@@ -1,0 +1,12 @@
+{
+  "name": "@arp/contracts",
+  "private": true,
+  "version": "0.0.0",
+  "description": "ARP Module Registry — Solidity contracts (Foundry).",
+  "scripts": {
+    "build": "forge build",
+    "test": "forge test",
+    "format": "forge fmt",
+    "lint": "solhint 'src/**/*.sol'"
+  }
+}

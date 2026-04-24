@@ -1,0 +1,25 @@
+{
+  "name": "arp-module-registry-mvp",
+  "version": "0.0.0",
+  "private": true,
+  "description": "ARP Module Registry — MVP. First on-chain deliverable of the Agent Reputation Protocol.",
+  "engines": {
+    "node": ">=20",
+    "bun": ">=1.2"
+  },
+  "workspaces": [
+    "app",
+    "contracts"
+  ],
+  "scripts": {
+    "dev": "bun --filter app dev",
+    "build": "bun --filter '*' build",
+    "test": "bun --filter '*' test",
+    "lint": "bun --filter '*' lint",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\" --ignore-path .gitignore",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\" --ignore-path .gitignore"
+  },
+  "devDependencies": {
+    "prettier": "^3.3.3"
+  }
+}

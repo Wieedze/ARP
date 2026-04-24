@@ -1,0 +1,40 @@
+# dependencies
+node_modules/
+# Note: bun.lockb is committed intentionally — it's the lockfile for reproducible installs.
+
+# env
+.env
+.env.local
+.env.*.local
+
+# foundry
+contracts/out/
+contracts/cache/
+contracts/broadcast/
+contracts/lib/
+
+# vite / app build
+app/dist/
+app/.vite/
+app/node_modules/
+
+# os
+.DS_Store
+Thumbs.db
+
+# editor
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+
+# logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# coverage
+coverage/
+*.lcov

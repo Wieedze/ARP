@@ -1,0 +1,8 @@
+node_modules
+app/dist
+contracts/out
+contracts/cache
+contracts/broadcast
+contracts/lib
+deployments
+pnpm-lock.yaml
