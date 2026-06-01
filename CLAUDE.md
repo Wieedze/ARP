@@ -1,89 +1,137 @@
-# CLAUDE.md — Operating instructions for this repository
+# CLAUDE.md — Router
 
-You are working on the **ARP Module Registry MVP**. Before writing any code, read this file fully, then the docs and skills it references.
+This file routes you to the right rules, skills, agents, and prior decisions for the task at hand. **It contains no rules itself.** Rules live in `.claude/rules/`. Decisions live in `.claude/choices/`. Lessons live in `.claude/learning/`.
 
-## Read order before starting any task
+If you find yourself wanting to add a rule to this file, **don't.** Add it to the matching file in `.claude/rules/` and update `.claude/rules/00-INDEX.md`.
 
-1. This file (you're reading it)
-2. `docs/01_PROJECT_CONTEXT.md` — what ARP is, what it isn't, why this MVP exists
-3. `docs/02_ARCHITECTURE.md` — locked architectural decisions you must not re-litigate
-4. `docs/03_MVP_SCOPE.md` — what is in scope and what is explicitly not
-5. `.claude/skills/arp/SKILL.md` — ARP-specific patterns and guardrails
+## Source of authority (read in this order on every task)
 
-Then the task-specific docs for whatever task you're currently executing.
+1. `docs/00_HACKATHON_PIVOT.md` — current strategic commitment (MetaMask Dev Cook-Off, deadline 2026-06-15). Supersedes any conflicting item in older docs for the duration of the hackathon.
+2. `docs/02_ARCHITECTURE.md` — locked architectural decisions.
+3. `docs/03_MVP_SCOPE.md` — extended (not replaced) by the pivot.
 
-## Operating principles
+If three layers conflict, the higher-numbered (= more recent) wins. The original docs remain authoritative for anything the pivot doesn't address.
 
-### Scope discipline is non-negotiable
+## Read order at the start of every task
 
-The MVP scope is defined in `docs/03_MVP_SCOPE.md`. If a task seems to require something outside that scope, **stop and ask**. Do not silently expand scope. Adding "just one small feature" is the failure mode this project is designed to prevent.
+1. This file.
+2. The task file in `tasks/`. Note its `Required skills` and `Do not do in this task` sections.
+3. The three source-of-authority docs above, in order.
+4. `docs/01_PROJECT_CONTEXT.md` for framing.
+5. The rules from `.claude/rules/` that match the task type (see routing table below).
+6. The global skills listed in the task's `Required skills` section.
+7. `.claude/skills/arp/SKILL.md`.
+8. Scan `.claude/choices/` for ADRs that touch this area.
+9. Scan `.claude/learning/` for post-mortems on similar prior tasks.
 
-### Architectural decisions are locked
+## Routing table — what to load by task type
 
-`docs/02_ARCHITECTURE.md` describes decisions already made after careful reasoning. If you believe one of them is wrong, flag it explicitly — do not silently implement a different approach.
+| If the task touches… | Rules | Global skills | Local skill | Agent |
+|---|---|---|---|---|
+| Solidity (`contracts/`) | `code.md`, `solidity.md`, `security.md` | `ethskills`, `secure-workflow-guide`, `guidelines-advisor` (and `token-integration-analyzer` if a token is involved) | `arp` | `contract-reviewer` |
+| Caveat enforcers (Task 02b) | `code.md`, `solidity.md`, `security.md`, `metamask-delegation.md` | **Canonical**: `mms-smart-accounts-kit` (read `references/delegations.md` first — authoritative on `ICaveatEnforcer` interface). Plus: `ethskills`, `secure-workflow-guide`, `guidelines-advisor`, `mms-gator-cli` (CLI-driven testing). **Supplementary**: `docs/06_BEAR_TRAP_REFERENCE.md` for patterns, test density, security checklist — MetaMask wins on any conflict. | `arp` | `contract-reviewer` |
+| MetaMask Smart Accounts / delegation / x402 (Tasks 03b, 04b) | `code.md`, `ui.md`, `metamask-delegation.md` | **Canonical**: `mms-smart-accounts-kit` + https://docs.metamask.io/smart-accounts-kit/. Plus: `ethskills`, `mms-gator-cli`. | `arp` | `ui-reviewer` (UI side) + manual SDK-vs-docs check |
+| TypeScript or UI (`app/`) | `code.md`, `ui.md` | — | `arp` | `ui-reviewer` |
+| Intuition atoms / triples / queries / staking | `code.md` | `intuition` (vendored at `.claude/skills/intuition/` — includes `operations/` and `reference/` subdirs) | `arp` | `intuition-integrator` |
+| Deployment scripts | `code.md`, `solidity.md`, `security.md` | `ethskills` | `arp` | `contract-reviewer` (review the script, not just contracts) |
+| Docs only | — | — | `arp` (for tone and framing) | — |
+| Any task — at the end | `workflow.md` | — | — | `task-verifier` (**mandatory**) |
+| Hackathon tasks (02b, 03b, 04b, 05b) | + narrative check (see below) | — | — | `task-verifier` requires the narrative answer |
 
-### Use existing skills rather than reinventing
+Load only rules that match. Loading the full rules folder for every task defeats the purpose of splitting them.
 
-The user has these skills installed. Use them for the appropriate work:
+## Mandatory: end-of-task verification
 
-- **Ethereum smart contracts skill** → all Solidity work, Foundry setup, test patterns, deployment scripts
-- **Trail of Bits audit security skill** → every contract must go through this before being considered done
-- **Intuition protocol skill** → all atoms, triples, multivault interactions
-- **This repo's ARP skill** (`.claude/skills/arp/SKILL.md`) → ARP-specific patterns, the protocol mental model, composition of the other skills
+Every task ends with a `task-verifier` agent call before you declare it done. The agent reads the task spec, the relevant rules, and the deliverables on disk, then returns pass/fail.
 
-When multiple skills apply (e.g., writing a contract that creates an Intuition atom), use all of them. Do not pick one.
+- **Pass** → the agent writes a post-mortem to `.claude/learning/NN-task-slug.md`. Mark the task file with a completion note.
+- **Fail** → fix the punch list returned by the agent and re-run. Do not declare the task complete.
 
-### Tasks are atomic
+See `.claude/agents/task-verifier.md` for the agent's procedure.
 
-Each task in `tasks/` is designed to be completable in a single focused session. Complete them in order unless the user explicitly authorizes otherwise. When a task is complete, update its file with a completion note and what you produced.
+### Narrative-preservation check (hackathon tasks only)
 
-### Quality bar
+For tasks **02b, 03b, 04b, 05b**, the completion report must answer one extra question in one sentence:
 
-This MVP is a demo for the Intuition core team. The target is **prestige**, not "it works". Specifically:
+> *Does this preserve the hackathon submission narrative?*
 
-- Contracts: 100% test coverage on public surface, security review pass, deploy scripts idempotent
-- UI: typography-driven, dark-first, no generic templates, no emoji, no gradients, no rounded everything
-- Documentation: every public API has a doc comment; every contract function has a NatSpec
-- Git hygiene: conventional commits, atomic diffs, no "fix typo" after merge
+The narrative is in `docs/00_HACKATHON_PIVOT.md`. If the answer is "no", the implementation has drifted and needs review before merging. The `task-verifier` agent enforces this on hackathon-tagged tasks.
 
-If you ship something and you're not proud of it, you haven't finished.
+## When to write an ADR
 
-### Communication style
+If during a task you make a non-obvious decision — a design tradeoff, a deviation from an obvious approach, an architectural choice not pre-specified — write an ADR in `.claude/choices/` using the template. Cross-link it from the task's post-mortem.
 
-When you complete a task, summarize what you did in three parts:
+See `.claude/choices/README.md` for when an ADR is and isn't warranted.
 
-1. **What shipped** — one sentence, concrete
-2. **What I decided** — any non-obvious choice you made, with the reasoning
-3. **What's next or blocked** — what the user should know before the next task
+## When to update a rule
 
-Do not write long narrative explanations unless explicitly asked. Do not use emoji. Do not use excessive bold.
+If a feedback loop with the user (or a post-mortem) reveals a missing or wrong rule:
 
-### Security posture
+1. Edit the rule file in `.claude/rules/`.
+2. Write an ADR in `.claude/choices/` recording the change and the reason.
+3. If the change came from a post-mortem, link the post-mortem in the ADR.
 
-ARP manages real value eventually (TRUST staking). Every contract-facing change must go through the Trail of Bits skill before being considered complete, even in MVP. Specifically watch for:
+Rules do not change silently. The audit trail is the point.
 
-- Reentrancy on any state-changing external call
-- Access control on admin functions (even if only owner can call, be explicit)
-- Integer overflow/underflow (Solidity 0.8+ reverts, but document the assumptions)
-- Unchecked external calls
-- Front-running on registration (is `msg.sender` the right creator binding?)
+## Hard constraints (the very few that belong in the router)
 
-## What not to do
+- **Default deployment target is Intuition Testnet** (changed from Base Sepolia per the hackathon pivot). Mainnet remains explicitly out of scope.
+- **Do not deploy to mainnet without explicit user confirmation per session.**
+- **Do not commit secrets** (`.env`, private keys, API keys).
+- **Do not silently expand scope.** When in doubt, stop and ask. See `.claude/rules/workflow.md` for the scope discipline rule in full. The pivot doc has an explicit out-of-scope list — re-read it before adding anything.
+- **Hackathon deadline: 2026-06-15 at 10:59 UTC.** Hard. Reward announcement 2026-06-22.
 
-- Do not generate boilerplate UI with shadcn/ui default components untouched — design it
-- Do not use `any` types in TypeScript, period
-- Do not commit secrets, `.env` files, or private keys
-- Do not deploy to mainnet without explicit user confirmation
-- Do not add dependencies unless strictly necessary, and justify each one in the PR description
-- Do not silently change the architecture documented in `docs/02_ARCHITECTURE.md`
+Everything else is in `.claude/rules/`. Open the rule file you need for the task you're doing — not all of them.
 
-## When to ask for clarification
+## Directory map
 
-Always ask, do not guess, when:
+```
+ARP/
+├── CLAUDE.md                          ← you are here (router only)
+├── docs/                              project specification
+│   ├── 00_HACKATHON_PIVOT.md         (current strategic commitment — supersedes conflicts)
+│   ├── 01_PROJECT_CONTEXT.md
+│   ├── 02_ARCHITECTURE.md            (locked decisions)
+│   ├── 03_MVP_SCOPE.md               (extended by 00)
+│   ├── 04_SEED_MODULES.md
+│   ├── 05_UI_DESIGN.md
+│   └── 06_BEAR_TRAP_REFERENCE.md     (supplementary example for Task 02b — MetaMask is canonical)
+├── tasks/                             atomic task files
+├── contracts/                         Solidity (Foundry)
+├── app/                               TypeScript UI
+├── schemas/                           JSON Schemas for modules
+├── deployments/                       per-chain deployment records
+└── .claude/                           Claude operating layer
+    ├── README.md                      (this directory explained)
+    ├── rules/                         domain-split rules
+    │   ├── 00-INDEX.md
+    │   ├── code.md
+    │   ├── solidity.md
+    │   ├── ui.md
+    │   ├── security.md
+    │   ├── workflow.md
+    │   └── metamask-delegation.md     (Tasks 02b, 03b, 04b)
+    ├── skills/
+    │   ├── arp/SKILL.md
+    │   ├── intuition/                 (vendored — Intuition protocol procedural knowledge)
+    │   ├── mms-smart-accounts-kit/    (vendored from github.com/MetaMask/skills — do not edit)
+    │   ├── mms-gator-cli/             (vendored from github.com/MetaMask/skills — do not edit)
+    │   └── mms-oh-my-opencode/        (vendored, scoped to OpenCode — not used here)
+    ├── agents/
+    │   ├── task-verifier.md          (mandatory end-of-task)
+    │   ├── contract-reviewer.md
+    │   ├── ui-reviewer.md
+    │   └── intuition-integrator.md
+    ├── learning/                      append-only post-mortems
+    │   ├── README.md
+    │   └── TEMPLATE.md
+    └── choices/                       append-only ADRs
+        ├── README.md
+        ├── TEMPLATE.md
+        ├── 0001-claude-meta-architecture.md
+        ├── 0002-hackathon-pivot-metamask-cookoff.md
+        ├── 0003-metamask-skills-vendored-locally.md
+        └── 0004-bear-trap-as-enforcer-reference.md
+```
 
-- A task file seems to contradict an architecture doc
-- The user's instruction seems to expand scope beyond `docs/03_MVP_SCOPE.md`
-- A dependency on Intuition infrastructure is unclear (e.g., which atom schema to use)
-- The chain deployment target is ambiguous (Base Sepolia by default, ask before anything else)
-
-When in doubt, stop and ask. Ten minutes of clarification saves a day of rework.
+For the rationale behind this structure, see `.claude/choices/0001-claude-meta-architecture.md`.

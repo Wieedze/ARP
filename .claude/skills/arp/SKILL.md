@@ -1,6 +1,6 @@
 ---
 name: arp-module-registry
-description: Procedural knowledge for working on the ARP (Agent Reputation Protocol) Module Registry MVP. Use this skill whenever working on any task in this repository, including Solidity contract work, Intuition atom creation, TypeScript UI work with ERC-8004 concepts, or anything touching agents, reputation, or the Intuition semantic graph. This skill composes with the ethereum-smart-contracts skill, trail-of-bits-audit-security skill, and intuition-protocol skill — read this skill first to understand the project, then apply the others for specific technical work.
+description: Procedural knowledge for working on the ARP (Agent Reputation Protocol) Module Registry MVP. Use this skill whenever working on any task in this repository, including Solidity contract work, Intuition atom creation, TypeScript UI work with ERC-8004 concepts, or anything touching agents, reputation, or the Intuition semantic graph. This skill composes with the ethereum-smart-contracts skill, trail-of-bits-audit-security skill, and intuition skill — read this skill first to understand the project, then apply the others for specific technical work.
 ---
 
 # ARP Module Registry — Project Skill
@@ -21,7 +21,7 @@ Then, depending on the task:
 
 - Solidity work → also load the ethereum-smart-contracts skill
 - Any contract touching value or permissions → also load trail-of-bits-audit-security
-- Any Intuition atom or triple work → also load intuition-protocol
+- Any Intuition atom or triple work → also load intuition
 - UI work → also load frontend-design
 
 Never skip this loading step to "save time." Every time it's been skipped on past projects, scope drifted.
@@ -83,7 +83,7 @@ Use for:
 
 Every contract change goes through this skill before the task is considered complete. No exceptions.
 
-### intuition-protocol
+### intuition
 
 Use for:
 - Creating atoms and triples programmatically

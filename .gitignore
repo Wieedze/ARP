@@ -38,3 +38,8 @@ yarn-error.log*
 # coverage
 coverage/
 *.lcov
+
+# MetaMask skills installer writes parallel copies for Cursor and a generic agents harness.
+# We only consume Claude Code skills (.claude/skills/mms-*); the others are vendored but unused.
+.cursor/
+.agents/
