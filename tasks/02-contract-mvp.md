@@ -1,5 +1,7 @@
 # Task 02 — Module Registry Contract
 
+> **Status: COMPLETE** (2026-06-01). Post-mortem: `.claude/learning/02-contract-mvp.md`. `contract-reviewer` PASS recorded in `contracts/SECURITY_REVIEW.md`. Gas-target deviation (200k → ~300k success path) accepted — ADR `0007-module-registry-gas-target-revision.md` recommended.
+
 ## Objective
 
 Write, test, and security-review the `ModuleRegistry.sol` contract. This is the on-chain core of the MVP.

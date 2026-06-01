@@ -17,6 +17,13 @@ ffi = false
 # Read-only access to ../deployments so scripts can resolve external addresses.
 fs_permissions = [{ access = "read", path = "../deployments" }]
 
+# delegation-framework ships with its own test suite + transitive submodules
+# (Truffle/Hardhat fixtures, OpenZeppelin imports that need remappings we
+# don't have). Task 02 (this contract) imports nothing from delegation-framework,
+# so we skip the whole lib for now. Task 02b will narrow this to keep only the
+# specific files we actually compile against (e.g. interfaces/ICaveatEnforcer.sol).
+skip = ["lib/delegation-framework/**"]
+
 [fmt]
 line_length = 120
 tab_width = 4
