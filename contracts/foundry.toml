@@ -8,7 +8,10 @@ script = "script"
 out = "out"
 libs = ["lib"]
 
-solc_version = "0.8.24"
+# Per-file solc selection: ModuleRegistry uses ^0.8.24, but the vendored
+# delegation-framework is pinned strict 0.8.23. auto_detect picks the right
+# compiler per compilation unit so both can coexist.
+auto_detect_solc = true
 optimizer = true
 optimizer_runs = 200
 via_ir = false
@@ -17,12 +20,25 @@ ffi = false
 # Read-only access to ../deployments so scripts can resolve external addresses.
 fs_permissions = [{ access = "read", path = "../deployments" }]
 
-# delegation-framework ships with its own test suite + transitive submodules
-# (Truffle/Hardhat fixtures, OpenZeppelin imports that need remappings we
-# don't have). Task 02 (this contract) imports nothing from delegation-framework,
-# so we skip the whole lib for now. Task 02b will narrow this to keep only the
-# specific files we actually compile against (e.g. interfaces/ICaveatEnforcer.sol).
-skip = ["lib/delegation-framework/**"]
+# Remappings for the delegation-framework consumption chain. The framework
+# itself depends on @account-abstraction, @erc7579, @openzeppelin/contracts,
+# @bytes-utils, @solidity-stringutils — all of which it bundles under
+# lib/delegation-framework/lib/. Our enforcers import from
+# delegation-framework/src/* via these remappings.
+#
+# The framework's crypto sub-libs (FCL/FreshCryptoLib/SCL) and its own test/
+# directory are NOT vendored — they ship broken transitive node_modules
+# (Truffle/Hardhat fixtures) that don't compile under our solc. They are
+# not needed for DomainScopeEnforcer or TrustStakeCapEnforcer (we don't use
+# advanced signature schemes or run delegation-framework's own tests).
+remappings = [
+    "@account-abstraction/=lib/delegation-framework/lib/account-abstraction/contracts/",
+    "@erc7579/=lib/delegation-framework/lib/erc7579-implementation/src/",
+    "@openzeppelin/contracts/=lib/delegation-framework/lib/openzeppelin-contracts/contracts/",
+    "@bytes-utils/=lib/delegation-framework/lib/solidity-bytes-utils/contracts/",
+    "@solidity-stringutils/=lib/delegation-framework/lib/solidity-stringutils/src/",
+    "delegation-framework/=lib/delegation-framework/src/",
+]
 
 [fmt]
 line_length = 120
