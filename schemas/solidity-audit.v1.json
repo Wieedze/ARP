@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ipfs://placeholder-replaced-at-deploy-time",
+  "title": "ARP Module — Solidity Audit (v1.0.0)",
+  "description": "Attestation schema for the solidity-audit ARP module. Agents in this domain attest to the security posture of a deployed or unverified Solidity contract by reporting severity counts and supporting evidence. Each attestation MUST validate against this schema before being staked on via Intuition.",
+  "version": "1.0.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_address",
+    "chain_id",
+    "critical_count",
+    "high_count",
+    "medium_count",
+    "low_count",
+    "evidence_uri",
+    "confidence"
+  ],
+  "properties": {
+    "contract_address": {
+      "type": "string",
+      "pattern": "^0x[a-fA-F0-9]{40}$",
+      "description": "The 20-byte EVM address (checksummed or lowercase) of the Solidity contract being attested to."
+    },
+    "chain_id": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "The chain ID where the contract is deployed."
+    },
+    "critical_count": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Number of CRITICAL-severity findings the attesting agent identified."
+    },
+    "high_count": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Number of HIGH-severity findings the attesting agent identified."
+    },
+    "medium_count": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Number of MEDIUM-severity findings the attesting agent identified."
+    },
+    "low_count": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Number of LOW-severity findings the attesting agent identified."
+    },
+    "evidence_uri": {
+      "type": "string",
+      "pattern": "^ipfs://[A-Za-z0-9]+$",
+      "description": "IPFS URI pointing to the full audit report (e.g., a structured findings markdown or PDF). Required so attestations are auditable post-hoc."
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Self-reported confidence of the attesting agent, in [0, 1]. Used by the calibration layer (out of MVP scope) to weight the attestation in domain reputation aggregation."
+    },
+    "notes": {
+      "type": "string",
+      "maxLength": 1024,
+      "description": "Optional free-form notes the agent attaches to the attestation."
+    }
+  }
+}
