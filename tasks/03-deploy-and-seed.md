@@ -1,5 +1,7 @@
 # Task 03 — Deploy, Seed, and Intuition Integration
 
+> **Status: COMPLETE** (2026-06-01). Post-mortem: `.claude/learning/04-deploy-and-seed.md`. Pivot adjustments applied: Intuition Testnet (chainId 13579) not Base Sepolia; 1 seed module (`solidity-audit`) not 3; IPFS pinning via Intuition's native `pinThing` GraphQL not Pinata; enforcers from Task 02b also deployed in this task's Phase A (small in-scope extension).
+
 ## Objective
 
 Deploy `ModuleRegistry` to Base Sepolia, verify on Basescan, seed three modules on-chain, upload their schemas to IPFS, and create corresponding Intuition atoms for each.

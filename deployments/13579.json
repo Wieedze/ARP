@@ -16,26 +16,21 @@
       "MetaMask deployments: ~/Project/metamask-smart-accounts-kit/packages/delegation-deployments/src/index.ts (CHAIN_ID.intuitionTestnet = 0x350b)"
     ]
   },
-
   "intuition": {
     "_source": ".claude/skills/intuition/SKILL.md line 152",
     "multiVault": "0x2Ece8D4dEdcB9918A398528f3fa4688b1d2CAB91"
   },
-
   "metamaskDelegationFramework": {
     "version": "1.3.0",
     "_source": "MetaMask deployments package (~/Project/metamask-smart-accounts-kit/packages/delegation-deployments/src/contractAddresses.ts → DEPLOYMENTS_1_3_0). All addresses are deterministic CREATE2 — same value on every chain MetaMask supports. Intuition Testnet (chainId 0x350b) is explicitly mapped to DEPLOYMENTS_1_3_0 at packages/delegation-deployments/src/index.ts line 148.",
-
     "delegationManager": "0xdb9B1e94B5b69Df7e401DDbedE43491141047dB3",
     "entryPoint": "0x0000000071727De22E5E9d8BAf0edAc6f37da032",
     "simpleFactory": "0x69Aa2f9fe1572F1B640E1bbc512f5c3a734fc77c",
-
     "implementations": {
       "hybridDeleGator": "0x48dBe696A4D990079e039489bA2053B36E8FFEC4",
       "multiSigDeleGator": "0x56a9EdB16a0105eb5a4C54f4C062e2868844f3A7",
       "eip7702StatelessDeleGator": "0x63c0c19a282a1B52b07dD5a65b58948A07DAE32B"
     },
-
     "enforcers": {
       "_note": "Standard caveat enforcers. ARP composes its custom DomainScopeEnforcer + TrustStakeCapEnforcer alongside a subset of these.",
       "allowedCalldata": "0xc2b0d624c1c4319760C96503BA27C347F3260f55",
@@ -73,7 +68,6 @@
       "multiTokenPeriod": "0xFB2f1a9BD76d3701B730E5d69C3219D42D80eBb7"
     }
   },
-
   "arp": {
     "_note": "Populated by scripts/deploy.sh. Addresses are EOA-nonce-derived (CREATE), so re-running with a new nonce will produce different addresses. To redeploy, increment the nonce assumption — there is no on-chain idempotency guard.",
     "deployer": "0xE596096F4176b682E300d73963e7B04B383C1AA1",
@@ -91,7 +85,22 @@
       "domainScopeEnforcer": "https://testnet.explorer.intuition.systems/address/0x516B82E29e3Ca46Ca810FC2EEf348932b198f7f9",
       "trustStakeCapEnforcer": "https://testnet.explorer.intuition.systems/address/0x7BB56819E9a413B8B4668C5cAF5C494c41dC0F8E"
     },
-    "modules": [],
-    "intuitionAtoms": []
+    "modules": [
+      {
+        "id": "1",
+        "name": "Solidity Audit",
+        "domain": "solidity-audit",
+        "schemaURI": "ipfs://bafkreiembmtprqzufrdkvig74lskv6iazuatblm4hwmtxkf5a3v67mkdkm",
+        "creator": "0xE596096F4176b682E300d73963e7B04B383C1AA1",
+        "tx": "0xbd97979b197e4423293180e36d69f72e8eb07d2bb11bdfb2940ec918d6f6af3c"
+      }
+    ],
+    "intuitionAtoms": [
+      {
+        "atomId": "0xde8890fca8dde322ca57bce0e20dfeb23be67332f9101305ebe72facdee032dc",
+        "uri": "ipfs://bafkreiembmtprqzufrdkvig74lskv6iazuatblm4hwmtxkf5a3v67mkdkm",
+        "tx": "0x97db7629c6c973d43c0c62325754d750ee262853bdbd87496b4b82c1ea3d0ac7"
+      }
+    ]
   }
 }
