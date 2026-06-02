@@ -3,7 +3,13 @@ import {
     toMetaMaskSmartAccount,
     type MetaMaskSmartAccount,
 } from "@metamask/smart-accounts-kit";
-import {type Account, type Chain, type Hex, type Transport, type WalletClient} from "viem";
+import {
+    type Account,
+    type Chain,
+    type Hex,
+    type Transport,
+    type WalletClient,
+} from "viem";
 import {type PrivateKeyAccount} from "viem/accounts";
 
 import {publicClient} from "../lib/clients";
@@ -56,4 +62,41 @@ export async function createUserSmartAccount(params: {
         deploySalt,
         signer: {walletClient: params.signer.walletClient},
     });
+}
+
+/**
+ * Deploy the Smart Account on-chain if it is not already deployed.
+ *
+ * MetaMask Smart Accounts are counterfactual by default — the address is
+ * deterministic but no bytecode exists until the first userOp is processed
+ * by the EntryPoint. The DelegationManager requires the delegator to be
+ * a contract implementing `IDeleGatorCore.executeFromExecutor`, so before
+ * a Smart Account can act as a delegator we must materialize it on-chain.
+ *
+ * This helper bypasses the Bundler (which Task 04b will wire properly)
+ * by calling the SDK's bundled SimpleFactory via the standard viem
+ * `factory + factoryData` pair the SmartAccount exposes. The user's
+ * EOA pays the gas.
+ *
+ * @returns `null` if the SA was already deployed, otherwise the
+ *          deployment transaction hash.
+ */
+export async function deploySmartAccountIfNeeded(params: {
+    smartAccount: MetaMaskSmartAccount<Implementation.Hybrid>;
+    funderWalletClient: WalletClient<Transport, Chain, Account>;
+}): Promise<Hex | null> {
+    const code = await publicClient.getCode({address: params.smartAccount.address});
+    if (code && code !== "0x") return null;
+
+    const {factory, factoryData} = await params.smartAccount.getFactoryArgs();
+    if (!factory || !factoryData) {
+        throw new Error("Smart Account has no factory args — already deployed or misconfigured");
+    }
+
+    const hash = await params.funderWalletClient.sendTransaction({
+        to: factory,
+        data: factoryData,
+    });
+    await publicClient.waitForTransactionReceipt({hash});
+    return hash;
 }
