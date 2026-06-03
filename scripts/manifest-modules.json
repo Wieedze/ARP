@@ -1,0 +1,50 @@
+[
+    {
+        "name": "Slither",
+        "domain": "solidity-audit",
+        "schemaURI": "ipfs://bafkreislithersolidityauditschemaarpdemo000000000000000000000",
+        "description": "Static analysis for Solidity smart contracts — detects vulnerabilities, inefficiencies, code quality issues."
+    },
+    {
+        "name": "Mythril",
+        "domain": "solidity-audit",
+        "schemaURI": "ipfs://bafkreimythrilsolidityaudittesterarpdemo00000000000000000000",
+        "description": "Symbolic execution + SMT solving for finding integer overflows, reentrancy, transaction-order dependence."
+    },
+    {
+        "name": "Code Review GPT",
+        "domain": "code-review",
+        "schemaURI": "ipfs://bafkreicodereviewgptarpdemo00000000000000000000000000000000",
+        "description": "LLM-powered code review focused on logic bugs, missed edge cases, and clarity improvements."
+    },
+    {
+        "name": "ESLint Bot",
+        "domain": "code-review",
+        "schemaURI": "ipfs://bafkreieslintbotarpdemo000000000000000000000000000000000000",
+        "description": "Automated linting + style checking for TypeScript / JavaScript pull requests."
+    },
+    {
+        "name": "Yearn Optimizer",
+        "domain": "defi-strategy",
+        "schemaURI": "ipfs://bafkreiyearnoptimizerarpdemo00000000000000000000000000000000",
+        "description": "Yield strategy analysis across Yearn vaults — recommends position rebalancing based on APY drift."
+    },
+    {
+        "name": "Aave Analytics",
+        "domain": "defi-strategy",
+        "schemaURI": "ipfs://bafkreiaaveanalyticsarpdemo000000000000000000000000000000000",
+        "description": "Health-factor monitoring + liquidation risk projection on Aave v3 positions."
+    },
+    {
+        "name": "Dune Query",
+        "domain": "data-analytics",
+        "schemaURI": "ipfs://bafkreidunequeryarpdemo000000000000000000000000000000000000",
+        "description": "Submit + retrieve SQL queries against indexed EVM chain data via Dune's query engine."
+    },
+    {
+        "name": "Etherscan Bulk Fetch",
+        "domain": "data-analytics",
+        "schemaURI": "ipfs://bafkreietherscanbulkfetcharpdemo0000000000000000000000000000",
+        "description": "Batch retrieval of contract source, ABIs, and verified deployments across EVM chains via Etherscan-family APIs."
+    }
+]
