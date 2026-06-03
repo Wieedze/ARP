@@ -107,7 +107,9 @@ function matchManifestEntry(
  *
  * @param params.methodologiesUsed  The methodology strings cited by the agent
  *                                  in its audit output (from `AuditReport`).
- * @param params.composeDelegation  The signed compose delegation for the agent.
+ * @param params.composeDelegation  The signed compose delegation for the agent
+ *                                  (single Delegation, or chain `[leaf, root]`
+ *                                  for sub-delegation flows).
  * @param params.agentWalletClient  The runtime EOA client (delegate).
  * @param params.publicClient       For reads + waitForTransactionReceipt.
  * @param params.agentSelfThing     The agent's identity Thing (used to
@@ -119,7 +121,7 @@ function matchManifestEntry(
  */
 export async function stakeOnUsedMethodologies(params: {
     methodologiesUsed: string[];
-    composeDelegation: Delegation;
+    composeDelegation: Delegation | Delegation[];
     agentWalletClient: WalletClient<Transport, Chain, Account>;
     publicClient: PublicClient;
     agentSelfThing: {name: string; description: string};

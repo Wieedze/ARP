@@ -62,9 +62,16 @@ const moduleRegistryAbi = [
     },
 ] as const;
 
-/** Common params shared by every redeem helper. */
+/**
+ * Common params shared by every redeem helper.
+ *
+ * `signedDelegation` can be a single signed delegation (direct redeem)
+ * or an array ordered `[leaf, ..., root]` representing the validation
+ * chain when a sub-delegation is involved. The framework walks the chain
+ * top-to-bottom.
+ */
 type RedeemCommon = {
-    signedDelegation: Delegation;
+    signedDelegation: Delegation | Delegation[];
     agentWalletClient: WalletClient<Transport, Chain, Account>;
 };
 

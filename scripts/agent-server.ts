@@ -41,10 +41,12 @@
  *     -d '{"contractCode": "...", "paymentTxHash": "0x...", "requesterAddress": "0x..."}'
  */
 
-import {readFileSync, writeFileSync, mkdtempSync} from "node:fs";
+import {writeFileSync, mkdtempSync} from "node:fs";
 import {tmpdir} from "node:os";
 import {join} from "node:path";
 
+import {hashDelegation} from "@metamask/delegation-core";
+import type {Delegation} from "@metamask/smart-accounts-kit";
 import {
     createPublicClient,
     createWalletClient,
@@ -59,8 +61,13 @@ import {
 import {privateKeyToAccount} from "viem/accounts";
 
 import {intuitionTestnet} from "../app/src/lib/chains";
-import {deserializeDelegation} from "../app/src/services/delegation";
-import {auditContract} from "./agent-auditor";
+import {
+    buildDelegation,
+    deserializeDelegation,
+    randomSalt,
+    signDelegationViaEOA,
+} from "../app/src/services/delegation";
+import {auditContract, type AuditReport} from "./agent-auditor";
 import {
     formatStakeActions,
     stakeOnUsedMethodologies,
@@ -81,6 +88,17 @@ async function main() {
         throw new Error("DELEGATION_COMPOSE_JSON required (copy from /agent step 4)");
     const port = Number(process.env.AGENT_SERVER_PORT ?? "3001");
     const minBudget = parseEther(process.env.AGENT_MIN_BUDGET_TTRUST ?? "0.005");
+
+    // Optional A2A: if env points at a Specialist server + an Agent #2
+    // runtime address, the Auditor sub-delegates every task to it.
+    const specialistEndpoint = process.env.SPECIALIST_ENDPOINT;
+    const specialistRuntimeAddress = process.env.AGENT2_RUNTIME_ADDRESS as
+        | Address
+        | undefined;
+    const subFee = parseEther(
+        process.env.SUBCONTRACT_FEE_TTRUST ?? "0.002",
+    );
+    const a2aEnabled = Boolean(specialistEndpoint && specialistRuntimeAddress);
 
     const composeDelegation = deserializeDelegation(composeJson);
     const agentAccount = privateKeyToAccount(agentPk);
@@ -109,6 +127,14 @@ async function main() {
     console.log(`  delegator (SA)   ${composeDelegation.delegator}`);
     console.log(`  port             ${port}`);
     console.log(`  min budget       ${formatEther(minBudget)} tTRUST`);
+    if (a2aEnabled) {
+        console.log(`  A2A mode         ENABLED`);
+        console.log(`    specialist     ${specialistRuntimeAddress}`);
+        console.log(`    endpoint       ${specialistEndpoint}`);
+        console.log(`    sub-fee        ${formatEther(subFee)} tTRUST`);
+    } else {
+        console.log(`  A2A mode         disabled (set SPECIALIST_ENDPOINT + AGENT2_RUNTIME_ADDRESS to enable)`);
+    }
     console.log("");
 
     Bun.serve({
@@ -131,7 +157,15 @@ async function main() {
                         agentWalletClient,
                         composeDelegation,
                         agentAccount,
+                        agentPk,
                         minBudget,
+                        a2a: a2aEnabled
+                            ? {
+                                  specialistEndpoint: specialistEndpoint!,
+                                  specialistRuntime: specialistRuntimeAddress!,
+                                  subFee,
+                              }
+                            : null,
                     });
                     return json(result);
                 } catch (err) {
@@ -154,10 +188,24 @@ async function handleRun(params: {
     agentWalletClient: ReturnType<typeof createWalletClient>;
     composeDelegation: ReturnType<typeof deserializeDelegation>;
     agentAccount: ReturnType<typeof privateKeyToAccount>;
+    agentPk: Hex;
     minBudget: bigint;
+    a2a: {
+        specialistEndpoint: string;
+        specialistRuntime: Address;
+        subFee: bigint;
+    } | null;
 }) {
-    const {body, publicClient, agentWalletClient, composeDelegation, agentAccount, minBudget} =
-        params;
+    const {
+        body,
+        publicClient,
+        agentWalletClient,
+        composeDelegation,
+        agentAccount,
+        agentPk,
+        minBudget,
+        a2a,
+    } = params;
 
     if (!body.contractCode || !body.paymentTxHash || !body.requesterAddress) {
         throw new Error(
@@ -219,6 +267,105 @@ async function handleRun(params: {
     });
     console.log(formatStakeActions(stakes));
 
+    // -------- 3.5. A2A — sub-delegate to Specialist if enabled --------
+    //
+    // Auditor (1) pays a small fee to Specialist's runtime so it has gas,
+    // (2) signs a leaf delegation chained off the root compose, (3) POSTs
+    // the task + chain to Specialist's endpoint, (4) awaits the result and
+    // merges its findings into the audit returned to Maria.
+    let subcontract: {
+        subPaymentTxHash: Hex;
+        subDelegation: Delegation;
+        specialistResponse: {
+            report: AuditReport;
+            stakes: StakeAction[];
+            receipt: {
+                role: "specialist";
+                agent: Address;
+                requestHash: Hex;
+                resultHash: Hex;
+                signature: Hex;
+            };
+        };
+    } | null = null;
+    if (a2a) {
+        console.log(`[run] A2A subcontract → ${a2a.specialistRuntime}`);
+
+        // (1) gas fee
+        const subPaymentTxHash = await agentWalletClient.sendTransaction({
+            to: a2a.specialistRuntime,
+            value: a2a.subFee,
+            chain: intuitionTestnet,
+        });
+        await publicClient.waitForTransactionReceipt({hash: subPaymentTxHash});
+        console.log(
+            `      sub-fee ${formatEther(a2a.subFee)} tTRUST tx ${subPaymentTxHash}`,
+        );
+
+        // (2) construct + sign leaf sub-delegation
+        const leafUnsigned = {
+            ...buildDelegation({
+                delegator: agentAccount.address,
+                delegate: a2a.specialistRuntime,
+                caveats: composeDelegation.caveats,
+                salt: randomSalt(),
+            }),
+            // override the default ROOT_AUTHORITY — for a chain, the leaf
+            // points at the keccak of the parent delegation struct.
+            authority: hashDelegation(composeDelegation) as Hex,
+        };
+        const subDelegation = await signDelegationViaEOA({
+            delegation: leafUnsigned,
+            privateKey: agentPk,
+        });
+        console.log(`      leaf signed by ${agentAccount.address}`);
+
+        // (3) POST to Specialist
+        const subRes = await fetch(`${a2a.specialistEndpoint.replace(/\/$/, "")}/run`, {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({
+                contractCode: body.contractCode,
+                parentPaymentTxHash: body.paymentTxHash,
+                subPaymentTxHash,
+                subDelegation,
+                rootDelegation: composeDelegation,
+                auditorAddress: agentAccount.address,
+                requesterAddress: body.requesterAddress,
+            }),
+        });
+        const subBody = (await subRes.json()) as {
+            report?: AuditReport;
+            stakes?: StakeAction[];
+            receipt?: {
+                role: "specialist";
+                agent: Address;
+                requestHash: Hex;
+                resultHash: Hex;
+                signature: Hex;
+            };
+            error?: string;
+        };
+        if (!subRes.ok || subBody.error) {
+            throw new Error(
+                `specialist /run failed: ${subBody.error ?? `HTTP ${subRes.status}`}`,
+            );
+        }
+        console.log(
+            `      specialist returned ${subBody.report?.findings.length ?? 0} findings`,
+        );
+
+        subcontract = {
+            subPaymentTxHash,
+            subDelegation,
+            specialistResponse: {
+                report: subBody.report!,
+                stakes: subBody.stakes!,
+                receipt: subBody.receipt!,
+            },
+        };
+    }
+
     // -------- 4. Sign the receipt --------
     const requestHash = keccak256(
         toHex(
@@ -246,6 +393,7 @@ async function handleRun(params: {
             resultHash,
             signature,
         },
+        subcontract,
     };
 }
 

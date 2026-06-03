@@ -88,14 +88,23 @@ export function buildRegisterModuleExecution(params: {
  *          `publicClient.waitForTransactionReceipt({ hash })` to confirm.
  */
 export async function redeemArpDelegation(params: {
-    signedDelegation: Delegation;
+    /**
+     * Either a single signed delegation (root) or a chain ordered from
+     * leaf to root: `[leaf, ..., root]`. The framework validates the
+     * chain top-to-bottom — leaf must be signed by the delegate of the
+     * next-up delegation, and so on down to the root delegator.
+     */
+    signedDelegation: Delegation | Delegation[];
     execution: ExecutionStruct;
     agentWalletClient: WalletClient<Transport, Chain, Account>;
 }): Promise<Hex> {
+    const chain = Array.isArray(params.signedDelegation)
+        ? params.signedDelegation
+        : [params.signedDelegation];
     return DelegationManager.execute.redeemDelegations({
         client: params.agentWalletClient,
         delegationManagerAddress: deployments.metamaskDelegationFramework.delegationManager,
-        delegations: [[params.signedDelegation]],
+        delegations: [chain],
         modes: [ExecutionMode.SingleDefault],
         executions: [[params.execution]],
     });
