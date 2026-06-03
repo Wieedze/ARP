@@ -317,47 +317,73 @@ export function ToolDetail() {
                 </div>
             </section>
 
-            {/* ---------- Compose / Bet ---------- */}
+            {/* ---------- Use this tool — stake (+ optional declaration) ---------- */}
             <section className="mt-12">
-                <h2 className="font-medium mb-2">Use this tool</h2>
-                <p className="text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)] mb-6 max-w-[640px]">
-                    {effectiveMode === "compose"
-                        ? "Declare that your agent uses this tool — creates the triple agent → uses → tool on Intuition and stakes tTRUST on the tool's atom. The stake is your agent's economic conviction."
-                        : "Bet directly on this tool — stakes tTRUST on the atom from your wallet. No agent identity required; your address holds the position."}
+                <h2 className="font-medium mb-2">Stake on this tool</h2>
+                <p className="text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)] mb-6 max-w-[680px]">
+                    Lock tTRUST on the tool's atom. Your wallet holds the
+                    position — shares accrue to your address, and the TVL on
+                    this tool grows. {hasAgent ? (
+                        <>
+                            Since you own Agent #{agentId!.toString()}, you can
+                            additionally <span className="text-[color:var(--color-fg)]">declare</span>{" "}
+                            on Intuition's graph that your agent uses this tool
+                            — the triple{" "}
+                            <span className="font-mono">agent → uses → tool</span>{" "}
+                            is recorded alongside your stake.
+                        </>
+                    ) : (
+                        <>
+                            Owning an agent NFT unlocks an additional option:
+                            attaching a declaration{" "}
+                            <span className="font-mono">agent → uses → tool</span>{" "}
+                            to your stake.
+                        </>
+                    )}
                 </p>
 
                 {!isConnected ? (
                     <p className="text-[color:var(--color-fg-60)] text-[length:var(--text-body-sm)]">
-                        Connect your wallet to take a position.
+                        Connect your wallet to stake.
                     </p>
                 ) : composeStatus === "done" ? (
-                    <ComposeResult steps={composeSteps} />
+                    <PositionTakenSummary
+                        mode={effectiveMode}
+                        steps={composeSteps}
+                        agentId={agentId ?? null}
+                        operatorAddress={operatorAddress ?? null}
+                    />
                 ) : (
                     <div>
                         {hasAgent ? (
                             <fieldset className="mb-4">
                                 <legend className="text-[length:var(--text-label)] uppercase tracking-wider text-[color:var(--color-fg-40)] mb-2">
-                                    Mode
+                                    Attach a declaration?
                                 </legend>
-                                <div className="flex flex-wrap gap-3 text-[length:var(--text-body-sm)] font-mono">
+                                <div className="flex flex-col gap-2 text-[length:var(--text-body-sm)]">
                                     {(
                                         [
                                             {
                                                 value: "compose" as const,
-                                                label: `compose as agent #${agentId!.toString()}`,
+                                                heading: `Yes — declare for my Agent #${agentId!.toString()}`,
+                                                detail: `The triple (Agent #${agentId!.toString()}, uses, this tool) is created on Intuition. Your wallet still holds the stake.`,
                                             },
-                                            {value: "bet" as const, label: "just bet"},
+                                            {
+                                                value: "bet" as const,
+                                                heading: "No — just stake",
+                                                detail: "Pure economic position. No triple. Anonymous in graph terms.",
+                                            },
                                         ]
-                                    ).map(({value, label}) => {
+                                    ).map(({value, heading, detail}) => {
                                         const active = effectiveMode === value;
                                         return (
                                             <label
                                                 key={value}
                                                 className={[
-                                                    "cursor-pointer px-3 py-1 border",
+                                                    "cursor-pointer p-3 border",
                                                     active
-                                                        ? "border-[color:var(--color-accent)] text-[color:var(--color-accent)]"
-                                                        : "border-[color:var(--color-border)] text-[color:var(--color-fg-60)]",
+                                                        ? "border-[color:var(--color-accent)]"
+                                                        : "border-[color:var(--color-border)]",
                                                 ].join(" ")}
                                             >
                                                 <input
@@ -368,7 +394,19 @@ export function ToolDetail() {
                                                     onChange={() => setMode(value)}
                                                     disabled={composeBusy}
                                                 />
-                                                {label}
+                                                <p
+                                                    className={[
+                                                        "font-mono",
+                                                        active
+                                                            ? "text-[color:var(--color-accent)]"
+                                                            : "text-[color:var(--color-fg)]",
+                                                    ].join(" ")}
+                                                >
+                                                    {heading}
+                                                </p>
+                                                <p className="text-[color:var(--color-fg-60)] mt-1">
+                                                    {detail}
+                                                </p>
                                             </label>
                                         );
                                     })}
@@ -401,11 +439,11 @@ export function ToolDetail() {
                         >
                             {composeBusy
                                 ? effectiveMode === "compose"
-                                    ? "Composing…"
-                                    : "Betting…"
+                                    ? "Declaring + staking…"
+                                    : "Staking…"
                                 : effectiveMode === "compose"
-                                  ? "Compose with this tool"
-                                  : "Place bet"}
+                                  ? `Declare for Agent #${agentId!.toString()} + stake`
+                                  : "Stake"}
                         </button>
                         {effectiveMode === "bet" && !hasAgent ? (
                             <p className="mt-3 text-[length:var(--text-body-sm)] text-[color:var(--color-fg-40)]">
@@ -453,9 +491,13 @@ function Metric({label, value}: {label: string; value: string}) {
     );
 }
 
-function ComposeResult({
+function PositionTakenSummary({
+    mode,
     steps,
+    agentId,
+    operatorAddress,
 }: {
+    mode: "compose" | "bet";
     steps: {
         agentAtomTx?: string;
         agentAtomCreated?: boolean;
@@ -465,27 +507,64 @@ function ComposeResult({
         tripleCreated?: boolean;
         depositTx?: string;
     };
+    agentId: bigint | null;
+    operatorAddress: `0x${string}` | null;
 }) {
+    const shortAddr = operatorAddress
+        ? `${operatorAddress.slice(0, 6)}…${operatorAddress.slice(-4)}`
+        : "your wallet";
     return (
         <div className="border border-[color:var(--color-accent)] p-4">
             <p className="text-[length:var(--text-label)] uppercase tracking-wider text-[color:var(--color-accent)] mb-3">
-                Composition recorded
+                {mode === "compose" ? "Declaration + stake recorded" : "Stake recorded"}
             </p>
-            <ResultLine
-                label="Agent atom"
-                tx={steps.agentAtomTx}
-                note={steps.agentAtomCreated ? "created" : "reused"}
-            />
-            <ResultLine
-                label="Tool atom"
-                tx={steps.toolAtomTx}
-                note={steps.toolAtomCreated ? "created" : "reused"}
-            />
-            <ResultLine
-                label="Triple agent → uses → tool"
-                tx={steps.tripleTx}
-                note={steps.tripleCreated ? "created" : "reused"}
-            />
+            <p className="text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)] mb-4 max-w-[640px]">
+                {mode === "compose" && agentId !== null ? (
+                    <>
+                        <span className="text-[color:var(--color-fg)]">
+                            Agent #{agentId.toString()}
+                        </span>{" "}
+                        now publicly declares it uses this tool. The triple is
+                        live on Intuition's graph. Your wallet{" "}
+                        <span className="font-mono">{shortAddr}</span> also
+                        backed the position with the staked tTRUST — the tool's
+                        TVL grew by that amount.
+                    </>
+                ) : (
+                    <>
+                        Your wallet{" "}
+                        <span className="font-mono">{shortAddr}</span> now holds
+                        a position on this tool's atom. No on-chain declaration
+                        was attached — pure economic stake. The tool's TVL grew
+                        by the staked amount.
+                    </>
+                )}
+            </p>
+            {mode === "compose" ? (
+                <>
+                    <ResultLine
+                        label="Agent atom"
+                        tx={steps.agentAtomTx}
+                        note={steps.agentAtomCreated ? "created" : "reused"}
+                    />
+                    <ResultLine
+                        label="Tool atom"
+                        tx={steps.toolAtomTx}
+                        note={steps.toolAtomCreated ? "created" : "reused"}
+                    />
+                    <ResultLine
+                        label="Triple agent → uses → tool"
+                        tx={steps.tripleTx}
+                        note={steps.tripleCreated ? "created" : "reused"}
+                    />
+                </>
+            ) : (
+                <ResultLine
+                    label="Tool atom"
+                    tx={steps.toolAtomTx}
+                    note={steps.toolAtomCreated ? "created" : "reused"}
+                />
+            )}
             <ResultLine label="Stake on tool atom" tx={steps.depositTx} />
         </div>
     );

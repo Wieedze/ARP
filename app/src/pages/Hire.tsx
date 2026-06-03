@@ -245,9 +245,6 @@ function PageHeader() {
             <h1 className="font-sans text-[length:var(--text-display)] leading-[var(--leading-display)] tracking-tight font-semibold">
                 Hire an agent
             </h1>
-            <p className="mt-2 text-[color:var(--color-fg-60)]">
-                Example consumer of the ARP trust layer.
-            </p>
         </header>
     );
 }

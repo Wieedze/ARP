@@ -45,6 +45,17 @@
       "name": "@arp/contracts",
       "version": "0.0.0",
     },
+    "sdk": {
+      "name": "@arp/sdk",
+      "version": "0.0.1",
+      "dependencies": {
+        "viem": "2.52.0",
+      },
+      "devDependencies": {
+        "typescript": "~6.0.2",
+        "vitest": "^4.1.8",
+      },
+    },
   },
   "overrides": {
     "viem": "2.52.0",
@@ -55,6 +66,8 @@
     "@arp/app": ["@arp/app@workspace:app"],
 
     "@arp/contracts": ["@arp/contracts@workspace:contracts"],
+
+    "@arp/sdk": ["@arp/sdk@workspace:sdk"],
 
     "@babel/code-frame": ["@babel/code-frame@7.29.0", "", { "dependencies": { "@babel/helper-validator-identifier": "^7.28.5", "js-tokens": "^4.0.0", "picocolors": "^1.1.1" } }, "sha512-9NhCeYjq9+3uxgdtp20LSiJXJvN0FeCtNGpJxuMFZ1Kv3cWUNb6DOhJwUvcVCzKGR66cw4njwM6hrJLqgOwbcw=="],
 
