@@ -135,8 +135,15 @@ export async function designateAgentRuntimeWallet(params: {
     publicClient: PublicClient;
     /** Seconds from now after which the signature expires. Default 1 h. */
     validForSeconds?: number;
+    /**
+     * Optional pre-generated runtime privkey. If omitted, a fresh key is
+     * generated. Allows callers (e.g. the multi-agent setup script) to
+     * keep the key in hand so they can immediately use it for follow-up
+     * operations like the SA-deposit approval.
+     */
+    runtimePrivateKey?: Hex;
 }): Promise<{agentWalletAddress: Address; agentWalletPrivateKey: Hex; tx: Hex}> {
-    const privateKey = generatePrivateKey();
+    const privateKey = params.runtimePrivateKey ?? generatePrivateKey();
     const account = privateKeyToAccount(privateKey);
 
     const now = Math.floor(Date.now() / 1000);
