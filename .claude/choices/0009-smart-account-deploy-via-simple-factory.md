@@ -68,6 +68,36 @@ Bundler / userOp orchestration is **deferred to Task 04b**, where it lives more 
 - `Implementation.Hybrid` is the right default for ARP (EOA owner, optional passkey signers in future). `Stateless7702` would require chain-level EIP-7702 support and a different tx type; `MultiSig` is overkill for a single-user demo.
 - The on-chain proof in commit `50bd274` includes the SA deployment tx, the happy redemption tx, and the revert selector. Anyone with the repo + an Intuition Testnet RPC can re-derive the addresses (deterministic via owner + salt) and inspect the actual chain state.
 
+## Assumption invariants (re-verify on framework upgrade)
+
+The SimpleFactory-direct deploy path is **byte-for-byte equivalent** to the Bundler/EntryPoint deploy path at delegation-framework `v1.3.0`. This equivalence rests on three load-bearing invariants of the upstream framework. **If we ever bump the pinned framework version** (`forge install metamask/delegation-framework@vNext`), each invariant must be re-verified before the SimpleFactory-direct path keeps working.
+
+1. **`SimpleFactory.deploy(bytecode, salt)` is pure CREATE2 + return-the-address with no other side-effects.**
+   - At v1.3.0: verified by reading `contracts/lib/delegation-framework/src/utils/SimpleFactory.sol` (the function is ~5 lines, just `CREATE2` + revert on collision).
+   - On upgrade: re-read the source. If `deploy` starts emitting registry events, writing to a global "official accounts" map, or requiring caller authorization, our path silently diverges from the Bundler path.
+
+2. **`HybridDeleGator.initialize(...)` does NOT require `msg.sender == EntryPoint`** (or any specific caller).
+   - At v1.3.0: verified — the proxy's initialization runs without a caller check.
+   - On upgrade: if a future implementation gates `initialize` on `msg.sender == ENTRY_POINT`, our deploy call (where `msg.sender` is the user EOA via the factory) will fail or leave the SA in an uninitialized state. We'd be forced to go through the Bundler.
+
+3. **The Bundler/EntryPoint deploy path produces the SAME bytecode at the SAME CREATE2 address as our direct path.**
+   - At v1.3.0: verified by the SDK's `getFactoryArgs()` — it returns the exact `(factory, factoryData)` pair the EntryPoint would call. Our direct tx forwards the same `data` to the same `factory`.
+   - On upgrade: if the EntryPoint starts pre-processing `factoryData` (modifying it, wrapping it, inserting a nonce), our raw forwarding diverges. The deployed bytecode could subtly differ.
+
+**Hypothetical break scenarios** that would make our shortcut detectable:
+
+- MetaMask v2.x adds a `RegisteredSmartAccounts` contract populated only when the EntryPoint deploys an SA. A future enforcer checks `delegator IN registry` → our SAs fail the check.
+- A new `HybridDeleGator` implementation calls a global registrar in its constructor. Our direct deploy doesn't trigger it (or triggers it with the wrong `msg.sender`).
+- The framework introduces a "deployment attestation" event that downstream contracts trust. Our path doesn't emit it.
+
+None of these exist today. The shortcut is safe at v1.3.0. The pinning in `lib/delegation-framework@v1.3.0` is the load-bearing safety property; without it, this ADR would be incomplete.
+
+**Operational protocol on framework upgrade**:
+
+1. Read the diff of `src/utils/SimpleFactory.sol` between versions. If non-trivial, escalate before continuing.
+2. Read the diff of `src/HybridDeleGator.sol` (and its base contracts). Same.
+3. Re-run `scripts/demo-delegation.ts` on testnet. If both happy + revert paths still pass, the shortcut still works. If anything new fails, fall back to the Bundler path (Task 04b infrastructure is the natural home).
+
 ## References
 
 - Failing line: `contracts/lib/delegation-framework/src/DelegationManager.sol:252`
