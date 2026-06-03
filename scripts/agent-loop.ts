@@ -42,6 +42,7 @@ import {privateKeyToAccount} from "viem/accounts";
 
 import {intuitionTestnet} from "../app/src/lib/chains";
 import {deployments} from "../app/src/lib/deployments";
+import {moduleRegistryAbi} from "../app/src/lib/abi/module-registry";
 import {multiVaultAbi} from "../app/src/lib/abi/multi-vault";
 import {deserializeDelegation} from "../app/src/services/delegation";
 import {
@@ -158,30 +159,48 @@ async function main() {
     for (const entry of manifest) {
         log(`\nprocessing ${entry.name} (${entry.domain})`);
 
-        // 3.a — publish module via publish delegation
-        try {
-            const tx = await redeemRegisterModule({
-                signedDelegation: publishDel,
-                agentWalletClient,
-                name: entry.name,
-                domain: entry.domain,
-                schemaURI: entry.schemaURI,
-                description: entry.description,
-            });
-            await publicClient.waitForTransactionReceipt({hash: tx});
-            log(`  published        ${tx}`);
-            published += 1;
-        } catch (err) {
-            const msg = (err as Error).message ?? String(err);
-            if (msg.includes("DomainNotAllowed")) {
-                log(`  domain rejected  ${entry.domain}  (DomainNotAllowed)`);
-                domainRejects += 1;
-                continue;
-            }
-            // The registry rejects on duplicate name+domain — treat as already-known.
-            if (msg.includes("revert") || msg.includes("Module")) {
-                log(`  already exists   (skipping publish, will compose)`);
-            } else {
+        // 3.a — publish module via publish delegation (skip if already
+        // registered — ADR 0013 makes ModuleRegistry enforce schemaURI
+        // uniqueness, so an off-chain check here avoids burning gas on a
+        // tx that would revert with ModuleAlreadyRegistered. The agent
+        // still composes (triple + stake) below regardless: position
+        // taking does not require having been the original publisher.
+        const existingId = await publicClient.readContract({
+            address: deployments.arp.moduleRegistry,
+            abi: moduleRegistryAbi,
+            functionName: "getModuleIdBySchemaURI",
+            args: [entry.schemaURI],
+        });
+
+        if (existingId !== 0n) {
+            log(`  already exists   #${existingId.toString()}  (skipping publish, taking position)`);
+        } else {
+            try {
+                const tx = await redeemRegisterModule({
+                    signedDelegation: publishDel,
+                    agentWalletClient,
+                    name: entry.name,
+                    domain: entry.domain,
+                    schemaURI: entry.schemaURI,
+                    description: entry.description,
+                });
+                await publicClient.waitForTransactionReceipt({hash: tx});
+                log(`  published        ${tx}`);
+                published += 1;
+            } catch (err) {
+                const msg = (err as Error).message ?? String(err);
+                // DomainNotAllowed(bytes32) — keccak256 first 4 bytes. Viem
+                // surfaces the raw selector hex when the error isn't in the
+                // provided ABI, so we match both the string (if a future ABI
+                // version includes it) and the selector.
+                if (msg.includes("DomainNotAllowed") || msg.includes("0xf2882f43")) {
+                    log(`  domain rejected  ${entry.domain}  (DomainNotAllowed)`);
+                    domainRejects += 1;
+                    // No publish authority and no existing module to position
+                    // on. Skip the entry entirely — the marketplace would have
+                    // no module record to surface the stake against.
+                    continue;
+                }
                 log(`  publish failed   ${truncate(msg)}`);
                 continue;
             }
