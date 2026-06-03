@@ -1,11 +1,12 @@
 import {useMemo, useState} from "react";
 import {Link, useNavigate} from "react-router-dom";
+import {formatEther} from "viem";
 import {useAccount} from "wagmi";
 
-import {deployments} from "../lib/deployments";
 import {type Module} from "../lib/abi/module-registry";
 import {useAgentId} from "../hooks/use-agent";
 import {useAllModules, useDomains} from "../hooks/use-modules";
+import {useVaultMetrics, type VaultMetric} from "../hooks/use-vault-metrics";
 
 /**
  * Module list page (the app's root route).
@@ -17,16 +18,32 @@ import {useAllModules, useDomains} from "../hooks/use-modules";
 export function ModuleList() {
     const {modules, isLoading, error, refetch} = useAllModules();
     const domains = useDomains(modules);
+    const {metrics} = useVaultMetrics(modules);
 
     const {isConnected} = useAccount();
     const {data: agentId} = useAgentId();
 
     const [filter, setFilter] = useState<string | null>(null);
 
+    // Join modules with their vault metric so the row component receives both
+    // and we can sort by TVL on a flat list.
+    type Row = {module: Module; metric: VaultMetric};
+    const rows: Row[] = useMemo(
+        () => modules.map((m, i) => ({module: m, metric: metrics[i] ?? null})),
+        [modules, metrics],
+    );
+
     const filtered = useMemo(() => {
-        if (!filter) return modules;
-        return modules.filter((m) => m.domain === filter);
-    }, [modules, filter]);
+        const inDomain = filter ? rows.filter((r) => r.module.domain === filter) : rows;
+        // Sort by TVL descending; modules with no metric (read failed or
+        // atom not created yet) sort to the bottom.
+        return [...inDomain].sort((a, b) => {
+            const av = a.metric?.totalAssets ?? -1n;
+            const bv = b.metric?.totalAssets ?? -1n;
+            if (av === bv) return Number(a.module.id - b.module.id);
+            return bv > av ? 1 : -1;
+        });
+    }, [rows, filter]);
 
     const agentCta = isConnected
         ? agentId
@@ -74,8 +91,13 @@ export function ModuleList() {
             {!error && !isLoading && filtered.length === 0 ? <EmptyState /> : null}
             {!error && !isLoading && filtered.length > 0 ? (
                 <ul className="border-t border-[color:var(--color-border)]">
-                    {filtered.map((m) => (
-                        <ModuleRow key={m.id.toString()} module={m} highlightDomain={filter} />
+                    {filtered.map(({module, metric}) => (
+                        <ModuleRow
+                            key={module.id.toString()}
+                            module={module}
+                            metric={metric}
+                            highlightDomain={filter}
+                        />
                     ))}
                 </ul>
             ) : null}
@@ -101,10 +123,18 @@ function FilterChip({label, active, onClick}: {label: string; active: boolean; o
     );
 }
 
-function ModuleRow({module, highlightDomain}: {module: Module; highlightDomain: string | null}) {
-    const explorerUrl = deployments.chain.explorerUrl;
+function ModuleRow({
+    module,
+    metric,
+    highlightDomain,
+}: {
+    module: Module;
+    metric: VaultMetric;
+    highlightDomain: string | null;
+}) {
     const navigate = useNavigate();
     const isHighlighted = highlightDomain === module.domain;
+    const hasStake = metric !== null && metric.totalAssets > 0n;
 
     function navigateToTool() {
         navigate(`/tool/${module.id.toString()}`);
@@ -121,7 +151,7 @@ function ModuleRow({module, highlightDomain}: {module: Module; highlightDomain: 
             }}
             role="link"
             tabIndex={0}
-            className="grid grid-cols-[3rem_1fr_auto] sm:grid-cols-[3rem_1fr_10rem_auto_8rem] items-center gap-x-4 gap-y-1 border-b border-[color:var(--color-border)] py-4 cursor-pointer hover:bg-[color:var(--color-surface-hover,rgba(255,255,255,0.03))] focus:outline-none focus:bg-[color:var(--color-surface-hover,rgba(255,255,255,0.03))]"
+            className="grid grid-cols-[3rem_1fr_auto] sm:grid-cols-[3rem_1fr_10rem_8rem_8rem] items-center gap-x-4 gap-y-1 border-b border-[color:var(--color-border)] py-4 cursor-pointer hover:bg-[color:var(--color-surface-hover,rgba(255,255,255,0.03))] focus:outline-none focus:bg-[color:var(--color-surface-hover,rgba(255,255,255,0.03))]"
         >
             <span className="font-mono text-[color:var(--color-fg-40)] text-[length:var(--text-body-sm)]">
                 #{module.id.toString()}
@@ -130,39 +160,57 @@ function ModuleRow({module, highlightDomain}: {module: Module; highlightDomain: 
             <span
                 className={[
                     "font-mono uppercase tracking-wider text-[length:var(--text-label)] hidden sm:inline",
-                    isHighlighted ? "text-[color:var(--color-accent)]" : "text-[color:var(--color-fg-60)]",
+                    isHighlighted
+                        ? "text-[color:var(--color-accent)]"
+                        : "text-[color:var(--color-fg-60)]",
                 ].join(" ")}
             >
                 {module.domain}
             </span>
-            <a
-                href={`${explorerUrl}/address/${module.creator}`}
-                target="_blank"
-                rel="noreferrer"
-                onClick={(e) => e.stopPropagation()}
-                className="hidden sm:inline font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)]"
+            <span
+                className={[
+                    "hidden sm:inline font-mono text-[length:var(--text-body-sm)] text-right",
+                    hasStake
+                        ? "text-[color:var(--color-accent)]"
+                        : "text-[color:var(--color-fg-40)]",
+                ].join(" ")}
+                title="Total TVL staked on this tool's atom"
             >
-                {short(module.creator)}
-            </a>
-            <time
-                dateTime={new Date(Number(module.createdAt) * 1000).toISOString()}
-                title={new Date(Number(module.createdAt) * 1000).toISOString()}
-                className="font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-fg-40)] text-right"
+                {metric === null ? "—" : `${formatTrust(metric.totalAssets)} tTRUST`}
+            </span>
+            <span
+                className="hidden sm:inline font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-fg-40)] text-right"
+                title="Distinct addresses that have ever staked on this tool"
             >
-                {relative(Number(module.createdAt))}
-            </time>
+                {metric === null
+                    ? "—"
+                    : `${metric.stakerCount} ${metric.stakerCount === 1 ? "staker" : "stakers"}`}
+            </span>
 
-            {/* Mobile-only second row: domain + creator */}
+            {/* Mobile-only second row: domain · TVL · creator */}
             <span
                 className={[
                     "col-span-3 sm:hidden font-mono uppercase tracking-wider text-[length:var(--text-label)]",
-                    isHighlighted ? "text-[color:var(--color-accent)]" : "text-[color:var(--color-fg-60)]",
+                    isHighlighted
+                        ? "text-[color:var(--color-accent)]"
+                        : "text-[color:var(--color-fg-60)]",
                 ].join(" ")}
             >
-                {module.domain} · {short(module.creator)}
+                {module.domain} ·{" "}
+                {metric === null ? "—" : `${formatTrust(metric.totalAssets)} tTRUST`}
             </span>
         </li>
     );
+}
+
+/**
+ * Trim trailing zeros for compact display. `formatEther` produces strings
+ * like "0.001000000001" — fine on a detail page but noisy on a row.
+ */
+function formatTrust(weiAmount: bigint): string {
+    const raw = formatEther(weiAmount);
+    if (!raw.includes(".")) return raw;
+    return raw.replace(/0+$/, "").replace(/\.$/, "");
 }
 
 function LoadingState() {
@@ -195,14 +243,3 @@ function ErrorState({onRetry}: {onRetry: () => void}) {
     );
 }
 
-function short(addr: string): string {
-    return `${addr.slice(0, 6)}…${addr.slice(-4)}`;
-}
-
-function relative(unixSeconds: number): string {
-    const diff = Date.now() / 1000 - unixSeconds;
-    if (diff < 60) return "just now";
-    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
-    if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
-    return `${Math.floor(diff / 86400)}d ago`;
-}
