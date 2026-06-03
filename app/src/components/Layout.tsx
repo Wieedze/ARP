@@ -1,4 +1,5 @@
 import {type ReactNode} from "react";
+import {Link} from "react-router-dom";
 
 import {deployments} from "../lib/deployments";
 
@@ -18,10 +19,24 @@ const REGISTRY_URL = deployments.arp.explorerLinks?.moduleRegistry ?? "#";
 export function Layout({children}: {children: ReactNode}) {
     return (
         <>
-            <header className="border-b border-[color:var(--color-border)] h-14 px-6 flex items-center justify-between">
-                <a href="/" className="font-semibold tracking-tight text-[length:var(--text-body)]">
+            <header className="border-b border-[color:var(--color-border)] h-14 px-6 flex items-center justify-between gap-6">
+                <Link to="/" className="font-semibold tracking-tight text-[length:var(--text-body)]">
                     ARP
-                </a>
+                </Link>
+                <nav className="flex items-center gap-5 text-[length:var(--text-body-sm)]">
+                    <Link
+                        to="/"
+                        className="text-[color:var(--color-fg-60)] hover:text-[color:var(--color-fg)]"
+                    >
+                        Modules
+                    </Link>
+                    <Link
+                        to="/hire"
+                        className="text-[color:var(--color-fg-60)] hover:text-[color:var(--color-fg)]"
+                    >
+                        Hire
+                    </Link>
+                </nav>
                 <WalletConnect />
             </header>
 
