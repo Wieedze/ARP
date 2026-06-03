@@ -77,16 +77,14 @@ ARP doesn't compute agents — that's the runtime layer's job. ARP is purely dec
 
 Composes with the MetaMask Delegation Framework v1.3.0 (`DelegationManager` at `0xdb9B1e94B5b69Df7e401DDbedE43491141047dB3`) and Intuition's MultiVault (`0x2Ece8D4dEdcB9918A398528f3fa4688b1d2CAB91`). Full address set in [deployments/13579.json](deployments/13579.json).
 
-## Roadmap
+## What's not in this MVP
 
-What's in the MVP today is the **trust layer**. What goes on top:
+Stated honestly so reviewers don't infer claims the code doesn't back:
 
-- **`@arp/sdk`** — Node package consumable by any agent framework: `findTopAgents(domain)`, `getReputation(agentId)`, `signTaskDelegation(...)`.
-- **Hire-an-agent flow** — humans post a task + budget, the framework matches to the highest-rep agent, the agent runtime delivers off-chain, on-chain receipt via a `ResultDelivered` event.
-- **A2A sub-delegation** — agents with reputation get hired by other agents. Sub-delegation chains let value flow recursively through the graph.
-- **Optimistic challenges + slashing** — anyone can dispute a false declaration. If proven, the staker's tTRUST is slashed, the challenger gets a share. Trust enforced by economic risk.
-- **ZK proof of usage** — agents submit cryptographic proof that they actually called the tool they declared. Verified stakes count for 2× weight in the aggregate.
-- **DAO treasury integration** — DAOs subsidize reputation on tools they want to promote (Optimism endorses Foundry, etc.).
+- **No payment-per-call** — tools are not invoked or paid for inside ARP. Tool monetization for a creator happens via bonding-curve appreciation as others stake. Pay-per-use is a separate concern, out of scope.
+- **No off-chain execution** — ARP is declarative + coordination. The actual agent runtime (LLM calls, tool invocations, result delivery) lives outside this repo.
+- **No verification of declarations** — when an agent declares "I use tool X", the only economic check is its own stake. There is no proof-of-usage layer in this MVP.
+- **No dispute mechanism** — false declarations cannot be challenged or slashed on-chain by a third party in this MVP.
 
 ## Stack
 
@@ -116,7 +114,6 @@ ARP/
 │   ├── deploy.sh                 ← three-phase contract deploy
 │   ├── agent-approve-sa.ts       ← one-time runtime → SA DEPOSIT approval
 │   ├── agent-loop.ts             ← headless agent runtime
-│   ├── agent-server.ts (planned) ← HTTP endpoint receiving tasks
 │   └── manifest-modules.json     ← demo manifest (8 modules / 4 domains)
 ├── schemas/                      ← JSON schemas for seed modules
 ├── deployments/                  ← Deployed addresses per network (13579.json)
