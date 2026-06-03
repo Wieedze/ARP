@@ -2,9 +2,11 @@ import {useEffect, useState} from "react";
 import {Link} from "react-router-dom";
 import {type Hex, zeroAddress} from "viem";
 import {useAccount, useWalletClient} from "wagmi";
+import {getWalletClient} from "@wagmi/core";
 
 import {publicClient} from "../lib/clients";
 import {deployments} from "../lib/deployments";
+import {wagmiConfig} from "../lib/wagmi";
 import {useAgentId, useAgentWallet, useTotalAgents} from "../hooks/use-agent";
 import {
     designateAgentRuntimeWallet,
@@ -82,12 +84,29 @@ export function AgentRegister() {
         };
     }, [operatorAddress, walletClient]);
 
+    /**
+     * Resolve a connected WalletClient on-demand. The `useWalletClient` hook
+     * is async and may be `undefined` at the moment of click (timing); we
+     * fall back to `getWalletClient(wagmiConfig)` which fetches the connector's
+     * client directly. Either path returns the same shape.
+     */
+    async function getActiveWalletClient() {
+        if (walletClient && walletClient.account) return walletClient;
+        const fetched = await getWalletClient(wagmiConfig);
+        if (!fetched || !fetched.account) {
+            throw new Error(
+                "No wallet client available — make sure your wallet is connected.",
+            );
+        }
+        return fetched;
+    }
+
     async function handleMintNft() {
-        if (!walletClient || !walletClient.account) return;
         setStep1Status("pending");
         setStep1Error(null);
         try {
-            const {tx} = await registerAgent({walletClient, publicClient});
+            const wc = await getActiveWalletClient();
+            const {tx} = await registerAgent({walletClient: wc, publicClient});
             setRegisterTx(tx);
             await agentQuery.refetch();
             await totalAgentsQuery.refetch();
@@ -99,13 +118,14 @@ export function AgentRegister() {
     }
 
     async function handleDesignateRuntime() {
-        if (!walletClient || !walletClient.account || !agentId) return;
+        if (!agentId) return;
         setStep2Status("pending");
         setStep2Error(null);
         try {
+            const wc = await getActiveWalletClient();
             const result = await designateAgentRuntimeWallet({
                 agentId,
-                operatorWalletClient: walletClient,
+                operatorWalletClient: wc,
                 publicClient,
             });
             setGeneratedRuntime({
@@ -122,17 +142,18 @@ export function AgentRegister() {
     }
 
     async function handleDeploySA() {
-        if (!operatorAddress || !walletClient || !walletClient.account) return;
+        if (!operatorAddress) return;
         setStep3Status("pending");
         setStep3Error(null);
         try {
+            const wc = await getActiveWalletClient();
             const sa = await createUserSmartAccount({
                 owner: operatorAddress,
-                signer: {walletClient},
+                signer: {walletClient: wc},
             });
             const tx = await deploySmartAccountIfNeeded({
                 smartAccount: sa,
-                funderWalletClient: walletClient,
+                funderWalletClient: wc,
             });
             if (tx) setDeployTx(tx);
             setIsSaDeployed(true);
