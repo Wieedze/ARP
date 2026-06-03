@@ -225,7 +225,7 @@ export function formatStakeActions(actions: StakeAction[]): string {
             if (a.skipped === "no-match")
                 return `  - "${a.methodology}" → no manifest match (skip)`;
             if (a.error)
-                return `  - "${a.methodology}" → ${a.matchedModule?.name} → error: ${a.error.slice(0, 80)}`;
+                return `  - "${a.methodology}" → ${a.matchedModule?.name} → error: ${a.error.slice(0, 400)}`;
             const stake = a.stake
                 ? `staked ${formatEther(a.stake.amount)} tTRUST`
                 : "no stake";
