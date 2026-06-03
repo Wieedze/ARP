@@ -45,7 +45,7 @@ export function useAgentWallet(agentId: bigint | null | undefined) {
             const result = await publicClient.readContract({
                 address: ADDRESS,
                 abi: identityRegistryAbi,
-                functionName: "agentWallet",
+                functionName: "getAgentWallet",
                 args: [agentId],
             });
             return result;

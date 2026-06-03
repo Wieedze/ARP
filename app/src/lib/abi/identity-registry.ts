@@ -60,9 +60,9 @@ export const identityRegistryAbi = [
     {
         type: "function",
         stateMutability: "view",
-        name: "agentWallet",
+        name: "getAgentWallet",
         inputs: [{name: "agentId", type: "uint256"}],
-        outputs: [{name: "", type: "address"}],
+        outputs: [{name: "wallet", type: "address"}],
     },
     {
         type: "function",
