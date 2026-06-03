@@ -45,6 +45,14 @@ contract ModuleRegistry {
     /// @param  id The id that was requested.
     error ModuleNotFound(uint256 id);
 
+    /// @notice Thrown by `registerModule` when a module with the same
+    ///         `schemaURI` already exists. ADR 0008 fixes `schemaURI` as
+    ///         the canonical tool identifier — one URI maps to one module,
+    ///         enforced at the registry level so the marketplace cannot be
+    ///         flooded with duplicates.
+    /// @param  existingId The id of the pre-existing module.
+    error ModuleAlreadyRegistered(uint256 existingId);
+
     /*//////////////////////////////////////////////////////////////
                                   EVENTS
     //////////////////////////////////////////////////////////////*/
@@ -108,6 +116,11 @@ contract ModuleRegistry {
     /// @dev keccak256(bytes(domain)) => list of module ids in that domain.
     mapping(bytes32 domainHash => uint256[] ids) private _modulesByDomainHash;
 
+    /// @dev keccak256(bytes(schemaURI)) => module id. Zero means the URI
+    ///      has never been registered. Used to enforce one-module-per-URI
+    ///      and to enable O(1) lookup by canonical tool URI.
+    mapping(bytes32 schemaURIHash => uint256 id) private _moduleBySchemaURIHash;
+
     /// @dev Monotonic id allocator. Next module gets `_nextId`, then it
     ///      increments. Starts at 1 so the first registered id is 1.
     uint256 private _nextId = 1;
@@ -136,6 +149,10 @@ contract ModuleRegistry {
         _validateSchemaURI(schemaURI);
         _validateDescription(description);
 
+        bytes32 uriHash = keccak256(bytes(schemaURI));
+        uint256 existing = _moduleBySchemaURIHash[uriHash];
+        if (existing != 0) revert ModuleAlreadyRegistered(existing);
+
         id = _nextId;
         unchecked {
             // `_nextId` cannot realistically overflow uint256 in any feasible
@@ -154,8 +171,24 @@ contract ModuleRegistry {
         });
 
         _modulesByDomainHash[keccak256(bytes(domain))].push(id);
+        _moduleBySchemaURIHash[uriHash] = id;
 
         emit ModuleRegistered(id, msg.sender, domain, name, schemaURI);
+    }
+
+    /// @notice Look up a module id by its canonical `schemaURI`.
+    /// @dev    Returns `0` when no module has been registered for the URI.
+    ///         Off-chain consumers (the agent runtime, the UI) check this
+    ///         before attempting `registerModule` so duplicates do not even
+    ///         reach simulation.
+    /// @param  schemaURI The IPFS URI to look up.
+    /// @return The id of the module registered with this URI, or 0 if none.
+    function getModuleIdBySchemaURI(string calldata schemaURI)
+        external
+        view
+        returns (uint256)
+    {
+        return _moduleBySchemaURIHash[keccak256(bytes(schemaURI))];
     }
 
     /// @notice Return the module with the given id.

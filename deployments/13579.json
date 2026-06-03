@@ -72,18 +72,22 @@
     "_note": "Populated by scripts/deploy.sh. Addresses are EOA-nonce-derived (CREATE), so re-running with a new nonce will produce different addresses. To redeploy, increment the nonce assumption — there is no on-chain idempotency guard.",
     "deployer": "0xE596096F4176b682E300d73963e7B04B383C1AA1",
     "deployedAt": "2026-06-01T13:30:00Z",
-    "moduleRegistry": "0x777C28eCb4688D647B535098d11fB87A9746334f",
+    "moduleRegistry": "0xc9a2f66775828017e984E8be077fA2d17e0A41F4",
+    "moduleRegistryV1": "0x777C28eCb4688D647B535098d11fB87A9746334f",
+    "_moduleRegistryNote": "Redeployed 2026-06-03 with schemaURI uniqueness (ADR 0013). V1 address kept for historical reference; orphan (UI reads V2).",
     "domainScopeEnforcer": "0x516B82E29e3Ca46Ca810FC2EEf348932b198f7f9",
     "trustStakeCapEnforcer": "0x7BB56819E9a413B8B4668C5cAF5C494c41dC0F8E",
     "identityRegistry": "0xC165A2AD2E540A4069E02834009161E2b4490d5A",
     "deployedTxs": {
-      "moduleRegistry": "0x02abe9a0c598df131995bc40927a4e0be0b86e7bdbfe747cfdf37fb19b069634",
+      "moduleRegistry": "0x6ee4f4d76dd55c69ea434f8c3c204cb6149df1c588910b1792db1650681fbc2e",
+      "moduleRegistryV1": "0x02abe9a0c598df131995bc40927a4e0be0b86e7bdbfe747cfdf37fb19b069634",
       "domainScopeEnforcer": "0x6ca2c4e680b45eaa37147c2458bd38d756e6ffabb560755657cc9caf893df272",
       "trustStakeCapEnforcer": "0x80e36828202a9c7606b92146076ed123155a94cfda3a2ab53013bd27be71764f",
       "identityRegistry": "0x60b1f6ff7dbdcbca6864794eb9c5cf1e3ba94770daac6d2e77a4df00d726900c"
     },
     "explorerLinks": {
-      "moduleRegistry": "https://testnet.explorer.intuition.systems/address/0x777C28eCb4688D647B535098d11fB87A9746334f",
+      "moduleRegistry": "https://testnet.explorer.intuition.systems/address/0xc9a2f66775828017e984E8be077fA2d17e0A41F4",
+      "moduleRegistryV1": "https://testnet.explorer.intuition.systems/address/0x777C28eCb4688D647B535098d11fB87A9746334f",
       "domainScopeEnforcer": "https://testnet.explorer.intuition.systems/address/0x516B82E29e3Ca46Ca810FC2EEf348932b198f7f9",
       "trustStakeCapEnforcer": "https://testnet.explorer.intuition.systems/address/0x7BB56819E9a413B8B4668C5cAF5C494c41dC0F8E",
       "identityRegistry": "https://testnet.explorer.intuition.systems/address/0xC165A2AD2E540A4069E02834009161E2b4490d5A"

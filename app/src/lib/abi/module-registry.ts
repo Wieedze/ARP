@@ -42,6 +42,13 @@ export const moduleRegistryAbi = [
     },
     {
         type: "function",
+        stateMutability: "view",
+        name: "getModuleIdBySchemaURI",
+        inputs: [{name: "schemaURI", type: "string"}],
+        outputs: [{name: "", type: "uint256"}],
+    },
+    {
+        type: "function",
         stateMutability: "nonpayable",
         name: "registerModule",
         inputs: [

@@ -34,11 +34,11 @@ contract ModuleRegistryTest is Test {
 
     function test_registerModule_returnsIncrementingIds() public {
         vm.prank(alice);
-        uint256 id1 = registry.registerModule(VALID_NAME, VALID_DOMAIN, VALID_SCHEMA_URI, "");
+        uint256 id1 = registry.registerModule(VALID_NAME, VALID_DOMAIN, "ipfs://bafy1", "");
         vm.prank(bob);
-        uint256 id2 = registry.registerModule(VALID_NAME, VALID_DOMAIN, VALID_SCHEMA_URI, "");
+        uint256 id2 = registry.registerModule(VALID_NAME, VALID_DOMAIN, "ipfs://bafy2", "");
         vm.prank(alice);
-        uint256 id3 = registry.registerModule(VALID_NAME, VALID_DOMAIN, VALID_SCHEMA_URI, "");
+        uint256 id3 = registry.registerModule(VALID_NAME, VALID_DOMAIN, "ipfs://bafy3", "");
 
         assertEq(id1, 1);
         assertEq(id2, 2);
@@ -74,19 +74,19 @@ contract ModuleRegistryTest is Test {
 
     function test_totalModules_incrementsOnRegister() public {
         vm.prank(alice);
-        registry.registerModule(VALID_NAME, VALID_DOMAIN, VALID_SCHEMA_URI, "");
+        registry.registerModule(VALID_NAME, VALID_DOMAIN, "ipfs://bafy1", "");
         assertEq(registry.totalModules(), 1);
 
         vm.prank(bob);
-        registry.registerModule(VALID_NAME, VALID_DOMAIN, VALID_SCHEMA_URI, "");
+        registry.registerModule(VALID_NAME, VALID_DOMAIN, "ipfs://bafy2", "");
         assertEq(registry.totalModules(), 2);
     }
 
     function test_getModulesByDomain_returnsCorrectIds() public {
         vm.startPrank(alice);
-        registry.registerModule("M1", "solidity-audit", VALID_SCHEMA_URI, "");
-        registry.registerModule("M2", "url-classification", VALID_SCHEMA_URI, "");
-        registry.registerModule("M3", "solidity-audit", VALID_SCHEMA_URI, "");
+        registry.registerModule("M1", "solidity-audit", "ipfs://bafy1", "");
+        registry.registerModule("M2", "url-classification", "ipfs://bafy2", "");
+        registry.registerModule("M3", "solidity-audit", "ipfs://bafy3", "");
         vm.stopPrank();
 
         uint256[] memory auditIds = registry.getModulesByDomain("solidity-audit");
@@ -136,9 +136,9 @@ contract ModuleRegistryTest is Test {
     function test_registerModule_acceptsMinimumDomainLength() public {
         // 2 chars: first must be a-z, second can be a-z, 0-9, or -
         vm.startPrank(alice);
-        registry.registerModule(VALID_NAME, "ab", VALID_SCHEMA_URI, "");
-        registry.registerModule(VALID_NAME, "a9", VALID_SCHEMA_URI, "");
-        registry.registerModule(VALID_NAME, "a-", VALID_SCHEMA_URI, "");
+        registry.registerModule(VALID_NAME, "ab", "ipfs://bafy-min1", "");
+        registry.registerModule(VALID_NAME, "a9", "ipfs://bafy-min2", "");
+        registry.registerModule(VALID_NAME, "a-", "ipfs://bafy-min3", "");
         vm.stopPrank();
         assertEq(registry.totalModules(), 3);
     }
@@ -253,6 +253,58 @@ contract ModuleRegistryTest is Test {
     }
 
     /*//////////////////////////////////////////////////////////////
+                       SCHEMA URI UNIQUENESS (ADR 0013)
+    //////////////////////////////////////////////////////////////*/
+
+    function test_registerModule_revertsOnDuplicateSchemaURI() public {
+        vm.prank(alice);
+        uint256 firstId = registry.registerModule(VALID_NAME, VALID_DOMAIN, VALID_SCHEMA_URI, "");
+
+        vm.expectRevert(
+            abi.encodeWithSelector(ModuleRegistry.ModuleAlreadyRegistered.selector, firstId)
+        );
+        vm.prank(bob);
+        registry.registerModule("Different Name", "different-domain", VALID_SCHEMA_URI, "");
+    }
+
+    function test_registerModule_revertsOnDuplicateSchemaURI_sameCreator() public {
+        // Even the original creator cannot re-register their own module.
+        vm.startPrank(alice);
+        uint256 firstId = registry.registerModule(VALID_NAME, VALID_DOMAIN, VALID_SCHEMA_URI, "");
+
+        vm.expectRevert(
+            abi.encodeWithSelector(ModuleRegistry.ModuleAlreadyRegistered.selector, firstId)
+        );
+        registry.registerModule(VALID_NAME, VALID_DOMAIN, VALID_SCHEMA_URI, "");
+        vm.stopPrank();
+    }
+
+    function test_getModuleIdBySchemaURI_returnsZeroBeforeRegistration() public view {
+        assertEq(registry.getModuleIdBySchemaURI(VALID_SCHEMA_URI), 0);
+    }
+
+    function test_getModuleIdBySchemaURI_returnsIdAfterRegistration() public {
+        vm.prank(alice);
+        uint256 id = registry.registerModule(VALID_NAME, VALID_DOMAIN, VALID_SCHEMA_URI, "");
+        assertEq(registry.getModuleIdBySchemaURI(VALID_SCHEMA_URI), id);
+    }
+
+    function test_getModuleIdBySchemaURI_returnsZeroForUnknownURI() public {
+        vm.prank(alice);
+        registry.registerModule(VALID_NAME, VALID_DOMAIN, "ipfs://bafy-registered", "");
+        assertEq(registry.getModuleIdBySchemaURI("ipfs://bafy-unknown"), 0);
+    }
+
+    function test_uniqueness_doesNotBlockOtherDomainsOrNames() public {
+        vm.startPrank(alice);
+        registry.registerModule("Slither", "solidity-audit", "ipfs://bafy-slither", "");
+        registry.registerModule("Mythril", "solidity-audit", "ipfs://bafy-mythril", "");
+        registry.registerModule("Slither", "different-domain", "ipfs://bafy-slither-2", "");
+        vm.stopPrank();
+        assertEq(registry.totalModules(), 3);
+    }
+
+    /*//////////////////////////////////////////////////////////////
                                   FUZZ
     //////////////////////////////////////////////////////////////*/
 
@@ -352,7 +404,14 @@ contract Handler is Test {
         bytes memory desc = new bytes(descLen);
         for (uint256 i = 0; i < descLen; i++) desc[i] = bytes1(0x61);
 
-        registry.registerModule(string(n), string(d), "ipfs://bafy1", string(desc));
+        // Unique schemaURI per call: the registry now enforces a single
+        // module per URI (ADR 0013). Feed the call counter into the URI so
+        // every iteration registers a fresh URI and the invariants still
+        // exercise multiple successful registrations.
+        string memory uri = string(
+            abi.encodePacked("ipfs://bafy-handler-", vm.toString(successCount + 1))
+        );
+        registry.registerModule(string(n), string(d), uri, string(desc));
         successCount++;
     }
 }
