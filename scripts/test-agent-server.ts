@@ -120,6 +120,23 @@ async function main() {
             error?: string;
         }[];
         receipt?: {agent: Address; signature: Hex};
+        subcontract?: {
+            subPaymentTxHash: string;
+            specialistResponse: {
+                report: {
+                    findings: {severity: string; title: string}[];
+                    methodologiesUsed: string[];
+                };
+                stakes: {
+                    methodology: string;
+                    matchedModule?: {name: string};
+                    skipped?: string;
+                    stake?: {amount: string; tx: string};
+                    error?: string;
+                }[];
+                receipt: {agent: Address; signature: Hex};
+            };
+        } | null;
         error?: string;
     };
 
@@ -154,9 +171,40 @@ async function main() {
     }
 
     console.log("");
-    console.log("=== SIGNED RECEIPT ===");
+    console.log("=== SIGNED RECEIPT (AUDITOR) ===");
     console.log(`agent:         ${body.receipt!.agent}`);
     console.log(`signature:     ${body.receipt!.signature.slice(0, 30)}…`);
+
+    if (body.subcontract) {
+        const sub = body.subcontract;
+        console.log("");
+        console.log("=== A2A SUBCONTRACT → SPECIALIST ===");
+        console.log(`sub-payment tx:  ${sub.subPaymentTxHash}`);
+        console.log(`specialist:      ${sub.specialistResponse.receipt.agent}`);
+        console.log(`findings:        ${sub.specialistResponse.report.findings.length}`);
+        for (const f of sub.specialistResponse.report.findings) {
+            console.log(`  [${f.severity.toUpperCase()}] ${f.title}`);
+        }
+        console.log(`methodologies:   ${sub.specialistResponse.report.methodologiesUsed.join(", ")}`);
+        console.log("");
+        console.log("--- SPECIALIST ON-CHAIN STAKES ---");
+        for (const s of sub.specialistResponse.stakes) {
+            if (s.skipped === "no-match") {
+                console.log(`  [skip]  "${s.methodology.slice(0, 60)}" — no manifest match`);
+            } else if (s.error) {
+                console.log(`  [fail]  ${s.matchedModule?.name} — ${s.error.slice(0, 100)}`);
+            } else if (s.stake) {
+                console.log(
+                    `  [ok]    ${s.matchedModule?.name} — staked ${formatEther(BigInt(s.stake.amount))} tTRUST, tx ${s.stake.tx.slice(0, 12)}…`,
+                );
+            }
+        }
+        console.log("");
+        console.log("--- SPECIALIST RECEIPT ---");
+        console.log(`agent:         ${sub.specialistResponse.receipt.agent}`);
+        console.log(`signature:     ${sub.specialistResponse.receipt.signature.slice(0, 30)}…`);
+    }
+
     console.log("");
     console.log("OK. Refresh the marketplace home page — the audit tools' TVL just climbed.");
 }

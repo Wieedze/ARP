@@ -157,7 +157,7 @@ export function HireResult() {
             </section>
 
             <section className="mb-12">
-                <h2 className="font-medium mb-4">Signed receipt</h2>
+                <h2 className="font-medium mb-4">Signed receipt (Auditor)</h2>
                 <dl className="font-mono text-[length:var(--text-body-sm)] grid grid-cols-[10rem_1fr] gap-y-2">
                     <dt className="text-[color:var(--color-fg-40)]">agent</dt>
                     <dd>
@@ -172,6 +172,13 @@ export function HireResult() {
                 </dl>
             </section>
 
+            {response.subcontract ? (
+                <SubcontractSection
+                    subcontract={response.subcontract}
+                    auditorAddress={agent.runtimeWallet}
+                />
+            ) : null}
+
             <details className="mb-10">
                 <summary className="cursor-pointer font-medium mb-2">
                     Raw audit response (markdown)
@@ -181,6 +188,116 @@ export function HireResult() {
                 </pre>
             </details>
         </article>
+    );
+}
+
+function SubcontractSection({
+    subcontract,
+    auditorAddress,
+}: {
+    subcontract: NonNullable<HireResultPayload["response"]["subcontract"]>;
+    auditorAddress: Address;
+}) {
+    const {subPaymentTxHash, specialistResponse} = subcontract;
+    const {report, stakes, receipt} = specialistResponse;
+
+    const [signerOk, setSignerOk] = useState<"unknown" | "ok" | "mismatch">(
+        "unknown",
+    );
+
+    useEffect(() => {
+        (async () => {
+            const digest = `${receipt.requestHash}|${receipt.resultHash}|${receipt.agent}`;
+            const recovered = await recoverAddress({
+                hash: hashMessage({raw: keccak256Browser(digest)}),
+                signature: receipt.signature,
+            });
+            setSignerOk(
+                recovered.toLowerCase() === receipt.agent.toLowerCase()
+                    ? "ok"
+                    : "mismatch",
+            );
+        })().catch(() => setSignerOk("mismatch"));
+    }, [receipt]);
+
+    return (
+        <section className="mb-12 border-t border-[color:var(--color-accent)] pt-8">
+            <header className="mb-6">
+                <p className="text-[length:var(--text-label)] uppercase tracking-wider text-[color:var(--color-accent)] mb-1">
+                    A2A · sub-delegation
+                </p>
+                <h2 className="font-medium">
+                    Specialist's deep-dive (subcontracted by Auditor)
+                </h2>
+                <p className="text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)] mt-1">
+                    The Auditor paid the Specialist a sub-fee and signed a
+                    leaf delegation rooted at Maria's compose authority. The
+                    Specialist ran an independent audit and posted its own
+                    stakes via the chained delegation. Two distinct
+                    reputations, one bounded budget.
+                </p>
+            </header>
+
+            <dl className="grid grid-cols-[10rem_1fr] gap-y-2 gap-x-4 text-[length:var(--text-body-sm)] border border-[color:var(--color-border)] p-4 mb-6">
+                <dt className="text-[color:var(--color-fg-40)] uppercase tracking-wider text-[length:var(--text-label)]">
+                    Sub-payment
+                </dt>
+                <dd className="font-mono">
+                    <ExplorerTxLink hash={subPaymentTxHash} />{" "}
+                    <span className="text-[color:var(--color-fg-40)]">
+                        (Auditor → Specialist runtime)
+                    </span>
+                </dd>
+                <dt className="text-[color:var(--color-fg-40)] uppercase tracking-wider text-[length:var(--text-label)]">
+                    Chain
+                </dt>
+                <dd className="font-mono">
+                    Maria → <ExplorerAddressLink address={auditorAddress} /> →{" "}
+                    <ExplorerAddressLink address={receipt.agent} />
+                </dd>
+            </dl>
+
+            <h3 className="font-medium mb-3 text-[length:var(--text-body-sm)] uppercase tracking-wider text-[color:var(--color-fg-40)]">
+                Specialist findings ({report.findings.length})
+            </h3>
+            <ul className="space-y-4 mb-6">
+                {report.findings.map((f, i) => (
+                    <FindingRow key={i} finding={f} />
+                ))}
+            </ul>
+
+            <h3 className="font-medium mb-3 text-[length:var(--text-body-sm)] uppercase tracking-wider text-[color:var(--color-fg-40)]">
+                Specialist on-chain stakes
+            </h3>
+            <ul className="space-y-2 mb-6">
+                {stakes.map((s, i) => (
+                    <StakeRow key={i} stake={s} />
+                ))}
+            </ul>
+
+            <h3 className="font-medium mb-3 text-[length:var(--text-body-sm)] uppercase tracking-wider text-[color:var(--color-fg-40)]">
+                Specialist receipt
+            </h3>
+            <dl className="font-mono text-[length:var(--text-body-sm)] grid grid-cols-[10rem_1fr] gap-y-2 mb-3">
+                <dt className="text-[color:var(--color-fg-40)]">agent</dt>
+                <dd>
+                    <ExplorerAddressLink address={receipt.agent} />{" "}
+                    {signerOk === "ok" ? (
+                        <span className="text-[color:var(--color-accent)]">
+                            ✓ signature verified
+                        </span>
+                    ) : signerOk === "mismatch" ? (
+                        <span>signature mismatch</span>
+                    ) : (
+                        <span className="text-[color:var(--color-fg-40)]">
+                            verifying…
+                        </span>
+                    )}
+                </dd>
+                <dt className="text-[color:var(--color-fg-40)]">signature</dt>
+                <dd className="break-all">{receipt.signature}</dd>
+            </dl>
+        </section>
     );
 }
 

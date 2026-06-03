@@ -124,7 +124,7 @@ export function Hire() {
                 <PageHeader />
                 <p className="text-[color:var(--color-fg-60)]">
                     Connect your wallet to hire an agent. You'll send tTRUST to
-                    the agent's runtime; the agent will execute the audit and
+                    the agent's runtime; the agent will execute the task and
                     sign a receipt.
                 </p>
             </section>
@@ -136,11 +136,7 @@ export function Hire() {
             <PageHeader />
 
             <p className="text-[color:var(--color-fg-60)] mb-8 max-w-[640px]">
-                Pick an agent, paste a Solidity contract, set a budget. Your
-                wallet sends tTRUST directly to the runtime address. The agent's
-                server validates the payment, executes the audit, posts on-chain
-                stakes on the methodologies it used, and returns a signed
-                receipt.
+                Pick an agent, set a budget.
             </p>
 
             {agentsQuery.isLoading ? (
@@ -324,39 +320,52 @@ function formatTrust(wei: bigint): string {
     return raw.replace(/0+$/, "").replace(/\.$/, "");
 }
 
+/**
+ * Shape of a single agent's audit response: report, on-chain stakes,
+ * signed receipt. Reused for both the Auditor (top-level) and the
+ * Specialist (under `.subcontract.specialistResponse`).
+ */
+export type AgentAuditResponse = {
+    report: {
+        contractName: string;
+        summary: string;
+        findings: {
+            severity: string;
+            title: string;
+            description: string;
+            location?: string;
+        }[];
+        methodologiesUsed: string[];
+        rawResponse: string;
+    };
+    stakes: {
+        methodology: string;
+        matchedModule?: {name: string};
+        skipped?: string;
+        atomId?: Hex;
+        triple?: {created: boolean; tripleId: Hex; tx?: Hex};
+        stake?: {amount: string; tx: Hex};
+        error?: string;
+    }[];
+    receipt: {
+        role?: "auditor" | "specialist";
+        agent: Address;
+        requestHash: Hex;
+        resultHash: Hex;
+        signature: Hex;
+    };
+};
+
 // Helper used by the result page after navigation. Keeps the typing in
 // one place so result UI doesn't have to re-derive shapes.
 export type HireResultPayload = {
     agent: {agentId: string; runtimeWallet: Address};
     paymentTxHash: Hex;
     budgetWei: string;
-    response: {
-        report: {
-            contractName: string;
-            summary: string;
-            findings: {
-                severity: string;
-                title: string;
-                description: string;
-                location?: string;
-            }[];
-            methodologiesUsed: string[];
-            rawResponse: string;
-        };
-        stakes: {
-            methodology: string;
-            matchedModule?: {name: string};
-            skipped?: string;
-            atomId?: Hex;
-            triple?: {created: boolean; tripleId: Hex; tx?: Hex};
-            stake?: {amount: string; tx: Hex};
-            error?: string;
-        }[];
-        receipt: {
-            agent: Address;
-            requestHash: Hex;
-            resultHash: Hex;
-            signature: Hex;
-        };
+    response: AgentAuditResponse & {
+        subcontract?: {
+            subPaymentTxHash: Hex;
+            specialistResponse: AgentAuditResponse;
+        } | null;
     };
 };
