@@ -48,7 +48,9 @@ type StepStatus = "idle" | "pending" | "done" | "error";
  *   3. Deploy your operator Smart Account — required because Task 03b's
  *      delegation flow needs a contract delegator (ADR 0009). Your
  *      future delegation to the agent runtime is signed by the SA.
- *   4. Compose tools — link to the next page (phase 5).
+ *   4. Sign delegations — Publish + Compose, scoped by ARP caveats.
+ *   5. Hand off to the runtime — operator setup ends; the runtime
+ *      acts under the signed delegations via `@arp/sdk`.
  */
 export function AgentRegister() {
     const {address: operatorAddress, isConnected} = useAccount();
@@ -457,22 +459,48 @@ export function AgentRegister() {
                     )}
                 </Step>
 
-                {/* ---------- Step 5 — Compose tools ---------- */}
+                {/* ---------- Step 5 — Hand off to the runtime ---------- */}
                 <Step
                     n={5}
-                    title="Compose tools"
-                    subtitle="Declare which tools the agent uses by creating triples + staking tTRUST on their atoms."
+                    title="Hand off to the runtime"
+                    subtitle="Operator setup ends here. From now on the agent's runtime acts under the delegations you just signed — it discovers tools via @arp/sdk, declares (agent → uses → tool) triples, and stakes tTRUST on each tool it composes with. No further clicks."
                     done={false}
                     pending={false}
                     error={null}
                 >
                     {allDone ? (
-                        <Link
-                            to="/"
-                            className="text-[color:var(--color-accent)] text-[length:var(--text-body-sm)]"
-                        >
-                            Go to modules →
-                        </Link>
+                        <div className="text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)] space-y-2 max-w-[680px]">
+                            <p>
+                                Paste the <span className="font-mono">.env</span> block above
+                                into <span className="font-mono">scripts/</span> and start a
+                                runtime:
+                            </p>
+                            <ul className="font-mono text-[length:var(--text-body-sm)] ml-4 space-y-1">
+                                <li>
+                                    <span className="text-[color:var(--color-fg-40)]">bun</span>{" "}
+                                    scripts/agent-loop.ts{" "}
+                                    <span className="text-[color:var(--color-fg-40)]">
+                                        — autonomous walk of the manifest
+                                    </span>
+                                </li>
+                                <li>
+                                    <span className="text-[color:var(--color-fg-40)]">bun</span>{" "}
+                                    scripts/agent-server.ts{" "}
+                                    <span className="text-[color:var(--color-fg-40)]">
+                                        — on-demand HTTP runtime (hire flow)
+                                    </span>
+                                </li>
+                            </ul>
+                            <p className="pt-2">
+                                <Link
+                                    to="/"
+                                    className="text-[color:var(--color-accent)]"
+                                >
+                                    Watch the modules page →
+                                </Link>{" "}
+                                TVL climbs as your runtime stakes.
+                            </p>
+                        </div>
                     ) : (
                         <p className="text-[color:var(--color-fg-40)] text-[length:var(--text-body-sm)]">
                             Available after steps 1 – 4.
