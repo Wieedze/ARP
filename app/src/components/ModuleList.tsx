@@ -1,5 +1,5 @@
 import {useMemo, useState} from "react";
-import {Link} from "react-router-dom";
+import {Link, useNavigate} from "react-router-dom";
 import {useAccount} from "wagmi";
 
 import {deployments} from "../lib/deployments";
@@ -103,10 +103,26 @@ function FilterChip({label, active, onClick}: {label: string; active: boolean; o
 
 function ModuleRow({module, highlightDomain}: {module: Module; highlightDomain: string | null}) {
     const explorerUrl = deployments.chain.explorerUrl;
+    const navigate = useNavigate();
     const isHighlighted = highlightDomain === module.domain;
 
+    function navigateToTool() {
+        navigate(`/tool/${module.id.toString()}`);
+    }
+
     return (
-        <li className="grid grid-cols-[3rem_1fr_auto] sm:grid-cols-[3rem_1fr_10rem_auto_8rem] items-center gap-x-4 gap-y-1 border-b border-[color:var(--color-border)] py-4">
+        <li
+            onClick={navigateToTool}
+            onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    navigateToTool();
+                }
+            }}
+            role="link"
+            tabIndex={0}
+            className="grid grid-cols-[3rem_1fr_auto] sm:grid-cols-[3rem_1fr_10rem_auto_8rem] items-center gap-x-4 gap-y-1 border-b border-[color:var(--color-border)] py-4 cursor-pointer hover:bg-[color:var(--color-surface-hover,rgba(255,255,255,0.03))] focus:outline-none focus:bg-[color:var(--color-surface-hover,rgba(255,255,255,0.03))]"
+        >
             <span className="font-mono text-[color:var(--color-fg-40)] text-[length:var(--text-body-sm)]">
                 #{module.id.toString()}
             </span>
@@ -123,6 +139,7 @@ function ModuleRow({module, highlightDomain}: {module: Module; highlightDomain: 
                 href={`${explorerUrl}/address/${module.creator}`}
                 target="_blank"
                 rel="noreferrer"
+                onClick={(e) => e.stopPropagation()}
                 className="hidden sm:inline font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)]"
             >
                 {short(module.creator)}

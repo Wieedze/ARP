@@ -69,3 +69,18 @@ export function useDomains(modules: Module[]): string[] {
         return Array.from(seen).sort();
     }, [modules]);
 }
+
+/**
+ * Read a single module by id. Returns `undefined` while loading, `null`
+ * if the id doesn't exist on chain (the contract reverts with
+ * `ModuleNotFound`), or the typed `Module` on success.
+ */
+export function useModule(id: bigint | null) {
+    return useReadContract({
+        address: ADDRESS,
+        abi: moduleRegistryAbi,
+        functionName: "getModule",
+        args: id !== null ? [id] : undefined,
+        query: {enabled: id !== null},
+    });
+}
