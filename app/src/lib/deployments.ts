@@ -48,10 +48,12 @@ export type Deployments = {
         moduleRegistry: Address;
         domainScopeEnforcer: Address;
         trustStakeCapEnforcer: Address;
+        identityRegistry: Address;
         deployedTxs: {
             moduleRegistry: Hex;
             domainScopeEnforcer: Hex;
             trustStakeCapEnforcer: Hex;
+            identityRegistry: Hex;
         };
         explorerLinks: Record<string, string>;
         modules: Array<{
