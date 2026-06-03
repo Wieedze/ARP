@@ -62,7 +62,7 @@ The demo runs on Intuition Testnet with two consoles side by side:
 
 **Marketplace UI (`/`)**
 8. Modules ranked by TVL desc, with live stakers count next to each row. Slither + Mythril rise as the agent stakes; new modules appear as the agent publishes.
-9. `/tool/:id` per-tool page surfaces metadata, vault metrics, and a compose wizard for the operator's own positioning (separate from runtime).
+9. `/tool/:id` per-tool page surfaces metadata, live vault metrics, an optional human stake form (EOA economic conviction), and a `@arp/sdk` snippet showing how a runtime declares + stakes on the tool automatically — no humans in the loop.
 
 ARP doesn't compute agents — that's the runtime layer's job. ARP is purely declarative + coordination + economic accounting.
 
