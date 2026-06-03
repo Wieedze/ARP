@@ -11,6 +11,7 @@ import {
 import {generatePrivateKey, privateKeyToAccount} from "viem/accounts";
 
 import {identityRegistryAbi} from "../lib/abi/identity-registry";
+import {intuitionTestnet} from "../lib/chains";
 import {deployments} from "../lib/deployments";
 
 const ADDRESS = deployments.arp.identityRegistry;
@@ -52,6 +53,7 @@ export async function registerAgent(params: {
         abi: identityRegistryAbi,
         functionName: "register",
         args: [],
+        chain: intuitionTestnet,
     });
     const receipt = await params.publicClient.waitForTransactionReceipt({hash: tx});
 
@@ -156,6 +158,7 @@ export async function designateAgentRuntimeWallet(params: {
         abi: identityRegistryAbi,
         functionName: "setAgentWallet",
         args: [params.agentId, account.address, deadline, signature],
+        chain: intuitionTestnet,
     });
     await params.publicClient.waitForTransactionReceipt({hash: tx});
 

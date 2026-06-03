@@ -12,6 +12,7 @@ import {
 } from "viem";
 import {type PrivateKeyAccount} from "viem/accounts";
 
+import {intuitionTestnet} from "../lib/chains";
 import {publicClient} from "../lib/clients";
 
 /**
@@ -96,6 +97,7 @@ export async function deploySmartAccountIfNeeded(params: {
     const hash = await params.funderWalletClient.sendTransaction({
         to: factory,
         data: factoryData,
+        chain: intuitionTestnet,
     });
     await publicClient.waitForTransactionReceipt({hash});
     return hash;

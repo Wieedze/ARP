@@ -9,6 +9,7 @@ import {
 } from "viem";
 
 import {multiVaultAbi} from "../lib/abi/multi-vault";
+import {intuitionTestnet} from "../lib/chains";
 import {deployments} from "../lib/deployments";
 
 import {pinThing} from "./intuition-pin";
@@ -86,6 +87,7 @@ export async function ensureAtomForThing(params: {
         functionName: "createAtoms",
         args: [[atomData], [atomCost]],
         value: atomCost,
+        chain: intuitionTestnet,
     });
     await params.publicClient.waitForTransactionReceipt({hash: tx});
     return {atomId, uri, created: true, tx};
@@ -145,6 +147,7 @@ export async function declareUsesTriple(params: {
         functionName: "createTriples",
         args: [[params.agentAtomId], [usesAtomId], [params.toolAtomId], [tripleCost]],
         value: tripleCost,
+        chain: intuitionTestnet,
     });
     await params.publicClient.waitForTransactionReceipt({hash: tx});
     return {tx};

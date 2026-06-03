@@ -9,6 +9,7 @@ import {
 } from "viem";
 
 import {multiVaultAbi} from "../lib/abi/multi-vault";
+import {intuitionTestnet} from "../lib/chains";
 import {deployments} from "../lib/deployments";
 
 const MULTI_VAULT = deployments.intuition.multiVault;
@@ -56,6 +57,7 @@ export async function depositOnAtom(params: {
             params.minShares ?? 0n,
         ],
         value: params.amount,
+        chain: intuitionTestnet,
     });
 }
 
