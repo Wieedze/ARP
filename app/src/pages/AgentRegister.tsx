@@ -1,17 +1,33 @@
-import {useEffect, useState} from "react";
+import {useEffect, useMemo, useState} from "react";
 import {Link} from "react-router-dom";
-import {type Hex, zeroAddress} from "viem";
+import {parseEther, type Hex, zeroAddress} from "viem";
 import {useAccount, useWalletClient} from "wagmi";
 import {getWalletClient} from "@wagmi/core";
+import {
+    Implementation,
+    type MetaMaskSmartAccount,
+} from "@metamask/smart-accounts-kit";
 
+import {
+    composeAndStakeCaveats,
+    publishModuleCaveats,
+} from "../lib/caveat-builder";
 import {publicClient} from "../lib/clients";
 import {deployments} from "../lib/deployments";
 import {wagmiConfig} from "../lib/wagmi";
 import {useAgentId, useAgentWallet, useTotalAgents} from "../hooks/use-agent";
+import {useAllModules, useDomains} from "../hooks/use-modules";
+import {useStoredDelegations} from "../hooks/use-stored-delegations";
 import {
     designateAgentRuntimeWallet,
     registerAgent,
 } from "../services/agent-identity";
+import {
+    buildDelegation,
+    randomSalt,
+    serializeDelegation,
+    signDelegationAs,
+} from "../services/delegation";
 import {
     createUserSmartAccount,
     deploySmartAccountIfNeeded,
@@ -58,10 +74,26 @@ export function AgentRegister() {
 
     // Step 3 state — operator Smart Account
     const [smartAccountAddress, setSmartAccountAddress] = useState<string | null>(null);
+    const [smartAccount, setSmartAccount] = useState<MetaMaskSmartAccount<
+        Implementation.Hybrid
+    > | null>(null);
     const [isSaDeployed, setIsSaDeployed] = useState<boolean | null>(null);
     const [step3Status, setStep3Status] = useState<StepStatus>("idle");
     const [step3Error, setStep3Error] = useState<string | null>(null);
     const [deployTx, setDeployTx] = useState<string | null>(null);
+
+    // Step 4 state — sign delegations (publish A + compose B)
+    const {modules} = useAllModules();
+    const knownDomains = useDomains(modules);
+    const [selectedDomains, setSelectedDomains] = useState<string[]>([]);
+    const [capInput, setCapInput] = useState("1");
+    const [periodSeconds, setPeriodSeconds] = useState<bigint>(86_400n);
+    const [step4Status, setStep4Status] = useState<StepStatus>("idle");
+    const [step4Error, setStep4Error] = useState<string | null>(null);
+    const storedDelegations = useStoredDelegations(
+        (smartAccountAddress as `0x${string}` | null) ?? undefined,
+    );
+
 
     useEffect(() => {
         if (!operatorAddress || !walletClient || !walletClient.account) return;
@@ -72,6 +104,7 @@ export function AgentRegister() {
                 signer: {walletClient},
             });
             if (cancelled) return;
+            setSmartAccount(sa);
             setSmartAccountAddress(sa.address);
             const code = await publicClient.getCode({address: sa.address});
             if (cancelled) return;
@@ -156,6 +189,7 @@ export function AgentRegister() {
                 funderWalletClient: wc,
             });
             if (tx) setDeployTx(tx);
+            setSmartAccount(sa);
             setIsSaDeployed(true);
             setStep3Status("done");
         } catch (err) {
@@ -163,6 +197,93 @@ export function AgentRegister() {
             setStep3Error((err as Error).message);
         }
     }
+
+    /**
+     * Sign both ARP delegations in sequence:
+     *   - publish: agent can `registerModule` in `selectedDomains`, capped
+     *   - compose: agent can `deposit`/`createAtoms`/`createTriples` on
+     *     MultiVault, same cap/period
+     *
+     * The delegate is the runtime wallet bound in step 2. The delegator is
+     * the operator's Smart Account (must be deployed). The signatures are
+     * produced by the SA's owner (the connected EOA) routed through the
+     * SA's EIP-712 path.
+     */
+    async function handleSignDelegations() {
+        if (!smartAccount) {
+            setStep4Error("Smart Account not ready");
+            setStep4Status("error");
+            return;
+        }
+        const runtimeAddress = runtimeWalletQuery.data;
+        if (!runtimeAddress || runtimeAddress === zeroAddress) {
+            setStep4Error("Runtime wallet not designated (step 2)");
+            setStep4Status("error");
+            return;
+        }
+        if (selectedDomains.length === 0) {
+            setStep4Error("Select at least one allowed domain");
+            setStep4Status("error");
+            return;
+        }
+        let cap: bigint;
+        try {
+            cap = parseEther(capInput.trim());
+        } catch {
+            setStep4Error("Cap must be a valid tTRUST amount");
+            setStep4Status("error");
+            return;
+        }
+        if (cap === 0n) {
+            setStep4Error("Cap must be > 0");
+            setStep4Status("error");
+            return;
+        }
+
+        setStep4Status("pending");
+        setStep4Error(null);
+        try {
+            const publishUnsigned = buildDelegation({
+                delegator: smartAccount.address,
+                delegate: runtimeAddress as Hex,
+                caveats: publishModuleCaveats({
+                    allowedDomains: selectedDomains,
+                    cap,
+                    periodSeconds,
+                }),
+                salt: randomSalt(),
+            });
+            const composeUnsigned = buildDelegation({
+                delegator: smartAccount.address,
+                delegate: runtimeAddress as Hex,
+                caveats: composeAndStakeCaveats({cap, periodSeconds}),
+                salt: randomSalt(),
+            });
+            const publishSigned = await signDelegationAs({
+                delegation: publishUnsigned,
+                smartAccount,
+            });
+            const composeSigned = await signDelegationAs({
+                delegation: composeUnsigned,
+                smartAccount,
+            });
+            storedDelegations.set(publishSigned, composeSigned);
+            setStep4Status("done");
+        } catch (err) {
+            setStep4Status("error");
+            setStep4Error((err as Error).message);
+        }
+    }
+
+    const envBlob = useMemo(() => {
+        if (!storedDelegations.stored) return null;
+        return [
+            `# Paste into .env for scripts/agent-loop.ts`,
+            `DELEGATION_PUBLISH_JSON='${serializeDelegation(storedDelegations.stored.publish)}'`,
+            `DELEGATION_COMPOSE_JSON='${serializeDelegation(storedDelegations.stored.compose)}'`,
+            ``,
+        ].join("\n");
+    }, [storedDelegations.stored]);
 
     if (!isConnected) {
         return (
@@ -182,7 +303,8 @@ export function AgentRegister() {
         runtimeWalletQuery.data !== zeroAddress;
     const step2Done = step1Done && runtimeBound;
     const step3Done = isSaDeployed === true;
-    const allDone = step1Done && step2Done && step3Done;
+    const step4Done = step3Done && storedDelegations.stored !== null;
+    const allDone = step1Done && step2Done && step3Done && step4Done;
 
     return (
         <section>
@@ -282,9 +404,49 @@ export function AgentRegister() {
                     )}
                 </Step>
 
-                {/* ---------- Step 4 — Compose tools ---------- */}
+                {/* ---------- Step 4 — Sign delegations ---------- */}
                 <Step
                     n={4}
+                    title="Sign delegations to your agent"
+                    subtitle="Two scoped permissions: publish new modules in chosen domains, and compose/stake on MultiVault. Bounded by cap + period. Signed once by your Smart Account."
+                    done={step4Done}
+                    pending={step4Status === "pending"}
+                    error={step4Error}
+                >
+                    {step4Done && storedDelegations.stored ? (
+                        <DelegationsActive
+                            signedAt={storedDelegations.stored.signedAt}
+                            envBlob={envBlob}
+                            onClear={() => storedDelegations.clear()}
+                        />
+                    ) : step3Done ? (
+                        <DelegationForm
+                            knownDomains={knownDomains}
+                            selectedDomains={selectedDomains}
+                            onToggleDomain={(d) =>
+                                setSelectedDomains((prev) =>
+                                    prev.includes(d)
+                                        ? prev.filter((x) => x !== d)
+                                        : [...prev, d],
+                                )
+                            }
+                            capInput={capInput}
+                            onCapChange={setCapInput}
+                            periodSeconds={periodSeconds}
+                            onPeriodChange={setPeriodSeconds}
+                            onSign={handleSignDelegations}
+                            pending={step4Status === "pending"}
+                        />
+                    ) : (
+                        <p className="text-[color:var(--color-fg-40)] text-[length:var(--text-body-sm)]">
+                            Available after steps 1, 2, and 3.
+                        </p>
+                    )}
+                </Step>
+
+                {/* ---------- Step 5 — Compose tools ---------- */}
+                <Step
+                    n={5}
                     title="Compose tools"
                     subtitle="Declare which tools the agent uses by creating triples + staking tTRUST on their atoms."
                     done={false}
@@ -300,12 +462,193 @@ export function AgentRegister() {
                         </Link>
                     ) : (
                         <p className="text-[color:var(--color-fg-40)] text-[length:var(--text-body-sm)]">
-                            Available after steps 1, 2, and 3.
+                            Available after steps 1 – 4.
                         </p>
                     )}
                 </Step>
             </ol>
         </section>
+    );
+}
+
+/** Form for configuring + signing the two delegations. */
+function DelegationForm({
+    knownDomains,
+    selectedDomains,
+    onToggleDomain,
+    capInput,
+    onCapChange,
+    periodSeconds,
+    onPeriodChange,
+    onSign,
+    pending,
+}: {
+    knownDomains: string[];
+    selectedDomains: string[];
+    onToggleDomain: (d: string) => void;
+    capInput: string;
+    onCapChange: (s: string) => void;
+    periodSeconds: bigint;
+    onPeriodChange: (s: bigint) => void;
+    onSign: () => void;
+    pending: boolean;
+}) {
+    return (
+        <div className="space-y-4">
+            <div>
+                <p className="text-[length:var(--text-label)] uppercase tracking-wider text-[color:var(--color-fg-40)] mb-2">
+                    Allowed domains (publish)
+                </p>
+                {knownDomains.length === 0 ? (
+                    <p className="text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)]">
+                        No domains yet. The agent will be able to publish in
+                        whichever domains exist when it acts.
+                    </p>
+                ) : (
+                    <div className="flex flex-wrap gap-2">
+                        {knownDomains.map((d) => {
+                            const active = selectedDomains.includes(d);
+                            return (
+                                <button
+                                    key={d}
+                                    type="button"
+                                    onClick={() => onToggleDomain(d)}
+                                    disabled={pending}
+                                    className={[
+                                        "font-mono uppercase tracking-wider text-[length:var(--text-label)] px-3 py-1 border",
+                                        active
+                                            ? "border-[color:var(--color-accent)] text-[color:var(--color-accent)]"
+                                            : "border-[color:var(--color-border)] text-[color:var(--color-fg-60)]",
+                                    ].join(" ")}
+                                >
+                                    {d}
+                                </button>
+                            );
+                        })}
+                    </div>
+                )}
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <label className="block text-[length:var(--text-body-sm)]">
+                    <span className="text-[color:var(--color-fg-60)] block mb-1">
+                        Cap per period
+                    </span>
+                    <div className="flex items-center gap-2">
+                        <input
+                            type="text"
+                            value={capInput}
+                            onChange={(e) => onCapChange(e.target.value)}
+                            disabled={pending}
+                            className="w-32 bg-transparent border border-[color:var(--color-border)] px-3 py-1.5 font-mono focus:outline-none focus:border-[color:var(--color-accent)]"
+                        />
+                        <span className="font-mono text-[color:var(--color-fg-40)]">
+                            tTRUST
+                        </span>
+                    </div>
+                </label>
+                <fieldset>
+                    <legend className="text-[color:var(--color-fg-60)] block mb-1 text-[length:var(--text-body-sm)]">
+                        Window
+                    </legend>
+                    <div className="flex gap-3 text-[length:var(--text-body-sm)] font-mono">
+                        {[
+                            {label: "1h", secs: 3_600n},
+                            {label: "1d", secs: 86_400n},
+                            {label: "7d", secs: 604_800n},
+                        ].map(({label, secs}) => {
+                            const active = periodSeconds === secs;
+                            return (
+                                <label
+                                    key={label}
+                                    className={[
+                                        "cursor-pointer px-3 py-1 border",
+                                        active
+                                            ? "border-[color:var(--color-accent)] text-[color:var(--color-accent)]"
+                                            : "border-[color:var(--color-border)] text-[color:var(--color-fg-60)]",
+                                    ].join(" ")}
+                                >
+                                    <input
+                                        type="radio"
+                                        name="period"
+                                        className="sr-only"
+                                        checked={active}
+                                        onChange={() => onPeriodChange(secs)}
+                                        disabled={pending}
+                                    />
+                                    {label}
+                                </label>
+                            );
+                        })}
+                    </div>
+                </fieldset>
+            </div>
+
+            <button
+                type="button"
+                onClick={onSign}
+                disabled={pending}
+                className="px-3 py-1.5 text-[length:var(--text-body-sm)]"
+            >
+                {pending ? "Signing…" : "Sign 2 delegations"}
+            </button>
+        </div>
+    );
+}
+
+/**
+ * Confirmation panel once both delegations are signed + stored. Surfaces
+ * the env blob so the operator can paste it into `.env` for the headless
+ * runtime in `scripts/agent-loop.ts`.
+ */
+function DelegationsActive({
+    signedAt,
+    envBlob,
+    onClear,
+}: {
+    signedAt: number;
+    envBlob: string | null;
+    onClear: () => void;
+}) {
+    const [copied, setCopied] = useState(false);
+    const date = new Date(signedAt * 1000).toISOString();
+    return (
+        <div className="border border-[color:var(--color-accent)] p-4">
+            <p className="text-[length:var(--text-label)] uppercase tracking-wider text-[color:var(--color-accent)] mb-2">
+                Delegations active
+            </p>
+            <p className="font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)] mb-3">
+                Signed {date}
+            </p>
+            {envBlob ? (
+                <textarea
+                    readOnly
+                    value={envBlob}
+                    className="w-full h-32 bg-transparent border border-[color:var(--color-border)] p-3 font-mono text-[length:var(--text-body-sm)] resize-none"
+                />
+            ) : null}
+            <div className="flex gap-3 mt-3">
+                <button
+                    type="button"
+                    onClick={() => {
+                        if (!envBlob) return;
+                        navigator.clipboard.writeText(envBlob);
+                        setCopied(true);
+                        setTimeout(() => setCopied(false), 2_000);
+                    }}
+                    className="px-3 py-1.5 text-[length:var(--text-body-sm)]"
+                >
+                    {copied ? "Copied" : "Copy as .env"}
+                </button>
+                <button
+                    type="button"
+                    onClick={onClear}
+                    className="px-3 py-1.5 text-[length:var(--text-body-sm)] border border-[color:var(--color-border)]"
+                >
+                    Clear + re-sign
+                </button>
+            </div>
+        </div>
     );
 }
 
