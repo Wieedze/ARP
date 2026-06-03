@@ -45,6 +45,7 @@ import {deployments} from "../app/src/lib/deployments";
 import {multiVaultAbi} from "../app/src/lib/abi/multi-vault";
 import {deserializeDelegation} from "../app/src/services/delegation";
 import {
+    ensureAgentApprovesSmartAccount,
     redeemDeclareTriple,
     redeemEnsureAtomForThing,
     redeemEnsureAtomForURI,
@@ -111,6 +112,25 @@ async function main() {
     log(`  delegator (SA)   ${publishDel.delegator}`);
     log(`  balance          ${formatEther(balance)} tTRUST`);
     log(`  manifest         ${manifest.length} entries from ${manifestPath}`);
+
+    // -------- 0. Bootstrap: runtime authorizes SA to deposit on its behalf --
+    //
+    // The agent stakes "in its own name" — vault shares go to the runtime
+    // EOA so reads of `MultiVault.balanceOf(runtime, atomId)` reflect the
+    // agent's reputation directly. MultiVault.deposit's on-chain msg.sender
+    // will be the SA (executeFromExecutor), so without this one-time
+    // approval the deposit reverts with MultiVault_SenderNotApproved.
+    log("\nensuring runtime → SA deposit approval");
+    const approvalTx = await ensureAgentApprovesSmartAccount({
+        agentWalletClient,
+        smartAccountAddress: publishDel.delegator,
+        publicClient,
+    });
+    if (approvalTx) {
+        log(`  approve          ${approvalTx} (granted DEPOSIT to SA)`);
+    } else {
+        log("  approve          already granted (skipped)");
+    }
 
     // -------- 1. Ensure the agent's self-atom -------------------------------
     log("\nensuring agent self-atom");

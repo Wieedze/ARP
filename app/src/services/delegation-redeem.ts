@@ -17,6 +17,7 @@ import {
 
 import {identityRegistryAbi} from "../lib/abi/identity-registry";
 import {multiVaultAbi} from "../lib/abi/multi-vault";
+import {intuitionTestnet} from "../lib/chains";
 import {deployments} from "../lib/deployments";
 
 import {redeemArpDelegation} from "./agent-action";
@@ -104,6 +105,17 @@ export async function redeemRegisterModule(
  * delegation's per-period cap; the `AllowedTargets`/`AllowedMethods`
  * enforcers verify the target is MultiVault and the selector is
  * `deposit`.
+ *
+ * **Receiver default: the runtime EOA** (`agentWalletClient.account.address`).
+ * This makes the *agent* the on-chain position holder — what gets read as
+ * "agent X has Y shares on tool T" reflects the agent's reputation
+ * directly. MultiVault guards `deposit` with `_isApprovedToDeposit(sender,
+ * receiver)`; when the agent redeems, the on-chain `msg.sender` is the
+ * Smart Account (because the DelegationManager calls
+ * `IDeleGatorCore.executeFromExecutor` on the delegator). For the check
+ * to pass, the runtime must have called `MultiVault.approve(SA, DEPOSIT)`
+ * once at bootstrap — see `ensureAgentDelegatedToSA` (typically run from
+ * `scripts/agent-loop.ts` startup).
  */
 export async function redeemStakeOnAtom(
     params: RedeemCommon & {
@@ -141,6 +153,70 @@ export async function redeemStakeOnAtom(
         execution,
         agentWalletClient: params.agentWalletClient,
     });
+}
+
+/**
+ * `ApprovalTypes` packed flag values per MultiVault.
+ * NONE = 0, DEPOSIT = 1, REDEMPTION = 2, BOTH = 3.
+ */
+export const APPROVAL_DEPOSIT = 1;
+export const APPROVAL_REDEMPTION = 2;
+export const APPROVAL_BOTH = 3;
+
+const approvalAbi = [
+    {
+        type: "function",
+        stateMutability: "nonpayable",
+        name: "approve",
+        inputs: [
+            {name: "sender", type: "address"},
+            {name: "approvalType", type: "uint8"},
+        ],
+        outputs: [],
+    },
+    {
+        type: "function",
+        stateMutability: "view",
+        name: "approvals",
+        inputs: [
+            {name: "receiver", type: "address"},
+            {name: "sender", type: "address"},
+        ],
+        outputs: [{name: "", type: "uint8"}],
+    },
+] as const;
+
+/**
+ * Idempotent one-time approval the **runtime EOA** must grant to the
+ * **Smart Account** so the SA can deposit on the runtime's behalf via
+ * the compose delegation. Without this, `MultiVault.deposit` reverts with
+ * `MultiVault_SenderNotApproved` because the on-chain `msg.sender` (the
+ * SA, calling through `executeFromExecutor`) does not equal the receiver
+ * (the runtime, holding the position).
+ *
+ * @returns `null` if approval already exists, otherwise the tx hash.
+ */
+export async function ensureAgentApprovesSmartAccount(params: {
+    agentWalletClient: WalletClient<Transport, Chain, Account>;
+    smartAccountAddress: Address;
+    publicClient: PublicClient;
+}): Promise<Hex | null> {
+    const current = await params.publicClient.readContract({
+        address: MULTI_VAULT,
+        abi: approvalAbi,
+        functionName: "approvals",
+        args: [params.agentWalletClient.account.address, params.smartAccountAddress],
+    });
+    if ((current & APPROVAL_DEPOSIT) !== 0) return null;
+    const tx = await params.agentWalletClient.writeContract({
+        address: MULTI_VAULT,
+        abi: approvalAbi,
+        functionName: "approve",
+        args: [params.smartAccountAddress, APPROVAL_DEPOSIT],
+        chain: intuitionTestnet,
+    });
+    await params.publicClient.waitForTransactionReceipt({hash: tx});
+    return tx;
 }
 
 /**
