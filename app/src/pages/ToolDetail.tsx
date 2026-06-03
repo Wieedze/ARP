@@ -8,32 +8,21 @@ import {multiVaultAbi} from "../lib/abi/multi-vault";
 import {publicClient} from "../lib/clients";
 import {deployments} from "../lib/deployments";
 import {wagmiConfig} from "../lib/wagmi";
-import {useAgentId} from "../hooks/use-agent";
 import {useAtomStake} from "../hooks/use-atom-stake";
 import {useModule} from "../hooks/use-modules";
 import {depositOnAtom} from "../services/atom-stake";
-import {
-    declareUsesTriple,
-    ensureAtomForThing,
-    ensureAtomForURI,
-} from "../services/intuition-graph";
+import {ensureAtomForURI} from "../services/intuition-graph";
 
 type StepStatus = "idle" | "pending" | "done" | "error";
 
 /**
- * Tool detail + composition page (`/tool/:id`).
+ * Tool detail page (`/tool/:id`).
  *
- * Shows the module's metadata + reputation metrics surfaced from the
- * Intuition vault for the tool's atom, plus an inline compose wizard
- * that materializes both ARP layers in three transactions:
- *
- *   A. Ensure the agent atom exists on Intuition (pin Thing → createAtoms
- *      if needed). Idempotent.
- *   B. Create the triple `(agent atom, "uses" atom, tool atom)`.
- *   C. Stake the user-selected amount of tTRUST on the tool atom.
- *
- * The operator's wallet signs everything for the MVP. In production the
- * agent runtime would do these calls programmatically.
+ * Read-only metadata + vault metrics, plus a single human action: stake
+ * tTRUST on the tool's atom from your own wallet. Agent runtimes do not
+ * use this page — they discover + stake via `@arp/sdk` under a delegation
+ * signed once by the operator. This page exists for humans browsing the
+ * marketplace + showing how a runtime would integrate.
  */
 export function ToolDetail() {
     const {id: idParam} = useParams();
@@ -42,7 +31,6 @@ export function ToolDetail() {
 
     const {address: operatorAddress, isConnected} = useAccount();
     const {data: walletClient} = useWalletClient();
-    const {data: agentId} = useAgentId();
 
     const m = moduleQuery.data;
 
@@ -70,19 +58,13 @@ export function ToolDetail() {
 
     const stakeQuery = useAtomStake(computedToolAtomId ?? undefined);
 
-    // Compose wizard state
+    // Human stake state
     const [amountInput, setAmountInput] = useState("0.05");
-    const [mode, setMode] = useState<"compose" | "bet">("compose");
-    const [composeStatus, setComposeStatus] = useState<StepStatus>("idle");
-    const [composeError, setComposeError] = useState<string | null>(null);
-    const [composeSteps, setComposeSteps] = useState<{
-        agentAtomTx?: string;
-        agentAtomCreated?: boolean;
-        agentAtomId?: Hex;
+    const [stakeStatus, setStakeStatus] = useState<StepStatus>("idle");
+    const [stakeError, setStakeError] = useState<string | null>(null);
+    const [stakeSteps, setStakeSteps] = useState<{
         toolAtomTx?: string;
         toolAtomCreated?: boolean;
-        tripleTx?: string;
-        tripleCreated?: boolean;
         depositTx?: string;
     }>({});
 
@@ -96,31 +78,29 @@ export function ToolDetail() {
     }
 
     /**
-     * "Just bet" — non-agent EOA stakes on the tool atom directly.
-     * Ensures the tool atom exists if not (operator-paid atomCost), then
-     * deposits. Skips the triple step entirely (no agent identity).
+     * Human stake — your wallet locks tTRUST on the tool's atom. No
+     * triple, no agent identity. Ensures the tool atom exists first (any
+     * caller pays atomCost once, subsequent stakers reuse it).
      */
-    async function handleBet() {
+    async function handleStake() {
         if (!m) return;
-        setComposeStatus("pending");
-        setComposeError(null);
+        setStakeStatus("pending");
+        setStakeError(null);
         try {
             const amount = parseEther(amountInput.trim());
             const wc = await getActiveWalletClient();
 
-            // Ensure the tool atom exists (idempotent).
             const toolAtomRes = await ensureAtomForURI({
                 uri: m.schemaURI,
                 walletClient: wc,
                 publicClient,
             });
-            setComposeSteps((s) => ({
+            setStakeSteps((s) => ({
                 ...s,
                 toolAtomTx: toolAtomRes.tx,
                 toolAtomCreated: toolAtomRes.created,
             }));
 
-            // Stake on the tool atom — shares go to the EOA caller.
             const depositTx = await depositOnAtom({
                 atomId: toolAtomRes.atomId,
                 amount,
@@ -128,81 +108,12 @@ export function ToolDetail() {
                 publicClient,
             });
             await publicClient.waitForTransactionReceipt({hash: depositTx});
-            setComposeSteps((s) => ({...s, depositTx}));
+            setStakeSteps((s) => ({...s, depositTx}));
             await stakeQuery.refetch();
-            setComposeStatus("done");
+            setStakeStatus("done");
         } catch (err) {
-            setComposeStatus("error");
-            setComposeError((err as Error).message);
-        }
-    }
-
-    async function handleCompose() {
-        if (!m || !agentId || !computedToolAtomId) return;
-        setComposeStatus("pending");
-        setComposeError(null);
-        try {
-            const amount = parseEther(amountInput.trim());
-            const wc = await getActiveWalletClient();
-
-            // A. Agent atom (idempotent — pinned Thing for the agent identity)
-            const agentAtomRes = await ensureAtomForThing({
-                thing: {
-                    name: `ARP Agent #${agentId.toString()}`,
-                    description: `Agent registered on the ARP IdentityRegistry. Operator: ${operatorAddress ?? ""}.`,
-                },
-                walletClient: wc,
-                publicClient,
-            });
-            setComposeSteps((s) => ({
-                ...s,
-                agentAtomTx: agentAtomRes.tx,
-                agentAtomCreated: agentAtomRes.created,
-                agentAtomId: agentAtomRes.atomId,
-            }));
-
-            // B. Tool atom — created directly from the module's `schemaURI`
-            // (the canonical tool URI per ADR 0008). Skipping this would
-            // make the triple below reference an atom that does not exist
-            // on chain — MultiVault_TermDoesNotExist.
-            const toolAtomRes = await ensureAtomForURI({
-                uri: m.schemaURI,
-                walletClient: wc,
-                publicClient,
-            });
-            setComposeSteps((s) => ({
-                ...s,
-                toolAtomTx: toolAtomRes.tx,
-                toolAtomCreated: toolAtomRes.created,
-            }));
-
-            // C. Triple agent → uses → tool (idempotent — skipped if exists)
-            const tripleRes = await declareUsesTriple({
-                agentAtomId: agentAtomRes.atomId,
-                toolAtomId: toolAtomRes.atomId,
-                walletClient: wc,
-                publicClient,
-            });
-            setComposeSteps((s) => ({
-                ...s,
-                tripleTx: tripleRes.tx,
-                tripleCreated: tripleRes.created,
-            }));
-
-            // D. Stake on the tool atom
-            const depositTx = await depositOnAtom({
-                atomId: toolAtomRes.atomId,
-                amount,
-                walletClient: wc,
-                publicClient,
-            });
-            await publicClient.waitForTransactionReceipt({hash: depositTx});
-            setComposeSteps((s) => ({...s, depositTx}));
-            await stakeQuery.refetch();
-            setComposeStatus("done");
-        } catch (err) {
-            setComposeStatus("error");
-            setComposeError((err as Error).message);
+            setStakeStatus("error");
+            setStakeError((err as Error).message);
         }
     }
 
@@ -227,9 +138,7 @@ export function ToolDetail() {
         );
     }
 
-    const hasAgent = agentId !== null && agentId !== undefined && agentId > 0n;
-    const effectiveMode = hasAgent ? mode : "bet";
-    const composeBusy = composeStatus === "pending";
+    const stakeBusy = stakeStatus === "pending";
 
     return (
         <article>
@@ -317,103 +226,28 @@ export function ToolDetail() {
                 </div>
             </section>
 
-            {/* ---------- Use this tool — stake (+ optional declaration) ---------- */}
+            {/* ---------- Stake on this tool (human path) ---------- */}
             <section className="mt-12">
                 <h2 className="font-medium mb-2">Stake on this tool</h2>
                 <p className="text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)] mb-6 max-w-[680px]">
-                    Lock tTRUST on the tool's atom. Your wallet holds the
-                    position — shares accrue to your address, and the TVL on
-                    this tool grows. {hasAgent ? (
-                        <>
-                            Since you own Agent #{agentId!.toString()}, you can
-                            additionally <span className="text-[color:var(--color-fg)]">declare</span>{" "}
-                            on Intuition's graph that your agent uses this tool
-                            — the triple{" "}
-                            <span className="font-mono">agent → uses → tool</span>{" "}
-                            is recorded alongside your stake.
-                        </>
-                    ) : (
-                        <>
-                            Owning an agent NFT unlocks an additional option:
-                            attaching a declaration{" "}
-                            <span className="font-mono">agent → uses → tool</span>{" "}
-                            to your stake.
-                        </>
-                    )}
+                    Lock tTRUST on the tool's atom from your own wallet —
+                    economic conviction, no agent identity attached. Your
+                    address holds the shares; the tool's TVL grows. Agents
+                    don't use this form; they stake through the SDK (see
+                    below).
                 </p>
 
                 {!isConnected ? (
                     <p className="text-[color:var(--color-fg-60)] text-[length:var(--text-body-sm)]">
                         Connect your wallet to stake.
                     </p>
-                ) : composeStatus === "done" ? (
-                    <PositionTakenSummary
-                        mode={effectiveMode}
-                        steps={composeSteps}
-                        agentId={agentId ?? null}
+                ) : stakeStatus === "done" ? (
+                    <StakeSummary
+                        steps={stakeSteps}
                         operatorAddress={operatorAddress ?? null}
                     />
                 ) : (
                     <div>
-                        {hasAgent ? (
-                            <fieldset className="mb-4">
-                                <legend className="text-[length:var(--text-label)] uppercase tracking-wider text-[color:var(--color-fg-40)] mb-2">
-                                    Attach a declaration?
-                                </legend>
-                                <div className="flex flex-col gap-2 text-[length:var(--text-body-sm)]">
-                                    {(
-                                        [
-                                            {
-                                                value: "compose" as const,
-                                                heading: `Yes — declare for my Agent #${agentId!.toString()}`,
-                                                detail: `The triple (Agent #${agentId!.toString()}, uses, this tool) is created on Intuition. Your wallet still holds the stake.`,
-                                            },
-                                            {
-                                                value: "bet" as const,
-                                                heading: "No — just stake",
-                                                detail: "Pure economic position. No triple. Anonymous in graph terms.",
-                                            },
-                                        ]
-                                    ).map(({value, heading, detail}) => {
-                                        const active = effectiveMode === value;
-                                        return (
-                                            <label
-                                                key={value}
-                                                className={[
-                                                    "cursor-pointer p-3 border",
-                                                    active
-                                                        ? "border-[color:var(--color-accent)]"
-                                                        : "border-[color:var(--color-border)]",
-                                                ].join(" ")}
-                                            >
-                                                <input
-                                                    type="radio"
-                                                    name="mode"
-                                                    className="sr-only"
-                                                    checked={active}
-                                                    onChange={() => setMode(value)}
-                                                    disabled={composeBusy}
-                                                />
-                                                <p
-                                                    className={[
-                                                        "font-mono",
-                                                        active
-                                                            ? "text-[color:var(--color-accent)]"
-                                                            : "text-[color:var(--color-fg)]",
-                                                    ].join(" ")}
-                                                >
-                                                    {heading}
-                                                </p>
-                                                <p className="text-[color:var(--color-fg-60)] mt-1">
-                                                    {detail}
-                                                </p>
-                                            </label>
-                                        );
-                                    })}
-                                </div>
-                            </fieldset>
-                        ) : null}
-
                         <label className="block text-[length:var(--text-body-sm)] mb-2">
                             <span className="text-[color:var(--color-fg-60)]">
                                 Stake amount
@@ -422,7 +256,7 @@ export function ToolDetail() {
                                 type="text"
                                 value={amountInput}
                                 onChange={(e) => setAmountInput(e.target.value)}
-                                disabled={composeBusy}
+                                disabled={stakeBusy}
                                 className="mt-1 block w-48 bg-transparent border border-[color:var(--color-border)] px-3 py-1.5 font-mono focus:outline-none focus:border-[color:var(--color-accent)]"
                             />
                             <span className="ml-2 font-mono text-[color:var(--color-fg-40)]">
@@ -431,50 +265,60 @@ export function ToolDetail() {
                         </label>
                         <button
                             type="button"
-                            onClick={
-                                effectiveMode === "compose" ? handleCompose : handleBet
-                            }
-                            disabled={composeBusy}
+                            onClick={handleStake}
+                            disabled={stakeBusy}
                             className="px-3 py-1.5 text-[length:var(--text-body-sm)]"
                         >
-                            {composeBusy
-                                ? effectiveMode === "compose"
-                                    ? "Declaring + staking…"
-                                    : "Staking…"
-                                : effectiveMode === "compose"
-                                  ? `Declare for Agent #${agentId!.toString()} + stake`
-                                  : "Stake"}
+                            {stakeBusy ? "Staking…" : "Stake"}
                         </button>
-                        {effectiveMode === "bet" && !hasAgent ? (
-                            <p className="mt-3 text-[length:var(--text-body-sm)] text-[color:var(--color-fg-40)]">
-                                Want to declare composition on Intuition's graph too?{" "}
-                                <Link
-                                    to="/agent"
-                                    className="text-[color:var(--color-accent)]"
-                                >
-                                    Register an agent
-                                </Link>
-                                .
-                            </p>
-                        ) : null}
-                        {composeError ? (
+                        {stakeError ? (
                             <p className="mt-4 text-[length:var(--text-body-sm)] font-mono break-all">
-                                Error: {composeError}
+                                Error: {stakeError}
                             </p>
                         ) : null}
-                        {composeSteps.tripleTx ||
-                        composeSteps.agentAtomTx ||
-                        composeSteps.toolAtomTx ||
-                        composeSteps.depositTx ? (
+                        {stakeSteps.toolAtomTx || stakeSteps.depositTx ? (
                             <div className="mt-4">
                                 <p className="text-[length:var(--text-label)] uppercase tracking-wider text-[color:var(--color-fg-40)] mb-1">
                                     Progress
                                 </p>
-                                <PartialSteps steps={composeSteps} />
+                                <PartialSteps steps={stakeSteps} />
                             </div>
                         ) : null}
                     </div>
                 )}
+            </section>
+
+            {/* ---------- How runtimes use this tool ---------- */}
+            <section className="mt-16">
+                <h2 className="font-medium mb-2">How a runtime uses this tool</h2>
+                <p className="text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)] mb-6 max-w-[680px]">
+                    Agents don't click buttons. A runtime embeds{" "}
+                    <span className="font-mono">@arp/sdk</span>, holds a one-time
+                    delegation signed by its operator, and declares + stakes on
+                    tools it actually composes with — automatically, every time
+                    it works.
+                </p>
+                <pre className="font-mono text-[length:var(--text-body-sm)] border border-[color:var(--color-border)] p-4 overflow-x-auto">
+{`import {createArpClient, findModuleBySchemaURI} from "@arp/sdk";
+
+// 1. Discover this tool (read-only, no auth).
+const arp = createArpClient();
+const tool = await findModuleBySchemaURI(arp, ${JSON.stringify(m.schemaURI)});
+
+// 2. After the agent actually uses the tool, declare + stake
+//    via the delegation its operator signed once. Pseudocode —
+//    your runtime supplies the redeemer + delegation chain:
+await runtime.declareUsage({
+    toolAtomId: tool.atomId,
+    stakeWei: parseEther("0.01"),
+});`}
+                </pre>
+                <p className="mt-4 text-[length:var(--text-body-sm)] text-[color:var(--color-fg-40)]">
+                    See <span className="font-mono">scripts/agent-server.ts</span>{" "}
+                    in the repo for a working runtime — fuzzy-matches the
+                    methodologies it used to ARP modules, then stakes each one
+                    under its delegation. No human in the loop.
+                </p>
             </section>
         </article>
     );
@@ -491,23 +335,15 @@ function Metric({label, value}: {label: string; value: string}) {
     );
 }
 
-function PositionTakenSummary({
-    mode,
+function StakeSummary({
     steps,
-    agentId,
     operatorAddress,
 }: {
-    mode: "compose" | "bet";
     steps: {
-        agentAtomTx?: string;
-        agentAtomCreated?: boolean;
         toolAtomTx?: string;
         toolAtomCreated?: boolean;
-        tripleTx?: string;
-        tripleCreated?: boolean;
         depositTx?: string;
     };
-    agentId: bigint | null;
     operatorAddress: `0x${string}` | null;
 }) {
     const shortAddr = operatorAddress
@@ -516,55 +352,19 @@ function PositionTakenSummary({
     return (
         <div className="border border-[color:var(--color-accent)] p-4">
             <p className="text-[length:var(--text-label)] uppercase tracking-wider text-[color:var(--color-accent)] mb-3">
-                {mode === "compose" ? "Declaration + stake recorded" : "Stake recorded"}
+                Stake recorded
             </p>
             <p className="text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)] mb-4 max-w-[640px]">
-                {mode === "compose" && agentId !== null ? (
-                    <>
-                        <span className="text-[color:var(--color-fg)]">
-                            Agent #{agentId.toString()}
-                        </span>{" "}
-                        now publicly declares it uses this tool. The triple is
-                        live on Intuition's graph. Your wallet{" "}
-                        <span className="font-mono">{shortAddr}</span> also
-                        backed the position with the staked tTRUST — the tool's
-                        TVL grew by that amount.
-                    </>
-                ) : (
-                    <>
-                        Your wallet{" "}
-                        <span className="font-mono">{shortAddr}</span> now holds
-                        a position on this tool's atom. No on-chain declaration
-                        was attached — pure economic stake. The tool's TVL grew
-                        by the staked amount.
-                    </>
-                )}
+                Your wallet{" "}
+                <span className="font-mono">{shortAddr}</span> now holds a
+                position on this tool's atom. The tool's TVL grew by the
+                staked amount.
             </p>
-            {mode === "compose" ? (
-                <>
-                    <ResultLine
-                        label="Agent atom"
-                        tx={steps.agentAtomTx}
-                        note={steps.agentAtomCreated ? "created" : "reused"}
-                    />
-                    <ResultLine
-                        label="Tool atom"
-                        tx={steps.toolAtomTx}
-                        note={steps.toolAtomCreated ? "created" : "reused"}
-                    />
-                    <ResultLine
-                        label="Triple agent → uses → tool"
-                        tx={steps.tripleTx}
-                        note={steps.tripleCreated ? "created" : "reused"}
-                    />
-                </>
-            ) : (
-                <ResultLine
-                    label="Tool atom"
-                    tx={steps.toolAtomTx}
-                    note={steps.toolAtomCreated ? "created" : "reused"}
-                />
-            )}
+            <ResultLine
+                label="Tool atom"
+                tx={steps.toolAtomTx}
+                note={steps.toolAtomCreated ? "created" : "reused"}
+            />
             <ResultLine label="Stake on tool atom" tx={steps.depositTx} />
         </div>
     );
@@ -574,17 +374,13 @@ function PartialSteps({
     steps,
 }: {
     steps: {
-        agentAtomTx?: string;
         toolAtomTx?: string;
-        tripleTx?: string;
         depositTx?: string;
     };
 }) {
     return (
         <ul className="text-[length:var(--text-body-sm)] font-mono">
-            {steps.agentAtomTx ? <li>✓ agent atom — {short(steps.agentAtomTx)}</li> : null}
             {steps.toolAtomTx ? <li>✓ tool atom — {short(steps.toolAtomTx)}</li> : null}
-            {steps.tripleTx ? <li>✓ triple — {short(steps.tripleTx)}</li> : null}
             {steps.depositTx ? <li>✓ stake — {short(steps.depositTx)}</li> : null}
         </ul>
     );
