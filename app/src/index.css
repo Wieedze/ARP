@@ -1,6 +1,8 @@
 @import "tailwindcss";
 
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap");
+/* Fonts (Inter + JetBrains Mono) are loaded via <link rel="stylesheet">
+   in app/index.html — CSS @import would have to precede every other rule,
+   which conflicts with the tailwindcss expansion above. */
 
 /* -------------------------------------------------------------------------- */
 /* Design tokens — typographic-driven, monochrome, single accent.              */
