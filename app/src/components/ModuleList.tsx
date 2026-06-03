@@ -1,7 +1,10 @@
 import {useMemo, useState} from "react";
+import {Link} from "react-router-dom";
+import {useAccount} from "wagmi";
 
 import {deployments} from "../lib/deployments";
 import {type Module} from "../lib/abi/module-registry";
+import {useAgentId} from "../hooks/use-agent";
 import {useAllModules, useDomains} from "../hooks/use-modules";
 
 /**
@@ -15,6 +18,9 @@ export function ModuleList() {
     const {modules, isLoading, error, refetch} = useAllModules();
     const domains = useDomains(modules);
 
+    const {isConnected} = useAccount();
+    const {data: agentId} = useAgentId();
+
     const [filter, setFilter] = useState<string | null>(null);
 
     const filtered = useMemo(() => {
@@ -22,15 +28,31 @@ export function ModuleList() {
         return modules.filter((m) => m.domain === filter);
     }, [modules, filter]);
 
+    const agentCta = isConnected
+        ? agentId
+            ? {to: "/agent", label: `Your agent #${agentId.toString()}`}
+            : {to: "/agent", label: "Register your agent"}
+        : null;
+
     return (
         <section>
-            <header className="mb-10">
-                <h1 className="font-sans text-[length:var(--text-display)] leading-[var(--leading-display)] tracking-tight font-semibold">
-                    Modules
-                </h1>
-                <p className="mt-2 text-[color:var(--color-fg-60)]">
-                    Evaluation modules registered on the Agent Reputation Protocol.
-                </p>
+            <header className="mb-10 flex items-baseline justify-between gap-4 flex-wrap">
+                <div>
+                    <h1 className="font-sans text-[length:var(--text-display)] leading-[var(--leading-display)] tracking-tight font-semibold">
+                        Modules
+                    </h1>
+                    <p className="mt-2 text-[color:var(--color-fg-60)]">
+                        Evaluation modules registered on the Agent Reputation Protocol.
+                    </p>
+                </div>
+                {agentCta ? (
+                    <Link
+                        to={agentCta.to}
+                        className="text-[length:var(--text-body-sm)] text-[color:var(--color-accent)]"
+                    >
+                        {agentCta.label} →
+                    </Link>
+                ) : null}
             </header>
 
             {domains.length > 0 ? (
