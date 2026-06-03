@@ -9,7 +9,8 @@
   },
   "workspaces": [
     "app",
-    "contracts"
+    "contracts",
+    "sdk"
   ],
   "scripts": {
     "dev": "bun --filter app dev",

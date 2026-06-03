@@ -1,0 +1,40 @@
+{
+    "name": "@arp/sdk",
+    "version": "0.0.1",
+    "description": "ARP — Agent Reputation Protocol. Read-only SDK to discover agents and tools and aggregate their on-chain reputation from any TypeScript runtime.",
+    "type": "module",
+    "exports": {
+        ".": {
+            "types": "./src/index.ts",
+            "default": "./src/index.ts"
+        }
+    },
+    "main": "./src/index.ts",
+    "types": "./src/index.ts",
+    "files": [
+        "src",
+        "README.md"
+    ],
+    "scripts": {
+        "test": "vitest run",
+        "test:watch": "vitest",
+        "build": "tsc -p tsconfig.json",
+        "lint": "tsc --noEmit -p tsconfig.json"
+    },
+    "dependencies": {
+        "viem": "2.52.0"
+    },
+    "devDependencies": {
+        "typescript": "~6.0.2",
+        "vitest": "^4.1.8"
+    },
+    "peerDependenciesMeta": {},
+    "keywords": [
+        "agent-reputation",
+        "erc-8004",
+        "intuition",
+        "metamask-delegations",
+        "trust-layer"
+    ],
+    "license": "MIT"
+}
