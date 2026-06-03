@@ -105,6 +105,7 @@ export function Hire() {
                         agentId: selectedAgent.agentId.toString(),
                         runtimeWallet: selectedAgent.runtimeWallet,
                     },
+                    requesterAddress,
                     paymentTxHash,
                     budgetWei: budgetWei.toString(),
                     response: body,
@@ -220,7 +221,7 @@ export function Hire() {
                             >
                                 {status === "pending"
                                     ? "Paying and awaiting result…"
-                                    : `Hire ${selectedAgent.agentId === undefined ? "" : "#" + selectedAgent.agentId.toString()}`}
+                                    : `Hire #${selectedAgent.agentId.toString()}`}
                             </button>
                             {error ? (
                                 <p className="mt-4 text-[length:var(--text-body-sm)] font-mono break-all">
@@ -357,6 +358,7 @@ export type AgentAuditResponse = {
 // one place so result UI doesn't have to re-derive shapes.
 export type HireResultPayload = {
     agent: {agentId: string; runtimeWallet: Address};
+    requesterAddress: Address;
     paymentTxHash: Hex;
     budgetWei: string;
     response: AgentAuditResponse & {

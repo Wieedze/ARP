@@ -46,12 +46,7 @@ export function HireResult() {
         if (!payload) return;
         const {receipt} = payload.response;
         const digestStr = `${receipt.requestHash}|${receipt.resultHash}|${receipt.agent}`;
-        // We re-derive the digest the server signed. The server applied
-        // keccak twice (once over the input string, once over the
-        // request|result|agent join). We need to mirror that here.
-        // Actually the server signs `keccak(toHex(string))` via the
-        // signMessage with `{raw: digest}` path, so the prefix is the
-        // standard "\x19Ethereum Signed Message:\n32" prefix.
+        // Mirror the server's keccak256(toHex(digestStr)) → personal_sign prefix.
         (async () => {
             const recovered = await recoverAddress({
                 hash: hashMessage({raw: keccak256Browser(digestStr)}),
@@ -175,6 +170,7 @@ export function HireResult() {
             {response.subcontract ? (
                 <SubcontractSection
                     subcontract={response.subcontract}
+                    requesterAddress={payload.requesterAddress}
                     auditorAddress={agent.runtimeWallet}
                 />
             ) : null}
@@ -193,9 +189,11 @@ export function HireResult() {
 
 function SubcontractSection({
     subcontract,
+    requesterAddress,
     auditorAddress,
 }: {
     subcontract: NonNullable<HireResultPayload["response"]["subcontract"]>;
+    requesterAddress: Address;
     auditorAddress: Address;
 }) {
     const {subPaymentTxHash, specialistResponse} = subcontract;
@@ -231,10 +229,10 @@ function SubcontractSection({
                 </h2>
                 <p className="text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)] mt-1">
                     The Auditor paid the Specialist a sub-fee and signed a
-                    leaf delegation rooted at Maria's compose authority. The
-                    Specialist ran an independent audit and posted its own
-                    stakes via the chained delegation. Two distinct
-                    reputations, one bounded budget.
+                    leaf delegation rooted at the requester's compose
+                    authority. The Specialist ran an independent audit and
+                    posted its own stakes via the chained delegation. Two
+                    distinct reputations, one bounded budget.
                 </p>
             </header>
 
@@ -252,7 +250,8 @@ function SubcontractSection({
                     Chain
                 </dt>
                 <dd className="font-mono">
-                    Maria → <ExplorerAddressLink address={auditorAddress} /> →{" "}
+                    <ExplorerAddressLink address={requesterAddress} /> →{" "}
+                    <ExplorerAddressLink address={auditorAddress} /> →{" "}
                     <ExplorerAddressLink address={receipt.agent} />
                 </dd>
             </dl>
