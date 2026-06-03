@@ -99,8 +99,8 @@ The operator's runtime key is the `delegate` for both — single keypair, two sc
 
 ### Revert-path demonstration
 
-- [ ] In the `/agent` wizard or a sibling diagnostic surface, add a **"Test revert" button** that explicitly calls `redeemRegisterModule` against Delegation A with a `domain` outside the allowed list (e.g., `defi-strategy` when the delegation only allows `solidity-audit`)
-- [ ] Surface the resulting `DomainNotAllowed(bytes32)` error from the simulation step so the demo clearly shows the enforcer firing
+- [x] **Implemented at the script level rather than the UI.** `scripts/agent-loop.ts` catches `DomainNotAllowed` on each `redeemRegisterModule` attempt (see `agent-loop.ts` line ~168) and logs a `domain rejected (DomainNotAllowed)` structured line, then continues with the next manifest entry. Because the manifest deliberately spans more domains than any single `publish` delegation will typically cover, the revert path fires naturally during a single `bun run scripts/agent-loop.ts` and is visible in the terminal log of the demo video.
+- [x] **Decision recorded.** A separate `/agent` "Test revert" UI surface would have duplicated the demo signal without adding value — the headless script already shows the enforcer firing in real time, in the same window where every other agent action is being narrated. Adding a UI button would dilute the wizard's role (operator configures, agent acts elsewhere). Documented in ADR 0012.
 
 ### Compose flow (`/tool/:id`)
 
@@ -131,4 +131,4 @@ The operator's runtime key is the `delegate` for both — single keypair, two sc
 
 > *Does this preserve the hackathon submission narrative?*
 >
-> [yes/no, ≤ one sentence, references `docs/00_HACKATHON_PIVOT.md`]
+> Yes — the implementation directly materializes the pivot narrative ("agent registers via MetaMask Smart Accounts, declares its tool composition on Intuition's semantic graph, stakes TRUST on its tools, posts attestations autonomously within a scoped ERC-7710 delegation, bounded by ARP-specific caveat enforcers"): the operator signs two delegations once in `/agent`, the headless `scripts/agent-loop.ts` runtime publishes modules + declares triples + stakes tTRUST autonomously under those delegations, and the same loop demonstrates the enforcer reverts (`DomainNotAllowed`, `StakeExceedsCap`) — see `docs/00_HACKATHON_PIVOT.md`.
