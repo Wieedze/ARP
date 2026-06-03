@@ -8,11 +8,32 @@ import {
     type Transport,
     type WalletClient,
 } from "viem";
+import {generatePrivateKey, privateKeyToAccount} from "viem/accounts";
 
 import {identityRegistryAbi} from "../lib/abi/identity-registry";
 import {deployments} from "../lib/deployments";
 
 const ADDRESS = deployments.arp.identityRegistry;
+
+/**
+ * EIP-712 domain for the deployed IdentityRegistry. `name` and `version`
+ * match the constants in the contract's constructor; `chainId` and
+ * `verifyingContract` are bound to our Intuition Testnet deployment.
+ */
+const EIP712_DOMAIN = {
+    name: "ERC-8004 IdentityRegistry",
+    version: "1.1",
+    chainId: deployments.chain.chainId,
+    verifyingContract: ADDRESS,
+} as const;
+
+const SET_AGENT_WALLET_TYPES = {
+    SetAgentWallet: [
+        {name: "agentId", type: "uint256"},
+        {name: "newWallet", type: "address"},
+        {name: "deadline", type: "uint256"},
+    ],
+} as const;
 
 /**
  * Mint a new ERC-8004 agent NFT for the caller. The `register()` overload
@@ -80,4 +101,67 @@ export async function findAgentIdByOwner(params: {
     // Pick the most recent; logs are returned in chronological order.
     const last = logs[logs.length - 1];
     return last.args.agentId ?? null;
+}
+
+/**
+ * Generate a fresh agent runtime keypair and bind it to an agent NFT via
+ * `setAgentWallet`.
+ *
+ * The conceptual split (ADR 0010, post-recentrage):
+ *
+ *   - The agent NFT owner = the OPERATOR (human team running the agent)
+ *   - The agentWallet     = the agent's RUNTIME wallet (the keys the
+ *                            autonomous program holds)
+ *
+ * ERC-8004 binds these explicitly: `setAgentWallet(agentId, newWallet, ...)`.
+ * The runtime wallet must consent via an EIP-712 signature over
+ * `SetAgentWallet(agentId, newWallet, deadline)` — proves the new wallet
+ * agreed to be designated.
+ *
+ * For the demo we generate the runtime key in the browser and immediately
+ * compute the signature. The caller is responsible for surfacing the
+ * generated private key to the operator (one-time display) so it can be
+ * given to the agent's runtime later.
+ *
+ * @returns `{ agentWalletAddress, agentWalletPrivateKey, tx }`. The private
+ *          key is returned ONCE — the caller MUST display it and the
+ *          operator MUST save it; there is no recovery.
+ */
+export async function designateAgentRuntimeWallet(params: {
+    agentId: bigint;
+    operatorWalletClient: WalletClient<Transport, Chain, Account>;
+    publicClient: PublicClient;
+    /** Seconds from now after which the signature expires. Default 1 h. */
+    validForSeconds?: number;
+}): Promise<{agentWalletAddress: Address; agentWalletPrivateKey: Hex; tx: Hex}> {
+    const privateKey = generatePrivateKey();
+    const account = privateKeyToAccount(privateKey);
+
+    const now = Math.floor(Date.now() / 1000);
+    const deadline = BigInt(now + (params.validForSeconds ?? 3600));
+
+    const signature = await account.signTypedData({
+        domain: EIP712_DOMAIN,
+        types: SET_AGENT_WALLET_TYPES,
+        primaryType: "SetAgentWallet",
+        message: {
+            agentId: params.agentId,
+            newWallet: account.address,
+            deadline,
+        },
+    });
+
+    const tx = await params.operatorWalletClient.writeContract({
+        address: ADDRESS,
+        abi: identityRegistryAbi,
+        functionName: "setAgentWallet",
+        args: [params.agentId, account.address, deadline, signature],
+    });
+    await params.publicClient.waitForTransactionReceipt({hash: tx});
+
+    return {
+        agentWalletAddress: account.address,
+        agentWalletPrivateKey: privateKey,
+        tx,
+    };
 }

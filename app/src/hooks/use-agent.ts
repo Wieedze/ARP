@@ -34,6 +34,28 @@ export function useAgentId() {
 }
 
 /**
+ * Read the runtime wallet bound to an agent NFT via `setAgentWallet`.
+ * Returns the zero address if no runtime wallet has been designated yet.
+ */
+export function useAgentWallet(agentId: bigint | null | undefined) {
+    return useQuery({
+        queryKey: ["agentWallet", agentId?.toString()],
+        queryFn: async () => {
+            if (!agentId) return null;
+            const result = await publicClient.readContract({
+                address: ADDRESS,
+                abi: identityRegistryAbi,
+                functionName: "agentWallet",
+                args: [agentId],
+            });
+            return result;
+        },
+        enabled: Boolean(agentId),
+        staleTime: 30_000,
+    });
+}
+
+/**
  * Read `totalAgents()` from the IdentityRegistry. Useful for the metrics
  * surface ("N agents registered").
  */

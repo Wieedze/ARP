@@ -58,12 +58,40 @@ export const identityRegistryAbi = [
         outputs: [{name: "", type: "string"}],
     },
     {
+        type: "function",
+        stateMutability: "view",
+        name: "agentWallet",
+        inputs: [{name: "agentId", type: "uint256"}],
+        outputs: [{name: "", type: "address"}],
+    },
+    {
+        type: "function",
+        stateMutability: "nonpayable",
+        name: "setAgentWallet",
+        inputs: [
+            {name: "agentId", type: "uint256"},
+            {name: "newWallet", type: "address"},
+            {name: "deadline", type: "uint256"},
+            {name: "signature", type: "bytes"},
+        ],
+        outputs: [],
+    },
+    {
         type: "event",
         name: "Registered",
         inputs: [
             {name: "agentId", type: "uint256", indexed: true},
             {name: "agentURI", type: "string", indexed: false},
             {name: "to", type: "address", indexed: true},
+        ],
+    },
+    {
+        type: "event",
+        name: "AgentWalletSet",
+        inputs: [
+            {name: "agentId", type: "uint256", indexed: true},
+            {name: "wallet", type: "address", indexed: true},
+            {name: "setBy", type: "address", indexed: true},
         ],
     },
 ] as const;
