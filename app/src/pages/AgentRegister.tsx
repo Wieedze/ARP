@@ -346,11 +346,24 @@ export function AgentRegister() {
                     error={step2Error}
                 >
                     {runtimeBound && runtimeWalletQuery.data ? (
-                        <DoneLine
-                            label="Runtime wallet"
-                            value={short(runtimeWalletQuery.data)}
-                            tx={generatedRuntime?.tx ?? null}
-                        />
+                        <>
+                            <DoneLine
+                                label="Runtime wallet"
+                                value={short(runtimeWalletQuery.data)}
+                                tx={generatedRuntime?.tx ?? null}
+                            />
+                            <button
+                                type="button"
+                                onClick={handleDesignateRuntime}
+                                disabled={step2Status === "pending"}
+                                className="mt-3 px-3 py-1.5 text-[length:var(--text-body-sm)] border border-[color:var(--color-border)]"
+                                title="Rotates the runtime key. Existing delegations become unusable — re-sign at step 4 after rotation."
+                            >
+                                {step2Status === "pending"
+                                    ? "Rotating…"
+                                    : "Re-generate runtime keypair"}
+                            </button>
+                        </>
                     ) : step1Done ? (
                         <button
                             type="button"
