@@ -42,6 +42,7 @@ import {
     redeemCreateAtom,
     redeemDeclareTriple,
     redeemEnsureAtomForThing,
+    redeemEnsureAtomForURI,
     redeemRegisterModule,
     redeemStakeOnAtom,
 } from "../delegation-redeem";
@@ -258,6 +259,68 @@ describe("redeemEnsureAtomForThing", () => {
         expect(args.execution.value).toBe(100n);
         const decoded = decodeFunctionData({abi: multiVaultAbi, data: args.execution.callData});
         expect(decoded.functionName).toBe("createAtoms");
+        expect(pc.waitForTransactionReceipt).toHaveBeenCalledWith({hash: TX_HASH});
+    });
+});
+
+describe("redeemEnsureAtomForURI", () => {
+    const TOOL_URI = "ipfs://bafkrei-slither-schema";
+    const TOOL_DATA = stringToHex(TOOL_URI);
+    const TOOL_ATOM_FROM_URI: Hex = `0x${"88".repeat(32)}`;
+
+    it("returns {created:false} and skips redeem when the URI atom exists", async () => {
+        const pc = makeMockPublicClient();
+        const wc = makeMockWalletClient();
+        pc.readContract.mockImplementation(
+            readContractDispatcher({
+                calculateAtomId: TOOL_ATOM_FROM_URI,
+                isTermCreated: true,
+            }),
+        );
+
+        const result = await redeemEnsureAtomForURI({
+            signedDelegation: fakeDelegation,
+            agentWalletClient: wc,
+            publicClient: pc,
+            uri: TOOL_URI,
+        });
+        expect(result).toEqual({atomId: TOOL_ATOM_FROM_URI, created: false});
+        expect(mockRedeem).not.toHaveBeenCalled();
+        expect(mockPin).not.toHaveBeenCalled();
+    });
+
+    it("redeems createAtoms from stringToHex(uri) when the atom is new — no pinThing path", async () => {
+        const pc = makeMockPublicClient();
+        const wc = makeMockWalletClient();
+        pc.readContract.mockImplementation(
+            readContractDispatcher({
+                calculateAtomId: TOOL_ATOM_FROM_URI,
+                isTermCreated: false,
+                getAtomCost: 250n,
+            }),
+        );
+
+        const result = await redeemEnsureAtomForURI({
+            signedDelegation: fakeDelegation,
+            agentWalletClient: wc,
+            publicClient: pc,
+            uri: TOOL_URI,
+        });
+
+        expect(result.created).toBe(true);
+        expect(result.atomId).toBe(TOOL_ATOM_FROM_URI);
+        expect(result.tx).toBe(TX_HASH);
+        expect(mockPin).not.toHaveBeenCalled();
+        expect(mockRedeem).toHaveBeenCalledTimes(1);
+        const args = mockRedeem.mock.calls[0][0] as {
+            execution: {target: Address; value: bigint; callData: Hex};
+        };
+        expect(args.execution.value).toBe(250n);
+        const decoded = decodeFunctionData({abi: multiVaultAbi, data: args.execution.callData});
+        expect(decoded.functionName).toBe("createAtoms");
+        if (decoded.functionName === "createAtoms") {
+            expect(decoded.args).toEqual([[TOOL_DATA], [250n]]);
+        }
         expect(pc.waitForTransactionReceipt).toHaveBeenCalledWith({hash: TX_HASH});
     });
 });

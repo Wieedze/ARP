@@ -163,6 +163,83 @@ describe("ensureAtomForThing", () => {
     });
 });
 
+describe("ensureAtomForURI", () => {
+    const TOOL_URI = "ipfs://bafkrei-slither";
+    const TOOL_DATA = stringToHex(TOOL_URI);
+    const TOOL_ATOM_FROM_URI: Hex = `0x${"77".repeat(32)}`;
+
+    beforeEach(() => {
+        // Reset the module-scoped pinThing mock so the assertions that
+        // ensureAtomForURI never pins start from a clean slate.
+        mockPin.mockReset();
+    });
+
+    function uriReader() {
+        return ({args}: {args: readonly unknown[]}) => {
+            const data = args[0] as Hex;
+            if (data === TOOL_DATA) return TOOL_ATOM_FROM_URI;
+            throw new Error(`unexpected atomData ${data}`);
+        };
+    }
+
+    it("returns {created:false} when the canonical URI's atom already exists, skipping createAtoms", async () => {
+        const pc = makeMockPublicClient();
+        const wc = makeMockWalletClient();
+        pc.readContract.mockImplementation(
+            readContractDispatcher({
+                calculateAtomId: uriReader(),
+                isTermCreated: ({args}: {args: readonly unknown[]}) =>
+                    args[0] === TOOL_ATOM_FROM_URI,
+            }),
+        );
+        const {ensureAtomForURI} = await freshGraph();
+
+        const result = await ensureAtomForURI({
+            uri: TOOL_URI,
+            walletClient: wc,
+            publicClient: pc,
+        });
+
+        expect(result).toEqual({atomId: TOOL_ATOM_FROM_URI, created: false});
+        expect(wc.writeContract).not.toHaveBeenCalled();
+        expect(mockPin).not.toHaveBeenCalled();
+    });
+
+    it("creates the atom from stringToHex(uri) directly, never calling pinThing", async () => {
+        const pc = makeMockPublicClient();
+        const wc = makeMockWalletClient();
+        pc.readContract.mockImplementation(
+            readContractDispatcher({
+                calculateAtomId: uriReader(),
+                isTermCreated: () => false,
+                getAtomCost: ATOM_COST,
+            }),
+        );
+        const {ensureAtomForURI} = await freshGraph();
+
+        const result = await ensureAtomForURI({
+            uri: TOOL_URI,
+            walletClient: wc,
+            publicClient: pc,
+        });
+
+        expect(result.created).toBe(true);
+        expect(result.atomId).toBe(TOOL_ATOM_FROM_URI);
+        expect(mockPin).not.toHaveBeenCalled();
+        const call = wc.writeContract.mock.calls[0][0] as {
+            address: string;
+            functionName: string;
+            args: readonly unknown[];
+            value: bigint;
+            chain: {id: number};
+        };
+        expect(call.address).toBe(MULTI_VAULT);
+        expect(call.functionName).toBe("createAtoms");
+        expect(call.args).toEqual([[TOOL_DATA], [ATOM_COST]]);
+        expect(call.value).toBe(ATOM_COST);
+    });
+});
+
 describe("getOrCreateUsesPredicateAtomId", () => {
     it("ensures the 'uses' atom on first call, reuses cache on the second", async () => {
         const pc = makeMockPublicClient();

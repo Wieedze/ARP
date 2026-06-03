@@ -12,7 +12,11 @@ import {useAgentId} from "../hooks/use-agent";
 import {useAtomStake} from "../hooks/use-atom-stake";
 import {useModule} from "../hooks/use-modules";
 import {depositOnAtom} from "../services/atom-stake";
-import {declareUsesTriple, ensureAtomForThing} from "../services/intuition-graph";
+import {
+    declareUsesTriple,
+    ensureAtomForThing,
+    ensureAtomForURI,
+} from "../services/intuition-graph";
 
 type StepStatus = "idle" | "pending" | "done" | "error";
 
@@ -74,6 +78,8 @@ export function ToolDetail() {
         agentAtomTx?: string;
         agentAtomCreated?: boolean;
         agentAtomId?: Hex;
+        toolAtomTx?: string;
+        toolAtomCreated?: boolean;
         tripleTx?: string;
         depositTx?: string;
     }>({});
@@ -95,7 +101,7 @@ export function ToolDetail() {
             const amount = parseEther(amountInput.trim());
             const wc = await getActiveWalletClient();
 
-            // A. Agent atom (idempotent — checks isTermCreated internally)
+            // A. Agent atom (idempotent — pinned Thing for the agent identity)
             const agentAtomRes = await ensureAtomForThing({
                 thing: {
                     name: `ARP Agent #${agentId.toString()}`,
@@ -111,18 +117,33 @@ export function ToolDetail() {
                 agentAtomId: agentAtomRes.atomId,
             }));
 
-            // B. Triple agent → uses → tool
+            // B. Tool atom — created directly from the module's `schemaURI`
+            // (the canonical tool URI per ADR 0008). Skipping this would
+            // make the triple below reference an atom that does not exist
+            // on chain — MultiVault_TermDoesNotExist.
+            const toolAtomRes = await ensureAtomForURI({
+                uri: m.schemaURI,
+                walletClient: wc,
+                publicClient,
+            });
+            setComposeSteps((s) => ({
+                ...s,
+                toolAtomTx: toolAtomRes.tx,
+                toolAtomCreated: toolAtomRes.created,
+            }));
+
+            // C. Triple agent → uses → tool
             const tripleRes = await declareUsesTriple({
                 agentAtomId: agentAtomRes.atomId,
-                toolAtomId: computedToolAtomId,
+                toolAtomId: toolAtomRes.atomId,
                 walletClient: wc,
                 publicClient,
             });
             setComposeSteps((s) => ({...s, tripleTx: tripleRes.tx}));
 
-            // C. Stake on the tool atom
+            // D. Stake on the tool atom
             const depositTx = await depositOnAtom({
-                atomId: computedToolAtomId,
+                atomId: toolAtomRes.atomId,
                 amount,
                 walletClient: wc,
                 publicClient,
@@ -300,6 +321,7 @@ export function ToolDetail() {
                         ) : null}
                         {composeSteps.tripleTx ||
                         composeSteps.agentAtomTx ||
+                        composeSteps.toolAtomTx ||
                         composeSteps.depositTx ? (
                             <div className="mt-4">
                                 <p className="text-[length:var(--text-label)] uppercase tracking-wider text-[color:var(--color-fg-40)] mb-1">
@@ -332,6 +354,8 @@ function ComposeResult({
     steps: {
         agentAtomTx?: string;
         agentAtomCreated?: boolean;
+        toolAtomTx?: string;
+        toolAtomCreated?: boolean;
         tripleTx?: string;
         depositTx?: string;
     };
@@ -346,6 +370,11 @@ function ComposeResult({
                 tx={steps.agentAtomTx}
                 note={steps.agentAtomCreated ? "created" : "reused"}
             />
+            <ResultLine
+                label="Tool atom"
+                tx={steps.toolAtomTx}
+                note={steps.toolAtomCreated ? "created" : "reused"}
+            />
             <ResultLine label="Triple agent → uses → tool" tx={steps.tripleTx} />
             <ResultLine label="Stake on tool atom" tx={steps.depositTx} />
         </div>
@@ -355,11 +384,17 @@ function ComposeResult({
 function PartialSteps({
     steps,
 }: {
-    steps: {agentAtomTx?: string; tripleTx?: string; depositTx?: string};
+    steps: {
+        agentAtomTx?: string;
+        toolAtomTx?: string;
+        tripleTx?: string;
+        depositTx?: string;
+    };
 }) {
     return (
         <ul className="text-[length:var(--text-body-sm)] font-mono">
             {steps.agentAtomTx ? <li>✓ agent atom — {short(steps.agentAtomTx)}</li> : null}
+            {steps.toolAtomTx ? <li>✓ tool atom — {short(steps.toolAtomTx)}</li> : null}
             {steps.tripleTx ? <li>✓ triple — {short(steps.tripleTx)}</li> : null}
             {steps.depositTx ? <li>✓ stake — {short(steps.depositTx)}</li> : null}
         </ul>

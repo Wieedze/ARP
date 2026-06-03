@@ -94,6 +94,58 @@ export async function ensureAtomForThing(params: {
 }
 
 /**
+ * Ensure an atom exists for a canonical URI (e.g. a module's `schemaURI`).
+ *
+ * Unlike `ensureAtomForThing`, no Hasura pin is performed — the URI is
+ * already canonical (typically an IPFS CID committed in the module
+ * manifest or `ModuleRegistry`'s registration). `atomData` is just
+ * `stringToHex(uri)`, and the atomId is `calculateAtomId` of that.
+ *
+ * Use this for the **tool atom** when declaring `(agent, uses, tool)`
+ * triples — pinning a different Thing for the tool would create a
+ * different atomId and the triple would reference an atom that does not
+ * exist on chain (`MultiVault_TermDoesNotExist`).
+ *
+ * See ADR 0008 (the schemaURI is the canonical tool URI).
+ */
+export async function ensureAtomForURI(params: {
+    uri: string;
+    walletClient: WalletClient<Transport, Chain, Account>;
+    publicClient: PublicClient;
+}): Promise<{atomId: Hex; created: boolean; tx?: Hex}> {
+    const atomData = stringToHex(params.uri);
+    const atomId = await params.publicClient.readContract({
+        address: MULTI_VAULT,
+        abi: multiVaultAbi,
+        functionName: "calculateAtomId",
+        args: [atomData],
+    });
+    const exists = await params.publicClient.readContract({
+        address: MULTI_VAULT,
+        abi: multiVaultAbi,
+        functionName: "isTermCreated",
+        args: [atomId],
+    });
+    if (exists) return {atomId, created: false};
+
+    const atomCost = await params.publicClient.readContract({
+        address: MULTI_VAULT,
+        abi: multiVaultAbi,
+        functionName: "getAtomCost",
+    });
+    const tx = await params.walletClient.writeContract({
+        address: MULTI_VAULT,
+        abi: multiVaultAbi,
+        functionName: "createAtoms",
+        args: [[atomData], [atomCost]],
+        value: atomCost,
+        chain: intuitionTestnet,
+    });
+    await params.publicClient.waitForTransactionReceipt({hash: tx});
+    return {atomId, created: true, tx};
+}
+
+/**
  * Return the atom ID for the canonical ARP "uses" predicate. Lazily
  * pinned + cached at module scope.
  */

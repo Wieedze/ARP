@@ -174,6 +174,52 @@ export async function redeemCreateAtom(
 }
 
 /**
+ * Ensure the atom for a canonical URI exists on chain, creating it via
+ * the compose delegation if needed. Mirrors `ensureAtomForURI` from
+ * `intuition-graph.ts` but redeems through the DelegationManager so the
+ * Smart Account (delegator) becomes the atom's creator on chain.
+ *
+ * Use this for tool atoms (where the canonical URI is the module's
+ * `schemaURI`). Use `redeemEnsureAtomForThing` for the agent/predicate
+ * atoms (where the Thing is pinned freshly and its URI is the result).
+ */
+export async function redeemEnsureAtomForURI(
+    params: RedeemCommon & {
+        uri: string;
+        publicClient: PublicClient;
+    },
+): Promise<{atomId: Hex; created: boolean; tx?: Hex}> {
+    const atomData = stringToHex(params.uri);
+    const atomId = await params.publicClient.readContract({
+        address: MULTI_VAULT,
+        abi: multiVaultAbi,
+        functionName: "calculateAtomId",
+        args: [atomData],
+    });
+    const exists = await params.publicClient.readContract({
+        address: MULTI_VAULT,
+        abi: multiVaultAbi,
+        functionName: "isTermCreated",
+        args: [atomId],
+    });
+    if (exists) return {atomId, created: false};
+
+    const atomCost = await params.publicClient.readContract({
+        address: MULTI_VAULT,
+        abi: multiVaultAbi,
+        functionName: "getAtomCost",
+    });
+    const tx = await redeemCreateAtom({
+        signedDelegation: params.signedDelegation,
+        agentWalletClient: params.agentWalletClient,
+        atomData,
+        atomCost,
+    });
+    await params.publicClient.waitForTransactionReceipt({hash: tx});
+    return {atomId, created: true, tx};
+}
+
+/**
  * Pin a Thing, check if the resulting atom exists on chain, and create it
  * under the compose delegation if not. Mirrors `ensureAtomForThing` from
  * `intuition-graph.ts` but routes the create through `redeemDelegation`

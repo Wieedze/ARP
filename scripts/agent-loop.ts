@@ -36,7 +36,6 @@ import {
     formatEther,
     http,
     parseEther,
-    stringToHex,
     type Hex,
 } from "viem";
 import {privateKeyToAccount} from "viem/accounts";
@@ -48,6 +47,7 @@ import {deserializeDelegation} from "../app/src/services/delegation";
 import {
     redeemDeclareTriple,
     redeemEnsureAtomForThing,
+    redeemEnsureAtomForURI,
     redeemRegisterModule,
     redeemStakeOnAtom,
 } from "../app/src/services/delegation-redeem";
@@ -181,39 +181,20 @@ async function main() {
 
         // 3.b — compose: ensure tool atom + declare triple + stake
         try {
-            const toolAtomData = stringToHex(entry.schemaURI);
-            const toolAtomId = await publicClient.readContract({
-                address: deployments.intuition.multiVault,
-                abi: multiVaultAbi,
-                functionName: "calculateAtomId",
-                args: [toolAtomData],
+            // The tool atom is created from the manifest's `schemaURI`
+            // directly (ADR 0008 — the schemaURI IS the canonical tool URI).
+            // Idempotent: if it already exists, redeemEnsureAtomForURI
+            // returns the existing atomId without sending a tx.
+            const toolAtomRes = await redeemEnsureAtomForURI({
+                signedDelegation: composeDel,
+                agentWalletClient,
+                publicClient,
+                uri: entry.schemaURI,
             });
-            const existsTool = await publicClient.readContract({
-                address: deployments.intuition.multiVault,
-                abi: multiVaultAbi,
-                functionName: "isTermCreated",
-                args: [toolAtomId],
-            });
-
-            if (!existsTool) {
-                const atomCost = await publicClient.readContract({
-                    address: deployments.intuition.multiVault,
-                    abi: multiVaultAbi,
-                    functionName: "getAtomCost",
-                });
-                const ensured = await redeemEnsureAtomForThing({
-                    signedDelegation: composeDel,
-                    agentWalletClient,
-                    publicClient,
-                    thing: {
-                        name: entry.name,
-                        description: entry.description,
-                    },
-                });
-                log(
-                    `  tool atom        ${ensured.atomId.slice(0, 12)}…  cost=${formatEther(atomCost)}`,
-                );
-            }
+            const toolAtomId = toolAtomRes.atomId;
+            log(
+                `  tool atom        ${toolAtomId.slice(0, 12)}…  ${toolAtomRes.created ? "(created)" : "(reused)"}`,
+            );
 
             const tripleTx = await redeemDeclareTriple({
                 signedDelegation: composeDel,
