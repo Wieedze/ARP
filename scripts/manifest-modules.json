@@ -1,50 +1,86 @@
 [
     {
-        "name": "Slither",
+        "name": "Trail of Bits — guidelines-advisor",
         "domain": "solidity-audit",
-        "schemaURI": "ipfs://bafkreislithersolidityauditschemaarpdemo000000000000000000000",
-        "description": "Static analysis for Solidity smart contracts — detects vulnerabilities, inefficiencies, code quality issues."
+        "schemaURI": "ipfs://bafkrei-tob-guidelines-advisor-arp",
+        "description": "Solidity best-practice advisor. Reviews code against standard patterns and flags anti-patterns. Cross-references SCSVS sections and SWC weaknesses."
     },
     {
-        "name": "Mythril",
+        "name": "Trail of Bits — secure-workflow-guide",
         "domain": "solidity-audit",
-        "schemaURI": "ipfs://bafkreimythrilsolidityaudittesterarpdemo00000000000000000000",
-        "description": "Symbolic execution + SMT solving for finding integer overflows, reentrancy, transaction-order dependence."
+        "schemaURI": "ipfs://bafkrei-tob-secure-workflow-arp",
+        "description": "Pre-audit security workflow. Covers reentrancy, access control, oracle manipulation, MEV, integer arithmetic, signature replay, DoS via unbounded loops."
     },
     {
-        "name": "Code Review GPT",
-        "domain": "code-review",
-        "schemaURI": "ipfs://bafkreicodereviewgptarpdemo00000000000000000000000000000000",
-        "description": "LLM-powered code review focused on logic bugs, missed edge cases, and clarity improvements."
+        "name": "Trail of Bits — code-maturity-assessor",
+        "domain": "solidity-audit",
+        "schemaURI": "ipfs://bafkrei-tob-code-maturity-arp",
+        "description": "Scorecard for contract maturity. Test coverage, formal verification readiness, monitoring, ops, incident response."
     },
     {
-        "name": "ESLint Bot",
-        "domain": "code-review",
-        "schemaURI": "ipfs://bafkreieslintbotarpdemo000000000000000000000000000000000000",
-        "description": "Automated linting + style checking for TypeScript / JavaScript pull requests."
+        "name": "Trail of Bits — token-integration-analyzer",
+        "domain": "token-integration",
+        "schemaURI": "ipfs://bafkrei-tob-token-integration-arp",
+        "description": "Risk analysis for integrating external tokens. ERC-20 edge cases, fee-on-transfer, rebasing, blocklists, upgrade hooks."
     },
     {
-        "name": "Yearn Optimizer",
+        "name": "Slither (Crytic)",
+        "domain": "solidity-audit",
+        "schemaURI": "ipfs://bafkrei-slither-crytic-arp",
+        "description": "Static analyzer for Solidity. Detects 90+ vulnerability classes. Open source, runs locally via Python. Industry de-facto baseline."
+    },
+    {
+        "name": "SCSVS (OWASP)",
+        "domain": "solidity-audit",
+        "schemaURI": "ipfs://bafkrei-scsvs-owasp-arp",
+        "description": "Smart Contract Security Verification Standard. OWASP-style verification checklist across 13 sections. Free, public."
+    },
+    {
+        "name": "SWC Registry",
+        "domain": "solidity-audit",
+        "schemaURI": "ipfs://bafkrei-swc-registry-arp",
+        "description": "Smart Contract Weakness Classification. 138 catalogued weaknesses with examples and remediation patterns. Reference standard."
+    },
+    {
+        "name": "DefiLlama API",
         "domain": "defi-strategy",
-        "schemaURI": "ipfs://bafkreiyearnoptimizerarpdemo00000000000000000000000000000000",
-        "description": "Yield strategy analysis across Yearn vaults — recommends position rebalancing based on APY drift."
+        "schemaURI": "ipfs://bafkrei-defillama-api-arp",
+        "description": "Aggregated DeFi data: TVL by chain/protocol, yield APYs, stablecoin metrics, derivatives volumes. Public read API."
     },
     {
-        "name": "Aave Analytics",
+        "name": "The Graph — subgraphs",
         "domain": "defi-strategy",
-        "schemaURI": "ipfs://bafkreiaaveanalyticsarpdemo000000000000000000000000000000000",
-        "description": "Health-factor monitoring + liquidation risk projection on Aave v3 positions."
+        "schemaURI": "ipfs://bafkrei-thegraph-subgraphs-arp",
+        "description": "Decentralized indexing layer. Query Aave/Uniswap/Compound state via GraphQL. Hosted service free for hackathon usage."
     },
     {
-        "name": "Dune Query",
-        "domain": "data-analytics",
-        "schemaURI": "ipfs://bafkreidunequeryarpdemo000000000000000000000000000000000000",
-        "description": "Submit + retrieve SQL queries against indexed EVM chain data via Dune's query engine."
+        "name": "1inch API (DEX aggregator)",
+        "domain": "defi-strategy",
+        "schemaURI": "ipfs://bafkrei-1inch-api-arp",
+        "description": "DEX aggregation routing across 90+ DEXes on multiple chains. Quote + swap endpoints. Free for read."
     },
     {
-        "name": "Etherscan Bulk Fetch",
+        "name": "Uniswap V3 subgraph",
+        "domain": "defi-strategy",
+        "schemaURI": "ipfs://bafkrei-uniswap-v3-subgraph-arp",
+        "description": "Pool-level Uniswap V3 data: TVL, volume, fee tiers, position liquidity ranges. Hosted on The Graph."
+    },
+    {
+        "name": "Dune Analytics",
         "domain": "data-analytics",
-        "schemaURI": "ipfs://bafkreietherscanbulkfetcharpdemo0000000000000000000000000000",
-        "description": "Batch retrieval of contract source, ABIs, and verified deployments across EVM chains via Etherscan-family APIs."
+        "schemaURI": "ipfs://bafkrei-dune-analytics-arp",
+        "description": "SQL-style query engine over indexed EVM chain data. 100k+ public dashboards. Free tier for hackathon usage."
+    },
+    {
+        "name": "Etherscan API",
+        "domain": "data-analytics",
+        "schemaURI": "ipfs://bafkrei-etherscan-api-arp",
+        "description": "Verified contract source, ABIs, tx history, internal txs, token transfers. Free tier covers most read operations."
+    },
+    {
+        "name": "Tenderly API",
+        "domain": "data-analytics",
+        "schemaURI": "ipfs://bafkrei-tenderly-api-arp",
+        "description": "Transaction simulation + debugging + state forking. Used by agents to dry-run risky executions before broadcasting."
     }
 ]
