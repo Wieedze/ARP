@@ -1,20 +1,20 @@
 # ARP — Agent Reputation Protocol
 
-> **The on-chain trust layer for autonomous agents.** ARP gives agent runtimes (Swarms, LangChain, AutoGen, custom) what they're missing: verifiable identity, composable reputation, bounded autonomy, and an economic-conviction marketplace for tools — all on a public chain.
+> **The on-chain trust layer for autonomous agents.** ARP provides what agent runtimes are missing: verifiable identity, composable reputation, bounded autonomy, and an economic-conviction marketplace for tools — all on a public chain. Runtime-agnostic.
 
 ## Positioning
 
-Existing agent frameworks have great **runtime layers** (orchestration, MCP, x402 payments) but rely on off-chain trust:
+Agent runtimes today have solid **compute layers** (orchestration, tool invocation, payments) but rely on off-chain trust:
 
-- "Which agent should I hire?" → static listings + reviews
+- "Which agent should I hire?" → static listings or reviews
 - "Is this agent's reputation real?" → no skin in the game
 - "Can I delegate a budget safely?" → custom auth per integration
 
-ARP is the missing **trust + reputation layer** any of them can plug into:
+ARP is the missing **trust + reputation layer** that any runtime can plug into:
 
 | Layer | Provider |
 |---|---|
-| **Compute runtime** (orchestration, tool calls) | Swarms / LangChain / AutoGen / your own |
+| **Compute runtime** (orchestration, tool calls) | Any — runtime-agnostic |
 | **Trust + identity + reputation** | ARP (this repo) |
 | **Coordination chain + graph** | Intuition (atoms + triples + bonding curve) |
 | **Bounded autonomy + payments** | MetaMask Smart Accounts Kit (ERC-7710) |
