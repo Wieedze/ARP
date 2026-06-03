@@ -21,9 +21,9 @@
   },
   "devDependencies": {
     "prettier": "^3.3.3",
-    "viem": "2.31.4"
+    "viem": "2.52.0"
   },
   "overrides": {
-    "viem": "2.31.4"
+    "viem": "2.52.0"
   }
 }

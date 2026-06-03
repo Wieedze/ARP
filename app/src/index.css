@@ -1,113 +1,111 @@
-@import 'tailwindcss';
+@import "tailwindcss";
 
-:root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap");
 
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
+/* -------------------------------------------------------------------------- */
+/* Design tokens — typographic-driven, monochrome, single accent.              */
+/* Aligned to docs/05_UI_DESIGN.md. Dark-first; no light-mode forking.         */
+/* -------------------------------------------------------------------------- */
 
-  font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
-  color-scheme: light dark;
-  color: var(--text);
-  background: var(--bg);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+@theme {
+    /* Monochrome surface ramp — single near-black background, alpha-stepped
+       foreground for the four hierarchy levels documented in 05_UI_DESIGN. */
+    --color-bg: #0a0a0a;
+    --color-fg: #fafafa;
+    --color-fg-60: rgba(250, 250, 250, 0.6);
+    --color-fg-40: rgba(250, 250, 250, 0.4);
+    --color-fg-20: rgba(250, 250, 250, 0.2);
 
-  @media (max-width: 1024px) {
-    font-size: 16px;
-  }
+    /* Hairline borders, not shadows. Two levels so we can hint elevation
+       without dropping to box-shadow. */
+    --color-border: rgba(255, 255, 255, 0.06);
+    --color-border-strong: rgba(255, 255, 255, 0.12);
+
+    /* Single accent — cyan, "modern infrastructure" per the design doc. */
+    --color-accent: #00e5ff;
+    --color-accent-dim: rgba(0, 229, 255, 0.16);
+
+    /* Fonts — Inter (display + body) and JetBrains Mono (data).
+       Both Google-hosted, both editorial-quality. */
+    --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", monospace;
+
+    /* Type scale — bounded to 3 body sizes + 1 display per the rule. */
+    --text-display: 32px;
+    --text-body: 15px;
+    --text-body-sm: 13px;
+    --text-label: 11px;
+
+    /* Line heights */
+    --leading-display: 1.1;
+    --leading-body: 1.5;
+    --leading-tight: 1.2;
+
+    /* Single motion curve, single duration. */
+    --ease-out-quart: cubic-bezier(0.16, 1, 0.3, 1);
+    --duration-base: 200ms;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
-  }
+/* -------------------------------------------------------------------------- */
+/* Reset + base                                                                */
+/* -------------------------------------------------------------------------- */
 
-  #social .button-icon {
-    filter: invert(1) brightness(2);
-  }
+* {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    margin: 0;
+    padding: 0;
+    background-color: var(--color-bg);
+    color: var(--color-fg);
+    font-family: var(--font-sans);
+    font-size: var(--text-body);
+    line-height: var(--leading-body);
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-feature-settings: "cv11", "ss03";
 }
 
 #root {
-  width: 1126px;
-  max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
-  min-height: 100svh;
-  display: flex;
-  flex-direction: column;
-  box-sizing: border-box;
+    min-height: 100svh;
+    display: flex;
+    flex-direction: column;
 }
 
-body {
-  margin: 0;
+button {
+    font-family: inherit;
+    background: transparent;
+    border: 1px solid var(--color-border);
+    color: var(--color-fg);
+    cursor: pointer;
+    transition: border-color var(--duration-base) var(--ease-out-quart),
+        color var(--duration-base) var(--ease-out-quart);
 }
 
-h1,
-h2 {
-  font-family: var(--heading);
-  font-weight: 500;
-  color: var(--text-h);
+button:hover {
+    border-color: var(--color-border-strong);
 }
 
-h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
-  }
-}
-h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
-  }
-}
-p {
-  margin: 0;
+button:focus-visible {
+    outline: none;
+    border-color: var(--color-accent);
 }
 
-code,
-.counter {
-  font-family: var(--mono);
-  display: inline-flex;
-  border-radius: 4px;
-  color: var(--text-h);
+a {
+    color: inherit;
+    text-decoration: none;
+    transition: color var(--duration-base) var(--ease-out-quart);
 }
 
-code {
-  font-size: 15px;
-  line-height: 135%;
-  padding: 4px 8px;
-  background: var(--code-bg);
+a:hover {
+    color: var(--color-accent);
+}
+
+::selection {
+    background: var(--color-accent-dim);
+    color: var(--color-fg);
 }
