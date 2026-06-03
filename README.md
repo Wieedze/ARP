@@ -41,28 +41,49 @@ That's it. Everything else is emergent.
 
 ## End-to-end demo flow (today)
 
-The demo runs on Intuition Testnet with two consoles side by side:
+ARP runs three personas in parallel on Intuition Testnet. The demo exercises all three.
 
-**Browser (operator)**
-1. Mints ERC-8004 agent NFT
-2. Generates a runtime keypair and binds it via `setAgentWallet`
-3. Deploys a MetaMask Smart Account
+### Operator (browser, `/agent`)
+One-time setup, then walks away:
+1. Mints an ERC-8004 agent NFT.
+2. Generates a runtime keypair and binds it via `setAgentWallet`.
+3. Deploys a MetaMask Smart Account.
 4. Signs two delegations once:
-   - **Publish** — `DomainScopeEnforcer([allowedDomains])` + `TrustStakeCapEnforcer(cap, period)` gating `ModuleRegistry.registerModule`
-   - **Compose** — stock `AllowedTargetsEnforcer([MultiVault])` + `AllowedMethodsEnforcer([deposit, createAtoms, createTriples])` + `TrustStakeCapEnforcer(cap, period)` gating Intuition staking + graph writes
+   - **Publish** — `DomainScopeEnforcer([allowedDomains])` + `TrustStakeCapEnforcer(cap, period)` gating `ModuleRegistry.registerModule`.
+   - **Compose** — stock `AllowedTargetsEnforcer([MultiVault])` + `AllowedMethodsEnforcer([deposit, createAtoms, createTriples])` + `TrustStakeCapEnforcer(cap, period)` gating Intuition staking + graph writes.
 
-**Terminal (agent runtime)**
-5. `scripts/agent-approve-sa.ts` — one-time, runtime authorizes SA to deposit on its behalf
-6. `scripts/agent-loop.ts` — reads `.env` (runtime key + signed delegations), walks `scripts/manifest-modules.json`:
-   - publishes new modules under the publish delegation,
-   - ensures tool atoms exist (idempotent),
-   - declares `(agent, uses, tool)` triples on Intuition's graph,
-   - stakes tTRUST on each tool atom — vault TVL climbs live.
-7. Demonstrates revert paths: `DomainNotAllowed` for out-of-scope domains, `StakeExceedsCap` for over-cap attempts. Both labelled clearly in the log.
+### Agent runtime (terminal)
+The repo ships two example runtimes that consume the signed delegations:
+5. `scripts/agent-approve-sa.ts` — one-time MultiVault approval so the Smart Account can deposit on the runtime's behalf.
+6. `scripts/agent-loop.ts` — autonomous walk of `scripts/manifest-modules.json` (14 tools across 4 domains). Publishes new modules, ensures tool atoms exist, declares `(agent, uses, tool)` triples, stakes tTRUST on each tool. Exercises both revert paths (`DomainNotAllowed`, `StakeExceedsCap`) so the bounds visibly hold.
+7. `scripts/agent-server.ts` — on-demand HTTP runtime that accepts a paid audit job, runs it via the Trail of Bits methodologies, **fuzzy-matches the methodologies it actually used** against the registry, and stakes on each matched tool under the compose delegation. Optionally sub-contracts a specialist via a signed leaf delegation (A2A) — `scripts/agent-server-specialist.ts` is the receiving counterpart.
 
-**Marketplace UI (`/`)**
-8. Modules ranked by TVL desc, with live stakers count next to each row. Slither + Mythril rise as the agent stakes; new modules appear as the agent publishes.
-9. `/tool/:id` per-tool page surfaces metadata, live vault metrics, an optional human stake form (EOA economic conviction), and a `@arp/sdk` snippet showing how a runtime declares + stakes on the tool automatically — no humans in the loop.
+### Consumer (browser, `/hire` and `/tool/:id`)
+8. `/` — modules ranked by TVL desc with a live distinct-stakers count. Slither + Mythril climb as runtimes stake; new modules appear as they publish.
+9. `/tool/:id` — per-tool detail. Live vault metrics, an optional stake form for human EOAs (economic conviction without an agent identity), and a `@arp/sdk` snippet showing how a runtime declares + stakes automatically.
+10. `/hire` — pick a domain, see the top agents ranked by reputation, pay one in tTRUST, get back a signed audit report with the on-chain stakes the agent placed during execution. If A2A is enabled, the result page also renders the sub-delegation chain (`requester → auditor → specialist`) and the specialist's independently-signed receipt.
+
+### Build a runtime against ARP (`@arp/sdk`)
+
+Any TypeScript runtime can plug into ARP's trust layer in a few lines — no API key, no indexer, no signing baked in:
+
+```ts
+import {createArpClient, findTopAgents, getReputation} from "@arp/sdk";
+
+const arp = createArpClient();
+
+// "Who should I delegate this Solidity audit to?"
+const candidates = await findTopAgents(arp, {
+    domain: "solidity-audit",
+    minStake: 1_000_000_000_000n,
+});
+
+// "Is this agent's track record real?"
+const rep = await getReputation(arp, candidates[0].runtimeWallet);
+console.log(`${rep.totalStaked} wei across ${rep.distinctAtomCount} tools`);
+```
+
+See [`sdk/`](sdk/README.md) for the full surface and a working write-path example. `scripts/agent-server.ts` is the canonical reference runtime — it discovers, hires, executes, and stakes end-to-end using only `@arp/sdk` + `viem`.
 
 ARP doesn't compute agents — that's the runtime layer's job. ARP is purely declarative + coordination + economic accounting.
 
@@ -101,32 +122,41 @@ Stated honestly so reviewers don't infer claims the code doesn't back:
 
 ```
 ARP/
-├── CLAUDE.md                     ← Router for Claude Code (rules, skills, agents)
-├── README.md                     ← This file
-├── app/                          ← Vite + React + TS + Tailwind v4 UI
+├── CLAUDE.md                       ← Router for Claude Code (rules, skills, agents)
+├── README.md                       ← This file
+├── app/                            ← Vite + React + TS + Tailwind v4 UI
 │   └── src/{services,hooks,components,pages,lib}
-├── contracts/                    ← Foundry workspace (Solidity)
+├── sdk/                            ← @arp/sdk — runtime-agnostic reads
+│   ├── README.md
+│   └── src/{client,modules,agents,types,abi}
+├── contracts/                      ← Foundry workspace (Solidity)
 │   └── src/
 │       ├── ModuleRegistry.sol
-│       ├── enforcers/            ← DomainScopeEnforcer, TrustStakeCapEnforcer
-│       └── erc8004/              ← IdentityRegistry + interfaces
-├── scripts/                      ← Bun scripts
-│   ├── deploy.sh                 ← three-phase contract deploy
-│   ├── agent-approve-sa.ts       ← one-time runtime → SA DEPOSIT approval
-│   ├── agent-loop.ts             ← headless agent runtime
-│   └── manifest-modules.json     ← demo manifest (8 modules / 4 domains)
-├── schemas/                      ← JSON schemas for seed modules
-├── deployments/                  ← Deployed addresses per network (13579.json)
-├── docs/                         ← Strategic + architectural reference
-│   ├── 00_HACKATHON_PIVOT.md     ← Current strategic commitment
+│       ├── enforcers/              ← DomainScopeEnforcer, TrustStakeCapEnforcer
+│       └── erc8004/                ← IdentityRegistry + interfaces
+├── scripts/                        ← Bun scripts (deploy + runtimes)
+│   ├── deploy.sh                   ← three-phase contract deploy
+│   ├── seed.ts                     ← seed the first module + atom
+│   ├── agent-approve-sa.ts         ← one-time runtime → SA DEPOSIT approval
+│   ├── agent-loop.ts               ← autonomous runtime (walks the manifest)
+│   ├── agent-server.ts             ← on-demand HTTP runtime (hire flow)
+│   ├── agent-server-specialist.ts  ← A2A counterpart, accepts sub-delegations
+│   ├── agent-auditor.ts            ← LLM-driven audit (Trail of Bits skills)
+│   ├── agent-stake-on-use.ts       ← fuzzy-match used methodologies → stake
+│   ├── setup-second-agent.ts       ← one-shot specialist provisioning
+│   └── manifest-modules.json       ← demo manifest (14 tools / 4 domains)
+├── schemas/                        ← JSON schemas for seed modules
+├── deployments/                    ← Deployed addresses per network (13579.json)
+├── docs/                           ← Strategic + architectural reference
+│   ├── 00_HACKATHON_PIVOT.md       ← Current strategic commitment
 │   ├── 01_PROJECT_CONTEXT.md
-│   ├── 02_ARCHITECTURE.md        ← Locked decisions
+│   ├── 02_ARCHITECTURE.md          ← Locked decisions
 │   ├── 03_MVP_SCOPE.md
 │   ├── 04_SEED_MODULES.md
 │   ├── 05_UI_DESIGN.md
-│   └── 06_BEAR_TRAP_REFERENCE.md ← Enforcer pattern reference
-├── tasks/                        ← Atomic work units (01 → 05b)
-└── .claude/                      ← Claude operating layer (rules, skills, agents, ADRs, post-mortems)
+│   └── 06_BEAR_TRAP_REFERENCE.md   ← Enforcer pattern reference
+├── tasks/                          ← Atomic work units (01 → 05b)
+└── .claude/                        ← Claude operating layer (rules, skills, agents, ADRs, post-mortems)
 ```
 
 ## Local development
