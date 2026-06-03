@@ -45,7 +45,6 @@ import {deployments} from "../app/src/lib/deployments";
 import {multiVaultAbi} from "../app/src/lib/abi/multi-vault";
 import {deserializeDelegation} from "../app/src/services/delegation";
 import {
-    ensureAgentApprovesSmartAccount,
     redeemDeclareTriple,
     redeemEnsureAtomForThing,
     redeemEnsureAtomForURI,
@@ -113,24 +112,13 @@ async function main() {
     log(`  balance          ${formatEther(balance)} tTRUST`);
     log(`  manifest         ${manifest.length} entries from ${manifestPath}`);
 
-    // -------- 0. Bootstrap: runtime authorizes SA to deposit on its behalf --
-    //
-    // The agent stakes "in its own name" — vault shares go to the runtime
-    // EOA so reads of `MultiVault.balanceOf(runtime, atomId)` reflect the
-    // agent's reputation directly. MultiVault.deposit's on-chain msg.sender
-    // will be the SA (executeFromExecutor), so without this one-time
-    // approval the deposit reverts with MultiVault_SenderNotApproved.
-    log("\nensuring runtime → SA deposit approval");
-    const approvalTx = await ensureAgentApprovesSmartAccount({
-        agentWalletClient,
-        smartAccountAddress: publishDel.delegator,
-        publicClient,
-    });
-    if (approvalTx) {
-        log(`  approve          ${approvalTx} (granted DEPOSIT to SA)`);
-    } else {
-        log("  approve          already granted (skipped)");
-    }
+    // Pre-requisite (one-time, NOT done here): the runtime must have called
+    // `MultiVault.approve(SA, DEPOSIT)` once so the SA can deposit on the
+    // runtime's behalf. Run `bun run scripts/agent-approve-sa.ts` after the
+    // initial funding step. The agent-loop deliberately does NOT check this
+    // (no RPC scan, no state file) — if the approval is missing, the first
+    // stake reverts with `MultiVault_SenderNotApproved` and the catch
+    // surfaces a pointer.
 
     // -------- 1. Ensure the agent's self-atom -------------------------------
     log("\nensuring agent self-atom");
@@ -255,6 +243,16 @@ async function main() {
             const msg = (err as Error).message ?? String(err);
             if (msg.includes("StakeExceedsCap")) {
                 log(`  cap reached      (TrustStakeCapEnforcer reverted)`);
+                break;
+            }
+            // 0xd76f6ff8 = MultiVault_SenderNotApproved — the runtime hasn't
+            // approved the SA to deposit on its behalf yet. One-time setup.
+            if (msg.includes("0xd76f6ff8") || msg.includes("SenderNotApproved")) {
+                log(
+                    `  setup missing    runtime has not approved SA to deposit.\n` +
+                        `                  → run: bun run scripts/agent-approve-sa.ts\n` +
+                        `                  then re-run this loop.`,
+                );
                 break;
             }
             log(`  compose failed   ${truncate(msg)}`);

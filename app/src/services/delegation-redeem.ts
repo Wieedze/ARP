@@ -174,40 +174,33 @@ const approvalAbi = [
         ],
         outputs: [],
     },
-    {
-        type: "function",
-        stateMutability: "view",
-        name: "approvals",
-        inputs: [
-            {name: "receiver", type: "address"},
-            {name: "sender", type: "address"},
-        ],
-        outputs: [{name: "", type: "uint8"}],
-    },
 ] as const;
 
 /**
- * Idempotent one-time approval the **runtime EOA** must grant to the
- * **Smart Account** so the SA can deposit on the runtime's behalf via
- * the compose delegation. Without this, `MultiVault.deposit` reverts with
- * `MultiVault_SenderNotApproved` because the on-chain `msg.sender` (the
- * SA, calling through `executeFromExecutor`) does not equal the receiver
- * (the runtime, holding the position).
+ * Grant the **Smart Account** `DEPOSIT` approval to act on the **runtime
+ * EOA**'s behalf. Called by the runtime so that subsequent
+ * `MultiVault.deposit(receiver=runtime, ...)` calls (via redeem) do not
+ * revert with `MultiVault_SenderNotApproved` — the on-chain msg.sender
+ * is the SA (executeFromExecutor) and the check is
+ * `sender == receiver || approvals[receiver][sender] & DEPOSIT`.
  *
- * @returns `null` if approval already exists, otherwise the tx hash.
+ * **Operator workflow** — call this **once** via `scripts/agent-approve-sa.ts`
+ * after funding the runtime EOA with gas. The approval persists on chain
+ * until explicitly revoked. The agent-loop assumes it is already granted
+ * and surfaces a clear pointer if a stake reverts with the matching
+ * selector.
+ *
+ * MultiVault's `approvals` mapping is `internal` with no public getter,
+ * so this helper does not attempt an existence check — that is the
+ * operator's discipline by running the setup script once.
+ *
+ * @returns The transaction hash.
  */
-export async function ensureAgentApprovesSmartAccount(params: {
+export async function grantSmartAccountDepositApproval(params: {
     agentWalletClient: WalletClient<Transport, Chain, Account>;
     smartAccountAddress: Address;
     publicClient: PublicClient;
-}): Promise<Hex | null> {
-    const current = await params.publicClient.readContract({
-        address: MULTI_VAULT,
-        abi: approvalAbi,
-        functionName: "approvals",
-        args: [params.agentWalletClient.account.address, params.smartAccountAddress],
-    });
-    if ((current & APPROVAL_DEPOSIT) !== 0) return null;
+}): Promise<Hex> {
     const tx = await params.agentWalletClient.writeContract({
         address: MULTI_VAULT,
         abi: approvalAbi,

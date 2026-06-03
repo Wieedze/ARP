@@ -40,7 +40,7 @@ const mockPin = pinThing as unknown as Mock;
 
 import {
     APPROVAL_DEPOSIT,
-    ensureAgentApprovesSmartAccount,
+    grantSmartAccountDepositApproval,
     redeemCreateAtom,
     redeemDeclareTriple,
     redeemEnsureAtomForThing,
@@ -327,58 +327,20 @@ describe("redeemEnsureAtomForURI", () => {
     });
 });
 
-describe("ensureAgentApprovesSmartAccount", () => {
+describe("grantSmartAccountDepositApproval", () => {
     const SA: Address = "0x000000000000000000000000000000000000F11E";
 
-    it("returns null when the runtime already has DEPOSIT approval for the SA", async () => {
+    it("calls MultiVault.approve(SA, DEPOSIT) from the runtime and waits for the receipt", async () => {
         const pc = makeMockPublicClient();
         const wc = makeMockWalletClient();
-        pc.readContract.mockImplementation(
-            readContractDispatcher({approvals: APPROVAL_DEPOSIT}),
-        );
 
-        const result = await ensureAgentApprovesSmartAccount({
+        const tx = await grantSmartAccountDepositApproval({
             agentWalletClient: wc,
             smartAccountAddress: SA,
             publicClient: pc,
         });
 
-        expect(result).toBeNull();
-        expect(wc.writeContract).not.toHaveBeenCalled();
-    });
-
-    it("returns null when BOTH approval is granted (DEPOSIT bit set inside the mask)", async () => {
-        const pc = makeMockPublicClient();
-        const wc = makeMockWalletClient();
-        // BOTH = 3 = DEPOSIT | REDEMPTION; DEPOSIT bit is still set
-        pc.readContract.mockImplementation(
-            readContractDispatcher({approvals: 3}),
-        );
-
-        const result = await ensureAgentApprovesSmartAccount({
-            agentWalletClient: wc,
-            smartAccountAddress: SA,
-            publicClient: pc,
-        });
-
-        expect(result).toBeNull();
-        expect(wc.writeContract).not.toHaveBeenCalled();
-    });
-
-    it("calls approve(SA, DEPOSIT) from the runtime when no DEPOSIT bit is set", async () => {
-        const pc = makeMockPublicClient();
-        const wc = makeMockWalletClient();
-        pc.readContract.mockImplementation(
-            readContractDispatcher({approvals: 0}),
-        );
-
-        const result = await ensureAgentApprovesSmartAccount({
-            agentWalletClient: wc,
-            smartAccountAddress: SA,
-            publicClient: pc,
-        });
-
-        expect(result).toBe(`0x${"aa".repeat(32)}`);
+        expect(tx).toBe(`0x${"aa".repeat(32)}`);
         expect(wc.writeContract).toHaveBeenCalledTimes(1);
         const call = wc.writeContract.mock.calls[0][0] as {
             address: string;
