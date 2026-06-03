@@ -3,11 +3,12 @@
 # Deploy the ARP on-chain stack (ModuleRegistry + both enforcers) to the
 # Intuition Testnet (chainId 13579).
 #
-# The deploy is split across two Foundry scripts so each can stay under a
-# strict pragma that matches its imports:
+# The deploy is split across three Foundry scripts so each can stay under
+# a strict pragma that matches its imports:
 #
-#   - DeployRegistry.s.sol   pragma ^0.8.24   -> ModuleRegistry
-#   - DeployEnforcers.s.sol  pragma 0.8.23    -> Domain/TrustStake enforcers
+#   - DeployRegistry.s.sol         pragma ^0.8.24   -> ModuleRegistry
+#   - DeployEnforcers.s.sol        pragma 0.8.23    -> Domain/TrustStake enforcers
+#   - DeployIdentityRegistry.s.sol pragma ^0.8.20   -> ERC-8004 IdentityRegistry
 #
 # Usage:
 #   scripts/deploy.sh              # dry-run (simulation only, no broadcast)
@@ -57,8 +58,15 @@ forge script script/DeployRegistry.s.sol \
   $BROADCAST_ARG
 
 echo ""
-echo "==> Phase 2/2 — DeployEnforcers"
+echo "==> Phase 2/3 — DeployEnforcers"
 forge script script/DeployEnforcers.s.sol \
+  --rpc-url "$INTUITION_TESTNET_RPC_URL" \
+  --private-key "$PRIVATE_KEY" \
+  $BROADCAST_ARG
+
+echo ""
+echo "==> Phase 3/3 — DeployIdentityRegistry (ERC-8004)"
+forge script script/DeployIdentityRegistry.s.sol \
   --rpc-url "$INTUITION_TESTNET_RPC_URL" \
   --private-key "$PRIVATE_KEY" \
   $BROADCAST_ARG
