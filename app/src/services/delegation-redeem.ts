@@ -342,9 +342,17 @@ export async function redeemEnsureAtomForThing(
 
 /**
  * Redeem the **compose** delegation to create a single
- * `(subject, predicate, object)` triple. The caller is responsible for
- * having ensured all three referenced atoms already exist (otherwise
- * `MultiVault.createTriples` reverts).
+ * `(subject, predicate, object)` triple — **idempotent**.
+ *
+ * The triple's bytes32 id is deterministic via
+ * `MultiVault.calculateTripleId(s, p, o)`. If the resulting term already
+ * exists on chain, this helper returns `{tripleId, created: false}` and
+ * sends no transaction. Otherwise it pays `getTripleCost()` and redeems
+ * `createTriples`.
+ *
+ * The caller is responsible for having ensured all three referenced
+ * atoms already exist (otherwise `MultiVault.createTriples` reverts with
+ * `MultiVault_TermDoesNotExist`).
  */
 export async function redeemDeclareTriple(
     params: RedeemCommon & {
@@ -353,7 +361,21 @@ export async function redeemDeclareTriple(
         objectAtomId: Hex;
         publicClient: PublicClient;
     },
-): Promise<Hex> {
+): Promise<{tripleId: Hex; created: boolean; tx?: Hex}> {
+    const tripleId = await params.publicClient.readContract({
+        address: MULTI_VAULT,
+        abi: multiVaultAbi,
+        functionName: "calculateTripleId",
+        args: [params.subjectAtomId, params.predicateAtomId, params.objectAtomId],
+    });
+    const exists = await params.publicClient.readContract({
+        address: MULTI_VAULT,
+        abi: multiVaultAbi,
+        functionName: "isTermCreated",
+        args: [tripleId],
+    });
+    if (exists) return {tripleId, created: false};
+
     const tripleCost = await params.publicClient.readContract({
         address: MULTI_VAULT,
         abi: multiVaultAbi,
@@ -374,11 +396,13 @@ export async function redeemDeclareTriple(
         value: tripleCost,
         callData,
     });
-    return redeemArpDelegation({
+    const tx = await redeemArpDelegation({
         signedDelegation: params.signedDelegation,
         execution,
         agentWalletClient: params.agentWalletClient,
     });
+    await params.publicClient.waitForTransactionReceipt({hash: tx});
+    return {tripleId, created: true, tx};
 }
 
 // Re-export the identity registry address so the agent loop can sanity-check

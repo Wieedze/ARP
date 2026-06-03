@@ -170,9 +170,14 @@ export async function getOrCreateUsesPredicateAtomId(params: {
 }
 
 /**
- * Declare that an agent uses a tool. Creates the triple
- * `(agentAtomId, usesAtomId, toolAtomId)` on Intuition's graph. Pays
- * `getTripleCost()`. Returns the deterministic triple ID.
+ * Declare that an agent uses a tool — **idempotent**.
+ *
+ * Creates the triple `(agentAtomId, usesAtomId, toolAtomId)` on
+ * Intuition's graph if it does not yet exist. The triple's bytes32 id is
+ * deterministic via `MultiVault.calculateTripleId(s, p, o)`; if the term
+ * is already created, this helper returns `{tripleId, created: false}`
+ * without sending a transaction. Otherwise it pays `getTripleCost()` and
+ * writes `createTriples`.
  *
  * The "uses" predicate atom is auto-ensured via the cached helper above.
  */
@@ -181,11 +186,25 @@ export async function declareUsesTriple(params: {
     toolAtomId: Hex;
     walletClient: WalletClient<Transport, Chain, Account>;
     publicClient: PublicClient;
-}): Promise<{tx: Hex}> {
+}): Promise<{tripleId: Hex; created: boolean; tx?: Hex}> {
     const usesAtomId = await getOrCreateUsesPredicateAtomId({
         walletClient: params.walletClient,
         publicClient: params.publicClient,
     });
+
+    const tripleId = await params.publicClient.readContract({
+        address: MULTI_VAULT,
+        abi: multiVaultAbi,
+        functionName: "calculateTripleId",
+        args: [params.agentAtomId, usesAtomId, params.toolAtomId],
+    });
+    const exists = await params.publicClient.readContract({
+        address: MULTI_VAULT,
+        abi: multiVaultAbi,
+        functionName: "isTermCreated",
+        args: [tripleId],
+    });
+    if (exists) return {tripleId, created: false};
 
     const tripleCost = await params.publicClient.readContract({
         address: MULTI_VAULT,
@@ -202,5 +221,5 @@ export async function declareUsesTriple(params: {
         chain: intuitionTestnet,
     });
     await params.publicClient.waitForTransactionReceipt({hash: tx});
-    return {tx};
+    return {tripleId, created: true, tx};
 }

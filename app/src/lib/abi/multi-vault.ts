@@ -84,6 +84,17 @@ export const multiVaultAbi = [
     },
     {
         type: "function",
+        stateMutability: "pure",
+        name: "calculateTripleId",
+        inputs: [
+            {name: "subjectId", type: "bytes32"},
+            {name: "predicateId", type: "bytes32"},
+            {name: "objectId", type: "bytes32"},
+        ],
+        outputs: [{name: "", type: "bytes32"}],
+    },
+    {
+        type: "function",
         stateMutability: "payable",
         name: "createAtoms",
         inputs: [

@@ -81,6 +81,7 @@ export function ToolDetail() {
         toolAtomTx?: string;
         toolAtomCreated?: boolean;
         tripleTx?: string;
+        tripleCreated?: boolean;
         depositTx?: string;
     }>({});
 
@@ -132,14 +133,18 @@ export function ToolDetail() {
                 toolAtomCreated: toolAtomRes.created,
             }));
 
-            // C. Triple agent → uses → tool
+            // C. Triple agent → uses → tool (idempotent — skipped if exists)
             const tripleRes = await declareUsesTriple({
                 agentAtomId: agentAtomRes.atomId,
                 toolAtomId: toolAtomRes.atomId,
                 walletClient: wc,
                 publicClient,
             });
-            setComposeSteps((s) => ({...s, tripleTx: tripleRes.tx}));
+            setComposeSteps((s) => ({
+                ...s,
+                tripleTx: tripleRes.tx,
+                tripleCreated: tripleRes.created,
+            }));
 
             // D. Stake on the tool atom
             const depositTx = await depositOnAtom({
@@ -357,6 +362,7 @@ function ComposeResult({
         toolAtomTx?: string;
         toolAtomCreated?: boolean;
         tripleTx?: string;
+        tripleCreated?: boolean;
         depositTx?: string;
     };
 }) {
@@ -375,7 +381,11 @@ function ComposeResult({
                 tx={steps.toolAtomTx}
                 note={steps.toolAtomCreated ? "created" : "reused"}
             />
-            <ResultLine label="Triple agent → uses → tool" tx={steps.tripleTx} />
+            <ResultLine
+                label="Triple agent → uses → tool"
+                tx={steps.tripleTx}
+                note={steps.tripleCreated ? "created" : "reused"}
+            />
             <ResultLine label="Stake on tool atom" tx={steps.depositTx} />
         </div>
     );

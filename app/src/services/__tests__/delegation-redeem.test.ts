@@ -358,16 +358,19 @@ describe("grantSmartAccountDepositApproval", () => {
 });
 
 describe("redeemDeclareTriple", () => {
-    it("encodes createTriples with the subject/predicate/object and tripleCost", async () => {
+    const TRIPLE_ID: Hex = `0x${"71".repeat(32)}`;
+
+    it("returns {created:false} and skips redeem when the triple already exists", async () => {
         const pc = makeMockPublicClient();
         const wc = makeMockWalletClient();
         pc.readContract.mockImplementation(
             readContractDispatcher({
-                getTripleCost: 77n,
+                calculateTripleId: TRIPLE_ID,
+                isTermCreated: true,
             }),
         );
 
-        const tx = await redeemDeclareTriple({
+        const result = await redeemDeclareTriple({
             signedDelegation: fakeDelegation,
             agentWalletClient: wc,
             publicClient: pc,
@@ -375,7 +378,33 @@ describe("redeemDeclareTriple", () => {
             predicateAtomId: USES_ATOM,
             objectAtomId: TOOL_ATOM,
         });
-        expect(tx).toBe(TX_HASH);
+
+        expect(result).toEqual({tripleId: TRIPLE_ID, created: false});
+        expect(mockRedeem).not.toHaveBeenCalled();
+    });
+
+    it("encodes createTriples with the subject/predicate/object and tripleCost when new", async () => {
+        const pc = makeMockPublicClient();
+        const wc = makeMockWalletClient();
+        pc.readContract.mockImplementation(
+            readContractDispatcher({
+                calculateTripleId: TRIPLE_ID,
+                isTermCreated: false,
+                getTripleCost: 77n,
+            }),
+        );
+
+        const result = await redeemDeclareTriple({
+            signedDelegation: fakeDelegation,
+            agentWalletClient: wc,
+            publicClient: pc,
+            subjectAtomId: AGENT_ATOM,
+            predicateAtomId: USES_ATOM,
+            objectAtomId: TOOL_ATOM,
+        });
+        expect(result.tripleId).toBe(TRIPLE_ID);
+        expect(result.created).toBe(true);
+        expect(result.tx).toBe(TX_HASH);
         const args = mockRedeem.mock.calls[0][0] as {
             execution: {target: Address; value: bigint; callData: Hex};
         };
@@ -391,5 +420,6 @@ describe("redeemDeclareTriple", () => {
                 [77n],
             ]);
         }
+        expect(pc.waitForTransactionReceipt).toHaveBeenCalledWith({hash: TX_HASH});
     });
 });

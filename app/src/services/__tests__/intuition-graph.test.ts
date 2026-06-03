@@ -276,6 +276,8 @@ describe("getOrCreateUsesPredicateAtomId", () => {
 });
 
 describe("declareUsesTriple", () => {
+    const TRIPLE_ID: Hex = `0x${"73".repeat(32)}`;
+
     let pc: MockPublicClient;
     let wc: MockWalletClient;
 
@@ -284,16 +286,19 @@ describe("declareUsesTriple", () => {
         wc = makeMockWalletClient();
         mockPin.mockReset();
         mockPin.mockResolvedValue(USES_THING_URI);
-        pc.readContract.mockImplementation(
-            readContractDispatcher({
-                calculateAtomId: makeAtomIdReader(),
-                isTermCreated: makeIsTermCreatedReader(new Set([USES_ATOM])),
-                getTripleCost: TRIPLE_COST,
-            }),
-        );
     });
 
     it("creates the triple with the cached 'uses' predicate sandwiched between agent and tool", async () => {
+        // uses atom already exists (skip pin/create); triple id is new
+        pc.readContract.mockImplementation(
+            readContractDispatcher({
+                calculateAtomId: makeAtomIdReader(),
+                isTermCreated: ({args}: {args: readonly unknown[]}) =>
+                    args[0] === USES_ATOM, // uses exists, triple id does not
+                calculateTripleId: TRIPLE_ID,
+                getTripleCost: TRIPLE_COST,
+            }),
+        );
         const {declareUsesTriple} = await freshGraph();
 
         const result = await declareUsesTriple({
@@ -303,6 +308,8 @@ describe("declareUsesTriple", () => {
             publicClient: pc,
         });
 
+        expect(result.tripleId).toBe(TRIPLE_ID);
+        expect(result.created).toBe(true);
         expect(result.tx).toBe(`0x${"aa".repeat(32)}`);
         const call = wc.writeContract.mock.calls[0][0] as {
             address: string;
@@ -319,23 +326,26 @@ describe("declareUsesTriple", () => {
         expect(pc.waitForTransactionReceipt).toHaveBeenCalledWith({hash: result.tx});
     });
 
-    it("only pins the 'uses' atom once across multiple triples (cache reused)", async () => {
+    it("returns {created:false} and skips createTriples when the triple already exists", async () => {
+        // Both uses atom AND the resulting triple id are already created
+        pc.readContract.mockImplementation(
+            readContractDispatcher({
+                calculateAtomId: makeAtomIdReader(),
+                isTermCreated: ({args}: {args: readonly unknown[]}) =>
+                    args[0] === USES_ATOM || args[0] === TRIPLE_ID,
+                calculateTripleId: TRIPLE_ID,
+            }),
+        );
         const {declareUsesTriple} = await freshGraph();
 
-        await declareUsesTriple({
-            agentAtomId: AGENT_ATOM,
-            toolAtomId: TOOL_ATOM,
-            walletClient: wc,
-            publicClient: pc,
-        });
-        await declareUsesTriple({
+        const result = await declareUsesTriple({
             agentAtomId: AGENT_ATOM,
             toolAtomId: TOOL_ATOM,
             walletClient: wc,
             publicClient: pc,
         });
 
-        expect(mockPin).toHaveBeenCalledTimes(1);
-        expect(wc.writeContract).toHaveBeenCalledTimes(2);
+        expect(result).toEqual({tripleId: TRIPLE_ID, created: false});
+        expect(wc.writeContract).not.toHaveBeenCalled();
     });
 });

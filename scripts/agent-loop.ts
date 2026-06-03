@@ -204,7 +204,7 @@ async function main() {
                 `  tool atom        ${toolAtomId.slice(0, 12)}…  ${toolAtomRes.created ? "(created)" : "(reused)"}`,
             );
 
-            const tripleTx = await redeemDeclareTriple({
+            const tripleRes = await redeemDeclareTriple({
                 signedDelegation: composeDel,
                 agentWalletClient,
                 publicClient,
@@ -212,8 +212,11 @@ async function main() {
                 predicateAtomId: usesAtom.atomId,
                 objectAtomId: toolAtomId,
             });
-            await publicClient.waitForTransactionReceipt({hash: tripleTx});
-            log(`  declared triple  ${tripleTx}`);
+            if (tripleRes.created) {
+                log(`  declared triple  ${tripleRes.tx}`);
+            } else {
+                log(`  triple           ${tripleRes.tripleId.slice(0, 12)}… (reused)`);
+            }
 
             const stakeAmount = parseEther("0.001");
             const stakeTx = await redeemStakeOnAtom({
