@@ -72,6 +72,7 @@ export function ToolDetail() {
 
     // Compose wizard state
     const [amountInput, setAmountInput] = useState("0.05");
+    const [mode, setMode] = useState<"compose" | "bet">("compose");
     const [composeStatus, setComposeStatus] = useState<StepStatus>("idle");
     const [composeError, setComposeError] = useState<string | null>(null);
     const [composeSteps, setComposeSteps] = useState<{
@@ -92,6 +93,48 @@ export function ToolDetail() {
             throw new Error("No wallet client available — make sure your wallet is connected.");
         }
         return fetched;
+    }
+
+    /**
+     * "Just bet" — non-agent EOA stakes on the tool atom directly.
+     * Ensures the tool atom exists if not (operator-paid atomCost), then
+     * deposits. Skips the triple step entirely (no agent identity).
+     */
+    async function handleBet() {
+        if (!m) return;
+        setComposeStatus("pending");
+        setComposeError(null);
+        try {
+            const amount = parseEther(amountInput.trim());
+            const wc = await getActiveWalletClient();
+
+            // Ensure the tool atom exists (idempotent).
+            const toolAtomRes = await ensureAtomForURI({
+                uri: m.schemaURI,
+                walletClient: wc,
+                publicClient,
+            });
+            setComposeSteps((s) => ({
+                ...s,
+                toolAtomTx: toolAtomRes.tx,
+                toolAtomCreated: toolAtomRes.created,
+            }));
+
+            // Stake on the tool atom — shares go to the EOA caller.
+            const depositTx = await depositOnAtom({
+                atomId: toolAtomRes.atomId,
+                amount,
+                walletClient: wc,
+                publicClient,
+            });
+            await publicClient.waitForTransactionReceipt({hash: depositTx});
+            setComposeSteps((s) => ({...s, depositTx}));
+            await stakeQuery.refetch();
+            setComposeStatus("done");
+        } catch (err) {
+            setComposeStatus("error");
+            setComposeError((err as Error).message);
+        }
     }
 
     async function handleCompose() {
@@ -184,7 +227,9 @@ export function ToolDetail() {
         );
     }
 
-    const ready = isConnected && agentId !== null && agentId !== undefined && agentId > 0n;
+    const hasAgent = agentId !== null && agentId !== undefined && agentId > 0n;
+    const effectiveMode = hasAgent ? mode : "bet";
+    const composeBusy = composeStatus === "pending";
 
     return (
         <article>
@@ -272,28 +317,65 @@ export function ToolDetail() {
                 </div>
             </section>
 
-            {/* ---------- Compose ---------- */}
+            {/* ---------- Compose / Bet ---------- */}
             <section className="mt-12">
                 <h2 className="font-medium mb-2">Use this tool</h2>
                 <p className="text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)] mb-6 max-w-[640px]">
-                    Declare that your agent uses this tool by creating the triple{" "}
-                    <span className="font-mono">agent → uses → tool</span> on Intuition and
-                    staking tTRUST on the tool's atom. The stake is the agent's economic
-                    conviction that the tool is part of its composition.
+                    {effectiveMode === "compose"
+                        ? "Declare that your agent uses this tool — creates the triple agent → uses → tool on Intuition and stakes tTRUST on the tool's atom. The stake is your agent's economic conviction."
+                        : "Bet directly on this tool — stakes tTRUST on the atom from your wallet. No agent identity required; your address holds the position."}
                 </p>
 
-                {!ready ? (
+                {!isConnected ? (
                     <p className="text-[color:var(--color-fg-60)] text-[length:var(--text-body-sm)]">
-                        Connect your wallet and{" "}
-                        <Link to="/agent" className="text-[color:var(--color-accent)]">
-                            register an agent
-                        </Link>{" "}
-                        first.
+                        Connect your wallet to take a position.
                     </p>
                 ) : composeStatus === "done" ? (
                     <ComposeResult steps={composeSteps} />
                 ) : (
                     <div>
+                        {hasAgent ? (
+                            <fieldset className="mb-4">
+                                <legend className="text-[length:var(--text-label)] uppercase tracking-wider text-[color:var(--color-fg-40)] mb-2">
+                                    Mode
+                                </legend>
+                                <div className="flex flex-wrap gap-3 text-[length:var(--text-body-sm)] font-mono">
+                                    {(
+                                        [
+                                            {
+                                                value: "compose" as const,
+                                                label: `compose as agent #${agentId!.toString()}`,
+                                            },
+                                            {value: "bet" as const, label: "just bet"},
+                                        ]
+                                    ).map(({value, label}) => {
+                                        const active = effectiveMode === value;
+                                        return (
+                                            <label
+                                                key={value}
+                                                className={[
+                                                    "cursor-pointer px-3 py-1 border",
+                                                    active
+                                                        ? "border-[color:var(--color-accent)] text-[color:var(--color-accent)]"
+                                                        : "border-[color:var(--color-border)] text-[color:var(--color-fg-60)]",
+                                                ].join(" ")}
+                                            >
+                                                <input
+                                                    type="radio"
+                                                    name="mode"
+                                                    className="sr-only"
+                                                    checked={active}
+                                                    onChange={() => setMode(value)}
+                                                    disabled={composeBusy}
+                                                />
+                                                {label}
+                                            </label>
+                                        );
+                                    })}
+                                </div>
+                            </fieldset>
+                        ) : null}
+
                         <label className="block text-[length:var(--text-body-sm)] mb-2">
                             <span className="text-[color:var(--color-fg-60)]">
                                 Stake amount
@@ -302,7 +384,7 @@ export function ToolDetail() {
                                 type="text"
                                 value={amountInput}
                                 onChange={(e) => setAmountInput(e.target.value)}
-                                disabled={composeStatus === "pending"}
+                                disabled={composeBusy}
                                 className="mt-1 block w-48 bg-transparent border border-[color:var(--color-border)] px-3 py-1.5 font-mono focus:outline-none focus:border-[color:var(--color-accent)]"
                             />
                             <span className="ml-2 font-mono text-[color:var(--color-fg-40)]">
@@ -311,14 +393,32 @@ export function ToolDetail() {
                         </label>
                         <button
                             type="button"
-                            onClick={handleCompose}
-                            disabled={composeStatus === "pending"}
+                            onClick={
+                                effectiveMode === "compose" ? handleCompose : handleBet
+                            }
+                            disabled={composeBusy}
                             className="px-3 py-1.5 text-[length:var(--text-body-sm)]"
                         >
-                            {composeStatus === "pending"
-                                ? "Composing…"
-                                : "Compose with this tool"}
+                            {composeBusy
+                                ? effectiveMode === "compose"
+                                    ? "Composing…"
+                                    : "Betting…"
+                                : effectiveMode === "compose"
+                                  ? "Compose with this tool"
+                                  : "Place bet"}
                         </button>
+                        {effectiveMode === "bet" && !hasAgent ? (
+                            <p className="mt-3 text-[length:var(--text-body-sm)] text-[color:var(--color-fg-40)]">
+                                Want to declare composition on Intuition's graph too?{" "}
+                                <Link
+                                    to="/agent"
+                                    className="text-[color:var(--color-accent)]"
+                                >
+                                    Register an agent
+                                </Link>
+                                .
+                            </p>
+                        ) : null}
                         {composeError ? (
                             <p className="mt-4 text-[length:var(--text-body-sm)] font-mono break-all">
                                 Error: {composeError}
