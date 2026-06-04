@@ -157,7 +157,7 @@ The repo ships a working agent runtime that does exactly this end-to-end in [`sc
 
 - It does **not** sign or send transactions. Compose it with `viem`'s `WalletClient` + your delegation flow.
 - It does **not** make subjective ranking calls. `findTopAgents` sorts by raw stake; layer your own weighted scoring on top if you want recency, domain affinity, or staker-overlap signals.
-- It does **not** verify tool execution. ARP's trust signal is economic conviction, not a cryptographic proof-of-work. Output verification is a separable concern.
+- It does **not** verify tool execution. ARP's trust signal is economic conviction, not a cryptographic proof-of-work. Output verification is a separable concern. Hoping to make it later with zk proof...
 
 ## License
 

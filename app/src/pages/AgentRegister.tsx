@@ -395,7 +395,7 @@ export function AgentRegister() {
                 <Step
                     n={3}
                     title="Deploy your operator Smart Account"
-                    subtitle="Required so the SA can act as delegator when you authorize the runtime to act on your behalf (ADR 0009). Counterfactual until first deploy."
+                    subtitle="Required so the SA can act as delegator when you authorize the runtime to act on your behalf"
                     done={step3Done}
                     pending={step3Status === "pending"}
                     error={step3Error}
@@ -463,7 +463,7 @@ export function AgentRegister() {
                 <Step
                     n={5}
                     title="Hand off to the runtime"
-                    subtitle="Operator setup ends here. From now on the agent's runtime acts under the delegations you just signed — it discovers tools via @arp/sdk, declares (agent → uses → tool) triples, and stakes tTRUST on each tool it composes with. No further clicks."
+                    subtitle="Operator setup ends here. From now on the agent's runtime acts under the delegations you just signed — it discovers tools via @arp/sdk, declares (agent → uses → tool) triples, and stakes tTRUST on each tool it composes with."
                     done={false}
                     pending={false}
                     error={null}
@@ -498,7 +498,6 @@ export function AgentRegister() {
                                 >
                                     Watch the modules page →
                                 </Link>{" "}
-                                TVL climbs as your runtime stakes.
                             </p>
                         </div>
                     ) : (

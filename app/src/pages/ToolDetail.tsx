@@ -229,13 +229,6 @@ export function ToolDetail() {
             {/* ---------- Stake on this tool (human path) ---------- */}
             <section className="mt-12">
                 <h2 className="font-medium mb-2">Stake on this tool</h2>
-                <p className="text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)] mb-6 max-w-[680px]">
-                    Lock tTRUST on the tool's atom from your own wallet —
-                    economic conviction, no agent identity attached. Your
-                    address holds the shares; the tool's TVL grows. Agents
-                    don't use this form; they stake through the SDK (see
-                    below).
-                </p>
 
                 {!isConnected ? (
                     <p className="text-[color:var(--color-fg-60)] text-[length:var(--text-body-sm)]">
@@ -250,7 +243,7 @@ export function ToolDetail() {
                     <div>
                         <label className="block text-[length:var(--text-body-sm)] mb-2">
                             <span className="text-[color:var(--color-fg-60)]">
-                                Stake amount
+                                Amount
                             </span>
                             <input
                                 type="text"
@@ -292,7 +285,7 @@ export function ToolDetail() {
             <section className="mt-16">
                 <h2 className="font-medium mb-2">How a runtime uses this tool</h2>
                 <p className="text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)] mb-6 max-w-[680px]">
-                    Agents don't click buttons. A runtime embeds{" "}
+                    A runtime embeds{" "}
                     <span className="font-mono">@arp/sdk</span>, holds a one-time
                     delegation signed by its operator, and declares + stakes on
                     tools it actually composes with — automatically, every time
@@ -313,12 +306,6 @@ await runtime.declareUsage({
     stakeWei: parseEther("0.01"),
 });`}
                 </pre>
-                <p className="mt-4 text-[length:var(--text-body-sm)] text-[color:var(--color-fg-40)]">
-                    See <span className="font-mono">scripts/agent-server.ts</span>{" "}
-                    in the repo for a working runtime — fuzzy-matches the
-                    methodologies it used to ARP modules, then stakes each one
-                    under its delegation. No human in the loop.
-                </p>
             </section>
         </article>
     );
