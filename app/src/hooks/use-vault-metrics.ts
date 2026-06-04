@@ -101,22 +101,28 @@ export function useVaultMetrics(modules: Module[]) {
         },
     });
 
-    // --- 4. distinct stakers per atom (one getLogs over Deposited events) ---
+    // --- 4. distinct stakers per atom (one getLogs over Deposited, filtered) ---
     //
-    // `Deposited` indexes both `receiver` and `termId`, so the RPC node can
-    // serve the whole history in one shot. We scan once for ALL atoms (no
-    // termId filter) and bucket client-side — N modules cost one call, not
-    // N. For a hackathon-scale chain (~10s of atoms, ~100s of events) the
-    // payload is small.
+    // `Deposited` indexes `termId`, so we pass the full set of module
+    // atomIds as an OR filter — the RPC returns only logs whose termId
+    // matches one of ours instead of the whole MultiVault history (which
+    // times out on Intuition Testnet). Client-side we then bucket by
+    // termId and dedup `receiver` for the count.
     //
     // `receiver` is the position-holder per ADR (delegated stakes assign
     // shares to the runtime EOA), so dedup is on that field.
+    const validAtomIds = useMemo(
+        () => computedAtomIds.filter((id): id is Hex => id !== null),
+        [computedAtomIds],
+    );
     const stakers = useQuery({
-        queryKey: ["multiVault.depositedStakers"],
+        queryKey: ["multiVault.depositedStakers", validAtomIds.join(",")],
         queryFn: async () => {
+            if (validAtomIds.length === 0) return new Map<Hex, Set<Address>>();
             const logs = await publicClient.getLogs({
                 address: MULTI_VAULT,
                 event: DEPOSITED_EVENT,
+                args: {termId: validAtomIds},
                 fromBlock: 0n,
                 toBlock: "latest",
             });
@@ -134,6 +140,7 @@ export function useVaultMetrics(modules: Module[]) {
             }
             return byAtom;
         },
+        enabled: validAtomIds.length > 0,
         staleTime: 15_000,
         refetchInterval: 15_000,
     });

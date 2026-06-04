@@ -182,20 +182,27 @@ async function enrichModulesWithMetrics(
         ),
     );
 
-    // One getLogs over Deposited, bucketed by termId client-side.
+    // One getLogs over Deposited filtered to our atom IDs (termId is
+    // indexed — viem encodes the array as an OR on that topic). Avoids
+    // the RPC timeout that an unfiltered MultiVault-history scan would
+    // hit on Intuition Testnet.
     const depositedEvent = multiVaultAbi.find(
         (e) => e.type === "event" && e.name === "Deposited",
     );
     if (!depositedEvent) {
         throw new Error("Deposited event missing from multiVaultAbi");
     }
-    const logs = await publicClient.getLogs({
-        address: deployment.multiVault,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        event: depositedEvent as any,
-        fromBlock: 0n,
-        toBlock: "latest",
-    });
+    const logs =
+        atomIds.length === 0
+            ? []
+            : await publicClient.getLogs({
+                  address: deployment.multiVault,
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  event: depositedEvent as any,
+                  args: {termId: atomIds},
+                  fromBlock: 0n,
+                  toBlock: "latest",
+              });
     const stakersByAtom = new Map<Hex, Set<string>>();
     for (const log of logs) {
         // viem types getLogs args generically; narrow per event.
