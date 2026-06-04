@@ -4,7 +4,9 @@ import {
     type ExecutionStruct,
 } from "@metamask/smart-accounts-kit";
 import {
+    createWalletClient,
     encodeFunctionData,
+    http,
     stringToHex,
     type Account,
     type Address,
@@ -14,6 +16,7 @@ import {
     type Transport,
     type WalletClient,
 } from "viem";
+import {privateKeyToAccount} from "viem/accounts";
 
 import {identityRegistryAbi} from "../lib/abi/identity-registry";
 import {multiVaultAbi} from "../lib/abi/multi-vault";
@@ -217,6 +220,52 @@ export async function grantSmartAccountDepositApproval(params: {
     });
     await params.publicClient.waitForTransactionReceipt({hash: tx});
     return tx;
+}
+
+/**
+ * One-click runtime bring-up performed from the operator's browser at
+ * `/agent` step 5. Combines the two transactions that previously
+ * required `scripts/agent-approve-sa.ts`:
+ *
+ *   1. Operator sends `fundAmount` of tTRUST to the runtime EOA so it
+ *      has gas to operate. Signed via the operator's wallet (MetaMask
+ *      popup).
+ *   2. The runtime — using its in-memory private key from step 2 —
+ *      calls `MultiVault.approve(SA, DEPOSIT)` so it can later receive
+ *      shares minted under the operator's compose delegation. Signed
+ *      locally, no popup.
+ *
+ * The runtime's private key never leaves the browser tab; it is only
+ * available during the same session as step 2. After page refresh the
+ * operator must run the equivalent script.
+ */
+export async function fundAndApproveRuntime(params: {
+    operatorWalletClient: WalletClient<Transport, Chain, Account>;
+    runtimePrivateKey: Hex;
+    smartAccountAddress: Address;
+    publicClient: PublicClient;
+    fundAmount: bigint;
+}): Promise<{fundTx: Hex; approveTx: Hex; runtimeAddress: Address}> {
+    const runtimeAccount = privateKeyToAccount(params.runtimePrivateKey);
+
+    const fundTx = await params.operatorWalletClient.sendTransaction({
+        to: runtimeAccount.address,
+        value: params.fundAmount,
+    });
+    await params.publicClient.waitForTransactionReceipt({hash: fundTx});
+
+    const runtimeWalletClient = createWalletClient({
+        account: runtimeAccount,
+        chain: intuitionTestnet,
+        transport: http(),
+    });
+    const approveTx = await grantSmartAccountDepositApproval({
+        agentWalletClient: runtimeWalletClient,
+        smartAccountAddress: params.smartAccountAddress,
+        publicClient: params.publicClient,
+    });
+
+    return {fundTx, approveTx, runtimeAddress: runtimeAccount.address};
 }
 
 /**

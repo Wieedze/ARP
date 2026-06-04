@@ -96,6 +96,14 @@ export function AgentRegister() {
         (smartAccountAddress as `0x${string}` | null) ?? undefined,
     );
 
+    // Step 5 state — fund runtime + approve MultiVault (one-click bring-up)
+    const [step5Status, setStep5Status] = useState<StepStatus>("idle");
+    const [step5Error, setStep5Error] = useState<string | null>(null);
+    const [bringUpTxs, setBringUpTxs] = useState<{
+        fundTx: string;
+        approveTx: string;
+    } | null>(null);
+
 
     useEffect(() => {
         if (!operatorAddress || !walletClient || !walletClient.account) return;
@@ -274,6 +282,37 @@ export function AgentRegister() {
         } catch (err) {
             setStep4Status("error");
             setStep4Error((err as Error).message);
+        }
+    }
+
+    /**
+     * Step 5 — fund the runtime EOA from the operator's wallet and let
+     * the runtime grant the MultiVault DEPOSIT approval to the Smart
+     * Account. Replaces `scripts/agent-approve-sa.ts`. Only works in the
+     * same session as step 2 (the runtime private key lives in component
+     * state). FUND_AMOUNT covers many approve + stake txns.
+     */
+    async function handleBringUpRuntime() {
+        if (!generatedRuntime || !smartAccountAddress) return;
+        setStep5Status("pending");
+        setStep5Error(null);
+        try {
+            const wc = await getActiveWalletClient();
+            const {fundAndApproveRuntime} = await import(
+                "../services/delegation-redeem"
+            );
+            const result = await fundAndApproveRuntime({
+                operatorWalletClient: wc,
+                runtimePrivateKey: generatedRuntime.privateKey,
+                smartAccountAddress: smartAccountAddress as `0x${string}`,
+                publicClient,
+                fundAmount: parseEther("0.01"),
+            });
+            setBringUpTxs({fundTx: result.fundTx, approveTx: result.approveTx});
+            setStep5Status("done");
+        } catch (err) {
+            setStep5Status("error");
+            setStep5Error((err as Error).message);
         }
     }
 
@@ -469,7 +508,84 @@ export function AgentRegister() {
                     error={null}
                 >
                     {allDone ? (
-                        <div className="text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)] space-y-2 max-w-[680px]">
+                        <div className="text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)] space-y-4 max-w-[680px]">
+                            <div className="border border-[color:var(--color-border)] p-3">
+                                <p className="text-[length:var(--text-label)] uppercase tracking-wider text-[color:var(--color-fg-40)] mb-1">
+                                    Bring-up
+                                </p>
+                                <p className="mb-3">
+                                    Fund the runtime EOA and grant the MultiVault DEPOSIT
+                                    approval to your Smart Account. Two transactions, one
+                                    click — replaces{" "}
+                                    <span className="font-mono">
+                                        scripts/agent-approve-sa.ts
+                                    </span>.
+                                </p>
+                                {step5Status === "done" && bringUpTxs ? (
+                                    <div className="font-mono text-[length:var(--text-body-sm)]">
+                                        <p className="text-[color:var(--color-accent)] mb-2">
+                                            Runtime ready
+                                        </p>
+                                        <p>
+                                            <span className="text-[color:var(--color-fg-40)]">
+                                                fund tx
+                                            </span>{" "}
+                                            <a
+                                                href={`${deployments.chain.explorerUrl}/tx/${bringUpTxs.fundTx}`}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                className="text-[color:var(--color-accent)]"
+                                            >
+                                                {bringUpTxs.fundTx.slice(0, 10)}…
+                                            </a>
+                                        </p>
+                                        <p>
+                                            <span className="text-[color:var(--color-fg-40)]">
+                                                approve tx
+                                            </span>{" "}
+                                            <a
+                                                href={`${deployments.chain.explorerUrl}/tx/${bringUpTxs.approveTx}`}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                className="text-[color:var(--color-accent)]"
+                                            >
+                                                {bringUpTxs.approveTx.slice(0, 10)}…
+                                            </a>
+                                        </p>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <button
+                                            type="button"
+                                            onClick={handleBringUpRuntime}
+                                            disabled={
+                                                step5Status === "pending" ||
+                                                !generatedRuntime
+                                            }
+                                            className="px-3 py-1.5 text-[length:var(--text-body-sm)]"
+                                        >
+                                            {step5Status === "pending"
+                                                ? "Funding and approving…"
+                                                : "Fund + approve runtime"}
+                                        </button>
+                                        {!generatedRuntime ? (
+                                            <p className="mt-2 text-[length:var(--text-body-sm)] text-[color:var(--color-fg-40)]">
+                                                Runtime private key not in memory (page
+                                                was refreshed). Run{" "}
+                                                <span className="font-mono">
+                                                    bun scripts/agent-approve-sa.ts
+                                                </span>{" "}
+                                                instead.
+                                            </p>
+                                        ) : null}
+                                        {step5Error ? (
+                                            <p className="mt-2 text-[length:var(--text-body-sm)] font-mono break-all">
+                                                Error: {step5Error}
+                                            </p>
+                                        ) : null}
+                                    </>
+                                )}
+                            </div>
                             <p>
                                 Paste the <span className="font-mono">.env</span> block above
                                 into <span className="font-mono">scripts/</span> and start a
