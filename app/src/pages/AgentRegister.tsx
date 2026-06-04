@@ -105,6 +105,16 @@ export function AgentRegister() {
     } | null>(null);
     const [pastedRuntimeKey, setPastedRuntimeKey] = useState("");
 
+    // Resolve the runtime private key from whichever source is available
+    // — fresh in-memory keypair from step 2, or a paste from a returning
+    // session. Validated `0x` + 64 hex chars before exposing.
+    const trimmedPaste = pastedRuntimeKey.trim();
+    const isValidPaste = /^0x[0-9a-fA-F]{64}$/.test(trimmedPaste);
+    const activeRuntimeKey: Hex | null = generatedRuntime
+        ? generatedRuntime.privateKey
+        : isValidPaste
+          ? (trimmedPaste as Hex)
+          : null;
 
     useEffect(() => {
         if (!operatorAddress || !walletClient || !walletClient.account) return;
@@ -319,13 +329,27 @@ export function AgentRegister() {
 
     const envBlob = useMemo(() => {
         if (!storedDelegations.stored) return null;
+        const pkLine = activeRuntimeKey
+            ? `AGENT_PRIVATE_KEY=${activeRuntimeKey}`
+            : `# AGENT_PRIVATE_KEY=0x... (paste the runtime key you saved at step 2)`;
         return [
-            `# Paste into .env for scripts/agent-loop.ts`,
+            `# Paste into scripts/.env for agent-loop.ts (autonomous walk)`,
+            `# or agent-server.ts (on-demand hire flow). Each runtime reads`,
+            `# whichever vars apply to its role.`,
+            ``,
+            pkLine,
             `DELEGATION_PUBLISH_JSON='${serializeDelegation(storedDelegations.stored.publish)}'`,
             `DELEGATION_COMPOSE_JSON='${serializeDelegation(storedDelegations.stored.compose)}'`,
             ``,
+            `# --- agent-server.ts options (all optional) ---`,
+            `# AGENT_SERVER_PORT=3001                         # HTTP listen port`,
+            `# AGENT_MIN_BUDGET_TTRUST=0.005                  # reject hire requests below this`,
+            `# SPECIALIST_ENDPOINT=http://localhost:3002      # enable A2A sub-contracting`,
+            `# AGENT2_RUNTIME_ADDRESS=0x...                   # specialist runtime to pay`,
+            `# SUBCONTRACT_FEE_TTRUST=0.002                   # fee paid to the specialist`,
+            ``,
         ].join("\n");
-    }, [storedDelegations.stored]);
+    }, [storedDelegations.stored, activeRuntimeKey]);
 
     if (!isConnected) {
         return (
@@ -347,18 +371,6 @@ export function AgentRegister() {
     const step3Done = isSaDeployed === true;
     const step4Done = step3Done && storedDelegations.stored !== null;
     const allDone = step1Done && step2Done && step3Done && step4Done;
-
-    // Step 5 needs the runtime private key. It's either still in
-    // component memory from step 2 (same session) or pasted by the
-    // operator from the copy they saved earlier. Validate the paste
-    // shape (0x + 64 hex chars) before exposing it.
-    const trimmedPaste = pastedRuntimeKey.trim();
-    const isValidPaste = /^0x[0-9a-fA-F]{64}$/.test(trimmedPaste);
-    const activeRuntimeKey: Hex | null = generatedRuntime
-        ? generatedRuntime.privateKey
-        : isValidPaste
-          ? (trimmedPaste as Hex)
-          : null;
 
     return (
         <section>
