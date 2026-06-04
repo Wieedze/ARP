@@ -43,3 +43,4 @@ coverage/
 # We only consume Claude Code skills (.claude/skills/mms-*); the others are vendored but unused.
 .cursor/
 .agents/
+docs
