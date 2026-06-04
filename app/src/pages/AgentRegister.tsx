@@ -103,6 +103,7 @@ export function AgentRegister() {
         fundTx: string;
         approveTx: string;
     } | null>(null);
+    const [pastedRuntimeKey, setPastedRuntimeKey] = useState("");
 
 
     useEffect(() => {
@@ -293,7 +294,7 @@ export function AgentRegister() {
      * state). FUND_AMOUNT covers many approve + stake txns.
      */
     async function handleBringUpRuntime() {
-        if (!generatedRuntime || !smartAccountAddress) return;
+        if (!activeRuntimeKey || !smartAccountAddress) return;
         setStep5Status("pending");
         setStep5Error(null);
         try {
@@ -303,7 +304,7 @@ export function AgentRegister() {
             );
             const result = await fundAndApproveRuntime({
                 operatorWalletClient: wc,
-                runtimePrivateKey: generatedRuntime.privateKey,
+                runtimePrivateKey: activeRuntimeKey,
                 smartAccountAddress: smartAccountAddress as `0x${string}`,
                 publicClient,
                 fundAmount: parseEther("0.01"),
@@ -346,6 +347,18 @@ export function AgentRegister() {
     const step3Done = isSaDeployed === true;
     const step4Done = step3Done && storedDelegations.stored !== null;
     const allDone = step1Done && step2Done && step3Done && step4Done;
+
+    // Step 5 needs the runtime private key. It's either still in
+    // component memory from step 2 (same session) or pasted by the
+    // operator from the copy they saved earlier. Validate the paste
+    // shape (0x + 64 hex chars) before exposing it.
+    const trimmedPaste = pastedRuntimeKey.trim();
+    const isValidPaste = /^0x[0-9a-fA-F]{64}$/.test(trimmedPaste);
+    const activeRuntimeKey: Hex | null = generatedRuntime
+        ? generatedRuntime.privateKey
+        : isValidPaste
+          ? (trimmedPaste as Hex)
+          : null;
 
     return (
         <section>
@@ -514,12 +527,8 @@ export function AgentRegister() {
                                     Bring-up
                                 </p>
                                 <p className="mb-3">
-                                    Fund the runtime EOA and grant the MultiVault DEPOSIT
-                                    approval to your Smart Account. Two transactions, one
-                                    click — replaces{" "}
-                                    <span className="font-mono">
-                                        scripts/agent-approve-sa.ts
-                                    </span>.
+                                    Fund the runtime and grant the MultiVault DEPOSIT
+                                    approval to your Smart Account.
                                 </p>
                                 {step5Status === "done" && bringUpTxs ? (
                                     <div className="font-mono text-[length:var(--text-body-sm)]">
@@ -555,12 +564,49 @@ export function AgentRegister() {
                                     </div>
                                 ) : (
                                     <>
+                                        {!generatedRuntime ? (
+                                            <div className="mb-3">
+                                                <p className="text-[length:var(--text-body-sm)] text-[color:var(--color-fg-40)] mb-2">
+                                                    Runtime private key isn't in this
+                                                    session's memory (it lives only in
+                                                    the browser tab where you ran step
+                                                    2). Paste the key you saved to
+                                                    re-enable the button, or run{" "}
+                                                    <span className="font-mono">
+                                                        bun scripts/agent-approve-sa.ts
+                                                    </span>{" "}
+                                                    instead.
+                                                </p>
+                                                <input
+                                                    type="password"
+                                                    value={pastedRuntimeKey}
+                                                    onChange={(e) =>
+                                                        setPastedRuntimeKey(
+                                                            e.target.value,
+                                                        )
+                                                    }
+                                                    placeholder="0x…"
+                                                    disabled={step5Status === "pending"}
+                                                    className="block w-full max-w-[680px] bg-transparent border border-[color:var(--color-border)] px-3 py-1.5 font-mono text-[length:var(--text-body-sm)] focus:outline-none focus:border-[color:var(--color-accent)]"
+                                                />
+                                                {pastedRuntimeKey.length > 0 &&
+                                                !isValidPaste ? (
+                                                    <p className="mt-1 text-[length:var(--text-body-sm)] text-[color:var(--color-fg-40)]">
+                                                        Expected{" "}
+                                                        <span className="font-mono">
+                                                            0x
+                                                        </span>{" "}
+                                                        + 64 hex chars.
+                                                    </p>
+                                                ) : null}
+                                            </div>
+                                        ) : null}
                                         <button
                                             type="button"
                                             onClick={handleBringUpRuntime}
                                             disabled={
                                                 step5Status === "pending" ||
-                                                !generatedRuntime
+                                                !activeRuntimeKey
                                             }
                                             className="px-3 py-1.5 text-[length:var(--text-body-sm)]"
                                         >
@@ -568,16 +614,6 @@ export function AgentRegister() {
                                                 ? "Funding and approving…"
                                                 : "Fund + approve runtime"}
                                         </button>
-                                        {!generatedRuntime ? (
-                                            <p className="mt-2 text-[length:var(--text-body-sm)] text-[color:var(--color-fg-40)]">
-                                                Runtime private key not in memory (page
-                                                was refreshed). Run{" "}
-                                                <span className="font-mono">
-                                                    bun scripts/agent-approve-sa.ts
-                                                </span>{" "}
-                                                instead.
-                                            </p>
-                                        ) : null}
                                         {step5Error ? (
                                             <p className="mt-2 text-[length:var(--text-body-sm)] font-mono break-all">
                                                 Error: {step5Error}
@@ -586,26 +622,7 @@ export function AgentRegister() {
                                     </>
                                 )}
                             </div>
-                            <p>
-                                Paste the <span className="font-mono">.env</span> block above
-                                into <span className="font-mono">scripts/</span> and start a
-                                runtime:
-                            </p>
                             <ul className="font-mono text-[length:var(--text-body-sm)] ml-4 space-y-1">
-                                <li>
-                                    <span className="text-[color:var(--color-fg-40)]">bun</span>{" "}
-                                    scripts/agent-loop.ts{" "}
-                                    <span className="text-[color:var(--color-fg-40)]">
-                                        — autonomous walk of the manifest
-                                    </span>
-                                </li>
-                                <li>
-                                    <span className="text-[color:var(--color-fg-40)]">bun</span>{" "}
-                                    scripts/agent-server.ts{" "}
-                                    <span className="text-[color:var(--color-fg-40)]">
-                                        — on-demand HTTP runtime (hire flow)
-                                    </span>
-                                </li>
                             </ul>
                             <p className="pt-2">
                                 <Link
