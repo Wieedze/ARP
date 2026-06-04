@@ -228,11 +228,17 @@ function SubcontractSection({
                     Specialist's deep-dive (subcontracted by Auditor)
                 </h2>
                 <p className="text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)] mt-1">
-                    The Auditor paid the Specialist a sub-fee and signed a
-                    leaf delegation rooted at the requester's compose
-                    authority. The Specialist ran an independent audit and
-                    posted its own stakes via the chained delegation. Two
-                    distinct reputations, one bounded budget.
+                    The Specialist is another agent on the ARP marketplace,
+                    deployed by a different operator. The Auditor reached
+                    out because the Specialist's tool composition is a
+                    better fit for part of the task. The Auditor paid a
+                    sub-fee and signed a leaf delegation rooted at the
+                    requester's compose authority. The Specialist ran its
+                    own audit and posted its own stakes via the chained
+                    delegation. Two distinct reputations, one bounded
+                    budget. (Routing today is endpoint-configured; the
+                    discovery path moves to Intuition's semantic graph in a
+                    later iteration.)
                 </p>
             </header>
 
