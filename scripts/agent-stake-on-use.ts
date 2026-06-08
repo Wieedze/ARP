@@ -42,6 +42,13 @@ export type ManifestEntry = {
     domain: string;
     schemaURI: string;
     description: string;
+    /**
+     * Synonyms / phrases that should map a free-text methodology mention
+     * back to this module. The matcher prefers the longest keyword hit so
+     * a multi-word phrase (e.g. "checks-effects-interactions") beats a
+     * generic single word (e.g. "review").
+     */
+    keywords?: string[];
 };
 
 export type StakeAction = {
@@ -65,17 +72,21 @@ function loadManifest(path = DEFAULT_MANIFEST_PATH): ManifestEntry[] {
 }
 
 /**
- * Fuzzy-match a methodology string against manifest module names.
+ * Fuzzy-match a methodology string against manifest module entries.
  *
- * The agent's audit output may say:
- *   "Trail of Bits Secure Workflow Guide"
- *   "secure-workflow-guide skill"
- *   "TOB secure-workflow"
- *   "Slither static analysis"
+ * The agent's audit output names methodologies in natural language —
+ * "Manual reentrancy vulnerability assessment", "Solidity best practices
+ * review", "Trail of Bits checks-effects-interactions analysis", etc.
+ * The match strategy, in order, picks the first hit:
  *
- * We normalize both sides (lowercase, strip non-alphanumeric) then check
- * containment in either direction. Good-enough for the hackathon scope;
- * a future version could use embeddings.
+ *   1. Normalized name containment (lower + strip non-alphanumeric).
+ *      Catches "Slither static analysis" → "Slither (Crytic)".
+ *   2. Keyword phrase hit. Each manifest entry declares synonyms; the
+ *      longest matching keyword wins so multi-word phrases beat generic
+ *      single words. Catches "Manual reentrancy vulnerability
+ *      assessment" → "Trail of Bits — secure-workflow-guide" via the
+ *      keyword "manual reentrancy".
+ *   3. Single-token fallback (4+ chars in the entry's name).
  */
 function matchManifestEntry(
     methodology: string,
@@ -85,15 +96,29 @@ function matchManifestEntry(
     const needle = norm(methodology);
     if (needle.length === 0) return undefined;
 
+    // 1. Name containment.
     for (const entry of manifest) {
         const hay = norm(entry.name);
         if (hay.includes(needle) || needle.includes(hay)) return entry;
     }
-    // Match on key token only (e.g. "slither", "scsvs")
-    const tokens = methodology
-        .toLowerCase()
-        .split(/[^a-z0-9]+/)
-        .filter((t) => t.length >= 4);
+
+    // 2. Keyword phrase hit — longest match wins (most specific).
+    const low = methodology.toLowerCase();
+    let best: ManifestEntry | undefined;
+    let bestLen = 0;
+    for (const entry of manifest) {
+        for (const kw of entry.keywords ?? []) {
+            const kwLow = kw.toLowerCase();
+            if (low.includes(kwLow) && kwLow.length > bestLen) {
+                best = entry;
+                bestLen = kwLow.length;
+            }
+        }
+    }
+    if (best) return best;
+
+    // 3. Single-token fallback on entry name (e.g. "slither", "scsvs").
+    const tokens = low.split(/[^a-z0-9]+/).filter((t) => t.length >= 4);
     for (const tok of tokens) {
         for (const entry of manifest) {
             if (entry.name.toLowerCase().includes(tok)) return entry;
