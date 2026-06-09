@@ -45,7 +45,7 @@ export function Layout({children}: {children: ReactNode}) {
                     Running on Intuition Testnet — no real value at stake.
                 </span>
                 <a
-                    href="https://testnet.hub.intuition.systems/faucet"
+                    href="https://hub.intuition.systems"
                     target="_blank"
                     rel="noreferrer"
                     className="text-[color:var(--color-accent)] hover:underline"
