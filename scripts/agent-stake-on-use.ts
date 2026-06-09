@@ -32,6 +32,7 @@ import {type Delegation} from "@metamask/smart-accounts-kit";
 
 import {
     redeemDeclareTriple,
+    redeemEnsureAtomForCaip10,
     redeemEnsureAtomForThing,
     redeemEnsureAtomForURI,
     redeemStakeOnAtom,
@@ -135,10 +136,11 @@ function matchManifestEntry(
  * @param params.composeDelegation  The signed compose delegation for the agent
  *                                  (single Delegation, or chain `[leaf, root]`
  *                                  for sub-delegation flows).
- * @param params.agentWalletClient  The runtime EOA client (delegate).
+ * @param params.agentWalletClient  The runtime EOA client (delegate). Its
+ *                                  address is also the agent's CAIP-10
+ *                                  identity — the subject of every
+ *                                  `(agent, uses, tool)` triple.
  * @param params.publicClient       For reads + waitForTransactionReceipt.
- * @param params.agentSelfThing     The agent's identity Thing (used to
- *                                  ensure its self-atom exists if not yet).
  * @param params.stakePerUsage      Amount staked on each cited methodology's
  *                                  atom. Defaults to 0.001 tTRUST per call.
  * @param params.manifestPath       Optional override for the manifest file
@@ -149,19 +151,22 @@ export async function stakeOnUsedMethodologies(params: {
     composeDelegation: Delegation | Delegation[];
     agentWalletClient: WalletClient<Transport, Chain, Account>;
     publicClient: PublicClient;
-    agentSelfThing: {name: string; description: string};
     stakePerUsage?: bigint;
     manifestPath?: string;
 }): Promise<StakeAction[]> {
     const stakeAmount = params.stakePerUsage ?? parseEther("0.001");
     const manifest = loadManifest(params.manifestPath);
 
-    // Ensure the agent's own atom exists (first call creates, subsequent reuse).
-    const agentAtom = await redeemEnsureAtomForThing({
+    // The agent's identity atom is the CAIP-10 of its runtime wallet — the
+    // same account that holds its reputation positions. Deriving it from the
+    // address (not a pinned Thing) makes the triple subject resolve to an
+    // Account on the Intuition indexer, and keeps it identical to the
+    // self-atom created at bootstrap by construction (both hash the address).
+    const agentAtom = await redeemEnsureAtomForCaip10({
         signedDelegation: params.composeDelegation,
         agentWalletClient: params.agentWalletClient,
         publicClient: params.publicClient,
-        thing: params.agentSelfThing,
+        address: params.agentWalletClient.account.address,
     });
 
     // Ensure the canonical "uses" predicate atom exists (one-time, idempotent).

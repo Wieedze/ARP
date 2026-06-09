@@ -209,10 +209,6 @@ async function handleRun(params: {
         composeDelegation: [body.subDelegation, body.rootDelegation],
         agentWalletClient,
         publicClient,
-        agentSelfThing: {
-            name: `ARP Specialist runtime ${agentAccount.address.slice(0, 8)}`,
-            description: `Specialist ARP agent, runtime ${agentAccount.address}, parent ${body.auditorAddress}.`,
-        },
     });
     console.log(formatStakeActions(stakes));
 

@@ -256,14 +256,6 @@ async function handleRun(params: {
         composeDelegation,
         agentWalletClient,
         publicClient,
-        agentSelfThing: {
-            // MUST match `scripts/agent-loop.ts` exactly — same name +
-            // description = same IPFS URI = same atomId. Mismatch would
-            // make stake-on-use create a fresh agent atom instead of
-            // reusing the one already on chain.
-            name: `ARP Agent runtime ${agentAccount.address.slice(0, 8)}`,
-            description: `Headless ARP agent, runtime ${agentAccount.address}, delegator ${composeDelegation.delegator}.`,
-        },
     });
     console.log(formatStakeActions(stakes));
 

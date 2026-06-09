@@ -345,6 +345,50 @@ export async function redeemEnsureAtomForURI(
 }
 
 /**
+ * Build a CAIP-10 account URI for an EVM address.
+ *
+ * Format: `caip10:eip155:{chainId}:{address}`, lowercased. The address is
+ * lowercased because the atom id is `keccak256` of these bytes — every
+ * call site that references the same identity must produce the exact same
+ * string, regardless of input checksum casing.
+ */
+export function caip10Uri(
+    address: Address,
+    chainId: number = intuitionTestnet.id,
+): string {
+    return `caip10:eip155:${chainId}:${address.toLowerCase()}`;
+}
+
+/**
+ * Ensure the **CAIP-10 account atom** for `address` exists on chain,
+ * creating it under the compose delegation if needed.
+ *
+ * Use this for an agent's **identity** atom — the on-chain account that
+ * holds its reputation positions. Unlike `redeemEnsureAtomForThing`, no
+ * IPFS pin is performed: the URI is deterministic, so the Intuition
+ * indexer types the atom as an `Account` and renders the address itself
+ * as the label. This makes a `(agent, uses, tool)` triple resolve to the
+ * agent's account on the explorer and keeps the triple subject identical
+ * to the position holder read by the reputation queries.
+ */
+export async function redeemEnsureAtomForCaip10(
+    params: RedeemCommon & {
+        address: Address;
+        publicClient: PublicClient;
+        chainId?: number;
+    },
+): Promise<{atomId: Hex; uri: string; created: boolean; tx?: Hex}> {
+    const uri = caip10Uri(params.address, params.chainId);
+    const result = await redeemEnsureAtomForURI({
+        signedDelegation: params.signedDelegation,
+        agentWalletClient: params.agentWalletClient,
+        uri,
+        publicClient: params.publicClient,
+    });
+    return {...result, uri};
+}
+
+/**
  * Pin a Thing, check if the resulting atom exists on chain, and create it
  * under the compose delegation if not. Mirrors `ensureAtomForThing` from
  * `intuition-graph.ts` but routes the create through `redeemDelegation`

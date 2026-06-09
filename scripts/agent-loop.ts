@@ -47,6 +47,7 @@ import {multiVaultAbi} from "../app/src/lib/abi/multi-vault";
 import {deserializeDelegation} from "../app/src/services/delegation";
 import {
     redeemDeclareTriple,
+    redeemEnsureAtomForCaip10,
     redeemEnsureAtomForThing,
     redeemEnsureAtomForURI,
     redeemRegisterModule,
@@ -122,15 +123,16 @@ async function main() {
     // surfaces a pointer.
 
     // -------- 1. Ensure the agent's self-atom -------------------------------
+    // CAIP-10 of the runtime wallet — the same account that holds the
+    // agent's reputation positions. The indexer types it as an Account and
+    // renders the address as the label, so the (agent, uses, tool) triple
+    // resolves to the agent's account on the explorer.
     log("\nensuring agent self-atom");
-    const agentAtom = await redeemEnsureAtomForThing({
+    const agentAtom = await redeemEnsureAtomForCaip10({
         signedDelegation: composeDel,
         agentWalletClient,
         publicClient,
-        thing: {
-            name: `ARP Agent runtime ${agentAccount.address.slice(0, 8)}`,
-            description: `Headless ARP agent, runtime ${agentAccount.address}, delegator ${publishDel.delegator}.`,
-        },
+        address: agentAccount.address,
     });
     log(
         `  agent atom       ${agentAtom.atomId.slice(0, 12)}… ${agentAtom.created ? "(created)" : "(reused)"}`,
