@@ -21,6 +21,11 @@
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\" --ignore-path .gitignore",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\" --ignore-path .gitignore"
   },
+  "dependencies": {
+    "@metamask/delegation-core": "^2.2.1",
+    "@metamask/delegation-deployments": "^1.4.0",
+    "@metamask/smart-accounts-kit": "^1.6.0"
+  },
   "devDependencies": {
     "prettier": "^3.3.3",
     "viem": "2.52.0"
