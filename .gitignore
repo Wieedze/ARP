@@ -44,3 +44,6 @@ coverage/
 .cursor/
 .agents/
 docs
+
+# sdk build output
+sdk/dist/
