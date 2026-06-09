@@ -12,6 +12,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@arp-protocol/sdk": "^0.0.1",
     "@metamask/delegation-core": "^2.2.1",
     "@metamask/delegation-deployments": "^1.4.0",
     "@metamask/smart-accounts-kit": "^1.6.0",
