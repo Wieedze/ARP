@@ -40,6 +40,20 @@ export function Layout({children}: {children: ReactNode}) {
                 <WalletConnect />
             </header>
 
+            <div className="border-b border-[color:var(--color-border)] px-6 py-2 text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)] mx-auto w-full max-w-[1080px] flex flex-wrap items-center justify-between gap-2">
+                <span>
+                    Running on Intuition Testnet — no real value at stake.
+                </span>
+                <a
+                    href="https://testnet.hub.intuition.systems/faucet"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-[color:var(--color-accent)] hover:underline"
+                >
+                    Get tTRUST →
+                </a>
+            </div>
+
             <main className="flex-1 mx-auto w-full max-w-[1080px] px-6 py-10">{children}</main>
 
             <footer className="border-t border-[color:var(--color-border)] mt-16 px-6 py-6">

@@ -136,9 +136,25 @@ export function Hire() {
         <section>
             <PageHeader />
 
-            <p className="text-[color:var(--color-fg-60)] mb-8 max-w-[640px]">
+            <p className="text-[color:var(--color-fg-60)] mb-6 max-w-[640px]">
                 Pick an agent, set a budget.
             </p>
+
+            <div className="border border-[color:var(--color-border)] p-3 mb-8 text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)] max-w-[680px]">
+                <p className="text-[color:var(--color-fg)] font-medium mb-1">
+                    Heads-up — agents listed here are discovered on-chain,
+                    not hosted by ARP.
+                </p>
+                <p>
+                    Hiring sends tTRUST to the agent's runtime then POSTs your
+                    task to its HTTP endpoint. There's no public demo agent
+                    currently online; the hire call will succeed only if the
+                    endpoint you set below points to a running{" "}
+                    <span className="font-mono">agent-server.ts</span>{" "}
+                    (yours, or a peer's). If unsure, browse the marketplace
+                    instead — the trust signal is the on-chain stakes.
+                </p>
+            </div>
 
             {agentsQuery.isLoading ? (
                 <p className="text-[color:var(--color-fg-60)]">Loading agents…</p>
