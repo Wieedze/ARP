@@ -5,6 +5,7 @@ import {ModuleList} from "./components/ModuleList";
 import {AgentRegister} from "./pages/AgentRegister";
 import {Hire} from "./pages/Hire";
 import {HireResult} from "./pages/HireResult";
+import {RegisterModule} from "./pages/RegisterModule";
 import {ToolDetail} from "./pages/ToolDetail";
 
 function App() {
@@ -13,6 +14,7 @@ function App() {
             <Routes>
                 <Route path="/" element={<ModuleList />} />
                 <Route path="/agent" element={<AgentRegister />} />
+                <Route path="/modules/new" element={<RegisterModule />} />
                 <Route path="/tool/:id" element={<ToolDetail />} />
                 <Route path="/hire" element={<Hire />} />
                 <Route path="/hire/result/:tx" element={<HireResult />} />

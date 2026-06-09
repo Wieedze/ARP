@@ -62,14 +62,22 @@ export function ModuleList() {
                         Evaluation modules registered on the Agent Reputation Protocol.
                     </p>
                 </div>
-                {agentCta ? (
+                <div className="flex items-center gap-5 text-[length:var(--text-body-sm)]">
                     <Link
-                        to={agentCta.to}
-                        className="text-[length:var(--text-body-sm)] text-[color:var(--color-accent)]"
+                        to="/modules/new"
+                        className="text-[color:var(--color-accent)]"
                     >
-                        {agentCta.label} →
+                        + Register a tool
                     </Link>
-                ) : null}
+                    {agentCta ? (
+                        <Link
+                            to={agentCta.to}
+                            className="text-[color:var(--color-accent)]"
+                        >
+                            {agentCta.label} →
+                        </Link>
+                    ) : null}
+                </div>
             </header>
 
             {domains.length > 0 ? (
