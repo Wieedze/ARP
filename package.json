@@ -13,6 +13,7 @@
     "sdk"
   ],
   "scripts": {
+    "demo": "bun scripts/demo.ts",
     "dev": "bun --filter app dev",
     "build": "bun --filter '*' build",
     "test": "bun --filter '*' test",

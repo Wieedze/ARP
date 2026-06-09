@@ -1,0 +1,117 @@
+Script started on 2026-06-08 17:44:25+02:00 [TERM="xterm-256color" TTY="/dev/pts/12" COLUMNS="149" LINES="31"]
+[1m[7m%[27m[1m[0m                                                                                                                                                     ]2;max@DESKTOP-S4SHGHM:~/Project/ARP]1;~/Project/ARP]7;file://DESKTOP-S4SHGHM/home/max/Project/ARP\[0m[27m[24m[J[01;32m➜  [36mARP[00m [K[?1h=[?2004h[0m[27m[24m[J[01;32m➜  [36mARP[00m [K[0m[27m[24m[J[01;32m➜  [36mARP[00m [01;34mgit:([31mmain[34m) [33m✗[00m [Kscripts[?1l>[?2004l
+]2;scripts]1;scripts[1m[7m%[27m[1m[0m                                                                                                                                                     ]2;max@DESKTOP-S4SHGHM:~/Project/ARP/scripts]1;..t/ARP/scripts]7;file://DESKTOP-S4SHGHM/home/max/Project/ARP/scripts\[0m[27m[24m[J[01;32m➜  [36mscripts[00m [01;34mgit:([31mmain[34m) [33m✗[00m [K[?1h=[?2004h[7m// SPDX-License-Identifier: MIT[27m
+[7mpragma solidity ^0.8.24;[27m[K
+[K
+[7m/// @title Reentrant — classic checks-effects-interactions violation.[27m[K
+[7m/// @notice Intentionally vulnerable. Used as input for the ARP demo agent.[27m[K
+[7mcontract Reentrant {[27m[K
+[7m    mapping(address => uint256) public balances;[27m[K
+[K
+[7m    function deposit() external payable {[27m[K
+[7m        balances[msg.sender] += msg.value;[27m[K
+[7m    }[27m[K
+[K
+[7m    /// @notice Vulnerable: state mutation happens AFTER the external call,[27m[K
+[7m    ///         so a reentrant call into `withdraw` reads a stale balance.[27m[K
+[7m    function withdraw(uint256 amount) external {[27m[K
+[7m        require(balances[msg.sender] >= amount, "insufficient");[27m[K
+[K
+[7m        // External call BEFORE updating state — reentrancy entry point.[27m[K
+[7m        (bool ok,) = msg.sender.call{value: amount}("");[27m[K
+[7m        require(ok, "transfer failed");[27m[K
+[K
+[7m        balances[msg.sender] -= amount;[27m[K
+[7m    }[27m[K
+[K
+[7m    receive() external payable {}[27m[K
+[7m}[27m[K
+[K[26A[24C[27m/[27m/[27m [27mS[27mP[27mD[27mX[27m-[27mL[27mi[27mc[27me[27mn[27ms[27me[27m-[27mI[27md[27me[27mn[27mt[27mi[27mf[27mi[27me[27mr[27m:[27m [27mM[27mI[27mT[1B[27mp[27mr[27ma[27mg[27mm[27ma[27m [27ms[27mo[27ml[27mi[27md[27mi[27mt[27my[27m [27m^[27m0[27m.[27m8[27m.[27m2[27m4[27m;[2B[27m/[27m/[27m/[27m [27m@[27mt[27mi[27mt[27ml[27me[27m [27mR[27me[27me[27mn[27mt[27mr[27ma[27mn[27mt[27m [27m—[27m [27mc[27ml[27ma[27ms[27ms[27mi[27mc[27m [27mc[27mh[27me[27mc[27mk[27ms[27m-[27me[27mf[27mf[27me[27mc[27mt[27ms[27m-[27mi[27mn[27mt[27me[27mr[27ma[27mc[27mt[27mi[27mo[27mn[27ms[27m [27mv[27mi[27mo[27ml[27ma[27mt[27mi[27mo[27mn[27m.[1B[27m/[27m/[27m/[27m [27m@[27mn[27mo[27mt[27mi[27mc[27me[27m [27mI[27mn[27mt[27me[27mn[27mt[27mi[27mo[27mn[27ma[27ml[27ml[27my[27m [27mv[27mu[27ml[27mn[27me[27mr[27ma[27mb[27ml[27me[27m.[27m [27mU[27ms[27me[27md[27m [27ma[27ms[27m [27mi[27mn[27mp[27mu[27mt[27m [27mf[27mo[27mr[27m [27mt[27mh[27me[27m [27mA[27mR[27mP[27m [27md[27me[27mm[27mo[27m [27ma[27mg[27me[27mn[27mt[27m.[1B[27mc[27mo[27mn[27mt[27mr[27ma[27mc[27mt[27m [27mR[27me[27me[27mn[27mt[27mr[27ma[27mn[27mt[27m [27m{[1B[27m [27m [27m [27m [27mm[27ma[27mp[27mp[27mi[27mn[27mg[27m([27ma[27md[27md[27mr[27me[27ms[27ms[27m [27m=[27m>[27m [27mu[27mi[27mn[27mt[27m2[27m5[27m6[27m)[27m [27mp[27mu[27mb[27ml[27mi[27mc[27m [27mb[27ma[27ml[27ma[27mn[27mc[27me[27ms[27m;[2B[27m [27m [27m [27m [27mf[27mu[27mn[27mc[27mt[27mi[27mo[27mn[27m [27md[27me[27mp[27mo[27ms[27mi[27mt[27m([27m)[27m [27me[27mx[27mt[27me[27mr[27mn[27ma[27ml[27m [27mp[27ma[27my[27ma[27mb[27ml[27me[27m [27m{[1B[27m [27m [27m [27m [27m [27m [27m [27m [27mb[27ma[27ml[27ma[27mn[27mc[27me[27ms[27m[[27mm[27ms[27mg[27m.[27ms[27me[27mn[27md[27me[27mr[27m][27m [27m+[27m=[27m [27mm[27ms[27mg[27m.[27mv[27ma[27ml[27mu[27me[27m;[1B[27m [27m [27m [27m [27m}[2B[27m [27m [27m [27m [27m/[27m/[27m/[27m [27m@[27mn[27mo[27mt[27mi[27mc[27me[27m [27mV[27mu[27ml[27mn[27me[27mr[27ma[27mb[27ml[27me[27m:[27m [27ms[27mt[27ma[27mt[27me[27m [27mm[27mu[27mt[27ma[27mt[27mi[27mo[27mn[27m [27mh[27ma[27mp[27mp[27me[27mn[27ms[27m [27mA[27mF[27mT[27mE[27mR[27m [27mt[27mh[27me[27m [27me[27mx[27mt[27me[27mr[27mn[27ma[27ml[27m [27mc[27ma[27ml[27ml[27m,[1B[27m [27m [27m [27m [27m/[27m/[27m/[67P[9Cso a reentrant call into `withdraw` reads a stale balance.[8C[K[1B[27m [27m [27m [27m [27mf[27mu[27mn[27mc[27mt[27mi[27mo[27mn[27m [27mw[27mi[27mt[27mh[27md[27mr[27ma[27mw[27m([27mu[27mi[27mn[27mt[27m2[27m5[27m6[27m [27ma[27mm[27mo[27mu[27mn[27mt[27m)[27m [27me[27mx[27mt[27me[27mr[27mn[27ma[27ml[27m [27m{[1B[27m [27m [27m [27m [27m [27m [27m [27m [27mr[27me[27mq[27mu[27mi[27mr[27me[27m([27mb[27ma[27ml[27ma[27mn[27mc[27me[27ms[27m[[27mm[27ms[27mg[27m.[27ms[27me[27mn[27md[27me[27mr[27m][27m [27m>[27m=[27m [27ma[27mm[27mo[27mu[27mn[27mt[27m,[27m [27m"[27mi[27mn[27ms[27mu[27mf[27mf[27mi[27mc[27mi[27me[27mn[27mt[27m"[27m)[27m;[2B[27m [27m [27m [27m [27m [27m [27m [27m [27m/[27m/[27m [27mE[27mx[27mt[27me[27mr[27mn[27ma[27ml[27m [27mc[27ma[27ml[27ml[27m [27mB[27mE[27mF[27mO[27mR[27mE[27m [27mu[27mp[27md[27ma[27mt[27mi[27mn[27mg[27m [27ms[27mt[27ma[27mt[27me[27m [27m—[27m [27mr[27me[27me[27mn[27mt[27mr[27ma[27mn[27mc[27my[27m [27me[27mn[27mt[27mr[27my[27m [27mp[27mo[27mi[27mn[27mt[27m.[1B[27m [27m [27m [27m [27m [27m [27m [27m [27m([27mb[27mo[27mo[27ml[27m [27mo[27mk[27m,[27m)[27m [27m=[27m [27mm[27ms[27mg[27m.[27ms[27me[27mn[27md[27me[27mr[27m.[27mc[27ma[27ml[27ml[27m{[27mv[27ma[27ml[27mu[27me[27m:[27m [27ma[27mm[27mo[27mu[27mn[27mt[27m}[27m([27m"[27m"[27m)[27m;[1B[27m [27m [27m [27m [27m [27m [27m [27m [27mr[27me[27mq[27mu[27mi[27mr[27me[27m([27mo[27mk[27m,[27m [27m"[27mt[27mr[27ma[27mn[27ms[27mf[27me[27mr[27m [27mf[27ma[27mi[27ml[27me[27md[27m"[27m)[27m;[2B[27m [27m [27m [27m [27m [27m [27m [27m [27mb[27ma[27ml[27ma[27mn[27mc[27me[27ms[27m[[27mm[27ms[27mg[27m.[27ms[27me[27mn[27md[27me[27mr[27m][27m [27m-[27m=[27m [27ma[27mm[27mo[27mu[27mn[27mt[27m;[1B[27m [27m [27m [27m [27m}[2B[27m [27m [27m [27m [27mr[27me[27mc[27me[27mi[27mv[27me[27m([27m)[27m [27me[27mx[27mt[27me[27mr[27mn[27ma[27ml[27m [27mp[27ma[27my[27ma[27mb[27ml[27me[27m [27m{[27m}[1B[27m}[1B[K[A[1C[?2004l[1B[1m[7m%[27m[1m[0m                                                                                                                                                     ]2;max@DESKTOP-S4SHGHM:~/Project/ARP/scripts]1;..t/ARP/scripts]7;file://DESKTOP-S4SHGHM/home/max/Project/ARP/scripts\[0m[27m[24m[J[01;31m➜  [36mscripts[00m [01;34mgit:([31mmain[34m) [33m✗[00m [K[?1h=[?2004hscripts bun ./agent-server.ts[?1l>[?2004l
+]2;bun ./agent-server.ts]1;bun[0m[31magent-server failed to start: [0m[1m80 |[0m     requesterAddress: Address[0m[2m;[0m
+[0m[1m81 |[0m }[0m[2m;[0m
+[0m[1m82 |[0m 
+[0m[1m83 |[0m [0m[35masync[0m [0m[35mfunction[0m main() {
+[0m[1m84 |[0m     [0m[35mconst[0m agentPk = process.env.AGENT_PRIVATE_KEY [0m[34mas[0m Hex | [0m[33mundefined[0m[0m[2m;[0m
+[0m[1m85 |[0m     [0m[35mif[0m (!agentPk) [0m[35mthrow[0m [0m[35mnew[0m [0m[1mError[0m([0m[32m"AGENT_PRIVATE_KEY required"[0m)[0m[2m;[0m
+                                 [31m[1m^[0m
+[0m[31merror[0m[2m:[0m [1mAGENT_PRIVATE_KEY required[0m
+[0m      [2mat [0m[0m[1m[3mmain[0m[2m ([0m[0m[36m[2m/home/max/Project/ARP/scripts/[0m[36magent-server.ts[0m[2m:[0m[33m85[0m[2m:[33m29[0m[2m)[0m
+[0m      [2mat [0m[0m[36m[2m/home/max/Project/ARP/scripts/[0m[36magent-server.ts[0m[2m:[0m[33m433[0m[2m:[33m1[0m
+[0m
+[1m[7m%[27m[1m[0m                                                                                                                                                     ]2;max@DESKTOP-S4SHGHM:~/Project/ARP/scripts]1;..t/ARP/scripts]7;file://DESKTOP-S4SHGHM/home/max/Project/ARP/scripts\[0m[27m[24m[J[01;31m➜  [36mscripts[00m [01;34mgit:([31mmain[34m) [33m✗[00m [K[?1h=[?2004h[7mcd /home/max/Project/ARP[27m
+[7mbun scripts/agent-server.ts[27m[K[A[27mc[27md[27m [27m/[27mh[27mo[27mm[27me[27m/[27mm[27ma[27mx[27m/[27mP[27mr[27mo[27mj[27me[27mc[27mt[27m/[27mA[27mR[27mP[1B[27mb[27mu[27mn[27m [27ms[27mc[27mr[27mi[27mp[27mt[27ms[27m/[27ma[27mg[27me[27mn[27mt[27m-[27ms[27me[27mr[27mv[27me[27mr[27m.[27mt[27ms[?1l>[?2004l
+]2;cd /home/max/Project/ARP; bun scripts/agent-server.ts]1;cdagent-server starting
+  runtime address  0x906f3A52ec089f8D4E9127F91C6bE5Ae0d18f91f
+  delegator (SA)   0xf11EA875389d88ED3ac7a8962Cc91164e606c2c4
+  port             3001
+  min budget       0.005 tTRUST
+  A2A mode         ENABLED
+    specialist     0x9C985BEFD57e3c45372105Fe7091e132b6d7e868
+    endpoint       http://localhost:3002
+    sub-fee        0.002 tTRUST
+
+Listening on http://localhost:3001
+[0m[31m/run failed: payment recipient 0x536ae1526c397159c469cdef9cba5d2dc6ee875b does not match runtime 0x906f3A52ec089f8D4E9127F91C6bE5Ae0d18f91f[0m
+[0m[31m/run failed: payment recipient 0x536ae1526c397159c469cdef9cba5d2dc6ee875b does not match runtime 0x906f3A52ec089f8D4E9127F91C6bE5Ae0d18f91f[0m
+[run] payment validated: 0.005 tTRUST from 0xe596096f4176b682e300d73963e7b04b383c1aa1
+[run] running audit on temp file /tmp/arp-audit-AJbdvU/Subject.sol…
+[run] audit complete: 5 findings, methodologies: Trail of Bits manual code review methodology, Checks-effects-interactions pattern analysis, Reentrancy attack surface identification, OpenZeppelin security patterns comparison
+[run] staking on used methodologies…
+  - "Trail of Bits manual code review methodology" → Trail of Bits — guidelines-advisor → triple reused, staked 0.001 tTRUST
+  - "Checks-effects-interactions pattern analysis" → no manifest match (skip)
+  - "Reentrancy attack surface identification" → no manifest match (skip)
+  - "OpenZeppelin security patterns comparison" → no manifest match (skip)
+[run] A2A subcontract → 0x9C985BEFD57e3c45372105Fe7091e132b6d7e868
+      sub-fee 0.002 tTRUST tx 0x13bff92ff8c79ee849bd61980a7eb8015569386d4d7d57c31d2440a1d02364d9
+      leaf signed by 0x906f3A52ec089f8D4E9127F91C6bE5Ae0d18f91f
+      specialist returned 4 findings
+[run] payment validated: 0.005 tTRUST from 0xe596096f4176b682e300d73963e7b04b383c1aa1
+[run] running audit on temp file /tmp/arp-audit-daAP21/Subject.sol…
+[run] audit complete: 4 findings, methodologies: Trail of Bits checks-effects-interactions pattern analysis, Manual reentrancy vulnerability assessment, Solidity best practices review (event emissions, state management)
+[run] staking on used methodologies…
+  - "Trail of Bits checks-effects-interactions pattern analysis" → Trail of Bits — guidelines-advisor → triple reused, staked 0.001 tTRUST
+  - "Manual reentrancy vulnerability assessment" → no manifest match (skip)
+  - "Solidity best practices review (event emissions, state management)" → no manifest match (skip)
+[run] A2A subcontract → 0x9C985BEFD57e3c45372105Fe7091e132b6d7e868
+      sub-fee 0.002 tTRUST tx 0x25a7b9cf41a8d493ad74098c6cb98181d61036a6016cddf91dfdf5090b9fcc69
+      leaf signed by 0x906f3A52ec089f8D4E9127F91C6bE5Ae27md[27m [27ma[27ms[27m [27mi[27mn[27mp[27mu[27mt[27m [27mf[27mo[27mr[27m [27mt[27mh[27me[27m [27mA[27mR[27mP[27m [27md[27me[27mm[27mo[27m [27ma[27mg[27me[27mn[27mt[27m.[1B[27mc[27mo[27mn[27mt[27mr[27ma[27mc[27mt[27m [27mR[27me[27me[27mn[27mt[27mr[27ma[27mn[27mt[27m [27m{[1B[27m [27m [27m [27m [27mm[27ma[27mp[27mp[27mi[27mn[27mg[27m([27ma[27md[27md[27mr[27me[27ms[27ms[27m [27m=[27m>[27m [27mu[27mi[27mn[27mt[27m2[27m5[27m6[27m)[27m [27mp[27mu[27mb[27ml[27mi[27mc[27m [27mb[27ma[27ml[27ma[27mn[27mc[27me[27ms[27m;[2B[27m [27m [27m [27m [27mf[27mu[27mn[27mc[27mt[27mi[27mo[27mn[27m [27md[27me[27mp[27mo[27ms[27mi[27mt[27m([27m)[27m [27me[27mx[27mt[27me[27mr[27mn[27ma[27ml[27m [27mp[27ma[27my[27ma[27mb[27ml[27me[27m [27m{[1B[27m [27m [27m [27m [27m [27m [27m [27m [27mb[27ma[27ml[27ma[27mn[27mc[27me[27ms[27m[[27mm[27ms[27mg[27m.[27ms[27me[27mn[27md[27me[27mr[27m][27m [27m+[27m=[27m [27mm[27ms[27mg[27m.[27mv[27ma[27ml[27mu[27me[27m;[1B[27m [27m [27m [27m [27m}[2B[27m [27m [27m [27m [27m/[27m/[27m/[27m [27m@[27mn[27mo[27mt[27mi[27mc[27me[27m [27mV[27mu[27ml[27mn[27me[27mr[27ma[27mb[27ml[27me[27m:[27m [27ms[27mt[27ma[27mt[27me[27m [27mm[27mu[27mt[27ma[27mt[27mi[27mo[27mn[27m [27mh[27ma[27mp[27mp[27me[27mn[27ms[27m [27mA[27mF[27mT[27mE[27mR[27m [27mt[27mh[27me[27m [27me[27mx[27mt[27me[27mr[27mn[27ma[27ml[27m [27mc[27ma[27ml[27ml[27m,[1B[27m [27m [27m [27m [27m/[27m/[27m/[67P[9Cso a reentrant call into `withdraw` reads a stale balance.[8C[K[1B[27m [27m [27m [27m [27mf[27mu[27mn[27mc[27mt[27mi[27mo[27mn[27m [27mw[27mi[27mt[27mh[27md[27mr[27ma[27mw[27m([27mu[27mi[27mn[27mt[27m2[27m5[27m6[27m [27ma[27mm[27mo[27mu[27mn[27mt[27m)[27m [27me[27mx[27mt[27me[27mr[27mn[27ma[27ml[27m [27m{[1B[27m [27m [27m [27m [27m [27m [27m [27m [27mr[27me[27mq[27mu[27mi[27mr[27me[27m([27mb[27ma[27ml[27ma[27mn[27mc[27me[27ms[27m[[27mm[27ms[27mg[27m.[27ms[27me[27mn[27md[27me[27mr[27m][27m [27m>[27m=[27m [27ma[27mm[27mo[27mu[27mn[27mt[27m,[27m [27m"[27mi[27mn[27ms[27mu[27mf[27mf[27mi[27mc[27mi[27me[27mn[27mt[27m"[27m)[27m;[2B[27m [27m [27m [27m [27m [27m [27m [27m [27m/[27m/[27m [27mE[27mx[27mt[27me[27mr[27mn[27ma[27ml[27m [27mc[27ma[27ml[27ml[27m [27mB[27mE[27mF[27mO[27mR[27mE[27m [27mu[27mp[27md[27ma[27mt[27mi[27mn[27mg[27m [27ms[27mt[27ma[27mt[27me[27m [27m—[27m [27mr[27me[27me[27mn[27mt[27mr[27ma[27mn[27mc[27my[27m [27me[27mn[27mt[27mr[27my[27m [27mp[27mo[27mi[27mn[27mt[27m.[1B[27m [27m [27m [27m [27m [27m [27m [27m [27m([27mb[27mo[27mo[27ml[27m [27mo[27mk[27m,[27m)[27m [27m=[27m [27mm[27ms[27mg[27m.[27ms[27me[27mn[27md[27me[27mr[27m.[27mc[27ma[27ml[27ml[27m{[27mv[27ma[27ml[27mu[27me[27m:[27m [27ma[27mm[27mo[27mu[27mn[27mt[27m}[27m([27m"[27m"[27m)[27m;[1B[27m [27m [27m [27m [27m [27m [27m [27m [27mr[27me[27mq[27mu[27mi[27mr[27me[27m([27mo[27mk[27m,[27m [27m"[27mt[27mr[27ma[27mn[27ms[27mf[27me[27mr[27m [27mf[27ma[27mi[27ml[27me[27md[27m"[27m)[27m;[2B[27m [27m [27m [27m [27m [27m [27m [27m [27mb[27ma[27ml[27ma[27mn[27mc[27me[27ms[27m[[27mm[27ms[27mg[27m.[27ms[27me[27mn[27md[27me[27mr[27m][27m [27m-[27m=[27m [27ma[27mm[27mo[27mu[27mn[27mt[27m;[1B[27m [27m [27m [27m [27m}[2B[27m [27m [27m [27m [27mr[27me[27mc[27me[27mi[27mv[27me[27m([27m)[27m [27me[27mx[27mt[27me[27mr[27mn[27ma[27ml[27m [27mp[27ma[27my[27ma[27mb[27ml[27me[27m [27m{[27m}[1B[27m}[1B[K[A[1C[?2004l[1B[1m[7m%[27m[1m[0m                                                                                                                                                     ]2;max@DESKTOP-S4SHGHM:~/Project/ARP/scripts]1;..t/ARP/scripts]7;file://DESKTOP-S4SHGHM/home/max/Project/ARP/scripts\[0m[27m[24m[J[01;31m➜  [36mscripts[00m [01;34mgit:([31mmain[34m) [33m✗[00m [K[?1h=[?2004hscripts bun ./agent-server.ts[?1l>[?2004l
+]2;bun ./agent-server.ts]1;bun[0m[31magent-server failed to start: [0m[1m80 |[0m     requesterAddress: Address[0m[2m;[0m
+[0m[1m81 |[0m }[0m[2m;[0m
+[0m[1m82 |[0m 
+[0m[1m83 |[0m [0m[35masync[0m [0m[35mfunction[0m main() {
+[0m[1m84 |[0m     [0m[35mconst[0m agentPk = process.env.AGENT_PRIVATE_KEY [0m[34mas[0m Hex | [0m[33mundefined[0m[0m[2m;[0m
+[0m[1m85 |[0m     [0m[35mif[0m (!agentPk) [0m[35mthrow[0m [0m[35mnew[0m [0m[1mError[0m([0m[32m"AGENT_PRIVATE_KEY required"[0m)[0m[2m;[0m
+                                 [31m[1m^[0m
+[0m[31merror[0m[2m:[0m [1mAGENT_PRIVATE_KEY required[0m
+[0m      [2mat [0m[0m[1m[3mmain[0m[2m ([0m[0m[36m[2m/home/max/Project/ARP/scripts/[0m[36magent-server.ts[0m[2m:[0m[33m85[0m[2m:[33m29[0m[2m)[0m
+[0m      [2mat [0m[0m[36m[2m/home/max/Project/ARP/scripts/[0m[36magent-server.ts[0m[2m:[0m[33m433[0m[2m:[33m1[0m
+[0m
+[1m[7m%[27m[1m[0m                                                                                                                                                     ]2;max@DESKTOP-S4SHGHM:~/Project/ARP/scripts]1;..t/ARP/scripts]7;file://DESKTOP-S4SHGHM/home/max/Project/ARP/scripts\[0m[27m[24m[J[01;31m➜  [36mscripts[00m [01;34mgit:([31mmain[34m) [33m✗[00m [K[?1h=[?2004h[7mcd /home/max/Project/ARP[27m
+[7mbun scripts/agent-server.ts[27m[K[A[27mc[27md[27m [27m/[27mh[27mo[27mm[27me[27m/[27mm[27ma[27mx[27m/[27mP[27mr[27mo[27mj[27me[27mc[27mt[27m/[27mA[27mR[27mP[1B[27mb[27mu[27mn[27m [27ms[27mc[27mr[27mi[27mp[27mt[27ms[27m/[27ma[27mg[27me[27mn[27mt[27m-[27ms[27me[27mr[27mv[27me[27mr[27m.[27mt[27ms[?1l>[?2004l
+]2;cd /home/max/Project/ARP; bun scripts/agent-server.ts]1;cdagent-server starting
+  runtime address  0x906f3A52ec089f8D4E9127F91C6bE5Ae0d18f91f
+  delegator (SA)   0xf11EA875389d88ED3ac7a8962Cc91164e606c2c4
+  port             3001
+  min budget       0.005 tTRUST
+  A2A mode         ENABLED
+    specialist     0x9C985BEFD57e3c45372105Fe7091e132b6d7e868
+    endpoint       http://localhost:3002
+    sub-fee        0.002 tTRUST
+
+Listening on http://localhost:3001
+[0m[31m/run failed: payment recipient 0x536ae1526c397159c469cdef9cba5d2dc6ee875b does not match runtime 0x906f3A52ec089f8D4E9127F91C6bE5Ae0d18f91f[0m
+[0m[31m/run failed: payment recipient 0x536ae1526c397159c469cdef9cba5d2dc6ee875b does not match runtime 0x906f3A52ec089f8D4E9127F91C6bE5Ae0d18f91f[0m
+[run] payment validated: 0.005 tTRUST from 0xe596096f4176b682e300d73963e7b04b383c1aa1
+[run] running audit on temp file /tmp/arp-audit-AJbdvU/Subject.sol…
+[run] audit complete: 5 findings, methodologies: Trail of Bits manual code review methodology, Checks-effects-interactions pattern analysis, Reentrancy attack surface identification, OpenZeppelin security patterns comparison
+[run] staking on used methodologies…
+  - "Trail of Bits manual code review methodology" → Trail of Bits — guidelines-advisor → triple reused, staked 0.001 tTRUST
+  - "Checks-effects-interactions pattern analysis" → no manifest match (skip)
+  - "Reentrancy attack surface identification" → no manifest match (skip)
+  - "OpenZeppelin security patterns comparison" → no manifest match (skip)
+[run] A2A subcontract → 0x9C985BEFD57e3c45372105Fe7091e132b6d7e868
+      sub-fee 0.002 tTRUST tx 0x13bff92ff8c79ee849bd61980a7eb8015569386d4d7d57c31d2440a1d02364d9
+      leaf signed by 0x906f3A52ec089f8D4E9127F91C6bE5Ae0d18f91f
+      specialist returned 4 findings
+[run] payment validated: 0.005 tTRUST from 0xe596096f4176b682e300d73963e7b04b383c1aa1
+[run] running audit on temp file /tmp/arp-audit-daAP21/

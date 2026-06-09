@@ -1,0 +1,39 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:atlas.discourse.group)",
+      "WebFetch(domain:eips.ethereum.org)",
+      "WebFetch(domain:docs.intuition.systems)",
+      "Bash(grep -nB2 -A6 \"defaultCurveId\\\\|getBondingCurveConfig\\\\|minShares\\\\|receiver\" /home/max/Project/ARP/.claude/skills/intuition/operations/deposit.md)",
+      "Bash(grep -nB1 -A10 \"createTriples\\\\|function createTriple\\\\|getTripleCost\" /home/max/Project/ARP/.claude/skills/intuition/operations/create-triples.md)",
+      "Bash(grep -nB1 -A5 \"^    function.*returns\\\\|^    function get\" /home/max/Project/ARP/contracts/src/erc8004/IdentityRegistry.sol)",
+      "Read(//usr/bin/**)",
+      "Bash(bash -lc 'which node; node --version')",
+      "Bash(cd /home/max/Project/ARP && find . -name node -type f -path \"*/node*\" 2>/dev/null | head -5; ls /home/max/.nvm 2>&1 | head -3; ls /usr/local/lib/node* 2>&1 | head -3)",
+      "Read(//usr/local/lib/**)",
+      "Bash(/home/max/.foundry/bin/forge test *)",
+      "Bash(PATH=/home/max/.nvm/versions/node/v22.21.1/bin:/home/max/.bun/bin:__TRACKED_VAR__ bun x tsc --noEmit -p tsconfig.app.json)",
+      "Bash(PATH=/home/max/.nvm/versions/node/v22.21.1/bin:/home/max/.bun/bin:__TRACKED_VAR__ bun run lint)",
+      "Bash(PATH=/home/max/.nvm/versions/node/v22.21.1/bin:/home/max/.bun/bin:__TRACKED_VAR__ bun run test)",
+      "Bash(PATH=/home/max/.nvm/versions/node/v22.21.1/bin:/home/max/.bun/bin:__TRACKED_VAR__ bun x vitest run --reporter=verbose)",
+      "Bash(grep -nB2 -A6 \"AllowedTargetsBuilderConfig\\\\|AllowedMethodsBuilderConfig\" /home/max/Project/ARP/node_modules/@metamask/smart-accounts-kit/dist/resolveCaveats-A9xC29l8.d.ts)",
+      "Bash(grep -nB2 -A20 \"declare class CaveatBuilder\\\\|createCaveatBuilder\" /home/max/Project/ARP/node_modules/@metamask/smart-accounts-kit/dist/resolveCaveats-A9xC29l8.d.ts)",
+      "Bash(grep -nB2 -A30 \"CoreCaveatBuilder\\\\b\" /home/max/Project/ARP/node_modules/@metamask/smart-accounts-kit/dist/resolveCaveats-A9xC29l8.d.ts)",
+      "Bash(grep -nB1 -A20 \"CoreCaveatMapByString\\\\|^declare enum CaveatType\" /home/max/Project/ARP/node_modules/@metamask/smart-accounts-kit/dist/resolveCaveats-A9xC29l8.d.ts)",
+      "Bash(grep -nB2 -A20 \"^declare.*createCaveat\\\\b\\\\|^declare.*createCaveatBuilder\" /home/max/Project/ARP/node_modules/@metamask/smart-accounts-kit/dist/caveats-B2OssjV4.d.ts)",
+      "Bash(grep -nB1 -A15 \"caveatEnforcers\\\\|SmartAccountsEnvironment\" /home/max/Project/ARP/node_modules/@metamask/smart-accounts-kit/dist/index-LqiEgBjV.d.ts)",
+      "Bash(grep -nB1 -A30 \"DEPLOYMENTS_1_3_0\\\\b\" /home/max/Project/ARP/node_modules/@metamask/delegation-deployments/dist/index.mjs)",
+      "Bash(grep -nB1 -A50 \"function getSmartAccountsEnvironment\" /home/max/Project/ARP/node_modules/@metamask/smart-accounts-kit/dist/chunk-GMGJRC3D.mjs)",
+      "Bash(grep -nB1 -A15 \"allowedTargets.*function\\\\|allowedTargetsBuilder.*=>\\\\|allowedMethods.*function\\\\|allowedMethodsBuilder.*=>\" /home/max/Project/ARP/node_modules/@metamask/smart-accounts-kit/dist/chunk-GMGJRC3D.mjs)",
+      "Bash(grep -nB1 -A8 \"allowedTargets\\\\|allowedMethods\" /home/max/Project/ARP/node_modules/@metamask/smart-accounts-kit/dist/chunk-GMGJRC3D.mjs)",
+      "Bash(grep -nB1 -A12 \"allowedTargets\\\\|allowedMethods\" /home/max/Project/ARP/node_modules/@metamask/smart-accounts-kit/dist/chunk-TNGQTVSY.mjs)",
+      "Bash(gh auth *)",
+      "Bash(grep -nB2 -A20 \"function registerModule\" /home/max/Project/ARP/contracts/src/ModuleRegistry.sol)",
+      "Bash(grep -nB1 -A30 \"function registerModule\\\\|function _validateName\\\\|function _validateDomain\\\\|ModuleExists\\\\|function getModule\\\\b\\\\|function totalModules\\\\|function getModulesBy\\\\|_modules\\\\|nameDomainHash\" /home/max/Project/ARP/contracts/src/ModuleRegistry.sol)",
+      "Bash(/home/max/.foundry/bin/forge --version)",
+      "Bash(grep -nB1 -A2 \"event Deposited\\\\|event Deposit\\\\b\\\\|event Redeem\" /home/max/Project/sofia-core/intuition-contracts-v2/src/protocol/MultiVault.sol /home/max/Project/sofia-core/intuition-contracts-v2/src/interfaces/IMultiVault.sol)",
+      "WebFetch(domain:swarms.world)",
+      "WebFetch(domain:docs.swarms.world)"
+    ]
+  }
+}
