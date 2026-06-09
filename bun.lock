@@ -46,7 +46,7 @@
       "version": "0.0.0",
     },
     "sdk": {
-      "name": "@arp/sdk",
+      "name": "@arp-protocol/sdk",
       "version": "0.0.1",
       "dependencies": {
         "viem": "2.52.0",
@@ -63,11 +63,11 @@
   "packages": {
     "@adraffy/ens-normalize": ["@adraffy/ens-normalize@1.11.1", "", {}, "sha512-nhCBV3quEgesuf7c7KYfperqSS14T8bYuvJ8PcLJp6znkZpFc0AuW4qBtr8eKVyPPe/8RSr7sglCWPU5eaxwKQ=="],
 
+    "@arp-protocol/sdk": ["@arp-protocol/sdk@workspace:sdk"],
+
     "@arp/app": ["@arp/app@workspace:app"],
 
     "@arp/contracts": ["@arp/contracts@workspace:contracts"],
-
-    "@arp/sdk": ["@arp/sdk@workspace:sdk"],
 
     "@babel/code-frame": ["@babel/code-frame@7.29.0", "", { "dependencies": { "@babel/helper-validator-identifier": "^7.28.5", "js-tokens": "^4.0.0", "picocolors": "^1.1.1" } }, "sha512-9NhCeYjq9+3uxgdtp20LSiJXJvN0FeCtNGpJxuMFZ1Kv3cWUNb6DOhJwUvcVCzKGR66cw4njwM6hrJLqgOwbcw=="],
 

@@ -1,4 +1,4 @@
-# `@arp/sdk`
+# `@arp-protocol/sdk`
 
 Runtime-agnostic discovery + reputation reads for the **Agent Reputation Protocol** on Intuition Testnet. Pure on-chain reads, packaged so any TypeScript agent runtime can make trust-aware decisions in a handful of lines.
 
@@ -13,9 +13,9 @@ No API key. No indexer. No auth. Every call reads directly from `ModuleRegistry`
 ## Install
 
 ```bash
-bun add @arp/sdk
+bun add @arp-protocol/sdk
 # or
-npm install @arp/sdk
+npm install @arp-protocol/sdk
 ```
 
 Requires `viem` 2.x (the SDK pins `viem` 2.52).
@@ -23,7 +23,7 @@ Requires `viem` 2.x (the SDK pins `viem` 2.52).
 ## Quick start
 
 ```ts
-import {createArpClient, findTopAgents} from "@arp/sdk";
+import {createArpClient, findTopAgents} from "@arp-protocol/sdk";
 
 const arp = createArpClient(); // defaults to Intuition Testnet
 
@@ -51,7 +51,7 @@ import {
     findModuleBySchemaURI,
     getAllModulesWithMetrics,
     getModulesByDomainWithMetrics,
-} from "@arp/sdk";
+} from "@arp-protocol/sdk";
 
 const all = await getAllModules(arp);
 const inDomain = await getModulesByDomain(arp, "defi-strategy");
@@ -66,7 +66,7 @@ const ranked = await getAllModulesWithMetrics(arp);
 ### Agents — the workforce
 
 ```ts
-import {getAgents, getLiveAgents, findTopAgents} from "@arp/sdk";
+import {getAgents, getLiveAgents, findTopAgents} from "@arp-protocol/sdk";
 
 const everyone = await getAgents(arp);
 const ready = await getLiveAgents(arp); // filtered to agents with a runtime wallet bound
@@ -82,7 +82,7 @@ Domain-scoped ranking is computed by intersecting an agent's stakes with the set
 ### Reputation — the track record
 
 ```ts
-import {getReputation} from "@arp/sdk";
+import {getReputation} from "@arp-protocol/sdk";
 
 const rep = await getReputation(arp, "0x…runtime");
 // {
@@ -99,7 +99,7 @@ Reputation is read straight from `MultiVault.Deposited` events with the agent's 
 By default the SDK targets Intuition Testnet (chainId 13579) with the canonical addresses from this repo's `deployments/13579.json`. To point at a fork, a redeploy, or eventually mainnet:
 
 ```ts
-import {createArpClient} from "@arp/sdk";
+import {createArpClient} from "@arp-protocol/sdk";
 import {http} from "viem";
 
 const arp = createArpClient({
@@ -120,7 +120,7 @@ You can also pass `publicClient` directly to reuse an existing viem client (reco
 The SDK is read-only by design — it never signs or broadcasts a transaction. To act on what you discover, your runtime composes the SDK's reads with its own write path:
 
 ```ts
-import {createArpClient, findModuleBySchemaURI} from "@arp/sdk";
+import {createArpClient, findModuleBySchemaURI} from "@arp-protocol/sdk";
 
 const arp = createArpClient();
 const tool = await findModuleBySchemaURI(arp, "arp://module/slither");

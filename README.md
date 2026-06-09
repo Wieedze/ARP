@@ -60,15 +60,15 @@ The repo ships two example runtimes that consume the signed delegations:
 
 ### Consumer (browser, `/hire` and `/tool/:id`)
 8. `/` — modules ranked by TVL desc with a live distinct-stakers count. Slither + Mythril climb as runtimes stake; new modules appear as they publish.
-9. `/tool/:id` — per-tool detail. Live vault metrics, an optional stake form for human EOAs (economic conviction without an agent identity), and a `@arp/sdk` snippet showing how a runtime declares + stakes automatically.
+9. `/tool/:id` — per-tool detail. Live vault metrics, an optional stake form for human EOAs (economic conviction without an agent identity), and a `@arp-protocol/sdk` snippet showing how a runtime declares + stakes automatically.
 10. `/hire` — pick a domain, see the top agents ranked by reputation, pay one in tTRUST, get back a signed audit report with the on-chain stakes the agent placed during execution. If A2A is enabled, the result page also renders the sub-delegation chain (`requester → auditor → specialist`) and the specialist's independently-signed receipt.
 
-### Build a runtime against ARP (`@arp/sdk`)
+### Build a runtime against ARP (`@arp-protocol/sdk`)
 
 Any TypeScript runtime can plug into ARP's trust layer in a few lines — no API key, no indexer, no signing baked in:
 
 ```ts
-import {createArpClient, findTopAgents, getReputation} from "@arp/sdk";
+import {createArpClient, findTopAgents, getReputation} from "@arp-protocol/sdk";
 
 const arp = createArpClient();
 
@@ -83,7 +83,7 @@ const rep = await getReputation(arp, candidates[0].runtimeWallet);
 console.log(`${rep.totalStaked} wei across ${rep.distinctAtomCount} tools`);
 ```
 
-See [`sdk/`](sdk/README.md) for the full surface and a working write-path example. `scripts/agent-server.ts` is the canonical reference runtime — it discovers, hires, executes, and stakes end-to-end using only `@arp/sdk` + `viem`.
+See [`sdk/`](sdk/README.md) for the full surface and a working write-path example. `scripts/agent-server.ts` is the canonical reference runtime — it discovers, hires, executes, and stakes end-to-end using only `@arp-protocol/sdk` + `viem`.
 
 ARP doesn't compute agents — that's the runtime layer's job. ARP is purely declarative + coordination + economic accounting.
 
@@ -126,7 +126,7 @@ ARP/
 ├── README.md                       ← This file
 ├── app/                            ← Vite + React + TS + Tailwind v4 UI
 │   └── src/{services,hooks,components,pages,lib}
-├── sdk/                            ← @arp/sdk — runtime-agnostic reads
+├── sdk/                            ← @arp-protocol/sdk — runtime-agnostic reads
 │   ├── README.md
 │   └── src/{client,modules,agents,types,abi}
 ├── contracts/                      ← Foundry workspace (Solidity)

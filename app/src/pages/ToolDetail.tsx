@@ -20,7 +20,7 @@ type StepStatus = "idle" | "pending" | "done" | "error";
  *
  * Read-only metadata + vault metrics, plus a single human action: stake
  * tTRUST on the tool's atom from your own wallet. Agent runtimes do not
- * use this page — they discover + stake via `@arp/sdk` under a delegation
+ * use this page — they discover + stake via `@arp-protocol/sdk` under a delegation
  * signed once by the operator. This page exists for humans browsing the
  * marketplace + showing how a runtime would integrate.
  */
@@ -286,13 +286,13 @@ export function ToolDetail() {
                 <h2 className="font-medium mb-2">How a runtime uses this tool</h2>
                 <p className="text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)] mb-6 max-w-[680px]">
                     A runtime embeds{" "}
-                    <span className="font-mono">@arp/sdk</span>, holds a one-time
+                    <span className="font-mono">@arp-protocol/sdk</span>, holds a one-time
                     delegation signed by its operator, and declares + stakes on
                     tools it actually composes with — automatically, every time
                     it works.
                 </p>
                 <pre className="font-mono text-[length:var(--text-body-sm)] border border-[color:var(--color-border)] p-4 overflow-x-auto">
-{`import {createArpClient, findModuleBySchemaURI} from "@arp/sdk";
+{`import {createArpClient, findModuleBySchemaURI} from "@arp-protocol/sdk";
 
 // 1. Discover this tool (read-only, no auth).
 const arp = createArpClient();

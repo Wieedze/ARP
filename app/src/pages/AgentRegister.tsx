@@ -50,7 +50,7 @@ type StepStatus = "idle" | "pending" | "done" | "error";
  *      future delegation to the agent runtime is signed by the SA.
  *   4. Sign delegations — Publish + Compose, scoped by ARP caveats.
  *   5. Hand off to the runtime — operator setup ends; the runtime
- *      acts under the signed delegations via `@arp/sdk`.
+ *      acts under the signed delegations via `@arp-protocol/sdk`.
  */
 export function AgentRegister() {
     const {address: operatorAddress, isConnected} = useAccount();
@@ -527,7 +527,7 @@ export function AgentRegister() {
                 <Step
                     n={5}
                     title="Hand off to the runtime"
-                    subtitle="Operator setup ends here. From now on the agent's runtime acts under the delegations you just signed — it discovers tools via @arp/sdk, declares (agent → uses → tool) triples, and stakes tTRUST on each tool it composes with."
+                    subtitle="Operator setup ends here. From now on the agent's runtime acts under the delegations you just signed — it discovers tools via @arp-protocol/sdk, declares (agent → uses → tool) triples, and stakes tTRUST on each tool it composes with."
                     done={false}
                     pending={false}
                     error={null}

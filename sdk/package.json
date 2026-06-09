@@ -1,5 +1,5 @@
 {
-    "name": "@arp/sdk",
+    "name": "@arp-protocol/sdk",
     "version": "0.0.1",
     "description": "ARP — Agent Reputation Protocol. Read-only SDK to discover agents and tools and aggregate their on-chain reputation from any TypeScript runtime.",
     "type": "module",

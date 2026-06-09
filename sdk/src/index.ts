@@ -1,10 +1,10 @@
 /**
- * `@arp/sdk` — runtime-agnostic discovery + reputation reads for the
+ * `@arp-protocol/sdk` — runtime-agnostic discovery + reputation reads for the
  * Agent Reputation Protocol on Intuition Testnet.
  *
  * Quick start:
  *
- *     import { createArpClient, findTopAgents, getReputation } from "@arp/sdk";
+ *     import { createArpClient, findTopAgents, getReputation } from "@arp-protocol/sdk";
  *
  *     const arp = createArpClient();
  *     const top = await findTopAgents(arp, { domain: "solidity-audit" });
