@@ -1,212 +1,212 @@
 [
-    {
-        "name": "Trail of Bits — guidelines-advisor",
-        "domain": "solidity-audit",
-        "schemaURI": "ipfs://bafkrei-tob-guidelines-advisor-arp",
-        "description": "Solidity best-practice advisor. Reviews code against standard patterns and flags anti-patterns. Cross-references SCSVS sections and SWC weaknesses.",
-        "keywords": [
-            "solidity best practices",
-            "best practices review",
-            "best-practice",
-            "best practice",
-            "anti-pattern",
-            "code review",
-            "guidelines",
-            "event emission",
-            "state management",
-            "naming conventions"
-        ]
-    },
-    {
-        "name": "Trail of Bits — secure-workflow-guide",
-        "domain": "solidity-audit",
-        "schemaURI": "ipfs://bafkrei-tob-secure-workflow-arp",
-        "description": "Pre-audit security workflow. Covers reentrancy, access control, oracle manipulation, MEV, integer arithmetic, signature replay, DoS via unbounded loops.",
-        "keywords": [
-            "checks-effects-interactions",
-            "checks effects interactions",
-            "reentrancy attack",
-            "reentrancy vulnerability",
-            "reentrancy guard",
-            "reentrancy assessment",
-            "reentrancy enumeration",
-            "manual reentrancy",
-            "reentrancy",
-            "reentrant",
-            "access control",
-            "oracle manipulation",
-            "mev",
-            "integer overflow",
-            "integer arithmetic",
-            "signature replay",
-            "dos",
-            "unbounded loop",
-            "unchecked call",
-            "external call",
-            "call ordering",
-            "state mutation",
-            "manual review",
-            "manual assessment",
-            "attack path"
-        ]
-    },
-    {
-        "name": "Trail of Bits — code-maturity-assessor",
-        "domain": "solidity-audit",
-        "schemaURI": "ipfs://bafkrei-tob-code-maturity-arp",
-        "description": "Scorecard for contract maturity. Test coverage, formal verification readiness, monitoring, ops, incident response.",
-        "keywords": [
-            "test coverage",
-            "code maturity",
-            "formal verification",
-            "monitoring",
-            "incident response",
-            "operational readiness"
-        ]
-    },
-    {
-        "name": "Trail of Bits — token-integration-analyzer",
-        "domain": "token-integration",
-        "schemaURI": "ipfs://bafkrei-tob-token-integration-arp",
-        "description": "Risk analysis for integrating external tokens. ERC-20 edge cases, fee-on-transfer, rebasing, blocklists, upgrade hooks.",
-        "keywords": [
-            "token integration",
-            "erc-20 edge",
-            "erc20 edge",
-            "fee-on-transfer",
-            "fee on transfer",
-            "rebasing",
-            "blocklist",
-            "weird token"
-        ]
-    },
-    {
-        "name": "Slither (Crytic)",
-        "domain": "solidity-audit",
-        "schemaURI": "ipfs://bafkrei-slither-crytic-arp",
-        "description": "Static analyzer for Solidity. Detects 90+ vulnerability classes. Open source, runs locally via Python. Industry de-facto baseline.",
-        "keywords": [
-            "static analyzer",
-            "static analysis",
-            "automated detection",
-            "crytic",
-            "slither"
-        ]
-    },
-    {
-        "name": "SCSVS (OWASP)",
-        "domain": "solidity-audit",
-        "schemaURI": "ipfs://bafkrei-scsvs-owasp-arp",
-        "description": "Smart Contract Security Verification Standard. OWASP-style verification checklist across 13 sections. Free, public.",
-        "keywords": [
-            "scsvs",
-            "owasp",
-            "verification standard",
-            "verification checklist",
-            "security checklist"
-        ]
-    },
-    {
-        "name": "SWC Registry",
-        "domain": "solidity-audit",
-        "schemaURI": "ipfs://bafkrei-swc-registry-arp",
-        "description": "Smart Contract Weakness Classification. 138 catalogued weaknesses with examples and remediation patterns. Reference standard.",
-        "keywords": [
-            "swc",
-            "weakness classification",
-            "weakness catalog",
-            "known weakness",
-            "remediation pattern"
-        ]
-    },
-    {
-        "name": "DefiLlama API",
-        "domain": "defi-strategy",
-        "schemaURI": "ipfs://bafkrei-defillama-api-arp",
-        "description": "Aggregated DeFi data: TVL by chain/protocol, yield APYs, stablecoin metrics, derivatives volumes. Public read API.",
-        "keywords": [
-            "defillama",
-            "tvl by protocol",
-            "yield apy",
-            "stablecoin metrics",
-            "defi data"
-        ]
-    },
-    {
-        "name": "The Graph — subgraphs",
-        "domain": "defi-strategy",
-        "schemaURI": "ipfs://bafkrei-thegraph-subgraphs-arp",
-        "description": "Decentralized indexing layer. Query Aave/Uniswap/Compound state via GraphQL. Hosted service free for hackathon usage.",
-        "keywords": [
-            "subgraph",
-            "the graph",
-            "graphql query",
-            "decentralized indexing"
-        ]
-    },
-    {
-        "name": "1inch API (DEX aggregator)",
-        "domain": "defi-strategy",
-        "schemaURI": "ipfs://bafkrei-1inch-api-arp",
-        "description": "DEX aggregation routing across 90+ DEXes on multiple chains. Quote + swap endpoints. Free for read.",
-        "keywords": [
-            "1inch",
-            "dex aggregator",
-            "dex aggregation",
-            "swap routing",
-            "quote endpoint"
-        ]
-    },
-    {
-        "name": "Uniswap V3 subgraph",
-        "domain": "defi-strategy",
-        "schemaURI": "ipfs://bafkrei-uniswap-v3-subgraph-arp",
-        "description": "Pool-level Uniswap V3 data: TVL, volume, fee tiers, position liquidity ranges. Hosted on The Graph.",
-        "keywords": [
-            "uniswap v3",
-            "uniswap",
-            "concentrated liquidity",
-            "fee tier",
-            "pool data"
-        ]
-    },
-    {
-        "name": "Dune Analytics",
-        "domain": "data-analytics",
-        "schemaURI": "ipfs://bafkrei-dune-analytics-arp",
-        "description": "SQL-style query engine over indexed EVM chain data. 100k+ public dashboards. Free tier for hackathon usage.",
-        "keywords": [
-            "dune analytics",
-            "dune",
-            "sql query",
-            "public dashboard",
-            "indexed chain data"
-        ]
-    },
-    {
-        "name": "Etherscan API",
-        "domain": "data-analytics",
-        "schemaURI": "ipfs://bafkrei-etherscan-api-arp",
-        "description": "Verified contract source, ABIs, tx history, internal txs, token transfers. Free tier covers most read operations.",
-        "keywords": [
-            "etherscan",
-            "verified contract source",
-            "abi lookup",
-            "tx history",
-            "token transfer history"
-        ]
-    },
-    {
-        "name": "Tenderly API",
-        "domain": "data-analytics",
-        "schemaURI": "ipfs://bafkrei-tenderly-api-arp",
-        "description": "Transaction simulation + debugging + state forking. Used by agents to dry-run risky executions before broadcasting.",
-        "keywords": [
-            "tenderly",
-            "tx simulation",
-            "transaction simulation",
-            "state forking",
-            "execution debugging"
-        ]
-    }
+  {
+    "name": "Trail of Bits — guidelines-advisor",
+    "domain": "solidity-audit",
+    "schemaURI": "ipfs://bafkreie5h7fovc2ytr43kyzoh634txokyt4yjw4mu2v724zqxbbment6cy",
+    "description": "Solidity best-practice advisor. Reviews code against standard patterns and flags anti-patterns. Cross-references SCSVS sections and SWC weaknesses.",
+    "keywords": [
+      "solidity best practices",
+      "best practices review",
+      "best-practice",
+      "best practice",
+      "anti-pattern",
+      "code review",
+      "guidelines",
+      "event emission",
+      "state management",
+      "naming conventions"
+    ]
+  },
+  {
+    "name": "Trail of Bits — secure-workflow-guide",
+    "domain": "solidity-audit",
+    "schemaURI": "ipfs://bafkreif7n3gdec3qdm2phd6yjxwduxsxzd2k6embxmorvpsp63ota6f2qy",
+    "description": "Pre-audit security workflow. Covers reentrancy, access control, oracle manipulation, MEV, integer arithmetic, signature replay, DoS via unbounded loops.",
+    "keywords": [
+      "checks-effects-interactions",
+      "checks effects interactions",
+      "reentrancy attack",
+      "reentrancy vulnerability",
+      "reentrancy guard",
+      "reentrancy assessment",
+      "reentrancy enumeration",
+      "manual reentrancy",
+      "reentrancy",
+      "reentrant",
+      "access control",
+      "oracle manipulation",
+      "mev",
+      "integer overflow",
+      "integer arithmetic",
+      "signature replay",
+      "dos",
+      "unbounded loop",
+      "unchecked call",
+      "external call",
+      "call ordering",
+      "state mutation",
+      "manual review",
+      "manual assessment",
+      "attack path"
+    ]
+  },
+  {
+    "name": "Trail of Bits — code-maturity-assessor",
+    "domain": "solidity-audit",
+    "schemaURI": "ipfs://bafkreidls5vj3qh3qluewb7vwtvzh6dixe2aj4tsnqgyjfz2ztdqpd3vbe",
+    "description": "Scorecard for contract maturity. Test coverage, formal verification readiness, monitoring, ops, incident response.",
+    "keywords": [
+      "test coverage",
+      "code maturity",
+      "formal verification",
+      "monitoring",
+      "incident response",
+      "operational readiness"
+    ]
+  },
+  {
+    "name": "Trail of Bits — token-integration-analyzer",
+    "domain": "token-integration",
+    "schemaURI": "ipfs://bafkreig2uvg42nto4m7rold5caoerbdltu7aoj77xnsahw5u4iypwob2ci",
+    "description": "Risk analysis for integrating external tokens. ERC-20 edge cases, fee-on-transfer, rebasing, blocklists, upgrade hooks.",
+    "keywords": [
+      "token integration",
+      "erc-20 edge",
+      "erc20 edge",
+      "fee-on-transfer",
+      "fee on transfer",
+      "rebasing",
+      "blocklist",
+      "weird token"
+    ]
+  },
+  {
+    "name": "Slither (Crytic)",
+    "domain": "solidity-audit",
+    "schemaURI": "ipfs://bafkreihwwfnaccd5wwhg3d6jriqzon5fu5jsb6yz5k4efqzus2fq573wae",
+    "description": "Static analyzer for Solidity. Detects 90+ vulnerability classes. Open source, runs locally via Python. Industry de-facto baseline.",
+    "keywords": [
+      "static analyzer",
+      "static analysis",
+      "automated detection",
+      "crytic",
+      "slither"
+    ]
+  },
+  {
+    "name": "SCSVS (OWASP)",
+    "domain": "solidity-audit",
+    "schemaURI": "ipfs://bafkreieaylojx2aczkb64mrtahqlsznfygiu43iluyvhc34u4it2hhxali",
+    "description": "Smart Contract Security Verification Standard. OWASP-style verification checklist across 13 sections. Free, public.",
+    "keywords": [
+      "scsvs",
+      "owasp",
+      "verification standard",
+      "verification checklist",
+      "security checklist"
+    ]
+  },
+  {
+    "name": "SWC Registry",
+    "domain": "solidity-audit",
+    "schemaURI": "ipfs://bafkreifviimva5xzo3a7ibjvjgdwdrijcqrhju6idzhuu7hl3ewep3cjyy",
+    "description": "Smart Contract Weakness Classification. 138 catalogued weaknesses with examples and remediation patterns. Reference standard.",
+    "keywords": [
+      "swc",
+      "weakness classification",
+      "weakness catalog",
+      "known weakness",
+      "remediation pattern"
+    ]
+  },
+  {
+    "name": "DefiLlama API",
+    "domain": "defi-strategy",
+    "schemaURI": "ipfs://bafkreiddwzz2jrxiooz3k24ud4rypavfmsq6lhzhkocsv6etsdsbph7kqe",
+    "description": "Aggregated DeFi data: TVL by chain/protocol, yield APYs, stablecoin metrics, derivatives volumes. Public read API.",
+    "keywords": [
+      "defillama",
+      "tvl by protocol",
+      "yield apy",
+      "stablecoin metrics",
+      "defi data"
+    ]
+  },
+  {
+    "name": "The Graph — subgraphs",
+    "domain": "defi-strategy",
+    "schemaURI": "ipfs://bafkreiafuk6oko2gwdqj4afqvmcgck47xbziphpily3de7dr5x3yx6h25y",
+    "description": "Decentralized indexing layer. Query Aave/Uniswap/Compound state via GraphQL. Hosted service free for hackathon usage.",
+    "keywords": [
+      "subgraph",
+      "the graph",
+      "graphql query",
+      "decentralized indexing"
+    ]
+  },
+  {
+    "name": "1inch API (DEX aggregator)",
+    "domain": "defi-strategy",
+    "schemaURI": "ipfs://bafkreifdi4vevfdbpxiowc3etspaqurgzwaoytf6zmpdssbxat2qsbnhme",
+    "description": "DEX aggregation routing across 90+ DEXes on multiple chains. Quote + swap endpoints. Free for read.",
+    "keywords": [
+      "1inch",
+      "dex aggregator",
+      "dex aggregation",
+      "swap routing",
+      "quote endpoint"
+    ]
+  },
+  {
+    "name": "Uniswap V3 subgraph",
+    "domain": "defi-strategy",
+    "schemaURI": "ipfs://bafkreickej7mtm7siqn7um6eyenuqdxrpu5ihaoxidefkyxaflbpc5hup4",
+    "description": "Pool-level Uniswap V3 data: TVL, volume, fee tiers, position liquidity ranges. Hosted on The Graph.",
+    "keywords": [
+      "uniswap v3",
+      "uniswap",
+      "concentrated liquidity",
+      "fee tier",
+      "pool data"
+    ]
+  },
+  {
+    "name": "Dune Analytics",
+    "domain": "data-analytics",
+    "schemaURI": "ipfs://bafkreicgaijd6j7sehjleszsc42idzfrfipvtbsx4brybovt3eu4e2m55e",
+    "description": "SQL-style query engine over indexed EVM chain data. 100k+ public dashboards. Free tier for hackathon usage.",
+    "keywords": [
+      "dune analytics",
+      "dune",
+      "sql query",
+      "public dashboard",
+      "indexed chain data"
+    ]
+  },
+  {
+    "name": "Etherscan API",
+    "domain": "data-analytics",
+    "schemaURI": "ipfs://bafkreiavdoqkui67erajtp4w7jsl7jsf37adsoes77guqhb36fpzz7imku",
+    "description": "Verified contract source, ABIs, tx history, internal txs, token transfers. Free tier covers most read operations.",
+    "keywords": [
+      "etherscan",
+      "verified contract source",
+      "abi lookup",
+      "tx history",
+      "token transfer history"
+    ]
+  },
+  {
+    "name": "Tenderly API",
+    "domain": "data-analytics",
+    "schemaURI": "ipfs://bafkreigczvrrfvi6djxbigwgnvnqnupdtv57auuruaiuuuvrcby7tawmje",
+    "description": "Transaction simulation + debugging + state forking. Used by agents to dry-run risky executions before broadcasting.",
+    "keywords": [
+      "tenderly",
+      "tx simulation",
+      "transaction simulation",
+      "state forking",
+      "execution debugging"
+    ]
+  }
 ]
