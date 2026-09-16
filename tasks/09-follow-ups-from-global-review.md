@@ -15,6 +15,14 @@ and only became visible once the pieces sat side by side.
 Recorded rather than fixed, because fixing them at the end of a long session — without the operator
 present, on branches that are green — trades a known-good state for an unreviewed one.
 
+## ~~Priority 1 — the curve id~~ — FIXED 2026-09-16
+
+> Closed on `feat/erc8004-connector` (`8786c98`) and `feat/agent-trust-panel`. `curveId` is a GraphQL
+> variable exposed on `IntuitionSourceConfig`, defaulting to `DEFAULT_CURVE_ID`; the app caches its
+> client per curve, threads the chain-read value through the profile query key, and three connector
+> tests plus two app tests pin the behaviour — including one asserting the query text never pins a
+> curve again. The description below is kept as the record of what was wrong.
+
 ## Priority 1 — the curve id, and it touches real money
 
 `erc8004/src/sources/intuition/queries.ts:15` hardcodes `vaults(where: {curve_id: {_eq: "1"}})` in the
