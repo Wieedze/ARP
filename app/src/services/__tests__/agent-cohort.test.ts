@@ -172,16 +172,14 @@ describe("buildCohortView", () => {
         const view = buildCohortView(page());
         expect(view.total).toBe(28_648);
         expect(view.rows).toHaveLength(25);
-        expect(view.rangeStart).toBe(1);
-        expect(view.rangeEnd).toBe(25);
+        expect(view.rangeLabel).toBe("1–25 of 28,648");
         expect(view.hasPrevious).toBe(false);
         expect(view.hasNext).toBe(true);
     });
 
     it("numbers a deep page from its offset", () => {
         const view = buildCohortView(page({offset: 20_000}));
-        expect(view.rangeStart).toBe(20_001);
-        expect(view.rangeEnd).toBe(20_025);
+        expect(view.rangeLabel).toBe("20,001–20,025 of 28,648");
         expect(view.hasPrevious).toBe(true);
     });
 
@@ -189,19 +187,22 @@ describe("buildCohortView", () => {
         const view = buildCohortView(
             page({offset: 28_640, agents: Array.from({length: 8}, () => listing())}),
         );
-        expect(view.rangeEnd).toBe(28_648);
+        expect(view.rangeLabel).toBe("28,641–28,648 of 28,648");
         expect(view.hasNext).toBe(false);
     });
 
-    it("still offers a next page when the source reported no total", () => {
-        expect(buildCohortView(page({total: null})).hasNext).toBe(true);
+    it("still offers a next page, and no total, when the source reported none", () => {
+        const view = buildCohortView(page({total: null}));
+        expect(view.hasNext).toBe(true);
+        expect(view.rangeLabel).toBe("1–25");
     });
 
-    it("renders an empty page as an empty range, not as row zero", () => {
+    it("says an empty page is empty rather than counting rows it does not have", () => {
+        // `0–40,000 of 28,648` is what a range computed from the offset alone
+        // prints here, and it is nonsense on its face.
         const view = buildCohortView(page({offset: 40_000, agents: []}));
         expect(view.rows).toEqual([]);
-        expect(view.rangeStart).toBe(0);
-        expect(view.rangeEnd).toBe(40_000);
+        expect(view.rangeLabel).toBe("no agents on this page");
         expect(view.hasNext).toBe(false);
     });
 

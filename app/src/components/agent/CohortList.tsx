@@ -17,11 +17,13 @@ import type {CohortRow, CohortView} from "../../services/agent-cohort";
  *
  * Below `sm` the four columns collapse to two and the name spans both rows, so
  * the numbers stay stacked against the right edge instead of forcing the page
- * wider than the screen.
+ * wider than the screen. The column headers go with them, so each numeric cell
+ * carries its own unit — visible at that width, and in the accessibility tree
+ * at every width, since a `display: none` label is a label nothing can read.
  */
 
 const ROW_GRID =
-    "grid grid-cols-[minmax(0,1fr)_minmax(7rem,10rem)] sm:grid-cols-[1.75rem_minmax(0,1fr)_4.5rem_minmax(8rem,11rem)] items-start gap-x-4 gap-y-0.5";
+    "grid grid-cols-[minmax(0,1fr)_minmax(7rem,10rem)] sm:grid-cols-[1.75rem_minmax(0,1fr)_5.5rem_minmax(8rem,11rem)] items-start gap-x-4 gap-y-0.5";
 
 function Avatar({src, name}: {src: string; name: string}) {
     const [failed, setFailed] = useState(false);
@@ -61,23 +63,31 @@ function RowBody({row}: {row: CohortRow}) {
             )}
 
             <span className="min-w-0 row-span-2 sm:row-span-1">
-                <span className="block truncate font-medium">{row.name}</span>
-                <span className="block font-mono text-[length:var(--text-label)] text-[color:var(--color-fg-60)] truncate">
+                <span className="block truncate font-medium leading-tight">{row.name}</span>
+                {/*
+                 * Wraps rather than truncates. At 400px this track is ~176px and
+                 * every one of these strings is longer than that — truncating
+                 * would drop the fallback disclaimer on roughly half the cohort
+                 * and the reason an unlinkable row is unlinkable on the rest,
+                 * which is the part of the row most worth keeping.
+                 */}
+                <span className="block font-mono text-[length:var(--text-label)] leading-tight text-[color:var(--color-fg-60)] break-words">
                     {row.identityProblem ?? row.identity}
                     {row.isFallbackMetadata ? " · indexer stand-in, not a chosen name" : null}
                 </span>
             </span>
 
-            <span className="font-mono text-[length:var(--text-body-sm)] text-right tabular-nums">
+            <span className="font-mono text-[length:var(--text-body-sm)] leading-tight text-right tabular-nums">
                 {row.statementCount === null ? "—" : row.statementCount.toLocaleString("en-US")}
-                <span className="sm:hidden text-[color:var(--color-fg-60)]"> statements</span>
+                <span className="sm:sr-only text-[color:var(--color-fg-60)]"> statements</span>
             </span>
 
             <span className="text-right min-w-0">
-                <span className="block font-mono text-[length:var(--text-body-sm)] tabular-nums">
+                <span className="block font-mono text-[length:var(--text-body-sm)] leading-tight tabular-nums">
+                    <span className="sr-only">staked on its atom: </span>
                     {row.marketCap ?? "—"}
                 </span>
-                <span className="block font-mono text-[length:var(--text-label)] text-[color:var(--color-fg-60)] break-words">
+                <span className="block font-mono text-[length:var(--text-label)] leading-tight text-[color:var(--color-fg-60)] break-words">
                     {row.positions}
                 </span>
             </span>
@@ -100,8 +110,9 @@ export function CohortList({view}: {view: CohortView}) {
         <div className="mt-8">
             <div
                 className={`${ROW_GRID} hidden sm:grid pb-2 border-b border-[color:var(--color-border-strong)] font-mono uppercase tracking-wider text-[length:var(--text-label)] text-[color:var(--color-fg-60)]`}
+                aria-hidden
             >
-                <span aria-hidden />
+                <span />
                 <span>Agent</span>
                 <span className="text-right">Statements</span>
                 <span className="text-right">Staked on its atom</span>

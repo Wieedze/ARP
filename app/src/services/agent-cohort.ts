@@ -46,7 +46,7 @@ export type CohortRow = {
     imageUrl: string | null;
     /** The panel route, or `null` when no single identity could be established. */
     href: string | null;
-    /** `8453:1380 · Base 8453`, or the reason there is no identity to show. */
+    /** `1380 · Base 8453`, or an em dash when there is no identity to show. */
     identity: string;
     /** Set when the row cannot be linked, saying why rather than leaving a dead cell. */
     identityProblem: string | null;
@@ -61,10 +61,8 @@ export type CohortView = {
     order: AgentListOrder;
     /** The whole cohort's size, from the graph's own aggregate. */
     total: number | null;
-    /** 1-based index of the first row on this page. */
-    rangeStart: number;
-    /** 1-based index of the last row on this page. */
-    rangeEnd: number;
+    /** `1–25 of 28,648`, already phrased — including for a page with no rows on it. */
+    rangeLabel: string;
     limit: number;
     offset: number;
     hasPrevious: boolean;
@@ -122,18 +120,32 @@ export function toCohortRow(listing: AgentListing, index: number): CohortRow {
     };
 }
 
+/**
+ * Where this page sits in the cohort, in words.
+ *
+ * Phrased here rather than in the component so an empty page cannot render
+ * `0–40,000 of 28,648` — a range counting rows it does not have. A page can be
+ * empty without anything being wrong: the aggregate and the rows are two reads,
+ * and an offset past the end of the list answers cleanly with nothing.
+ */
+function rangeLabelFor(page: AgentPage, rowCount: number): string {
+    if (rowCount === 0) return "no agents on this page";
+    const start = (page.offset + 1).toLocaleString("en-US");
+    const end = (page.offset + rowCount).toLocaleString("en-US");
+    const total = page.total === null ? "" : ` of ${page.total.toLocaleString("en-US")}`;
+    return `${start}–${end}${total}`;
+}
+
 /** One page in, everything the directory renders out. */
 export function buildCohortView(page: AgentPage): CohortView {
     const rows = page.agents.map(toCohortRow);
-    const rangeStart = rows.length === 0 ? 0 : page.offset + 1;
     const rangeEnd = page.offset + rows.length;
 
     return {
         sourceId: page.sourceId,
         order: page.order,
         total: page.total,
-        rangeStart,
-        rangeEnd,
+        rangeLabel: rangeLabelFor(page, rows.length),
         limit: page.limit,
         offset: page.offset,
         hasPrevious: page.offset > 0,

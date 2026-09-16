@@ -50,15 +50,15 @@ export function AgentDirectory() {
 
             <header className="mt-8 mb-10">
                 <h1 className="text-[length:var(--text-display)] leading-[var(--leading-display)] tracking-tight font-semibold">
-                    Agent trust panel
+                    ERC-8004 agents
                 </h1>
                 <p className="mt-3 max-w-[64ch] text-[color:var(--color-fg-60)]">
                     {view?.total === null || view?.total === undefined
-                        ? "Every ERC-8004 agent the Intuition graph mirrors"
-                        : `${view.total.toLocaleString("en-US")} ERC-8004 agents`}{" "}
-                    carry a trust score. Providers sign their assessments and declare how long they
-                    stay valid, and no consumer checks either. Open one and see what its rating is
-                    actually resting on.
+                        ? "Every one the Intuition graph mirrors"
+                        : `All ${view.total.toLocaleString("en-US")} the Intuition graph mirrors`}{" "}
+                    carries a trust score. Providers sign their assessments and declare how long
+                    they stay valid, and no consumer checks either. Open one and see what its rating
+                    is actually resting on.
                 </p>
             </header>
 
@@ -94,11 +94,7 @@ export function AgentDirectory() {
                                 aria-live="polite"
                                 className="font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)] tabular-nums"
                             >
-                                {view.rangeStart.toLocaleString("en-US")}–
-                                {view.rangeEnd.toLocaleString("en-US")}
-                                {view.total === null
-                                    ? ""
-                                    : ` of ${view.total.toLocaleString("en-US")}`}
+                                {view.rangeLabel}
                                 {cohortQuery.isPlaceholderData ? " · reading…" : ""}
                             </p>
                             <div className="flex gap-3">
@@ -118,10 +114,10 @@ export function AgentDirectory() {
                         </nav>
                         <p className="mt-4 max-w-[68ch] text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)]">
                             Ordered and paged by the indexer at{" "}
-                            <span className="font-mono">{ERC8004_GRAPHQL_URL}</span>, a page at a
-                            time. Rows are never re-sorted here — the order belongs to the whole
-                            cohort, and re-ranking one page would make it a property of the window
-                            instead.
+                            <span className="font-mono break-all">{ERC8004_GRAPHQL_URL}</span>, a
+                            page at a time. Rows are never re-sorted here — the order belongs to the
+                            whole cohort, and re-ranking one page would make it a property of the
+                            window instead.
                         </p>
                     </>
                 )}
@@ -162,7 +158,7 @@ function OrderControl({
                         type="button"
                         aria-pressed={entry.id === order}
                         onClick={() => onChange(entry.id)}
-                        className={`px-3 py-1 text-[length:var(--text-body-sm)] border ${
+                        className={`px-3 py-1 text-[length:var(--text-body-sm)] border focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--color-accent)] ${
                             entry.id === order
                                 ? "border-[color:var(--color-accent)] text-[color:var(--color-accent)]"
                                 : "border-[color:var(--color-border-strong)] text-[color:var(--color-fg-60)]"
@@ -190,7 +186,7 @@ function PageButton({
             type="button"
             disabled={disabled}
             onClick={onClick}
-            className="px-3 py-1.5 text-[length:var(--text-body-sm)] border border-[color:var(--color-border-strong)] disabled:opacity-40 disabled:cursor-not-allowed"
+            className="px-3 py-1.5 text-[length:var(--text-body-sm)] border border-[color:var(--color-border-strong)] focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--color-accent)] disabled:opacity-40 disabled:cursor-not-allowed"
         >
             {label}
         </button>
