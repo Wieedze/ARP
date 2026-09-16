@@ -212,6 +212,25 @@ O4 turns a byproduct into the product: the enforcers already emit on every check
 into the assessment as evidence, and the distinction between _declared_ and _proven_ becomes legible
 to everyone.
 
+**Coverage is two surfaces, not one** (ADR 0020). Read coverage is total from day one:
+`getAgentProfile` answers for any ERC-8004 agent whether or not anything was ever written for it, at
+no on-chain cost. Write coverage is gated on evidence — ARP writes the canonical shell only where it
+holds something no one else does: a distinct staker, an execution receipt, or capability data absent
+from the graph.
+
+That is a cost decision made on measured numbers rather than a preference. Creating the shell is one
+Atom plus four Triples, all protocol fees, none recoverable:
+
+| Shape                                  | Per agent | Whole cohort |
+| -------------------------------------- | --------- | ------------ |
+| `has trust provider` only              | 0.1 TRUST | ~2,865       |
+| + source Atom + `has trust assessment` | 0.3 TRUST | ~8,594       |
+| Full canonical shell                   | 0.5 TRUST | ~14,300      |
+
+Blanket coverage is the incumbent's strategy, and §2 is the argument for why it produces a thin
+signal. Buying presence across the cohort stays open as a distribution move, deliberately deferred
+until the resolver is live and proven — Intuition has no deletion, so a mass write is a one-way door.
+
 **Gate:** first assessment live at the canonical resolver path with a verifying signature; first
 execution receipt produced by a real delegated action.
 

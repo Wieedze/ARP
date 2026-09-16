@@ -316,6 +316,17 @@ Publish `null` with an explicit `insufficient-evidence` band rather than a numbe
 evidence is thin. Half of Deep3's cohort is scored on one reviewer; refusing to score is a
 differentiator.
 
+**Cost, measured on mainnet 2026-09-16**: `atomCreationProtocolFee` and `tripleCreationProtocolFee`
+are both 0.1 TRUST and neither is recoverable — they are fees, not deposits that become a position.
+The shell is one Atom plus four Triples, so **0.5 TRUST per agent**; the ARP provider Atom is paid
+once. Across the cohort that is ~14,300 TRUST, and most of it would buy the right to publish
+`insufficient-evidence`.
+
+So coverage follows evidence rather than the registry (ADR 0020). ARP's read API answers for every
+agent at no on-chain cost; the shell is written only where ARP holds a distinct staker, an execution
+receipt, or capability data the graph lacks. Sponsored writes — an operator paying their own
+0.5 TRUST, marked as sponsored — are a separate opt-in path and the layer's first natural revenue.
+
 **Effort**: 5–7 d · **Depends on**: O1, and O2 for anything but a trivial score
 **Risk**: medium. Requires operating a resolver with real uptime and freshness obligations
 (ADR 0015 flags this). Mainnet _writes_ need a Partner API key for `pinThing`
