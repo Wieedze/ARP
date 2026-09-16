@@ -14,23 +14,39 @@ import {fetchAgentProfile} from "../services/erc8004-connector";
  * a DOM, which is what ADR 0011 leaves room for.
  */
 
-export type AgentProfileFetcher = (ref: AgentRef) => Promise<AgentProfile>;
+export type AgentProfileFetcher = (ref: AgentRef, curveId?: bigint) => Promise<AgentProfile>;
 
-export function agentProfileQueryKey(ref: AgentRef | null) {
-    return ["erc8004", "agent-profile", ref?.chainId ?? null, ref?.tokenId ?? null] as const;
+/**
+ * The curve is part of the key.
+ *
+ * Market numbers are read for one bonding curve and a stake is deposited into
+ * the curve `getBondingCurveConfig()` names. Keying on it means that if the two
+ * ever diverge the profile refetches instead of rendering a market that belongs
+ * to a different vault. On mainnet today the chain reports `1`, which is also
+ * the package default, so the key is unchanged and nothing refetches.
+ */
+export function agentProfileQueryKey(ref: AgentRef | null, curveId?: bigint) {
+    return [
+        "erc8004",
+        "agent-profile",
+        ref?.chainId ?? null,
+        ref?.tokenId ?? null,
+        curveId === undefined ? "default" : curveId.toString(),
+    ] as const;
 }
 
 export function agentProfileQueryOptions(
     ref: AgentRef | null,
+    curveId?: bigint,
     fetchProfile: AgentProfileFetcher = fetchAgentProfile,
 ) {
     return {
-        queryKey: agentProfileQueryKey(ref),
+        queryKey: agentProfileQueryKey(ref, curveId),
         queryFn: async (): Promise<TrustPanelView> => {
             if (ref === null) {
                 throw new Error("No agent reference to resolve.");
             }
-            return buildTrustPanel(await fetchProfile(ref));
+            return buildTrustPanel(await fetchProfile(ref, curveId));
         },
         enabled: ref !== null,
         // Several resolver round trips per read; re-running them on every
@@ -40,6 +56,6 @@ export function agentProfileQueryOptions(
     };
 }
 
-export function useAgentProfile(ref: AgentRef | null) {
-    return useQuery(agentProfileQueryOptions(ref));
+export function useAgentProfile(ref: AgentRef | null, curveId?: bigint) {
+    return useQuery(agentProfileQueryOptions(ref, curveId));
 }

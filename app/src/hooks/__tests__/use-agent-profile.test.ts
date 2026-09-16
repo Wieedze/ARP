@@ -20,19 +20,48 @@ function optionsOver(value: AgentProfile | Error) {
         if (value instanceof Error) throw value;
         return value;
     });
-    return {options: agentProfileQueryOptions(REF, fetchProfile), fetchProfile};
+    return {options: agentProfileQueryOptions(REF, undefined, fetchProfile), fetchProfile};
 }
 
 describe("agentProfileQueryOptions", () => {
     it("keys on the ERC-8004 identity, not on a source handle", () => {
-        expect(agentProfileQueryKey(REF)).toEqual(["erc8004", "agent-profile", 8453, "2340"]);
-        expect(agentProfileQueryKey(null)).toEqual(["erc8004", "agent-profile", null, null]);
+        expect(agentProfileQueryKey(REF)).toEqual([
+            "erc8004",
+            "agent-profile",
+            8453,
+            "2340",
+            "default",
+        ]);
+        expect(agentProfileQueryKey(null)).toEqual([
+            "erc8004",
+            "agent-profile",
+            null,
+            null,
+            "default",
+        ]);
+
+        // The curve is part of the key: a market read for one curve must not be
+        // served from cache when a stake would land in another.
+        expect(agentProfileQueryKey(REF, 7n)).toEqual([
+            "erc8004",
+            "agent-profile",
+            8453,
+            "2340",
+            "7",
+        ]);
     });
 
     it("stays disabled without a reference, and refuses to invent one", async () => {
-        const options = agentProfileQueryOptions(null, vi.fn());
+        const options = agentProfileQueryOptions(null, undefined, vi.fn());
         expect(options.enabled).toBe(false);
         await expect(options.queryFn()).rejects.toThrow("No agent reference");
+    });
+
+    it("passes the curve it was given to the fetcher, so the market matches the vault", async () => {
+        const fetchProfile = vi.fn(async () => richProfile());
+        const options = agentProfileQueryOptions(REF, 7n, fetchProfile);
+        await options.queryFn();
+        expect(fetchProfile).toHaveBeenCalledWith(REF, 7n);
     });
 
     it("never retries — every retry is another round of provider fetches", () => {
@@ -43,7 +72,7 @@ describe("agentProfileQueryOptions", () => {
         const {options, fetchProfile} = optionsOver(richProfile());
         const view = await options.queryFn();
 
-        expect(fetchProfile).toHaveBeenCalledWith(REF);
+        expect(fetchProfile).toHaveBeenCalledWith(REF, undefined);
         expect(view.found).toBe(true);
         expect(view.rows).toHaveLength(2);
         expect(view.rows[0].score).toBe(55.35);

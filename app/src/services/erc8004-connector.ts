@@ -26,15 +26,35 @@ import {
  */
 export const ERC8004_GRAPHQL_URL = INTUITION_MAINNET_GRAPHQL;
 
-let cached: Erc8004Client | null = null;
+/**
+ * Clients are cached per bonding curve, not globally.
+ *
+ * The market numbers this client reads are filtered to one curve, and the vault
+ * a stake is deposited into is chosen by `defaultCurveId` read from
+ * `getBondingCurveConfig()`. Those have to be the same curve or the panel shows
+ * one market beside a position in another. Passing `undefined` uses the
+ * package's default, which is what the first render does before the chain read
+ * lands — on mainnet today both are `1`, so that render is already correct and
+ * the key never changes.
+ */
+const clients = new Map<string, Erc8004Client>();
 
-export function erc8004Client(): Erc8004Client {
-    if (cached === null) {
-        cached = createErc8004Client({
-            sources: [intuitionSource({graphqlUrl: ERC8004_GRAPHQL_URL}), erc8004RegistrySource()],
-        });
-    }
-    return cached;
+export function erc8004Client(curveId?: bigint): Erc8004Client {
+    const key = curveId === undefined ? "default" : curveId.toString();
+    const existing = clients.get(key);
+    if (existing !== undefined) return existing;
+
+    const client = createErc8004Client({
+        sources: [
+            intuitionSource({
+                graphqlUrl: ERC8004_GRAPHQL_URL,
+                ...(curveId === undefined ? {} : {curveId}),
+            }),
+            erc8004RegistrySource(),
+        ],
+    });
+    clients.set(key, client);
+    return client;
 }
 
 /**
@@ -44,6 +64,10 @@ export function erc8004Client(): Erc8004Client {
  * whose `identity` is `null`. It *does* throw when every source failed at a
  * step, which is a different thing and the caller should say so.
  */
-export function fetchAgentProfile(ref: AgentRef, client = erc8004Client()): Promise<AgentProfile> {
+export function fetchAgentProfile(
+    ref: AgentRef,
+    curveId?: bigint,
+    client = erc8004Client(curveId),
+): Promise<AgentProfile> {
     return getAgentProfile(client, ref);
 }

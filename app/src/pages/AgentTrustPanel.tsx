@@ -54,8 +54,12 @@ export function AgentTrustPanel() {
     const tokenId = parseTokenId(params.tokenId);
     const ref = chainId !== null && tokenId !== null ? {chainId, tokenId} : null;
 
-    const profileQuery = useAgentProfile(ref);
+    // The market numbers and the vault a stake lands in must be the same curve.
+    // Until the chain read resolves this is undefined and the package default is
+    // used, which is correct on mainnet today; if the chain ever reports another
+    // curve the query key changes and the profile refetches against it.
     const sessionQuery = useStakeSession();
+    const profileQuery = useAgentProfile(ref, sessionQuery.data?.curveId);
     const view = profileQuery.data;
 
     if (ref === null) {
