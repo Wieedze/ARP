@@ -83,6 +83,23 @@ export {
     type IntuitionSourceConfig,
 } from "./sources/intuition/index.js";
 
+/**
+ * The `same as` predicate's Intuition term id — the canonical ERC-8004 identity
+ * edge, identical on mainnet (1155) and testnet (13579).
+ *
+ * The one term id this package exports, and the exception needs a reason. Every
+ * other id is an internal detail of how the reads are filtered, and no public
+ * signature mentions one. This one leaks because a *writer* has to name the
+ * same predicate this package's preflight filters on: an agent linked with a
+ * differently-resolved `same as` atom is not on the edge anything here reads.
+ * Two frozen copies of a constant whose whole purpose is to be frozen is the
+ * worse failure, so the writer takes this one rather than keeping its own.
+ *
+ * Exporting it adds no write path. This package still never signs and never
+ * sends a transaction.
+ */
+export {SAME_AS as INTUITION_SAME_AS_TERM_ID} from "./sources/intuition/terms.js";
+
 export {
     erc8004RegistrySource,
     ERC8004_REGISTRY_SOURCE_ID,
