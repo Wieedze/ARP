@@ -112,11 +112,29 @@ Being explicit about this is the point of the package.
   recovering Deep3's declared signer from its live documents, and is marked `confirmed` on that
   basis. A document whose struct shape does not match any confirmed strategy gets `unverified` with
   the attempts recorded, never a guess.
-- **`mismatch` is reserved for real red flags.** It is returned only when a confirmed reconstruction
-  applied cleanly and recovered a _different_ address — a tampered or mis-signed document. An unknown
-  format is `unverified`, not `mismatch`.
+- **`mismatch` is reserved for real red flags, and is scoped to providers we have studied.** A
+  strategy is confirmed _against a provider_, never universally: `providerIdCaip19Strategy` carries
+  `confirmedProviderIds: ["deep3-labs"]` because that is whose declared signer it was actually shown
+  to recover. `mismatch` is returned only when a strategy confirmed for _this document's_ provider
+  applied cleanly and recovered a _different_ address.
+
+    The consequence is deliberate and worth stating plainly: **a provider outside that list gets
+    `unverified` even when their document is genuinely tampered.** Another provider can publish the
+    same three field names and encode `agent` differently, in which case our reconstruction recovers a
+    meaningless address — and publishing `mismatch` on that basis would be a public accusation against
+    someone who did nothing wrong. We trade a true positive about a stranger for never crying wolf
+    about one. Confirming a provider means recovering their own declared signer from their own live
+    documents and adding their `provider.id` to that list; nothing less.
+
+    `verified` is _not_ gated this way. Vouching for a signature that demonstrably checks out costs
+    nobody anything, so any provider can reach it on an exact match.
+
 - **Capabilities are relayed, never inferred.** Nothing is read out of the registration file yet; the
   URI is exposed and that is all.
+- **Provider identity in the graph is not checked against the document.** Nothing verifies that the
+  `provider.id` inside a document matches the provider atom whose edge pointed us at it. An
+  impersonator who copies a known `provider.id` will get `mismatch` (which is the intent), but the
+  graph-side binding is unproven either way.
 - **No caching.** Every call is a live read, and each source method runs its own preflight, so a full
   profile is several round trips. If that becomes a problem it is a measured follow-up, not a
   guess-driven optimisation.

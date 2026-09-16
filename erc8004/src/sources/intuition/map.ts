@@ -1,4 +1,5 @@
 import {isRecord, readBigInt, readNumber, readRecord, readString} from "../../json.js";
+import {provenanceFor} from "../../provenance.js";
 import type {
     AgentMetadata,
     CapabilityRef,
@@ -35,11 +36,7 @@ export const INTUITION_SOURCE_ID = "intuition";
  */
 export const FALLBACK_NAME_PATTERN = /^Agent \d+:\d+$/;
 
-function provenance(kind: Provenance["kind"], origin: string | null, note?: string): Provenance {
-    return note === undefined
-        ? {sourceId: INTUITION_SOURCE_ID, kind, origin}
-        : {sourceId: INTUITION_SOURCE_ID, kind, origin, note};
-}
+const provenance = provenanceFor(INTUITION_SOURCE_ID);
 
 export function claimProvenance(origin: string | null): Provenance {
     return provenance("claim", origin);

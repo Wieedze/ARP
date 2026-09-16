@@ -67,6 +67,30 @@ describe("canonicalizeRfc8785 — string escaping (RFC 8785 section 3.2.2.2)", (
         expect(canonicalizeRfc8785(input)).toBe(expected);
     });
 
+    it("rejects lone surrogates instead of escaping them", () => {
+        // RFC 8785 requires valid Unicode. A lone surrogate has no UTF-8 form,
+        // so there is nothing to canonicalise; JSON.stringify would emit
+        // \udxxx and hand back bytes that look canonical and are not.
+        expect(() => canonicalizeRfc8785(cp(0xd800))).toThrow(CanonicalizationError);
+        expect(() => canonicalizeRfc8785(cp(0xdc00))).toThrow(CanonicalizationError);
+        expect(() => canonicalizeRfc8785(`a${cp(0xd800)}`)).toThrow(CanonicalizationError);
+        expect(() => canonicalizeRfc8785(`${cp(0xd800)}${cp(0xd800)}`)).toThrow(
+            CanonicalizationError,
+        );
+        expect(() => canonicalizeRfc8785({[cp(0xd800)]: 1})).toThrow(CanonicalizationError);
+        expect(() => canonicalizeRfc8785({a: [cp(0xdfff)]})).toThrow(CanonicalizationError);
+    });
+
+    it("still accepts a well-formed surrogate pair", () => {
+        expect(canonicalizeRfc8785(cp(0x1f600))).toBe(`"${cp(0x1f600)}"`);
+        expect(canonicalizeRfc8785(`${cp(0x1f600)}${cp(0x1f600)}`)).toBe(
+            `"${cp(0x1f600)}${cp(0x1f600)}"`,
+        );
+        // A pair immediately followed by a legitimate BMP character — the index
+        // advance past the low surrogate must not swallow it.
+        expect(canonicalizeRfc8785(`${cp(0x1f600)}a`)).toBe(`"${cp(0x1f600)}a"`);
+    });
+
     it("leaves non-ASCII characters unescaped", () => {
         expect(canonicalizeRfc8785(cp(0x20ac))).toBe(`"${cp(0x20ac)}"`);
         expect(canonicalizeRfc8785(cp(0x1f600))).toBe(`"${cp(0x1f600)}"`);

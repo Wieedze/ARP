@@ -4,6 +4,7 @@ import {describe, expect, it} from "vitest";
 import {createErc8004Client, type Erc8004Client} from "../src/client.js";
 import {isRecord} from "../src/json.js";
 import {
+    AllSourcesFailedError,
     getAgentProfile,
     getAssessments,
     getCapabilities,
@@ -281,10 +282,42 @@ describe("getAgentProfile — a failing source does not take the profile with it
                 },
             ],
         });
-        await expect(allBroken.sources).toHaveLength(1);
-        await expect(resolveAgent(allBroken, {chainId: 8453, tokenId: "2340"})).rejects.toThrow(
-            "every source failed at resolveAgent",
+        expect(allBroken.sources).toHaveLength(1);
+
+        const error = await resolveAgent(allBroken, {chainId: 8453, tokenId: "2340"}).catch(
+            (caught: unknown) => caught,
         );
+        // A typed error, not a bare one: a caller has to be able to tell
+        // "nothing answered" from a programmer bug, because null already means
+        // "the agent is not there".
+        expect(error).toBeInstanceOf(AllSourcesFailedError);
+        if (!(error instanceof AllSourcesFailedError)) return;
+        expect(error.step).toBe("resolveAgent");
+        expect(error.errors).toEqual([
+            {sourceId: "broken", step: "resolveAgent", message: "upstream down"},
+        ]);
+        expect(error.message).toContain("every source failed at resolveAgent");
+    });
+
+    it("does not raise when one source answered cleanly and another failed", async () => {
+        const fetchImpl = fixtureFetch();
+        const mixed = createErc8004Client({
+            fetch: fetchImpl,
+            sources: [
+                intuitionSource({fetch: fetchImpl, graphqlUrl: INTUITION_URL}),
+                {
+                    id: "broken",
+                    resolveAgent: async () => {
+                        throw new Error("upstream down");
+                    },
+                    getAssessments: async () => [],
+                    getCapabilities: async () => {
+                        throw new Error("upstream down");
+                    },
+                },
+            ],
+        });
+        await expect(resolveAgent(mixed, {chainId: 8453, tokenId: "2340"})).resolves.not.toBeNull();
     });
 });
 

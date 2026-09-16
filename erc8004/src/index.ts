@@ -25,6 +25,7 @@
 export {createErc8004Client, type Erc8004Client, type Erc8004ClientConfig} from "./client.js";
 
 export {
+    AllSourcesFailedError,
     getAgentProfile,
     getAssessments,
     getCapabilities,
@@ -42,6 +43,7 @@ export {
 
 export {
     DEFAULT_SIGNATURE_STRATEGIES,
+    isConfirmedForProvider,
     providerIdCaip19LowercaseStrategy,
     providerIdCaip19Strategy,
     providerNameCaip19Strategy,
@@ -100,9 +102,7 @@ export type {
     ProviderClaim,
     ResolvedAgentRef,
     SignatureAttempt,
-    SignatureStrategyConfidence,
     SignatureVerdict,
-    Sourced,
     SourceError,
     TrustProvider,
 } from "./types.js";

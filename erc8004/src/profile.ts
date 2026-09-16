@@ -47,19 +47,39 @@ async function gather<T>(
 }
 
 /**
+ * Raised when every consulted source failed at one step.
+ *
+ * Its own type, because a caller is expected to handle it: `null` from
+ * `resolveAgent` means the agent is not there, and a step where nothing
+ * answered means we do not know — conflating the two is the dishonesty this
+ * package exists to prevent. A bare `Error` would be indistinguishable from a
+ * programmer bug, so `step` and the per-source `errors` are carried on the
+ * value rather than only in the message.
+ */
+export class AllSourcesFailedError extends Error {
+    readonly step: SourceError["step"];
+    readonly errors: readonly SourceError[];
+
+    constructor(step: SourceError["step"], errors: readonly SourceError[]) {
+        super(
+            `every source failed at ${step}: ${errors
+                .map((entry) => `${entry.sourceId}: ${entry.message}`)
+                .join("; ")}`,
+        );
+        this.name = "AllSourcesFailedError";
+        this.step = step;
+        this.errors = errors;
+    }
+}
+
+/**
  * A step where every consulted source failed produced no information at all.
  * Returning an empty result there would be indistinguishable from "we looked and
- * found nothing", so the first error is rethrown instead.
+ * found nothing", so it raises instead.
  */
 function throwIfTotalFailure<T>(gathered: Gathered<T>, step: Step): void {
     if (gathered.entries.length === 0 && gathered.errors.length > 0) {
-        const first = gathered.errors[0];
-        throw new Error(
-            `every source failed at ${step}: ${gathered.errors
-                .map((entry) => `${entry.sourceId}: ${entry.message}`)
-                .join("; ")}`,
-            first === undefined ? undefined : {cause: first},
-        );
+        throw new AllSourcesFailedError(step, gathered.errors);
     }
 }
 

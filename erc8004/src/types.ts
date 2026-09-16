@@ -36,12 +36,6 @@ export type Provenance = {
     note?: string;
 };
 
-/** A value paired with the provenance of that value. */
-export type Sourced<T> = {
-    value: T;
-    provenance: Provenance;
-};
-
 /**
  * Metadata an agent (or an indexer standing in for one) declares about itself.
  *
@@ -244,26 +238,33 @@ export type AssessmentFetch =
 /** One reconstruction this package tried, and what it recovered. */
 export type SignatureAttempt = {
     strategyId: string;
-    confidence: SignatureStrategyConfidence;
+    /**
+     * Whether this strategy had been confirmed against *this document's*
+     * provider. Confirmation is per-provider, never universal, and only a
+     * confirmed-for-this-provider attempt can produce a `mismatch`.
+     */
+    confirmedForProvider: boolean;
     /** Null when the strategy could not build a payload at all. */
     recovered: Address | null;
     /** Present when the attempt failed rather than simply not matching. */
     error?: string;
 };
 
-export type SignatureStrategyConfidence = "confirmed" | "speculative";
-
 /**
  * The honest answer to "does this signature recover to the address the
  * document claims signed it?".
  *
  *   - `verified`   — it does. Recovery matched the declared signer exactly.
- *   - `mismatch`   — a reconstruction this package has confirmed against live
- *                    signed documents applied cleanly and recovered a *different*
- *                    address. That is a red flag, not an unknown.
+ *                    Available to any provider, confirmed or not: vouching for
+ *                    a correct signature costs nobody anything.
+ *   - `mismatch`   — a reconstruction confirmed against *this provider's own*
+ *                    live documents applied cleanly and recovered a *different*
+ *                    address. A red flag, and reachable only for a provider
+ *                    whose signing scheme has actually been established.
  *   - `unverified` — could not evaluate: no signature, an unsupported algorithm,
- *                    or no confirmed reconstruction applies to this document's shape.
- *                    Never claim more than this.
+ *                    or no strategy confirmed for this provider. Being unable to
+ *                    check a stranger is the correct answer about a stranger;
+ *                    accusing them is not.
  */
 export type SignatureVerdict =
     | {

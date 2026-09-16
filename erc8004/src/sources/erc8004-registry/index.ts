@@ -2,13 +2,8 @@ import {createPublicClient, http, type Chain, type PublicClient, type Transport}
 import {base, bsc, mainnet} from "viem/chains";
 
 import {toCaip19} from "../../caip.js";
-import type {
-    AgentIdentity,
-    Capabilities,
-    Provenance,
-    ProviderClaim,
-    ResolvedAgentRef,
-} from "../../types.js";
+import {provenanceFor} from "../../provenance.js";
+import type {AgentIdentity, Capabilities, ProviderClaim, ResolvedAgentRef} from "../../types.js";
 import type {TrustSource} from "../source.js";
 import {identityRegistryAbi} from "./abi.js";
 
@@ -40,11 +35,7 @@ export type Erc8004RegistrySourceConfig = {
     transports?: Record<number, Transport>;
 };
 
-function provenance(kind: Provenance["kind"], origin: string | null, note?: string): Provenance {
-    return note === undefined
-        ? {sourceId: ERC8004_REGISTRY_SOURCE_ID, kind, origin}
-        : {sourceId: ERC8004_REGISTRY_SOURCE_ID, kind, origin, note};
-}
+const provenance = provenanceFor(ERC8004_REGISTRY_SOURCE_ID);
 
 /**
  * The ERC-8004 Identity Registry itself, read directly with viem.

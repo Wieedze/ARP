@@ -2,7 +2,7 @@ import {getAddress, isAddress, isHex, keccak256, recoverTypedDataAddress, type H
 
 import {canonicalBytesRfc8785, CanonicalizationError} from "./canonicalize.js";
 import {isRecord, omitPath, readArray, readPath, readString} from "./json.js";
-import type {SignatureAttempt, SignatureStrategyConfidence, SignatureVerdict} from "./types.js";
+import type {SignatureAttempt, SignatureVerdict} from "./types.js";
 
 /** The typed-data block as published, after narrowing. */
 type Eip712Block = {
@@ -25,23 +25,39 @@ export type SignatureStrategyInput = {
 /**
  * A named way of reconstructing the values that went into the signed struct.
  *
- * The struct's field *names* are published in the document; the *values* behind
- * `provider` and `agent` are not. That gap is the reason this is a swappable
- * strategy rather than a hardcoded mapping, and the reason each one carries a
- * confidence grade.
+ * The struct's field *names* are published in the document; the values behind
+ * `provider` and `agent` are not. That gap is why this is a swappable strategy
+ * rather than a hardcoded mapping.
+ *
+ * `confirmedProviderIds` is the part that keeps the verdicts honest. A strategy
+ * is confirmed *against a provider*, never universally: what was established is
+ * that this reconstruction recovers *that* provider's declared signer from
+ * *their* live documents. Another provider can publish the same three field
+ * names and encode `agent` differently, and nothing about the first
+ * confirmation says anything about them.
  */
 export type SignatureValueStrategy = {
     readonly id: string;
     /**
-     *   - `confirmed`   — validated against live signed documents; the date and
-     *                     the documents are named at the definition site.
-     *   - `speculative` — plausible, never observed to recover. A speculative
-     *                     strategy failing proves nothing about the document.
+     * The `provider.id` values this strategy has been confirmed against, by
+     * recovering that provider's own declared signer from their live documents.
+     * Empty means confirmed against nobody — the strategy can still produce a
+     * `verified` verdict on an exact match, but it can never produce a
+     * `mismatch`.
      */
-    readonly confidence: SignatureStrategyConfidence;
+    readonly confirmedProviderIds: readonly string[];
     /** Returns the struct message, or null when this strategy does not apply. */
     build(input: SignatureStrategyInput): Record<string, unknown> | null;
 };
+
+/** True when this strategy's confirmation actually covers the document in hand. */
+export function isConfirmedForProvider(
+    strategy: SignatureValueStrategy,
+    document: unknown,
+): boolean {
+    const providerId = readString(readPath(document, ["provider"]), "id");
+    return providerId !== null && strategy.confirmedProviderIds.includes(providerId);
+}
 
 const FEEDBACK_FIELDS = ["provider", "agent", "contentHash"] as const;
 
@@ -66,6 +82,32 @@ function agentCaip19From(document: unknown, lowercaseRegistry: boolean): string 
 }
 
 /**
+ * The `FeedbackTrustAssessment` family: `provider` is some string identifying
+ * the provider, `agent` is the CAIP-19 asset id of the assessed agent, and
+ * `contentHash` is the hash of the canonicalised document. The four variants
+ * below differ only in which provider field is read and how the registry
+ * address is cased.
+ */
+function feedbackAssessmentStrategy(config: {
+    id: string;
+    confirmedProviderIds: readonly string[];
+    providerField: "id" | "name" | "url";
+    lowercaseRegistry?: boolean;
+}): SignatureValueStrategy {
+    return {
+        id: config.id,
+        confirmedProviderIds: config.confirmedProviderIds,
+        build({document, contentHash, fields}) {
+            if (!hasExactFields(fields, FEEDBACK_FIELDS)) return null;
+            const provider = readString(readPath(document, ["provider"]), config.providerField);
+            const agent = agentCaip19From(document, config.lowercaseRegistry === true);
+            if (provider === null || agent === null) return null;
+            return {provider, agent, contentHash};
+        },
+    };
+}
+
+/**
  * The reconstruction Deep3 Labs actually signs with.
  *
  * `provider` is the provider's slug id (`provider.id`), not its display name;
@@ -75,62 +117,44 @@ function agentCaip19From(document: unknown, lowercaseRegistry: boolean): string 
  * declare — from all three live
  * `api.deep3.ai/.well-known/intuition/erc8004/agents/8453/{1380,2340,6649}`
  * feedback-trust-assessment documents.
+ *
+ * `confirmedProviderIds` is therefore `deep3-labs` and nothing else. Extend it
+ * only for a provider whose own live documents have actually been recovered.
  */
-export const providerIdCaip19Strategy: SignatureValueStrategy = {
+export const providerIdCaip19Strategy: SignatureValueStrategy = feedbackAssessmentStrategy({
     id: "provider-id-caip19",
-    confidence: "confirmed",
-    build({document, contentHash, fields}) {
-        if (!hasExactFields(fields, FEEDBACK_FIELDS)) return null;
-        const providerId = readString(readPath(document, ["provider"]), "id");
-        const agent = agentCaip19From(document, false);
-        if (providerId === null || agent === null) return null;
-        return {provider: providerId, agent, contentHash};
-    },
-};
+    confirmedProviderIds: ["deep3-labs"],
+    providerField: "id",
+});
 
 /** Same shape, registry lowercased. Never observed to recover; kept because CAIP-19 casing is not universally checksummed. */
-export const providerIdCaip19LowercaseStrategy: SignatureValueStrategy = {
-    id: "provider-id-caip19-lowercase-registry",
-    confidence: "speculative",
-    build({document, contentHash, fields}) {
-        if (!hasExactFields(fields, FEEDBACK_FIELDS)) return null;
-        const providerId = readString(readPath(document, ["provider"]), "id");
-        const agent = agentCaip19From(document, true);
-        if (providerId === null || agent === null) return null;
-        return {provider: providerId, agent, contentHash};
+export const providerIdCaip19LowercaseStrategy: SignatureValueStrategy = feedbackAssessmentStrategy(
+    {
+        id: "provider-id-caip19-lowercase-registry",
+        confirmedProviderIds: [],
+        providerField: "id",
+        lowercaseRegistry: true,
     },
-};
+);
 
 /** Display name instead of slug. Never observed to recover. */
-export const providerNameCaip19Strategy: SignatureValueStrategy = {
+export const providerNameCaip19Strategy: SignatureValueStrategy = feedbackAssessmentStrategy({
     id: "provider-name-caip19",
-    confidence: "speculative",
-    build({document, contentHash, fields}) {
-        if (!hasExactFields(fields, FEEDBACK_FIELDS)) return null;
-        const providerName = readString(readPath(document, ["provider"]), "name");
-        const agent = agentCaip19From(document, false);
-        if (providerName === null || agent === null) return null;
-        return {provider: providerName, agent, contentHash};
-    },
-};
+    confirmedProviderIds: [],
+    providerField: "name",
+});
 
 /** Provider homepage instead of slug. Never observed to recover. */
-export const providerUrlCaip19Strategy: SignatureValueStrategy = {
+export const providerUrlCaip19Strategy: SignatureValueStrategy = feedbackAssessmentStrategy({
     id: "provider-url-caip19",
-    confidence: "speculative",
-    build({document, contentHash, fields}) {
-        if (!hasExactFields(fields, FEEDBACK_FIELDS)) return null;
-        const providerUrl = readString(readPath(document, ["provider"]), "url");
-        const agent = agentCaip19From(document, false);
-        if (providerUrl === null || agent === null) return null;
-        return {provider: providerUrl, agent, contentHash};
-    },
-};
+    confirmedProviderIds: [],
+    providerField: "url",
+});
 
 /**
- * Tried in order. The confirmed strategy leads; the speculative ones exist so a
- * document signed with a near variant is reported as a near variant rather than
- * as an unknown.
+ * Tried in order. The variant confirmed against a real provider leads; the
+ * unconfirmed ones exist so a document signed with a near variant is reported
+ * as a near variant rather than as an unknown.
  */
 export const DEFAULT_SIGNATURE_STRATEGIES: readonly SignatureValueStrategy[] = [
     providerIdCaip19Strategy,
@@ -270,11 +294,12 @@ export async function verifyAssessmentSignature(
     let confirmedApplied: {strategyId: string; recovered: `0x${string}`} | null = null;
 
     for (const strategy of strategies) {
+        const confirmedForProvider = isConfirmedForProvider(strategy, document);
         const message = strategy.build({document, contentHash, fields: eip712.fields});
         if (message === null) {
             attempts.push({
                 strategyId: strategy.id,
-                confidence: strategy.confidence,
+                confirmedForProvider,
                 recovered: null,
                 error: "strategy does not apply to this document shape",
             });
@@ -292,17 +317,13 @@ export async function verifyAssessmentSignature(
         } catch (error) {
             attempts.push({
                 strategyId: strategy.id,
-                confidence: strategy.confidence,
+                confirmedForProvider,
                 recovered: null,
                 error: error instanceof Error ? error.message : String(error),
             });
             continue;
         }
-        attempts.push({
-            strategyId: strategy.id,
-            confidence: strategy.confidence,
-            recovered,
-        });
+        attempts.push({strategyId: strategy.id, confirmedForProvider, recovered});
         if (recovered === declaredSigner) {
             return {
                 status: "verified",
@@ -312,14 +333,21 @@ export async function verifyAssessmentSignature(
                 contentHash,
             };
         }
-        if (strategy.confidence === "confirmed" && confirmedApplied === null) {
+        if (confirmedForProvider && confirmedApplied === null) {
             confirmedApplied = {strategyId: strategy.id, recovered};
         }
     }
 
-    // A reconstruction we have confirmed against live signed documents applied
-    // cleanly and produced someone else. That is a tampered or mis-signed
-    // document, not an unknown format — say so.
+    // A reconstruction confirmed against *this provider's own* live documents
+    // applied cleanly and produced someone else. That is a tampered or
+    // mis-signed document, and it is the only route to `mismatch`.
+    //
+    // The gate is deliberately narrow. A provider we have never studied can use
+    // the same three field names with a different `agent` encoding; the strategy
+    // would build and recover a perfectly meaningless address. Publishing
+    // `mismatch` there would be a public accusation against someone who did
+    // nothing wrong, on the strength of a reconstruction we never validated for
+    // them. `unverified` is the correct answer about a stranger.
     if (confirmedApplied !== null) {
         return {
             status: "mismatch",
@@ -331,8 +359,11 @@ export async function verifyAssessmentSignature(
         };
     }
 
+    const providerId = readString(readPath(document, ["provider"]), "id");
     return unverified(
-        "could not reconstruct the signed payload: no confirmed strategy applies to this document's struct shape",
+        `could not reconstruct the signed payload: no strategy is confirmed for provider ${
+            providerId === null ? "(document declares no provider.id)" : `"${providerId}"`
+        }`,
         declaredSigner,
         attempts,
     );

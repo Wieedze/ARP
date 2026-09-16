@@ -10,6 +10,38 @@ export class CanonicalizationError extends Error {
 }
 
 /**
+ * True when `value` contains a surrogate code unit with no partner.
+ *
+ * RFC 8785 requires valid Unicode input; a lone surrogate is not representable
+ * in UTF-8 and has no canonical form. `JSON.stringify` would quietly re-escape
+ * it as `\udxxx`, producing bytes that look canonical and are not.
+ */
+function hasLoneSurrogate(value: string): boolean {
+    for (let index = 0; index < value.length; index += 1) {
+        const unit = value.charCodeAt(index);
+        if (unit >= 0xd800 && unit <= 0xdbff) {
+            const next = value.charCodeAt(index + 1);
+            // charCodeAt past the end is NaN, so an unpaired trailing high
+            // surrogate falls through to the comparison and reports true.
+            if (!(next >= 0xdc00 && next <= 0xdfff)) return true;
+            index += 1;
+        } else if (unit >= 0xdc00 && unit <= 0xdfff) {
+            return true;
+        }
+    }
+    return false;
+}
+
+function encodeString(value: string): string {
+    if (hasLoneSurrogate(value)) {
+        throw new CanonicalizationError(
+            `string contains a lone surrogate: ${JSON.stringify(value)}`,
+        );
+    }
+    return JSON.stringify(value);
+}
+
+/**
  * RFC 8785 (JSON Canonicalization Scheme).
  *
  * Written rather than depended on: it is sixty lines, and a signature check is
@@ -26,6 +58,10 @@ export class CanonicalizationError extends Error {
  * Whitespace is never emitted, and `undefined`-valued properties are dropped as
  * `JSON.stringify` drops them. Input is expected to have come from `JSON.parse`,
  * where neither case can arise.
+ *
+ * Lone surrogates are rejected rather than escaped. The RFC requires valid
+ * Unicode, and a canonicaliser that silently produces plausible-looking bytes
+ * for invalid input is the exact failure mode a signature check cannot survive.
  */
 export function canonicalizeRfc8785(value: unknown): string {
     if (value === null) return "null";
@@ -41,7 +77,7 @@ export function canonicalizeRfc8785(value: unknown): string {
             return JSON.stringify(value);
         }
         case "string":
-            return JSON.stringify(value);
+            return encodeString(value);
         case "object":
             break;
         default:
@@ -58,7 +94,7 @@ export function canonicalizeRfc8785(value: unknown): string {
     for (const key of Object.keys(record).sort()) {
         const member = record[key];
         if (member === undefined) continue;
-        parts.push(`${JSON.stringify(key)}:${canonicalizeRfc8785(member)}`);
+        parts.push(`${encodeString(key)}:${canonicalizeRfc8785(member)}`);
     }
     return `{${parts.join(",")}}`;
 }

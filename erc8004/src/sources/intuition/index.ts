@@ -166,9 +166,9 @@ export function intuitionSource(config: IntuitionSourceConfig = {}): TrustSource
                 provenance: claimProvenance(subject.handle),
             };
             for (const row of rows) {
-                const ref_ = mapCapabilityRef(row);
-                if (ref_ === null) continue;
-                bucketFor(capabilities, ref_).push(ref_);
+                const capability = mapCapabilityRef(row);
+                if (capability === null) continue;
+                bucketFor(capabilities, capability).push(capability);
             }
             return capabilities;
         },
@@ -183,8 +183,8 @@ export function intuitionSource(config: IntuitionSourceConfig = {}): TrustSource
     };
 }
 
-function bucketFor(capabilities: Capabilities, ref: CapabilityRef): CapabilityRef[] {
-    switch (ref.relation) {
+function bucketFor(capabilities: Capabilities, capability: CapabilityRef): CapabilityRef[] {
+    switch (capability.relation) {
         case "has-type":
             return capabilities.types;
         case "implements":

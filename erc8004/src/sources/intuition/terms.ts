@@ -65,13 +65,17 @@ export const HAS_TRUST_ASSESSMENT =
     "0x7f455fb041f766c3f24552db4c943888c6778c2475d4f2d434b84ad03298457c" as const;
 
 /**
- * `provided by`.
+ * `provided by` resolves to `0x9a310b5ca895009792e5b1dc0131539f36c054e8e32987989367ec73a1a3ef19`
+ * — derived 2026-09-16 by the same procedure as the two above (two atoms by
+ * label, 28,751 edges against 1; matches Appendix B).
  *
- * Derived 2026-09-16, same procedure: two atoms by label, this one and
- * `0xde9de640…`, 28,751 edges against 1. Matches Appendix B.
+ * It is recorded here as a comment rather than a constant because this package
+ * never traverses it. `provided by` is the trust pattern's fourth edge, from
+ * the assessment source back to the provider; every read here starts at the
+ * agent and walks `as_subject_triples`, so the edge is never needed. Whoever
+ * adds a provider-first read will want the id and should not have to re-derive
+ * it — but an exported constant nothing references is dead weight.
  */
-export const PROVIDED_BY =
-    "0x9a310b5ca895009792e5b1dc0131539f36c054e8e32987989367ec73a1a3ef19" as const;
 
 /**
  * `uses` — a second, distinct predicate from `use`, not published in Appendix B.

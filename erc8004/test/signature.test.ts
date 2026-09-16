@@ -3,6 +3,7 @@ import {describe, expect, it} from "vitest";
 import {isRecord, readPath} from "../src/json.js";
 import {
     DEFAULT_SIGNATURE_STRATEGIES,
+    isConfirmedForProvider,
     providerIdCaip19LowercaseStrategy,
     providerIdCaip19Strategy,
     providerNameCaip19Strategy,
@@ -38,12 +39,25 @@ describe("verifyAssessmentSignature — verified", () => {
         });
     }
 
-    it("is reached by the confirmed strategy, so a verified verdict never rests on a guess", () => {
-        expect(providerIdCaip19Strategy.confidence).toBe("confirmed");
-        const speculative = DEFAULT_SIGNATURE_STRATEGIES.filter(
-            (strategy) => strategy.confidence === "speculative",
+    it("is reached by the strategy confirmed against this very provider", () => {
+        expect(providerIdCaip19Strategy.confirmedProviderIds).toEqual(["deep3-labs"]);
+        expect(isConfirmedForProvider(providerIdCaip19Strategy, fixture(SIGNED_DOCUMENTS[0]))).toBe(
+            true,
         );
-        expect(speculative.length).toBeGreaterThan(0);
+        const unconfirmed = DEFAULT_SIGNATURE_STRATEGIES.filter(
+            (strategy) => strategy.confirmedProviderIds.length === 0,
+        );
+        expect(unconfirmed.length).toBeGreaterThan(0);
+    });
+
+    it("is available to a provider we have confirmed nothing about, when the signature is simply correct", async () => {
+        // Vouching for a correct signature costs nobody anything, so `verified`
+        // is not gated on confirmation the way `mismatch` is.
+        const document = clone("deep3-2340.assessment.json");
+        const verdict = await verifyAssessmentSignature(document, {
+            strategies: [{...providerIdCaip19Strategy, confirmedProviderIds: []}],
+        });
+        expect(verdict.status).toBe("verified");
     });
 });
 
@@ -79,6 +93,41 @@ describe("verifyAssessmentSignature — mismatch", () => {
         document["injected"] = "not signed";
         const verdict = await verifyAssessmentSignature(document);
         expect(verdict.status).toBe("mismatch");
+    });
+
+    it("is unreachable for a provider whose signing scheme was never confirmed", async () => {
+        // The regression test for the false-accusation bug. This document has
+        // the same three field names as Deep3's, so the confirmed strategy
+        // builds cleanly and recovery returns *some* address — but nothing has
+        // ever been established about how this provider encodes `agent`, so the
+        // recovered address is meaningless and `mismatch` would be a public
+        // accusation against someone who may have done nothing wrong.
+        const document = clone("deep3-2340.assessment.json");
+        const provider = readPath(document, ["provider"]);
+        if (!isRecord(provider)) throw new Error("no provider block");
+        provider["id"] = "some-other-provider";
+
+        const verdict = await verifyAssessmentSignature(document);
+        expect(verdict.status).toBe("unverified");
+        if (verdict.status !== "unverified") return;
+        expect(verdict.reason).toContain("no strategy is confirmed for provider");
+        expect(verdict.reason).toContain("some-other-provider");
+        // The evidence is still recorded: every strategy applied and recovered
+        // an address. We simply decline to draw a conclusion from it.
+        expect(verdict.attempts.every((attempt) => attempt.recovered !== null)).toBe(true);
+        expect(verdict.attempts.every((attempt) => !attempt.confirmedForProvider)).toBe(true);
+    });
+
+    it("names the missing provider.id rather than accusing an anonymous document", async () => {
+        const document = clone("deep3-2340.assessment.json");
+        const provider = readPath(document, ["provider"]);
+        if (!isRecord(provider)) throw new Error("no provider block");
+        delete provider["id"];
+
+        const verdict = await verifyAssessmentSignature(document);
+        expect(verdict.status).toBe("unverified");
+        if (verdict.status !== "unverified") return;
+        expect(verdict.reason).toContain("declares no provider.id");
     });
 });
 
@@ -128,7 +177,7 @@ describe("verifyAssessmentSignature — unverified", () => {
         expect(verdict.reason).toContain("could not reconstruct");
     });
 
-    it("says unverified — not mismatch — when no confirmed strategy fits the struct shape", async () => {
+    it("says unverified — not mismatch — when no strategy fits the struct shape", async () => {
         const document = clone("deep3-2340.assessment.json");
         const eip712 = readPath(document, ["assessment", "signature", "eip712"]);
         if (!isRecord(eip712)) throw new Error("no eip712 block");
@@ -142,7 +191,7 @@ describe("verifyAssessmentSignature — unverified", () => {
         const verdict = await verifyAssessmentSignature(document);
         expect(verdict.status).toBe("unverified");
         if (verdict.status !== "unverified") return;
-        expect(verdict.reason).toContain("no confirmed strategy applies");
+        expect(verdict.reason).toContain("no strategy is confirmed for provider");
         expect(verdict.attempts.every((attempt) => attempt.recovered === null)).toBe(true);
         expect(verdict.attempts.map((attempt) => attempt.strategyId)).toEqual(
             DEFAULT_SIGNATURE_STRATEGIES.map((strategy) => strategy.id),
@@ -234,13 +283,14 @@ describe("the speculative strategies", () => {
         }
     });
 
-    it("are all marked speculative, so none of them can produce a confident mismatch", () => {
+    it("are confirmed against nobody, so none of them can produce a mismatch", () => {
         for (const strategy of [
             providerIdCaip19LowercaseStrategy,
             providerNameCaip19Strategy,
             providerUrlCaip19Strategy,
         ]) {
-            expect(strategy.confidence).toBe("speculative");
+            expect(strategy.confirmedProviderIds).toEqual([]);
+            expect(isConfirmedForProvider(strategy, fixture(SIGNED_DOCUMENTS[0]))).toBe(false);
         }
     });
 });
@@ -248,14 +298,14 @@ describe("the speculative strategies", () => {
 describe("verifyAssessmentSignature — strategies are swappable", () => {
     it("reports unverified when the caller supplies only strategies that cannot apply", async () => {
         const verdict = await verifyAssessmentSignature(fixture("deep3-2340.assessment.json"), {
-            strategies: [{id: "never-applies", confidence: "speculative", build: () => null}],
+            strategies: [{id: "never-applies", confirmedProviderIds: [], build: () => null}],
         });
         expect(verdict.status).toBe("unverified");
         if (verdict.status !== "unverified") return;
         expect(verdict.attempts).toEqual([
             {
                 strategyId: "never-applies",
-                confidence: "speculative",
+                confirmedForProvider: false,
                 recovered: null,
                 error: "strategy does not apply to this document shape",
             },
@@ -267,7 +317,7 @@ describe("verifyAssessmentSignature — strategies are swappable", () => {
             strategies: [
                 {
                     id: "bad-values",
-                    confidence: "speculative",
+                    confirmedProviderIds: [],
                     build: () => ({provider: "x", agent: "y", contentHash: "not-a-hash"}),
                 },
             ],
