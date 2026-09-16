@@ -26,10 +26,26 @@ import {CAPABILITY_PREDICATE_IDS, SAME_AS, TRUST_PREDICATE_IDS} from "./terms.js
 export const INTUITION_MAINNET_GRAPHQL = "https://mainnet.intuition.sh/v1/graphql";
 export const INTUITION_TESTNET_GRAPHQL = "https://testnet.intuition.sh/v1/graphql";
 
+/**
+ * The bonding curve market reads are filtered to.
+ *
+ * `1` is the MultiVault default on mainnet today and that is not a guarantee —
+ * it comes from `getBondingCurveConfig()`, which governance can change. A caller
+ * that also writes should pass the value it read from chain, so the market it
+ * renders and the vault it deposits into are the same one.
+ */
+export const DEFAULT_CURVE_ID = "1";
+
 export type IntuitionSourceConfig = {
     graphqlUrl?: string;
     fetch?: FetchLike;
     timeoutMs?: number;
+    /**
+     * Bonding curve for market reads. Defaults to {@link DEFAULT_CURVE_ID}.
+     * Accepts bigint so a value read straight from the contract needs no
+     * conversion at the call site.
+     */
+    curveId?: string | number | bigint;
     /** Pre-built transport. Tests inject one here so no network is touched. */
     transport?: GraphqlTransport;
 };
@@ -90,6 +106,10 @@ async function resolveSubject(
  * cache (see the README).
  */
 export function intuitionSource(config: IntuitionSourceConfig = {}): TrustSource {
+    // The indexer types curve_id as a string, so a bigint read from
+    // getBondingCurveConfig() is stringified here rather than at every call site.
+    const curveId = config.curveId === undefined ? DEFAULT_CURVE_ID : String(config.curveId);
+
     const transport =
         config.transport ??
         createGraphqlTransport({
@@ -104,6 +124,7 @@ export function intuitionSource(config: IntuitionSourceConfig = {}): TrustSource
         const data = await transport.request(TRUST_SURFACE_QUERY, {
             subjectId: subject.handle,
             predicateIds: TRUST_PREDICATE_IDS,
+            curveId,
         });
         return Array.isArray(data["triples"]) ? data["triples"] : [];
     }

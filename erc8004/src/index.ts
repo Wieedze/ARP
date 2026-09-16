@@ -61,6 +61,7 @@ export {canonicalBytesRfc8785, canonicalizeRfc8785, CanonicalizationError} from 
 export {DEFAULT_IDENTITY_REGISTRY, parseCaip19, resolveRef, toCaip19} from "./caip.js";
 
 export {
+    DEFAULT_CURVE_ID,
     INTUITION_MAINNET_GRAPHQL,
     INTUITION_TESTNET_GRAPHQL,
     intuitionSource,

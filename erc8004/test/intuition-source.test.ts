@@ -273,3 +273,57 @@ describe("intuitionSource — transport failures surface", () => {
         await expect(failing.resolveAgent(CLAWNCH)).rejects.toThrow("field not found");
     });
 });
+
+describe("intuitionSource — the bonding curve is a parameter, not an assumption", () => {
+    /**
+     * A recording transport. It answers the preflight so the surface query runs,
+     * then captures the variables that query was sent with.
+     */
+    function recordingTransport(seen: Record<string, unknown>[]) {
+        return {
+            async request(query: string, variables: Record<string, unknown>) {
+                seen.push({query, ...variables});
+                if (
+                    query.includes("FindAgentByERC8004Identity") ||
+                    query.includes("sameAsPredicateId")
+                ) {
+                    return {
+                        triples: [{subject: {term_id: "0xsubject", label: "x", value: null}}],
+                    };
+                }
+                return {triples: []};
+            },
+        };
+    }
+
+    const ref = {
+        chainId: 8453,
+        tokenId: "6649",
+        registry: "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432" as const,
+    };
+
+    it("filters market reads to curve 1 by default", async () => {
+        const seen: Record<string, unknown>[] = [];
+        const source = intuitionSource({transport: recordingTransport(seen)});
+        await source.getAssessments(ref);
+
+        const surface = seen.find((entry) => String(entry["query"]).includes("AgentTrustSurface"));
+        expect(surface?.["curveId"]).toBe("1");
+    });
+
+    it("sends the curve it was given, so the market shown matches the vault deposited into", async () => {
+        const seen: Record<string, unknown>[] = [];
+        // A bigint, as getBondingCurveConfig() returns it — no conversion at the call site.
+        const source = intuitionSource({transport: recordingTransport(seen), curveId: 7n});
+        await source.getAssessments(ref);
+
+        const surface = seen.find((entry) => String(entry["query"]).includes("AgentTrustSurface"));
+        expect(surface?.["curveId"]).toBe("7");
+    });
+
+    it("never pins a curve in the query text itself", () => {
+        // A literal here would silently override the variable for every caller.
+        expect(TRUST_SURFACE_QUERY).not.toMatch(/curve_id:\s*\{_eq:\s*"/);
+        expect(TRUST_SURFACE_QUERY).toContain("$curveId");
+    });
+});
