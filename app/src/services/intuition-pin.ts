@@ -9,9 +9,13 @@
  * endpoint is network-agnostic — one key serves testnet 13579 and mainnet 1155 —
  * so it is a module constant here rather than a per-chain deployment field.
  *
- * The credential is an **explicit parameter**. Nothing under `app/src/services/`
- * reads the ambient environment; that is a grepped invariant, not a habit. It
- * keeps this module pure and testable without an environment.
+ * The credential is an **explicit parameter**. No module under `app/src/services/`
+ * reads a *credential* from the ambient environment — that is the invariant, and
+ * `grep -rn "process.env" app/src/services/` is how it is checked. (Non-secret
+ * build-time config does appear: `trust-stake.ts` reads
+ * `import.meta.env.VITE_MAX_STAKE_TRUST`, a UI ceiling that is deliberately
+ * public.) Passing the key rather than reading it keeps this module pure and
+ * testable without an environment.
  *
  * `PinAuth` is **branded** (see below), so this module exports no way to build
  * one: a browser file importing only from `app/src/services/` cannot produce a
@@ -25,14 +29,14 @@
  */
 
 /** The gated pinning endpoint. Not `deployments.chain.graphqlUrl` — that is the read endpoint. */
-export const PIN_ENDPOINT = "https://pin.intuition.systems/v1/graphql";
+export const PIN_ENDPOINT = 'https://pin.intuition.systems/v1/graphql';
 
 /**
  * Intuition's documented header for the partner key. Exported so
  * `scripts/pin-env.ts` resolves the same default this module applies — one
  * literal, no drift.
  */
-export const DEFAULT_HEADER_NAME = "apikey";
+export const DEFAULT_HEADER_NAME = 'apikey';
 
 /**
  * Brand for {@link PinAuth}. Declared, never defined: it exists only in the type
@@ -51,9 +55,9 @@ declare const pinAuthBrand: unique symbol;
  * {@link DEFAULT_HEADER_NAME}.
  */
 export type PinAuth = {
-    apiKey: string;
-    headerName?: string;
-    readonly [pinAuthBrand]: true;
+  apiKey: string;
+  headerName?: string;
+  readonly [pinAuthBrand]: true;
 };
 
 /**
@@ -66,18 +70,18 @@ export type PinAuth = {
  * real debugging time: the endpoint moved, and nothing in the old message said so.
  */
 export class PinAuthError extends Error {
-    readonly status: number;
+  readonly status: number;
 
-    constructor(status: number, body: string) {
-        super(
-            `pinThing: ${PIN_ENDPOINT} rejected the partner credential (HTTP ${status}). ` +
-                `Set INTUITION_PIN_API_KEY in .env at the repo root — never with a VITE_ ` +
-                `prefix, which would ship it to every visitor — then confirm it with ` +
-                `\`bun run verify:pin\`. Response: ${body}`,
-        );
-        this.name = "PinAuthError";
-        this.status = status;
-    }
+  constructor(status: number, body: string) {
+    super(
+      `pinThing: ${PIN_ENDPOINT} rejected the partner credential (HTTP ${status}). ` +
+        `Set INTUITION_PIN_API_KEY in .env at the repo root — never with a VITE_ ` +
+        `prefix, which would ship it to every visitor — then confirm it with ` +
+        `\`bun run verify:pin\`. Response: ${body}`,
+    );
+    this.name = 'PinAuthError';
+    this.status = status;
+  }
 }
 
 /**
@@ -97,41 +101,41 @@ export class PinAuthError extends Error {
  * @throws {PinAuthError} when the endpoint answers 401 or 403.
  */
 export async function pinThing(
-    args: {
-        name: string;
-        description: string;
-        image: string;
-        url: string;
-    },
-    auth: PinAuth,
+  args: {
+    name: string;
+    description: string;
+    image: string;
+    url: string;
+  },
+  auth: PinAuth,
 ): Promise<string> {
-    const mutation = `
+  const mutation = `
         mutation pinThing($name: String!, $description: String!, $image: String!, $url: String!) {
             pinThing(thing: { name: $name, description: $description, image: $image, url: $url }) {
                 uri
             }
         }
     `;
-    const res = await fetch(PIN_ENDPOINT, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            [auth.headerName ?? DEFAULT_HEADER_NAME]: auth.apiKey,
-        },
-        body: JSON.stringify({query: mutation, variables: args}),
-    });
-    if (res.status === 401 || res.status === 403) {
-        throw new PinAuthError(res.status, await res.text());
-    }
-    if (!res.ok) throw new Error(`pinThing HTTP ${res.status}: ${await res.text()}`);
-    // GraphQL response shape is fixed by the schema; runtime validation
-    // would be theatre — the read below throws on missing fields anyway.
-    const json = (await res.json()) as {
-        data?: {pinThing: {uri: string}};
-        errors?: unknown;
-    };
-    if (json.errors) throw new Error(`pinThing GraphQL: ${JSON.stringify(json.errors)}`);
-    const uri = json.data?.pinThing.uri;
-    if (!uri) throw new Error(`pinThing returned no uri: ${JSON.stringify(json)}`);
-    return uri;
+  const res = await fetch(PIN_ENDPOINT, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      [auth.headerName ?? DEFAULT_HEADER_NAME]: auth.apiKey,
+    },
+    body: JSON.stringify({ query: mutation, variables: args }),
+  });
+  if (res.status === 401 || res.status === 403) {
+    throw new PinAuthError(res.status, await res.text());
+  }
+  if (!res.ok) throw new Error(`pinThing HTTP ${res.status}: ${await res.text()}`);
+  // GraphQL response shape is fixed by the schema; runtime validation
+  // would be theatre — the read below throws on missing fields anyway.
+  const json = (await res.json()) as {
+    data?: { pinThing: { uri: string } };
+    errors?: unknown;
+  };
+  if (json.errors) throw new Error(`pinThing GraphQL: ${JSON.stringify(json.errors)}`);
+  const uri = json.data?.pinThing.uri;
+  if (!uri) throw new Error(`pinThing returned no uri: ${JSON.stringify(json)}`);
+  return uri;
 }
