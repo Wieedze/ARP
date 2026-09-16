@@ -54,11 +54,10 @@ export function AgentDirectory() {
                 </h1>
                 <p className="mt-3 max-w-[64ch] text-[color:var(--color-fg-60)]">
                     {view?.total === null || view?.total === undefined
-                        ? "Every one the Intuition graph mirrors"
-                        : `All ${view.total.toLocaleString("en-US")} the Intuition graph mirrors`}{" "}
-                    carries a trust score. Providers sign their assessments and declare how long
-                    they stay valid, and no consumer checks either. Open one and see what its rating
-                    is actually resting on.
+                        ? "Every one that the Intuition graph mirrors carries a trust score."
+                        : `All ${view.total.toLocaleString("en-US")} that the Intuition graph mirrors carry a trust score.`}{" "}
+                    Providers sign their assessments and declare how long they stay valid, and no
+                    consumer checks either. Open one and see what its rating is actually resting on.
                 </p>
             </header>
 
@@ -158,7 +157,7 @@ function OrderControl({
                         type="button"
                         aria-pressed={entry.id === order}
                         onClick={() => onChange(entry.id)}
-                        className={`px-3 py-1 text-[length:var(--text-body-sm)] border focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--color-accent)] ${
+                        className={`px-3 py-1 text-[length:var(--text-body-sm)] border ${
                             entry.id === order
                                 ? "border-[color:var(--color-accent)] text-[color:var(--color-accent)]"
                                 : "border-[color:var(--color-border-strong)] text-[color:var(--color-fg-60)]"
@@ -186,7 +185,7 @@ function PageButton({
             type="button"
             disabled={disabled}
             onClick={onClick}
-            className="px-3 py-1.5 text-[length:var(--text-body-sm)] border border-[color:var(--color-border-strong)] focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--color-accent)] disabled:opacity-40 disabled:cursor-not-allowed"
+            className="px-3 py-1.5 text-[length:var(--text-body-sm)] border border-[color:var(--color-border-strong)] disabled:opacity-40 disabled:cursor-not-allowed"
         >
             {label}
         </button>
@@ -290,7 +289,7 @@ function LookupForm() {
             <button
                 type="submit"
                 disabled={!isValid}
-                className="mt-5 px-3 py-1.5 text-[length:var(--text-body-sm)] border border-[color:var(--color-border-strong)] focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--color-accent)] disabled:opacity-40 disabled:cursor-not-allowed"
+                className="mt-5 px-3 py-1.5 text-[length:var(--text-body-sm)] border border-[color:var(--color-border-strong)] disabled:opacity-40 disabled:cursor-not-allowed"
             >
                 Open panel
             </button>

@@ -115,7 +115,6 @@ button:hover {
 }
 
 button:focus-visible {
-    outline: none;
     border-color: var(--color-accent);
 }
 
@@ -138,10 +137,17 @@ a:hover {
 /* Focus                                                                       */
 /* -------------------------------------------------------------------------- */
 
-/* Buttons shift their border on focus (above). Links and inputs have no border
-   to shift, so they get a real ring — `ui.md` requires a visible focus state on
-   every interactive element, not just the ones that happen to have a box. */
+/* Everything focusable gets a real ring.
+   Buttons also shift their border to accent (above), and that shift used to be
+   the whole indicator — with `outline: none` beside it. It fails on any button
+   whose resting border is already accent, which is what a selected toggle in a
+   group looks like: border accent before focus, border accent after, nothing to
+   see. Worse, the rule is unlayered, so it beat every `focus-visible:outline-*`
+   utility in `@layer utilities` and made them silently inert wherever they were
+   reached for. `ui.md` requires a visible focus state on every interactive
+   element; the ring is what actually delivers one. */
 a:focus-visible,
+button:focus-visible,
 input:focus-visible,
 summary:focus-visible,
 [tabindex]:focus-visible {
