@@ -1,13 +1,15 @@
 import {toCaip19} from "../../caip.js";
 import {defaultFetch, type FetchLike} from "../../http.js";
-import {isRecord, readString} from "../../json.js";
+import {isRecord, readNumber, readRecord, readString} from "../../json.js";
 import type {
     AgentIdentity,
+    AgentPage,
     Capabilities,
     CapabilityRef,
     ClaimMarket,
     ProviderClaim,
     ResolvedAgentRef,
+    ResolvedListAgentsOptions,
 } from "../../types.js";
 import type {TrustSource} from "../source.js";
 import {createGraphqlTransport, type GraphqlTransport} from "./graphql.js";
@@ -15,13 +17,26 @@ import {
     claimProvenance,
     derivedProvenance,
     INTUITION_SOURCE_ID,
+    mapAgentListing,
     mapCapabilityRef,
     mapClaimMarket,
     mapMetadata,
     mapProviderClaim,
 } from "./map.js";
-import {CAPABILITIES_QUERY, RESOLVE_AGENT_QUERY, TRUST_SURFACE_QUERY} from "./queries.js";
-import {CAPABILITY_PREDICATE_IDS, SAME_AS, TRUST_PREDICATE_IDS} from "./terms.js";
+import {
+    CAPABILITIES_QUERY,
+    COHORT_ORDER_BY,
+    COHORT_QUERY,
+    RESOLVE_AGENT_QUERY,
+    TRUST_SURFACE_QUERY,
+} from "./queries.js";
+import {
+    CAPABILITY_PREDICATE_IDS,
+    ERC8004,
+    IMPLEMENT,
+    SAME_AS,
+    TRUST_PREDICATE_IDS,
+} from "./terms.js";
 
 export const INTUITION_MAINNET_GRAPHQL = "https://mainnet.intuition.sh/v1/graphql";
 export const INTUITION_TESTNET_GRAPHQL = "https://testnet.intuition.sh/v1/graphql";
@@ -97,9 +112,12 @@ async function resolveSubject(
  *
  * It is the only source that can answer `getMarkets`: the graph prices every
  * claim, so it can say who has capital behind a provider's opinion and who is
- * taking the other side. It is also the narrowest in coverage — it mirrors Base
- * only, so agents registered on BSC or Ethereum resolve to `null` here and are
- * picked up by the registry source instead.
+ * taking the other side. It is also the only one that can answer `listAgents`,
+ * because a registry contract has no enumeration. It is at the same time the
+ * narrowest in coverage — it mirrors Base only, so agents registered on BSC or
+ * Ethereum resolve to `null` here and are picked up by the registry source
+ * instead. The cohort it can list is therefore the Base mirror, not every
+ * ERC-8004 agent that exists.
  *
  * Every method runs its own preflight. That costs a round trip per call and is
  * deliberate: the methods are independently callable, and this package ships no
@@ -201,6 +219,43 @@ export function intuitionSource(config: IntuitionSourceConfig = {}): TrustSource
                 const market = mapClaimMarket(row);
                 return market === null ? [] : [market];
             });
+        },
+
+        /**
+         * One page of the mirrored ERC-8004 cohort.
+         *
+         * The only method here that does not start from an identity, and the
+         * only one that can answer at all: the graph is the sole source that
+         * knows the population exists. Membership, the order and the total all
+         * come from the same `implement` → `ERC-8004` filter, so the count the
+         * caller renders is the count of the thing it is paging through.
+         *
+         * The page is ordered by the indexer and returned untouched. Sorting it
+         * again here would produce a page ordered against itself — correct
+         * within the window, wrong about the cohort.
+         */
+        async listAgents(options: ResolvedListAgentsOptions): Promise<AgentPage> {
+            const data = await transport.request(COHORT_QUERY, {
+                predicateId: IMPLEMENT,
+                objectId: ERC8004,
+                sameAsPredicateId: SAME_AS,
+                orderBy: COHORT_ORDER_BY[options.order],
+                limit: options.limit,
+                offset: options.offset,
+            });
+
+            const rows = Array.isArray(data["triples"]) ? data["triples"] : [];
+            return {
+                sourceId: INTUITION_SOURCE_ID,
+                order: options.order,
+                limit: options.limit,
+                offset: options.offset,
+                total: readNumber(readRecord(data["total"], "aggregate"), "count"),
+                agents: rows.flatMap((row) => {
+                    const listing = mapAgentListing(row);
+                    return listing === null ? [] : [listing];
+                }),
+            };
         },
     };
 }

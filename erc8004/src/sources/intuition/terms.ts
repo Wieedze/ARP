@@ -29,6 +29,19 @@ export const HAS_TYPE =
 export const IMPLEMENT =
     "0xfa02609bfde5a9a7ba18fa8afc1c42bc643edfaf7d44e3ce9e50835290d03324" as const;
 
+/**
+ * `ERC-8004` — the object atom every mirrored agent's `implement` edge points at.
+ *
+ * Published in Appendix B of the partner guide, and unambiguous: unlike the
+ * predicates above, `atoms(where: {label: {_eq: "ERC-8004"}})` returned exactly
+ * one row when re-checked on 2026-09-16, carrying 28,648 edges as object.
+ *
+ * `IMPLEMENT` + this atom is the cohort filter — the definition of "an agent the
+ * ERC-8004 mirror knows about".
+ */
+export const ERC8004 =
+    "0x595ba5059b23a9aa4d64deff324ff3d957866715d5b7b8015eebc9009bab78b2" as const;
+
 /** `available on`. Published. */
 export const AVAILABLE_ON =
     "0xa974ce85010776bb6eb81e4492bdb8712f127aa75ae737f02cbe80e72409f7d3" as const;

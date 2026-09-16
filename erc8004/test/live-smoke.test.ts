@@ -1,6 +1,7 @@
 import {describe, expect, it} from "vitest";
 
 import {createErc8004Client} from "../src/client.js";
+import {listAgents} from "../src/listing.js";
 import {getAgentProfile} from "../src/profile.js";
 import {intuitionSource} from "../src/sources/intuition/index.js";
 
@@ -24,6 +25,16 @@ live("live smoke (ERC8004_LIVE=1)", () => {
         );
         expect(profile.sourceErrors).toEqual([]);
         expect(profile.assessments.length).toBeGreaterThan(0);
+    }, 60_000);
+
+    it("reads a page of the real cohort in both orders", async () => {
+        const evidence = await listAgents(client(), {order: "evidence-quantity", limit: 5});
+        expect(evidence.total).toBeGreaterThan(20_000);
+        expect(evidence.agents).toHaveLength(5);
+        expect(evidence.agents[0]?.statementCount).toBeGreaterThan(5);
+
+        const economic = await listAgents(client(), {order: "economic-conviction", limit: 5});
+        expect(economic.agents[0]?.market?.totalMarketCap).toBeGreaterThan(0n);
     }, 60_000);
 
     it("still verifies a live Deep3 signature end to end", async () => {
