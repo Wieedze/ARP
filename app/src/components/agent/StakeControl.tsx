@@ -32,7 +32,18 @@ type Phase =
     | {step: "signing"; quote: StakeQuote}
     | {step: "sent"; quote: StakeQuote; hash: Hex}
     | {step: "done"; quote: StakeQuote; hash: Hex}
-    | {step: "error"; message: string; back: "form" | "confirm"; quote: StakeQuote | null};
+    /**
+     * `hash` is the difference between "we never sent anything" and "we sent it
+     * and then lost sight of it". On a surface that moves real value those are
+     * not the same sentence, and only one of them may offer to sign again.
+     */
+    | {
+          step: "error";
+          message: string;
+          back: "form" | "confirm";
+          quote: StakeQuote | null;
+          hash: Hex | null;
+      };
 
 const SIDES: StakeSide[] = ["support", "oppose"];
 
@@ -121,25 +132,37 @@ export function StakeControl({
             });
             setPhase({step: "confirm", quote});
         } catch (error) {
-            setPhase({step: "error", message: errorMessage(error), back: "form", quote: null});
+            setPhase({
+                step: "error",
+                message: errorMessage(error),
+                back: "form",
+                quote: null,
+                hash: null,
+            });
         }
     }
 
     /** Step 3. The only path in the app that signs a mainnet transaction. */
     async function handleConfirm(quote: StakeQuote) {
         setPhase({step: "signing", quote});
+        // Held outside the try so the catch can tell a deposit that was never
+        // broadcast from one that was and whose receipt we then lost.
+        let broadcast: Hex | null = null;
         try {
-            const hash = await submit(quote);
-            setPhase({step: "sent", quote, hash});
-            await awaitReceipt(hash);
-            setPhase({step: "done", quote, hash});
+            broadcast = await submit(quote);
+            setPhase({step: "sent", quote, hash: broadcast});
+            await awaitReceipt(broadcast);
+            setPhase({step: "done", quote, hash: broadcast});
             onSettled();
         } catch (error) {
             setPhase({
                 step: "error",
                 message: errorMessage(error),
-                back: "confirm",
+                // Never back to the confirmation step once a transaction is out:
+                // the obvious next click would sign the same deposit twice.
+                back: broadcast === null ? "confirm" : "form",
                 quote,
+                hash: broadcast,
             });
         }
     }
@@ -216,8 +239,22 @@ export function StakeControl({
             ) : phase.step === "error" ? (
                 <div className="mt-4" role="alert">
                     <p className="text-[length:var(--text-body-sm)] max-w-[60ch] break-words">
-                        Nothing was staked. {phase.message}
+                        {phase.hash === null
+                            ? `Nothing was staked. ${phase.message}`
+                            : `The deposit was broadcast and then this panel lost track of it — it may still land. Do not sign it again without checking. ${phase.message}`}
                     </p>
+                    {phase.hash !== null ? (
+                        <p className="mt-2 font-mono text-[length:var(--text-body-sm)]">
+                            <a
+                                href={mainnetTxUrl(phase.hash)}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="text-[color:var(--color-accent)]"
+                            >
+                                {truncateMiddle(phase.hash, 12, 8)} ↗
+                            </a>
+                        </p>
+                    ) : null}
                     <button
                         type="button"
                         onClick={() =>
