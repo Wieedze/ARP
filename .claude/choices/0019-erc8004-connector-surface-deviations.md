@@ -1,6 +1,6 @@
 # 0019 — `@arp-protocol/erc8004` public-surface deviations from the Task 07 spec
 
-**Status:** Proposed
+**Status:** Accepted
 **Date:** 2026-09-16
 **Triggered by:** `tasks/07-erc8004-connector.md`, two-axis review of `feat/erc8004-connector`
 
