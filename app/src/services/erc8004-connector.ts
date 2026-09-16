@@ -42,6 +42,14 @@ export const ERC8004_GRAPHQL_URL = INTUITION_MAINNET_GRAPHQL;
  */
 const clients = new Map<string, Erc8004Client>();
 
+/**
+ * Cache keys for the two single-source clients below. They share the map with
+ * the per-curve combined clients, and a curve id is always decimal digits or
+ * `"default"`, so neither key can collide with one.
+ */
+const REGISTRY_ONLY_KEY = "registry-only";
+const GRAPH_ONLY_KEY = "graph-only";
+
 export function erc8004Client(curveId?: bigint): Erc8004Client {
     const key = curveId === undefined ? "default" : curveId.toString();
     const existing = clients.get(key);
@@ -57,6 +65,46 @@ export function erc8004Client(curveId?: bigint): Erc8004Client {
         ],
     });
     clients.set(key, client);
+    return client;
+}
+
+/**
+ * A client that reads **only** the ERC-8004 Identity Registry contract.
+ *
+ * The import path needs one answer the graph cannot give and must not be asked
+ * for: who owns the token. `resolveAgent` on the combined client returns the
+ * first source that answered, and that is the graph, whose `owner` is always
+ * `null` — so a combined client would hand back an identity with no owner and
+ * the import would read it as "we could not tell" for every agent on Base.
+ *
+ * Narrowing the client to one source also makes the answer unambiguous in the
+ * other direction: `null` here means the registry says this token does not
+ * exist, not that some other source failed to find it.
+ */
+export function erc8004RegistryClient(): Erc8004Client {
+    const existing = clients.get(REGISTRY_ONLY_KEY);
+    if (existing !== undefined) return existing;
+    const client = createErc8004Client({sources: [erc8004RegistrySource()]});
+    clients.set(REGISTRY_ONLY_KEY, client);
+    return client;
+}
+
+/**
+ * A client that reads **only** the Intuition graph.
+ *
+ * Used for the canonical-atom preflight. `AgentIdentity.sourceHandle` is
+ * source-scoped and meaningless across sources — the registry source puts
+ * `8453:0x8004…:2340` there, the graph puts the agent atom's term id. Asking a
+ * combined client for a handle and treating whatever comes back as an atom id
+ * is how a term id gets confused with a string. One source, one meaning.
+ */
+export function erc8004GraphClient(): Erc8004Client {
+    const existing = clients.get(GRAPH_ONLY_KEY);
+    if (existing !== undefined) return existing;
+    const client = createErc8004Client({
+        sources: [intuitionSource({graphqlUrl: ERC8004_GRAPHQL_URL})],
+    });
+    clients.set(GRAPH_ONLY_KEY, client);
     return client;
 }
 
