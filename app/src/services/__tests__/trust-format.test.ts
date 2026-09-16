@@ -129,8 +129,17 @@ describe("describeFetchError", () => {
         expect(
             describeFetchError({kind: "not-json", contentType: "text/html", excerpt: "<html>"}),
         ).toContain("text/html");
+        expect(describeFetchError({kind: "not-json", contentType: null, excerpt: ""})).toContain(
+            "an unknown content type",
+        );
         expect(describeFetchError({kind: "timeout", timeoutMs: 8000})).toContain("8000 ms");
         expect(describeFetchError({kind: "no-resolver-url"})).toContain("no resolver URL");
-        expect(describeFetchError({kind: "something-new"})).toContain("could not be read");
+        expect(describeFetchError({kind: "network", message: "fetch failed"})).toContain(
+            "fetch failed",
+        );
+        expect(describeFetchError({kind: "malformed", message: "not an object"})).toContain(
+            "not an object",
+        );
+        expect(describeFetchError({kind: "skipped"})).toContain("not fetched");
     });
 });

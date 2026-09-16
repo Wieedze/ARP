@@ -1,6 +1,11 @@
 import type {FreshnessVerdict, SignatureVerdict} from "@arp-protocol/erc8004";
 
-import {describeFreshness, describeSignature} from "../../services/trust-format";
+import {
+    describeFreshness,
+    describeSignature,
+    type FreshnessCopy,
+    type SignatureCopy,
+} from "../../services/trust-format";
 
 /**
  * The two verdicts the connector produced, rendered exactly as it produced
@@ -9,7 +14,7 @@ import {describeFreshness, describeSignature} from "../../services/trust-format"
  * use the alarm colour.
  */
 
-const SIGNATURE_TONE: Record<string, string> = {
+const SIGNATURE_TONE: Record<SignatureCopy["tone"], string> = {
     verified: "text-[color:var(--color-accent)] border-[color:var(--color-accent)]",
     mismatch:
         "text-[color:var(--color-alarm)] border-[color:var(--color-alarm)] bg-[color:var(--color-alarm-dim)]",
@@ -43,11 +48,25 @@ export function SignatureLine({verdict}: {verdict: SignatureVerdict}) {
     );
 }
 
+/**
+ * Stale is set at full foreground weight and fresh is not. Enforcing a
+ * provider's own validity window is half of what this panel does, so a document
+ * four days past its deadline cannot render identically to one inside it — and
+ * the alarm colour stays reserved for a mismatch.
+ */
+const FRESHNESS_TONE: Record<FreshnessCopy["tone"], string> = {
+    fresh: "text-[color:var(--color-fg-60)]",
+    stale: "text-[color:var(--color-fg)]",
+    unknown: "text-[color:var(--color-fg-60)]",
+};
+
 export function FreshnessLine({verdict}: {verdict: FreshnessVerdict}) {
     const copy = describeFreshness(verdict);
     return (
         <div>
-            <span className="font-mono uppercase tracking-wider text-[length:var(--text-label)] text-[color:var(--color-fg-60)]">
+            <span
+                className={`font-mono uppercase tracking-wider text-[length:var(--text-label)] ${FRESHNESS_TONE[copy.tone]}`}
+            >
                 {copy.label}
             </span>
             <p className="mt-1 text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)] max-w-[52ch]">

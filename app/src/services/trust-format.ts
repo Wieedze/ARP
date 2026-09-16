@@ -1,5 +1,10 @@
 import {formatEther} from "viem";
-import type {FreshnessVerdict, MarketSide, SignatureVerdict} from "@arp-protocol/erc8004";
+import type {
+    AssessmentFetchError,
+    FreshnessVerdict,
+    MarketSide,
+    SignatureVerdict,
+} from "@arp-protocol/erc8004";
 
 /**
  * Display helpers for the trust panel. Pure functions, no React, no clock of
@@ -154,24 +159,30 @@ export function agentRegistryExplorerUrl(
     return host === undefined ? null : `${host}/token/${registry}?a=${tokenId}`;
 }
 
-/** Why a resolver document could not be read, in one sentence a reader can act on. */
-export function describeFetchError(error: {kind: string} & Record<string, unknown>): string {
+/**
+ * Why a resolver document could not be read, in one sentence a reader can act
+ * on.
+ *
+ * Switches on the connector's own discriminated union rather than on a widened
+ * `{kind: string}`: a variant added upstream then fails to compile here instead
+ * of quietly falling through to the generic sentence, and every field is read
+ * off a narrowed member so nothing can render as the string "undefined".
+ */
+export function describeFetchError(error: AssessmentFetchError): string {
     switch (error.kind) {
         case "no-resolver-url":
             return "The graph edge carries no resolver URL, so there is no document to read.";
         case "skipped":
             return "The resolver was not fetched.";
         case "network":
-            return `The resolver could not be reached: ${String(error["message"])}`;
+            return `The resolver could not be reached: ${error.message}`;
         case "timeout":
-            return `The resolver did not answer within ${String(error["timeoutMs"])} ms.`;
+            return `The resolver did not answer within ${error.timeoutMs} ms.`;
         case "http":
-            return `The resolver answered HTTP ${String(error["status"])} ${String(error["statusText"])}.`;
+            return `The resolver answered HTTP ${error.status} ${error.statusText}.`;
         case "not-json":
-            return `The resolver answered ${String(error["contentType"]) || "an unknown content type"} rather than JSON.`;
+            return `The resolver answered ${error.contentType ?? "an unknown content type"} rather than JSON.`;
         case "malformed":
-            return `The document could not be parsed: ${String(error["message"])}`;
-        default:
-            return "The document could not be read.";
+            return `The document could not be parsed: ${error.message}`;
     }
 }

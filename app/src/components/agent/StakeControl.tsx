@@ -1,22 +1,15 @@
 import {useId, useState} from "react";
-import {getWalletClient} from "@wagmi/core";
 import {useAccount, useSwitchChain} from "wagmi";
 import type {Hex} from "viem";
 
-import {
-    INTUITION_MAINNET_CHAIN_ID,
-    intuitionMainnetClient,
-    mainnetTxUrl,
-} from "../../lib/intuition-mainnet";
-import {wagmiConfig} from "../../lib/wagmi";
+import {useStakeActions} from "../../hooks/use-stake-actions";
+import {INTUITION_MAINNET_CHAIN_ID, mainnetTxUrl} from "../../lib/intuition-mainnet";
 import type {TrustRow} from "../../services/agent-trust";
 import {formatTrust, truncateMiddle} from "../../services/trust-format";
 import {
     MAX_STAKE_WEI,
     MIN_SHARES_TOLERANCE_BPS,
     parseStakeAmount,
-    quoteStake,
-    submitStake,
     type StakeQuote,
     type StakeSession,
     type StakeSide,
@@ -40,6 +33,8 @@ type Phase =
     | {step: "sent"; quote: StakeQuote; hash: Hex}
     | {step: "done"; quote: StakeQuote; hash: Hex}
     | {step: "error"; message: string; back: "form" | "confirm"; quote: StakeQuote | null};
+
+const SIDES: StakeSide[] = ["support", "oppose"];
 
 const SIDE_COPY: Record<StakeSide, {label: string; sentence: string}> = {
     support: {
@@ -75,6 +70,7 @@ export function StakeControl({
 }) {
     const {address, isConnected, chainId} = useAccount();
     const {switchChainAsync, isPending: isSwitching} = useSwitchChain();
+    const {quote: buildQuote, submit, awaitReceipt} = useStakeActions();
 
     const [side, setSide] = useState<StakeSide | null>(null);
     // Safeguard 2: empty, and nothing in this file ever seeds it.
@@ -116,7 +112,7 @@ export function StakeControl({
         if (check?.status !== "ok") return;
         setPhase({step: "quoting"});
         try {
-            const quote = await quoteStake(intuitionMainnetClient, {
+            const quote = await buildQuote({
                 tripleId,
                 side,
                 assets: check.value,
@@ -133,21 +129,9 @@ export function StakeControl({
     async function handleConfirm(quote: StakeQuote) {
         setPhase({step: "signing", quote});
         try {
-            // Deliberately not pinned to a chain id: a client built for 1155
-            // would *claim* to be on 1155 whatever the wallet is really doing.
-            // The connected client tells the truth, and `submitStake` checks it
-            // against the wallet's own `eth_chainId` before building anything.
-            const walletClient = await getWalletClient(wagmiConfig);
-            if (walletClient === null || walletClient.account === undefined) {
-                throw new Error("No wallet client — reconnect your wallet and try again.");
-            }
-            const hash = await submitStake({
-                walletClient,
-                publicClient: intuitionMainnetClient,
-                quote,
-            });
+            const hash = await submit(quote);
             setPhase({step: "sent", quote, hash});
-            await intuitionMainnetClient.waitForTransactionReceipt({hash});
+            await awaitReceipt(hash);
             setPhase({step: "done", quote, hash});
             onSettled();
         } catch (error) {
@@ -197,8 +181,13 @@ export function StakeControl({
                         disabled={isSwitching}
                         className={`mt-3 ${controlClass}`}
                     >
-                        {isSwitching ? "Waiting for your wallet…" : "Switch to Intuition mainnet"}
+                        Switch to Intuition mainnet
                     </button>
+                    {isSwitching ? (
+                        <p className="mt-2 text-[length:var(--text-body-sm)]" role="status">
+                            Waiting for your wallet to confirm the network switch.
+                        </p>
+                    ) : null}
                     {switchError !== null ? (
                         <p className="mt-2 text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)]">
                             {switchError}
@@ -250,7 +239,7 @@ export function StakeControl({
                             Side
                         </legend>
                         <div className="mt-2 flex flex-col gap-2">
-                            {(Object.keys(SIDE_COPY) as StakeSide[]).map((option) => (
+                            {SIDES.map((option) => (
                                 <label
                                     key={option}
                                     className="flex items-start gap-3 border border-[color:var(--color-border)] px-3 py-2 cursor-pointer has-[:checked]:border-[color:var(--color-accent)]"
@@ -288,7 +277,6 @@ export function StakeControl({
                             type="text"
                             inputMode="decimal"
                             autoComplete="off"
-                            placeholder=""
                             value={amount}
                             onChange={(event) => setAmount(event.target.value)}
                             aria-describedby={`${fieldId}-amount-help`}
@@ -410,7 +398,7 @@ function ConfirmStep({
                     disabled={isSigning}
                     className={`${controlClass} border-[color:var(--color-accent)] text-[color:var(--color-accent)]`}
                 >
-                    {isSigning ? "Waiting for your wallet…" : "Sign in wallet"}
+                    Sign in wallet
                 </button>
                 <button
                     type="button"
@@ -421,6 +409,14 @@ function ConfirmStep({
                     Cancel
                 </button>
             </div>
+            {/* Outside the buttons on purpose: a disabled control is dimmed to
+                40%, and the one line telling the user what is happening should
+                not be the least readable thing on screen. */}
+            {isSigning ? (
+                <p className="mt-3 text-[length:var(--text-body-sm)]" role="status">
+                    Waiting for your wallet. Nothing has been sent until you sign.
+                </p>
+            ) : null}
         </div>
     );
 }

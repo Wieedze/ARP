@@ -77,6 +77,10 @@ html,
 body {
     margin: 0;
     padding: 0;
+    /* The UI is dark-only. Without this the UA paints its own controls —
+       select popups, radio circles, scrollbars — in the light palette, which
+       lands as white chrome on a near-black page. */
+    color-scheme: dark;
     background-color: var(--color-bg);
     color: var(--color-fg);
     font-family: var(--font-sans);

@@ -81,8 +81,17 @@ export function MarketPanel({
     if (row.tripleId === null) {
         return (
             <p className="text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)] max-w-[52ch]">
-                No <span className="font-mono">has trust provider</span> edge backs this assessment,
-                so there is no vault and nothing to take a position on.
+                {row.providerClaim === null ? (
+                    <>
+                        No <span className="font-mono">has trust provider</span> edge backs this
+                        assessment, so there is no vault and nothing to take a position on.
+                    </>
+                ) : (
+                    <>
+                        This provider edge's identifier is not a 32-byte term id, so no vault can be
+                        addressed from it. Nothing is staked here and nothing can be.
+                    </>
+                )}
             </p>
         );
     }

@@ -32,7 +32,7 @@ export function Layout({children}: {children: ReactNode}) {
 
     return (
         <>
-            <header className="border-b border-[color:var(--color-border)] h-14 px-6 flex items-center justify-between gap-6">
+            <header className="border-b border-[color:var(--color-border)] min-h-14 px-6 py-2 flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
                 <Link
                     to="/"
                     className="font-semibold tracking-tight text-[length:var(--text-body)]"

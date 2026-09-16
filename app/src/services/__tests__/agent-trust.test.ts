@@ -187,6 +187,27 @@ describe("joinProviderRows", () => {
         expect(rows[0].weight).toBe("single");
     });
 
+    it("refuses a source handle that is not a 32-byte term id", () => {
+        // `sourceHandle` is source-scoped: the registry source emits
+        // `chainId:registry:tokenId`, which is not a vault key. Asserting it into
+        // `Hex` would hand a malformed `bytes32` to `deposit`, which reverts with
+        // no message.
+        const rows = joinProviderRows(
+            [
+                providerEdge({
+                    handle: "8453:0x8004A169FB4a3325136EB29fA0ceB6D2e539a432:2340",
+                    providerName: "Some source",
+                    market: null,
+                }),
+            ],
+            [],
+        );
+
+        expect(rows).toHaveLength(1);
+        expect(rows[0].providerClaim).not.toBeNull();
+        expect(rows[0].tripleId).toBeNull();
+    });
+
     it("returns nothing when no provider has written an edge", () => {
         expect(joinProviderRows([], [])).toEqual([]);
     });

@@ -132,9 +132,28 @@ const CAPABILITY_GROUP_ORDER: {relation: CapabilityRelation; label: string}[] = 
 ];
 
 function asRecord(value: unknown): Record<string, unknown> | null {
+    // Safe: the guard on the line above establishes a non-null, non-array
+    // object, which is exactly what the target type says and nothing more.
     return typeof value === "object" && value !== null && !Array.isArray(value)
         ? (value as Record<string, unknown>)
         : null;
+}
+
+/**
+ * A `bytes32` term id as the indexer prints it.
+ *
+ * `sourceHandle` is typed `string` and is source-scoped: the Intuition source
+ * emits a term id, the registry source emits `chainId:registry:tokenId`, and a
+ * future source could emit anything. This one becomes the `bytes32` a deposit
+ * is addressed to, so it is checked rather than asserted — a malformed term id
+ * reverts with no message, which is the hardest failure on this surface to
+ * diagnose.
+ */
+const TERM_ID_PATTERN = /^0x[0-9a-fA-F]{64}$/;
+
+function asTermId(handle: string | null): Hex | null {
+    // Safe: the pattern establishes the `0x${string}` shape `Hex` denotes.
+    return handle !== null && TERM_ID_PATTERN.test(handle) ? (handle as Hex) : null;
 }
 
 function readCount(source: Record<string, unknown> | null, key: string): number | null {
@@ -229,7 +248,7 @@ function rowFrom(
         providerMatch,
         providerClaim: providerEdge,
         assessment: assessmentEdge,
-        tripleId: handle === null ? null : (handle as Hex),
+        tripleId: asTermId(handle),
         market: handle === null ? null : (markets.get(handle) ?? null),
         score: document?.score ?? null,
         scoreScale: document?.scoreScale ?? null,
@@ -272,13 +291,13 @@ export function joinProviderRows(assessments: ProviderAssessment[], markets: Cla
         let paired: ProviderAssessment | null = null;
 
         if (name !== null) {
+            const target = normalise(name);
             paired =
-                assessmentEdges.find(
-                    (entry) =>
-                        !taken.has(entry) &&
-                        providerNameOf(entry) !== null &&
-                        normalise(providerNameOf(entry) as string) === normalise(name),
-                ) ?? null;
+                assessmentEdges.find((entry) => {
+                    if (taken.has(entry)) return false;
+                    const declared = providerNameOf(entry);
+                    return declared !== null && normalise(declared) === target;
+                }) ?? null;
             if (paired !== null) match = "document";
 
             if (paired === null) {
@@ -286,10 +305,7 @@ export function joinProviderRows(assessments: ProviderAssessment[], markets: Cla
                     assessmentEdges.find(
                         (entry) =>
                             !taken.has(entry) &&
-                            (entry.claim.label ?? "")
-                                .trim()
-                                .toLowerCase()
-                                .startsWith(normalise(name)),
+                            (entry.claim.label ?? "").trim().toLowerCase().startsWith(target),
                     ) ?? null;
                 if (paired !== null) match = "label-prefix";
             }
