@@ -79,7 +79,7 @@ Guard 4 names the vault's current position count including `"none — you would 
 
 The task file contradicted itself — its checklist said the stake control ships _disabled_ while its body and ADR 0017 said _enabled_. The stale lines were struck in place rather than deleted, so the contradiction and its resolution both stay visible in history.
 
-`.claude/rules/security.md` still reads "Mainnet deployment … is out of scope". That is true for deployment and now misleading about deposits. It was left alone rather than edited mid-task; it needs its own change.
+`.claude/rules/security.md` read "Mainnet deployment … is out of scope" — true for deployment, misleading about deposits the moment ADR 0017 authorised them. Left alone rather than edited mid-task, which was the right call; corrected separately on the strategy branch, where the rule now distinguishes deployment from deposits and adds that no agent may ever sign a mainnet transaction.
 
 ## Which tier of the evidence ladder does this serve?
 

@@ -34,9 +34,19 @@ Each branch is one reviewable unit, cut from `main`, targeting `main`.
 | `feat/erc8004-connector`        | `@arp-protocol/erc8004` — read, merge, verify signatures    | —          | Phase 1 · O1        |
 | `feat/agent-trust-panel`        | `/agent/:chainId/:tokenId` — merged panel + curation market | connector  | Phase 1 · O1 + O6   |
 
-`feat/pin-writes-server-side` and `feat/erc8004-connector` touch disjoint files and are built in
-parallel in separate git worktrees. `feat/agent-trust-panel` starts once the connector's surface is
-stable.
+The shape is a fan-out, not a linear stack:
+
+```
+main
+ └─ docs/strategy-and-positioning        (7)
+     ├─ feat/pin-writes-server-side     (+5)   ← sibling
+     └─ feat/erc8004-connector         (+10)   ← sibling
+         └─ feat/agent-trust-panel     (+12)   ← stacked, consumes the connector
+```
+
+`feat/pin-writes-server-side` and `feat/erc8004-connector` touch disjoint files and are independent —
+the connector is read-only and never touches the write path, so neither needs the other. Merge order:
+the strategy branch first, then the two siblings in any order, then the panel after the connector.
 
 ---
 
