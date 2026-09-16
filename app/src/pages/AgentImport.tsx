@@ -6,11 +6,7 @@ import {useAccount, useSwitchChain} from "wagmi";
 import {DEFAULT_IDENTITY_REGISTRY} from "@arp-protocol/erc8004";
 
 import {useAgentImport} from "../hooks/use-agent-import";
-import {
-    INTUITION_MAINNET_CHAIN_ID,
-    mainnetAddressUrl,
-    mainnetTxUrl,
-} from "../lib/intuition-mainnet";
+import {INTUITION_MAINNET_CHAIN_ID, mainnetTxUrl} from "../lib/intuition-mainnet";
 import {
     ARP_IMPORT_CONTEXT,
     buildImportConsent,
@@ -47,10 +43,11 @@ const LOOKUP_CHAINS: {id: number; label: string; note: string}[] = [
     {id: 1, label: "Ethereum (1)", note: "registry only — the graph does not mirror it"},
 ];
 
+// The focus ring is the unlayered `:focus-visible` rule in `index.css`, which
+// deliberately beats any utility — so none is repeated here.
 const controlClass =
     "px-3 py-1.5 text-[length:var(--text-body-sm)] border border-[color:var(--color-border-strong)] " +
-    "focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-2 " +
-    "focus-visible:outline-[color:var(--color-accent)] disabled:opacity-40 disabled:cursor-not-allowed";
+    "disabled:opacity-40 disabled:cursor-not-allowed";
 
 const inputClass =
     "mt-2 block w-full bg-transparent border border-[color:var(--color-border-strong)] px-3 py-1.5 " +
@@ -269,14 +266,33 @@ export function AgentImport() {
                 </p>
             </header>
 
-            <Step index={1} title="Prove the agent is yours" status={proofStatus}>
+            <Step
+                index={1}
+                title="Prove the agent is yours"
+                status={proofStatus}
+                result={
+                    proofError !== null ? (
+                        <Failure message={proofError} />
+                    ) : refusal !== null ? (
+                        <Refusal verdict={refusal} />
+                    ) : proven !== null ? (
+                        <Proof proven={proven} />
+                    ) : null
+                }
+            >
                 <p className="mb-6 max-w-[64ch] text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)]">
                     The registry is an ERC-721 and names an owner for every token. We read it and
                     compare it to your connected wallet. That comparison is the proof; the signature
                     in step 2 is consent, not evidence of ownership.
                 </p>
 
-                <div className="max-w-[26rem]">
+                <form
+                    className="max-w-[26rem]"
+                    onSubmit={(event) => {
+                        event.preventDefault();
+                        void handleCheckOwnership();
+                    }}
+                >
                     <div>
                         <label htmlFor={`${fieldId}-chain`} className={labelClass}>
                             Registry chain
@@ -289,6 +305,7 @@ export function AgentImport() {
                                 resetFromStep1();
                                 setProofStatus("idle");
                             }}
+                            aria-describedby={`${fieldId}-chain-note`}
                             className={`${inputClass} text-[length:var(--text-body-sm)]`}
                         >
                             {LOOKUP_CHAINS.map((chain) => (
@@ -297,7 +314,10 @@ export function AgentImport() {
                                 </option>
                             ))}
                         </select>
-                        <p className="mt-2 text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)]">
+                        <p
+                            id={`${fieldId}-chain-note`}
+                            className="mt-2 text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)]"
+                        >
                             {LOOKUP_CHAINS.find((chain) => chain.id === chainId)?.note}
                         </p>
                     </div>
@@ -317,20 +337,24 @@ export function AgentImport() {
                                 resetFromStep1();
                                 setProofStatus("idle");
                             }}
+                            aria-invalid={trimmedToken !== "" && !isTokenValid}
+                            aria-describedby={`${fieldId}-token-help`}
                             className={inputClass}
                         />
-                        {trimmedToken !== "" && !isTokenValid ? (
-                            <p className="mt-2 text-[length:var(--text-body-sm)]">
-                                Token ids are decimal, for example 2340.
-                            </p>
-                        ) : null}
+                        <p
+                            id={`${fieldId}-token-help`}
+                            className="mt-2 text-[length:var(--text-body-sm)]"
+                        >
+                            {trimmedToken !== "" && !isTokenValid
+                                ? "Token ids are decimal, for example 2340."
+                                : ""}
+                        </p>
                     </div>
 
                     <button
-                        type="button"
-                        onClick={() => void handleCheckOwnership()}
+                        type="submit"
                         disabled={!isConnected || !isTokenValid || proofStatus === "pending"}
-                        className={`mt-5 ${controlClass}`}
+                        className={`mt-3 ${controlClass}`}
                     >
                         {proofStatus === "pending" ? "Reading the registry…" : "Check ownership"}
                     </button>
@@ -339,11 +363,7 @@ export function AgentImport() {
                             Connect the wallet that owns the agent.
                         </p>
                     ) : null}
-                </div>
-
-                {proofError !== null ? <Failure message={proofError} /> : null}
-                {refusal !== null ? <Refusal verdict={refusal} /> : null}
-                {proven !== null ? <Proof proven={proven} /> : null}
+                </form>
             </Step>
 
             <Step
@@ -351,6 +371,13 @@ export function AgentImport() {
                 title="Sign the statement"
                 status={consentStatus}
                 disabled={proven === null}
+                result={
+                    consentError !== null ? (
+                        <Failure message={consentError} />
+                    ) : signed !== null ? (
+                        <Field label="Signature" value={truncateMiddle(signed.signature, 14, 10)} />
+                    ) : null
+                }
             >
                 <p className="mb-6 max-w-[64ch] text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)]">
                     An EIP-712 message naming the agent, the account that will act for it, the ARP
@@ -370,11 +397,6 @@ export function AgentImport() {
                         ? "Waiting for your wallet…"
                         : "Sign the statement"}
                 </button>
-
-                {consentError !== null ? <Failure message={consentError} /> : null}
-                {signed !== null ? (
-                    <Field label="Signature" value={truncateMiddle(signed.signature, 14, 10)} />
-                ) : null}
             </Step>
 
             <Step
@@ -382,6 +404,13 @@ export function AgentImport() {
                 title="Publish the link"
                 status={linkStatus}
                 disabled={imported === null && !hasNoCanonicalAtom}
+                result={
+                    linkError !== null ? (
+                        <Failure message={linkError} />
+                    ) : txs !== null ? (
+                        <Published txs={txs} />
+                    ) : null
+                }
             >
                 {hasNoCanonicalAtom && proven !== null ? (
                     <NoCanonicalAtom chainId={proven.chainId} />
@@ -392,9 +421,10 @@ export function AgentImport() {
                             <span className="font-mono">
                                 (agent atom, same as, CAIP-10 of your Smart Account)
                             </span>
-                            . The predicate is Intuition's canonical <code>same as</code>, and the
-                            subject is your agent's existing atom — neither is minted here. Real
-                            TRUST pays for the write.
+                            . The predicate is Intuition's canonical{" "}
+                            <span className="font-mono">same as</span>, and the subject is your
+                            agent's existing atom — neither is minted here. Real TRUST pays for the
+                            write.
                         </p>
 
                         {plan === null ? (
@@ -444,9 +474,6 @@ export function AgentImport() {
                                 </button>
                             )
                         ) : null}
-
-                        {linkError !== null ? <Failure message={linkError} /> : null}
-                        {txs !== null ? <Published txs={txs} /> : null}
                     </>
                 )}
             </Step>
@@ -468,30 +495,48 @@ export function AgentImport() {
     );
 }
 
+/**
+ * One step, with its result in a live region mounted from the first render and
+ * refilled in place.
+ *
+ * An inactive step dims its rule and its ordinal and nothing else. The prose
+ * inside says what the step is about to do — what will be signed, what the
+ * write costs — and is written to be read *before* the step unlocks, so fading
+ * it below AA would hide it exactly when it is wanted. The disabled buttons
+ * carry the state for assistive tech; the wrapper does not pretend to.
+ */
 function Step({
     index,
     title,
     status,
     disabled = false,
     children,
+    result,
 }: {
     index: number;
     title: string;
     status: StepStatus;
     disabled?: boolean;
     children: React.ReactNode;
+    result?: React.ReactNode;
 }) {
     return (
         <section
             aria-labelledby={`import-step-${index}`}
             className={`mb-14 pl-5 border-l ${
                 disabled
-                    ? "border-l-[color:var(--color-border)] opacity-50"
+                    ? "border-l-[color:var(--color-border)]"
                     : "border-l-[color:var(--color-border-strong)]"
             }`}
         >
             <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
-                <span className="font-mono uppercase tracking-wider text-[length:var(--text-label)] text-[color:var(--color-fg-40)]">
+                <span
+                    className={`font-mono uppercase tracking-wider text-[length:var(--text-label)] ${
+                        disabled
+                            ? "text-[color:var(--color-fg-40)]"
+                            : "text-[color:var(--color-fg-60)]"
+                    }`}
+                >
                     Step {index}
                 </span>
                 <h2 id={`import-step-${index}`} className="font-medium">
@@ -503,9 +548,8 @@ function Step({
                     </span>
                 ) : null}
             </div>
-            <div className="mt-5" aria-disabled={disabled}>
-                {children}
-            </div>
+            <div className="mt-5">{children}</div>
+            <div aria-live="polite">{result}</div>
         </section>
     );
 }
@@ -534,10 +578,7 @@ function Field({label, value, href}: {label: string; value: string; href?: strin
 
 function Failure({message}: {message: string}) {
     return (
-        <p
-            aria-live="polite"
-            className="mt-5 max-w-[64ch] text-[length:var(--text-body-sm)] border-l border-l-[color:var(--color-alarm)] pl-4"
-        >
+        <p className="mt-5 max-w-[64ch] text-[length:var(--text-body-sm)] border-l border-l-[color:var(--color-alarm)] pl-4">
             {message}
         </p>
     );
@@ -547,7 +588,7 @@ function Failure({message}: {message: string}) {
 function Refusal({verdict}: {verdict: OwnershipVerdict}) {
     if (verdict.status === "not-found") {
         return (
-            <div aria-live="polite" className="mt-6 max-w-[64ch]">
+            <div className="mt-6 max-w-[64ch]">
                 <p className="font-medium">No such agent in that registry.</p>
                 <p className="mt-2 text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)]">
                     Token {verdict.ref.tokenId} on chain {verdict.ref.chainId} has never been
@@ -559,7 +600,7 @@ function Refusal({verdict}: {verdict: OwnershipVerdict}) {
     }
     if (verdict.status === "owner-mismatch") {
         return (
-            <div aria-live="polite" className="mt-6 max-w-[64ch]">
+            <div className="mt-6 max-w-[64ch]">
                 <p className="font-medium">That agent belongs to another address.</p>
                 <p className="mt-2 text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)]">
                     The registry names the owner below. Connect that wallet to import it.
@@ -574,7 +615,7 @@ function Refusal({verdict}: {verdict: OwnershipVerdict}) {
 
 function Proof({proven}: {proven: ProvenAgent}) {
     return (
-        <div aria-live="polite" className="mt-8 max-w-[64ch]">
+        <div className="mt-8 max-w-[64ch]">
             <p className="font-medium">
                 {proven.atom?.label ?? `Agent ${proven.chainId}:${proven.tokenId}`} is yours.
             </p>
@@ -583,11 +624,8 @@ function Proof({proven}: {proven: ProvenAgent}) {
             {proven.atom === null ? (
                 <Field label="Canonical Intuition atom" value="not mirrored — see step 3" />
             ) : (
-                <Field
-                    label="Canonical Intuition atom"
-                    value={proven.atom.atomId}
-                    href={mainnetAddressUrl(proven.atom.atomId)}
-                />
+                // A term id is not an address, and nothing in the explorer resolves one.
+                <Field label="Canonical Intuition atom" value={proven.atom.atomId} />
             )}
             <Field label="Your Smart Account, which will stake" value={proven.operatingAccount} />
         </div>
@@ -645,7 +683,7 @@ function LinkPlan({plan}: {plan: ImportLinkPlan}) {
     return (
         <div className="max-w-[64ch]">
             <Field label="Subject — the agent's canonical atom" value={plan.agentAtomId} />
-            <Field label="Predicate — Intuition's `same as`" value={plan.predicateId} />
+            <Field label="Predicate — Intuition's same as" value={plan.predicateId} />
             <Field
                 label={`Object — your account${plan.accountAtomExists ? ", already on the graph" : ", to be created"}`}
                 value={plan.accountAtomUri}
@@ -671,7 +709,7 @@ function LinkPlan({plan}: {plan: ImportLinkPlan}) {
 
 function Published({txs}: {txs: {atomTx?: Hex; tripleTx?: Hex}}) {
     return (
-        <div aria-live="polite" className="mt-6 max-w-[64ch]">
+        <div className="mt-6 max-w-[64ch]">
             <p className="font-medium">The link is on the graph.</p>
             <p className="mt-2 text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)]">
                 Stakes sent from that account are now attributable to this agent, which is what

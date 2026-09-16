@@ -220,6 +220,7 @@ export async function resolveCanonicalAgentAtom(params: {
         );
     }
     return {
+        // Narrowed by the BYTES32 guard above, which is the only way past it.
         atomId: identity.sourceHandle as Hex,
         label: identity.metadata.name,
         caip19: toCaip19(ref),
@@ -357,7 +358,7 @@ export async function planOperatorLink(
     publicClient: PublicClient,
     imported: Pick<ImportedAgent, "agentAtomId" | "operatingAccount">,
 ): Promise<ImportLinkPlan> {
-    const predicateId = INTUITION_SAME_AS_TERM_ID as Hex;
+    const predicateId = INTUITION_SAME_AS_TERM_ID;
     const candidates = caip10AccountUris(imported.operatingAccount, INTUITION_MAINNET_CHAIN_ID);
 
     // An address whose hex happens to carry no letters checksums to itself, so
