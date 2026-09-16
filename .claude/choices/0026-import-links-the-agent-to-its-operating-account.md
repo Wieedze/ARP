@@ -29,9 +29,13 @@ Four things constrain what that link can be.
    preflight returns it; deriving a replacement would be the duplicate (1) forbids.
 4. **Mainnet already carries both spellings of a CAIP-10 account id.** Measured 2026-09-16 against
    `https://mainnet.intuition.sh/v1/graphql`: 5,003 atoms of the form `caip10:eip155:…`, of which
-   ~170 spell the address entirely in lowercase and the rest checksum it; for at least one address
+   170 spell the address entirely in lowercase and the rest checksum it; for at least one address
    (`0x25d5C9Db…`) both spellings exist as separate atoms, minted a minute apart. Atom ids are
    content-derived, so the two are different nodes.
+
+   **The split inverts on the chain that matters.** Narrowed to chain 1155 — where the link is
+   written — 34 of the 45 `caip10:eip155:1155:…` atoms are entirely lowercase. The global figure
+   points one way and the relevant one points the other, so the fallback is stated against 1155.
 
 Two measurements bear on the choice and are recorded here because they were not obvious beforehand:
 
@@ -62,7 +66,8 @@ The import publishes exactly one edge on Intuition mainnet:
 - **Subject**: the canonical atom from the connector's preflight. Never re-derived, never re-pinned.
 - **Object**: the CAIP-10 account atom for the operating account on chain 1155. The plan checks the
   chain first and **converges on whichever spelling already exists**; only when neither does is one
-  created, in the checksummed form the mainnet vocabulary predominantly carries.
+  created, in the lowercase form 34 of chain 1155's 45 such atoms carry — which is also the spelling
+  `caip10Uri` already produces, so ARP writes one convention on both networks.
 - **Nothing is minted on the import path** in the sense that matters: no ERC-8004 token on any
   registry, and no agent atom. The account atom is a node for the operator's own account, created
   only when the graph does not already hold it, and is named in the priced plan before the operator
@@ -97,11 +102,11 @@ data.", image: "", url: ""}`), so publishing it needs the partner pinning key an
   owner's signal away from the atoms the indexed cohort already points at." The warning is scoped to
   that edge, but the mechanism is general and the CAIP-10 construction is the one ADR 0014 already
   chose.
-- **Lowercase the CAIP-10 address, matching `caip10Uri` in `delegation-redeem.ts`** — rejected as the
-  _default_, kept as a fallback. ARP's own testnet atoms lowercase, and internal consistency is worth
-  something; but mainnet predominantly checksums, and a link that names a node nobody else points at
-  buys consistency at the cost of the thing the link exists for. Converging on whatever already
-  exists gets both in every case where it matters.
+- **Checksum the CAIP-10 address as the fallback** — this was the first answer, on the global figure
+  (4,833 of 5,003 `caip10:eip155:…` atoms checksum), and it was wrong. Narrowing the same query to
+  chain 1155, the chain the link is written on, reverses it: 34 of 45 are lowercase. Deciding on the
+  aggregate would have written ARP's edges against the minority convention of the only chain
+  involved, and would additionally have split from `caip10Uri`'s existing spelling for no gain.
 
 ## Consequences
 
@@ -129,10 +134,10 @@ data.", image: "", url: ""}`), so publishing it needs the partner pinning key an
   agent already carrying four would become ambiguous to the cohort listing, and this import would be
   the edge that tipped it. Not guarded against, because no such agent exists in the measured cohort
   and a guard against a hypothetical is worse than a recorded limit.
-- ARP now has two CAIP-10 spellings in the codebase: `caip10Uri` lowercases for testnet,
-  `caip10AccountUris` prefers checksummed for mainnet. Deliberate — changing `caip10Uri` would orphan
-  the atoms and triples ARP has already written on testnet — but it is a seam, and it is named here
-  so the next reader does not treat one as a bug.
+- `caip10AccountUris` returns two spellings where `caip10Uri` returns one. They agree on the
+  spelling ARP writes — both lowercase — and the second exists only so an account already on the
+  graph under the checksummed form is joined rather than duplicated. Asserted in
+  `agent-import.test.ts` so the two cannot drift.
 
 **Neutral (worth knowing):**
 
@@ -145,6 +150,14 @@ data.", image: "", url: ""}`), so publishing it needs the partner pinning key an
   `app/src/services/__tests__/agent-import.test.ts` rather than argued from CREATE2 in a comment.
 - ADR 0025 stands: there is no `ModuleRegistry` on mainnet and `DomainScopeEnforcer` there is inert.
   The import writes to the MultiVault and to nothing else, so neither is involved.
+- Both writes were checked against the live mainnet MultiVault by `eth_call`, with nothing broadcast.
+  `createAtoms` for a CAIP-10 account atom simulates clean and returns exactly the id
+  `calculateAtomId` predicts. `createTriples` with Clawnch's canonical atom as subject, `same as` as
+  predicate and an existing `caip10:eip155:1155:…` atom as object also simulates clean. With an
+  object atom that does not exist yet it reverts `MultiVault_TermDoesNotExist(bytes32)`
+  (`0x4762af7d`) — which is why `simulateOperatorLink` reports the triple as `deferred` rather than
+  pretending to have checked it, and why `submitOperatorLink` simulates it again after the atom
+  lands.
 
 ## References
 

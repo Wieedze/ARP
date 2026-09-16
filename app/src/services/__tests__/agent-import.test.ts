@@ -45,6 +45,7 @@ import {
     type ImportedAgent,
     type ImportLinkPlan,
 } from "../agent-import";
+import {caip10Uri} from "../delegation-redeem";
 import {StakeGuardError} from "../trust-stake";
 
 /**
@@ -223,7 +224,7 @@ const asPublic = (client: MockPublic) => client as any;
 const asWallet = (client: MockWallet) => client as any;
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
-const [CHECKSUMMED_URI, LOWERCASE_URI] = caip10AccountUris(
+const [LOWERCASE_URI, CHECKSUMMED_URI] = caip10AccountUris(
     SMART_ACCOUNT,
     INTUITION_MAINNET_CHAIN_ID,
 );
@@ -383,7 +384,7 @@ describe("the import path mints nothing", () => {
     it("writes nothing at all when the link is already on the graph", async () => {
         const publicClient = makePublic({
             atomIdByUri: ATOM_IDS,
-            existing: [ACCOUNT_ATOM_CHECKSUMMED, TRIPLE],
+            existing: [ACCOUNT_ATOM_LOWERCASE, TRIPLE],
         });
         const wallet = makeWallet();
         const imported = await importedAgent();
@@ -503,13 +504,18 @@ describe("the consent statement", () => {
 /* -------------------------------------------------------------------------- */
 
 describe("caip10AccountUris", () => {
-    it("offers the checksummed spelling first and the lowercase one second", () => {
+    it("offers the lowercase spelling first — the one chain 1155 predominantly carries", () => {
         const [first, second] = caip10AccountUris(
             SMART_ACCOUNT.toLowerCase() as Address,
             INTUITION_MAINNET_CHAIN_ID,
         );
-        expect(first).toBe(`caip10:eip155:1155:${getAddress(SMART_ACCOUNT)}`);
-        expect(second).toBe(`caip10:eip155:1155:${SMART_ACCOUNT.toLowerCase()}`);
+        expect(first).toBe(`caip10:eip155:1155:${SMART_ACCOUNT.toLowerCase()}`);
+        expect(second).toBe(`caip10:eip155:1155:${getAddress(SMART_ACCOUNT)}`);
+    });
+
+    it("agrees with `caip10Uri`, the spelling ARP already writes on testnet", () => {
+        const [lowercase] = caip10AccountUris(SMART_ACCOUNT, INTUITION_MAINNET_CHAIN_ID);
+        expect(lowercase).toBe(caip10Uri(SMART_ACCOUNT, INTUITION_MAINNET_CHAIN_ID));
     });
 });
 
@@ -523,19 +529,19 @@ describe("planOperatorLink", () => {
     it("converges on the spelling already on chain rather than minting a duplicate", async () => {
         const publicClient = makePublic({
             atomIdByUri: ATOM_IDS,
-            existing: [ACCOUNT_ATOM_LOWERCASE],
+            existing: [ACCOUNT_ATOM_CHECKSUMMED],
         });
         const plan = await planOperatorLink(asPublic(publicClient), await importedAgent());
-        expect(plan.accountAtomUri).toBe(LOWERCASE_URI);
+        expect(plan.accountAtomUri).toBe(CHECKSUMMED_URI);
         expect(plan.accountAtomExists).toBe(true);
         expect(plan.atomCost).toBe(0n);
         expect(plan.tripleCost).toBe(TRIPLE_COST);
     });
 
-    it("falls back to the checksummed spelling when neither exists", async () => {
+    it("falls back to the lowercase spelling when neither exists", async () => {
         const publicClient = makePublic({atomIdByUri: ATOM_IDS});
         const plan = await planOperatorLink(asPublic(publicClient), await importedAgent());
-        expect(plan.accountAtomUri).toBe(CHECKSUMMED_URI);
+        expect(plan.accountAtomUri).toBe(LOWERCASE_URI);
         expect(plan.accountAtomExists).toBe(false);
         expect(plan.totalCost).toBe(ATOM_COST + TRIPLE_COST);
     });
@@ -546,11 +552,7 @@ describe("planOperatorLink", () => {
         const call = publicClient.readContract.mock.calls
             .map((entry) => entry[0] as {functionName: string; args?: readonly unknown[]})
             .find((args) => args.functionName === "calculateTripleId");
-        expect(call?.args).toEqual([
-            AGENT_ATOM,
-            INTUITION_SAME_AS_TERM_ID,
-            ACCOUNT_ATOM_CHECKSUMMED,
-        ]);
+        expect(call?.args).toEqual([AGENT_ATOM, INTUITION_SAME_AS_TERM_ID, ACCOUNT_ATOM_LOWERCASE]);
     });
 });
 
@@ -567,7 +569,7 @@ describe("simulateOperatorLink", () => {
     it("checks the triple for real once the account atom is already there", async () => {
         const publicClient = makePublic({
             atomIdByUri: ATOM_IDS,
-            existing: [ACCOUNT_ATOM_CHECKSUMMED],
+            existing: [ACCOUNT_ATOM_LOWERCASE],
         });
         const plan = await planOperatorLink(asPublic(publicClient), await importedAgent());
         await expect(
@@ -578,7 +580,7 @@ describe("simulateOperatorLink", () => {
     it("calls nothing when both are already published", async () => {
         const publicClient = makePublic({
             atomIdByUri: ATOM_IDS,
-            existing: [ACCOUNT_ATOM_CHECKSUMMED, TRIPLE],
+            existing: [ACCOUNT_ATOM_LOWERCASE, TRIPLE],
         });
         const plan = await planOperatorLink(asPublic(publicClient), await importedAgent());
         await expect(

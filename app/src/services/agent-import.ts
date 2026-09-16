@@ -303,24 +303,27 @@ export type ImportedAgent = {
 /**
  * The two spellings of a CAIP-10 account id for one address, most-likely first.
  *
- * Mainnet carries 5,003 `caip10:eip155:…` atoms and most spell the address in
- * its EIP-55 checksummed form, but both spellings exist — for at least one
- * address, both exist *for the same account*. Atom ids are content-derived, so
- * the two are different nodes, and picking the wrong one links the agent to an
- * account nobody else points at.
+ * Both are in live use and they are different atoms: ids are content-derived,
+ * so `…:0xAbC…` and `…:0xabc…` are separate nodes, and mainnet holds both for
+ * at least one address, minted a minute apart. Picking the wrong one links the
+ * agent to an account nobody else points at.
  *
- * The plan below therefore checks the chain before it chooses: whichever atom
- * already exists is the one used, and only when neither does is one created, in
- * the checksummed form the mainnet vocabulary predominantly carries. ADR 0026
- * records that this deliberately differs from `caip10Uri` in
- * `delegation-redeem.ts`, which lowercases for ARP's testnet atoms and stays
- * that way — changing it would orphan atoms and triples that already exist.
+ * Lowercase comes first because that is what the chain the link targets
+ * actually carries: of the 45 `caip10:eip155:1155:…` atoms on Intuition mainnet
+ * on 2026-09-16, 34 are entirely lowercase. (Across every `eip155` chain the
+ * split runs the other way — 170 lowercase out of 5,003 — which is why the
+ * order is stated against chain 1155 rather than against "mainnet".) It is also
+ * the spelling `caip10Uri` in `delegation-redeem.ts` already produces, so ARP
+ * writes one convention on both networks.
+ *
+ * Order is only a tiebreak. The plan below reads the chain first and uses
+ * whichever atom already exists; the fallback applies only when neither does.
  */
 export function caip10AccountUris(address: Address, chainId: number): [string, string] {
     const checksummed = getAddress(address);
     return [
-        `caip10:eip155:${chainId}:${checksummed}`,
         `caip10:eip155:${chainId}:${checksummed.toLowerCase()}`,
+        `caip10:eip155:${chainId}:${checksummed}`,
     ];
 }
 
@@ -378,7 +381,7 @@ export async function planOperatorLink(
     }
 
     // Converge on whatever the graph already holds; fall back to the first
-    // spelling, which is the checksummed one the cohort predominantly uses.
+    // spelling, which is the lowercase one chain 1155 predominantly carries.
     const chosen = resolved.find((entry) => entry.exists) ?? resolved[0];
     if (chosen === undefined) {
         throw new ImportGuardError(
