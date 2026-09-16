@@ -14,6 +14,7 @@
   ],
   "scripts": {
     "demo": "bun scripts/demo.ts",
+    "verify:pin": "bun scripts/verify-pin-key.ts",
     "dev": "bun --filter app dev",
     "build": "bun --filter '*' build",
     "test": "bun --filter '*' test",
