@@ -27,6 +27,13 @@
     --color-accent: #00e5ff;
     --color-accent-dim: rgba(0, 229, 255, 0.16);
 
+    /* The single semantic exception to the one-accent rule (ADR 0018).
+       Reserved for a signature `mismatch` — a document that does not recover
+       to the signer it names. Nothing decorative may use it. 6.6:1 on the
+       background, so it passes AA as body text. */
+    --color-alarm: #ff5f52;
+    --color-alarm-dim: rgba(255, 95, 82, 0.12);
+
     /* Fonts — Inter (display + body) and JetBrains Mono (data).
        Both Google-hosted, both editorial-quality. */
     --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -37,6 +44,16 @@
     --text-body: 15px;
     --text-body-sm: 13px;
     --text-label: 11px;
+
+    /* Score sizes — the trust panel's one hero, and its whole argument.
+       A score's type size is set by how much evidence it rests on, so a 64.36
+       backed by 1,445 reviewers cannot read like a 59.95 backed by 2.
+       Used only by the assessment rows (ADR 0018). */
+    --text-score-1: 22px;
+    --text-score-2: 30px;
+    --text-score-3: 42px;
+    --text-score-4: 56px;
+    --text-score-5: 72px;
 
     /* Line heights */
     --leading-display: 1.1;
@@ -84,7 +101,8 @@ button {
     border: 1px solid var(--color-border);
     color: var(--color-fg);
     cursor: pointer;
-    transition: border-color var(--duration-base) var(--ease-out-quart),
+    transition:
+        border-color var(--duration-base) var(--ease-out-quart),
         color var(--duration-base) var(--ease-out-quart);
 }
 
@@ -110,4 +128,34 @@ a:hover {
 ::selection {
     background: var(--color-accent-dim);
     color: var(--color-fg);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Focus                                                                       */
+/* -------------------------------------------------------------------------- */
+
+/* Buttons shift their border on focus (above). Links and inputs have no border
+   to shift, so they get a real ring — `ui.md` requires a visible focus state on
+   every interactive element, not just the ones that happen to have a box. */
+a:focus-visible,
+input:focus-visible,
+summary:focus-visible,
+[tabindex]:focus-visible {
+    outline: 1px solid var(--color-accent);
+    outline-offset: 2px;
+    border-radius: 1px;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Trust panel                                                                 */
+/* -------------------------------------------------------------------------- */
+
+/* The score numeral. Mono, because a score is data; tabular, so two scores at
+   the same weight align on the decimal; tight, because at 72px default
+   tracking reads as a price tag. */
+.score-numeral {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.045em;
+    line-height: 0.92;
 }
