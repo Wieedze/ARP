@@ -1,6 +1,18 @@
 # Task 07 — `@arp-protocol/erc8004`: the read connector
 
-> **Status: NOT STARTED** (specified 2026-09-16).
+> **Status: COMPLETE** (specified 2026-09-16, completed 2026-09-16).
+>
+> Commits `032d851`..`cba9aa5` on `feat/erc8004-connector`. Verifier verdict: PASS.
+> Post-mortem: `.claude/learning/09-erc8004-connector.md`.
+> Surface deviations recorded in `.claude/choices/0019-erc8004-connector-surface-deviations.md`.
+>
+> **Signature verification works.** The spec expected `unverified` across the board and authorised
+> shipping that; it was not necessary. `provider` = `provider.id`, `agent` = the CAIP-19 asset id with
+> the registry as written, `contentHash` = keccak256 over the RFC-8785 canonical document minus
+> `assessment.signature`. Confirmed by recovering Deep3's declared signer
+> `0x27A6265e6daf8d9935A3031f2E7cDC4bDFbe2Ebe` from all three of their live documents. Confirmation is
+> bound to `provider.id`, so `mismatch` is unreachable for a provider whose scheme has not been
+> established — see the README's "What it cannot verify".
 >
 > Phase 1 · option O1 of `docs/08`. Serves tier 1→2 of the evidence ladder (`docs/09` §2): it does not
 > produce a new signal, it makes the existing ones legible and checkable.
@@ -238,19 +250,19 @@ mode most likely to hit this package.
 
 ## Acceptance criteria
 
-- [ ] `bun run build` in `erc8004/` produces working ESM types
-- [ ] `bun run test` green, every public function covered
-- [ ] `bun run lint` clean, `prettier --check` clean
-- [ ] `grep -rn ": any" erc8004/src` returns nothing
-- [ ] No predicate resolved by label anywhere in the package
-- [ ] `getAgentProfile` returns a correct profile for all three fixtures, including the bare one
-- [ ] Signature verdicts are honest — no `verified` that has not actually recovered to the declared signer
-- [ ] **No public signature mentions an Intuition term ID.** `grep -rn "term_id\|termId" erc8004/src` finds hits only under `sources/intuition/`
-- [ ] **`Erc8004RegistrySource` resolves an agent with `IntuitionSource` removed from the client entirely** — the portability claim is tested, not asserted
-- [ ] Every field in `AgentProfile` carries which source produced it
-- [ ] The four pure functions are importable and usable without constructing a client
-- [ ] A short `erc8004/README.md`: what it does, the one-call example, how to run it without Intuition, and a plain statement of what it cannot yet verify
-- [ ] `task-verifier` pass
+- [x] `bun run build` in `erc8004/` produces working ESM types
+- [x] `bun run test` green, every public function covered
+- [x] `bun run lint` clean, `prettier --check` clean
+- [x] `grep -rn ": any" erc8004/src` returns nothing
+- [x] No predicate resolved by label anywhere in the package
+- [x] `getAgentProfile` returns a correct profile for all three fixtures, including the bare one
+- [x] Signature verdicts are honest — no `verified` that has not actually recovered to the declared signer
+- [x] **No public signature mentions an Intuition term ID.** `grep -rn "term_id\|termId" erc8004/src` finds hits only under `sources/intuition/`
+- [x] **`Erc8004RegistrySource` resolves an agent with `IntuitionSource` removed from the client entirely** — the portability claim is tested, not asserted
+- [x] Every field in `AgentProfile` carries which source produced it
+- [x] The four pure functions are importable and usable without constructing a client
+- [x] A short `erc8004/README.md`: what it does, the one-call example, how to run it without Intuition, and a plain statement of what it cannot yet verify
+- [x] `task-verifier` pass
 
 ## Out of scope
 
