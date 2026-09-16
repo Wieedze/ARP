@@ -212,7 +212,7 @@ O4 turns a byproduct into the product: the enforcers already emit on every check
 into the assessment as evidence, and the distinction between _declared_ and _proven_ becomes legible
 to everyone.
 
-**Coverage is two surfaces, not one** (ADR 0020). Read coverage is total from day one:
+**Coverage is two surfaces, not one** (ADR 0021). Read coverage is total from day one:
 `getAgentProfile` answers for any ERC-8004 agent whether or not anything was ever written for it, at
 no on-chain cost. Write coverage is gated on evidence — ARP writes the canonical shell only where it
 holds something no one else does: a distinct staker, an execution receipt, or capability data absent

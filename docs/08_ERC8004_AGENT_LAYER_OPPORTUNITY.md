@@ -322,7 +322,7 @@ The shell is one Atom plus four Triples, so **0.5 TRUST per agent**; the ARP pro
 once. Across the cohort that is ~14,300 TRUST, and most of it would buy the right to publish
 `insufficient-evidence`.
 
-So coverage follows evidence rather than the registry (ADR 0020). ARP's read API answers for every
+So coverage follows evidence rather than the registry (ADR 0021). ARP's read API answers for every
 agent at no on-chain cost; the shell is written only where ARP holds a distinct staker, an execution
 receipt, or capability data the graph lacks. Sponsored writes — an operator paying their own
 0.5 TRUST, marked as sponsored — are a separate opt-in path and the layer's first natural revenue.

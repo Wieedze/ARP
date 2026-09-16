@@ -163,7 +163,14 @@ gh pr create --base main --head docs/strategy-and-positioning \
 - Phase 2 (capability indexing) — the moat, but it is a write path at scale and needs Phase 0 merged
   and a gas budget first.
 - Phase 3 and 4.
-- Any mainnet write, including enabling the stake control.
+- Deploying any ARP contract to Intuition mainnet, and creating atoms or triples there at scale
+  (ADR 0021 costs that: 0.5 TRUST per agent, ~14,300 across the cohort).
+
+  **Superseded:** this section originally read "any mainnet write, including enabling the stake
+  control". ADR 0017 authorised one narrow class of mainnet write — deposits into existing
+  `has trust provider` vaults, signed by the operator — and the panel ships it enabled. The
+  prohibition above is what survives.
+
 - Deploying ARP contracts to Intuition mainnet.
 - The `CLAUDE.md` authority re-point proposed in `docs/09` §10 — the router does not change silently;
   it needs its own ADR and the user's acceptance of `docs/09`.

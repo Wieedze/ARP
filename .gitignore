@@ -46,3 +46,6 @@ coverage/
 
 # sdk build output
 sdk/dist/
+
+# Raw paste of the Intuition partner guide; docs/07 is the vendored copy that counts.
+integration8004.txt
