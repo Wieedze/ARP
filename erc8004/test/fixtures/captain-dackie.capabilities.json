@@ -1,0 +1,671 @@
+{
+  "data": {
+    "triples": [
+      {
+        "term_id": "0x2e4f3f2cdc98bd53f3b2874c1bcf8e3844521c27aaa8a6619d72540afc41d440",
+        "predicate": {
+          "term_id": "0x7ec36d201c842dc787b45cb5bb753bea4cf849be3908fb1b0a7d067c3c3cc1f5",
+          "label": "has tag"
+        },
+        "object": {
+          "term_id": "0x671725c78c95813ee4a58addc29304bc68b6ebb15eed981df3202cc9da87a0ec",
+          "label": "tee-attestation",
+          "value": {
+            "thing": {
+              "name": "tee-attestation",
+              "description": "Value atom observed in ERC-8004 agent registry data.",
+              "image": "",
+              "url": ""
+            }
+          }
+        }
+      },
+      {
+        "term_id": "0x30527009e86d4b88c43310df5717dc18a970971a8329fea53e917a5cc8032d5a",
+        "predicate": {
+          "term_id": "0x7ec36d201c842dc787b45cb5bb753bea4cf849be3908fb1b0a7d067c3c3cc1f5",
+          "label": "has tag"
+        },
+        "object": {
+          "term_id": "0xaa48f7e4c77b65653e1a7f6e139783e82af640df73c66e432ab25426979de6c2",
+          "label": "workflow_automation",
+          "value": {
+            "thing": {
+              "name": "workflow_automation",
+              "description": "Value atom observed in ERC-8004 agent registry data.",
+              "image": "",
+              "url": ""
+            }
+          }
+        }
+      },
+      {
+        "term_id": "0x3b4d3cb46bfe99c111d7481a08ae0f64d0718d6912a5677e76cd0522f610a958",
+        "predicate": {
+          "term_id": "0x7ec36d201c842dc787b45cb5bb753bea4cf849be3908fb1b0a7d067c3c3cc1f5",
+          "label": "has tag"
+        },
+        "object": {
+          "term_id": "0x598193f2ac7f951b82b59a9c454cc012c3d7bfd76328331f4e4c9e5e75a2be8f",
+          "label": "x402",
+          "value": {
+            "thing": {
+              "name": "x402",
+              "description": "Protocol or standard atom for x402, used in ERC-8004 agent capability triples.",
+              "image": "",
+              "url": ""
+            }
+          }
+        }
+      },
+      {
+        "term_id": "0x4bb53cd79cc710a64f625f4f7189109d17ba5e116af440936a40090ce0cbe46b",
+        "predicate": {
+          "term_id": "0x7ec36d201c842dc787b45cb5bb753bea4cf849be3908fb1b0a7d067c3c3cc1f5",
+          "label": "has tag"
+        },
+        "object": {
+          "term_id": "0xdd4e17ebf44ba8d430b8153a8eca4cfcc49c15701300dbd32e95abd502f115f1",
+          "label": "pattern_recognition",
+          "value": {
+            "thing": {
+              "name": "pattern_recognition",
+              "description": "Value atom observed in ERC-8004 agent registry data.",
+              "image": "",
+              "url": ""
+            }
+          }
+        }
+      },
+      {
+        "term_id": "0x5732e3ef2018227f823c63c071891c3a04018a6c8c886fbed5ca7f8e88535428",
+        "predicate": {
+          "term_id": "0x7ec36d201c842dc787b45cb5bb753bea4cf849be3908fb1b0a7d067c3c3cc1f5",
+          "label": "has tag"
+        },
+        "object": {
+          "term_id": "0x9d04d57aefffa7a81874b3e07219630109af0ea997c19edf52e464329250897f",
+          "label": "quantitative_analysis",
+          "value": {
+            "thing": {
+              "name": "quantitative_analysis",
+              "description": "Value atom observed in ERC-8004 agent registry data.",
+              "image": "",
+              "url": ""
+            }
+          }
+        }
+      },
+      {
+        "term_id": "0x60b8b2032406b9f92605eabe28cde0e9578bcfa902e5aeabde504c9e12eb10eb",
+        "predicate": {
+          "term_id": "0x7ec36d201c842dc787b45cb5bb753bea4cf849be3908fb1b0a7d067c3c3cc1f5",
+          "label": "has tag"
+        },
+        "object": {
+          "term_id": "0x268c3bf09621f6c17c1136a4933e13eea3a9f10aaee4eac617891e15dd26dc8a",
+          "label": "market_analysis",
+          "value": {
+            "thing": {
+              "name": "market_analysis",
+              "description": "Value atom observed in ERC-8004 agent registry data.",
+              "image": "",
+              "url": ""
+            }
+          }
+        }
+      },
+      {
+        "term_id": "0x63f3c59878f426ce603a0ef2b5d3c8eee0e340eb41fe2bdbc9f65663bdb51edb",
+        "predicate": {
+          "term_id": "0x7ec36d201c842dc787b45cb5bb753bea4cf849be3908fb1b0a7d067c3c3cc1f5",
+          "label": "has tag"
+        },
+        "object": {
+          "term_id": "0x1e49b9102c046de00f1a448041f4e98bc1430fb4a002f7f0ba52840843ad9eb3",
+          "label": "crypto-economic",
+          "value": {
+            "thing": {
+              "name": "crypto-economic",
+              "description": "Value atom observed in ERC-8004 agent registry data.",
+              "image": "",
+              "url": ""
+            }
+          }
+        }
+      },
+      {
+        "term_id": "0x6de3866fe698a2959c3a066371a8dddf209d2303110e043b64ce5f59a52e06ad",
+        "predicate": {
+          "term_id": "0x7ec36d201c842dc787b45cb5bb753bea4cf849be3908fb1b0a7d067c3c3cc1f5",
+          "label": "has tag"
+        },
+        "object": {
+          "term_id": "0xd9d94f1e3a89564433c5a55e2f978fbf204422a3caf302b8145e4562ee40c503",
+          "label": "transaction_execution",
+          "value": {
+            "thing": {
+              "name": "transaction_execution",
+              "description": "Value atom observed in ERC-8004 agent registry data.",
+              "image": "",
+              "url": ""
+            }
+          }
+        }
+      },
+      {
+        "term_id": "0x791731e897d402a60848ec705b521cca013b41b9da81a2797e6c3b9e51f6f133",
+        "predicate": {
+          "term_id": "0x7ec36d201c842dc787b45cb5bb753bea4cf849be3908fb1b0a7d067c3c3cc1f5",
+          "label": "has tag"
+        },
+        "object": {
+          "term_id": "0xd22b16d68b364ec3d75ffbab4435e1348be87cc7bed4eda6f6a4d59ca79ae0bf",
+          "label": "reputation",
+          "value": {
+            "thing": {
+              "name": "reputation",
+              "description": "Value atom observed in ERC-8004 agent registry data.",
+              "image": "",
+              "url": ""
+            }
+          }
+        }
+      },
+      {
+        "term_id": "0x7a22fb0b8d485446d25ce1fe63370430acaf9216592f0a25e1a59f072fdd20dc",
+        "predicate": {
+          "term_id": "0x7ec36d201c842dc787b45cb5bb753bea4cf849be3908fb1b0a7d067c3c3cc1f5",
+          "label": "has tag"
+        },
+        "object": {
+          "term_id": "0x1c6b97ad92d0c838cfb05f70dec3e5bb4bb9ef01b99b2bd381df5db1f1ec84df",
+          "label": "risk_assessment",
+          "value": {
+            "thing": {
+              "name": "risk_assessment",
+              "description": "Value atom observed in ERC-8004 agent registry data.",
+              "image": "",
+              "url": ""
+            }
+          }
+        }
+      },
+      {
+        "term_id": "0x8ef7a38eded68884ff99f6a39ad0e20e67772e94c94f6978a2aca787a0bcf7df",
+        "predicate": {
+          "term_id": "0x7ec36d201c842dc787b45cb5bb753bea4cf849be3908fb1b0a7d067c3c3cc1f5",
+          "label": "has tag"
+        },
+        "object": {
+          "term_id": "0x71b96cfa48de061286fdf688c3308e309ffff2afc3032b6931c369da07dcde99",
+          "label": "blockchain_interaction",
+          "value": {
+            "thing": {
+              "name": "blockchain_interaction",
+              "description": "Value atom observed in ERC-8004 agent registry data.",
+              "image": "",
+              "url": ""
+            }
+          }
+        }
+      },
+      {
+        "term_id": "0xa191eb66b2f793ceb9d02f4ea5d2f47a17315bdf12b35e37c4eb0c12867c87f0",
+        "predicate": {
+          "term_id": "0x7ec36d201c842dc787b45cb5bb753bea4cf849be3908fb1b0a7d067c3c3cc1f5",
+          "label": "has tag"
+        },
+        "object": {
+          "term_id": "0x23b90d9faa6d5ed8fd9416d6a1c270e92e406d48afc9ab9885fb2de557205741",
+          "label": "decision_making",
+          "value": {
+            "thing": {
+              "name": "decision_making",
+              "description": "Value atom observed in ERC-8004 agent registry data.",
+              "image": "",
+              "url": ""
+            }
+          }
+        }
+      },
+      {
+        "term_id": "0xa91726556166dddfbda194b56a5d3051e2210722309915afafbcad83a1e093c5",
+        "predicate": {
+          "term_id": "0x7ec36d201c842dc787b45cb5bb753bea4cf849be3908fb1b0a7d067c3c3cc1f5",
+          "label": "has tag"
+        },
+        "object": {
+          "term_id": "0xffea236f8bef36de25d2e8ac4a336f4c3a40549dd0376aacacfb48fd9dc0948f",
+          "label": "tool_use_planning",
+          "value": {
+            "thing": {
+              "name": "tool_use_planning",
+              "description": "Value atom observed in ERC-8004 agent registry data.",
+              "image": "",
+              "url": ""
+            }
+          }
+        }
+      },
+      {
+        "term_id": "0xbf499d2491d9c71cb82ff3dc39789d9c95b8e36a554b260b038e02ad94a97584",
+        "predicate": {
+          "term_id": "0x7ec36d201c842dc787b45cb5bb753bea4cf849be3908fb1b0a7d067c3c3cc1f5",
+          "label": "has tag"
+        },
+        "object": {
+          "term_id": "0xda550e795d6f98476c25748cfc2a9d2a73174f0f0f2e4ae2b20dd0e0b09327af",
+          "label": "api_integration",
+          "value": {
+            "thing": {
+              "name": "api_integration",
+              "description": "Value atom observed in ERC-8004 agent registry data.",
+              "image": "",
+              "url": ""
+            }
+          }
+        }
+      },
+      {
+        "term_id": "0xdba8cb662b44273d72ee5d60949769749f2e564f7935995c548fe4d801c6152b",
+        "predicate": {
+          "term_id": "0x7ec36d201c842dc787b45cb5bb753bea4cf849be3908fb1b0a7d067c3c3cc1f5",
+          "label": "has tag"
+        },
+        "object": {
+          "term_id": "0x9790f1f6812db5e33ecaf5a3be1a6a3391b788990646d162fa56323076056b82",
+          "label": "strategic_planning",
+          "value": {
+            "thing": {
+              "name": "strategic_planning",
+              "description": "Value atom observed in ERC-8004 agent registry data.",
+              "image": "",
+              "url": ""
+            }
+          }
+        }
+      },
+      {
+        "term_id": "0xdc4a8e3c8f38025f605b11c85bf7b56b73c997a7dc69b8e7960dcadf1e1de064",
+        "predicate": {
+          "term_id": "0x7ec36d201c842dc787b45cb5bb753bea4cf849be3908fb1b0a7d067c3c3cc1f5",
+          "label": "has tag"
+        },
+        "object": {
+          "term_id": "0x8229bf17815b756009416b6d2fb50aa04e29fe2fe06eb96b205c7a7694ee4951",
+          "label": "search",
+          "value": {
+            "thing": {
+              "name": "search",
+              "description": "Value atom observed in ERC-8004 agent registry data.",
+              "image": "",
+              "url": ""
+            }
+          }
+        }
+      },
+      {
+        "term_id": "0xeb29bdfac3076443159b6de8d63fe74535fc80094a1a0a01e6ff0849f61d457e",
+        "predicate": {
+          "term_id": "0x7ec36d201c842dc787b45cb5bb753bea4cf849be3908fb1b0a7d067c3c3cc1f5",
+          "label": "has tag"
+        },
+        "object": {
+          "term_id": "0x4e8a462e99c27c58307166f12e778b25deed01ae781c4c5f6eda3b159d23a802",
+          "label": "retrieval_of_information",
+          "value": {
+            "thing": {
+              "name": "retrieval_of_information",
+              "description": "Value atom observed in ERC-8004 agent registry data.",
+              "image": "",
+              "url": ""
+            }
+          }
+        }
+      },
+      {
+        "term_id": "0xfb02399f6e82102660fbc8d75ad6935bf8b565e74cc65b152868645d7c66d0d2",
+        "predicate": {
+          "term_id": "0x7ec36d201c842dc787b45cb5bb753bea4cf849be3908fb1b0a7d067c3c3cc1f5",
+          "label": "has tag"
+        },
+        "object": {
+          "term_id": "0x8668d70ddb3f1c5bbf830d0e8f2bb0ff29dc740de753110a1f8aaa0c20033a3c",
+          "label": "chain_of_thought_structuring",
+          "value": {
+            "thing": {
+              "name": "chain_of_thought_structuring",
+              "description": "Value atom observed in ERC-8004 agent registry data.",
+              "image": "",
+              "url": ""
+            }
+          }
+        }
+      },
+      {
+        "term_id": "0x19133dac85244a26d713e02ea7cfe150474dd11e9042a1e055f426ab82720ea7",
+        "predicate": {
+          "term_id": "0x96c20ddd7f83034666e200aa976cbe2249946bf76a7c66333212be82f284ad4b",
+          "label": "has category"
+        },
+        "object": {
+          "term_id": "0x5400cd50420c824aac1aabc7dfcd2d27ed1d605716dea18133d6c36888a1e67c",
+          "label": "trading",
+          "value": {
+            "thing": {
+              "name": "trading",
+              "description": "Value atom observed in ERC-8004 agent registry data.",
+              "image": "",
+              "url": ""
+            }
+          }
+        }
+      },
+      {
+        "term_id": "0x26eed739bc361d900e2098a4b88bc29f71b8c95a294b48d2bc853043f3896e9c",
+        "predicate": {
+          "term_id": "0x96c20ddd7f83034666e200aa976cbe2249946bf76a7c66333212be82f284ad4b",
+          "label": "has category"
+        },
+        "object": {
+          "term_id": "0xd67c8622403097b77fc261b122be3669285c4d7be623c80f81262c2281cbf820",
+          "label": "defi",
+          "value": {
+            "thing": {
+              "name": "defi",
+              "description": "Value atom observed in ERC-8004 agent registry data.",
+              "image": "",
+              "url": ""
+            }
+          }
+        }
+      },
+      {
+        "term_id": "0x3defd6667b029ea487fdc211599fd5b12b9f1ab0d7b78a3232239beb8b677553",
+        "predicate": {
+          "term_id": "0x96c20ddd7f83034666e200aa976cbe2249946bf76a7c66333212be82f284ad4b",
+          "label": "has category"
+        },
+        "object": {
+          "term_id": "0x3bdcd590dbdd0254786d687b2e7357a9e1c7690e2d9dd6bbc739f9933f1cdc7a",
+          "label": "investment_services",
+          "value": {
+            "thing": {
+              "name": "investment_services",
+              "description": "Value atom observed in ERC-8004 agent registry data.",
+              "image": "",
+              "url": ""
+            }
+          }
+        }
+      },
+      {
+        "term_id": "0x4383cc99ded0a0bb415007ca39cba56af48bf278a27b93bc658cab4130ede39f",
+        "predicate": {
+          "term_id": "0x96c20ddd7f83034666e200aa976cbe2249946bf76a7c66333212be82f284ad4b",
+          "label": "has category"
+        },
+        "object": {
+          "term_id": "0xfd7f47ae1b71c3c9c4336a84ec161f13a5d6db151f0b177352c63484a2b95725",
+          "label": "crypto_assets",
+          "value": {
+            "thing": {
+              "name": "crypto_assets",
+              "description": "Value atom observed in ERC-8004 agent registry data.",
+              "image": "",
+              "url": ""
+            }
+          }
+        }
+      },
+      {
+        "term_id": "0x86dbc0eb3b033fd042836dfa750bd7677c6d8d4721a517240a1107ed2de5c81e",
+        "predicate": {
+          "term_id": "0x96c20ddd7f83034666e200aa976cbe2249946bf76a7c66333212be82f284ad4b",
+          "label": "has category"
+        },
+        "object": {
+          "term_id": "0x08ff9888468aabe8e707358c6d35835bc27b8a31833a68be213d063a4398a8b4",
+          "label": "smart_contracts",
+          "value": {
+            "thing": {
+              "name": "smart_contracts",
+              "description": "Value atom observed in ERC-8004 agent registry data.",
+              "image": "",
+              "url": ""
+            }
+          }
+        }
+      },
+      {
+        "term_id": "0x8e3cd30379e83aa845a338df55c5c6caf20ba04b83c87143877703a392c040ce",
+        "predicate": {
+          "term_id": "0x96c20ddd7f83034666e200aa976cbe2249946bf76a7c66333212be82f284ad4b",
+          "label": "has category"
+        },
+        "object": {
+          "term_id": "0x3906d7b7309f9c04fcf06a28a6954c87f9c4c40f74e262ca2c1beb741148806c",
+          "label": "blockchain",
+          "value": {
+            "thing": {
+              "name": "blockchain",
+              "description": "Value atom observed in ERC-8004 agent registry data.",
+              "image": "",
+              "url": ""
+            }
+          }
+        }
+      },
+      {
+        "term_id": "0x943daa8b1f7113567f75fa8ad4361bbf06625252440a6c35cf8b3ad75e90c034",
+        "predicate": {
+          "term_id": "0x96c20ddd7f83034666e200aa976cbe2249946bf76a7c66333212be82f284ad4b",
+          "label": "has category"
+        },
+        "object": {
+          "term_id": "0x016f0c8e0d5bcf1525ef8bed4fa0fb91c82b362ab0784ff202cd12d3d08985e5",
+          "label": "finance_and_business",
+          "value": {
+            "thing": {
+              "name": "finance_and_business",
+              "description": "Value atom observed in ERC-8004 agent registry data.",
+              "image": "",
+              "url": ""
+            }
+          }
+        }
+      },
+      {
+        "term_id": "0x086f14474e3abe3f33948452641dd0304abec8c53579a0fab400c1df5da5f741",
+        "predicate": {
+          "term_id": "0x9ddda4ac2477ec6908e9561ab31ccd767bf3642e0ed0531fd61d447badd896ab",
+          "label": "use"
+        },
+        "object": {
+          "term_id": "0xcfba7ccac56d280356b324ef16332100707ab50e7a6c1c7ab7dfdeb5fb62e43d",
+          "label": "MCP",
+          "value": {
+            "thing": {
+              "name": "MCP",
+              "description": "Protocol or standard atom for MCP, used in ERC-8004 agent capability triples.",
+              "image": "",
+              "url": ""
+            }
+          }
+        }
+      },
+      {
+        "term_id": "0xd294c63cb97189d969dec7b92a410a81605e29c56e147ea9eb273595cd580cf5",
+        "predicate": {
+          "term_id": "0x9ddda4ac2477ec6908e9561ab31ccd767bf3642e0ed0531fd61d447badd896ab",
+          "label": "use"
+        },
+        "object": {
+          "term_id": "0x9146ad2efc85bece6280476c8b338d01ddf0bec09ba56ee0441c9405a852a6e9",
+          "label": "A2A",
+          "value": {
+            "thing": {
+              "name": "A2A",
+              "description": "Protocol or standard atom for A2A, used in ERC-8004 agent capability triples.",
+              "image": "",
+              "url": ""
+            }
+          }
+        }
+      },
+      {
+        "term_id": "0xfb9d7452a61ef1165c8e5bf3584ee91bab6ac864a6e24598a73b018fda7d02db",
+        "predicate": {
+          "term_id": "0x9ddda4ac2477ec6908e9561ab31ccd767bf3642e0ed0531fd61d447badd896ab",
+          "label": "use"
+        },
+        "object": {
+          "term_id": "0xec422ccd84fecb350432533e68a2565c11addff74d80335d1548941518aefb9e",
+          "label": "OASF",
+          "value": {
+            "thing": {
+              "name": "OASF",
+              "description": "Protocol or standard atom for OASF, used in ERC-8004 agent capability triples.",
+              "image": "",
+              "url": ""
+            }
+          }
+        }
+      },
+      {
+        "term_id": "0x6c500a910858fd777c454abbb8262e572ae641834be8d1c9018a655fadce251b",
+        "predicate": {
+          "term_id": "0xa632a94306ab1d56911cff8c06473659a7caa2dfec6de3921bc23ec8ebf96ced",
+          "label": "has type"
+        },
+        "object": {
+          "term_id": "0xb52bb294a1cbf67a3fccc6bc8423e0758a11acfeb60caf6a0465ffca9ec3ae79",
+          "label": "MCP Server",
+          "value": {
+            "thing": {
+              "name": "MCP Server",
+              "description": "Value atom observed in ERC-8004 agent registry data.",
+              "image": "",
+              "url": ""
+            }
+          }
+        }
+      },
+      {
+        "term_id": "0xd236cbe135f08bb33f3f7ff6430c657b0e866d0e946102ba126e152abc76d987",
+        "predicate": {
+          "term_id": "0xa632a94306ab1d56911cff8c06473659a7caa2dfec6de3921bc23ec8ebf96ced",
+          "label": "has type"
+        },
+        "object": {
+          "term_id": "0x6f0aee1b3bc88f578afc00e9444213d0f54cd9ab40cac7130f1d3453fd5c317e",
+          "label": "A2A Agent",
+          "value": {
+            "thing": {
+              "name": "A2A Agent",
+              "description": "Value atom observed in ERC-8004 agent registry data.",
+              "image": "",
+              "url": ""
+            }
+          }
+        }
+      },
+      {
+        "term_id": "0xe05356545e775d8e858fccef434c50b65a96bd80fe3e16e2bbfd1379bb42cdeb",
+        "predicate": {
+          "term_id": "0xa632a94306ab1d56911cff8c06473659a7caa2dfec6de3921bc23ec8ebf96ced",
+          "label": "has type"
+        },
+        "object": {
+          "term_id": "0x9a8bfad8858f33eb1f3599cc218fc5ee743bc359a8f3e60209e4252f163254e8",
+          "label": "OASF Agent",
+          "value": {
+            "thing": {
+              "name": "OASF Agent",
+              "description": "Value atom observed in ERC-8004 agent registry data.",
+              "image": "",
+              "url": ""
+            }
+          }
+        }
+      },
+      {
+        "term_id": "0xe0dac964ed4ba4722a5f42b10e42d795a5a8f6a9995175052db673952675585b",
+        "predicate": {
+          "term_id": "0xa632a94306ab1d56911cff8c06473659a7caa2dfec6de3921bc23ec8ebf96ced",
+          "label": "has type"
+        },
+        "object": {
+          "term_id": "0x800342c0ded1c288e69f39a2dc96d8cff9b242e9f573193e6e0a849e5315d3e9",
+          "label": "AIAgent",
+          "value": {
+            "thing": {
+              "name": "AIAgent",
+              "description": "Type atom for software agents and AI agents represented in the Intuition knowledge graph.",
+              "image": "",
+              "url": ""
+            }
+          }
+        }
+      },
+      {
+        "term_id": "0xd2e20df719a59565bb063662a9804767a8f229d7ed727394cf6bd027b70c5ec3",
+        "predicate": {
+          "term_id": "0xa974ce85010776bb6eb81e4492bdb8712f127aa75ae737f02cbe80e72409f7d3",
+          "label": "available on"
+        },
+        "object": {
+          "term_id": "0xa9d3369082d5616143ae1562866b1b6ec815f295c9c1edb2cb82f8d81382d158",
+          "label": "Base",
+          "value": {
+            "thing": {
+              "name": "Base",
+              "description": "Chain atom for Base, used to describe where an ERC-8004 agent is available.",
+              "image": "",
+              "url": ""
+            }
+          }
+        }
+      },
+      {
+        "term_id": "0x1860a5f7b7cfcb76b870d08db2e160bf031bcf91d0fdca80097eed09b6139d74",
+        "predicate": {
+          "term_id": "0xaf3ca6cd6db1cc57c5ae68b1177ba1fd426488bd781494166ab8cb0ed28a6ea3",
+          "label": "compatible with"
+        },
+        "object": {
+          "term_id": "0x598193f2ac7f951b82b59a9c454cc012c3d7bfd76328331f4e4c9e5e75a2be8f",
+          "label": "x402",
+          "value": {
+            "thing": {
+              "name": "x402",
+              "description": "Protocol or standard atom for x402, used in ERC-8004 agent capability triples.",
+              "image": "",
+              "url": ""
+            }
+          }
+        }
+      },
+      {
+        "term_id": "0x7b7d7bc5c3e426fee8a76aba0c9129ef9ac627f556fbf67ba0ed9081c9b5d5c8",
+        "predicate": {
+          "term_id": "0xfa02609bfde5a9a7ba18fa8afc1c42bc643edfaf7d44e3ce9e50835290d03324",
+          "label": "implement"
+        },
+        "object": {
+          "term_id": "0x595ba5059b23a9aa4d64deff324ff3d957866715d5b7b8015eebc9009bab78b2",
+          "label": "ERC-8004",
+          "value": {
+            "thing": {
+              "name": "ERC-8004",
+              "description": "Protocol atom for ERC-8004 agent identity, discovery, and trust data.",
+              "image": "",
+              "url": ""
+            }
+          }
+        }
+      }
+    ]
+  }
+}

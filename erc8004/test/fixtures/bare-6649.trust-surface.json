@@ -1,0 +1,98 @@
+{
+  "data": {
+    "triples": [
+      {
+        "term_id": "0xbb5fb3fd0ce0f55afd542999bbae7c1252227887d8a5d680b17007a2b0693b76",
+        "predicate": {
+          "term_id": "0x7f455fb041f766c3f24552db4c943888c6778c2475d4f2d434b84ad03298457c",
+          "label": "has trust assessment"
+        },
+        "object": {
+          "term_id": "0x9a08fcd36ccb36ec6b9be58ac7bfaa68c7cc3d10d2ca2daebdad8b2cea1a7571",
+          "label": "Deep3 Labs — Agent 8453:6649 assessment",
+          "data": "ipfs://bafkreidi7idu7q5ia5qzhzvo2ddo4vgbhbdh6ajgpthpgptbzay3a7plj4",
+          "value": {
+            "thing": {
+              "name": "Deep3 Labs — Agent 8453:6649 assessment",
+              "description": "Live feedback assessment for eip155:8453/erc721:0x8004A169FB4a3325136EB29fA0ceB6D2e539a432/6649.",
+              "image": "https://assets.deep3.ai/logo.svg",
+              "url": "https://api.deep3.ai/.well-known/intuition/erc8004/agents/8453/6649/erc8004-feedback-trust-assessment.json"
+            }
+          }
+        },
+        "term": {
+          "total_market_cap": "987500001000000",
+          "total_assets": "987500001000000",
+          "vaults": [
+            {
+              "market_cap": "987500001000000",
+              "total_assets": "987500001000000",
+              "total_shares": "987500001000000",
+              "current_share_price": "1000000000000000000",
+              "position_count": 1
+            }
+          ]
+        },
+        "counter_term": {
+          "total_market_cap": "1000000",
+          "total_assets": "1000000",
+          "vaults": [
+            {
+              "market_cap": "1000000",
+              "total_assets": "1000000",
+              "total_shares": "1000000",
+              "current_share_price": "1000000000000000000",
+              "position_count": 0
+            }
+          ]
+        }
+      },
+      {
+        "term_id": "0xd7269615e9ce8294f3b67b44a7a23f0fe60f5efd3d92fc8f31b79d6a95d7d477",
+        "predicate": {
+          "term_id": "0xdc3c5639b39f9b6553b75b37c47fa4810961392b28956234ba9f401a98f43888",
+          "label": "has trust provider"
+        },
+        "object": {
+          "term_id": "0xdaf11206a8c7093860b53fa376178a46c8c802663fb2485f051b2d65c627c23f",
+          "label": "Deep3 Labs",
+          "data": "ipfs://bafkreicfrjejfvpji3fcmhtfeduclvvtwih2h76mmapizwt26duoevjrgy",
+          "value": {
+            "thing": {
+              "name": "Deep3 Labs",
+              "description": "Deep3 Labs trains AI and machine learning models on blockchain data.",
+              "image": "https://assets.deep3.ai/logo.svg",
+              "url": "https://deep3.ai"
+            }
+          }
+        },
+        "term": {
+          "total_market_cap": "987500001000000",
+          "total_assets": "987500001000000",
+          "vaults": [
+            {
+              "market_cap": "987500001000000",
+              "total_assets": "987500001000000",
+              "total_shares": "987500001000000",
+              "current_share_price": "1000000000000000000",
+              "position_count": 1
+            }
+          ]
+        },
+        "counter_term": {
+          "total_market_cap": "1000000",
+          "total_assets": "1000000",
+          "vaults": [
+            {
+              "market_cap": "1000000",
+              "total_assets": "1000000",
+              "total_shares": "1000000",
+              "current_share_price": "1000000000000000000",
+              "position_count": 0
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

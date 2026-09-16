@@ -1,0 +1,190 @@
+{
+  "data": {
+    "triples": [
+      {
+        "term_id": "0xa606da39ddb17c06affdbbbf40cc45f13082fb0a3886b4b70a5819345d235805",
+        "predicate": {
+          "term_id": "0xdc3c5639b39f9b6553b75b37c47fa4810961392b28956234ba9f401a98f43888",
+          "label": "has trust provider"
+        },
+        "object": {
+          "term_id": "0x6d7cd747553fc564c5aa716f6c983b0540461b0839fa6e5fca0608244f22743d",
+          "label": "AsterPay KYA",
+          "data": "ipfs://bafkreiccojmbbln4j6cjmlgcnsywjmcmhoxslbn4bv4ccqbuifayd6fr54",
+          "value": {
+            "thing": {
+              "name": "AsterPay KYA",
+              "description": "Know Your Agent (KYA): deterministic rule-based trust scoring (0-100) for AI agents — on-chain wallet analysis, sanctions screening, ERC-8004 identity, operator KYB and behavioral history, with dollar-denominated exposure guidance. EU/EUR settlement layer for agent commerce.",
+              "image": "https://asterpay.io/assets/asterpay-icon-512.png",
+              "url": "https://asterpay.io"
+            }
+          }
+        },
+        "term": {
+          "total_market_cap": "5264277868688529753",
+          "total_assets": "5126112499998074999",
+          "vaults": [
+            {
+              "market_cap": "987500001000000",
+              "total_assets": "987500001000000",
+              "total_shares": "987500001000000",
+              "current_share_price": "1000000000000000000",
+              "position_count": 1
+            }
+          ]
+        },
+        "counter_term": {
+          "total_market_cap": "4000000",
+          "total_assets": "4000001",
+          "vaults": [
+            {
+              "market_cap": "1000000",
+              "total_assets": "1000000",
+              "total_shares": "1000000",
+              "current_share_price": "1000000000000000000",
+              "position_count": 0
+            }
+          ]
+        }
+      },
+      {
+        "term_id": "0xa516d25121d3966a03078fb00ae7a77b711e7d5bc6687bd5d70a02546d308f6e",
+        "predicate": {
+          "term_id": "0x7f455fb041f766c3f24552db4c943888c6778c2475d4f2d434b84ad03298457c",
+          "label": "has trust assessment"
+        },
+        "object": {
+          "term_id": "0xb10e81a47fb75579d2d85d0ac0c4d6c58fe439c6bf8f10ca9259efc97a669d7c",
+          "label": "AsterPay KYA — Captain Dackie trust assessment",
+          "data": "ipfs://bafkreihvnumr2la4hldxfjx6azt74kvprnjqrn5zugktirvuweftygwg3u",
+          "value": {
+            "thing": {
+              "name": "AsterPay KYA — Captain Dackie trust assessment",
+              "description": "Live KYA trust assessment for the Captain Dackie ERC-8004 agent (Base #1380). Score, tier, risk level, per-dimension breakdown and max-exposure guidance, refreshed continuously.",
+              "image": "https://asterpay.io/assets/asterpay-icon-512.png",
+              "url": "https://api.asterpay.io/.well-known/intuition/erc8004/agents/8453/1380/trust-assessment.json"
+            }
+          }
+        },
+        "term": {
+          "total_market_cap": "5066968941635030771",
+          "total_assets": "4938487499998074999",
+          "vaults": [
+            {
+              "market_cap": "987500001000000",
+              "total_assets": "987500001000000",
+              "total_shares": "987500001000000",
+              "current_share_price": "1000000000000000000",
+              "position_count": 1
+            }
+          ]
+        },
+        "counter_term": {
+          "total_market_cap": "1000000",
+          "total_assets": "1000000",
+          "vaults": [
+            {
+              "market_cap": "1000000",
+              "total_assets": "1000000",
+              "total_shares": "1000000",
+              "current_share_price": "1000000000000000000",
+              "position_count": 0
+            }
+          ]
+        }
+      },
+      {
+        "term_id": "0x87f1f9a1f57b9ff9f69aba87e8d7b28aee92b6013f6c026c437cab3bab3a43fd",
+        "predicate": {
+          "term_id": "0x7f455fb041f766c3f24552db4c943888c6778c2475d4f2d434b84ad03298457c",
+          "label": "has trust assessment"
+        },
+        "object": {
+          "term_id": "0x8945be014899fbf1f5c3835992aeeaf6231e7d52131cc63cea8a2438726c382a",
+          "label": "Deep3 Labs — Captain Dackie assessment",
+          "data": "ipfs://bafkreidcapk5frb53xvgnls74ukzhpmuhvz2reu2nze72rwvgsrtswzxii",
+          "value": {
+            "thing": {
+              "name": "Deep3 Labs — Captain Dackie assessment",
+              "description": "Live feedback assessment for eip155:8453/erc721:0x8004A169FB4a3325136EB29fA0ceB6D2e539a432/1380.",
+              "image": "https://assets.deep3.ai/logo.svg",
+              "url": "https://api.deep3.ai/.well-known/intuition/erc8004/agents/8453/1380/erc8004-feedback-trust-assessment.json"
+            }
+          }
+        },
+        "term": {
+          "total_market_cap": "987500001000000",
+          "total_assets": "987500001000000",
+          "vaults": [
+            {
+              "market_cap": "987500001000000",
+              "total_assets": "987500001000000",
+              "total_shares": "987500001000000",
+              "current_share_price": "1000000000000000000",
+              "position_count": 1
+            }
+          ]
+        },
+        "counter_term": {
+          "total_market_cap": "1000000",
+          "total_assets": "1000000",
+          "vaults": [
+            {
+              "market_cap": "1000000",
+              "total_assets": "1000000",
+              "total_shares": "1000000",
+              "current_share_price": "1000000000000000000",
+              "position_count": 0
+            }
+          ]
+        }
+      },
+      {
+        "term_id": "0xc6dc2046ed87123a9c7e5940a98a82dae427f27f5b880c8f314e9b1030328249",
+        "predicate": {
+          "term_id": "0xdc3c5639b39f9b6553b75b37c47fa4810961392b28956234ba9f401a98f43888",
+          "label": "has trust provider"
+        },
+        "object": {
+          "term_id": "0xdaf11206a8c7093860b53fa376178a46c8c802663fb2485f051b2d65c627c23f",
+          "label": "Deep3 Labs",
+          "data": "ipfs://bafkreicfrjejfvpji3fcmhtfeduclvvtwih2h76mmapizwt26duoevjrgy",
+          "value": {
+            "thing": {
+              "name": "Deep3 Labs",
+              "description": "Deep3 Labs trains AI and machine learning models on blockchain data.",
+              "image": "https://assets.deep3.ai/logo.svg",
+              "url": "https://deep3.ai"
+            }
+          }
+        },
+        "term": {
+          "total_market_cap": "987500001000000",
+          "total_assets": "987500001000000",
+          "vaults": [
+            {
+              "market_cap": "987500001000000",
+              "total_assets": "987500001000000",
+              "total_shares": "987500001000000",
+              "current_share_price": "1000000000000000000",
+              "position_count": 1
+            }
+          ]
+        },
+        "counter_term": {
+          "total_market_cap": "1000000",
+          "total_assets": "1000000",
+          "vaults": [
+            {
+              "market_cap": "1000000",
+              "total_assets": "1000000",
+              "total_shares": "1000000",
+              "current_share_price": "1000000000000000000",
+              "position_count": 0
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

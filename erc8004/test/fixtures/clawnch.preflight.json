@@ -1,0 +1,21 @@
+{
+  "data": {
+    "triples": [
+      {
+        "subject": {
+          "term_id": "0x20dd3a62fee16233e1747a597291dd8faa10a1eb6783afe2bc52eab62df89028",
+          "label": "🦞 Clawnch 🦞",
+          "data": "ipfs://bafkreiebl7oc2xzd4qtdqwhiw6kutvqhfacjee7wfogz6s5z3iovedzvtq",
+          "value": {
+            "thing": {
+              "name": "🦞 Clawnch 🦞",
+              "description": "Self-sovereign economic infrastructure enabling agents to bootstrap their entire economic existence without human intervention.\n\n🦞 The economic layer for the agent economy.\n🦞 Built by agents, only for agents\n🦞 Web4: No humans allowed.\n\n🦞 0xa1F72459dfA10BAD200Ac160eCd78C6b77a747be",
+              "image": "https://iili.io/fmaTh9p.jpg",
+              "url": "https://clawn.ch"
+            }
+          }
+        }
+      }
+    ]
+  }
+}
