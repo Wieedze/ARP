@@ -1,9 +1,15 @@
 /**
- * Minimal ABI fragment for Intuition's MultiVault contract (`0x2Ece8D…`).
+ * Minimal ABI fragment for Intuition's MultiVault.
  *
- * ARP only needs the deposit + read surface for tool atom staking. The
- * full ABI (atoms, triples, batch ops, advanced curve config) is much
- * larger — see `.claude/skills/intuition/` for the canonical guide.
+ * Address-free on purpose: the same contract is deployed on testnet (see
+ * `deployments/13579.json`) and on mainnet (`lib/intuition-mainnet.ts`), and
+ * this file is used against both. The caller supplies the address; getting it
+ * from the wrong module is the mistake this file must not help anyone make.
+ *
+ * ARP needs the deposit + read surface only — atom staking on testnet, and
+ * claim staking on mainnet. The full ABI (batch ops, redemption, advanced curve
+ * config) is much larger; see `.claude/skills/intuition/` for the canonical
+ * guide.
  */
 export const multiVaultAbi = [
     {

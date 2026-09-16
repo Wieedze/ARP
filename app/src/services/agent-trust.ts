@@ -68,8 +68,6 @@ export type TrustRow = {
     id: string;
     providerName: string;
     providerUrl: string | null;
-    providerDescription: string | null;
-    providerImage: string | null;
     providerMatch: ProviderMatch;
     providerClaim: ProviderAssessment | null;
     assessment: ProviderAssessment | null;
@@ -243,8 +241,6 @@ function rowFrom(
         // A `has trust provider` object atom's url is the provider's own site;
         // the assessment atom's url is the document. Never interchange them.
         providerUrl: providerEdge?.claim.provider.url ?? document?.provider?.url ?? null,
-        providerDescription: providerEdge?.claim.provider.description ?? null,
-        providerImage: providerEdge?.claim.provider.image ?? null,
         providerMatch,
         providerClaim: providerEdge,
         assessment: assessmentEdge,

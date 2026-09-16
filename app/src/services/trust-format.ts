@@ -132,12 +132,17 @@ export function describeSignature(verdict: SignatureVerdict): SignatureCopy {
  * the MultiVault an account holds at most one position per vault, so the
  * position count *is* the distinct-staker count — stated rather than assumed.
  */
+export function describePositionCount(count: number): string {
+    return count === 1
+        ? "1 position · 1 distinct staker"
+        : `${count} positions · ${count} distinct stakers`;
+}
+
 export function describeStakers(side: MarketSide): string {
     const count = side.positionCount;
     if (count === null) return "position count not reported by the indexer";
     if (count === 0) return "no positions · no distinct stakers";
-    if (count === 1) return "1 position · 1 distinct staker";
-    return `${count} positions · ${count} distinct stakers`;
+    return describePositionCount(count);
 }
 
 /**
