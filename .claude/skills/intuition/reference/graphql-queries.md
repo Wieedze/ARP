@@ -36,6 +36,32 @@ The `$GRAPHQL` endpoint also supports **pin mutations** — `pinThing`, `pinPers
 
 Pin mutations are documented in `reference/schemas.md`. All read safety invariants below also apply to pin mutation requests — use only the session-pinned `$GRAPHQL` endpoint.
 
+> **ARP divergence note — measured 2026-09-16 (not an upstream change).**
+> This file is a vendored snapshot (ADR 0005); the text above is left as
+> captured. It is **wrong on this point today**: pin mutations were removed
+> from the indexer endpoint and moved behind a gated service.
+>
+> ```
+> POST https://testnet.intuition.sh/v1/graphql   -> {"errors":[{"message":"no mutations exist"}]}
+> POST https://mainnet.intuition.sh/v1/graphql   -> {"errors":[{"message":"no mutations exist"}]}
+> POST https://pin.intuition.systems/v1/graphql  -> 401 {"message":"No API key found in request"}
+> ```
+>
+> `pinThing` / `pinPerson` / `pinOrganization` now live at
+> `https://pin.intuition.systems/v1/graphql` and require a partner API key,
+> sent as the `apikey` header. The endpoint is network-agnostic — one key
+> serves testnet 13579 and mainnet 1155 — so it is **not** derived from
+> `$GRAPHQL`, which remains read-only.
+>
+> The mutation bodies, the all-fields-required rule and the response contract
+> below are unchanged; only the endpoint and the authentication are.
+>
+> In ARP: `app/src/services/intuition-pin.ts` (endpoint + credential as an
+> explicit parameter), `scripts/pin-env.ts` (the only env read),
+> `bun run verify:pin`. See ADR 0016 and
+> `docs/07_INTUITION_ERC8004_PARTNER_GUIDE.md`, which is authoritative on the
+> partner pinning API.
+
 ## Read Safety Invariants
 
 These rules govern all GraphQL reads. They are the read-side equivalent of the write invariant in SKILL.md step 6.
