@@ -214,6 +214,13 @@ bun run build        # ESM + .d.ts into dist/
 bun run lint         # tsc --noEmit
 ```
 
+> **`bun run build` is a precondition for every consumer.** This package's `exports` point at
+> `dist/`, which is gitignored, so anything importing `@arp-protocol/erc8004` — an app, a script, a
+> one-off probe — reads whatever was last built. A stale `dist/` fails _silently_ and plausibly: it
+> once reported agents with zero trust providers, which looked exactly like a regression in the
+> connector rather than an old build. `app/`'s `dev`, `build` and `test` scripts run this build
+> first for that reason. A standalone script has to do it itself.
+
 Fixtures are real responses recorded from mainnet on 2026-09-16 — three live agents, three cohort
 pages, and four live provider documents, including one provider whose advertised resolver URL 404s. Mocking sits at the
 network boundary only, so the GraphQL transport, the document narrowing and the signature check all
