@@ -576,9 +576,18 @@ function Field({label, value, href}: {label: string; value: string; href?: strin
     );
 }
 
+/**
+ * A caught error, set apart by a rule rather than by a colour.
+ *
+ * Not `--color-alarm`: ADR 0018 scopes that hue to a signature `mismatch` and
+ * its row, and nothing else. A rejected wallet prompt or a slow RPC is a
+ * recoverable operation failing, not a provider caught misrepresenting a
+ * signature, and painting both the same colour is what makes the rare one stop
+ * meaning anything.
+ */
 function Failure({message}: {message: string}) {
     return (
-        <p className="mt-5 max-w-[64ch] text-[length:var(--text-body-sm)] border-l border-l-[color:var(--color-alarm)] pl-4">
+        <p className="mt-5 max-w-[64ch] text-[length:var(--text-body-sm)] border-l border-l-[color:var(--color-border-strong)] pl-4">
             {message}
         </p>
     );
