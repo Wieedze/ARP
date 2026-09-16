@@ -95,7 +95,8 @@ ARP/
 │   ├── 03_MVP_SCOPE.md               (extended by 00)
 │   ├── 04_SEED_MODULES.md
 │   ├── 05_UI_DESIGN.md
-│   └── 06_BEAR_TRAP_REFERENCE.md     (supplementary example for Task 02b — MetaMask is canonical)
+│   ├── 06_BEAR_TRAP_REFERENCE.md     (supplementary example for Task 02b — MetaMask is canonical)
+│   └── 07_INTUITION_ERC8004_PARTNER_GUIDE.md  (vendored Intuition partner guide — canonical ERC-8004 write pattern + Appendix B term IDs; ADR 0015)
 ├── tasks/                             atomic task files
 ├── contracts/                         Solidity (Foundry)
 ├── app/                               TypeScript UI
