@@ -11,9 +11,15 @@
  *
  * The credential is an **explicit parameter**. Nothing under `app/src/services/`
  * reads the ambient environment; that is a grepped invariant, not a habit. It
- * keeps this module pure and testable without an environment, and it makes a
- * browser caller a compile-time error instead of a leaked partner key: only Node
- * entry points can produce a `PinAuth` (see `scripts/pin-env.ts`).
+ * keeps this module pure and testable without an environment.
+ *
+ * `PinAuth` is **branded** (see below), so this module exports no way to build
+ * one: a browser file importing only from `app/src/services/` cannot produce a
+ * credential at all, and `{apiKey: "…"}` is a type error rather than a leak. The
+ * single sanctioned constructor is `requirePinAuth()` in `scripts/pin-env.ts`,
+ * which is Node-only. Any other production requires a deliberate, commented type
+ * assertion — greppable in review, which is the point: no TypeScript brand can
+ * stop a caller who sets out to lie, it can only stop the accident.
  *
  * See ADR 0016 and `docs/07_INTUITION_ERC8004_PARTNER_GUIDE.md`.
  */
@@ -21,23 +27,40 @@
 /** The gated pinning endpoint. Not `deployments.chain.graphqlUrl` — that is the read endpoint. */
 export const PIN_ENDPOINT = "https://pin.intuition.systems/v1/graphql";
 
-/** Intuition's documented header for the partner key. */
-const DEFAULT_HEADER_NAME = "apikey";
+/**
+ * Intuition's documented header for the partner key. Exported so
+ * `scripts/pin-env.ts` resolves the same default this module applies — one
+ * literal, no drift.
+ */
+export const DEFAULT_HEADER_NAME = "apikey";
 
 /**
- * Partner credential for the pinning API.
+ * Brand for {@link PinAuth}. Declared, never defined: it exists only in the type
+ * system and this module never exports a value carrying it, so no other module
+ * can write the property. That is what makes `PinAuth` nominal rather than
+ * structural.
+ */
+declare const pinAuthBrand: unique symbol;
+
+/**
+ * Partner credential for the pinning API. Obtain one from `requirePinAuth()` in
+ * `scripts/pin-env.ts`; it cannot be written as an object literal.
  *
  * `headerName` exists only so a scheme change upstream (e.g. a move to
  * `Authorization: Bearer`) does not require a code change; it defaults to
- * `"apikey"`.
+ * {@link DEFAULT_HEADER_NAME}.
  */
 export type PinAuth = {
     apiKey: string;
     headerName?: string;
+    readonly [pinAuthBrand]: true;
 };
 
 /**
- * The pinning endpoint rejected the credential.
+ * The pinning endpoint rejected the credential — 401 (no/unknown key) or 403
+ * (key known, not entitled). Both mean "fix the credential", so both get the
+ * same remediation rather than one of them falling through to a bare
+ * `pinThing HTTP 403` that names nothing actionable.
  *
  * Carries the remediation inline because the bare `HTTP 401` this replaces cost
  * real debugging time: the endpoint moved, and nothing in the old message said so.
@@ -71,7 +94,7 @@ export class PinAuthError extends Error {
  *
  * @param args  The Thing's four metadata fields.
  * @param auth  Partner credential. Required — see the module header.
- * @throws {PinAuthError} when the endpoint answers 401.
+ * @throws {PinAuthError} when the endpoint answers 401 or 403.
  */
 export async function pinThing(
     args: {
@@ -97,7 +120,9 @@ export async function pinThing(
         },
         body: JSON.stringify({query: mutation, variables: args}),
     });
-    if (res.status === 401) throw new PinAuthError(res.status, await res.text());
+    if (res.status === 401 || res.status === 403) {
+        throw new PinAuthError(res.status, await res.text());
+    }
     if (!res.ok) throw new Error(`pinThing HTTP ${res.status}: ${await res.text()}`);
     // GraphQL response shape is fixed by the schema; runtime validation
     // would be theatre — the read below throws on missing fields anyway.

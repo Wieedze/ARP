@@ -3,6 +3,7 @@ import {stringToHex, type Hex} from "viem";
 
 import {deployments} from "../../lib/deployments";
 import {intuitionTestnet} from "../../lib/chains";
+import type {PinAuth} from "../intuition-pin";
 
 import {
     makeMockPublicClient,
@@ -27,7 +28,10 @@ const TRIPLE_COST = 50n;
 
 // Pinning is gated behind Intuition's partner API (ADR 0016); every helper
 // that pins now takes the credential as a required parameter.
-const PIN_AUTH = {apiKey: "test-partner-key"};
+// `PinAuth` is branded so only `scripts/pin-env.ts` can mint one from a real
+// key. A test fixture is the other legitimate producer, and the assertion is
+// what makes that deliberate rather than accidental.
+const PIN_AUTH = {apiKey: "test-partner-key"} as unknown as PinAuth;
 
 // pinThing is mocked at the module boundary — the service calls it via
 // import and we never want a real fetch in unit tests.

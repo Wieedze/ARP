@@ -1,9 +1,16 @@
 import {afterEach, describe, expect, it, vi} from "vitest";
 
 import {deployments} from "../../lib/deployments";
-import {PIN_ENDPOINT, PinAuthError, pinThing} from "../intuition-pin";
+import {PIN_ENDPOINT, PinAuthError, pinThing, type PinAuth} from "../intuition-pin";
 
-const AUTH = {apiKey: "test-partner-key"};
+// `PinAuth` is branded so only `scripts/pin-env.ts` can mint one from a real
+// key. A test fixture is the other legitimate producer, and the assertion is
+// what makes that deliberate rather than accidental.
+const AUTH = {apiKey: "test-partner-key"} as unknown as PinAuth;
+const AUTH_OVERRIDE = {
+    apiKey: "Bearer abc",
+    headerName: "Authorization",
+} as unknown as PinAuth;
 
 function mockFetch(impl: typeof fetch) {
     vi.stubGlobal("fetch", vi.fn(impl));
@@ -58,9 +65,9 @@ describe("pinThing", () => {
     });
 
     it("sends the credential under the default 'apikey' header", async () => {
-        let headers: Record<string, string> | undefined;
+        let headers: Headers | undefined;
         mockFetch(async (_url, init) => {
-            headers = init?.headers as Record<string, string>;
+            headers = new Headers(init?.headers);
             return new Response(JSON.stringify({data: {pinThing: {uri: "ipfs://x"}}}), {
                 status: 200,
                 headers: {"Content-Type": "application/json"},
@@ -69,27 +76,24 @@ describe("pinThing", () => {
 
         await pinThing({name: "x", description: "y", image: "", url: ""}, AUTH);
 
-        expect(headers?.["apikey"]).toBe("test-partner-key");
-        expect(headers?.["Content-Type"]).toBe("application/json");
+        expect(headers?.get("apikey")).toBe("test-partner-key");
+        expect(headers?.get("Content-Type")).toBe("application/json");
     });
 
     it("honours a headerName override so a scheme change needs no code change", async () => {
-        let headers: Record<string, string> | undefined;
+        let headers: Headers | undefined;
         mockFetch(async (_url, init) => {
-            headers = init?.headers as Record<string, string>;
+            headers = new Headers(init?.headers);
             return new Response(JSON.stringify({data: {pinThing: {uri: "ipfs://x"}}}), {
                 status: 200,
                 headers: {"Content-Type": "application/json"},
             });
         });
 
-        await pinThing(
-            {name: "x", description: "y", image: "", url: ""},
-            {apiKey: "Bearer abc", headerName: "Authorization"},
-        );
+        await pinThing({name: "x", description: "y", image: "", url: ""}, AUTH_OVERRIDE);
 
-        expect(headers?.["Authorization"]).toBe("Bearer abc");
-        expect(headers?.["apikey"]).toBeUndefined();
+        expect(headers?.get("Authorization")).toBe("Bearer abc");
+        expect(headers?.get("apikey")).toBeNull();
     });
 
     it("throws PinAuthError on 401, naming the env var and the verify command", async () => {
@@ -110,6 +114,17 @@ describe("pinThing", () => {
         // The upstream body is preserved — it is what distinguishes "no key
         // sent" from "key rejected".
         await expect(promise).rejects.toThrow(/No API key found in request/);
+    });
+
+    it("treats 403 exactly like 401 — a key that exists but is not entitled", async () => {
+        mockFetch(async () => new Response("forbidden", {status: 403}));
+
+        const promise = pinThing({name: "x", description: "y", image: "", url: ""}, AUTH);
+
+        await expect(promise).rejects.toBeInstanceOf(PinAuthError);
+        await expect(promise).rejects.toMatchObject({name: "PinAuthError", status: 403});
+        await expect(promise).rejects.toThrow(/INTUITION_PIN_API_KEY/);
+        await expect(promise).rejects.toThrow(/bun run verify:pin/);
     });
 
     it("throws on a non-2xx HTTP response, surfacing status + body", async () => {
