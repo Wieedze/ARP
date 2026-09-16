@@ -32,10 +32,19 @@ for (const entry of profile.assessments) {
         entry.claim.provider.name,
         entry.signature.status, // "verified" | "mismatch" | "unverified"
         entry.freshness.status, // "fresh" | "stale" | "unknown"
-        entry.market?.support.totalAssets,
+        entry.market?.support.positionCount, // distinct stakers — see the warning below
     );
 }
 ```
+
+> **On market numbers.** `positionCount` is the field to lead with: these vaults typically hold one
+> or two positions, so a market cap shown without its staker count misrepresents the market.
+>
+> `support.totalAssets` is the **term**-level total, not the vault balance, and the two differ by
+> roughly three orders of magnitude — 0.988 against 0.0009875 TRUST on a live claim measured
+> 2026-09-16. If you need the vault balance, read `getVault(termId, curveId)` on the MultiVault
+> directly; this package deliberately does not, because it is read-only and holds no chain client.
+> ARP's own panel reads the chain for exactly this reason.
 
 `registry` defaults to the ERC-8004 Identity Registry at
 `0x8004A169FB4a3325136EB29fA0ceB6D2e539a432`, which is deployed at the same address on Base, BSC and
