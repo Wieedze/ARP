@@ -34,9 +34,19 @@ Each branch is one reviewable unit, cut from `main`, targeting `main`.
 | `feat/erc8004-connector`        | `@arp-protocol/erc8004` — read, merge, verify signatures    | —          | Phase 1 · O1        |
 | `feat/agent-trust-panel`        | `/agent/:chainId/:tokenId` — merged panel + curation market | connector  | Phase 1 · O1 + O6   |
 
-`feat/pin-writes-server-side` and `feat/erc8004-connector` touch disjoint files and are built in
-parallel in separate git worktrees. `feat/agent-trust-panel` starts once the connector's surface is
-stable.
+The shape is a fan-out, not a linear stack:
+
+```
+main
+ └─ docs/strategy-and-positioning        (7)
+     ├─ feat/pin-writes-server-side     (+5)   ← sibling
+     └─ feat/erc8004-connector         (+10)   ← sibling
+         └─ feat/agent-trust-panel     (+12)   ← stacked, consumes the connector
+```
+
+`feat/pin-writes-server-side` and `feat/erc8004-connector` touch disjoint files and are independent —
+the connector is read-only and never touches the write path, so neither needs the other. Merge order:
+the strategy branch first, then the two siblings in any order, then the panel after the connector.
 
 ---
 
@@ -153,7 +163,14 @@ gh pr create --base main --head docs/strategy-and-positioning \
 - Phase 2 (capability indexing) — the moat, but it is a write path at scale and needs Phase 0 merged
   and a gas budget first.
 - Phase 3 and 4.
-- Any mainnet write, including enabling the stake control.
+- Deploying any ARP contract to Intuition mainnet, and creating atoms or triples there at scale
+  (ADR 0021 costs that: 0.5 TRUST per agent, ~14,300 across the cohort).
+
+  **Superseded:** this section originally read "any mainnet write, including enabling the stake
+  control". ADR 0017 authorised one narrow class of mainnet write — deposits into existing
+  `has trust provider` vaults, signed by the operator — and the panel ships it enabled. The
+  prohibition above is what survives.
+
 - Deploying ARP contracts to Intuition mainnet.
 - The `CLAUDE.md` authority re-point proposed in `docs/09` §10 — the router does not change silently;
   it needs its own ADR and the user's acceptance of `docs/09`.

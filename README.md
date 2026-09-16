@@ -12,14 +12,16 @@ Agent runtimes today have solid **compute layers** (orchestration, tool invocati
 
 ARP is the missing **trust + reputation layer** that any runtime can plug into:
 
-| Layer | Provider |
-|---|---|
-| **Compute runtime** (orchestration, tool calls) | Any — runtime-agnostic |
-| **Trust + identity + reputation** | ARP (this repo) |
-| **Coordination chain + graph** | Intuition (atoms + triples + bonding curve) |
-| **Bounded autonomy + payments** | MetaMask Smart Accounts Kit (ERC-7710) |
+| Layer                                           | Provider                                    |
+| ----------------------------------------------- | ------------------------------------------- |
+| **Compute runtime** (orchestration, tool calls) | Any — runtime-agnostic                      |
+| **Trust + identity + reputation**               | ARP (this repo)                             |
+| **Coordination chain + graph**                  | Intuition (atoms + triples + bonding curve) |
+| **Bounded autonomy + payments**                 | MetaMask Smart Accounts Kit (ERC-7710)      |
 
-Built for the **MetaMask Dev Cook-Off** (deadline 2026-06-15). Deployed entirely on **Intuition Testnet**.
+ARP's own contracts are deployed on **Intuition Testnet** (chainId 13579). The trust panel additionally **reads Intuition mainnet** (chainId 1155), where the 28,648 ERC-8004 agents live, and can **stake real TRUST** there — see _Two networks_ below.
+
+Originally built for the MetaMask Dev Cook-Off (deadline 2026-06-15, now past). The current strategic commitment is [docs/09_POSITIONING_AND_PLAN.md](docs/09_POSITIONING_AND_PLAN.md).
 
 ## What ARP gives you
 
@@ -44,7 +46,9 @@ That's it. Everything else is emergent.
 ARP runs three personas in parallel on Intuition Testnet. The demo exercises all three.
 
 ### Operator (browser, `/agent`)
+
 One-time setup, then walks away:
+
 1. Mints an ERC-8004 agent NFT.
 2. Generates a runtime keypair and binds it via `setAgentWallet`.
 3. Deploys a MetaMask Smart Account.
@@ -53,12 +57,11 @@ One-time setup, then walks away:
    - **Compose** — stock `AllowedTargetsEnforcer([MultiVault])` + `AllowedMethodsEnforcer([deposit, createAtoms, createTriples])` + `TrustStakeCapEnforcer(cap, period)` gating Intuition staking + graph writes.
 
 ### Agent runtime (terminal)
-The repo ships two example runtimes that consume the signed delegations:
-5. `scripts/agent-approve-sa.ts` — one-time MultiVault approval so the Smart Account can deposit on the runtime's behalf.
-6. `scripts/agent-loop.ts` — autonomous walk of `scripts/manifest-modules.json` (14 tools across 4 domains). Publishes new modules, ensures tool atoms exist, declares `(agent, uses, tool)` triples, stakes tTRUST on each tool. Exercises both revert paths (`DomainNotAllowed`, `StakeExceedsCap`) so the bounds visibly hold.
-7. `scripts/agent-server.ts` — on-demand HTTP runtime that accepts a paid audit job, runs it via the Trail of Bits methodologies, **fuzzy-matches the methodologies it actually used** against the registry, and stakes on each matched tool under the compose delegation. Optionally sub-contracts a specialist via a signed leaf delegation (A2A) — `scripts/agent-server-specialist.ts` is the receiving counterpart.
+
+The repo ships two example runtimes that consume the signed delegations: 5. `scripts/agent-approve-sa.ts` — one-time MultiVault approval so the Smart Account can deposit on the runtime's behalf. 6. `scripts/agent-loop.ts` — autonomous walk of `scripts/manifest-modules.json` (14 tools across 4 domains). Publishes new modules, ensures tool atoms exist, declares `(agent, uses, tool)` triples, stakes tTRUST on each tool. Exercises both revert paths (`DomainNotAllowed`, `StakeExceedsCap`) so the bounds visibly hold. 7. `scripts/agent-server.ts` — on-demand HTTP runtime that accepts a paid audit job, runs it via the Trail of Bits methodologies, **fuzzy-matches the methodologies it actually used** against the registry, and stakes on each matched tool under the compose delegation. Optionally sub-contracts a specialist via a signed leaf delegation (A2A) — `scripts/agent-server-specialist.ts` is the receiving counterpart.
 
 ### Consumer (browser, `/hire` and `/tool/:id`)
+
 8. `/` — modules ranked by TVL desc with a live distinct-stakers count. Slither + Mythril climb as runtimes stake; new modules appear as they publish.
 9. `/tool/:id` — per-tool detail. Live vault metrics, an optional stake form for human EOAs (economic conviction without an agent identity), and a `@arp-protocol/sdk` snippet showing how a runtime declares + stakes automatically.
 10. `/hire` — pick a domain, see the top agents ranked by reputation, pay one in tTRUST, get back a signed audit report with the on-chain stakes the agent placed during execution. If A2A is enabled, the result page also renders the sub-delegation chain (`requester → auditor → specialist`) and the specialist's independently-signed receipt.
@@ -68,14 +71,14 @@ The repo ships two example runtimes that consume the signed delegations:
 Any TypeScript runtime can plug into ARP's trust layer in a few lines — no API key, no indexer, no signing baked in:
 
 ```ts
-import {createArpClient, findTopAgents, getReputation} from "@arp-protocol/sdk";
+import { createArpClient, findTopAgents, getReputation } from '@arp-protocol/sdk';
 
 const arp = createArpClient();
 
 // "Who should I delegate this Solidity audit to?"
 const candidates = await findTopAgents(arp, {
-    domain: "solidity-audit",
-    minStake: 1_000_000_000_000n,
+  domain: 'solidity-audit',
+  minStake: 1_000_000_000_000n,
 });
 
 // "Is this agent's track record real?"
@@ -89,14 +92,31 @@ ARP doesn't compute agents — that's the runtime layer's job. ARP is purely dec
 
 ## Deployed contracts (Intuition Testnet, chainId 13579)
 
-| Contract | Address |
-|---|---|
+| Contract                                     | Address                                                                                                                                       |
+| -------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
 | `ModuleRegistry` (v2 — schemaURI uniqueness) | [`0xc9a2f66775828017e984E8be077fA2d17e0A41F4`](https://testnet.explorer.intuition.systems/address/0xc9a2f66775828017e984E8be077fA2d17e0A41F4) |
-| `IdentityRegistry` (ERC-8004) | [`0xC165A2AD2E540A4069E02834009161E2b4490d5A`](https://testnet.explorer.intuition.systems/address/0xC165A2AD2E540A4069E02834009161E2b4490d5A) |
-| `DomainScopeEnforcer` | [`0x516B82E29e3Ca46Ca810FC2EEf348932b198f7f9`](https://testnet.explorer.intuition.systems/address/0x516B82E29e3Ca46Ca810FC2EEf348932b198f7f9) |
-| `TrustStakeCapEnforcer` | [`0x7BB56819E9a413B8B4668C5cAF5C494c41dC0F8E`](https://testnet.explorer.intuition.systems/address/0x7BB56819E9a413B8B4668C5cAF5C494c41dC0F8E) |
+| `IdentityRegistry` (ERC-8004)                | [`0xC165A2AD2E540A4069E02834009161E2b4490d5A`](https://testnet.explorer.intuition.systems/address/0xC165A2AD2E540A4069E02834009161E2b4490d5A) |
+| `DomainScopeEnforcer`                        | [`0x516B82E29e3Ca46Ca810FC2EEf348932b198f7f9`](https://testnet.explorer.intuition.systems/address/0x516B82E29e3Ca46Ca810FC2EEf348932b198f7f9) |
+| `TrustStakeCapEnforcer`                      | [`0x7BB56819E9a413B8B4668C5cAF5C494c41dC0F8E`](https://testnet.explorer.intuition.systems/address/0x7BB56819E9a413B8B4668C5cAF5C494c41dC0F8E) |
 
 Composes with the MetaMask Delegation Framework v1.3.0 (`DelegationManager` at `0xdb9B1e94B5b69Df7e401DDbedE43491141047dB3`) and Intuition's MultiVault (`0x2Ece8D4dEdcB9918A398528f3fa4688b1d2CAB91`). Full address set in [deployments/13579.json](deployments/13579.json).
+
+## Two networks, and which one spends money
+
+This is the sharpest thing to understand before running anything.
+
+|                                                                   | Intuition Testnet 13579       | Intuition mainnet 1155        |
+| ----------------------------------------------------------------- | ----------------------------- | ----------------------------- |
+| ARP's contracts (`ModuleRegistry`, enforcers, `IdentityRegistry`) | deployed here                 | **not deployed, not planned** |
+| The 28,648 ERC-8004 agents                                        | absent                        | here                          |
+| What the trust panel reads                                        | —                             | here                          |
+| What staking spends                                               | tTRUST (free from the faucet) | **real TRUST**                |
+
+The panel reads mainnet because that is where the cohort is, and reads are free and keyless. Staking
+from the panel deposits **real TRUST** into Intuition's own MultiVault — not an ARP contract. That is
+authorised deliberately and narrowly by [ADR 0017](.claude/choices/0017-arp-stakes-real-trust-on-mainnet.md),
+behind seven safeguards including a 1 TRUST ceiling and a confirmation step, and **no agent or script
+may ever sign a mainnet transaction** — every one is signed by the operator in their own wallet.
 
 ## What's not in this MVP
 
