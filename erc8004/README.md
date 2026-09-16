@@ -239,7 +239,10 @@ ERC8004_LIVE=1 bun run test
 ```
 
 It resolves a real agent against `https://mainnet.intuition.sh/v1/graphql`, re-verifies a live
-signature, and reads a page of the cohort in both orders. It catches indexer schema drift, which
+signature, and reads a page of the cohort in both orders on a deliberately generous deadline — it
+asserts that the _result_ is correct, never that it arrived quickly. Latency is printed by a separate
+observation that cannot fail the suite, because a test that fails on somebody else's p95 trains a
+reader to ignore it. It catches indexer schema drift, which
 recorded fixtures cannot catch by construction — a fixture answers whatever it is asked, so a query
 whose _variable declarations_ the indexer rejects passes every hermetic test and fails in production.
 That happened once already, to the market read's `$curveId`.
