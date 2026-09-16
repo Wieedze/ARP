@@ -1,6 +1,13 @@
 # Task 10 — The directory shows the whole cohort
 
-> **Status: NOT STARTED** (specified 2026-09-16).
+> **Status: COMPLETE** (2026-09-16). Branch `feat/agent-trust-panel`, commits `9c24681..26da3b8`.
+> Post-mortem: `.claude/learning/11-agent-directory-full-cohort.md`. ADRs `0023` (market cap and
+> position count read at one scope) and `0024` (an ambiguous identity gets no link).
+> `ui-reviewer` pass at `5d9142a`; `task-verifier` pass at `26da3b8`.
+>
+> **One line below was verified differently than written.** The query in "The sort orders" pairs a
+> term-level market cap with a curve-scoped position count, and a real row shows the two disagree —
+> see ADR 0023. The orders themselves are exactly as specified and were confirmed live.
 >
 > Phase 1. Serves tier 2→3 of the evidence ladder: it makes the cohort navigable by what cost
 > something, rather than by a number.
@@ -78,7 +85,7 @@ sorted descending would undo the panel's whole editorial claim in one control.
 - [x] `bun run test`, `bun run lint`, `tsc -b` clean in `app/`; `bun run test` clean in `erc8004/`
 - [x] Keyboard reachable, visible focus, no horizontal scroll at 400px — **assessed by reading the
       markup, not in a browser.** There is none in this environment
-- [ ] `ui-reviewer` pass, then `task-verifier` pass
+- [x] `ui-reviewer` pass, then `task-verifier` pass
 
 ## Out of scope
 
