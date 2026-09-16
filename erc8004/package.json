@@ -1,0 +1,45 @@
+{
+    "name": "@arp-protocol/erc8004",
+    "version": "0.0.1",
+    "description": "Read-only ERC-8004 trust connector. Resolves an agent identity to one merged profile — every trust provider's assessment with its EIP-712 signature verified and its declared freshness enforced, plus capabilities and live market data.",
+    "type": "module",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "default": "./dist/index.js"
+        }
+    },
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "files": [
+        "dist",
+        "README.md"
+    ],
+    "scripts": {
+        "test": "vitest run",
+        "test:watch": "vitest",
+        "build": "tsc -p tsconfig.build.json",
+        "lint": "tsc --noEmit -p tsconfig.json",
+        "prepublishOnly": "bun run build"
+    },
+    "dependencies": {
+        "viem": "2.52.0"
+    },
+    "devDependencies": {
+        "@types/node": "^24.12.2",
+        "typescript": "~6.0.2",
+        "vitest": "^4.1.8"
+    },
+    "keywords": [
+        "erc-8004",
+        "agent-reputation",
+        "intuition",
+        "eip-712",
+        "rfc-8785",
+        "trust-layer"
+    ],
+    "license": "MIT",
+    "publishConfig": {
+        "access": "public"
+    }
+}

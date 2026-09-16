@@ -10,7 +10,8 @@
   "workspaces": [
     "app",
     "contracts",
-    "sdk"
+    "sdk",
+    "erc8004"
   ],
   "scripts": {
     "demo": "bun scripts/demo.ts",

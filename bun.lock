@@ -52,6 +52,18 @@
       "name": "@arp/contracts",
       "version": "0.0.0",
     },
+    "erc8004": {
+      "name": "@arp-protocol/erc8004",
+      "version": "0.0.1",
+      "dependencies": {
+        "viem": "2.52.0",
+      },
+      "devDependencies": {
+        "@types/node": "^24.12.2",
+        "typescript": "~6.0.2",
+        "vitest": "^4.1.8",
+      },
+    },
     "sdk": {
       "name": "@arp-protocol/sdk",
       "version": "0.0.1",
@@ -69,6 +81,8 @@
   },
   "packages": {
     "@adraffy/ens-normalize": ["@adraffy/ens-normalize@1.11.1", "", {}, "sha512-nhCBV3quEgesuf7c7KYfperqSS14T8bYuvJ8PcLJp6znkZpFc0AuW4qBtr8eKVyPPe/8RSr7sglCWPU5eaxwKQ=="],
+
+    "@arp-protocol/erc8004": ["@arp-protocol/erc8004@workspace:erc8004"],
 
     "@arp-protocol/sdk": ["@arp-protocol/sdk@workspace:sdk"],
 
