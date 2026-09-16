@@ -176,7 +176,10 @@ ERC8004_LIVE=1 bun run test
 ```
 
 It resolves a real agent against `https://mainnet.intuition.sh/v1/graphql` and re-verifies a live
-signature. It catches indexer schema drift, which recorded fixtures cannot catch by construction.
+signature. It catches indexer schema drift, which recorded fixtures cannot catch by construction — a
+fixture answers whatever it is asked, so a query whose _variable declarations_ the indexer rejects
+passes every hermetic test and fails in production. That happened once already, to the market read's
+`$curveId`.
 
 ## Read-only
 

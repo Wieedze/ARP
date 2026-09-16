@@ -326,4 +326,13 @@ describe("intuitionSource — the bonding curve is a parameter, not an assumptio
         expect(TRUST_SURFACE_QUERY).not.toMatch(/curve_id:\s*\{_eq:\s*"/);
         expect(TRUST_SURFACE_QUERY).toContain("$curveId");
     });
+
+    it("declares the curve variable as the scalar the indexer actually has", () => {
+        // A literal coerces to `numeric`; a variable does not. Declaring this
+        // `String!` is rejected at validation and takes the entire trust
+        // surface down with it — which fixtures cannot see, because a fixture
+        // answers whatever it is asked. Live mainnet rejected exactly that on
+        // 2026-09-16.
+        expect(TRUST_SURFACE_QUERY).toContain("$curveId: numeric!");
+    });
 });

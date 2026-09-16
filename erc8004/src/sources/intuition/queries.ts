@@ -18,6 +18,12 @@ const THING = `value { thing { name description image url } }`;
  * assumes it. If this fragment pinned curve 1 while a deposit went to another,
  * the panel would show one curve's market beside a position in a different
  * vault, with nothing to signal the mismatch.
+ *
+ * The variable is declared `numeric!`, which is the Hasura scalar `curve_id`
+ * actually has. A literal coerces from a string; a *variable* does not, so
+ * declaring it `String!` is rejected at validation time and takes the whole
+ * trust surface down. Fixtures cannot catch that — only the live smoke test
+ * can, which is why it exists.
  */
 const MARKET_SIDE = `
     total_market_cap
@@ -52,7 +58,7 @@ query ResolveAgentByCaip($sameAsPredicateId: String!, $caipId: String!) {
 }`;
 
 export const TRUST_SURFACE_QUERY = `
-query AgentTrustSurface($subjectId: String!, $predicateIds: [String!], $curveId: String!) {
+query AgentTrustSurface($subjectId: String!, $predicateIds: [String!], $curveId: numeric!) {
   triples(
     where: {subject_id: {_eq: $subjectId}, predicate_id: {_in: $predicateIds}}
     order_by: {term: {total_market_cap: desc}}

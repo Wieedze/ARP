@@ -106,8 +106,9 @@ async function resolveSubject(
  * cache (see the README).
  */
 export function intuitionSource(config: IntuitionSourceConfig = {}): TrustSource {
-    // The indexer types curve_id as a string, so a bigint read from
-    // getBondingCurveConfig() is stringified here rather than at every call site.
+    // `curve_id` is a Hasura `numeric`, which accepts a JSON string for the
+    // variable's value. Stringifying here means a bigint read straight from
+    // getBondingCurveConfig() needs no conversion at the call site.
     const curveId = config.curveId === undefined ? DEFAULT_CURVE_ID : String(config.curveId);
 
     const transport =
