@@ -122,4 +122,54 @@ export const multiVaultAbi = [
         ],
         outputs: [{name: "", type: "bytes32[]"}],
     },
+    {
+        type: "function",
+        stateMutability: "view",
+        name: "getGeneralConfig",
+        inputs: [],
+        outputs: [
+            {
+                name: "",
+                type: "tuple",
+                components: [
+                    {name: "admin", type: "address"},
+                    {name: "protocolMultisig", type: "address"},
+                    {name: "feeDenominator", type: "uint256"},
+                    {name: "trustBonding", type: "address"},
+                    {name: "minDeposit", type: "uint256"},
+                    {name: "minShare", type: "uint256"},
+                    {name: "atomDataMaxLength", type: "uint256"},
+                    {name: "feeThreshold", type: "uint256"},
+                ],
+            },
+        ],
+    },
+    {
+        type: "function",
+        stateMutability: "pure",
+        name: "getCounterIdFromTripleId",
+        inputs: [{name: "tripleId", type: "bytes32"}],
+        outputs: [{name: "", type: "bytes32"}],
+    },
+    {
+        type: "function",
+        stateMutability: "view",
+        name: "currentSharePrice",
+        inputs: [
+            {name: "termId", type: "bytes32"},
+            {name: "curveId", type: "uint256"},
+        ],
+        outputs: [{name: "", type: "uint256"}],
+    },
+    {
+        type: "function",
+        stateMutability: "view",
+        name: "getShares",
+        inputs: [
+            {name: "account", type: "address"},
+            {name: "termId", type: "bytes32"},
+            {name: "curveId", type: "uint256"},
+        ],
+        outputs: [{name: "", type: "uint256"}],
+    },
 ] as const;

@@ -12,6 +12,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@arp-protocol/erc8004": "^0.0.1",
     "@arp-protocol/sdk": "^0.0.1",
     "@metamask/delegation-core": "^2.2.1",
     "@wagmi/core": "^3.1.0",

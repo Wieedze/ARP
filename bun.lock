@@ -18,6 +18,7 @@
       "name": "@arp/app",
       "version": "0.0.0",
       "dependencies": {
+        "@arp-protocol/erc8004": "^0.0.1",
         "@arp-protocol/sdk": "^0.0.1",
         "@metamask/delegation-core": "^2.2.1",
         "@metamask/delegation-deployments": "^1.4.0",
