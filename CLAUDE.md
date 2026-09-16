@@ -6,9 +6,10 @@ If you find yourself wanting to add a rule to this file, **don't.** Add it to th
 
 ## Source of authority (read in this order on every task)
 
-1. `docs/09_POSITIONING_AND_PLAN.md` — **current strategic commitment** (ADR 0022). The evidence ladder in §2 is the thesis every task serves. Supersedes any conflicting item in older docs.
-   - `docs/00_HACKATHON_PIVOT.md` is **historical record** — the reason the MetaMask/Intuition stack was chosen. Its deadline passed 2026-06-15. Do not read it as a live commitment.
-   - `docs/08_ERC8004_AGENT_LAYER_OPPORTUNITY.md` holds the measurements `09` argues from.
+1. `docs/12_THE_IDEA.md` — **the mechanism, and the only canonical statement of it.** Sixty lines. Read it first, every time, including its drift signals. It exists because three separate analyses written in one day each drifted from it.
+   - `docs/01_PROJECT_CONTEXT.md` — what ARP is and is not. Still authoritative on positioning.
+   - `docs/08`, `docs/09`, `docs/11` are **analysis, not commitment**. The measurements in `08` hold. Their differentiation arguments drifted; `12` corrects them.
+   - `docs/00_HACKATHON_PIVOT.md` is **historical record** — why the MetaMask/Intuition stack was chosen. Deadline passed 2026-06-15.
 2. `docs/02_ARCHITECTURE.md` — locked architectural decisions.
 3. `docs/03_MVP_SCOPE.md` — extended (not replaced) by the pivot.
 
