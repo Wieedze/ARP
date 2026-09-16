@@ -1,5 +1,6 @@
 import {formatEther} from "viem";
 import type {
+    AgentAtomMarket,
     AssessmentFetchError,
     FreshnessVerdict,
     MarketSide,
@@ -143,6 +144,39 @@ export function describeStakers(side: MarketSide): string {
     if (count === null) return "position count not reported by the indexer";
     if (count === 0) return "no positions · no distinct stakers";
     return describePositionCount(count);
+}
+
+/**
+ * Positions on an agent's own atom.
+ *
+ * Deliberately *not* phrased as distinct stakers, unlike `describeStakers`.
+ * `AgentAtomMarket` sums across every bonding curve so that its position count
+ * and its market cap describe the same thing, and that sum counts an account
+ * staked on two curves twice. The curve count is stated so the reader can see
+ * where the number came from.
+ */
+export function describeAtomPositions(market: AgentAtomMarket): string {
+    const count = market.positionCount;
+    if (count === null) return "position count not reported";
+    const curves = market.vaultCount;
+    const positions = `${count} position${count === 1 ? "" : "s"}`;
+    if (curves === null) return positions;
+    return `${positions} · ${curves} curve${curves === 1 ? "" : "s"}`;
+}
+
+const CHAIN_NAMES: Record<number, string> = {
+    1: "Ethereum",
+    56: "BSC",
+    8453: "Base",
+};
+
+/**
+ * `Base 8453`, or just the id for a chain we have no name for. Never a guess —
+ * an unknown chain id renders as itself rather than as a plausible name.
+ */
+export function describeChain(chainId: number): string {
+    const name = CHAIN_NAMES[chainId];
+    return name === undefined ? String(chainId) : `${name} ${chainId}`;
 }
 
 /**

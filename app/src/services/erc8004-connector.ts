@@ -4,9 +4,12 @@ import {
     getAgentProfile,
     INTUITION_MAINNET_GRAPHQL,
     intuitionSource,
+    listAgents,
+    type AgentPage,
     type AgentProfile,
     type AgentRef,
     type Erc8004Client,
+    type ListAgentsOptions,
 } from "@arp-protocol/erc8004";
 
 /**
@@ -70,4 +73,22 @@ export function fetchAgentProfile(
     client = erc8004Client(curveId),
 ): Promise<AgentProfile> {
     return getAgentProfile(client, ref);
+}
+
+/**
+ * Fetch one page of the ERC-8004 cohort.
+ *
+ * No curve is passed, and that is deliberate rather than an omission: a listing
+ * row shows the market on the agent's *own* atom summed across every bonding
+ * curve, so there is no single curve to filter to. The panel, which does read
+ * one curve, takes the one the chain reports.
+ *
+ * Throws when no source could produce a page. An empty page and a failed read
+ * are different answers and the caller renders them differently.
+ */
+export function fetchAgentCohort(
+    options: ListAgentsOptions,
+    client = erc8004Client(),
+): Promise<AgentPage> {
+    return listAgents(client, options);
 }

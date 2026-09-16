@@ -1,0 +1,217 @@
+import {describe, expect, it} from "vitest";
+import type {AgentListing, AgentPage} from "@arp-protocol/erc8004";
+
+import {buildCohortView, COHORT_ORDERS, toCohortRow} from "../agent-cohort";
+
+const REGISTRY = "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432" as const;
+
+function listing(overrides: Partial<AgentListing> = {}): AgentListing {
+    return {
+        sourceHandle: "0xatom",
+        ref: {chainId: 8453, tokenId: "1380", registry: REGISTRY},
+        identities: [{chainId: 8453, tokenId: "1380", registry: REGISTRY}],
+        identityEdgeCount: 1,
+        isIdentityAmbiguous: false,
+        metadata: {
+            name: "Captain Dackie",
+            description: null,
+            image: "https://blob.example/dackie.jpg",
+            url: null,
+            isFallback: false,
+        },
+        statementCount: 41,
+        market: {totalMarketCap: 6_336_930_209_822_752_561n, positionCount: 1, vaultCount: 2},
+        provenance: {sourceId: "intuition", kind: "claim", origin: "0xatom"},
+        ...overrides,
+    };
+}
+
+function page(overrides: Partial<AgentPage> = {}): AgentPage {
+    return {
+        sourceId: "intuition",
+        order: "evidence-quantity",
+        limit: 25,
+        offset: 0,
+        total: 28_648,
+        agents: Array.from({length: 25}, () => listing()),
+        ...overrides,
+    };
+}
+
+describe("COHORT_ORDERS", () => {
+    it("offers exactly the two orders that measure what something cost", () => {
+        expect(COHORT_ORDERS.map((entry) => entry.id)).toEqual([
+            "evidence-quantity",
+            "economic-conviction",
+        ]);
+    });
+
+    it("labels what is counted rather than implying quality", () => {
+        // "Most statements" is a count. "Top agents" would be a claim about
+        // quality that nothing on this page is entitled to make.
+        for (const entry of COHORT_ORDERS) {
+            expect(entry.label).not.toMatch(/best|top|rank|score|trust(ed|worthy)/i);
+            expect(entry.note.length).toBeGreaterThan(40);
+        }
+    });
+});
+
+describe("toCohortRow", () => {
+    it("links by the identity from the same-as edge", () => {
+        const row = toCohortRow(listing(), 0);
+        expect(row.href).toBe("/agent/8453/1380");
+        expect(row.identity).toBe("1380 · Base 8453");
+        expect(row.identityProblem).toBeNull();
+    });
+
+    it("shows the market cap with its position count beside it, always", () => {
+        const row = toCohortRow(listing(), 0);
+        expect(row.marketCap).toBe("6.3369302 TRUST");
+        expect(row.positions).toBe("1 position · 2 curves");
+    });
+
+    it("says the position count is missing rather than printing a bare cap", () => {
+        const row = toCohortRow(
+            listing({
+                market: {totalMarketCap: 1_000_000n, positionCount: null, vaultCount: 1},
+            }),
+            0,
+        );
+        expect(row.marketCap).toBe("<0.00000001 TRUST");
+        expect(row.positions).toBe("position count not reported");
+    });
+
+    it("distinguishes no market data from a market of zero", () => {
+        expect(toCohortRow(listing({market: null}), 0)).toMatchObject({
+            marketCap: null,
+            positions: "no market data",
+        });
+        expect(
+            toCohortRow(
+                listing({
+                    market: {totalMarketCap: 0n, positionCount: 0, vaultCount: 1},
+                }),
+                0,
+            ),
+        ).toMatchObject({marketCap: "0 TRUST", positions: "0 positions · 1 curve"});
+    });
+
+    it("marks the indexer's stand-in metadata as a fallback", () => {
+        const row = toCohortRow(
+            listing({
+                metadata: {
+                    name: "Agent 8453:6649",
+                    description: null,
+                    image: "",
+                    url: null,
+                    isFallback: true,
+                },
+            }),
+            0,
+        );
+        expect(row.isFallbackMetadata).toBe(true);
+        expect(row.name).toBe("Agent 8453:6649");
+    });
+
+    it("treats an empty image string as no image, not as a broken one", () => {
+        // The graph stores "" for an agent with no image, and <img src=""> is a
+        // request for the page itself.
+        expect(
+            toCohortRow(listing({metadata: {...listing().metadata, image: ""}}), 0).imageUrl,
+        ).toBe(null);
+        expect(
+            toCohortRow(listing({metadata: {...listing().metadata, image: "   "}}), 0).imageUrl,
+        ).toBe(null);
+        expect(toCohortRow(listing(), 0).imageUrl).toBe("https://blob.example/dackie.jpg");
+    });
+
+    it("refuses to link an atom that claims several identities, and says why", () => {
+        const row = toCohortRow(
+            listing({
+                ref: null,
+                isIdentityAmbiguous: true,
+                identityEdgeCount: 16,
+                metadata: {...listing().metadata, name: "Ouro Proof-of-Compute Oracle"},
+            }),
+            0,
+        );
+        expect(row.href).toBeNull();
+        expect(row.identityProblem).toBe("claims 16 identities — no single agent to open");
+    });
+
+    it("says when an agent has no ERC-8004 identity edge at all", () => {
+        const row = toCohortRow(
+            listing({ref: null, identities: [], identityEdgeCount: 0, isIdentityAmbiguous: false}),
+            0,
+        );
+        expect(row.href).toBeNull();
+        expect(row.identityProblem).toBe("no ERC-8004 identity edge in the graph");
+    });
+
+    it("never derives a token id from the display name", () => {
+        // The name reads `Agent 8453:6649`; the edge says 42. The edge wins.
+        const row = toCohortRow(
+            listing({
+                ref: {chainId: 8453, tokenId: "42", registry: REGISTRY},
+                metadata: {
+                    name: "Agent 8453:6649",
+                    description: null,
+                    image: null,
+                    url: null,
+                    isFallback: true,
+                },
+            }),
+            0,
+        );
+        expect(row.href).toBe("/agent/8453/42");
+    });
+});
+
+describe("buildCohortView", () => {
+    it("carries the graph's own total rather than the page length", () => {
+        const view = buildCohortView(page());
+        expect(view.total).toBe(28_648);
+        expect(view.rows).toHaveLength(25);
+        expect(view.rangeStart).toBe(1);
+        expect(view.rangeEnd).toBe(25);
+        expect(view.hasPrevious).toBe(false);
+        expect(view.hasNext).toBe(true);
+    });
+
+    it("numbers a deep page from its offset", () => {
+        const view = buildCohortView(page({offset: 20_000}));
+        expect(view.rangeStart).toBe(20_001);
+        expect(view.rangeEnd).toBe(20_025);
+        expect(view.hasPrevious).toBe(true);
+    });
+
+    it("stops paging on a short page, whatever the total claims", () => {
+        const view = buildCohortView(
+            page({offset: 28_640, agents: Array.from({length: 8}, () => listing())}),
+        );
+        expect(view.rangeEnd).toBe(28_648);
+        expect(view.hasNext).toBe(false);
+    });
+
+    it("still offers a next page when the source reported no total", () => {
+        expect(buildCohortView(page({total: null})).hasNext).toBe(true);
+    });
+
+    it("renders an empty page as an empty range, not as row zero", () => {
+        const view = buildCohortView(page({offset: 40_000, agents: []}));
+        expect(view.rows).toEqual([]);
+        expect(view.rangeStart).toBe(0);
+        expect(view.rangeEnd).toBe(40_000);
+        expect(view.hasNext).toBe(false);
+    });
+
+    it("keeps the rows in the order the source produced them", () => {
+        const first = listing({sourceHandle: "0xa", statementCount: 41});
+        const second = listing({sourceHandle: "0xb", statementCount: 5});
+        const third = listing({sourceHandle: "0xc", statementCount: 30});
+        const view = buildCohortView(page({agents: [first, second, third]}));
+        // Not 41, 30, 5 — this page is a window onto an order decided over the
+        // whole cohort, and sorting it here would be a claim about the cohort.
+        expect(view.rows.map((row) => row.statementCount)).toEqual([41, 5, 30]);
+    });
+});
