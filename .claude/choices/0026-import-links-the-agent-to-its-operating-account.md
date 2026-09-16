@@ -134,6 +134,15 @@ data.", image: "", url: ""}`), so publishing it needs the partner pinning key an
   agent already carrying four would become ambiguous to the cohort listing, and this import would be
   the edge that tipped it. Not guarded against, because no such agent exists in the measured cohort
   and a guard against a hypothetical is worse than a recorded limit.
+- **The account the link names does not yet stake on the chain the link is written to.** The edge lands
+  on Intuition mainnet (1155) and names the operator's Smart Account, because that is the delegator
+  a delegated stake executes as. Today nothing on 1155 stakes as a Smart Account: `trust-stake.ts`
+  deposits from the connected EOA and refuses any other receiver, and the delegation path in
+  `delegation-redeem.ts` targets testnet 13579. So the link is correct about the flow `docs/12`
+  describes and premature about the one that runs. Closing it is the gap `docs/12` already names —
+  "the guard rail on the chain where the agents are" — and Task 11's own Out of scope forbids
+  building the mainnet delegation surface here. Nothing downstream should assume agent attribution
+  works end to end until that lands.
 - `caip10AccountUris` returns two spellings where `caip10Uri` returns one. They agree on the
   spelling ARP writes — both lowercase — and the second exists only so an account already on the
   graph under the checksummed form is joined rather than duplicated. Asserted in

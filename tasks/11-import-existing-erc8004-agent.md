@@ -1,9 +1,22 @@
 # Task 11 — Import an existing ERC-8004 agent
 
-> **Status: NOT STARTED** (specified 2026-09-16).
+> **Status: COMPLETE** (specified 2026-09-16, completed 2026-09-16).
 >
 > Closes the gap named in `docs/12_THE_IDEA.md`: the mechanism works for agents ARP mints, and the
 > 28,648 that already exist are the population.
+>
+> Commits `f72d4d0`..`a39a914` on `feat/import-erc8004-agent`. `ui-reviewer` pass (second round),
+> `task-verifier` pass. Post-mortem: `.claude/learning/12-import-existing-erc8004-agent.md`.
+> The design question below was settled as `same as` against the operating account's CAIP-10 —
+> ADR `.claude/choices/0026-import-links-the-agent-to-its-operating-account.md`.
+>
+> **One open seam, recorded rather than closed.** The link lands on Intuition mainnet and names the
+> operator's Smart Account, because that is the delegator a delegated stake executes as. Today
+> nothing on 1155 stakes as a Smart Account — `trust-stake.ts` deposits from the connected EOA, and
+> the delegation path targets testnet 13579. The edge is correct about the flow `docs/12` describes
+> and premature about the one that runs. That is the remaining open row in `docs/12`'s state table
+> ("the guard rail on the chain where the agents are"), and this task's Out of scope forbids
+> building it here.
 
 ## Objective
 
