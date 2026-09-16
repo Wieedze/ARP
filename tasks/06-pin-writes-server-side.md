@@ -1,8 +1,18 @@
 # Task 06 — Restore the Intuition write path, server-side only
 
-> **Status: NOT STARTED** (specified 2026-09-16).
+> **Status: COMPLETE** (2026-09-16, commits `1e9b92b` + `f482588`).
+> Post-mortem: `.claude/learning/08-pin-writes-server-side.md`. Verifier: PASS.
 >
 > Not a hackathon task. No narrative-preservation answer required.
+>
+> Acceptance criteria 2 and 3 (`bun scripts/seed.ts`, `bun scripts/agent-loop.ts`)
+> were not executed — they send real transactions on Intuition Testnet. Verified
+> instead by running both with the pin key cleared: each resolves all imports and
+> reaches `requirePinAuth()` before any chain work.
+>
+> Criterion 4 caveat: root `bun run test` and `contracts` lint fail for
+> pre-existing reasons unrelated to this task (sdk has no test files; solhint is
+> not installed). See the post-mortem.
 
 ## Objective
 
