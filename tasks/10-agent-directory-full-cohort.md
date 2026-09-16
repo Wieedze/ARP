@@ -66,15 +66,19 @@ sorted descending would undo the panel's whole editorial claim in one control.
 
 ## Acceptance criteria
 
-- [ ] `/agents` lists real agents from mainnet, paginated, with the true total shown
-- [ ] Both sort orders work and are labelled as not being quality rankings
-- [ ] No sort by score anywhere
-- [ ] Fallback-metadata agents are marked, as they are on the panel
-- [ ] Position count appears wherever a market cap does
-- [ ] Rows link correctly; token id comes from the CAIP edge
-- [ ] `bun run test`, `bun run lint`, `tsc -b` clean
-- [ ] Keyboard reachable, visible focus, no horizontal scroll at 400px
-- [ ] `ui-reviewer` pass, then `task-verifier` pass
+- [x] `/agents` lists real agents from mainnet, paginated, with the true total shown — 28,648 from
+      the graph's own `triples_aggregate`, never a literal
+- [x] Both sort orders work and are labelled as not being quality rankings
+- [x] No sort by score anywhere — `AgentListOrder` has two members and a test asserts it
+- [x] Fallback-metadata agents are marked, as they are on the panel
+- [x] Position count appears wherever a market cap does — both read across every bonding curve so
+      the two figures match in scope (ADR 0023)
+- [x] Rows link correctly; token id comes from the CAIP edge. An atom claiming several identities
+      gets no link and the reason instead (ADR 0024)
+- [x] `bun run test`, `bun run lint`, `tsc -b` clean in `app/`; `bun run test` clean in `erc8004/`
+- [x] Keyboard reachable, visible focus, no horizontal scroll at 400px — **assessed by reading the
+      markup, not in a browser.** There is none in this environment
+- [x] `ui-reviewer` pass, then `task-verifier` pass
 
 ## Out of scope
 
