@@ -76,6 +76,7 @@ export {DEFAULT_IDENTITY_REGISTRY, parseCaip19, resolveRef, toCaip19} from "./ca
 
 export {
     DEFAULT_CURVE_ID,
+    DEFAULT_LIST_TIMEOUT_MS,
     INTUITION_MAINNET_GRAPHQL,
     INTUITION_TESTNET_GRAPHQL,
     intuitionSource,
@@ -91,7 +92,7 @@ export {
 
 export type {TrustSource} from "./sources/source.js";
 
-export {DEFAULT_TIMEOUT_MS, HttpError, type FetchLike} from "./http.js";
+export {DEFAULT_TIMEOUT_MS, HttpError, isTimeoutError, type FetchLike} from "./http.js";
 
 export type {
     AgentAtomMarket,

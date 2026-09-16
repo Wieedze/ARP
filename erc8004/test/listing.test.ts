@@ -10,7 +10,7 @@ import {
     resolveListOptions,
 } from "../src/listing.js";
 import {erc8004RegistrySource} from "../src/sources/erc8004-registry/index.js";
-import {intuitionSource} from "../src/sources/intuition/index.js";
+import {DEFAULT_LIST_TIMEOUT_MS, intuitionSource} from "../src/sources/intuition/index.js";
 import {
     COHORT_ORDER_BY,
     COHORT_QUERY,
@@ -67,6 +67,87 @@ describe("listAgents — which sources can answer", () => {
             ],
         });
         await expect(listAgents(failing)).rejects.toBeInstanceOf(ListAgentsFailedError);
+    });
+
+    it("tells a deadline apart from a refusal, so a caller knows whether to wait", async () => {
+        const refused = createErc8004Client({
+            sources: [
+                intuitionSource({
+                    graphqlUrl: INTUITION_URL,
+                    fetch: async () => new Response("down", {status: 503, statusText: "Down"}),
+                }),
+            ],
+        });
+        await expect(listAgents(refused)).rejects.toMatchObject({timedOut: false});
+
+        // Hangs until the deadline aborts it, so the real abort path runs:
+        // fetchWithTimeout -> HttpError(timeout) -> GraphqlError carrying it as
+        // `cause` -> isTimeoutError. Asserting on a hand-made error would prove
+        // only that the assertion matches itself.
+        const late = createErc8004Client({
+            sources: [
+                intuitionSource({
+                    graphqlUrl: INTUITION_URL,
+                    listTimeoutMs: 10,
+                    fetch: (_input, init) =>
+                        new Promise((_resolve, reject) => {
+                            init?.signal?.addEventListener("abort", () =>
+                                reject(new Error("aborted")),
+                            );
+                        }),
+                }),
+            ],
+        });
+        const failure = await listAgents(late).catch((error: unknown) => error);
+        expect(failure).toBeInstanceOf(ListAgentsFailedError);
+        expect(failure).toMatchObject({timedOut: true});
+        expect((failure as ListAgentsFailedError).errors[0]?.message).toContain("timed out");
+    });
+});
+
+describe("listAgents — the cohort gets its own deadline", () => {
+    function timeoutRecorder(seen: {timeoutMs: number | undefined}[]) {
+        return {
+            async request(
+                _query: string,
+                _variables: Record<string, unknown>,
+                options?: {timeoutMs?: number},
+            ) {
+                seen.push({timeoutMs: options?.timeoutMs});
+                return {triples: [], total: {aggregate: {count: 0}}};
+            },
+        };
+    }
+
+    it("spends its own budget rather than the profile read's", async () => {
+        // 10s is the shared default and this endpoint has been measured
+        // completing a correct cohort query in 9.1s, so sharing truncates reads
+        // that were going to succeed.
+        expect(DEFAULT_LIST_TIMEOUT_MS).toBeGreaterThan(10_000);
+
+        const seen: {timeoutMs: number | undefined}[] = [];
+        const source = intuitionSource({transport: timeoutRecorder(seen)});
+        await source.listAgents?.({order: "evidence-quantity", limit: 25, offset: 0});
+        expect(seen).toEqual([{timeoutMs: DEFAULT_LIST_TIMEOUT_MS}]);
+    });
+
+    it("takes the budget it is given", async () => {
+        const seen: {timeoutMs: number | undefined}[] = [];
+        const source = intuitionSource({transport: timeoutRecorder(seen), listTimeoutMs: 4_000});
+        await source.listAgents?.({order: "evidence-quantity", limit: 25, offset: 0});
+        expect(seen).toEqual([{timeoutMs: 4_000}]);
+    });
+
+    it("leaves the profile reads on the shared budget", async () => {
+        const seen: {timeoutMs: number | undefined}[] = [];
+        const source = intuitionSource({transport: timeoutRecorder(seen), listTimeoutMs: 4_000});
+        await source.resolveAgent({
+            chainId: 8453,
+            tokenId: "2340",
+            registry: "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+        });
+        // No override: the transport's own deadline applies, unchanged.
+        expect(seen).toEqual([{timeoutMs: undefined}]);
     });
 });
 

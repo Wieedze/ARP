@@ -1,4 +1,5 @@
 import type {Erc8004Client} from "./client.js";
+import {isTimeoutError} from "./http.js";
 import type {TrustSource} from "./sources/source.js";
 import type {
     AgentListOrder,
@@ -53,11 +54,22 @@ export class NoListingSourceError extends Error {
     }
 }
 
-/** Raised when every source that can list agents failed. */
+/**
+ * Raised when every source that can list agents failed.
+ *
+ * `timedOut` is on the value rather than left for a caller to recover from the
+ * message, because the two cases call for different things. A deadline means
+ * the read was probably going to succeed and is worth retrying — the same
+ * cohort query has been measured returning in under a second and then timing
+ * out minutes later, with no change to the query. Anything else means the
+ * endpoint answered and said no, and retrying is just noise.
+ */
 export class ListAgentsFailedError extends Error {
     readonly errors: readonly SourceError[];
+    /** Every source that failed did so on its deadline, not on an answer. */
+    readonly timedOut: boolean;
 
-    constructor(errors: readonly SourceError[]) {
+    constructor(errors: readonly SourceError[], causes: readonly unknown[] = []) {
         super(
             `every listing source failed: ${errors
                 .map((entry) => `${entry.sourceId}: ${entry.message}`)
@@ -65,6 +77,7 @@ export class ListAgentsFailedError extends Error {
         );
         this.name = "ListAgentsFailedError";
         this.errors = errors;
+        this.timedOut = causes.length > 0 && causes.every(isTimeoutError);
     }
 }
 
@@ -116,10 +129,12 @@ export async function listAgents(
     }
 
     const errors: SourceError[] = [];
+    const causes: unknown[] = [];
     for (const source of capable) {
         try {
             return await source.listAgents(resolved);
         } catch (error) {
+            causes.push(error);
             errors.push({
                 sourceId: source.id,
                 step: "listAgents",
@@ -127,5 +142,5 @@ export async function listAgents(
             });
         }
     }
-    throw new ListAgentsFailedError(errors);
+    throw new ListAgentsFailedError(errors, causes);
 }

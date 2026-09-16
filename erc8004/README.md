@@ -97,6 +97,12 @@ Some caveats that are the point rather than footnotes:
 - **`listAgents` is optional on `TrustSource` and only Intuition implements it.** A registry contract
   cannot be enumerated, so a registry-only client raises `NoListingSourceError` instead of returning
   an empty page that would read as "there are no agents".
+- **The listing has its own deadline**, `DEFAULT_LIST_TIMEOUT_MS` (30s), separate from the 10s every
+  other read gets. Ordering the whole cohort is a different kind of read, and this endpoint's latency
+  on it is wildly variable: measured at 0.78s, at 9.1s, and not returning inside 25s — on the same
+  query, within an hour, with both orders affected alike. Override with `intuitionSource({listTimeoutMs})`.
+  When every listing source fails, `ListAgentsFailedError.timedOut` says whether it was a deadline
+  (worth retrying) or an answer (not).
 
 ## The pieces, separately
 

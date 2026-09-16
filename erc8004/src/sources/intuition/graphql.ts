@@ -6,16 +6,35 @@ export class GraphqlError extends Error {
     readonly url: string;
     readonly httpStatus: number | null;
 
-    constructor(message: string, url: string, httpStatus: number | null) {
-        super(message);
+    /**
+     * `cause` carries the `HttpError` this wraps, when there was one, so
+     * `isTimeoutError` can tell a deadline from a refusal without this module
+     * having to classify it — and without a caller matching on message text.
+     */
+    constructor(message: string, url: string, httpStatus: number | null, cause?: unknown) {
+        super(message, cause === undefined ? undefined : {cause});
         this.name = "GraphqlError";
         this.url = url;
         this.httpStatus = httpStatus;
     }
 }
 
+/**
+ * `timeoutMs` overrides the transport's own budget for one request.
+ *
+ * Reads on this endpoint are not equally expensive: resolving one agent is a
+ * point lookup, while ordering the whole cohort by an aggregate is a sort over
+ * every row. One deadline for both either cuts off a read that was going to
+ * succeed or lets a hung point lookup sit for the cohort's budget.
+ */
+export type GraphqlRequestOptions = {timeoutMs?: number};
+
 export type GraphqlTransport = {
-    request(query: string, variables: Record<string, unknown>): Promise<Record<string, unknown>>;
+    request(
+        query: string,
+        variables: Record<string, unknown>,
+        options?: GraphqlRequestOptions,
+    ): Promise<Record<string, unknown>>;
 };
 
 /**
@@ -33,7 +52,7 @@ export function createGraphqlTransport(config: {
     const timeoutMs = config.timeoutMs ?? DEFAULT_TIMEOUT_MS;
 
     return {
-        async request(query, variables) {
+        async request(query, variables, options) {
             let response: Response;
             try {
                 response = await fetchWithTimeout(
@@ -47,11 +66,11 @@ export function createGraphqlTransport(config: {
                         },
                         body: JSON.stringify({query, variables}),
                     },
-                    timeoutMs,
+                    options?.timeoutMs ?? timeoutMs,
                 );
             } catch (error) {
                 const message = error instanceof HttpError ? error.message : String(error);
-                throw new GraphqlError(message, config.url, null);
+                throw new GraphqlError(message, config.url, null, error);
             }
 
             if (!response.ok) {
