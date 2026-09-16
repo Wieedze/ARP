@@ -20,6 +20,9 @@ const AgentDirectory = lazy(() =>
 const AgentTrustPanel = lazy(() =>
     import("./pages/AgentTrustPanel").then((module) => ({default: module.AgentTrustPanel})),
 );
+const AgentImport = lazy(() =>
+    import("./pages/AgentImport").then((module) => ({default: module.AgentImport})),
+);
 
 function App() {
     return (
@@ -27,6 +30,14 @@ function App() {
             <Routes>
                 <Route path="/" element={<ModuleList />} />
                 <Route path="/agent" element={<AgentRegister />} />
+                <Route
+                    path="/agent/import"
+                    element={
+                        <Suspense fallback={<RouteFallback label="agent import" />}>
+                            <AgentImport />
+                        </Suspense>
+                    }
+                />
                 <Route
                     path="/agents"
                     element={
