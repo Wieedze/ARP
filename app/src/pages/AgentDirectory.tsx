@@ -250,7 +250,7 @@ function LookupForm() {
                     id={`${fieldId}-chain`}
                     value={chainId}
                     onChange={(event) => setChainId(Number(event.target.value))}
-                    className="mt-2 block w-full bg-[color:var(--color-bg)] border border-[color:var(--color-border-strong)] px-3 py-1.5 font-mono text-[length:var(--text-body-sm)] focus:outline-none focus:border-[color:var(--color-accent)]"
+                    className="mt-2 block w-full bg-[color:var(--color-bg)] border border-[color:var(--color-border-strong)] px-3 py-1.5 font-mono text-[length:var(--text-body-sm)] focus:border-[color:var(--color-accent)]"
                 >
                     {LOOKUP_CHAINS.map((chain) => (
                         <option key={chain.id} value={chain.id}>
@@ -277,7 +277,7 @@ function LookupForm() {
                     autoComplete="off"
                     value={tokenId}
                     onChange={(event) => setTokenId(event.target.value)}
-                    className="mt-2 block w-full bg-transparent border border-[color:var(--color-border-strong)] px-3 py-1.5 font-mono focus:outline-none focus:border-[color:var(--color-accent)]"
+                    className="mt-2 block w-full bg-transparent border border-[color:var(--color-border-strong)] px-3 py-1.5 font-mono focus:border-[color:var(--color-accent)]"
                 />
                 {trimmed !== "" && !isValid ? (
                     <p className="mt-2 text-[length:var(--text-body-sm)]">

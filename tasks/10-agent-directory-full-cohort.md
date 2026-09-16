@@ -78,7 +78,7 @@ sorted descending would undo the panel's whole editorial claim in one control.
 - [x] `bun run test`, `bun run lint`, `tsc -b` clean in `app/`; `bun run test` clean in `erc8004/`
 - [x] Keyboard reachable, visible focus, no horizontal scroll at 400px — **assessed by reading the
       markup, not in a browser.** There is none in this environment
-- [x] `ui-reviewer` pass, then `task-verifier` pass
+- [ ] `ui-reviewer` pass, then `task-verifier` pass
 
 ## Out of scope
 

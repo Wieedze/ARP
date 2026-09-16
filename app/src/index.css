@@ -145,10 +145,18 @@ a:hover {
    see. Worse, the rule is unlayered, so it beat every `focus-visible:outline-*`
    utility in `@layer utilities` and made them silently inert wherever they were
    reached for. `ui.md` requires a visible focus state on every interactive
-   element; the ring is what actually delivers one. */
+   element; the ring is what actually delivers one.
+
+   The selector lists every focusable element type the app uses. `select` and
+   `textarea` are here for consistency rather than repair — both carry a border
+   swap to accent that is a real replacement, since neither one's resting border
+   is ever accent. Leaving them out would mean two controls focusing differently
+   from every other control on the same form. */
 a:focus-visible,
 button:focus-visible,
 input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
 summary:focus-visible,
 [tabindex]:focus-visible {
     outline: 1px solid var(--color-accent);
