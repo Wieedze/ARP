@@ -25,6 +25,10 @@ const TOOL_ATOM: Hex = `0x${"a3".repeat(32)}`;
 const ATOM_COST = 100n;
 const TRIPLE_COST = 50n;
 
+// Pinning is gated behind Intuition's partner API (ADR 0016); every helper
+// that pins now takes the credential as a required parameter.
+const PIN_AUTH = {apiKey: "test-partner-key"};
+
 // pinThing is mocked at the module boundary — the service calls it via
 // import and we never want a real fetch in unit tests.
 vi.mock("../intuition-pin", () => ({
@@ -91,6 +95,7 @@ describe("ensureAtomForThing", () => {
             thing: {name: "ARP Agent #1", description: "desc"},
             walletClient: wc,
             publicClient: pc,
+            pinAuth: PIN_AUTH,
         });
 
         expect(result).toEqual({
@@ -116,6 +121,7 @@ describe("ensureAtomForThing", () => {
             thing: {name: "ARP Agent #1", description: "desc"},
             walletClient: wc,
             publicClient: pc,
+            pinAuth: PIN_AUTH,
         });
 
         expect(result.created).toBe(true);
@@ -139,7 +145,7 @@ describe("ensureAtomForThing", () => {
         expect(pc.waitForTransactionReceipt).toHaveBeenCalledWith({hash: result.tx});
     });
 
-    it("passes empty strings to pinThing for missing optional image and url fields", async () => {
+    it("forwards the credential to pinThing, with empty strings for the optional fields", async () => {
         pc.readContract.mockImplementation(
             readContractDispatcher({
                 calculateAtomId: makeAtomIdReader(),
@@ -152,14 +158,18 @@ describe("ensureAtomForThing", () => {
             thing: {name: "ARP Agent #1", description: "desc"},
             walletClient: wc,
             publicClient: pc,
+            pinAuth: PIN_AUTH,
         });
 
-        expect(mockPin).toHaveBeenCalledWith({
-            name: "ARP Agent #1",
-            description: "desc",
-            image: "",
-            url: "",
-        });
+        expect(mockPin).toHaveBeenCalledWith(
+            {
+                name: "ARP Agent #1",
+                description: "desc",
+                image: "",
+                url: "",
+            },
+            PIN_AUTH,
+        );
     });
 });
 
@@ -259,16 +269,20 @@ describe("getOrCreateUsesPredicateAtomId", () => {
         const first = await getOrCreateUsesPredicateAtomId({
             walletClient: wc,
             publicClient: pc,
+            pinAuth: PIN_AUTH,
         });
         const second = await getOrCreateUsesPredicateAtomId({
             walletClient: wc,
             publicClient: pc,
+            pinAuth: PIN_AUTH,
         });
 
         expect(first).toBe(USES_ATOM);
         expect(second).toBe(USES_ATOM);
         // Pinned once — second call short-circuits on the cached id.
         expect(mockPin).toHaveBeenCalledTimes(1);
+        // The credential reached the pin, not just the outer signature.
+        expect(mockPin.mock.calls[0][1]).toBe(PIN_AUTH);
         // No new readContract for the second lookup either.
         const readCalls = pc.readContract.mock.calls.length;
         expect(readCalls).toBeLessThanOrEqual(2);
@@ -306,6 +320,7 @@ describe("declareUsesTriple", () => {
             toolAtomId: TOOL_ATOM,
             walletClient: wc,
             publicClient: pc,
+            pinAuth: PIN_AUTH,
         });
 
         expect(result.tripleId).toBe(TRIPLE_ID);
@@ -343,6 +358,7 @@ describe("declareUsesTriple", () => {
             toolAtomId: TOOL_ATOM,
             walletClient: wc,
             publicClient: pc,
+            pinAuth: PIN_AUTH,
         });
 
         expect(result).toEqual({tripleId: TRIPLE_ID, created: false});
