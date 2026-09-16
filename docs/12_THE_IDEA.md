@@ -7,7 +7,7 @@
 
 ## The mechanism, in full
 
-1. An agent has an **ERC-8004 identity**. ARP does not mint it. If the agent already has one — 28,648 do — ARP adopts it.
+1. An agent has an **ERC-8004 identity**. ARP is where you get one: it **mints** a new identity into the ERC-8004 registry, or **imports** an existing one — 28,648 already exist. Both paths end in the same place, and everything after this point is identical for either.
 2. An agent is **composed of modules**. A module is a tool or a methodology registered in `ModuleRegistry`: a domain plus a schema. Anyone can register one.
 3. The agent runs. It **deposits TRUST on the modules it actually used** — not the ones it claims to use.
 4. That deposit is the signal. It produces reputation at two levels at once:
@@ -25,7 +25,7 @@ It costs money, it is bounded by a contract, and it is about **usage**, not opin
 
 ## What ARP is not
 
-- **Not a registry.** ERC-8004 owns identity. ARP reads it.
+- **Not a registry.** ARP mints into ERC-8004's registry and reads from it; it never keeps an identity namespace of its own. Being an on-ramp to the standard is being its client, not its competitor.
 - **Not a marketplace.** `/hire` is a demo that the index works.
 - **Not consumer-facing.** B2B infrastructure — agents, dApps and protocols consume it (`docs/01`).
 - **Not in anyone's runtime.** The only thing an operator adopts is a delegation they sign once.
@@ -39,7 +39,7 @@ Written down because this document exists to stop a specific failure, which has 
 - "ARP should be the bounded-hiring rail / the marketplace" → no. See above.
 - "ARP should require the infrastructure to route its runtime through us" → no. The only integration is a signed delegation.
 - "ARP should weight sentiment by staker track record" → interesting, and not this. It has no falsifiable subject.
-- "ARP should mint the agent's identity" → never. The identity exists.
+- "ARP should keep its own agent registry" → no. Minting **into ERC-8004** is fine and is a product surface; a parallel ARP identity namespace is not. An agent minted through ARP must be indexable by everyone else reading the standard.
 
 ## The state of it
 
@@ -53,11 +53,13 @@ Written down because this document exists to stop a specific failure, which has 
 | **Adoption of an existing ERC-8004 agent**                      | **missing — the whole gap**                            |
 | **The guard rail on the chain where the agents are**            | **missing — enforcers are on testnet, agents are not** |
 
-The mechanism works today for agents ARP mints. It does not work for the 28,648 that already exist, and that is the only thing standing between this and a live system.
+The mechanism works today for agents ARP mints. It does not work for the 28,648 that already exist — and those are the population, so that gap is what stands between this and a live system.
 
 ## What closes it
 
-**Adoption instead of minting.** An operator proves control of an existing ERC-8004 agent — the registry names the `owner`, so a signature from that address is the whole proof. No bridge, no mint. `IdentityRegistry` on testnet stays a demo fixture; `docs/01` says ARP is not a registry, and this is what honouring that looks like.
+**Import, alongside the mint that already works.** Minting is built. What is missing is the other door: an operator proving control of an existing ERC-8004 agent. The registry names the `owner`, so a signature from that address is the whole proof — no bridge, no mint, no second identity.
+
+**One open question the mint path now raises**: which registry does ARP mint into? The 28,648 live in `0x8004A169…A432` on Base. ARP's own deployment of the reference implementation sits on Intuition testnet 13579. Minting there produces an agent nobody else indexes — the fragmentation the standard exists to prevent. If minting is a real product surface it should target the registry the ecosystem reads. That is a decision, not an implementation detail, and it needs an ADR.
 
 **The canonical atom as the subject.** The agent's atom already exists on Intuition mainnet, derived from its registration file. ADR 0015 already settled that it is the subject of everything ERC-8004-facing. `declareUsesTriple` points at it rather than at a freshly minted one.
 
