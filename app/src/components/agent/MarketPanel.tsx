@@ -7,11 +7,10 @@ import {describeStakers, formatTrust, truncateMiddle} from "../../services/trust
 /**
  * The live market on one `has trust provider` claim.
  *
- * Two numbers come from two places and the panel says which is which. Balances
- * are read from the MultiVault, because that is the vault a deposit lands in
- * and it is correct before the indexer is. Position counts come from the
- * indexer, because the contract does not expose them. Neither is presented as
- * the other.
+ * Two numbers come from two places. Balances are read from the MultiVault,
+ * because that is the vault a deposit lands in and it is correct before the
+ * indexer is. Position counts come from the indexer, because the contract does
+ * not expose them. Neither is presented as the other.
  *
  * Position count and distinct stakers appear on every side, always. These
  * vaults hold one or two positions each; a bare market cap would suggest a
@@ -112,13 +111,8 @@ export function MarketPanel({
                     isLoading={isLoading}
                 />
             </div>
-            <p className="mt-3 text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)] max-w-[64ch]">
-                Balances read from the MultiVault on Intuition mainnet. Position counts come from
-                the indexer — the contract does not expose them. In the MultiVault an account holds
-                at most one position per vault, so the position count is the distinct-staker count.
-            </p>
             {error !== null ? (
-                <p className="mt-2 text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)]">
+                <p className="mt-3 text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)]">
                     Vault balances could not be read: {error.message}. The indexer figures above are
                     what is left.
                 </p>

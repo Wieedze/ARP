@@ -35,8 +35,7 @@ export function SignatureLine({verdict}: {verdict: SignatureVerdict}) {
             </p>
             {copy.tone === "unverified" ? (
                 <p className="mt-1 text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)] max-w-[52ch]">
-                    Unverified means the signature could not be checked — not that the provider did
-                    anything wrong.
+                    Not checked — not an accusation.
                 </p>
             ) : null}
             {copy.tone === "mismatch" ? (

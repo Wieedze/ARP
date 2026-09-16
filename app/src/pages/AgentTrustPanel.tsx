@@ -163,12 +163,6 @@ export function AgentTrustPanel() {
                         <div className="min-w-0">
                             <section>
                                 <h2 className="font-medium">Assessments</h2>
-                                <p className="mt-1 text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)] max-w-[64ch]">
-                                    Each provider's own document, fetched live, with its EIP-712
-                                    signature checked and its declared freshness window enforced.
-                                    Verdicts are shown exactly as the connector reports them.
-                                </p>
-
                                 {view.rows.length === 0 ? (
                                     <p className="mt-6 text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)] max-w-[60ch]">
                                         No trust provider has written an edge about this agent. With
@@ -194,13 +188,12 @@ export function AgentTrustPanel() {
 
                             <section className="mt-16">
                                 <h2 className="font-medium">Capabilities</h2>
-                                <p className="mt-1 mb-6 text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)] max-w-[64ch]">
-                                    Relayed from the graph, never inferred from a registration file.
-                                </p>
-                                <CapabilitySection
-                                    groups={view.capabilities}
-                                    count={view.capabilityCount}
-                                />
+                                <div className="mt-6">
+                                    <CapabilitySection
+                                        groups={view.capabilities}
+                                        count={view.capabilityCount}
+                                    />
+                                </div>
                             </section>
 
                             {view.sourceErrors.length > 0 || view.conflicts.length > 0 ? (
@@ -280,10 +273,6 @@ function LoadingShape({chainId, tokenId}: {chainId: number; tokenId: string}) {
                 <li>erc-8004 registry on chain {chainId} — owner, registration file</li>
                 <li>each provider's resolver — document, signature, freshness window</li>
             </ul>
-            <p className="mt-6 text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)] max-w-[60ch]">
-                Several round trips, some of them to endpoints outside anyone's control. Rows whose
-                source does not answer will say so rather than disappear.
-            </p>
         </section>
     );
 }

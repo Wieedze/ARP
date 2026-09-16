@@ -59,13 +59,6 @@ export function AssessmentRow({
                 ) : null}
             </header>
 
-            {row.providerMatch === "label-prefix" ? (
-                <p className="mt-2 text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)] max-w-[60ch]">
-                    Document matched to this provider by the assessment atom's label, because the
-                    document itself could not be read. A naming convention, not a proof.
-                </p>
-            ) : null}
-
             <div className="mt-5 grid lg:grid-cols-[minmax(0,15rem)_minmax(0,1fr)] gap-x-10 gap-y-6">
                 <div>
                     {row.score !== null ? (

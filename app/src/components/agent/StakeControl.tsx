@@ -477,10 +477,10 @@ function Receipt({
             </p>
             <p className="mt-3 text-[length:var(--text-body-sm)] max-w-[52ch]">
                 {formatTrust(quote.assets)} TRUST deposited to{" "}
-                {quote.side === "support" ? "support" : "oppose"} this claim.{" "}
+                {quote.side === "support" ? "support" : "oppose"} this claim.
                 {settled
-                    ? "The market figures above refresh from the chain, not from an assumption about what this transaction did."
-                    : "Nothing above has been updated yet — it will refresh once the receipt lands."}
+                    ? null
+                    : " Nothing above has been updated yet — it will refresh once the receipt lands."}
             </p>
             <p className="mt-3 font-mono text-[length:var(--text-body-sm)]">
                 <a

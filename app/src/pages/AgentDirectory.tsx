@@ -127,9 +127,7 @@ export function AgentDirectory() {
             <section className="mt-16">
                 <h2 className="font-medium">Look one up directly</h2>
                 <p className="mt-1 mb-6 max-w-[64ch] text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)]">
-                    The list above is the Base mirror, which is the only chain the graph indexes.
-                    Agents on BSC and Ethereum are registered but have no trust edges, so they
-                    cannot be listed — only opened by token id.
+                    The list is Base only. Agents on BSC and Ethereum open by token id.
                 </p>
                 <LookupForm />
             </section>
@@ -200,11 +198,6 @@ function CohortLoading() {
         <div aria-live="polite" className="mt-8">
             <p className="font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)]">
                 reading the cohort from the intuition graph — identity, statement counts, markets
-            </p>
-            <p className="mt-2 max-w-[64ch] text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)]">
-                Ordering 28,648 agents is one sort over the whole cohort, and this endpoint has been
-                measured taking anywhere from under a second to nine on it. A few seconds here is
-                normal rather than a sign something is wrong.
             </p>
         </div>
     );

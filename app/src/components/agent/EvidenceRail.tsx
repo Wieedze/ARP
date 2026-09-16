@@ -20,8 +20,7 @@ export function EvidenceRail({basis, weight}: {basis: ReviewerBasis; weight: Evi
     if (basis.kind === "not-published") {
         return (
             <p className="mt-3 text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)] max-w-[46ch]">
-                {WEIGHT_CAPTION.unknown} A rule-based score legitimately has none; that is not the
-                same as a review-based score with zero.
+                {WEIGHT_CAPTION.unknown}
             </p>
         );
     }
