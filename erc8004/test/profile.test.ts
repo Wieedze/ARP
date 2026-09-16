@@ -364,6 +364,11 @@ describe("the composable pieces", () => {
         expect(profile.markets).toHaveLength(4);
         for (const entry of profile.assessments) {
             expect(entry.fetch.status).toBe("error");
+            // A caller's choice is reported as its own kind, never dressed up as
+            // a network failure the provider did not cause.
+            if (entry.fetch.status === "error") {
+                expect(entry.fetch.error).toEqual({kind: "skipped"});
+            }
             expect(entry.signature.status).toBe("unverified");
         }
     });

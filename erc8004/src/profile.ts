@@ -224,7 +224,7 @@ export async function getAgentProfile(
                 ? ({
                       status: "error",
                       url: claim.resolverUrl,
-                      error: {kind: "network", message: "resolver fetch skipped by caller"},
+                      error: {kind: "skipped"},
                   } as const)
                 : await fetchAssessment(claim, {
                       fetch: client.fetch,

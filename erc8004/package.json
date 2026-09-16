@@ -20,6 +20,7 @@
         "test:watch": "vitest",
         "build": "tsc -p tsconfig.build.json",
         "lint": "tsc --noEmit -p tsconfig.json",
+        "format:check": "prettier --check .",
         "prepublishOnly": "bun run build"
     },
     "dependencies": {

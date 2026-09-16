@@ -229,6 +229,7 @@ export type AssessmentDocument = {
 
 export type AssessmentFetchError =
     | {kind: "no-resolver-url"}
+    | {kind: "skipped"}
     | {kind: "network"; message: string}
     | {kind: "timeout"; timeoutMs: number}
     | {kind: "http"; status: number; statusText: string}
