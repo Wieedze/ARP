@@ -56,3 +56,9 @@
 - **A panel that stakes real value needs its safeguards traceable, not just present.** Numbering them in the service header and mapping each to a named function made verification a lookup instead of an audit. Do that again on any value-handling surface.
 - **No browser was available in this environment, so nothing was visually verified.** Layout, contrast and 400px behaviour were checked by reading code and built CSS. `/agent/8453/6649` and `/agent/8453/2340` rendering correctly are the two acceptance criteria still resting on inference; the operator should open both once before this is shown to anyone.
 - The first real stake transaction is still unexecuted, by design (ADR 0017). It is the operator's, deliberately, with their own wallet.
+
+## Residuals the verifier accepted rather than closed
+
+- After a broadcast-then-lost error, "Back" routes to `{step: "form"}` but does not clear `amount` and `side`. Re-signing still costs four deliberate actions (Back → Review → Sign → wallet confirm) behind an explicit "do not sign it again without checking", so the one-click path is gone; the form is merely not wiped. Clear it if this branch is ever touched again.
+- If the wallet broadcasts but the `writeContract` response is lost, `broadcast` stays `null` and the panel says "Nothing was staked", which could be false. You cannot report a hash you never received; this residual is not closable from the client.
+- No visual verification was possible (no browser in the build environment). See the suggestion above.
