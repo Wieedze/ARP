@@ -9,10 +9,20 @@
 
 const THING = `value { thing { name description image url } }`;
 
+/**
+ * Both market sides, for one bonding curve.
+ *
+ * The curve is a `$curveId` variable rather than a literal because
+ * `defaultCurveId` is governance-configurable on the MultiVault — ARP's write
+ * path reads it from `getBondingCurveConfig()` on every deposit and never
+ * assumes it. If this fragment pinned curve 1 while a deposit went to another,
+ * the panel would show one curve's market beside a position in a different
+ * vault, with nothing to signal the mismatch.
+ */
 const MARKET_SIDE = `
     total_market_cap
     total_assets
-    vaults(where: {curve_id: {_eq: "1"}}, limit: 1) {
+    vaults(where: {curve_id: {_eq: $curveId}}, limit: 1) {
       market_cap
       total_assets
       total_shares
@@ -42,7 +52,7 @@ query ResolveAgentByCaip($sameAsPredicateId: String!, $caipId: String!) {
 }`;
 
 export const TRUST_SURFACE_QUERY = `
-query AgentTrustSurface($subjectId: String!, $predicateIds: [String!]) {
+query AgentTrustSurface($subjectId: String!, $predicateIds: [String!], $curveId: String!) {
   triples(
     where: {subject_id: {_eq: $subjectId}, predicate_id: {_in: $predicateIds}}
     order_by: {term: {total_market_cap: desc}}
