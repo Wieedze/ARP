@@ -1,6 +1,15 @@
 # Task 08 — The agent trust panel
 
-> **Status: NOT STARTED** (specified 2026-09-16).
+> **Status: COMPLETE** (2026-09-16). Branch `feat/agent-trust-panel`, commits `9c60ef6..b8a63ee`.
+> Post-mortem: `.claude/learning/10-agent-trust-panel.md`. ADRs `0018` (design and edge join) and
+> `0020` (package-local Prettier config). `ui-reviewer` pass at `ec65620`; `task-verifier` pass.
+>
+> **Two lines below are stale and were deliberately not followed.** The acceptance criterion "Stake
+> control present, disabled" and the out-of-scope entry "Any mainnet write, including enabling the
+> stake control" predate ADR 0017, which was accepted the same day and states "The control ships
+> enabled" and "Supersedes: the 'ship it disabled' provision". The body of this task (§"The staking
+> control — live, with real TRUST") already says the same. The control ships **enabled**. No real
+> stake transaction has been executed; the first one is the operator's.
 >
 > Phase 1 · options O1 + O6 of `docs/08`. Serves tiers 2→3 of the evidence ladder (`docs/09` §2): it
 > makes existing ratings checkable, and it builds the surface where staked conviction becomes
@@ -198,22 +207,32 @@ Per ADR 0011 the app test scope is services and hooks, not pages.
 
 ## Acceptance criteria
 
-- [ ] `/agent/8453/6649` renders the bare fixture correctly, fallback metadata labelled as such
-- [ ] `/agent/8453/2340` renders the rich fixture with both providers and the full capability set
-- [ ] A provider with an unreachable resolver renders as a row stating what failed, not a crash
-- [ ] Signature verdicts are displayed exactly as the connector reports them — the UI never upgrades
+- [~] `/agent/8453/6649` renders the bare fixture correctly, fallback metadata labelled as such —
+      the view model was checked against live mainnet data; **no browser was available, so the
+      render itself is unverified.** Open it once.
+- [~] `/agent/8453/2340` renders the rich fixture with both providers and the full capability set —
+      same caveat. Live read returns both providers, 14 capability edges, scores 59 and 55.35.
+- [x] A provider with an unreachable resolver renders as a row stating what failed, not a crash
+- [x] Signature verdicts are displayed exactly as the connector reports them — the UI never upgrades
       `unverified` to `verified`
-- [ ] Distinct stakers shown wherever a market is shown
-- [ ] Stake control present, disabled, with its reason stated
-- [ ] `bun run test`, `bun run lint`, `prettier --check` all clean
-- [ ] Keyboard reachable, visible focus rings, labelled controls, WCAG AA in dark mode
-- [ ] Renders at 400px wide without horizontal body scroll
-- [ ] `ui-reviewer` pass, then `task-verifier` pass
+- [x] Distinct stakers shown wherever a market is shown
+- [x] ~~Stake control present, disabled, with its reason stated~~ — **superseded by ADR 0017.** The
+      control ships enabled, behind the ADR's seven safeguards.
+- [~] `bun run test`, `bun run lint`, `prettier --check` all clean — test and lint clean;
+      `prettier --check` is clean for every file this task touched and red on 23 pre-existing files
+      (ADR 0020). It was never achievable as written: 180 files fail repo-wide.
+- [x] Keyboard reachable, visible focus rings, labelled controls, WCAG AA in dark mode — contrast
+      measured numerically by `ui-reviewer`, not eyeballed.
+- [~] Renders at 400px wide without horizontal body scroll — verified by reading code and built CSS,
+      not in a browser.
+- [x] `ui-reviewer` pass, then `task-verifier` pass
 
 ## Out of scope
 
 - Capability search or ranking across the cohort — Phase 2.
 - ARP's own assessment — Phase 3. The ARP row shows `insufficient-evidence` and says why.
-- Any mainnet write, including enabling the stake control.
+- ~~Any mainnet write, including enabling the stake control.~~ **Superseded by ADR 0017**, accepted
+  the same day this task was written. Mainnet *deposits into existing vaults* are in scope and
+  shipped; deploying any ARP contract to mainnet remains out of scope and unauthorised.
 - Redesigning existing pages. New components share the existing design tokens; do not refactor
   `/hire` or `/tool/:id` in this task.
