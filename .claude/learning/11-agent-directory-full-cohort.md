@@ -95,6 +95,12 @@
 - **A recorded fixture cannot validate a query.** Every new or edited GraphQL query needs one live
   assertion, or it is unverified no matter how green the suite is. This cost a silently broken trust
   panel once already.
+- **A live assertion must not be a latency assertion.** The first version of the live cohort test
+  failed on the endpoint's p95, which is somebody else's mood. Assert the result; observe the timing
+  separately where it cannot fail the suite.
+- **Pick a timeout from measurement, and measure more than once.** Three sessions on the same day
+  gave three different regimes for the same query. A single session would have produced a confident,
+  wrong number — and a per-order budget fitted to the first session's numbers.
 - **Verify a spec's query against a real row before implementing it.** The task's pairing was
   verified live "before the work started" and still shipped the bug, because it was checked for
   _syntax_, not against a row where the two scopes disagree. Pick the adversarial row.
@@ -111,6 +117,37 @@
   phone width once.
 - App test scope stays services-only per ADR 0011, so `CohortList.tsx` and `AgentDirectory.tsx` have
   no render tests; the logic that would be tested lives in `agent-cohort.ts`, where it is.
+
+## Follow-up round — latency, failure copy, and a stale `dist/`
+
+Raised by the coordinator after the verifier passed, all four closed on this branch.
+
+- **The 10s shared deadline sat below the endpoint's own p95 for a query known to be correct.**
+  `listAgents` now has `DEFAULT_LIST_TIMEOUT_MS` (30s), configurable per source as `listTimeoutMs`,
+  and the profile reads keep the 10s budget untouched. The number comes from three independent
+  measurement sessions against mainnet on the same day, recorded in the constant's doc comment:
+  0.78–0.83s, 0.64–9.1s, and 2.10–2.62s over 20 samples with zero failures. **The two orders are not
+  separable** — in the third session the "expensive" aggregate sort was marginally _faster_ than the
+  cheap one, and the order that timed out twice in the first ran clean twenty times in the third.
+  What moves is the endpoint, not the query, so a per-order budget would be fitting noise.
+- **A failed listing now says so instead of rendering as an empty list.** `describeCohortFailure`
+  turns the error into a headline, a reason and a remedy; a deadline offers the other order, and
+  anything where the endpoint actually answered does not, because a switch would get the same answer
+  and offering it would be a false remedy. `ListAgentsFailedError.timedOut` makes that distinction a
+  typed value rather than a match on message text — `isTimeoutError` walks the `cause` chain, and
+  both `HttpError` and `GraphqlError` now carry their cause so the chain exists.
+- **The live test no longer asserts latency.** It was failing on the indexer's p95, which trains a
+  reader to ignore a live test — the worst thing one can do. Split: correctness of both orders on a
+  120s budget, and a separate observation that prints timings and can only fail if a read comes back
+  _wrong_.
+- **`dist/` staleness is closed for the app and documented for everyone else.** `app`'s `dev`,
+  `build`, `test` and `test:watch` now run `bun run --cwd ../erc8004 build` first, so the app can
+  never compile against an old connector. A standalone script still can, and that already cost
+  somebody a chase after a phantom regression — agents reported with zero trust providers, which
+  looked exactly like a connector bug and was an old build. The README now states the precondition
+  in a callout beside the test commands. A `src` path alias was considered and rejected: the
+  package's internal imports use `.js` specifiers that Vite does not resolve to `.ts` without a
+  plugin, and two resolution paths for one specifier is a worse footgun than one build step.
 
 ## Residuals the verifier accepted rather than closed
 
