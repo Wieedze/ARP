@@ -1,7 +1,14 @@
 import {describe, expect, it} from "vitest";
+import {HttpError, ListAgentsFailedError, NoListingSourceError} from "@arp-protocol/erc8004";
 import type {AgentListing, AgentPage} from "@arp-protocol/erc8004";
 
-import {buildCohortView, COHORT_ORDERS, toCohortRow} from "../agent-cohort";
+import {
+    buildCohortView,
+    COHORT_ORDERS,
+    describeCohortFailure,
+    orderLabel,
+    toCohortRow,
+} from "../agent-cohort";
 
 const REGISTRY = "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432" as const;
 
@@ -214,5 +221,77 @@ describe("buildCohortView", () => {
         // Not 41, 30, 5 — this page is a window onto an order decided over the
         // whole cohort, and sorting it here would be a claim about the cohort.
         expect(view.rows.map((row) => row.statementCount)).toEqual([41, 5, 30]);
+    });
+});
+
+describe("describeCohortFailure", () => {
+    /**
+     * Built through the package's own constructor with a real cause, so
+     * `timedOut` is computed the way production computes it. Handing the
+     * constructor a hand-set flag would assert the flag into existence and
+     * prove nothing about the path that sets it.
+     */
+    const refusal = () =>
+        new ListAgentsFailedError(
+            [{sourceId: "intuition", step: "listAgents", message: "HTTP 503 Down"}],
+            [new Error("HTTP 503 Down")],
+        );
+
+    const deadline = () =>
+        new ListAgentsFailedError(
+            [{sourceId: "intuition", step: "listAgents", message: "timed out after 30000ms"}],
+            [new HttpError("timeout", "timed out after 30000ms", 30_000)],
+        );
+
+    it("says the indexer ran out of time, and offers the other order", () => {
+        const failure = describeCohortFailure(deadline(), "economic-conviction");
+        expect(deadline().timedOut).toBe(true);
+
+        expect(failure.headline).toBe("The indexer did not answer in time");
+        expect(failure.alternateOrder).toBe("evidence-quantity");
+        expect(failure.canRetry).toBe(true);
+        // It must not sell the other order as the faster one — the latency swing
+        // is the endpoint's and hits both orders alike.
+        expect(failure.detail).toContain("fresh read rather than a faster one");
+    });
+
+    it("does not offer the other order when the endpoint answered and said no", () => {
+        // A GraphQL or HTTP error gets the same answer on either order, so
+        // suggesting a switch would be a false remedy.
+        expect(refusal().timedOut).toBe(false);
+        const failure = describeCohortFailure(refusal(), "evidence-quantity");
+        expect(failure.headline).toBe("The cohort could not be read");
+        expect(failure.alternateOrder).toBeNull();
+        expect(failure.canRetry).toBe(true);
+    });
+
+    it("says plainly when nothing configured can enumerate agents", () => {
+        const failure = describeCohortFailure(
+            new NoListingSourceError(["erc8004-registry"]),
+            "evidence-quantity",
+        );
+        expect(failure.headline).toBe("Nothing configured here can list agents");
+        expect(failure.canRetry).toBe(false);
+        expect(failure.alternateOrder).toBeNull();
+        expect(failure.detail).toContain("lookup form");
+    });
+
+    it("never lets a failure read as an empty cohort", () => {
+        for (const error of [
+            refusal(),
+            deadline(),
+            new NoListingSourceError([]),
+            new Error("boom"),
+        ]) {
+            const failure = describeCohortFailure(error, "evidence-quantity");
+            expect(failure.headline.length).toBeGreaterThan(0);
+            expect(failure.detail.length).toBeGreaterThan(40);
+            expect(failure.headline).not.toMatch(/no agents|empty/i);
+        }
+    });
+
+    it("names an order the way the control names it", () => {
+        expect(orderLabel("evidence-quantity")).toBe("Most statements");
+        expect(orderLabel("economic-conviction")).toBe("Most staked");
     });
 });

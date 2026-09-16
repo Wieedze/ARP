@@ -5,7 +5,7 @@ import type {AgentListOrder} from "@arp-protocol/erc8004";
 import {CohortList} from "../components/agent/CohortList";
 import {MainnetNotice} from "../components/agent/MainnetNotice";
 import {COHORT_PAGE_SIZE, useAgentCohort} from "../hooks/use-agent-cohort";
-import {COHORT_ORDERS} from "../services/agent-cohort";
+import {COHORT_ORDERS, describeCohortFailure, orderLabel} from "../services/agent-cohort";
 import {ERC8004_GRAPHQL_URL} from "../services/erc8004-connector";
 
 /**
@@ -77,8 +77,10 @@ export function AgentDirectory() {
 
                 {cohortQuery.error !== null ? (
                     <CohortError
-                        message={cohortQuery.error.message}
+                        error={cohortQuery.error}
+                        order={order}
                         onRetry={() => void cohortQuery.refetch()}
+                        onSwitchOrder={changeOrder}
                     />
                 ) : view === undefined ? (
                     <CohortLoading />
@@ -195,29 +197,69 @@ function PageButton({
 /** A loading state shaped like the answer: the read that is in flight, named. */
 function CohortLoading() {
     return (
-        <p
-            aria-live="polite"
-            className="mt-8 font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)]"
-        >
-            reading the cohort from the intuition graph — identity, statement counts, markets
-        </p>
+        <div aria-live="polite" className="mt-8">
+            <p className="font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)]">
+                reading the cohort from the intuition graph — identity, statement counts, markets
+            </p>
+            <p className="mt-2 max-w-[64ch] text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)]">
+                Ordering 28,648 agents is one sort over the whole cohort, and this endpoint has been
+                measured taking anywhere from under a second to nine on it. A few seconds here is
+                normal rather than a sign something is wrong.
+            </p>
+        </div>
     );
 }
 
-function CohortError({message, onRetry}: {message: string; onRetry: () => void}) {
+/**
+ * A failed listing, said out loud.
+ *
+ * An empty list reads as "there are no agents", which is the one thing it
+ * definitely does not mean — so the failure takes the space the rows would have
+ * had and names itself. A deadline also offers the other order, because a
+ * reader whose sort just failed should not have to guess whether the page is
+ * broken or the endpoint is slow.
+ */
+function CohortError({
+    error,
+    order,
+    onRetry,
+    onSwitchOrder,
+}: {
+    error: Error;
+    order: AgentListOrder;
+    onRetry: () => void;
+    onSwitchOrder: (next: AgentListOrder) => void;
+}) {
+    const failure = describeCohortFailure(error, order);
+    // Bound to a local so the narrowing survives into the click handler.
+    const alternate = failure.alternateOrder;
+
     return (
-        <div className="mt-8">
-            <p className="max-w-[64ch]">
-                The cohort could not be read, so this list is empty for a reason that has nothing to
-                do with how many agents exist. {message}
-            </p>
-            <button
-                type="button"
-                onClick={onRetry}
-                className="mt-4 px-3 py-1.5 text-[length:var(--text-body-sm)] border border-[color:var(--color-border-strong)]"
-            >
-                Try again
-            </button>
+        <div className="mt-8 pl-5 border-l border-l-[color:var(--color-border-strong)]">
+            <h3 className="text-[length:var(--text-body)] font-medium">{failure.headline}</h3>
+            <p className="mt-3 max-w-[64ch] text-[color:var(--color-fg-60)]">{failure.detail}</p>
+            {failure.canRetry || alternate !== null ? (
+                <div className="mt-5 flex flex-wrap gap-3">
+                    {failure.canRetry ? (
+                        <button
+                            type="button"
+                            onClick={onRetry}
+                            className="px-3 py-1.5 text-[length:var(--text-body-sm)] border border-[color:var(--color-border-strong)]"
+                        >
+                            Try again
+                        </button>
+                    ) : null}
+                    {alternate !== null ? (
+                        <button
+                            type="button"
+                            onClick={() => onSwitchOrder(alternate)}
+                            className="px-3 py-1.5 text-[length:var(--text-body-sm)] border border-[color:var(--color-border-strong)]"
+                        >
+                            Order by {orderLabel(alternate).toLowerCase()} instead
+                        </button>
+                    ) : null}
+                </div>
+            ) : null}
         </div>
     );
 }

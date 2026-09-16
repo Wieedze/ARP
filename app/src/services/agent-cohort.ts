@@ -1,3 +1,4 @@
+import {ListAgentsFailedError, NoListingSourceError} from "@arp-protocol/erc8004";
 import type {AgentListing, AgentListOrder, AgentPage} from "@arp-protocol/erc8004";
 
 import {describeAtomPositions, describeChain, formatTrust} from "./trust-format";
@@ -153,5 +154,60 @@ export function buildCohortView(page: AgentPage): CohortView {
         // total the source did not report is not a reason to hide the control.
         hasNext: rows.length === page.limit && (page.total === null || rangeEnd < page.total),
         rows,
+    };
+}
+
+/**
+ * What went wrong with a cohort read, phrased for a reader rather than for a log.
+ *
+ * `ui.md`'s rule for an empty state is to say what would be there and why it is
+ * not, and a failed listing is the same obligation: a blank list reads as "there
+ * are no agents", which is the one thing it definitely does not mean.
+ */
+export type CohortFailure = {
+    headline: string;
+    detail: string;
+    /**
+     * An order worth offering instead, or `null` when switching would not help.
+     *
+     * Only set for a deadline. If the endpoint answered and said no, the other
+     * order gets the same answer, and offering it would be a false suggestion.
+     */
+    alternateOrder: AgentListOrder | null;
+    canRetry: boolean;
+};
+
+function otherOrder(order: AgentListOrder): AgentListOrder {
+    return order === "evidence-quantity" ? "economic-conviction" : "evidence-quantity";
+}
+
+export function orderLabel(order: AgentListOrder): string {
+    return COHORT_ORDERS.find((entry) => entry.id === order)?.label ?? order;
+}
+
+export function describeCohortFailure(error: Error, order: AgentListOrder): CohortFailure {
+    if (error instanceof NoListingSourceError) {
+        return {
+            headline: "Nothing configured here can list agents",
+            detail: "An ERC-8004 registry can be asked about one token id but cannot be asked for its population, so only a graph source can produce this list. None is configured. The lookup form below still reaches any agent whose token id you already know.",
+            alternateOrder: null,
+            canRetry: false,
+        };
+    }
+
+    if (error instanceof ListAgentsFailedError && error.timedOut) {
+        return {
+            headline: "The indexer did not answer in time",
+            detail: `The read is correct and nothing is known to be wrong with it — this endpoint's latency on the cohort swings by more than an order of magnitude, and the same query has come back in under a second and then not at all a few minutes later. The swing is the endpoint's and affects both orders alike, so the other order below is a fresh read rather than a faster one.`,
+            alternateOrder: otherOrder(order),
+            canRetry: true,
+        };
+    }
+
+    return {
+        headline: "The cohort could not be read",
+        detail: `This list is empty for a reason that has nothing to do with how many agents exist. ${error.message}`,
+        alternateOrder: null,
+        canRetry: true,
     };
 }
