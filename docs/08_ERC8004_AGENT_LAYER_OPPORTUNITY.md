@@ -328,11 +328,15 @@ receipt, or capability data the graph lacks. Sponsored writes — an operator pa
 0.5 TRUST, marked as sponsored — are a separate opt-in path and the layer's first natural revenue.
 
 **Effort**: 5–7 d · **Depends on**: O1, and O2 for anything but a trivial score
-**Risk**: medium. Requires operating a resolver with real uptime and freshness obligations
-(ADR 0015 flags this). Mainnet _writes_ need a Partner API key for `pinThing`
-— **open question**: whether self-pinning the identical canonical JSON to IPFS yields the same CID and
-therefore the same atom ID, which would unblock the write path. Must be verified empirically on
-testnet before this option is costed. Reads never need a key.
+**Risk**: medium, and the risks have moved since this was written. The Partner API key is now
+**obtained and verified**, and `bun run verify:pin` shows the canonical recipe reproducing
+byte-for-byte against a live mainnet atom — so preflight-before-mint is settled, and the self-pinning
+question is downgraded from a blocker to a resilience concern.
+
+What remains is operating the resolver: `validUntil` makes staleness visible to everyone, and nobody
+has yet said where it is hosted or who is on call. That is now the largest unresolved dependency of
+O3, ahead of anything on-chain — and it is not hypothetical, since one of the two providers measured
+here already publishes a resolver URL that does not answer.
 
 ---
 
