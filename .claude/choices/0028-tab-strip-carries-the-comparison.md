@@ -1,4 +1,4 @@
-# 0027 — The tab strip carries the comparison, and ARP gets a tab
+# 0028 — The tab strip carries the comparison, and ARP gets a tab
 
 **Status:** Accepted
 **Date:** 2026-09-17

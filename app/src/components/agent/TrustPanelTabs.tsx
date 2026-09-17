@@ -34,7 +34,7 @@ const STATIC_LINES: Record<"arp" | "agent", {primary: string; secondary: string}
  * instead, the same device `FreshnessLine` uses for stale against fresh.
  * `mismatch` keeps the alarm colour: a document that does not recover to the
  * signer it names has to be unmissable from the tab that hides it, not only
- * from inside the panel (ADR 0018, ADR 0027).
+ * from inside the panel (ADR 0018, ADR 0028).
  *
  * Nothing here drops below `--color-fg-60`. At `--text-label` the next step
  * down is 3.66:1, and in this strip the tone is not chrome — it is how the
