@@ -69,6 +69,19 @@ export function fixtureFetch(overrides: Record<string, () => Response> = {}): Fe
             if (!isRecord(variables))
                 throw new Error(`unroutable GraphQL body: ${String(init?.body)}`);
 
+            const objectId = variables["objectId"];
+            if (typeof objectId === "string") {
+                const order = variables["orderBy"];
+                const offset = variables["offset"];
+                const byMarketCap = JSON.stringify(order).includes("total_market_cap");
+                const slug = byMarketCap
+                    ? "economic-0"
+                    : offset === 0
+                      ? "evidence-0"
+                      : `evidence-${String(offset)}`;
+                return jsonResponse(fixture(`cohort-${slug}.json`));
+            }
+
             const caipId = variables["caipId"];
             if (typeof caipId === "string") {
                 const slug = CAIP_TO_SLUG[caipId] ?? "absent";

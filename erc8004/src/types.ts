@@ -169,8 +169,96 @@ export type ProfileConflict = {
 /** A source that failed during a merged read. The profile is still returned. */
 export type SourceError = {
     sourceId: string;
-    step: "resolveAgent" | "getAssessments" | "getCapabilities" | "getMarkets";
+    step: "resolveAgent" | "getAssessments" | "getCapabilities" | "getMarkets" | "listAgents";
     message: string;
+};
+
+/**
+ * How a cohort listing is ordered.
+ *
+ * Both orders rank by something that cost its author money or effort. There is
+ * no order by score, and adding one would contradict the rest of this package:
+ * a provider's number is the claim being qualified here, not the ranking key.
+ */
+export type AgentListOrder = "evidence-quantity" | "economic-conviction";
+
+/**
+ * The market on an agent's *own* atom — not on any claim about it.
+ *
+ * Both figures are read at the same scope, summed across every bonding curve,
+ * because a market cap from all curves beside a position count from one reads
+ * as a contradiction and is one. The consequence is that `positionCount` here
+ * is a count of positions, not of distinct stakers: an account staked on two
+ * curves is counted twice. `MarketSide.positionCount`, which is scoped to a
+ * single vault, is the one that equals the distinct-staker count.
+ */
+export type AgentAtomMarket = {
+    totalMarketCap: bigint | null;
+    positionCount: number | null;
+    /** How many curve vaults exist on the atom. `positionCount` sums across all of them. */
+    vaultCount: number | null;
+};
+
+/**
+ * One agent as it appears in a cohort listing.
+ *
+ * Deliberately thinner than `AgentIdentity`: a listing row is a way into a
+ * profile, not a substitute for one. Nothing here is checked — the metadata is
+ * whatever the indexer holds and the market is whatever the graph prices.
+ */
+export type AgentListing = {
+    /** Source-scoped handle for the agent — an Intuition atom term id. Do not parse it. */
+    sourceHandle: string;
+    /**
+     * The ERC-8004 identity, when the source could establish exactly one.
+     *
+     * `null` when the agent declares none this package understands, or when it
+     * declares several — see `isIdentityAmbiguous`. It is read from the `same as`
+     * edge and never parsed out of a display label.
+     */
+    ref: ResolvedAgentRef | null;
+    /** Every ERC-8004 identity found among the `same as` edges that were read. */
+    identities: ResolvedAgentRef[];
+    /** How many `same as` edges the agent carries in total, ERC-8004 or not. */
+    identityEdgeCount: number | null;
+    /**
+     * True when the agent claims more than one ERC-8004 identity, or carries more
+     * `same as` edges than were read so a second identity may be hiding behind
+     * them. Either way there is no single agent to link to, and saying so beats
+     * picking one.
+     */
+    isIdentityAmbiguous: boolean;
+    metadata: AgentMetadata;
+    /** How many statements the source holds about this agent. The evidence-quantity sort key. */
+    statementCount: number | null;
+    market: AgentAtomMarket | null;
+    provenance: Provenance;
+};
+
+/** One page of a cohort listing. Paged at the source; never re-ranked here. */
+export type AgentPage = {
+    /** Which source produced this page. Pages from different sources are not comparable. */
+    sourceId: string;
+    order: AgentListOrder;
+    limit: number;
+    offset: number;
+    /** The whole cohort's size, from the source's own aggregate — not `agents.length`. */
+    total: number | null;
+    agents: AgentListing[];
+};
+
+/** What a caller asks a listing for. Every field has a default. */
+export type ListAgentsOptions = {
+    order?: AgentListOrder;
+    limit?: number;
+    offset?: number;
+};
+
+/** `ListAgentsOptions` with every field filled in. What sources actually receive. */
+export type ResolvedListAgentsOptions = {
+    order: AgentListOrder;
+    limit: number;
+    offset: number;
 };
 
 export type AssessmentEvidence = {

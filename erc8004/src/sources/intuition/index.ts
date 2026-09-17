@@ -1,13 +1,15 @@
 import {toCaip19} from "../../caip.js";
 import {defaultFetch, type FetchLike} from "../../http.js";
-import {isRecord, readString} from "../../json.js";
+import {isRecord, readNumber, readRecord, readString} from "../../json.js";
 import type {
     AgentIdentity,
+    AgentPage,
     Capabilities,
     CapabilityRef,
     ClaimMarket,
     ProviderClaim,
     ResolvedAgentRef,
+    ResolvedListAgentsOptions,
 } from "../../types.js";
 import type {TrustSource} from "../source.js";
 import {createGraphqlTransport, type GraphqlTransport} from "./graphql.js";
@@ -15,13 +17,26 @@ import {
     claimProvenance,
     derivedProvenance,
     INTUITION_SOURCE_ID,
+    mapAgentListing,
     mapCapabilityRef,
     mapClaimMarket,
     mapMetadata,
     mapProviderClaim,
 } from "./map.js";
-import {CAPABILITIES_QUERY, RESOLVE_AGENT_QUERY, TRUST_SURFACE_QUERY} from "./queries.js";
-import {CAPABILITY_PREDICATE_IDS, SAME_AS, TRUST_PREDICATE_IDS} from "./terms.js";
+import {
+    CAPABILITIES_QUERY,
+    COHORT_ORDER_BY,
+    COHORT_QUERY,
+    RESOLVE_AGENT_QUERY,
+    TRUST_SURFACE_QUERY,
+} from "./queries.js";
+import {
+    CAPABILITY_PREDICATE_IDS,
+    ERC8004,
+    IMPLEMENT,
+    SAME_AS,
+    TRUST_PREDICATE_IDS,
+} from "./terms.js";
 
 export const INTUITION_MAINNET_GRAPHQL = "https://mainnet.intuition.sh/v1/graphql";
 export const INTUITION_TESTNET_GRAPHQL = "https://testnet.intuition.sh/v1/graphql";
@@ -36,6 +51,34 @@ export const INTUITION_TESTNET_GRAPHQL = "https://testnet.intuition.sh/v1/graphq
  */
 export const DEFAULT_CURVE_ID = "1";
 
+/**
+ * Deadline for the cohort listing, separate from every other read.
+ *
+ * `DEFAULT_TIMEOUT_MS` is 10s, and this endpoint has been measured completing a
+ * correct cohort query in 9.1s — so the shared budget truncates reads that were
+ * going to succeed. Three independent measurement sessions against mainnet on
+ * 2026-09-16, `limit: 25`:
+ *
+ *   | session | evidence-quantity      | economic-conviction               |
+ *   | ------- | ---------------------- | --------------------------------- |
+ *   | A       | 0.78, 0.78, 0.83       | 0.82, 8.3, cut at 25, cut at 25   |
+ *   | B       | 0.64 – 3.4 (ad hoc)    | 0.82 – 9.1 (ad hoc)               |
+ *   | C       | 2.21 – 2.62 (n=10)     | 2.10 – 2.32 (n=10), no failures   |
+ *
+ * The orders are not separable: in session C the "expensive" aggregate sort was
+ * marginally *faster* than the cheap one, and the order that timed out twice in
+ * session A ran clean twenty times in session C. What moves is the endpoint,
+ * not the query — so a budget picked per order would be fitting noise.
+ *
+ * 30s, because: it is over three times the slowest completed read anyone has
+ * observed (9.1s); it is above 25s, the ceiling at which the only two
+ * non-completions were cut, so a read that would have landed just past there
+ * still gets to; and with the one retry the UI performs it caps a hung list at
+ * 60s, which is already the outer edge of what a list view should make somebody
+ * wait. Override with `listTimeoutMs` if your endpoint is better behaved.
+ */
+export const DEFAULT_LIST_TIMEOUT_MS = 30_000;
+
 export type IntuitionSourceConfig = {
     graphqlUrl?: string;
     fetch?: FetchLike;
@@ -46,6 +89,15 @@ export type IntuitionSourceConfig = {
      * conversion at the call site.
      */
     curveId?: string | number | bigint;
+    /**
+     * Deadline for `listAgents` only. Defaults to {@link DEFAULT_LIST_TIMEOUT_MS}.
+     *
+     * Separate from `timeoutMs` because ordering the whole cohort by an
+     * aggregate is a different kind of read from resolving one agent, and one
+     * budget for both either cuts off a cohort read that was going to succeed
+     * or lets a hung point lookup sit for the cohort's budget.
+     */
+    listTimeoutMs?: number;
     /** Pre-built transport. Tests inject one here so no network is touched. */
     transport?: GraphqlTransport;
 };
@@ -97,18 +149,24 @@ async function resolveSubject(
  *
  * It is the only source that can answer `getMarkets`: the graph prices every
  * claim, so it can say who has capital behind a provider's opinion and who is
- * taking the other side. It is also the narrowest in coverage — it mirrors Base
- * only, so agents registered on BSC or Ethereum resolve to `null` here and are
- * picked up by the registry source instead.
+ * taking the other side. It is also the only one that can answer `listAgents`,
+ * because a registry contract has no enumeration. It is at the same time the
+ * narrowest in coverage — it mirrors Base only, so agents registered on BSC or
+ * Ethereum resolve to `null` here and are picked up by the registry source
+ * instead. The cohort it can list is therefore the Base mirror, not every
+ * ERC-8004 agent that exists.
  *
  * Every method runs its own preflight. That costs a round trip per call and is
  * deliberate: the methods are independently callable, and this package ships no
  * cache (see the README).
  */
 export function intuitionSource(config: IntuitionSourceConfig = {}): TrustSource {
-    // The indexer types curve_id as a string, so a bigint read from
-    // getBondingCurveConfig() is stringified here rather than at every call site.
+    // `curve_id` is a Hasura `numeric`, which accepts a JSON string for the
+    // variable's value. Stringifying here means a bigint read straight from
+    // getBondingCurveConfig() needs no conversion at the call site.
     const curveId = config.curveId === undefined ? DEFAULT_CURVE_ID : String(config.curveId);
+
+    const listTimeoutMs = config.listTimeoutMs ?? DEFAULT_LIST_TIMEOUT_MS;
 
     const transport =
         config.transport ??
@@ -200,6 +258,47 @@ export function intuitionSource(config: IntuitionSourceConfig = {}): TrustSource
                 const market = mapClaimMarket(row);
                 return market === null ? [] : [market];
             });
+        },
+
+        /**
+         * One page of the mirrored ERC-8004 cohort.
+         *
+         * The only method here that does not start from an identity, and the
+         * only one that can answer at all: the graph is the sole source that
+         * knows the population exists. Membership, the order and the total all
+         * come from the same `implement` → `ERC-8004` filter, so the count the
+         * caller renders is the count of the thing it is paging through.
+         *
+         * The page is ordered by the indexer and returned untouched. Sorting it
+         * again here would produce a page ordered against itself — correct
+         * within the window, wrong about the cohort.
+         */
+        async listAgents(options: ResolvedListAgentsOptions): Promise<AgentPage> {
+            const data = await transport.request(
+                COHORT_QUERY,
+                {
+                    predicateId: IMPLEMENT,
+                    objectId: ERC8004,
+                    sameAsPredicateId: SAME_AS,
+                    orderBy: COHORT_ORDER_BY[options.order],
+                    limit: options.limit,
+                    offset: options.offset,
+                },
+                {timeoutMs: listTimeoutMs},
+            );
+
+            const rows = Array.isArray(data["triples"]) ? data["triples"] : [];
+            return {
+                sourceId: INTUITION_SOURCE_ID,
+                order: options.order,
+                limit: options.limit,
+                offset: options.offset,
+                total: readNumber(readRecord(data["total"], "aggregate"), "count"),
+                agents: rows.flatMap((row) => {
+                    const listing = mapAgentListing(row);
+                    return listing === null ? [] : [listing];
+                }),
+            };
         },
     };
 }

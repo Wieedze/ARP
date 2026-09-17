@@ -326,4 +326,32 @@ describe("intuitionSource — the bonding curve is a parameter, not an assumptio
         expect(TRUST_SURFACE_QUERY).not.toMatch(/curve_id:\s*\{_eq:\s*"/);
         expect(TRUST_SURFACE_QUERY).toContain("$curveId");
     });
+
+    it("declares the curve variable as the scalar the indexer actually has", () => {
+        // A literal coerces to `numeric`; a variable does not. Declaring this
+        // `String!` is rejected at validation and takes the entire trust
+        // surface down with it — which fixtures cannot see, because a fixture
+        // answers whatever it is asked. Live mainnet rejected exactly that on
+        // 2026-09-16.
+        expect(TRUST_SURFACE_QUERY).toContain("$curveId: numeric!");
+    });
+});
+
+/**
+ * The one term id this package exports. A writer that links an agent has to
+ * name the same predicate the preflight above filters on, and a second frozen
+ * copy of a frozen constant is how the two drift apart.
+ */
+describe("INTUITION_SAME_AS_TERM_ID", () => {
+    it("is the `same as` id the preflight filters on, not a second copy of it", async () => {
+        const {INTUITION_SAME_AS_TERM_ID} = await import("../src/index.js");
+        expect(INTUITION_SAME_AS_TERM_ID).toBe(SAME_AS);
+    });
+
+    it("matches Appendix B of the Intuition partner guide verbatim", async () => {
+        const {INTUITION_SAME_AS_TERM_ID} = await import("../src/index.js");
+        expect(INTUITION_SAME_AS_TERM_ID).toBe(
+            "0xbeebfb7d177cbd96ffc239d2196c72ec346efe81f39dc595773f13d83506f5f0",
+        );
+    });
 });

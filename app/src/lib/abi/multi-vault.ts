@@ -1,9 +1,15 @@
 /**
- * Minimal ABI fragment for Intuition's MultiVault contract (`0x2Ece8D…`).
+ * Minimal ABI fragment for Intuition's MultiVault.
  *
- * ARP only needs the deposit + read surface for tool atom staking. The
- * full ABI (atoms, triples, batch ops, advanced curve config) is much
- * larger — see `.claude/skills/intuition/` for the canonical guide.
+ * Address-free on purpose: the same contract is deployed on testnet (see
+ * `deployments/13579.json`) and on mainnet (`lib/intuition-mainnet.ts`), and
+ * this file is used against both. The caller supplies the address; getting it
+ * from the wrong module is the mistake this file must not help anyone make.
+ *
+ * ARP needs the deposit + read surface only — atom staking on testnet, and
+ * claim staking on mainnet. The full ABI (batch ops, redemption, advanced curve
+ * config) is much larger; see `.claude/skills/intuition/` for the canonical
+ * guide.
  */
 export const multiVaultAbi = [
     {
@@ -121,5 +127,55 @@ export const multiVaultAbi = [
             {name: "assets", type: "uint256[]"},
         ],
         outputs: [{name: "", type: "bytes32[]"}],
+    },
+    {
+        type: "function",
+        stateMutability: "view",
+        name: "getGeneralConfig",
+        inputs: [],
+        outputs: [
+            {
+                name: "",
+                type: "tuple",
+                components: [
+                    {name: "admin", type: "address"},
+                    {name: "protocolMultisig", type: "address"},
+                    {name: "feeDenominator", type: "uint256"},
+                    {name: "trustBonding", type: "address"},
+                    {name: "minDeposit", type: "uint256"},
+                    {name: "minShare", type: "uint256"},
+                    {name: "atomDataMaxLength", type: "uint256"},
+                    {name: "feeThreshold", type: "uint256"},
+                ],
+            },
+        ],
+    },
+    {
+        type: "function",
+        stateMutability: "pure",
+        name: "getCounterIdFromTripleId",
+        inputs: [{name: "tripleId", type: "bytes32"}],
+        outputs: [{name: "", type: "bytes32"}],
+    },
+    {
+        type: "function",
+        stateMutability: "view",
+        name: "currentSharePrice",
+        inputs: [
+            {name: "termId", type: "bytes32"},
+            {name: "curveId", type: "uint256"},
+        ],
+        outputs: [{name: "", type: "uint256"}],
+    },
+    {
+        type: "function",
+        stateMutability: "view",
+        name: "getShares",
+        inputs: [
+            {name: "account", type: "address"},
+            {name: "termId", type: "bytes32"},
+            {name: "curveId", type: "uint256"},
+        ],
+        outputs: [{name: "", type: "uint256"}],
     },
 ] as const;

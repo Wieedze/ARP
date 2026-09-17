@@ -6,13 +6,16 @@
  * declared freshness window actually enforced, the agent's capability
  * declarations, and the live market on each provider claim.
  *
- *     import {createErc8004Client, getAgentProfile} from "@arp-protocol/erc8004";
+ *     import {createErc8004Client, getAgentProfile, listAgents} from "@arp-protocol/erc8004";
  *
  *     const client = createErc8004Client();
  *     const profile = await getAgentProfile(client, {chainId: 8453, tokenId: "2340"});
  *     for (const entry of profile.assessments) {
  *         console.log(entry.claim.provider.name, entry.signature.status, entry.freshness.status);
  *     }
+ *
+ *     const page = await listAgents(client, {order: "evidence-quantity", limit: 25});
+ *     console.log(page.total, page.agents[0]?.metadata.name);
  *
  * Providers publish signed assessments and declare validity windows. Consumers
  * read the number and trust it. This package checks both, and reports what it
@@ -34,6 +37,17 @@ export {
     resolveAgent,
     type GetAgentProfileOptions,
 } from "./profile.js";
+
+export {
+    DEFAULT_LIST_ORDER,
+    DEFAULT_PAGE_SIZE,
+    listAgents,
+    ListAgentsFailedError,
+    listingCapableSources,
+    MAX_PAGE_SIZE,
+    NoListingSourceError,
+    resolveListOptions,
+} from "./listing.js";
 
 export {
     fetchAssessment,
@@ -62,11 +76,29 @@ export {DEFAULT_IDENTITY_REGISTRY, parseCaip19, resolveRef, toCaip19} from "./ca
 
 export {
     DEFAULT_CURVE_ID,
+    DEFAULT_LIST_TIMEOUT_MS,
     INTUITION_MAINNET_GRAPHQL,
     INTUITION_TESTNET_GRAPHQL,
     intuitionSource,
     type IntuitionSourceConfig,
 } from "./sources/intuition/index.js";
+
+/**
+ * The `same as` predicate's Intuition term id — the canonical ERC-8004 identity
+ * edge, identical on mainnet (1155) and testnet (13579).
+ *
+ * The one term id this package exports, and the exception needs a reason. Every
+ * other id is an internal detail of how the reads are filtered, and no public
+ * signature mentions one. This one leaks because a *writer* has to name the
+ * same predicate this package's preflight filters on: an agent linked with a
+ * differently-resolved `same as` atom is not on the edge anything here reads.
+ * Two frozen copies of a constant whose whole purpose is to be frozen is the
+ * worse failure, so the writer takes this one rather than keeping its own.
+ *
+ * Exporting it adds no write path. This package still never signs and never
+ * sends a transaction.
+ */
+export {SAME_AS as INTUITION_SAME_AS_TERM_ID} from "./sources/intuition/terms.js";
 
 export {
     erc8004RegistrySource,
@@ -77,11 +109,15 @@ export {
 
 export type {TrustSource} from "./sources/source.js";
 
-export {DEFAULT_TIMEOUT_MS, HttpError, type FetchLike} from "./http.js";
+export {DEFAULT_TIMEOUT_MS, HttpError, isTimeoutError, type FetchLike} from "./http.js";
 
 export type {
+    AgentAtomMarket,
     AgentIdentity,
+    AgentListing,
+    AgentListOrder,
     AgentMetadata,
+    AgentPage,
     AgentProfile,
     AgentRef,
     AssessmentDocument,
@@ -96,12 +132,14 @@ export type {
     ClaimMarket,
     ClaimRelation,
     FreshnessVerdict,
+    ListAgentsOptions,
     MarketSide,
     ProfileConflict,
     Provenance,
     ProviderAssessment,
     ProviderClaim,
     ResolvedAgentRef,
+    ResolvedListAgentsOptions,
     SignatureAttempt,
     SignatureVerdict,
     SourceError,

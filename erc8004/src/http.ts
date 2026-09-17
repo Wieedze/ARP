@@ -8,12 +8,33 @@ export class HttpError extends Error {
     readonly kind: "network" | "timeout";
     readonly timeoutMs: number;
 
-    constructor(kind: "network" | "timeout", message: string, timeoutMs: number) {
-        super(message);
+    /** `cause` keeps the underlying failure so the chain stays walkable. */
+    constructor(kind: "network" | "timeout", message: string, timeoutMs: number, cause?: unknown) {
+        super(message, cause === undefined ? undefined : {cause});
         this.name = "HttpError";
         this.kind = kind;
         this.timeoutMs = timeoutMs;
     }
+}
+
+/**
+ * Was this failure a deadline rather than a refusal?
+ *
+ * Walks the `cause` chain, because the transports in this package wrap an
+ * `HttpError` in their own error type rather than letting a raw one escape. It
+ * lives here, beside `HttpError`, so the source-neutral layers can ask the
+ * question without importing anything source-specific.
+ *
+ * The distinction matters to a caller: a timeout is worth retrying or waiting
+ * out, and an endpoint that answered with a refusal is not.
+ */
+export function isTimeoutError(error: unknown): boolean {
+    let cursor: unknown = error;
+    for (let depth = 0; depth < 8 && cursor !== null && cursor !== undefined; depth += 1) {
+        if (cursor instanceof HttpError) return cursor.kind === "timeout";
+        cursor = cursor instanceof Error ? cursor.cause : null;
+    }
+    return false;
 }
 
 /**
@@ -40,6 +61,7 @@ export async function fetchWithTimeout(
             "network",
             error instanceof Error ? error.message : String(error),
             timeoutMs,
+            error,
         );
     } finally {
         clearTimeout(timer);

@@ -50,6 +50,60 @@ for (const entry of profile.assessments) {
 `0x8004A169FB4a3325136EB29fA0ceB6D2e539a432`, which is deployed at the same address on Base, BSC and
 Ethereum.
 
+## Listing the cohort
+
+Everything above is keyed by an identity. `listAgents` is the read for when you do not have one yet.
+
+```ts
+import {createErc8004Client, listAgents} from "@arp-protocol/erc8004";
+
+const client = createErc8004Client();
+const page = await listAgents(client, {order: "evidence-quantity", limit: 25, offset: 0});
+
+console.log(page.total); // 28,648 on mainnet — the graph's count, not page.agents.length
+for (const agent of page.agents) {
+    console.log(
+        agent.metadata.name,
+        agent.metadata.isFallback, // `Agent 8453:6649` is the indexer's stand-in, not a name
+        agent.statementCount, // how many statements exist about it
+        agent.market?.totalMarketCap,
+        agent.market?.positionCount, // always read this beside the cap
+        agent.ref?.tokenId, // from the `same as` edge, never parsed from the label
+    );
+}
+```
+
+Two orders, and only two:
+
+- `evidence-quantity` — how many statements the graph holds about the agent. The mirrored shell gives
+  every agent exactly five, so anything above five is somebody having bothered.
+- `economic-conviction` — what is staked on the agent's own atom.
+
+**There is no order by score, and one should not be added.** A provider's score is the claim this
+package exists to qualify; making it the ranking key would undo that in a single control.
+
+Some caveats that are the point rather than footnotes:
+
+- **The page is the source's, not yours.** It is ordered and paged by the indexer and returned
+  untouched. Re-ranking the union of several pages client-side makes the order a property of the
+  window instead of the cohort, and presents the result as if it were the latter.
+- **`market.totalMarketCap` and `market.positionCount` are both summed across every bonding curve**,
+  deliberately, so the two figures describe the same thing. That makes `positionCount` a count of
+  positions rather than of distinct stakers — an account staked on two curves counts twice. The
+  per-vault `MarketSide.positionCount` is the one that equals the distinct-staker count.
+- **`ref` is `null` when the identity is not unambiguous.** Clawnch's atom carries a second `same as`
+  edge to `did:web:clawn.ch`, which is ignored; one mainnet atom claims sixteen ERC-8004 token ids,
+  and that one gets `isIdentityAmbiguous` and no `ref` rather than an arbitrary pick.
+- **`listAgents` is optional on `TrustSource` and only Intuition implements it.** A registry contract
+  cannot be enumerated, so a registry-only client raises `NoListingSourceError` instead of returning
+  an empty page that would read as "there are no agents".
+- **The listing has its own deadline**, `DEFAULT_LIST_TIMEOUT_MS` (30s), separate from the 10s every
+  other read gets. Ordering the whole cohort is a different kind of read, and this endpoint's latency
+  on it is wildly variable: measured at 0.78s, at 9.1s, and not returning inside 25s — on the same
+  query, within an hour, with both orders affected alike. Override with `intuitionSource({listTimeoutMs})`.
+  When every listing source fails, `ListAgentsFailedError.timedOut` says whether it was a deadline
+  (worth retrying) or an answer (not).
+
 ## The pieces, separately
 
 Everything is composable and keyed by the ERC-8004 identity. No public signature mentions an
@@ -61,6 +115,8 @@ getAssessments(client, ref); // ProviderClaim[]
 getCapabilities(client, ref); // Capabilities[] — one per source that answered
 getMarkets(client, ref); // ClaimMarket[]
 marketCapableSources(client); // which sources can price a claim at all
+listAgents(client, options); // AgentPage — one window onto the cohort
+listingCapableSources(client); // which sources can enumerate agents at all
 ```
 
 Four functions are pure — no client, no network, no configuration. **A consumer who wants nothing
@@ -164,8 +220,15 @@ bun run build        # ESM + .d.ts into dist/
 bun run lint         # tsc --noEmit
 ```
 
-Fixtures are real responses recorded from mainnet on 2026-09-16 — three live agents and four live
-provider documents, including one provider whose advertised resolver URL 404s. Mocking sits at the
+> **`bun run build` is a precondition for every consumer.** This package's `exports` point at
+> `dist/`, which is gitignored, so anything importing `@arp-protocol/erc8004` — an app, a script, a
+> one-off probe — reads whatever was last built. A stale `dist/` fails _silently_ and plausibly: it
+> once reported agents with zero trust providers, which looked exactly like a regression in the
+> connector rather than an old build. `app/`'s `dev`, `build` and `test` scripts run this build
+> first for that reason. A standalone script has to do it itself.
+
+Fixtures are real responses recorded from mainnet on 2026-09-16 — three live agents, three cohort
+pages, and four live provider documents, including one provider whose advertised resolver URL 404s. Mocking sits at the
 network boundary only, so the GraphQL transport, the document narrowing and the signature check all
 run for real.
 
@@ -175,8 +238,14 @@ One live smoke test is opt-in:
 ERC8004_LIVE=1 bun run test
 ```
 
-It resolves a real agent against `https://mainnet.intuition.sh/v1/graphql` and re-verifies a live
-signature. It catches indexer schema drift, which recorded fixtures cannot catch by construction.
+It resolves a real agent against `https://mainnet.intuition.sh/v1/graphql`, re-verifies a live
+signature, and reads a page of the cohort in both orders on a deliberately generous deadline — it
+asserts that the _result_ is correct, never that it arrived quickly. Latency is printed by a separate
+observation that cannot fail the suite, because a test that fails on somebody else's p95 trains a
+reader to ignore it. It catches indexer schema drift, which
+recorded fixtures cannot catch by construction — a fixture answers whatever it is asked, so a query
+whose _variable declarations_ the indexer rejects passes every hermetic test and fails in production.
+That happened once already, to the market read's `$curveId`.
 
 ## Read-only
 

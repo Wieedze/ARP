@@ -27,6 +27,13 @@
     --color-accent: #00e5ff;
     --color-accent-dim: rgba(0, 229, 255, 0.16);
 
+    /* The single semantic exception to the one-accent rule (ADR 0018).
+       Reserved for a signature `mismatch` — a document that does not recover
+       to the signer it names. Nothing decorative may use it. 6.6:1 on the
+       background, so it passes AA as body text. */
+    --color-alarm: #ff5f52;
+    --color-alarm-dim: rgba(255, 95, 82, 0.12);
+
     /* Fonts — Inter (display + body) and JetBrains Mono (data).
        Both Google-hosted, both editorial-quality. */
     --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -37,6 +44,16 @@
     --text-body: 15px;
     --text-body-sm: 13px;
     --text-label: 11px;
+
+    /* Score sizes — the trust panel's one hero, and its whole argument.
+       A score's type size is set by how much evidence it rests on, so a 64.36
+       backed by 1,445 reviewers cannot read like a 59.95 backed by 2.
+       Used only by the assessment rows (ADR 0018). */
+    --text-score-1: 22px;
+    --text-score-2: 30px;
+    --text-score-3: 42px;
+    --text-score-4: 56px;
+    --text-score-5: 72px;
 
     /* Line heights */
     --leading-display: 1.1;
@@ -60,6 +77,10 @@ html,
 body {
     margin: 0;
     padding: 0;
+    /* The UI is dark-only. Without this the UA paints its own controls —
+       select popups, radio circles, scrollbars — in the light palette, which
+       lands as white chrome on a near-black page. */
+    color-scheme: dark;
     background-color: var(--color-bg);
     color: var(--color-fg);
     font-family: var(--font-sans);
@@ -84,7 +105,8 @@ button {
     border: 1px solid var(--color-border);
     color: var(--color-fg);
     cursor: pointer;
-    transition: border-color var(--duration-base) var(--ease-out-quart),
+    transition:
+        border-color var(--duration-base) var(--ease-out-quart),
         color var(--duration-base) var(--ease-out-quart);
 }
 
@@ -93,7 +115,6 @@ button:hover {
 }
 
 button:focus-visible {
-    outline: none;
     border-color: var(--color-accent);
 }
 
@@ -110,4 +131,49 @@ a:hover {
 ::selection {
     background: var(--color-accent-dim);
     color: var(--color-fg);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Focus                                                                       */
+/* -------------------------------------------------------------------------- */
+
+/* Everything focusable gets a real ring.
+   Buttons also shift their border to accent (above), and that shift used to be
+   the whole indicator — with `outline: none` beside it. It fails on any button
+   whose resting border is already accent, which is what a selected toggle in a
+   group looks like: border accent before focus, border accent after, nothing to
+   see. Worse, the rule is unlayered, so it beat every `focus-visible:outline-*`
+   utility in `@layer utilities` and made them silently inert wherever they were
+   reached for. `ui.md` requires a visible focus state on every interactive
+   element; the ring is what actually delivers one.
+
+   The selector lists every focusable element type the app uses. `select` and
+   `textarea` are here for consistency rather than repair — both carry a border
+   swap to accent that is a real replacement, since neither one's resting border
+   is ever accent. Leaving them out would mean two controls focusing differently
+   from every other control on the same form. */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+summary:focus-visible,
+[tabindex]:focus-visible {
+    outline: 1px solid var(--color-accent);
+    outline-offset: 2px;
+    border-radius: 1px;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Trust panel                                                                 */
+/* -------------------------------------------------------------------------- */
+
+/* The score numeral. Mono, because a score is data; tabular, so two scores at
+   the same weight align on the decimal; tight, because at 72px default
+   tracking reads as a price tag. */
+.score-numeral {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.045em;
+    line-height: 0.92;
 }
