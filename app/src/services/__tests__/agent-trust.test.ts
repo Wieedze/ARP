@@ -368,21 +368,21 @@ describe("buildPanelTabs", () => {
         );
     }
 
-    it("opens one tab per provider, then ARP, then the agent", () => {
+    it("opens with the agent, then one tab per provider, then ARP", () => {
         const model = tabsFor();
 
         expect(model.tabs.map((tab) => tab.slug)).toEqual([
+            AGENT_TAB_SLUG,
             "deep3-labs",
             "asterpay-kya",
             ARP_TAB_SLUG,
-            AGENT_TAB_SLUG,
         ]);
-        expect(model.tabs.map((tab) => tab.kind)).toEqual(["provider", "provider", "arp", "agent"]);
+        expect(model.tabs.map((tab) => tab.kind)).toEqual(["agent", "provider", "provider", "arp"]);
         expect(model.tabs.map((tab) => tab.label)).toEqual([
+            "Agent",
             "Deep3 Labs",
             "AsterPay KYA",
             "ARP",
-            "Agent",
         ]);
     });
 
@@ -446,7 +446,11 @@ describe("buildPanelTabs", () => {
         });
     });
 
-    it("opens on the best-evidenced provider, not the highest score", () => {
+    it("opens on the agent's own data, however loud the providers are", () => {
+        // The old rule was "the provider with the most evidence behind it".
+        // Both of these publish a count, one of them 1,445 of them, and the
+        // page still opens on what the agent is for rather than on a
+        // stranger's assessment of it.
         const thin = claimMarket(ASTERPAY_TRIPLE);
         const deep = claimMarket(DEEP3_TRIPLE);
         const model = buildPanelTabs(
@@ -491,37 +495,8 @@ describe("buildPanelTabs", () => {
             ),
         );
 
-        expect(model.defaultSlug).toBe("deep3-labs");
-    });
-
-    it("opens on the agent when no provider publishes a reviewer count", () => {
-        const market = claimMarket(ASTERPAY_TRIPLE);
-        const model = buildPanelTabs(
-            joinProviderRows(
-                [
-                    providerEdge({
-                        handle: ASTERPAY_TRIPLE,
-                        providerName: "AsterPay KYA",
-                        market,
-                    }),
-                    assessmentEdge({
-                        handle: `${ASTERPAY_TRIPLE}-doc`,
-                        providerName: "AsterPay KYA",
-                        fetch: okFetch(
-                            "https://api.asterpay.example/assessment.json",
-                            assessmentDocument({
-                                providerName: "AsterPay KYA",
-                                providerId: "asterpay-kya",
-                                score: 66,
-                            }),
-                        ),
-                    }),
-                ],
-                [market],
-            ),
-        );
-
         expect(model.defaultSlug).toBe(AGENT_TAB_SLUG);
+        expect(model.tabs[0].kind).toBe("agent");
     });
 
     it("keeps every slug distinct, including against the reserved two", () => {
@@ -540,12 +515,12 @@ describe("buildPanelTabs", () => {
         const slugs = model.tabs.map((tab) => tab.slug);
         expect(new Set(slugs).size).toBe(slugs.length);
         expect(slugs).toEqual([
+            AGENT_TAB_SLUG,
             "agent-2",
             "arp-2",
             "agent-3",
             "provider-4",
             ARP_TAB_SLUG,
-            AGENT_TAB_SLUG,
         ]);
     });
 });

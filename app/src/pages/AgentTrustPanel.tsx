@@ -30,8 +30,8 @@ import type {StakeSession} from "../services/trust-stake";
  *
  * The left rail is the agent and stays put — identity belongs to no provider,
  * so it must not vanish when a reader opens one. The right column is where the
- * claims live, and where the tabs are: one per provider, then ARP's own
- * position, then the agent's own data.
+ * claims live, and where the tabs are: the agent's own data first, then one per
+ * provider, then ARP's own position.
  *
  * Every read here is Intuition **mainnet**, regardless of the wallet's chain.
  */
@@ -234,7 +234,7 @@ type ClaimsProps = {
 };
 
 /**
- * Two or more providers: one tab each, then ARP, then the agent's own data.
+ * Two or more providers: the agent's own data, then one tab each, then ARP.
  *
  * The strip carries the per-provider summary, so the comparison stacking gave
  * away for free survives being one-at-a-time — see `TrustPanelTabs`.

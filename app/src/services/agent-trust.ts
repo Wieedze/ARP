@@ -434,7 +434,14 @@ export type PanelTab =
 
 export type PanelTabs = {
     tabs: PanelTab[];
-    /** The tab a bare URL opens. */
+    /**
+     * The tab a bare URL opens: always the agent's own data.
+     *
+     * What the agent is for comes before anyone's opinion of it, and it is the
+     * one tab that is about the agent rather than about a provider. This
+     * replaces the earlier rule — the provider with the most evidence behind it
+     * — which opened the page on a stranger's assessment.
+     */
     defaultSlug: string;
 };
 
@@ -452,10 +459,6 @@ function slugify(value: string): string {
         .replace(/^-+|-+$/g, "");
 }
 
-function reviewerTotal(row: TrustRow): number {
-    return row.reviewers.kind === "reviewers" ? row.reviewers.total : 0;
-}
-
 function summarise(row: TrustRow): TabSummary {
     const verdict = row.assessment?.signature ?? null;
     return {
@@ -467,27 +470,10 @@ function summarise(row: TrustRow): TabSummary {
 }
 
 /**
- * The tab a bare URL opens: the provider with the most evidence behind it.
+ * The agent's own data first, then one tab per provider, then ARP.
  *
- * Deliberately not the highest score — opening on the loudest number would undo
- * the panel's argument on the first screen. Ties keep graph order. When no
- * provider publishes a reviewer count there is no best-evidenced provider to
- * choose, so the agent's own data opens instead.
- */
-function defaultSlugFor(tabs: PanelTab[]): string {
-    let best: {slug: string; total: number} | null = null;
-    for (const tab of tabs) {
-        if (tab.kind !== "provider") continue;
-        const total = reviewerTotal(tab.row);
-        if (total > 0 && (best === null || total > best.total)) {
-            best = {slug: tab.slug, total};
-        }
-    }
-    return best?.slug ?? AGENT_TAB_SLUG;
-}
-
-/**
- * One tab per provider on this agent, then ARP, then the agent's own data.
+ * The agent leads because the page is about the agent: what it is for comes
+ * before what anyone says about it.
  *
  * ARP gets a tab rather than a footnote because its abstention is a claim about
  * this agent and belongs beside the others: "insufficient evidence" is only
@@ -500,7 +486,7 @@ function defaultSlugFor(tabs: PanelTab[]): string {
 export function buildPanelTabs(rows: TrustRow[]): PanelTabs {
     const used = new Set<string>([AGENT_TAB_SLUG, ARP_TAB_SLUG]);
 
-    const tabs: PanelTab[] = rows.map((row, index) => {
+    const providers: PanelTab[] = rows.map((row, index) => {
         const base = slugify(row.providerName) || `provider-${index + 1}`;
         let slug = base;
         for (let suffix = 2; used.has(slug); suffix += 1) slug = `${base}-${suffix}`;
@@ -508,10 +494,14 @@ export function buildPanelTabs(rows: TrustRow[]): PanelTabs {
         return {kind: "provider", slug, label: row.providerName, row, summary: summarise(row)};
     });
 
-    tabs.push({kind: "arp", slug: ARP_TAB_SLUG, label: "ARP"});
-    tabs.push({kind: "agent", slug: AGENT_TAB_SLUG, label: "Agent"});
-
-    return {tabs, defaultSlug: defaultSlugFor(tabs)};
+    return {
+        tabs: [
+            {kind: "agent", slug: AGENT_TAB_SLUG, label: "Agent"},
+            ...providers,
+            {kind: "arp", slug: ARP_TAB_SLUG, label: "ARP"},
+        ],
+        defaultSlug: AGENT_TAB_SLUG,
+    };
 }
 
 /**

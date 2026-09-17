@@ -114,7 +114,7 @@ export function TrustPanelTabs({
     return (
         <div
             role="tablist"
-            aria-label="Assessments by provider, ARP's own position, and the agent's own data"
+            aria-label="The agent's own data, assessments by provider, and ARP's own position"
             className="flex flex-wrap gap-x-5 gap-y-7"
         >
             {tabs.map((tab, index) => {
