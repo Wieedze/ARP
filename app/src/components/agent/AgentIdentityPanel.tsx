@@ -80,14 +80,6 @@ export function AgentIdentityPanel({view}: {view: TrustPanelView}) {
                     </Field>
                 ) : null}
             </dl>
-
-            <p className="mt-6 text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)]">
-                Sources consulted:{" "}
-                <span className="font-mono">{view.sourcesConsulted.join(", ")}</span>.
-                {view.marketCapableSources.length === 0
-                    ? " None of them can see stake, so an empty market means unknown, not empty."
-                    : ` Markets from ${view.marketCapableSources.join(", ")}.`}
-            </p>
         </aside>
     );
 }

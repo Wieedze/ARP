@@ -265,7 +265,6 @@ function TabbedClaims({
                 tabs={model.tabs}
                 selectedSlug={selected.slug}
                 baseId={baseId}
-                hasUnreadSources={hasUnreadSources}
                 onSelect={onSelectTab}
             />
 
@@ -395,8 +394,8 @@ function ArpPosition() {
 }
 
 /**
- * A loading state shaped like the answer: the reads that are in flight, named.
- * Not a grey block on a grey background.
+ * A loading state shaped like the answer: the agent being resolved, named,
+ * where its name will be. Not a grey block on a grey background.
  */
 function LoadingShape({chainId, tokenId}: {chainId: number; tokenId: string}) {
     return (
@@ -404,11 +403,6 @@ function LoadingShape({chainId, tokenId}: {chainId: number; tokenId: string}) {
             <h1 className="text-[length:var(--text-display)] leading-[var(--leading-display)] tracking-tight font-semibold text-[color:var(--color-fg-60)]">
                 Resolving {chainId}:{tokenId}
             </h1>
-            <ul className="mt-6 flex flex-col gap-2 font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)]">
-                <li>intuition graph — identity, trust edges, capabilities, markets</li>
-                <li>erc-8004 registry on chain {chainId} — owner, registration file</li>
-                <li>each provider's resolver — document, signature, freshness window</li>
-            </ul>
         </section>
     );
 }

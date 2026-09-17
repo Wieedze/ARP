@@ -11,6 +11,8 @@ import {
     readReviewerBasis,
     selectPanelTab,
     shouldUseTabs,
+    type PanelTab,
+    type PanelTabs,
 } from "../agent-trust";
 
 import {
@@ -283,7 +285,6 @@ describe("buildTrustPanel", () => {
         expect(view.isFallbackMetadata).toBe(false);
         expect(view.rows).toHaveLength(2);
         expect(view.capabilityCount).toBe(0);
-        expect(view.marketCapableSources).toEqual(["intuition"]);
     });
 
     it("reports a missing agent as not found rather than as a failure", () => {
@@ -360,6 +361,13 @@ describe("buildPanelTabs", () => {
         return buildPanelTabs(joinProviderRows(profileValue.assessments, profileValue.markets));
     }
 
+    /** The provider tabs in strip order, without pinning where they start. */
+    function providerTabs(model: PanelTabs) {
+        return model.tabs.filter(
+            (tab): tab is Extract<PanelTab, {kind: "provider"}> => tab.kind === "provider",
+        );
+    }
+
     it("opens one tab per provider, then ARP, then the agent", () => {
         const model = tabsFor();
 
@@ -378,26 +386,16 @@ describe("buildPanelTabs", () => {
         ]);
     });
 
-    it("summarises each provider by signature and evidence, never by score", () => {
+    it("summarises each provider by its signature verdict, never by score", () => {
         const model = tabsFor();
-        const [deep3, asterpay] = model.tabs;
+        const [deep3, asterpay] = providerTabs(model);
 
-        if (deep3.kind !== "provider" || asterpay.kind !== "provider") {
-            throw new Error("expected two provider tabs");
-        }
-
-        // The whole point of the strip: one signs and rests on 26 reviewers,
-        // the other publishes no count at all, and that is legible from either
-        // tab without the scores being repeated up here.
-        expect(deep3.summary).toEqual({
-            signature: {status: "verified", label: "verified"},
-            evidence: "26 reviewers",
-            weight: "moderate",
-        });
+        // The whole point of the strip: one provider signs its document and the
+        // other does not, and that is legible from either tab without the
+        // scores being repeated up here.
+        expect(deep3.summary).toEqual({signature: {status: "verified", label: "verified"}});
         expect(asterpay.summary).toEqual({
             signature: {status: "unverified", label: "not verified"},
-            evidence: "no reviewer count",
-            weight: "unknown",
         });
         expect(deep3.summary).not.toHaveProperty("score");
     });
@@ -427,9 +425,10 @@ describe("buildPanelTabs", () => {
             ),
         );
 
-        const tab = model.tabs[0];
-        if (tab.kind !== "provider") throw new Error("expected a provider tab");
-        expect(tab.summary.signature).toEqual({status: "mismatch", label: "mismatch"});
+        expect(providerTabs(model)[0].summary.signature).toEqual({
+            status: "mismatch",
+            label: "mismatch",
+        });
     });
 
     it("calls a provider edge with no assessment absent, not unverified", () => {
@@ -441,38 +440,10 @@ describe("buildPanelTabs", () => {
             ),
         );
 
-        const tab = model.tabs[0];
-        if (tab.kind !== "provider") throw new Error("expected a provider tab");
-        expect(tab.summary.signature).toEqual({status: "absent", label: "no document"});
-        expect(tab.summary.evidence).toBe("no reviewer count");
-    });
-
-    it("counts one reviewer in the singular", () => {
-        const model = buildPanelTabs(
-            joinProviderRows(
-                [
-                    assessmentEdge({
-                        handle: "0xorphan",
-                        providerName: "Nobody",
-                        fetch: okFetch(
-                            "https://api.example/a.json",
-                            assessmentDocument({
-                                providerName: "Nobody",
-                                providerId: "nobody",
-                                score: 10,
-                                numReviewers: 1,
-                            }),
-                        ),
-                        signature: UNVERIFIED,
-                    }),
-                ],
-                [],
-            ),
-        );
-
-        const tab = model.tabs[0];
-        if (tab.kind !== "provider") throw new Error("expected a provider tab");
-        expect(tab.summary.evidence).toBe("1 reviewer");
+        expect(providerTabs(model)[0].summary.signature).toEqual({
+            status: "absent",
+            label: "no document",
+        });
     });
 
     it("opens on the best-evidenced provider, not the highest score", () => {

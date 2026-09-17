@@ -135,8 +135,6 @@ describe("agentProfileQueryOptions", () => {
         expect(view.found).toBe(true);
         expect(view.rows).toEqual([]);
         expect(view.capabilityCount).toBe(0);
-        // Markets are readable here, so "no markets" means "nobody staked".
-        expect(view.marketCapableSources).toEqual(["intuition"]);
     });
 
     it("distinguishes an agent that is not there from a read that failed", async () => {

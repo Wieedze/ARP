@@ -30,31 +30,11 @@ export const SCORE_TONE_CLASS: Record<EvidenceWeight, string> = {
 
 /** One sentence naming what the size means, so the device is never just decorative. */
 export const WEIGHT_CAPTION: Record<EvidenceWeight, string> = {
-    unknown: "Weight unknown — the document publishes no reviewer count.",
+    unknown: "Weight unknown.",
     none: "No reviewers behind this score.",
     single: "One reviewer. A single opinion, priced as a score.",
     thin: "A handful of reviewers. Thin.",
     moderate: "Enough reviewers to be worth comparing.",
     substantial: "Hundreds of reviewers behind it.",
     deep: "Thousands of reviewers behind it.",
-};
-
-/**
- * The same argument at label scale, for the tab strip.
- *
- * Tone and weight, no size — the strip has no room for the size scale, and a
- * tab is a control rather than a hero. Three tiers rather than the panel's
- * seven, and they stop at `--color-fg-60`: at `--text-label` the next step down
- * is 3.66:1 against the background, and this text is the signal rather than
- * chrome. The ordering still agrees with `SCORE_TONE_CLASS`, so the strip and
- * the panel never disagree about which provider is better backed.
- */
-export const EVIDENCE_TONE_CLASS: Record<EvidenceWeight, string> = {
-    unknown: "text-[color:var(--color-fg-60)]",
-    none: "text-[color:var(--color-fg-60)]",
-    single: "text-[color:var(--color-fg-60)]",
-    thin: "text-[color:var(--color-fg-60)]",
-    moderate: "text-[color:var(--color-fg)]",
-    substantial: "text-[color:var(--color-fg)] font-medium",
-    deep: "text-[color:var(--color-fg)] font-medium",
 };

@@ -116,8 +116,6 @@ export type TrustPanelView = {
     capabilityCount: number;
     sourceErrors: AgentProfile["sourceErrors"];
     conflicts: AgentProfile["conflicts"];
-    sourcesConsulted: string[];
-    marketCapableSources: string[];
 };
 
 const CAPABILITY_GROUP_ORDER: {relation: CapabilityRelation; label: string}[] = [
@@ -386,8 +384,6 @@ export function buildTrustPanel(profile: AgentProfile): TrustPanelView {
         capabilityCount: capabilities.reduce((total, group) => total + group.entries.length, 0),
         sourceErrors: profile.sourceErrors,
         conflicts: profile.conflicts,
-        sourcesConsulted: profile.sourcesConsulted,
-        marketCapableSources: profile.marketCapableSources,
     };
 }
 
@@ -418,12 +414,10 @@ export function shouldUseTabs(rows: TrustRow[]): boolean {
 /**
  * What a provider tab carries in the strip itself.
  *
- * Stacking let a reader see one provider's 26-reviewer score beside another's
- * unsigned one; tabs take that away, and this is what is put back. Three fields
- * and deliberately **no score**: the strip states what a number rests on —
- * whether the document is signed, and how much evidence is behind it — and
- * leaves the number in the panel. A strip of scores would rank providers by the
- * one variable ADR 0018 argues is not the measure.
+ * Stacking let a reader see one provider's signed assessment beside another's
+ * unsigned one; tabs take that away, and this is what is put back. Deliberately
+ * **no score**: a strip of scores would rank providers by the one variable
+ * ADR 0018 argues is not the measure.
  */
 export type TabSummary = {
     /**
@@ -431,9 +425,6 @@ export type TabSummary = {
      * verdict at all: no assessment edge, so nothing was ever checked.
      */
     signature: {status: SignatureVerdict["status"] | "absent"; label: string};
-    /** `1,445 reviewers`, or `no reviewer count` — never `0 reviewers`. */
-    evidence: string;
-    weight: EvidenceWeight;
 };
 
 export type PanelTab =
@@ -467,17 +458,11 @@ function reviewerTotal(row: TrustRow): number {
 
 function summarise(row: TrustRow): TabSummary {
     const verdict = row.assessment?.signature ?? null;
-    const basis = row.reviewers;
     return {
         signature:
             verdict === null
                 ? {status: "absent", label: "no document"}
                 : {status: verdict.status, label: SIGNATURE_TAB_LABEL[verdict.status]},
-        evidence:
-            basis.kind === "not-published"
-                ? "no reviewer count"
-                : `${basis.total.toLocaleString("en-US")} reviewer${basis.total === 1 ? "" : "s"}`,
-        weight: row.weight,
     };
 }
 

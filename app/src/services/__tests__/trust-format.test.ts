@@ -70,11 +70,13 @@ describe("describeFreshness", () => {
 });
 
 describe("describeSignature", () => {
-    it("never upgrades an unverified verdict", () => {
+    it("never upgrades an unverified verdict, and adds nothing to it", () => {
         const copy = describeSignature(UNVERIFIED);
         expect(copy.tone).toBe("unverified");
         expect(copy.label).toBe("Not verified");
-        expect(copy.detail).toBe("no signature block at assessment.signature");
+        // The connector's reason restates the label in the document's own field
+        // names; the verdict is the fact, and it is carried by the label.
+        expect(copy.detail).toBeNull();
     });
 
     it("names both addresses on a mismatch", () => {

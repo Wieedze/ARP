@@ -30,14 +30,11 @@ export function SignatureLine({verdict}: {verdict: SignatureVerdict}) {
             >
                 {copy.label}
             </span>
-            <p className="mt-2 text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)] max-w-[52ch]">
-                {copy.detail}
-            </p>
-            {copy.tone === "unverified" ? (
-                <p className="mt-1 text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)] max-w-[52ch]">
-                    Not checked — not an accusation.
+            {copy.detail === null ? null : (
+                <p className="mt-2 text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)] max-w-[52ch]">
+                    {copy.detail}
                 </p>
-            ) : null}
+            )}
             {copy.tone === "mismatch" ? (
                 <p className="mt-1 text-[length:var(--text-body-sm)] text-[color:var(--color-alarm)] max-w-[52ch]">
                     Treat this document as untrusted until the provider explains it.

@@ -2,28 +2,26 @@ import {useRef, type KeyboardEvent} from "react";
 
 import type {PanelTab, TabSummary} from "../../services/agent-trust";
 
-import {EVIDENCE_TONE_CLASS} from "./evidence-scale";
 import {panelDomId, tabDomId} from "./tab-ids";
 
 /**
  * The tab strip — and the panel's comparison device.
  *
- * Stacking let a reader see one provider's 26-reviewer score beside another's
+ * Stacking let a reader see one provider's signed assessment beside another's
  * unsigned one at the same time. That comparison is the page's editorial claim,
  * and a strip of bare names would destroy it. So every tab carries, from every
- * tab, the two facts that decide what a provider's number is worth: whether the
- * document is signed, and how much evidence is behind it. The number itself
- * stays in the panel. A strip of scores would rank providers by exactly the
- * variable ADR 0018 argues is not the measure.
+ * tab, the connector's verdict on that provider's document. The score, and what
+ * it rests on, stay in the panel: a strip of scores would rank providers by
+ * exactly the variable ADR 0018 argues is not the measure.
  *
  * The strip owns no state. The selected tab lives in the URL, so a link to one
  * provider's view is shareable and a refresh keeps the place.
  */
 
-/** Sub-lines for the two tabs that are not a provider's claim. */
-const STATIC_LINES: Record<"arp" | "agent", {primary: string; secondary: string}> = {
-    arp: {primary: "no assessment", secondary: "insufficient evidence"},
-    agent: {primary: "capabilities", secondary: "what could not be read"},
+/** The verdict line for the two tabs that are not a provider's claim. */
+const STATIC_LINES: Record<"arp" | "agent", string> = {
+    arp: "no assessment",
+    agent: "capabilities",
 };
 
 /**
@@ -53,38 +51,18 @@ function isMismatch(tab: PanelTab): boolean {
     return tab.kind === "provider" && tab.summary.signature.status === "mismatch";
 }
 
-function TabLines({tab, hasUnreadSources}: {tab: PanelTab; hasUnreadSources: boolean}) {
-    if (tab.kind === "provider") {
-        return (
-            <>
-                <span
-                    className={`mt-1.5 block font-mono uppercase tracking-wider text-[length:var(--text-label)] ${SIGNATURE_TONE_CLASS[tab.summary.signature.status]}`}
-                >
-                    {tab.summary.signature.label}
-                </span>
-                <span
-                    className={`mt-1 block font-mono text-[length:var(--text-label)] ${EVIDENCE_TONE_CLASS[tab.summary.weight]}`}
-                >
-                    {tab.summary.evidence}
-                </span>
-            </>
-        );
-    }
-
-    const lines = STATIC_LINES[tab.kind];
-    const secondary = tab.kind === "agent" && !hasUnreadSources ? null : lines.secondary;
+function TabLine({tab}: {tab: PanelTab}) {
+    const [text, tone] =
+        tab.kind === "provider"
+            ? [tab.summary.signature.label, SIGNATURE_TONE_CLASS[tab.summary.signature.status]]
+            : [STATIC_LINES[tab.kind], "text-[color:var(--color-fg-60)]"];
 
     return (
-        <>
-            <span className="mt-1.5 block font-mono uppercase tracking-wider text-[length:var(--text-label)] text-[color:var(--color-fg-60)]">
-                {lines.primary}
-            </span>
-            {secondary === null ? null : (
-                <span className="mt-1 block font-mono text-[length:var(--text-label)] text-[color:var(--color-fg-60)]">
-                    {secondary}
-                </span>
-            )}
-        </>
+        <span
+            className={`mt-1.5 block font-mono uppercase tracking-wider text-[length:var(--text-label)] ${tone}`}
+        >
+            {text}
+        </span>
     );
 }
 
@@ -92,13 +70,11 @@ export function TrustPanelTabs({
     tabs,
     selectedSlug,
     baseId,
-    hasUnreadSources,
     onSelect,
 }: {
     tabs: PanelTab[];
     selectedSlug: string;
     baseId: string;
-    hasUnreadSources: boolean;
     onSelect: (slug: string) => void;
 }) {
     const buttons = useRef<(HTMLButtonElement | null)[]>([]);
@@ -192,7 +168,7 @@ export function TrustPanelTabs({
                         >
                             {tab.label}
                         </span>
-                        <TabLines tab={tab} hasUnreadSources={hasUnreadSources} />
+                        <TabLine tab={tab} />
                     </button>
                 );
             })}

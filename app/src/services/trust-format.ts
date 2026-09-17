@@ -95,7 +95,12 @@ export function describeFreshness(verdict: FreshnessVerdict): FreshnessCopy {
 
 export type SignatureCopy = {
     label: string;
-    detail: string;
+    /**
+     * The one fact the label does not already carry — which addresses are
+     * involved. `null` for `unverified`, where the connector's reason is a
+     * restatement of the label in the document's own field names.
+     */
+    detail: string | null;
     tone: "verified" | "mismatch" | "unverified";
 };
 
@@ -121,7 +126,7 @@ export function describeSignature(verdict: SignatureVerdict): SignatureCopy {
             tone: "mismatch",
         };
     }
-    return {label: "Not verified", detail: verdict.reason, tone: "unverified"};
+    return {label: "Not verified", detail: null, tone: "unverified"};
 }
 
 /**
