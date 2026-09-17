@@ -35,7 +35,7 @@ vi.mock("../agent-action", () => ({
 vi.mock("../intuition-pin", () => ({
     pinThing: vi.fn(),
 }));
-import {pinThing} from "../intuition-pin";
+import {pinThing, type PinAuth} from "../intuition-pin";
 const mockPin = pinThing as unknown as Mock;
 
 import {
@@ -56,6 +56,13 @@ const TOOL_ATOM: Hex = `0x${"d2".repeat(32)}`;
 const AGENT_ATOM: Hex = `0x${"d3".repeat(32)}`;
 const USES_ATOM: Hex = `0x${"d4".repeat(32)}`;
 const TX_HASH = `0x${"ee".repeat(32)}` as Hex;
+
+// Pinning is gated behind Intuition's partner API (ADR 0016); the credential
+// is a required parameter on every helper that pins.
+// `PinAuth` is branded so only `scripts/pin-env.ts` can mint one from a real
+// key. A test fixture is the other legitimate producer, and the assertion is
+// what makes that deliberate rather than accidental.
+const PIN_AUTH = {apiKey: "test-partner-key"} as unknown as PinAuth;
 
 const fakeDelegation = {
     delegate: DEFAULT_TEST_ADDRESS,
@@ -229,6 +236,7 @@ describe("redeemEnsureAtomForThing", () => {
             signedDelegation: fakeDelegation,
             agentWalletClient: wc,
             publicClient: pc,
+            pinAuth: PIN_AUTH,
             thing: {name: "x", description: "y"},
         });
         expect(result.created).toBe(false);
@@ -249,9 +257,15 @@ describe("redeemEnsureAtomForThing", () => {
             signedDelegation: fakeDelegation,
             agentWalletClient: wc,
             publicClient: pc,
+            pinAuth: PIN_AUTH,
             thing: {name: "x", description: "y"},
         });
         expect(result.created).toBe(true);
+        // The credential reached the pin, not just the outer signature.
+        expect(mockPin).toHaveBeenCalledWith(
+            {name: "x", description: "y", image: "", url: ""},
+            PIN_AUTH,
+        );
         expect(result.tx).toBe(TX_HASH);
         expect(mockRedeem).toHaveBeenCalledTimes(1);
         const args = mockRedeem.mock.calls[0][0] as {

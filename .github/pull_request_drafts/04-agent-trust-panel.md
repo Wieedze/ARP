@@ -10,7 +10,7 @@ Stacked on the connector PR, which it consumes. Review order: strategy → conne
 
 Two routes.
 
-`/agents` — the whole mirrored cohort, all 28,648 of it, paged 25 at a time and ordered only by measures of evidence: how many statements exist about an agent, or what is staked on its atom. Never by score — that is the number the panel exists to qualify, and one descending score column would undo the argument in a single control. The page says in as many words that neither order is a quality ranking. Below it, the token-id form stays: it is the only route to an agent on BSC or Ethereum, labelled `registry only — no trust edges in the graph` — the connector's portability surfacing in the UI.
+`/agents` — a chain selector and a token-id form that reaches any of the 28,648 agents, plus three agents shown as a **starting set**, each with a sentence on _why it is there_, never how it scored. Calling three hand-picked agents a ranking would have been the first dishonest thing on the page. The chain selector already offers BSC and Ethereum, labelled `registry only — no trust edges in the graph` — the connector's portability surfacing in the UI.
 
 `/agent/:chainId/:tokenId` — the panel. Identity left, assessments and capabilities right. Both routes lazy-loaded; the panel is a 69 kB chunk most visits never fetch.
 

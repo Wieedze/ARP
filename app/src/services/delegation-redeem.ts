@@ -24,7 +24,7 @@ import {intuitionTestnet} from "../lib/chains";
 import {deployments} from "../lib/deployments";
 
 import {redeemArpDelegation} from "./agent-action";
-import {pinThing} from "./intuition-pin";
+import {pinThing, type PinAuth} from "./intuition-pin";
 
 /**
  * Agent-side helpers that wrap `redeemArpDelegation` for each concrete ARP
@@ -393,19 +393,28 @@ export async function redeemEnsureAtomForCaip10(
  * under the compose delegation if not. Mirrors `ensureAtomForThing` from
  * `intuition-graph.ts` but routes the create through `redeemDelegation`
  * instead of direct EOA write.
+ *
+ * `pinAuth` is required, not optional: pinning is gated behind Intuition's
+ * partner API (ADR 0016) and only a Node entry point can supply the key.
+ * `redeemEnsureAtomForURI` and `redeemEnsureAtomForCaip10` stay credential-free
+ * — they derive the URI rather than pinning it.
  */
 export async function redeemEnsureAtomForThing(
     params: RedeemCommon & {
         thing: {name: string; description: string; image?: string; url?: string};
         publicClient: PublicClient;
+        pinAuth: PinAuth;
     },
 ): Promise<{atomId: Hex; uri: string; created: boolean; tx?: Hex}> {
-    const uri = await pinThing({
-        name: params.thing.name,
-        description: params.thing.description,
-        image: params.thing.image ?? "",
-        url: params.thing.url ?? "",
-    });
+    const uri = await pinThing(
+        {
+            name: params.thing.name,
+            description: params.thing.description,
+            image: params.thing.image ?? "",
+            url: params.thing.url ?? "",
+        },
+        params.pinAuth,
+    );
     const atomData = stringToHex(uri);
 
     const atomId = await params.publicClient.readContract({
