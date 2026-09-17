@@ -6,13 +6,12 @@ import {
     describeFetchError,
     describeFreshness,
     describeSignature,
-    describeStakers,
     formatDuration,
     formatTrust,
     truncateMiddle,
 } from "../trust-format";
 
-import {marketSide, MISMATCH, UNVERIFIED, VERIFIED, STALE, FRESH} from "./trust-fixtures";
+import {MISMATCH, UNVERIFIED, VERIFIED, STALE, FRESH} from "./trust-fixtures";
 
 describe("formatTrust", () => {
     it("keeps whole and fractional amounts readable", () => {
@@ -91,23 +90,6 @@ describe("describeSignature", () => {
         const copy = describeSignature(VERIFIED);
         expect(copy.tone).toBe("verified");
         expect(copy.detail).toContain("recovers to the signer the document names");
-    });
-});
-
-describe("describeStakers", () => {
-    it("always pairs the position count with the distinct-staker count", () => {
-        expect(describeStakers(marketSide({positionCount: null}))).toBe(
-            "position count not reported by the indexer",
-        );
-        expect(describeStakers(marketSide({positionCount: 0}))).toBe(
-            "no positions · no distinct stakers",
-        );
-        expect(describeStakers(marketSide({positionCount: 1}))).toBe(
-            "1 position · 1 distinct staker",
-        );
-        expect(describeStakers(marketSide({positionCount: 4}))).toBe(
-            "4 positions · 4 distinct stakers",
-        );
     });
 });
 

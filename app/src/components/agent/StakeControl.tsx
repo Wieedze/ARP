@@ -5,7 +5,7 @@ import type {Hex} from "viem";
 import {useStakeActions} from "../../hooks/use-stake-actions";
 import {INTUITION_MAINNET_CHAIN_ID, mainnetTxUrl} from "../../lib/intuition-mainnet";
 import type {TrustRow} from "../../services/agent-trust";
-import {describePositionCount, formatTrust, truncateMiddle} from "../../services/trust-format";
+import {formatTrust, truncateMiddle} from "../../services/trust-format";
 import {
     MAX_STAKE_WEI,
     MIN_SHARES_TOLERANCE_BPS,
@@ -412,7 +412,7 @@ function ConfirmStep({
                             ? "not reported"
                             : positions === 0
                               ? "none — you would be the first"
-                              : describePositionCount(positions)
+                              : positions.toLocaleString("en-US")
                     }
                 />
                 <Term label="Shares minted" value={formatTrust(quote.expectedShares)} />

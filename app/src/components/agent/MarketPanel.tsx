@@ -2,7 +2,9 @@ import type {MarketSide} from "@arp-protocol/erc8004";
 
 import type {TrustRow} from "../../services/agent-trust";
 import type {ClaimVaults, VaultPosition} from "../../services/trust-stake";
-import {describeStakers, formatTrust, truncateMiddle} from "../../services/trust-format";
+import {formatTrust, truncateMiddle} from "../../services/trust-format";
+
+import {StakerCount} from "./StakerCount";
 
 /**
  * The live market on one `has trust provider` claim.
@@ -12,9 +14,8 @@ import {describeStakers, formatTrust, truncateMiddle} from "../../services/trust
  * indexer is. Position counts come from the indexer, because the contract does
  * not expose them. Neither is presented as the other.
  *
- * Position count and distinct stakers appear on every side, always. These
- * vaults hold one or two positions each; a bare market cap would suggest a
- * depth of opinion that does not exist here.
+ * The staker count appears on every side, always — see `StakerCount` for why a
+ * TRUST figure is never shown here without it.
  */
 
 function SideColumn({
@@ -50,7 +51,13 @@ function SideColumn({
                         : "—"}
             </p>
             <p className="mt-1 text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)]">
-                {side === null ? "no market data" : describeStakers(side)}
+                {side === null ? (
+                    "no market data"
+                ) : side.positionCount === null ? (
+                    "position count not reported by the indexer"
+                ) : (
+                    <StakerCount count={side.positionCount} />
+                )}
             </p>
             {vault !== undefined && vault.shares !== null && vault.shares > 0n ? (
                 <p className="mt-2 font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-accent)]">
