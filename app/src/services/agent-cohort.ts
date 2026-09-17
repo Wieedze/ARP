@@ -1,7 +1,7 @@
 import {ListAgentsFailedError, NoListingSourceError} from "@arp-protocol/erc8004";
 import type {AgentListing, AgentListOrder, AgentPage} from "@arp-protocol/erc8004";
 
-import {describeAtomPositions, describeChain, formatTrust} from "./trust-format";
+import {describeAtomPositions, formatTrust} from "./trust-format";
 
 /**
  * Turns one `AgentPage` into the shape the directory renders.
@@ -13,8 +13,7 @@ import {describeAtomPositions, describeChain, formatTrust} from "./trust-format"
  */
 
 /**
- * The two orders the directory offers, with the sentence that keeps each one
- * honest.
+ * The two orders the directory offers.
  *
  * Neither is a quality ranking and the labels say what is actually being
  * counted. There is no order by score: the panel exists to argue that a score
@@ -24,18 +23,9 @@ import {describeAtomPositions, describeChain, formatTrust} from "./trust-format"
 export const COHORT_ORDERS: readonly {
     id: AgentListOrder;
     label: string;
-    note: string;
 }[] = [
-    {
-        id: "evidence-quantity",
-        label: "Most statements",
-        note: "How many statements the graph holds about the agent. The mirrored shell gives every agent five, so anything above five is somebody having bothered.",
-    },
-    {
-        id: "economic-conviction",
-        label: "Most staked",
-        note: "What is staked on the agent's own atom, across every bonding curve. Mostly one or two positions, so read the position count beside it.",
-    },
+    {id: "evidence-quantity", label: "Most statements"},
+    {id: "economic-conviction", label: "Most staked"},
 ];
 
 export type CohortRow = {
@@ -47,8 +37,6 @@ export type CohortRow = {
     imageUrl: string | null;
     /** The panel route, or `null` when no single identity could be established. */
     href: string | null;
-    /** `1380 · Base 8453`, or an em dash when there is no identity to show. */
-    identity: string;
     /** Set when the row cannot be linked, saying why rather than leaving a dead cell. */
     identityProblem: string | null;
     statementCount: number | null;
@@ -113,7 +101,6 @@ export function toCohortRow(listing: AgentListing, index: number): CohortRow {
         isFallbackMetadata: listing.metadata.isFallback,
         imageUrl: imageUrlOf(listing),
         href: ref === null ? null : `/agent/${ref.chainId}/${ref.tokenId}`,
-        identity: ref === null ? "—" : `${ref.tokenId} · ${describeChain(ref.chainId)}`,
         identityProblem: identityProblemOf(listing),
         statementCount: listing.statementCount,
         marketCap: cap === null ? null : `${formatTrust(cap)} TRUST`,

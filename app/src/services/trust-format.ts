@@ -164,21 +164,6 @@ export function describeAtomPositions(market: AgentAtomMarket): string {
     return `${positions} · ${curves} curve${curves === 1 ? "" : "s"}`;
 }
 
-const CHAIN_NAMES: Record<number, string> = {
-    1: "Ethereum",
-    56: "BSC",
-    8453: "Base",
-};
-
-/**
- * `Base 8453`, or just the id for a chain we have no name for. Never a guess —
- * an unknown chain id renders as itself rather than as a plausible name.
- */
-export function describeChain(chainId: number): string {
-    const name = CHAIN_NAMES[chainId];
-    return name === undefined ? String(chainId) : `${name} ${chainId}`;
-}
-
 /**
  * The block explorer for the chain the ERC-8004 identity lives on. `null` for
  * a chain we have no explorer for, which is rendered as an absent link rather

@@ -54,6 +54,10 @@ function Placeholder() {
 }
 
 function RowBody({row}: {row: CohortRow}) {
+    const notes: string[] = [];
+    if (row.identityProblem !== null) notes.push(row.identityProblem);
+    if (row.isFallbackMetadata) notes.push("indexer stand-in, not a chosen name");
+
     return (
         <>
             {row.imageUrl === null ? (
@@ -65,16 +69,16 @@ function RowBody({row}: {row: CohortRow}) {
             <span className="min-w-0 row-span-2 sm:row-span-1">
                 <span className="block truncate font-medium leading-tight">{row.name}</span>
                 {/*
-                 * Wraps rather than truncates. At 400px this track is ~176px and
-                 * every one of these strings is longer than that — truncating
-                 * would drop the fallback disclaimer on roughly half the cohort
-                 * and the reason an unlinkable row is unlinkable on the rest,
-                 * which is the part of the row most worth keeping.
+                 * Only when there is something to say. Wraps rather than
+                 * truncates: at 400px this track is ~176px and both of these
+                 * strings are longer than that, and truncating would drop the
+                 * reason an unlinkable row is unlinkable.
                  */}
-                <span className="block font-mono text-[length:var(--text-label)] leading-tight text-[color:var(--color-fg-60)] break-words">
-                    {row.identityProblem ?? row.identity}
-                    {row.isFallbackMetadata ? " · indexer stand-in, not a chosen name" : null}
-                </span>
+                {notes.length === 0 ? null : (
+                    <span className="block font-mono text-[length:var(--text-label)] leading-tight text-[color:var(--color-fg-60)] break-words">
+                        {notes.join(" · ")}
+                    </span>
+                )}
             </span>
 
             <span className="font-mono text-[length:var(--text-body-sm)] leading-tight text-right tabular-nums">

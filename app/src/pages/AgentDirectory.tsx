@@ -12,9 +12,9 @@ import {ERC8004_GRAPHQL_URL} from "../services/erc8004-connector";
  * `/agents` — the way into the trust panel.
  *
  * The whole mirrored cohort, paged, ordered by measures of evidence and never
- * by a score. Both orders rank by what cost somebody something to produce, and
- * the page says so in as many words: "most statements about it" is not "best",
- * and a list that implied otherwise would be the first dishonest thing here.
+ * by a score. Both orders rank by what cost somebody something to produce.
+ * That used to be said on the page; it is now said only by what the controls
+ * offer, which is why there is no order-by-score button and never will be.
  *
  * Capability search — finding an agent by what it can actually do — needs an
  * index that does not exist yet and is the next phase. Until then the lookup
@@ -34,8 +34,6 @@ export function AgentDirectory() {
     const cohortQuery = useAgentCohort(order, offset);
     const view = cohortQuery.data;
 
-    const activeOrder = COHORT_ORDERS.find((entry) => entry.id === order);
-
     function changeOrder(next: AgentListOrder) {
         // A page number means nothing across two different orders, so paging
         // restarts rather than carrying an offset into a sequence it was not
@@ -52,13 +50,6 @@ export function AgentDirectory() {
                 <h1 className="text-[length:var(--text-display)] leading-[var(--leading-display)] tracking-tight font-semibold">
                     ERC-8004 agents
                 </h1>
-                <p className="mt-3 max-w-[64ch] text-[color:var(--color-fg-60)]">
-                    {view?.total === null || view?.total === undefined
-                        ? "Every one that the Intuition graph mirrors carries a trust score."
-                        : `All ${view.total.toLocaleString("en-US")} that the Intuition graph mirrors carry a trust score.`}{" "}
-                    Providers sign their assessments and declare how long they stay valid, and no
-                    consumer checks either. Open one and see what its rating is actually resting on.
-                </p>
             </header>
 
             <section>
@@ -66,14 +57,6 @@ export function AgentDirectory() {
                     <h2 className="font-medium">The cohort</h2>
                     <OrderControl order={order} onChange={changeOrder} />
                 </div>
-
-                <p className="mt-2 max-w-[68ch] text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)]">
-                    <span className="text-[color:var(--color-fg)]">
-                        Neither order is a quality ranking.
-                    </span>{" "}
-                    {activeOrder?.note} Ordering by a provider's score is the one thing this panel
-                    argues against, so it is not offered.
-                </p>
 
                 {cohortQuery.error !== null ? (
                     <CohortError
