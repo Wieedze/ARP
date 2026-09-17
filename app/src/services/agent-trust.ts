@@ -476,8 +476,8 @@ function summarise(row: TrustRow): TabSummary {
  * before what anyone says about it.
  *
  * ARP gets a tab rather than a footnote because its abstention is a claim about
- * this agent and belongs beside the others: "insufficient evidence" is only
- * legible as a position if it sits where a position would sit.
+ * this agent and belongs beside the others: "no assessment" is only legible as
+ * a position if it sits where a position would sit.
  *
  * Slugs go in the URL, so they are derived from the provider's name and made
  * unique — two providers named alike, or a provider that happens to be called

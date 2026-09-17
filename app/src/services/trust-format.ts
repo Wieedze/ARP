@@ -131,8 +131,8 @@ export function describeSignature(verdict: SignatureVerdict): SignatureCopy {
 /**
  * Positions on an agent's own atom.
  *
- * Deliberately *not* phrased as distinct stakers, unlike `describeStakers`.
- * `AgentAtomMarket` sums across every bonding curve so that its position count
+ * Deliberately *not* phrased as distinct stakers, unlike `StakerCount` on the
+ * panel. `AgentAtomMarket` sums across every bonding curve so that its position count
  * and its market cap describe the same thing, and that sum counts an account
  * staked on two curves twice. The curve count is stated so the reader can see
  * where the number came from.

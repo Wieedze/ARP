@@ -18,7 +18,7 @@ import {panelDomId, tabDomId} from "./tab-ids";
  * provider's view is shareable and a refresh keeps the place.
  */
 
-/** The verdict line for the two tabs that are not a provider's claim. */
+/** The second line for the two tabs that carry no provider's claim. */
 const STATIC_LINES: Record<"arp" | "agent", string> = {
     arp: "no assessment",
     agent: "capabilities",
