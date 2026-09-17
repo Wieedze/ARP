@@ -177,7 +177,7 @@ export function StakeControl({
             <h4 className="font-medium">Take a position on {row.providerName}</h4>
             <p className="mt-1 text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)] max-w-[60ch]">
                 A deposit into the vault on the claim{" "}
-                <span className="font-mono text-[color:var(--color-fg)]">
+                <span className="font-mono text-[color:var(--color-fg)] break-words">
                     this agent · has trust provider · {row.providerName}
                 </span>
                 , on Intuition mainnet. Real TRUST, not recoverable by this panel. Up to{" "}

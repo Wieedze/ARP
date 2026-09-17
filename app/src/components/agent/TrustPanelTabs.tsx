@@ -35,12 +35,18 @@ const STATIC_LINES: Record<"arp" | "agent", {primary: string; secondary: string}
  * `mismatch` keeps the alarm colour: a document that does not recover to the
  * signer it names has to be unmissable from the tab that hides it, not only
  * from inside the panel (ADR 0018, ADR 0027).
+ *
+ * Nothing here drops below `--color-fg-60`. At `--text-label` the next step
+ * down is 3.66:1, and in this strip the tone is not chrome — it is how the
+ * bottom tier is told from the one above it. `absent` and `unverified` land on
+ * the same tone as a result; their words differ, and the panel one click away
+ * carries the whole verdict.
  */
 const SIGNATURE_TONE_CLASS: Record<TabSummary["signature"]["status"], string> = {
     verified: "text-[color:var(--color-fg)]",
     mismatch: "text-[color:var(--color-alarm)]",
     unverified: "text-[color:var(--color-fg-60)]",
-    absent: "text-[color:var(--color-fg-40)]",
+    absent: "text-[color:var(--color-fg-60)]",
 };
 
 function isMismatch(tab: PanelTab): boolean {
@@ -70,11 +76,11 @@ function TabLines({tab, hasUnreadSources}: {tab: PanelTab; hasUnreadSources: boo
 
     return (
         <>
-            <span className="mt-1.5 block font-mono uppercase tracking-wider text-[length:var(--text-label)] text-[color:var(--color-fg-40)]">
+            <span className="mt-1.5 block font-mono uppercase tracking-wider text-[length:var(--text-label)] text-[color:var(--color-fg-60)]">
                 {lines.primary}
             </span>
             {secondary === null ? null : (
-                <span className="mt-1 block font-mono text-[length:var(--text-label)] text-[color:var(--color-fg-40)]">
+                <span className="mt-1 block font-mono text-[length:var(--text-label)] text-[color:var(--color-fg-60)]">
                     {secondary}
                 </span>
             )}
@@ -158,13 +164,17 @@ export function TrustPanelTabs({
                         }}
                         onClick={() => onSelect(tab.slug)}
                         onKeyDown={(event) => handleKeyDown(event, index)}
-                        // `border-0` because the base stylesheet gives every
-                        // button a hairline box, and this one's only rule is the
-                        // one above it. The basis wraps the strip onto a second
-                        // row rather than overflowing at 400px; the cap stops a
-                        // tab left alone on that second row from stretching
-                        // across the whole width.
-                        className="group border-0 p-0 grow basis-[9rem] max-w-[18rem] min-w-0 text-left"
+                        // `border-0!` and not `border-0`: `index.css` gives
+                        // every button a hairline box in an *unlayered* rule,
+                        // and an unlayered normal declaration beats every
+                        // utility regardless of specificity. Only an important
+                        // one wins it back. A tab's single rule is the one
+                        // above it, not a box around it.
+                        //
+                        // The basis wraps the strip onto a second row rather
+                        // than overflowing at 400px; the cap stops a tab left
+                        // alone on that row from stretching the whole width.
+                        className="group border-0! p-0 grow basis-[9rem] max-w-[18rem] min-w-0 text-left"
                     >
                         {/* Fixed-height slot so a 1px rule and a 2px rule do not
                             shift the labels beside them off a common baseline. */}

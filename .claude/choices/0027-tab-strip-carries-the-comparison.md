@@ -119,9 +119,29 @@ foreground weight instead — the device `FreshnessLine` already uses for stale 
   a real-value confusion, not a cosmetic one.
 - `StakeControl`'s heading now names the provider and spells out the claim, because a reader can land
   on a tab straight from a URL with no assessment block scrolled above it.
-- The `index.css` focus repair from Task 08 is still in place: the emitted stylesheet contains no
-  `outline: none` and the base rule covers both `button:focus-visible` and `[tabindex]:focus-visible`,
-  which is what gives the tabpanel its ring.
+- The `index.css` focus repair from Task 08 is still in place, but the honest phrasing is that no
+  `outline: none` *survives the cascade*: the build emits one, `.focus\:outline-none` from
+  `StakeControl`, and it is inside `@layer utilities` where it loses to the unlayered base rule that
+  covers `button:focus-visible` and `[tabindex]:focus-visible`. That base rule is what gives the
+  tabpanel its ring. Grepping for the declaration is not enough — its layer decides the answer.
+- The same cascade rule bites the other way one rule up. `index.css` gives every `button` a hairline
+  box in an **unlayered** declaration, and an unlayered normal declaration beats every layered
+  utility whatever its specificity, so a plain `border-0` on a tab is inert and each tab paints a
+  box. The strip uses `border-0!`: an important declaration in a layer does beat an unlayered normal
+  one. Anything else in this codebase that tries to remove a button's border has the same problem.
+- `aria-controls` on an unselected tab names an element that is not in the DOM, because only the
+  selected panel renders. That is the usual trade for not mounting every panel — mounting all of
+  them would mean a `StakeControl` per provider — and assistive technology tolerates it.
+- Two rows can carry the same provider name: `joinProviderRows` emits one row per *edge*, so two
+  `has trust provider` edges naming one provider produce two rows. `buildPanelTabs` makes the slugs
+  distinct; the labels stay verbatim, so the strip would show two tabs reading alike. Not observed
+  live.
+- The ARP tab repeats "insufficient evidence" in its own panel, the same way a provider tab's
+  `verified` is restated as "Signature verified" one click below. Consistent rather than redundant.
+- `--color-fg-40` at `--text-label` computes to 3.66:1 on this background, under AA. The strip
+  therefore stops at `--color-fg-60` (7.04:1) and uses font weight for its top tier. The token is
+  paired with `--text-label` in about twenty pre-existing places elsewhere in the app; those are
+  outside this task and remain to be dealt with.
 
 ## References
 

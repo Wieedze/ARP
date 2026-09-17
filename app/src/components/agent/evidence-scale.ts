@@ -42,17 +42,19 @@ export const WEIGHT_CAPTION: Record<EvidenceWeight, string> = {
 /**
  * The same argument at label scale, for the tab strip.
  *
- * Colour only — the strip has no room for the size scale, and a tab is a
- * control rather than a hero. A basis nobody published recedes furthest, a deep
- * one sits at full foreground, and the ordering matches `SCORE_TONE_CLASS` so
- * the strip and the panel never disagree about which provider is better backed.
+ * Tone and weight, no size — the strip has no room for the size scale, and a
+ * tab is a control rather than a hero. Three tiers rather than the panel's
+ * seven, and they stop at `--color-fg-60`: at `--text-label` the next step down
+ * is 3.66:1 against the background, and this text is the signal rather than
+ * chrome. The ordering still agrees with `SCORE_TONE_CLASS`, so the strip and
+ * the panel never disagree about which provider is better backed.
  */
 export const EVIDENCE_TONE_CLASS: Record<EvidenceWeight, string> = {
-    unknown: "text-[color:var(--color-fg-40)]",
-    none: "text-[color:var(--color-fg-40)]",
+    unknown: "text-[color:var(--color-fg-60)]",
+    none: "text-[color:var(--color-fg-60)]",
     single: "text-[color:var(--color-fg-60)]",
     thin: "text-[color:var(--color-fg-60)]",
     moderate: "text-[color:var(--color-fg)]",
-    substantial: "text-[color:var(--color-fg)]",
-    deep: "text-[color:var(--color-fg)]",
+    substantial: "text-[color:var(--color-fg)] font-medium",
+    deep: "text-[color:var(--color-fg)] font-medium",
 };
