@@ -854,6 +854,13 @@ function PageHeader() {
                     {short(deployments.arp.identityRegistry)}
                 </a>
             </p>
+            <p className="mt-3 text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)] max-w-[640px]">
+                Already hold an ERC-8004 agent?{" "}
+                <Link className="underline" to="/agent/import">
+                    Import it instead
+                </Link>{" "}
+                — the registry already names you as its owner, so nothing needs minting.
+            </p>
         </header>
     );
 }
