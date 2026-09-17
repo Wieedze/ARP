@@ -1,0 +1,21 @@
+{
+  "data": {
+    "triples": [
+      {
+        "subject": {
+          "term_id": "0x0ea137804fd2180aca6c35474e7db6e3c2fb0f7990dd798452ed5b412610765e",
+          "label": "Agent 8453:6649",
+          "data": "ipfs://bafkreif6xwptjdsux2iwnhdbxyjom23bzzimhk62y574rreexdghi6hlbq",
+          "value": {
+            "thing": {
+              "name": "Agent 8453:6649",
+              "description": "ERC-8004 agent 8453:6649",
+              "image": "",
+              "url": "https://8004scan.io/agents/8453/6649"
+            }
+          }
+        }
+      }
+    ]
+  }
+}

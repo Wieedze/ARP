@@ -1,0 +1,92 @@
+{
+  "$schema": "https://schemas.deep3.ai/erc8004-feedback-trust-assessment/v1.json",
+  "agent": {
+    "chainId": 8453,
+    "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+    "tokenId": "2340"
+  },
+  "assessment": {
+    "dimensions": {
+      "availability": 51.78,
+      "general_rating": 50.04,
+      "quality": 59.29,
+      "trust": 59.28
+    },
+    "evidence": [
+      {
+        "sha256": "5542023421acddf63d1d6357875173f08e67d7473b10fc3c4258dc60dc10ee09",
+        "type": "feedback-summary",
+        "url": "https://api.deep3.ai/.well-known/intuition/erc8004/agents/8453/2340/evidence.json"
+      }
+    ],
+    "freshness": {
+      "refreshIntervalSeconds": 86400,
+      "validUntil": "2026-09-12T09:26:26.384Z"
+    },
+    "lastUpdated": "2026-09-05T00:43:44.264Z",
+    "score": 55.35,
+    "scoreScale": "0-100",
+    "signature": {
+      "alg": "EIP-712",
+      "eip712": {
+        "domain": {
+          "name": "ERC8004FeedbackTrustAssessment",
+          "version": "1"
+        },
+        "primaryType": "FeedbackTrustAssessment",
+        "types": {
+          "FeedbackTrustAssessment": [
+            {
+              "name": "provider",
+              "type": "string"
+            },
+            {
+              "name": "agent",
+              "type": "string"
+            },
+            {
+              "name": "contentHash",
+              "type": "bytes32"
+            }
+          ]
+        }
+      },
+      "payload": {
+        "canonicalization": "RFC8785",
+        "excludes": [
+          "assessment.signature"
+        ],
+        "hash": "keccak256"
+      },
+      "signer": "0x27A6265e6daf8d9935A3031f2E7cDC4bDFbe2Ebe",
+      "value": "0x4d6eb94775ed76b16fac0197e4ada1cb3a2af037295a579e8132a8578d17f2fa33ab8b6a07f769db02fdfbd2dccf62adad6a6d17167090a9d1d947f70578c0bc1c"
+    },
+    "sourceChain": "base"
+  },
+  "method": {
+    "asOfBlock": {
+      "8453": 51105056
+    },
+    "band": "RANKED",
+    "comparativeReviewers": 6,
+    "nonComparativeReviewers": 20,
+    "numReviewers": 26,
+    "reason": null,
+    "repscore": {
+      "commit": "cf79b4e72db55d07bf7213d1e77651276e7eefbf",
+      "repository": "https://github.com/deep3labs/deep3-agent-8004-feedback",
+      "tagmap": {
+        "sha256": "424387763932cdb9dbbdf5093b69d8d4d6ac8107b5f14f1fb3fce9e2af57e8a3",
+        "url": "https://schemas.deep3.ai/tagmap/424387763932cdb9dbbdf5093b69d8d4d6ac8107b5f14f1fb3fce9e2af57e8a3/tag_schema.yaml"
+      },
+      "version": "1.0.0"
+    },
+    "reviewerDifferentiation": 40.48,
+    "source": "ERC-8004 ReputationRegistry feedback, revoked entries excluded"
+  },
+  "provider": {
+    "id": "deep3-labs",
+    "name": "Deep3 Labs",
+    "url": "https://deep3.ai"
+  }
+}

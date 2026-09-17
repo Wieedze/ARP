@@ -11,6 +11,7 @@
  *                                (`/agent` step 4 → "Copy as .env").
  *     DELEGATION_COMPOSE_JSON  — JSON of the signed compose delegation.
  *     MANIFEST_PATH            — defaults to `scripts/manifest-modules.json`
+ *     INTUITION_PIN_API_KEY    — partner pinning key (see scripts/pin-env.ts)
  *
  *   What it does:
  *     1. Pin + ensure the agent's self-atom on Intuition (one-time).
@@ -54,6 +55,8 @@ import {
     redeemStakeOnAtom,
 } from "../app/src/services/delegation-redeem";
 
+import {requirePinAuth} from "./pin-env";
+
 type ManifestEntry = {
     name: string;
     domain: string;
@@ -64,6 +67,9 @@ type ManifestEntry = {
 async function main() {
     const agentPk = process.env.AGENT_PRIVATE_KEY as Hex | undefined;
     if (!agentPk) throw new Error("AGENT_PRIVATE_KEY required");
+    // Pinning is gated (ADR 0016). Resolve the credential before any chain
+    // work so a missing key fails immediately instead of mid-loop.
+    const pinAuth = requirePinAuth();
     const publishJson = process.env.DELEGATION_PUBLISH_JSON;
     const composeJson = process.env.DELEGATION_COMPOSE_JSON;
     if (!publishJson) throw new Error("DELEGATION_PUBLISH_JSON required (paste from /agent step 4)");
@@ -143,6 +149,7 @@ async function main() {
         signedDelegation: composeDel,
         agentWalletClient,
         publicClient,
+        pinAuth,
         thing: {
             name: "uses",
             description:

@@ -1,0 +1,272 @@
+{
+  "data": {
+    "triples": [
+      {
+        "term_id": "0x3ebedcb5123e3d967f33d3515c2088391687e2e22e5189ea1e26133feedd0cd3",
+        "predicate": {
+          "term_id": "0x9ddda4ac2477ec6908e9561ab31ccd767bf3642e0ed0531fd61d447badd896ab",
+          "label": "use"
+        },
+        "object": {
+          "term_id": "0x9146ad2efc85bece6280476c8b338d01ddf0bec09ba56ee0441c9405a852a6e9",
+          "label": "A2A",
+          "value": {
+            "thing": {
+              "name": "A2A",
+              "description": "Protocol or standard atom for A2A, used in ERC-8004 agent capability triples.",
+              "image": "",
+              "url": ""
+            }
+          }
+        }
+      },
+      {
+        "term_id": "0x490a38df7480c2644cb428803ef28c69a7654fe76f6272c655ceb7f03972aa70",
+        "predicate": {
+          "term_id": "0xaf3ca6cd6db1cc57c5ae68b1177ba1fd426488bd781494166ab8cb0ed28a6ea3",
+          "label": "compatible with"
+        },
+        "object": {
+          "term_id": "0x598193f2ac7f951b82b59a9c454cc012c3d7bfd76328331f4e4c9e5e75a2be8f",
+          "label": "x402",
+          "value": {
+            "thing": {
+              "name": "x402",
+              "description": "Protocol or standard atom for x402, used in ERC-8004 agent capability triples.",
+              "image": "",
+              "url": ""
+            }
+          }
+        }
+      },
+      {
+        "term_id": "0xe9923723d02ed343b162ccd53ec0ca1e8062f0b985e4b5af83a5a8f9df393fc8",
+        "predicate": {
+          "term_id": "0xa632a94306ab1d56911cff8c06473659a7caa2dfec6de3921bc23ec8ebf96ced",
+          "label": "has type"
+        },
+        "object": {
+          "term_id": "0x800342c0ded1c288e69f39a2dc96d8cff9b242e9f573193e6e0a849e5315d3e9",
+          "label": "AIAgent",
+          "value": {
+            "thing": {
+              "name": "AIAgent",
+              "description": "Type atom for software agents and AI agents represented in the Intuition knowledge graph.",
+              "image": "",
+              "url": ""
+            }
+          }
+        }
+      },
+      {
+        "term_id": "0xdd2b93c9ec017152311f655e81282fbf77c13b0daf5b54141365393a7b123378",
+        "predicate": {
+          "term_id": "0xfa02609bfde5a9a7ba18fa8afc1c42bc643edfaf7d44e3ce9e50835290d03324",
+          "label": "implement"
+        },
+        "object": {
+          "term_id": "0x595ba5059b23a9aa4d64deff324ff3d957866715d5b7b8015eebc9009bab78b2",
+          "label": "ERC-8004",
+          "value": {
+            "thing": {
+              "name": "ERC-8004",
+              "description": "Protocol atom for ERC-8004 agent identity, discovery, and trust data.",
+              "image": "",
+              "url": ""
+            }
+          }
+        }
+      },
+      {
+        "term_id": "0xb4ad13e6a2248719baa2fa6b4930c6004c671f8073789728f8cec15ef5659a73",
+        "predicate": {
+          "term_id": "0xa974ce85010776bb6eb81e4492bdb8712f127aa75ae737f02cbe80e72409f7d3",
+          "label": "available on"
+        },
+        "object": {
+          "term_id": "0xa9d3369082d5616143ae1562866b1b6ec815f295c9c1edb2cb82f8d81382d158",
+          "label": "Base",
+          "value": {
+            "thing": {
+              "name": "Base",
+              "description": "Chain atom for Base, used to describe where an ERC-8004 agent is available.",
+              "image": "",
+              "url": ""
+            }
+          }
+        }
+      },
+      {
+        "term_id": "0x1a117287962ebd43b52653e18cef7c3310b00f118fda17b55c319a61b1ec4ed8",
+        "predicate": {
+          "term_id": "0x7ec36d201c842dc787b45cb5bb753bea4cf849be3908fb1b0a7d067c3c3cc1f5",
+          "label": "has tag"
+        },
+        "object": {
+          "term_id": "0x598193f2ac7f951b82b59a9c454cc012c3d7bfd76328331f4e4c9e5e75a2be8f",
+          "label": "x402",
+          "value": {
+            "thing": {
+              "name": "x402",
+              "description": "Protocol or standard atom for x402, used in ERC-8004 agent capability triples.",
+              "image": "",
+              "url": ""
+            }
+          }
+        }
+      },
+      {
+        "term_id": "0x676db8030c1681243a39411329dab3ab4acec241cde42f4f6bf64a06de48aee3",
+        "predicate": {
+          "term_id": "0x7ec36d201c842dc787b45cb5bb753bea4cf849be3908fb1b0a7d067c3c3cc1f5",
+          "label": "has tag"
+        },
+        "object": {
+          "term_id": "0x671725c78c95813ee4a58addc29304bc68b6ebb15eed981df3202cc9da87a0ec",
+          "label": "tee-attestation",
+          "value": {
+            "thing": {
+              "name": "tee-attestation",
+              "description": "Value atom observed in ERC-8004 agent registry data.",
+              "image": "",
+              "url": ""
+            }
+          }
+        }
+      },
+      {
+        "term_id": "0xb9c90f2f81ec33c411a8e0bad7560a865f2cf17de867373564f96e9b8eec4846",
+        "predicate": {
+          "term_id": "0x9ddda4ac2477ec6908e9561ab31ccd767bf3642e0ed0531fd61d447badd896ab",
+          "label": "use"
+        },
+        "object": {
+          "term_id": "0xcfba7ccac56d280356b324ef16332100707ab50e7a6c1c7ab7dfdeb5fb62e43d",
+          "label": "MCP",
+          "value": {
+            "thing": {
+              "name": "MCP",
+              "description": "Protocol or standard atom for MCP, used in ERC-8004 agent capability triples.",
+              "image": "",
+              "url": ""
+            }
+          }
+        }
+      },
+      {
+        "term_id": "0x8ca9ebba07ceecbafb9f6b5489839fa03964f8355fd0114260794800023b7a28",
+        "predicate": {
+          "term_id": "0xa632a94306ab1d56911cff8c06473659a7caa2dfec6de3921bc23ec8ebf96ced",
+          "label": "has type"
+        },
+        "object": {
+          "term_id": "0x9a8bfad8858f33eb1f3599cc218fc5ee743bc359a8f3e60209e4252f163254e8",
+          "label": "OASF Agent",
+          "value": {
+            "thing": {
+              "name": "OASF Agent",
+              "description": "Value atom observed in ERC-8004 agent registry data.",
+              "image": "",
+              "url": ""
+            }
+          }
+        }
+      },
+      {
+        "term_id": "0x5135c7ef6fd5c7f3c37dd004718a6cf27deeac8f3bed44f0937318fd286f9953",
+        "predicate": {
+          "term_id": "0x7ec36d201c842dc787b45cb5bb753bea4cf849be3908fb1b0a7d067c3c3cc1f5",
+          "label": "has tag"
+        },
+        "object": {
+          "term_id": "0x1e49b9102c046de00f1a448041f4e98bc1430fb4a002f7f0ba52840843ad9eb3",
+          "label": "crypto-economic",
+          "value": {
+            "thing": {
+              "name": "crypto-economic",
+              "description": "Value atom observed in ERC-8004 agent registry data.",
+              "image": "",
+              "url": ""
+            }
+          }
+        }
+      },
+      {
+        "term_id": "0xb743ad0467ea01e70bc7d3411f139c6db89815e9fd26290df41b5998908023e9",
+        "predicate": {
+          "term_id": "0xa632a94306ab1d56911cff8c06473659a7caa2dfec6de3921bc23ec8ebf96ced",
+          "label": "has type"
+        },
+        "object": {
+          "term_id": "0x6f0aee1b3bc88f578afc00e9444213d0f54cd9ab40cac7130f1d3453fd5c317e",
+          "label": "A2A Agent",
+          "value": {
+            "thing": {
+              "name": "A2A Agent",
+              "description": "Value atom observed in ERC-8004 agent registry data.",
+              "image": "",
+              "url": ""
+            }
+          }
+        }
+      },
+      {
+        "term_id": "0x3ad5b5f75a24f23f2a4e3d92a188e62f66483ce6223ab5459cf003325037e35f",
+        "predicate": {
+          "term_id": "0x7ec36d201c842dc787b45cb5bb753bea4cf849be3908fb1b0a7d067c3c3cc1f5",
+          "label": "has tag"
+        },
+        "object": {
+          "term_id": "0xd22b16d68b364ec3d75ffbab4435e1348be87cc7bed4eda6f6a4d59ca79ae0bf",
+          "label": "reputation",
+          "value": {
+            "thing": {
+              "name": "reputation",
+              "description": "Value atom observed in ERC-8004 agent registry data.",
+              "image": "",
+              "url": ""
+            }
+          }
+        }
+      },
+      {
+        "term_id": "0xf8907fb45fd47bbe2ab59f6761bb9aa9f739222e4b861704cab2713735c57354",
+        "predicate": {
+          "term_id": "0xa632a94306ab1d56911cff8c06473659a7caa2dfec6de3921bc23ec8ebf96ced",
+          "label": "has type"
+        },
+        "object": {
+          "term_id": "0xb52bb294a1cbf67a3fccc6bc8423e0758a11acfeb60caf6a0465ffca9ec3ae79",
+          "label": "MCP Server",
+          "value": {
+            "thing": {
+              "name": "MCP Server",
+              "description": "Value atom observed in ERC-8004 agent registry data.",
+              "image": "",
+              "url": ""
+            }
+          }
+        }
+      },
+      {
+        "term_id": "0xbf0239b1c8c54d4112624f98b24007d559ae7d59104f3d925688b9510733a396",
+        "predicate": {
+          "term_id": "0x9ddda4ac2477ec6908e9561ab31ccd767bf3642e0ed0531fd61d447badd896ab",
+          "label": "use"
+        },
+        "object": {
+          "term_id": "0xec422ccd84fecb350432533e68a2565c11addff74d80335d1548941518aefb9e",
+          "label": "OASF",
+          "value": {
+            "thing": {
+              "name": "OASF",
+              "description": "Protocol or standard atom for OASF, used in ERC-8004 agent capability triples.",
+              "image": "",
+              "url": ""
+            }
+          }
+        }
+      }
+    ]
+  }
+}

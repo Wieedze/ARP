@@ -12,7 +12,7 @@ import {multiVaultAbi} from "../lib/abi/multi-vault";
 import {intuitionTestnet} from "../lib/chains";
 import {deployments} from "../lib/deployments";
 
-import {pinThing} from "./intuition-pin";
+import {pinThing, type PinAuth} from "./intuition-pin";
 
 const MULTI_VAULT = deployments.intuition.multiVault;
 
@@ -45,18 +45,26 @@ let cachedUsesAtomId: Hex | null = null;
  *
  * Returns `{ atomId, uri, created }` — `created` is `false` if the atom
  * was already on chain.
+ *
+ * `pinAuth` is required, not optional: pinning is gated behind Intuition's
+ * partner API (ADR 0016), and only a Node entry point can supply the key. An
+ * optional parameter would re-open the leak this closes.
  */
 export async function ensureAtomForThing(params: {
     thing: {name: string; description: string; image?: string; url?: string};
     walletClient: WalletClient<Transport, Chain, Account>;
     publicClient: PublicClient;
+    pinAuth: PinAuth;
 }): Promise<{atomId: Hex; uri: string; created: boolean; tx?: Hex}> {
-    const uri = await pinThing({
-        name: params.thing.name,
-        description: params.thing.description,
-        image: params.thing.image ?? "",
-        url: params.thing.url ?? "",
-    });
+    const uri = await pinThing(
+        {
+            name: params.thing.name,
+            description: params.thing.description,
+            image: params.thing.image ?? "",
+            url: params.thing.url ?? "",
+        },
+        params.pinAuth,
+    );
 
     const atomData = stringToHex(uri);
     const atomId = await params.publicClient.readContract({
@@ -152,6 +160,7 @@ export async function ensureAtomForURI(params: {
 export async function getOrCreateUsesPredicateAtomId(params: {
     walletClient: WalletClient<Transport, Chain, Account>;
     publicClient: PublicClient;
+    pinAuth: PinAuth;
 }): Promise<Hex> {
     if (cachedUsesAtomId) return cachedUsesAtomId;
     const result = await ensureAtomForThing({
@@ -164,6 +173,7 @@ export async function getOrCreateUsesPredicateAtomId(params: {
         },
         walletClient: params.walletClient,
         publicClient: params.publicClient,
+        pinAuth: params.pinAuth,
     });
     cachedUsesAtomId = result.atomId;
     return result.atomId;
@@ -186,10 +196,12 @@ export async function declareUsesTriple(params: {
     toolAtomId: Hex;
     walletClient: WalletClient<Transport, Chain, Account>;
     publicClient: PublicClient;
+    pinAuth: PinAuth;
 }): Promise<{tripleId: Hex; created: boolean; tx?: Hex}> {
     const usesAtomId = await getOrCreateUsesPredicateAtomId({
         walletClient: params.walletClient,
         publicClient: params.publicClient,
+        pinAuth: params.pinAuth,
     });
 
     const tripleId = await params.publicClient.readContract({
