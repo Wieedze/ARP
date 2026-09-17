@@ -23,6 +23,11 @@ import {
  * that resubmits, and no code path where arriving at or leaving this route
  * causes a transaction (safeguard 5). `handleConfirm` is reachable from exactly
  * one click.
+ *
+ * The heading names the provider and the claim in full. Since the panel moved
+ * to tabs a reader can land here straight from a URL, with no assessment block
+ * scrolled above to say what is being staked on — and nobody should have to
+ * infer what they are about to put real money behind.
  */
 
 type Phase =
@@ -169,10 +174,13 @@ export function StakeControl({
 
     return (
         <section className="mt-6 border-t border-[color:var(--color-border)] pt-5">
-            <h4 className="font-medium">Take a position</h4>
+            <h4 className="font-medium">Take a position on {row.providerName}</h4>
             <p className="mt-1 text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)] max-w-[60ch]">
-                A deposit into this claim's vault on Intuition mainnet. Real TRUST, not recoverable
-                by this panel. Up to{" "}
+                A deposit into the vault on the claim{" "}
+                <span className="font-mono text-[color:var(--color-fg)]">
+                    this agent · has trust provider · {row.providerName}
+                </span>
+                , on Intuition mainnet. Real TRUST, not recoverable by this panel. Up to{" "}
                 <span className="font-mono">{formatTrust(MAX_STAKE_WEI)} TRUST</span> per
                 transaction.
             </p>

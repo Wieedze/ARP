@@ -38,3 +38,21 @@ export const WEIGHT_CAPTION: Record<EvidenceWeight, string> = {
     substantial: "Hundreds of reviewers behind it.",
     deep: "Thousands of reviewers behind it.",
 };
+
+/**
+ * The same argument at label scale, for the tab strip.
+ *
+ * Colour only — the strip has no room for the size scale, and a tab is a
+ * control rather than a hero. A basis nobody published recedes furthest, a deep
+ * one sits at full foreground, and the ordering matches `SCORE_TONE_CLASS` so
+ * the strip and the panel never disagree about which provider is better backed.
+ */
+export const EVIDENCE_TONE_CLASS: Record<EvidenceWeight, string> = {
+    unknown: "text-[color:var(--color-fg-40)]",
+    none: "text-[color:var(--color-fg-40)]",
+    single: "text-[color:var(--color-fg-60)]",
+    thin: "text-[color:var(--color-fg-60)]",
+    moderate: "text-[color:var(--color-fg)]",
+    substantial: "text-[color:var(--color-fg)]",
+    deep: "text-[color:var(--color-fg)]",
+};
