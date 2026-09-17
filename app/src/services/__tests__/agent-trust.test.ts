@@ -1,11 +1,16 @@
 import {describe, expect, it} from "vitest";
 
 import {
+    AGENT_TAB_SLUG,
+    ARP_TAB_SLUG,
+    buildPanelTabs,
     buildTrustPanel,
     evidenceWeight,
     groupCapabilities,
     joinProviderRows,
     readReviewerBasis,
+    selectPanelTab,
+    shouldUseTabs,
 } from "../agent-trust";
 
 import {
@@ -15,12 +20,14 @@ import {
     claimMarket,
     DEEP3_TRIPLE,
     identity,
+    MISMATCH,
     notFoundFetch,
     okFetch,
     profile,
     providerEdge,
     richProfile,
     UNVERIFIED,
+    VERIFIED,
 } from "./trust-fixtures";
 
 describe("readReviewerBasis", () => {
@@ -336,5 +343,262 @@ describe("buildTrustPanel", () => {
 
         expect(view.sourceErrors).toHaveLength(1);
         expect(view.found).toBe(true);
+    });
+});
+
+describe("shouldUseTabs", () => {
+    it("takes two providers before a strip earns its place", () => {
+        const rows = joinProviderRows(richProfile().assessments, richProfile().markets);
+        expect(shouldUseTabs(rows)).toBe(true);
+        expect(shouldUseTabs(rows.slice(0, 1))).toBe(false);
+        expect(shouldUseTabs([])).toBe(false);
+    });
+});
+
+describe("buildPanelTabs", () => {
+    function tabsFor(profileValue = richProfile()) {
+        return buildPanelTabs(joinProviderRows(profileValue.assessments, profileValue.markets));
+    }
+
+    it("opens one tab per provider, then ARP, then the agent", () => {
+        const model = tabsFor();
+
+        expect(model.tabs.map((tab) => tab.slug)).toEqual([
+            "deep3-labs",
+            "asterpay-kya",
+            ARP_TAB_SLUG,
+            AGENT_TAB_SLUG,
+        ]);
+        expect(model.tabs.map((tab) => tab.kind)).toEqual(["provider", "provider", "arp", "agent"]);
+        expect(model.tabs.map((tab) => tab.label)).toEqual([
+            "Deep3 Labs",
+            "AsterPay KYA",
+            "ARP",
+            "Agent",
+        ]);
+    });
+
+    it("summarises each provider by signature and evidence, never by score", () => {
+        const model = tabsFor();
+        const [deep3, asterpay] = model.tabs;
+
+        if (deep3.kind !== "provider" || asterpay.kind !== "provider") {
+            throw new Error("expected two provider tabs");
+        }
+
+        // The whole point of the strip: one signs and rests on 26 reviewers,
+        // the other publishes no count at all, and that is legible from either
+        // tab without the scores being repeated up here.
+        expect(deep3.summary).toEqual({
+            signature: {status: "verified", label: "verified"},
+            evidence: "26 reviewers",
+            weight: "moderate",
+        });
+        expect(asterpay.summary).toEqual({
+            signature: {status: "unverified", label: "not verified"},
+            evidence: "no reviewer count",
+            weight: "unknown",
+        });
+        expect(deep3.summary).not.toHaveProperty("score");
+    });
+
+    it("relays a mismatch as a mismatch and never upgrades an unverified", () => {
+        const market = claimMarket(DEEP3_TRIPLE);
+        const model = buildPanelTabs(
+            joinProviderRows(
+                [
+                    providerEdge({handle: DEEP3_TRIPLE, providerName: "Deep3 Labs", market}),
+                    assessmentEdge({
+                        handle: `${DEEP3_TRIPLE}-doc`,
+                        providerName: "Deep3 Labs",
+                        fetch: okFetch(
+                            "https://api.deep3.example/assessment.json",
+                            assessmentDocument({
+                                providerName: "Deep3 Labs",
+                                providerId: "deep3-labs",
+                                score: 55.35,
+                                numReviewers: 26,
+                            }),
+                        ),
+                        signature: MISMATCH,
+                    }),
+                ],
+                [market],
+            ),
+        );
+
+        const tab = model.tabs[0];
+        if (tab.kind !== "provider") throw new Error("expected a provider tab");
+        expect(tab.summary.signature).toEqual({status: "mismatch", label: "mismatch"});
+    });
+
+    it("calls a provider edge with no assessment absent, not unverified", () => {
+        const market = claimMarket(DEEP3_TRIPLE);
+        const model = buildPanelTabs(
+            joinProviderRows(
+                [providerEdge({handle: DEEP3_TRIPLE, providerName: "Deep3 Labs", market})],
+                [market],
+            ),
+        );
+
+        const tab = model.tabs[0];
+        if (tab.kind !== "provider") throw new Error("expected a provider tab");
+        expect(tab.summary.signature).toEqual({status: "absent", label: "no document"});
+        expect(tab.summary.evidence).toBe("no reviewer count");
+    });
+
+    it("counts one reviewer in the singular", () => {
+        const model = buildPanelTabs(
+            joinProviderRows(
+                [
+                    assessmentEdge({
+                        handle: "0xorphan",
+                        providerName: "Nobody",
+                        fetch: okFetch(
+                            "https://api.example/a.json",
+                            assessmentDocument({
+                                providerName: "Nobody",
+                                providerId: "nobody",
+                                score: 10,
+                                numReviewers: 1,
+                            }),
+                        ),
+                        signature: UNVERIFIED,
+                    }),
+                ],
+                [],
+            ),
+        );
+
+        const tab = model.tabs[0];
+        if (tab.kind !== "provider") throw new Error("expected a provider tab");
+        expect(tab.summary.evidence).toBe("1 reviewer");
+    });
+
+    it("opens on the best-evidenced provider, not the highest score", () => {
+        const thin = claimMarket(ASTERPAY_TRIPLE);
+        const deep = claimMarket(DEEP3_TRIPLE);
+        const model = buildPanelTabs(
+            joinProviderRows(
+                [
+                    providerEdge({
+                        handle: ASTERPAY_TRIPLE,
+                        providerName: "Loud Scores",
+                        market: thin,
+                    }),
+                    assessmentEdge({
+                        handle: `${ASTERPAY_TRIPLE}-doc`,
+                        providerName: "Loud Scores",
+                        fetch: okFetch(
+                            "https://api.example/loud.json",
+                            assessmentDocument({
+                                providerName: "Loud Scores",
+                                providerId: "loud",
+                                score: 99,
+                                numReviewers: 2,
+                            }),
+                        ),
+                        signature: UNVERIFIED,
+                    }),
+                    providerEdge({handle: DEEP3_TRIPLE, providerName: "Deep3 Labs", market: deep}),
+                    assessmentEdge({
+                        handle: `${DEEP3_TRIPLE}-doc`,
+                        providerName: "Deep3 Labs",
+                        fetch: okFetch(
+                            "https://api.deep3.example/assessment.json",
+                            assessmentDocument({
+                                providerName: "Deep3 Labs",
+                                providerId: "deep3-labs",
+                                score: 41,
+                                numReviewers: 1445,
+                            }),
+                        ),
+                        signature: VERIFIED,
+                    }),
+                ],
+                [thin, deep],
+            ),
+        );
+
+        expect(model.defaultSlug).toBe("deep3-labs");
+    });
+
+    it("opens on the agent when no provider publishes a reviewer count", () => {
+        const market = claimMarket(ASTERPAY_TRIPLE);
+        const model = buildPanelTabs(
+            joinProviderRows(
+                [
+                    providerEdge({
+                        handle: ASTERPAY_TRIPLE,
+                        providerName: "AsterPay KYA",
+                        market,
+                    }),
+                    assessmentEdge({
+                        handle: `${ASTERPAY_TRIPLE}-doc`,
+                        providerName: "AsterPay KYA",
+                        fetch: okFetch(
+                            "https://api.asterpay.example/assessment.json",
+                            assessmentDocument({
+                                providerName: "AsterPay KYA",
+                                providerId: "asterpay-kya",
+                                score: 66,
+                            }),
+                        ),
+                    }),
+                ],
+                [market],
+            ),
+        );
+
+        expect(model.defaultSlug).toBe(AGENT_TAB_SLUG);
+    });
+
+    it("keeps every slug distinct, including against the reserved two", () => {
+        const model = buildPanelTabs(
+            joinProviderRows(
+                [
+                    providerEdge({handle: DEEP3_TRIPLE, providerName: "Agent", market: null}),
+                    providerEdge({handle: ASTERPAY_TRIPLE, providerName: "ARP", market: null}),
+                    providerEdge({handle: "0xthird", providerName: "Agent", market: null}),
+                    providerEdge({handle: "0xfourth", providerName: "!!!", market: null}),
+                ],
+                [],
+            ),
+        );
+
+        const slugs = model.tabs.map((tab) => tab.slug);
+        expect(new Set(slugs).size).toBe(slugs.length);
+        expect(slugs).toEqual([
+            "agent-2",
+            "arp-2",
+            "agent-3",
+            "provider-4",
+            ARP_TAB_SLUG,
+            AGENT_TAB_SLUG,
+        ]);
+    });
+});
+
+describe("selectPanelTab", () => {
+    it("honours the tab the URL names", () => {
+        const model = buildPanelTabs(
+            joinProviderRows(richProfile().assessments, richProfile().markets),
+        );
+
+        expect(selectPanelTab(model, "asterpay-kya").slug).toBe("asterpay-kya");
+        expect(selectPanelTab(model, ARP_TAB_SLUG).kind).toBe("arp");
+        expect(selectPanelTab(model, AGENT_TAB_SLUG).kind).toBe("agent");
+    });
+
+    it("falls back silently when the URL names nothing this agent has", () => {
+        const model = buildPanelTabs(
+            joinProviderRows(richProfile().assessments, richProfile().markets),
+        );
+
+        // A shared link to a provider that has since stopped writing edges is a
+        // stale link, not an error page.
+        expect(selectPanelTab(model, "some-departed-provider").slug).toBe(model.defaultSlug);
+        expect(selectPanelTab(model, null).slug).toBe(model.defaultSlug);
+        expect(selectPanelTab(model, "").slug).toBe(model.defaultSlug);
     });
 });

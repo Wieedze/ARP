@@ -5,6 +5,7 @@ import type {
     CapabilityRelation,
     ClaimMarket,
     ProviderAssessment,
+    SignatureVerdict,
 } from "@arp-protocol/erc8004";
 import type {Hex} from "viem";
 
@@ -388,4 +389,155 @@ export function buildTrustPanel(profile: AgentProfile): TrustPanelView {
         sourcesConsulted: profile.sourcesConsulted,
         marketCapableSources: profile.marketCapableSources,
     };
+}
+
+/* -------------------------------------------------------------------------- */
+/* Tabs                                                                        */
+/* -------------------------------------------------------------------------- */
+
+/** The agent's own data — capabilities, and the reads that did not land. */
+export const AGENT_TAB_SLUG = "agent";
+
+/** ARP's own position on this agent, which today is that it has none. */
+export const ARP_TAB_SLUG = "arp";
+
+/**
+ * How many providers it takes before a tab strip earns its place.
+ *
+ * With one provider there is nothing to compare it against, so the strip would
+ * be a control with no choice behind it. That is also the common case: one
+ * provider covers 99.99% of this cohort, so most agents keep the stacked
+ * layout and only the contested ones pay for tabs.
+ */
+const MIN_PROVIDERS_FOR_TABS = 2;
+
+export function shouldUseTabs(rows: TrustRow[]): boolean {
+    return rows.length >= MIN_PROVIDERS_FOR_TABS;
+}
+
+/**
+ * What a provider tab carries in the strip itself.
+ *
+ * Stacking let a reader see one provider's 26-reviewer score beside another's
+ * unsigned one; tabs take that away, and this is what is put back. Three fields
+ * and deliberately **no score**: the strip states what a number rests on —
+ * whether the document is signed, and how much evidence is behind it — and
+ * leaves the number in the panel. A strip of scores would rank providers by the
+ * one variable ADR 0018 argues is not the measure.
+ */
+export type TabSummary = {
+    /**
+     * The connector's verdict, relayed. `absent` is the fourth case and not a
+     * verdict at all: no assessment edge, so nothing was ever checked.
+     */
+    signature: {status: SignatureVerdict["status"] | "absent"; label: string};
+    /** `1,445 reviewers`, or `no reviewer count` — never `0 reviewers`. */
+    evidence: string;
+    weight: EvidenceWeight;
+};
+
+export type PanelTab =
+    | {kind: "provider"; slug: string; label: string; row: TrustRow; summary: TabSummary}
+    | {kind: "arp"; slug: string; label: string}
+    | {kind: "agent"; slug: string; label: string};
+
+export type PanelTabs = {
+    tabs: PanelTab[];
+    /** The tab a bare URL opens. */
+    defaultSlug: string;
+};
+
+/** The connector's own words, compressed to fit a tab. Nothing is upgraded. */
+const SIGNATURE_TAB_LABEL: Record<SignatureVerdict["status"], string> = {
+    verified: "verified",
+    mismatch: "mismatch",
+    unverified: "not verified",
+};
+
+function slugify(value: string): string {
+    return value
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "");
+}
+
+function reviewerTotal(row: TrustRow): number {
+    return row.reviewers.kind === "reviewers" ? row.reviewers.total : 0;
+}
+
+function summarise(row: TrustRow): TabSummary {
+    const verdict = row.assessment?.signature ?? null;
+    const basis = row.reviewers;
+    return {
+        signature:
+            verdict === null
+                ? {status: "absent", label: "no document"}
+                : {status: verdict.status, label: SIGNATURE_TAB_LABEL[verdict.status]},
+        evidence:
+            basis.kind === "not-published"
+                ? "no reviewer count"
+                : `${basis.total.toLocaleString("en-US")} reviewer${basis.total === 1 ? "" : "s"}`,
+        weight: row.weight,
+    };
+}
+
+/**
+ * The tab a bare URL opens: the provider with the most evidence behind it.
+ *
+ * Deliberately not the highest score — opening on the loudest number would undo
+ * the panel's argument on the first screen. Ties keep graph order. When no
+ * provider publishes a reviewer count there is no best-evidenced provider to
+ * choose, so the agent's own data opens instead.
+ */
+function defaultSlugFor(tabs: PanelTab[]): string {
+    let best: {slug: string; total: number} | null = null;
+    for (const tab of tabs) {
+        if (tab.kind !== "provider") continue;
+        const total = reviewerTotal(tab.row);
+        if (total > 0 && (best === null || total > best.total)) {
+            best = {slug: tab.slug, total};
+        }
+    }
+    return best?.slug ?? AGENT_TAB_SLUG;
+}
+
+/**
+ * One tab per provider on this agent, then ARP, then the agent's own data.
+ *
+ * ARP gets a tab rather than a footnote because its abstention is a claim about
+ * this agent and belongs beside the others: "insufficient evidence" is only
+ * legible as a position if it sits where a position would sit.
+ *
+ * Slugs go in the URL, so they are derived from the provider's name and made
+ * unique — two providers named alike, or a provider that happens to be called
+ * "Agent", must still address distinct tabs.
+ */
+export function buildPanelTabs(rows: TrustRow[]): PanelTabs {
+    const used = new Set<string>([AGENT_TAB_SLUG, ARP_TAB_SLUG]);
+
+    const tabs: PanelTab[] = rows.map((row, index) => {
+        const base = slugify(row.providerName) || `provider-${index + 1}`;
+        let slug = base;
+        for (let suffix = 2; used.has(slug); suffix += 1) slug = `${base}-${suffix}`;
+        used.add(slug);
+        return {kind: "provider", slug, label: row.providerName, row, summary: summarise(row)};
+    });
+
+    tabs.push({kind: "arp", slug: ARP_TAB_SLUG, label: "ARP"});
+    tabs.push({kind: "agent", slug: AGENT_TAB_SLUG, label: "Agent"});
+
+    return {tabs, defaultSlug: defaultSlugFor(tabs)};
+}
+
+/**
+ * The tab the URL asks for, or the default when it asks for one this agent does
+ * not have. A stale shared link falls back silently rather than erroring — the
+ * provider it named may simply have stopped writing edges.
+ */
+export function selectPanelTab(model: PanelTabs, requested: string | null): PanelTab {
+    const asked = model.tabs.find((tab) => tab.slug === requested);
+    if (asked !== undefined) return asked;
+    const fallback = model.tabs.find((tab) => tab.slug === model.defaultSlug);
+    // `buildPanelTabs` always appends the agent tab, so this is unreachable.
+    return fallback ?? {kind: "agent", slug: AGENT_TAB_SLUG, label: "Agent"};
 }
