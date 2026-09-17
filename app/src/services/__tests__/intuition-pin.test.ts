@@ -1,9 +1,16 @@
 import {afterEach, describe, expect, it, vi} from "vitest";
 
 import {deployments} from "../../lib/deployments";
-import {pinThing} from "../intuition-pin";
+import {PIN_ENDPOINT, PinAuthError, pinThing, type PinAuth} from "../intuition-pin";
 
-const GRAPHQL_URL = deployments.chain.graphqlUrl;
+// `PinAuth` is branded so only `scripts/pin-env.ts` can mint one from a real
+// key. A test fixture is the other legitimate producer, and the assertion is
+// what makes that deliberate rather than accidental.
+const AUTH = {apiKey: "test-partner-key"} as unknown as PinAuth;
+const AUTH_OVERRIDE = {
+    apiKey: "Bearer abc",
+    headerName: "Authorization",
+} as unknown as PinAuth;
 
 function mockFetch(impl: typeof fetch) {
     vi.stubGlobal("fetch", vi.fn(impl));
@@ -14,6 +21,13 @@ afterEach(() => {
 });
 
 describe("pinThing", () => {
+    it("targets the gated pinning endpoint, not the read-only indexer", () => {
+        expect(PIN_ENDPOINT).toBe("https://pin.intuition.systems/v1/graphql");
+        // The indexer answers "no mutations exist" since 2026-09 (ADR 0016);
+        // deriving the pin URL from it is the regression this guards against.
+        expect(PIN_ENDPOINT).not.toBe(deployments.chain.graphqlUrl);
+    });
+
     it("posts the GraphQL mutation with all four fields and returns the uri", async () => {
         let captured: {url: string; init: RequestInit} | undefined;
         mockFetch(async (url, init) => {
@@ -26,15 +40,18 @@ describe("pinThing", () => {
             );
         });
 
-        const uri = await pinThing({
-            name: "Solidity Audit",
-            description: "Reputation domain for Solidity contract security",
-            image: "https://example.com/image.png",
-            url: "https://example.com",
-        });
+        const uri = await pinThing(
+            {
+                name: "Solidity Audit",
+                description: "Reputation domain for Solidity contract security",
+                image: "https://example.com/image.png",
+                url: "https://example.com",
+            },
+            AUTH,
+        );
 
         expect(uri).toBe("ipfs://bafkrei-test");
-        expect(captured?.url).toBe(GRAPHQL_URL);
+        expect(captured?.url).toBe(PIN_ENDPOINT);
         expect(captured?.init.method).toBe("POST");
 
         const body = JSON.parse(String(captured?.init.body));
@@ -47,11 +64,74 @@ describe("pinThing", () => {
         });
     });
 
+    it("sends the credential under the default 'apikey' header", async () => {
+        let headers: Headers | undefined;
+        mockFetch(async (_url, init) => {
+            headers = new Headers(init?.headers);
+            return new Response(JSON.stringify({data: {pinThing: {uri: "ipfs://x"}}}), {
+                status: 200,
+                headers: {"Content-Type": "application/json"},
+            });
+        });
+
+        await pinThing({name: "x", description: "y", image: "", url: ""}, AUTH);
+
+        expect(headers?.get("apikey")).toBe("test-partner-key");
+        expect(headers?.get("Content-Type")).toBe("application/json");
+    });
+
+    it("honours a headerName override so a scheme change needs no code change", async () => {
+        let headers: Headers | undefined;
+        mockFetch(async (_url, init) => {
+            headers = new Headers(init?.headers);
+            return new Response(JSON.stringify({data: {pinThing: {uri: "ipfs://x"}}}), {
+                status: 200,
+                headers: {"Content-Type": "application/json"},
+            });
+        });
+
+        await pinThing({name: "x", description: "y", image: "", url: ""}, AUTH_OVERRIDE);
+
+        expect(headers?.get("Authorization")).toBe("Bearer abc");
+        expect(headers?.get("apikey")).toBeNull();
+    });
+
+    it("throws PinAuthError on 401, naming the env var and the verify command", async () => {
+        mockFetch(
+            async () =>
+                new Response(JSON.stringify({message: "No API key found in request"}), {
+                    status: 401,
+                }),
+        );
+
+        const promise = pinThing({name: "x", description: "y", image: "", url: ""}, AUTH);
+
+        await expect(promise).rejects.toBeInstanceOf(PinAuthError);
+        await expect(promise).rejects.toMatchObject({name: "PinAuthError", status: 401});
+        await expect(promise).rejects.toThrow(/INTUITION_PIN_API_KEY/);
+        await expect(promise).rejects.toThrow(/bun run verify:pin/);
+        await expect(promise).rejects.toThrow(/pin\.intuition\.systems/);
+        // The upstream body is preserved — it is what distinguishes "no key
+        // sent" from "key rejected".
+        await expect(promise).rejects.toThrow(/No API key found in request/);
+    });
+
+    it("treats 403 exactly like 401 — a key that exists but is not entitled", async () => {
+        mockFetch(async () => new Response("forbidden", {status: 403}));
+
+        const promise = pinThing({name: "x", description: "y", image: "", url: ""}, AUTH);
+
+        await expect(promise).rejects.toBeInstanceOf(PinAuthError);
+        await expect(promise).rejects.toMatchObject({name: "PinAuthError", status: 403});
+        await expect(promise).rejects.toThrow(/INTUITION_PIN_API_KEY/);
+        await expect(promise).rejects.toThrow(/bun run verify:pin/);
+    });
+
     it("throws on a non-2xx HTTP response, surfacing status + body", async () => {
         mockFetch(async () => new Response("upstream down", {status: 502}));
 
         await expect(
-            pinThing({name: "x", description: "y", image: "", url: ""}),
+            pinThing({name: "x", description: "y", image: "", url: ""}, AUTH),
         ).rejects.toThrow(/HTTP 502.*upstream down/);
     });
 
@@ -65,7 +145,7 @@ describe("pinThing", () => {
         );
 
         await expect(
-            pinThing({name: "x", description: "y", image: "", url: ""}),
+            pinThing({name: "x", description: "y", image: "", url: ""}, AUTH),
         ).rejects.toThrow(/GraphQL.*validation failed/);
     });
 
@@ -79,7 +159,7 @@ describe("pinThing", () => {
         );
 
         await expect(
-            pinThing({name: "x", description: "y", image: "", url: ""}),
+            pinThing({name: "x", description: "y", image: "", url: ""}, AUTH),
         ).rejects.toThrow(/no uri/);
     });
 });

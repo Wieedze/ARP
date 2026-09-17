@@ -3,7 +3,8 @@
  *
  * Sequence (matches the architecture's off-chain Intuition coupling):
  *   1. Read deployments/13579.json for ModuleRegistry + MultiVault addresses.
- *   2. Pin a Thing via Intuition GraphQL (pinThing) to obtain an ipfs:// URI.
+ *   2. Pin a Thing via Intuition's gated pinning API (pinThing, shared service
+ *      in app/src/services/intuition-pin.ts) to obtain an ipfs:// URI.
  *   3. Call ModuleRegistry.registerModule(name, domain, schemaURI, description)
  *      on Intuition Testnet — schemaURI is the URI from step 2.
  *   4. Call MultiVault.createAtoms([URI]) to mint the corresponding Intuition
@@ -21,6 +22,7 @@
  * Required env (in .env at repo root):
  *   PRIVATE_KEY
  *   INTUITION_TESTNET_RPC_URL
+ *   INTUITION_PIN_API_KEY        partner pinning key — see scripts/pin-env.ts
  */
 
 import {readFileSync, writeFileSync} from "node:fs";
@@ -38,6 +40,10 @@ import {
     type Hex,
 } from "viem";
 import {privateKeyToAccount} from "viem/accounts";
+
+import {pinThing} from "../app/src/services/intuition-pin";
+
+import {requirePinAuth} from "./pin-env";
 
 // ---------- Constants ----------
 
@@ -111,34 +117,14 @@ function saveDeployments(d: Deployments): void {
     writeFileSync(DEPLOYMENTS_PATH, JSON.stringify(d, null, 2) + "\n");
 }
 
-async function pinThing(graphqlUrl: string, args: {name: string; description: string; image: string; url: string}): Promise<string> {
-    const mutation = `
-        mutation pinThing($name: String!, $description: String!, $image: String!, $url: String!) {
-            pinThing(thing: { name: $name, description: $description, image: $image, url: $url }) {
-                uri
-            }
-        }
-    `;
-    const res = await fetch(graphqlUrl, {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({query: mutation, variables: args}),
-    });
-    if (!res.ok) throw new Error(`pinThing HTTP ${res.status}: ${await res.text()}`);
-    // GraphQL contract is fixed by the Intuition schema (skill reference/schemas.md);
-    // shape is narrowed and validated below before access.
-    const json = (await res.json()) as {data?: {pinThing: {uri: string}}; errors?: unknown};
-    if (json.errors) throw new Error(`pinThing GraphQL: ${JSON.stringify(json.errors)}`);
-    const uri = json.data?.pinThing.uri;
-    if (!uri) throw new Error(`pinThing returned no uri: ${JSON.stringify(json)}`);
-    return uri;
-}
-
 // ---------- Main ----------
 
 async function main() {
     const privateKey = process.env.PRIVATE_KEY;
     if (!privateKey) throw new Error("PRIVATE_KEY env var required");
+    // Resolved before any chain work so a missing key fails in the first
+    // millisecond rather than after the registry reads.
+    const pinAuth = requirePinAuth();
     // PRIVATE_KEY is validated by privateKeyToAccount (throws on bad format);
     // the cast is only to satisfy the `0x${string}` template-literal type.
     const account = privateKeyToAccount(privateKey as Hex);
@@ -147,7 +133,6 @@ async function main() {
     const moduleRegistry = deployments.arp.moduleRegistry;
     const multiVault = deployments.intuition.multiVault;
     const rpcUrl = process.env.INTUITION_TESTNET_RPC_URL ?? deployments.chain.rpcUrl;
-    const graphqlUrl = deployments.chain.graphqlUrl;
 
     const intuitionTestnet = defineChain({
         id: deployments.chain.chainId,
@@ -163,15 +148,18 @@ async function main() {
     console.log("ModuleRegistry:  ", moduleRegistry);
     console.log("Intuition vault: ", multiVault);
 
-    // -------- 1. Pin the Thing via Intuition GraphQL --------
+    // -------- 1. Pin the Thing via Intuition's gated pinning API --------
 
     console.log("\n[1/3] Pinning Thing on Intuition…");
-    const uri = await pinThing(graphqlUrl, {
-        name: THING_NAME,
-        description: THING_DESCRIPTION,
-        image: "",
-        url: "",
-    });
+    const uri = await pinThing(
+        {
+            name: THING_NAME,
+            description: THING_DESCRIPTION,
+            image: "",
+            url: "",
+        },
+        pinAuth,
+    );
     console.log("  uri:           ", uri);
 
     // -------- 2. Register the module on-chain --------

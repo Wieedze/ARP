@@ -38,6 +38,8 @@ import {
     redeemStakeOnAtom,
 } from "../app/src/services/delegation-redeem";
 
+import {requirePinAuth} from "./pin-env";
+
 export type ManifestEntry = {
     name: string;
     domain: string;
@@ -145,6 +147,10 @@ function matchManifestEntry(
  *                                  atom. Defaults to 0.001 tTRUST per call.
  * @param params.manifestPath       Optional override for the manifest file
  *                                  used to match methodology names.
+ *
+ * Requires `INTUITION_PIN_API_KEY` in the environment — the "uses" predicate
+ * atom is pinned through Intuition's gated pinning API. Throws before any
+ * chain write if it is absent.
  */
 export async function stakeOnUsedMethodologies(params: {
     methodologiesUsed: string[];
@@ -156,6 +162,9 @@ export async function stakeOnUsedMethodologies(params: {
 }): Promise<StakeAction[]> {
     const stakeAmount = params.stakePerUsage ?? parseEther("0.001");
     const manifest = loadManifest(params.manifestPath);
+    // Node-only read, sanctioned by ADR 0016: the credential enters here and is
+    // handed down explicitly. `app/src/services/` never reads the environment.
+    const pinAuth = requirePinAuth();
 
     // The agent's identity atom is the CAIP-10 of its runtime wallet — the
     // same account that holds its reputation positions. Deriving it from the
@@ -174,6 +183,7 @@ export async function stakeOnUsedMethodologies(params: {
         signedDelegation: params.composeDelegation,
         agentWalletClient: params.agentWalletClient,
         publicClient: params.publicClient,
+        pinAuth,
         thing: {
             name: "uses",
             description:
