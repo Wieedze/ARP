@@ -1,6 +1,10 @@
 # Task 12 — Tabs on the agent panel, one per provider
 
-> **Status: NOT STARTED** (specified 2026-09-17).
+> **Status: COMPLETE** (specified 2026-09-17, completed 2026-09-17).
+> Branch `feat/agent-panel-tabs`, 5 commits from `de8ea64`, head `7146d8d`.
+> `ui-reviewer` PASS · `task-verifier` PASS.
+> Post-mortem: `.claude/learning/13-agent-panel-tabs.md`.
+> Decisions: `.claude/choices/0028-tab-strip-carries-the-comparison.md`.
 
 ## Objective
 
@@ -66,13 +70,13 @@ detail.
 
 ## Acceptance criteria
 
-- [ ] One tab per provider present, plus `Agent`, on `/agent/8453/2340` (two providers) and `/agent/8453/1380`
-- [ ] A single-provider agent does not get a pointless tab strip
-- [ ] The per-provider summary is visible from every tab
-- [ ] Selected tab is in the URL and survives a refresh
-- [ ] Stake control stays inside its provider's tab
-- [ ] Arrow-key navigation works, focus is visible, ARIA roles correct
-- [ ] `ui-reviewer` pass, then `task-verifier` pass
+- [x] One tab per provider present, plus `Agent`, on `/agent/8453/2340` (two providers) and `/agent/8453/1380`
+- [x] A single-provider agent does not get a pointless tab strip
+- [x] The per-provider summary is visible from every tab
+- [x] Selected tab is in the URL and survives a refresh
+- [x] Stake control stays inside its provider's tab
+- [x] Arrow-key navigation works, focus is visible, ARIA roles correct
+- [x] `ui-reviewer` pass, then `task-verifier` pass
 
 ## Out of scope
 
