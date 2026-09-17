@@ -1,0 +1,44 @@
+{
+  "data": {
+    "triples": [
+      {
+        "term_id": "0x880814b21f5f8e4c107b3314fdb1660077a74908ad0efadf909bba762a6d7096",
+        "predicate": {
+          "term_id": "0xa632a94306ab1d56911cff8c06473659a7caa2dfec6de3921bc23ec8ebf96ced",
+          "label": "has type"
+        },
+        "object": {
+          "term_id": "0x800342c0ded1c288e69f39a2dc96d8cff9b242e9f573193e6e0a849e5315d3e9",
+          "label": "AIAgent",
+          "value": {
+            "thing": {
+              "name": "AIAgent",
+              "description": "Type atom for software agents and AI agents represented in the Intuition knowledge graph.",
+              "image": "",
+              "url": ""
+            }
+          }
+        }
+      },
+      {
+        "term_id": "0x18b5df614411cd2dd43ab73c44353de6da41c6cfe2cc91d9bfbac978368b42fa",
+        "predicate": {
+          "term_id": "0xfa02609bfde5a9a7ba18fa8afc1c42bc643edfaf7d44e3ce9e50835290d03324",
+          "label": "implement"
+        },
+        "object": {
+          "term_id": "0x595ba5059b23a9aa4d64deff324ff3d957866715d5b7b8015eebc9009bab78b2",
+          "label": "ERC-8004",
+          "value": {
+            "thing": {
+              "name": "ERC-8004",
+              "description": "Protocol atom for ERC-8004 agent identity, discovery, and trust data.",
+              "image": "",
+              "url": ""
+            }
+          }
+        }
+      }
+    ]
+  }
+}
