@@ -6,3 +6,7 @@ contracts/broadcast
 contracts/lib
 deployments
 pnpm-lock.yaml
+
+# Vendored verbatim snapshot of Intuition's partner guide (ADR 0015).
+# Reformatting it would break the "faithful to the snapshot" guarantee.
+docs/07_INTUITION_ERC8004_PARTNER_GUIDE.md

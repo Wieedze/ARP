@@ -43,7 +43,9 @@ coverage/
 # We only consume Claude Code skills (.claude/skills/mms-*); the others are vendored but unused.
 .cursor/
 .agents/
-docs
 
 # sdk build output
 sdk/dist/
+
+# Raw paste of the Intuition partner guide; docs/07 is the vendored copy that counts.
+integration8004.txt

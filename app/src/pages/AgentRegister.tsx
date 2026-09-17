@@ -634,8 +634,7 @@ export function AgentRegister() {
                                     </>
                                 )}
                             </div>
-                            <ul className="font-mono text-[length:var(--text-body-sm)] ml-4 space-y-1">
-                            </ul>
+                            <ul className="font-mono text-[length:var(--text-body-sm)] ml-4 space-y-1"></ul>
                             <p className="pt-2">
                                 <Link
                                     to="/"

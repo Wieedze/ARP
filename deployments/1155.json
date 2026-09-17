@@ -1,0 +1,42 @@
+{
+  "chain": {
+    "name": "Intuition",
+    "chainId": 1155,
+    "nativeCurrency": {"name": "Intuition", "symbol": "TRUST", "decimals": 18},
+    "rpcUrl": "https://rpc.intuition.systems/http",
+    "explorerUrl": "https://explorer.intuition.systems",
+    "graphqlUrl": "https://mainnet.intuition.sh/v1/graphql"
+  },
+  "intuition": {
+    "multiVault": "0x6E35cF57A41fA15eA0EaE9C33e751b01A784Fe7e",
+    "defaultCurveId": 1,
+    "_note": "defaultCurveId read from getBondingCurveConfig() 2026-09-16. Governance-configurable — read it, do not trust this copy."
+  },
+  "metamaskDelegationFramework": {
+    "version": "1.3.0",
+    "delegationManager": "0xdb9B1e94B5b69Df7e401DDbedE43491141047dB3",
+    "_note": "Verified present on 1155 (23008 bytes) 2026-09-16. Deterministic CREATE2, same address as every supported chain."
+  },
+  "arp": {
+    "enforcers": {
+      "trustStakeCapEnforcer": {
+        "address": "0x99921C234d4Ca518DC58ba63ff9bfD2Cc9435f34",
+        "tx": "0xe4994f613501dfb0b8bc9662ddab6426b30399d287d8a746c416cf75314bb322",
+        "status": "active",
+        "_note": "The guard rail that bounds real money. No registry dependency — works standalone."
+      },
+      "domainScopeEnforcer": {
+        "address": "0x4E20279EeE9f77673A4f1605E58607cD9A597d70",
+        "tx": "0x77147e70ce751e99bebbb113765e52ec613bf3c3582a20a689f9d65822809a7b",
+        "status": "inert",
+        "_note": "Deployed 2026-09-16, then ADR 0025 decided against putting ModuleRegistry on mainnet. This enforcer only gates ModuleRegistry.registerModule calls, so on 1155 there is nothing for it to gate. Left in place rather than redeployed; recorded so nobody has to guess later."
+      }
+    },
+    "moduleRegistry": null,
+    "identityRegistry": null,
+    "_note": "ARP deploys no registry on mainnet. ERC-8004 identity lives in the Base registry 0x8004A169FB4a3325136EB29fA0ceB6D2e539a432 (chain 8453); ARP reads it. A tool's domain is expressed on the graph as (tool, has category, domain). See ADR 0025 and docs/12."
+  },
+  "deployedBy": "0xE596096F4176b682E300d73963e7B04B383C1AA1",
+  "deployedAt": "2026-09-16",
+  "gasCost": "0.0000228 TRUST for both enforcers"
+}
