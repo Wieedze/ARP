@@ -177,6 +177,9 @@ export {
 export type {ProbeOptions} from "./verify/probe.js";
 
 export {HostLimiter, hostOf} from "./verify/host-limiter.js";
+
+export {asAgentIdentityAtom, NoAgentIdentityError} from "./verify/subject.js";
+export type {AgentIdentityAtom} from "./verify/subject.js";
 export type {HostLimiterOptions} from "./verify/host-limiter.js";
 
 export type {

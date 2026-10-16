@@ -45,6 +45,9 @@ import { privateKeyToAccount } from 'viem/accounts';
 // `USES` is what the module declares; `INTUITION_USES_TERM_ID` is the same
 // value under its public-API alias (ADR 0030).
 import { USES as INTUITION_USES_TERM_ID } from '../erc8004/src/sources/intuition/terms';
+import { NoAgentIdentityError, asAgentIdentityAtom } from '../erc8004/src/verify/subject';
+import { intuitionSource } from '../erc8004/src/sources/intuition/index';
+import { resolveRef, toCaip19 } from '../erc8004/src/caip';
 
 import { intuitionTestnet } from '../app/src/lib/chains';
 import { deployments } from '../app/src/lib/deployments';
@@ -53,7 +56,6 @@ import { multiVaultAbi } from '../app/src/lib/abi/multi-vault';
 import { deserializeDelegation } from '../app/src/services/delegation';
 import {
   redeemDeclareTriple,
-  redeemEnsureAtomForCaip10,
   redeemEnsureAtomForURI,
   redeemRegisterModule,
   redeemStakeOnAtom,
@@ -123,21 +125,29 @@ async function main() {
   // stake reverts with `MultiVault_SenderNotApproved` and the catch
   // surfaces a pointer.
 
-  // -------- 1. Ensure the agent's self-atom -------------------------------
-  // CAIP-10 of the runtime wallet — the same account that holds the
-  // agent's reputation positions. The indexer types it as an Account and
-  // renders the address as the label, so the (agent, uses, tool) triple
-  // resolves to the agent's account on the explorer.
-  log('\nensuring agent self-atom');
-  const agentAtom = await redeemEnsureAtomForCaip10({
-    signedDelegation: composeDel,
-    agentWalletClient,
-    publicClient,
-    address: agentAccount.address,
+  // -------- 1. The subject of a `uses` edge is the ERC-8004 identity ---------
+  // ADR 0032: the edge is a claim about the agent's identity, not a record of
+  // an operating account's action. This script has only the runtime wallet, so
+  // it stops here rather than writing the account as the subject — that edge
+  // would be permanent (Intuition has no deletion) and invisible to both
+  // `getCapabilities` and every third party following the partner guide.
+  // Twenty-one such triples already exist on testnet from before ADR 0030.
+  const erc8004TokenId = process.env.AGENT_ERC8004_TOKEN_ID;
+  if (!erc8004TokenId) {
+    throw new NoAgentIdentityError(`caip10:eip155:${intuitionTestnet.id}:${agentAccount.address}`);
+  }
+  const identityRef = resolveRef({
+    chainId: Number(process.env.AGENT_ERC8004_CHAIN_ID ?? 8453),
+    tokenId: erc8004TokenId,
   });
-  log(
-    `  agent atom       ${agentAtom.atomId.slice(0, 12)}… ${agentAtom.created ? '(created)' : '(reused)'}`,
-  );
+  const identity = await intuitionSource({
+    graphqlUrl: deployments.chain.graphqlUrl,
+  }).resolveAgent(identityRef);
+  if (identity === null) {
+    throw new NoAgentIdentityError(toCaip19(identityRef));
+  }
+  const subjectAtomId = asAgentIdentityAtom(identity.sourceHandle as Hex, toCaip19(identityRef));
+  log(`  identity atom    ${subjectAtomId.slice(0, 12)}… (ERC-8004 ${erc8004TokenId})`);
 
   // -------- 2. The shared `uses` predicate --------------------------------
   // Not ours to create. Minting one produced a node this repo's own connector
@@ -221,7 +231,7 @@ async function main() {
         signedDelegation: composeDel,
         agentWalletClient,
         publicClient,
-        subjectAtomId: agentAtom.atomId,
+        subjectAtomId,
         predicateAtomId: usesAtomId,
         objectAtomId: toolAtomId,
       });

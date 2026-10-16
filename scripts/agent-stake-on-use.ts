@@ -35,10 +35,15 @@ import { type Delegation } from '@metamask/smart-accounts-kit';
 // `USES` is what the module declares; `INTUITION_USES_TERM_ID` is the same
 // value under its public-API alias (ADR 0030).
 import { USES as INTUITION_USES_TERM_ID } from '../erc8004/src/sources/intuition/terms';
+import { NoAgentIdentityError, asAgentIdentityAtom } from '../erc8004/src/verify/subject';
+import { intuitionSource } from '../erc8004/src/sources/intuition/index';
+import { resolveRef, toCaip19 } from '../erc8004/src/caip';
+
+import { intuitionTestnet } from '../app/src/lib/chains';
+import { deployments } from '../app/src/lib/deployments';
 
 import {
   redeemDeclareTriple,
-  redeemEnsureAtomForCaip10,
   redeemEnsureAtomForURI,
   redeemStakeOnAtom,
 } from '../app/src/services/delegation-redeem';
@@ -166,17 +171,28 @@ export async function stakeOnUsedMethodologies(params: {
 }): Promise<StakeAction[]> {
   const stakeAmount = params.stakePerUsage ?? parseEther('0.001');
   const manifest = loadManifest(params.manifestPath);
-  // The agent's identity atom is the CAIP-10 of its runtime wallet — the
-  // same account that holds its reputation positions. Deriving it from the
-  // address (not a pinned Thing) makes the triple subject resolve to an
-  // Account on the Intuition indexer, and keeps it identical to the
-  // self-atom created at bootstrap by construction (both hash the address).
-  const agentAtom = await redeemEnsureAtomForCaip10({
-    signedDelegation: params.composeDelegation,
-    agentWalletClient: params.agentWalletClient,
-    publicClient: params.publicClient,
-    address: params.agentWalletClient.account.address,
+  // -------- the subject of a `uses` edge is the ERC-8004 identity ---------
+  // ADR 0032: the edge is a claim about the agent's identity, not a record of
+  // an operating account's action. This script has only the runtime wallet, so
+  // it stops here rather than writing the account as the subject — that edge
+  // would be permanent (Intuition has no deletion) and invisible to both
+  // `getCapabilities` and every third party following the partner guide.
+  // Twenty-one such triples already exist on testnet from before ADR 0030.
+  const erc8004TokenId = process.env.AGENT_ERC8004_TOKEN_ID;
+  if (!erc8004TokenId) {
+    throw new NoAgentIdentityError(
+      `caip10:eip155:${intuitionTestnet.id}:${params.agentWalletClient.account.address}`,
+    );
+  }
+  const identityRef = resolveRef({
+    chainId: Number(process.env.AGENT_ERC8004_CHAIN_ID ?? 8453),
+    tokenId: erc8004TokenId,
   });
+  const identity = await intuitionSource({
+    graphqlUrl: deployments.chain.graphqlUrl,
+  }).resolveAgent(identityRef);
+  if (identity === null) throw new NoAgentIdentityError(toCaip19(identityRef));
+  const subjectAtomId = asAgentIdentityAtom(identity.sourceHandle as Hex, toCaip19(identityRef));
 
   // The shared `uses` predicate. Not ours to create: minting one produced a
   // node this repo's own connector cannot read (ADR 0030).
@@ -206,7 +222,7 @@ export async function stakeOnUsedMethodologies(params: {
         signedDelegation: params.composeDelegation,
         agentWalletClient: params.agentWalletClient,
         publicClient: params.publicClient,
-        subjectAtomId: agentAtom.atomId,
+        subjectAtomId,
         predicateAtomId: usesAtomId,
         objectAtomId: toolAtom.atomId,
       });

@@ -102,7 +102,16 @@ So the three facts are:
 Fixing the predicate was necessary and is not sufficient. The subject is the other half, and the
 bridge the subject mismatch would have been crossed by was never built.
 
-### Two viable options. This needs an ADR either way.
+### Decided: option A. **ADR `0032`.**
+
+Write on the registration-derived agent atom. A `uses` edge is a claim about the agent's identity,
+not a record of an account's action — and since anyone can write `(X, uses, Y)` about any `X`, the
+subject is a question of who can **read** the edge, not who may assert it.
+
+**The cost this accepts:** ARP's own agents have no ERC-8004 identity and must be minted into the
+canonical registry (ADR `0027`) before they can carry an edge. The two options as weighed:
+
+### The two options as they were weighed
 
 **A — write the edge on the registration-derived agent atom.** A consumer looks up an ERC-8004
 agent, not a CAIP-10 account, so the agent's published identity is where a claim about the agent

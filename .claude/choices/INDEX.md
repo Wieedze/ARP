@@ -2,7 +2,7 @@
 
 **Generated** 2026-10-16 by `scripts/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-31 decisions. Newest last. `choices/README.md` says when to write one.
+32 decisions. Newest last. `choices/README.md` says when to write one.
 
 ## Not accepted
 
@@ -45,3 +45,4 @@ Read these before relying on them.
 | [0029](0029-the-page-states-facts-and-stops-explaining-them.md) | 2026-09-17 | Accepted | The page states facts and stops explaining them |
 | [0030](0030-the-use-edge-is-chosen-on-meaning.md) | 2026-10-16 | Accepted | The `use` edge is chosen on meaning, not on publication |
 | [0031](0031-claims-carry-their-bounds.md) | 2026-10-16 | Accepted | A claim carries its bounds, or it is not written |
+| [0032](0032-the-use-edge-is-a-claim-about-the-identity.md) | 2026-10-16 | Accepted | A `uses` edge is a claim about the identity, not a record of the account |
