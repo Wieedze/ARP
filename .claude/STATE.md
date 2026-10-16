@@ -21,7 +21,9 @@ it, `docs/12` wins and the thing below has drifted.
 
 ## Where the work is right now
 
-**Branch** `feat/agent-panel-tabs`, 14 commits ahead of `main`, **not pushed**.
+**Branch** `feat/agent-panel-tabs`, **31 commits** ahead of `main` and of `origin/main`, **not
+pushed**. Recount with `git rev-list --count main..HEAD` rather than trusting this line — it was
+wrong by 17 within one commit of being written, which is the failure `claims.md` exists for.
 
 **Blocked on one thing:** no GitHub credential is reachable from the agent session. `git push` fails
 with `could not read Username`; `gh` is not logged in; the user's own credentials sit in
