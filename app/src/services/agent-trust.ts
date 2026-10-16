@@ -5,6 +5,7 @@ import type {
     CapabilityRelation,
     ClaimMarket,
     ProviderAssessment,
+    SignatureVerdict,
 } from "@arp-protocol/erc8004";
 import type {Hex} from "viem";
 
@@ -115,14 +116,23 @@ export type TrustPanelView = {
     capabilityCount: number;
     sourceErrors: AgentProfile["sourceErrors"];
     conflicts: AgentProfile["conflicts"];
-    sourcesConsulted: string[];
-    marketCapableSources: string[];
 };
 
 const CAPABILITY_GROUP_ORDER: {relation: CapabilityRelation; label: string}[] = [
-    {relation: "uses", label: "Uses"},
+    // `uses-tool` first: what an agent depends on is the part a reader is
+    // choosing between. `supports-protocol` sits with the other interface
+    // claims — what you can call the agent with is a different question from
+    // what it runs on. "Supports" rather than "Speaks" because the published
+    // object set is ERC-8004, x402, MCP, A2A and OASF: you do not *speak* a
+    // schema or a payment scheme, and OASF alone is 16 of 153 edges. ADR 0030.
+    //
+    // Note this group leads nothing today — zero `uses` edges have a subject
+    // the connector can reach — so the ordering is a bet on edges ARP has yet
+    // to write, not a current improvement.
+    {relation: "uses-tool", label: "Uses"},
     {relation: "has-type", label: "Type"},
     {relation: "implements", label: "Implements"},
+    {relation: "supports-protocol", label: "Supports"},
     {relation: "has-category", label: "Category"},
     {relation: "has-tag", label: "Tags"},
     {relation: "compatible-with", label: "Compatible with"},
@@ -340,6 +350,7 @@ export function groupCapabilities(profile: AgentProfile): CapabilityGroup[] {
     const all: CapabilityRef[] = profile.capabilities.flatMap((entry) => [
         ...entry.types,
         ...entry.protocols,
+        ...entry.tools,
         ...entry.chains,
         ...entry.tags,
         ...entry.categories,
@@ -385,7 +396,135 @@ export function buildTrustPanel(profile: AgentProfile): TrustPanelView {
         capabilityCount: capabilities.reduce((total, group) => total + group.entries.length, 0),
         sourceErrors: profile.sourceErrors,
         conflicts: profile.conflicts,
-        sourcesConsulted: profile.sourcesConsulted,
-        marketCapableSources: profile.marketCapableSources,
     };
+}
+
+/* -------------------------------------------------------------------------- */
+/* Tabs                                                                        */
+/* -------------------------------------------------------------------------- */
+
+/** The agent's own data — capabilities, and the reads that did not land. */
+export const AGENT_TAB_SLUG = "agent";
+
+/** ARP's own position on this agent, which today is that it has none. */
+export const ARP_TAB_SLUG = "arp";
+
+/**
+ * How many providers it takes before a tab strip earns its place.
+ *
+ * With one provider there is nothing to compare it against, so the strip would
+ * be a control with no choice behind it. That is also the common case: one
+ * provider covers 99.99% of this cohort, so most agents keep the stacked
+ * layout and only the contested ones pay for tabs.
+ */
+const MIN_PROVIDERS_FOR_TABS = 2;
+
+export function shouldUseTabs(rows: TrustRow[]): boolean {
+    return rows.length >= MIN_PROVIDERS_FOR_TABS;
+}
+
+/**
+ * What a provider tab carries in the strip itself.
+ *
+ * Stacking let a reader see one provider's signed assessment beside another's
+ * unsigned one; tabs take that away, and this is what is put back. Deliberately
+ * **no score**: a strip of scores would rank providers by the one variable
+ * ADR 0018 argues is not the measure.
+ */
+export type TabSummary = {
+    /**
+     * The connector's verdict, relayed. `absent` is the fourth case and not a
+     * verdict at all: no assessment edge, so nothing was ever checked.
+     */
+    signature: {status: SignatureVerdict["status"] | "absent"; label: string};
+};
+
+export type PanelTab =
+    | {kind: "provider"; slug: string; label: string; row: TrustRow; summary: TabSummary}
+    | {kind: "arp"; slug: string; label: string}
+    | {kind: "agent"; slug: string; label: string};
+
+export type PanelTabs = {
+    tabs: PanelTab[];
+    /**
+     * The tab a bare URL opens: always the agent's own data.
+     *
+     * What the agent is for comes before anyone's opinion of it, and it is the
+     * one tab that is about the agent rather than about a provider. This
+     * replaces the earlier rule — the provider with the most evidence behind it
+     * — which opened the page on a stranger's assessment.
+     */
+    defaultSlug: string;
+};
+
+/** The connector's own words, compressed to fit a tab. Nothing is upgraded. */
+const SIGNATURE_TAB_LABEL: Record<SignatureVerdict["status"], string> = {
+    verified: "verified",
+    mismatch: "mismatch",
+    unverified: "not verified",
+};
+
+function slugify(value: string): string {
+    return value
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "");
+}
+
+function summarise(row: TrustRow): TabSummary {
+    const verdict = row.assessment?.signature ?? null;
+    return {
+        signature:
+            verdict === null
+                ? {status: "absent", label: "no document"}
+                : {status: verdict.status, label: SIGNATURE_TAB_LABEL[verdict.status]},
+    };
+}
+
+/**
+ * The agent's own data first, then one tab per provider, then ARP.
+ *
+ * The agent leads because the page is about the agent: what it is for comes
+ * before what anyone says about it.
+ *
+ * ARP gets a tab rather than a footnote because its abstention is a claim about
+ * this agent and belongs beside the others: "no assessment" is only legible as
+ * a position if it sits where a position would sit.
+ *
+ * Slugs go in the URL, so they are derived from the provider's name and made
+ * unique — two providers named alike, or a provider that happens to be called
+ * "Agent", must still address distinct tabs.
+ */
+export function buildPanelTabs(rows: TrustRow[]): PanelTabs {
+    const used = new Set<string>([AGENT_TAB_SLUG, ARP_TAB_SLUG]);
+
+    const providers: PanelTab[] = rows.map((row, index) => {
+        const base = slugify(row.providerName) || `provider-${index + 1}`;
+        let slug = base;
+        for (let suffix = 2; used.has(slug); suffix += 1) slug = `${base}-${suffix}`;
+        used.add(slug);
+        return {kind: "provider", slug, label: row.providerName, row, summary: summarise(row)};
+    });
+
+    return {
+        tabs: [
+            {kind: "agent", slug: AGENT_TAB_SLUG, label: "Agent"},
+            ...providers,
+            {kind: "arp", slug: ARP_TAB_SLUG, label: "ARP"},
+        ],
+        defaultSlug: AGENT_TAB_SLUG,
+    };
+}
+
+/**
+ * The tab the URL asks for, or the default when it asks for one this agent does
+ * not have. A stale shared link falls back silently rather than erroring — the
+ * provider it named may simply have stopped writing edges.
+ */
+export function selectPanelTab(model: PanelTabs, requested: string | null): PanelTab {
+    const asked = model.tabs.find((tab) => tab.slug === requested);
+    if (asked !== undefined) return asked;
+    const fallback = model.tabs.find((tab) => tab.slug === model.defaultSlug);
+    // `buildPanelTabs` always prepends the agent tab, so this is unreachable.
+    return fallback ?? {kind: "agent", slug: AGENT_TAB_SLUG, label: "Agent"};
 }

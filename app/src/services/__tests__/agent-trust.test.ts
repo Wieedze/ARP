@@ -1,11 +1,18 @@
 import {describe, expect, it} from "vitest";
 
 import {
+    AGENT_TAB_SLUG,
+    ARP_TAB_SLUG,
+    buildPanelTabs,
     buildTrustPanel,
     evidenceWeight,
     groupCapabilities,
     joinProviderRows,
     readReviewerBasis,
+    selectPanelTab,
+    shouldUseTabs,
+    type PanelTab,
+    type PanelTabs,
 } from "../agent-trust";
 
 import {
@@ -15,12 +22,14 @@ import {
     claimMarket,
     DEEP3_TRIPLE,
     identity,
+    MISMATCH,
     notFoundFetch,
     okFetch,
     profile,
     providerEdge,
     richProfile,
     UNVERIFIED,
+    VERIFIED,
 } from "./trust-fixtures";
 
 describe("readReviewerBasis", () => {
@@ -230,11 +239,20 @@ describe("groupCapabilities", () => {
                         ],
                         protocols: [
                             {
-                                relation: "uses",
+                                relation: "supports-protocol",
                                 label: "MCP",
                                 name: "MCP",
                                 url: null,
                                 sourceHandle: "0xmcp",
+                            },
+                        ],
+                        tools: [
+                            {
+                                relation: "uses-tool",
+                                label: "Obsidian",
+                                name: "Obsidian",
+                                url: null,
+                                sourceHandle: "0xobsidian",
                             },
                         ],
                         chains: [],
@@ -253,6 +271,7 @@ describe("groupCapabilities", () => {
                             },
                         ],
                         protocols: [],
+                        tools: [],
                         chains: [],
                         tags: [],
                         categories: [],
@@ -262,8 +281,59 @@ describe("groupCapabilities", () => {
             }),
         );
 
-        expect(groups.map((group) => group.relation)).toEqual(["uses", "has-type"]);
+        // `uses-tool` leads the order, then the type, then the protocol it speaks.
+        expect(groups.map((group) => group.relation)).toEqual([
+            "uses-tool",
+            "has-type",
+            "supports-protocol",
+        ]);
         expect(groups.find((group) => group.relation === "has-type")?.entries).toHaveLength(1);
+    });
+
+    it("keeps a tool out of the protocol group and a protocol out of the tool group", () => {
+        // The defect this pins (ADR 0030, task 20): `use` and `uses` both mapped
+        // to one relation and bucketed as `protocols`, so ARP reported Obsidian
+        // and GitHub as protocols for every agent carrying a `uses` edge — 185
+        // mainnet edges at the time of the fix.
+        const groups = groupCapabilities(
+            profile({
+                capabilities: [
+                    {
+                        types: [],
+                        protocols: [
+                            {
+                                relation: "supports-protocol",
+                                label: "MCP",
+                                name: "MCP",
+                                url: null,
+                                sourceHandle: "0xmcp",
+                            },
+                        ],
+                        tools: [
+                            {
+                                relation: "uses-tool",
+                                label: "Obsidian",
+                                name: "Obsidian",
+                                url: null,
+                                sourceHandle: "0xobsidian",
+                            },
+                        ],
+                        chains: [],
+                        tags: [],
+                        categories: [],
+                        provenance: {sourceId: "intuition", kind: "claim", origin: null},
+                    },
+                ],
+            }),
+        );
+
+        const labelsOf = (relation: string) =>
+            groups.find((group) => group.relation === relation)?.entries.map((e) => e.label) ?? [];
+
+        expect(labelsOf("uses-tool")).toEqual(["Obsidian"]);
+        expect(labelsOf("supports-protocol")).toEqual(["MCP"]);
+        expect(labelsOf("uses-tool")).not.toContain("MCP");
+        expect(labelsOf("supports-protocol")).not.toContain("Obsidian");
     });
 });
 
@@ -276,7 +346,6 @@ describe("buildTrustPanel", () => {
         expect(view.isFallbackMetadata).toBe(false);
         expect(view.rows).toHaveLength(2);
         expect(view.capabilityCount).toBe(0);
-        expect(view.marketCapableSources).toEqual(["intuition"]);
     });
 
     it("reports a missing agent as not found rather than as a failure", () => {
@@ -336,5 +405,207 @@ describe("buildTrustPanel", () => {
 
         expect(view.sourceErrors).toHaveLength(1);
         expect(view.found).toBe(true);
+    });
+});
+
+describe("shouldUseTabs", () => {
+    it("takes two providers before a strip earns its place", () => {
+        const rows = joinProviderRows(richProfile().assessments, richProfile().markets);
+        expect(shouldUseTabs(rows)).toBe(true);
+        expect(shouldUseTabs(rows.slice(0, 1))).toBe(false);
+        expect(shouldUseTabs([])).toBe(false);
+    });
+});
+
+describe("buildPanelTabs", () => {
+    function tabsFor(profileValue = richProfile()) {
+        return buildPanelTabs(joinProviderRows(profileValue.assessments, profileValue.markets));
+    }
+
+    /** The provider tabs in strip order, without pinning where they start. */
+    function providerTabs(model: PanelTabs) {
+        return model.tabs.filter(
+            (tab): tab is Extract<PanelTab, {kind: "provider"}> => tab.kind === "provider",
+        );
+    }
+
+    it("opens with the agent, then one tab per provider, then ARP", () => {
+        const model = tabsFor();
+
+        expect(model.tabs.map((tab) => tab.slug)).toEqual([
+            AGENT_TAB_SLUG,
+            "deep3-labs",
+            "asterpay-kya",
+            ARP_TAB_SLUG,
+        ]);
+        expect(model.tabs.map((tab) => tab.kind)).toEqual(["agent", "provider", "provider", "arp"]);
+        expect(model.tabs.map((tab) => tab.label)).toEqual([
+            "Agent",
+            "Deep3 Labs",
+            "AsterPay KYA",
+            "ARP",
+        ]);
+    });
+
+    it("summarises each provider by its signature verdict, never by score", () => {
+        const model = tabsFor();
+        const [deep3, asterpay] = providerTabs(model);
+
+        // The whole point of the strip: one provider signs its document and the
+        // other does not, and that is legible from either tab without the
+        // scores being repeated up here.
+        expect(deep3.summary).toEqual({signature: {status: "verified", label: "verified"}});
+        expect(asterpay.summary).toEqual({
+            signature: {status: "unverified", label: "not verified"},
+        });
+        expect(deep3.summary).not.toHaveProperty("score");
+    });
+
+    it("relays a mismatch as a mismatch and never upgrades an unverified", () => {
+        const market = claimMarket(DEEP3_TRIPLE);
+        const model = buildPanelTabs(
+            joinProviderRows(
+                [
+                    providerEdge({handle: DEEP3_TRIPLE, providerName: "Deep3 Labs", market}),
+                    assessmentEdge({
+                        handle: `${DEEP3_TRIPLE}-doc`,
+                        providerName: "Deep3 Labs",
+                        fetch: okFetch(
+                            "https://api.deep3.example/assessment.json",
+                            assessmentDocument({
+                                providerName: "Deep3 Labs",
+                                providerId: "deep3-labs",
+                                score: 55.35,
+                                numReviewers: 26,
+                            }),
+                        ),
+                        signature: MISMATCH,
+                    }),
+                ],
+                [market],
+            ),
+        );
+
+        expect(providerTabs(model)[0].summary.signature).toEqual({
+            status: "mismatch",
+            label: "mismatch",
+        });
+    });
+
+    it("calls a provider edge with no assessment absent, not unverified", () => {
+        const market = claimMarket(DEEP3_TRIPLE);
+        const model = buildPanelTabs(
+            joinProviderRows(
+                [providerEdge({handle: DEEP3_TRIPLE, providerName: "Deep3 Labs", market})],
+                [market],
+            ),
+        );
+
+        expect(providerTabs(model)[0].summary.signature).toEqual({
+            status: "absent",
+            label: "no document",
+        });
+    });
+
+    it("opens on the agent's own data, however loud the providers are", () => {
+        // The old rule was "the provider with the most evidence behind it".
+        // Both of these publish a count, one of them 1,445 of them, and the
+        // page still opens on what the agent is for rather than on a
+        // stranger's assessment of it.
+        const thin = claimMarket(ASTERPAY_TRIPLE);
+        const deep = claimMarket(DEEP3_TRIPLE);
+        const model = buildPanelTabs(
+            joinProviderRows(
+                [
+                    providerEdge({
+                        handle: ASTERPAY_TRIPLE,
+                        providerName: "Loud Scores",
+                        market: thin,
+                    }),
+                    assessmentEdge({
+                        handle: `${ASTERPAY_TRIPLE}-doc`,
+                        providerName: "Loud Scores",
+                        fetch: okFetch(
+                            "https://api.example/loud.json",
+                            assessmentDocument({
+                                providerName: "Loud Scores",
+                                providerId: "loud",
+                                score: 99,
+                                numReviewers: 2,
+                            }),
+                        ),
+                        signature: UNVERIFIED,
+                    }),
+                    providerEdge({handle: DEEP3_TRIPLE, providerName: "Deep3 Labs", market: deep}),
+                    assessmentEdge({
+                        handle: `${DEEP3_TRIPLE}-doc`,
+                        providerName: "Deep3 Labs",
+                        fetch: okFetch(
+                            "https://api.deep3.example/assessment.json",
+                            assessmentDocument({
+                                providerName: "Deep3 Labs",
+                                providerId: "deep3-labs",
+                                score: 41,
+                                numReviewers: 1445,
+                            }),
+                        ),
+                        signature: VERIFIED,
+                    }),
+                ],
+                [thin, deep],
+            ),
+        );
+
+        expect(model.defaultSlug).toBe(AGENT_TAB_SLUG);
+        expect(model.tabs[0].kind).toBe("agent");
+    });
+
+    it("keeps every slug distinct, including against the reserved two", () => {
+        const model = buildPanelTabs(
+            joinProviderRows(
+                [
+                    providerEdge({handle: DEEP3_TRIPLE, providerName: "Agent", market: null}),
+                    providerEdge({handle: ASTERPAY_TRIPLE, providerName: "ARP", market: null}),
+                    providerEdge({handle: "0xthird", providerName: "Agent", market: null}),
+                    providerEdge({handle: "0xfourth", providerName: "!!!", market: null}),
+                ],
+                [],
+            ),
+        );
+
+        const slugs = model.tabs.map((tab) => tab.slug);
+        expect(new Set(slugs).size).toBe(slugs.length);
+        expect(slugs).toEqual([
+            AGENT_TAB_SLUG,
+            "agent-2",
+            "arp-2",
+            "agent-3",
+            "provider-4",
+            ARP_TAB_SLUG,
+        ]);
+    });
+});
+
+describe("selectPanelTab", () => {
+    it("honours the tab the URL names", () => {
+        const model = buildPanelTabs(
+            joinProviderRows(richProfile().assessments, richProfile().markets),
+        );
+
+        expect(selectPanelTab(model, "asterpay-kya").slug).toBe("asterpay-kya");
+        expect(selectPanelTab(model, ARP_TAB_SLUG).kind).toBe("arp");
+        expect(selectPanelTab(model, AGENT_TAB_SLUG).kind).toBe("agent");
+    });
+
+    it("falls back silently when the URL names nothing this agent has", () => {
+        const model = buildPanelTabs(
+            joinProviderRows(richProfile().assessments, richProfile().markets),
+        );
+
+        // A shared link to a provider that has since stopped writing edges is a
+        // stale link, not an error page.
+        expect(selectPanelTab(model, "some-departed-provider").slug).toBe(model.defaultSlug);
+        expect(selectPanelTab(model, null).slug).toBe(model.defaultSlug);
+        expect(selectPanelTab(model, "").slug).toBe(model.defaultSlug);
     });
 });

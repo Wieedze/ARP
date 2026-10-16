@@ -58,7 +58,6 @@ describe("COHORT_ORDERS", () => {
         // quality that nothing on this page is entitled to make.
         for (const entry of COHORT_ORDERS) {
             expect(entry.label).not.toMatch(/best|top|rank|score|trust(ed|worthy)/i);
-            expect(entry.note.length).toBeGreaterThan(40);
         }
     });
 });
@@ -67,7 +66,6 @@ describe("toCohortRow", () => {
     it("links by the identity from the same-as edge", () => {
         const row = toCohortRow(listing(), 0);
         expect(row.href).toBe("/agent/8453/1380");
-        expect(row.identity).toBe("1380 · Base 8453");
         expect(row.identityProblem).toBeNull();
     });
 

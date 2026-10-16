@@ -51,6 +51,7 @@ For tasks tied to the MetaMask Dev Cook-Off submission, add a fourth bullet:
 If the answer is "no", the implementation has drifted and must be reviewed before merging. The `task-verifier` agent checks this answer is present and substantive on hackathon-tagged tasks.
 
 Do not:
+
 - Write multi-paragraph narratives unless asked.
 - Use emoji.
 - Use excessive bold.
@@ -70,6 +71,14 @@ A task is **not** complete until the `task-verifier` agent has returned a pass. 
 5. If fail → fix and re-run from step 3. Do not declare done.
 6. If pass → write a post-mortem entry in `.claude/learning/` using the template.
 7. Mark the task file with a completion note (date, commit SHA, post-mortem reference).
+8. **Update `.claude/STATE.md`** — the task table, and anything in "known defects" the task closed or
+   discovered. `STATE.md` is the one file an agent reads to orient itself; a stale one misleads
+   rather than merely lagging.
+9. **Run `bun run scripts/build-claude-index.ts`** if the task added an ADR or a post-mortem.
+
+Run `ui-reviewer` / `contract-reviewer` / `intuition-integrator` **before** `task-verifier`, not
+alongside it. The verifier's acceptance criteria include the domain reviewer's verdict, so running
+them concurrently wastes a whole verifier pass — it happened on task 15.
 
 The `task-verifier` is in `.claude/agents/task-verifier.md`.
 
@@ -78,12 +87,14 @@ The `task-verifier` is in `.claude/agents/task-verifier.md`.
 If during a task you make a non-obvious decision (a design tradeoff, a deviation from an obvious approach, an architectural choice not pre-specified), write an ADR in `.claude/choices/` using the template. Reference the ADR in the task's post-mortem.
 
 Examples of "non-obvious" worth recording:
+
 - Choosing one library over another that was also viable.
 - Picking an algorithm with a particular tradeoff (e.g., O(n) write for O(1) read).
 - Deciding the boundary between two layers.
 - Deviating from a rule (with justification — rules can be broken with cause, but the break must be recorded).
 
 Things **not** worth an ADR:
+
 - Standard patterns from the rules or the docs.
 - "I named this file X." Trivial.
 - Bug fixes where the right answer was obvious.

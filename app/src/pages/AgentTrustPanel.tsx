@@ -1,13 +1,23 @@
-import {useState} from "react";
-import {Link, useParams} from "react-router-dom";
+import {useId, useState} from "react";
+import {Link, useParams, useSearchParams} from "react-router-dom";
 
 import {AgentIdentityPanel} from "../components/agent/AgentIdentityPanel";
 import {AssessmentRow} from "../components/agent/AssessmentRow";
 import {CapabilitySection} from "../components/agent/CapabilitySection";
 import {MainnetNotice} from "../components/agent/MainnetNotice";
+import {panelDomId, tabDomId} from "../components/agent/tab-ids";
+import {TrustPanelTabs} from "../components/agent/TrustPanelTabs";
+import {UnreadSources} from "../components/agent/UnreadSources";
 import {useAgentProfile} from "../hooks/use-agent-profile";
 import {useStakeSession} from "../hooks/use-stake-session";
+import {
+    buildPanelTabs,
+    selectPanelTab,
+    shouldUseTabs,
+    type TrustPanelView,
+} from "../services/agent-trust";
 import {ERC8004_GRAPHQL_URL} from "../services/erc8004-connector";
+import type {StakeSession} from "../services/trust-stake";
 
 /**
  * `/agent/:chainId/:tokenId` — the trust panel.
@@ -18,8 +28,15 @@ import {ERC8004_GRAPHQL_URL} from "../services/erc8004-connector";
  * which providers could not be reached at all, and how thin the market on each
  * claim really is.
  *
+ * The left rail is the agent and stays put — identity belongs to no provider,
+ * so it must not vanish when a reader opens one. The right column is where the
+ * claims live, and where the tabs are: the agent's own data first, then one per
+ * provider, then ARP's own position.
+ *
  * Every read here is Intuition **mainnet**, regardless of the wallet's chain.
  */
+
+const TAB_PARAM = "tab";
 
 function parseTokenId(value: string | undefined): string | null {
     if (value === undefined || !/^\d+$/.test(value)) return null;
@@ -54,6 +71,9 @@ export function AgentTrustPanel() {
     const tokenId = parseTokenId(params.tokenId);
     const ref = chainId !== null && tokenId !== null ? {chainId, tokenId} : null;
 
+    const [searchParams, setSearchParams] = useSearchParams();
+    const baseId = useId();
+
     // The market numbers and the vault a stake lands in must be the same curve.
     // Until the chain read resolves this is undefined and the package default is
     // used, which is correct on mainnet today; if the chain ever reports another
@@ -61,6 +81,23 @@ export function AgentTrustPanel() {
     const sessionQuery = useStakeSession();
     const profileQuery = useAgentProfile(ref, sessionQuery.data?.curveId);
     const view = profileQuery.data;
+
+    /**
+     * `replace` rather than `push`: a tab is a way of looking at one page, not a
+     * place. Pushing would make Back walk the reader through every tab they
+     * opened before it left the agent. The URL still changes, so the link is
+     * still shareable and a refresh still lands on the same tab.
+     */
+    function handleSelectTab(slug: string) {
+        setSearchParams(
+            (current) => {
+                const next = new URLSearchParams(current);
+                next.set(TAB_PARAM, slug);
+                return next;
+            },
+            {replace: true},
+        );
+    }
 
     if (ref === null) {
         return (
@@ -161,69 +198,22 @@ export function AgentTrustPanel() {
                         <AgentIdentityPanel view={view} />
 
                         <div className="min-w-0">
-                            <section>
-                                <h2 className="font-medium">Assessments</h2>
-                                {view.rows.length === 0 ? (
-                                    <p className="mt-6 text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)] max-w-[60ch]">
-                                        No trust provider has written an edge about this agent. With
-                                        99.99% of the cohort covered by one provider, an agent with
-                                        none is unusual — and there is nothing here to take a
-                                        position on.
-                                    </p>
-                                ) : (
-                                    <div className="mt-8 flex flex-col gap-14">
-                                        {view.rows.map((row) => (
-                                            <AssessmentRow
-                                                key={row.id}
-                                                row={row}
-                                                session={sessionQuery.data}
-                                                sessionError={sessionQuery.error}
-                                            />
-                                        ))}
-                                    </div>
-                                )}
-
-                                <ArpRow />
-                            </section>
-
-                            <section className="mt-16">
-                                <h2 className="font-medium">Capabilities</h2>
-                                <div className="mt-6">
-                                    <CapabilitySection
-                                        groups={view.capabilities}
-                                        count={view.capabilityCount}
-                                    />
-                                </div>
-                            </section>
-
-                            {view.sourceErrors.length > 0 || view.conflicts.length > 0 ? (
-                                <section className="mt-16">
-                                    <h2 className="font-medium">What could not be read</h2>
-                                    <ul className="mt-4 flex flex-col gap-2 text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)]">
-                                        {view.sourceErrors.map((error, index) => (
-                                            <li key={`${error.sourceId}-${index}`}>
-                                                <span className="font-mono">{error.sourceId}</span>{" "}
-                                                failed at{" "}
-                                                <span className="font-mono">{error.step}</span>:{" "}
-                                                {error.message}
-                                            </li>
-                                        ))}
-                                        {view.conflicts.map((conflict, index) => (
-                                            <li key={`${conflict.field}-${index}`}>
-                                                Sources disagree on{" "}
-                                                <span className="font-mono">{conflict.field}</span>:{" "}
-                                                {conflict.entries
-                                                    .map(
-                                                        (entry) =>
-                                                            `${entry.sourceId} says ${entry.value ?? "nothing"}`,
-                                                    )
-                                                    .join("; ")}
-                                                . Both answers kept.
-                                            </li>
-                                        ))}
-                                    </ul>
-                                </section>
-                            ) : null}
+                            {shouldUseTabs(view.rows) ? (
+                                <TabbedClaims
+                                    view={view}
+                                    baseId={baseId}
+                                    requestedTab={searchParams.get(TAB_PARAM)}
+                                    onSelectTab={handleSelectTab}
+                                    session={sessionQuery.data}
+                                    sessionError={sessionQuery.error}
+                                />
+                            ) : (
+                                <StackedClaims
+                                    view={view}
+                                    session={sessionQuery.data}
+                                    sessionError={sessionQuery.error}
+                                />
+                            )}
 
                             <p className="mt-16 text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)] max-w-[64ch]">
                                 Graph read from{" "}
@@ -237,14 +227,159 @@ export function AgentTrustPanel() {
     );
 }
 
+type ClaimsProps = {
+    view: TrustPanelView;
+    session: StakeSession | undefined;
+    sessionError: Error | null;
+};
+
 /**
- * ARP's own row. It has no assessment to publish yet and says so, rather than
- * occupying the slot with a number it has not earned. Phase 3 is where this
- * changes, and it changes by ARP staking on its own reads first.
+ * Two or more providers: the agent's own data, then one tab each, then ARP.
+ *
+ * The strip carries the per-provider summary, so the comparison stacking gave
+ * away for free survives being one-at-a-time — see `TrustPanelTabs`.
  */
-function ArpRow() {
+function TabbedClaims({
+    view,
+    baseId,
+    requestedTab,
+    onSelectTab,
+    session,
+    sessionError,
+}: ClaimsProps & {
+    baseId: string;
+    requestedTab: string | null;
+    onSelectTab: (slug: string) => void;
+}) {
+    const model = buildPanelTabs(view.rows);
+    const selected = selectPanelTab(model, requestedTab);
+    const hasUnreadSources = view.sourceErrors.length > 0 || view.conflicts.length > 0;
+
     return (
-        <article className="mt-14 pl-5 border-l border-l-[color:var(--color-border-strong)]">
+        <>
+            {/* The tab labels are the section headings a reader sees; this one
+                keeps the document outline from jumping h1 → h3. */}
+            <h2 className="sr-only">Assessments and agent data</h2>
+
+            <TrustPanelTabs
+                tabs={model.tabs}
+                selectedSlug={selected.slug}
+                baseId={baseId}
+                onSelect={onSelectTab}
+            />
+
+            <div
+                role="tabpanel"
+                id={panelDomId(baseId, selected.slug)}
+                aria-labelledby={tabDomId(baseId, selected.slug)}
+                tabIndex={0}
+                className="mt-10"
+            >
+                {selected.kind === "provider" ? (
+                    /* Keyed on the row: without it React reuses the instance
+                       across a tab switch and the stake control keeps the quote
+                       it built for the previous provider's claim. */
+                    <AssessmentRow
+                        key={selected.row.id}
+                        row={selected.row}
+                        session={session}
+                        sessionError={sessionError}
+                    />
+                ) : selected.kind === "arp" ? (
+                    <ArpPosition />
+                ) : (
+                    <AgentData view={view} hasUnreadSources={hasUnreadSources} />
+                )}
+            </div>
+        </>
+    );
+}
+
+/**
+ * Fewer than two providers: no strip.
+ *
+ * One provider covers 99.99% of this cohort, so this is the ordinary case, and
+ * a tab strip over a single claim would be a control with no choice behind it.
+ */
+function StackedClaims({view, session, sessionError}: ClaimsProps) {
+    return (
+        <>
+            <section>
+                <h2 className="font-medium">Assessments</h2>
+                {view.rows.length === 0 ? (
+                    <p className="mt-6 text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)] max-w-[60ch]">
+                        No trust provider has written an edge about this agent. With 99.99% of the
+                        cohort covered by one provider, an agent with none is unusual — and there is
+                        nothing here to take a position on.
+                    </p>
+                ) : (
+                    <div className="mt-8 flex flex-col gap-14">
+                        {view.rows.map((row) => (
+                            <AssessmentRow
+                                key={row.id}
+                                row={row}
+                                session={session}
+                                sessionError={sessionError}
+                            />
+                        ))}
+                    </div>
+                )}
+
+                <div className="mt-14">
+                    <ArpPosition />
+                </div>
+            </section>
+
+            <section className="mt-16">
+                <h2 className="font-medium">Capabilities</h2>
+                <div className="mt-6">
+                    <CapabilitySection groups={view.capabilities} count={view.capabilityCount} />
+                </div>
+            </section>
+
+            {view.sourceErrors.length > 0 || view.conflicts.length > 0 ? (
+                <section className="mt-16">
+                    <h2 className="font-medium">What could not be read</h2>
+                    <div className="mt-4">
+                        <UnreadSources view={view} />
+                    </div>
+                </section>
+            ) : null}
+        </>
+    );
+}
+
+/** The `Agent` tab: what this agent is for, and what could not be read about it. */
+function AgentData({view, hasUnreadSources}: {view: TrustPanelView; hasUnreadSources: boolean}) {
+    return (
+        <div className="flex flex-col gap-14">
+            <section>
+                <h3 className="font-medium">Capabilities</h3>
+                <div className="mt-6">
+                    <CapabilitySection groups={view.capabilities} count={view.capabilityCount} />
+                </div>
+            </section>
+
+            {hasUnreadSources ? (
+                <section>
+                    <h3 className="font-medium">What could not be read</h3>
+                    <div className="mt-4">
+                        <UnreadSources view={view} />
+                    </div>
+                </section>
+            ) : null}
+        </div>
+    );
+}
+
+/**
+ * ARP's own position. It has no assessment to publish yet and says so, rather
+ * than occupying the slot with a number it has not earned. Phase 3 is where
+ * this changes, and it changes by ARP staking on its own reads first.
+ */
+function ArpPosition() {
+    return (
+        <article className="pl-5 border-l border-l-[color:var(--color-border-strong)]">
             <h3 className="text-[length:var(--text-body)] font-medium">ARP</h3>
             <p className="mt-3 font-mono uppercase tracking-wider text-[length:var(--text-label)] text-[color:var(--color-fg-60)]">
                 insufficient evidence
@@ -259,8 +394,8 @@ function ArpRow() {
 }
 
 /**
- * A loading state shaped like the answer: the reads that are in flight, named.
- * Not a grey block on a grey background.
+ * A loading state shaped like the answer: the agent being resolved, named,
+ * where its name will be. Not a grey block on a grey background.
  */
 function LoadingShape({chainId, tokenId}: {chainId: number; tokenId: string}) {
     return (
@@ -268,11 +403,6 @@ function LoadingShape({chainId, tokenId}: {chainId: number; tokenId: string}) {
             <h1 className="text-[length:var(--text-display)] leading-[var(--leading-display)] tracking-tight font-semibold text-[color:var(--color-fg-60)]">
                 Resolving {chainId}:{tokenId}
             </h1>
-            <ul className="mt-6 flex flex-col gap-2 font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)]">
-                <li>intuition graph — identity, trust edges, capabilities, markets</li>
-                <li>erc-8004 registry on chain {chainId} — owner, registration file</li>
-                <li>each provider's resolver — document, signature, freshness window</li>
-            </ul>
         </section>
     );
 }

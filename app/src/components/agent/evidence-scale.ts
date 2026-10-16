@@ -30,7 +30,7 @@ export const SCORE_TONE_CLASS: Record<EvidenceWeight, string> = {
 
 /** One sentence naming what the size means, so the device is never just decorative. */
 export const WEIGHT_CAPTION: Record<EvidenceWeight, string> = {
-    unknown: "Weight unknown — the document publishes no reviewer count.",
+    unknown: "Weight unknown.",
     none: "No reviewers behind this score.",
     single: "One reviewer. A single opinion, priced as a score.",
     thin: "A handful of reviewers. Thin.",

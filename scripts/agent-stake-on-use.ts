@@ -17,61 +17,64 @@
  * "stake on what it used".
  */
 
-import {readFileSync} from "node:fs";
-import {resolve} from "node:path";
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 
-import {formatEther, parseEther, type Hex} from "viem";
+import { formatEther, parseEther, type Hex } from 'viem';
 import {
-    type Account,
-    type Chain,
-    type PublicClient,
-    type Transport,
-    type WalletClient,
-} from "viem";
-import {type Delegation} from "@metamask/smart-accounts-kit";
+  type Account,
+  type Chain,
+  type PublicClient,
+  type Transport,
+  type WalletClient,
+} from 'viem';
+import { type Delegation } from '@metamask/smart-accounts-kit';
+
+// The shared tool-usage predicate, imported from the connector's frozen
+// constants by relative path, as the other cross-workspace imports here do.
+// `USES` is what the module declares; `INTUITION_USES_TERM_ID` is the same
+// value under its public-API alias (ADR 0030).
+import { USES as INTUITION_USES_TERM_ID } from '../erc8004/src/sources/intuition/terms';
 
 import {
-    redeemDeclareTriple,
-    redeemEnsureAtomForCaip10,
-    redeemEnsureAtomForThing,
-    redeemEnsureAtomForURI,
-    redeemStakeOnAtom,
-} from "../app/src/services/delegation-redeem";
-
-import {requirePinAuth} from "./pin-env";
+  redeemDeclareTriple,
+  redeemEnsureAtomForCaip10,
+  redeemEnsureAtomForURI,
+  redeemStakeOnAtom,
+} from '../app/src/services/delegation-redeem';
 
 export type ManifestEntry = {
-    name: string;
-    domain: string;
-    schemaURI: string;
-    description: string;
-    /**
-     * Synonyms / phrases that should map a free-text methodology mention
-     * back to this module. The matcher prefers the longest keyword hit so
-     * a multi-word phrase (e.g. "checks-effects-interactions") beats a
-     * generic single word (e.g. "review").
-     */
-    keywords?: string[];
+  name: string;
+  domain: string;
+  schemaURI: string;
+  description: string;
+  /**
+   * Synonyms / phrases that should map a free-text methodology mention
+   * back to this module. The matcher prefers the longest keyword hit so
+   * a multi-word phrase (e.g. "checks-effects-interactions") beats a
+   * generic single word (e.g. "review").
+   */
+  keywords?: string[];
 };
 
 export type StakeAction = {
-    methodology: string;
-    matchedModule?: ManifestEntry;
-    skipped?: "no-match" | "no-budget";
-    atomId?: Hex;
-    triple?: {created: boolean; tripleId: Hex; tx?: Hex};
-    stake?: {amount: bigint; tx: Hex};
-    error?: string;
+  methodology: string;
+  matchedModule?: ManifestEntry;
+  skipped?: 'no-match' | 'no-budget';
+  atomId?: Hex;
+  triple?: { created: boolean; tripleId: Hex; tx?: Hex };
+  stake?: { amount: bigint; tx: Hex };
+  error?: string;
 };
 
-const DEFAULT_MANIFEST_PATH = resolve(process.cwd(), "scripts/manifest-modules.json");
+const DEFAULT_MANIFEST_PATH = resolve(process.cwd(), 'scripts/manifest-modules.json');
 
 let cachedManifest: ManifestEntry[] | null = null;
 
 function loadManifest(path = DEFAULT_MANIFEST_PATH): ManifestEntry[] {
-    if (cachedManifest) return cachedManifest;
-    cachedManifest = JSON.parse(readFileSync(path, "utf8")) as ManifestEntry[];
-    return cachedManifest;
+  if (cachedManifest) return cachedManifest;
+  cachedManifest = JSON.parse(readFileSync(path, 'utf8')) as ManifestEntry[];
+  return cachedManifest;
 }
 
 /**
@@ -92,42 +95,42 @@ function loadManifest(path = DEFAULT_MANIFEST_PATH): ManifestEntry[] {
  *   3. Single-token fallback (4+ chars in the entry's name).
  */
 function matchManifestEntry(
-    methodology: string,
-    manifest: ManifestEntry[],
+  methodology: string,
+  manifest: ManifestEntry[],
 ): ManifestEntry | undefined {
-    const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
-    const needle = norm(methodology);
-    if (needle.length === 0) return undefined;
+  const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
+  const needle = norm(methodology);
+  if (needle.length === 0) return undefined;
 
-    // 1. Name containment.
+  // 1. Name containment.
+  for (const entry of manifest) {
+    const hay = norm(entry.name);
+    if (hay.includes(needle) || needle.includes(hay)) return entry;
+  }
+
+  // 2. Keyword phrase hit — longest match wins (most specific).
+  const low = methodology.toLowerCase();
+  let best: ManifestEntry | undefined;
+  let bestLen = 0;
+  for (const entry of manifest) {
+    for (const kw of entry.keywords ?? []) {
+      const kwLow = kw.toLowerCase();
+      if (low.includes(kwLow) && kwLow.length > bestLen) {
+        best = entry;
+        bestLen = kwLow.length;
+      }
+    }
+  }
+  if (best) return best;
+
+  // 3. Single-token fallback on entry name (e.g. "slither", "scsvs").
+  const tokens = low.split(/[^a-z0-9]+/).filter((t) => t.length >= 4);
+  for (const tok of tokens) {
     for (const entry of manifest) {
-        const hay = norm(entry.name);
-        if (hay.includes(needle) || needle.includes(hay)) return entry;
+      if (entry.name.toLowerCase().includes(tok)) return entry;
     }
-
-    // 2. Keyword phrase hit — longest match wins (most specific).
-    const low = methodology.toLowerCase();
-    let best: ManifestEntry | undefined;
-    let bestLen = 0;
-    for (const entry of manifest) {
-        for (const kw of entry.keywords ?? []) {
-            const kwLow = kw.toLowerCase();
-            if (low.includes(kwLow) && kwLow.length > bestLen) {
-                best = entry;
-                bestLen = kwLow.length;
-            }
-        }
-    }
-    if (best) return best;
-
-    // 3. Single-token fallback on entry name (e.g. "slither", "scsvs").
-    const tokens = low.split(/[^a-z0-9]+/).filter((t) => t.length >= 4);
-    for (const tok of tokens) {
-        for (const entry of manifest) {
-            if (entry.name.toLowerCase().includes(tok)) return entry;
-        }
-    }
-    return undefined;
+  }
+  return undefined;
 }
 
 /**
@@ -148,111 +151,97 @@ function matchManifestEntry(
  * @param params.manifestPath       Optional override for the manifest file
  *                                  used to match methodology names.
  *
- * Requires `INTUITION_PIN_API_KEY` in the environment — the "uses" predicate
- * atom is pinned through Intuition's gated pinning API. Throws before any
- * chain write if it is absent.
+ * Needs no pinning credential. The `use`/`uses` predicate is shared and frozen
+ * (ADR 0030), and the atoms this path touches are resolved from CAIP-10 and
+ * URIs, neither of which pins. It required `INTUITION_PIN_API_KEY` only while
+ * it minted its own predicate.
  */
 export async function stakeOnUsedMethodologies(params: {
-    methodologiesUsed: string[];
-    composeDelegation: Delegation | Delegation[];
-    agentWalletClient: WalletClient<Transport, Chain, Account>;
-    publicClient: PublicClient;
-    stakePerUsage?: bigint;
-    manifestPath?: string;
+  methodologiesUsed: string[];
+  composeDelegation: Delegation | Delegation[];
+  agentWalletClient: WalletClient<Transport, Chain, Account>;
+  publicClient: PublicClient;
+  stakePerUsage?: bigint;
+  manifestPath?: string;
 }): Promise<StakeAction[]> {
-    const stakeAmount = params.stakePerUsage ?? parseEther("0.001");
-    const manifest = loadManifest(params.manifestPath);
-    // Node-only read, sanctioned by ADR 0016: the credential enters here and is
-    // handed down explicitly. `app/src/services/` never reads the environment.
-    const pinAuth = requirePinAuth();
+  const stakeAmount = params.stakePerUsage ?? parseEther('0.001');
+  const manifest = loadManifest(params.manifestPath);
+  // The agent's identity atom is the CAIP-10 of its runtime wallet — the
+  // same account that holds its reputation positions. Deriving it from the
+  // address (not a pinned Thing) makes the triple subject resolve to an
+  // Account on the Intuition indexer, and keeps it identical to the
+  // self-atom created at bootstrap by construction (both hash the address).
+  const agentAtom = await redeemEnsureAtomForCaip10({
+    signedDelegation: params.composeDelegation,
+    agentWalletClient: params.agentWalletClient,
+    publicClient: params.publicClient,
+    address: params.agentWalletClient.account.address,
+  });
 
-    // The agent's identity atom is the CAIP-10 of its runtime wallet — the
-    // same account that holds its reputation positions. Deriving it from the
-    // address (not a pinned Thing) makes the triple subject resolve to an
-    // Account on the Intuition indexer, and keeps it identical to the
-    // self-atom created at bootstrap by construction (both hash the address).
-    const agentAtom = await redeemEnsureAtomForCaip10({
-        signedDelegation: params.composeDelegation,
-        agentWalletClient: params.agentWalletClient,
-        publicClient: params.publicClient,
-        address: params.agentWalletClient.account.address,
-    });
+  // The shared `uses` predicate. Not ours to create: minting one produced a
+  // node this repo's own connector cannot read (ADR 0030).
+  const usesAtomId = INTUITION_USES_TERM_ID as Hex;
 
-    // Ensure the canonical "uses" predicate atom exists (one-time, idempotent).
-    const usesAtom = await redeemEnsureAtomForThing({
-        signedDelegation: params.composeDelegation,
-        agentWalletClient: params.agentWalletClient,
-        publicClient: params.publicClient,
-        pinAuth,
-        thing: {
-            name: "uses",
-            description:
-                "ARP predicate — links an agent atom to a tool atom that the " +
-                "agent composes with. The triple (agent, uses, tool) is the " +
-                "immutable layer of ARP's two-layer reputation model.",
-        },
-    });
+  const actions: StakeAction[] = [];
 
-    const actions: StakeAction[] = [];
-
-    for (const methodology of params.methodologiesUsed) {
-        const matched = matchManifestEntry(methodology, manifest);
-        if (!matched) {
-            actions.push({methodology, skipped: "no-match"});
-            continue;
-        }
-
-        try {
-            // 1. Ensure the tool atom exists for the matched manifest entry.
-            const toolAtom = await redeemEnsureAtomForURI({
-                signedDelegation: params.composeDelegation,
-                agentWalletClient: params.agentWalletClient,
-                publicClient: params.publicClient,
-                uri: matched.schemaURI,
-            });
-
-            // 2. Declare (agent, uses, tool) triple. Idempotent — returns
-            //    {created: false} if already on chain.
-            const triple = await redeemDeclareTriple({
-                signedDelegation: params.composeDelegation,
-                agentWalletClient: params.agentWalletClient,
-                publicClient: params.publicClient,
-                subjectAtomId: agentAtom.atomId,
-                predicateAtomId: usesAtom.atomId,
-                objectAtomId: toolAtom.atomId,
-            });
-
-            // 3. Stake on the tool atom.
-            const stakeTx = await redeemStakeOnAtom({
-                signedDelegation: params.composeDelegation,
-                agentWalletClient: params.agentWalletClient,
-                publicClient: params.publicClient,
-                atomId: toolAtom.atomId,
-                amount: stakeAmount,
-            });
-            await params.publicClient.waitForTransactionReceipt({hash: stakeTx});
-
-            actions.push({
-                methodology,
-                matchedModule: matched,
-                atomId: toolAtom.atomId,
-                triple: {
-                    created: triple.created,
-                    tripleId: triple.tripleId,
-                    tx: triple.tx,
-                },
-                stake: {amount: stakeAmount, tx: stakeTx},
-            });
-        } catch (err) {
-            actions.push({
-                methodology,
-                matchedModule: matched,
-                error: (err as Error).message ?? String(err),
-            });
-        }
+  for (const methodology of params.methodologiesUsed) {
+    const matched = matchManifestEntry(methodology, manifest);
+    if (!matched) {
+      actions.push({ methodology, skipped: 'no-match' });
+      continue;
     }
 
-    return actions;
+    try {
+      // 1. Ensure the tool atom exists for the matched manifest entry.
+      const toolAtom = await redeemEnsureAtomForURI({
+        signedDelegation: params.composeDelegation,
+        agentWalletClient: params.agentWalletClient,
+        publicClient: params.publicClient,
+        uri: matched.schemaURI,
+      });
+
+      // 2. Declare (agent, uses, tool) triple. Idempotent — returns
+      //    {created: false} if already on chain.
+      const triple = await redeemDeclareTriple({
+        signedDelegation: params.composeDelegation,
+        agentWalletClient: params.agentWalletClient,
+        publicClient: params.publicClient,
+        subjectAtomId: agentAtom.atomId,
+        predicateAtomId: usesAtomId,
+        objectAtomId: toolAtom.atomId,
+      });
+
+      // 3. Stake on the tool atom.
+      const stakeTx = await redeemStakeOnAtom({
+        signedDelegation: params.composeDelegation,
+        agentWalletClient: params.agentWalletClient,
+        publicClient: params.publicClient,
+        atomId: toolAtom.atomId,
+        amount: stakeAmount,
+      });
+      await params.publicClient.waitForTransactionReceipt({ hash: stakeTx });
+
+      actions.push({
+        methodology,
+        matchedModule: matched,
+        atomId: toolAtom.atomId,
+        triple: {
+          created: triple.created,
+          tripleId: triple.tripleId,
+          tx: triple.tx,
+        },
+        stake: { amount: stakeAmount, tx: stakeTx },
+      });
+    } catch (err) {
+      actions.push({
+        methodology,
+        matchedModule: matched,
+        error: (err as Error).message ?? String(err),
+      });
+    }
+  }
+
+  return actions;
 }
 
 /**
@@ -260,21 +249,18 @@ export async function stakeOnUsedMethodologies(params: {
  * the HTTP server.
  */
 export function formatStakeActions(actions: StakeAction[]): string {
-    return actions
-        .map((a) => {
-            if (a.skipped === "no-match")
-                return `  - "${a.methodology}" → no manifest match (skip)`;
-            if (a.error)
-                return `  - "${a.methodology}" → ${a.matchedModule?.name} → error: ${a.error.slice(0, 400)}`;
-            const stake = a.stake
-                ? `staked ${formatEther(a.stake.amount)} tTRUST`
-                : "no stake";
-            const triple = a.triple?.created
-                ? "triple created"
-                : a.triple
-                  ? "triple reused"
-                  : "no triple";
-            return `  - "${a.methodology}" → ${a.matchedModule?.name} → ${triple}, ${stake}`;
-        })
-        .join("\n");
+  return actions
+    .map((a) => {
+      if (a.skipped === 'no-match') return `  - "${a.methodology}" → no manifest match (skip)`;
+      if (a.error)
+        return `  - "${a.methodology}" → ${a.matchedModule?.name} → error: ${a.error.slice(0, 400)}`;
+      const stake = a.stake ? `staked ${formatEther(a.stake.amount)} tTRUST` : 'no stake';
+      const triple = a.triple?.created
+        ? 'triple created'
+        : a.triple
+          ? 'triple reused'
+          : 'no triple';
+      return `  - "${a.methodology}" → ${a.matchedModule?.name} → ${triple}, ${stake}`;
+    })
+    .join('\n');
 }

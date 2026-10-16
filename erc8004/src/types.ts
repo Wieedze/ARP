@@ -129,7 +129,24 @@ export type ClaimMarket = {
 export type CapabilityRelation =
     | "has-type"
     | "implements"
-    | "uses"
+    /**
+     * `use` (`0x9ddda4ac…`) — "supports this protocol". Named by meaning rather
+     * than by the predicate's label, because `use` and `uses` are two different
+     * claims whose labels differ by one letter. It deliberately drops the `uses`
+     * stem entirely: a `uses-protocol` / `uses-tool` pair would have
+     * reintroduced a one-letter discriminator, which is the bug. Measured 2026-10-16: 153 of its
+     * 158 mainnet edges and 166 of 166 on testnet have a protocol as the object
+     * (A2A, MCP, OASF), and Appendix B's object table for it is five standards,
+     * enumerated and closed. ADR 0030.
+     */
+    | "supports-protocol"
+    /**
+     * `uses` (`0x5c0bde1c…`) — "this entity uses this tool". Zero of its 185
+     * mainnet and 143 testnet edges have a protocol as the object; they are
+     * Intuition, Base, Claude, GitHub, Obsidian, Cursor. This is the relation
+     * ARP writes. ADR 0030.
+     */
+    | "uses-tool"
     | "compatible-with"
     | "available-on"
     | "has-tag"
@@ -153,6 +170,15 @@ export type CapabilityRef = {
 export type Capabilities = {
     types: CapabilityRef[];
     protocols: CapabilityRef[];
+    /**
+     * Tools and services the agent uses, from `uses-tool`.
+     *
+     * Separate from `protocols` because they are different claims: supporting
+     * MCP is a statement about an interface the agent exposes, using Obsidian is
+     * a statement about something it depends on. They were one bucket until ADR
+     * 0030, which reported Obsidian and GitHub as protocols.
+     */
+    tools: CapabilityRef[];
     chains: CapabilityRef[];
     tags: CapabilityRef[];
     categories: CapabilityRef[];

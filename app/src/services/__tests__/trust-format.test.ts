@@ -6,13 +6,21 @@ import {
     describeFetchError,
     describeFreshness,
     describeSignature,
-    describeStakers,
     formatDuration,
+    formatStakerCount,
     formatTrust,
+    stakerLabel,
     truncateMiddle,
 } from "../trust-format";
 
-import {marketSide, MISMATCH, UNVERIFIED, VERIFIED, STALE, FRESH} from "./trust-fixtures";
+import {
+    FRESH,
+    MISMATCH,
+    STALE,
+    UNVERIFIED,
+    UNVERIFIED_UNRECONSTRUCTABLE,
+    VERIFIED,
+} from "./trust-fixtures";
 
 describe("formatTrust", () => {
     it("keeps whole and fractional amounts readable", () => {
@@ -70,11 +78,20 @@ describe("describeFreshness", () => {
 });
 
 describe("describeSignature", () => {
-    it("never upgrades an unverified verdict", () => {
+    it("drops the absent-signature reason, which only restates the label", () => {
         const copy = describeSignature(UNVERIFIED);
         expect(copy.tone).toBe("unverified");
         expect(copy.label).toBe("Not verified");
-        expect(copy.detail).toBe("no signature block at assessment.signature");
+        expect(copy.detail).toBeNull();
+    });
+
+    it("relays every other unverified reason, because each carries a fact", () => {
+        const copy = describeSignature(UNVERIFIED_UNRECONSTRUCTABLE);
+        expect(copy.tone).toBe("unverified");
+        expect(copy.label).toBe("Not verified");
+        // "They signed and we cannot check it" must not render as "they never
+        // signed". Task 15 removed one reason; this asserts it removed only one.
+        expect(copy.detail).toBe(UNVERIFIED_UNRECONSTRUCTABLE.reason);
     });
 
     it("names both addresses on a mismatch", () => {
@@ -89,23 +106,6 @@ describe("describeSignature", () => {
         const copy = describeSignature(VERIFIED);
         expect(copy.tone).toBe("verified");
         expect(copy.detail).toContain("recovers to the signer the document names");
-    });
-});
-
-describe("describeStakers", () => {
-    it("always pairs the position count with the distinct-staker count", () => {
-        expect(describeStakers(marketSide({positionCount: null}))).toBe(
-            "position count not reported by the indexer",
-        );
-        expect(describeStakers(marketSide({positionCount: 0}))).toBe(
-            "no positions · no distinct stakers",
-        );
-        expect(describeStakers(marketSide({positionCount: 1}))).toBe(
-            "1 position · 1 distinct staker",
-        );
-        expect(describeStakers(marketSide({positionCount: 4}))).toBe(
-            "4 positions · 4 distinct stakers",
-        );
     });
 });
 
@@ -141,5 +141,20 @@ describe("describeFetchError", () => {
             "not an object",
         );
         expect(describeFetchError({kind: "skipped"})).toContain("not fetched");
+    });
+});
+
+describe("stakerLabel", () => {
+    it("is singular at one and plural everywhere else", () => {
+        expect(stakerLabel(0)).toBe("0 distinct stakers");
+        expect(stakerLabel(1)).toBe("1 distinct staker");
+        expect(stakerLabel(2)).toBe("2 distinct stakers");
+    });
+
+    it("groups digits the same way the visible figure does", () => {
+        // `role="img"` hides the digits from assistive tech, so the label is the
+        // only announced copy. These two drifted apart once already.
+        expect(stakerLabel(1445)).toBe("1,445 distinct stakers");
+        expect(stakerLabel(1445)).toContain(formatStakerCount(1445));
     });
 });

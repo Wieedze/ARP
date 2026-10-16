@@ -1,6 +1,8 @@
 import {beforeEach, describe, expect, it, vi, type Mock} from "vitest";
 import {stringToHex, type Hex} from "viem";
 
+import {INTUITION_CAPABILITY_PREDICATE_IDS, INTUITION_USES_TERM_ID} from "@arp-protocol/erc8004";
+
 import {deployments} from "../../lib/deployments";
 import {intuitionTestnet} from "../../lib/chains";
 import type {PinAuth} from "../intuition-pin";
@@ -16,11 +18,9 @@ import {
 const MULTI_VAULT = deployments.intuition.multiVault;
 
 const AGENT_THING_URI = "ipfs://bafkrei-agent";
-const USES_THING_URI = "ipfs://bafkrei-uses";
 const TOOL_THING_URI = "ipfs://bafkrei-tool";
 
 const AGENT_ATOM: Hex = `0x${"a1".repeat(32)}`;
-const USES_ATOM: Hex = `0x${"a2".repeat(32)}`;
 const TOOL_ATOM: Hex = `0x${"a3".repeat(32)}`;
 
 const ATOM_COST = 100n;
@@ -45,10 +45,11 @@ import {pinThing} from "../intuition-pin";
 const mockPin = pinThing as unknown as Mock;
 
 /**
- * Reset the module under test before every test so its module-scoped
- * `cachedUsesAtomId` does not leak between cases. Each test re-imports
- * `intuition-graph` and uses the fresh export. Sub-test calls within one
- * test still observe the cache they themselves built.
+ * Re-import the module under test for each case, so the `pinThing` mock is
+ * rebound rather than captured from a previous import.
+ *
+ * It used to exist to clear a module-scoped `cachedUsesAtomId`; that cache went
+ * with the minted predicate (ADR 0030), and the module holds no state now.
  */
 async function freshGraph() {
     vi.resetModules();
@@ -59,7 +60,6 @@ function makeAtomIdReader() {
     return ({args}: {args: readonly unknown[]}) => {
         const data = args[0] as Hex;
         if (data === stringToHex(AGENT_THING_URI)) return AGENT_ATOM;
-        if (data === stringToHex(USES_THING_URI)) return USES_ATOM;
         if (data === stringToHex(TOOL_THING_URI)) return TOOL_ATOM;
         throw new Error(`Unexpected atomData passed to calculateAtomId: ${data}`);
     };
@@ -80,7 +80,6 @@ describe("ensureAtomForThing", () => {
         wc = makeMockWalletClient();
         mockPin.mockReset();
         mockPin.mockImplementation(async ({name}: {name: string}) => {
-            if (name === "uses") return USES_THING_URI;
             if (name === "Solidity Audit") return TOOL_THING_URI;
             return AGENT_THING_URI;
         });
@@ -254,45 +253,6 @@ describe("ensureAtomForURI", () => {
     });
 });
 
-describe("getOrCreateUsesPredicateAtomId", () => {
-    it("ensures the 'uses' atom on first call, reuses cache on the second", async () => {
-        const pc = makeMockPublicClient();
-        const wc = makeMockWalletClient();
-        mockPin.mockReset();
-        mockPin.mockResolvedValue(USES_THING_URI);
-
-        pc.readContract.mockImplementation(
-            readContractDispatcher({
-                calculateAtomId: makeAtomIdReader(),
-                isTermCreated: makeIsTermCreatedReader(new Set([USES_ATOM])),
-            }),
-        );
-
-        const {getOrCreateUsesPredicateAtomId} = await freshGraph();
-
-        const first = await getOrCreateUsesPredicateAtomId({
-            walletClient: wc,
-            publicClient: pc,
-            pinAuth: PIN_AUTH,
-        });
-        const second = await getOrCreateUsesPredicateAtomId({
-            walletClient: wc,
-            publicClient: pc,
-            pinAuth: PIN_AUTH,
-        });
-
-        expect(first).toBe(USES_ATOM);
-        expect(second).toBe(USES_ATOM);
-        // Pinned once — second call short-circuits on the cached id.
-        expect(mockPin).toHaveBeenCalledTimes(1);
-        // The credential reached the pin, not just the outer signature.
-        expect(mockPin.mock.calls[0][1]).toBe(PIN_AUTH);
-        // No new readContract for the second lookup either.
-        const readCalls = pc.readContract.mock.calls.length;
-        expect(readCalls).toBeLessThanOrEqual(2);
-    });
-});
-
 describe("declareUsesTriple", () => {
     const TRIPLE_ID: Hex = `0x${"73".repeat(32)}`;
 
@@ -302,17 +262,18 @@ describe("declareUsesTriple", () => {
     beforeEach(() => {
         pc = makeMockPublicClient();
         wc = makeMockWalletClient();
+        // Reset, but deliberately give it no implementation: this path must not
+        // reach pinThing at all, which the assertion below checks.
         mockPin.mockReset();
-        mockPin.mockResolvedValue(USES_THING_URI);
     });
 
-    it("creates the triple with the cached 'uses' predicate sandwiched between agent and tool", async () => {
-        // uses atom already exists (skip pin/create); triple id is new
+    it("sandwiches the shared 'uses' predicate between agent and tool", async () => {
         pc.readContract.mockImplementation(
             readContractDispatcher({
                 calculateAtomId: makeAtomIdReader(),
+                // The predicate exists; the triple id does not.
                 isTermCreated: ({args}: {args: readonly unknown[]}) =>
-                    args[0] === USES_ATOM, // uses exists, triple id does not
+                    args[0] === INTUITION_USES_TERM_ID,
                 calculateTripleId: TRIPLE_ID,
                 getTripleCost: TRIPLE_COST,
             }),
@@ -324,7 +285,6 @@ describe("declareUsesTriple", () => {
             toolAtomId: TOOL_ATOM,
             walletClient: wc,
             publicClient: pc,
-            pinAuth: PIN_AUTH,
         });
 
         expect(result.tripleId).toBe(TRIPLE_ID);
@@ -339,10 +299,17 @@ describe("declareUsesTriple", () => {
         };
         expect(call.address).toBe(MULTI_VAULT);
         expect(call.functionName).toBe("createTriples");
-        expect(call.args).toEqual([[AGENT_ATOM], [USES_ATOM], [TOOL_ATOM], [TRIPLE_COST]]);
+        expect(call.args).toEqual([
+            [AGENT_ATOM],
+            [INTUITION_USES_TERM_ID],
+            [TOOL_ATOM],
+            [TRIPLE_COST],
+        ]);
         expect(call.value).toBe(TRIPLE_COST);
         expect(call.chain.id).toBe(intuitionTestnet.id);
         expect(pc.waitForTransactionReceipt).toHaveBeenCalledWith({hash: result.tx});
+        // Nothing is pinned for a predicate: it is not ours to create.
+        expect(mockPin).not.toHaveBeenCalled();
     });
 
     it("returns {created:false} and skips createTriples when the triple already exists", async () => {
@@ -351,7 +318,7 @@ describe("declareUsesTriple", () => {
             readContractDispatcher({
                 calculateAtomId: makeAtomIdReader(),
                 isTermCreated: ({args}: {args: readonly unknown[]}) =>
-                    args[0] === USES_ATOM || args[0] === TRIPLE_ID,
+                    args[0] === INTUITION_USES_TERM_ID || args[0] === TRIPLE_ID,
                 calculateTripleId: TRIPLE_ID,
             }),
         );
@@ -362,10 +329,62 @@ describe("declareUsesTriple", () => {
             toolAtomId: TOOL_ATOM,
             walletClient: wc,
             publicClient: pc,
-            pinAuth: PIN_AUTH,
         });
 
         expect(result).toEqual({tripleId: TRIPLE_ID, created: false});
         expect(wc.writeContract).not.toHaveBeenCalled();
+    });
+});
+
+describe("the write predicate is shared, readable, and semantically right", () => {
+    it("writes on a predicate inside CAPABILITY_PREDICATE_IDS", () => {
+        // The bug this pins: ARP used to mint its own `use` atom, so every
+        // triple and every stake it wrote landed on a node the connector's
+        // capability filter never matches — invisible to this repo's own reads
+        // and to everyone else's. A predicate the read side does not query is
+        // TRUST spent into an orphan node, which is why this is an assertion
+        // and not a comment.
+        expect(INTUITION_CAPABILITY_PREDICATE_IDS).toContain(INTUITION_USES_TERM_ID);
+    });
+
+    it("pins the frozen id rather than resolving a label", () => {
+        // ADR 0015: ids are frozen, never resolved at runtime. Five atoms are
+        // labelled `use`/`uses` on testnet and four on mainnet, so a label
+        // lookup is a coin flip between fragmented nodes.
+        //
+        // ADR 0030: this is the tool-usage node, NOT the published `use`
+        // (`0x9ddda4ac…`), whose objects are 153/158 protocols on mainnet and
+        // 166/166 on testnet. Choosing on meaning over publication is the whole
+        // decision, so the id is asserted literally.
+        expect(INTUITION_USES_TERM_ID).toBe(
+            "0x5c0bde1cc696456c0268248c4656acdf9621fdb39e605bc99b0a83dc8ff6e800",
+        );
+    });
+
+    it("throws rather than minting when the predicate is absent from the chain", async () => {
+        const pc = makeMockPublicClient();
+        const wc = makeMockWalletClient();
+        mockPin.mockReset();
+        pc.readContract.mockImplementation(
+            readContractDispatcher({
+                calculateAtomId: makeAtomIdReader(),
+                isTermCreated: () => false, // nothing exists, predicate included
+                calculateTripleId: `0x${"73".repeat(32)}` as Hex,
+            }),
+        );
+        const {declareUsesTriple, PredicateNotOnChainError} = await freshGraph();
+
+        await expect(
+            declareUsesTriple({
+                agentAtomId: AGENT_ATOM,
+                toolAtomId: TOOL_ATOM,
+                walletClient: wc,
+                publicClient: pc,
+            }),
+        ).rejects.toThrow(PredicateNotOnChainError);
+        // The failure mode this replaces was an on-chain revert after the user
+        // had approved and paid gas. Minting instead is the bug ADR 0030 closes.
+        expect(wc.writeContract).not.toHaveBeenCalled();
+        expect(mockPin).not.toHaveBeenCalled();
     });
 });

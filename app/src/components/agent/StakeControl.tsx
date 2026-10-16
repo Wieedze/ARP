@@ -5,7 +5,7 @@ import type {Hex} from "viem";
 import {useStakeActions} from "../../hooks/use-stake-actions";
 import {INTUITION_MAINNET_CHAIN_ID, mainnetTxUrl} from "../../lib/intuition-mainnet";
 import type {TrustRow} from "../../services/agent-trust";
-import {describePositionCount, formatTrust, truncateMiddle} from "../../services/trust-format";
+import {formatTrust, truncateMiddle} from "../../services/trust-format";
 import {
     MAX_STAKE_WEI,
     MIN_SHARES_TOLERANCE_BPS,
@@ -23,6 +23,12 @@ import {
  * that resubmits, and no code path where arriving at or leaving this route
  * causes a transaction (safeguard 5). `handleConfirm` is reachable from exactly
  * one click.
+ *
+ * The heading names the provider, and the confirmation spells the claim out in
+ * full along with the ceiling and the fact that this is real TRUST. A reader
+ * can land here straight from a URL with no assessment block scrolled above,
+ * so nobody should have to infer what they are about to put real money behind
+ * — but that sentence belongs at the step where it bites, not over the form.
  */
 
 type Phase =
@@ -169,12 +175,9 @@ export function StakeControl({
 
     return (
         <section className="mt-6 border-t border-[color:var(--color-border)] pt-5">
-            <h4 className="font-medium">Take a position</h4>
+            <h4 className="font-medium">Take a position on {row.providerName}</h4>
             <p className="mt-1 text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)] max-w-[60ch]">
-                A deposit into this claim's vault on Intuition mainnet. Real TRUST, not recoverable
-                by this panel. Up to{" "}
-                <span className="font-mono">{formatTrust(MAX_STAKE_WEI)} TRUST</span> per
-                transaction.
+                Your deposit is the market's confidence in this provider's assessment of this agent.
             </p>
 
             {!isConnected ? (
@@ -391,12 +394,14 @@ function ConfirmStep({
                 <span className="font-mono">{formatTrust(quote.assets)} TRUST</span> to{" "}
                 <span className="font-medium">{SIDE_COPY[quote.side].label.toLowerCase()}</span> the
                 claim that <span className="font-medium">{row.providerName}</span> is a trust
-                provider for this agent. Real value, on Intuition mainnet.
+                provider for this agent. Real TRUST on Intuition mainnet, not recoverable by this
+                panel, and capped at{" "}
+                <span className="font-mono">{formatTrust(MAX_STAKE_WEI)} TRUST</span> per
+                transaction.
             </p>
 
             <dl className="mt-4 grid grid-cols-1 sm:grid-cols-[10rem_1fr] gap-y-2 gap-x-4 text-[length:var(--text-body-sm)]">
                 <Term label="Vault" value={truncateMiddle(quote.termId, 12, 8)} />
-                <Term label="Curve" value={quote.curveId.toString()} />
                 <Term
                     label="Positions there"
                     value={
@@ -404,7 +409,7 @@ function ConfirmStep({
                             ? "not reported"
                             : positions === 0
                               ? "none — you would be the first"
-                              : describePositionCount(positions)
+                              : positions.toLocaleString("en-US")
                     }
                 />
                 <Term label="Shares minted" value={formatTrust(quote.expectedShares)} />

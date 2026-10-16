@@ -1,9 +1,9 @@
 import {formatEther} from "viem";
+import {ABSENT_SIGNATURE_REASON} from "@arp-protocol/erc8004";
 import type {
     AgentAtomMarket,
     AssessmentFetchError,
     FreshnessVerdict,
-    MarketSide,
     SignatureVerdict,
 } from "@arp-protocol/erc8004";
 
@@ -95,16 +95,33 @@ export function describeFreshness(verdict: FreshnessVerdict): FreshnessCopy {
 
 export type SignatureCopy = {
     label: string;
-    detail: string;
+    /**
+     * The one fact the label does not already carry.
+     *
+     * For `verified` and `mismatch`, the addresses involved. For `unverified`,
+     * the connector's own reason — except the absent-signature one, which is
+     * the only reason that merely restates the label in the document's field
+     * names and is therefore the only one that can be dropped without losing a
+     * fact. `no strategy is confirmed for provider …` is a statement about
+     * *this package's* limits on a document that **is** signed, and a reader
+     * who cannot tell it from "they never signed" has lost the thing the panel
+     * exists to show.
+     */
+    detail: string | null;
     tone: "verified" | "mismatch" | "unverified";
 };
 
 /**
- * The connector's verdict, relayed verbatim.
+ * The connector's verdict, relayed verbatim but for one suppressed reason.
  *
  * There is no branch here that turns an `unverified` into anything warmer.
- * `unverified` means the signature could not be checked — usually because
- * there is none — and saying so is the honest answer about a stranger.
+ * `unverified` means the signature could not be checked — often because there
+ * is none — and saying so is the honest answer about a stranger.
+ *
+ * The absent-signature reason is dropped as redundant with the label (task 15).
+ * Every other reason is relayed, because each says something the label does
+ * not: an unsupported algorithm, a malformed EIP-712 block, or a provider whose
+ * encoding this package has never confirmed.
  */
 export function describeSignature(verdict: SignatureVerdict): SignatureCopy {
     if (verdict.status === "verified") {
@@ -121,36 +138,19 @@ export function describeSignature(verdict: SignatureVerdict): SignatureCopy {
             tone: "mismatch",
         };
     }
-    return {label: "Not verified", detail: verdict.reason, tone: "unverified"};
-}
-
-/**
- * How many positions hold this side of a claim, and how many distinct
- * accounts that is.
- *
- * Never a bare market cap. Every vault on this surface currently holds one or
- * two positions, so a lone number would suggest depth that is not there. In
- * the MultiVault an account holds at most one position per vault, so the
- * position count *is* the distinct-staker count — stated rather than assumed.
- */
-export function describePositionCount(count: number): string {
-    return count === 1
-        ? "1 position · 1 distinct staker"
-        : `${count} positions · ${count} distinct stakers`;
-}
-
-export function describeStakers(side: MarketSide): string {
-    const count = side.positionCount;
-    if (count === null) return "position count not reported by the indexer";
-    if (count === 0) return "no positions · no distinct stakers";
-    return describePositionCount(count);
+    const isRedundant = verdict.reason === ABSENT_SIGNATURE_REASON;
+    return {
+        label: "Not verified",
+        detail: isRedundant ? null : verdict.reason,
+        tone: "unverified",
+    };
 }
 
 /**
  * Positions on an agent's own atom.
  *
- * Deliberately *not* phrased as distinct stakers, unlike `describeStakers`.
- * `AgentAtomMarket` sums across every bonding curve so that its position count
+ * Deliberately *not* phrased as distinct stakers, unlike `StakerCount` on the
+ * panel. `AgentAtomMarket` sums across every bonding curve so that its position count
  * and its market cap describe the same thing, and that sum counts an account
  * staked on two curves twice. The curve count is stated so the reader can see
  * where the number came from.
@@ -162,21 +162,6 @@ export function describeAtomPositions(market: AgentAtomMarket): string {
     const positions = `${count} position${count === 1 ? "" : "s"}`;
     if (curves === null) return positions;
     return `${positions} · ${curves} curve${curves === 1 ? "" : "s"}`;
-}
-
-const CHAIN_NAMES: Record<number, string> = {
-    1: "Ethereum",
-    56: "BSC",
-    8453: "Base",
-};
-
-/**
- * `Base 8453`, or just the id for a chain we have no name for. Never a guess —
- * an unknown chain id renders as itself rather than as a plausible name.
- */
-export function describeChain(chainId: number): string {
-    const name = CHAIN_NAMES[chainId];
-    return name === undefined ? String(chainId) : `${name} ${chainId}`;
 }
 
 /**
@@ -224,4 +209,28 @@ export function describeFetchError(error: AssessmentFetchError): string {
         case "malformed":
             return `The document could not be parsed: ${error.message}`;
     }
+}
+
+/**
+ * The digits shown beside the person mark.
+ *
+ * Shared with `stakerLabel` so the visible figure and the accessible name can
+ * never disagree on formatting — they did briefly, one grouped and one not.
+ */
+export function formatStakerCount(count: number): string {
+    return count.toLocaleString("en-US");
+}
+
+/**
+ * The accessible name for a staker count.
+ *
+ * `StakerCount` renders `role="img"`, which makes the span a leaf in the
+ * accessibility tree: the visible digits are not announced, so this string is
+ * the only thing a screen reader gets and it has to carry both the number and
+ * the noun. Pure and exported so the singular/plural/zero cases stay tested —
+ * `app/` has no DOM test environment (ADR 0011), so a component-level
+ * assertion is not available.
+ */
+export function stakerLabel(count: number): string {
+    return `${formatStakerCount(count)} distinct staker${count === 1 ? "" : "s"}`;
 }

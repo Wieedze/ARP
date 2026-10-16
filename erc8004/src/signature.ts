@@ -210,6 +210,19 @@ function computeContentHash(document: unknown, excludes: readonly string[]): Hex
     }
 }
 
+/**
+ * The reason emitted when a document carries no signature block at all.
+ *
+ * Exported because a consumer may legitimately want to render this case
+ * differently from every other `unverified`: it is the only reason that merely
+ * restates the verdict in the document's own field names, and so the only one a
+ * UI can drop without losing a fact. Every other reason says something about the
+ * document — or about this package's limits — that the `unverified` label does
+ * not carry. Compare against this constant rather than the literal, so the
+ * string stays in one place.
+ */
+export const ABSENT_SIGNATURE_REASON = "no signature block at assessment.signature";
+
 function unverified(
     reason: string,
     declaredSigner: `0x${string}` | null,
@@ -238,7 +251,7 @@ export async function verifyAssessmentSignature(
 ): Promise<SignatureVerdict> {
     const signature = readPath(document, ["assessment", "signature"]);
     if (!isRecord(signature)) {
-        return unverified("no signature block at assessment.signature", null);
+        return unverified(ABSENT_SIGNATURE_REASON, null);
     }
 
     const declaredSignerRaw = readString(signature, "signer");
