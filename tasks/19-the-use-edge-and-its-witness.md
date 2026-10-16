@@ -80,6 +80,52 @@ itself make these triples readable — the subject is the other half, and ADR 00
 identities are joined only by a `same as` triple. Check that edge exists for ARP's agents before
 claiming this gate.
 
+## Step 1b — The join does not exist. **Decide this before step 2.** Blocking.
+
+Measured 2026-10-16, both chains, read-only:
+
+|                                                         | mainnet | testnet                    |
+| ------------------------------------------------------- | ------- | -------------------------- |
+| `same as` edges whose object is a `caip10:` atom        | **0**   | **0**                      |
+| edges of **any** predicate pointing at a `caip10:` atom | —       | **0** (over 20 such atoms) |
+
+So the three facts are:
+
+1. ARP writes `(caip10 atom, uses, tool)` — the 21 stranded triples all have a `caip10:` subject.
+2. `getCapabilities` keys on `resolveSubject`, which returns the atom X satisfying
+   `(X, same as, <CAIP-19 of the ERC-8004 token>)` — the registration-derived atom.
+3. **Nothing links the two.** ADR `0026` specifies
+   `(canonical agent atom, same as, CAIP-10 of the operating account)` and
+   `app/src/services/agent-import.ts:397` implements it, but **no such edge exists on either chain**.
+   The import path passes its tests and has never written a real edge.
+
+Fixing the predicate was necessary and is not sufficient. The subject is the other half, and the
+bridge the subject mismatch would have been crossed by was never built.
+
+### Two viable options. This needs an ADR either way.
+
+**A — write the edge on the registration-derived agent atom.** A consumer looks up an ERC-8004
+agent, not a CAIP-10 account, so the agent's published identity is where a claim about the agent
+belongs; the operating account is how it _acts_, not what it _is_. The edge then needs no join at
+all and `getCapabilities` reads it unchanged.
+
+_Cost:_ ARP's own agents have **no ERC-8004 identity** — `ARP Agent #1` and the two runtime accounts
+exist only as `caip10:` atoms. Under A they cannot carry a `uses` edge until they are minted into the
+canonical registry, which is ADR `0027`'s path and a real cost per agent.
+
+**B — write on the operating account, and teach the reader to follow `same as`.** Matches where the
+evidence actually comes from: the stake and the transaction are the operating account's. Needs the
+import's `same as` edge to be written for real, plus a connector change so `getCapabilities` unions
+the subject's own triples with those of any atom it is `same as` to.
+
+_Cost:_ two writes instead of one, a public connector change, and every reader that does not follow
+`same as` still cannot see the edges — including third parties, which is the same discoverability
+problem ADR `0030` accepted for the predicate.
+
+**Do not pick by taste.** Settle it on whether a `uses` edge is a claim about the identity or a record
+of the account's action, and write the ADR before step 2. Measure first whether any cohort agent has
+an operating-account link at all — the answer today is no, for anyone.
+
 ## Step 2 — Tools are agents, so most edges need no new atom
 
 In ERC-8004 plus MCP the tool layer and the agent layer are the same layer. `8453:2340` declares six
