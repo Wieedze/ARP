@@ -6,7 +6,12 @@ import type {DeclaredEndpoint, ProbeOutcome, ProbeRequest} from "./types.js";
  */
 export const DEFAULT_USER_AGENT = "ARP-verifier/0.1 (+https://github.com/Wieedze/ARP)";
 
-export const DEFAULT_TIMEOUT_MS = 8_000;
+/**
+ * Probe timeout. Shorter than `http.ts`'s `DEFAULT_TIMEOUT_MS` (10 s) on purpose: that one is for
+ * endpoints we have a relationship with, this one is for tens of thousands of strangers' servers,
+ * and the name is distinct so the two cannot be confused at an import site.
+ */
+export const DEFAULT_PROBE_TIMEOUT_MS = 8_000;
 
 /** The MCP revision the handshake declares. Pinned, not latest: a prober must be reproducible. */
 export const MCP_PROTOCOL_VERSION = "2025-06-18";
@@ -46,7 +51,7 @@ async function send(
     options: ProbeOptions,
 ): Promise<{response: Response; body: string} | {error: unknown}> {
     const doFetch = options.fetch ?? globalThis.fetch;
-    const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+    const timeoutMs = options.timeoutMs ?? DEFAULT_PROBE_TIMEOUT_MS;
     try {
         const response = await doFetch(request.url, {
             ...init,
