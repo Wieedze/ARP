@@ -1,7 +1,10 @@
 # Task 18 — `strict` is off in the app, and has been since the first commit
 
-> **Status: NOT STARTED** (recorded 2026-10-16, from the Task 15 UI review).
-> Surfaced out of scope and not fixed in that task. **The fix is one line and costs zero errors.**
+> **Status: COMPLETE** 2026-10-16 · commit `6b351ee` · post-mortem
+> `.claude/learning/15-strict-is-off-in-the-app.md` · `task-verifier` PASS.
+> Measured cost was indeed zero errors. Both `tsconfig.app.json` and `tsconfig.node.json` got the
+> flag. **The `scripts/` gate gap is NOT closed by this** — it is not zero-cost and now has its own
+> task, `tasks/21`.
 
 ## The finding
 

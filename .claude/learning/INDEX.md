@@ -2,7 +2,7 @@
 
 **Generated** 2026-10-16 by `scripts/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-14 entries, one per completed task. Written by `task-verifier` on a pass.
+15 entries, one per completed task. Written by `task-verifier` on a pass.
 
 | # | task | verdict | entry |
 | --- | --- | --- | --- |
@@ -20,3 +20,4 @@
 | [12](12-import-existing-erc8004-agent.md) | `tasks/11-import-existing-erc8004-agent.md` | PASS | Import an existing ERC-8004 agent |
 | [13](13-agent-panel-tabs.md) | `tasks/12-agent-panel-tabs.md` | PASS (second pass; first pass held on an open `ui-reviewer` gate, not on code) | Tabs on the agent panel, one per provider |
 | [14](14-strip-the-panel-copy.md) | `tasks/15-strip-the-panel-copy.md` | PASS | Strip the panel's copy down |
+| [15](15-strict-is-off-in-the-app.md) | `tasks/18-strict-is-off-in-the-app.md` | PASS | `strict` is off in the app |

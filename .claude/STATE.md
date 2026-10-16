@@ -1,6 +1,6 @@
 # Project state
 
-**Updated** 2026-10-16. Hand-maintained — a task does not close without updating this file
+**Updated** 2026-10-16 (task 18 closed). Hand-maintained — a task does not close without updating this file
 (`workflow.md`, task-close protocol).
 
 Read this after `CLAUDE.md` and before anything else. It replaces reading 31 ADRs and 14
@@ -21,8 +21,8 @@ it, `docs/12` wins and the thing below has drifted.
 
 ## Where the work is right now
 
-**Branch** `feat/agent-panel-tabs`, **31 commits** ahead of `main` and of `origin/main`, **not
-pushed**. Recount with `git rev-list --count main..HEAD` rather than trusting this line — it was
+**Branch** `feat/agent-panel-tabs`, **34 commits** ahead of `main` and of `origin/main`, **pushed** — `origin/feat/agent-panel-tabs` matched local at `4b205d3`; commits after that are
+local again. Recount with `git rev-list --count main..HEAD` rather than trusting this line — it was
 wrong by 17 within one commit of being written, which is the failure `claims.md` exists for.
 
 **Blocked on one thing:** no GitHub credential is reachable from the agent session. `git push` fails
@@ -48,14 +48,15 @@ and task 20 commits and does not describe them.**
 | 14     | contrast below AA                                 | open — `--color-fg-40` at 3.66:1                                                                              |
 | 15     | strip the panel copy                              | done, verified                                                                                                |
 | 16     | the agent SDK                                     | open — **needs rewriting around MCP**, see `docs/13` phase 3                                                  |
-| 17     | the external verifier                             | open — **build this next after 18**                                                                           |
-| 18     | `strict` is off in the app                        | open — **one line, measured at zero errors; do it first**                                                     |
+| 17     | the external verifier                             | open — **next**                                                                                               |
+| 18     | `strict` is off in the app                        | done, verified (`6b351ee`) — cost was indeed zero errors                                                      |
 | 19     | the `use` edge and its witness                    | step 1 done, steps 2–5 open; gate not demonstrated                                                            |
 | 20     | a tool renders as a protocol                      | done, verified                                                                                                |
+| 21     | `scripts/` is outside every gate                  | open — **not** zero-cost, unlike 18; owns the gap 18 did not reach                                            |
 
-**Recommended order**, from two independent reviewers: **18 → 17 → 19 steps 2–5 → 16**, with 13 and
-14 cleared alongside 18. Task 18's zero-error measurement decays with every commit written under the
-looser flag.
+**Recommended order**: **17 → 19 steps 2–5 → 16**. Task 18 is done. Tasks 13, 14 and 21 are still
+open — the note that 13 and 14 would be "cleared alongside 18" did not happen, and 21 did not exist
+when that order was written.
 
 ## The plan, in three phases
 
@@ -75,15 +76,16 @@ the tool who used it.
 
 ## Known defects, not yet fixed
 
-| what                                                                                                                                               | where               | severity                                                                      |
-| -------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------- | ----------------------------------------------------------------------------- |
-| `scripts/` is outside **every** gate — `tsc -b` covers only `app/src`, no eslint config at the repo root, `bun build` skips unused locals          | recorded in task 19 | real; it already hid a dead variable in the two files a fix existed to repair |
-| `strict` absent from `app/tsconfig.app.json` since the first commit                                                                                | task 18             | every "tsc clean" since task 01 meant less than it read                       |
-| `ensureAtomForURI` mints an atom for any `ipfs://` string without validating it is a CID; 18 permanent atoms with fabricated CIDs exist on testnet | task 20 appendix    | unrecoverable per occurrence                                                  |
-| `--color-fg-40` at 3.66:1, below AA                                                                                                                | task 14             | accessibility                                                                 |
-| `code.md:86` requires a test framework the repo does not have                                                                                      | task 13             | an unsatisfiable rule                                                         |
-| 21 triples stranded on a predicate ARP minted and abandoned                                                                                        | ADR 0030            | testnet only, 2.1e-11 tTRUST; **not migrable**, Intuition has no deletion     |
-| `identity-registry.ts` declares `totalAgents()`, which reverts on the canonical registry                                                           | unrecorded          | needs a task                                                                  |
+| what                                                                                                                                               | where            | severity                                                                                                                                                                                           |
+| -------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `scripts/` is outside **every** gate — `tsc -b` covers only `app/src`, no eslint config at the repo root, `bun build` skips unused locals          | **task 21**      | live: `scripts/seed.ts:34` imports `decodeEventLog` and never uses it, plus five implicit `any`s. Not zero-cost to close — two ad-hoc configs disagreed (6 vs 24), so measure with a committed one |
+| `app/vitest.config.ts` is in neither tsconfig project                                                                                              | task 21          | measured at zero errors to add; same shape as task 18, missed by it                                                                                                                                |
+| `bun run format:check` fails on 190 files, long-standing                                                                                           | task 21          | a gate that always fails is not a gate; citing it green would be a `claims.md` check-4 error                                                                                                       |
+| `ensureAtomForURI` mints an atom for any `ipfs://` string without validating it is a CID; 18 permanent atoms with fabricated CIDs exist on testnet | task 20 appendix | unrecoverable per occurrence                                                                                                                                                                       |
+| `--color-fg-40` at 3.66:1, below AA                                                                                                                | task 14          | accessibility                                                                                                                                                                                      |
+| `code.md:86` requires a test framework the repo does not have                                                                                      | task 13          | an unsatisfiable rule                                                                                                                                                                              |
+| 21 triples stranded on a predicate ARP minted and abandoned                                                                                        | ADR 0030         | testnet only, 2.1e-11 tTRUST; **not migrable**, Intuition has no deletion                                                                                                                          |
+| `identity-registry.ts` declares `totalAgents()`, which reverts on the canonical registry                                                           | unrecorded       | needs a task                                                                                                                                                                                       |
 
 ## Decisions that govern everything
 

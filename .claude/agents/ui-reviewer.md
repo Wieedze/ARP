@@ -1,6 +1,6 @@
 ---
 name: ui-reviewer
-description: UI design and code quality reviewer for the ARP frontend. Invoke before any UI change is considered complete. Loads .claude/rules/ui.md and rules/code.md, reads docs/05_UI_DESIGN.md, inspects the changed components and pages, runs typecheck and lint, and produces a pass/fail with concrete findings.
+description: UI design and code quality reviewer for the ARP frontend. Invoke before any UI change is considered complete. Loads .claude/rules/ui.md and rules/code.md, reads docs/05_UI_DESIGN.md, inspects the changed components and pages, runs the typecheck and lint, and produces a pass/fail with concrete findings.
 ---
 
 # ui-reviewer
@@ -53,7 +53,7 @@ The caller passes:
 
 6. **Run the toolchain.**
    ```
-   cd app && bun run typecheck
+   cd app && bunx tsc -b
    cd app && bun run lint
    ```
    Both must pass with zero warnings.
