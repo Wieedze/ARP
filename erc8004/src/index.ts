@@ -151,3 +151,31 @@ export type {
     SourceError,
     TrustProvider,
 } from "./types.js";
+
+/**
+ * The external verifier — reads what an agent published about itself and checks whether it holds up.
+ *
+ * Needs no cooperation from the agent being checked. `readDeclaredEndpoints` and `classifyEndpoint`
+ * are pure functions of a registration document: no network, no clock, no configuration.
+ *
+ * The one thing a consumer must get right: `not-checkable` is **not** a failure. 82% of declared
+ * endpoints in the cohort land there, so rendering it beside a confirmed defect would mass-slander
+ * the cohort. `partitionByCheckability` exists so that split does not get re-implemented per caller.
+ */
+export {
+    classifyEndpoint,
+    partitionByCheckability,
+    readDeclaredEndpoints,
+} from "./verify/declaration.js";
+
+export type {
+    DeclarationSpelling,
+    DeclaredEndpoint,
+    DocumentOutcome,
+    EndpointClassification,
+    KnownProtocol,
+    NotCheckableCode,
+    ProbedEndpoint,
+    ProbeOutcome,
+    ProbeRequest,
+} from "./verify/types.js";
