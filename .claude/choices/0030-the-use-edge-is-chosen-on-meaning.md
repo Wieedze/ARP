@@ -1,8 +1,9 @@
-# ADR 0030 — The `use` edge is chosen on meaning, not on publication
+# 0030 — The `use` edge is chosen on meaning, not on publication
 
-**Date**: 2026-10-16
-**Status**: Accepted
-**Supersedes**: the choice recorded in commit `5e1d5d2`, which this ADR reverses.
+**Status:** Accepted
+**Date:** 2026-10-16
+**Triggered by:** `intuition-integrator` review of commit `5e1d5d2`, which this ADR reverses. The
+commit chose the published predicate without measuring what its existing edges assert.
 
 ## Context
 

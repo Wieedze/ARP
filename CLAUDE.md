@@ -18,14 +18,18 @@ If three layers conflict, the higher-numbered (= more recent) wins. The original
 ## Read order at the start of every task
 
 1. This file.
-2. The task file in `tasks/`. Note its `Required skills` and `Do not do in this task` sections.
-3. The three source-of-authority docs above, in order.
-4. `docs/01_PROJECT_CONTEXT.md` for framing.
-5. The rules from `.claude/rules/` that match the task type (see routing table below).
-6. The global skills listed in the task's `Required skills` section.
-7. `.claude/skills/arp/SKILL.md`.
-8. Scan `.claude/choices/` for ADRs that touch this area.
-9. Scan `.claude/learning/` for post-mortems on similar prior tasks.
+2. **`.claude/STATE.md`** — where the project actually is: branch, task table, known defects, the
+   recommended order, and the four claim checks. One read instead of 31 ADRs and 14 post-mortems.
+   It is hand-maintained, so a task does not close without updating it.
+3. The task file in `tasks/`. Note its `Required skills` and `Do not do in this task` sections.
+4. The three source-of-authority docs above, in order.
+5. `docs/01_PROJECT_CONTEXT.md` for framing.
+6. The rules from `.claude/rules/` that match the task type (see routing table below).
+7. The global skills listed in the task's `Required skills` section.
+8. `.claude/skills/arp/SKILL.md`.
+9. Scan `.claude/choices/INDEX.md` for ADRs that touch this area — generated, so rerun
+   `scripts/build-claude-index.ts` after adding one.
+10. Scan `.claude/learning/INDEX.md` for post-mortems on similar prior tasks.
 
 ## Routing table — what to load by task type
 
@@ -38,8 +42,8 @@ If three layers conflict, the higher-numbered (= more recent) wins. The original
 | Intuition atoms / triples / queries / staking                | `code.md`                                                         | `intuition` (vendored at `.claude/skills/intuition/` — includes `operations/` and `reference/` subdirs)                                                                                                                                                                                                                                                                      | `arp`                        | `intuition-integrator`                                          |
 | Deployment scripts                                           | `code.md`, `solidity.md`, `security.md`                           | `ethskills`                                                                                                                                                                                                                                                                                                                                                                  | `arp`                        | `contract-reviewer` (review the script, not just contracts)     |
 | Docs only                                                    | —                                                                 | —                                                                                                                                                                                                                                                                                                                                                                            | `arp` (for tone and framing) | —                                                               |
-| Any task — at the end                                        | `workflow.md`                                                     | —                                                                                                                                                                                                                                                                                                                                                                            | —                            | `task-verifier` (**mandatory**)                                 |
-| Any task — at the end                                        | `workflow.md`                                                     | —                                                                                                                                                                                                                                                                                                                                                                            | —                            | `task-verifier` requires the evidence-ladder answer (see below) |
+| Any task — at the end                                        | `workflow.md`, `claims.md`                                        | —                                                                                                                                                                                                                                                                                                                                                                            | —                            | `task-verifier` (**mandatory**)                                 |
+| Any task — at the end                                        | `workflow.md`, `claims.md`                                        | —                                                                                                                                                                                                                                                                                                                                                                            | —                            | `task-verifier` requires the evidence-ladder answer (see below) |
 
 Load only rules that match. Loading the full rules folder for every task defeats the purpose of splitting them.
 
@@ -61,6 +65,19 @@ Every completion report answers one extra question in one sentence:
 The ladder is `docs/09_POSITIONING_AND_PLAN.md` §3 — asserted, rated, staked, proven. ARP's position is the last two. If a task cannot name a tier, it has drifted and needs review before merging. The `task-verifier` agent enforces this.
 
 This replaces the hackathon narrative-preservation check (ADR `0022`). Task files 02b–05b still reference the old check in their headers; they are complete and left as historical record.
+
+### Claim check (every task, every answer with a number in it)
+
+`.claude/rules/claims.md`, ADR `0031`. Added because six statements in one session were wrong while
+every underlying measurement was right — the break was the step from a measurement to a sentence.
+
+1. **Reachability before blast radius.** A wrong branch nothing reaches is _latent_, not live. Say which.
+2. **One number, one context.** Name the chain, the date, the population. Never sum across chains.
+3. **Cite third parties** to a file and a line, or do not write the claim.
+4. **Confirm a gate's scope covers your change** before calling it green. `tsc -b` over `app/src`
+   says nothing about `scripts/`.
+
+Commit the script, not the number. Quote the interval, not the point, when n is small.
 
 ## When to write an ADR
 
@@ -109,6 +126,7 @@ ARP/
 ├── deployments/                       per-chain deployment records
 └── .claude/                           Claude operating layer
     ├── README.md                      (this directory explained)
+    ├── STATE.md                       ← **read this second, after CLAUDE.md**
     ├── rules/                         domain-split rules
     │   ├── 00-INDEX.md
     │   ├── code.md
@@ -116,6 +134,7 @@ ARP/
     │   ├── ui.md
     │   ├── security.md
     │   ├── workflow.md
+    │   ├── claims.md                  (every task, at the end — ADR 0031)
     │   └── metamask-delegation.md     (Tasks 02b, 03b, 04b)
     ├── skills/
     │   ├── arp/SKILL.md
@@ -129,9 +148,11 @@ ARP/
     │   ├── ui-reviewer.md
     │   └── intuition-integrator.md
     ├── learning/                      append-only post-mortems
+    │   ├── INDEX.md                   (generated — scripts/build-claude-index.ts)
     │   ├── README.md
     │   └── TEMPLATE.md
     └── choices/                       append-only ADRs
+        ├── INDEX.md                   (generated — scripts/build-claude-index.ts)
         ├── README.md
         ├── TEMPLATE.md
         ├── 0001-claude-meta-architecture.md
