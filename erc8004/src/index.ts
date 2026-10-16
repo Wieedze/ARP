@@ -193,3 +193,20 @@ export type {
     ProbeOutcome,
     ProbeRequest,
 } from "./verify/types.js";
+
+/**
+ * A tool's standing, as the sum of what agents put behind using it.
+ *
+ * The read half of `docs/12`'s mechanism — an agent stakes on the modules it used, which builds
+ * reputation for the tool as well as the agent. Until this existed the `uses` edges were a write
+ * path with no reader.
+ *
+ * Keyed by atom id rather than `AgentRef`, because a tool is not always an agent. Where it is (the
+ * common case in ERC-8004 plus MCP, `docs/14`), resolve its atom through the identity path first.
+ *
+ * **Never render `totals.supportAssets` without `totals.supportPositions`.** Live on 2026-10-16,
+ * GitHub shows 22.59 TRUST across 6 positions of which one is 22.44: the figure alone reads as a
+ * market when it is one account's conviction. ADR 0023.
+ */
+export {getToolUsage} from "./tool-usage.js";
+export type {ToolUsage, ToolUsageConfig, ToolUsageEdge} from "./tool-usage.js";

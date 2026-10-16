@@ -123,7 +123,7 @@ export function mapProviderClaim(row: unknown): ProviderClaim | null {
     };
 }
 
-function mapMarketSide(side: unknown): MarketSide {
+export function mapMarketSide(side: unknown): MarketSide {
     const vaults = isRecord(side) && Array.isArray(side["vaults"]) ? side["vaults"] : [];
     const vault = vaults.length > 0 ? vaults[0] : null;
     return {

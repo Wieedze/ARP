@@ -19,13 +19,33 @@ Without it the `uses` edges are a write path with no reader, and nobody can act 
 
 ## What bounds it
 
-**194 `uses` triples against 88,243 agents** (measured 2026-10-16,
-`scripts/measure-predicate-edges.ts`). The tool-reputation surface does not exist to be joined — ARP
-creates it. So the first version has almost nothing to show, and the design has to be honest about
-that rather than padded.
+**Corrected 2026-10-16.** An earlier version of this file said the surface does not exist. That was
+the _agent_-side figure — 194 `uses` triples against 88,243 agents — and it is the wrong number for
+this task. Measured on the **tool** side, by walking the objects of those edges:
 
-**An empty state that explains what would be there and how to make it appear**, per `rules/ui.md`.
-Not a marketing pitch, and not a chart of zeroes.
+|                                                     |                                                                      |
+| --------------------------------------------------- | -------------------------------------------------------------------- |
+| distinct atoms that are the object of a `uses` edge | **84**                                                               |
+| of those, carrying at least one position            | **64**                                                               |
+| largest support on one tool                         | **22.69 TRUST** (Obsidian)                                           |
+| a tool with real opposition                         | IPFS — 0.10 TRUST for across 10 positions, **0.03 against across 3** |
+
+So the surface exists in miniature, and the disagreement mechanism has already been used at least
+once. The first version has real data to show.
+
+**Concentration is the thing to design for, not emptiness.** GitHub shows 22.59 TRUST across 6
+positions — **of which one position is 22.44**. The figure alone reads as a market when it is one
+account's conviction. So a weight never renders without its position count, and ideally not without
+its spread.
+
+**And one tool demonstrates the whole ladder at once.** IPFS's seven incoming edges include
+`(Infura, uses, IPFS)`, `(Fleek, …)` and `(Pinata, …)` with **zero** stake — free assertions, which
+`docs/14` puts at the bottom as _nothing_ — beside `(Relics by Intuition, …)` at 0.08 across 8
+positions, with a counter side. Use it as the design fixture: if those three render like the fourth,
+the page has failed.
+
+An empty state is still needed for the other ~88,000 atoms nobody has declared, per `rules/ui.md`:
+it explains what would be there and how to make it appear, and is not a marketing pitch.
 
 ## What a tool is, mechanically
 
@@ -42,8 +62,10 @@ each edge read both vaults.
 
 ## Do
 
-1. A service that, given a tool's atom id, returns its incoming `uses` edges with each edge's subject
-   (the agent), its vault and its counter-vault. Pure TypeScript, no React — `rules/code.md`.
+1. ~~A service that, given a tool's atom id, returns its incoming `uses` edges with each edge's
+   subject (the agent), its vault and its counter-vault.~~ **DONE** — `getToolUsage` in
+   `erc8004/src/tool-usage.ts`, exported from the connector, 10 tests, verified against live mainnet
+   on Obsidian, GitHub and IPFS.
 2. A route and a page. Two columns per `rules/ui.md`: identity left, the edges right. Dense list,
    mono for ids and amounts, hairline borders.
 3. **Render the provenance tier of each edge**, from `docs/14`'s ladder: a payment or an on-chain call
@@ -52,7 +74,8 @@ each edge read both vaults.
    renders the bottom row like the others has made things worse than before it existed.
 4. Link it from the agent panel: an agent's `uses-tool` capabilities become links to the tool page.
    That edge already renders after `tasks/20` — it just goes nowhere.
-5. The empty state, written before the populated one. It is what almost every tool will show.
+5. The empty state, for the ~88,000 atoms with no incoming edge. Not "before the populated one" —
+   that instruction was based on the wrong figure; there is real data for the populated case.
 
 ## Out of scope
 
