@@ -3,8 +3,11 @@
 **Task:** `tasks/15-strip-the-panel-copy.md`
 **Completed:** 2026-10-16
 **Commit:** `3689e19` (fixes) on `feat/agent-panel-tabs`; implementation `7ccf585`..`99dafd8`
-**Verifier verdict:** PASS (second pass; the first held on an open `ui-reviewer` gate that had in
-fact already returned PASS — the two reviews ran concurrently, so the verifier could not see it)
+**Verifier verdict:** `ui-reviewer` PASS at `3689e19`. `task-verifier` second pass **pending** — its
+first pass held on an open `ui-reviewer` gate that had in fact already returned PASS, because the two
+reviews ran concurrently and the verifier could not see it. Its other two punch-list items (the ADR
+bullet, the ladder sentence) are closed in `d8418b8`. **This line is updated when the verdict
+arrives; do not read the task as verified until it says so.**
 
 ## What shipped
 
