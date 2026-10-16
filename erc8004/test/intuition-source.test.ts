@@ -265,11 +265,12 @@ describe("intuitionSource.getCapabilities", () => {
         const mixed = intuitionSource({
             graphqlUrl: INTUITION_URL,
             fetch: async (input, init) => {
+                // Dispatch on the operation name, not on whether the serialised
+                // body happens to contain the predicate ids: that coupling breaks
+                // the test if the transport ever inlines variables or adopts
+                // persisted queries, for a reason unrelated to bucketing.
                 const body = String(init?.body ?? "");
-                if (!body.includes("as_subject_triples") && !body.includes("triples(")) {
-                    return fixtureFetch()(input, init);
-                }
-                if (!body.includes(USE) || !body.includes(USES)) {
+                if (!body.includes("AgentCapabilities")) {
                     return fixtureFetch()(input, init);
                 }
                 return new Response(
@@ -286,7 +287,9 @@ describe("intuitionSource.getCapabilities", () => {
         const capabilities = await mixed.getCapabilities(CLAWNCH);
         expect(capabilities.protocols.map((entry) => entry.label)).toEqual(["MCP"]);
         expect(capabilities.tools.map((entry) => entry.label)).toEqual(["Obsidian"]);
-        expect(capabilities.protocols.map((entry) => entry.relation)).toEqual(["uses-protocol"]);
+        expect(capabilities.protocols.map((entry) => entry.relation)).toEqual([
+            "supports-protocol",
+        ]);
         expect(capabilities.tools.map((entry) => entry.relation)).toEqual(["uses-tool"]);
     });
 

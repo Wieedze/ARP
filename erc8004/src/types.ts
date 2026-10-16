@@ -132,12 +132,14 @@ export type CapabilityRelation =
     /**
      * `use` (`0x9ddda4ac…`) — "supports this protocol". Named by meaning rather
      * than by the predicate's label, because `use` and `uses` are two different
-     * claims whose labels differ by one letter. Measured 2026-10-16: 153 of its
+     * claims whose labels differ by one letter. It deliberately drops the `uses`
+     * stem entirely: a `uses-protocol` / `uses-tool` pair would have
+     * reintroduced a one-letter discriminator, which is the bug. Measured 2026-10-16: 153 of its
      * 158 mainnet edges and 166 of 166 on testnet have a protocol as the object
      * (A2A, MCP, OASF), and Appendix B's object table for it is five standards,
      * enumerated and closed. ADR 0030.
      */
-    | "uses-protocol"
+    | "supports-protocol"
     /**
      * `uses` (`0x5c0bde1c…`) — "this entity uses this tool". Zero of its 185
      * mainnet and 143 testnet edges have a protocol as the object; they are

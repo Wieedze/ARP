@@ -239,7 +239,7 @@ describe("groupCapabilities", () => {
                         ],
                         protocols: [
                             {
-                                relation: "uses-protocol",
+                                relation: "supports-protocol",
                                 label: "MCP",
                                 name: "MCP",
                                 url: null,
@@ -285,7 +285,7 @@ describe("groupCapabilities", () => {
         expect(groups.map((group) => group.relation)).toEqual([
             "uses-tool",
             "has-type",
-            "uses-protocol",
+            "supports-protocol",
         ]);
         expect(groups.find((group) => group.relation === "has-type")?.entries).toHaveLength(1);
     });
@@ -302,7 +302,7 @@ describe("groupCapabilities", () => {
                         types: [],
                         protocols: [
                             {
-                                relation: "uses-protocol",
+                                relation: "supports-protocol",
                                 label: "MCP",
                                 name: "MCP",
                                 url: null,
@@ -331,9 +331,9 @@ describe("groupCapabilities", () => {
             groups.find((group) => group.relation === relation)?.entries.map((e) => e.label) ?? [];
 
         expect(labelsOf("uses-tool")).toEqual(["Obsidian"]);
-        expect(labelsOf("uses-protocol")).toEqual(["MCP"]);
+        expect(labelsOf("supports-protocol")).toEqual(["MCP"]);
         expect(labelsOf("uses-tool")).not.toContain("MCP");
-        expect(labelsOf("uses-protocol")).not.toContain("Obsidian");
+        expect(labelsOf("supports-protocol")).not.toContain("Obsidian");
     });
 });
 

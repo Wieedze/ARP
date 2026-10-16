@@ -120,13 +120,19 @@ export type TrustPanelView = {
 
 const CAPABILITY_GROUP_ORDER: {relation: CapabilityRelation; label: string}[] = [
     // `uses-tool` first: what an agent depends on is the part a reader is
-    // choosing between. `uses-protocol` sits with the other interface claims,
-    // under "Speaks", because supporting MCP says what you can call it with —
-    // a different question from what it runs on. ADR 0030.
+    // choosing between. `supports-protocol` sits with the other interface
+    // claims — what you can call the agent with is a different question from
+    // what it runs on. "Supports" rather than "Speaks" because the published
+    // object set is ERC-8004, x402, MCP, A2A and OASF: you do not *speak* a
+    // schema or a payment scheme, and OASF alone is 16 of 153 edges. ADR 0030.
+    //
+    // Note this group leads nothing today — zero `uses` edges have a subject
+    // the connector can reach — so the ordering is a bet on edges ARP has yet
+    // to write, not a current improvement.
     {relation: "uses-tool", label: "Uses"},
     {relation: "has-type", label: "Type"},
     {relation: "implements", label: "Implements"},
-    {relation: "uses-protocol", label: "Speaks"},
+    {relation: "supports-protocol", label: "Supports"},
     {relation: "has-category", label: "Category"},
     {relation: "has-tag", label: "Tags"},
     {relation: "compatible-with", label: "Compatible with"},

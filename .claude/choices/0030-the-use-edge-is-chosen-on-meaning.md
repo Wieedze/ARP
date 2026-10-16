@@ -79,23 +79,42 @@ Also decided:
   starting one, and stops contradicting the published canon for `use`.
 - A tool no longer renders as a protocol by construction.
 - Declaring a triple needs no partner credential.
-- Two guard tests: the write predicate must be inside `CAPABILITY_PREDICATE_IDS`, and the frozen id
-  is asserted literally so the semantic choice cannot be edited away silently.
+- Two guard tests, which guard different things and neither guards everything. The
+  `CAPABILITY_PREDICATE_IDS` membership test pins the **minting** bug class only — it would pass
+  identically for either id, since both are in the array. The literal-id assertion is what pins the
+  **semantic** choice.
 
 **Negative**
 
 - **`uses` is not in Appendix B.** A third party following the partner guide will filter on `use` and
   will not see ARP's edges. This is the accepted cost, and it is the one thing publication bought.
-  The remedy is to have `uses` canonised rather than to write wrong data: Appendix B documents an
-  extension path, and Intuition publicly invited a connector proposal. The measurements in this ADR
-  are the proposal's evidence — a vocabulary slot with 328 genuine edges, fragmented across four to
-  five atoms, with no published owner.
+  The remedy is to have `uses` canonised rather than to write wrong data. `docs/07` Appendix B
+  documents the path — "ask the Business Development team to extend the canon" — and ADR 0015 names
+  the contact. That is a documented extension route, not a standing invitation, and should not be
+  quoted as one.
+
+  **The number to carry into that conversation is 185**, the mainnet `uses` edge count, and it needs
+  a caveat rather than the adjective "genuine": those 185 include `love` (4), `developed` (3), three
+  book titles and `Recommended Predicates` (2) alongside the tool objects. A proposal should quote
+  the mainnet count with non-tool objects excluded. **Do not use 328** — that was 185 mainnet plus
+  143 testnet, one atom's edges summed across two chains, and it sat one paragraph from a
+  four-to-five-atom fragmentation claim describing a different and larger set (mainnet 380, testnet
+  482). Two numbers doing one job.
+
 - `uses` keeps looser company than `use`: `(I, uses, love)` and similar sit alongside the tool edges.
   Semantics wins anyway; a noisy neighbourhood is survivable, a wrong predicate is permanent.
-- **The read side still cannot distinguish the two.** Both map to relation `uses` and bucket to
-  `protocols`, so `uses`'s 185 mainnet edges are _already_ mislabelled as protocols today,
-  independent of this change. Splitting the relation changes the connector's public `Capabilities`
-  type and is recorded as `tasks/20` rather than smuggled into this fix.
+- **The read side could not distinguish the two.** Both mapped to relation `uses` and bucketed to
+  `protocols`. Splitting them changes the connector's public `Capabilities` type, so it was recorded
+  as `tasks/20` rather than smuggled into this fix, and landed there as `supports-protocol` /
+  `uses-tool`.
+
+  **That defect was latent, not live, and an earlier draft of this ADR overstated it.** Measured
+  2026-10-16: of the distinct subjects carrying a `uses` edge — 83 on mainnet, 69 on testnet —
+  **zero** carry a `same as` edge, while 79 of 80 `use` subjects do. `getCapabilities` only runs on a
+  subject returned by `resolveSubject`, which filters on `same as`, so no reachable input ever
+  exercised the wrong branch and nothing was ever reported to a reader as a protocol. The fix was
+  still necessary: ARP was about to write `uses` edges on exactly the subjects that _are_ reachable,
+  which is what would have converted it from latent to live.
 
 **Neutral**
 

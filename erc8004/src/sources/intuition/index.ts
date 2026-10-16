@@ -309,7 +309,7 @@ function bucketFor(capabilities: Capabilities, capability: CapabilityRef): Capab
         case "has-type":
             return capabilities.types;
         case "implements":
-        case "uses-protocol":
+        case "supports-protocol":
         case "compatible-with":
             return capabilities.protocols;
         case "uses-tool":

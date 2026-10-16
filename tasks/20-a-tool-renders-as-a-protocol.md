@@ -1,8 +1,9 @@
 # Task 20 — A tool renders as a protocol
 
-> **Status: IMPLEMENTED, AWAITING VERIFICATION** 2026-10-16. Recorded from the
-> `intuition-integrator` review of ADR 0030. **This was a live defect, not a refactor** — it
-> mislabelled 185 mainnet edges. The appendix defect (unvalidated CIDs) is **not** fixed here.
+> **Status: IMPLEMENTED, VERIFIED** 2026-10-16 (`intuition-integrator` PASS). Recorded from that
+> agent's review of ADR 0030. **The defect was latent, not live** — see the correction below; an
+> earlier version of this file and of the commit message claimed 185 mislabelled edges, and the
+> honest number is **zero**. The appendix defect (unvalidated CIDs) is **not** fixed here.
 
 ## The finding
 
@@ -23,17 +24,27 @@ That is right for `use` and wrong for `uses`. Measured 2026-10-16, every edge on
 | `use` `0x9ddda4ac…`  | mainnet 153/158, testnet 166/166 — A2A, MCP, OASF                                    |
 | `uses` `0x5c0bde1c…` | **mainnet 0/185, testnet 0/143** — Intuition, Base, Claude, GitHub, Obsidian, Cursor |
 
-So **`getCapabilities` reports Obsidian and GitHub as protocols** for every agent carrying a `uses`
-edge. This predates ADR 0030 and is independent of it; ARP writing on `uses` makes ARP's own tool
-edges land in the same wrong bucket.
+So `getCapabilities` would file Obsidian and GitHub under `protocols`.
+
+**Correction, and it matters: no reader ever saw that.** `getCapabilities` only runs on a subject
+returned by `resolveSubject`, which filters on `same as`. Measured 2026-10-16: of the distinct
+subjects carrying a `uses` edge — **83 mainnet, 69 testnet — zero** carry a `same as` edge, against
+79 of 80 for `use`. So the mapping was wrong but **unreachable**, and the claim of 185 mislabelled
+edges was mine, not the evidence's.
+
+The fix is still necessary rather than cosmetic: ARP was about to write `uses` edges on exactly the
+subjects that _are_ reachable, which converts a latent defect into a live one. It is a defect fixed
+before it could fire, which is worth saying plainly instead of inflating.
 
 `tasks/19` step 5 says the tiers of evidence must render distinguishably. A tool filed as a protocol
 is the same class of error one level down: two different kinds of fact in one bucket.
 
 ## Do
 
-1. Split the relation. `USE` → `uses-protocol`, `USES` → `uses-tool` (names to settle in the task;
-   `CapabilityRelation` is a public union).
+1. Split the relation. `USE` → **`supports-protocol`**, `USES` → `uses-tool`. The `uses-protocol`
+   name proposed here was rejected in review: it keeps the ambiguous `uses` stem, so the
+   discriminator becomes a suffix, and it names a predicate whose label is `use`. `supports-protocol`
+   drops the stem and matches the panel label.
 2. Add `tools` to `Capabilities` and route `uses-tool` there.
 3. Update `bucketFor`, the mapping table, and every consumer. `app/src/pages/AgentTrustPanel.tsx`
    renders `capabilities.protocols`.

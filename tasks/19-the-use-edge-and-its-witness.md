@@ -26,6 +26,15 @@ confirmed or contested by the counterparty, and is readable by ARP's own connect
 > **21 edges, testnet only, 21,000,000 wei ≈ 2.1 × 10⁻¹¹ tTRUST, absent from mainnet.** Not migrated —
 > Intuition has no deletion. The bug cost nothing material and never touched real TRUST.
 >
+> `pinAuth` is gone from both scripts: nothing in them pins any more, yet both hard-threw without a
+> partner key that no longer did anything, so the fixed path was unrunnable.
+>
+> **Why the gates missed that**: `app/tsconfig.app.json` includes only `src`, so `scripts/` sits
+> outside `tsc -b` and its `noUnusedLocals`; there is no eslint config at the repo root, so
+> `eslint .` from `app/` never sees `scripts/`; and `bun build` strips types without checking unused
+> locals. **The two files that carry this task's fix are outside every gate it reports.** Worth its
+> own change — related to `tasks/18`, wider than it.
+>
 > Steps 2–5 remain. **The gate below is not yet demonstrated** — see the note at its end.
 > Deferred to `tasks/20`: both predicates still map to one relation and bucket as `protocols`, so a
 > tool renders as a protocol.
