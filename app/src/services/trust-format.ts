@@ -1,4 +1,5 @@
 import {formatEther} from "viem";
+import {ABSENT_SIGNATURE_REASON} from "@arp-protocol/erc8004";
 import type {
     AgentAtomMarket,
     AssessmentFetchError,
@@ -95,20 +96,32 @@ export function describeFreshness(verdict: FreshnessVerdict): FreshnessCopy {
 export type SignatureCopy = {
     label: string;
     /**
-     * The one fact the label does not already carry — which addresses are
-     * involved. `null` for `unverified`, where the connector's reason is a
-     * restatement of the label in the document's own field names.
+     * The one fact the label does not already carry.
+     *
+     * For `verified` and `mismatch`, the addresses involved. For `unverified`,
+     * the connector's own reason — except the absent-signature one, which is
+     * the only reason that merely restates the label in the document's field
+     * names and is therefore the only one that can be dropped without losing a
+     * fact. `no strategy is confirmed for provider …` is a statement about
+     * *this package's* limits on a document that **is** signed, and a reader
+     * who cannot tell it from "they never signed" has lost the thing the panel
+     * exists to show.
      */
     detail: string | null;
     tone: "verified" | "mismatch" | "unverified";
 };
 
 /**
- * The connector's verdict, relayed verbatim.
+ * The connector's verdict, relayed verbatim but for one suppressed reason.
  *
  * There is no branch here that turns an `unverified` into anything warmer.
- * `unverified` means the signature could not be checked — usually because
- * there is none — and saying so is the honest answer about a stranger.
+ * `unverified` means the signature could not be checked — often because there
+ * is none — and saying so is the honest answer about a stranger.
+ *
+ * The absent-signature reason is dropped as redundant with the label (task 15).
+ * Every other reason is relayed, because each says something the label does
+ * not: an unsupported algorithm, a malformed EIP-712 block, or a provider whose
+ * encoding this package has never confirmed.
  */
 export function describeSignature(verdict: SignatureVerdict): SignatureCopy {
     if (verdict.status === "verified") {
@@ -125,7 +138,12 @@ export function describeSignature(verdict: SignatureVerdict): SignatureCopy {
             tone: "mismatch",
         };
     }
-    return {label: "Not verified", detail: null, tone: "unverified"};
+    const isRedundant = verdict.reason === ABSENT_SIGNATURE_REASON;
+    return {
+        label: "Not verified",
+        detail: isRedundant ? null : verdict.reason,
+        tone: "unverified",
+    };
 }
 
 /**
@@ -191,4 +209,28 @@ export function describeFetchError(error: AssessmentFetchError): string {
         case "malformed":
             return `The document could not be parsed: ${error.message}`;
     }
+}
+
+/**
+ * The digits shown beside the person mark.
+ *
+ * Shared with `stakerLabel` so the visible figure and the accessible name can
+ * never disagree on formatting — they did briefly, one grouped and one not.
+ */
+export function formatStakerCount(count: number): string {
+    return count.toLocaleString("en-US");
+}
+
+/**
+ * The accessible name for a staker count.
+ *
+ * `StakerCount` renders `role="img"`, which makes the span a leaf in the
+ * accessibility tree: the visible digits are not announced, so this string is
+ * the only thing a screen reader gets and it has to carry both the number and
+ * the noun. Pure and exported so the singular/plural/zero cases stay tested —
+ * `app/` has no DOM test environment (ADR 0011), so a component-level
+ * assertion is not available.
+ */
+export function stakerLabel(count: number): string {
+    return `${formatStakerCount(count)} distinct staker${count === 1 ? "" : "s"}`;
 }

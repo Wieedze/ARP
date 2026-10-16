@@ -56,6 +56,7 @@ export {
 } from "./assessment.js";
 
 export {
+    ABSENT_SIGNATURE_REASON,
     DEFAULT_SIGNATURE_STRATEGIES,
     isConfirmedForProvider,
     providerIdCaip19LowercaseStrategy,

@@ -1,3 +1,4 @@
+import {ABSENT_SIGNATURE_REASON} from "@arp-protocol/erc8004";
 import type {
     AgentIdentity,
     AgentProfile,
@@ -135,8 +136,25 @@ export const VERIFIED: SignatureVerdict = {
 
 export const UNVERIFIED: SignatureVerdict = {
     status: "unverified",
-    reason: "no signature block at assessment.signature",
+    reason: ABSENT_SIGNATURE_REASON,
     declaredSigner: null,
+    attempts: [],
+};
+
+/**
+ * `unverified` on a document that **is** signed.
+ *
+ * The connector emits nine distinct `unverified` reasons and only
+ * `ABSENT_SIGNATURE_REASON` restates the verdict. This is the one that matters
+ * most: AsterPay-style documents carry a real signature this package has no
+ * confirmed strategy for, and a reader who cannot tell that from "they never
+ * signed" has lost the fact the panel exists to show. The fixture set held only
+ * the absent case, which is how task 15 dropped every reason unnoticed.
+ */
+export const UNVERIFIED_UNRECONSTRUCTABLE: Extract<SignatureVerdict, {status: "unverified"}> = {
+    status: "unverified",
+    reason: 'could not reconstruct the signed payload: no strategy is confirmed for provider "asterpay"',
+    declaredSigner: "0x27A6265e6daf8d9935A3031f2E7cDC4bDFbe2Ebe",
     attempts: [],
 };
 

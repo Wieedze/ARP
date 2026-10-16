@@ -513,6 +513,6 @@ export function selectPanelTab(model: PanelTabs, requested: string | null): Pane
     const asked = model.tabs.find((tab) => tab.slug === requested);
     if (asked !== undefined) return asked;
     const fallback = model.tabs.find((tab) => tab.slug === model.defaultSlug);
-    // `buildPanelTabs` always appends the agent tab, so this is unreachable.
+    // `buildPanelTabs` always prepends the agent tab, so this is unreachable.
     return fallback ?? {kind: "agent", slug: AGENT_TAB_SLUG, label: "Agent"};
 }

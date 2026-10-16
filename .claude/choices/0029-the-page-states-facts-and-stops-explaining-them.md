@@ -88,12 +88,43 @@ on mainnet move to the confirmation step, where they bite.
 - The directory row no longer distinguishes two agents that share a display name without opening one.
 - An agent whose sources partly failed no longer says which sources were consulted anywhere on the
   page; `What could not be read` still names the ones that failed, which is the half that matters.
+- **Two different emptinesses now render identically.** The removed `Sources consulted` block carried
+  the sentence "None of them can see stake, so an empty market means unknown, not empty." Without it,
+  `MarketPanel` shows `no market data` both when no source can price the claim and when nobody has
+  staked, and nothing on the page separates them. The service-level assertion that pinned the
+  distinction went with it — the `marketCapableSources` expectation in
+  `app/src/hooks/__tests__/use-agent-profile.test.ts`, whose comment read "Markets are readable here,
+  so 'no markets' means 'nobody staked'." The removal was dictated, so this is recorded rather than
+  reversed; restoring the distinction without the paragraph would mean two distinct empty states in
+  `MarketPanel`, which is a design task, not a copy edit.
 
 **Neutral (worth knowing):**
 
-- `SignatureCopy.detail` is now `string | null`. The connector's `unverified` reason is a restatement
-  of the label in the document's own field names, so the label carries the verdict alone; `verified`
-  and `mismatch` keep their detail because it names addresses the label does not.
+- `SignatureCopy.detail` is now `string | null`. `verified` and `mismatch` keep their detail because
+  it names addresses the label does not.
+
+  **Corrected after review.** This ADR first said "the connector's `unverified` reason is a
+  restatement of the label in the document's own field names", and the implementation suppressed the
+  reason for _every_ unverified verdict on that basis. The claim is true of exactly one of the nine
+  reasons `erc8004/src/signature.ts` emits — the one the task listed. It is false for the other
+  eight, and worst for `could not reconstruct the signed payload: no strategy is confirmed for
+provider …`, which is a statement about **this package's** limits on a document that _is_ signed.
+  Rendering it identically to "no signature block at all" loses the fact the panel exists to show,
+  and it also contradicted this task's own Keep list ("every signature verdict … exactly as the
+  connector reports them").
+
+  The fix: the connector exports `ABSENT_SIGNATURE_REASON`, and `describeSignature` suppresses the
+  detail only for that reason. Comparing against an exported constant rather than a local literal
+  keeps the string in one place and leaves the public `SignatureVerdict` type unchanged.
+
+- `stakerLabel` and `formatStakerCount` are exported pure functions in `trust-format.ts`. The deleted
+  `describeStakers` suite took the singular/plural/zero coverage with it, and `app/` has no DOM test
+  environment (ADR 0011) to assert on the component. Exporting the label restores the coverage
+  without adding a test dependency, and it fixed a real drift: the visible figure was grouped
+  (`1,445`) while the accessible name was not (`1445`).
+- `StakeControl`'s confirmation step keeps a plain figure for positions rather than the person mark.
+  The surrounding `<dl>` already names it with a `<dt>`, so the glyph would restate the label there;
+  the mark earns its place in `MarketPanel`, where the number stands alone.
 - One item in the task could not be located: "the token id and chain in the stake confirmation".
   There is no token id in the confirmation step, and the only chain it names is "Intuition mainnet"
   by name. The curve id was removed; the vault term id was kept, because a reader about to sign
