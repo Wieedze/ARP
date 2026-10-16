@@ -168,6 +168,17 @@ export {
     readDeclaredEndpoints,
 } from "./verify/declaration.js";
 
+export {
+    DEFAULT_TIMEOUT_MS,
+    DEFAULT_USER_AGENT,
+    MCP_PROTOCOL_VERSION,
+    probeEndpoint,
+} from "./verify/probe.js";
+export type {ProbeOptions} from "./verify/probe.js";
+
+export {HostLimiter, hostOf} from "./verify/host-limiter.js";
+export type {HostLimiterOptions} from "./verify/host-limiter.js";
+
 export type {
     DeclarationSpelling,
     DeclaredEndpoint,
