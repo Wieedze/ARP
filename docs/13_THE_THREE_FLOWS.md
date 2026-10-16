@@ -10,16 +10,22 @@
 ```mermaid
 flowchart TB
     subgraph REG["ERC-8004 registries · Base 88,243 · BSC · Ethereum"]
-        RF["registration file<br/>endpoints · named capabilities · x402"]
+        RF["registration file<br/>services[] or endpoints[] · x402 · sometimes capabilities"]
     end
 
     subgraph A["A · Verifier — needs nobody's permission"]
-        A1["read registration file"] --> A2["probe the declared endpoint"]
-        A2 --> A3{"answers?"}
-        A3 -->|no| A4["liveness: dead"]
-        A3 -->|yes| A5{"serves what it declares?"}
-        A5 -->|no| A6["gap: declared ≠ served"]
-        A5 -->|yes| A7["capabilities confirmed"]
+        A1["fetch registration file"] --> A0{"resolves?"}
+        A0 -->|"no · 37%"| A4["confirmed: identity unreachable"]
+        A0 -->|yes| A2{"probeable endpoint?"}
+        A2 -->|"no · 82% templated or CAIP/ENS"| A8["not checkable — NOT a defect"]
+        A2 -->|yes| A3{"answers?"}
+        A3 -->|no| A4
+        A3 -->|yes| A5{"declares a protocol?"}
+        A5 -->|no| A7["confirmed: live"]
+        A5 -->|yes| A6{"speaks it?"}
+        A6 -->|no| A9["confirmed: declared ≠ served"]
+        A6 -->|unclear| A10["inconclusive — we may be at fault"]
+        A6 -->|yes| A7
     end
 
     subgraph B["B · Declare — the agent opts in, via MCP"]
@@ -37,13 +43,16 @@ flowchart TB
     RF --> A1
     RF --> C2
     A7 -.discovery.-> C1
-    A6 -.discovery.-> C1
+    A9 -.discovery.-> C1
 
-    A4 --> G[("Intuition graph")]
-    A6 --> G
-    A7 --> G
-    B3 --> G
+    A4 --> R[("off-graph JSON surface<br/>probes are not triples")]
+    A7 --> R
+    A9 --> R
+    A8 -.- R
+    A10 -.- R
+    B3 --> G[("Intuition graph")]
     C5 --> G
+    R -.durable conclusions only.-> G
 ```
 
 The arrow that matters: **`RF → A1` needs no consent.** Everything in flow A runs on 88,243 agents
@@ -53,11 +62,11 @@ whether they have heard of ARP or not.
 
 ## What each flow costs the agent being rated
 
-|                | Adoption required | Signal strength                     | Starts              |
-| -------------- | ----------------- | ----------------------------------- | ------------------- |
-| **A** verifier | **none**          | weak, but universal and continuous  | immediately         |
-| **B** declare  | an MCP endpoint   | medium — costly, therefore credible | when someone adopts |
-| **C** hire     | **none**          | **strongest** — somebody paid twice | when someone hires  |
+|                | Adoption required | Signal strength                          | Starts              |
+| -------------- | ----------------- | ---------------------------------------- | ------------------- |
+| **A** verifier | **none**          | weak per agent, universal and continuous | immediately         |
+| **B** declare  | an MCP endpoint   | medium — costly, therefore credible      | when someone adopts |
+| **C** hire     | **none**          | **strongest** — somebody paid twice      | when someone hires  |
 
 A feeds discovery for C. C produces the best signal. B is the optional middle.
 
@@ -87,20 +96,36 @@ records two facts per agent: does it answer, and does it serve what it claims.
 
 Hard parts, named now:
 
-- **Endpoint shapes vary.** MCP needs an `initialize` handshake; some deployments add their own
-  requirements. Probed live on 2026-10-16: Clawnch declares six MCP tools, and a standard client gets
-  `{"error": "Missing sessionId query parameter"}` and zero tools. That is a real gap — but a prober
-  must distinguish _"the agent is broken"_ from _"we spoke the protocol wrong"_, and must say which.
-  **Reporting a false gap is this component's version of a false `mismatch`**, and the connector's rule
-  applies: when unsure, say unverified, never accuse.
+- **Most declared endpoints cannot be probed at all**, and that is not their fault. Measured over
+  n = 140 random ids on 2026-10-16: of 90 declared endpoints, 76% carry an unsubstituted
+  `{placeholder}` and 7% are a CAIP address or ENS name rather than a URL. **Only 16 of 90 were
+  probeable.** Those 82% must report _not checkable_, never _failing_ — get this wrong and the
+  verifier mass-slanders the cohort on its first run.
+- **The volume is in the document layer, not the endpoint layer.** 23% of sampled ids have no
+  `tokenURI`; of those that do, **37% publish a registration file that does not resolve**. One GET
+  establishes it — the cheapest and most abundant confirmed fact available.
+- **Two spellings coexist**, and the common one is not the one the examples use: `services[]` 106
+  occurrences against `endpoints[]` 2. A verifier reading only `endpoints` sees almost nothing — a
+  real bug while measuring, and the first thing to get right.
+- **A declared protocol is where the check gets sharp.** Of 4 endpoints named `mcp`, 2 answer
+  `initialize` correctly and 2 do not. Clawnch declares six MCP tools and a standard client gets
+  `{"error": "Missing sessionId query parameter"}` and zero tools. But a prober must separate _"the
+  agent is broken"_ from _"we spoke the protocol wrong"_ and say which.
+  **Reporting a false defect is this component's version of a false `mismatch`**, and the connector's
+  rule applies unchanged: when unsure, say unverified, never accuse.
 - **Rate and courtesy.** Probing 88,243 third-party endpoints is a load somebody else pays for. Back
-  off, cache, identify the client, honour `robots`-equivalent signals where they exist.
+  off, cache by document hash, identify the client, honour `robots`-equivalent signals. Limit per
+  host, not globally: Termix alone accounts for 38 of 108 endpoints in the sample, so a global limit
+  still hammers one host.
 - **Where results live.** Off-graph first — a published JSON surface like the trust-assessment
   resolver. Writing every probe on-chain is unaffordable and wrong: liveness changes hourly, and
   `docs/07`'s named anti-pattern is mutable data as triples.
 
-**Gate**: liveness and capability-conformance for 100 agents, reproducible, with the "we might be
-wrong" cases separated from the confirmed gaps.
+**Gate**: liveness and endpoint classification for 100 agents, reproducible from a committed script,
+with the _not checkable_ and _we might be wrong_ cases visibly separated from the confirmed facts. A
+reviewer must be able to take any confirmed row and reproduce it with one `curl`.
+
+Full spec and the measured table: `tasks/17-the-external-verifier.md`.
 
 ### Phase 2 — hire
 
