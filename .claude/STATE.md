@@ -58,10 +58,24 @@ and task 20 commits and does not describe them.**
 | 20     | a tool renders as a protocol                      | done, verified                                                                                                |
 | 21     | `scripts/` is outside every gate                  | open — **not** zero-cost, unlike 18; owns the gap 18 did not reach                                            |
 | 22     | the chain as witness                              | open — user proposal; strongest evidence class, bounded by how much tool use is on-chain. **Measure first**   |
+| 23     | the tool surface                                  | open — **the half of `docs/12` that does not exist**: nothing shows a tool with its weight                    |
 
-**Recommended order**: **17 (in progress) → 19 steps 2–5 → 16**, with 22 runnable in parallel since its first step is read-only. Task 18 is done. Tasks 13, 14 and 21 are still
-open — the note that 13 and 14 would be "cleared alongside 18" did not happen, and 21 did not exist
-when that order was written.
+**Recommended order**, re-anchored 2026-10-16 on the user's restatement that the point is **tool
+reputation from the agents that used them**: **19 steps 2–5 → the tool surface → 16**, with 17
+finished alongside since it is what tells you which tools exist.
+
+Task 17 does **not** give tools reputation — it gives agents a checkable record. It serves the goal
+indirectly and genuinely: because in ERC-8004 plus MCP the tool _is_ an agent, the verifier's output
+is the list of tools that actually work, on the order of a thousand of 88,243. Without it you do not
+know what to rate. But the mechanism that rates them is the `uses` edge, and that is task 19.
+
+**The half of `docs/12` that does not exist: nothing in the UI shows a tool with its weight.** Now `tasks/23`. The panel
+shows agents and their trust providers. There is no "this tool was used by these agents, who staked
+this much on it" surface, which is the thing `docs/12` describes and the only reason the edges are
+worth writing.
+
+Tasks 13, 14, 21 and 22 are open. The earlier note that 13 and 14 would be "cleared alongside 18"
+did not happen.
 
 ## The plan, in three phases
 
