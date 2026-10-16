@@ -88,6 +88,13 @@ on mainnet move to the confirmation step, where they bite.
 - The directory row no longer distinguishes two agents that share a display name without opening one.
 - An agent whose sources partly failed no longer says which sources were consulted anywhere on the
   page; `What could not be read` still names the ones that failed, which is the half that matters.
+- **The `Statements` column lost the floor of its own scale.** The removed per-order note read "The
+  mirrored shell gives every agent five, so anything above five is somebody having bothered." The
+  column survives as a bare right-aligned integer under a bare header, and nothing on the page — nor
+  anywhere in `app/src` — now says that five is free. A reader sees `5` on most rows and `7` on one
+  and cannot tell that two of those seven cost somebody something. That is the same kind of loss as
+  `Weight unknown.`: not a sentence explaining how to judge, but the constant a reader needs in order
+  to judge at all. Dictated by name, so recorded rather than reversed.
 - **Two different emptinesses now render identically.** The removed `Sources consulted` block carried
   the sentence "None of them can see stake, so an empty market means unknown, not empty." Without it,
   `MarketPanel` shows `no market data` both when no source can price the claim and when nobody has
@@ -108,7 +115,7 @@ on mainnet move to the confirmation step, where they bite.
   reason for _every_ unverified verdict on that basis. The claim is true of exactly one of the nine
   reasons `erc8004/src/signature.ts` emits — the one the task listed. It is false for the other
   eight, and worst for `could not reconstruct the signed payload: no strategy is confirmed for
-provider …`, which is a statement about **this package's** limits on a document that _is_ signed.
+  provider …`, which is a statement about **this package's** limits on a document that _is_ signed.
   Rendering it identically to "no signature block at all" loses the fact the panel exists to show,
   and it also contradicted this task's own Keep list ("every signature verdict … exactly as the
   connector reports them").

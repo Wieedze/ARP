@@ -134,7 +134,7 @@ export const VERIFIED: SignatureVerdict = {
     contentHash: `0x${"ab".repeat(32)}`,
 };
 
-export const UNVERIFIED: SignatureVerdict = {
+export const UNVERIFIED: Extract<SignatureVerdict, {status: "unverified"}> = {
     status: "unverified",
     reason: ABSENT_SIGNATURE_REASON,
     declaredSigner: null,
@@ -155,7 +155,24 @@ export const UNVERIFIED_UNRECONSTRUCTABLE: Extract<SignatureVerdict, {status: "u
     status: "unverified",
     reason: 'could not reconstruct the signed payload: no strategy is confirmed for provider "asterpay"',
     declaredSigner: "0x27A6265e6daf8d9935A3031f2E7cDC4bDFbe2Ebe",
-    attempts: [],
+    // Populated, not empty: reaching this branch means strategies ran and
+    // failed, so `erc8004/src/signature.ts` always passes attempts here. An
+    // empty array is a shape the connector never emits for this reason, and a
+    // later task rendering which reconstructions were tried would have been
+    // testing against a fiction.
+    attempts: [
+        {
+            strategyId: "provider-id-caip19",
+            confirmedForProvider: false,
+            recovered: "0x9b2A1f0C7e5D4b83Ae61C0d2F8475E39aB1c6D70",
+        },
+        {
+            strategyId: "provider-name-caip19",
+            confirmedForProvider: false,
+            recovered: null,
+            error: "document declares no provider.name",
+        },
+    ],
 };
 
 export const MISMATCH: SignatureVerdict = {

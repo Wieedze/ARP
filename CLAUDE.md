@@ -58,7 +58,7 @@ Every completion report answers one extra question in one sentence:
 
 > _Which tier of the evidence ladder does this serve, and does it move ARP up it?_
 
-The ladder is `docs/09_POSITIONING_AND_PLAN.md` §2 — asserted, rated, staked, proven. ARP's position is the last two. If a task cannot name a tier, it has drifted and needs review before merging. The `task-verifier` agent enforces this.
+The ladder is `docs/09_POSITIONING_AND_PLAN.md` §3 — asserted, rated, staked, proven. ARP's position is the last two. If a task cannot name a tier, it has drifted and needs review before merging. The `task-verifier` agent enforces this.
 
 This replaces the hackathon narrative-preservation check (ADR `0022`). Task files 02b–05b still reference the old check in their headers; they are complete and left as historical record.
 
