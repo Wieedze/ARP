@@ -99,7 +99,11 @@ export {
  * Exporting it adds no write path. This package still never signs and never
  * sends a transaction.
  */
-export {SAME_AS as INTUITION_SAME_AS_TERM_ID} from "./sources/intuition/terms.js";
+export {
+    CAPABILITY_PREDICATE_IDS as INTUITION_CAPABILITY_PREDICATE_IDS,
+    SAME_AS as INTUITION_SAME_AS_TERM_ID,
+    USE as INTUITION_USE_TERM_ID,
+} from "./sources/intuition/terms.js";
 
 export {
     erc8004RegistrySource,

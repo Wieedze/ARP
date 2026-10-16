@@ -8,6 +8,8 @@ import {
     type WalletClient,
 } from "viem";
 
+import {INTUITION_USE_TERM_ID} from "@arp-protocol/erc8004";
+
 import {multiVaultAbi} from "../lib/abi/multi-vault";
 import {intuitionTestnet} from "../lib/chains";
 import {deployments} from "../lib/deployments";
@@ -22,21 +24,14 @@ const MULTI_VAULT = deployments.intuition.multiVault;
  * The two-layer reputation model (ADR 0010) materializes here:
  *   - `ensureAtomForThing` — pin a Thing, compute its atom ID, return
  *     a created OR existing atom (idempotent).
- *   - `declareUsesTriple` — connect an agent atom to a tool atom via
- *     a "uses" predicate atom. Materializes the "immutable layer" —
+ *   - `declareUsesTriple` — connect an agent atom to a tool atom via the
+ *     **published** `use` predicate. Materializes the "immutable layer" —
  *     the agent's claim of composition gets a permanent record in the
- *     graph.
+ *     graph, on the node everybody else reads.
  *
  * Both operations defer to lower-level Intuition primitives documented
  * in `.claude/skills/intuition/operations/`.
  */
-
-/**
- * Cache the "uses" predicate atom ID at the module level so the UI
- * doesn't re-pin + lookup on every triple creation. The first call within
- * a session pays the lookup; subsequent calls reuse the cached value.
- */
-let cachedUsesAtomId: Hex | null = null;
 
 /**
  * Ensure a Thing-backed atom exists on Intuition. Pin first, then check
@@ -154,32 +149,6 @@ export async function ensureAtomForURI(params: {
 }
 
 /**
- * Return the atom ID for the canonical ARP "uses" predicate. Lazily
- * pinned + cached at module scope.
- */
-export async function getOrCreateUsesPredicateAtomId(params: {
-    walletClient: WalletClient<Transport, Chain, Account>;
-    publicClient: PublicClient;
-    pinAuth: PinAuth;
-}): Promise<Hex> {
-    if (cachedUsesAtomId) return cachedUsesAtomId;
-    const result = await ensureAtomForThing({
-        thing: {
-            name: "uses",
-            description:
-                "ARP predicate — links an agent atom to a tool atom that the agent " +
-                "composes with. The triple (agent, uses, tool) is the immutable layer " +
-                "of ARP's two-layer reputation model.",
-        },
-        walletClient: params.walletClient,
-        publicClient: params.publicClient,
-        pinAuth: params.pinAuth,
-    });
-    cachedUsesAtomId = result.atomId;
-    return result.atomId;
-}
-
-/**
  * Declare that an agent uses a tool — **idempotent**.
  *
  * Creates the triple `(agentAtomId, usesAtomId, toolAtomId)` on
@@ -189,20 +158,33 @@ export async function getOrCreateUsesPredicateAtomId(params: {
  * without sending a transaction. Otherwise it pays `getTripleCost()` and
  * writes `createTriples`.
  *
- * The "uses" predicate atom is auto-ensured via the cached helper above.
+ * The predicate is `INTUITION_USE_TERM_ID` — the `use` atom published in
+ * Appendix B of the partner guide, verified present on **both** mainnet 1155
+ * and testnet 13579 under the same id on 2026-10-16. Nothing is pinned for it,
+ * which is why this function needs no `PinAuth`: a predicate is not ours to
+ * create.
+ *
+ * ARP previously minted its own `use` atom here. Because atom ids are
+ * content-deterministic over the pinned URI, that produced a *fifth* node
+ * meaning "use" — invisible to this repo's own connector, which filters on
+ * `CAPABILITY_PREDICATE_IDS`, and invisible to everyone else. Every triple and
+ * every stake written that way is attached to a node nobody queries.
+ *
+ * Measured 2026-10-16, atoms labelled `use`/`uses` by edge count:
+ * mainnet 185 / **158 (published)** / 36 / 1, testnet **166 (published)** /
+ * 152 / 143 / 21 / 0. The published one does not lead on mainnet, and that is
+ * deliberately not the tiebreaker — ADR 0015 makes publication the rule, and
+ * twenty-seven edges is noise. `docs/07`: "do not mint your own copies — a
+ * differently-pinned duplicate is a different node and fragments the staking
+ * surface."
  */
 export async function declareUsesTriple(params: {
     agentAtomId: Hex;
     toolAtomId: Hex;
     walletClient: WalletClient<Transport, Chain, Account>;
     publicClient: PublicClient;
-    pinAuth: PinAuth;
 }): Promise<{tripleId: Hex; created: boolean; tx?: Hex}> {
-    const usesAtomId = await getOrCreateUsesPredicateAtomId({
-        walletClient: params.walletClient,
-        publicClient: params.publicClient,
-        pinAuth: params.pinAuth,
-    });
+    const usesAtomId = INTUITION_USE_TERM_ID as Hex;
 
     const tripleId = await params.publicClient.readContract({
         address: MULTI_VAULT,
