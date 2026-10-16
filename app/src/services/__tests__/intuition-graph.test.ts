@@ -1,7 +1,7 @@
 import {beforeEach, describe, expect, it, vi, type Mock} from "vitest";
 import {stringToHex, type Hex} from "viem";
 
-import {INTUITION_CAPABILITY_PREDICATE_IDS, INTUITION_USE_TERM_ID} from "@arp-protocol/erc8004";
+import {INTUITION_CAPABILITY_PREDICATE_IDS, INTUITION_USES_TERM_ID} from "@arp-protocol/erc8004";
 
 import {deployments} from "../../lib/deployments";
 import {intuitionTestnet} from "../../lib/chains";
@@ -45,10 +45,11 @@ import {pinThing} from "../intuition-pin";
 const mockPin = pinThing as unknown as Mock;
 
 /**
- * Reset the module under test before every test so its module-scoped
- * `cachedUsesAtomId` does not leak between cases. Each test re-imports
- * `intuition-graph` and uses the fresh export. Sub-test calls within one
- * test still observe the cache they themselves built.
+ * Re-import the module under test for each case, so the `pinThing` mock is
+ * rebound rather than captured from a previous import.
+ *
+ * It used to exist to clear a module-scoped `cachedUsesAtomId`; that cache went
+ * with the minted predicate (ADR 0030), and the module holds no state now.
  */
 async function freshGraph() {
     vi.resetModules();
@@ -266,11 +267,13 @@ describe("declareUsesTriple", () => {
         mockPin.mockReset();
     });
 
-    it("sandwiches the published 'use' predicate between agent and tool", async () => {
+    it("sandwiches the shared 'uses' predicate between agent and tool", async () => {
         pc.readContract.mockImplementation(
             readContractDispatcher({
                 calculateAtomId: makeAtomIdReader(),
-                isTermCreated: () => false, // the triple id is new
+                // The predicate exists; the triple id does not.
+                isTermCreated: ({args}: {args: readonly unknown[]}) =>
+                    args[0] === INTUITION_USES_TERM_ID,
                 calculateTripleId: TRIPLE_ID,
                 getTripleCost: TRIPLE_COST,
             }),
@@ -298,7 +301,7 @@ describe("declareUsesTriple", () => {
         expect(call.functionName).toBe("createTriples");
         expect(call.args).toEqual([
             [AGENT_ATOM],
-            [INTUITION_USE_TERM_ID],
+            [INTUITION_USES_TERM_ID],
             [TOOL_ATOM],
             [TRIPLE_COST],
         ]);
@@ -314,7 +317,8 @@ describe("declareUsesTriple", () => {
         pc.readContract.mockImplementation(
             readContractDispatcher({
                 calculateAtomId: makeAtomIdReader(),
-                isTermCreated: ({args}: {args: readonly unknown[]}) => args[0] === TRIPLE_ID,
+                isTermCreated: ({args}: {args: readonly unknown[]}) =>
+                    args[0] === INTUITION_USES_TERM_ID || args[0] === TRIPLE_ID,
                 calculateTripleId: TRIPLE_ID,
             }),
         );
@@ -332,7 +336,7 @@ describe("declareUsesTriple", () => {
     });
 });
 
-describe("the write predicate is one the read side queries", () => {
+describe("the write predicate is shared, readable, and semantically right", () => {
     it("writes on a predicate inside CAPABILITY_PREDICATE_IDS", () => {
         // The bug this pins: ARP used to mint its own `use` atom, so every
         // triple and every stake it wrote landed on a node the connector's
@@ -340,15 +344,47 @@ describe("the write predicate is one the read side queries", () => {
         // and to everyone else's. A predicate the read side does not query is
         // TRUST spent into an orphan node, which is why this is an assertion
         // and not a comment.
-        expect(INTUITION_CAPABILITY_PREDICATE_IDS).toContain(INTUITION_USE_TERM_ID);
+        expect(INTUITION_CAPABILITY_PREDICATE_IDS).toContain(INTUITION_USES_TERM_ID);
     });
 
-    it("uses the id published in Appendix B, not a label lookup", () => {
-        // ADR 0015: ids are frozen, never resolved by label at runtime. Five
-        // distinct atoms are labelled `use`/`uses` on testnet and four on
-        // mainnet, so a label lookup is a coin flip between fragmented nodes.
-        expect(INTUITION_USE_TERM_ID).toBe(
-            "0x9ddda4ac2477ec6908e9561ab31ccd767bf3642e0ed0531fd61d447badd896ab",
+    it("pins the frozen id rather than resolving a label", () => {
+        // ADR 0015: ids are frozen, never resolved at runtime. Five atoms are
+        // labelled `use`/`uses` on testnet and four on mainnet, so a label
+        // lookup is a coin flip between fragmented nodes.
+        //
+        // ADR 0030: this is the tool-usage node, NOT the published `use`
+        // (`0x9ddda4ac…`), whose objects are 153/158 protocols on mainnet and
+        // 166/166 on testnet. Choosing on meaning over publication is the whole
+        // decision, so the id is asserted literally.
+        expect(INTUITION_USES_TERM_ID).toBe(
+            "0x5c0bde1cc696456c0268248c4656acdf9621fdb39e605bc99b0a83dc8ff6e800",
         );
+    });
+
+    it("throws rather than minting when the predicate is absent from the chain", async () => {
+        const pc = makeMockPublicClient();
+        const wc = makeMockWalletClient();
+        mockPin.mockReset();
+        pc.readContract.mockImplementation(
+            readContractDispatcher({
+                calculateAtomId: makeAtomIdReader(),
+                isTermCreated: () => false, // nothing exists, predicate included
+                calculateTripleId: `0x${"73".repeat(32)}` as Hex,
+            }),
+        );
+        const {declareUsesTriple, PredicateNotOnChainError} = await freshGraph();
+
+        await expect(
+            declareUsesTriple({
+                agentAtomId: AGENT_ATOM,
+                toolAtomId: TOOL_ATOM,
+                walletClient: wc,
+                publicClient: pc,
+            }),
+        ).rejects.toThrow(PredicateNotOnChainError);
+        // The failure mode this replaces was an on-chain revert after the user
+        // had approved and paid gas. Minting instead is the bug ADR 0030 closes.
+        expect(wc.writeContract).not.toHaveBeenCalled();
+        expect(mockPin).not.toHaveBeenCalled();
     });
 });

@@ -10,9 +10,25 @@ confirmed or contested by the counterparty, and is readable by ARP's own connect
 
 ## Step 1 — Stop minting a private `use` predicate. Blocking.
 
-> **DONE** 2026-10-16, commit `5e1d5d2`. Unified onto `0x9ddda4ac` (Appendix B), verified present on
-> both chains under the same id. `declareUsesTriple` no longer takes `PinAuth`. Two guard tests added.
-> Steps 2–5 remain. Existing triples were not migrated, per the instruction below.
+> **DONE** 2026-10-16. Two commits: `5e1d5d2` removed the minted predicate, and the follow-up
+> **reversed its choice of replacement** after the `intuition-integrator` review — see **ADR 0030**.
+> The predicate is `uses` `0x5c0bde1c…`, chosen on **meaning**: `use` `0x9ddda4ac…` is the published
+> one but its objects are 153/158 protocols on mainnet and 166/166 on testnet, so it means "supports
+> this protocol", and Appendix B's object table for it is five standards, closed.
+>
+> `5e1d5d2` also fixed a function with no production callers. The paths that actually write are
+> `scripts/agent-stake-on-use.ts` and `scripts/agent-loop.ts`, both now corrected.
+>
+> Added: an `isTermCreated` preflight on the predicate with `PredicateNotOnChainError`, replacing an
+> on-chain revert that fired after the user had approved and paid gas.
+>
+> Orphan census, as item 4 below requires: `0x3707e587ade3f003f79bfdfa820a7d51900ab9e2b7226800ac4f4e09865e60e5`,
+> **21 edges, testnet only, 21,000,000 wei ≈ 2.1 × 10⁻¹¹ tTRUST, absent from mainnet.** Not migrated —
+> Intuition has no deletion. The bug cost nothing material and never touched real TRUST.
+>
+> Steps 2–5 remain. **The gate below is not yet demonstrated** — see the note at its end.
+> Deferred to `tasks/20`: both predicates still map to one relation and bucket as `protocols`, so a
+> tool renders as a protocol.
 
 `app/src/services/intuition-graph.ts:157-180` pins a Thing named `"uses"` with an ARP-specific
 description and caches the resulting atom id. Atom ids are content-deterministic over the pinned URI,
@@ -47,7 +63,13 @@ Do:
    post-mortem how many were written to the orphan node and what that cost, so the number is on file.
 
 **Gate:** a triple written by the write path is returned by `getAgentProfile` for the same agent.
-Nothing in the current codebase passes that test today.
+
+**Not demonstrated yet, and the predicate is only half of it.** `getCapabilities` keys on
+`resolveSubject`, which resolves through `same as` to the **ERC-8004 registration-derived** atom,
+while both write paths pass a **CAIP-10** atom as the subject. So fixing the predicate does not by
+itself make these triples readable — the subject is the other half, and ADR 0015 §2 says the two
+identities are joined only by a `same as` triple. Check that edge exists for ARP's agents before
+claiming this gate.
 
 ## Step 2 — Tools are agents, so most edges need no new atom
 

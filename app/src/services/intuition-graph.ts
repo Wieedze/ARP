@@ -8,7 +8,7 @@ import {
     type WalletClient,
 } from "viem";
 
-import {INTUITION_USE_TERM_ID} from "@arp-protocol/erc8004";
+import {INTUITION_USES_TERM_ID} from "@arp-protocol/erc8004";
 
 import {multiVaultAbi} from "../lib/abi/multi-vault";
 import {intuitionTestnet} from "../lib/chains";
@@ -17,6 +17,23 @@ import {deployments} from "../lib/deployments";
 import {pinThing, type PinAuth} from "./intuition-pin";
 
 const MULTI_VAULT = deployments.intuition.multiVault;
+
+/**
+ * The shared `uses` predicate atom is absent from the configured chain.
+ *
+ * A predicate is not ours to create, so this is a configuration fault rather
+ * than something to recover from by minting one — minting is the bug ADR 0030
+ * exists to close.
+ */
+export class PredicateNotOnChainError extends Error {
+    readonly termId: Hex;
+
+    constructor(termId: Hex) {
+        super(`the shared \`uses\` predicate ${termId} is not created on this chain`);
+        this.name = "PredicateNotOnChainError";
+        this.termId = termId;
+    }
+}
 
 /**
  * ARP-specific helpers for the Intuition knowledge graph.
@@ -158,25 +175,34 @@ export async function ensureAtomForURI(params: {
  * without sending a transaction. Otherwise it pays `getTripleCost()` and
  * writes `createTriples`.
  *
- * The predicate is `INTUITION_USE_TERM_ID` — the `use` atom published in
- * Appendix B of the partner guide, verified present on **both** mainnet 1155
- * and testnet 13579 under the same id on 2026-10-16. Nothing is pinned for it,
- * which is why this function needs no `PinAuth`: a predicate is not ours to
- * create.
+ * The predicate is `INTUITION_USES_TERM_ID` (`0x5c0bde1c…`) — chosen on
+ * **meaning**, not on publication or volume. See ADR 0030.
  *
- * ARP previously minted its own `use` atom here. Because atom ids are
- * content-deterministic over the pinned URI, that produced a *fifth* node
- * meaning "use" — invisible to this repo's own connector, which filters on
- * `CAPABILITY_PREDICATE_IDS`, and invisible to everyone else. Every triple and
- * every stake written that way is attached to a node nobody queries.
+ * ARP previously minted its own `uses` atom here. Atom ids are
+ * content-deterministic over the pinned URI, so that produced a node invisible
+ * to this repo's own connector, which filters on `CAPABILITY_PREDICATE_IDS`.
+ * Nothing is pinned now, which is why this function needs no `PinAuth`: a
+ * predicate is not ours to create.
  *
- * Measured 2026-10-16, atoms labelled `use`/`uses` by edge count:
- * mainnet 185 / **158 (published)** / 36 / 1, testnet **166 (published)** /
- * 152 / 143 / 21 / 0. The published one does not lead on mainnet, and that is
- * deliberately not the tiebreaker — ADR 0015 makes publication the rule, and
- * twenty-seven edges is noise. `docs/07`: "do not mint your own copies — a
- * differently-pinned duplicate is a different node and fragments the staking
- * surface."
+ * The published `use` atom (`0x9ddda4ac…`, Appendix B) is the wrong node
+ * despite being the published one. Measured 2026-10-16 over every edge on
+ * each:
+ *
+ * | predicate | objects that are a protocol |
+ * |---|---|
+ * | `use` `0x9ddda4ac` | mainnet 153/158, testnet 166/166 |
+ * | `uses` `0x5c0bde1c` | mainnet 0/185, testnet 0/143 |
+ *
+ * `use` means "supports this protocol" — its objects are A2A, MCP and OASF,
+ * and Appendix B's object table for it is five standards, enumerated and
+ * closed. `uses` means "this entity uses this tool": Intuition, Base, Claude,
+ * GitHub, Obsidian, Cursor. Writing `(agent, use, Slither)` would contradict
+ * the published canon and, because `bucketFor` files relation `uses` under
+ * `capabilities.protocols`, would render a tool as a protocol.
+ *
+ * `uses` is not in Appendix B, so a third party following the guide will not
+ * filter on it. That is the cost, and it is accepted: wrong data is not fixed
+ * by discoverability. ADR 0030 records the proposal to have it canonised.
  */
 export async function declareUsesTriple(params: {
     agentAtomId: Hex;
@@ -184,7 +210,18 @@ export async function declareUsesTriple(params: {
     walletClient: WalletClient<Transport, Chain, Account>;
     publicClient: PublicClient;
 }): Promise<{tripleId: Hex; created: boolean; tx?: Hex}> {
-    const usesAtomId = INTUITION_USE_TERM_ID as Hex;
+    const usesAtomId = INTUITION_USES_TERM_ID as Hex;
+
+    // Preflight the predicate. `ensureAtomForThing` guards its atom this way and
+    // this path guarded only the triple, so a chain missing the predicate meant
+    // `createTriples` reverting after the user had already approved and paid gas.
+    const predicateExists = await params.publicClient.readContract({
+        address: MULTI_VAULT,
+        abi: multiVaultAbi,
+        functionName: "isTermCreated",
+        args: [usesAtomId],
+    });
+    if (!predicateExists) throw new PredicateNotOnChainError(usesAtomId);
 
     const tripleId = await params.publicClient.readContract({
         address: MULTI_VAULT,
