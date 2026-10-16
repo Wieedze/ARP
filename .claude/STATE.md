@@ -57,8 +57,9 @@ and task 20 commits and does not describe them.**
 | 19     | the `use` edge and its witness                    | step 1 done, steps 2–5 open; gate not demonstrated                                                            |
 | 20     | a tool renders as a protocol                      | done, verified                                                                                                |
 | 21     | `scripts/` is outside every gate                  | open — **not** zero-cost, unlike 18; owns the gap 18 did not reach                                            |
+| 22     | the chain as witness                              | open — user proposal; strongest evidence class, bounded by how much tool use is on-chain. **Measure first**   |
 
-**Recommended order**: **17 → 19 steps 2–5 → 16**. Task 18 is done. Tasks 13, 14 and 21 are still
+**Recommended order**: **17 (in progress) → 19 steps 2–5 → 16**, with 22 runnable in parallel since its first step is read-only. Task 18 is done. Tasks 13, 14 and 21 are still
 open — the note that 13 and 14 would be "cleared alongside 18" did not happen, and 21 did not exist
 when that order was written.
 

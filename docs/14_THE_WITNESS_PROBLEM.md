@@ -33,6 +33,28 @@ Only what touched a **third party**. An agent cannot fabricate an event whose so
 | A payment to the tool        | The payee is a third party. You cannot have paid someone who received nothing.                                                                                                                          |
 | An on-chain call to the tool | The chain recorded it, not the agent.                                                                                                                                                                   |
 | A delegation redemption      | `TrustStakeCapEnforcer` (`0x99921C234d4Ca518DC58ba63ff9bfD2Cc9435f34`, chain 1155) emits `StakeCapChecked(delegationHash, newCumulative, cap)` on every pass. Unreachable without an actual redemption. |
+| **The agent's own calldata** | A transaction is a fact the chain recorded, not the agent. Needs no hook and no adoption, and works **retroactively** on history that already exists. `tasks/22`.                                       |
+
+The last row was a user proposal, and it came with a correction worth keeping: the instinct is to
+reach for a hook that fires when a skill is called, but **a hook has to be installed, which is
+adoption** — the cost flow A exists to avoid. Reading transactions needs nobody's permission. A hook
+only adds what a raw transaction cannot carry, a semantic payload the tool chooses to emit, and that
+is an opt-in refinement rather than the foundation.
+
+Measured 2026-10-16, 120 random Base token ids: **100% resolve an owner, 81% of those owners have
+transacted** (55% with ten or more), 68% hold a balance. So the accounts are active and the surface
+is not empty.
+
+**Two things that table does not establish**, stated because reach is the easy thing to overstate:
+`ownerOf` returns the token holder rather than the agent — one address in that sample has 37,928
+transactions and holds three agents, which is a minting platform, not an agent at work — and a nonce
+counts every transaction including the mint. Whether what these accounts _call_ is a tool is
+unmeasured, and settling it needs an indexer.
+`scripts/measure-cohort-onchain-activity.ts` reproduces the table.
+
+**And the limit that bounds the whole row: most tools are not contracts.** An MCP server, a REST API,
+an LLM call — none leave calldata. On the subset that does, this is unbeatable; off it, it says
+nothing. So it is a fourth source for the same edge, never a replacement for the three flows.
 
 Note the limit, stated plainly because it is easy to overclaim: **the redemption receipt proves real
 money moved under a bounded authority. It does not prove the tool was used.** The link between "I used
