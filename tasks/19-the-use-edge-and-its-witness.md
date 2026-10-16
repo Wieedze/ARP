@@ -10,6 +10,10 @@ confirmed or contested by the counterparty, and is readable by ARP's own connect
 
 ## Step 1 — Stop minting a private `use` predicate. Blocking.
 
+> **DONE** 2026-10-16, commit `5e1d5d2`. Unified onto `0x9ddda4ac` (Appendix B), verified present on
+> both chains under the same id. `declareUsesTriple` no longer takes `PinAuth`. Two guard tests added.
+> Steps 2–5 remain. Existing triples were not migrated, per the instruction below.
+
 `app/src/services/intuition-graph.ts:157-180` pins a Thing named `"uses"` with an ARP-specific
 description and caches the resulting atom id. Atom ids are content-deterministic over the pinned URI,
 so that id is neither `USE` nor `USES` in `erc8004/src/sources/intuition/terms.ts`.
