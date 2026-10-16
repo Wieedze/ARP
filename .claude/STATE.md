@@ -21,9 +21,13 @@ it, `docs/12` wins and the thing below has drifted.
 
 ## Where the work is right now
 
-**Branch** `feat/agent-panel-tabs`, **34 commits** ahead of `main` and of `origin/main`, **pushed** — `origin/feat/agent-panel-tabs` matched local at `4b205d3`; commits after that are
-local again. Recount with `git rev-list --count main..HEAD` rather than trusting this line — it was
-wrong by 17 within one commit of being written, which is the failure `claims.md` exists for.
+**Branch** `feat/agent-panel-tabs` — 35 commits ahead of `main`.
+Pushed up to `4b205d3`; **3 local commits are not pushed**.
+
+Recount rather than trusting these numbers — `git rev-list --count main..HEAD` and
+`git rev-list --count origin/feat/agent-panel-tabs..HEAD`. This line has already been wrong twice:
+once by 17, and once asserting "pushed" and "ahead of origin/main" in the same sentence, which cannot
+both hold. It is the most volatile line in this file.
 
 **Blocked on one thing:** no GitHub credential is reachable from the agent session. `git push` fails
 with `could not read Username`; `gh` is not logged in; the user's own credentials sit in
