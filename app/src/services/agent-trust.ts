@@ -119,9 +119,14 @@ export type TrustPanelView = {
 };
 
 const CAPABILITY_GROUP_ORDER: {relation: CapabilityRelation; label: string}[] = [
-    {relation: "uses", label: "Uses"},
+    // `uses-tool` first: what an agent depends on is the part a reader is
+    // choosing between. `uses-protocol` sits with the other interface claims,
+    // under "Speaks", because supporting MCP says what you can call it with —
+    // a different question from what it runs on. ADR 0030.
+    {relation: "uses-tool", label: "Uses"},
     {relation: "has-type", label: "Type"},
     {relation: "implements", label: "Implements"},
+    {relation: "uses-protocol", label: "Speaks"},
     {relation: "has-category", label: "Category"},
     {relation: "has-tag", label: "Tags"},
     {relation: "compatible-with", label: "Compatible with"},
@@ -339,6 +344,7 @@ export function groupCapabilities(profile: AgentProfile): CapabilityGroup[] {
     const all: CapabilityRef[] = profile.capabilities.flatMap((entry) => [
         ...entry.types,
         ...entry.protocols,
+        ...entry.tools,
         ...entry.chains,
         ...entry.tags,
         ...entry.categories,

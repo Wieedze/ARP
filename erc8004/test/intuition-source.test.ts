@@ -14,6 +14,8 @@ import {
     HAS_TRUST_PROVIDER,
     SAME_AS,
     TRUST_PREDICATE_IDS,
+    USE,
+    USES,
 } from "../src/sources/intuition/terms.js";
 import {fixtureFetch, INTUITION_URL} from "./helpers.js";
 
@@ -242,6 +244,50 @@ describe("intuitionSource.getCapabilities", () => {
         expect(capabilities.categories).toEqual([]);
         expect(capabilities.types.map((entry) => entry.label)).toEqual(["AIAgent"]);
         expect(capabilities.protocols.map((entry) => entry.label)).toEqual(["ERC-8004"]);
+    });
+
+    it("separates `use` (a protocol) from `uses` (a tool)", async () => {
+        // The defect this pins (ADR 0030, task 20): both predicates mapped to one
+        // relation and bucketed as `protocols`, so Obsidian and GitHub were
+        // reported as protocols — 185 mainnet edges at the time of the fix.
+        //
+        // Measured 2026-10-16: 153 of `use`'s 158 mainnet edges have a protocol
+        // as the object (A2A/MCP/OASF); 0 of `uses`'s 185 do.
+        const edge = (predicate: string, label: string, name: string) => ({
+            term_id: `0x${name.toLowerCase().padEnd(64, "0")}`,
+            predicate: {term_id: predicate, label: name === "MCP" ? "use" : "uses"},
+            object: {
+                term_id: `0x${label.toLowerCase().padEnd(64, "1")}`,
+                label,
+                value: {thing: {name: label, description: "", image: "", url: ""}},
+            },
+        });
+        const mixed = intuitionSource({
+            graphqlUrl: INTUITION_URL,
+            fetch: async (input, init) => {
+                const body = String(init?.body ?? "");
+                if (!body.includes("as_subject_triples") && !body.includes("triples(")) {
+                    return fixtureFetch()(input, init);
+                }
+                if (!body.includes(USE) || !body.includes(USES)) {
+                    return fixtureFetch()(input, init);
+                }
+                return new Response(
+                    JSON.stringify({
+                        data: {
+                            triples: [edge(USE, "MCP", "MCP"), edge(USES, "Obsidian", "Obsidian")],
+                        },
+                    }),
+                    {status: 200, headers: {"content-type": "application/json"}},
+                );
+            },
+        });
+
+        const capabilities = await mixed.getCapabilities(CLAWNCH);
+        expect(capabilities.protocols.map((entry) => entry.label)).toEqual(["MCP"]);
+        expect(capabilities.tools.map((entry) => entry.label)).toEqual(["Obsidian"]);
+        expect(capabilities.protocols.map((entry) => entry.relation)).toEqual(["uses-protocol"]);
+        expect(capabilities.tools.map((entry) => entry.relation)).toEqual(["uses-tool"]);
     });
 
     it("returns an empty result for an agent that is not in the graph", async () => {

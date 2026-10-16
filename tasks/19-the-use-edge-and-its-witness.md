@@ -1,6 +1,6 @@
 # Task 19 — The `use` edge, and its witness
 
-> **Status: NOT STARTED** (specified 2026-10-16). Implements `docs/14_THE_WITNESS_PROBLEM.md`.
+> **Status: STEP 1 DONE, STEPS 2–5 OPEN** (specified 2026-10-16). Implements `docs/14_THE_WITNESS_PROBLEM.md`.
 > **Step 1 is a prerequisite for every other step and for tasks 16 and 17.**
 
 ## Objective

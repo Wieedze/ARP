@@ -1,7 +1,8 @@
 # Task 20 — A tool renders as a protocol
 
-> **Status: NOT STARTED** (recorded 2026-10-16, from the `intuition-integrator` review of ADR 0030).
-> **This is a live defect, not a refactor.** It mislabels 185 mainnet edges today.
+> **Status: IMPLEMENTED, AWAITING VERIFICATION** 2026-10-16. Recorded from the
+> `intuition-integrator` review of ADR 0030. **This was a live defect, not a refactor** — it
+> mislabelled 185 mainnet edges. The appendix defect (unvalidated CIDs) is **not** fixed here.
 
 ## The finding
 

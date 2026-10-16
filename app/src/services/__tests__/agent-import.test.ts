@@ -147,6 +147,7 @@ function graphClient(sourceHandle: string | null): Erc8004Client {
         getCapabilities: async () => ({
             types: [],
             protocols: [],
+            tools: [],
             chains: [],
             tags: [],
             categories: [],

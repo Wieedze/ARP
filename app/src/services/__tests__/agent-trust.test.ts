@@ -239,11 +239,20 @@ describe("groupCapabilities", () => {
                         ],
                         protocols: [
                             {
-                                relation: "uses",
+                                relation: "uses-protocol",
                                 label: "MCP",
                                 name: "MCP",
                                 url: null,
                                 sourceHandle: "0xmcp",
+                            },
+                        ],
+                        tools: [
+                            {
+                                relation: "uses-tool",
+                                label: "Obsidian",
+                                name: "Obsidian",
+                                url: null,
+                                sourceHandle: "0xobsidian",
                             },
                         ],
                         chains: [],
@@ -262,6 +271,7 @@ describe("groupCapabilities", () => {
                             },
                         ],
                         protocols: [],
+                        tools: [],
                         chains: [],
                         tags: [],
                         categories: [],
@@ -271,8 +281,59 @@ describe("groupCapabilities", () => {
             }),
         );
 
-        expect(groups.map((group) => group.relation)).toEqual(["uses", "has-type"]);
+        // `uses-tool` leads the order, then the type, then the protocol it speaks.
+        expect(groups.map((group) => group.relation)).toEqual([
+            "uses-tool",
+            "has-type",
+            "uses-protocol",
+        ]);
         expect(groups.find((group) => group.relation === "has-type")?.entries).toHaveLength(1);
+    });
+
+    it("keeps a tool out of the protocol group and a protocol out of the tool group", () => {
+        // The defect this pins (ADR 0030, task 20): `use` and `uses` both mapped
+        // to one relation and bucketed as `protocols`, so ARP reported Obsidian
+        // and GitHub as protocols for every agent carrying a `uses` edge — 185
+        // mainnet edges at the time of the fix.
+        const groups = groupCapabilities(
+            profile({
+                capabilities: [
+                    {
+                        types: [],
+                        protocols: [
+                            {
+                                relation: "uses-protocol",
+                                label: "MCP",
+                                name: "MCP",
+                                url: null,
+                                sourceHandle: "0xmcp",
+                            },
+                        ],
+                        tools: [
+                            {
+                                relation: "uses-tool",
+                                label: "Obsidian",
+                                name: "Obsidian",
+                                url: null,
+                                sourceHandle: "0xobsidian",
+                            },
+                        ],
+                        chains: [],
+                        tags: [],
+                        categories: [],
+                        provenance: {sourceId: "intuition", kind: "claim", origin: null},
+                    },
+                ],
+            }),
+        );
+
+        const labelsOf = (relation: string) =>
+            groups.find((group) => group.relation === relation)?.entries.map((e) => e.label) ?? [];
+
+        expect(labelsOf("uses-tool")).toEqual(["Obsidian"]);
+        expect(labelsOf("uses-protocol")).toEqual(["MCP"]);
+        expect(labelsOf("uses-tool")).not.toContain("MCP");
+        expect(labelsOf("uses-protocol")).not.toContain("Obsidian");
     });
 });
 

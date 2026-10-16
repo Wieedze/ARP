@@ -125,6 +125,7 @@ export function erc8004RegistrySource(config: Erc8004RegistrySourceConfig = {}):
             return {
                 types: [],
                 protocols: [],
+                tools: [],
                 chains: [],
                 tags: [],
                 categories: [],

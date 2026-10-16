@@ -227,6 +227,7 @@ export function intuitionSource(config: IntuitionSourceConfig = {}): TrustSource
             const empty: Capabilities = {
                 types: [],
                 protocols: [],
+                tools: [],
                 chains: [],
                 tags: [],
                 categories: [],
@@ -308,9 +309,11 @@ function bucketFor(capabilities: Capabilities, capability: CapabilityRef): Capab
         case "has-type":
             return capabilities.types;
         case "implements":
-        case "uses":
+        case "uses-protocol":
         case "compatible-with":
             return capabilities.protocols;
+        case "uses-tool":
+            return capabilities.tools;
         case "available-on":
             return capabilities.chains;
         case "has-tag":

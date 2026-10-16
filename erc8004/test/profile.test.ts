@@ -347,6 +347,7 @@ describe("getAgentProfile — conflicts are kept, not resolved", () => {
             getCapabilities: async () => ({
                 types: [],
                 protocols: [],
+                tools: [],
                 chains: [],
                 tags: [],
                 categories: [],

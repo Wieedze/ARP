@@ -77,8 +77,8 @@ const CLAIM_RELATIONS: Record<string, ClaimRelation> = {
 const CAPABILITY_RELATIONS: Record<string, CapabilityRelation> = {
     [HAS_TYPE]: "has-type",
     [IMPLEMENT]: "implements",
-    [USE]: "uses",
-    [USES]: "uses",
+    [USE]: "uses-protocol",
+    [USES]: "uses-tool",
     [COMPATIBLE_WITH]: "compatible-with",
     [AVAILABLE_ON]: "available-on",
     [HAS_TAG]: "has-tag",
