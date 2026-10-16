@@ -1,6 +1,6 @@
 # Task 15 — Strip the panel's copy down
 
-> **Status: AWAITING FINAL VERDICT** 2026-10-16 · commits `7ccf585`..`99dafd8`, fixes `3689e19` ·
+> **Status: COMPLETE** 2026-10-16 · commits `7ccf585`..`99dafd8`, fixes `3689e19` ·
 > post-mortem `.claude/learning/14-strip-the-panel-copy.md` · ADR `.claude/choices/0029-*.md`
 > Specified 2026-09-17. Same branch and surface as Task 12.
 
