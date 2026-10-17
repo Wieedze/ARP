@@ -1,6 +1,6 @@
 # Project state
 
-**Updated** 2026-10-17. Hand-maintained — a task does not close without updating this file
+**Updated** 2026-10-17 (ADR 0033 — hackathon surface set aside). Hand-maintained — a task does not close without updating this file
 (`workflow.md`, task-close protocol).
 
 Read this after `CLAUDE.md` and before anything else. It replaces reading 31 ADRs and 14
@@ -18,6 +18,12 @@ not an afterthought.
 
 That is `docs/12_THE_IDEA.md`, which is the only canonical statement. If anything below contradicts
 it, `docs/12` wins and the thing below has drifted.
+
+**The hackathon surface is set aside** (ADR `0033`, 2026-10-17). ARP's three demo agents, the Solidity
+auditor, the agent servers and `/hire` are historical record — not a dependency, not maintained.
+**An agent arriving through the connector brings or mints its own ERC-8004 identity; ARP mints nothing
+on anyone's behalf.** The forward surface is the verifier, `getToolUsage`, the panel and the
+directory.
 
 ## Where the work is right now
 
@@ -39,27 +45,27 @@ and task 20 commits and does not describe them.**
 
 ## Tasks
 
-| #      | task                                              | state                                                                                                         |
-| ------ | ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| 01–03b | setup, contract, deploy, enforcers, smart account | done                                                                                                          |
-| 04     | UI core                                           | **no status line** — code exists, fiche never marked                                                          |
-| 04b    | agent identity and compose                        | done                                                                                                          |
-| 04c    | agent autonomous positioning                      | **IN PROGRESS since 2026-06-03** — hackathon deadline passed 2026-06-15; finished or abandoned, not in flight |
-| 05     | UI polish and deploy                              | **no status line**                                                                                            |
-| 06–08  | pin writes, connector, trust panel                | done                                                                                                          |
-| 09     | follow-ups from global review                     | open                                                                                                          |
-| 10–12  | directory, import, panel tabs                     | done                                                                                                          |
-| 13     | a rule the repo cannot satisfy                    | open — `code.md:86` requires React Testing Library; the repo has none                                         |
-| 14     | contrast below AA                                 | open — `--color-fg-40` at 3.66:1                                                                              |
-| 15     | strip the panel copy                              | done, verified                                                                                                |
-| 16     | the agent SDK                                     | open — **needs rewriting around MCP**, see `docs/13` phase 3                                                  |
-| 17     | the external verifier                             | **built**, 48 tests; gate not yet run at 100 agents                                                           |
-| 18     | `strict` is off in the app                        | done, verified (`6b351ee`) — cost was indeed zero errors                                                      |
-| 19     | the `use` edge and its witness                    | step 1 done, steps 2–5 open; gate not demonstrated                                                            |
-| 20     | a tool renders as a protocol                      | done, verified                                                                                                |
-| 21     | `scripts/` is outside every gate                  | open — **not** zero-cost, unlike 18; owns the gap 18 did not reach                                            |
-| 22     | the chain as witness                              | open — user proposal; strongest evidence class, bounded by how much tool use is on-chain. **Measure first**   |
-| 23     | the tool surface                                  | step 1 **done** (`getToolUsage`, 9 tests, live-verified); the page remains                                    |
+| #      | task                                              | state                                                                                                       |
+| ------ | ------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| 01–03b | setup, contract, deploy, enforcers, smart account | done                                                                                                        |
+| 04     | UI core                                           | **no status line** — code exists, fiche never marked                                                        |
+| 04b    | agent identity and compose                        | done                                                                                                        |
+| 04c    | agent autonomous positioning                      | **set aside** — hackathon surface, ADR `0033`                                                               |
+| 05     | UI polish and deploy                              | **no status line**                                                                                          |
+| 06–08  | pin writes, connector, trust panel                | done                                                                                                        |
+| 09     | follow-ups from global review                     | open                                                                                                        |
+| 10–12  | directory, import, panel tabs                     | done                                                                                                        |
+| 13     | a rule the repo cannot satisfy                    | open — `code.md:86` requires React Testing Library; the repo has none                                       |
+| 14     | contrast below AA                                 | open — `--color-fg-40` at 3.66:1                                                                            |
+| 15     | strip the panel copy                              | done, verified                                                                                              |
+| 16     | the hire / MCP server                             | open — **and now the only hire path**, since ADR `0033` set the demo aside                                  |
+| 17     | the external verifier                             | **built**, 48 tests; gate not yet run at 100 agents                                                         |
+| 18     | `strict` is off in the app                        | done, verified (`6b351ee`) — cost was indeed zero errors                                                    |
+| 19     | the `use` edge and its witness                    | step 1 done; steps 2–5 **unblocked** by ADR `0033` — no minting needed                                      |
+| 20     | a tool renders as a protocol                      | done, verified                                                                                              |
+| 21     | `scripts/` is outside every gate                  | open — **not** zero-cost, unlike 18; owns the gap 18 did not reach                                          |
+| 22     | the chain as witness                              | open — user proposal; strongest evidence class, bounded by how much tool use is on-chain. **Measure first** |
+| 23     | the tool surface                                  | step 1 **done** (`getToolUsage`, 9 tests, live-verified); the page remains                                  |
 
 **Recommended order**, re-anchored 2026-10-16 on the user's restatement that the point is **tool
 reputation from the agents that used them**: **19 steps 2–5 → the tool surface → 16**, with 17

@@ -108,8 +108,10 @@ Write on the registration-derived agent atom. A `uses` edge is a claim about the
 not a record of an account's action — and since anyone can write `(X, uses, Y)` about any `X`, the
 subject is a question of who can **read** the edge, not who may assert it.
 
-**The cost this accepts:** ARP's own agents have no ERC-8004 identity and must be minted into the
-canonical registry (ADR `0027`) before they can carry an edge. The two options as weighed:
+**The cost this accepted is withdrawn** (ADR `0033`, 2026-10-17). It rested on ARP's demo agents
+needing an identity; those are set aside, and an agent arriving through the connector brings or mints
+its own. So every agent that can write an edge already has the identity by construction, and steps
+2–5 are no longer blocked on minting anything. The two options as weighed:
 
 ### The two options as they were weighed
 
