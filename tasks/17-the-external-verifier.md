@@ -1,7 +1,14 @@
 # Task 17 — The external verifier
 
-> **Status: NOT STARTED** (specified 2026-10-16). Phase 1 of `docs/13_THE_THREE_FLOWS.md`.
-> Build this **before** task 16. It is the only flow that needs nobody's consent.
+> **Status: BUILT, GATE NOT YET RUN AT 100 AGENTS** (specified 2026-10-16, built 2026-10-16/17).
+> Phase 1 of `docs/13_THE_THREE_FLOWS.md`. The only flow that needs nobody's consent.
+>
+> **Shipped**: `erc8004/src/verify/{declaration,probe,host-limiter,subject}.ts`, exported from the
+> connector, 41 tests. `scripts/verify-cohort.ts` walks a range or a list and writes a JSON surface.
+> Verified live against six real documents and five MCP endpoints.
+>
+> **Remaining**: run the gate — 100 agents in one walk, with the three groups separated and any
+> confirmed row reproducible by one request. Then `task-verifier`, post-mortem, `STATE.md`.
 
 ## Objective
 

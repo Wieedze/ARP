@@ -1,6 +1,6 @@
 # Project state
 
-**Updated** 2026-10-16 (task 18 closed). Hand-maintained — a task does not close without updating this file
+**Updated** 2026-10-17. Hand-maintained — a task does not close without updating this file
 (`workflow.md`, task-close protocol).
 
 Read this after `CLAUDE.md` and before anything else. It replaces reading 31 ADRs and 14
@@ -21,13 +21,14 @@ it, `docs/12` wins and the thing below has drifted.
 
 ## Where the work is right now
 
-**Branch** `feat/agent-panel-tabs` — 35 commits ahead of `main`.
-Pushed up to `4b205d3`; **3 local commits are not pushed**.
+**Branch** `feat/agent-panel-tabs` — 47 commits ahead of `main`,
+of which **15 are not pushed** (remote is at `4b205d3`).
 
-Recount rather than trusting these numbers — `git rev-list --count main..HEAD` and
-`git rev-list --count origin/feat/agent-panel-tabs..HEAD`. This line has already been wrong twice:
-once by 17, and once asserting "pushed" and "ahead of origin/main" in the same sentence, which cannot
-both hold. It is the most volatile line in this file.
+Recount rather than trusting these two numbers — `git rev-list --count main..HEAD` and
+`git rev-list --count origin/feat/agent-panel-tabs..HEAD`. This line has been wrong twice: once by
+17 commits, and once asserting "pushed" and "ahead of origin/main" together, which cannot both hold.
+
+**Tests**: connector 222 passed / 4 skipped · app 205 passed / 2 skipped. `tsc` 0, `lint` 0.
 
 **Blocked on one thing:** no GitHub credential is reachable from the agent session. `git push` fails
 with `could not read Username`; `gh` is not logged in; the user's own credentials sit in
@@ -52,13 +53,13 @@ and task 20 commits and does not describe them.**
 | 14     | contrast below AA                                 | open — `--color-fg-40` at 3.66:1                                                                              |
 | 15     | strip the panel copy                              | done, verified                                                                                                |
 | 16     | the agent SDK                                     | open — **needs rewriting around MCP**, see `docs/13` phase 3                                                  |
-| 17     | the external verifier                             | open — **next**                                                                                               |
+| 17     | the external verifier                             | **built**, 48 tests; gate not yet run at 100 agents                                                           |
 | 18     | `strict` is off in the app                        | done, verified (`6b351ee`) — cost was indeed zero errors                                                      |
 | 19     | the `use` edge and its witness                    | step 1 done, steps 2–5 open; gate not demonstrated                                                            |
 | 20     | a tool renders as a protocol                      | done, verified                                                                                                |
 | 21     | `scripts/` is outside every gate                  | open — **not** zero-cost, unlike 18; owns the gap 18 did not reach                                            |
 | 22     | the chain as witness                              | open — user proposal; strongest evidence class, bounded by how much tool use is on-chain. **Measure first**   |
-| 23     | the tool surface                                  | open — **the half of `docs/12` that does not exist**: nothing shows a tool with its weight                    |
+| 23     | the tool surface                                  | step 1 **done** (`getToolUsage`, 9 tests, live-verified); the page remains                                    |
 
 **Recommended order**, re-anchored 2026-10-16 on the user's restatement that the point is **tool
 reputation from the agents that used them**: **19 steps 2–5 → the tool surface → 16**, with 17
