@@ -170,6 +170,102 @@ describe("probeEndpoint — MCP", () => {
     });
 });
 
+describe("probeEndpoint — what the server says about itself", () => {
+    const INIT = JSON.stringify({
+        jsonrpc: "2.0",
+        id: 1,
+        result: {
+            protocolVersion: "2024-11-05",
+            capabilities: {tools: {}},
+            serverInfo: {name: "NebulaScan", version: "1.0.0"},
+        },
+    });
+    const TOOLS = JSON.stringify({
+        jsonrpc: "2.0",
+        id: 2,
+        result: {
+            tools: [
+                {name: "bridge_monitor", description: "Track real-time inflows"},
+                {name: "peg_checker"},
+                {name: ""},
+                "not an object",
+            ],
+        },
+    });
+
+    it("records the NEGOTIATED protocol version, not the one we asked for", async () => {
+        // Live: gmchain and nebula-scan both answer 2024-11-05 to a 2025-06-18 request. That is
+        // correct MCP version negotiation, and the server's answer is the fact worth keeping.
+        const outcome = await probeEndpoint(endpoint(), {fetch: respond(INIT)});
+        expect(outcome.status).toBe("confirmed");
+        if (outcome.status !== "confirmed") return;
+        expect(outcome.server).toEqual({
+            name: "NebulaScan",
+            version: "1.0.0",
+            protocolVersion: "2024-11-05",
+        });
+        expect(outcome.detail).toContain("NebulaScan");
+        expect(outcome.detail).toContain("2024-11-05");
+    });
+
+    it("asks for nothing extra unless listTools is set", async () => {
+        // One request is the courtesy baseline; the follow-up is opt-in.
+        let calls = 0;
+        const outcome = await probeEndpoint(endpoint(), {
+            fetch: (async () => {
+                calls += 1;
+                return new Response(INIT, {status: 200});
+            }) as unknown as typeof fetch,
+        });
+        expect(calls).toBe(1);
+        if (outcome.status === "confirmed") expect(outcome.servedTools).toBeUndefined();
+    });
+
+    it("recovers the tool list the registration file did not carry", async () => {
+        // The reason this exists: 0 of 112 registration documents declared a capability, while all
+        // three confirmed MCP servers listed theirs. The runtime is where the data is.
+        const bodies = [INIT, "{}", TOOLS];
+        let i = 0;
+        const outcome = await probeEndpoint(endpoint(), {
+            listTools: true,
+            fetch: (async () =>
+                new Response(bodies[i++] ?? "{}", {status: 200})) as unknown as typeof fetch,
+        });
+        expect(outcome.status).toBe("confirmed");
+        if (outcome.status !== "confirmed") return;
+        // Nameless and non-object entries are dropped rather than yielding blank rows.
+        expect(outcome.servedTools).toEqual([
+            {name: "bridge_monitor", description: "Track real-time inflows"},
+            {name: "peg_checker", description: null},
+        ]);
+        expect(outcome.detail).toContain("serving 2 tools");
+    });
+
+    it("stays confirmed when the handshake works but tools/list does not", async () => {
+        // Losing a confirmed MCP server because a follow-up failed would be the wrong trade.
+        const bodies = [INIT, "{}", "gateway timeout"];
+        let i = 0;
+        const outcome = await probeEndpoint(endpoint(), {
+            listTools: true,
+            fetch: (async () =>
+                new Response(bodies[i++] ?? "{}", {status: 200})) as unknown as typeof fetch,
+        });
+        expect(outcome.status).toBe("confirmed");
+        if (outcome.status !== "confirmed") return;
+        expect(outcome.servedTools).toEqual([]);
+    });
+
+    it("reads an SSE-framed answer instead of calling it unrecognised", async () => {
+        // Some deployments answer a single POST with text/event-stream even when the client accepts
+        // plain JSON. Treating that as unparseable would report a working server as inconclusive.
+        const framed = `event: message\ndata: ${INIT}\n\n`;
+        const outcome = await probeEndpoint(endpoint(), {fetch: respond(framed)});
+        expect(outcome.status).toBe("confirmed");
+        if (outcome.status !== "confirmed") return;
+        expect(outcome.server?.name).toBe("NebulaScan");
+    });
+});
+
 describe("probeEndpoint — A2A and plain", () => {
     it("confirms an agent card at the well-known path", async () => {
         const seen: string[] = [];

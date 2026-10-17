@@ -18,6 +18,17 @@ export const MCP_PROTOCOL_VERSION = "2025-06-18";
 
 export type ProbeOptions = {
     fetch?: typeof globalThis.fetch;
+    /**
+     * After a successful MCP handshake, ask the server what it serves.
+     *
+     * Off by default because it is a second request per endpoint and the task's courtesy rules make
+     * one request the baseline. Worth turning on: measured 2026-10-16, **0 of 112 registration
+     * documents declared any capability**, yet all three confirmed MCP servers answered
+     * `tools/list` with their real tool list — 13 tools across gmchain, surfliquid and nebula-scan.
+     * So this recovers capability data the registration file does not carry, which is a stronger
+     * result than comparing declared against served.
+     */
+    listTools?: boolean;
     userAgent?: string;
     timeoutMs?: number;
     /** Injected so tests do not sleep. Called with the delay a courteous client would wait. */
@@ -32,6 +43,21 @@ export type ProbeOptions = {
  * shrug.
  */
 const OBSERVED_LIMIT = 240;
+
+/**
+ * Pull the JSON out of a response that may be SSE-framed.
+ *
+ * Some MCP deployments answer a single POST with `text/event-stream` even when the client accepts
+ * plain JSON. Treating that as unparseable would report a working server as inconclusive.
+ */
+function unframe(text: string): string {
+    if (!text.includes("data:")) return text;
+    return text
+        .split("\n")
+        .filter((line) => line.startsWith("data:"))
+        .map((line) => line.slice(5).trim())
+        .join("");
+}
 
 function truncate(text: string): string {
     const flat = text.replace(/\s+/g, " ").trim();
@@ -105,6 +131,67 @@ function rateLimited(request: ProbeRequest, status: number, body: string): Probe
     };
 }
 
+/**
+ * Ask a server what it serves, after a successful handshake.
+ *
+ * Sends the `initialized` notification first, as the spec asks, then one `tools/list`. Returns an
+ * empty array rather than throwing: a server that handshakes but will not list is still confirmed
+ * as speaking MCP, and losing that because the follow-up failed would be the wrong trade.
+ */
+async function listTools(
+    url: string,
+    session: string | null,
+    options: ProbeOptions,
+): Promise<{name: string; description: string | null}[]> {
+    const headers: Record<string, string> = {
+        "content-type": "application/json",
+        accept: "application/json, text/event-stream",
+    };
+    if (session) headers["mcp-session-id"] = session;
+
+    // Courtesy, and the spec's own sequence. Failure here is ignored by design.
+    await send(
+        {method: "POST", url, rpcMethod: "notifications/initialized"},
+        {
+            method: "POST",
+            headers,
+            body: JSON.stringify({jsonrpc: "2.0", method: "notifications/initialized"}),
+        },
+        options,
+    );
+
+    const sent = await send(
+        {method: "POST", url, rpcMethod: "tools/list"},
+        {
+            method: "POST",
+            headers,
+            body: JSON.stringify({jsonrpc: "2.0", id: 2, method: "tools/list"}),
+        },
+        options,
+    );
+    if ("error" in sent) return [];
+    try {
+        const parsed = JSON.parse(unframe(sent.body)) as Record<string, unknown>;
+        const result = parsed["result"] as Record<string, unknown> | undefined;
+        const tools = Array.isArray(result?.["tools"]) ? result["tools"] : [];
+        return tools.flatMap((tool) => {
+            if (typeof tool !== "object" || tool === null) return [];
+            const record = tool as Record<string, unknown>;
+            const name = record["name"];
+            if (typeof name !== "string" || name.length === 0) return [];
+            return [
+                {
+                    name,
+                    description:
+                        typeof record["description"] === "string" ? record["description"] : null,
+                },
+            ];
+        });
+    } catch {
+        return [];
+    }
+}
+
 async function probeMcp(url: string, options: ProbeOptions): Promise<ProbeOutcome> {
     const request: ProbeRequest = {method: "POST", url, rpcMethod: "initialize"};
     const sent = await send(
@@ -133,13 +220,41 @@ async function probeMcp(url: string, options: ProbeOptions): Promise<ProbeOutcom
     if (response.status === 429 || response.status === 503) {
         return rateLimited(request, response.status, body);
     }
-    if (response.ok && /"result"\s*:/.test(body)) {
+    const framed = unframe(body);
+    let parsed: Record<string, unknown> | null = null;
+    try {
+        parsed = JSON.parse(framed) as Record<string, unknown>;
+    } catch {
+        parsed = null;
+    }
+    const result =
+        parsed !== null && typeof parsed["result"] === "object" && parsed["result"] !== null
+            ? (parsed["result"] as Record<string, unknown>)
+            : null;
+
+    if (response.ok && result !== null) {
+        const info = (result["serverInfo"] ?? {}) as Record<string, unknown>;
+        const server = {
+            name: typeof info["name"] === "string" ? info["name"] : null,
+            version: typeof info["version"] === "string" ? info["version"] : null,
+            // What the server NEGOTIATED, not what we asked for. gmchain and nebula-scan both
+            // answer 2024-11-05 to a 2025-06-18 request, which is correct MCP behaviour.
+            protocolVersion:
+                typeof result["protocolVersion"] === "string" ? result["protocolVersion"] : null,
+        };
+        const session = response.headers.get("mcp-session-id");
+        const servedTools = options.listTools ? await listTools(url, session, options) : undefined;
         return {
             status: "confirmed",
             code: "serves-declared-protocol",
             httpStatus: response.status,
             request,
-            detail: "answered `initialize` with a JSON-RPC result",
+            detail:
+                `answered \`initialize\` as ${server.name ?? "an unnamed server"}` +
+                (server.protocolVersion ? ` on ${server.protocolVersion}` : "") +
+                (servedTools ? `, serving ${servedTools.length} tools` : ""),
+            server,
+            ...(servedTools === undefined ? {} : {servedTools}),
         };
     }
     if (response.status >= 500) {
@@ -155,7 +270,9 @@ async function probeMcp(url: string, options: ProbeOptions): Promise<ProbeOutcom
     // protocol it declared, or our handshake being wrong for this deployment — and we cannot tell
     // which from one exchange. A JSON-RPC error object is the one case we can read as the former:
     // the server understood the envelope and refused the call.
-    if (/"error"\s*:\s*\{[^}]*"code"\s*:\s*-3\d{4}/.test(body)) {
+    const rpcError =
+        parsed === null ? null : (parsed["error"] as Record<string, unknown> | undefined);
+    if (rpcError !== null && rpcError !== undefined && typeof rpcError["code"] === "number") {
         return {
             status: "confirmed",
             code: "declared-protocol-not-served",

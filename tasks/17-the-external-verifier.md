@@ -51,6 +51,32 @@ So **only 16 of 90 declared endpoints were probeable at all.** That is the headl
 what this task can claim. The document layer is where the volume is: a registration file that does not
 resolve is a fact about 37% of agents that have a `tokenURI`, and it costs one GET to establish.
 
+## The verifier recovers capability data, not just liveness
+
+Found 2026-10-16 by completing the handshake on the three confirmed MCP servers:
+
+| agent      | server                | negotiated | tools                                                                                  |
+| ---------- | --------------------- | ---------- | -------------------------------------------------------------------------------------- |
+| 8453:51722 | GM Chain Orchestrator | 2024-11-05 | `get_race_status`, `start_race`, `get_leaderboard`, `optimize_speed`, `get_track_info` |
+| 8453:51097 | Surf AI               | 2025-06-18 | `get_protocol_stats`, `get_protocol_info`, `get_vault_metadata`                        |
+| 8453:26183 | NebulaScan            | 2024-11-05 | `bridge_monitor`, `peg_checker`, `exploit_scanner`, `relay_health`, `flow_analytics`   |
+
+**None of those three declares a capability in its registration file**, and neither did any of the
+112 documents in the sample. Yet `tools/list` returns the real list. So the runtime is where the
+capability data lives, and asking for it is one extra request.
+
+That is a stronger result than this task was specced for. "Does it serve what it declared" barely
+applies when almost nothing is declared; **"what does it actually serve"** applies to every callable
+agent, and it is what makes the output usable for choosing who to hire.
+
+Two details worth keeping:
+
+- The version recorded is the one the server **negotiated**, not the one requested. gmchain and
+  nebula-scan both answer `2024-11-05` to a `2025-06-18` request — correct MCP behaviour, and the
+  server's answer is the fact.
+- `listTools` is **off by default**. One request per endpoint is the courtesy baseline; the follow-up
+  is opt-in, and a failed follow-up never downgrades a confirmed handshake.
+
 Where a name declares a protocol, the check is sharp. Of 4 endpoints named `mcp`: 2 speak MCP
 (`gmchain.vercel.app/api/mcp`, `api.helixa.xyz/api/mcp` both answer `initialize` with a `result`),
 2 do not — one returns `{"status":"error","code":404,"message":"Application not found"}`, one is dead.

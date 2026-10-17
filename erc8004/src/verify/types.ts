@@ -89,6 +89,24 @@ export type ProbeOutcome =
           /** What we sent, so any confirmed row can be reproduced with one `curl`. */
           request: ProbeRequest;
           detail: string;
+          /**
+           * What the server said about itself during the handshake.
+           *
+           * Present only on `serves-declared-protocol`. `protocolVersion` is what the server
+           * NEGOTIATED, not what we asked for — gmchain and nebula-scan both answered `2024-11-05`
+           * to a `2025-06-18` request, which is correct MCP behaviour and worth recording as the
+           * server's own answer rather than our assumption.
+           */
+          server?: {name: string | null; version: string | null; protocolVersion: string | null};
+          /**
+           * The tools the server actually serves, from `tools/list`. Only populated when
+           * `listTools` was set.
+           *
+           * This is capability data **recovered from the runtime**, and it is often the only place
+           * it exists: 0 of 112 registration documents in the 2026-10-16 sample declared a
+           * capability, while all three confirmed MCP servers listed theirs.
+           */
+          servedTools?: {name: string; description: string | null}[];
       }
     | {
           status: "not-checkable";
