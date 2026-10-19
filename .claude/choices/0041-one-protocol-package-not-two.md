@@ -85,24 +85,41 @@ list of "live" files and that is exactly the shape that misses one. Every match 
 `@arp-protocol/erc8004`, `@arp-protocol/sdk`, `sdk/` and `DEFAULT_DEPLOYMENT` across every file type,
 triaged:
 
-| what it turned out to be                                                                                                                           | action                                      |
-| -------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
-| third-party URLs — `api.deep3.ai/.well-known/intuition/erc8004/agents/…` in fixtures, `signature.ts`, `helpers.ts`                                 | none; not our paths                         |
-| `contracts/src/erc8004/` — a Solidity directory that still exists                                                                                  | none                                        |
-| this ADR's and the retractions' own text, quoting the old names                                                                                    | none; deliberate                            |
-| append-only record — `.claude/learning/`, ADRs `0014`–`0033`, completed task files, `docs/07`–`14`, PR drafts                                      | none; the policy above                      |
-| **`.gitignore`'s dead `sdk/dist/` block**                                                                                                          | **removed**, replaced by `packages/*/dist/` |
-| **`README.md`'s link to `sdk/README.md`** — a broken link on the repo's front page                                                                 | **fixed**                                   |
-| **`README.md`'s directory map**, still listing `sdk/` and labelling it `@arp-protocol/core`                                                        | **fixed**                                   |
-| **`tasks/09` and `tasks/21`** — **open** task files with actionable items citing `sdk/src/…`                                                       | **fixed**                                   |
-| ADRs `0038`–`0040`, written the same day but before the rename                                                                                     | a forwarding note at the top of each        |
-| **three live code comments** — `scripts/rig-registration-files.ts`, `scripts/verify-rig-claims.ts`, `app/src/services/__tests__/trust-fixtures.ts` | **fixed**                                   |
+| what it turned out to be                                                                                                                                                       | action                                      |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------- |
+| third-party URLs — `api.deep3.ai/.well-known/intuition/erc8004/agents/…` in fixtures, `signature.ts`, `helpers.ts`                                                             | none; not our paths                         |
+| `contracts/src/erc8004/` — a Solidity directory that still exists                                                                                                              | none                                        |
+| this ADR's and the retractions' own text, quoting the old names                                                                                                                | none; deliberate                            |
+| append-only record — `.claude/learning/`, ADRs `0014`–`0033`, completed task files, `docs/07`–`14`, PR drafts                                                                  | none; the policy above                      |
+| **`.gitignore`'s dead `sdk/dist/` block**                                                                                                                                      | **removed**, replaced by `packages/*/dist/` |
+| **`README.md`'s link to `sdk/README.md`** — a broken link on the repo's front page                                                                                             | **fixed**                                   |
+| **`README.md`'s directory map**, still listing `sdk/` and labelling it `@arp-protocol/core`                                                                                    | **fixed**                                   |
+| **`tasks/09` and `tasks/21`** — **open** task files with actionable items citing `sdk/src/…`                                                                                   | **fixed**                                   |
+| ADRs `0038`–`0040`, written the same day but before the rename                                                                                                                 | a forwarding note at the top of each        |
+| **four live code comments** — `scripts/rig-registration-files.ts`, `scripts/verify-rig-claims.ts`, `app/src/services/__tests__/trust-fixtures.ts`, `scripts/arp-mcp-server.ts` | **fixed**                                   |
 
 **What the sweep says about the first pass:** it was right on the code and the configs that matter,
 and wrong in places a hand-built list of "live files" could not help but miss — a front-page link,
-two open task files, a dead ignore rule and three code comments. None of them break a build; all of
-them send a reader somewhere that does not exist. The lesson is the method, not the count: sweep
-every file type and triage, rather than enumerate the files you believe are live.
+two open task files, a dead ignore rule and four code comments. None of them break a build; all of
+them send a reader somewhere that does not exist.
+
+**And the sweep itself missed two, for a structural reason worth more than the fixes.** Every pattern
+it used — `erc8004/`, `@arp-protocol/erc8004`, `@arp-protocol/sdk`, `sdk/`, `DEFAULT_DEPLOYMENT` —
+was anchored on a slash or an `@`, so **a bare `erc8004` token in prose could not match any of
+them**. Two survived exactly there: `scripts/arp-mcp-server.ts:10`, and `tasks/09:104` in a bullet
+whose other two references had already been rewritten twice. The search that closes the class is the
+bare token, triaged by hand:
+
+```
+grep -rn "erc8004" scripts packages/protocol/src packages/protocol/test app/src contracts/src \
+  .claude/rules .claude/STATE.md .claude/agents CLAUDE.md README.md .gitignore tasks
+```
+
+It returns legitimate hits too — third-party `.well-known` URLs, `contracts/src/erc8004/`, the
+`erc8004-connector` and `erc8004TokenId` identifiers, react-query cache keys, and this repo's own
+retraction text — so it has to be read rather than piped into `sed`. The lesson is the pattern, not
+the count: a rename's residue is a **token**, and anchoring the search on the punctuation around it
+is how two passes can both look thorough and both miss the same line.
 
 The built output was never at risk: `packages/protocol/.gitignore:1` carries `dist/`, so nothing was
 committed — confirmed with `git ls-files`, 0 tracked files under `packages/protocol/dist`.

@@ -7,7 +7,7 @@
  *      PORT=4000 bun run scripts/arp-mcp-server.ts
  *
  *  MCP over HTTP is JSON-RPC with three methods — `initialize`, `tools/list`, `tools/call` — so it
- *  is hand-rolled rather than pulling a dependency. `erc8004` holds the protocol logic; this file is
+ *  is hand-rolled rather than pulling a dependency. `@arp-protocol/core` holds the protocol logic; this file is
  *  a transport over it, which is why it lives in `scripts/` and not in the connector
  *  (`rules/portability.md`).
  *
@@ -80,8 +80,8 @@ const reads = multiVaultReads({ address: MULTI_VAULT, chainId, rpcUrl: RPC_URL }
 
 /**
  * So an `https://` tool reuses the atom it already has instead of minting a metadata-less one
- * beside it. Measured: 78 of the 84 tool atoms on mainnet `uses` edges are `ipfs://` and 77 resolve
- * a pinned Thing. A graph read, no credential.
+ * beside it. Measured by `scripts/measure-tool-atom-shape.ts`: 78 of the 84 tool atoms on mainnet
+ * `uses` edges are `ipfs://` and 77 of those resolve a pinned Thing. A graph read, no credential.
  */
 const toolAtoms = intuitionToolAtomLookup({ graphqlUrl: GRAPHQL_URL });
 

@@ -101,7 +101,7 @@ delegates to it for agents and reputation. The `Deposited` event signature is de
   _term_-level total and runs ~1,000× the vault balance; `MarketPanel.tsx` deliberately avoids it and
   reads `getVault` instead. The connector's README teaches integrators the number its own app rejects.
 - `packages/protocol/package.json` points `exports` at `./dist`, which is gitignored, so `app` will not build on
-  a clean clone until `erc8004` is built. No path alias to `packages/protocol/src`.
+  a clean clone until `packages/protocol` is built. No path alias to `packages/protocol/src`.
 
 ## Out of scope
 

@@ -347,8 +347,8 @@ For a **content address** — `ipfs://`, `ar://` — the atom id derives from th
 _is_ the pinned document. Nothing else is needed.
 
 For an **`https://` endpoint** it is not that simple, and getting it wrong is permanent. Measured on
-mainnet over the 84 tool atoms on `uses` edges: **78 are `ipfs://`** and 77 of those resolve a
-pinned Thing with metadata; the only two raw-URL atoms in the whole set are `schema.org` vocabulary
+mainnet over the 84 tool atoms on `uses` edges (`scripts/measure-tool-atom-shape.ts`): **78 are
+`ipfs://`** and 77 of those resolve a pinned Thing with metadata; the only two raw-URL atoms in the whole set are `schema.org` vocabulary
 terms, not tools. So minting an atom straight from an `https://` URL puts the tool on an id with no
 metadata, beside whatever atom it really has — and the tool's reputation splits across both, with
 no way to merge them.

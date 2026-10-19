@@ -101,7 +101,8 @@ export type PlannedTool = {
      * Set when the plan is about to create a **bare URL atom** — no pinned Thing, so no metadata
      * for any reader.
      *
-     * Measured on mainnet: of the 84 tool atoms on `uses` edges, 78 are `ipfs://` and 77 resolve a
+     * Measured by `scripts/measure-tool-atom-shape.ts` on mainnet: of the 84 tool atoms on `uses`
+     * edges, 78 are `ipfs://` and 77 of those resolve a
      * `value.thing`; the only two raw-URL atoms are schema.org vocabulary terms, not tools. So this
      * is off the cohort's canon, and if the tool later gets a proper pinned atom the reputation
      * splits across two ids permanently. Not an error — sometimes it is the only option — but the

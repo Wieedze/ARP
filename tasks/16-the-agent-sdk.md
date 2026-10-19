@@ -152,7 +152,8 @@ Names are a suggestion. Argue for better ones.
 
 ## Constraints
 
-- Read paths come from `@arp-protocol/core` and `@arp-protocol/core`. Do not reimplement them.
+- Read paths come from `@arp-protocol/core`. Do not reimplement them. (This line named two packages
+  until ADR `0041` folded them into one; a blind rename left the same name twice.)
 - Canonical predicate constants only. Never resolve by label, never mint a predicate.
 - The canonical ERC-8004 atom is the subject for anything ERC-8004-facing (ADR 0015).
 - No pinning. If a path seems to need the partner key, that is a signal it is using the wrong atom
@@ -191,6 +192,11 @@ Names are a suggestion. Argue for better ones.
 reads **"nobody, at any real size"**. This is the first thing in the repo that lets a party ARP is
 not, holding no relationship with ARP and no key of ARP's, produce a tier-3 edge: a `uses` claim with
 its own operator's capital at risk behind it.
+
+**The machinery is in place; no edge has been produced.** The claim above is about what is now
+possible, not about evidence that exists — and the same "nothing has been signed" that keeps this
+off tier 4 means no tier-3 edge has been written either. Stated here because the asymmetry would
+otherwise read as a stronger result than it is.
 
 It does **not** reach tier 4, Proven — "this action executed under enforced caveats"
 (`docs/09:54`). The delegated path is built and the caveats are deployed on both chains, but

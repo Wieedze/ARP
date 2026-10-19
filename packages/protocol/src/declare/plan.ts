@@ -122,9 +122,9 @@ async function resolveToolAtom(
     if (lookup === undefined) {
         return derive(
             `${uri} is a location, not a content address, and no lookup was given. The atom this ` +
-                `plan would create carries no pinned metadata, and 77 of the 84 tool atoms on ` +
-                `mainnet \`uses\` edges do — all but one of those being \`ipfs://\`. Pass a lookup ` +
-                `to reuse the tool's real atom.`,
+                `plan would create carries no pinned metadata, while 78 of the 84 tool atoms on ` +
+                `mainnet \`uses\` edges are \`ipfs://\` and 77 of those carry a pinned Thing. Pass a ` +
+                `lookup to reuse the tool's real atom.`,
         );
     }
 

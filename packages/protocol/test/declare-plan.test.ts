@@ -410,7 +410,7 @@ describe("which atom a tool resolves to", () => {
             tools: [HTTPS_URI],
             reads: fakeReads(),
         });
-        // Measured on mainnet: 78 of the 84 tool atoms on `uses` edges are `ipfs://` and 77
+        // Measured by scripts/measure-tool-atom-shape.ts on mainnet: 78 of the 84 tool atoms are `ipfs://` and 77
         // resolve a pinned Thing; the only two raw-URL atoms are schema.org vocabulary, not tools.
         expect(plan.tools[0]?.bareUrlWarning).toContain("no pinned metadata");
         expect(plan.calls.find((c) => c.kind === "create-atom")?.why).toContain("BARE URL");
