@@ -1,10 +1,13 @@
 # Project state
 
-**Updated** 2026-10-17 (ADR 0033 — hackathon surface set aside). Hand-maintained — a task does not close without updating this file
+**Updated** 2026-10-19 (task 24 verified). Hand-maintained — a task does not close without updating this file
 (`workflow.md`, task-close protocol).
 
-Read this after `CLAUDE.md` and before anything else. It replaces reading 31 ADRs and 14
-post-mortems to find out where the project is.
+Read this after `CLAUDE.md` and before anything else. It replaces reading every ADR in
+`.claude/choices/` and every post-mortem in `.claude/learning/` to find out where the project is.
+(It said "31 ADRs and 14 post-mortems" while the truth was 37 and 16 — the same hand-maintained
+count that was wrong four times about commits, three lines further down. Counts of files in a
+growing directory do not belong in prose; `.claude/choices/INDEX.md` is generated.)
 
 ---
 
@@ -32,14 +35,20 @@ directory.
 
 ## Where the work is right now
 
-**Branch** `feat/agent-panel-tabs` — 60 commits ahead of `main`,
-of which **12 are not pushed** (remote at `c23effb`).
+**Branch** `feat/agent-panel-tabs`, pushed up to `c23effb`.
 
-**Recount; do not read these two numbers.** `git rev-list --count main..HEAD` and
-`git rev-list --count origin/feat/agent-panel-tabs..HEAD`. This line has now been wrong **three
-times** — once by 17, once asserting "pushed" and "ahead of origin/main" together, and once at 47/15
-when the truth was 60/12, _in the commit whose stated purpose included updating this file_. It is the
-most volatile line here and the least worth trusting.
+**The commit counts used to live here and have been deleted.** They were wrong four times — by 17,
+then by asserting "pushed" and "ahead of origin/main" together, then 47/15 against 60/12, then 60/12
+against 61/13 because the correcting commit counted itself. A hand-maintained count of commits
+ahead, written inside the commit that changes it, is stale the moment it is written; a fifth value
+would be wrong for the same structural reason. Read them instead:
+
+```
+git rev-list --count main..HEAD
+git rev-list --count origin/feat/agent-panel-tabs..HEAD
+```
+
+The remote SHA above is stable between pushes, so it stays.
 
 **Tests**: connector **248 passed / 4 skipped** · app 205 passed / 2 skipped. `tsc` 0, `lint` 0.
 

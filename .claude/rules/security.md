@@ -86,15 +86,15 @@ The `contract-reviewer` agent (in `.claude/agents/`) orchestrates these for you 
 
   **No ARP agent, script or automated process may sign a mainnet transaction with ARP's own funds.**
 
-  The qualifier is deliberate and was added with ADR `0035`. Three cases, which earlier wordings
+  The qualifier is deliberate and was added with ADR `0035`. Four cases, which earlier wordings
   collapsed:
 
-  | Whose funds | Who signs | Mainnet? |
-  | --- | --- | --- |
-  | **ARP's own** | a script or agent, automatically | **never** |
-  | ARP's own | a human in the panel | yes, ADR `0017`, seven safeguards |
-  | **An agent operator's**, under a delegation they signed | the agent | yes **after the path is proven on testnet** — ADR `0036` |
-  | An agent operator's | an agent session with their raw key | **testnet 13579 only** — ADR `0037` |
+  | Whose funds                                             | Who signs                           | Mainnet?                                                 |
+  | ------------------------------------------------------- | ----------------------------------- | -------------------------------------------------------- |
+  | **ARP's own**                                           | a script or agent, automatically    | **never**                                                |
+  | ARP's own                                               | a human in the panel                | yes, ADR `0017`, seven safeguards                        |
+  | **An agent operator's**, under a delegation they signed | the agent                           | yes **after the path is proven on testnet** — ADR `0036` |
+  | An agent operator's                                     | an agent session with their raw key | **testnet 13579 only** — ADR `0037`                      |
 
   Row 3 is the product (`docs/12` points 3 and 5), so a flat "no agent may ever sign a mainnet
   transaction" forbids the thing being built. Row 1 is the development hazard the rule exists for.

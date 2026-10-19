@@ -19,7 +19,8 @@ If three layers conflict, the higher-numbered (= more recent) wins. The original
 
 1. This file.
 2. **`.claude/STATE.md`** — where the project actually is: branch, task table, known defects, the
-   recommended order, and the four claim checks. One read instead of 31 ADRs and 14 post-mortems.
+   recommended order, and the four claim checks. One read instead of the whole of `.claude/choices/`
+   and `.claude/learning/`.
    It is hand-maintained, so a task does not close without updating it.
 3. The task file in `tasks/`. Note its `Required skills` and `Do not do in this task` sections.
 4. The three source-of-authority docs above, in order.
@@ -102,10 +103,10 @@ Rules do not change silently. The audit trail is the point.
 - **Do not commit secrets** (`.env`, private keys, API keys).
 - **Do not silently expand scope.** When in doubt, stop and ask. See `.claude/rules/workflow.md` for the scope discipline rule in full. The pivot doc has an explicit out-of-scope list — re-read it before adding anything.
 - **Mainnet: deployment vs transactions are different questions.** No ARP contract is on mainnet and none is planned. ADR `0017` authorises one narrow class of mainnet transaction — deposits into existing `has trust provider` vaults, signed by the operator. **Mainnet signing has exactly one canonical statement, in `.claude/rules/security.md` — read it
-there rather than from a restatement.** Summary: ARP's own funds are never signed for automatically;
-an *agent operator's* funds, under a delegation they signed, are the product (ADR `0036`). This
-bullet said "no agent or script may ever sign a mainnet transaction", which forbids `docs/12`
-points 3 and 5.
+  there rather than from a restatement.** Summary: ARP's own funds are never signed for automatically;
+  an _agent operator's_ funds, under a delegation they signed, are the product (ADR `0036`). This
+  bullet said "no agent or script may ever sign a mainnet transaction", which forbids `docs/12`
+  points 3 and 5.
 
 Everything else is in `.claude/rules/`. Open the rule file you need for the task you're doing — not all of them.
 

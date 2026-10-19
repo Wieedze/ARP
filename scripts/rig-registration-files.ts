@@ -14,8 +14,9 @@
  *
  *  Who ran them, for the record: the three mints of 2026-10-19 were signed by an **agent session**
  *  with the operator's key, on the user's explicit ask — ADR 0037. That is a fact about that task,
- *  not about this file, and the two were conflated once already. It prints the registration files and the
- *  transactions that would create them. The operator runs them with their own key — the same
+ *  not about this file, and the two were conflated once already.
+ *
+ *  The operator runs them with their own key — the same
  *  division as everywhere else in this project (ADR 0035).
  *
  *  The files are `data:` URIs on purpose: 18 of the sampled mainnet agents do it that way, and it

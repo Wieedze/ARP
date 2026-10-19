@@ -1,7 +1,7 @@
 import {describe, expect, it} from "vitest";
 
 import {TOOLS} from "../../scripts/arp-mcp-tools.js";
-import type {NotCheckableCode} from "../src/verify/types.js";
+import type {EndpointClassification, NotCheckableCode} from "../src/verify/types.js";
 import {FILES, OWN_ENDPOINT, dataUri} from "../../scripts/rig-registration-files.js";
 import {
     classifyEndpoint,
@@ -223,8 +223,22 @@ describe("`exercises` is checked against the classifier, not trusted as prose", 
      * probe is the only authority on it. Reporting these tests as closing "the class" was wrong by
      * one level.
      */
-    const statusesClaimed = (exercises: string) => {
-        const claimed = new Set<string>();
+    /**
+     * The **checkability** a claim implies — not "the statuses claimed", which is how the
+     * overstatement happened.
+     *
+     * It maps `ProbeOutcome.status` names (`confirmed` / `inconclusive` / `not-checkable`) onto
+     * `EndpointClassification["status"]` values (`probeable` / `not-checkable`). Two different
+     * enums, and `confirmed` and `inconclusive` both land on `probeable` **by design** — a unit
+     * test cannot tell them apart before a request is sent. The return type says so.
+     *
+     * What this does catch, and it is worth keeping cheap: a file claiming a probe outcome for an
+     * endpoint that will never be probed. Measured — `rig-unprobeable: "confirmed/dead"` fails here.
+     */
+    const checkabilityImpliedByClaim = (
+        exercises: string,
+    ): Set<EndpointClassification["status"]> => {
+        const claimed = new Set<EndpointClassification["status"]>();
         if (/\bnot-checkable\b/.test(exercises)) claimed.add("not-checkable");
         if (/\bconfirmed\b/.test(exercises)) claimed.add("probeable");
         if (/\binconclusive\b/.test(exercises)) claimed.add("probeable");
@@ -236,7 +250,7 @@ describe("`exercises` is checked against the classifier, not trusted as prose", 
             const actual = new Set(
                 readDeclaredEndpoints(file.doc).map((e) => e.classification.status),
             );
-            for (const claimed of statusesClaimed(file.exercises)) {
+            for (const claimed of checkabilityImpliedByClaim(file.exercises)) {
                 expect(actual, `${file.slug} claims ${claimed}`).toContain(claimed);
             }
         }
@@ -244,7 +258,7 @@ describe("`exercises` is checked against the classifier, not trusted as prose", 
 
     it("every file claims at least one status, so the field cannot be decorative", () => {
         for (const file of FILES) {
-            expect(statusesClaimed(file.exercises).size, file.slug).toBeGreaterThan(0);
+            expect(checkabilityImpliedByClaim(file.exercises).size, file.slug).toBeGreaterThan(0);
         }
     });
 

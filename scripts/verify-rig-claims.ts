@@ -25,13 +25,23 @@ import { readFileSync } from 'node:fs';
 import type { NotCheckableCode } from '../erc8004/src/verify/types.js';
 import { FILES, dataUri } from './rig-registration-files.js';
 
-/** Imported rather than hand-copied, so a fifth member cannot be silently skipped. */
-const NOT_CHECKABLE_CODES = [
-  'templated',
-  'non-http-identifier',
-  'unparseable-url',
-  'empty',
-] as const satisfies readonly NotCheckableCode[];
+/**
+ * Keyed by the union, so tsc fails when it grows.
+ *
+ * `satisfies readonly NotCheckableCode[]` on an array would NOT do this — measured, it checks
+ * assignability and not exhaustiveness, and compiles clean against a five-member union. The Record
+ * form errors with TS1360 naming the missing member.
+ *
+ * And the loud failure on an unknown code does not come from the type at all: a fifth code in prose
+ * yields zero claims, which hits the `claims.length === 0` guard below. The type keeps this list
+ * honest; the guard is what stops a silent skip.
+ */
+const NOT_CHECKABLE_CODES = Object.keys({
+  templated: true,
+  'non-http-identifier': true,
+  'unparseable-url': true,
+  empty: true,
+} satisfies Record<NotCheckableCode, true>) as NotCheckableCode[];
 
 type Outcome = { status: string; code: string };
 type Report = {
@@ -108,6 +118,7 @@ function claimedPairs(exercises: string): string[] {
 }
 
 let failures = 0;
+let drifts = 0;
 let checked = 0;
 
 console.log(`report:   ${reportPath}`);
@@ -157,11 +168,23 @@ for (const file of FILES) {
           ? `  DRIFT — deployments records ${recorded}`
           : '  matches deployments'),
   );
-  if (drift) failures += 1;
+  if (drift) {
+    failures += 1;
+    drifts += 1;
+  }
 }
 
-console.log(
-  `\n${checked} claims checked · ${failures} mismatched` +
-    (failures === 0 ? '' : '\n\nA mismatch means the prose and the probe disagree. Fix the prose.'),
-);
+const claimMismatches = failures - drifts;
+console.log(`\n${checked} claims checked · ${claimMismatches} mismatched · ${drifts} drifted`);
+if (claimMismatches > 0) {
+  console.log('A mismatch means the prose and the probe disagree. Fix the prose.');
+}
+if (drifts > 0) {
+  // Not the prose's fault: the fixture and the chain disagree, and editing the prose would be
+  // exactly wrong. Either re-mint, update the recorded hash, or unset ARP_MCP_ENDPOINT.
+  console.log(
+    'A drift means the repo fixture and the recorded hash disagree. Re-mint, update the hash in ' +
+      'deployments/13579.json, or check whether ARP_MCP_ENDPOINT is set.',
+  );
+}
 if (failures > 0) process.exit(1);
