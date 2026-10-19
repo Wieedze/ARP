@@ -71,9 +71,17 @@ and task 20 commits and does not describe them.**
 | 21     | `scripts/` is outside every gate                  | open — **not** zero-cost, unlike 18; owns the gap 18 did not reach                                          |
 | 22     | the chain as witness                              | open — user proposal; strongest evidence class, bounded by how much tool use is on-chain. **Measure first** |
 | 23     | the tool surface                                  | step 1 **done** (`getToolUsage`, 9 tests, live-verified); the page remains                                  |
+| 24     | make the testnet rig faithful                     | open — **Phase 0, do first**. The 2 testnet agents have an empty `tokenURI`, so discovery never runs        |
 
-**Recommended order**, re-anchored 2026-10-19 on ADR `0035`: **16 → 23 (the tool page) → 19 steps
-2–5**, with 17 finished alongside since it is what tells you which tools exist.
+**Recommended order** — `docs/15_ROADMAP.md` is the full version with what testnet can and cannot
+prove. Short form: **24 → 16 → 23 → 17**, then the two mainnet gaps.
+
+Everything runs on **testnet 13579 for now** — the rig is already deployed there and nothing needs
+simulating. Two things testnet will never prove, both design work rather than testing:
+`DomainScopeEnforcer` has no mainnet mechanism (it gates `ModuleRegistry.registerModule`, which ADR
+`0025` keeps off mainnet), and the triple **fee** sits outside `TrustStakeCapEnforcer`. And costs are
+**100× apart** — 0.001 TRUST per triple on testnet against 0.1 on mainnet — so no budget tuned on
+testnet transfers.
 
 Task 16 moved to the front because it is the loop itself — an operator signs one delegation, the
 agent declares and deposits, the tool gains reputation. `docs/12` calls it "the whole gap". Nothing
