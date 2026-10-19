@@ -58,7 +58,7 @@ and task 20 commits and does not describe them.**
 | 13     | a rule the repo cannot satisfy                    | open — `code.md:86` requires React Testing Library; the repo has none                                       |
 | 14     | contrast below AA                                 | open — `--color-fg-40` at 3.66:1                                                                            |
 | 15     | strip the panel copy                              | done, verified                                                                                              |
-| 16     | the hire / MCP server                             | open — **and now the only hire path**, since ADR `0033` set the demo aside                                  |
+| 16     | the connector an agent declares through           | open — **the whole gap** `docs/12` names; re-anchored on ADR `0035`                                         |
 | 17     | the external verifier                             | **built**, 48 tests; gate not yet run at 100 agents                                                         |
 | 18     | `strict` is off in the app                        | done, verified (`6b351ee`) — cost was indeed zero errors                                                    |
 | 19     | the `use` edge and its witness                    | step 1 done; steps 2–5 **unblocked** by ADR `0033` — no minting needed                                      |
@@ -67,9 +67,17 @@ and task 20 commits and does not describe them.**
 | 22     | the chain as witness                              | open — user proposal; strongest evidence class, bounded by how much tool use is on-chain. **Measure first** |
 | 23     | the tool surface                                  | step 1 **done** (`getToolUsage`, 9 tests, live-verified); the page remains                                  |
 
-**Recommended order**, re-anchored 2026-10-16 on the user's restatement that the point is **tool
-reputation from the agents that used them**: **19 steps 2–5 → the tool surface → 16**, with 17
-finished alongside since it is what tells you which tools exist.
+**Recommended order**, re-anchored 2026-10-19 on ADR `0035`: **16 → 23 (the tool page) → 19 steps
+2–5**, with 17 finished alongside since it is what tells you which tools exist.
+
+Task 16 moved to the front because it is the loop itself — an operator signs one delegation, the
+agent declares and deposits, the tool gains reputation. `docs/12` calls it "the whole gap". Nothing
+else on this list produces a single new edge.
+
+**Two mistakes made and corrected, worth not repeating:** staking on whether an endpoint answers is
+ARP producing one more score, which `docs/01` rejects — the verifier is for discovery, never for the
+stake. And ARP's author is **not a party** to the loop: they build the rail, the agent's operator
+signs the delegation (ADR `0035`).
 
 Task 17 does **not** give tools reputation — it gives agents a checkable record. It serves the goal
 indirectly and genuinely: because in ERC-8004 plus MCP the tool _is_ an agent, the verifier's output

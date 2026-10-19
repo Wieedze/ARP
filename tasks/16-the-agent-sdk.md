@@ -1,15 +1,43 @@
-# Task 16 — `@arp-protocol/agent`: the write and hire SDK
+# Task 16 — The connector an agent declares through
 
-> **Status: NOT STARTED** (specified 2026-10-16).
+> **Status: NOT STARTED** (specified 2026-10-16, re-anchored 2026-10-19 on ADR `0035`).
+> **This is the whole gap** `docs/12` names: _"Adoption of an existing ERC-8004 agent — missing."_
 
 ## Objective
 
-A package a third-party agent runtime imports to do two things:
+Close the loop `docs/12` describes, for agents that already exist:
 
-1. **Report what it used**, and put TRUST behind it — the input ARP scores.
-2. **Hire another agent** on the network under a bounded delegation, and rate it afterwards.
+```
+an agent's operator signs one delegation          ← not ARP, not ARP's author
+the agent runs and uses tools
+the agent deposits on those tools                 ← its own TRUST, under the signed cap
+the tool gains reputation, and so does the agent  ← docs/12 point 4
+```
 
-Both already work in this repo as scripts wired to ARP's own setup. This decouples them.
+**ARP is not a party to any of it** (ADR `0035`). It supplies three things and nothing else:
+
+1. **The connector** the agent declares what it used through.
+2. **The delegation** its operator signed, with `DomainScopeEnforcer` and `TrustStakeCapEnforcer` as
+   the guard rail. Both are on mainnet 1155 (`deployments/1155.json`), so `docs/12`'s second gap —
+   "the guard rail on the chain where the agents are" — is already closed.
+3. **The deposit** on the tools.
+
+The author of ARP appears nowhere in the live loop. Any design where they sign, hold funds, or are
+needed for a stake to happen has reproduced the mistake ADR `0035` records.
+
+**MCP first, not an npm package.** An MCP server is universal — any MCP client connects with no
+integration work — and the agent _chooses to call it_, so ARP is still not in anyone's runtime. A
+package is a second surface for runtimes that do not speak MCP, and it comes after.
+
+## What this is not
+
+Beyond `docs/12`'s own drift list, two mistakes made in this project and worth naming here:
+
+- **Not liveness scoring.** Probing whether an endpoint answers and staking on the result is ARP
+  producing one more score, which `docs/01` rejects. The verifier (`tasks/17`) is for **discovery** —
+  knowing who can be hired — never for the stake.
+- **Not an attestation scheme to design first.** ADR `0034`'s deposit-as-attestation is real and only
+  matters once edges are being written. It is not a prerequisite.
 
 ## What this is not
 
@@ -25,7 +53,7 @@ What can be recovered without being in the runtime is enough:
 
 If a design idea needs visibility into execution, it is the wrong design.
 
-## Half 1 — report and stake
+## Half 1 — declare and deposit (**this is the task**)
 
 `scripts/agent-stake-on-use.ts` already does this. It cannot be reused as-is because it requires four
 things a third party does not have:
@@ -54,7 +82,7 @@ rail. The guard rail must not be the price of entry.
 0.1 TRUST per triple. It is not "free to declare, costly to stake" — which is arguably right, since a
 declaration that costs is already a signal.
 
-## Half 2 — hire, and rate
+## Half 2 — hire, and rate (**defer; split it out if half 1 grows**)
 
 `scripts/agent-server.ts` already subcontracts: it signs a leaf delegation chained off its root
 compose authority, POSTs the task, and validates the fee. `agent-server-specialist.ts` is the

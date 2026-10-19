@@ -81,6 +81,29 @@ The `contract-reviewer` agent (in `.claude/agents/`) orchestrates these for you 
 - Default deployment target: **Intuition Testnet** (changed from Base Sepolia per `docs/00_HACKATHON_PIVOT.md`; ADR `0002`).
 - **Mainnet deployment** (Intuition mainnet or any other) requires explicit user confirmation per session. No ARP contract is deployed to mainnet today, and none is planned — the panel's staking targets Intuition's own MultiVault, not an ARP contract.
 - **Mainnet transactions are not the same question as mainnet deployment.** ADR `0017` authorises one narrow class: deposits into existing `has trust provider` triple vaults and their counter-triples on chain 1155, signed by the operator in their own wallet. It does not authorise contract deployment, atom or triple creation at scale (see ADR `0021` for that cost), or any stake initiated by an agent. Read the ADR before widening it.
-- **No agent, script or automated process may sign a mainnet transaction.** Verification of staking code is unit tests over a mocked wallet client, `previewDeposit` reads, and `eth_call` simulation. A passing test suite is not a reason to spend real TRUST.
+- **No ARP agent, script or automated process may sign a mainnet transaction with ARP's own funds.**
+  Verification of staking code is unit tests over a mocked wallet client, `previewDeposit` reads, and
+  `eth_call` simulation. A passing test suite is not a reason to spend real TRUST.
+
+  **Read the scope of that sentence carefully — it was misread once, badly.** It governs _this
+  repo's_ development: do not let a script spend the operator's TRUST while you are testing it. It
+  does **not** govern the protocol's design, and it cannot: `docs/12` point 3 is _"the agent runs, it
+  deposits TRUST on the modules it actually used"_, and point 5 is _"the agent operates under a signed
+  delegation whose caveats are the guard rail"_. **An external agent depositing its own operator's
+  TRUST, bounded by caveats that operator signed, is the product**, not a rule violation. A rule file
+  cannot forbid the canonical mechanism.
+
+  Two different signers, and conflating them is the error:
+
+  | Who signs                        | What                                      | Rule                                                     |
+  | -------------------------------- | ----------------------------------------- | -------------------------------------------------------- |
+  | A human in ARP's panel           | a deposit on a `has trust provider` claim | ADR `0017`. The UI never auto-stakes; a human clicks.    |
+  | An **external agent's operator** | one delegation, once                      | `docs/12` point 5. ARP is not a party and signs nothing. |
+
+  ADR `0017` scopes _itself_ away from the second case — it says it does not authorise "any automated
+  or agent-initiated stake". That makes agent-initiated staking **not yet authorised**, not
+  forbidden, and it needs its own ADR. The risk calculus there is different in kind, because the
+  TRUST at stake is the agent operator's and the bound is a caveat they signed.
+
 - Every deployment writes its addresses to `deployments/<chainId>.json`. Idempotent — re-running on the same chain does not redeploy unless `--force` is passed.
 - `.env.example` documents the Intuition Testnet RPC, explorer URL, and chain ID. Update it whenever a new env var is introduced.
