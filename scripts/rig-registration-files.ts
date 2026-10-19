@@ -60,16 +60,17 @@ export const FILES: RigFile[] = [
       type: TYPE,
       name: 'ARP Rig — Confirmed',
       description:
-        "Testnet rig agent. Declares a live MCP endpoint so the verifier's confirmed path " +
-        'and its tools/list recovery both exercise. The endpoint is borrowed from ' +
-        '8453:26183 (nebula-scan) because ARP runs no MCP server of its own yet; this ' +
-        "agent's confirmed verdict therefore depends on a third party's uptime.",
+        "Testnet rig agent. Declares ARP's own MCP server so the verifier's confirmed " +
+        'path and its tools/list recovery both exercise with no dependency on a third ' +
+        'party. The endpoint is local by default and says so: a fixture for whoever runs ' +
+        'the verifier on the same machine, not a service anyone else can reach. Regenerate ' +
+        'with ARP_MCP_ENDPOINT set once a public URL exists.',
       services: [
         {
           name: 'mcp',
           endpoint: OWN_ENDPOINT,
           version: '2024-11-05',
-          capabilities: ['bridge_monitor', 'peg_checker', 'exploit_scanner'],
+          capabilities: ['arp_tool_reputation'],
         },
       ],
       x402Support: false,

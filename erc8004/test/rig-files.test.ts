@@ -1,5 +1,6 @@
 import {describe, expect, it} from "vitest";
 
+import {TOOLS} from "../../scripts/arp-mcp-tools.js";
 import {FILES, dataUri} from "../../scripts/rig-registration-files.js";
 import {
     classifyEndpoint,
@@ -74,7 +75,9 @@ describe("each rig file exercises the group it claims", () => {
         const endpoints = readDeclaredEndpoints(bySlug("rig-dead").doc);
         expect(endpoints).toHaveLength(1);
         expect(endpoints[0].classification.status).toBe("probeable");
-        expect(endpoints[0].classification).toMatchObject({url: expect.stringContaining(".invalid")});
+        expect(endpoints[0].classification).toMatchObject({
+            url: expect.stringContaining(".invalid"),
+        });
     });
 
     it("rig-unprobeable declares only endpoints that must never be called a defect", () => {
@@ -117,5 +120,65 @@ describe("the rig's own endpoint values are classified as intended", () => {
     it("the CAIP-10 wallet value is an identifier, not a broken URL", () => {
         const c = classifyEndpoint("eip155:13579:0xE596096F4176b682E300d73963e7B04B383C1AA1");
         expect(c).toMatchObject({status: "not-checkable", code: "non-http-identifier"});
+    });
+});
+
+describe("a rig file does not contradict itself", () => {
+    /**
+     * These three assertions exist because the fixture nearly shipped with all three wrong.
+     *
+     * `rig-confirmed` had been pointed at ARP's own MCP server, but its `description` still said the
+     * endpoint was "borrowed from 8453:26183 (nebula-scan) because ARP runs no MCP server of its
+     * own", and its `capabilities` still listed nebula-scan's three tools. The structural tests above
+     * all passed: the shape was right and every claim in the prose was false.
+     *
+     * The ids are permanent once minted, so a self-contradicting file is not a thing to fix later.
+     */
+    it("does not name a borrowed endpoint it no longer uses", () => {
+        for (const file of FILES) {
+            const prose = String(file.doc["description"]);
+            const endpoints = readDeclaredEndpoints(file.doc).map((e) =>
+                e.classification.status === "probeable"
+                    ? e.classification.declared
+                    : e.classification.declared,
+            );
+            for (const borrowed of ["nebula-scan", "8453:26183", "borrowed from"]) {
+                // Mentioning it is only wrong if nothing actually points there any more.
+                const stillPointsThere = endpoints.some((url) => url.includes("nebula-scan"));
+                if (!stillPointsThere) expect(prose).not.toContain(borrowed);
+            }
+        }
+    });
+
+    it("declares only capabilities the server it points at actually serves", () => {
+        // A fixture claiming tools the server does not serve is a `declared ≠ served` mismatch the
+        // verifier would report — against ARP's own rig, which would be an own goal.
+        const served = new Set(TOOLS.map((t) => t.name));
+        for (const file of FILES) {
+            for (const endpoint of readDeclaredEndpoints(file.doc)) {
+                if (endpoint.capabilities.length === 0) continue;
+                const url =
+                    endpoint.classification.status === "probeable"
+                        ? endpoint.classification.url
+                        : "";
+                if (!url.includes("localhost") && !url.includes("127.0.0.1")) continue;
+                for (const declared of endpoint.capabilities) {
+                    expect(served).toContain(declared);
+                }
+            }
+        }
+    });
+
+    it("says the endpoint is local when it is", () => {
+        for (const file of FILES) {
+            const isLocal = readDeclaredEndpoints(file.doc).some(
+                (e) =>
+                    e.classification.status === "probeable" &&
+                    /localhost|127\.0\.0\.1/.test(e.classification.url),
+            );
+            if (!isLocal) continue;
+            // A reader of the registry has to be able to tell a fixture from a service.
+            expect(String(file.doc["description"]).toLowerCase()).toContain("local");
+        }
     });
 });

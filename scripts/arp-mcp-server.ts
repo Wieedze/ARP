@@ -22,6 +22,7 @@
  */
 
 import { getToolUsage, type ToolUsage } from '../erc8004/src/tool-usage.js';
+import { TOOLS } from './arp-mcp-tools.js';
 
 const PORT = Number(process.env.PORT ?? 3002);
 const GRAPHQL_URL = process.env.INTUITION_GRAPHQL_URL ?? 'https://mainnet.intuition.sh/v1/graphql';
@@ -29,33 +30,6 @@ const PROTOCOL_VERSION = '2025-06-18';
 
 type JsonRpcId = string | number | null;
 type Rpc = { jsonrpc?: string; id?: JsonRpcId; method?: string; params?: Record<string, unknown> };
-
-const TOOLS = [
-  {
-    name: 'arp_tool_reputation',
-    description:
-      'What agents staked on using a tool. Returns every incoming `uses` edge with its ' +
-      'subject, its support vault and its counter vault, plus totals. Amounts always come ' +
-      'with their position count: one vault here can hold 22.4 TRUST from a single account, ' +
-      'and the figure alone would read as a market.',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        tool_atom_id: {
-          type: 'string',
-          description: "The tool's Intuition atom id, 0x-prefixed 32 bytes.",
-        },
-        attested_by: {
-          type: 'string',
-          description:
-            'Optional. Keep only edges this account holds a position in — a filter on ' +
-            'who stands behind the edge, never an exclusivity claim (ADR 0034).',
-        },
-      },
-      required: ['tool_atom_id'],
-    },
-  },
-] as const;
 
 function result(id: JsonRpcId, value: unknown) {
   return Response.json({ jsonrpc: '2.0', id, result: value });
@@ -123,9 +97,9 @@ async function callTool(id: JsonRpcId, params: Record<string, unknown> | undefin
   }
 }
 
-const server = Bun.serve({
+export const handler = {
   port: PORT,
-  async fetch(request) {
+  async fetch(request: Request) {
     if (request.method === 'GET') {
       // Not part of MCP. A plain GET is what the verifier's non-protocol probe sends, and
       // answering it makes this endpoint `live` rather than `dead` for that path too.
@@ -168,9 +142,12 @@ const server = Bun.serve({
         return fail(id, -32601, `method not found: ${String(body.method)}`);
     }
   },
-});
+};
 
-console.log(`ARP MCP server on http://localhost:${server.port}`);
-console.log(`  graph: ${GRAPHQL_URL}`);
-console.log(`  tools: ${TOOLS.map((t) => t.name).join(', ')}`);
-console.log(`\nreads only — signs nothing, sends nothing.`);
+if (import.meta.main) {
+  const server = Bun.serve(handler);
+  console.log(`ARP MCP server on http://localhost:${server.port}`);
+  console.log(`  graph: ${GRAPHQL_URL}`);
+  console.log(`  tools: ${TOOLS.map((t) => t.name).join(', ')}`);
+  console.log(`\nreads only — signs nothing, sends nothing.`);
+}
