@@ -6,7 +6,7 @@ If you find yourself wanting to add a rule to this file, **don't.** Add it to th
 
 ## Source of authority (read in this order on every task)
 
-1. `docs/12_THE_IDEA.md` — **the mechanism, and the only canonical statement of it.** Sixty lines. Read it first, every time, including its drift signals. It exists because three separate analyses written in one day each drifted from it.
+1. `docs/12_THE_IDEA.md` — **the mechanism, and the only canonical statement of it.** Short enough to read in full, and that is the point. Read it first, every time, including its drift signals. It exists because three separate analyses written in one day each drifted from it.
    - `docs/01_PROJECT_CONTEXT.md` — what ARP is and is not. Still authoritative on positioning.
    - `docs/08`, `docs/09`, `docs/11` are **analysis, not commitment**. The measurements in `08` hold. Their differentiation arguments drifted; `12` corrects them.
    - `docs/00_HACKATHON_PIVOT.md` is **historical record** — why the MetaMask/Intuition stack was chosen. Deadline passed 2026-06-15.

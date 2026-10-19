@@ -1,217 +1,189 @@
-# feat: tabs, the predicate fix, and the plan for rating agents that never heard of ARP
+# feat: the connector an agent declares through
 
-**Branch** `feat/agent-panel-tabs` → `main` · 32 commits · 66 files · Tasks 12, 15 and 20 shipped; 17–19 specced.
+**Branch** `feat/agent-panel-tabs` → `main` · 67 commits · 15 ADRs · Tasks 12, 15, 18, 20 and 24
+complete, 16 half 1 complete, 17 built.
 
-Three separable things. Review in this order, they get progressively more consequential.
+Four separable things. Review in this order — they get progressively more consequential, and the
+last two are the ones that change what the project is.
 
-1. **UI** — tabs on the agent panel, and the copy stripped back. Tasks 12 and 15.
-2. **A write path that was writing into a node nobody queries.** Task 19 step 1, ADR 0030. This is the one that matters.
-3. **Docs and specs** — the plan for flows the cohort can't opt out of. `docs/13`, `docs/14`, tasks 17–20.
+1. **UI** — tabs on the agent panel, explanatory copy stripped. Tasks 12 and 15.
+2. **The external verifier** — reads what an agent publishes and checks whether it holds up. Needs
+   nobody's consent. Task 17.
+3. **A write path that was writing into a node nobody queries.** ADR `0030`.
+4. **The connector an agent declares through** — the loop `docs/12` calls "the whole gap". Task 16
+   half 1, ADRs `0038`–`0039`.
 
----
-
-## 1 · The UI
-
-**Task 12** — one tab per trust provider instead of stacked sections, so two providers' opinions of
-the same agent sit at the same place on screen and compare by switching rather than scrolling. ADR `0028`.
-
-**Task 15** — every explanatory paragraph removed from the panel and the directory; the facts kept.
-"N stakers" became a person mark and a number. The Agent tab leads and is the default. One sentence
-over the stake control, with the cap and the irreversibility moved to the confirmation step where
-they bite. ADR `0029`.
-
-### The bug review caught here
-
-The task's removal list named one string — `no signature block at assessment.signature` — and the
-implementation suppressed `verdict.reason` for **every** `unverified` verdict. The connector emits
-nine. The worst collapse:
-
-```
-could not reconstruct the signed payload: no strategy is confirmed for provider "asterpay"
-```
-
-That is a statement about **the connector's own limits** on a document that _is_ signed, and it
-rendered identically to a document with no signature block at all: two words, `NOT VERIFIED`. On a
-page whose argument is that providers sign and nobody checks, that conflation is a **tier
-regression** — the panel fell back from demonstrating the evidence ladder to asserting it.
-
-Nothing caught it because the only `unverified` fixture carried the one reason that _should_ be
-dropped. A fixture set covering one member of a nine-member union is not coverage of the union.
-
-Fixed by exporting `ABSENT_SIGNATURE_REASON` from the connector and suppressing only that reason —
-one copy of the string, no brittle literal comparison, public `SignatureVerdict` unchanged.
-
-### What the strip cost, recorded rather than engineered away
-
-ADR `0029` carries six Negative bullets. Two are outright fact losses:
-
-- **`Weight unknown.`** no longer says whose omission that is, so a reader can read it as a limit of
-  the panel rather than of the provider's document — which inverts the point.
-- **The `Statements` column lost the floor of its own scale.** The removed note read "the mirrored
-  shell gives every agent five, so anything above five is somebody having bothered." The column is
-  now a bare integer, so `5` and `7` are indistinguishable in meaning. Not a sentence explaining how
-  to judge — the constant a reader needs in order to judge at all.
-
-All of these removals were dictated by name. They are reported, not reversed.
+Plus a rename that touches 34 import sites and no logic: ADR `0041`.
 
 ---
 
-## 2 · ARP was writing into a node nobody queries
+## 1. UI — tabs, and less prose
 
-`intuition-graph.ts` minted its **own** predicate atom by pinning a Thing named `"uses"`. Atom ids
-are content-deterministic over the pinned URI, so this produced a node in neither of the ids the
-connector filters on. **One half of the repo wrote edges the other half could not see, and no third
-party could either.** `docs/07` names the failure exactly: _"do not mint your own copies — a
-differently-pinned duplicate is a different node and fragments the staking surface."_
+One tab per trust provider on the agent panel, Agent first and default. The explanatory copy is
+gone from both the panel and the directory: a staker count is a person mark and a number, not a
+sentence about what a staker count means. ADRs `0028`, `0029`.
 
-### Two mistakes on the way to fixing it, both caught by review
+## 2. The external verifier (task 17)
 
-**First pass fixed a function with no production callers.** `declareUsesTriple` is referenced only by
-its own definition and its tests. The writers are `scripts/agent-stake-on-use.ts` and
-`scripts/agent-loop.ts`, which both still minted. Running either would have written orphan edge #22,
-silently.
+Give it an agent's registration document and it says which of three things it learned. The split
+that matters, and the reason the module exists:
 
-**And it chose the predicate on the wrong axis.** It picked `use` `0x9ddda4ac…` because that is the
-id published in Appendix B, reasoning that ADR `0015` makes publication the rule and the 27-edge
-difference was noise. Both statements true, conclusion wrong: **publication and volume only decide
-between nodes that mean the same thing.** Measured, every edge on each, by object:
+| group           | meaning                                               |
+| --------------- | ----------------------------------------------------- |
+| `confirmed`     | we reached it, or we proved it is dead                |
+| `not-checkable` | nothing to probe — templated, non-HTTP, empty         |
+| `inconclusive`  | the request failed in a way that may be **our** fault |
 
-| predicate            | objects that are a protocol              |
-| -------------------- | ---------------------------------------- |
-| `use` `0x9ddda4ac…`  | mainnet **153/158**, testnet **166/166** |
-| `uses` `0x5c0bde1c…` | mainnet **0/185**, testnet **0/143**     |
+**`not-checkable` is not a failure.** 82% of declared endpoints in the cohort land there, so
+rendering it beside a confirmed defect would mass-slander the cohort. `partitionByCheckability`
+exists so no caller re-implements that split. `classifyEndpoint` returns a discriminated union and
+never a boolean, for the same reason.
 
-`use` means **"supports this protocol"** — A2A 69, MCP 68, OASF 16 — and Appendix B's object table
-for it is five standards, enumerated and closed. `uses` means **"this entity uses this tool"**:
-Intuition, Base, Ethereum, IPFS, Claude, GitHub, Obsidian, Cursor.
+The prober is deliberate about its own uncertainty: a timeout is `confirmed/dead`, a TLS or DNS
+failure is `inconclusive`, and a 429 or 503 is never a verdict. It serialises **per host**, not
+globally — one operator held 38 of 108 endpoints — and honours `Retry-After`.
 
-**So: write on `uses`. Where meaning and publication disagree, meaning wins — wrong data is not
-repaired by being discoverable.** ADR `0030` records the reversal with what the first pass had
-claimed quoted in place.
+Measured on Base 8453, 2026-10-16, `scripts/measure-cohort-endpoints.ts`: 52% of the sampled cohort
+declares a protocol endpoint and **1–7%** answer (Wilson interval, n=122). The interval is the
+finding; a point estimate there would be dishonest.
 
-The cost is real and accepted: `uses` is not in Appendix B, so a third party following the guide will
-not see ARP's edges. The remedy is canonisation, and the proposal has evidence — a vocabulary slot
-with no published owner, fragmented across four atoms on mainnet and five on testnet.
+## 3. The `use`/`uses` fix — ADR `0030`
 
-### Task 20 · a tool is not a protocol
+ARP was writing `use`. Measured object histograms on mainnet 1155 say `use` means **"supports this
+protocol"** (153 of 158 edges) and `uses` means **"uses this tool"** (0 of 185 edges are protocols).
+The predicate was picked on _publication_ and should have been picked on _meaning_. ARP now writes
+`uses` — the frozen constant, never a minted one.
 
-Both predicates mapped to one relation, bucketed as `protocols`. Split into `supports-protocol` and
-`uses-tool`, with a new `tools` bucket. Named by meaning, deliberately breaking the label-mirroring
-convention, because the one-letter gap between `use` and `uses` _is_ the bug.
+Twenty-one triples are stranded on the predicate ARP minted and abandoned. Testnet only,
+2.1e-11 tTRUST, **not migrable** — Intuition has no deletion. Recorded rather than quietly dropped.
 
-**The defect was latent, not live, and an earlier version of this branch said otherwise.**
-`getCapabilities` only runs on a subject resolved through `same as`. Of the distinct subjects carrying
-a `uses` edge — 83 mainnet, 69 testnet — **zero** carry a `same as` edge, against 79 of 80 for `use`.
-So nothing was ever reported to a reader as a protocol. The fix stays necessary: ARP was about to
-write `uses` edges on exactly the reachable subjects, which converts latent into live. **A defect
-fixed before it could fire, which is worth saying plainly instead of inflating.**
+## 4. Task 16 half 1 — declare and deposit
 
-### Also in here
+An agent that already exists resolves its ERC-8004 identity, declares the tools it used, and
+deposits TRUST on those declarations. `packages/protocol/src/declare/`, two MCP tools, a runnable
+example, 44 tests.
 
-- An `isTermCreated` preflight on the predicate, throwing `PredicateNotOnChainError`. It replaced an
-  on-chain revert that fired _after_ the user had approved and paid gas.
-- `declareUsesTriple` and both scripts now need **no pinning credential**. A predicate is not ours to
-  create. The scripts had kept `requirePinAuth()` and hard-threw without a key they no longer used,
-  so nobody could run the newly-fixed path.
-- **Orphan census**: `0x3707e587…`, label `uses`, pinned description byte-for-byte the string from the
-  deleted helper. 21 edges, **testnet only**, 21,000,000 wei ≈ 2.1 × 10⁻¹¹ tTRUST, absent from
-  mainnet. Not migrated — Intuition has no deletion. The bug cost nothing material.
+**What a third party needs: a funded wallet and an ERC-8004 identity. No API key.** A tool's atom
+derives from its URI, and the identity atom already exists for the mirrored cohort, so nothing is
+pinned.
 
----
+### The design decision — ADR `0038`
 
-## 3 · Docs and specs
+**The connector prepares calls and never signs or sends one.** It returns
+`{chainId, to, value, data, why}` for the agent's own runtime to sign with its own key. The package
+holds no key, builds no wallet client, and has no send path — so it **cannot** spend an operator's
+TRUST even by mistake. ADR `0035`'s "ARP is not a party" becomes a structural property instead of a
+promise, and it is checkable: zero hits for
+`createWalletClient|privateKeyToAccount|sendTransaction|writeContract|signTypedData|PRIVATE_KEY`
+across the whole package.
 
-`docs/13_THE_THREE_FLOWS.md` sets out three ways an agent gets rated and the order to build them.
-`docs/14_THE_WITNESS_PROBLEM.md` answers the question both earlier plans dodged.
+Two signing modes. **Direct** — sign the calls as they come, the signer's own TRUST is spent.
+**Delegated** — the operator signs one delegation up front with caveats bounding the spend, and the
+runtime redeems against it. One redemption per call, never a batch: the framework's own reference
+says batch mode "does not currently have compatible caveat enforcers", and ARP's
+`TrustStakeCapEnforcer` guards `beforeHook` with `onlySingleCallTypeMode`. The guard rail is not the
+price of entry.
 
-### The load-bearing conclusion
+### The deposit goes on the edge, not the tool's atom — ADR `0039`
 
-**You cannot observe a runtime, and a connector inside the agent's process is under the agent's
-control.** It sees only what the agent passes it, so an agent can call `declare_used(["A"])` having
-used B. An SDK **moves the lie one layer in** rather than reducing it. Proving what a program did
-internally needs a hardware root of trust or a zk proof, not an npm package.
+Two vaults can carry a deposit about one tool, and they are different claims. The triple's vault
+says "I stand behind the claim that this agent used this tool"; the atom's vault is a market on the
+tool in general, open to anyone for any reason.
 
-So the connector stops being presented as verification. What is a fact is only what touched a **third
-party** — a payment, an on-chain call, a delegation redemption — or what the **counterparty**
-attests. Hence the reversal: **do not ask the agent what it used, ask the tool who used it.**
+ARP had already picked both, in different files. `getToolUsage` prices the **triple**;
+`scripts/agent-stake-on-use.ts` deposits on the **atom**. So ARP's own writer put TRUST where ARP's
+own reader cannot see it. **Latent, not live** — that script's only callers are set-aside hackathon
+surface — but it is the file task 16 was told to adapt.
 
-And the collapse that makes it cheap: in ERC-8004 plus MCP the tool layer and the agent layer are the
-same layer. Agent `8453:2340` declares six MCP tools _and_ holds an ERC-8004 identity, so
-`(A, use, B)` joins two atoms that already exist. No namespace to invent, no `ModuleRegistry` to
-deploy — ADR `0025` was right for a reason it did not know.
+Measured on mainnet 1155 before deciding, all curves, over the 185 `uses` edges that exist
+(`scripts/measure-stake-vault-placement.ts`):
 
-### Measured, with every script committed
+| vault             | edges with positions | assets                                 |
+| ----------------- | -------------------- | -------------------------------------- |
+| the edge (triple) | 110 of 185           | 245.776495 TRUST                       |
+| the object's atom | 146 of 185           | 2,673,997 TRUST over 84 distinct atoms |
 
-|                                                | n        | result                               |
-| ---------------------------------------------- | -------- | ------------------------------------ |
-| declares a protocol endpoint                   | 122 docs | 63 — **51.6%** (CI 42.9–60.3%)       |
-| **answers one**                                | 122 docs | 3 — **2.5%** (CI **0.8–7.0%**)       |
-| `tokenURI` reverts or empty                    | 140 ids  | 23%                                  |
-| of those with a URI, document does not resolve | 108      | **37%**                              |
-| declared endpoints that are probeable at all   | 90       | **16** — 76% templated, 7% not a URL |
+**74 of those 185 carry stake only on the atom**, invisible to any reader of the edge. The atom
+figure is larger and answers a different question.
 
-**About half the cohort says it is callable; between 1% and 7% is.** The gap survives the error bars:
-bottom of the claiming range against top of the answering range is still roughly sixfold.
+### Two defects a review caught, both permanent and neither reverting
 
-Quote the interval, not the point — at n=3 the extrapolation spans 741 to 6,160 agents.
+**No `chainId` on the prepared call.** Each MultiVault is **codeless on the other chain**
+(`eth_getCode` → `0x`), and a value-bearing call to a codeless address does not revert — it is a
+plain transfer that succeeds. A testnet plan signed against mainnet would send 0.1 TRUST per call to
+an address nobody controls, silently. The chain is now on every call, because a wallet is handed one
+call at a time.
 
-Nothing in these percentages is a defect on the agent's part. **82% of declared endpoints are
-unprobeable** (templated `{placeholder}`, CAIP address, ENS name), and conflating that with _failing_
-would mass-slander the cohort on the first run. Hence three groups, not pass/fail: confirmed, not
-checkable, inconclusive.
+**A raw `https://` tool URL minted an off-canon atom.** Of the 84 tool atoms on mainnet `uses`
+edges, 78 are `ipfs://` and 77 of those resolve a pinned Thing; the only two raw-URL atoms in the
+set are `schema.org` vocabulary terms, not tools. A bare URL atom carries no metadata and splits the
+tool's reputation across two permanent ids. Fixed with a graph read and **no pin key**: one match is
+reused, none creates a bare atom and warns in the plan, and **several refuses** —
+`https://github.com` resolves to five atoms, and choosing one would write a permanent edge onto an
+arbitrary id.
 
----
+## 5. The rename — ADR `0041`
 
-## Verification
+`erc8004/` → `packages/protocol/` (`@arp-protocol/core`), and `sdk/` folded into
+`packages/protocol/src/arp/` and deleted. The names lied: `erc8004` read as "an implementation of
+the standard" and was the protocol layer entire, while two packages did one job with no boundary
+written anywhere. `arp/` is that boundary — everything under it reads ARP's own deployment.
 
-|           |                                                                                          |
-| --------- | ---------------------------------------------------------------------------------------- |
-| `app`     | `tsc -b` 0 · `lint` 0 · **205 passed / 2 skipped** (was 124 at the start of this branch) |
-| `erc8004` | build 0 · **174 passed / 4 skipped**                                                     |
-| `scripts` | both bundle; the constant is present and the minted description gone                     |
-| Reviews   | `ui-reviewer` PASS · `task-verifier` PASS · `intuition-integrator` PASS                  |
+`app/` does **not** absorb the protocol layer, and the reason is measured:
+`app/src/lib/deployments.ts:1` imports `deployments/13579.json` **at module load**, and ~12 sites
+hardcode `chain: intuitionTestnet`. That binding is deliberate, but it means anything built in
+`app/` needs porting site by site for mainnet, which is the goal.
 
-## Gaps, stated plainly
+34 files rewritten, no logic changed.
 
-- **Nothing was visually verified.** No browser in the build environment. Open `/agents` and
-  `/agent/8453/2340` before showing anyone.
-- **`scripts/` is outside every gate.** `app/tsconfig.app.json` includes only `src`; there is no
-  eslint config at the repo root; `bun build` strips types without checking unused locals. A dead
-  variable survived all three, in the two files a fix existed to repair. Recorded in task 19.
-- **`strict` has never been set** in `app/tsconfig.app.json`, which `code.md` calls non-negotiable.
-  Measured: **zero errors**. So every "tsc clean" since task 01 was weaker evidence than the rule it
-  was cited against. `tasks/18`, one line, deliberately not slipped in here.
-- Task 19's gate is **not** claimed. `getCapabilities` keys on a subject resolved through `same as`
-  while the write paths pass a CAIP-10 atom; the predicate was half the problem.
-- `ensureAtomForURI` mints an atom for any `ipfs://` string without validating it is a CID. 18
-  permanent testnet atoms with fabricated CIDs already exist. `tasks/20` appendix.
+## What this does not do
 
-## Two things not from these tasks
+- **Nothing has been signed or sent on any chain.** The whole write path is verified read-only
+  against live mainnet: identity resolved, ids computed, costs read, plan priced. Crossing that line
+  needs an operator who decides to spend.
+- No contract is deployed to mainnet, and none is planned.
+- `hire` and `rate` are not here. They moved to `tasks/25` with the full spec.
+- Phase 0 of the roadmap is **not** closed: identity resolution still does not route through
+  `resolveAgent`, deferred with an owner (`tasks/19` step 1b).
 
-- **`502a010`** recovers ADR `0027` plus a population correction in `docs/12`; it rides this branch
-  because it never reached `main` through the earlier stacked PRs.
-- **`CLAUDE.md`** cited the evidence ladder as `docs/09` §2; it is §3. Fixed — a wrong pointer in the
-  section that gates every task misroutes every reader of it.
+## A correction this branch makes to its own record — ADR `0040`
 
-## New in `.claude/`
+Five places in the repo, **including a rule file**, asserted that the triple fee "sits outside
+`TrustStakeCapEnforcer`, which bounds the deposit only", and `docs/15` listed it as one of two gaps
+testnet can never close. It is false: the enforcer decodes `value` out of the execution and nothing
+else (`TrustStakeCapEnforcer.sol:101`; its NatSpec says "Only `value` is consumed"; and a test caps a
+call with empty calldata). It is a native-spend cap. The true, narrower limitation is that **the cap
+bounds the amount, not the kind** — an operator's cap can be burned on non-recoverable fees instead
+of invested in positions.
 
-`STATE.md` (the project's position in one read), `rules/claims.md` + ADR `0031`, and generated
-`INDEX.md` for both `choices/` and `learning/`.
+## Gates
 
-ADR `0031` exists because **six statements in this session were wrong while every underlying
-measurement was right** — two reviewers re-derived the numbers and got identical values. The break was
-always the step from a measurement to a sentence. Four checks: reachability before blast radius, one
-number one context, cite third parties to a file and a line, confirm a gate's scope covers your
-change. Plus: commit the script, not the number.
+| gate                      | result                                      |
+| ------------------------- | ------------------------------------------- |
+| `packages/protocol` `tsc` | 0                                           |
+| `packages/protocol` tests | 292 passed / 4 skipped                      |
+| `app` `tsc -b`            | 0                                           |
+| `app` `eslint`            | 0                                           |
+| `app` tests               | 205 passed / 2 skipped                      |
+| testnet rig gate          | 4 claims checked · 0 mismatched · 0 drifted |
 
-The index generator immediately surfaced that **ADR `0015` is still `Proposed`** while the project
-depends on it.
+**What these gates do not cover**, and it is worth a reviewer's attention: `scripts/` is inside **no
+typecheck and no lint** — there is no root `tsconfig.json` and no root eslint config. This branch
+added two scripts there, so it widened that gap rather than narrowing it. `tasks/21` owns it, and
+it is not zero-cost to close: two ad-hoc configs disagreed on the error count (6 against 24), so it
+needs measuring with a committed one. The write path itself is inside every gate, because it lives
+in the package and not in `scripts/`.
 
-## Which tier of the evidence ladder does this serve?
+`prettier --check` fails repo-wide — run it rather than trusting a count here; it is long-standing
+and recorded as a known defect. Every file this branch created or edited is clean.
 
-**Tier 3, and it repairs the path to tier 4.** The UI protects the one tier-3 affordance ARP ships.
-The predicate fix is what makes a staked usage edge _exist and be readable at all_ — without it every
-stake-on-use was TRUST spent into an orphan node. `docs/14` names the first thing in this ecosystem
-that is not an assertion: two parties with opposing interests agreeing.
+## Where to start reading
+
+- `docs/12_THE_IDEA.md` — the only canonical statement of the mechanism, and short
+- `.claude/choices/0038-the-write-path-is-a-plan-not-a-transaction.md` — why the connector cannot
+  sign
+- `.claude/choices/0039-the-deposit-goes-on-the-edge.md` — which vault, and the measurement
+- `packages/protocol/README.md` §"Declaring what your agent used" — the third-party surface
+- `.claude/rules/claims.md` — what may be asserted here, and the measured failure that produced it
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
