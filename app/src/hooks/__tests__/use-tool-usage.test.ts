@@ -50,9 +50,10 @@ describe("toolUsageQueryKey", () => {
     });
 
     it("carries no bonding curve, unlike the agent profile's key", () => {
-        // `getToolUsage` reads `total_assets` off the term, which is the all-curve aggregate, so
-        // there is no single curve this read belongs to. A curve in the key would promise a
-        // narrowing that does not happen.
+        // Because `fetchToolUsage` passes no curve, so every read through this hook is the default
+        // one — not because the read is curve-agnostic, which it is not: `positionCount` is scoped
+        // to a vault. A caller that passed a curve would collide here, and that is the day to add
+        // it to the key.
         expect(toolUsageQueryKey(ATOM)).toHaveLength(3);
     });
 

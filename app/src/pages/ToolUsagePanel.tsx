@@ -2,7 +2,12 @@ import {useParams} from "react-router-dom";
 
 import {useToolUsage, isToolAtomId} from "../hooks/use-tool-usage";
 import {formatTrust, truncateMiddle} from "../services/trust-format";
-import {DERIVABLE_TIERS, UNREACHABLE_TIERS, type ToolUsageView} from "../services/tool-usage-view";
+import {
+    describeCounts,
+    opensRun,
+    UNREACHABLE_TIERS,
+    type ToolUsageView,
+} from "../services/tool-usage-view";
 import {MainnetNotice} from "../components/agent/MainnetNotice";
 import {UsageEdgeRow} from "../components/tool/UsageEdgeRow";
 import {TIER_CAPTION, TIER_LABEL, TIER_UNREACHABLE_REASON} from "../components/tool/tier-scale";
@@ -97,13 +102,16 @@ function ToolUsageBody({view}: {view: ToolUsageView}) {
                     <dd className="mt-1 font-mono tabular-nums">{view.edges.length}</dd>
                 </dl>
 
-                {/* Gated on the POSITION count, not on `isEmpty`. Measured on mainnet
-                    2026-10-19: 20 of the 84 atoms that are the object of a `uses` edge have zero
-                    positions and non-zero summed assets, because every edge carries creation dust
-                    (ADR 0042). Rendering the sidebar for those printed
-                    "Staked for <0.00000001 across 0 positions" beside the banner saying nobody has
-                    staked anything — two statements on one screen that cannot both be true. */}
-                {view.totals.supportPositions > 0 ? <Totals view={view} /> : null}
+                {/* Gated on the POSITION count, not on `isEmpty`. `scripts/measure-tool-page-states.ts`
+                    counts which state every tool atom would render: on mainnet 2026-10-19, 64 of 84
+                    render the sidebar and **20 have it gated** — 19 entirely free plus the one
+                    off-curve atom — because every edge carries creation dust (ADR 0042). Rendering
+                    it for those printed "Staked for <0.00000001 across 0 positions" beside the
+                    banner saying nobody has staked anything: two statements on one screen that
+                    cannot both be true. */}
+                {view.totals.supportPositions > 0 || view.totals.opposePositions > 0 ? (
+                    <Totals view={view} />
+                ) : null}
 
                 <a
                     href={`${INTUITION_MAINNET_EXPLORER}/address/${view.toolAtomId}`}
@@ -140,16 +148,20 @@ function ToolUsageBody({view}: {view: ToolUsageView}) {
 function Totals({view}: {view: ToolUsageView}) {
     return (
         <dl className="mt-6 border-t border-[color:var(--color-border)] pt-4 text-[length:var(--text-body-sm)]">
-            <dt className="text-[color:var(--color-fg-60)] text-[length:var(--text-label)] uppercase tracking-wider">
-                Staked for
-            </dt>
-            <dd className="mt-1 font-mono tabular-nums">
-                {formatTrust(view.totals.supportAssets)}{" "}
-                <span className="text-[color:var(--color-fg-60)]">
-                    across {view.totals.supportPositions}{" "}
-                    {view.totals.supportPositions === 1 ? "position" : "positions"}
-                </span>
-            </dd>
+            {view.totals.supportPositions > 0 ? (
+                <>
+                    <dt className="text-[color:var(--color-fg-60)] text-[length:var(--text-label)] uppercase tracking-wider">
+                        Staked for
+                    </dt>
+                    <dd className="mt-1 font-mono tabular-nums">
+                        {formatTrust(view.totals.supportAssets)}{" "}
+                        <span className="text-[color:var(--color-fg-60)]">
+                            across {view.totals.supportPositions}{" "}
+                            {view.totals.supportPositions === 1 ? "position" : "positions"}
+                        </span>
+                    </dd>
+                </>
+            ) : null}
             {view.totals.opposePositions > 0 ? (
                 <>
                     <dt className="mt-4 text-[color:var(--color-fg-60)] text-[length:var(--text-label)] uppercase tracking-wider">
@@ -182,9 +194,11 @@ function Edges({view}: {view: ToolUsageView}) {
                     <UsageEdgeRow
                         key={edge.tripleId}
                         edge={edge}
-                        // The list is sorted by tier, so "first of its tier" is "differs from the
-                        // one above" — the caption prints once per run rather than once per row.
-                        isFirstOfTier={index === 0 || view.edges[index - 1]?.tier !== edge.tier}
+                        // `opensRun` lives in the service because this predicate was wrong here:
+                        // it keyed on the tier while the row renders from the tier AND
+                        // `isOffCurve`, which suppressed the caption on the first free row after
+                        // an off-curve one.
+                        isFirstOfTier={opensRun(view.edges, index)}
                     />
                 ))}
             </ul>
@@ -224,28 +238,6 @@ function EmptyState({atomId}: {atomId: string}) {
             </p>
         </div>
     );
-}
-
-/**
- * What is on screen, in words, counted rather than implied.
- *
- * Built by hand rather than by mapping the labels, because "1 free assertion" and "3 free
- * assertions" differ and lowercasing a label does not pluralise it. The first version printed
- * "1 priced assertion · 1 staked off-curve · 3 free assertion" — ungrammatical on the gate fixture
- * itself. Off-curve is counted separately because it is a flag on the edge, not a rung.
- */
-function describeCounts(view: ToolUsageView): string {
-    const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
-    const parts = DERIVABLE_TIERS.filter((tier) => view.tierCounts[tier] > 0).map((tier) =>
-        plural(
-            view.tierCounts[tier],
-            TIER_LABEL[tier].toLowerCase(),
-            `${TIER_LABEL[tier].toLowerCase()}s`,
-        ),
-    );
-    const offCurve = view.edges.filter((edge) => edge.isOffCurve).length;
-    if (offCurve > 0) parts.push(`${offCurve} staked off-curve`);
-    return parts.join(" · ");
 }
 
 /**

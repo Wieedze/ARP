@@ -21,8 +21,14 @@ export function isToolAtomId(value: string | undefined): value is string {
 }
 
 export function toolUsageQueryKey(toolAtomId: string | null) {
-    // No curve in the key, unlike the agent profile's. `getToolUsage` reads `total_assets` off the
-    // term, which is the all-curve aggregate, so there is no single curve this read belongs to.
+    // No curve in the key, and the reason is narrower than "there is no single curve this read
+    // belongs to" — which is what this said, and which is false. `getToolUsage` reads
+    // `total_assets` off the term (all curves) but `positionCount` off a vault scoped to
+    // `config.curveId` (`tool-usage.ts:164`, consumed at `:201`), so half the read IS curve-scoped.
+    // The key omits it because `fetchToolUsage` passes no curve and so every read here is the
+    // default — a curve in the key would promise a narrowing no caller can currently request. **A
+    // caller that did pass one would collide in this cache**, which is a reason to add the curve the
+    // day that becomes possible, not a reason the curve does not exist.
     return ["erc8004", "tool-usage", toolAtomId] as const;
 }
 

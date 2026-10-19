@@ -90,6 +90,21 @@ if (payload.errors) {
 }
 const rows = payload.data?.triples ?? [];
 
+/**
+ * TRUST per bonding curve, so the split is produced rather than asserted.
+ *
+ * It was cited for a figure it did not compute: the split lived in this file's own docstring, and
+ * `tool-usage-view.ts` quoted "91.6%" where the real number is 89.33% and where this repo already
+ * held "89%" elsewhere. `rules/claims.md` — commit the script, not the number.
+ */
+const assetsByCurve = new Map<string, bigint>();
+const addByCurve = (s: Side | null | undefined) => {
+  for (const v of s?.vaults ?? []) {
+    const key = String(v.curve_id ?? '?');
+    assetsByCurve.set(key, (assetsByCurve.get(key) ?? 0n) + BigInt(v.total_assets ?? '0'));
+  }
+};
+
 let edgesWithTriplePositions = 0;
 let edgesWithObjectAtomPositions = 0;
 let edgesWithBoth = 0;
@@ -111,6 +126,8 @@ for (const row of rows) {
   const onEdge = positions(row.term) + positions(row.counter_term);
   const onAtom = positions(row.object_vaults?.term);
   tripleAssets += assets(row.term) + assets(row.counter_term);
+  addByCurve(row.term);
+  addByCurve(row.counter_term);
   const objectId = row.object?.term_id;
   if (objectId !== undefined) atomAssets.set(objectId, assets(row.object_vaults?.term));
   if (onEdge > 0 && onAtom > 0) edgesWithBoth += 1;
@@ -133,6 +150,19 @@ console.log(
 console.log(`  both                ${edgesWithBoth}`);
 console.log(`  ATOM but not EDGE   ${edgesOnlyOnAtom}  — invisible to getToolUsage`);
 console.log(`  neither             ${edgesWithNeither}`);
+const byCurveTotal = [...assetsByCurve.values()].reduce((a, b) => a + b, 0n);
+console.log(`\n  the EDGE total, split by bonding curve (${trust(byCurveTotal)} TRUST):`);
+for (const [curve, amount] of [...assetsByCurve.entries()].sort()) {
+  const share = byCurveTotal === 0n ? 0 : (100 * Number(amount)) / Number(byCurveTotal);
+  console.log(
+    `    curve ${curve.padEnd(3)} ${trust(amount).padStart(14)} TRUST  ${share.toFixed(2)}%`,
+  );
+}
+console.log(
+  `  The reader's per-vault fields are scoped to one curve while its asset totals are not, so this\n` +
+    `  split is what says how much of the market those fields exclude.`,
+);
+
 console.log(
   `\nThe atom total is summed once per DISTINCT atom. An object atom's vault is a market on the` +
     `\ntool itself, open to anyone for any reason; the edge's vault is a market on this one claim.` +

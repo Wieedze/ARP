@@ -4,6 +4,8 @@ import type {MarketSide, ToolUsage, ToolUsageEdge} from "@arp-protocol/core";
 import {
     buildToolUsageView,
     DERIVABLE_TIERS,
+    describeCounts,
+    opensRun,
     tierForEdge,
     UNREACHABLE_TIERS,
 } from "../tool-usage-view";
@@ -215,5 +217,93 @@ describe("buildToolUsageView", () => {
         expect(view.toolAtomId).toBe(`0x${"ab".repeat(32)}`);
         expect(view.label).toBe("IPFS");
         expect(view.pinnedUri).toBe("ipfs://bafkreiipfs");
+    });
+});
+
+/**
+ * The two predicates that lived in the page and were each wrong once there.
+ *
+ * Both are pure functions of the view, and both shipped broken because a `.tsx` is out of reach of
+ * this environment (`tasks/26`). They are here now, with the exact shapes that broke them.
+ */
+const DUST_WEI = 1_000_000n;
+const OFF_CURVE_WEI = 4_940_000_000_000_000_000n;
+const PRICED_WEI = 80_000_000_001_000_000n;
+
+const viewOf = (edges: ToolUsageEdge[]) => buildToolUsageView(usage(edges));
+
+describe("describeCounts", () => {
+    it("does not count an off-curve edge twice", () => {
+        // The round-2 regression, and live on the one mainnet page where off-curve exists — that
+        // atom has exactly one incoming edge, so the line read "1 free assertion · 1 staked
+        // off-curve" over a single row labelled Staked off-curve.
+        const view = viewOf([edge("0x6", "FIFA", OFF_CURVE_WEI, 0)]);
+        expect(view.edges).toHaveLength(1);
+        expect(describeCounts(view)).toBe("1 staked off-curve");
+    });
+
+    it("pluralises, because lowercasing a label does not", () => {
+        // The round-1 defect: "3 free assertion".
+        const view = viewOf([
+            edge("0x1", "Infura", DUST_WEI, 0),
+            edge("0x3", "Fleek", DUST_WEI, 0),
+            edge("0x4", "Pinata", DUST_WEI, 0),
+        ]);
+        expect(describeCounts(view)).toBe("3 free assertions");
+    });
+
+    it("keeps the singular singular", () => {
+        expect(describeCounts(viewOf([edge("0x2", "Relics", PRICED_WEI, 8)]))).toBe(
+            "1 priced assertion",
+        );
+    });
+
+    it("counts the three kinds separately and in rung order", () => {
+        const view = viewOf([
+            edge("0x1", "Infura", DUST_WEI, 0),
+            edge("0x2", "Relics", PRICED_WEI, 8),
+            edge("0x6", "FIFA", OFF_CURVE_WEI, 0),
+            edge("0x3", "Fleek", DUST_WEI, 0),
+        ]);
+        expect(describeCounts(view)).toBe(
+            "1 priced assertion · 2 free assertions · 1 staked off-curve",
+        );
+    });
+});
+
+describe("opensRun", () => {
+    it("opens on the first row", () => {
+        const view = viewOf([edge("0x2", "Relics", PRICED_WEI, 8)]);
+        expect(opensRun(view.edges, 0)).toBe(true);
+    });
+
+    it("keeps the caption on the first free row behind an off-curve one", () => {
+        // The latent defect: off-curve shares `tier === "free-assertion"` and sorts between priced
+        // and free, so keying on the tier alone suppressed the caption that carries docs/14's
+        // **nothing** — the row that gets mistaken for data.
+        const view = viewOf([
+            edge("0x2", "Relics", PRICED_WEI, 8),
+            edge("0x6", "FIFA", OFF_CURVE_WEI, 0),
+            edge("0x1", "Infura", DUST_WEI, 0),
+        ]);
+        expect(view.edges.map((e) => [e.tier, e.isOffCurve])).toEqual([
+            ["priced-assertion", false],
+            ["free-assertion", true],
+            ["free-assertion", false],
+        ]);
+        expect([0, 1, 2].map((i) => opensRun(view.edges, i))).toEqual([true, true, true]);
+    });
+
+    it("prints the caption once per run, not once per row", () => {
+        const view = viewOf([
+            edge("0x1", "Infura", DUST_WEI, 0),
+            edge("0x3", "Fleek", DUST_WEI, 0),
+            edge("0x4", "Pinata", DUST_WEI, 0),
+        ]);
+        expect([0, 1, 2].map((i) => opensRun(view.edges, i))).toEqual([true, false, false]);
+    });
+
+    it("is false for an index that is not there", () => {
+        expect(opensRun([], 0)).toBe(false);
     });
 });

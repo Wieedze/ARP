@@ -55,7 +55,7 @@ trap for whoever reaches for the wrong one."_ The page's first version rendered 
 does not have. The per-edge rows keep `StakerCount` because each is one vault; the totals say
 "across N positions".
 
-Three sites were wrong and are corrected:
+Four sites were wrong and are corrected:
 
 | site                                                | was                               | consequence                                                                               |
 | --------------------------------------------------- | --------------------------------- | ----------------------------------------------------------------------------------------- |
@@ -78,8 +78,10 @@ is about: it is a figure for capital that does not exist. The page says "Nothing
 
 The same read pairs an **all-curve** `totalAssets` with a `positionCount` scoped to one vault
 (`packages/protocol/src/sources/intuition/map.ts:126-137`). Measured on 1155 over the 185 `uses`
-edges: **26.20 TRUST on curve 1 against 219.54 on curve 2** — 91.6% of it off the curve the counts
-read. So an edge can hold real capital and report zero positions here.
+edges: **26.232648 TRUST on curve 1 against 219.543848 on curve 2** — **89.33%** of it off the curve
+the counts read, now printed by `scripts/measure-stake-vault-placement.ts` rather than asserted. An
+earlier version said 91.6%, which neither its own two inputs nor any script produces, while
+`packages/protocol/src/tool-usage.ts:22` already carried 89% for the same quantity. So an edge can hold real capital and report zero positions here.
 
 Keying the tier on positions alone would then print _"This is not evidence"_ over a term holding
 TRUST. **Live on 1 of 185 edges today** — `2026 FIFA World Cup uses upgraded semi-automated offside
@@ -88,9 +90,16 @@ n=1, not 91%.
 
 So the page carries an `off-curve` state, which is **not** one of `docs/14`'s five rungs — it is a
 statement about the reader, not about the edge. It says capital is behind the claim, on a curve this
-page does not read, and shows no figure. Its threshold is crude and stated rather than tuned: dust
-observed up to ~4e6 wei, smallest real deposit observed 1e16, so 1e9 sits three orders above one and
-seven below the other.
+page does not read, and shows no figure. Its threshold rests on a **governance floor, not an
+observation**: dust is `minShare` per touched vault, ~4e6 wei at most, and the smallest deposit the
+protocol _accepts_ is `getGeneralConfig().minDeposit` — 1e16 on mainnet, 1e15 on testnet
+(`docs/15_ROADMAP.md:56`). So 1e9 sits 250× above the dust, which is **2.4 orders and not three**,
+and seven orders below anything the protocol will take.
+
+This paragraph first argued from "the smallest real stake observed is 1e16". An observation can be
+beaten by the next deposit; a protocol floor cannot without governance moving. The code was
+corrected and this record was not, so for one commit the reasoning existed only in a commit
+message — which is the failure mode an append-only record exists to prevent.
 
 **The real fix is to read `defaultCurveId` from the chain**, which `packages/protocol/src/tool-usage.ts:26`
 already assigns to this task and `rules/portability.md` lists under "read it from the chain, not from

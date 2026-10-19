@@ -9,20 +9,31 @@
 functions — which is why `agent-trust.ts`, `tool-usage-view.ts` and the query-options pattern are
 tested at all — but nothing asserts what a component puts on screen.
 
-Two review rounds on **one page** (`tasks/23`) found six defects that a single render assertion
+**`tasks/13` has recorded this gap since 2026-09-17** — `code.md:86` requires React Testing Library
+and the repo has none. This file is the evidence for it, not a second gap; close them together.
+
+Three review rounds on **one page** (`tasks/23`) found eight defects that a single render assertion
 would each have caught. They are not hypothetical and none was found by a test:
 
-| what shipped                                                                                                                                         | the assertion that would have caught it                    |
-| ---------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
-| The sidebar printed `Staked for <0.00000001 across 0 positions` beside a banner saying nobody had staked anything — **20 of the 84 live tool pages** | render an all-free tool, assert the sidebar is absent      |
-| The off-curve row sorted **above** the priced edge, because it sorted on a figure the page is forbidden to display                                   | render the mixed fixture, assert the row order             |
-| The counts line read `1 priced assertion · 1 staked off-curve · 3 free assertion`                                                                    | render the IPFS fixture, assert the string                 |
-| A `<p>` as a direct child of `<dl>` — invalid HTML                                                                                                   | validate the rendered markup                               |
-| No `aria-live` on the async region, against three precedents in the same app                                                                         | query for a live region                                    |
-| The Ladder's closing paragraph described a layout it did not have, and was false on the empty state                                                  | render both states, assert the copy matches what is listed |
+| what shipped                                                                                                                                            | the assertion that would have caught it                    |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| The sidebar printed `Staked for <0.00000001 across 0 positions` beside a banner saying nobody had staked anything — **20 of the 84 live tool pages**    | render an all-free tool, assert the sidebar is absent      |
+| The off-curve row sorted **above** the priced edge, because it sorted on a figure the page is forbidden to display                                      | render the mixed fixture, assert the row order             |
+| The counts line read `1 priced assertion · 1 staked off-curve · 3 free assertion`                                                                       | render the IPFS fixture, assert the string                 |
+| A `<p>` as a direct child of `<dl>` — invalid HTML                                                                                                      | validate the rendered markup                               |
+| No `aria-live` on the async region, against three precedents in the same app                                                                            | query for a live region                                    |
+| The Ladder's closing paragraph described a layout it did not have, and was false on the empty state                                                     | render both states, assert the copy matches what is listed |
+| **The counts line double-counted an off-curve edge** — "1 free assertion · 1 staked off-curve" for one row, on the one live page where off-curve exists | render the one-off-curve-edge fixture, assert the string   |
+| **The free-assertion caption was suppressed** when an off-curve row preceded it, dropping `docs/14`'s _nothing_ sentence                                | render the mixed fixture, assert the caption is present    |
 
-Every one is a pure function of a fixture that already exists in the repo. The first two were live
-on mainnet data.
+Every one is a pure function of a fixture that already exists in the repo. Three were live on
+mainnet data.
+
+**Two of the eight were closed without this environment**, and that is the honest caveat: the counts
+line and the caption predicate were moved out of the `.tsx` into `tool-usage-view.ts`, where the
+existing node environment reaches them, and both now have mutation-tested cover. That is the right
+move whenever a defect is a pure function of the view — and it is not available for the other six,
+which are about what the DOM contains.
 
 ## What this is not
 

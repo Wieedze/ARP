@@ -82,9 +82,12 @@ export function tierForEdge(edge: ToolUsageEdge): ProvenanceTier {
  *
  * `getToolUsage` pairs an **all-curve** `totalAssets` with a `positionCount` scoped to one vault
  * (`packages/protocol/src/sources/intuition/map.ts:126-137`), which are two different populations —
- * and on mainnet **91.6% of the TRUST on `uses` edges sits on curve 2** while the counts read curve
- * 1 (`scripts/measure-stake-vault-placement.ts`). So an edge can hold real capital and report zero
- * positions here. **Live on 1 of 185 edges** today, which is latent-ish rather than widespread, and
+ * and on mainnet **89.33% of the TRUST on `uses` edges sits on curve 2** (219.543848 of 245.776495
+ * TRUST, measured 2026-10-19 by `scripts/measure-stake-vault-placement.ts`) while the
+ * counts read curve 1. So an edge can hold real capital and report zero positions here.
+ *
+ * This said 91.6%, which is not a figure anything produces: `packages/protocol/src/tool-usage.ts:22`
+ * already carried **89%** for the same quantity, four lines above the line this deferral cites. **Live on 1 of 185 edges** today, which is latent-ish rather than widespread, and
  * the cost of getting it wrong is printing "This is not evidence" over 4.94 TRUST.
  *
  * Calling such an edge `free-assertion` would be a lie, and `priced-assertion` would claim a market
@@ -97,9 +100,14 @@ export function tierForEdge(edge: ToolUsageEdge): ProvenanceTier {
  * **The ceiling is safe against a governance floor, not against an observation.** Creation dust is
  * `minShare` per touched vault — 1e6 each, up to ~4e6 observed. The smallest deposit the protocol
  * *accepts* is `getGeneralConfig().minDeposit`: **1e16 on mainnet 1155, 1e15 on testnet 13579**
- * (`rules/portability.md`). So 1e9 sits 250× above the dust and at least a million times below
- * anything the protocol will take. An "observed smallest stake" can be beaten by the next deposit;
- * a protocol floor cannot without governance moving.
+ * (`docs/15_ROADMAP.md:56`). So 1e9 sits 250× above the dust — 2.4 orders, not three — and at least
+ * seven orders below anything the protocol will take. An "observed smallest stake" can be beaten by
+ * the next deposit; a protocol floor cannot without governance moving.
+ *
+ * Those two values are a **copy** of a governance-configurable field, and `rules/portability.md`
+ * says to read such values from the chain rather than trust a copy. The copy is load-bearing only
+ * for the size of the gap, which is seven orders — it would survive the floor moving by a factor of
+ * a million. Said out loud rather than left as an unmarked hardcode.
  *
  * Reading `defaultCurveId` from the chain is the real fix and belongs to the connector's read
  * contract, not to this page — `packages/protocol/src/tool-usage.ts:26` already says so.
@@ -219,4 +227,62 @@ export function buildToolUsageView(usage: ToolUsage): ToolUsageView {
             tierCounts["priced-assertion"] === 0 &&
             !edges.some((edge) => edge.isOffCurve),
     };
+}
+
+/**
+ * What is on screen, in words, counted rather than implied.
+ *
+ * **Lives here and not in the page, because it has now been wrong twice.** Round 1 printed
+ * "1 priced assertion · 1 staked off-curve · 3 free assertion" — a label where a plural belonged.
+ * Round 2 fixed that and introduced a worse one: off-curve edges keep `tier === "free-assertion"`,
+ * so counting the rungs from `tierCounts` and then appending the off-curve count counted the same
+ * edge twice. On the one mainnet page where an off-curve edge exists it has exactly one edge, so
+ * the line read "1 free assertion · 1 staked off-curve" above a single row labelled
+ * `Staked off-curve` — two items for one edge, and a free assertion nowhere on the page.
+ *
+ * Both failures were pure functions of the view sitting in a `.tsx` that no test could reach. The
+ * third fix arrives with a test instead of with a third review.
+ *
+ * Plurals are built by hand: lowercasing a label does not pluralise it.
+ */
+export function describeCounts(view: ToolUsageView): string {
+    const plural = (n: number, one: string) => `${n} ${one}${n === 1 ? "" : "s"}`;
+    const offCurve = view.edges.filter((edge) => edge.isOffCurve).length;
+    const parts = DERIVABLE_TIERS.flatMap((tier) => {
+        // Off-curve edges carry the free tier, so subtract them or they are counted twice.
+        const onRung =
+            tier === "free-assertion" ? view.tierCounts[tier] - offCurve : view.tierCounts[tier];
+        return onRung > 0 ? [plural(onRung, TIER_NOUN[tier])] : [];
+    });
+    if (offCurve > 0) parts.push(`${offCurve} staked off-curve`);
+    return parts.join(" · ");
+}
+
+/** The noun for each rung, lowercase and singular. Pluralised by {@link describeCounts}. */
+const TIER_NOUN: Record<ProvenanceTier, string> = {
+    fact: "fact",
+    "confirmed-by-both": "edge confirmed by both",
+    "tool-declared": "tool-declared edge",
+    "priced-assertion": "priced assertion",
+    "free-assertion": "free assertion",
+};
+
+/**
+ * Whether this edge opens a run of its kind, so the caption prints once rather than once per row.
+ *
+ * **Keyed on what the row actually renders from**, which is the tier *and* `isOffCurve` — not on the
+ * tier alone. Off-curve shares `free-assertion`, and `rankOf` sorts it between priced and free, so
+ * keying on the tier made the first genuinely free row see the same tier above it and render with
+ * **no caption at all**. The sentence dropped is `docs/14`'s *nothing*, which `tier-scale.ts` says
+ * must never be decoration "because that is the row that gets mistaken for data".
+ *
+ * Latent rather than live when found: it needs a tool with an off-curve edge *and* a free edge, and
+ * the single off-curve atom on mainnet has one edge.
+ */
+export function opensRun(edges: readonly ToolUsageEdgeView[], index: number): boolean {
+    const edge = edges[index];
+    if (edge === undefined) return false;
+    const previous = edges[index - 1];
+    if (previous === undefined) return true;
+    return previous.tier !== edge.tier || previous.isOffCurve !== edge.isOffCurve;
 }

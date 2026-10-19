@@ -18,8 +18,10 @@
 > all seven, on the surface other agents read) and in `ModuleList.tsx`.
 >
 > A review then found the same defect surviving in the sidebar, where **20 of the 84 live tool pages
-> printed a figure beside a banner saying nobody had staked anything**. Gated, and verified against
-> one of the twenty.
+> printed a figure beside a banner saying nobody had staked anything**. Gated, verified against one
+> of the twenty, and the figure is now produced by `scripts/measure-tool-page-states.ts` rather than
+> asserted — it reports 64 rendering, 19 free-only and 1 off-curve, and names the off-curve atom so
+> the n=1 claim is checkable.
 
 ## The gap
 
@@ -36,18 +38,27 @@ Without it the `uses` edges are a write path with no reader, and nobody can act 
 ## What bounds it
 
 **Corrected 2026-10-16.** An earlier version of this file said the surface does not exist. That was
-the _agent_-side figure — 194 `uses` triples against 88,243 agents — and it is the wrong number for
+the _agent_-side figure — 194 `use` triples against 88,243 agents, and `use` is the other predicate — so it is the wrong number for
 this task. Measured on the **tool** side, by walking the objects of those edges:
 
 |                                                     |                                                                      |
 | --------------------------------------------------- | -------------------------------------------------------------------- |
 | distinct atoms that are the object of a `uses` edge | **84**                                                               |
 | of those, carrying at least one position            | **64**                                                               |
-| largest support on one tool                         | **22.69 TRUST** (Obsidian)                                           |
+| largest support on one tool                         | **superlative removed** — see below                                  |
 | a tool with real opposition                         | IPFS — 0.10 TRUST for across 10 positions, **0.03 against across 3** |
 
 So the surface exists in miniature, and the disagreement mechanism has already been used at least
 once. The first version has real data to show.
+
+**The "largest support" superlative is gone rather than updated, and that is the lesson.** It said
+22.69 TRUST (Obsidian) and was dated "Corrected 2026-10-16" with no script named. Re-measured three
+days later: Obsidian is third by one method and not in the top four by another — and the two methods
+disagree because one sums every bonding curve and the other reads the curve the positions are scoped
+to, which is this task's own central finding. A superlative needs a method as well as a date, and a
+leaderboard in a task file rots while every structural figure around it holds. The structural ones
+do hold, re-measured: **84** atoms are the object of a `uses` edge and **64** carry at least one
+position (the complement, 20 of 84, is what gates the page's sidebar).
 
 **Concentration is the thing to design for, not emptiness.** GitHub shows 22.59 TRUST across 6
 positions — **of which one position is 22.44**. The figure alone reads as a market when it is one
@@ -143,10 +154,26 @@ different weight, which is `docs/14:156`'s one requirement of this surface.
 ## Still open, with owners
 
 - **Read `defaultCurveId` from the chain** in `getToolUsage`. `packages/protocol/src/tool-usage.ts:26`
-  assigns it here; it is deferred because it changes the connector's read contract, which the trust
-  panel shares. The page states the mismatch on screen meanwhile. ADR `0042`.
-- **No DOM test environment in `app/`** (ADR `0011`) — now **`tasks/26`**, with the six defects two
-  review rounds found on this one page as its case. Each was one render assertion away from being
+  assigns it here. Deferred, and **the reason first written down was false**: it said the fix
+  "changes the connector's read contract, which the trust panel shares". Neither half holds —
+  `getToolUsage` already accepts `curveId` in its config (`tool-usage.ts:164`, consumed at `:201`),
+  so a caller can hand it a chain-read curve with no contract change, and the trust panel has its
+  own independent constant (`sources/intuition/index.ts:52`) rather than sharing this one. Every
+  piece is already in the repo: `declare/multivault.ts` reads `defaultCurveId()` from the chain and
+  `app/src/lib/intuition-mainnet.ts` exports a mainnet client.
+
+  **The real reasons are design ones, and they are smaller but sharper**: an extra chain round trip
+  per page load; a cache key that currently argues in writing against carrying a curve
+  (`use-tool-usage.ts:24`); and **no designed behaviour when the chain's curve differs from the one
+  the positions were read on** — which is the case the `off-curve` state papers over. That state has
+  now cost one live sort defect, one live counts defect and one latent caption defect across three
+  review rounds, so the next reader should know the fix is small and the design question is the
+  blocker. ADR `0042`.
+
+- **No DOM test environment in `app/`** (ADR `0011`) — now **`tasks/26`**, which `tasks/13` has
+  recorded as an open gap since September; both rows are in `STATE.md` and now cross-reference each
+  other. `tasks/26` carries the seven defects three review rounds found on this one page as its
+  case. Each was one render assertion away from being
   caught, and two were live on mainnet data.
 - **`--color-fg-40` is 3.66:1, below AA** (`tasks/14`). This page uses `--color-fg-60` throughout
   rather than adding two new instances.
