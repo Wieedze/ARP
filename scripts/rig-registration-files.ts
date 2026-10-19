@@ -32,14 +32,17 @@ const RPC = 'https://testnet.rpc.intuition.systems/http';
 const TYPE = 'https://eips.ethereum.org/EIPS/eip-8004#registration-v1';
 
 /**
- * `rig-confirmed` points at a live third-party MCP server.
+ * `rig-confirmed` points at **ARP's own MCP server** (`scripts/arp-mcp-server.ts`).
  *
- * Endpoints are HTTP and chain-independent, so a testnet agent with a real endpoint is not a
- * contradiction — it is what a real agent looks like. **But the gate's `confirmed` case then depends
- * on somebody else's uptime**, which is a known fragility of this rig and the reason the file names
- * which server it borrowed. Swap it the moment ARP runs one of its own.
+ * It borrowed a third party's endpoint until 2026-10-19, which made the gate's `confirmed` case
+ * depend on somebody else's uptime. ARP now runs one, so the dependency is gone.
+ *
+ * The default is `localhost`, which is **honest about what it is**: a local fixture, meaningful to
+ * whoever runs the verifier on the same machine and to nobody else. Set `ARP_MCP_ENDPOINT` to
+ * regenerate the file against a public URL once one exists — the agents are ARP's own, so
+ * `setAgentURI` can update them.
  */
-const BORROWED_ENDPOINT = 'https://nebula-scan-ten.vercel.app/mcp';
+const OWN_ENDPOINT = process.env.ARP_MCP_ENDPOINT ?? 'http://localhost:3002/mcp';
 
 export type RigFile = { slug: string; exercises: string; doc: Record<string, unknown> };
 
@@ -64,7 +67,7 @@ export const FILES: RigFile[] = [
       services: [
         {
           name: 'mcp',
-          endpoint: BORROWED_ENDPOINT,
+          endpoint: OWN_ENDPOINT,
           version: '2024-11-05',
           capabilities: ['bridge_monitor', 'peg_checker', 'exploit_scanner'],
         },

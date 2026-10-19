@@ -52,6 +52,10 @@ classification, not the capability recovery. The rig looks complete and exercise
 
 ## Do not do in this task
 
+- Do not point a rig file at a third party's endpoint. **Fixed 2026-10-19**: `rig-confirmed` pointed
+  at nebula-scan until ARP ran its own MCP server (`scripts/arp-mcp-server.ts`). It now points at
+  ARP's, defaulting to `localhost` and saying so in its own description — a local fixture is honest;
+  borrowing someone's uptime for a gate is not.
 - Do not host the registration files anywhere ARP has to keep running. A `data:` URI is how 18 of
   the sampled mainnet agents do it and it has no uptime obligation.
 - Do not fabricate a CID. `ensureAtomForURI` already minted 18 permanent testnet atoms for strings
