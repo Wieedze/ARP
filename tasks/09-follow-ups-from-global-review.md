@@ -25,7 +25,7 @@ present, on branches that are green — trades a known-good state for an unrevie
 
 ## Priority 1 — the curve id, and it touches real money
 
-`erc8004/src/sources/intuition/queries.ts:15` hardcodes `vaults(where: {curve_id: {_eq: "1"}})` in the
+`packages/protocol/src/sources/intuition/queries.ts:15` hardcodes `vaults(where: {curve_id: {_eq: "1"}})` in the
 `MARKET_SIDE` fragment, interpolated for both `term` and `counter_term`. Every market number the panel
 displays is therefore curve-1-only, with no comment acknowledging the assumption and no way to
 configure it — `IntuitionSourceConfig` exposes `graphqlUrl`, `fetch`, `timeoutMs`, `transport`, and no
@@ -97,7 +97,7 @@ delegates to it for agents and reputation. The `Deposited` event signature is de
 - `INTUITION_MAINNET_CHAIN_ID` and `INTUITION_MAINNET_EXPLORER` restate fields on the chain object
   re-exported two lines above them.
 - `.env.example:57` `VITE_INTUITION_TESTNET_GRAPHQL` is read by nothing.
-- `erc8004/README.md` headlines `entry.market?.support.totalAssets` as its example field. That is the
+- `packages/protocol/README.md` headlines `entry.market?.support.totalAssets` as its example field. That is the
   _term_-level total and runs ~1,000× the vault balance; `MarketPanel.tsx` deliberately avoids it and
   reads `getVault` instead. The connector's README teaches integrators the number its own app rejects.
 - `erc8004/package.json` points `exports` at `./dist`, which is gitignored, so `app` will not build on

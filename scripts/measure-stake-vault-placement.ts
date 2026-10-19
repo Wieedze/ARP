@@ -19,7 +19,7 @@
 // `uses` — "uses this tool" (ADR 0030). IMPORTED, never copied: `terms.ts` is the only place a term
 // id may appear, and typing this one from memory produced a wrong 32 bytes on the first draft of
 // this very script. A measurement against the wrong predicate reads as "no edges exist".
-import { USES } from '../erc8004/src/sources/intuition/terms';
+import { USES } from '../packages/protocol/src/sources/intuition/terms';
 
 const TARGETS = {
   mainnet: { label: 'Intuition mainnet 1155', url: 'https://mainnet.intuition.sh/v1/graphql' },

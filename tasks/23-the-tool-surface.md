@@ -64,7 +64,7 @@ each edge read both vaults.
 
 1. ~~A service that, given a tool's atom id, returns its incoming `uses` edges with each edge's
    subject (the agent), its vault and its counter-vault.~~ **DONE** — `getToolUsage` in
-   `erc8004/src/tool-usage.ts`, exported from the connector, 10 tests, verified against live mainnet
+   `packages/protocol/src/tool-usage.ts`, exported from the connector, 10 tests, verified against live mainnet
    on Obsidian, GitHub and IPFS.
 2. A route and a page. Two columns per `rules/ui.md`: identity left, the edges right. Dense list,
    mono for ids and amounts, hairline borders.

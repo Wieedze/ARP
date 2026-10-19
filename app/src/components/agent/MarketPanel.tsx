@@ -1,4 +1,4 @@
-import type {MarketSide} from "@arp-protocol/erc8004";
+import type {MarketSide} from "@arp-protocol/core";
 
 import type {TrustRow} from "../../services/agent-trust";
 import type {ClaimVaults, VaultPosition} from "../../services/trust-stake";

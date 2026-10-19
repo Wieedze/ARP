@@ -3,7 +3,7 @@ import {Link} from "react-router-dom";
 import type {Address, Hex} from "viem";
 import {useAccount, useSwitchChain} from "wagmi";
 
-import {DEFAULT_IDENTITY_REGISTRY} from "@arp-protocol/erc8004";
+import {DEFAULT_IDENTITY_REGISTRY} from "@arp-protocol/core";
 
 import {useAgentImport} from "../hooks/use-agent-import";
 import {INTUITION_MAINNET_CHAIN_ID, mainnetTxUrl} from "../lib/intuition-mainnet";

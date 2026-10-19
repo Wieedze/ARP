@@ -10,7 +10,7 @@ import {
     type AgentRef,
     type Erc8004Client,
     type ListAgentsOptions,
-} from "@arp-protocol/erc8004";
+} from "@arp-protocol/core";
 
 /**
  * The app's single `Erc8004Client`.

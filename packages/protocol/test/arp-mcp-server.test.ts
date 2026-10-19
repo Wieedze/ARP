@@ -194,7 +194,7 @@ beforeAll(async () => {
     await new Promise<void>((resolve) => stub!.listen(PORT + 1, "127.0.0.1", resolve));
 
     server = spawn("bun", ["run", "scripts/arp-mcp-server.ts"], {
-        cwd: new URL("../..", import.meta.url).pathname,
+        cwd: new URL("../../..", import.meta.url).pathname,
         env: {
             ...process.env,
             PORT: String(PORT),

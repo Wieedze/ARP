@@ -69,7 +69,15 @@ export type ArpDeployment = {
  * these to match. The SDK ships an explicit default so consumers don't
  * have to chase down addresses to get started.
  */
-export const DEFAULT_DEPLOYMENT: ArpDeployment = {
+/**
+ * ARP's own contracts on **Intuition Testnet 13579**, named rather than called a default.
+ *
+ * It was `DEFAULT_DEPLOYMENT`, and the word hid the binding: every consumer that did not pass a
+ * deployment silently read testnet. `rules/portability.md` rule 1 is about exactly that shape —
+ * take the chain as config, default it *visibly*, never let it be the thing nobody notices.
+ * `createArpClient` still falls back to this, and now says which chain it is falling back to.
+ */
+export const TESTNET_DEPLOYMENT: ArpDeployment = {
     chain: intuitionTestnet,
     identityRegistry: "0xC165A2AD2E540A4069E02834009161E2b4490d5A",
     moduleRegistry: "0xc9a2f66775828017e984E8be077fA2d17e0A41F4",
@@ -103,7 +111,7 @@ export type ArpClientConfig = {
  *     const modules = await getModulesByDomain(arp, "solidity-audit");
  */
 export function createArpClient(config: ArpClientConfig = {}): ArpClient {
-    const deployment = config.deployment ?? DEFAULT_DEPLOYMENT;
+    const deployment = config.deployment ?? TESTNET_DEPLOYMENT;
     const publicClient =
         config.publicClient ??
         createPublicClient({

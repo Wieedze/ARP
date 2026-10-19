@@ -1,6 +1,6 @@
 import {useId, useState} from "react";
 import {useNavigate} from "react-router-dom";
-import type {AgentListOrder} from "@arp-protocol/erc8004";
+import type {AgentListOrder} from "@arp-protocol/core";
 
 import {CohortList} from "../components/agent/CohortList";
 import {MainnetNotice} from "../components/agent/MainnetNotice";

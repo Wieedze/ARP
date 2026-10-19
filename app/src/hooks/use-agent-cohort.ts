@@ -1,5 +1,5 @@
 import {keepPreviousData, useQuery} from "@tanstack/react-query";
-import type {AgentListOrder, AgentPage, ListAgentsOptions} from "@arp-protocol/erc8004";
+import type {AgentListOrder, AgentPage, ListAgentsOptions} from "@arp-protocol/core";
 
 import {buildCohortView, type CohortView} from "../services/agent-cohort";
 import {fetchAgentCohort} from "../services/erc8004-connector";

@@ -22,7 +22,7 @@
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 
-import type { NotCheckableCode } from '../erc8004/src/verify/types.js';
+import type { NotCheckableCode } from '../packages/protocol/src/verify/types.js';
 import { FILES, dataUri } from './rig-registration-files.js';
 
 /**

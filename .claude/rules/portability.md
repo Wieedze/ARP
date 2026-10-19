@@ -4,15 +4,23 @@ Load when writing anything that touches a chain. The goal is mainnet; testnet is
 
 ## The one rule
 
-**New protocol logic goes in `erc8004/`, not in `app/`.**
+**New protocol logic goes in `packages/protocol/`, not in `app/`.**
 
 Measured 2026-10-19:
 
-|                                |                                                                                                                        |
-| ------------------------------ | ---------------------------------------------------------------------------------------------------------------------- |
-| `erc8004/src`                  | **zero** hardcoded chain references. Config takes `graphqlUrl` and `rpcUrls` keyed by `chainId`.                       |
-| `app/src/lib/deployments.ts:1` | `import deploymentsJson from "../../../deployments/13579.json"` — **the whole app is bound to testnet at module load** |
-| `app/src`                      | ~12 sites hardcode `chain: intuitionTestnet` in write paths                                                            |
+| where                                | what it binds                                                                                                          |
+| ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------- |
+| `packages/protocol/src` (not `arp/`) | **zero** chain bindings. Config takes `graphqlUrl` and `rpcUrls` keyed by `chainId`; a plan carries its `chainId`.     |
+| `packages/protocol/src/arp`          | **names both chains, on purpose** — `defineChain` for 13579 and 1155, plus `TESTNET_DEPLOYMENT` as a visible fallback  |
+| `app/src/lib/deployments.ts:1`       | `import deploymentsJson from "../../../deployments/13579.json"` — **the whole app is bound to testnet at module load** |
+| `app/src`                            | ~12 sites hardcode `chain: intuitionTestnet` in write paths                                                            |
+
+Re-measured 2026-10-19 after ADR `0041` folded `sdk/` in, because that fold made the old version of
+this table wrong: it said the package had **zero** chain references, which stopped being true the
+moment `sdk/`'s chain definitions arrived. They are confined to `src/arp/`, which is the namespace
+for ARP's own contracts, and that is the whole reason the namespace exists. **The rest of the package
+still has none** — that is the invariant worth protecting, and `src/arp/` is the one place to look
+when it seems broken.
 
 The app's binding is **deliberate, not a defect.** `app/src/lib/intuition-mainnet.ts` is a separate
 module precisely so "a mainnet read can never be served from a testnet constant by accident, and so
@@ -20,8 +28,12 @@ that grepping for `intuition-mainnet` finds every place real value is at stake" 
 explicit worlds with a greppable boundary is a good safety property and should not be collapsed.
 
 But it means **anything built in `app/` inherits the testnet world** and has to be ported later, site
-by site. The connector does not. So the loop — prepare a call, resolve an identity, read a tool's
-standing — belongs there.
+by site. The protocol package does not. So the loop — prepare a call, resolve an identity, read a
+tool's standing — belongs there.
+
+That reason is why the answer to "why does everything live in the protocol package?" is not "move it
+into `app/`". ADR `0041` renamed the package because the **name** was wrong, and left the boundary
+where the measurement puts it.
 
 ## What portable actually requires
 

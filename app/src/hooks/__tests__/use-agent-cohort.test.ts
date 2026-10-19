@@ -1,5 +1,5 @@
 import {describe, expect, it, vi} from "vitest";
-import type {AgentListing, AgentPage, ListAgentsOptions} from "@arp-protocol/erc8004";
+import type {AgentListing, AgentPage, ListAgentsOptions} from "@arp-protocol/core";
 
 import {agentCohortQueryKey, agentCohortQueryOptions, COHORT_PAGE_SIZE} from "../use-agent-cohort";
 

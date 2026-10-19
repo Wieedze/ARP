@@ -8,7 +8,7 @@ import {
     type AgentIdentity,
     type Erc8004Client,
     type TrustSource,
-} from "@arp-protocol/erc8004";
+} from "@arp-protocol/core";
 import {getSmartAccountsEnvironment} from "@metamask/smart-accounts-kit";
 import {
     custom,

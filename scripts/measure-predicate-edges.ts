@@ -13,7 +13,7 @@ const URL_ = 'https://mainnet.intuition.sh/v1/graphql';
 // Read the ids straight from the connector's frozen constants, so this script
 // cannot drift from what the code actually queries.
 const src = await Bun.file(
-  new URL('../erc8004/src/sources/intuition/terms.ts', import.meta.url),
+  new URL('../packages/protocol/src/sources/intuition/terms.ts', import.meta.url),
 ).text();
 const lines = [...src.matchAll(/export const (\w+)\s*=\s*\n?\s*"(0x[0-9a-f]{64})"/g)].map((m) => [
   m[1],

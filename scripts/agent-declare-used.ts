@@ -36,7 +36,7 @@ import {
   prepareStakeOnUsed,
   resolveDeclarationSubject,
   type PreparedCall,
-} from '../erc8004/src/declare/index.js';
+} from '../packages/protocol/src/declare/index.js';
 
 const TARGETS = { mainnet: 1155, testnet: 13579 } as const;
 

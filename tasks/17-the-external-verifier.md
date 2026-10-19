@@ -3,7 +3,7 @@
 > **Status: BUILT, GATE NOT YET RUN AT 100 AGENTS** (specified 2026-10-16, built 2026-10-16/17).
 > Phase 1 of `docs/13_THE_THREE_FLOWS.md`. The only flow that needs nobody's consent.
 >
-> **Shipped**: `erc8004/src/verify/{declaration,probe,host-limiter,subject}.ts`, exported from the
+> **Shipped**: `packages/protocol/src/verify/{declaration,probe,host-limiter,subject}.ts`, exported from the
 > connector, 41 tests. `scripts/verify-cohort.ts` walks a range or a list and writes a JSON surface.
 > Verified live against six real documents and five MCP endpoints.
 >
@@ -101,12 +101,12 @@ Separately, agent 8453:2340 (Clawnch) declares six MCP tools and a standard clie
    may be the thing at fault. Report _inconclusive_, and say what we sent.
 
 > **Reporting a false defect is this task's version of a false `mismatch`.** The connector's rule
-> applies unchanged (ADR 0019, and the `confirmedProviderIds` trade in `erc8004/`): when unsure, say
+> applies unchanged (ADR 0019, and the `confirmedProviderIds` trade in `packages/protocol/`): when unsure, say
 > unverified, never accuse. Group 2 must never be rendered in the same visual register as group 1.
 
 ## Deliverables
 
-- `erc8004/src/verify/` — pure classification. Given a registration document, return the endpoint
+- `packages/protocol/src/verify/` — pure classification. Given a registration document, return the endpoint
   list across both spellings and each endpoint's class. No network in this module; it is a function
   of the document, and therefore unit-testable without fixtures of the whole internet.
 - A prober that performs the network part, with the courtesy rules below, and returns group 1/2/3

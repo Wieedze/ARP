@@ -1,5 +1,5 @@
 import {describe, expect, it, vi} from "vitest";
-import type {AgentProfile} from "@arp-protocol/erc8004";
+import type {AgentProfile} from "@arp-protocol/core";
 
 import {
     ASTERPAY_TRIPLE,

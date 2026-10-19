@@ -1,7 +1,7 @@
 import {beforeEach, describe, expect, it, vi, type Mock} from "vitest";
 import {stringToHex, type Hex} from "viem";
 
-import {INTUITION_CAPABILITY_PREDICATE_IDS, INTUITION_USES_TERM_ID} from "@arp-protocol/erc8004";
+import {INTUITION_CAPABILITY_PREDICATE_IDS, INTUITION_USES_TERM_ID} from "@arp-protocol/core";
 
 import {deployments} from "../../lib/deployments";
 import {intuitionTestnet} from "../../lib/chains";

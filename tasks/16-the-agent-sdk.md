@@ -4,7 +4,7 @@
 > `0035`. **This is the whole gap** `docs/12` names: _"Adoption of an existing ERC-8004 agent —
 > missing."_
 >
-> Half 1 — declare and deposit — shipped as `erc8004/src/declare/` (6 modules), two MCP tools, a
+> Half 1 — declare and deposit — shipped as `packages/protocol/src/declare/` (6 modules), two MCP tools, a
 > runnable example and 34 tests. Half 2 — hire and rate — moved to **`tasks/25`**, which this file
 > told us to do if half 1 grew.
 >
@@ -152,7 +152,7 @@ Names are a suggestion. Argue for better ones.
 
 ## Constraints
 
-- Read paths come from `@arp-protocol/erc8004` and `@arp-protocol/sdk`. Do not reimplement them.
+- Read paths come from `@arp-protocol/core` and `@arp-protocol/core`. Do not reimplement them.
 - Canonical predicate constants only. Never resolve by label, never mint a predicate.
 - The canonical ERC-8004 atom is the subject for anything ERC-8004-facing (ADR 0015).
 - No pinning. If a path seems to need the partner key, that is a signal it is using the wrong atom
@@ -179,7 +179,7 @@ Names are a suggestion. Argue for better ones.
 - [→] `hire` produces a bounded sub-delegation that the existing specialist server accepts — **moved
   to `tasks/25`**, with half 2.
 - [→] `rate` writes `(A, uses, B)` and stakes — no new predicate — **moved to `tasks/25`**.
-- [x] A README a third party can follow without reading this repo. `erc8004/README.md` §"Declaring
+- [x] A README a third party can follow without reading this repo. `packages/protocol/README.md` §"Declaring
       what your agent used": what you need, the plan, the ordering constraint, both costs read from
       the chain, and both signing modes.
 - [ ] `task-verifier` pass

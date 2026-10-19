@@ -34,8 +34,8 @@ import {
   type DeclarePlan,
   type PreparedCall,
   type StakePlan,
-} from '../erc8004/src/declare/index.js';
-import { getToolUsage, type ToolUsage } from '../erc8004/src/tool-usage.js';
+} from '../packages/protocol/src/declare/index.js';
+import { getToolUsage, type ToolUsage } from '../packages/protocol/src/tool-usage.js';
 import { TOOLS } from './arp-mcp-tools.js';
 
 const PORT = Number(process.env.PORT ?? 3002);

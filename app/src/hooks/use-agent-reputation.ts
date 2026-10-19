@@ -7,7 +7,7 @@ import {
     type AgentReputation,
     type AgentWithReputation,
     type FindTopAgentsOptions,
-} from "@arp-protocol/sdk";
+} from "@arp-protocol/core";
 
 import {arpClient} from "../lib/arp-sdk";
 

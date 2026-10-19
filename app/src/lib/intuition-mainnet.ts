@@ -1,5 +1,5 @@
 import {createPublicClient, http, type Address} from "viem";
-import {intuitionMainnet} from "@arp-protocol/sdk";
+import {intuitionMainnet} from "@arp-protocol/core";
 
 /**
  * Intuition **mainnet** (chain 1155) — the network the ERC-8004 agent cohort
@@ -12,7 +12,7 @@ import {intuitionMainnet} from "@arp-protocol/sdk";
  * stake. ADR 0017 authorises deposits into existing vaults here and nothing
  * else.
  *
- * `intuitionMainnet` is re-exported from `@arp-protocol/sdk` rather than
+ * `intuitionMainnet` is re-exported from `@arp-protocol/core` rather than
  * redefined — one chain definition, one source of truth.
  */
 export {intuitionMainnet};

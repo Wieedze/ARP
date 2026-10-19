@@ -41,7 +41,7 @@ confirmed or contested by the counterparty, and is readable by ARP's own connect
 
 `app/src/services/intuition-graph.ts:157-180` pins a Thing named `"uses"` with an ARP-specific
 description and caches the resulting atom id. Atom ids are content-deterministic over the pinned URI,
-so that id is neither `USE` nor `USES` in `erc8004/src/sources/intuition/terms.ts`.
+so that id is neither `USE` nor `USES` in `packages/protocol/src/sources/intuition/terms.ts`.
 
 **Consequence today: every `(agent, uses, tool)` triple ARP has written sits on a node its own
 connector never queries, and no third party queries either.** `docs/07` warns about exactly this —
@@ -153,7 +153,7 @@ MCP tools and holds an ERC-8004 identity, so `(A, use, B)` joins two atoms that 
 ## Step 3 — The witness: a tool attests who used it
 
 A tool publishes a signed usage attestation at a resolver URL. The shape is deliberately the one
-`erc8004/src/signature.ts` already verifies — EIP-712 over RFC-8785 of the document minus its
+`packages/protocol/src/signature.ts` already verifies — EIP-712 over RFC-8785 of the document minus its
 signature, recovering to a signer the document names.
 
 The attestation says: this agent called me, in this period, this many times. Nothing about quality.

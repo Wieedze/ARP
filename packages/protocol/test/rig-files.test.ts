@@ -1,8 +1,8 @@
 import {describe, expect, it} from "vitest";
 
-import {TOOLS} from "../../scripts/arp-mcp-tools.js";
+import {TOOLS} from "../../../scripts/arp-mcp-tools.js";
 import type {EndpointClassification, NotCheckableCode} from "../src/verify/types.js";
-import {FILES, OWN_ENDPOINT, dataUri} from "../../scripts/rig-registration-files.js";
+import {FILES, OWN_ENDPOINT, dataUri} from "../../../scripts/rig-registration-files.js";
 import {
     classifyEndpoint,
     partitionByCheckability,

@@ -1,7 +1,7 @@
 # Task 25 — Hire an agent, and rate it afterwards
 
 > **Status: NOT STARTED** (split out of `tasks/16` on 2026-10-19, which said to do exactly that if
-> half 1 grew. It did: the declare-and-deposit half landed as `erc8004/src/declare/` plus two MCP
+> half 1 grew. It did: the declare-and-deposit half landed as `packages/protocol/src/declare/` plus two MCP
 > tools, 34 tests and three ADRs.)
 >
 > Task 16's acceptance list carried two criteria belonging here — `hire` and `rate`. They are not
@@ -29,7 +29,7 @@ the counterparty.
   compose authority, POSTs the task, and validates the fee. `agent-server-specialist.ts` is the
   receiving side. **That is the hard part and it works** — but it is set-aside hackathon surface
   (ADR `0033`), so it is a reference, not a dependency.
-- `erc8004/src/declare/` has the rating primitive already. `rate` is `prepareDeclareUsed` plus
+- `packages/protocol/src/declare/` has the rating primitive already. `rate` is `prepareDeclareUsed` plus
   `prepareStakeOnUsed` where the "tool" is an agent. Atoms can be agents or tools or both.
 - `toDelegatedCalls` already wraps prepared calls for redemption, one per call.
 

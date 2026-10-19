@@ -1,4 +1,4 @@
-import {ABSENT_SIGNATURE_REASON} from "@arp-protocol/erc8004";
+import {ABSENT_SIGNATURE_REASON} from "@arp-protocol/core";
 import type {
     AgentIdentity,
     AgentProfile,
@@ -11,7 +11,7 @@ import type {
     ProviderAssessment,
     ProviderClaim,
     SignatureVerdict,
-} from "@arp-protocol/erc8004";
+} from "@arp-protocol/core";
 import type {Address} from "viem";
 
 /**

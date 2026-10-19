@@ -18,8 +18,7 @@
       "name": "@arp/app",
       "version": "0.0.0",
       "dependencies": {
-        "@arp-protocol/erc8004": "^0.0.1",
-        "@arp-protocol/sdk": "^0.0.1",
+        "@arp-protocol/core": "^0.0.1",
         "@metamask/delegation-core": "^2.2.1",
         "@metamask/delegation-deployments": "^1.4.0",
         "@metamask/smart-accounts-kit": "^1.6.0",
@@ -53,28 +52,24 @@
       "name": "@arp/contracts",
       "version": "0.0.0",
     },
-    "erc8004": {
-      "name": "@arp-protocol/erc8004",
+    "packages/protocol": {
+      "name": "@arp-protocol/core",
       "version": "0.0.1",
       "dependencies": {
         "viem": "2.52.0",
       },
       "devDependencies": {
+        "@metamask/smart-accounts-kit": "^1.6.0",
         "@types/node": "^24.12.2",
         "typescript": "~6.0.2",
         "vitest": "^4.1.8",
       },
-    },
-    "sdk": {
-      "name": "@arp-protocol/sdk",
-      "version": "0.0.1",
-      "dependencies": {
-        "viem": "2.52.0",
+      "peerDependencies": {
+        "@metamask/smart-accounts-kit": "^1.6.0",
       },
-      "devDependencies": {
-        "typescript": "~6.0.2",
-        "vitest": "^4.1.8",
-      },
+      "optionalPeers": [
+        "@metamask/smart-accounts-kit",
+      ],
     },
   },
   "overrides": {
@@ -83,9 +78,7 @@
   "packages": {
     "@adraffy/ens-normalize": ["@adraffy/ens-normalize@1.11.1", "", {}, "sha512-nhCBV3quEgesuf7c7KYfperqSS14T8bYuvJ8PcLJp6znkZpFc0AuW4qBtr8eKVyPPe/8RSr7sglCWPU5eaxwKQ=="],
 
-    "@arp-protocol/erc8004": ["@arp-protocol/erc8004@workspace:erc8004"],
-
-    "@arp-protocol/sdk": ["@arp-protocol/sdk@workspace:sdk"],
+    "@arp-protocol/core": ["@arp-protocol/core@workspace:packages/protocol"],
 
     "@arp/app": ["@arp/app@workspace:app"],
 

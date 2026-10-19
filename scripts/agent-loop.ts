@@ -44,10 +44,10 @@ import { privateKeyToAccount } from 'viem/accounts';
 // constants by relative path, as the other cross-workspace imports here do.
 // `USES` is what the module declares; `INTUITION_USES_TERM_ID` is the same
 // value under its public-API alias (ADR 0030).
-import { USES as INTUITION_USES_TERM_ID } from '../erc8004/src/sources/intuition/terms';
-import { NoAgentIdentityError, asAgentIdentityAtom } from '../erc8004/src/verify/subject';
-import { intuitionSource } from '../erc8004/src/sources/intuition/index';
-import { resolveRef, toCaip19 } from '../erc8004/src/caip';
+import { USES as INTUITION_USES_TERM_ID } from '../packages/protocol/src/sources/intuition/terms';
+import { NoAgentIdentityError, asAgentIdentityAtom } from '../packages/protocol/src/verify/subject';
+import { intuitionSource } from '../packages/protocol/src/sources/intuition/index';
+import { resolveRef, toCaip19 } from '../packages/protocol/src/caip';
 
 import { intuitionTestnet } from '../app/src/lib/chains';
 import { deployments } from '../app/src/lib/deployments';

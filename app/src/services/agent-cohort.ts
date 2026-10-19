@@ -1,5 +1,5 @@
-import {ListAgentsFailedError, NoListingSourceError} from "@arp-protocol/erc8004";
-import type {AgentListing, AgentListOrder, AgentPage} from "@arp-protocol/erc8004";
+import {ListAgentsFailedError, NoListingSourceError} from "@arp-protocol/core";
+import type {AgentListing, AgentListOrder, AgentPage} from "@arp-protocol/core";
 
 import {describeAtomPositions, formatTrust} from "./trust-format";
 

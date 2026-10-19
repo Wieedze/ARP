@@ -1,5 +1,5 @@
 import {useQuery} from "@tanstack/react-query";
-import type {AgentProfile, AgentRef} from "@arp-protocol/erc8004";
+import type {AgentProfile, AgentRef} from "@arp-protocol/core";
 
 import {buildTrustPanel, type TrustPanelView} from "../services/agent-trust";
 import {fetchAgentProfile} from "../services/erc8004-connector";

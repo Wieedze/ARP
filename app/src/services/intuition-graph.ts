@@ -8,7 +8,7 @@ import {
     type WalletClient,
 } from "viem";
 
-import {INTUITION_USES_TERM_ID} from "@arp-protocol/erc8004";
+import {INTUITION_USES_TERM_ID} from "@arp-protocol/core";
 
 import {multiVaultAbi} from "../lib/abi/multi-vault";
 import {intuitionTestnet} from "../lib/chains";

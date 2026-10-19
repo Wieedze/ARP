@@ -1,11 +1,11 @@
 import {formatEther} from "viem";
-import {ABSENT_SIGNATURE_REASON} from "@arp-protocol/erc8004";
+import {ABSENT_SIGNATURE_REASON} from "@arp-protocol/core";
 import type {
     AgentAtomMarket,
     AssessmentFetchError,
     FreshnessVerdict,
     SignatureVerdict,
-} from "@arp-protocol/erc8004";
+} from "@arp-protocol/core";
 
 /**
  * Display helpers for the trust panel. Pure functions, no React, no clock of

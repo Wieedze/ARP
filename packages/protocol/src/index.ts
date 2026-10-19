@@ -1,12 +1,12 @@
 /**
- * `@arp-protocol/erc8004` — a connector for the ERC-8004 agent layer. Never signs, never sends.
+ * `@arp-protocol/core` — a connector for the ERC-8004 agent layer. Never signs, never sends.
  *
  * Give it an ERC-8004 identity and it returns one merged profile: every trust
  * provider's assessment with its EIP-712 signature actually verified and its
  * declared freshness window actually enforced, the agent's capability
  * declarations, and the live market on each provider claim.
  *
- *     import {createErc8004Client, getAgentProfile, listAgents} from "@arp-protocol/erc8004";
+ *     import {createErc8004Client, getAgentProfile, listAgents} from "@arp-protocol/core";
  *
  *     const client = createErc8004Client();
  *     const profile = await getAgentProfile(client, {chainId: 8453, tokenId: "2340"});
@@ -263,3 +263,39 @@ export type {
     ToolAtomLookup,
     ToolAtomLookupConfig,
 } from "./declare/index.js";
+
+/**
+ * ARP's own contracts — the ModuleRegistry catalogue and the agents registered against it.
+ *
+ * Folded in from `@arp-protocol/sdk` (ADR `0041`). The split between that package and this one was
+ * never written down, so a consumer could not tell which to import; `arp/` is now the boundary.
+ * Everything here reads **ARP's own deployment**, which is why it is the one place in this package
+ * that names a chain: `TESTNET_DEPLOYMENT`, named rather than defaulted.
+ */
+export {
+    createArpClient,
+    findModuleBySchemaURI,
+    findTopAgents,
+    getAgents,
+    getAllModules,
+    getAllModulesWithMetrics,
+    getLiveAgents,
+    getModulesByDomain,
+    getModulesByDomainWithMetrics,
+    getReputation,
+    intuitionMainnet,
+    intuitionTestnet,
+    TESTNET_DEPLOYMENT,
+} from "./arp/index.js";
+
+export type {
+    Agent,
+    AgentReputation,
+    AgentWithReputation,
+    ArpClient,
+    ArpClientConfig,
+    ArpDeployment,
+    FindTopAgentsOptions,
+    Module,
+    ModuleWithMetrics,
+} from "./arp/index.js";

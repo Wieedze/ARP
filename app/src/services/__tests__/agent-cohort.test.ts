@@ -1,6 +1,6 @@
 import {describe, expect, it} from "vitest";
-import {HttpError, ListAgentsFailedError, NoListingSourceError} from "@arp-protocol/erc8004";
-import type {AgentListing, AgentPage} from "@arp-protocol/erc8004";
+import {HttpError, ListAgentsFailedError, NoListingSourceError} from "@arp-protocol/core";
+import type {AgentListing, AgentPage} from "@arp-protocol/core";
 
 import {
     buildCohortView,

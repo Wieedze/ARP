@@ -1,5 +1,5 @@
 {
-    "name": "@arp-protocol/erc8004",
+    "name": "@arp-protocol/core",
     "version": "0.0.1",
     "description": "ERC-8004 trust connector. Never signs and never sends. Resolves an agent identity to one merged profile — every trust provider's assessment with its EIP-712 signature verified and its declared freshness enforced, plus capabilities and live market data. Prepares, but never sends, the calls an agent uses to declare what it used and stake on it.",
     "type": "module",

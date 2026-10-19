@@ -6,7 +6,7 @@ import {
     type AgentRef,
     type Erc8004Client,
     type ResolvedAgentRef,
-} from "@arp-protocol/erc8004";
+} from "@arp-protocol/core";
 import {
     getAddress,
     recoverTypedDataAddress,

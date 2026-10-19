@@ -6,7 +6,7 @@ import type {
     ClaimMarket,
     ProviderAssessment,
     SignatureVerdict,
-} from "@arp-protocol/erc8004";
+} from "@arp-protocol/core";
 import type {Hex} from "viem";
 
 /**

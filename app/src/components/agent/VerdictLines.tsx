@@ -1,4 +1,4 @@
-import type {FreshnessVerdict, SignatureVerdict} from "@arp-protocol/erc8004";
+import type {FreshnessVerdict, SignatureVerdict} from "@arp-protocol/core";
 
 import {
     describeFreshness,

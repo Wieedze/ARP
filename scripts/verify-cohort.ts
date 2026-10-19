@@ -38,7 +38,7 @@ import {
   type DeclaredEndpoint,
   type DocumentOutcome,
   type ProbeOutcome,
-} from '../erc8004/src/index.js';
+} from '../packages/protocol/src/index.js';
 
 const TOKEN_URI = '0xc87b56dd';
 
