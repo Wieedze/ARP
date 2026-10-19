@@ -10,8 +10,13 @@
  *  Read-only: one `eth_call` of `tokenURI` per sampled id and one GET of the registration file.
  *  Signs nothing. Uniform sampling over token ids, so quote n with any figure taken from it —
  *  consecutive runs at n=200 have returned 112 and 113 parsed documents. */
-const RPC = 'https://base-rpc.publicnode.com';
-const REGISTRY = '0x8004A169FB4a3325136EB29fA0ceB6D2e539a432';
+/**
+ * Config, not constants. `portability.md` rule 1: no chain constant at module scope — take it as
+ * config, default it, never import it. This file was added by the very commit that introduced that
+ * rule, and broke it; its sibling `verify-cohort.ts` had just been refactored away from this shape.
+ */
+const RPC = process.env.BASE_RPC_URL ?? 'https://base-rpc.publicnode.com';
+const REGISTRY = process.env.ERC8004_REGISTRY ?? '0x8004A169FB4a3325136EB29fA0ceB6D2e539a432';
 const UA = 'ARP-verifier/0.0 measurement';
 
 async function tokenURI(id: number): Promise<string | null> {
@@ -36,7 +41,7 @@ async function tokenURI(id: number): Promise<string | null> {
   return new TextDecoder().decode(new Uint8Array(b.map((x) => parseInt(x, 16))));
 }
 
-const TOTAL = 88243,
+const TOTAL = Number(process.env.COHORT_SIZE ?? 88_243),
   N = Number(process.argv[2] ?? 200);
 const ids = Array.from({ length: N }, () => 1 + Math.floor(Math.random() * TOTAL));
 
@@ -55,63 +60,78 @@ const skillVocab = new Map<string, number>();
 const toolVocab = new Map<string, number>();
 const bump = (m: Map<string, number>, k: string) => m.set(k, (m.get(k) ?? 0) + 1);
 
-await Promise.all(
-  ids.map(async (id) => {
-    const uri = await tokenURI(id).catch(() => null);
-    if (!uri) return;
-    const url = uri.startsWith('ipfs://') ? `https://ipfs.io/ipfs/${uri.slice(7)}` : uri;
-    let doc: any;
-    try {
-      if (url.startsWith('data:')) {
-        const p = url.slice(url.indexOf(',') + 1);
-        doc = JSON.parse(
-          url.includes(';base64,')
-            ? Buffer.from(p, 'base64').toString('utf8')
-            : decodeURIComponent(p),
-        );
-      } else {
-        const r = await fetch(url, {
-          headers: { 'user-agent': UA },
-          signal: AbortSignal.timeout(15000),
-        });
-        if (!r.ok) return;
-        doc = await r.json();
-      }
-    } catch {
-      return;
-    }
-    t.docs++;
-    let any = false;
+/**
+ * Serialised in small batches, with a gap.
+ *
+ * The first version fired all N requests at once. More than discourtesy: a rate-limited document
+ * fetch falls into `if (!r.ok) return` and drops silently out of the parsed count, so part of the
+ * 108/112/113 spread was self-inflicted throttling rather than sampling. The zero numerator is
+ * robust either way — a zero cannot be inflated by a smaller denominator — but explaining the
+ * variance by sampling alone was not the whole truth.
+ */
+const BATCH = 8;
+const GAP_MS = 250;
 
-    const skills = doc.oasf_skills ?? doc.skills;
-    if (Array.isArray(skills) && skills.length) {
-      t.oasfSkills++;
+async function visit(id: number): Promise<void> {
+  const uri = await tokenURI(id).catch(() => null);
+  if (!uri) return;
+  const url = uri.startsWith('ipfs://') ? `https://ipfs.io/ipfs/${uri.slice(7)}` : uri;
+  let doc: unknown;
+  try {
+    if (url.startsWith('data:')) {
+      const p = url.slice(url.indexOf(',') + 1);
+      doc = JSON.parse(
+        url.includes(';base64,')
+          ? Buffer.from(p, 'base64').toString('utf8')
+          : decodeURIComponent(p),
+      );
+    } else {
+      const r = await fetch(url, {
+        headers: { 'user-agent': UA },
+        signal: AbortSignal.timeout(15000),
+      });
+      if (!r.ok) return;
+      doc = await r.json();
+    }
+  } catch {
+    return;
+  }
+  t.docs++;
+  let any = false;
+
+  const skills = doc.oasf_skills ?? doc.skills;
+  if (Array.isArray(skills) && skills.length) {
+    t.oasfSkills++;
+    any = true;
+    t.totalSkills += skills.length;
+    for (const s of skills)
+      bump(skillVocab, typeof s === 'string' ? s : JSON.stringify(s?.name ?? s).slice(0, 40));
+  }
+  const eps = [...(doc.endpoints ?? []), ...(doc.services ?? [])].filter(
+    (e) => e && typeof e === 'object',
+  );
+  for (const e of eps) {
+    const caps = Array.isArray(e.capabilities) ? e.capabilities : [];
+    if (caps.length) {
+      t.capabilities++;
       any = true;
-      t.totalSkills += skills.length;
-      for (const s of skills)
-        bump(skillVocab, typeof s === 'string' ? s : JSON.stringify(s?.name ?? s).slice(0, 40));
+      t.totalNamedTools += caps.length;
+      for (const c of caps) bump(toolVocab, String(c).slice(0, 40));
     }
-    const eps = [...(doc.endpoints ?? []), ...(doc.services ?? [])].filter(
-      (e) => e && typeof e === 'object',
-    );
-    for (const e of eps) {
-      const caps = Array.isArray(e.capabilities) ? e.capabilities : [];
-      if (caps.length) {
-        t.capabilities++;
-        any = true;
-        t.totalNamedTools += caps.length;
-        for (const c of caps) bump(toolVocab, String(c).slice(0, 40));
-      }
-    }
-    if (Array.isArray(doc.tags) && doc.tags.length) {
-      t.tags++;
-      any = true;
-    }
-    if (doc.x402Support === true) t.x402++;
-    if (Array.isArray(doc.supportedTrust) && doc.supportedTrust.length) t.supportedTrust++;
-    if (any) t.withAnyToolSurface++;
-  }),
-);
+  }
+  if (Array.isArray(doc.tags) && doc.tags.length) {
+    t.tags++;
+    any = true;
+  }
+  if (doc.x402Support === true) t.x402++;
+  if (Array.isArray(doc.supportedTrust) && doc.supportedTrust.length) t.supportedTrust++;
+  if (any) t.withAnyToolSurface++;
+}
+
+for (let i = 0; i < ids.length; i += BATCH) {
+  await Promise.all(ids.slice(i, i + BATCH).map(visit));
+  if (i + BATCH < ids.length) await new Promise((r) => setTimeout(r, GAP_MS));
+}
 
 console.log(`sampled ${N} random ids of ${TOTAL}; ${t.docs} documents parsed\n`);
 const pc = (n: number) => `${n} (${t.docs ? ((100 * n) / t.docs).toFixed(0) : 0}% of parsed)`;

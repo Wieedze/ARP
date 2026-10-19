@@ -9,9 +9,12 @@
  *      bun run scripts/rig-registration-files.ts            # print the files and the calls
  *      bun run scripts/rig-registration-files.ts --cast     # print ready-to-run cast commands
  *
- *  **This script signs nothing and sends nothing.** (The three mints of 2026-10-19 were signed by
- *  an agent session with the operator's key, on the user's explicit ask — ADR 0037. That is a fact
- *  about that task, not about this file, and the two were conflated once already.) It prints the registration files and the
+ *  **This script signs nothing and sends nothing.** It prints the registration files and the
+ *  transactions that would create them.
+ *
+ *  Who ran them, for the record: the three mints of 2026-10-19 were signed by an **agent session**
+ *  with the operator's key, on the user's explicit ask — ADR 0037. That is a fact about that task,
+ *  not about this file, and the two were conflated once already. It prints the registration files and the
  *  transactions that would create them. The operator runs them with their own key — the same
  *  division as everywhere else in this project (ADR 0035).
  *
@@ -43,6 +46,11 @@ const TYPE = 'https://eips.ethereum.org/EIPS/eip-8004#registration-v1';
  * whoever runs the verifier on the same machine and to nobody else. Set `ARP_MCP_ENDPOINT` to
  * regenerate the file against a public URL once one exists — the agents are ARP's own, so
  * `setAgentURI` can update them.
+ *
+ * **That escape hatch is a rehearsal prop**, and `portability.md` rule 4 — introduced by this same
+ * task — says so: "any step that works because ARP can write to the registry is not a step." On
+ * mainnet ARP owns no registry and cannot `setAgentURI`. The real fix is a public endpoint, not a
+ * plan to amend the record later.
  */
 export const OWN_ENDPOINT = process.env.ARP_MCP_ENDPOINT ?? 'http://localhost:3002/mcp';
 

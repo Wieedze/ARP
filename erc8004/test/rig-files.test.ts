@@ -1,6 +1,7 @@
 import {describe, expect, it} from "vitest";
 
 import {TOOLS} from "../../scripts/arp-mcp-tools.js";
+import type {NotCheckableCode} from "../src/verify/types.js";
 import {FILES, OWN_ENDPOINT, dataUri} from "../../scripts/rig-registration-files.js";
 import {
     classifyEndpoint,
@@ -210,9 +211,17 @@ describe("`exercises` is checked against the classifier, not trusted as prose", 
      * `inconclusive/transport-error`, and `deployments/13579.json` copied the string verbatim. Every
      * structural test passed, because they checked the shape and not the claim.
      *
-     * Everything reachable without a network call is checkable here. `dead` against `live` is the
-     * one distinction that genuinely needs the probe, so a file claiming it is asserted to be
-     * probeable and left to the gate — which is what caught it.
+     * **What these close, precisely**: the checkability axis — `probeable` against `not-checkable` —
+     * and, inside `not-checkable`, the code. That is everything derivable from the document alone.
+     *
+     * **What they do NOT close**: `confirmed` against `inconclusive`. Both are `probeable` before a
+     * request is sent, so no unit test can tell them apart — and *the mutation that actually
+     * shipped lived exactly there*. Measured: flipping `rig-dead`'s claim between `confirmed/dead`
+     * and `inconclusive/transport-error` leaves this suite green.
+     *
+     * `scripts/verify-rig-claims.ts` closes that family by reading the gate's report, because the
+     * probe is the only authority on it. Reporting these tests as closing "the class" was wrong by
+     * one level.
      */
     const statusesClaimed = (exercises: string) => {
         const claimed = new Set<string>();
@@ -240,7 +249,16 @@ describe("`exercises` is checked against the classifier, not trusted as prose", 
     });
 
     it("a file claiming a not-checkable code names one the classifier can return", () => {
-        const codes = ["templated", "non-http-identifier", "unparseable-url", "empty"] as const;
+        // A `Record` keyed by the union, not an array: `satisfies readonly NotCheckableCode[]`
+        // checks assignability, NOT exhaustiveness, so a fifth member would pass it and then be
+        // silently skipped by the `continue` below. Measured — the array form did not catch a
+        // grown union. The Record does, because a missing key is a type error.
+        const codes = Object.keys({
+            templated: true,
+            "non-http-identifier": true,
+            "unparseable-url": true,
+            empty: true,
+        } satisfies Record<NotCheckableCode, true>) as NotCheckableCode[];
         for (const file of FILES) {
             const named = codes.filter((c) => file.exercises.includes(c));
             if (named.length === 0) continue;

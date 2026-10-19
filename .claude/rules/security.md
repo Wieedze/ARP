@@ -81,7 +81,23 @@ The `contract-reviewer` agent (in `.claude/agents/`) orchestrates these for you 
 - Default deployment target: **Intuition Testnet** (changed from Base Sepolia per `docs/00_HACKATHON_PIVOT.md`; ADR `0002`).
 - **Mainnet deployment** (Intuition mainnet or any other) requires explicit user confirmation per session. No ARP contract is deployed to mainnet today, and none is planned — the panel's staking targets Intuition's own MultiVault, not an ARP contract.
 - **Mainnet transactions are not the same question as mainnet deployment.** ADR `0017` authorises one narrow class: deposits into existing `has trust provider` triple vaults and their counter-triples on chain 1155, signed by the operator in their own wallet. It does not authorise contract deployment, atom or triple creation at scale (see ADR `0021` for that cost), or any stake initiated by an agent. Read the ADR before widening it.
-- **No ARP agent, script or automated process may sign a mainnet transaction with ARP's own funds.**
+- **Mainnet signing, in one sentence, and the only place it is stated.** `CLAUDE.md` and
+  `.claude/STATE.md` cite this bullet; if they ever restate it, they are wrong and this wins.
+
+  **No ARP agent, script or automated process may sign a mainnet transaction with ARP's own funds.**
+
+  The qualifier is deliberate and was added with ADR `0035`. Three cases, which earlier wordings
+  collapsed:
+
+  | Whose funds | Who signs | Mainnet? |
+  | --- | --- | --- |
+  | **ARP's own** | a script or agent, automatically | **never** |
+  | ARP's own | a human in the panel | yes, ADR `0017`, seven safeguards |
+  | **An agent operator's**, under a delegation they signed | the agent | yes **after the path is proven on testnet** — ADR `0036` |
+  | An agent operator's | an agent session with their raw key | **testnet 13579 only** — ADR `0037` |
+
+  Row 3 is the product (`docs/12` points 3 and 5), so a flat "no agent may ever sign a mainnet
+  transaction" forbids the thing being built. Row 1 is the development hazard the rule exists for.
   Verification of staking code is unit tests over a mocked wallet client, `previewDeposit` reads, and
   `eth_call` simulation. A passing test suite is not a reason to spend real TRUST.
 
