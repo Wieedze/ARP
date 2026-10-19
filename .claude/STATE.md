@@ -39,7 +39,13 @@ Recount rather than trusting these two numbers — `git rev-list --count main..H
 `git rev-list --count origin/feat/agent-panel-tabs..HEAD`. This line has been wrong twice: once by
 17 commits, and once asserting "pushed" and "ahead of origin/main" together, which cannot both hold.
 
-**Tests**: connector 222 passed / 4 skipped · app 205 passed / 2 skipped. `tsc` 0, `lint` 0.
+**Tests**: connector **248 passed / 4 skipped** · app 205 passed / 2 skipped. `tsc` 0, `lint` 0.
+
+**What those gates do NOT cover** (`claims.md` check 4): `scripts/arp-mcp-server.ts` and
+`scripts/verify-cohort.ts` are inside **no typecheck and no lint** — there is no root `tsconfig.json`
+and no root eslint config. `scripts/arp-mcp-tools.ts` and `scripts/rig-registration-files.ts` _are_
+inside the connector's typecheck, incidentally, because its tests import them — a partial closure of
+`tasks/21`'s gap that nobody designed.
 
 **Blocked on one thing:** no GitHub credential is reachable from the agent session. `git push` fails
 with `could not read Username`; `gh` is not logged in; the user's own credentials sit in
@@ -50,28 +56,28 @@ and task 20 commits and does not describe them.**
 
 ## Tasks
 
-| #      | task                                              | state                                                                                                       |
-| ------ | ------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| 01–03b | setup, contract, deploy, enforcers, smart account | done                                                                                                        |
-| 04     | UI core                                           | **no status line** — code exists, fiche never marked                                                        |
-| 04b    | agent identity and compose                        | done                                                                                                        |
-| 04c    | agent autonomous positioning                      | **set aside** — hackathon surface, ADR `0033`                                                               |
-| 05     | UI polish and deploy                              | **no status line**                                                                                          |
-| 06–08  | pin writes, connector, trust panel                | done                                                                                                        |
-| 09     | follow-ups from global review                     | open                                                                                                        |
-| 10–12  | directory, import, panel tabs                     | done                                                                                                        |
-| 13     | a rule the repo cannot satisfy                    | open — `code.md:86` requires React Testing Library; the repo has none                                       |
-| 14     | contrast below AA                                 | open — `--color-fg-40` at 3.66:1                                                                            |
-| 15     | strip the panel copy                              | done, verified                                                                                              |
-| 16     | the connector an agent declares through           | open — **the whole gap** `docs/12` names; re-anchored on ADR `0035`                                         |
-| 17     | the external verifier                             | **built**, 48 tests; gate not yet run at 100 agents                                                         |
-| 18     | `strict` is off in the app                        | done, verified (`6b351ee`) — cost was indeed zero errors                                                    |
-| 19     | the `use` edge and its witness                    | step 1 done; steps 2–5 **unblocked** by ADR `0033` — no minting needed                                      |
-| 20     | a tool renders as a protocol                      | done, verified                                                                                              |
-| 21     | `scripts/` is outside every gate                  | open — **not** zero-cost, unlike 18; owns the gap 18 did not reach                                          |
-| 22     | the chain as witness                              | open — user proposal; strongest evidence class, bounded by how much tool use is on-chain. **Measure first** |
-| 23     | the tool surface                                  | step 1 **done** (`getToolUsage`, 9 tests, live-verified); the page remains                                  |
-| 24     | make the testnet rig faithful                     | open — **Phase 0, do first**. The 2 testnet agents have an empty `tokenURI`, so discovery never runs        |
+| #      | task                                              | state                                                                                                                          |
+| ------ | ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| 01–03b | setup, contract, deploy, enforcers, smart account | done                                                                                                                           |
+| 04     | UI core                                           | **no status line** — code exists, fiche never marked                                                                           |
+| 04b    | agent identity and compose                        | done                                                                                                                           |
+| 04c    | agent autonomous positioning                      | **set aside** — hackathon surface, ADR `0033`                                                                                  |
+| 05     | UI polish and deploy                              | **no status line**                                                                                                             |
+| 06–08  | pin writes, connector, trust panel                | done                                                                                                                           |
+| 09     | follow-ups from global review                     | open                                                                                                                           |
+| 10–12  | directory, import, panel tabs                     | done                                                                                                                           |
+| 13     | a rule the repo cannot satisfy                    | open — `code.md:86` requires React Testing Library; the repo has none                                                          |
+| 14     | contrast below AA                                 | open — `--color-fg-40` at 3.66:1                                                                                               |
+| 15     | strip the panel copy                              | done, verified                                                                                                                 |
+| 16     | the connector an agent declares through           | open — **the whole gap** `docs/12` names; re-anchored on ADR `0035`                                                            |
+| 17     | the external verifier                             | **built**, 48 tests; gate not yet run at 100 agents                                                                            |
+| 18     | `strict` is off in the app                        | done, verified (`6b351ee`) — cost was indeed zero errors                                                                       |
+| 19     | the `use` edge and its witness                    | step 1 done; steps 2–5 **unblocked** by ADR `0033` — no minting needed                                                         |
+| 20     | a tool renders as a protocol                      | done, verified                                                                                                                 |
+| 21     | `scripts/` is outside every gate                  | open — **not** zero-cost, unlike 18; owns the gap 18 did not reach                                                             |
+| 22     | the chain as witness                              | open — user proposal; strongest evidence class, bounded by how much tool use is on-chain. **Measure first**                    |
+| 23     | the tool surface                                  | step 1 **done** (`getToolUsage`, 9 tests, live-verified); the page remains                                                     |
+| 24     | make the testnet rig faithful                     | **gate met**, re-verification pending. Agents 3,4,5 exist; step 3 (identity resolution) **deferred**, so Phase 0 is not closed |
 
 **Recommended order** — `docs/15_ROADMAP.md` is the full version with what testnet can and cannot
 prove. Short form: **24 → 16 → 23 → 17**, then the two mainnet gaps.
@@ -128,6 +134,8 @@ the tool who used it.
 | `scripts/` is outside **every** gate — `tsc -b` covers only `app/src`, no eslint config at the repo root, `bun build` skips unused locals          | **task 21**      | live: `scripts/seed.ts:34` imports `decodeEventLog` and never uses it, plus five implicit `any`s. Not zero-cost to close — two ad-hoc configs disagreed (6 vs 24), so measure with a committed one |
 | `app/vitest.config.ts` is in neither tsconfig project                                                                                              | task 21          | measured at zero errors to add; same shape as task 18, missed by it                                                                                                                                |
 | `bun run format:check` fails on 190 files, long-standing                                                                                           | task 21          | a gate that always fails is not a gate; citing it green would be a `claims.md` check-4 error                                                                                                       |
+| the rig's testnet writes are permanent — 3 mints plus 1 `setAgentURI`                                                                              | ADR `0037`       | a wrong fixture costs an id; one was wrong when minted and corrected in place. Document hashes in `deployments/13579.json` make repo-vs-chain drift detectable                                     |
+| `verify-cohort.ts` builds a document-hash map, logs it, and **never reads it**                                                                     | task 21          | its header claimed caching that does not happen; the claim is corrected, the map is not wired. A Base run was observed loading a testnet file before the out path was keyed by target              |
 | `ensureAtomForURI` mints an atom for any `ipfs://` string without validating it is a CID; 18 permanent atoms with fabricated CIDs exist on testnet | task 20 appendix | unrecoverable per occurrence                                                                                                                                                                       |
 | `--color-fg-40` at 3.66:1, below AA                                                                                                                | task 14          | accessibility                                                                                                                                                                                      |
 | `code.md:86` requires a test framework the repo does not have                                                                                      | task 13          | an unsatisfiable rule                                                                                                                                                                              |

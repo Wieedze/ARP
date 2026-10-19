@@ -222,7 +222,7 @@ describe("probeEndpoint — what the server says about itself", () => {
     });
 
     it("recovers the tool list the registration file did not carry", async () => {
-        // The reason this exists: 0 of 112 registration documents declared a capability, while all
+        // The reason this exists: 0 of ~110 parsed documents across repeated n=200 samples (scripts/measure-cohort-skills.ts; the zero is stable, the denominator varies) declared a capability, while all
         // three confirmed MCP servers listed theirs. The runtime is where the data is.
         const bodies = [INIT, "{}", TOOLS];
         let i = 0;

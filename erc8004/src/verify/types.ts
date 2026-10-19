@@ -62,7 +62,7 @@ export type DeclaredEndpoint = {
     protocol: KnownProtocol | null;
     version: string | null;
     /**
-     * Tool names the endpoint claims to serve. Almost always empty — 0 of 112 parsed documents in
+     * Tool names the endpoint claims to serve. Almost always empty — 0 of ~110 parsed documents across repeated n=200 samples (scripts/measure-cohort-skills.ts; the zero is stable, the denominator varies with the sample) in
      * the 2026-10-16 sample declared any, and only the `endpoints`-spelling documents carry them.
      * When non-empty it is the sharpest check available: declared names against served names.
      */
@@ -103,7 +103,7 @@ export type ProbeOutcome =
            * `listTools` was set.
            *
            * This is capability data **recovered from the runtime**, and it is often the only place
-           * it exists: 0 of 112 registration documents in the 2026-10-16 sample declared a
+           * it exists: 0 of ~110 parsed documents across repeated n=200 samples (scripts/measure-cohort-skills.ts; the zero is stable, the denominator varies with the sample) declared a
            * capability, while all three confirmed MCP servers listed theirs.
            */
           servedTools?: {name: string; description: string | null}[];

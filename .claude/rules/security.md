@@ -100,6 +100,14 @@ The `contract-reviewer` agent (in `.claude/agents/`) orchestrates these for you 
   | A human in ARP's panel           | a deposit on a `has trust provider` claim | ADR `0017`. The UI never auto-stakes; a human clicks.    |
   | An **external agent's operator** | one delegation, once                      | `docs/12` point 5. ARP is not a party and signs nothing. |
 
+  **Testnet 13579 is permitted, and that is now written rather than inferred** (ADR `0037`). An agent
+  session may sign there with the operator's key when the user asks for that specific action, on
+  three conditions: the key is never read into the agent's context, its address is verified against
+  the expected account first, and the effect is recorded where a later reader looks. It covers the
+  action asked for and not a standing licence — approval of one mint is not approval of a loop. This
+  paragraph exists because the rule's silence about testnet got filled by inference from an ADR that
+  did not cover it.
+
   ADR `0017` scopes _itself_ away from the second case — it says it does not authorise "any automated
   or agent-initiated stake". That makes agent-initiated staking **not yet authorised**, not
   forbidden, and it needs its own ADR. The risk calculus there is different in kind, because the

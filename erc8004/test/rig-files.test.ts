@@ -1,7 +1,7 @@
 import {describe, expect, it} from "vitest";
 
 import {TOOLS} from "../../scripts/arp-mcp-tools.js";
-import {FILES, dataUri} from "../../scripts/rig-registration-files.js";
+import {FILES, OWN_ENDPOINT, dataUri} from "../../scripts/rig-registration-files.js";
 import {
     classifyEndpoint,
     partitionByCheckability,
@@ -64,7 +64,7 @@ describe("each rig file exercises the group it claims", () => {
         expect(endpoints).toHaveLength(1);
         expect(endpoints[0].protocol).toBe("mcp");
         expect(endpoints[0].classification.status).toBe("probeable");
-        // Capabilities are the rare case: 0 of 112 real documents declared any, so this is the only
+        // Capabilities are the rare case: 0 of ~110 parsed documents across repeated n=200 samples (scripts/measure-cohort-skills.ts; the zero is stable, the denominator varies with the sample), so this is the only
         // place the declared-against-served comparison can be exercised at all.
         expect(endpoints[0].capabilities.length).toBeGreaterThan(0);
     });
@@ -145,15 +145,13 @@ describe("a rig file does not contradict itself", () => {
     it("does not name a borrowed endpoint it no longer uses", () => {
         for (const file of FILES) {
             const prose = String(file.doc["description"]);
-            const endpoints = readDeclaredEndpoints(file.doc).map((e) =>
-                e.classification.status === "probeable"
-                    ? e.classification.declared
-                    : e.classification.declared,
-            );
+            // `declared` is on both members of the union, so no narrowing is needed.
+            const endpoints = readDeclaredEndpoints(file.doc).map((e) => e.classification.declared);
+            // Hoisted: it does not depend on which string is being checked.
+            const stillPointsThere = endpoints.some((url) => url.includes("nebula-scan"));
+            if (stillPointsThere) continue;
             for (const borrowed of ["nebula-scan", "8453:26183", "borrowed from"]) {
-                // Mentioning it is only wrong if nothing actually points there any more.
-                const stillPointsThere = endpoints.some((url) => url.includes("nebula-scan"));
-                if (!stillPointsThere) expect(prose).not.toContain(borrowed);
+                expect(prose).not.toContain(borrowed);
             }
         }
     });
@@ -161,32 +159,95 @@ describe("a rig file does not contradict itself", () => {
     it("declares only capabilities the server it points at actually serves", () => {
         // A fixture claiming tools the server does not serve is a `declared ≠ served` mismatch the
         // verifier would report — against ARP's own rig, which would be an own goal.
-        const served = new Set(TOOLS.map((t) => t.name));
+        //
+        // Keyed on OWN_ENDPOINT, not on the substring "localhost". The first version skipped unless
+        // the URL contained localhost, so setting ARP_MCP_ENDPOINT — the change this repo's own
+        // comment tells the next person to make — silently turned it into a no-op that still
+        // reported green. Measured: 0 assertions executed under a public URL.
+        const served = new Set<string>(TOOLS.map((t) => t.name));
+        let checked = 0;
         for (const file of FILES) {
             for (const endpoint of readDeclaredEndpoints(file.doc)) {
                 if (endpoint.capabilities.length === 0) continue;
-                const url =
-                    endpoint.classification.status === "probeable"
-                        ? endpoint.classification.url
-                        : "";
-                if (!url.includes("localhost") && !url.includes("127.0.0.1")) continue;
+                if (endpoint.classification.declared !== OWN_ENDPOINT) continue;
                 for (const declared of endpoint.capabilities) {
                     expect(served).toContain(declared);
+                    checked += 1;
                 }
+            }
+        }
+        // A test that verifies nothing must not report green.
+        expect(checked).toBeGreaterThan(0);
+    });
+
+    it("describes its endpoint's locality in both directions", () => {
+        // Asserted both ways rather than skipped when not local. The first version only checked the
+        // local case, so a public endpoint made it vacuous — and the failure mode it guards against
+        // is a description that stops matching the endpoint, which is exactly what happens when the
+        // endpoint changes.
+        const isLocal = /^https?:\/\/(localhost|127\.0\.0\.1)/.test(OWN_ENDPOINT);
+        let checked = 0;
+        for (const file of FILES) {
+            const pointsAtOurs = readDeclaredEndpoints(file.doc).some(
+                (e) => e.classification.declared === OWN_ENDPOINT,
+            );
+            if (!pointsAtOurs) continue;
+            const prose = String(file.doc["description"]).toLowerCase();
+            // A reader of the registry has to be able to tell a fixture from a service.
+            if (isLocal) expect(prose).toContain("local");
+            else expect(prose).toContain("regenerate");
+            checked += 1;
+        }
+        expect(checked).toBeGreaterThan(0);
+    });
+});
+
+describe("`exercises` is checked against the classifier, not trusted as prose", () => {
+    /**
+     * The field that was wrong.
+     *
+     * `rig-dead.exercises` claimed `confirmed/dead` while the real outcome was
+     * `inconclusive/transport-error`, and `deployments/13579.json` copied the string verbatim. Every
+     * structural test passed, because they checked the shape and not the claim.
+     *
+     * Everything reachable without a network call is checkable here. `dead` against `live` is the
+     * one distinction that genuinely needs the probe, so a file claiming it is asserted to be
+     * probeable and left to the gate — which is what caught it.
+     */
+    const statusesClaimed = (exercises: string) => {
+        const claimed = new Set<string>();
+        if (/\bnot-checkable\b/.test(exercises)) claimed.add("not-checkable");
+        if (/\bconfirmed\b/.test(exercises)) claimed.add("probeable");
+        if (/\binconclusive\b/.test(exercises)) claimed.add("probeable");
+        return claimed;
+    };
+
+    it("every status a file claims is one its endpoints actually classify as", () => {
+        for (const file of FILES) {
+            const actual = new Set(
+                readDeclaredEndpoints(file.doc).map((e) => e.classification.status),
+            );
+            for (const claimed of statusesClaimed(file.exercises)) {
+                expect(actual, `${file.slug} claims ${claimed}`).toContain(claimed);
             }
         }
     });
 
-    it("says the endpoint is local when it is", () => {
+    it("every file claims at least one status, so the field cannot be decorative", () => {
         for (const file of FILES) {
-            const isLocal = readDeclaredEndpoints(file.doc).some(
-                (e) =>
-                    e.classification.status === "probeable" &&
-                    /localhost|127\.0\.0\.1/.test(e.classification.url),
+            expect(statusesClaimed(file.exercises).size, file.slug).toBeGreaterThan(0);
+        }
+    });
+
+    it("a file claiming a not-checkable code names one the classifier can return", () => {
+        const codes = ["templated", "non-http-identifier", "unparseable-url", "empty"] as const;
+        for (const file of FILES) {
+            const named = codes.filter((c) => file.exercises.includes(c));
+            if (named.length === 0) continue;
+            const actual = readDeclaredEndpoints(file.doc).flatMap((e) =>
+                e.classification.status === "not-checkable" ? [e.classification.code] : [],
             );
-            if (!isLocal) continue;
-            // A reader of the registry has to be able to tell a fixture from a service.
-            expect(String(file.doc["description"]).toLowerCase()).toContain("local");
+            for (const code of named) expect(actual, `${file.slug} claims ${code}`).toContain(code);
         }
     });
 });

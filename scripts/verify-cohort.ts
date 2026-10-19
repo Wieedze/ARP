@@ -17,7 +17,8 @@
  *      declared endpoints in the 2026-10-16 sample — a global limit still points its whole budget at
  *      one server
  *    - a 429 or 503 closes that host for its Retry-After and is never recorded as a verdict
- *    - documents are cached by content hash, so re-running does not re-probe an unchanged agent
+ *    - a document hash is recorded per agent, so a future version can skip an unchanged one.
+ *      **It does not skip today** — nothing reads it back (`tasks/21`).
  *
  *  The output separates three groups and never merges them. `not-checkable` is 82% of declared
  *  endpoints and is NOT a defect; rendering it beside a confirmed failure would mass-slander the
@@ -120,7 +121,7 @@ const TARGET = pickTarget();
  * `--tools` asks a confirmed MCP server what it serves.
  *
  * Opt-in because it is a second request per endpoint and one request is the courtesy baseline
- * (`tasks/17`). Worth passing: 0 of 112 sampled registration documents declared a capability, while
+ * (`tasks/17`). Worth passing: 0 of ~110 parsed documents across repeated n=200 samples (scripts/measure-cohort-skills.ts; the zero is stable, the denominator varies) declared a capability, while
  * every confirmed MCP server listed its tools — the runtime is where that data lives.
  */
 const WANTS_TOOLS = process.argv.includes('--tools');
@@ -345,6 +346,10 @@ function summarise(agents: AgentResult[]): void {
   const pc = (k: number, of: number) => (of ? `${((100 * k) / of).toFixed(0)}%` : '—');
 
   console.log(`\n${'═'.repeat(72)}`);
+  // The chain, first line. The previous version printed neither, and its output was pasted into
+  // tasks/24 and deployments/13579.json where it reads identically to a Base run.
+  console.log(`${TARGET.label}`);
+  console.log(`  registry ${TARGET.registry}  ·  chain ${TARGET.chainId}`);
   console.log(`n = ${n} agents · ${requestsMade} network requests\n`);
   console.log('DOCUMENT LAYER');
   console.log(`  no tokenURI at all          ${docs.noTokenUri}  (${pc(docs.noTokenUri, n)} of n)`);
@@ -409,19 +414,25 @@ if (ids.length === 0) {
   process.exit(1);
 }
 
+// The target is in the name. Without it a Base walk and a testnet walk on the same day collide on
+// token id — observed: a Base run printed "cache: 3 agents from a previous run" loaded from the
+// testnet walk. That is `portability.md` rule 2 inside the commit that introduced the rule.
 const outPath =
-  arg('out') ?? `/tmp/claude-0/arp-verify-cohort-${new Date().toISOString().slice(0, 10)}.json`;
+  arg('out') ??
+  `/tmp/claude-0/arp-verify-cohort-${TARGET.name}-${new Date().toISOString().slice(0, 10)}.json`;
 
-// One cached report lets a re-run skip agents whose document has not changed.
-let cache = new Map<string, string>();
+// NOT A CACHE YET. A previous run is read only to report how many agents it held — nothing consumes
+// it, and `verifyAgent` always re-fetches and re-probes. Kept because the file is the natural place
+// for one and the count is useful to an operator, but the header no longer claims caching that does
+// not exist, and `tasks/21` carries it as a defect. Wiring it up needs the document hash compared
+// before the fetch, which is a change to `verifyAgent`, not to this block.
+let previousCount = 0;
 try {
   const previous = JSON.parse(readFileSync(outPath, 'utf8')) as Report;
-  cache = new Map(
-    previous.agents
-      .filter((a) => a.documentHash !== null)
-      .map((a) => [a.tokenId, a.documentHash as string]),
+  previousCount = previous.agents.filter((a) => a.documentHash !== null).length;
+  console.log(
+    `a previous run at ${outPath} held ${previousCount} agents — NOT reused, see tasks/21`,
   );
-  console.log(`cache: ${cache.size} agents from a previous run at ${outPath}`);
 } catch {
   // No previous run. Expected on a first walk.
 }

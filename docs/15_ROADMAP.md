@@ -86,7 +86,12 @@ read them and the discovery path never runs. `setAgentURI()` exists.
   capabilities on at least one. Mint a third.
 - Point identity resolution at the real code path, per gap 1.
 
-**Gate**: the verifier reads all three off the testnet registry and classifies them.
+**Gate**: the verifier reads all three off the testnet registry and classifies them. **Met
+2026-10-19** over ids 1,2,3,4,5 — see `tasks/24`.
+
+**But the third bullet is deferred, so Phase 0 is not closed.** Identity resolution still does not go
+through `resolveAgent`; `tasks/24` records why and who owns it. Gap 1 below therefore has an owner
+rather than a reader's assumption that Phase 0 handled it.
 
 ### Phase 1 — the loop. This is the product.
 

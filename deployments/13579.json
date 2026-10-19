@@ -110,7 +110,7 @@
       }
     ],
     "rigAgents": {
-      "_note": "Task 24. ERC-8004 agents on ARP's own testnet registry, minted 2026-10-19 by the deployer, each exercising one branch of the verifier. Before these, the registry's two agents carried an empty tokenURI and the whole discovery path ran against nothing. Permanent: the ids are taken and setAgentURI leaves the old URI in the event log.",
+      "_note": "Task 24. ERC-8004 agents on ARP's own testnet registry, minted 2026-10-19 on chain 13579. SIGNED BY THE AGENT SESSION using the operator's PRIVATE_KEY from .env, on the user's explicit authorisation \u2014 not by a human at a keyboard. See ADR 0037. security.md scopes its automation prohibition to mainnet, so this is permitted and was previously unwritten. Agents 1 and 2 were left with an EMPTY tokenURI deliberately: no-token-uri is 23% of the real cohort (32/140, scripts/measure-cohort-endpoints.ts), so they exercise a branch the three new agents cannot. Permanent: the ids are taken and setAgentURI leaves the superseded URI in the mint transaction's calldata.",
       "registry": "0xC165A2AD2E540A4069E02834009161E2b4490d5A",
       "agents": {
         "3": {
@@ -118,7 +118,9 @@
           "exercises": "confirmed/serves-declared-protocol + tools/list recovery",
           "endpoint": "http://localhost:3002/mcp",
           "_endpointNote": "ARP's own MCP server, local by default. Regenerate with ARP_MCP_ENDPOINT once a public URL exists; setAgentURI can update it.",
-          "tx": "0xce4fee69c692ddf57d4537b23479d78384a9e2d06b733b532e419055ed50a086"
+          "tx": "0xce4fee69c692ddf57d4537b23479d78384a9e2d06b733b532e419055ed50a086",
+          "documentSha256_16": "478ac85cd6b2357f",
+          "_documentShaNote": "sha256 of the data: URI, first 16 hex. Lets repo-vs-chain drift be detected: the fixtures in scripts/rig-registration-files.ts are the source of truth for three permanent mints, and an edit to FILES would otherwise diverge silently. A unit test cannot check this \u2014 it needs a network read \u2014 so the gate command below is where it belongs."
         },
         "4": {
           "slug": "rig-dead",
@@ -126,19 +128,22 @@
           "endpoint": "http://192.0.2.1/mcp",
           "_endpointNote": "TEST-NET-1, RFC 5737 \u2014 reserved and never routable, so it always times out. A .invalid hostname was tried first and gave inconclusive/transport-error, because a DNS failure is indistinguishable from our own network being down.",
           "tx": "0x87bf71cf0ce55db7f82ca617b8601ee87f870e67018b1097a311ed2d61cc7378",
-          "uriUpdatedTx": "0x8f5950a61fca19b6a3f69b26f6c4159e29833689ed4b1623d8610206bfe87100"
+          "uriUpdatedTx": "0x8f5950a61fca19b6a3f69b26f6c4159e29833689ed4b1623d8610206bfe87100",
+          "documentSha256_16": "6db8b769dd551e98"
         },
         "5": {
           "slug": "rig-unprobeable",
           "exercises": "not-checkable \u00d72 \u2014 templated and non-http-identifier. Never a defect.",
-          "tx": "0x859aff609fa10dba635ffd12d0b60b598c7c3174238f61962edb4b5eee1a0efd"
+          "tx": "0x859aff609fa10dba635ffd12d0b60b598c7c3174238f61962edb4b5eee1a0efd",
+          "documentSha256_16": "f61a9d7f6637958e"
         }
       },
       "gate": {
-        "command": "bun run scripts/verify-cohort.ts --target intuition-testnet --ids 3,4,5 --tools",
+        "command": "bun run scripts/verify-cohort.ts --target intuition-testnet --ids 1,2,3,4,5 --tools",
         "ranAt": "2026-10-19",
-        "result": "3 documents read, 4 endpoints: 2 confirmed (serves-declared-protocol, dead), 2 not-checkable (templated, non-http-identifier), 0 inconclusive, 1 capability list recovered (arp_tool_reputation)",
-        "_requires": "scripts/arp-mcp-server.ts running on :3002, or agent 3 reports inconclusive"
+        "result": "5 agents: 2 with no tokenURI (40%), 3 read. 4 endpoints: 2 confirmed (serves-declared-protocol, dead), 2 not-checkable (templated, non-http-identifier), 0 inconclusive, 1 capability list recovered (arp_tool_reputation).",
+        "_requires": "scripts/arp-mcp-server.ts listening on :3002, or agent 3 reports inconclusive. The confirmed branch is therefore reproducible only on a host running that server \u2014 a known limit of this gate until ARP has a public endpoint.",
+        "_widerThanSpecced": "--ids 1,2,3,4,5 rather than 3,4,5. Including the two empty-tokenURI agents exercises a fifth branch for two extra requests."
       }
     }
   }

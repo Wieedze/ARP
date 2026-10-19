@@ -1,21 +1,33 @@
 # Task 24 — Make the testnet rig faithful
 
-> **Status: GATE MET, AWAITING VERIFICATION** 2026-10-19. Phase 0 of `docs/15_ROADMAP.md`.
+> **Status: GATE MET, RE-VERIFICATION PENDING** 2026-10-19. Phase 0 of `docs/15_ROADMAP.md`.
 >
-> Agents **3, 4 and 5** minted on `0xC165A2AD…`, recorded in `deployments/13579.json` under
-> `arp.rigAgents` with their transactions. The gate ran:
+> Agents **3, 4 and 5** minted on `0xC165A2AD…`; ids, transactions and document hashes in
+> `deployments/13579.json` under `arp.rigAgents`. **Signed by an agent session with the operator's
+> key on the user's explicit ask — ADR `0037`**, which also says what that does not extend to.
 >
 > ```
-> bun run scripts/verify-cohort.ts --target intuition-testnet --ids 3,4,5 --tools
+> bun run scripts/verify-cohort.ts --target intuition-testnet --ids 1,2,3,4,5 --tools
 >
-> 3 documents read · 4 endpoints
+> 5 agents · 2 with no tokenURI (40%) · 3 read · 4 endpoints
 >   CONFIRMED      2   serves-declared-protocol ×1 · dead ×1
 >   NOT CHECKABLE  2   templated ×1 · non-http-identifier ×1
 >   INCONCLUSIVE   0
 >   capability lists recovered: 1 — arp_tool_reputation
 > ```
 >
-> Needs `scripts/arp-mcp-server.ts` running on `:3002`, or agent 3 reports inconclusive.
+> Needs `scripts/arp-mcp-server.ts` on `:3002`. **So the `confirmed` branch reproduces only on a host
+> running that server** — a known limit until ARP has a public endpoint, and `ARP_MCP_ENDPOINT` is not
+> the answer, because `portability.md` rule 4 disqualifies any step that works because ARP can write
+> to the registry.
+>
+> **Two deviations from the `Do` list, both deliberate:**
+>
+> 1. **Agents 1 and 2 keep their empty `tokenURI`** rather than being given files. `no-token-uri` is
+>    23% of the real cohort (32/140, `scripts/measure-cohort-endpoints.ts`), so leaving them exercises
+>    a branch the three new agents cannot — which is why the gate walks `1,2,3,4,5` and not `3,4,5`.
+>    Better than the spec, and recorded rather than silently substituted.
+> 2. **Step 3 is NOT done.** See the note at the end of the `Do` list.
 
 ## The finding
 
@@ -43,7 +55,7 @@ classification, not the capability recovery. The rig looks complete and exercise
    - `services[]`, **not** `endpoints[]` — measured 106 occurrences against 2 across 150 random Base
      ids. A verifier reading only `endpoints` sees almost nothing, and that was a real bug.
    - a declared protocol name on at least one endpoint, so the handshake path exercises.
-   - **capabilities on at least one** — 0 of 112 real documents declared any, so this is the rare
+   - **capabilities on at least one** — 0 of ~110 parsed documents across repeated n=200 samples (`scripts/measure-cohort-skills.ts`; the zero is stable, the denominator varies with the sample), so this is the rare
      case and the one the code is least exercised against.
    - **At least one endpoint that is deliberately not probeable** — a `{placeholder}` or a
      `caip10:` identifier. 82% of real declared endpoints are unprobeable, and the rig must exercise
@@ -54,6 +66,21 @@ classification, not the capability recovery. The rig looks complete and exercise
    registry and the staking are the same chain; on mainnet they are not. Do not shortcut
    `resolveAgent` because the chain ids happen to match — that shortcut is gap 1 of
    `docs/15_ROADMAP.md` and it will not fail until migration.
+
+   > **DEFERRED, not done** (2026-10-19). `git diff` over `erc8004/src app/src` across this task's
+   > commits is empty: `resolveAgent` is untouched and `scripts/verify-cohort.ts` reads `tokenURI`
+   > by raw `eth_call`, which is a different path from the one that will hit Base. The task's own
+   > Gate does not test it, which is how it slipped past the first verification.
+   >
+   > **Owned by `tasks/19` step 1b's successor**, because the two are the same problem seen from two
+   > sides: on mainnet an agent's identity is on Base 8453 and its atom on 1155, joined by `same as`,
+   > and _nothing_ resolves that join today — ADR `0032` chose the registration-derived atom as the
+   > subject, and `scripts/measure-caip10-join.ts` shows zero edges exist to make the join. Doing it
+   > here would have been the shortcut this bullet forbids, pointed at a rig where both chains
+   > coincide.
+   >
+   > The honest cost: **Phase 0 is not closed.** `docs/15_ROADMAP.md`'s gap 1 has an owner now rather
+   > than a reader's assumption that this task handled it.
 
 ## Do not do in this task
 

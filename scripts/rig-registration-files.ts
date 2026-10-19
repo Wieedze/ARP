@@ -9,7 +9,9 @@
  *      bun run scripts/rig-registration-files.ts            # print the files and the calls
  *      bun run scripts/rig-registration-files.ts --cast     # print ready-to-run cast commands
  *
- *  **This script signs nothing and sends nothing.** It prints the registration files and the
+ *  **This script signs nothing and sends nothing.** (The three mints of 2026-10-19 were signed by
+ *  an agent session with the operator's key, on the user's explicit ask — ADR 0037. That is a fact
+ *  about that task, not about this file, and the two were conflated once already.) It prints the registration files and the
  *  transactions that would create them. The operator runs them with their own key — the same
  *  division as everywhere else in this project (ADR 0035).
  *
@@ -21,7 +23,7 @@
  *  Shapes follow the 2026-10-16 cohort measurement rather than what is convenient:
  *    - `services[]`, not `endpoints[]` — 106 occurrences against 2 across 150 random Base ids
  *    - a declared protocol name, so the handshake path exercises
- *    - capabilities on one agent only — 0 of 112 real documents declared any, so it is the rare case
+ *    - capabilities on one agent only — 0 of ~110 parsed documents across repeated n=200 samples (scripts/measure-cohort-skills.ts; the zero is stable, the denominator varies with the sample), so it is the rare case
  *      and the one the code is least exercised against
  *    - one endpoint deliberately unprobeable — 82% of real ones are, and that is the group that must
  *      never be reported as a defect
@@ -42,7 +44,7 @@ const TYPE = 'https://eips.ethereum.org/EIPS/eip-8004#registration-v1';
  * regenerate the file against a public URL once one exists — the agents are ARP's own, so
  * `setAgentURI` can update them.
  */
-const OWN_ENDPOINT = process.env.ARP_MCP_ENDPOINT ?? 'http://localhost:3002/mcp';
+export const OWN_ENDPOINT = process.env.ARP_MCP_ENDPOINT ?? 'http://localhost:3002/mcp';
 
 export type RigFile = { slug: string; exercises: string; doc: Record<string, unknown> };
 
