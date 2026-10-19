@@ -39,10 +39,46 @@ import {
   type ProbeOutcome,
 } from '../erc8004/src/index.js';
 
-const RPC = process.env.BASE_RPC_URL ?? 'https://base-rpc.publicnode.com';
-const REGISTRY = '0x8004A169FB4a3325136EB29fA0ceB6D2e539a432';
 const TOKEN_URI = '0xc87b56dd';
-const COHORT_SIZE = 88_243;
+
+/**
+ * The registries this walker knows, selected with `--target`.
+ *
+ * No chain constant at module scope (`rules/portability.md`): the target is config, defaulted, and
+ * printed in the report so a result can never be read against the wrong chain.
+ *
+ * `cohortSize` only bounds `--count`'s uniform sample. On the testnet rig it is read from the
+ * registry instead, because `totalAgents()` is small and moves — sampling 1..88243 there would miss
+ * every agent.
+ */
+const TARGETS = {
+  base: {
+    label: 'Base 8453 — the ERC-8004 cohort',
+    chainId: 8453,
+    rpc: process.env.BASE_RPC_URL ?? 'https://base-rpc.publicnode.com',
+    registry: '0x8004A169FB4a3325136EB29fA0ceB6D2e539a432',
+    cohortSize: 88_243,
+  },
+  'intuition-testnet': {
+    label: "Intuition testnet 13579 — ARP's own registry (the rig)",
+    chainId: 13579,
+    rpc: process.env.INTUITION_TESTNET_RPC_URL ?? 'https://testnet.rpc.intuition.systems/http',
+    registry: '0xC165A2AD2E540A4069E02834009161E2b4490d5A',
+    cohortSize: null,
+  },
+} as const;
+
+type TargetName = keyof typeof TARGETS;
+
+function pickTarget(): (typeof TARGETS)[TargetName] & { name: TargetName } {
+  const requested = (arg('target') ?? 'base') as string;
+  if (!(requested in TARGETS)) {
+    console.error(`unknown --target ${requested}. Known: ${Object.keys(TARGETS).join(', ')}`);
+    process.exit(1);
+  }
+  const name = requested as TargetName;
+  return { ...TARGETS[name], name };
+}
 
 /** Gateways tried in order for an `ipfs://` URI. ipfs.io rate-limits hard under a walk. */
 const IPFS_GATEWAYS = [
@@ -53,7 +89,7 @@ const IPFS_GATEWAYS = [
 
 type AgentResult = {
   tokenId: string;
-  chainId: 8453;
+  chainId: number;
   document: DocumentOutcome;
   /** Hash of the document bytes, so a re-run can skip an unchanged agent. */
   documentHash: string | null;
@@ -63,7 +99,7 @@ type AgentResult = {
 type Report = {
   generatedAt: string;
   registry: string;
-  cohortSize: number;
+  cohortSize: number | null;
   userAgent: string;
   timeoutMs: number;
   requestsMade: number;
@@ -76,6 +112,9 @@ function arg(name: string): string | null {
   const i = process.argv.indexOf(`--${name}`);
   return i === -1 ? null : (process.argv[i + 1] ?? null);
 }
+
+/** Chosen once, printed in the report, and never re-derived. */
+const TARGET = pickTarget();
 
 function chooseIds(): number[] {
   const explicit = arg('ids');
@@ -92,7 +131,14 @@ function chooseIds(): number[] {
   }
   const count = Number(arg('count') ?? 100);
   // Uniform over the id space. Sampling error applies — print n with any figure taken from this.
-  return Array.from({ length: count }, () => 1 + Math.floor(Math.random() * COHORT_SIZE));
+  if (TARGET.cohortSize === null) {
+    console.error(
+      `--count needs a known cohort size; ${TARGET.name} does not have one.\n` +
+        `Read totalAgents() off ${TARGET.registry} and pass --from 1 --to N, or --ids.`,
+    );
+    process.exit(1);
+  }
+  return Array.from({ length: count }, () => 1 + Math.floor(Math.random() * TARGET.cohortSize));
 }
 
 // -------------------------------------------------------------------- reading --
@@ -106,14 +152,14 @@ const countingFetch: typeof fetch = async (input, init) => {
 
 async function tokenUri(id: number): Promise<string | null> {
   const data = TOKEN_URI + BigInt(id).toString(16).padStart(64, '0');
-  const response = await countingFetch(RPC, {
+  const response = await countingFetch(TARGET.rpc, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({
       jsonrpc: '2.0',
       id: 1,
       method: 'eth_call',
-      params: [{ to: REGISTRY, data }, 'latest'],
+      params: [{ to: TARGET.registry, data }, 'latest'],
     }),
     signal: AbortSignal.timeout(20_000),
   });
@@ -238,7 +284,7 @@ async function fetchDocument(
 // ----------------------------------------------------------------------- walk --
 
 async function verifyAgent(id: number, limiter: HostLimiter): Promise<AgentResult> {
-  const base = { tokenId: String(id), chainId: 8453 as const };
+  const base = { tokenId: String(id), chainId: TARGET.chainId };
   const uri = await tokenUri(id).catch(() => null);
   if (!uri) {
     return { ...base, document: { status: 'no-token-uri' }, documentHash: null, endpoints: [] };
@@ -371,8 +417,8 @@ process.stdout.write('\n');
 
 const report: Report = {
   generatedAt: new Date().toISOString(),
-  registry: REGISTRY,
-  cohortSize: COHORT_SIZE,
+  registry: TARGET.registry,
+  cohortSize: TARGET.cohortSize,
   userAgent: DEFAULT_USER_AGENT,
   timeoutMs: DEFAULT_PROBE_TIMEOUT_MS,
   requestsMade,
