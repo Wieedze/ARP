@@ -17,7 +17,6 @@ export const TIER_LABEL: Record<ProvenanceTier, string> = {
     "confirmed-by-both": "Confirmed by both",
     "tool-declared": "Tool's word",
     "priced-assertion": "Priced assertion",
-    "off-curve": "Staked off-curve",
     "free-assertion": "Free assertion",
 };
 
@@ -26,7 +25,6 @@ export const TIER_TONE_CLASS: Record<ProvenanceTier, string> = {
     "confirmed-by-both": "text-[color:var(--color-fg)] font-semibold",
     "tool-declared": "text-[color:var(--color-fg)] font-medium",
     "priced-assertion": "text-[color:var(--color-fg)] font-medium",
-    "off-curve": "text-[color:var(--color-fg-60)] font-medium",
     "free-assertion": "text-[color:var(--color-fg-60)] font-normal",
 };
 
@@ -41,8 +39,6 @@ export const TIER_CAPTION: Record<ProvenanceTier, string> = {
     "confirmed-by-both": "The tool and the agent both declared it, and their interests oppose.",
     "tool-declared": "The tool's word that this agent used it. A third party, and strong.",
     "priced-assertion": "The agent's own claim, with TRUST behind it. Priced, not proven.",
-    "off-curve":
-        "TRUST is behind this claim, on a bonding curve this page does not read. How much, and from how many, is not shown here.",
     "free-assertion": "The agent's own claim, with nothing on this curve behind it.",
 };
 
@@ -57,6 +53,20 @@ export const TIER_UNREACHABLE_REASON: Record<ProvenanceTier, string | null> = {
     "confirmed-by-both": "No tool declares its own users, so there is no second party to agree.",
     "tool-declared": "Same: the tool side of an edge is not written by anything today.",
     "priced-assertion": null,
-    "off-curve": null,
     "free-assertion": null,
 };
+
+/**
+ * The off-curve case, which is **not a rung** and so is kept out of the tables above.
+ *
+ * Its tone is `--color-fg` with `font-normal`: distinguished from a priced assertion by weight and
+ * from a free one by colour, rather than being free's near-twin. They are the two states furthest
+ * apart in meaning — "real capital is behind this" against "nothing is" — and one weight step was
+ * the smallest distinction on the page between them.
+ */
+export const OFF_CURVE_LABEL = "Staked off-curve";
+
+export const OFF_CURVE_TONE_CLASS = "text-[color:var(--color-fg)] font-normal";
+
+export const OFF_CURVE_CAPTION =
+    "TRUST is behind this claim, on a bonding curve this page does not read. How much, and from how many, is not shown here.";

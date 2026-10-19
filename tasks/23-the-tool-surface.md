@@ -1,6 +1,6 @@
 # Task 23 — The tool surface
 
-> **Status: BUILT, REVIEW ROUND 2 PENDING** 2026-10-19. **This is the thing `docs/12` describes**,
+> **Status: BUILT, `ui-reviewer` PASS round 2, PUNCH LIST CLOSED** 2026-10-19. **This is the thing `docs/12` describes**,
 > and the reason the `uses` edges are worth writing at all.
 >
 > The page is `app/src/pages/ToolUsagePanel.tsx` at `/tool/atom/:atomId`, with
@@ -145,10 +145,36 @@ different weight, which is `docs/14:156`'s one requirement of this surface.
 - **Read `defaultCurveId` from the chain** in `getToolUsage`. `packages/protocol/src/tool-usage.ts:26`
   assigns it here; it is deferred because it changes the connector's read contract, which the trust
   panel shares. The page states the mismatch on screen meanwhile. ADR `0042`.
-- **No DOM test environment in `app/`** (ADR `0011`). Four of the review's findings were each one
-  render assertion away from being caught. Worth its own task rather than a mid-task bolt-on.
+- **No DOM test environment in `app/`** (ADR `0011`) — now **`tasks/26`**, with the six defects two
+  review rounds found on this one page as its case. Each was one render assertion away from being
+  caught, and two were live on mainnet data.
 - **`--color-fg-40` is 3.66:1, below AA** (`tasks/14`). This page uses `--color-fg-60` throughout
   rather than adding two new instances.
+
+## What round 2 changed, and the design it corrected
+
+The `off-curve` state was first carried as a sixth `ProvenanceTier` member. That was wrong, and the
+file said so three lines down without noticing: `isContested` is documented as _"not a rung — an
+orthogonal signal on the same edge"_, which is word for word what off-curve is. Carrying it as a
+rung forced it to pick a tone in the rung table, put a non-rung in `DERIVABLE_TIERS`, made the
+partition test carve it out — and made the sort rank it **above** the edges the page can read,
+because it sorted on the all-curve figure the page is forbidden to display. Live on 1 of 84 pages.
+
+It is `isOffCurve` now, beside `isContested`. `ProvenanceTier` is back to `docs/14`'s five rungs,
+the sort groups by rung before weighing, and six comments that had drifted into describing a
+two-state world became true again — which is the sign the refactor was the right shape rather than
+a tidy-up.
+
+Also closed: the counts line read `1 priced assertion · 1 staked off-curve · 3 free assertion`
+(ungrammatical on the gate fixture itself); `DUST_CEILING`'s safety rested on "the smallest stake
+observed" rather than on `minDeposit`, which is a governance floor and cannot be beaten by the next
+deposit; a dead `<span>` left by the contrast fix; an unreachable null branch; and `OtherMarket`
+opened with "Everything above…" while rendering on the empty state.
+
+And the live `3 of 7` check on the MCP `staked` flag is now `scripts/measure-mcp-staked-flag.ts` —
+it compares the server's flag against the graph's own position counts and exits non-zero on a
+disagreement, so the figure is re-runnable rather than observed. That flag is one of the three sites
+ADR `0042` had to fix, which makes it the one most likely to rot again.
 
 ## Which tier of the evidence ladder does this serve?
 

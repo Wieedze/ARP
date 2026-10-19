@@ -1,7 +1,14 @@
 import {formatTrust, truncateMiddle} from "../../services/trust-format";
 import type {ToolUsageEdgeView} from "../../services/tool-usage-view";
 import {StakerCount} from "../agent/StakerCount";
-import {TIER_CAPTION, TIER_LABEL, TIER_TONE_CLASS} from "./tier-scale";
+import {
+    OFF_CURVE_CAPTION,
+    OFF_CURVE_LABEL,
+    OFF_CURVE_TONE_CLASS,
+    TIER_CAPTION,
+    TIER_LABEL,
+    TIER_TONE_CLASS,
+} from "./tier-scale";
 
 /**
  * One agent's declared use of this tool, and what the market says about it.
@@ -47,16 +54,18 @@ export function UsageEdgeRow({
                 </div>
                 <div className="text-right">
                     <p
-                        className={`text-[length:var(--text-body-sm)] ${TIER_TONE_CLASS[edge.tier]}`}
+                        className={`text-[length:var(--text-body-sm)] ${
+                            edge.isOffCurve ? OFF_CURVE_TONE_CLASS : TIER_TONE_CLASS[edge.tier]
+                        }`}
                     >
-                        {TIER_LABEL[edge.tier]}
+                        {edge.isOffCurve ? OFF_CURVE_LABEL : TIER_LABEL[edge.tier]}
                     </p>
                     {/* Only on the first row of a run of the same tier. The caption is the device
                         that stops the weight being decoration, but repeating it four times down
                         IPFS's free edges is noise in a list `ui.md` wants dense. */}
                     {isFirstOfTier ? (
                         <p className="mt-1 max-w-[42ch] text-[length:var(--text-label)] text-[color:var(--color-fg-60)]">
-                            {TIER_CAPTION[edge.tier]}
+                            {edge.isOffCurve ? OFF_CURVE_CAPTION : TIER_CAPTION[edge.tier]}
                         </p>
                     ) : null}
                 </div>
@@ -83,7 +92,7 @@ export function UsageEdgeRow({
                             so "nothing staked" full stop would be a claim about the tool that this
                             page has not read. */}
                         <dd className="font-sans text-[color:var(--color-fg-60)]">
-                            {edge.tier === "off-curve"
+                            {edge.isOffCurve
                                 ? "Staked on a curve this page does not read."
                                 : "Nothing staked on this claim."}
                         </dd>

@@ -117,7 +117,8 @@ function ToolUsageBody({view}: {view: ToolUsageView}) {
 
             <div className="min-w-0">
                 {view.isEmpty ? <EmptyState atomId={view.toolAtomId} /> : <Edges view={view} />}
-                <OtherMarket />
+                {/* "Everything above prices the claim…" is false with nothing above it. */}
+                {view.isEmpty ? null : <OtherMarket />}
                 <Ladder view={view} />
             </div>
         </div>
@@ -226,6 +227,28 @@ function EmptyState({atomId}: {atomId: string}) {
 }
 
 /**
+ * What is on screen, in words, counted rather than implied.
+ *
+ * Built by hand rather than by mapping the labels, because "1 free assertion" and "3 free
+ * assertions" differ and lowercasing a label does not pluralise it. The first version printed
+ * "1 priced assertion · 1 staked off-curve · 3 free assertion" — ungrammatical on the gate fixture
+ * itself. Off-curve is counted separately because it is a flag on the edge, not a rung.
+ */
+function describeCounts(view: ToolUsageView): string {
+    const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
+    const parts = DERIVABLE_TIERS.filter((tier) => view.tierCounts[tier] > 0).map((tier) =>
+        plural(
+            view.tierCounts[tier],
+            TIER_LABEL[tier].toLowerCase(),
+            `${TIER_LABEL[tier].toLowerCase()}s`,
+        ),
+    );
+    const offCurve = view.edges.filter((edge) => edge.isOffCurve).length;
+    if (offCurve > 0) parts.push(`${offCurve} staked off-curve`);
+    return parts.join(" · ");
+}
+
+/**
  * The market this page does **not** read, named once.
  *
  * A deposit can sit on the tool's own atom instead of on the `uses` edge, and 74 of the 185 mainnet
@@ -251,14 +274,11 @@ function OtherMarket() {
  * rungs and this data distinguishes two; saying so is cheaper than implying the other three are
  * unoccupied rather than unread.
  */
-function Ladder({view}: {view: ToolUsageView | null}) {
+function Ladder({view}: {view: ToolUsageView}) {
     // What is actually on screen, counted rather than implied. `tierCounts` exists for this.
-    const counts =
-        view === null || view.isEmpty
-            ? null
-            : DERIVABLE_TIERS.filter((tier) => view.tierCounts[tier] > 0)
-                  .map((tier) => `${view.tierCounts[tier]} ${TIER_LABEL[tier].toLowerCase()}`)
-                  .join(" · ");
+    // Not `ToolUsageView | null`: there is one call site and it always has a view, so the null
+    // branch was unreachable.
+    const counts = view.isEmpty ? null : describeCounts(view);
     return (
         <section className="mt-12 border-t border-[color:var(--color-border)] pt-6">
             <h2 className="text-[length:var(--text-label)] uppercase tracking-wider text-[color:var(--color-fg-60)]">
@@ -274,10 +294,7 @@ function Ladder({view}: {view: ToolUsageView | null}) {
                             {TIER_LABEL[tier]}
                         </dt>
                         <dd className="max-w-[60ch] text-[color:var(--color-fg-60)]">
-                            {TIER_CAPTION[tier]}{" "}
-                            <span className="text-[color:var(--color-fg-60)]">
-                                {TIER_UNREACHABLE_REASON[tier]}
-                            </span>
+                            {TIER_CAPTION[tier]} {TIER_UNREACHABLE_REASON[tier]}
                         </dd>
                     </div>
                 ))}

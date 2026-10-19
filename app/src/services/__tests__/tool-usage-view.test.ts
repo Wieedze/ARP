@@ -82,20 +82,6 @@ describe("tierForEdge", () => {
         );
     });
 
-    it("refuses to call an edge free when it holds TRUST on another curve", () => {
-        // The live case, n=1 of 185 on mainnet today: `2026 FIFA World Cup uses upgraded
-        // semi-automated offside technology` holds 4.94 TRUST in its term with zero positions on
-        // the curve this read is scoped to. Calling that `free-assertion` would print "This is not
-        // evidence" over real capital; calling it priced would claim a market we cannot see.
-        expect(tierForEdge(edge("0x6", "FIFA", 4_940_000_000_000_000_000n, 0))).toBe("off-curve");
-    });
-
-    it("still calls the creation dust free, because it is below the ceiling", () => {
-        // The threshold has to separate 1e6-4e6 of dust from 1e16-and-up of real stake. 1e9 is
-        // three orders above the dust observed and seven below the smallest real deposit.
-        expect(tierForEdge(edge("0x7", "Infura", 4_000_000n, 0))).toBe("free-assertion");
-    });
-
     it("treats a null market as free rather than as unknown", () => {
         // The graph returns no vault row for a term nobody has deposited into. That is zero stake,
         // not missing information.
@@ -104,12 +90,8 @@ describe("tierForEdge", () => {
 });
 
 describe("the ladder's reach", () => {
-    it("claims only the rungs this data can derive", () => {
-        // `off-curve` is not one of docs/14's five rungs — it is a statement about this reader,
-        // added because 91.6% of the TRUST on `uses` edges sits on a curve the counts are not
-        // scoped to, and calling such an edge free would print "This is not evidence" over real
-        // capital. Live on 1 of 185 edges.
-        expect(DERIVABLE_TIERS).toEqual(["priced-assertion", "off-curve", "free-assertion"]);
+    it("claims only the two rungs this data can derive", () => {
+        expect(DERIVABLE_TIERS).toEqual(["priced-assertion", "free-assertion"]);
     });
 
     it("names the three it cannot, rather than omitting them", () => {
@@ -119,10 +101,12 @@ describe("the ladder's reach", () => {
         expect(UNREACHABLE_TIERS).toEqual(["fact", "confirmed-by-both", "tool-declared"]);
     });
 
-    it("covers docs/14's five rungs between the two lists, plus the reader's own state", () => {
+    it("covers all five of docs/14's rungs between the two lists, with no overlap", () => {
+        // Five, not six. `off-curve` is carried as `isOffCurve` on the edge beside `isContested`,
+        // not as a rung — this file's own words for `isContested` are "not a rung, an orthogonal
+        // signal on the same edge", and that is exactly what off-curve is.
         const all = [...DERIVABLE_TIERS, ...UNREACHABLE_TIERS];
-        expect(new Set(all).size).toBe(6);
-        expect(all.filter((t) => t !== "off-curve")).toHaveLength(5);
+        expect(new Set(all).size).toBe(5);
     });
 });
 
@@ -167,18 +151,46 @@ describe("buildToolUsageView", () => {
         expect(buildToolUsageView(ipfs).isEntirelyUnpriced).toBe(false);
     });
 
-    it("does not call a tool unpriced when its only edge is staked off-curve", () => {
-        // Otherwise the page would print "nobody has put TRUST behind any of these claims" over an
-        // edge holding 4.94 TRUST.
+    it("flags an edge holding TRUST on another curve, without calling it priced or free", () => {
+        // The live case, n=1 of 185 on mainnet: `2026 FIFA World Cup uses upgraded semi-automated
+        // offside technology` holds 4.94 TRUST in its term with zero positions on the curve read.
         const offCurve = buildToolUsageView(
             usage([edge("0x6", "FIFA", 4_940_000_000_000_000_000n, 0)]),
         );
+        expect(offCurve.edges[0]?.isOffCurve).toBe(true);
+        // The tier stays free, because no position exists on the curve read. The flag is what says
+        // the page cannot see the whole market.
+        expect(offCurve.edges[0]?.tier).toBe("free-assertion");
+        // And the tool is not "entirely unpriced", or the page would print "nobody has put TRUST
+        // behind any of these claims" over 4.94 TRUST.
         expect(offCurve.isEntirelyUnpriced).toBe(false);
-        expect(offCurve.tierCounts["off-curve"]).toBe(1);
+    });
+
+    it("does not flag the creation dust as off-curve", () => {
+        // The ceiling clears ~4e6 of dust and stays far below `minDeposit`, which is 1e16 on
+        // mainnet and 1e15 on testnet — the smallest the protocol accepts.
+        const dusty = buildToolUsageView(usage([edge("0x7", "Infura", 4_000_000n, 0)]));
+        expect(dusty.edges[0]?.isOffCurve).toBe(false);
+        expect(dusty.isEntirelyUnpriced).toBe(true);
+    });
+
+    it("sorts an off-curve edge below the priced ones it cannot outrank", () => {
+        // Sorting on assets alone put it first, because its all-curve 4.94 TRUST outweighs the 0.08
+        // the page can read — the top row went to the one edge whose market is invisible here.
+        const mixed = buildToolUsageView(
+            usage([
+                edge("0x6", "FIFA", 4_940_000_000_000_000_000n, 0),
+                edge("0x2", "Relics", 80_000_000_001_000_000n, 8),
+                edge("0x1", "Infura", DUST, 0),
+            ]),
+        );
+        expect(mixed.edges.map((e) => e.agent.label)).toEqual(["Relics", "FIFA", "Infura"]);
     });
 
     it("reports the empty case rather than failing on it", () => {
-        // Roughly 88,000 atoms are in this state and it is the normal one.
+        // The normal case. 84 atoms are the object of a `uses` edge on mainnet 1155
+        // (`scripts/measure-tool-atom-shape.ts`); every other atom is in this state, and the atom
+        // population itself has not been counted — 88,243 is ERC-8004 identities on Base.
         const none = buildToolUsageView(usage([]));
         expect(none.isEmpty).toBe(true);
         expect(none.isEntirelyUnpriced).toBe(false);

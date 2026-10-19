@@ -27,8 +27,10 @@ describe("isToolAtomId", () => {
 
     it("rejects anything else, so a bad route param is not read as an unused tool", () => {
         // The distinction the page turns on: a malformed id is a broken link, while a well-formed
-        // one with no edges is the normal case for ~88,000 atoms. Rendering the first as the second
+        // one with no edges is the normal case for almost every atom. Rendering the first as the second
         // would tell a user their tool has no reputation when the truth is we never looked it up.
+        // (The well-formed-but-unused case is the normal one: 84 atoms are the object of a `uses`
+        // edge on 1155, against an atom population nobody has counted.)
         for (const bad of [
             undefined,
             "",

@@ -20,12 +20,6 @@ export type ProvenanceTier =
     | "confirmed-by-both"
     | "tool-declared"
     | "priced-assertion"
-    /**
-     * Not one of `docs/14`'s five rungs — a statement about **this reader**, not about the edge.
-     * See {@link hasOffCurveStake}: capital is behind the claim, on a bonding curve this read is not
-     * scoped to, so neither "priced" nor "nothing" is true of it.
-     */
-    | "off-curve"
     | "free-assertion";
 
 /**
@@ -44,11 +38,7 @@ export type ProvenanceTier =
  * the scale continues above, reports a priced assertion as the best evidence that exists — which is
  * the flattening `docs/14` warns about, arrived at from the other direction.
  */
-export const DERIVABLE_TIERS: readonly ProvenanceTier[] = [
-    "priced-assertion",
-    "off-curve",
-    "free-assertion",
-];
+export const DERIVABLE_TIERS: readonly ProvenanceTier[] = ["priced-assertion", "free-assertion"];
 
 export const UNREACHABLE_TIERS: readonly ProvenanceTier[] = [
     "fact",
@@ -84,8 +74,7 @@ export const UNREACHABLE_TIERS: readonly ProvenanceTier[] = [
  * See ADR `0042`.
  */
 export function tierForEdge(edge: ToolUsageEdge): ProvenanceTier {
-    if ((edge.support.positionCount ?? 0) > 0) return "priced-assertion";
-    return hasOffCurveStake(edge) ? "off-curve" : "free-assertion";
+    return (edge.support.positionCount ?? 0) > 0 ? "priced-assertion" : "free-assertion";
 }
 
 /**
@@ -98,19 +87,26 @@ export function tierForEdge(edge: ToolUsageEdge): ProvenanceTier {
  * positions here. **Live on 1 of 185 edges** today, which is latent-ish rather than widespread, and
  * the cost of getting it wrong is printing "This is not evidence" over 4.94 TRUST.
  *
- * Calling that `free-assertion` would be a lie; calling it `priced-assertion` would claim a market
- * this read cannot see. It gets its own rung-adjacent state that says what is true: something is
- * behind it, on a curve this page does not read.
+ * Calling such an edge `free-assertion` would be a lie, and `priced-assertion` would claim a market
+ * this read cannot see. So it is **not a rung at all** — it is `isOffCurve`, a flag beside
+ * `isContested`, which this file already documents as "not a rung — an orthogonal signal on the
+ * same edge". Carrying it as a sixth `ProvenanceTier` member forced it to pick a tone in the rung
+ * table, put a non-rung in `DERIVABLE_TIERS`, and made the sort rank it above the edges this page
+ * can actually read.
  *
- * The threshold is deliberately crude and stated rather than tuned. Creation dust observed up to
- * ~4e6 wei (`minShare` per touched vault); the smallest real stake observed is 1e16. 1e9 sits three
- * orders above the dust and seven below the smallest real deposit, so no plausible value is near
- * it. Reading `defaultCurveId` from the chain is the real fix and it belongs to the connector's
- * read contract, not to this page — `packages/protocol/src/tool-usage.ts:26` already says so.
+ * **The ceiling is safe against a governance floor, not against an observation.** Creation dust is
+ * `minShare` per touched vault — 1e6 each, up to ~4e6 observed. The smallest deposit the protocol
+ * *accepts* is `getGeneralConfig().minDeposit`: **1e16 on mainnet 1155, 1e15 on testnet 13579**
+ * (`rules/portability.md`). So 1e9 sits 250× above the dust and at least a million times below
+ * anything the protocol will take. An "observed smallest stake" can be beaten by the next deposit;
+ * a protocol floor cannot without governance moving.
+ *
+ * Reading `defaultCurveId` from the chain is the real fix and belongs to the connector's read
+ * contract, not to this page — `packages/protocol/src/tool-usage.ts:26` already says so.
  */
 const DUST_CEILING = 1_000_000_000n;
 
-export function hasOffCurveStake(edge: ToolUsageEdge): boolean {
+function hasOffCurveStake(edge: ToolUsageEdge): boolean {
     return (
         (edge.support.positionCount ?? 0) === 0 && (edge.support.totalAssets ?? 0n) > DUST_CEILING
     );
@@ -125,6 +121,12 @@ export type ToolUsageEdgeView = {
     supportPositions: number;
     opposeAssets: bigint;
     opposePositions: number;
+    /**
+     * Capital is behind this claim on a bonding curve this read is not scoped to. Not a rung — see
+     * {@link tierForEdge}'s note. The tier stays `free-assertion`, because no position exists on
+     * the curve read; this says the page cannot see the whole market, and so no figure is shown.
+     */
+    isOffCurve: boolean;
     /**
      * Someone has staked the other way. Not a rung — an orthogonal signal on the same edge.
      *
@@ -157,18 +159,28 @@ const emptyTierCounts = (): Record<ProvenanceTier, number> => ({
     "confirmed-by-both": 0,
     "tool-declared": 0,
     "priced-assertion": 0,
-    "off-curve": 0,
     "free-assertion": 0,
 });
 
 /**
- * Order: priced edges first, heaviest first, then the free ones.
+ * Order: priced first, then off-curve, then free. Within a group, heaviest first.
  *
  * Not a ranking — `tasks/23` puts composing edges into a score out of scope, and this orders rather
  * than scores. It exists because the alternative is the graph's own order, which is arbitrary, and
  * an arbitrary order puts a free assertion above a priced one often enough to mislead.
+ *
+ * **Grouped before weighed, and that is the fix for a live defect.** Sorting on `supportAssets`
+ * alone put the off-curve edge first, because its all-curve 4.94 TRUST outweighs the 0.08 the page
+ * can actually read — so the top row went to the one edge whose market this page cannot see. Live
+ * on 1 of 84 tool pages.
  */
+function rankOf(edge: ToolUsageEdgeView): number {
+    if (edge.tier === "priced-assertion") return 0;
+    return edge.isOffCurve ? 1 : 2;
+}
+
 function compareEdges(a: ToolUsageEdgeView, b: ToolUsageEdgeView): number {
+    if (rankOf(a) !== rankOf(b)) return rankOf(a) - rankOf(b);
     if (a.supportAssets !== b.supportAssets) return a.supportAssets > b.supportAssets ? -1 : 1;
     if (a.supportPositions !== b.supportPositions) return b.supportPositions - a.supportPositions;
     return a.tripleId.localeCompare(b.tripleId);
@@ -188,6 +200,7 @@ export function buildToolUsageView(usage: ToolUsage): ToolUsageView {
             supportPositions: edge.support.positionCount ?? 0,
             opposeAssets: edge.oppose.totalAssets ?? 0n,
             opposePositions,
+            isOffCurve: hasOffCurveStake(edge),
             isContested: opposePositions > 0,
         };
     });
@@ -204,6 +217,6 @@ export function buildToolUsageView(usage: ToolUsage): ToolUsageView {
         isEntirelyUnpriced:
             edges.length > 0 &&
             tierCounts["priced-assertion"] === 0 &&
-            tierCounts["off-curve"] === 0,
+            !edges.some((edge) => edge.isOffCurve),
     };
 }
