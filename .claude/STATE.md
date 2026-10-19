@@ -206,6 +206,9 @@ Full list in `.claude/choices/INDEX.md` (generated). The ones to know before tou
   so a cap can be burned on non-recoverable fees. Corrects a claim five files asserted.
 - **0041** — one protocol package, `packages/protocol` (`@arp-protocol/core`), with `sdk/` folded
   into `src/arp/`. Read it before following any path written before 2026-10-19.
+- **0043** — **a retraction is greppable, or it is partial.** Before committing a corrected sentence
+  or a changed count, grep the old wording: three corrections in two rounds each landed at one site,
+  and the copy that survived was the one other files pointed at.
 - **0042** — **a vault's assets are not evidence of a stake; its position count is.** Creating a
   term seeds its vaults with `minShare`, so `totalAssets > 0` means "this term exists". Three "has
   stake?" checks were wrong, including the MCP server's `staked` flag, which answered `true` for

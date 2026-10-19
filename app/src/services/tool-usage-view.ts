@@ -109,8 +109,10 @@ export function tierForEdge(edge: ToolUsageEdge): ProvenanceTier {
  * for the size of the gap, which is seven orders — it would survive the floor moving by a factor of
  * a million. Said out loud rather than left as an unmarked hardcode.
  *
- * Reading `defaultCurveId` from the chain is the real fix and belongs to the connector's read
- * contract, not to this page — `packages/protocol/src/tool-usage.ts:26` already says so.
+ * Reading `defaultCurveId` from the chain is the real fix, and `packages/protocol/src/tool-usage.ts:26`
+ * assigns it to this task. **Why it is deferred is in `tasks/23`, not here** — an earlier version of
+ * this comment asserted a reason that turned out to be false, and a reason stated in two places
+ * drifts in one of them (ADR `0042`).
  */
 const DUST_CEILING = 1_000_000_000n;
 

@@ -103,9 +103,26 @@ message — which is the failure mode an append-only record exists to prevent.
 
 **The real fix is to read `defaultCurveId` from the chain**, which `packages/protocol/src/tool-usage.ts:26`
 already assigns to this task and `rules/portability.md` lists under "read it from the chain, not from
-a copy". It is deliberately **not** done here: it changes the connector's read contract, which the
-trust panel shares, and that is a connector change rather than a page change. The page states the
-mismatch on screen instead.
+a copy". It is deliberately **not** done here, and the page states the mismatch on screen instead.
+
+> ~~It changes the connector's read contract, which the trust panel shares, and that is a connector
+> change rather than a page change.~~
+>
+> **That reason was false, corrected 2026-10-19.** `getToolUsage` already accepts `curveId` in its
+> config (`packages/protocol/src/tool-usage.ts:164`, consumed at `:201`), so a caller can hand it a
+> chain-read curve with **no** contract change; and the trust panel has its own independent
+> `DEFAULT_CURVE_ID` (`packages/protocol/src/sources/intuition/index.ts:52`) rather than sharing
+> this one. Every piece of the cheap path is already in the repo.
+>
+> The real reasons are design ones, and smaller: an extra chain round trip per page load; a cache
+> key that currently argues in writing against carrying a curve (`app/src/hooks/use-tool-usage.ts`);
+> and **no designed behaviour when the chain's curve differs from the one the positions were read
+> on** — which is the case the `off-curve` state papers over. `tasks/23` carries the full version
+> and the cost ledger: that deferral has produced one live sort defect, one live counts defect and
+> one latent caption defect across three review rounds.
+>
+> Struck through rather than deleted, because this ADR is the record two other sites point at, and
+> because it is the second time in two commits that a correction landed in the code and not here.
 
 ## Alternatives considered
 

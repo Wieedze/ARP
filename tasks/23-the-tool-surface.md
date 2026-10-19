@@ -172,9 +172,9 @@ different weight, which is `docs/14:156`'s one requirement of this surface.
 
 - **No DOM test environment in `app/`** (ADR `0011`) — now **`tasks/26`**, which `tasks/13` has
   recorded as an open gap since September; both rows are in `STATE.md` and now cross-reference each
-  other. `tasks/26` carries the seven defects three review rounds found on this one page as its
+  other. `tasks/26` carries the eight defects three review rounds found on this one page as its
   case. Each was one render assertion away from being
-  caught, and two were live on mainnet data.
+  caught, and three were live on mainnet data.
 - **`--color-fg-40` is 3.66:1, below AA** (`tasks/14`). This page uses `--color-fg-60` throughout
   rather than adding two new instances.
 

@@ -8,7 +8,7 @@ statements in one session were wrong while every underlying measurement was righ
 reviewers re-derived the numbers and got the same values. The break was never in the measurement. It
 was always in the step from the measurement to the sentence. See ADR 0031.
 
-## The four failures, and the check that stops each
+## The five failures, and the check that stops each
 
 ### 1. A consequence stated without measuring what bounds it
 
@@ -65,7 +65,34 @@ project.
 Name the gate's scope when it does not cover everything: "tsc clean over `app/src`; `scripts/` is
 outside every gate."
 
-## Two habits that prevent all four
+### 5. A correction that landed in one place
+
+> Corrected: `TrustStakeCapEnforcer` bounds the deposit only → it caps native `value`. Fixed in the
+> code; **stale in the ADR the code points at.**
+> Corrected: the deferral "changes the connector's read contract" → it does not. Fixed in the task
+> file; **stale in the ADR and in the code comment, which both pointed at it.**
+> Changed: six defects → eight. Fixed in the table and in `STATE.md`; **stale in the same file's
+> title, prose and Gate** — where the Gate then demanded six reproductions from a table of eight.
+
+**Check: before you commit a retraction or a changed count, grep for the old wording.**
+
+```
+grep -rn "trust panel shares" --include=*.md --include=*.ts .
+grep -rn "six defects" --include=*.md .
+```
+
+Each of those takes seconds and each would have caught one of the three above. The failure is not
+finding the right answer — all three were found. It is that a sentence written twice gets corrected
+once, and the copy that survives is usually the one other files point at.
+
+Two things make it worse and are worth knowing: an **append-only** record cannot be rewritten, so a
+retraction there is struck through in place and the grep is the only way to find it; and a **count**
+has more copies than it looks like — a title, a gate, a status line and a table row are four sites
+for one number.
+
+Added 2026-10-19 after the third instance in two review rounds. ADR `0043`.
+
+## Two habits that prevent the first four
 
 **Commit the script, not the number.** Every figure in a doc, ADR, task file or report that came from
 a measurement names the script that produces it. `scripts/measure-*.ts` exist for this. A number
@@ -82,5 +109,5 @@ It governs what is written in: completion reports, commit messages, ADRs, task f
 `docs/`, PR descriptions, and answers to the user. Code comments too — a comment asserting a number
 is subject to the same rule, and `code.md` already forbids comments that misdescribe state.
 
-It does not slow ordinary work. Three of the four checks are a single query or a single `grep`. The
+It does not slow ordinary work. Four of the five checks are a single query or a single `grep`. The
 cost of skipping them is paid by whoever reads the claim next and believes it.

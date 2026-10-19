@@ -19,7 +19,7 @@ If three layers conflict, the higher-numbered (= more recent) wins. The original
 
 1. This file.
 2. **`.claude/STATE.md`** — where the project actually is: branch, task table, known defects, the
-   recommended order, and the four claim checks. One read instead of the whole of `.claude/choices/`
+   recommended order, and the claim checks. One read instead of the whole of `.claude/choices/`
    and `.claude/learning/`.
    It is hand-maintained, so a task does not close without updating it.
 3. The task file in `tasks/`. Note its `Required skills` and `Do not do in this task` sections.
@@ -77,6 +77,9 @@ every underlying measurement was right — the break was the step from a measure
 3. **Cite third parties** to a file and a line, or do not write the claim.
 4. **Confirm a gate's scope covers your change** before calling it green. `tsc -b` over `app/src`
    says nothing about `scripts/`.
+5. **Grep the old wording before committing a retraction or a changed count.** ADR `0043` — three
+   corrections in two review rounds each landed at one site out of two or four, and the surviving
+   copy was the one other files pointed at.
 
 Commit the script, not the number. Quote the interval, not the point, when n is small.
 

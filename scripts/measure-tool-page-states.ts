@@ -47,12 +47,17 @@ query ToolPageStates($uses: String!, $curve: numeric!) {
       total_assets
       vaults(where: {curve_id: {_eq: $curve}}, limit: 1) { position_count }
     }
+    counter_term {
+      vaults(where: {curve_id: {_eq: $curve}}, limit: 1) { position_count }
+    }
   }
 }`;
 
+type Side = { vaults?: { position_count?: number | null }[] };
 type Row = {
   object?: { term_id?: string; label?: string | null } | null;
-  term?: { total_assets?: string | null; vaults?: { position_count?: number | null }[] } | null;
+  term?: (Side & { total_assets?: string | null }) | null;
+  counter_term?: Side | null;
 };
 
 const response = await fetch(target.url, {
@@ -68,7 +73,13 @@ if (payload.errors) {
 }
 const rows = payload.data?.triples ?? [];
 
-type Tool = { label: string | null; edges: number; positions: number; offCurve: number };
+type Tool = {
+  label: string | null;
+  edges: number;
+  positions: number;
+  opposePositions: number;
+  offCurve: number;
+};
 const tools = new Map<string, Tool>();
 for (const row of rows) {
   const id = row.object?.term_id;
@@ -80,9 +91,15 @@ for (const row of rows) {
     offCurve: 0,
   };
   const positions = row.term?.vaults?.[0]?.position_count ?? 0;
+  // The gate is `supportPositions > 0 || opposePositions > 0`, so the opposition half counts. It
+  // changes nothing today — 0 of 84 atoms have an oppose position without a support one — but a
+  // script whose docstring says "the page's own state machine, counted" has to model the whole gate
+  // or it silently stops matching the page.
+  const opposePositions = row.counter_term?.vaults?.[0]?.position_count ?? 0;
   const assets = BigInt(row.term?.total_assets ?? '0');
   tool.edges += 1;
   tool.positions += positions;
+  tool.opposePositions += opposePositions;
   if (positions === 0 && assets > DUST_CEILING) tool.offCurve += 1;
   tools.set(id, tool);
 }
@@ -93,7 +110,7 @@ let freeOnly = 0;
 const offCurveTools: string[] = [];
 for (const [id, tool] of tools) {
   if (tool.offCurve > 0) offCurveTools.push(`${tool.label ?? '(unlabelled)'}  ${id}`);
-  if (tool.positions > 0) priced += 1;
+  if (tool.positions > 0 || tool.opposePositions > 0) priced += 1;
   else if (tool.offCurve > 0) offCurveOnly += 1;
   else freeOnly += 1;
 }
@@ -101,7 +118,7 @@ for (const [id, tool] of tools) {
 console.log(`${target.label} — predicate \`uses\` ${USES}`);
 console.log(`${rows.length} edges over ${tools.size} distinct tool atoms (query limit 500)\n`);
 console.log(
-  `  the sidebar RENDERS       ${String(priced).padStart(3)} atoms  (a position on curve ${READ_CURVE})`,
+  `  the sidebar RENDERS       ${String(priced).padStart(3)} atoms  (a position either way on curve ${READ_CURVE})`,
 );
 console.log(
   `  off-curve, no position    ${String(offCurveOnly).padStart(3)} atoms  (assets above the dust ceiling)`,

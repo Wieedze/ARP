@@ -1,11 +1,12 @@
-# Task 26 — The app has no DOM test environment, and it cost six defects on one page
+# Task 26 — The app has no DOM test environment, and it cost eight defects on one page
 
-> **Status: NOT STARTED** (recorded 2026-10-19, from two `ui-reviewer` rounds on `tasks/23`).
+> **Status: NOT STARTED** (recorded 2026-10-19, from three review rounds on `tasks/23` — two
+> `ui-reviewer`, one `task-verifier`).
 > ADR `0011` chose no DOM environment for `app/`. This is the bill for that choice, itemised.
 
 ## The finding
 
-`app/` has 231 tests and **no way to render a component**. Services and hooks are tested as pure
+`app/` has 239 tests and **no way to render a component**. Services and hooks are tested as pure
 functions — which is why `agent-trust.ts`, `tool-usage-view.ts` and the query-options pattern are
 tested at all — but nothing asserts what a component puts on screen.
 
@@ -49,7 +50,7 @@ which are about what the DOM contains.
 
 - **Not snapshot testing.** `rules/code.md`: "tested behaviourally, not by checking implementation
   details … not enzyme-style snapshots." A snapshot of this page would have passed with every one of
-  the six defects in it.
+  the eight defects in it.
 - **Not a licence to test every component.** The two in scope are the ones that decide what a number
   means.
 
@@ -78,9 +79,14 @@ which are about what the DOM contains.
 
 ## Gate
 
-The six defects in the table are each reproduced as a failing test against the code as it was, then
-pass against the code as it is. A test that cannot be made to fail has not been shown to work —
-`tasks/24` learned that the hard way.
+**Six of the eight** — every row except the counts line and the caption predicate — are each
+reproduced as a failing test against the code as it was, then pass against the code as it is. Those
+two are already covered: they were moved into `tool-usage-view.ts` and have mutation-tested cover in
+the environment that exists, so demanding a DOM reproduction of them would be asking for a second
+test of the same thing.
+
+A test that cannot be made to fail has not been shown to work — `tasks/24` learned that the hard
+way, and the two already-closed rows were each verified by reverting the fix.
 
 ## Which tier of the evidence ladder does this serve?
 
