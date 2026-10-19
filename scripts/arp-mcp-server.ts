@@ -124,7 +124,14 @@ function serialise(usage: ToolUsage) {
       oppose: side(e.oppose),
       // The tier a reader must not flatten: an edge with no stake behind it is not weak
       // evidence, it is none (docs/14).
-      staked: (e.support.totalAssets ?? 0n) > 0n,
+      //
+      // Keyed on the POSITION COUNT, not the assets. Creating a triple seeds its vault with
+      // `minShare`, so `total_assets` is never zero for an edge that exists — measured on mainnet
+      // 2026-10-19, every unbacked IPFS edge reports exactly 1000000 wei with zero positions. This
+      // line read `totalAssets > 0n` and so answered `staked: true` for all 7 of IPFS's edges,
+      // including the 4 nobody has backed. The caveat below promises the flag means something; it
+      // did not. ADR `0042`.
+      staked: (e.support.positionCount ?? 0) > 0,
     })),
     provenance: usage.provenance,
     caveat:

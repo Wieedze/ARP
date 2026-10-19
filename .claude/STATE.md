@@ -1,6 +1,6 @@
 # Project state
 
-**Updated** 2026-10-19 (task 16 half 1 complete, verifier PASS). Hand-maintained — a task does not close without updating this file
+**Updated** 2026-10-19 (task 23's page built, ADR 0042). Hand-maintained — a task does not close without updating this file
 (`workflow.md`, task-close protocol).
 
 Read this after `CLAUDE.md` and before anything else. It replaces reading every ADR in
@@ -58,7 +58,7 @@ git rev-list --count origin/feat/agent-panel-tabs..HEAD
 
 The remote SHA above is stable between pushes, so it stays.
 
-**Tests**: connector **292 passed / 4 skipped** · app 205 passed / 2 skipped. `tsc` 0, `lint` 0.
+**Tests**: connector **292 passed / 4 skipped** · app **231 passed / 2 skipped**. `tsc` 0, `lint` 0.
 Task 16 added **44** of those — 29 planner, 7 delegated, 8 at the MCP wire. Re-read them rather than
 trusting this line: `cd packages/protocol && bun run test`.
 
@@ -87,29 +87,29 @@ and task 20 commits and does not describe them.**
 
 ## Tasks
 
-| #      | task                                              | state                                                                                                                                                                                                           |
-| ------ | ------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 01–03b | setup, contract, deploy, enforcers, smart account | done                                                                                                                                                                                                            |
-| 04     | UI core                                           | **no status line** — code exists, fiche never marked                                                                                                                                                            |
-| 04b    | agent identity and compose                        | done                                                                                                                                                                                                            |
-| 04c    | agent autonomous positioning                      | **set aside** — hackathon surface, ADR `0033`                                                                                                                                                                   |
-| 05     | UI polish and deploy                              | **no status line**                                                                                                                                                                                              |
-| 06–08  | pin writes, connector, trust panel                | done                                                                                                                                                                                                            |
-| 09     | follow-ups from global review                     | open                                                                                                                                                                                                            |
-| 10–12  | directory, import, panel tabs                     | done                                                                                                                                                                                                            |
-| 13     | a rule the repo cannot satisfy                    | open — `code.md:86` requires React Testing Library; the repo has none                                                                                                                                           |
-| 14     | contrast below AA                                 | open — `--color-fg-40` at 3.66:1                                                                                                                                                                                |
-| 15     | strip the panel copy                              | done, verified                                                                                                                                                                                                  |
-| 16     | the connector an agent declares through           | **half 1 complete** (`a714f25`, verifier PASS round 4) — `packages/protocol/src/declare/`, 2 MCP tools, 44 tests. Prepares calls, never signs (ADR `0038`); stake on the edge (ADR `0039`). Half 2 → `tasks/25` |
-| 17     | the external verifier                             | **built**, 48 tests; gate not yet run at 100 agents                                                                                                                                                             |
-| 18     | `strict` is off in the app                        | done, verified (`6b351ee`) — cost was indeed zero errors                                                                                                                                                        |
-| 19     | the `use` edge and its witness                    | step 1 done. **Step 1b is blocking** — the `same as` join does not exist (`scripts/measure-caip10-join.ts`: zero edges). 1b also **owns task 24's deferred step 3**                                             |
-| 20     | a tool renders as a protocol                      | done, verified                                                                                                                                                                                                  |
-| 21     | `scripts/` is outside every gate                  | open — **not** zero-cost, unlike 18; owns the gap 18 did not reach                                                                                                                                              |
-| 22     | the chain as witness                              | open — user proposal; strongest evidence class, bounded by how much tool use is on-chain. **Measure first**                                                                                                     |
-| 23     | the tool surface                                  | step 1 **done** (`getToolUsage`, 9 tests, live-verified); the page remains                                                                                                                                      |
-| 24     | make the testnet rig faithful                     | **complete** (`5787660`, verifier PASS). Agents 3,4,5 exist and the two-step gate passes; step 3 (identity resolution) **deferred** to task 19 step 1b, so Phase 0 is not closed                                |
-| 25     | hire an agent, and rate it afterwards             | open — split out of 16 on 2026-10-19. Depends on `tasks/23`: a candidate list is unjudgeable without a tool page                                                                                                |
+| #      | task                                              | state                                                                                                                                                                                                               |
+| ------ | ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 01–03b | setup, contract, deploy, enforcers, smart account | done                                                                                                                                                                                                                |
+| 04     | UI core                                           | **no status line** — code exists, fiche never marked                                                                                                                                                                |
+| 04b    | agent identity and compose                        | done                                                                                                                                                                                                                |
+| 04c    | agent autonomous positioning                      | **set aside** — hackathon surface, ADR `0033`                                                                                                                                                                       |
+| 05     | UI polish and deploy                              | **no status line**                                                                                                                                                                                                  |
+| 06–08  | pin writes, connector, trust panel                | done                                                                                                                                                                                                                |
+| 09     | follow-ups from global review                     | open                                                                                                                                                                                                                |
+| 10–12  | directory, import, panel tabs                     | done                                                                                                                                                                                                                |
+| 13     | a rule the repo cannot satisfy                    | open — `code.md:86` requires React Testing Library; the repo has none                                                                                                                                               |
+| 14     | contrast below AA                                 | open — `--color-fg-40` at 3.66:1                                                                                                                                                                                    |
+| 15     | strip the panel copy                              | done, verified                                                                                                                                                                                                      |
+| 16     | the connector an agent declares through           | **half 1 complete** (`a714f25`, verifier PASS round 4) — `packages/protocol/src/declare/`, 2 MCP tools, 44 tests. Prepares calls, never signs (ADR `0038`); stake on the edge (ADR `0039`). Half 2 → `tasks/25`     |
+| 17     | the external verifier                             | **built**, 48 tests; gate not yet run at 100 agents                                                                                                                                                                 |
+| 18     | `strict` is off in the app                        | done, verified (`6b351ee`) — cost was indeed zero errors                                                                                                                                                            |
+| 19     | the `use` edge and its witness                    | step 1 done. **Step 1b is blocking** — the `same as` join does not exist (`scripts/measure-caip10-join.ts`: zero edges). 1b also **owns task 24's deferred step 3**                                                 |
+| 20     | a tool renders as a protocol                      | done, verified                                                                                                                                                                                                      |
+| 21     | `scripts/` is outside every gate                  | open — **not** zero-cost, unlike 18; owns the gap 18 did not reach                                                                                                                                                  |
+| 22     | the chain as witness                              | open — user proposal; strongest evidence class, bounded by how much tool use is on-chain. **Measure first**                                                                                                         |
+| 23     | the tool surface                                  | **page built**, review round 2 pending — `/tool/atom/:atomId`, the ladder rendered at two weights with the other three rungs named. ADR `0042`: a vault's assets are not evidence of a stake, its position count is |
+| 24     | make the testnet rig faithful                     | **complete** (`5787660`, verifier PASS). Agents 3,4,5 exist and the two-step gate passes; step 3 (identity resolution) **deferred** to task 19 step 1b, so Phase 0 is not closed                                    |
+| 25     | hire an agent, and rate it afterwards             | open — split out of 16 on 2026-10-19. Depends on `tasks/23`: a candidate list is unjudgeable without a tool page                                                                                                    |
 
 **Recommended order** — `docs/15_ROADMAP.md` is the full version with what testnet can and cannot
 prove. Short form: 24 and 16's half 1 are done; next is **23 → 17 → 25**, then the two mainnet gaps.
@@ -205,6 +205,10 @@ Full list in `.claude/choices/INDEX.md` (generated). The ones to know before tou
   so a cap can be burned on non-recoverable fees. Corrects a claim five files asserted.
 - **0041** — one protocol package, `packages/protocol` (`@arp-protocol/core`), with `sdk/` folded
   into `src/arp/`. Read it before following any path written before 2026-10-19.
+- **0042** — **a vault's assets are not evidence of a stake; its position count is.** Creating a
+  term seeds its vaults with `minShare`, so `totalAssets > 0` means "this term exists". Three "has
+  stake?" checks were wrong, including the MCP server's `staked` flag, which answered `true` for
+  every edge. Read it before writing any check of the form `assets > 0`.
 
 ## Hard constraints
 

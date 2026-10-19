@@ -1,9 +1,25 @@
 # Task 23 — The tool surface
 
-> **Status: NOT STARTED** (specified 2026-10-16, after the user restated that the point is **tool
-> reputation from the agents that used them**).
-> Depends on `tasks/19` steps 2–5. **This is the thing `docs/12` describes**, and the reason the
-> `uses` edges are worth writing at all.
+> **Status: BUILT, REVIEW ROUND 2 PENDING** 2026-10-19. **This is the thing `docs/12` describes**,
+> and the reason the `uses` edges are worth writing at all.
+>
+> The page is `app/src/pages/ToolUsagePanel.tsx` at `/tool/atom/:atomId`, with
+> `services/tool-usage-view.ts`, `hooks/use-tool-usage.ts`, `components/tool/` and 26 tests (18 on the view, 8 on the hook's contract).
+>
+> **The dependency line was wrong and is removed.** It said "depends on `tasks/19` steps 2–5" — the
+> write path. The page reads edges that already exist, and this file's own measurement says so (84
+> atoms, 64 with positions). Nothing was blocked.
+>
+> **The gate found the defect this file predicted a month earlier**, in its own words: _"if those
+> three render like the fourth, the page has failed."_ It did. Creating a triple seeds both of its
+> vaults with `minShare`, so `totalAssets > 0` is true of every edge that exists, and all seven of
+> IPFS's rendered as priced. Keyed on the position count now — live: 3 priced, 4 free. ADR `0042`,
+> which also fixes the same defect in `scripts/arp-mcp-server.ts` (it answered `staked: true` for
+> all seven, on the surface other agents read) and in `ModuleList.tsx`.
+>
+> A review then found the same defect surviving in the sidebar, where **20 of the 84 live tool pages
+> printed a figure beside a banner saying nobody had staked anything**. Gated, and verified against
+> one of the twenty.
 
 ## The gap
 
@@ -66,16 +82,29 @@ each edge read both vaults.
    subject (the agent), its vault and its counter-vault.~~ **DONE** — `getToolUsage` in
    `packages/protocol/src/tool-usage.ts`, exported from the connector, 10 tests, verified against live mainnet
    on Obsidian, GitHub and IPFS.
-2. A route and a page. Two columns per `rules/ui.md`: identity left, the edges right. Dense list,
-   mono for ids and amounts, hairline borders.
-3. **Render the provenance tier of each edge**, from `docs/14`'s ladder: a payment or an on-chain call
+2. ~~A route and a page. Two columns per `rules/ui.md`: identity left, the edges right. Dense list,
+   mono for ids and amounts, hairline borders.~~ **DONE** — `/tool/atom/:atomId`, lazy-loaded like
+   the other mainnet routes (measured: static import grew the entry chunk 16 kB and dissolved the
+   connector's own chunk into it).
+3. ~~**Render the provenance tier of each edge**~~ **DONE, with two of the five rungs and the other
+   three named.** Only `priced-assertion` and `free-assertion` are derivable from an edge and its
+   vaults; `fact`, `confirmed-by-both` and `tool-declared` need data nothing reads yet and are struck
+   through on the page with the reason. A sixth state, `off-curve`, is **not** a rung — it is a
+   statement about the reader, for the 1 of 185 live edges holding TRUST on a curve the counts are
+   not scoped to (ADR `0042`). Original spec below.
+
+   **Render the provenance tier of each edge**, from `docs/14`'s ladder: a payment or an on-chain call
    is a fact; both parties agreeing is confirmed; the tool alone is a third party's word; the agent
    alone with stake is a priced assertion; the agent alone for free is **nothing**. A page that
    renders the bottom row like the others has made things worse than before it existed.
-4. Link it from the agent panel: an agent's `uses-tool` capabilities become links to the tool page.
-   That edge already renders after `tasks/20` — it just goes nowhere.
-5. The empty state, for the ~88,000 atoms with no incoming edge. Not "before the populated one" —
-   that instruction was based on the wrong figure; there is real data for the populated case.
+
+4. ~~Link it from the agent panel~~ **DONE** — `CapabilitySection.tsx`, `uses-tool` entries link to
+   `/tool/atom/${sourceHandle}`. The internal link wins over the object's own external URL, because
+   the tool's standing is what the panel cannot otherwise show.
+5. ~~The empty state~~ **DONE.** Not "~88,000 atoms", which is a count of ERC-8004 identities on
+   **Base** (`docs/12:10`) and not of Intuition-mainnet atoms — that population has not been
+   measured. 84 atoms are the object of a `uses` edge on 1155. The copy carries no measured figure
+   at all: a number on screen rots where nobody can re-run it.
 
 ## Out of scope
 
@@ -96,6 +125,30 @@ each edge read both vaults.
 
 One tool page, rendered from live mainnet data, showing at least one real incoming `uses` edge with
 its two vaults and its provenance tier — plus the empty state for a tool with none.
+
+## Gate — met 2026-10-19
+
+Run read-only against live mainnet 1155, nothing signed:
+
+```
+IPFS   0x6cf977f2…  7 edges   3 priced · 4 free   sidebar: 0.1 TRUST across 10 positions
+Colony 0x014f7789…  1 edge    1 free              sidebar: gated, shows nothing
+0xdede…             no edges                      the empty state
+```
+
+IPFS is the fixture this file named: `Relics by Intuition` priced at 0.08 across 8 positions with
+0.03 against across 3, beside `Infura`, `Fleek`, `Pinata` and `AnyType` at nothing. They render at
+different weight, which is `docs/14:156`'s one requirement of this surface.
+
+## Still open, with owners
+
+- **Read `defaultCurveId` from the chain** in `getToolUsage`. `packages/protocol/src/tool-usage.ts:26`
+  assigns it here; it is deferred because it changes the connector's read contract, which the trust
+  panel shares. The page states the mismatch on screen meanwhile. ADR `0042`.
+- **No DOM test environment in `app/`** (ADR `0011`). Four of the review's findings were each one
+  render assertion away from being caught. Worth its own task rather than a mid-task bolt-on.
+- **`--color-fg-40` is 3.66:1, below AA** (`tasks/14`). This page uses `--color-fg-60` throughout
+  rather than adding two new instances.
 
 ## Which tier of the evidence ladder does this serve?
 

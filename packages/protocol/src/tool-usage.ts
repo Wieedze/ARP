@@ -119,6 +119,14 @@ export type ToolUsage = {
     label: string | null;
     /** The pinned URI, when the atom has one. */
     pinnedUri: string | null;
+    /**
+     * Capped at 200 by the query, silently.
+     *
+     * **Latent**: the busiest tool on mainnet has 24 incoming edges and the whole graph holds 185
+     * across 84 atoms, so nothing is near it. It matters because a caller rendering
+     * `edges.length` as "declared uses" would print 200 as though it were the count — say
+     * "200+" if that day comes.
+     */
     edges: ToolUsageEdge[];
     /**
      * Summed across edges — and **never shown without `supportPositions`**. These vaults hold one or

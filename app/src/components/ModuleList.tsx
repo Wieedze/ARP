@@ -63,17 +63,11 @@ export function ModuleList() {
                     </p>
                 </div>
                 <div className="flex items-center gap-5 text-[length:var(--text-body-sm)]">
-                    <Link
-                        to="/modules/new"
-                        className="text-[color:var(--color-accent)]"
-                    >
+                    <Link to="/modules/new" className="text-[color:var(--color-accent)]">
                         + Register a tool
                     </Link>
                     {agentCta ? (
-                        <Link
-                            to={agentCta.to}
-                            className="text-[color:var(--color-accent)]"
-                        >
+                        <Link to={agentCta.to} className="text-[color:var(--color-accent)]">
                             {agentCta.label} →
                         </Link>
                     ) : null}
@@ -82,7 +76,11 @@ export function ModuleList() {
 
             {domains.length > 0 ? (
                 <nav className="mb-8 flex flex-wrap gap-2" aria-label="Filter by domain">
-                    <FilterChip label="All" active={filter === null} onClick={() => setFilter(null)} />
+                    <FilterChip
+                        label="All"
+                        active={filter === null}
+                        onClick={() => setFilter(null)}
+                    />
                     {domains.map((d) => (
                         <FilterChip
                             key={d}
@@ -113,7 +111,15 @@ export function ModuleList() {
     );
 }
 
-function FilterChip({label, active, onClick}: {label: string; active: boolean; onClick: () => void}) {
+function FilterChip({
+    label,
+    active,
+    onClick,
+}: {
+    label: string;
+    active: boolean;
+    onClick: () => void;
+}) {
     return (
         <button
             type="button"
@@ -142,7 +148,9 @@ function ModuleRow({
 }) {
     const navigate = useNavigate();
     const isHighlighted = highlightDomain === module.domain;
-    const hasStake = metric !== null && metric.totalAssets > 0n;
+    // `stakerCount`, not `totalAssets`: creating an atom deposits `minShare` into its vault, so
+    // assets are non-zero for every atom that exists and this read `> 0n` once. ADR 0042.
+    const hasStake = metric !== null && metric.stakerCount > 0;
 
     function navigateToTool() {
         navigate(`/tool/${module.id.toString()}`);
@@ -225,7 +233,10 @@ function LoadingState() {
     return (
         <ul className="border-t border-[color:var(--color-border)]">
             {Array.from({length: 3}, (_, i) => (
-                <li key={i} className="border-b border-[color:var(--color-border)] py-4 animate-pulse">
+                <li
+                    key={i}
+                    className="border-b border-[color:var(--color-border)] py-4 animate-pulse"
+                >
                     <div className="h-4 w-2/3 bg-[color:var(--color-fg-20)] mb-2" />
                     <div className="h-3 w-1/3 bg-[color:var(--color-fg-20)]" />
                 </li>
@@ -244,10 +255,13 @@ function ErrorState({onRetry}: {onRetry: () => void}) {
             <p className="text-[color:var(--color-fg-60)]">
                 Couldn’t load modules from Intuition Testnet.
             </p>
-            <button type="button" onClick={onRetry} className="px-3 py-1 text-[length:var(--text-body-sm)]">
+            <button
+                type="button"
+                onClick={onRetry}
+                className="px-3 py-1 text-[length:var(--text-body-sm)]"
+            >
                 Retry
             </button>
         </div>
     );
 }
-

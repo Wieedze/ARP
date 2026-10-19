@@ -2,7 +2,7 @@
 
 **Generated** 2026-10-19 by `scripts/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-41 decisions. Newest last. `choices/README.md` says when to write one.
+42 decisions. Newest last. `choices/README.md` says when to write one.
 
 ## Not accepted
 
@@ -55,3 +55,4 @@ Read these before relying on them.
 | [0039](0039-the-deposit-goes-on-the-edge.md) | 2026-10-19 | Accepted | The deposit goes on the edge, not on the tool's atom |
 | [0040](0040-the-cap-bounds-the-amount-not-the-kind.md) | 2026-10-19 | Accepted | The cap bounds the amount, not the kind |
 | [0041](0041-one-protocol-package-not-two.md) | 2026-10-19 | Accepted | One protocol package, not two, and it is called what it is |
+| [0042](0042-a-vault-s-assets-are-not-evidence-of-a-stake.md) | 2026-10-19 | Accepted | A vault's assets are not evidence of a stake; its position count is |

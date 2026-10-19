@@ -23,6 +23,15 @@ const AgentTrustPanel = lazy(() =>
 const AgentImport = lazy(() =>
     import("./pages/AgentImport").then((module) => ({default: module.AgentImport})),
 );
+/**
+ * The tool surface is split for the same reason and measured: importing it statically grew the
+ * entry chunk by 16,230 bytes and dissolved the separate `erc8004-connector` chunk into it, which
+ * also falsified the comment above — the connector would then be something the eagerly loaded
+ * bundle needs. `rules/ui.md`: lazy-load route-level code.
+ */
+const ToolUsagePanel = lazy(() =>
+    import("./pages/ToolUsagePanel").then((module) => ({default: module.ToolUsagePanel})),
+);
 
 function App() {
     return (
@@ -56,6 +65,18 @@ function App() {
                 />
                 <Route path="/modules/new" element={<RegisterModule />} />
                 <Route path="/tool/:id" element={<ToolDetail />} />
+                {/* Keyed on an ATOM, not a ModuleRegistry id, and a mainnet view. The route above
+                    is the testnet ModuleRegistry page (ADR 0025 keeps that registry off mainnet);
+                    this one is `tasks/23`'s surface. The paths are deliberately nested rather than
+                    `/tools/:atomId`, which would read as a plural of the other one. */}
+                <Route
+                    path="/tool/atom/:atomId"
+                    element={
+                        <Suspense fallback={<RouteFallback label="tool surface" />}>
+                            <ToolUsagePanel />
+                        </Suspense>
+                    }
+                />
                 <Route path="/hire" element={<Hire />} />
                 <Route path="/hire/result/:tx" element={<HireResult />} />
             </Routes>

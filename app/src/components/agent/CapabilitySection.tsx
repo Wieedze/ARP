@@ -1,20 +1,24 @@
+import {Link} from "react-router-dom";
+
 import type {CapabilityGroup} from "../../services/agent-trust";
 
 /**
  * What the graph says this agent is for.
  *
- * Almost always nothing: 194 `use` triples exist across the whole Intuition
- * mainnet graph. The empty state says that plainly instead of padding the
- * section — an agent with no declared capability is the normal case and the
- * point of Phase 2, not an error to apologise for.
+ * Almost always nothing, and the empty state says so plainly instead of padding the section — an
+ * agent with no declared capability is the normal case, not an error to apologise for.
+ *
+ * The copy used to carry "194 `use` triples exist across the entire graph". Two problems: a measured
+ * figure on screen rots where nobody can re-run it, and `use` is the wrong predicate for this claim
+ * anyway — ADR `0030` found that `use` means "supports this protocol" while `uses` means "uses this
+ * tool", so the number was answering a different question than the sentence asked.
  */
 export function CapabilitySection({groups, count}: {groups: CapabilityGroup[]; count: number}) {
     if (count === 0) {
         return (
             <p className="text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)] max-w-[60ch]">
                 No capability triples. Every agent in this cohort carries a trust score; almost none
-                carries a statement of what it is for — 194 <span className="font-mono">use</span>{" "}
-                triples exist across the entire graph. Indexing that layer is the next phase of this
+                carries a statement of what it is for. Indexing that layer is the next phase of this
                 work, not something this panel can infer.
             </p>
         );
@@ -33,6 +37,22 @@ export function CapabilitySection({groups, count}: {groups: CapabilityGroup[]; c
                     <dd className="flex flex-wrap gap-x-4 gap-y-1 text-[length:var(--text-body-sm)]">
                         {group.entries.map((entry, index) => {
                             const label = entry.name ?? entry.label ?? "unnamed";
+                            // A `uses-tool` object is a tool, and a tool has a page: who else
+                            // declared using it and what they put behind saying so. `tasks/20` made
+                            // this edge render; until now it went nowhere. The internal link wins
+                            // over the object's own external url, because the standing of the tool
+                            // is what this panel cannot otherwise show.
+                            if (group.relation === "uses-tool" && entry.sourceHandle !== null) {
+                                return (
+                                    <Link
+                                        key={`${label}-${index}`}
+                                        to={`/tool/atom/${entry.sourceHandle}`}
+                                        className="font-mono text-[color:var(--color-accent)]"
+                                    >
+                                        {label}
+                                    </Link>
+                                );
+                            }
                             return entry.url !== null ? (
                                 <a
                                     key={`${label}-${index}`}
