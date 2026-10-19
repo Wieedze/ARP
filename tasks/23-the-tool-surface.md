@@ -1,6 +1,14 @@
 # Task 23 — The tool surface
 
-> **Status: BUILT, `ui-reviewer` PASS round 2, PUNCH LIST CLOSED** 2026-10-19. **This is the thing `docs/12` describes**,
+> **Status: COMPLETE** 2026-10-19 · commits `94184c4`, `9f7aaab`, `a808c27`, `7b6b2d5` ·
+> post-mortem `.claude/learning/18-the-tool-surface.md` · `ui-reviewer` PASS round 2,
+> `task-verifier` PASS round 4.
+>
+> Five review rounds in all, and the page's logic was right from the first commit. What failed was
+> the step from a measurement to a sentence — a percentage the repo already held correctly four
+> lines away, a superlative that rotted in three days, a deferral reason that was false, and three
+> corrections that each landed at one site out of two or four. That last pattern became
+> `claims.md` check 5 and ADR `0043`. **This is the thing `docs/12` describes**,
 > and the reason the `uses` edges are worth writing at all.
 >
 > The page is `app/src/pages/ToolUsagePanel.tsx` at `/tool/atom/:atomId`, with
