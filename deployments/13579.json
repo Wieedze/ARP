@@ -22,7 +22,7 @@
   },
   "metamaskDelegationFramework": {
     "version": "1.3.0",
-    "_source": "MetaMask deployments package (~/Project/metamask-smart-accounts-kit/packages/delegation-deployments/src/contractAddresses.ts → DEPLOYMENTS_1_3_0). All addresses are deterministic CREATE2 — same value on every chain MetaMask supports. Intuition Testnet (chainId 0x350b) is explicitly mapped to DEPLOYMENTS_1_3_0 at packages/delegation-deployments/src/index.ts line 148.",
+    "_source": "MetaMask deployments package (~/Project/metamask-smart-accounts-kit/packages/delegation-deployments/src/contractAddresses.ts \u2192 DEPLOYMENTS_1_3_0). All addresses are deterministic CREATE2 \u2014 same value on every chain MetaMask supports. Intuition Testnet (chainId 0x350b) is explicitly mapped to DEPLOYMENTS_1_3_0 at packages/delegation-deployments/src/index.ts line 148.",
     "delegationManager": "0xdb9B1e94B5b69Df7e401DDbedE43491141047dB3",
     "entryPoint": "0x0000000071727De22E5E9d8BAf0edAc6f37da032",
     "simpleFactory": "0x69Aa2f9fe1572F1B640E1bbc512f5c3a734fc77c",
@@ -69,7 +69,7 @@
     }
   },
   "arp": {
-    "_note": "Populated by scripts/deploy.sh. Addresses are EOA-nonce-derived (CREATE), so re-running with a new nonce will produce different addresses. To redeploy, increment the nonce assumption — there is no on-chain idempotency guard.",
+    "_note": "Populated by scripts/deploy.sh. Addresses are EOA-nonce-derived (CREATE), so re-running with a new nonce will produce different addresses. To redeploy, increment the nonce assumption \u2014 there is no on-chain idempotency guard.",
     "deployer": "0xE596096F4176b682E300d73963e7B04B383C1AA1",
     "deployedAt": "2026-06-01T13:30:00Z",
     "moduleRegistry": "0xc9a2f66775828017e984E8be077fA2d17e0A41F4",
@@ -108,6 +108,38 @@
         "uri": "ipfs://bafkreiembmtprqzufrdkvig74lskv6iazuatblm4hwmtxkf5a3v67mkdkm",
         "tx": "0x97db7629c6c973d43c0c62325754d750ee262853bdbd87496b4b82c1ea3d0ac7"
       }
-    ]
+    ],
+    "rigAgents": {
+      "_note": "Task 24. ERC-8004 agents on ARP's own testnet registry, minted 2026-10-19 by the deployer, each exercising one branch of the verifier. Before these, the registry's two agents carried an empty tokenURI and the whole discovery path ran against nothing. Permanent: the ids are taken and setAgentURI leaves the old URI in the event log.",
+      "registry": "0xC165A2AD2E540A4069E02834009161E2b4490d5A",
+      "agents": {
+        "3": {
+          "slug": "rig-confirmed",
+          "exercises": "confirmed/serves-declared-protocol + tools/list recovery",
+          "endpoint": "http://localhost:3002/mcp",
+          "_endpointNote": "ARP's own MCP server, local by default. Regenerate with ARP_MCP_ENDPOINT once a public URL exists; setAgentURI can update it.",
+          "tx": "0xce4fee69c692ddf57d4537b23479d78384a9e2d06b733b532e419055ed50a086"
+        },
+        "4": {
+          "slug": "rig-dead",
+          "exercises": "confirmed/dead",
+          "endpoint": "http://192.0.2.1/mcp",
+          "_endpointNote": "TEST-NET-1, RFC 5737 \u2014 reserved and never routable, so it always times out. A .invalid hostname was tried first and gave inconclusive/transport-error, because a DNS failure is indistinguishable from our own network being down.",
+          "tx": "0x87bf71cf0ce55db7f82ca617b8601ee87f870e67018b1097a311ed2d61cc7378",
+          "uriUpdatedTx": "0x8f5950a61fca19b6a3f69b26f6c4159e29833689ed4b1623d8610206bfe87100"
+        },
+        "5": {
+          "slug": "rig-unprobeable",
+          "exercises": "not-checkable \u00d72 \u2014 templated and non-http-identifier. Never a defect.",
+          "tx": "0x859aff609fa10dba635ffd12d0b60b598c7c3174238f61962edb4b5eee1a0efd"
+        }
+      },
+      "gate": {
+        "command": "bun run scripts/verify-cohort.ts --target intuition-testnet --ids 3,4,5 --tools",
+        "ranAt": "2026-10-19",
+        "result": "3 documents read, 4 endpoints: 2 confirmed (serves-declared-protocol, dead), 2 not-checkable (templated, non-http-identifier), 0 inconclusive, 1 capability list recovered (arp_tool_reputation)",
+        "_requires": "scripts/arp-mcp-server.ts running on :3002, or agent 3 reports inconclusive"
+      }
+    }
   }
 }

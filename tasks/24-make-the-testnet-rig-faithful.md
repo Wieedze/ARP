@@ -1,16 +1,21 @@
 # Task 24 — Make the testnet rig faithful
 
-> **Status: PREPARED, AWAITING THE OPERATOR'S SIGNATURE** (2026-10-19). Phase 0 of
-> `docs/15_ROADMAP.md`.
+> **Status: GATE MET, AWAITING VERIFICATION** 2026-10-19. Phase 0 of `docs/15_ROADMAP.md`.
 >
-> `scripts/rig-registration-files.ts` holds the three registration files and prints the three
-> `register(string)` calls. **It signs nothing and sends nothing** — the operator runs them with
-> their own key, as everywhere else (ADR `0035`). `erc8004/test/rig-files.test.ts` runs the files
-> through the real classifier: 9 tests, 233 in the connector suite.
+> Agents **3, 4 and 5** minted on `0xC165A2AD…`, recorded in `deployments/13579.json` under
+> `arp.rigAgents` with their transactions. The gate ran:
 >
-> **Changed from the plan below**: minting three new agents rather than amending the two that exist.
-> Token 1 is owned by `0xc634457a…`, which is not the deployer, and `setAgentURI` requires the owner.
-> Minting is permissionless and gives all three a URI from birth, which is what real agents have.
+> ```
+> bun run scripts/verify-cohort.ts --target intuition-testnet --ids 3,4,5 --tools
+>
+> 3 documents read · 4 endpoints
+>   CONFIRMED      2   serves-declared-protocol ×1 · dead ×1
+>   NOT CHECKABLE  2   templated ×1 · non-http-identifier ×1
+>   INCONCLUSIVE   0
+>   capability lists recovered: 1 — arp_tool_reputation
+> ```
+>
+> Needs `scripts/arp-mcp-server.ts` running on `:3002`, or agent 3 reports inconclusive.
 
 ## The finding
 

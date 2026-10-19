@@ -69,15 +69,23 @@ describe("each rig file exercises the group it claims", () => {
         expect(endpoints[0].capabilities.length).toBeGreaterThan(0);
     });
 
-    it("rig-dead declares a probeable endpoint on a host that cannot resolve", () => {
-        // Probeable is the point: the verifier must reach the network and get a fact back. `.invalid`
-        // is reserved by RFC 2606 and never resolves, so the dead verdict does not depend on anyone.
+    it("rig-dead declares a probeable endpoint that is guaranteed to time out", () => {
+        // 192.0.2.1 is TEST-NET-1, which RFC 5737 reserves for documentation and guarantees is
+        // never routable — so the connection always times out and the verdict is `confirmed/dead`.
+        //
+        // An earlier draft used a `.invalid` hostname. Measured: that fails DNS resolution, Bun
+        // reports it identically to a broken local network, and the prober correctly returned
+        // `inconclusive/transport-error`. **The fixture was wrong, not the prober** — and no
+        // structural test could have caught it, because the claim was about an outcome that needs a
+        // network call. Running the gate is what caught it.
         const endpoints = readDeclaredEndpoints(bySlug("rig-dead").doc);
         expect(endpoints).toHaveLength(1);
         expect(endpoints[0].classification.status).toBe("probeable");
         expect(endpoints[0].classification).toMatchObject({
-            url: expect.stringContaining(".invalid"),
+            url: expect.stringContaining("192.0.2.1"),
         });
+        // Not `.invalid`: a DNS failure is indistinguishable from our own network being down.
+        expect(JSON.stringify(bySlug("rig-dead").doc)).not.toContain("does-not-exist.invalid");
     });
 
     it("rig-unprobeable declares only endpoints that must never be called a defect", () => {

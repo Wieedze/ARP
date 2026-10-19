@@ -116,6 +116,15 @@ function arg(name: string): string | null {
 /** Chosen once, printed in the report, and never re-derived. */
 const TARGET = pickTarget();
 
+/**
+ * `--tools` asks a confirmed MCP server what it serves.
+ *
+ * Opt-in because it is a second request per endpoint and one request is the courtesy baseline
+ * (`tasks/17`). Worth passing: 0 of 112 sampled registration documents declared a capability, while
+ * every confirmed MCP server listed its tools — the runtime is where that data lives.
+ */
+const WANTS_TOOLS = process.argv.includes('--tools');
+
 function chooseIds(): number[] {
   const explicit = arg('ids');
   if (explicit) {
@@ -300,9 +309,9 @@ async function verifyAgent(id: number, limiter: HostLimiter): Promise<AgentResul
     const probe =
       endpoint.classification.status === 'probeable'
         ? await limiter.run(endpoint.classification.url, () =>
-            probeEndpoint(endpoint, { fetch: countingFetch }),
+            probeEndpoint(endpoint, { fetch: countingFetch, listTools: WANTS_TOOLS }),
           )
-        : await probeEndpoint(endpoint, { fetch: countingFetch });
+        : await probeEndpoint(endpoint, { fetch: countingFetch, listTools: WANTS_TOOLS });
     if (probe.status === 'inconclusive' && probe.code === 'rate-limited') {
       limiter.backOff(probe.request.url, null);
     }
@@ -363,6 +372,20 @@ function summarise(agents: AgentResult[]): void {
   ).length;
   if (declaredProtocol.length > 0) {
     console.log(`\nnamed a protocol and serves it: ${served} of ${declaredProtocol.length} probed`);
+  }
+
+  const recovered = agents.flatMap((a) =>
+    a.endpoints.flatMap((e) =>
+      e.outcome.status === 'confirmed' && e.outcome.servedTools
+        ? [{ tokenId: a.tokenId, tools: e.outcome.servedTools.map((t) => t.name) }]
+        : [],
+    ),
+  );
+  if (WANTS_TOOLS) {
+    console.log(`\ncapability lists recovered from the runtime: ${recovered.length}`);
+    for (const r of recovered) {
+      console.log(`  ${r.tokenId.padStart(6)}  ${r.tools.join(', ')}`);
+    }
   }
 
   console.log('\nreproduce any CONFIRMED row with one request:');

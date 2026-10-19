@@ -84,13 +84,17 @@ export const FILES: RigFile[] = [
       type: TYPE,
       name: 'ARP Rig — Dead Endpoint',
       description:
-        'Testnet rig agent. Declares an MCP endpoint on a host that does not resolve, so ' +
-        "the verifier's dead path exercises. A timeout is an answer about the agent: an " +
-        'endpoint that cannot respond is not serving callers.',
+        'Testnet rig agent. Declares an MCP endpoint on 192.0.2.1, which RFC 5737 reserves ' +
+        'for documentation and guarantees is never routable, so the connection always times ' +
+        "out and the verifier's `confirmed/dead` path exercises. A timeout is an answer about " +
+        'the agent: an endpoint that cannot respond in eight seconds is not serving callers. ' +
+        'An earlier draft used a .invalid hostname, which fails DNS resolution instead — and ' +
+        'Bun reports that identically to a broken local network, so the prober correctly ' +
+        'returned inconclusive rather than dead. The fixture was wrong, not the prober.',
       services: [
         {
           name: 'mcp',
-          endpoint: 'https://arp-rig-does-not-exist.invalid/mcp',
+          endpoint: 'http://192.0.2.1/mcp',
           version: '2025-06-18',
         },
       ],
