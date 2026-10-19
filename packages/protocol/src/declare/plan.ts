@@ -96,6 +96,10 @@ function once<T>(read: () => Promise<T>): () => Promise<T> {
  * Which atom a tool's URI should resolve to, and whether a new one has to be created.
  *
  * `atomData` is `null` when an existing atom is reused — there is nothing to encode.
+ *
+ * The 84/78/77 figures in the warning strings below come from
+ * `scripts/measure-tool-atom-shape.ts`. This was the one of the six sites quoting them that named
+ * no source, which is how its sentence came to be wrong twice.
  */
 async function resolveToolAtom(
     uri: string,

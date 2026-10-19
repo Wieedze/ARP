@@ -9,11 +9,13 @@
  *      bun run scripts/measure-tool-atom-shape.ts                 # mainnet 1155
  *      bun run scripts/measure-tool-atom-shape.ts testnet         # 13579
  *
- *  **Committed because its figures were quoted in five places from no script at all** — the
- *  84/78/77 breakdown appears in `packages/protocol/src/declare/{plan,types}.ts`, the package
- *  README, a test and the MCP server, and `rules/claims.md` forbids exactly that: commit the
- *  script, not the number. Three verifier rounds in a row found a wrong version of this one
- *  sentence, and the reason was that no reader could re-derive it.
+ *  **Committed because its figures were quoted in six places from no script at all** — the
+ *  84/78/77 breakdown appears in `packages/protocol/src/declare/{plan,types,tool-atom}.ts`, the
+ *  package README, a test and the MCP server, and `rules/claims.md` forbids exactly that: commit
+ *  the script, not the number. **Two** verifier rounds found a wrong version of this one sentence —
+ *  `be5bf85`'s `77 of the 78` denominator and `be311a6`'s "all but one" clause — and the reason
+ *  both times was that no reader could re-derive it. (This docstring first said five places and
+ *  three rounds. Both were wrong, in the file arguing against unverifiable numbers.)
  *
  *  Read-only: one GraphQL query. Signs nothing.
  */

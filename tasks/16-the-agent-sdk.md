@@ -1,6 +1,8 @@
 # Task 16 — The connector an agent declares through
 
-> **Status: HALF 1 DONE, HALF 2 SPLIT OUT** 2026-10-19. Specified 2026-10-16, re-anchored on ADR
+> **Status: HALF 1 COMPLETE, HALF 2 SPLIT OUT** 2026-10-19 · commits `be5bf85`..`a714f25` ·
+> post-mortem `.claude/learning/17-the-agent-sdk.md` · `task-verifier` PASS on the fourth round.
+> Specified 2026-10-16, re-anchored on ADR
 > `0035`. **This is the whole gap** `docs/12` names: _"Adoption of an existing ERC-8004 agent —
 > missing."_
 >
@@ -184,7 +186,10 @@ Names are a suggestion. Argue for better ones.
 - [x] A README a third party can follow without reading this repo. `packages/protocol/README.md` §"Declaring
       what your agent used": what you need, the plan, the ordering constraint, both costs read from
       the chain, and both signing modes.
-- [ ] `task-verifier` pass
+- [x] `task-verifier` **PASS** 2026-10-19, round 4, on `a714f25`. Post-mortem
+      `.claude/learning/17-the-agent-sdk.md`. Four rounds, and **not one touched the design** — the
+      code has been right since `be5bf85`. What broke, twice, was the step from a measurement to a
+      sentence about it, which is the failure `rules/claims.md` was written for.
 
 ## Which tier of the evidence ladder does this serve?
 

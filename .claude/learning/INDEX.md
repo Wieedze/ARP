@@ -2,7 +2,7 @@
 
 **Generated** 2026-10-19 by `scripts/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-16 entries, one per completed task. Written by `task-verifier` on a pass.
+17 entries, one per completed task. Written by `task-verifier` on a pass.
 
 | # | task | verdict | entry |
 | --- | --- | --- | --- |
@@ -22,3 +22,4 @@
 | [14](14-strip-the-panel-copy.md) | `tasks/15-strip-the-panel-copy.md` | PASS | Strip the panel's copy down |
 | [15](15-strict-is-off-in-the-app.md) | `tasks/18-strict-is-off-in-the-app.md` | PASS | `strict` is off in the app |
 | [16](16-make-the-testnet-rig-faithful.md) | `tasks/24-make-the-testnet-rig-faithful.md` | PASS | Make the testnet rig faithful |
+| [17](17-the-agent-sdk.md) | `tasks/16-the-agent-sdk.md` — half 1 only; half 2 split out to `tasks/25` | PASS | The connector an agent declares through (half 1) |
