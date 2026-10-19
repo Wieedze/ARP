@@ -73,10 +73,39 @@ the meantime — 10 `measure-*`, 7 `agent-*`, 3 `verify-*` — and the real pain
 
 ## The same question for citations of the old path
 
-83 occurrences of `erc8004/` across 37 markdown files. **Only the live documents were rewritten** —
+83 occurrences of `erc8004/` across 37 markdown files **on the first pass, which counted markdown
+only**. The repo-wide sweep below is the honest measurement; markdown was never the whole class.
+**Only the live documents were rewritten** —
 `CLAUDE.md`, `README.md`, `.claude/STATE.md`, `.claude/rules/`, `docs/15_ROADMAP.md`, and the open
 task files. `.claude/learning/` and the earlier ADRs keep their original paths, because a
 post-mortem is a record of what was true on its date.
+
+**Swept repo-wide afterwards**, because the first pass of this policy was applied from a hand-built
+list of "live" files and that is exactly the shape that misses one. Every match for `erc8004/`,
+`@arp-protocol/erc8004`, `@arp-protocol/sdk`, `sdk/` and `DEFAULT_DEPLOYMENT` across every file type,
+triaged:
+
+| what it turned out to be                                                                                                                           | action                                      |
+| -------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| third-party URLs — `api.deep3.ai/.well-known/intuition/erc8004/agents/…` in fixtures, `signature.ts`, `helpers.ts`                                 | none; not our paths                         |
+| `contracts/src/erc8004/` — a Solidity directory that still exists                                                                                  | none                                        |
+| this ADR's and the retractions' own text, quoting the old names                                                                                    | none; deliberate                            |
+| append-only record — `.claude/learning/`, ADRs `0014`–`0033`, completed task files, `docs/07`–`14`, PR drafts                                      | none; the policy above                      |
+| **`.gitignore`'s dead `sdk/dist/` block**                                                                                                          | **removed**, replaced by `packages/*/dist/` |
+| **`README.md`'s link to `sdk/README.md`** — a broken link on the repo's front page                                                                 | **fixed**                                   |
+| **`README.md`'s directory map**, still listing `sdk/` and labelling it `@arp-protocol/core`                                                        | **fixed**                                   |
+| **`tasks/09` and `tasks/21`** — **open** task files with actionable items citing `sdk/src/…`                                                       | **fixed**                                   |
+| ADRs `0038`–`0040`, written the same day but before the rename                                                                                     | a forwarding note at the top of each        |
+| **three live code comments** — `scripts/rig-registration-files.ts`, `scripts/verify-rig-claims.ts`, `app/src/services/__tests__/trust-fixtures.ts` | **fixed**                                   |
+
+**What the sweep says about the first pass:** it was right on the code and the configs that matter,
+and wrong in places a hand-built list of "live files" could not help but miss — a front-page link,
+two open task files, a dead ignore rule and three code comments. None of them break a build; all of
+them send a reader somewhere that does not exist. The lesson is the method, not the count: sweep
+every file type and triage, rather than enumerate the files you believe are live.
+
+The built output was never at risk: `packages/protocol/.gitignore:1` carries `dist/`, so nothing was
+committed — confirmed with `git ls-files`, 0 tracked files under `packages/protocol/dist`.
 
 **The mapping, for reading anything written before 2026-10-19:**
 

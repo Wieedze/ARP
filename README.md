@@ -86,7 +86,8 @@ const rep = await getReputation(arp, candidates[0].runtimeWallet);
 console.log(`${rep.totalStaked} wei across ${rep.distinctAtomCount} tools`);
 ```
 
-See [`sdk/`](sdk/README.md) for the full surface and a working write-path example. `scripts/agent-server.ts` is the canonical reference runtime — it discovers, hires, executes, and stakes end-to-end using only `@arp-protocol/core` + `viem`.
+See [`packages/protocol/`](packages/protocol/README.md) for the full surface, including the
+declare-and-stake write path. `scripts/agent-server.ts` is the canonical reference runtime — it discovers, hires, executes, and stakes end-to-end using only `@arp-protocol/core` + `viem`.
 
 ARP doesn't compute agents — that's the runtime layer's job. ARP is purely declarative + coordination + economic accounting.
 
@@ -146,9 +147,12 @@ ARP/
 ├── README.md                       ← This file
 ├── app/                            ← Vite + React + TS + Tailwind v4 UI
 │   └── src/{services,hooks,components,pages,lib}
-├── sdk/                            ← @arp-protocol/core — runtime-agnostic reads
-│   ├── README.md
-│   └── src/{client,modules,agents,types,abi}
+├── packages/
+│   └── protocol/                   ← @arp-protocol/core — the protocol layer (ADR 0041)
+│       ├── README.md               ← the surface a third party reads
+│       ├── src/                    ← identity, graph, verifier, tool usage,
+│       │                             declare/stake plans. Never signs, never sends
+│       └── src/arp/                ← ARP's own contracts (the folded-in `sdk/`)
 ├── contracts/                      ← Foundry workspace (Solidity)
 │   └── src/
 │       ├── ModuleRegistry.sol

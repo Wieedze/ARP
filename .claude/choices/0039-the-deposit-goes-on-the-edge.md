@@ -4,6 +4,10 @@
 **Date:** 2026-10-19
 **Triggered by:** `tasks/16` — found while deciding what `prepareStakeOnUsed` should target
 
+> **Paths in this ADR predate the 2026-10-19 reorganisation.** Read `erc8004/src/…` as
+> `packages/protocol/src/…` and `@arp-protocol/erc8004` as `@arp-protocol/core`. The text is left as
+> written because an ADR is a record of a decision on its date; ADR `0041` carries the full mapping.
+
 ## Context
 
 "The agent deposits TRUST on the modules it used" has two readings on Intuition, and they are

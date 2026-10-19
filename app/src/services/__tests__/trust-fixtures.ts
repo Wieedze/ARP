@@ -156,7 +156,7 @@ export const UNVERIFIED_UNRECONSTRUCTABLE: Extract<SignatureVerdict, {status: "u
     reason: 'could not reconstruct the signed payload: no strategy is confirmed for provider "asterpay"',
     declaredSigner: "0x27A6265e6daf8d9935A3031f2E7cDC4bDFbe2Ebe",
     // Populated, not empty: reaching this branch means strategies ran and
-    // failed, so `erc8004/src/signature.ts` always passes attempts here. An
+    // failed, so `packages/protocol/src/signature.ts` always passes attempts here. An
     // empty array is a shape the connector never emits for this reason, and a
     // later task rendering which reconstructions were tried would have been
     // testing against a fiction.

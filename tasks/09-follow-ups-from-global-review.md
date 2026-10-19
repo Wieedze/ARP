@@ -81,16 +81,16 @@ and `trust-stake.ts:128` `formatWeiPlain`.
 
 ## Priority 5 — vault metrics implemented twice
 
-`app/src/hooks/use-vault-metrics.ts:55-177` and `sdk/src/modules.ts:151-200` are the same four-step
+`app/src/hooks/use-vault-metrics.ts:55-177` and `packages/protocol/src/arp/modules.ts:151-200` are the same four-step
 algorithm — curve config, `calculateAtomId`, `getVault` per atom, one filtered `getLogs`, dedup on
 `receiver` — down to paraphrased rationale comments. The app already depends on the sdk and already
 delegates to it for agents and reputation. The `Deposited` event signature is declared three times.
 
 ## Lower
 
-- `sdk/src/client.ts:74-76` hardcodes three addresses `deployments/13579.json` already owns, with a
+- `packages/protocol/src/arp/client.ts:74-76` hardcodes three addresses `deployments/13579.json` already owns, with a
   comment telling the reader to hand-update them.
-- The testnet chain is defined three times (`app/src/lib/chains.ts:14`, `sdk/src/client.ts:16`,
+- The testnet chain is defined three times (`app/src/lib/chains.ts:14`, `packages/protocol/src/arp/client.ts:16`,
   `scripts/seed.ts:152`) with differing completeness — `seed.ts`'s copy omits `blockExplorers` and
   `testnet: true`. `app/src/lib/intuition-mainnet.ts` already imports its chain from the sdk; its
   sibling does not.

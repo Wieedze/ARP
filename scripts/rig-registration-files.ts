@@ -58,7 +58,7 @@ export const OWN_ENDPOINT = process.env.ARP_MCP_ENDPOINT ?? 'http://localhost:30
 export type RigFile = { slug: string; exercises: string; doc: Record<string, unknown> };
 
 /**
- * Exported so the rig is **tested, not eyeballed**. `erc8004/test/rig-files.test.ts` runs them
+ * Exported so the rig is **tested, not eyeballed**. `packages/protocol/test/rig-files.test.ts` runs them
  * through the real classifier and asserts each produces the group it claims to exercise — a rig
  * whose fixtures were never checked is the same failure as a fixture set covering one member of a
  * nine-member union (task 15).

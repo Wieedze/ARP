@@ -52,7 +52,7 @@ config.
 3. Fix `scripts/seed.ts:34` either way — it is a confirmed dead import and needs no gate to justify.
 4. Wire it into a repo-level check so this cannot regress, and say in the task where that check runs.
 5. Decide whether a root eslint config is in scope or a separate task. It is likely separate: a root
-   config will surface findings across `contracts/` and `sdk/` too.
+   config will surface findings across `contracts/` and `packages/protocol/` too.
 
 ## Also recorded here, same shape, different file
 

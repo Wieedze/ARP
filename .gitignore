@@ -44,8 +44,8 @@ coverage/
 .cursor/
 .agents/
 
-# sdk build output
-sdk/dist/
+# package build output (each package also ignores its own `dist/`)
+packages/*/dist/
 
 # Raw paste of the Intuition partner guide; docs/07 is the vendored copy that counts.
 integration8004.txt
