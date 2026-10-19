@@ -14,7 +14,7 @@ import {
     type ToolAtomCandidate,
     type ToolAtomLookup,
 } from "../src/declare/index.js";
-import {USES} from "../src/sources/intuition/terms.js";
+import {USE, USES} from "../src/sources/intuition/terms.js";
 import {asAgentIdentityAtom} from "../src/verify/subject.js";
 
 const MULTI_VAULT = "0x6E35cF57A41fA15eA0EaE9C33e751b01A784Fe7e" as Address;
@@ -213,10 +213,11 @@ describe("prepareDeclareUsed", () => {
             reads: fakeReads(),
         });
         expect(plan.predicate).toBe(USES);
-        // ADR 0030's whole finding: a minted predicate yields a node this repo's reader cannot see.
-        expect(plan.predicate).not.toBe(
-            "0x9ddda4ac2477ec6908e9561ab31ccd767bf3642e0ed0531fd61d447badd896ab",
-        );
+        // And not `USE`, which is the pair ADR 0030 had to disentangle: `use` means "supports this
+        // protocol", `uses` means "uses this tool". IMPORTED, not copied — `terms.ts` is the only
+        // place a term id may appear, and a test guarding against confusing these two is the worst
+        // place in the repo to keep a hand-typed copy of one of them.
+        expect(plan.predicate).not.toBe(USE);
     });
 
     it("skips the atom when it already exists and still declares the edge", async () => {

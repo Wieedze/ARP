@@ -55,9 +55,17 @@ DelegationManager.
    | `getAtomCost()`   | 0.001000000001       | 0.100000000001           |
    | `minDeposit`      | 0.001                | **0.01**                 |
 
-   No budget, cap or loop guard tuned on testnet is valid on mainnet. And the triple cost is a **fee,
-   not a deposit** — unrecoverable, and **outside** `TrustStakeCapEnforcer`, which bounds the deposit
-   only. An agent in a loop burns 0.1 TRUST per iteration with the cap untouched (ADR `0036`).
+   No budget, cap or loop guard tuned on testnet is valid on mainnet. And a term cost is a **fee,
+   not a deposit** — it does not come back, unlike a deposit.
+
+   This paragraph used to add "and **outside** `TrustStakeCapEnforcer`, which bounds the deposit
+   only. An agent in a loop burns 0.1 TRUST per iteration with the cap untouched." **Both sentences
+   were false** (ADR `0040`): the enforcer decodes `value` out of the execution and nothing else
+   (`contracts/src/enforcers/TrustStakeCapEnforcer.sol:101`), so the fee counts against the cap and a
+   loop would hit it. This was the **third** copy of that claim in this file; the other two were
+   corrected and this one — the primary statement in the numbered gaps list — was missed, so the file
+   contradicted itself 70 lines apart. What is true is narrower: **the cap bounds the amount, not the
+   kind**, so a cap can be burned on fees instead of invested in positions.
 
 3. **That a third party adopts.** No amount of testnet makes an operator sign. This is distribution,
    not engineering, and it is where the real risk sits.

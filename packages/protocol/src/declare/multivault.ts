@@ -223,6 +223,9 @@ export type MultiVaultReadsConfig = {
 export function multiVaultReads(config: MultiVaultReadsConfig): MultiVaultReads {
     const client =
         config.client ??
+        // viem's generics narrow a client to the chain it was given, and none is given here
+        // deliberately — these are plain `eth_call` reads. The base type is what the reader holds,
+        // which is the same device `sources/erc8004-registry` uses for its per-chain client map.
         (createPublicClient({
             transport: config.transport ?? http(config.rpcUrl),
         }) as PublicClient);

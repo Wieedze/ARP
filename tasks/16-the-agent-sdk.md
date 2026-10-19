@@ -4,8 +4,8 @@
 > `0035`. **This is the whole gap** `docs/12` names: _"Adoption of an existing ERC-8004 agent —
 > missing."_
 >
-> Half 1 — declare and deposit — shipped as `packages/protocol/src/declare/` (6 modules), two MCP tools, a
-> runnable example and 34 tests. Half 2 — hire and rate — moved to **`tasks/25`**, which this file
+> Half 1 — declare and deposit — shipped as `packages/protocol/src/declare/`, two MCP tools, a
+> runnable example and 44 tests. Half 2 — hire and rate — moved to **`tasks/25`**, which this file
 > told us to do if half 1 grew.
 >
 > **The design decision, and it is the load-bearing one: the connector prepares calls and never
@@ -26,7 +26,7 @@
 >     --tool https://mcp.gmchain.xyz/mcp
 >
 > subject atom  0x45078ae569def2264355f77e592028dd6f1f5d6373c204fe82bf3141ab1861fb
-> declare: 4 call(s), 0.400000000006 TRUST
+> declare: 4 call(s), 0.400000000006 TRUST     # two tools: 2 atoms + 2 triples
 >   create-atom    0.100000000001 TRUST  create the atom for ipfs://bafkreiarpslitherschema
 >   create-triple  0.100000000002 TRUST  declare that this agent uses ipfs://…
 >   …
@@ -170,7 +170,8 @@ Names are a suggestion. Argue for better ones.
 - [x] Both signing modes work, tested. Direct is `plan.calls` as they come; delegated is
       `toDelegatedCalls`, one redemption per call because `TrustStakeCapEnforcer` guards `beforeHook`
       with `onlySingleCallTypeMode` (`contracts/src/enforcers/TrustStakeCapEnforcer.sol:95-96`).
-      6 tests, including one that decodes the permission context to check the chain order.
+      7 tests, including one that decodes the permission context to check the chain order, and one
+      that asserts the amount lands where the cap enforcer reads it.
 - [x] Declarations land on the canonical atom; a test asserts the subject. It decodes the
       `createTriples` calldata and asserts `subjects == [SUBJECT]` rather than reading the plan's own
       field back (ADR `0032`).
@@ -183,6 +184,19 @@ Names are a suggestion. Argue for better ones.
       what your agent used": what you need, the plan, the ordering constraint, both costs read from
       the chain, and both signing modes.
 - [ ] `task-verifier` pass
+
+## Which tier of the evidence ladder does this serve?
+
+**Tier 3, Staked** — `docs/09_POSITIONING_AND_PLAN.md:53`, whose "who supplies it today" column
+reads **"nobody, at any real size"**. This is the first thing in the repo that lets a party ARP is
+not, holding no relationship with ARP and no key of ARP's, produce a tier-3 edge: a `uses` claim with
+its own operator's capital at risk behind it.
+
+It does **not** reach tier 4, Proven — "this action executed under enforced caveats"
+(`docs/09:54`). The delegated path is built and the caveats are deployed on both chains, but
+**nothing has been signed or sent on any chain**, so no action has executed under them yet. Crossing
+that line needs an operator who decides to spend, which is `docs/15`'s Phase 4 and is adoption
+rather than engineering.
 
 ## Out of scope
 

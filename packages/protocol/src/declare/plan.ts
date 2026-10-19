@@ -122,8 +122,9 @@ async function resolveToolAtom(
     if (lookup === undefined) {
         return derive(
             `${uri} is a location, not a content address, and no lookup was given. The atom this ` +
-                `plan would create carries no pinned metadata, and 77 of the 78 tool atoms on ` +
-                `mainnet \`uses\` edges do. Pass a lookup to reuse the tool's real atom.`,
+                `plan would create carries no pinned metadata, and 77 of the 84 tool atoms on ` +
+                `mainnet \`uses\` edges do — all but one of those being \`ipfs://\`. Pass a lookup ` +
+                `to reuse the tool's real atom.`,
         );
     }
 
@@ -137,6 +138,10 @@ async function resolveToolAtom(
                 `splits across two ids and Intuition has no deletion.`,
         );
     }
+    // Same boundary as `resolve-subject`: a `term_id` off the indexer is a 32-byte hex string by
+    // schema, typed `string` on `ToolAtomCandidate` because the lookup is a graph read and not a
+    // chain read. It is passed straight to `calculateTripleId`, which would revert on a malformed
+    // one rather than silently mis-encode.
     return {atomId: only.termId as Hex, atomSource: "existing-thing" as const, atomData: null};
 }
 
@@ -173,6 +178,8 @@ export async function prepareDeclareUsed(params: {
      */
     lookup?: ToolAtomLookup;
 }): Promise<DeclarePlan> {
+    // `USES` is declared `as const` in `terms.ts`, so it is a literal string type rather than
+    // `Hex`. The bytes are the same; the cast only widens the literal.
     const predicate = params.predicate ?? (USES as Hex);
     const uris = [
         ...new Set(params.tools.map((uri) => uri.trim()).filter((uri) => uri.length > 0)),

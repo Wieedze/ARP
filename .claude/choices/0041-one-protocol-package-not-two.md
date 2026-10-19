@@ -118,6 +118,11 @@ post-mortem is a record of what was true on its date.
 
 **Neutral (worth knowing):**
 
+- **The fold brought one `as any` into a package that had none** — `src/arp/modules.ts:201`, an
+  eslint-disabled cast on a viem event filter, pre-existing in `sdk/` since `c461677`. `code.md`
+  forbids `any` outright, so the package can no longer be described as free of it. Left in place
+  because fixing it is a behaviour change in moved code rather than part of a move, and recorded in
+  `.claude/STATE.md` so nobody infers the property from the package's reputation.
 - No source logic changed. Every gate that passed before passes after: protocol `tsc` 0 and 292
   passed / 4 skipped, app `tsc` 0, `lint` 0, 205 passed / 2 skipped.
 - `packages/protocol/test/` keeps two relative imports that reach up into `scripts/`, now at

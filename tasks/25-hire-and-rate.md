@@ -2,7 +2,7 @@
 
 > **Status: NOT STARTED** (split out of `tasks/16` on 2026-10-19, which said to do exactly that if
 > half 1 grew. It did: the declare-and-deposit half landed as `packages/protocol/src/declare/` plus two MCP
-> tools, 34 tests and three ADRs.)
+> tools, 44 tests and four ADRs.)
 >
 > Task 16's acceptance list carried two criteria belonging here — `hire` and `rate`. They are not
 > dropped; they moved, with the rest of its Half 2 text as the spec below.

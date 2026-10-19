@@ -1,8 +1,8 @@
 /** The tools ARP's MCP server serves. Data, not transport.
  *
  *  Its own module so it can be imported without pulling in the server's Bun runtime: the connector's
- *  tests assert the rig's declared capabilities against this list, and `erc8004` must typecheck
- *  without `@types/bun`, which is installed nowhere in this repo (`tasks/21`).
+ *  tests assert the rig's declared capabilities against this list, and `@arp-protocol/core` must
+ *  typecheck without `@types/bun`, which is installed nowhere in this repo (`tasks/21`).
  *
  *  A fixture declaring a tool this list does not contain is a `declared ≠ served` mismatch the
  *  verifier would report — against ARP's own rig. That nearly shipped once.

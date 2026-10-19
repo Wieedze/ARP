@@ -37,5 +37,8 @@ export async function resolveDeclarationSubject(params: {
 
     const identity = await source.resolveAgent(ref);
     if (identity === null) throw new NoAgentIdentityError(caip19);
+    // `sourceHandle` is the graph's `term_id`, which is a 0x-prefixed 32-byte string by the
+    // indexer's own schema; `AgentIdentity` types it as `string` because not every source is a
+    // graph. `asAgentIdentityAtom` is the guard that matters here, and it checks the CAIP-19.
     return asAgentIdentityAtom(identity.sourceHandle as Hex, caip19);
 }

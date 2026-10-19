@@ -1,4 +1,4 @@
-# `@arp-protocol/erc8004`
+# `@arp-protocol/core`
 
 A read-only connector for the ERC-8004 agent layer.
 
@@ -14,7 +14,7 @@ rather than rounding it up to a pass.
 ## Install
 
 ```sh
-bun add @arp-protocol/erc8004
+bun add @arp-protocol/core
 ```
 
 `viem` is the only runtime dependency. `@metamask/smart-accounts-kit` is needed **only** for
@@ -23,7 +23,7 @@ delegated signing (see below) and is imported lazily, so a direct-mode consumer 
 ## The one call
 
 ```ts
-import {createErc8004Client, getAgentProfile} from "@arp-protocol/erc8004";
+import {createErc8004Client, getAgentProfile} from "@arp-protocol/core";
 
 const client = createErc8004Client();
 const profile = await getAgentProfile(client, {chainId: 8453, tokenId: "2340"});
@@ -56,7 +56,7 @@ Ethereum.
 Everything above is keyed by an identity. `listAgents` is the read for when you do not have one yet.
 
 ```ts
-import {createErc8004Client, listAgents} from "@arp-protocol/erc8004";
+import {createErc8004Client, listAgents} from "@arp-protocol/core";
 
 const client = createErc8004Client();
 const page = await listAgents(client, {order: "evidence-quantity", limit: 25, offset: 0});
@@ -129,7 +129,7 @@ import {
     verifyAssessmentSignature,
     assessFreshness,
     fetchAssessment,
-} from "@arp-protocol/erc8004";
+} from "@arp-protocol/core";
 
 const document = await (await fetch(resolverUrl)).json();
 const verdict = await verifyAssessmentSignature(document);
@@ -141,7 +141,7 @@ const freshness = assessFreshness(document);
 Intuition is _a_ source, not _the_ source. Drop it entirely:
 
 ```ts
-import {createErc8004Client, erc8004RegistrySource, getAgentProfile} from "@arp-protocol/erc8004";
+import {createErc8004Client, erc8004RegistrySource, getAgentProfile} from "@arp-protocol/core";
 
 const client = createErc8004Client({sources: [erc8004RegistrySource()]});
 const profile = await getAgentProfile(client, {chainId: 56, tokenId: "17"});
@@ -222,7 +222,7 @@ bun run lint         # tsc --noEmit
 ```
 
 > **`bun run build` is a precondition for every consumer.** This package's `exports` point at
-> `dist/`, which is gitignored, so anything importing `@arp-protocol/erc8004` — an app, a script, a
+> `dist/`, which is gitignored, so anything importing `@arp-protocol/core` — an app, a script, a
 > one-off probe — reads whatever was last built. A stale `dist/` fails _silently_ and plausibly: it
 > once reported agents with zero trust providers, which looked exactly like a regression in the
 > connector rather than an old build. `app/`'s `dev`, `build` and `test` scripts run this build
@@ -267,7 +267,7 @@ import {
     prepareDeclareUsed,
     prepareStakeOnUsed,
     resolveDeclarationSubject,
-} from "@arp-protocol/erc8004";
+} from "@arp-protocol/core";
 
 // 1. The subject of the claim: your agent's identity atom, resolved from its ERC-8004 token.
 const subject = await resolveDeclarationSubject({agent: {chainId: 8453, tokenId: "1380"}});
@@ -356,7 +356,7 @@ no way to merge them.
 Pass a `lookup` and the planner reuses the tool's existing atom:
 
 ```ts
-import {intuitionToolAtomLookup} from "@arp-protocol/erc8004";
+import {intuitionToolAtomLookup} from "@arp-protocol/core";
 
 const lookup = intuitionToolAtomLookup({graphqlUrl: "https://mainnet.intuition.sh/v1/graphql"});
 ```
@@ -394,7 +394,7 @@ may spend per period, and the runtime redeems against it. The delegator's TRUST 
 bound the operator set.
 
 ```ts
-import {toDelegatedCalls} from "@arp-protocol/erc8004";
+import {toDelegatedCalls} from "@arp-protocol/core";
 
 const delegated = await toDelegatedCalls({
     calls: plan.calls,
