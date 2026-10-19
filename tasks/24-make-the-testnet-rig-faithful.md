@@ -1,6 +1,13 @@
 # Task 24 — Make the testnet rig faithful
 
-> **Status: GATE MET, RE-VERIFICATION PENDING** 2026-10-19. Phase 0 of `docs/15_ROADMAP.md`.
+> **Status: COMPLETE, WITH STEP 3 DEFERRED** 2026-10-19 · commits `2587883`..`5787660` ·
+> post-mortem `.claude/learning/16-make-the-testnet-rig-faithful.md` · `task-verifier` PASS on the
+> third round. Phase 0 of `docs/15_ROADMAP.md`, which **Phase 0 does not close** — step 3 is
+> deferred to `tasks/19` step 1b, and `docs/15` says so.
+>
+> Three verifier rounds, and what failed each time was the record rather than the rig: two
+> vacuous tests, an unreproducible number, a false header, a count of commits wrong four times,
+> and a claim of mine that the new unit tests closed a class they cannot. ADRs `0037`.
 >
 > Agents **3, 4 and 5** minted on `0xC165A2AD…`; ids, transactions and document hashes in
 > `deployments/13579.json` under `arp.rigAgents`. **Signed by an agent session with the operator's
