@@ -2,7 +2,7 @@
 
 **Generated** 2026-10-19 by `scripts/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-35 decisions. Newest last. `choices/README.md` says when to write one.
+36 decisions. Newest last. `choices/README.md` says when to write one.
 
 ## Not accepted
 
@@ -49,3 +49,4 @@ Read these before relying on them.
 | [0033](0033-the-hackathon-surface-is-set-aside.md) | 2026-10-17 | Accepted | The hackathon surface is set aside; agents bring their own identity |
 | [0034](0034-the-deposit-is-the-attestation.md) | 2026-10-19 | Accepted | The deposit is the attestation |
 | [0035](0035-the-agent-stakes-its-own-trust-and-arp-is-not-a-party.md) | 2026-10-19 | Accepted | The agent stakes its own operator's TRUST, and ARP is not a party |
+| [0036](0036-an-agent-may-stake.md) | 2026-10-19 | Accepted | An agent may stake. That is what ARP is. |

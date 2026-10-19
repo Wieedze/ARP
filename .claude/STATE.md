@@ -8,6 +8,11 @@ post-mortems to find out where the project is.
 
 ---
 
+## What ARP is, in one line
+
+**A connector between the Intuition protocol and agents, to create a network of agent and tool
+reputation.** (The user's own words, 2026-10-19, recorded in ADR `0036`.)
+
 ## What ARP is, in one paragraph
 
 Anyone registers their agent as ERC-8004 through ARP, or imports an identity that already exists.
