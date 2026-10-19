@@ -47,6 +47,36 @@ query ToolUsage($toolId: String!, $uses: String!, $curveId: numeric!) {
   }
 }`;
 
+/**
+ * The same read, narrowed to edges one account vouches for (ADR 0034).
+ *
+ * `positions` carries `account_id` beside `term_id`, so the narrowing is a `where` clause rather
+ * than a second pass — and `transaction_hash` comes back with it, so every surviving row reproduces
+ * from the chain.
+ */
+const ATTESTED_TOOL_USAGE_QUERY = `
+query AttestedToolUsage($toolId: String!, $uses: String!, $curveId: numeric!, $attestor: String!) {
+  tool: atoms(where: {term_id: {_eq: $toolId}}, limit: 1) {
+    term_id
+    label
+    data
+  }
+  triples(where: {
+    predicate_id: {_eq: $uses},
+    object_id: {_eq: $toolId},
+    term: {positions: {account_id: {_eq: $attestor}}}
+  }, limit: 200) {
+    term_id
+    subject {
+      term_id
+      label
+      type
+    }
+    term { ${VAULT_SIDE} }
+    counter_term { ${VAULT_SIDE} }
+  }
+}`;
+
 /** One agent's declared use of a tool, and what the market says about it. */
 export type ToolUsageEdge = {
     /** The triple's term id. Its two vaults are the market on this one claim. */
@@ -86,6 +116,20 @@ export type ToolUsage = {
 };
 
 export type ToolUsageConfig = {
+    /**
+     * Keep only edges this account holds a position in — the attestation filter of ADR 0034.
+     *
+     * A triple's subject carries no authorisation (ADR 0032), so an edge of unknown origin is
+     * unusable however readable it is. A deposit is recorded against the depositor's address, so
+     * filtering by account is filtering by **who stands behind the edge**.
+     *
+     * It is a filter, **not an exclusion**: anyone else may deposit on the same edge, and anyone may
+     * write a competing edge this account has not attested. Do not render it as exclusivity.
+     *
+     * Already the ecosystem's own convention rather than a proposal — `wieedze.eth` and `w00ds.eth`
+     * hold positions on their own `uses` edges on mainnet today.
+     */
+    attestedBy?: string;
     graphqlUrl?: string;
     fetch?: FetchLike;
     timeoutMs?: number;
@@ -121,11 +165,16 @@ export async function getToolUsage(
             timeoutMs: config.timeoutMs ?? DEFAULT_TIMEOUT_MS,
         });
 
-    const data = await transport.request(TOOL_USAGE_QUERY, {
-        toolId: toolAtomId,
-        uses: USES,
-        curveId: config.curveId === undefined ? DEFAULT_CURVE_ID : String(config.curveId),
-    });
+    const attestor = config.attestedBy?.toLowerCase();
+    const data = await transport.request(
+        attestor === undefined ? TOOL_USAGE_QUERY : ATTESTED_TOOL_USAGE_QUERY,
+        {
+            toolId: toolAtomId,
+            uses: USES,
+            curveId: config.curveId === undefined ? DEFAULT_CURVE_ID : String(config.curveId),
+            ...(attestor === undefined ? {} : {attestor}),
+        },
+    );
 
     const toolRows = Array.isArray(data["tool"]) ? data["tool"] : [];
     const tool = toolRows.length > 0 && isRecord(toolRows[0]) ? toolRows[0] : null;
@@ -168,7 +217,9 @@ export async function getToolUsage(
             sourceId: "intuition",
             kind: "claim",
             origin: toolAtomId,
-            note: `${edges.length} incoming \`uses\` edges`,
+            note:
+                `${edges.length} incoming \`uses\` edges` +
+                (attestor === undefined ? "" : `, attested by ${attestor}`),
         },
     };
 }

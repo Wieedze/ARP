@@ -154,6 +154,33 @@ describe("getToolUsage", () => {
         expect(usage.edges[0].agent.label).toBe("Relics by Intuition");
     });
 
+    it("narrows to one attestor's edges, and says so in the provenance", async () => {
+        // ADR 0034: a triple's subject carries no authorisation, so an edge of unknown origin is
+        // unusable however readable it is. A deposit is recorded against the depositor's address,
+        // so filtering by account is filtering by who stands behind the edge.
+        const seen: {query: string; variables: unknown}[] = [];
+        const usage = await getToolUsage(IPFS_ATOM, {
+            attestedBy: "0x077B59A3751Cd6682534C8203aAb29113876aF01",
+            transport: transport(RECORDED, seen),
+        });
+        expect(seen[0].query).toContain("AttestedToolUsage");
+        expect(seen[0].query).toContain("positions: {account_id: {_eq: $attestor}}");
+        // Lower-cased: `account_id` is stored lower-case, and a checksummed address matches nothing.
+        expect(seen[0].variables).toMatchObject({
+            attestor: "0x077b59a3751cd6682534c8203aab29113876af01",
+        });
+        expect(usage.provenance.note).toContain("attested by 0x077b59a3");
+    });
+
+    it("does not send the attestor clause when nobody is named", async () => {
+        // The unfiltered read must stay unfiltered: an empty `attestor` variable would match no
+        // position and silently return zero edges, which reads identically to an unused tool.
+        const seen: {query: string; variables: unknown}[] = [];
+        await getToolUsage(IPFS_ATOM, {transport: transport(RECORDED, seen)});
+        expect(seen[0].query).not.toContain("AttestedToolUsage");
+        expect(seen[0].variables).not.toHaveProperty("attestor");
+    });
+
     it("marks the provenance a claim, not something ARP derived", async () => {
         // Each edge is an assertion somebody wrote; the market only prices it. Calling the totals
         // `derived` would suggest ARP computed the standing rather than read it.

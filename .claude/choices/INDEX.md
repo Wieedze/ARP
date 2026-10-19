@@ -1,8 +1,8 @@
 # ADR index
 
-**Generated** 2026-10-17 by `scripts/build-claude-index.ts`. Do not edit by hand — rerun the script.
+**Generated** 2026-10-19 by `scripts/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-33 decisions. Newest last. `choices/README.md` says when to write one.
+34 decisions. Newest last. `choices/README.md` says when to write one.
 
 ## Not accepted
 
@@ -47,3 +47,4 @@ Read these before relying on them.
 | [0031](0031-claims-carry-their-bounds.md) | 2026-10-16 | Accepted | A claim carries its bounds, or it is not written |
 | [0032](0032-the-use-edge-is-a-claim-about-the-identity.md) | 2026-10-16 | Accepted | A `uses` edge is a claim about the identity, not a record of the account |
 | [0033](0033-the-hackathon-surface-is-set-aside.md) | 2026-10-17 | Accepted | The hackathon surface is set aside; agents bring their own identity |
+| [0034](0034-the-deposit-is-the-attestation.md) | 2026-10-19 | Accepted | The deposit is the attestation |

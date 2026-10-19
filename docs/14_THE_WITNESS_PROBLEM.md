@@ -118,6 +118,39 @@ order of a thousand of them, not ninety thousand.
 **This gap is the product.** It costs one HTTP request per agent to establish, needs nobody's
 permission, and nothing in this ecosystem currently reports it.
 
+## Provenance: the deposit is the attestation
+
+A triple's subject carries no authorisation — writing `(NetGuardian, uses, Slither)` requires
+controlling neither party (ADR `0032`). So an edge has **no provenance**, and a readable edge of
+unknown origin is still unusable.
+
+The answer is not a signature scheme, an `attested by` predicate or a writer allow-list. **It is the
+deposit** (ADR `0034`): a position is recorded on-chain against the depositor's address, so depositing
+on an edge is simultaneously a statement of provenance and of belief.
+
+Verified 2026-10-19 — the filter is one query, because `positions` carries `account_id` beside
+`term_id`:
+
+```graphql
+positions(where: {account_id: {_eq: $attestor},
+                  term: {triple: {predicate_id: {_eq: $uses}}}})
+```
+
+Three things make this better than it first looks:
+
+- **It is the ecosystem's existing convention, not a proposal.** `wieedze.eth` holds positions on its
+  own `(wieedze.eth, uses, Hardhat)` edge; `w00ds.eth` on MetaMask, Claude, Obsidian and Cursor.
+- **It doubles as the economic position** ARP wanted anyway. The attestation is not overhead on the
+  stake; it _is_ the stake.
+- **It is revocable.** A position can be redeemed, so a vouching can be withdrawn when an edge turns
+  out wrong — strictly better than an immutable signature.
+
+And the limit, which must never be rendered away: **it is a filter, not an exclusion.** Anyone may
+deposit on the same edge, and anyone may write a competing edge nobody attested. Every attestation
+also costs at least `minDeposit`, so the bound on how many edges a party can stand behind is money.
+
+`scripts/measure-attestor-filter.ts` reproduces it.
+
 ## The ladder of knowledge
 
 What the interface must never do is render these at the same weight. This is `docs/09` §3's evidence
