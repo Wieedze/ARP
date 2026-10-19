@@ -2,7 +2,7 @@
 
 **Generated** 2026-10-19 by `scripts/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-37 decisions. Newest last. `choices/README.md` says when to write one.
+40 decisions. Newest last. `choices/README.md` says when to write one.
 
 ## Not accepted
 
@@ -51,3 +51,6 @@ Read these before relying on them.
 | [0035](0035-the-agent-stakes-its-own-trust-and-arp-is-not-a-party.md) | 2026-10-19 | Accepted | The agent stakes its own operator's TRUST, and ARP is not a party |
 | [0036](0036-an-agent-may-stake.md) | 2026-10-19 | Accepted | An agent may stake. That is what ARP is. |
 | [0037](0037-an-agent-session-may-sign-on-testnet.md) | 2026-10-19 | Accepted | An agent session may sign on testnet 13579 with the operator's key |
+| [0038](0038-the-write-path-is-a-plan-not-a-transaction.md) | 2026-10-19 | Accepted | The write path is a plan, not a transaction |
+| [0039](0039-the-deposit-goes-on-the-edge.md) | 2026-10-19 | Accepted | The deposit goes on the edge, not on the tool's atom |
+| [0040](0040-the-cap-bounds-the-amount-not-the-kind.md) | 2026-10-19 | Accepted | The cap bounds the amount, not the kind |

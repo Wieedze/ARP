@@ -77,11 +77,18 @@ the enforcer's name suggests more protection than it gives.
 
 **Negative**
 
-- **The fee is outside the cap.** `TrustStakeCapEnforcer` bounds the deposit; `getTripleCost()` is
-  charged by the MultiVault on triple creation and is not a deposit. An agent in a loop burns
-  0.1 TRUST per iteration with the cap untouched. This needs a bound of its own — an edge budget per
-  period, enforced before `createTriples` — and **it is not built**. Recorded here rather than
-  discovered later.
+- ~~**The fee is outside the cap.**~~ **Corrected by ADR `0040` on 2026-10-19 — this bullet was
+  wrong.** It claimed `TrustStakeCapEnforcer` bounds the deposit and that an agent in a loop "burns
+  0.1 TRUST per iteration with the cap untouched". The enforcer decodes `value` out of the execution
+  and nothing else (`contracts/src/enforcers/TrustStakeCapEnforcer.sol:101`), so the fee **is**
+  counted and the loop would hit the cap. Left struck through rather than deleted, because this ADR
+  is append-only record and the wrong version propagated to four other files from here.
+
+  The real limitation: **the cap bounds the amount, not the kind.** It cannot tell a non-recoverable
+  fee from a recoverable deposit, so an agent can exhaust an operator's cap on term creation and
+  hold no position. A bound that could tell them apart would have to decode calldata and know every
+  term-creating selector; **not built**, and recorded as such in `docs/15_ROADMAP.md` Phase 3.
+
 - A first mainnet spend will happen without ARP being able to reverse it. Intuition has no deletion,
   and a wrong edge is permanent even when its deposit is redeemed.
 - The testnet-first condition is a judgement, not a mechanism. Nothing enforces it, so it holds only

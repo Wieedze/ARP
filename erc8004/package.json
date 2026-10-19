@@ -1,7 +1,7 @@
 {
     "name": "@arp-protocol/erc8004",
     "version": "0.0.1",
-    "description": "Read-only ERC-8004 trust connector. Resolves an agent identity to one merged profile — every trust provider's assessment with its EIP-712 signature verified and its declared freshness enforced, plus capabilities and live market data.",
+    "description": "ERC-8004 trust connector. Never signs and never sends. Resolves an agent identity to one merged profile — every trust provider's assessment with its EIP-712 signature verified and its declared freshness enforced, plus capabilities and live market data. Prepares, but never sends, the calls an agent uses to declare what it used and stake on it.",
     "type": "module",
     "exports": {
         ".": {
@@ -26,7 +26,16 @@
     "dependencies": {
         "viem": "2.52.0"
     },
+    "peerDependencies": {
+        "@metamask/smart-accounts-kit": "^1.6.0"
+    },
+    "peerDependenciesMeta": {
+        "@metamask/smart-accounts-kit": {
+            "optional": true
+        }
+    },
     "devDependencies": {
+        "@metamask/smart-accounts-kit": "^1.6.0",
         "@types/node": "^24.12.2",
         "typescript": "~6.0.2",
         "vitest": "^4.1.8"

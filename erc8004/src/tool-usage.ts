@@ -6,7 +6,26 @@ import {INTUITION_MAINNET_GRAPHQL} from "./sources/intuition/index.js";
 import {USES} from "./sources/intuition/terms.js";
 import type {MarketSide, Provenance} from "./types.js";
 
-/** The curve the UI prices on. Governance-configurable — read it, do not trust a copy. */
+/**
+ * The curve this reader's per-vault fields are scoped to. **A copy, and the comment above it used
+ * to claim otherwise** — it said "governance-configurable, read it, do not trust a copy" directly
+ * above a copy.
+ *
+ * Today it is correct: `getBondingCurveConfig().defaultCurveId` is 1 on both 1155 and 13579
+ * (measured 2026-10-19), so this agrees with what `prepareStakeOnUsed` writes and no deposit is
+ * invisible. Two things a reader should know anyway:
+ *
+ *   - If governance moves `defaultCurveId`, the writer follows it and this does not. Assets would
+ *     still show, because `mapMarketSide` reads `total_assets` off the **term** (all curves), but
+ *     `positionCount` would read 0 — and ADR `0023`'s rule against showing a TRUST figure without a
+ *     position count would then be satisfied by a zero.
+ *   - It already mixes populations: on mainnet, **89% of the TRUST on `uses` edges sits on curve
+ *     2** (`scripts/measure-stake-vault-placement.ts`), which the per-vault fields exclude and the
+ *     term-level totals include.
+ *
+ * Reading it from the chain is the fix and belongs with `tasks/23`, because it changes what the
+ * tool surface displays.
+ */
 const DEFAULT_CURVE_ID = "1";
 
 const VAULT_SIDE = `

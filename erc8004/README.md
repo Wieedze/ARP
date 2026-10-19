@@ -17,7 +17,8 @@ rather than rounding it up to a pass.
 bun add @arp-protocol/erc8004
 ```
 
-`viem` is the only runtime dependency.
+`viem` is the only runtime dependency. `@metamask/smart-accounts-kit` is needed **only** for
+delegated signing (see below) and is imported lazily, so a direct-mode consumer never loads it.
 
 ## The one call
 
@@ -247,7 +248,175 @@ recorded fixtures cannot catch by construction — a fixture answers whatever it
 whose _variable declarations_ the indexer rejects passes every hermetic test and fails in production.
 That happened once already, to the market read's `$curveId`.
 
-## Read-only
+## Declaring what your agent used
 
-This package never signs and never sends a transaction. There is no wallet client, no private key,
-and no write path anywhere in it. Every read is unauthenticated.
+The other half: an agent says which tools it used, and puts TRUST behind the claim. The tool gains
+reputation, and so does the agent.
+
+**What you need: a funded wallet and an ERC-8004 identity.** No API key, no account with anyone, no
+relationship with ARP. A tool's atom is derived from its URI and your identity atom already exists
+if your agent is in the Base mirror, so nothing has to be pinned.
+
+**This package prepares the calls. It never signs them and never sends them.** You get a list of
+`{to, value, data, why}` and sign it with your own key. ARP holds no key and has no send path, so it
+cannot spend your TRUST even by mistake — that is the point, not a limitation.
+
+```ts
+import {
+    multiVaultReads,
+    prepareDeclareUsed,
+    prepareStakeOnUsed,
+    resolveDeclarationSubject,
+} from "@arp-protocol/erc8004";
+
+// 1. The subject of the claim: your agent's identity atom, resolved from its ERC-8004 token.
+const subject = await resolveDeclarationSubject({agent: {chainId: 8453, tokenId: "1380"}});
+
+// 2. A reader for the chain you are writing to. Addresses differ per chain — pass yours.
+const reads = multiVaultReads({
+    address: "0x6E35cF57A41fA15eA0EaE9C33e751b01A784Fe7e", // Intuition MultiVault, chain 1155
+    chainId: 1155,
+    rpcUrl: "https://rpc.intuition.systems/http",
+});
+
+// 3. The plan. Nothing has happened yet.
+const plan = await prepareDeclareUsed({
+    subject,
+    tools: ["ipfs://bafkrei…", "https://tools.example.org/semgrep.json"],
+    reads,
+    // Needed whenever a tool is an https:// endpoint — see "Which atom a tool gets" below.
+    lookup: intuitionToolAtomLookup({graphqlUrl}),
+});
+
+console.log(plan.totalValue); // what signing this will cost you, in wei
+
+for (const call of plan.calls) {
+    // Check the chain on EVERY call, not once on the plan. Each MultiVault is codeless on the
+    // other chain, and a value-bearing call to a codeless address does not revert — it is a plain
+    // transfer that succeeds. Signing a 13579 plan against 1155 loses the fee with no error.
+    if (call.chainId !== (await wallet.getChainId())) throw new Error("wrong chain");
+
+    const hash = await wallet.sendTransaction({
+        to: call.to,
+        value: call.value,
+        data: call.data,
+    }); // your key
+    // Wait for the receipt before the next call. `plan.calls` is ordered because an atom must
+    // exist before the edge that references it, and `sendTransaction` resolves on the hash, not
+    // on inclusion — so firing them without waiting reverts the create-triple.
+    await publicClient.waitForTransactionReceipt({hash});
+}
+```
+
+`plan.tools` says which ids already existed, so running it twice is visibly a no-op rather than a
+silent one.
+
+Then put TRUST behind it. Declaring and staking are separate transactions on purpose: the
+declaration is a statement, the deposit is what makes it cost something.
+
+**Declaring alone leaves an edge with no position on it, and that matters more than it sounds.**
+`createTriples` is paid with `assets = tripleCost`, and the cost is deducted in full — measured on
+mainnet, `getTripleCost()` is `1e17 + 2e6` against a `tripleCreationProtocolFee` of `1e17` and two
+`minShare`s of `1e6`, so the remainder available to deposit is **zero**. The declarer takes no
+position on the edge it just created. Any reader filtering on who stands behind an edge will skip
+it, including this package's own `getToolUsage({attestedBy})`. So a declare-only run spends a
+non-recoverable fee on a claim nobody is backing — including you. Stake, or expect the edge to read
+as unbacked.
+
+```ts
+const stake = await prepareStakeOnUsed({
+    targets: plan.tools.map((tool) => ({tripleId: tool.tripleId, amount: 10_000_000_000_000_000n})),
+    receiver: myAddress, // who holds the position
+    reads,
+});
+```
+
+`stake.minDeposit` is the protocol's floor on that chain, read per plan — **1e16 (0.01 TRUST) on
+mainnet 1155 against 1e15 (0.001) on testnet 13579**, so an amount tuned on testnet is a tenth of
+what mainnet accepts. An amount below it is refused with `BelowMinDepositError` rather than sent.
+
+**The deposit lands on the edge, not on the tool's atom.** The edge is the claim _you_ made, it gets
+a counter-vault so anyone can take the other side, and it is the vault a reader can attribute back
+to you. The atom's vault is a market on the tool in general, open to anyone for any reason — on
+Intuition mainnet on 2026-10-19, 74 of the 185 existing `uses` edges had stake only there, where no
+reader of the edge can see it (`scripts/measure-stake-vault-placement.ts`).
+
+### Which atom a tool gets
+
+For a **content address** — `ipfs://`, `ar://` — the atom id derives from the URI, because the URI
+_is_ the pinned document. Nothing else is needed.
+
+For an **`https://` endpoint** it is not that simple, and getting it wrong is permanent. Measured on
+mainnet over the 84 tool atoms on `uses` edges: **78 are `ipfs://`** and 77 of those resolve a
+pinned Thing with metadata; the only two raw-URL atoms in the whole set are `schema.org` vocabulary
+terms, not tools. So minting an atom straight from an `https://` URL puts the tool on an id with no
+metadata, beside whatever atom it really has — and the tool's reputation splits across both, with
+no way to merge them.
+
+Pass a `lookup` and the planner reuses the tool's existing atom:
+
+```ts
+import {intuitionToolAtomLookup} from "@arp-protocol/erc8004";
+
+const lookup = intuitionToolAtomLookup({graphqlUrl: "https://mainnet.intuition.sh/v1/graphql"});
+```
+
+It is a graph read. **No API key** — the pinning credential is for _minting_ an atom, which this
+never does. Then:
+
+- **one match** → that atom is used as the object, and no atom is created.
+- **no match** → the plan still creates one from the URL, and `plannedTool.bareUrlWarning` says so
+  before you sign.
+- **several matches** → `AmbiguousToolAtomError`, and the planner refuses. `https://github.com`
+  resolves to **five** atoms today; picking one of them for you would write a permanent edge onto an
+  arbitrary id. Pass the `ipfs://` URI of the atom you mean.
+
+### What it costs
+
+Read from the chain on every plan, never hardcoded, because it is governance-configurable and
+differs by two orders of magnitude between chains. Measured 2026-10-19:
+
+| chain           | `getAtomCost()` | `getTripleCost()` |
+| --------------- | --------------- | ----------------- |
+| Intuition 1155  | 0.100000000001  | 0.100000000002    |
+| Intuition 13579 | 0.001000000001  | 0.001000000002    |
+
+Creating a term is a **fee** — it does not come back. A deposit is a position, and it does. Check
+`plan.totalValue` before you sign.
+
+### Two ways to sign
+
+**Direct** — your agent's wallet signs the calls as they come, and its own TRUST is spent. Minimal
+friction, and the way to start.
+
+**Delegated** — your operator signs one delegation up front, with caveats bounding what the agent
+may spend per period, and the runtime redeems against it. The delegator's TRUST is spent, within the
+bound the operator set.
+
+```ts
+import {toDelegatedCalls} from "@arp-protocol/erc8004";
+
+const delegated = await toDelegatedCalls({
+    calls: plan.calls,
+    delegations: signedDelegation, // or [leaf, …, root] for a chain
+    delegationManager: "0xdb9B1e94B5b69Df7e401DDbedE43491141047dB3",
+});
+// delegated.calls each send 0 — a redemption spends the DELEGATOR's balance.
+// delegated.delegatorValue is what the delegator actually spends.
+```
+
+Delegated mode needs `@metamask/smart-accounts-kit` installed; direct mode does not, and the import
+is lazy so you only pay for it if you use it. One redemption per call, never a batch — the caveat
+enforcers reject batch execution modes, which is the whole reason they can bound a spend.
+
+The guard rail is not the price of entry: you can start direct and add the delegation later without
+changing anything else.
+
+## Never signs, never sends
+
+No wallet client, no private key, no send path anywhere in this package. Every read is
+unauthenticated, and the write half returns unsigned calls for your own key.
+
+This used to read "read-only throughout, no write path of any kind", which stopped being true when
+the planners landed. The invariant that matters is narrower and unchanged: nothing here can move
+your funds.

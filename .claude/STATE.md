@@ -1,6 +1,6 @@
 # Project state
 
-**Updated** 2026-10-19 (task 24 verified). Hand-maintained — a task does not close without updating this file
+**Updated** 2026-10-19 (task 16 half 1). Hand-maintained — a task does not close without updating this file
 (`workflow.md`, task-close protocol).
 
 Read this after `CLAUDE.md` and before anything else. It replaces reading every ADR in
@@ -50,13 +50,20 @@ git rev-list --count origin/feat/agent-panel-tabs..HEAD
 
 The remote SHA above is stable between pushes, so it stays.
 
-**Tests**: connector **248 passed / 4 skipped** · app 205 passed / 2 skipped. `tsc` 0, `lint` 0.
+**Tests**: connector **282 passed / 4 skipped** · app 205 passed / 2 skipped. `tsc` 0, `lint` 0.
+Task 16 added 34 of those — 19 planner, 7 delegated, 8 at the MCP wire. Re-read them rather than
+trusting this line: `cd erc8004 && bun run test`.
 
-**What those gates do NOT cover** (`claims.md` check 4): `scripts/arp-mcp-server.ts` and
-`scripts/verify-cohort.ts` are inside **no typecheck and no lint** — there is no root `tsconfig.json`
-and no root eslint config. `scripts/arp-mcp-tools.ts` and `scripts/rig-registration-files.ts` _are_
-inside the connector's typecheck, incidentally, because its tests import them — a partial closure of
-`tasks/21`'s gap that nobody designed.
+**What those gates do NOT cover** (`claims.md` check 4): `scripts/arp-mcp-server.ts`,
+`scripts/verify-cohort.ts`, `scripts/agent-declare-used.ts` and
+`scripts/measure-stake-vault-placement.ts` are inside **no typecheck and no lint** — there is no root
+`tsconfig.json` and no root eslint config. Task 16 added two of those four, so the gap `tasks/21`
+owns got wider rather than narrower. `scripts/arp-mcp-tools.ts` and
+`scripts/rig-registration-files.ts` _are_ inside the connector's typecheck, incidentally, because its
+tests import them — a partial closure nobody designed.
+
+The write path itself is inside every gate, because it lives in `erc8004/src/declare/` and not in
+`scripts/` (`portability.md` rule 1). That is what the rule is for.
 
 **Blocked on one thing:** no GitHub credential is reachable from the agent session. `git push` fails
 with `could not read Username`; `gh` is not logged in; the user's own credentials sit in
@@ -80,7 +87,7 @@ and task 20 commits and does not describe them.**
 | 13     | a rule the repo cannot satisfy                    | open — `code.md:86` requires React Testing Library; the repo has none                                                                                                            |
 | 14     | contrast below AA                                 | open — `--color-fg-40` at 3.66:1                                                                                                                                                 |
 | 15     | strip the panel copy                              | done, verified                                                                                                                                                                   |
-| 16     | the connector an agent declares through           | open — **the whole gap** `docs/12` names; re-anchored on ADR `0035`                                                                                                              |
+| 16     | the connector an agent declares through           | **half 1 done** — `erc8004/src/declare/`, 2 MCP tools, 34 tests. Prepares calls, never signs (ADR `0038`); stake on the edge (ADR `0039`). Half 2 → `tasks/25`                   |
 | 17     | the external verifier                             | **built**, 48 tests; gate not yet run at 100 agents                                                                                                                              |
 | 18     | `strict` is off in the app                        | done, verified (`6b351ee`) — cost was indeed zero errors                                                                                                                         |
 | 19     | the `use` edge and its witness                    | step 1 done. **Step 1b is blocking** — the `same as` join does not exist (`scripts/measure-caip10-join.ts`: zero edges). 1b also **owns task 24's deferred step 3**              |
@@ -89,16 +96,22 @@ and task 20 commits and does not describe them.**
 | 22     | the chain as witness                              | open — user proposal; strongest evidence class, bounded by how much tool use is on-chain. **Measure first**                                                                      |
 | 23     | the tool surface                                  | step 1 **done** (`getToolUsage`, 9 tests, live-verified); the page remains                                                                                                       |
 | 24     | make the testnet rig faithful                     | **complete** (`5787660`, verifier PASS). Agents 3,4,5 exist and the two-step gate passes; step 3 (identity resolution) **deferred** to task 19 step 1b, so Phase 0 is not closed |
+| 25     | hire an agent, and rate it afterwards             | open — split out of 16 on 2026-10-19. Depends on `tasks/23`: a candidate list is unjudgeable without a tool page                                                                 |
 
 **Recommended order** — `docs/15_ROADMAP.md` is the full version with what testnet can and cannot
-prove. Short form: **24 → 16 → 23 → 17**, then the two mainnet gaps.
+prove. Short form: 24 and 16's half 1 are done; next is **23 → 17 → 25**, then the two mainnet gaps.
+`tasks/23` moves ahead of 25 because `hire` returns a candidate list nobody can judge without a page
+that shows a tool with its weight.
 
 Everything runs on **testnet 13579 for now** — the rig is already deployed there and nothing needs
-simulating. Two things testnet will never prove, both design work rather than testing:
+simulating. What testnet will never prove is **one** thing, not two, and that is a correction:
 `DomainScopeEnforcer` has no mainnet mechanism (it gates `ModuleRegistry.registerModule`, which ADR
-`0025` keeps off mainnet), and the triple **fee** sits outside `TrustStakeCapEnforcer`. And costs are
-**100× apart** — 0.001 TRUST per triple on testnet against 0.1 on mainnet — so no budget tuned on
-testnet transfers.
+`0025` keeps off mainnet). The second one — "the triple fee sits outside `TrustStakeCapEnforcer`" —
+**was false in five places including a rule file**, and ADR `0040` corrects it: the enforcer caps
+native `value`, so a fee counts against it. The true, narrower limitation is that **the cap bounds
+the amount and not the kind**, so a cap can be burned on fees instead of invested in positions. And
+costs are **100× apart** — 0.001000000002 TRUST per triple on testnet against 0.100000000002 on
+mainnet — so no budget tuned on testnet transfers.
 
 Task 16 moved to the front because it is the loop itself — an operator signs one delegation, the
 agent declares and deposits, the tool gains reputation. `docs/12` calls it "the whole gap". Nothing
@@ -140,18 +153,21 @@ the tool who used it.
 
 ## Known defects, not yet fixed
 
-| what                                                                                                                                               | where            | severity                                                                                                                                                                                           |
-| -------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `scripts/` is outside **every** gate — `tsc -b` covers only `app/src`, no eslint config at the repo root, `bun build` skips unused locals          | **task 21**      | live: `scripts/seed.ts:34` imports `decodeEventLog` and never uses it, plus five implicit `any`s. Not zero-cost to close — two ad-hoc configs disagreed (6 vs 24), so measure with a committed one |
-| `app/vitest.config.ts` is in neither tsconfig project                                                                                              | task 21          | measured at zero errors to add; same shape as task 18, missed by it                                                                                                                                |
-| `bun run format:check` fails on 190 files, long-standing                                                                                           | task 21          | a gate that always fails is not a gate; citing it green would be a `claims.md` check-4 error                                                                                                       |
-| the rig's testnet writes are permanent — 3 mints plus 1 `setAgentURI`                                                                              | ADR `0037`       | a wrong fixture costs an id; one was wrong when minted and corrected in place. Document hashes in `deployments/13579.json` make repo-vs-chain drift detectable                                     |
-| `verify-cohort.ts` builds a document-hash map, logs it, and **never reads it**                                                                     | task 21          | its header claimed caching that does not happen; the claim is corrected, the map is not wired. A Base run was observed loading a testnet file before the out path was keyed by target              |
-| `ensureAtomForURI` mints an atom for any `ipfs://` string without validating it is a CID; 18 permanent atoms with fabricated CIDs exist on testnet | task 20 appendix | unrecoverable per occurrence                                                                                                                                                                       |
-| `--color-fg-40` at 3.66:1, below AA                                                                                                                | task 14          | accessibility                                                                                                                                                                                      |
-| `code.md:86` requires a test framework the repo does not have                                                                                      | task 13          | an unsatisfiable rule                                                                                                                                                                              |
-| 21 triples stranded on a predicate ARP minted and abandoned                                                                                        | ADR 0030         | testnet only, 2.1e-11 tTRUST; **not migrable**, Intuition has no deletion                                                                                                                          |
-| `identity-registry.ts` declares `totalAgents()`, which reverts on the canonical registry                                                           | unrecorded       | needs a task                                                                                                                                                                                       |
+| what                                                                                                                                                                                                                                                                                                                                            | where                   | severity                                                                                                                                                                                                                                                                                                           |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `scripts/` is outside **every** gate — `tsc -b` covers only `app/src`, no eslint config at the repo root, `bun build` skips unused locals                                                                                                                                                                                                       | **task 21**             | live: `scripts/seed.ts:34` imports `decodeEventLog` and never uses it, plus five implicit `any`s. Not zero-cost to close — two ad-hoc configs disagreed (6 vs 24), so measure with a committed one                                                                                                                 |
+| `app/vitest.config.ts` is in neither tsconfig project                                                                                                                                                                                                                                                                                           | task 21                 | measured at zero errors to add; same shape as task 18, missed by it                                                                                                                                                                                                                                                |
+| `bun run format:check` fails repo-wide, long-standing (**214** files on 2026-10-19 — count it, do not quote it: `bunx prettier --check .`). `.claude/choices/INDEX.md` is among them and is **generated**, so `build-claude-index.ts` re-dirties it on every run; it belongs in `.prettierignore` or the generator should emit formatted output | task 21                 | a gate that always fails is not a gate; citing it green would be a `claims.md` check-4 error                                                                                                                                                                                                                       |
+| the rig's testnet writes are permanent — 3 mints plus 1 `setAgentURI`                                                                                                                                                                                                                                                                           | ADR `0037`              | a wrong fixture costs an id; one was wrong when minted and corrected in place. Document hashes in `deployments/13579.json` make repo-vs-chain drift detectable                                                                                                                                                     |
+| `verify-cohort.ts` builds a document-hash map, logs it, and **never reads it**                                                                                                                                                                                                                                                                  | task 21                 | its header claimed caching that does not happen; the claim is corrected, the map is not wired. A Base run was observed loading a testnet file before the out path was keyed by target                                                                                                                              |
+| `ensureAtomForURI` mints an atom for any `ipfs://` string without validating it is a CID; 18 permanent atoms with fabricated CIDs exist on testnet                                                                                                                                                                                              | task 20 appendix        | unrecoverable per occurrence                                                                                                                                                                                                                                                                                       |
+| `erc8004/src/tool-usage.ts` scopes its per-vault fields to a **hardcoded curve 1** while the writer reads `defaultCurveId` from the chain                                                                                                                                                                                                       | `tasks/23`              | **not live** — both resolve to 1 on both chains today, so no deposit is invisible. But 89% of mainnet `uses`-edge TRUST sits on curve 2, which those fields exclude while the term-level totals include it, so one `MarketSide` can mix two populations (`claims.md` check 2 inside the data model)                |
+| A declare-only run creates an edge **with no position on it** — `getTripleCost()` leaves a zero remainder, so the declarer backs nothing and `getToolUsage({attestedBy})` discards the edge                                                                                                                                                     | `tasks/16` / `tasks/25` | a design consequence, not a bug: declaring and staking are separate by spec. Costs 0.1 TRUST of non-recoverable fee for an edge that reads as unbacked until a stake follows. `assets = tripleCost + minDeposit` would make the declaration self-attesting in one transaction — a product decision nobody has made |
+| `scripts/agent-stake-on-use.ts` deposits on the tool's **atom** while `getToolUsage` prices the **triple**, so its stake is invisible to ARP's own reader                                                                                                                                                                                       | ADR `0039`              | **latent, not live** — its only callers are `agent-server.ts` and `agent-server-specialist.ts`, both set-aside hackathon surface (ADR `0033`). Not fixed: it is historical record. Do not copy it — `erc8004/src/declare/` is the pattern. Mainnet, 2026-10-19: 74 of 185 `uses` edges are in that state           |
+| `--color-fg-40` at 3.66:1, below AA                                                                                                                                                                                                                                                                                                             | task 14                 | accessibility                                                                                                                                                                                                                                                                                                      |
+| `code.md:86` requires a test framework the repo does not have                                                                                                                                                                                                                                                                                   | task 13                 | an unsatisfiable rule                                                                                                                                                                                                                                                                                              |
+| 21 triples stranded on a predicate ARP minted and abandoned                                                                                                                                                                                                                                                                                     | ADR 0030                | testnet only, 2.1e-11 tTRUST; **not migrable**, Intuition has no deletion                                                                                                                                                                                                                                          |
+| `identity-registry.ts` declares `totalAgents()`, which reverts on the canonical registry                                                                                                                                                                                                                                                        | unrecorded              | needs a task                                                                                                                                                                                                                                                                                                       |
 
 ## Decisions that govern everything
 
@@ -167,6 +183,10 @@ Full list in `.claude/choices/INDEX.md` (generated). The ones to know before tou
 - **0030** — the `use` edge is chosen on **meaning**, not publication. `use` means "supports this
   protocol"; `uses` means "uses this tool". ARP writes `uses` `0x5c0bde1c…`.
 - **0031** — a claim carries its bounds. See below.
+- **0038** — the write path is a **plan**, not a transaction. The connector returns unsigned calls
+  and holds no key, so ADR `0035`'s "ARP is not a party" is structural rather than promised.
+- **0039** — the deposit goes on the **edge**, not the tool's atom. The edge is the claim, it has a
+  counter-vault, and it is the vault `getToolUsage` prices.
 
 ## Hard constraints
 
@@ -191,6 +211,7 @@ scripts/measure-cohort-callable.ts         how many agents can act as a tool for
 scripts/measure-predicate-edges.ts         edge count per predicate the connector freezes
 scripts/measure-predicate-objects.ts       what `use` vs `uses` edges actually assert
 scripts/measure-predicate-reachability.ts  whether a defect is live or latent
+scripts/measure-stake-vault-placement.ts   whether a stake sits on the edge or the object atom
 scripts/build-claude-index.ts              regenerate the ADR and post-mortem indexes
 scripts/verify-pin-key.ts                  validate the partner key, prove recipe determinism
 ```

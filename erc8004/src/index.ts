@@ -1,5 +1,5 @@
 /**
- * `@arp-protocol/erc8004` — a read-only connector for the ERC-8004 agent layer.
+ * `@arp-protocol/erc8004` — a connector for the ERC-8004 agent layer. Never signs, never sends.
  *
  * Give it an ERC-8004 identity and it returns one merged profile: every trust
  * provider's assessment with its EIP-712 signature actually verified and its
@@ -21,8 +21,11 @@
  * read the number and trust it. This package checks both, and reports what it
  * cannot check rather than rounding up to a pass.
  *
- * Read-only throughout: no signer, no wallet client, no private key, no write
- * path of any kind.
+ * **Never signs and never sends.** That was once "read-only throughout, no write path of any
+ * kind", and the honest version is narrower: `declare/` prepares the calls an agent needs to
+ * declare what it used and deposit on it, and hands them back unsigned. The package still holds no
+ * key, builds no wallet client and has no send path — which is what makes "ARP is not a party"
+ * (ADR `0035`) an enforceable property rather than a promise. See ADR `0038`.
  */
 
 export {createErc8004Client, type Erc8004Client, type Erc8004ClientConfig} from "./client.js";
@@ -96,8 +99,8 @@ export {
  * Two frozen copies of a constant whose whole purpose is to be frozen is the
  * worse failure, so the writer takes this one rather than keeping its own.
  *
- * Exporting it adds no write path. This package still never signs and never
- * sends a transaction.
+ * Exporting it adds no send path. This package still never signs and never sends a transaction;
+ * `declare/` prepares calls for the agent's own key (ADR `0038`).
  */
 export {
     CAPABILITY_PREDICATE_IDS as INTUITION_CAPABILITY_PREDICATE_IDS,
@@ -210,3 +213,53 @@ export type {
  */
 export {getToolUsage} from "./tool-usage.js";
 export type {ToolUsage, ToolUsageConfig, ToolUsageEdge} from "./tool-usage.js";
+
+/**
+ * Declaring what an agent used, and putting TRUST behind it — the write half of `docs/12`.
+ *
+ * Returns **plans**, not transactions: `PreparedCall[]` for the agent's own runtime to sign with
+ * its own key. ARP never holds the key and never sends (ADR `0038`), so it cannot spend an
+ * operator's TRUST even by mistake — the property ADR `0035` asks for, made structural.
+ *
+ * A third party needs a funded wallet and an ERC-8004 identity. No API key: a tool's atom derives
+ * from its URI (ADR `0008`) and the identity atom already exists for the mirrored cohort.
+ *
+ * Two modes. **Direct** — sign `plan.calls` as they come; the signer's own TRUST is spent.
+ * **Delegated** — pass them through `toDelegatedCalls` with the operator's signed delegation; the
+ * delegator's TRUST is spent, bounded by the caveats the operator signed. The guard rail is not
+ * the price of entry.
+ */
+export {
+    AmbiguousToolAtomError,
+    atomDataForUri,
+    BelowMinDepositError,
+    derivesItsOwnAtom,
+    EmptyPlanError,
+    encodeCreateAtom,
+    encodeCreateTriple,
+    encodeDeposit,
+    intuitionToolAtomLookup,
+    multiVaultDeclareAbi,
+    multiVaultReads,
+    NonPositiveAmountError,
+    prepareDeclareUsed,
+    prepareStakeOnUsed,
+    resolveDeclarationSubject,
+    SmartAccountsKitMissingError,
+    toDelegatedCalls,
+} from "./declare/index.js";
+
+export type {
+    DeclarePlan,
+    DelegatedPlan,
+    DelegationLike,
+    MultiVaultReads,
+    MultiVaultReadsConfig,
+    PlannedStake,
+    PlannedTool,
+    PreparedCall,
+    StakePlan,
+    ToolAtomCandidate,
+    ToolAtomLookup,
+    ToolAtomLookupConfig,
+} from "./declare/index.js";

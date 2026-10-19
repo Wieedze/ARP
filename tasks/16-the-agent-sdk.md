@@ -1,7 +1,46 @@
 # Task 16 — The connector an agent declares through
 
-> **Status: NOT STARTED** (specified 2026-10-16, re-anchored 2026-10-19 on ADR `0035`).
-> **This is the whole gap** `docs/12` names: _"Adoption of an existing ERC-8004 agent — missing."_
+> **Status: HALF 1 DONE, HALF 2 SPLIT OUT** 2026-10-19. Specified 2026-10-16, re-anchored on ADR
+> `0035`. **This is the whole gap** `docs/12` names: _"Adoption of an existing ERC-8004 agent —
+> missing."_
+>
+> Half 1 — declare and deposit — shipped as `erc8004/src/declare/` (6 modules), two MCP tools, a
+> runnable example and 34 tests. Half 2 — hire and rate — moved to **`tasks/25`**, which this file
+> told us to do if half 1 grew.
+>
+> **The design decision, and it is the load-bearing one: the connector prepares calls and never
+> signs or sends one** (ADR `0038`). ARP holds no key, so it cannot spend an operator's TRUST even
+> by mistake — ADR `0035` made structural instead of promised.
+>
+> **And the deposit goes on the edge, not the tool's atom** (ADR `0039`). ARP's reader
+> (`getToolUsage`) priced the triple while ARP's writer (`scripts/agent-stake-on-use.ts`) deposited
+> on the atom, so the writer put TRUST where the reader could not see it. Latent, not live — the
+> script's only callers are set-aside hackathon surface. Measured on mainnet before deciding
+> (`scripts/measure-stake-vault-placement.ts`): of 185 `uses` edges, 110 carry stake on the edge and
+> 74 carry it **only** on the atom.
+>
+> Verified against live mainnet 1155 on 2026-10-19, read-only, nothing signed and nothing sent:
+>
+> ```
+> bun run scripts/agent-declare-used.ts --agent 8453/1380 --tool ipfs://bafkreiarpslitherschema \
+>     --tool https://mcp.gmchain.xyz/mcp
+>
+> subject atom  0x45078ae569def2264355f77e592028dd6f1f5d6373c204fe82bf3141ab1861fb
+> declare: 4 call(s), 0.400000000006 TRUST
+>   create-atom    0.100000000001 TRUST  create the atom for ipfs://bafkreiarpslitherschema
+>   create-triple  0.100000000002 TRUST  declare that this agent uses ipfs://…
+>   …
+> ```
+>
+> **No live write has happened.** Sending any of it needs the user's explicit go-ahead per ADR
+> `0037`, and on mainnet it is `security.md` row 1 territory for ARP's own funds.
+>
+> **One thing this task found that it did not set out to find** (ADR `0040`): the repo asserted in
+> five places — including `portability.md`, a rule — that the triple fee "sits outside
+> `TrustStakeCapEnforcer`, which bounds the deposit only". False. The enforcer decodes `value` out
+> of the execution and nothing else, so a fee counts against the cap like any other spend. All five
+> are corrected, and a test now asserts the delegated path puts the amount where the enforcer reads
+> it, so the outer `value: 0n` cannot slip past the cap.
 
 ## Objective
 
@@ -125,13 +164,24 @@ Names are a suggestion. Argue for better ones.
 
 ## Acceptance criteria
 
-- [ ] A runtime with only a funded wallet and an ERC-8004 identity can declare and stake — **no API key**
-- [ ] Both signing modes work, tested
-- [ ] Declarations land on the canonical atom; a test asserts the subject
-- [ ] The canonical `uses` predicate is used, not a minted one
-- [ ] `hire` produces a bounded sub-delegation that the existing specialist server accepts
-- [ ] `rate` writes `(A, uses, B)` and stakes — no new predicate
-- [ ] A README a third party can follow without reading this repo
+- [x] A runtime with only a funded wallet and an ERC-8004 identity can declare and stake — **no API
+      key**. `resolveDeclarationSubject` is a graph read; a tool's atom derives from its URI (ADR
+      `0008`). Nothing in the path pins, so `requirePinAuth` never appears.
+- [x] Both signing modes work, tested. Direct is `plan.calls` as they come; delegated is
+      `toDelegatedCalls`, one redemption per call because `TrustStakeCapEnforcer` guards `beforeHook`
+      with `onlySingleCallTypeMode` (`contracts/src/enforcers/TrustStakeCapEnforcer.sol:95-96`).
+      6 tests, including one that decodes the permission context to check the chain order.
+- [x] Declarations land on the canonical atom; a test asserts the subject. It decodes the
+      `createTriples` calldata and asserts `subjects == [SUBJECT]` rather than reading the plan's own
+      field back (ADR `0032`).
+- [x] The canonical `uses` predicate is used, not a minted one. Asserted against the frozen constant,
+      and asserted **not** to be `USE` — the pair ADR `0030` had to disentangle.
+- [→] `hire` produces a bounded sub-delegation that the existing specialist server accepts — **moved
+  to `tasks/25`**, with half 2.
+- [→] `rate` writes `(A, uses, B)` and stakes — no new predicate — **moved to `tasks/25`**.
+- [x] A README a third party can follow without reading this repo. `erc8004/README.md` §"Declaring
+      what your agent used": what you need, the plan, the ordering constraint, both costs read from
+      the chain, and both signing modes.
 - [ ] `task-verifier` pass
 
 ## Out of scope

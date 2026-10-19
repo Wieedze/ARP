@@ -95,14 +95,27 @@ rather than a reader's assumption that Phase 0 handled it.
 
 ### Phase 1 — the loop. This is the product.
 
-- **The connector**, built so ARP **prepares** the call and the agent **signs and sends** it. Build
-  and send are fused today in `delegation-redeem.ts`; separating them is what keeps ARP out of the
-  loop — no key, no gas, no signature. It also preserves the connector package's own invariant:
-  _never signs, never sends_.
-- MCP first, not a package. Universal, and the agent chooses to call it.
+- **The connector** — **built** 2026-10-19 (`tasks/16` half 1, ADR `0038`). It prepares the calls
+  and the agent signs and sends them. Build and send were fused in `delegation-redeem.ts`;
+  `erc8004/src/declare/` separates them, which is what keeps ARP out of the loop — no key, no gas,
+  no signature — and preserves the package's own invariant: _never signs, never sends_. This bullet
+  predicted the design before the task ran, which is the reason to trust it is not drift.
+- MCP first, not a package — **done**: `arp_declare_used` and `arp_stake_on_used` return the plan,
+  with a caveat on every response that nothing was signed or sent. Universal, and the agent chooses
+  to call it.
 - An operator signs a delegation scoped by domain and capped; the agent declares and deposits.
+  **The agent half is built** — `toDelegatedCalls` wraps the plan for redemption, one call per
+  redemption. **The operator half is not**: nothing in this repo yet asks a third-party operator to
+  sign a delegation, and the domain scoping has no mainnet mechanism (Phase 3, gap 4).
 
 **Gate**: a tool's reputation changes because an agent ARP does not control staked on it.
+
+**The gate is NOT met, and the distance is one specific thing.** The whole path is verified
+read-only against live mainnet — identity resolved, ids computed, costs read, plan priced — but
+**nothing has been signed or sent on any chain**, so no tool's reputation has moved. Closing it
+needs an agent ARP does not control, and its operator's decision to spend. That is Phase 4, which
+is adoption and not engineering. Phase 1 has therefore built everything it can build and is **not
+closed**, for the same reason Phase 0 is not.
 
 ### Phase 2 — make the result visible.
 
@@ -112,8 +125,13 @@ rather than a reader's assumption that Phase 0 handled it.
 
 ### Phase 3 — what mainnet needs and testnet will not give.
 
-- **A fee budget**, enforced before `createTriples`. Gap 2 — not built, and the cap's name promises
-  protection it does not give.
+- **A budget that tells a fee from a deposit.** Gap 2, restated after ADR `0040` found the old
+  version of it wrong. `TrustStakeCapEnforcer` **does** cap the fee — it caps native `value`
+  whatever the call — so a delegated redemption of `createTriples` is bounded. What it cannot do is
+  distinguish spend-and-gone from spend-and-redeemable, so an operator's cap can be burned entirely
+  on term creation. `DeclarePlan.totalValue` surfaces the cost before signing, which is the
+  off-chain half; the on-chain half would have to decode calldata and know every term-creating
+  selector, and is **not built**.
 - **A domain mechanism that works without `ModuleRegistry`.** Gap 4. Likely an allow-list of tool
   atom ids in the delegation terms, with the domain resolved off-chain when the list is built — then
   the enforcer needs no registry and no graph read. **Not designed yet.**
@@ -126,6 +144,10 @@ that worth doing; none of it causes it.
 
 ## The honest summary
 
-Testnet proves the machine. Mainnet proves the market. The two gaps that are **not** closed by
-testing — the mainnet domain mechanism, and the fee outside the cap — are both design work, and both
-are in Phase 3 rather than hidden.
+Testnet proves the machine. Mainnet proves the market. The gap that is **not** closed by testing is
+the mainnet domain mechanism, which is design work and is in Phase 3 rather than hidden.
+
+This used to say "two gaps", the second being "the fee outside the cap". ADR `0040` found that false:
+`TrustStakeCapEnforcer` caps native `value`, so a fee counts against it. What remains of that second
+gap is real but smaller — the cap bounds the amount and not the kind, so it can be burned on fees
+rather than invested — and it is a refinement rather than a hole.
