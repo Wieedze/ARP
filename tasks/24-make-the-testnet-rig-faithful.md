@@ -1,7 +1,16 @@
 # Task 24 — Make the testnet rig faithful
 
-> **Status: NOT STARTED** (specified 2026-10-19). Phase 0 of `docs/15_ROADMAP.md`.
-> **Small, and it unblocks everything else.** Do it first.
+> **Status: PREPARED, AWAITING THE OPERATOR'S SIGNATURE** (2026-10-19). Phase 0 of
+> `docs/15_ROADMAP.md`.
+>
+> `scripts/rig-registration-files.ts` holds the three registration files and prints the three
+> `register(string)` calls. **It signs nothing and sends nothing** — the operator runs them with
+> their own key, as everywhere else (ADR `0035`). `erc8004/test/rig-files.test.ts` runs the files
+> through the real classifier: 9 tests, 233 in the connector suite.
+>
+> **Changed from the plan below**: minting three new agents rather than amending the two that exist.
+> Token 1 is owned by `0xc634457a…`, which is not the deployer, and `setAgentURI` requires the owner.
+> Minting is permissionless and gives all three a URI from birth, which is what real agents have.
 
 ## The finding
 
