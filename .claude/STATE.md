@@ -140,7 +140,7 @@ signs the delegation (ADR `0035`).
 
 Task 17 does **not** give tools reputation — it gives agents a checkable record. It serves the goal
 indirectly and genuinely: because in ERC-8004 plus MCP the tool _is_ an agent, the verifier's output
-is the list of tools that actually work, on the order of a thousand of 88,243. Without it you do not
+is the list of tools that actually work, on the order of a thousand of 300,000-plus. Without it you do not
 know what to rate. But the mechanism that rates them is the `uses` edge, and that is task 19.
 
 **A tool with its weight now has a page** — `/tool/atom/:atomId`, `tasks/23`. It is **not finished**
@@ -154,7 +154,8 @@ did not happen.
 `docs/13_THE_THREE_FLOWS.md`, with the mechanism in `docs/14_THE_WITNESS_PROBLEM.md`.
 
 1. **The verifier** (task 17) — read what agents publish, probe it, classify. Needs nobody's consent,
-   runs on all 88,243 today, and is the only signal that moves on its own.
+   runs on the whole registry today (highest minted id 309,925 on 2026-10-20), and is the only
+   signal that moves on its own.
 2. **Hire** (task 25) — hire an agent that never signed anything; the delegation caps the buyer's own
    spend, so the seller needs no relationship with ARP.
 3. **The MCP server** — last, because it is the only flow that depends on someone else adopting.
@@ -231,6 +232,12 @@ Full list in `.claude/choices/INDEX.md` (generated). The ones to know before tou
   2026-10-20, `(Agent 13579:3) uses (Trail of Bits — guidelines-advisor)`, edge `0x5999d4d1…`,
   support positionCount **1**, counter 1e6 wei at positionCount **0** — ADR `0042`'s dust, first-party.
   Six calls, 0.00723 tTRUST. Testnet proves the **write**, not the cross-chain join.
+  **And the coverage number was wrong everywhere**: `88,243` sat in 16 files with no script, and
+  five of them bounded a _uniform sample_ with it, so every cohort measurement drew from the oldest
+  third of the registry. Measured first-party: Base's highest minted id is **309,925**, the mirror
+  is still **28,648** — unchanged since 2026-09-16 — so coverage is **9.2% and falling**. Read it
+  with `scripts/measure-cohort-coverage.ts`; the population is read, never hardcoded
+  (`scripts/erc8004-population.ts`).
 - **0046** — **ARP scores nobody**; it makes staking possible and reads the result. No score, rating
   or assessment of any agent is ever published, because the argument is that the input costs money and
   a score replaces the money with a judgement. A deposit goes on a claim that **can be contradicted**

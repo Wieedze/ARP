@@ -1,3 +1,4 @@
+import { highestTokenId } from './erc8004-population.js';
 /** Do cohort agents actually transact on-chain? Read-only, keyless.
  *
  *  The precondition for `tasks/22` — the chain as witness. If these accounts never transact there is
@@ -43,8 +44,11 @@ async function ownerOf(id: number): Promise<string | null> {
   return '0x' + res.slice(-40);
 }
 
-const TOTAL = 88243;
+// Read, never hardcoded: `88243` here sampled the oldest third of the registry once it passed
+// 300,000, which is a sampling bias and not a stale number. ADR `0047`.
+const TOTAL = await highestTokenId();
 const N = Number(process.argv[2] ?? 120);
+console.log(`sampling ${N} of ${TOTAL.toLocaleString('en-US')} token ids`);
 const ids = Array.from({ length: N }, () => 1 + Math.floor(Math.random() * TOTAL));
 
 const t = { resolved: 0, noOwner: 0, nonceZero: 0, nonceSome: 0, nonceMany: 0, withBalance: 0 };

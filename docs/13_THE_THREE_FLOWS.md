@@ -9,7 +9,7 @@
 
 ```mermaid
 flowchart TB
-    subgraph REG["ERC-8004 registries · Base 88,243 · BSC · Ethereum"]
+    subgraph REG["ERC-8004 registries · Base 310k · BSC · Ethereum"]
         RF["registration file<br/>services[] or endpoints[] · x402 · sometimes capabilities"]
     end
 
@@ -55,8 +55,15 @@ flowchart TB
     R -.durable conclusions only.-> G
 ```
 
-The arrow that matters: **`RF → A1` needs no consent.** Everything in flow A runs on 88,243 agents
-whether they have heard of ARP or not.
+The arrow that matters: **`RF → A1` needs no consent.** Everything in flow A runs on every agent in
+the registry, whether they have heard of ARP or not.
+
+Flow B is narrower, and the gap is the finding. The `uses` edge needs the agent's **identity atom**,
+which Intuition's mirror writes, and the mirror holds **28,648** — unchanged since 2026-09-16 while
+the registry tripled, so **9.2%** coverage and falling (highest minted id 309,925 on 2026-10-20,
+`scripts/measure-cohort-coverage.ts`). For the other nine in ten the atom does not exist and must be
+written: `scripts/agent-identity-atom.ts`, ADR `0047`. Every count here moves at ~44,000 agents a
+day, so run the script rather than quoting this paragraph.
 
 ---
 
@@ -75,7 +82,7 @@ A feeds discovery for C. C produces the best signal. B is the optional middle.
 ## Why A comes first
 
 Every plan before this one stalled on the same thing: the graph is empty, and filling it needed
-somebody to adopt something. 194 `use` triples against 88,243 agents.
+somebody to adopt something. 194 `use` triples against a registry past 309,000.
 
 **A breaks that without asking anyone.** A registration file naming six MCP tools either serves them
 or it does not, and finding out is a request anyone may make. The result is a fact about the agent
@@ -113,7 +120,7 @@ Hard parts, named now:
   agent is broken"_ from _"we spoke the protocol wrong"_ and say which.
   **Reporting a false defect is this component's version of a false `mismatch`**, and the connector's
   rule applies unchanged: when unsure, say unverified, never accuse.
-- **Rate and courtesy.** Probing 88,243 third-party endpoints is a load somebody else pays for. Back
+- **Rate and courtesy.** Probing 300,000-plus third-party endpoints is a load somebody else pays for. Back
   off, cache by document hash, identify the client, honour `robots`-equivalent signals. Limit per
   host, not globally: Termix alone accounts for 38 of 108 endpoints in the sample, so a global limit
   still hammers one host.

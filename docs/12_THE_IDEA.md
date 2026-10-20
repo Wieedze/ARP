@@ -7,7 +7,7 @@
 
 ## The mechanism, in full
 
-1. An agent has an **ERC-8004 identity**. ARP is where you get one: it **mints** a new identity into the canonical ERC-8004 registry (ADR 0027), or **imports** an existing one — 88,243 exist on Base, of which Intuition mirrors 28,648. Both paths end in the same place, and everything after this point is identical for either.
+1. An agent has an **ERC-8004 identity**. ARP is where you get one: it **mints** a new identity into the canonical ERC-8004 registry (ADR 0027), or **imports** an existing one — the Base registry's highest minted id was 309,925 on 2026-10-20 and Intuition mirrors **28,648**, about one in ten (`scripts/measure-cohort-coverage.ts`; both move, the registry at ~44,000 a day). Both paths end in the same place, and everything after this point is identical for either.
 2. An agent is **composed of modules**. A module is a tool or a methodology registered in `ModuleRegistry`: a domain plus a schema. Anyone can register one.
 3. The agent runs. It **deposits TRUST on the modules it actually used** — not the ones it claims to use.
 4. That deposit is the signal. It produces reputation at two levels at once:
@@ -66,7 +66,7 @@ Written down because this document exists to stop a specific failure, which has 
 | **Adoption of an existing ERC-8004 agent**                      | **missing — the whole gap**                            |
 | **The guard rail on the chain where the agents are**            | **missing — enforcers are on testnet, agents are not** |
 
-The mechanism works today for agents ARP mints. It does not work for the agents that already exist — 28,648 mirrored, 88,243 on Base — and those are the population, so that gap is what stands between this and a live system.
+The mechanism works today for agents ARP mints. It does not work for the agents that already exist — **28,648** mirrored out of a registry whose highest minted id is 309,925 — and those are the population, so that gap is what stands between this and a live system. Worse than it reads: the mirror has not moved since 2026-09-16 while the registry tripled, so for roughly nine agents in ten the identity atom does **not exist** and has to be written (`scripts/agent-identity-atom.ts`, ADR `0047`).
 
 ## What closes it
 
@@ -80,4 +80,4 @@ The mechanism works today for agents ARP mints. It does not work for the agents 
 
 ## What the measurements say about the timing
 
-`docs/08` counted 194 `use` triples across the entire Intuition mainnet graph, against 28,648 mirrored agents — and the Base registry holds 88,243, so the real ratio is worse. That was recorded as a market opportunity. It is better read as the exact hole this mechanism fills — and the reason there is no incumbent in it.
+`docs/08` counted 194 `use` triples across the entire Intuition mainnet graph, against 28,648 mirrored agents — and the Base registry had passed 309,000 by 2026-10-20, so the real ratio is worse. That was recorded as a market opportunity. It is better read as the exact hole this mechanism fills — and the reason there is no incumbent in it.

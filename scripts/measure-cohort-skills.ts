@@ -10,6 +10,7 @@
  *  Read-only: one `eth_call` of `tokenURI` per sampled id and one GET of the registration file.
  *  Signs nothing. Uniform sampling over token ids, so quote n with any figure taken from it —
  *  consecutive runs at n=200 have returned 108, 112 and 113 parsed documents. */
+import { highestTokenId } from './erc8004-population.js';
 /**
  * Config, not constants. `portability.md` rule 1: no chain constant at module scope — take it as
  * config, default it, never import it. This file was added by the very commit that introduced that
@@ -41,7 +42,7 @@ async function tokenURI(id: number): Promise<string | null> {
   return new TextDecoder().decode(new Uint8Array(b.map((x) => parseInt(x, 16))));
 }
 
-const TOTAL = Number(process.env.COHORT_SIZE ?? 88_243),
+const TOTAL = Number(process.env.COHORT_SIZE ?? (await highestTokenId())),
   N = Number(process.argv[2] ?? 200);
 const ids = Array.from({ length: N }, () => 1 + Math.floor(Math.random() * TOTAL));
 

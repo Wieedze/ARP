@@ -17,7 +17,7 @@ party**: it holds no funds, signs nothing, and is in nobody's runtime (ADR `0035
 ## Where things actually live
 
 ```
-identity of the 88,243 agents  →  Base 8453
+identity of 309,925 agents     →  Base 8453   (28,648 mirrored — 9.2%)
 their atoms + the MultiVault   →  Intuition mainnet 1155     ← two different chains
 ARP's own 8004 registry        →  Intuition testnet 13579
 the test MultiVault            →  Intuition testnet 13579     ← one chain

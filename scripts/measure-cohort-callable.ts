@@ -13,6 +13,7 @@
  *  estimate — at n=3 the extrapolation spans 741 to 6,160 agents. A declared endpoint that cannot be
  *  probed (templated `{placeholder}`, CAIP or ENS identifier) is skipped, never counted as dead:
  *  see the three groups in `tasks/17-the-external-verifier.md`. */
+import { highestTokenId } from './erc8004-population.js';
 const RPC = 'https://base-rpc.publicnode.com';
 const REGISTRY = '0x8004A169FB4a3325136EB29fA0ceB6D2e539a432';
 const UA = 'ARP-verifier/0.0 (measurement)';
@@ -40,7 +41,8 @@ async function tokenURI(id: number): Promise<string | null> {
   return new TextDecoder().decode(new Uint8Array(b.map((x) => parseInt(x, 16))));
 }
 
-const TOTAL = 88243,
+// Read, never hardcoded — see `erc8004-population.ts`. A fixed 88243 sampled the oldest third.
+const TOTAL = await highestTokenId(),
   N = Number(process.argv[2] ?? 250);
 const ids = Array.from({ length: N }, () => 1 + Math.floor(Math.random() * TOTAL));
 

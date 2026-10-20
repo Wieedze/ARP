@@ -94,6 +94,12 @@ modules, and a module can itself be an agent.
 n = 250 uniformly random Base token ids, 2026-10-16, 122 registration documents parsed. Wilson 95%
 intervals, because the callable count is small and a point estimate would mislead.
 
+> **The denominator is as of 2026-10-16 and has since tripled.** Base held 88,243 agents then; its
+> highest minted id was **309,925** on 2026-10-20, rising on the order of 44,000 a day. The **rates**
+> below are what the sample measures and they do not expire; the extrapolated column does, and
+> scales with the population. Re-run `scripts/measure-cohort-coverage.ts` rather than trusting a
+> count written here.
+
 |                                                        | of 122 parsed  | 95% CI     | extrapolated over 88,243 |
 | ------------------------------------------------------ | -------------- | ---------- | ------------------------ |
 | declares a protocol endpoint (`mcp`, `a2a`, `rest`, …) | 63 — **51.6%** | 42.9–60.3% | 37,819 – 53,229          |

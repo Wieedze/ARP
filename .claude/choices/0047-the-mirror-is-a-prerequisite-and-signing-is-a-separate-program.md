@@ -93,6 +93,36 @@ The counter-vault's 1e6 wei with **zero positions** is ADR `0042`'s creation dus
 own edge: `totalAssets > 0` means the term exists, and `positionCount` is the discriminator. The
 rule now has a first-party reproduction.
 
+## What resolving the count then found
+
+`88,243` sat in **16 files** with no script behind it — `rules/claims.md` forbids exactly that — and
+it was stale. Measured first-party 2026-10-20 by **binary search on `ownerOf`**, the method ADR
+`0027` used (the registry is a proxy with no counter: `totalAgents()`, `totalSupply()`,
+`nextAgentId()`, `agentCount()`, `getAgentCount()` and `currentTokenId()` all revert, and
+`eth_getLogs` over its history is refused by every free RPC):
+
+|                                          |             |
+| ---------------------------------------- | ----------- |
+| Base 8453, highest minted id             | **309,925** |
+| Intuition mirror, `implement → ERC-8004` | **28,648**  |
+| coverage                                 | **9.2%**    |
+
+**The mirror has not moved.** 28,648 is the identical figure `docs/08` measured on 2026-09-16, while
+the registry tripled at roughly 44,000 new agents a day. So coverage is falling, and
+`agent-identity-atom.ts` is not a testnet convenience — it is the only path for about nine agents in
+ten.
+
+**And the stale constant was a sampling bias, not a stale figure.** Five scripts bounded a _uniform
+sample_ with it — `measure-cohort-{endpoints,callable,onchain-activity,skills}.ts` and
+`verify-cohort.ts` — so every cohort measurement in this repo drew from the **oldest third** of the
+registry. Agents minted before the 44,000-a-day rate are not a random sample of today's cohort, so
+the direction of the bias is unknown and probably optimistic. `docs/14`'s "1–7% answer" describes the
+first 88,243 agents, and that is now stated where the table is.
+
+Fixed by reading it: `scripts/erc8004-population.ts` exports `highestTokenId()`, and all five callers
+use it. Both counts in this section come from `git grep -l`, which is the only reason they are
+written down at all.
+
 ## Consequences
 
 **Positive:**

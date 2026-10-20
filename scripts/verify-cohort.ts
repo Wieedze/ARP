@@ -24,6 +24,7 @@
  *  endpoints and is NOT a defect; rendering it beside a confirmed failure would mass-slander the
  *  cohort on the first run.
  */
+import { highestTokenId } from './erc8004-population.js';
 
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
@@ -51,6 +52,11 @@ const TOKEN_URI = '0xc87b56dd';
  * `cohortSize` only bounds `--count`'s uniform sample. On the testnet rig it is read from the
  * registry instead, because `totalAgents()` is small and moves — sampling 1..88243 there would miss
  * every agent.
+ *
+ * On Base it is **read too**, via `erc8004-population.ts`. It used to be the constant `88_243`,
+ * which sampled the oldest third once the registry passed 300,000 — a sampling bias, not a stale
+ * figure, since agents minted before the ~44,000-a-day rate are not a random sample of today's
+ * cohort. ADR `0047`.
  */
 const TARGETS = {
   base: {
@@ -58,7 +64,7 @@ const TARGETS = {
     chainId: 8453,
     rpc: process.env.BASE_RPC_URL ?? 'https://base-rpc.publicnode.com',
     registry: '0x8004A169FB4a3325136EB29fA0ceB6D2e539a432',
-    cohortSize: 88_243,
+    cohortSize: await highestTokenId(),
   },
   'intuition-testnet': {
     label: "Intuition testnet 13579 — ARP's own registry (the rig)",

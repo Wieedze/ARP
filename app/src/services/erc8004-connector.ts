@@ -154,7 +154,8 @@ export function fetchAgentCohort(
  * Returns a tool with an empty `edges` array when nobody has declared using it, which is the answer
  * for the overwhelming majority of atoms and is not an error. Measured: **84** atoms are the object
  * of a `uses` edge on 1155 (`scripts/measure-tool-atom-shape.ts`); the atom population itself has
- * not been counted, and 88,243 is a count of ERC-8004 identities on Base, not of atoms here.
+ * not been counted, and the Base registry's id count is of ERC-8004 identities there, not of atoms
+ * here (`scripts/measure-cohort-coverage.ts` — 309,925 against 28,648 mirrored on 2026-10-20).
  */
 export function fetchToolUsage(toolAtomId: string): Promise<ToolUsage> {
     return getToolUsage(toolAtomId, {graphqlUrl: ERC8004_GRAPHQL_URL});

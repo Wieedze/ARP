@@ -192,7 +192,7 @@ describe("buildToolUsageView", () => {
     it("reports the empty case rather than failing on it", () => {
         // The normal case. 84 atoms are the object of a `uses` edge on mainnet 1155
         // (`scripts/measure-tool-atom-shape.ts`); every other atom is in this state, and the atom
-        // population itself has not been counted — 88,243 is ERC-8004 identities on Base.
+        // population itself has not been counted — the Base registry's ids are identities there, not atoms.
         const none = buildToolUsageView(usage([]));
         expect(none.isEmpty).toBe(true);
         expect(none.isEntirelyUnpriced).toBe(false);
