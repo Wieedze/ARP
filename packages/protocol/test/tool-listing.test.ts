@@ -1,0 +1,178 @@
+import {describe, expect, it} from "vitest";
+
+import {listTools} from "../src/tool-listing.js";
+import {SAME_AS, USES} from "../src/sources/intuition/terms.js";
+
+/** One `uses` edge, shaped like the graph returns it. */
+function edge(params: {
+    atomId: string;
+    label?: string;
+    supportAssets?: string;
+    supportPositions?: number;
+    opposeAssets?: string;
+    /** Whether the subject carries a `same as` edge — i.e. is a linked ERC-8004 agent. */
+    byAgent?: boolean;
+}) {
+    return {
+        term_id: `edge-${params.atomId}-${params.supportAssets ?? "0"}`,
+        object: {term_id: params.atomId, label: params.label ?? null, data: null, type: "Thing"},
+        subject: {
+            term_id: `subject-${params.atomId}`,
+            label: null,
+            asSameAs: params.byAgent === true ? [{term_id: "same-as-edge"}] : [],
+        },
+        term: {
+            total_assets: params.supportAssets ?? "0",
+            vaults: [
+                {
+                    position_count: params.supportPositions ?? 0,
+                    total_assets: params.supportAssets ?? "0",
+                },
+            ],
+        },
+        counter_term: {
+            total_assets: params.opposeAssets ?? "0",
+            vaults: [{position_count: 0, total_assets: params.opposeAssets ?? "0"}],
+        },
+    };
+}
+
+function transportOf(triples: unknown[]) {
+    const seen: Record<string, unknown>[] = [];
+    return {
+        seen,
+        transport: {
+            async request(_query: string, variables: Record<string, unknown>) {
+                seen.push(variables);
+                return {triples};
+            },
+        },
+    };
+}
+
+describe("listTools", () => {
+    it("groups edges by tool and counts them", async () => {
+        const {transport} = transportOf([
+            edge({atomId: "0xaa", label: "slither"}),
+            edge({atomId: "0xaa", supportAssets: "5"}),
+            edge({atomId: "0xbb", label: "foundry"}),
+        ]);
+        const page = await listTools({transport});
+        expect(page.tools.map((t) => [t.atomId, t.edgeCount])).toEqual([
+            ["0xaa", 2],
+            ["0xbb", 1],
+        ]);
+        expect(page.edgesRead).toBe(3);
+        expect(page.truncated).toBe(false);
+    });
+
+    it("counts priced edges, not summed positions — ADR 0023's trap", async () => {
+        // Two edges, each with 3 positions. A summed count would say 6, which is a count of nothing
+        // a reader recognises. What the page says is that 2 of its edges are paid for.
+        const {transport} = transportOf([
+            edge({atomId: "0xaa", supportAssets: "10", supportPositions: 3}),
+            edge({atomId: "0xaa", supportAssets: "20", supportPositions: 3}),
+            edge({atomId: "0xaa", supportAssets: "0", supportPositions: 0}),
+        ]);
+        const page = await listTools({transport});
+        expect(page.tools[0]?.edgeCount).toBe(3);
+        expect(page.tools[0]?.pricedEdges).toBe(2);
+        // Assets are additive, so their sum is reported — and named as a sum.
+        expect(page.tools[0]?.supportAssetsSum).toBe(30n);
+    });
+
+    it("treats dust as unpriced: assets without a position are not a stake", async () => {
+        // ADR 0042: creating a term seeds both vaults with minShare, so assets alone prove the term
+        // exists. 1e6 wei with no position is that dust.
+        const {transport} = transportOf([
+            edge({atomId: "0xaa", supportAssets: "1000000", supportPositions: 0}),
+        ]);
+        const page = await listTools({transport});
+        expect(page.tools[0]?.pricedEdges).toBe(0);
+        expect(page.tools[0]?.supportAssetsSum).toBe(1_000_000n);
+    });
+
+    it("orders by priced edges first, then by the money", async () => {
+        const {transport} = transportOf([
+            edge({atomId: "0xlow", supportAssets: "999", supportPositions: 1}),
+            edge({atomId: "0xhigh", supportAssets: "1", supportPositions: 1}),
+            edge({atomId: "0xhigh", supportAssets: "1", supportPositions: 1}),
+        ]);
+        const page = await listTools({transport, order: "priced-edges"});
+        expect(page.tools.map((t) => t.atomId)).toEqual(["0xhigh", "0xlow"]);
+    });
+
+    it("orders by conviction when asked, which is a different answer", async () => {
+        const {transport} = transportOf([
+            edge({atomId: "0xlow", supportAssets: "999", supportPositions: 1}),
+            edge({atomId: "0xhigh", supportAssets: "1", supportPositions: 1}),
+            edge({atomId: "0xhigh", supportAssets: "1", supportPositions: 1}),
+        ]);
+        const page = await listTools({transport, order: "conviction"});
+        expect(page.tools.map((t) => t.atomId)).toEqual(["0xlow", "0xhigh"]);
+    });
+
+    it("orders by declaration count when asked", async () => {
+        const {transport} = transportOf([
+            edge({atomId: "0xa"}),
+            edge({atomId: "0xa", supportAssets: "1"}),
+            edge({atomId: "0xa", supportAssets: "2"}),
+            edge({atomId: "0xb", supportAssets: "999", supportPositions: 9}),
+        ]);
+        const page = await listTools({transport, order: "declarations"});
+        expect(page.tools.map((t) => t.atomId)).toEqual(["0xa", "0xb"]);
+    });
+
+    it("reports truncation rather than implying a complete picture", async () => {
+        const {transport} = transportOf(
+            Array.from({length: 4}, (_, i) => edge({atomId: `0x${i}`})),
+        );
+        const page = await listTools({transport, edgeLimit: 4});
+        expect(page.truncated).toBe(true);
+    });
+
+    it("separates agent declarations from sentences people wrote", async () => {
+        // Measured 2026-10-20: **0 of 185** `uses` edges on mainnet have a subject carrying a
+        // `same as` edge, and 1 of 144 on testnet. So the default order has to put the agent-declared
+        // ones first, or the page reports human prose as agent behaviour.
+        const {transport} = transportOf([
+            edge({atomId: "0xprose", label: "Base", supportAssets: "9999", supportPositions: 5}),
+            edge({atomId: "0xprose", supportAssets: "9999", supportPositions: 5}),
+            edge({
+                atomId: "0xreal",
+                label: "guidelines-advisor",
+                supportAssets: "1",
+                supportPositions: 1,
+                byAgent: true,
+            }),
+        ]);
+        const page = await listTools({transport});
+        expect(page.agentDeclaredEdgesRead).toBe(1);
+        // The one real declaration outranks two well-funded sentences.
+        expect(page.tools.map((t) => t.atomId)).toEqual(["0xreal", "0xprose"]);
+        expect(page.tools[0]?.agentDeclaredEdges).toBe(1);
+        expect(page.tools[1]?.agentDeclaredEdges).toBe(0);
+    });
+
+    it("sends the frozen `same as` term id too", async () => {
+        const {transport, seen} = transportOf([]);
+        await listTools({transport});
+        expect(seen[0]?.["sameAs"]).toBe(SAME_AS);
+    });
+
+    it("sends the frozen `uses` term id and a numeric curve id", async () => {
+        const {transport, seen} = transportOf([]);
+        await listTools({transport, curveId: 2});
+        expect(seen[0]).toMatchObject({uses: USES, curveId: "2", limit: 500});
+        // `curveId` is a Hasura `numeric` and travels as a string; declaring it String! in the
+        // query took the whole trust surface down once.
+        expect(typeof seen[0]?.["curveId"]).toBe("string");
+    });
+
+    it("survives a row with no object, instead of dropping the page", async () => {
+        const {transport} = transportOf([{term_id: "x", object: null}, edge({atomId: "0xaa"})]);
+        const page = await listTools({transport});
+        expect(page.tools).toHaveLength(1);
+        expect(page.edgesRead).toBe(2);
+    });
+});
