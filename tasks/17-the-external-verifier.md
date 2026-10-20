@@ -4,7 +4,9 @@
 > Phase 1 of `docs/13_THE_THREE_FLOWS.md`. The only flow that needs nobody's consent.
 >
 > **Shipped**: `packages/protocol/src/verify/{declaration,probe,host-limiter,subject}.ts`, exported from the
-> connector, 41 tests. `scripts/verify-cohort.ts` walks a range or a list and writes a JSON surface.
+> connector, **39 tests** — 15 in `verify-declaration.test.ts`, 24 in `verify-probe.test.ts`. (This
+> said 41 and `STATE.md` said 48; neither was ever right. Count them:
+> `grep -c '    it(' packages/protocol/test/verify-{declaration,probe}.test.ts`.) `scripts/verify-cohort.ts` walks a range or a list and writes a JSON surface.
 > Verified live against six real documents and five MCP endpoints.
 >
 > **Remaining**: run the gate — 100 agents in one walk, with the three groups separated and any

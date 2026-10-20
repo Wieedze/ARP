@@ -26,7 +26,7 @@
  */
 
 import { createHash } from 'node:crypto';
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 
 import {
@@ -194,8 +194,15 @@ async function fetchDocument(
   limiter: HostLimiter,
 ): Promise<{ outcome: DocumentOutcome; body: string | null }> {
   if (uri.startsWith('data:')) {
+    // Decode AND parse. The `catch` used to cover only the decode, so a `data:` URI holding
+    // non-JSON returned `status: 'read'` with an unparseable body — and `JSON.parse` downstream
+    // then threw inside a `Promise.all`, killing a 100-agent walk on one malformed document. The
+    // HTTP branch below has always validated the parse; this one did not, and that asymmetry is
+    // what the gate found.
     try {
-      return { outcome: { status: 'read', url: uri, httpStatus: 200 }, body: decodeDataUri(uri) };
+      const body = decodeDataUri(uri);
+      JSON.parse(body);
+      return { outcome: { status: 'read', url: uri, httpStatus: 200 }, body };
     } catch (error) {
       return {
         outcome: {
@@ -203,7 +210,7 @@ async function fetchDocument(
           code: 'not-json',
           url: uri,
           httpStatus: null,
-          detail: `data: URI did not decode (${String(error).slice(0, 80)})`,
+          detail: `data: URI did not decode to JSON (${String(error).slice(0, 80)})`,
         },
         body: null,
       };
@@ -304,7 +311,28 @@ async function verifyAgent(id: number, limiter: HostLimiter): Promise<AgentResul
     return { ...base, document: outcome, documentHash: null, endpoints: [] };
   }
   const documentHash = createHash('sha256').update(body).digest('hex').slice(0, 16);
-  const declared = readDeclaredEndpoints(JSON.parse(body));
+  // Belt and braces, and the belt is what matters at 100 agents: `verifyAgent` runs inside a
+  // `Promise.all`, so an exception here does not degrade one agent — it rejects the batch and
+  // takes every result with it. Any future path that returns `read` without validating lands
+  // softly instead of destroying the walk.
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(body);
+  } catch (error) {
+    return {
+      ...base,
+      document: {
+        status: 'unreachable',
+        code: 'not-json',
+        url: outcome.url,
+        httpStatus: outcome.httpStatus,
+        detail: `read, but did not parse (${String(error).slice(0, 80)})`,
+      },
+      documentHash,
+      endpoints: [],
+    };
+  }
+  const declared = readDeclaredEndpoints(parsed);
   const endpoints = [];
   for (const endpoint of declared) {
     const probe =
@@ -441,6 +469,44 @@ const limiter = new HostLimiter({ minGapMs: 400 });
 const agents: AgentResult[] = [];
 const CONCURRENCY = 8;
 
+/**
+ * One walk at a time, enforced by a lock file.
+ *
+ * Added because I started two walks by accident and for about five minutes both probed the same
+ * third-party hosts — doubling a load nobody asked for, which `tasks/17` calls a hard requirement,
+ * and interleaving two progress counters into one log so the output was unreadable. The courtesy
+ * rules are all per-host and per-request; none of them can see a second process.
+ *
+ * The lock holds the pid and the start time, so a stale one from a crashed run says so rather than
+ * blocking forever. `--force` overrides it for the case where that judgement is wrong.
+ */
+const lockPath = `${outPath}.lock`;
+if (existsSync(lockPath) && !process.argv.includes('--force')) {
+  const held = readFileSync(lockPath, 'utf8').trim();
+  console.error(
+    `another walk holds ${lockPath}: ${held}\n` +
+      `Two walks probe the same hosts twice over, which tasks/17 forbids. Wait for it, or pass\n` +
+      `--force if that process is gone.`,
+  );
+  process.exit(1);
+}
+
+writeFileSync(lockPath, `pid ${process.pid}, started ${new Date().toISOString()}`);
+const releaseLock = () => {
+  try {
+    rmSync(lockPath, { force: true });
+  } catch {
+    /* the report is written; a leftover lock is a nuisance, not a failure */
+  }
+};
+process.on('exit', releaseLock);
+for (const signal of ['SIGINT', 'SIGTERM'] as const) {
+  process.on(signal, () => {
+    releaseLock();
+    process.exit(130);
+  });
+}
+
 console.log(`walking ${ids.length} ids, ${CONCURRENCY} at a time, serialised per host…`);
 for (let i = 0; i < ids.length; i += CONCURRENCY) {
   const slice = ids.slice(i, i + CONCURRENCY);
@@ -458,6 +524,7 @@ const report: Report = {
   requestsMade,
   agents,
 };
+
 mkdirSync(dirname(outPath), { recursive: true });
 writeFileSync(outPath, JSON.stringify(report, null, 2));
 
