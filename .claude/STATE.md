@@ -222,6 +222,15 @@ Full list in `.claude/choices/INDEX.md` (generated). The ones to know before tou
   term seeds its vaults with `minShare`, so `totalAssets > 0` means "this term exists". Three "has
   stake?" checks were wrong, including the MCP server's `staked` flag, which answered `true` for
   every edge. Read it before writing any check of the form `assets > 0`.
+- **0047** — **the mirror is a prerequisite nobody listed, and signing is a separate program.**
+  The identity atom a `uses` edge needs is written by **Intuition's mirror**, which covers Base — so
+  an unmirrored agent (every ARP rig agent on testnet: 728 `same as` edges there, none ours) cannot
+  declare at all until someone writes it. `scripts/agent-identity-atom.ts` writes what the mirror
+  would have, from recipes **read off mainnet**. `scripts/agent-send-plan.ts` is the **only script
+  here that signs**, and refuses by default. **The first real `uses` edge exists**: chain 13579,
+  2026-10-20, `(Agent 13579:3) uses (Trail of Bits — guidelines-advisor)`, edge `0x5999d4d1…`,
+  support positionCount **1**, counter 1e6 wei at positionCount **0** — ADR `0042`'s dust, first-party.
+  Six calls, 0.00723 tTRUST. Testnet proves the **write**, not the cross-chain join.
 - **0046** — **ARP scores nobody**; it makes staking possible and reads the result. No score, rating
   or assessment of any agent is ever published, because the argument is that the input costs money and
   a score replaces the money with a judgement. A deposit goes on a claim that **can be contradicted**

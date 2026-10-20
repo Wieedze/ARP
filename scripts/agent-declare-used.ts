@@ -22,7 +22,7 @@
  *  Direct is the on-ramp and delegated is the guard rail. The guard rail is not the price of entry.
  */
 
-import { readFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 
 import { createPublicClient, formatEther, http, parseEther } from 'viem';
 import type { Address, Hex } from 'viem';
@@ -67,7 +67,7 @@ const tools = args('tool');
 if (!agentRef || !/^\d+\/\d+$/.test(agentRef) || tools.length === 0) {
   console.error(
     'usage: --agent <chainId>/<tokenId> --tool <uri> [--tool <uri>] ' +
-      '[--stake <TRUST> --receiver <0x…>] [--simulate]',
+      '[--registry <0x…>] [--stake <TRUST> --receiver <0x…>] [--simulate] [--json <file>]',
   );
   process.exit(1);
 }
@@ -115,8 +115,20 @@ function die(error: unknown): never {
   throw error;
 }
 
+/**
+ * The registry the agent's identity lives in.
+ *
+ * Defaults to the canonical one (`caip.ts`'s `DEFAULT_IDENTITY_REGISTRY`), which is right on Base
+ * 8453, BSC 56 and Ethereum 1. It is **wrong on Intuition testnet 13579**, where that address has
+ * no code at all (`eth_getCode` → `0x`, checked 2026-10-20) and ARP's own agents live in the
+ * registry ARP deployed, `deployments/13579.json` → `arp.identityRegistry`. Passing it explicitly
+ * is how a chain whose agents are not in the canonical registry is addressed, and
+ * `rules/portability.md` rule 4 is the reason this is a flag and not a second constant.
+ */
+const registry = arg('registry') as Address | undefined;
+
 const subject = await resolveDeclarationSubject({
-  agent: { chainId: Number(agentChainId), tokenId: agentTokenId },
+  agent: { chainId: Number(agentChainId), tokenId: agentTokenId, registry },
   graphqlUrl,
 }).catch(die);
 console.log(`subject atom  ${subject}   (resolved through \`same as\`, ADR 0032)\n`);
@@ -232,6 +244,33 @@ if (process.argv.includes('--simulate')) {
         `  independent eth_call would revert on MultiVault_TermDoesNotExist and tell you nothing.`,
     );
   }
+}
+
+/**
+ * `--json` writes the calls for `scripts/agent-send-plan.ts`, which is the only script here that
+ * signs. The split is deliberate and matches ADR `0038` one level up: planning and signing are
+ * different programs, so a plan can be read, diffed and approved before a key is anywhere near it.
+ *
+ * `value` is serialised as a **decimal string** because JSON has no bigint. The sender parses it
+ * back with `BigInt`, and `chainId` travels on every call so the sender can refuse a plan built
+ * for another chain.
+ */
+const jsonPath = arg('json');
+if (jsonPath !== undefined) {
+  const all = [...plan.calls, ...stakeCalls];
+  writeFileSync(
+    jsonPath,
+    `${JSON.stringify(
+      all.map((call) => ({ ...call, value: call.value.toString() })),
+      null,
+      2,
+    )}\n`,
+  );
+  console.log(`\nwrote ${all.length} call(s) to ${jsonPath}`);
+  console.log(
+    `  next: bun run scripts/agent-send-plan.ts --chain ${chainId} --plan ${jsonPath}` +
+      `   (add --execute to send)`,
+  );
 }
 
 console.log(
