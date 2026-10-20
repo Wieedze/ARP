@@ -1,6 +1,6 @@
 # Project state
 
-**Updated** 2026-10-19 (task 23 complete, verifier PASS). Hand-maintained — a task does not close without updating this file
+**Updated** 2026-10-20 (coherence audit, `tasks/28`). Hand-maintained — a task does not close without updating this file
 (`workflow.md`, task-close protocol).
 
 Read this after `CLAUDE.md` and before anything else. It replaces reading every ADR in
@@ -35,7 +35,7 @@ directory.
 
 ## Where the work is right now
 
-**Branch** `feat/agent-panel-tabs`, pushed up to `c23effb`.
+**Branch** `feat/agent-panel-tabs`, pushed up to `fc541ec` (2026-10-20). Read the remote rather than this line: `git rev-parse origin/feat/agent-panel-tabs`.
 
 **The layout changed on 2026-10-19 (ADR `0041`), at the user's request** — _"ça devient le bordel,
 et le but c'est d'avoir un projet clair et maintenable et auditable"_. `erc8004/` →
@@ -58,7 +58,7 @@ git rev-list --count origin/feat/agent-panel-tabs..HEAD
 
 The remote SHA above is stable between pushes, so it stays.
 
-**Tests**: connector **292 passed / 4 skipped** · app **231 passed / 2 skipped**. `tsc` 0, `lint` 0.
+**Tests**: connector **292 passed / 4 skipped** · app **239 passed / 2 skipped** (measured 2026-10-20). `tsc` 0, `lint` 0.
 Task 16 added **44** of those — 29 planner, 7 delegated, 8 at the MCP wire. Re-read them rather than
 trusting this line: `cd packages/protocol && bun run test`.
 
@@ -92,7 +92,7 @@ and task 20 commits and does not describe them.**
 | 01–03b | setup, contract, deploy, enforcers, smart account         | done                                                                                                                                                                                                                                                    |
 | 04     | UI core                                                   | **no status line** — code exists, fiche never marked                                                                                                                                                                                                    |
 | 04b    | agent identity and compose                                | done                                                                                                                                                                                                                                                    |
-| 04c    | agent autonomous positioning                              | **set aside** — hackathon surface, ADR `0033`                                                                                                                                                                                                           |
+| 04c    | agent autonomous positioning                              | done 2026-06-03 (`learning/07`, PASS), then **set aside** — ADR `0033`                                                                                                                                                                                  |
 | 05     | UI polish and deploy                                      | **no status line**                                                                                                                                                                                                                                      |
 | 06–08  | pin writes, connector, trust panel                        | done                                                                                                                                                                                                                                                    |
 | 09     | follow-ups from global review                             | open                                                                                                                                                                                                                                                    |
@@ -109,9 +109,10 @@ and task 20 commits and does not describe them.**
 | 22     | the chain as witness                                      | open — user proposal; strongest evidence class, bounded by how much tool use is on-chain. **Measure first**                                                                                                                                             |
 | 23     | the tool surface                                          | **complete** (`7b6b2d5`, verifier PASS round 4, post-mortem `learning/18`) — `/tool/atom/:atomId`, the ladder rendered at two weights with the other three rungs named. ADR `0042`: a vault's assets are not evidence of a stake, its position count is |
 | 24     | make the testnet rig faithful                             | **complete** (`5787660`, verifier PASS). Agents 3,4,5 exist and the two-step gate passes; step 3 (identity resolution) **deferred** to task 19 step 1b, so Phase 0 is not closed                                                                        |
-| 25     | hire an agent, and rate it afterwards                     | open — split out of 16 on 2026-10-19. Depends on `tasks/23`: a candidate list is unjudgeable without a tool page                                                                                                                                        |
+| 25     | hire an agent, and rate it afterwards                     | open — split out of 16 on 2026-10-19. **`/hire` is unfinished, not dead** (user, 2026-10-20); ADR `0033` still lists today's `Hire.tsx` as set aside — reconcile when 25 starts                                                                         |
 | 26     | the app has no DOM test environment                       | open — the evidence for `tasks/13`'s rule, not a second gap. **Eight defects** across three review rounds on one page, three live on mainnet data; two were closed by moving pure functions into the service                                            |
 | 27     | a pass over the prose: slop, redundancy, over-explanation | open — recorded 2026-10-20 at the user's request, to run **after** the connector and the tools page. 43 ADRs, 18 post-mortems and 31 task files, almost all mine, and the user cannot tell which sentence is load-bearing                               |
+| 28     | coherence audit — code, front, docs                       | **first batch done** 2026-10-20 (banner, import copy, `tool` wording, dead files, rule fixes; ADR `0044`). The rest is the punch list in the task file. Mint vs "mints nothing" is left to the user                                                     |
 
 **Recommended order** — `docs/15_ROADMAP.md` is the full version with what testnet can and cannot
 prove. Short form: 24, 16's half 1 and 23 are done; next is **17 → 25**, then the two mainnet gaps.
@@ -142,10 +143,8 @@ indirectly and genuinely: because in ERC-8004 plus MCP the tool _is_ an agent, t
 is the list of tools that actually work, on the order of a thousand of 88,243. Without it you do not
 know what to rate. But the mechanism that rates them is the `uses` edge, and that is task 19.
 
-**The half of `docs/12` that does not exist: nothing in the UI shows a tool with its weight.** Now `tasks/23`. The panel
-shows agents and their trust providers. There is no "this tool was used by these agents, who staked
-this much on it" surface, which is the thing `docs/12` describes and the only reason the edges are
-worth writing.
+**A tool with its weight now has a page** — `/tool/atom/:atomId`, `tasks/23`. It is **not finished**
+(user, 2026-10-20), and its only inbound link is an agent's capability section (`tasks/28`).
 
 Tasks 13, 14, 21 and 22 are open. The earlier note that 13 and 14 would be "cleared alongside 18"
 did not happen.
@@ -156,7 +155,7 @@ did not happen.
 
 1. **The verifier** (task 17) — read what agents publish, probe it, classify. Needs nobody's consent,
    runs on all 88,243 today, and is the only signal that moves on its own.
-2. **Hire** (task 16) — hire an agent that never signed anything; the delegation caps the buyer's own
+2. **Hire** (task 25) — hire an agent that never signed anything; the delegation caps the buyer's own
    spend, so the seller needs no relationship with ARP.
 3. **The MCP server** — last, because it is the only flow that depends on someone else adopting.
 
@@ -165,6 +164,15 @@ runtime, and a connector inside the agent's process is under the agent's control
 lie one layer in. What is a fact is only what touched a third party — a payment, an on-chain call, a
 delegation redemption — or what the **counterparty** attests. Do not ask the agent what it used; ask
 the tool who used it.
+
+**And that rung now has a path, which it never had before** (ADR `0045`). Everything ARP writes today
+sits on rung 4 of `docs/14:159` — an agent declaring alone, with a stake behind it. Rung 2 is _two
+parties declaring the same edge_, and it needs something listening on the operator's side, which is
+what the node is for. Two pairs, not equally strong: agent↔tool have genuinely opposing interests,
+requester↔provider do not — both gain from the provider looking good, so the hire pair must never be
+rendered as if it were the tool pair. The cheapest piece needs nobody's adoption: **an unmatched
+one-sided claim is visible as one-sided**, which is one graph query. No hire predicate exists in
+`terms.ts` yet, and ADR `0030` is what happens when one is chosen on publication instead of meaning.
 
 ## Known defects, not yet fixed
 
@@ -214,6 +222,20 @@ Full list in `.claude/choices/INDEX.md` (generated). The ones to know before tou
   term seeds its vaults with `minShare`, so `totalAssets > 0` means "this term exists". Three "has
   stake?" checks were wrong, including the MCP server's `staked` flag, which answered `true` for
   every edge. Read it before writing any check of the form `assets > 0`.
+- **0046** — **ARP scores nobody**; it makes staking possible and reads the result. No score, rating
+  or assessment of any agent is ever published, because the argument is that the input costs money and
+  a score replaces the money with a judgement. A deposit goes on a claim that **can be contradicted**
+  — `(agent, uses, tool)`, never the identity atom, never one triple per interaction. The **position**
+  is the measure and the triple only its support, so **no historical cumulative is ever displayed**
+  (latent today; what is live is the cross-edge sum at `tool-usage.ts:235`). Settles ADR `0015` after
+  89 days: its term-ID half stands, its trust-provider half is rejected. Measured first —
+  `has trust provider` is 28,683 edges over **three** objects, Deep3 at 99.86%.
+- **0045** — **the invariant is the request path, not the runtime.** `docs/12`'s "Not in anyone's
+  runtime" carried two claims: ARP ships no code (**already false** — `scripts/arp-mcp-server.ts`
+  hosts the planning an agent depends on) and ARP cannot see execution (**holds**, `docs/14`). ARP
+  now **ships a node the operator runs**, holding no key: it prepares, the agent signs. The test is
+  mechanical — unplug ARP's servers and every declaration, stake and agent-to-agent call still
+  completes. Six sites restated the old wording; all corrected in one pass.
 
 ## Hard constraints
 

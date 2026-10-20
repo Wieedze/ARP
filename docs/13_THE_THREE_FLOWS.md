@@ -150,8 +150,9 @@ make that choice attractive by having data already.
 
 ## What stays true throughout
 
-ARP is never in anyone's runtime. The verifier reads what agents publish. The MCP server is a tool an
-agent chooses to call. The hire bounds the buyer, never the seller.
+ARP is never in the path of a request. The verifier reads what agents publish. The connector is a node
+the operator runs, not a host they depend on, and it holds no key (ADR `0045`). The hire bounds the
+buyer, never the seller.
 
 If a design step needs visibility into execution, it is the wrong step — `docs/12`'s drift list says so
 and it has been right every time.

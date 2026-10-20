@@ -70,6 +70,12 @@ needed for a stake to happen has reproduced the mistake ADR `0035` records.
 integration work — and the agent _chooses to call it_, so ARP is still not in anyone's runtime. A
 package is a second surface for runtimes that do not speak MCP, and it comes after.
 
+> **Superseded 2026-10-20 by ADR `0045`.** The reasoning above is half right: MCP first was the
+> correct sequencing, and "still not in anyone's runtime" was already false of this very server,
+> whose hosted planning an agent depends on. The delivered node is not a "second surface for runtimes
+> that do not speak MCP" — it is the same MCP, run by the operator instead of by ARP, and it is the
+> only way the receive half can exist at all. Half 1 shipped as written; read `0045` before half 2.
+
 ## What this is not
 
 Beyond `docs/12`'s own drift list, two mistakes made in this project and worth naming here:
@@ -82,9 +88,10 @@ Beyond `docs/12`'s own drift list, two mistakes made in this project and worth n
 
 ## What this is not
 
-`docs/12` names it as a drift signal: **ARP is never in anyone's runtime.** This SDK is called _after_
-work, by the agent, reporting what it did. It does not wrap execution, does not observe it, and does
-not require the operator to route anything through ARP.
+`docs/12`'s drift list forbids **routing agents' requests through ARP's own host** — not shipping code
+an operator runs (ADR `0045` separated the two). What stands unchanged is the other half: **ARP has no
+visibility into what an agent executes.** This SDK is called _after_ work, by the agent, reporting what
+it did. It does not wrap execution and does not observe it.
 
 What can be recovered without being in the runtime is enough:
 

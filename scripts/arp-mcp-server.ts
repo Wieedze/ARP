@@ -17,8 +17,11 @@
  *  property rather than a promise.
  *
  *  Two things it is deliberately not:
- *    - not in anyone's runtime. The agent *chooses* to call it. That is the whole difference between
- *      a connector and an integration, and `docs/12` lists the alternative as a drift signal.
+ *    - not meant to be a host an agent depends on — and today it is one. Planning lives here: atom
+ *      resolution, the refuse-on-ambiguous rule, the cost reads. If this process is down an agent
+ *      cannot build its plan. "The agent chooses to call it", which this comment used to argue, is
+ *      true of signing and false of planning. ADR `0045` moves this to a node the operator runs; the
+ *      dependency is real until then and is stated here rather than defended.
  *    - not a scorer. It returns what was staked and by whom, with provenance. Composing that into a
  *      single number is a decision nobody has made (`docs/01` rejects being one more score).
  */

@@ -25,7 +25,10 @@ the panel yet. That is a fact about today's user base, not a design property.
 > 3. The agent runs. It **deposits TRUST on the modules it actually used**.
 > 4. The agent operates under a **signed delegation whose caveats are the guard rail**.
 
-and under _What ARP is not_: **"The only thing an operator adopts is a delegation they sign once."**
+and under _What ARP is not_: ~~**"The only thing an operator adopts is a delegation they sign
+once."**~~ — replaced 2026-10-20 by ADR `0045`: the operator also runs a node. **This ADR's
+conclusion is unaffected**, because the node holds no key either (ADR `0038`), so ARP is still not a
+party to the loop.
 
 So the author of ARP appears nowhere in the live loop. They build the rail.
 

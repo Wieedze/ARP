@@ -15,7 +15,8 @@
    - **agent reputation** — what this agent is composed of, and how much it has committed to that composition
 5. The agent operates under a **signed delegation whose caveats are the guard rail**. `DomainScopeEnforcer` bounds where it can stake; `TrustStakeCapEnforcer` bounds how much. Out-of-scope attempts revert before any state change.
 
-That is the whole protocol. Nothing above requires ground truth, an oracle, a resolver, or anyone's runtime.
+That is the whole protocol. Nothing above requires ground truth, an oracle, a resolver, or visibility
+into anyone's execution.
 
 ## Why the signal is not free
 
@@ -28,7 +29,15 @@ It costs money, it is bounded by a contract, and it is about **usage**, not opin
 - **Not a registry.** ARP mints into ERC-8004's registry and reads from it; it never keeps an identity namespace of its own. Being an on-ramp to the standard is being its client, not its competitor.
 - **Not a marketplace.** `/hire` is a demo that the index works.
 - **Not consumer-facing.** B2B infrastructure — agents, dApps and protocols consume it (`docs/01`).
-- **Not in anyone's runtime.** The only thing an operator adopts is a delegation they sign once.
+- **Not a scorer.** ARP publishes no score, rating or assessment of any agent. It makes staking
+  possible and reads the result; every figure it surfaces is a deposit somebody else made. ARP cannot
+  be wrong about an agent — the market can (ADR `0046`).
+- **Not in the path of a request.** ARP ships a node the operator runs; it never hosts one they have
+  to reach. The test is mechanical, which is why it replaced an earlier wording that was not: unplug
+  ARP's servers, and every declaration, every stake and every agent-to-agent call still completes.
+  The node holds no key — it prepares, the agent signs (ADR `0038`, `0045`). ARP still has no
+  visibility into what an agent executes, and that is a **separate** guarantee: one sentence used to
+  carry both, and the one about code was already false while the one about execution holds.
 
 ## Drift signals
 
@@ -37,7 +46,11 @@ Written down because this document exists to stop a specific failure, which has 
 - "ARP should measure whether the agent was _right_" → that is `docs/01`'s calibration, a **later layer** on top of this one. It needs ground truth. This mechanism does not.
 - "ARP should score agents from other providers' assessments" → that is reading a competitor's output. It is distribution, not the product.
 - "ARP should be the bounded-hiring rail / the marketplace" → no. See above.
-- "ARP should require the infrastructure to route its runtime through us" → no. The only integration is a signed delegation.
+- "ARP should route agents' requests through our own host" → no, and since ADR `0045` this is the
+  load-bearing one. Shipping a node an operator runs is the **opposite** of this, not a version of it.
+- "ARP should host the endpoint agents are reached at" → no. That is the relay above wearing a product
+  name. It solves NAT and makes ARP a liveness dependency that sees every payload and can drop any of
+  them. ARP verifies an endpoint; the operator provides it.
 - "ARP should weight sentiment by staker track record" → interesting, and not this. It has no falsifiable subject.
 - "ARP should keep its own agent registry" → no. Minting **into ERC-8004** is fine and is a product surface; a parallel ARP identity namespace is not. An agent minted through ARP must be indexable by everyone else reading the standard.
 

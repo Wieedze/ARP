@@ -2,13 +2,13 @@
 
 **Generated** 2026-10-20 by `scripts/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-43 decisions. Newest last. `choices/README.md` says when to write one.
+46 decisions. Newest last. `choices/README.md` says when to write one.
 
 ## Not accepted
 
 Read these before relying on them.
 
-- **0015** (Proposed) — Adopt the canonical Intuition ERC-8004 pattern; ARP publishes as a trust provider
+- **0015** (Accepted in part — the trust-provider role is **rejected** by ADR `0046`) — Adopt the canonical Intuition ERC-8004 pattern; ARP publishes as a trust provider
 
 ## All
 
@@ -28,7 +28,7 @@ Read these before relying on them.
 | [0012](0012-agent-positioning-via-two-delegations.md) | 2026-06-03 | Accepted | Agent positioning via two delegations (publish + compose) |
 | [0013](0013-module-registry-schema-uri-uniqueness.md) | 2026-06-03 | Accepted | ModuleRegistry enforces schemaURI uniqueness |
 | [0014](0014-agent-identity-as-caip10-atom.md) | 2026-06-09 | Accepted | Agent identity atom is CAIP-10, not a pinned Thing |
-| [0015](0015-adopt-canonical-intuition-erc8004-pattern.md) | 2026-07-23 | Proposed | Adopt the canonical Intuition ERC-8004 pattern; ARP publishes as a trust provider |
+| [0015](0015-adopt-canonical-intuition-erc8004-pattern.md) | 2026-07-23 | Accepted in part — the trust-provider role is **rejected** by ADR `0046` | Adopt the canonical Intuition ERC-8004 pattern; ARP publishes as a trust provider |
 | [0016](0016-intuition-writes-move-server-side.md) | 2026-09-16 | Accepted | Intuition writes move server-side; the browser stops pinning |
 | [0017](0017-arp-stakes-real-trust-on-mainnet.md) | 2026-09-16 | Accepted | ARP stakes real TRUST on Intuition mainnet |
 | [0018](0018-trust-panel-design-and-join.md) | 2026-09-16 | Accepted | The trust panel: one alarm colour, an evidence-weighted score, and a two-edge join |
@@ -57,3 +57,6 @@ Read these before relying on them.
 | [0041](0041-one-protocol-package-not-two.md) | 2026-10-19 | Accepted | One protocol package, not two, and it is called what it is |
 | [0042](0042-a-vault-s-assets-are-not-evidence-of-a-stake.md) | 2026-10-19 | Accepted | A vault's assets are not evidence of a stake; its position count is |
 | [0043](0043-a-retraction-is-greppable-or-it-is-partial.md) | 2026-10-19 | Accepted | A retraction is greppable, or it is partial |
+| [0044](0044-tool-is-the-one-word.md) | 2026-10-20 | Accepted | "Tool" is the one word on screen; two rule lines corrected |
+| [0045](0045-the-invariant-is-the-request-path-not-the-runtime.md) | 2026-10-20 | Accepted | the invariant is the request path, not the runtime |
+| [0046](0046-arp-scores-nobody.md) | 2026-10-20 | Accepted | ARP scores nobody; it makes staking possible and reads the result |
