@@ -85,10 +85,22 @@ no second chain to write to.
 
 **Negative:**
 
-- **Reading the feedback has a third-party dependency.** The Reputation Registry exposes no counter,
-  and `eth_getLogs` over its history is refused by every free RPC (checked 2026-10-20), so today the
-  only way to read it at scale is 8004scan.io — an index ARP does not control and cannot verify.
-  A paid archive RPC or our own indexer removes that; neither exists.
+- **Cohort-wide questions about the feedback need a third party.** The Reputation Registry exposes
+  no counter and `eth_getLogs` over its history is refused by every free RPC, so "how many
+  feedbacks exist" or "which agents have the most" comes from 8004scan.io today — an index ARP does
+  not control.
+
+  **Per-agent reads do not, and that is the case the side-by-side view needs.** Corrected the same
+  day this ADR was written, after the first version of this bullet claimed the dependency was
+  general. Measured 2026-10-20 against the registry on Base 8453: `getClients(agentId)` returns
+  every address that left feedback — 2 for agent 8453:6649, **1,514** for 8453:1380 — and
+  `getLastIndex(agentId, client)` returns how many each left. Two plain `eth_call`s, first-party and
+  verifiable, no index and no key.
+
+  So **an indexer of our own would buy cohort discovery and nothing else**, duplicating what
+  8004scan gives away while taking on the uptime and freshness obligations ADR `0046` was glad to
+  drop. It is not on the path of anything decided here.
+
 - ARP contributes nothing to the 8004 reputation surface. That is deliberate, and it means an
   ecosystem participant who looks only there sees nothing of ARP.
 
