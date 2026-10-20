@@ -285,19 +285,35 @@ export async function prepareDeclareUsed(params: {
  *                         being spent, and guessing wrong sends the position to the wrong party.
  * @param params.minShares Slippage floor. Defaults to 0, which accepts whatever the curve returns.
  *                         The caller's decision, stated rather than hidden.
+ * @param params.curveId   Which bonding curve the position is taken on. Defaults to the chain's
+ *                         `defaultCurveId`, and **the default is not the interesting curve.**
+ *
+ *                         Measured on mainnet 1155, 2026-10-20, over the 185 `uses` edges: the
+ *                         registry holds exactly two curves — 1 "Linear Curve" and 2 "Offset
+ *                         Progressive Curve" — and `defaultCurveId` is 1. Curve 1 carries 185
+ *                         vaults, 26.20 TRUST and a share price of 1.000–1.060. Curve 2 carries 28
+ *                         vaults, **219.54 TRUST** and a share price of 3.000–4.181.
+ *
+ *                         So the default is where the vaults are and curve 2 is where the money and
+ *                         the upside are. A caller who wants a position that appreciates has to say
+ *                         so, which is why this is a parameter and not a new default: changing the
+ *                         default would silently move every existing caller's money to a different
+ *                         market.
  */
 export async function prepareStakeOnUsed(params: {
     targets: readonly {tripleId: Hex; amount: bigint}[];
     receiver: Address;
     reads: MultiVaultReads;
     minShares?: bigint;
+    curveId?: bigint;
 }): Promise<StakePlan> {
     if (params.targets.length === 0) throw new EmptyPlanError("no stake target given");
     const minShares = params.minShares ?? 0n;
-    const [curveId, minDeposit] = await Promise.all([
+    const [defaultCurveId, minDeposit] = await Promise.all([
         params.reads.defaultCurveId(),
         params.reads.minDeposit(),
     ]);
+    const curveId = params.curveId ?? defaultCurveId;
 
     const calls: PreparedCall[] = [];
     const targets: PlannedStake[] = [];
@@ -321,7 +337,7 @@ export async function prepareStakeOnUsed(params: {
             to: params.reads.address,
             value: target.amount,
             data: encodeDeposit(params.receiver, target.tripleId, curveId, minShares),
-            why: `stake behind the claim ${target.tripleId}`,
+            why: `stake behind the claim ${target.tripleId} on curve ${curveId}`,
         });
     }
 

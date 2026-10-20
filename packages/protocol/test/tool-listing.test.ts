@@ -10,16 +10,16 @@ function edge(params: {
     supportAssets?: string;
     supportPositions?: number;
     opposeAssets?: string;
-    /** Whether the subject carries a `same as` edge — i.e. is a linked ERC-8004 agent. */
-    byAgent?: boolean;
+    hostedAt?: string;
 }) {
     return {
         term_id: `edge-${params.atomId}-${params.supportAssets ?? "0"}`,
-        object: {term_id: params.atomId, label: params.label ?? null, data: null, type: "Thing"},
-        subject: {
-            term_id: `subject-${params.atomId}`,
-            label: null,
-            asSameAs: params.byAgent === true ? [{term_id: "same-as-edge"}] : [],
+        object: {
+            term_id: params.atomId,
+            label: params.label ?? null,
+            data: null,
+            type: "Thing",
+            value: {thing: {url: params.hostedAt ?? null}},
         },
         term: {
             total_assets: params.supportAssets ?? "0",
@@ -98,7 +98,7 @@ describe("listTools", () => {
             edge({atomId: "0xhigh", supportAssets: "1", supportPositions: 1}),
             edge({atomId: "0xhigh", supportAssets: "1", supportPositions: 1}),
         ]);
-        const page = await listTools({transport, order: "priced-edges"});
+        const page = await listTools({transport});
         expect(page.tools.map((t) => t.atomId)).toEqual(["0xhigh", "0xlow"]);
     });
 
@@ -131,30 +131,29 @@ describe("listTools", () => {
         expect(page.truncated).toBe(true);
     });
 
-    it("separates agent declarations from sentences people wrote", async () => {
-        // Measured 2026-10-20: **0 of 185** `uses` edges on mainnet have a subject carrying a
-        // `same as` edge, and 1 of 144 on testnet. So the default order has to put the agent-declared
-        // ones first, or the page reports human prose as agent behaviour.
-        const {transport} = transportOf([
-            edge({atomId: "0xprose", label: "Base", supportAssets: "9999", supportPositions: 5}),
-            edge({atomId: "0xprose", supportAssets: "9999", supportPositions: 5}),
-            edge({
-                atomId: "0xreal",
-                label: "guidelines-advisor",
-                supportAssets: "1",
-                supportPositions: 1,
-                byAgent: true,
-            }),
-        ]);
+    it("carries where the tool is hosted — the pointer an agent goes and visits", async () => {
+        const {transport} = transportOf([edge({atomId: "0xaa", hostedAt: "https://colony.io"})]);
         const page = await listTools({transport});
-        expect(page.agentDeclaredEdgesRead).toBe(1);
-        // The one real declaration outranks two well-funded sentences.
-        expect(page.tools.map((t) => t.atomId)).toEqual(["0xreal", "0xprose"]);
-        expect(page.tools[0]?.agentDeclaredEdges).toBe(1);
-        expect(page.tools[1]?.agentDeclaredEdges).toBe(0);
+        expect(page.tools[0]?.hostedAt).toBe("https://colony.io");
     });
 
-    it("sends the frozen `same as` term id too", async () => {
+    it('treats the literal string "null" as no pointer, because three tools carry it', async () => {
+        // Measured 2026-10-20 over the 80 distinct tools on mainnet `uses` edges: 28 carry no url
+        // and three carry the four characters `null`. A pointer that reads as a URL and is not one
+        // would send an agent to `https://null`.
+        const {transport} = transportOf([
+            edge({atomId: "0xaa", hostedAt: "null"}),
+            edge({atomId: "0xbb", hostedAt: "   "}),
+        ]);
+        const page = await listTools({transport});
+        expect(page.tools.map((t) => t.hostedAt)).toEqual([null, null]);
+    });
+
+    it("filters to agent declarations in the query, not in the caller", async () => {
+        // The `uses` predicate is shared and most of what sits on it is prose: measured 2026-10-20,
+        // 0 of 185 edges on mainnet 1155 have a subject carrying a `same as` edge. Those are not
+        // this protocol's data, so the subject constraint travels in the query rather than leaving
+        // the caller to separate two populations.
         const {transport, seen} = transportOf([]);
         await listTools({transport});
         expect(seen[0]?.["sameAs"]).toBe(SAME_AS);

@@ -497,6 +497,35 @@ describe("prepareStakeOnUsed", () => {
         expect(decodeDeposit(plan.calls[0]!.data).args[2]).toBe(4n);
     });
 
+    it("takes the curve a caller asks for over the chain's default", async () => {
+        // Measured on mainnet 1155, 2026-10-20: the registry holds two curves — 1 "Linear Curve"
+        // and 2 "Offset Progressive Curve" — and `defaultCurveId` is 1. Curve 1 holds 185 vaults
+        // and 26.20 TRUST at a share price of 1.000–1.060; curve 2 holds 28 vaults and 219.54
+        // TRUST at 3.000–4.181. The default is where the vaults are; curve 2 is where the money
+        // and the upside are, so a caller has to be able to choose.
+        const plan = await prepareStakeOnUsed({
+            targets: [{tripleId, amount: 1n}],
+            receiver: RECEIVER,
+            reads: fakeReads({existing, curveId: 1n}),
+            curveId: 2n,
+        });
+        expect(plan.curveId).toBe(2n);
+        expect(decodeDeposit(plan.calls[0]!.data).args[2]).toBe(2n);
+        // The curve is in the line a caller reads before authorising the spend, because the two
+        // curves are different markets and a plan that hides which one is being entered is a plan
+        // an operator cannot judge.
+        expect(plan.calls[0]!.why).toContain("curve 2");
+    });
+
+    it("still falls back to the chain's default when no curve is asked for", async () => {
+        const plan = await prepareStakeOnUsed({
+            targets: [{tripleId, amount: 1n}],
+            receiver: RECEIVER,
+            reads: fakeReads({existing, curveId: 7n}),
+        });
+        expect(plan.curveId).toBe(7n);
+    });
+
     it("plans no deposit on a triple that is not on chain yet, and reports why", async () => {
         const plan = await prepareStakeOnUsed({
             targets: [{tripleId, amount: 1n}],

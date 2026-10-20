@@ -46,6 +46,7 @@ import {
   type StakePlan,
 } from '../packages/protocol/src/declare/index.js';
 import { toCaip19 } from '../packages/protocol/src/caip.js';
+import { listTools, type ToolListingOrder } from '../packages/protocol/src/tool-listing.js';
 import { createErc8004Client } from '../packages/protocol/src/client.js';
 import { listAgents } from '../packages/protocol/src/listing.js';
 import { intuitionSource } from '../packages/protocol/src/sources/intuition/index.js';
@@ -289,7 +290,17 @@ async function stakeOnUsed(id: JsonRpcId, args: Record<string, unknown>) {
     parsed.push({ tripleId: row['triple_id'], amount: BigInt(amountRaw) });
   }
 
-  const plan = await prepareStakeOnUsed({ targets: parsed, receiver, reads });
+  const curveRaw = args['curve_id'];
+  if (curveRaw !== undefined && (typeof curveRaw !== 'number' || !Number.isInteger(curveRaw))) {
+    return fail(id, -32602, 'curve_id must be an integer');
+  }
+
+  const plan = await prepareStakeOnUsed({
+    targets: parsed,
+    receiver,
+    reads,
+    ...(curveRaw === undefined ? {} : { curveId: BigInt(curveRaw) }),
+  });
   return text(id, serialiseStakePlan(plan));
 }
 
@@ -430,6 +441,65 @@ async function findAgents(id: JsonRpcId, args: Record<string, unknown>) {
   });
 }
 
+/**
+ * Tools agents declared using, with where each is hosted and what stands behind it.
+ *
+ * The step the rest of this server assumed somebody else had taken. `arp_tool_reputation` prices a
+ * tool whose atom id you already know; nothing let an agent **find** one, and a pointer nobody can
+ * enumerate is not a pointer (ADR `0051`).
+ *
+ * `hosted_at` is the field that makes this actionable: ARP stores no tool, so an agent reads the
+ * listing, **goes to the host**, and decides for itself. It is a home page, not a call target — 28
+ * of the 80 distinct tools on mainnet carry none at all.
+ *
+ * Agent declarations only: the `uses` predicate is shared and most of what sits on it is ordinary
+ * prose, filtered out in the query rather than returned under a caveat.
+ */
+async function findTools(id: JsonRpcId, args: Record<string, unknown>) {
+  const orderRaw = args['order'] ?? 'priced-edges';
+  if (orderRaw !== 'priced-edges' && orderRaw !== 'conviction' && orderRaw !== 'declarations') {
+    return fail(id, -32602, "order must be 'priced-edges', 'conviction' or 'declarations'");
+  }
+  const limitRaw = args['limit'] ?? 25;
+  if (
+    typeof limitRaw !== 'number' ||
+    !Number.isInteger(limitRaw) ||
+    limitRaw < 1 ||
+    limitRaw > 100
+  ) {
+    return fail(id, -32602, 'limit must be an integer between 1 and 100');
+  }
+  const curveRaw = args['curve_id'];
+  if (curveRaw !== undefined && (typeof curveRaw !== 'number' || !Number.isInteger(curveRaw))) {
+    return fail(id, -32602, 'curve_id must be an integer');
+  }
+
+  const page = await listTools({
+    graphqlUrl: GRAPHQL_URL,
+    order: orderRaw as ToolListingOrder,
+    ...(curveRaw === undefined ? {} : { curveId: curveRaw }),
+  });
+
+  return text(id, {
+    curve_id: page.curveId,
+    edges_read: page.edgesRead,
+    truncated: page.truncated,
+    tools: page.tools.slice(0, limitRaw).map((tool) => ({
+      tool_atom_id: tool.atomId,
+      label: tool.label,
+      // Where to go and look. ARP hosts nothing; this is the pointer and the point.
+      hosted_at: tool.hostedAt,
+      atom_uri: tool.uri,
+      declarations: tool.edgeCount,
+      // How many of those declarations somebody paid to stand behind. Never a summed position
+      // count: positions are counted per vault and a sum across edges counts nothing (ADR `0023`).
+      paid_declarations: tool.pricedEdges,
+      support_assets_wei: tool.supportAssetsSum.toString(),
+      oppose_assets_wei: tool.opposeAssetsSum.toString(),
+    })),
+  });
+}
+
 async function callTool(id: JsonRpcId, params: Record<string, unknown> | undefined) {
   const name = typeof params?.['name'] === 'string' ? params['name'] : null;
   const args = (params?.['arguments'] ?? {}) as Record<string, unknown>;
@@ -445,6 +515,8 @@ async function callTool(id: JsonRpcId, params: Record<string, unknown> | undefin
         return await identity(id, args);
       case 'arp_find_agents':
         return await findAgents(id, args);
+      case 'arp_find_tools':
+        return await findTools(id, args);
       default:
         return fail(id, -32602, `unknown tool: ${String(name)}`);
     }

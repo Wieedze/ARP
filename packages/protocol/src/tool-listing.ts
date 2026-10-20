@@ -6,11 +6,15 @@ import {isRecord, readNumber, readString} from "./json.js";
 /**
  * The tools agents have declared using, with what stands behind each — the read `/tools` is built on.
  *
+ * **It returns agent declarations only.** The `uses` predicate is shared, and most of what sits on it
+ * is ordinary prose: measured 2026-10-20, **0 of 185** edges on mainnet 1155 and 1 of 144 on testnet
+ * 13579 have a subject carrying a `same as` edge, and the rest are sentences like "Tip Jar uses
+ * Intuition". Those are not this protocol's data, so the filter is in the **query** — the subject must
+ * carry a `same as` edge — rather than a group the caller is left to separate.
+ *
  * **Why it groups client-side.** There is no server-side aggregate over a predicate's objects here,
- * so this reads the `uses` edges and groups them by object. That is only honest because the set is
- * small and the bound is reported: 185 edges on mainnet 1155 and 143 on testnet 13579, measured
- * 2026-10-16 (`scripts/measure-predicate-objects.ts`). `edgesRead` and `truncated` come back with the
- * page so a caller can tell a complete picture from a prefix of one, rather than assuming.
+ * so it reads the matching edges and groups them by object. `edgesRead` and `truncated` come back with
+ * the page so a caller can tell a complete set from a prefix of one.
  *
  * **What it deliberately does not return.** A summed position count. Positions are counted per vault,
  * and a sum across an atom's edges is not a count of anything a reader would recognise — ADR `0023`
@@ -25,13 +29,20 @@ const DEFAULT_EDGE_LIMIT = 500;
 
 const TOOL_LISTING_QUERY = `
 query ToolListing($uses: String!, $sameAs: String!, $curveId: numeric!, $limit: Int!) {
-  triples(where: {predicate_id: {_eq: $uses}}, limit: $limit) {
+  triples(
+    where: {
+      predicate_id: {_eq: $uses}
+      subject: {as_subject_triples: {predicate_id: {_eq: $sameAs}}}
+    }
+    limit: $limit
+  ) {
     term_id
-    object { term_id label data type }
-    subject {
+    object {
       term_id
       label
-      asSameAs: as_subject_triples(where: {predicate_id: {_eq: $sameAs}}, limit: 1) { term_id }
+      data
+      type
+      value { thing { url } }
     }
     term {
       total_assets
@@ -49,6 +60,17 @@ export type ToolListing = {
     label: string | null;
     /** The atom's `data` — an `ipfs://` URI for 78 of the 84 tool atoms on mainnet. */
     uri: string | null;
+    /**
+     * Where the tool is **hosted** — the pinned Thing's `url`. The pointer, and the whole reason a
+     * listing is useful to an agent: discover, go look, decide.
+     *
+     * `null` for 28 of the 80 distinct tools on mainnet `uses` edges, measured 2026-10-20, and
+     * three of the rest carry the literal string `"null"`, which is normalised away here. The ones
+     * that do carry a url carry a home page — `https://colony.io`, `https://www.ethereum.org/` —
+     * which is what a pointer holds. It is **not** a call target and must not be used as one
+     * (ADR `0051`).
+     */
+    hostedAt: string | null;
     type: string | null;
     /** How many `uses` edges point at this tool. One per declaring agent, per declaration. */
     edgeCount: number;
@@ -63,18 +85,6 @@ export type ToolListing = {
     /** Summed across this tool's edges. Assets are additive; this is named as a sum for that reason. */
     supportAssetsSum: bigint;
     opposeAssetsSum: bigint;
-    /**
-     * How many of this tool's edges were declared by a **linked ERC-8004 agent** — a subject
-     * carrying a `same as` edge.
-     *
-     * The field that decides whether a reader is looking at agent declarations or at sentences
-     * people wrote. Measured 2026-10-20: **0 of 185** `uses` edges on mainnet 1155 have such a
-     * subject, and 1 of 144 on testnet 13579. So `uses` in the wild is a generic "X uses Y" — the
-     * objects of those edges are things like `Base`, `Intuition` and `has tag`, and the subjects are
-     * names like `Tip Jar` and `Hartel`. A `/tools` page that merges the two populations reports
-     * human prose as agent behaviour.
-     */
-    agentDeclaredEdges: number;
 };
 
 export type ToolListingPage = {
@@ -84,12 +94,10 @@ export type ToolListingPage = {
     edgesRead: number;
     /** True when the edge limit was hit, so the grouping may be a prefix rather than the whole set. */
     truncated: boolean;
-    /** How many of `edgesRead` came from a linked ERC-8004 agent. See `agentDeclaredEdges`. */
-    agentDeclaredEdgesRead: number;
     tools: ToolListing[];
 };
 
-export type ToolListingOrder = "agent-declared" | "declarations" | "priced-edges" | "conviction";
+export type ToolListingOrder = "declarations" | "priced-edges" | "conviction";
 
 export type ToolListingConfig = {
     graphqlUrl?: string;
@@ -109,6 +117,16 @@ function bigintFrom(value: unknown): bigint {
         typeof value === "string" ? value : typeof value === "number" ? String(value) : null;
     if (text === null || !/^\d+$/.test(text)) return 0n;
     return BigInt(text);
+}
+
+/** The Thing's `url`, with the literal string `"null"` treated as absent — three tools carry it. */
+function hostedAtFrom(object: Record<string, unknown>): string | null {
+    const value = object["value"];
+    const thing = isRecord(value) ? value["thing"] : null;
+    const url = isRecord(thing) ? readString(thing, "url") : null;
+    if (url === null) return null;
+    const trimmed = url.trim();
+    return trimmed.length === 0 || trimmed === "null" ? null : trimmed;
 }
 
 function sideOf(term: unknown): {assets: bigint; positions: number} {
@@ -145,7 +163,6 @@ export async function listTools(config: ToolListingConfig = {}): Promise<ToolLis
 
     const rows = Array.isArray(data["triples"]) ? data["triples"] : [];
     const byAtom = new Map<string, ToolListing>();
-    let agentDeclaredEdgesRead = 0;
 
     for (const row of rows) {
         if (!isRecord(row)) continue;
@@ -157,49 +174,29 @@ export async function listTools(config: ToolListingConfig = {}): Promise<ToolLis
         const support = sideOf(row["term"]);
         const oppose = sideOf(row["counter_term"]);
 
-        const subject = row["subject"];
-        const sameAsRows =
-            isRecord(subject) && Array.isArray(subject["asSameAs"]) ? subject["asSameAs"] : [];
-        const byAgent = sameAsRows.length > 0;
-        if (byAgent) agentDeclaredEdgesRead += 1;
-
         const existing = byAtom.get(atomId);
         if (existing === undefined) {
             byAtom.set(atomId, {
                 atomId,
                 label: readString(object, "label"),
                 uri: readString(object, "data"),
+                hostedAt: hostedAtFrom(object),
                 type: readString(object, "type"),
                 edgeCount: 1,
                 pricedEdges: support.positions > 0 ? 1 : 0,
                 supportAssetsSum: support.assets,
                 opposeAssetsSum: oppose.assets,
-                agentDeclaredEdges: byAgent ? 1 : 0,
             });
             continue;
         }
         existing.edgeCount += 1;
         if (support.positions > 0) existing.pricedEdges += 1;
-        if (byAgent) existing.agentDeclaredEdges += 1;
         existing.supportAssetsSum += support.assets;
         existing.opposeAssetsSum += oppose.assets;
     }
 
-    const order = config.order ?? "agent-declared";
+    const order = config.order ?? "priced-edges";
     const tools = [...byAtom.values()].sort((a, b) => {
-        if (order === "agent-declared") {
-            // Agent declarations first, then the money behind them. The default, because a tool
-            // nobody's agent declared is not evidence about tools — it is a sentence someone wrote.
-            if (a.agentDeclaredEdges !== b.agentDeclaredEdges) {
-                return b.agentDeclaredEdges - a.agentDeclaredEdges;
-            }
-            if (a.pricedEdges !== b.pricedEdges) return b.pricedEdges - a.pricedEdges;
-            return a.supportAssetsSum === b.supportAssetsSum
-                ? b.edgeCount - a.edgeCount
-                : a.supportAssetsSum < b.supportAssetsSum
-                  ? 1
-                  : -1;
-        }
         if (order === "declarations") return b.edgeCount - a.edgeCount;
         if (order === "conviction") {
             if (a.supportAssetsSum === b.supportAssetsSum) return b.pricedEdges - a.pricedEdges;
@@ -211,11 +208,5 @@ export async function listTools(config: ToolListingConfig = {}): Promise<ToolLis
         return a.supportAssetsSum < b.supportAssetsSum ? 1 : -1;
     });
 
-    return {
-        curveId,
-        edgesRead: rows.length,
-        truncated: rows.length >= edgeLimit,
-        agentDeclaredEdgesRead,
-        tools,
-    };
+    return {curveId, edgesRead: rows.length, truncated: rows.length >= edgeLimit, tools};
 }

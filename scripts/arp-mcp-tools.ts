@@ -67,6 +67,41 @@ export const TOOLS = [
     },
   },
   {
+    name: 'arp_find_tools',
+    description:
+      'Tools agents declared using, with where each one is hosted and what stands behind it. The ' +
+      'step before `arp_tool_reputation`, which needs an atom id you do not have yet. ' +
+      '`hosted_at` is the pointer: ARP stores no tool, so read the listing, go to the host and ' +
+      'decide for yourself — it is a home page, not a call target, and 28 of the 80 tools on ' +
+      'mainnet carry none. `paid_declarations` is how many declarations somebody paid to stand ' +
+      'behind; there is no summed position count, because positions are counted per vault and a ' +
+      'sum across edges counts nothing. Agent declarations only — the `uses` predicate is shared ' +
+      'and most of what sits on it is ordinary prose.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        order: {
+          type: 'string',
+          enum: ['priced-edges', 'conviction', 'declarations'],
+          description:
+            'What to rank by, and none is a score: how many declarations were paid for, the TRUST ' +
+            'behind them, or how many exist. Defaults to priced-edges.',
+        },
+        limit: { type: 'number', description: '1 to 100. Defaults to 25.' },
+        curve_id: {
+          type: 'number',
+          description:
+            'Which bonding curve the figures are read at. Defaults to the chain default, 1 — ' +
+            'which is where the vaults are and not where the money is. Measured on mainnet ' +
+            '2026-10-20: curve 1 "Linear Curve" holds 26.20 TRUST at a share price of 1.000-1.060 ' +
+            'over 185 vaults; curve 2 "Offset Progressive Curve" holds 219.54 TRUST at 3.000-4.181 ' +
+            'over 28. Two different markets, so ask for the one you mean.',
+        },
+      },
+      required: [],
+    },
+  },
+  {
     name: 'arp_tool_reputation',
     description:
       'What agents staked on using a tool. Returns every incoming `uses` edge with its ' +
@@ -139,6 +174,15 @@ export const TOOLS = [
             'Who receives the shares. In direct mode your own account; in delegated mode the ' +
             'delegator whose TRUST is spent. Not defaulted — guessing sends the position to ' +
             'the wrong party.',
+        },
+        curve_id: {
+          type: 'number',
+          description:
+            'Which bonding curve to take the position on. Defaults to the chain default, 1, and ' +
+            'the default is not the interesting curve. Measured on mainnet 2026-10-20: curve 1 ' +
+            '"Linear Curve" is 26.20 TRUST at a share price of 1.000-1.060; curve 2 "Offset ' +
+            'Progressive Curve" is 219.54 TRUST at 3.000-4.181. A position that appreciates has ' +
+            'to ask for curve 2. The two are different markets, not two views of one.',
         },
         targets: {
           type: 'array',

@@ -256,7 +256,7 @@ describe("the handshake", () => {
     it("lists its tools with a schema", async () => {
         const {body} = await rpc("tools/list", undefined, 2);
         const tools = (body?.["result"] as {tools: {name: string; inputSchema: unknown}[]}).tools;
-        // All five, in order. A tool added without landing here is a tool the rig's declared
+        // All six, in order. A tool added without landing here is a tool the rig's declared
         // capabilities test cannot see either (`rig-files.test.ts`).
         //
         // `arp_identity` is first because a caller should ask it first: the identity atom is
@@ -265,6 +265,7 @@ describe("the handshake", () => {
         expect(tools.map((t) => t.name)).toEqual([
             "arp_identity",
             "arp_find_agents",
+            "arp_find_tools",
             "arp_tool_reputation",
             "arp_declare_used",
             "arp_stake_on_used",
