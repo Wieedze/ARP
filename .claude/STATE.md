@@ -223,6 +223,16 @@ Full list in `.claude/choices/INDEX.md` (generated). The ones to know before tou
   term seeds its vaults with `minShare`, so `totalAssets > 0` means "this term exists". Three "has
   stake?" checks were wrong, including the MCP server's `staked` flag, which answered `true` for
   every edge. Read it before writing any check of the form `assets > 0`.
+- **0048** — **ARP does not mirror ERC-8004 feedback.** One triple per opinion would turn 569,148
+  free opinions into 569,148 empty vaults — `docs/07:71`'s fragmentation anti-pattern — and there is
+  **no feedback predicate in the canon**, so mirroring means minting one (ADR `0030`'s cost). The
+  feedback also carries no exposure: free, mean score **95.09/100**. ARP reads both surfaces and
+  renders them at **different weights, never summed** (`docs/14:156`). `arp_rate_agent` is therefore
+  **not built**. The framing that settled it: ARP writes in the **capability** vocabulary (`uses`,
+  `has tag`, `implement`…), not the **trust** vocabulary (`has trust provider`, `has trust
+assessment`), which it only reads — so what ARP writes is a claim about **composition**, and
+  reputation is what emerges when money sits on one. That is why Deep3 is not a competitor: a
+  different part of the graph.
 - **0047** — **the mirror is a prerequisite nobody listed, and signing is a separate program.**
   The identity atom a `uses` edge needs is written by **Intuition's mirror**, which covers Base — so
   an unmirrored agent (every ARP rig agent on testnet: 728 `same as` edges there, none ours) cannot
