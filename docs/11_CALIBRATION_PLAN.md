@@ -1,5 +1,11 @@
 # 11 — Back to calibration: what ARP is, and the plan to get there
 
+> **Historical, 2026-10-20. Its conclusion is reversed.** ADR `0049`: ARP does not calibrate, and
+> not as a later layer either. This document argues the opposite at length and is kept because its
+> _measurements_ hold and because the argument is worth reading before anyone proposes calibration
+> again. For what ARP is, read `docs/12` and then `docs/01`. The router already classes `08`, `09`
+> and `11` as analysis rather than commitment; this is the clearest case of why.
+
 **Date**: 2026-09-16
 **Status**: correction + plan. Supersedes the differentiation argument in `docs/08` and `docs/09`.
 

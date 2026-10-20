@@ -223,6 +223,15 @@ Full list in `.claude/choices/INDEX.md` (generated). The ones to know before tou
   term seeds its vaults with `minShare`, so `totalAssets > 0` means "this term exists". Three "has
   stake?" checks were wrong, including the MCP server's `staked` flag, which answered `true` for
   every edge. Read it before writing any check of the form `assets > 0`.
+- **0049** — **ARP does not calibrate**, and not as a later layer either. `docs/01` opened with
+  "Domain-dimensional calibration is ARP" and `docs/02` carried a forked indexer outputting
+  calibrated scores as component 4; both are out. Calibration is a score, and one needing **ground
+  truth** — `docs/12`'s first drift signal. What replaces it in the positioning, all four built:
+  the input is **priced** not free; it is written in the **capability** vocabulary so the claim is
+  about composition; ARP holds **no key, no path, no data**; and the **position** is the measure, so
+  the signal is live. New one-liner: identity is ERC-8004, the trust graph is Intuition, **the priced
+  declaration of use is ARP**. `docs/11` is marked historical — its conclusion is reversed, its
+  measurements hold.
 - **0048** — **ARP does not mirror ERC-8004 feedback.** One triple per opinion would turn 569,148
   free opinions into 569,148 empty vaults — `docs/07:71`'s fragmentation anti-pattern — and there is
   **no feedback predicate in the canon**, so mirroring means minting one (ADR `0030`'s cost). The

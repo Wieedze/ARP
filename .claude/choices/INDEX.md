@@ -2,7 +2,7 @@
 
 **Generated** 2026-10-20 by `scripts/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-48 decisions. Newest last. `choices/README.md` says when to write one.
+49 decisions. Newest last. `choices/README.md` says when to write one.
 
 ## Not accepted
 
@@ -62,3 +62,4 @@ Read these before relying on them.
 | [0046](0046-arp-scores-nobody.md) | 2026-10-20 | Accepted | ARP scores nobody; it makes staking possible and reads the result |
 | [0047](0047-the-mirror-is-a-prerequisite-and-signing-is-a-separate-program.md) | 2026-10-20 | Accepted | the mirror is a prerequisite nobody listed, and signing is a separate program |
 | [0048](0048-arp-does-not-mirror-8004-feedback.md) | 2026-10-20 | Accepted | ARP does not mirror ERC-8004 feedback; it reads it beside its own claims |
+| [0049](0049-arp-does-not-calibrate.md) | 2026-10-20 | Accepted | ARP does not calibrate, and the positioning says what it does instead |

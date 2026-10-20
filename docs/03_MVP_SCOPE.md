@@ -7,6 +7,7 @@ A deployed `ModuleRegistry` contract on Base Sepolia with three seeded modules, 
 ## In scope
 
 ### Contract
+
 - `ModuleRegistry.sol` — a single contract that registers evaluation modules
 - Public function: `registerModule(string name, string domain, string schemaURI, string description)`
 - Emits `ModuleRegistered(uint256 indexed id, address indexed creator, string domain)`
@@ -18,23 +19,28 @@ A deployed `ModuleRegistry` contract on Base Sepolia with three seeded modules, 
 - Verified on Basescan
 
 ### Intuition integration
+
 - For each registered module, create a corresponding Intuition atom of type `ARP_MODULE`
 - Link atom to on-chain module ID via a triple
 - One script that can idempotently sync on-chain modules → atoms
 
 ### Seed modules
+
 Three modules registered at deployment time (see `docs/04_SEED_MODULES.md`):
+
 1. Solidity Audit
 2. URL Classification
 3. Factual Claim Verification
 
 Each seed module has:
+
 - A schema JSON file committed to this repo under `schemas/`
 - The schema uploaded to IPFS, URI recorded
 - Registered on-chain via the deployment script
 - Corresponding Intuition atom created
 
 ### UI
+
 - Single-page application, Vite + React + TypeScript + Tailwind
 - Dark-mode default, no light-mode fallback for MVP
 - Routes:
@@ -45,8 +51,8 @@ Each seed module has:
 - Live data only — no mocks in production build
 - Loading states, empty states, error states all handled
 
-
 ### Documentation in the repo
+
 - This `docs/` folder, kept in sync with reality
 - Every task file updated with completion notes
 - Contract addresses recorded in `deployments/base-sepolia.json`
@@ -58,10 +64,10 @@ These are deferred to later milestones and should **not** be implemented in this
 - TRUST token staking
 - Agent attestation flow
 - Any ERC-8004 contract interaction (reading or writing)
-- Calibration algorithm
-- Score computation
+- ~~Calibration algorithm~~ — **removed, not deferred.** ADR `0049`.
+- ~~Score computation~~ — **removed.** ARP scores nobody, ADR `0046`.
 - Merkle checkpoint publishing
-- Indexer (forked from Intuition's) — none in this MVP
+- Indexer (forked from Intuition's) — none in this MVP, and no longer planned (ADR `0049`)
 - Module deletion or updating (modules are append-only for MVP)
 - Module governance / DAO
 - Mainnet deployment
@@ -91,6 +97,7 @@ The MVP is complete when **all** of the following are true:
 ## Non-goals for the demo conversation
 
 When presenting to the Intuition team, the MVP should **not**:
+
 - Claim ARP is complete
 - Show vaporware features via mocks
 - Overpromise on the scoring layer (it's not built yet)

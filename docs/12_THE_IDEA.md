@@ -43,7 +43,7 @@ It costs money, it is bounded by a contract, and it is about **usage**, not opin
 
 Written down because this document exists to stop a specific failure, which has already happened three times in one day. If you catch yourself proposing any of these, stop and re-read the mechanism above.
 
-- "ARP should measure whether the agent was _right_" → that is `docs/01`'s calibration, a **later layer** on top of this one. It needs ground truth. This mechanism does not.
+- "ARP should measure whether the agent was _right_" → no, and **not as a later layer either** (ADR `0049`). It needs ground truth; this mechanism does not, and that is the point rather than a stage it has not reached. This bullet used to call it "a later layer on top of this one", which kept an unbuilt differentiator alive in the positioning for months.
 - "ARP should score agents from other providers' assessments" → that is reading a competitor's output. It is distribution, not the product.
 - "ARP should be the bounded-hiring rail / the marketplace" → no. See above.
 - "ARP should route agents' requests through our own host" → no, and since ADR `0045` this is the

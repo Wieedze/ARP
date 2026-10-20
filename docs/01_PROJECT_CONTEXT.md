@@ -2,24 +2,19 @@
 
 ## One-liner
 
-ARP is the Intuition reputation layer for ERC-8004 agents. Identity is ERC-8004. Trust graph is Intuition. Domain-dimensional calibration is ARP.
+ARP is the Intuition reputation layer for ERC-8004 agents. Identity is ERC-8004. Trust graph is Intuition. **The priced declaration of use is ARP.**
 
-> **Open conflict, 2026-10-20 — not resolved here.** "Domain-dimensional calibration is ARP" and
-> "calibration over volume" below both describe **scoring**, which ADR `0046` has now ruled out:
-> _ARP scores nobody._ `docs/12` already treats calibration as "a **later layer** on top of this one"
-> that "needs ground truth", and its first drift signal is proposing it too early. So the two are not
-> flatly incompatible — calibration can only ever be a layer above the staked mechanism, and building
-> it would need an ADR reversing or scoping `0046`.
->
-> What is **not** settled is whether it still belongs in this document's one-liner and core-innovation
-> claim, which is a positioning decision and the author's to make. Read the mechanism in `docs/12`
-> and the decision in `0046` as current; read these two lines as the older framing.
+> This line used to end "Domain-dimensional calibration is ARP". **Calibration is out** — not
+> deferred, out (ADR `0049`). It is a score, and a score that needs ground truth, which is `docs/12`'s
+> first drift signal; ADR `0046` had already settled that ARP scores nobody.
 
 ## What ARP is
 
 ARP (Agent Reputation Protocol) is a permissionless, modular reputation protocol for autonomous AI agents. It sits on top of ERC-8004 (the Ethereum agent identity standard) and uses Intuition's semantic graph as its ontology layer.
 
-The core innovation is **calibration over volume**: an agent's reputation weight in a given domain is determined by the accuracy of their past attestations in that domain, not by how many attestations they've made.
+The core innovation is that **the input costs money**. An agent declares the tools it used and deposits TRUST on that declaration, under a cap its operator signed. Nothing here measures whether the agent was _right_ — reputation is what emerges when real value sits on a claim about composition, and the claim is one a third party can contradict.
+
+This used to read "calibration over volume: an agent's reputation weight determined by the accuracy of their past attestations". That is a score needing ground truth, and it is out (ADR `0049`).
 
 ## What ARP is not
 
@@ -52,7 +47,7 @@ The MVP proves execution capacity and architectural coherence. It is not a compl
 
 ARP executes a thesis that Intuition has already published (November 2025 Medium post): that the agent economy needs agent registries + agent reputation + agent coordination. Intuition wants to be the trust and coordination layer. ARP implements the reputation slot of that thesis concretely.
 
-This positioning means ARP should never feel like a competing vision. It is an implementation of Intuition's stated direction, differentiated by specific design choices (modular registry, permissionless module creation, calibration-weighted scoring — the third is the open conflict flagged under the one-liner above; ADR `0046`).
+This positioning means ARP should never feel like a competing vision. It is an implementation of Intuition's stated direction, differentiated by specific design choices (modular registry, permissionless module creation, and a signal that is a priced deposit rather than an opinion — calibration-weighted scoring was the third item here and is out, ADR `0049`).
 
 ## Competitive landscape
 
@@ -65,10 +60,12 @@ The reputation layer for ERC-8004 agents is not empty. Known competitors:
 
 ARP's defensible differentiation:
 
-1. Permissionless modular evaluation (vs fixed proprietary grids)
-2. Calibration-weighted scoring (vs volume-based or undocumented weighting)
-3. Intuition semantic graph as backend (vs centralized indexers)
-4. Economic skin in the game (TRUST staking on attestations)
+1. **The input is priced, not free** — a deposit on a claim about use, bounded by a cap its operator signed. Every competitor above takes free input.
+2. **Written in the capability vocabulary, not the trust vocabulary** — `uses`, `has tag`, `implement`. So ARP makes claims about **composition**, and reputation emerges when money sits on one. Trust providers write elsewhere in the graph, which is why they are not competitors on this surface (ADR `0048`).
+3. **ARP holds nothing** — no key (ADR `0038`), no request path (ADR `0045`), no data. The reputation is positions on a public graph, so adopting ARP is not a bet on ARP surviving.
+4. **The position is the measure, so the signal is live** — withdrawable, and contradictable through the counter-claim (ADR `0046`).
+
+Item 2 of this list used to be calibration-weighted scoring. It is out (ADR `0049`).
 
 ## Target hackathon deliverable
 
