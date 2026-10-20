@@ -1,45 +1,39 @@
-/** The canonical agent-atom recipe, and the pinning call it needs. Data and transport, no script.
+/** The pinning call. The **recipes moved into the package** — see why below.
  *
- *  Its own module so `verify-pin-key.ts` and `agent-identity-atom.ts` share one copy of the recipe:
- *  a single differing character yields a different CID and therefore a **duplicate, fragmented**
- *  agent atom, and Intuition has no deletion. `verify-pin-key.ts` proves the recipe reproduces an
- *  atom Intuition's own ingestion minted, so this file is the thing that proof is about.
+ *  `canonicalAgentThing`, `canonicalCaipThing`, `thingDocument` and `thingUri` now live in
+ *  `packages/protocol/src/declare/agent-atom.ts` and are re-exported here so existing callers keep
+ *  working. They belong in the package because, measured 2026-10-20, they need **no credential and
+ *  no network**: the atom's id is a pure function of the agent's identity, and both on-chain CIDs
+ *  for agent 8453:6649 are reproduced locally from the recipe alone.
  *
- *  **Why this is not in `@arp-protocol/core`**: pinning needs a partner credential, and the
- *  package's third-party promise is "a funded wallet and an ERC-8004 identity, **no API key**"
- *  (`packages/protocol/README.md`). The same split as planning versus signing: the pure part could
- *  live there, the credentialled call cannot.
+ *  What stays here is the one thing that does need a credential: the pin itself. And its role is
+ *  narrower than it looked — pinning makes the document **readable** (Intuition's indexer resolves
+ *  the Thing's `name`, which `RESOLVE_AGENT_QUERY` filters on). It is not needed to know the atom's
+ *  id, to plan, or to create it. Pinning the same bytes anywhere yields the same CID, and
+ *  Intuition's own pins are retrievable from third-party IPFS gateways, so the gated partner API
+ *  (ADR `0016`) is one pinning service rather than a gate on the path.
  */
-export const PIN_ENDPOINT = 'https://pin.intuition.systems/v1/graphql';
+import type { AgentThing } from '../packages/protocol/src/declare/agent-atom.js';
 
-export type AgentThing = { name: string; description: string; image: string; url: string };
+export {
+  canonicalAgentThing,
+  canonicalCaipThing,
+  thingDocument,
+  thingUri,
+  type AgentThing,
+} from '../packages/protocol/src/declare/agent-atom.js';
+
+export const PIN_ENDPOINT = 'https://pin.intuition.systems/v1/graphql';
 
 type PinResponse = { data?: { pinThing?: { uri?: string } }; errors?: unknown };
 
 /**
- * Reproduce the canonical agent-atom recipe from `docs/07` Step A verbatim. The fallbacks are part
- * of the frozen recipe, not defaults to improve.
+ * Pins a Thing and returns its `ipfs://…` URI.
+ *
+ * Content-addressed, so re-pinning is idempotent and creates no on-chain state. A caller should
+ * compare the returned URI against `thingUri(thing)` — they must be equal, and a mismatch means the
+ * API's serialisation has drifted from the recipe, which would mint a duplicate atom.
  */
-export function canonicalAgentThing(
-  chainId: number,
-  tokenId: string,
-  registration?: { name?: string; description?: string; image?: string; webEndpoint?: string },
-): AgentThing {
-  const normalize = (value?: string | null): string | null => {
-    if (typeof value !== 'string') return null;
-    const trimmed = value.trim();
-    return trimmed.length > 0 ? trimmed : null;
-  };
-  const agentKey = `${chainId}:${tokenId}`;
-  return {
-    name: normalize(registration?.name) ?? `Agent ${agentKey}`,
-    description: normalize(registration?.description) ?? `ERC-8004 agent ${agentKey}`,
-    image: normalize(registration?.image) ?? '',
-    url: normalize(registration?.webEndpoint) ?? `https://8004scan.io/agents/${chainId}/${tokenId}`,
-  };
-}
-
-/** Pins a Thing and returns its `ipfs://…` URI. Content-addressed, so re-pinning is idempotent. */
 export async function pinThing(
   thing: AgentThing,
   auth: { apiKey: string; headerName: string },
@@ -58,22 +52,4 @@ export async function pinThing(
   if (!res.ok) return { status: res.status, body };
   const json = JSON.parse(body) as PinResponse;
   return { status: res.status, uri: json.data?.pinThing?.uri, body };
-}
-
-/**
- * The CAIP-19 external-identifier Thing — the **object** of the `same as` edge.
- *
- * Read off mainnet rather than guessed (2026-10-20): agent 8453:6649's `same as` object carries
- * exactly these fields, and the description is a **fixed sentence**, not a template. The shape is
- * the one `RESOLVE_AGENT_QUERY` filters on — `object.value.thing.name == <caip19>` — so a differing
- * character makes the agent unresolvable rather than merely untidy.
- */
-export function canonicalCaipThing(caip19: string): AgentThing {
-  return {
-    name: caip19,
-    description:
-      'CAIP-style external identifier atom for linking an Intuition atom to an ERC-8004 registry identity.',
-    image: '',
-    url: '',
-  };
 }

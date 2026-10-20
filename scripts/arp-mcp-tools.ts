@@ -14,6 +14,59 @@
  */
 export const TOOLS = [
   {
+    name: 'arp_identity',
+    description:
+      'Whether an agent has the identity atom a `uses` edge must carry as its subject. Ask this ' +
+      "first: the atom is written by Intuition's mirror, and measured 2026-10-20 the mirror holds " +
+      '28,648 against a Base registry whose highest minted id is 309,925 — so for about nine ' +
+      'agents in ten the answer is no, and every other tool here fails for them until it is yes. A ' +
+      'read; it reports the gap rather than closing it, because closing it is a write. The atom ids ' +
+      'are computable from your identity alone, with no API key.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        agent_chain_id: {
+          type: 'number',
+          description:
+            'The chain the ERC-8004 identity lives on — 8453 for the canonical registry.',
+        },
+        agent_token_id: {
+          type: 'string',
+          description: 'The ERC-8004 token id, as a decimal string.',
+        },
+        registry: {
+          type: 'string',
+          description:
+            'Optional. The identity registry, when it is not the canonical one. Needed on any ' +
+            'chain where that address has no code — it has none on Intuition testnet 13579.',
+        },
+      },
+      required: ['agent_chain_id', 'agent_token_id'],
+    },
+  },
+  {
+    name: 'arp_find_agents',
+    description:
+      'Agents the graph holds, paged. Two orders, named for what they measure and not for a ' +
+      'ranking: `evidence-quantity` is how many statements the source holds about an agent, ' +
+      '`economic-conviction` is TRUST on its own atom. ARP composes no score — you get the parts. ' +
+      '`total` is the cohort size, never the page length, and an agent with several `same as` ' +
+      'edges is reported as ambiguous rather than resolved to one of them.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        order: {
+          type: 'string',
+          enum: ['evidence-quantity', 'economic-conviction'],
+          description: 'Defaults to evidence-quantity.',
+        },
+        limit: { type: 'number', description: '1 to 100. Defaults to 25.' },
+        offset: { type: 'number', description: 'Defaults to 0.' },
+      },
+      required: [],
+    },
+  },
+  {
     name: 'arp_tool_reputation',
     description:
       'What agents staked on using a tool. Returns every incoming `uses` edge with its ' +

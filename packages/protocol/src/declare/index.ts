@@ -53,3 +53,11 @@ export {
 } from "./delegated.js";
 
 export type {DeclarePlan, PlannedStake, PlannedTool, PreparedCall, StakePlan} from "./types.js";
+
+export {
+    canonicalAgentThing,
+    canonicalCaipThing,
+    thingDocument,
+    thingUri,
+    type AgentThing,
+} from "./agent-atom.js";

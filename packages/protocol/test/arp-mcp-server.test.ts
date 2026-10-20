@@ -256,14 +256,26 @@ describe("the handshake", () => {
     it("lists its tools with a schema", async () => {
         const {body} = await rpc("tools/list", undefined, 2);
         const tools = (body?.["result"] as {tools: {name: string; inputSchema: unknown}[]}).tools;
-        // All three, in order. A tool added without landing here is a tool the rig's declared
+        // All five, in order. A tool added without landing here is a tool the rig's declared
         // capabilities test cannot see either (`rig-files.test.ts`).
+        //
+        // `arp_identity` is first because a caller should ask it first: the identity atom is
+        // written by Intuition's mirror and most agents do not have one, so every other tool here
+        // fails for them until that is fixed (ADR `0047`).
         expect(tools.map((t) => t.name)).toEqual([
+            "arp_identity",
+            "arp_find_agents",
             "arp_tool_reputation",
             "arp_declare_used",
             "arp_stake_on_used",
         ]);
-        expect(tools[0].inputSchema).toMatchObject({required: ["tool_atom_id"]});
+        // By name, not by index: the order above is an assertion about the list, and a schema
+        // assertion keyed on position silently moves to a different tool when it changes.
+        const byName = new Map(tools.map((tool) => [tool.name, tool.inputSchema]));
+        expect(byName.get("arp_tool_reputation")).toMatchObject({required: ["tool_atom_id"]});
+        expect(byName.get("arp_identity")).toMatchObject({
+            required: ["agent_chain_id", "agent_token_id"],
+        });
     });
 
     it("refuses an unknown method with -32601", async () => {

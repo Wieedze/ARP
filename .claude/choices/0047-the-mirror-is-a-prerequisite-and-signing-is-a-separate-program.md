@@ -123,6 +123,95 @@ Fixed by reading it: `scripts/erc8004-population.ts` exports `highestTokenId()`,
 use it. Both counts in this section come from `git grep -l`, which is the only reason they are
 written down at all.
 
+## "Who pins" was the wrong question — measured, not arbitrated
+
+It looked like a fork with three branches: the operator gets their own partner key, ARP pins on
+request, or the atom points at a `data:` URI and diverges from the canon. Each had a cost and none
+was obviously right.
+
+**Measured 2026-10-20, the fork dissolves.** Agent 8453:6649's atom carries
+`ipfs://bafkreif6xwptjdsux2iwnhdbxyjom23bzzimhk62y574rreexdghi6hlbq`. That CID was retrieved from a
+**third-party** IPFS gateway — so Intuition's pins are on the public network, not a private store —
+and the 171 bytes behind it are:
+
+```json
+{
+  "@context": "https://schema.org",
+  "@type": "Thing",
+  "description": "ERC-8004 agent 8453:6649",
+  "image": "",
+  "name": "Agent 8453:6649",
+  "url": "https://8004scan.io/agents/8453/6649"
+}
+```
+
+The schema.org wrapper, keys in **sorted** order, no whitespace. The CID is CIDv1 raw + sha2-256 of
+exactly those bytes. Reproduced from the recipe alone, and the CID recomputed from the reproduction:
+**all three match**, and so does the CAIP atom's own CID
+(`ipfs://bafkreiagjji27tchqekmrvpl4u5fneb3ua6fkqj34ab3msnqskb3pqjo64`) — two independent fixtures,
+not one lucky recipe.
+
+So **the atom's id is a pure function of the agent's identity.** An agent can compute it with no
+partner key, no API and no network. `packages/protocol/src/declare/agent-atom.ts` does, which puts
+the whole identity path back inside the package's "a funded wallet and an ERC-8004 identity, no API
+key" promise. Seven tests assert it against the live fixtures.
+
+What pinning is actually for, stated narrowly: making the document **readable**, because the indexer
+resolves the Thing's `name` and `RESOLVE_AGENT_QUERY` filters on it. It is not needed to know the id,
+to plan, or to create the atom — and since the bytes determine the CID, **anyone can pin them**,
+at any time, and the atom becomes resolvable retroactively. The partner API is one pinning service.
+
+Consequences, and they are better than any of the three branches:
+
+- ARP pinning on request is a **verifiable convenience**, not a dependency. `agent-identity-atom.ts`
+  now compares the API's answer to the local computation and **refuses on a mismatch** — minting on
+  a drifted serialisation would be a permanent duplicate.
+- If ARP disappears, an operator pins the same bytes elsewhere and gets the same atom.
+- One thing is still untested: whether Intuition's indexer fetches content pinned **outside** their
+  service. Their own pins being publicly retrievable makes it likely, not certain. One atom on
+  testnet settles it, and nothing here depends on the answer.
+
+## The node, as shipped
+
+`scripts/arp-mcp-server.ts` now serves **stdio** as well as HTTP — `--stdio` or
+`ARP_TRANSPORT=stdio` — which is how an MCP client launches a local server, and therefore how ADR
+`0045`'s "ship a node, do not host a path" becomes true of this file rather than aspired to.
+
+One dispatch, two transports: the stdio loop wraps `handler.fetch` instead of re-implementing it. In
+stdio mode **stdout is the protocol channel**, so the banner and every diagnostic go to stderr; one
+stray `console.log` desynchronises the client and the failure looks like a malformed server.
+
+Verified by a real handshake against testnet: `initialize`, a notification that correctly returns
+nothing, `tools/list` showing four tools, and `arp_identity` on both branches — rig agent 3
+`declarable: true` with the atom written above, rig agent 4 `declarable: false` with the reason.
+
+## The directory, and the defect it caught
+
+`arp_find_agents` completes the node's read surface: the cohort, paged, in one of two orders named
+for what they measure rather than for a ranking — how many statements a source holds about an agent,
+or TRUST on the agent's own atom. `total` is the cohort's size from the source's aggregate, never the
+page length. An agent with several `same as` edges is reported **ambiguous** rather than resolved to
+one of them, and a fallback name is flagged as one, because `Agent 8453:6649` is a derived name and
+crediting an agent with choosing it is a small lie.
+
+**Its first version shipped a wrong number, and the reason is structural.** It serialised
+`market.totalAssets` — a field `AgentAtomMarket` does not have — and coerced the `undefined` with
+`?? 0n`. So the directory reported **0 TRUST for an agent carrying 13.02**, with a position count of
+2 beside it: a figure that is absent rendered as a figure that is nothing, which is ADR `0042`'s
+family with the sign reversed.
+
+Three things about it are worth keeping:
+
+- It was caught by **running it against mainnet and disbelieving the output**, not by a test. The top
+  of an order sorted by conviction showing 0.0000 is the kind of result that is either a finding or a
+  bug, and checking which took one graph query.
+- `tsc` would have caught it in a second. It did not, because **`scripts/` is outside every
+  typecheck** (`tasks/21`). That known defect now has a concrete cost: a wrong figure on the surface
+  third parties read.
+- The fix keeps `null` as `null`. `position_count` and `vault_count` are reported as the source gives
+  them, and `vault_count` matters: on that agent curve 1 held 0.00098 TRUST and curve 2 held 12.28,
+  so a figure from one curve beside a count from all of them is a contradiction.
+
 ## Consequences
 
 **Positive:**

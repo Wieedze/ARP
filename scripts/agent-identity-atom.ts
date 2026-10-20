@@ -39,7 +39,13 @@ import {
   toCaip19,
   type PreparedCall,
 } from '../packages/protocol/src/index.js';
-import { canonicalAgentThing, canonicalCaipThing, pinThing } from './intuition-pin.js';
+import {
+  canonicalAgentThing,
+  canonicalCaipThing,
+  pinThing,
+  thingDocument,
+  thingUri,
+} from './intuition-pin.js';
 
 const TARGETS = { mainnet: 1155, testnet: 13579 } as const;
 
@@ -104,6 +110,11 @@ const things = {
 
 const uris: Record<keyof typeof things, string> = { identity: '', caip: '' };
 for (const key of ['identity', 'caip'] as const) {
+  // The id is known **before** the pin: `thingUri` computes it from the recipe with no credential
+  // and no network (ADR `0047`). Pinning only makes the document readable, so the API's answer is
+  // checked against the local computation rather than trusted — a mismatch means one of the two has
+  // drifted, and minting on either would be permanent.
+  const expected = thingUri(things[key]);
   const result = await pinThing(things[key], { apiKey, headerName });
   if (result.status !== 200 || !result.uri) {
     console.error(
@@ -111,9 +122,16 @@ for (const key of ['identity', 'caip'] as const) {
     );
     process.exit(1);
   }
+  if (result.uri !== expected) {
+    console.error(
+      `REFUSED — the pinning API returned ${result.uri} for the ${key} Thing, but the recipe ` +
+        `computes ${expected}. One of the two has drifted; minting either would be permanent.`,
+    );
+    process.exit(3);
+  }
   uris[key] = result.uri;
-  console.log(`${key.padEnd(9)} ${result.uri}`);
-  console.log(`          ${JSON.stringify(things[key])}`);
+  console.log(`${key.padEnd(9)} ${result.uri}  (matches the local computation)`);
+  console.log(`          ${thingDocument(things[key])}`);
 }
 
 const identityAtom = await reads.atomId(atomDataForUri(uris.identity));
