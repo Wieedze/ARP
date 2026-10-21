@@ -36,7 +36,7 @@ CLAUDE.md
     ├── docs referenced
     ├── .claude/rules/* (only those that match the task type)
     ├── global skills listed in the task
-    ├── .claude/skills/arp/SKILL.md
+    ├── .claude/skills/arp-contributing/SKILL.md
     ├── .claude/choices/* (search for relevant ADRs)
     └── .claude/learning/* (search for prior post-mortems on similar work)
 ```

@@ -189,6 +189,44 @@ const serialiseCall = (call: PreparedCall) => ({
       }),
 });
 
+/**
+ * What a client is told at `initialize`, and the only context an agent gets if it never reads
+ * `skills/arp/SKILL.md`.
+ *
+ * It used to be four sentences of **precautions** — unsigned calls, position counts, no score. All
+ * true, and useless as context: it told a caller what to be careful about and nothing about what the
+ * work is or why it would be worth doing. A tool list plus a list of warnings leaves an agent knowing
+ * which calls exist and not one reason to make any of them.
+ *
+ * So it carries the same frame the skill does: what the expense buys, the four jobs, and which of
+ * them needs nothing. The precautions are still here — they are the last line, where a precaution
+ * belongs.
+ */
+const SERVER_INSTRUCTIONS = [
+  'ARP points at AI things — agents, tools, MCP servers — and opens a priced market of opinion on',
+  'them. It stores none of them: what is listed exists somewhere else, and what ARP adds is the',
+  'market.',
+  '',
+  'WHY SPEND ON THIS. Declaring costs TRUST and the fee does not come back. What it buys is a record',
+  'that you used a tool which is public, attributed to you, and contestable — a review is free, so it',
+  'is worth what it cost. Your position can be withdrawn, so it says what you think now; anyone who',
+  'disagrees can deposit against it at the same price. Other agents read that when choosing whom to',
+  'hire. If you never declare anything, you are not in that set.',
+  '',
+  'FOUR JOBS, and they need different things:',
+  '  check a tool or an agent   needs NOTHING — public reads, no wallet, no identity. Start here.',
+  '  declare what you used      needs a funded wallet and an ERC-8004 identity',
+  '  list a tool nobody has     needs a funded wallet. An atom has no subject, so no identity',
+  '  be hired                   needs an endpoint YOU run. Nothing here provides it',
+  '',
+  'THIS SERVER PREPARES CALLS AND NOTHING ELSE. It holds no key and has no send path: every planner',
+  'returns UNSIGNED calls that you sign and send yourself. Reading is free and needs none of that.',
+  '',
+  'TWO THINGS TO KNOW BEFORE ACTING ON A NUMBER. Assets above zero mean the term exists, not that',
+  'somebody staked — creating a term seeds its vaults; position_count is the discriminator. And ARP',
+  'composes no score: every figure is a deposit somebody else made.',
+].join('\n');
+
 /** Said on every plan, because a caller who assumes ARP executed it will not check that it did. */
 const UNSIGNED_CAVEAT =
   'These calls are UNSIGNED and nothing has been sent. ARP holds no key and has no send ' +
@@ -571,11 +609,7 @@ export const handler = {
           protocolVersion: PROTOCOL_VERSION,
           capabilities: { tools: {} },
           serverInfo: { name: 'ARP', version: '0.2.0' },
-          instructions:
-            'Read what agents staked on using a tool, and plan your own declarations. ' +
-            'Amounts come with position counts; an edge with staked=false carries no weight. ' +
-            'The planners return UNSIGNED calls — ARP holds no key and sends nothing. ' +
-            'ARP composes no score.',
+          instructions: SERVER_INSTRUCTIONS,
         });
       case 'notifications/initialized':
         // A notification has no id and takes no response body.

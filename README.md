@@ -97,17 +97,29 @@ default and only `--execute` signs.
 `/hire` was a demo that the index works. It was never finished and is removed (2026-10-20); hiring is
 `tasks/25`.
 
-### Three ways in, and you only need one
+### One path, and four jobs on it
 
-|                    | what it is                                                                                                                         | needs                            |
-| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- |
-| **the skill**      | [`skills/arp/SKILL.md`](skills/arp/SKILL.md) — the procedure, readable by any agent                                                | a funded wallet                  |
-| **the MCP server** | `scripts/arp-mcp-server.ts`, stdio — `arp_identity`, `arp_find_agents`, `arp_find_tools`, declare and stake as plans               | a client that speaks MCP         |
-| **the node**       | `scripts/agent-node.ts` — the inbound endpoint, so other agents can **reach** your agent. It signs receipts and never transactions | a port, and a reason to be hired |
+The skill, the connector and the node are not three alternatives — they do different jobs on the same
+path, and conflating them was how the whole surface read as a menu:
 
-The node is only for being _used_. Declaring and staking need none of it: read the skill, or call the
-package. That asymmetry is the point —
-[ADR 0045](.claude/choices/0045-the-invariant-is-the-request-path-not-the-runtime.md).
+|                    | what it is                                                                                                  | when you want it                                                       |
+| ------------------ | ----------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| **the skill**      | [`skills/arp/SKILL.md`](skills/arp/SKILL.md) — the whole procedure, as public reads and calls you sign      | always. It is the source of truth and it replaces the other two        |
+| **the MCP server** | `scripts/arp-mcp-server.ts`, stdio — it _prepares_ the same calls                                           | when you would rather not encode calldata. Holds no key, sends nothing |
+| **the node**       | `scripts/agent-node.ts` — an inbound endpoint other agents reach you at. Signs receipts, never transactions | only for being **hired**. Irrelevant to reading, declaring or listing  |
+
+And the four jobs, because they need different things and only one of them needs a wallet at all:
+
+| you want to                                   | you need                                                |
+| --------------------------------------------- | ------------------------------------------------------- |
+| **check** a tool or an agent before using it  | nothing — public reads, no wallet, no identity          |
+| **declare** what you used, and pay to mean it | a funded wallet + an ERC-8004 identity                  |
+| **list** a tool nobody has listed             | a funded wallet. An atom has no subject, so no identity |
+| **be hired**                                  | an endpoint you run                                     |
+
+The asymmetry is the point: **using** ARP needs nothing installed, and **being used** needs an
+endpoint you provide — [ADR 0045](.claude/choices/0045-the-invariant-is-the-request-path-not-the-runtime.md).
+Unplug ARP's servers and every read, declaration and stake above still completes.
 
 ### The delegation guard rail
 
@@ -263,7 +275,9 @@ ARP/
 │   └── agent-server*.ts, agent-loop.ts, agent-auditor.ts
 │                                     ← the set-aside hackathon surface (ADR 0033). Historical
 │                                       record, not a dependency. Do not copy from them
-├── skills/arp/SKILL.md             ← PUBLISHABLE: how to use ARP with nothing installed
+├── skills/arp/SKILL.md             ← PUBLISHABLE: how to USE ARP with nothing installed.
+│                                     `.claude/skills/arp-contributing/` is the other one —
+│                                     how to work ON this repo
 ├── schemas/                        ← JSON schemas for seed modules
 ├── deployments/                    ← Deployed addresses per network (13579.json, 1155.json)
 ├── FUTURE.md                       ← asked for, deliberately not built yet

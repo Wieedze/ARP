@@ -1,11 +1,13 @@
 ---
-name: arp-module-registry
-description: Procedural knowledge for working on the ARP (Agent Reputation Protocol) Module Registry MVP. Use this skill whenever working on any task in this repository, including Solidity contract work, Intuition atom creation, TypeScript UI work with ERC-8004 concepts, or anything touching agents, reputation, or the Intuition semantic graph. This skill composes with the ethereum-smart-contracts skill, trail-of-bits-audit-security skill, and intuition skill — read this skill first to understand the project, then apply the others for specific technical work.
+name: arp-contributing
+description: Procedural knowledge for **contributing to** the ARP repository — not for using ARP, which is `skills/arp/SKILL.md` at the repo root. Use this skill whenever working on any task in this repository, including Solidity contract work, Intuition atom creation, TypeScript UI work with ERC-8004 concepts, or anything touching agents, reputation, or the Intuition semantic graph. This skill composes with the ethereum-smart-contracts skill, trail-of-bits-audit-security skill, and intuition skill — read this skill first to understand the project, then apply the others for specific technical work.
 ---
 
-# ARP Module Registry — Project Skill
+# Contributing to ARP — repository skill
 
-This is the procedural companion to the docs in this repo. Where the docs tell you *what* ARP is, this skill tells you *how* to work on it without drifting.
+This is the procedural companion to the docs in this repo. Where the docs tell you _what_ ARP is, this skill tells you _how_ to work on it without drifting.
+
+**It is not the skill for using ARP.** That is [`skills/arp/SKILL.md`](../../../skills/arp/SKILL.md) at the repo root — publishable, for an external agent, and it needs nothing installed. The two were `.claude/skills/arp/` and `skills/arp/`, one character apart, and the project's own author opened the wrong one. This directory is `arp-contributing` for that reason, and this skill's `name` was `arp-module-registry` until `ModuleRegistry.sol` was deleted (ADR `0055`) — a name pointing at a contract that no longer exists.
 
 ## Before you write a single line of code
 
@@ -35,6 +37,7 @@ ARP fails if any of these three drift:
 The MVP is one contract, three seed modules, one UI. Nothing else. If a task seems to need more, **it doesn't**. The need is real but belongs to a later milestone. Write it down in a `FUTURE.md` or similar, and stay in scope.
 
 Phrases that signal drift:
+
 - "it would be better if we also…"
 - "while we're at it, let's…"
 - "this is a good opportunity to…"
@@ -65,17 +68,19 @@ Maxime has three other skills installed that this project relies on. Here's how 
 ### ethereum-smart-contracts
 
 Use for:
+
 - Foundry project setup (`forge init`, `foundry.toml` config)
 - Writing Solidity (0.8.24+)
 - Writing Foundry tests (fuzz, invariant, fork)
 - Gas optimization patterns
 - Deployment scripts
 
-Do not use it to decide *what* to build — that's in the ARP docs. Use it for *how* to build the Solidity parts well.
+Do not use it to decide _what_ to build — that's in the ARP docs. Use it for _how_ to build the Solidity parts well.
 
 ### trail-of-bits-audit-security
 
 Use for:
+
 - Pre-merge review of any contract changes
 - Threat modeling the Module Registry before deployment
 - Checklist of common pitfalls (reentrancy, access control, overflow, signature replay)
@@ -86,6 +91,7 @@ Every contract change goes through this skill before the task is considered comp
 ### intuition
 
 Use for:
+
 - Creating atoms and triples programmatically
 - Understanding the multivault
 - Querying the Intuition graph
@@ -112,6 +118,7 @@ Schemas live on IPFS. URIs are `ipfs://bafy...` strings. The contract stores the
 ### Event indexing strategy
 
 The `ModuleRegistered` event indexes:
+
 - `id` (uint256, indexed)
 - `creator` (address, indexed)
 - `domain` (string, indexed as hash)
@@ -149,12 +156,14 @@ The UI is an application, not a marketing site. No hero section with a tagline, 
 ## Communication norms for this project
 
 When reporting back after a task:
+
 - Lead with the concrete thing shipped (contract address, commit SHA, deployed URL)
 - Flag any decision you made that wasn't fully specified
 - Flag any scope pressure you felt and how you resisted
 - Suggest the next logical task but let the user choose
 
 Avoid:
+
 - Apologizing for implementation choices that were reasonable
 - Hedging ("I think maybe this might work")
 - Filler like "I'll now proceed to..."
@@ -163,6 +172,7 @@ Avoid:
 ## When to escalate to the user
 
 Stop and ask when:
+
 - A task requires a decision that seems to expand scope
 - An architectural choice not documented in `docs/02_ARCHITECTURE.md` comes up
 - A deployment would touch mainnet or spend significant gas

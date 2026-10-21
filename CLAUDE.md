@@ -27,7 +27,7 @@ If three layers conflict, the higher-numbered (= more recent) wins. The original
 5. `docs/01_PROJECT_CONTEXT.md` for framing.
 6. The rules from `.claude/rules/` that match the task type (see routing table below).
 7. The global skills listed in the task's `Required skills` section.
-8. `.claude/skills/arp/SKILL.md`.
+8. `.claude/skills/arp-contributing/SKILL.md`.
 9. Scan `.claude/choices/INDEX.md` for ADRs that touch this area — generated, so rerun
    `scripts/build-claude-index.ts` after adding one.
 10. Scan `.claude/learning/INDEX.md` for post-mortems on similar prior tasks.
@@ -145,8 +145,10 @@ ARP/
 ├── scripts/                           flat `.ts` — measure-*, agent-*, verify-*. Inside no
 │                                      typecheck and no lint (tasks/21)
 ├── skills/arp/SKILL.md                **publishable** — how to USE ARP with nothing installed
-│                                      (ADR 0052). Not `.claude/skills/arp/`, which is how to
-│                                      work ON this repo
+│                                      (ADR 0052). The one for working ON this repo is
+│                                      `.claude/skills/arp-contributing/` — renamed because one
+│                                      character of difference was not enough and the author
+│                                      himself opened the wrong file
 ├── schemas/                           JSON Schemas for modules
 ├── deployments/                       per-chain deployment records
 └── .claude/                           Claude operating layer

@@ -258,8 +258,23 @@ describe("the handshake", () => {
         expect(result["protocolVersion"]).toBe("2025-06-18");
         expect(result["serverInfo"]).toMatchObject({name: "ARP"});
         expect(result["capabilities"]).toHaveProperty("tools");
-        // The instructions tell a caller the one thing it must not get wrong.
-        expect(String(result["instructions"])).toContain("composes no score");
+        /**
+         * The instructions are the **only** context an agent gets if it never reads the skill file,
+         * so they have to carry the frame and not just the precautions.
+         *
+         * They were four sentences of warnings — unsigned calls, position counts, no score — all
+         * true and useless as context: a caller learned what to be careful about and nothing about
+         * what the work is or why any of it would be worth doing.
+         */
+        const instructions = String(result["instructions"]);
+        // What the expense buys, which is the question a rational agent asks first.
+        expect(instructions).toContain("does not come back");
+        expect(instructions).toContain("contestable");
+        // That reading is free, which is the job most agents want and the cheapest one.
+        expect(instructions).toMatch(/needs NOTHING/);
+        // And the precautions, still there, at the end where a precaution belongs.
+        expect(instructions).toContain("UNSIGNED");
+        expect(instructions).toContain("composes no score");
     });
 
     it("takes the `initialized` notification without a body", async () => {
