@@ -1,7 +1,7 @@
 /** Can a term be previewed before it exists, and does the preview see the zero-position failure?
  *
- *      bun run scripts/measure-preview-before-create.ts            # testnet 13579
- *      bun run scripts/measure-preview-before-create.ts mainnet    # 1155
+ *      bun run scripts/measure/preview-before-create.ts            # testnet 13579
+ *      bun run scripts/measure/preview-before-create.ts mainnet    # 1155
  *
  *  Two things had to be measured before the plans could preview anything.
  *
@@ -33,8 +33,8 @@
  */
 import { createPublicClient, formatEther, http, parseAbi, stringToHex } from 'viem';
 
-import { toolAtomUri } from '../packages/protocol/src/declare/tool-thing.js';
-import { SAME_AS, USES } from '../packages/protocol/src/sources/intuition/terms.js';
+import { toolAtomUri } from '../../packages/protocol/src/declare/tool-thing.js';
+import { SAME_AS, USES } from '../../packages/protocol/src/sources/intuition/terms.js';
 
 const TARGETS = {
   testnet: {
@@ -52,7 +52,7 @@ const TARGETS = {
 const which = (process.argv[2] ?? 'testnet') as keyof typeof TARGETS;
 const target = TARGETS[which];
 if (!target) {
-  console.error('usage: bun run scripts/measure-preview-before-create.ts [testnet|mainnet]');
+  console.error('usage: bun run scripts/measure/preview-before-create.ts [testnet|mainnet]');
   process.exit(1);
 }
 

@@ -127,7 +127,7 @@ const TARGET = pickTarget();
  * `--tools` asks a confirmed MCP server what it serves.
  *
  * Opt-in because it is a second request per endpoint and one request is the courtesy baseline
- * (`tasks/17`). Worth passing: 0 of ~110 parsed documents across repeated n=200 samples (scripts/measure-cohort-skills.ts; the zero is stable, the denominator varies) declared a capability, while
+ * (`tasks/17`). Worth passing: 0 of ~110 parsed documents across repeated n=200 samples (scripts/measure/cohort-skills.ts; the zero is stable, the denominator varies) declared a capability, while
  * every confirmed MCP server listed its tools — the runtime is where that data lives.
  */
 const WANTS_TOOLS = process.argv.includes('--tools');

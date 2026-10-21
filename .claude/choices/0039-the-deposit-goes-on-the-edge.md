@@ -30,7 +30,7 @@ defect is **latent, not live** — no path runs it today. What made it urgent is
 that script as the thing to adapt, so copying its choice is how it would have become live.
 
 Measured before deciding, on Intuition mainnet 1155, 2026-10-19, over the 185 `uses` edges that
-exist — `scripts/measure-stake-vault-placement.ts`:
+exist — `scripts/measure/stake-vault-placement.ts`:
 
 | vault             | edges with positions | assets, all curves                     |
 | ----------------- | -------------------- | -------------------------------------- |
@@ -45,7 +45,7 @@ any reader of the edge; 1 carries none.
 unlabelled population. The cause was in the script: `vaults(limit: 1)` with no `order_by` and no
 `curve_id` filter reads a nondeterministic single vault, which also contradicted ADR `0023`, this
 repo's own decision to read the market across every curve. Fixed in
-`scripts/measure-stake-vault-placement.ts`, and the corrected run was reproduced independently by
+`scripts/measure/stake-vault-placement.ts`, and the corrected run was reproduced independently by
 the `intuition-integrator` review the same day. **89% of the TRUST on `uses` edges sits on curve
 2**, so the slice was 11% of the total. The load-bearing figure — 74 edges staked only on the atom —
 reproduces exactly either way.
@@ -116,4 +116,4 @@ since Intuition has no deletion.
 - Related ADR: `.claude/choices/0033-the-hackathon-surface-is-set-aside.md`
 - Related ADR: `.claude/choices/0038-the-write-path-is-a-plan-not-a-transaction.md`
 - Related rule: `.claude/rules/claims.md` checks 1 and 2, both of which this measurement tripped
-- Script: `scripts/measure-stake-vault-placement.ts`
+- Script: `scripts/measure/stake-vault-placement.ts`

@@ -1,7 +1,7 @@
 /** Does "how many terms does this staker hold?" tell a real account from a bot?
  *
- *      bun run scripts/measure-staker-concentration.ts            # mainnet 1155
- *      bun run scripts/measure-staker-concentration.ts testnet    # 13579
+ *      bun run scripts/measure/staker-concentration.ts            # mainnet 1155
+ *      bun run scripts/measure/staker-concentration.ts testnet    # 13579
  *
  *  The question behind it, in the user's words: _« si on voit que tu n'as aucune position ou très
  *  peu, sur 1 outil une fois, et que cet outil n'a que des votes de comptes qui n'ont qu'un seul
@@ -50,7 +50,7 @@ const TARGETS = {
 const which = (process.argv[2] ?? 'mainnet') as keyof typeof TARGETS;
 const target = TARGETS[which];
 if (!target) {
-  console.error('usage: bun run scripts/measure-staker-concentration.ts [mainnet|testnet]');
+  console.error('usage: bun run scripts/measure/staker-concentration.ts [mainnet|testnet]');
   process.exit(1);
 }
 

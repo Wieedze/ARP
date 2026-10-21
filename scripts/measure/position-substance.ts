@@ -1,7 +1,7 @@
 /** At how many positions does an atom stop being a slot and start being a market?
  *
- *      bun run scripts/measure-position-substance.ts            # mainnet 1155
- *      bun run scripts/measure-position-substance.ts testnet    # 13579
+ *      bun run scripts/measure/position-substance.ts            # mainnet 1155
+ *      bun run scripts/measure/position-substance.ts testnet    # 13579
  *
  *  The question behind it, in the user's words: _« les atomes créés ou existants c'est une chose,
  *  mais s'il y a 0 position dessus c'est comme s'il n'existait pas — ce qui compte c'est les
@@ -30,7 +30,7 @@ const TARGETS = {
 const which = (process.argv[2] ?? 'mainnet') as keyof typeof TARGETS;
 const target = TARGETS[which];
 if (!target) {
-  console.error('usage: bun run scripts/measure-position-substance.ts [mainnet|testnet]');
+  console.error('usage: bun run scripts/measure/position-substance.ts [mainnet|testnet]');
   process.exit(1);
 }
 

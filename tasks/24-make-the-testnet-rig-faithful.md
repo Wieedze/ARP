@@ -31,7 +31,7 @@
 > **Two deviations from the `Do` list, both deliberate:**
 >
 > 1. **Agents 1 and 2 keep their empty `tokenURI`** rather than being given files. `no-token-uri` is
->    23% of the real cohort (32/140, `scripts/measure-cohort-endpoints.ts`), so leaving them exercises
+>    23% of the real cohort (32/140, `scripts/measure/cohort-endpoints.ts`), so leaving them exercises
 >    a branch the three new agents cannot — which is why the gate walks `1,2,3,4,5` and not `3,4,5`.
 >    Better than the spec, and recorded rather than silently substituted.
 > 2. **Step 3 is NOT done.** See the note at the end of the `Do` list.
@@ -62,7 +62,7 @@ classification, not the capability recovery. The rig looks complete and exercise
    - `services[]`, **not** `endpoints[]` — measured 106 occurrences against 2 across 150 random Base
      ids. A verifier reading only `endpoints` sees almost nothing, and that was a real bug.
    - a declared protocol name on at least one endpoint, so the handshake path exercises.
-   - **capabilities on at least one** — 0 of ~110 parsed documents across repeated n=200 samples (`scripts/measure-cohort-skills.ts`; the zero is stable, the denominator varies with the sample), so this is the rare
+   - **capabilities on at least one** — 0 of ~110 parsed documents across repeated n=200 samples (`scripts/measure/cohort-skills.ts`; the zero is stable, the denominator varies with the sample), so this is the rare
      case and the one the code is least exercised against.
    - **At least one endpoint that is deliberately not probeable** — a `{placeholder}` or a
      `caip10:` identifier. 82% of real declared endpoints are unprobeable, and the rig must exercise
@@ -82,7 +82,7 @@ classification, not the capability recovery. The rig looks complete and exercise
    > **Owned by `tasks/19` step 1b's successor**, because the two are the same problem seen from two
    > sides: on mainnet an agent's identity is on Base 8453 and its atom on 1155, joined by `same as`,
    > and _nothing_ resolves that join today — ADR `0032` chose the registration-derived atom as the
-   > subject, and `scripts/measure-caip10-join.ts` shows zero edges exist to make the join. Doing it
+   > subject, and `scripts/measure/caip10-join.ts` shows zero edges exist to make the join. Doing it
    > here would have been the shortcut this bullet forbids, pointed at a rig where both chains
    > coincide.
    >

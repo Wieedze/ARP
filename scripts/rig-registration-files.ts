@@ -27,7 +27,7 @@
  *  Shapes follow the 2026-10-16 cohort measurement rather than what is convenient:
  *    - `services[]`, not `endpoints[]` — 106 occurrences against 2 across 150 random Base ids
  *    - a declared protocol name, so the handshake path exercises
- *    - capabilities on one agent only — 0 of ~110 parsed documents across repeated n=200 samples (scripts/measure-cohort-skills.ts; the zero is stable, the denominator varies with the sample), so it is the rare case
+ *    - capabilities on one agent only — 0 of ~110 parsed documents across repeated n=200 samples (scripts/measure/cohort-skills.ts; the zero is stable, the denominator varies with the sample), so it is the rare case
  *      and the one the code is least exercised against
  *    - one endpoint deliberately unprobeable — 82% of real ones are, and that is the group that must
  *      never be reported as a defect

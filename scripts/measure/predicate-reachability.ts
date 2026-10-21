@@ -5,7 +5,7 @@
  *  is what separates a latent defect from a live one, and the distinction is easy to overstate —
  *  task 20's first draft claimed 185 mislabelled edges when the reachable count was zero.
  *
- *      bun run scripts/measure-predicate-reachability.ts
+ *      bun run scripts/measure/predicate-reachability.ts
  *
  *  Read-only: two GraphQL queries per predicate per chain. Signs nothing.
  *

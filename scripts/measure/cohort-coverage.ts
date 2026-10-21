@@ -1,6 +1,6 @@
 /** What fraction of ERC-8004 agents can ARP actually read — and is the mirror still moving?
  *
- *      bun run scripts/measure-cohort-coverage.ts
+ *      bun run scripts/measure/cohort-coverage.ts
  *
  *  Committed because `88,243` sat in **16 files** with no script behind it, which `rules/claims.md`
  *  forbids outright — and because it turned out to be stale in a way that changes a conclusion
@@ -26,7 +26,7 @@ const INTUITION_MAINNET = 'https://mainnet.intuition.sh/v1/graphql';
 const BASE_RPC = process.env.BASE_RPC_URL ?? 'https://base-rpc.publicnode.com';
 const REGISTRY = '0x8004A169FB4a3325136EB29fA0ceB6D2e539a432' as const;
 
-import { ERC8004, IMPLEMENT, SAME_AS } from '../packages/protocol/src/sources/intuition/terms';
+import { ERC8004, IMPLEMENT, SAME_AS } from '../../packages/protocol/src/sources/intuition/terms';
 import { createPublicClient, http, toFunctionSelector, type Hex } from 'viem';
 
 const OWNER_OF = toFunctionSelector('function ownerOf(uint256) view returns (address)');

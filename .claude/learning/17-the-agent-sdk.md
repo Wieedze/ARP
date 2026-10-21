@@ -18,7 +18,7 @@ discipline rather than design. See "Surprises".
 - `scripts/agent-declare-used.ts` — the runnable example. Mainnet 1155, read-only.
 - `packages/protocol/README.md` §"Declaring what your agent used" — what you need, the plan, the
   ordering constraint, both costs read from the chain, both signing modes.
-- `scripts/measure-tool-atom-shape.ts` — committed in round 4 because the 84/78/77 breakdown had
+- `scripts/measure/tool-atom-shape.ts` — committed in round 4 because the 84/78/77 breakdown had
   been quoted in six places from no script at all.
 - 44 tests: 29 planner, 7 delegated, 8 at the MCP wire. Re-derived per file, not read off a report.
 - ADRs `0038` (a plan, not a transaction), `0039` (the deposit goes on the edge), `0040` (the cap
@@ -49,7 +49,7 @@ the same as verifying the file after the fix**, and the second is the only one t
 **The root cause of that recurrence was a number with no script behind it.** `claims.md` already
 said "commit the script, not the number"; the 84/78/77 figures were quoted in six places and
 produced by nothing re-runnable, so no reader — including three verifier rounds — could settle the
-sentence against anything but another copy of the sentence. `scripts/measure-tool-atom-shape.ts`
+sentence against anything but another copy of the sentence. `scripts/measure/tool-atom-shape.ts`
 closed the class in one commit, and an independent run reproduces 84 atoms / 78 `ipfs://` / 77
 pinned exactly, with 0 of the 2 raw-URL atoms and 0 of the 4 others pinned — which is what makes
 "77 of 84" sound rather than a coincidence of two subpopulations.
@@ -109,7 +109,7 @@ the line telling the reader to re-run it pointed at a directory that commit had 
   introduced by the commit that closed the previous round.
 - **Re-derive counts per file.** `bun run test -- <file>` per test file takes a minute and makes a
   headline count checkable.
-- **Two live imprecisions were left in `scripts/measure-tool-atom-shape.ts`'s docstring**, non-blocking
+- **Two live imprecisions were left in `scripts/measure/tool-atom-shape.ts`'s docstring**, non-blocking
   and recorded here for whoever next edits it: it says the breakdown was quoted in "five places" and
   lists five, but `packages/protocol/src/declare/tool-atom.ts` carries it too, so it is six; and
   "three verifier rounds in a row found a wrong version of this one sentence" is two in the commit

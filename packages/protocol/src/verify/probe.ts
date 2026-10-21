@@ -22,7 +22,7 @@ export type ProbeOptions = {
      * After a successful MCP handshake, ask the server what it serves.
      *
      * Off by default because it is a second request per endpoint and the task's courtesy rules make
-     * one request the baseline. Worth turning on: measured 2026-10-16, 0 of ~110 parsed documents across repeated n=200 samples (scripts/measure-cohort-skills.ts; the zero is stable, the denominator varies) declared a capability, yet all three confirmed MCP servers answered
+     * one request the baseline. Worth turning on: measured 2026-10-16, 0 of ~110 parsed documents across repeated n=200 samples (scripts/measure/cohort-skills.ts; the zero is stable, the denominator varies) declared a capability, yet all three confirmed MCP servers answered
      * `tools/list` with their real tool list — 13 tools across gmchain, surfliquid and nebula-scan.
      * So this recovers capability data the registration file does not carry, which is a stronger
      * result than comparing declared against served.

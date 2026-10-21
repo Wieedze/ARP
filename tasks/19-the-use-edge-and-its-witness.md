@@ -59,7 +59,7 @@ Measured on mainnet 2026-10-16:
 
 **Use `USE`.** Twenty-seven edges of difference is noise, so volume does not decide; publication does,
 and ADR `0015` already made that the rule. Reproduce the counts with
-`scripts/measure-cohort-endpoints.ts`'s sibling query before changing this.
+`scripts/measure/cohort-endpoints.ts`'s sibling query before changing this.
 
 Do:
 

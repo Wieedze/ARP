@@ -3,7 +3,7 @@
  *  The evidence for ADR 0034 — the deposit is the attestation. A position is recorded against the
  *  depositor's address, so filtering by account is filtering by who stands behind an edge.
  *
- *      bun run scripts/measure-attestor-filter.ts
+ *      bun run scripts/measure/attestor-filter.ts
  *
  *  Measured 2026-10-19 on mainnet: the filter is ONE query, no extra index. The convention is
  *  already in use — wieedze.eth holds positions on (wieedze.eth, uses, Hardhat) and (…, uses,

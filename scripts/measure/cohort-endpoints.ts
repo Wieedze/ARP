@@ -4,7 +4,7 @@
  *  the verifier's classification: the shape of the cohort is the reason the classes are what
  *  they are, and it moves.
  *
- *      bun run scripts/measure-cohort-endpoints.ts 140
+ *      bun run scripts/measure/cohort-endpoints.ts 140
  *
  *  Read-only throughout: one `eth_call` of `tokenURI` per sampled id, one GET of the resolved
  *  registration file, one GET per probeable endpoint, one `initialize` POST per declared MCP

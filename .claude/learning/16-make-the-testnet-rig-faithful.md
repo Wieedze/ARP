@@ -16,7 +16,7 @@ closing two verifier punch lists, all on `feat/agent-panel-tabs`
   written under `rules/portability.md`.
 - `scripts/verify-rig-claims.ts` — asserts each fixture's `exercises` prose against what the probe
   observed, plus document hashes against `deployments/13579.json`. Exits non-zero on a mismatch.
-- `scripts/measure-cohort-skills.ts` — committed so the "0 of ~110 documents declare a capability"
+- `scripts/measure/cohort-skills.ts` — committed so the "0 of ~110 documents declare a capability"
   figure can be re-run.
 - `erc8004/test/rig-files.test.ts`, `erc8004/test/arp-mcp-server.test.ts` — 21 then 24 tests.
 - `deployments/13579.json` — `arp.rigAgents`: ids 3, 4, 5, their transactions, document hashes, the
@@ -67,7 +67,7 @@ commit, in two files, with contradictory comments.
 it. But the default out path carried no chain, so a Base run was observed loading the testnet walk's
 file. `portability.md` rule 2, inside the commit that introduced `portability.md`.
 
-**Unthrottled measurement inflates its own variance.** `measure-cohort-skills.ts` first fired all 200
+**Unthrottled measurement inflates its own variance.** `measure/cohort-skills.ts` first fired all 200
 requests at once. A rate-limited fetch falls into `if (!r.ok) return` and drops silently out of the
 parsed count, so part of the 108/112/113 spread was self-inflicted, not sampling. The zero numerator
 survives — a zero cannot be inflated by a smaller denominator — but "the denominator varies with the
@@ -98,7 +98,7 @@ itself. Third and fourth occurrences; the line already warned it had been wrong 
   delegation: ADR `0036` · an operator's raw key: testnet only, ADR `0037`). `CLAUDE.md` and
   `STATE.md` cite it instead of restating.
 - **Agents 1 and 2 keep their empty `tokenURI`**, against the task's step 1. `no-token-uri` is 23% of
-  the real cohort (32/140, `scripts/measure-cohort-endpoints.ts`), so leaving them exercises a branch
+  the real cohort (32/140, `scripts/measure/cohort-endpoints.ts`), so leaving them exercises a branch
   the three new agents cannot — which is why the gate walks `1,2,3,4,5`. Better than the spec, and
   the gate had to widen for it to count.
 - **Step 3 (route identity resolution through `resolveAgent`) deferred, not done**, and owned by
@@ -117,7 +117,7 @@ itself. Third and fourth occurrences; the line already warned it had been wrong 
 - `.claude/rules/portability.md` — **first use, and it caught two things it was written for**: the
   out-path collision (rule 2) and the `ARP_MCP_ENDPOINT` escape hatch (rule 4, "a rehearsal prop").
   It was also broken twice *by the commits implementing it* — module-scope chain constants in
-  `measure-cohort-skills.ts`, in the same task that refactored them out of `verify-cohort.ts`.
+  `measure/cohort-skills.ts`, in the same task that refactored them out of `verify-cohort.ts`.
 - `.claude/rules/claims.md` — **sufficient, and the highest-yield rule in the task.** Check 1
   separated the latent cache hazard from a live one. Check 2 found the unanchored `112` in six places
   and the three-way split of the mainnet constraint. Check 3 found that nothing on disk recorded who

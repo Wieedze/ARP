@@ -38,8 +38,8 @@ not measurable from the repo at all; the measurable population is the 3.
 `noUnusedLocals` + `noUnusedParameters` produce 24 diagnostics. Genuine ones: `scripts/seed.ts:34`
 `decodeEventLog` declared and never read (TS6133 — a dead import _today_, not the historical one the
 commit message describes), and five implicit-`any` parameters (`agent-server.ts:142`,
-`agent-server-specialist.ts:93`, `demo.ts:53`, `measure-cohort-callable.ts:40`,
-`measure-cohort-endpoints.ts:31`). Six more are type mismatches at the viem/delegation seam needing
+`agent-server-specialist.ts:93`, `demo.ts:53`, `measure/cohort-callable.ts:40`,
+`measure/cohort-endpoints.ts:31`). Six more are type mismatches at the viem/delegation seam needing
 triage (`agent-server.ts:210,211,287,307`, `agent-server-specialist.ts:210,211` — including
 `Delegation.salt` typed `` `0x${string}` `` against `bigint`). The rest are missing Bun types:
 `@types/bun` is installed nowhere in the repo. So widening the gate is **not** zero-cost, which is

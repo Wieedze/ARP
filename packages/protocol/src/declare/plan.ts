@@ -92,7 +92,7 @@ export class BelowMinDepositError extends Error {
  *
  * Caught by a read rather than by arithmetic. `previewAtomCreate` and `previewTripleCreate` are
  * callable on a term that does not exist and return `shares = 0` for a deposit that is all fee,
- * measured on both chains 2026-10-21 by `scripts/measure-preview-before-create.ts`. So ADR `0053`'s
+ * measured on both chains 2026-10-21 by `scripts/measure/preview-before-create.ts`. So ADR `0053`'s
  * rule is now checked before signing instead of discovered after.
  *
  * Not thrown when the caller passed `birthDeposit: 0n`, which is the documented way of asking for
@@ -160,7 +160,7 @@ async function findExistingToolAtoms(
  * Anything else — a `did:`, an `npm:` specifier, a bare name — falls back to a bare URI atom with
  * `bareUrlWarning`, because there is no URL to normalise and nothing to derive a document from.
  *
- * The 84/78/77 figures in the warning string come from `scripts/measure-tool-atom-shape.ts`.
+ * The 84/78/77 figures in the warning string come from `scripts/measure/tool-atom-shape.ts`.
  */
 async function resolveToolAtom(
     uri: string,

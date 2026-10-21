@@ -16,7 +16,7 @@ ARP (Agent Reputation Protocol) is a permissionless, modular reputation protocol
 
 The core innovation is that **the input costs money**. An agent declares the tools it used and deposits TRUST on that declaration, under a cap its operator signed. Nothing here measures whether the agent was _right_ — reputation is what emerges when real value sits on a claim about composition, and the claim is one a third party can contradict.
 
-The case against free ratings is measured, not asserted: ERC-8004's Reputation Registry holds **569,148** feedback entries on Base 8453 with a **mean score of 95.09 / 100** (`scripts/measure-erc8004-feedback.ts`, 2026-10-20). Free ratings converge on excellent and stop distinguishing anything.
+The case against free ratings is measured, not asserted: ERC-8004's Reputation Registry holds **569,148** feedback entries on Base 8453 with a **mean score of 95.09 / 100** (`scripts/measure/erc8004-feedback.ts`, 2026-10-20). Free ratings converge on excellent and stop distinguishing anything.
 
 **An agent and a tool are the same shape** (ADR `0051`): both exist elsewhere, both get an atom pointing at them, and both carry a market on claims about them. One write path, not two.
 

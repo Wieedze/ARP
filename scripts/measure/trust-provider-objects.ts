@@ -6,15 +6,15 @@
  *  ADR `0030` is the precedent for getting this wrong: `use` was chosen on publication instead of
  *  meaning, and 21 triples are stranded permanently on a predicate ARP minted and abandoned.
  *
- *      bun run scripts/measure-trust-provider-objects.ts            # mainnet 1155
- *      bun run scripts/measure-trust-provider-objects.ts testnet    # 13579
+ *      bun run scripts/measure/trust-provider-objects.ts            # mainnet 1155
+ *      bun run scripts/measure/trust-provider-objects.ts testnet    # 13579
  *
  *  Read-only: paginated GraphQL. Signs nothing, needs no key.
  */
 import {
   HAS_TRUST_ASSESSMENT,
   HAS_TRUST_PROVIDER,
-} from '../packages/protocol/src/sources/intuition/terms';
+} from '../../packages/protocol/src/sources/intuition/terms';
 
 const TARGETS = {
   mainnet: { label: 'Intuition mainnet 1155', url: 'https://mainnet.intuition.sh/v1/graphql' },
@@ -24,7 +24,7 @@ const TARGETS = {
 const which = (process.argv[2] ?? 'mainnet') as keyof typeof TARGETS;
 const target = TARGETS[which];
 if (!target) {
-  console.error('usage: bun run scripts/measure-trust-provider-objects.ts [mainnet|testnet]');
+  console.error('usage: bun run scripts/measure/trust-provider-objects.ts [mainnet|testnet]');
   process.exit(1);
 }
 

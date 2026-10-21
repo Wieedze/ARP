@@ -1,8 +1,8 @@
 /** Does ARP's MCP server tell the truth about which edges are staked?
  *
  *      bun run scripts/arp-mcp-server.ts                          # in another shell
- *      bun run scripts/measure-mcp-staked-flag.ts                 # IPFS on mainnet
- *      bun run scripts/measure-mcp-staked-flag.ts 0x<atom id>
+ *      bun run scripts/measure/mcp-staked-flag.ts                 # IPFS on mainnet
+ *      bun run scripts/measure/mcp-staked-flag.ts 0x<atom id>
  *
  *  **Exists because the flag was wrong and nothing would have told us.** `arp_tool_reputation`
  *  answers `staked` per edge, and its own caveat says "an edge with staked=false carries no weight
@@ -20,7 +20,7 @@
  *  Read-only: one MCP call and one GraphQL query. Signs nothing. Exits non-zero on a mismatch.
  */
 
-import { USES } from '../packages/protocol/src/sources/intuition/terms';
+import { USES } from '../../packages/protocol/src/sources/intuition/terms';
 
 const SERVER = process.env.ARP_MCP_URL ?? 'http://127.0.0.1:3002/mcp';
 const GRAPHQL = process.env.INTUITION_GRAPHQL_URL ?? 'https://mainnet.intuition.sh/v1/graphql';
@@ -29,7 +29,7 @@ const DEFAULT_TOOL = '0x6cf977f274782296374d17fefca32b45c42181eab2d1d513b161cf83
 
 const toolAtomId = process.argv[2] ?? DEFAULT_TOOL;
 if (!/^0x[0-9a-fA-F]{64}$/.test(toolAtomId)) {
-  console.error('usage: bun run scripts/measure-mcp-staked-flag.ts [0x<32-byte atom id>]');
+  console.error('usage: bun run scripts/measure/mcp-staked-flag.ts [0x<32-byte atom id>]');
   process.exit(1);
 }
 

@@ -32,7 +32,7 @@ something to price.
 
 Measured 2026-10-16, **n = 140 uniformly random token ids** on Base registry
 `0x8004A169FB4a3325136EB29fA0ceB6D2e539a432`. Reproduce with
-`bun run scripts/measure-cohort-endpoints.ts 140`. Sampling error applies — quote n with any number.
+`bun run scripts/measure/cohort-endpoints.ts 140`. Sampling error applies — quote n with any number.
 
 | Layer                                                   | Result             |
 | ------------------------------------------------------- | ------------------ |

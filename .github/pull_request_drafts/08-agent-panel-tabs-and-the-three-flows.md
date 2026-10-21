@@ -43,7 +43,7 @@ The prober is deliberate about its own uncertainty: a timeout is `confirmed/dead
 failure is `inconclusive`, and a 429 or 503 is never a verdict. It serialises **per host**, not
 globally — one operator held 38 of 108 endpoints — and honours `Retry-After`.
 
-Measured on Base 8453, 2026-10-16, `scripts/measure-cohort-endpoints.ts`: 52% of the sampled cohort
+Measured on Base 8453, 2026-10-16, `scripts/measure/cohort-endpoints.ts`: 52% of the sampled cohort
 declares a protocol endpoint and **1–7%** answer (Wilson interval, n=122). The interval is the
 finding; a point estimate there would be dishonest.
 
@@ -96,7 +96,7 @@ own reader cannot see it. **Latent, not live** — that script's only callers ar
 surface — but it is the file task 16 was told to adapt.
 
 Measured on mainnet 1155 before deciding, all curves, over the 185 `uses` edges that exist
-(`scripts/measure-stake-vault-placement.ts`):
+(`scripts/measure/stake-vault-placement.ts`):
 
 | vault             | edges with positions | assets                                 |
 | ----------------- | -------------------- | -------------------------------------- |

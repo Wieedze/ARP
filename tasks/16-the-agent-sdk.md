@@ -18,7 +18,7 @@
 > (`getToolUsage`) priced the triple while ARP's writer (`scripts/agent-stake-on-use.ts`) deposited
 > on the atom, so the writer put TRUST where the reader could not see it. Latent, not live — the
 > script's only callers are set-aside hackathon surface. Measured on mainnet before deciding
-> (`scripts/measure-stake-vault-placement.ts`): of 185 `uses` edges, 110 carry stake on the edge and
+> (`scripts/measure/stake-vault-placement.ts`): of 185 `uses` edges, 110 carry stake on the edge and
 > 74 carry it **only** on the atom.
 >
 > Verified against live mainnet 1155 on 2026-10-19, read-only, nothing signed and nothing sent:

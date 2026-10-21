@@ -14,7 +14,7 @@ export type ToolAtomCandidate = {
 /**
  * Finds the atom a tool already has, so a second one is not created beside it.
  *
- * Why this exists, measured by `scripts/measure-tool-atom-shape.ts` on Intuition mainnet 1155 on
+ * Why this exists, measured by `scripts/measure/tool-atom-shape.ts` on Intuition mainnet 1155 on
  * 2026-10-19 over the 84 distinct object
  * atoms on the 185 `uses` edges:
  *

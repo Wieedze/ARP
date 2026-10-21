@@ -18,7 +18,7 @@ was always in the step from the measurement to the sentence. See ADR 0031.
 **Check:** before saying a defect affects N things, measure how many of those N the code can actually
 reach. A wrong branch nothing reaches is **latent**, not live. Say which.
 
-Reachability is usually one query. `scripts/measure-predicate-reachability.ts` is the one that
+Reachability is usually one query. `scripts/measure/predicate-reachability.ts` is the one that
 settled this case: `getCapabilities` only runs on a subject resolved through `same as`, and no `uses`
 subject had one.
 

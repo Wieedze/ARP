@@ -61,7 +61,7 @@ the registry, whether they have heard of ARP or not.
 Flow B is narrower, and the gap is the finding. The `uses` edge needs the agent's **identity atom**,
 which Intuition's mirror writes, and the mirror holds **28,648** — unchanged since 2026-09-16 while
 the registry tripled, so **9.2%** coverage and falling (highest minted id 309,925 on 2026-10-20,
-`scripts/measure-cohort-coverage.ts`). For the other nine in ten the atom does not exist and must be
+`scripts/measure/cohort-coverage.ts`). For the other nine in ten the atom does not exist and must be
 written: `scripts/agent-identity-atom.ts`, ADR `0047`. Every count here moves at ~44,000 agents a
 day, so run the script rather than quoting this paragraph.
 

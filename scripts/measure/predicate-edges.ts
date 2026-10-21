@@ -3,7 +3,7 @@
  *  The basis for task 19 step 1 — which predicate ARP should write `(agent, use, tool)` on.
  *  Re-run before changing that choice; the counts move.
  *
- *      bun run scripts/measure-predicate-edges.ts
+ *      bun run scripts/measure/predicate-edges.ts
  *
  *  Read-only: one aggregate query per predicate. Signs nothing.
  *

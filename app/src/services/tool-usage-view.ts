@@ -83,7 +83,7 @@ export function tierForEdge(edge: ToolUsageEdge): ProvenanceTier {
  * `getToolUsage` pairs an **all-curve** `totalAssets` with a `positionCount` scoped to one vault
  * (`packages/protocol/src/sources/intuition/map.ts:126-137`), which are two different populations —
  * and on mainnet **89.33% of the TRUST on `uses` edges sits on curve 2** (219.543848 of 245.776495
- * TRUST, measured 2026-10-19 by `scripts/measure-stake-vault-placement.ts`) while the
+ * TRUST, measured 2026-10-19 by `scripts/measure/stake-vault-placement.ts`) while the
  * counts read curve 1. So an edge can hold real capital and report zero positions here.
  *
  * This said 91.6%, which is not a figure anything produces: `packages/protocol/src/tool-usage.ts:22`

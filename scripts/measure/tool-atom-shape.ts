@@ -6,8 +6,8 @@
  *  whatever atom the tool really has — and Intuition has no deletion, so the tool's reputation
  *  splits across two ids permanently (ADR `0039`'s failure mode one level up).
  *
- *      bun run scripts/measure-tool-atom-shape.ts                 # mainnet 1155
- *      bun run scripts/measure-tool-atom-shape.ts testnet         # 13579
+ *      bun run scripts/measure/tool-atom-shape.ts                 # mainnet 1155
+ *      bun run scripts/measure/tool-atom-shape.ts testnet         # 13579
  *
  *  **Committed because its figures were quoted in six places from no script at all** — the
  *  84/78/77 breakdown appears in `packages/protocol/src/declare/{plan,types,tool-atom}.ts`, the
@@ -22,7 +22,7 @@
 
 // `uses` — "uses this tool" (ADR 0030). IMPORTED, never copied: `terms.ts` is the only place a term
 // id may appear.
-import { USES } from '../packages/protocol/src/sources/intuition/terms';
+import { USES } from '../../packages/protocol/src/sources/intuition/terms';
 
 const TARGETS = {
   mainnet: { label: 'Intuition mainnet 1155', url: 'https://mainnet.intuition.sh/v1/graphql' },
@@ -32,7 +32,7 @@ const TARGETS = {
 const which = (process.argv[2] ?? 'mainnet') as keyof typeof TARGETS;
 const target = TARGETS[which];
 if (!target) {
-  console.error('usage: bun run scripts/measure-tool-atom-shape.ts [mainnet|testnet]');
+  console.error('usage: bun run scripts/measure/tool-atom-shape.ts [mainnet|testnet]');
   process.exit(1);
 }
 

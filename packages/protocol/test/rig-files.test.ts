@@ -65,7 +65,7 @@ describe("each rig file exercises the group it claims", () => {
         expect(endpoints).toHaveLength(1);
         expect(endpoints[0].protocol).toBe("mcp");
         expect(endpoints[0].classification.status).toBe("probeable");
-        // Capabilities are the rare case: 0 of ~110 parsed documents across repeated n=200 samples (scripts/measure-cohort-skills.ts; the zero is stable, the denominator varies with the sample), so this is the only
+        // Capabilities are the rare case: 0 of ~110 parsed documents across repeated n=200 samples (scripts/measure/cohort-skills.ts; the zero is stable, the denominator varies with the sample), so this is the only
         // place the declared-against-served comparison can be exercised at all.
         expect(endpoints[0].capabilities.length).toBeGreaterThan(0);
     });

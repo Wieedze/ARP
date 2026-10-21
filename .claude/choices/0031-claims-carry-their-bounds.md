@@ -79,7 +79,7 @@ project depends on it.
 **Neutral**
 
 - This ADR is itself subject to the rule. Every figure in it is reproducible:
-  `scripts/measure-predicate-reachability.ts` for the zero, `scripts/measure-predicate-objects.ts`
-  for the object histograms, `scripts/measure-predicate-edges.ts` for the edge counts.
+  `scripts/measure/predicate-reachability.ts` for the zero, `scripts/measure/predicate-objects.ts`
+  for the object histograms, `scripts/measure/predicate-edges.ts` for the edge counts.
 - The wrong statements are left in the history rather than rebased away, and ADR 0030 carries its own
   correction in place with what it had claimed quoted. The record of being wrong is the point.

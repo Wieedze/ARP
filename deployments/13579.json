@@ -110,7 +110,7 @@
       }
     ],
     "rigAgents": {
-      "_note": "Task 24. ERC-8004 agents on ARP's own testnet registry, minted 2026-10-19 on chain 13579. SIGNED BY THE AGENT SESSION using the operator's PRIVATE_KEY from .env, on the user's explicit authorisation \u2014 not by a human at a keyboard. See ADR 0037. security.md scopes its automation prohibition to mainnet, so this is permitted and was previously unwritten. Agents 1 and 2 were left with an EMPTY tokenURI deliberately: no-token-uri is 23% of the real cohort (32/140, scripts/measure-cohort-endpoints.ts), so they exercise a branch the three new agents cannot. Permanent: the ids are taken and setAgentURI leaves the superseded URI in the mint transaction's calldata.",
+      "_note": "Task 24. ERC-8004 agents on ARP's own testnet registry, minted 2026-10-19 on chain 13579. SIGNED BY THE AGENT SESSION using the operator's PRIVATE_KEY from .env, on the user's explicit authorisation \u2014 not by a human at a keyboard. See ADR 0037. security.md scopes its automation prohibition to mainnet, so this is permitted and was previously unwritten. Agents 1 and 2 were left with an EMPTY tokenURI deliberately: no-token-uri is 23% of the real cohort (32/140, scripts/measure/cohort-endpoints.ts), so they exercise a branch the three new agents cannot. Permanent: the ids are taken and setAgentURI leaves the superseded URI in the mint transaction's calldata.",
       "registry": "0xC165A2AD2E540A4069E02834009161E2b4490d5A",
       "agents": {
         "3": {

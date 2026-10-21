@@ -1,6 +1,6 @@
 /** Can anyone mint into the canonical ERC-8004 registry, and how far ahead of the mirror is it?
  *
- *      bun run scripts/measure-registry-mintability.ts
+ *      bun run scripts/measure/registry-mintability.ts
  *
  *  Two questions that decide whether ARP can mint where the ecosystem reads, rather than into a
  *  registry it deployed itself.

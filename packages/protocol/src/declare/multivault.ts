@@ -260,7 +260,7 @@ export type MultiVaultReads = {
     /**
      * What a term creation would actually buy, **before** anything is signed.
      *
-     * Measured on both chains 2026-10-21 by `scripts/measure-preview-before-create.ts`, and the two
+     * Measured on both chains 2026-10-21 by `scripts/measure/preview-before-create.ts`, and the two
      * findings are why these are on the reader at all:
      *
      * 1. **Callable on a term that does not exist.** The curve state is empty and it computes from

@@ -4,7 +4,7 @@ import { highestTokenId } from './erc8004-population.js';
  *  The precondition for `tasks/22` — the chain as witness. If these accounts never transact there is
  *  no calldata to derive usage from.
  *
- *      bun run scripts/measure-cohort-onchain-activity.ts 120
+ *      bun run scripts/measure/cohort-onchain-activity.ts 120
  *
  *  Measured 2026-10-16 over 120 random ids: 120/120 resolved an owner; 19% nonce 0, 26% 1-9 tx,
  *  55% 10+, 68% hold a balance.

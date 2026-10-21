@@ -6,7 +6,7 @@ import {thingDocument, thingUri, type AgentThing} from "./agent-atom.js";
  * ## The problem this solves
  *
  * An atom's id is the hash of its data, so two atoms are the same atom only if their bytes match
- * exactly. Measured on mainnet 1155 on 2026-10-19 with `scripts/measure-tool-atom-shape.ts` and the
+ * exactly. Measured on mainnet 1155 on 2026-10-19 with `scripts/measure/tool-atom-shape.ts` and the
  * `ToolAtomByUrl` query: `https://github.com` already resolves **five** distinct `Thing` atoms —
  * two labelled `GitHub`, three `github.com`. One URL, five markets, none of which can be merged
  * because Intuition has no deletion.

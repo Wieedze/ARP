@@ -17,7 +17,7 @@ Fixing the predicate (ADR `0030`) was necessary and not sufficient. Three facts,
    `(canonical agent atom, same as, CAIP-10 of the operating account)` and
    `app/src/services/agent-import.ts:397` implements it, but **zero edges of any predicate point at a
    `caip10:` atom** on either chain, over 20 such atoms on testnet. The import path passes its tests
-   and has never written a real edge. `scripts/measure-caip10-join.ts` re-checks this.
+   and has never written a real edge. `scripts/measure/caip10-join.ts` re-checks this.
 
 So the subject was the other half of the problem, and the bridge it would have been crossed by was
 never built. Since Intuition has no deletion, picking wrong is permanent.

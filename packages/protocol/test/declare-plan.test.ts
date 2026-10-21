@@ -139,7 +139,7 @@ function fakeReads(
          * The real contract's behaviour, reduced to the one property the planner reads: the fee
          * comes out of `assets`, so what is left is what buys shares, and the fee alone buys none.
          *
-         * Measured on both chains 2026-10-21 (`scripts/measure-preview-before-create.ts`). The
+         * Measured on both chains 2026-10-21 (`scripts/measure/preview-before-create.ts`). The
          * entry fee is dropped here — a percentage the fake does not need, because no assertion is
          * about the exact share count, only about zero against non-zero.
          */
@@ -474,7 +474,7 @@ describe("which atom a tool resolves to", () => {
             tools: ["npm:some-package"],
             reads: fakeReads(),
         });
-        // Measured by scripts/measure-tool-atom-shape.ts on mainnet: 78 of the 84 tool atoms are `ipfs://` and 77
+        // Measured by scripts/measure/tool-atom-shape.ts on mainnet: 78 of the 84 tool atoms are `ipfs://` and 77
         // resolve a pinned Thing; the only two raw-URL atoms are schema.org vocabulary, not tools.
         expect(plan.tools[0]?.atomSource).toBe("derived-from-uri");
         expect(plan.tools[0]?.bareUrlWarning).toContain("no pinned metadata");
@@ -563,7 +563,7 @@ describe("previews before signing", () => {
      *
      * `previewAtomCreate` is callable on an atom that does not exist and returns `shares = 0` for a
      * deposit the fees eat — measured on both chains by
-     * `scripts/measure-preview-before-create.ts`. A 1-wei deposit against a 2% fee rounds to zero
+     * `scripts/measure/preview-before-create.ts`. A 1-wei deposit against a 2% fee rounds to zero
      * shares, which is a term on the chain that is not a market.
      */
     it("refuses a creation that would buy no shares", async () => {
@@ -646,7 +646,7 @@ describe("prepareStakeOnUsed", () => {
         expect(functionName).toBe("deposit");
         const [receiver, termId, curveId, minShares] = args;
         // The load-bearing assertion of this module. Measured on mainnet 1155 on 2026-10-19
-        // (scripts/measure-stake-vault-placement.ts): 74 of 185 `uses` edges carry stake only on
+        // (scripts/measure/stake-vault-placement.ts): 74 of 185 `uses` edges carry stake only on
         // the object atom, which getToolUsage cannot see. A regression to the atom id fails here.
         expect(termId).toBe(tripleId);
         expect(termId).not.toBe(atomIdFor(TOOL_URI));

@@ -3,7 +3,7 @@
  *  The basis for `docs/14_THE_WITNESS_PROBLEM.md`: the witness set is the callable set, and it is
  *  two orders of magnitude smaller than the cohort.
  *
- *      bun run scripts/measure-cohort-callable.ts 250
+ *      bun run scripts/measure/cohort-callable.ts 250
  *
  *  Read-only: one `eth_call` of `tokenURI` per id, one GET of the registration file, one protocol
  *  probe per probeable protocol endpoint. 8 s timeouts, courtesy user-agent, no retries.

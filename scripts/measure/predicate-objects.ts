@@ -3,7 +3,7 @@
  *  The evidence for ADR 0030: the two predicates do not mean the same thing, so publication and
  *  volume cannot decide between them. Re-run before changing which one ARP writes on.
  *
- *      bun run scripts/measure-predicate-objects.ts
+ *      bun run scripts/measure/predicate-objects.ts
  *
  *  Read-only: one GraphQL query per predicate per chain. Signs nothing.
  *

@@ -6,7 +6,7 @@
  *  caip10 atom, over 20 such atoms on testnet. The import passes its tests and has never written a
  *  real edge, so the join `getCapabilities` would need does not exist.
  *
- *      bun run scripts/measure-caip10-join.ts
+ *      bun run scripts/measure/caip10-join.ts
  *
  *  Re-run before choosing between options A and B in task 19 step 1b: if this ever returns non-zero,
  *  the premise has changed. */

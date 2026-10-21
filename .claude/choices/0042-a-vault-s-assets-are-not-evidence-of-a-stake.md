@@ -79,7 +79,7 @@ is about: it is a figure for capital that does not exist. The page says "Nothing
 The same read pairs an **all-curve** `totalAssets` with a `positionCount` scoped to one vault
 (`packages/protocol/src/sources/intuition/map.ts:126-137`). Measured on 1155 over the 185 `uses`
 edges: **26.232648 TRUST on curve 1 against 219.543848 on curve 2** — **89.33%** of it off the curve
-the counts read, now printed by `scripts/measure-stake-vault-placement.ts` rather than asserted. An
+the counts read, now printed by `scripts/measure/stake-vault-placement.ts` rather than asserted. An
 earlier version said 91.6%, which neither its own two inputs nor any script produces, while
 `packages/protocol/src/tool-usage.ts:22` already carried 89% for the same quantity. So an edge can hold real capital and report zero positions here.
 
@@ -165,7 +165,7 @@ a copy". It is deliberately **not** done here, and the page states the mismatch 
 
 ## References
 
-- Script: `scripts/measure-stake-vault-placement.ts` reads these vaults across every curve
+- Script: `scripts/measure/stake-vault-placement.ts` reads these vaults across every curve
 - Related ADR: `.claude/choices/0023-cohort-listing-reads-the-atom-market-across-every-curve.md` —
   line 9 for "every market cap must carry a position count beside it", lines 51-52 for which
   position count equals a distinct-staker count, and lines 90-92 for the trap this task fell into

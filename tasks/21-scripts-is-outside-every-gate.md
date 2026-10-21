@@ -34,7 +34,7 @@ inherited**. `.claude/rules/claims.md`: commit the script, not the number.
 Known shapes, from both runs:
 
 - implicit `any` parameters in `agent-server.ts`, `agent-server-specialist.ts`, `demo.ts`,
-  `measure-cohort-callable.ts`, `measure-cohort-endpoints.ts`
+  `measure/cohort-callable.ts`, `measure/cohort-endpoints.ts`
 - type mismatches at the viem / delegation seam, including `Delegation.salt` typed `` `0x${string}` ``
   against `bigint`
 - missing Bun types — `@types/bun` is installed nowhere in the repo

@@ -27,7 +27,7 @@
 >
 > A review then found the same defect surviving in the sidebar, where **20 of the 84 live tool pages
 > printed a figure beside a banner saying nobody had staked anything**. Gated, verified against one
-> of the twenty, and the figure is now produced by `scripts/measure-tool-page-states.ts` rather than
+> of the twenty, and the figure is now produced by `scripts/measure/tool-page-states.ts` rather than
 > asserted — it reports 64 rendering, 19 free-only and 1 off-curve, and names the off-curve atom so
 > the n=1 claim is checkable.
 
@@ -206,7 +206,7 @@ observed" rather than on `minDeposit`, which is a governance floor and cannot be
 deposit; a dead `<span>` left by the contrast fix; an unreachable null branch; and `OtherMarket`
 opened with "Everything above…" while rendering on the empty state.
 
-And the live `3 of 7` check on the MCP `staked` flag is now `scripts/measure-mcp-staked-flag.ts` —
+And the live `3 of 7` check on the MCP `staked` flag is now `scripts/measure/mcp-staked-flag.ts` —
 it compares the server's flag against the graph's own position counts and exits non-zero on a
 disagreement, so the figure is re-runnable rather than observed. That flag is one of the three sites
 ADR `0042` had to fix, which makes it the one most likely to rot again.

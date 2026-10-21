@@ -20,7 +20,7 @@ import type {MarketSide, Provenance} from "./types.js";
  *     `positionCount` would read 0 — and ADR `0023`'s rule against showing a TRUST figure without a
  *     position count would then be satisfied by a zero.
  *   - It already mixes populations: on mainnet, **89% of the TRUST on `uses` edges sits on curve
- *     2** (`scripts/measure-stake-vault-placement.ts`), which the per-vault fields exclude and the
+ *     2** (`scripts/measure/stake-vault-placement.ts`), which the per-vault fields exclude and the
  *     term-level totals include.
  *
  * Reading it from the chain is the fix and belongs with `tasks/23`, because it changes what the

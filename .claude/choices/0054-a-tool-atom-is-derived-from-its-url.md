@@ -15,7 +15,7 @@ names, produce two different documents, two different CIDs, two different atoms,
 reputations — and Intuition has no deletion.
 
 This is not a hypothetical. Measured on mainnet 1155 on 2026-10-21 by
-`scripts/measure-url-atom-fragmentation.ts`, over all 90,608 atoms whose Thing carries a URL:
+`scripts/measure/url-atom-fragmentation.ts`, over all 90,608 atoms whose Thing carries a URL:
 
 | | |
 | --- | --- |
@@ -138,4 +138,4 @@ legibility does.
 - Related ADR: `.claude/choices/0030-the-use-edge-is-chosen-on-meaning.md`
 - Related rule: `.claude/rules/portability.md`
 - Skill: `.claude/skills/intuition/SKILL.md` — "plain string versions are legacy duplicates"
-- Scripts: `scripts/measure-url-atom-fragmentation.ts`, `scripts/pin-tool.ts`
+- Scripts: `scripts/measure/url-atom-fragmentation.ts`, `scripts/pin-tool.ts`

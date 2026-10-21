@@ -9,7 +9,7 @@ c'est inutile »_.
 ## Context
 
 ERC-8004's Reputation Registry holds **569,148** feedback entries on Base 8453 (8004scan.io,
-2026-10-20, `scripts/measure-erc8004-feedback.ts`), and it is where the ecosystem looks. The question
+2026-10-20, `scripts/measure/erc8004-feedback.ts`), and it is where the ecosystem looks. The question
 was whether ARP should bring them onto Intuition so they can be staked on.
 
 **The user's objection is the documented anti-pattern, independently re-derived.** `docs/07:71`:
@@ -63,7 +63,7 @@ no second chain to write to.
   counterparty as provider. Non-fragmenting and needs no new predicate. Declined because it puts an
   ordinary agent into a slot that three dedicated scoring companies occupy — measured 2026-10-20,
   `has trust provider` carries 28,683 edges over **three** objects, Deep3 at 99.86%
-  (`scripts/measure-trust-provider-objects.ts`) — so readers filter on known providers and the claim
+  (`scripts/measure/trust-provider-objects.ts`) — so readers filter on known providers and the claim
   would be written where nobody looks for it.
 - **One claim per agent** (`agent is trustworthy`, feedback as evidence behind it). Rejected: no
   falsifiable subject, which is `docs/12`'s drift signal.
@@ -119,4 +119,4 @@ no second chain to write to.
 - Related doc: `docs/07_INTUITION_ERC8004_PARTNER_GUIDE.md:71` (the fragmentation anti-pattern),
   `docs/12_THE_IDEA.md` (the drift list), `docs/14_THE_WITNESS_PROBLEM.md:156` and `:159` (never at
   the same weight; the ladder)
-- Measurements: `scripts/measure-erc8004-feedback.ts`, `scripts/measure-trust-provider-objects.ts`
+- Measurements: `scripts/measure/erc8004-feedback.ts`, `scripts/measure/trust-provider-objects.ts`

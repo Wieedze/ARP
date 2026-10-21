@@ -137,7 +137,7 @@ export type PlannedTool = {
      * an `npm:` specifier, a bare name. An http(s) URL takes the `derived-thing` path instead, which
      * is what this warning used to exist for.
      *
-     * Measured by `scripts/measure-tool-atom-shape.ts` on mainnet: of the 84 tool atoms on `uses`
+     * Measured by `scripts/measure/tool-atom-shape.ts` on mainnet: of the 84 tool atoms on `uses`
      * edges, 78 are `ipfs://` and 77 of those resolve a `value.thing`; the only two raw-URL atoms
      * are schema.org vocabulary terms, not tools. So this is off the cohort's canon, and if the tool
      * later gets a proper pinned atom the reputation splits across two ids permanently. Not an
@@ -151,7 +151,7 @@ export type PlannedTool = {
  *
  * **The deposit goes on the triple, not on the tool's atom**, and that is the load-bearing choice
  * in this module. Measured on mainnet 1155 on 2026-10-19 with
- * `scripts/measure-stake-vault-placement.ts` over the 185 `uses` edges that exist:
+ * `scripts/measure/stake-vault-placement.ts` over the 185 `uses` edges that exist:
  *
  * | vault             | edges with positions | assets, all curves                     |
  * | ----------------- | -------------------- | -------------------------------------- |

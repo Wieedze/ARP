@@ -78,6 +78,6 @@ Excalidraw and ChatGPT at once, so gas amortises across an attestation set.
 
 - This does not change ADR `0032`. The edge still carries the registration-derived identity atom as
   its subject; `0034` answers who stands behind it, which `0032` did not.
-- `scripts/measure-attestor-filter.ts` reproduces the query and the live examples above.
+- `scripts/measure/attestor-filter.ts` reproduces the query and the live examples above.
 - No mainnet transaction is implied by this ADR. Depositing is `ADR 0017`'s posture and its seven
   safeguards, unchanged, and **no agent or script may sign one** (`rules/security.md`).

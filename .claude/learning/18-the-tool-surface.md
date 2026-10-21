@@ -22,8 +22,8 @@ round that fixed its sibling, and five claims that had drifted from their source
 - `app/src/components/agent/CapabilitySection.tsx` — `uses-tool` entries now link to the tool page.
   `tasks/20` made that edge render; until now it went nowhere.
 - `app/src/services/erc8004-connector.ts` — `fetchToolUsage`.
-- Three new scripts: `measure-tool-atom-shape.ts`, `measure-mcp-staked-flag.ts` (exits non-zero on a
-  disagreement), `measure-tool-page-states.ts`. `measure-stake-vault-placement.ts` gained the
+- Three new scripts: `measure/tool-atom-shape.ts`, `measure/mcp-staked-flag.ts` (exits non-zero on a
+  disagreement), `measure/tool-page-states.ts`. `measure/stake-vault-placement.ts` gained the
   per-curve split it had been cited for without computing.
 - 34 tests for this task (26 on the view, 8 on the hook's contract). ADRs `0042` and `0043`.
 - `tasks/26` — the DOM test environment, with eight itemised defects as its case.

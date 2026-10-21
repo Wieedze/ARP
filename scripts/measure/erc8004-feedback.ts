@@ -4,7 +4,7 @@
  *  answer turned out to matter for a different reason: the free layer is **flooded**, which is the
  *  argument for pricing rather than aggregating (ADR `0046`).
  *
- *      bun run scripts/measure-erc8004-feedback.ts
+ *      bun run scripts/measure/erc8004-feedback.ts
  *
  *  Source: 8004scan.io's public API — a **third party**, cited as such per `rules/claims.md` check 3.
  *  It is the same source `docs/07:18` quotes, so the guide's figures and these are comparable in kind.

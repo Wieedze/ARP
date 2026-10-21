@@ -1,7 +1,7 @@
 /** Which state would the tool page render, for every tool atom that exists?
  *
- *      bun run scripts/measure-tool-page-states.ts            # mainnet 1155
- *      bun run scripts/measure-tool-page-states.ts testnet    # 13579
+ *      bun run scripts/measure/tool-page-states.ts            # mainnet 1155
+ *      bun run scripts/measure/tool-page-states.ts testnet    # 13579
  *
  *  **Committed because three figures the page asserts had no script**: how many atoms are the object
  *  of a `uses` edge (84), how many of those would render no sidebar because nothing has a position
@@ -20,7 +20,7 @@
  */
 
 // `uses` — imported, never copied. `terms.ts` is the only place a term id may appear.
-import { USES } from '../packages/protocol/src/sources/intuition/terms';
+import { USES } from '../../packages/protocol/src/sources/intuition/terms';
 
 const TARGETS = {
   mainnet: { label: 'Intuition mainnet 1155', url: 'https://mainnet.intuition.sh/v1/graphql' },
@@ -35,7 +35,7 @@ const READ_CURVE = '1';
 const which = (process.argv[2] ?? 'mainnet') as keyof typeof TARGETS;
 const target = TARGETS[which];
 if (!target) {
-  console.error('usage: bun run scripts/measure-tool-page-states.ts [mainnet|testnet]');
+  console.error('usage: bun run scripts/measure/tool-page-states.ts [mainnet|testnet]');
   process.exit(1);
 }
 

@@ -433,7 +433,7 @@ export async function planOperatorLink(
         const atomCost = await publicClient.readContract({...vault, functionName: "getAtomCost"});
         atomAssets = atomCost + minDeposit;
         // Callable before the term exists, and `0` here is the zero-position failure caught while
-        // it is still free (measured on both chains, `scripts/measure-preview-before-create.ts`).
+        // it is still free (measured on both chains, `scripts/measure/preview-before-create.ts`).
         const [shares] = await publicClient.readContract({
             ...vault,
             functionName: "previewAtomCreate",

@@ -1,7 +1,7 @@
 /** How many atoms does one URL already have, and would normalising the URL have merged them?
  *
- *      bun run scripts/measure-url-atom-fragmentation.ts            # mainnet 1155
- *      bun run scripts/measure-url-atom-fragmentation.ts testnet    # 13579
+ *      bun run scripts/measure/url-atom-fragmentation.ts            # mainnet 1155
+ *      bun run scripts/measure/url-atom-fragmentation.ts testnet    # 13579
  *
  *  The question this answers is the one that justifies `declare/tool-thing.ts`. An atom's id is the
  *  hash of its data, and its data is a document containing a **free-text `name`**. So two people
@@ -56,7 +56,7 @@
 import {
   isToolUrl,
   normaliseToolUrl,
-} from '../packages/protocol/src/declare/tool-thing.js';
+} from '../../packages/protocol/src/declare/tool-thing.js';
 
 const TARGETS = {
   mainnet: { label: 'Intuition mainnet 1155', url: 'https://mainnet.intuition.sh/v1/graphql' },
@@ -66,7 +66,7 @@ const TARGETS = {
 const which = (process.argv[2] ?? 'mainnet') as keyof typeof TARGETS;
 const target = TARGETS[which];
 if (!target) {
-  console.error('usage: bun run scripts/measure-url-atom-fragmentation.ts [mainnet|testnet]');
+  console.error('usage: bun run scripts/measure/url-atom-fragmentation.ts [mainnet|testnet]');
   process.exit(1);
 }
 

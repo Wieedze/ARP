@@ -21,7 +21,7 @@ creating one atom each way:
 
 A positionless term is worse than absent. It occupies the id the real one would have had, so a later
 depositor either finds it and funds a slot nobody vouched for, or misses it and mints a second atom
-beside it — and Intuition has no deletion. `scripts/measure-position-substance.ts` puts numbers on
+beside it — and Intuition has no deletion. `scripts/measure/position-substance.ts` puts numbers on
 how common this is: of 269,675 mainnet atoms, 256,644 carry at least one position, but the population
 drops **16×** between two positions and three (121,129 → 7,656). Most of the graph is slots.
 
@@ -65,7 +65,7 @@ Both fire when the preview returns `shares = 0` and `birthDeposit` was not expli
   0.11 TRUST for an atom rather than 0.10.
 - The invariant is now falsifiable before signing, by a call that costs nothing.
   `previewAtomCreate` and `previewTripleCreate` are **callable on a term that does not exist** —
-  measured on both chains, `scripts/measure-preview-before-create.ts`. That is what makes the guard
+  measured on both chains, `scripts/measure/preview-before-create.ts`. That is what makes the guard
   possible at all.
 - Every `PreparedCall` carries `preview.shares`, so an operator reading a plan sees what the money
   buys and not only what it costs.
@@ -91,4 +91,4 @@ Both fire when the preview returns `shares = 0` and `birthDeposit` was not expli
 - Related rule: `.claude/rules/claims.md` failure 5 — a correction that landed in one place
 - Related ADR: `.claude/choices/0051-arp-points-and-prices-it-stores-nothing.md`
 - Related ADR: `.claude/choices/0054-a-tool-atom-is-derived-from-its-url.md`
-- Scripts: `scripts/measure-preview-before-create.ts`, `scripts/measure-position-substance.ts`
+- Scripts: `scripts/measure/preview-before-create.ts`, `scripts/measure/position-substance.ts`

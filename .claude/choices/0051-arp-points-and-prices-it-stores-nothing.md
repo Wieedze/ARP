@@ -23,7 +23,7 @@ store or deliver a tool. If a tool is registered here it is because it already e
 ARP creates is a **market of opinion** on it.
 
 And the empirical case for that market is already measured, in this repo:
-`scripts/measure-erc8004-feedback.ts` reads 569,148 feedback entries on Base 8453 with a **mean score
+`scripts/measure/erc8004-feedback.ts` reads 569,148 feedback entries on Base 8453 with a **mean score
 of 95.09 / 100**. Free ratings converge on excellent and stop distinguishing anything. That is the
 user's "étoiles qui ne veulent rien dire", as a number.
 
@@ -100,5 +100,5 @@ being a call target is what ARP has just declined to be.
   of free feedback), `0049` (no calibration; the four built differentiators), `0025`
   (`ModuleRegistry` stays off mainnet), `0045` (the disappearance test), `0047`
   (`agent-identity-atom.ts`, the write path this generalises)
-- Measurements: `scripts/measure-erc8004-feedback.ts` (569,148 entries, mean 95.09/100),
-  `scripts/measure-tool-atom-shape.ts`
+- Measurements: `scripts/measure/erc8004-feedback.ts` (569,148 entries, mean 95.09/100),
+  `scripts/measure/tool-atom-shape.ts`

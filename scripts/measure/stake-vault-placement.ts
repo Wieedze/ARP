@@ -5,13 +5,13 @@
  *    the triple's vault      "I stand behind the claim that this agent used this tool"
  *    the object atom's vault "I think this tool is valuable", by anyone, for any reason
  *
- *  `getToolUsage` prices the **triple**. `scripts/agent-stake-on-use.ts` deposits on the **object
+ *  `getToolUsage` prices the **triple**. the deleted `agent-stake-on-use.ts` deposited on the **object
  *  atom**. Both cannot be right, and this measures which one the ecosystem actually uses before
  *  `tasks/16` picks one — the question is load-bearing, because a deposit in the wrong vault is
  *  invisible to the reader and permanent.
  *
- *      bun run scripts/measure-stake-vault-placement.ts                 # mainnet 1155
- *      bun run scripts/measure-stake-vault-placement.ts testnet         # 13579
+ *      bun run scripts/measure/stake-vault-placement.ts                 # mainnet 1155
+ *      bun run scripts/measure/stake-vault-placement.ts testnet         # 13579
  *
  *  Read-only: one GraphQL query. Signs nothing.
  */
@@ -19,7 +19,7 @@
 // `uses` — "uses this tool" (ADR 0030). IMPORTED, never copied: `terms.ts` is the only place a term
 // id may appear, and typing this one from memory produced a wrong 32 bytes on the first draft of
 // this very script. A measurement against the wrong predicate reads as "no edges exist".
-import { USES } from '../packages/protocol/src/sources/intuition/terms';
+import { USES } from '../../packages/protocol/src/sources/intuition/terms';
 
 const TARGETS = {
   mainnet: { label: 'Intuition mainnet 1155', url: 'https://mainnet.intuition.sh/v1/graphql' },
@@ -29,7 +29,7 @@ const TARGETS = {
 const which = (process.argv[2] ?? 'mainnet') as keyof typeof TARGETS;
 const target = TARGETS[which];
 if (!target) {
-  console.error(`usage: bun run scripts/measure-stake-vault-placement.ts [mainnet|testnet]`);
+  console.error(`usage: bun run scripts/measure/stake-vault-placement.ts [mainnet|testnet]`);
   process.exit(1);
 }
 
@@ -145,7 +145,7 @@ console.log(
   `  stake on the EDGE   ${edgesWithTriplePositions} of ${rows.length} edges · ${trust(tripleAssets)} TRUST  (what getToolUsage prices)`,
 );
 console.log(
-  `  stake on the ATOM   ${edgesWithObjectAtomPositions} of ${rows.length} edges · ${trust(objectAtomAssets)} TRUST over ${atomAssets.size} distinct atoms  (what agent-stake-on-use writes)`,
+  `  stake on the ATOM   ${edgesWithObjectAtomPositions} of ${rows.length} edges · ${trust(objectAtomAssets)} TRUST over ${atomAssets.size} distinct atoms  (what the deleted agent-stake-on-use wrote)`,
 );
 console.log(`  both                ${edgesWithBoth}`);
 console.log(`  ATOM but not EDGE   ${edgesOnlyOnAtom}  — invisible to getToolUsage`);

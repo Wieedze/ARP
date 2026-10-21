@@ -7,7 +7,7 @@
 
 ## The mechanism, in full
 
-1. An agent has an **ERC-8004 identity**. ARP is where you get one: it **mints** a new identity into the canonical ERC-8004 registry (ADR 0027), or **imports** an existing one — the Base registry's next id was **444,562** on 2026-10-21 and Intuition reaches **28,720** through a `same as` edge, about **one in fifteen** (`scripts/measure-registry-mintability.ts`). Both paths end in the same place, and everything after this point is identical for either.
+1. An agent has an **ERC-8004 identity**. ARP is where you get one: it **mints** a new identity into the canonical ERC-8004 registry (ADR 0027), or **imports** an existing one — the Base registry's next id was **444,562** on 2026-10-21 and Intuition reaches **28,720** through a `same as` edge, about **one in fifteen** (`scripts/measure/registry-mintability.ts`). Both paths end in the same place, and everything after this point is identical for either.
 
    **No daily rate is quoted here, and that is deliberate.** Two observations the same day: the id rose from 309,925 on 2026-10-20 to 444,562 on 2026-10-21, and 72 ids were consumed in the two minutes between two probes. Those imply rates 2.6× apart — ~135,000 a day against ~52,000 — so a two-minute sample cannot settle it and neither can two daily snapshots. An earlier version of this line said "~44,000 a day" as though it were a measurement. Re-run the script; do not quote a rate.
 
@@ -83,7 +83,7 @@ Re-confirmed by the user on 2026-10-21 in those terms — canonical in productio
 — so it is one decision twice agreed, not an open question.
 
 What was never measured until 2026-10-21 is the premise ADR `0027` rests on: that anyone **can** mint
-there. `scripts/measure-registry-mintability.ts` settles it — `register()` simulates successfully
+there. `scripts/measure/registry-mintability.ts` settles it — `register()` simulates successfully
 from an arbitrary address. The registry has an `owner()` but minting is not behind it, and `paused()`
 reverts. The same run: next id **444,562**, up from 444,490 two minutes earlier, against **28,720**
 reachable through a `same as` edge. One agent in fifteen.

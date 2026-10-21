@@ -5,7 +5,7 @@
  *  "0 of N parsed documents declared an endpoint capability", which is why the rig declares one at
  *  all: it is the rare case and the one the code is least exercised against.
  *
- *      bun run scripts/measure-cohort-skills.ts 200
+ *      bun run scripts/measure/cohort-skills.ts 200
  *
  *  Read-only: one `eth_call` of `tokenURI` per sampled id and one GET of the registration file.
  *  Signs nothing. Uniform sampling over token ids, so quote n with any figure taken from it —
