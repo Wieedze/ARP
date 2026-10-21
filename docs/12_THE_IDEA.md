@@ -7,7 +7,10 @@
 
 ## The mechanism, in full
 
-1. An agent has an **ERC-8004 identity**. ARP is where you get one: it **mints** a new identity into the canonical ERC-8004 registry (ADR 0027), or **imports** an existing one — the Base registry's highest minted id was 309,925 on 2026-10-20 and Intuition mirrors **28,648**, about one in ten (`scripts/measure-cohort-coverage.ts`; both move, the registry at ~44,000 a day). Both paths end in the same place, and everything after this point is identical for either.
+1. An agent has an **ERC-8004 identity**. ARP is where you get one: it **mints** a new identity into the canonical ERC-8004 registry (ADR 0027), or **imports** an existing one — the Base registry's next id was **444,562** on 2026-10-21 and Intuition reaches **28,720** through a `same as` edge, about **one in fifteen** (`scripts/measure-registry-mintability.ts`). Both paths end in the same place, and everything after this point is identical for either.
+
+   **No daily rate is quoted here, and that is deliberate.** Two observations the same day: the id rose from 309,925 on 2026-10-20 to 444,562 on 2026-10-21, and 72 ids were consumed in the two minutes between two probes. Those imply rates 2.6× apart — ~135,000 a day against ~52,000 — so a two-minute sample cannot settle it and neither can two daily snapshots. An earlier version of this line said "~44,000 a day" as though it were a measurement. Re-run the script; do not quote a rate.
+
 2. An agent is **composed of modules**. A module is a tool or a methodology registered in `ModuleRegistry`: a domain plus a schema. Anyone can register one.
 3. The agent runs. It **deposits TRUST on the modules it actually used** — not the ones it claims to use.
 4. That deposit is the signal. It produces reputation at two levels at once:
@@ -66,13 +69,27 @@ Written down because this document exists to stop a specific failure, which has 
 | **Adoption of an existing ERC-8004 agent**                      | **missing — the whole gap**                            |
 | **The guard rail on the chain where the agents are**            | **missing — enforcers are on testnet, agents are not** |
 
-The mechanism works today for agents ARP mints. It does not work for the agents that already exist — **28,648** mirrored out of a registry whose highest minted id is 309,925 — and those are the population, so that gap is what stands between this and a live system. Worse than it reads: the mirror has not moved since 2026-09-16 while the registry tripled, so for roughly nine agents in ten the identity atom does **not exist** and has to be written (`scripts/agent-identity-atom.ts`, ADR `0047`).
+The mechanism works today for agents ARP mints. It does not work for the agents that already exist — **28,720** reachable out of a registry whose next id is **444,562**, measured 2026-10-21 — and those are the population, so that gap is what stands between this and a live system. Worse than it reads: the mirror has not moved since 2026-09-16 while the registry kept going, so for roughly **fourteen agents in fifteen** the identity atom does **not exist** and has to be written (`scripts/agent-identity-atom.ts`, ADR `0047`). `/agent/import` writes it now rather than waiting.
 
 ## What closes it
 
 **Import, alongside the mint that already works.** Minting is built. What is missing is the other door: an operator proving control of an existing ERC-8004 agent. The registry names the `owner`, so a signature from that address is the whole proof — no bridge, no mint, no second identity.
 
-**One open question the mint path now raises**: which registry does ARP mint into? The 28,648 live in `0x8004A169…A432` on Base. ARP's own deployment of the reference implementation sits on Intuition testnet 13579. Minting there produces an agent nobody else indexes — the fragmentation the standard exists to prevent. If minting is a real product surface it should target the registry the ecosystem reads. That is a decision, not an implementation detail, and it needs an ADR.
+**Which registry ARP mints into — settled, and this paragraph used to say it was not.** ADR `0027`
+decided it: when ARP mints, it mints into the canonical registry `0x8004A169…A432`, Base by default,
+and ARP's own deployment on testnet 13579 is a **demo fixture only**. Minting into ARP's registry
+produces an agent nobody else indexes, which is the fragmentation the standard exists to prevent.
+Re-confirmed by the user on 2026-10-21 in those terms — canonical in production, ARP's own on testnet
+— so it is one decision twice agreed, not an open question.
+
+What was never measured until 2026-10-21 is the premise ADR `0027` rests on: that anyone **can** mint
+there. `scripts/measure-registry-mintability.ts` settles it — `register()` simulates successfully
+from an arbitrary address. The registry has an `owner()` but minting is not behind it, and `paused()`
+reverts. The same run: next id **444,562**, up from 444,490 two minutes earlier, against **28,720**
+reachable through a `same as` edge. One agent in fifteen.
+
+**The Base mint path is still not built.** `/agent` mints into the testnet fixture, and the page has
+to say so.
 
 **The canonical atom as the subject.** The agent's atom already exists on Intuition mainnet, derived from its registration file. ADR 0015 already settled that it is the subject of everything ERC-8004-facing. `declareUsesTriple` points at it rather than at a freshly minted one.
 
@@ -80,4 +97,4 @@ The mechanism works today for agents ARP mints. It does not work for the agents 
 
 ## What the measurements say about the timing
 
-`docs/08` counted 194 `use` triples across the entire Intuition mainnet graph, against 28,648 mirrored agents — and the Base registry had passed 309,000 by 2026-10-20, so the real ratio is worse. That was recorded as a market opportunity. It is better read as the exact hole this mechanism fills — and the reason there is no incumbent in it.
+`docs/08` counted 194 `use` triples across the entire Intuition mainnet graph, against 28,720 reachable agents — and the Base registry's next id was 444,562 on 2026-10-21, so the real ratio is worse. That was recorded as a market opportunity. It is better read as the exact hole this mechanism fills — and the reason there is no incumbent in it.

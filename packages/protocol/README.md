@@ -61,7 +61,7 @@ import {createErc8004Client, listAgents} from "@arp-protocol/core";
 const client = createErc8004Client();
 const page = await listAgents(client, {order: "evidence-quantity", limit: 25, offset: 0});
 
-console.log(page.total); // 28,648 on mainnet — the graph's count, not page.agents.length
+console.log(page.total); // ~28,700 on mainnet — the graph's count, not page.agents.length
 for (const agent of page.agents) {
     console.log(
         agent.metadata.name,

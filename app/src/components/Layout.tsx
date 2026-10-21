@@ -46,12 +46,18 @@ export function Layout({children}: {children: ReactNode}) {
                     ARP
                 </Link>
                 {/*
-                 * Agents · Tools · Register (user, 2026-10-20). "Tools" is `/tools` — the tools
-                 * agents declared using — because that is the surface the protocol is about.
-                 * `/` still lists what ARP's registry holds and is reached by the wordmark.
+                 * Agents · Tools (user, 2026-10-20), and **Register is gone** as of 2026-10-21.
+                 * It pointed at `/modules/new`, which wrote to ARP's own `ModuleRegistry` — and
+                 * ADR `0051` retired that: ARP points at tools hosted elsewhere and keeps no
+                 * catalogue. An entry point for writing into a registry that is not the product is
+                 * worse than no entry point, and what replaces it is in `FUTURE.md`.
                  *
-                 * A fourth tab, "How it works", is part of the same structure and is not built:
-                 * its content is a decision, not a layout.
+                 * `/` is the tool catalogue now, so "Tools" and the wordmark lead to the same
+                 * place. That is deliberate while there are two tabs: the alternative was keeping a
+                 * root route onto a retired registry.
+                 *
+                 * A "How it works" tab is part of the same structure and is not built: its content
+                 * is a decision, not a layout.
                  */}
                 <nav className="flex items-center gap-5 text-[length:var(--text-body-sm)]">
                     <Link
@@ -65,12 +71,6 @@ export function Layout({children}: {children: ReactNode}) {
                         className="text-[color:var(--color-fg-60)] hover:text-[color:var(--color-fg)]"
                     >
                         Tools
-                    </Link>
-                    <Link
-                        to="/modules/new"
-                        className="text-[color:var(--color-fg-60)] hover:text-[color:var(--color-fg)]"
-                    >
-                        Register
                     </Link>
                 </nav>
                 <WalletConnect />

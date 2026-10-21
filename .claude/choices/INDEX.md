@@ -2,7 +2,7 @@
 
 **Generated** 2026-10-21 by `scripts/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-54 decisions. Newest last. `choices/README.md` says when to write one.
+55 decisions. Newest last. `choices/README.md` says when to write one.
 
 ## Not accepted
 
@@ -68,3 +68,4 @@ Read these before relying on them.
 | [0052](0052-the-procedure-is-the-product-for-the-use-half.md) | 2026-10-20 | Accepted | the procedure is the product for the "use" half; the connector is a convenience |
 | [0053](0053-every-term-is-born-with-a-position.md) | 2026-10-21 | Accepted | Every term is born with a position |
 | [0054](0054-a-tool-atom-is-derived-from-its-url.md) | 2026-10-21 | Accepted | A tool's atom is derived from its URL |
+| [0055](0055-one-contract-not-five.md) | 2026-10-21 | Accepted | One contract, not five |

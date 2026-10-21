@@ -105,7 +105,8 @@ your atom.
 ### 2. If it returns nothing, write it yourself
 
 Most agents land here: the atom is written by Intuition's mirror, and measured 2026-10-20 the mirror
-holds **28,648** of a Base registry whose highest minted id is **309,925** — about one in ten. It is
+reaches **28,720** of a Base registry whose next id is **444,562** — about one in fifteen, measured
+2026-10-21. It is
 the common case, not a fault of yours.
 
 Two atoms and one triple. The documents are frozen recipes; a single differing character yields a

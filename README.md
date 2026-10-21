@@ -182,12 +182,14 @@ This is the sharpest thing to understand before running anything.
 
 The panels read mainnet because that is where the cohort is, and reads are free and keyless.
 
-**How big the cohort is, and the gap that matters more.** Intuition's mirror holds **28,648** agents;
-the canonical registry on Base had minted up to id **309,925** by 2026-10-20, and the registry moves
-at roughly 44,000 a day while the mirror has not moved since 2026-09-16
-(`scripts/measure-cohort-coverage.ts`). So for roughly nine agents in ten the Intuition atom does
-**not exist** and has to be written — which is why `/agent/import` writes it rather than waiting
+**How big the cohort is, and the gap that matters more.** Measured 2026-10-21 by
+`scripts/measure-registry-mintability.ts`: Intuition reaches **28,720** agents through a `same as`
+edge, against a canonical Base registry whose **next id is 444,562**. So roughly **one agent in
+fifteen** has an Intuition identity atom, and the other fourteen have to have one written — which is
+why `/agent/import` writes it rather than waiting
 ([ADR 0047](.claude/choices/0047-the-mirror-is-a-prerequisite-and-signing-is-a-separate-program.md)).
+The mirror has not moved since 2026-09-16; the registry has. Re-run the script rather than quoting
+these — and do not quote a daily rate, because two observations the same day imply rates 2.6× apart.
 
 Staking deposits **real TRUST** into Intuition's own MultiVault — not an ARP contract. That is
 authorised deliberately and narrowly by [ADR 0017](.claude/choices/0017-arp-stakes-real-trust-on-mainnet.md),

@@ -1,8 +1,6 @@
 import {describe, expect, it} from "vitest";
 import {
     decodeAbiParameters,
-    keccak256,
-    toBytes,
     toFunctionSelector,
 } from "viem";
 
@@ -10,33 +8,11 @@ import {deployments} from "../deployments";
 import {
     MULTI_VAULT_COMPOSE_SELECTORS,
     composeAndStakeCaveats,
-    domainScopeCaveat,
-    publishModuleCaveats,
     trustStakeCapCaveat,
 } from "../caveat-builder";
 
 const ARP = deployments.arp;
 
-describe("domainScopeCaveat", () => {
-    it("encodes the hashed allowed-domain list and binds to our enforcer", () => {
-        const caveat = domainScopeCaveat(["solidity-audit", "code-review"]);
-        expect(caveat.enforcer).toBe(ARP.domainScopeEnforcer);
-        expect(caveat.args).toBe("0x");
-
-        const [hashes] = decodeAbiParameters(
-            [{type: "bytes32[]"}],
-            caveat.terms,
-        );
-        expect(hashes).toEqual([
-            keccak256(toBytes("solidity-audit")),
-            keccak256(toBytes("code-review")),
-        ]);
-    });
-
-    it("rejects an empty allowedDomains list", () => {
-        expect(() => domainScopeCaveat([])).toThrow(/non-empty/);
-    });
-});
 
 describe("trustStakeCapCaveat", () => {
     it("ABI-encodes (cap, period) and binds to our enforcer", () => {
@@ -92,32 +68,3 @@ describe("composeAndStakeCaveats", () => {
     });
 });
 
-describe("publishModuleCaveats", () => {
-    it("emits 2 caveats: DomainScope + TrustStakeCap", () => {
-        const caveats = publishModuleCaveats({
-            allowedDomains: ["solidity-audit"],
-            cap: 10n ** 18n,
-            periodSeconds: 86_400n,
-        });
-        expect(caveats).toHaveLength(2);
-        expect(caveats[0].enforcer).toBe(ARP.domainScopeEnforcer);
-        expect(caveats[1].enforcer).toBe(ARP.trustStakeCapEnforcer);
-    });
-
-    it("preserves the domain order in the encoded hash list", () => {
-        const caveats = publishModuleCaveats({
-            allowedDomains: ["a", "b", "c"],
-            cap: 1n,
-            periodSeconds: 1n,
-        });
-        const [hashes] = decodeAbiParameters(
-            [{type: "bytes32[]"}],
-            caveats[0].terms,
-        );
-        expect(hashes).toEqual([
-            keccak256(toBytes("a")),
-            keccak256(toBytes("b")),
-            keccak256(toBytes("c")),
-        ]);
-    });
-});

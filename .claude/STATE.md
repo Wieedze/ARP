@@ -154,7 +154,7 @@ did not happen.
 `docs/13_THE_THREE_FLOWS.md`, with the mechanism in `docs/14_THE_WITNESS_PROBLEM.md`.
 
 1. **The verifier** (task 17) — read what agents publish, probe it, classify. Needs nobody's consent,
-   runs on the whole registry today (highest minted id 309,925 on 2026-10-20), and is the only
+   runs on the whole registry today (next id 444,562 on 2026-10-21), and is the only
    signal that moves on its own.
 2. **Hire** (task 25) — hire an agent that never signed anything; the delegation caps the buyer's own
    spend, so the seller needs no relationship with ARP. The old `/hire` demo is **deleted** (user,
@@ -277,8 +277,9 @@ assessment`), which it only reads — so what ARP writes is a claim about **comp
   Six calls, 0.00723 tTRUST. Testnet proves the **write**, not the cross-chain join.
   **And the coverage number was wrong everywhere**: `88,243` sat in 16 files with no script, and
   five of them bounded a _uniform sample_ with it, so every cohort measurement drew from the oldest
-  third of the registry. Measured first-party: Base's highest minted id is **309,925**, the mirror
-  is still **28,648** — unchanged since 2026-09-16 — so coverage is **9.2% and falling**. Read it
+  third of the registry. Measured first-party, 2026-10-21: Base's next id is **444,562**, the mirror
+  reaches **28,720** — unchanged in substance since 2026-09-16 — so coverage is **6.46% and falling**
+  (it was 9.2% on 2026-10-20; the denominator grows, the numerator does not). Read it
   with `scripts/measure-cohort-coverage.ts`; the population is read, never hardcoded
   (`scripts/erc8004-population.ts`).
   **The node ships over stdio** (`--stdio`), one dispatch for both transports, diagnostics on stderr

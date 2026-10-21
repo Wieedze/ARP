@@ -2,10 +2,7 @@ import {lazy, Suspense} from "react";
 import {Route, Routes} from "react-router-dom";
 
 import {Layout} from "./components/Layout";
-import {ModuleList} from "./components/ModuleList";
 import {AgentRegister} from "./pages/AgentRegister";
-import {RegisterModule} from "./pages/RegisterModule";
-import {ToolDetail} from "./pages/ToolDetail";
 
 /**
  * The trust panel and its entry point are split out of the main bundle. They
@@ -39,7 +36,18 @@ function App() {
     return (
         <Layout>
             <Routes>
-                <Route path="/" element={<ModuleList />} />
+                {/* `/` is the tool catalogue now. It was `ModuleList`, reading ARP's own
+                    `ModuleRegistry`, and ADR `0051` retired that: ARP points at tools hosted
+                    elsewhere and keeps no catalogue. The root route pointing at a registry ARP
+                    wrote was the clearest remaining statement of the opposite. */}
+                <Route
+                    path="/"
+                    element={
+                        <Suspense fallback={<RouteFallback label="tools" />}>
+                            <ToolCatalog />
+                        </Suspense>
+                    }
+                />
                 <Route path="/agent" element={<AgentRegister />} />
                 <Route
                     path="/agent/import"
@@ -65,7 +73,6 @@ function App() {
                         </Suspense>
                     }
                 />
-                <Route path="/modules/new" element={<RegisterModule />} />
                 <Route
                     path="/tools"
                     element={
@@ -74,11 +81,9 @@ function App() {
                         </Suspense>
                     }
                 />
-                <Route path="/tool/:id" element={<ToolDetail />} />
-                {/* Keyed on an ATOM, not a ModuleRegistry id, and a mainnet view. The route above
-                    is the testnet ModuleRegistry page (ADR 0025 keeps that registry off mainnet);
-                    this one is `tasks/23`'s surface. The paths are deliberately nested rather than
-                    `/tools/:atomId`, which would read as a plural of the other one. */}
+                {/* Keyed on an ATOM. `/tool/:id` was the testnet `ModuleRegistry` page beside it
+                    and is gone with the registry (ADR `0051`); the nesting under `/tool/` is kept
+                    so existing links to this one still resolve. */}
                 <Route
                     path="/tool/atom/:atomId"
                     element={

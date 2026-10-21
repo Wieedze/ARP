@@ -10,13 +10,11 @@ import {
 
 import {
     composeAndStakeCaveats,
-    publishModuleCaveats,
 } from "../lib/caveat-builder";
 import {publicClient} from "../lib/clients";
 import {deployments} from "../lib/deployments";
 import {wagmiConfig} from "../lib/wagmi";
 import {useAgentId, useAgentWallet, useTotalAgents} from "../hooks/use-agent";
-import {useAllModules, useDomains} from "../hooks/use-modules";
 import {useStoredDelegations} from "../hooks/use-stored-delegations";
 import {
     designateAgentRuntimeWallet,
@@ -85,9 +83,6 @@ export function AgentRegister() {
     const [deployTx, setDeployTx] = useState<string | null>(null);
 
     // Step 4 state — sign delegations (publish A + compose B)
-    const {modules} = useAllModules();
-    const knownDomains = useDomains(modules);
-    const [selectedDomains, setSelectedDomains] = useState<string[]>([]);
     const [capInput, setCapInput] = useState("1");
     const [periodSeconds, setPeriodSeconds] = useState<bigint>(86_400n);
     const [step4Status, setStep4Status] = useState<StepStatus>("idle");
@@ -220,15 +215,19 @@ export function AgentRegister() {
     }
 
     /**
-     * Sign both ARP delegations in sequence:
-     *   - publish: agent can `registerModule` in `selectedDomains`, capped
-     *   - compose: agent can `deposit`/`createAtoms`/`createTriples` on
-     *     MultiVault, same cap/period
+     * Sign the compose-and-stake delegation: the agent may call
+     * `deposit`/`createAtoms`/`createTriples` on the MultiVault, bounded by cap and period.
      *
-     * The delegate is the runtime wallet bound in step 2. The delegator is
-     * the operator's Smart Account (must be deployed). The signatures are
-     * produced by the SA's owner (the connected EOA) routed through the
-     * SA's EIP-712 path.
+     * **There used to be two.** A "publish" delegation gated `ModuleRegistry.registerModule` within
+     * a chosen set of domains, through `DomainScopeEnforcer`. Both are gone — ADR `0051` retired
+     * ARP's catalogue, and the domain scope was hackathon scaffolding the user retired with it. What
+     * is left is the one caveat that is still the product: a **cumulative cap over a rolling
+     * period**, which MetaMask's stock `valueLte` does not provide — that bounds one redemption, not
+     * a budget.
+     *
+     * The delegate is the runtime wallet bound in step 2. The delegator is the operator's Smart
+     * Account (must be deployed). The signature is produced by the SA's owner (the connected EOA)
+     * routed through the SA's EIP-712 path.
      */
     async function handleSignDelegations() {
         if (!smartAccount) {
@@ -239,11 +238,6 @@ export function AgentRegister() {
         const runtimeAddress = runtimeWalletQuery.data;
         if (!runtimeAddress || runtimeAddress === zeroAddress) {
             setStep4Error("Runtime wallet not designated (step 2)");
-            setStep4Status("error");
-            return;
-        }
-        if (selectedDomains.length === 0) {
-            setStep4Error("Select at least one allowed domain");
             setStep4Status("error");
             return;
         }
@@ -264,31 +258,17 @@ export function AgentRegister() {
         setStep4Status("pending");
         setStep4Error(null);
         try {
-            const publishUnsigned = buildDelegation({
-                delegator: smartAccount.address,
-                delegate: runtimeAddress as Hex,
-                caveats: publishModuleCaveats({
-                    allowedDomains: selectedDomains,
-                    cap,
-                    periodSeconds,
-                }),
-                salt: randomSalt(),
-            });
             const composeUnsigned = buildDelegation({
                 delegator: smartAccount.address,
                 delegate: runtimeAddress as Hex,
                 caveats: composeAndStakeCaveats({cap, periodSeconds}),
                 salt: randomSalt(),
             });
-            const publishSigned = await signDelegationAs({
-                delegation: publishUnsigned,
-                smartAccount,
-            });
             const composeSigned = await signDelegationAs({
                 delegation: composeUnsigned,
                 smartAccount,
             });
-            storedDelegations.set(publishSigned, composeSigned);
+            storedDelegations.set(composeSigned);
             setStep4Status("done");
         } catch (err) {
             setStep4Status("error");
@@ -338,7 +318,6 @@ export function AgentRegister() {
             `# whichever vars apply to its role.`,
             ``,
             pkLine,
-            `DELEGATION_PUBLISH_JSON='${serializeDelegation(storedDelegations.stored.publish)}'`,
             `DELEGATION_COMPOSE_JSON='${serializeDelegation(storedDelegations.stored.compose)}'`,
             ``,
             `# --- agent-server.ts options (all optional) ---`,
@@ -500,15 +479,6 @@ export function AgentRegister() {
                         />
                     ) : step3Done ? (
                         <DelegationForm
-                            knownDomains={knownDomains}
-                            selectedDomains={selectedDomains}
-                            onToggleDomain={(d) =>
-                                setSelectedDomains((prev) =>
-                                    prev.includes(d)
-                                        ? prev.filter((x) => x !== d)
-                                        : [...prev, d],
-                                )
-                            }
                             capInput={capInput}
                             onCapChange={setCapInput}
                             periodSeconds={periodSeconds}
@@ -657,9 +627,6 @@ export function AgentRegister() {
 
 /** Form for configuring + signing the two delegations. */
 function DelegationForm({
-    knownDomains,
-    selectedDomains,
-    onToggleDomain,
     capInput,
     onCapChange,
     periodSeconds,
@@ -667,9 +634,6 @@ function DelegationForm({
     onSign,
     pending,
 }: {
-    knownDomains: string[];
-    selectedDomains: string[];
-    onToggleDomain: (d: string) => void;
     capInput: string;
     onCapChange: (s: string) => void;
     periodSeconds: bigint;
@@ -679,40 +643,6 @@ function DelegationForm({
 }) {
     return (
         <div className="space-y-4">
-            <div>
-                <p className="text-[length:var(--text-label)] uppercase tracking-wider text-[color:var(--color-fg-40)] mb-2">
-                    Allowed domains (publish)
-                </p>
-                {knownDomains.length === 0 ? (
-                    <p className="text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)]">
-                        No domains yet. The agent will be able to publish in
-                        whichever domains exist when it acts.
-                    </p>
-                ) : (
-                    <div className="flex flex-wrap gap-2">
-                        {knownDomains.map((d) => {
-                            const active = selectedDomains.includes(d);
-                            return (
-                                <button
-                                    key={d}
-                                    type="button"
-                                    onClick={() => onToggleDomain(d)}
-                                    disabled={pending}
-                                    className={[
-                                        "font-mono uppercase tracking-wider text-[length:var(--text-label)] px-3 py-1 border",
-                                        active
-                                            ? "border-[color:var(--color-accent)] text-[color:var(--color-accent)]"
-                                            : "border-[color:var(--color-border)] text-[color:var(--color-fg-60)]",
-                                    ].join(" ")}
-                                >
-                                    {d}
-                                </button>
-                            );
-                        })}
-                    </div>
-                )}
-            </div>
-
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <label className="block text-[length:var(--text-body-sm)]">
                     <span className="text-[color:var(--color-fg-60)] block mb-1">

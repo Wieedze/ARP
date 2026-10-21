@@ -1,51 +1,9 @@
 /**
- * ARP's **own** contracts — the ModuleRegistry catalogue and the agents registered against it.
+ * ARP's own namespace: the two Intuition chain definitions, and nothing else.
  *
- * Folded in from the separate `@arp-protocol/sdk` package on 2026-10-19 (ADR `0041`). Two
- * read-only client packages over the same chains, with no written boundary between them, was the
- * thing nobody could navigate. This namespace is the boundary: everything under `arp/` reads
- * **ARP's** deployment, and everything outside it reads the ERC-8004 and Intuition layers that
- * exist whether or not ARP does.
- *
- * Quick start:
- *
- *     import { createArpClient, findTopAgents, getReputation } from "@arp-protocol/core";
- *
- *     const arp = createArpClient();
- *     const top = await findTopAgents(arp, { domain: "solidity-audit" });
- *     console.log(top[0]);
- *     // → { agentId: 1n, runtimeWallet: "0x…", reputation: { totalStaked: 5000n, … } }
- *
- * All functions are read-only — the SDK never signs or sends
- * transactions. Plug it into any agent runtime to make trust-aware
- * decisions about which tools / agents to compose with.
+ * It held a client, a `ModuleRegistry` reader and an agent-reputation surface — 790 lines, all with
+ * zero consumers outside this package, all of it the catalogue ADR `0051` retired. What a namespace
+ * for "ARP's own contracts" has left is the chain definitions, because `rules/portability.md` makes
+ * this the one file allowed to name a chain.
  */
-
-export {
-    createArpClient,
-    intuitionTestnet,
-    intuitionMainnet,
-    TESTNET_DEPLOYMENT,
-    type ArpClient,
-    type ArpClientConfig,
-    type ArpDeployment,
-} from "./client.js";
-
-export {
-    getAllModules,
-    getModulesByDomain,
-    findModuleBySchemaURI,
-    getAllModulesWithMetrics,
-    getModulesByDomainWithMetrics,
-} from "./modules.js";
-
-export {getAgents, getLiveAgents, getReputation, findTopAgents} from "./agents.js";
-
-export type {
-    Module,
-    ModuleWithMetrics,
-    Agent,
-    AgentReputation,
-    AgentWithReputation,
-    FindTopAgentsOptions,
-} from "./types.js";
+export {intuitionMainnet, intuitionTestnet} from "./chains.js";

@@ -8,8 +8,14 @@ import {
 } from "../services/delegation";
 
 /**
- * Persist the operator's two signed ARP delegations (publish + compose)
- * client-side, keyed by Smart Account address.
+ * Persist the operator's signed compose-and-stake delegation client-side, keyed by Smart Account
+ * address.
+ *
+ * **It held two.** The second was a "publish" delegation gating
+ * `ModuleRegistry.registerModule` through `DomainScopeEnforcer`; both the registry and the enforcer
+ * are gone (ADR `0051`). The storage key is bumped to `v2` for that reason — a `v1` blob holds a
+ * `publish` field this code no longer reads, and silently dropping half a stored pair would leave
+ * an operator believing a delegation is active that nothing can redeem.
  *
  * A signed delegation is bytes — the EIP-712-signed struct that names a
  * specific delegate (the runtime EOA) and specific caveats. Reading the
@@ -24,12 +30,11 @@ import {
  */
 
 type StoredDelegations = {
-    publish: Delegation;
     compose: Delegation;
     signedAt: number;
 };
 
-const STORAGE_PREFIX = "arp.delegations.v1";
+const STORAGE_PREFIX = "arp.delegations.v2";
 
 function storageKey(saAddress: Address): string {
     return `${STORAGE_PREFIX}.${saAddress.toLowerCase()}`;
@@ -41,12 +46,10 @@ function readFromStorage(saAddress: Address): StoredDelegations | null {
     if (!raw) return null;
     try {
         const parsed = JSON.parse(raw) as {
-            publish: string;
             compose: string;
             signedAt: number;
         };
         return {
-            publish: deserializeDelegation(parsed.publish),
             compose: deserializeDelegation(parsed.compose),
             signedAt: parsed.signedAt,
         };
@@ -62,7 +65,6 @@ function writeToStorage(saAddress: Address, value: StoredDelegations): void {
     localStorage.setItem(
         storageKey(saAddress),
         JSON.stringify({
-            publish: serializeDelegation(value.publish),
             compose: serializeDelegation(value.compose),
             signedAt: value.signedAt,
         }),
@@ -70,9 +72,8 @@ function writeToStorage(saAddress: Address, value: StoredDelegations): void {
 }
 
 /**
- * Read + manage the operator's stored delegations for the given Smart
- * Account. Returns `null` until the operator has signed both delegations
- * for this SA.
+ * Read + manage the operator's stored delegation for the given Smart Account. Returns `null` until
+ * the operator has signed for this SA.
  *
  * `set` overwrites; `clear` removes (useful if the operator wants to
  * re-sign with different caveats).
@@ -89,12 +90,11 @@ export function useStoredDelegations(saAddress: Address | undefined) {
     }, [saAddress, version]);
 
     const set = useCallback(
-        (publish: Delegation, compose: Delegation) => {
+        (compose: Delegation) => {
             if (!saAddress) {
                 throw new Error("useStoredDelegations.set: no SA address bound");
             }
             const next: StoredDelegations = {
-                publish,
                 compose,
                 signedAt: Math.floor(Date.now() / 1000),
             };

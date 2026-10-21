@@ -279,40 +279,17 @@ export type {
 } from "./declare/index.js";
 
 /**
- * ARP's own contracts — the ModuleRegistry catalogue and the agents registered against it.
+ * The two Intuition chain definitions, and the only thing left under `arp/`.
  *
- * Folded in from `@arp-protocol/sdk` (ADR `0041`). The split between that package and this one was
- * never written down, so a consumer could not tell which to import; `arp/` is now the boundary.
- * Everything here reads **ARP's own deployment**, which is why it is the one place in this package
- * that names a chain: `TESTNET_DEPLOYMENT`, named rather than defaulted.
+ * It exported a client, a `ModuleRegistry` reader and an agent-reputation surface — folded in from
+ * `@arp-protocol/sdk` by ADR `0041`. Measured 2026-10-21, every one of those had **zero consumers**
+ * outside this package, and all of it was the catalogue ADR `0051` retired. `ModuleRegistry.sol` and
+ * `DomainScopeEnforcer.sol` went the same day.
+ *
+ * What stays is why the namespace exists at all: `rules/portability.md` makes this the one place in
+ * the package allowed to name a chain, because an L3 is not in viem's registry.
  */
-export {
-    createArpClient,
-    findModuleBySchemaURI,
-    findTopAgents,
-    getAgents,
-    getAllModules,
-    getAllModulesWithMetrics,
-    getLiveAgents,
-    getModulesByDomain,
-    getModulesByDomainWithMetrics,
-    getReputation,
-    intuitionMainnet,
-    intuitionTestnet,
-    TESTNET_DEPLOYMENT,
-} from "./arp/index.js";
-
-export type {
-    Agent,
-    AgentReputation,
-    AgentWithReputation,
-    ArpClient,
-    ArpClientConfig,
-    ArpDeployment,
-    FindTopAgentsOptions,
-    Module,
-    ModuleWithMetrics,
-} from "./arp/index.js";
+export {intuitionMainnet, intuitionTestnet} from "./arp/index.js";
 
 export {
     INTUITION_MAX_PAGE,

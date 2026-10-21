@@ -1,7 +1,5 @@
 import {
     encodeAbiParameters,
-    keccak256,
-    toBytes,
     type Hex,
 } from "viem";
 
@@ -30,29 +28,6 @@ import {toFunctionSelector} from "viem";
  * decodes via `abi.decode(...)`. The encoding here MUST match the Solidity
  * decode line, otherwise the on-chain validation reverts at redemption.
  */
-
-/**
- * `DomainScopeEnforcer` caveat. `terms` is `abi.encode(bytes32[])` where each
- * element is `keccak256(bytes(domain))`. Hashing on this side avoids
- * accidental case mismatches and saves on-chain calldata.
- *
- * @param allowedDomains  Domain identifiers the agent is permitted to
- *                        register modules in (e.g. `["solidity-audit"]`).
- *                        Must be non-empty; the enforcer reverts on
- *                        empty list.
- */
-export function domainScopeCaveat(allowedDomains: string[]): Caveat {
-    if (allowedDomains.length === 0) {
-        throw new Error("domainScopeCaveat: allowedDomains must be non-empty");
-    }
-    const hashes = allowedDomains.map((d) => keccak256(toBytes(d)));
-    const terms = encodeAbiParameters([{type: "bytes32[]"}], [hashes]);
-    return {
-        enforcer: deployments.arp.domainScopeEnforcer,
-        terms,
-        args: "0x" as Hex,
-    };
-}
 
 /**
  * `TrustStakeCapEnforcer` caveat. `terms` is `abi.encode(uint256, uint256)`
@@ -149,28 +124,3 @@ export function composeAndStakeCaveats(params: {
     ];
 }
 
-/**
- * Caveats for the **publish-modules** delegation:
- *
- *   - `DomainScopeEnforcer([allowedDomains])` (ours) — restricts to
- *     `ModuleRegistry.registerModule` calls in the listed domains.
- *   - `TrustStakeCapEnforcer(cap, periodSeconds)` (ours) — caps cumulative
- *     spend per period. `registerModule` is not payable so `value` is 0
- *     for every call; the cap is mostly a safety net for compose with
- *     future payable variants. We include it so the two delegations
- *     have symmetric shapes in the operator UI.
- *
- * Notably, no target restriction is added: `DomainScopeEnforcer` is itself
- * scoped by the `registerModule` selector check, so the agent cannot
- * accidentally call something else through this delegation.
- */
-export function publishModuleCaveats(params: {
-    allowedDomains: string[];
-    cap: bigint;
-    periodSeconds: bigint;
-}): Caveat[] {
-    return [
-        domainScopeCaveat(params.allowedDomains),
-        trustStakeCapCaveat(params.cap, params.periodSeconds),
-    ];
-}

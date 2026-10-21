@@ -36,7 +36,7 @@ la partie agent »_.
 once the register screen exists.
 
 **The decision that has to come first, because it is permanent.** Under ADR `0054` the atom id is a
-pure function of the normalised URL, so the URL chosen *is* the identity, forever. The user's own
+pure function of the normalised URL, so the URL chosen _is_ the identity, forever. The user's own
 measured example: `sofia.intuition.box` carries 30 atoms across 28 distinct URLs under 21 names.
 
 Settled in conversation:
