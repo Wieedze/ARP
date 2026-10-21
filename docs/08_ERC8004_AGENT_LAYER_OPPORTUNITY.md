@@ -293,6 +293,20 @@ agents it does not own.
 
 ### O3 — ARP as a trust provider, with a signal that costs something
 
+> **Decided and rejected — ADR `0046`, 2026-10-20. Read this before costing the option below.** This
+> document's own header says each option needs its own ADR before it is a commitment; O3 got one and
+> the answer was no. ARP publishes no score, rating or assessment of any agent, and does not register
+> as a trust provider: the argument is that the input costs money, and a score replaces the money
+> with a judgement. Two obligations disappear with it — operating a resolver domain with uptime and
+> freshness commitments, and the mainnet Partner API key dependency.
+>
+> The "Ships" paragraph below cites `ADR 0015 §3`, whose *"calibrated dimensional scores"* half is
+> **rejected** by `0046` while its no-mutable-scores half stands. Measured first, which is why the
+> answer was no: `has trust provider` is 28,683 edges over **three** objects with Deep3 at 99.86%
+> (`scripts/measure/trust-provider-objects.ts`), and Deep3's own assessment documents declare their
+> source as ERC-8004 feedback — so this option competes on somebody's existing product, 28,644 edges
+> behind. ADR `0049` then removed the calibration half separately.
+
 **Thesis**: F2. Deep3's input is free feedback. ARP's input is staked capital and verified execution.
 Two providers on the same agent, with visibly different methodologies, is exactly what the canonical
 pattern is designed to display — and the guide's own framing ("a thousand free ratings from throwaway
