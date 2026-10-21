@@ -6,12 +6,20 @@
  *
  *  It is wrong twice over. The protocol fee is charged on the way out as well, and the total is not
  *  even constant: two careful reads on the same day disagreed, 125 bps against 200 bps, because they
- *  sampled different terms. Governance configures these and the contract applies them conditionally,
- *  so the only correct instruction to an agent is **call `previewRedeem`** — which is what the skill
- *  already says about every other cost on the chain.
+ *  sampled different terms.
  *
- *  This script exists to keep that claim honest rather than to produce a number to quote. It reports
- *  the observed spread across a real sample, and the spread is the finding.
+ *  **The rule, which this script tests rather than asserts:** 125 bps (the protocol fee) always,
+ *  plus 75 (the exit fee) unless the redemption would leave the term's **default-curve** vault
+ *  holding fewer than `feeThreshold` shares. It is the default-curve vault's share supply that
+ *  decides, not the assets of the vault being left — which is why a term can pay 125 while holding
+ *  12 TRUST on curve 2 and another pays 200 while holding 1.2.
+ *
+ *  The script predicts each observation from public reads and prints the prediction beside the
+ *  measurement. 21/21 agreed on mainnet 1155, 2026-10-21. A miss means the rule is wrong and the
+ *  honest answer reverts to the range, which is why the prediction is printed rather than assumed.
+ *
+ *  Knowing the rule does not mean applying it: all three inputs are governance-configurable, so an
+ *  agent still calls `previewRedeem`. What the rule is for is sizing a decision before making it.
  *
  *  Method: `convertToAssets(termId, curveId, shares)` is the pre-fee gross for those shares;
  *  `previewRedeem(termId, curveId, shares)[0]` is what the account actually receives. The gap, in
@@ -42,6 +50,9 @@ const TARGETS = {
   },
 } as const;
 
+// Safe, and the cast is what keeps the guard below honest: it narrows argv to the key union so the
+// lookup type-checks, which makes `if (!target)` dead to the type system and still live at runtime
+// for a bad argument. Dropping the cast would require a runtime `in` check to say the same thing.
 const which = (process.argv[2] ?? 'mainnet') as keyof typeof TARGETS;
 const target = TARGETS[which];
 if (!target) {
@@ -81,6 +92,8 @@ if (!body.data) throw new Error('no data in response');
 
 const readAbi = parseAbi([
   'function convertToAssets(bytes32 termId, uint256 curveId, uint256 shares) view returns (uint256)',
+  'function getVault(bytes32 termId, uint256 curveId) view returns (uint256 totalAssets, uint256 totalShares)',
+  'function getBondingCurveConfig() view returns ((address registry, uint256 defaultCurveId))',
   'function previewRedeem(bytes32 termId, uint256 curveId, uint256 shares) view returns (uint256 assetsAfterFees, uint256 sharesUsed)',
   'function getVaultFees() view returns ((uint256 entryFee, uint256 exitFee, uint256 protocolFee))',
   'function getGeneralConfig() view returns ((address admin, address protocolMultisig, uint256 feeDenominator, address trustBonding, uint256 minDeposit, uint256 minShare, uint256 atomDataMaxLength, uint256 feeThreshold))',
@@ -89,10 +102,30 @@ const readAbi = parseAbi([
 const client = createPublicClient({ chain: target.chain, transport: http() });
 const multiVault = target.multiVault as `0x${string}`;
 
-const [fees, general] = await Promise.all([
+const [fees, general, curveConfig] = await Promise.all([
   client.readContract({ address: multiVault, abi: readAbi, functionName: 'getVaultFees' }),
   client.readContract({ address: multiVault, abi: readAbi, functionName: 'getGeneralConfig' }),
+  client.readContract({ address: multiVault, abi: readAbi, functionName: 'getBondingCurveConfig' }),
 ]);
+const defaultCurveId = curveConfig.defaultCurveId;
+
+/**
+ * The rule the two values come from, tested rather than asserted.
+ *
+ * The protocol fee is unconditional; the exit fee is waived when the **default-curve** vault would
+ * be left holding fewer than `feeThreshold` shares after the redemption. So the figure is a property
+ * of that vault's state at call time, not of the term, and not of the vault being redeemed — a term
+ * crosses from one value to the other as its default-curve supply grows past the threshold.
+ *
+ * Predicted here from public reads only, and checked against the measurement below. A prediction
+ * that matched on every observation is the evidence for the rule; a prediction that missed would
+ * mean the rule is wrong and the honest answer is the range.
+ */
+function predictedBps(defaultCurveShares: bigint, curveId: bigint, shares: bigint): number {
+  const remaining = curveId === defaultCurveId ? defaultCurveShares - shares : defaultCurveShares;
+  const exit = remaining < general.feeThreshold ? 0n : fees.exitFee;
+  return Number(exit + fees.protocolFee);
+}
 
 console.log(`\n${target.label} — ${new Date().toISOString().slice(0, 10)}\n`);
 console.log('what the config says');
@@ -105,7 +138,13 @@ console.log(
 /** A redemption small enough not to move the curve, so the figure is the fee and not the slope. */
 const SHARES = 1_000_000_000_000_000n; // 1e15
 
-type Observation = { kind: string; name: string; curveId: bigint; bps: number };
+type Observation = {
+  kind: string;
+  name: string;
+  curveId: bigint;
+  bps: number;
+  predicted: number;
+};
 const observations: Observation[] = [];
 
 async function probe(kind: string, row: Row) {
@@ -128,11 +167,18 @@ async function probe(kind: string, row: Row) {
         }),
       ]);
       if (gross === 0n) continue;
+      const defaultVault = await client.readContract({
+        address: multiVault,
+        abi: readAbi,
+        functionName: 'getVault',
+        args: [row.term_id as `0x${string}`, defaultCurveId],
+      });
       observations.push({
         kind,
         name: row.label?.slice(0, 24) ?? row.term_id.slice(0, 10),
         curveId,
         bps: Number(((gross - preview[0]) * 10_000n * 100n) / gross) / 100,
+        predicted: predictedBps(defaultVault[1], curveId, SHARES),
       });
     } catch {
       // A term the node will not quote for this size tells us nothing; skip rather than guess.
@@ -145,9 +191,23 @@ async function probe(kind: string, row: Row) {
 for (const row of body.data.atoms) await probe('atom', row);
 for (const row of body.data.triples) await probe('triple', row);
 
-console.log('what leaving actually costs, measured per term');
+console.log('what leaving actually costs, measured — and what the rule predicts');
 for (const o of observations) {
-  console.log(`  ${o.kind.padEnd(6)} curve ${o.curveId}  ${o.bps.toFixed(1).padStart(6)} bps   ${o.name}`);
+  const agrees = Math.abs(o.bps - o.predicted) < 0.05;
+  console.log(
+    `  ${o.kind.padEnd(6)} curve ${o.curveId}  ${o.bps.toFixed(1).padStart(6)} bps   ` +
+      `predicted ${o.predicted.toString().padStart(3)}  ${agrees ? 'ok ' : 'MISS'}  ${o.name}`,
+  );
+}
+const misses = observations.filter((o) => Math.abs(o.bps - o.predicted) >= 0.05);
+console.log(
+  `\n  the rule: ${fees.protocolFee} bps always, plus ${fees.exitFee} iff the curve-${defaultCurveId} vault`,
+);
+console.log(
+  `  still holds >= ${general.feeThreshold} shares after the redemption — ${observations.length - misses.length}/${observations.length} agree`,
+);
+if (misses.length > 0) {
+  console.log('  **the rule is wrong**: quote the range, not the rule.');
 }
 
 if (observations.length === 0) {
@@ -160,9 +220,9 @@ if (observations.length === 0) {
   console.log(`\n  ${observations.length} observations, ${distinct.length} distinct value(s): ${distinct.join(', ')} bps`);
   console.log(`  range ${low.toFixed(1)}–${high.toFixed(1)} bps against a configured "exit fee" of ${fees.exitFee} bps`);
   console.log(
-    low === high
-      ? '\n  One value here. Do not quote it anyway: it is governance-configurable and conditional.'
-      : '\n  **Not one number.** Quote the range or, better, tell the caller to call `previewRedeem`.',
+    misses.length === 0 && distinct.length > 1
+      ? '\n  Two values, and the rule above picks between them — but it is governance-configurable,\n  so an agent calls `previewRedeem` rather than applying it.'
+      : '\n  **Do not quote a single figure.** Tell the caller to call `previewRedeem`.',
   );
 }
 console.log();

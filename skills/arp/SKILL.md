@@ -339,13 +339,30 @@ Four things about it that cost real TRUST to learn otherwise:
 - **Leaving is not free, and do not compute what it costs — read it.** `getVaultFees()` returns
   `(entry 50, exit 75, protocol 125)` over a `feeDenominator` of 10,000 from `getGeneralConfig()` on
   mainnet 1155, 2026-10-21. Reading "exit 75" as 0.75% is wrong twice: the protocol fee is charged on
-  the way out too, and the total is **not one number**. Measured across 21 vaults the same day
+  the way out too, and the total is **not one figure**.
+
+  The rule, measured against 21 vaults the same day and matching on all 21
   (`scripts/measure/exit-cost.ts`, `convertToAssets` as the pre-fee gross against `previewRedeem`):
-  **125 bps on some terms and 200 bps on others**, on both atoms and triples and on both curves. What
-  selects between them is governance-configured and conditional, and this skill does not claim to
-  know it. So a position taken and closed at the same price loses money — more than the config's
-  "exit fee" suggests — and `previewRedeem` is the only thing that will tell you how much. That is
-  the same rule as "What it costs" at the top of this file: read it from the chain, per call.
+
+  > **125 bps always, plus 75 more unless the redemption would leave the term's _default-curve_
+  > vault holding fewer than `feeThreshold` shares.**
+
+  `feeThreshold` is 1e18 shares and `defaultCurveId` is 1 today, both from the chain. Three things
+  follow that cost money to learn otherwise:
+
+  - It is a property of **that vault's state when you call**, not of the term and not of the vault
+    you are leaving. A term crosses from 125 to 200 as its curve-1 supply grows past the threshold,
+    and back if it shrinks.
+  - On the default curve it also depends on **the size of your own redemption**, since your shares
+    come out of the supply the test looks at. Two quotes at two sizes can carry different fees.
+  - Two values is **exhaustive** under this config, not merely what the sample happened to show: the
+    protocol fee is unconditional and the exit fee is binary.
+
+  Know the rule, then **do not apply it** — `previewRedeem` reads the live config and your actual
+  size, and all three inputs are governance-configurable. That is the same rule as "What it costs" at
+  the top of this file: read it from the chain, per call. What the rule is for is sizing a decision
+  before you make it, and the decision it changes is that a position opened and closed at the same
+  price loses materially more than the config's "exit fee" suggests.
 
 Redeeming a position is not the same as unsaying the claim. The triple stays on the chain, your
 address stays on it, and the 0.1 TRUST stays spent. What changes is that you no longer have capital

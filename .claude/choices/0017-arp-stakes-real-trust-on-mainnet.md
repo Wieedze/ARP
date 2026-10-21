@@ -93,8 +93,16 @@ own work.** Verification is unit tests over a mocked wallet client, `previewDepo
 - Gas on the Intuition L3 is negligible (~0.0001 TRUST per transaction); the cost that matters is the
   deposit itself.
 - Depositing into a triple signals agreement; depositing into its counter-triple, obtained via
-  `getCounterIdFromTripleId`, signals disagreement. Both sides are priced, which is what makes the
-  vault a market rather than a tally.
+  `getCounterIdFromTripleId`, signals disagreement. Both sides are priced, ~~which is what makes the
+  vault a market rather than a tally~~.
+
+  **Qualified by ADR `0056`, 2026-10-21.** Both sides being priced is true and is the mechanism. It
+  is not what makes the vault a market: measured chain-wide on 1155, 969 of 285,775 triples carry any
+  position on the counter side (`scripts/measure/counter-side-usage.ts`), and `has trust provider`
+  triples sit inside that population. What makes it a market is that a position can be **withdrawn**,
+  so the price moves — which is also why the next bullet, about these vaults holding one or two
+  positions, is the one to read first. Decided here rather than left to inherit: it was the last live
+  instance of this construction in the repo.
 - Markets on these vaults currently carry one or two positions. Early stakes will move them visibly —
   a reason to display position counts and distinct stakers rather than bare market cap.
 

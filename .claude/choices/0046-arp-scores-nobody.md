@@ -68,12 +68,18 @@ then the argument is somebody else's.
 - **The claim that works today is `(agent, uses, tool)`** — an assertion about a fact, ~~which the
   tool can deny, which gets a free counter-triple,~~ and which `getToolUsage` already prices.
   `docs/12` points 3 and 4, already built. **Struck by ADR `0056`, 2026-10-21**: the counter-triple
-  is free and all but unused, 1 of 185. The **third** copy of this premise in this file.
+  is free and all but unused, 1 of 185. One of three copies of this premise in this file — see the
+  count in Alternatives below, which is stated there once rather than as an ordinal at each site.
 
 ### 3. The position is the measure; the triple is only its support
 
-Because a position can be withdrawn and the counter-triple staked, reputation is **live** rather than
-accumulated. Therefore **no historical cumulative is ever displayed.** "50 TRUST staked since the
+Because a position can be withdrawn ~~and the counter-triple staked~~, reputation is **live** rather
+than accumulated.
+
+**Struck by ADR `0056`, 2026-10-21.** The withdrawal half carries this alone; the counter-triple is
+free and all but unused, 1 of 185 mainnet `uses` edges. Found in the fourth review round, by reading
+the strike corpus for live twins rather than by a grep — it is one compound noun from the sentence
+`0049:41` had struck in the same commit that left this one standing. Therefore **no historical cumulative is ever displayed.** "50 TRUST staked since the
 beginning" is false if 40 were withdrawn. Current position, with the counter beside it.
 
 **Reachability, before anyone reads this as a bug report** (`rules/claims.md` check 1): no historical
@@ -112,9 +118,16 @@ timeline.
   own ADR and the assessment must never be proprietary.
 - ~~**Staking on the agent's identity atom** — rejected. Nothing to contradict, so nothing is
   learned.~~ **Amended by ADR `0056`, 2026-10-21**, on the same terms as §2 above: allowed, named a
-  market, never summed with the edge count. This file turned out to hold **three** copies of the
-  premise across §2 and this list, found over three review rounds — `rules/claims.md` §5, for the
-  fourth time in this project, and the first where the retraction itself needed three passes.
+  market, never summed with the edge count.
+
+  **The count of copies in this file, stated precisely because the first attempt at it was wrong.**
+  Two claims live here and they are not the same claim, so they get two numbers (`rules/claims.md`
+  §2). The **prohibition** — no stake on an identity atom — appears **twice**: §2's first bullet and
+  this one. The **premise** — a stake goes on a claim because it can be contradicted — appears
+  **three times**: §2's heading, §2's third bullet, and §3. Five marked sites in one file, found
+  across four review rounds. An earlier version of this note said "three copies of the premise",
+  conflating the two claims and undercounting — a count written inside the note that records
+  miscounting, which is `claims.md` §5 about itself.
 - **Inventing a peer-vouching predicate** — deferred, not rejected. Unnecessary while
   `(agent, uses, tool)` carries the loop, and ADR `0030` is the price of choosing one carelessly.
 
