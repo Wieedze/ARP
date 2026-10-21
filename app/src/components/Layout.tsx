@@ -2,6 +2,8 @@ import {type ReactNode} from "react";
 import {Link, useLocation} from "react-router-dom";
 
 import {deployments} from "../lib/deployments";
+import {linkClass} from "../lib/control-class";
+import {readsMainnet} from "../lib/mainnet-routes";
 
 import {WalletConnect} from "./WalletConnect";
 
@@ -22,15 +24,12 @@ const REGISTRY_URL = deployments.arp.explorerLinks?.moduleRegistry ?? "#";
  * most expensive sentence in the app, so the testnet strip is route-aware. A
  * mainnet route renders `MainnetNotice` itself, so the shell adds no second
  * strip there.
+ *
+ * **The route list moved to `lib/mainnet-routes.ts`** after it went stale twice in one day — once
+ * for `/` and once for `/register`, each a page that reads or spends real TRUST while this shell
+ * told the reader it was testnet and offered them a faucet. A hand-maintained list inside the
+ * component is what made both possible.
  */
-function readsMainnet(pathname: string): boolean {
-    return (
-        pathname === "/agents" ||
-        pathname === "/tools" ||
-        pathname.startsWith("/agent/") ||
-        pathname.startsWith("/tool/atom/")
-    );
-}
 
 export function Layout({children}: {children: ReactNode}) {
     const {pathname} = useLocation();
@@ -46,15 +45,14 @@ export function Layout({children}: {children: ReactNode}) {
                     ARP
                 </Link>
                 {/*
-                 * Agents · Tools (user, 2026-10-20), and **Register is gone** as of 2026-10-21.
-                 * It pointed at `/modules/new`, which wrote to ARP's own `ModuleRegistry` — and
-                 * ADR `0051` retired that: ARP points at tools hosted elsewhere and keeps no
-                 * catalogue. An entry point for writing into a registry that is not the product is
-                 * worse than no entry point, and what replaces it is in `FUTURE.md`.
+                 * Agents · Tools · Register (user, 2026-10-20).
                  *
-                 * `/` is the tool catalogue now, so "Tools" and the wordmark lead to the same
-                 * place. That is deliberate while there are two tabs: the alternative was keeping a
-                 * root route onto a retired registry.
+                 * Register pointed at `/modules/new` and wrote into ARP's own `ModuleRegistry`;
+                 * ADR `0051` retired that and both went. It points at `/register` now, which
+                 * creates a tool's **atom** — derived from its URL, so the same URL always lands on
+                 * the same market (ADR `0054`). ARP still stores nothing.
+                 *
+                 * `/` is the tool catalogue, so "Tools" and the wordmark lead to the same place.
                  *
                  * A "How it works" tab is part of the same structure and is not built: its content
                  * is a decision, not a layout.
@@ -62,15 +60,21 @@ export function Layout({children}: {children: ReactNode}) {
                 <nav className="flex items-center gap-5 text-[length:var(--text-body-sm)]">
                     <Link
                         to="/agents"
-                        className="text-[color:var(--color-fg-60)] hover:text-[color:var(--color-fg)]"
+                        className="text-[color:var(--color-fg-60)]! hover:text-[color:var(--color-fg)]!"
                     >
                         Agents
                     </Link>
                     <Link
                         to="/tools"
-                        className="text-[color:var(--color-fg-60)] hover:text-[color:var(--color-fg)]"
+                        className="text-[color:var(--color-fg-60)]! hover:text-[color:var(--color-fg)]!"
                     >
                         Tools
+                    </Link>
+                    <Link
+                        to="/register"
+                        className="text-[color:var(--color-fg-60)]! hover:text-[color:var(--color-fg)]!"
+                    >
+                        Register
                     </Link>
                 </nav>
                 <WalletConnect />
@@ -83,7 +87,7 @@ export function Layout({children}: {children: ReactNode}) {
                         href="https://intuition-testnet.hub.caldera.xyz/"
                         target="_blank"
                         rel="noreferrer"
-                        className="text-[color:var(--color-accent)] hover:underline"
+                        className={linkClass}
                     >
                         Get tTRUST →
                     </a>

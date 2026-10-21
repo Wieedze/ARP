@@ -6,6 +6,7 @@ import {useAccount, useSwitchChain} from "wagmi";
 import {DEFAULT_IDENTITY_REGISTRY, type IdentityAtomPlan} from "@arp-protocol/core";
 
 import {MainnetNotice} from "../components/agent/MainnetNotice";
+import {controlClass, linkClass} from "../lib/control-class";
 import {useAgentImport} from "../hooks/use-agent-import";
 import {INTUITION_MAINNET_CHAIN_ID, mainnetTxUrl} from "../lib/intuition-mainnet";
 import {
@@ -43,12 +44,6 @@ const LOOKUP_CHAINS: {id: number; label: string; note: string}[] = [
     {id: 56, label: "BSC (56)", note: "registry only — the graph does not mirror it"},
     {id: 1, label: "Ethereum (1)", note: "registry only — the graph does not mirror it"},
 ];
-
-// The focus ring is the unlayered `:focus-visible` rule in `index.css`, which
-// deliberately beats any utility — so none is repeated here.
-const controlClass =
-    "px-3 py-1.5 text-[length:var(--text-body-sm)] border border-[color:var(--color-border-strong)] " +
-    "disabled:opacity-40 disabled:cursor-not-allowed";
 
 const inputClass =
     "mt-2 block w-full bg-transparent border border-[color:var(--color-border-strong)] px-3 py-1.5 " +
@@ -299,7 +294,7 @@ export function AgentImport() {
                 </p>
                 <p className="mt-3 max-w-[64ch] text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)]">
                     Minting a new one instead is on{" "}
-                    <Link className="underline" to="/agent">
+                    <Link className={linkClass} to="/agent">
                         the agent setup page
                     </Link>
                     , which mints into ARP's registry on Intuition testnet — a different registry
@@ -536,7 +531,7 @@ export function AgentImport() {
                     The next steps are a Smart Account, a delegation whose caveats bound what the
                     runtime may stake, and then the stakes themselves. They are not wired for an
                     imported agent yet:{" "}
-                    <Link className="underline" to="/agent">
+                    <Link className={linkClass} to="/agent">
                         the agent setup page
                     </Link>{" "}
                     only recognises agents in ARP's testnet registry, and the delegation and tool
@@ -619,7 +614,7 @@ function Field({label, value, href}: {label: string; value: string; href?: strin
                     href={href}
                     target="_blank"
                     rel="noreferrer"
-                    className="mt-1 block font-mono text-[length:var(--text-body-sm)] break-all text-[color:var(--color-accent)] hover:underline"
+                    className={`mt-1 block font-mono text-[length:var(--text-body-sm)] break-all ${linkClass}`}
                 >
                     {value}
                 </a>
@@ -754,8 +749,8 @@ function MissingIdentityAtom(props: {
             <p className="mt-3 text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)]">
                 The mirror covers Base (8453) and last moved on 2026-09-16; it holds 28,648 agents
                 against a registry whose highest minted id is 309,925. This is not a duplicate: the
-                atom&rsquo;s id is the hash of a document derived from the agent&rsquo;s identity, so
-                what gets written here is the same id the mirror would write, sooner.
+                atom&rsquo;s id is the hash of a document derived from the agent&rsquo;s identity,
+                so what gets written here is the same id the mirror would write, sooner.
             </p>
 
             {plan === null ? (
@@ -804,8 +799,8 @@ function MissingIdentityAtom(props: {
                         retroactive rather than a missed window. */}
                     <p className="mt-4 text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)]">
                         The atom is created unpinned, so readers see its id rather than its name
-                        until someone pins the document. Anyone can, at any time, and the id does not
-                        change — the same bytes always hash to the same CID.
+                        until someone pins the document. Anyone can, at any time, and the id does
+                        not change — the same bytes always hash to the same CID.
                     </p>
                 </>
             )}

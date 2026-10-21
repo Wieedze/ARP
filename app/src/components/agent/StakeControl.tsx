@@ -2,6 +2,8 @@ import {useId, useState} from "react";
 import {useAccount, useSwitchChain} from "wagmi";
 import type {Hex} from "viem";
 
+import {controlClass, primaryControlClass} from "../../lib/control-class";
+
 import {useStakeActions} from "../../hooks/use-stake-actions";
 import {INTUITION_MAINNET_CHAIN_ID, mainnetTxUrl} from "../../lib/intuition-mainnet";
 import {formatTrust, truncateMiddle} from "../../services/trust-format";
@@ -68,11 +70,6 @@ const SIDE_COPY: Record<StakeSide, {label: string; sentence: string}> = {
         sentence: "the claim is not worth trusting — deposit into its counter-triple",
     },
 };
-
-const controlClass =
-    "px-3 py-1.5 text-[length:var(--text-body-sm)] border border-[color:var(--color-border-strong)] " +
-    "focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-2 " +
-    "focus-visible:outline-[color:var(--color-accent)] disabled:opacity-40 disabled:cursor-not-allowed";
 
 function errorMessage(error: unknown): string {
     if (error instanceof Error) return error.message;
@@ -523,15 +520,7 @@ function ConfirmStep({
                     type="button"
                     onClick={onConfirm}
                     disabled={isSigning}
-                    // Banged, both of them. `index.css` carries an **unlayered**
-                    // `button { border: 1px solid var(--color-border); color: var(--color-fg) }`,
-                    // and an unlayered normal declaration beats a normal one in every `@layer` —
-                    // so these two utilities, which Tailwind emits into `@layer utilities`, were
-                    // inert. The primary action at the moment real TRUST is committed rendered
-                    // with Cancel's border and Cancel's text colour, differing only in its label.
-                    // Importance outranks layer order, which is why `!` is what suppresses it.
-                    // `rules/ui.md` names this as one of two failure classes no static check sees.
-                    className={`${controlClass} border-[color:var(--color-accent)]! text-[color:var(--color-accent)]!`}
+                    className={primaryControlClass}
                 >
                     Sign in wallet
                 </button>

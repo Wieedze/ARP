@@ -1,4 +1,7 @@
 import {useState} from "react";
+import {Link} from "react-router-dom";
+
+import {linkClass} from "../lib/control-class";
 import type {ToolListingOrder} from "@arp-protocol/core";
 
 import {MainnetNotice} from "../components/agent/MainnetNotice";
@@ -42,7 +45,8 @@ export function ToolCatalog() {
                         Tools
                     </h1>
                     <p className="mt-2 text-[color:var(--color-fg-60)] max-w-[64ch]">
-                        Tools agents declared using, on the Intuition mainnet graph.
+                        Tools somebody registered, and tools agents declared using, on the Intuition
+                        mainnet graph. ARP hosts none of them — each row is a pointer with a vault.
                     </p>
                 </div>
                 <div className="flex flex-wrap items-baseline gap-x-6 gap-y-3">
@@ -65,11 +69,21 @@ export function ToolCatalog() {
                     <Failure error={query.error} onRetry={() => void query.refetch()} />
                 )
             ) : view.rows.length === 0 ? (
-                // The list's own state, in as few words as it takes. An empty region with nothing
-                // in it reads as a failed read.
-                <p className="font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)]">
-                    no declarations yet
-                </p>
+                // An empty region with nothing in it reads as a failed read, so the state is said.
+                // And it says what would fill it, per `rules/ui.md`, because on this page the answer
+                // is one click away and the emptiness is not informative about any tool.
+                <div className="max-w-[60ch]">
+                    <p className="font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)]">
+                        nothing here yet
+                    </p>
+                    <p className="mt-3 text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)]">
+                        A row appears when somebody registers a tool, or when an agent declares
+                        using one through the MCP server or the skill. Nobody has.
+                    </p>
+                    <Link to="/register" className={`mt-4 inline-block ${linkClass}`}>
+                        Register the first one →
+                    </Link>
+                </div>
             ) : (
                 <>
                     <ToolCatalogList rows={view.rows} curveId={view.curveId} />

@@ -1,5 +1,11 @@
 import {formatTrust} from "./trust-format";
-import type {ToolListing, ToolListingOrder, ToolListingPage} from "@arp-protocol/core";
+import type {
+    RegisteredTool,
+    RegisteredToolsPage,
+    ToolListing,
+    ToolListingOrder,
+    ToolListingPage,
+} from "@arp-protocol/core";
 
 /**
  * Turns one `ToolListingPage` into the rows `/tools` renders.
@@ -45,8 +51,21 @@ export const TOOL_ORDERS: readonly {id: ToolListingOrder; label: string}[] = [
     {id: "declarations", label: "Most declarations"},
 ];
 
+/**
+ * Which of the two populations a row came from, and they are not interchangeable.
+ *
+ * `registered` — somebody created the tool's **atom** from its URL and priced the tool itself.
+ * `declared` — an agent wrote `(agent, uses, tool)` and priced its own claim to have used it.
+ *
+ * A row says which, because the figure means something different in each: one is a market on the
+ * tool, the other a market on a claim about it (ADR `0039`). A tool can be in both, and then it
+ * appears once with its declarations counted.
+ */
+export type ToolProvenance = "registered" | "declared";
+
 export type ToolRow = {
     key: string;
+    provenance: ToolProvenance;
     /** The tool's label, or its atom id when the graph holds no label. */
     name: string;
     /** True when `name` is the atom id, so it can be set in mono. */
@@ -54,15 +73,24 @@ export type ToolRow = {
     href: string;
     declarations: number;
     /**
-     * How many of this tool's declarations carry at least one position.
+     * How many of this tool's declarations carry at least one position, or `null` when this read
+     * cannot say.
      *
      * Never a summed position count: positions are counted per vault, and a sum across an atom's
      * edges is a count of nothing a reader recognises (ADR `0023`).
      */
-    paidDeclarations: number;
+    paidDeclarations: number | null;
     supportTrust: string;
     /** `null` when nothing stands against the tool, so the cell stays empty rather than showing a zero. */
     opposeTrust: string | null;
+    /**
+     * How many positions stand on the tool's own atom. `null` for a `declared` row.
+     *
+     * Not foldable into `paidDeclarations`: that counts **edges** carrying a position, this counts
+     * positions in **one** vault. Summing them would be the per-vault-versus-across-edges error
+     * ADR `0023` predicted in writing.
+     */
+    stakers: number | null;
 };
 
 export type ToolCatalogView = {
@@ -83,6 +111,7 @@ function rowOf(tool: ToolListing): ToolRow {
     const named = label !== undefined && label.length > 0;
     return {
         key: tool.atomId,
+        provenance: "declared",
         name: named ? label : tool.atomId,
         isUnnamed: !named,
         href: `/tool/atom/${tool.atomId}`,
@@ -90,9 +119,64 @@ function rowOf(tool: ToolListing): ToolRow {
         paidDeclarations: tool.pricedEdges,
         supportTrust: formatTrust(tool.supportAssetsSum),
         opposeTrust: tool.opposeAssetsSum > 0n ? formatTrust(tool.opposeAssetsSum) : null,
+        stakers: null,
     };
 }
 
-export function buildToolCatalogView(page: ToolListingPage): ToolCatalogView {
-    return {rows: page.tools.map(rowOf), truncated: page.truncated, curveId: page.curveId};
+function registeredRowOf(tool: RegisteredTool): ToolRow {
+    const label = tool.label?.trim();
+    const named = label !== undefined && label.length > 0;
+    return {
+        key: tool.atomId,
+        provenance: "registered",
+        name: named ? label : tool.atomId,
+        isUnnamed: !named,
+        href: `/tool/atom/${tool.atomId}`,
+        declarations: tool.declarations,
+        // `null`, not `0`: pricing a registered row's declarations needs the per-edge vaults, which
+        // is `listTools`'s read, so this is **unknown** here. A zero under "paid for" would read as
+        // "nobody paid", which is a claim this read cannot make — the same distinction the oppose
+        // column makes two cells over by staying empty.
+        paidDeclarations: null,
+        supportTrust: formatTrust(tool.assets),
+        opposeTrust: null,
+        stakers: tool.positionCount,
+    };
+}
+
+/**
+ * The two populations, merged into one list, with the declared row winning a collision.
+ *
+ * **Why two reads and not one widened filter.** `listTools` keeps only `uses` edges whose subject
+ * carries a `same as` edge — the only proof on the graph that a subject is a real ERC-8004 agent,
+ * since there is no flag for it. That filter is why the catalogue was empty: measured on mainnet
+ * 2026-10-21, **0 of 185** `uses` edges have an identified subject, and the rest are sentences
+ * anyone wrote on a shared public predicate, with platforms and book titles as objects. Widening the
+ * filter fills the catalogue with those.
+ *
+ * A **registered** tool is an atom, so it never passes through that query at all, and a person can
+ * create one without being an agent. Two reads, two populations, each honest about what it is.
+ *
+ * A collision keeps the declared row because it carries the per-edge market the page is about.
+ *
+ * The registered row's atom-vault figures answer the other question and are **not** reachable
+ * anywhere in this app yet: `ToolUsagePanel` sums the edge vaults, and nothing deposits on a tool's
+ * atom. An earlier version of this sentence said they were — and the same sentence was corrected in
+ * `ToolCatalogList` while this copy, the one that file imports its types from, kept the stale
+ * version (`rules/claims.md` failure 5).
+ */
+export function buildToolCatalogView(
+    page: ToolListingPage,
+    registered?: RegisteredToolsPage,
+): ToolCatalogView {
+    const rows = page.tools.map(rowOf);
+    const declared = new Set(rows.map((row) => row.key.toLowerCase()));
+    for (const tool of registered?.tools ?? []) {
+        if (!declared.has(tool.atomId.toLowerCase())) rows.push(registeredRowOf(tool));
+    }
+    return {
+        rows,
+        truncated: page.truncated || (registered?.truncated ?? false),
+        curveId: page.curveId,
+    };
 }

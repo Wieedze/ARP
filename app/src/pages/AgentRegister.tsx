@@ -2,6 +2,8 @@ import {useEffect, useMemo, useState} from "react";
 import {Link} from "react-router-dom";
 import {parseEther, type Hex, zeroAddress} from "viem";
 import {useAccount, useWalletClient} from "wagmi";
+
+import {linkClass} from "../lib/control-class";
 import {getWalletClient} from "@wagmi/core";
 import {
     Implementation,
@@ -786,7 +788,7 @@ function PageHeader() {
             </p>
             <p className="mt-3 text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)] max-w-[640px]">
                 Already hold an ERC-8004 agent?{" "}
-                <Link className="underline" to="/agent/import">
+                <Link className={linkClass} to="/agent/import">
                     Import it instead
                 </Link>{" "}
                 — the registry already names you as its owner, so nothing needs minting.

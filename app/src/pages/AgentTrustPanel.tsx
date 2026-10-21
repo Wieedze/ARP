@@ -1,6 +1,7 @@
 import {useId, useState} from "react";
 import {Link, useParams, useSearchParams} from "react-router-dom";
 
+import {linkClass} from "../lib/control-class";
 import {AgentIdentityPanel} from "../components/agent/AgentIdentityPanel";
 import {AssessmentRow} from "../components/agent/AssessmentRow";
 import {CapabilitySection} from "../components/agent/CapabilitySection";
@@ -107,7 +108,7 @@ export function AgentTrustPanel() {
                     <span className="font-mono">/agent/8453/2340</span>.
                 </p>
                 <p className="mt-4">
-                    <Link to="/agents" className="text-[color:var(--color-accent)]">
+                    <Link to="/agents" className={linkClass}>
                         Look one up →
                     </Link>
                 </p>
@@ -158,7 +159,7 @@ export function AgentTrustPanel() {
                         token id.
                     </p>
                     <p className="mt-5">
-                        <Link to="/agents" className="text-[color:var(--color-accent)]">
+                        <Link to="/agents" className={linkClass}>
                             Try another →
                         </Link>
                     </p>

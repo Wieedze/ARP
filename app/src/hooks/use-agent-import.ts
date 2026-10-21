@@ -1,10 +1,8 @@
 import type {IdentityAtomPlan} from "@arp-protocol/core";
-import {getWalletClient} from "@wagmi/core";
 import {useCallback} from "react";
 import type {Address, Hex} from "viem";
 
 import {intuitionMainnetClient} from "../lib/intuition-mainnet";
-import {wagmiConfig} from "../lib/wagmi";
 import {
     planOperatorLink,
     resolveCanonicalAgentAtom,
@@ -23,6 +21,7 @@ import {
     type IdentityAtomSubmission,
 } from "../services/agent-identity-atom";
 import {createUserSmartAccount} from "../services/smart-account";
+import {connectedWalletClient} from "./wallet-client";
 
 /**
  * The chain and wallet actions the import page performs, kept out of the page.
@@ -135,20 +134,4 @@ export function useAgentImport() {
         planIdentity,
         publishIdentity,
     };
-}
-
-/**
- * The wallet's own client, requested without pinning a chain id.
- *
- * A client built for one chain reports that chain whatever the wallet is really
- * doing. `submitOperatorLink` checks the wallet's own `eth_chainId` against
- * mainnet before it builds anything, and it can only do that if the client it
- * is handed tells the truth.
- */
-async function connectedWalletClient() {
-    const walletClient = await getWalletClient(wagmiConfig);
-    if (walletClient === null || walletClient.account === undefined) {
-        throw new Error("No wallet client — reconnect your wallet and try again.");
-    }
-    return walletClient;
 }

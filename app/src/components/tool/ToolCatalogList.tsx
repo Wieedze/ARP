@@ -9,6 +9,13 @@ import type {ToolRow} from "../../services/tool-catalog";
  * down. Four columns and no more: the name, how many declarations exist, how many somebody paid to
  * stand behind, and the TRUST summed across them. Nothing restates a column in prose.
  *
+ * **A row says which population it came from**, under the name and in small type rather than as a
+ * fifth column. The figure means something different in each: a `declared` row's TRUST is summed
+ * across the edges agents wrote, a `registered` row's is what sits on the tool's own atom. Same
+ * column, two questions — so the row has to say which. The tool's own page carries the per-edge
+ * markets and **not** the atom's vault, so it does not yet spell the distinction out; until it does,
+ * this sub-label is the only place it is said.
+ *
  * Below `sm` the four columns collapse to two and the name spans **three** rows, because there are
  * three numeric cells: with `row-span-2` the third one overflows column 2 and wraps to the next
  * row's first column, landing out of line with the two above it. `CohortList` spans two because it
@@ -60,10 +67,26 @@ function Row({row}: {row: ToolRow}) {
                         }`}
                     >
                         {row.name}
+                        {/* Under the name, not a column: it qualifies the row rather than measuring
+                            it, and a fifth column would be a fifth column on a list that reads
+                            down. */}
+                        <span className="block font-sans font-normal text-[length:var(--text-label)] uppercase tracking-wider text-[color:var(--color-fg-60)]">
+                            {row.provenance === "registered"
+                                ? row.stakers === null || row.stakers === 0
+                                    ? "registered"
+                                    : `registered · ${row.stakers} on the tool`
+                                : "declared by agents"}
+                        </span>
                     </span>
 
                     <Figure value={String(row.declarations)} label="declarations" />
-                    <Figure value={String(row.paidDeclarations)} label="paid for" />
+                    {/* An unknown stays empty rather than printing a zero, like the oppose cell
+                        below. A registered row's declarations are counted but not priced: pricing
+                        them needs the per-edge vaults, which is the declared read. */}
+                    <Figure
+                        value={row.paidDeclarations === null ? "—" : String(row.paidDeclarations)}
+                        label="paid for"
+                    />
                     <span className="font-mono text-[length:var(--text-body-sm)] tabular-nums text-right leading-tight">
                         <span className="sr-only">staked behind it: </span>
                         {row.supportTrust}

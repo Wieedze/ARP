@@ -9,6 +9,9 @@ import {AgentRegister} from "./pages/AgentRegister";
  * pull the ERC-8004 connector and its graph transport, which nothing else in
  * the app needs, and most visits never open them.
  */
+const ToolRegister = lazy(() =>
+    import("./pages/ToolRegister").then((module) => ({default: module.ToolRegister})),
+);
 const AgentDirectory = lazy(() =>
     import("./pages/AgentDirectory").then((module) => ({default: module.AgentDirectory})),
 );
@@ -70,6 +73,14 @@ function App() {
                     element={
                         <Suspense fallback={<RouteFallback label="trust panel" />}>
                             <AgentTrustPanel />
+                        </Suspense>
+                    }
+                />
+                <Route
+                    path="/register"
+                    element={
+                        <Suspense fallback={<RouteFallback label="register a tool" />}>
+                            <ToolRegister />
                         </Suspense>
                     }
                 />

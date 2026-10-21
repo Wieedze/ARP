@@ -292,6 +292,14 @@ export type {
 export {intuitionMainnet, intuitionTestnet} from "./arp/index.js";
 
 export {
+    listRegisteredTools,
+    type RegisteredTool,
+    type RegisteredToolsConfig,
+    type RegisteredToolsOrder,
+    type RegisteredToolsPage,
+} from "./registered-tools.js";
+
+export {
     INTUITION_MAX_PAGE,
     listTools,
     type ToolListing,
