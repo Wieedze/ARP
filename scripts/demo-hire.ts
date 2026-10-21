@@ -20,8 +20,8 @@
  *    1. the hirer **paid** — a transaction, on chain, from the hirer to the hired agent
  *    2. the hired agent **verified that payment** before doing anything (`agent-node.ts`)
  *    3. it returned a **receipt signed by its own runtime key**, binding this request to this result
- *    4. the hirer then **deposited TRUST** on `(hirer, uses, hired)` — which it can withdraw, and
- *       which anyone can oppose at the same price
+ *    4. the hirer then **deposited TRUST** on `(hirer, uses, hired)` — which it can withdraw, so the
+ *       figure says what it thinks now rather than what it thought once
  *
  *  A star has none of the four. `docs/14:159`'s top rung is "payment, on-chain call, or delegation
  *  redemption"; this walk produces the first, and then prices a claim anchored to it.

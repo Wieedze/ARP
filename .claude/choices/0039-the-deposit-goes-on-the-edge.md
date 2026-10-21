@@ -4,6 +4,14 @@
 **Date:** 2026-10-19
 **Triggered by:** `tasks/16` — found while deciding what `prepareStakeOnUsed` should target
 
+> **Narrowed by ADR `0056`, 2026-10-21.** The decision stands for the planner: a deposit that is
+> made goes on the edge. What `0056` removes is **reason 2 below** — the counter-vault does not make
+> the edge a live market. Measured on mainnet 1155: **1** of the 185 `uses` edges has ever been
+> contradicted, and 969 of 285,775 triples chain-wide
+> (`scripts/measure/counter-side-usage.ts`). ARP's own surfaces therefore create the edge rather than
+> soliciting a deposit on it, and the market is on the atoms, in both directions. Reasons 1 and 3 —
+> attribution, and being what the reader reads — are untouched and now carry the argument alone.
+
 > **Paths in this ADR predate the 2026-10-19 reorganisation.** Read `erc8004/src/…` as
 > `packages/protocol/src/…` and `@arp-protocol/erc8004` as `@arp-protocol/core`. The text is left as
 > written because an ADR is a record of a decision on its date; ADR `0041` carries the full mapping.
@@ -61,9 +69,11 @@ number was absurd rather than because anything complained.
 1. **It is the claim.** The deposit is the attestation (ADR `0034`). A deposit on the atom is not
    attributable to any usage claim — it is a market on the tool, and it would be there whether or
    not anyone ever used it.
-2. **It is contestable.** Every triple gets a counter-triple for free, so a false `uses` edge can be
-   bet against. An atom has no counter-vault; there is no way to take the other side of "this tool
-   is valuable".
+2. ~~**It is contestable.** Every triple gets a counter-triple for free, so a false `uses` edge can
+   be bet against. An atom has no counter-vault; there is no way to take the other side of "this
+   tool is valuable".~~ **Retracted by ADR `0056`** — true of the mechanism, false of its use. The
+   counter-vault exists and costs what agreement costs; 1 of 185 `uses` edges has ever carried one.
+   `rules/claims.md` check 1: a mechanism nothing reaches is latent, not live.
 3. **It is what the reader reads.** A deposit elsewhere is invisible to `getToolUsage`, and 74
    mainnet edges are in that state today.
 
@@ -76,8 +86,9 @@ since Intuition has no deletion.
 
 ## Alternatives considered
 
-- **The tool's atom, matching `agent-stake-on-use.ts`.** Rejected: invisible to ARP's reader, not
-  attributable to a usage claim, and not contestable.
+- **The tool's atom, matching `agent-stake-on-use.ts`.** Rejected: invisible to ARP's reader and not
+  attributable to a usage claim. ~~and not contestable~~ — see the header note; and ADR `0056` later
+  **accepted the atom as a market in its own right**, beside the edge rather than instead of it.
 - **Both vaults, splitting the amount.** Rejected: it doubles the cost of every attestation to buy
   nothing the edge does not already give, and it makes "how much was staked on this claim" a figure
   a reader has to reconstruct from two places.
@@ -89,8 +100,10 @@ since Intuition has no deletion.
 **Positive:**
 
 - What the connector writes is what the connector reads. The loop closes.
-- The claim can be contested by anyone, which is what makes a staked self-report worth more than an
-  unstaked one.
+- ~~The claim can be contested by anyone, which is what makes a staked self-report worth more than
+  an unstaked one.~~ **Retracted by ADR `0056`.** What makes a self-report worth more than an
+  unstaked one is that writing it cost 0.1 TRUST irrecoverably, not that somebody might contradict
+  it — almost nobody ever does.
 - A test asserts the decoded `termId` **is** the triple id and **is not** the atom id, so a
   regression fails rather than writing permanently into the wrong vault
   (`erc8004/test/declare-plan.test.ts`, mutation-tested).

@@ -109,7 +109,10 @@ timeline.
   Declined for now: it is not needed for the loop to work, it re-adds both obligations above, and it
   is the one shape that slides into being a score without anyone noticing. If revisited it needs its
   own ADR and the assessment must never be proprietary.
-- **Staking on the agent's identity atom** — rejected. Nothing to contradict, so nothing is learned.
+- ~~**Staking on the agent's identity atom** — rejected. Nothing to contradict, so nothing is
+  learned.~~ **Amended by ADR `0056`, 2026-10-21**, on the same terms as §2 above: allowed, named a
+  market, never summed with the edge count. This is the second copy of that prohibition in this file
+  and it survived the first retraction — `rules/claims.md` §5, for the fourth time in this project.
 - **Inventing a peer-vouching predicate** — deferred, not rejected. Unnecessary while
   `(agent, uses, tool)` carries the loop, and ADR `0030` is the price of choosing one carelessly.
 

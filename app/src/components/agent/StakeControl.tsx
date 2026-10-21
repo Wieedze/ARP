@@ -58,10 +58,10 @@ type Phase =
           hash: Hex | null;
       };
 
-/** Both sides exist only for a triple. An atom has no counter vault to oppose from (ADR `0056`). */
 /** The heading tags a caller may ask for. Not `string`: an arbitrary tag is not a heading. */
 export type HeadingTag = "h2" | "h3" | "h4";
 
+/** Both sides exist only for a triple. An atom has no counter vault to oppose from (ADR `0056`). */
 const SIDES: StakeSide[] = ["support", "oppose"];
 
 const SIDE_COPY: Record<StakeSide, {label: string; sentence: string}> = {

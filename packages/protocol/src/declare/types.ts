@@ -158,11 +158,18 @@ export type PlannedTool = {
  * | the edge (triple) | 110 of 185           | 245.776495 TRUST                       |
  * | the object's atom | 146 of 185           | 2,673,997 TRUST over 84 distinct atoms |
  *
- * The atom's vault is larger and answers a different question: it is a market on the tool itself,
+ * The atom's vault is larger and answers a different question: it is the market on the tool itself,
  * open to anyone for any reason, and a deposit in it is not attributable to any usage claim. The
- * edge's vault is a market on *this* claim, it gets a counter-vault for free so the claim can be
- * contested, and it is the vault `getToolUsage` prices. 74 of those 185 edges carry stake only on
- * the atom — deposits ARP's own reader cannot see.
+ * edge's vault holds a position on *this* claim, which is what makes it **attributable back to you**,
+ * and it is the vault `getToolUsage` prices. 74 of those 185 edges carry stake only on the atom —
+ * deposits ARP's own reader cannot see.
+ *
+ * **This paragraph used to justify the edge by its counter-vault** — "so the claim can be contested".
+ * The counter-vault is real and costs what agreement costs, but it is all but unused: measured on
+ * mainnet 1155, 2026-10-21, **1** of those 185 edges has ever been contradicted and 969 of 285,775
+ * triples chain-wide (`scripts/measure/counter-side-usage.ts`). ADR `0056` acts on that for ARP's own
+ * surfaces; this planner keeps the capability, because an agent putting more behind its own
+ * attributed claim is not making a mistake. What changed is the reason.
  */
 export type StakePlan = {
     calls: PreparedCall[];

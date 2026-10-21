@@ -12,14 +12,17 @@ import {
     deriveMinShares,
     parseStakeAmount,
     asStakeTermId,
+    deriveMinAssets,
     parseShareAmount,
     quoteRedeem,
     quoteStake,
     readClaimVaults,
+    readMaxRedeem,
     submitRedeem,
     readStakeSession,
     resolveMaxStakeWei,
     resolveStakeTermId,
+    targetTermId,
     StakeGuardError,
     submitStake,
 } from "../trust-stake";
@@ -554,6 +557,48 @@ describe("parseShareAmount", () => {
             status: "ok",
             value: held,
         });
+    });
+});
+
+describe("deriveMinAssets", () => {
+    it("floors 1% below the preview and never returns zero", () => {
+        expect(deriveMinAssets(parseEther("1.5"))).toBe(parseEther("1.485"));
+        // A preview so small that 99% of it rounds to nothing still yields a floor, because `0`
+        // disables slippage protection outright — the same reason `deriveMinShares` clamps.
+        expect(deriveMinAssets(1n)).toBe(1n);
+    });
+
+    it("refuses a preview of nothing rather than returning an unprotected floor", () => {
+        expect(() => deriveMinAssets(0n)).toThrow(StakeGuardError);
+        expect(() => deriveMinAssets(0n)).toThrowError(/no assets/);
+    });
+
+    it("honours an explicit tolerance", () => {
+        expect(deriveMinAssets(parseEther("1"), 0n)).toBe(parseEther("1"));
+        expect(deriveMinAssets(parseEther("1"), 5_000n)).toBe(parseEther("0.5"));
+    });
+});
+
+describe("targetTermId", () => {
+    it("is the triple id for a triple and the atom id for an atom", () => {
+        expect(targetTermId({kind: "triple", tripleId: TRIPLE})).toBe(TRIPLE);
+        expect(targetTermId({kind: "atom", atomId: ATOM})).toBe(ATOM);
+    });
+});
+
+describe("readMaxRedeem", () => {
+    it("asks the chain rather than deriving a ceiling from a share balance", async () => {
+        const client = makePublicClient();
+        client.readContract.mockImplementation(readContractDispatcher({maxRedeem: 42n}));
+
+        await expect(
+            readMaxRedeem(asPublic(client), {
+                termId: ATOM,
+                curveId: 1n,
+                account: DEFAULT_TEST_ADDRESS,
+            }),
+        ).resolves.toBe(42n);
+        expect(client.readContract.mock.calls[0][0].args).toEqual([DEFAULT_TEST_ADDRESS, ATOM, 1n]);
     });
 });
 

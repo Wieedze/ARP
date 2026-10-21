@@ -58,8 +58,8 @@ git rev-list --count origin/feat/agent-panel-tabs..HEAD
 
 The remote SHA above is stable between pushes, so it stays.
 
-**Tests**: connector **368 passed / 4 skipped** · app **322 passed / 2 skipped** · contracts **17
-passed** (measured 2026-10-21, after ADR `0056`). `tsc` 0, `lint` 0, `check:tokens` 0.
+**Tests**: connector **368 passed / 4 skipped** · app **327 passed / 2 skipped** · contracts **17
+passed** (measured 2026-10-21, after ADR `0056` and its two review rounds). `tsc` 0, `lint` 0, `check:tokens` 0.
 
 The app count went **down** from 276 at one point in the day, deliberately: `mainnet-routes.test.ts`
 replaced nine tests over a hand-written route list with four that read the source. Fewer tests, one
@@ -347,6 +347,7 @@ scripts/measure/predicate-edges.ts         edge count per predicate the connecto
 scripts/measure/predicate-objects.ts       what `use` vs `uses` edges actually assert
 scripts/measure/predicate-reachability.ts  whether a defect is live or latent
 scripts/measure/stake-vault-placement.ts   whether a stake sits on the edge or the object atom
+scripts/measure/counter-side-usage.ts      whether anybody ever takes the other side, and what an act costs
 scripts/build-claude-index.ts              regenerate the ADR and post-mortem indexes
 scripts/verify-pin-key.ts                  validate the partner key, prove recipe determinism
 ```

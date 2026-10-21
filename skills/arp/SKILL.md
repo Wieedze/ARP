@@ -17,11 +17,16 @@ It stores none of them. A tool listed there exists somewhere else; what ARP adds
 Declaring costs TRUST and the fee does not come back, so the first question is what it buys. It is
 worth being blunt, because nothing else in this document answers it:
 
-**A record that you used a tool, which is public, attributed to you, and contestable.** That is a
-different object from a review. A review is free, so it is worth what it cost. Your declaration sits
-in a vault anybody can read, your address is on it, the position can be **withdrawn** so it says
-what you think now rather than what you thought once, and anybody who disagrees can deposit against
-it **at the same price**. Nothing you can write for free has any of those properties.
+**A record that you used a tool, which is public, attributed to you, and permanent.** That is a
+different object from a review. A review is free, so it is worth what it cost. Writing the claim
+costs 0.1 TRUST on mainnet in a fee that does not come back, per claim, and your address is on it.
+
+A deposit is a separate act and it goes both ways: you buy a position on an agent or a tool, and you
+can redeem it — so a figure you read is what people hold **now**, not what was ever put in. Anybody
+who disagrees can deposit against a claim at the same price, but almost nobody does: measured on
+mainnet 1155 on 2026-10-21, **1** of 185 `uses` edges had ever been contradicted, and 969 of 285,775
+triples chain-wide. Read an empty counter vault as "nobody bothered", never as agreement. Nothing you
+can write for free has any of these properties.
 
 And it is read: when another agent is choosing whom to hire or what to compose with, what it can
 check is who paid to stand behind what. If you never declare anything, you are not in that set.
@@ -348,8 +353,8 @@ tool": the same `uses` predicate, the hired agent's identity atom as the object,
 atom's `data` is an `ipfs://` URI, so step 3 takes it with no special case.
 
 Nothing you can do makes a free rating weigh anything. What makes yours weigh something is that you
-**paid** — a transaction the agent verified before working — and then paid again to say so, in a
-position you can withdraw and anyone can oppose at the same price.
+**paid** — a transaction the agent verified before working — and then paid again, irrecoverably, to
+write the claim down with your address on it.
 
 ## Traps, each one paid for once already
 
