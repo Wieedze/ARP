@@ -118,7 +118,10 @@ export type ImportGuardCode =
     | "no-canonical-atom"
     | "consent-mismatch"
     | "cost-above-ceiling"
-    | "unusable-atom-id";
+    | "unusable-atom-id"
+    // A term the fees would leave at zero positions (ADR `0053`). Raised from the plan, so nothing
+    // is signed and nothing is sent.
+    | "positionless-term";
 
 /** A guard refused to proceed. Carries a code the UI branches on. */
 export class ImportGuardError extends Error {
@@ -337,10 +340,25 @@ export type ImportLinkPlan = {
     predicateId: Hex;
     tripleId: Hex;
     tripleExists: boolean;
-    /** What the MultiVault charges for each write that is still needed. Zero when it is not. */
-    atomCost: bigint;
-    tripleCost: bigint;
+    /**
+     * What each write that is still needed will **send**. Zero when it is not needed.
+     *
+     * This is the creation fee **plus** the chain's `minDeposit`, not the fee alone. `assets` is the
+     * deposit and `createAtoms`/`createTriples` take the fee out of it, so sending the fee seeds the
+     * vault with `minShare` and leaves the term with **zero positions** — on the chain, and not a
+     * market (ADR `0053`).
+     *
+     * These two fields carried the fee alone until 2026-10-21, which made this the fourth copy of
+     * that bug and the only one on **mainnet 1155**, at 0.1 TRUST a term. Latent rather than live:
+     * measured that day, there are **zero** `same as` edges onto a `caip10:eip155:…` atom on 1155, so
+     * this path had never been run and no real TRUST was spent on a positionless term.
+     */
+    atomAssets: bigint;
+    tripleAssets: bigint;
     totalCost: bigint;
+    /** Shares each write buys, from `previewAtomCreate`/`previewTripleCreate`. Zero when not needed. */
+    atomShares: bigint;
+    tripleShares: bigint;
 };
 
 const vault = {address: INTUITION_MAINNET_MULTIVAULT, abi: multiVaultAbi} as const;
@@ -402,12 +420,57 @@ export async function planOperatorLink(
         args: [tripleId],
     });
 
-    const atomCost = chosen.exists
-        ? 0n
-        : await publicClient.readContract({...vault, functionName: "getAtomCost"});
-    const tripleCost = tripleExists
-        ? 0n
-        : await publicClient.readContract({...vault, functionName: "getTripleCost"});
+    // Read, never carried: 0.01 TRUST on mainnet 1155 against 0.001 on testnet 13579
+    // (`rules/portability.md` rule 3). Every term is born with it (ADR `0053`).
+    const {minDeposit} = await publicClient.readContract({
+        ...vault,
+        functionName: "getGeneralConfig",
+    });
+
+    let atomAssets = 0n;
+    let atomShares = 0n;
+    if (!chosen.exists) {
+        const atomCost = await publicClient.readContract({...vault, functionName: "getAtomCost"});
+        atomAssets = atomCost + minDeposit;
+        // Callable before the term exists, and `0` here is the zero-position failure caught while
+        // it is still free (measured on both chains, `scripts/measure-preview-before-create.ts`).
+        const [shares] = await publicClient.readContract({
+            ...vault,
+            functionName: "previewAtomCreate",
+            args: [chosen.atomId, atomAssets],
+        });
+        if (shares === 0n) {
+            throw new ImportGuardError(
+                "positionless-term",
+                `Creating the account atom with ${atomAssets} wei would buy 0 shares, so it would ` +
+                    `be born with no position — on the chain, and not a market. Nothing was sent.`,
+            );
+        }
+        atomShares = shares;
+    }
+
+    let tripleAssets = 0n;
+    let tripleShares = 0n;
+    if (!tripleExists) {
+        const tripleCost = await publicClient.readContract({
+            ...vault,
+            functionName: "getTripleCost",
+        });
+        tripleAssets = tripleCost + minDeposit;
+        const [shares] = await publicClient.readContract({
+            ...vault,
+            functionName: "previewTripleCreate",
+            args: [tripleId, tripleAssets],
+        });
+        if (shares === 0n) {
+            throw new ImportGuardError(
+                "positionless-term",
+                `Creating the same-as edge with ${tripleAssets} wei would buy 0 shares, so it ` +
+                    `would be born with no position — on the chain, and not a market. Nothing was sent.`,
+            );
+        }
+        tripleShares = shares;
+    }
 
     return {
         agentAtomId: imported.agentAtomId,
@@ -418,9 +481,11 @@ export async function planOperatorLink(
         predicateId,
         tripleId,
         tripleExists,
-        atomCost,
-        tripleCost,
-        totalCost: atomCost + tripleCost,
+        atomAssets,
+        tripleAssets,
+        totalCost: atomAssets + tripleAssets,
+        atomShares,
+        tripleShares,
     };
 }
 
@@ -455,8 +520,8 @@ function simulateCreateAtom(publicClient: PublicClient, plan: ImportLinkPlan, ac
     return publicClient.simulateContract({
         ...vault,
         functionName: "createAtoms",
-        args: [[stringToHex(plan.accountAtomUri)], [plan.atomCost]],
-        value: plan.atomCost,
+        args: [[stringToHex(plan.accountAtomUri)], [plan.atomAssets]],
+        value: plan.atomAssets,
         account,
     });
 }
@@ -465,8 +530,8 @@ function simulateCreateTriple(publicClient: PublicClient, plan: ImportLinkPlan, 
     return publicClient.simulateContract({
         ...vault,
         functionName: "createTriples",
-        args: [[plan.agentAtomId], [plan.predicateId], [plan.accountAtomId], [plan.tripleCost]],
-        value: plan.tripleCost,
+        args: [[plan.agentAtomId], [plan.predicateId], [plan.accountAtomId], [plan.tripleAssets]],
+        value: plan.tripleAssets,
         account,
     });
 }
@@ -511,8 +576,8 @@ export async function submitOperatorLink(params: {
         const atomTx = await walletClient.writeContract({
             ...vault,
             functionName: "createAtoms",
-            args: [[stringToHex(plan.accountAtomUri)], [plan.atomCost]],
-            value: plan.atomCost,
+            args: [[stringToHex(plan.accountAtomUri)], [plan.atomAssets]],
+            value: plan.atomAssets,
             chain: intuitionMainnet,
         });
         await publicClient.waitForTransactionReceipt({hash: atomTx});
@@ -524,8 +589,8 @@ export async function submitOperatorLink(params: {
         const tripleTx = await walletClient.writeContract({
             ...vault,
             functionName: "createTriples",
-            args: [[plan.agentAtomId], [plan.predicateId], [plan.accountAtomId], [plan.tripleCost]],
-            value: plan.tripleCost,
+            args: [[plan.agentAtomId], [plan.predicateId], [plan.accountAtomId], [plan.tripleAssets]],
+            value: plan.tripleAssets,
             chain: intuitionMainnet,
         });
         await publicClient.waitForTransactionReceipt({hash: tripleTx});

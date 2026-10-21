@@ -178,4 +178,37 @@ export const multiVaultAbi = [
         ],
         outputs: [{name: "", type: "uint256"}],
     },
+    // Both are callable on a term that does **not** exist, and both return `shares = 0` when the
+    // creation fee eats the whole deposit — measured on 13579 and 1155 on 2026-10-21 by
+    // `scripts/measure-preview-before-create.ts`. That is what lets a positionless term be refused
+    // before the fee is spent (ADR `0053`). `previewDeposit` above is not symmetric: it reverts on
+    // a term that does not exist.
+    {
+        type: "function",
+        stateMutability: "view",
+        name: "previewAtomCreate",
+        inputs: [
+            {name: "termId", type: "bytes32"},
+            {name: "assets", type: "uint256"},
+        ],
+        outputs: [
+            {name: "shares", type: "uint256"},
+            {name: "assetsAfterFixedFees", type: "uint256"},
+            {name: "assetsAfterFees", type: "uint256"},
+        ],
+    },
+    {
+        type: "function",
+        stateMutability: "view",
+        name: "previewTripleCreate",
+        inputs: [
+            {name: "termId", type: "bytes32"},
+            {name: "assets", type: "uint256"},
+        ],
+        outputs: [
+            {name: "shares", type: "uint256"},
+            {name: "assetsAfterFixedFees", type: "uint256"},
+            {name: "assetsAfterFees", type: "uint256"},
+        ],
+    },
 ] as const;

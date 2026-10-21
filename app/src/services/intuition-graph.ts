@@ -62,6 +62,68 @@ export class PredicateNotOnChainError extends Error {
  * partner API (ADR 0016), and only a Node entry point can supply the key. An
  * optional parameter would re-open the leak this closes.
  */
+/**
+ * A term this code would create with **no position**.
+ *
+ * `assets` in `createAtoms`/`createTriples` is the deposit and the creation fee comes out of it, so
+ * paying the fee alone seeds the vault with `minShare` and leaves the term at zero positions — on the
+ * chain, and not a market (ADR `0053`). Measured on testnet 13579 on 2026-10-21: of 33 atoms
+ * carrying the canonical `Agent 8453:…` fallback label, **6 have no position** and hold exactly
+ * 1,000,000 wei.
+ *
+ * This file was the third copy of that bug. The planner in `@arp-protocol/core` and
+ * `scripts/plan-identity-atom.ts` were both corrected first; these three write paths were the copies
+ * the correction missed, which is `rules/claims.md` failure 5 in code.
+ */
+export class PositionlessTermError extends Error {
+    constructor(what: string, termId: Hex, assets: bigint) {
+        super(
+            `creating the ${what} ${termId} with ${assets} wei would buy 0 shares, so it would be ` +
+                `born with no position — it would exist on the chain and not exist as a market ` +
+                `(ADR 0053). The creation fee comes out of \`assets\`; raise it above the fee by at ` +
+                `least this chain's \`minDeposit\`.`,
+        );
+        this.name = "PositionlessTermError";
+    }
+}
+
+/**
+ * What a term must be created with, and the chain's confirmation that it buys something.
+ *
+ * `minDeposit` is read per call, never carried: 0.001 TRUST on testnet 13579 against 0.01 on
+ * mainnet 1155 (`rules/portability.md` rule 3). The preview is a `view` on a term that does not
+ * exist yet, which is what makes the refusal free.
+ */
+async function assetsForCreate(params: {
+    publicClient: PublicClient;
+    termId: Hex;
+    kind: "atom" | "triple";
+}): Promise<bigint> {
+    const read = <const T extends "getAtomCost" | "getTripleCost" | "getGeneralConfig">(
+        functionName: T,
+    ) =>
+        params.publicClient.readContract({
+            address: MULTI_VAULT,
+            abi: multiVaultAbi,
+            functionName,
+        });
+
+    const [cost, config] = await Promise.all([
+        read(params.kind === "atom" ? "getAtomCost" : "getTripleCost"),
+        read("getGeneralConfig"),
+    ]);
+    const assets = cost + config.minDeposit;
+
+    const [shares] = await params.publicClient.readContract({
+        address: MULTI_VAULT,
+        abi: multiVaultAbi,
+        functionName: params.kind === "atom" ? "previewAtomCreate" : "previewTripleCreate",
+        args: [params.termId, assets],
+    });
+    if (shares === 0n) throw new PositionlessTermError(params.kind, params.termId, assets);
+    return assets;
+}
+
 export async function ensureAtomForThing(params: {
     thing: {name: string; description: string; image?: string; url?: string};
     walletClient: WalletClient<Transport, Chain, Account>;
@@ -95,18 +157,18 @@ export async function ensureAtomForThing(params: {
 
     if (exists) return {atomId, uri, created: false};
 
-    const atomCost = await params.publicClient.readContract({
-        address: MULTI_VAULT,
-        abi: multiVaultAbi,
-        functionName: "getAtomCost",
+    const assets = await assetsForCreate({
+        publicClient: params.publicClient,
+        termId: atomId,
+        kind: "atom",
     });
 
     const tx = await params.walletClient.writeContract({
         address: MULTI_VAULT,
         abi: multiVaultAbi,
         functionName: "createAtoms",
-        args: [[atomData], [atomCost]],
-        value: atomCost,
+        args: [[atomData], [assets]],
+        value: assets,
         chain: intuitionTestnet,
     });
     await params.publicClient.waitForTransactionReceipt({hash: tx});
@@ -148,17 +210,17 @@ export async function ensureAtomForURI(params: {
     });
     if (exists) return {atomId, created: false};
 
-    const atomCost = await params.publicClient.readContract({
-        address: MULTI_VAULT,
-        abi: multiVaultAbi,
-        functionName: "getAtomCost",
+    const assets = await assetsForCreate({
+        publicClient: params.publicClient,
+        termId: atomId,
+        kind: "atom",
     });
     const tx = await params.walletClient.writeContract({
         address: MULTI_VAULT,
         abi: multiVaultAbi,
         functionName: "createAtoms",
-        args: [[atomData], [atomCost]],
-        value: atomCost,
+        args: [[atomData], [assets]],
+        value: assets,
         chain: intuitionTestnet,
     });
     await params.publicClient.waitForTransactionReceipt({hash: tx});
@@ -237,18 +299,18 @@ export async function declareUsesTriple(params: {
     });
     if (exists) return {tripleId, created: false};
 
-    const tripleCost = await params.publicClient.readContract({
-        address: MULTI_VAULT,
-        abi: multiVaultAbi,
-        functionName: "getTripleCost",
+    const assets = await assetsForCreate({
+        publicClient: params.publicClient,
+        termId: tripleId,
+        kind: "triple",
     });
 
     const tx = await params.walletClient.writeContract({
         address: MULTI_VAULT,
         abi: multiVaultAbi,
         functionName: "createTriples",
-        args: [[params.agentAtomId], [usesAtomId], [params.toolAtomId], [tripleCost]],
-        value: tripleCost,
+        args: [[params.agentAtomId], [usesAtomId], [params.toolAtomId], [assets]],
+        value: assets,
         chain: intuitionTestnet,
     });
     await params.publicClient.waitForTransactionReceipt({hash: tx});

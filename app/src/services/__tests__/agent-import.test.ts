@@ -68,6 +68,10 @@ const ACCOUNT_ATOM_LOWERCASE: Hex = `0x${"10".repeat(32)}`;
 const TRIPLE: Hex = `0x${"33".repeat(32)}`;
 const ATOM_COST = 100_000_000_001_000_000n;
 const TRIPLE_COST = 100_000_000_002_000_000n;
+/** Mainnet 1155's floor, read from `getGeneralConfig()`. Every term is born with it (ADR `0053`). */
+const MIN_DEPOSIT = 10_000_000_000_000_000n;
+const ATOM_ASSETS = ATOM_COST + MIN_DEPOSIT;
+const TRIPLE_ASSETS = TRIPLE_COST + MIN_DEPOSIT;
 
 /* -------------------------------------------------------------------------- */
 /* Doubles                                                                     */
@@ -175,6 +179,11 @@ function makePublic(options: {
     existing?: Hex[];
     atomIdByUri?: Record<string, Hex>;
     tripleId?: Hex;
+    /**
+     * What the create previews return for `shares`. Non-zero by default; `0n` is the chain's answer
+     * to a deposit the fees eat, and the plan must refuse rather than send it (ADR `0053`).
+     */
+    createShares?: bigint;
 }): MockPublic {
     const existing = new Set<string>(options.existing ?? []);
     const byUri = options.atomIdByUri ?? {};
@@ -197,6 +206,22 @@ function makePublic(options: {
                     return ATOM_COST;
                 case "getTripleCost":
                     return TRIPLE_COST;
+                case "getGeneralConfig":
+                    return {
+                        admin: `0x${"11".repeat(20)}`,
+                        protocolMultisig: `0x${"22".repeat(20)}`,
+                        feeDenominator: 10_000n,
+                        trustBonding: `0x${"33".repeat(20)}`,
+                        minDeposit: MIN_DEPOSIT,
+                        minShare: 1_000_000n,
+                        atomDataMaxLength: 1000n,
+                        feeThreshold: 10n ** 18n,
+                    };
+                case "previewAtomCreate":
+                case "previewTripleCreate": {
+                    const shares = options.createShares ?? ATOM_ASSETS;
+                    return [shares, shares, shares];
+                }
                 default:
                     throw new Error(`unexpected readContract ${args.functionName}`);
             }
@@ -373,13 +398,39 @@ describe("the import path mints nothing", () => {
         });
 
         const calls = wallet.writeContract.mock.calls.map(
-            (call) => call[0] as {address: Address; functionName: string},
+            (call) =>
+                call[0] as {
+                    address: Address;
+                    functionName: string;
+                    args: readonly unknown[];
+                    value: bigint;
+                },
         );
         expect(calls).toHaveLength(2);
         for (const call of calls) {
             expect(call.address).toBe(INTUITION_MAINNET_MULTIVAULT);
         }
         expect(calls.map((call) => call.functionName)).toEqual(["createAtoms", "createTriples"]);
+
+        /**
+         * The `value` assertions are the ones that were missing, and their absence is why this
+         * path shipped sending the **fee alone** as `assets` — which creates the term with zero
+         * positions, on mainnet 1155, at 0.1 TRUST each (ADR `0053`). The functionName and address
+         * were checked; what the call actually paid was not.
+         */
+        expect(calls[0]?.value).toBe(ATOM_ASSETS);
+        expect(calls[0]?.args[1]).toEqual([ATOM_ASSETS]);
+        expect(calls[1]?.value).toBe(TRIPLE_ASSETS);
+        expect(calls[1]?.args[3]).toEqual([TRIPLE_ASSETS]);
+    });
+
+    it("refuses to plan a term the fees would leave with no position", async () => {
+        // The refusal is in the plan, so nothing is signed and nothing is sent. `previewAtomCreate`
+        // is callable before the term exists, which is what makes the check free.
+        const publicClient = makePublic({atomIdByUri: ATOM_IDS, createShares: 0n});
+        await expect(
+            planOperatorLink(asPublic(publicClient), await importedAgent()),
+        ).rejects.toThrow(ImportGuardError);
     });
 
     it("writes nothing at all when the link is already on the graph", async () => {
@@ -535,8 +586,8 @@ describe("planOperatorLink", () => {
         const plan = await planOperatorLink(asPublic(publicClient), await importedAgent());
         expect(plan.accountAtomUri).toBe(CHECKSUMMED_URI);
         expect(plan.accountAtomExists).toBe(true);
-        expect(plan.atomCost).toBe(0n);
-        expect(plan.tripleCost).toBe(TRIPLE_COST);
+        expect(plan.atomAssets).toBe(0n);
+        expect(plan.tripleAssets).toBe(TRIPLE_ASSETS);
     });
 
     it("falls back to the lowercase spelling when neither exists", async () => {
@@ -544,7 +595,7 @@ describe("planOperatorLink", () => {
         const plan = await planOperatorLink(asPublic(publicClient), await importedAgent());
         expect(plan.accountAtomUri).toBe(LOWERCASE_URI);
         expect(plan.accountAtomExists).toBe(false);
-        expect(plan.totalCost).toBe(ATOM_COST + TRIPLE_COST);
+        expect(plan.totalCost).toBe(ATOM_ASSETS + TRIPLE_ASSETS);
     });
 
     it("keys the triple on the agent atom, the predicate and the account atom", async () => {

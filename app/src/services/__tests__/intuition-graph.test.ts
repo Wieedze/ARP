@@ -25,6 +25,25 @@ const TOOL_ATOM: Hex = `0x${"a3".repeat(32)}`;
 
 const ATOM_COST = 100n;
 const TRIPLE_COST = 50n;
+/**
+ * The deposit every created term is born with (ADR `0053`), read from `getGeneralConfig()` rather
+ * than assumed — 0.001 TRUST on testnet 13579 against 0.01 on mainnet 1155.
+ */
+const MIN_DEPOSIT = 1000n;
+const ATOM_ASSETS = ATOM_COST + MIN_DEPOSIT;
+const TRIPLE_ASSETS = TRIPLE_COST + MIN_DEPOSIT;
+const GENERAL_CONFIG = {
+    admin: `0x${"11".repeat(20)}`,
+    protocolMultisig: `0x${"22".repeat(20)}`,
+    feeDenominator: 10_000n,
+    trustBonding: `0x${"33".repeat(20)}`,
+    minDeposit: MIN_DEPOSIT,
+    minShare: 1_000_000n,
+    atomDataMaxLength: 1000n,
+    feeThreshold: 10n ** 18n,
+} as const;
+/** Non-zero shares, so the create is allowed. The zero case has its own test below. */
+const CREATE_PREVIEW = [ATOM_ASSETS, ATOM_ASSETS, ATOM_ASSETS] as const;
 
 // Pinning is gated behind Intuition's partner API (ADR 0016); every helper
 // that pins now takes the credential as a required parameter.
@@ -116,6 +135,8 @@ describe("ensureAtomForThing", () => {
                 calculateAtomId: makeAtomIdReader(),
                 isTermCreated: makeIsTermCreatedReader(new Set()),
                 getAtomCost: ATOM_COST,
+                getGeneralConfig: GENERAL_CONFIG,
+                previewAtomCreate: CREATE_PREVIEW,
             }),
         );
         const {ensureAtomForThing} = await freshGraph();
@@ -142,8 +163,8 @@ describe("ensureAtomForThing", () => {
         };
         expect(call.address).toBe(MULTI_VAULT);
         expect(call.functionName).toBe("createAtoms");
-        expect(call.args).toEqual([[stringToHex(AGENT_THING_URI)], [ATOM_COST]]);
-        expect(call.value).toBe(ATOM_COST);
+        expect(call.args).toEqual([[stringToHex(AGENT_THING_URI)], [ATOM_ASSETS]]);
+        expect(call.value).toBe(ATOM_ASSETS);
         expect(call.chain.id).toBe(intuitionTestnet.id);
         expect(pc.waitForTransactionReceipt).toHaveBeenCalledWith({hash: result.tx});
     });
@@ -195,6 +216,35 @@ describe("ensureAtomForURI", () => {
         };
     }
 
+    /**
+     * ADR `0053`: `assets` is the deposit and the creation fee comes out of it, so paying the fee
+     * alone leaves the term with zero positions — on the chain, and not a market.
+     * `previewAtomCreate` is callable before the term exists and returns `shares = 0` for exactly
+     * that case (measured on both chains 2026-10-21), so the refusal costs nothing.
+     *
+     * This file held the third copy of the bug. The package planner and
+     * `scripts/plan-identity-atom.ts` were corrected first; these write paths were missed.
+     */
+    it("refuses to create an atom that would buy no shares", async () => {
+        const pc = makeMockPublicClient();
+        const wc = makeMockWalletClient();
+        pc.readContract.mockImplementation(
+            readContractDispatcher({
+                calculateAtomId: uriReader(),
+                isTermCreated: () => false,
+                getAtomCost: ATOM_COST,
+                getGeneralConfig: GENERAL_CONFIG,
+                previewAtomCreate: [0n, 0n, 0n] as const,
+            }),
+        );
+        const {ensureAtomForURI, PositionlessTermError} = await freshGraph();
+
+        await expect(
+            ensureAtomForURI({uri: TOOL_URI, walletClient: wc, publicClient: pc}),
+        ).rejects.toThrow(PositionlessTermError);
+        expect(wc.writeContract).not.toHaveBeenCalled();
+    });
+
     it("returns {created:false} when the canonical URI's atom already exists, skipping createAtoms", async () => {
         const pc = makeMockPublicClient();
         const wc = makeMockWalletClient();
@@ -226,6 +276,8 @@ describe("ensureAtomForURI", () => {
                 calculateAtomId: uriReader(),
                 isTermCreated: () => false,
                 getAtomCost: ATOM_COST,
+                getGeneralConfig: GENERAL_CONFIG,
+                previewAtomCreate: CREATE_PREVIEW,
             }),
         );
         const {ensureAtomForURI} = await freshGraph();
@@ -248,8 +300,8 @@ describe("ensureAtomForURI", () => {
         };
         expect(call.address).toBe(MULTI_VAULT);
         expect(call.functionName).toBe("createAtoms");
-        expect(call.args).toEqual([[TOOL_DATA], [ATOM_COST]]);
-        expect(call.value).toBe(ATOM_COST);
+        expect(call.args).toEqual([[TOOL_DATA], [ATOM_ASSETS]]);
+        expect(call.value).toBe(ATOM_ASSETS);
     });
 });
 
@@ -267,6 +319,31 @@ describe("declareUsesTriple", () => {
         mockPin.mockReset();
     });
 
+    it("refuses to create a triple that would buy no shares", async () => {
+        // The same ADR `0053` guard as the atom path above, on the edge.
+        pc.readContract.mockImplementation(
+            readContractDispatcher({
+                isTermCreated: ({args}: {args: readonly unknown[]}) =>
+                    args[0] === INTUITION_USES_TERM_ID,
+                calculateTripleId: TRIPLE_ID,
+                getTripleCost: TRIPLE_COST,
+                getGeneralConfig: GENERAL_CONFIG,
+                previewTripleCreate: [0n, 0n, 0n] as const,
+            }),
+        );
+        const {declareUsesTriple, PositionlessTermError} = await freshGraph();
+
+        await expect(
+            declareUsesTriple({
+                agentAtomId: AGENT_ATOM,
+                toolAtomId: TOOL_ATOM,
+                walletClient: wc,
+                publicClient: pc,
+            }),
+        ).rejects.toThrow(PositionlessTermError);
+        expect(wc.writeContract).not.toHaveBeenCalled();
+    });
+
     it("sandwiches the shared 'uses' predicate between agent and tool", async () => {
         pc.readContract.mockImplementation(
             readContractDispatcher({
@@ -276,6 +353,8 @@ describe("declareUsesTriple", () => {
                     args[0] === INTUITION_USES_TERM_ID,
                 calculateTripleId: TRIPLE_ID,
                 getTripleCost: TRIPLE_COST,
+                getGeneralConfig: GENERAL_CONFIG,
+                previewTripleCreate: [TRIPLE_ASSETS, TRIPLE_ASSETS, TRIPLE_ASSETS] as const,
             }),
         );
         const {declareUsesTriple} = await freshGraph();
@@ -303,9 +382,9 @@ describe("declareUsesTriple", () => {
             [AGENT_ATOM],
             [INTUITION_USES_TERM_ID],
             [TOOL_ATOM],
-            [TRIPLE_COST],
+            [TRIPLE_ASSETS],
         ]);
-        expect(call.value).toBe(TRIPLE_COST);
+        expect(call.value).toBe(TRIPLE_ASSETS);
         expect(call.chain.id).toBe(intuitionTestnet.id);
         expect(pc.waitForTransactionReceipt).toHaveBeenCalledWith({hash: result.tx});
         // Nothing is pinned for a predicate: it is not ours to create.
