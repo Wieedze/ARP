@@ -123,6 +123,48 @@ export const multiVaultDeclareAbi = [
         ],
         outputs: [{name: "shares", type: "uint256"}],
     },
+    {
+        type: "function",
+        stateMutability: "view",
+        name: "previewAtomCreate",
+        inputs: [
+            {name: "termId", type: "bytes32"},
+            {name: "assets", type: "uint256"},
+        ],
+        outputs: [
+            {name: "shares", type: "uint256"},
+            {name: "assetsAfterFixedFees", type: "uint256"},
+            {name: "assetsAfterFees", type: "uint256"},
+        ],
+    },
+    {
+        type: "function",
+        stateMutability: "view",
+        name: "previewTripleCreate",
+        inputs: [
+            {name: "termId", type: "bytes32"},
+            {name: "assets", type: "uint256"},
+        ],
+        outputs: [
+            {name: "shares", type: "uint256"},
+            {name: "assetsAfterFixedFees", type: "uint256"},
+            {name: "assetsAfterFees", type: "uint256"},
+        ],
+    },
+    {
+        type: "function",
+        stateMutability: "view",
+        name: "previewDeposit",
+        inputs: [
+            {name: "termId", type: "bytes32"},
+            {name: "curveId", type: "uint256"},
+            {name: "assets", type: "uint256"},
+        ],
+        outputs: [
+            {name: "shares", type: "uint256"},
+            {name: "assetsAfterFees", type: "uint256"},
+        ],
+    },
 ] as const;
 
 /** The atom data for a canonical URI. `keccak256` of these exact bytes is the atom id. */
@@ -130,24 +172,46 @@ export function atomDataForUri(uri: string): Hex {
     return stringToHex(uri);
 }
 
-export function encodeCreateAtom(atomData: Hex, cost: bigint): Hex {
+/**
+ * `assets` is the **deposit**, and the term's creation fee is taken out of it.
+ *
+ * Measured on testnet 13579, 2026-10-20, by creating one atom each way:
+ *
+ * | `assets` passed    | the atom's vault ends up with |
+ * | ------------------ | ----------------------------- |
+ * | `cost` exactly     | 1,000,000 wei, **0 positions** |
+ * | `cost + minDeposit`| 980,000,001,000,000 wei, **1 position** |
+ *
+ * So passing the cost leaves nothing to deposit: the whole amount is the fee, the vault is seeded
+ * with `minShare` alone, and the term is born with **no position**. An atom with no position exists
+ * on the chain and does not exist as a market — which is the rule this project now holds (ADR
+ * `0053`). Re-measured on testnet 13579 on 2026-10-21: of 33 atoms carrying the canonical
+ * `Agent 8453:…` fallback label, **6 have no position** and hold exactly 1,000,000 wei, against 27
+ * holding 980,000,001,000,000 with one. An earlier version of this comment said "the first three
+ * atoms ARP ever created" — the count was never measured, and it is 6.
+ *
+ * The parameter is therefore named `assets` and not `cost`, and a caller passes
+ * `cost + deposit`. `value` on the call must equal it.
+ */
+export function encodeCreateAtom(atomData: Hex, assets: bigint): Hex {
     return encodeFunctionData({
         abi: multiVaultDeclareAbi,
         functionName: "createAtoms",
-        args: [[atomData], [cost]],
+        args: [[atomData], [assets]],
     });
 }
 
+/** Same as {@link encodeCreateAtom}: `assets` is the deposit and the triple's fee comes out of it. */
 export function encodeCreateTriple(
     subjectId: Hex,
     predicateId: Hex,
     objectId: Hex,
-    cost: bigint,
+    assets: bigint,
 ): Hex {
     return encodeFunctionData({
         abi: multiVaultDeclareAbi,
         functionName: "createTriples",
-        args: [[subjectId], [predicateId], [objectId], [cost]],
+        args: [[subjectId], [predicateId], [objectId], [assets]],
     });
 }
 
@@ -193,6 +257,40 @@ export type MultiVaultReads = {
      * mainnet. Reading this does.
      */
     minDeposit(): Promise<bigint>;
+    /**
+     * What a term creation would actually buy, **before** anything is signed.
+     *
+     * Measured on both chains 2026-10-21 by `scripts/measure-preview-before-create.ts`, and the two
+     * findings are why these are on the reader at all:
+     *
+     * 1. **Callable on a term that does not exist.** The curve state is empty and it computes from
+     *    zero, so the check can happen while it is still free.
+     * 2. **It returns `shares = 0` for the fee alone** — on both chains, for atoms and triples. So
+     *    ADR `0053`'s "every term is born with a position" stops being an invariant held by
+     *    discipline and becomes one verified by a read.
+     *
+     * `previewDeposit` is **not** symmetric: it reverts on a term that does not exist. Only call it
+     * for a term `termExists` confirmed.
+     */
+    previewAtomCreate(termId: Hex, assets: bigint): Promise<TermPreview>;
+    previewTripleCreate(termId: Hex, assets: bigint): Promise<TermPreview>;
+    previewDeposit(termId: Hex, curveId: bigint, assets: bigint): Promise<DepositPreview>;
+};
+
+/** What `previewAtomCreate` / `previewTripleCreate` return. */
+export type TermPreview = {
+    /** Shares the creator receives. **Zero means the term is born with no position.** */
+    shares: bigint;
+    /** The deposit left after the flat creation fee. */
+    assetsAfterFixedFees: bigint;
+    /** The deposit left after every fee, which is what actually reaches the vault. */
+    assetsAfterFees: bigint;
+};
+
+/** What `previewDeposit` returns. */
+export type DepositPreview = {
+    shares: bigint;
+    assetsAfterFees: bigint;
 };
 
 export type MultiVaultReadsConfig = {
@@ -275,6 +373,34 @@ export function multiVaultReads(config: MultiVaultReadsConfig): MultiVaultReads 
                 functionName: "getGeneralConfig",
             });
             return general.minDeposit;
+        },
+        async previewAtomCreate(termId: Hex, assets: bigint): Promise<TermPreview> {
+            const [shares, assetsAfterFixedFees, assetsAfterFees] = await client.readContract({
+                ...contract,
+                functionName: "previewAtomCreate",
+                args: [termId, assets],
+            });
+            return {shares, assetsAfterFixedFees, assetsAfterFees};
+        },
+        async previewTripleCreate(termId: Hex, assets: bigint): Promise<TermPreview> {
+            const [shares, assetsAfterFixedFees, assetsAfterFees] = await client.readContract({
+                ...contract,
+                functionName: "previewTripleCreate",
+                args: [termId, assets],
+            });
+            return {shares, assetsAfterFixedFees, assetsAfterFees};
+        },
+        async previewDeposit(
+            termId: Hex,
+            curveId: bigint,
+            assets: bigint,
+        ): Promise<DepositPreview> {
+            const [shares, assetsAfterFees] = await client.readContract({
+                ...contract,
+                functionName: "previewDeposit",
+                args: [termId, curveId, assets],
+            });
+            return {shares, assetsAfterFees};
         },
     };
 }

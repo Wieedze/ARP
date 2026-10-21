@@ -9,7 +9,10 @@ import {
     NonPositiveAmountError,
     atomDataForUri,
     prepareDeclareUsed,
+    ZeroPositionError,
     prepareStakeOnUsed,
+    toolAtomUri,
+    toolThingDocument,
     type MultiVaultReads,
     type ToolAtomCandidate,
     type ToolAtomLookup,
@@ -58,6 +61,16 @@ function fakeReads(
         curveId?: bigint;
         chainId?: number;
         minDeposit?: bigint;
+        /**
+         * The entry fee the previews take, in basis points. `0` by default so every assertion that
+         * is about an amount stays about the amount.
+         *
+         * Measured on the real chains 2026-10-21: 200 bps on testnet 13579 for an atom, 100 for a
+         * triple; 175 and 125 on mainnet 1155. It is set here only by the test that needs a deposit
+         * to round down to **zero shares**, which is how the real chain refuses dust and the only
+         * way `ZeroPositionError` is reachable with a non-zero `birthDeposit`.
+         */
+        feeBps?: bigint;
     } = {},
 ): MultiVaultReads & {reads: string[]} {
     const existing = state.existing ?? new Set<string>();
@@ -70,6 +83,16 @@ function fakeReads(
      * A lookup cannot be wrong that way.
      */
     const uriByAtomId = new Map<string, string>();
+    /**
+     * What a creation deposit buys, the way the chain computes it: the fee first, then the shares
+     * **rounded down**. Rounding down is the part that matters — it is why a deposit can be
+     * positive and still buy nothing.
+     */
+    const afterFees = (left: bigint) => {
+        if (left <= 0n) return {shares: 0n, assetsAfterFixedFees: 0n, assetsAfterFees: 0n};
+        const shares = (left * (10_000n - (state.feeBps ?? 0n))) / 10_000n;
+        return {shares, assetsAfterFixedFees: left, assetsAfterFees: shares};
+    };
     return {
         reads,
         address: MULTI_VAULT,
@@ -111,6 +134,30 @@ function fakeReads(
             // 1n unless a test says otherwise, so the existing amount assertions stay about the
             // amount and not about the floor.
             return state.minDeposit ?? 1n;
+        },
+        /**
+         * The real contract's behaviour, reduced to the one property the planner reads: the fee
+         * comes out of `assets`, so what is left is what buys shares, and the fee alone buys none.
+         *
+         * Measured on both chains 2026-10-21 (`scripts/measure-preview-before-create.ts`). The
+         * entry fee is dropped here — a percentage the fake does not need, because no assertion is
+         * about the exact share count, only about zero against non-zero.
+         */
+        async previewAtomCreate(_termId: Hex, assets: bigint) {
+            reads.push("previewAtomCreate");
+            return afterFees(assets - (state.atomCost ?? parseEther("0.01")));
+        },
+        async previewTripleCreate(_termId: Hex, assets: bigint) {
+            reads.push("previewTripleCreate");
+            return afterFees(assets - (state.tripleCost ?? parseEther("0.1")));
+        },
+        /** Reverts on a term that does not exist, as the real one does. */
+        async previewDeposit(termId: Hex, _curveId: bigint, assets: bigint) {
+            reads.push("previewDeposit");
+            if (!existing.has(termId.toLowerCase())) {
+                throw new Error(`previewDeposit on a term that does not exist: ${termId}`);
+            }
+            return {shares: assets, assetsAfterFees: assets};
         },
     };
 }
@@ -260,7 +307,11 @@ describe("prepareDeclareUsed", () => {
         // charges ~0.1 for both (measured 2026-10-19), and an earlier version of this comment
         // claimed these WERE the mainnet figures. The planner only sums what it reads, which is
         // the property under test; a fixture is free to pick two distinguishable numbers.
-        expect(plan.totalValue).toBe(parseEther("0.22"));
+        // Two atoms and two triples, so two atom fees, two triple fees, and **four birth
+        // deposits**: every term is born with a position, because a term at zero positions exists
+        // on the chain and not as a market (ADR `0053`). The fake floor is 1 wei, so the four are
+        // visible as the +4 rather than hidden in a rounder number.
+        expect(plan.totalValue).toBe(parseEther("0.22") + 4n);
     });
 
     it("reads the costs from the chain, so testnet's 100× cheaper fees carry through", async () => {
@@ -277,7 +328,8 @@ describe("prepareDeclareUsed", () => {
                 chainId: 13579,
             }),
         });
-        expect(plan.totalValue).toBe(parseEther("0.002"));
+        // One atom and one triple: two fees of 0.001, plus two birth deposits of the fake 1 wei floor.
+        expect(plan.totalValue).toBe(parseEther("0.002") + 2n);
         expect(plan.chainId).toBe(13579);
     });
 
@@ -404,16 +456,39 @@ describe("which atom a tool resolves to", () => {
         expect(plan.tools[0]?.bareUrlWarning).toBeUndefined();
     });
 
-    it("warns when it would mint a bare URL atom with no lookup to consult", async () => {
+    it("derives the canonical Thing for a URL with no lookup, rather than a bare URL atom", async () => {
         const plan = await prepareDeclareUsed({
             subject: SUBJECT,
             tools: [HTTPS_URI],
             reads: fakeReads(),
         });
+        expect(plan.tools[0]?.atomSource).toBe("derived-thing");
+        expect(plan.tools[0]?.atomUri).toBe(toolAtomUri(HTTPS_URI));
+        expect(plan.tools[0]?.pinDocument).toBe(toolThingDocument(HTTPS_URI));
+        expect(plan.tools[0]?.bareUrlWarning).toBeUndefined();
+    });
+
+    it("warns only for a URI that is neither a content address nor a URL", async () => {
+        const plan = await prepareDeclareUsed({
+            subject: SUBJECT,
+            tools: ["npm:some-package"],
+            reads: fakeReads(),
+        });
         // Measured by scripts/measure-tool-atom-shape.ts on mainnet: 78 of the 84 tool atoms are `ipfs://` and 77
         // resolve a pinned Thing; the only two raw-URL atoms are schema.org vocabulary, not tools.
+        expect(plan.tools[0]?.atomSource).toBe("derived-from-uri");
         expect(plan.tools[0]?.bareUrlWarning).toContain("no pinned metadata");
-        expect(plan.calls.find((c) => c.kind === "create-atom")?.why).toContain("BARE URL");
+        expect(plan.calls.find((c) => c.kind === "create-atom")?.why).toContain("BARE URI");
+    });
+
+    it("plans one atom for two spellings of one URL", async () => {
+        const plan = await prepareDeclareUsed({
+            subject: SUBJECT,
+            tools: ["https://www.github.com/crytic/slither/", "github.com/crytic/slither"],
+            reads: fakeReads(),
+        });
+        expect(plan.tools).toHaveLength(1);
+        expect(plan.calls.map((c) => c.kind)).toEqual(["create-atom", "create-triple"]);
     });
 
     it("reuses the tool's existing atom when the lookup finds exactly one", async () => {
@@ -450,15 +525,109 @@ describe("which atom a tool resolves to", () => {
         ).rejects.toThrow(AmbiguousToolAtomError);
     });
 
-    it("still creates a bare URL atom when the lookup finds nothing, and says so", async () => {
+    it("derives the canonical Thing when the lookup finds nothing", async () => {
         const plan = await prepareDeclareUsed({
             subject: SUBJECT,
             tools: [HTTPS_URI],
             reads: fakeReads(),
             lookup: fakeLookup([]),
         });
-        expect(plan.tools[0]?.atomSource).toBe("derived-from-uri");
-        expect(plan.tools[0]?.bareUrlWarning).toContain("no atom on the graph");
+        expect(plan.tools[0]?.atomSource).toBe("derived-thing");
+        expect(plan.tools[0]?.pinDocument).toContain(HTTPS_URI);
+    });
+
+    it("searches both the raw and the normalised spelling before minting", async () => {
+        const asked: string[] = [];
+        const plan = await prepareDeclareUsed({
+            subject: SUBJECT,
+            tools: ["https://www.github.com/crytic/slither/"],
+            reads: fakeReads(),
+            lookup: {
+                async findByUrl(url) {
+                    asked.push(url);
+                    return [];
+                },
+            },
+        });
+        expect(asked).toEqual([
+            "https://www.github.com/crytic/slither/",
+            "https://github.com/crytic/slither",
+        ]);
+        expect(plan.tools[0]?.atomSource).toBe("derived-thing");
+    });
+});
+
+describe("previews before signing", () => {
+    /**
+     * The guard ADR `0053` always implied and nothing enforced until 2026-10-21.
+     *
+     * `previewAtomCreate` is callable on an atom that does not exist and returns `shares = 0` for a
+     * deposit the fees eat — measured on both chains by
+     * `scripts/measure-preview-before-create.ts`. A 1-wei deposit against a 2% fee rounds to zero
+     * shares, which is a term on the chain that is not a market.
+     */
+    it("refuses a creation that would buy no shares", async () => {
+        await expect(
+            prepareDeclareUsed({
+                subject: SUBJECT,
+                tools: [TOOL_URI],
+                reads: fakeReads({feeBps: 200n}),
+            }),
+        ).rejects.toThrow(ZeroPositionError);
+    });
+
+    it("allows a positionless term when the caller asked for one explicitly", async () => {
+        // `birthDeposit: 0n` is the documented way to say so, so the guard must not fire on it:
+        // the error is for the accident, not for the choice.
+        const plan = await prepareDeclareUsed({
+            subject: SUBJECT,
+            tools: [TOOL_URI],
+            reads: fakeReads({feeBps: 200n}),
+            birthDeposit: 0n,
+        });
+        expect(plan.calls.every((call) => call.preview?.shares === 0n)).toBe(true);
+    });
+
+    it("carries the previewed shares on every create call", async () => {
+        const plan = await prepareDeclareUsed({
+            subject: SUBJECT,
+            tools: [TOOL_URI],
+            reads: fakeReads({minDeposit: parseEther("0.01")}),
+        });
+        expect(plan.calls.map((call) => call.kind)).toEqual(["create-atom", "create-triple"]);
+        for (const call of plan.calls) {
+            expect(call.preview?.shares).toBe(parseEther("0.01"));
+        }
+    });
+
+    it("previews a deposit on the curve it will actually price against", async () => {
+        const tripleId = tripleIdFor(TOOL_URI);
+        const reads = fakeReads({existing: new Set([tripleId.toLowerCase()])});
+        const plan = await prepareStakeOnUsed({
+            targets: [{tripleId, amount: parseEther("0.5")}],
+            receiver: RECEIVER,
+            reads,
+            curveId: 2n,
+        });
+        expect(reads.reads).toContain("previewDeposit");
+        expect(plan.targets[0]?.shares).toBe(parseEther("0.5"));
+        expect(plan.calls[0]?.preview?.shares).toBe(parseEther("0.5"));
+    });
+
+    it("plans no deposit and no preview for a triple that does not exist", async () => {
+        // `previewDeposit` reverts there on the real chain, and the fake reverts too — so a preview
+        // attempted on a missing term would fail the test rather than quietly return a number.
+        const tripleId = tripleIdFor(TOOL_URI);
+        const reads = fakeReads();
+        const plan = await prepareStakeOnUsed({
+            targets: [{tripleId, amount: parseEther("0.5")}],
+            receiver: RECEIVER,
+            reads,
+        });
+        expect(plan.calls).toHaveLength(0);
+        expect(plan.targets[0]?.exists).toBe(false);
+        expect(plan.targets[0]?.shares).toBeUndefined();
+        expect(reads.reads).not.toContain("previewDeposit");
     });
 });
 

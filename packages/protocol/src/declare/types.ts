@@ -34,6 +34,18 @@ export type PreparedCall = {
     data: Hex;
     /** One line, for a human or an operator reading the plan before authorising it. */
     why: string;
+    /**
+     * What the chain says this call will buy, read with `preview*` before anything is signed.
+     *
+     * `shares` is the load-bearing field. **Zero means the term ends up with no position** — it
+     * exists on the chain and does not exist as a market (ADR `0053`). The Intuition skill's "always
+     * preview" instruction was unimplemented here until 2026-10-21, which meant the one invariant
+     * this project holds about term creation was held by discipline instead of by a read.
+     *
+     * Absent only when no preview was possible: `previewDeposit` reverts on a term that does not
+     * exist, so a deposit planned for a triple the caller has not created yet carries none.
+     */
+    preview?: {shares: bigint; assetsAfterFees: bigint};
 };
 
 /**
@@ -78,8 +90,15 @@ export type DeclarePlan = {
 
 /** One tool in a declaration, with the ids the plan resolved for it. */
 export type PlannedTool = {
-    /** The canonical URI the atom derives from — a `schemaURI`, an MCP endpoint, an `ipfs://` doc. */
+    /** What the caller asked for, trimmed. A URL, an MCP endpoint, an `ipfs://` doc. */
     uri: string;
+    /**
+     * The URI the atom's id actually derives from, which is **not always** {@link uri}.
+     *
+     * For `derived-thing` it is the `ipfs://` CID of a document computed from the URL, so a caller
+     * displaying "the atom for X" has the right string to show and to pin.
+     */
+    atomUri: string;
     /** The atom used as the triple's object. */
     atomId: Hex;
     /**
@@ -91,22 +110,38 @@ export type PlannedTool = {
      * `existing-thing` — an atom already on the graph whose pinned Thing carries this exact `url`,
      * found by {@link ToolAtomLookup}. Used so a location URL does not mint a second atom beside
      * the tool's real one.
+     *
+     * `derived-thing` — a canonical Thing computed from the normalised URL (`tool-thing.ts`), whose
+     * every field is a pure function of that URL. The atom nobody has created yet, in the one form
+     * that cannot fork: a free-text `name` inside a hashed document is why `https://github.com`
+     * already has five atoms. `pinDocument` carries the bytes that make it readable.
      */
-    atomSource: "derived-from-uri" | "existing-thing";
+    atomSource: "derived-from-uri" | "existing-thing" | "derived-thing";
     /** The `(agent, uses, tool)` triple id. Computable before either term exists. */
     tripleId: Hex;
     atomExists: boolean;
     tripleExists: boolean;
     /**
-     * Set when the plan is about to create a **bare URL atom** — no pinned Thing, so no metadata
+     * The exact JSON to pin for this atom's metadata to resolve. Set iff `derived-thing`.
+     *
+     * The atom can be created, staked and read as an id without it; pinning is what makes a reader
+     * see a name instead of a hash. Separate from the plan on purpose — pinning needs a credential
+     * (ADR `0016`) and the plan needs none, so the two cannot share a step.
+     */
+    pinDocument?: string;
+    /**
+     * Set when the plan is about to create a **bare URI atom** — no pinned Thing, so no metadata
      * for any reader.
      *
+     * Now reachable only for a URI that is neither a content address nor an http(s) URL: a `did:`,
+     * an `npm:` specifier, a bare name. An http(s) URL takes the `derived-thing` path instead, which
+     * is what this warning used to exist for.
+     *
      * Measured by `scripts/measure-tool-atom-shape.ts` on mainnet: of the 84 tool atoms on `uses`
-     * edges, 78 are `ipfs://` and 77 of those resolve a
-     * `value.thing`; the only two raw-URL atoms are schema.org vocabulary terms, not tools. So this
-     * is off the cohort's canon, and if the tool later gets a proper pinned atom the reputation
-     * splits across two ids permanently. Not an error — sometimes it is the only option — but the
-     * caller is told before it signs.
+     * edges, 78 are `ipfs://` and 77 of those resolve a `value.thing`; the only two raw-URL atoms
+     * are schema.org vocabulary terms, not tools. So this is off the cohort's canon, and if the tool
+     * later gets a proper pinned atom the reputation splits across two ids permanently. Not an
+     * error — sometimes it is the only option — but the caller is told before it signs.
      */
     bareUrlWarning?: string;
 };
@@ -153,4 +188,12 @@ export type PlannedStake = {
      * caller may not have sent yet.
      */
     exists: boolean;
+    /**
+     * Shares this deposit buys, from `previewDeposit`. Absent when `exists` is false, because the
+     * preview reverts there.
+     *
+     * It is not `amount` minus a constant: the entry fee is a governance parameter and the curve is
+     * not linear in assets on curve 2. Read, not computed.
+     */
+    shares?: bigint;
 };

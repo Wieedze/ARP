@@ -120,6 +120,23 @@ const ethCallReturns: Record<string, Hex> = {
             ],
         ],
     ),
+    // The previews. `shares` is non-zero so the plans do not refuse: a zero would be the real
+    // chain's answer to a fee-only deposit, and `ZeroPositionError` is covered in `declare-plan`
+    // against a reader whose arithmetic a test can state. Here the point is only that the plan
+    // asks.
+    [selector("function previewAtomCreate(bytes32,uint256) view returns (uint256,uint256,uint256)")]:
+        encodeAbiParameters(
+            [{type: "uint256"}, {type: "uint256"}, {type: "uint256"}],
+            [980n, 1000n, 980n],
+        ),
+    [selector(
+        "function previewTripleCreate(bytes32,uint256) view returns (uint256,uint256,uint256)",
+    )]: encodeAbiParameters(
+        [{type: "uint256"}, {type: "uint256"}, {type: "uint256"}],
+        [990n, 1000n, 990n],
+    ),
+    [selector("function previewDeposit(bytes32,uint256,uint256) view returns (uint256,uint256)")]:
+        encodeAbiParameters([{type: "uint256"}, {type: "uint256"}], [980n, 980n]),
 };
 
 /**
@@ -359,7 +376,9 @@ describe("arp_declare_used", () => {
         });
         // The stub charges 0.001 per atom and 0.002 per triple. A number here would lose
         // precision for any realistic TRUST figure, so the wire carries strings.
-        expect(p["total_value_wei"]).toBe(parseEther("0.003").toString());
+        // 0.001 + 0.002 in fees, plus two birth deposits at the stub's 1000-wei floor — one atom
+        // and one triple, each born with a position (ADR `0053`).
+        expect(p["total_value_wei"]).toBe((parseEther("0.003") + 2_000n).toString());
         expect(typeof p["total_value_wei"]).toBe("string");
     });
 

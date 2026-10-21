@@ -238,21 +238,35 @@ export {
     encodeCreateAtom,
     encodeCreateTriple,
     encodeDeposit,
+    IdentityTermHasNoPositionError,
     intuitionToolAtomLookup,
+    isToolUrl,
     multiVaultDeclareAbi,
     multiVaultReads,
+    canonicalAgentThing,
+    canonicalCaipThing,
     NonPositiveAmountError,
+    normaliseToolUrl,
     prepareDeclareUsed,
+    prepareIdentityAtom,
     prepareStakeOnUsed,
     resolveDeclarationSubject,
     SmartAccountsKitMissingError,
     toDelegatedCalls,
+    toolAtomUri,
+    thingDocument,
+    thingUri,
+    toolThing,
+    toolThingDocument,
+    ZeroPositionError,
 } from "./declare/index.js";
 
 export type {
+    AgentThing,
     DeclarePlan,
     DelegatedPlan,
     DelegationLike,
+    IdentityAtomPlan,
     MultiVaultReads,
     MultiVaultReadsConfig,
     PlannedStake,
@@ -301,6 +315,7 @@ export type {
 } from "./arp/index.js";
 
 export {
+    INTUITION_MAX_PAGE,
     listTools,
     type ToolListing,
     type ToolListingConfig,

@@ -353,7 +353,30 @@ terms, not tools. So minting an atom straight from an `https://` URL puts the to
 metadata, beside whatever atom it really has — and the tool's reputation splits across both, with
 no way to merge them.
 
-Pass a `lookup` and the planner reuses the tool's existing atom:
+So a URL gets a **Thing derived from the URL itself**, every field a pure function of it
+(`normaliseToolUrl` + `toolThing`, ADR `0054`). Same URL in, same document, same CID, same atom id —
+on any machine, with no credential and no network. The free-text `name` is what forks an atom, and
+removing the field removes the fork. Measured on mainnet 2026-10-21 over all 90,608 atoms whose
+Thing carries a URL (`scripts/measure-url-atom-fragmentation.ts`): 3,256 URLs are held by more than
+one atom, and **2,022 atoms are in excess of the names present** — they share both a URL and a name
+with another atom, which nothing but duplication explains. `https://trenches.bid` has **53 atoms all
+named "Clawlett"**; `https://github.com` has 5, labelled "GitHub" twice and "github.com" three times.
+
+```ts
+import {normaliseToolUrl, toolAtomUri} from "@arp-protocol/core";
+
+normaliseToolUrl("http://www.github.com/crytic/slither/#readme");
+// "https://github.com/crytic/slither"
+toolAtomUri("github.com/crytic/slither");
+// "ipfs://bafkreidf2beugrdbzvidlwibi46fhyanrh7v3noaucjahsllu2xjqtas44"
+```
+
+Pinning that document is a **separate step** — `bun run scripts/pin-tool.ts <url>`. It makes the atom
+read as a name instead of a hash, because Intuition's indexer resolves `value.thing` from the CID. It
+is not needed to know the id, to plan, to create, or to stake.
+
+Reusing an atom that **already exists** is still preferred over minting a derived one. Pass a
+`lookup`:
 
 ```ts
 import {intuitionToolAtomLookup} from "@arp-protocol/core";
@@ -364,12 +387,19 @@ const lookup = intuitionToolAtomLookup({graphqlUrl: "https://mainnet.intuition.s
 It is a graph read. **No API key** — the pinning credential is for _minting_ an atom, which this
 never does. Then:
 
-- **one match** → that atom is used as the object, and no atom is created.
-- **no match** → the plan still creates one from the URL, and `plannedTool.bareUrlWarning` says so
-  before you sign.
+Both the raw and the normalised spelling are searched, because an atom carries whatever URL its
+creator typed. Then:
+
+- **one match** → that atom is used as the object, `atomSource` is `existing-thing`, and no atom is
+  created.
+- **no match** → the plan derives the canonical Thing, `atomSource` is `derived-thing`, and
+  `plannedTool.pinDocument` carries the exact bytes to pin.
 - **several matches** → `AmbiguousToolAtomError`, and the planner refuses. `https://github.com`
   resolves to **five** atoms today; picking one of them for you would write a permanent edge onto an
   arbitrary id. Pass the `ipfs://` URI of the atom you mean.
+
+A URI that is neither a content address nor an http(s) URL — a `did:`, an `npm:` specifier — is the
+one case left that mints a bare URI atom, and `plannedTool.bareUrlWarning` says so before you sign.
 
 ### What it costs
 

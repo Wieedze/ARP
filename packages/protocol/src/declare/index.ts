@@ -33,6 +33,7 @@ export {
     NonPositiveAmountError,
     prepareDeclareUsed,
     prepareStakeOnUsed,
+    ZeroPositionError,
 } from "./plan.js";
 
 export {
@@ -61,3 +62,19 @@ export {
     thingUri,
     type AgentThing,
 } from "./agent-atom.js";
+
+export {
+    InvalidToolUrlError,
+    isToolUrl,
+    normaliseToolUrl,
+    toolAtomUri,
+    toolThing,
+    toolThingDocument,
+    TOOL_THING_DESCRIPTION,
+} from "./tool-thing.js";
+
+export {
+    IdentityTermHasNoPositionError,
+    prepareIdentityAtom,
+    type IdentityAtomPlan,
+} from "./identity-plan.js";

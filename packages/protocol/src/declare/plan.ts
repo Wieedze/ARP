@@ -10,6 +10,7 @@ import {
     type MultiVaultReads,
 } from "./multivault.js";
 import {derivesItsOwnAtom, type ToolAtomCandidate, type ToolAtomLookup} from "./tool-atom.js";
+import {isToolUrl, normaliseToolUrl, toolAtomUri, toolThingDocument} from "./tool-thing.js";
 import type {DeclarePlan, PlannedStake, PlannedTool, PreparedCall, StakePlan} from "./types.js";
 
 /** A plan was asked for with nothing to plan. A caller bug, not a chain state. */
@@ -86,6 +87,33 @@ export class BelowMinDepositError extends Error {
     }
 }
 
+/**
+ * A term this plan would create with **no position** — on the chain, and not a market.
+ *
+ * Caught by a read rather than by arithmetic. `previewAtomCreate` and `previewTripleCreate` are
+ * callable on a term that does not exist and return `shares = 0` for a deposit that is all fee,
+ * measured on both chains 2026-10-21 by `scripts/measure-preview-before-create.ts`. So ADR `0053`'s
+ * rule is now checked before signing instead of discovered after.
+ *
+ * Not thrown when the caller passed `birthDeposit: 0n`, which is the documented way of asking for
+ * exactly this. The error is for the accident, not for the choice.
+ */
+export class ZeroPositionError extends Error {
+    readonly termId: Hex;
+
+    constructor(what: string, termId: Hex, assets: bigint) {
+        super(
+            `creating the ${what} ${termId} with ${assets} wei would buy 0 shares, so the term ` +
+                `would be born with no position — it would exist on the chain and not exist as a ` +
+                `market (ADR 0053). The creation fee comes out of \`assets\`, so raise it above ` +
+                `the fee by at least the chain's \`minDeposit\`. Pass \`birthDeposit: 0n\` if a ` +
+                `positionless term is genuinely what you want.`,
+        );
+        this.name = "ZeroPositionError";
+        this.termId = termId;
+    }
+}
+
 /** Read a value at most once per plan, however many tools need it. */
 function once<T>(read: () => Promise<T>): () => Promise<T> {
     let pending: Promise<T> | null = null;
@@ -93,13 +121,46 @@ function once<T>(read: () => Promise<T>): () => Promise<T> {
 }
 
 /**
+ * Every atom already on the graph that claims either spelling of this URL.
+ *
+ * Both are asked for because an atom carries whatever URL its creator typed, which is usually not
+ * the normalised one — so searching only the normalised form misses the atom it exists to reuse,
+ * and searching only the raw form misses it whenever the caller's spelling differs. Merged by
+ * `termId`, since one atom answering both queries is the common case.
+ */
+async function findExistingToolAtoms(
+    lookup: ToolAtomLookup,
+    raw: string,
+    normalised: string,
+): Promise<ToolAtomCandidate[]> {
+    const spellings = raw === normalised ? [raw] : [raw, normalised];
+    const found = new Map<string, ToolAtomCandidate>();
+    for (const url of spellings) {
+        for (const candidate of await lookup.findByUrl(url)) {
+            found.set(candidate.termId, candidate);
+        }
+    }
+    return [...found.values()];
+}
+
+/**
  * Which atom a tool's URI should resolve to, and whether a new one has to be created.
  *
- * `atomData` is `null` when an existing atom is reused — there is nothing to encode.
+ * Three paths, in order of preference:
  *
- * The 84/78/77 figures in the warning strings below come from
- * `scripts/measure-tool-atom-shape.ts`. This was the one of the six sites quoting them that named
- * no source, which is how its sentence came to be wrong twice.
+ * 1. **The URI is a content address** (`ipfs://`, `ar://`) — it *is* the pinned document, so the
+ *    derived id and the canon are the same thing (ADR `0008`). Nothing to look up.
+ * 2. **An atom already carries this URL** — reuse it, so a location URL does not mint a second atom
+ *    beside the tool's real one. Two spellings are searched; more than one hit is an error, not a
+ *    coin flip.
+ * 3. **An http(s) URL with no atom yet** — derive the canonical Thing from the normalised URL
+ *    (`tool-thing.ts`). Same URL always yields the same atom id, which is the property a free-text
+ *    `name` destroys: `https://github.com` has five atoms today.
+ *
+ * Anything else — a `did:`, an `npm:` specifier, a bare name — falls back to a bare URI atom with
+ * `bareUrlWarning`, because there is no URL to normalise and nothing to derive a document from.
+ *
+ * The 84/78/77 figures in the warning string come from `scripts/measure-tool-atom-shape.ts`.
  */
 async function resolveToolAtom(
     uri: string,
@@ -107,46 +168,57 @@ async function resolveToolAtom(
     lookup: ToolAtomLookup | undefined,
 ): Promise<{
     atomId: Hex;
+    atomUri: string;
     atomSource: PlannedTool["atomSource"];
     atomData: Hex | null;
+    pinDocument?: string;
     bareUrlWarning?: string;
 }> {
-    const derive = async (warning?: string) => {
-        const atomData = atomDataForUri(uri);
-        return {
-            atomId: await reads.atomId(atomData),
-            atomSource: "derived-from-uri" as const,
-            atomData,
-            ...(warning === undefined ? {} : {bareUrlWarning: warning}),
-        };
+    const derive = async (
+        atomUri: string,
+        atomSource: PlannedTool["atomSource"],
+        extra: {pinDocument?: string; bareUrlWarning?: string} = {},
+    ) => {
+        const atomData = atomDataForUri(atomUri);
+        return {atomId: await reads.atomId(atomData), atomUri, atomSource, atomData, ...extra};
     };
 
-    if (derivesItsOwnAtom(uri)) return derive();
+    if (derivesItsOwnAtom(uri)) return derive(uri, "derived-from-uri");
 
-    if (lookup === undefined) {
-        return derive(
-            `${uri} is a location, not a content address, and no lookup was given. The atom this ` +
-                `plan would create carries no pinned metadata, while 78 of the 84 tool atoms on ` +
-                `mainnet \`uses\` edges are \`ipfs://\` and 77 of those carry a pinned Thing. Pass a ` +
-                `lookup to reuse the tool's real atom.`,
-        );
+    if (!isToolUrl(uri)) {
+        return derive(uri, "derived-from-uri", {
+            bareUrlWarning:
+                `${uri} is neither a content address nor an http(s) URL, so there is no URL to ` +
+                `normalise and no document to derive. This plan creates a bare URI atom with no ` +
+                `pinned metadata, while 78 of the 84 tool atoms on mainnet \`uses\` edges are ` +
+                `\`ipfs://\` and 77 of those carry a pinned Thing. If the tool later gets a proper ` +
+                `pinned atom, its reputation splits across two ids and Intuition has no deletion.`,
+        });
     }
 
-    const candidates = await lookup.findByUrl(uri);
-    if (candidates.length > 1) throw new AmbiguousToolAtomError(uri, candidates);
-    const only = candidates[0];
-    if (only === undefined) {
-        return derive(
-            `no atom on the graph carries ${uri} in a pinned Thing, so this plan creates a bare ` +
-                `URL atom with no metadata. If the tool later gets a pinned atom, its reputation ` +
-                `splits across two ids and Intuition has no deletion.`,
-        );
+    const normalised = normaliseToolUrl(uri);
+
+    if (lookup !== undefined) {
+        const candidates = await findExistingToolAtoms(lookup, uri, normalised);
+        if (candidates.length > 1) throw new AmbiguousToolAtomError(uri, candidates);
+        const only = candidates[0];
+        if (only !== undefined) {
+            // Same boundary as `resolve-subject`: a `term_id` off the indexer is a 32-byte hex
+            // string by schema, typed `string` on `ToolAtomCandidate` because the lookup is a graph
+            // read and not a chain read. It is passed straight to `calculateTripleId`, which would
+            // revert on a malformed one rather than silently mis-encode.
+            return {
+                atomId: only.termId as Hex,
+                atomUri: only.uri ?? normalised,
+                atomSource: "existing-thing" as const,
+                atomData: null,
+            };
+        }
     }
-    // Same boundary as `resolve-subject`: a `term_id` off the indexer is a 32-byte hex string by
-    // schema, typed `string` on `ToolAtomCandidate` because the lookup is a graph read and not a
-    // chain read. It is passed straight to `calculateTripleId`, which would revert on a malformed
-    // one rather than silently mis-encode.
-    return {atomId: only.termId as Hex, atomSource: "existing-thing" as const, atomData: null};
+
+    return derive(toolAtomUri(normalised), "derived-thing", {
+        pinDocument: toolThingDocument(normalised),
+    });
 }
 
 /**
@@ -181,17 +253,50 @@ export async function prepareDeclareUsed(params: {
      * is absent.
      */
     lookup?: ToolAtomLookup;
+    /**
+     * The deposit every term this plan creates is born with. Defaults to the chain's `minDeposit`.
+     *
+     * Not optional in effect, only in the signature: a term created without one has **zero
+     * positions**, which means it exists on the chain and does not exist as a market (ADR `0053`).
+     * Passing `0n` is allowed and produces exactly that, so a caller who wants it has to say so.
+     */
+    birthDeposit?: bigint;
 }): Promise<DeclarePlan> {
     // `USES` is declared `as const` in `terms.ts`, so it is a literal string type rather than
     // `Hex`. The bytes are the same; the cast only widens the literal.
     const predicate = params.predicate ?? (USES as Hex);
-    const uris = [
-        ...new Set(params.tools.map((uri) => uri.trim()).filter((uri) => uri.length > 0)),
-    ];
+    /**
+     * Deduplicated on the **normalised** URL, not the string the caller passed.
+     *
+     * `github.com/x` and `https://github.com/x` survive a plain `Set` as two entries, resolve to
+     * one atom id and one triple id, and would produce two identical creates — the second of which
+     * reverts with `MultiVault_AtomExists` after the first has already been paid for.
+     */
+    const byIdentity = new Map<string, string>();
+    for (const raw of params.tools) {
+        const uri = raw.trim();
+        if (uri.length === 0) continue;
+        const key = isToolUrl(uri) ? normaliseToolUrl(uri) : uri;
+        if (!byIdentity.has(key)) byIdentity.set(key, uri);
+    }
+    const uris = [...byIdentity.values()];
     if (uris.length === 0) throw new EmptyPlanError("no tool URI survived trimming");
 
     const atomCost = once(() => params.reads.atomCost());
     const tripleCost = once(() => params.reads.tripleCost());
+    /**
+     * Every term is born with a position.
+     *
+     * `createAtoms`/`createTriples` take the **deposit** as `assets` and take the fee out of it, so
+     * passing the fee alone seeds the vault with `minShare` and leaves the term at **zero
+     * positions** — existing on the chain and not existing as a market (ADR `0053`). Measured on
+     * testnet: `cost` gives 1,000,000 wei and 0 positions; `cost + minDeposit` gives
+     * 980,000,001,000,000 wei and 1.
+     *
+     * `birthDeposit` defaults to the chain's `minDeposit`, read rather than assumed — it is 0.01
+     * TRUST on mainnet 1155 against 0.001 on testnet 13579.
+     */
+    const birthDeposit = once(async () => params.birthDeposit ?? (await params.reads.minDeposit()));
     const chainId = params.reads.chainId;
 
     const tools: PlannedTool[] = [];
@@ -199,11 +304,8 @@ export async function prepareDeclareUsed(params: {
     const existingTerms: Hex[] = [];
 
     for (const uri of uris) {
-        const {atomId, atomSource, atomData, bareUrlWarning} = await resolveToolAtom(
-            uri,
-            params.reads,
-            params.lookup,
-        );
+        const {atomId, atomUri, atomSource, atomData, pinDocument, bareUrlWarning} =
+            await resolveToolAtom(uri, params.reads, params.lookup);
         const tripleId = await params.reads.tripleId(params.subject, predicate, atomId);
         const [atomExists, tripleExists] = await Promise.all([
             params.reads.termExists(atomId),
@@ -212,11 +314,13 @@ export async function prepareDeclareUsed(params: {
 
         tools.push({
             uri,
+            atomUri,
             atomId,
             atomSource,
             tripleId,
             atomExists,
             tripleExists,
+            ...(pinDocument === undefined ? {} : {pinDocument}),
             ...(bareUrlWarning === undefined ? {} : {bareUrlWarning}),
         });
 
@@ -229,31 +333,43 @@ export async function prepareDeclareUsed(params: {
                 `the graph reports an atom for ${uri} that \`isTermCreated\` denies: ${atomId}`,
             );
         } else {
-            const cost = await atomCost();
+            const assets = (await atomCost()) + (await birthDeposit());
+            const preview = await params.reads.previewAtomCreate(atomId, assets);
+            if (preview.shares === 0n && params.birthDeposit !== 0n) {
+                throw new ZeroPositionError("atom", atomId, assets);
+            }
             calls.push({
                 kind: "create-atom",
                 chainId,
                 to: params.reads.address,
-                value: cost,
-                data: encodeCreateAtom(atomData, cost),
+                value: assets,
+                data: encodeCreateAtom(atomData, assets),
                 why:
                     bareUrlWarning === undefined
-                        ? `create the atom for ${uri}`
-                        : `create a BARE URL atom for ${uri} — no pinned metadata`,
+                        ? `create the atom for ${uri} (${atomUri})`
+                        : `create a BARE URI atom for ${uri} — no pinned metadata`,
+                preview: {shares: preview.shares, assetsAfterFees: preview.assetsAfterFees},
             });
         }
 
         if (tripleExists) {
             existingTerms.push(tripleId);
         } else {
-            const cost = await tripleCost();
+            const assets = (await tripleCost()) + (await birthDeposit());
+            const preview = await params.reads.previewTripleCreate(tripleId, assets);
+            if (preview.shares === 0n && params.birthDeposit !== 0n) {
+                throw new ZeroPositionError("edge", tripleId, assets);
+            }
             calls.push({
                 kind: "create-triple",
                 chainId,
                 to: params.reads.address,
-                value: cost,
-                data: encodeCreateTriple(params.subject, predicate, atomId, cost),
-                why: `declare that this agent uses ${uri}`,
+                value: assets,
+                data: encodeCreateTriple(params.subject, predicate, atomId, assets),
+                // The deposit is in this call, so a declared edge carries a position from its first
+                // transaction. `prepareStakeOnUsed` is for adding to it, not for starting it.
+                why: `declare that this agent uses ${uri}, with a position behind it`,
+                preview: {shares: preview.shares, assetsAfterFees: preview.assetsAfterFees},
             });
         }
     }
@@ -324,13 +440,28 @@ export async function prepareStakeOnUsed(params: {
             throw new BelowMinDepositError(target.tripleId, target.amount, minDeposit);
         }
         const exists = await params.reads.termExists(target.tripleId);
+        if (!exists) {
+            // No preview: `previewDeposit` reverts on a term that does not exist (measured on both
+            // chains 2026-10-21). Nothing is planned for it either, so there is nothing to price.
+            targets.push({
+                tripleId: target.tripleId,
+                receiver: params.receiver,
+                amount: target.amount,
+                exists,
+            });
+            continue;
+        }
+        // On the curve the deposit will actually price against, not the default: curve 2's share
+        // price was 3.000–4.181 against curve 1's 1.000–1.060 on mainnet, so the same amount buys
+        // very different holdings and the caller is told which before signing.
+        const preview = await params.reads.previewDeposit(target.tripleId, curveId, target.amount);
         targets.push({
             tripleId: target.tripleId,
             receiver: params.receiver,
             amount: target.amount,
             exists,
+            shares: preview.shares,
         });
-        if (!exists) continue;
         calls.push({
             kind: "deposit",
             chainId: params.reads.chainId,
@@ -338,6 +469,7 @@ export async function prepareStakeOnUsed(params: {
             value: target.amount,
             data: encodeDeposit(params.receiver, target.tripleId, curveId, minShares),
             why: `stake behind the claim ${target.tripleId} on curve ${curveId}`,
+            preview: {shares: preview.shares, assetsAfterFees: preview.assetsAfterFees},
         });
     }
 
