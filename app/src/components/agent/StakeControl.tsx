@@ -4,7 +4,6 @@ import type {Hex} from "viem";
 
 import {useStakeActions} from "../../hooks/use-stake-actions";
 import {INTUITION_MAINNET_CHAIN_ID, mainnetTxUrl} from "../../lib/intuition-mainnet";
-import type {TrustRow} from "../../services/agent-trust";
 import {formatTrust, truncateMiddle} from "../../services/trust-format";
 import {
     MAX_STAKE_WEI,
@@ -24,11 +23,17 @@ import {
  * causes a transaction (safeguard 5). `handleConfirm` is reachable from exactly
  * one click.
  *
- * The heading names the provider, and the confirmation spells the claim out in
- * full along with the ceiling and the fact that this is real TRUST. A reader
- * can land here straight from a URL with no assessment block scrolled above,
- * so nobody should have to infer what they are about to put real money behind
- * — but that sentence belongs at the step where it bites, not over the form.
+ * The heading names the claim's subject and the confirmation spells the claim out in full, because a
+ * reader can land here straight from a URL with nothing scrolled above, and nobody should have to
+ * infer what they are about to put real money behind.
+ *
+ * **What the confirmation says, corrected.** This comment used to claim the confirmation carried
+ * "the ceiling and the fact that this is real TRUST". It did not, by then: `99dafd8` removed that
+ * sentence. The ceiling is disclosed in the form's help text instead, which is the better place —
+ * visible while the number is being chosen. The network is back in the confirmation, and that is
+ * deliberate: this control is reused on a page where the only other mention of mainnet can be
+ * thousands of pixels up, and ADR `0017`'s own Consequences section names that as the sharpest
+ * failure mode the two-network app has.
  */
 
 type Phase =
@@ -74,16 +79,77 @@ function errorMessage(error: unknown): string {
     return String(error);
 }
 
+/**
+ * The claim a deposit backs or contests, reduced to what this control needs.
+ *
+ * It used to take a `TrustRow`, which tied it to `has trust provider` and to the agent panel. It
+ * never read more than four fields off that row, and the `uses` edge market — the one `docs/12` is
+ * actually about — had no control at all because of the coupling. So the prop is the claim now.
+ *
+ * `subject` and `predicate` are rendered, not parsed: "<subject> <predicate>" has to read as the
+ * sentence the money goes behind, because that sentence is the last thing shown before a wallet
+ * opens (ADR `0017` safeguard 4).
+ */
+export type StakeClaim = {
+    /** The triple's term id. A support deposit goes here; the counter-triple is derived. */
+    tripleId: Hex;
+    subject: string;
+    predicate: string;
+    /**
+     * One line saying what a deposit here means, under the heading.
+     *
+     * On the claim and not hardcoded: it read "the market's confidence in this provider's assessment
+     * of this agent", which is false on a page with no provider and no assessment — and false in the
+     * way `ToolUsagePanel`'s own `OtherMarket` paragraph exists to prevent, by describing a market
+     * that is not the one on screen.
+     */
+    blurb: string;
+    /**
+     * True when `subject` is an id rather than a name, so the confirmation sets it in mono and the
+     * caller has already truncated it. An untruncated 66-character atom id in proportional type
+     * wraps across two lines mid-sentence, and `rules/ui.md` puts ids in mono.
+     */
+    subjectIsId?: boolean;
+    /**
+     * `positionCount` is nullable because a source can report a vault without reporting its
+     * positions, and "not reported" is not "none" — the confirmation says which.
+     */
+    market: {
+        support: {positionCount: number | null};
+        opposition: {positionCount: number | null};
+    } | null;
+};
+
 export function StakeControl({
-    row,
+    claim,
     session,
     sessionError,
     onSettled,
+    onInFlightChange,
 }: {
-    row: TrustRow;
+    claim: StakeClaim;
     session: StakeSession | undefined;
     sessionError: Error | null;
     onSettled: () => void;
+    /**
+     * Called `true` the moment a transaction is signed for and `false` on **every** terminal
+     * transition — settled or failed — so a parent that can **unmount** this control knows not to.
+     *
+     * Every exit releasing it is the part that took a round to get right: releasing only on success
+     * left no way back from a failure, and the caller's `disabled={inFlight && !isOpen}` then left
+     * the open row's own Close enabled, so one click unmounted the control, set `isOpen` false
+     * everywhere, and disabled every button on the page until a reload.
+     *
+     * It exists because a caller that discloses one of these at a time destroys the receipt
+     * otherwise: the hash, the explorer link, and the error branch's "it may still land, do not
+     * sign it again without checking". `Phase`'s own comment is the reason that matters — the hash
+     * is the difference between "we never sent anything" and "we sent it and lost sight of it".
+     *
+     * Reported from the transition points rather than from a `useEffect`. There are **no effects in
+     * this file**, which is what makes ADR `0017` safeguard 5 — never auto-stake, nothing on mount
+     * or navigation — checkable by grep rather than by reading.
+     */
+    onInFlightChange?: (inFlight: boolean) => void;
 }) {
     const {address, isConnected, chainId} = useAccount();
     const {switchChainAsync, isPending: isSwitching} = useSwitchChain();
@@ -98,8 +164,7 @@ export function StakeControl({
     const fieldId = useId();
     const onMainnet = chainId === INTUITION_MAINNET_CHAIN_ID;
 
-    if (row.tripleId === null) return null;
-    const tripleId = row.tripleId;
+    const tripleId = claim.tripleId;
 
     const check =
         session === undefined
@@ -151,6 +216,7 @@ export function StakeControl({
     /** Step 3. The only path in the app that signs a mainnet transaction. */
     async function handleConfirm(quote: StakeQuote) {
         setPhase({step: "signing", quote});
+        onInFlightChange?.(true);
         // Held outside the try so the catch can tell a deposit that was never
         // broadcast from one that was and whose receipt we then lost.
         let broadcast: Hex | null = null;
@@ -159,8 +225,18 @@ export function StakeControl({
             setPhase({step: "sent", quote, hash: broadcast});
             await awaitReceipt(broadcast);
             setPhase({step: "done", quote, hash: broadcast});
+            onInFlightChange?.(false);
             onSettled();
         } catch (error) {
+            // Released here too, and unconditionally. The flag means "non-terminal: signed for, not
+            // yet settled or failed" — after this catch nothing is in the air. Its *outcome* may be
+            // unknown, which is a different condition, and holding the flag for it conflated the
+            // two and left the page unrecoverable.
+            //
+            // Signing the same deposit twice is prevented by `back` below, not by this flag: once
+            // something is broadcast the control refuses to return to the confirmation step. A
+            // sibling row was never the path to that click anyway.
+            onInFlightChange?.(false);
             setPhase({
                 step: "error",
                 message: errorMessage(error),
@@ -174,10 +250,20 @@ export function StakeControl({
     }
 
     return (
-        <section className="mt-6 border-t border-[color:var(--color-border)] pt-5">
-            <h4 className="font-medium">Take a position on {row.providerName}</h4>
+        // Named, because an unnamed `section` maps to `generic` rather than to a `region`, and a
+        // page can hold one of these per row.
+        //
+        // **Layout-neutral on purpose.** It had `mt-6 border-t … pt-5`, then `pl-5 border-l …`, and
+        // both were wrong for one of the two callers — the first put an ambiguous second hairline
+        // in a list row, the second nested an identical left rail inside `AssessmentRow`'s own and
+        // left the agent panel's form flush against the market panel. Spacing and the rail belong
+        // to whichever container this sits in, and each caller provides its own.
+        <section aria-labelledby={`${fieldId}-heading`}>
+            <h4 id={`${fieldId}-heading`} className="font-medium">
+                Take a position on this claim
+            </h4>
             <p className="mt-1 text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)] max-w-[60ch]">
-                Your deposit is the market's confidence in this provider's assessment of this agent.
+                {claim.blurb}
             </p>
 
             {!isConnected ? (
@@ -223,7 +309,7 @@ export function StakeControl({
             ) : phase.step === "confirm" || phase.step === "signing" ? (
                 <ConfirmStep
                     quote={phase.quote}
-                    row={row}
+                    claim={claim}
                     isSigning={phase.step === "signing"}
                     onCancel={() => setPhase({step: "form"})}
                     onConfirm={() => handleConfirm(phase.quote)}
@@ -368,21 +454,21 @@ export function StakeControl({
  */
 function ConfirmStep({
     quote,
-    row,
+    claim,
     isSigning,
     onCancel,
     onConfirm,
 }: {
     quote: StakeQuote;
-    row: TrustRow;
+    claim: StakeClaim;
     isSigning: boolean;
     onCancel: () => void;
     onConfirm: () => void;
 }) {
     const positions =
         quote.side === "support"
-            ? (row.market?.support.positionCount ?? null)
-            : (row.market?.opposition.positionCount ?? null);
+            ? (claim.market?.support.positionCount ?? null)
+            : (claim.market?.opposition.positionCount ?? null);
 
     return (
         <div className="mt-4 border border-[color:var(--color-border-strong)] p-4 max-w-[36rem]">
@@ -393,8 +479,18 @@ function ConfirmStep({
                 You are about to deposit{" "}
                 <span className="font-mono">{formatTrust(quote.assets)} TRUST</span> to{" "}
                 <span className="font-medium">{SIDE_COPY[quote.side].label.toLowerCase()}</span> the
-                claim that <span className="font-medium">{row.providerName}</span> is a trust
-                provider for this agent.
+                claim that{" "}
+                <span className={claim.subjectIsId ? "font-mono" : "font-medium"}>
+                    {claim.subject}
+                </span>{" "}
+                {claim.predicate}.
+            </p>
+            {/* The only other place the network is named can be thousands of pixels up, when this
+                control is one of several on a list page. ADR `0017`'s Consequences section calls
+                the two-network ambiguity the sharpest failure mode this app has, and the
+                confirmation is the step where it would bite. */}
+            <p className="mt-2 text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)] max-w-[52ch]">
+                Real TRUST, Intuition mainnet, not recoverable by this panel.
             </p>
 
             <dl className="mt-4 grid grid-cols-1 sm:grid-cols-[10rem_1fr] gap-y-2 gap-x-4 text-[length:var(--text-body-sm)]">
@@ -427,7 +523,15 @@ function ConfirmStep({
                     type="button"
                     onClick={onConfirm}
                     disabled={isSigning}
-                    className={`${controlClass} border-[color:var(--color-accent)] text-[color:var(--color-accent)]`}
+                    // Banged, both of them. `index.css` carries an **unlayered**
+                    // `button { border: 1px solid var(--color-border); color: var(--color-fg) }`,
+                    // and an unlayered normal declaration beats a normal one in every `@layer` —
+                    // so these two utilities, which Tailwind emits into `@layer utilities`, were
+                    // inert. The primary action at the moment real TRUST is committed rendered
+                    // with Cancel's border and Cancel's text colour, differing only in its label.
+                    // Importance outranks layer order, which is why `!` is what suppresses it.
+                    // `rules/ui.md` names this as one of two failure classes no static check sees.
+                    className={`${controlClass} border-[color:var(--color-accent)]! text-[color:var(--color-accent)]!`}
                 >
                     Sign in wallet
                 </button>

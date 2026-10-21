@@ -116,10 +116,18 @@ export function tierForEdge(edge: ToolUsageEdge): ProvenanceTier {
  */
 const DUST_CEILING = 1_000_000_000n;
 
-function hasOffCurveStake(edge: ToolUsageEdge): boolean {
-    return (
-        (edge.support.positionCount ?? 0) === 0 && (edge.support.totalAssets ?? 0n) > DUST_CEILING
-    );
+/**
+ * Capital is on the term but not on the curve this read is scoped to, so the position count here is
+ * **unknown rather than zero**.
+ *
+ * One predicate per side, because deriving one and forgetting the other is the bug. The support side
+ * had this and the oppose side did not, so opposition capital on a non-default curve still read as
+ * "nobody has taken the other side" — and downstream, as "you would be the first". Reachability on
+ * the support side is 1 of 185 mainnet edges; on the oppose side it is **unmeasured**, because
+ * nothing has read the counter-vaults.
+ */
+function hasOffCurveStake(side: ToolUsageEdge["support"]): boolean {
+    return (side.positionCount ?? 0) === 0 && (side.totalAssets ?? 0n) > DUST_CEILING;
 }
 
 /** One edge, with its rung and the two sides of its market. */
@@ -137,6 +145,12 @@ export type ToolUsageEdgeView = {
      * the curve read; this says the page cannot see the whole market, and so no figure is shown.
      */
     isOffCurve: boolean;
+    /**
+     * The same thing on the counter-vault. Kept separate from {@link isOffCurve} rather than
+     * `||`-ed into it: they answer different questions, and a reader asking "can I say nobody has
+     * opposed this" must not get an answer derived from the support side.
+     */
+    isOppositionOffCurve: boolean;
     /**
      * Someone has staked the other way. Not a rung — an orthogonal signal on the same edge.
      *
@@ -210,7 +224,8 @@ export function buildToolUsageView(usage: ToolUsage): ToolUsageView {
             supportPositions: edge.support.positionCount ?? 0,
             opposeAssets: edge.oppose.totalAssets ?? 0n,
             opposePositions,
-            isOffCurve: hasOffCurveStake(edge),
+            isOffCurve: hasOffCurveStake(edge.support),
+            isOppositionOffCurve: hasOffCurveStake(edge.oppose),
             isContested: opposePositions > 0,
         };
     });

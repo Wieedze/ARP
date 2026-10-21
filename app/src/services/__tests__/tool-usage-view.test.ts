@@ -168,6 +168,39 @@ describe("buildToolUsageView", () => {
         expect(offCurve.isEntirelyUnpriced).toBe(false);
     });
 
+    it("flags the COUNTER-vault's off-curve capital too, and separately", () => {
+        /**
+         * The asymmetry, not the zero, was the bug. `hasOffCurveStake` read the support side only,
+         * so opposition capital on a curve this read does not cover came back as
+         * `opposePositions: 0` — and downstream the confirmation printed "none — you would be the
+         * first" on the oppose side, over a counter-vault holding real TRUST.
+         *
+         * Separate flags rather than one `||`: a reader asking "can I say nobody has opposed this"
+         * must not get an answer derived from the support side.
+         *
+         * Reachability: the support-side case is 1 of 185 mainnet edges; this one is **unmeasured**,
+         * because nothing has read the counter-vaults.
+         */
+        const opposed = buildToolUsageView(
+            usage([
+                edge("0x8", "Contested", 80_000_000_000_000_000n, 2, 4_940_000_000_000_000_000n, 0),
+            ]),
+        );
+        expect(opposed.edges[0]?.isOffCurve).toBe(false);
+        expect(opposed.edges[0]?.isOppositionOffCurve).toBe(true);
+        // `isContested` keys on positions, so it stays false — the counter-vault's capital is on a
+        // curve this read cannot see, which is exactly what the new flag is for.
+        expect(opposed.edges[0]?.isContested).toBe(false);
+    });
+
+    it("does not flag the counter-vault's creation dust as off-curve", () => {
+        // Every triple's counter-vault is seeded with `minShare` at creation, so a bare edge has
+        // non-zero oppose assets. Reading those as a market is ADR `0042`'s defect wearing the
+        // other hat.
+        const bare = buildToolUsageView(usage([edge("0x9", "Bare", 4_000_000n, 0, 1_000_000n, 0)]));
+        expect(bare.edges[0]?.isOppositionOffCurve).toBe(false);
+    });
+
     it("does not flag the creation dust as off-curve", () => {
         // The ceiling clears ~4e6 of dust and stays far below `minDeposit`, which is 1e16 on
         // mainnet and 1e15 on testnet — the smallest the protocol accepts.

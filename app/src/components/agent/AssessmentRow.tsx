@@ -144,14 +144,31 @@ export function AssessmentRow({
                 />
             </div>
 
-            <StakeControl
-                row={row}
-                session={session}
-                sessionError={sessionError}
-                onSettled={() => {
-                    void vaultsQuery.refetch();
-                }}
-            />
+            {/* `tripleId` is nullable on a `TrustRow`, for two reasons and not one: the graph gave
+                no `term_id`, or it gave one `asTermId` rejected as malformed. Either way there is
+                no vault to deposit into, so the control is absent rather than rendering a form
+                with nowhere to send. */}
+            {row.tripleId === null ? null : (
+                // The spacing and the rail are the container's, not the control's — the
+                // `<article>` already carries `pl-5 border-l`, so a second one inside it read as a
+                // double indent for no reason.
+                <div className="mt-6">
+                    <StakeControl
+                        claim={{
+                            tripleId: row.tripleId,
+                            subject: row.providerName,
+                            predicate: "is a trust provider for this agent",
+                            blurb: "Your deposit is the market's confidence in this provider's assessment of this agent.",
+                            market: row.market,
+                        }}
+                        session={session}
+                        sessionError={sessionError}
+                        onSettled={() => {
+                            void vaultsQuery.refetch();
+                        }}
+                    />
+                </div>
+            )}
         </article>
     );
 }

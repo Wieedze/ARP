@@ -1,5 +1,8 @@
+import {useId, useState} from "react";
 import {useParams} from "react-router-dom";
+import type {Hex} from "viem";
 
+import {useStakeSession} from "../hooks/use-stake-session";
 import {useToolUsage, isToolAtomId} from "../hooks/use-tool-usage";
 import {formatTrust, truncateMiddle} from "../services/trust-format";
 import {
@@ -9,6 +12,7 @@ import {
     type ToolUsageView,
 } from "../services/tool-usage-view";
 import {MainnetNotice} from "../components/agent/MainnetNotice";
+import {StakeControl} from "../components/agent/StakeControl";
 import {UsageEdgeRow} from "../components/tool/UsageEdgeRow";
 import {TIER_CAPTION, TIER_LABEL, TIER_UNREACHABLE_REASON} from "../components/tool/tier-scale";
 import {INTUITION_MAINNET_EXPLORER} from "../lib/intuition-mainnet";
@@ -24,9 +28,15 @@ import {INTUITION_MAINNET_EXPLORER} from "../lib/intuition-mainnet";
  * is testnet-only — `ModuleRegistry` is not going to mainnet (ADR `0025`). This page is keyed on an
  * atom, reads the incoming `uses` edges, and is a mainnet view.
  *
- * It reads and does not write. No staking control in this first version (`tasks/23`): ADR `0017`'s
- * seven safeguards apply the moment a deposit becomes possible, and they are acceptance criteria
- * rather than advice.
+ * **It writes now**, and that is new as of 2026-10-21. The first version read only, on the grounds
+ * that ADR `0017`'s seven safeguards are acceptance criteria rather than advice. They are, and they
+ * are met by reusing the control that implements them: `StakeControl` was generalised from a
+ * `TrustRow` to a claim, so the chain guard, the empty amount, the ceiling, the confirmation with
+ * the vault's position count, the never-auto-stake rule, `previewDeposit` on every quote and
+ * `minShares` from the preview all come with it rather than being re-implemented here.
+ *
+ * Reading without writing was the larger problem: the `uses` edge market is what `docs/12` is about,
+ * and it was the one market in the app nobody could take a position in.
  */
 export function ToolUsagePanel() {
     const {atomId} = useParams();
@@ -50,15 +60,25 @@ export function ToolUsagePanel() {
     return (
         <section>
             <MainnetNotice />
-            <div aria-live="polite" aria-busy={query.isPending}>
+            {/* `aria-live` is on the two transient branches, not on the wrapper.
+                On the wrapper it was the live region for every `StakeControl` below it, and a live
+                region announces all descendant mutations that do not establish their own — so the
+                amount field's help text, which swaps as the user types, became a polite
+                announcement per keystroke. The controls carry their own `role="status"` and
+                `role="alert"` nodes, correctly placed. */}
+            <div>
                 {query.isPending ? (
-                    <p className="mt-10 text-[color:var(--color-fg-60)]">
+                    <p
+                        aria-live="polite"
+                        aria-busy
+                        className="mt-10 text-[color:var(--color-fg-60)]"
+                    >
                         Reading the <span className="font-mono">uses</span> edges of{" "}
                         <span className="font-mono">{truncateMiddle(atomId)}</span> on Intuition
                         mainnet…
                     </p>
                 ) : query.isError ? (
-                    <div className="mt-10">
+                    <div aria-live="polite" className="mt-10">
                         <h1 className="text-[length:var(--text-display)] leading-[var(--leading-display)] tracking-tight font-semibold">
                             The read failed
                         </h1>
@@ -69,14 +89,14 @@ export function ToolUsagePanel() {
                         </p>
                     </div>
                 ) : (
-                    <ToolUsageBody view={query.data} />
+                    <ToolUsageBody view={query.data} onSettled={() => void query.refetch()} />
                 )}
             </div>
         </section>
     );
 }
 
-function ToolUsageBody({view}: {view: ToolUsageView}) {
+function ToolUsageBody({view, onSettled}: {view: ToolUsageView; onSettled: () => void}) {
     return (
         <div className="mt-10 grid gap-x-12 gap-y-10 md:grid-cols-[18rem_1fr] md:items-start">
             <aside>
@@ -124,7 +144,11 @@ function ToolUsageBody({view}: {view: ToolUsageView}) {
             </aside>
 
             <div className="min-w-0">
-                {view.isEmpty ? <EmptyState atomId={view.toolAtomId} /> : <Edges view={view} />}
+                {view.isEmpty ? (
+                    <EmptyState atomId={view.toolAtomId} />
+                ) : (
+                    <Edges view={view} onSettled={onSettled} />
+                )}
                 {/* "Everything above prices the claim…" is false with nothing above it. */}
                 {view.isEmpty ? null : <OtherMarket />}
                 <Ladder view={view} />
@@ -180,7 +204,31 @@ function Totals({view}: {view: ToolUsageView}) {
     );
 }
 
-function Edges({view}: {view: ToolUsageView}) {
+function Edges({view, onSettled}: {view: ToolUsageView; onSettled: () => void}) {
+    // One session read for the whole list, not one per row: it is the same chain config every
+    // control needs, and `curveId`/`minDeposit` are governance state rather than per-claim state.
+    const {data: session, error: sessionError} = useStakeSession();
+    /**
+     * Which row's form is open — **one at a time**, by construction.
+     *
+     * Not a per-row boolean. The form is ~390px against a ~120px row, so N open forms turn a list
+     * `rules/ui.md` wants at 15 rows above the fold into one and a half, and put ~4 tab stops on
+     * every row. One at a time keeps the list dense and the keyboard path short.
+     */
+    const [openEdge, setOpenEdge] = useState<string | null>(null);
+    /**
+     * The open row has a transaction out, so no other row may take its place.
+     *
+     * One-at-a-time plus unmount would otherwise destroy the receipt mid-flight: the user signs on
+     * row A, clicks "Take a position" on row B while the receipt is pending, and row A's control
+     * unmounts — taking the hash, the explorer link and the "it may still land, do not sign it
+     * again" branch with it. The unmount is kept, because it is also what empties the form between
+     * rows (ADR `0017` safeguard 2, enforced by construction); what is added is that it cannot
+     * happen while money is in the air.
+     */
+    const [inFlight, setInFlight] = useState(false);
+    const panelPrefix = useId();
+
     return (
         <>
             {view.isEntirelyUnpriced ? (
@@ -190,20 +238,144 @@ function Edges({view}: {view: ToolUsageView}) {
                 </p>
             ) : null}
             <ul>
-                {view.edges.map((edge, index) => (
-                    <UsageEdgeRow
-                        key={edge.tripleId}
-                        edge={edge}
-                        // `opensRun` lives in the service because this predicate was wrong here:
-                        // it keyed on the tier while the row renders from the tier AND
-                        // `isOffCurve`, which suppressed the caption on the first free row after
-                        // an off-curve one.
-                        isFirstOfTier={opensRun(view.edges, index)}
-                    />
-                ))}
+                {view.edges.map((edge, index) => {
+                    const isOpen = openEdge === edge.tripleId;
+                    const panelId = `${panelPrefix}-${edge.tripleId}`;
+                    const subject = edge.agent.label ?? truncateMiddle(edge.agent.atomId);
+                    const tripleId = tripleIdOrNull(edge.tripleId);
+                    return (
+                        <UsageEdgeRow
+                            key={edge.tripleId}
+                            edge={edge}
+                            // `opensRun` lives in the service because this predicate was wrong
+                            // here: it keyed on the tier while the row renders from the tier AND
+                            // `isOffCurve`, which suppressed the caption on the first free row
+                            // after an off-curve one.
+                            isFirstOfTier={opensRun(view.edges, index)}
+                            action={
+                                // No form for an id the encoder would reject. The row still reads.
+                                tripleId === null ? null : (
+                                    /* `border-0!` with the bang, and the bang is the point.
+                                       `index.css` carries an **unlayered** `button { border: 1px
+                                       solid var(--color-border) }`, and an unlayered normal
+                                       declaration beats a normal one in every `@layer` — so the
+                                       plain `border-0` utility, which Tailwind emits into
+                                       `@layer utilities`, loses. Verified in the built CSS, not
+                                       assumed: `button{border:` sits at depth 0 in
+                                       `dist/assets/index-*.css`. Importance outranks layer order,
+                                       so `!important` is what actually suppresses it.
+
+                                       `rules/ui.md` names this as one of two failure classes no
+                                       static check sees, and says the comment at the call site is
+                                       the only defence. An earlier version of this comment
+                                       described a defence that did not work, which is worse than
+                                       none.
+
+                                       The same rule sets `color` and `cursor`, so the accent text,
+                                       the disabled colour and the disabled cursor each need the
+                                       bang too. Without them the only difference between enabled
+                                       and disabled was a missing underline — a lock nobody would
+                                       notice, on the mechanism that protects a transaction in
+                                       flight.
+
+                                       `p-0` needs no bang: preflight's `button{padding:0}` is in
+                                       `@layer base`, so utility and reset are both layered and the
+                                       utility wins. */
+                                    <button
+                                        type="button"
+                                        aria-expanded={isOpen}
+                                        // Only while open: `children` renders only then, so the
+                                        // IDREF would otherwise point at nothing.
+                                        {...(isOpen ? {"aria-controls": panelId} : {})}
+                                        // Every row, the open one included: its Close is what
+                                        // would throw the receipt away mid-flight, and gating the
+                                        // siblings instead gated the wrong button.
+                                        disabled={inFlight}
+                                        onClick={() => setOpenEdge(isOpen ? null : edge.tripleId)}
+                                        className="border-0! p-0 text-[length:var(--text-body-sm)] text-[color:var(--color-accent)]! underline underline-offset-4 disabled:text-[color:var(--color-fg-40)]! disabled:no-underline disabled:cursor-not-allowed!"
+                                    >
+                                        {isOpen ? "Close" : "Take a position"}
+                                    </button>
+                                )
+                            }
+                        >
+                            {isOpen && tripleId !== null ? (
+                                <div id={panelId}>
+                                    <StakeControl
+                                        claim={{
+                                            tripleId,
+                                            subject,
+                                            subjectIsId: edge.agent.label === null,
+                                            predicate: "uses this tool",
+                                            blurb: "Your deposit is the market's confidence that this agent actually used this tool.",
+                                            /**
+                                             * `null` when the page cannot speak for the count, not
+                                             * `0`. `isOffCurve` means the vault this page reads
+                                             * shows no position while the term holds real assets —
+                                             * so the count on the curve a deposit targets is
+                                             * genuinely unknown here, and the confirmation must say
+                                             * "not reported" rather than "you would be the first".
+                                             * It said the latter, two lines under a row saying
+                                             * capital was behind the claim.
+                                             *
+                                             * The displayed count is also scoped to
+                                             * `tool-usage.ts`'s hardcoded `DEFAULT_CURVE_ID` while
+                                             * the deposit follows `getBondingCurveConfig()` read
+                                             * from the chain. They agree on 1155 today — measured,
+                                             * not guaranteed — and `tasks/23` owns closing it.
+                                             */
+                                            market: {
+                                                support: {
+                                                    positionCount: edge.isOffCurve
+                                                        ? null
+                                                        : edge.supportPositions,
+                                                },
+                                                opposition: {
+                                                    positionCount: edge.isOppositionOffCurve
+                                                        ? null
+                                                        : edge.opposePositions,
+                                                },
+                                            },
+                                        }}
+                                        session={session}
+                                        sessionError={sessionError}
+                                        onSettled={onSettled}
+                                        onInFlightChange={setInFlight}
+                                    />
+                                </div>
+                            ) : undefined}
+                        </UsageEdgeRow>
+                    );
+                })}
             </ul>
         </>
     );
+}
+
+/**
+ * The edge's `term_id`, or `null` when it is not 32 bytes of hex.
+ *
+ * It arrives from the indexer typed `string`. The project already has this predicate twice
+ * (`agent-trust.ts`'s `asTermId`, `use-tool-usage.ts`'s `isToolAtomId`), and casting instead of
+ * checking made the two `StakeControl` call sites meet the same non-nullable `Hex` contract by
+ * different means — one validated, one asserted.
+ *
+ * **It returns `null` and does not throw**, and the difference is the whole page. `app/src` has no
+ * error boundary — `grep -rn "componentDidCatch\|getDerivedStateFromError"` finds nothing — so a
+ * throw from render unmounts the tree to the root and blanks the app. A malformed id is a reason not
+ * to offer the form, not a reason to take the page down; the row still reads, it just cannot be
+ * staked on, which is the honest state and is what `AssessmentRow` already does for a null
+ * `tripleId`.
+ *
+ * What the cast let through instead: the bad value reached viem, whose fixed-`bytesN` encoder throws
+ * `AbiEncodingBytesSizeMismatchError` **client-side, before any RPC** — inside `handleReview`'s
+ * try/catch, so it surfaced as "Nothing was staked" with a Back button. Contained, and better than
+ * a throw from render. An earlier comment here said the chain would revert; it would not.
+ *
+ * Latent either way: no mainnet `uses` edge has been measured carrying a malformed `term_id`.
+ */
+function tripleIdOrNull(value: string): Hex | null {
+    return /^0x[0-9a-fA-F]{64}$/.test(value) ? (value as Hex) : null;
 }
 
 /**
