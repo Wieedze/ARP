@@ -23,6 +23,10 @@
     --color-border: rgba(255, 255, 255, 0.06);
     --color-border-strong: rgba(255, 255, 255, 0.12);
 
+    /* Row hover. Defined here rather than inlined as a fallback at each call site: two components
+       wanted it and both carried the same literal, which is a theme value hiding in two files. */
+    --color-surface-hover: rgba(255, 255, 255, 0.03);
+
     /* Single accent — cyan, "modern infrastructure" per the design doc. */
     --color-accent: #00e5ff;
     --color-accent-dim: rgba(0, 229, 255, 0.16);

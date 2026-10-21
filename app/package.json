@@ -9,7 +9,8 @@
         "lint": "eslint .",
         "preview": "vite preview",
         "test": "bun run --cwd ../packages/protocol build && vitest run",
-        "test:watch": "bun run --cwd ../packages/protocol build && vitest"
+        "test:watch": "bun run --cwd ../packages/protocol build && vitest",
+        "check:tokens": "bun run check-css-tokens.ts"
     },
     "dependencies": {
         "@arp-protocol/core": "^0.0.1",

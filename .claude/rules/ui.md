@@ -55,6 +55,31 @@ Strip these reflexes. If you find yourself reaching for one, stop.
 - Lazy-load route-level code. No eager-loading of the entire app.
 - Images are explicit `<Image>` (Next.js) with dimensions. No layout shift.
 
+## Gates
+
+Four, and the fourth exists because the other three cannot see it:
+
+```
+cd app && bunx tsc -b
+cd app && bun run lint
+cd app && bun run test
+cd app && bun run check:tokens
+```
+
+`check:tokens` checks that every `var(--…)` resolves to a token `index.css` defines. ADR `0050`: a
+page shipped against **five custom properties that do not exist**, and `tsc` and `eslint` were both
+green while fourteen styling sites were inert in the browser — an undefined custom property is
+invalid at computed-value time, so dim text rendered at full white and row hover did nothing. **A
+string in a class name is a string to every other tool here.**
+
+It covers one failure class and not three. Two remain uncovered and no static check sees them:
+
+- a Tailwind utility that **does not exist** — v4 emits nothing, silently, so a typo passes;
+- a utility **defeated by an unlayered rule** in `index.css`. `button { border: 1px solid … }` beats
+  every Tailwind `border-*` utility regardless of specificity, which once made a selected state
+  invisible. When you work against a base-layer rule, say so in a comment at the call site — that
+  comment is the only defence there is.
+
 ## Review
 
 UI changes pass through the `ui-reviewer` agent before a task is marked complete. See `.claude/agents/ui-reviewer.md`.
