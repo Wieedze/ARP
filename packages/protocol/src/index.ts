@@ -292,6 +292,20 @@ export type {
 export {intuitionMainnet, intuitionTestnet} from "./arp/index.js";
 
 export {
+    getAccountActivity,
+    getAccountHoldings,
+    getTermActivity,
+    getTermShape,
+    INTUITION_MAX_POSITIONS_PAGE,
+    type AccountActivityBucket,
+    type AccountHoldings,
+    type TermActivityBucket,
+    type TermActivityGrain,
+    type TermShape,
+    type TermShapeConfig,
+} from "./term-shape.js";
+
+export {
     listRegisteredTools,
     type RegisteredTool,
     type RegisteredToolsConfig,
