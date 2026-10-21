@@ -1,8 +1,8 @@
 # ADR index
 
-**Generated** 2026-10-20 by `scripts/build-claude-index.ts`. Do not edit by hand — rerun the script.
+**Generated** 2026-10-21 by `scripts/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-49 decisions. Newest last. `choices/README.md` says when to write one.
+54 decisions. Newest last. `choices/README.md` says when to write one.
 
 ## Not accepted
 
@@ -63,3 +63,8 @@ Read these before relying on them.
 | [0047](0047-the-mirror-is-a-prerequisite-and-signing-is-a-separate-program.md) | 2026-10-20 | Accepted | the mirror is a prerequisite nobody listed, and signing is a separate program |
 | [0048](0048-arp-does-not-mirror-8004-feedback.md) | 2026-10-20 | Accepted | ARP does not mirror ERC-8004 feedback; it reads it beside its own claims |
 | [0049](0049-arp-does-not-calibrate.md) | 2026-10-20 | Accepted | ARP does not calibrate, and the positioning says what it does instead |
+| [0050](0050-a-css-token-gate.md) | 2026-10-20 | Accepted | a gate for CSS custom properties, because neither existing gate reads a class name |
+| [0051](0051-arp-points-and-prices-it-stores-nothing.md) | 2026-10-20 | Accepted | ARP points at things and prices opinions about them; it stores nothing |
+| [0052](0052-the-procedure-is-the-product-for-the-use-half.md) | 2026-10-20 | Accepted | the procedure is the product for the "use" half; the connector is a convenience |
+| [0053](0053-every-term-is-born-with-a-position.md) | 2026-10-21 | Accepted | Every term is born with a position |
+| [0054](0054-a-tool-atom-is-derived-from-its-url.md) | 2026-10-21 | Accepted | A tool's atom is derived from its URL |

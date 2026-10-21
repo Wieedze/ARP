@@ -106,7 +106,7 @@ Stop and ask, do not guess, when:
 - A task file contradicts an architecture doc.
 - The user's instruction would expand scope.
 - An Intuition atom schema or integration detail is ambiguous.
-- The deployment target is ambiguous (default Base Sepolia, but confirm if mainnet is implied).
+- The deployment target is ambiguous (default Intuition Testnet 13579, but confirm if mainnet is implied).
 - A rule and a task spec disagree.
 
 Ten minutes of clarification saves a day of rework. The cost of asking is near zero. The cost of guessing wrong is the cost of the rework plus the trust damage.

@@ -101,7 +101,7 @@ Rules do not change silently. The audit trail is the point.
 
 ## Hard constraints (the very few that belong in the router)
 
-- **Default deployment target is Intuition Testnet** (changed from Base Sepolia per the hackathon pivot). Mainnet remains explicitly out of scope.
+- **Default deployment target is Intuition Testnet** (changed from Base Sepolia per the hackathon pivot). Mainnet **deployment** remains out of scope; mainnet transactions are the separate question below.
 - **Do not deploy to mainnet without explicit user confirmation per session.**
 - **Do not commit secrets** (`.env`, private keys, API keys).
 - **Do not silently expand scope.** When in doubt, stop and ask. See `.claude/rules/workflow.md` for the scope discipline rule in full. The pivot doc has an explicit out-of-scope list — re-read it before adding anything.
@@ -119,14 +119,19 @@ Everything else is in `.claude/rules/`. Open the rule file you need for the task
 ARP/
 ├── CLAUDE.md                          ← you are here (router only)
 ├── docs/                              project specification
-│   ├── 00_HACKATHON_PIVOT.md         (current strategic commitment — supersedes conflicts)
-│   ├── 01_PROJECT_CONTEXT.md
+│   ├── 00_HACKATHON_PIVOT.md         (historical record — why the MetaMask/Intuition stack)
+│   ├── 01_PROJECT_CONTEXT.md         (positioning — still authoritative)
 │   ├── 02_ARCHITECTURE.md            (locked decisions)
-│   ├── 03_MVP_SCOPE.md               (extended by 00)
+│   ├── 03_MVP_SCOPE.md
 │   ├── 04_SEED_MODULES.md
 │   ├── 05_UI_DESIGN.md
 │   ├── 06_BEAR_TRAP_REFERENCE.md     (supplementary example for Task 02b — MetaMask is canonical)
-│   └── 07_INTUITION_ERC8004_PARTNER_GUIDE.md  (vendored Intuition partner guide — canonical ERC-8004 write pattern + Appendix B term IDs; ADR 0015)
+│   ├── 07_INTUITION_ERC8004_PARTNER_GUIDE.md  (vendored Intuition partner guide — ADR 0015)
+│   ├── 08–11                         (analysis, not commitment — see "Source of authority")
+│   ├── 12_THE_IDEA.md                (THE canonical mechanism — read first)
+│   ├── 13_THE_THREE_FLOWS.md
+│   ├── 14_THE_WITNESS_PROBLEM.md
+│   └── 15_ROADMAP.md
 ├── tasks/                             atomic task files
 ├── contracts/                         Solidity (Foundry)
 ├── packages/
@@ -136,8 +141,11 @@ ARP/
 │       └── src/arp/                   ARP's OWN contracts (the folded-in `sdk/`) — the one place
 │                                      here that names a chain: `TESTNET_DEPLOYMENT`
 ├── app/                               TypeScript UI. Bound to testnet at module load, deliberately
-├── scripts/                           31 flat `.ts` — measure-*, agent-*, verify-*. Inside no
+├── scripts/                           flat `.ts` — measure-*, agent-*, verify-*. Inside no
 │                                      typecheck and no lint (tasks/21)
+├── skills/arp/SKILL.md                **publishable** — how to USE ARP with nothing installed
+│                                      (ADR 0052). Not `.claude/skills/arp/`, which is how to
+│                                      work ON this repo
 ├── schemas/                           JSON Schemas for modules
 ├── deployments/                       per-chain deployment records
 └── .claude/                           Claude operating layer
@@ -172,10 +180,7 @@ ARP/
         ├── INDEX.md                   (generated — scripts/build-claude-index.ts)
         ├── README.md
         ├── TEMPLATE.md
-        ├── 0001-claude-meta-architecture.md
-        ├── 0002-hackathon-pivot-metamask-cookoff.md
-        ├── 0003-metamask-skills-vendored-locally.md
-        └── 0004-bear-trap-as-enforcer-reference.md
+        └── NNNN-*.md                  (one per decision — list them from INDEX.md)
 ```
 
 For the rationale behind this structure, see `.claude/choices/0001-claude-meta-architecture.md`.

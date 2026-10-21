@@ -1,6 +1,8 @@
 # Task 04c — Agent autonomous positioning under bounded delegation
 
-> **Status: IN PROGRESS** (started 2026-06-03).
+> **Status: COMPLETE** 2026-06-03 (`.claude/learning/07`, verifier PASS, commit `9ef78ff`). **Set aside**
+> since 2026-10-17 with the rest of the hackathon surface (ADR `0033`). This line said IN PROGRESS until
+> 2026-10-20.
 >
 > **Hackathon track**: MetaMask Dev Cook-Off — primary track ($3000 Best Agent). Narrative-preservation check required in completion report.
 

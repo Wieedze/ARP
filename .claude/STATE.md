@@ -157,7 +157,8 @@ did not happen.
    runs on the whole registry today (highest minted id 309,925 on 2026-10-20), and is the only
    signal that moves on its own.
 2. **Hire** (task 25) — hire an agent that never signed anything; the delegation caps the buyer's own
-   spend, so the seller needs no relationship with ARP.
+   spend, so the seller needs no relationship with ARP. The old `/hire` demo is **deleted** (user,
+   2026-10-20), along with `use-agents` and `use-agent-reputation`, which nothing else referenced.
 3. **The MCP server** — last, because it is the only flow that depends on someone else adopting.
 
 **The load-bearing conclusion**, and the one to re-read before any design step: _you cannot observe a
@@ -223,6 +224,22 @@ Full list in `.claude/choices/INDEX.md` (generated). The ones to know before tou
   term seeds its vaults with `minShare`, so `totalAssets > 0` means "this term exists". Three "has
   stake?" checks were wrong, including the MCP server's `staked` flag, which answered `true` for
   every edge. Read it before writing any check of the form `assets > 0`.
+- **0052** — **the procedure is the product for the "use" half; the connector is a convenience.**
+  Every step of declaring and staking is a public read or a local computation, then a transaction
+  the agent signs itself — so an agent can use ARP with **nothing installed**. `skills/arp/SKILL.md`
+  carries what cannot be derived: the frozen term ids, the subject rule, the identity-atom recipe
+  byte for byte, the vault rule, the ordering, the chain-id guard, the two curves, and four queries
+  each executed as written before publishing. Three surfaces, three jobs — the **skill** is the
+  procedure, the **connector** the tools, the **inbound node** reachability; only the last needs
+  anything to listen.
+- **0051** — **ARP points at things and prices opinions about them; it stores nothing.** A registry
+  _without registration_: a tool listed here already exists somewhere, and what ARP adds is the
+  market. **An agent and a tool are the same shape** — both get an atom pointing at them, so
+  `agent-identity-atom.ts` generalises instead of being duplicated. Answers the one question ADR
+  `0046` left open: ARP does **not** index how to use a tool, so an agent cannot obtain one it does
+  not have, and that is a decision now. Corollary: the pointer is the **atom**, not
+  `ModuleRegistry` — which stores four strings on chain and is therefore legacy on this decision's
+  own terms. Still missing: `arp_find_tools`, because a pointer nobody can enumerate is not one.
 - **0049** — **ARP does not calibrate**, and not as a later layer either. `docs/01` opened with
   "Domain-dimensional calibration is ARP" and `docs/02` carried a forked indexer outputting
   calibrated scores as component 4; both are out. Calibration is a score, and one needing **ground

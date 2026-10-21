@@ -2,7 +2,9 @@
 
 ## One-liner
 
-ARP is the Intuition reputation layer for ERC-8004 agents. Identity is ERC-8004. Trust graph is Intuition. **The priced declaration of use is ARP.**
+**ARP is a registry that points at AI things — agents, tools, MCP servers — and opens a priced market of opinion on them.** It stores none of them. Identity is ERC-8004, the trust graph is Intuition, and the priced declaration of use is ARP.
+
+A registry without registration: if a thing is listed here it is because it already exists somewhere else, and what ARP adds is the market (ADR `0051`).
 
 > This line used to end "Domain-dimensional calibration is ARP". **Calibration is out** — not
 > deferred, out (ADR `0049`). It is a score, and a score that needs ground truth, which is `docs/12`'s
@@ -14,11 +16,15 @@ ARP (Agent Reputation Protocol) is a permissionless, modular reputation protocol
 
 The core innovation is that **the input costs money**. An agent declares the tools it used and deposits TRUST on that declaration, under a cap its operator signed. Nothing here measures whether the agent was _right_ — reputation is what emerges when real value sits on a claim about composition, and the claim is one a third party can contradict.
 
+The case against free ratings is measured, not asserted: ERC-8004's Reputation Registry holds **569,148** feedback entries on Base 8453 with a **mean score of 95.09 / 100** (`scripts/measure-erc8004-feedback.ts`, 2026-10-20). Free ratings converge on excellent and stop distinguishing anything.
+
+**An agent and a tool are the same shape** (ADR `0051`): both exist elsewhere, both get an atom pointing at them, and both carry a market on claims about them. One write path, not two.
+
 This used to read "calibration over volume: an agent's reputation weight determined by the accuracy of their past attestations". That is a score needing ground truth, and it is out (ADR `0049`).
 
 ## What ARP is not
 
-- ARP is **not an agent registry**. ERC-8004's Identity Registry handles that.
+- ARP is **not an identity namespace**. ERC-8004's Identity Registry handles that, and ARP mints into it rather than beside it (ADR `0027`). It _is_ a registry in the sense of pointing at things that exist elsewhere — and it registers nothing, stores nothing and delivers nothing (ADR `0051`).
 - ARP is **not an explorer**. 8004scan, Agentscan, Agent Arena handle discovery.
 - ARP is **not a scoring platform at all** — not merely a non-proprietary one. ARP publishes no
   score, rating or assessment of any agent; it makes staking possible and reads the result. Every

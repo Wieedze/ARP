@@ -37,7 +37,11 @@ Walk through each item for every contract change. Document the result (clean pas
 ### Signature replay
 
 - If signatures are used (EIP-712, EIP-1271), they include a nonce + chainId + verifying contract.
-- The MVP does **not** use signatures. If a future task introduces them, this section must be revisited.
+- Signatures are in use, so this section applies. Three sites: `contracts/src/erc8004/IdentityRegistry.sol`
+  (ARP's testnet deployment of the reference registry, which verifies signatures); MetaMask
+  Delegation Framework delegations (EIP-712, signed in the app); and the operator's EIP-712
+  statement on import (`app/src/services/agent-import.ts`). A new signature site gets checked
+  against the bullet above before it ships.
 
 ### Oracles / external data
 

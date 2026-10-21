@@ -10,6 +10,7 @@ You are the UI gatekeeper. The MVP UI is a credibility artifact — it must not 
 ## Inputs
 
 The caller passes:
+
 - The paths to changed UI files.
 - A summary of what changed.
 
@@ -52,15 +53,22 @@ The caller passes:
    - Color contrast appears adequate (visual check; deeper audit if it looks marginal).
 
 6. **Run the toolchain.**
+
    ```
    cd app && bunx tsc -b
    cd app && bun run lint
+   # Neither of the two above can see an undefined CSS custom property: a string in a class name
+   # is a string to them. One page shipped with fourteen inert styling sites while both were
+   # green. ADR `0050`.
+   cd app && bun run check:tokens
    ```
+
    Both must pass with zero warnings.
 
 7. **Return verdict.**
 
    On **PASS**:
+
    ```
    PASS
 
@@ -72,6 +80,7 @@ The caller passes:
    ```
 
    On **FAIL**:
+
    ```
    FAIL
 

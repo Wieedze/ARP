@@ -3,6 +3,10 @@
 **Status:** Accepted
 **Date:** 2026-10-17
 **Triggered by:** user decision — _"les agent de arp existant sont inutiles, tout le taff hackathon
+
+> **Answered 2026-10-20.** This ADR left open "whether `/hire` [stays] in the app". The user decided
+> to delete it, and it is gone — along with `use-agents` and `use-agent-reputation`, which nothing
+> else referenced. Hiring is `tasks/25`.
 est a mettre de coté"_, after asking why ARP's own agents mattered when the point is the agents
 already in the ERC-8004 registry.
 

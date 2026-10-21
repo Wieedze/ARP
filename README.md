@@ -60,11 +60,15 @@ One-time setup, then walks away:
 
 The repo ships two example runtimes that consume the signed delegations: 5. `scripts/agent-approve-sa.ts` — one-time MultiVault approval so the Smart Account can deposit on the runtime's behalf. 6. `scripts/agent-loop.ts` — autonomous walk of `scripts/manifest-modules.json` (14 tools across 4 domains). Publishes new modules, ensures tool atoms exist, declares `(agent, uses, tool)` triples, stakes tTRUST on each tool. Exercises both revert paths (`DomainNotAllowed`, `StakeExceedsCap`) so the bounds visibly hold. 7. `scripts/agent-server.ts` — on-demand HTTP runtime that accepts a paid audit job, runs it via the Trail of Bits methodologies, **fuzzy-matches the methodologies it actually used** against the registry, and stakes on each matched tool under the compose delegation. Optionally sub-contracts a specialist via a signed leaf delegation (A2A) — `scripts/agent-server-specialist.ts` is the receiving counterpart.
 
-### Consumer (browser, `/hire` and `/tool/:id`)
+### Consumer (browser)
 
 8. `/` — modules ranked by TVL desc with a live distinct-stakers count. Slither + Mythril climb as runtimes stake; new modules appear as they publish.
 9. `/tool/:id` — per-tool detail. Live vault metrics, an optional stake form for human EOAs (economic conviction without an agent identity), and a `@arp-protocol/core` snippet showing how a runtime declares + stakes automatically.
-10. `/hire` — pick a domain, see the top agents ranked by reputation, pay one in tTRUST, get back a signed audit report with the on-chain stakes the agent placed during execution. If A2A is enabled, the result page also renders the sub-delegation chain (`requester → auditor → specialist`) and the specialist's independently-signed receipt.
+10. `/tools` — tools agents declared using, on the Intuition mainnet graph, with how many declarations somebody paid to stand behind and the TRUST summed across them. Agent declarations only: the `uses` predicate is shared and most of what sits on it is ordinary prose, filtered out in the query.
+11. `/agents` — the mirrored ERC-8004 cohort, paged, ordered by measures of evidence and never by a score.
+12. `/agent/:chainId/:tokenId` — one agent's trust surface, one tab per trust provider.
+
+`/hire` was a demo that the index works. It was never finished and is removed (2026-10-20); hiring is `tasks/25`.
 
 ### Build a runtime against ARP (`@arp-protocol/core`)
 
