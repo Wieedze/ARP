@@ -107,10 +107,10 @@ export function RegisterModule() {
                 <PageHeader />
                 <div className="border border-[color:var(--color-accent)] p-4 mb-6">
                     <p className="text-[length:var(--text-label)] uppercase tracking-wider text-[color:var(--color-accent)] mb-2">
-                        Module registered
+                        Tool registered
                     </p>
                     <p className="text-[color:var(--color-fg-60)] mb-3 max-w-[640px] text-[length:var(--text-body-sm)]">
-                        Module{" "}
+                        Tool{" "}
                         <span className="font-mono">
                             #{result.moduleId.toString()}
                         </span>{" "}
@@ -232,7 +232,7 @@ export function RegisterModule() {
                     />
                     {schemaURITaken ? (
                         <p className="text-[length:var(--text-body-sm)] text-[color:var(--color-fg-40)] mt-1">
-                            A module with this schemaURI already exists.
+                            A tool with this schemaURI already exists.
                         </p>
                     ) : null}
                 </Field>

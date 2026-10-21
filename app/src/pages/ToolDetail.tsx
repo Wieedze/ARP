@@ -119,20 +119,20 @@ export function ToolDetail() {
 
     if (!moduleId) {
         return (
-            <p className="text-[color:var(--color-fg-60)]">Invalid module ID.</p>
+            <p className="text-[color:var(--color-fg-60)]">Invalid tool ID.</p>
         );
     }
 
     if (moduleQuery.isLoading) {
-        return <p className="text-[color:var(--color-fg-60)]">Loading module…</p>;
+        return <p className="text-[color:var(--color-fg-60)]">Loading tool…</p>;
     }
 
     if (moduleQuery.error || !m) {
         return (
             <p className="text-[color:var(--color-fg-60)]">
-                Module not found.{" "}
+                Tool not found.{" "}
                 <Link className="text-[color:var(--color-accent)]" to="/">
-                    Back to modules
+                    Back to tools
                 </Link>
             </p>
         );
@@ -146,7 +146,7 @@ export function ToolDetail() {
                 to="/"
                 className="font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-fg-40)]"
             >
-                ← modules
+                ← tools
             </Link>
 
             <header className="mt-4 mb-10 grid sm:grid-cols-[1fr_auto] gap-x-8 gap-y-2 items-baseline">
@@ -161,7 +161,7 @@ export function ToolDetail() {
             {/* ---------- Metadata table ---------- */}
             <dl className="grid grid-cols-[8rem_1fr] gap-y-3 gap-x-4 text-[length:var(--text-body-sm)] border-y border-[color:var(--color-border)] py-6">
                 <dt className="text-[color:var(--color-fg-40)] uppercase tracking-wider text-[length:var(--text-label)]">
-                    Module ID
+                    Tool ID
                 </dt>
                 <dd className="font-mono">#{m.id.toString()}</dd>
 

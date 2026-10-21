@@ -487,7 +487,7 @@ export function AgentRegister() {
                 <Step
                     n={4}
                     title="Sign delegations to your agent"
-                    subtitle="Two scoped permissions: publish new modules in chosen domains, and compose/stake on MultiVault. Bounded by cap + period. Signed once by your Smart Account."
+                    subtitle="Two scoped permissions: publish new tools in chosen domains, and compose/stake on MultiVault. Bounded by cap + period. Signed once by your Smart Account."
                     done={step4Done}
                     pending={step4Status === "pending"}
                     error={step4Error}
@@ -640,7 +640,7 @@ export function AgentRegister() {
                                     to="/"
                                     className="text-[color:var(--color-accent)]"
                                 >
-                                    Watch the modules page →
+                                    Watch the tools page →
                                 </Link>{" "}
                             </p>
                         </div>

@@ -4,8 +4,6 @@ import {Route, Routes} from "react-router-dom";
 import {Layout} from "./components/Layout";
 import {ModuleList} from "./components/ModuleList";
 import {AgentRegister} from "./pages/AgentRegister";
-import {Hire} from "./pages/Hire";
-import {HireResult} from "./pages/HireResult";
 import {RegisterModule} from "./pages/RegisterModule";
 import {ToolDetail} from "./pages/ToolDetail";
 
@@ -31,6 +29,10 @@ const AgentImport = lazy(() =>
  */
 const ToolUsagePanel = lazy(() =>
     import("./pages/ToolUsagePanel").then((module) => ({default: module.ToolUsagePanel})),
+);
+/** Same reason: it reads the Intuition graph, which nothing in the eager bundle needs. */
+const ToolCatalog = lazy(() =>
+    import("./pages/ToolCatalog").then((module) => ({default: module.ToolCatalog})),
 );
 
 function App() {
@@ -64,6 +66,14 @@ function App() {
                     }
                 />
                 <Route path="/modules/new" element={<RegisterModule />} />
+                <Route
+                    path="/tools"
+                    element={
+                        <Suspense fallback={<RouteFallback label="tools in use" />}>
+                            <ToolCatalog />
+                        </Suspense>
+                    }
+                />
                 <Route path="/tool/:id" element={<ToolDetail />} />
                 {/* Keyed on an ATOM, not a ModuleRegistry id, and a mainnet view. The route above
                     is the testnet ModuleRegistry page (ADR 0025 keeps that registry off mainnet);
@@ -77,8 +87,6 @@ function App() {
                         </Suspense>
                     }
                 />
-                <Route path="/hire" element={<Hire />} />
-                <Route path="/hire/result/:tx" element={<HireResult />} />
             </Routes>
         </Layout>
     );

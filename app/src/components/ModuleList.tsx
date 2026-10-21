@@ -56,10 +56,10 @@ export function ModuleList() {
             <header className="mb-10 flex items-baseline justify-between gap-4 flex-wrap">
                 <div>
                     <h1 className="font-sans text-[length:var(--text-display)] leading-[var(--leading-display)] tracking-tight font-semibold">
-                        Modules
+                        Tools
                     </h1>
                     <p className="mt-2 text-[color:var(--color-fg-60)]">
-                        Evaluation modules registered on the Agent Reputation Protocol.
+                        Tools registered in ARP's ModuleRegistry.
                     </p>
                 </div>
                 <div className="flex items-center gap-5 text-[length:var(--text-body-sm)]">
@@ -167,7 +167,7 @@ function ModuleRow({
             }}
             role="link"
             tabIndex={0}
-            className="grid grid-cols-[3rem_1fr_auto] sm:grid-cols-[3rem_1fr_10rem_8rem_8rem] items-center gap-x-4 gap-y-1 border-b border-[color:var(--color-border)] py-4 cursor-pointer hover:bg-[color:var(--color-surface-hover,rgba(255,255,255,0.03))] focus:outline-none focus:bg-[color:var(--color-surface-hover,rgba(255,255,255,0.03))]"
+            className="grid grid-cols-[3rem_1fr_auto] sm:grid-cols-[3rem_1fr_10rem_8rem_8rem] items-center gap-x-4 gap-y-1 border-b border-[color:var(--color-border)] py-4 cursor-pointer hover:bg-[color:var(--color-surface-hover)] focus:outline-none focus:bg-[color:var(--color-surface-hover)]"
         >
             <span className="font-mono text-[color:var(--color-fg-40)] text-[length:var(--text-body-sm)]">
                 #{module.id.toString()}
@@ -246,14 +246,14 @@ function LoadingState() {
 }
 
 function EmptyState() {
-    return <p className="text-[color:var(--color-fg-60)]">No modules yet.</p>;
+    return <p className="text-[color:var(--color-fg-60)]">No tools yet.</p>;
 }
 
 function ErrorState({onRetry}: {onRetry: () => void}) {
     return (
         <div className="flex items-center gap-4">
             <p className="text-[color:var(--color-fg-60)]">
-                Couldn’t load modules from Intuition Testnet.
+                Couldn’t load tools from Intuition Testnet.
             </p>
             <button
                 type="button"
