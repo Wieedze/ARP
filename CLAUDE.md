@@ -118,6 +118,7 @@ Everything else is in `.claude/rules/`. Open the rule file you need for the task
 ```
 ARP/
 ├── CLAUDE.md                          ← you are here (router only)
+├── FUTURE.md                          asked for, deliberately not built yet (`workflow.md`)
 ├── docs/                              project specification
 │   ├── 00_HACKATHON_PIVOT.md         (historical record — why the MetaMask/Intuition stack)
 │   ├── 01_PROJECT_CONTEXT.md         (positioning — still authoritative)
