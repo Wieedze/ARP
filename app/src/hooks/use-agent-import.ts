@@ -1,3 +1,4 @@
+import type {IdentityAtomPlan} from "@arp-protocol/core";
 import {getWalletClient} from "@wagmi/core";
 import {useCallback} from "react";
 import type {Address, Hex} from "viem";
@@ -16,6 +17,11 @@ import {
     type ImportLinkPlan,
     type OwnershipVerdict,
 } from "../services/agent-import";
+import {
+    planIdentityAtom,
+    submitIdentityAtom,
+    type IdentityAtomSubmission,
+} from "../services/agent-identity-atom";
 import {createUserSmartAccount} from "../services/smart-account";
 
 /**
@@ -96,6 +102,29 @@ export function useAgentImport() {
         [],
     );
 
+    /**
+     * Prices the identity atom the mirror has not written. Reads only, and needs no pinning key:
+     * the atom's id is a pure function of the agent's identity (ADR `0047`).
+     */
+    const planIdentity = useCallback(
+        (agent: {chainId: number; tokenId: string; registry: Address}) =>
+            planIdentityAtom({publicClient: intuitionMainnetClient, agent}),
+        [],
+    );
+
+    /** The second write. One click handler, like `publishLink`, and never a mutation. */
+    const publishIdentity = useCallback(
+        async (plan: IdentityAtomPlan): Promise<IdentityAtomSubmission> => {
+            const walletClient = await connectedWalletClient();
+            return submitIdentityAtom({
+                walletClient,
+                publicClient: intuitionMainnetClient,
+                plan,
+            });
+        },
+        [],
+    );
+
     return {
         verifyOwnership,
         resolveAtom,
@@ -103,6 +132,8 @@ export function useAgentImport() {
         signConsent,
         planLink,
         publishLink,
+        planIdentity,
+        publishIdentity,
     };
 }
 

@@ -3,8 +3,9 @@ import {Link} from "react-router-dom";
 import type {Address, Hex} from "viem";
 import {useAccount, useSwitchChain} from "wagmi";
 
-import {DEFAULT_IDENTITY_REGISTRY} from "@arp-protocol/core";
+import {DEFAULT_IDENTITY_REGISTRY, type IdentityAtomPlan} from "@arp-protocol/core";
 
+import {MainnetNotice} from "../components/agent/MainnetNotice";
 import {useAgentImport} from "../hooks/use-agent-import";
 import {INTUITION_MAINNET_CHAIN_ID, mainnetTxUrl} from "../lib/intuition-mainnet";
 import {
@@ -97,6 +98,10 @@ export function AgentImport() {
     const [linkError, setLinkError] = useState<string | null>(null);
     const [plan, setPlan] = useState<ImportLinkPlan | null>(null);
     const [txs, setTxs] = useState<{atomTx?: Hex; tripleTx?: Hex} | null>(null);
+    const [identityPlan, setIdentityPlan] = useState<IdentityAtomPlan | null>(null);
+    const [identityStatus, setIdentityStatus] = useState<StepStatus>("idle");
+    const [identityError, setIdentityError] = useState<string | null>(null);
+    const [identityTxs, setIdentityTxs] = useState<Hex[] | null>(null);
 
     const trimmedToken = tokenId.trim();
     const isTokenValid = /^\d+$/.test(trimmedToken);
@@ -236,6 +241,39 @@ export function AgentImport() {
         }
     }
 
+    async function handlePlanIdentity() {
+        if (proven === null) return;
+        setIdentityStatus("pending");
+        setIdentityError(null);
+        try {
+            setIdentityPlan(
+                await actions.planIdentity({
+                    chainId: proven.chainId,
+                    tokenId: proven.tokenId,
+                    registry: DEFAULT_IDENTITY_REGISTRY,
+                }),
+            );
+            setIdentityStatus("idle");
+        } catch (error) {
+            setIdentityStatus("error");
+            setIdentityError(errorMessage(error));
+        }
+    }
+
+    async function handlePublishIdentity() {
+        if (identityPlan === null) return;
+        setIdentityStatus("pending");
+        setIdentityError(null);
+        try {
+            const result = await actions.publishIdentity(identityPlan);
+            setIdentityTxs(result.txs);
+            setIdentityStatus("done");
+        } catch (error) {
+            setIdentityStatus("error");
+            setIdentityError(errorMessage(error));
+        }
+    }
+
     async function handleSwitchChain() {
         setLinkError(null);
         try {
@@ -247,7 +285,9 @@ export function AgentImport() {
 
     return (
         <section>
-            <header className="mb-12">
+            <MainnetNotice />
+
+            <header className="mt-8 mb-12">
                 <h1 className="text-[length:var(--text-display)] leading-[var(--leading-display)] font-semibold tracking-tight">
                     Import an agent you already have
                 </h1>
@@ -262,7 +302,8 @@ export function AgentImport() {
                     <Link className="underline" to="/agent">
                         the agent setup page
                     </Link>
-                    . Both doors end in the same place.
+                    , which mints into ARP's registry on Intuition testnet — a different registry
+                    from the one read here.
                 </p>
             </header>
 
@@ -413,7 +454,18 @@ export function AgentImport() {
                 }
             >
                 {hasNoCanonicalAtom && proven !== null ? (
-                    <NoCanonicalAtom chainId={proven.chainId} />
+                    <MissingIdentityAtom
+                        plan={identityPlan}
+                        status={identityStatus}
+                        error={identityError}
+                        txs={identityTxs}
+                        onMainnet={onMainnet}
+                        walletChainId={walletChainId}
+                        isSwitching={isSwitching}
+                        onSwitchChain={() => void handleSwitchChain()}
+                        onPlan={() => void handlePlanIdentity()}
+                        onPublish={() => void handlePublishIdentity()}
+                    />
                 ) : (
                     <>
                         <p className="mb-6 max-w-[64ch] text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)]">
@@ -481,14 +533,14 @@ export function AgentImport() {
             <section className="mt-16 pl-5 border-l border-l-[color:var(--color-border-strong)]">
                 <h2 className="font-medium">What follows</h2>
                 <p className="mt-3 max-w-[64ch] text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)]">
-                    From here the agent takes the same path as one minted through ARP: a Smart
-                    Account, a delegation whose caveats bound what the runtime may stake, and then
-                    the stakes themselves. That flow lives on{" "}
+                    The next steps are a Smart Account, a delegation whose caveats bound what the
+                    runtime may stake, and then the stakes themselves. They are not wired for an
+                    imported agent yet:{" "}
                     <Link className="underline" to="/agent">
                         the agent setup page
-                    </Link>
-                    , and it runs against ARP's testnet contracts — the delegation and module
-                    surfaces are not deployed on mainnet (ADR 0025).
+                    </Link>{" "}
+                    only recognises agents in ARP's testnet registry, and the delegation and tool
+                    registry contracts are not deployed on mainnet (ADR 0025).
                 </p>
             </section>
         </section>
@@ -671,19 +723,145 @@ function ConsentPreview({consent}: {consent: ImportConsent}) {
     );
 }
 
-function NoCanonicalAtom({chainId}: {chainId: number}) {
+/**
+ * The mirror has not written this agent's atom, so ARP writes it.
+ *
+ * This replaced a dead end. The page used to say "nothing is written … the link waits for the
+ * mirror", on the grounds that deriving an atom would produce "a differently-pinned duplicate". That
+ * reason stopped being true: the recipe in `@arp-protocol/core` reproduces the mirror's bytes
+ * exactly — verified against agent 8453:6649, whose atom Intuition's own ingestion minted — so the
+ * derived atom **is** the one the mirror would write, not a second one. Waiting was costing nine
+ * agents in ten their identity (ADR `0047`, `docs/12`).
+ */
+function MissingIdentityAtom(props: {
+    plan: IdentityAtomPlan | null;
+    status: StepStatus;
+    error: string | null;
+    txs: Hex[] | null;
+    onMainnet: boolean;
+    walletChainId: number | undefined;
+    isSwitching: boolean;
+    onSwitchChain: () => void;
+    onPlan: () => void;
+    onPublish: () => void;
+}) {
+    const {plan, txs} = props;
     return (
         <div className="max-w-[64ch]">
             <p className="font-medium">
-                The Intuition graph does not mirror this agent, so there is no atom to link.
+                The Intuition graph does not mirror this agent yet, so its atom has to be written.
             </p>
             <p className="mt-3 text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)]">
-                The mirror covers Base (8453); this agent is on chain {chainId}. Deriving an atom
-                here instead would produce a differently-pinned duplicate — a separate node that
-                splits the agent's staking surface from the one the ecosystem reads. So nothing is
-                written. Your ownership is proven and your statement stands; the link waits for the
-                mirror.
+                The mirror covers Base (8453) and last moved on 2026-09-16; it holds 28,648 agents
+                against a registry whose highest minted id is 309,925. This is not a duplicate: the
+                atom&rsquo;s id is the hash of a document derived from the agent&rsquo;s identity, so
+                what gets written here is the same id the mirror would write, sooner.
             </p>
+
+            {plan === null ? (
+                <button
+                    type="button"
+                    onClick={props.onPlan}
+                    disabled={props.status === "pending"}
+                    className={`mt-6 ${controlClass}`}
+                >
+                    {props.status === "pending" ? "Reading the vault…" : "Price the identity atom"}
+                </button>
+            ) : (
+                <>
+                    <div className="mt-6">
+                        <Field
+                            label={`Identity atom${plan.existing.identityAtom ? ", already on the graph" : ", to be created"}`}
+                            value={plan.uris.identity}
+                        />
+                        <Field
+                            label={`CAIP-19 atom${plan.existing.caipAtom ? ", already on the graph" : ", to be created"}`}
+                            value={plan.uris.caip}
+                        />
+                        <Field
+                            label={`same as edge${plan.existing.triple ? ", already on the graph" : ", to be created"}`}
+                            value={plan.tripleId}
+                        />
+                    </div>
+                    <div className="mt-6 border-t border-[color:var(--color-border)] pt-4">
+                        {plan.calls.map((call) => (
+                            <p
+                                key={call.data}
+                                className="font-mono text-[length:var(--text-body-sm)] tabular-nums"
+                            >
+                                {call.kind} — {formatTrust(call.value)} TRUST,{" "}
+                                {call.preview === undefined
+                                    ? "no preview"
+                                    : `${formatTrust(call.preview.shares)} shares`}
+                            </p>
+                        ))}
+                        <p className="mt-2 font-mono text-[length:var(--text-body-sm)] tabular-nums">
+                            total — {formatTrust(plan.totalValue)} TRUST
+                        </p>
+                    </div>
+                    {/* Said because the atom works without it and a reader will wonder why the name
+                        is a hash. Pinning the same bytes later yields the same id, so it is
+                        retroactive rather than a missed window. */}
+                    <p className="mt-4 text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)]">
+                        The atom is created unpinned, so readers see its id rather than its name
+                        until someone pins the document. Anyone can, at any time, and the id does not
+                        change — the same bytes always hash to the same CID.
+                    </p>
+                </>
+            )}
+
+            {props.error !== null ? <Failure message={props.error} /> : null}
+
+            {plan !== null && txs === null ? (
+                !props.onMainnet ? (
+                    <div className="mt-6">
+                        <p className="text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)]">
+                            Your wallet is on chain {props.walletChainId ?? "unknown"}. The write
+                            lands on Intuition mainnet ({INTUITION_MAINNET_CHAIN_ID}).
+                        </p>
+                        <button
+                            type="button"
+                            onClick={props.onSwitchChain}
+                            disabled={props.isSwitching}
+                            className={`mt-3 ${controlClass}`}
+                        >
+                            {props.isSwitching ? "Switching…" : "Switch to Intuition mainnet"}
+                        </button>
+                    </div>
+                ) : plan.calls.length === 0 ? (
+                    <p className="mt-6 text-[length:var(--text-body-sm)]">
+                        The atom and its edge are already on the graph. There is nothing to send.
+                    </p>
+                ) : (
+                    <button
+                        type="button"
+                        onClick={props.onPublish}
+                        disabled={props.status === "pending"}
+                        className={`mt-6 ${controlClass}`}
+                    >
+                        {props.status === "pending"
+                            ? "Waiting for your wallet…"
+                            : `Write the identity atom — ${formatTrust(plan.totalValue)} TRUST`}
+                    </button>
+                )
+            ) : null}
+
+            {txs !== null ? (
+                <div className="mt-6">
+                    <p className="font-medium">The agent has an identity atom.</p>
+                    <p className="mt-2 text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)]">
+                        Price the link above to publish the edge to your staking account.
+                    </p>
+                    {txs.map((hash, index) => (
+                        <Field
+                            key={hash}
+                            label={`Transaction ${index + 1}`}
+                            value={truncateMiddle(hash, 14, 10)}
+                            href={mainnetTxUrl(hash)}
+                        />
+                    ))}
+                </div>
+            ) : null}
         </div>
     );
 }
@@ -701,12 +879,12 @@ function LinkPlan({plan}: {plan: ImportLinkPlan}) {
                 <p className="font-mono text-[length:var(--text-body-sm)] tabular-nums">
                     {plan.accountAtomExists
                         ? "account atom — already published, 0 TRUST"
-                        : `account atom — ${formatTrust(plan.atomCost)} TRUST`}
+                        : `account atom — ${formatTrust(plan.atomAssets)} TRUST`}
                 </p>
                 <p className="mt-1 font-mono text-[length:var(--text-body-sm)] tabular-nums">
                     {plan.tripleExists
                         ? "same-as edge — already published, 0 TRUST"
-                        : `same-as edge — ${formatTrust(plan.tripleCost)} TRUST`}
+                        : `same-as edge — ${formatTrust(plan.tripleAssets)} TRUST`}
                 </p>
                 <p className="mt-2 font-mono text-[length:var(--text-body-sm)] tabular-nums">
                     total — {formatTrust(plan.totalCost)} TRUST
