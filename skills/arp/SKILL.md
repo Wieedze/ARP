@@ -111,8 +111,8 @@ validation and takes the whole query down.
 Read the counter vault too, and know what to expect from it. Disagreement costs exactly what
 agreement costs, so an edge with money against it is genuinely different — but measured on mainnet
 1155 on 2026-10-21, **1** of 185 `uses` edges had any, and 969 of 285,775 triples chain-wide. Treat a
-non-empty counter vault as a strong and rare signal, not as the normal case, and do not read an empty
-one as agreement.
+non-empty counter vault as strong and rare information, not as the normal case, and do not read an
+empty one as agreement.
 
 **What the numbers mean before you act on them.** `total_assets > 0` does not mean somebody staked —
 creating a term seeds both its vaults with `minShare`, so it means the term exists. `position_count`
@@ -336,9 +336,16 @@ Four things about it that cost real TRUST to learn otherwise:
 - **`maxRedeem` is the ceiling, read from the chain.** It agreed with `getShares` to the wei on
   mainnet 2026-10-21, which is not a guarantee that it always will — ask for the ceiling, do not
   derive it from a balance.
-- **The exit fee is real**: `getVaultFees()` returned `(entry 50, exit 75, protocol 125)` over a
-  `feeDenominator` of 10,000 on mainnet 2026-10-21. Leaving costs 0.75%, so a position taken and
-  closed at the same price loses money. `previewRedeem` already has it subtracted.
+- **Leaving is not free, and do not compute what it costs — read it.** `getVaultFees()` returns
+  `(entry 50, exit 75, protocol 125)` over a `feeDenominator` of 10,000 from `getGeneralConfig()` on
+  mainnet 1155, 2026-10-21. Reading "exit 75" as 0.75% is wrong twice: the protocol fee is charged on
+  the way out too, and the total is **not one number**. Measured across 21 vaults the same day
+  (`scripts/measure/exit-cost.ts`, `convertToAssets` as the pre-fee gross against `previewRedeem`):
+  **125 bps on some terms and 200 bps on others**, on both atoms and triples and on both curves. What
+  selects between them is governance-configured and conditional, and this skill does not claim to
+  know it. So a position taken and closed at the same price loses money — more than the config's
+  "exit fee" suggests — and `previewRedeem` is the only thing that will tell you how much. That is
+  the same rule as "What it costs" at the top of this file: read it from the chain, per call.
 
 Redeeming a position is not the same as unsaying the claim. The triple stays on the chain, your
 address stays on it, and the 0.1 TRUST stays spent. What changes is that you no longer have capital

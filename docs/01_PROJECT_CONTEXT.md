@@ -14,7 +14,7 @@ A registry without registration: if a thing is listed here it is because it alre
 
 ARP (Agent Reputation Protocol) is a permissionless, modular reputation protocol for autonomous AI agents. It sits on top of ERC-8004 (the Ethereum agent identity standard) and uses Intuition's semantic graph as its ontology layer.
 
-The core innovation is that **the input costs money**. An agent declares the tools it used and deposits TRUST on that declaration, under a cap its operator signed. Nothing here measures whether the agent was _right_ — reputation is what emerges when real value sits on a claim about composition, and the claim is one a third party can contradict.
+The core innovation is that **the input costs money**. An agent declares the tools it used and deposits TRUST on that declaration, under a cap its operator signed. Nothing here measures whether the agent was _right_ — reputation is what emerges when real value sits on a claim about composition, and writing that claim costs money that does not come back (ADR `0056`; this sentence used to end "and the claim is one a third party can contradict", which is true of the mechanism and all but unused in practice — 1 of 185 mainnet `uses` edges).
 
 The case against free ratings is measured, not asserted: ERC-8004's Reputation Registry holds **569,148** feedback entries on Base 8453 with a **mean score of 95.09 / 100** (`scripts/measure/erc8004-feedback.ts`, 2026-10-20). Free ratings converge on excellent and stop distinguishing anything.
 
@@ -69,7 +69,9 @@ ARP's defensible differentiation:
 1. **The input is priced, not free** — a deposit on a claim about use, bounded by a cap its operator signed. Every competitor above takes free input.
 2. **Written in the capability vocabulary, not the trust vocabulary** — `uses`, `has tag`, `implement`. So ARP makes claims about **composition**, and reputation emerges when money sits on one. Trust providers write elsewhere in the graph, which is why they are not competitors on this surface (ADR `0048`).
 3. **ARP holds nothing** — no key (ADR `0038`), no request path (ADR `0045`), no data. The reputation is positions on a public graph, so adopting ARP is not a bet on ARP surviving.
-4. **The position is the measure, so the signal is live** — withdrawable, and contradictable through the counter-claim (ADR `0046`).
+4. **The position is the measure, so what you read is live** — withdrawable, so it is what people hold now rather than what was ever put in (ADR `0046` §3, and ADR `0056`, which built the exit).
+
+Item 4 used to read "so the **signal** is live — withdrawable, and contradictable through the counter-claim (ADR `0046`)". Three things wrong with it, all fixed by ADR `0056`: the counter-claim is almost never used, so contradictability was not a differentiator; `0046`'s §2 heading is now struck, so the citation walked a reader into retracted text; and ARP does not call this a signal — it is a market, and a price is not a verdict.
 
 Item 2 of this list used to be calibration-weighted scoring. It is out (ADR `0049`).
 

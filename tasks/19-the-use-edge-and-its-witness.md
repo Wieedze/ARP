@@ -171,9 +171,12 @@ resolution, and adding an authority is the single biggest scope risk in this tas
 > **The Gate below cannot be met, and ADR `0056` is why — read this before starting step 3.**
 > Measured on mainnet 1155, 2026-10-21 (`scripts/measure/counter-side-usage.ts`): **1** of the 185
 > `uses` edges has ever carried a position in its counter-vault, and 969 of 285,775 triples
-> chain-wide. A Gate asking for an edge whose counter side carries the **larger** position is asking
-> for a case that does not exist in the data — the same shape as ADR `0043`'s Gate demanding six
-> reproductions from a table of eight.
+> chain-wide. So **at most one of 185 is even a candidate**, and whether that one edge's counter side
+> carries the *larger* position is **unmeasured** — one query, not yet run, and ADR `0042` cuts both
+> ways on it: `minShare` dust sits on both vaults, so that lone counter position may be creation dust
+> rather than disagreement. Either way the Gate is asking for a case the data has at most one of.
+> Same shape as `tasks/26`'s Gate demanding six reproductions from a table of eight (recorded in ADR
+> `0043`).
 >
 > The half that survives is the first: **one edge confirmed by both parties**, which is a real and
 > reachable tier. The dispute half needs either a testnet fixture ARP creates itself — and then it is

@@ -38,8 +38,13 @@ the differentiation claims.
 3. **ARP holds nothing** — no key (ADR `0038`), no request path (ADR `0045`), and no data: the
    reputation is atoms, triples and positions on a public graph, so an operator adopting ARP is not
    betting on ARP surviving.
-4. **The position is the measure, so the signal is live.** It can be withdrawn and the counter-claim
-   staked, which is what separates it from an accumulated total (ADR `0046`).
+4. **The position is the measure, so the signal is live.** It can be withdrawn ~~and the counter-claim
+   staked~~, which is what separates it from an accumulated total (ADR `0046`).
+
+   **Amended by ADR `0056`, 2026-10-21.** The withdrawal half carries this on its own: measured on
+   mainnet 1155, 1 of the 185 `uses` edges has ever had its counter-claim staked, and 969 of 285,775
+   triples chain-wide (`scripts/measure/counter-side-usage.ts`). The fourth ADR to carry this premise
+   and the last to be found — `rules/claims.md` §5.
 
 The one-liner becomes: _identity is ERC-8004, the trust graph is Intuition, **the priced declaration
 of use is ARP**._

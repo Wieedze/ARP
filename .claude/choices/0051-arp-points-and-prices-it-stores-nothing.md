@@ -39,8 +39,15 @@ Three parts, and the third is the product:
    contribution to both is an atom pointing at it and the positions people take on claims about it.
    `scripts/agent-identity-atom.ts` already does this for an agent — pin a Thing, create the atom,
    link it. A tool is the same operation with a different Thing.
-3. **The market is the output.** Deposits on claims, priced and withdrawable, with the counter-claim
-   free. Trend, trust and whatever a consumer builds on them come from positions, not from ARP.
+3. **The market is the output.** Deposits on claims, priced and withdrawable, ~~with the
+   counter-claim free~~. Trend, trust and whatever a consumer builds on them come from positions, not
+   from ARP.
+
+   **Struck by ADR `0056`, 2026-10-21** — the fifth ADR found carrying this premise and the only one
+   none of three review rounds' greps reached until `counter-claim` was tried as a phrasing. The
+   counter-claim is free and all but unused: 1 of 185 mainnet `uses` edges
+   (`scripts/measure/counter-side-usage.ts`). "Priced and withdrawable" carries the point alone, and
+   `0056` built the withdrawal half.
 
 **Corollary that follows and was not obvious.** The pointer is the **atom**, not `ModuleRegistry`.
 The contract stores four strings on chain, and this decision says ARP does not store. It stays

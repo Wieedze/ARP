@@ -65,9 +65,10 @@ then the argument is somebody else's.
 - **Not one triple per interaction.** `docs/07` names this anti-pattern directly: mutable data written
   as direct triples "fragments the staking surface and forces consumers to migrate". Stable shell,
   mutable JSON behind it.
-- **The claim that works today is `(agent, uses, tool)`** — an assertion about a fact, which the tool
-  can deny, which gets a free counter-triple, and which `getToolUsage` already prices. `docs/12`
-  points 3 and 4, already built.
+- **The claim that works today is `(agent, uses, tool)`** — an assertion about a fact, ~~which the
+  tool can deny, which gets a free counter-triple,~~ and which `getToolUsage` already prices.
+  `docs/12` points 3 and 4, already built. **Struck by ADR `0056`, 2026-10-21**: the counter-triple
+  is free and all but unused, 1 of 185. The **third** copy of this premise in this file.
 
 ### 3. The position is the measure; the triple is only its support
 
@@ -111,8 +112,9 @@ timeline.
   own ADR and the assessment must never be proprietary.
 - ~~**Staking on the agent's identity atom** — rejected. Nothing to contradict, so nothing is
   learned.~~ **Amended by ADR `0056`, 2026-10-21**, on the same terms as §2 above: allowed, named a
-  market, never summed with the edge count. This is the second copy of that prohibition in this file
-  and it survived the first retraction — `rules/claims.md` §5, for the fourth time in this project.
+  market, never summed with the edge count. This file turned out to hold **three** copies of the
+  premise across §2 and this list, found over three review rounds — `rules/claims.md` §5, for the
+  fourth time in this project, and the first where the retraction itself needed three passes.
 - **Inventing a peer-vouching predicate** — deferred, not rejected. Unnecessary while
   `(agent, uses, tool)` carries the loop, and ADR `0030` is the price of choosing one carelessly.
 
