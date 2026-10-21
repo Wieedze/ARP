@@ -48,7 +48,7 @@ The reason is internal consistency, not modesty. ARP's whole argument is that it
 because it is staked money. Adding ARP's own score on top replaces the money with a judgement, and
 then the argument is somebody else's.
 
-### 2. A deposit goes on a claim that can be contradicted
+### 2. ~~A deposit goes on a claim that can be contradicted~~ — **both halves amended by `0056`**
 
 - ~~**Not on an identity atom.**~~ **Amended by ADR `0056`, 2026-10-21 — read it before relying on
   this bullet.** The reasoning below still holds and `0056` accepts it; the *prohibition* does not.

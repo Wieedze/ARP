@@ -19,10 +19,13 @@ worth being blunt, because nothing else in this document answers it:
 
 **A record that you used a tool, which is public, attributed to you, and permanent.** That is a
 different object from a review. A review is free, so it is worth what it cost. Writing the claim
-costs 0.1 TRUST on mainnet in a fee that does not come back, per claim, and your address is on it.
+costs **0.1 TRUST on mainnet in a fee that does not come back**, per claim, and your address is on
+it. The term is born with a position on top of that — another `minDeposit`, 0.01, which is yours and
+redeemable (ADR `0053`, and "What it costs" below). So the act is ~0.11 out, of which 0.1 is spent.
 
-A deposit is a separate act and it goes both ways: you buy a position on an agent or a tool, and you
-can redeem it — so a figure you read is what people hold **now**, not what was ever put in. Anybody
+Putting **more** behind it is a separate act and it goes both ways: you buy a position on a claim, an
+agent or a tool, and you can redeem it — so a figure you read is what people hold **now**, not what
+was ever put in. Anybody
 who disagrees can deposit against a claim at the same price, but almost nobody does: measured on
 mainnet 1155 on 2026-10-21, **1** of 185 `uses` edges had ever been contradicted, and 969 of 285,775
 triples chain-wide. Read an empty counter vault as "nobody bothered", never as agreement. Nothing you
@@ -310,6 +313,36 @@ Two bonding curves exist, and `defaultCurveId()` is 1:
 
 Measured 2026-10-20: curve 1 holds 26.20 TRUST at a share price of 1.000–1.060; curve 2 holds
 219.54 at 3.000–4.181. Two markets. Never add them.
+
+### 5. Take it back out, whenever you want
+
+```
+maxRedeem(you, termId, curveId)                  -> shares you can burn
+previewRedeem(termId, curveId, shares)           -> (assetsAfterFees, sharesUsed)
+redeem(receiver, termId, curveId, shares, minAssets)
+```
+
+This is the half that makes the figure mean something, and this file asserted it one section up
+before documenting it. A position you cannot leave is a donation, and a market with one direction is
+a collection box.
+
+Four things about it that cost real TRUST to learn otherwise:
+
+- **It is denominated in shares, not in TRUST.** The TRUST you get back depends on where the curve
+  is now, so `previewRedeem` is the only thing that knows. Do not invert the curve yourself.
+- **`minAssets` is your slippage floor and `0` disables it.** Take `previewRedeem`'s first return,
+  subtract your tolerance, and refuse to send if the result is zero rather than sending an
+  unprotected redemption.
+- **`maxRedeem` is the ceiling, read from the chain.** It agreed with `getShares` to the wei on
+  mainnet 2026-10-21, which is not a guarantee that it always will — ask for the ceiling, do not
+  derive it from a balance.
+- **The exit fee is real**: `getVaultFees()` returned `(entry 50, exit 75, protocol 125)` over a
+  `feeDenominator` of 10,000 on mainnet 2026-10-21. Leaving costs 0.75%, so a position taken and
+  closed at the same price loses money. `previewRedeem` already has it subtracted.
+
+Redeeming a position is not the same as unsaying the claim. The triple stays on the chain, your
+address stays on it, and the 0.1 TRUST stays spent. What changes is that you no longer have capital
+behind it — which is exactly what a reader should be able to see.
 
 ## Register a tool
 

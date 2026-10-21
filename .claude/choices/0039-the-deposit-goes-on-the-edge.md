@@ -86,9 +86,10 @@ since Intuition has no deletion.
 
 ## Alternatives considered
 
-- **The tool's atom, matching `agent-stake-on-use.ts`.** Rejected: invisible to ARP's reader and not
-  attributable to a usage claim. ~~and not contestable~~ — see the header note; and ADR `0056` later
-  **accepted the atom as a market in its own right**, beside the edge rather than instead of it.
+- **The tool's atom, matching `agent-stake-on-use.ts`.** Rejected: invisible to ARP's reader, not
+  attributable to a usage claim, ~~and not contestable~~. The struck clause: see the header note. And
+  ADR `0056` later **accepted the atom as a market in its own right**, beside the edge rather than
+  instead of it.
 - **Both vaults, splitting the amount.** Rejected: it doubles the cost of every attestation to buy
   nothing the edge does not already give, and it makes "how much was staked on this claim" a figure
   a reader has to reconstruct from two places.

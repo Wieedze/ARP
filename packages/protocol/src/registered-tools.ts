@@ -26,11 +26,16 @@ import {INTUITION_MAX_PAGE} from "./tool-listing.js";
  * | actor | writes | onto | means |
  * | --- | --- | --- | --- |
  * | a person | the tool's atom, derived from its URL | the atom's vault | "this tool is worth something" |
- * | an agent | `(agent, uses, tool)` | the edge's vault, and its counter-vault | "I used it, and I am paying to say so" |
+ * | an agent | `(agent, uses, tool)` | the edge's vault | "I used it, and I am paying to say so" |
  *
  * Two markets, two actors, two questions. ADR `0039` put the *agent's* deposit on the edge and said
  * the atom's vault "answers a different question — a market on the tool itself, open to anyone for
  * any reason". That is this one.
+ *
+ * The edge row used to name "its counter-vault" alongside the edge's own. Dropped: a triple does get
+ * one for free, and 1 of the 185 mainnet `uses` edges has ever carried a position in it
+ * (`scripts/measure/counter-side-usage.ts`, 1155, 2026-10-21), so listing it as a destination
+ * described a market rather than a mechanism. ADR `0056`.
  *
  * ## How a registered tool is recognised
  *

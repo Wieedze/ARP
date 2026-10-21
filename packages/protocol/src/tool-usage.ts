@@ -103,7 +103,14 @@ export type ToolUsageEdge = {
     agent: {atomId: string; label: string | null; type: string | null};
     /** Deposits saying the use happened and mattered. */
     support: MarketSide;
-    /** Deposits on the counter-triple, betting the other way. Free with every triple. */
+    /**
+ * Deposits on the counter-triple, betting the other way.
+ *
+ * It exists for every triple at the same price as agreement, and is almost never used: 1 of the 185
+ * mainnet `uses` edges has ever carried one, 969 of 285,775 triples chain-wide
+ * (`scripts/measure/counter-side-usage.ts`, 1155, 2026-10-21). Read an empty one as "nobody
+ * bothered", never as agreement.
+ */
     oppose: MarketSide;
 };
 

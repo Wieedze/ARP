@@ -88,9 +88,9 @@ equally strong:
 
 The ladder's engine is the opposition, so the hire pair is the weaker one and must not be rendered as
 if it were the tool pair. Two things rescue it anyway: the **payment is already rung 1**, a fact, so
-the attestation only adds "and it was delivered" — the part a payment cannot prove; and Intuition's
-**counter-triple is free**, so an invented delivery is contestable at no cost by the party with the
-most motive to contest.
+the attestation only adds "and it was delivered" — the part a payment cannot prove; and ~~Intuition's
+**counter-triple is free** (`docs/14:178`), so an invented delivery is contestable at no cost by the
+party with the most motive to contest~~.
 
 > **The second of those two is weaker than written — ADR `0056`, 2026-10-21.** Free is not the same
 > as used: **1** of the 185 mainnet `uses` edges has ever carried a counter-position, and 969 of

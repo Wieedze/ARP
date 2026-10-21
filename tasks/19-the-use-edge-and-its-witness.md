@@ -168,6 +168,19 @@ No new mechanism is needed for disagreement: Intuition gives every triple a coun
 **Do not** build arbitration, a dispute window, or a resolution authority. The market is the
 resolution, and adding an authority is the single biggest scope risk in this task.
 
+> **The Gate below cannot be met, and ADR `0056` is why — read this before starting step 3.**
+> Measured on mainnet 1155, 2026-10-21 (`scripts/measure/counter-side-usage.ts`): **1** of the 185
+> `uses` edges has ever carried a position in its counter-vault, and 969 of 285,775 triples
+> chain-wide. A Gate asking for an edge whose counter side carries the **larger** position is asking
+> for a case that does not exist in the data — the same shape as ADR `0043`'s Gate demanding six
+> reproductions from a table of eight.
+>
+> The half that survives is the first: **one edge confirmed by both parties**, which is a real and
+> reachable tier. The dispute half needs either a testnet fixture ARP creates itself — and then it is
+> a rehearsal prop, `rules/portability.md` point 4 — or restating as "render the counter side
+> correctly **when** it exists", which is what `UsageEdgeRow` already does. Decide which before
+> writing code against the sentence below.
+
 **Gate:** one edge confirmed by both parties, and one edge where the counter-triple carries the larger
 position, both rendered distinguishably.
 

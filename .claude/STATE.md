@@ -308,9 +308,12 @@ assessment`), which it only reads — so what ARP writes is a claim about **comp
   a mismatch. Untested: whether Intuition's indexer fetches a third-party pin.
 - **0046** — **ARP scores nobody**; it makes staking possible and reads the result. No score, rating
   or assessment of any agent is ever published, because the argument is that the input costs money and
-  a score replaces the money with a judgement. A deposit goes on a claim that **can be contradicted**
-  — `(agent, uses, tool)`, never one triple per interaction. **Its "never the identity atom" is
-  amended by `0056`**: a deposit there is allowed, named a market, never summed with the edge count.
+  a score replaces the money with a judgement. **Both halves of its §2 are amended by `0056`** —
+  not just the one this line used to name. "Never the identity atom" is gone: a deposit there is
+  allowed, named a market, never summed with the edge count. And "a deposit goes on a claim that
+  **can be contradicted**" is retracted as a premise: the counter-vault exists and is almost never
+  used, 1 of 185 `uses` edges, so ARP creates the edge and does not solicit a deposit on it.
+  `(agent, uses, tool)` is still the claim, and still never one triple per interaction.
   The **position** is the measure and the triple only its support, so **no historical cumulative is
   ever displayed**
   (latent today; what is live is the cross-edge sum at `tool-usage.ts:235`). Settles ADR `0015` after

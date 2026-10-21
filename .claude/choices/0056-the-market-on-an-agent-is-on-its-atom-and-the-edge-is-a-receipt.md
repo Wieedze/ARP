@@ -96,14 +96,14 @@ the depositor keeps and can redeem; the agent receives none of the principal. On
 `atomWalletDepositFee` = 50/10,000 = **0.50%** leaves toward the atom's wallet
 (`computeAtomWalletAddr`), and on mainnet that wallet is **not deployed** — code length 0 at
 `0x20A3ecb734CC64A7146d98638d73A51C52aD8922` for the Cursor atom — so who can claim it is **not
-established by this ADR**.
+established by this ADR**. The agent is paid for its work through x402, which is a different rail
+(`rules/metamask-delegation.md`).
 
 Those two figures are the only ones here that `scripts/measure/counter-side-usage.ts` does not print,
 so the calls that produce them are named instead (`rules/claims.md`, "commit the script, not the
 number"): `getAtomConfig()` on the MultiVault returns `(atomCreationProtocolFee,
 atomWalletDepositFee)` = `(1e17, 50)` against a `feeDenominator` of 10,000 from `getGeneralConfig()`,
-and `eth_getCode` on the computed wallet address returns `0x`. The agent is paid for its work through x402, which is a different rail
-(`rules/metamask-delegation.md`).
+and `eth_getCode` on the computed wallet address returns `0x`.
 
 ### 5. It is a market, so it has an exit — and ARP calls it a market, never a signal
 
