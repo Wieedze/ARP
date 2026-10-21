@@ -58,7 +58,12 @@ git rev-list --count origin/feat/agent-panel-tabs..HEAD
 
 The remote SHA above is stable between pushes, so it stays.
 
-**Tests**: connector **349 passed / 4 skipped** · app **253 passed / 2 skipped** (measured 2026-10-21). `tsc` 0, `lint` 0, `check:tokens` 0.
+**Tests**: connector **357 passed / 4 skipped** · app **271 passed / 2 skipped** · contracts **17
+passed** (measured 2026-10-21, end of day). `tsc` 0, `lint` 0, `check:tokens` 0, `forge build` clean.
+
+The app count went **down** from 276 at one point in the day, deliberately: `mainnet-routes.test.ts`
+replaced nine tests over a hand-written route list with four that read the source. Fewer tests, one
+more defect caught — the nine could not fail on the thing they existed to prevent.
 Task 16 added **44** of those — 29 planner, 7 delegated, 8 at the MCP wire. Re-read them rather than
 trusting this line: `cd packages/protocol && bun run test`.
 
