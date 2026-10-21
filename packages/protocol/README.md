@@ -335,11 +335,19 @@ const stake = await prepareStakeOnUsed({
 mainnet 1155 against 1e15 (0.001) on testnet 13579**, so an amount tuned on testnet is a tenth of
 what mainnet accepts. An amount below it is refused with `BelowMinDepositError` rather than sent.
 
-**The deposit lands on the edge, not on the tool's atom.** The edge is the claim _you_ made, it gets
-a counter-vault so anyone can take the other side, and it is the vault a reader can attribute back
-to you. The atom's vault is a market on the tool in general, open to anyone for any reason — on
-Intuition mainnet on 2026-10-19, 74 of the 185 existing `uses` edges had stake only there, where no
-reader of the edge can see it (`scripts/measure-stake-vault-placement.ts`).
+**The deposit lands on the edge, not on the tool's atom.** The edge is the claim _you_ made, so a
+reader can attribute the position back to you, and it is the vault a tool-reputation read prices. The
+atom's vault is the market on the tool itself, open to anyone for any reason — on Intuition mainnet on
+2026-10-19, 74 of the 185 existing `uses` edges had stake only there, where no reader of the edge can
+see it (`scripts/measure/stake-vault-placement.ts`).
+
+**An earlier version of this paragraph justified the edge by its counter-vault** — "anyone can take
+the other side". The counter-vault is real and costs what agreement costs, but it is all but unused:
+measured 2026-10-21 on the same chain, **1** of those 185 edges has ever been contradicted and 969 of
+285,775 triples chain-wide (`scripts/measure/counter-side-usage.ts`). ADR `0056` acts on that for
+ARP's own surfaces — the edge is created rather than staked on there, and the market is on the atoms.
+This planner still offers the edge deposit, because an agent that wants to put more behind its own
+attributed claim is not wrong to; what changed is the reason given for it.
 
 ### Which atom a tool gets
 
@@ -347,7 +355,7 @@ For a **content address** — `ipfs://`, `ar://` — the atom id derives from th
 _is_ the pinned document. Nothing else is needed.
 
 For an **`https://` endpoint** it is not that simple, and getting it wrong is permanent. Measured on
-mainnet over the 84 tool atoms on `uses` edges (`scripts/measure-tool-atom-shape.ts`): **78 are
+mainnet over the 84 tool atoms on `uses` edges (`scripts/measure/tool-atom-shape.ts`): **78 are
 `ipfs://`** and 77 of those resolve a pinned Thing with metadata; the only two raw-URL atoms in the whole set are `schema.org` vocabulary
 terms, not tools. So minting an atom straight from an `https://` URL puts the tool on an id with no
 metadata, beside whatever atom it really has — and the tool's reputation splits across both, with
@@ -357,7 +365,7 @@ So a URL gets a **Thing derived from the URL itself**, every field a pure functi
 (`normaliseToolUrl` + `toolThing`, ADR `0054`). Same URL in, same document, same CID, same atom id —
 on any machine, with no credential and no network. The free-text `name` is what forks an atom, and
 removing the field removes the fork. Measured on mainnet 2026-10-21 over all 90,608 atoms whose
-Thing carries a URL (`scripts/measure-url-atom-fragmentation.ts`): 3,256 URLs are held by more than
+Thing carries a URL (`scripts/measure/url-atom-fragmentation.ts`): 3,256 URLs are held by more than
 one atom, and **2,022 atoms are in excess of the names present** — they share both a URL and a name
 with another atom, which nothing but duplication explains. `https://trenches.bid` has **53 atoms all
 named "Clawlett"**; `https://github.com` has 5, labelled "GitHub" twice and "github.com" three times.

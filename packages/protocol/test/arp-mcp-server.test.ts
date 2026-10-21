@@ -269,7 +269,12 @@ describe("the handshake", () => {
         const instructions = String(result["instructions"]);
         // What the expense buys, which is the question a rational agent asks first.
         expect(instructions).toContain("does not come back");
-        expect(instructions).toContain("contestable");
+        // It said `contestable`. ADR `0056` took that word out: measured on mainnet 1155, 1 of 185
+        // `uses` edges has ever been contradicted, so leading on contestability told a caller to
+        // expect a mechanism nothing reaches. What the fee buys is attribution and permanence.
+        expect(instructions).toContain("attributed to you");
+        // And the exit, because a figure read without it is mistaken for a cumulative.
+        expect(instructions).toContain("redeem it");
         // That reading is free, which is the job most agents want and the cheapest one.
         expect(instructions).toMatch(/needs NOTHING/);
         // And the precautions, still there, at the end where a precaution belongs.

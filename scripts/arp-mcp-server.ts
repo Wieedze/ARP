@@ -96,7 +96,7 @@ const reads = multiVaultReads({ address: MULTI_VAULT, chainId, rpcUrl: RPC_URL }
 
 /**
  * So an `https://` tool reuses the atom it already has instead of minting a metadata-less one
- * beside it. Measured by `scripts/measure-tool-atom-shape.ts`: 78 of the 84 tool atoms on mainnet
+ * beside it. Measured by `scripts/measure/tool-atom-shape.ts`: 78 of the 84 tool atoms on mainnet
  * `uses` edges are `ipfs://` and 77 of those resolve a pinned Thing. A graph read, no credential.
  */
 const toolAtoms = intuitionToolAtomLookup({ graphqlUrl: GRAPHQL_URL });
@@ -207,11 +207,16 @@ const SERVER_INSTRUCTIONS = [
   'them. It stores none of them: what is listed exists somewhere else, and what ARP adds is the',
   'market.',
   '',
-  'WHY SPEND ON THIS. Declaring costs TRUST and the fee does not come back. What it buys is a record',
-  'that you used a tool which is public, attributed to you, and contestable — a review is free, so it',
-  'is worth what it cost. Your position can be withdrawn, so it says what you think now; anyone who',
-  'disagrees can deposit against it at the same price. Other agents read that when choosing whom to',
-  'hire. If you never declare anything, you are not in that set.',
+  'WHY SPEND ON THIS. Declaring costs 0.1 TRUST on mainnet and the fee does not come back. What it',
+  'buys is a record that you used a tool which is public, attributed to you, and permanent — a review',
+  'is free, so it is worth what it cost. Other agents read that when choosing whom to hire. If you',
+  'never declare anything, you are not in that set.',
+  '',
+  'A deposit is a different act from a declaration, and it goes both ways: you buy a position on an',
+  'agent or a tool, and you can redeem it. So a figure you read is what people hold NOW, not what was',
+  'ever put in. Anyone can deposit against a claim at the same price, but almost nobody does — 1 of',
+  '185 `uses` edges on mainnet 1155 as of 2026-10-21 — so read an empty counter vault as "nobody',
+  'bothered", never as agreement.',
   '',
   'FOUR JOBS, and they need different things:',
   '  check a tool or an agent   needs NOTHING — public reads, no wallet, no identity. Start here.',
@@ -361,7 +366,7 @@ async function stakeOnUsed(id: JsonRpcId, args: Record<string, unknown>) {
 /**
  * Does this agent have an identity atom — the thing a `uses` edge must carry as its subject?
  *
- * The most useful read here, because of what `scripts/measure-cohort-coverage.ts` measures: the atom
+ * The most useful read here, because of what `scripts/measure/cohort-coverage.ts` measures: the atom
  * is written by Intuition's **mirror**, the mirror holds 28,648, and the Base registry's highest
  * minted id was 309,925 on 2026-10-20. So for roughly nine agents in ten the answer is **no**, and
  * every other tool on this server fails for them until it is yes (ADR `0047`).

@@ -14,6 +14,7 @@ import {
     type StakeQuote,
     type StakeSession,
     type StakeSide,
+    type StakeTarget,
 } from "../../services/trust-stake";
 
 /**
@@ -58,6 +59,7 @@ type Phase =
           hash: Hex | null;
       };
 
+/** Both sides exist only for a triple. An atom has no counter vault to oppose from (ADR `0056`). */
 const SIDES: StakeSide[] = ["support", "oppose"];
 
 const SIDE_COPY: Record<StakeSide, {label: string; sentence: string}> = {
@@ -88,10 +90,21 @@ function errorMessage(error: unknown): string {
  * opens (ADR `0017` safeguard 4).
  */
 export type StakeClaim = {
-    /** The triple's term id. A support deposit goes here; the counter-triple is derived. */
-    tripleId: Hex;
+    /**
+     * What the deposit is addressed to. A triple's counter-triple is derived from it; an atom has
+     * none, and the control then shows no side selector because there is only one side.
+     */
+    target: StakeTarget;
     subject: string;
-    predicate: string;
+    /** The heading above the form. The caller names it, because the two targets are not one act. */
+    heading: string;
+    /**
+     * What the subject is claimed to do, rendered after `subject` in the confirmation.
+     *
+     * Absent for an atom target: an atom carries no assertion, so there is no claim to restate and
+     * the confirmation names the subject alone.
+     */
+    predicate?: string;
     /**
      * One line saying what a deposit here means, under the heading.
      *
@@ -113,7 +126,8 @@ export type StakeClaim = {
      */
     market: {
         support: {positionCount: number | null};
-        opposition: {positionCount: number | null};
+        /** `null` for an atom target — there is no opposition vault, not an empty one. */
+        opposition: {positionCount: number | null} | null;
     } | null;
 };
 
@@ -152,7 +166,16 @@ export function StakeControl({
     const {switchChainAsync, isPending: isSwitching} = useSwitchChain();
     const {quote: buildQuote, submit, awaitReceipt} = useStakeActions();
 
-    const [side, setSide] = useState<StakeSide | null>(null);
+    /**
+     * The chosen side, and the effective one.
+     *
+     * For an atom there is exactly one side, so requiring a choice would be a form field with a
+     * single option. Safeguard 2 is untouched: the **amount** is what never gets a default, and it
+     * still does not.
+     */
+    const hasCounterVault = claim.target.kind === "triple";
+    const [chosenSide, setChosenSide] = useState<StakeSide | null>(null);
+    const side: StakeSide | null = hasCounterVault ? chosenSide : "support";
     // Safeguard 2: empty, and nothing in this file ever seeds it.
     const [amount, setAmount] = useState("");
     const [phase, setPhase] = useState<Phase>({step: "form"});
@@ -161,7 +184,7 @@ export function StakeControl({
     const fieldId = useId();
     const onMainnet = chainId === INTUITION_MAINNET_CHAIN_ID;
 
-    const tripleId = claim.tripleId;
+    const target = claim.target;
 
     const check =
         session === undefined
@@ -192,7 +215,7 @@ export function StakeControl({
         setPhase({step: "quoting"});
         try {
             const quote = await buildQuote({
-                tripleId,
+                target,
                 side,
                 assets: check.value,
                 receiver: address,
@@ -257,7 +280,7 @@ export function StakeControl({
         // to whichever container this sits in, and each caller provides its own.
         <section aria-labelledby={`${fieldId}-heading`}>
             <h4 id={`${fieldId}-heading`} className="font-medium">
-                Take a position on this claim
+                {claim.heading}
             </h4>
             <p className="mt-1 text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)] max-w-[60ch]">
                 {claim.blurb}
@@ -319,7 +342,7 @@ export function StakeControl({
                     onReset={() => {
                         setPhase({step: "form"});
                         setAmount("");
-                        setSide(null);
+                        setChosenSide(null);
                     }}
                 />
             ) : phase.step === "error" ? (
@@ -357,38 +380,40 @@ export function StakeControl({
                 </div>
             ) : (
                 <div className="mt-4 max-w-[34rem]">
-                    <fieldset className="border-0 p-0 m-0">
-                        <legend className="font-mono uppercase tracking-wider text-[length:var(--text-label)] text-[color:var(--color-fg-60)]">
-                            Side
-                        </legend>
-                        <div className="mt-2 flex flex-col gap-2">
-                            {SIDES.map((option) => (
-                                <label
-                                    key={option}
-                                    className="flex items-start gap-3 border border-[color:var(--color-border)] px-3 py-2 cursor-pointer has-[:checked]:border-[color:var(--color-accent)]"
-                                >
-                                    <input
-                                        type="radio"
-                                        name={`${fieldId}-side`}
-                                        value={option}
-                                        checked={side === option}
-                                        onChange={() => setSide(option)}
-                                        className="mt-1 accent-[color:var(--color-accent)]"
-                                    />
-                                    <span className="text-[length:var(--text-body-sm)]">
-                                        <span className="font-medium">
-                                            {SIDE_COPY[option].label}
+                    {hasCounterVault ? (
+                        <fieldset className="border-0 p-0 m-0">
+                            <legend className="font-mono uppercase tracking-wider text-[length:var(--text-label)] text-[color:var(--color-fg-60)]">
+                                Side
+                            </legend>
+                            <div className="mt-2 flex flex-col gap-2">
+                                {SIDES.map((option) => (
+                                    <label
+                                        key={option}
+                                        className="flex items-start gap-3 border border-[color:var(--color-border)] px-3 py-2 cursor-pointer has-[:checked]:border-[color:var(--color-accent)]"
+                                    >
+                                        <input
+                                            type="radio"
+                                            name={`${fieldId}-side`}
+                                            value={option}
+                                            checked={side === option}
+                                            onChange={() => setChosenSide(option)}
+                                            className="mt-1 accent-[color:var(--color-accent)]"
+                                        />
+                                        <span className="text-[length:var(--text-body-sm)]">
+                                            <span className="font-medium">
+                                                {SIDE_COPY[option].label}
+                                            </span>
+                                            <span className="block text-[color:var(--color-fg-60)]">
+                                                {SIDE_COPY[option].sentence}
+                                            </span>
                                         </span>
-                                        <span className="block text-[color:var(--color-fg-60)]">
-                                            {SIDE_COPY[option].sentence}
-                                        </span>
-                                    </span>
-                                </label>
-                            ))}
-                        </div>
-                    </fieldset>
+                                    </label>
+                                ))}
+                            </div>
+                        </fieldset>
+                    ) : null}
 
-                    <div className="mt-4">
+                    <div className={hasCounterVault ? "mt-4" : ""}>
                         <label
                             htmlFor={`${fieldId}-amount`}
                             className="block font-mono uppercase tracking-wider text-[length:var(--text-label)] text-[color:var(--color-fg-60)]"
@@ -465,7 +490,7 @@ function ConfirmStep({
     const positions =
         quote.side === "support"
             ? (claim.market?.support.positionCount ?? null)
-            : (claim.market?.opposition.positionCount ?? null);
+            : (claim.market?.opposition?.positionCount ?? null);
 
     return (
         <div className="mt-4 border border-[color:var(--color-border-strong)] p-4 max-w-[36rem]">
@@ -474,13 +499,29 @@ function ConfirmStep({
             </p>
             <p className="mt-3 text-[length:var(--text-body-sm)] max-w-[52ch]">
                 You are about to deposit{" "}
-                <span className="font-mono">{formatTrust(quote.assets)} TRUST</span> to{" "}
-                <span className="font-medium">{SIDE_COPY[quote.side].label.toLowerCase()}</span> the
-                claim that{" "}
-                <span className={claim.subjectIsId ? "font-mono" : "font-medium"}>
-                    {claim.subject}
-                </span>{" "}
-                {claim.predicate}.
+                <span className="font-mono">{formatTrust(quote.assets)} TRUST</span>{" "}
+                {claim.target.kind === "triple" ? (
+                    <>
+                        to{" "}
+                        <span className="font-medium">
+                            {SIDE_COPY[quote.side].label.toLowerCase()}
+                        </span>{" "}
+                        the claim that{" "}
+                        <span className={claim.subjectIsId ? "font-mono" : "font-medium"}>
+                            {claim.subject}
+                        </span>{" "}
+                        {claim.predicate}.
+                    </>
+                ) : (
+                    <>
+                        onto{" "}
+                        <span className={claim.subjectIsId ? "font-mono" : "font-medium"}>
+                            {claim.subject}
+                        </span>
+                        . Nothing here can contradict it, and the deposit stays yours — it is a
+                        position you can redeem, not a payment.
+                    </>
+                )}
             </p>
             {/* The only other place the network is named can be thousands of pixels up, when this
                 control is one of several on a list page. ADR `0017`'s Consequences section calls
@@ -565,8 +606,11 @@ function Receipt({
                 {settled ? "Position taken" : "Submitted — waiting for the receipt"}
             </p>
             <p className="mt-3 text-[length:var(--text-body-sm)] max-w-[52ch]">
-                {formatTrust(quote.assets)} TRUST deposited to{" "}
-                {quote.side === "support" ? "support" : "oppose"} this claim.
+                {formatTrust(quote.assets)} TRUST deposited{" "}
+                {quote.target.kind === "atom"
+                    ? "onto this agent"
+                    : `to ${quote.side === "support" ? "support" : "oppose"} this claim`}
+                .
                 {settled
                     ? null
                     : " Nothing above has been updated yet — it will refresh once the receipt lands."}

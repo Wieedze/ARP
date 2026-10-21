@@ -29,9 +29,12 @@ describe("matchesFilters", () => {
     });
 
     it("combines with AND, so two filters narrow rather than widen", () => {
-        const both = row({paidDeclarations: 1, declarations: 1, opposeTrust: null});
-        expect(matchesFilters(both, ["paid-for", "declared-by-agents"])).toBe(true);
-        expect(matchesFilters(both, ["paid-for", "contested"])).toBe(false);
+        const neither = row({paidDeclarations: 1, declarations: 0});
+        expect(matchesFilters(row({paidDeclarations: 1, declarations: 1}), [
+            "paid-for",
+            "declared-by-agents",
+        ])).toBe(true);
+        expect(matchesFilters(neither, ["paid-for", "declared-by-agents"])).toBe(false);
     });
 
     it("excludes an unknown rather than counting it as zero", () => {
@@ -44,11 +47,6 @@ describe("matchesFilters", () => {
         expect(matchesFilters(row({paidDeclarations: null}), ["paid-for"])).toBe(false);
         expect(matchesFilters(row({paidDeclarations: 0}), ["paid-for"])).toBe(false);
         expect(matchesFilters(row({paidDeclarations: 1}), ["paid-for"])).toBe(true);
-    });
-
-    it("reads contested off the oppose column, which is null when nothing stands against", () => {
-        expect(matchesFilters(row({opposeTrust: null}), ["contested"])).toBe(false);
-        expect(matchesFilters(row({opposeTrust: "0.5000"}), ["contested"])).toBe(true);
     });
 
     it("every declared filter is handled", () => {
@@ -104,12 +102,14 @@ describe("unknowableUnder", () => {
         expect(unknowableUnder([row()], ["paid-for", "declared-by-agents"])).toBe(0);
     });
 
-    it("treats a registered row under `contested` as unknowable", () => {
-        // An atom's vault has no counter side to read at all, so `opposeTrust: null` there means
-        // "not applicable" rather than "nobody disagrees".
-        expect(unknowableUnder([registered()], ["contested"])).toBe(1);
-        // Whereas a declared row's null is measured.
-        expect(unknowableUnder([row({opposeTrust: null})], ["contested"])).toBe(0);
+    /**
+     * The `contested` filter was the other half of this count and ADR `0056` removed it, so
+     * `paid-for` is now the only filter that can exclude a row on an unknown. That makes this the
+     * whole of the unknowable surface rather than one case of two.
+     */
+    it("counts only the unknown, never a measured no", () => {
+        expect(unknowableUnder([registered()], ["paid-for"])).toBe(1);
+        expect(unknowableUnder([row({paidDeclarations: 0})], ["paid-for"])).toBe(0);
     });
 });
 

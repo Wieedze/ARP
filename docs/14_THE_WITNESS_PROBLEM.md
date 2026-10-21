@@ -50,7 +50,7 @@ is not empty.
 transactions and holds three agents, which is a minting platform, not an agent at work — and a nonce
 counts every transaction including the mint. Whether what these accounts _call_ is a tool is
 unmeasured, and settling it needs an indexer.
-`scripts/measure-cohort-onchain-activity.ts` reproduces the table.
+`scripts/measure/cohort-onchain-activity.ts` reproduces the table.
 
 **And the limit that bounds the whole row: most tools are not contracts.** An MCP server, a REST API,
 an LLM call — none leave calldata. On the subset that does, this is unbeatable; off it, it says
@@ -97,7 +97,7 @@ intervals, because the callable count is small and a point estimate would mislea
 > **The denominator is as of 2026-10-16 and has since tripled.** Base held 88,243 agents then; its
 > highest minted id was **309,925** on 2026-10-20, rising on the order of 44,000 a day. The **rates**
 > below are what the sample measures and they do not expire; the extrapolated column does, and
-> scales with the population. Re-run `scripts/measure-cohort-coverage.ts` rather than trusting a
+> scales with the population. Re-run `scripts/measure/cohort-coverage.ts` rather than trusting a
 > count written here.
 
 |                                                        | of 122 parsed  | 95% CI     | extrapolated over 88,243 |
@@ -155,7 +155,7 @@ And the limit, which must never be rendered away: **it is a filter, not an exclu
 deposit on the same edge, and anyone may write a competing edge nobody attested. Every attestation
 also costs at least `minDeposit`, so the bound on how many edges a party can stand behind is money.
 
-`scripts/measure-attestor-filter.ts` reproduces it.
+`scripts/measure/attestor-filter.ts` reproduces it.
 
 ## The ladder of knowledge
 
@@ -173,17 +173,32 @@ ladder applied to usage rather than to trust.
 The bottom row is the one that gets mistaken for data. Its only weight is the TRUST staked behind it,
 which is a market pricing an opinion — not evidence that anything happened.
 
-## Disagreement is already free
+## Disagreement is already free — and almost nobody buys it
 
 Intuition gives every triple a counter-triple. So:
 
 - the agent claims `(A, use, B)` and deposits on the triple
 - B disagrees and deposits on the **counter**-triple
 
-No new mechanism, no arbitration, no authority. The disagreement is on-chain, priced, and visible —
-and a contested edge is more informative than an uncontested one, because somebody paid to contest it.
+No new mechanism, no arbitration, no authority. The disagreement is on-chain, priced, and visible,
+and a contested edge is more informative than an uncontested one because somebody paid to contest it.
 
-That is the speculative layer: support is "this happened and mattered", oppose is a bet against it.
+**Measured, 2026-10-21, mainnet 1155** (`scripts/measure/counter-side-usage.ts`) — and this section
+was built on the mechanism rather than on its use:
+
+| population                | total   | somebody **disagreed** |
+| ------------------------- | ------- | ---------------------- |
+| every triple on the chain | 285,775 | **969 — 0.34%**        |
+| the 185 `uses` edges      | 185     | **1**                  |
+
+So the counter-vault is **available and all but unused**, which is `rules/claims.md` check 1: a
+mechanism nothing reaches is latent, not live. The reason is structural rather than cultural — a
+statement of fact has no resolution mechanism, so there is nothing to pay somebody for being right
+about it, and the bet has no settlement date.
+
+What carries the weight instead is the **cost of writing the claim**: 0.1 TRUST in a non-recoverable
+protocol fee, per declaration. ADR `0056` acts on this — the edge is created, not staked on, and the
+market lives on the atoms, in both directions.
 
 ## What this means for the build
 

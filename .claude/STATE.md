@@ -1,6 +1,6 @@
 # Project state
 
-**Updated** 2026-10-20 (coherence audit, `tasks/28`). Hand-maintained — a task does not close without updating this file
+**Updated** 2026-10-21 (ADR `0056` — where the market on an agent lives). Hand-maintained — a task does not close without updating this file
 (`workflow.md`, task-close protocol).
 
 Read this after `CLAUDE.md` and before anything else. It replaces reading every ADR in
@@ -58,8 +58,8 @@ git rev-list --count origin/feat/agent-panel-tabs..HEAD
 
 The remote SHA above is stable between pushes, so it stays.
 
-**Tests**: connector **357 passed / 4 skipped** · app **271 passed / 2 skipped** · contracts **17
-passed** (measured 2026-10-21, end of day). `tsc` 0, `lint` 0, `check:tokens` 0, `forge build` clean.
+**Tests**: connector **368 passed / 4 skipped** · app **322 passed / 2 skipped** · contracts **17
+passed** (measured 2026-10-21, after ADR `0056`). `tsc` 0, `lint` 0, `check:tokens` 0.
 
 The app count went **down** from 276 at one point in the day, deliberately: `mainnet-routes.test.ts`
 replaced nine tests over a hand-written route list with four that read the source. Fewer tests, one
@@ -74,7 +74,7 @@ the worst place in the file to get wrong twice.)
 
 **What those gates do NOT cover** (`claims.md` check 4): `scripts/arp-mcp-server.ts`,
 `scripts/verify-cohort.ts`, `scripts/agent-declare-used.ts` and
-`scripts/measure-stake-vault-placement.ts` are inside **no typecheck and no lint** — there is no root
+`scripts/measure/stake-vault-placement.ts` are inside **no typecheck and no lint** — there is no root
 `tsconfig.json` and no root eslint config. Task 16 added two of those four, so the gap `tasks/21`
 owns got wider rather than narrower. `scripts/arp-mcp-tools.ts` and
 `scripts/rig-registration-files.ts` _are_ inside the connector's typecheck, incidentally, because its
@@ -108,7 +108,7 @@ and task 20 commits and does not describe them.**
 | 16     | the connector an agent declares through                   | **half 1 complete** (`a714f25`, verifier PASS round 4) — `packages/protocol/src/declare/`, 2 MCP tools, 44 tests. Prepares calls, never signs (ADR `0038`); stake on the edge (ADR `0039`). Half 2 → `tasks/25`                                         |
 | 17     | the external verifier                                     | **built**, 39 tests (15 declaration + 24 probe, measured — 48 was never right); gate not yet run at 100 agents                                                                                                                                          |
 | 18     | `strict` is off in the app                                | done, verified (`6b351ee`) — cost was indeed zero errors                                                                                                                                                                                                |
-| 19     | the `use` edge and its witness                            | step 1 done. **Step 1b is blocking** — the `same as` join does not exist (`scripts/measure-caip10-join.ts`: zero edges). 1b also **owns task 24's deferred step 3**                                                                                     |
+| 19     | the `use` edge and its witness                            | step 1 done. **Step 1b is blocking** — the `same as` join does not exist (`scripts/measure/caip10-join.ts`: zero edges). 1b also **owns task 24's deferred step 3**                                                                                     |
 | 20     | a tool renders as a protocol                              | done, verified                                                                                                                                                                                                                                          |
 | 21     | `scripts/` is outside every gate                          | open — **not** zero-cost, unlike 18; owns the gap 18 did not reach                                                                                                                                                                                      |
 | 22     | the chain as witness                                      | open — user proposal; strongest evidence class, bounded by how much tool use is on-chain. **Measure first**                                                                                                                                             |
@@ -198,7 +198,7 @@ file exists so an ask does not get lost and does not get smuggled into an unrela
 | `verify-cohort.ts` builds a document-hash map, logs it, and **never reads it**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | task 21                                           | its header claimed caching that does not happen; the claim is corrected, the map is not wired. A Base run was observed loading a testnet file before the out path was keyed by target                                                                                                                                                                                                                                                                                                  |
 | `ensureAtomForURI` mints an atom for any `ipfs://` string without validating it is a CID; 18 permanent atoms with fabricated CIDs exist on testnet                                                                                                                                                                                                                                                                                                                                                                                                                                                     | task 20 appendix                                  | unrecoverable per occurrence                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | the protocol package has **one `as any`** — `src/arp/modules.ts:201`, with an eslint-disable                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | `tasks/09`                                        | arrived with the ADR `0041` fold; pre-existing in `sdk/` since `c461677`. `code.md` forbids it and the package had none before, so do not assume the package is clean of it. Not fixed in the fold, because that is a behaviour change in moved code                                                                                                                                                                                                                                   |
-| `packages/protocol/src/tool-usage.ts` scopes its per-vault fields to a **hardcoded curve 1** while its asset totals are all-curve                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | `tasks/23` records the deferral; the fix is small | **not live for correctness, but it cost three defects.** 89.33% of mainnet `uses`-edge TRUST is on curve 2 (`measure-stake-vault-placement.ts`), so an edge can hold capital and report zero positions — 1 of 185 does. The `off-curve` state papers over it and has produced one live sort defect, one live counts defect and one latent caption defect. `getToolUsage` already accepts `curveId`; the blocker is a design question, not a contract change                            |
+| `packages/protocol/src/tool-usage.ts` scopes its per-vault fields to a **hardcoded curve 1** while its asset totals are all-curve                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | `tasks/23` records the deferral; the fix is small | **not live for correctness, but it cost three defects.** 89.33% of mainnet `uses`-edge TRUST is on curve 2 (`measure/stake-vault-placement.ts`), so an edge can hold capital and report zero positions — 1 of 185 does. The `off-curve` state papers over it and has produced one live sort defect, one live counts defect and one latent caption defect. `getToolUsage` already accepts `curveId`; the blocker is a design question, not a contract change                            |
 | ~~A declare-only run creates an edge with no position on it~~ **CLOSED 2026-10-21, ADR `0053`.** The product decision was made: `assets = cost + minDeposit`, so every term is born with a position and the declaration is self-attesting in one transaction. Enforced by `previewAtomCreate`/`previewTripleCreate`, which are callable before the term exists and return `shares = 0` for a fee-only deposit. Four write paths carried the old behaviour and all four are fixed: the package planner, `scripts/plan-identity-atom.ts`, three sites in `app/src/services/intuition-graph.ts`, and `submitOperatorLink` in `app/src/services/agent-import.ts` — that last one on **mainnet 1155**, latent (zero `same as` edges onto a `caip10:` atom existed, so it had never run). Residue: **6 positionless atoms on testnet 13579**, unremovable | ADR `0053`                                        | closed                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
 | The Intuition indexer returns **at most 250 rows** per query however large `limit` is — silently, no error, no flag                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | `tool-listing.ts`, fixed 2026-10-21              | **was latent.** `DEFAULT_EDGE_LIMIT` was 500 and `truncated` is `rows.length >= edgeLimit`, so the condition was unsatisfiable and a short read reported itself complete. Never bit: mainnet has 185 `uses` edges. `INTUITION_MAX_PAGE` is exported and the limit clamped — **anything else in this repo that pages has to respect it**                                                                                                                                             |
 | `scripts/agent-stake-on-use.ts` deposits on the tool's **atom** while `getToolUsage` prices the **triple**, so its stake is invisible to ARP's own reader                                                                                                                                                                                                                                                                                                                                                                                                                                              | ADR `0039`                                        | **latent, not live** — its only callers are `agent-server.ts` and `agent-server-specialist.ts`, both set-aside hackathon surface (ADR `0033`). Not fixed: it is historical record. Do not copy it — `packages/protocol/src/declare/` is the pattern. Mainnet, 2026-10-19: 74 of 185 `uses` edges are in that state                                                                                                                                                                     |
@@ -223,8 +223,18 @@ Full list in `.claude/choices/INDEX.md` (generated). The ones to know before tou
 - **0031** — a claim carries its bounds. See below.
 - **0038** — the write path is a **plan**, not a transaction. The connector returns unsigned calls
   and holds no key, so ADR `0035`'s "ARP is not a party" is structural rather than promised.
-- **0039** — the deposit goes on the **edge**, not the tool's atom. The edge is the claim, it has a
-  counter-vault, and it is the vault `getToolUsage` prices.
+- **0039** — the deposit goes on the **edge**, not the tool's atom. **Narrowed by `0056`**: the
+  edge is created, not deposited on. It is still the vault `getToolUsage` prices and still the claim;
+  what went is the premise that its counter-vault makes it a market.
+- **0056** — **the market on an agent is on the agent's own atom; the `uses` edge is a receipt that
+  costs money to write.** Measured on mainnet 1155, 2026-10-21: **1** of the 185 `uses` edges has
+  ever been contradicted, and **969 of 285,775** triples chain-wide — so nobody takes the other side
+  of a statement of fact, and the 0.1 TRUST non-recoverable fee to *create* the edge is the whole
+  of the skin in the game. Amends `0046` §2: a deposit on an identity atom is now allowed, named a
+  **market** and never reputation, never summed with the edge count. And it is a market in both
+  directions — `redeem` shipped with it, because a deposit nobody can withdraw is a donation. The
+  user's framing, verbatim: _« soit on mise sur un agent soit on retire notre mise de l'agent, c'est
+  un market donc pas un signal, juste une bourse d'agents et d'outils »_.
 - **0040** — `TrustStakeCapEnforcer` is a **native-spend** cap. It bounds the amount, not the kind,
   so a cap can be burned on non-recoverable fees. Corrects a claim five files asserted.
 - **0041** — one protocol package, `packages/protocol` (`@arp-protocol/core`), with `sdk/` folded
@@ -285,7 +295,7 @@ assessment`), which it only reads — so what ARP writes is a claim about **comp
   third of the registry. Measured first-party, 2026-10-21: Base's next id is **444,562**, the mirror
   reaches **28,720** — unchanged in substance since 2026-09-16 — so coverage is **6.46% and falling**
   (it was 9.2% on 2026-10-20; the denominator grows, the numerator does not). Read it
-  with `scripts/measure-cohort-coverage.ts`; the population is read, never hardcoded
+  with `scripts/measure/cohort-coverage.ts`; the population is read, never hardcoded
   (`scripts/erc8004-population.ts`).
   **The node ships over stdio** (`--stdio`), one dispatch for both transports, diagnostics on stderr
   because stdout is the protocol channel. New tool `arp_identity` — ask it first; it answers whether
@@ -299,8 +309,10 @@ assessment`), which it only reads — so what ARP writes is a claim about **comp
 - **0046** — **ARP scores nobody**; it makes staking possible and reads the result. No score, rating
   or assessment of any agent is ever published, because the argument is that the input costs money and
   a score replaces the money with a judgement. A deposit goes on a claim that **can be contradicted**
-  — `(agent, uses, tool)`, never the identity atom, never one triple per interaction. The **position**
-  is the measure and the triple only its support, so **no historical cumulative is ever displayed**
+  — `(agent, uses, tool)`, never one triple per interaction. **Its "never the identity atom" is
+  amended by `0056`**: a deposit there is allowed, named a market, never summed with the edge count.
+  The **position** is the measure and the triple only its support, so **no historical cumulative is
+  ever displayed**
   (latent today; what is live is the cross-edge sum at `tool-usage.ts:235`). Settles ADR `0015` after
   89 days: its term-ID half stands, its trust-provider half is rejected. Measured first —
   `has trust provider` is 28,683 edges over **three** objects, Deep3 at 99.86%.
@@ -329,12 +341,12 @@ assessment`), which it only reads — so what ARP writes is a claim about **comp
 Every measured figure names its script. Run them; do not quote them from memory.
 
 ```
-scripts/measure-cohort-endpoints.ts        what registration files declare, and what is probeable
-scripts/measure-cohort-callable.ts         how many agents can act as a tool for another agent
-scripts/measure-predicate-edges.ts         edge count per predicate the connector freezes
-scripts/measure-predicate-objects.ts       what `use` vs `uses` edges actually assert
-scripts/measure-predicate-reachability.ts  whether a defect is live or latent
-scripts/measure-stake-vault-placement.ts   whether a stake sits on the edge or the object atom
+scripts/measure/cohort-endpoints.ts        what registration files declare, and what is probeable
+scripts/measure/cohort-callable.ts         how many agents can act as a tool for another agent
+scripts/measure/predicate-edges.ts         edge count per predicate the connector freezes
+scripts/measure/predicate-objects.ts       what `use` vs `uses` edges actually assert
+scripts/measure/predicate-reachability.ts  whether a defect is live or latent
+scripts/measure/stake-vault-placement.ts   whether a stake sits on the edge or the object atom
 scripts/build-claude-index.ts              regenerate the ADR and post-mortem indexes
 scripts/verify-pin-key.ts                  validate the partner key, prove recipe determinism
 ```

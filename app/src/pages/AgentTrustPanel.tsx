@@ -2,6 +2,7 @@ import {useId, useState} from "react";
 import {Link, useParams, useSearchParams} from "react-router-dom";
 
 import {linkClass} from "../lib/control-class";
+import {AgentBacking} from "../components/agent/AgentBacking";
 import {AgentIdentityPanel} from "../components/agent/AgentIdentityPanel";
 import {AssessmentRow} from "../components/agent/AssessmentRow";
 import {CapabilitySection} from "../components/agent/CapabilitySection";
@@ -18,7 +19,7 @@ import {
     type TrustPanelView,
 } from "../services/agent-trust";
 import {ERC8004_GRAPHQL_URL} from "../services/erc8004-connector";
-import type {StakeSession} from "../services/trust-stake";
+import {asStakeTermId, type StakeSession} from "../services/trust-stake";
 
 /**
  * `/agent/:chainId/:tokenId` — the trust panel.
@@ -82,6 +83,9 @@ export function AgentTrustPanel() {
     const sessionQuery = useStakeSession();
     const profileQuery = useAgentProfile(ref, sessionQuery.data?.curveId);
     const view = profileQuery.data;
+    // Checked, not asserted: `atomTermId` comes off a source handle typed `string`, and a malformed
+    // term id would become the address a deposit is sent to.
+    const backingAtomId = asStakeTermId(view?.atomTermId ?? null);
 
     /**
      * `replace` rather than `push`: a tab is a way of looking at one page, not a
@@ -199,6 +203,25 @@ export function AgentTrustPanel() {
                         <AgentIdentityPanel view={view} />
 
                         <div className="min-w-0">
+                            {/* First in the column, because it is the market on **this agent**,
+                                which is what the page is about. The assessments below it are one
+                                provider's opinion, which is the provider's business and runs
+                                beside this rather than feeding it (ADR `0056`).
+
+                                Absent when the graph has no atom for the agent: there is no vault
+                                to deposit into, so the section would be a form with nowhere to
+                                send. Measured on mainnet 1155 — most of the mirrored cohort does
+                                resolve to one, and the ones that do not are the honest gap. */}
+                            {backingAtomId === null ? null : (
+                                <div className="mb-16 pb-16 border-b border-[color:var(--color-border)]">
+                                    <AgentBacking
+                                        atomTermId={backingAtomId}
+                                        name={view.name ?? view.tokenId}
+                                        nameIsId={view.name === null}
+                                    />
+                                </div>
+                            )}
+
                             {shouldUseTabs(view.rows) ? (
                                 <TabbedClaims
                                     view={view}
@@ -386,9 +409,8 @@ function ArpPosition() {
                 insufficient evidence
             </p>
             <p className="mt-3 text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)] max-w-[60ch]">
-                ARP publishes no assessment of this agent. It has no execution record for it and no
-                capital at risk on it, and a score assembled out of neither would be exactly the
-                costless signal this panel exists to argue against.
+                ARP publishes no assessment of this agent, and will not. What is on this page is
+                what other people paid to say.
             </p>
         </article>
     );

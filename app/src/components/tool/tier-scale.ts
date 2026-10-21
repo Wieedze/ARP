@@ -43,20 +43,6 @@ export const TIER_CAPTION: Record<ProvenanceTier, string> = {
 };
 
 /**
- * Why a rung cannot be reached yet. Empty for the ones that can.
- *
- * Shown on the page so the scale visibly continues above what the data can say. Without it, a
- * priced assertion reads as the best evidence that exists.
- */
-export const TIER_UNREACHABLE_REASON: Record<ProvenanceTier, string | null> = {
-    fact: "Nothing here reads payments, calldata or redemptions yet.",
-    "confirmed-by-both": "No tool declares its own users, so there is no second party to agree.",
-    "tool-declared": "Same: the tool side of an edge is not written by anything today.",
-    "priced-assertion": null,
-    "free-assertion": null,
-};
-
-/**
  * The off-curve case, which is **not a rung** and so is kept out of the tables above.
  *
  * Its tone is `--color-fg` with `font-normal`: distinguished from a priced assertion by weight and
@@ -69,4 +55,4 @@ export const OFF_CURVE_LABEL = "Staked off-curve";
 export const OFF_CURVE_TONE_CLASS = "text-[color:var(--color-fg)] font-normal";
 
 export const OFF_CURVE_CAPTION =
-    "TRUST is behind this claim, on a bonding curve this page does not read. How much, and from how many, is not shown here.";
+    "TRUST is behind this claim, on a bonding curve this page does not read.";

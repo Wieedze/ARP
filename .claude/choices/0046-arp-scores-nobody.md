@@ -18,7 +18,7 @@ by a provider key, and point 4 to registering as a trust provider. Nothing in th
 either, and the decision has been load-bearing in the codebase only through its _other_ points.
 
 **Measured before deciding** — mainnet 1155, 2026-10-20,
-`scripts/measure-trust-provider-objects.ts` (committed with this ADR):
+`scripts/measure/trust-provider-objects.ts` (committed with this ADR):
 
 | predicate              | edges  | distinct objects | distribution                                                          |
 | ---------------------- | ------ | ---------------- | --------------------------------------------------------------------- |
@@ -50,9 +50,18 @@ then the argument is somebody else's.
 
 ### 2. A deposit goes on a claim that can be contradicted
 
-- **Not on an identity atom.** An identity carries no assertion, so a stake on it cannot be wrong and
-  nobody can meaningfully take the other side. What it would measure is **attention**, not trust — a
-  visibility market wearing a reputation label.
+- ~~**Not on an identity atom.**~~ **Amended by ADR `0056`, 2026-10-21 — read it before relying on
+  this bullet.** The reasoning below still holds and `0056` accepts it; the *prohibition* does not.
+  A deposit on an agent's identity atom is now allowed, on three conditions: it is named a **market**
+  and never reputation, the UI states it has no other side, and it is never added to the count of
+  clients who declared using the agent. What forced the change is that the only claim left —
+  `(client, uses, agent)` — turned out not to be a market either: measured on mainnet 1155,
+  **1 of 185** `uses` edges has ever been contradicted and **969 of 285,775** triples chain-wide
+  (`scripts/measure/counter-side-usage.ts`).
+
+  The original reasoning, which stands: an identity carries no assertion, so a stake on it cannot be
+  wrong and nobody can meaningfully take the other side. What it would measure is **attention**, not
+  trust — a visibility market wearing a reputation label.
 - **Not one triple per interaction.** `docs/07` names this anti-pattern directly: mutable data written
   as direct triples "fragments the staking surface and forces consumers to migrate". Stable shell,
   mutable JSON behind it.
@@ -136,7 +145,7 @@ timeline.
 
 ## References
 
-- Measurement: `scripts/measure-trust-provider-objects.ts` (mainnet 1155, 2026-10-20)
+- Measurement: `scripts/measure/trust-provider-objects.ts` (mainnet 1155, 2026-10-20)
 - Related ADR: `0015` (partially accepted here — the provider role is declined), `0030` (choose a
   predicate on meaning, not publication), `0032` (the subject atom), `0038` (prepare, never sign),
   `0042` (assets are not a stake), `0045` (the node, and the ladder rung it opens), `0010:71`

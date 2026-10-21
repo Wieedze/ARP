@@ -100,9 +100,11 @@ query ($toolId: String!, $uses: String!, $curveId: numeric!) {
 `$curveId` is a `numeric` and travels as a **string**. Declaring it `String!` is rejected at
 validation and takes the whole query down.
 
-Read the counter vault too. Disagreement costs exactly what agreement costs, so an edge with money
-against it is not the same as an edge with nothing against it, and a figure shown without its
-counter is half an answer.
+Read the counter vault too, and know what to expect from it. Disagreement costs exactly what
+agreement costs, so an edge with money against it is genuinely different — but measured on mainnet
+1155 on 2026-10-21, **1** of 185 `uses` edges had any, and 969 of 285,775 triples chain-wide. Treat a
+non-empty counter vault as a strong and rare signal, not as the normal case, and do not read an empty
+one as agreement.
 
 **What the numbers mean before you act on them.** `total_assets > 0` does not mean somebody staked —
 creating a term seeds both its vaults with `minShare`, so it means the term exists. `position_count`

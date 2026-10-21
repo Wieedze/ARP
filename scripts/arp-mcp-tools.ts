@@ -162,9 +162,10 @@ export const TOOLS = [
     description:
       'Plan deposits that put TRUST behind declarations already on chain. Returns unsigned ' +
       'calls; you sign and send them. The deposit lands on the `uses` EDGE, not on the ' +
-      "tool's atom: the edge is the claim, it gets a counter-vault so the claim can be " +
-      'contested, and it is the vault tool-reputation reads price. A triple that is not on ' +
-      'chain yet is reported with `exists: false` and gets no call.',
+      "tool's atom: the edge is the claim YOU made, so a reader can attribute the position " +
+      'back to you, and it is the vault tool-reputation reads price. The atom carries the ' +
+      'market on the thing itself, open to anyone. A triple that is not on chain yet is ' +
+      'reported with `exists: false` and gets no call.',
     inputSchema: {
       type: 'object',
       properties: {

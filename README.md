@@ -3,7 +3,7 @@
 > **A registry that points at AI things — agents, tools, MCP servers — and opens a priced market of
 > opinion on them.** It stores none of them. What is listed exists somewhere else; what ARP adds is
 > the market. Nobody is scored: every figure it shows is a deposit somebody else made, and every
-> claim has a counter-vault so it can be contradicted.
+> position can be withdrawn, so what you read is current rather than accumulated.
 
 [docs/12_THE_IDEA.md](docs/12_THE_IDEA.md) is the canonical statement of the mechanism and the only
 one. Read it before `08`, `09` or `11` — those are analysis and they drifted.
@@ -40,10 +40,12 @@ corrects it.
    or imports one that already exists, and gives it the Intuition atom everything else reads from.
    The atom's id is the hash of a document derived from the agent's identity, so it is computable
    offline with no credential — which is why ARP can write it rather than wait for a mirror.
-2. **A priced claim, not a score** — an agent deposits TRUST on the tools it actually used, and the
-   deposit sits on the **claim** `(agent, uses, tool)`, not on the identity. Every claim gets a
-   counter-vault for free, so anyone can take the other side. A position can be withdrawn, so the
-   signal is current rather than cumulative ([ADR 0046](.claude/choices/0046-arp-scores-nobody.md)).
+2. **A market, not a score** — an agent declares the tools it used, and the declaration itself
+   costs 0.1 TRUST in a non-recoverable fee. The market is a deposit on the agent's or the tool's
+   own atom, in both directions: you buy in, or you take your money back out. A position can be
+   withdrawn, so what is displayed is current rather than accumulated
+   ([ADR 0056](.claude/choices/0056-the-market-on-an-agent-is-on-its-atom-and-the-edge-is-a-receipt.md),
+   [ADR 0046](.claude/choices/0046-arp-scores-nobody.md)).
 3. **One atom per URL** — a tool's atom derives from its normalised URL and nothing else, so two
    people registering the same tool land on the same market instead of forking it
    ([ADR 0054](.claude/choices/0054-a-tool-atom-is-derived-from-its-url.md)).
@@ -195,7 +197,7 @@ This is the sharpest thing to understand before running anything.
 The panels read mainnet because that is where the cohort is, and reads are free and keyless.
 
 **How big the cohort is, and the gap that matters more.** Measured 2026-10-21 by
-`scripts/measure-registry-mintability.ts`: Intuition reaches **28,720** agents through a `same as`
+`scripts/measure/registry-mintability.ts`: Intuition reaches **28,720** agents through a `same as`
 edge, against a canonical Base registry whose **next id is 444,562**. So roughly **one agent in
 fifteen** has an Intuition identity atom, and the other fourteen have to have one written — which is
 why `/agent/import` writes it rather than waiting
@@ -226,12 +228,17 @@ Stated honestly so reviewers don't infer claims the code doesn't back:
   check is its own stake. There is no proof-of-usage layer, and there is not going to be one: it
   needs ground truth and this mechanism deliberately does not
   ([ADR 0049](.claude/choices/0049-arp-does-not-calibrate.md)).
-- **No slashing** — a false declaration cannot be confiscated. It **can** be contradicted: every
-  triple gets a counter-vault for free, so anyone can deposit against the claim, and the panel at
-  `/tool/atom/:atomId` is where that is done. Contestability is the mechanism, not slashing, and it
-  is why "the input costs money" is the weaker half of the argument — a position can also be
-  **withdrawn**, which is what keeps the signal current rather than cumulative
-  ([ADR 0046](.claude/choices/0046-arp-scores-nobody.md)).
+- **No slashing** — a false declaration cannot be confiscated. What it costs is the 0.1 TRUST
+  non-recoverable fee to write it, per declaration, forever.
+
+  **Contestability is available and all but unused, and this bullet used to lead on it.** Intuition
+  gives every triple a counter-vault for free, so anyone *can* deposit against a claim. Measured on
+  mainnet 1155, 2026-10-21 (`scripts/measure/counter-side-usage.ts`): **1** of the 185 `uses` edges
+  has ever been contradicted, and **969 of 285,775** triples chain-wide — 0.34%. Nobody takes the
+  other side of a statement of fact, because there is no resolution mechanism that would pay them
+  for being right. So the live guards are the **cost of writing** and the fact that a position can
+  be **withdrawn**, which is what keeps a figure current rather than accumulated
+  ([ADR 0056](.claude/choices/0056-the-market-on-an-agent-is-on-its-atom-and-the-edge-is-a-receipt.md)).
 
 ## Stack
 

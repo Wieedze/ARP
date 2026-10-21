@@ -155,7 +155,8 @@ export function AssessmentRow({
                 <div className="mt-6">
                     <StakeControl
                         claim={{
-                            tripleId: row.tripleId,
+                            target: {kind: "triple", tripleId: row.tripleId},
+                            heading: "Take a position on this claim",
                             subject: row.providerName,
                             predicate: "is a trust provider for this agent",
                             blurb: "Your deposit is the market's confidence in this provider's assessment of this agent.",

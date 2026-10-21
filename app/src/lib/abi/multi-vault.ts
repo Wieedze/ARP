@@ -180,9 +180,52 @@ export const multiVaultAbi = [
     },
     // Both are callable on a term that does **not** exist, and both return `shares = 0` when the
     // creation fee eats the whole deposit — measured on 13579 and 1155 on 2026-10-21 by
-    // `scripts/measure-preview-before-create.ts`. That is what lets a positionless term be refused
+    // `scripts/measure/preview-before-create.ts`. That is what lets a positionless term be refused
     // before the fee is spent (ADR `0053`). `previewDeposit` above is not symmetric: it reverts on
     // a term that does not exist.
+    // The exit side. Signatures verified against mainnet 1155 on 2026-10-21 with `cast call`, not
+    // transcribed from a doc: `previewRedeem` on the Cursor atom returned (3.220577336235195070,
+    // 1000000000000000000) for 1e18 shares on curve 2, and `maxRedeem` agreed with `getShares` to
+    // the wei. A wrong ABI here reverts with no message, which is the hardest failure on this
+    // surface to diagnose.
+    {
+        type: "function",
+        stateMutability: "view",
+        name: "previewRedeem",
+        inputs: [
+            {name: "termId", type: "bytes32"},
+            {name: "curveId", type: "uint256"},
+            {name: "shares", type: "uint256"},
+        ],
+        outputs: [
+            {name: "assetsAfterFees", type: "uint256"},
+            {name: "sharesUsed", type: "uint256"},
+        ],
+    },
+    {
+        type: "function",
+        stateMutability: "view",
+        name: "maxRedeem",
+        inputs: [
+            {name: "sender", type: "address"},
+            {name: "termId", type: "bytes32"},
+            {name: "curveId", type: "uint256"},
+        ],
+        outputs: [{name: "", type: "uint256"}],
+    },
+    {
+        type: "function",
+        stateMutability: "nonpayable",
+        name: "redeem",
+        inputs: [
+            {name: "receiver", type: "address"},
+            {name: "termId", type: "bytes32"},
+            {name: "curveId", type: "uint256"},
+            {name: "shares", type: "uint256"},
+            {name: "minAssets", type: "uint256"},
+        ],
+        outputs: [{name: "assets", type: "uint256"}],
+    },
     {
         type: "function",
         stateMutability: "view",

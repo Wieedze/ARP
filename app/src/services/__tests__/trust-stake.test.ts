@@ -11,8 +11,12 @@ import {
     assertMainnetWallet,
     deriveMinShares,
     parseStakeAmount,
+    asStakeTermId,
+    parseShareAmount,
+    quoteRedeem,
     quoteStake,
     readClaimVaults,
+    submitRedeem,
     readStakeSession,
     resolveMaxStakeWei,
     resolveStakeTermId,
@@ -24,6 +28,8 @@ import {DEFAULT_TEST_ACCOUNT, DEFAULT_TEST_ADDRESS, readContractDispatcher} from
 
 const TRIPLE: Hex = `0x${"11".repeat(32)}`;
 const COUNTER: Hex = `0x${"99".repeat(32)}`;
+/** An agent's identity atom. No counter vault exists for it — ADR `0056`. */
+const ATOM: Hex = `0x${"77".repeat(32)}`;
 const LIMITS = {minDeposit: parseEther("0.01"), maxStake: parseEther("1")};
 
 type StakeMockPublicClient = {
@@ -172,7 +178,10 @@ describe("resolveStakeTermId", () => {
     it("supports by depositing into the triple itself — no extra call", async () => {
         const client = makePublicClient();
         await expect(
-            resolveStakeTermId(asPublic(client), {tripleId: TRIPLE, side: "support"}),
+            resolveStakeTermId(asPublic(client), {
+                target: {kind: "triple", tripleId: TRIPLE},
+                side: "support",
+            }),
         ).resolves.toBe(TRIPLE);
         expect(client.readContract).not.toHaveBeenCalled();
     });
@@ -184,9 +193,52 @@ describe("resolveStakeTermId", () => {
         );
 
         await expect(
-            resolveStakeTermId(asPublic(client), {tripleId: TRIPLE, side: "oppose"}),
+            resolveStakeTermId(asPublic(client), {
+                target: {kind: "triple", tripleId: TRIPLE},
+                side: "oppose",
+            }),
         ).resolves.toBe(COUNTER);
         expect(client.readContract.mock.calls[0][0].args).toEqual([TRIPLE]);
+    });
+
+    it("supports an atom by depositing into the atom itself", async () => {
+        const client = makePublicClient();
+        await expect(
+            resolveStakeTermId(asPublic(client), {
+                target: {kind: "atom", atomId: ATOM},
+                side: "support",
+            }),
+        ).resolves.toBe(ATOM);
+        expect(client.readContract).not.toHaveBeenCalled();
+    });
+
+    /**
+     * The one that matters. An atom has no counter vault, so resolving `oppose` to the atom's own
+     * id would send a deposit meant to bet *against* something into the vault backing it — the
+     * worst outcome of the two targets sharing a code path. ADR `0056`.
+     */
+    it("refuses to oppose an atom rather than resolving it to the atom itself", async () => {
+        const client = makePublicClient();
+        await expect(
+            resolveStakeTermId(asPublic(client), {
+                target: {kind: "atom", atomId: ATOM},
+                side: "oppose",
+            }),
+        ).rejects.toMatchObject({code: "no-counter-vault"});
+        expect(client.readContract).not.toHaveBeenCalled();
+    });
+});
+
+describe("asStakeTermId", () => {
+    it("accepts 32 bytes of hex and rejects everything else", () => {
+        expect(asStakeTermId(TRIPLE)).toBe(TRIPLE);
+        expect(asStakeTermId(null)).toBeNull();
+        expect(asStakeTermId(undefined)).toBeNull();
+        expect(asStakeTermId("")).toBeNull();
+        // One nibble short, which is the shape a truncated indexer handle has.
+        expect(asStakeTermId(TRIPLE.slice(0, -1))).toBeNull();
+        expect(asStakeTermId(`${TRIPLE}0`)).toBeNull();
+        expect(asStakeTermId("8453:0xabc:2340")).toBeNull();
     });
 });
 
@@ -210,7 +262,7 @@ describe("quoteStake", () => {
         wire(client);
 
         const quote = await quoteStake(asPublic(client), {
-            tripleId: TRIPLE,
+            target: {kind: "triple", tripleId: TRIPLE},
             side: "oppose",
             assets: parseEther("0.01"),
             receiver: DEFAULT_TEST_ADDRESS,
@@ -229,7 +281,7 @@ describe("quoteStake", () => {
         wire(client);
 
         const quote = await quoteStake(asPublic(client), {
-            tripleId: TRIPLE,
+            target: {kind: "triple", tripleId: TRIPLE},
             side: "support",
             assets: parseEther("0.01"),
             receiver: DEFAULT_TEST_ADDRESS,
@@ -249,7 +301,7 @@ describe("quoteStake", () => {
 
         await expect(
             quoteStake(asPublic(client), {
-                tripleId: TRIPLE,
+                target: {kind: "triple", tripleId: TRIPLE},
                 side: "support",
                 assets: parseEther("0.01"),
                 receiver: zeroAddress,
@@ -259,13 +311,34 @@ describe("quoteStake", () => {
 
         await expect(
             quoteStake(asPublic(client), {
-                tripleId: TRIPLE,
+                target: {kind: "triple", tripleId: TRIPLE},
                 side: "support",
                 assets: 0n,
                 receiver: DEFAULT_TEST_ADDRESS,
                 session,
             }),
         ).rejects.toThrow(StakeGuardError);
+    });
+
+    it("quotes an atom against the atom's own vault, deriving no counter id", async () => {
+        const client = makePublicClient();
+        wire(client);
+
+        const quote = await quoteStake(asPublic(client), {
+            target: {kind: "atom", atomId: ATOM},
+            side: "support",
+            assets: parseEther("0.01"),
+            receiver: DEFAULT_TEST_ADDRESS,
+            session,
+        });
+
+        expect(quote.termId).toBe(ATOM);
+        expect(quote.target).toEqual({kind: "atom", atomId: ATOM});
+        expect(
+            client.readContract.mock.calls.some(
+                (call) => call[0].functionName === "getCounterIdFromTripleId",
+            ),
+        ).toBe(false);
     });
 });
 
@@ -322,7 +395,7 @@ describe("assertMainnetWallet", () => {
 describe("submitStake", () => {
     const quote = {
         side: "support" as const,
-        tripleId: TRIPLE,
+        target: {kind: "triple" as const, tripleId: TRIPLE},
         termId: TRIPLE,
         curveId: 1n,
         receiver: DEFAULT_TEST_ADDRESS,
@@ -446,5 +519,209 @@ describe("submitStake", () => {
         expect(call.args).toEqual([DEFAULT_TEST_ADDRESS, TRIPLE, 1n, 9_776_250_000_000_000n]);
         expect(call.value).toBe(parseEther("0.01"));
         expect(call.chain.id).toBe(INTUITION_MAINNET_CHAIN_ID);
+    });
+});
+
+/**
+ * The exit. Its tests exist in their own right and not as a mirror of the deposit's: the two paths
+ * fail differently. A deposit over the ceiling spends money the user did not mean to; a redemption
+ * over the holding cannot spend anything, and the guard is there so it fails with a sentence in the
+ * browser instead of a bare revert on-chain.
+ */
+describe("parseShareAmount", () => {
+    const held = parseEther("3.113441379595912110");
+
+    it("treats an empty field as no choice rather than as zero", () => {
+        expect(parseShareAmount("", held)).toEqual({status: "empty"});
+        expect(parseShareAmount("   ", held)).toEqual({status: "empty"});
+    });
+
+    it("refuses a non-number, a non-positive amount and more than the holding", () => {
+        expect(parseShareAmount("all", held).status).toBe("unparseable");
+        expect(parseShareAmount("0", held).status).toBe("not-positive");
+        // `parseEther("-1")` succeeds and returns -1e18, so a negative reaches the sign check
+        // rather than the parse failure. Refused either way; the status says which.
+        expect(parseShareAmount("-1", held).status).toBe("not-positive");
+        expect(parseShareAmount("3.2", held)).toEqual({status: "over", held});
+    });
+
+    /**
+     * The exact holding passes. It is the value the "All of it" affordance puts in the field, and a
+     * boundary that rejected it would make taking everything out impossible by one wei.
+     */
+    it("accepts the whole holding, to the wei", () => {
+        expect(parseShareAmount("3.113441379595912110", held)).toEqual({
+            status: "ok",
+            value: held,
+        });
+    });
+});
+
+describe("quoteRedeem", () => {
+    const HELD = parseEther("3");
+
+    function wireRedeem(client: StakeMockPublicClient) {
+        client.readContract.mockImplementation(
+            readContractDispatcher({
+                previewRedeem: [parseEther("1.5"), parseEther("0.5")],
+                maxRedeem: HELD,
+            }),
+        );
+    }
+
+    it("reports the TRUST out after fees and a non-zero slippage floor", async () => {
+        const client = makePublicClient();
+        wireRedeem(client);
+
+        const quote = await quoteRedeem(asPublic(client), {
+            termId: ATOM,
+            curveId: 1n,
+            shares: parseEther("0.5"),
+            receiver: DEFAULT_TEST_ADDRESS,
+        });
+
+        expect(quote.assetsAfterFees).toBe(parseEther("1.5"));
+        expect(quote.maxShares).toBe(HELD);
+        // 1% below the preview, and never zero.
+        expect(quote.minAssets).toBe(parseEther("1.485"));
+        expect(quote.minAssets).toBeGreaterThan(0n);
+    });
+
+    it("refuses more shares than the account holds, before anything is signed", async () => {
+        const client = makePublicClient();
+        wireRedeem(client);
+
+        await expect(
+            quoteRedeem(asPublic(client), {
+                termId: ATOM,
+                curveId: 1n,
+                shares: HELD + 1n,
+                receiver: DEFAULT_TEST_ADDRESS,
+            }),
+        ).rejects.toMatchObject({code: "exceeds-holding"});
+    });
+
+    it("refuses a zero amount and a zero receiver", async () => {
+        const client = makePublicClient();
+        wireRedeem(client);
+
+        await expect(
+            quoteRedeem(asPublic(client), {
+                termId: ATOM,
+                curveId: 1n,
+                shares: 0n,
+                receiver: DEFAULT_TEST_ADDRESS,
+            }),
+        ).rejects.toMatchObject({code: "zero-amount"});
+
+        await expect(
+            quoteRedeem(asPublic(client), {
+                termId: ATOM,
+                curveId: 1n,
+                shares: parseEther("0.5"),
+                receiver: zeroAddress,
+            }),
+        ).rejects.toMatchObject({code: "zero-receiver"});
+    });
+
+    it("refuses a preview that yields nothing rather than dropping the floor to zero", async () => {
+        const client = makePublicClient();
+        client.readContract.mockImplementation(
+            readContractDispatcher({previewRedeem: [0n, 0n], maxRedeem: HELD}),
+        );
+
+        await expect(
+            quoteRedeem(asPublic(client), {
+                termId: ATOM,
+                curveId: 1n,
+                shares: parseEther("0.5"),
+                receiver: DEFAULT_TEST_ADDRESS,
+            }),
+        ).rejects.toMatchObject({code: "no-slippage-floor"});
+    });
+});
+
+describe("submitRedeem", () => {
+    const exit = {
+        termId: ATOM,
+        curveId: 1n,
+        receiver: DEFAULT_TEST_ADDRESS,
+        shares: parseEther("0.5"),
+        assetsAfterFees: parseEther("1.5"),
+        sharesUsed: parseEther("0.5"),
+        maxShares: parseEther("3"),
+        minAssets: parseEther("1.485"),
+    };
+
+    it("refuses a wallet on the wrong chain and signs nothing", async () => {
+        const wallet = makeWalletClient(13579);
+        const client = makePublicClient();
+
+        await expect(
+            submitRedeem({
+                walletClient: asWallet(wallet),
+                publicClient: asPublic(client),
+                quote: exit,
+            }),
+        ).rejects.toMatchObject({code: "wrong-chain"});
+        expect(wallet.writeContract).not.toHaveBeenCalled();
+        expect(client.simulateContract).not.toHaveBeenCalled();
+    });
+
+    /**
+     * The client was built for mainnet and the wallet moved after the quote. Only `getChainId`
+     * catches it, which is why both are asked — the same trap the deposit path has.
+     */
+    it("catches a wallet that switched networks after the quote was built", async () => {
+        const wallet = makeWalletClient(INTUITION_MAINNET_CHAIN_ID, 13579);
+        const client = makePublicClient();
+
+        await expect(
+            submitRedeem({
+                walletClient: asWallet(wallet),
+                publicClient: asPublic(client),
+                quote: exit,
+            }),
+        ).rejects.toMatchObject({code: "wrong-chain"});
+        expect(wallet.writeContract).not.toHaveBeenCalled();
+    });
+
+    it("refuses to send TRUST anywhere but the connected account", async () => {
+        const wallet = makeWalletClient();
+        const client = makePublicClient();
+
+        await expect(
+            submitRedeem({
+                walletClient: asWallet(wallet),
+                publicClient: asPublic(client),
+                quote: {...exit, receiver: `0x${"cd".repeat(20)}`},
+            }),
+        ).rejects.toMatchObject({code: "receiver-mismatch"});
+        expect(wallet.writeContract).not.toHaveBeenCalled();
+    });
+
+    it("simulates before signing, and sends the floor it was quoted", async () => {
+        const wallet = makeWalletClient();
+        const client = makePublicClient();
+        client.simulateContract.mockResolvedValue({result: parseEther("1.5")});
+
+        await submitRedeem({
+            walletClient: asWallet(wallet),
+            publicClient: asPublic(client),
+            quote: exit,
+        });
+
+        expect(client.simulateContract).toHaveBeenCalledTimes(1);
+        const sent = wallet.writeContract.mock.calls[0][0];
+        expect(sent.functionName).toBe("redeem");
+        expect(sent.args).toEqual([
+            DEFAULT_TEST_ADDRESS,
+            ATOM,
+            1n,
+            parseEther("0.5"),
+            parseEther("1.485"),
+        ]);
+        // A redemption carries no `msg.value`, and sending one would be a silent loss.
+        expect(sent.value).toBeUndefined();
     });
 });

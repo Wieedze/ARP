@@ -9,6 +9,8 @@ import type {
 } from "@arp-protocol/core";
 import type {Hex} from "viem";
 
+import {asStakeTermId} from "./trust-stake";
+
 /**
  * Turns one `AgentProfile` into the shape the panel renders.
  *
@@ -157,12 +159,7 @@ function asRecord(value: unknown): Record<string, unknown> | null {
  * reverts with no message, which is the hardest failure on this surface to
  * diagnose.
  */
-const TERM_ID_PATTERN = /^0x[0-9a-fA-F]{64}$/;
-
-function asTermId(handle: string | null): Hex | null {
-    // Safe: the pattern establishes the `0x${string}` shape `Hex` denotes.
-    return handle !== null && TERM_ID_PATTERN.test(handle) ? (handle as Hex) : null;
-}
+const asTermId = asStakeTermId;
 
 function readCount(source: Record<string, unknown> | null, key: string): number | null {
     if (source === null) return null;

@@ -97,11 +97,11 @@ export type ToolRow = {
     /**
      * TRUST deposited against the tool's declarations, or `null`.
      *
-     * `null` carries **two** meanings and the second was undocumented until the filters made it an
-     * exclusion. For a `declared` row it is measured: nothing stands against it. For a `registered`
-     * row it is hardcoded, because an atom's vault has no counter side — so `null` there means "not
-     * applicable", not "nobody disagrees". Before the filters this only decided whether a cell
-     * stayed empty; `matchesFilters` is the first consumer to act on it.
+     * `null` carries **two** meanings. For a `declared` row it is measured: nothing stands against
+     * it. For a `registered` row it is hardcoded, because an atom's vault has no counter side — so
+     * `null` there means "not applicable", not "nobody disagrees". It decides whether the cell
+     * stays empty and nothing branches on it: the `contested` filter did, and ADR `0056` removed
+     * it.
      */
     opposeTrust: string | null;
     /**
@@ -128,12 +128,17 @@ export type ToolRow = {
  * | --- | --- | --- |
  * | `paid-for` | rows where somebody paid to stand behind a declaration | separates a claim from a free assertion |
  * | `declared-by-agents` | rows an agent declared using | separates used from merely registered |
- * | `contested` | rows with a deposit on the other side | somebody disagrees, which is information |
  *
  * None is the default. The default is everything, because a default filter is a ranking wearing
  * another name.
+ *
+ * **There was a third, `contested`, and ADR `0056` removed it.** Measured on mainnet 1155,
+ * 2026-10-21: 1 of the 185 `uses` edges has ever been contradicted, and 969 of 285,775 triples
+ * chain-wide. A control that narrows 185 rows to 1 is not a choice, and offering it told the reader
+ * to look for a disagreement that is not there. The `Against` figure still shows on a row that has
+ * one — displaying what exists is not the same as soliciting it.
  */
-export type ToolFilter = "paid-for" | "declared-by-agents" | "contested";
+export type ToolFilter = "paid-for" | "declared-by-agents";
 
 export const TOOL_FILTERS: readonly {id: ToolFilter; label: string; title: string}[] = [
     {
@@ -149,11 +154,6 @@ export const TOOL_FILTERS: readonly {id: ToolFilter; label: string; title: strin
         id: "declared-by-agents",
         label: "Used by agents",
         title: "An identified agent declared using it, rather than only being registered",
-    },
-    {
-        id: "contested",
-        label: "Contested",
-        title: "Somebody has deposited against a declaration about it",
     },
 ];
 
@@ -178,11 +178,6 @@ export function matchesFilters(row: ToolRow, active: readonly ToolFilter[]): boo
                 return row.paidDeclarations !== null && row.paidDeclarations > 0;
             case "declared-by-agents":
                 return row.declarations > 0;
-            case "contested":
-                // Same overload on the other column, and it needed saying here too. For a declared
-                // row `null` is measured — nothing stands against it. For a registered row it is
-                // hardcoded, because an atom's vault has no counter side to read at all.
-                return row.opposeTrust !== null;
         }
     });
 }
@@ -199,11 +194,7 @@ export function unknowableUnder(rows: readonly ToolRow[], active: readonly ToolF
     return rows.filter(
         (row) =>
             !matchesFilters(row, active) &&
-            active.some(
-                (filter) =>
-                    (filter === "paid-for" && row.paidDeclarations === null) ||
-                    (filter === "contested" && row.provenance === "registered"),
-            ),
+            active.some((filter) => filter === "paid-for" && row.paidDeclarations === null),
     ).length;
 }
 
