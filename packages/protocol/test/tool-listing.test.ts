@@ -1,6 +1,6 @@
 import {describe, expect, it} from "vitest";
 
-import {listTools} from "../src/tool-listing.js";
+import {INTUITION_MAX_PAGE, listTools} from "../src/tool-listing.js";
 import {SAME_AS, USES} from "../src/sources/intuition/terms.js";
 
 /** One `uses` edge, shaped like the graph returns it. */
@@ -162,7 +162,7 @@ describe("listTools", () => {
     it("sends the frozen `uses` term id and a numeric curve id", async () => {
         const {transport, seen} = transportOf([]);
         await listTools({transport, curveId: 2});
-        expect(seen[0]).toMatchObject({uses: USES, curveId: "2", limit: 500});
+        expect(seen[0]).toMatchObject({uses: USES, curveId: "2", limit: INTUITION_MAX_PAGE});
         // `curveId` is a Hasura `numeric` and travels as a string; declaring it String! in the
         // query took the whole trust surface down once.
         expect(typeof seen[0]?.["curveId"]).toBe("string");
@@ -173,5 +173,28 @@ describe("listTools", () => {
         const page = await listTools({transport});
         expect(page.tools).toHaveLength(1);
         expect(page.edgesRead).toBe(2);
+    });
+});
+
+describe("INTUITION_MAX_PAGE", () => {
+    /**
+     * The regression this constant exists to stop.
+     *
+     * `truncated` is `rows.length >= edgeLimit`, and the indexer returns at most 250 rows however
+     * large `limit` is (probed on both chains, `atoms` and `triples`, 2026-10-21). So an `edgeLimit`
+     * above 250 makes the condition unsatisfiable and a short read reports itself as complete.
+     */
+    it("clamps an over-large edgeLimit so `truncated` stays reachable", async () => {
+        const rows = Array.from({length: INTUITION_MAX_PAGE}, (_, index) => ({
+            term_id: `0x${String(index).padStart(64, "0")}`,
+            object: {term_id: `0x${"ab".repeat(32)}`, label: "a tool", value: null, term: null},
+            term: null,
+            counter_term: null,
+        }));
+        const {transport, seen} = transportOf(rows);
+        const page = await listTools({transport, edgeLimit: 10_000});
+        expect(seen[0]?.["limit"]).toBe(INTUITION_MAX_PAGE);
+        expect(page.edgesRead).toBe(INTUITION_MAX_PAGE);
+        expect(page.truncated).toBe(true);
     });
 });

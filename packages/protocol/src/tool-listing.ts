@@ -25,7 +25,23 @@ import {isRecord, readNumber, readString} from "./json.js";
 
 const DEFAULT_CURVE_ID = "1";
 const DEFAULT_TIMEOUT_MS = 10_000;
-const DEFAULT_EDGE_LIMIT = 500;
+
+/**
+ * The most rows Intuition's indexer will return for one query, whatever `limit` asks for.
+ *
+ * Probed 2026-10-21 on both chains, `atoms` and `triples`: `limit: 250` returns 250, and `limit:
+ * 500` and `limit: 1000` **also return 250** — no error, no warning, no flag on the response.
+ *
+ * It is exported because it is the endpoint's property and not this module's, so anything else here
+ * that pages has to respect it. `DEFAULT_EDGE_LIMIT` was 500 until this was measured, which made
+ * `truncated` — computed as `rows.length >= edgeLimit` — **unreachable**: 250 is never ≥ 500, so a
+ * short read reported itself as a complete one. Latent rather than live, because mainnet has 185
+ * `uses` edges and testnet fewer, so the cap has never actually been hit; it would have started
+ * lying silently at the 251st edge.
+ */
+export const INTUITION_MAX_PAGE = 250;
+
+const DEFAULT_EDGE_LIMIT = INTUITION_MAX_PAGE;
 
 const TOOL_LISTING_QUERY = `
 query ToolListing($uses: String!, $sameAs: String!, $curveId: numeric!, $limit: Int!) {
@@ -105,7 +121,10 @@ export type ToolListingConfig = {
     timeoutMs?: number;
     transport?: GraphqlTransport;
     curveId?: number;
-    /** How many edges to read before grouping. Defaults to 500. */
+    /**
+     * How many edges to read before grouping. Defaults to, and is clamped at,
+     * {@link INTUITION_MAX_PAGE} — the indexer silently ignores anything larger.
+     */
     edgeLimit?: number;
     order?: ToolListingOrder;
 };
@@ -152,7 +171,9 @@ export async function listTools(config: ToolListingConfig = {}): Promise<ToolLis
         });
 
     const curveId = config.curveId ?? Number(DEFAULT_CURVE_ID);
-    const edgeLimit = config.edgeLimit ?? DEFAULT_EDGE_LIMIT;
+    // Clamped, not trusted: a caller asking for 500 gets 250 rows from the endpoint regardless, and
+    // comparing the result against the number it asked for is how `truncated` came to be unreachable.
+    const edgeLimit = Math.min(config.edgeLimit ?? DEFAULT_EDGE_LIMIT, INTUITION_MAX_PAGE);
 
     const data = await transport.request(TOOL_LISTING_QUERY, {
         uses: USES,
