@@ -40,6 +40,14 @@ export type ProvenanceTier =
  */
 export const DERIVABLE_TIERS: readonly ProvenanceTier[] = ["priced-assertion", "free-assertion"];
 
+/**
+ * The complement of {@link DERIVABLE_TIERS}, kept so a test can assert the two cover every tier.
+ *
+ * It had a second consumer — the panel's struck-through ladder — and ADR `0056` removed it, because
+ * a page listing the evidence it cannot reach is the UI arguing its own epistemology. The set stays
+ * because the exhaustiveness check is real: a new `ProvenanceTier` in neither list is a tier nothing
+ * accounts for.
+ */
 export const UNREACHABLE_TIERS: readonly ProvenanceTier[] = [
     "fact",
     "confirmed-by-both",

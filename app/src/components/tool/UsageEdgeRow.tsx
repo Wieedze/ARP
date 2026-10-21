@@ -31,27 +31,9 @@ import {
 export function UsageEdgeRow({
     edge,
     isFirstOfTier,
-    action,
-    children,
 }: {
     edge: ToolUsageEdgeView;
     isFirstOfTier: boolean;
-    /** The affordance that discloses {@link children}. Sits under the tier label, costing ~20px. */
-    action?: React.ReactNode;
-    /**
-     * The control for taking a position on this claim, rendered inside the row's own `li` and only
-     * when the row is open.
-     *
-     * A slot rather than a sibling because a sibling had to be its own `li` to keep the `ul` valid,
-     * and an `li` holding only a form is a list item that is not an item. It is also where it
-     * belongs visually: the form acts on the claim stated two lines above it.
-     *
-     * **Disclosed, not always rendered**, and that is load-bearing. The form is ~390px; a row is
-     * ~120px. One per row turned a list `rules/ui.md` wants at 15 rows above the fold into one and
-     * a half, and left two identical hairlines per row — one meaning "new row", one meaning "same
-     * row, now a form" — so the border stopped carrying information.
-     */
-    children?: React.ReactNode;
 }) {
     return (
         <li className="border-t border-[color:var(--color-border)] py-4 first:border-t-0">
@@ -59,10 +41,9 @@ export function UsageEdgeRow({
                 <div className="min-w-0">
                     {/* An agent with no label is addressed by its atom and nothing else, so the id
                         is the name — printing it twice said nothing twice. */}
-                    {/* An `h3`, not a `p`: the page's headings are `h1` and `h2`, and the
-                        disclosed `StakeControl` opens with an `h4`. As a `p` the document skipped
-                        from h2 to h4. Tailwind's preflight resets heading size and weight, so the
-                        tag changes the outline and not the type. */}
+                    {/* An `h3`, not a `p`: the page's headings are `h1` and `h2`, so a `p` left
+                        the rows outside the outline entirely. Tailwind's preflight resets heading
+                        size and weight, so the tag changes the outline and not the type. */}
                     {edge.agent.label === null ? (
                         <h3 className="truncate font-mono">{truncateMiddle(edge.agent.atomId)}</h3>
                     ) : (
@@ -90,7 +71,6 @@ export function UsageEdgeRow({
                             {edge.isOffCurve ? OFF_CURVE_CAPTION : TIER_CAPTION[edge.tier]}
                         </p>
                     ) : null}
-                    {action === undefined ? null : <div className="mt-2">{action}</div>}
                 </div>
             </div>
 
@@ -133,11 +113,6 @@ export function UsageEdgeRow({
                     </div>
                 ) : null}
             </dl>
-            {children === undefined ? null : (
-                <div className="mt-4 pl-5 border-l border-[color:var(--color-border-strong)]">
-                    {children}
-                </div>
-            )}
         </li>
     );
 }

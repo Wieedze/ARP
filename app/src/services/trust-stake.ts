@@ -647,7 +647,7 @@ export async function quoteRedeem(
     if (params.shares > maxShares) {
         throw new StakeGuardError(
             "exceeds-holding",
-            `You hold ${maxShares} shares in this vault and asked to redeem ${params.shares}. Nothing was sent.`,
+            `You hold ${formatWeiPlain(maxShares)} shares in this vault and asked to redeem ${formatWeiPlain(params.shares)}. Nothing was sent.`,
         );
     }
 

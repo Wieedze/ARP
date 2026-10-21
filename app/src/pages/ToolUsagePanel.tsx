@@ -47,12 +47,11 @@ export function ToolUsagePanel() {
     return (
         <section>
             <MainnetNotice />
-            {/* `aria-live` is on the two transient branches, not on the wrapper.
-                On the wrapper it was the live region for every `StakeControl` below it, and a live
-                region announces all descendant mutations that do not establish their own — so the
-                amount field's help text, which swaps as the user types, became a polite
-                announcement per keystroke. The controls carry their own `role="status"` and
-                `role="alert"` nodes, correctly placed. */}
+            {/* `aria-live` is on the two transient branches, not on the wrapper. A live region
+                announces every descendant mutation that does not establish its own, so a wrapper
+                region turned a form's per-keystroke help text into a polite announcement per
+                keystroke. The forms are gone (ADR `0056`) but the rule that cost us that is not,
+                and the next thing added under this wrapper would hit it again. */}
             <div>
                 {query.isPending ? (
                     <p
@@ -168,6 +167,9 @@ function Totals({view}: {view: ToolUsageView}) {
                             {view.totals.supportPositions === 1 ? "position" : "positions"}
                         </span>
                     </dd>
+                    <dd className="mt-1 max-w-[30ch] font-sans text-[length:var(--text-label)] text-[color:var(--color-fg-60)]">
+                        Amounts cover every curve; the counts cover one.
+                    </dd>
                 </>
             ) : null}
             {view.totals.opposePositions > 0 ? (
@@ -197,8 +199,8 @@ function Edges({view}: {view: ToolUsageView}) {
             </p>
             {view.isEntirelyUnpriced ? (
                 <p className="mb-6 max-w-[70ch] border border-[color:var(--color-border-strong)] px-4 py-3 text-[length:var(--text-body-sm)]">
-                    Every declaration below is free. Nobody has put TRUST behind any of these
-                    claims.
+                    Every declaration below is free — nothing stands behind the claims themselves.
+                    The tool&rsquo;s own atom is a separate market and this page does not read it.
                 </p>
             ) : null}
             <ul>

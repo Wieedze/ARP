@@ -214,9 +214,13 @@ export function AgentTrustPanel() {
                                 resolve to one, and the ones that do not are the honest gap. */}
                             {backingAtomId === null ? null : (
                                 <div className="mb-16 pb-16 border-b border-[color:var(--color-border)]">
+                                    {/* The same string the `h1` above uses. `view.tokenId` alone
+                                        made the confirmation read "deposit onto 2340" while the
+                                        heading said "Token 2340" — the one screen where the
+                                        subject has to be unmistakable (ADR `0017` safeguard 4). */}
                                     <AgentBacking
                                         atomTermId={backingAtomId}
-                                        name={view.name ?? view.tokenId}
+                                        name={view.name ?? `Token ${view.tokenId}`}
                                         nameIsId={view.name === null}
                                     />
                                 </div>

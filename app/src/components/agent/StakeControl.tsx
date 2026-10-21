@@ -14,7 +14,6 @@ import {
     type StakeQuote,
     type StakeSession,
     type StakeSide,
-    type StakeTarget,
 } from "../../services/trust-stake";
 
 /**
@@ -60,6 +59,9 @@ type Phase =
       };
 
 /** Both sides exist only for a triple. An atom has no counter vault to oppose from (ADR `0056`). */
+/** The heading tags a caller may ask for. Not `string`: an arbitrary tag is not a heading. */
+export type HeadingTag = "h2" | "h3" | "h4";
+
 const SIDES: StakeSide[] = ["support", "oppose"];
 
 const SIDE_COPY: Record<StakeSide, {label: string; sentence: string}> = {
@@ -89,22 +91,16 @@ function errorMessage(error: unknown): string {
  * sentence the money goes behind, because that sentence is the last thing shown before a wallet
  * opens (ADR `0017` safeguard 4).
  */
-export type StakeClaim = {
-    /**
-     * What the deposit is addressed to. A triple's counter-triple is derived from it; an atom has
-     * none, and the control then shows no side selector because there is only one side.
-     */
-    target: StakeTarget;
+type ClaimShape =
+    /** A triple's claim is restated in the confirmation, so its predicate is not optional. */
+    | {target: {kind: "triple"; tripleId: Hex}; predicate: string}
+    /** An atom carries no assertion, so there is no claim to restate and no predicate to take. */
+    | {target: {kind: "atom"; atomId: Hex}; predicate?: undefined};
+
+export type StakeClaim = ClaimShape & {
     subject: string;
     /** The heading above the form. The caller names it, because the two targets are not one act. */
     heading: string;
-    /**
-     * What the subject is claimed to do, rendered after `subject` in the confirmation.
-     *
-     * Absent for an atom target: an atom carries no assertion, so there is no claim to restate and
-     * the confirmation names the subject alone.
-     */
-    predicate?: string;
     /**
      * One line saying what a deposit here means, under the heading.
      *
@@ -137,11 +133,19 @@ export function StakeControl({
     sessionError,
     onSettled,
     onInFlightChange,
+    /**
+     * The tag for this control's own heading, because its level depends on its parent and not on
+     * itself. `AssessmentRow` opens at `h3`, so `h4` is right there; `AgentBacking` opens at `h2`,
+     * where `h4` would skip a level. Hardcoding `h4` put an `h1 → h3 → h4` chain on the agent page
+     * under the very `h2` that exists to stop the outline jumping.
+     */
+    headingLevel: Heading = "h4",
 }: {
     claim: StakeClaim;
     session: StakeSession | undefined;
     sessionError: Error | null;
     onSettled: () => void;
+    headingLevel?: HeadingTag;
     /**
      * Called `true` the moment a transaction is signed for and `false` on **every** terminal
      * transition — settled or failed — so a parent that can **unmount** this control knows not to.
@@ -279,9 +283,9 @@ export function StakeControl({
         // left the agent panel's form flush against the market panel. Spacing and the rail belong
         // to whichever container this sits in, and each caller provides its own.
         <section aria-labelledby={`${fieldId}-heading`}>
-            <h4 id={`${fieldId}-heading`} className="font-medium">
+            <Heading id={`${fieldId}-heading`} className="font-medium">
                 {claim.heading}
-            </h4>
+            </Heading>
             <p className="mt-1 text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)] max-w-[60ch]">
                 {claim.blurb}
             </p>

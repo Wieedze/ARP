@@ -1,3 +1,4 @@
+import {useId} from "react";
 import type {Hex} from "viem";
 import {useAccount} from "wagmi";
 
@@ -65,10 +66,17 @@ export function AgentBacking({
 
     const vault = vaultQuery.data;
     const positionCount = shapeQuery.data?.shape.positionCount ?? null;
+    const headingId = useId();
 
     return (
-        <section>
-            <h3 className="font-medium">Backing</h3>
+        <section aria-labelledby={headingId}>
+            {/* `h2`, not `h3`. The panel's `h1` is the agent's name and the next heading in DOM
+                order used to be the sr-only `h2` that exists to stop the outline jumping — putting
+                this section above it at `h3` reintroduced exactly that jump. The two controls take
+                their level as a prop for the same reason. */}
+            <h2 id={headingId} className="font-medium">
+                Backing
+            </h2>
 
             <dl className="mt-4 flex flex-wrap gap-x-10 gap-y-3 text-[length:var(--text-body-sm)]">
                 <div>
@@ -92,9 +100,16 @@ export function AgentBacking({
                         Yours
                     </dt>
                     <dd className="mt-1 font-mono tabular-nums">
-                        {vault === undefined || vault.shares === null
-                            ? "—"
-                            : formatTrust(vault.shares)}
+                        {vault === undefined || vault.shares === null ? (
+                            "—"
+                        ) : (
+                            <>
+                                {formatTrust(vault.shares)}{" "}
+                                <span className="font-sans text-[color:var(--color-fg-60)]">
+                                    shares
+                                </span>
+                            </>
+                        )}
                     </dd>
                 </div>
                 <div>
@@ -132,6 +147,7 @@ export function AgentBacking({
                     }}
                     session={session}
                     sessionError={sessionError}
+                    headingLevel="h3"
                     onSettled={() => {
                         void vaultQuery.refetch();
                         void shapeQuery.refetch();
@@ -144,6 +160,7 @@ export function AgentBacking({
                     termId={atomTermId}
                     curveId={session?.curveId}
                     heldShares={vault?.shares ?? null}
+                    headingLevel="h3"
                     onSettled={() => {
                         void vaultQuery.refetch();
                         void shapeQuery.refetch();
