@@ -314,20 +314,18 @@ export function AgentRegister() {
         const pkLine = activeRuntimeKey
             ? `AGENT_PRIVATE_KEY=${activeRuntimeKey}`
             : `# AGENT_PRIVATE_KEY=0x... (paste the runtime key you saved at step 2)`;
+        // It named `agent-loop.ts` and `agent-server.ts` and listed six of their env vars. Both
+        // scripts are deleted — ADR `0055` found them dangling on contracts that no longer exist
+        // and ADR `0033` had already set that surface aside — so the block was instructions for
+        // software that is not there, handed to an operator at the moment they are told setup is
+        // done. It cited ADR `0056`, which is a different decision entirely.
         return [
-            `# Paste into scripts/.env for agent-loop.ts (autonomous walk)`,
-            `# or agent-server.ts (on-demand hire flow). Each runtime reads`,
-            `# whichever vars apply to its role.`,
+            `# Paste into scripts/.env. The runtime that reads this is the one you run:`,
+            `# scripts/agent-node.ts to be reachable, or your own, through`,
+            `# @arp-protocol/core or skills/arp/SKILL.md.`,
             ``,
             pkLine,
             `DELEGATION_COMPOSE_JSON='${serializeDelegation(storedDelegations.stored.compose)}'`,
-            ``,
-            `# --- agent-server.ts options (all optional) ---`,
-            `# AGENT_SERVER_PORT=3001                         # HTTP listen port`,
-            `# AGENT_MIN_BUDGET_TTRUST=0.005                  # reject hire requests below this`,
-            `# SPECIALIST_ENDPOINT=http://localhost:3002      # enable A2A sub-contracting`,
-            `# AGENT2_RUNTIME_ADDRESS=0x...                   # specialist runtime to pay`,
-            `# SUBCONTRACT_FEE_TTRUST=0.002                   # fee paid to the specialist`,
             ``,
         ].join("\n");
     }, [storedDelegations.stored, activeRuntimeKey]);
@@ -715,7 +713,7 @@ function DelegationForm({
 /**
  * Confirmation panel once both delegations are signed + stored. Surfaces
  * the env blob so the operator can paste it into `.env` for the headless
- * runtime in `scripts/agent-loop.ts`.
+ * runtime the operator runs.
  */
 function DelegationsActive({
     signedAt,

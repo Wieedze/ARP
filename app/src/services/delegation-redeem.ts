@@ -125,7 +125,7 @@ export async function redeemRegisterModule(
  * `IDeleGatorCore.executeFromExecutor` on the delegator). For the check
  * to pass, the runtime must have called `MultiVault.approve(SA, DEPOSIT)`
  * once at bootstrap — see `ensureAgentDelegatedToSA` (typically run from
- * `scripts/agent-loop.ts` startup).
+ * the runtime's startup).
  */
 export async function redeemStakeOnAtom(
     params: RedeemCommon & {
@@ -196,7 +196,7 @@ const approvalAbi = [
  *
  * **Operator workflow** — call this **once** via `scripts/agent-approve-sa.ts`
  * after funding the runtime EOA with gas. The approval persists on chain
- * until explicitly revoked. The agent-loop assumes it is already granted
+ * until explicitly revoked. A runtime assumes it is already granted
  * and surfaces a clear pointer if a stake reverts with the matching
  * selector.
  *
