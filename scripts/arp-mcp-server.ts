@@ -177,6 +177,16 @@ const serialiseCall = (call: PreparedCall) => ({
   value_wei: call.value.toString(),
   data: call.data,
   why: call.why,
+  // What the chain says the call buys, read before anything is signed. `shares: "0"` means the
+  // term would be born with no position — on the chain, and not a market (ADR `0053`).
+  ...(call.preview === undefined
+    ? {}
+    : {
+        preview: {
+          shares: call.preview.shares.toString(),
+          assets_after_fees_wei: call.preview.assetsAfterFees.toString(),
+        },
+      }),
 });
 
 /** Said on every plan, because a caller who assumes ARP executed it will not check that it did. */
@@ -193,11 +203,17 @@ function serialiseDeclarePlan(plan: DeclarePlan) {
     predicate_term_id: plan.predicate,
     tools: plan.tools.map((tool) => ({
       uri: tool.uri,
+      // Not always `uri`: for an http(s) URL the atom derives from a Thing computed off the
+      // normalised URL, so this is the `ipfs://` string the id is actually the hash of.
+      atom_uri: tool.atomUri,
       atom_id: tool.atomId,
       atom_source: tool.atomSource,
       triple_id: tool.tripleId,
       atom_exists: tool.atomExists,
       triple_exists: tool.tripleExists,
+      // The bytes to pin for this atom to read as a name instead of a hash. Creating, declaring
+      // and staking all work without it; only legibility does not.
+      ...(tool.pinDocument === undefined ? {} : { pin_document: tool.pinDocument }),
       ...(tool.bareUrlWarning === undefined ? {} : { bare_url_warning: tool.bareUrlWarning }),
     })),
     calls: plan.calls.map(serialiseCall),

@@ -222,7 +222,10 @@ async function send(label: string, calls: readonly PreparedCall[]) {
     return true;
   }
   for (const call of calls) {
-    console.log(`  ${call.kind.padEnd(14)} ${formatEther(call.value).padStart(14)}  ${call.why}`);
+    console.log(
+      `  ${call.kind.padEnd(14)} ${formatEther(call.value).padStart(14)}` +
+        `${call.preview === undefined ? '' : `  ${call.preview.shares} shares`}  ${call.why}`,
+    );
   }
   const outcome = await sendPlan({
     calls: serialise(calls),

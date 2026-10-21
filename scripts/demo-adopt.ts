@@ -105,7 +105,10 @@ async function run(label: string, calls: readonly PreparedCall[]): Promise<boole
     return true;
   }
   for (const call of calls) {
-    console.log(`  ${call.kind.padEnd(14)} ${formatEther(call.value).padStart(14)}  ${call.why}`);
+    console.log(
+      `  ${call.kind.padEnd(14)} ${formatEther(call.value).padStart(14)}` +
+        `${call.preview === undefined ? '' : `  ${call.preview.shares} shares`}  ${call.why}`,
+    );
   }
   const outcome = await sendPlan({
     calls: serialise(calls),
@@ -204,6 +207,7 @@ for (const tool of declarePlan.tools) {
     `  tool atom ${tool.atomId}  ${tool.atomExists ? 'exists' : 'TO CREATE'}  (${tool.atomSource})`,
   );
   console.log(`  uses edge ${tool.tripleId}  ${tool.tripleExists ? 'exists' : 'TO CREATE'}`);
+  if (tool.atomUri !== tool.uri) console.log(`  atom data ${tool.atomUri}`);
   if (tool.bareUrlWarning !== undefined) console.log(`  WARN ${tool.bareUrlWarning}`);
 }
 console.log('');

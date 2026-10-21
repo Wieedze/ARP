@@ -144,10 +144,16 @@ const plan = await prepareDeclareUsed({
 
 for (const tool of plan.tools) {
   console.log(`  ${tool.uri}`);
+  if (tool.atomUri !== tool.uri) console.log(`     data   ${tool.atomUri}`);
   console.log(
     `     atom   ${tool.atomId}  ${tool.atomExists ? 'exists' : 'TO CREATE'}  (${tool.atomSource})\n` +
       `     edge   ${tool.tripleId}  ${tool.tripleExists ? 'exists' : 'TO CREATE'}`,
   );
+  // The atom works unpinned; a reader just sees a hash instead of a name. Said once, here, rather
+  // than left for whoever wonders why the catalogue row is blank.
+  if (tool.pinDocument !== undefined && !tool.atomExists) {
+    console.log(`     pin    bun run scripts/pin-tool.ts ${tool.uri}`);
+  }
   if (tool.bareUrlWarning !== undefined) console.log(`     WARN   ${tool.bareUrlWarning}`);
 }
 
@@ -155,7 +161,8 @@ const show = (label: string, calls: PreparedCall[], total: bigint) => {
   console.log(`\n${label}: ${calls.length} call(s), ${formatEther(total)} TRUST`);
   for (const call of calls) {
     console.log(
-      `  ${call.kind.padEnd(14)} ${formatEther(call.value).padStart(14)} TRUST  ${call.why}`,
+      `  ${call.kind.padEnd(14)} ${formatEther(call.value).padStart(14)} TRUST` +
+        `${call.preview === undefined ? '' : `  ${call.preview.shares} shares`}  ${call.why}`,
     );
   }
 };

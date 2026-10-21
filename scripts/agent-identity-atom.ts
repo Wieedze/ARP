@@ -89,7 +89,10 @@ console.log(`same as edge  ${plan.tripleId}  ${plan.existing.triple ? 'exists' :
 
 console.log(`\nplan: ${plan.calls.length} call(s), ${formatEther(plan.totalValue)} TRUST`);
 for (const call of plan.calls) {
-  console.log(`  ${call.kind.padEnd(14)} ${formatEther(call.value).padStart(14)}  ${call.why}`);
+  console.log(
+    `  ${call.kind.padEnd(14)} ${formatEther(call.value).padStart(14)}` +
+      `${call.preview === undefined ? '' : `  ${call.preview.shares} shares`}  ${call.why}`,
+  );
 }
 if (plan.calls.length === 0) {
   console.log('  nothing to do — this agent already resolves. Idempotent by content address.');
