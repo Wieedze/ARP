@@ -174,7 +174,7 @@ export function RegisterModule() {
             <PageHeader />
             <p className="text-[color:var(--color-fg-60)] mb-8 max-w-[640px]">
                 Add a tool to the ARP catalogue. Anyone can publish — the
-                marketplace ranks by economic conviction (TVL on the atom).
+                marketplace ranks by economic conviction.
                 Registration takes two transactions: the registry entry, then
                 the atom creation with a{" "}
                 <span className="font-mono">
