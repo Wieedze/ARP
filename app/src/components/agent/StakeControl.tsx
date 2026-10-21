@@ -394,10 +394,7 @@ function ConfirmStep({
                 <span className="font-mono">{formatTrust(quote.assets)} TRUST</span> to{" "}
                 <span className="font-medium">{SIDE_COPY[quote.side].label.toLowerCase()}</span> the
                 claim that <span className="font-medium">{row.providerName}</span> is a trust
-                provider for this agent. Real TRUST on Intuition mainnet, not recoverable by this
-                panel, and capped at{" "}
-                <span className="font-mono">{formatTrust(MAX_STAKE_WEI)} TRUST</span> per
-                transaction.
+                provider for this agent.
             </p>
 
             <dl className="mt-4 grid grid-cols-1 sm:grid-cols-[10rem_1fr] gap-y-2 gap-x-4 text-[length:var(--text-body-sm)]">
@@ -424,12 +421,6 @@ function ConfirmStep({
                 />
                 <Term label="Receiver" value={truncateMiddle(quote.receiver, 8, 6)} />
             </dl>
-
-            <p className="mt-3 text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)] max-w-[52ch]">
-                Shares are not linear in the deposit: protocol fee, entry fee and the triple's atom
-                deposit fraction all apply before the bonding curve prices what is left. These are
-                the numbers <span className="font-mono">previewDeposit</span> returned just now.
-            </p>
 
             <div className="mt-4 flex flex-wrap gap-3">
                 <button

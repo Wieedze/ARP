@@ -25,17 +25,23 @@ function pageOf(): ToolListingPage {
 describe("toolCatalogQueryKey", () => {
     it("keys on the order, because two orders are two sequences", () => {
         // A page from one order must never be served from cache for the other.
-        expect(toolCatalogQueryKey("priced-edges")).not.toEqual(toolCatalogQueryKey("conviction"));
+        expect(toolCatalogQueryKey("priced-edges", 1)).not.toEqual(
+            toolCatalogQueryKey("conviction", 1),
+        );
+        // The two curves are two markets, so one must never be served from the other's cache.
+        expect(toolCatalogQueryKey("priced-edges", 1)).not.toEqual(
+            toolCatalogQueryKey("priced-edges", 2),
+        );
     });
 });
 
 describe("toolCatalogQueryOptions", () => {
     it("passes the order through and maps the page to rows", async () => {
         const fetchListing = vi.fn(async () => pageOf());
-        const options = toolCatalogQueryOptions("conviction", fetchListing);
+        const options = toolCatalogQueryOptions("conviction", 2, fetchListing);
         const view = await options.queryFn();
 
-        expect(fetchListing).toHaveBeenCalledWith("conviction");
+        expect(fetchListing).toHaveBeenCalledWith("conviction", 2);
         expect(view.rows).toHaveLength(1);
         expect(view.rows[0]?.name).toBe("Trail of Bits — guidelines-advisor");
         expect(view.rows[0]?.href).toBe("/tool/atom/0xba5844b5");
@@ -46,12 +52,12 @@ describe("toolCatalogQueryOptions", () => {
     it("keeps the previous page while a new order loads", () => {
         // Switching order is the same rows in a different sequence, so replacing the list with a
         // loading state on every click would be a worse answer than a stale one.
-        const options = toolCatalogQueryOptions("priced-edges", async () => pageOf());
+        const options = toolCatalogQueryOptions("priced-edges", 1, async () => pageOf());
         expect(options.placeholderData).toBeDefined();
     });
 
     it("lets a failed read surface rather than retrying indefinitely", () => {
-        const options = toolCatalogQueryOptions("priced-edges", async () => pageOf());
+        const options = toolCatalogQueryOptions("priced-edges", 1, async () => pageOf());
         expect(options.retry).toBe(1);
     });
 });

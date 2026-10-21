@@ -6,7 +6,6 @@ import {CohortList} from "../components/agent/CohortList";
 import {MainnetNotice} from "../components/agent/MainnetNotice";
 import {COHORT_PAGE_SIZE, useAgentCohort} from "../hooks/use-agent-cohort";
 import {COHORT_ORDERS, describeCohortFailure, orderLabel} from "../services/agent-cohort";
-import {ERC8004_GRAPHQL_URL} from "../services/erc8004-connector";
 
 /**
  * `/agents` — the way into the trust panel.
@@ -96,13 +95,6 @@ export function AgentDirectory() {
                                 />
                             </div>
                         </nav>
-                        <p className="mt-4 max-w-[68ch] text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)]">
-                            Ordered and paged by the indexer at{" "}
-                            <span className="font-mono break-all">{ERC8004_GRAPHQL_URL}</span>, a
-                            page at a time. Rows are never re-sorted here — the order belongs to the
-                            whole cohort, and re-ranking one page would make it a property of the
-                            window instead.
-                        </p>
                     </>
                 )}
             </section>
