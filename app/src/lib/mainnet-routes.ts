@@ -20,6 +20,7 @@ export const MAINNET_ROUTES: readonly string[] = [
     "/agents",
     "/tools",
     "/register",
+    "/me",
 ];
 
 /** Route prefixes whose children are all mainnet. */

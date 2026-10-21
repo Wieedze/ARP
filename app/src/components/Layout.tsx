@@ -1,5 +1,6 @@
 import {type ReactNode} from "react";
 import {Link, useLocation} from "react-router-dom";
+import {useAccount} from "wagmi";
 
 import {deployments} from "../lib/deployments";
 import {linkClass} from "../lib/control-class";
@@ -33,6 +34,7 @@ const REGISTRY_URL = deployments.arp.explorerLinks?.moduleRegistry ?? "#";
 
 export function Layout({children}: {children: ReactNode}) {
     const {pathname} = useLocation();
+    const {isConnected} = useAccount();
     const isMainnetRoute = readsMainnet(pathname);
 
     return (
@@ -76,6 +78,16 @@ export function Layout({children}: {children: ReactNode}) {
                     >
                         Register
                     </Link>
+                    {/* Last, and only once a wallet is connected: a page called "your positions"
+                        with nothing to read is a worse answer than no tab. */}
+                    {isConnected ? (
+                        <Link
+                            to="/me"
+                            className="text-[color:var(--color-fg-60)]! hover:text-[color:var(--color-fg)]!"
+                        >
+                            You
+                        </Link>
+                    ) : null}
                 </nav>
                 <WalletConnect />
             </header>

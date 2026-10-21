@@ -107,11 +107,14 @@ describe("getTermShape", () => {
 });
 
 describe("getTermActivity", () => {
-    it("reads a count the indexer sends as a string", async () => {
+    it("counts signals — deposits and redemptions — and reads the string the indexer sends", async () => {
         /**
-         * `signal_stats_*.count` comes back as `"5"`, not `5`. A reader accepting only `number`
-         * returned 0 for every bucket while `volume` read correctly — a whole column silently zero,
-         * the same class as the `market.totalAssets` defect `STATE.md` records.
+         * Two findings in one assertion. `signal_stats_*.count` comes back as `"5"`, not `5` — a
+         * reader accepting only `number` returned 0 for every bucket while `volume` read correctly,
+         * the same class as the `market.totalAssets` defect `STATE.md` records. And it counts
+         * **signals**, which are deposits *and* redemptions: 11 of them against 1 deposit on one
+         * measured day. The field was called `deposits`, which was a second wrong name on the same
+         * row.
          */
         const {transport} = transportOf({
             TermActivity: {
@@ -122,7 +125,7 @@ describe("getTermActivity", () => {
             },
         });
         const buckets = await getTermActivity(TERM, {transport, grain: "week"});
-        expect(buckets.map((bucket) => bucket.deposits)).toEqual([34, 27]);
+        expect(buckets.map((bucket) => bucket.signals)).toEqual([34, 27]);
     });
 
     it("returns oldest first, because a curve is read left to right", async () => {

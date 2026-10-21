@@ -23,7 +23,7 @@ import {isRecord, readString} from "./json.js";
  * | question | field |
  * | --- | --- |
  * | a few big holders, or many? | {@link TermShape.largestShare}, {@link TermShape.topThreeShare} |
- * | all at once, or over time? | {@link TermShape.firstDeposit}, {@link TermShape.lastDeposit} |
+ * | all at once, or over time? | {@link TermShape.firstPosition}, {@link TermShape.lastPosition} |
  * | do its backers exist elsewhere? | {@link TermShape.medianBackerBreadth} |
  * | how many agents actually used it? | not here — that is `getToolUsage`, a different axis |
  *
@@ -59,9 +59,24 @@ export type TermShape = {
     largestShareBps: number | null;
     /** The three largest together, same basis. `null` for the same reason. */
     topThreeShareBps: number | null;
-    /** When the first and last deposit landed. Same-hour arrival is the cheapest sybil signature. */
-    firstDeposit: string | null;
-    lastDeposit: string | null;
+    /**
+     * When the first and last **position** was opened, not when the first and last deposit landed.
+     *
+     * The distinction is the whole name. A `position` row's `created_at` is when an account *opened*
+     * its holding and does **not** move when that account deposits again, so this is the span over
+     * which backers arrived — a different fact from the span over which money arrived.
+     *
+     * Measured on mainnet 1155, 2026-10-21, on the busiest term on the graph: positions span
+     * 2025-11-01 → **2026-09-26**, deposits span 2025-11-01 → **2026-10-20**. Twenty-four days
+     * apart, on one term, in one query. These were called `firstDeposit`/`lastDeposit` and the UI
+     * printed "every deposit landed the same day" from them — on the panel whose entire claim is
+     * that it states facts and never a verdict.
+     *
+     * Reading `deposits` instead is a different query, and the question "when did its backers
+     * arrive" is the one the sybil flag wants anyway: a cluster is addresses appearing together.
+     */
+    firstPosition: string | null;
+    lastPosition: string | null;
     /**
      * The median number of **other** terms this term's backers hold a position on.
      *
@@ -79,13 +94,28 @@ export type TermShape = {
     backersSampled: boolean;
 };
 
-/** One bucket of a term's activity over time. */
+/**
+ * One bucket of a term's activity over time.
+ *
+ * **Signals, not deposits, and TRUST, not shares.** Both halves of that were wrong here and the
+ * second was being rendered: this said "deposits" and "in wei of shares", and the UI printed the
+ * volume as TRUST. Probed on mainnet 2026-10-21 to settle it:
+ *
+ * - a `signal` links to **either** a `deposit` or a `redemption`, and `signal_stats_*.count` counts
+ *   both — 11 signals against 1 deposit on one day of the busiest term;
+ * - `signal.delta` equals the deposit's `assets_after_fees` **exactly**, and the redemption's
+ *   `assets` exactly, so the unit is TRUST and not shares. The UI's label was right and this
+ *   docstring was wrong.
+ * - a redemption's delta is **positive**, so the volume is absolute TRUST moved in either
+ *   direction. It is activity, not net flow, and a reader taking it for inflow would read an exit
+ *   as an arrival.
+ */
 export type TermActivityBucket = {
     /** The bucket's start, ISO 8601. */
     bucket: string;
-    /** Deposits that landed in it. */
-    deposits: number;
-    /** Their volume, in wei of shares. */
+    /** Deposits **and** redemptions that landed in it. */
+    signals: number;
+    /** TRUST moved in either direction, in wei. Not net: a redemption adds to it. */
     volume: bigint;
 };
 
@@ -239,8 +269,8 @@ export async function getTermShape(
         totalShares,
         largestShareBps: shareBps(largest, totalShares),
         topThreeShareBps: shareBps(topThree, totalShares),
-        firstDeposit: isRecord(firstRow) ? readString(firstRow, "created_at") : null,
-        lastDeposit: isRecord(lastRow) ? readString(lastRow, "created_at") : null,
+        firstPosition: isRecord(firstRow) ? readString(firstRow, "created_at") : null,
+        lastPosition: isRecord(lastRow) ? readString(lastRow, "created_at") : null,
         // Minus one: the position on this term itself, which every backer holds by definition.
         medianBackerBreadth: median(breadth.map((held) => Math.max(0, held - 1))),
         backersRead: backers.length,
@@ -285,12 +315,15 @@ async function backerBreadth(
 }
 
 /**
- * A term's deposits over time, for a curve a reader can actually see.
+ * A term's activity over time, for a curve a reader can actually see.
  *
  * The indexer ships this **pre-bucketed** — `signal_stats_hourly` through `_monthly` — so this is
  * one query and no client-side aggregation. Each row carries its `curve_id`, which is kept rather
  * than folded: curve 1 is linear and curve 2 is offset progressive, they are two markets, and a
  * combined line would be a figure from one beside a count from the other.
+ *
+ * What a bucket counts and in what unit is on {@link TermActivityBucket}, and both were wrong once
+ * — read it before labelling this in a UI.
  */
 export async function getTermActivity(
     termId: string,
@@ -321,7 +354,7 @@ export async function getTermActivity(
         if (bucket === null) continue;
         buckets.push({
             bucket,
-            deposits: numberFrom(row["count"]),
+            signals: numberFrom(row["count"]),
             volume: bigintFrom(row["volume"]),
         });
     }

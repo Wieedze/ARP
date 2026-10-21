@@ -84,7 +84,15 @@ function publicClientWith(reads: Reads = {}): MockPublicClient {
     return pc;
 }
 
-/** The graph read, stubbed so no network is touched. Returns the atoms a URL already has. */
+/**
+ * The graph read, stubbed so no network is touched.
+ *
+ * **Passed on every call, including the ones that do not assert on it.** `planToolRegistration`
+ * builds the real `intuitionToolAtomLookup` when none is given, so a test that omits it reaches
+ * Intuition's mainnet endpoint — two of these timed out at 5s once the suite grew, and before that
+ * they were passing only because the network was fast. A test whose result depends on somebody
+ * else's uptime is not a test.
+ */
 function lookupReturning(candidates: {termId: string; label: string | null; uri: string | null}[]) {
     const asked: string[] = [];
     return {
@@ -97,6 +105,13 @@ function lookupReturning(candidates: {termId: string; label: string | null; uri:
         },
     };
 }
+
+/** No atom on the graph carries the URL — the common case, and the one most tests want. */
+const noAtoms = {
+    async findByUrl() {
+        return [];
+    },
+};
 
 function walletOn(chainId: number) {
     return {
@@ -136,9 +151,11 @@ describe("planToolRegistration", () => {
         // A `did:`, an `npm:` specifier, a bare word. Those have no URL to derive a document from,
         // and this screen is for URLs.
         for (const bad of ["", "did:web:example.org", "npm:slither"]) {
-            expect(await codeOf(planToolRegistration({url: bad, publicClient: pc as never}))).toBe(
-                "bad-url",
-            );
+            expect(
+                await codeOf(
+                    planToolRegistration({url: bad, publicClient: pc as never, lookup: noAtoms}),
+                ),
+            ).toBe("bad-url");
         }
     });
 
@@ -150,7 +167,9 @@ describe("planToolRegistration", () => {
         ];
         const plans = [];
         for (const url of spellings) {
-            plans.push(await planToolRegistration({url, publicClient: pc as never}));
+            plans.push(
+                await planToolRegistration({url, publicClient: pc as never, lookup: noAtoms}),
+            );
         }
         expect(new Set(plans.map((plan) => plan.atomUri)).size).toBe(1);
         expect(new Set(plans.map((plan) => plan.normalisedUrl)).size).toBe(1);
@@ -159,7 +178,11 @@ describe("planToolRegistration", () => {
     it("carries every fee number, not a lump total", async () => {
         // ADR `0017` safeguard 6: several fee layers apply, and implying 1:1 would be a lie. The
         // chain takes three bites — the flat creation fee, the entry fee, then shares rounded down.
-        const plan = await planToolRegistration({url: "github.com/x", publicClient: pc as never});
+        const plan = await planToolRegistration({
+            url: "github.com/x",
+            publicClient: pc as never,
+            lookup: noAtoms,
+        });
         expect(plan.assets).toBe(ASSETS);
         expect(plan.creationFee).toBe(ATOM_COST);
         expect(plan.assetsAfterFees).toBe(AFTER_FEES);
@@ -174,7 +197,13 @@ describe("planToolRegistration", () => {
         // — and it is the only slippage guard available here: `createAtoms` has no `minShares`.
         const zero = publicClientWith({shares: 0n});
         expect(
-            await codeOf(planToolRegistration({url: "github.com/x", publicClient: zero as never})),
+            await codeOf(
+                planToolRegistration({
+                    url: "github.com/x",
+                    publicClient: zero as never,
+                    lookup: noAtoms,
+                }),
+            ),
         ).toBe("no-position");
     });
 
@@ -185,7 +214,11 @@ describe("planToolRegistration", () => {
         const expensive = publicClientWith({atomCost: MAX_STAKE_WEI + parseEther("1")});
         expect(
             await codeOf(
-                planToolRegistration({url: "github.com/x", publicClient: expensive as never}),
+                planToolRegistration({
+                    url: "github.com/x",
+                    publicClient: expensive as never,
+                    lookup: noAtoms,
+                }),
             ),
         ).toBe("cost-above-ceiling");
     });
@@ -194,6 +227,7 @@ describe("planToolRegistration", () => {
         const plan = await planToolRegistration({
             url: "github.com/x",
             publicClient: publicClientWith({exists: true}) as never,
+            lookup: noAtoms,
         });
         expect(plan.exists).toBe(true);
         expect(plan.assets).toBe(0n);

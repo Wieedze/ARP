@@ -1,13 +1,21 @@
-import {useState} from "react";
+import {useId, useState} from "react";
 import {Link} from "react-router-dom";
 
+import {CurveControl, Segmented} from "../components/tool/ToolCatalogControls";
 import {linkClass} from "../lib/control-class";
 import type {ToolListingOrder} from "@arp-protocol/core";
 
 import {MainnetNotice} from "../components/agent/MainnetNotice";
 import {ToolCatalogList} from "../components/tool/ToolCatalogList";
 import {useToolCatalog} from "../hooks/use-tool-catalog";
-import {TOOL_CURVES, TOOL_ORDERS} from "../services/tool-catalog";
+import {
+    matchesFilters,
+    TOOL_CURVES,
+    TOOL_FILTERS,
+    TOOL_ORDERS,
+    unknowableUnder,
+    type ToolFilter,
+} from "../services/tool-catalog";
 
 /**
  * `/tools` — tools agents declared using, with what is staked behind each.
@@ -32,8 +40,27 @@ export function ToolCatalog() {
     // the tool's growth rather than the holder's timing. Curve 2 is where the money sits today, and
     // that is a different question — `TOOL_CURVES` has the measurement.
     const [curveId, setCurveId] = useState(TOOL_CURVES[0]?.id ?? 1);
+    /**
+     * The reader's filters, and none is on by default.
+     *
+     * A default filter is a ranking wearing another name. The question was "can we highlight the
+     * good ones?", and the answer is that ARP has no opinion to highlight with (ADR `0046`) — a
+     * badge granted by two metrics is two metrics somebody farms, and a sybil costs $0.00005 an
+     * address here. What it has is dimensions the reader narrows on, differently from the next
+     * reader.
+     */
+    const [filters, setFilters] = useState<ToolFilter[]>([]);
     const query = useToolCatalog(order, curveId);
     const view = query.data;
+    /**
+     * The filtered rows and what the filters could not answer, derived here rather than in the JSX.
+     *
+     * It was an IIFE wrapping a three-deep ternary inside the render, which recomputed every render
+     * and could not be reached by `useMemo`. Three branches read as three branches when they are not
+     * nested inside an expression.
+     */
+    const visible = (view?.rows ?? []).filter((row) => matchesFilters(row, filters));
+    const unknowable = unknowableUnder(view?.rows ?? [], filters);
 
     return (
         <section>
@@ -51,7 +78,22 @@ export function ToolCatalog() {
                 </div>
                 <div className="flex flex-wrap items-baseline gap-x-6 gap-y-3">
                     <CurveControl curveId={curveId} onChange={setCurveId} />
-                    <OrderControl order={order} onChange={setOrder} />
+                    <Segmented
+                        label="Order"
+                        selected={order}
+                        onChange={setOrder}
+                        options={TOOL_ORDERS}
+                    />
+                    <FilterControl
+                        active={filters}
+                        onToggle={(filter) =>
+                            setFilters((previous) =>
+                                previous.includes(filter)
+                                    ? previous.filter((entry) => entry !== filter)
+                                    : [...previous, filter],
+                            )
+                        }
+                    />
                 </div>
             </header>
 
@@ -68,6 +110,29 @@ export function ToolCatalog() {
                 ) : (
                     <Failure error={query.error} onRetry={() => void query.refetch()} />
                 )
+            ) : visible.length === 0 && view.rows.length > 0 && filters.length > 0 ? (
+                // A filtered-to-empty list is a different state from an empty catalogue, and
+                // saying so is the difference between "nothing matches what you asked" and
+                // "nothing exists" — the second would be a false claim about the graph.
+                <div className="max-w-[60ch]">
+                    <p className="font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)]">
+                        no rows match
+                    </p>
+                    {/* "None can answer" is not "none matches", and a reader who registered the
+                        only tool on the list deserves the first. Every filter here is about
+                        declarations, and a registered-only row has no per-edge figures to answer
+                        with — so it is excluded on an unknown, not on a no. */}
+                    <p className="mt-3 text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)]">
+                        {unknowable === view.rows.length
+                            ? view.rows.length === 1
+                                ? "The one tool listed has no agent declarations yet, so these filters cannot answer for it."
+                                : `None of the ${view.rows.length} tools listed has agent declarations yet, so these filters cannot answer for them.`
+                            : view.rows.length === 1
+                              ? "One tool is listed and it does not match."
+                              : `${view.rows.length} tools are listed and none matches.`}{" "}
+                        Turn a filter off to see them.
+                    </p>
+                </div>
             ) : view.rows.length === 0 ? (
                 // An empty region with nothing in it reads as a failed read, so the state is said.
                 // And it says what would fill it, per `rules/ui.md`, because on this page the answer
@@ -86,7 +151,7 @@ export function ToolCatalog() {
                 </div>
             ) : (
                 <>
-                    <ToolCatalogList rows={view.rows} curveId={view.curveId} />
+                    <ToolCatalogList rows={visible} curveId={view.curveId} />
                     {/* Only when it happened: a prefix presented as the whole set is the one thing
                         this page could get wrong without anyone noticing. */}
                     {view.truncated ? (
@@ -101,90 +166,64 @@ export function ToolCatalog() {
     );
 }
 
+/**
+ * The reader's filters. A checkbox group, because they combine — unlike the order, which is one of
+ * three.
+ *
+ * `aria-pressed` on a button, not a real `<input type="checkbox">`, to match the two segmented
+ * controls beside it: three different widget idioms in one header would be worse than one idiom used
+ * for a slightly different job, and `aria-pressed` is the APG's toggle-button pattern.
+ */
+function FilterControl({
+    active,
+    onToggle,
+}: {
+    active: readonly ToolFilter[];
+    onToggle: (filter: ToolFilter) => void;
+}) {
+    const labelId = useId();
+    return (
+        <div className="flex items-baseline gap-3">
+            <span
+                id={labelId}
+                className="font-mono uppercase tracking-wider text-[length:var(--text-label)] text-[color:var(--color-fg-60)]"
+            >
+                Only
+            </span>
+            <div role="group" aria-labelledby={labelId} className="flex flex-wrap gap-1">
+                {TOOL_FILTERS.map((filter) => {
+                    const on = active.includes(filter.id);
+                    return (
+                        <button
+                            key={filter.id}
+                            type="button"
+                            aria-pressed={on}
+                            title={filter.title}
+                            onClick={() => onToggle(filter.id)}
+                            // Banged, like every other selected state here: `index.css`'s unlayered
+                            // `button { border; color }` beats any `@layer utilities` rule, and an
+                            // unbanged selected state renders identically to an unselected one.
+                            className={`px-3 py-1 text-[length:var(--text-body-sm)] ${
+                                on
+                                    ? "border-[color:var(--color-accent)]! text-[color:var(--color-accent)]!"
+                                    : "border-[color:var(--color-border-strong)]! text-[color:var(--color-fg-60)]!"
+                            }`}
+                        >
+                            {filter.label}
+                        </button>
+                    );
+                })}
+            </div>
+        </div>
+    );
+}
+
 /** The rows on screen are the last good read, and a newer one failed. */
 function StaleNotice() {
     return (
         <p className="mt-6 pl-5 border-l border-[color:var(--color-border-strong)] text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)] max-w-[64ch]">
             These rows are the last successful read. The most recent one failed.
         </p>
-    );
-}
-
-/**
- * Which bonding curve the figures come from.
- *
- * A selector and not two columns: the two are different markets, so a reader compares them by
- * switching rather than by reading a total that would erase the difference. "Long term" and "Short
- * term" name what a position on each one means; the curve's own name is in the `title` and the
- * subtitle for anyone who wants it.
- */
-function CurveControl({curveId, onChange}: {curveId: number; onChange: (next: number) => void}) {
-    return (
-        <div className="flex items-baseline gap-3">
-            <span
-                id="tool-curve-label"
-                className="font-mono uppercase tracking-wider text-[length:var(--text-label)] text-[color:var(--color-fg-60)]"
-            >
-                Horizon
-            </span>
-            <div role="group" aria-labelledby="tool-curve-label" className="flex gap-1">
-                {TOOL_CURVES.map((entry) => (
-                    <button
-                        key={entry.id}
-                        type="button"
-                        aria-pressed={entry.id === curveId}
-                        onClick={() => onChange(entry.id)}
-                        title={entry.curve}
-                        className={`px-3 py-1 text-[length:var(--text-body-sm)] border ${
-                            entry.id === curveId
-                                ? "border-[color:var(--color-accent)] text-[color:var(--color-accent)]"
-                                : "border-[color:var(--color-border-strong)] text-[color:var(--color-fg-60)]"
-                        }`}
-                    >
-                        {entry.label}
-                    </button>
-                ))}
-            </div>
-        </div>
-    );
-}
-
-function OrderControl({
-    order,
-    onChange,
-}: {
-    order: ToolListingOrder;
-    onChange: (next: ToolListingOrder) => void;
-}) {
-    return (
-        <div className="flex items-baseline gap-3">
-            <span
-                id="tool-order-label"
-                className="font-mono uppercase tracking-wider text-[length:var(--text-label)] text-[color:var(--color-fg-60)]"
-            >
-                Order
-            </span>
-            {/* `px-3 py-1 border`, selected in the accent, because `index.css`'s unlayered `button`
-                rule sets a full 1px border and beats every Tailwind `border-*` utility — a
-                `border-b` here renders as a tight box with no selected state at all. */}
-            <div role="group" aria-labelledby="tool-order-label" className="flex gap-1">
-                {TOOL_ORDERS.map((entry) => (
-                    <button
-                        key={entry.id}
-                        type="button"
-                        aria-pressed={entry.id === order}
-                        onClick={() => onChange(entry.id)}
-                        className={`px-3 py-1 text-[length:var(--text-body-sm)] border ${
-                            entry.id === order
-                                ? "border-[color:var(--color-accent)] text-[color:var(--color-accent)]"
-                                : "border-[color:var(--color-border-strong)] text-[color:var(--color-fg-60)]"
-                        }`}
-                    >
-                        {entry.label}
-                    </button>
-                ))}
-            </div>
-        </div>
     );
 }
 

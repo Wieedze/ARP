@@ -45,6 +45,19 @@ export const TOOL_CURVES: readonly {id: number; label: string; curve: string}[] 
     {id: 2, label: "Short term", curve: "Offset Progressive Curve"},
 ];
 
+/**
+ * `1` → `"Long term"`, for a figure that needs to name the curve it was read at.
+ *
+ * Here and not beside the control that uses it: a component file that also exports a function breaks
+ * fast refresh, and this belongs with `TOOL_CURVES` regardless.
+ *
+ * Falls back to the id rather than to a guess — a curve this app does not know is a curve it cannot
+ * name, and "curve 7" is honest where "Long term" would be an invention.
+ */
+export function curveLabelOf(curveId: number): string {
+    return TOOL_CURVES.find((entry) => entry.id === curveId)?.label ?? `curve ${curveId}`;
+}
+
 export const TOOL_ORDERS: readonly {id: ToolListingOrder; label: string}[] = [
     {id: "priced-edges", label: "Most declarations paid for"},
     {id: "conviction", label: "Most TRUST behind"},
@@ -81,7 +94,15 @@ export type ToolRow = {
      */
     paidDeclarations: number | null;
     supportTrust: string;
-    /** `null` when nothing stands against the tool, so the cell stays empty rather than showing a zero. */
+    /**
+     * TRUST deposited against the tool's declarations, or `null`.
+     *
+     * `null` carries **two** meanings and the second was undocumented until the filters made it an
+     * exclusion. For a `declared` row it is measured: nothing stands against it. For a `registered`
+     * row it is hardcoded, because an atom's vault has no counter side — so `null` there means "not
+     * applicable", not "nobody disagrees". Before the filters this only decided whether a cell
+     * stayed empty; `matchesFilters` is the first consumer to act on it.
+     */
     opposeTrust: string | null;
     /**
      * How many positions stand on the tool's own atom. `null` for a `declared` row.
@@ -92,6 +113,99 @@ export type ToolRow = {
      */
     stakers: number | null;
 };
+
+/**
+ * What a reader can narrow the list to. **Their** choice, not a ranking ARP publishes.
+ *
+ * This is the whole shape of the answer to "can we highlight the good ones?". No: a badge granted by
+ * metrics is a badge somebody farms, and a sybil costs $0.00005 an address on this graph. ARP
+ * publishes no score (ADR `0046`). What it can do is let the reader say what they are looking for —
+ * and two readers can want different things, which is the point of showing dimensions at all.
+ *
+ * Each filter is a **fact about the row**, never a judgment of the tool:
+ *
+ * | filter | keeps | why a reader would want it |
+ * | --- | --- | --- |
+ * | `paid-for` | rows where somebody paid to stand behind a declaration | separates a claim from a free assertion |
+ * | `declared-by-agents` | rows an agent declared using | separates used from merely registered |
+ * | `contested` | rows with a deposit on the other side | somebody disagrees, which is information |
+ *
+ * None is the default. The default is everything, because a default filter is a ranking wearing
+ * another name.
+ */
+export type ToolFilter = "paid-for" | "declared-by-agents" | "contested";
+
+export const TOOL_FILTERS: readonly {id: ToolFilter; label: string; title: string}[] = [
+    {
+        id: "paid-for",
+        // "Declarations paid for", not "Paid for". The filter is about **declarations** — whether an
+        // agent's claim to have used the tool carries a position — and the terse label read as being
+        // about the tool, which hid rows displaying real TRUST on the tool's own vault. `TOOL_ORDERS`
+        // already had the unambiguous phrasing one entry up and this did not match it.
+        label: "Declarations paid for",
+        title: "At least one agent's declaration carries a position",
+    },
+    {
+        id: "declared-by-agents",
+        label: "Used by agents",
+        title: "An identified agent declared using it, rather than only being registered",
+    },
+    {
+        id: "contested",
+        label: "Contested",
+        title: "Somebody has deposited against a declaration about it",
+    },
+];
+
+/**
+ * Does this row satisfy every filter the reader turned on?
+ *
+ * **Every filter here is about declarations, and a registered-only row fails all three.** That is
+ * correct and it is also why the labels say "declarations": a row can carry real TRUST on the
+ * tool's own vault and still be hidden by all three, because nobody has *declared using* it.
+ * Hiding it is right; implying nobody paid for it would not be.
+ *
+ * `countsAsUnknown` exists so the empty state can say which happened. "No rows match what you
+ * asked" and "the rows that exist cannot answer what you asked" are different sentences, and a
+ * reader who registered the only tool on the list deserves the second.
+ */
+export function matchesFilters(row: ToolRow, active: readonly ToolFilter[]): boolean {
+    return active.every((filter) => {
+        switch (filter) {
+            case "paid-for":
+                // `null` is "this read cannot say", not "nobody paid": pricing a registered row's
+                // declarations needs the per-edge vaults, which is `listTools`'s read.
+                return row.paidDeclarations !== null && row.paidDeclarations > 0;
+            case "declared-by-agents":
+                return row.declarations > 0;
+            case "contested":
+                // Same overload on the other column, and it needed saying here too. For a declared
+                // row `null` is measured — nothing stands against it. For a registered row it is
+                // hardcoded, because an atom's vault has no counter side to read at all.
+                return row.opposeTrust !== null;
+        }
+    });
+}
+
+/**
+ * Of the rows a filter hid, how many did it hide because the read **cannot answer**?
+ *
+ * Not a count of non-matches. A registered row has no per-edge figures, so every declaration filter
+ * excludes it on an unknown rather than on a no — and an empty list that says "none matches" when
+ * the truth is "none can say" is a claim about those tools that this page has not read.
+ */
+export function unknowableUnder(rows: readonly ToolRow[], active: readonly ToolFilter[]): number {
+    if (active.length === 0) return 0;
+    return rows.filter(
+        (row) =>
+            !matchesFilters(row, active) &&
+            active.some(
+                (filter) =>
+                    (filter === "paid-for" && row.paidDeclarations === null) ||
+                    (filter === "contested" && row.provenance === "registered"),
+            ),
+    ).length;
+}
 
 export type ToolCatalogView = {
     rows: ToolRow[];

@@ -3,7 +3,9 @@ import {useParams} from "react-router-dom";
 import type {Hex} from "viem";
 
 import {useStakeSession} from "../hooks/use-stake-session";
+import {useTermShape} from "../hooks/use-term-shape";
 import {useToolUsage, isToolAtomId} from "../hooks/use-tool-usage";
+import {curveLabelOf} from "../services/tool-catalog";
 import {formatTrust, truncateMiddle} from "../services/trust-format";
 import {
     describeCounts,
@@ -13,6 +15,7 @@ import {
 } from "../services/tool-usage-view";
 import {MainnetNotice} from "../components/agent/MainnetNotice";
 import {StakeControl} from "../components/agent/StakeControl";
+import {TermShapePanel} from "../components/tool/TermShapePanel";
 import {UsageEdgeRow} from "../components/tool/UsageEdgeRow";
 import {TIER_CAPTION, TIER_LABEL, TIER_UNREACHABLE_REASON} from "../components/tool/tier-scale";
 import {INTUITION_MAINNET_EXPLORER} from "../lib/intuition-mainnet";
@@ -301,6 +304,17 @@ function Edges({view, onSettled}: {view: ToolUsageView; onSettled: () => void}) 
                         >
                             {isOpen && tripleId !== null ? (
                                 <div id={panelId}>
+                                    {/* The distribution first, the form second. A reader deciding
+                                        whether to back a claim wants to know whether one account
+                                        already holds most of it before they are asked for a
+                                        number, and the shape read only happens for the open row —
+                                        one aggregate plus a batched breadth request per term is a
+                                        fan-out a whole list should not trigger. */}
+                                    <EdgeShape
+                                        tripleId={tripleId}
+                                        curveId={session?.curveId}
+                                        sessionFailed={sessionError !== null}
+                                    />
                                     <StakeControl
                                         claim={{
                                             tripleId,
@@ -349,6 +363,68 @@ function Edges({view, onSettled}: {view: ToolUsageView; onSettled: () => void}) 
                 })}
             </ul>
         </>
+    );
+}
+
+/**
+ * One claim's distribution and its curve, read only when its row is open.
+ *
+ * Its own component so the read is mounted by the disclosure rather than by the list: `useTermShape`
+ * is `enabled` on a non-null term, and a hook called once per row would fire a request per row.
+ */
+function EdgeShape({
+    tripleId,
+    curveId,
+    sessionFailed,
+}: {
+    tripleId: Hex;
+    curveId: bigint | undefined;
+    /**
+     * The session read failed, so the curve will never arrive.
+     *
+     * Without it a failed session left `curveId` undefined forever and this rendered a pending state
+     * with `aria-busy` that could not resolve: a spinner announcing itself to a screen reader
+     * indefinitely, while the form directly below it correctly reported the error.
+     */
+    sessionFailed: boolean;
+}) {
+    /**
+     * Nothing is read until the curve is known.
+     *
+     * It defaulted to 1 while the stake session loaded, then re-keyed and silently redrew with
+     * different numbers once the real `defaultCurveId` arrived — and `use-stake-session.ts` says in
+     * as many words that the curve is governance-configurable and today's value "is not a
+     * guarantee". A figure that changes under the reader without the label changing is worse than a
+     * figure that arrives late.
+     */
+    const query = useTermShape(curveId === undefined ? null : tripleId, Number(curveId ?? 1n));
+    // Nothing rather than a spinner: the form below already says why staking is closed, and a
+    // second copy of the same failure is noise.
+    if (sessionFailed) return null;
+    if (curveId === undefined || query.isPending) {
+        return (
+            <p
+                aria-live="polite"
+                aria-busy
+                className="text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)]"
+            >
+                Reading this claim&rsquo;s market…
+            </p>
+        );
+    }
+    if (query.isError || query.data === undefined) {
+        // Absent rather than an error block: the staking form below it still works, and a failed
+        // read of a secondary reading should not look like a broken page.
+        return null;
+    }
+    return (
+        <div className="mb-6 pb-6 border-b border-[color:var(--color-border)]">
+            <TermShapePanel
+                shape={query.data.shape}
+                curve={query.data.curve}
+                curveLabel={curveLabelOf(query.data.shape.curveId)}
+            />
+        </div>
     );
 }
 
