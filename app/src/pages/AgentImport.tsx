@@ -287,10 +287,8 @@ export function AgentImport() {
                     Import an agent you already have
                 </h1>
                 <p className="mt-3 max-w-[64ch] text-[color:var(--color-steel)]">
-                    The ERC-8004 registry already names you as the owner, so nothing here mints a
-                    second identity — not on the registry's chain, not on Intuition, not in ARP.
-                    What gets published is one edge: your agent's canonical atom, linked to the
-                    account that will stake for it.
+                    Nothing is minted. One edge gets published: your agent&rsquo;s atom, linked to
+                    the account that will stake for it.
                 </p>
                 <p className="mt-3 max-w-[64ch] text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
                     Minting a new one instead is on{" "}
@@ -316,12 +314,6 @@ export function AgentImport() {
                     ) : null
                 }
             >
-                <p className="mb-6 max-w-[64ch] text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
-                    The registry is an ERC-721 and names an owner for every token. We read it and
-                    compare it to your connected wallet. That comparison is the proof; the signature
-                    in step 2 is consent, not evidence of ownership.
-                </p>
-
                 <form
                     className="max-w-[26rem]"
                     onSubmit={(event) => {
@@ -415,12 +407,6 @@ export function AgentImport() {
                     ) : null
                 }
             >
-                <p className="mb-6 max-w-[64ch] text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
-                    An EIP-712 message naming the agent, the account that will act for it, the ARP
-                    context and a nonce. Nothing on chain verifies it — it is the recorded consent
-                    behind the edge published in step 3, and it is checked again before that write.
-                </p>
-
                 {pendingConsent !== null ? <ConsentPreview consent={pendingConsent} /> : null}
 
                 <button
@@ -464,14 +450,11 @@ export function AgentImport() {
                 ) : (
                     <>
                         <p className="mb-6 max-w-[64ch] text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
-                            One triple on Intuition mainnet:{" "}
+                            One triple on Intuition mainnet, paid in real TRUST:{" "}
                             <span className="font-mono">
                                 (agent atom, same as, CAIP-10 of your Smart Account)
                             </span>
-                            . The predicate is Intuition's canonical{" "}
-                            <span className="font-mono">same as</span>, and the subject is your
-                            agent's existing atom — neither is minted here. Real TRUST pays for the
-                            write.
+                            .
                         </p>
 
                         {plan === null ? (
@@ -525,17 +508,13 @@ export function AgentImport() {
                 )}
             </Step>
 
+            {/* The rest — Smart Account, delegation, stakes — is not wired for an imported agent:
+                `/agent` only recognises ARP's testnet registry and the delegation contracts are
+                not on mainnet (ADR `0025`). That is a roadmap, so only the part a reader would
+                walk into is on screen. */}
             <section className="mt-16 pl-5 border-l border-l-[color:var(--color-rule-strong)]">
-                <h2 className="font-medium">What follows</h2>
-                <p className="mt-3 max-w-[64ch] text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
-                    The next steps are a Smart Account, a delegation whose caveats bound what the
-                    runtime may stake, and then the stakes themselves. They are not wired for an
-                    imported agent yet:{" "}
-                    <Link className={linkClass} to="/agent">
-                        the agent setup page
-                    </Link>{" "}
-                    only recognises agents in ARP's testnet registry, and the delegation and tool
-                    registry contracts are not deployed on mainnet (ADR 0025).
+                <p className="max-w-[64ch] text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
+                    Delegation and staking are not wired for an imported agent yet.
                 </p>
             </section>
         </section>
@@ -747,10 +726,7 @@ function MissingIdentityAtom(props: {
                 The Intuition graph does not mirror this agent yet, so its atom has to be written.
             </p>
             <p className="mt-3 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
-                The mirror covers Base (8453) and last moved on 2026-09-16; it holds 28,648 agents
-                against a registry whose highest minted id is 309,925. This is not a duplicate: the
-                atom&rsquo;s id is the hash of a document derived from the agent&rsquo;s identity,
-                so what gets written here is the same id the mirror would write, sooner.
+                Not a duplicate — this is the same id the mirror would write, sooner.
             </p>
 
             {plan === null ? (

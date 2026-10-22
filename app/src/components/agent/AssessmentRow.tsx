@@ -84,17 +84,15 @@ export function AssessmentRow({
                 <div className="flex flex-col gap-5">
                     {row.assessment === null ? (
                         <p className="text-[length:var(--text-body-sm)] text-[color:var(--color-steel)] max-w-[60ch]">
-                            This provider is declared in the graph but publishes no{" "}
+                            No{" "}
                             <span className="font-mono">has trust assessment</span> edge, so there
-                            is no document to check. The market below is still live.
+                            is no document to check.
                         </p>
                     ) : (
                         <>
                             {row.documentError !== null ? (
                                 <p className="text-[length:var(--text-body-sm)] max-w-[60ch]">
-                                    {describeFetchError(row.documentError)} Everything below the
-                                    provider's own document is missing for that reason — the row is
-                                    not broken, the source is unreachable.
+                                    {describeFetchError(row.documentError)}
                                 </p>
                             ) : null}
                             <SignatureLine verdict={row.assessment.signature} />

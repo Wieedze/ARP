@@ -137,7 +137,7 @@ export function AgentBacking({
                         heading: "Back this agent",
                         subject: name,
                         subjectIsId: nameIsId,
-                        blurb: "A deposit on the agent's own atom. It has no other side, and it stays yours — a position you can redeem, not a payment to the agent.",
+                        blurb: "It stays yours — a position you can redeem, not a payment to the agent.",
                         market: {
                             support: {positionCount},
                             // No opposition vault exists for an atom. `null` says that; a zero

@@ -71,10 +71,7 @@ export function ToolCatalog() {
                     <h1 className="font-sans text-[length:var(--text-display)] leading-[var(--leading-display)] tracking-tight font-semibold">
                         Tools
                     </h1>
-                    <p className="mt-2 text-[color:var(--color-steel)] max-w-[64ch]">
-                        Tools somebody registered, and tools agents declared using, on the Intuition
-                        mainnet graph. ARP hosts none of them — each row is a pointer with a vault.
-                    </p>
+
                 </div>
                 <div className="flex flex-wrap items-baseline gap-x-6 gap-y-3">
                     <CurveControl curveId={curveId} onChange={setCurveId} />
@@ -118,19 +115,14 @@ export function ToolCatalog() {
                     <p className="font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
                         no rows match
                     </p>
-                    {/* "None can answer" is not "none matches", and a reader who registered the
-                        only tool on the list deserves the first. Every filter here is about
-                        declarations, and a registered-only row has no per-edge figures to answer
-                        with — so it is excluded on an unknown, not on a no. */}
+                    {/* Two different states and one sentence each. "None can answer" is not "none
+                        matches": every filter here is about declarations, and a registered-only row
+                        has no per-edge figures, so it is excluded on an unknown rather than on a
+                        no. A reader who registered the only tool on the list deserves the first. */}
                     <p className="mt-3 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
                         {unknowable === view.rows.length
-                            ? view.rows.length === 1
-                                ? "The one tool listed has no agent declarations yet, so these filters cannot answer for it."
-                                : `None of the ${view.rows.length} tools listed has agent declarations yet, so these filters cannot answer for them.`
-                            : view.rows.length === 1
-                              ? "One tool is listed and it does not match."
-                              : `${view.rows.length} tools are listed and none matches.`}{" "}
-                        Turn a filter off to see them.
+                            ? "No agent has declared using these yet, so the filters cannot answer."
+                            : "Turn a filter off to see them."}
                     </p>
                 </div>
             ) : view.rows.length === 0 ? (
@@ -142,8 +134,7 @@ export function ToolCatalog() {
                         nothing here yet
                     </p>
                     <p className="mt-3 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
-                        A row appears when somebody registers a tool, or when an agent declares
-                        using one through the MCP server or the skill. Nobody has.
+                        A row appears when somebody registers a tool, or an agent declares using one.
                     </p>
                     <Link to="/register" className={`mt-4 inline-block ${linkClass}`}>
                         Register the first one →

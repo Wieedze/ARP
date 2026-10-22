@@ -17,9 +17,7 @@ export function CapabilitySection({groups, count}: {groups: CapabilityGroup[]; c
     if (count === 0) {
         return (
             <p className="text-[length:var(--text-body-sm)] text-[color:var(--color-steel)] max-w-[60ch]">
-                No capability triples. Every agent in this cohort carries a trust score; almost none
-                carries a statement of what it is for. Indexing that layer is the next phase of this
-                work, not something this panel can infer.
+                No capability triples.
             </p>
         );
     }

@@ -199,8 +199,8 @@ function Edges({view}: {view: ToolUsageView}) {
             </p>
             {view.isEntirelyUnpriced ? (
                 <p className="mb-6 max-w-[70ch] border border-[color:var(--color-rule-strong)] px-4 py-3 text-[length:var(--text-body-sm)]">
-                    Every declaration below is free — nothing stands behind the claims themselves.
-                    The tool&rsquo;s own atom is a separate market and this page does not read it.
+                    Nothing stands behind the claims below. The tool&rsquo;s own atom is a
+                    separate market, not read here.
                 </p>
             ) : null}
             <ul>
@@ -240,9 +240,7 @@ function EmptyState({atomId}: {atomId: string}) {
             <h2 className="text-[length:var(--text-body)] font-medium">No declared uses</h2>
             <p className="mt-3 max-w-[70ch] text-[color:var(--color-steel)]">
                 No agent has declared using{" "}
-                <span className="font-mono">{truncateMiddle(atomId)}</span>. An edge appears here
-                when an agent writes <span className="font-mono">(agent, uses, this atom)</span> on
-                Intuition mainnet.
+                <span className="font-mono">{truncateMiddle(atomId)}</span>.
             </p>
         </div>
     );

@@ -103,9 +103,7 @@ export function CohortList({view}: {view: CohortView}) {
     if (view.rows.length === 0) {
         return (
             <p className="mt-8 max-w-[64ch] text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
-                This page of the cohort came back empty. Every agent listed here declares{" "}
-                <span className="font-mono">implement → ERC-8004</span> in the Intuition graph, and
-                an empty page past the start of the list means the offset has run off the end of it.
+                This page came back empty — the offset has run off the end of the list.
             </p>
         );
     }

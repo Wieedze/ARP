@@ -93,16 +93,7 @@ export function ToolRegister() {
                     Register a tool
                 </h1>
                 <p className="mt-3 max-w-[64ch] text-[color:var(--color-steel)]">
-                    Paste the URL where the tool lives. ARP does not host it and does not store it —
-                    what this creates is a pointer with a vault anyone can deposit into from any
-                    Intuition client, so a tool can be backed with TRUST instead of with stars.
-                </p>
-                <p className="mt-3 max-w-[64ch] text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
-                    The atom&rsquo;s id is derived from the URL alone, so the same URL always lands
-                    on the same market — whoever registers it, and however they would have named it.
-                    An agent claiming it <strong className="font-medium">used</strong> the tool
-                    writes something different, on a different vault, through the MCP server or the
-                    skill.
+                    The same URL always lands on the same market, whoever registers it.
                 </p>
             </header>
 
@@ -154,12 +145,11 @@ export function ToolRegister() {
                     id={`${fieldId}-hint`}
                     className="mt-2 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]"
                 >
-                    A repo, a skill page, an MCP server, a hosted agent. The scheme, a leading{" "}
-                    <span className="font-mono">www.</span>, a trailing slash and a fragment are
-                    normalised away.{" "}
-                    <strong className="font-medium">The path&rsquo;s case is not</strong> — most
-                    servers are case-sensitive there, so <span className="font-mono">/Crytic</span>{" "}
-                    and <span className="font-mono">/crytic</span> are two different markets.
+                    The scheme, <span className="font-mono">www.</span>, a trailing slash and a
+                    fragment are normalised away.{" "}
+                    <strong className="font-medium">The path&rsquo;s case is not</strong> —{" "}
+                    <span className="font-mono">/Crytic</span> and{" "}
+                    <span className="font-mono">/crytic</span> are two different markets.
                 </p>
 
                 {error !== null ? (
@@ -243,9 +233,7 @@ function Resolved(props: {
                     {/* Reported, never chosen between. Picking one would put a permanent deposit on
                         an arbitrary id, and `https://github.com` has five of them on mainnet. */}
                     <p className="mt-2 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
-                        Each was named by whoever registered it, which is why one URL can carry
-                        several. They are listed, not chosen between — a deposit on the wrong one is
-                        permanent, and Intuition has no deletion.
+                        A deposit on the wrong one is permanent — Intuition has no deletion.
                     </p>
                     <ul aria-labelledby={headingId} className="mt-3">
                         {plan.existingCandidates.map((candidate) => (
@@ -270,14 +258,6 @@ function Resolved(props: {
             {plan.exists ? (
                 <div className="mt-8 max-w-[64ch]">
                     <p className="font-medium">This tool already has its atom.</p>
-                    {/* It names the destination rather than promising a market: that page carries
-                        the per-edge markets, and with 0 of mainnet's 185 `uses` edges passing the
-                        agent filter it will often be empty. "Its market is open" sent a reader to
-                        "No declared uses". */}
-                    <p className="mt-2 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
-                        Nothing to create. Its page lists the agents that declared using it, with
-                        both sides of each claim — and is empty until one does.
-                    </p>
                     <Link
                         to={`/tool/atom/${plan.atomId}`}
                         className={`mt-4 inline-block ${linkClass}`}
@@ -288,17 +268,12 @@ function Resolved(props: {
             ) : tx !== null ? (
                 <div className="mt-8 max-w-[64ch]">
                     <p className="font-medium">Registered.</p>
-                    {/* Said because the atom works unpinned and a reader will wonder why the name is
-                        a hash. Pinning the same bytes later yields the same id, so it is
-                        retroactive rather than a missed window. */}
+                    {/* Said because the atom works unpinned and a reader will wonder why the name
+                        is a hash. Pinning later yields the same id, so it is retroactive rather
+                        than a missed window — but that belongs here, not on screen. */}
                     <p className="mt-2 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
-                        Readers see the atom&rsquo;s id until its document is pinned. Anyone can pin
-                        it, at any time, and the id does not change — the same bytes always hash to
-                        the same CID.
+                        It shows as an id until somebody pins its document. Anyone can, at any time.
                     </p>
-                    {/* The bytes, not just the claim that anyone can pin them. Telling a reader
-                        they can do something and withholding what they would need is the gap
-                        between a true sentence and a usable one. */}
                     <details className="mt-3">
                         <summary className="cursor-pointer text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
                             The document to pin

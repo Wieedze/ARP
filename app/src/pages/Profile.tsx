@@ -44,10 +44,7 @@ export function Profile() {
                     <p className="mt-2 max-w-[64ch] text-[color:var(--color-steel)]">
                         {isConnected ? (
                             <>
-                                Read from the Intuition mainnet graph for{" "}
-                                <span className="font-mono">{truncateMiddle(address ?? "")}</span>.
-                                Nothing here is ARP&rsquo;s opinion of you — it is what the chain
-                                records.
+                                <span className="font-mono">{truncateMiddle(address ?? "")}</span>
                             </>
                         ) : (
                             "Connect a wallet to see what you hold."
@@ -82,12 +79,10 @@ function Positions({view}: {view: ProfileView}) {
                 <p className="font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
                     nothing held on this curve
                 </p>
-                {/* Says what would fill it, per `rules/ui.md` — and the two ways in, because they
-                    are the two different acts and a reader should know they are different. */}
+                {/* Says what would fill it, per `rules/ui.md`. The two links below are the two
+                    ways in, so the sentence does not need to name them a second time. */}
                 <p className="mt-3 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
-                    A position appears when you price a tool or back an agent&rsquo;s claim about
-                    one. They are different acts: one is an opinion about the tool, the other is an
-                    opinion about somebody&rsquo;s statement.
+                    A position appears when you back a tool or an agent.
                 </p>
                 <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2">
                     <Link to="/register" className={linkClass}>
@@ -140,9 +135,8 @@ function Positions({view}: {view: ProfileView}) {
                     // is only visible if it is said: the alternative was a line that looked like
                     // the account began at its hundredth-last deposit.
                     <p className="mt-3 max-w-[60ch] text-[length:var(--text-label)] text-[color:var(--color-steel)]">
-                        The line covers your most recent deposits and starts from{" "}
-                        <span className="font-mono">{view.openingTrust} TRUST</span> already held
-                        before them — the graph returns a limited window, not your whole history.
+                        Recent deposits only, starting from{" "}
+                        <span className="font-mono">{view.openingTrust} TRUST</span> already held.
                     </p>
                 ) : null}
             </div>

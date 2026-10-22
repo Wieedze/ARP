@@ -308,8 +308,7 @@ export function StakeControl({
                     <p className="text-[length:var(--text-body-sm)] max-w-[60ch]">
                         Your wallet is on chain{" "}
                         <span className="font-mono">{chainId ?? "unknown"}</span>. This deposit goes
-                        to Intuition mainnet ({INTUITION_MAINNET_CHAIN_ID}) and the panel will not
-                        build a transaction until your wallet is there.
+                        to Intuition mainnet ({INTUITION_MAINNET_CHAIN_ID}).
                     </p>
                     <button
                         type="button"

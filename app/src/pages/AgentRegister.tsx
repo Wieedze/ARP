@@ -362,7 +362,7 @@ export function AgentRegister() {
                 <Step
                     n={1}
                     title="Mint the agent NFT"
-                    subtitle="An ERC-8004 agent NFT owned by your operator wallet. The agent itself is the NFT — your wallet is the team running it."
+                    subtitle="Owned by your connected wallet."
                     done={step1Done}
                     pending={step1Status === "pending"}
                     error={step1Error}
@@ -385,7 +385,7 @@ export function AgentRegister() {
                 <Step
                     n={2}
                     title="Designate the agent's runtime wallet"
-                    subtitle="A fresh keypair the autonomous program will hold. The operator submits, the runtime wallet signs its own consent via EIP-712. Generated in your browser — save the private key."
+                    subtitle="Generated in your browser. Save the private key — it is shown once."
                     done={step2Done}
                     pending={step2Status === "pending"}
                     error={step2Error}
@@ -438,7 +438,7 @@ export function AgentRegister() {
                 <Step
                     n={3}
                     title="Deploy your operator Smart Account"
-                    subtitle="Required so the SA can act as delegator when you authorize the runtime to act on your behalf"
+                    subtitle="It is what signs the delegations in step 4."
                     done={step3Done}
                     pending={step3Status === "pending"}
                     error={step3Error}
@@ -466,7 +466,7 @@ export function AgentRegister() {
                 <Step
                     n={4}
                     title="Sign delegations to your agent"
-                    subtitle="Two scoped permissions: publish new tools in chosen domains, and compose/stake on MultiVault. Bounded by cap + period. Signed once by your Smart Account."
+                    subtitle="What the runtime may spend, and over what period. Signed once."
                     done={step4Done}
                     pending={step4Status === "pending"}
                     error={step4Error}
@@ -497,7 +497,7 @@ export function AgentRegister() {
                 <Step
                     n={5}
                     title="Hand off to the runtime"
-                    subtitle="Operator setup ends here. From now on the agent's runtime acts under the delegations you just signed — it discovers tools via @arp-protocol/core, declares (agent → uses → tool) triples, and stakes tTRUST on each tool it composes with."
+                    subtitle="Setup ends here. From now on the runtime acts under the delegations you signed."
                     done={false}
                     pending={false}
                     error={null}
@@ -773,8 +773,7 @@ function PageHeader() {
                 Configure an agent
             </h1>
             <p className="mt-2 text-[color:var(--color-steel)] max-w-[640px]">
-                You — the operator — set up an agent's on-chain identity. The agent itself is a
-                separate entity with its own keys; it runs autonomously once configured. Registry:{" "}
+                Registry:{" "}
                 <a
                     className="font-mono"
                     target="_blank"
@@ -788,8 +787,7 @@ function PageHeader() {
                 Already hold an ERC-8004 agent?{" "}
                 <Link className={linkClass} to="/agent/import">
                     Import it instead
-                </Link>{" "}
-                — the registry already names you as its owner, so nothing needs minting.
+                </Link>
             </p>
         </header>
     );

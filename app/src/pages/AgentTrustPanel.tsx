@@ -204,10 +204,8 @@ export function AgentTrustPanel() {
 
                         {view.isFallbackMetadata ? (
                             <p className="mt-4 border border-[color:var(--color-rule-strong)] px-3 py-2 text-[length:var(--text-body-sm)] max-w-[64ch]">
-                                This name and URL are the indexer's stand-in, not the agent's own.
-                                It registered without metadata — about 54% of the cohort is in that
-                                state — so <span className="font-mono">{view.name}</span> is a
-                                generated label and tells you nothing about what this agent does.
+                                This name and URL are the indexer&rsquo;s stand-in. The agent
+                                registered without metadata.
                             </p>
                         ) : view.description !== null ? (
                             <p className="mt-4 max-w-[68ch] text-[color:var(--color-steel)]">
@@ -353,9 +351,7 @@ function StackedClaims({view, session, sessionError}: ClaimsProps) {
                 <h2 className="font-medium">Assessments</h2>
                 {view.rows.length === 0 ? (
                     <p className="mt-6 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)] max-w-[60ch]">
-                        No trust provider has written an edge about this agent. With 99.99% of the
-                        cohort covered by one provider, an agent with none is unusual — and there is
-                        nothing here to take a position on.
+                        No trust provider has written an edge about this agent.
                     </p>
                 ) : (
                     <div className="mt-8 flex flex-col gap-14">
@@ -430,8 +426,7 @@ function ArpPosition() {
                 insufficient evidence
             </p>
             <p className="mt-3 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)] max-w-[60ch]">
-                ARP publishes no assessment of this agent, and will not. What is on this page is
-                what other people paid to say.
+                ARP publishes no assessment, and will not.
             </p>
         </article>
     );
