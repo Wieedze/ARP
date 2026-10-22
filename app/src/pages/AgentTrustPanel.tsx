@@ -1,5 +1,6 @@
 import {useId, useState} from "react";
 import {Link, useParams, useSearchParams} from "react-router-dom";
+import {useAccount} from "wagmi";
 
 import {linkClass} from "../lib/control-class";
 import {AgentBacking} from "../components/agent/AgentBacking";
@@ -12,6 +13,8 @@ import {TrustPanelTabs} from "../components/agent/TrustPanelTabs";
 import {UnreadSources} from "../components/agent/UnreadSources";
 import {useAgentProfile} from "../hooks/use-agent-profile";
 import {useStakeSession} from "../hooks/use-stake-session";
+import {useTermVault} from "../hooks/use-term-vault";
+import {RingLoader} from "../components/brand/RingLoader";
 import {
     buildPanelTabs,
     selectPanelTab,
@@ -80,12 +83,26 @@ export function AgentTrustPanel() {
     // Until the chain read resolves this is undefined and the package default is
     // used, which is correct on mainnet today; if the chain ever reports another
     // curve the query key changes and the profile refetches against it.
+    const {address} = useAccount();
     const sessionQuery = useStakeSession();
     const profileQuery = useAgentProfile(ref, sessionQuery.data?.curveId);
     const view = profileQuery.data;
     // Checked, not asserted: `atomTermId` comes off a source handle typed `string`, and a malformed
     // term id would become the address a deposit is sent to.
     const backingAtomId = asStakeTermId(view?.atomTermId ?? null);
+    /**
+     * Whether the connected wallet holds a position here, for the sigil's core.
+     *
+     * The same query key `AgentBacking` uses, so react-query serves one request for both rather
+     * than two: the alternative was threading the answer up out of a child, which would have made
+     * the identity column depend on the market section's render.
+     */
+    const viewerVault = useTermVault({
+        termId: backingAtomId,
+        curveId: sessionQuery.data?.curveId ?? null,
+        account: address ?? null,
+    });
+    const viewerStaked = (viewerVault.data?.shares ?? 0n) > 0n;
 
     /**
      * `replace` rather than `push`: a tab is a way of looking at one page, not a
@@ -200,7 +217,7 @@ export function AgentTrustPanel() {
                     </header>
 
                     <div className="grid lg:grid-cols-[minmax(0,17rem)_minmax(0,1fr)] gap-x-12 gap-y-12">
-                        <AgentIdentityPanel view={view} />
+                        <AgentIdentityPanel view={view} viewerStaked={viewerStaked} />
 
                         <div className="min-w-0">
                             {/* First in the column, because it is the market on **this agent**,
@@ -426,10 +443,13 @@ function ArpPosition() {
  */
 function LoadingShape({chainId, tokenId}: {chainId: number; tokenId: string}) {
     return (
-        <section className="mt-10" aria-live="polite">
-            <h1 className="text-[length:var(--text-display)] leading-[var(--leading-display)] tracking-tight font-semibold text-[color:var(--color-steel)]">
-                Resolving {chainId}:{tokenId}
-            </h1>
+        <section className="mt-10" aria-live="polite" aria-busy>
+            <div className="flex items-center gap-4">
+                <RingLoader size={40} label="Resolving this agent" />
+                <h1 className="text-[length:var(--text-display)] leading-[var(--leading-display)] tracking-tight font-semibold text-[color:var(--color-steel)]">
+                    Resolving {chainId}:{tokenId}
+                </h1>
+            </div>
         </section>
     );
 }
