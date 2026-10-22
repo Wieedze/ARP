@@ -12,8 +12,8 @@ import {agentRegistryExplorerUrl, truncateMiddle} from "../../services/trust-for
 
 function Field({label, children}: {label: string; children: React.ReactNode}) {
     return (
-        <div className="border-t border-[color:var(--color-border)] pt-2">
-            <dt className="font-mono uppercase tracking-wider text-[length:var(--text-label)] text-[color:var(--color-fg-60)]">
+        <div className="border-t border-[color:var(--color-rule)] pt-2">
+            <dt className="font-mono uppercase tracking-wider text-[length:var(--text-label)] text-[color:var(--color-steel)]">
                 {label}
             </dt>
             <dd className="mt-1 font-mono text-[length:var(--text-body-sm)] break-all">
@@ -49,7 +49,7 @@ export function AgentIdentityPanel({view}: {view: TrustPanelView}) {
                 <Field label="Token id">{view.tokenId}</Field>
                 <Field label="Owner">
                     {view.owner === null ? (
-                        <span className="text-[color:var(--color-fg-60)]">
+                        <span className="text-[color:var(--color-steel)]">
                             not read — the registry source did not answer
                         </span>
                     ) : (
@@ -58,7 +58,7 @@ export function AgentIdentityPanel({view}: {view: TrustPanelView}) {
                 </Field>
                 <Field label="Intuition atom">
                     {view.atomTermId === null ? (
-                        <span className="text-[color:var(--color-fg-60)]">
+                        <span className="text-[color:var(--color-steel)]">
                             no atom — this agent is not in the Intuition graph
                         </span>
                     ) : (
@@ -67,7 +67,7 @@ export function AgentIdentityPanel({view}: {view: TrustPanelView}) {
                 </Field>
                 <Field label="Registration file">
                     {view.registrationFile === null ? (
-                        <span className="text-[color:var(--color-fg-60)]">none published</span>
+                        <span className="text-[color:var(--color-steel)]">none published</span>
                     ) : (
                         registrationFileSummary(view.registrationFile)
                     )}

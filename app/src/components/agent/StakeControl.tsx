@@ -286,21 +286,21 @@ export function StakeControl({
             <Heading id={`${fieldId}-heading`} className="font-medium">
                 {claim.heading}
             </Heading>
-            <p className="mt-1 text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)] max-w-[60ch]">
+            <p className="mt-1 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)] max-w-[60ch]">
                 {claim.blurb}
             </p>
 
             {!isConnected ? (
-                <p className="mt-4 text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)]">
+                <p className="mt-4 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
                     Connect a wallet to take a position.
                 </p>
             ) : sessionError !== null ? (
-                <p className="mt-4 text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)]">
+                <p className="mt-4 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
                     The MultiVault's deposit minimum could not be read ({sessionError.message}).
                     Staking stays closed until it can be.
                 </p>
             ) : session === undefined ? (
-                <p className="mt-4 text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)]">
+                <p className="mt-4 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
                     Reading the MultiVault's curve and deposit minimum…
                 </p>
             ) : !onMainnet ? (
@@ -325,7 +325,7 @@ export function StakeControl({
                         </p>
                     ) : null}
                     {switchError !== null ? (
-                        <p className="mt-2 text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)]">
+                        <p className="mt-2 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
                             {switchError}
                         </p>
                     ) : null}
@@ -386,14 +386,14 @@ export function StakeControl({
                 <div className="mt-4 max-w-[34rem]">
                     {hasCounterVault ? (
                         <fieldset className="border-0 p-0 m-0">
-                            <legend className="font-mono uppercase tracking-wider text-[length:var(--text-label)] text-[color:var(--color-fg-60)]">
+                            <legend className="font-mono uppercase tracking-wider text-[length:var(--text-label)] text-[color:var(--color-steel)]">
                                 Side
                             </legend>
                             <div className="mt-2 flex flex-col gap-2">
                                 {SIDES.map((option) => (
                                     <label
                                         key={option}
-                                        className="flex items-start gap-3 border border-[color:var(--color-border)] px-3 py-2 cursor-pointer has-[:checked]:border-[color:var(--color-accent)]"
+                                        className="flex items-start gap-3 border border-[color:var(--color-rule)] px-3 py-2 cursor-pointer has-[:checked]:border-[color:var(--color-accent)]"
                                     >
                                         <input
                                             type="radio"
@@ -407,7 +407,7 @@ export function StakeControl({
                                             <span className="font-medium">
                                                 {SIDE_COPY[option].label}
                                             </span>
-                                            <span className="block text-[color:var(--color-fg-60)]">
+                                            <span className="block text-[color:var(--color-steel)]">
                                                 {SIDE_COPY[option].sentence}
                                             </span>
                                         </span>
@@ -420,7 +420,7 @@ export function StakeControl({
                     <div className={hasCounterVault ? "mt-4" : ""}>
                         <label
                             htmlFor={`${fieldId}-amount`}
-                            className="block font-mono uppercase tracking-wider text-[length:var(--text-label)] text-[color:var(--color-fg-60)]"
+                            className="block font-mono uppercase tracking-wider text-[length:var(--text-label)] text-[color:var(--color-steel)]"
                         >
                             Amount (TRUST)
                         </label>
@@ -432,11 +432,11 @@ export function StakeControl({
                             value={amount}
                             onChange={(event) => setAmount(event.target.value)}
                             aria-describedby={`${fieldId}-amount-help`}
-                            className="mt-2 block w-48 bg-transparent border border-[color:var(--color-border-strong)] px-3 py-1.5 font-mono focus:outline-none focus:border-[color:var(--color-accent)]"
+                            className="mt-2 block w-48 bg-transparent border border-[color:var(--color-rule-strong)] px-3 py-1.5 font-mono focus:outline-none focus:border-[color:var(--color-accent)]"
                         />
                         <p
                             id={`${fieldId}-amount-help`}
-                            className="mt-2 text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)] max-w-[52ch]"
+                            className="mt-2 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)] max-w-[52ch]"
                         >
                             {check !== null && check.status !== "ok" && check.status !== "empty" ? (
                                 check.message
@@ -497,8 +497,8 @@ function ConfirmStep({
             : (claim.market?.opposition?.positionCount ?? null);
 
     return (
-        <div className="mt-4 border border-[color:var(--color-border-strong)] p-4 max-w-[36rem]">
-            <p className="font-mono uppercase tracking-wider text-[length:var(--text-label)] text-[color:var(--color-fg-60)]">
+        <div className="mt-4 border border-[color:var(--color-rule-strong)] p-4 max-w-[36rem]">
+            <p className="font-mono uppercase tracking-wider text-[length:var(--text-label)] text-[color:var(--color-steel)]">
                 Confirm before your wallet opens
             </p>
             <p className="mt-3 text-[length:var(--text-body-sm)] max-w-[52ch]">
@@ -531,7 +531,7 @@ function ConfirmStep({
                 control is one of several on a list page. ADR `0017`'s Consequences section calls
                 the two-network ambiguity the sharpest failure mode this app has, and the
                 confirmation is the step where it would bite. */}
-            <p className="mt-2 text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)] max-w-[52ch]">
+            <p className="mt-2 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)] max-w-[52ch]">
                 Real TRUST, Intuition mainnet, not recoverable by this panel.
             </p>
 
@@ -641,7 +641,7 @@ function Receipt({
 function Term({label, value}: {label: string; value: string}) {
     return (
         <>
-            <dt className="text-[color:var(--color-fg-60)]">{label}</dt>
+            <dt className="text-[color:var(--color-steel)]">{label}</dt>
             <dd className="font-mono break-all">{value}</dd>
         </>
     );

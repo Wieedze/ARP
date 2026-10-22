@@ -38,7 +38,7 @@ function Avatar({src, name}: {src: string; name: string}) {
             loading="lazy"
             onError={() => setFailed(true)}
             title={name}
-            className="hidden sm:block w-6 h-6 mt-0.5 object-cover border border-[color:var(--color-border-strong)]"
+            className="hidden sm:block w-6 h-6 mt-0.5 object-cover border border-[color:var(--color-rule-strong)]"
         />
     );
 }
@@ -48,7 +48,7 @@ function Placeholder() {
     return (
         <span
             aria-hidden
-            className="hidden sm:block w-6 h-6 mt-0.5 border border-[color:var(--color-border)]"
+            className="hidden sm:block w-6 h-6 mt-0.5 border border-[color:var(--color-rule)]"
         />
     );
 }
@@ -75,7 +75,7 @@ function RowBody({row}: {row: CohortRow}) {
                  * reason an unlinkable row is unlinkable.
                  */}
                 {notes.length === 0 ? null : (
-                    <span className="block font-mono text-[length:var(--text-label)] leading-tight text-[color:var(--color-fg-60)] break-words">
+                    <span className="block font-mono text-[length:var(--text-label)] leading-tight text-[color:var(--color-steel)] break-words">
                         {notes.join(" · ")}
                     </span>
                 )}
@@ -83,7 +83,7 @@ function RowBody({row}: {row: CohortRow}) {
 
             <span className="font-mono text-[length:var(--text-body-sm)] leading-tight text-right tabular-nums">
                 {row.statementCount === null ? "—" : row.statementCount.toLocaleString("en-US")}
-                <span className="sm:sr-only text-[color:var(--color-fg-60)]"> statements</span>
+                <span className="sm:sr-only text-[color:var(--color-steel)]"> statements</span>
             </span>
 
             <span className="text-right min-w-0">
@@ -91,7 +91,7 @@ function RowBody({row}: {row: CohortRow}) {
                     <span className="sr-only">staked on its atom: </span>
                     {row.marketCap ?? "—"}
                 </span>
-                <span className="block font-mono text-[length:var(--text-label)] leading-tight text-[color:var(--color-fg-60)] break-words">
+                <span className="block font-mono text-[length:var(--text-label)] leading-tight text-[color:var(--color-steel)] break-words">
                     {row.positions}
                 </span>
             </span>
@@ -102,7 +102,7 @@ function RowBody({row}: {row: CohortRow}) {
 export function CohortList({view}: {view: CohortView}) {
     if (view.rows.length === 0) {
         return (
-            <p className="mt-8 max-w-[64ch] text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)]">
+            <p className="mt-8 max-w-[64ch] text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
                 This page of the cohort came back empty. Every agent listed here declares{" "}
                 <span className="font-mono">implement → ERC-8004</span> in the Intuition graph, and
                 an empty page past the start of the list means the offset has run off the end of it.
@@ -113,7 +113,7 @@ export function CohortList({view}: {view: CohortView}) {
     return (
         <div className="mt-8">
             <div
-                className={`${ROW_GRID} hidden sm:grid pb-2 border-b border-[color:var(--color-border-strong)] font-mono uppercase tracking-wider text-[length:var(--text-label)] text-[color:var(--color-fg-60)]`}
+                className={`${ROW_GRID} hidden sm:grid pb-2 border-b border-[color:var(--color-rule-strong)] font-mono uppercase tracking-wider text-[length:var(--text-label)] text-[color:var(--color-steel)]`}
                 aria-hidden
             >
                 <span />
@@ -122,9 +122,9 @@ export function CohortList({view}: {view: CohortView}) {
                 <span className="text-right">Staked on its atom</span>
             </div>
 
-            <ul className="border-t border-[color:var(--color-border-strong)] sm:border-t-0">
+            <ul className="border-t border-[color:var(--color-rule-strong)] sm:border-t-0">
                 {view.rows.map((row) => (
-                    <li key={row.key} className="border-b border-[color:var(--color-border)]">
+                    <li key={row.key} className="border-b border-[color:var(--color-rule)]">
                         {row.href === null ? (
                             <div className={`${ROW_GRID} py-2.5`}>
                                 <RowBody row={row} />

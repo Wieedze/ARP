@@ -18,7 +18,7 @@ const SIGNATURE_TONE: Record<SignatureCopy["tone"], string> = {
     verified: "text-[color:var(--color-accent)] border-[color:var(--color-accent)]",
     mismatch:
         "text-[color:var(--color-alarm)] border-[color:var(--color-alarm)] bg-[color:var(--color-alarm-dim)]",
-    unverified: "text-[color:var(--color-fg-60)] border-[color:var(--color-border-strong)]",
+    unverified: "text-[color:var(--color-steel)] border-[color:var(--color-rule-strong)]",
 };
 
 export function SignatureLine({verdict}: {verdict: SignatureVerdict}) {
@@ -31,7 +31,7 @@ export function SignatureLine({verdict}: {verdict: SignatureVerdict}) {
                 {copy.label}
             </span>
             {copy.detail === null ? null : (
-                <p className="mt-2 text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)] max-w-[52ch]">
+                <p className="mt-2 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)] max-w-[52ch]">
                     {copy.detail}
                 </p>
             )}
@@ -51,9 +51,9 @@ export function SignatureLine({verdict}: {verdict: SignatureVerdict}) {
  * the alarm colour stays reserved for a mismatch.
  */
 const FRESHNESS_TONE: Record<FreshnessCopy["tone"], string> = {
-    fresh: "text-[color:var(--color-fg-60)]",
+    fresh: "text-[color:var(--color-steel)]",
     stale: "text-[color:var(--color-fg)]",
-    unknown: "text-[color:var(--color-fg-60)]",
+    unknown: "text-[color:var(--color-steel)]",
 };
 
 export function FreshnessLine({verdict}: {verdict: FreshnessVerdict}) {
@@ -65,7 +65,7 @@ export function FreshnessLine({verdict}: {verdict: FreshnessVerdict}) {
             >
                 {copy.label}
             </span>
-            <p className="mt-1 text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)] max-w-[52ch]">
+            <p className="mt-1 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)] max-w-[52ch]">
                 {copy.detail}
             </p>
         </div>

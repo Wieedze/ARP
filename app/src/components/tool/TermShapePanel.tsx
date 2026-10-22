@@ -33,7 +33,7 @@ export function TermShapePanel({
 }) {
     if (shape.positionCount === 0) {
         return (
-            <p className="text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)]">
+            <p className="text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
                 Nobody has staked on this claim, so there is no distribution to read.
             </p>
         );
@@ -81,7 +81,7 @@ export function TermShapePanel({
                         TRUST moved in either direction. Probed on mainnet 2026-10-21; the package's
                         own docstring had it as shares and this label had it as deposits, and both
                         were wrong in different ways. */}
-                    <p className="text-[length:var(--text-label)] uppercase tracking-wider text-[color:var(--color-fg-60)]">
+                    <p className="text-[length:var(--text-label)] uppercase tracking-wider text-[color:var(--color-steel)]">
                         Weekly activity · {curveLabel} · TRUST moved, in or out
                     </p>
                     <div className="mt-2">
@@ -102,11 +102,11 @@ export function TermShapePanel({
 function Reading({label, value, note}: {label: string; value: string; note?: string}) {
     return (
         <>
-            <dt className="text-[color:var(--color-fg-60)]">{label}</dt>
+            <dt className="text-[color:var(--color-steel)]">{label}</dt>
             <dd className="font-mono tabular-nums">
                 {value}
                 {note === undefined ? null : (
-                    <span className="block font-sans text-[length:var(--text-label)] text-[color:var(--color-fg-60)]">
+                    <span className="block font-sans text-[length:var(--text-label)] text-[color:var(--color-steel)]">
                         {note}
                     </span>
                 )}

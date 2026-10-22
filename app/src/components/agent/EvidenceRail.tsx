@@ -19,7 +19,7 @@ function formatCount(value: number): string {
 export function EvidenceRail({basis, weight}: {basis: ReviewerBasis; weight: EvidenceWeight}) {
     if (basis.kind === "not-published") {
         return (
-            <p className="mt-3 text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)] max-w-[46ch]">
+            <p className="mt-3 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)] max-w-[46ch]">
                 {WEIGHT_CAPTION.unknown}
             </p>
         );
@@ -36,14 +36,14 @@ export function EvidenceRail({basis, weight}: {basis: ReviewerBasis; weight: Evi
         <div className="mt-3">
             <div className="flex items-end gap-[2px] h-3" aria-hidden="true">
                 {Array.from({length: ticks}, (_, index) => (
-                    <span key={index} className="w-px h-full bg-[color:var(--color-fg-60)]" />
+                    <span key={index} className="w-px h-full bg-[color:var(--color-steel)]" />
                 ))}
                 {ticks === 0 ? (
-                    <span className="w-6 h-px bg-[color:var(--color-border-strong)]" />
+                    <span className="w-6 h-px bg-[color:var(--color-rule-strong)]" />
                 ) : null}
             </div>
             <p className="mt-2 font-mono text-[length:var(--text-body-sm)]">{parts.join(" · ")}</p>
-            <p className="mt-1 text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)] max-w-[46ch]">
+            <p className="mt-1 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)] max-w-[46ch]">
                 {WEIGHT_CAPTION[weight]}
             </p>
         </div>

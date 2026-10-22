@@ -46,11 +46,11 @@ const LOOKUP_CHAINS: {id: number; label: string; note: string}[] = [
 ];
 
 const inputClass =
-    "mt-2 block w-full bg-transparent border border-[color:var(--color-border-strong)] px-3 py-1.5 " +
+    "mt-2 block w-full bg-transparent border border-[color:var(--color-rule-strong)] px-3 py-1.5 " +
     "font-mono focus:border-[color:var(--color-accent)]";
 
 const labelClass =
-    "block font-mono uppercase tracking-wider text-[length:var(--text-label)] text-[color:var(--color-fg-60)]";
+    "block font-mono uppercase tracking-wider text-[length:var(--text-label)] text-[color:var(--color-steel)]";
 
 type StepStatus = "idle" | "pending" | "done" | "error";
 
@@ -286,13 +286,13 @@ export function AgentImport() {
                 <h1 className="text-[length:var(--text-display)] leading-[var(--leading-display)] font-semibold tracking-tight">
                     Import an agent you already have
                 </h1>
-                <p className="mt-3 max-w-[64ch] text-[color:var(--color-fg-60)]">
+                <p className="mt-3 max-w-[64ch] text-[color:var(--color-steel)]">
                     The ERC-8004 registry already names you as the owner, so nothing here mints a
                     second identity — not on the registry's chain, not on Intuition, not in ARP.
                     What gets published is one edge: your agent's canonical atom, linked to the
                     account that will stake for it.
                 </p>
-                <p className="mt-3 max-w-[64ch] text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)]">
+                <p className="mt-3 max-w-[64ch] text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
                     Minting a new one instead is on{" "}
                     <Link className={linkClass} to="/agent">
                         the agent setup page
@@ -316,7 +316,7 @@ export function AgentImport() {
                     ) : null
                 }
             >
-                <p className="mb-6 max-w-[64ch] text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)]">
+                <p className="mb-6 max-w-[64ch] text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
                     The registry is an ERC-721 and names an owner for every token. We read it and
                     compare it to your connected wallet. That comparison is the proof; the signature
                     in step 2 is consent, not evidence of ownership.
@@ -352,7 +352,7 @@ export function AgentImport() {
                         </select>
                         <p
                             id={`${fieldId}-chain-note`}
-                            className="mt-2 text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)]"
+                            className="mt-2 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]"
                         >
                             {LOOKUP_CHAINS.find((chain) => chain.id === chainId)?.note}
                         </p>
@@ -395,7 +395,7 @@ export function AgentImport() {
                         {proofStatus === "pending" ? "Reading the registry…" : "Check ownership"}
                     </button>
                     {!isConnected ? (
-                        <p className="mt-3 text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)]">
+                        <p className="mt-3 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
                             Connect the wallet that owns the agent.
                         </p>
                     ) : null}
@@ -415,7 +415,7 @@ export function AgentImport() {
                     ) : null
                 }
             >
-                <p className="mb-6 max-w-[64ch] text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)]">
+                <p className="mb-6 max-w-[64ch] text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
                     An EIP-712 message naming the agent, the account that will act for it, the ARP
                     context and a nonce. Nothing on chain verifies it — it is the recorded consent
                     behind the edge published in step 3, and it is checked again before that write.
@@ -463,7 +463,7 @@ export function AgentImport() {
                     />
                 ) : (
                     <>
-                        <p className="mb-6 max-w-[64ch] text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)]">
+                        <p className="mb-6 max-w-[64ch] text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
                             One triple on Intuition mainnet:{" "}
                             <span className="font-mono">
                                 (agent atom, same as, CAIP-10 of your Smart Account)
@@ -490,7 +490,7 @@ export function AgentImport() {
                         {plan !== null && txs === null ? (
                             !onMainnet ? (
                                 <div className="mt-6">
-                                    <p className="max-w-[64ch] text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)]">
+                                    <p className="max-w-[64ch] text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
                                         Your wallet is on chain {walletChainId ?? "unknown"}. The
                                         write lands on Intuition mainnet (
                                         {INTUITION_MAINNET_CHAIN_ID}).
@@ -525,9 +525,9 @@ export function AgentImport() {
                 )}
             </Step>
 
-            <section className="mt-16 pl-5 border-l border-l-[color:var(--color-border-strong)]">
+            <section className="mt-16 pl-5 border-l border-l-[color:var(--color-rule-strong)]">
                 <h2 className="font-medium">What follows</h2>
-                <p className="mt-3 max-w-[64ch] text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)]">
+                <p className="mt-3 max-w-[64ch] text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
                     The next steps are a Smart Account, a delegation whose caveats bound what the
                     runtime may stake, and then the stakes themselves. They are not wired for an
                     imported agent yet:{" "}
@@ -572,16 +572,16 @@ function Step({
             aria-labelledby={`import-step-${index}`}
             className={`mb-14 pl-5 border-l ${
                 disabled
-                    ? "border-l-[color:var(--color-border)]"
-                    : "border-l-[color:var(--color-border-strong)]"
+                    ? "border-l-[color:var(--color-rule)]"
+                    : "border-l-[color:var(--color-rule-strong)]"
             }`}
         >
             <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
                 <span
                     className={`font-mono uppercase tracking-wider text-[length:var(--text-label)] ${
                         disabled
-                            ? "text-[color:var(--color-fg-40)]"
-                            : "text-[color:var(--color-fg-60)]"
+                            ? "text-[color:var(--color-grey)]"
+                            : "text-[color:var(--color-steel)]"
                     }`}
                 >
                     Step {index}
@@ -590,7 +590,7 @@ function Step({
                     {title}
                 </h2>
                 {status === "done" ? (
-                    <span className="font-mono text-[length:var(--text-label)] text-[color:var(--color-fg-60)]">
+                    <span className="font-mono text-[length:var(--text-label)] text-[color:var(--color-steel)]">
                         done
                     </span>
                 ) : null}
@@ -634,7 +634,7 @@ function Field({label, value, href}: {label: string; value: string; href?: strin
  */
 function Failure({message}: {message: string}) {
     return (
-        <p className="mt-5 max-w-[64ch] text-[length:var(--text-body-sm)] border-l border-l-[color:var(--color-border-strong)] pl-4">
+        <p className="mt-5 max-w-[64ch] text-[length:var(--text-body-sm)] border-l border-l-[color:var(--color-rule-strong)] pl-4">
             {message}
         </p>
     );
@@ -646,7 +646,7 @@ function Refusal({verdict}: {verdict: OwnershipVerdict}) {
         return (
             <div className="mt-6 max-w-[64ch]">
                 <p className="font-medium">No such agent in that registry.</p>
-                <p className="mt-2 text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)]">
+                <p className="mt-2 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
                     Token {verdict.ref.tokenId} on chain {verdict.ref.chainId} has never been
                     minted. Check the chain as well as the id — the same number is a different agent
                     on each one.
@@ -658,7 +658,7 @@ function Refusal({verdict}: {verdict: OwnershipVerdict}) {
         return (
             <div className="mt-6 max-w-[64ch]">
                 <p className="font-medium">That agent belongs to another address.</p>
-                <p className="mt-2 text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)]">
+                <p className="mt-2 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
                     The registry names the owner below. Connect that wallet to import it.
                 </p>
                 <Field label="Owner" value={verdict.owner} />
@@ -690,7 +690,7 @@ function Proof({proven}: {proven: ProvenAgent}) {
 
 function ConsentPreview({consent}: {consent: ImportConsent}) {
     return (
-        <dl className="max-w-[64ch] border-t border-[color:var(--color-border)] pt-4">
+        <dl className="max-w-[64ch] border-t border-[color:var(--color-rule)] pt-4">
             {[
                 ["agent", consent.agent],
                 ["operator", consent.operator],
@@ -698,7 +698,7 @@ function ConsentPreview({consent}: {consent: ImportConsent}) {
                 ["context", ARP_IMPORT_CONTEXT],
             ].map(([term, value]) => (
                 <div key={term} className="flex flex-wrap gap-x-4 py-1">
-                    <dt className="w-40 shrink-0 font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)]">
+                    <dt className="w-40 shrink-0 font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
                         {term}
                     </dt>
                     <dd className="font-mono text-[length:var(--text-body-sm)] break-all">
@@ -707,10 +707,10 @@ function ConsentPreview({consent}: {consent: ImportConsent}) {
                 </div>
             ))}
             <div className="flex flex-wrap gap-x-4 py-1">
-                <dt className="w-40 shrink-0 font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)]">
+                <dt className="w-40 shrink-0 font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
                     nonce
                 </dt>
-                <dd className="font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)]">
+                <dd className="font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
                     drawn when you sign
                 </dd>
             </div>
@@ -746,7 +746,7 @@ function MissingIdentityAtom(props: {
             <p className="font-medium">
                 The Intuition graph does not mirror this agent yet, so its atom has to be written.
             </p>
-            <p className="mt-3 text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)]">
+            <p className="mt-3 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
                 The mirror covers Base (8453) and last moved on 2026-09-16; it holds 28,648 agents
                 against a registry whose highest minted id is 309,925. This is not a duplicate: the
                 atom&rsquo;s id is the hash of a document derived from the agent&rsquo;s identity,
@@ -778,7 +778,7 @@ function MissingIdentityAtom(props: {
                             value={plan.tripleId}
                         />
                     </div>
-                    <div className="mt-6 border-t border-[color:var(--color-border)] pt-4">
+                    <div className="mt-6 border-t border-[color:var(--color-rule)] pt-4">
                         {plan.calls.map((call) => (
                             <p
                                 key={call.data}
@@ -797,7 +797,7 @@ function MissingIdentityAtom(props: {
                     {/* Said because the atom works without it and a reader will wonder why the name
                         is a hash. Pinning the same bytes later yields the same id, so it is
                         retroactive rather than a missed window. */}
-                    <p className="mt-4 text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)]">
+                    <p className="mt-4 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
                         The atom is created unpinned, so readers see its id rather than its name
                         until someone pins the document. Anyone can, at any time, and the id does
                         not change — the same bytes always hash to the same CID.
@@ -810,7 +810,7 @@ function MissingIdentityAtom(props: {
             {plan !== null && txs === null ? (
                 !props.onMainnet ? (
                     <div className="mt-6">
-                        <p className="text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)]">
+                        <p className="text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
                             Your wallet is on chain {props.walletChainId ?? "unknown"}. The write
                             lands on Intuition mainnet ({INTUITION_MAINNET_CHAIN_ID}).
                         </p>
@@ -844,7 +844,7 @@ function MissingIdentityAtom(props: {
             {txs !== null ? (
                 <div className="mt-6">
                     <p className="font-medium">The agent has an identity atom.</p>
-                    <p className="mt-2 text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)]">
+                    <p className="mt-2 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
                         Price the link above to publish the edge to your staking account.
                     </p>
                     {txs.map((hash, index) => (
@@ -870,7 +870,7 @@ function LinkPlan({plan}: {plan: ImportLinkPlan}) {
                 label={`Object — your account${plan.accountAtomExists ? ", already on the graph" : ", to be created"}`}
                 value={plan.accountAtomUri}
             />
-            <div className="mt-6 border-t border-[color:var(--color-border)] pt-4">
+            <div className="mt-6 border-t border-[color:var(--color-rule)] pt-4">
                 <p className="font-mono text-[length:var(--text-body-sm)] tabular-nums">
                     {plan.accountAtomExists
                         ? "account atom — already published, 0 TRUST"
@@ -893,7 +893,7 @@ function Published({txs}: {txs: {atomTx?: Hex; tripleTx?: Hex}}) {
     return (
         <div className="mt-6 max-w-[64ch]">
             <p className="font-medium">The link is on the graph.</p>
-            <p className="mt-2 text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)]">
+            <p className="mt-2 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
                 Stakes sent from that account are now attributable to this agent, which is what
                 agent reputation is read from.
             </p>

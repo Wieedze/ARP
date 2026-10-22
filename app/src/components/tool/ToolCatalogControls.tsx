@@ -9,7 +9,7 @@ import {TOOL_CURVES} from "../../services/tool-catalog";
  *
  * `CurveControl` was private to `ToolCatalog` and its selected state was
  * `border-[color:var(--color-accent)] text-[color:var(--color-accent)]` — **unbanged**. `index.css`
- * carries an unlayered `button { border: 1px solid var(--color-border); color: var(--color-fg) }`,
+ * carries an unlayered `button { border: 1px solid var(--color-rule); color: var(--color-fg) }`,
  * which beats any `@layer utilities` rule, so the selected button rendered **identically to the
  * unselected ones**: the selection was invisible.
  *
@@ -38,7 +38,7 @@ function Segmented<T>({
         <div className="flex items-baseline gap-3">
             <span
                 id={labelId}
-                className="font-mono uppercase tracking-wider text-[length:var(--text-label)] text-[color:var(--color-fg-60)]"
+                className="font-mono uppercase tracking-wider text-[length:var(--text-label)] text-[color:var(--color-steel)]"
             >
                 {label}
             </span>
@@ -53,7 +53,7 @@ function Segmented<T>({
                         className={`px-3 py-1 text-[length:var(--text-body-sm)] ${
                             option.id === selected
                                 ? "border-[color:var(--color-accent)]! text-[color:var(--color-accent)]!"
-                                : "border-[color:var(--color-border-strong)]! text-[color:var(--color-fg-60)]!"
+                                : "border-[color:var(--color-rule-strong)]! text-[color:var(--color-steel)]!"
                         }`}
                     >
                         {option.label}

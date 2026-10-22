@@ -80,7 +80,7 @@ export function AgentBacking({
 
             <dl className="mt-4 flex flex-wrap gap-x-10 gap-y-3 text-[length:var(--text-body-sm)]">
                 <div>
-                    <dt className="font-mono uppercase tracking-wider text-[length:var(--text-label)] text-[color:var(--color-fg-60)]">
+                    <dt className="font-mono uppercase tracking-wider text-[length:var(--text-label)] text-[color:var(--color-steel)]">
                         Deposited
                     </dt>
                     <dd className="mt-1 font-mono tabular-nums">
@@ -88,7 +88,7 @@ export function AgentBacking({
                     </dd>
                 </div>
                 <div>
-                    <dt className="font-mono uppercase tracking-wider text-[length:var(--text-label)] text-[color:var(--color-fg-60)]">
+                    <dt className="font-mono uppercase tracking-wider text-[length:var(--text-label)] text-[color:var(--color-steel)]">
                         Backers
                     </dt>
                     <dd className="mt-1 font-mono tabular-nums">
@@ -96,7 +96,7 @@ export function AgentBacking({
                     </dd>
                 </div>
                 <div>
-                    <dt className="font-mono uppercase tracking-wider text-[length:var(--text-label)] text-[color:var(--color-fg-60)]">
+                    <dt className="font-mono uppercase tracking-wider text-[length:var(--text-label)] text-[color:var(--color-steel)]">
                         Yours
                     </dt>
                     <dd className="mt-1 font-mono tabular-nums">
@@ -105,7 +105,7 @@ export function AgentBacking({
                         ) : (
                             <>
                                 {formatTrust(vault.shares)}{" "}
-                                <span className="font-sans text-[color:var(--color-fg-60)]">
+                                <span className="font-sans text-[color:var(--color-steel)]">
                                     shares
                                 </span>
                             </>
@@ -113,7 +113,7 @@ export function AgentBacking({
                     </dd>
                 </div>
                 <div>
-                    <dt className="font-mono uppercase tracking-wider text-[length:var(--text-label)] text-[color:var(--color-fg-60)]">
+                    <dt className="font-mono uppercase tracking-wider text-[length:var(--text-label)] text-[color:var(--color-steel)]">
                         Vault
                     </dt>
                     <dd className="mt-1 font-mono">{truncateMiddle(atomTermId, 10, 6)}</dd>

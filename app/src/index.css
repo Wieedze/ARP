@@ -1,47 +1,58 @@
 @import "tailwindcss";
 
-/* Fonts (Inter + JetBrains Mono) are loaded via <link rel="stylesheet">
-   in app/index.html — CSS @import would have to precede every other rule,
-   which conflicts with the tailwindcss expansion above. */
+/* Fonts (Archivo + Geist Mono) are loaded via <link rel="stylesheet"> in
+   app/index.html — CSS @import would have to precede every other rule, which
+   conflicts with the tailwindcss expansion above. */
 
 /* -------------------------------------------------------------------------- */
-/* Design tokens — typographic-driven, monochrome, single accent.              */
-/* Aligned to docs/05_UI_DESIGN.md. Dark-first; no light-mode forking.         */
+/* Design tokens — ADR 0057, "The Source". Graphite, one warm accent.         */
+/*                                                                            */
+/* Named for what they ARE, not for an alpha step: `steel` and `grey` replaced */
+/* `fg-60` and `fg-40` across 208 call sites in one pass rather than being     */
+/* aliased onto them. Two names for one value is the failure this repo spent a */
+/* day on (`rules/claims.md` §5), and `check:tokens` (ADR 0050) is what makes  */
+/* the rename safe: an unresolved `var()` fails the gate.                      */
+/*                                                                            */
+/* Contrast ratios are against --color-ground and are the reason each step     */
+/* exists. `grey` is 3.8:1 — dim DISPLAY text only, never body copy.           */
 /* -------------------------------------------------------------------------- */
 
 @theme {
-    /* Monochrome surface ramp — single near-black background, alpha-stepped
-       foreground for the four hierarchy levels documented in 05_UI_DESIGN. */
-    --color-bg: #0a0a0a;
-    --color-fg: #fafafa;
-    --color-fg-60: rgba(250, 250, 250, 0.6);
-    --color-fg-40: rgba(250, 250, 250, 0.4);
-    --color-fg-20: rgba(250, 250, 250, 0.2);
+    /* Graphite neutrals. Four surfaces, four text levels. */
+    --color-ground: #0e0f10; /* the page */
+    --color-bg: #121314; /* panels, code blocks */
+    --color-raised: #1b1d1f; /* selected rows, drawers, tooltips */
+    --color-raised-2: #232629;
 
-    /* Hairline borders, not shadows. Two levels so we can hint elevation
-       without dropping to box-shadow. */
-    --color-border: rgba(255, 255, 255, 0.06);
-    --color-border-strong: rgba(255, 255, 255, 0.12);
+    --color-rule: #2e3134; /* hairlines */
+    --color-rule-strong: #43474b; /* control borders, table head rule */
 
-    /* Row hover. Defined here rather than inlined as a fallback at each call site: two components
-       wanted it and both carried the same literal, which is a theme value hiding in two files. */
-    --color-surface-hover: rgba(255, 255, 255, 0.03);
+    --color-grey: #6b7075; /* dim display text only — 3.8:1 */
+    --color-steel: #8a9096; /* labels, secondary text — 5.9:1 */
+    --color-silver: #a9aeb2; /* body secondary — 8.5:1 */
+    --color-fg: #e6e8e6; /* paper, primary text — 15.5:1 */
 
-    /* Single accent — cyan, "modern infrastructure" per the design doc. */
-    --color-accent: #00e5ff;
-    --color-accent-dim: rgba(0, 229, 255, 0.16);
+    /* Row hover is a background change and nothing else (ADR 0057 §6: no
+       mouse-reactive effects). Its own token rather than `raised`, which means
+       "selected" — a hover that looked selected made the two indistinguishable. */
+    --color-surface-hover: #17191a;
 
-    /* The single semantic exception to the one-accent rule (ADR 0018).
-       Reserved for a signature `mismatch` — a document that does not recover
-       to the signer it names. Nothing decorative may use it. 6.6:1 on the
-       background, so it passes AA as body text. */
-    --color-alarm: #ff5f52;
-    --color-alarm-dim: rgba(255, 95, 82, 0.12);
+    /* One accent. Saffron, 10.4:1. Ink on top of it is --color-bg, never paper. */
+    --color-accent: #ffb020;
+    --color-accent-dim: rgba(255, 176, 32, 0.16);
+    --color-accent-ink: #121314;
 
-    /* Fonts — Inter (display + body) and JetBrains Mono (data).
-       Both Google-hosted, both editorial-quality. */
-    --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
-    --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", monospace;
+    /* The single semantic exception to the one-accent rule (ADR 0018, kept by
+       0057 §2). A signature `mismatch`, or a module used but never declared.
+       Nothing decorative may use it. 5.9:1, so it passes AA as body text. */
+    --color-alarm: #ff4d6d;
+    --color-alarm-dim: rgba(255, 77, 109, 0.12);
+
+    /* Archivo carries display at 800/125% width and prose at 400–700 normal.
+       Geist Mono carries every address, id, hash, amount, timestamp and label. */
+    --font-display: "Archivo", "Arial Narrow", system-ui, sans-serif;
+    --font-sans: "Archivo", system-ui, sans-serif;
+    --font-mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
 
     /* Type scale — bounded to 3 body sizes + 1 display per the rule. */
     --text-display: 32px;
@@ -52,12 +63,21 @@
     /* Score sizes — the trust panel's one hero, and its whole argument.
        A score's type size is set by how much evidence it rests on, so a 64.36
        backed by 1,445 reviewers cannot read like a 59.95 backed by 2.
-       Used only by the assessment rows (ADR 0018). */
+       Used only by the assessment rows (ADR 0018, unchanged by 0057). */
     --text-score-1: 22px;
     --text-score-2: 30px;
     --text-score-3: 42px;
     --text-score-4: 56px;
     --text-score-5: 72px;
+
+    /* Corners: "between square and round" (ADR 0057 §4), tiered so nothing is
+       uniformly rounded — which is the template signal `rules/ui.md` warns of.
+       Full circles (999px) are reserved for dots and agent sigils, so a circle
+       always means "an agent". */
+    --radius-tag: 6px;
+    --radius-control: 8px;
+    --radius-button: 10px;
+    --radius-card: 12px;
 
     /* Line heights */
     --leading-display: 1.1;
@@ -85,7 +105,7 @@ body {
        select popups, radio circles, scrollbars — in the light palette, which
        lands as white chrome on a near-black page. */
     color-scheme: dark;
-    background-color: var(--color-bg);
+    background-color: var(--color-ground);
     color: var(--color-fg);
     font-family: var(--font-sans);
     font-size: var(--text-body);
@@ -94,7 +114,6 @@ body {
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    font-feature-settings: "cv11", "ss03";
 }
 
 #root {
@@ -106,7 +125,8 @@ body {
 button {
     font-family: inherit;
     background: transparent;
-    border: 1px solid var(--color-border);
+    border: 1px solid var(--color-rule);
+    border-radius: var(--radius-button);
     color: var(--color-fg);
     cursor: pointer;
     transition:
@@ -115,7 +135,7 @@ button {
 }
 
 button:hover {
-    border-color: var(--color-border-strong);
+    border-color: var(--color-rule-strong);
 }
 
 button:focus-visible {
@@ -135,6 +155,36 @@ a:hover {
 ::selection {
     background: var(--color-accent-dim);
     color: var(--color-fg);
+}
+
+/* -------------------------------------------------------------------------- */
+/* The ring loader's pulse — ADR 0057 §6                                       */
+/* -------------------------------------------------------------------------- */
+
+/* Here and not in the component: an `animation-delay` per ring cannot be a Tailwind arbitrary
+   value, and an inline `animation` would be out of reach of the media query below. The delay
+   itself IS set inline, per ring, because it is data about which ring this is. */
+.ring-loader g {
+    fill: var(--color-rule);
+    animation: ring-pulse 1.2s var(--ease-out-quart) infinite;
+}
+
+@keyframes ring-pulse {
+    0%,
+    100% {
+        fill: var(--color-rule);
+    }
+    40% {
+        fill: var(--color-accent);
+    }
+}
+
+/* Static, not slower. A loader that still moves is not reduced motion. */
+@media (prefers-reduced-motion: reduce) {
+    .ring-loader g {
+        animation: none;
+        fill: var(--color-rule-strong);
+    }
 }
 
 /* -------------------------------------------------------------------------- */

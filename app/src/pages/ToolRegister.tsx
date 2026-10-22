@@ -92,12 +92,12 @@ export function ToolRegister() {
                 <h1 className="text-[length:var(--text-display)] leading-[var(--leading-display)] font-semibold tracking-tight">
                     Register a tool
                 </h1>
-                <p className="mt-3 max-w-[64ch] text-[color:var(--color-fg-60)]">
+                <p className="mt-3 max-w-[64ch] text-[color:var(--color-steel)]">
                     Paste the URL where the tool lives. ARP does not host it and does not store it —
                     what this creates is a pointer with a vault anyone can deposit into from any
                     Intuition client, so a tool can be backed with TRUST instead of with stars.
                 </p>
-                <p className="mt-3 max-w-[64ch] text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)]">
+                <p className="mt-3 max-w-[64ch] text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
                     The atom&rsquo;s id is derived from the URL alone, so the same URL always lands
                     on the same market — whoever registers it, and however they would have named it.
                     An agent claiming it <strong className="font-medium">used</strong> the tool
@@ -109,7 +109,7 @@ export function ToolRegister() {
             <div className="max-w-[48rem]">
                 <label
                     htmlFor={fieldId}
-                    className="block text-[length:var(--text-label)] uppercase tracking-wider text-[color:var(--color-fg-60)]"
+                    className="block text-[length:var(--text-label)] uppercase tracking-wider text-[color:var(--color-steel)]"
                 >
                     Tool URL
                 </label>
@@ -139,7 +139,7 @@ export function ToolRegister() {
                         autoCorrect="off"
                         inputMode="url"
                         aria-describedby={`${fieldId}-hint`}
-                        className="min-w-0 flex-1 bg-transparent border border-[color:var(--color-border-strong)] px-3 py-2 font-mono text-[length:var(--text-body-sm)]"
+                        className="min-w-0 flex-1 bg-transparent border border-[color:var(--color-rule-strong)] px-3 py-2 font-mono text-[length:var(--text-body-sm)]"
                     />
                     <button
                         type="button"
@@ -152,7 +152,7 @@ export function ToolRegister() {
                 </div>
                 <p
                     id={`${fieldId}-hint`}
-                    className="mt-2 text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)]"
+                    className="mt-2 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]"
                 >
                     A repo, a skill page, an MCP server, a hosted agent. The scheme, a leading{" "}
                     <span className="font-mono">www.</span>, a trailing slash and a fragment are
@@ -165,7 +165,7 @@ export function ToolRegister() {
                 {error !== null ? (
                     <p
                         role="alert"
-                        className="mt-6 border border-[color:var(--color-border-strong)] px-4 py-3 text-[length:var(--text-body-sm)]"
+                        className="mt-6 border border-[color:var(--color-rule-strong)] px-4 py-3 text-[length:var(--text-body-sm)]"
                     >
                         {error}
                     </p>
@@ -228,7 +228,7 @@ function Resolved(props: {
     // page were ever mounted twice.
     const headingId = useId();
     return (
-        <div className="mt-10 pl-5 border-l border-[color:var(--color-border-strong)]">
+        <div className="mt-10 pl-5 border-l border-[color:var(--color-rule-strong)]">
             <Field label="Normalised URL" value={plan.normalisedUrl} />
             <Field label="Atom data" value={plan.atomUri} />
             <Field label="Atom id" value={plan.atomId} />
@@ -242,7 +242,7 @@ function Resolved(props: {
                     </h2>
                     {/* Reported, never chosen between. Picking one would put a permanent deposit on
                         an arbitrary id, and `https://github.com` has five of them on mainnet. */}
-                    <p className="mt-2 text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)]">
+                    <p className="mt-2 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
                         Each was named by whoever registered it, which is why one URL can carry
                         several. They are listed, not chosen between — a deposit on the wrong one is
                         permanent, and Intuition has no deletion.
@@ -251,7 +251,7 @@ function Resolved(props: {
                         {plan.existingCandidates.map((candidate) => (
                             <li
                                 key={candidate.termId}
-                                className="border-t border-[color:var(--color-border)] py-2 text-[length:var(--text-body-sm)]"
+                                className="border-t border-[color:var(--color-rule)] py-2 text-[length:var(--text-body-sm)]"
                             >
                                 <Link to={`/tool/atom/${candidate.termId}`} className={linkClass}>
                                     {candidate.label ?? (
@@ -274,7 +274,7 @@ function Resolved(props: {
                         the per-edge markets, and with 0 of mainnet's 185 `uses` edges passing the
                         agent filter it will often be empty. "Its market is open" sent a reader to
                         "No declared uses". */}
-                    <p className="mt-2 text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)]">
+                    <p className="mt-2 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
                         Nothing to create. Its page lists the agents that declared using it, with
                         both sides of each claim — and is empty until one does.
                     </p>
@@ -291,7 +291,7 @@ function Resolved(props: {
                     {/* Said because the atom works unpinned and a reader will wonder why the name is
                         a hash. Pinning the same bytes later yields the same id, so it is
                         retroactive rather than a missed window. */}
-                    <p className="mt-2 text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)]">
+                    <p className="mt-2 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
                         Readers see the atom&rsquo;s id until its document is pinned. Anyone can pin
                         it, at any time, and the id does not change — the same bytes always hash to
                         the same CID.
@@ -300,10 +300,10 @@ function Resolved(props: {
                         they can do something and withholding what they would need is the gap
                         between a true sentence and a usable one. */}
                     <details className="mt-3">
-                        <summary className="cursor-pointer text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)]">
+                        <summary className="cursor-pointer text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
                             The document to pin
                         </summary>
-                        <pre className="mt-2 overflow-x-auto border border-[color:var(--color-border)] p-3 font-mono text-[length:var(--text-label)]">
+                        <pre className="mt-2 overflow-x-auto border border-[color:var(--color-rule)] p-3 font-mono text-[length:var(--text-label)]">
                             {plan.document}
                         </pre>
                     </details>
@@ -345,19 +345,19 @@ function Resolved(props: {
                         />
                         <Term label="Shares minted" value={formatTrust(plan.shares)} />
                     </dl>
-                    <p className="mt-4 text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)]">
+                    <p className="mt-4 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
                         The shares are a position you hold and can redeem. The fees are not. An atom
                         created with the fee alone would exist on the chain and not exist as a
                         market, which is why the minimum deposit is included rather than optional.
                     </p>
 
                     {!props.isConnected ? (
-                        <p className="mt-6 text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)]">
+                        <p className="mt-6 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
                             Connect a wallet to register it.
                         </p>
                     ) : !props.onMainnet ? (
                         <div className="mt-6">
-                            <p className="text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)]">
+                            <p className="text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
                                 Your wallet is on chain {props.walletChainId ?? "unknown"}. A
                                 tool&rsquo;s market is on Intuition mainnet (
                                 {INTUITION_MAINNET_CHAIN_ID}).
@@ -373,7 +373,7 @@ function Resolved(props: {
                             {props.switchError === null ? null : (
                                 <p
                                     role="alert"
-                                    className="mt-3 text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)]"
+                                    className="mt-3 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]"
                                 >
                                     {props.switchError}
                                 </p>
@@ -400,7 +400,7 @@ function Resolved(props: {
 function Term({label, value}: {label: string; value: string}) {
     return (
         <>
-            <dt className="font-sans text-[color:var(--color-fg-60)]">{label}</dt>
+            <dt className="font-sans text-[color:var(--color-steel)]">{label}</dt>
             <dd>{value}</dd>
         </>
     );
@@ -409,7 +409,7 @@ function Term({label, value}: {label: string; value: string}) {
 function Field({label, value, href}: {label: string; value: string; href?: string}) {
     return (
         <div className="mt-4">
-            <p className="text-[length:var(--text-label)] uppercase tracking-wider text-[color:var(--color-fg-60)]">
+            <p className="text-[length:var(--text-label)] uppercase tracking-wider text-[color:var(--color-steel)]">
                 {label}
             </p>
             {href === undefined ? (

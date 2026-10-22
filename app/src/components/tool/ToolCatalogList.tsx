@@ -40,7 +40,7 @@ function Figure({value, label}: {value: string; label: string}) {
     return (
         <span className="font-mono text-[length:var(--text-body-sm)] tabular-nums text-right leading-tight">
             {value}
-            <span className="sm:sr-only block text-[length:var(--text-label)] text-[color:var(--color-fg-60)] font-sans">
+            <span className="sm:sr-only block text-[length:var(--text-label)] text-[color:var(--color-steel)] font-sans">
                 {label}
             </span>
         </span>
@@ -49,7 +49,7 @@ function Figure({value, label}: {value: string; label: string}) {
 
 function Row({row}: {row: ToolRow}) {
     return (
-        <li className="border-b border-[color:var(--color-border)]">
+        <li className="border-b border-[color:var(--color-rule)]">
             <Link
                 to={row.href}
                 className="block py-3 hover:bg-[color:var(--color-surface-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[color:var(--color-accent)]"
@@ -70,7 +70,7 @@ function Row({row}: {row: ToolRow}) {
                         {/* Under the name, not a column: it qualifies the row rather than measuring
                             it, and a fifth column would be a fifth column on a list that reads
                             down. */}
-                        <span className="block font-sans font-normal text-[length:var(--text-label)] uppercase tracking-wider text-[color:var(--color-fg-60)]">
+                        <span className="block font-sans font-normal text-[length:var(--text-label)] uppercase tracking-wider text-[color:var(--color-steel)]">
                             {row.provenance === "registered"
                                 ? row.stakers === null || row.stakers === 0
                                     ? "registered"
@@ -90,11 +90,11 @@ function Row({row}: {row: ToolRow}) {
                     <span className="font-mono text-[length:var(--text-body-sm)] tabular-nums text-right leading-tight">
                         <span className="sr-only">staked behind it: </span>
                         {row.supportTrust}
-                        <span className="text-[color:var(--color-fg-60)]"> TRUST</span>
+                        <span className="text-[color:var(--color-steel)]"> TRUST</span>
                         {/* The counter only when something stands against it, so the cell is empty
                             rather than carrying a zero that reads as agreement. */}
                         {row.opposeTrust === null ? null : (
-                            <span className="block text-[length:var(--text-label)] text-[color:var(--color-fg-60)] font-sans">
+                            <span className="block text-[length:var(--text-label)] text-[color:var(--color-steel)] font-sans">
                                 {row.opposeTrust} against
                             </span>
                         )}
@@ -111,7 +111,7 @@ function Headers({curveId}: {curveId: number}) {
             // `aria-hidden` because every cell carries its own `sr-only` label: without it a
             // screen reader reads the header and then the label again, for every row.
             aria-hidden
-            className={`${ROW_GRID} hidden sm:grid pb-2 border-b border-[color:var(--color-border-strong)] font-mono uppercase tracking-wider text-[length:var(--text-label)] text-[color:var(--color-fg-60)]`}
+            className={`${ROW_GRID} hidden sm:grid pb-2 border-b border-[color:var(--color-rule-strong)] font-mono uppercase tracking-wider text-[length:var(--text-label)] text-[color:var(--color-steel)]`}
         >
             <span>Tool</span>
             <span className="text-right">Declarations</span>

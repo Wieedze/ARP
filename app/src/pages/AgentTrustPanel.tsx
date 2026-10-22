@@ -62,7 +62,7 @@ function AgentAvatar({src, name}: {src: string; name: string}) {
             height={56}
             loading="lazy"
             onError={() => setFailed(true)}
-            className="w-14 h-14 object-cover border border-[color:var(--color-border-strong)]"
+            className="w-14 h-14 object-cover border border-[color:var(--color-rule-strong)]"
         />
     );
 }
@@ -124,7 +124,7 @@ export function AgentTrustPanel() {
         <article>
             <Link
                 to="/agents"
-                className="font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)]"
+                className="font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]"
             >
                 ← agents
             </Link>
@@ -140,14 +140,14 @@ export function AgentTrustPanel() {
                     <h1 className="text-[length:var(--text-display)] leading-[var(--leading-display)] tracking-tight font-semibold">
                         Could not read this agent
                     </h1>
-                    <p className="mt-4 max-w-[60ch] text-[color:var(--color-fg-60)]">
+                    <p className="mt-4 max-w-[60ch] text-[color:var(--color-steel)]">
                         Every source failed, so nothing here would be an answer.{" "}
                         {profileQuery.error.message}
                     </p>
                     <button
                         type="button"
                         onClick={() => void profileQuery.refetch()}
-                        className="mt-5 px-3 py-1.5 text-[length:var(--text-body-sm)] border border-[color:var(--color-border-strong)]"
+                        className="mt-5 px-3 py-1.5 text-[length:var(--text-body-sm)] border border-[color:var(--color-rule-strong)]"
                     >
                         Try again
                     </button>
@@ -157,7 +157,7 @@ export function AgentTrustPanel() {
                     <h1 className="text-[length:var(--text-display)] leading-[var(--leading-display)] tracking-tight font-semibold">
                         No agent there
                     </h1>
-                    <p className="mt-4 max-w-[60ch] text-[color:var(--color-fg-60)]">
+                    <p className="mt-4 max-w-[60ch] text-[color:var(--color-steel)]">
                         Nothing resolves for <span className="font-mono">{view.caip19}</span>. The
                         sources answered cleanly; the agent is simply not registered under that
                         token id.
@@ -179,21 +179,21 @@ export function AgentTrustPanel() {
                                 <h1 className="text-[length:var(--text-display)] leading-[var(--leading-display)] tracking-tight font-semibold break-words">
                                     {view.name ?? `Token ${view.tokenId}`}
                                 </h1>
-                                <p className="mt-2 font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)] break-all">
+                                <p className="mt-2 font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-steel)] break-all">
                                     {view.caip19}
                                 </p>
                             </div>
                         </div>
 
                         {view.isFallbackMetadata ? (
-                            <p className="mt-4 border border-[color:var(--color-border-strong)] px-3 py-2 text-[length:var(--text-body-sm)] max-w-[64ch]">
+                            <p className="mt-4 border border-[color:var(--color-rule-strong)] px-3 py-2 text-[length:var(--text-body-sm)] max-w-[64ch]">
                                 This name and URL are the indexer's stand-in, not the agent's own.
                                 It registered without metadata — about 54% of the cohort is in that
                                 state — so <span className="font-mono">{view.name}</span> is a
                                 generated label and tells you nothing about what this agent does.
                             </p>
                         ) : view.description !== null ? (
-                            <p className="mt-4 max-w-[68ch] text-[color:var(--color-fg-60)]">
+                            <p className="mt-4 max-w-[68ch] text-[color:var(--color-steel)]">
                                 {view.description}
                             </p>
                         ) : null}
@@ -213,7 +213,7 @@ export function AgentTrustPanel() {
                                 send. Measured on mainnet 1155 — most of the mirrored cohort does
                                 resolve to one, and the ones that do not are the honest gap. */}
                             {backingAtomId === null ? null : (
-                                <div className="mb-16 pb-16 border-b border-[color:var(--color-border)]">
+                                <div className="mb-16 pb-16 border-b border-[color:var(--color-rule)]">
                                     {/* The same string the `h1` above uses. `view.tokenId` alone
                                         made the confirmation read "deposit onto 2340" while the
                                         heading said "Token 2340" — the one screen where the
@@ -243,7 +243,7 @@ export function AgentTrustPanel() {
                                 />
                             )}
 
-                            <p className="mt-16 text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)] max-w-[64ch]">
+                            <p className="mt-16 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)] max-w-[64ch]">
                                 Graph read from{" "}
                                 <span className="font-mono">{ERC8004_GRAPHQL_URL}</span>.
                             </p>
@@ -335,7 +335,7 @@ function StackedClaims({view, session, sessionError}: ClaimsProps) {
             <section>
                 <h2 className="font-medium">Assessments</h2>
                 {view.rows.length === 0 ? (
-                    <p className="mt-6 text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)] max-w-[60ch]">
+                    <p className="mt-6 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)] max-w-[60ch]">
                         No trust provider has written an edge about this agent. With 99.99% of the
                         cohort covered by one provider, an agent with none is unusual — and there is
                         nothing here to take a position on.
@@ -407,12 +407,12 @@ function AgentData({view, hasUnreadSources}: {view: TrustPanelView; hasUnreadSou
  */
 function ArpPosition() {
     return (
-        <article className="pl-5 border-l border-l-[color:var(--color-border-strong)]">
+        <article className="pl-5 border-l border-l-[color:var(--color-rule-strong)]">
             <h3 className="text-[length:var(--text-body)] font-medium">ARP</h3>
-            <p className="mt-3 font-mono uppercase tracking-wider text-[length:var(--text-label)] text-[color:var(--color-fg-60)]">
+            <p className="mt-3 font-mono uppercase tracking-wider text-[length:var(--text-label)] text-[color:var(--color-steel)]">
                 insufficient evidence
             </p>
-            <p className="mt-3 text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)] max-w-[60ch]">
+            <p className="mt-3 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)] max-w-[60ch]">
                 ARP publishes no assessment of this agent, and will not. What is on this page is
                 what other people paid to say.
             </p>
@@ -427,7 +427,7 @@ function ArpPosition() {
 function LoadingShape({chainId, tokenId}: {chainId: number; tokenId: string}) {
     return (
         <section className="mt-10" aria-live="polite">
-            <h1 className="text-[length:var(--text-display)] leading-[var(--leading-display)] tracking-tight font-semibold text-[color:var(--color-fg-60)]">
+            <h1 className="text-[length:var(--text-display)] leading-[var(--leading-display)] tracking-tight font-semibold text-[color:var(--color-steel)]">
                 Resolving {chainId}:{tokenId}
             </h1>
         </section>

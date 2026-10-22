@@ -25,7 +25,7 @@ export const TIER_TONE_CLASS: Record<ProvenanceTier, string> = {
     "confirmed-by-both": "text-[color:var(--color-fg)] font-semibold",
     "tool-declared": "text-[color:var(--color-fg)] font-medium",
     "priced-assertion": "text-[color:var(--color-fg)] font-medium",
-    "free-assertion": "text-[color:var(--color-fg-60)] font-normal",
+    "free-assertion": "text-[color:var(--color-steel)] font-normal",
 };
 
 /**

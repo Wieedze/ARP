@@ -1,5 +1,5 @@
 import {lazy, Suspense} from "react";
-import {Route, Routes} from "react-router-dom";
+import {Navigate, Route, Routes} from "react-router-dom";
 
 import {Layout} from "./components/Layout";
 import {AgentRegister} from "./pages/AgentRegister";
@@ -80,13 +80,18 @@ function App() {
                     }
                 />
                 <Route
-                    path="/me"
+                    path="/profile"
                     element={
                         <Suspense fallback={<RouteFallback label="your positions" />}>
                             <Profile />
                         </Suspense>
                     }
                 />
+                {/* `/me` was the route and the tab was called "You". The user rejected both as
+                    wrong syntax; `HANDOFF.md` §8 names the route `/profile`. The redirect stays
+                    because a bookmark, a shared link or a `git log` reference to `/me` should not
+                    land on a blank page — and it is three lines against a dead end. */}
+                <Route path="/me" element={<Navigate to="/profile" replace />} />
                 <Route
                     path="/register"
                     element={
@@ -123,7 +128,7 @@ function RouteFallback({label}: {label: string}) {
     return (
         <p
             aria-live="polite"
-            className="font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)]"
+            className="font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]"
         >
             loading {label}…
         </p>

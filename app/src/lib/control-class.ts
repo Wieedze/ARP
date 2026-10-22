@@ -7,7 +7,12 @@
  * them were **inert**. `index.css` carries an **unlayered** base rule:
  *
  * ```css
- * button { border: 1px solid var(--color-border); color: var(--color-fg); cursor: pointer }
+ * button {
+ *   border: 1px solid var(--color-rule);
+ *   border-radius: var(--radius-button);
+ *   color: var(--color-fg);
+ *   cursor: pointer;
+ * }
  * ```
  *
  * An unlayered normal declaration beats a normal declaration in **every** `@layer`, and Tailwind
@@ -33,11 +38,17 @@
  * | `border-color` | yes | **yes** |
  * | `color` | yes, `--color-fg` — this is the one the table used to omit | **yes** |
  * | `cursor` | yes | **yes** |
+ * | `border-radius` | yes, 10px since ADR `0057` — so do not set it at all | n/a |
  * | `opacity` | no | no |
  * | padding, font size | `@layer base` preflight only | no |
  *
  * The width is deliberately left to the base rule. A first draft of `ToolRegister`'s copy wrote
  * `border-0! border border-[…]!`, which is width zero with an important colour: an invisible button.
+ *
+ * The radius joined that list with ADR `0057`: 10px is the design default, so a `rounded-*` utility
+ * here would be inert and a component that genuinely wants another radius needs `rounded-[…]!`. The
+ * tokens are `--radius-tag` 6, `--radius-control` 8, `--radius-button` 10, `--radius-card` 12, and
+ * full circles are reserved for dots and agent sigils so that a circle always means "an agent".
  */
 
 /** Spacing and type, shared by both variants. */
@@ -53,10 +64,10 @@ const DISABLED = "disabled:opacity-40 disabled:cursor-not-allowed!";
  * an accent outline no utility can defeat and none can usefully add to. Four
  * `focus-visible:outline-*` classes were being carried here for nothing.
  */
-export const controlClass = `${SHAPE} border-[color:var(--color-border-strong)]! ${DISABLED}`;
+export const controlClass = `${SHAPE} border-[color:var(--color-rule-strong)]! ${DISABLED}`;
 
 /**
- * The primary action, in accent. Use it for the one button that commits.
+ * The primary action, in accent — Saffron since ADR `0057`. Use it for the one button that commits.
  *
  * Both properties banged, which is the whole reason this constant exists separately: without them it
  * is indistinguishable from {@link controlClass}, and "the button that spends real TRUST looks like

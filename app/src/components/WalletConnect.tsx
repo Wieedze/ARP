@@ -50,7 +50,7 @@ export function WalletConnect() {
         const primary = connectors.find((c) => c.id === "metaMask" || c.id === "injected") ?? connectors[0];
         if (!primary) {
             return (
-                <span className="text-[length:var(--text-body-sm)] text-[color:var(--color-fg-40)]">
+                <span className="text-[length:var(--text-body-sm)] text-[color:var(--color-grey)]">
                     No wallet detected
                 </span>
             );
@@ -83,7 +83,7 @@ export function WalletConnect() {
             {open ? (
                 <div
                     role="menu"
-                    className="absolute right-0 top-full mt-1 w-44 border border-[color:var(--color-border-strong)] bg-[color:var(--color-bg)] text-[length:var(--text-body-sm)]"
+                    className="absolute right-0 top-full mt-1 w-44 border border-[color:var(--color-rule-strong)] bg-[color:var(--color-ground)] text-[length:var(--text-body-sm)]"
                 >
                     <button
                         type="button"

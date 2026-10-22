@@ -43,8 +43,8 @@ const STATIC_LINES: Record<"arp" | "agent", string> = {
 const SIGNATURE_TONE_CLASS: Record<TabSummary["signature"]["status"], string> = {
     verified: "text-[color:var(--color-fg)]",
     mismatch: "text-[color:var(--color-alarm)]",
-    unverified: "text-[color:var(--color-fg-60)]",
-    absent: "text-[color:var(--color-fg-60)]",
+    unverified: "text-[color:var(--color-steel)]",
+    absent: "text-[color:var(--color-steel)]",
 };
 
 function isMismatch(tab: PanelTab): boolean {
@@ -55,7 +55,7 @@ function TabLine({tab}: {tab: PanelTab}) {
     const [text, tone] =
         tab.kind === "provider"
             ? [tab.summary.signature.label, SIGNATURE_TONE_CLASS[tab.summary.signature.status]]
-            : [STATIC_LINES[tab.kind], "text-[color:var(--color-fg-60)]"];
+            : [STATIC_LINES[tab.kind], "text-[color:var(--color-steel)]"];
 
     return (
         <span
@@ -124,7 +124,7 @@ export function TrustPanelTabs({
                     ? "bg-[color:var(--color-alarm)]"
                     : isSelected
                       ? "bg-[color:var(--color-accent)]"
-                      : "bg-[color:var(--color-border-strong)]";
+                      : "bg-[color:var(--color-rule-strong)]";
 
                 return (
                     <button
@@ -163,7 +163,7 @@ export function TrustPanelTabs({
                             className={`mt-3 block text-[length:var(--text-body)] break-words ${
                                 isSelected
                                     ? "font-medium text-[color:var(--color-fg)]"
-                                    : "text-[color:var(--color-fg-60)] group-hover:text-[color:var(--color-fg)]"
+                                    : "text-[color:var(--color-steel)] group-hover:text-[color:var(--color-fg)]"
                             }`}
                         >
                             {tab.label}

@@ -12,7 +12,7 @@ import {deployments} from "../../lib/deployments";
  */
 export function MainnetNotice() {
     return (
-        <p className="bg-[color:var(--color-fg)] text-[color:var(--color-bg)] font-mono uppercase tracking-wider text-[length:var(--text-label)] px-4 py-2">
+        <p className="bg-[color:var(--color-fg)] text-[color:var(--color-ground)] font-mono uppercase tracking-wider text-[length:var(--text-label)] px-4 py-2">
             Intuition mainnet · chain {INTUITION_MAINNET_CHAIN_ID} · real TRUST
             <span className="normal-case tracking-normal">
                 {" — "}ARP's own contracts are on Intuition testnet {deployments.chain.chainId}.

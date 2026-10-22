@@ -1,5 +1,19 @@
 # 05 — UI Design Principles
 
+> **Superseded on the specifics by ADR `0057`, 2026-10-22 — "The Source".** The *thesis* below
+> stands and is why the identity was commissioned at all. What changed: the accent is **Saffron
+> `#FFB020`**, not cyan; the type is **Archivo + Geist Mono**, not Inter + JetBrains Mono; the
+> neutrals are graphite with named levels (`ground` / `bg` / `raised` and `fg` / `silver` / `steel` /
+> `grey`), not an alpha ramp; and corners are **tiered** 6 / 8 / 10 / 12px rather than capped at 4.
+> The live token list is `app/src/index.css`'s `@theme` block, which `check:tokens` polices.
+>
+> Read `.claude/rules/ui.md` first — it carries the amendment in the form a task needs. The build
+> contract is `arp-design-handoff/HANDOFF.md`; its **section 8 (screens and routes) was not
+> adopted**, by user decision, so the pages keep the structure they have.
+>
+> Anything in this file about colour values, font families or radii is historical. Everything about
+> hierarchy, density, negative space, copy and accessibility is current.
+
 The UI is the part of this MVP that Billy will see first, before reading a single line of Solidity. It must signal **prestige in 10 seconds**. This document captures design direction to prevent the default "ship-it React template" outcome.
 
 ## Design thesis

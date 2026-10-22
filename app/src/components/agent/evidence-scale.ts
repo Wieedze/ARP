@@ -19,10 +19,10 @@ export const SCORE_SIZE_CLASS: Record<EvidenceWeight, string> = {
 };
 
 export const SCORE_TONE_CLASS: Record<EvidenceWeight, string> = {
-    unknown: "text-[color:var(--color-fg-60)] font-normal",
-    none: "text-[color:var(--color-fg-60)] font-normal",
-    single: "text-[color:var(--color-fg-60)] font-normal",
-    thin: "text-[color:var(--color-fg-60)] font-normal",
+    unknown: "text-[color:var(--color-steel)] font-normal",
+    none: "text-[color:var(--color-steel)] font-normal",
+    single: "text-[color:var(--color-steel)] font-normal",
+    thin: "text-[color:var(--color-steel)] font-normal",
     moderate: "text-[color:var(--color-fg)] font-medium",
     substantial: "text-[color:var(--color-fg)] font-semibold",
     deep: "text-[color:var(--color-fg)] font-semibold",

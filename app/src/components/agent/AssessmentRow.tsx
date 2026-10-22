@@ -42,7 +42,7 @@ export function AssessmentRow({
             className={`pl-5 border-l ${
                 isMismatch
                     ? "border-l-2 border-l-[color:var(--color-alarm)]"
-                    : "border-l-[color:var(--color-border-strong)]"
+                    : "border-l-[color:var(--color-rule-strong)]"
             }`}
         >
             <header className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
@@ -52,7 +52,7 @@ export function AssessmentRow({
                         href={row.providerUrl}
                         target="_blank"
                         rel="noreferrer"
-                        className="font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)] break-all"
+                        className="font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-steel)] break-all"
                     >
                         {row.providerUrl} ↗
                     </a>
@@ -68,13 +68,13 @@ export function AssessmentRow({
                             >
                                 {row.score}
                             </p>
-                            <p className="mt-2 font-mono uppercase tracking-wider text-[length:var(--text-label)] text-[color:var(--color-fg-60)]">
+                            <p className="mt-2 font-mono uppercase tracking-wider text-[length:var(--text-label)] text-[color:var(--color-steel)]">
                                 score{row.scoreScale !== null ? ` · ${row.scoreScale}` : ""}
                                 {row.riskLevel !== null ? ` · risk ${row.riskLevel}` : ""}
                             </p>
                         </>
                     ) : (
-                        <p className="text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)] max-w-[40ch]">
+                        <p className="text-[length:var(--text-body-sm)] text-[color:var(--color-steel)] max-w-[40ch]">
                             No score in this document.
                         </p>
                     )}
@@ -83,7 +83,7 @@ export function AssessmentRow({
 
                 <div className="flex flex-col gap-5">
                     {row.assessment === null ? (
-                        <p className="text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)] max-w-[60ch]">
+                        <p className="text-[length:var(--text-body-sm)] text-[color:var(--color-steel)] max-w-[60ch]">
                             This provider is declared in the graph but publishes no{" "}
                             <span className="font-mono">has trust assessment</span> edge, so there
                             is no document to check. The market below is still live.
@@ -101,13 +101,13 @@ export function AssessmentRow({
                             <FreshnessLine verdict={row.assessment.freshness} />
                             {row.dimensions.length > 0 ? (
                                 <div>
-                                    <p className="font-mono uppercase tracking-wider text-[length:var(--text-label)] text-[color:var(--color-fg-60)]">
+                                    <p className="font-mono uppercase tracking-wider text-[length:var(--text-label)] text-[color:var(--color-steel)]">
                                         Dimensions
                                     </p>
                                     <dl className="mt-2 grid grid-cols-[1fr_auto] gap-x-6 text-[length:var(--text-body-sm)] max-w-[24rem]">
                                         {row.dimensions.map((dimension) => (
                                             <div key={dimension.name} className="contents">
-                                                <dt className="text-[color:var(--color-fg-60)] truncate">
+                                                <dt className="text-[color:var(--color-steel)] truncate">
                                                     {dimension.name}
                                                 </dt>
                                                 <dd className="font-mono tabular-nums text-right">

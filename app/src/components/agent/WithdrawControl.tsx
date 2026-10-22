@@ -139,14 +139,14 @@ export function WithdrawControl({
             <Heading id={`${fieldId}-heading`} className="font-medium">
                 Withdraw
             </Heading>
-            <p className="mt-1 text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)] max-w-[60ch]">
+            <p className="mt-1 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)] max-w-[60ch]">
                 You hold <span className="font-mono">{formatTrust(held)}</span> shares here. Burning
                 them returns TRUST at the curve&rsquo;s current price, less the exit fee.
             </p>
 
             {phase.step === "confirm" || phase.step === "signing" ? (
-                <div className="mt-4 border border-[color:var(--color-border-strong)] p-4 max-w-[36rem]">
-                    <p className="font-mono uppercase tracking-wider text-[length:var(--text-label)] text-[color:var(--color-fg-60)]">
+                <div className="mt-4 border border-[color:var(--color-rule-strong)] p-4 max-w-[36rem]">
+                    <p className="font-mono uppercase tracking-wider text-[length:var(--text-label)] text-[color:var(--color-steel)]">
                         Confirm before your wallet opens
                     </p>
                     <p className="mt-3 text-[length:var(--text-body-sm)] max-w-[52ch]">
@@ -158,7 +158,7 @@ export function WithdrawControl({
                         </span>
                         , after fees.
                     </p>
-                    <p className="mt-2 text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)] max-w-[52ch]">
+                    <p className="mt-2 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)] max-w-[52ch]">
                         Real TRUST, Intuition mainnet.
                     </p>
                     <div className="mt-5 flex flex-wrap gap-3">
@@ -250,7 +250,7 @@ export function WithdrawControl({
                 <div className="mt-4 max-w-[34rem]">
                     <label
                         htmlFor={`${fieldId}-shares`}
-                        className="block font-mono uppercase tracking-wider text-[length:var(--text-label)] text-[color:var(--color-fg-60)]"
+                        className="block font-mono uppercase tracking-wider text-[length:var(--text-label)] text-[color:var(--color-steel)]"
                     >
                         Shares
                     </label>
@@ -269,7 +269,7 @@ export function WithdrawControl({
                                     ? undefined
                                     : `${fieldId}-shares-error`
                             }
-                            className="w-48 border border-[color:var(--color-border-strong)] bg-transparent px-3 py-1.5 font-mono tabular-nums"
+                            className="w-48 border border-[color:var(--color-rule-strong)] bg-transparent px-3 py-1.5 font-mono tabular-nums"
                         />
                         {/* The exact held value, not a formatted one re-parsed: formatting rounds,
                             and a rounded "all" either leaves dust behind or exceeds the holding. */}
@@ -285,7 +285,7 @@ export function WithdrawControl({
                     {check.status === "empty" || check.status === "ok" ? null : (
                         <p
                             id={`${fieldId}-shares-error`}
-                            className="mt-2 text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)]"
+                            className="mt-2 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]"
                         >
                             {check.status === "unparseable"
                                 ? "Not a number."
@@ -296,7 +296,7 @@ export function WithdrawControl({
                     )}
 
                     {!isConnected ? (
-                        <p className="mt-4 text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)]">
+                        <p className="mt-4 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
                             Connect a wallet to withdraw.
                         </p>
                     ) : !onMainnet ? (

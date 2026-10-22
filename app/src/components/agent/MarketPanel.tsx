@@ -37,8 +37,8 @@ function SideColumn({
     const indexerAssets = side?.marketCap ?? null;
 
     return (
-        <div className="border-t border-[color:var(--color-border)] pt-3">
-            <p className="font-mono uppercase tracking-wider text-[length:var(--text-label)] text-[color:var(--color-fg-60)]">
+        <div className="border-t border-[color:var(--color-rule)] pt-3">
+            <p className="font-mono uppercase tracking-wider text-[length:var(--text-label)] text-[color:var(--color-steel)]">
                 {title}
             </p>
             <p className="mt-2 font-mono text-[length:var(--text-body)]">
@@ -50,7 +50,7 @@ function SideColumn({
                         ? `${formatTrust(indexerAssets)} TRUST`
                         : "—"}
             </p>
-            <p className="mt-1 text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)]">
+            <p className="mt-1 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
                 {side === null ? (
                     "no market data"
                 ) : side.positionCount === null ? (
@@ -65,7 +65,7 @@ function SideColumn({
                 </p>
             ) : null}
             {vault !== undefined ? (
-                <p className="mt-2 font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)] break-all">
+                <p className="mt-2 font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-steel)] break-all">
                     {truncateMiddle(vault.termId, 10, 8)}
                 </p>
             ) : null}
@@ -86,7 +86,7 @@ export function MarketPanel({
 }) {
     if (row.tripleId === null) {
         return (
-            <p className="text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)] max-w-[52ch]">
+            <p className="text-[length:var(--text-body-sm)] text-[color:var(--color-steel)] max-w-[52ch]">
                 {row.providerClaim === null ? (
                     <>
                         No <span className="font-mono">has trust provider</span> edge backs this
@@ -119,7 +119,7 @@ export function MarketPanel({
                 />
             </div>
             {error !== null ? (
-                <p className="mt-3 text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)]">
+                <p className="mt-3 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
                     Vault balances could not be read: {error.message}. The indexer figures above are
                     what is left.
                 </p>

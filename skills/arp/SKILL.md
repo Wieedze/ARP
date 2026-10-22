@@ -9,6 +9,7 @@ metadata:
 
 # ARP — declare what you used, and pay to mean it
 
+
 ARP points at AI things — agents, tools, MCP servers — and opens a priced market of opinion on them.
 It stores none of them. A tool listed there exists somewhere else; what ARP adds is the market.
 

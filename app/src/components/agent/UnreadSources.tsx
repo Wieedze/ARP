@@ -10,7 +10,7 @@ import type {TrustPanelView} from "../../services/agent-trust";
  */
 export function UnreadSources({view}: {view: TrustPanelView}) {
     return (
-        <ul className="flex flex-col gap-2 text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)]">
+        <ul className="flex flex-col gap-2 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
             {view.sourceErrors.map((error, index) => (
                 <li key={`${error.sourceId}-${index}`}>
                     <span className="font-mono">{error.sourceId}</span> failed at{" "}

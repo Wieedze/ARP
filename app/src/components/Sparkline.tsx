@@ -116,7 +116,7 @@ export function Sparkline({
                     className="stroke-[color:var(--color-accent)]"
                 />
             </svg>
-            <div className="mt-1 flex justify-between font-mono text-[length:var(--text-label)] text-[color:var(--color-fg-60)]">
+            <div className="mt-1 flex justify-between font-mono text-[length:var(--text-label)] text-[color:var(--color-steel)]">
                 <span>{first?.label}</span>
                 <span>{last?.label}</span>
             </div>

@@ -16,7 +16,7 @@ import type {CapabilityGroup} from "../../services/agent-trust";
 export function CapabilitySection({groups, count}: {groups: CapabilityGroup[]; count: number}) {
     if (count === 0) {
         return (
-            <p className="text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)] max-w-[60ch]">
+            <p className="text-[length:var(--text-body-sm)] text-[color:var(--color-steel)] max-w-[60ch]">
                 No capability triples. Every agent in this cohort carries a trust score; almost none
                 carries a statement of what it is for. Indexing that layer is the next phase of this
                 work, not something this panel can infer.
@@ -29,9 +29,9 @@ export function CapabilitySection({groups, count}: {groups: CapabilityGroup[]; c
             {groups.map((group) => (
                 <div
                     key={group.relation}
-                    className="grid sm:grid-cols-[8rem_1fr] gap-x-6 gap-y-1 border-t border-[color:var(--color-border)] pt-3"
+                    className="grid sm:grid-cols-[8rem_1fr] gap-x-6 gap-y-1 border-t border-[color:var(--color-rule)] pt-3"
                 >
-                    <dt className="font-mono uppercase tracking-wider text-[length:var(--text-label)] text-[color:var(--color-fg-60)]">
+                    <dt className="font-mono uppercase tracking-wider text-[length:var(--text-label)] text-[color:var(--color-steel)]">
                         {group.label}
                     </dt>
                     <dd className="flex flex-wrap gap-x-4 gap-y-1 text-[length:var(--text-body-sm)]">

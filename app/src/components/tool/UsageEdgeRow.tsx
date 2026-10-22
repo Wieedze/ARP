@@ -36,7 +36,7 @@ export function UsageEdgeRow({
     isFirstOfTier: boolean;
 }) {
     return (
-        <li className="border-t border-[color:var(--color-border)] py-4 first:border-t-0">
+        <li className="border-t border-[color:var(--color-rule)] py-4 first:border-t-0">
             <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
                 <div className="min-w-0">
                     {/* An agent with no label is addressed by its atom and nothing else, so the id
@@ -49,7 +49,7 @@ export function UsageEdgeRow({
                     ) : (
                         <>
                             <h3 className="truncate">{edge.agent.label}</h3>
-                            <p className="mt-1 font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)]">
+                            <p className="mt-1 font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
                                 {truncateMiddle(edge.agent.atomId)}
                             </p>
                         </>
@@ -67,7 +67,7 @@ export function UsageEdgeRow({
                         that stops the weight being decoration, but repeating it four times down
                         IPFS's free edges is noise in a list `ui.md` wants dense. */}
                     {isFirstOfTier ? (
-                        <p className="mt-1 max-w-[42ch] text-[length:var(--text-label)] text-[color:var(--color-fg-60)]">
+                        <p className="mt-1 max-w-[42ch] text-[length:var(--text-label)] text-[color:var(--color-steel)]">
                             {edge.isOffCurve ? OFF_CURVE_CAPTION : TIER_CAPTION[edge.tier]}
                         </p>
                     ) : null}
@@ -77,7 +77,7 @@ export function UsageEdgeRow({
             <dl className="mt-3 flex flex-wrap items-baseline gap-x-8 gap-y-2 font-mono text-[length:var(--text-body-sm)]">
                 {edge.supportPositions > 0 ? (
                     <div className="flex items-baseline gap-2">
-                        <dt className="text-[color:var(--color-fg-60)] font-sans text-[length:var(--text-label)] uppercase tracking-wider">
+                        <dt className="text-[color:var(--color-steel)] font-sans text-[length:var(--text-label)] uppercase tracking-wider">
                             For
                         </dt>
                         <dd className="flex items-baseline gap-2 tabular-nums">
@@ -87,14 +87,14 @@ export function UsageEdgeRow({
                     </div>
                 ) : (
                     <div className="flex items-baseline gap-2">
-                        <dt className="text-[color:var(--color-fg-60)] font-sans text-[length:var(--text-label)] uppercase tracking-wider">
+                        <dt className="text-[color:var(--color-steel)] font-sans text-[length:var(--text-label)] uppercase tracking-wider">
                             For
                         </dt>
                         {/* Scoped to the CLAIM, not to the tool. A deposit can sit on the tool's
                             own atom instead, and 74 of the 185 mainnet edges are in that state —
                             so "nothing staked" full stop would be a claim about the tool that this
                             page has not read. */}
-                        <dd className="font-sans text-[color:var(--color-fg-60)]">
+                        <dd className="font-sans text-[color:var(--color-steel)]">
                             {edge.isOffCurve
                                 ? "Staked on a curve this page does not read."
                                 : "Nothing staked on this claim."}
@@ -103,7 +103,7 @@ export function UsageEdgeRow({
                 )}
                 {edge.isContested ? (
                     <div className="flex items-baseline gap-2">
-                        <dt className="text-[color:var(--color-fg-60)] font-sans text-[length:var(--text-label)] uppercase tracking-wider">
+                        <dt className="text-[color:var(--color-steel)] font-sans text-[length:var(--text-label)] uppercase tracking-wider">
                             Against
                         </dt>
                         <dd className="flex items-baseline gap-2 tabular-nums">

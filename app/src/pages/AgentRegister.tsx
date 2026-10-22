@@ -334,7 +334,7 @@ export function AgentRegister() {
         return (
             <section>
                 <PageHeader />
-                <p className="text-[color:var(--color-fg-60)]">
+                <p className="text-[color:var(--color-steel)]">
                     Connect your wallet (the operator) to set up an agent.
                 </p>
             </section>
@@ -357,7 +357,7 @@ export function AgentRegister() {
 
             <RoleBanner operatorAddress={operatorAddress ?? null} />
 
-            <ol className="border-t border-[color:var(--color-border)]">
+            <ol className="border-t border-[color:var(--color-rule)]">
                 {/* ---------- Step 1 — Mint NFT ---------- */}
                 <Step
                     n={1}
@@ -401,7 +401,7 @@ export function AgentRegister() {
                                 type="button"
                                 onClick={handleDesignateRuntime}
                                 disabled={step2Status === "pending"}
-                                className="mt-3 px-3 py-1.5 text-[length:var(--text-body-sm)] border border-[color:var(--color-border)]"
+                                className="mt-3 px-3 py-1.5 text-[length:var(--text-body-sm)] border border-[color:var(--color-rule)]"
                                 title="Rotates the runtime key. Existing delegations become unusable — re-sign at step 4 after rotation."
                             >
                                 {step2Status === "pending"
@@ -421,7 +421,7 @@ export function AgentRegister() {
                                 : "Generate runtime keypair"}
                         </button>
                     ) : (
-                        <p className="text-[color:var(--color-fg-40)] text-[length:var(--text-body-sm)]">
+                        <p className="text-[color:var(--color-grey)] text-[length:var(--text-body-sm)]">
                             Available after step 1.
                         </p>
                     )}
@@ -444,7 +444,7 @@ export function AgentRegister() {
                     error={step3Error}
                 >
                     {smartAccountAddress ? (
-                        <p className="font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)] mb-3">
+                        <p className="font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-steel)] mb-3">
                             {smartAccountAddress}
                         </p>
                     ) : null}
@@ -487,7 +487,7 @@ export function AgentRegister() {
                             pending={step4Status === "pending"}
                         />
                     ) : (
-                        <p className="text-[color:var(--color-fg-40)] text-[length:var(--text-body-sm)]">
+                        <p className="text-[color:var(--color-grey)] text-[length:var(--text-body-sm)]">
                             Available after steps 1, 2, and 3.
                         </p>
                     )}
@@ -503,9 +503,9 @@ export function AgentRegister() {
                     error={null}
                 >
                     {allDone ? (
-                        <div className="text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)] space-y-4 max-w-[680px]">
-                            <div className="border border-[color:var(--color-border)] p-3">
-                                <p className="text-[length:var(--text-label)] uppercase tracking-wider text-[color:var(--color-fg-40)] mb-1">
+                        <div className="text-[length:var(--text-body-sm)] text-[color:var(--color-steel)] space-y-4 max-w-[680px]">
+                            <div className="border border-[color:var(--color-rule)] p-3">
+                                <p className="text-[length:var(--text-label)] uppercase tracking-wider text-[color:var(--color-grey)] mb-1">
                                     Bring-up
                                 </p>
                                 <p className="mb-3">
@@ -518,7 +518,7 @@ export function AgentRegister() {
                                             Runtime ready
                                         </p>
                                         <p>
-                                            <span className="text-[color:var(--color-fg-40)]">
+                                            <span className="text-[color:var(--color-grey)]">
                                                 fund tx
                                             </span>{" "}
                                             <a
@@ -531,7 +531,7 @@ export function AgentRegister() {
                                             </a>
                                         </p>
                                         <p>
-                                            <span className="text-[color:var(--color-fg-40)]">
+                                            <span className="text-[color:var(--color-grey)]">
                                                 approve tx
                                             </span>{" "}
                                             <a
@@ -548,7 +548,7 @@ export function AgentRegister() {
                                     <>
                                         {!generatedRuntime ? (
                                             <div className="mb-3">
-                                                <p className="text-[length:var(--text-body-sm)] text-[color:var(--color-fg-40)] mb-2">
+                                                <p className="text-[length:var(--text-body-sm)] text-[color:var(--color-grey)] mb-2">
                                                     Runtime private key isn't in this
                                                     session's memory (it lives only in
                                                     the browser tab where you ran step
@@ -569,11 +569,11 @@ export function AgentRegister() {
                                                     }
                                                     placeholder="0x…"
                                                     disabled={step5Status === "pending"}
-                                                    className="block w-full max-w-[680px] bg-transparent border border-[color:var(--color-border)] px-3 py-1.5 font-mono text-[length:var(--text-body-sm)] focus:outline-none focus:border-[color:var(--color-accent)]"
+                                                    className="block w-full max-w-[680px] bg-transparent border border-[color:var(--color-rule)] px-3 py-1.5 font-mono text-[length:var(--text-body-sm)] focus:outline-none focus:border-[color:var(--color-accent)]"
                                                 />
                                                 {pastedRuntimeKey.length > 0 &&
                                                 !isValidPaste ? (
-                                                    <p className="mt-1 text-[length:var(--text-body-sm)] text-[color:var(--color-fg-40)]">
+                                                    <p className="mt-1 text-[length:var(--text-body-sm)] text-[color:var(--color-grey)]">
                                                         Expected{" "}
                                                         <span className="font-mono">
                                                             0x
@@ -615,7 +615,7 @@ export function AgentRegister() {
                             </p>
                         </div>
                     ) : (
-                        <p className="text-[color:var(--color-fg-40)] text-[length:var(--text-body-sm)]">
+                        <p className="text-[color:var(--color-grey)] text-[length:var(--text-body-sm)]">
                             Available after steps 1 – 4.
                         </p>
                     )}
@@ -645,7 +645,7 @@ function DelegationForm({
         <div className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <label className="block text-[length:var(--text-body-sm)]">
-                    <span className="text-[color:var(--color-fg-60)] block mb-1">
+                    <span className="text-[color:var(--color-steel)] block mb-1">
                         Cap per period
                     </span>
                     <div className="flex items-center gap-2">
@@ -654,15 +654,15 @@ function DelegationForm({
                             value={capInput}
                             onChange={(e) => onCapChange(e.target.value)}
                             disabled={pending}
-                            className="w-32 bg-transparent border border-[color:var(--color-border)] px-3 py-1.5 font-mono focus:outline-none focus:border-[color:var(--color-accent)]"
+                            className="w-32 bg-transparent border border-[color:var(--color-rule)] px-3 py-1.5 font-mono focus:outline-none focus:border-[color:var(--color-accent)]"
                         />
-                        <span className="font-mono text-[color:var(--color-fg-40)]">
+                        <span className="font-mono text-[color:var(--color-grey)]">
                             tTRUST
                         </span>
                     </div>
                 </label>
                 <fieldset>
-                    <legend className="text-[color:var(--color-fg-60)] block mb-1 text-[length:var(--text-body-sm)]">
+                    <legend className="text-[color:var(--color-steel)] block mb-1 text-[length:var(--text-body-sm)]">
                         Window
                     </legend>
                     <div className="flex gap-3 text-[length:var(--text-body-sm)] font-mono">
@@ -679,7 +679,7 @@ function DelegationForm({
                                         "cursor-pointer px-3 py-1 border",
                                         active
                                             ? "border-[color:var(--color-accent)] text-[color:var(--color-accent)]"
-                                            : "border-[color:var(--color-border)] text-[color:var(--color-fg-60)]",
+                                            : "border-[color:var(--color-rule)] text-[color:var(--color-steel)]",
                                     ].join(" ")}
                                 >
                                     <input
@@ -731,14 +731,14 @@ function DelegationsActive({
             <p className="text-[length:var(--text-label)] uppercase tracking-wider text-[color:var(--color-accent)] mb-2">
                 Delegations active
             </p>
-            <p className="font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)] mb-3">
+            <p className="font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-steel)] mb-3">
                 Signed {date}
             </p>
             {envBlob ? (
                 <textarea
                     readOnly
                     value={envBlob}
-                    className="w-full h-32 bg-transparent border border-[color:var(--color-border)] p-3 font-mono text-[length:var(--text-body-sm)] resize-none"
+                    className="w-full h-32 bg-transparent border border-[color:var(--color-rule)] p-3 font-mono text-[length:var(--text-body-sm)] resize-none"
                 />
             ) : null}
             <div className="flex gap-3 mt-3">
@@ -757,7 +757,7 @@ function DelegationsActive({
                 <button
                     type="button"
                     onClick={onClear}
-                    className="px-3 py-1.5 text-[length:var(--text-body-sm)] border border-[color:var(--color-border)]"
+                    className="px-3 py-1.5 text-[length:var(--text-body-sm)] border border-[color:var(--color-rule)]"
                 >
                     Clear + re-sign
                 </button>
@@ -772,7 +772,7 @@ function PageHeader() {
             <h1 className="font-sans text-[length:var(--text-display)] leading-[var(--leading-display)] tracking-tight font-semibold">
                 Configure an agent
             </h1>
-            <p className="mt-2 text-[color:var(--color-fg-60)] max-w-[640px]">
+            <p className="mt-2 text-[color:var(--color-steel)] max-w-[640px]">
                 You — the operator — set up an agent's on-chain identity. The agent itself is a
                 separate entity with its own keys; it runs autonomously once configured. Registry:{" "}
                 <a
@@ -784,7 +784,7 @@ function PageHeader() {
                     {short(deployments.arp.identityRegistry)}
                 </a>
             </p>
-            <p className="mt-3 text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)] max-w-[640px]">
+            <p className="mt-3 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)] max-w-[640px]">
                 Already hold an ERC-8004 agent?{" "}
                 <Link className={linkClass} to="/agent/import">
                     Import it instead
@@ -797,26 +797,26 @@ function PageHeader() {
 
 function RoleBanner({operatorAddress}: {operatorAddress: string | null}) {
     return (
-        <div className="mb-8 grid grid-cols-1 sm:grid-cols-2 gap-3 border border-[color:var(--color-border)] p-4">
+        <div className="mb-8 grid grid-cols-1 sm:grid-cols-2 gap-3 border border-[color:var(--color-rule)] p-4">
             <div>
-                <p className="text-[length:var(--text-label)] uppercase tracking-wider text-[color:var(--color-fg-40)] mb-1">
+                <p className="text-[length:var(--text-label)] uppercase tracking-wider text-[color:var(--color-grey)] mb-1">
                     Operator
                 </p>
                 <p className="font-mono text-[length:var(--text-body-sm)]">
                     {operatorAddress ? short(operatorAddress) : "—"}
                 </p>
-                <p className="text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)] mt-1">
+                <p className="text-[length:var(--text-body-sm)] text-[color:var(--color-steel)] mt-1">
                     Connected wallet. Owns the agent NFT, signs admin actions.
                 </p>
             </div>
             <div>
-                <p className="text-[length:var(--text-label)] uppercase tracking-wider text-[color:var(--color-fg-40)] mb-1">
+                <p className="text-[length:var(--text-label)] uppercase tracking-wider text-[color:var(--color-grey)] mb-1">
                     Agent runtime
                 </p>
                 <p className="font-mono text-[length:var(--text-body-sm)]">
                     designated in step 2
                 </p>
-                <p className="text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)] mt-1">
+                <p className="text-[length:var(--text-body-sm)] text-[color:var(--color-steel)] mt-1">
                     Separate wallet. The autonomous program holds this key.
                 </p>
             </div>
@@ -833,11 +833,11 @@ function RuntimeKeyDisplay({address, privateKey}: {address: string; privateKey: 
             </p>
             <dl className="text-[length:var(--text-body-sm)] font-mono">
                 <div className="grid grid-cols-[8rem_1fr] gap-2 mb-1">
-                    <dt className="text-[color:var(--color-fg-60)]">Address:</dt>
+                    <dt className="text-[color:var(--color-steel)]">Address:</dt>
                     <dd className="break-all">{address}</dd>
                 </div>
                 <div className="grid grid-cols-[8rem_1fr] gap-2">
-                    <dt className="text-[color:var(--color-fg-60)]">Private key:</dt>
+                    <dt className="text-[color:var(--color-steel)]">Private key:</dt>
                     <dd className="break-all">{privateKey}</dd>
                 </div>
             </dl>
@@ -880,11 +880,11 @@ function Step({
         ? "text-[color:var(--color-accent)]"
         : pending
           ? "text-[color:var(--color-fg)]"
-          : "text-[color:var(--color-fg-40)]";
+          : "text-[color:var(--color-grey)]";
 
     return (
-        <li className="grid grid-cols-[2.5rem_1fr] gap-x-4 border-b border-[color:var(--color-border)] py-6">
-            <span className="font-mono text-[color:var(--color-fg-40)]">{n}.</span>
+        <li className="grid grid-cols-[2.5rem_1fr] gap-x-4 border-b border-[color:var(--color-rule)] py-6">
+            <span className="font-mono text-[color:var(--color-grey)]">{n}.</span>
             <div>
                 <div className="flex items-baseline justify-between gap-3 mb-1">
                     <h2 className="font-medium">{title}</h2>
@@ -894,7 +894,7 @@ function Step({
                         {status}
                     </span>
                 </div>
-                <p className="text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)] mb-3">
+                <p className="text-[length:var(--text-body-sm)] text-[color:var(--color-steel)] mb-3">
                     {subtitle}
                 </p>
                 {error ? (
@@ -911,7 +911,7 @@ function Step({
 function DoneLine({label, value, tx}: {label: string; value: string; tx: string | null}) {
     return (
         <p className="font-mono text-[length:var(--text-body-sm)]">
-            <span className="text-[color:var(--color-fg-60)]">{label}</span>{" "}
+            <span className="text-[color:var(--color-steel)]">{label}</span>{" "}
             <span className="text-[color:var(--color-accent)]">{value}</span>
             {tx ? (
                 <>
@@ -920,7 +920,7 @@ function DoneLine({label, value, tx}: {label: string; value: string; tx: string 
                         href={`${deployments.chain.explorerUrl}/tx/${tx}`}
                         target="_blank"
                         rel="noreferrer"
-                        className="text-[color:var(--color-fg-40)] hover:text-[color:var(--color-accent)]"
+                        className="text-[color:var(--color-grey)] hover:text-[color:var(--color-accent)]"
                     >
                         {tx.slice(0, 8)}…{tx.slice(-6)} ↗
                     </a>

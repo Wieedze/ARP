@@ -71,7 +71,7 @@ export function ToolCatalog() {
                     <h1 className="font-sans text-[length:var(--text-display)] leading-[var(--leading-display)] tracking-tight font-semibold">
                         Tools
                     </h1>
-                    <p className="mt-2 text-[color:var(--color-fg-60)] max-w-[64ch]">
+                    <p className="mt-2 text-[color:var(--color-steel)] max-w-[64ch]">
                         Tools somebody registered, and tools agents declared using, on the Intuition
                         mainnet graph. ARP hosts none of them — each row is a pointer with a vault.
                     </p>
@@ -103,7 +103,7 @@ export function ToolCatalog() {
                 query.error === null ? (
                     <p
                         aria-live="polite"
-                        className="font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)]"
+                        className="font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]"
                     >
                         reading…
                     </p>
@@ -115,14 +115,14 @@ export function ToolCatalog() {
                 // saying so is the difference between "nothing matches what you asked" and
                 // "nothing exists" — the second would be a false claim about the graph.
                 <div className="max-w-[60ch]">
-                    <p className="font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)]">
+                    <p className="font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
                         no rows match
                     </p>
                     {/* "None can answer" is not "none matches", and a reader who registered the
                         only tool on the list deserves the first. Every filter here is about
                         declarations, and a registered-only row has no per-edge figures to answer
                         with — so it is excluded on an unknown, not on a no. */}
-                    <p className="mt-3 text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)]">
+                    <p className="mt-3 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
                         {unknowable === view.rows.length
                             ? view.rows.length === 1
                                 ? "The one tool listed has no agent declarations yet, so these filters cannot answer for it."
@@ -138,10 +138,10 @@ export function ToolCatalog() {
                 // And it says what would fill it, per `rules/ui.md`, because on this page the answer
                 // is one click away and the emptiness is not informative about any tool.
                 <div className="max-w-[60ch]">
-                    <p className="font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)]">
+                    <p className="font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
                         nothing here yet
                     </p>
-                    <p className="mt-3 text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)]">
+                    <p className="mt-3 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
                         A row appears when somebody registers a tool, or when an agent declares
                         using one through the MCP server or the skill. Nobody has.
                     </p>
@@ -155,7 +155,7 @@ export function ToolCatalog() {
                     {/* Only when it happened: a prefix presented as the whole set is the one thing
                         this page could get wrong without anyone noticing. */}
                     {view.truncated ? (
-                        <p className="mt-6 text-[length:var(--text-label)] text-[color:var(--color-fg-60)]">
+                        <p className="mt-6 text-[length:var(--text-label)] text-[color:var(--color-steel)]">
                             The read hit its limit — these are the first rows, not all of them.
                         </p>
                     ) : null}
@@ -186,7 +186,7 @@ function FilterControl({
         <div className="flex items-baseline gap-3">
             <span
                 id={labelId}
-                className="font-mono uppercase tracking-wider text-[length:var(--text-label)] text-[color:var(--color-fg-60)]"
+                className="font-mono uppercase tracking-wider text-[length:var(--text-label)] text-[color:var(--color-steel)]"
             >
                 Only
             </span>
@@ -206,7 +206,7 @@ function FilterControl({
                             className={`px-3 py-1 text-[length:var(--text-body-sm)] ${
                                 on
                                     ? "border-[color:var(--color-accent)]! text-[color:var(--color-accent)]!"
-                                    : "border-[color:var(--color-border-strong)]! text-[color:var(--color-fg-60)]!"
+                                    : "border-[color:var(--color-rule-strong)]! text-[color:var(--color-steel)]!"
                             }`}
                         >
                             {filter.label}
@@ -221,7 +221,7 @@ function FilterControl({
 /** The rows on screen are the last good read, and a newer one failed. */
 function StaleNotice() {
     return (
-        <p className="mt-6 pl-5 border-l border-[color:var(--color-border-strong)] text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)] max-w-[64ch]">
+        <p className="mt-6 pl-5 border-l border-[color:var(--color-rule-strong)] text-[length:var(--text-body-sm)] text-[color:var(--color-steel)] max-w-[64ch]">
             These rows are the last successful read. The most recent one failed.
         </p>
     );
@@ -229,15 +229,15 @@ function StaleNotice() {
 
 function Failure({error, onRetry}: {error: Error; onRetry: () => void}) {
     return (
-        <div className="pl-5 border-l border-[color:var(--color-border-strong)] max-w-[64ch]">
+        <div className="pl-5 border-l border-[color:var(--color-rule-strong)] max-w-[64ch]">
             <p className="font-medium">The graph read failed.</p>
-            <p className="mt-2 font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)] break-words">
+            <p className="mt-2 font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-steel)] break-words">
                 {error.message}
             </p>
             <button
                 type="button"
                 onClick={onRetry}
-                className="mt-4 px-3 py-1 text-[length:var(--text-body-sm)] border border-[color:var(--color-border-strong)]"
+                className="mt-4 px-3 py-1 text-[length:var(--text-body-sm)] border border-[color:var(--color-rule-strong)]"
             >
                 Try again
             </button>

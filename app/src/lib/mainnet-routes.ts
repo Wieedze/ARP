@@ -20,6 +20,10 @@ export const MAINNET_ROUTES: readonly string[] = [
     "/agents",
     "/tools",
     "/register",
+    "/profile",
+    // `/me` only redirects to `/profile`, but it is in the list anyway: the redirect renders for a
+    // frame, and a frame of "no real value at stake" above a mainnet page is the sentence this
+    // file exists to prevent.
     "/me",
 ];
 

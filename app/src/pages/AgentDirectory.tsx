@@ -75,7 +75,7 @@ export function AgentDirectory() {
                         >
                             <p
                                 aria-live="polite"
-                                className="font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)] tabular-nums"
+                                className="font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-steel)] tabular-nums"
                             >
                                 {view.rangeLabel}
                                 {cohortQuery.isPlaceholderData ? " · reading…" : ""}
@@ -101,7 +101,7 @@ export function AgentDirectory() {
 
             <section className="mt-16">
                 <h2 className="font-medium">Look one up directly</h2>
-                <p className="mt-1 mb-6 max-w-[64ch] text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)]">
+                <p className="mt-1 mb-6 max-w-[64ch] text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
                     The list is Base only. Agents on BSC and Ethereum open by token id.
                 </p>
                 <LookupForm />
@@ -121,7 +121,7 @@ function OrderControl({
         <div className="flex items-baseline gap-3">
             <span
                 id="cohort-order-label"
-                className="font-mono uppercase tracking-wider text-[length:var(--text-label)] text-[color:var(--color-fg-60)]"
+                className="font-mono uppercase tracking-wider text-[length:var(--text-label)] text-[color:var(--color-steel)]"
             >
                 Order
             </span>
@@ -135,7 +135,7 @@ function OrderControl({
                         className={`px-3 py-1 text-[length:var(--text-body-sm)] border ${
                             entry.id === order
                                 ? "border-[color:var(--color-accent)] text-[color:var(--color-accent)]"
-                                : "border-[color:var(--color-border-strong)] text-[color:var(--color-fg-60)]"
+                                : "border-[color:var(--color-rule-strong)] text-[color:var(--color-steel)]"
                         }`}
                     >
                         {entry.label}
@@ -160,7 +160,7 @@ function PageButton({
             type="button"
             disabled={disabled}
             onClick={onClick}
-            className="px-3 py-1.5 text-[length:var(--text-body-sm)] border border-[color:var(--color-border-strong)] disabled:opacity-40 disabled:cursor-not-allowed"
+            className="px-3 py-1.5 text-[length:var(--text-body-sm)] border border-[color:var(--color-rule-strong)] disabled:opacity-40 disabled:cursor-not-allowed"
         >
             {label}
         </button>
@@ -171,7 +171,7 @@ function PageButton({
 function CohortLoading() {
     return (
         <div aria-live="polite" className="mt-8">
-            <p className="font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)]">
+            <p className="font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
                 reading the cohort from the intuition graph — identity, statement counts, markets
             </p>
         </div>
@@ -203,16 +203,16 @@ function CohortError({
     const alternate = failure.alternateOrder;
 
     return (
-        <div className="mt-8 pl-5 border-l border-l-[color:var(--color-border-strong)]">
+        <div className="mt-8 pl-5 border-l border-l-[color:var(--color-rule-strong)]">
             <h3 className="text-[length:var(--text-body)] font-medium">{failure.headline}</h3>
-            <p className="mt-3 max-w-[64ch] text-[color:var(--color-fg-60)]">{failure.detail}</p>
+            <p className="mt-3 max-w-[64ch] text-[color:var(--color-steel)]">{failure.detail}</p>
             {failure.canRetry || alternate !== null ? (
                 <div className="mt-5 flex flex-wrap gap-3">
                     {failure.canRetry ? (
                         <button
                             type="button"
                             onClick={onRetry}
-                            className="px-3 py-1.5 text-[length:var(--text-body-sm)] border border-[color:var(--color-border-strong)]"
+                            className="px-3 py-1.5 text-[length:var(--text-body-sm)] border border-[color:var(--color-rule-strong)]"
                         >
                             Try again
                         </button>
@@ -221,7 +221,7 @@ function CohortError({
                         <button
                             type="button"
                             onClick={() => onSwitchOrder(alternate)}
-                            className="px-3 py-1.5 text-[length:var(--text-body-sm)] border border-[color:var(--color-border-strong)]"
+                            className="px-3 py-1.5 text-[length:var(--text-body-sm)] border border-[color:var(--color-rule-strong)]"
                         >
                             Order by {orderLabel(alternate).toLowerCase()} instead
                         </button>
@@ -252,7 +252,7 @@ function LookupForm() {
             <div>
                 <label
                     htmlFor={`${fieldId}-chain`}
-                    className="block font-mono uppercase tracking-wider text-[length:var(--text-label)] text-[color:var(--color-fg-60)]"
+                    className="block font-mono uppercase tracking-wider text-[length:var(--text-label)] text-[color:var(--color-steel)]"
                 >
                     Chain
                 </label>
@@ -260,7 +260,7 @@ function LookupForm() {
                     id={`${fieldId}-chain`}
                     value={chainId}
                     onChange={(event) => setChainId(Number(event.target.value))}
-                    className="mt-2 block w-full bg-[color:var(--color-bg)] border border-[color:var(--color-border-strong)] px-3 py-1.5 font-mono text-[length:var(--text-body-sm)] focus:border-[color:var(--color-accent)]"
+                    className="mt-2 block w-full bg-[color:var(--color-ground)] border border-[color:var(--color-rule-strong)] px-3 py-1.5 font-mono text-[length:var(--text-body-sm)] focus:border-[color:var(--color-accent)]"
                 >
                     {LOOKUP_CHAINS.map((chain) => (
                         <option key={chain.id} value={chain.id}>
@@ -268,7 +268,7 @@ function LookupForm() {
                         </option>
                     ))}
                 </select>
-                <p className="mt-2 text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)]">
+                <p className="mt-2 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
                     {LOOKUP_CHAINS.find((chain) => chain.id === chainId)?.note}
                 </p>
             </div>
@@ -276,7 +276,7 @@ function LookupForm() {
             <div className="mt-5">
                 <label
                     htmlFor={`${fieldId}-token`}
-                    className="block font-mono uppercase tracking-wider text-[length:var(--text-label)] text-[color:var(--color-fg-60)]"
+                    className="block font-mono uppercase tracking-wider text-[length:var(--text-label)] text-[color:var(--color-steel)]"
                 >
                     Token id
                 </label>
@@ -287,7 +287,7 @@ function LookupForm() {
                     autoComplete="off"
                     value={tokenId}
                     onChange={(event) => setTokenId(event.target.value)}
-                    className="mt-2 block w-full bg-transparent border border-[color:var(--color-border-strong)] px-3 py-1.5 font-mono focus:border-[color:var(--color-accent)]"
+                    className="mt-2 block w-full bg-transparent border border-[color:var(--color-rule-strong)] px-3 py-1.5 font-mono focus:border-[color:var(--color-accent)]"
                 />
                 {trimmed !== "" && !isValid ? (
                     <p className="mt-2 text-[length:var(--text-body-sm)]">
@@ -299,7 +299,7 @@ function LookupForm() {
             <button
                 type="submit"
                 disabled={!isValid}
-                className="mt-5 px-3 py-1.5 text-[length:var(--text-body-sm)] border border-[color:var(--color-border-strong)] disabled:opacity-40 disabled:cursor-not-allowed"
+                className="mt-5 px-3 py-1.5 text-[length:var(--text-body-sm)] border border-[color:var(--color-rule-strong)] disabled:opacity-40 disabled:cursor-not-allowed"
             >
                 Open panel
             </button>

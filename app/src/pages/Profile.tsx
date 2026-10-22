@@ -41,7 +41,7 @@ export function Profile() {
                     <h1 className="text-[length:var(--text-body)] font-semibold tracking-tight">
                         Your positions
                     </h1>
-                    <p className="mt-2 max-w-[64ch] text-[color:var(--color-fg-60)]">
+                    <p className="mt-2 max-w-[64ch] text-[color:var(--color-steel)]">
                         {isConnected ? (
                             <>
                                 Read from the Intuition mainnet graph for{" "}
@@ -58,13 +58,13 @@ export function Profile() {
             </header>
 
             {!isConnected ? null : query.isPending ? (
-                <p aria-live="polite" aria-busy className="text-[color:var(--color-fg-60)]">
+                <p aria-live="polite" aria-busy className="text-[color:var(--color-steel)]">
                     Reading your positions…
                 </p>
             ) : query.isError ? (
                 <div aria-live="polite">
                     <p className="font-medium">The read failed</p>
-                    <p className="mt-2 max-w-[60ch] text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)]">
+                    <p className="mt-2 max-w-[60ch] text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
                         {query.error instanceof Error ? query.error.message : String(query.error)}
                     </p>
                 </div>
@@ -79,12 +79,12 @@ function Positions({view}: {view: ProfileView}) {
     if (view.termsHeld === 0 && view.curve.length === 0) {
         return (
             <div className="max-w-[60ch]">
-                <p className="font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)]">
+                <p className="font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
                     nothing held on this curve
                 </p>
                 {/* Says what would fill it, per `rules/ui.md` — and the two ways in, because they
                     are the two different acts and a reader should know they are different. */}
-                <p className="mt-3 text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)]">
+                <p className="mt-3 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
                     A position appears when you price a tool or back an agent&rsquo;s claim about
                     one. They are different acts: one is an opinion about the tool, the other is an
                     opinion about somebody&rsquo;s statement.
@@ -113,12 +113,12 @@ function Positions({view}: {view: ProfileView}) {
                 {/* The label changes rather than the number being hidden: redeeming an appreciated
                     position returns more than went in, so a negative net is a real state and
                     "Still committed: -0.5 TRUST" is not a sentence. */}
-                <p className="text-[length:var(--text-label)] uppercase tracking-wider text-[color:var(--color-fg-60)]">
+                <p className="text-[length:var(--text-label)] uppercase tracking-wider text-[color:var(--color-steel)]">
                     {view.isNetNegative ? "Taken out, net of deposits" : "Still committed"}
                 </p>
                 <p className="mt-1 font-mono text-[length:var(--text-display)] leading-[var(--leading-display)] tabular-nums">
                     {view.netTrust}
-                    <span className="text-[length:var(--text-body)] text-[color:var(--color-fg-60)]">
+                    <span className="text-[length:var(--text-body)] text-[color:var(--color-steel)]">
                         {" "}
                         TRUST
                     </span>
@@ -139,7 +139,7 @@ function Positions({view}: {view: ProfileView}) {
                     // The curve starts from a real opening balance rather than from zero, and that
                     // is only visible if it is said: the alternative was a line that looked like
                     // the account began at its hundredth-last deposit.
-                    <p className="mt-3 max-w-[60ch] text-[length:var(--text-label)] text-[color:var(--color-fg-60)]">
+                    <p className="mt-3 max-w-[60ch] text-[length:var(--text-label)] text-[color:var(--color-steel)]">
                         The line covers your most recent deposits and starts from{" "}
                         <span className="font-mono">{view.openingTrust} TRUST</span> already held
                         before them — the graph returns a limited window, not your whole history.
@@ -147,7 +147,7 @@ function Positions({view}: {view: ProfileView}) {
                 ) : null}
             </div>
 
-            <dl className="grid grid-cols-[1fr_auto] gap-y-3 gap-x-6 self-start text-[length:var(--text-body-sm)] lg:border-l lg:border-[color:var(--color-border)] lg:pl-8">
+            <dl className="grid grid-cols-[1fr_auto] gap-y-3 gap-x-6 self-start text-[length:var(--text-body-sm)] lg:border-l lg:border-[color:var(--color-rule)] lg:pl-8">
                 <Row label="Terms you hold" value={view.termsHeld.toLocaleString("en-US")} />
                 <Row label="Deposited" value={`${view.depositedTrust} TRUST`} />
                 {/* Absent rather than zero: "redeemed 0" reads as a fact about your behaviour that
@@ -173,7 +173,7 @@ function Positions({view}: {view: ProfileView}) {
 function Row({label, value, note}: {label: string; value: string; note?: string}) {
     return (
         <>
-            <dt className="text-[color:var(--color-fg-60)]">
+            <dt className="text-[color:var(--color-steel)]">
                 {label}
                 {note === undefined ? null : (
                     <span className="block text-[length:var(--text-label)]">{note}</span>

@@ -36,7 +36,7 @@ export function ToolUsagePanel() {
                 <h1 className="text-[length:var(--text-display)] leading-[var(--leading-display)] tracking-tight font-semibold">
                     Not an atom id
                 </h1>
-                <p className="mt-4 max-w-[60ch] text-[color:var(--color-fg-60)]">
+                <p className="mt-4 max-w-[60ch] text-[color:var(--color-steel)]">
                     A tool is addressed by its Intuition atom id — 0x followed by 32 bytes. Got{" "}
                     <span className="font-mono">{atomId ?? "nothing"}</span>.
                 </p>
@@ -57,7 +57,7 @@ export function ToolUsagePanel() {
                     <p
                         aria-live="polite"
                         aria-busy
-                        className="mt-10 text-[color:var(--color-fg-60)]"
+                        className="mt-10 text-[color:var(--color-steel)]"
                     >
                         Reading the <span className="font-mono">uses</span> edges of{" "}
                         <span className="font-mono">{truncateMiddle(atomId)}</span> on Intuition
@@ -68,7 +68,7 @@ export function ToolUsagePanel() {
                         <h1 className="text-[length:var(--text-display)] leading-[var(--leading-display)] tracking-tight font-semibold">
                             The read failed
                         </h1>
-                        <p className="mt-4 max-w-[60ch] text-[color:var(--color-fg-60)]">
+                        <p className="mt-4 max-w-[60ch] text-[color:var(--color-steel)]">
                             {query.error instanceof Error
                                 ? query.error.message
                                 : String(query.error)}
@@ -89,20 +89,20 @@ function ToolUsageBody({view}: {view: ToolUsageView}) {
                 <h1 className="text-[length:var(--text-display)] leading-[var(--leading-display)] tracking-tight font-semibold break-words">
                     {view.label ?? "Unnamed atom"}
                 </h1>
-                <dl className="mt-6 border-t border-[color:var(--color-border)] pt-4 text-[length:var(--text-body-sm)]">
-                    <dt className="text-[color:var(--color-fg-60)] text-[length:var(--text-label)] uppercase tracking-wider">
+                <dl className="mt-6 border-t border-[color:var(--color-rule)] pt-4 text-[length:var(--text-body-sm)]">
+                    <dt className="text-[color:var(--color-steel)] text-[length:var(--text-label)] uppercase tracking-wider">
                         Atom
                     </dt>
                     <dd className="mt-1 font-mono break-all">{view.toolAtomId}</dd>
                     {view.pinnedUri === null ? null : (
                         <>
-                            <dt className="mt-4 text-[color:var(--color-fg-60)] text-[length:var(--text-label)] uppercase tracking-wider">
+                            <dt className="mt-4 text-[color:var(--color-steel)] text-[length:var(--text-label)] uppercase tracking-wider">
                                 Pinned at
                             </dt>
                             <dd className="mt-1 font-mono break-all">{view.pinnedUri}</dd>
                         </>
                     )}
-                    <dt className="mt-4 text-[color:var(--color-fg-60)] text-[length:var(--text-label)] uppercase tracking-wider">
+                    <dt className="mt-4 text-[color:var(--color-steel)] text-[length:var(--text-label)] uppercase tracking-wider">
                         Declared uses
                     </dt>
                     <dd className="mt-1 font-mono tabular-nums">{view.edges.length}</dd>
@@ -154,32 +154,32 @@ function ToolUsageBody({view}: {view: ToolUsageView}) {
  */
 function Totals({view}: {view: ToolUsageView}) {
     return (
-        <dl className="mt-6 border-t border-[color:var(--color-border)] pt-4 text-[length:var(--text-body-sm)]">
+        <dl className="mt-6 border-t border-[color:var(--color-rule)] pt-4 text-[length:var(--text-body-sm)]">
             {view.totals.supportPositions > 0 ? (
                 <>
-                    <dt className="text-[color:var(--color-fg-60)] text-[length:var(--text-label)] uppercase tracking-wider">
+                    <dt className="text-[color:var(--color-steel)] text-[length:var(--text-label)] uppercase tracking-wider">
                         Staked for
                     </dt>
                     <dd className="mt-1 font-mono tabular-nums">
                         {formatTrust(view.totals.supportAssets)}{" "}
-                        <span className="text-[color:var(--color-fg-60)]">
+                        <span className="text-[color:var(--color-steel)]">
                             across {view.totals.supportPositions}{" "}
                             {view.totals.supportPositions === 1 ? "position" : "positions"}
                         </span>
                     </dd>
-                    <dd className="mt-1 max-w-[30ch] font-sans text-[length:var(--text-label)] text-[color:var(--color-fg-60)]">
+                    <dd className="mt-1 max-w-[30ch] font-sans text-[length:var(--text-label)] text-[color:var(--color-steel)]">
                         Amounts cover every curve; the counts cover one.
                     </dd>
                 </>
             ) : null}
             {view.totals.opposePositions > 0 ? (
                 <>
-                    <dt className="mt-4 text-[color:var(--color-fg-60)] text-[length:var(--text-label)] uppercase tracking-wider">
+                    <dt className="mt-4 text-[color:var(--color-steel)] text-[length:var(--text-label)] uppercase tracking-wider">
                         Staked against
                     </dt>
                     <dd className="mt-1 font-mono tabular-nums">
                         {formatTrust(view.totals.opposeAssets)}{" "}
-                        <span className="text-[color:var(--color-fg-60)]">
+                        <span className="text-[color:var(--color-steel)]">
                             across {view.totals.opposePositions}{" "}
                             {view.totals.opposePositions === 1 ? "position" : "positions"}
                         </span>
@@ -194,11 +194,11 @@ function Edges({view}: {view: ToolUsageView}) {
     return (
         <>
             {/* Counted, not implied. `tierCounts` exists for this. */}
-            <p className="mb-6 text-[length:var(--text-body-sm)] text-[color:var(--color-fg-60)]">
+            <p className="mb-6 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
                 {describeCounts(view)}
             </p>
             {view.isEntirelyUnpriced ? (
-                <p className="mb-6 max-w-[70ch] border border-[color:var(--color-border-strong)] px-4 py-3 text-[length:var(--text-body-sm)]">
+                <p className="mb-6 max-w-[70ch] border border-[color:var(--color-rule-strong)] px-4 py-3 text-[length:var(--text-body-sm)]">
                     Every declaration below is free — nothing stands behind the claims themselves.
                     The tool&rsquo;s own atom is a separate market and this page does not read it.
                 </p>
@@ -238,7 +238,7 @@ function EmptyState({atomId}: {atomId: string}) {
     return (
         <div>
             <h2 className="text-[length:var(--text-body)] font-medium">No declared uses</h2>
-            <p className="mt-3 max-w-[70ch] text-[color:var(--color-fg-60)]">
+            <p className="mt-3 max-w-[70ch] text-[color:var(--color-steel)]">
                 No agent has declared using{" "}
                 <span className="font-mono">{truncateMiddle(atomId)}</span>. An edge appears here
                 when an agent writes <span className="font-mono">(agent, uses, this atom)</span> on
