@@ -32,9 +32,10 @@ export function Layout({children}: {children: ReactNode}) {
         <>
             {/*
              * Agents · Tools on the left, Register · My profile on the right (user, 2026-10-20,
-             * split per ADR `0057` §3). The handoff's left pair is "AGENTS, MODULES"; there is no
-             * module surface — `ModuleRegistry` and its three pages went with ADR `0051`/`0055` —
-             * so Tools takes the slot, which is the live equivalent.
+             * one row since 2026-10-27). The handoff's left pair is "AGENTS, MODULES"; there is
+             * no module surface — `ModuleRegistry` and its three pages went with ADR `0051`/`0055`
+             * — so Tools takes the slot, which is the live equivalent. Discover replaced Hire
+             * (ADR `0060`).
              *
              * Register points at `/register`, which creates a tool's **atom**, derived from its URL
              * so the same URL always lands on the same market (ADR `0054`). ARP stores nothing.
@@ -48,23 +49,15 @@ export function Layout({children}: {children: ReactNode}) {
              * A "How it works" tab is part of the same structure and is not built: its content is a
              * decision, not a layout.
              */}
-            <NavSplit
-                left={
-                    <>
-                        <NavLink to="/agents">Agents</NavLink>
-                        <NavLink to="/tools">Tools</NavLink>
-                        <NavLink to="/discover">Discover</NavLink>
-                    </>
-                }
-                right={
-                    <>
-                        <NavLink to="/register">Register</NavLink>
-                        {isConnected ? <NavLink to="/profile">My profile</NavLink> : null}
-                        <ChainToggle />
-                        <WalletConnect />
-                    </>
-                }
-            />
+            <NavSplit>
+                <NavLink to="/agents">Agents</NavLink>
+                <NavLink to="/tools">Tools</NavLink>
+                <NavLink to="/discover">Discover</NavLink>
+                <NavLink to="/register">Register</NavLink>
+                {isConnected ? <NavLink to="/profile">My profile</NavLink> : null}
+                <ChainToggle />
+                <WalletConnect />
+            </NavSplit>
 
             <main className="flex-1 mx-auto w-full max-w-[1080px] px-6 py-10">{children}</main>
 

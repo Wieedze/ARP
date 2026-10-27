@@ -4,12 +4,18 @@ import {Link, useLocation} from "react-router-dom";
 import {SourceMark} from "./SourceMark";
 
 /**
- * The split nav: links right-aligned on the left, the mark in the centre, links left-aligned on the
- * right. ADR `0057` §3.
+ * The nav: the mark and the wordmark at top left, everything else to the right.
  *
- * A three-column grid of `1fr auto 1fr` is what centres the mark on the **page** rather than
- * between the link groups, so the logo stays put as labels change length. Flexbox with
- * `justify-between` would drift.
+ * ## It was a split nav with the mark centred, and it broke (user, 2026-10-27)
+ *
+ * ADR `0057` §3 specified `1fr auto 1fr` with the logo in the middle. That holds for four links. It
+ * stops holding the moment a wallet connects, because the right side then carries three links, a
+ * two-button chain toggle and an address — and the fixed centre column has no give, so the right
+ * group wraps under a half-empty left one.
+ *
+ * So the mark moves to the left, which is also where the user asked for it, and the right side gets
+ * the whole remaining width to wrap inside. The centred version is recorded in `0057`; this is the
+ * amendment.
  *
  * **No ruler, no tick marks, no decoration under the nav** — the user rejected all three
  * (`HANDOFF.md` §3). One hairline, nothing else.
@@ -30,7 +36,7 @@ function NavLink({to, children}: {to: string; children: ReactNode}) {
             // `text-…!` because `a { color: inherit }` is unlayered in `index.css` and beats an
             // unbanged utility — the table in `lib/control-class.ts` has the full list. The hover
             // colour needs the bang for the same reason, and `group` is what lets the dot follow it.
-            className={`group inline-flex items-center gap-2 font-mono text-[12px] uppercase tracking-[0.12em] ${
+            className={`group inline-flex items-center gap-2 font-mono text-[12px] uppercase tracking-[0.12em] whitespace-nowrap ${
                 current
                     ? "text-[color:var(--color-fg)]!"
                     : "text-[color:var(--color-steel)]! hover:text-[color:var(--color-fg)]!"
@@ -49,23 +55,27 @@ function NavLink({to, children}: {to: string; children: ReactNode}) {
     );
 }
 
-export function NavSplit({
-    left,
-    right,
-}: {
-    /** Rendered right-aligned, so the group reads inward toward the mark. */
-    left: ReactNode;
-    /** Rendered left-aligned, same reason. */
-    right: ReactNode;
-}) {
+export function NavSplit({children}: {children: ReactNode}) {
     return (
-        <header className="h-[88px] border-b border-[color:var(--color-rule)] px-6">
-            <div className="mx-auto grid h-full w-full max-w-[1080px] grid-cols-[1fr_auto_1fr] items-center gap-6">
-                <nav className="flex flex-wrap items-center justify-end gap-6">{left}</nav>
-                <Link to="/" aria-label="ARP, home">
-                    <SourceMark size={56} />
+        <header className="border-b border-[color:var(--color-rule)] px-6">
+            {/* `min-h` rather than `h`: with a wallet connected the right group can take two lines
+                at a narrow width, and a fixed height would clip it. */}
+            <div className="mx-auto flex min-h-[88px] w-full max-w-[1200px] flex-wrap items-center justify-between gap-x-8 gap-y-4 py-3">
+                <Link to="/" aria-label="ARP, home" className="flex items-center gap-3">
+                    <SourceMark size={40} />
+                    {/* Archivo 800 at width 125%, per ADR `0057` §1. `font-stretch` is inline
+                        because Tailwind has no utility for it and an arbitrary property would be
+                        the second failure class `rules/ui.md` names — a class that emits nothing. */}
+                    <span
+                        className="font-display text-[22px] font-extrabold leading-none tracking-[-0.02em] text-[color:var(--color-fg)]"
+                        style={{fontStretch: "125%"}}
+                    >
+                        ARP
+                    </span>
                 </Link>
-                <nav className="flex flex-wrap items-center justify-start gap-6">{right}</nav>
+                <nav className="flex flex-wrap items-center justify-end gap-x-6 gap-y-3">
+                    {children}
+                </nav>
             </div>
         </header>
     );
