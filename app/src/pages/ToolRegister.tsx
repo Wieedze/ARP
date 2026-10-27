@@ -5,7 +5,7 @@ import {useAccount, useSwitchChain} from "wagmi";
 
 import {controlClass, linkClass} from "../lib/control-class";
 import {useToolRegister} from "../hooks/use-tool-register";
-import {INTUITION_MAINNET_CHAIN_ID, mainnetTxUrl} from "../lib/intuition-mainnet";
+import {useChainChoice, type ChainChoice} from "../lib/chain-choice";
 import type {ToolRegistration} from "../services/tool-register";
 import {formatTrust, truncateMiddle} from "../services/trust-format";
 
@@ -43,7 +43,8 @@ export function ToolRegister() {
     const [switchError, setSwitchError] = useState<string | null>(null);
 
     const fieldId = useId();
-    const onMainnet = chainId === INTUITION_MAINNET_CHAIN_ID;
+    const chain = useChainChoice();
+    const onTargetChain = chainId === chain.chainId;
 
     async function handleLookUp() {
         setStatus("reading");
@@ -64,7 +65,7 @@ export function ToolRegister() {
         // an unhandled rejection with the button simply stopping and nothing saying why.
         setSwitchError(null);
         try {
-            await switchChainAsync({chainId: INTUITION_MAINNET_CHAIN_ID});
+            await switchChainAsync({chainId: chain.chainId});
         } catch (caught) {
             setSwitchError(caught instanceof Error ? caught.message : String(caught));
         }
@@ -85,7 +86,6 @@ export function ToolRegister() {
 
     return (
         <section>
-
             <header className="mt-8 mb-12">
                 <h1 className="text-[length:var(--text-display)] leading-[var(--leading-display)] font-semibold tracking-tight">
                     Register a tool
@@ -184,7 +184,8 @@ export function ToolRegister() {
                             plan={plan}
                             tx={tx}
                             isConnected={isConnected}
-                            onMainnet={onMainnet}
+                            onTargetChain={onTargetChain}
+                            chain={chain}
                             walletChainId={chainId}
                             isSwitching={isSwitching}
                             isSigning={status === "signing"}
@@ -203,7 +204,8 @@ function Resolved(props: {
     plan: ToolRegistration;
     tx: Hex | null;
     isConnected: boolean;
-    onMainnet: boolean;
+    onTargetChain: boolean;
+    chain: ChainChoice;
     walletChainId: number | undefined;
     isSwitching: boolean;
     isSigning: boolean;
@@ -283,7 +285,7 @@ function Resolved(props: {
                     <Field
                         label="Transaction"
                         value={truncateMiddle(tx, 14, 10)}
-                        href={mainnetTxUrl(tx)}
+                        href={`${plan.chain.explorerUrl}/tx/${tx}`}
                     />
                     {/* Not "open its market": this is the branch a *first* registrant reaches, so
                         there are no `uses` edges on the atom by construction and that page renders
@@ -303,18 +305,21 @@ function Resolved(props: {
                         is spent, the deposit is yours" — two buckets, where the chain takes three
                         bites: the flat fee, the entry fee, then shares rounded down. */}
                     <dl className="grid grid-cols-1 sm:grid-cols-[10rem_1fr] gap-y-2 gap-x-4 font-mono text-[length:var(--text-body-sm)] tabular-nums">
-                        <Term label="You send" value={`${formatTrust(plan.assets)} TRUST`} />
+                        <Term
+                            label="You send"
+                            value={`${formatTrust(plan.assets)} ${plan.chain.symbol}`}
+                        />
                         <Term
                             label="Creation fee"
-                            value={`${formatTrust(plan.creationFee)} TRUST — spent`}
+                            value={`${formatTrust(plan.creationFee)} ${plan.chain.symbol} — spent`}
                         />
                         <Term
                             label="Fees in total"
-                            value={`${formatTrust(plan.feeAssets)} TRUST`}
+                            value={`${formatTrust(plan.feeAssets)} ${plan.chain.symbol}`}
                         />
                         <Term
                             label="Reaches the vault"
-                            value={`${formatTrust(plan.assetsAfterFees)} TRUST`}
+                            value={`${formatTrust(plan.assetsAfterFees)} ${plan.chain.symbol}`}
                         />
                         <Term label="Shares minted" value={formatTrust(plan.shares)} />
                     </dl>
@@ -328,12 +333,12 @@ function Resolved(props: {
                         <p className="mt-6 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
                             Connect a wallet to register it.
                         </p>
-                    ) : !props.onMainnet ? (
+                    ) : !props.onTargetChain ? (
                         <div className="mt-6">
                             <p className="text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
-                                Your wallet is on chain {props.walletChainId ?? "unknown"}. A
-                                tool&rsquo;s market is on Intuition mainnet (
-                                {INTUITION_MAINNET_CHAIN_ID}).
+                                Your wallet is on chain {props.walletChainId ?? "unknown"}. This
+                                registration goes to {props.chain.chain.name} ({props.chain.chainId}
+                                ).
                             </p>
                             <button
                                 type="button"
@@ -341,7 +346,9 @@ function Resolved(props: {
                                 disabled={props.isSwitching}
                                 className={`mt-3 ${controlClass}`}
                             >
-                                {props.isSwitching ? "Switching…" : "Switch to Intuition mainnet"}
+                                {props.isSwitching
+                                    ? "Switching…"
+                                    : `Switch to ${props.chain.chain.name}`}
                             </button>
                             {props.switchError === null ? null : (
                                 <p
@@ -361,7 +368,7 @@ function Resolved(props: {
                         >
                             {props.isSigning
                                 ? "Waiting for your wallet…"
-                                : `Register — ${formatTrust(plan.assets)} TRUST`}
+                                : `Register — ${formatTrust(plan.assets)} ${plan.chain.symbol}`}
                         </button>
                     )}
                 </div>

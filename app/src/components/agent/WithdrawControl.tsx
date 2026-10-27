@@ -4,7 +4,7 @@ import {formatEther, type Hex} from "viem";
 
 import {controlClass, linkClass, primaryControlClass} from "../../lib/control-class";
 import {useStakeActions} from "../../hooks/use-stake-actions";
-import {INTUITION_MAINNET_CHAIN_ID, mainnetTxUrl} from "../../lib/intuition-mainnet";
+import {useChainChoice} from "../../lib/chain-choice";
 import {formatTrust} from "../../services/trust-format";
 import {parseShareAmount, type RedeemQuote} from "../../services/trust-stake";
 import {type HeadingTag} from "./StakeControl";
@@ -33,11 +33,16 @@ type Phase =
     | {step: "sent"; quote: RedeemQuote; hash: Hex}
     | {step: "done"; quote: RedeemQuote; hash: Hex}
     /**
-      * `hash` is the difference between "we never sent anything" and "we sent it and then lost
-      * sight of it". On a surface that moves real value those are not the same sentence, and only
-      * one of them may offer to sign again.
-      */
-    | {step: "error"; message: string; hash: Hex | null};
+     * `hash` is the difference between "we never sent anything" and "we sent it and then lost
+     * sight of it". On a surface that moves real value those are not the same sentence, and only
+     * one of them may offer to sign again.
+     */
+    /**
+     * `explorerUrl` rather than the live toggle's: a hash belongs to the chain the quote was priced
+     * on, and a reader who switches the toggle after a failed broadcast would otherwise be handed
+     * a link to the other chain's explorer for a transaction that is not there.
+     */
+    | {step: "error"; message: string; hash: Hex | null; explorerUrl: string};
 
 function errorMessage(error: unknown): string {
     if (error instanceof Error) return error.message;
@@ -67,8 +72,9 @@ export function WithdrawControl({
     const [phase, setPhase] = useState<Phase>({step: "form"});
     const [switchError, setSwitchError] = useState<string | null>(null);
     const fieldId = useId();
+    const chain = useChainChoice();
 
-    const onMainnet = chainId === INTUITION_MAINNET_CHAIN_ID;
+    const onTargetChain = chainId === chain.chainId;
     const held = heldShares ?? 0n;
     const check = parseShareAmount(amount, held);
 
@@ -85,7 +91,7 @@ export function WithdrawControl({
     const isQuoting = phase.step === "quoting";
     const canReview =
         isConnected &&
-        onMainnet &&
+        onTargetChain &&
         curveId !== undefined &&
         check.status === "ok" &&
         phase.step === "form";
@@ -93,7 +99,7 @@ export function WithdrawControl({
     async function handleSwitch() {
         setSwitchError(null);
         try {
-            await switchChainAsync({chainId: INTUITION_MAINNET_CHAIN_ID});
+            await switchChainAsync({chainId: chain.chainId});
         } catch (error) {
             setSwitchError(errorMessage(error));
         }
@@ -111,7 +117,12 @@ export function WithdrawControl({
             });
             setPhase({step: "confirm", quote});
         } catch (error) {
-            setPhase({step: "error", message: errorMessage(error), hash: null});
+            setPhase({
+                step: "error",
+                message: errorMessage(error),
+                hash: null,
+                explorerUrl: chain.explorerUrl,
+            });
         }
     }
 
@@ -130,7 +141,12 @@ export function WithdrawControl({
             setPhase({step: "done", quote, hash});
             onSettled();
         } catch (error) {
-            setPhase({step: "error", message: errorMessage(error), hash: broadcast});
+            setPhase({
+                step: "error",
+                message: errorMessage(error),
+                hash: broadcast,
+                explorerUrl: quote.chain.explorerUrl,
+            });
         }
     }
 
@@ -141,7 +157,7 @@ export function WithdrawControl({
             </Heading>
             <p className="mt-1 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)] max-w-[60ch]">
                 You hold <span className="font-mono">{formatTrust(held)}</span> shares here. Burning
-                them returns TRUST at the curve&rsquo;s current price, less the exit fee.
+                them returns {chain.symbol} at the curve&rsquo;s current price, less the exit fee.
             </p>
 
             {phase.step === "confirm" || phase.step === "signing" ? (
@@ -154,12 +170,17 @@ export function WithdrawControl({
                         <span className="font-mono">{formatTrust(phase.quote.shares)}</span> shares
                         and receive{" "}
                         <span className="font-mono">
-                            {formatTrust(phase.quote.assetsAfterFees)} TRUST
+                            {formatTrust(phase.quote.assetsAfterFees)} {phase.quote.chain.symbol}
                         </span>
                         , after fees.
                     </p>
                     <p className="mt-2 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)] max-w-[52ch]">
-                        Real TRUST, Intuition mainnet.
+                        {/* Two sentences, not one with the token swapped in — "Real tTRUST" would
+                            be a false claim, and this line exists to name the network at the one
+                            moment it matters. */}
+                        {phase.quote.chain.isMainnet
+                            ? `Real ${phase.quote.chain.symbol}, ${phase.quote.chain.chain.name}.`
+                            : `Test ${phase.quote.chain.symbol} on ${phase.quote.chain.chain.name}.`}
                     </p>
                     <div className="mt-5 flex flex-wrap gap-3">
                         <button
@@ -191,14 +212,15 @@ export function WithdrawControl({
                             : "Submitted — waiting for the receipt"}
                     </p>
                     <p className="mt-3 text-[length:var(--text-body-sm)] max-w-[52ch]">
-                        {formatTrust(phase.quote.assetsAfterFees)} TRUST back to your wallet.
+                        {formatTrust(phase.quote.assetsAfterFees)} {phase.quote.chain.symbol} back
+                        to your wallet.
                         {phase.step === "done"
                             ? null
                             : " Nothing above has been updated yet — it will refresh once the receipt lands."}
                     </p>
                     <p className="mt-3 font-mono text-[length:var(--text-body-sm)]">
                         <a
-                            href={mainnetTxUrl(phase.hash)}
+                            href={`${phase.quote.chain.explorerUrl}/tx/${phase.hash}`}
                             target="_blank"
                             rel="noreferrer"
                             className={linkClass}
@@ -229,7 +251,7 @@ export function WithdrawControl({
                             The transaction went out. It may still land — check it before signing
                             anything again.{" "}
                             <a
-                                href={mainnetTxUrl(phase.hash)}
+                                href={`${phase.explorerUrl}/tx/${phase.hash}`}
                                 target="_blank"
                                 rel="noreferrer"
                                 className={`font-mono ${linkClass}`}
@@ -299,13 +321,12 @@ export function WithdrawControl({
                         <p className="mt-4 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
                             Connect a wallet to withdraw.
                         </p>
-                    ) : !onMainnet ? (
+                    ) : !onTargetChain ? (
                         <div className="mt-4">
                             <p className="text-[length:var(--text-body-sm)] max-w-[60ch]">
                                 Your wallet is on chain{" "}
                                 <span className="font-mono">{chainId ?? "unknown"}</span>. This
-                                withdrawal happens on Intuition mainnet (
-                                {INTUITION_MAINNET_CHAIN_ID}).
+                                withdrawal happens on {chain.chain.name} ({chain.chainId}).
                             </p>
                             <button
                                 type="button"
@@ -313,7 +334,7 @@ export function WithdrawControl({
                                 disabled={isSwitching}
                                 className={`mt-3 ${controlClass}`}
                             >
-                                Switch to Intuition mainnet
+                                Switch to {chain.chain.name}
                             </button>
                             {switchError === null ? null : (
                                 <p

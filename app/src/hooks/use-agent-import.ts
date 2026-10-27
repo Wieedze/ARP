@@ -2,7 +2,7 @@ import type {IdentityAtomPlan} from "@arp-protocol/core";
 import {useCallback} from "react";
 import type {Address, Hex} from "viem";
 
-import {intuitionMainnetClient} from "../lib/intuition-mainnet";
+import {useChainChoice} from "../lib/chain-choice";
 import {
     planOperatorLink,
     resolveCanonicalAgentAtom,
@@ -33,6 +33,8 @@ import {connectedWalletClient} from "./wallet-client";
  * retry semantics, and a retry that resubmits is the thing to avoid here.
  */
 export function useAgentImport() {
+    const chain = useChainChoice();
+
     /** Reads the ERC-8004 registry on the agent's own chain. Free, and signs nothing. */
     const verifyOwnership = useCallback(
         (params: {
@@ -76,12 +78,17 @@ export function useAgentImport() {
         [],
     );
 
-    /** Reads the mainnet MultiVault to price the link. Sends nothing. */
+    /**
+     * Reads the selected chain's MultiVault to price the link. Sends nothing.
+     *
+     * The chain goes **onto the plan**, so the two writes and the chain guard all read it from one
+     * place and the toggle cannot move between pricing and signing without the guard noticing.
+     */
     const planLink = useCallback(
         (
             imported: Pick<ImportedAgent, "agentAtomId" | "operatingAccount">,
-        ): Promise<ImportLinkPlan> => planOperatorLink(intuitionMainnetClient, imported),
-        [],
+        ): Promise<ImportLinkPlan> => planOperatorLink(chain.client, imported, chain),
+        [chain],
     );
 
     /** The one write. Reachable from a single click handler and nowhere else. */
@@ -91,14 +98,17 @@ export function useAgentImport() {
             plan: ImportLinkPlan;
         }): Promise<{atomTx?: Hex; tripleTx?: Hex}> => {
             const walletClient = await connectedWalletClient();
+            // The plan's own chain, not the live toggle: `submitOperatorLink` guards on
+            // `plan.chain`, so simulating against anything else would report a revert where the
+            // guard should report a mismatch.
             return submitOperatorLink({
                 walletClient,
-                publicClient: intuitionMainnetClient,
+                publicClient: chain.client,
                 imported: params.imported,
                 plan: params.plan,
             });
         },
-        [],
+        [chain],
     );
 
     /**
@@ -107,8 +117,8 @@ export function useAgentImport() {
      */
     const planIdentity = useCallback(
         (agent: {chainId: number; tokenId: string; registry: Address}) =>
-            planIdentityAtom({publicClient: intuitionMainnetClient, agent}),
-        [],
+            planIdentityAtom({publicClient: chain.client, chain, agent}),
+        [chain],
     );
 
     /** The second write. One click handler, like `publishLink`, and never a mutation. */
@@ -117,11 +127,12 @@ export function useAgentImport() {
             const walletClient = await connectedWalletClient();
             return submitIdentityAtom({
                 walletClient,
-                publicClient: intuitionMainnetClient,
+                publicClient: chain.client,
+                chain,
                 plan,
             });
         },
-        [],
+        [chain],
     );
 
     return {

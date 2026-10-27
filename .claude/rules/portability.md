@@ -12,8 +12,8 @@ Measured 2026-10-19:
 | ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------- |
 | `packages/protocol/src` (not `arp/`) | **zero** chain bindings. Config takes `graphqlUrl` and `rpcUrls` keyed by `chainId`; a plan carries its `chainId`.     |
 | `packages/protocol/src/arp`          | **names both chains, on purpose** — `defineChain` for 13579 and 1155, plus `TESTNET_DEPLOYMENT` as a visible fallback  |
-| `app/src/lib/deployments.ts:1`       | `import deploymentsJson from "../../../deployments/13579.json"` — **the whole app is bound to testnet at module load** |
-| `app/src`                            | ~12 sites hardcode `chain: intuitionTestnet` in write paths                                                            |
+| `app/src/lib/deployments.ts:1`       | `import deploymentsJson from "../../../deployments/13579.json"` — ARP's **own** deployment, still bound at module load |
+| `app/src`                            | **11** sites hardcode `chain: intuitionTestnet`, all of them ARP's own contracts — re-measured 2026-10-27              |
 
 Re-measured 2026-10-19 after ADR `0041` folded `sdk/` in, because that fold made the old version of
 this table wrong: it said the package had **zero** chain references, which stopped being true the
@@ -22,14 +22,27 @@ for ARP's own contracts, and that is the whole reason the namespace exists. **Th
 still has none** — that is the invariant worth protecting, and `src/arp/` is the one place to look
 when it seems broken.
 
-The app's binding is **deliberate, not a defect.** `app/src/lib/intuition-mainnet.ts` is a separate
-module precisely so "a mainnet read can never be served from a testnet constant by accident, and so
-that grepping for `intuition-mainnet` finds every place real value is at stake" — its own words. Two
-explicit worlds with a greppable boundary is a good safety property and should not be collapsed.
+## The boundary moved on 2026-10-27, and it is now a different line
 
-But it means **anything built in `app/` inherits the testnet world** and has to be ported later, site
-by site. The protocol package does not. So the loop — prepare a call, resolve an identity, read a
-tool's standing — belongs there.
+ADR `0061`. It used to be **module vs module**: `intuition-mainnet.ts` against `deployments.ts`, two
+explicit worlds, and "grepping for `intuition-mainnet` finds every place real value is at stake".
+That property is gone, and on purpose — a grep for a module name cannot tell you which chain a
+button is about to spend on, because the answer is now per quote rather than per import.
+
+The line is **whose contract it is**:
+
+| addressed to                                 | chain                          | how                                                                 |
+| -------------------------------------------- | ------------------------------ | ------------------------------------------------------------------- |
+| Intuition's **MultiVault**                   | either, the reader's choice    | `lib/chain-choice.ts`, and the chain rides on the quote or the plan |
+| **ARP's own** contracts (`IdentityRegistry`) | testnet 13579, by construction | `lib/deployments.ts` at module load — they exist on one chain only  |
+
+So "real value is at stake" is answered by `isMainnet` on the chain a quote was priced against, which
+the quote carries and the confirmation step prints. If you are adding a write, carry the chain on the
+thing you priced; do not re-read a toggle at signing time.
+
+**What still holds unchanged:** anything built in `app/` against ARP's own contracts inherits the
+testnet world and has to be ported later, site by site. The protocol package does not. So the loop —
+prepare a call, resolve an identity, read a tool's standing — still belongs there.
 
 That reason is why the answer to "why does everything live in the protocol package?" is not "move it
 into `app/`". ADR `0041` renamed the package because the **name** was wrong, and left the boundary
@@ -70,6 +83,10 @@ contract at call time. `deployments/1155.json` says this in its own note about `
 
 ## The exception
 
-The trust panel's mainnet staking path stays in `app/` under `intuition-mainnet.ts`. It is UI, it is
-human-signed, and ADR `0017`'s safeguards are UI behaviour. Do not move it into the connector: the
-connector never signs and never sends, and that invariant is worth more than the symmetry.
+The trust panel's staking path stays in `app/`. It is UI, it is human-signed, and ADR `0017`'s
+safeguards are UI behaviour. Do not move it into the connector: the connector never signs and never
+sends, and that invariant is worth more than the symmetry.
+
+This used to read "the trust panel's **mainnet** staking path … under `intuition-mainnet.ts`". Both
+halves are now wrong: the path serves either chain, and `intuition-mainnet.ts` is three constants
+(ADR `0061`). The exception is about **where the code lives**, not which chain it targets.

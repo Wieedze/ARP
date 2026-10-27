@@ -40,7 +40,7 @@ The staking control is **live against Intuition mainnet chain 1155** (ADR 0017 â
 
 | #   | Guard                                | Where                                                                            |
 | --- | ------------------------------------ | -------------------------------------------------------------------------------- |
-| 1   | Chain guard                          | `assertMainnetWallet`, called **twice** by `submitStake`                         |
+| 1   | Chain guard                          | `assertMainnetWallet`, called **twice** by `submitStake` (renamed `assertWalletOnChain`, ADR `0061`) |
 | 2   | No spending default                  | amount field starts empty, no preset submits                                     |
 | 3   | Ceiling                              | `VITE_MAX_STAKE_TRUST`, default 1 TRUST; minimum read from on-chain `minDeposit` |
 | 4   | Confirmation before the wallet opens | `ConfirmStep`                                                                    |

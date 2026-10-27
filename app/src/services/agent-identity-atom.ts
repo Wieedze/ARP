@@ -6,12 +6,7 @@ import {
 } from "@arp-protocol/core";
 import type {Account, Address, Chain, Hex, PublicClient, Transport, WalletClient} from "viem";
 
-import {
-    INTUITION_MAINNET_CHAIN_ID,
-    INTUITION_MAINNET_MULTIVAULT,
-    intuitionMainnet,
-} from "../lib/intuition-mainnet";
-import {MAX_STAKE_WEI} from "./trust-stake";
+import {MAX_STAKE_WEI, type StakeChain} from "./trust-stake";
 
 /**
  * Give an agent the Intuition identity atom everything else depends on.
@@ -44,8 +39,14 @@ import {MAX_STAKE_WEI} from "./trust-stake";
  *
  * ## Chain
  *
- * Mainnet 1155, the same chain and the same human signature as the operator link beside it. It is
- * not a new write surface.
+ * Whichever chain the caller names — the same chain and the same human signature as the operator
+ * link beside it. It is not a new write surface.
+ *
+ * It was pinned to mainnet 1155. The costs are **100x apart** (`atomCost` 0.1 TRUST on 1155
+ * against 0.001 on 13579, measured by `scripts/measure/predicate-parity.ts`), so the plan is
+ * priced per chain and `submitIdentityAtom` checks every call's own `chainId` against the chain it
+ * was told to send on — each MultiVault is codeless on the other chain, where a value-bearing call
+ * does not revert, it succeeds as a transfer to nobody.
  */
 export type IdentityAtomSubmission = {txs: Hex[]; plan: IdentityAtomPlan};
 
@@ -60,11 +61,11 @@ export class IdentityAtomGuardError extends Error {
     }
 }
 
-function assertMainnet(chainId: number | undefined): void {
-    if (chainId !== INTUITION_MAINNET_CHAIN_ID) {
+function assertChain(expected: StakeChain, chainId: number | undefined): void {
+    if (chainId !== expected.chainId) {
         throw new IdentityAtomGuardError(
             "wrong-chain",
-            `This writes to Intuition mainnet (${INTUITION_MAINNET_CHAIN_ID}). Your wallet reports ` +
+            `This writes to ${expected.chain.name} (${expected.chainId}). Your wallet reports ` +
                 `${chainId ?? "no chain"}. Nothing was sent.`,
         );
     }
@@ -78,6 +79,8 @@ function assertMainnet(chainId: number | undefined): void {
  */
 export async function planIdentityAtom(params: {
     publicClient: PublicClient;
+    /** The Intuition chain the atom is written to. Not the agent's registry chain. */
+    chain: StakeChain;
     agent: {chainId: number; tokenId: string; registry: Address};
     /**
      * The registration file's fields when the caller has them. Absent, the frozen recipe's
@@ -87,8 +90,8 @@ export async function planIdentityAtom(params: {
     registration?: {name?: string; description?: string; image?: string; webEndpoint?: string};
 }): Promise<IdentityAtomPlan> {
     const reads = multiVaultReads({
-        address: INTUITION_MAINNET_MULTIVAULT,
-        chainId: INTUITION_MAINNET_CHAIN_ID,
+        address: params.chain.multiVault,
+        chainId: params.chain.chainId,
         client: params.publicClient,
     });
     return prepareIdentityAtom({
@@ -107,12 +110,13 @@ export async function planIdentityAtom(params: {
 export async function submitIdentityAtom(params: {
     walletClient: WalletClient<Transport, Chain, Account>;
     publicClient: PublicClient;
+    chain: StakeChain;
     plan: IdentityAtomPlan;
 }): Promise<IdentityAtomSubmission> {
-    const {walletClient, publicClient, plan} = params;
+    const {walletClient, publicClient, chain, plan} = params;
 
-    assertMainnet(walletClient.chain?.id);
-    assertMainnet(await walletClient.getChainId());
+    assertChain(chain, walletClient.chain?.id);
+    assertChain(chain, await walletClient.getChainId());
 
     if (plan.calls.length === 0) {
         throw new IdentityAtomGuardError(
@@ -132,13 +136,13 @@ export async function submitIdentityAtom(params: {
     for (const call of plan.calls) {
         // The plan carries its own chain id, and each MultiVault is codeless on the other chain —
         // where a value-bearing call does not revert, it succeeds as a transfer to nobody.
-        assertMainnet(call.chainId);
+        assertChain(chain, call.chainId);
         await simulate(publicClient, call, walletClient.account.address);
         const hash = await walletClient.sendTransaction({
             to: call.to,
             data: call.data,
             value: call.value,
-            chain: intuitionMainnet,
+            chain: chain.chain,
         });
         await publicClient.waitForTransactionReceipt({hash});
         txs.push(hash);

@@ -1,7 +1,7 @@
 import {useQuery} from "@tanstack/react-query";
 import type {Address, Hex, PublicClient} from "viem";
 
-import {intuitionMainnetClient} from "../lib/intuition-mainnet";
+import {useChainChoice} from "../lib/chain-choice";
 import {readVaultPosition, type VaultPosition} from "../services/trust-stake";
 
 /**
@@ -14,13 +14,17 @@ import {readVaultPosition, type VaultPosition} from "../services/trust-stake";
  * Disabled until there is a term and a curve id — nothing here fires on mount without both.
  */
 export function termVaultQueryOptions(
+    chain: {chainId: number; client: PublicClient; multiVault: Address},
     params: {termId: Hex | null; curveId: bigint | null; account: Address | null},
-    client: PublicClient = intuitionMainnetClient,
 ) {
     const {termId, curveId, account} = params;
     return {
+        // The chain id leads, because the same term id exists on both chains — term ids are
+        // `keccak(atomData)` and chain-independent — while the **vaults** are per-chain. Without
+        // it, switching would serve the other chain's balance for the same term.
         queryKey: [
-            "intuition-mainnet",
+            "intuition",
+            chain.chainId,
             "term-vault",
             termId,
             curveId?.toString() ?? null,
@@ -30,7 +34,12 @@ export function termVaultQueryOptions(
             if (termId === null || curveId === null) {
                 throw new Error("No term to read.");
             }
-            return readVaultPosition(client, {termId, curveId, account});
+            return readVaultPosition(chain.client, {
+                termId,
+                curveId,
+                account,
+                multiVault: chain.multiVault,
+            });
         },
         enabled: termId !== null && curveId !== null,
         staleTime: 15_000,
@@ -43,5 +52,6 @@ export function useTermVault(params: {
     curveId: bigint | null;
     account: Address | null;
 }) {
-    return useQuery(termVaultQueryOptions(params));
+    const chain = useChainChoice();
+    return useQuery(termVaultQueryOptions(chain, params));
 }

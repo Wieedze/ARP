@@ -30,10 +30,12 @@ describe("matchesFilters", () => {
 
     it("combines with AND, so two filters narrow rather than widen", () => {
         const neither = row({paidDeclarations: 1, declarations: 0});
-        expect(matchesFilters(row({paidDeclarations: 1, declarations: 1}), [
-            "paid-for",
-            "declared-by-agents",
-        ])).toBe(true);
+        expect(
+            matchesFilters(row({paidDeclarations: 1, declarations: 1}), [
+                "paid-for",
+                "declared-by-agents",
+            ]),
+        ).toBe(true);
         expect(matchesFilters(neither, ["paid-for", "declared-by-agents"])).toBe(false);
     });
 

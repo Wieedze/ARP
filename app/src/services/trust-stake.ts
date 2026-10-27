@@ -11,19 +11,32 @@ import {
 } from "viem";
 
 import {multiVaultAbi} from "../lib/abi/multi-vault";
-import {
-    INTUITION_MAINNET_CHAIN_ID,
-    INTUITION_MAINNET_MULTIVAULT,
-    intuitionMainnet,
-} from "../lib/intuition-mainnet";
 
 /**
- * Staking on a `has trust provider` claim — Intuition **mainnet**, real TRUST.
+ * Staking on a term's vault — whichever Intuition chain the caller names.
+ *
+ * ## It was mainnet-only, and the chain is now a parameter
+ *
+ * Every function here took the mainnet MultiVault from a module constant. The user's instruction
+ * (2026-10-27) was that the toggle has to reach the writes: _« si c'est du trust on paye en trust,
+ * si c'est sur testnet il n'y a que du tTRUST, car on lit **et agit** sur testnet obligatoirement,
+ * sinon aucun intérêt d'avoir un toggle »_. A reader on testnet seeing `tTRUST` beside a button
+ * that deposits mainnet `TRUST` is the clearest possible way to lose money on this surface.
+ *
+ * So the chain travels **on the quote** rather than beside it. A quote is the thing built against
+ * one chain's vault at one moment, and `submitStake` re-derives the MultiVault address, the viem
+ * chain and the guard's expected id from `quote.chain`. There is no second argument that could
+ * disagree with it, and a quote built on testnet cannot be signed on mainnet.
+ *
+ * `security.md` is unchanged by this and worth re-reading: ARP's own funds are never signed for
+ * automatically, and the mainnet row of its table is "a human in the panel, ADR `0017`, seven
+ * safeguards". A toggle the user operates is that human. What this removes is the accident of
+ * *silently* defaulting to mainnet, not any safeguard.
  *
  * Authorised by ADR 0017, which also fixes the seven safeguards this module
  * implements. Each one is marked below so a reviewer can find it:
  *
- *   1. chain guard        → `assertMainnetWallet`, called by `submitStake`
+ *   1. chain guard        → `assertWalletOnChain`, called by `submitStake`
  *   2. no spending default→ `parseStakeAmount` returns `empty` for `""`
  *   3. hard ceiling       → `resolveMaxStakeWei` / `parseStakeAmount`
  *   4. confirmation step  → the UI's job; `quoteStake` supplies what it states
@@ -38,6 +51,34 @@ import {
  * third mechanism and none is invented here.
  */
 
+/**
+ * The chain a stake is built against.
+ *
+ * Declared here rather than imported from `lib/chain-choice.ts` because a service may not import
+ * React (`rules/code.md`), and `ChainChoice` carries a context. `ChainChoice` satisfies this
+ * structurally, so the provider's value is passed straight in.
+ */
+export type StakeChain = {
+    /** For viem's `chain` argument on a write. */
+    chain: Chain;
+    /** What the wallet must report before a transaction is built. */
+    chainId: number;
+    /** The MultiVault on this chain. Addresses differ; a default would be a chain constant. */
+    multiVault: Address;
+    /** `TRUST` or `tTRUST`, so a guard message names the token the user is actually spending. */
+    symbol: string;
+    /**
+     * Where to look a hash up, and whether the value is real.
+     *
+     * Not used by anything in this module — they ride along because a **quote is the record of
+     * what was priced and where**, and the receipt that renders from it must link to the same
+     * chain the deposit went to. The alternative was a component reading the live toggle to build
+     * the link, which would point at the wrong explorer for anyone who switched after signing.
+     */
+    explorerUrl: string;
+    isMainnet: boolean;
+};
+
 export type StakeSide = "support" | "oppose";
 
 /**
@@ -46,9 +87,7 @@ export type StakeSide = "support" | "oppose";
  * A union rather than a `Hex` plus a flag: the two cases differ in what sides exist, and the type
  * is what stops `oppose` being built for an atom at a call site that has not thought about it.
  */
-export type StakeTarget =
-    | {kind: "triple"; tripleId: Hex}
-    | {kind: "atom"; atomId: Hex};
+export type StakeTarget = {kind: "triple"; tripleId: Hex} | {kind: "atom"; atomId: Hex};
 
 /** The term a **support** deposit lands in. For a triple's counter, see `resolveStakeTermId`. */
 export function targetTermId(target: StakeTarget): Hex {
@@ -80,6 +119,8 @@ export type StakeSession = {
 export type StakeLimits = {
     minDeposit: bigint;
     maxStake: bigint;
+    /** The chain's native symbol. Every message below quotes an amount, so every one needs it. */
+    symbol: string;
 };
 
 /** Slippage floor, in basis points below the previewed share count. */
@@ -125,14 +166,20 @@ export function parseStakeAmount(input: string, limits: StakeLimits): AmountChec
     const trimmed = input.trim();
     if (trimmed === "") return {status: "empty"};
     if (!/^\d*\.?\d*$/.test(trimmed) || trimmed === ".") {
-        return {status: "invalid", message: "Enter an amount in TRUST, for example 0.05."};
+        return {
+            status: "invalid",
+            message: `Enter an amount in ${limits.symbol}, for example 0.05.`,
+        };
     }
 
     let value: bigint;
     try {
         value = parseEther(trimmed);
     } catch {
-        return {status: "invalid", message: "Enter an amount in TRUST, for example 0.05."};
+        return {
+            status: "invalid",
+            message: `Enter an amount in ${limits.symbol}, for example 0.05.`,
+        };
     }
 
     if (value <= 0n) {
@@ -142,14 +189,14 @@ export function parseStakeAmount(input: string, limits: StakeLimits): AmountChec
         return {
             status: "below-min",
             value,
-            message: `The MultiVault rejects deposits below its minDeposit of ${formatWeiPlain(limits.minDeposit)} TRUST.`,
+            message: `The MultiVault rejects deposits below its minDeposit of ${formatWeiPlain(limits.minDeposit)} ${limits.symbol}.`,
         };
     }
     if (value > limits.maxStake) {
         return {
             status: "above-max",
             value,
-            message: `This panel refuses more than ${formatWeiPlain(limits.maxStake)} TRUST per transaction (VITE_MAX_STAKE_TRUST).`,
+            message: `This panel refuses more than ${formatWeiPlain(limits.maxStake)} ${limits.symbol} per transaction (VITE_MAX_STAKE_TRUST).`,
         };
     }
     return {status: "ok", value};
@@ -203,10 +250,17 @@ export function deriveMinShares(
     return floor > 0n ? floor : 1n;
 }
 
-const vault = {address: INTUITION_MAINNET_MULTIVAULT, abi: multiVaultAbi} as const;
+/** The contract handle for one chain's MultiVault. Was a module constant pinned to mainnet. */
+function vaultAt(multiVault: Address) {
+    return {address: multiVault, abi: multiVaultAbi} as const;
+}
 
 /** `getBondingCurveConfig()` and `getGeneralConfig()` — queried, never hardcoded. */
-export async function readStakeSession(publicClient: PublicClient): Promise<StakeSession> {
+export async function readStakeSession(
+    publicClient: PublicClient,
+    multiVault: Address,
+): Promise<StakeSession> {
+    const vault = vaultAt(multiVault);
     const [curveConfig, generalConfig] = await Promise.all([
         publicClient.readContract({...vault, functionName: "getBondingCurveConfig"}),
         publicClient.readContract({...vault, functionName: "getGeneralConfig"}),
@@ -228,7 +282,7 @@ export async function readStakeSession(publicClient: PublicClient): Promise<Stak
  */
 export async function resolveStakeTermId(
     publicClient: PublicClient,
-    params: {target: StakeTarget; side: StakeSide},
+    params: {target: StakeTarget; side: StakeSide; multiVault: Address},
 ): Promise<Hex> {
     if (params.side === "support") return targetTermId(params.target);
     if (params.target.kind === "atom") {
@@ -238,7 +292,7 @@ export async function resolveStakeTermId(
         );
     }
     return publicClient.readContract({
-        ...vault,
+        ...vaultAt(params.multiVault),
         functionName: "getCounterIdFromTripleId",
         args: [params.target.tripleId],
     });
@@ -257,8 +311,9 @@ export type VaultPosition = {
 /** On-chain vault state for one side. Read live so the panel agrees with the chain. */
 export async function readVaultPosition(
     publicClient: PublicClient,
-    params: {termId: Hex; curveId: bigint; account?: Address | null},
+    params: {termId: Hex; curveId: bigint; account?: Address | null; multiVault: Address},
 ): Promise<VaultPosition> {
+    const vault = vaultAt(params.multiVault);
     const [totals, sharePrice, shares] = await Promise.all([
         publicClient.readContract({
             ...vault,
@@ -302,6 +357,8 @@ export type StakeQuote = {
     feeAssets: bigint;
     minShares: bigint;
     vault: VaultPosition;
+    /** The chain this quote was built against. `submitStake` reads the guard from here. */
+    chain: StakeChain;
 };
 
 /**
@@ -322,6 +379,7 @@ export async function quoteStake(
         receiver: Address;
         session: StakeSession;
         toleranceBps?: bigint;
+        chain: StakeChain;
     },
 ): Promise<StakeQuote> {
     if (params.assets <= 0n) {
@@ -337,11 +395,12 @@ export async function quoteStake(
     const termId = await resolveStakeTermId(publicClient, {
         target: params.target,
         side: params.side,
+        multiVault: params.chain.multiVault,
     });
 
     const [preview, position] = await Promise.all([
         publicClient.readContract({
-            ...vault,
+            ...vaultAt(params.chain.multiVault),
             functionName: "previewDeposit",
             args: [termId, params.session.curveId, params.assets],
         }),
@@ -349,6 +408,7 @@ export async function quoteStake(
             termId,
             curveId: params.session.curveId,
             account: params.receiver,
+            multiVault: params.chain.multiVault,
         }),
     ]);
 
@@ -366,24 +426,27 @@ export async function quoteStake(
         feeAssets: params.assets - assetsAfterFees,
         minShares: deriveMinShares(expectedShares, params.toleranceBps),
         vault: position,
+        chain: params.chain,
     };
 }
 
 /**
- * Safeguard 1. A deposit built against mainnet and signed on another chain is
- * the most plausible way to lose funds on this surface, so the chain id is
- * checked immediately before the transaction is built — not only in the UI,
- * where a stale render could lie about it.
+ * Safeguard 1. A deposit built against one chain and signed on another is the most plausible way to
+ * lose funds on this surface, so the chain id is checked immediately before the transaction is
+ * built — not only in the UI, where a stale render could lie about it.
  *
- * Called twice by `submitStake`, against two different answers. A wallet
- * client's `chain` is whatever it was configured with, which is not evidence
- * about where the user's wallet actually is; `getChainId()` asks the wallet.
+ * Called twice by `submitStake`, against two different answers. A wallet client's `chain` is
+ * whatever it was configured with, which is not evidence about where the user's wallet actually is;
+ * `getChainId()` asks the wallet.
+ *
+ * `expected` comes off the **quote**, so the guard cannot be pointed at a different chain from the
+ * one the deposit was priced against. It was `assertMainnetWallet` with the id hardcoded.
  */
-export function assertMainnetWallet(chainId: number | undefined): void {
-    if (chainId !== INTUITION_MAINNET_CHAIN_ID) {
+export function assertWalletOnChain(expected: StakeChain, chainId: number | undefined): void {
+    if (chainId !== expected.chainId) {
         throw new StakeGuardError(
             "wrong-chain",
-            `Your wallet is on chain ${chainId ?? "unknown"}. Staking requires Intuition mainnet (${INTUITION_MAINNET_CHAIN_ID}).`,
+            `Your wallet is on chain ${chainId ?? "unknown"}. This deposit was priced on ${expected.chain.name} (${expected.chainId}) and must be signed there.`,
         );
     }
 }
@@ -402,7 +465,7 @@ export function simulateStake(
 ): Promise<bigint> {
     return publicClient
         .simulateContract({
-            ...vault,
+            ...vaultAt(quote.chain.multiVault),
             functionName: "deposit",
             args: [quote.receiver, quote.termId, quote.curveId, quote.minShares],
             value: quote.assets,
@@ -426,10 +489,10 @@ export async function submitStake(params: {
     const {walletClient, publicClient, quote} = params;
 
     // What the client was built with…
-    assertMainnetWallet(walletClient.chain?.id);
+    assertWalletOnChain(quote.chain, walletClient.chain?.id);
     // …and what the wallet itself says right now, which is the only answer that
     // catches a user who switched networks after the quote was built.
-    assertMainnetWallet(await walletClient.getChainId());
+    assertWalletOnChain(quote.chain, await walletClient.getChainId());
 
     const sender = walletClient.account.address;
     if (quote.receiver === zeroAddress) {
@@ -454,11 +517,11 @@ export async function submitStake(params: {
     await simulateStake(publicClient, quote, sender);
 
     return walletClient.writeContract({
-        ...vault,
+        ...vaultAt(quote.chain.multiVault),
         functionName: "deposit",
         args: [quote.receiver, quote.termId, quote.curveId, quote.minShares],
         value: quote.assets,
-        chain: intuitionMainnet,
+        chain: quote.chain.chain,
     });
 }
 
@@ -481,22 +544,25 @@ export type ClaimVaults = {
  */
 export async function readClaimVaults(
     publicClient: PublicClient,
-    params: {tripleId: Hex; curveId: bigint; account?: Address | null},
+    params: {tripleId: Hex; curveId: bigint; account?: Address | null; multiVault: Address},
 ): Promise<ClaimVaults> {
     const counterTermId = await resolveStakeTermId(publicClient, {
         target: {kind: "triple", tripleId: params.tripleId},
         side: "oppose",
+        multiVault: params.multiVault,
     });
     const [support, opposition] = await Promise.all([
         readVaultPosition(publicClient, {
             termId: params.tripleId,
             curveId: params.curveId,
             account: params.account,
+            multiVault: params.multiVault,
         }),
         readVaultPosition(publicClient, {
             termId: counterTermId,
             curveId: params.curveId,
             account: params.account,
+            multiVault: params.multiVault,
         }),
     ]);
     return {
@@ -520,7 +586,7 @@ export async function readClaimVaults(
  *
  * The safeguards that apply here, mapped to ADR `0017`'s numbering:
  *
- *   1. chain guard        → `assertMainnetWallet`, called twice by `submitRedeem`
+ *   1. chain guard        → `assertWalletOnChain`, called twice by `submitRedeem`
  *   2. no default         → the UI's amount starts empty; nothing here seeds it
  *   3. ceiling            → `maxRedeem`, read from the chain, and a redeem above it is refused
  *   4. confirmation       → `quoteRedeem` supplies what the UI states
@@ -536,6 +602,8 @@ export type RedeemQuote = {
     termId: Hex;
     curveId: bigint;
     receiver: Address;
+    /** The chain this quote was built against. `submitRedeem` reads the guard from here. */
+    chain: StakeChain;
     /** Shares being burned. */
     shares: bigint;
     /** TRUST the account receives, after the exit and protocol fees. */
@@ -601,10 +669,10 @@ export function parseShareAmount(input: string, held: bigint): ShareCheck {
 /** How many shares the account can take out of this vault. Read, never derived from a balance. */
 export function readMaxRedeem(
     publicClient: PublicClient,
-    params: {termId: Hex; curveId: bigint; account: Address},
+    params: {termId: Hex; curveId: bigint; account: Address; multiVault: Address},
 ): Promise<bigint> {
     return publicClient.readContract({
-        ...vault,
+        ...vaultAt(params.multiVault),
         functionName: "maxRedeem",
         args: [params.account, params.termId, params.curveId],
     });
@@ -619,6 +687,7 @@ export async function quoteRedeem(
         shares: bigint;
         receiver: Address;
         toleranceBps?: bigint;
+        chain: StakeChain;
     },
 ): Promise<RedeemQuote> {
     if (params.shares <= 0n) {
@@ -627,13 +696,13 @@ export async function quoteRedeem(
     if (params.receiver === zeroAddress) {
         throw new StakeGuardError(
             "zero-receiver",
-            "No connected account to receive the TRUST. Connect a wallet first.",
+            `No connected account to receive the ${params.chain.symbol}. Connect a wallet first.`,
         );
     }
 
     const [preview, maxShares] = await Promise.all([
         publicClient.readContract({
-            ...vault,
+            ...vaultAt(params.chain.multiVault),
             functionName: "previewRedeem",
             args: [params.termId, params.curveId, params.shares],
         }),
@@ -641,6 +710,7 @@ export async function quoteRedeem(
             termId: params.termId,
             curveId: params.curveId,
             account: params.receiver,
+            multiVault: params.chain.multiVault,
         }),
     ]);
 
@@ -657,6 +727,7 @@ export async function quoteRedeem(
         termId: params.termId,
         curveId: params.curveId,
         receiver: params.receiver,
+        chain: params.chain,
         shares: params.shares,
         assetsAfterFees,
         sharesUsed,
@@ -665,7 +736,7 @@ export async function quoteRedeem(
     };
 }
 
-/** `eth_call` the redemption before signing. Read-only; returns the TRUST the call would return. */
+/** `eth_call` the redemption before signing. Read-only; returns what the call would pay out. */
 export function simulateRedeem(
     publicClient: PublicClient,
     quote: RedeemQuote,
@@ -673,7 +744,7 @@ export function simulateRedeem(
 ): Promise<bigint> {
     return publicClient
         .simulateContract({
-            ...vault,
+            ...vaultAt(quote.chain.multiVault),
             functionName: "redeem",
             args: [quote.receiver, quote.termId, quote.curveId, quote.shares, quote.minAssets],
             account,
@@ -694,8 +765,8 @@ export async function submitRedeem(params: {
 }): Promise<Hex> {
     const {walletClient, publicClient, quote} = params;
 
-    assertMainnetWallet(walletClient.chain?.id);
-    assertMainnetWallet(await walletClient.getChainId());
+    assertWalletOnChain(quote.chain, walletClient.chain?.id);
+    assertWalletOnChain(quote.chain, await walletClient.getChainId());
 
     const sender = walletClient.account.address;
     if (quote.receiver === zeroAddress) {
@@ -704,7 +775,7 @@ export async function submitRedeem(params: {
     if (quote.receiver.toLowerCase() !== sender.toLowerCase()) {
         throw new StakeGuardError(
             "receiver-mismatch",
-            "The TRUST must go to the connected account. Redeeming to another address is not offered here.",
+            `The ${quote.chain.symbol} must go to the connected account. Redeeming to another address is not offered here.`,
         );
     }
     if (quote.shares <= 0n) {
@@ -726,9 +797,9 @@ export async function submitRedeem(params: {
     await simulateRedeem(publicClient, quote, sender);
 
     return walletClient.writeContract({
-        ...vault,
+        ...vaultAt(quote.chain.multiVault),
         functionName: "redeem",
         args: [quote.receiver, quote.termId, quote.curveId, quote.shares, quote.minAssets],
-        chain: intuitionMainnet,
+        chain: quote.chain.chain,
     });
 }

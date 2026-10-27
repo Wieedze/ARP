@@ -1,7 +1,7 @@
 import {useQuery} from "@tanstack/react-query";
 import type {Address, Hex, PublicClient} from "viem";
 
-import {intuitionMainnetClient} from "../lib/intuition-mainnet";
+import {useChainChoice} from "../lib/chain-choice";
 import {readClaimVaults, type ClaimVaults} from "../services/trust-stake";
 
 /**
@@ -14,13 +14,15 @@ import {readClaimVaults, type ClaimVaults} from "../services/trust-stake";
  * both.
  */
 export function claimVaultsQueryOptions(
+    chain: {chainId: number; client: PublicClient; multiVault: Address},
     params: {tripleId: Hex | null; curveId: bigint | null; account: Address | null},
-    client: PublicClient = intuitionMainnetClient,
 ) {
     const {tripleId, curveId, account} = params;
     return {
+        // Chain id first, for the reason spelled out in `use-term-vault`: one term id, two vaults.
         queryKey: [
-            "intuition-mainnet",
+            "intuition",
+            chain.chainId,
             "claim-vaults",
             tripleId,
             curveId?.toString() ?? null,
@@ -30,7 +32,12 @@ export function claimVaultsQueryOptions(
             if (tripleId === null || curveId === null) {
                 throw new Error("No claim to read.");
             }
-            return readClaimVaults(client, {tripleId, curveId, account});
+            return readClaimVaults(chain.client, {
+                tripleId,
+                curveId,
+                account,
+                multiVault: chain.multiVault,
+            });
         },
         enabled: tripleId !== null && curveId !== null,
         staleTime: 15_000,
@@ -43,5 +50,6 @@ export function useClaimVaults(params: {
     curveId: bigint | null;
     account: Address | null;
 }) {
-    return useQuery(claimVaultsQueryOptions(params));
+    const chain = useChainChoice();
+    return useQuery(claimVaultsQueryOptions(chain, params));
 }

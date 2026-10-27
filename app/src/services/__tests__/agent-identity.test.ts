@@ -4,11 +4,7 @@ import {privateKeyToAccount} from "viem/accounts";
 
 import {deployments} from "../../lib/deployments";
 import {intuitionTestnet} from "../../lib/chains";
-import {
-    designateAgentRuntimeWallet,
-    findAgentIdByOwner,
-    registerAgent,
-} from "../agent-identity";
+import {designateAgentRuntimeWallet, findAgentIdByOwner, registerAgent} from "../agent-identity";
 
 import {
     DEFAULT_TEST_ADDRESS,
@@ -78,9 +74,9 @@ describe("registerAgent", () => {
     it("throws when no Registered event is found in the receipt block", async () => {
         pc.getLogs.mockResolvedValue([]);
 
-        await expect(
-            registerAgent({walletClient: wc, publicClient: pc}),
-        ).rejects.toThrow(/Registered event not found/);
+        await expect(registerAgent({walletClient: wc, publicClient: pc})).rejects.toThrow(
+            /Registered event not found/,
+        );
     });
 });
 

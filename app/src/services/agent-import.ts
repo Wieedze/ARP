@@ -21,14 +21,9 @@ import {
 } from "viem";
 
 import {multiVaultAbi} from "../lib/abi/multi-vault";
-import {
-    INTUITION_MAINNET_CHAIN_ID,
-    INTUITION_MAINNET_MULTIVAULT,
-    intuitionMainnet,
-} from "../lib/intuition-mainnet";
 
 import {erc8004GraphClient, erc8004RegistryClient} from "./erc8004-connector";
-import {assertMainnetWallet, MAX_STAKE_WEI} from "./trust-stake";
+import {assertWalletOnChain, MAX_STAKE_WEI, type StakeChain} from "./trust-stake";
 
 /**
  * Importing an ERC-8004 agent that already exists — the second door, beside the
@@ -49,7 +44,7 @@ import {assertMainnetWallet, MAX_STAKE_WEI} from "./trust-stake";
  * It proves nothing about ownership that the read did not already settle, and
  * nothing on chain verifies it.
  *
- * **What it writes.** One edge on Intuition mainnet, and only one:
+ * **What it writes.** One edge on whichever Intuition chain the caller names, and only one:
  * `(canonical agent atom, same as, CAIP-10 of the operating account)`. Without
  * it a tool stake is attributable to an address and to nothing else, so tool
  * reputation works and agent reputation does not — and agent reputation is half
@@ -331,6 +326,11 @@ export function caip10AccountUris(address: Address, chainId: number): [string, s
     ];
 }
 
+/** The MultiVault handle for one chain. Was a module constant pinned to mainnet. */
+function vaultFor(chain: StakeChain) {
+    return {address: chain.multiVault, abi: multiVaultAbi} as const;
+}
+
 export type ImportLinkPlan = {
     agentAtomId: Hex;
     operatingAccount: Address;
@@ -359,9 +359,20 @@ export type ImportLinkPlan = {
     /** Shares each write buys, from `previewAtomCreate`/`previewTripleCreate`. Zero when not needed. */
     atomShares: bigint;
     tripleShares: bigint;
+    /**
+     * The chain this plan was priced on, and the only place the writes read it from.
+     *
+     * The costs are **100x apart** — `atomCost` is 0.1 TRUST on 1155 against 0.001 on 13579, and
+     * `minDeposit` 0.01 against 0.001 (`scripts/measure/predicate-parity.ts`, 2026-10-27) — so a
+     * plan priced on one chain and sent to the other is wrong by two orders of magnitude in one
+     * direction and reverts in the other. Carried rather than re-read so there is no window
+     * between pricing and signing in which the toggle can move.
+     *
+     * The predicate id is safe to carry across: all nine predicates this app names exist on both
+     * chains, measured by the same script.
+     */
+    chain: StakeChain;
 };
-
-const vault = {address: INTUITION_MAINNET_MULTIVAULT, abi: multiVaultAbi} as const;
 
 /**
  * Work out exactly which writes the link needs, and what they cost, before
@@ -375,9 +386,13 @@ const vault = {address: INTUITION_MAINNET_MULTIVAULT, abi: multiVaultAbi} as con
 export async function planOperatorLink(
     publicClient: PublicClient,
     imported: Pick<ImportedAgent, "agentAtomId" | "operatingAccount">,
+    chain: StakeChain,
 ): Promise<ImportLinkPlan> {
+    const vault = vaultFor(chain);
     const predicateId = INTUITION_SAME_AS_TERM_ID;
-    const candidates = caip10AccountUris(imported.operatingAccount, INTUITION_MAINNET_CHAIN_ID);
+    // The CAIP-10 account atom names the chain it is an account ON, which is this chain — the same
+    // address on 1155 and 13579 is two different atoms, correctly.
+    const candidates = caip10AccountUris(imported.operatingAccount, chain.chainId);
 
     // An address whose hex happens to carry no letters checksums to itself, so
     // the two spellings collapse into one. Deduplicating keeps that case from
@@ -473,6 +488,7 @@ export async function planOperatorLink(
     }
 
     return {
+        chain,
         agentAtomId: imported.agentAtomId,
         operatingAccount: imported.operatingAccount,
         accountAtomUri: chosen.uri,
@@ -518,7 +534,7 @@ export async function simulateOperatorLink(
 
 function simulateCreateAtom(publicClient: PublicClient, plan: ImportLinkPlan, account: Address) {
     return publicClient.simulateContract({
-        ...vault,
+        ...vaultFor(plan.chain),
         functionName: "createAtoms",
         args: [[stringToHex(plan.accountAtomUri)], [plan.atomAssets]],
         value: plan.atomAssets,
@@ -528,7 +544,7 @@ function simulateCreateAtom(publicClient: PublicClient, plan: ImportLinkPlan, ac
 
 function simulateCreateTriple(publicClient: PublicClient, plan: ImportLinkPlan, account: Address) {
     return publicClient.simulateContract({
-        ...vault,
+        ...vaultFor(plan.chain),
         functionName: "createTriples",
         args: [[plan.agentAtomId], [plan.predicateId], [plan.accountAtomId], [plan.tripleAssets]],
         value: plan.tripleAssets,
@@ -556,8 +572,8 @@ export async function submitOperatorLink(params: {
 }): Promise<{atomTx?: Hex; tripleTx?: Hex}> {
     const {walletClient, publicClient, imported, plan} = params;
 
-    assertMainnetWallet(walletClient.chain?.id);
-    assertMainnetWallet(await walletClient.getChainId());
+    assertWalletOnChain(plan.chain, walletClient.chain?.id);
+    assertWalletOnChain(plan.chain, await walletClient.getChainId());
 
     if (plan.totalCost > MAX_STAKE_WEI) {
         throw new ImportGuardError(
@@ -574,11 +590,11 @@ export async function submitOperatorLink(params: {
     if (!plan.accountAtomExists) {
         await simulateCreateAtom(publicClient, plan, sender);
         const atomTx = await walletClient.writeContract({
-            ...vault,
+            ...vaultFor(plan.chain),
             functionName: "createAtoms",
             args: [[stringToHex(plan.accountAtomUri)], [plan.atomAssets]],
             value: plan.atomAssets,
-            chain: intuitionMainnet,
+            chain: plan.chain.chain,
         });
         await publicClient.waitForTransactionReceipt({hash: atomTx});
         result.atomTx = atomTx;
@@ -587,11 +603,16 @@ export async function submitOperatorLink(params: {
     if (!plan.tripleExists) {
         await simulateCreateTriple(publicClient, plan, sender);
         const tripleTx = await walletClient.writeContract({
-            ...vault,
+            ...vaultFor(plan.chain),
             functionName: "createTriples",
-            args: [[plan.agentAtomId], [plan.predicateId], [plan.accountAtomId], [plan.tripleAssets]],
+            args: [
+                [plan.agentAtomId],
+                [plan.predicateId],
+                [plan.accountAtomId],
+                [plan.tripleAssets],
+            ],
             value: plan.tripleAssets,
-            chain: intuitionMainnet,
+            chain: plan.chain.chain,
         });
         await publicClient.waitForTransactionReceipt({hash: tripleTx});
         result.tripleTx = tripleTx;

@@ -21,12 +21,23 @@ import {
  *
  * ## What it does and does not switch
  *
- * **Reads only.** Every write path keeps its own explicit chain and its own guard: `trust-stake.ts`
- * still asserts the wallet is on mainnet before building a deposit, the registration flow still
- * targets ARP's testnet registry, and nothing here can move either of them. That separation is
- * deliberate and is why `lib/intuition-mainnet.ts` exists as its own module — "so a mainnet read can
- * never be served from a testnet constant by accident". A toggle the user operates is not an
- * accident; a toggle that silently re-aimed a signature would be.
+ * **Reads and writes, for anything on Intuition's MultiVault** — ADR `0061`. This said "reads only"
+ * for one day, and that was untenable: a page showing `tTRUST` above a button depositing `TRUST` is
+ * worse than the bug it replaced, and a toggle that moves half the loop cannot rehearse the loop,
+ * which is the only reason it exists.
+ *
+ * The chain does **not** reach this app through the toggle at signing time. It travels **on the
+ * quote or the plan** — `StakeQuote`, `RedeemQuote`, `ImportLinkPlan`, `ToolRegistration` each carry
+ * a `StakeChain`, and the write derives the vault address, viem's `chain` and the guard's expected
+ * id from that one field. So a quote priced on testnet cannot be signed on mainnet, and moving the
+ * toggle between pricing and signing produces the chain guard's sentence rather than a silent switch
+ * of target.
+ *
+ * **What this cannot move: ARP's own contracts.** The `IdentityRegistry` and the agent and
+ * delegation flows that depend on it are on 13579 and nowhere else (11 `chain: intuitionTestnet`
+ * sites in five services, measured 2026-10-27). They are addressed from `lib/deployments.ts` at
+ * module load, deliberately. The line is whose contract it is, not which module imports it —
+ * `rules/portability.md` has the table.
  *
  * ## The trap, named because it is invisible
  *
@@ -36,9 +47,18 @@ import {
  * and `chainId` from here and both go in the key.
  */
 
+/**
+ * The two chains this app addresses, as a union rather than `number`.
+ *
+ * `wagmiConfig` narrows `switchChain`'s argument to the ids it was built with, so a `number` here
+ * does not typecheck at the one call site that asks the wallet to switch. The union is also the
+ * honest type: there are two chains and adding a third is a decision, not a value.
+ */
+export type ArpChainId = typeof intuitionMainnet.id | typeof intuitionTestnet.id;
+
 export type ChainChoice = {
     chain: Chain;
-    chainId: number;
+    chainId: ArpChainId;
     /** Where graph reads go. */
     graphqlUrl: string;
     /** The MultiVault on this chain. Addresses differ; a default would be a chain constant. */

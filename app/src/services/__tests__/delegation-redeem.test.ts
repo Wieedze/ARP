@@ -1,11 +1,5 @@
 import {beforeEach, describe, expect, it, vi, type Mock} from "vitest";
-import {
-    decodeFunctionData,
-    parseEther,
-    stringToHex,
-    type Address,
-    type Hex,
-} from "viem";
+import {decodeFunctionData, parseEther, stringToHex, type Address, type Hex} from "viem";
 
 import {deployments} from "../../lib/deployments";
 import {multiVaultAbi} from "../../lib/abi/multi-vault";
@@ -67,8 +61,7 @@ const PIN_AUTH = {apiKey: "test-partner-key"} as unknown as PinAuth;
 const fakeDelegation = {
     delegate: DEFAULT_TEST_ADDRESS,
     delegator: "0x1111111111111111111111111111111111111111" as Hex,
-    authority:
-        "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff" as Hex,
+    authority: "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff" as Hex,
     caveats: [],
     salt: `0x${"00".repeat(32)}` as Hex,
     signature: `0x${"aa".repeat(65)}` as Hex,
@@ -427,12 +420,7 @@ describe("redeemDeclareTriple", () => {
         const decoded = decodeFunctionData({abi: multiVaultAbi, data: args.execution.callData});
         expect(decoded.functionName).toBe("createTriples");
         if (decoded.functionName === "createTriples") {
-            expect(decoded.args).toEqual([
-                [AGENT_ATOM],
-                [USES_ATOM],
-                [TOOL_ATOM],
-                [77n],
-            ]);
+            expect(decoded.args).toEqual([[AGENT_ATOM], [USES_ATOM], [TOOL_ATOM], [77n]]);
         }
         expect(pc.waitForTransactionReceipt).toHaveBeenCalledWith({hash: TX_HASH});
     });

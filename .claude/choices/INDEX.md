@@ -2,7 +2,7 @@
 
 **Generated** 2026-10-27 by `scripts/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-59 decisions. Newest last. `choices/README.md` says when to write one.
+60 decisions. Newest last. `choices/README.md` says when to write one.
 
 ## Not accepted
 
@@ -74,3 +74,4 @@ Read these before relying on them.
 | [0057](0057-brand-identity-the-source.md) | 2026-10-21 | Proposed | Brand identity v0.3: The Source, Saffron, Archivo + Geist Mono |
 | [0058](0058-the-network-banners-come-off.md) | 2026-10-27 | Accepted | The network banners come off; the warning lives at the signature |
 | [0060](0060-arp-records-it-does-not-broker.md) | 2026-10-27 | Accepted | ARP records a use; it does not broker one |
+| [0061](0061-the-toggle-governs-writes.md) | 2026-10-27 | Accepted | The chain toggle governs writes, and the chain rides on the quote |

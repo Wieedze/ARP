@@ -1,8 +1,7 @@
 import {useCallback} from "react";
 import type {Hex} from "viem";
 
-import {intuitionMainnetClient} from "../lib/intuition-mainnet";
-import {ERC8004_GRAPHQL_URL} from "../services/erc8004-connector";
+import {useChainChoice} from "../lib/chain-choice";
 import {
     planToolRegistration,
     submitToolRegistration,
@@ -14,34 +13,43 @@ import {connectedWalletClient} from "./wallet-client";
  * The two actions the register screen performs, kept out of the page.
  *
  * Callbacks only, nothing on mount. The read is free and still the operator's to trigger; the write
- * moves real TRUST on Intuition mainnet. Same shape and same reason as `useAgentImport` — a mutation
- * carries retry semantics, and a retry that resubmits is the thing to avoid on a surface like this
- * (ADR `0017` safeguard 5).
+ * moves value. Same shape and same reason as `useAgentImport` — a mutation carries retry semantics,
+ * and a retry that resubmits is the thing to avoid on a surface like this (ADR `0017`
+ * safeguard 5).
  *
- * **Not chain-switchable, deliberately.** The chain toggle (`lib/chain-choice.tsx`) moves reads
- * only. This hook plans against one client and submits against the same one, and reading testnet
- * while submitting to mainnet is the incoherence worth refusing — the plan would name an atom that
- * the chain being written to does not have. It moves with the write path or not at all.
+ * **It follows the chain toggle now**, and the comment here used to say the opposite: _"not
+ * chain-switchable, deliberately … it moves with the write path or not at all"_. It moves with the
+ * write path, and the write path moved (user, 2026-10-27). The incoherence that comment was
+ * guarding against — planning on one chain and submitting to another — is prevented by the
+ * mechanism rather than by refusing the feature: the chain travels **on the registration**, and
+ * `submitToolRegistration` guards the wallet against `registration.chain` rather than against
+ * whatever the toggle says at signing time.
  */
 export function useToolRegister() {
+    const chain = useChainChoice();
+
     const plan = useCallback(
         (url: string): Promise<ToolRegistration> =>
             planToolRegistration({
                 url,
-                publicClient: intuitionMainnetClient,
-                graphqlUrl: ERC8004_GRAPHQL_URL,
+                publicClient: chain.client,
+                chain,
+                graphqlUrl: chain.graphqlUrl,
             }),
-        [],
+        [chain],
     );
 
-    const submit = useCallback(async (registration: ToolRegistration): Promise<Hex> => {
-        const walletClient = await connectedWalletClient();
-        return submitToolRegistration({
-            walletClient,
-            publicClient: intuitionMainnetClient,
-            registration,
-        });
-    }, []);
+    const submit = useCallback(
+        async (registration: ToolRegistration): Promise<Hex> => {
+            const walletClient = await connectedWalletClient();
+            return submitToolRegistration({
+                walletClient,
+                publicClient: chain.client,
+                registration,
+            });
+        },
+        [chain],
+    );
 
     return {plan, submit};
 }

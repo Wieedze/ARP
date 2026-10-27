@@ -138,10 +138,10 @@ describe("pinThing", () => {
     it("throws when GraphQL returns an errors field", async () => {
         mockFetch(
             async () =>
-                new Response(
-                    JSON.stringify({errors: [{message: "validation failed"}]}),
-                    {status: 200, headers: {"Content-Type": "application/json"}},
-                ),
+                new Response(JSON.stringify({errors: [{message: "validation failed"}]}), {
+                    status: 200,
+                    headers: {"Content-Type": "application/json"},
+                }),
         );
 
         await expect(

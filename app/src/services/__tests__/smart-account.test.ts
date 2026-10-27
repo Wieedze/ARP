@@ -21,16 +21,12 @@ vi.mock("@metamask/smart-accounts-kit", () => ({
 vi.mock("../../lib/clients", () => ({
     publicClient: {
         getCode: (...args: unknown[]) => mockGetCode(...args),
-        waitForTransactionReceipt: (...args: unknown[]) =>
-            mockWaitForReceipt(...args),
+        waitForTransactionReceipt: (...args: unknown[]) => mockWaitForReceipt(...args),
     },
 }));
 
 // Service must be imported AFTER vi.mock so the mocks are in place.
-import {
-    createUserSmartAccount,
-    deploySmartAccountIfNeeded,
-} from "../smart-account";
+import {createUserSmartAccount, deploySmartAccountIfNeeded} from "../smart-account";
 
 const PK: Hex = `0x${"02".repeat(32)}`;
 const PK_ACCOUNT = privateKeyToAccount(PK);

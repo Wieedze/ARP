@@ -11,12 +11,7 @@ import {
 } from "@arp-protocol/core";
 import type {Account, Chain, Hex, PublicClient, Transport, WalletClient} from "viem";
 
-import {
-    INTUITION_MAINNET_CHAIN_ID,
-    INTUITION_MAINNET_MULTIVAULT,
-    intuitionMainnet,
-} from "../lib/intuition-mainnet";
-import {MAX_STAKE_WEI} from "./trust-stake";
+import {MAX_STAKE_WEI, type StakeChain} from "./trust-stake";
 
 /**
  * Register a tool: create the atom its URL derives from, or find the one that already exists.
@@ -46,12 +41,20 @@ import {MAX_STAKE_WEI} from "./trust-stake";
  * pinning only makes the document readable. `scripts/pin-tool.ts` does it, retroactively, and the id
  * does not change.
  *
- * ## Mainnet
+ * ## Chain
  *
- * The tool market is on Intuition mainnet 1155, because that is where the agents and the MultiVault
- * are. Same chain, same ceiling and same human signature as the panels beside it.
+ * Whichever chain the caller names, carried **on the registration** so the plan and the write
+ * cannot disagree. Same ceiling and same human signature as the panels beside it.
+ *
+ * It was pinned to mainnet 1155 on the argument that "that is where the agents and the MultiVault
+ * are". True of the cohort — 30,913 identities on 1155 against 768 on 13579 — and irrelevant to
+ * where a *write* should go while the loop is being proven: the whole point of the toggle is that
+ * the loop runs end to end on testnet first (user, 2026-10-27). The costs are 100x apart
+ * (`scripts/measure/predicate-parity.ts`), which is exactly why the plan is per chain.
  */
 export type ToolRegistration = {
+    /** The chain this was priced on, and the only place the write reads it from. */
+    chain: StakeChain;
     /** What the operator typed, trimmed. */
     input: string;
     /** The canonical form every field of the Thing derives from. */
@@ -102,7 +105,12 @@ export type ToolRegistration = {
 };
 
 export class ToolRegisterGuardError extends Error {
-    readonly code: "bad-url" | "wrong-chain" | "cost-above-ceiling" | "already-exists" | "no-position";
+    readonly code:
+        | "bad-url"
+        | "wrong-chain"
+        | "cost-above-ceiling"
+        | "already-exists"
+        | "no-position";
 
     constructor(code: ToolRegisterGuardError["code"], message: string) {
         super(message);
@@ -111,12 +119,12 @@ export class ToolRegisterGuardError extends Error {
     }
 }
 
-function assertMainnet(chainId: number | undefined): void {
-    if (chainId !== INTUITION_MAINNET_CHAIN_ID) {
+function assertChain(expected: StakeChain, chainId: number | undefined): void {
+    if (chainId !== expected.chainId) {
         throw new ToolRegisterGuardError(
             "wrong-chain",
-            `A tool's market is on Intuition mainnet (${INTUITION_MAINNET_CHAIN_ID}). Your wallet ` +
-                `reports ${chainId ?? "no chain"}. Nothing was sent.`,
+            `This registration was priced on ${expected.chain.name} (${expected.chainId}). Your ` +
+                `wallet reports ${chainId ?? "no chain"}. Nothing was sent.`,
         );
     }
 }
@@ -130,6 +138,7 @@ function assertMainnet(chainId: number | undefined): void {
 export async function planToolRegistration(params: {
     url: string;
     publicClient: PublicClient;
+    chain: StakeChain;
     graphqlUrl?: string;
     /**
      * The graph read, injectable so the planning can be tested without a network.
@@ -153,8 +162,8 @@ export async function planToolRegistration(params: {
 
     const atomUri = toolAtomUri(normalisedUrl);
     const reads = multiVaultReads({
-        address: INTUITION_MAINNET_MULTIVAULT,
-        chainId: INTUITION_MAINNET_CHAIN_ID,
+        address: params.chain.multiVault,
+        chainId: params.chain.chainId,
         client: params.publicClient,
     });
 
@@ -211,6 +220,7 @@ export async function planToolRegistration(params: {
     }
 
     return {
+        chain: params.chain,
         input,
         normalisedUrl,
         atomUri,
@@ -234,8 +244,8 @@ export async function submitToolRegistration(params: {
 }): Promise<Hex> {
     const {walletClient, publicClient, registration} = params;
 
-    assertMainnet(walletClient.chain?.id);
-    assertMainnet(await walletClient.getChainId());
+    assertChain(registration.chain, walletClient.chain?.id);
+    assertChain(registration.chain, await walletClient.getChainId());
 
     if (registration.exists) {
         throw new ToolRegisterGuardError(
@@ -254,15 +264,15 @@ export async function submitToolRegistration(params: {
     const data = encodeCreateAtom(atomDataForUri(registration.atomUri), registration.assets);
     await publicClient.call({
         account: walletClient.account.address,
-        to: INTUITION_MAINNET_MULTIVAULT,
+        to: registration.chain.multiVault,
         data,
         value: registration.assets,
     });
     const hash = await walletClient.sendTransaction({
-        to: INTUITION_MAINNET_MULTIVAULT,
+        to: registration.chain.multiVault,
         data,
         value: registration.assets,
-        chain: intuitionMainnet,
+        chain: registration.chain.chain,
     });
     await publicClient.waitForTransactionReceipt({hash});
     return hash;

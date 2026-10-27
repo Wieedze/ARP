@@ -7,7 +7,7 @@ import {DEFAULT_IDENTITY_REGISTRY, type IdentityAtomPlan} from "@arp-protocol/co
 
 import {controlClass, linkClass} from "../lib/control-class";
 import {useAgentImport} from "../hooks/use-agent-import";
-import {INTUITION_MAINNET_CHAIN_ID, mainnetTxUrl} from "../lib/intuition-mainnet";
+import {useChainChoice, type ChainChoice} from "../lib/chain-choice";
 import {
     ARP_IMPORT_CONTEXT,
     buildImportConsent,
@@ -32,7 +32,7 @@ import {formatTrust, truncateMiddle} from "../services/trust-format";
  *      compare. That is the whole proof — no bridge, no cross-chain message.
  *   2. **Say so.** An EIP-712 statement naming the agent, the account that will
  *      act for it, the ARP context and a nonce. Consent, and the record of it.
- *   3. **Publish the link.** One `same as` edge on Intuition mainnet, from the
+ *   3. **Publish the link.** One `same as` edge on the selected Intuition chain, from the
  *      agent's canonical atom to the operating account's CAIP-10. Without it a
  *      tool stake is attributable to an address and to nothing else, and agent
  *      reputation — half of `docs/12` — has nothing to attach to.
@@ -99,7 +99,8 @@ export function AgentImport() {
 
     const trimmedToken = tokenId.trim();
     const isTokenValid = /^\d+$/.test(trimmedToken);
-    const onMainnet = walletChainId === INTUITION_MAINNET_CHAIN_ID;
+    const chain = useChainChoice();
+    const onTargetChain = walletChainId === chain.chainId;
 
     /**
      * The import, complete enough to write from.
@@ -271,7 +272,7 @@ export function AgentImport() {
     async function handleSwitchChain() {
         setLinkError(null);
         try {
-            await switchChainAsync({chainId: INTUITION_MAINNET_CHAIN_ID});
+            await switchChainAsync({chainId: chain.chainId});
         } catch (error) {
             setLinkError(errorMessage(error));
         }
@@ -279,7 +280,6 @@ export function AgentImport() {
 
     return (
         <section>
-
             <header className="mt-8 mb-12">
                 <h1 className="text-[length:var(--text-display)] leading-[var(--leading-display)] font-semibold tracking-tight">
                     Import an agent you already have
@@ -428,7 +428,7 @@ export function AgentImport() {
                     linkError !== null ? (
                         <Failure message={linkError} />
                     ) : txs !== null ? (
-                        <Published txs={txs} />
+                        <Published txs={txs} explorerUrl={chain.explorerUrl} />
                     ) : null
                 }
             >
@@ -438,7 +438,8 @@ export function AgentImport() {
                         status={identityStatus}
                         error={identityError}
                         txs={identityTxs}
-                        onMainnet={onMainnet}
+                        onTargetChain={onTargetChain}
+                        chain={chain}
                         walletChainId={walletChainId}
                         isSwitching={isSwitching}
                         onSwitchChain={() => void handleSwitchChain()}
@@ -448,7 +449,7 @@ export function AgentImport() {
                 ) : (
                     <>
                         <p className="mb-6 max-w-[64ch] text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
-                            One triple on Intuition mainnet, paid in real TRUST:{" "}
+                            One triple on {chain.chain.name}, paid in {chain.symbol}:{" "}
                             <span className="font-mono">
                                 (agent atom, same as, CAIP-10 of your Smart Account)
                             </span>
@@ -469,12 +470,11 @@ export function AgentImport() {
                         )}
 
                         {plan !== null && txs === null ? (
-                            !onMainnet ? (
+                            !onTargetChain ? (
                                 <div className="mt-6">
                                     <p className="max-w-[64ch] text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
                                         Your wallet is on chain {walletChainId ?? "unknown"}. The
-                                        write lands on Intuition mainnet (
-                                        {INTUITION_MAINNET_CHAIN_ID}).
+                                        write lands on {chain.chain.name} ({chain.chainId}).
                                     </p>
                                     <button
                                         type="button"
@@ -482,7 +482,9 @@ export function AgentImport() {
                                         disabled={isSwitching}
                                         className={`mt-3 ${controlClass}`}
                                     >
-                                        {isSwitching ? "Switching…" : "Switch to Intuition mainnet"}
+                                        {isSwitching
+                                            ? "Switching…"
+                                            : `Switch to ${chain.chain.name}`}
                                     </button>
                                 </div>
                             ) : plan.totalCost === 0n ? (
@@ -498,7 +500,7 @@ export function AgentImport() {
                                 >
                                     {linkStatus === "pending"
                                         ? "Waiting for your wallet…"
-                                        : `Publish the link — ${formatTrust(plan.totalCost)} TRUST`}
+                                        : `Publish the link — ${formatTrust(plan.totalCost)} ${plan.chain.symbol}`}
                                 </button>
                             )
                         ) : null}
@@ -710,7 +712,8 @@ function MissingIdentityAtom(props: {
     status: StepStatus;
     error: string | null;
     txs: Hex[] | null;
-    onMainnet: boolean;
+    onTargetChain: boolean;
+    chain: ChainChoice;
     walletChainId: number | undefined;
     isSwitching: boolean;
     onSwitchChain: () => void;
@@ -758,14 +761,14 @@ function MissingIdentityAtom(props: {
                                 key={call.data}
                                 className="font-mono text-[length:var(--text-body-sm)] tabular-nums"
                             >
-                                {call.kind} — {formatTrust(call.value)} TRUST,{" "}
+                                {call.kind} — {formatTrust(call.value)} {props.chain.symbol},{" "}
                                 {call.preview === undefined
                                     ? "no preview"
                                     : `${formatTrust(call.preview.shares)} shares`}
                             </p>
                         ))}
                         <p className="mt-2 font-mono text-[length:var(--text-body-sm)] tabular-nums">
-                            total — {formatTrust(plan.totalValue)} TRUST
+                            total — {formatTrust(plan.totalValue)} {props.chain.symbol}
                         </p>
                     </div>
                     {/* Said because the atom works without it and a reader will wonder why the name
@@ -782,11 +785,11 @@ function MissingIdentityAtom(props: {
             {props.error !== null ? <Failure message={props.error} /> : null}
 
             {plan !== null && txs === null ? (
-                !props.onMainnet ? (
+                !props.onTargetChain ? (
                     <div className="mt-6">
                         <p className="text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
                             Your wallet is on chain {props.walletChainId ?? "unknown"}. The write
-                            lands on Intuition mainnet ({INTUITION_MAINNET_CHAIN_ID}).
+                            lands on {props.chain.chain.name} ({props.chain.chainId}).
                         </p>
                         <button
                             type="button"
@@ -794,7 +797,9 @@ function MissingIdentityAtom(props: {
                             disabled={props.isSwitching}
                             className={`mt-3 ${controlClass}`}
                         >
-                            {props.isSwitching ? "Switching…" : "Switch to Intuition mainnet"}
+                            {props.isSwitching
+                                ? "Switching…"
+                                : `Switch to ${props.chain.chain.name}`}
                         </button>
                     </div>
                 ) : plan.calls.length === 0 ? (
@@ -810,7 +815,7 @@ function MissingIdentityAtom(props: {
                     >
                         {props.status === "pending"
                             ? "Waiting for your wallet…"
-                            : `Write the identity atom — ${formatTrust(plan.totalValue)} TRUST`}
+                            : `Write the identity atom — ${formatTrust(plan.totalValue)} ${props.chain.symbol}`}
                     </button>
                 )
             ) : null}
@@ -826,7 +831,7 @@ function MissingIdentityAtom(props: {
                             key={hash}
                             label={`Transaction ${index + 1}`}
                             value={truncateMiddle(hash, 14, 10)}
-                            href={mainnetTxUrl(hash)}
+                            href={`${props.chain.explorerUrl}/tx/${hash}`}
                         />
                     ))}
                 </div>
@@ -847,23 +852,23 @@ function LinkPlan({plan}: {plan: ImportLinkPlan}) {
             <div className="mt-6 border-t border-[color:var(--color-rule)] pt-4">
                 <p className="font-mono text-[length:var(--text-body-sm)] tabular-nums">
                     {plan.accountAtomExists
-                        ? "account atom — already published, 0 TRUST"
-                        : `account atom — ${formatTrust(plan.atomAssets)} TRUST`}
+                        ? `account atom — already published, 0 ${plan.chain.symbol}`
+                        : `account atom — ${formatTrust(plan.atomAssets)} ${plan.chain.symbol}`}
                 </p>
                 <p className="mt-1 font-mono text-[length:var(--text-body-sm)] tabular-nums">
                     {plan.tripleExists
-                        ? "same-as edge — already published, 0 TRUST"
-                        : `same-as edge — ${formatTrust(plan.tripleAssets)} TRUST`}
+                        ? `same-as edge — already published, 0 ${plan.chain.symbol}`
+                        : `same-as edge — ${formatTrust(plan.tripleAssets)} ${plan.chain.symbol}`}
                 </p>
                 <p className="mt-2 font-mono text-[length:var(--text-body-sm)] tabular-nums">
-                    total — {formatTrust(plan.totalCost)} TRUST
+                    total — {formatTrust(plan.totalCost)} {plan.chain.symbol}
                 </p>
             </div>
         </div>
     );
 }
 
-function Published({txs}: {txs: {atomTx?: Hex; tripleTx?: Hex}}) {
+function Published({txs, explorerUrl}: {txs: {atomTx?: Hex; tripleTx?: Hex}; explorerUrl: string}) {
     return (
         <div className="mt-6 max-w-[64ch]">
             <p className="font-medium">The link is on the graph.</p>
@@ -875,14 +880,14 @@ function Published({txs}: {txs: {atomTx?: Hex; tripleTx?: Hex}}) {
                 <Field
                     label="Account atom"
                     value={truncateMiddle(txs.atomTx, 14, 10)}
-                    href={mainnetTxUrl(txs.atomTx)}
+                    href={`${explorerUrl}/tx/${txs.atomTx}`}
                 />
             ) : null}
             {txs.tripleTx !== undefined ? (
                 <Field
                     label="Same-as edge"
                     value={truncateMiddle(txs.tripleTx, 14, 10)}
-                    href={mainnetTxUrl(txs.tripleTx)}
+                    href={`${explorerUrl}/tx/${txs.tripleTx}`}
                 />
             ) : null}
         </div>

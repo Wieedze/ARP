@@ -37,6 +37,16 @@ async function codeOf(work: Promise<unknown>): Promise<string> {
 }
 
 const MAINNET_MULTIVAULT = "0x6E35cF57A41fA15eA0EaE9C33e751b01A784Fe7e";
+
+/** The chain a registration is priced on, as the service now takes it. */
+const MAINNET = {
+    chain: intuitionMainnet,
+    chainId: INTUITION_MAINNET_CHAIN_ID,
+    multiVault: MAINNET_MULTIVAULT as Address,
+    symbol: "TRUST",
+    explorerUrl: "https://explorer.intuition.systems",
+    isMainnet: true,
+} as const;
 const ATOM_COST = parseEther("0.1");
 const MIN_DEPOSIT = parseEther("0.01");
 const ASSETS = ATOM_COST + MIN_DEPOSIT;
@@ -124,6 +134,7 @@ function walletOn(chainId: number) {
 
 function registrationOf(overrides: Partial<ToolRegistration> = {}): ToolRegistration {
     return {
+        chain: MAINNET,
         input: "github.com/crytic/slither",
         normalisedUrl: "https://github.com/crytic/slither",
         atomUri: "ipfs://bafkreidf2beugrdbzvidlwibi46fhyanrh7v3noaucjahsllu2xjqtas44",
@@ -153,7 +164,12 @@ describe("planToolRegistration", () => {
         for (const bad of ["", "did:web:example.org", "npm:slither"]) {
             expect(
                 await codeOf(
-                    planToolRegistration({url: bad, publicClient: pc as never, lookup: noAtoms}),
+                    planToolRegistration({
+                        url: bad,
+                        publicClient: pc as never,
+                        chain: MAINNET,
+                        lookup: noAtoms,
+                    }),
                 ),
             ).toBe("bad-url");
         }
@@ -168,7 +184,12 @@ describe("planToolRegistration", () => {
         const plans = [];
         for (const url of spellings) {
             plans.push(
-                await planToolRegistration({url, publicClient: pc as never, lookup: noAtoms}),
+                await planToolRegistration({
+                    url,
+                    publicClient: pc as never,
+                    chain: MAINNET,
+                    lookup: noAtoms,
+                }),
             );
         }
         expect(new Set(plans.map((plan) => plan.atomUri)).size).toBe(1);
@@ -181,6 +202,7 @@ describe("planToolRegistration", () => {
         const plan = await planToolRegistration({
             url: "github.com/x",
             publicClient: pc as never,
+            chain: MAINNET,
             lookup: noAtoms,
         });
         expect(plan.assets).toBe(ASSETS);
@@ -201,6 +223,7 @@ describe("planToolRegistration", () => {
                 planToolRegistration({
                     url: "github.com/x",
                     publicClient: zero as never,
+                    chain: MAINNET,
                     lookup: noAtoms,
                 }),
             ),
@@ -217,6 +240,7 @@ describe("planToolRegistration", () => {
                 planToolRegistration({
                     url: "github.com/x",
                     publicClient: expensive as never,
+                    chain: MAINNET,
                     lookup: noAtoms,
                 }),
             ),
@@ -227,6 +251,7 @@ describe("planToolRegistration", () => {
         const plan = await planToolRegistration({
             url: "github.com/x",
             publicClient: publicClientWith({exists: true}) as never,
+            chain: MAINNET,
             lookup: noAtoms,
         });
         expect(plan.exists).toBe(true);
@@ -240,6 +265,7 @@ describe("planToolRegistration", () => {
         await planToolRegistration({
             url: "https://www.github.com/crytic/slither/",
             publicClient: pc as never,
+            chain: MAINNET,
             lookup,
         });
         // An atom on the graph carries whatever URL its creator typed, which is usually not the
@@ -259,6 +285,7 @@ describe("planToolRegistration", () => {
         const plan = await planToolRegistration({
             url: "github.com/crytic/slither",
             publicClient: pc as never,
+            chain: MAINNET,
             lookup,
         });
         // Reported, never chosen between: a deposit on the wrong one is permanent.

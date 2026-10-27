@@ -4,6 +4,7 @@ import type {TrustRow} from "../../services/agent-trust";
 import type {ClaimVaults, VaultPosition} from "../../services/trust-stake";
 import {formatTrust, truncateMiddle} from "../../services/trust-format";
 
+import {useChainChoice} from "../../lib/chain-choice";
 import {StakerCount} from "./StakerCount";
 
 /**
@@ -17,10 +18,9 @@ import {StakerCount} from "./StakerCount";
  * The staker count appears on every side, always — see `StakerCount` for why a
  * TRUST figure is never shown here without it.
  *
- * **`TRUST` is hardcoded here on purpose.** Both balances come from the mainnet MultiVault through
- * `useClaimVaults`, which the chain toggle does not reach — `portability.md` exempts the staking
- * path, and the deposit beside these figures is mainnet-only under ADR `0017`. Every figure the
- * toggle *does* govern takes its symbol from `useChainChoice`.
+ * The symbol comes from the toggle. It was hardcoded `TRUST` while `useClaimVaults` read the
+ * mainnet MultiVault whatever the toggle said; both now follow it, so a testnet reader sees testnet
+ * balances in `tTRUST` beside a deposit that goes to testnet.
  */
 
 function SideColumn({
@@ -34,6 +34,7 @@ function SideColumn({
     vault: VaultPosition | undefined;
     isLoading: boolean;
 }) {
+    const chain = useChainChoice();
     const onChainAssets = vault?.totalAssets ?? null;
     // `marketCap` is the curve's own vault, which is what `getVault` returns and
     // what a deposit joins. `totalAssets` on a MarketSide is the term-level
@@ -48,11 +49,11 @@ function SideColumn({
             </p>
             <p className="mt-2 font-mono text-[length:var(--text-body)]">
                 {onChainAssets !== null
-                    ? `${formatTrust(onChainAssets)} TRUST`
+                    ? `${formatTrust(onChainAssets)} ${chain.symbol}`
                     : isLoading
                       ? "reading vault…"
                       : indexerAssets !== null
-                        ? `${formatTrust(indexerAssets)} TRUST`
+                        ? `${formatTrust(indexerAssets)} ${chain.symbol}`
                         : "—"}
             </p>
             <p className="mt-1 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">

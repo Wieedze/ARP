@@ -60,9 +60,7 @@ const DEFAULT_TEST_PK: Hex = `0x${"01".repeat(32)}`;
 export const DEFAULT_TEST_ACCOUNT = privateKeyToAccount(DEFAULT_TEST_PK);
 export const DEFAULT_TEST_ADDRESS: Address = DEFAULT_TEST_ACCOUNT.address;
 
-export function makeMockWalletClient(overrides?: {
-    address?: Address;
-}): MockWalletClient {
+export function makeMockWalletClient(overrides?: {address?: Address}): MockWalletClient {
     const account =
         overrides?.address && overrides.address !== DEFAULT_TEST_ADDRESS
             ? ({...DEFAULT_TEST_ACCOUNT, address: overrides.address} as Account)

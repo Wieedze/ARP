@@ -8,7 +8,7 @@ import {
     intuitionMainnet,
 } from "../../lib/intuition-mainnet";
 import {
-    assertMainnetWallet,
+    assertWalletOnChain,
     deriveMinShares,
     parseStakeAmount,
     asStakeTermId,
@@ -33,7 +33,31 @@ const TRIPLE: Hex = `0x${"11".repeat(32)}`;
 const COUNTER: Hex = `0x${"99".repeat(32)}`;
 /** An agent's identity atom. No counter vault exists for it — ADR `0056`. */
 const ATOM: Hex = `0x${"77".repeat(32)}`;
-const LIMITS = {minDeposit: parseEther("0.01"), maxStake: parseEther("1")};
+const LIMITS = {minDeposit: parseEther("0.01"), maxStake: parseEther("1"), symbol: "TRUST"};
+
+/**
+ * The chain a quote is built against, as the service now takes it.
+ *
+ * Both are here, not just mainnet: the port that made the chain a parameter is only worth anything
+ * if a test can send the wrong one, and `assertWalletOnChain` is the guard that has to catch it.
+ */
+const MAINNET = {
+    chain: intuitionMainnet,
+    chainId: intuitionMainnet.id,
+    multiVault: INTUITION_MAINNET_MULTIVAULT,
+    symbol: "TRUST",
+    explorerUrl: "https://explorer.intuition.systems",
+    isMainnet: true,
+} as const;
+
+const TESTNET = {
+    chain: intuitionTestnet,
+    chainId: intuitionTestnet.id,
+    multiVault: "0x2Ece8D4dEdcB9918A398528f3fa4688b1d2CAB91" as Address,
+    symbol: "tTRUST",
+    explorerUrl: "https://testnet.explorer.intuition.systems",
+    isMainnet: false,
+} as const;
 
 type StakeMockPublicClient = {
     readContract: Mock;
@@ -169,7 +193,7 @@ describe("readStakeSession", () => {
             }),
         );
 
-        await expect(readStakeSession(asPublic(client))).resolves.toEqual({
+        await expect(readStakeSession(asPublic(client), MAINNET.multiVault)).resolves.toEqual({
             curveId: 3n,
             minDeposit: parseEther("0.02"),
             minShare: 1_000_000n,
@@ -184,6 +208,7 @@ describe("resolveStakeTermId", () => {
             resolveStakeTermId(asPublic(client), {
                 target: {kind: "triple", tripleId: TRIPLE},
                 side: "support",
+                multiVault: MAINNET.multiVault,
             }),
         ).resolves.toBe(TRIPLE);
         expect(client.readContract).not.toHaveBeenCalled();
@@ -199,6 +224,7 @@ describe("resolveStakeTermId", () => {
             resolveStakeTermId(asPublic(client), {
                 target: {kind: "triple", tripleId: TRIPLE},
                 side: "oppose",
+                multiVault: MAINNET.multiVault,
             }),
         ).resolves.toBe(COUNTER);
         expect(client.readContract.mock.calls[0][0].args).toEqual([TRIPLE]);
@@ -210,6 +236,7 @@ describe("resolveStakeTermId", () => {
             resolveStakeTermId(asPublic(client), {
                 target: {kind: "atom", atomId: ATOM},
                 side: "support",
+                multiVault: MAINNET.multiVault,
             }),
         ).resolves.toBe(ATOM);
         expect(client.readContract).not.toHaveBeenCalled();
@@ -226,6 +253,7 @@ describe("resolveStakeTermId", () => {
             resolveStakeTermId(asPublic(client), {
                 target: {kind: "atom", atomId: ATOM},
                 side: "oppose",
+                multiVault: MAINNET.multiVault,
             }),
         ).rejects.toMatchObject({code: "no-counter-vault"});
         expect(client.readContract).not.toHaveBeenCalled();
@@ -270,6 +298,7 @@ describe("quoteStake", () => {
             assets: parseEther("0.01"),
             receiver: DEFAULT_TEST_ADDRESS,
             session,
+            chain: MAINNET,
         });
 
         expect(quote.termId).toBe(COUNTER);
@@ -289,6 +318,7 @@ describe("quoteStake", () => {
             assets: parseEther("0.01"),
             receiver: DEFAULT_TEST_ADDRESS,
             session,
+            chain: MAINNET,
         });
 
         expect(quote.expectedShares).toBe(9_875_000_000_000_000n);
@@ -309,6 +339,7 @@ describe("quoteStake", () => {
                 assets: parseEther("0.01"),
                 receiver: zeroAddress,
                 session,
+                chain: MAINNET,
             }),
         ).rejects.toThrow(StakeGuardError);
 
@@ -319,6 +350,7 @@ describe("quoteStake", () => {
                 assets: 0n,
                 receiver: DEFAULT_TEST_ADDRESS,
                 session,
+                chain: MAINNET,
             }),
         ).rejects.toThrow(StakeGuardError);
     });
@@ -333,6 +365,7 @@ describe("quoteStake", () => {
             assets: parseEther("0.01"),
             receiver: DEFAULT_TEST_ADDRESS,
             session,
+            chain: MAINNET,
         });
 
         expect(quote.termId).toBe(ATOM);
@@ -361,6 +394,7 @@ describe("readClaimVaults", () => {
             tripleId: TRIPLE,
             curveId: 1n,
             account: DEFAULT_TEST_ADDRESS,
+            multiVault: MAINNET.multiVault,
         });
 
         expect(vaults.support.termId).toBe(TRIPLE);
@@ -382,16 +416,23 @@ describe("readClaimVaults", () => {
             tripleId: TRIPLE,
             curveId: 1n,
             account: null,
+            multiVault: MAINNET.multiVault,
         });
         expect(vaults.support.shares).toBeNull();
     });
 });
 
-describe("assertMainnetWallet", () => {
+describe("assertWalletOnChain", () => {
     it("passes only on 1155", () => {
-        expect(() => assertMainnetWallet(INTUITION_MAINNET_CHAIN_ID)).not.toThrow();
-        expect(() => assertMainnetWallet(13579)).toThrow(StakeGuardError);
-        expect(() => assertMainnetWallet(undefined)).toThrow(StakeGuardError);
+        expect(() => assertWalletOnChain(MAINNET, INTUITION_MAINNET_CHAIN_ID)).not.toThrow();
+        expect(() => assertWalletOnChain(MAINNET, 13579)).toThrow(StakeGuardError);
+        expect(() => assertWalletOnChain(MAINNET, undefined)).toThrow(StakeGuardError);
+        // The point of the port: the expected chain is the quote's, so testnet is right on testnet
+        // and wrong on mainnet. A hardcoded guard could not express the second line.
+        expect(() => assertWalletOnChain(TESTNET, 13579)).not.toThrow();
+        expect(() => assertWalletOnChain(TESTNET, INTUITION_MAINNET_CHAIN_ID)).toThrow(
+            StakeGuardError,
+        );
     });
 });
 
@@ -407,6 +448,7 @@ describe("submitStake", () => {
         assetsAfterFees: 9_875_000_000_000_000n,
         feeAssets: 125_000_000_000_000n,
         minShares: 9_776_250_000_000_000n,
+        chain: MAINNET,
         vault: {
             termId: TRIPLE,
             curveId: 1n,
@@ -596,6 +638,7 @@ describe("readMaxRedeem", () => {
                 termId: ATOM,
                 curveId: 1n,
                 account: DEFAULT_TEST_ADDRESS,
+                multiVault: MAINNET.multiVault,
             }),
         ).resolves.toBe(42n);
         expect(client.readContract.mock.calls[0][0].args).toEqual([DEFAULT_TEST_ADDRESS, ATOM, 1n]);
@@ -623,6 +666,7 @@ describe("quoteRedeem", () => {
             curveId: 1n,
             shares: parseEther("0.5"),
             receiver: DEFAULT_TEST_ADDRESS,
+            chain: MAINNET,
         });
 
         expect(quote.assetsAfterFees).toBe(parseEther("1.5"));
@@ -642,6 +686,7 @@ describe("quoteRedeem", () => {
                 curveId: 1n,
                 shares: HELD + 1n,
                 receiver: DEFAULT_TEST_ADDRESS,
+                chain: MAINNET,
             }),
         ).rejects.toMatchObject({code: "exceeds-holding"});
     });
@@ -656,6 +701,7 @@ describe("quoteRedeem", () => {
                 curveId: 1n,
                 shares: 0n,
                 receiver: DEFAULT_TEST_ADDRESS,
+                chain: MAINNET,
             }),
         ).rejects.toMatchObject({code: "zero-amount"});
 
@@ -665,6 +711,7 @@ describe("quoteRedeem", () => {
                 curveId: 1n,
                 shares: parseEther("0.5"),
                 receiver: zeroAddress,
+                chain: MAINNET,
             }),
         ).rejects.toMatchObject({code: "zero-receiver"});
     });
@@ -681,6 +728,7 @@ describe("quoteRedeem", () => {
                 curveId: 1n,
                 shares: parseEther("0.5"),
                 receiver: DEFAULT_TEST_ADDRESS,
+                chain: MAINNET,
             }),
         ).rejects.toMatchObject({code: "no-slippage-floor"});
     });
@@ -690,6 +738,7 @@ describe("submitRedeem", () => {
     const exit = {
         termId: ATOM,
         curveId: 1n,
+        chain: MAINNET,
         receiver: DEFAULT_TEST_ADDRESS,
         shares: parseEther("0.5"),
         assetsAfterFees: parseEther("1.5"),

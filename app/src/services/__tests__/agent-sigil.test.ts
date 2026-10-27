@@ -34,9 +34,7 @@ describe("sigilModulesOf", () => {
     });
 
     it("prefers the term id over the name, so an upstream rename does not redraw the glyph", () => {
-        const groups = [
-            group("uses-tool", [entry({name: "ipfs", sourceHandle: "0xabc"})]),
-        ];
+        const groups = [group("uses-tool", [entry({name: "ipfs", sourceHandle: "0xabc"})])];
         expect(sigilModulesOf(groups)).toEqual([{name: "0xabc", state: "declared"}]);
     });
 
@@ -69,9 +67,7 @@ describe("sigilModulesOf", () => {
      * source arrives, this expectation is what should fail.
      */
     it("marks every module declared, because no receipt source exists yet", () => {
-        const groups = [
-            group("uses-tool", [entry({name: "ipfs"}), entry({name: "github"})]),
-        ];
+        const groups = [group("uses-tool", [entry({name: "ipfs"}), entry({name: "github"})])];
         expect(sigilModulesOf(groups).every((m) => m.state === "declared")).toBe(true);
     });
 });

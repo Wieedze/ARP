@@ -58,6 +58,16 @@ import {StakeGuardError} from "../trust-stake";
 const CLAWNCH = {tokenId: "2340", owner: "0x729a121c347cd89C14f5FF9CD289cA8c70B1de1d"} as const;
 const BARE = {tokenId: "6649", owner: "0x5c422e353D04F8c47F1c5DDC1c83E71d50c8775c"} as const;
 
+/** The chain a link plan is priced on, as the service now takes it. */
+const MAINNET = {
+    chain: intuitionMainnet,
+    chainId: INTUITION_MAINNET_CHAIN_ID,
+    multiVault: INTUITION_MAINNET_MULTIVAULT,
+    symbol: "TRUST",
+    explorerUrl: "https://explorer.intuition.systems",
+    isMainnet: true,
+} as const;
+
 const OPERATOR_PK: Hex = `0x${"07".repeat(32)}`;
 const OPERATOR = privateKeyToAccount(OPERATOR_PK);
 /** A checksummed address with letters in it, so its two CAIP-10 spellings differ. */
@@ -388,7 +398,7 @@ describe("the import path mints nothing", () => {
         const publicClient = makePublic({atomIdByUri: ATOM_IDS});
         const wallet = makeWallet();
         const imported = await importedAgent();
-        const plan = await planOperatorLink(asPublic(publicClient), imported);
+        const plan = await planOperatorLink(asPublic(publicClient), imported, MAINNET);
 
         await submitOperatorLink({
             walletClient: asWallet(wallet),
@@ -429,7 +439,7 @@ describe("the import path mints nothing", () => {
         // is callable before the term exists, which is what makes the check free.
         const publicClient = makePublic({atomIdByUri: ATOM_IDS, createShares: 0n});
         await expect(
-            planOperatorLink(asPublic(publicClient), await importedAgent()),
+            planOperatorLink(asPublic(publicClient), await importedAgent(), MAINNET),
         ).rejects.toThrow(ImportGuardError);
     });
 
@@ -440,7 +450,7 @@ describe("the import path mints nothing", () => {
         });
         const wallet = makeWallet();
         const imported = await importedAgent();
-        const plan = await planOperatorLink(asPublic(publicClient), imported);
+        const plan = await planOperatorLink(asPublic(publicClient), imported, MAINNET);
 
         expect(plan.totalCost).toBe(0n);
         await expect(
@@ -574,7 +584,7 @@ describe("caip10AccountUris", () => {
 describe("planOperatorLink", () => {
     it("uses Intuition's canonical `same as`, not a predicate of our own", async () => {
         const publicClient = makePublic({atomIdByUri: ATOM_IDS});
-        const plan = await planOperatorLink(asPublic(publicClient), await importedAgent());
+        const plan = await planOperatorLink(asPublic(publicClient), await importedAgent(), MAINNET);
         expect(plan.predicateId).toBe(INTUITION_SAME_AS_TERM_ID);
     });
 
@@ -583,7 +593,7 @@ describe("planOperatorLink", () => {
             atomIdByUri: ATOM_IDS,
             existing: [ACCOUNT_ATOM_CHECKSUMMED],
         });
-        const plan = await planOperatorLink(asPublic(publicClient), await importedAgent());
+        const plan = await planOperatorLink(asPublic(publicClient), await importedAgent(), MAINNET);
         expect(plan.accountAtomUri).toBe(CHECKSUMMED_URI);
         expect(plan.accountAtomExists).toBe(true);
         expect(plan.atomAssets).toBe(0n);
@@ -592,7 +602,7 @@ describe("planOperatorLink", () => {
 
     it("falls back to the lowercase spelling when neither exists", async () => {
         const publicClient = makePublic({atomIdByUri: ATOM_IDS});
-        const plan = await planOperatorLink(asPublic(publicClient), await importedAgent());
+        const plan = await planOperatorLink(asPublic(publicClient), await importedAgent(), MAINNET);
         expect(plan.accountAtomUri).toBe(LOWERCASE_URI);
         expect(plan.accountAtomExists).toBe(false);
         expect(plan.totalCost).toBe(ATOM_ASSETS + TRIPLE_ASSETS);
@@ -600,7 +610,7 @@ describe("planOperatorLink", () => {
 
     it("keys the triple on the agent atom, the predicate and the account atom", async () => {
         const publicClient = makePublic({atomIdByUri: ATOM_IDS});
-        await planOperatorLink(asPublic(publicClient), await importedAgent());
+        await planOperatorLink(asPublic(publicClient), await importedAgent(), MAINNET);
         const call = publicClient.readContract.mock.calls
             .map((entry) => entry[0] as {functionName: string; args?: readonly unknown[]})
             .find((args) => args.functionName === "calculateTripleId");
@@ -611,7 +621,7 @@ describe("planOperatorLink", () => {
 describe("simulateOperatorLink", () => {
     it("defers the triple until its object atom exists", async () => {
         const publicClient = makePublic({atomIdByUri: ATOM_IDS});
-        const plan = await planOperatorLink(asPublic(publicClient), await importedAgent());
+        const plan = await planOperatorLink(asPublic(publicClient), await importedAgent(), MAINNET);
         await expect(
             simulateOperatorLink(asPublic(publicClient), plan, OPERATOR.address),
         ).resolves.toEqual({atom: "ok", triple: "deferred"});
@@ -623,7 +633,7 @@ describe("simulateOperatorLink", () => {
             atomIdByUri: ATOM_IDS,
             existing: [ACCOUNT_ATOM_LOWERCASE],
         });
-        const plan = await planOperatorLink(asPublic(publicClient), await importedAgent());
+        const plan = await planOperatorLink(asPublic(publicClient), await importedAgent(), MAINNET);
         await expect(
             simulateOperatorLink(asPublic(publicClient), plan, OPERATOR.address),
         ).resolves.toEqual({atom: "not-needed", triple: "ok"});
@@ -634,7 +644,7 @@ describe("simulateOperatorLink", () => {
             atomIdByUri: ATOM_IDS,
             existing: [ACCOUNT_ATOM_LOWERCASE, TRIPLE],
         });
-        const plan = await planOperatorLink(asPublic(publicClient), await importedAgent());
+        const plan = await planOperatorLink(asPublic(publicClient), await importedAgent(), MAINNET);
         await expect(
             simulateOperatorLink(asPublic(publicClient), plan, OPERATOR.address),
         ).resolves.toEqual({atom: "not-needed", triple: "not-needed"});
@@ -650,7 +660,7 @@ describe("submitOperatorLink", () => {
     beforeEach(async () => {
         publicClient = makePublic({atomIdByUri: ATOM_IDS});
         imported = await importedAgent();
-        plan = await planOperatorLink(asPublic(publicClient), imported);
+        plan = await planOperatorLink(asPublic(publicClient), imported, MAINNET);
     });
 
     it("refuses a wallet configured for another chain", async () => {

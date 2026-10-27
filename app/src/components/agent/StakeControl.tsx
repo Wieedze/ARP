@@ -5,7 +5,7 @@ import type {Hex} from "viem";
 import {controlClass, primaryControlClass} from "../../lib/control-class";
 
 import {useStakeActions} from "../../hooks/use-stake-actions";
-import {INTUITION_MAINNET_CHAIN_ID, mainnetTxUrl} from "../../lib/intuition-mainnet";
+import {useChainChoice} from "../../lib/chain-choice";
 import {formatTrust, truncateMiddle} from "../../services/trust-format";
 import {
     MAX_STAKE_WEI,
@@ -17,7 +17,13 @@ import {
 } from "../../services/trust-stake";
 
 /**
- * The stake control. Real TRUST, Intuition mainnet, authorised by ADR 0017.
+ * The stake control. Real value on mainnet, test value on testnet, authorised by ADR 0017.
+ *
+ * **The chain is the toggle's, not a constant.** It was pinned to 1155, so on testnet the figures
+ * read `tTRUST` while this control deposited mainnet `TRUST`. Everything chain-shaped here — the
+ * switch prompt, the explorer link, the token in the amount label and in the confirmation — now
+ * comes from `quote.chain` where a quote exists and from `useChainChoice` where one does not. The
+ * quote is preferred, because it is what the deposit was priced against.
  *
  * The flow is deliberately three explicit steps — choose, review, sign — and
  * nothing advances on its own. There is no effect in this component, no retry
@@ -101,7 +107,7 @@ export type StakeClaim = ClaimShape & {
     subject: string;
     /** The heading above the form. The caller names it, because the two targets are not one act. */
     heading: string;
-/**
+    /**
      * One line under the heading, or omitted.
      *
      * On the claim and not hardcoded: it read "the market's confidence in this provider's assessment
@@ -185,19 +191,24 @@ export function StakeControl({
     const [switchError, setSwitchError] = useState<string | null>(null);
 
     const fieldId = useId();
-    const onMainnet = chainId === INTUITION_MAINNET_CHAIN_ID;
+    const chain = useChainChoice();
+    const onTargetChain = chainId === chain.chainId;
 
     const target = claim.target;
 
     const check =
         session === undefined
             ? null
-            : parseStakeAmount(amount, {minDeposit: session.minDeposit, maxStake: MAX_STAKE_WEI});
+            : parseStakeAmount(amount, {
+                  minDeposit: session.minDeposit,
+                  maxStake: MAX_STAKE_WEI,
+                  symbol: chain.symbol,
+              });
 
     const canReview =
         session !== undefined &&
         isConnected &&
-        onMainnet &&
+        onTargetChain &&
         side !== null &&
         check?.status === "ok" &&
         phase.step === "form";
@@ -205,7 +216,7 @@ export function StakeControl({
     async function handleSwitch() {
         setSwitchError(null);
         try {
-            await switchChainAsync({chainId: INTUITION_MAINNET_CHAIN_ID});
+            await switchChainAsync({chainId: chain.chainId});
         } catch (error) {
             setSwitchError(errorMessage(error));
         }
@@ -236,7 +247,7 @@ export function StakeControl({
         }
     }
 
-    /** Step 3. The only path in the app that signs a mainnet transaction. */
+    /** Step 3. The only path in this control that signs. */
     async function handleConfirm(quote: StakeQuote) {
         setPhase({step: "signing", quote});
         onInFlightChange?.(true);
@@ -304,12 +315,12 @@ export function StakeControl({
                 <p className="mt-4 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
                     Reading the MultiVault's curve and deposit minimum…
                 </p>
-            ) : !onMainnet ? (
+            ) : !onTargetChain ? (
                 <div className="mt-4">
                     <p className="text-[length:var(--text-body-sm)] max-w-[60ch]">
                         Your wallet is on chain{" "}
                         <span className="font-mono">{chainId ?? "unknown"}</span>. This deposit goes
-                        to Intuition mainnet ({INTUITION_MAINNET_CHAIN_ID}).
+                        to {chain.chain.name} ({chain.chainId}).
                     </p>
                     <button
                         type="button"
@@ -317,7 +328,7 @@ export function StakeControl({
                         disabled={isSwitching}
                         className={`mt-3 ${controlClass}`}
                     >
-                        Switch to Intuition mainnet
+                        Switch to {chain.chain.name}
                     </button>
                     {isSwitching ? (
                         <p className="mt-2 text-[length:var(--text-body-sm)]" role="status">
@@ -359,7 +370,7 @@ export function StakeControl({
                     {phase.hash !== null ? (
                         <p className="mt-2 font-mono text-[length:var(--text-body-sm)]">
                             <a
-                                href={mainnetTxUrl(phase.hash)}
+                                href={`${phase.quote?.chain.explorerUrl ?? chain.explorerUrl}/tx/${phase.hash}`}
                                 target="_blank"
                                 rel="noreferrer"
                                 className="text-[color:var(--color-accent)]"
@@ -422,7 +433,7 @@ export function StakeControl({
                             htmlFor={`${fieldId}-amount`}
                             className="block font-mono uppercase tracking-wider text-[length:var(--text-label)] text-[color:var(--color-steel)]"
                         >
-                            Amount (TRUST)
+                            Amount ({chain.symbol})
                         </label>
                         <input
                             id={`${fieldId}-amount`}
@@ -489,7 +500,9 @@ function ConfirmStep({
             </p>
             <p className="mt-3 text-[length:var(--text-body-sm)] max-w-[52ch]">
                 You are about to deposit{" "}
-                <span className="font-mono">{formatTrust(quote.assets)} TRUST</span>{" "}
+                <span className="font-mono">
+                    {formatTrust(quote.assets)} {quote.chain.symbol}
+                </span>{" "}
                 {claim.target.kind === "triple" ? (
                     <>
                         to{" "}
@@ -518,7 +531,12 @@ function ConfirmStep({
                 the two-network ambiguity the sharpest failure mode this app has, and the
                 confirmation is the step where it would bite. */}
             <p className="mt-2 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)] max-w-[52ch]">
-                Real TRUST, Intuition mainnet, not recoverable by this panel.
+                {/* Two sentences, not one with the token swapped in: "Real tTRUST" would be a
+                    false claim, and the whole point of this line is that it is the one place the
+                    network is named at the moment money moves. */}
+                {quote.chain.isMainnet
+                    ? `Real ${quote.chain.symbol}, ${quote.chain.chain.name}, not recoverable by this panel.`
+                    : `Test ${quote.chain.symbol} on ${quote.chain.chain.name}. Not recoverable by this panel.`}
             </p>
 
             <dl className="mt-4 grid grid-cols-1 sm:grid-cols-[10rem_1fr] gap-y-2 gap-x-4 text-[length:var(--text-body-sm)]">
@@ -536,9 +554,12 @@ function ConfirmStep({
                 <Term label="Shares minted" value={formatTrust(quote.expectedShares)} />
                 <Term
                     label="After fees"
-                    value={`${formatTrust(quote.assetsAfterFees)} TRUST of ${formatTrust(quote.assets)}`}
+                    value={`${formatTrust(quote.assetsAfterFees)} ${quote.chain.symbol} of ${formatTrust(quote.assets)}`}
                 />
-                <Term label="Fees" value={`${formatTrust(quote.feeAssets)} TRUST`} />
+                <Term
+                    label="Fees"
+                    value={`${formatTrust(quote.feeAssets)} ${quote.chain.symbol}`}
+                />
                 <Term
                     label="Minimum shares"
                     value={`${formatTrust(quote.minShares)} (${Number(MIN_SHARES_TOLERANCE_BPS) / 100}% slippage floor)`}
@@ -596,7 +617,7 @@ function Receipt({
                 {settled ? "Position taken" : "Submitted — waiting for the receipt"}
             </p>
             <p className="mt-3 text-[length:var(--text-body-sm)] max-w-[52ch]">
-                {formatTrust(quote.assets)} TRUST deposited{" "}
+                {formatTrust(quote.assets)} {quote.chain.symbol} deposited{" "}
                 {quote.target.kind === "atom"
                     ? "onto this agent"
                     : `to ${quote.side === "support" ? "support" : "oppose"} this claim`}
@@ -607,7 +628,7 @@ function Receipt({
             </p>
             <p className="mt-3 font-mono text-[length:var(--text-body-sm)]">
                 <a
-                    href={mainnetTxUrl(hash)}
+                    href={`${quote.chain.explorerUrl}/tx/${hash}`}
                     target="_blank"
                     rel="noreferrer"
                     className="text-[color:var(--color-accent)]"

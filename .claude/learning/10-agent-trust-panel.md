@@ -9,7 +9,7 @@
 
 - `app/src/services/erc8004-connector.ts` — the app's single `Erc8004Client`, pinned to the Intuition **mainnet** indexer. Never `deployments.chain.graphqlUrl`.
 - `app/src/services/agent-trust.ts` — `AgentProfile` → `TrustPanelView`. Owns the two-edge join (`has trust provider` × `has trust assessment`) and the evidence-weight bands.
-- `app/src/services/trust-stake.ts` — the whole staking surface: session reads, `previewDeposit` quoting, `deriveMinShares`, `assertMainnetWallet`, `simulateStake`, `submitStake`. The seven ADR-0017 safeguards are numbered in its header and each maps to a named function.
+- `app/src/services/trust-stake.ts` — the whole staking surface: session reads, `previewDeposit` quoting, `deriveMinShares`, ~~`assertMainnetWallet`~~ (renamed `assertWalletOnChain` on 2026-10-27, ADR `0061` — the chain is a parameter now), `simulateStake`, `submitStake`. The seven ADR-0017 safeguards are numbered in its header and each maps to a named function.
 - `app/src/services/trust-format.ts` — freshness phrasing, TRUST amounts, distinct-staker copy, fetch-error sentences. Pure, no clock of its own.
 - `app/src/hooks/{use-agent-profile,use-stake-session,use-claim-vaults,use-stake-actions}.ts` — lifecycle only. `use-stake-actions` returns callbacks, deliberately not a mutation.
 - `app/src/pages/AgentTrustPanel.tsx` — `/agent/:chainId/:tokenId`.
