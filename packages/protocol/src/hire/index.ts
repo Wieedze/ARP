@@ -8,3 +8,4 @@ export {
     type HirePlan,
     type UnsignedDelegation,
 } from "./plan.js";
+export {prepareRate, prepareRateStake, type RatePlan} from "./rate.js";

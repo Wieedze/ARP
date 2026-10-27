@@ -244,6 +244,19 @@ async function resolveToolAtom(
 export async function prepareDeclareUsed(params: {
     subject: AgentIdentityAtom;
     tools: readonly string[];
+    /**
+     * Objects whose atom **already exists** and must not be derived.
+     *
+     * The case a hired agent is in: it reached the graph through `same as` from its ERC-8004 token
+     * and already has an identity atom, so deriving a second one from a URL would be the
+     * fragmentation ADR `0054` exists to prevent. `rate` in `src/hire/` is this parameter and
+     * nothing else — `tasks/25` says rating is `prepareDeclareUsed` plus `prepareStakeOnUsed`, and
+     * a parallel implementation would be a second place for the edge's shape to drift.
+     *
+     * An atom here that the chain does not have raises rather than being created: a plan cannot
+     * mint an identity on someone's behalf.
+     */
+    objects?: readonly Hex[];
     reads: MultiVaultReads;
     predicate?: Hex;
     /**
@@ -280,7 +293,19 @@ export async function prepareDeclareUsed(params: {
         if (!byIdentity.has(key)) byIdentity.set(key, uri);
     }
     const uris = [...byIdentity.values()];
-    if (uris.length === 0) throw new EmptyPlanError("no tool URI survived trimming");
+
+    /**
+     * The two input kinds in one list, deduplicated separately because they cannot collide: a URI
+     * is a string the caller wrote and an atom id is 32 bytes the chain already holds.
+     */
+    type Target = {kind: "uri"; uri: string} | {kind: "atom"; atomId: Hex};
+    const targets: Target[] = [
+        ...uris.map((uri): Target => ({kind: "uri", uri})),
+        ...[...new Set((params.objects ?? []).map((id) => id.toLowerCase()))].map(
+            (id): Target => ({kind: "atom", atomId: id as Hex}),
+        ),
+    ];
+    if (targets.length === 0) throw new EmptyPlanError("no tool URI or object atom was given");
 
     const atomCost = once(() => params.reads.atomCost());
     const tripleCost = once(() => params.reads.tripleCost());
@@ -303,9 +328,21 @@ export async function prepareDeclareUsed(params: {
     const calls: PreparedCall[] = [];
     const existingTerms: Hex[] = [];
 
-    for (const uri of uris) {
+    for (const target of targets) {
+        const uri = target.kind === "uri" ? target.uri : target.atomId;
         const {atomId, atomUri, atomSource, atomData, pinDocument, bareUrlWarning} =
-            await resolveToolAtom(uri, params.reads, params.lookup);
+            target.kind === "uri"
+                ? await resolveToolAtom(target.uri, params.reads, params.lookup)
+                : {
+                      atomId: target.atomId,
+                      atomUri: target.atomId,
+                      atomSource: "given-atom" as const,
+                      // `null` is what makes the branch below raise rather than create: there is no
+                      // calldata to mint someone else's identity, and that is the point.
+                      atomData: null,
+                      pinDocument: undefined,
+                      bareUrlWarning: undefined,
+                  };
         const tripleId = await params.reads.tripleId(params.subject, predicate, atomId);
         const [atomExists, tripleExists] = await Promise.all([
             params.reads.termExists(atomId),
@@ -330,7 +367,11 @@ export async function prepareDeclareUsed(params: {
             // An atom the graph says exists that the chain says does not. Only reachable if the
             // indexer is ahead of the chain it indexes, and there is no calldata to build for it.
             throw new EmptyPlanError(
-                `the graph reports an atom for ${uri} that \`isTermCreated\` denies: ${atomId}`,
+                target.kind === "atom"
+                    ? `atom ${atomId} does not exist on chain ${chainId}, and a plan will not ` +
+                      `create one for an object it was handed — deriving a second identity is ` +
+                      `the fragmentation ADR 0054 exists to prevent`
+                    : `the graph reports an atom for ${uri} that \`isTermCreated\` denies: ${atomId}`,
             );
         } else {
             const assets = (await atomCost()) + (await birthDeposit());

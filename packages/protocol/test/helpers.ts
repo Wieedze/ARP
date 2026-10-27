@@ -1,8 +1,13 @@
 import {readFileSync} from "node:fs";
 import {fileURLToPath} from "node:url";
 
+import {parseEther} from "viem";
+import type {Address, Hex} from "viem";
+
+import type {MultiVaultReads} from "../src/declare/index.js";
 import type {FetchLike} from "../src/http.js";
 import {isRecord} from "../src/json.js";
+import {asAgentIdentityAtom} from "../src/verify/subject.js";
 
 const FIXTURE_DIR = fileURLToPath(new URL("./fixtures/", import.meta.url));
 
@@ -135,5 +140,157 @@ export function recordedEthCall(recorded: Record<string, {ownerOf: unknown; toke
         if (result === null) throw new Error(`unexpected selector ${data.slice(0, 10)}`);
         if (isRecord(result)) throw new Error("execution reverted");
         return result;
+    };
+}
+
+
+/* -------------------------------------------------------------------------- */
+/* A fake MultiVault reader, shared by every planner test                      */
+/*                                                                            */
+/* Extracted from `declare-plan.test.ts` when `hire-rate.test.ts` needed the   */
+/* same chain state. Two copies of a reader that decides what a plan is        */
+/* allowed to do is two places for the fixture to drift from the chain it      */
+/* stands in for.                                                             */
+/* -------------------------------------------------------------------------- */
+
+export const MULTI_VAULT = "0x6E35cF57A41fA15eA0EaE9C33e751b01A784Fe7e" as Address;
+export const RECEIVER = "0x1111111111111111111111111111111111111111" as Address;
+
+/** The agent's ERC-8004 identity atom, branded the way a real caller must (ADR 0032). */
+export const SUBJECT = asAgentIdentityAtom(
+    "0xaaa0000000000000000000000000000000000000000000000000000000000001" as Hex,
+    "eip155:8453/erc721:0x8004A169FB4a3325136EB29fA0ceB6D2e539a432/1380",
+);
+
+export const TOOL_URI = "ipfs://bafkreiarpslitherschema";
+export const OTHER_URI = "https://tools.example.org/semgrep.json";
+
+/**
+ * Deterministic stand-ins for the two `calculate*` views.
+ *
+ * Every nibble is valid hex. The first draft used `a70m` as a mnemonic prefix, which is not hex and
+ * only one test noticed — the one that decodes the calldata. The other eighteen passed on an id
+ * viem cannot parse, which is the vacuity shape: a fixture no assertion looks inside.
+ */
+export const idFor = (prefix: string, uri: string): Hex => {
+    const body = (prefix + Buffer.from(uri).toString("hex")).slice(0, 64).padEnd(64, "0");
+    return `0x${body}` as Hex;
+};
+export const atomIdFor = (uri: string): Hex => idFor("a70a", uri);
+export const tripleIdFor = (uri: string): Hex => idFor("7319", uri);
+
+/**
+ * A reader over stated chain state.
+ *
+ * A mocked viem client would prove a call was shaped; this proves the plan was right given what the
+ * chain says, which is the only thing the planner is responsible for. `calls` records every read so
+ * a test can assert a cost was read **per plan** rather than carried as a constant.
+ */
+export function fakeReads(
+    state: {
+        existing?: ReadonlySet<string>;
+        atomCost?: bigint;
+        tripleCost?: bigint;
+        curveId?: bigint;
+        chainId?: number;
+        minDeposit?: bigint;
+        /**
+         * The entry fee the previews take, in basis points. `0` by default so every assertion that
+         * is about an amount stays about the amount.
+         *
+         * Measured on the real chains 2026-10-21: 200 bps on testnet 13579 for an atom, 100 for a
+         * triple; 175 and 125 on mainnet 1155. It is set here only by the test that needs a deposit
+         * to round down to **zero shares**, which is how the real chain refuses dust and the only
+         * way `ZeroPositionError` is reachable with a non-zero `birthDeposit`.
+         */
+        feeBps?: bigint;
+    } = {},
+): MultiVaultReads & {reads: string[]} {
+    const existing = state.existing ?? new Set<string>();
+    const reads: string[] = [];
+    /**
+     * Which URI produced which atom id, recorded as the reads happen.
+     *
+     * The alternative — reverse-parsing the URI back out of the atom id — needs trailing zeros
+     * stripped, and the hex of an ASCII URI can legitimately end in a zero nibble (`p` is `0x70`).
+     * A lookup cannot be wrong that way.
+     */
+    const uriByAtomId = new Map<string, string>();
+    /**
+     * What a creation deposit buys, the way the chain computes it: the fee first, then the shares
+     * **rounded down**. Rounding down is the part that matters — it is why a deposit can be
+     * positive and still buy nothing.
+     */
+    const afterFees = (left: bigint) => {
+        if (left <= 0n) return {shares: 0n, assetsAfterFixedFees: 0n, assetsAfterFees: 0n};
+        const shares = (left * (10_000n - (state.feeBps ?? 0n))) / 10_000n;
+        return {shares, assetsAfterFixedFees: left, assetsAfterFees: shares};
+    };
+    return {
+        reads,
+        address: MULTI_VAULT,
+        chainId: state.chainId ?? 1155,
+        async atomId(atomData: Hex) {
+            reads.push("calculateAtomId");
+            const uri = Buffer.from(atomData.slice(2), "hex").toString("utf8");
+            const id = atomIdFor(uri);
+            uriByAtomId.set(id, uri);
+            return id;
+        },
+        async tripleId(subject: Hex, predicate: Hex, objectId: Hex) {
+            reads.push(`calculateTripleId:${subject}:${predicate}`);
+            // Keyed off the URI when this reader computed the atom id, and off the object id
+            // otherwise — which is the case when the planner reuses an atom the lookup found and
+            // never calls `atomId` at all. An earlier version threw there, and the throw was a
+            // bug in the fake rather than in the planner.
+            const uri = uriByAtomId.get(objectId);
+            return uri === undefined ? idFor("7319", objectId) : tripleIdFor(uri);
+        },
+        async termExists(termId: Hex) {
+            reads.push("isTermCreated");
+            return existing.has(termId.toLowerCase());
+        },
+        async atomCost() {
+            reads.push("getAtomCost");
+            return state.atomCost ?? parseEther("0.01");
+        },
+        async tripleCost() {
+            reads.push("getTripleCost");
+            return state.tripleCost ?? parseEther("0.1");
+        },
+        async defaultCurveId() {
+            reads.push("getBondingCurveConfig");
+            return state.curveId ?? 1n;
+        },
+        async minDeposit() {
+            reads.push("getGeneralConfig");
+            // 1n unless a test says otherwise, so the existing amount assertions stay about the
+            // amount and not about the floor.
+            return state.minDeposit ?? 1n;
+        },
+        /**
+         * The real contract's behaviour, reduced to the one property the planner reads: the fee
+         * comes out of `assets`, so what is left is what buys shares, and the fee alone buys none.
+         *
+         * Measured on both chains 2026-10-21 (`scripts/measure/preview-before-create.ts`). The
+         * entry fee is dropped here — a percentage the fake does not need, because no assertion is
+         * about the exact share count, only about zero against non-zero.
+         */
+        async previewAtomCreate(_termId: Hex, assets: bigint) {
+            reads.push("previewAtomCreate");
+            return afterFees(assets - (state.atomCost ?? parseEther("0.01")));
+        },
+        async previewTripleCreate(_termId: Hex, assets: bigint) {
+            reads.push("previewTripleCreate");
+            return afterFees(assets - (state.tripleCost ?? parseEther("0.1")));
+        },
+        /** Reverts on a term that does not exist, as the real one does. */
+        async previewDeposit(termId: Hex, _curveId: bigint, assets: bigint) {
+            reads.push("previewDeposit");
+            if (!existing.has(termId.toLowerCase())) {
+                throw new Error(`previewDeposit on a term that does not exist: ${termId}`);
+            }
+            return {shares: assets, assetsAfterFees: assets};
+        },
     };
 }

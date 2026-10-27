@@ -340,8 +340,11 @@ export {
     DelegationFrameworkMissingError,
     HireBoundMissingError,
     prepareHire,
+    prepareRate,
+    prepareRateStake,
     type HireBound,
     type HireEnvironment,
     type HirePlan,
+    type RatePlan,
     type UnsignedDelegation,
 } from "./hire/index.js";

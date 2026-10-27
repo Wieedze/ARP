@@ -115,8 +115,13 @@ export type PlannedTool = {
      * every field is a pure function of that URL. The atom nobody has created yet, in the one form
      * that cannot fork: a free-text `name` inside a hashed document is why `https://github.com`
      * already has five atoms. `pinDocument` carries the bytes that make it readable.
+     *
+     * `given-atom` — the caller named the atom id and nothing was derived. The case a **hired
+     * agent** is in: it already has an identity atom, reached through `same as` from its ERC-8004
+     * token, and deriving a second one from some URL is exactly the fragmentation ADR `0054`
+     * exists to prevent. A plan in this state never creates the atom; it requires it to exist.
      */
-    atomSource: "derived-from-uri" | "existing-thing" | "derived-thing";
+    atomSource: "derived-from-uri" | "existing-thing" | "derived-thing" | "given-atom";
     /** The `(agent, uses, tool)` triple id. Computable before either term exists. */
     tripleId: Hex;
     atomExists: boolean;
