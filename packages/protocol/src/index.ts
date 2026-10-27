@@ -107,6 +107,17 @@ export {
     SAME_AS as INTUITION_SAME_AS_TERM_ID,
     USE as INTUITION_USE_TERM_ID,
     USES as INTUITION_USES_TERM_ID,
+    /**
+     * The one per-network choice in Intuition's vocabulary: both `has tag` atoms exist on both
+     * chains, and each network's ecosystem **writes** with a different one. Use the function, not
+     * the constants, on any write path.
+     */
+    hasTagForWriting as intuitionHasTagForWriting,
+    HAS_TAG as INTUITION_HAS_TAG_MAINNET,
+    HAS_TAG_TESTNET as INTUITION_HAS_TAG_TESTNET,
+    /** The trust pattern's other two edges. Read-only here; exported so a shell can be checked. */
+    PROVIDED_BY as INTUITION_PROVIDED_BY_TERM_ID,
+    TRUST_ASSESSMENT_SOURCE as INTUITION_TRUST_ASSESSMENT_SOURCE,
 } from "./sources/intuition/terms.js";
 
 export {

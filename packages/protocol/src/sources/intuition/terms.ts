@@ -42,6 +42,33 @@ export const IMPLEMENT =
 export const ERC8004 =
     "0x595ba5059b23a9aa4d64deff324ff3d957866715d5b7b8015eebc9009bab78b2" as const;
 
+/**
+ * `AIAgent` — the object atom of the classification edge every agent needs.
+ *
+ * `docs/07` Appendix B, identical on 1155 and 13579. With {@link ERC8004} it completes Intuition's
+ * stated **minimum for a new agent**: `same as`, `has type` → `AIAgent`, `implement` → `ERC-8004`.
+ * An atom carrying only `same as` is identifiable and **unclassified**, which is not a cosmetic
+ * gap — `COHORT_QUERY`'s membership test is `implement` → `ERC-8004`, so such an agent is missing
+ * from this project's own index.
+ */
+export const AI_AGENT =
+    "0x800342c0ded1c288e69f39a2dc96d8cff9b242e9f573193e6e0a849e5315d3e9" as const;
+
+/**
+ * `provided by` — the trust pattern's third edge, from an assessment source back to its provider.
+ *
+ * Published, and **nothing here traverses it**: ARP reads the two edges hanging off the agent and
+ * resolves the document from the source's `url`. It is a constant rather than a comment so the
+ * shell can be *checked* — a provider whose source has no `provided by` and no
+ * `has type` → {@link TRUST_ASSESSMENT_SOURCE} has published three quarters of the pattern.
+ */
+export const PROVIDED_BY =
+    "0x9a310b5ca895009792e5b1dc0131539f36c054e8e32987989367ec73a1a3ef19" as const;
+
+/** `Trust Assessment Source` — the type marker on an assessment source atom. Published. */
+export const TRUST_ASSESSMENT_SOURCE =
+    "0xf8a0ea34c8e7195b63d1641141166cc56e9128e25cf8c9f68ac6b81527b78f07" as const;
+
 /** `available on`. Published. */
 export const AVAILABLE_ON =
     "0xa974ce85010776bb6eb81e4492bdb8712f127aa75ae737f02cbe80e72409f7d3" as const;
@@ -53,9 +80,32 @@ export const USE = "0x9ddda4ac2477ec6908e9561ab31ccd767bf3642e0ed0531fd61d447bad
 export const COMPATIBLE_WITH =
     "0xaf3ca6cd6db1cc57c5ae68b1177ba1fd426488bd781494166ab8cb0ed28a6ea3" as const;
 
-/** `has tag` — the mainnet vocabulary's atom (the testnet ecosystem writes with a different one). Published. */
+/**
+ * `has tag` — **mainnet writes**. Published.
+ *
+ * The one per-network choice in the whole vocabulary. Both atoms exist on both networks, so a read
+ * with either resolves; what differs is which one each network's ecosystem writes with.
+ * `0x7ec36d20…` pins `https://schema.org/keywords`, `0x6de69cc0…` pins the string `has tag`
+ * (`docs/07` Appendix B). Writing the mainnet one on testnet produces a real edge nothing on that
+ * network reads.
+ */
 export const HAS_TAG =
     "0x7ec36d201c842dc787b45cb5bb753bea4cf849be3908fb1b0a7d067c3c3cc1f5" as const;
+
+/** `has tag` — **testnet writes**. The counterpart to {@link HAS_TAG}; see its note. */
+export const HAS_TAG_TESTNET =
+    "0x6de69cc0ae3efe4000279b1bf365065096c8715d8180bc2a98046ee07d3356fd" as const;
+
+/**
+ * The `has tag` predicate to **write** with on a given chain.
+ *
+ * A function rather than a constant because this is the only term in the vocabulary where the
+ * answer depends on the chain, and a caller that forgets lands on a silent miss rather than an
+ * error. Reads should use neither — query both, or filter on something else.
+ */
+export function hasTagForWriting(chainId: number): string {
+    return chainId === 13579 ? HAS_TAG_TESTNET : HAS_TAG;
+}
 
 /** `has category`. Published. */
 export const HAS_CATEGORY =

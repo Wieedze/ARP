@@ -2,7 +2,7 @@ import type {Hex} from "viem";
 
 import {toCaip19} from "../caip.js";
 import type {AgentRef, ResolvedAgentRef} from "../types.js";
-import {SAME_AS} from "../sources/intuition/terms.js";
+import {AI_AGENT, ERC8004, HAS_TYPE, IMPLEMENT, SAME_AS} from "../sources/intuition/terms.js";
 import {
     canonicalAgentThing,
     canonicalCaipThing,
@@ -41,14 +41,42 @@ import type {PreparedCall} from "./types.js";
  *
  * `(identity atom, same as, caip19 atom)`. `RESOLVE_AGENT_QUERY` filters on the **object**'s Thing
  * name and returns the **subject**. Reversed, the agent stays unresolvable and the fee is spent.
+ *
+ * ## Three edges, not one — and the missing two were a live defect
+ *
+ * Intuition's own guide states the **minimum for a new agent**: `same as`, `has type` → `AIAgent`,
+ * and `implement` → `ERC-8004` (the ERC-8004 agent-layer doc, and `docs/07` Appendix B). This
+ * planner wrote `same as` and stopped, which looked like a reasonable subset and was not one:
+ * `COHORT_QUERY`'s membership test is `implement` → `ERC-8004` by term id on both ends, so **an
+ * agent whose atom this wrote did not appear in ARP's own index.** Identifiable, unclassified, and
+ * invisible to the one list that is supposed to find it.
+ *
+ * Found 2026-10-27 by reading Intuition's rules against this code at the user's request. The two
+ * object atoms are canonical and identical on 1155 and 13579, so they are referenced, never minted
+ * — "partners should reuse listed object atoms rather than minting duplicates".
+ *
+ * `has tag` and `has category` are *recommended enrichment*, not the minimum, and they are not
+ * written here: a tag nobody chose is noise, and `has tag` is the one term whose id differs by
+ * network (`hasTagForWriting`).
  */
 export type IdentityAtomPlan = {
     caip19: string;
     identityAtom: Hex;
     caipAtom: Hex;
+    /** `(identity, same as, caip19)` — the edge resolution reads. */
     tripleId: Hex;
+    /** `(identity, has type, AIAgent)` — classification, part of Intuition's minimum. */
+    typeTripleId: Hex;
+    /** `(identity, implement, ERC-8004)` — what `COHORT_QUERY` filters membership on. */
+    implementTripleId: Hex;
     /** What already exists, so "nothing to do" reads differently from "failed to plan". */
-    existing: {identityAtom: boolean; caipAtom: boolean; triple: boolean};
+    existing: {
+        identityAtom: boolean;
+        caipAtom: boolean;
+        triple: boolean;
+        typeTriple: boolean;
+        implementTriple: boolean;
+    };
     /** The two Things, for a caller that wants to show or pin them. */
     things: {identity: AgentThing; caip: AgentThing};
     /** The exact bytes to pin for each, so the documents are readable. */
@@ -110,17 +138,33 @@ export async function prepareIdentityAtom(params: {
         params.reads.atomId(atomDataForUri(uris.identity)),
         params.reads.atomId(atomDataForUri(uris.caip)),
     ]);
-    const tripleId = await params.reads.tripleId(identityAtom, SAME_AS as Hex, caipAtom);
+    // The three edges Intuition's minimum names, in the order they are written. `same as` first,
+    // because it is the one resolution reads and the one whose absence makes the rest unreachable.
+    const [tripleId, typeTripleId, implementTripleId] = await Promise.all([
+        params.reads.tripleId(identityAtom, SAME_AS as Hex, caipAtom),
+        params.reads.tripleId(identityAtom, HAS_TYPE as Hex, AI_AGENT as Hex),
+        params.reads.tripleId(identityAtom, IMPLEMENT as Hex, ERC8004 as Hex),
+    ]);
 
-    const [identityExists, caipExists, tripleExists, atomCost, tripleCost, minDeposit] =
-        await Promise.all([
-            params.reads.termExists(identityAtom),
-            params.reads.termExists(caipAtom),
-            params.reads.termExists(tripleId),
-            params.reads.atomCost(),
-            params.reads.tripleCost(),
-            params.reads.minDeposit(),
-        ]);
+    const [
+        identityExists,
+        caipExists,
+        tripleExists,
+        typeExists,
+        implementExists,
+        atomCost,
+        tripleCost,
+        minDeposit,
+    ] = await Promise.all([
+        params.reads.termExists(identityAtom),
+        params.reads.termExists(caipAtom),
+        params.reads.termExists(tripleId),
+        params.reads.termExists(typeTripleId),
+        params.reads.termExists(implementTripleId),
+        params.reads.atomCost(),
+        params.reads.tripleCost(),
+        params.reads.minDeposit(),
+    ]);
 
     const birthDeposit = params.birthDeposit ?? minDeposit;
     const atomAssets = atomCost + birthDeposit;
@@ -172,13 +216,45 @@ export async function prepareIdentityAtom(params: {
             preview: await preview("triple", tripleId, tripleAssets),
         });
     }
+    // The two classification edges. Their object atoms are canonical and already on both chains,
+    // so only the edges are created — never the objects.
+    if (!typeExists) {
+        calls.push({
+            kind: "create-triple",
+            chainId: chainId_,
+            to: params.reads.address,
+            value: tripleAssets,
+            data: encodeCreateTriple(identityAtom, HAS_TYPE as Hex, AI_AGENT as Hex, tripleAssets),
+            why: "identity atom --has type--> AIAgent, Intuition's stated minimum",
+            preview: await preview("triple", typeTripleId, tripleAssets),
+        });
+    }
+    if (!implementExists) {
+        calls.push({
+            kind: "create-triple",
+            chainId: chainId_,
+            to: params.reads.address,
+            value: tripleAssets,
+            data: encodeCreateTriple(identityAtom, IMPLEMENT as Hex, ERC8004 as Hex, tripleAssets),
+            why: "identity atom --implement--> ERC-8004, which is what COHORT_QUERY filters on",
+            preview: await preview("triple", implementTripleId, tripleAssets),
+        });
+    }
 
     return {
         caip19,
         identityAtom,
         caipAtom,
         tripleId,
-        existing: {identityAtom: identityExists, caipAtom: caipExists, triple: tripleExists},
+        typeTripleId,
+        implementTripleId,
+        existing: {
+            identityAtom: identityExists,
+            caipAtom: caipExists,
+            triple: tripleExists,
+            typeTriple: typeExists,
+            implementTriple: implementExists,
+        },
         things,
         documents: {
             identity: thingDocument(things.identity),
