@@ -1,73 +1,51 @@
-# React + TypeScript + Vite
+# `app` — the ARP interface
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Vite + React 19 + TypeScript + Tailwind v4. Read [`../README.md`](../README.md) for what ARP is and
+[`../docs/12_THE_IDEA.md`](../docs/12_THE_IDEA.md) for the mechanism.
 
-Currently, two official plugins are available:
-
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+bun run dev      # http://localhost:5173
+bun run build
+bun run test     # Vitest, two projects: node for services, happy-dom for components
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Four gates, and the fourth exists because the other three cannot see it
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+bunx tsc -b
+bun run lint
+bun run test
+bun run check:tokens     # every var(--…) in src resolves to a token index.css defines
+bun run check:contrast   # no sub-AA colour token on body text
 ```
+
+`check:tokens` exists because a page once shipped against five custom properties that did not
+exist: `tsc` and `eslint` were both green while fourteen styling sites were inert in the browser,
+because an undefined custom property is invalid at computed-value time (ADR `0050`). A string in a
+class name is a string to every other tool here.
+
+Two failure classes remain uncovered, and no static check sees them: a **Tailwind utility that does
+not exist** (v4 emits nothing, silently, so a typo passes), and a utility **defeated by an unlayered
+rule** in `index.css` — `button { border: … }` beats every Tailwind `border-*` utility regardless of
+specificity. When you write against a base-layer rule, say so in a comment at the call site.
+
+## Layout
+
+| directory        | what lives there                                                           |
+| ---------------- | -------------------------------------------------------------------------- |
+| `src/pages`      | one file per route                                                         |
+| `src/components` | presentation. No chain call, no business logic                             |
+| `src/hooks`      | the only place allowed to bridge components and services                   |
+| `src/services`   | off-chain logic that talks to a chain, Intuition or IPFS. Imports no React |
+| `src/lib`        | chain config, ABIs, deployment addresses, class helpers                    |
+
+New protocol logic goes in [`../packages/protocol`](../packages/protocol), not here:
+`src/lib/deployments.ts` binds this whole app to testnet at module load, deliberately, so anything
+built here inherits that and has to be ported later. See `.claude/rules/portability.md`.
+
+## The design language
+
+`.claude/rules/ui.md` is the contract and `docs/05_UI_DESIGN.md` is the visual spec. In short: dark
+first, typography-driven, hairlines rather than shadows, one warm accent spent only on the primary
+action and the viewer's own position, mono for every address, id, amount and label. No explanatory
+sentence inside a card — a figure that needs a caveat gets a `Hint`.

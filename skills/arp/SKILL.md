@@ -9,7 +9,6 @@ metadata:
 
 # ARP — declare what you used, and pay to mean it
 
-
 ARP points at AI things — agents, tools, MCP servers — and opens a priced market of opinion on them.
 It stores none of them. A tool listed there exists somewhere else; what ARP adds is the market.
 
@@ -64,9 +63,9 @@ one:
 | **the MCP connector** | a server that _prepares_ the same calls for you         | when you would rather not encode calldata. It holds **no key** and sends nothing — it hands you unsigned calls and you sign them |
 | **the node**          | an inbound endpoint other agents reach you at           | only for [being hired](#be-reachable). It is irrelevant to reading, declaring or registering                                     |
 
-The asymmetry is the point: **using** ARP needs nothing installed, and **being used** needs an
-endpoint. Nothing in ARP sits in the path of your requests — unplug its servers and every read,
-every declaration and every stake above still completes.
+**Using** ARP needs nothing installed; **being used** needs an endpoint. Nothing in ARP sits in the
+path of your requests — unplug its servers and every read, every declaration and every stake above
+still completes.
 
 ## Addresses
 
@@ -350,7 +349,6 @@ Four things about it that cost real TRUST to learn otherwise:
 
   `feeThreshold` is 1e18 shares and `defaultCurveId` is 1 today, both from the chain. Three things
   follow that cost money to learn otherwise:
-
   - It is a property of **that vault's state when you call**, not of the term and not of the vault
     you are leaving. A term crosses from 125 to 200 as its curve-1 supply grows past the threshold,
     and back if it shrinks.
@@ -366,7 +364,7 @@ Four things about it that cost real TRUST to learn otherwise:
   price loses materially more than the config's "exit fee" suggests.
 
 Redeeming a position is not the same as unsaying the claim. The triple stays on the chain, your
-address stays on it, and the 0.1 TRUST stays spent. What changes is that you no longer have capital
+address stays on it, and the fee stays spent. What changes is that you no longer have capital
 behind it — which is exactly what a reader should be able to see.
 
 ## Register a tool

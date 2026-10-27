@@ -10,13 +10,9 @@ one. Read it before `08`, `09` or `11` — those are analysis and they drifted.
 
 ## Positioning
 
-Agent runtimes today have solid **compute layers** (orchestration, tool invocation, payments) but rely on off-chain trust:
-
-- "Which agent should I hire?" → static listings or reviews
-- "Is this agent's reputation real?" → no skin in the game
-- "Can I delegate a budget safely?" → custom auth per integration
-
-ARP is the missing **trust + reputation layer** that any runtime can plug into:
+Agent runtimes have compute layers — orchestration, tool invocation, payments — and take trust
+off-chain: a listing, a review, a score, none of which cost anything to produce. ARP is the layer
+where an opinion costs something, and any runtime can read it:
 
 | Layer                                           | Provider                                    |
 | ----------------------------------------------- | ------------------------------------------- |
@@ -40,8 +36,9 @@ corrects it.
    or imports one that already exists, and gives it the Intuition atom everything else reads from.
    The atom's id is the hash of a document derived from the agent's identity, so it is computable
    offline with no credential — which is why ARP can write it rather than wait for a mirror.
-2. **A market, not a score** — an agent declares the tools it used, and the declaration itself
-   costs 0.1 TRUST in a non-recoverable fee. The market is a deposit on the agent's or the tool's
+2. **A market, not a score** — an agent declares the tools it used, and the declaration costs a
+   non-recoverable fee: from 0.1 TRUST on mainnet, from 0.001 on testnet, read off
+   `getTripleCost()` rather than copied. The market is a deposit on the agent's or the tool's
    own atom, in both directions: you buy in, or you take your money back out. A position can be
    withdrawn, so what is displayed is current rather than accumulated
    ([ADR 0056](.claude/choices/0056-the-market-on-an-agent-is-on-its-atom-and-the-edge-is-a-receipt.md),
@@ -62,11 +59,9 @@ corrects it.
 ```
 Atom        a thing — agent, tool, label, identity. Has a vault.
 Triple      a directed claim: (subject, predicate, object) of atoms.
-Stake       tTRUST locked into an atom's vault — economic conviction.
+Stake       TRUST deposited into a vault, withdrawable — economic conviction.
 Delegation  ERC-7710 signed authorization, scoped by caveat enforcers.
 ```
-
-That's it. Everything else is emergent.
 
 ## What is live, and where
 
@@ -93,15 +88,15 @@ default and only `--execute` signs.
 | `/rig`                     | the five-step testnet bring-up: mint into ARP's own registry copy, designate a runtime wallet, deploy a Smart Account, sign two delegations, fund it. A rehearsal of `docs/12` point 5, consumed by `scripts/`. Not in the nav | testnet 13579                         |
 | `/tools`                   | tools agents declared using                                                                                                                                                                                                    | either, the toggle                    |
 | `/atom/:atomId`            | one atom — a tool, a tag, a category, a protocol, an agent — its own market, and every claim pointing at it grouped by predicate                                                                                               | either, read only                     |
-| `/`                        | the same list as `/tools`. It was ARP's own `ModuleRegistry`, retired by [ADR 0051](.claude/choices/0051-arp-points-and-prices-it-stores-nothing.md)                                                                           | either, the toggle                    |
+| `/`                        | the front page. Every figure on it is read from the chain in view, including the empty state                                                                                                                                   | either, the toggle                    |
 
 `/hire` was a demo that the index works. It was never finished and is removed (2026-10-20); hiring is
 `tasks/25`.
 
 ### One path, and four jobs on it
 
-The skill, the connector and the node are not three alternatives — they do different jobs on the same
-path, and conflating them was how the whole surface read as a menu:
+The skill, the MCP server and the node are not three alternatives. They do different jobs on one
+path:
 
 |                    | what it is                                                                                                  | when you want it                                                       |
 | ------------------ | ----------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
@@ -118,9 +113,9 @@ And the four jobs, because they need different things and only one of them needs
 | **list** a tool nobody has listed             | a funded wallet. An atom has no subject, so no identity |
 | **be hired**                                  | an endpoint you run                                     |
 
-The asymmetry is the point: **using** ARP needs nothing installed, and **being used** needs an
-endpoint you provide — [ADR 0045](.claude/choices/0045-the-invariant-is-the-request-path-not-the-runtime.md).
-Unplug ARP's servers and every read, declaration and stake above still completes.
+**Using** ARP needs nothing installed; **being used** needs an endpoint you provide
+([ADR 0045](.claude/choices/0045-the-invariant-is-the-request-path-not-the-runtime.md)). Unplug
+ARP's servers and every read, declaration and stake above still completes.
 
 ### The delegation guard rail
 
@@ -184,14 +179,13 @@ Composes with the MetaMask Delegation Framework v1.3.0 (`DelegationManager` at `
 
 ## Two networks, and which one spends money
 
-This is the sharpest thing to understand before running anything.
-
-|                                                                   | Intuition Testnet 13579       | Intuition mainnet 1155        |
-| ----------------------------------------------------------------- | ----------------------------- | ----------------------------- |
-| ARP's contracts (`ModuleRegistry`, enforcers, `IdentityRegistry`) | deployed here                 | **not deployed, not planned** |
-| The mirrored ERC-8004 agents                                      | absent                        | here                          |
-| What the panels read                                              | —                             | here                          |
-| What staking spends                                               | tTRUST (free from the faucet) | **real TRUST**                |
+|                                                         | Intuition Testnet 13579       | Intuition mainnet 1155           |
+| ------------------------------------------------------- | ----------------------------- | -------------------------------- |
+| ARP's registries (`ModuleRegistry`, `IdentityRegistry`) | deployed here                 | **not deployed, not planned**    |
+| ARP's two caveat enforcers                              | deployed here                 | deployed 2026-09-16, never fired |
+| The mirrored ERC-8004 agents                            | absent                        | here                             |
+| What the panels read                                    | —                             | here                             |
+| What staking spends                                     | tTRUST (free from the faucet) | **real TRUST**                   |
 
 The panels read mainnet because that is where the cohort is, and reads are free and keyless.
 
@@ -219,16 +213,15 @@ that file wins.
 
 ## What's not in this MVP
 
-Stated honestly so reviewers don't infer claims the code doesn't back:
-
 - **No payment-per-call** — tools are not invoked or paid for inside ARP. Tool monetization for a creator happens via bonding-curve appreciation as others stake. Pay-per-use is a separate concern, out of scope.
 - **No off-chain execution** — ARP is declarative + coordination. The actual agent runtime (LLM calls, tool invocations, result delivery) lives outside this repo.
 - **No verification of declarations** — when an agent declares "I use tool X", the only economic
   check is its own stake. There is no proof-of-usage layer, and there is not going to be one: it
   needs ground truth and this mechanism deliberately does not
   ([ADR 0049](.claude/choices/0049-arp-does-not-calibrate.md)).
-- **No slashing** — a false declaration cannot be confiscated. What it costs is the 0.1 TRUST
-  non-recoverable fee to write it, per declaration, forever.
+- **No slashing** — a false declaration cannot be confiscated. What it costs is the non-recoverable
+  fee to write it, per declaration, forever: from 0.1 TRUST on mainnet and from 0.001 on testnet,
+  read off `getTripleCost()`.
 
   **Contestability is available and all but unused, and this bullet used to lead on it.** Intuition
   gives every triple a counter-vault for free, so anyone _can_ deposit against a claim. Measured on
@@ -243,7 +236,8 @@ Stated honestly so reviewers don't infer claims the code doesn't back:
 
 - **Runtime & package manager** — Bun 1.2+ (workspaces, installs, scripts)
 - **Contracts** — Solidity 0.8.24, Foundry
-- **Chain** — Intuition Testnet (chainId 13579)
+- **Chains** — Intuition Testnet 13579 (ARP's own contracts) and Intuition mainnet 1155 (the
+  cohort), chosen by a toggle that governs reads and writes alike
 - **Frontend** — Vite + React 19 + TypeScript + Tailwind v4
 - **Wallet & accounts** — viem 2 + Wagmi 3 + `@metamask/smart-accounts-kit`
 - **Delegation** — ERC-7710 + MetaMask Delegation Framework v1.3.0, with ARP-custom caveat enforcers
@@ -269,14 +263,14 @@ ARP/
 │       ├── ModuleRegistry.sol
 │       ├── enforcers/              ← DomainScopeEnforcer, TrustStakeCapEnforcer
 │       └── erc8004/                ← IdentityRegistry + interfaces
-├── scripts/                        ← flat Bun scripts. Inside no typecheck and no lint (tasks/21)
+├── scripts/                        ← flat Bun scripts, typechecked by `tsconfig.scripts.json`
 │   ├── demo-adopt.ts               ← an agent from nothing to a readable position
 │   ├── demo-hire.ts                ← a second agent discovers, calls, verifies, rates
 │   ├── arp-mcp-server.ts           ← the MCP server, stdio
 │   ├── agent-node.ts               ← the inbound endpoint. Signs receipts, never transactions
 │   ├── send-plan.ts                ← the ONLY place that signs
 │   ├── pin-tool.ts                 ← make a derived tool atom readable
-│   ├── measure-*.ts                ← every number in this repo is re-runnable from one of these
+│   ├── measure/*.ts                ← every number in this repo is re-runnable from one of these
 │   ├── deploy.sh                   ← three-phase contract deploy
 │   └── agent-server*.ts, agent-loop.ts, agent-auditor.ts
 │                                     ← the set-aside hackathon surface (ADR 0033). Historical

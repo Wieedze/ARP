@@ -85,12 +85,23 @@ Each of those takes seconds and each would have caught one of the three above. T
 finding the right answer — all three were found. It is that a sentence written twice gets corrected
 once, and the copy that survives is usually the one other files point at.
 
-Two things make it worse and are worth knowing: an **append-only** record cannot be rewritten, so a
-retraction there is struck through in place and the grep is the only way to find it; and a **count**
-has more copies than it looks like — a title, a gate, a status line and a table row are four sites
-for one number.
+Two things make it worse. An **append-only** record cannot be rewritten, so a retraction there is
+struck through in place and the grep is the only way to find it. And a **count** has more copies
+than it looks like — a title, a gate, a status line and a table row are four sites for one number.
 
 Added 2026-10-19 after the third instance in two review rounds. ADR `0043`.
+
+**One grep is not the sweep.** 2026-10-27, correcting an undated "82% of declared endpoints": the
+first grep found two sites, a careful second pass found four more, a reviewer found six after that
+— **fifteen in all, nine needing the fix**. They differed only in wording (`82% of real endpoints`,
+`82% of declared`, `Those 82%`, a mermaid edge label, and one **string written into generated data**
+that ships to a third party). Grep the **number**, not the sentence, and read every hit rather than
+the ones that look like the one you remember writing.
+
+And twice that day the _correction_ introduced the defect: "89 of 89" lost the denominator the
+script prints, and a dated re-measurement was presented as a time series an append-only graph
+forbids. **Re-check a retraction the way you would check the claim** — a sentence written to fix a
+claims error is not exempt from this rule.
 
 ## Two habits that prevent the first four
 

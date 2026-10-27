@@ -162,8 +162,6 @@ picked for you.
 
 ## What it cannot verify
 
-Being explicit about this is the point of the package.
-
 - **Most documents are not signed at all.** Of the providers live on mainnet today, Deep3 Labs signs
   and AsterPay KYA does not. An unsigned document gets `unverified`, never `verified`.
 - **Provider identity is unproven.** Anyone can publish an assessment under any provider name. The
@@ -259,7 +257,7 @@ if your agent is in the Base mirror, so nothing has to be pinned.
 
 **This package prepares the calls. It never signs them and never sends them.** You get a list of
 `{to, value, data, why}` and sign it with your own key. ARP holds no key and has no send path, so it
-cannot spend your TRUST even by mistake — that is the point, not a limitation.
+cannot spend your TRUST even by mistake.
 
 ```ts
 import {

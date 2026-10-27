@@ -44,8 +44,7 @@ it. That is the opening.
 
 ## 3. The evidence ladder
 
-This is the whole argument. Trust signals are not interchangeable; they differ by **what they cost to
-produce**.
+Trust signals are not interchangeable. They differ by **what they cost to produce**.
 
 | Tier             | The claim                                     | What it costs to produce                   | Who supplies it today                          |
 | ---------------- | --------------------------------------------- | ------------------------------------------ | ---------------------------------------------- |
