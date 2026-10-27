@@ -66,24 +66,23 @@ export function AgentDirectory() {
     return (
         <section>
             <header className="grid items-end gap-x-8 gap-y-6 pt-14 pb-10 md:grid-cols-[minmax(0,1fr)_auto]">
-                <div>
-                    <p className="font-mono text-[length:var(--text-label)] uppercase tracking-[0.08em] text-[color:var(--color-steel)]">
-                        Agent index · {chain.chain.name} {chain.chainId}
-                    </p>
-                    <h1 className="type-display mt-3.5">
-                        Agents.
-                        <br />
-                        <span className="text-[color:var(--color-grey)]">
-                            Sorted by what is at stake.
-                        </span>
-                    </h1>
-                </div>
+                {/* The name of the thing, and nothing else.
+                    The reference's header is a kicker — "AGENT INDEX · INTUITION TESTNET 13579" —
+                    over "Agents." and a dim "Sorted by what is at stake.". The user rejected both
+                    (2026-10-27), and on the same grounds as the rail's notes: the kicker restates
+                    what the page already is, and the second line comments on **our** choice of
+                    sort. Neither tells a reader anything the page does not already show — the
+                    chain and the count are in the box to the right, and the sort is a control.
+
+                    What is left is `rules/ui.md`'s own argument: "typography-driven, hierarchy
+                    comes from type weight and size". One word at `--text-display` is the design. */}
+                <h1 className="type-display">Agents</h1>
 
                 {/* One cell per fact, and only facts. The reference has three — AGENTS, STAKED,
                     RECEIPTS — and the other two would be fabricated here: the cohort read does not
                     sum staked value across the index, and receipts do not exist. */}
                 <dl className="flex overflow-hidden rounded-[var(--radius-card)] border border-[color:var(--color-rule)]">
-                    <Fact label="Agents">
+                    <Fact label="In the index">
                         {view?.total === null || view === undefined
                             ? "—"
                             : view.total.toLocaleString("en-US")}

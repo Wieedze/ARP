@@ -192,11 +192,8 @@ export function AgentTrustPanel() {
                     <header className="flex flex-wrap items-start gap-x-8 gap-y-6 pt-10 pb-12">
                         <AgentSigil view={view} viewerStaked={viewerStaked} />
                         <div className="min-w-0 flex-1">
-                            <p className="font-mono text-[length:var(--text-label)] uppercase tracking-[0.08em] text-[color:var(--color-steel)]">
-                                ERC-8004 agent · {chain.chain.name}
-                            </p>
                             <h1
-                                className={`type-title mt-3 ${
+                                className={`type-title ${
                                     view.name === null ? "text-[color:var(--color-grey)]" : ""
                                 }`}
                             >
