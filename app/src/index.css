@@ -162,14 +162,25 @@ button:focus-visible {
     border-color: var(--color-accent);
 }
 
+/* Links are silver and go paper on hover — the design handoffs' own `a` rule, and the one
+   `rules/ui.md` already implied: "one accent, and it is warm … spent on the primary action, the
+   selected state, and the viewer's own position — nothing else." A link in body copy is none of
+   those three, and the hover-to-accent below was the app spending the accent on all of them.
+
+   The user cut it (2026-10-27): "les liens en jaune, j'aime pas." He is right, and so was the
+   rule — this is the rule finally being obeyed rather than a new preference.
+
+   Still unlayered, so `color` here beats any `text-*` utility without a bang. `inherit` is gone
+   because it made a link invisible in every context whose own colour was already the text colour,
+   which is most of them; `linkClass` existed partly to paper over that. */
 a {
-    color: inherit;
+    color: var(--color-silver);
     text-decoration: none;
     transition: color var(--duration-base) var(--ease-out-quart);
 }
 
 a:hover {
-    color: var(--color-accent);
+    color: var(--color-fg);
 }
 
 ::selection {

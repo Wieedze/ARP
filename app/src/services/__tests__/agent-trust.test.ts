@@ -1,7 +1,6 @@
 import {describe, expect, it} from "vitest";
 
 import {
-    AGENT_TAB_SLUG,
     ARP_TAB_SLUG,
     buildPanelTabs,
     buildTrustPanel,
@@ -429,22 +428,20 @@ describe("buildPanelTabs", () => {
         );
     }
 
-    it("opens with the agent, then one tab per provider, then ARP", () => {
+    it("is one tab per provider, then ARP — and no agent tab", () => {
+        // The `agent` tab held capabilities and the failed reads. Those are page sections now
+        // (`PanelSection` 05 and 06), visible whether or not a strip is drawn — and a strip is
+        // drawn for 0.01% of this cohort. Keeping the tab would have rendered capabilities twice
+        // on exactly the agents that get one.
         const model = tabsFor();
 
         expect(model.tabs.map((tab) => tab.slug)).toEqual([
-            AGENT_TAB_SLUG,
             "deep3-labs",
             "asterpay-kya",
             ARP_TAB_SLUG,
         ]);
-        expect(model.tabs.map((tab) => tab.kind)).toEqual(["agent", "provider", "provider", "arp"]);
-        expect(model.tabs.map((tab) => tab.label)).toEqual([
-            "Agent",
-            "Deep3 Labs",
-            "AsterPay KYA",
-            "ARP",
-        ]);
+        expect(model.tabs.map((tab) => tab.kind)).toEqual(["provider", "provider", "arp"]);
+        expect(model.tabs.map((tab) => tab.label)).toEqual(["Deep3 Labs", "AsterPay KYA", "ARP"]);
     });
 
     it("summarises each provider by its signature verdict, never by score", () => {
@@ -507,11 +504,13 @@ describe("buildPanelTabs", () => {
         });
     });
 
-    it("opens on the agent's own data, however loud the providers are", () => {
-        // The old rule was "the provider with the most evidence behind it".
-        // Both of these publish a count, one of them 1,445 of them, and the
-        // page still opens on what the agent is for rather than on a
-        // stranger's rating of it.
+    it("opens on the first provider, not on the loudest one", () => {
+        // Two rules have been tried and both are gone. First "the provider with the most evidence
+        // behind it", which opened the page on whichever stranger had written most. Then the
+        // agent's own data, which is now sections 01 and 05 — above this strip and always visible,
+        // so a tab for it was a second copy. What is left is strip order: the first row the join
+        // produced. Both providers here publish a reviewer count, one of them 1,445, and the
+        // default ignores both.
         const thin = claimMarket(ASTERPAY_TRIPLE);
         const deep = claimMarket(DEEP3_TRIPLE);
         const model = buildPanelTabs(
@@ -556,8 +555,12 @@ describe("buildPanelTabs", () => {
             ),
         );
 
-        expect(model.defaultSlug).toBe(AGENT_TAB_SLUG);
-        expect(model.tabs[0].kind).toBe("agent");
+        // Asserted against the strip rather than against a fixture name: the invariant is "the
+        // first provider", and pinning a slug would pass for the wrong reason the day the fixture
+        // is reordered.
+        const first = providerTabs(model)[0];
+        expect(model.defaultSlug).toBe(first?.slug);
+        expect(model.tabs[0]?.kind).toBe("provider");
     });
 
     it("keeps every slug distinct, including against the reserved two", () => {
@@ -575,14 +578,9 @@ describe("buildPanelTabs", () => {
 
         const slugs = model.tabs.map((tab) => tab.slug);
         expect(new Set(slugs).size).toBe(slugs.length);
-        expect(slugs).toEqual([
-            AGENT_TAB_SLUG,
-            "agent-2",
-            "arp-2",
-            "agent-3",
-            "provider-4",
-            ARP_TAB_SLUG,
-        ]);
+        // Only `arp` is reserved now, so a provider literally called "Agent" keeps the plain
+        // slug and the second one takes the suffix.
+        expect(slugs).toEqual(["agent", "arp-2", "agent-2", "provider-4", ARP_TAB_SLUG]);
     });
 });
 
@@ -594,7 +592,6 @@ describe("selectPanelTab", () => {
 
         expect(selectPanelTab(model, "asterpay-kya").slug).toBe("asterpay-kya");
         expect(selectPanelTab(model, ARP_TAB_SLUG).kind).toBe("arp");
-        expect(selectPanelTab(model, AGENT_TAB_SLUG).kind).toBe("agent");
     });
 
     it("falls back silently when the URL names nothing this agent has", () => {

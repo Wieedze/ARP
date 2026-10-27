@@ -418,10 +418,12 @@ export function buildTrustPanel(profile: AgentProfile): TrustPanelView {
 /* Tabs                                                                        */
 /* -------------------------------------------------------------------------- */
 
-/** The agent's own data — capabilities, and the reads that did not land. */
-export const AGENT_TAB_SLUG = "agent";
-
-/** ARP's own position on this agent, which today is that it has none. */
+/**
+ * ARP's own position on this agent, which today is that it has none.
+ *
+ * It is also the default when an agent has no provider at all — a state
+ * `shouldUseTabs` makes unreachable, since the strip needs two providers to exist.
+ */
 export const ARP_TAB_SLUG = "arp";
 
 /**
@@ -454,20 +456,29 @@ export type TabSummary = {
     signature: {status: SignatureVerdict["status"] | "absent"; label: string};
 };
 
+/**
+ * ## The `agent` tab is gone
+ *
+ * There used to be a third kind, holding the agent's capabilities and the reads that failed. It
+ * existed because the layout was one column and the agent's own data had nowhere else to go. The
+ * page is numbered sections now (`PanelSection`), so that data is sections 05 and 06 at the page
+ * level — visible whether or not a strip is drawn, which it is not for 99.99% of this cohort.
+ *
+ * Leaving the tab in would have rendered capabilities twice on any agent that has two providers.
+ */
 export type PanelTab =
     | {kind: "provider"; slug: string; label: string; row: TrustRow; summary: TabSummary}
-    | {kind: "arp"; slug: string; label: string}
-    | {kind: "agent"; slug: string; label: string};
+    | {kind: "arp"; slug: string; label: string};
 
 export type PanelTabs = {
     tabs: PanelTab[];
     /**
-     * The tab a bare URL opens: always the agent's own data.
+     * The tab a bare URL opens: the first provider.
      *
-     * What the agent is for comes before anyone's opinion of it, and it is the
-     * one tab that is about the agent rather than about a provider. This
-     * replaces the earlier rule — the provider with the most evidence behind it
-     * — which opened the page on a stranger's rating.
+     * It used to be the agent's own data, on the argument that what an agent is for comes before
+     * anyone's opinion of it. That argument is now served better by the layout than by a tab — the
+     * agent's own data is sections 01 and 05, above this strip and always visible. The strip is
+     * providers only, so its default is simply the first of them.
      */
     defaultSlug: string;
 };
@@ -511,7 +522,7 @@ function summarise(row: TrustRow): TabSummary {
  * "Agent", must still address distinct tabs.
  */
 export function buildPanelTabs(rows: TrustRow[]): PanelTabs {
-    const used = new Set<string>([AGENT_TAB_SLUG, ARP_TAB_SLUG]);
+    const used = new Set<string>([ARP_TAB_SLUG]);
 
     const providers: PanelTab[] = rows.map((row, index) => {
         const base = slugify(row.providerName) || `provider-${index + 1}`;
@@ -522,12 +533,11 @@ export function buildPanelTabs(rows: TrustRow[]): PanelTabs {
     });
 
     return {
-        tabs: [
-            {kind: "agent", slug: AGENT_TAB_SLUG, label: "Agent"},
-            ...providers,
-            {kind: "arp", slug: ARP_TAB_SLUG, label: "ARP"},
-        ],
-        defaultSlug: AGENT_TAB_SLUG,
+        tabs: [...providers, {kind: "arp", slug: ARP_TAB_SLUG, label: "ARP"}],
+        // The first provider, which is the first row the join produced and so the one the graph
+        // ranked highest. Not "the provider with the most evidence": that rule was tried, and it
+        // opened the page on whichever stranger happened to have written most.
+        defaultSlug: providers[0]?.slug ?? ARP_TAB_SLUG,
     };
 }
 
@@ -540,6 +550,6 @@ export function selectPanelTab(model: PanelTabs, requested: string | null): Pane
     const asked = model.tabs.find((tab) => tab.slug === requested);
     if (asked !== undefined) return asked;
     const fallback = model.tabs.find((tab) => tab.slug === model.defaultSlug);
-    // `buildPanelTabs` always prepends the agent tab, so this is unreachable.
-    return fallback ?? {kind: "agent", slug: AGENT_TAB_SLUG, label: "Agent"};
+    // `buildPanelTabs` always appends the ARP tab, so this is unreachable.
+    return fallback ?? {kind: "arp", slug: ARP_TAB_SLUG, label: "ARP"};
 }

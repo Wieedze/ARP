@@ -78,14 +78,22 @@ export const primaryControlClass = `${SHAPE} border-[color:var(--color-accent)]!
 /**
  * A text link rendered as an action.
  *
- * `a { color: inherit }` and `a { text-decoration: none }` are **both unlayered** in `index.css`, so
- * a link's colour utility needs the bang and a plain `underline` emits nothing at all — ten sites
- * across the app were dead before this module existed. `underline!` is `text-decoration-line` with
- * importance, which is what wins.
+ * **No accent.** It was `text-[color:var(--color-accent)]!`, which put Saffron on every link in the
+ * app — and `rules/ui.md` reserves the accent for three things: the primary action, the selected
+ * state, and the viewer's own position. A link is none of them. The user cut it on sight
+ * (2026-10-27): _« les liens en jaune, j'aime pas »_. The rule had said so first.
  *
- * One consequence worth knowing before adding to it: because `color` here is `!important`,
- * `index.css`'s `a:hover { color: var(--color-accent) }` can no longer fire, so these links have no
- * hover colour shift. The underline carries the affordance instead. An unbanged `hover:text-*` added
- * later would be inert for the same reason the original was.
+ * What carries the affordance instead is the **underline**, and `index.css`'s base `a` rule now
+ * supplies the colour: silver, paper on hover. So this constant is down to the one property the
+ * cascade will not give for free.
+ *
+ * `a { text-decoration: none }` is **unlayered** in `index.css`, so a plain `underline` utility
+ * emits nothing at all — ten sites across the app were dead before this module existed.
+ * `underline!` is `text-decoration-line` with importance, which is what wins. The offset is an
+ * ordinary utility and needs no bang.
+ *
+ * The hover shift works again now that the colour is not banged here: the base `a:hover` rule
+ * fires, and an unbanged `hover:text-*` added later would still be inert against it.
  */
-export const linkClass = "text-[color:var(--color-accent)]! underline! underline-offset-4";
+export const linkClass =
+    "underline! underline-offset-4 decoration-[color:var(--color-rule-strong)]";

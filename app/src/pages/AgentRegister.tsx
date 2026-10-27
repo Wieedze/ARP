@@ -509,7 +509,7 @@ export function AgentRegister() {
                                                 href={`${deployments.chain.explorerUrl}/tx/${bringUpTxs.fundTx}`}
                                                 target="_blank"
                                                 rel="noreferrer"
-                                                className="text-[color:var(--color-accent)]"
+                                                className={linkClass}
                                             >
                                                 {bringUpTxs.fundTx.slice(0, 10)}…
                                             </a>
@@ -522,7 +522,7 @@ export function AgentRegister() {
                                                 href={`${deployments.chain.explorerUrl}/tx/${bringUpTxs.approveTx}`}
                                                 target="_blank"
                                                 rel="noreferrer"
-                                                className="text-[color:var(--color-accent)]"
+                                                className={linkClass}
                                             >
                                                 {bringUpTxs.approveTx.slice(0, 10)}…
                                             </a>
@@ -583,7 +583,7 @@ export function AgentRegister() {
                             </div>
                             <ul className="font-mono text-[length:var(--text-body-sm)] ml-4 space-y-1"></ul>
                             <p className="pt-2">
-                                <Link to="/" className="text-[color:var(--color-accent)]">
+                                <Link to="/" className={linkClass}>
                                     Watch the tools page →
                                 </Link>{" "}
                             </p>
@@ -878,7 +878,7 @@ function DoneLine({label, value, tx}: {label: string; value: string; tx: string 
     return (
         <p className="font-mono text-[length:var(--text-body-sm)]">
             <span className="text-[color:var(--color-steel)]">{label}</span>{" "}
-            <span className="text-[color:var(--color-accent)]">{value}</span>
+            <span className={linkClass}>{value}</span>
             {tx ? (
                 <>
                     {"  "}
@@ -886,7 +886,7 @@ function DoneLine({label, value, tx}: {label: string; value: string; tx: string 
                         href={`${deployments.chain.explorerUrl}/tx/${tx}`}
                         target="_blank"
                         rel="noreferrer"
-                        className="text-[color:var(--color-grey)] hover:text-[color:var(--color-accent)]"
+                        className="text-[color:var(--color-grey)]! hover:text-[color:var(--color-fg)]!"
                     >
                         {tx.slice(0, 8)}…{tx.slice(-6)} ↗
                     </a>

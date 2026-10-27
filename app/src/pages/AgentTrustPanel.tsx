@@ -4,7 +4,8 @@ import {useAccount} from "wagmi";
 
 import {linkClass} from "../lib/control-class";
 import {AgentBacking} from "../components/agent/AgentBacking";
-import {AgentIdentityPanel} from "../components/agent/AgentIdentityPanel";
+import {AgentIdentityPanel, AgentSigil} from "../components/agent/AgentIdentityPanel";
+import {PanelSection} from "../components/agent/PanelSection";
 import {RatingRow} from "../components/agent/RatingRow";
 import {CapabilitySection} from "../components/agent/CapabilitySection";
 import {DeclaredUses} from "../components/usage/DeclaredUses";
@@ -183,93 +184,126 @@ export function AgentTrustPanel() {
                 </section>
             ) : (
                 <>
-                    <header className="mt-8 mb-10">
-                        <div className="flex items-start gap-4">
-                            {view.image !== null ? (
-                                <AgentAvatar src={view.image} name={view.name ?? view.tokenId} />
-                            ) : null}
-                            <div className="min-w-0">
-                                <h1 className="type-title">
-                                    {view.name ?? `Token ${view.tokenId}`}
-                                </h1>
-                                <p className="mt-2 font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-steel)] break-all">
-                                    {view.caip19}
+                    {/* The header: the mark, the name, what it says about itself. The sigil is
+                        beside the name rather than at the top of a metadata column, because it is
+                        the agent's identity and that is where an identity mark goes. The avatar
+                        only shows when the agent chose one — the sigil is generated and always
+                        true, the avatar is whatever was uploaded. */}
+                    <header className="flex flex-wrap items-start gap-x-8 gap-y-6 pt-10 pb-12">
+                        <AgentSigil view={view} viewerStaked={viewerStaked} />
+                        <div className="min-w-0 flex-1">
+                            <p className="font-mono text-[length:var(--text-label)] uppercase tracking-[0.08em] text-[color:var(--color-steel)]">
+                                ERC-8004 agent · {chain.chain.name}
+                            </p>
+                            <h1
+                                className={`type-title mt-3 ${
+                                    view.name === null ? "text-[color:var(--color-grey)]" : ""
+                                }`}
+                            >
+                                {view.name ?? `Token ${view.tokenId}`}
+                            </h1>
+                            <p className="mt-4 break-all font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
+                                {view.caip19}
+                            </p>
+                            {view.isFallbackMetadata ? (
+                                <p className="mt-5 inline-flex max-w-[64ch] rounded-[var(--radius-tag)] border border-dashed border-[color:var(--color-rule-strong)] px-3 py-1.5 font-mono text-[length:var(--text-label)] text-[color:var(--color-silver)]">
+                                    Name and URL are the indexer&rsquo;s stand-in — this agent
+                                    registered without metadata
                                 </p>
-                            </div>
+                            ) : view.description !== null ? (
+                                <p className="mt-5 max-w-[62ch] text-[color:var(--color-silver)]">
+                                    {view.description}
+                                </p>
+                            ) : null}
                         </div>
-
-                        {view.isFallbackMetadata ? (
-                            <p className="mt-4 border border-[color:var(--color-rule-strong)] px-3 py-2 text-[length:var(--text-body-sm)] max-w-[64ch]">
-                                This name and URL are the indexer&rsquo;s stand-in. The agent
-                                registered without metadata.
-                            </p>
-                        ) : view.description !== null ? (
-                            <p className="mt-4 max-w-[68ch] text-[color:var(--color-steel)]">
-                                {view.description}
-                            </p>
+                        {view.image !== null ? (
+                            <AgentAvatar src={view.image} name={view.name ?? view.tokenId} />
                         ) : null}
                     </header>
 
-                    <div className="grid lg:grid-cols-[minmax(0,17rem)_minmax(0,1fr)] gap-x-12 gap-y-12">
-                        <AgentIdentityPanel view={view} viewerStaked={viewerStaked} />
+                    {/* Numbered sections, in the order the page argues: who it is, what the market
+                        on it says, who used it, what others rate it. Each rung costs more to
+                        produce than the one above it, and the ordering is what says so — the
+                        reference's PAID/FREE pills are gone (user, 2026-10-27). */}
+                    <PanelSection number="01" title="Identity" note="Read from the registry">
+                        <AgentIdentityPanel view={view} />
+                    </PanelSection>
 
-                        <div className="min-w-0">
-                            {/* First in the column, because it is the market on **this agent**,
-                                which is what the page is about. The ratings below it are one
-                                provider's opinion, which is the provider's business and runs
-                                beside this rather than feeding it (ADR `0056`).
+                    {/* The market on **this agent**, which is what the page is about. The ratings
+                        below are one provider's opinion, which runs beside this rather than feeding
+                        it (ADR `0056`).
 
-                                Absent when the graph has no atom for the agent: there is no vault
-                                to deposit into, so the section would be a form with nowhere to
-                                send. Measured on mainnet 1155 — most of the mirrored cohort does
-                                resolve to one, and the ones that do not are the honest gap. */}
-                            {backingAtomId === null ? null : (
-                                <div className="mb-16 pb-16 border-b border-[color:var(--color-rule)]">
-                                    {/* The same string the `h1` above uses. `view.tokenId` alone
-                                        made the confirmation read "deposit onto 2340" while the
-                                        heading said "Token 2340" — the one screen where the
-                                        subject has to be unmistakable (ADR `0017` safeguard 4). */}
-                                    <AgentBacking
-                                        atomTermId={backingAtomId}
-                                        name={view.name ?? `Token ${view.tokenId}`}
-                                        nameIsId={view.name === null}
-                                    />
-                                </div>
-                            )}
+                        Absent when the graph has no atom: no vault to deposit into, so the section
+                        would be a form with nowhere to send. Measured on mainnet 1155 — most of the
+                        mirrored cohort does resolve to one, and the ones that do not are the honest
+                        gap. */}
+                    {backingAtomId === null ? null : (
+                        <PanelSection
+                            number="02"
+                            title="Backing"
+                            note="Deposits on this agent's own atom"
+                        >
+                            {/* The same string the `h1` above uses. `view.tokenId` alone made the
+                                confirmation read "deposit onto 2340" while the heading said
+                                "Token 2340" — the one screen where the subject has to be
+                                unmistakable (ADR `0017` safeguard 4). */}
+                            <AgentBacking
+                                atomTermId={backingAtomId}
+                                name={view.name ?? `Token ${view.tokenId}`}
+                                nameIsId={view.name === null}
+                            />
+                        </PanelSection>
+                    )}
 
-                            {/* Who declared using **this agent** — section 03 of the delivered
-                                design, in our own implementation. The same component the atom page
-                                uses, because it is the same read: `uses` edges whose object is this
-                                atom. Keyed on the agent's atom rather than its token id, so it is
-                                absent for the same reason the backing section is — no atom, no
-                                edges to point at it. */}
-                            {backingAtomId === null ? null : (
-                                <div className="mb-16 pb-16 border-b border-[color:var(--color-rule)]">
-                                    <h2 className="font-medium">Who declared using it</h2>
-                                    <div className="mt-4">
-                                        <DeclaredUses atomId={backingAtomId} />
-                                    </div>
-                                </div>
-                            )}
+                    {/* The same component the atom page uses, because it is the same read: `uses`
+                        edges whose object is this atom. Keyed on the agent's atom rather than its
+                        token id, so it is absent for the same reason section 02 is. */}
+                    {backingAtomId === null ? null : (
+                        <PanelSection number="03" title="Who used it" note="Declared, and paid for">
+                            <DeclaredUses atomId={backingAtomId} />
+                        </PanelSection>
+                    )}
 
-                            {shouldUseTabs(view.rows) ? (
-                                <TabbedClaims
-                                    view={view}
-                                    baseId={baseId}
-                                    requestedTab={searchParams.get(TAB_PARAM)}
-                                    onSelectTab={handleSelectTab}
-                                    session={sessionQuery.data}
-                                />
-                            ) : (
-                                <StackedClaims view={view} session={sessionQuery.data} />
-                            )}
+                    <PanelSection
+                        number="04"
+                        title="Ratings"
+                        note="Published by third parties, read from their own documents"
+                    >
+                        {shouldUseTabs(view.rows) ? (
+                            <TabbedClaims
+                                view={view}
+                                baseId={baseId}
+                                requestedTab={searchParams.get(TAB_PARAM)}
+                                onSelectTab={handleSelectTab}
+                                session={sessionQuery.data}
+                            />
+                        ) : (
+                            <StackedClaims view={view} session={sessionQuery.data} />
+                        )}
+                    </PanelSection>
 
-                            <p className="mt-16 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)] max-w-[64ch]">
-                                Graph read from{" "}
-                                <span className="font-mono">{chain.graphqlUrl}</span>.
-                            </p>
-                        </div>
-                    </div>
+                    <PanelSection number="05" title="Capabilities" note="What it says it can do">
+                        <CapabilitySection
+                            groups={view.capabilities}
+                            count={view.capabilityCount}
+                        />
+                    </PanelSection>
+
+                    {/* Only when something actually failed. An always-present "nothing failed"
+                        section would be a row of reassurance, which is not information. */}
+                    {view.sourceErrors.length > 0 || view.conflicts.length > 0 ? (
+                        <PanelSection
+                            number="06"
+                            title="Not read"
+                            note="Sources that failed, and claims that disagree"
+                        >
+                            <UnreadSources view={view} />
+                        </PanelSection>
+                    ) : null}
+
+                    <p className="border-t border-[color:var(--color-rule)] pt-5 font-mono text-[length:var(--text-label)] text-[color:var(--color-grey)]">
+                        Graph read from {chain.graphqlUrl}
+                    </p>
                 </>
             )}
         </article>
@@ -300,7 +334,6 @@ function TabbedClaims({
 }) {
     const model = buildPanelTabs(view.rows);
     const selected = selectPanelTab(model, requestedTab);
-    const hasUnreadSources = view.sourceErrors.length > 0 || view.conflicts.length > 0;
 
     return (
         <>
@@ -327,10 +360,8 @@ function TabbedClaims({
                        across a tab switch and the stake control keeps the quote
                        it built for the previous provider's claim. */
                     <RatingRow key={selected.row.id} row={selected.row} session={session} />
-                ) : selected.kind === "arp" ? (
-                    <ArpPosition />
                 ) : (
-                    <AgentData view={view} hasUnreadSources={hasUnreadSources} />
+                    <ArpPosition />
                 )}
             </div>
         </>
@@ -346,64 +377,21 @@ function TabbedClaims({
 function StackedClaims({view, session}: ClaimsProps) {
     return (
         <>
-            <section>
-                <h2 className="font-medium">Ratings</h2>
-                {view.rows.length === 0 ? (
-                    <p className="mt-6 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)] max-w-[60ch]">
-                        No trust provider has written an edge about this agent.
-                    </p>
-                ) : (
-                    <div className="mt-8 flex flex-col gap-14">
-                        {view.rows.map((row) => (
-                            <RatingRow key={row.id} row={row} session={session} />
-                        ))}
-                    </div>
-                )}
-
-                <div className="mt-14">
-                    <ArpPosition />
+            {view.rows.length === 0 ? (
+                <p className="max-w-[60ch] text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
+                    No trust provider has written an edge about this agent.
+                </p>
+            ) : (
+                <div className="flex flex-col gap-14">
+                    {view.rows.map((row) => (
+                        <RatingRow key={row.id} row={row} session={session} />
+                    ))}
                 </div>
-            </section>
-
-            <section className="mt-16">
-                <h2 className="font-medium">Capabilities</h2>
-                <div className="mt-6">
-                    <CapabilitySection groups={view.capabilities} count={view.capabilityCount} />
-                </div>
-            </section>
-
-            {view.sourceErrors.length > 0 || view.conflicts.length > 0 ? (
-                <section className="mt-16">
-                    <h2 className="font-medium">What could not be read</h2>
-                    <div className="mt-4">
-                        <UnreadSources view={view} />
-                    </div>
-                </section>
-            ) : null}
+            )}
+            <div className="mt-9">
+                <ArpPosition />
+            </div>
         </>
-    );
-}
-
-/** The `Agent` tab: what this agent is for, and what could not be read about it. */
-function AgentData({view, hasUnreadSources}: {view: TrustPanelView; hasUnreadSources: boolean}) {
-    return (
-        <div className="flex flex-col gap-14">
-            <section>
-                <h3 className="font-medium">Capabilities</h3>
-                <div className="mt-6">
-                    <CapabilitySection groups={view.capabilities} count={view.capabilityCount} />
-                </div>
-            </section>
-
-            {hasUnreadSources ? (
-                <section>
-                    <h3 className="font-medium">What could not be read</h3>
-                    <div className="mt-4">
-                        <UnreadSources view={view} />
-                    </div>
-                </section>
-            ) : null}
-        </div>
     );
 }
 

@@ -1,6 +1,7 @@
 import {useAccount} from "wagmi";
 
 import {useClaimVaults} from "../../hooks/use-claim-vaults";
+import {linkClass} from "../../lib/control-class";
 import type {TrustRow} from "../../services/agent-trust";
 import {describeFetchError} from "../../services/trust-format";
 import type {StakeSession} from "../../services/trust-stake";
@@ -133,7 +134,7 @@ export function RatingRow({
                                         href={row.documentUrl}
                                         target="_blank"
                                         rel="noreferrer"
-                                        className="font-mono text-[color:var(--color-accent)] break-all"
+                                        className={`font-mono break-all ${linkClass}`}
                                     >
                                         raw document ↗
                                     </a>

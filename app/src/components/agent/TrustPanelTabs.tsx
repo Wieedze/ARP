@@ -18,10 +18,15 @@ import {panelDomId, tabDomId} from "./tab-ids";
  * provider's view is shareable and a refresh keeps the place.
  */
 
-/** The second line for the two tabs that carry no provider's claim. */
-const STATIC_LINES: Record<"arp" | "agent", string> = {
+/**
+ * The second line for the one tab that carries no provider's claim.
+ *
+ * It was a pair — the other was the `agent` tab's "capabilities". That tab is gone: the agent's
+ * own data is page sections 01 and 05 now, above this strip and visible whether or not a strip is
+ * drawn (`services/agent-trust.ts`).
+ */
+const STATIC_LINES: Record<"arp", string> = {
     arp: "no rating",
-    agent: "capabilities",
 };
 
 /**

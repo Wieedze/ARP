@@ -2,7 +2,7 @@ import {useId, useState} from "react";
 import {useAccount, useSwitchChain} from "wagmi";
 import type {Hex} from "viem";
 
-import {controlClass, primaryControlClass} from "../../lib/control-class";
+import {controlClass, linkClass, primaryControlClass} from "../../lib/control-class";
 
 import {useStakeActions} from "../../hooks/use-stake-actions";
 import {useChainChoice} from "../../lib/chain-choice";
@@ -373,7 +373,7 @@ export function StakeControl({
                                 href={`${phase.quote?.chain.explorerUrl ?? chain.explorerUrl}/tx/${phase.hash}`}
                                 target="_blank"
                                 rel="noreferrer"
-                                className="text-[color:var(--color-accent)]"
+                                className={linkClass}
                             >
                                 {truncateMiddle(phase.hash, 12, 8)} ↗
                             </a>
@@ -631,7 +631,7 @@ function Receipt({
                     href={`${quote.chain.explorerUrl}/tx/${hash}`}
                     target="_blank"
                     rel="noreferrer"
-                    className="text-[color:var(--color-accent)]"
+                    className={linkClass}
                 >
                     {truncateMiddle(hash, 12, 8)} ↗
                 </a>
