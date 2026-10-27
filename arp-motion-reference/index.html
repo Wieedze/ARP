@@ -1,0 +1,981 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>ARP — motion reference</title>
+        <link
+            href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=Geist+Mono:wght@400;500;600&display=swap"
+            rel="stylesheet"
+        />
+
+        <!--
+          ============================================================================
+          WHAT THIS FILE IS
+
+          An exact, standalone reproduction of ARP's landing page as it stands on
+          2026-10-27. Every number below is lifted from the running app, not
+          approximated: the durations, the easing, the thresholds, the copy, the
+          colours. Open it in a browser; it needs no build and no network beyond the
+          font.
+
+          It exists so a design agent can rework the page WITHOUT reading the React
+          app, and so that whatever comes back can be compared against what it
+          replaces.
+
+          ----------------------------------------------------------------------------
+          WHAT IS MECHANISM (do not change without saying so) vs DECORATION (yours)
+
+          MECHANISM — these are load-bearing and each one was arrived at by a failure:
+
+            1. The deck cross-fades on CONTINUOUS scroll progress, not on a rounded
+               index. The first version rounded to the nearest scene and swapped a
+               class behind a 520ms transition: that reads as a jump followed by a
+               slow fade, because the swap is instantaneous at the midpoint and the
+               motion arrives after the decision.
+
+            2. Durations are 240-260ms. Practitioner guidance for a scroll reveal is
+               150-250ms with opacity and a small transform. 520/620ms was the first
+               attempt and the user's word for it was "il faut rendre ça plus fluide".
+
+            3. position: sticky, never JS pinning. The scrollbar stays honest, and
+               Home / End / PageDown / find-in-page all keep working.
+
+            4. The deck REFUSES TO PIN rather than clip: under prefers-reduced-motion,
+               below 680px tall or 900px wide, or before JS has run, it renders as an
+               ordinary stacked document. A pinned scene cannot scroll, so a scene
+               that does not fit would be cut off with no way to reach the rest.
+               Verified across four configurations: 452 words reachable in every one.
+
+            5. The deck owns hash navigation. An inactive scene is position:absolute
+               inside the sticky stage, so the browser's own anchor handling lands on
+               the wrong scene — measured, #build moved the page 268px and left the
+               target at opacity 0.
+
+            6. Inactive scenes carry inert + aria-hidden. Otherwise six screens of
+               links are in the tab order at once.
+
+            7. Inside a pinned deck, element stagger is triggered by THE SCENE
+               BECOMING ACTIVE, not by IntersectionObserver. Every scene is mounted
+               and inside the viewport the whole time at opacity 0, so an observer
+               fires for all of them at once and every stagger plays off-screen.
+
+          DECORATION — change freely, this is where the creativity goes:
+
+            the per-scene composition, what moves and in which direction, the stagger
+            order within a scene, whether a scene has one focal element or several,
+            type scale within a scene, the particle field, the progress rail, whether
+            a scene uses the full width or a column.
+
+          ----------------------------------------------------------------------------
+          WHAT THE PAGE IS ABOUT, in one sentence, because motion that fights it fails:
+
+            Backing what you use raises its reputation and therefore its value, so a
+            position is a bet on what you use and what you believe.
+
+          Every figure on the real page is somebody's actual deposit, read live from
+          a chain. THE PAGE SHOWS NOTHING IT HAS NOT READ — where there is no data it
+          says so ("No declaration on this chain yet"). Never animate a placeholder
+          into a figure: the swap under it is a lie the motion told.
+          ============================================================================
+        -->
+
+        <style>
+            /* ---- tokens, copied verbatim from app/src/index.css ------------------ */
+            :root {
+                --color-ground: #0e0f10; /* the page */
+                --color-bg: #121314; /* panels, code blocks */
+                --color-raised: #1b1d1f;
+                --color-rule: #2e3134; /* hairlines */
+                --color-rule-strong: #43474b; /* control borders, table head rule */
+                --color-grey: #6b7075; /* dim DISPLAY text only — 3.8:1, never body */
+                --color-numeral: #2a2d30; /* big ghost numerals — not text, so not AA */
+                --color-watermark: #17181a;
+                --color-steel: #8a9096; /* labels, secondary text — 5.9:1 */
+                --color-silver: #a9aeb2; /* body secondary — 8.5:1 */
+                --color-fg: #e6e8e6; /* paper, primary text — 15.5:1 */
+
+                /* ONE accent. It is spent on the primary action, the selected state,
+                   and the viewer's own position. Nothing else. Two rounds of review
+                   were spent taking it off prose. */
+                --color-accent: #ffb020; /* 10.4:1 */
+                --color-accent-ink: #121314; /* ink on the accent — 10.17:1 */
+
+                /* The single semantic exception: a signature mismatch, or a module
+                   used but never declared. Nothing decorative. */
+                --color-alarm: #ff4d6d;
+
+                --font-display: "Archivo", "Arial Narrow", system-ui, sans-serif;
+                --font-sans: "Archivo", system-ui, sans-serif;
+                --font-mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+                --text-display: clamp(44px, 6.4vw, 88px);
+                --text-section: clamp(28px, 4vw, 52px);
+                --text-body: 15px;
+                --text-body-sm: 13px;
+                --text-label: 11px;
+
+                --radius-tag: 6px;
+                --radius-control: 8px;
+                --radius-button: 10px;
+                --radius-card: 12px;
+
+                --leading-display: 0.92;
+                --leading-section: 0.95;
+                --leading-body: 1.5;
+
+                /* The one motion curve and the base duration the app already had. */
+                --ease-out-quart: cubic-bezier(0.16, 1, 0.3, 1);
+                --duration-base: 200ms;
+
+                /* --- the deck's own numbers, from SceneDeck.tsx ------------------- */
+                --scene-fade: 240ms; /* FADE_MS   */
+                --scene-slide: 18px; /* the translate at one scene's distance */
+                --reveal-fade: 260ms; /* Reveal's duration */
+                --reveal-step: 80ms; /* the stagger between siblings */
+            }
+
+            /* HOLD = 0.55 and the min viewport are in JS below, because the fade is
+               computed per frame from scroll position rather than declared in CSS. */
+
+            * {
+                box-sizing: border-box;
+            }
+            html {
+                scroll-behavior: smooth;
+            }
+            body {
+                margin: 0;
+                background: var(--color-ground);
+                color: var(--color-fg);
+                font-family: var(--font-sans);
+                font-size: var(--text-body);
+                line-height: var(--leading-body);
+                -webkit-font-smoothing: antialiased;
+            }
+
+            /* Display type: Archivo 800 at 125% width. The face WITHOUT a size, so a
+               call site sets its own — the sized variants are unlayered in the app and
+               silently beat any utility, which shipped two inert overrides. */
+            .face {
+                font-family: var(--font-display);
+                font-weight: 800;
+                font-stretch: 125%;
+                letter-spacing: -0.02em;
+                line-height: 1;
+            }
+            .label {
+                font-family: var(--font-mono);
+                font-size: var(--text-label);
+                text-transform: uppercase;
+                letter-spacing: 0.08em;
+                color: var(--color-steel);
+            }
+            .mono {
+                font-family: var(--font-mono);
+                font-size: var(--text-body-sm);
+            }
+            .dim {
+                color: var(--color-grey);
+            }
+            .silver {
+                color: var(--color-silver);
+            }
+            .steel {
+                color: var(--color-steel);
+            }
+
+            /* ---- shell ----------------------------------------------------------- */
+            nav {
+                position: sticky;
+                top: 0;
+                z-index: 20;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 28px;
+                height: 88px;
+                border-bottom: 1px solid var(--color-rule);
+                background: var(--color-ground);
+            }
+            .shell {
+                width: 100%;
+                max-width: 1320px;
+                margin: 0 auto;
+                padding: 0 24px;
+            }
+
+            /* ---- the deck -------------------------------------------------------- */
+            /* svh, not vh: on mobile the dynamic toolbar makes vh taller than what is
+               visible, which clips a pinned scene. */
+            #deck[data-pinned="true"] {
+                height: calc(var(--scenes) * 100svh);
+            }
+            #deck[data-pinned="true"] .stage {
+                position: sticky;
+                top: 0;
+                display: flex;
+                align-items: center;
+                height: 100svh;
+                overflow: hidden;
+            }
+            .stage-inner {
+                position: relative;
+                width: 100%;
+            }
+            .scene {
+                width: 100%;
+            }
+            #deck[data-pinned="true"] .scene {
+                will-change: opacity, transform;
+                transition:
+                    opacity var(--scene-fade) var(--ease-out-quart),
+                    transform var(--scene-fade) var(--ease-out-quart);
+            }
+            #deck[data-pinned="true"] .scene[data-active="false"] {
+                position: absolute;
+                inset-inline: 0;
+                top: 0;
+                pointer-events: none;
+            }
+            /* Stacked: no pinning, no fading, every scene in the flow. This is what a
+               reduced-motion reader, a phone and a short window all get, and it has to
+               be a design rather than a degradation — most readers only see this. */
+            #deck[data-pinned="false"] .scene {
+                padding: 64px 0;
+            }
+            #deck[data-pinned="false"] .scene:first-child {
+                padding-top: 0;
+            }
+
+            /* ---- staggered arrival within a scene -------------------------------- */
+            .rev {
+                transition:
+                    opacity var(--reveal-fade) var(--ease-out-quart),
+                    transform var(--reveal-fade) var(--ease-out-quart);
+            }
+            .scene[data-active="false"] .rev {
+                opacity: 0;
+                transform: translateY(12px);
+            }
+            .scene[data-active="true"] .rev {
+                opacity: 1;
+                transform: none;
+                /* The delay is on the way IN. Put it on the hidden state and the
+                   element waits before LEAVING, which drags every hand-over. */
+                transition-delay: calc(var(--i, 0) * var(--reveal-step));
+            }
+            @media (prefers-reduced-motion: reduce) {
+                html {
+                    scroll-behavior: auto;
+                }
+                .rev,
+                .scene {
+                    transition: none !important;
+                    opacity: 1 !important;
+                    transform: none !important;
+                }
+            }
+
+            /* ---- the progress rail ----------------------------------------------- */
+            #rail {
+                position: fixed;
+                right: 24px;
+                top: 50%;
+                z-index: 10;
+                display: none;
+                flex-direction: column;
+                gap: 8px;
+                transform: translateY(-50%);
+                pointer-events: none;
+            }
+            #deck[data-pinned="true"] ~ #rail {
+                display: flex;
+            }
+            #rail span {
+                width: 6px;
+                height: 6px;
+                border-radius: 999px;
+                background: var(--color-rule-strong);
+                transition: background-color var(--duration-base) var(--ease-out-quart);
+            }
+            #rail span[data-on="true"] {
+                background: var(--color-accent);
+            }
+
+            /* ---- pieces ---------------------------------------------------------- */
+            .hero {
+                position: relative;
+            }
+            /* The field bleeds past the 1320 shell to the viewport edge. Inside the
+               shell it read as a dead margin on a wide screen. */
+            .field {
+                position: absolute;
+                inset-block: 0;
+                left: 0;
+                right: calc(50% - 50vw);
+            }
+            .hero-copy {
+                position: relative;
+                display: flex;
+                flex-direction: column;
+                justify-content: flex-end;
+                gap: 24px;
+                max-width: 40rem;
+                min-height: min(66svh, 34rem);
+                padding: clamp(24px, 5vw, 64px) 0;
+            }
+            h1 {
+                margin: 0;
+                font-size: clamp(36px, 4.4vw, 60px);
+            }
+            h2 {
+                margin: 0;
+                font-size: clamp(30px, 4.4vw, 56px);
+            }
+
+            /* The ONE filled control. An <a> is not covered by the base button rule,
+               so the radius is declared here — it shipped square once. */
+            .cta {
+                display: inline-flex;
+                align-items: center;
+                height: 48px;
+                padding: 0 22px;
+                border: 0;
+                border-radius: var(--radius-button);
+                background: var(--color-accent);
+                color: var(--color-accent-ink);
+                font-weight: 700;
+                font-size: 15px;
+                text-decoration: none;
+            }
+            .quiet {
+                font-family: var(--font-mono);
+                font-size: 12px;
+                color: var(--color-silver);
+                text-decoration: underline;
+                text-underline-offset: 4px;
+                text-decoration-color: var(--color-rule-strong);
+            }
+
+            .beat {
+                position: absolute;
+                right: clamp(20px, 4vw, 56px);
+                bottom: clamp(20px, 4vw, 56px);
+                display: flex;
+                flex-direction: column;
+                gap: 4px;
+                min-width: min(18rem, 70vw);
+                padding: 12px 14px;
+                border: 1px solid var(--color-rule-strong);
+                border-radius: var(--radius-button);
+                background: color-mix(in srgb, var(--color-bg) 90%, transparent);
+            }
+            .beat-head {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                padding-bottom: 8px;
+                border-bottom: 1px solid var(--color-rule);
+                font-family: var(--font-mono);
+                font-size: 10px;
+                text-transform: uppercase;
+                letter-spacing: 0.06em;
+                color: var(--color-steel);
+            }
+            /* Grey, not accent: the accent means "somebody paid", and on mainnet the
+               count is 0. A warm dot here said the opposite of its own label. */
+            .beat-dot {
+                width: 6px;
+                height: 6px;
+                border-radius: 999px;
+                background: var(--color-rule-strong);
+            }
+
+            .ticker {
+                display: flex;
+                align-items: center;
+                height: 48px;
+                margin-top: 24px;
+                border-top: 1px solid var(--color-rule);
+                border-bottom: 1px solid var(--color-rule);
+                font-family: var(--font-mono);
+                font-size: var(--text-body-sm);
+                color: var(--color-steel);
+            }
+
+            .sec-head {
+                display: flex;
+                flex-wrap: wrap;
+                align-items: flex-end;
+                justify-content: space-between;
+                gap: 24px;
+                margin-bottom: 32px;
+            }
+            .rows {
+                border-top: 1px solid var(--color-rule-strong);
+            }
+            .row {
+                display: grid;
+                gap: 24px;
+                align-items: baseline;
+                padding: 28px 0;
+                border-bottom: 1px solid var(--color-rule);
+                grid-template-columns: 5rem minmax(0, 1fr) minmax(0, 1.1fr);
+            }
+            .row.rung {
+                grid-template-columns: 5rem minmax(0, 1fr) minmax(0, 1.3fr) minmax(0, 1fr) 9rem;
+                align-items: center;
+            }
+            .row.off {
+                color: var(--color-steel);
+            }
+            .numeral {
+                font-size: clamp(34px, 5vw, 56px);
+                color: var(--color-numeral);
+            }
+            .row.rung:not(.off) .numeral {
+                color: var(--color-fg);
+            }
+            .row-name {
+                font-size: 22px;
+            }
+            .who {
+                display: flex;
+                align-items: center;
+                justify-content: flex-end;
+                gap: 8px;
+                font-family: var(--font-mono);
+                font-size: var(--text-body-sm);
+            }
+            .who i {
+                width: 6px;
+                height: 6px;
+                border-radius: 999px;
+                background: var(--color-rule-strong);
+                font-style: normal;
+            }
+            .row.rung:not(.off) .who i {
+                background: var(--color-accent);
+            }
+
+            .cards {
+                display: grid;
+                gap: 20px;
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+            }
+            .card {
+                display: flex;
+                flex-direction: column;
+                gap: 16px;
+                padding: 20px;
+                border: 1px solid var(--color-rule);
+                border-radius: var(--radius-card);
+            }
+            .card.primary {
+                border-color: var(--color-accent);
+            }
+            .card dl {
+                display: grid;
+                grid-template-columns: auto 1fr;
+                gap: 6px 20px;
+                margin: 0;
+                font-family: var(--font-mono);
+                font-size: var(--text-body-sm);
+            }
+            .card dt {
+                color: var(--color-steel);
+            }
+            .card dd {
+                margin: 0;
+                text-align: right;
+            }
+            /* The one figure on the page that wears the accent: the primary action's
+               own cost, inside the primary action's own card. */
+            .card.primary dd.warm {
+                color: var(--color-accent);
+            }
+
+            .manifesto {
+                font-size: clamp(36px, 5.4vw, 72px);
+                line-height: 1.02;
+            }
+            pre {
+                margin: 0;
+                padding: 24px;
+                border: 1px solid var(--color-rule);
+                border-radius: var(--radius-card);
+                background: var(--color-bg);
+                font-family: var(--font-mono);
+                font-size: var(--text-body-sm);
+                color: var(--color-silver);
+                overflow-x: auto;
+            }
+            pre b {
+                color: var(--color-steel);
+                font-weight: 400;
+            }
+            .build {
+                display: grid;
+                gap: 40px;
+                align-items: center;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            footer {
+                margin-top: 96px;
+                padding: 28px 24px 0;
+                border-top: 1px solid var(--color-rule);
+                overflow: hidden;
+            }
+            .wordmark {
+                display: block;
+                width: 100%;
+                margin-top: 24px;
+                font-size: clamp(150px, 30vw, 420px);
+                line-height: 0.74;
+                color: var(--color-watermark);
+                text-align: center;
+            }
+
+            @media (max-width: 900px) {
+                .cards,
+                .build {
+                    grid-template-columns: 1fr;
+                }
+                .row,
+                .row.rung {
+                    grid-template-columns: 1fr;
+                    gap: 8px;
+                }
+                .who {
+                    justify-content: flex-start;
+                }
+                .beat {
+                    position: static;
+                    margin-top: 24px;
+                }
+            }
+        </style>
+    </head>
+
+    <body>
+        <nav>
+            <span class="label">Agents</span>
+            <span class="label">Tools</span>
+            <span class="face" style="font-size: 18px">ARP</span>
+            <span class="label">Your agent</span>
+            <span class="label">Add a tool</span>
+        </nav>
+
+        <!-- --scenes drives the spacer height; keep it equal to the scene count. -->
+        <div id="deck" class="shell" data-pinned="false" style="--scenes: 6">
+            <div class="stage">
+                <div class="stage-inner">
+                    <!-- ===== SCENE 1 — the hero ================================= -->
+                    <section class="scene hero" data-scene="0" data-active="true">
+                        <canvas class="field" id="field"></canvas>
+                        <div class="hero-copy">
+                            <p class="label rev" style="--i: 0">ARP · Agent Reputation Protocol</p>
+                            <h1 class="face rev" style="--i: 1">
+                                The reputation pulse for autonomous agents and tools.
+                            </h1>
+                            <p class="silver rev" style="--i: 2; font-size: 18px; max-width: 44ch">
+                                Every beat is someone paying to say what they saw.
+                            </p>
+                            <div
+                                class="rev"
+                                style="--i: 3; display: flex; gap: 20px; align-items: center"
+                            >
+                                <a class="cta" href="#">Open the agent index</a>
+                                <a class="quiet" href="#build">or build against it →</a>
+                            </div>
+                        </div>
+
+                        <!-- Real or absent. On mainnet today this card is empty, and
+                             saying so is the page's most load-bearing sentence. -->
+                        <div class="beat">
+                            <span class="beat-head"><i class="beat-dot"></i> Pulse · 0 on mainnet</span>
+                            <span style="font-size: 13px">No declaration on this chain yet.</span>
+                            <span class="mono steel" style="font-size: 10px">
+                                Nobody has run the loop here — including us.
+                            </span>
+                        </div>
+
+                        <div class="ticker rev" style="--i: 4">
+                            No agent has declared using anything on mainnet yet.
+                        </div>
+                    </section>
+
+                    <!-- ===== SCENE 2 — why anyone would ========================= -->
+                    <section class="scene" data-scene="1" data-active="false">
+                        <div class="sec-head rev" style="--i: 0">
+                            <h2 class="face">
+                                Back what you use.<br />
+                                <span class="dim">If others follow, your position is worth more.</span>
+                            </h2>
+                            <span class="label">Fig. 01 · why anyone would</span>
+                        </div>
+                        <div class="rows">
+                            <div class="row rev" style="--i: 1">
+                                <span class="face numeral">01</span>
+                                <span class="face row-name">You use something</span>
+                                <span class="silver">
+                                    A tool, a model, another agent. Saying so costs a 0.1 TRUST fee
+                                    that does not come back, and your address is on it for good.
+                                </span>
+                            </div>
+                            <div class="row rev" style="--i: 2">
+                                <span class="face numeral">02</span>
+                                <span class="face row-name">You take a position</span>
+                                <span class="silver">
+                                    TRUST into its vault. Not a payment to anyone — it stays yours,
+                                    and you can take it back whenever you want.
+                                </span>
+                            </div>
+                            <div class="row rev" style="--i: 3">
+                                <span class="face numeral">03</span>
+                                <span class="face row-name">Others arrive, or they do not</span>
+                                <span class="silver">
+                                    Every deposit after yours is priced higher on the curve. If
+                                    nobody follows, you still hold exactly what you put in.
+                                </span>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- ===== SCENE 3 — the evidence ladder ====================== -->
+                    <section class="scene" data-scene="2" data-active="false">
+                        <div class="sec-head rev" style="--i: 0">
+                            <h2 class="face">
+                                Four rungs.<br />
+                                <span class="dim">ARP stands on the top two.</span>
+                            </h2>
+                            <span class="label">Fig. 02 · the evidence ladder</span>
+                        </div>
+                        <div class="rows">
+                            <div class="row rung off rev" style="--i: 1">
+                                <span class="face numeral">01</span>
+                                <span class="face row-name">Asserted</span>
+                                <span class="silver">"I am an agent, I do X."</span>
+                                <span class="mono">one gas fee, once</span>
+                                <span class="who"><i></i> ERC-8004</span>
+                            </div>
+                            <div class="row rung off rev" style="--i: 2">
+                                <span class="face numeral">02</span>
+                                <span class="face row-name">Rated</span>
+                                <span class="silver">"Someone scored this agent."</span>
+                                <span class="mono">nothing</span>
+                                <span class="who"><i></i> feedback aggregators</span>
+                            </div>
+                            <div class="row rung rev" style="--i: 3">
+                                <span class="face numeral">03</span>
+                                <span class="face row-name">Staked</span>
+                                <span class="silver">"I have capital at risk on this claim."</span>
+                                <span class="mono">capital that can be lost</span>
+                                <span class="who"><i></i> ARP</span>
+                            </div>
+                            <div class="row rung rev" style="--i: 4">
+                                <span class="face numeral">04</span>
+                                <span class="face row-name">Proven</span>
+                                <span class="silver">
+                                    "This action executed under enforced caveats."
+                                </span>
+                                <span class="mono">a validated transaction</span>
+                                <span class="who"><i></i> ARP</span>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- ===== SCENE 4 — three ways to add a beat ================= -->
+                    <section class="scene" data-scene="3" data-active="false">
+                        <div class="sec-head rev" style="--i: 0">
+                            <h2 class="face">
+                                Three ways to add a beat.<br />
+                                <span class="dim">Each one costs you something.</span>
+                            </h2>
+                            <span class="label">Fig. 03 · with a wallet</span>
+                        </div>
+                        <div class="cards">
+                            <article class="card primary rev" style="--i: 1">
+                                <span class="label">01</span>
+                                <h3 class="face row-name" style="margin: 0">Declare you used it</h3>
+                                <dl>
+                                    <dt>Costs from</dt>
+                                    <dd class="warm">0.11 TRUST</dd>
+                                    <dt>Refundable</dt>
+                                    <dd>no</dd>
+                                    <dt>Signed by</dt>
+                                    <dd>your address</dd>
+                                </dl>
+                                <a class="quiet" href="#" style="margin-top: auto">Find a tool →</a>
+                            </article>
+                            <article class="card rev" style="--i: 2">
+                                <span class="label">02</span>
+                                <h3 class="face row-name" style="margin: 0">Back it</h3>
+                                <dl>
+                                    <dt>Goes to</dt>
+                                    <dd>its atom vault</dd>
+                                    <dt>Withdrawable</dt>
+                                    <dd>yes</dd>
+                                    <dt>Paid to the agent</dt>
+                                    <dd>no</dd>
+                                </dl>
+                                <a class="quiet" href="#" style="margin-top: auto">Open the index →</a>
+                            </article>
+                            <article class="card rev" style="--i: 3">
+                                <span class="label">03</span>
+                                <h3 class="face row-name" style="margin: 0">Put yourself on it</h3>
+                                <dl>
+                                    <dt>Mints</dt>
+                                    <dd>a real ERC-8004 id</dd>
+                                    <dt>Chain</dt>
+                                    <dd>Base 8453</dd>
+                                    <dt>Then</dt>
+                                    <dd>link your staking account</dd>
+                                </dl>
+                                <a class="quiet" href="#" style="margin-top: auto">Add your agent →</a>
+                            </article>
+                        </div>
+                    </section>
+
+                    <!-- ===== SCENE 5 — the manifesto ============================ -->
+                    <section class="scene" data-scene="4" data-active="false">
+                        <p class="face manifesto rev" style="--i: 0; margin: 0">
+                            No score. No grade. No stars.<br />
+                            <span class="dim">ARP has no opinion about any agent.</span><br />
+                            <span>Every number is somebody's deposit.</span>
+                        </p>
+                    </section>
+
+                    <!-- ===== SCENE 6 — build against it ========================= -->
+                    <section class="scene" id="build" data-scene="5" data-active="false">
+                        <div class="sec-head rev" style="--i: 0">
+                            <h2 class="face">
+                                No API key.<br />
+                                <span class="dim">No indexer.</span>
+                            </h2>
+                            <span class="label">Fig. 04 · build against it</span>
+                        </div>
+                        <div class="build">
+                            <div
+                                class="rev"
+                                style="--i: 1; display: flex; flex-direction: column; gap: 20px"
+                            >
+                                <p class="face" style="margin: 0; font-size: clamp(24px, 3vw, 34px)">
+                                    Never signs.
+                                </p>
+                                <p class="mono steel" style="margin: 0">
+                                    <span style="color: var(--color-fg)">@arp-protocol/core</span>
+                                    · holds no key, has no send path
+                                </p>
+                            </div>
+                            <pre class="rev" style="--i: 2">
+<b>// Who is on the record, ordered by evidence, never by a score.</b>
+const page = await listAgents(client, {
+  order: 'evidence-quantity', limit: 25,
+});
+
+<b>// Who declared using a tool, and what stands behind each side.</b>
+const usage = await getToolUsage(toolAtomId, { graphqlUrl });
+
+<b>// Writing is a plan: unsigned calls, signed by your own wallet.</b>
+const plan = await prepareDeclareUsed({ subject, reads, tools });</pre
+                            >
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </div>
+
+        <div id="rail" aria-hidden="true"></div>
+
+        <footer>
+            <span class="label">Agent Reputation Protocol — Intuition</span>
+            <span class="face wordmark">ARP</span>
+        </footer>
+
+        <script type="module">
+            /* ====================================================================
+               THE DECK. ~90 lines, no dependency.
+
+               GSAP was asked about and the answer is "not yet": this has one
+               threshold and one transition. The case for a motion library is a
+               TIMELINE — several elements whose arrivals depend on each other,
+               scroll-scrubbed progress, or a sequence that must be reversible. If
+               your design needs one of those, say which, and that is the brief that
+               justifies the dependency.
+
+               Three.js was also asked about: it is a WebGL 3D renderer. Nothing here
+               is 3D. It would add ~600kB and do none of this better.
+               ==================================================================== */
+
+            const MIN_HEIGHT = 680; // below this a scene does not fit, so the deck stacks
+            const MIN_WIDTH = 900;
+            const HOLD = 0.55; // fraction of a scene's band spent fully opaque
+            const SLIDE = 18; // px at one scene's distance
+
+            const deck = document.getElementById("deck");
+            const scenes = [...deck.querySelectorAll(".scene")];
+            const rail = document.getElementById("rail");
+            rail.innerHTML = scenes.map(() => "<span></span>").join("");
+            const marks = [...rail.children];
+
+            const canPin = () =>
+                !window.matchMedia("(prefers-reduced-motion: reduce)").matches &&
+                window.innerHeight >= MIN_HEIGHT &&
+                window.innerWidth >= MIN_WIDTH;
+
+            let pinned = false;
+
+            function paint() {
+                const on = canPin();
+                if (on !== pinned) {
+                    pinned = on;
+                    deck.dataset.pinned = String(on);
+                }
+                if (!on) {
+                    // Stacked: everything in the flow, nothing hidden, no transforms.
+                    for (const scene of scenes) {
+                        scene.dataset.active = "true";
+                        scene.style.opacity = "";
+                        scene.style.transform = "";
+                    }
+                    return;
+                }
+
+                // Scene-space position: 0 is the first scene centred, 1 the second.
+                // The stage is pinned for one viewport per scene, so the division
+                // needs no magic number.
+                const top = deck.getBoundingClientRect().top;
+                const progress = Math.min(
+                    Math.max(-top / window.innerHeight, 0),
+                    scenes.length - 1,
+                );
+                const active = Math.round(progress);
+
+                scenes.forEach((scene, i) => {
+                    const distance = Math.abs(progress - i);
+                    // Opacity derived from distance, so neighbours OVERLAP. The first
+                    // version switched on a rounded index and the hand-over read as a
+                    // jump followed by a fade.
+                    const fade = Math.min(Math.max((distance - HOLD) / (1 - HOLD), 0), 1);
+                    scene.dataset.active = String(i === active);
+                    scene.style.opacity = String(1 - fade);
+                    scene.style.transform = `translate3d(0, ${(progress - i) * -SLIDE}px, 0)`;
+                    // A scene nobody can see is out of the tab order.
+                    scene.inert = i !== active;
+                    scene.setAttribute("aria-hidden", i === active ? "false" : "true");
+                });
+                marks.forEach((m, i) => (m.dataset.on = String(i === active)));
+            }
+
+            /* Hash navigation, because the browser's own lands on the wrong scene: an
+               inactive scene is position:absolute inside the sticky stage, so its box
+               is nowhere near the offset that would make it active. */
+            function go(hash) {
+                if (!pinned || !hash || hash === "#") return false;
+                const target = deck.querySelector(`[id="${CSS.escape(hash.slice(1))}"]`);
+                const scene = target?.closest("[data-scene]");
+                if (!scene) return false;
+                const index = Number(scene.dataset.scene);
+                const top =
+                    window.scrollY + deck.getBoundingClientRect().top + index * window.innerHeight;
+                window.scrollTo({top, behavior: "smooth"});
+                return true;
+            }
+
+            document.addEventListener("click", (event) => {
+                const anchor = event.target.closest?.("a[href^='#']");
+                if (!anchor || event.button !== 0 || event.metaKey || event.ctrlKey) return;
+                if (go(anchor.getAttribute("href"))) {
+                    event.preventDefault();
+                    history.replaceState(null, "", anchor.getAttribute("href"));
+                }
+            });
+            window.addEventListener("hashchange", () => go(location.hash));
+
+            let frame = 0;
+            const onScroll = () => {
+                cancelAnimationFrame(frame);
+                frame = requestAnimationFrame(paint);
+            };
+            window.addEventListener("scroll", onScroll, {passive: true});
+            window.addEventListener("resize", onScroll);
+            paint();
+            if (location.hash) requestAnimationFrame(() => go(location.hash));
+
+            /* ====================================================================
+               THE HERO FIELD. Canvas 2D, ~50 lines, no dependency.
+
+               In the real app this is driven by live chain data: one dot per actual
+               declaration, warm when somebody has a position behind it, and NOTHING
+               orbiting when the count is zero — which it is on mainnet today. The
+               mark alone is the honest empty state, not a placeholder.
+
+               Dots, not stroked rings: three hairline circles behind a 60px headline
+               read as a target. No pointer reaction of any kind — parallax,
+               repulsion, hover tilt and cursor trails were all built and all four
+               were rejected. The motion is a clock, not a cursor.
+               ==================================================================== */
+            const canvas = document.getElementById("field");
+            const ctx = canvas.getContext("2d");
+            const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+            let w = 0,
+                h = 0;
+
+            function resize() {
+                const dpr = Math.min(window.devicePixelRatio || 1, 2);
+                const box = canvas.getBoundingClientRect();
+                w = box.width;
+                h = box.height;
+                canvas.width = Math.round(w * dpr);
+                canvas.height = Math.round(h * dpr);
+                ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+                // Assigning width CLEARS the bitmap. Under reduced motion nothing
+                // re-arms the loop, so without this one line the hero goes
+                // permanently blank after a resize — measured: 2107 painted pixels,
+                // then 0, then 0.
+                if (still) draw(0);
+            }
+
+            function draw(time) {
+                const css = getComputedStyle(document.documentElement);
+                const rule = css.getPropertyValue("--color-rule-strong").trim();
+                ctx.clearRect(0, 0, w, h);
+                const cx = w > 900 ? w * 0.7 : w / 2;
+                const cy = h / 2;
+                const unit = Math.min(w, h);
+                ctx.fillStyle = rule;
+                for (const [ring, count] of [
+                    [0.185, 6],
+                    [0.33, 12],
+                    [0.46, 18],
+                ]) {
+                    for (let i = 0; i < count; i++) {
+                        const a = (i / count) * Math.PI * 2 - Math.PI / 2 + (still ? 0 : time * 2e-5);
+                        ctx.beginPath();
+                        ctx.arc(
+                            cx + Math.cos(a) * unit * ring,
+                            cy + Math.sin(a) * unit * ring,
+                            unit * (0.0095 - ring * 0.012),
+                            0,
+                            Math.PI * 2,
+                        );
+                        ctx.fill();
+                    }
+                }
+                // The core is warm ONLY when something is on the record. At zero it is
+                // grey, because the accent means "somebody paid" on every surface.
+                ctx.beginPath();
+                ctx.arc(cx, cy, unit * 0.018, 0, Math.PI * 2);
+                ctx.fill();
+                if (!still) requestAnimationFrame(draw);
+            }
+
+            resize();
+            window.addEventListener("resize", resize);
+            requestAnimationFrame(draw);
+        </script>
+    </body>
+</html>
