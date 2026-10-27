@@ -289,7 +289,9 @@ ARP/
 │   ├── 05_UI_DESIGN.md
 │   ├── 08–11                       ← analysis, NOT commitment. They drifted; 12 corrects them
 │   ├── 00_HACKATHON_PIVOT.md       ← historical record (deadline 2026-06-15, past)
-│   └── 13_THE_THREE_FLOWS.md, 14_THE_WITNESS_PROBLEM.md, 15_ROADMAP.md
+│   ├── 13_THE_THREE_FLOWS.md, 14_THE_WITNESS_PROBLEM.md, 15_ROADMAP.md
+│   └── 16_THE_AGENT_PAGE.md, 17_THE_ATOM_PAGE.md
+│                                   ← design briefs, handed to a design agent. Not decisions
 ├── tasks/                          ← Atomic work units
 └── .claude/                        ← Claude operating layer (rules, skills, agents, ADRs, post-mortems)
 ```
