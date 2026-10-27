@@ -20,7 +20,8 @@ import {
 import {formatTrust, truncateMiddle} from "../services/trust-format";
 
 /**
- * `/agent/import` — the second door.
+ * The "yes" branch of `/agent` — rendered inside `YourAgent`, not routed to. It had its own
+ * route at `/agent/import`, which now redirects here.
  *
  * `/agent` mints a new ERC-8004 identity. This page takes one that already
  * exists. 28,648 do, and none of them needs another, so nothing is minted here

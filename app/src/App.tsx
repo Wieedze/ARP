@@ -19,8 +19,8 @@ const AgentDirectory = lazy(() =>
 const AgentTrustPanel = lazy(() =>
     import("./pages/AgentTrustPanel").then((module) => ({default: module.AgentTrustPanel})),
 );
-const AgentImport = lazy(() =>
-    import("./pages/AgentImport").then((module) => ({default: module.AgentImport})),
+const YourAgent = lazy(() =>
+    import("./pages/YourAgent").then((module) => ({default: module.YourAgent})),
 );
 /**
  * The tool surface is split for the same reason and measured: importing it statically grew the
@@ -52,15 +52,28 @@ function App() {
                         </Suspense>
                     }
                 />
-                <Route path="/agent" element={<AgentRegister />} />
+                {/* One door, one question — "does your agent already have an ERC-8004 id?" — with
+                    both branches on this page. It was two routes that linked only to each other and
+                    appeared in no nav, so the only way to reach either was to know the URL (user,
+                    2026-10-27). `?have=yes|no` carries the branch, so it is shareable and Back
+                    returns to the question. */}
                 <Route
-                    path="/agent/import"
+                    path="/agent"
                     element={
-                        <Suspense fallback={<RouteFallback label="agent import" />}>
-                            <AgentImport />
+                        <Suspense fallback={<RouteFallback label="your agent" />}>
+                            <YourAgent />
                         </Suspense>
                     }
                 />
+                {/* The old spelling of the "yes" branch. Redirected, not removed: it is linked from
+                    commits, ADRs and task files. */}
+                <Route path="/agent/import" element={<Navigate to="/agent?have=yes" replace />} />
+                {/* The five-step testnet bring-up, named for what it is. It mints into ARP's **own**
+                    copy of the registry on 13579, designates a runtime wallet, deploys a Smart
+                    Account, signs two delegations and funds the runtime — a rehearsal of
+                    `docs/12` point 5, consumed by `scripts/`, not a path a visitor takes. Out of
+                    the nav on purpose. */}
+                <Route path="/rig" element={<AgentRegister />} />
                 <Route
                     path="/agents"
                     element={

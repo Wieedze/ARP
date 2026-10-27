@@ -191,6 +191,19 @@ one-sided claim is visible as one-sided**, which is one graph query. No hire pre
 skill and MCP registered as tools, a "How it works" tab, and one screen for register-and-declare. The
 file exists so an ask does not get lost and does not get smuggled into an unrelated change.
 
+**Your agent has one door now** — `/agent`, in the nav, with one question at the top: *does your
+agent already have an ERC-8004 id?* It was two pages (`/agent` and `/agent/import`) that linked
+only to each other and appeared in no nav, so 1,828 lines of UI had no way in. ADR `0062`.
+
+The "no" branch **mints in the canonical registry on Base 8453**, not in ARP's own copy on 13579.
+`register()` is permissionless there — measured by `scripts/measure/canonical-registry.ts`, which
+simulated it from a zero-balance address on both Base and BSC. The five-step testnet bring-up moved
+to `/rig`, named for what it is and out of the nav.
+
+**Still not built, and it is the centre of the mechanism**: declaring a use has no page. "An agent
+deposits TRUST on the modules it actually used" (`docs/12` point 3) exists only in
+`scripts/agent-declare-used.ts` and the MCP server. `/atom/:atomId` is where it belongs.
+
 ## Known defects, not yet fixed
 
 | what                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | where                                             | severity                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |

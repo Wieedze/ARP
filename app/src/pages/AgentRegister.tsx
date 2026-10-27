@@ -5,33 +5,22 @@ import {useAccount, useWalletClient} from "wagmi";
 
 import {linkClass} from "../lib/control-class";
 import {getWalletClient} from "@wagmi/core";
-import {
-    Implementation,
-    type MetaMaskSmartAccount,
-} from "@metamask/smart-accounts-kit";
+import {Implementation, type MetaMaskSmartAccount} from "@metamask/smart-accounts-kit";
 
-import {
-    composeAndStakeCaveats,
-} from "../lib/caveat-builder";
+import {composeAndStakeCaveats} from "../lib/caveat-builder";
 import {publicClient} from "../lib/clients";
 import {deployments} from "../lib/deployments";
 import {wagmiConfig} from "../lib/wagmi";
 import {useAgentId, useAgentWallet, useTotalAgents} from "../hooks/use-agent";
 import {useStoredDelegations} from "../hooks/use-stored-delegations";
-import {
-    designateAgentRuntimeWallet,
-    registerAgent,
-} from "../services/agent-identity";
+import {designateAgentRuntimeWallet, registerAgent} from "../services/agent-identity";
 import {
     buildDelegation,
     randomSalt,
     serializeDelegation,
     signDelegationAs,
 } from "../services/delegation";
-import {
-    createUserSmartAccount,
-    deploySmartAccountIfNeeded,
-} from "../services/smart-account";
+import {createUserSmartAccount, deploySmartAccountIfNeeded} from "../services/smart-account";
 
 type StepStatus = "idle" | "pending" | "done" | "error";
 
@@ -76,9 +65,8 @@ export function AgentRegister() {
 
     // Step 3 state — operator Smart Account
     const [smartAccountAddress, setSmartAccountAddress] = useState<string | null>(null);
-    const [smartAccount, setSmartAccount] = useState<MetaMaskSmartAccount<
-        Implementation.Hybrid
-    > | null>(null);
+    const [smartAccount, setSmartAccount] =
+        useState<MetaMaskSmartAccount<Implementation.Hybrid> | null>(null);
     const [isSaDeployed, setIsSaDeployed] = useState<boolean | null>(null);
     const [step3Status, setStep3Status] = useState<StepStatus>("idle");
     const [step3Error, setStep3Error] = useState<string | null>(null);
@@ -145,9 +133,7 @@ export function AgentRegister() {
         if (walletClient && walletClient.account) return walletClient;
         const fetched = await getWalletClient(wagmiConfig);
         if (!fetched || !fetched.account) {
-            throw new Error(
-                "No wallet client available — make sure your wallet is connected.",
-            );
+            throw new Error("No wallet client available — make sure your wallet is connected.");
         }
         return fetched;
     }
@@ -291,9 +277,7 @@ export function AgentRegister() {
         setStep5Error(null);
         try {
             const wc = await getActiveWalletClient();
-            const {fundAndApproveRuntime} = await import(
-                "../services/delegation-redeem"
-            );
+            const {fundAndApproveRuntime} = await import("../services/delegation-redeem");
             const result = await fundAndApproveRuntime({
                 operatorWalletClient: wc,
                 runtimePrivateKey: activeRuntimeKey,
@@ -509,8 +493,8 @@ export function AgentRegister() {
                                     Bring-up
                                 </p>
                                 <p className="mb-3">
-                                    Fund the runtime and grant the MultiVault DEPOSIT
-                                    approval to your Smart Account.
+                                    Fund the runtime and grant the MultiVault DEPOSIT approval to
+                                    your Smart Account.
                                 </p>
                                 {step5Status === "done" && bringUpTxs ? (
                                     <div className="font-mono text-[length:var(--text-body-sm)]">
@@ -549,10 +533,9 @@ export function AgentRegister() {
                                         {!generatedRuntime ? (
                                             <div className="mb-3">
                                                 <p className="text-[length:var(--text-body-sm)] text-[color:var(--color-grey)] mb-2">
-                                                    Runtime private key isn't in this
-                                                    session's memory (it lives only in
-                                                    the browser tab where you ran step
-                                                    2). Paste the key you saved to
+                                                    Runtime private key isn't in this session's
+                                                    memory (it lives only in the browser tab where
+                                                    you ran step 2). Paste the key you saved to
                                                     re-enable the button, or run{" "}
                                                     <span className="font-mono">
                                                         bun scripts/agent-approve-sa.ts
@@ -563,22 +546,17 @@ export function AgentRegister() {
                                                     type="password"
                                                     value={pastedRuntimeKey}
                                                     onChange={(e) =>
-                                                        setPastedRuntimeKey(
-                                                            e.target.value,
-                                                        )
+                                                        setPastedRuntimeKey(e.target.value)
                                                     }
                                                     placeholder="0x…"
                                                     disabled={step5Status === "pending"}
                                                     className="block w-full max-w-[680px] bg-transparent border border-[color:var(--color-rule)] px-3 py-1.5 font-mono text-[length:var(--text-body-sm)] focus:outline-none focus:border-[color:var(--color-accent)]"
                                                 />
-                                                {pastedRuntimeKey.length > 0 &&
-                                                !isValidPaste ? (
+                                                {pastedRuntimeKey.length > 0 && !isValidPaste ? (
                                                     <p className="mt-1 text-[length:var(--text-body-sm)] text-[color:var(--color-grey)]">
                                                         Expected{" "}
-                                                        <span className="font-mono">
-                                                            0x
-                                                        </span>{" "}
-                                                        + 64 hex chars.
+                                                        <span className="font-mono">0x</span> + 64
+                                                        hex chars.
                                                     </p>
                                                 ) : null}
                                             </div>
@@ -587,8 +565,7 @@ export function AgentRegister() {
                                             type="button"
                                             onClick={handleBringUpRuntime}
                                             disabled={
-                                                step5Status === "pending" ||
-                                                !activeRuntimeKey
+                                                step5Status === "pending" || !activeRuntimeKey
                                             }
                                             className="px-3 py-1.5 text-[length:var(--text-body-sm)]"
                                         >
@@ -606,10 +583,7 @@ export function AgentRegister() {
                             </div>
                             <ul className="font-mono text-[length:var(--text-body-sm)] ml-4 space-y-1"></ul>
                             <p className="pt-2">
-                                <Link
-                                    to="/"
-                                    className="text-[color:var(--color-accent)]"
-                                >
+                                <Link to="/" className="text-[color:var(--color-accent)]">
                                     Watch the tools page →
                                 </Link>{" "}
                             </p>
@@ -656,9 +630,7 @@ function DelegationForm({
                             disabled={pending}
                             className="w-32 bg-transparent border border-[color:var(--color-rule)] px-3 py-1.5 font-mono focus:outline-none focus:border-[color:var(--color-accent)]"
                         />
-                        <span className="font-mono text-[color:var(--color-grey)]">
-                            tTRUST
-                        </span>
+                        <span className="font-mono text-[color:var(--color-grey)]">tTRUST</span>
                     </div>
                 </label>
                 <fieldset>
@@ -785,7 +757,7 @@ function PageHeader() {
             </p>
             <p className="mt-3 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)] max-w-[640px]">
                 Already hold an ERC-8004 agent?{" "}
-                <Link className={linkClass} to="/agent/import">
+                <Link className={linkClass} to="/agent?have=yes">
                     Import it instead
                 </Link>
             </p>
@@ -811,9 +783,7 @@ function RoleBanner({operatorAddress}: {operatorAddress: string | null}) {
                 <p className="text-[length:var(--text-label)] uppercase tracking-wider text-[color:var(--color-grey)] mb-1">
                     Agent runtime
                 </p>
-                <p className="font-mono text-[length:var(--text-body-sm)]">
-                    designated in step 2
-                </p>
+                <p className="font-mono text-[length:var(--text-body-sm)]">designated in step 2</p>
                 <p className="text-[length:var(--text-body-sm)] text-[color:var(--color-steel)] mt-1">
                     Separate wallet. The autonomous program holds this key.
                 </p>

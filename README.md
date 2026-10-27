@@ -85,15 +85,15 @@ default and only `--execute` signs.
 
 ### Pages
 
-| route                      | what it is                                                                                                                                             | chain                  |
-| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------- |
-| `/agents`                  | the mirrored ERC-8004 cohort, paged, ordered by measures of evidence and never by a score                                                              | mainnet 1155 (read)    |
-| `/agent/:chainId/:tokenId` | one agent's trust surface, one tab per trust provider, with a staking control                                                                          | mainnet (read + write) |
-| `/agent`                   | mint an ERC-8004 identity                                                                                                                              | testnet 13579          |
-| `/agent/import`            | prove you own an existing agent, write its identity atom if the mirror has not, link your staking account                                              | mainnet                |
-| `/tools`                   | tools agents declared using                                                                                                                            | either, the toggle     |
-| `/atom/:atomId`            | one atom — a tool, a tag, a category, a protocol, an agent — its own market, and every claim pointing at it grouped by predicate                       | either, read only      |
-| `/`                        | the same list as `/tools`. It was ARP's own `ModuleRegistry`, retired by [ADR 0051](.claude/choices/0051-arp-points-and-prices-it-stores-nothing.md)   | either, the toggle     |
+| route                      | what it is                                                                                                                                                                                                                     | chain                                 |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------- |
+| `/agents`                  | the mirrored ERC-8004 cohort, paged, ordered by measures of evidence and never by a score                                                                                                                                      | mainnet 1155 (read)                   |
+| `/agent/:chainId/:tokenId` | one agent's trust surface, one tab per trust provider, with a staking control                                                                                                                                                  | mainnet (read + write)                |
+| `/agent`                   | **one door for your agent.** One question — does it already have an ERC-8004 id? — then either prove you own it and link your staking account, or mint one                                                                     | Base 8453 to mint, the toggle to link |
+| `/rig`                     | the five-step testnet bring-up: mint into ARP's own registry copy, designate a runtime wallet, deploy a Smart Account, sign two delegations, fund it. A rehearsal of `docs/12` point 5, consumed by `scripts/`. Not in the nav | testnet 13579                         |
+| `/tools`                   | tools agents declared using                                                                                                                                                                                                    | either, the toggle                    |
+| `/atom/:atomId`            | one atom — a tool, a tag, a category, a protocol, an agent — its own market, and every claim pointing at it grouped by predicate                                                                                               | either, read only                     |
+| `/`                        | the same list as `/tools`. It was ARP's own `ModuleRegistry`, retired by [ADR 0051](.claude/choices/0051-arp-points-and-prices-it-stores-nothing.md)                                                                           | either, the toggle                    |
 
 `/hire` was a demo that the index works. It was never finished and is removed (2026-10-20); hiring is
 `tasks/25`.
@@ -231,7 +231,7 @@ Stated honestly so reviewers don't infer claims the code doesn't back:
   non-recoverable fee to write it, per declaration, forever.
 
   **Contestability is available and all but unused, and this bullet used to lead on it.** Intuition
-  gives every triple a counter-vault for free, so anyone *can* deposit against a claim. Measured on
+  gives every triple a counter-vault for free, so anyone _can_ deposit against a claim. Measured on
   mainnet 1155, 2026-10-21 (`scripts/measure/counter-side-usage.ts`): **1** of the 185 `uses` edges
   has ever been contradicted, and **969 of 285,775** triples chain-wide — 0.34%. Nobody takes the
   other side of a statement of fact, because there is no resolution mechanism that would pay them

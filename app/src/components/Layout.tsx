@@ -52,7 +52,13 @@ export function Layout({children}: {children: ReactNode}) {
             <NavSplit>
                 <NavLink to="/agents">Agents</NavLink>
                 <NavLink to="/tools">Tools</NavLink>
-                <NavLink to="/register">Register</NavLink>
+                {/* `/agent` and `/agent/import` linked only to each other and appeared in no nav,
+                    so the only route to either was already knowing the URL — 1,828 lines of UI with
+                    no door (user, 2026-10-27). They are one page now and this is the door. "Your
+                    agent", not "Register", because `/register` beside it registers a *tool* and two
+                    tabs reading "Register" would be the ambiguity that question was asked about. */}
+                <NavLink to="/agent">Your agent</NavLink>
+                <NavLink to="/register">Add a tool</NavLink>
                 {isConnected ? <NavLink to="/profile">My profile</NavLink> : null}
                 <ChainToggle />
                 <WalletConnect />
@@ -64,9 +70,7 @@ export function Layout({children}: {children: ReactNode}) {
                 <div className="mx-auto w-full max-w-[1080px] flex flex-wrap items-center justify-between gap-3 text-[length:var(--text-label)] uppercase tracking-wider text-[color:var(--color-grey)]">
                     <span>
                         Agent Reputation Protocol —{" "}
-                        <span className="text-[color:var(--color-steel)]">
-                            {chain.chain.name}
-                        </span>
+                        <span className="text-[color:var(--color-steel)]">{chain.chain.name}</span>
                     </span>
                     {/* `ModuleRegistry` used to be the first link here. The contract is retired
                         (ADR `0051`, `0055`) and the three pages that used it are deleted, so the
