@@ -230,7 +230,9 @@ async function send(label: string, calls: readonly PreparedCall[]) {
   const outcome = await sendPlan({
     calls: serialise(calls),
     chainId,
-    rpcUrl,
+    // Narrowed by the `if (!rpcUrl || …) process.exit(1)` guard above; the annotation on the
+    // declaration re-widens it, so the assertion restates what the guard proved.
+    rpcUrl: rpcUrl as string,
     keyName: 'PRIVATE_KEY',
     execute,
     onCall: (i, _c, hash, status, gas) =>

@@ -14,6 +14,7 @@
  *  any number taken from it. Not every class it counts is a defect — see the three groups in
  *  the task spec. `templated` and non-HTTP identifiers are *unprobeable*, not broken. */
 import { highestTokenId } from './erc8004-population.js';
+import type { JsonRpcReply } from './shapes.js';
 const RPC = 'https://base-rpc.publicnode.com';
 const REGISTRY = '0x8004A169FB4a3325136EB29fA0ceB6D2e539a432';
 const UA = 'ARP-verifier/0.0 (+https://github.com/Wieedze/ARP) measurement';
@@ -31,7 +32,7 @@ async function tokenURI(id: number): Promise<string | null> {
     }),
     signal: AbortSignal.timeout(20000),
   });
-  const j = await r.json();
+  const j = (await r.json()) as JsonRpcReply;
   if (j.error || !j.result || j.result === '0x') return null;
   const hex = j.result.slice(2);
   const len = parseInt(hex.slice(64, 128), 16);

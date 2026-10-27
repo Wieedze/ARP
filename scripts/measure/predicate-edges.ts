@@ -1,3 +1,4 @@
+import type { GraphqlReply } from './shapes.js';
 /** Edge count per predicate on Intuition mainnet, for every id the connector freezes.
  *
  *  The basis for task 19 step 1 — which predicate ARP should write `(agent, use, tool)` on.
@@ -30,7 +31,11 @@ for (const [name, pid] of lines) {
     body: JSON.stringify({ query: q, variables: { pid } }),
     signal: AbortSignal.timeout(30000),
   });
-  const j = await r.json();
+  type Reply = {
+    triples_aggregate?: { aggregate?: { count?: number } };
+    t?: { predicate?: { label?: unknown } }[];
+  };
+  const j = (await r.json()) as GraphqlReply<Reply>;
   const c = j?.data?.triples_aggregate?.aggregate?.count;
   const label = j?.data?.t?.[0]?.predicate?.label ?? '—';
   if (c === undefined) {
@@ -39,3 +44,9 @@ for (const [name, pid] of lines) {
   }
   console.log(`${name.padEnd(20)} ${String(c).padStart(7)} edges   label="${label}"`);
 }
+
+// A module, not a global script. Without this TypeScript treats every top-level
+// `const` here as sharing one scope with every other import-free file in `scripts/`,
+// which produced 21 phantom redeclarations and 20 "await outside a module" errors the
+// first time this directory was typechecked (`tasks/21`). Bun already runs it as a module.
+export {};

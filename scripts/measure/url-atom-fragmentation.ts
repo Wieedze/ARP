@@ -53,10 +53,7 @@
  *  polite to a third party's endpoint — this script's predecessor took a 429 twice, and this run
  *  took six despite 400 ms spacing, which the backoff absorbed.
  */
-import {
-  isToolUrl,
-  normaliseToolUrl,
-} from '../../packages/protocol/src/declare/tool-thing.js';
+import { isToolUrl, normaliseToolUrl } from '../../packages/protocol/src/declare/tool-thing.js';
 
 const TARGETS = {
   mainnet: { label: 'Intuition mainnet 1155', url: 'https://mainnet.intuition.sh/v1/graphql' },
@@ -147,7 +144,7 @@ for (;;) {
   await new Promise((r) => setTimeout(r, SPACING_MS));
 }
 
-type Group = {url: string; atoms: Map<string, string | null>};
+type Group = { url: string; atoms: Map<string, string | null> };
 
 const grouped = (m: Map<string, Map<string, string | null>>): Group[] =>
   [...m.entries()].filter(([, atoms]) => atoms.size > 1).map(([url, atoms]) => ({ url, atoms }));
@@ -181,8 +178,12 @@ console.log(`  of those, not an http(s) URL           ${unnormalisable}`);
 console.log(`  distinct raw URLs                      ${byRaw.size}`);
 console.log(`  distinct normalised URLs               ${byNormalised.size}`);
 console.log('');
-console.log(`  raw URLs held by >1 atom               ${rawGroups.length}  (${atomsIn(rawGroups)} atoms)`);
-console.log(`  normalised URLs held by >1 atom        ${normGroups.length}  (${atomsIn(normGroups)} atoms)`);
+console.log(
+  `  raw URLs held by >1 atom               ${rawGroups.length}  (${atomsIn(rawGroups)} atoms)`,
+);
+console.log(
+  `  normalised URLs held by >1 atom        ${normGroups.length}  (${atomsIn(normGroups)} atoms)`,
+);
 console.log(`  forks only normalisation sees          ${normGroups.length - rawGroups.length}`);
 console.log('');
 console.log('  splitting the raw groups by whether a NAME is also shared:');
@@ -204,11 +205,15 @@ console.log('');
 console.log('  largest duplicate groups — same url, fewer names than atoms:');
 for (const g of [...rawForks].sort((a, b) => b.atoms.size - a.atoms.size).slice(0, 10)) {
   const names = [...labels(g)].slice(0, 3).join(' | ');
-  console.log(`    ${String(g.atoms.size).padStart(4)} atoms, ${String(labels(g).size).padStart(3)} names  ${g.url.slice(0, 54).padEnd(54)}  ${names.slice(0, 50)}`);
+  console.log(
+    `    ${String(g.atoms.size).padStart(4)} atoms, ${String(labels(g).size).padStart(3)} names  ${g.url.slice(0, 54).padEnd(54)}  ${names.slice(0, 50)}`,
+  );
 }
 console.log('');
 console.log('  largest shared-host groups, for contrast:');
 for (const g of [...rawShared].sort((a, b) => b.atoms.size - a.atoms.size).slice(0, 5)) {
   const sample = [...labels(g)][0] ?? '';
-  console.log(`    ${String(g.atoms.size).padStart(4)} atoms, ${String(labels(g).size).padStart(3)} names  ${g.url.slice(0, 54).padEnd(54)}  ${sample.slice(0, 50)}`);
+  console.log(
+    `    ${String(g.atoms.size).padStart(4)} atoms, ${String(labels(g).size).padStart(3)} names  ${g.url.slice(0, 54).padEnd(54)}  ${sample.slice(0, 50)}`,
+  );
 }

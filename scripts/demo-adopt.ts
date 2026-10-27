@@ -113,7 +113,9 @@ async function run(label: string, calls: readonly PreparedCall[]): Promise<boole
   const outcome = await sendPlan({
     calls: serialise(calls),
     chainId,
-    rpcUrl,
+    // Narrowed by the `if (!rpcUrl || …) process.exit(1)` guard above; the annotation on the
+    // declaration re-widens it, so the assertion restates what the guard proved.
+    rpcUrl: rpcUrl as string,
     execute,
     onCall: (index, _call, hash, status, gas) =>
       console.log(`    ${String(index + 1).padStart(2)}. ${status.padEnd(8)} ${hash}  gas ${gas}`),

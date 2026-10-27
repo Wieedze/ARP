@@ -1,8 +1,59 @@
 # Task 21 — `scripts/` is outside every gate
 
-> **Status: NOT STARTED** (recorded 2026-10-16, from the `task-verifier` close-out of task 18).
-> **Not zero-cost**, unlike task 18 — that is why it is a separate task and not a wider task 18.
-> It has no owning task until this one: `tasks/19` only mentions the gap inside step 1's notes.
+> **Status: COMPLETE** 2026-10-27. `tsconfig.scripts.json` is committed and wired as
+> `bun run check:scripts`. **93 → 0.**
+
+## The measured number, and what it found
+
+The task said not to inherit 6 or 24, because two ad-hoc configs disagreed. The committed config
+reported **93**, and the breakdown is the useful part:
+
+| class            | count | what it was                                                                                                                                                                                                                                            |
+| ---------------- | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| TS1375 + TS2451  | 41    | **config artefact.** Eight scripts have no import or export, so TS treated every top-level `const` in them as sharing one global scope — `URL_`, `USES`, `gql` colliding across files. `export {}` makes them modules, which Bun already runs them as. |
+| TS18046 + TS2339 | ~38   | untyped reads at the wire. `Response.json()` is `unknown` under `strict`, correctly.                                                                                                                                                                   |
+| TS2307           | 4     | **four dead scripts** — see below                                                                                                                                                                                                                      |
+| TS7006           | 4     | implicit `any` parameters                                                                                                                                                                                                                              |
+| TS6133           | 1     | a dead constant, `PAGE` in `staker-concentration.ts`                                                                                                                                                                                                   |
+| the rest         | 5     | type mismatches at the viem and Bun seams                                                                                                                                                                                                              |
+
+### Two real defects, neither of which any review had found
+
+**`scripts/measure/erc8004-population.ts` never existed.** Five scripts imported
+`./erc8004-population.js`; git has no record of the file, deleted or otherwise. So
+`cohort-callable`, `cohort-endpoints`, `cohort-onchain-activity` and `cohort-skills` **threw on
+import** and had been dead for their whole life. Confirmed by running one. The module is written
+now, lifted from the private copy `cohort-coverage.ts` had kept — and verified against the chain:
+highest minted id on Base **1,138,237**, consistent with the 1,137,885 that
+`canonical-registry.ts` got from a `register()` simulation minutes earlier.
+
+**`tool-page-states.ts` built its accumulator without `opposePositions`.** The default literal
+omitted the field, so the first edge on any tool did `undefined + n` and every count after it was
+`NaN`. The comment two lines below it explains why the opposition half matters. The object that had
+to hold it did not.
+
+## The boundary question the task said to resolve first
+
+`import.meta.env` turned out not to be the problem: only four scripts import from `app/src`, and
+none of them reaches `chains.ts`. The config needs no Vite ambient types — `"types": ["bun"]` and
+`@types/bun`, added at the root, is the whole of it.
+
+## One package change, and it is a fix rather than an accommodation
+
+`ProbeOptions.fetch` was `typeof globalThis.fetch`. Under Bun's lib types that global is an
+**object** carrying `preconnect`, so a counting or caching wrapper — the only reason anyone injects
+a fetch — cannot satisfy it. `verify-cohort.ts` has exactly such a wrapper and was the thing that
+could not typecheck. It is `FetchLike` now, which the package has had all along for this, and which
+is all the prober uses.
+
+## Also recorded here
+
+- **`app/vitest.config.ts`** is still in neither tsconfig project. Measured at zero cost during task
+  18; left for a config task rather than folded in here, because this one is already large.
+- **`bun run format:check`** still fails repo-wide and is still not a gate. Unchanged.
+- **A root eslint config** is out of scope, as the task predicted: it would surface findings across
+  `contracts/` and `packages/protocol/` too, and that is its own task.
+- **`scripts/seed.ts` no longer exists**, so item 3 of the Do list is moot.
 
 ## The finding
 

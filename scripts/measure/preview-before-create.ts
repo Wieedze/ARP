@@ -77,11 +77,7 @@ const PROBE_URL = 'https://example.invalid/arp-preview-probe';
 
 const atomUri = toolAtomUri(PROBE_URL);
 const atomId = (await read('calculateAtomId', [stringToHex(atomUri)])) as `0x${string}`;
-const tripleId = (await read('calculateTripleId', [
-  atomId,
-  USES,
-  SAME_AS,
-])) as `0x${string}`;
+const tripleId = (await read('calculateTripleId', [atomId, USES, SAME_AS])) as `0x${string}`;
 
 const atomCost = (await read('getAtomCost', [])) as bigint;
 const tripleCost = (await read('getTripleCost', [])) as bigint;

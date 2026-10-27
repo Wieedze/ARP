@@ -37,7 +37,9 @@ const client = createPublicClient({ transport: http(BASE_RPC) });
 
 console.log(`ERC-8004 canonical registry on Base 8453 — ${new Date().toISOString().slice(0, 10)}`);
 console.log(`  address   ${CANONICAL_REGISTRY}`);
-console.log(`  owner()   ${await client.readContract({ address: CANONICAL_REGISTRY, abi, functionName: 'owner' })}`);
+console.log(
+  `  owner()   ${await client.readContract({ address: CANONICAL_REGISTRY, abi, functionName: 'owner' })}`,
+);
 
 let nextId: bigint | null = null;
 try {
@@ -51,7 +53,9 @@ try {
   console.log(`  register() from an arbitrary address  SIMULATES OK -> next id ${nextId}`);
   console.log('    so minting is permissionless: ARP can mint where the ecosystem reads');
 } catch (error) {
-  console.log(`  register() from an arbitrary address  REVERTS: ${(error as Error).message.split('\n')[0]}`);
+  console.log(
+    `  register() from an arbitrary address  REVERTS: ${(error as Error).message.split('\n')[0]}`,
+  );
   console.log('    so minting is gated and ADR 0055 production path does not exist as written');
 }
 

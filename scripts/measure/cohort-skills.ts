@@ -11,6 +11,7 @@
  *  Signs nothing. Uniform sampling over token ids, so quote n with any figure taken from it —
  *  consecutive runs at n=200 have returned 108, 112 and 113 parsed documents. */
 import { highestTokenId } from './erc8004-population.js';
+import { arr, prop, type JsonRpcReply, type RegistrationDoc } from './shapes.js';
 /**
  * Config, not constants. `portability.md` rule 1: no chain constant at module scope — take it as
  * config, default it, never import it. This file was added by the very commit that introduced that
@@ -33,7 +34,7 @@ async function tokenURI(id: number): Promise<string | null> {
     }),
     signal: AbortSignal.timeout(20000),
   });
-  const j = await r.json();
+  const j = (await r.json()) as JsonRpcReply;
   if (j.error || !j.result || j.result === '0x') return null;
   const hex = j.result.slice(2);
   const len = parseInt(hex.slice(64, 128), 16);
@@ -77,7 +78,7 @@ async function visit(id: number): Promise<void> {
   const uri = await tokenURI(id).catch(() => null);
   if (!uri) return;
   const url = uri.startsWith('ipfs://') ? `https://ipfs.io/ipfs/${uri.slice(7)}` : uri;
-  let doc: unknown;
+  let doc: RegistrationDoc = {};
   try {
     if (url.startsWith('data:')) {
       const p = url.slice(url.indexOf(',') + 1);
@@ -92,7 +93,7 @@ async function visit(id: number): Promise<void> {
         signal: AbortSignal.timeout(15000),
       });
       if (!r.ok) return;
-      doc = await r.json();
+      doc = (await r.json()) as RegistrationDoc;
     }
   } catch {
     return;
@@ -100,19 +101,22 @@ async function visit(id: number): Promise<void> {
   t.docs++;
   let any = false;
 
-  const skills = doc.oasf_skills ?? doc.skills;
+  const skills = arr(doc.oasf_skills).length > 0 ? arr(doc.oasf_skills) : arr(doc.skills);
   if (Array.isArray(skills) && skills.length) {
     t.oasfSkills++;
     any = true;
     t.totalSkills += skills.length;
     for (const s of skills)
-      bump(skillVocab, typeof s === 'string' ? s : JSON.stringify(s?.name ?? s).slice(0, 40));
+      bump(
+        skillVocab,
+        typeof s === 'string' ? s : JSON.stringify(prop(s, 'name') ?? s).slice(0, 40),
+      );
   }
-  const eps = [...(doc.endpoints ?? []), ...(doc.services ?? [])].filter(
+  const eps = [...arr(doc.endpoints), ...arr(doc.services)].filter(
     (e) => e && typeof e === 'object',
   );
   for (const e of eps) {
-    const caps = Array.isArray(e.capabilities) ? e.capabilities : [];
+    const caps = arr(prop(e, 'capabilities'));
     if (caps.length) {
       t.capabilities++;
       any = true;
@@ -120,7 +124,7 @@ async function visit(id: number): Promise<void> {
       for (const c of caps) bump(toolVocab, String(c).slice(0, 40));
     }
   }
-  if (Array.isArray(doc.tags) && doc.tags.length) {
+  if (arr(doc.tags).length > 0) {
     t.tags++;
     any = true;
   }

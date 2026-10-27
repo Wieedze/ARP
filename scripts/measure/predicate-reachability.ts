@@ -1,3 +1,4 @@
+import type { GraphqlReply } from './shapes.js';
 /** Could `getCapabilities` ever reach an edge on a given predicate?
  *
  *  It only runs on a subject returned by `resolveSubject`, which filters on `same as`. So an edge
@@ -42,13 +43,10 @@ for (const [net, url] of [
       body: JSON.stringify({ query: Q, variables: { pid } }),
       signal: AbortSignal.timeout(40000),
     });
-    const j = await r.json();
+    type Subjects = { triples?: { subject?: { term_id?: string } }[] };
+    const j = (await r.json()) as GraphqlReply<Subjects>;
     const subs = [
-      ...new Set(
-        (j?.data?.triples ?? [])
-          .map((t: { subject?: { term_id?: string } }) => t.subject?.term_id)
-          .filter(Boolean),
-      ),
+      ...new Set((j?.data?.triples ?? []).map((t) => t.subject?.term_id).filter(Boolean)),
     ] as string[];
     const r2 = await fetch(url, {
       method: 'POST',
@@ -56,7 +54,10 @@ for (const [net, url] of [
       body: JSON.stringify({ query: SA, variables: { ids: subs } }),
       signal: AbortSignal.timeout(40000),
     });
-    const j2 = await r2.json();
+    type SameAs = {
+      triples?: { subject?: { label?: unknown }; object?: { label?: unknown } }[];
+    };
+    const j2 = (await r2.json()) as GraphqlReply<SameAs>;
     const hits = j2?.data?.triples ?? [];
     console.log(
       `${net.padEnd(8)} ${name.padEnd(5)} distinct subjects ${String(subs.length).padStart(4)}` +
@@ -69,3 +70,9 @@ for (const [net, url] of [
     }
   }
 }
+
+// A module, not a global script. Without this TypeScript treats every top-level
+// `const` here as sharing one scope with every other import-free file in `scripts/`,
+// which produced 21 phantom redeclarations and 20 "await outside a module" errors the
+// first time this directory was typechecked (`tasks/21`). Bun already runs it as a module.
+export {};

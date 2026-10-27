@@ -1,4 +1,5 @@
 import type {DeclaredEndpoint, ProbeOutcome, ProbeRequest} from "./types.js";
+import type { FetchLike } from "../http.js";
 
 /**
  * Identify the client. A recipient seeing this in their logs can find out who is calling and ask us
@@ -17,7 +18,15 @@ export const DEFAULT_PROBE_TIMEOUT_MS = 8_000;
 export const MCP_PROTOCOL_VERSION = "2025-06-18";
 
 export type ProbeOptions = {
-    fetch?: typeof globalThis.fetch;
+    /**
+     * The network read, injectable.
+     *
+     * `FetchLike`, not `typeof globalThis.fetch`. Under Bun's lib types the global is an **object**
+     * carrying `preconnect`, so a counting or caching wrapper — which is the only reason to inject
+     * one — could not satisfy it. `scripts/verify-cohort.ts` has such a wrapper and was the thing
+     * that could not typecheck (`tasks/21`). The prober only ever calls it with a string URL.
+     */
+    fetch?: FetchLike;
     /**
      * After a successful MCP handshake, ask the server what it serves.
      *

@@ -20,7 +20,9 @@
     "test": "bun --filter '*' test",
     "lint": "bun --filter '*' lint",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\" --ignore-path .gitignore",
-    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\" --ignore-path .gitignore"
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\" --ignore-path .gitignore",
+    "check:scripts": "bunx tsc -p tsconfig.scripts.json --noEmit",
+    "check": "bun run check:scripts && bun run --cwd app check:tokens && bun run --cwd app check:contrast"
   },
   "dependencies": {
     "@metamask/delegation-core": "^2.2.1",
@@ -28,6 +30,7 @@
     "@metamask/smart-accounts-kit": "^1.6.0"
   },
   "devDependencies": {
+    "@types/bun": "^1.4.4",
     "prettier": "^3.3.3",
     "viem": "2.52.0"
   },

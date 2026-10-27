@@ -1,4 +1,5 @@
 import { highestTokenId } from './erc8004-population.js';
+import type { JsonRpcReply } from './shapes.js';
 /** Do cohort agents actually transact on-chain? Read-only, keyless.
  *
  *  The precondition for `tasks/22` — the chain as witness. If these accounts never transact there is
@@ -32,7 +33,7 @@ async function rpc(method: string, params: unknown[]): Promise<string | null> {
     body: JSON.stringify({ jsonrpc: '2.0', id: 1, method, params }),
     signal: AbortSignal.timeout(20000),
   });
-  const j = await r.json();
+  const j = (await r.json()) as JsonRpcReply;
   if (j.error || !j.result || j.result === '0x') return null;
   return j.result as string;
 }

@@ -129,10 +129,12 @@ function predictedBps(defaultCurveShares: bigint, curveId: bigint, shares: bigin
 
 console.log(`\n${target.label} — ${new Date().toISOString().slice(0, 10)}\n`);
 console.log('what the config says');
-console.log(`  entry ${fees.entryFee}  exit ${fees.exitFee}  protocol ${fees.protocolFee}  / denominator ${general.feeDenominator}`);
+console.log(
+  `  entry ${fees.entryFee}  exit ${fees.exitFee}  protocol ${fees.protocolFee}  / denominator ${general.feeDenominator}`,
+);
 console.log(`  feeThreshold ${general.feeThreshold}   minShare ${general.minShare}`);
 console.log(
-  `  so "exit" alone reads as ${(Number(fees.exitFee) / Number(general.feeDenominator) * 100).toFixed(2)}% — the measurement below is what leaving actually costs\n`,
+  `  so "exit" alone reads as ${((Number(fees.exitFee) / Number(general.feeDenominator)) * 100).toFixed(2)}% — the measurement below is what leaving actually costs\n`,
 );
 
 /** A redemption small enough not to move the curve, so the figure is the fee and not the slope. */
@@ -217,8 +219,12 @@ if (observations.length === 0) {
   const low = Math.min(...values);
   const high = Math.max(...values);
   const distinct = [...new Set(values.map((v) => v.toFixed(1)))].sort();
-  console.log(`\n  ${observations.length} observations, ${distinct.length} distinct value(s): ${distinct.join(', ')} bps`);
-  console.log(`  range ${low.toFixed(1)}–${high.toFixed(1)} bps against a configured "exit fee" of ${fees.exitFee} bps`);
+  console.log(
+    `\n  ${observations.length} observations, ${distinct.length} distinct value(s): ${distinct.join(', ')} bps`,
+  );
+  console.log(
+    `  range ${low.toFixed(1)}–${high.toFixed(1)} bps against a configured "exit fee" of ${fees.exitFee} bps`,
+  );
   console.log(
     misses.length === 0 && distinct.length > 1
       ? '\n  Two values, and the rule above picks between them — but it is governance-configurable,\n  so an agent calls `previewRedeem` rather than applying it.'

@@ -90,15 +90,25 @@ async function gql<T>(query: string): Promise<T> {
 
 type Count = { aggregate: { count: number } };
 type Aggregates = Record<
-  | 'triplesAll' | 'triplesAnyPos' | 'triplesTwoPlus' | 'triplesContested'
-  | 'atomsAll' | 'atomsTwoPlus'
-  | 'usesAll' | 'usesAnyPos' | 'usesTwoPlus' | 'usesContested',
+  | 'triplesAll'
+  | 'triplesAnyPos'
+  | 'triplesTwoPlus'
+  | 'triplesContested'
+  | 'atomsAll'
+  | 'atomsTwoPlus'
+  | 'usesAll'
+  | 'usesAnyPos'
+  | 'usesTwoPlus'
+  | 'usesContested',
   Count
 >;
 type Sample = {
   triples: {
     subject: { label: string | null } | null;
-    object: { label: string | null; term: { total_assets: string; vaults: { position_count: number }[] } | null } | null;
+    object: {
+      label: string | null;
+      term: { total_assets: string; vaults: { position_count: number }[] } | null;
+    } | null;
     term: { total_assets: string; vaults: { position_count: number }[] } | null;
   }[];
 };
@@ -130,9 +140,15 @@ console.log(`\n${target.label} — ${new Date().toISOString().slice(0, 10)}\n`);
 
 console.log('every triple on the chain');
 console.log(`  total                       ${agg.triplesAll.aggregate.count}`);
-console.log(`  carries a position          ${agg.triplesAnyPos.aggregate.count}  ${pct(agg.triplesAnyPos.aggregate.count, agg.triplesAll.aggregate.count)}  (the birth deposit — every term is born with one, ADR 0053)`);
-console.log(`  somebody ELSE joined (>1)   ${agg.triplesTwoPlus.aggregate.count}  ${pct(agg.triplesTwoPlus.aggregate.count, agg.triplesAll.aggregate.count)}`);
-console.log(`  somebody DISAGREED          ${agg.triplesContested.aggregate.count}  ${pct(agg.triplesContested.aggregate.count, agg.triplesAll.aggregate.count)}`);
+console.log(
+  `  carries a position          ${agg.triplesAnyPos.aggregate.count}  ${pct(agg.triplesAnyPos.aggregate.count, agg.triplesAll.aggregate.count)}  (the birth deposit — every term is born with one, ADR 0053)`,
+);
+console.log(
+  `  somebody ELSE joined (>1)   ${agg.triplesTwoPlus.aggregate.count}  ${pct(agg.triplesTwoPlus.aggregate.count, agg.triplesAll.aggregate.count)}`,
+);
+console.log(
+  `  somebody DISAGREED          ${agg.triplesContested.aggregate.count}  ${pct(agg.triplesContested.aggregate.count, agg.triplesAll.aggregate.count)}`,
+);
 
 console.log('\nthe `uses` edges ARP reads');
 console.log(`  total                       ${agg.usesAll.aggregate.count}`);
@@ -142,15 +158,23 @@ console.log(`  somebody DISAGREED          ${agg.usesContested.aggregate.count}`
 
 console.log('\natoms, as a contrast on the joined rate only — see the header on contamination');
 console.log(`  total                       ${agg.atomsAll.aggregate.count}`);
-console.log(`  two or more positions       ${agg.atomsTwoPlus.aggregate.count}  ${pct(agg.atomsTwoPlus.aggregate.count, agg.atomsAll.aggregate.count)}`);
+console.log(
+  `  two or more positions       ${agg.atomsTwoPlus.aggregate.count}  ${pct(agg.atomsTwoPlus.aggregate.count, agg.atomsAll.aggregate.count)}`,
+);
 
 const feeDenominator = generalConfig.feeDenominator;
 const fraction = tripleConfig.atomDepositFractionForTriple;
 console.log('\nwhat an act costs here, read from the chain and not from deployments/');
-console.log(`  create a triple             ${formatEther(tripleCost)} TRUST   — a FEE: gone, not redeemable`);
+console.log(
+  `  create a triple             ${formatEther(tripleCost)} TRUST   — a FEE: gone, not redeemable`,
+);
 console.log(`  create an atom              ${formatEther(atomCost)} TRUST   — a FEE`);
-console.log(`  minDeposit                  ${formatEther(generalConfig.minDeposit)} TRUST   — a DEPOSIT: redeemable`);
-console.log(`  of a triple deposit, toward its atoms  ${fraction}/${feeDenominator} = ${(Number(fraction) / Number(feeDenominator) * 100).toFixed(2)}%`);
+console.log(
+  `  minDeposit                  ${formatEther(generalConfig.minDeposit)} TRUST   — a DEPOSIT: redeemable`,
+);
+console.log(
+  `  of a triple deposit, toward its atoms  ${fraction}/${feeDenominator} = ${((Number(fraction) / Number(feeDenominator)) * 100).toFixed(2)}%`,
+);
 
 console.log('\nthe richest `uses` edges, beside the atom each points at');
 for (const row of sample.triples) {

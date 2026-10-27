@@ -43,8 +43,8 @@
  *  needs no key.
  */
 const TARGETS = {
-  mainnet: {label: 'Intuition mainnet 1155', url: 'https://mainnet.intuition.sh/v1/graphql'},
-  testnet: {label: 'Intuition testnet 13579', url: 'https://testnet.intuition.sh/v1/graphql'},
+  mainnet: { label: 'Intuition mainnet 1155', url: 'https://mainnet.intuition.sh/v1/graphql' },
+  testnet: { label: 'Intuition testnet 13579', url: 'https://testnet.intuition.sh/v1/graphql' },
 } as const;
 
 const which = (process.argv[2] ?? 'mainnet') as keyof typeof TARGETS;
@@ -54,14 +54,13 @@ if (!target) {
   process.exit(1);
 }
 
-const PAGE = 250;
 const SPACING_MS = 400;
 
 async function query(body: string): Promise<Record<string, unknown>> {
   for (let attempt = 0; attempt < 5; attempt += 1) {
     const res = await fetch(target.url, {
       method: 'POST',
-      headers: {'content-type': 'application/json', 'user-agent': 'arp-measure/1.0'},
+      headers: { 'content-type': 'application/json', 'user-agent': 'arp-measure/1.0' },
       body,
       signal: AbortSignal.timeout(45_000),
     });
@@ -72,7 +71,7 @@ async function query(body: string): Promise<Record<string, unknown>> {
       continue;
     }
     if (!res.ok) throw new Error(`${target.url} → HTTP ${res.status}`);
-    const json = (await res.json()) as {data?: Record<string, unknown>; errors?: unknown};
+    const json = (await res.json()) as { data?: Record<string, unknown>; errors?: unknown };
     if (json.errors || !json.data) throw new Error(`GraphQL: ${JSON.stringify(json.errors)}`);
     return json.data;
   }
@@ -89,7 +88,7 @@ const totals = await query(
   }),
 );
 const count = (key: string): number => {
-  const node = totals[key] as {aggregate?: {count?: number}} | undefined;
+  const node = totals[key] as { aggregate?: { count?: number } } | undefined;
   return node?.aggregate?.count ?? 0;
 };
 
@@ -97,7 +96,9 @@ console.log(`${target.label} — ${new Date().toISOString().slice(0, 10)}`);
 console.log(`  positions            ${count('positions')}`);
 console.log(`  distinct accounts    ${count('accounts')}`);
 console.log(`  distinct terms       ${count('terms')}`);
-console.log(`  positions / account  ${(count('positions') / count('accounts')).toFixed(1)} on average`);
+console.log(
+  `  positions / account  ${(count('positions') / count('accounts')).toFixed(1)} on average`,
+);
 console.log('');
 
 /**
@@ -115,7 +116,9 @@ console.log('');
  */
 const TERM = process.env.TERM_ID ?? null;
 if (TERM === null) {
-  console.log('  Set TERM_ID=0x… to profile one claim\'s backers. Picking the busiest term instead.');
+  console.log(
+    "  Set TERM_ID=0x… to profile one claim's backers. Picking the busiest term instead.",
+  );
 }
 
 const busiest = await query(
@@ -123,8 +126,7 @@ const busiest = await query(
     query: `query { positions(limit: 1, order_by: {shares: desc}) { term_id } }`,
   }),
 );
-const termId =
-  TERM ?? ((busiest['positions'] as {term_id: string}[])[0]?.term_id ?? null);
+const termId = TERM ?? (busiest['positions'] as { term_id: string }[])[0]?.term_id ?? null;
 if (termId === null) {
   console.error('no term to profile');
   process.exit(1);
@@ -135,12 +137,14 @@ const holders = await query(
     query: `query ($termId: String!, $limit: Int!) {
       positions(where: {term_id: {_eq: $termId}}, limit: $limit) { account_id shares }
     }`,
-    variables: {termId, limit: 100},
+    variables: { termId, limit: 100 },
   }),
 );
-const rows = (holders['positions'] ?? []) as {account_id: string; shares: string}[];
+const rows = (holders['positions'] ?? []) as { account_id: string; shares: string }[];
 console.log(`  term ${termId}`);
-console.log(`  backers read          ${rows.length}${rows.length === 100 ? ' (page cap — more exist)' : ''}`);
+console.log(
+  `  backers read          ${rows.length}${rows.length === 100 ? ' (page cap — more exist)' : ''}`,
+);
 
 /** For each backer: how many distinct terms do they hold a position on, anywhere on the graph? */
 const breadth = new Map<string, number>();
@@ -152,10 +156,10 @@ for (const row of rows) {
           aggregate { count(columns: term_id, distinct: true) }
         }
       }`,
-      variables: {account: row.account_id},
+      variables: { account: row.account_id },
     }),
   );
-  const node = data['positions_aggregate'] as {aggregate?: {count?: number}} | undefined;
+  const node = data['positions_aggregate'] as { aggregate?: { count?: number } } | undefined;
   breadth.set(row.account_id, node?.aggregate?.count ?? 0);
   await new Promise((r) => setTimeout(r, SPACING_MS));
 }
@@ -171,6 +175,16 @@ for (const n of [1, 2, 3, 5, 10, 50]) {
 }
 console.log('');
 console.log(`  backers whose ONLY position is this one: ${onlyHere} of ${widths.length}`);
-console.log('  That ratio is the discriminator. A claim backed entirely by single-position accounts');
-console.log('  is the shape a sybil leaves; one backed by accounts that hold positions elsewhere is');
+console.log(
+  '  That ratio is the discriminator. A claim backed entirely by single-position accounts',
+);
+console.log(
+  '  is the shape a sybil leaves; one backed by accounts that hold positions elsewhere is',
+);
 console.log('  not. Neither is forbidden and neither is scored — the reader is handed the number.');
+
+// A module, not a global script. Without this TypeScript treats every top-level
+// `const` here as sharing one scope with every other import-free file in `scripts/`,
+// which produced 21 phantom redeclarations and 20 "await outside a module" errors the
+// first time this directory was typechecked (`tasks/21`). Bun already runs it as a module.
+export {};

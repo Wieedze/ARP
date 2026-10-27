@@ -1,3 +1,4 @@
+import type { GraphqlReply } from './shapes.js';
 /** What do the existing edges on each candidate `use`/`uses` predicate actually assert?
  *
  *  The evidence for ADR 0030: the two predicates do not mean the same thing, so publication and
@@ -43,7 +44,8 @@ for (const [net, url] of NETS) {
       body: JSON.stringify({ query: Q, variables: { pid } }),
       signal: AbortSignal.timeout(40000),
     });
-    const j = await r.json();
+    type Reply = { triples?: { object?: { label?: unknown } }[] };
+    const j = (await r.json()) as GraphqlReply<Reply>;
     const rows = j?.data?.triples ?? [];
     const obj = new Map<string, number>();
     let std = 0;
@@ -59,3 +61,9 @@ for (const [net, url] of NETS) {
     console.log('   ' + top.map(([k, v]) => `${k}×${v}`).join(' · '));
   }
 }
+
+// A module, not a global script. Without this TypeScript treats every top-level
+// `const` here as sharing one scope with every other import-free file in `scripts/`,
+// which produced 21 phantom redeclarations and 20 "await outside a module" errors the
+// first time this directory was typechecked (`tasks/21`). Bun already runs it as a module.
+export {};

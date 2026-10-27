@@ -97,3 +97,9 @@ console.log(
   '\nAn atom below the cliff exists on the chain and does not exist as a market. A directory that\n' +
     'lists atoms lists mostly empty slots.',
 );
+
+// A module, not a global script. Without this TypeScript treats every top-level
+// `const` here as sharing one scope with every other import-free file in `scripts/`,
+// which produced 21 phantom redeclarations and 20 "await outside a module" errors the
+// first time this directory was typechecked (`tasks/21`). Bun already runs it as a module.
+export {};

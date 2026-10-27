@@ -79,49 +79,49 @@ for (const chain of CHAINS) {
  * indexer's stand-in (`FALLBACK_NAME_PATTERN`, "half the mainnet cohort looks like this").
  */
 {
-    const client = createPublicClient({transport: http("https://mainnet.base.org")});
-    const wide = parseAbi([
-        "function register(string agentURI) returns (uint256)",
-        "function setAgentURI(uint256 agentId, string agentURI)",
-        "function tokenURI(uint256 tokenId) view returns (string)",
-        "function ownerOf(uint256 tokenId) view returns (address)",
-    ]);
+  const client = createPublicClient({ transport: http('https://mainnet.base.org') });
+  const wide = parseAbi([
+    'function register(string agentURI) returns (uint256)',
+    'function setAgentURI(uint256 agentId, string agentURI)',
+    'function tokenURI(uint256 tokenId) view returns (string)',
+    'function ownerOf(uint256 tokenId) view returns (address)',
+  ]);
 
-    console.log("\n--- Base 8453: does the URI-bearing form exist, and what do real agents carry?");
+  console.log('\n--- Base 8453: does the URI-bearing form exist, and what do real agents carry?');
 
-    for (const fn of ["register", "setAgentURI"] as const) {
-        try {
-            const data =
-                fn === "register"
-                    ? encodeFunctionData({abi: wide, functionName: fn, args: ["ipfs://probe"]})
-                    : encodeFunctionData({abi: wide, functionName: fn, args: [1n, "ipfs://probe"]});
-            const result = await client.call({account: PROBE, to: DEFAULT_IDENTITY_REGISTRY, data});
-            console.log(`    ${fn}(…) simulates OK -> ${result.data ?? "no return"}`);
-        } catch (error) {
-            console.log(`    ${fn}(…): ${(error as Error).message.split("\n")[0]}`);
-        }
-        await new Promise((r) => setTimeout(r, 400));
+  for (const fn of ['register', 'setAgentURI'] as const) {
+    try {
+      const data =
+        fn === 'register'
+          ? encodeFunctionData({ abi: wide, functionName: fn, args: ['ipfs://probe'] })
+          : encodeFunctionData({ abi: wide, functionName: fn, args: [1n, 'ipfs://probe'] });
+      const result = await client.call({ account: PROBE, to: DEFAULT_IDENTITY_REGISTRY, data });
+      console.log(`    ${fn}(…) simulates OK -> ${result.data ?? 'no return'}`);
+    } catch (error) {
+      console.log(`    ${fn}(…): ${(error as Error).message.split('\n')[0]}`);
     }
+    await new Promise((r) => setTimeout(r, 400));
+  }
 
-    for (const id of [1n, 2340n, 6649n, 500000n, 1100000n]) {
-        try {
-            const owner = await client.readContract({
-                address: DEFAULT_IDENTITY_REGISTRY,
-                abi: wide,
-                functionName: "ownerOf",
-                args: [id],
-            });
-            await new Promise((r) => setTimeout(r, 400));
-            const uri = await client.readContract({
-                address: DEFAULT_IDENTITY_REGISTRY,
-                abi: wide,
-                functionName: "tokenURI",
-                args: [id],
-            });
-            console.log(`    #${id}  ${owner}  ${uri === "" ? "(no uri)" : uri}`);
-        } catch (error) {
-            console.log(`    #${id}: ${(error as Error).message.split("\n")[0]}`);
-        }
-        await new Promise((r) => setTimeout(r, 400));
+  for (const id of [1n, 2340n, 6649n, 500000n, 1100000n]) {
+    try {
+      const owner = await client.readContract({
+        address: DEFAULT_IDENTITY_REGISTRY,
+        abi: wide,
+        functionName: 'ownerOf',
+        args: [id],
+      });
+      await new Promise((r) => setTimeout(r, 400));
+      const uri = await client.readContract({
+        address: DEFAULT_IDENTITY_REGISTRY,
+        abi: wide,
+        functionName: 'tokenURI',
+        args: [id],
+      });
+      console.log(`    #${id}  ${owner}  ${uri === '' ? '(no uri)' : uri}`);
+    } catch (error) {
+      console.log(`    #${id}: ${(error as Error).message.split('\n')[0]}`);
     }
+    await new Promise((r) => setTimeout(r, 400));
+  }
 }

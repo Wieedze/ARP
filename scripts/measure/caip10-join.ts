@@ -1,3 +1,4 @@
+import type { GraphqlReply } from './shapes.js';
 /** Does anything point AT a `caip10:` atom on Intuition? Read-only.
  *
  *  The evidence for `tasks/19` step 1b. ADR 0026 specifies
@@ -28,17 +29,27 @@ const INCOMING = `query($ids: [String!]) {
   }
 }`;
 
-const gql = async (query: string, variables: Record<string, unknown> = {}) => {
+const gql = async <T>(
+  query: string,
+  variables: Record<string, unknown> = {},
+): Promise<GraphqlReply<T>> => {
   const r = await fetch(URL_, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ query, variables }),
     signal: AbortSignal.timeout(40000),
   });
-  return r.json();
+  return (await r.json()) as GraphqlReply<T>;
 };
 
-const j = await gql(FIND);
+type Agg = { aggregate?: { count?: number } };
+type AtomRow = {
+  term_id: string;
+  label?: unknown;
+  as_subject_triples_aggregate?: Agg;
+  as_object_triples_aggregate?: Agg;
+};
+const j = await gql<{ atoms?: AtomRow[] }>(FIND);
 const atoms = j?.data?.atoms ?? [];
 console.log(`caip10-labelled atoms on testnet: ${atoms.length}\n`);
 for (const a of atoms.slice(0, 10)) {
@@ -46,9 +57,15 @@ for (const a of atoms.slice(0, 10)) {
   const inc = a.as_object_triples_aggregate?.aggregate?.count ?? 0;
   console.log(`  ${String(a.label).slice(0, 44).padEnd(44)} out=${out} in=${inc}`);
 }
-const ids = atoms.map((a: { term_id: string }) => a.term_id);
+const ids = atoms.map((a) => a.term_id);
 if (ids.length) {
-  const k = await gql(INCOMING, { ids });
+  type Labelled = { label?: unknown };
+  type IncomingRow = {
+    predicate?: Labelled & { term_id?: unknown };
+    subject?: Labelled;
+    object?: Labelled;
+  };
+  const k = await gql<{ triples?: IncomingRow[] }>(INCOMING, { ids });
   const rows = k?.data?.triples ?? [];
   console.log(`\nedges pointing AT a caip10 atom: ${rows.length}`);
   const byPred = new Map<string, number>();
@@ -63,3 +80,9 @@ if (ids.length) {
     );
   }
 }
+
+// A module, not a global script. Without this TypeScript treats every top-level
+// `const` here as sharing one scope with every other import-free file in `scripts/`,
+// which produced 21 phantom redeclarations and 20 "await outside a module" errors the
+// first time this directory was typechecked (`tasks/21`). Bun already runs it as a module.
+export {};

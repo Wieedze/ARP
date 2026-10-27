@@ -161,7 +161,12 @@ function chooseIds(): number[] {
 
 let requestsMade = 0;
 
-const countingFetch: typeof fetch = async (input, init) => {
+// Not `typeof fetch`: Bun's lib types that as an object carrying `preconnect`, which a
+// counting wrapper has no business implementing. The call signature is what callers use.
+const countingFetch = async (
+  input: Parameters<typeof globalThis.fetch>[0],
+  init?: Parameters<typeof globalThis.fetch>[1],
+): Promise<Response> => {
   requestsMade += 1;
   return globalThis.fetch(input, init);
 };
