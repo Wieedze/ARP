@@ -1,8 +1,53 @@
 # Task 22 — The chain as witness
 
-> **Status: NOT STARTED** (specified 2026-10-16, from a user proposal).
-> Extends `docs/14_THE_WITNESS_PROBLEM.md`'s **fact** row. Additive to tasks 17 and 19, not a
-> replacement for either.
+> **Status: GATE RUN 2026-10-27 — steps 2 and 3 are NOT justified; step 4 is already producing
+> data.** (Specified 2026-10-16, from a user proposal.) Extends
+> `docs/14_THE_WITNESS_PROBLEM.md`'s **fact** row. Additive to tasks 17 and 19, not a replacement
+> for either.
+>
+> The gate asks for the step-1 measurement with an honest fraction, _"including the outcome where
+> the fraction is too small to justify steps 2–4."_ That is the outcome, and it splits cleanly.
+>
+> **The fraction is zero, and two independent measurements say so.**
+>
+> 1. **Step 1's key does not exist.** The step specifies `same as` → the agent's CAIP-10 operating
+>    account (ADR `0026`). Re-run 2026-10-27, `scripts/measure/caip10-join.ts`: 20 caip10-labelled
+>    atoms on testnet, **0 edges of any predicate point at one**. The sender side cannot be
+>    resolved today, which is `tasks/19` step 1b's blocker and not separately fixable here.
+> 2. **There is nothing in the calldata to read even if it could.** New:
+>    `scripts/measure/tool-addressability.ts` classifies every distinct object of a `uses` edge by
+>    its atom URI, because a tool is witnessable from calldata only if it is a contract.
+>
+>    | chain         | `uses` edges | distinct tools | a contract |    a URL |   a name |
+>    | ------------- | -----------: | -------------: | ---------: | -------: | -------: |
+>    | mainnet 1155  |          185 |             84 | **0 — 0%** | 48 — 57% | 36 — 43% |
+>    | testnet 13579 |          146 |             69 | **0 — 0%** | 39 — 57% | 30 — 43% |
+>
+>    Not a small fraction — **none**. ARP's own tool model is the reason: a tool atom is a `Thing`
+>    identified by a URL (`toolAtomUri`), so `github.com/crytic/slither` is a tool and no sequence
+>    of transactions can witness its use. The task's own limit section predicted this; the size of
+>    the subset is now measured rather than assumed.
+>
+> **Step 4 is the exception, and it already has data.** `scripts/measure/enforcer-events.ts` indexes
+> `StakeCapChecked` off `TrustStakeCapEnforcer`, reading both addresses from
+> `deployments/<chainId>.json`:
+>
+> | chain |    logs | transactions | distinct delegations | senders                                                       |
+> | ----- | ------: | -----------: | -------------------: | ------------------------------------------------------------- |
+> | 13579 | **122** |          108 |                    9 | 3 — 93 tx from ARP's own rig agent `0x906f3A52…` (ADR `0047`) |
+> | 1155  |       0 |            — |                    — | —                                                             |
+>
+> The hook is unreachable without a redemption, so each log is a fact about one. **But 93 of the 108
+> transactions are ARP crossing its own guard rail**, which proves the machinery and not the market;
+> 15 transactions from two accounts are not recorded anywhere in this repo. A count of 122 quoted
+> without the sender column would read as adoption, which is `rules/claims.md` §1 — the consequence
+> stated without measuring what bounds it.
+>
+> **Conclusion.** Steps 2 and 3 (deriving `(agent, uses, tool)` from decoded calls) have a
+> denominator of zero and are not built. Step 4's source is live and is the only tier-4 evidence
+> this project produces today; it belongs on the surface, which is a separate task and not this one.
+> The idea was right about the evidence class and wrong about the reach, and the reach is now a
+> committed number instead of an estimate.
 
 ## The idea, and the correction that improves it
 
