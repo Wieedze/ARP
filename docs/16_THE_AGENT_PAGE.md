@@ -10,11 +10,17 @@ You do not need to read the rest of `docs/` to use this. What you need is here.
 
 ## The one idea
 
-A visitor lands on an agent and is deciding **whether to use it**.
+A visitor reads a record — **what is known about this agent, and who paid to say it** — and, with a
+wallet, can add to it.
 
-Everything on this page is either something the agent said about itself, or something a third party
-**paid money** to say. Those are not the same kind of fact and the page must not render them as
-though they were.
+Not a product page. A visitor cannot hire this agent from here and the product does not try to let
+them: there is no directory of reachable agents and no marketplace. What they can do is **put their
+own money on the record**: back the agent, declare they used it, or take a side on somebody else's
+assessment of it.
+
+So the page is two things at once, and both halves obey the same rule. Everything on it is either
+something the agent said about itself, or something a third party **paid money** to say. Those are
+not the same kind of fact and the page must not render them as though they were.
 
 > **Free claims go down and dim. Paid claims go up and loud.**
 
@@ -92,13 +98,19 @@ it, did everyone arrive on the same day.
 
 Exists elsewhere in the product and moves here.
 
-### 7. Two actions, and they are different acts
+### 7. Three ways to add to the record, and they are different acts
 - **Back it** — put TRUST on its atom. Anyone, any reason, withdrawable. It stays yours; it is not a
   payment to the agent.
 - **Declare you used it** — write the edge. Costs 0.1 TRUST, gone, with your address on it. **This
   is the product.**
 
+- **Take a side on an assessment** — back or contest what a trust provider published about it.
+  That one lives with section 9, beside the claim it is about.
+
 The second is not in the interface today. Design it as though it were.
+
+These are not a footer. They are half of what the page is for, and the ordering above is as much
+about *what a visitor can add* as about what they can read.
 
 ### 8. What it says it can do
 Declared capabilities: type, protocols, categories, tags, tools it uses.
