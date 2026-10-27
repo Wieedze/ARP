@@ -225,7 +225,7 @@ export function AgentTrustPanel() {
                         on it says, who used it, what others rate it. Each rung costs more to
                         produce than the one above it, and the ordering is what says so — the
                         reference's PAID/FREE pills are gone (user, 2026-10-27). */}
-                    <PanelSection number="01" title="Identity" note="Read from the registry">
+                    <PanelSection number="01" title="Identity">
                         <AgentIdentityPanel view={view} />
                     </PanelSection>
 
@@ -238,11 +238,7 @@ export function AgentTrustPanel() {
                         mirrored cohort does resolve to one, and the ones that do not are the honest
                         gap. */}
                     {backingAtomId === null ? null : (
-                        <PanelSection
-                            number="02"
-                            title="Backing"
-                            note="Deposits on this agent's own atom"
-                        >
+                        <PanelSection number="02" title="Backing">
                             {/* The same string the `h1` above uses. `view.tokenId` alone made the
                                 confirmation read "deposit onto 2340" while the heading said
                                 "Token 2340" — the one screen where the subject has to be
@@ -259,16 +255,12 @@ export function AgentTrustPanel() {
                         edges whose object is this atom. Keyed on the agent's atom rather than its
                         token id, so it is absent for the same reason section 02 is. */}
                     {backingAtomId === null ? null : (
-                        <PanelSection number="03" title="Who used it" note="Declared, and paid for">
+                        <PanelSection number="03" title="Who used it">
                             <DeclaredUses atomId={backingAtomId} />
                         </PanelSection>
                     )}
 
-                    <PanelSection
-                        number="04"
-                        title="Ratings"
-                        note="Published by third parties, read from their own documents"
-                    >
+                    <PanelSection number="04" title="Ratings">
                         {shouldUseTabs(view.rows) ? (
                             <TabbedClaims
                                 view={view}
@@ -282,7 +274,7 @@ export function AgentTrustPanel() {
                         )}
                     </PanelSection>
 
-                    <PanelSection number="05" title="Capabilities" note="What it says it can do">
+                    <PanelSection number="05" title="Capabilities">
                         <CapabilitySection
                             groups={view.capabilities}
                             count={view.capabilityCount}
@@ -292,11 +284,7 @@ export function AgentTrustPanel() {
                     {/* Only when something actually failed. An always-present "nothing failed"
                         section would be a row of reassurance, which is not information. */}
                     {view.sourceErrors.length > 0 || view.conflicts.length > 0 ? (
-                        <PanelSection
-                            number="06"
-                            title="Not read"
-                            note="Sources that failed, and claims that disagree"
-                        >
+                        <PanelSection number="06" title="Not read">
                             <UnreadSources view={view} />
                         </PanelSection>
                     ) : null}

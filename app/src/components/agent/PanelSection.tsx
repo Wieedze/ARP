@@ -22,20 +22,23 @@ import {type ReactNode} from "react";
  * pense que c'est inutile »_. The rail keeps the number and the name, which are structure; the
  * taxonomy is gone, and the ordering already says what it was there to say.
  *
+ * It briefly carried a third line, a `note` under the title — "read from the registry", "published
+ * by third parties". Those were explanations of **our** choices, which is the one thing the user
+ * has asked to keep off the screen more than any other (2026-10-27, and five times before). The
+ * rail is a number and a name. If a figure inside a section genuinely needs a caveat, that is what
+ * `Hint` is for.
+ *
  * The rail collapses above the body below `lg`, where a 200px column would leave the content a
  * strip. It stays a rail, not a heading, so the hierarchy survives the collapse.
  */
 export function PanelSection({
     number,
     title,
-    note,
     children,
 }: {
     /** `01`, `02` — zero-padded by the caller so the sequence is visible in the source too. */
     number: string;
     title: string;
-    /** One mono line under the title. For a fact about the section, never an explanation of it. */
-    note?: string;
     children: ReactNode;
 }) {
     return (
@@ -43,11 +46,6 @@ export function PanelSection({
             <div className="flex flex-col gap-2.5 font-mono text-[11px] uppercase tracking-[0.06em]">
                 <span className="text-[color:var(--color-grey)]">{number}</span>
                 <h2 className="tracking-[0.08em] text-[color:var(--color-fg)]">{title}</h2>
-                {note === undefined ? null : (
-                    <p className="normal-case tracking-normal text-[color:var(--color-steel)]">
-                        {note}
-                    </p>
-                )}
             </div>
             <div className="flex min-w-0 flex-col gap-5">{children}</div>
         </section>

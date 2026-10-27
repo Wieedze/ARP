@@ -111,7 +111,10 @@ export function Layout({children}: {children: ReactNode}) {
                         </a>
                     </nav>
                 </div>
-                <div className="mx-auto w-full max-w-[1320px]">
+                {/* Full bleed, so "across the whole width" means the viewport and not the
+                    1320px shell (user, 2026-10-27). The footer carries `px-6`, cancelled here by
+                    the negative inset — the mark touches both edges. */}
+                <div className="-mx-6 mt-6">
                     <Watermark />
                 </div>
             </footer>
