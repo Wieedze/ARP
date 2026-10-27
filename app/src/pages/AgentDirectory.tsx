@@ -2,24 +2,42 @@ import {useId, useState} from "react";
 import {useNavigate} from "react-router-dom";
 import type {AgentListOrder} from "@arp-protocol/core";
 
-import {CapabilitySearch} from "../components/agent/CapabilitySearch";
+import {CapabilityFilter, CapabilityResults} from "../components/agent/CapabilitySearch";
 import {CohortList} from "../components/agent/CohortList";
 import {RingLoader} from "../components/brand/RingLoader";
+import {useChainChoice} from "../lib/chain-choice";
+import {controlClass} from "../lib/control-class";
 import {COHORT_PAGE_SIZE, useAgentCohort} from "../hooks/use-agent-cohort";
 import {COHORT_ORDERS, describeCohortFailure, orderLabel} from "../services/agent-cohort";
 
 /**
- * `/agents` — the way into the trust panel.
+ * `/agents` — the index.
  *
- * The whole mirrored cohort, paged, ordered by measures of evidence and never
- * by a score. Both orders rank by what cost somebody something to produce.
- * That used to be said on the page; it is now said only by what the controls
- * offer, which is why there is no order-by-score button and never will be.
+ * ## Rebuilt 2026-10-27 from the second design handoff
  *
- * Capability search — finding an agent by what it can actually do — needs an
- * index that does not exist yet and is the next phase. Until then the lookup
- * form stays, because it is the only route to an agent on BSC or Ethereum,
- * where the graph holds registry entries but no trust edges.
+ * `arp-design-handoff/arp-design-handoff 2/reference/agents.html`. The user's verdict on what was
+ * here: _« tout est mal disposé, surtout en haut avec le find capability et le titre erc8004
+ * agents, ça ne va pas du tout. Le whole cohort non plus, enfin rien ne va. »_ Three specific
+ * faults, and each one is fixed by the reference rather than by taste:
+ *
+ * 1. **The title was `ERC-8004 agents` at 32px** — a standard spelling nobody says out loud, at a
+ *    size that barely cleared body copy. It is `Agents.` over a dim second line now, at
+ *    `--text-display` (up to 88px), with the standard named in the kicker where a standard belongs.
+ * 2. **Two headings for one list.** "Find by capability" sat above the list with its own heading,
+ *    then "The whole cohort" above the rows. The filter is in the toolbar now and its results
+ *    *replace* the rows, so there is one list and no heading over it — the toolbar says what it is.
+ * 3. **Nothing anchored the page.** The reference's `.facts` box puts the one number this page is
+ *    about in the top right, boxed, against the title.
+ *
+ * ## Two columns the reference has and this page does not
+ *
+ * `DOMAIN` and `RECEIPTS`. Neither has data behind it: the cohort read samples capability edges but
+ * does not resolve a single domain per agent, and a receipt is an action executed under enforced
+ * caveats, which nothing in this app produces yet. Rendering either would be a column of invented
+ * values, and `rules/claims.md` is the whole reason not to. They arrive when the data does.
+ *
+ * Both orders rank by what cost somebody something to produce. There is no order-by-score button
+ * and never will be (ADR `0046`).
  */
 
 const LOOKUP_CHAINS: {id: number; label: string; note: string}[] = [
@@ -29,85 +47,105 @@ const LOOKUP_CHAINS: {id: number; label: string; note: string}[] = [
 ];
 
 export function AgentDirectory() {
+    const chain = useChainChoice();
     const [order, setOrder] = useState<AgentListOrder>("evidence-quantity");
     const [offset, setOffset] = useState(0);
+    const [draft, setDraft] = useState("");
+    const [filter, setFilter] = useState("");
     const cohortQuery = useAgentCohort(order, offset);
     const view = cohortQuery.data;
+    const isFiltered = filter.trim().length > 0;
 
     function changeOrder(next: AgentListOrder) {
-        // A page number means nothing across two different orders, so paging
-        // restarts rather than carrying an offset into a sequence it was not
-        // measured against.
+        // A page number means nothing across two different orders, so paging restarts rather than
+        // carrying an offset into a sequence it was not measured against.
         setOrder(next);
         setOffset(0);
     }
 
     return (
         <section>
-
-            <header className="mt-8 mb-10">
-                <h1 className="text-[length:var(--text-display)] leading-[var(--leading-display)] tracking-tight font-semibold">
-                    ERC-8004 agents
-                </h1>
-            </header>
-
-            {/* The capability search was its own page, `/discover`, and it listed the same
-                objects with the same figures — one paged, one filtered. Two pages for one list
-                (user, 2026-10-27). It is a filter here now, above the cohort it filters. */}
-            <CapabilitySearch />
-
-            <section className="mt-16">
-                <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
-                    <h2 className="font-medium">The whole cohort</h2>
-                    <OrderControl order={order} onChange={changeOrder} />
+            <header className="grid items-end gap-x-8 gap-y-6 pt-14 pb-10 md:grid-cols-[minmax(0,1fr)_auto]">
+                <div>
+                    <p className="font-mono text-[length:var(--text-label)] uppercase tracking-[0.08em] text-[color:var(--color-steel)]">
+                        Agent index · {chain.chain.name} {chain.chainId}
+                    </p>
+                    <h1 className="type-display mt-3.5">
+                        Agents.
+                        <br />
+                        <span className="text-[color:var(--color-grey)]">
+                            Sorted by what is at stake.
+                        </span>
+                    </h1>
                 </div>
 
-                {cohortQuery.error !== null ? (
-                    <CohortError
-                        error={cohortQuery.error}
-                        order={order}
-                        onRetry={() => void cohortQuery.refetch()}
-                        onSwitchOrder={changeOrder}
-                    />
-                ) : view === undefined ? (
-                    <CohortLoading />
-                ) : (
-                    <>
-                        <CohortList view={view} />
-                        <nav
-                            aria-label="Cohort pages"
-                            className="mt-5 flex flex-wrap items-center justify-between gap-x-6 gap-y-3"
-                        >
-                            <p
-                                aria-live="polite"
-                                className="font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-steel)] tabular-nums"
-                            >
-                                {view.rangeLabel}
-                                {cohortQuery.isPlaceholderData ? " · reading…" : ""}
-                            </p>
-                            <div className="flex gap-3">
-                                <PageButton
-                                    label="← Previous"
-                                    disabled={!view.hasPrevious}
-                                    onClick={() =>
-                                        setOffset(Math.max(0, offset - COHORT_PAGE_SIZE))
-                                    }
-                                />
-                                <PageButton
-                                    label="Next →"
-                                    disabled={!view.hasNext}
-                                    onClick={() => setOffset(offset + COHORT_PAGE_SIZE)}
-                                />
-                            </div>
-                        </nav>
-                    </>
-                )}
-            </section>
+                {/* One cell per fact, and only facts. The reference has three — AGENTS, STAKED,
+                    RECEIPTS — and the other two would be fabricated here: the cohort read does not
+                    sum staked value across the index, and receipts do not exist. */}
+                <dl className="flex overflow-hidden rounded-[var(--radius-card)] border border-[color:var(--color-rule)]">
+                    <Fact label="Agents">
+                        {view?.total === null || view === undefined
+                            ? "—"
+                            : view.total.toLocaleString("en-US")}
+                    </Fact>
+                    <Fact label="Chain">{chain.label}</Fact>
+                </dl>
+            </header>
 
-            <section className="mt-16">
-                <h2 className="font-medium">Look one up directly</h2>
-                <p className="mt-1 mb-6 max-w-[64ch] text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
-                    The list is Base only. Agents on BSC and Ethereum open by token id.
+            <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-4 border-y border-[color:var(--color-rule)] py-3.5">
+                <CapabilityFilter value={draft} onChange={setDraft} onSubmit={setFilter} />
+                {isFiltered ? null : <OrderControl order={order} onChange={changeOrder} />}
+            </div>
+
+            {isFiltered ? (
+                <div className="mt-8">
+                    <CapabilityResults domain={filter} />
+                </div>
+            ) : cohortQuery.error !== null ? (
+                <CohortError
+                    error={cohortQuery.error}
+                    order={order}
+                    onRetry={() => void cohortQuery.refetch()}
+                    onSwitchOrder={changeOrder}
+                />
+            ) : view === undefined ? (
+                <CohortLoading />
+            ) : (
+                <>
+                    <CohortList view={view} />
+                    <nav
+                        aria-label="Cohort pages"
+                        className="mt-5 flex flex-wrap items-center justify-between gap-x-6 gap-y-3"
+                    >
+                        <p
+                            aria-live="polite"
+                            className="font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-steel)] tabular-nums"
+                        >
+                            {view.rangeLabel}
+                            {cohortQuery.isPlaceholderData ? " · reading…" : ""}
+                        </p>
+                        <div className="flex gap-3">
+                            <PageButton
+                                label="← Previous"
+                                disabled={!view.hasPrevious}
+                                onClick={() => setOffset(Math.max(0, offset - COHORT_PAGE_SIZE))}
+                            />
+                            <PageButton
+                                label="Next →"
+                                disabled={!view.hasNext}
+                                onClick={() => setOffset(offset + COHORT_PAGE_SIZE)}
+                            />
+                        </div>
+                    </nav>
+                </>
+            )}
+
+            <section className="mt-24 border-t border-[color:var(--color-rule)] pt-10">
+                <h2 className="type-section">
+                    Or open one<span className="text-[color:var(--color-grey)]"> by id.</span>
+                </h2>
+                <p className="mt-4 mb-7 max-w-[64ch] text-[color:var(--color-silver)]">
+                    The index is Base only. Agents on BSC and Ethereum open by token id.
                 </p>
                 <LookupForm />
             </section>
@@ -115,6 +153,26 @@ export function AgentDirectory() {
     );
 }
 
+/** One boxed figure in the header. Mono label above, display numeral below. */
+function Fact({label, children}: {label: string; children: React.ReactNode}) {
+    return (
+        <div className="flex min-w-[7.5rem] flex-col gap-1.5 px-5 py-3.5 [&+&]:border-l [&+&]:border-l-[color:var(--color-rule)]">
+            <dt className="font-mono text-[10px] uppercase tracking-[0.06em] text-[color:var(--color-steel)]">
+                {label}
+            </dt>
+            <dd className="type-section text-[26px] leading-none tabular-nums">{children}</dd>
+        </div>
+    );
+}
+
+/**
+ * The order, as the reference's segmented `.sort` group: one bordered strip, hairlines between,
+ * the selected cell raised.
+ *
+ * It was three bordered pills beside a mono "ORDER" label. The label is gone — the control is in
+ * a toolbar whose only other item is a filter, and "STATEMENTS / CONVICTION" reads as a sort
+ * without being told it is one.
+ */
 function OrderControl({
     order,
     onChange,
@@ -122,31 +180,37 @@ function OrderControl({
     order: AgentListOrder;
     onChange: (next: AgentListOrder) => void;
 }) {
+    const labelId = useId();
     return (
-        <div className="flex items-baseline gap-3">
-            <span
-                id="cohort-order-label"
-                className="font-mono uppercase tracking-wider text-[length:var(--text-label)] text-[color:var(--color-steel)]"
-            >
-                Order
+        <div
+            role="group"
+            aria-labelledby={labelId}
+            className="flex overflow-hidden rounded-[var(--radius-control)] border border-[color:var(--color-rule)]"
+        >
+            <span id={labelId} className="sr-only">
+                Order the index
             </span>
-            <div role="group" aria-labelledby="cohort-order-label" className="flex gap-1">
-                {COHORT_ORDERS.map((entry) => (
+            {COHORT_ORDERS.map((entry) => {
+                const selected = entry.id === order;
+                return (
                     <button
                         key={entry.id}
                         type="button"
-                        aria-pressed={entry.id === order}
+                        aria-pressed={selected}
                         onClick={() => onChange(entry.id)}
-                        className={`px-3 py-1 text-[length:var(--text-body-sm)] border ${
-                            entry.id === order
-                                ? "border-[color:var(--color-accent)] text-[color:var(--color-accent)]"
-                                : "border-[color:var(--color-rule-strong)] text-[color:var(--color-steel)]"
+                        // Banged, and `border-transparent!` rather than no border: `index.css`'s
+                        // unlayered `button { border: 1px solid … }` would otherwise draw a box
+                        // inside the strip's own border on every cell.
+                        className={`h-[34px] border-transparent! px-3 font-mono text-[11px] uppercase tracking-wider [&+&]:border-l-[color:var(--color-rule)]! ${
+                            selected
+                                ? "bg-[color:var(--color-raised)] text-[color:var(--color-fg)]!"
+                                : "text-[color:var(--color-steel)]! hover:text-[color:var(--color-fg)]!"
                         }`}
                     >
                         {entry.label}
                     </button>
-                ))}
-            </div>
+                );
+            })}
         </div>
     );
 }
@@ -161,12 +225,7 @@ function PageButton({
     onClick: () => void;
 }) {
     return (
-        <button
-            type="button"
-            disabled={disabled}
-            onClick={onClick}
-            className="px-3 py-1.5 text-[length:var(--text-body-sm)] border border-[color:var(--color-rule-strong)] disabled:opacity-40 disabled:cursor-not-allowed"
-        >
+        <button type="button" disabled={disabled} onClick={onClick} className={controlClass}>
             {label}
         </button>
     );
@@ -180,7 +239,7 @@ function PageButton({
  */
 function CohortLoading() {
     return (
-        <div aria-live="polite" aria-busy className="mt-8 flex items-center gap-4">
+        <div aria-live="polite" aria-busy className="mt-10 flex items-center gap-4">
             <RingLoader size={32} label="Reading the cohort" />
             <p className="font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
                 reading the cohort from the intuition graph — identity, statement counts, markets
@@ -192,11 +251,10 @@ function CohortLoading() {
 /**
  * A failed listing, said out loud.
  *
- * An empty list reads as "there are no agents", which is the one thing it
- * definitely does not mean — so the failure takes the space the rows would have
- * had and names itself. A deadline also offers the other order, because a
- * reader whose sort just failed should not have to guess whether the page is
- * broken or the endpoint is slow.
+ * An empty list reads as "there are no agents", which is the one thing it definitely does not
+ * mean — so the failure takes the space the rows would have had and names itself. A deadline also
+ * offers the other order, because a reader whose sort just failed should not have to guess whether
+ * the page is broken or the endpoint is slow.
  */
 function CohortError({
     error,
@@ -214,17 +272,13 @@ function CohortError({
     const alternate = failure.alternateOrder;
 
     return (
-        <div className="mt-8 pl-5 border-l border-l-[color:var(--color-rule-strong)]">
+        <div className="mt-10 border-l border-l-[color:var(--color-rule-strong)] pl-5">
             <h3 className="text-[length:var(--text-body)] font-medium">{failure.headline}</h3>
             <p className="mt-3 max-w-[64ch] text-[color:var(--color-steel)]">{failure.detail}</p>
             {failure.canRetry || alternate !== null ? (
                 <div className="mt-5 flex flex-wrap gap-3">
                     {failure.canRetry ? (
-                        <button
-                            type="button"
-                            onClick={onRetry}
-                            className="px-3 py-1.5 text-[length:var(--text-body-sm)] border border-[color:var(--color-rule-strong)]"
-                        >
+                        <button type="button" onClick={onRetry} className={controlClass}>
                             Try again
                         </button>
                     ) : null}
@@ -232,7 +286,7 @@ function CohortError({
                         <button
                             type="button"
                             onClick={() => onSwitchOrder(alternate)}
-                            className="px-3 py-1.5 text-[length:var(--text-body-sm)] border border-[color:var(--color-rule-strong)]"
+                            className={controlClass}
                         >
                             Order by {orderLabel(alternate).toLowerCase()} instead
                         </button>
@@ -259,11 +313,11 @@ function LookupForm() {
     }
 
     return (
-        <form onSubmit={handleSubmit} className="max-w-[26rem]">
+        <form onSubmit={handleSubmit} className="flex flex-wrap items-end gap-3">
             <div>
                 <label
                     htmlFor={`${fieldId}-chain`}
-                    className="block font-mono uppercase tracking-wider text-[length:var(--text-label)] text-[color:var(--color-steel)]"
+                    className="block font-mono text-[length:var(--text-label)] uppercase tracking-wider text-[color:var(--color-steel)]"
                 >
                     Chain
                 </label>
@@ -271,23 +325,20 @@ function LookupForm() {
                     id={`${fieldId}-chain`}
                     value={chainId}
                     onChange={(event) => setChainId(Number(event.target.value))}
-                    className="mt-2 block w-full bg-[color:var(--color-ground)] border border-[color:var(--color-rule-strong)] px-3 py-1.5 font-mono text-[length:var(--text-body-sm)] focus:border-[color:var(--color-accent)]"
+                    className="mt-2 h-9 rounded-[var(--radius-control)] border border-[color:var(--color-rule-strong)] bg-[color:var(--color-ground)] px-3 font-mono text-[length:var(--text-body-sm)] focus:border-[color:var(--color-accent)]"
                 >
-                    {LOOKUP_CHAINS.map((chain) => (
-                        <option key={chain.id} value={chain.id}>
-                            {chain.label}
+                    {LOOKUP_CHAINS.map((entry) => (
+                        <option key={entry.id} value={entry.id}>
+                            {entry.label}
                         </option>
                     ))}
                 </select>
-                <p className="mt-2 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
-                    {LOOKUP_CHAINS.find((chain) => chain.id === chainId)?.note}
-                </p>
             </div>
 
-            <div className="mt-5">
+            <div>
                 <label
                     htmlFor={`${fieldId}-token`}
-                    className="block font-mono uppercase tracking-wider text-[length:var(--text-label)] text-[color:var(--color-steel)]"
+                    className="block font-mono text-[length:var(--text-label)] uppercase tracking-wider text-[color:var(--color-steel)]"
                 >
                     Token id
                 </label>
@@ -297,23 +348,20 @@ function LookupForm() {
                     inputMode="numeric"
                     autoComplete="off"
                     value={tokenId}
+                    placeholder="2340"
                     onChange={(event) => setTokenId(event.target.value)}
-                    className="mt-2 block w-full bg-transparent border border-[color:var(--color-rule-strong)] px-3 py-1.5 font-mono focus:border-[color:var(--color-accent)]"
+                    className="mt-2 h-9 w-40 rounded-[var(--radius-control)] border border-[color:var(--color-rule-strong)] bg-transparent px-3 font-mono focus:border-[color:var(--color-accent)]"
                 />
-                {trimmed !== "" && !isValid ? (
-                    <p className="mt-2 text-[length:var(--text-body-sm)]">
-                        Token ids are decimal, for example 2340.
-                    </p>
-                ) : null}
             </div>
 
-            <button
-                type="submit"
-                disabled={!isValid}
-                className="mt-5 px-3 py-1.5 text-[length:var(--text-body-sm)] border border-[color:var(--color-rule-strong)] disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-                Open panel
+            <button type="submit" disabled={!isValid} className={`h-9 ${controlClass}`}>
+                Open
             </button>
+
+            <p className="w-full font-mono text-[length:var(--text-label)] text-[color:var(--color-grey)]">
+                {LOOKUP_CHAINS.find((entry) => entry.id === chainId)?.note}
+                {trimmed !== "" && !isValid ? " · token ids are decimal" : ""}
+            </p>
         </form>
     );
 }

@@ -1,4 +1,3 @@
-import {useState} from "react";
 import {Link} from "react-router-dom";
 
 import {RingLoader} from "../brand/RingLoader";
@@ -18,7 +17,13 @@ import {formatTrust, truncateMiddle} from "../../services/trust-format";
  * `/discover`, which listed the same objects with the same figures as `/agents`: one paged, one
  * filtered. Two pages for one list.
  *
- * It is a **filter on the directory** now, above the cohort it filters.
+ * It is a **filter on the directory** now, and split in two so it can actually behave like one:
+ * `CapabilityFilter` is the input and sits in the index's toolbar beside the sort, and
+ * `CapabilityResults` *replaces* the cohort table while a search is live. It was a titled section
+ * stacked above the list, with its own "Find by capability" heading and the list's "The whole
+ * cohort" heading under it — two headings for one list, which is what the user objected to
+ * (2026-10-27): _« surtout en haut avec le find capability et le titre erc8004 agents, ça ne va
+ * pas du tout »_.
  *
  * ## What this is and is not
  *
@@ -36,52 +41,61 @@ import {formatTrust, truncateMiddle} from "../../services/trust-format";
 
 const SUGGESTIONS = ["MCP Server", "defi", "smart_contracts", "A2A Agent", "trading"];
 
-export function CapabilitySearch() {
-    const chain = useChainChoice();
-    const [domain, setDomain] = useState("");
-    const [submitted, setSubmitted] = useState("");
-    const query = useFindAgents(submitted);
-
+/**
+ * The input, for the index's toolbar. No heading — the page already has one, and the placeholder
+ * plus the examples underneath say what it searches.
+ */
+export function CapabilityFilter({
+    value,
+    onChange,
+    onSubmit,
+}: {
+    value: string;
+    onChange: (next: string) => void;
+    onSubmit: (domain: string) => void;
+}) {
     return (
-        <section>
-            <h2 className="font-medium">Find by capability</h2>
-
+        <div>
             <form
-                className="mt-6 flex flex-wrap items-end gap-3"
+                className="flex flex-wrap items-center gap-2"
                 onSubmit={(event) => {
                     event.preventDefault();
-                    setSubmitted(domain);
+                    onSubmit(value);
                 }}
             >
-                <div>
-                    <label
-                        htmlFor="hire-domain"
-                        className="block font-mono uppercase tracking-wider text-[length:var(--text-label)] text-[color:var(--color-steel)]"
-                    >
-                        What it says it can do
-                    </label>
-                    <input
-                        id="hire-domain"
-                        type="text"
-                        value={domain}
-                        onChange={(event) => setDomain(event.target.value)}
-                        placeholder="MCP Server"
-                        className="mt-2 w-80 border border-[color:var(--color-rule-strong)] bg-transparent px-3 py-1.5 font-mono"
-                    />
-                </div>
+                <input
+                    type="search"
+                    value={value}
+                    onChange={(event) => onChange(event.target.value)}
+                    placeholder="What it says it can do"
+                    aria-label="Filter agents by declared capability"
+                    className="h-9 w-[min(16rem,100%)] rounded-[var(--radius-control)] border border-[color:var(--color-rule)] bg-[color:var(--color-bg)] px-3 font-mono text-[length:var(--text-body-sm)]"
+                />
                 <button
                     type="submit"
-                    disabled={domain.trim().length === 0}
-                    className={controlClass}
+                    disabled={value.trim().length === 0}
+                    className={`h-9 ${controlClass}`}
                 >
-                    Search
+                    Filter
                 </button>
+                {value.trim().length === 0 ? null : (
+                    <button
+                        type="button"
+                        onClick={() => {
+                            onChange("");
+                            onSubmit("");
+                        }}
+                        className="h-9 px-2 font-mono text-[length:var(--text-label)] uppercase tracking-wider text-[color:var(--color-steel)]! border-transparent!"
+                    >
+                        Clear
+                    </button>
+                )}
             </form>
 
             {/* The vocabulary is the graph's, not ours, so the examples are ones that return
                 something. Measured on mainnet 2026-10-27: `MCP Server` 50, the rest one each. */}
-            <div className="mt-3 flex flex-wrap items-baseline gap-2 text-[length:var(--text-body-sm)]">
-                <span className="font-mono uppercase tracking-wider text-[length:var(--text-label)] text-[color:var(--color-steel)]">
+            <div className="mt-2 flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                <span className="font-mono uppercase tracking-wider text-[length:var(--text-label)] text-[color:var(--color-grey)]">
                     try
                 </span>
                 {SUGGESTIONS.map((suggestion) => (
@@ -89,18 +103,28 @@ export function CapabilitySearch() {
                         key={suggestion}
                         type="button"
                         onClick={() => {
-                            setDomain(suggestion);
-                            setSubmitted(suggestion);
+                            onChange(suggestion);
+                            onSubmit(suggestion);
                         }}
-                        className="px-2 py-1 text-[length:var(--text-body-sm)] border-[color:var(--color-rule)]! text-[color:var(--color-steel)]!"
+                        className="px-1.5 py-0.5 font-mono text-[length:var(--text-label)] border-transparent! text-[color:var(--color-steel)]! hover:text-[color:var(--color-fg)]!"
                     >
                         {suggestion}
                     </button>
                 ))}
             </div>
+        </div>
+    );
+}
 
-            <div className="mt-10">
-                {submitted.trim().length === 0 ? null : query.isPending ? (
+/** The results, which stand in for the cohort table while a filter is live. */
+export function CapabilityResults({domain}: {domain: string}) {
+    const chain = useChainChoice();
+    const query = useFindAgents(domain);
+
+    return (
+        <section aria-label={`Agents declaring ${domain}`}>
+            <div>
+                {domain.trim().length === 0 ? null : query.isPending ? (
                     <div aria-live="polite" aria-busy className="flex items-center gap-4">
                         <RingLoader size={32} label="Searching" />
                         <p className="font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">

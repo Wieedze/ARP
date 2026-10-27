@@ -28,6 +28,8 @@
     --color-rule-strong: #43474b; /* control borders, table head rule */
 
     --color-grey: #6b7075; /* dim display text only — 3.8:1 */
+    --color-numeral: #2a2d30; /* big ghost numerals — a rank, a rung. Not text, so not AA */
+    --color-watermark: #17181a; /* the footer wordmark, one step off the ground */
     --color-steel: #8a9096; /* labels, secondary text — 5.9:1 */
     --color-silver: #a9aeb2; /* body secondary — 8.5:1 */
     --color-fg: #e6e8e6; /* paper, primary text — 15.5:1 */
@@ -54,11 +56,25 @@
     --font-sans: "Archivo", system-ui, sans-serif;
     --font-mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
 
-    /* Type scale — bounded to 3 body sizes + 1 display per the rule. */
-    --text-display: 32px;
+    /* Type scale — three body sizes, and display type that is actually display type.
+       `--text-display` was a flat 32px, which is where "ce n'est pas agréable" came from
+       (user, 2026-10-27): every page title sat a hair above body copy, so nothing on any
+       screen was the loudest thing on it. The second design handoff
+       (`arp-design-handoff/arp-design-handoff 2/reference/`) sets a fluid clamp, and the
+       clamps below are its numbers, not ours.
+
+       Two sizes, because the references use two. A listing's title is a statement — one or
+       two short words — and goes to 88px. A detail page's title is *content*: an agent's
+       name, sometimes very long, so it tops out at 76px and wraps anywhere (`.type-title`). */
+    --text-display: clamp(44px, 6.4vw, 88px);
+    --text-title: clamp(40px, 5.6vw, 76px);
+    --text-section: clamp(28px, 4vw, 52px);
     --text-body: 15px;
     --text-body-sm: 13px;
     --text-label: 11px;
+
+    /* The footer wordmark. Bleeds off the bottom at `.watermark`'s negative margin. */
+    --text-giant: clamp(150px, 30vw, 420px);
 
     /* Score sizes — the trust panel's one hero, and its whole argument.
        A score's type size is set by how much evidence it rests on, so a 64.36
@@ -79,8 +95,12 @@
     --radius-button: 10px;
     --radius-card: 12px;
 
-    /* Line heights */
-    --leading-display: 1.1;
+    /* Line heights. Display type is set tight — below 1 — because at 88px anything looser
+       reads as two unrelated lines rather than one headline. */
+    --leading-display: 0.92;
+    --leading-title: 0.94;
+    --leading-section: 0.95;
+    --leading-giant: 0.74;
     --leading-body: 1.5;
     --leading-tight: 1.2;
 
@@ -216,6 +236,53 @@ summary:focus-visible,
     outline: 1px solid var(--color-accent);
     outline-offset: 2px;
     border-radius: 1px;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Display type                                                                */
+/* -------------------------------------------------------------------------- */
+
+/* Archivo 800 at width 125%, per ADR `0057` §1 and both design handoffs.
+   `font-stretch` has no Tailwind utility and an arbitrary property would be the
+   second failure class `rules/ui.md` names — a class that emits nothing — so it
+   lives here with the three properties that always travel with it.
+
+   One class instead of five utilities at nine call sites, which is also what the
+   user meant by "unifier les fonctions": the type is one decision, not five.
+
+   **Unlayered, so these win over `text-*`, `leading-*`, `font-*` and
+   `tracking-*` utilities on the same element.** That is correct — these classes
+   *are* the type — but it means overriding one needs `!`, and `rules/ui.md`'s
+   note about base-layer rules applies. */
+.type-display {
+    font-family: var(--font-display);
+    font-size: var(--text-display);
+    line-height: var(--leading-display);
+    font-weight: 800;
+    font-stretch: 125%;
+    letter-spacing: -0.03em;
+}
+
+/* A detail page's title is content, not a statement: an agent's name can be long,
+   a bare atom id longer still. Smaller ceiling, and it breaks mid-token rather
+   than pushing the layout sideways. */
+.type-title {
+    font-family: var(--font-display);
+    font-size: var(--text-title);
+    line-height: var(--leading-title);
+    font-weight: 800;
+    font-stretch: 125%;
+    letter-spacing: -0.03em;
+    overflow-wrap: anywhere;
+}
+
+.type-section {
+    font-family: var(--font-display);
+    font-size: var(--text-section);
+    line-height: var(--leading-section);
+    font-weight: 800;
+    font-stretch: 125%;
+    letter-spacing: -0.02em;
 }
 
 /* -------------------------------------------------------------------------- */

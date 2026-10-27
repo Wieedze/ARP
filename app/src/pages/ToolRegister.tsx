@@ -87,9 +87,7 @@ export function ToolRegister() {
     return (
         <section>
             <header className="mt-8 mb-12">
-                <h1 className="text-[length:var(--text-display)] leading-[var(--leading-display)] font-semibold tracking-tight">
-                    Register a tool
-                </h1>
+                <h1 className="type-display">Register a tool</h1>
                 <p className="mt-3 max-w-[64ch] text-[color:var(--color-steel)]">
                     The same URL always lands on the same market, whoever registers it.
                 </p>
@@ -258,10 +256,7 @@ function Resolved(props: {
             {plan.exists ? (
                 <div className="mt-8 max-w-[64ch]">
                     <p className="font-medium">This tool already has its atom.</p>
-                    <Link
-                        to={`/atom/${plan.atomId}`}
-                        className={`mt-4 inline-block ${linkClass}`}
-                    >
+                    <Link to={`/atom/${plan.atomId}`} className={`mt-4 inline-block ${linkClass}`}>
                         See its declarations →
                     </Link>
                 </div>
@@ -291,10 +286,7 @@ function Resolved(props: {
                         there are no `uses` edges on the atom by construction and that page renders
                         "No declared uses". The `exists` branch above was corrected and this one was
                         not — `rules/claims.md` failure 5, on the path that mattered more. */}
-                    <Link
-                        to={`/atom/${plan.atomId}`}
-                        className={`mt-2 inline-block ${linkClass}`}
-                    >
+                    <Link to={`/atom/${plan.atomId}`} className={`mt-2 inline-block ${linkClass}`}>
                         See its declarations →
                     </Link>
                 </div>

@@ -49,9 +49,7 @@ export function AtomPanel() {
     if (!valid) {
         return (
             <section className="mt-10">
-                <h1 className="text-[length:var(--text-display)] leading-[var(--leading-display)] tracking-tight font-semibold">
-                    Not an atom id
-                </h1>
+                <h1 className="type-title">Not an atom id</h1>
                 <p className="mt-4 max-w-[60ch] text-[color:var(--color-steel)]">
                     An atom is addressed by its Intuition id — 0x followed by 32 bytes. Got{" "}
                     <span className="font-mono">{atomId ?? "nothing"}</span>.
@@ -75,9 +73,7 @@ export function AtomPanel() {
     if (query.isError) {
         return (
             <section className="mt-10" aria-live="polite">
-                <h1 className="text-[length:var(--text-display)] leading-[var(--leading-display)] tracking-tight font-semibold">
-                    The read failed
-                </h1>
+                <h1 className="type-title">The read failed</h1>
                 <p className="mt-4 max-w-[60ch] font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-steel)] break-words">
                     {query.error instanceof Error ? query.error.message : String(query.error)}
                 </p>
@@ -90,13 +86,7 @@ export function AtomPanel() {
     return (
         <section className="mt-10 grid gap-x-12 gap-y-10 md:grid-cols-[18rem_1fr] md:items-start">
             <aside>
-                <h1
-                    className={`text-[length:var(--text-display)] leading-[var(--leading-display)] tracking-tight font-semibold break-words ${
-                        view.titleIsId ? "font-mono" : ""
-                    }`}
-                >
-                    {view.title}
-                </h1>
+                <h1 className={`type-title ${view.titleIsId ? "font-mono" : ""}`}>{view.title}</h1>
                 <Identity view={view} />
             </aside>
 

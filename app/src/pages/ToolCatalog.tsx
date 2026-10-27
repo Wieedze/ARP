@@ -62,13 +62,9 @@ export function ToolCatalog() {
 
     return (
         <section>
-
             <header className="mt-8 mb-6 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-3">
                 <div>
-                    <h1 className="font-sans text-[length:var(--text-display)] leading-[var(--leading-display)] tracking-tight font-semibold">
-                        Tools
-                    </h1>
-
+                    <h1 className="font-sans type-display">Tools</h1>
                 </div>
                 <div className="flex flex-wrap items-baseline gap-x-6 gap-y-3">
                     <CurveControl curveId={curveId} onChange={setCurveId} />
@@ -131,7 +127,8 @@ export function ToolCatalog() {
                         nothing here yet
                     </p>
                     <p className="mt-3 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
-                        A row appears when somebody registers a tool, or an agent declares using one.
+                        A row appears when somebody registers a tool, or an agent declares using
+                        one.
                     </p>
                     <Link to="/register" className={`mt-4 inline-block ${linkClass}`}>
                         Register the first one →

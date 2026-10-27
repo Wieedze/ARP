@@ -71,9 +71,7 @@ export function YourAgent() {
     return (
         <section>
             <header className="mt-8 mb-10">
-                <h1 className="font-display text-[length:var(--text-display)] leading-[var(--leading-display)] tracking-tight font-semibold">
-                    Your agent
-                </h1>
+                <h1 className="type-display">Your agent</h1>
             </header>
 
             <fieldset className="border-0 p-0 m-0">

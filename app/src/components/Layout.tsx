@@ -5,14 +5,17 @@ import {useChainChoice} from "../lib/chain-choice";
 
 import {ChainToggle} from "./brand/ChainToggle";
 import {NavLink, NavSplit} from "./brand/NavSplit";
+import {Watermark} from "./brand/Watermark";
 import {WalletConnect} from "./WalletConnect";
 
 /**
- * Layout shell. The header is the split nav from ADR `0057` §3: links inward on both sides, the
- * Source mark centred on the page, one hairline below and no decoration under it.
+ * Layout shell. The header is the split nav from ADR `0057` §3 and both design handoffs: links
+ * inward on both sides, the Source mark centred on the page, one hairline below and no decoration
+ * under it. The footer ends on the wordmark at `--text-giant`, cropped by the page edge.
  *
- * Max content width is intentional (not the viewport) — set on `<main>`
- * so the shell itself spans full width but the content stays readable.
+ * Max content width is **1320px**, which is the reference's `.wrap`, not the 1080 this shell used.
+ * The listing pages are eight-column tables and 1080 squeezed them; the user's complaint that the
+ * agent index was badly laid out started there (2026-10-27).
  *
  * The app spans two networks: ARP's own contracts on Intuition testnet, and the ERC-8004 cohort
  * plus its vaults on Intuition mainnet (ADR 0017).
@@ -49,25 +52,35 @@ export function Layout({children}: {children: ReactNode}) {
              * A "How it works" tab is part of the same structure and is not built: its content is a
              * decision, not a layout.
              */}
-            <NavSplit>
-                <NavLink to="/agents">Agents</NavLink>
-                <NavLink to="/tools">Tools</NavLink>
-                {/* `/agent` and `/agent/import` linked only to each other and appeared in no nav,
-                    so the only route to either was already knowing the URL — 1,828 lines of UI with
-                    no door (user, 2026-10-27). They are one page now and this is the door. "Your
-                    agent", not "Register", because `/register` beside it registers a *tool* and two
-                    tabs reading "Register" would be the ambiguity that question was asked about. */}
-                <NavLink to="/agent">Your agent</NavLink>
-                <NavLink to="/register">Add a tool</NavLink>
-                {isConnected ? <NavLink to="/profile">My profile</NavLink> : null}
-                <ChainToggle />
-                <WalletConnect />
-            </NavSplit>
+            {/* Split around the centred mark: what you read on the left, what you *do* on the
+                right. `/agent` and `/agent/import` linked only to each other and appeared in no
+                nav, so the only route to either was already knowing the URL — 1,828 lines of UI
+                with no door (user, 2026-10-27). "Your agent", not "Register", because
+                `/register` beside it registers a *tool* and two items reading "Register" would be
+                the ambiguity that question was about. */}
+            <NavSplit
+                left={
+                    <>
+                        <NavLink to="/agents">Agents</NavLink>
+                        <NavLink to="/tools">Tools</NavLink>
+                    </>
+                }
+                right={
+                    <>
+                        <NavLink to="/agent">Your agent</NavLink>
+                        <NavLink to="/register">Add a tool</NavLink>
+                        {isConnected ? <NavLink to="/profile">My profile</NavLink> : null}
+                        <ChainToggle />
+                        <WalletConnect />
+                    </>
+                }
+            />
 
-            <main className="flex-1 mx-auto w-full max-w-[1080px] px-6 py-10">{children}</main>
+            <main className="flex-1 mx-auto w-full max-w-[1320px] px-6 py-10">{children}</main>
 
-            <footer className="border-t border-[color:var(--color-rule)] mt-16 px-6 py-6">
-                <div className="mx-auto w-full max-w-[1080px] flex flex-wrap items-center justify-between gap-3 text-[length:var(--text-label)] uppercase tracking-wider text-[color:var(--color-grey)]">
+            {/* `overflow-hidden` is what makes the wordmark's crop a crop rather than a scrollbar. */}
+            <footer className="mt-24 overflow-hidden border-t border-[color:var(--color-rule)] px-6 pt-7">
+                <div className="mx-auto w-full max-w-[1320px] flex flex-wrap items-center justify-between gap-3 text-[length:var(--text-label)] uppercase tracking-wider text-[color:var(--color-grey)]">
                     <span>
                         Agent Reputation Protocol —{" "}
                         <span className="text-[color:var(--color-steel)]">{chain.chain.name}</span>
@@ -87,6 +100,9 @@ export function Layout({children}: {children: ReactNode}) {
                             MetaMask
                         </a>
                     </nav>
+                </div>
+                <div className="mx-auto w-full max-w-[1320px]">
+                    <Watermark />
                 </div>
             </footer>
         </>

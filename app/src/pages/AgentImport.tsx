@@ -282,9 +282,7 @@ export function AgentImport() {
     return (
         <section>
             <header className="mt-8 mb-12">
-                <h1 className="text-[length:var(--text-display)] leading-[var(--leading-display)] font-semibold tracking-tight">
-                    Import an agent you already have
-                </h1>
+                <h1 className="type-display">Import an agent you already have</h1>
                 <p className="mt-3 max-w-[64ch] text-[color:var(--color-steel)]">
                     Nothing is minted. One edge gets published: your agent&rsquo;s atom, linked to
                     the account that will stake for it.

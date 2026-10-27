@@ -741,9 +741,7 @@ function DelegationsActive({
 function PageHeader() {
     return (
         <header className="mb-10">
-            <h1 className="font-sans text-[length:var(--text-display)] leading-[var(--leading-display)] tracking-tight font-semibold">
-                Configure an agent
-            </h1>
+            <h1 className="font-sans type-display">Configure an agent</h1>
             <p className="mt-2 text-[color:var(--color-steel)] max-w-[640px]">
                 Registry:{" "}
                 <a

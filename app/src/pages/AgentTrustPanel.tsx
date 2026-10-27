@@ -154,9 +154,7 @@ export function AgentTrustPanel() {
                 <LoadingShape chainId={ref.chainId} tokenId={ref.tokenId} />
             ) : profileQuery.error !== null ? (
                 <section className="mt-10">
-                    <h1 className="text-[length:var(--text-display)] leading-[var(--leading-display)] tracking-tight font-semibold">
-                        Could not read this agent
-                    </h1>
+                    <h1 className="type-title">Could not read this agent</h1>
                     <p className="mt-4 max-w-[60ch] text-[color:var(--color-steel)]">
                         Every source failed, so nothing here would be an answer.{" "}
                         {profileQuery.error.message}
@@ -171,9 +169,7 @@ export function AgentTrustPanel() {
                 </section>
             ) : view === undefined ? null : !view.found ? (
                 <section className="mt-10">
-                    <h1 className="text-[length:var(--text-display)] leading-[var(--leading-display)] tracking-tight font-semibold">
-                        No agent there
-                    </h1>
+                    <h1 className="type-title">No agent there</h1>
                     <p className="mt-4 max-w-[60ch] text-[color:var(--color-steel)]">
                         Nothing resolves for <span className="font-mono">{view.caip19}</span>. The
                         sources answered cleanly; the agent is simply not registered under that
@@ -193,7 +189,7 @@ export function AgentTrustPanel() {
                                 <AgentAvatar src={view.image} name={view.name ?? view.tokenId} />
                             ) : null}
                             <div className="min-w-0">
-                                <h1 className="text-[length:var(--text-display)] leading-[var(--leading-display)] tracking-tight font-semibold break-words">
+                                <h1 className="type-title">
                                     {view.name ?? `Token ${view.tokenId}`}
                                 </h1>
                                 <p className="mt-2 font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-steel)] break-all">
@@ -439,7 +435,7 @@ function LoadingShape({chainId, tokenId}: {chainId: number; tokenId: string}) {
         <section className="mt-10" aria-live="polite" aria-busy>
             <div className="flex items-center gap-4">
                 <RingLoader size={40} label="Resolving this agent" />
-                <h1 className="text-[length:var(--text-display)] leading-[var(--leading-display)] tracking-tight font-semibold text-[color:var(--color-steel)]">
+                <h1 className="type-title text-[color:var(--color-steel)]">
                     Resolving {chainId}:{tokenId}
                 </h1>
             </div>

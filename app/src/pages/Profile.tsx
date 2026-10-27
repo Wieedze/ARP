@@ -110,7 +110,7 @@ function Positions({view}: {view: ProfileView}) {
                 <p className="text-[length:var(--text-label)] uppercase tracking-wider text-[color:var(--color-steel)]">
                     {view.isNetNegative ? "Taken out, net of deposits" : "Still committed"}
                 </p>
-                <p className="mt-1 font-mono text-[length:var(--text-display)] leading-[var(--leading-display)] tabular-nums">
+                <p className="mt-1 font-mono text-[length:var(--text-title)] leading-[var(--leading-title)] tabular-nums">
                     {view.netTrust}
                     <span className="text-[length:var(--text-body)] text-[color:var(--color-steel)]">
                         {" "}
