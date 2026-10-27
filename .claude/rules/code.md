@@ -6,11 +6,11 @@ These apply to all code in the repo: Solidity, TypeScript, scripts.
 
 The codebase has three layers. Mixing them is a defect.
 
-| Layer | Responsibility | Examples |
-|---|---|---|
-| **Domain / contracts** | On-chain state and invariants. Pure business logic. | `contracts/src/*.sol` |
-| **Services** | Off-chain logic that talks to chain, Intuition, IPFS. No UI concerns. | `app/src/services/*.ts`, `app/src/lib/*.ts` |
-| **Presentation** | React components, hooks, pages. No business logic, no direct chain calls. | `app/src/components/*.tsx`, `app/src/pages/*.tsx` |
+| Layer                  | Responsibility                                                            | Examples                                          |
+| ---------------------- | ------------------------------------------------------------------------- | ------------------------------------------------- |
+| **Domain / contracts** | On-chain state and invariants. Pure business logic.                       | `contracts/src/*.sol`                             |
+| **Services**           | Off-chain logic that talks to chain, Intuition, IPFS. No UI concerns.     | `app/src/services/*.ts`, `app/src/lib/*.ts`       |
+| **Presentation**       | React components, hooks, pages. No business logic, no direct chain calls. | `app/src/components/*.tsx`, `app/src/pages/*.tsx` |
 
 Rules:
 
@@ -83,6 +83,16 @@ A function shipped without tests is not done. Coverage targets:
 
 - Contracts: 100% line + branch coverage on the public surface. Fuzz where inputs are unbounded.
 - Services: every public function has a unit test. Mock at the network boundary only.
-- Hooks and components: tested behaviorally, not by checking implementation details. React Testing Library or equivalent, not enzyme-style snapshots.
+- Hooks and components: tested behaviourally, not by checking implementation details. React Testing
+  Library or equivalent, not enzyme-style snapshots.
+
+  **This line was unsatisfiable from 2026-09-17 to 2026-10-27** — `tasks/13` recorded that the repo
+  had no DOM environment, so the rule demanded a tool nobody could run. It is satisfiable now
+  (`app/vitest.config.ts`, two projects, `@testing-library/react` on `happy-dom`), and the bill for
+  the gap is itemised in `tasks/26`: eight defects on one page across three review rounds.
+
+  **Behaviourally** is load-bearing and is the reason snapshots are named: a snapshot of that page
+  would have passed with all eight in it. Assert what a reader gets — a figure that is absent, a
+  live region that announces, a sentence that reads as one — never which class carried it.
 
 A test that is hard to write usually points at a design that mixed layers. Refactor, don't bury.

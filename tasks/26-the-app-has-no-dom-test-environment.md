@@ -1,6 +1,20 @@
 # Task 26 — The app has no DOM test environment, and it cost eight defects on one page
 
-> **Status: NOT STARTED** (recorded 2026-10-19, from three review rounds on `tasks/23` — two
+> **Status: COMPLETE** 2026-10-27 — ADR `0063`, closing `tasks/13` with it.
+>
+> Two projects in `app/vitest.config.ts`: `*.test.ts` on `node`, `*.test.tsx` on `happy-dom`.
+> 19 component tests across `AtomPanel` and `UsageEdgeRow`; the app suite is 402.
+>
+> **`environmentMatchGlobs` is gone in Vitest 4** and fails silently — every `.tsx` test runs
+> in `node` and the only symptom is `document is not defined`, which reads as a missing
+> dependency. The first version of the config had it.
+>
+> `ToolUsagePanel` no longer exists; its states are `AtomPanel`'s, and the `uses`-scoped view
+> is `DeclaredUses`. The six DOM-shaped defects are covered by the tests on those two.
+>
+> Original status below.
+>
+> **NOT STARTED** (recorded 2026-10-19, from three review rounds on `tasks/23` — two
 > `ui-reviewer`, one `task-verifier`).
 > ADR `0011` chose no DOM environment for `app/`. This is the bill for that choice, itemised.
 
