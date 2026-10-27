@@ -1,8 +1,29 @@
 # Task 27 — A pass over the prose: slop, redundancy, over-explanation
 
-> **Status: NOT STARTED** (recorded 2026-10-20, at the user's request, to be run **after** the
-> connector and the tools page — not before).
+> **Status: STEPS 1-3 DONE 2026-10-27 (`dc3ef0b`); STEPS 4-6 NOT DONE.** Recorded 2026-10-20 at
+> the user's request, to be run after the connector and the tools page.
 > Scope: every word a human or a third party reads. Not the code.
+>
+> **Done** — the front-facing half, which is the order's own priority because these are read by
+> people who did not write them:
+>
+> 1. `README.md` — 331 → 325 lines, and **six factual errors** came out with the prose: the
+>    mainnet row, the `/` row, `0.1 TRUST` twice, two stale `scripts/` lines, and a one-chain
+>    Stack. A prose pass over a stale document corrects facts or it is cosmetic.
+> 2. `packages/protocol/README.md` and `skills/arp/SKILL.md` — the two surfaces a third party
+>    reads. Four slop sentences cut by the table's own tests.
+> 3. `app/src` UI copy — **already clean**: "marketplace" returns nothing, and so do the
+>    apologetic and marketing patterns. `app/README.md` was still the Vite template and is now
+>    real (`tasks/28` item 22).
+>
+> **Not done**, and not claimed: steps **4** (`docs/` — 16 files, 5,967 lines), **5**
+> (`.claude/rules/` — two sentences cut, the rest untouched) and **6** (31 task files, 65 ADRs,
+> 19 post-mortems). Two targeted cuts landed in 4 and 5 — `docs/09:47` and `claims.md:88` — and
+> that is all.
+>
+> The remaining work is large and low-risk, and splitting it is deliberate: the gate below asks
+> that a reader who did not write a file can say which sentence matters, and that is a judgement
+> made per file, not a sweep.
 
 ## Why this is a task and not a tidy-up
 
