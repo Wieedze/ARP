@@ -1,5 +1,7 @@
 import {useEffect, useRef, useState, type ReactNode} from "react";
 
+import {useScene} from "./scene-context";
+
 /**
  * Bring an element in once, when it first reaches the viewport.
  *
@@ -45,19 +47,24 @@ export function Reveal({
     delayMs?: number;
     className?: string;
 }) {
+    const {pinned, isActive} = useScene();
     const ref = useRef<HTMLDivElement | null>(null);
-    const [shown, setShown] = useState(() => !canAnimate());
+    const [seen, setSeen] = useState(() => !canAnimate());
+
+    // Pinned, the trigger is the scene arriving; stacked, it is the element reaching the viewport.
+    const shown = pinned ? !canAnimate() || isActive : seen;
 
     useEffect(() => {
         const node = ref.current;
         if (node === null) return;
+        if (pinned) return;
         if (!canAnimate()) return;
 
         const observer = new IntersectionObserver(
             (entries) => {
                 for (const entry of entries) {
                     if (!entry.isIntersecting) continue;
-                    setShown(true);
+                    setSeen(true);
                     observer.disconnect();
                 }
             },
@@ -65,15 +72,17 @@ export function Reveal({
         );
         observer.observe(node);
         return () => observer.disconnect();
-    }, []);
+    }, [pinned]);
 
     return (
         <div
             ref={ref}
-            className={`motion-safe:transition-[opacity,transform] motion-safe:duration-[620ms] motion-safe:ease-[cubic-bezier(0.2,0.65,0.3,1)] ${
+            className={`motion-safe:transition-[opacity,transform] motion-safe:duration-[260ms] motion-safe:ease-[var(--ease-out-quart)] ${
                 shown ? "translate-y-0 opacity-100" : "translate-y-3 opacity-0"
             } ${className}`}
-            style={shown ? undefined : {transitionDelay: `${delayMs}ms`}}
+            // The delay is on the way **in** — which is the opposite of the usual reflex. Put it
+            // on the hidden state and the element waits before leaving, so a scene change drags.
+            style={shown ? {transitionDelay: `${delayMs}ms`} : undefined}
         >
             {children}
         </div>

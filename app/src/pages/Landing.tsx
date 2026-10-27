@@ -3,6 +3,7 @@ import type {RecentDeclaration} from "@arp-protocol/core";
 
 import {PulseField} from "../components/brand/PulseField";
 import {Reveal} from "../components/brand/Reveal";
+import {SceneDeck} from "../components/brand/SceneDeck";
 import {useRecentDeclarations} from "../hooks/use-recent-declarations";
 import {useDeclarationCost} from "../hooks/use-declaration-cost";
 import {useChainChoice} from "../lib/chain-choice";
@@ -62,7 +63,7 @@ export function Landing() {
     const steps = stepsFor(fee);
 
     return (
-        <>
+        <SceneDeck>
             {/* **No frame, and no inset.** The hero was a bordered card with
                 `clamp(24px,5vw,64px)` of padding, so its headline began 65px to the right of every
                 other heading on the page — measured at 1920px, h1 at 388 against 323 everywhere
@@ -78,29 +79,42 @@ export function Landing() {
                     was the full width of the hero, which put an 88px headline straight across the
                     field's rings and made both unreadable. */}
                 <div className="relative flex min-h-[min(72vh,38rem)] max-w-[40rem] flex-col justify-end gap-6 py-[clamp(24px,5vw,64px)]">
-                    <p className="font-mono text-[length:var(--text-label)] uppercase tracking-[0.08em] text-[color:var(--color-steel)]">
-                        ARP · Agent Reputation Protocol
-                    </p>
-                    <h1 className="type-face text-[clamp(36px,4.4vw,60px)]">
-                        The reputation pulse for autonomous agents and tools.
-                    </h1>
-                    <p className="max-w-[44ch] text-[length:18px] leading-[1.45] text-[color:var(--color-silver)]">
-                        Every beat is someone paying to say what they saw.
-                    </p>
-                    <div className="flex flex-wrap items-center gap-5">
-                        <Link to="/agents" className={heroControlClass}>
-                            Open the agent index
-                        </Link>
-                        <a href="#build" className={`font-mono text-[12px] ${linkClass}`}>
-                            or build against it →
-                        </a>
-                    </div>
+                    <Reveal>
+                        <p className="font-mono text-[length:var(--text-label)] uppercase tracking-[0.08em] text-[color:var(--color-steel)]">
+                            ARP · Agent Reputation Protocol
+                        </p>
+                    </Reveal>
+                    <Reveal delayMs={80}>
+                        <h1 className="type-face text-[clamp(36px,4.4vw,60px)]">
+                            The reputation pulse for autonomous agents and tools.
+                        </h1>
+                    </Reveal>
+                    <Reveal delayMs={170}>
+                        <p className="max-w-[44ch] text-[length:18px] leading-[1.45] text-[color:var(--color-silver)]">
+                            Every beat is someone paying to say what they saw.
+                        </p>
+                    </Reveal>
+                    <Reveal delayMs={250}>
+                        <div className="flex flex-wrap items-center gap-5">
+                            <Link to="/agents" className={heroControlClass}>
+                                Open the agent index
+                            </Link>
+                            <a href="#build" className={`font-mono text-[12px] ${linkClass}`}>
+                                or build against it →
+                            </a>
+                        </div>
+                    </Reveal>
                 </div>
 
                 <Beat declarations={declarations} isPending={recent.isPending} />
-            </section>
 
-            <Ticker declarations={declarations} isPending={recent.isPending} />
+                {/* Inside the hero's scene, not beside it. On its own it was one line of mono
+                    owning a whole viewport, which is a screen the reader scrolls past wondering
+                    what they missed. */}
+                <Reveal delayMs={330}>
+                    <Ticker declarations={declarations} isPending={recent.isPending} />
+                </Reveal>
+            </section>
 
             {/* **Rewritten 2026-10-27.** It was a two-column free-versus-paid table of quoted
                 claims, and the user read it back as a flat list: _"tout ça c'est incompréhensible,
@@ -122,17 +136,18 @@ export function Landing() {
                 dim="If others follow, your position is worth more."
             >
                 <div className="border-t border-[color:var(--color-rule-strong)]">
-                    {steps.map((step) => (
-                        <div
-                            key={step.n}
-                            className="grid items-baseline gap-6 border-b border-[color:var(--color-rule)] py-7 md:grid-cols-[5rem_minmax(0,1fr)_minmax(0,1.1fr)]"
-                        >
-                            <span className="type-face text-[clamp(34px,5vw,56px)] text-[color:var(--color-numeral)]">
-                                {step.n}
-                            </span>
-                            <span className="type-face text-[22px]">{step.name}</span>
-                            <span className="text-[color:var(--color-silver)]">{step.line}</span>
-                        </div>
+                    {steps.map((step, index) => (
+                        <Reveal key={step.n} delayMs={index * 80}>
+                            <div className="grid items-baseline gap-6 border-b border-[color:var(--color-rule)] py-7 md:grid-cols-[5rem_minmax(0,1fr)_minmax(0,1.1fr)]">
+                                <span className="type-face text-[clamp(34px,5vw,56px)] text-[color:var(--color-numeral)]">
+                                    {step.n}
+                                </span>
+                                <span className="type-face text-[22px]">{step.name}</span>
+                                <span className="text-[color:var(--color-silver)]">
+                                    {step.line}
+                                </span>
+                            </div>
+                        </Reveal>
                     ))}
                 </div>
             </Section>
@@ -143,43 +158,46 @@ export function Landing() {
                 dim="ARP stands on the top two."
             >
                 <div className="border-t border-[color:var(--color-rule-strong)]">
-                    {RUNGS.map((rung) => (
-                        <div
-                            key={rung.n}
-                            className={`grid items-center gap-6 border-b border-[color:var(--color-rule)] py-7 md:grid-cols-[5rem_minmax(0,1fr)_minmax(0,1.3fr)_minmax(0,1fr)_9rem] ${
-                                rung.arp ? "" : "text-[color:var(--color-steel)]"
-                            }`}
-                        >
-                            <span
-                                className={`type-face text-[clamp(34px,5vw,56px)] ${
-                                    rung.arp
-                                        ? "text-[color:var(--color-fg)]"
-                                        : "text-[color:var(--color-numeral)]"
+                    {RUNGS.map((rung, index) => (
+                        <Reveal key={rung.n} delayMs={index * 80}>
+                            <div
+                                className={`grid items-center gap-6 border-b border-[color:var(--color-rule)] py-7 md:grid-cols-[5rem_minmax(0,1fr)_minmax(0,1.3fr)_minmax(0,1fr)_9rem] ${
+                                    rung.arp ? "" : "text-[color:var(--color-steel)]"
                                 }`}
                             >
-                                {rung.n}
-                            </span>
-                            <span
-                                className={`type-face text-[22px] ${rung.arp ? "text-[color:var(--color-fg)]" : ""}`}
-                            >
-                                {rung.name}
-                            </span>
-                            <span className="text-[color:var(--color-silver)]">{rung.claim}</span>
-                            <span className="font-mono text-[length:var(--text-body-sm)]">
-                                {rung.cost}
-                            </span>
-                            <span className="flex items-center gap-2 font-mono text-[length:var(--text-body-sm)] md:justify-end">
                                 <span
-                                    aria-hidden="true"
-                                    className={`h-[6px] w-[6px] rounded-full ${
+                                    className={`type-face text-[clamp(34px,5vw,56px)] ${
                                         rung.arp
-                                            ? "bg-[color:var(--color-accent)]"
-                                            : "bg-[color:var(--color-rule-strong)]"
+                                            ? "text-[color:var(--color-fg)]"
+                                            : "text-[color:var(--color-numeral)]"
                                     }`}
-                                />
-                                {rung.who}
-                            </span>
-                        </div>
+                                >
+                                    {rung.n}
+                                </span>
+                                <span
+                                    className={`type-face text-[22px] ${rung.arp ? "text-[color:var(--color-fg)]" : ""}`}
+                                >
+                                    {rung.name}
+                                </span>
+                                <span className="text-[color:var(--color-silver)]">
+                                    {rung.claim}
+                                </span>
+                                <span className="font-mono text-[length:var(--text-body-sm)]">
+                                    {rung.cost}
+                                </span>
+                                <span className="flex items-center gap-2 font-mono text-[length:var(--text-body-sm)] md:justify-end">
+                                    <span
+                                        aria-hidden="true"
+                                        className={`h-[6px] w-[6px] rounded-full ${
+                                            rung.arp
+                                                ? "bg-[color:var(--color-accent)]"
+                                                : "bg-[color:var(--color-rule-strong)]"
+                                        }`}
+                                    />
+                                    {rung.who}
+                                </span>
+                            </div>
+                        </Reveal>
                     ))}
                 </div>
             </Section>
@@ -281,7 +299,7 @@ export function Landing() {
                     </pre>
                 </div>
             </Section>
-        </>
+        </SceneDeck>
     );
 }
 
@@ -317,7 +335,7 @@ function Section({
                     </span>
                 </div>
             </Reveal>
-            <Reveal delayMs={120}>{children}</Reveal>
+            <Reveal delayMs={90}>{children}</Reveal>
         </section>
     );
 }
