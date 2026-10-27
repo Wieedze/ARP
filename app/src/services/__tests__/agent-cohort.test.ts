@@ -55,7 +55,7 @@ describe("COHORT_ORDERS", () => {
     });
 
     it("labels what is counted rather than implying quality", () => {
-        // "Most statements" is a count. "Top agents" would be a claim about
+        // "Most claims" is a count. "Top agents" would be a claim about
         // quality that nothing on this page is entitled to make.
         for (const entry of COHORT_ORDERS) {
             expect(entry.label).not.toMatch(/best|top|rank|score|trust(ed|worthy)/i);
@@ -359,7 +359,7 @@ describe("describeCohortFailure", () => {
     });
 
     it("names an order the way the control names it", () => {
-        expect(orderLabel("evidence-quantity")).toBe("Most statements");
+        expect(orderLabel("evidence-quantity")).toBe("Most claims");
         expect(orderLabel("economic-conviction")).toBe("Most staked");
     });
 });

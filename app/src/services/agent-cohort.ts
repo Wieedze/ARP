@@ -25,7 +25,7 @@ export const COHORT_ORDERS: readonly {
     id: AgentListOrder;
     label: string;
 }[] = [
-    {id: "evidence-quantity", label: "Most statements"},
+    {id: "evidence-quantity", label: "Most claims"},
     {id: "economic-conviction", label: "Most staked"},
 ];
 

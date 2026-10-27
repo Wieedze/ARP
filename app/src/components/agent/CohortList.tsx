@@ -9,8 +9,8 @@ import type {CohortRow, CohortView} from "../../services/agent-cohort";
  *
  * One grid, one hairline under each row, everything numeric in mono and
  * right-aligned so the columns read down. The two figures a reader is being
- * asked to judge an agent on — how many statements exist about it, and what is
- * staked on it — sit in their own columns rather than buried in prose.
+ * asked to judge an agent on — how many claims name it as their subject, and what is staked on its
+ * atom — sit in their own columns rather than buried in prose.
  *
  * Every market cap carries its position count. These atoms hold one or two
  * positions each; a bare number would suggest a depth of opinion that is not
@@ -82,7 +82,7 @@ function RowBody({row}: {row: CohortRow}) {
 
             <span className="font-mono text-[length:var(--text-body-sm)] leading-tight text-right tabular-nums">
                 {row.statementCount === null ? "—" : row.statementCount.toLocaleString("en-US")}
-                <span className="sm:sr-only text-[color:var(--color-steel)]"> statements</span>
+                <span className="sm:sr-only text-[color:var(--color-steel)]"> claims</span>
             </span>
 
             <span className="text-right min-w-0">
@@ -115,8 +115,15 @@ export function CohortList({view}: {view: CohortView}) {
             >
                 <span />
                 <span>Agent</span>
-                <span className="text-right">Statements</span>
-                <span className="text-right">Staked on its atom</span>
+                {/* "Claims" and "Staked", not "Statements" and "Staked on its atom" (user,
+                    2026-10-27, asking for fewer words and nothing implied). `statementCount` is
+                    the count of triples with this agent as **subject**, and a triple is a claim —
+                    so "claims" is the literal reading, not a softening. "Staked" is the design
+                    reference's own column name; "on its atom" was there to keep it apart from the
+                    edge vaults, and no edge figure appears on this page for it to be confused
+                    with. */}
+                <span className="text-right">Claims</span>
+                <span className="text-right">Staked</span>
             </div>
 
             <ul className="border-t border-[color:var(--color-rule-strong)] sm:border-t-0">

@@ -241,7 +241,7 @@ function CohortLoading() {
         <div aria-live="polite" aria-busy className="mt-10 flex items-center gap-4">
             <RingLoader size={32} label="Reading the cohort" />
             <p className="font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
-                reading the cohort from the intuition graph — identity, statement counts, markets
+                reading the cohort from the intuition graph
             </p>
         </div>
     );
