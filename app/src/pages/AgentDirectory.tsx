@@ -2,6 +2,7 @@ import {useId, useState} from "react";
 import {useNavigate} from "react-router-dom";
 import type {AgentListOrder} from "@arp-protocol/core";
 
+import {CapabilitySearch} from "../components/agent/CapabilitySearch";
 import {CohortList} from "../components/agent/CohortList";
 import {RingLoader} from "../components/brand/RingLoader";
 import {COHORT_PAGE_SIZE, useAgentCohort} from "../hooks/use-agent-cohort";
@@ -50,9 +51,14 @@ export function AgentDirectory() {
                 </h1>
             </header>
 
-            <section>
+            {/* The capability search was its own page, `/discover`, and it listed the same
+                objects with the same figures — one paged, one filtered. Two pages for one list
+                (user, 2026-10-27). It is a filter here now, above the cohort it filters. */}
+            <CapabilitySearch />
+
+            <section className="mt-16">
                 <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
-                    <h2 className="font-medium">The cohort</h2>
+                    <h2 className="font-medium">The whole cohort</h2>
                     <OrderControl order={order} onChange={changeOrder} />
                 </div>
 

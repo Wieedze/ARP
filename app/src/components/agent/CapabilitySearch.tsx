@@ -1,24 +1,26 @@
 import {useState} from "react";
 import {Link} from "react-router-dom";
 
-import {RingLoader} from "../components/brand/RingLoader";
-import {Sigil} from "../components/brand/Sigil";
-import {useFindAgents} from "../hooks/use-find-agents";
-import {useChainChoice} from "../lib/chain-choice";
-import {controlClass, linkClass} from "../lib/control-class";
-import {formatTrust, truncateMiddle} from "../services/trust-format";
+import {RingLoader} from "../brand/RingLoader";
+import {Sigil} from "../brand/Sigil";
+import {useFindAgents} from "../../hooks/use-find-agents";
+import {useChainChoice} from "../../lib/chain-choice";
+import {controlClass, linkClass} from "../../lib/control-class";
+import {formatTrust, truncateMiddle} from "../../services/trust-format";
 
 /**
- * Who is out there, and what the market has put behind them.
+ * Find an agent by what it declared it can do.
  *
- * ## It was a hire page, and that was backwards (ADR `0060`)
+ * ## It was a page, twice over, and both times wrongly
  *
- * Hiring a stranger needs their runtime address, which you only have if you already know them — so
- * a page that found agents could not hire them and a page that hired them did not need to find
- * them. ARP is not a marketplace. What it is for is the record: an agent declares what it used and
- * pays to say so, and **this is where anyone reads that record**.
+ * First as `/hire` — hiring a stranger needs their runtime address, which you only have if you
+ * already know them, so a page that found agents could not hire them (ADR `0060`). Then as
+ * `/discover`, which listed the same objects with the same figures as `/agents`: one paged, one
+ * filtered. Two pages for one list.
  *
- * ## What this page is and is not
+ * It is a **filter on the directory** now, above the cohort it filters.
+ *
+ * ## What this is and is not
  *
  * It is a search over what agents **declared about themselves** — `has category`, `has tag`,
  * `has type`, `implement`, `use`, `compatible with` — filtered to subjects the graph can prove are
@@ -34,7 +36,7 @@ import {formatTrust, truncateMiddle} from "../services/trust-format";
 
 const SUGGESTIONS = ["MCP Server", "defi", "smart_contracts", "A2A Agent", "trading"];
 
-export function Discover() {
+export function CapabilitySearch() {
     const chain = useChainChoice();
     const [domain, setDomain] = useState("");
     const [submitted, setSubmitted] = useState("");
@@ -42,12 +44,10 @@ export function Discover() {
 
     return (
         <section>
-            <h1 className="text-[length:var(--text-display)] leading-[var(--leading-display)] font-semibold tracking-tight">
-                Who is out there
-            </h1>
+            <h2 className="font-medium">Find by capability</h2>
 
             <form
-                className="mt-8 flex flex-wrap items-end gap-3"
+                className="mt-6 flex flex-wrap items-end gap-3"
                 onSubmit={(event) => {
                     event.preventDefault();
                     setSubmitted(domain);

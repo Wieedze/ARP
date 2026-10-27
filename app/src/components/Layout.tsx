@@ -52,7 +52,6 @@ export function Layout({children}: {children: ReactNode}) {
             <NavSplit>
                 <NavLink to="/agents">Agents</NavLink>
                 <NavLink to="/tools">Tools</NavLink>
-                <NavLink to="/discover">Discover</NavLink>
                 <NavLink to="/register">Register</NavLink>
                 {isConnected ? <NavLink to="/profile">My profile</NavLink> : null}
                 <ChainToggle />
