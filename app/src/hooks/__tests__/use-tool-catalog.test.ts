@@ -50,20 +50,34 @@ const noneRegistered = async () => registeredPageOf([]);
 describe("toolCatalogQueryKey", () => {
     it("keys on the order, because two orders are two sequences", () => {
         // A page from one order must never be served from cache for the other.
-        expect(toolCatalogQueryKey("priced-edges", 1)).not.toEqual(
-            toolCatalogQueryKey("conviction", 1),
+        expect(toolCatalogQueryKey(1155, "priced-edges", 1)).not.toEqual(
+            toolCatalogQueryKey(1155, "conviction", 1),
         );
         // The two curves are two markets, so one must never be served from the other's cache.
-        expect(toolCatalogQueryKey("priced-edges", 1)).not.toEqual(
-            toolCatalogQueryKey("priced-edges", 2),
+        expect(toolCatalogQueryKey(1155, "priced-edges", 1)).not.toEqual(
+            toolCatalogQueryKey(1155, "priced-edges", 2),
+        );
+    });
+
+    /**
+     * The chain is the one that cannot be left out. ARP's own three `uses` edges are on 13579 while
+     * the cohort is on 1155, so a reader switches to see them — and a shared key would serve the
+     * other chain's rows from cache under the new label.
+     */
+    it("keys on the chain, so one chain's rows never render under the other's name", () => {
+        expect(toolCatalogQueryKey(1155, "priced-edges", 1)).not.toEqual(
+            toolCatalogQueryKey(13579, "priced-edges", 1),
         );
     });
 });
 
+/** Either chain, named at the call site so the key assertions above stay readable. */
+const MAINNET = {chainId: 1155, graphqlUrl: "https://mainnet.intuition.sh/v1/graphql"};
+
 describe("toolCatalogQueryOptions", () => {
     it("passes the order through and maps the page to rows", async () => {
         const fetchListing = vi.fn(async () => pageOf());
-        const options = toolCatalogQueryOptions("conviction", 2, fetchListing, noneRegistered);
+        const options = toolCatalogQueryOptions(MAINNET, "conviction", 2, fetchListing, noneRegistered);
         const view = await options.queryFn();
 
         expect(fetchListing).toHaveBeenCalledWith("conviction", 2);
@@ -78,6 +92,7 @@ describe("toolCatalogQueryOptions", () => {
         // Switching order is the same rows in a different sequence, so replacing the list with a
         // loading state on every click would be a worse answer than a stale one.
         const options = toolCatalogQueryOptions(
+            MAINNET,
             "priced-edges",
             1,
             async () => pageOf(),
@@ -88,6 +103,7 @@ describe("toolCatalogQueryOptions", () => {
 
     it("lets a failed read surface rather than retrying indefinitely", () => {
         const options = toolCatalogQueryOptions(
+            MAINNET,
             "priced-edges",
             1,
             async () => pageOf(),
@@ -107,6 +123,7 @@ describe("toolCatalogQueryOptions", () => {
          * query and a person can create one without being an agent.
          */
         const options = toolCatalogQueryOptions(
+            MAINNET,
             "conviction",
             1,
             async () => pageOf(),
@@ -128,6 +145,7 @@ describe("toolCatalogQueryOptions", () => {
         // the per-edge market this page is about; the atom-vault figures answer the other question
         // and are on the tool's own page.
         const options = toolCatalogQueryOptions(
+            MAINNET,
             "conviction",
             1,
             async () => pageOf(),
@@ -141,6 +159,7 @@ describe("toolCatalogQueryOptions", () => {
 
     it("reports truncation from either read", async () => {
         const options = toolCatalogQueryOptions(
+            MAINNET,
             "conviction",
             1,
             async () => pageOf(),

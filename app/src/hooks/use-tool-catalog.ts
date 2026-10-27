@@ -8,7 +8,7 @@ import {
 } from "@arp-protocol/core";
 
 import {buildToolCatalogView, type ToolCatalogView} from "../services/tool-catalog";
-import {ERC8004_GRAPHQL_URL} from "../services/erc8004-connector";
+import {useChainChoice} from "../lib/chain-choice";
 
 /**
  * The tool catalogue's read.
@@ -39,11 +39,15 @@ export type ToolCatalogFetcher = (
 
 export type RegisteredToolsFetcher = (curveId: number) => Promise<RegisteredToolsPage>;
 
-const fetchToolListing: ToolCatalogFetcher = (order, curveId) =>
-    listTools({graphqlUrl: ERC8004_GRAPHQL_URL, order, curveId});
+const fetchToolListing =
+    (graphqlUrl: string): ToolCatalogFetcher =>
+    (order, curveId) =>
+        listTools({graphqlUrl, order, curveId});
 
-const fetchRegisteredTools: RegisteredToolsFetcher = (curveId) =>
-    listRegisteredTools({graphqlUrl: ERC8004_GRAPHQL_URL, curveId});
+const fetchRegisteredTools =
+    (graphqlUrl: string): RegisteredToolsFetcher =>
+    (curveId) =>
+        listRegisteredTools({graphqlUrl, curveId});
 
 /**
  * The curve is in the key, like the order is.
@@ -53,18 +57,26 @@ const fetchRegisteredTools: RegisteredToolsFetcher = (curveId) =>
  * would show a figure from one market beside a count from the other, which is the contradiction
  * `rules/claims.md` §2 is about.
  */
-export function toolCatalogQueryKey(order: ToolListingOrder, curveId: number) {
-    return ["intuition", "tool-catalog", order, curveId] as const;
+/**
+ * The **chain is in the key**, and it is the one that cannot be left out.
+ *
+ * Without it, switching chains serves the other chain's rows from cache: testnet figures under a
+ * mainnet heading, which is `rules/claims.md` §2 rendered as a page. The curve is in for the same
+ * reason one paragraph down.
+ */
+export function toolCatalogQueryKey(chainId: number, order: ToolListingOrder, curveId: number) {
+    return ["intuition", chainId, "tool-catalog", order, curveId] as const;
 }
 
 export function toolCatalogQueryOptions(
+    chain: {chainId: number; graphqlUrl: string},
     order: ToolListingOrder,
     curveId: number,
-    fetchListing: ToolCatalogFetcher = fetchToolListing,
-    fetchRegistered: RegisteredToolsFetcher = fetchRegisteredTools,
+    fetchListing: ToolCatalogFetcher = fetchToolListing(chain.graphqlUrl),
+    fetchRegistered: RegisteredToolsFetcher = fetchRegisteredTools(chain.graphqlUrl),
 ) {
     return {
-        queryKey: toolCatalogQueryKey(order, curveId),
+        queryKey: toolCatalogQueryKey(chain.chainId, order, curveId),
         queryFn: async (): Promise<ToolCatalogView> => {
             // In parallel: two independent reads of the same endpoint, and neither needs the other.
             const [declared, registered] = await Promise.all([
@@ -83,5 +95,6 @@ export function toolCatalogQueryOptions(
 }
 
 export function useToolCatalog(order: ToolListingOrder, curveId: number) {
-    return useQuery(toolCatalogQueryOptions(order, curveId));
+    const chain = useChainChoice();
+    return useQuery(toolCatalogQueryOptions(chain, order, curveId));
 }

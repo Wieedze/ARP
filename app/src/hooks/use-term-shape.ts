@@ -1,7 +1,7 @@
 import {useQuery} from "@tanstack/react-query";
 import {getTermActivity, getTermShape, type TermActivityBucket} from "@arp-protocol/core";
 
-import {ERC8004_GRAPHQL_URL} from "../services/erc8004-connector";
+import {useChainChoice} from "../lib/chain-choice";
 import {buildTermShapeView, type TermShapeView} from "../services/term-shape-view";
 
 /**
@@ -16,11 +16,13 @@ import {buildTermShapeView, type TermShapeView} from "../services/term-shape-vie
  */
 export type TermInsight = {shape: TermShapeView; curve: TermActivityBucket[]};
 
-export function termShapeQueryKey(termId: string | null, curveId: number) {
-    return ["intuition", "term-shape", termId ?? "none", curveId] as const;
+/** The chain is in the key: the same term id names two different vaults (see `chain-choice`). */
+export function termShapeQueryKey(chainId: number, termId: string | null, curveId: number) {
+    return ["intuition", chainId, "term-shape", termId ?? "none", curveId] as const;
 }
 
 export function termShapeQueryOptions(
+    chain: {chainId: number; graphqlUrl: string},
     termId: string | null,
     curveId: number,
     read: {
@@ -29,13 +31,13 @@ export function termShapeQueryOptions(
     } = {shape: getTermShape, activity: getTermActivity},
 ) {
     return {
-        queryKey: termShapeQueryKey(termId, curveId),
+        queryKey: termShapeQueryKey(chain.chainId, termId, curveId),
         queryFn: async (): Promise<TermInsight> => {
             if (termId === null) throw new Error("no term");
             const [shape, curve] = await Promise.all([
-                read.shape(termId, {graphqlUrl: ERC8004_GRAPHQL_URL, curveId}),
+                read.shape(termId, {graphqlUrl: chain.graphqlUrl, curveId}),
                 read.activity(termId, {
-                    graphqlUrl: ERC8004_GRAPHQL_URL,
+                    graphqlUrl: chain.graphqlUrl,
                     curveId,
                     grain: "week",
                     buckets: 26,
@@ -50,5 +52,6 @@ export function termShapeQueryOptions(
 }
 
 export function useTermShape(termId: string | null, curveId: number) {
-    return useQuery(termShapeQueryOptions(termId, curveId));
+    const chain = useChainChoice();
+    return useQuery(termShapeQueryOptions(chain, termId, curveId));
 }

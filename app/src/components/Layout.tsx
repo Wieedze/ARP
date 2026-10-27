@@ -1,9 +1,9 @@
 import {type ReactNode} from "react";
-import {useLocation} from "react-router-dom";
 import {useAccount} from "wagmi";
 
-import {readsMainnet} from "../lib/mainnet-routes";
+import {useChainChoice} from "../lib/chain-choice";
 
+import {ChainToggle} from "./brand/ChainToggle";
 import {NavLink, NavSplit} from "./brand/NavSplit";
 import {WalletConnect} from "./WalletConnect";
 
@@ -25,9 +25,8 @@ import {WalletConnect} from "./WalletConnect";
  */
 
 export function Layout({children}: {children: ReactNode}) {
-    const {pathname} = useLocation();
     const {isConnected} = useAccount();
-    const isMainnetRoute = readsMainnet(pathname);
+    const chain = useChainChoice();
 
     return (
         <>
@@ -60,6 +59,7 @@ export function Layout({children}: {children: ReactNode}) {
                     <>
                         <NavLink to="/register">Register</NavLink>
                         {isConnected ? <NavLink to="/profile">My profile</NavLink> : null}
+                        <ChainToggle />
                         <WalletConnect />
                     </>
                 }
@@ -72,7 +72,7 @@ export function Layout({children}: {children: ReactNode}) {
                     <span>
                         Agent Reputation Protocol —{" "}
                         <span className="text-[color:var(--color-steel)]">
-                            {isMainnetRoute ? "Intuition Mainnet" : "Intuition Testnet"}
+                            {chain.chain.name}
                         </span>
                     </span>
                     {/* `ModuleRegistry` used to be the first link here. The contract is retired

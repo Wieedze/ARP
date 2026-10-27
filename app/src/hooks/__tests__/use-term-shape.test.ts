@@ -29,10 +29,13 @@ const reads = () => ({
     ]),
 });
 
+/** Either chain, named so the key assertions stay readable. */
+const MAINNET = {chainId: 1155, graphqlUrl: "https://mainnet.intuition.sh/v1/graphql"};
+
 describe("termShapeQueryKey", () => {
     it("keys on the term and the curve", () => {
-        expect(termShapeQueryKey(TERM, 1)).not.toEqual(termShapeQueryKey(TERM, 2));
-        expect(termShapeQueryKey(TERM, 1)).not.toEqual(termShapeQueryKey("0xdead", 1));
+        expect(termShapeQueryKey(1155, TERM, 1)).not.toEqual(termShapeQueryKey(1155, TERM, 2));
+        expect(termShapeQueryKey(1155, TERM, 1)).not.toEqual(termShapeQueryKey(1155, "0xdead", 1));
     });
 });
 
@@ -40,13 +43,13 @@ describe("termShapeQueryOptions", () => {
     it("does not read before the term is known", () => {
         // The caller passes `null` until the stake session resolves the curve: a figure that
         // silently redraws with different numbers is worse than one that arrives late.
-        expect(termShapeQueryOptions(null, 1, reads() as never).enabled).toBe(false);
-        expect(termShapeQueryOptions(TERM, 1, reads() as never).enabled).toBe(true);
+        expect(termShapeQueryOptions(MAINNET, null, 1, reads() as never).enabled).toBe(false);
+        expect(termShapeQueryOptions(MAINNET, TERM, 1, reads() as never).enabled).toBe(true);
     });
 
     it("reads both halves at the curve it was asked for, and carries it into the view", async () => {
         const read = reads();
-        const options = termShapeQueryOptions(TERM, 2, read as never);
+        const options = termShapeQueryOptions(MAINNET, TERM, 2, read as never);
         const insight = await options.queryFn();
 
         expect(read.shape).toHaveBeenCalledWith(TERM, expect.objectContaining({curveId: 2}));
@@ -59,7 +62,7 @@ describe("termShapeQueryOptions", () => {
     });
 
     it("maps the shape rather than handing the raw read to the page", async () => {
-        const insight = await termShapeQueryOptions(TERM, 1, reads() as never).queryFn();
+        const insight = await termShapeQueryOptions(MAINNET, TERM, 1, reads() as never).queryFn();
         expect(insight.shape.concentration).toBe("31.2% held by one account");
         expect(insight.curve).toHaveLength(2);
     });

@@ -17,6 +17,11 @@ import {connectedWalletClient} from "./wallet-client";
  * moves real TRUST on Intuition mainnet. Same shape and same reason as `useAgentImport` — a mutation
  * carries retry semantics, and a retry that resubmits is the thing to avoid on a surface like this
  * (ADR `0017` safeguard 5).
+ *
+ * **Not chain-switchable, deliberately.** The chain toggle (`lib/chain-choice.tsx`) moves reads
+ * only. This hook plans against one client and submits against the same one, and reading testnet
+ * while submitting to mainnet is the incoherence worth refusing — the plan would name an atom that
+ * the chain being written to does not have. It moves with the write path or not at all.
  */
 export function useToolRegister() {
     const plan = useCallback(

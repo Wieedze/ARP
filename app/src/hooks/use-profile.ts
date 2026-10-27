@@ -6,26 +6,27 @@ import {
     type ProfileReader,
     type ProfileView,
 } from "../services/account-profile";
-import {ERC8004_GRAPHQL_URL} from "../services/erc8004-connector";
+import {useChainChoice} from "../lib/chain-choice";
 
 /**
  * One account's own page.
  *
- * Reads Intuition mainnet, like every other market surface here. It is keyed on the **connected
- * address**, so switching wallets re-keys the query rather than serving another account's figures
- * from cache — which is the one cache mistake a page about "your" money must not make.
+ * Keyed on the **connected address** and on the **chain**, so neither switching wallets nor
+ * switching chains serves the other's figures from cache — the one cache mistake a page about
+ * "your" money must not make.
  */
-export function profileQueryKey(account: string | undefined, curveId: number) {
-    return ["intuition", "profile", account ?? "none", curveId] as const;
+export function profileQueryKey(chainId: number, account: string | undefined, curveId: number) {
+    return ["intuition", chainId, "profile", account ?? "none", curveId] as const;
 }
 
 export function profileQueryOptions(
+    chain: {chainId: number; graphqlUrl: string},
     account: string | undefined,
     curveId: number,
-    reader: ProfileReader = intuitionProfileReader(ERC8004_GRAPHQL_URL),
+    reader: ProfileReader = intuitionProfileReader(chain.graphqlUrl),
 ) {
     return {
-        queryKey: profileQueryKey(account, curveId),
+        queryKey: profileQueryKey(chain.chainId, account, curveId),
         queryFn: async (): Promise<ProfileView> => {
             if (account === undefined) throw new Error("no account connected");
             return buildProfileView({account, curveId, reader});
@@ -39,5 +40,6 @@ export function profileQueryOptions(
 }
 
 export function useProfile(account: string | undefined, curveId: number) {
-    return useQuery(profileQueryOptions(account, curveId));
+    const chain = useChainChoice();
+    return useQuery(profileQueryOptions(chain, account, curveId));
 }
