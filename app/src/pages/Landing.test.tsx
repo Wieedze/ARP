@@ -60,26 +60,40 @@ beforeEach(() => {
 });
 
 describe("Landing", () => {
-    it("never states two different prices for the same act", async () => {
+    it("prints no amount the chain read did not produce", async () => {
         const {container} = renderWithProviders(<Landing />);
         await waitFor(() => expect(cost).toHaveBeenCalled());
 
-        // Every figure carrying the chain's symbol, from the rendered text. On testnet a stale
-        // `0.1 tTRUST` beside a read `0.002 tTRUST` is the defect, and only the DOM shows it.
+        // The defect this guards: a literal `0.1 TRUST` survived beside a figure read off the
+        // chain, wearing the chain's symbol so it looked chain-aware while staying fixed. On
+        // testnet the two were 100x apart.
+        //
+        // The page legitimately prints **two** figures — the non-recoverable fee and the
+        // fee-plus-deposit floor — so the assertion is not "one amount". It is that every amount
+        // on the page came from the mocked read, which a hardcoded literal cannot satisfy.
+        const allowed = new Set(["0.001 tTRUST", "0.002 tTRUST"]);
         await waitFor(() => {
             const amounts = (container.textContent ?? "").match(/[\d.]+\s*tTRUST/g) ?? [];
             expect(amounts.length).toBeGreaterThan(0);
-            expect(new Set(amounts.map((a) => a.replace(/\s+/g, " ")))).toHaveProperty("size", 1);
+            for (const amount of amounts) expect(allowed).toContain(amount.replace(/\s+/g, " "));
         });
     });
 
-    it("prices the declaration at fee plus deposit, not the fee alone", async () => {
+    it("prices the act card at fee plus deposit, not the fee alone", async () => {
         const {container} = renderWithProviders(<Landing />);
-        // `formatTrust` trims to 8 places, so 0.002000000002 prints as `0.002`. The fee alone would
-        // print `0.001`, which is the understatement
-        // `readDeclarationCost` exists to prevent.
-        await waitFor(() => expect(container.textContent).toContain("0.002 tTRUST"));
-        expect(container.textContent).not.toContain("0.001 tTRUST");
+        await waitFor(() => expect(cost).toHaveBeenCalled());
+
+        // Scoped to the row, because the fee alone is correctly printed elsewhere — beat 01 says
+        // what does not come back, and that is the fee. What must not happen is the *floor* row
+        // showing the fee: `getTripleCost()` alone seeds a term with `minShare` and zero
+        // positions (ADR `0053`), so calling it the floor understates by half on testnet.
+        await waitFor(() => {
+            const term = [...container.querySelectorAll("dt")].find(
+                (dt) => dt.textContent?.trim() === "Costs from",
+            );
+            expect(term, "no `Costs from` row on the page").toBeTruthy();
+            expect(term?.nextElementSibling?.textContent).toBe("0.002 tTRUST");
+        });
     });
 
     it("gives every in-page anchor a target on the page", async () => {

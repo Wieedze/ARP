@@ -3,7 +3,6 @@ import type {RecentDeclaration} from "@arp-protocol/core";
 
 import {PulseField} from "../components/brand/PulseField";
 import {Reveal} from "../components/brand/Reveal";
-import {useAgentCohort} from "../hooks/use-agent-cohort";
 import {useRecentDeclarations} from "../hooks/use-recent-declarations";
 import {useDeclarationCost} from "../hooks/use-declaration-cost";
 import {useChainChoice} from "../lib/chain-choice";
@@ -45,7 +44,6 @@ import {formatTrust, truncateMiddle} from "../services/trust-format";
 export function Landing() {
     const chain = useChainChoice();
     const recent = useRecentDeclarations(8);
-    const cohort = useAgentCohort("economic-conviction", 0);
     const cost = useDeclarationCost();
 
     const declarations = recent.data ?? [];
@@ -56,7 +54,12 @@ export function Landing() {
     // symbol interpolated beside it, which looked chain-aware while staying fixed. On testnet the
     // two sites were 100× apart, eleven inches apart on screen (`rules/claims.md` §5).
     const floor = cost.data === undefined ? "—" : `${formatTrust(cost.data.floor)} ${chain.symbol}`;
+    // The **fee**, not the floor, for beat 01. That beat says the money does not come back, and
+    // only the fee half is: the floor is fee + deposit and the deposit is redeemable. Printing the
+    // floor there called a redeemable deposit non-recoverable.
+    const fee = cost.data === undefined ? "—" : `${formatTrust(cost.data.fee)} ${chain.symbol}`;
     const acts = actsFor(floor);
+    const steps = stepsFor(fee);
 
     return (
         <>
@@ -99,44 +102,38 @@ export function Landing() {
 
             <Ticker declarations={declarations} isPending={recent.isPending} />
 
-            {/* The one rule, and the only section that argues rather than reports. */}
+            {/* **Rewritten 2026-10-27.** It was a two-column free-versus-paid table of quoted
+                claims, and the user read it back as a flat list: _"tout ça c'est incompréhensible,
+                et même si ça l'était ça veut rien dire d'intéressant"_. Right twice — the two
+                columns only parse as a table, and the thing they argued (free claims are worth
+                less) is a premise, not the product.
+
+                What replaces it is his own sentence: backing what you use raises its reputation
+                and therefore its value, so a position is a bet on what you use and what you
+                believe. That is `docs/12` points 3 and 4 read forwards — the deposit is the
+                signal — and the README's own first line, "a priced market of opinion".
+
+                The third beat states the downside in the same breath as the upside. A section
+                that names only the upside is a promise, and there is no resolution mechanism
+                behind this one to make a promise good. */}
             <Section
-                figure="Fig. 01 · the one rule"
-                title="Free claims go down."
-                dim="Paid claims go up."
+                figure="Fig. 01 · why anyone would"
+                title="Back what you use."
+                dim="If others follow, your position is worth more."
             >
-                <div className="grid border-t border-[color:var(--color-rule-strong)] md:grid-cols-2">
-                    <Column
-                        cost="Costs nothing"
-                        hollow
-                        claims={[
-                            [
-                                '"I am a DeFi agent."',
-                                // `total` is the whole ERC-8004 cohort, not the agents making this
-                                // particular claim — `AgentPage.total` is "the whole cohort's
-                                // size", filtered on `implement -> ERC-8004` and nothing else. The
-                                // old wording read the figure against a population it does not
-                                // describe (`rules/claims.md` §2).
-                                `one gas fee · ${cohortSize(cohort.data?.total)} agents on the record, each asserted the same way`,
-                            ],
-                            [
-                                '"I use Slither and the SWC Registry."',
-                                "no deposit · a declared tool",
-                            ],
-                            [
-                                '"We rate this agent 71 / 100."',
-                                "no deposit · one rater's opinion, signature checked",
-                            ],
-                        ]}
-                    />
-                    <Column
-                        cost="Costs money"
-                        claims={[
-                            ['"I used this agent."', `${floor}, and the fee half never comes back`],
-                            ['"I back this agent."', `${chain.symbol} on its atom, withdrawable`],
-                            ['"That rating is wrong."', `${chain.symbol} against a signed claim`],
-                        ]}
-                    />
+                <div className="border-t border-[color:var(--color-rule-strong)]">
+                    {steps.map((step) => (
+                        <div
+                            key={step.n}
+                            className="grid items-baseline gap-6 border-b border-[color:var(--color-rule)] py-7 md:grid-cols-[5rem_minmax(0,1fr)_minmax(0,1.1fr)]"
+                        >
+                            <span className="type-face text-[clamp(34px,5vw,56px)] text-[color:var(--color-numeral)]">
+                                {step.n}
+                            </span>
+                            <span className="type-face text-[22px]">{step.name}</span>
+                            <span className="text-[color:var(--color-silver)]">{step.line}</span>
+                        </div>
+                    ))}
                 </div>
             </Section>
 
@@ -290,12 +287,6 @@ export function Landing() {
 
 /* -------------------------------------------------------------------------- */
 
-/** `28,648`, or `—` while the cohort read is in flight. Never a guess. (The reference mock shows
- *  `30,913`, which is the `same as` edge count rather than the cohort's.) */
-function cohortSize(total: number | null | undefined): string {
-    return total === null || total === undefined ? "—" : total.toLocaleString("en-US");
-}
-
 function Section({
     figure,
     title,
@@ -328,56 +319,6 @@ function Section({
             </Reveal>
             <Reveal delayMs={120}>{children}</Reveal>
         </section>
-    );
-}
-
-/**
- * One side of the one-rule split, labelled by **what it costs**.
- *
- * The reference labels them "SAID FOR FREE · SHOWN LOW AND DIM" and "PAID TO SAY · SHOWN HIGH AND
- * LOUD". The user cut that vocabulary, and he was right twice: it names our taxonomy rather than
- * the fact, and the second half describes the page's own styling to the reader.
- */
-function Column({
-    cost,
-    claims,
-    hollow = false,
-}: {
-    cost: string;
-    claims: [string, string][];
-    hollow?: boolean;
-}) {
-    return (
-        <div
-            className={`flex flex-col py-6 ${hollow ? "pr-0 md:pr-10" : "md:border-l md:border-l-[color:var(--color-rule)] md:pl-10"}`}
-        >
-            <span className="flex items-center gap-2.5 pb-4 font-mono text-[length:var(--text-label)] uppercase tracking-[0.06em] text-[color:var(--color-steel)]">
-                <span
-                    aria-hidden="true"
-                    className={`h-2 w-2 rounded-full ${
-                        hollow
-                            ? "border-[1.5px] border-[color:var(--color-steel)]"
-                            : "bg-[color:var(--color-fg)]"
-                    }`}
-                />
-                {cost}
-            </span>
-            {claims.map(([quote, note]) => (
-                <div
-                    key={quote}
-                    className="flex flex-col gap-2 border-t border-dashed border-[color:var(--color-rule)] py-5"
-                >
-                    <span
-                        className={`text-[17px] ${hollow ? "text-[color:var(--color-steel)]" : "text-[color:var(--color-fg)]"}`}
-                    >
-                        {quote}
-                    </span>
-                    <span className="font-mono text-[length:var(--text-label)] text-[color:var(--color-steel)]">
-                        {note}
-                    </span>
-                </div>
-            ))}
-        </div>
     );
 }
 
@@ -550,6 +491,35 @@ const RUNGS = [
         arp: true,
     },
 ] as const;
+
+/**
+ * The three beats of Fig. 01, and the whole reason anyone would use this.
+ *
+ * Every line names a mechanism that exists, not a projection: the fee is read off the chain, the
+ * position is a vault deposit anyone can redeem, and the price moving with deposits is the bonding
+ * curve Intuition already runs. **No figure here is a return.** ARP has no resolution mechanism, so
+ * an upside stated without its downside would be a promise nothing backs — which is why beat 03
+ * carries both halves in one sentence.
+ */
+function stepsFor(fee: string) {
+    return [
+        {
+            n: "01",
+            name: "You use something",
+            line: `A tool, a model, another agent. Saying so costs a ${fee} fee that does not come back, and your address is on it for good.`,
+        },
+        {
+            n: "02",
+            name: "You take a position",
+            line: "TRUST into its vault. Not a payment to anyone — it stays yours, and you can take it back whenever you want.",
+        },
+        {
+            n: "03",
+            name: "Others arrive, or they do not",
+            line: "Every deposit after yours is priced higher on the curve. If nobody follows, you still hold exactly what you put in.",
+        },
+    ] as const;
+}
 
 /**
  * Each one is a page that exists. A card for an act nobody can perform would be a brochure.
