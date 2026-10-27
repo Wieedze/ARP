@@ -1,14 +1,15 @@
 # ADR index
 
-**Generated** 2026-10-21 by `scripts/build-claude-index.ts`. Do not edit by hand — rerun the script.
+**Generated** 2026-10-27 by `scripts/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-56 decisions. Newest last. `choices/README.md` says when to write one.
+58 decisions. Newest last. `choices/README.md` says when to write one.
 
 ## Not accepted
 
 Read these before relying on them.
 
 - **0015** (Accepted in part — the trust-provider role is **rejected** by ADR `0046`) — Adopt the canonical Intuition ERC-8004 pattern; ARP publishes as a trust provider
+- **0057** (Proposed) — Brand identity v0.3: The Source, Saffron, Archivo + Geist Mono
 
 ## All
 
@@ -70,3 +71,5 @@ Read these before relying on them.
 | [0054](0054-a-tool-atom-is-derived-from-its-url.md) | 2026-10-21 | Accepted | A tool's atom is derived from its URL |
 | [0055](0055-one-contract-not-five.md) | 2026-10-21 | Accepted | One contract, not five |
 | [0056](0056-the-market-on-an-agent-is-on-its-atom-and-the-edge-is-a-receipt.md) | 2026-10-21 | Accepted | the market on an agent is on its atom; the edge is a receipt, not a market |
+| [0057](0057-brand-identity-the-source.md) | 2026-10-21 | Proposed | Brand identity v0.3: The Source, Saffron, Archivo + Geist Mono |
+| [0058](0058-the-network-banners-come-off.md) | 2026-10-27 | Accepted | The network banners come off; the warning lives at the signature |

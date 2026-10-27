@@ -31,13 +31,7 @@ export function TermShapePanel({
      */
     curveLabel: string;
 }) {
-    if (shape.positionCount === 0) {
-        return (
-            <p className="text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
-                Nobody has staked on this claim, so there is no distribution to read.
-            </p>
-        );
-    }
+    if (shape.positionCount === 0) return null;
 
     return (
         <div>

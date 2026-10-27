@@ -169,18 +169,41 @@ export function describeAtomPositions(market: AgentAtomMarket): string {
  * a chain we have no explorer for, which is rendered as an absent link rather
  * than a guessed one.
  */
+const CHAIN_EXPLORER: Record<number, string> = {
+    1: "https://etherscan.io",
+    56: "https://bscscan.com",
+    8453: "https://basescan.org",
+};
+
 export function agentRegistryExplorerUrl(
     chainId: number,
     registry: string,
     tokenId: string,
 ): string | null {
-    const base: Record<number, string> = {
-        1: "https://etherscan.io",
-        56: "https://bscscan.com",
-        8453: "https://basescan.org",
-    };
-    const host = base[chainId];
+    const host = CHAIN_EXPLORER[chainId];
     return host === undefined ? null : `${host}/token/${registry}?a=${tokenId}`;
+}
+
+/**
+ * An address on the **identity's own chain** — Base, BSC or Ethereum, never Intuition.
+ *
+ * An agent's owner is an account on the registry's chain, so linking it to Intuition's explorer
+ * would be a live link to the wrong network. `null` for a chain with no explorer here, rendered
+ * unlinked rather than guessed.
+ */
+export function chainAddressExplorerUrl(chainId: number, address: string): string | null {
+    const host = CHAIN_EXPLORER[chainId];
+    return host === undefined ? null : `${host}/address/${address}`;
+}
+
+/**
+ * An Intuition term, on Intuition's own portal.
+ *
+ * `portal.intuition.systems/explore/atom/{termId}`. Probed 2026-10-27 rather than assumed: that
+ * path answers while `/app/atom/{termId}` 404s, so the server routes the one and not the other.
+ */
+export function intuitionAtomUrl(termId: string): string {
+    return `https://portal.intuition.systems/explore/atom/${termId}`;
 }
 
 /**

@@ -3,7 +3,6 @@ import {useParams} from "react-router-dom";
 import {useToolUsage, isToolAtomId} from "../hooks/use-tool-usage";
 import {formatTrust, truncateMiddle} from "../services/trust-format";
 import {describeCounts, opensRun, type ToolUsageView} from "../services/tool-usage-view";
-import {MainnetNotice} from "../components/agent/MainnetNotice";
 import {UsageEdgeRow} from "../components/tool/UsageEdgeRow";
 import {INTUITION_MAINNET_EXPLORER} from "../lib/intuition-mainnet";
 
@@ -46,7 +45,6 @@ export function ToolUsagePanel() {
 
     return (
         <section>
-            <MainnetNotice />
             {/* `aria-live` is on the two transient branches, not on the wrapper. A live region
                 announces every descendant mutation that does not establish its own, so a wrapper
                 region turned a form's per-keystroke help text into a polite announcement per

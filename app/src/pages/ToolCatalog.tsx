@@ -5,7 +5,6 @@ import {CurveControl, Segmented} from "../components/tool/ToolCatalogControls";
 import {linkClass} from "../lib/control-class";
 import type {ToolListingOrder} from "@arp-protocol/core";
 
-import {MainnetNotice} from "../components/agent/MainnetNotice";
 import {ToolCatalogList} from "../components/tool/ToolCatalogList";
 import {useToolCatalog} from "../hooks/use-tool-catalog";
 import {
@@ -23,9 +22,8 @@ import {
  * Agent declarations only. The `uses` predicate is shared and most of what sits on it is ordinary
  * prose, filtered out in the query rather than shown under a caveat.
  *
- * It reads **Intuition mainnet**, so it renders `MainnetNotice` itself and the route is listed in
- * `Layout.readsMainnet` — without both, the shell would print "no real value at stake" above real
- * TRUST sums, which `Layout`'s own comment calls the most expensive sentence in the app.
+ * It reads **Intuition mainnet**. The banner that used to say so is gone (ADR `0058`); the warning
+ * now lives in the confirmation step, where a wallet is about to open.
  *
  * This is the nav's "Tools" (user, 2026-10-20), so the `h1` is "Tools" and the subtitle carries the
  * population and the chain — `/` lists a different population on a different chain and still says
@@ -64,7 +62,6 @@ export function ToolCatalog() {
 
     return (
         <section>
-            <MainnetNotice />
 
             <header className="mt-8 mb-6 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-3">
                 <div>

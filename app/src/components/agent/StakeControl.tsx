@@ -101,15 +101,14 @@ export type StakeClaim = ClaimShape & {
     subject: string;
     /** The heading above the form. The caller names it, because the two targets are not one act. */
     heading: string;
-    /**
-     * One line saying what a deposit here means, under the heading.
+/**
+     * One line under the heading, or omitted.
      *
      * On the claim and not hardcoded: it read "the market's confidence in this provider's assessment
-     * of this agent", which is false on a page with no provider and no assessment — and false in the
-     * way `ToolUsagePanel`'s own `OtherMarket` paragraph exists to prevent, by describing a market
-     * that is not the one on screen.
+     * of this agent", which is false on a page with no provider and no assessment. Optional since
+     * ADR `0058` — the agent backing form carries none, because the heading already says the act.
      */
-    blurb: string;
+    blurb?: string;
     /**
      * True when `subject` is an id rather than a name, so the confirmation sets it in mono and the
      * caller has already truncated it. An untruncated 66-character atom id in proportional type
@@ -286,9 +285,11 @@ export function StakeControl({
             <Heading id={`${fieldId}-heading`} className="font-medium">
                 {claim.heading}
             </Heading>
-            <p className="mt-1 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)] max-w-[60ch]">
-                {claim.blurb}
-            </p>
+            {claim.blurb === undefined || claim.blurb === "" ? null : (
+                <p className="mt-1 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)] max-w-[60ch]">
+                    {claim.blurb}
+                </p>
+            )}
 
             {!isConnected ? (
                 <p className="mt-4 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
@@ -437,23 +438,9 @@ export function StakeControl({
                             id={`${fieldId}-amount-help`}
                             className="mt-2 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)] max-w-[52ch]"
                         >
-                            {check !== null && check.status !== "ok" && check.status !== "empty" ? (
-                                check.message
-                            ) : (
-                                <>
-                                    Minimum{" "}
-                                    <span className="font-mono">
-                                        {formatTrust(session.minDeposit)}
-                                    </span>{" "}
-                                    (the MultiVault's own{" "}
-                                    <span className="font-mono">minDeposit</span>
-                                    ), ceiling{" "}
-                                    <span className="font-mono">
-                                        {formatTrust(MAX_STAKE_WEI)}
-                                    </span>{" "}
-                                    per transaction.
-                                </>
-                            )}
+                            {check !== null && check.status !== "ok" && check.status !== "empty"
+                                ? check.message
+                                : null}
                         </p>
                     </div>
 

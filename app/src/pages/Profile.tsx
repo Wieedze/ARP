@@ -2,7 +2,6 @@ import {useState} from "react";
 import {Link} from "react-router-dom";
 import {useAccount} from "wagmi";
 
-import {MainnetNotice} from "../components/agent/MainnetNotice";
 import {Sparkline} from "../components/Sparkline";
 import {CurveControl} from "../components/tool/ToolCatalogControls";
 import {useProfile} from "../hooks/use-profile";
@@ -31,7 +30,6 @@ export function Profile() {
 
     return (
         <section>
-            <MainnetNotice />
 
             <header className="mt-8 mb-10 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-3">
                 <div>

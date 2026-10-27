@@ -2,7 +2,6 @@ import {type ReactNode} from "react";
 import {useLocation} from "react-router-dom";
 import {useAccount} from "wagmi";
 
-import {linkClass} from "../lib/control-class";
 import {readsMainnet} from "../lib/mainnet-routes";
 
 import {NavLink, NavSplit} from "./brand/NavSplit";
@@ -15,17 +14,14 @@ import {WalletConnect} from "./WalletConnect";
  * Max content width is intentional (not the viewport) — set on `<main>`
  * so the shell itself spans full width but the content stays readable.
  *
- * The app spans two networks: ARP's own contracts on Intuition testnet, and the
- * ERC-8004 cohort plus its vaults on Intuition mainnet (ADR 0017). Showing "no
- * real value at stake" above a page that stakes real TRUST would be the single
- * most expensive sentence in the app, so the testnet strip is route-aware. A
- * mainnet route renders `MainnetNotice` itself, so the shell adds no second
- * strip there.
+ * The app spans two networks: ARP's own contracts on Intuition testnet, and the ERC-8004 cohort
+ * plus its vaults on Intuition mainnet (ADR 0017).
  *
- * **The route list moved to `lib/mainnet-routes.ts`** after it went stale twice in one day — once
- * for `/` and once for `/register`, each a page that reads or spends real TRUST while this shell
- * told the reader it was testnet and offered them a faucet. A hand-maintained list inside the
- * component is what made both possible.
+ * **Both network banners are gone** — the shell's testnet strip and the per-page `MainnetNotice`
+ * (ADR `0058`, user decision). The warning that matters is the one at the moment a wallet opens,
+ * and `StakeControl` and `WithdrawControl` both carry it in their confirmation step, which is where
+ * ADR `0029` said it belonged. `readsMainnet` survives for the footer's network label, which is a
+ * fact about where the data came from rather than a warning about it.
  */
 
 export function Layout({children}: {children: ReactNode}) {
@@ -68,20 +64,6 @@ export function Layout({children}: {children: ReactNode}) {
                     </>
                 }
             />
-
-            {isMainnetRoute ? null : (
-                <div className="border-b border-[color:var(--color-rule)] px-6 py-2 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)] mx-auto w-full max-w-[1080px] flex flex-wrap items-center justify-between gap-2">
-                    <span>Running on Intuition Testnet — no real value at stake.</span>
-                    <a
-                        href="https://intuition-testnet.hub.caldera.xyz/"
-                        target="_blank"
-                        rel="noreferrer"
-                        className={linkClass}
-                    >
-                        Get tTRUST →
-                    </a>
-                </div>
-            )}
 
             <main className="flex-1 mx-auto w-full max-w-[1080px] px-6 py-10">{children}</main>
 

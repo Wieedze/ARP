@@ -4,7 +4,6 @@ import type {AgentListOrder} from "@arp-protocol/core";
 
 import {CohortList} from "../components/agent/CohortList";
 import {RingLoader} from "../components/brand/RingLoader";
-import {MainnetNotice} from "../components/agent/MainnetNotice";
 import {COHORT_PAGE_SIZE, useAgentCohort} from "../hooks/use-agent-cohort";
 import {COHORT_ORDERS, describeCohortFailure, orderLabel} from "../services/agent-cohort";
 
@@ -44,7 +43,6 @@ export function AgentDirectory() {
 
     return (
         <section>
-            <MainnetNotice />
 
             <header className="mt-8 mb-10">
                 <h1 className="text-[length:var(--text-display)] leading-[var(--leading-display)] tracking-tight font-semibold">

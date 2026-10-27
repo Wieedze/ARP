@@ -1,6 +1,11 @@
 import {sigilModulesOf} from "../../services/agent-sigil";
 import type {TrustPanelView} from "../../services/agent-trust";
-import {agentRegistryExplorerUrl, truncateMiddle} from "../../services/trust-format";
+import {
+    agentRegistryExplorerUrl,
+    chainAddressExplorerUrl,
+    intuitionAtomUrl,
+    truncateMiddle,
+} from "../../services/trust-format";
 import {Hint} from "../brand/Hint";
 import {Sigil} from "../brand/Sigil";
 
@@ -50,6 +55,8 @@ export function AgentIdentityPanel({
     viewerStaked?: boolean;
 }) {
     const explorerUrl = agentRegistryExplorerUrl(view.chainId, view.registry, view.tokenId);
+    const ownerUrl =
+        view.owner === null ? null : chainAddressExplorerUrl(view.chainId, view.owner);
     const modules = sigilModulesOf(view.capabilities);
 
     return (
@@ -88,20 +95,28 @@ export function AgentIdentityPanel({
                 <Field label="Token id">{view.tokenId}</Field>
                 <Field label="Owner">
                     {view.owner === null ? (
-                        <span className="text-[color:var(--color-steel)]">
-                            not read — the registry source did not answer
-                        </span>
-                    ) : (
+                        <span className="text-[color:var(--color-steel)]">not read</span>
+                    ) : ownerUrl === null ? (
                         truncateMiddle(view.owner, 10, 8)
+                    ) : (
+                        <a href={ownerUrl} target="_blank" rel="noreferrer">
+                            {truncateMiddle(view.owner, 10, 8)} ↗
+                        </a>
                     )}
                 </Field>
                 <Field label="Intuition atom">
                     {view.atomTermId === null ? (
                         <span className="text-[color:var(--color-steel)]">
-                            no atom — this agent is not in the Intuition graph
+                            not in the Intuition graph
                         </span>
                     ) : (
-                        truncateMiddle(view.atomTermId, 12, 8)
+                        <a
+                            href={intuitionAtomUrl(view.atomTermId)}
+                            target="_blank"
+                            rel="noreferrer"
+                        >
+                            {truncateMiddle(view.atomTermId, 12, 8)} ↗
+                        </a>
                     )}
                 </Field>
                 <Field label="Registration file">

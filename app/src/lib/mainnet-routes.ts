@@ -1,19 +1,20 @@
 /**
  * Which routes read or write **Intuition mainnet 1155**, in one place.
  *
- * `Layout` shows a testnet strip and a faucet link on every other route. Getting this list wrong is,
- * in `Layout`'s own words, the single most expensive sentence in the app: "no real value at stake"
- * above a page that spends real TRUST. ADR `0017`'s Consequences section names the two-network
- * ambiguity as the sharpest failure mode this app has.
+ * **Its reason for existing is gone and it is kept for one small job.** It used to drive the
+ * shell's testnet strip, and getting it wrong printed "no real value at stake" above a page that
+ * spends real TRUST — which happened twice in one day, for `/` and for `/register`. ADR `0058`
+ * removed both network banners at the user's request, so the only consumer left is the footer's
+ * network label. Being wrong there is cosmetic.
  *
- * **It went wrong twice in one day**, both times because the list was hand-maintained inside
- * `Layout` and a new route did not reach it: `/` the moment it became the tool catalogue, and
- * `/register` the moment it was added — a page that sends a real `createAtoms`. Each showed the
- * testnet strip and a "Get tTRUST" link above `MainnetNotice` saying the opposite. `claims.md`
- * check 5: fix the predicate, not the route you happened to notice.
+ * The test that kept it honest went with the banner: it derived the answer from `MainnetNotice` in
+ * a page's source, and that component no longer exists. So **this list is hand-maintained again**,
+ * and nothing checks it. That is acceptable for a footer label and would not be for a warning —
+ * if anything safety-bearing ever reads it again, the check has to come back with it.
  *
- * So the list lives here, beside a test that locks it, and the rule is one line: **a route that
- * renders `MainnetNotice` belongs in it.**
+ * The warning that matters now lives where a wallet is about to open: `StakeControl` and
+ * `WithdrawControl` both name the network and the real TRUST in their confirmation step, which is
+ * where ADR `0029` said it belonged.
  */
 export const MAINNET_ROUTES: readonly string[] = [
     "/", // the tool catalogue

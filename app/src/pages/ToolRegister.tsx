@@ -3,7 +3,6 @@ import {Link} from "react-router-dom";
 import type {Hex} from "viem";
 import {useAccount, useSwitchChain} from "wagmi";
 
-import {MainnetNotice} from "../components/agent/MainnetNotice";
 import {controlClass, linkClass} from "../lib/control-class";
 import {useToolRegister} from "../hooks/use-tool-register";
 import {INTUITION_MAINNET_CHAIN_ID, mainnetTxUrl} from "../lib/intuition-mainnet";
@@ -86,7 +85,6 @@ export function ToolRegister() {
 
     return (
         <section>
-            <MainnetNotice />
 
             <header className="mt-8 mb-12">
                 <h1 className="text-[length:var(--text-display)] leading-[var(--leading-display)] font-semibold tracking-tight">

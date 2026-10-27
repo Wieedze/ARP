@@ -7,7 +7,6 @@ import {AgentBacking} from "../components/agent/AgentBacking";
 import {AgentIdentityPanel} from "../components/agent/AgentIdentityPanel";
 import {AssessmentRow} from "../components/agent/AssessmentRow";
 import {CapabilitySection} from "../components/agent/CapabilitySection";
-import {MainnetNotice} from "../components/agent/MainnetNotice";
 import {panelDomId, tabDomId} from "../components/agent/tab-ids";
 import {TrustPanelTabs} from "../components/agent/TrustPanelTabs";
 import {UnreadSources} from "../components/agent/UnreadSources";
@@ -147,7 +146,6 @@ export function AgentTrustPanel() {
             </Link>
 
             <div className="mt-4">
-                <MainnetNotice />
             </div>
 
             {profileQuery.isLoading ? (
