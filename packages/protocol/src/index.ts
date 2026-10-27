@@ -321,3 +321,27 @@ export {
     type ToolListingOrder,
     type ToolListingPage,
 } from "./tool-listing.js";
+
+/**
+ * **Hire** — the buyer's half of `tasks/25`.
+ *
+ * `prepareHire` returns a bounded sub-delegation for the buyer to sign and the sentence each bound
+ * is worth showing before they do. It holds no key and signs nothing (ADR `0038`), and the seller
+ * signs nothing either: the budget comes out of the **buyer's** balance, so an agent that has never
+ * heard of ARP can be hired without being asked for anything.
+ *
+ * The bounds are the **framework's own** enforcers, not ARP's. Measured 2026-10-27: the MetaMask
+ * Delegation Framework is deployed on both Intuition chains at 1.3.0, while ARP's
+ * `TrustStakeCapEnforcer` is on testnet 13579 alone — so a hire bounded by ours would work in the
+ * rehearsal and not in the thing (`rules/portability.md` point 4).
+ */
+export {
+    HIRE_SELECTORS,
+    DelegationFrameworkMissingError,
+    HireBoundMissingError,
+    prepareHire,
+    type HireBound,
+    type HireEnvironment,
+    type HirePlan,
+    type UnsignedDelegation,
+} from "./hire/index.js";
