@@ -29,7 +29,8 @@
  *    - a declared protocol name, so the handshake path exercises
  *    - capabilities on one agent only — 0 of ~110 parsed documents across repeated n=200 samples (scripts/measure/cohort-skills.ts; the zero is stable, the denominator varies with the sample), so it is the rare case
  *      and the one the code is least exercised against
- *    - one endpoint deliberately unprobeable — 82% of real ones are, and that is the group that must
+ *    - one endpoint deliberately unprobeable — 82% of real ones were in the 2026-10-16 sample and
+ *      4% on 2026-10-27, and it is the group that must
  *      never be reported as a defect
  */
 
@@ -120,9 +121,10 @@ export const FILES: RigFile[] = [
       name: 'ARP Rig — Unprobeable',
       description:
         'Testnet rig agent. Declares only endpoints that cannot be probed: a templated URL ' +
-        'whose substitution the file does not describe, and a CAIP-10 identifier. This is ' +
-        '82% of real declared endpoints. The agent did nothing wrong, and a verifier that ' +
-        'reports either as a failure mass-slanders the cohort on its first run.',
+        'whose substitution the file does not describe, and a CAIP-10 identifier. That was ' +
+        '82% of real declared endpoints in the 2026-10-16 sample and 4% on 2026-10-27. The ' +
+        'agent did nothing wrong, and a verifier that reports either as a failure ' +
+        'mass-slanders the cohort on its first run.',
       services: [
         {
           name: 'a2a',

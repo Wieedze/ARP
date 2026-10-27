@@ -23,8 +23,9 @@ export type NotCheckableCode = "templated" | "non-http-identifier" | "unparseabl
 /**
  * Whether a declared endpoint value is something a prober can reach.
  *
- * **`not-checkable` is not a failure.** It is the verifier declining to judge, and 82% of declared
- * endpoints in the cohort land here. Rendering it in the same register as a confirmed defect would
+ * **`not-checkable` is not a failure.** It is the verifier declining to judge, and a large share of
+ * declared endpoints land here — 82% in the 2026-10-16 sample, 4% on 2026-10-27, so the rule holds
+ * at any share and the number does not. Rendering it in the same register as a confirmed defect would
  * mass-slander the cohort on the first run, which is this task's version of the connector's false
  * `mismatch`.
  */

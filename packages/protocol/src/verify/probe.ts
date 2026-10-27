@@ -1,5 +1,5 @@
 import type {DeclaredEndpoint, ProbeOutcome, ProbeRequest} from "./types.js";
-import type { FetchLike } from "../http.js";
+import type {FetchLike} from "../http.js";
 
 /**
  * Identify the client. A recipient seeing this in their logs can find out who is calling and ask us
@@ -299,9 +299,23 @@ async function probeMcp(url: string, options: ProbeOptions): Promise<ProbeOutcom
     };
 }
 
-/** Candidate paths for an A2A agent card, in the order the spec and the wild both use. */
+/**
+ * Candidate paths for an A2A agent card, in the order the spec and the wild both use.
+ *
+ * **A declared URL that is already a card is tried alone.** This used to append the two well-known
+ * paths to the declared URL unconditionally, so an endpoint declared as
+ * `https://host/a2a/<id>/.well-known/agent-card.json` was asked for
+ * `…/agent-card.json/.well-known/agent-card.json` first — a path that cannot exist — then a second
+ * one, and only then the URL itself, which is what answered. Measured on the 2026-10-27 walk: that
+ * is **three requests per endpoint where one would do, 89 times against a single host**, and
+ * `tasks/17` calls one request per endpoint per run a hard requirement. The walk's results were
+ * unaffected (every one of the 89 won on the third candidate) but the courtesy cost was real.
+ */
 function a2aCandidates(url: string): string[] {
     const base = url.replace(/\/+$/, "");
+    // A card is served at a file, not at a directory. If the declared URL already names one, a
+    // well-known path appended to it is a path under a file.
+    if (/\.json$/i.test(base)) return [url];
     return [`${base}/.well-known/agent-card.json`, `${base}/.well-known/agent.json`, url];
 }
 
@@ -384,7 +398,8 @@ async function probePlain(url: string, options: ProbeOptions): Promise<ProbeOutc
  * - `confirmed` — a fact, with the request that established it, so any row reproduces with one
  *   `curl`.
  * - `not-checkable` — carried straight through from the classification. **Never probed**, so no
- *   request is made and nothing is claimed. This is 82% of real endpoints.
+ *   request is made and nothing is claimed. Its share moves with whoever minted recently — 82% of
+ *   real endpoints in the 2026-10-16 sample, 4% on 2026-10-27 — so the rule holds at any share.
  * - `inconclusive` — it answered something we did not understand, or the transport failed in a way
  *   that could be our network. Reported with what we sent and what came back.
  *

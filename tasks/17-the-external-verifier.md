@@ -1,6 +1,6 @@
 # Task 17 — The external verifier
 
-> **Status: BUILT, GATE NOT YET RUN AT 100 AGENTS** (specified 2026-10-16, built 2026-10-16/17).
+> **Status: GATE RUN 2026-10-27, PASSED** (specified 2026-10-16, built 2026-10-16/17).
 > Phase 1 of `docs/13_THE_THREE_FLOWS.md`. The only flow that needs nobody's consent.
 >
 > **Shipped**: `packages/protocol/src/verify/{declaration,probe,host-limiter,subject}.ts`, exported from the
@@ -9,8 +9,46 @@
 > `grep -c '    it(' packages/protocol/test/verify-{declaration,probe}.test.ts`.) `scripts/verify-cohort.ts` walks a range or a list and writes a JSON surface.
 > Verified live against six real documents and five MCP endpoints.
 >
-> **Remaining**: run the gate — 100 agents in one walk, with the three groups separated and any
-> confirmed row reproducible by one request. Then `task-verifier`, post-mortem, `STATE.md`.
+> **Gate run 2026-10-27 — passed, and the result is not what the gate expected.** Two walks of 100
+> agents each on Base 8453, both committed under `measurements/`, both readable with
+> `bun run scripts/measure/verifier-gate.ts <file>`:
+>
+> | walk                          | n   | document read | endpoints | confirmed | not-checkable           | inconclusive        |
+> | ----------------------------- | --- | ------------- | --------- | --------- | ----------------------- | ------------------- |
+> | uniform over 1,138,325 minted | 100 | 96            | 186       | 178       | 8 `templated`           | 0                   |
+> | ids 1–100 (the oldest)        | 100 | 99            | 107       | 99        | 7 `non-http-identifier` | 1 `transport-error` |
+>
+> Every confirmed row reproduces with one `curl`, printed by the report script. One was re-run by
+> hand: agent 497755's A2A card, HTTP 200.
+>
+> On the uniform walk **93 endpoints named a protocol**, 4 of them templated and so unprobeable;
+> of the **89 probed, 89 serve what they named**. The middle term matters: "89 of 89" without it
+> reads as "every endpoint that named a protocol", which is not what was measured.
+>
+> **The finding is the concentration, not the rates.** 89 of the 100 uniformly sampled agents are
+> `centralcity.ai` (Wilson 95%: 81.4–93.7%) and **178 of 178 probed endpoints are on that one host**.
+> At the other end, 98 of ids 1–100 are `marketplace.olas.network` (93.0–99.4%). So "89 of 89 named
+> a protocol and serve it" is a fact about one operator's deployment, and "0 of 0 named a protocol"
+> is a fact about another's. Neither is a property of ERC-8004 on Base.
+>
+> A uniform sample of this registry is a sample of whoever minted most of it. The report script
+> prints the host breakdown under every rate and says so in a sentence, because the rate alone is
+> the exact shape of `rules/claims.md` §2 — one number read against the wrong population.
+>
+> **Every percentage further down this file is from the 2026-10-16 sample and none of them
+> survived.** 23% with no `tokenURI` is 3% here; 37% unresolvable is 1%; "82% of declared endpoints
+> land in group 2" is 4%. They are not corrections of each other — they are two different operators'
+> conventions, measured eleven days apart on a registry that grew from 88,243 to 1,138,325. Read
+> each against its own date, and read neither as the cohort.
+>
+> **One courtesy defect, found by the verifier and fixed**: `a2aCandidates` appended the two
+> well-known card paths to the declared URL even when the declared URL was already a card, so this
+> walk cost three requests per A2A endpoint where one would do — 178 of them against a single host,
+> against the task's own hard rule of one request per endpoint per run. Every one of the 89 won on
+> the third candidate, so the results above are unaffected. The walk decomposes exactly:
+> `551 = 100 eth_call + 95 document GET + 89×3 A2A + 89×1 plain`. The same walk now costs **373**.
+>
+> **Remaining**: `task-verifier`, post-mortem, `STATE.md`.
 
 ## Objective
 
@@ -23,8 +61,15 @@ agents chose to publish at addresses they chose to publish them at.
 
 ## Why first
 
-Every earlier plan stalled on an empty graph — 194 `use` triples against 88,243 agents — and filling
-it needed somebody to adopt something. This does not. It is also the only signal that **moves on its
+Every earlier plan stalled on an empty graph. One measurement, with the script that produces it:
+`scripts/measure/predicate-edges.ts` on mainnet 1155, 2026-10-27 — **158 edges on `use`, 185 on
+`uses`, 120 on `has category`** — against a Base registry at **1,138,325** minted the same day.
+
+(The "194 `use` triples" this paragraph used to open with comes from `docs/09:35` and **does not
+reproduce**; the other two figures of its trio do. Intuition has no deletion, so it is a different
+query and not a graph that shrank. Correcting the six places that quote it is `tasks/28`.)
+
+Filling that graph needed somebody to adopt something. This does not. It is also the only signal that **moves on its
 own**, which is what makes a rating dynamic rather than a snapshot, and what gives a market
 something to price.
 
@@ -97,8 +142,9 @@ Separately, agent 8453:2340 (Clawnch) declares six MCP tools and a standard clie
 1. **Confirmed fact** — the document 404s; the endpoint times out; the endpoint answers and speaks
    the protocol it declared.
 2. **Unprobeable** — templated URL, CAIP or ENS identifier, no endpoint declared. The agent did
-   nothing wrong. Report _not checkable_, never _failing_. 82% of declared endpoints land here, so
-   getting this wrong would mean mass-slandering the cohort.
+   nothing wrong. Report _not checkable_, never _failing_. 82% of declared endpoints landed here in
+   the 2026-10-16 sample, 4% on 2026-10-27 — the share follows whoever minted most recently, and
+   getting this wrong would mean mass-slandering the cohort at either share.
 3. **We might be wrong** — the endpoint answered something we did not understand; our MCP handshake
    may be the thing at fault. Report _inconclusive_, and say what we sent.
 
@@ -153,5 +199,12 @@ group 2 and group 3 visibly separated from group 1 in the output. A reviewer mus
 
 ## Which tier of the evidence ladder does this serve?
 
-Tier 1 → 2. It turns assertions agents make about themselves into checkable facts, for the whole
-cohort, without asking anyone's permission — and it is the cold-start unlock for tiers 3 and 4.
+**It hardens tier 1; it does not reach tier 2, and should not claim to.** `docs/09` §3 defines
+tier 2 as _Rated_ — "someone scored this agent 67.25", costing nothing — and the verifier produces
+no score. What it does is make a tier-1 assertion **falsifiable**: the claim still costs one gas fee
+to make, but it now costs an upkeep to sustain, because anyone can check it at any time without the
+agent's cooperation.
+
+The ladder has no rung for a checked assertion, and that absence is the point: ARP's position is
+tiers 3 and 4, and this is their **precondition**. Nobody stakes capital on an agent nobody can
+check, so a cohort of unfalsifiable assertions has no market in it to open.

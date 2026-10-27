@@ -172,9 +172,10 @@ export type {
  * Needs no cooperation from the agent being checked. `readDeclaredEndpoints` and `classifyEndpoint`
  * are pure functions of a registration document: no network, no clock, no configuration.
  *
- * The one thing a consumer must get right: `not-checkable` is **not** a failure. 82% of declared
- * endpoints in the cohort land there, so rendering it beside a confirmed defect would mass-slander
- * the cohort. `partitionByCheckability` exists so that split does not get re-implemented per caller.
+ * The one thing a consumer must get right: `not-checkable` is **not** a failure. Enough declared
+ * endpoints land there that rendering it beside a confirmed defect would mass-slander the cohort —
+ * 82% of them in the 2026-10-16 sample and 4% on 2026-10-27, a share that moves with whoever minted
+ * most recently, which is why the rule is stated and not the proportion. `partitionByCheckability` exists so that split does not get re-implemented per caller.
  */
 export {
     classifyEndpoint,

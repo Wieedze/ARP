@@ -17,7 +17,7 @@ flowchart TB
         A1["fetch registration file"] --> A0{"resolves?"}
         A0 -->|"no · 37%"| A4["confirmed: identity unreachable"]
         A0 -->|yes| A2{"probeable endpoint?"}
-        A2 -->|"no · 82% templated or CAIP/ENS"| A8["not checkable — NOT a defect"]
+        A2 -->|"no · templated or CAIP/ENS"| A8["not checkable — NOT a defect"]
         A2 -->|yes| A3{"answers?"}
         A3 -->|no| A4
         A3 -->|yes| A5{"declares a protocol?"}
@@ -107,7 +107,9 @@ Hard parts, named now:
   n = 140 random ids on 2026-10-16: of 90 declared endpoints, 76% carry an unsubstituted
   `{placeholder}` and 7% are a CAIP address or ENS name rather than a URL. **Only 16 of 90 were
   probeable.** Those 82% must report _not checkable_, never _failing_ — get this wrong and the
-  verifier mass-slanders the cohort on its first run.
+  verifier mass-slanders the cohort on its first run. **The share is not stable**: on 2026-10-27 it
+  was 4% of 186 endpoints, because a uniform sample of a registry one operator minted most of is a
+  sample of that operator (ADR `0064`). The rule is the part that holds; the proportion is not.
 - **The volume is in the document layer, not the endpoint layer.** 23% of sampled ids have no
   `tokenURI`; of those that do, **37% publish a registration file that does not resolve**. One GET
   establishes it — the cheapest and most abundant confirmed fact available.

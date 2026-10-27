@@ -9,7 +9,10 @@
  *      bun run scripts/verify-cohort.ts --from 1 --to 200 --out /tmp/cohort.json
  *
  *  Read-only throughout: one `eth_call` of `tokenURI` per id, one GET of the registration file, and
- *  one request per *probeable* endpoint. Signs nothing, writes nothing on chain.
+ *  one request per *probeable* endpoint — except an A2A endpoint declared as a directory, which
+ *  costs up to three while the two well-known card paths are tried. (It cost three for **every**
+ *  A2A endpoint until 2026-10-27; see `a2aCandidates` in `verify/probe.ts`.) Signs nothing, writes
+ *  nothing on chain.
  *
  *  Courtesy is not optional here (`tasks/17`):
  *    - every request identifies the client and the timeout is 8 s
@@ -20,9 +23,10 @@
  *    - a document hash is recorded per agent, so a future version can skip an unchanged one.
  *      **It does not skip today** — nothing reads it back (`tasks/21`).
  *
- *  The output separates three groups and never merges them. `not-checkable` is 82% of declared
- *  endpoints and is NOT a defect; rendering it beside a confirmed failure would mass-slander the
- *  cohort on the first run.
+ *  The output separates three groups and never merges them. `not-checkable` is NOT a defect, and
+ *  rendering it beside a confirmed failure would mass-slander the cohort. Its share moves a lot
+ *  with who minted recently — 82% of declared endpoints in the 2026-10-16 sample, 4% on
+ *  2026-10-27 — so the reason is the rule here, not the proportion.
  */
 import { highestTokenId } from './erc8004-population.js';
 

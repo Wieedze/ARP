@@ -32,8 +32,10 @@ const TEMPLATE = /\{[A-Za-z_][A-Za-z0-9_]*\}/;
 /**
  * What class of thing a declared endpoint value is.
  *
- * Pure, and deliberately **not** a boolean. 82% of declared endpoints in the cohort cannot be probed
- * at all, and an `ok: false` would collapse "this agent is broken" into "we cannot check this agent"
+ * Pure, and deliberately **not** a boolean. A large share of declared endpoints cannot be probed at
+ * all — 82% in the 2026-10-16 sample, 4% on 2026-10-27, because the share tracks whoever minted
+ * most recently — and an `ok: false` would collapse "this agent is broken" into "we cannot check
+ * this agent"
  * — the single most damaging mistake this verifier can make. The two outcomes are different
  * `status` values so that no consumer can render them in one register by accident, and the reason is
  * a `code` rather than a free-form string so a consumer can branch on it without matching prose.

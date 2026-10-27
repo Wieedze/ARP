@@ -1,0 +1,5259 @@
+{
+  "generatedAt": "2026-10-27T20:14:08.796Z",
+  "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+  "cohortSize": 1138325,
+  "userAgent": "ARP-verifier/0.1 (+https://github.com/Wieedze/ARP)",
+  "timeoutMs": 8000,
+  "requestsMade": 551,
+  "agents": [
+    {
+      "tokenId": "497755",
+      "chainId": 8453,
+      "document": {
+        "status": "read",
+        "url": "https://centralcity.ai/a/L3e0ZM",
+        "httpStatus": 200
+      },
+      "documentHash": "e17e14f62cc2044c",
+      "endpoints": [
+        {
+          "declaredUnder": "services",
+          "name": "A2A",
+          "protocol": "a2a",
+          "version": "1.0",
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a2a/2adfbde6-4723-43b8-a8a2-b890f47f50d8/.well-known/agent-card.json",
+            "declared": "https://centralcity.ai/a2a/2adfbde6-4723-43b8-a8a2-b890f47f50d8/.well-known/agent-card.json"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "serves-declared-protocol",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a2a/2adfbde6-4723-43b8-a8a2-b890f47f50d8/.well-known/agent-card.json"
+            },
+            "detail": "served an agent card at the declared URL itself"
+          }
+        },
+        {
+          "declaredUnder": "services",
+          "name": "web",
+          "protocol": null,
+          "version": null,
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a/L3e0ZM",
+            "declared": "https://centralcity.ai/a/L3e0ZM"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "live",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a/L3e0ZM"
+            },
+            "detail": "answered HTTP 200"
+          }
+        }
+      ]
+    },
+    {
+      "tokenId": "443861",
+      "chainId": 8453,
+      "document": {
+        "status": "read",
+        "url": "https://centralcity.ai/a/sw82lg",
+        "httpStatus": 200
+      },
+      "documentHash": "a438c7793ad8205b",
+      "endpoints": [
+        {
+          "declaredUnder": "services",
+          "name": "A2A",
+          "protocol": "a2a",
+          "version": "1.0",
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a2a/92a152a3-bba4-4a3f-9e44-7e756620139f/.well-known/agent-card.json",
+            "declared": "https://centralcity.ai/a2a/92a152a3-bba4-4a3f-9e44-7e756620139f/.well-known/agent-card.json"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "serves-declared-protocol",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a2a/92a152a3-bba4-4a3f-9e44-7e756620139f/.well-known/agent-card.json"
+            },
+            "detail": "served an agent card at the declared URL itself"
+          }
+        },
+        {
+          "declaredUnder": "services",
+          "name": "web",
+          "protocol": null,
+          "version": null,
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a/sw82lg",
+            "declared": "https://centralcity.ai/a/sw82lg"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "live",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a/sw82lg"
+            },
+            "detail": "answered HTTP 200"
+          }
+        }
+      ]
+    },
+    {
+      "tokenId": "167009",
+      "chainId": 8453,
+      "document": {
+        "status": "read",
+        "url": "https://centralcity.ai/a/TgtwSO",
+        "httpStatus": 200
+      },
+      "documentHash": "3f341e9f48244459",
+      "endpoints": [
+        {
+          "declaredUnder": "services",
+          "name": "A2A",
+          "protocol": "a2a",
+          "version": "1.0",
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a2a/c75b7aa7-1916-4a4f-9163-2bfe88da5fff/.well-known/agent-card.json",
+            "declared": "https://centralcity.ai/a2a/c75b7aa7-1916-4a4f-9163-2bfe88da5fff/.well-known/agent-card.json"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "serves-declared-protocol",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a2a/c75b7aa7-1916-4a4f-9163-2bfe88da5fff/.well-known/agent-card.json"
+            },
+            "detail": "served an agent card at the declared URL itself"
+          }
+        },
+        {
+          "declaredUnder": "services",
+          "name": "web",
+          "protocol": null,
+          "version": null,
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a/TgtwSO",
+            "declared": "https://centralcity.ai/a/TgtwSO"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "live",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a/TgtwSO"
+            },
+            "detail": "answered HTTP 200"
+          }
+        }
+      ]
+    },
+    {
+      "tokenId": "722228",
+      "chainId": 8453,
+      "document": {
+        "status": "read",
+        "url": "https://centralcity.ai/a/5d8xlr",
+        "httpStatus": 200
+      },
+      "documentHash": "8437eb2fab9dfed4",
+      "endpoints": [
+        {
+          "declaredUnder": "services",
+          "name": "A2A",
+          "protocol": "a2a",
+          "version": "1.0",
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a2a/8129606f-01a3-4746-88cf-2743503fb5a7/.well-known/agent-card.json",
+            "declared": "https://centralcity.ai/a2a/8129606f-01a3-4746-88cf-2743503fb5a7/.well-known/agent-card.json"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "serves-declared-protocol",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a2a/8129606f-01a3-4746-88cf-2743503fb5a7/.well-known/agent-card.json"
+            },
+            "detail": "served an agent card at the declared URL itself"
+          }
+        },
+        {
+          "declaredUnder": "services",
+          "name": "web",
+          "protocol": null,
+          "version": null,
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a/5d8xlr",
+            "declared": "https://centralcity.ai/a/5d8xlr"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "live",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a/5d8xlr"
+            },
+            "detail": "answered HTTP 200"
+          }
+        }
+      ]
+    },
+    {
+      "tokenId": "609340",
+      "chainId": 8453,
+      "document": {
+        "status": "read",
+        "url": "https://centralcity.ai/a/MRwj1i",
+        "httpStatus": 200
+      },
+      "documentHash": "654bbd9902976856",
+      "endpoints": [
+        {
+          "declaredUnder": "services",
+          "name": "A2A",
+          "protocol": "a2a",
+          "version": "1.0",
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a2a/4239cf66-88a5-45e5-a37a-8348d89969ae/.well-known/agent-card.json",
+            "declared": "https://centralcity.ai/a2a/4239cf66-88a5-45e5-a37a-8348d89969ae/.well-known/agent-card.json"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "serves-declared-protocol",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a2a/4239cf66-88a5-45e5-a37a-8348d89969ae/.well-known/agent-card.json"
+            },
+            "detail": "served an agent card at the declared URL itself"
+          }
+        },
+        {
+          "declaredUnder": "services",
+          "name": "web",
+          "protocol": null,
+          "version": null,
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a/MRwj1i",
+            "declared": "https://centralcity.ai/a/MRwj1i"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "live",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a/MRwj1i"
+            },
+            "detail": "answered HTTP 200"
+          }
+        }
+      ]
+    },
+    {
+      "tokenId": "59474",
+      "chainId": 8453,
+      "document": {
+        "status": "no-token-uri"
+      },
+      "documentHash": null,
+      "endpoints": []
+    },
+    {
+      "tokenId": "1091256",
+      "chainId": 8453,
+      "document": {
+        "status": "read",
+        "url": "https://centralcity.ai/a/dzaFSW",
+        "httpStatus": 200
+      },
+      "documentHash": "2eaf4365ea03eed4",
+      "endpoints": [
+        {
+          "declaredUnder": "services",
+          "name": "A2A",
+          "protocol": "a2a",
+          "version": "1.0",
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a2a/1eef469a-2f8f-40f4-bc14-59b1c6a3e275/.well-known/agent-card.json",
+            "declared": "https://centralcity.ai/a2a/1eef469a-2f8f-40f4-bc14-59b1c6a3e275/.well-known/agent-card.json"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "serves-declared-protocol",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a2a/1eef469a-2f8f-40f4-bc14-59b1c6a3e275/.well-known/agent-card.json"
+            },
+            "detail": "served an agent card at the declared URL itself"
+          }
+        },
+        {
+          "declaredUnder": "services",
+          "name": "web",
+          "protocol": null,
+          "version": null,
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a/dzaFSW",
+            "declared": "https://centralcity.ai/a/dzaFSW"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "live",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a/dzaFSW"
+            },
+            "detail": "answered HTTP 200"
+          }
+        }
+      ]
+    },
+    {
+      "tokenId": "1031519",
+      "chainId": 8453,
+      "document": {
+        "status": "read",
+        "url": "https://centralcity.ai/a/osSDz5",
+        "httpStatus": 200
+      },
+      "documentHash": "06b52389050bb731",
+      "endpoints": [
+        {
+          "declaredUnder": "services",
+          "name": "A2A",
+          "protocol": "a2a",
+          "version": "1.0",
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a2a/1780b359-40bb-4d5a-b008-03cbd0112686/.well-known/agent-card.json",
+            "declared": "https://centralcity.ai/a2a/1780b359-40bb-4d5a-b008-03cbd0112686/.well-known/agent-card.json"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "serves-declared-protocol",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a2a/1780b359-40bb-4d5a-b008-03cbd0112686/.well-known/agent-card.json"
+            },
+            "detail": "served an agent card at the declared URL itself"
+          }
+        },
+        {
+          "declaredUnder": "services",
+          "name": "web",
+          "protocol": null,
+          "version": null,
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a/osSDz5",
+            "declared": "https://centralcity.ai/a/osSDz5"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "live",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a/osSDz5"
+            },
+            "detail": "answered HTTP 200"
+          }
+        }
+      ]
+    },
+    {
+      "tokenId": "336928",
+      "chainId": 8453,
+      "document": {
+        "status": "read",
+        "url": "https://centralcity.ai/a/rezohk",
+        "httpStatus": 200
+      },
+      "documentHash": "29b0cd82fa12efed",
+      "endpoints": [
+        {
+          "declaredUnder": "services",
+          "name": "A2A",
+          "protocol": "a2a",
+          "version": "1.0",
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a2a/ca671843-58a6-4538-bb41-5247b22dbc56/.well-known/agent-card.json",
+            "declared": "https://centralcity.ai/a2a/ca671843-58a6-4538-bb41-5247b22dbc56/.well-known/agent-card.json"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "serves-declared-protocol",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a2a/ca671843-58a6-4538-bb41-5247b22dbc56/.well-known/agent-card.json"
+            },
+            "detail": "served an agent card at the declared URL itself"
+          }
+        },
+        {
+          "declaredUnder": "services",
+          "name": "web",
+          "protocol": null,
+          "version": null,
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a/rezohk",
+            "declared": "https://centralcity.ai/a/rezohk"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "live",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a/rezohk"
+            },
+            "detail": "answered HTTP 200"
+          }
+        }
+      ]
+    },
+    {
+      "tokenId": "426453",
+      "chainId": 8453,
+      "document": {
+        "status": "read",
+        "url": "https://centralcity.ai/a/1G91pr",
+        "httpStatus": 200
+      },
+      "documentHash": "483d654a3d6ff84d",
+      "endpoints": [
+        {
+          "declaredUnder": "services",
+          "name": "A2A",
+          "protocol": "a2a",
+          "version": "1.0",
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a2a/aa641a7f-a696-4515-91b7-af70cce40033/.well-known/agent-card.json",
+            "declared": "https://centralcity.ai/a2a/aa641a7f-a696-4515-91b7-af70cce40033/.well-known/agent-card.json"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "serves-declared-protocol",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a2a/aa641a7f-a696-4515-91b7-af70cce40033/.well-known/agent-card.json"
+            },
+            "detail": "served an agent card at the declared URL itself"
+          }
+        },
+        {
+          "declaredUnder": "services",
+          "name": "web",
+          "protocol": null,
+          "version": null,
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a/1G91pr",
+            "declared": "https://centralcity.ai/a/1G91pr"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "live",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a/1G91pr"
+            },
+            "detail": "answered HTTP 200"
+          }
+        }
+      ]
+    },
+    {
+      "tokenId": "183447",
+      "chainId": 8453,
+      "document": {
+        "status": "read",
+        "url": "https://centralcity.ai/a/nF3WDM",
+        "httpStatus": 200
+      },
+      "documentHash": "6d1f0638434f0c84",
+      "endpoints": [
+        {
+          "declaredUnder": "services",
+          "name": "A2A",
+          "protocol": "a2a",
+          "version": "1.0",
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a2a/27fca7e2-76b4-4071-91b8-0b3ffdbdeaf6/.well-known/agent-card.json",
+            "declared": "https://centralcity.ai/a2a/27fca7e2-76b4-4071-91b8-0b3ffdbdeaf6/.well-known/agent-card.json"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "serves-declared-protocol",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a2a/27fca7e2-76b4-4071-91b8-0b3ffdbdeaf6/.well-known/agent-card.json"
+            },
+            "detail": "served an agent card at the declared URL itself"
+          }
+        },
+        {
+          "declaredUnder": "services",
+          "name": "web",
+          "protocol": null,
+          "version": null,
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a/nF3WDM",
+            "declared": "https://centralcity.ai/a/nF3WDM"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "live",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a/nF3WDM"
+            },
+            "detail": "answered HTTP 200"
+          }
+        }
+      ]
+    },
+    {
+      "tokenId": "741943",
+      "chainId": 8453,
+      "document": {
+        "status": "read",
+        "url": "https://centralcity.ai/a/f9ofEB",
+        "httpStatus": 200
+      },
+      "documentHash": "f8531eb8e37a36c2",
+      "endpoints": [
+        {
+          "declaredUnder": "services",
+          "name": "A2A",
+          "protocol": "a2a",
+          "version": "1.0",
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a2a/5f01d2eb-39a0-4bdc-9f1c-f405b356eaae/.well-known/agent-card.json",
+            "declared": "https://centralcity.ai/a2a/5f01d2eb-39a0-4bdc-9f1c-f405b356eaae/.well-known/agent-card.json"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "serves-declared-protocol",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a2a/5f01d2eb-39a0-4bdc-9f1c-f405b356eaae/.well-known/agent-card.json"
+            },
+            "detail": "served an agent card at the declared URL itself"
+          }
+        },
+        {
+          "declaredUnder": "services",
+          "name": "web",
+          "protocol": null,
+          "version": null,
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a/f9ofEB",
+            "declared": "https://centralcity.ai/a/f9ofEB"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "live",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a/f9ofEB"
+            },
+            "detail": "answered HTTP 200"
+          }
+        }
+      ]
+    },
+    {
+      "tokenId": "906254",
+      "chainId": 8453,
+      "document": {
+        "status": "read",
+        "url": "https://centralcity.ai/a/EbJeNR",
+        "httpStatus": 200
+      },
+      "documentHash": "4ddfe0e6902375f8",
+      "endpoints": [
+        {
+          "declaredUnder": "services",
+          "name": "A2A",
+          "protocol": "a2a",
+          "version": "1.0",
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a2a/b791a63a-7ee0-40b4-a0ad-a52553b6c045/.well-known/agent-card.json",
+            "declared": "https://centralcity.ai/a2a/b791a63a-7ee0-40b4-a0ad-a52553b6c045/.well-known/agent-card.json"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "serves-declared-protocol",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a2a/b791a63a-7ee0-40b4-a0ad-a52553b6c045/.well-known/agent-card.json"
+            },
+            "detail": "served an agent card at the declared URL itself"
+          }
+        },
+        {
+          "declaredUnder": "services",
+          "name": "web",
+          "protocol": null,
+          "version": null,
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a/EbJeNR",
+            "declared": "https://centralcity.ai/a/EbJeNR"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "live",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a/EbJeNR"
+            },
+            "detail": "answered HTTP 200"
+          }
+        }
+      ]
+    },
+    {
+      "tokenId": "741567",
+      "chainId": 8453,
+      "document": {
+        "status": "read",
+        "url": "https://centralcity.ai/a/HjYsdP",
+        "httpStatus": 200
+      },
+      "documentHash": "38bb2e21fbe513e5",
+      "endpoints": [
+        {
+          "declaredUnder": "services",
+          "name": "A2A",
+          "protocol": "a2a",
+          "version": "1.0",
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a2a/ead4c82a-97e3-44c7-ac6c-c71b118546b5/.well-known/agent-card.json",
+            "declared": "https://centralcity.ai/a2a/ead4c82a-97e3-44c7-ac6c-c71b118546b5/.well-known/agent-card.json"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "serves-declared-protocol",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a2a/ead4c82a-97e3-44c7-ac6c-c71b118546b5/.well-known/agent-card.json"
+            },
+            "detail": "served an agent card at the declared URL itself"
+          }
+        },
+        {
+          "declaredUnder": "services",
+          "name": "web",
+          "protocol": null,
+          "version": null,
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a/HjYsdP",
+            "declared": "https://centralcity.ai/a/HjYsdP"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "live",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a/HjYsdP"
+            },
+            "detail": "answered HTTP 200"
+          }
+        }
+      ]
+    },
+    {
+      "tokenId": "1135333",
+      "chainId": 8453,
+      "document": {
+        "status": "read",
+        "url": "https://centralcity.ai/a/b6knHv",
+        "httpStatus": 200
+      },
+      "documentHash": "6ee5ed80b5ca2551",
+      "endpoints": [
+        {
+          "declaredUnder": "services",
+          "name": "A2A",
+          "protocol": "a2a",
+          "version": "1.0",
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a2a/d6440b7f-d198-4479-a2bb-eb109806e65d/.well-known/agent-card.json",
+            "declared": "https://centralcity.ai/a2a/d6440b7f-d198-4479-a2bb-eb109806e65d/.well-known/agent-card.json"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "serves-declared-protocol",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a2a/d6440b7f-d198-4479-a2bb-eb109806e65d/.well-known/agent-card.json"
+            },
+            "detail": "served an agent card at the declared URL itself"
+          }
+        },
+        {
+          "declaredUnder": "services",
+          "name": "web",
+          "protocol": null,
+          "version": null,
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a/b6knHv",
+            "declared": "https://centralcity.ai/a/b6knHv"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "live",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a/b6knHv"
+            },
+            "detail": "answered HTTP 200"
+          }
+        }
+      ]
+    },
+    {
+      "tokenId": "462823",
+      "chainId": 8453,
+      "document": {
+        "status": "read",
+        "url": "https://centralcity.ai/a/VxhyGr",
+        "httpStatus": 200
+      },
+      "documentHash": "53b2acbb387e77f2",
+      "endpoints": [
+        {
+          "declaredUnder": "services",
+          "name": "A2A",
+          "protocol": "a2a",
+          "version": "1.0",
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a2a/0786fc08-26c6-4716-b9b7-cd892ae54e29/.well-known/agent-card.json",
+            "declared": "https://centralcity.ai/a2a/0786fc08-26c6-4716-b9b7-cd892ae54e29/.well-known/agent-card.json"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "serves-declared-protocol",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a2a/0786fc08-26c6-4716-b9b7-cd892ae54e29/.well-known/agent-card.json"
+            },
+            "detail": "served an agent card at the declared URL itself"
+          }
+        },
+        {
+          "declaredUnder": "services",
+          "name": "web",
+          "protocol": null,
+          "version": null,
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a/VxhyGr",
+            "declared": "https://centralcity.ai/a/VxhyGr"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "live",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a/VxhyGr"
+            },
+            "detail": "answered HTTP 200"
+          }
+        }
+      ]
+    },
+    {
+      "tokenId": "218123",
+      "chainId": 8453,
+      "document": {
+        "status": "read",
+        "url": "https://centralcity.ai/a/Zc8SyH",
+        "httpStatus": 200
+      },
+      "documentHash": "151f79452f97cf91",
+      "endpoints": [
+        {
+          "declaredUnder": "services",
+          "name": "A2A",
+          "protocol": "a2a",
+          "version": "1.0",
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a2a/75f34756-91a8-417c-a3d1-494c05532682/.well-known/agent-card.json",
+            "declared": "https://centralcity.ai/a2a/75f34756-91a8-417c-a3d1-494c05532682/.well-known/agent-card.json"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "serves-declared-protocol",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a2a/75f34756-91a8-417c-a3d1-494c05532682/.well-known/agent-card.json"
+            },
+            "detail": "served an agent card at the declared URL itself"
+          }
+        },
+        {
+          "declaredUnder": "services",
+          "name": "web",
+          "protocol": null,
+          "version": null,
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a/Zc8SyH",
+            "declared": "https://centralcity.ai/a/Zc8SyH"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "live",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a/Zc8SyH"
+            },
+            "detail": "answered HTTP 200"
+          }
+        }
+      ]
+    },
+    {
+      "tokenId": "315254",
+      "chainId": 8453,
+      "document": {
+        "status": "read",
+        "url": "https://centralcity.ai/a/iLJdcB",
+        "httpStatus": 200
+      },
+      "documentHash": "63d6ccd6f7aab545",
+      "endpoints": [
+        {
+          "declaredUnder": "services",
+          "name": "A2A",
+          "protocol": "a2a",
+          "version": "1.0",
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a2a/1b051e48-2b0e-4857-9a8c-f56fa515855c/.well-known/agent-card.json",
+            "declared": "https://centralcity.ai/a2a/1b051e48-2b0e-4857-9a8c-f56fa515855c/.well-known/agent-card.json"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "serves-declared-protocol",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a2a/1b051e48-2b0e-4857-9a8c-f56fa515855c/.well-known/agent-card.json"
+            },
+            "detail": "served an agent card at the declared URL itself"
+          }
+        },
+        {
+          "declaredUnder": "services",
+          "name": "web",
+          "protocol": null,
+          "version": null,
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a/iLJdcB",
+            "declared": "https://centralcity.ai/a/iLJdcB"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "live",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a/iLJdcB"
+            },
+            "detail": "answered HTTP 200"
+          }
+        }
+      ]
+    },
+    {
+      "tokenId": "1130339",
+      "chainId": 8453,
+      "document": {
+        "status": "read",
+        "url": "https://termix-platform-prod.s3.ap-southeast-1.amazonaws.com/platform/agents/122a4fb2e6807d53f9baf5e4a3c08c74f342435de2ec837ca2b1bdbdd6f43544.json",
+        "httpStatus": 200
+      },
+      "documentHash": "25555e6ebbded464",
+      "endpoints": [
+        {
+          "declaredUnder": "services",
+          "name": "A2A",
+          "protocol": "a2a",
+          "version": "0.3.0",
+          "capabilities": [],
+          "classification": {
+            "status": "not-checkable",
+            "code": "templated",
+            "declared": "https://platform-backend-base.prod.termix.live/api/v1/a2a/agents/{agentId}/card",
+            "placeholder": "{agentId}"
+          },
+          "outcome": {
+            "status": "not-checkable",
+            "code": "templated",
+            "detail": "not probed: templated"
+          }
+        },
+        {
+          "declaredUnder": "services",
+          "name": "Termix Platform",
+          "protocol": null,
+          "version": "aacp-platform-v1",
+          "capabilities": [],
+          "classification": {
+            "status": "not-checkable",
+            "code": "templated",
+            "declared": "https://platform-backend-base.prod.termix.live/api/v1/agents/{agentId}/services",
+            "placeholder": "{agentId}"
+          },
+          "outcome": {
+            "status": "not-checkable",
+            "code": "templated",
+            "detail": "not probed: templated"
+          }
+        }
+      ]
+    },
+    {
+      "tokenId": "179869",
+      "chainId": 8453,
+      "document": {
+        "status": "read",
+        "url": "https://centralcity.ai/a/aTP09u",
+        "httpStatus": 200
+      },
+      "documentHash": "aa1b0470c481742e",
+      "endpoints": [
+        {
+          "declaredUnder": "services",
+          "name": "A2A",
+          "protocol": "a2a",
+          "version": "1.0",
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a2a/364e0e39-d02a-4057-87c1-918dc6f6e90e/.well-known/agent-card.json",
+            "declared": "https://centralcity.ai/a2a/364e0e39-d02a-4057-87c1-918dc6f6e90e/.well-known/agent-card.json"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "serves-declared-protocol",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a2a/364e0e39-d02a-4057-87c1-918dc6f6e90e/.well-known/agent-card.json"
+            },
+            "detail": "served an agent card at the declared URL itself"
+          }
+        },
+        {
+          "declaredUnder": "services",
+          "name": "web",
+          "protocol": null,
+          "version": null,
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a/aTP09u",
+            "declared": "https://centralcity.ai/a/aTP09u"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "live",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a/aTP09u"
+            },
+            "detail": "answered HTTP 200"
+          }
+        }
+      ]
+    },
+    {
+      "tokenId": "899008",
+      "chainId": 8453,
+      "document": {
+        "status": "read",
+        "url": "https://centralcity.ai/a/1maQGx",
+        "httpStatus": 200
+      },
+      "documentHash": "fd92e7c044eb7eac",
+      "endpoints": [
+        {
+          "declaredUnder": "services",
+          "name": "A2A",
+          "protocol": "a2a",
+          "version": "1.0",
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a2a/d656c3d9-e051-49fe-9e6c-fb89eeac2c16/.well-known/agent-card.json",
+            "declared": "https://centralcity.ai/a2a/d656c3d9-e051-49fe-9e6c-fb89eeac2c16/.well-known/agent-card.json"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "serves-declared-protocol",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a2a/d656c3d9-e051-49fe-9e6c-fb89eeac2c16/.well-known/agent-card.json"
+            },
+            "detail": "served an agent card at the declared URL itself"
+          }
+        },
+        {
+          "declaredUnder": "services",
+          "name": "web",
+          "protocol": null,
+          "version": null,
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a/1maQGx",
+            "declared": "https://centralcity.ai/a/1maQGx"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "live",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a/1maQGx"
+            },
+            "detail": "answered HTTP 200"
+          }
+        }
+      ]
+    },
+    {
+      "tokenId": "789518",
+      "chainId": 8453,
+      "document": {
+        "status": "read",
+        "url": "https://centralcity.ai/a/9fF7OE",
+        "httpStatus": 200
+      },
+      "documentHash": "f8bd0fc0838920b6",
+      "endpoints": [
+        {
+          "declaredUnder": "services",
+          "name": "A2A",
+          "protocol": "a2a",
+          "version": "1.0",
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a2a/e620eb9f-c392-4c2d-b092-ed5becedcac6/.well-known/agent-card.json",
+            "declared": "https://centralcity.ai/a2a/e620eb9f-c392-4c2d-b092-ed5becedcac6/.well-known/agent-card.json"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "serves-declared-protocol",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a2a/e620eb9f-c392-4c2d-b092-ed5becedcac6/.well-known/agent-card.json"
+            },
+            "detail": "served an agent card at the declared URL itself"
+          }
+        },
+        {
+          "declaredUnder": "services",
+          "name": "web",
+          "protocol": null,
+          "version": null,
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a/9fF7OE",
+            "declared": "https://centralcity.ai/a/9fF7OE"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "live",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a/9fF7OE"
+            },
+            "detail": "answered HTTP 200"
+          }
+        }
+      ]
+    },
+    {
+      "tokenId": "795384",
+      "chainId": 8453,
+      "document": {
+        "status": "read",
+        "url": "https://centralcity.ai/a/TYcMgd",
+        "httpStatus": 200
+      },
+      "documentHash": "910dd0ace46286ca",
+      "endpoints": [
+        {
+          "declaredUnder": "services",
+          "name": "A2A",
+          "protocol": "a2a",
+          "version": "1.0",
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a2a/471f88ff-8c0b-44f5-bcb9-06e272b85356/.well-known/agent-card.json",
+            "declared": "https://centralcity.ai/a2a/471f88ff-8c0b-44f5-bcb9-06e272b85356/.well-known/agent-card.json"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "serves-declared-protocol",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a2a/471f88ff-8c0b-44f5-bcb9-06e272b85356/.well-known/agent-card.json"
+            },
+            "detail": "served an agent card at the declared URL itself"
+          }
+        },
+        {
+          "declaredUnder": "services",
+          "name": "web",
+          "protocol": null,
+          "version": null,
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a/TYcMgd",
+            "declared": "https://centralcity.ai/a/TYcMgd"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "live",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a/TYcMgd"
+            },
+            "detail": "answered HTTP 200"
+          }
+        }
+      ]
+    },
+    {
+      "tokenId": "345853",
+      "chainId": 8453,
+      "document": {
+        "status": "read",
+        "url": "https://centralcity.ai/a/EyIfmA",
+        "httpStatus": 200
+      },
+      "documentHash": "133b833f273607f2",
+      "endpoints": [
+        {
+          "declaredUnder": "services",
+          "name": "A2A",
+          "protocol": "a2a",
+          "version": "1.0",
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a2a/c8256f14-d3bb-4158-8842-a684eceb68c4/.well-known/agent-card.json",
+            "declared": "https://centralcity.ai/a2a/c8256f14-d3bb-4158-8842-a684eceb68c4/.well-known/agent-card.json"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "serves-declared-protocol",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a2a/c8256f14-d3bb-4158-8842-a684eceb68c4/.well-known/agent-card.json"
+            },
+            "detail": "served an agent card at the declared URL itself"
+          }
+        },
+        {
+          "declaredUnder": "services",
+          "name": "web",
+          "protocol": null,
+          "version": null,
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a/EyIfmA",
+            "declared": "https://centralcity.ai/a/EyIfmA"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "live",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a/EyIfmA"
+            },
+            "detail": "answered HTTP 200"
+          }
+        }
+      ]
+    },
+    {
+      "tokenId": "1059761",
+      "chainId": 8453,
+      "document": {
+        "status": "read",
+        "url": "https://centralcity.ai/a/ri85h4",
+        "httpStatus": 200
+      },
+      "documentHash": "b717060919811033",
+      "endpoints": [
+        {
+          "declaredUnder": "services",
+          "name": "A2A",
+          "protocol": "a2a",
+          "version": "1.0",
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a2a/2514fd36-5b00-47e2-a0fb-cf053ba309aa/.well-known/agent-card.json",
+            "declared": "https://centralcity.ai/a2a/2514fd36-5b00-47e2-a0fb-cf053ba309aa/.well-known/agent-card.json"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "serves-declared-protocol",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a2a/2514fd36-5b00-47e2-a0fb-cf053ba309aa/.well-known/agent-card.json"
+            },
+            "detail": "served an agent card at the declared URL itself"
+          }
+        },
+        {
+          "declaredUnder": "services",
+          "name": "web",
+          "protocol": null,
+          "version": null,
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a/ri85h4",
+            "declared": "https://centralcity.ai/a/ri85h4"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "live",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a/ri85h4"
+            },
+            "detail": "answered HTTP 200"
+          }
+        }
+      ]
+    },
+    {
+      "tokenId": "469908",
+      "chainId": 8453,
+      "document": {
+        "status": "read",
+        "url": "https://centralcity.ai/a/bjUeUH",
+        "httpStatus": 200
+      },
+      "documentHash": "4989b849d534ba97",
+      "endpoints": [
+        {
+          "declaredUnder": "services",
+          "name": "A2A",
+          "protocol": "a2a",
+          "version": "1.0",
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a2a/328c7b27-2bde-486e-a0c6-b74db8e792dd/.well-known/agent-card.json",
+            "declared": "https://centralcity.ai/a2a/328c7b27-2bde-486e-a0c6-b74db8e792dd/.well-known/agent-card.json"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "serves-declared-protocol",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a2a/328c7b27-2bde-486e-a0c6-b74db8e792dd/.well-known/agent-card.json"
+            },
+            "detail": "served an agent card at the declared URL itself"
+          }
+        },
+        {
+          "declaredUnder": "services",
+          "name": "web",
+          "protocol": null,
+          "version": null,
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a/bjUeUH",
+            "declared": "https://centralcity.ai/a/bjUeUH"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "live",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a/bjUeUH"
+            },
+            "detail": "answered HTTP 200"
+          }
+        }
+      ]
+    },
+    {
+      "tokenId": "548250",
+      "chainId": 8453,
+      "document": {
+        "status": "read",
+        "url": "https://centralcity.ai/a/KLqPyd",
+        "httpStatus": 200
+      },
+      "documentHash": "3674293668a80237",
+      "endpoints": [
+        {
+          "declaredUnder": "services",
+          "name": "A2A",
+          "protocol": "a2a",
+          "version": "1.0",
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a2a/67c692bf-d100-431b-9115-e14a22047ad1/.well-known/agent-card.json",
+            "declared": "https://centralcity.ai/a2a/67c692bf-d100-431b-9115-e14a22047ad1/.well-known/agent-card.json"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "serves-declared-protocol",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a2a/67c692bf-d100-431b-9115-e14a22047ad1/.well-known/agent-card.json"
+            },
+            "detail": "served an agent card at the declared URL itself"
+          }
+        },
+        {
+          "declaredUnder": "services",
+          "name": "web",
+          "protocol": null,
+          "version": null,
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a/KLqPyd",
+            "declared": "https://centralcity.ai/a/KLqPyd"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "live",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a/KLqPyd"
+            },
+            "detail": "answered HTTP 200"
+          }
+        }
+      ]
+    },
+    {
+      "tokenId": "544525",
+      "chainId": 8453,
+      "document": {
+        "status": "read",
+        "url": "https://centralcity.ai/a/4VblWe",
+        "httpStatus": 200
+      },
+      "documentHash": "8dcda0526234dd74",
+      "endpoints": [
+        {
+          "declaredUnder": "services",
+          "name": "A2A",
+          "protocol": "a2a",
+          "version": "1.0",
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a2a/050194dd-fbb8-4217-aef3-adec0da855dc/.well-known/agent-card.json",
+            "declared": "https://centralcity.ai/a2a/050194dd-fbb8-4217-aef3-adec0da855dc/.well-known/agent-card.json"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "serves-declared-protocol",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a2a/050194dd-fbb8-4217-aef3-adec0da855dc/.well-known/agent-card.json"
+            },
+            "detail": "served an agent card at the declared URL itself"
+          }
+        },
+        {
+          "declaredUnder": "services",
+          "name": "web",
+          "protocol": null,
+          "version": null,
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a/4VblWe",
+            "declared": "https://centralcity.ai/a/4VblWe"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "live",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a/4VblWe"
+            },
+            "detail": "answered HTTP 200"
+          }
+        }
+      ]
+    },
+    {
+      "tokenId": "1060330",
+      "chainId": 8453,
+      "document": {
+        "status": "read",
+        "url": "https://centralcity.ai/a/Ws8hOI",
+        "httpStatus": 200
+      },
+      "documentHash": "f21ce66a8b520684",
+      "endpoints": [
+        {
+          "declaredUnder": "services",
+          "name": "A2A",
+          "protocol": "a2a",
+          "version": "1.0",
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a2a/cce70a22-54a2-42c3-9e4b-0041cd5b9325/.well-known/agent-card.json",
+            "declared": "https://centralcity.ai/a2a/cce70a22-54a2-42c3-9e4b-0041cd5b9325/.well-known/agent-card.json"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "serves-declared-protocol",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a2a/cce70a22-54a2-42c3-9e4b-0041cd5b9325/.well-known/agent-card.json"
+            },
+            "detail": "served an agent card at the declared URL itself"
+          }
+        },
+        {
+          "declaredUnder": "services",
+          "name": "web",
+          "protocol": null,
+          "version": null,
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a/Ws8hOI",
+            "declared": "https://centralcity.ai/a/Ws8hOI"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "live",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a/Ws8hOI"
+            },
+            "detail": "answered HTTP 200"
+          }
+        }
+      ]
+    },
+    {
+      "tokenId": "804048",
+      "chainId": 8453,
+      "document": {
+        "status": "read",
+        "url": "https://centralcity.ai/a/iV57T2",
+        "httpStatus": 200
+      },
+      "documentHash": "9324059036d87f1d",
+      "endpoints": [
+        {
+          "declaredUnder": "services",
+          "name": "A2A",
+          "protocol": "a2a",
+          "version": "1.0",
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a2a/c2c15c78-5f7d-4118-bf90-64321e730149/.well-known/agent-card.json",
+            "declared": "https://centralcity.ai/a2a/c2c15c78-5f7d-4118-bf90-64321e730149/.well-known/agent-card.json"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "serves-declared-protocol",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a2a/c2c15c78-5f7d-4118-bf90-64321e730149/.well-known/agent-card.json"
+            },
+            "detail": "served an agent card at the declared URL itself"
+          }
+        },
+        {
+          "declaredUnder": "services",
+          "name": "web",
+          "protocol": null,
+          "version": null,
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a/iV57T2",
+            "declared": "https://centralcity.ai/a/iV57T2"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "live",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a/iV57T2"
+            },
+            "detail": "answered HTTP 200"
+          }
+        }
+      ]
+    },
+    {
+      "tokenId": "791689",
+      "chainId": 8453,
+      "document": {
+        "status": "read",
+        "url": "https://centralcity.ai/a/sy9r1b",
+        "httpStatus": 200
+      },
+      "documentHash": "1b0f1e0e05872248",
+      "endpoints": [
+        {
+          "declaredUnder": "services",
+          "name": "A2A",
+          "protocol": "a2a",
+          "version": "1.0",
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a2a/2db47fb2-b500-4069-9752-219b6df4c4e2/.well-known/agent-card.json",
+            "declared": "https://centralcity.ai/a2a/2db47fb2-b500-4069-9752-219b6df4c4e2/.well-known/agent-card.json"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "serves-declared-protocol",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a2a/2db47fb2-b500-4069-9752-219b6df4c4e2/.well-known/agent-card.json"
+            },
+            "detail": "served an agent card at the declared URL itself"
+          }
+        },
+        {
+          "declaredUnder": "services",
+          "name": "web",
+          "protocol": null,
+          "version": null,
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a/sy9r1b",
+            "declared": "https://centralcity.ai/a/sy9r1b"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "live",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a/sy9r1b"
+            },
+            "detail": "answered HTTP 200"
+          }
+        }
+      ]
+    },
+    {
+      "tokenId": "517829",
+      "chainId": 8453,
+      "document": {
+        "status": "read",
+        "url": "https://termix-platform-prod.s3.ap-southeast-1.amazonaws.com/platform/agents/b50dbbc4eaf73c2de15c8780e42e31a58e460678cdaf46463db5ccbeb89fe746.json",
+        "httpStatus": 200
+      },
+      "documentHash": "a54e1dc8fdad196b",
+      "endpoints": [
+        {
+          "declaredUnder": "services",
+          "name": "A2A",
+          "protocol": "a2a",
+          "version": "0.3.0",
+          "capabilities": [],
+          "classification": {
+            "status": "not-checkable",
+            "code": "templated",
+            "declared": "https://platform-backend-base.prod.termix.live/api/v1/a2a/agents/{agentId}/card",
+            "placeholder": "{agentId}"
+          },
+          "outcome": {
+            "status": "not-checkable",
+            "code": "templated",
+            "detail": "not probed: templated"
+          }
+        },
+        {
+          "declaredUnder": "services",
+          "name": "Termix Platform",
+          "protocol": null,
+          "version": "aacp-platform-v1",
+          "capabilities": [],
+          "classification": {
+            "status": "not-checkable",
+            "code": "templated",
+            "declared": "https://platform-backend-base.prod.termix.live/api/v1/agents/{agentId}/services",
+            "placeholder": "{agentId}"
+          },
+          "outcome": {
+            "status": "not-checkable",
+            "code": "templated",
+            "detail": "not probed: templated"
+          }
+        }
+      ]
+    },
+    {
+      "tokenId": "455789",
+      "chainId": 8453,
+      "document": {
+        "status": "read",
+        "url": "https://centralcity.ai/a/L4dnyw",
+        "httpStatus": 200
+      },
+      "documentHash": "018aac2427abac63",
+      "endpoints": [
+        {
+          "declaredUnder": "services",
+          "name": "A2A",
+          "protocol": "a2a",
+          "version": "1.0",
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a2a/fc0f7e01-965b-49a7-bddc-cba552f9b373/.well-known/agent-card.json",
+            "declared": "https://centralcity.ai/a2a/fc0f7e01-965b-49a7-bddc-cba552f9b373/.well-known/agent-card.json"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "serves-declared-protocol",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a2a/fc0f7e01-965b-49a7-bddc-cba552f9b373/.well-known/agent-card.json"
+            },
+            "detail": "served an agent card at the declared URL itself"
+          }
+        },
+        {
+          "declaredUnder": "services",
+          "name": "web",
+          "protocol": null,
+          "version": null,
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a/L4dnyw",
+            "declared": "https://centralcity.ai/a/L4dnyw"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "live",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a/L4dnyw"
+            },
+            "detail": "answered HTTP 200"
+          }
+        }
+      ]
+    },
+    {
+      "tokenId": "792753",
+      "chainId": 8453,
+      "document": {
+        "status": "read",
+        "url": "https://centralcity.ai/a/YHASGJ",
+        "httpStatus": 200
+      },
+      "documentHash": "d3b6410b4bf841fb",
+      "endpoints": [
+        {
+          "declaredUnder": "services",
+          "name": "A2A",
+          "protocol": "a2a",
+          "version": "1.0",
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a2a/52ec9877-36fe-4643-9876-e62b9e997b05/.well-known/agent-card.json",
+            "declared": "https://centralcity.ai/a2a/52ec9877-36fe-4643-9876-e62b9e997b05/.well-known/agent-card.json"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "serves-declared-protocol",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a2a/52ec9877-36fe-4643-9876-e62b9e997b05/.well-known/agent-card.json"
+            },
+            "detail": "served an agent card at the declared URL itself"
+          }
+        },
+        {
+          "declaredUnder": "services",
+          "name": "web",
+          "protocol": null,
+          "version": null,
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a/YHASGJ",
+            "declared": "https://centralcity.ai/a/YHASGJ"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "live",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a/YHASGJ"
+            },
+            "detail": "answered HTTP 200"
+          }
+        }
+      ]
+    },
+    {
+      "tokenId": "271066",
+      "chainId": 8453,
+      "document": {
+        "status": "read",
+        "url": "https://centralcity.ai/a/qLnXDa",
+        "httpStatus": 200
+      },
+      "documentHash": "e71733fc2479a81d",
+      "endpoints": [
+        {
+          "declaredUnder": "services",
+          "name": "A2A",
+          "protocol": "a2a",
+          "version": "1.0",
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a2a/df0ba305-c86d-4846-8fb5-ebf3eddf6898/.well-known/agent-card.json",
+            "declared": "https://centralcity.ai/a2a/df0ba305-c86d-4846-8fb5-ebf3eddf6898/.well-known/agent-card.json"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "serves-declared-protocol",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a2a/df0ba305-c86d-4846-8fb5-ebf3eddf6898/.well-known/agent-card.json"
+            },
+            "detail": "served an agent card at the declared URL itself"
+          }
+        },
+        {
+          "declaredUnder": "services",
+          "name": "web",
+          "protocol": null,
+          "version": null,
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a/qLnXDa",
+            "declared": "https://centralcity.ai/a/qLnXDa"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "live",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a/qLnXDa"
+            },
+            "detail": "answered HTTP 200"
+          }
+        }
+      ]
+    },
+    {
+      "tokenId": "926261",
+      "chainId": 8453,
+      "document": {
+        "status": "read",
+        "url": "https://centralcity.ai/a/c3ox9c",
+        "httpStatus": 200
+      },
+      "documentHash": "ae8976cc350df3d9",
+      "endpoints": [
+        {
+          "declaredUnder": "services",
+          "name": "A2A",
+          "protocol": "a2a",
+          "version": "1.0",
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a2a/37178d8e-0412-49dd-9b9c-de3e10fbd5c7/.well-known/agent-card.json",
+            "declared": "https://centralcity.ai/a2a/37178d8e-0412-49dd-9b9c-de3e10fbd5c7/.well-known/agent-card.json"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "serves-declared-protocol",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a2a/37178d8e-0412-49dd-9b9c-de3e10fbd5c7/.well-known/agent-card.json"
+            },
+            "detail": "served an agent card at the declared URL itself"
+          }
+        },
+        {
+          "declaredUnder": "services",
+          "name": "web",
+          "protocol": null,
+          "version": null,
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a/c3ox9c",
+            "declared": "https://centralcity.ai/a/c3ox9c"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "live",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a/c3ox9c"
+            },
+            "detail": "answered HTTP 200"
+          }
+        }
+      ]
+    },
+    {
+      "tokenId": "279464",
+      "chainId": 8453,
+      "document": {
+        "status": "read",
+        "url": "https://centralcity.ai/a/x2dJCE",
+        "httpStatus": 200
+      },
+      "documentHash": "81abf89ddef56fc4",
+      "endpoints": [
+        {
+          "declaredUnder": "services",
+          "name": "A2A",
+          "protocol": "a2a",
+          "version": "1.0",
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a2a/c6d42cf5-6df7-4ed0-bbb2-1da082ba146c/.well-known/agent-card.json",
+            "declared": "https://centralcity.ai/a2a/c6d42cf5-6df7-4ed0-bbb2-1da082ba146c/.well-known/agent-card.json"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "serves-declared-protocol",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a2a/c6d42cf5-6df7-4ed0-bbb2-1da082ba146c/.well-known/agent-card.json"
+            },
+            "detail": "served an agent card at the declared URL itself"
+          }
+        },
+        {
+          "declaredUnder": "services",
+          "name": "web",
+          "protocol": null,
+          "version": null,
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a/x2dJCE",
+            "declared": "https://centralcity.ai/a/x2dJCE"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "live",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a/x2dJCE"
+            },
+            "detail": "answered HTTP 200"
+          }
+        }
+      ]
+    },
+    {
+      "tokenId": "124834",
+      "chainId": 8453,
+      "document": {
+        "status": "read",
+        "url": "https://centralcity.ai/a/E3qZeC",
+        "httpStatus": 200
+      },
+      "documentHash": "f7cff4a9371034ef",
+      "endpoints": [
+        {
+          "declaredUnder": "services",
+          "name": "A2A",
+          "protocol": "a2a",
+          "version": "1.0",
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a2a/bf650caa-da32-448a-b0b5-8cd562377afa/.well-known/agent-card.json",
+            "declared": "https://centralcity.ai/a2a/bf650caa-da32-448a-b0b5-8cd562377afa/.well-known/agent-card.json"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "serves-declared-protocol",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a2a/bf650caa-da32-448a-b0b5-8cd562377afa/.well-known/agent-card.json"
+            },
+            "detail": "served an agent card at the declared URL itself"
+          }
+        },
+        {
+          "declaredUnder": "services",
+          "name": "web",
+          "protocol": null,
+          "version": null,
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a/E3qZeC",
+            "declared": "https://centralcity.ai/a/E3qZeC"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "live",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a/E3qZeC"
+            },
+            "detail": "answered HTTP 200"
+          }
+        }
+      ]
+    },
+    {
+      "tokenId": "312234",
+      "chainId": 8453,
+      "document": {
+        "status": "read",
+        "url": "https://centralcity.ai/a/nlvSRm",
+        "httpStatus": 200
+      },
+      "documentHash": "3bb42911323686ec",
+      "endpoints": [
+        {
+          "declaredUnder": "services",
+          "name": "A2A",
+          "protocol": "a2a",
+          "version": "1.0",
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a2a/16bcc673-ea27-4f1e-a9f4-6141b04c1322/.well-known/agent-card.json",
+            "declared": "https://centralcity.ai/a2a/16bcc673-ea27-4f1e-a9f4-6141b04c1322/.well-known/agent-card.json"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "serves-declared-protocol",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a2a/16bcc673-ea27-4f1e-a9f4-6141b04c1322/.well-known/agent-card.json"
+            },
+            "detail": "served an agent card at the declared URL itself"
+          }
+        },
+        {
+          "declaredUnder": "services",
+          "name": "web",
+          "protocol": null,
+          "version": null,
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a/nlvSRm",
+            "declared": "https://centralcity.ai/a/nlvSRm"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "live",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a/nlvSRm"
+            },
+            "detail": "answered HTTP 200"
+          }
+        }
+      ]
+    },
+    {
+      "tokenId": "466748",
+      "chainId": 8453,
+      "document": {
+        "status": "read",
+        "url": "https://centralcity.ai/a/CHD5Pd",
+        "httpStatus": 200
+      },
+      "documentHash": "1f8ea310afa37125",
+      "endpoints": [
+        {
+          "declaredUnder": "services",
+          "name": "A2A",
+          "protocol": "a2a",
+          "version": "1.0",
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a2a/a042b50f-6529-4d36-8b12-2458aacc262f/.well-known/agent-card.json",
+            "declared": "https://centralcity.ai/a2a/a042b50f-6529-4d36-8b12-2458aacc262f/.well-known/agent-card.json"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "serves-declared-protocol",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a2a/a042b50f-6529-4d36-8b12-2458aacc262f/.well-known/agent-card.json"
+            },
+            "detail": "served an agent card at the declared URL itself"
+          }
+        },
+        {
+          "declaredUnder": "services",
+          "name": "web",
+          "protocol": null,
+          "version": null,
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a/CHD5Pd",
+            "declared": "https://centralcity.ai/a/CHD5Pd"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "live",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a/CHD5Pd"
+            },
+            "detail": "answered HTTP 200"
+          }
+        }
+      ]
+    },
+    {
+      "tokenId": "1052831",
+      "chainId": 8453,
+      "document": {
+        "status": "read",
+        "url": "https://centralcity.ai/a/RoARIL",
+        "httpStatus": 200
+      },
+      "documentHash": "3d659a9ab46b2be4",
+      "endpoints": [
+        {
+          "declaredUnder": "services",
+          "name": "A2A",
+          "protocol": "a2a",
+          "version": "1.0",
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a2a/1f4d84a0-9b28-436f-93ef-36ae7d5109f4/.well-known/agent-card.json",
+            "declared": "https://centralcity.ai/a2a/1f4d84a0-9b28-436f-93ef-36ae7d5109f4/.well-known/agent-card.json"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "serves-declared-protocol",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a2a/1f4d84a0-9b28-436f-93ef-36ae7d5109f4/.well-known/agent-card.json"
+            },
+            "detail": "served an agent card at the declared URL itself"
+          }
+        },
+        {
+          "declaredUnder": "services",
+          "name": "web",
+          "protocol": null,
+          "version": null,
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a/RoARIL",
+            "declared": "https://centralcity.ai/a/RoARIL"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "live",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a/RoARIL"
+            },
+            "detail": "answered HTTP 200"
+          }
+        }
+      ]
+    },
+    {
+      "tokenId": "754757",
+      "chainId": 8453,
+      "document": {
+        "status": "read",
+        "url": "https://centralcity.ai/a/bN1Tzg",
+        "httpStatus": 200
+      },
+      "documentHash": "6aaea4dfac486009",
+      "endpoints": [
+        {
+          "declaredUnder": "services",
+          "name": "A2A",
+          "protocol": "a2a",
+          "version": "1.0",
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a2a/daed0a94-7a7a-4f87-9448-d146f58b58c1/.well-known/agent-card.json",
+            "declared": "https://centralcity.ai/a2a/daed0a94-7a7a-4f87-9448-d146f58b58c1/.well-known/agent-card.json"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "serves-declared-protocol",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a2a/daed0a94-7a7a-4f87-9448-d146f58b58c1/.well-known/agent-card.json"
+            },
+            "detail": "served an agent card at the declared URL itself"
+          }
+        },
+        {
+          "declaredUnder": "services",
+          "name": "web",
+          "protocol": null,
+          "version": null,
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a/bN1Tzg",
+            "declared": "https://centralcity.ai/a/bN1Tzg"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "live",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a/bN1Tzg"
+            },
+            "detail": "answered HTTP 200"
+          }
+        }
+      ]
+    },
+    {
+      "tokenId": "69360",
+      "chainId": 8453,
+      "document": {
+        "status": "read",
+        "url": "https://termix-platform-prod.s3.ap-southeast-1.amazonaws.com/platform/agents/2827f2e91ced384cf061b6021c82fda4b4596bb3df974f96913345b7d3db21b8.json",
+        "httpStatus": 200
+      },
+      "documentHash": "273d6be21ec7400e",
+      "endpoints": [
+        {
+          "declaredUnder": "services",
+          "name": "A2A",
+          "protocol": "a2a",
+          "version": "0.3.0",
+          "capabilities": [],
+          "classification": {
+            "status": "not-checkable",
+            "code": "templated",
+            "declared": "https://platform-backend-base.prod.termix.live/api/v1/a2a/agents/{agentId}/card",
+            "placeholder": "{agentId}"
+          },
+          "outcome": {
+            "status": "not-checkable",
+            "code": "templated",
+            "detail": "not probed: templated"
+          }
+        },
+        {
+          "declaredUnder": "services",
+          "name": "Termix Platform",
+          "protocol": null,
+          "version": "aacp-platform-v1",
+          "capabilities": [],
+          "classification": {
+            "status": "not-checkable",
+            "code": "templated",
+            "declared": "https://platform-backend-base.prod.termix.live/api/v1/agents/{agentId}/services",
+            "placeholder": "{agentId}"
+          },
+          "outcome": {
+            "status": "not-checkable",
+            "code": "templated",
+            "detail": "not probed: templated"
+          }
+        }
+      ]
+    },
+    {
+      "tokenId": "86333",
+      "chainId": 8453,
+      "document": {
+        "status": "read",
+        "url": "https://arweave.net/wC0L6LR_IGsS_SgAQFrSbnzsjVgAbOlwZcV_lbrp_v8/155.json",
+        "httpStatus": 200
+      },
+      "documentHash": "7ac7b6eb9b219591",
+      "endpoints": []
+    },
+    {
+      "tokenId": "157959",
+      "chainId": 8453,
+      "document": {
+        "status": "read",
+        "url": "https://centralcity.ai/a/gCpRpM",
+        "httpStatus": 200
+      },
+      "documentHash": "65f7d8b90d9ebcd5",
+      "endpoints": [
+        {
+          "declaredUnder": "services",
+          "name": "A2A",
+          "protocol": "a2a",
+          "version": "1.0",
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a2a/fadb2d3f-c456-4dc5-81a2-a0f69ff406f2/.well-known/agent-card.json",
+            "declared": "https://centralcity.ai/a2a/fadb2d3f-c456-4dc5-81a2-a0f69ff406f2/.well-known/agent-card.json"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "serves-declared-protocol",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a2a/fadb2d3f-c456-4dc5-81a2-a0f69ff406f2/.well-known/agent-card.json"
+            },
+            "detail": "served an agent card at the declared URL itself"
+          }
+        },
+        {
+          "declaredUnder": "services",
+          "name": "web",
+          "protocol": null,
+          "version": null,
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a/gCpRpM",
+            "declared": "https://centralcity.ai/a/gCpRpM"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "live",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a/gCpRpM"
+            },
+            "detail": "answered HTTP 200"
+          }
+        }
+      ]
+    },
+    {
+      "tokenId": "713452",
+      "chainId": 8453,
+      "document": {
+        "status": "read",
+        "url": "https://centralcity.ai/a/Mxp62J",
+        "httpStatus": 200
+      },
+      "documentHash": "1d8b087f6a052f4c",
+      "endpoints": [
+        {
+          "declaredUnder": "services",
+          "name": "A2A",
+          "protocol": "a2a",
+          "version": "1.0",
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a2a/fbff7e9f-6ecc-4e3b-9e20-84cbb51a951d/.well-known/agent-card.json",
+            "declared": "https://centralcity.ai/a2a/fbff7e9f-6ecc-4e3b-9e20-84cbb51a951d/.well-known/agent-card.json"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "serves-declared-protocol",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a2a/fbff7e9f-6ecc-4e3b-9e20-84cbb51a951d/.well-known/agent-card.json"
+            },
+            "detail": "served an agent card at the declared URL itself"
+          }
+        },
+        {
+          "declaredUnder": "services",
+          "name": "web",
+          "protocol": null,
+          "version": null,
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a/Mxp62J",
+            "declared": "https://centralcity.ai/a/Mxp62J"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "live",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a/Mxp62J"
+            },
+            "detail": "answered HTTP 200"
+          }
+        }
+      ]
+    },
+    {
+      "tokenId": "639185",
+      "chainId": 8453,
+      "document": {
+        "status": "read",
+        "url": "https://centralcity.ai/a/54A603",
+        "httpStatus": 200
+      },
+      "documentHash": "ffbfece16115c7d9",
+      "endpoints": [
+        {
+          "declaredUnder": "services",
+          "name": "A2A",
+          "protocol": "a2a",
+          "version": "1.0",
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a2a/f0f7cef7-c335-45e2-8b48-1f12b63588b3/.well-known/agent-card.json",
+            "declared": "https://centralcity.ai/a2a/f0f7cef7-c335-45e2-8b48-1f12b63588b3/.well-known/agent-card.json"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "serves-declared-protocol",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a2a/f0f7cef7-c335-45e2-8b48-1f12b63588b3/.well-known/agent-card.json"
+            },
+            "detail": "served an agent card at the declared URL itself"
+          }
+        },
+        {
+          "declaredUnder": "services",
+          "name": "web",
+          "protocol": null,
+          "version": null,
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a/54A603",
+            "declared": "https://centralcity.ai/a/54A603"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "live",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a/54A603"
+            },
+            "detail": "answered HTTP 200"
+          }
+        }
+      ]
+    },
+    {
+      "tokenId": "491815",
+      "chainId": 8453,
+      "document": {
+        "status": "read",
+        "url": "https://centralcity.ai/a/ZIGEBM",
+        "httpStatus": 200
+      },
+      "documentHash": "9eb880d315622ccf",
+      "endpoints": [
+        {
+          "declaredUnder": "services",
+          "name": "A2A",
+          "protocol": "a2a",
+          "version": "1.0",
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a2a/19f3915d-fcaf-4403-865a-37d625ec3aaf/.well-known/agent-card.json",
+            "declared": "https://centralcity.ai/a2a/19f3915d-fcaf-4403-865a-37d625ec3aaf/.well-known/agent-card.json"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "serves-declared-protocol",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a2a/19f3915d-fcaf-4403-865a-37d625ec3aaf/.well-known/agent-card.json"
+            },
+            "detail": "served an agent card at the declared URL itself"
+          }
+        },
+        {
+          "declaredUnder": "services",
+          "name": "web",
+          "protocol": null,
+          "version": null,
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a/ZIGEBM",
+            "declared": "https://centralcity.ai/a/ZIGEBM"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "live",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a/ZIGEBM"
+            },
+            "detail": "answered HTTP 200"
+          }
+        }
+      ]
+    },
+    {
+      "tokenId": "1045553",
+      "chainId": 8453,
+      "document": {
+        "status": "read",
+        "url": "https://centralcity.ai/a/2nmPtD",
+        "httpStatus": 200
+      },
+      "documentHash": "21564059ce10b9bc",
+      "endpoints": [
+        {
+          "declaredUnder": "services",
+          "name": "A2A",
+          "protocol": "a2a",
+          "version": "1.0",
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a2a/dd382691-2b1e-4f01-9d1f-53f4830dd3c0/.well-known/agent-card.json",
+            "declared": "https://centralcity.ai/a2a/dd382691-2b1e-4f01-9d1f-53f4830dd3c0/.well-known/agent-card.json"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "serves-declared-protocol",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a2a/dd382691-2b1e-4f01-9d1f-53f4830dd3c0/.well-known/agent-card.json"
+            },
+            "detail": "served an agent card at the declared URL itself"
+          }
+        },
+        {
+          "declaredUnder": "services",
+          "name": "web",
+          "protocol": null,
+          "version": null,
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a/2nmPtD",
+            "declared": "https://centralcity.ai/a/2nmPtD"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "live",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a/2nmPtD"
+            },
+            "detail": "answered HTTP 200"
+          }
+        }
+      ]
+    },
+    {
+      "tokenId": "515172",
+      "chainId": 8453,
+      "document": {
+        "status": "read",
+        "url": "https://centralcity.ai/a/EmuTVo",
+        "httpStatus": 200
+      },
+      "documentHash": "96c789e31adf0ebb",
+      "endpoints": [
+        {
+          "declaredUnder": "services",
+          "name": "A2A",
+          "protocol": "a2a",
+          "version": "1.0",
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a2a/915ca1bb-db17-4590-9ce9-861887282838/.well-known/agent-card.json",
+            "declared": "https://centralcity.ai/a2a/915ca1bb-db17-4590-9ce9-861887282838/.well-known/agent-card.json"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "serves-declared-protocol",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a2a/915ca1bb-db17-4590-9ce9-861887282838/.well-known/agent-card.json"
+            },
+            "detail": "served an agent card at the declared URL itself"
+          }
+        },
+        {
+          "declaredUnder": "services",
+          "name": "web",
+          "protocol": null,
+          "version": null,
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a/EmuTVo",
+            "declared": "https://centralcity.ai/a/EmuTVo"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "live",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a/EmuTVo"
+            },
+            "detail": "answered HTTP 200"
+          }
+        }
+      ]
+    },
+    {
+      "tokenId": "670081",
+      "chainId": 8453,
+      "document": {
+        "status": "read",
+        "url": "https://centralcity.ai/a/LvNTt6",
+        "httpStatus": 200
+      },
+      "documentHash": "997b4c734cb7bce0",
+      "endpoints": [
+        {
+          "declaredUnder": "services",
+          "name": "A2A",
+          "protocol": "a2a",
+          "version": "1.0",
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a2a/f61d969e-e950-41a3-b87a-d38992b172f5/.well-known/agent-card.json",
+            "declared": "https://centralcity.ai/a2a/f61d969e-e950-41a3-b87a-d38992b172f5/.well-known/agent-card.json"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "serves-declared-protocol",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a2a/f61d969e-e950-41a3-b87a-d38992b172f5/.well-known/agent-card.json"
+            },
+            "detail": "served an agent card at the declared URL itself"
+          }
+        },
+        {
+          "declaredUnder": "services",
+          "name": "web",
+          "protocol": null,
+          "version": null,
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a/LvNTt6",
+            "declared": "https://centralcity.ai/a/LvNTt6"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "live",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a/LvNTt6"
+            },
+            "detail": "answered HTTP 200"
+          }
+        }
+      ]
+    },
+    {
+      "tokenId": "27007",
+      "chainId": 8453,
+      "document": {
+        "status": "read",
+        "url": "data:application/json;base64,ewogICJ0eXBlIjogImh0dHBzOi8vZWlwcy5ldGhlcmV1bS5vcmcvRUlQUy9laXAtODAwNCNyZWdpc3RyYXRpb24tdjEiLAogICJuYW1lIjogIkJiIiwKICAiZGVzY3JpcHRpb24iOiAiIHVuaXF1ZSB0byBiZSBpbiB0aGUgd29ybGQgYW5kIEknbSBzbyBoYXBwefCfmIEgdGhhdCB5b3VyIG1vbSBpcyBpdCBqdXN0IHl5IiwKICAiaW1hZ2UiOiAiIiwKICAic2VydmljZXMiOiBbXSwKICAicmVnaXN0cmF0aW9ucyI6IFtdLAogICJzdXBwb3J0ZWRUcnVzdHMiOiBbXSwKICAiYWN0aXZlIjogZmFsc2UsCiAgIng0MDJzdXBwb3J0IjogZmFsc2UKfQ==",
+        "httpStatus": 200
+      },
+      "documentHash": "c307f66555e9d1d2",
+      "endpoints": []
+    },
+    {
+      "tokenId": "134865",
+      "chainId": 8453,
+      "document": {
+        "status": "read",
+        "url": "https://centralcity.ai/a/ShcM0G",
+        "httpStatus": 200
+      },
+      "documentHash": "836cc06b009ea117",
+      "endpoints": [
+        {
+          "declaredUnder": "services",
+          "name": "A2A",
+          "protocol": "a2a",
+          "version": "1.0",
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a2a/97fd7e4d-4bd8-419f-a15b-82de9b400b37/.well-known/agent-card.json",
+            "declared": "https://centralcity.ai/a2a/97fd7e4d-4bd8-419f-a15b-82de9b400b37/.well-known/agent-card.json"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "serves-declared-protocol",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a2a/97fd7e4d-4bd8-419f-a15b-82de9b400b37/.well-known/agent-card.json"
+            },
+            "detail": "served an agent card at the declared URL itself"
+          }
+        },
+        {
+          "declaredUnder": "services",
+          "name": "web",
+          "protocol": null,
+          "version": null,
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a/ShcM0G",
+            "declared": "https://centralcity.ai/a/ShcM0G"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "live",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a/ShcM0G"
+            },
+            "detail": "answered HTTP 200"
+          }
+        }
+      ]
+    },
+    {
+      "tokenId": "783339",
+      "chainId": 8453,
+      "document": {
+        "status": "read",
+        "url": "https://centralcity.ai/a/hR06yN",
+        "httpStatus": 200
+      },
+      "documentHash": "4aa94be1bb2c894f",
+      "endpoints": [
+        {
+          "declaredUnder": "services",
+          "name": "A2A",
+          "protocol": "a2a",
+          "version": "1.0",
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a2a/3ba61111-8668-41aa-927e-519cf3f4298d/.well-known/agent-card.json",
+            "declared": "https://centralcity.ai/a2a/3ba61111-8668-41aa-927e-519cf3f4298d/.well-known/agent-card.json"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "serves-declared-protocol",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a2a/3ba61111-8668-41aa-927e-519cf3f4298d/.well-known/agent-card.json"
+            },
+            "detail": "served an agent card at the declared URL itself"
+          }
+        },
+        {
+          "declaredUnder": "services",
+          "name": "web",
+          "protocol": null,
+          "version": null,
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a/hR06yN",
+            "declared": "https://centralcity.ai/a/hR06yN"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "live",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a/hR06yN"
+            },
+            "detail": "answered HTTP 200"
+          }
+        }
+      ]
+    },
+    {
+      "tokenId": "771077",
+      "chainId": 8453,
+      "document": {
+        "status": "read",
+        "url": "https://centralcity.ai/a/6aSvAY",
+        "httpStatus": 200
+      },
+      "documentHash": "20e1dbeb511c550b",
+      "endpoints": [
+        {
+          "declaredUnder": "services",
+          "name": "A2A",
+          "protocol": "a2a",
+          "version": "1.0",
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a2a/fdf5bf7c-7ff2-41bf-bd48-62005cc07f0b/.well-known/agent-card.json",
+            "declared": "https://centralcity.ai/a2a/fdf5bf7c-7ff2-41bf-bd48-62005cc07f0b/.well-known/agent-card.json"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "serves-declared-protocol",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a2a/fdf5bf7c-7ff2-41bf-bd48-62005cc07f0b/.well-known/agent-card.json"
+            },
+            "detail": "served an agent card at the declared URL itself"
+          }
+        },
+        {
+          "declaredUnder": "services",
+          "name": "web",
+          "protocol": null,
+          "version": null,
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a/6aSvAY",
+            "declared": "https://centralcity.ai/a/6aSvAY"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "live",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a/6aSvAY"
+            },
+            "detail": "answered HTTP 200"
+          }
+        }
+      ]
+    },
+    {
+      "tokenId": "474405",
+      "chainId": 8453,
+      "document": {
+        "status": "read",
+        "url": "https://centralcity.ai/a/GSXwKr",
+        "httpStatus": 200
+      },
+      "documentHash": "cef8eeb0d5373f91",
+      "endpoints": [
+        {
+          "declaredUnder": "services",
+          "name": "A2A",
+          "protocol": "a2a",
+          "version": "1.0",
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a2a/3478abb5-a62d-4086-90d9-75d0a84f9dbd/.well-known/agent-card.json",
+            "declared": "https://centralcity.ai/a2a/3478abb5-a62d-4086-90d9-75d0a84f9dbd/.well-known/agent-card.json"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "serves-declared-protocol",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a2a/3478abb5-a62d-4086-90d9-75d0a84f9dbd/.well-known/agent-card.json"
+            },
+            "detail": "served an agent card at the declared URL itself"
+          }
+        },
+        {
+          "declaredUnder": "services",
+          "name": "web",
+          "protocol": null,
+          "version": null,
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a/GSXwKr",
+            "declared": "https://centralcity.ai/a/GSXwKr"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "live",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a/GSXwKr"
+            },
+            "detail": "answered HTTP 200"
+          }
+        }
+      ]
+    },
+    {
+      "tokenId": "193725",
+      "chainId": 8453,
+      "document": {
+        "status": "read",
+        "url": "https://centralcity.ai/a/nseNkd",
+        "httpStatus": 200
+      },
+      "documentHash": "680b3505463a7db5",
+      "endpoints": [
+        {
+          "declaredUnder": "services",
+          "name": "A2A",
+          "protocol": "a2a",
+          "version": "1.0",
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a2a/420e5fd9-bdd3-4717-8253-d564b51d1a78/.well-known/agent-card.json",
+            "declared": "https://centralcity.ai/a2a/420e5fd9-bdd3-4717-8253-d564b51d1a78/.well-known/agent-card.json"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "serves-declared-protocol",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a2a/420e5fd9-bdd3-4717-8253-d564b51d1a78/.well-known/agent-card.json"
+            },
+            "detail": "served an agent card at the declared URL itself"
+          }
+        },
+        {
+          "declaredUnder": "services",
+          "name": "web",
+          "protocol": null,
+          "version": null,
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a/nseNkd",
+            "declared": "https://centralcity.ai/a/nseNkd"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "live",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a/nseNkd"
+            },
+            "detail": "answered HTTP 200"
+          }
+        }
+      ]
+    },
+    {
+      "tokenId": "847286",
+      "chainId": 8453,
+      "document": {
+        "status": "read",
+        "url": "https://centralcity.ai/a/ziWLyN",
+        "httpStatus": 200
+      },
+      "documentHash": "61bac72b00ba7037",
+      "endpoints": [
+        {
+          "declaredUnder": "services",
+          "name": "A2A",
+          "protocol": "a2a",
+          "version": "1.0",
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a2a/0b328f60-30db-4573-91f3-373298b1b14c/.well-known/agent-card.json",
+            "declared": "https://centralcity.ai/a2a/0b328f60-30db-4573-91f3-373298b1b14c/.well-known/agent-card.json"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "serves-declared-protocol",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a2a/0b328f60-30db-4573-91f3-373298b1b14c/.well-known/agent-card.json"
+            },
+            "detail": "served an agent card at the declared URL itself"
+          }
+        },
+        {
+          "declaredUnder": "services",
+          "name": "web",
+          "protocol": null,
+          "version": null,
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a/ziWLyN",
+            "declared": "https://centralcity.ai/a/ziWLyN"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "live",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a/ziWLyN"
+            },
+            "detail": "answered HTTP 200"
+          }
+        }
+      ]
+    },
+    {
+      "tokenId": "881153",
+      "chainId": 8453,
+      "document": {
+        "status": "read",
+        "url": "https://centralcity.ai/a/jqEjIE",
+        "httpStatus": 200
+      },
+      "documentHash": "82ebe912bebb7cf0",
+      "endpoints": [
+        {
+          "declaredUnder": "services",
+          "name": "A2A",
+          "protocol": "a2a",
+          "version": "1.0",
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a2a/7ecaed4f-8d57-455e-bd6a-6030ed6cee07/.well-known/agent-card.json",
+            "declared": "https://centralcity.ai/a2a/7ecaed4f-8d57-455e-bd6a-6030ed6cee07/.well-known/agent-card.json"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "serves-declared-protocol",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a2a/7ecaed4f-8d57-455e-bd6a-6030ed6cee07/.well-known/agent-card.json"
+            },
+            "detail": "served an agent card at the declared URL itself"
+          }
+        },
+        {
+          "declaredUnder": "services",
+          "name": "web",
+          "protocol": null,
+          "version": null,
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a/jqEjIE",
+            "declared": "https://centralcity.ai/a/jqEjIE"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "live",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a/jqEjIE"
+            },
+            "detail": "answered HTTP 200"
+          }
+        }
+      ]
+    },
+    {
+      "tokenId": "516813",
+      "chainId": 8453,
+      "document": {
+        "status": "read",
+        "url": "https://centralcity.ai/a/BiA3bT",
+        "httpStatus": 200
+      },
+      "documentHash": "600f9e52a384be7e",
+      "endpoints": [
+        {
+          "declaredUnder": "services",
+          "name": "A2A",
+          "protocol": "a2a",
+          "version": "1.0",
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a2a/05eb2b36-0057-4c98-8732-b2fdc62b8829/.well-known/agent-card.json",
+            "declared": "https://centralcity.ai/a2a/05eb2b36-0057-4c98-8732-b2fdc62b8829/.well-known/agent-card.json"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "serves-declared-protocol",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a2a/05eb2b36-0057-4c98-8732-b2fdc62b8829/.well-known/agent-card.json"
+            },
+            "detail": "served an agent card at the declared URL itself"
+          }
+        },
+        {
+          "declaredUnder": "services",
+          "name": "web",
+          "protocol": null,
+          "version": null,
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a/BiA3bT",
+            "declared": "https://centralcity.ai/a/BiA3bT"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "live",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a/BiA3bT"
+            },
+            "detail": "answered HTTP 200"
+          }
+        }
+      ]
+    },
+    {
+      "tokenId": "660241",
+      "chainId": 8453,
+      "document": {
+        "status": "read",
+        "url": "https://centralcity.ai/a/rjFtaP",
+        "httpStatus": 200
+      },
+      "documentHash": "c20fb9c19b1d6c4c",
+      "endpoints": [
+        {
+          "declaredUnder": "services",
+          "name": "A2A",
+          "protocol": "a2a",
+          "version": "1.0",
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a2a/6f238edd-6312-4323-a82c-eb743cc634fb/.well-known/agent-card.json",
+            "declared": "https://centralcity.ai/a2a/6f238edd-6312-4323-a82c-eb743cc634fb/.well-known/agent-card.json"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "serves-declared-protocol",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a2a/6f238edd-6312-4323-a82c-eb743cc634fb/.well-known/agent-card.json"
+            },
+            "detail": "served an agent card at the declared URL itself"
+          }
+        },
+        {
+          "declaredUnder": "services",
+          "name": "web",
+          "protocol": null,
+          "version": null,
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a/rjFtaP",
+            "declared": "https://centralcity.ai/a/rjFtaP"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "live",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a/rjFtaP"
+            },
+            "detail": "answered HTTP 200"
+          }
+        }
+      ]
+    },
+    {
+      "tokenId": "246701",
+      "chainId": 8453,
+      "document": {
+        "status": "read",
+        "url": "https://centralcity.ai/a/dHhzFr",
+        "httpStatus": 200
+      },
+      "documentHash": "ff2a37a32f707fd8",
+      "endpoints": [
+        {
+          "declaredUnder": "services",
+          "name": "A2A",
+          "protocol": "a2a",
+          "version": "1.0",
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a2a/2cda0b54-2719-4538-80c2-54e9323e56e2/.well-known/agent-card.json",
+            "declared": "https://centralcity.ai/a2a/2cda0b54-2719-4538-80c2-54e9323e56e2/.well-known/agent-card.json"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "serves-declared-protocol",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a2a/2cda0b54-2719-4538-80c2-54e9323e56e2/.well-known/agent-card.json"
+            },
+            "detail": "served an agent card at the declared URL itself"
+          }
+        },
+        {
+          "declaredUnder": "services",
+          "name": "web",
+          "protocol": null,
+          "version": null,
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a/dHhzFr",
+            "declared": "https://centralcity.ai/a/dHhzFr"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "live",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a/dHhzFr"
+            },
+            "detail": "answered HTTP 200"
+          }
+        }
+      ]
+    },
+    {
+      "tokenId": "911318",
+      "chainId": 8453,
+      "document": {
+        "status": "read",
+        "url": "https://centralcity.ai/a/zkxNT8",
+        "httpStatus": 200
+      },
+      "documentHash": "2ec503b73e3bd71b",
+      "endpoints": [
+        {
+          "declaredUnder": "services",
+          "name": "A2A",
+          "protocol": "a2a",
+          "version": "1.0",
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a2a/70a96a6e-240c-477b-bf44-2073ca092acd/.well-known/agent-card.json",
+            "declared": "https://centralcity.ai/a2a/70a96a6e-240c-477b-bf44-2073ca092acd/.well-known/agent-card.json"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "serves-declared-protocol",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a2a/70a96a6e-240c-477b-bf44-2073ca092acd/.well-known/agent-card.json"
+            },
+            "detail": "served an agent card at the declared URL itself"
+          }
+        },
+        {
+          "declaredUnder": "services",
+          "name": "web",
+          "protocol": null,
+          "version": null,
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a/zkxNT8",
+            "declared": "https://centralcity.ai/a/zkxNT8"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "live",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a/zkxNT8"
+            },
+            "detail": "answered HTTP 200"
+          }
+        }
+      ]
+    },
+    {
+      "tokenId": "657609",
+      "chainId": 8453,
+      "document": {
+        "status": "read",
+        "url": "https://centralcity.ai/a/ckumwB",
+        "httpStatus": 200
+      },
+      "documentHash": "0d0acd196332f81d",
+      "endpoints": [
+        {
+          "declaredUnder": "services",
+          "name": "A2A",
+          "protocol": "a2a",
+          "version": "1.0",
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a2a/b1fdc86c-3a02-43f9-b400-0931e3b7c841/.well-known/agent-card.json",
+            "declared": "https://centralcity.ai/a2a/b1fdc86c-3a02-43f9-b400-0931e3b7c841/.well-known/agent-card.json"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "serves-declared-protocol",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a2a/b1fdc86c-3a02-43f9-b400-0931e3b7c841/.well-known/agent-card.json"
+            },
+            "detail": "served an agent card at the declared URL itself"
+          }
+        },
+        {
+          "declaredUnder": "services",
+          "name": "web",
+          "protocol": null,
+          "version": null,
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a/ckumwB",
+            "declared": "https://centralcity.ai/a/ckumwB"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "live",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a/ckumwB"
+            },
+            "detail": "answered HTTP 200"
+          }
+        }
+      ]
+    },
+    {
+      "tokenId": "921179",
+      "chainId": 8453,
+      "document": {
+        "status": "read",
+        "url": "https://centralcity.ai/a/BzhqK8",
+        "httpStatus": 200
+      },
+      "documentHash": "bbf983b92ad873dc",
+      "endpoints": [
+        {
+          "declaredUnder": "services",
+          "name": "A2A",
+          "protocol": "a2a",
+          "version": "1.0",
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a2a/232f10ec-c8ab-4e5c-8bdc-42f2b4527f83/.well-known/agent-card.json",
+            "declared": "https://centralcity.ai/a2a/232f10ec-c8ab-4e5c-8bdc-42f2b4527f83/.well-known/agent-card.json"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "serves-declared-protocol",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a2a/232f10ec-c8ab-4e5c-8bdc-42f2b4527f83/.well-known/agent-card.json"
+            },
+            "detail": "served an agent card at the declared URL itself"
+          }
+        },
+        {
+          "declaredUnder": "services",
+          "name": "web",
+          "protocol": null,
+          "version": null,
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a/BzhqK8",
+            "declared": "https://centralcity.ai/a/BzhqK8"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "live",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a/BzhqK8"
+            },
+            "detail": "answered HTTP 200"
+          }
+        }
+      ]
+    },
+    {
+      "tokenId": "690095",
+      "chainId": 8453,
+      "document": {
+        "status": "read",
+        "url": "https://centralcity.ai/a/vmTWem",
+        "httpStatus": 200
+      },
+      "documentHash": "e4512941980e2033",
+      "endpoints": [
+        {
+          "declaredUnder": "services",
+          "name": "A2A",
+          "protocol": "a2a",
+          "version": "1.0",
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a2a/5b245bf2-88a8-4aa6-a04d-a4e6f6e9d42e/.well-known/agent-card.json",
+            "declared": "https://centralcity.ai/a2a/5b245bf2-88a8-4aa6-a04d-a4e6f6e9d42e/.well-known/agent-card.json"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "serves-declared-protocol",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a2a/5b245bf2-88a8-4aa6-a04d-a4e6f6e9d42e/.well-known/agent-card.json"
+            },
+            "detail": "served an agent card at the declared URL itself"
+          }
+        },
+        {
+          "declaredUnder": "services",
+          "name": "web",
+          "protocol": null,
+          "version": null,
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a/vmTWem",
+            "declared": "https://centralcity.ai/a/vmTWem"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "live",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a/vmTWem"
+            },
+            "detail": "answered HTTP 200"
+          }
+        }
+      ]
+    },
+    {
+      "tokenId": "19799",
+      "chainId": 8453,
+      "document": {
+        "status": "read",
+        "url": "data:application/json;base64,ewogICJ0eXBlIjogImh0dHBzOi8vZWlwcy5ldGhlcmV1bS5vcmcvRUlQUy9laXAtODAwNCNyZWdpc3RyYXRpb24tdjEiLAogICJuYW1lIjogInJ0Z2g0MzFmZGdoc2doZmRzMjUiLAogICJkZXNjcmlwdGlvbiI6ICJyd3RoZXJ0IGh5dGVyIHloZmdkIGRmcyBnIGZkc2cgZHNmIDVyd2V0eWdlcnQgeWg0MzY1N3V5NTYzNGhiZXR5IGZzdHJlIGh1eWZnaGQgYmRmIiwKICAiaW1hZ2UiOiAiIiwKICAic2VydmljZXMiOiBbXSwKICAicmVnaXN0cmF0aW9ucyI6IFtdLAogICJzdXBwb3J0ZWRUcnVzdHMiOiBbXSwKICAiYWN0aXZlIjogZmFsc2UsCiAgIng0MDJzdXBwb3J0IjogZmFsc2UKfQ==",
+        "httpStatus": 200
+      },
+      "documentHash": "ad66345ec7900d31",
+      "endpoints": []
+    },
+    {
+      "tokenId": "228229",
+      "chainId": 8453,
+      "document": {
+        "status": "read",
+        "url": "https://centralcity.ai/a/GbtDIe",
+        "httpStatus": 200
+      },
+      "documentHash": "63042345bdb4e759",
+      "endpoints": [
+        {
+          "declaredUnder": "services",
+          "name": "A2A",
+          "protocol": "a2a",
+          "version": "1.0",
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a2a/858bd3f3-fabc-4e5d-9d56-b077863bcd6b/.well-known/agent-card.json",
+            "declared": "https://centralcity.ai/a2a/858bd3f3-fabc-4e5d-9d56-b077863bcd6b/.well-known/agent-card.json"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "serves-declared-protocol",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a2a/858bd3f3-fabc-4e5d-9d56-b077863bcd6b/.well-known/agent-card.json"
+            },
+            "detail": "served an agent card at the declared URL itself"
+          }
+        },
+        {
+          "declaredUnder": "services",
+          "name": "web",
+          "protocol": null,
+          "version": null,
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a/GbtDIe",
+            "declared": "https://centralcity.ai/a/GbtDIe"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "live",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a/GbtDIe"
+            },
+            "detail": "answered HTTP 200"
+          }
+        }
+      ]
+    },
+    {
+      "tokenId": "416204",
+      "chainId": 8453,
+      "document": {
+        "status": "read",
+        "url": "https://centralcity.ai/a/pxFgmt",
+        "httpStatus": 200
+      },
+      "documentHash": "c50d7f5c3befad69",
+      "endpoints": [
+        {
+          "declaredUnder": "services",
+          "name": "A2A",
+          "protocol": "a2a",
+          "version": "1.0",
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a2a/d688caa5-94ad-4193-b6a9-ec1885ccdd4c/.well-known/agent-card.json",
+            "declared": "https://centralcity.ai/a2a/d688caa5-94ad-4193-b6a9-ec1885ccdd4c/.well-known/agent-card.json"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "serves-declared-protocol",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a2a/d688caa5-94ad-4193-b6a9-ec1885ccdd4c/.well-known/agent-card.json"
+            },
+            "detail": "served an agent card at the declared URL itself"
+          }
+        },
+        {
+          "declaredUnder": "services",
+          "name": "web",
+          "protocol": null,
+          "version": null,
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a/pxFgmt",
+            "declared": "https://centralcity.ai/a/pxFgmt"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "live",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a/pxFgmt"
+            },
+            "detail": "answered HTTP 200"
+          }
+        }
+      ]
+    },
+    {
+      "tokenId": "729960",
+      "chainId": 8453,
+      "document": {
+        "status": "read",
+        "url": "https://centralcity.ai/a/WlT4tg",
+        "httpStatus": 200
+      },
+      "documentHash": "ec182f3bd60e6322",
+      "endpoints": [
+        {
+          "declaredUnder": "services",
+          "name": "A2A",
+          "protocol": "a2a",
+          "version": "1.0",
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a2a/bfc73061-017e-456c-a2c4-fd6f485f2efa/.well-known/agent-card.json",
+            "declared": "https://centralcity.ai/a2a/bfc73061-017e-456c-a2c4-fd6f485f2efa/.well-known/agent-card.json"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "serves-declared-protocol",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a2a/bfc73061-017e-456c-a2c4-fd6f485f2efa/.well-known/agent-card.json"
+            },
+            "detail": "served an agent card at the declared URL itself"
+          }
+        },
+        {
+          "declaredUnder": "services",
+          "name": "web",
+          "protocol": null,
+          "version": null,
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a/WlT4tg",
+            "declared": "https://centralcity.ai/a/WlT4tg"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "live",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a/WlT4tg"
+            },
+            "detail": "answered HTTP 200"
+          }
+        }
+      ]
+    },
+    {
+      "tokenId": "773372",
+      "chainId": 8453,
+      "document": {
+        "status": "read",
+        "url": "https://centralcity.ai/a/Emcg9L",
+        "httpStatus": 200
+      },
+      "documentHash": "9a81cff086e27a71",
+      "endpoints": [
+        {
+          "declaredUnder": "services",
+          "name": "A2A",
+          "protocol": "a2a",
+          "version": "1.0",
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a2a/4f72d6a0-394a-4b98-9676-c36506c3f9f3/.well-known/agent-card.json",
+            "declared": "https://centralcity.ai/a2a/4f72d6a0-394a-4b98-9676-c36506c3f9f3/.well-known/agent-card.json"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "serves-declared-protocol",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a2a/4f72d6a0-394a-4b98-9676-c36506c3f9f3/.well-known/agent-card.json"
+            },
+            "detail": "served an agent card at the declared URL itself"
+          }
+        },
+        {
+          "declaredUnder": "services",
+          "name": "web",
+          "protocol": null,
+          "version": null,
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a/Emcg9L",
+            "declared": "https://centralcity.ai/a/Emcg9L"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "live",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a/Emcg9L"
+            },
+            "detail": "answered HTTP 200"
+          }
+        }
+      ]
+    },
+    {
+      "tokenId": "256288",
+      "chainId": 8453,
+      "document": {
+        "status": "read",
+        "url": "https://centralcity.ai/a/ZC7ayO",
+        "httpStatus": 200
+      },
+      "documentHash": "bfd6119e96f188c8",
+      "endpoints": [
+        {
+          "declaredUnder": "services",
+          "name": "A2A",
+          "protocol": "a2a",
+          "version": "1.0",
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a2a/84789231-74ea-40da-bddb-11346838eb10/.well-known/agent-card.json",
+            "declared": "https://centralcity.ai/a2a/84789231-74ea-40da-bddb-11346838eb10/.well-known/agent-card.json"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "serves-declared-protocol",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a2a/84789231-74ea-40da-bddb-11346838eb10/.well-known/agent-card.json"
+            },
+            "detail": "served an agent card at the declared URL itself"
+          }
+        },
+        {
+          "declaredUnder": "services",
+          "name": "web",
+          "protocol": null,
+          "version": null,
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a/ZC7ayO",
+            "declared": "https://centralcity.ai/a/ZC7ayO"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "live",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a/ZC7ayO"
+            },
+            "detail": "answered HTTP 200"
+          }
+        }
+      ]
+    },
+    {
+      "tokenId": "724498",
+      "chainId": 8453,
+      "document": {
+        "status": "read",
+        "url": "https://centralcity.ai/a/uTdWAR",
+        "httpStatus": 200
+      },
+      "documentHash": "ecce5e3f64d3d007",
+      "endpoints": [
+        {
+          "declaredUnder": "services",
+          "name": "A2A",
+          "protocol": "a2a",
+          "version": "1.0",
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a2a/c0c59ea7-aab9-4b6c-ae3d-8273ac6bc292/.well-known/agent-card.json",
+            "declared": "https://centralcity.ai/a2a/c0c59ea7-aab9-4b6c-ae3d-8273ac6bc292/.well-known/agent-card.json"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "serves-declared-protocol",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a2a/c0c59ea7-aab9-4b6c-ae3d-8273ac6bc292/.well-known/agent-card.json"
+            },
+            "detail": "served an agent card at the declared URL itself"
+          }
+        },
+        {
+          "declaredUnder": "services",
+          "name": "web",
+          "protocol": null,
+          "version": null,
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a/uTdWAR",
+            "declared": "https://centralcity.ai/a/uTdWAR"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "live",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a/uTdWAR"
+            },
+            "detail": "answered HTTP 200"
+          }
+        }
+      ]
+    },
+    {
+      "tokenId": "73542",
+      "chainId": 8453,
+      "document": {
+        "status": "read",
+        "url": "https://termix-platform-prod.s3.ap-southeast-1.amazonaws.com/platform/agents/718f376b9436ec265c689258b21160ef1467be75c9d5072abc455824f1709f54.json",
+        "httpStatus": 200
+      },
+      "documentHash": "9c0abc79a2a16bbc",
+      "endpoints": [
+        {
+          "declaredUnder": "services",
+          "name": "A2A",
+          "protocol": "a2a",
+          "version": "0.3.0",
+          "capabilities": [],
+          "classification": {
+            "status": "not-checkable",
+            "code": "templated",
+            "declared": "https://platform-backend-base.prod.termix.live/api/v1/a2a/agents/{agentId}/card",
+            "placeholder": "{agentId}"
+          },
+          "outcome": {
+            "status": "not-checkable",
+            "code": "templated",
+            "detail": "not probed: templated"
+          }
+        },
+        {
+          "declaredUnder": "services",
+          "name": "Termix Platform",
+          "protocol": null,
+          "version": "aacp-platform-v1",
+          "capabilities": [],
+          "classification": {
+            "status": "not-checkable",
+            "code": "templated",
+            "declared": "https://platform-backend-base.prod.termix.live/api/v1/agents/{agentId}/services",
+            "placeholder": "{agentId}"
+          },
+          "outcome": {
+            "status": "not-checkable",
+            "code": "templated",
+            "detail": "not probed: templated"
+          }
+        }
+      ]
+    },
+    {
+      "tokenId": "163344",
+      "chainId": 8453,
+      "document": {
+        "status": "read",
+        "url": "https://centralcity.ai/a/TIPLnZ",
+        "httpStatus": 200
+      },
+      "documentHash": "6c48c59edf0fc7b4",
+      "endpoints": [
+        {
+          "declaredUnder": "services",
+          "name": "A2A",
+          "protocol": "a2a",
+          "version": "1.0",
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a2a/949bdc1c-7dd8-4e14-9f28-f38349993b51/.well-known/agent-card.json",
+            "declared": "https://centralcity.ai/a2a/949bdc1c-7dd8-4e14-9f28-f38349993b51/.well-known/agent-card.json"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "serves-declared-protocol",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a2a/949bdc1c-7dd8-4e14-9f28-f38349993b51/.well-known/agent-card.json"
+            },
+            "detail": "served an agent card at the declared URL itself"
+          }
+        },
+        {
+          "declaredUnder": "services",
+          "name": "web",
+          "protocol": null,
+          "version": null,
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a/TIPLnZ",
+            "declared": "https://centralcity.ai/a/TIPLnZ"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "live",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a/TIPLnZ"
+            },
+            "detail": "answered HTTP 200"
+          }
+        }
+      ]
+    },
+    {
+      "tokenId": "566778",
+      "chainId": 8453,
+      "document": {
+        "status": "read",
+        "url": "https://centralcity.ai/a/DPrW92",
+        "httpStatus": 200
+      },
+      "documentHash": "ca69d5a1fac63d2e",
+      "endpoints": [
+        {
+          "declaredUnder": "services",
+          "name": "A2A",
+          "protocol": "a2a",
+          "version": "1.0",
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a2a/4cb42b87-b861-4dca-a72a-41674994fa20/.well-known/agent-card.json",
+            "declared": "https://centralcity.ai/a2a/4cb42b87-b861-4dca-a72a-41674994fa20/.well-known/agent-card.json"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "serves-declared-protocol",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a2a/4cb42b87-b861-4dca-a72a-41674994fa20/.well-known/agent-card.json"
+            },
+            "detail": "served an agent card at the declared URL itself"
+          }
+        },
+        {
+          "declaredUnder": "services",
+          "name": "web",
+          "protocol": null,
+          "version": null,
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a/DPrW92",
+            "declared": "https://centralcity.ai/a/DPrW92"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "live",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a/DPrW92"
+            },
+            "detail": "answered HTTP 200"
+          }
+        }
+      ]
+    },
+    {
+      "tokenId": "955606",
+      "chainId": 8453,
+      "document": {
+        "status": "read",
+        "url": "https://centralcity.ai/a/Jw8gdS",
+        "httpStatus": 200
+      },
+      "documentHash": "c3001d6d64bfaf9e",
+      "endpoints": [
+        {
+          "declaredUnder": "services",
+          "name": "A2A",
+          "protocol": "a2a",
+          "version": "1.0",
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a2a/01649e34-5afb-43a6-aa80-5970f0bdab62/.well-known/agent-card.json",
+            "declared": "https://centralcity.ai/a2a/01649e34-5afb-43a6-aa80-5970f0bdab62/.well-known/agent-card.json"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "serves-declared-protocol",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a2a/01649e34-5afb-43a6-aa80-5970f0bdab62/.well-known/agent-card.json"
+            },
+            "detail": "served an agent card at the declared URL itself"
+          }
+        },
+        {
+          "declaredUnder": "services",
+          "name": "web",
+          "protocol": null,
+          "version": null,
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a/Jw8gdS",
+            "declared": "https://centralcity.ai/a/Jw8gdS"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "live",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a/Jw8gdS"
+            },
+            "detail": "answered HTTP 200"
+          }
+        }
+      ]
+    },
+    {
+      "tokenId": "611560",
+      "chainId": 8453,
+      "document": {
+        "status": "read",
+        "url": "https://centralcity.ai/a/YNtP96",
+        "httpStatus": 200
+      },
+      "documentHash": "0124e35279980fe5",
+      "endpoints": [
+        {
+          "declaredUnder": "services",
+          "name": "A2A",
+          "protocol": "a2a",
+          "version": "1.0",
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a2a/8df65f9d-333d-4efd-af23-adf1a24624af/.well-known/agent-card.json",
+            "declared": "https://centralcity.ai/a2a/8df65f9d-333d-4efd-af23-adf1a24624af/.well-known/agent-card.json"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "serves-declared-protocol",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a2a/8df65f9d-333d-4efd-af23-adf1a24624af/.well-known/agent-card.json"
+            },
+            "detail": "served an agent card at the declared URL itself"
+          }
+        },
+        {
+          "declaredUnder": "services",
+          "name": "web",
+          "protocol": null,
+          "version": null,
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a/YNtP96",
+            "declared": "https://centralcity.ai/a/YNtP96"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "live",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a/YNtP96"
+            },
+            "detail": "answered HTTP 200"
+          }
+        }
+      ]
+    },
+    {
+      "tokenId": "229972",
+      "chainId": 8453,
+      "document": {
+        "status": "read",
+        "url": "https://centralcity.ai/a/iEgH6T",
+        "httpStatus": 200
+      },
+      "documentHash": "d257b22d998983ea",
+      "endpoints": [
+        {
+          "declaredUnder": "services",
+          "name": "A2A",
+          "protocol": "a2a",
+          "version": "1.0",
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a2a/ad5035a4-e0d3-4c5f-9ddd-46d5f50e014e/.well-known/agent-card.json",
+            "declared": "https://centralcity.ai/a2a/ad5035a4-e0d3-4c5f-9ddd-46d5f50e014e/.well-known/agent-card.json"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "serves-declared-protocol",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a2a/ad5035a4-e0d3-4c5f-9ddd-46d5f50e014e/.well-known/agent-card.json"
+            },
+            "detail": "served an agent card at the declared URL itself"
+          }
+        },
+        {
+          "declaredUnder": "services",
+          "name": "web",
+          "protocol": null,
+          "version": null,
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a/iEgH6T",
+            "declared": "https://centralcity.ai/a/iEgH6T"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "live",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a/iEgH6T"
+            },
+            "detail": "answered HTTP 200"
+          }
+        }
+      ]
+    },
+    {
+      "tokenId": "176558",
+      "chainId": 8453,
+      "document": {
+        "status": "read",
+        "url": "https://centralcity.ai/a/VgKLnL",
+        "httpStatus": 200
+      },
+      "documentHash": "a86a78c0755d7bfd",
+      "endpoints": [
+        {
+          "declaredUnder": "services",
+          "name": "A2A",
+          "protocol": "a2a",
+          "version": "1.0",
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a2a/3c4e9623-44d4-477e-a819-eed142c8f873/.well-known/agent-card.json",
+            "declared": "https://centralcity.ai/a2a/3c4e9623-44d4-477e-a819-eed142c8f873/.well-known/agent-card.json"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "serves-declared-protocol",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a2a/3c4e9623-44d4-477e-a819-eed142c8f873/.well-known/agent-card.json"
+            },
+            "detail": "served an agent card at the declared URL itself"
+          }
+        },
+        {
+          "declaredUnder": "services",
+          "name": "web",
+          "protocol": null,
+          "version": null,
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a/VgKLnL",
+            "declared": "https://centralcity.ai/a/VgKLnL"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "live",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a/VgKLnL"
+            },
+            "detail": "answered HTTP 200"
+          }
+        }
+      ]
+    },
+    {
+      "tokenId": "858966",
+      "chainId": 8453,
+      "document": {
+        "status": "read",
+        "url": "https://centralcity.ai/a/cXOwTI",
+        "httpStatus": 200
+      },
+      "documentHash": "3dc132a465ab6429",
+      "endpoints": [
+        {
+          "declaredUnder": "services",
+          "name": "A2A",
+          "protocol": "a2a",
+          "version": "1.0",
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a2a/782a5b9e-a7e0-4def-950e-a49aff308f3f/.well-known/agent-card.json",
+            "declared": "https://centralcity.ai/a2a/782a5b9e-a7e0-4def-950e-a49aff308f3f/.well-known/agent-card.json"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "serves-declared-protocol",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a2a/782a5b9e-a7e0-4def-950e-a49aff308f3f/.well-known/agent-card.json"
+            },
+            "detail": "served an agent card at the declared URL itself"
+          }
+        },
+        {
+          "declaredUnder": "services",
+          "name": "web",
+          "protocol": null,
+          "version": null,
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a/cXOwTI",
+            "declared": "https://centralcity.ai/a/cXOwTI"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "live",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a/cXOwTI"
+            },
+            "detail": "answered HTTP 200"
+          }
+        }
+      ]
+    },
+    {
+      "tokenId": "1135855",
+      "chainId": 8453,
+      "document": {
+        "status": "no-token-uri"
+      },
+      "documentHash": null,
+      "endpoints": []
+    },
+    {
+      "tokenId": "120837",
+      "chainId": 8453,
+      "document": {
+        "status": "read",
+        "url": "https://centralcity.ai/a/M0lgMg",
+        "httpStatus": 200
+      },
+      "documentHash": "52ca0d51d5841161",
+      "endpoints": [
+        {
+          "declaredUnder": "services",
+          "name": "A2A",
+          "protocol": "a2a",
+          "version": "1.0",
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a2a/c85c4f57-b643-43ed-a921-d3a30219e81b/.well-known/agent-card.json",
+            "declared": "https://centralcity.ai/a2a/c85c4f57-b643-43ed-a921-d3a30219e81b/.well-known/agent-card.json"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "serves-declared-protocol",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a2a/c85c4f57-b643-43ed-a921-d3a30219e81b/.well-known/agent-card.json"
+            },
+            "detail": "served an agent card at the declared URL itself"
+          }
+        },
+        {
+          "declaredUnder": "services",
+          "name": "web",
+          "protocol": null,
+          "version": null,
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a/M0lgMg",
+            "declared": "https://centralcity.ai/a/M0lgMg"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "live",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a/M0lgMg"
+            },
+            "detail": "answered HTTP 200"
+          }
+        }
+      ]
+    },
+    {
+      "tokenId": "133272",
+      "chainId": 8453,
+      "document": {
+        "status": "read",
+        "url": "https://centralcity.ai/a/K5WeON",
+        "httpStatus": 200
+      },
+      "documentHash": "5ca8fd3e79024f7a",
+      "endpoints": [
+        {
+          "declaredUnder": "services",
+          "name": "A2A",
+          "protocol": "a2a",
+          "version": "1.0",
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a2a/3f0fbe2f-1de6-4240-bc96-d941a06305c9/.well-known/agent-card.json",
+            "declared": "https://centralcity.ai/a2a/3f0fbe2f-1de6-4240-bc96-d941a06305c9/.well-known/agent-card.json"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "serves-declared-protocol",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a2a/3f0fbe2f-1de6-4240-bc96-d941a06305c9/.well-known/agent-card.json"
+            },
+            "detail": "served an agent card at the declared URL itself"
+          }
+        },
+        {
+          "declaredUnder": "services",
+          "name": "web",
+          "protocol": null,
+          "version": null,
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a/K5WeON",
+            "declared": "https://centralcity.ai/a/K5WeON"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "live",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a/K5WeON"
+            },
+            "detail": "answered HTTP 200"
+          }
+        }
+      ]
+    },
+    {
+      "tokenId": "890230",
+      "chainId": 8453,
+      "document": {
+        "status": "read",
+        "url": "https://centralcity.ai/a/eyEq6I",
+        "httpStatus": 200
+      },
+      "documentHash": "9121ed61fa0f045e",
+      "endpoints": [
+        {
+          "declaredUnder": "services",
+          "name": "A2A",
+          "protocol": "a2a",
+          "version": "1.0",
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a2a/6f2bebbd-0ba6-401b-833a-5b5bfbce6d65/.well-known/agent-card.json",
+            "declared": "https://centralcity.ai/a2a/6f2bebbd-0ba6-401b-833a-5b5bfbce6d65/.well-known/agent-card.json"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "serves-declared-protocol",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a2a/6f2bebbd-0ba6-401b-833a-5b5bfbce6d65/.well-known/agent-card.json"
+            },
+            "detail": "served an agent card at the declared URL itself"
+          }
+        },
+        {
+          "declaredUnder": "services",
+          "name": "web",
+          "protocol": null,
+          "version": null,
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a/eyEq6I",
+            "declared": "https://centralcity.ai/a/eyEq6I"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "live",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a/eyEq6I"
+            },
+            "detail": "answered HTTP 200"
+          }
+        }
+      ]
+    },
+    {
+      "tokenId": "838591",
+      "chainId": 8453,
+      "document": {
+        "status": "read",
+        "url": "https://centralcity.ai/a/dhUObI",
+        "httpStatus": 200
+      },
+      "documentHash": "f4a35fbe40d3b74f",
+      "endpoints": [
+        {
+          "declaredUnder": "services",
+          "name": "A2A",
+          "protocol": "a2a",
+          "version": "1.0",
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a2a/9d41b587-636d-46d3-a245-f900b53a913d/.well-known/agent-card.json",
+            "declared": "https://centralcity.ai/a2a/9d41b587-636d-46d3-a245-f900b53a913d/.well-known/agent-card.json"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "serves-declared-protocol",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a2a/9d41b587-636d-46d3-a245-f900b53a913d/.well-known/agent-card.json"
+            },
+            "detail": "served an agent card at the declared URL itself"
+          }
+        },
+        {
+          "declaredUnder": "services",
+          "name": "web",
+          "protocol": null,
+          "version": null,
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a/dhUObI",
+            "declared": "https://centralcity.ai/a/dhUObI"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "live",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a/dhUObI"
+            },
+            "detail": "answered HTTP 200"
+          }
+        }
+      ]
+    },
+    {
+      "tokenId": "467393",
+      "chainId": 8453,
+      "document": {
+        "status": "read",
+        "url": "https://centralcity.ai/a/ftlYYU",
+        "httpStatus": 200
+      },
+      "documentHash": "1d8489ec6ea4a59b",
+      "endpoints": [
+        {
+          "declaredUnder": "services",
+          "name": "A2A",
+          "protocol": "a2a",
+          "version": "1.0",
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a2a/58744248-212d-419c-80fc-85fe70993293/.well-known/agent-card.json",
+            "declared": "https://centralcity.ai/a2a/58744248-212d-419c-80fc-85fe70993293/.well-known/agent-card.json"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "serves-declared-protocol",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a2a/58744248-212d-419c-80fc-85fe70993293/.well-known/agent-card.json"
+            },
+            "detail": "served an agent card at the declared URL itself"
+          }
+        },
+        {
+          "declaredUnder": "services",
+          "name": "web",
+          "protocol": null,
+          "version": null,
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a/ftlYYU",
+            "declared": "https://centralcity.ai/a/ftlYYU"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "live",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a/ftlYYU"
+            },
+            "detail": "answered HTTP 200"
+          }
+        }
+      ]
+    },
+    {
+      "tokenId": "842449",
+      "chainId": 8453,
+      "document": {
+        "status": "read",
+        "url": "https://centralcity.ai/a/FAcZOM",
+        "httpStatus": 200
+      },
+      "documentHash": "f78f332bc266ee32",
+      "endpoints": [
+        {
+          "declaredUnder": "services",
+          "name": "A2A",
+          "protocol": "a2a",
+          "version": "1.0",
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a2a/9cf994ff-cff5-4147-90e7-f0e90040ce13/.well-known/agent-card.json",
+            "declared": "https://centralcity.ai/a2a/9cf994ff-cff5-4147-90e7-f0e90040ce13/.well-known/agent-card.json"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "serves-declared-protocol",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a2a/9cf994ff-cff5-4147-90e7-f0e90040ce13/.well-known/agent-card.json"
+            },
+            "detail": "served an agent card at the declared URL itself"
+          }
+        },
+        {
+          "declaredUnder": "services",
+          "name": "web",
+          "protocol": null,
+          "version": null,
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a/FAcZOM",
+            "declared": "https://centralcity.ai/a/FAcZOM"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "live",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a/FAcZOM"
+            },
+            "detail": "answered HTTP 200"
+          }
+        }
+      ]
+    },
+    {
+      "tokenId": "1023692",
+      "chainId": 8453,
+      "document": {
+        "status": "read",
+        "url": "https://centralcity.ai/a/HYNKcu",
+        "httpStatus": 200
+      },
+      "documentHash": "24aa652755ec4617",
+      "endpoints": [
+        {
+          "declaredUnder": "services",
+          "name": "A2A",
+          "protocol": "a2a",
+          "version": "1.0",
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a2a/16d63cf1-4084-45fd-a8b7-77b52bc065d1/.well-known/agent-card.json",
+            "declared": "https://centralcity.ai/a2a/16d63cf1-4084-45fd-a8b7-77b52bc065d1/.well-known/agent-card.json"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "serves-declared-protocol",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a2a/16d63cf1-4084-45fd-a8b7-77b52bc065d1/.well-known/agent-card.json"
+            },
+            "detail": "served an agent card at the declared URL itself"
+          }
+        },
+        {
+          "declaredUnder": "services",
+          "name": "web",
+          "protocol": null,
+          "version": null,
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a/HYNKcu",
+            "declared": "https://centralcity.ai/a/HYNKcu"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "live",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a/HYNKcu"
+            },
+            "detail": "answered HTTP 200"
+          }
+        }
+      ]
+    },
+    {
+      "tokenId": "23741",
+      "chainId": 8453,
+      "document": {
+        "status": "unreachable",
+        "code": "http-error",
+        "url": "https://ipfs.io/ipfs/QmTg8U1EZfGdU4CJ6dLWJwkKSWjaKd4y4vpjFEnoiahX8Y",
+        "httpStatus": 429,
+        "detail": "gateway asked us to back off (HTTP 429)"
+      },
+      "documentHash": null,
+      "endpoints": []
+    },
+    {
+      "tokenId": "294538",
+      "chainId": 8453,
+      "document": {
+        "status": "read",
+        "url": "https://centralcity.ai/a/SDFPWY",
+        "httpStatus": 200
+      },
+      "documentHash": "bb07d1126f517251",
+      "endpoints": [
+        {
+          "declaredUnder": "services",
+          "name": "A2A",
+          "protocol": "a2a",
+          "version": "1.0",
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a2a/353a1bd2-4d74-4d7c-a944-2c8d55246963/.well-known/agent-card.json",
+            "declared": "https://centralcity.ai/a2a/353a1bd2-4d74-4d7c-a944-2c8d55246963/.well-known/agent-card.json"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "serves-declared-protocol",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a2a/353a1bd2-4d74-4d7c-a944-2c8d55246963/.well-known/agent-card.json"
+            },
+            "detail": "served an agent card at the declared URL itself"
+          }
+        },
+        {
+          "declaredUnder": "services",
+          "name": "web",
+          "protocol": null,
+          "version": null,
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a/SDFPWY",
+            "declared": "https://centralcity.ai/a/SDFPWY"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "live",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a/SDFPWY"
+            },
+            "detail": "answered HTTP 200"
+          }
+        }
+      ]
+    },
+    {
+      "tokenId": "174670",
+      "chainId": 8453,
+      "document": {
+        "status": "read",
+        "url": "https://centralcity.ai/a/AMApOW",
+        "httpStatus": 200
+      },
+      "documentHash": "42b45c1f02432325",
+      "endpoints": [
+        {
+          "declaredUnder": "services",
+          "name": "A2A",
+          "protocol": "a2a",
+          "version": "1.0",
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a2a/da80b501-00d0-433d-a25a-4d0fd6347f8f/.well-known/agent-card.json",
+            "declared": "https://centralcity.ai/a2a/da80b501-00d0-433d-a25a-4d0fd6347f8f/.well-known/agent-card.json"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "serves-declared-protocol",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a2a/da80b501-00d0-433d-a25a-4d0fd6347f8f/.well-known/agent-card.json"
+            },
+            "detail": "served an agent card at the declared URL itself"
+          }
+        },
+        {
+          "declaredUnder": "services",
+          "name": "web",
+          "protocol": null,
+          "version": null,
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a/AMApOW",
+            "declared": "https://centralcity.ai/a/AMApOW"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "live",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a/AMApOW"
+            },
+            "detail": "answered HTTP 200"
+          }
+        }
+      ]
+    },
+    {
+      "tokenId": "1122068",
+      "chainId": 8453,
+      "document": {
+        "status": "read",
+        "url": "https://centralcity.ai/a/CXZa0g",
+        "httpStatus": 200
+      },
+      "documentHash": "4588c0cdfc5215e6",
+      "endpoints": [
+        {
+          "declaredUnder": "services",
+          "name": "A2A",
+          "protocol": "a2a",
+          "version": "1.0",
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a2a/816eafbc-71c5-4b3f-8955-71c757ef47a2/.well-known/agent-card.json",
+            "declared": "https://centralcity.ai/a2a/816eafbc-71c5-4b3f-8955-71c757ef47a2/.well-known/agent-card.json"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "serves-declared-protocol",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a2a/816eafbc-71c5-4b3f-8955-71c757ef47a2/.well-known/agent-card.json"
+            },
+            "detail": "served an agent card at the declared URL itself"
+          }
+        },
+        {
+          "declaredUnder": "services",
+          "name": "web",
+          "protocol": null,
+          "version": null,
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a/CXZa0g",
+            "declared": "https://centralcity.ai/a/CXZa0g"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "live",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a/CXZa0g"
+            },
+            "detail": "answered HTTP 200"
+          }
+        }
+      ]
+    },
+    {
+      "tokenId": "136421",
+      "chainId": 8453,
+      "document": {
+        "status": "read",
+        "url": "https://centralcity.ai/a/smbS3a",
+        "httpStatus": 200
+      },
+      "documentHash": "0b8c557ced28dfc5",
+      "endpoints": [
+        {
+          "declaredUnder": "services",
+          "name": "A2A",
+          "protocol": "a2a",
+          "version": "1.0",
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a2a/40a2bd93-8d13-41d5-8bc9-4dd4d82d8034/.well-known/agent-card.json",
+            "declared": "https://centralcity.ai/a2a/40a2bd93-8d13-41d5-8bc9-4dd4d82d8034/.well-known/agent-card.json"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "serves-declared-protocol",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a2a/40a2bd93-8d13-41d5-8bc9-4dd4d82d8034/.well-known/agent-card.json"
+            },
+            "detail": "served an agent card at the declared URL itself"
+          }
+        },
+        {
+          "declaredUnder": "services",
+          "name": "web",
+          "protocol": null,
+          "version": null,
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a/smbS3a",
+            "declared": "https://centralcity.ai/a/smbS3a"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "live",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a/smbS3a"
+            },
+            "detail": "answered HTTP 200"
+          }
+        }
+      ]
+    },
+    {
+      "tokenId": "388640",
+      "chainId": 8453,
+      "document": {
+        "status": "read",
+        "url": "https://centralcity.ai/a/Zq0WXw",
+        "httpStatus": 200
+      },
+      "documentHash": "e0d3831dbaea4bf8",
+      "endpoints": [
+        {
+          "declaredUnder": "services",
+          "name": "A2A",
+          "protocol": "a2a",
+          "version": "1.0",
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a2a/c0fc6f5a-6b86-4d69-a2d5-1f64ef4bfcd0/.well-known/agent-card.json",
+            "declared": "https://centralcity.ai/a2a/c0fc6f5a-6b86-4d69-a2d5-1f64ef4bfcd0/.well-known/agent-card.json"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "serves-declared-protocol",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a2a/c0fc6f5a-6b86-4d69-a2d5-1f64ef4bfcd0/.well-known/agent-card.json"
+            },
+            "detail": "served an agent card at the declared URL itself"
+          }
+        },
+        {
+          "declaredUnder": "services",
+          "name": "web",
+          "protocol": null,
+          "version": null,
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a/Zq0WXw",
+            "declared": "https://centralcity.ai/a/Zq0WXw"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "live",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a/Zq0WXw"
+            },
+            "detail": "answered HTTP 200"
+          }
+        }
+      ]
+    },
+    {
+      "tokenId": "557758",
+      "chainId": 8453,
+      "document": {
+        "status": "read",
+        "url": "https://centralcity.ai/a/cMb36Z",
+        "httpStatus": 200
+      },
+      "documentHash": "62fe8f910f14d295",
+      "endpoints": [
+        {
+          "declaredUnder": "services",
+          "name": "A2A",
+          "protocol": "a2a",
+          "version": "1.0",
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a2a/f05d6cac-35bb-4312-8faf-845ebe1742d7/.well-known/agent-card.json",
+            "declared": "https://centralcity.ai/a2a/f05d6cac-35bb-4312-8faf-845ebe1742d7/.well-known/agent-card.json"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "serves-declared-protocol",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a2a/f05d6cac-35bb-4312-8faf-845ebe1742d7/.well-known/agent-card.json"
+            },
+            "detail": "served an agent card at the declared URL itself"
+          }
+        },
+        {
+          "declaredUnder": "services",
+          "name": "web",
+          "protocol": null,
+          "version": null,
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a/cMb36Z",
+            "declared": "https://centralcity.ai/a/cMb36Z"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "live",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a/cMb36Z"
+            },
+            "detail": "answered HTTP 200"
+          }
+        }
+      ]
+    },
+    {
+      "tokenId": "354051",
+      "chainId": 8453,
+      "document": {
+        "status": "read",
+        "url": "https://centralcity.ai/a/54tPqq",
+        "httpStatus": 200
+      },
+      "documentHash": "16a13a87fa0cc384",
+      "endpoints": [
+        {
+          "declaredUnder": "services",
+          "name": "A2A",
+          "protocol": "a2a",
+          "version": "1.0",
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a2a/1f5af82d-7533-4a32-b05d-db2d3c13ea20/.well-known/agent-card.json",
+            "declared": "https://centralcity.ai/a2a/1f5af82d-7533-4a32-b05d-db2d3c13ea20/.well-known/agent-card.json"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "serves-declared-protocol",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a2a/1f5af82d-7533-4a32-b05d-db2d3c13ea20/.well-known/agent-card.json"
+            },
+            "detail": "served an agent card at the declared URL itself"
+          }
+        },
+        {
+          "declaredUnder": "services",
+          "name": "web",
+          "protocol": null,
+          "version": null,
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a/54tPqq",
+            "declared": "https://centralcity.ai/a/54tPqq"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "live",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a/54tPqq"
+            },
+            "detail": "answered HTTP 200"
+          }
+        }
+      ]
+    },
+    {
+      "tokenId": "144742",
+      "chainId": 8453,
+      "document": {
+        "status": "read",
+        "url": "https://centralcity.ai/a/rsYNC6",
+        "httpStatus": 200
+      },
+      "documentHash": "c8b5b1905d50039f",
+      "endpoints": [
+        {
+          "declaredUnder": "services",
+          "name": "A2A",
+          "protocol": "a2a",
+          "version": "1.0",
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a2a/134c2558-7383-46aa-a993-116300818d6e/.well-known/agent-card.json",
+            "declared": "https://centralcity.ai/a2a/134c2558-7383-46aa-a993-116300818d6e/.well-known/agent-card.json"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "serves-declared-protocol",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a2a/134c2558-7383-46aa-a993-116300818d6e/.well-known/agent-card.json"
+            },
+            "detail": "served an agent card at the declared URL itself"
+          }
+        },
+        {
+          "declaredUnder": "services",
+          "name": "web",
+          "protocol": null,
+          "version": null,
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a/rsYNC6",
+            "declared": "https://centralcity.ai/a/rsYNC6"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "live",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a/rsYNC6"
+            },
+            "detail": "answered HTTP 200"
+          }
+        }
+      ]
+    },
+    {
+      "tokenId": "41641",
+      "chainId": 8453,
+      "document": {
+        "status": "no-token-uri"
+      },
+      "documentHash": null,
+      "endpoints": []
+    },
+    {
+      "tokenId": "949478",
+      "chainId": 8453,
+      "document": {
+        "status": "read",
+        "url": "https://centralcity.ai/a/7gDXm1",
+        "httpStatus": 200
+      },
+      "documentHash": "fe6ff90dfaa52585",
+      "endpoints": [
+        {
+          "declaredUnder": "services",
+          "name": "A2A",
+          "protocol": "a2a",
+          "version": "1.0",
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a2a/02bc6c8d-02de-4945-8e30-b903355d23c3/.well-known/agent-card.json",
+            "declared": "https://centralcity.ai/a2a/02bc6c8d-02de-4945-8e30-b903355d23c3/.well-known/agent-card.json"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "serves-declared-protocol",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a2a/02bc6c8d-02de-4945-8e30-b903355d23c3/.well-known/agent-card.json"
+            },
+            "detail": "served an agent card at the declared URL itself"
+          }
+        },
+        {
+          "declaredUnder": "services",
+          "name": "web",
+          "protocol": null,
+          "version": null,
+          "capabilities": [],
+          "classification": {
+            "status": "probeable",
+            "url": "https://centralcity.ai/a/7gDXm1",
+            "declared": "https://centralcity.ai/a/7gDXm1"
+          },
+          "outcome": {
+            "status": "confirmed",
+            "code": "live",
+            "httpStatus": 200,
+            "request": {
+              "method": "GET",
+              "url": "https://centralcity.ai/a/7gDXm1"
+            },
+            "detail": "answered HTTP 200"
+          }
+        }
+      ]
+    }
+  ]
+}

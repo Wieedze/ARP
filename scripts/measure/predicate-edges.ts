@@ -9,12 +9,21 @@ import type { GraphqlReply } from './shapes.js';
  *  Read-only: one aggregate query per predicate. Signs nothing.
  *
  *  Measured 2026-10-16: `use` 158 edges (published in Appendix B, unambiguous), `uses` 185
- *  (never published, derived by edge count). 27 edges is noise, so publication decides — ADR 0015. */
+ *  (never published, derived by edge count). 27 edges is noise, so publication decides — ADR 0015.
+ *
+ *  **Re-run 2026-10-27: 158, 185 and `has category` 120 — unchanged, to the edge.** Worth the line,
+ *  because `docs/09:35` quotes a trio of "194 `use`, 184 `uses`, 120 `has category`" and two of the
+ *  three reproduce here. Intuition has no deletion, so 194 → 158 cannot be a graph that shrank; it
+ *  is a different query. Do not read the pair as a time series — `tasks/17` briefly did.
+ *
+ *  It also could not run at all between `562d0fd` and 2026-10-27: that commit moved this file into
+ *  `scripts/measure/` and the `../packages/…` below became `scripts/packages/…`, so it threw ENOENT.
+ *  `check:scripts` is a typecheck and cannot see a runtime path. */
 const URL_ = 'https://mainnet.intuition.sh/v1/graphql';
 // Read the ids straight from the connector's frozen constants, so this script
 // cannot drift from what the code actually queries.
 const src = await Bun.file(
-  new URL('../packages/protocol/src/sources/intuition/terms.ts', import.meta.url),
+  new URL('../../packages/protocol/src/sources/intuition/terms.ts', import.meta.url),
 ).text();
 const lines = [...src.matchAll(/export const (\w+)\s*=\s*\n?\s*"(0x[0-9a-f]{64})"/g)].map((m) => [
   m[1],

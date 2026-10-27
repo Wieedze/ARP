@@ -116,7 +116,8 @@ describe("classifyEndpoint", () => {
     });
 
     it("never returns a boolean-shaped verdict", () => {
-        // The shape is the safeguard: 82% of real endpoints are not-checkable, and an `ok: false`
+        // The shape is the safeguard: a large share of real endpoints are not-checkable — 82% in
+        // the 2026-10-16 sample, 4% on 2026-10-27 — and an `ok: false`
         // would render "we cannot check this" as "this is broken".
         const c = classifyEndpoint("thethclup999.base.eth");
         expect(c).not.toHaveProperty("ok");

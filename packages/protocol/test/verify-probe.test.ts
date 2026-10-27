@@ -291,6 +291,32 @@ describe("probeEndpoint — A2A and plain", () => {
         expect(seen[1]).toContain("/.well-known/agent.json");
     });
 
+    it("asks once when the declared URL is already a card", async () => {
+        // The courtesy defect of the 2026-10-27 walk: centralcity declares the card path itself,
+        // and appending `/.well-known/agent-card.json` to it made three requests out of one. A
+        // count assertion is the only thing that catches it — all three outcomes were `confirmed`.
+        const seen: string[] = [];
+        const outcome = await probeEndpoint(
+            endpoint({
+                name: "a2a",
+                protocol: "a2a",
+                classification: {
+                    status: "probeable",
+                    url: "https://host.test/a2a/abc/.well-known/agent-card.json",
+                    declared: "https://host.test/a2a/abc/.well-known/agent-card.json",
+                },
+            }),
+            {
+                fetch: (async (url: string) => {
+                    seen.push(String(url));
+                    return new Response(RECORDED.agentCard, {status: 200});
+                }) as unknown as typeof fetch,
+            },
+        );
+        expect(outcome.status).toBe("confirmed");
+        expect(seen).toEqual(["https://host.test/a2a/abc/.well-known/agent-card.json"]);
+    });
+
     it("calls a named-but-unknown endpoint live when it answers under 500", async () => {
         const outcome = await probeEndpoint(
             endpoint({

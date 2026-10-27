@@ -8,8 +8,9 @@
 > they happened rather than here: the nav's centred mark moved left and then back
 > (`components/brand/NavSplit.tsx`), and `--text-display` was a flat 32px until the second handoff
 > replaced it with a clamp — which is where "ce n'est pas agréable" came from.
-> **Date:** 2026-10-21
-> **Triggered by:** user request — art direction for the MVP, built in the "ARP · Brand identity" design canvas (pages v0.3 Identity and v0.4 Components).
+
+**Date:** 2026-10-21
+**Triggered by:** user request — art direction for the MVP, built in the "ARP · Brand identity" design canvas (pages v0.3 Identity and v0.4 Components).
 
 > **Renumbered from 0032 on arrival, 2026-10-22.** `0032` is taken by _the `use` edge is a claim
 > about the identity_ — the ADR that fixes the subject of every triple ARP writes, cited from eight
