@@ -132,7 +132,9 @@ ARP/
 │   ├── 12_THE_IDEA.md                (THE canonical mechanism — read first)
 │   ├── 13_THE_THREE_FLOWS.md
 │   ├── 14_THE_WITNESS_PROBLEM.md
-│   └── 15_ROADMAP.md
+│   ├── 15_ROADMAP.md
+│   ├── 16_THE_AGENT_PAGE.md         (design brief — the agent page)
+│   └── 17_THE_ATOM_PAGE.md          (design brief — the atom page's gravity field + curves)
 ├── tasks/                             atomic task files
 ├── contracts/                         Solidity (Foundry)
 ├── packages/

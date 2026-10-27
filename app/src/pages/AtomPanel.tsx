@@ -99,7 +99,7 @@ export function AtomPanel() {
                             {describePointers(view)}
                         </p>
                         {view.groups.map((group) => (
-                            <Group key={group.predicateAtomId} group={group} />
+                            <Group key={group.predicateAtomId} group={group} subject={view.title} />
                         ))}
                     </>
                 )}
@@ -195,7 +195,7 @@ function Term({label, children}: {label: string; children: React.ReactNode}) {
  * asking "what is said about this thing", and the answer is a list of verbs with subjects under
  * them.
  */
-function Group({group}: {group: GroupView}) {
+function Group({group, subject}: {group: GroupView; subject: string}) {
     return (
         <section className="mb-12">
             <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 border-b border-[color:var(--color-rule-strong)] pb-2">
@@ -214,14 +214,31 @@ function Group({group}: {group: GroupView}) {
                         key={row.tripleId}
                         className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 border-b border-[color:var(--color-rule)] py-3"
                     >
-                        {/* Every subject is an atom, so every subject is a link to its own page.
-                            That is the whole fix: the graph is walkable in both directions now. */}
-                        <Link
-                            to={`/atom/${row.subjectAtomId}`}
-                            className={`min-w-0 truncate ${row.nameIsId ? "font-mono" : ""} ${linkClass}`}
-                        >
-                            {row.name}
-                        </Link>
+                        {/* The **whole sentence**, not just its subject. A row used to read
+                            "Agent 13579:3" under a heading "uses", leaving the reader to assemble
+                            `Agent 13579:3 — uses — this atom` themselves (user, 2026-10-27, with a
+                            screenshot). A triple is a statement and reads as one.
+
+                            Weighted so the new information leads: the subject is the only part
+                            that changes down the list, so it carries the colour and the link. The
+                            predicate is steel and the object is the page you are already on, so it
+                            is dimmest — present for the grammar, not for the eye. Every subject is
+                            an atom, so every subject links to its own page: the graph is walkable
+                            in both directions. */}
+                        <p className="flex min-w-0 flex-wrap items-baseline gap-x-2">
+                            <Link
+                                to={`/atom/${row.subjectAtomId}`}
+                                className={`min-w-0 truncate ${row.nameIsId ? "font-mono" : ""} ${linkClass}`}
+                            >
+                                {row.name}
+                            </Link>
+                            <span className="text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
+                                {group.label}
+                            </span>
+                            <span className="min-w-0 truncate text-[length:var(--text-body-sm)] text-[color:var(--color-grey)]">
+                                {subject}
+                            </span>
+                        </p>
                         <span className="flex items-center gap-4">
                             {row.backing === null ? null : (
                                 <Backing amount={row.backing} positions={row.positions} />
