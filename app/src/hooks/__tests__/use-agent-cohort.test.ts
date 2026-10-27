@@ -37,10 +37,18 @@ async function pageOver(options: ListAgentsOptions): Promise<AgentPage> {
     };
 }
 
+/** Either chain, named so the key assertions stay readable. */
+const MAINNET = {
+    chainId: 1155,
+    graphqlUrl: "https://mainnet.intuition.sh/v1/graphql",
+    symbol: "TRUST",
+};
+
 describe("agentCohortQueryKey", () => {
     it("keys on the order and the offset", () => {
-        expect(agentCohortQueryKey("evidence-quantity", 0)).toEqual([
+        expect(agentCohortQueryKey(1155, "evidence-quantity", 0)).toEqual([
             "erc8004",
+            1155,
             "agent-cohort",
             "evidence-quantity",
             25,
@@ -51,8 +59,8 @@ describe("agentCohortQueryKey", () => {
     it("gives two orders of the same cohort two different keys", () => {
         // They are two sequences, not two views of one, so a page of one must
         // never be served from cache for the other.
-        expect(agentCohortQueryKey("evidence-quantity", 50)).not.toEqual(
-            agentCohortQueryKey("economic-conviction", 50),
+        expect(agentCohortQueryKey(1155, "evidence-quantity", 50)).not.toEqual(
+            agentCohortQueryKey(1155, "economic-conviction", 50),
         );
     });
 });
@@ -60,27 +68,27 @@ describe("agentCohortQueryKey", () => {
 describe("agentCohortQueryOptions", () => {
     it("asks the source for one page, not for the cohort", async () => {
         const fetchCohort = vi.fn(pageOver);
-        await agentCohortQueryOptions("evidence-quantity", 0, fetchCohort).queryFn();
+        await agentCohortQueryOptions(MAINNET, "evidence-quantity", 0, fetchCohort).queryFn();
         expect(fetchCohort).toHaveBeenCalledWith({
             order: "evidence-quantity",
             limit: COHORT_PAGE_SIZE,
             offset: 0,
-        });
+        }, "https://mainnet.intuition.sh/v1/graphql");
         expect(COHORT_PAGE_SIZE).toBeLessThanOrEqual(50);
     });
 
     it("passes the order and the offset straight through", async () => {
         const fetchCohort = vi.fn(pageOver);
-        await agentCohortQueryOptions("economic-conviction", 75, fetchCohort).queryFn();
+        await agentCohortQueryOptions(MAINNET, "economic-conviction", 75, fetchCohort).queryFn();
         expect(fetchCohort).toHaveBeenCalledWith({
             order: "economic-conviction",
             limit: COHORT_PAGE_SIZE,
             offset: 75,
-        });
+        }, "https://mainnet.intuition.sh/v1/graphql");
     });
 
     it("maps the page into the directory view", async () => {
-        const view = await agentCohortQueryOptions(
+        const view = await agentCohortQueryOptions(MAINNET, 
             "evidence-quantity",
             0,
             vi.fn(pageOver),
@@ -97,12 +105,12 @@ describe("agentCohortQueryOptions", () => {
             throw new Error("no configured source can list agents: erc8004-registry");
         });
         await expect(
-            agentCohortQueryOptions("evidence-quantity", 0, failing).queryFn(),
+            agentCohortQueryOptions(MAINNET, "evidence-quantity", 0, failing).queryFn(),
         ).rejects.toThrow("no configured source can list agents");
     });
 
     it("keeps the previous page on screen while the next one loads", () => {
-        const options = agentCohortQueryOptions("evidence-quantity", 25, vi.fn(pageOver));
+        const options = agentCohortQueryOptions(MAINNET, "evidence-quantity", 25, vi.fn(pageOver));
         expect(options.placeholderData).toBeTypeOf("function");
     });
 });

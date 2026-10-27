@@ -117,7 +117,12 @@ function identityProblemOf(listing: AgentListing): string | null {
     return "no ERC-8004 identity edge in the graph";
 }
 
-export function toCohortRow(listing: AgentListing, index: number): CohortRow {
+/**
+ * @param symbol The chain's native token — `TRUST` on 1155, `tTRUST` on 13579. Passed in because a
+ *               service cannot read a hook, and because a figure carrying the other chain's unit is
+ *               `rules/claims.md` §2 on a money column.
+ */
+export function toCohortRow(listing: AgentListing, index: number, symbol: string): CohortRow {
     const ref = listing.ref;
     const market = listing.market;
     const cap = market?.totalMarketCap ?? null;
@@ -131,7 +136,7 @@ export function toCohortRow(listing: AgentListing, index: number): CohortRow {
         href: ref === null ? null : `/agent/${ref.chainId}/${ref.tokenId}`,
         identityProblem: identityProblemOf(listing),
         statementCount: listing.statementCount,
-        marketCap: cap === null ? null : `${formatTrust(cap)} TRUST`,
+        marketCap: cap === null ? null : `${formatTrust(cap)} ${symbol}`,
         positions: market === null ? "no market data" : describeAtomPositions(market),
     };
 }
@@ -153,8 +158,8 @@ function rangeLabelFor(page: AgentPage, rowCount: number): string {
 }
 
 /** One page in, everything the directory renders out. */
-export function buildCohortView(page: AgentPage): CohortView {
-    const rows = page.agents.map(toCohortRow);
+export function buildCohortView(page: AgentPage, symbol: string): CohortView {
+    const rows = page.agents.map((listing, index) => toCohortRow(listing, index, symbol));
     const rangeEnd = page.offset + rows.length;
 
     return {

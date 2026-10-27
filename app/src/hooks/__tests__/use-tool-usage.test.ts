@@ -19,6 +19,9 @@ const usage = (edges: ToolUsage["edges"] = []): ToolUsage => ({
     provenance: {sourceId: "intuition", kind: "claim", origin: ATOM},
 });
 
+/** Either chain, named so the key assertions stay readable. */
+const MAINNET = {chainId: 1155, graphqlUrl: "https://mainnet.intuition.sh/v1/graphql"};
+
 describe("isToolAtomId", () => {
     it("accepts 0x plus 32 bytes, in either case", () => {
         expect(isToolAtomId(ATOM)).toBe(true);
@@ -46,7 +49,7 @@ describe("isToolAtomId", () => {
 
 describe("toolUsageQueryKey", () => {
     it("keys on the atom id", () => {
-        expect(toolUsageQueryKey(ATOM)).toEqual(["erc8004", "tool-usage", ATOM]);
+        expect(toolUsageQueryKey(1155, ATOM)).toEqual(["erc8004", 1155, "tool-usage", ATOM]);
     });
 
     it("carries no bonding curve, unlike the agent profile's key", () => {
@@ -54,18 +57,19 @@ describe("toolUsageQueryKey", () => {
         // one — not because the read is curve-agnostic, which it is not: `positionCount` is scoped
         // to a vault. A caller that passed a curve would collide here, and that is the day to add
         // it to the key.
-        expect(toolUsageQueryKey(ATOM)).toHaveLength(3);
+        expect(toolUsageQueryKey(1155, ATOM)).toHaveLength(4);
+        expect(toolUsageQueryKey(1155, ATOM)).not.toContain("1");
     });
 
     it("keys null distinctly, so the disabled query cannot collide with a real one", () => {
-        expect(toolUsageQueryKey(null)).toEqual(["erc8004", "tool-usage", null]);
+        expect(toolUsageQueryKey(1155, null)).toEqual(["erc8004", 1155, "tool-usage", null]);
     });
 });
 
 describe("toolUsageQueryOptions", () => {
     it("is disabled without an atom, and does not fetch", async () => {
         const fetchUsage = vi.fn(async () => usage());
-        const options = toolUsageQueryOptions(null, fetchUsage);
+        const options = toolUsageQueryOptions(MAINNET, null, fetchUsage);
         expect(options.enabled).toBe(false);
         await expect(options.queryFn()).rejects.toThrow("No tool atom to resolve.");
         expect(fetchUsage).not.toHaveBeenCalled();
@@ -73,8 +77,8 @@ describe("toolUsageQueryOptions", () => {
 
     it("hands the connector's answer to the view builder", async () => {
         const fetchUsage = vi.fn(async () => usage());
-        const view = await toolUsageQueryOptions(ATOM, fetchUsage).queryFn();
-        expect(fetchUsage).toHaveBeenCalledWith(ATOM);
+        const view = await toolUsageQueryOptions(MAINNET, ATOM, fetchUsage).queryFn();
+        expect(fetchUsage).toHaveBeenCalledWith(ATOM, "https://mainnet.intuition.sh/v1/graphql");
         // The hook returns a VIEW, not the raw read: `isEmpty` exists only on the view, so this
         // asserts the mapping happened rather than that the fetch was called.
         expect(view.isEmpty).toBe(true);
@@ -85,7 +89,7 @@ describe("toolUsageQueryOptions", () => {
         const fetchUsage = vi.fn(async () => {
             throw new Error("indexer down");
         });
-        const options = toolUsageQueryOptions(ATOM, fetchUsage);
+        const options = toolUsageQueryOptions(MAINNET, ATOM, fetchUsage);
         expect(options.retry).toBe(0);
         await expect(options.queryFn()).rejects.toThrow("indexer down");
     });

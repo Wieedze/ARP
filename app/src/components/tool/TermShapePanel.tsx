@@ -1,4 +1,5 @@
 import {Sparkline} from "../Sparkline";
+import {useChainChoice} from "../../lib/chain-choice";
 import {formatTrust} from "../../services/trust-format";
 import type {TermShapeView} from "../../services/term-shape-view";
 import type {TermActivityBucket} from "@arp-protocol/core";
@@ -31,6 +32,7 @@ export function TermShapePanel({
      */
     curveLabel: string;
 }) {
+    const {symbol} = useChainChoice();
     if (shape.positionCount === 0) return null;
 
     return (
@@ -51,7 +53,9 @@ export function TermShapePanel({
                         label="Backers arrived"
                         value={shape.span}
                         note={
-                            shape.arrivedTogether ? "every backer opened on the same day" : undefined
+                            shape.arrivedTogether
+                                ? "every backer opened on the same day"
+                                : undefined
                         }
                     />
                 )}
@@ -76,7 +80,7 @@ export function TermShapePanel({
                         own docstring had it as shares and this label had it as deposits, and both
                         were wrong in different ways. */}
                     <p className="text-[length:var(--text-label)] uppercase tracking-wider text-[color:var(--color-steel)]">
-                        Weekly activity · {curveLabel} · TRUST moved, in or out
+                        Weekly activity · {curveLabel} · {symbol} moved, in or out
                     </p>
                     <div className="mt-2">
                         <Sparkline
@@ -84,7 +88,7 @@ export function TermShapePanel({
                                 label: bucket.bucket.slice(0, 10),
                                 value: bucket.volume,
                             }))}
-                            describe={(value) => `${formatTrust(value)} TRUST`}
+                            describe={(value) => `${formatTrust(value)} ${symbol}`}
                         />
                     </div>
                 </div>

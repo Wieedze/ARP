@@ -1,3 +1,4 @@
+import {useChainChoice} from "../lib/chain-choice";
 import {useQuery} from "@tanstack/react-query";
 
 import {fetchToolUsage} from "../services/erc8004-connector";
@@ -13,6 +14,7 @@ import {buildToolUsageView, type ToolUsageView} from "../services/tool-usage-vie
 
 export type ToolUsageFetcher = (
     toolAtomId: string,
+    graphqlUrl?: string,
 ) => Promise<Parameters<typeof buildToolUsageView>[0]>;
 
 /** `0x` + 32 bytes. Anything else is a bad route param, not a tool nobody has used. */
@@ -20,7 +22,11 @@ export function isToolAtomId(value: string | undefined): value is string {
     return typeof value === "string" && /^0x[0-9a-fA-F]{64}$/.test(value);
 }
 
-export function toolUsageQueryKey(toolAtomId: string | null) {
+/**
+ * The chain is in the key. Without it, switching serves the other chain's answer from cache under
+ * the new label — `rules/claims.md` §2 as a page (`lib/chain-choice.ts`).
+ */
+export function toolUsageQueryKey(chainId: number, toolAtomId: string | null) {
     // No curve in the key, and the reason is narrower than "there is no single curve this read
     // belongs to" — which is what this said, and which is false. `getToolUsage` reads
     // `total_assets` off the term (all curves) but `positionCount` off a vault scoped to
@@ -29,20 +35,21 @@ export function toolUsageQueryKey(toolAtomId: string | null) {
     // default — a curve in the key would promise a narrowing no caller can currently request. **A
     // caller that did pass one would collide in this cache**, which is a reason to add the curve the
     // day that becomes possible, not a reason the curve does not exist.
-    return ["erc8004", "tool-usage", toolAtomId] as const;
+    return ["erc8004", chainId, "tool-usage", toolAtomId] as const;
 }
 
 export function toolUsageQueryOptions(
+    chain: {chainId: number; graphqlUrl: string},
     toolAtomId: string | null,
     fetchUsage: ToolUsageFetcher = fetchToolUsage,
 ) {
     return {
-        queryKey: toolUsageQueryKey(toolAtomId),
+        queryKey: toolUsageQueryKey(chain.chainId, toolAtomId),
         queryFn: async (): Promise<ToolUsageView> => {
             if (toolAtomId === null) {
                 throw new Error("No tool atom to resolve.");
             }
-            return buildToolUsageView(await fetchUsage(toolAtomId));
+            return buildToolUsageView(await fetchUsage(toolAtomId, chain.graphqlUrl));
         },
         enabled: toolAtomId !== null,
         // One graph round trip, and the edges change when somebody stakes — which is rare enough
@@ -53,5 +60,6 @@ export function toolUsageQueryOptions(
 }
 
 export function useToolUsage(toolAtomId: string | null) {
-    return useQuery(toolUsageQueryOptions(toolAtomId));
+    const chain = useChainChoice();
+    return useQuery(toolUsageQueryOptions(chain, toolAtomId));
 }

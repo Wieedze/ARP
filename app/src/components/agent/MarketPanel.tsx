@@ -16,6 +16,11 @@ import {StakerCount} from "./StakerCount";
  *
  * The staker count appears on every side, always — see `StakerCount` for why a
  * TRUST figure is never shown here without it.
+ *
+ * **`TRUST` is hardcoded here on purpose.** Both balances come from the mainnet MultiVault through
+ * `useClaimVaults`, which the chain toggle does not reach — `portability.md` exempts the staking
+ * path, and the deposit beside these figures is mainnet-only under ADR `0017`. Every figure the
+ * toggle *does* govern takes its symbol from `useChainChoice`.
  */
 
 function SideColumn({

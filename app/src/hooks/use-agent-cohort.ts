@@ -1,4 +1,5 @@
 import {keepPreviousData, useQuery} from "@tanstack/react-query";
+import {useChainChoice} from "../lib/chain-choice";
 import type {AgentListOrder, AgentPage, ListAgentsOptions} from "@arp-protocol/core";
 
 import {buildCohortView, type CohortView} from "../services/agent-cohort";
@@ -12,7 +13,10 @@ import {fetchAgentCohort} from "../services/erc8004-connector";
  * key, the paging and the mapping are testable without a DOM.
  */
 
-export type AgentCohortFetcher = (options: ListAgentsOptions) => Promise<AgentPage>;
+export type AgentCohortFetcher = (
+    options: ListAgentsOptions,
+    graphqlUrl?: string,
+) => Promise<AgentPage>;
 
 /** 25 rows — dense enough to show the shape of the cohort, small enough to stay one read. */
 export const COHORT_PAGE_SIZE = 25;
@@ -23,19 +27,27 @@ export const COHORT_PAGE_SIZE = 25;
  * Two orders of the same cohort are two different sequences, not two views of
  * one, so a page from one must never be served from cache for the other.
  */
-export function agentCohortQueryKey(order: AgentListOrder, offset: number) {
-    return ["erc8004", "agent-cohort", order, COHORT_PAGE_SIZE, offset] as const;
+/**
+ * The chain is in the key. Without it, switching serves the other chain's answer from cache under
+ * the new label — `rules/claims.md` §2 as a page (`lib/chain-choice.ts`).
+ */
+export function agentCohortQueryKey(chainId: number, order: AgentListOrder, offset: number) {
+    return ["erc8004", chainId, "agent-cohort", order, COHORT_PAGE_SIZE, offset] as const;
 }
 
 export function agentCohortQueryOptions(
+    chain: {chainId: number; graphqlUrl: string; symbol: string},
     order: AgentListOrder,
     offset: number,
     fetchCohort: AgentCohortFetcher = fetchAgentCohort,
 ) {
     return {
-        queryKey: agentCohortQueryKey(order, offset),
+        queryKey: agentCohortQueryKey(chain.chainId, order, offset),
         queryFn: async (): Promise<CohortView> =>
-            buildCohortView(await fetchCohort({order, limit: COHORT_PAGE_SIZE, offset})),
+            buildCohortView(
+                await fetchCohort({order, limit: COHORT_PAGE_SIZE, offset}, chain.graphqlUrl),
+                chain.symbol,
+            ),
         // One graph read per page, and the cohort moves on the order of days.
         staleTime: 60_000,
         retry: 1,
@@ -46,5 +58,6 @@ export function agentCohortQueryOptions(
 }
 
 export function useAgentCohort(order: AgentListOrder, offset: number) {
-    return useQuery(agentCohortQueryOptions(order, offset));
+    const chain = useChainChoice();
+    return useQuery(agentCohortQueryOptions(chain, order, offset));
 }

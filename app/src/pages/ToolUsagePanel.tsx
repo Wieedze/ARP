@@ -4,7 +4,7 @@ import {useToolUsage, isToolAtomId} from "../hooks/use-tool-usage";
 import {formatTrust, truncateMiddle} from "../services/trust-format";
 import {describeCounts, opensRun, type ToolUsageView} from "../services/tool-usage-view";
 import {UsageEdgeRow} from "../components/tool/UsageEdgeRow";
-import {INTUITION_MAINNET_EXPLORER} from "../lib/intuition-mainnet";
+import {useChainChoice} from "../lib/chain-choice";
 
 /**
  * A tool's standing: who declared using it, and what they put behind saying so (`/tool/atom/:atomId`).
@@ -81,6 +81,7 @@ export function ToolUsagePanel() {
 }
 
 function ToolUsageBody({view}: {view: ToolUsageView}) {
+    const chain = useChainChoice();
     return (
         <div className="mt-10 grid gap-x-12 gap-y-10 md:grid-cols-[18rem_1fr] md:items-start">
             <aside>
@@ -118,7 +119,7 @@ function ToolUsageBody({view}: {view: ToolUsageView}) {
                 ) : null}
 
                 <a
-                    href={`${INTUITION_MAINNET_EXPLORER}/address/${view.toolAtomId}`}
+                    href={`${chain.explorerUrl}/address/${view.toolAtomId}`}
                     target="_blank"
                     rel="noreferrer"
                     className="mt-6 inline-block text-[length:var(--text-body-sm)] text-[color:var(--color-accent)]"
@@ -128,11 +129,7 @@ function ToolUsageBody({view}: {view: ToolUsageView}) {
             </aside>
 
             <div className="min-w-0">
-                {view.isEmpty ? (
-                    <EmptyState atomId={view.toolAtomId} />
-                ) : (
-                    <Edges view={view} />
-                )}
+                {view.isEmpty ? <EmptyState atomId={view.toolAtomId} /> : <Edges view={view} />}
             </div>
         </div>
     );
@@ -151,6 +148,7 @@ function ToolUsageBody({view}: {view: ToolUsageView}) {
  * "positions" because that is all a sum can claim.
  */
 function Totals({view}: {view: ToolUsageView}) {
+    const chain = useChainChoice();
     return (
         <dl className="mt-6 border-t border-[color:var(--color-rule)] pt-4 text-[length:var(--text-body-sm)]">
             {view.totals.supportPositions > 0 ? (
@@ -159,7 +157,7 @@ function Totals({view}: {view: ToolUsageView}) {
                         Staked for
                     </dt>
                     <dd className="mt-1 font-mono tabular-nums">
-                        {formatTrust(view.totals.supportAssets)}{" "}
+                        {formatTrust(view.totals.supportAssets)} {chain.symbol}{" "}
                         <span className="text-[color:var(--color-steel)]">
                             across {view.totals.supportPositions}{" "}
                             {view.totals.supportPositions === 1 ? "position" : "positions"}
@@ -176,7 +174,7 @@ function Totals({view}: {view: ToolUsageView}) {
                         Staked against
                     </dt>
                     <dd className="mt-1 font-mono tabular-nums">
-                        {formatTrust(view.totals.opposeAssets)}{" "}
+                        {formatTrust(view.totals.opposeAssets)} {chain.symbol}{" "}
                         <span className="text-[color:var(--color-steel)]">
                             across {view.totals.opposePositions}{" "}
                             {view.totals.opposePositions === 1 ? "position" : "positions"}
@@ -197,8 +195,8 @@ function Edges({view}: {view: ToolUsageView}) {
             </p>
             {view.isEntirelyUnpriced ? (
                 <p className="mb-6 max-w-[70ch] border border-[color:var(--color-rule-strong)] px-4 py-3 text-[length:var(--text-body-sm)]">
-                    Nothing stands behind the claims below. The tool&rsquo;s own atom is a
-                    separate market, not read here.
+                    Nothing stands behind the claims below. The tool&rsquo;s own atom is a separate
+                    market, not read here.
                 </p>
             ) : null}
             <ul>

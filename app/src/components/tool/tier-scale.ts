@@ -38,7 +38,7 @@ export const TIER_CAPTION: Record<ProvenanceTier, string> = {
     fact: "A payment, an on-chain call or a redeemed delegation. The chain recorded it.",
     "confirmed-by-both": "The tool and the agent both declared it, and their interests oppose.",
     "tool-declared": "The tool's word that this agent used it. A third party, and strong.",
-    "priced-assertion": "The agent's own claim, with TRUST behind it. Priced, not proven.",
+    "priced-assertion": "The agent's own claim, with a stake behind it. Priced, not proven.",
     "free-assertion": "The agent's own claim, with nothing on this curve behind it.",
 };
 
@@ -55,4 +55,4 @@ export const OFF_CURVE_LABEL = "Staked off-curve";
 export const OFF_CURVE_TONE_CLASS = "text-[color:var(--color-fg)] font-normal";
 
 export const OFF_CURVE_CAPTION =
-    "TRUST is behind this claim, on a bonding curve this page does not read.";
+    "A stake is behind this claim, on a bonding curve this page does not read.";

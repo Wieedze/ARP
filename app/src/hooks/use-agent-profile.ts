@@ -1,4 +1,5 @@
 import {useQuery} from "@tanstack/react-query";
+import {useChainChoice} from "../lib/chain-choice";
 import type {AgentProfile, AgentRef} from "@arp-protocol/core";
 
 import {buildTrustPanel, type TrustPanelView} from "../services/agent-trust";
@@ -14,7 +15,11 @@ import {fetchAgentProfile} from "../services/erc8004-connector";
  * a DOM, which is what ADR 0011 leaves room for.
  */
 
-export type AgentProfileFetcher = (ref: AgentRef, curveId?: bigint) => Promise<AgentProfile>;
+export type AgentProfileFetcher = (
+    ref: AgentRef,
+    curveId?: bigint,
+    graphqlUrl?: string,
+) => Promise<AgentProfile>;
 
 /**
  * The curve is part of the key.
@@ -25,9 +30,14 @@ export type AgentProfileFetcher = (ref: AgentRef, curveId?: bigint) => Promise<A
  * to a different vault. On mainnet today the chain reports `1`, which is also
  * the package default, so the key is unchanged and nothing refetches.
  */
-export function agentProfileQueryKey(ref: AgentRef | null, curveId?: bigint) {
+/**
+ * The chain is in the key. Without it, switching serves the other chain's answer from cache under
+ * the new label — `rules/claims.md` §2 as a page (`lib/chain-choice.ts`).
+ */
+export function agentProfileQueryKey(chainId: number, ref: AgentRef | null, curveId?: bigint) {
     return [
         "erc8004",
+        chainId,
         "agent-profile",
         ref?.chainId ?? null,
         ref?.tokenId ?? null,
@@ -36,17 +46,18 @@ export function agentProfileQueryKey(ref: AgentRef | null, curveId?: bigint) {
 }
 
 export function agentProfileQueryOptions(
+    chain: {chainId: number; graphqlUrl: string},
     ref: AgentRef | null,
     curveId?: bigint,
     fetchProfile: AgentProfileFetcher = fetchAgentProfile,
 ) {
     return {
-        queryKey: agentProfileQueryKey(ref, curveId),
+        queryKey: agentProfileQueryKey(chain.chainId, ref, curveId),
         queryFn: async (): Promise<TrustPanelView> => {
             if (ref === null) {
                 throw new Error("No agent reference to resolve.");
             }
-            return buildTrustPanel(await fetchProfile(ref, curveId));
+            return buildTrustPanel(await fetchProfile(ref, curveId, chain.graphqlUrl));
         },
         enabled: ref !== null,
         // Several resolver round trips per read; re-running them on every
@@ -57,5 +68,6 @@ export function agentProfileQueryOptions(
 }
 
 export function useAgentProfile(ref: AgentRef | null, curveId?: bigint) {
-    return useQuery(agentProfileQueryOptions(ref, curveId));
+    const chain = useChainChoice();
+    return useQuery(agentProfileQueryOptions(chain, ref, curveId));
 }

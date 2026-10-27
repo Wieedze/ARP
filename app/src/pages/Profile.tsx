@@ -1,4 +1,5 @@
 import {useState} from "react";
+import {useChainChoice} from "../lib/chain-choice";
 import {Link} from "react-router-dom";
 import {useAccount} from "wagmi";
 
@@ -30,7 +31,6 @@ export function Profile() {
 
     return (
         <section>
-
             <header className="mt-8 mb-10 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-3">
                 <div>
                     {/* Not `--text-display`: the net figure below uses it, and two elements at the
@@ -71,6 +71,7 @@ export function Profile() {
 }
 
 function Positions({view}: {view: ProfileView}) {
+    const chain = useChainChoice();
     if (view.termsHeld === 0 && view.curve.length === 0) {
         return (
             <div className="max-w-[60ch]">
@@ -113,7 +114,7 @@ function Positions({view}: {view: ProfileView}) {
                     {view.netTrust}
                     <span className="text-[length:var(--text-body)] text-[color:var(--color-steel)]">
                         {" "}
-                        TRUST
+                        {chain.symbol}
                     </span>
                 </p>
 
@@ -122,8 +123,8 @@ function Positions({view}: {view: ProfileView}) {
                         <Sparkline
                             points={view.curve}
                             // `formatTrust`, so the accessible summary does not read
-                            // "0.12345678901234568 TRUST" and so both sparklines format alike.
-                            describe={(value) => `${formatTrust(value)} TRUST`}
+                            // "0.12345678901234568" at full precision, and so both sparklines format alike.
+                            describe={(value) => `${formatTrust(value)} ${chain.symbol}`}
                         />
                     </div>
                 )}
@@ -134,18 +135,21 @@ function Positions({view}: {view: ProfileView}) {
                     // the account began at its hundredth-last deposit.
                     <p className="mt-3 max-w-[60ch] text-[length:var(--text-label)] text-[color:var(--color-steel)]">
                         Recent deposits only, starting from{" "}
-                        <span className="font-mono">{view.openingTrust} TRUST</span> already held.
+                        <span className="font-mono">
+                            {view.openingTrust} {chain.symbol}
+                        </span>{" "}
+                        already held.
                     </p>
                 ) : null}
             </div>
 
             <dl className="grid grid-cols-[1fr_auto] gap-y-3 gap-x-6 self-start text-[length:var(--text-body-sm)] lg:border-l lg:border-[color:var(--color-rule)] lg:pl-8">
                 <Row label="Terms you hold" value={view.termsHeld.toLocaleString("en-US")} />
-                <Row label="Deposited" value={`${view.depositedTrust} TRUST`} />
+                <Row label="Deposited" value={`${view.depositedTrust} ${chain.symbol}`} />
                 {/* Absent rather than zero: "redeemed 0" reads as a fact about your behaviour that
                     a first deposit has not had time to be. */}
                 {view.hasRedeemed ? (
-                    <Row label="Redeemed" value={`${view.redeemedTrust} TRUST`} />
+                    <Row label="Redeemed" value={`${view.redeemedTrust} ${chain.symbol}`} />
                 ) : null}
                 <Row
                     label="Tools you priced"

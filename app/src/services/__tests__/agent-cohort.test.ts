@@ -78,6 +78,7 @@ describe("the row's glyph", () => {
                 ],
             }),
             0,
+            "TRUST",
         );
         expect(row.modules).toEqual([
             {name: "0xmcp", state: "declared"},
@@ -94,6 +95,7 @@ describe("the row's glyph", () => {
                 ],
             }),
             0,
+            "TRUST",
         );
         expect(row.modules).toHaveLength(1);
     });
@@ -104,7 +106,7 @@ describe("the row's glyph", () => {
      * identity.
      */
     it("is empty when the agent declared nothing the read sampled", () => {
-        expect(toCohortRow(listing({capabilities: []}), 0).modules).toEqual([]);
+        expect(toCohortRow(listing({capabilities: []}), 0, "TRUST").modules).toEqual([]);
     });
 
     /**
@@ -115,6 +117,7 @@ describe("the row's glyph", () => {
         const row = toCohortRow(
             listing({capabilities: [{predicateId: "0xp1", objectId: "0xa", label: "a"}]}),
             0,
+            "TRUST",
         );
         expect(row.modules.every((m) => m.state === "declared")).toBe(true);
     });
@@ -122,13 +125,13 @@ describe("the row's glyph", () => {
 
 describe("toCohortRow", () => {
     it("links by the identity from the same-as edge", () => {
-        const row = toCohortRow(listing(), 0);
+        const row = toCohortRow(listing(), 0, "TRUST");
         expect(row.href).toBe("/agent/8453/1380");
         expect(row.identityProblem).toBeNull();
     });
 
     it("shows the market cap with its position count beside it, always", () => {
-        const row = toCohortRow(listing(), 0);
+        const row = toCohortRow(listing(), 0, "TRUST");
         expect(row.marketCap).toBe("6.3369302 TRUST");
         expect(row.positions).toBe("1 position · 2 curves");
     });
@@ -139,13 +142,14 @@ describe("toCohortRow", () => {
                 market: {totalMarketCap: 1_000_000n, positionCount: null, vaultCount: 1},
             }),
             0,
+            "TRUST",
         );
         expect(row.marketCap).toBe("<0.00000001 TRUST");
         expect(row.positions).toBe("position count not reported");
     });
 
     it("distinguishes no market data from a market of zero", () => {
-        expect(toCohortRow(listing({market: null}), 0)).toMatchObject({
+        expect(toCohortRow(listing({market: null}), 0, "TRUST")).toMatchObject({
             marketCap: null,
             positions: "no market data",
         });
@@ -155,6 +159,7 @@ describe("toCohortRow", () => {
                     market: {totalMarketCap: 0n, positionCount: 0, vaultCount: 1},
                 }),
                 0,
+                "TRUST",
             ),
         ).toMatchObject({marketCap: "0 TRUST", positions: "0 positions · 1 curve"});
     });
@@ -171,6 +176,7 @@ describe("toCohortRow", () => {
                 },
             }),
             0,
+            "TRUST",
         );
         expect(row.isFallbackMetadata).toBe(true);
         expect(row.name).toBe("Agent 8453:6649");
@@ -180,12 +186,14 @@ describe("toCohortRow", () => {
         // The graph stores "" for an agent with no image, and <img src=""> is a
         // request for the page itself.
         expect(
-            toCohortRow(listing({metadata: {...listing().metadata, image: ""}}), 0).imageUrl,
+            toCohortRow(listing({metadata: {...listing().metadata, image: ""}}), 0, "TRUST")
+                .imageUrl,
         ).toBe(null);
         expect(
-            toCohortRow(listing({metadata: {...listing().metadata, image: "   "}}), 0).imageUrl,
+            toCohortRow(listing({metadata: {...listing().metadata, image: "   "}}), 0, "TRUST")
+                .imageUrl,
         ).toBe(null);
-        expect(toCohortRow(listing(), 0).imageUrl).toBe("https://blob.example/dackie.jpg");
+        expect(toCohortRow(listing(), 0, "TRUST").imageUrl).toBe("https://blob.example/dackie.jpg");
     });
 
     it("refuses to link an atom that claims several identities, and says why", () => {
@@ -197,6 +205,7 @@ describe("toCohortRow", () => {
                 metadata: {...listing().metadata, name: "Ouro Proof-of-Compute Oracle"},
             }),
             0,
+            "TRUST",
         );
         expect(row.href).toBeNull();
         expect(row.identityProblem).toBe("claims 16 identities — no single agent to open");
@@ -206,6 +215,7 @@ describe("toCohortRow", () => {
         const row = toCohortRow(
             listing({ref: null, identities: [], identityEdgeCount: 0, isIdentityAmbiguous: false}),
             0,
+            "TRUST",
         );
         expect(row.href).toBeNull();
         expect(row.identityProblem).toBe("no ERC-8004 identity edge in the graph");
@@ -225,6 +235,7 @@ describe("toCohortRow", () => {
                 },
             }),
             0,
+            "TRUST",
         );
         expect(row.href).toBe("/agent/8453/42");
     });
@@ -232,7 +243,7 @@ describe("toCohortRow", () => {
 
 describe("buildCohortView", () => {
     it("carries the graph's own total rather than the page length", () => {
-        const view = buildCohortView(page());
+        const view = buildCohortView(page(), "TRUST");
         expect(view.total).toBe(28_648);
         expect(view.rows).toHaveLength(25);
         expect(view.rangeLabel).toBe("1–25 of 28,648");
@@ -241,7 +252,7 @@ describe("buildCohortView", () => {
     });
 
     it("numbers a deep page from its offset", () => {
-        const view = buildCohortView(page({offset: 20_000}));
+        const view = buildCohortView(page({offset: 20_000}), "TRUST");
         expect(view.rangeLabel).toBe("20,001–20,025 of 28,648");
         expect(view.hasPrevious).toBe(true);
     });
@@ -249,13 +260,14 @@ describe("buildCohortView", () => {
     it("stops paging on a short page, whatever the total claims", () => {
         const view = buildCohortView(
             page({offset: 28_640, agents: Array.from({length: 8}, () => listing())}),
+            "TRUST",
         );
         expect(view.rangeLabel).toBe("28,641–28,648 of 28,648");
         expect(view.hasNext).toBe(false);
     });
 
     it("still offers a next page, and no total, when the source reported none", () => {
-        const view = buildCohortView(page({total: null}));
+        const view = buildCohortView(page({total: null}), "TRUST");
         expect(view.hasNext).toBe(true);
         expect(view.rangeLabel).toBe("1–25");
     });
@@ -263,7 +275,7 @@ describe("buildCohortView", () => {
     it("says an empty page is empty rather than counting rows it does not have", () => {
         // `0–40,000 of 28,648` is what a range computed from the offset alone
         // prints here, and it is nonsense on its face.
-        const view = buildCohortView(page({offset: 40_000, agents: []}));
+        const view = buildCohortView(page({offset: 40_000, agents: []}), "TRUST");
         expect(view.rows).toEqual([]);
         expect(view.rangeLabel).toBe("no agents on this page");
         expect(view.hasNext).toBe(false);
@@ -273,7 +285,7 @@ describe("buildCohortView", () => {
         const first = listing({sourceHandle: "0xa", statementCount: 41});
         const second = listing({sourceHandle: "0xb", statementCount: 5});
         const third = listing({sourceHandle: "0xc", statementCount: 30});
-        const view = buildCohortView(page({agents: [first, second, third]}));
+        const view = buildCohortView(page({agents: [first, second, third]}), "TRUST");
         // Not 41, 30, 5 — this page is a window onto an order decided over the
         // whole cohort, and sorting it here would be a claim about the cohort.
         expect(view.rows.map((row) => row.statementCount)).toEqual([41, 5, 30]);

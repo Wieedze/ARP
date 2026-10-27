@@ -20,20 +20,25 @@ function optionsOver(value: AgentProfile | Error) {
         if (value instanceof Error) throw value;
         return value;
     });
-    return {options: agentProfileQueryOptions(REF, undefined, fetchProfile), fetchProfile};
+    return {options: agentProfileQueryOptions(MAINNET, REF, undefined, fetchProfile), fetchProfile};
 }
+
+/** Either chain, named so the key assertions stay readable. */
+const MAINNET = {chainId: 1155, graphqlUrl: "https://mainnet.intuition.sh/v1/graphql"};
 
 describe("agentProfileQueryOptions", () => {
     it("keys on the ERC-8004 identity, not on a source handle", () => {
-        expect(agentProfileQueryKey(REF)).toEqual([
+        expect(agentProfileQueryKey(1155, REF)).toEqual([
             "erc8004",
+            1155,
             "agent-profile",
             8453,
             "2340",
             "default",
         ]);
-        expect(agentProfileQueryKey(null)).toEqual([
+        expect(agentProfileQueryKey(1155, null)).toEqual([
             "erc8004",
+            1155,
             "agent-profile",
             null,
             null,
@@ -42,8 +47,9 @@ describe("agentProfileQueryOptions", () => {
 
         // The curve is part of the key: a market read for one curve must not be
         // served from cache when a stake would land in another.
-        expect(agentProfileQueryKey(REF, 7n)).toEqual([
+        expect(agentProfileQueryKey(1155, REF, 7n)).toEqual([
             "erc8004",
+            1155,
             "agent-profile",
             8453,
             "2340",
@@ -52,27 +58,27 @@ describe("agentProfileQueryOptions", () => {
     });
 
     it("stays disabled without a reference, and refuses to invent one", async () => {
-        const options = agentProfileQueryOptions(null, undefined, vi.fn());
+        const options = agentProfileQueryOptions(MAINNET, null, undefined, vi.fn());
         expect(options.enabled).toBe(false);
         await expect(options.queryFn()).rejects.toThrow("No agent reference");
     });
 
     it("passes the curve it was given to the fetcher, so the market matches the vault", async () => {
         const fetchProfile = vi.fn(async () => richProfile());
-        const options = agentProfileQueryOptions(REF, 7n, fetchProfile);
+        const options = agentProfileQueryOptions(MAINNET, REF, 7n, fetchProfile);
         await options.queryFn();
-        expect(fetchProfile).toHaveBeenCalledWith(REF, 7n);
+        expect(fetchProfile).toHaveBeenCalledWith(REF, 7n, "https://mainnet.intuition.sh/v1/graphql");
     });
 
     it("never retries — every retry is another round of provider fetches", () => {
-        expect(agentProfileQueryOptions(REF).retry).toBe(0);
+        expect(agentProfileQueryOptions(MAINNET, REF).retry).toBe(0);
     });
 
     it("maps a rich profile into the panel view", async () => {
         const {options, fetchProfile} = optionsOver(richProfile());
         const view = await options.queryFn();
 
-        expect(fetchProfile).toHaveBeenCalledWith(REF, undefined);
+        expect(fetchProfile).toHaveBeenCalledWith(REF, undefined, "https://mainnet.intuition.sh/v1/graphql");
         expect(view.found).toBe(true);
         expect(view.rows).toHaveLength(2);
         expect(view.rows[0].score).toBe(55.35);

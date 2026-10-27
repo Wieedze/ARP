@@ -52,15 +52,26 @@ const clients = new Map<string, Erc8004Client>();
 const REGISTRY_ONLY_KEY = "registry-only";
 const GRAPH_ONLY_KEY = "graph-only";
 
-export function erc8004Client(curveId?: bigint): Erc8004Client {
-    const key = curveId === undefined ? "default" : curveId.toString();
+/**
+ * A client for one chain's graph, cached per `(graphqlUrl, curveId)`.
+ *
+ * **The url is in the cache key**, and leaving it out is the bug this signature exists to stop: the
+ * app reads two chains now (`lib/chain-choice.ts`), and a client cached under the curve alone would
+ * serve the first chain asked for to every later caller — including one on the other chain, under
+ * the other chain's label.
+ */
+export function erc8004Client(
+    curveId?: bigint,
+    graphqlUrl: string = ERC8004_GRAPHQL_URL,
+): Erc8004Client {
+    const key = `${graphqlUrl}|${curveId === undefined ? "default" : curveId.toString()}`;
     const existing = clients.get(key);
     if (existing !== undefined) return existing;
 
     const client = createErc8004Client({
         sources: [
             intuitionSource({
-                graphqlUrl: ERC8004_GRAPHQL_URL,
+                graphqlUrl,
                 ...(curveId === undefined ? {} : {curveId}),
             }),
             erc8004RegistrySource(),
@@ -120,7 +131,8 @@ export function erc8004GraphClient(): Erc8004Client {
 export function fetchAgentProfile(
     ref: AgentRef,
     curveId?: bigint,
-    client = erc8004Client(curveId),
+    graphqlUrl?: string,
+    client = erc8004Client(curveId, graphqlUrl),
 ): Promise<AgentProfile> {
     return getAgentProfile(client, ref);
 }
@@ -138,7 +150,8 @@ export function fetchAgentProfile(
  */
 export function fetchAgentCohort(
     options: ListAgentsOptions,
-    client = erc8004Client(),
+    graphqlUrl?: string,
+    client = erc8004Client(undefined, graphqlUrl),
 ): Promise<AgentPage> {
     return listAgents(client, options);
 }
@@ -150,13 +163,19 @@ export function fetchAgentCohort(
  * where it is, which is the common case in ERC-8004 plus MCP (`docs/14`), the caller resolves it
  * through the identity path first and passes the atom.
  *
- * Mainnet, like every other read on this surface: the `uses` edges and their vaults are on 1155.
+ * **Takes the chain it reads**, because the page that links here is chain-aware: a reader who
+ * switched to testnet, saw three tools and clicked one would otherwise land on a mainnet read that
+ * says "no declared uses" — the toggle working on the list and not on the thing it links to.
+ *
  * Returns a tool with an empty `edges` array when nobody has declared using it, which is the answer
  * for the overwhelming majority of atoms and is not an error. Measured: **84** atoms are the object
  * of a `uses` edge on 1155 (`scripts/measure/tool-atom-shape.ts`); the atom population itself has
  * not been counted, and the Base registry's id count is of ERC-8004 identities there, not of atoms
  * here (`scripts/measure/cohort-coverage.ts` — 309,925 against 28,648 mirrored on 2026-10-20).
  */
-export function fetchToolUsage(toolAtomId: string): Promise<ToolUsage> {
-    return getToolUsage(toolAtomId, {graphqlUrl: ERC8004_GRAPHQL_URL});
+export function fetchToolUsage(
+    toolAtomId: string,
+    graphqlUrl: string = ERC8004_GRAPHQL_URL,
+): Promise<ToolUsage> {
+    return getToolUsage(toolAtomId, {graphqlUrl});
 }

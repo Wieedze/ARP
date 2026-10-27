@@ -69,7 +69,11 @@ export function CapabilitySearch() {
                         className="mt-2 w-80 border border-[color:var(--color-rule-strong)] bg-transparent px-3 py-1.5 font-mono"
                     />
                 </div>
-                <button type="submit" disabled={domain.trim().length === 0} className={controlClass}>
+                <button
+                    type="submit"
+                    disabled={domain.trim().length === 0}
+                    className={controlClass}
+                >
                     Search
                 </button>
             </form>
@@ -126,6 +130,7 @@ export function CapabilitySearch() {
 }
 
 function Candidates({page}: {page: NonNullable<ReturnType<typeof useFindAgents>["data"]>}) {
+    const chain = useChainChoice();
     return (
         <>
             <p className="font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
@@ -161,7 +166,7 @@ function Candidates({page}: {page: NonNullable<ReturnType<typeof useFindAgents>[
                                 </span>
                             ) : (
                                 <>
-                                    {formatTrust(candidate.backingAssets)}
+                                    {formatTrust(candidate.backingAssets)} {chain.symbol}
                                     <span className="block text-[length:var(--text-label)] text-[color:var(--color-steel)]">
                                         {candidate.backers}{" "}
                                         {candidate.backers === 1 ? "backer" : "backers"}

@@ -1,4 +1,5 @@
 import {useId} from "react";
+import {useChainChoice} from "../../lib/chain-choice";
 import type {Hex} from "viem";
 import {useAccount} from "wagmi";
 
@@ -46,6 +47,7 @@ export function AgentBacking({
     nameIsId: boolean;
 }) {
     const {address} = useAccount();
+    const chain = useChainChoice();
     const {data: session, error: sessionError} = useStakeSession();
     const vaultQuery = useTermVault({
         termId: atomTermId,
@@ -84,7 +86,9 @@ export function AgentBacking({
                         Deposited
                     </dt>
                     <dd className="mt-1 font-mono tabular-nums">
-                        {vault === undefined ? "—" : `${formatTrust(vault.totalAssets)} TRUST`}
+                        {vault === undefined
+                            ? "—"
+                            : `${formatTrust(vault.totalAssets)} ${chain.symbol}`}
                     </dd>
                 </div>
                 <div>

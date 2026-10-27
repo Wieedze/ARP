@@ -1,4 +1,5 @@
 import {Link} from "react-router-dom";
+import {useChainChoice} from "../../lib/chain-choice";
 
 import type {ToolRow} from "../../services/tool-catalog";
 
@@ -48,6 +49,7 @@ function Figure({value, label}: {value: string; label: string}) {
 }
 
 function Row({row}: {row: ToolRow}) {
+    const {symbol} = useChainChoice();
     return (
         <li className="border-b border-[color:var(--color-rule)]">
             <Link
@@ -90,7 +92,7 @@ function Row({row}: {row: ToolRow}) {
                     <span className="font-mono text-[length:var(--text-body-sm)] tabular-nums text-right leading-tight">
                         <span className="sr-only">staked behind it: </span>
                         {row.supportTrust}
-                        <span className="text-[color:var(--color-steel)]"> TRUST</span>
+                        <span className="text-[color:var(--color-steel)]"> {symbol}</span>
                         {/* The counter only when something stands against it, so the cell is empty
                             rather than carrying a zero that reads as agreement. */}
                         {row.opposeTrust === null ? null : (

@@ -60,7 +60,7 @@ export function curveLabelOf(curveId: number): string {
 
 export const TOOL_ORDERS: readonly {id: ToolListingOrder; label: string}[] = [
     {id: "priced-edges", label: "Most declarations paid for"},
-    {id: "conviction", label: "Most TRUST behind"},
+    {id: "conviction", label: "Most staked"},
     {id: "declarations", label: "Most declarations"},
 ];
 

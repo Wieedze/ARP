@@ -1,3 +1,4 @@
+import {useChainChoice} from "../../lib/chain-choice";
 import {formatTrust, truncateMiddle} from "../../services/trust-format";
 import type {ToolUsageEdgeView} from "../../services/tool-usage-view";
 import {StakerCount} from "../agent/StakerCount";
@@ -35,6 +36,7 @@ export function UsageEdgeRow({
     edge: ToolUsageEdgeView;
     isFirstOfTier: boolean;
 }) {
+    const chain = useChainChoice();
     return (
         <li className="border-t border-[color:var(--color-rule)] py-4 first:border-t-0">
             <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
@@ -81,7 +83,7 @@ export function UsageEdgeRow({
                             For
                         </dt>
                         <dd className="flex items-baseline gap-2 tabular-nums">
-                            {formatTrust(edge.supportAssets)}
+                            {formatTrust(edge.supportAssets)} {chain.symbol}
                             <StakerCount count={edge.supportPositions} />
                         </dd>
                     </div>
@@ -107,7 +109,7 @@ export function UsageEdgeRow({
                             Against
                         </dt>
                         <dd className="flex items-baseline gap-2 tabular-nums">
-                            {formatTrust(edge.opposeAssets)}
+                            {formatTrust(edge.opposeAssets)} {chain.symbol}
                             <StakerCount count={edge.opposePositions} />
                         </dd>
                     </div>
