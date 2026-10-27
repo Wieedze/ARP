@@ -1,6 +1,6 @@
 import {Link, useParams} from "react-router-dom";
 
-import {RingLoader} from "../components/brand/RingLoader";
+import {PageLoading} from "../components/brand/PageLoading";
 import {useAtomStanding, isAtomId} from "../hooks/use-atom-standing";
 import {useChainChoice} from "../lib/chain-choice";
 import {linkClass} from "../lib/control-class";
@@ -60,13 +60,10 @@ export function AtomPanel() {
 
     if (query.isPending) {
         return (
-            <div aria-live="polite" aria-busy className="mt-10 flex items-center gap-4">
-                <RingLoader size={32} label="Reading the atom" />
-                <p className="font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
-                    reading <span>{truncateMiddle(atomId)}</span> and everything pointing at it on{" "}
-                    {chain.label.toLowerCase()}
-                </p>
-            </div>
+            <PageLoading label="Reading the atom">
+                reading {truncateMiddle(atomId)} and everything pointing at it on{" "}
+                {chain.label.toLowerCase()}
+            </PageLoading>
         );
     }
 

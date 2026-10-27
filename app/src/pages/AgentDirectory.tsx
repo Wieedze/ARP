@@ -4,7 +4,7 @@ import type {AgentListOrder} from "@arp-protocol/core";
 
 import {CapabilityFilter, CapabilityResults} from "../components/agent/CapabilitySearch";
 import {CohortList} from "../components/agent/CohortList";
-import {RingLoader} from "../components/brand/RingLoader";
+import {PageLoading} from "../components/brand/PageLoading";
 import {useChainChoice} from "../lib/chain-choice";
 import {controlClass} from "../lib/control-class";
 import {COHORT_PAGE_SIZE, useAgentCohort} from "../hooks/use-agent-cohort";
@@ -108,7 +108,7 @@ export function AgentDirectory() {
                     onSwitchOrder={changeOrder}
                 />
             ) : view === undefined ? (
-                <CohortLoading />
+                <PageLoading label="Reading the cohort" />
             ) : (
                 <>
                     <CohortList view={view} />
@@ -227,23 +227,6 @@ function PageButton({
         <button type="button" disabled={disabled} onClick={onClick} className={controlClass}>
             {label}
         </button>
-    );
-}
-
-/**
- * A loading state shaped like the answer: the read that is in flight, named.
- *
- * The ring sits beside the sentence rather than replacing it (ADR `0057` §6) — the sentence says
- * what is being read, the ring says it is still running. A spinner alone would drop the first half.
- */
-function CohortLoading() {
-    return (
-        <div aria-live="polite" aria-busy className="mt-10 flex items-center gap-4">
-            <RingLoader size={32} label="Reading the cohort" />
-            <p className="font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
-                reading the cohort from the intuition graph
-            </p>
-        </div>
     );
 }
 

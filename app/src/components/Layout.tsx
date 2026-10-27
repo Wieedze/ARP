@@ -32,7 +32,11 @@ export function Layout({children}: {children: ReactNode}) {
     const chain = useChainChoice();
 
     return (
-        <>
+        /* `min-h-screen flex flex-col` is what makes `flex-1` on `<main>` mean anything. This was
+           a fragment, so the footer sat directly under whatever the page rendered — on a short
+           page or a loading one it rode up the screen and then jumped back down when the content
+           arrived (user, 2026-10-27). */
+        <div className="flex min-h-screen flex-col">
             {/*
              * Agents · Tools on the left, Register · My profile on the right (user, 2026-10-20,
              * one row since 2026-10-27). The handoff's left pair is "AGENTS, MODULES"; there is
@@ -118,6 +122,6 @@ export function Layout({children}: {children: ReactNode}) {
                     <Watermark />
                 </div>
             </footer>
-        </>
+        </div>
     );
 }

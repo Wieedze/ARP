@@ -16,7 +16,7 @@ import {useChainChoice} from "../lib/chain-choice";
 import {useAgentProfile} from "../hooks/use-agent-profile";
 import {useStakeSession} from "../hooks/use-stake-session";
 import {useTermVault} from "../hooks/use-term-vault";
-import {RingLoader} from "../components/brand/RingLoader";
+import {PageLoading} from "../components/brand/PageLoading";
 import {
     buildPanelTabs,
     selectPanelTab,
@@ -400,18 +400,16 @@ function ArpPosition() {
 }
 
 /**
- * A loading state shaped like the answer: the agent being resolved, named,
- * where its name will be. Not a grey block on a grey background.
+ * A loading state shaped like the answer: the agent being resolved, named.
+ *
+ * It used to render the name as an `h1` beside a 40px ring, so the page had a heading that was not
+ * the agent's. `PageLoading` centres the mark and keeps the subject in the label, which is the
+ * same information without claiming to be the page's title.
  */
 function LoadingShape({chainId, tokenId}: {chainId: number; tokenId: string}) {
     return (
-        <section className="mt-10" aria-live="polite" aria-busy>
-            <div className="flex items-center gap-4">
-                <RingLoader size={40} label="Resolving this agent" />
-                <h1 className="type-title text-[color:var(--color-steel)]">
-                    Resolving {chainId}:{tokenId}
-                </h1>
-            </div>
-        </section>
+        <PageLoading label="Resolving this agent">
+            resolving {chainId}:{tokenId}
+        </PageLoading>
     );
 }

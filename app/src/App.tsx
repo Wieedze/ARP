@@ -1,6 +1,8 @@
 import {lazy, Suspense} from "react";
 import {Navigate, Route, Routes, useParams} from "react-router-dom";
 
+import {PageLoading} from "./components/brand/PageLoading";
+
 import {Layout} from "./components/Layout";
 import {AgentRegister} from "./pages/AgentRegister";
 
@@ -149,14 +151,7 @@ function AtomRedirect() {
 }
 
 function RouteFallback({label}: {label: string}) {
-    return (
-        <p
-            aria-live="polite"
-            className="font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]"
-        >
-            loading {label}…
-        </p>
-    );
+    return <PageLoading label={`Loading ${label}`}>loading {label}…</PageLoading>;
 }
 
 export default App;

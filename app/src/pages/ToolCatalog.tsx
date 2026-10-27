@@ -5,6 +5,7 @@ import {CurveControl, Segmented} from "../components/tool/ToolCatalogControls";
 import {linkClass} from "../lib/control-class";
 import type {ToolListingOrder} from "@arp-protocol/core";
 
+import {PageLoading} from "../components/brand/PageLoading";
 import {ToolCatalogList} from "../components/tool/ToolCatalogList";
 import {useToolCatalog} from "../hooks/use-tool-catalog";
 import {
@@ -91,12 +92,9 @@ export function ToolCatalog() {
                 replacing them with an error would lose a good read to a transient one. */}
             {view === undefined ? (
                 query.error === null ? (
-                    <p
-                        aria-live="polite"
-                        className="font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]"
-                    >
-                        reading…
-                    </p>
+                    <PageLoading label="Reading the tools">
+                        reading declared tools from the intuition graph
+                    </PageLoading>
                 ) : (
                     <Failure error={query.error} onRetry={() => void query.refetch()} />
                 )
