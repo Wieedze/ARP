@@ -2,7 +2,7 @@ import {describe, expect, it} from "vitest";
 
 import {
     curveLabelOf,
-    matchesFilters,
+    matchesFilter,
     TOOL_FILTERS,
     unknowableUnder,
     type ToolRow,
@@ -22,21 +22,29 @@ const row = (overrides: Partial<ToolRow> = {}): ToolRow => ({
     ...overrides,
 });
 
-describe("matchesFilters", () => {
-    it("keeps everything when nothing is on, because a default filter is a ranking", () => {
-        expect(matchesFilters(row(), [])).toBe(true);
-        expect(matchesFilters(row({declarations: 0, paidDeclarations: 0}), [])).toBe(true);
+describe("matchesFilter", () => {
+    it("keeps everything under `all`, because a default narrowing is a ranking", () => {
+        expect(matchesFilter(row(), "all")).toBe(true);
+        expect(matchesFilter(row({declarations: 0, paidDeclarations: 0}), "all")).toBe(true);
     });
 
-    it("combines with AND, so two filters narrow rather than widen", () => {
-        const neither = row({paidDeclarations: 1, declarations: 0});
-        expect(
-            matchesFilters(row({paidDeclarations: 1, declarations: 1}), [
-                "paid-for",
-                "declared-by-agents",
-            ]),
-        ).toBe(true);
-        expect(matchesFilters(neither, ["paid-for", "declared-by-agents"])).toBe(false);
+    it("is one axis: `paid` is strictly inside `used`, which is inside `all`", () => {
+        // Why the two checkboxes became one control. They were nested, so turning the stricter one
+        // on made the looser one do nothing — and that is exactly what the user could not see
+        // (2026-10-27): "c'est quoi la diff entre paid for et used by agent ?".
+        const paid = row({declarations: 3, paidDeclarations: 2});
+        const usedOnly = row({declarations: 3, paidDeclarations: 0});
+        const neither = row({declarations: 0, paidDeclarations: 0});
+
+        for (const [subject, all, used, isPaid] of [
+            [paid, true, true, true],
+            [usedOnly, true, true, false],
+            [neither, true, false, false],
+        ] as const) {
+            expect(matchesFilter(subject, "all")).toBe(all);
+            expect(matchesFilter(subject, "used")).toBe(used);
+            expect(matchesFilter(subject, "paid")).toBe(isPaid);
+        }
     });
 
     it("excludes an unknown rather than counting it as zero", () => {
@@ -46,16 +54,25 @@ describe("matchesFilters", () => {
          * assert that nobody paid, which this read cannot know — the same distinction the oppose
          * column makes by staying empty.
          */
-        expect(matchesFilters(row({paidDeclarations: null}), ["paid-for"])).toBe(false);
-        expect(matchesFilters(row({paidDeclarations: 0}), ["paid-for"])).toBe(false);
-        expect(matchesFilters(row({paidDeclarations: 1}), ["paid-for"])).toBe(true);
+        expect(matchesFilter(row({paidDeclarations: null}), "paid")).toBe(false);
+        expect(matchesFilter(row({paidDeclarations: 0}), "paid")).toBe(false);
+        expect(matchesFilter(row({paidDeclarations: 1}), "paid")).toBe(true);
     });
 
     it("every declared filter is handled", () => {
-        // A new `ToolFilter` with no branch would fall through `every` as `undefined` — falsy, so it
-        // would silently hide every row rather than failing loudly.
+        // A new `ToolFilter` with no branch returns `undefined` — falsy, so it would silently hide
+        // every row rather than failing loudly.
         for (const filter of TOOL_FILTERS) {
-            expect(typeof matchesFilters(row(), [filter.id])).toBe("boolean");
+            expect(typeof matchesFilter(row(), filter.id)).toBe("boolean");
+        }
+    });
+
+    it("offers three points and reads loosest first", () => {
+        expect(TOOL_FILTERS.map((filter) => filter.id)).toEqual(["all", "used", "paid"]);
+        expect(TOOL_FILTERS.map((filter) => filter.label)).toEqual(["All", "Used", "Paid for"]);
+        // No tooltips: an explanation a reader must hover for is one a touch screen never gets.
+        for (const filter of TOOL_FILTERS) {
+            expect(filter).not.toHaveProperty("title");
         }
     });
 });
@@ -79,52 +96,51 @@ describe("unknowableUnder", () => {
             ...overrides,
         });
 
-    it("counts nothing when no filter is on", () => {
-        expect(unknowableUnder([registered(), row()], [])).toBe(0);
+    it("counts nothing under `all`", () => {
+        expect(unknowableUnder([registered(), row()], "all")).toBe(0);
     });
 
     it("counts a registered row excluded on an unknown", () => {
         // `paidDeclarations: null` is "this read cannot say", so the exclusion is not a verdict.
-        expect(unknowableUnder([registered()], ["paid-for"])).toBe(1);
+        expect(unknowableUnder([registered()], "paid")).toBe(1);
     });
 
     it("does NOT count a declared row whose answer is a measured no", () => {
         // `paidDeclarations: 0` is a fact: nobody paid. Calling that unknowable would tell the
         // reader the page cannot see something it can see.
-        expect(unknowableUnder([row({paidDeclarations: 0})], ["paid-for"])).toBe(0);
+        expect(unknowableUnder([row({paidDeclarations: 0})], "paid")).toBe(0);
     });
 
-    it("does NOT count a row excluded only by a filter that answered it", () => {
-        // `declarations` is measured for both populations, so `declared-by-agents` always answers.
-        // A registered row with zero declarations is a no, not an unknown.
-        expect(unknowableUnder([registered()], ["declared-by-agents"])).toBe(0);
-    });
-
-    it("counts nothing among rows that match", () => {
-        expect(unknowableUnder([row()], ["paid-for", "declared-by-agents"])).toBe(0);
+    it("counts nothing under `used`, which every row can answer", () => {
+        // `declarations` is measured for both populations, so `used` always answers. A registered
+        // row with zero declarations is a no, not an unknown.
+        expect(unknowableUnder([registered()], "used")).toBe(0);
     });
 
     /**
-     * The `contested` filter was the other half of this count and ADR `0056` removed it, so
-     * `paid-for` is now the only filter that can exclude a row on an unknown. That makes this the
+     * The `contested` filter was the other half of this count and ADR `0056` removed it, so `paid`
+     * is now the only point on the axis that can exclude a row on an unknown. That makes this the
      * whole of the unknowable surface rather than one case of two.
      */
     it("counts only the unknown, never a measured no", () => {
-        expect(unknowableUnder([registered()], ["paid-for"])).toBe(1);
-        expect(unknowableUnder([row({paidDeclarations: 0})], ["paid-for"])).toBe(0);
+        expect(unknowableUnder([registered()], "paid")).toBe(1);
+        expect(unknowableUnder([row({paidDeclarations: 0})], "paid")).toBe(0);
     });
 });
 
 describe("curveLabelOf", () => {
     it("names the two curves this app knows", () => {
-        expect(curveLabelOf(1)).toBe("Long term");
-        expect(curveLabelOf(2)).toBe("Short term");
+        // The contract's own names. They were "Long term" and "Short term", which is an
+        // invention — nothing in a bonding curve is about time — under a control called "Horizon"
+        // that the user could not read at all (2026-10-27).
+        expect(curveLabelOf(1)).toBe("Linear");
+        expect(curveLabelOf(2)).toBe("Progressive");
     });
 
     it("falls back to the id rather than inventing a name", () => {
         // The reason the function exists rather than being an index lookup: a curve this app does
-        // not know is a curve it cannot name, and "curve 7" is honest where "Long term" would be an
-        // invention. `defaultCurveId` is governance-configurable.
+        // not know is a curve it cannot name, and "curve 7" is honest where a made-up label would
+        // not be. `defaultCurveId` is governance-configurable.
         expect(curveLabelOf(7)).toBe("curve 7");
     });
 });

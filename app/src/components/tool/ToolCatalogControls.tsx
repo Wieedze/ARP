@@ -67,11 +67,20 @@ function Segmented<T>({
 /**
  * Which bonding curve a page reads.
  *
- * Named "Horizon" rather than "Curve" because what a position on each one *means* is the useful
- * distinction, not its id: curve 1 is linear and a position says "I stand behind this, durably";
- * curve 2 is offset progressive and says "I think this is about to be noticed". Two markets, never
- * summed — measured 2026-10-20, curve 1 holds 26.20 TRUST across 185 vaults at a share price of
- * 1.000–1.060, curve 2 holds 219.54 across 28 at 3.000–4.181.
+ * It was called **"Horizon"**, with the two curves labelled "Long term" and "Short term". The
+ * reasoning was that what a position *means* beats its id — curve 1 linear reads as "durably",
+ * curve 2 offset-progressive as "about to be noticed". The user could not read any of it
+ * (2026-10-27): _« je comprends pas horizon ? Là on a un registre de tool avec de la valeur et tu
+ * proposes un horizon, ce n'est pas compréhensible. »_
+ *
+ * He is right twice. Nothing in a bonding curve is about **time**, so long/short term was an
+ * invention; and `curveLabelOf` already argued against exactly this, in writing, one file over:
+ * "curve 7 is honest where Long term would be an invention."
+ *
+ * The contract's own names now — Linear and Progressive — under a control called Curve. What the
+ * choice does is real and is why it stays: two markets, never summed. Measured 2026-10-20, curve 1
+ * holds 26.20 TRUST across 185 vaults at a share price of 1.000–1.060, curve 2 holds 219.54 across
+ * 28 at 3.000–4.181 — so it decides whether you see a tenth of the money or the rest.
  */
 export function CurveControl({
     curveId,
@@ -82,7 +91,7 @@ export function CurveControl({
 }) {
     return (
         <Segmented
-            label="Horizon"
+            label="Curve"
             selected={curveId}
             onChange={onChange}
             options={TOOL_CURVES.map((entry) => ({

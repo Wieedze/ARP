@@ -3,8 +3,9 @@ import {Link} from "react-router-dom";
 import {RingLoader} from "../brand/RingLoader";
 import {Sigil} from "../brand/Sigil";
 import {useFindAgents} from "../../hooks/use-find-agents";
+import {StakerCount} from "./StakerCount";
 import {useChainChoice} from "../../lib/chain-choice";
-import {controlClass, linkClass} from "../../lib/control-class";
+import {controlClass} from "../../lib/control-class";
 import {formatTrust, truncateMiddle} from "../../services/trust-format";
 
 /**
@@ -166,7 +167,10 @@ function Candidates({page}: {page: NonNullable<ReturnType<typeof useFindAgents>[
                 {page.agents.map((candidate) => (
                     <li
                         key={candidate.atomId}
-                        className="flex flex-wrap items-start gap-x-6 gap-y-2 border-b border-[color:var(--color-rule)] py-3"
+                        // `group` is what lets the arrow appear on hover; `focus-within` is what
+                        // lets it appear for a keyboard, which `opacity-0` would otherwise hide
+                        // from entirely.
+                        className="group flex flex-wrap items-center gap-x-6 gap-y-2 border-b border-[color:var(--color-rule)] py-3 hover:bg-[color:var(--color-surface-hover)]"
                     >
                         {/* The glyph is generated from what the agent declared, so two candidates
                             are distinguishable before either name is read. */}
@@ -183,28 +187,33 @@ function Candidates({page}: {page: NonNullable<ReturnType<typeof useFindAgents>[
                                 {candidate.matched.label ?? "—"}
                             </span>
                         </span>
-                        <span className="text-right font-mono text-[length:var(--text-body-sm)] tabular-nums">
-                            {candidate.backingAssets === null ? (
-                                <span className="font-sans text-[color:var(--color-steel)]">
-                                    no backing
+                        {/* The mark, the count, the amount — and **nothing at all** when nobody
+                            has backed it. It read "no backing", which is a sentence about an
+                            absence; an empty cell says the same thing without being read (user,
+                            2026-10-27). */}
+                        {candidate.backingAssets === null ? (
+                            <span />
+                        ) : (
+                            <span className="flex shrink-0 items-center gap-3 font-mono text-[length:var(--text-body-sm)] tabular-nums">
+                                <span className="text-[color:var(--color-steel)]">
+                                    <StakerCount count={candidate.backers} />
                                 </span>
-                            ) : (
-                                <>
+                                <span>
                                     {formatTrust(candidate.backingAssets)} {chain.symbol}
-                                    <span className="block text-[length:var(--text-label)] text-[color:var(--color-steel)]">
-                                        {candidate.backers}{" "}
-                                        {candidate.backers === 1 ? "backer" : "backers"}
-                                    </span>
-                                </>
-                            )}
-                        </span>
-                        {/* `/atom/:atomId` is really "an atom and the `uses` edges pointing
-                            at it", and for an agent's identity atom those edges are **who declared
-                            hiring it**. The content is right; the route's name is a leftover from
-                            when only tools had one. Labelled for what it gives rather than for
-                            where it goes. */}
-                        <Link to={`/atom/${candidate.atomId}`} className={linkClass}>
-                            Who hired it →
+                                </span>
+                            </span>
+                        )}
+                        {/* An arrow, and only on hover or focus. It said "Who hired it →" — a
+                            leftover from the hire flow ADR `0060` deleted, and wrong twice over:
+                            nothing here hires, and the page it opens is the atom's whole standing,
+                            not one question about it. Naming the destination needs a sentence; the
+                            arrow says "there is more" and the row is already a link to it. */}
+                        <Link
+                            to={`/atom/${candidate.atomId}`}
+                            aria-label={`Open ${candidate.label ?? candidate.atomId}`}
+                            className="shrink-0 font-mono text-[color:var(--color-grey)]! opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100 hover:text-[color:var(--color-fg)]! focus-visible:opacity-100"
+                        >
+                            →
                         </Link>
                     </li>
                 ))}

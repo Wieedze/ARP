@@ -1,4 +1,4 @@
-import {useId, useState} from "react";
+import {useState} from "react";
 import {Link} from "react-router-dom";
 
 import {CurveControl, Segmented} from "../components/tool/ToolCatalogControls";
@@ -9,7 +9,8 @@ import {PageLoading} from "../components/brand/PageLoading";
 import {ToolCatalogList} from "../components/tool/ToolCatalogList";
 import {useToolCatalog} from "../hooks/use-tool-catalog";
 import {
-    matchesFilters,
+    curveLabelOf,
+    matchesFilter,
     TOOL_CURVES,
     TOOL_FILTERS,
     TOOL_ORDERS,
@@ -34,21 +35,23 @@ import {
  */
 
 export function ToolCatalog() {
-    const [order, setOrder] = useState<ToolListingOrder>("priced-edges");
+    // `conviction`, not `priced-edges`. The old default ranked by how many claims carry a position
+    // and is gone from the control (`TOOL_ORDERS`); money behind a claim is what separates it from
+    // an assertion, so the list opens on the amount rather than on a free count.
+    const [order, setOrder] = useState<ToolListingOrder>("conviction");
     // Curve 1 is the default because it is the durable signal: linear, so a position's gain follows
     // the tool's growth rather than the holder's timing. Curve 2 is where the money sits today, and
     // that is a different question — `TOOL_CURVES` has the measurement.
     const [curveId, setCurveId] = useState(TOOL_CURVES[0]?.id ?? 1);
     /**
-     * The reader's filters, and none is on by default.
+     * What the list is narrowed to, and `all` by default.
      *
-     * A default filter is a ranking wearing another name. The question was "can we highlight the
-     * good ones?", and the answer is that ARP has no opinion to highlight with (ADR `0046`) — a
-     * badge granted by two metrics is two metrics somebody farms, and a sybil costs $0.00005 an
-     * address here. What it has is dimensions the reader narrows on, differently from the next
-     * reader.
+     * A default narrowing is a ranking wearing another name. The question was "can we highlight
+     * the good ones?", and the answer is that ARP has no opinion to highlight with (ADR `0046`) —
+     * a badge granted by two metrics is two metrics somebody farms, and a sybil costs $0.00005 an
+     * address here. What it has is one axis the reader moves along.
      */
-    const [filters, setFilters] = useState<ToolFilter[]>([]);
+    const [filter, setFilter] = useState<ToolFilter>("all");
     const query = useToolCatalog(order, curveId);
     const view = query.data;
     /**
@@ -58,35 +61,40 @@ export function ToolCatalog() {
      * and could not be reached by `useMemo`. Three branches read as three branches when they are not
      * nested inside an expression.
      */
-    const visible = (view?.rows ?? []).filter((row) => matchesFilters(row, filters));
-    const unknowable = unknowableUnder(view?.rows ?? [], filters);
+    const visible = (view?.rows ?? []).filter((row) => matchesFilter(row, filter));
+    const unknowable = unknowableUnder(view?.rows ?? [], filter);
 
     return (
         <section>
-            <header className="mt-8 mb-6 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-3">
-                <div>
-                    <h1 className="font-sans type-display">Tools</h1>
-                </div>
-                <div className="flex flex-wrap items-baseline gap-x-6 gap-y-3">
-                    <CurveControl curveId={curveId} onChange={setCurveId} />
+            <header className="grid items-end gap-x-8 gap-y-6 pt-14 pb-10 md:grid-cols-[minmax(0,1fr)_auto]">
+                <h1 className="type-display">Tools</h1>
+                <dl className="flex overflow-hidden rounded-[var(--radius-card)] border border-[color:var(--color-rule)]">
+                    <Fact label="In the list">
+                        {view === undefined ? "—" : view.rows.length.toLocaleString("en-US")}
+                    </Fact>
+                    <Fact label="Curve">{curveLabelOf(curveId)}</Fact>
+                </dl>
+            </header>
+
+            {/* The toolbar on its own rule, like the index's. It was inline with the `h1`, which
+                at `--text-display` put four controls against a single word. */}
+            <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border-y border-[color:var(--color-rule)] py-3.5">
+                <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
                     <Segmented
                         label="Order"
                         selected={order}
                         onChange={setOrder}
                         options={TOOL_ORDERS}
                     />
-                    <FilterControl
-                        active={filters}
-                        onToggle={(filter) =>
-                            setFilters((previous) =>
-                                previous.includes(filter)
-                                    ? previous.filter((entry) => entry !== filter)
-                                    : [...previous, filter],
-                            )
-                        }
+                    <Segmented
+                        label="Show"
+                        selected={filter}
+                        onChange={setFilter}
+                        options={TOOL_FILTERS}
                     />
                 </div>
-            </header>
+                <CurveControl curveId={curveId} onChange={setCurveId} />
+            </div>
 
             {/* The list survives a failed refetch: `keepPreviousData` still holds the rows, and
                 replacing them with an error would lose a good read to a transient one. */}
@@ -98,7 +106,7 @@ export function ToolCatalog() {
                 ) : (
                     <Failure error={query.error} onRetry={() => void query.refetch()} />
                 )
-            ) : visible.length === 0 && view.rows.length > 0 && filters.length > 0 ? (
+            ) : visible.length === 0 && view.rows.length > 0 && filter !== "all" ? (
                 // A filtered-to-empty list is a different state from an empty catalogue, and
                 // saying so is the difference between "nothing matches what you asked" and
                 // "nothing exists" — the second would be a false claim about the graph.
@@ -149,54 +157,14 @@ export function ToolCatalog() {
     );
 }
 
-/**
- * The reader's filters. A checkbox group, because they combine — unlike the order, which is one of
- * three.
- *
- * `aria-pressed` on a button, not a real `<input type="checkbox">`, to match the two segmented
- * controls beside it: three different widget idioms in one header would be worse than one idiom used
- * for a slightly different job, and `aria-pressed` is the APG's toggle-button pattern.
- */
-function FilterControl({
-    active,
-    onToggle,
-}: {
-    active: readonly ToolFilter[];
-    onToggle: (filter: ToolFilter) => void;
-}) {
-    const labelId = useId();
+/** One boxed figure in the header, matching the index's. */
+function Fact({label, children}: {label: string; children: React.ReactNode}) {
     return (
-        <div className="flex items-baseline gap-3">
-            <span
-                id={labelId}
-                className="font-mono uppercase tracking-wider text-[length:var(--text-label)] text-[color:var(--color-steel)]"
-            >
-                Only
-            </span>
-            <div role="group" aria-labelledby={labelId} className="flex flex-wrap gap-1">
-                {TOOL_FILTERS.map((filter) => {
-                    const on = active.includes(filter.id);
-                    return (
-                        <button
-                            key={filter.id}
-                            type="button"
-                            aria-pressed={on}
-                            title={filter.title}
-                            onClick={() => onToggle(filter.id)}
-                            // Banged, like every other selected state here: `index.css`'s unlayered
-                            // `button { border; color }` beats any `@layer utilities` rule, and an
-                            // unbanged selected state renders identically to an unselected one.
-                            className={`px-3 py-1 text-[length:var(--text-body-sm)] ${
-                                on
-                                    ? "border-[color:var(--color-accent)]! text-[color:var(--color-accent)]!"
-                                    : "border-[color:var(--color-rule-strong)]! text-[color:var(--color-steel)]!"
-                            }`}
-                        >
-                            {filter.label}
-                        </button>
-                    );
-                })}
-            </div>
+        <div className="flex min-w-[7.5rem] flex-col gap-1.5 px-5 py-3.5 [&+&]:border-l [&+&]:border-l-[color:var(--color-rule)]">
+            <dt className="font-mono text-[10px] uppercase tracking-[0.06em] text-[color:var(--color-steel)]">
+                {label}
+            </dt>
+            <dd className="type-section text-[26px] leading-none tabular-nums">{children}</dd>
         </div>
     );
 }

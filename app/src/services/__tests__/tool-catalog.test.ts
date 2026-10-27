@@ -76,11 +76,25 @@ describe("buildToolCatalogView", () => {
 
     it("offers no order by score, and never will", () => {
         // ADR 0046: ARP composes no score. One descending score column would undo the argument the
-        // whole surface exists to make.
-        expect(TOOL_ORDERS.map((o) => o.id)).toEqual([
-            "priced-edges",
-            "conviction",
-            "declarations",
-        ]);
+        // whole surface exists to make. Asserted as a **set**, because the order of the buttons is
+        // a layout decision that has already changed once — pinning the array made a reshuffle look
+        // like a regression, which is the opposite of what this test is for.
+        expect(new Set(TOOL_ORDERS.map((order) => order.id))).toEqual(
+            new Set(["declarations", "conviction"]),
+        );
+        for (const order of TOOL_ORDERS) {
+            expect(order.label).not.toMatch(/score|rank|best|top|rating/i);
+        }
+    });
+
+    it("sorts by count and by amount, and by nothing in between", () => {
+        // Three sorts became two. `priced-edges` ranked by *how many* claims carry a position — a
+        // count of backed claims, sitting between the other two and reading as neither. The user
+        // read "Most paid for" and "Most staked" as the same thing (2026-10-27), and needing to
+        // explain that one is a count and the other a sum is the proof it should not be a button.
+        //
+        // Two things happen to a tool: an agent says it used it, and somebody puts money on it.
+        // Count and amount. That is the whole space.
+        expect(TOOL_ORDERS.map((order) => order.label)).toEqual(["Most used", "Most staked"]);
     });
 });

@@ -5,7 +5,8 @@ import {useAtomStanding, isAtomId} from "../hooks/use-atom-standing";
 import {useChainChoice} from "../lib/chain-choice";
 import {linkClass} from "../lib/control-class";
 import {describePointers, type AtomView, type GroupView} from "../services/atom-standing-view";
-import {stakerLabel, truncateMiddle} from "../services/trust-format";
+import {truncateMiddle} from "../services/trust-format";
+import {StakerCount} from "../components/agent/StakerCount";
 
 /**
  * `/atom/:atomId` — one atom, its own market, and everything that points at it.
@@ -126,21 +127,18 @@ function Identity({view}: {view: AtomView}) {
                         <span className="font-mono break-all">{view.pinnedUri}</span>
                     </Term>
                 )}
-                {/* The atom's own market, labelled so it cannot be read as the edges' total. A
-                    deposit here says the thing is worth something; a deposit on an edge says one
-                    claim about it is true. Two markets, never added (ADR `0056`). */}
-                <Term label="Backing the atom">
-                    {view.ownBacking === null ? (
-                        <span className="text-[color:var(--color-steel)]">no backing</span>
-                    ) : (
-                        <span className="font-mono tabular-nums">
-                            {view.ownBacking}{" "}
-                            <span className="text-[color:var(--color-steel)]">
-                                · {stakerLabel(view.ownPositions)}
-                            </span>
-                        </span>
-                    )}
-                </Term>
+                {/* The atom's own market — a different one from the edges below, and never summed
+                    with them (ADR `0056`). It was "Backing the atom · 6.03586585 TRUST · 1 distinct
+                    staker": a label, a figure and four words of prose for two numbers. The user
+                    asked for the mark and the numbers and nothing else (2026-10-27).
+
+                    Absent when nobody has backed it. It read "no backing", which is a sentence
+                    about an absence — an empty cell says the same thing and says it faster. */}
+                {view.ownBacking === null ? null : (
+                    <Term label="Backed">
+                        <Backing amount={view.ownBacking} positions={view.ownPositions} />
+                    </Term>
+                )}
             </dl>
 
             <a
@@ -152,6 +150,30 @@ function Identity({view}: {view: AtomView}) {
                 Explorer →
             </a>
         </>
+    );
+}
+
+/**
+ * A staked figure: the person mark with its count, then the amount.
+ *
+ * `StakerCount` was already exactly what the user asked for — _« juste un svg avec une personne et
+ * un chiffre ainsi que la somme totale »_ — and this page was spelling it out in words instead
+ * (`1 distinct staker`). The mark says "accounts" without the noun, the digit says how many, and
+ * the amount follows.
+ *
+ * The count is never dropped. ADR `0023`: every vault on this surface holds one or two positions,
+ * so an amount on its own suggests a depth of opinion that is not there, and the count is the part
+ * that stops it reading as a market. `StakerCount` carries the announced label, so a screen reader
+ * still hears "1 distinct staker" where the screen shows a glyph and a digit.
+ */
+function Backing({amount, positions}: {amount: string; positions: number}) {
+    return (
+        <span className="flex shrink-0 items-center gap-3 font-mono text-[length:var(--text-body-sm)] tabular-nums">
+            <span className="text-[color:var(--color-steel)]">
+                <StakerCount count={positions} />
+            </span>
+            <span>{amount}</span>
+        </span>
     );
 }
 
@@ -182,11 +204,9 @@ function Group({group}: {group: GroupView}) {
                 >
                     {group.label}
                 </h2>
-                <p className="font-mono text-[length:var(--text-label)] tabular-nums text-[color:var(--color-steel)]">
-                    {group.backing === null
-                        ? `${group.rows.length} ${group.rows.length === 1 ? "claim" : "claims"}, nothing staked`
-                        : `${group.backing} · ${stakerLabel(group.positions)}`}
-                </p>
+                {group.backing === null ? null : (
+                    <Backing amount={group.backing} positions={group.positions} />
+                )}
             </div>
             <ul>
                 {group.rows.map((row) => (
@@ -202,21 +222,12 @@ function Group({group}: {group: GroupView}) {
                         >
                             {row.name}
                         </Link>
-                        <span className="font-mono text-[length:var(--text-body-sm)] tabular-nums">
-                            {row.backing === null ? (
-                                <span className="font-sans text-[color:var(--color-steel)]">
-                                    nothing staked
-                                </span>
-                            ) : (
-                                <>
-                                    {row.backing}{" "}
-                                    <span className="text-[color:var(--color-steel)]">
-                                        · {stakerLabel(row.positions)}
-                                    </span>
-                                </>
+                        <span className="flex items-center gap-4">
+                            {row.backing === null ? null : (
+                                <Backing amount={row.backing} positions={row.positions} />
                             )}
                             {row.opposition === null ? null : (
-                                <span className="ml-3 text-[color:var(--color-alarm)]">
+                                <span className="font-mono text-[length:var(--text-body-sm)] tabular-nums text-[color:var(--color-alarm)]">
                                     against {row.opposition}
                                 </span>
                             )}

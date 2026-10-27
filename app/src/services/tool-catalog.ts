@@ -40,13 +40,28 @@ import type {
  * never added** — a lot on the linear curve beside little on the progressive reads as quietly
  * trusted, the reverse reads as hyped, and a total erases both readings.
  */
+/**
+ * The two bonding curves the MultiVault runs, by the contract's own names.
+ *
+ * They were labelled "Long term" and "Short term" under a control called "Horizon". The user could
+ * not read it (2026-10-27): _« je comprends pas horizon ? Là on a un registre de tool avec de la
+ * valeur et tu proposes un horizon, ce n'est pas compréhensible. »_ He is right, and
+ * `curveLabelOf`'s own docstring one function down already argued the point against itself —
+ * "curve 7 is honest where Long term would be an invention". Long/short term was exactly that
+ * invention: nothing in the contract is about time.
+ *
+ * What the control actually picks is **which vault's money you are looking at**. Measured on
+ * mainnet 2026-10-20, curve 1 holds 26.20 TRUST across 185 `uses` vaults and curve 2 holds 219.54
+ * — 89.33% of it (`scripts/measure/stake-vault-placement.ts`). So it is not a preference, it is
+ * the difference between seeing a tenth of the market and seeing the rest.
+ */
 export const TOOL_CURVES: readonly {id: number; label: string; curve: string}[] = [
-    {id: 1, label: "Long term", curve: "Linear Curve"},
-    {id: 2, label: "Short term", curve: "Offset Progressive Curve"},
+    {id: 1, label: "Linear", curve: "Linear Curve"},
+    {id: 2, label: "Progressive", curve: "Offset Progressive Curve"},
 ];
 
 /**
- * `1` → `"Long term"`, for a figure that needs to name the curve it was read at.
+ * `1` → `"Linear"`, for a figure that needs to name the curve it was read at.
  *
  * Here and not beside the control that uses it: a component file that also exports a function breaks
  * fast refresh, and this belongs with `TOOL_CURVES` regardless.
@@ -58,10 +73,31 @@ export function curveLabelOf(curveId: number): string {
     return TOOL_CURVES.find((entry) => entry.id === curveId)?.label ?? `curve ${curveId}`;
 }
 
+/**
+ * Two ways to read the list, because there are two things that happen to a tool.
+ *
+ * A tool is an open market exactly like an agent: an agent can **say it used it**, and anyone can
+ * **put money on it**. Count and amount. That is the whole space, and it is what the user asked
+ * for — _« ce qu'on veut voir c'est les plus populaires et les plus investis »_.
+ *
+ * | label       | reads          | the question                      |
+ * | ----------- | -------------- | --------------------------------- |
+ * | Most used   | `declarations` | how many agents said they used it |
+ * | Most staked | `conviction`   | how much money is behind it       |
+ *
+ * **`priced-edges` is gone from this control**, and it was the default. It ranked by *how many of
+ * the claims carry a position* — a count of backed claims, which sits between the other two and is
+ * neither. The user read "Most paid for" and "Most staked" as the same thing (2026-10-27), and
+ * having to explain that one is a count and the other a sum is the proof that it should not be a
+ * button. The package still exposes the order; this page no longer offers it.
+ *
+ * `conviction` is the default in its place: the page's argument is that money behind a claim is
+ * what separates it from an assertion (`docs/09` §3), and leading on a free count would rank the
+ * list by the rung the ladder exists to demote.
+ */
 export const TOOL_ORDERS: readonly {id: ToolListingOrder; label: string}[] = [
-    {id: "priced-edges", label: "Most declarations paid for"},
+    {id: "declarations", label: "Most used"},
     {id: "conviction", label: "Most staked"},
-    {id: "declarations", label: "Most declarations"},
 ];
 
 /**
@@ -138,23 +174,32 @@ export type ToolRow = {
  * to look for a disagreement that is not there. The `Against` figure still shows on a row that has
  * one — displaying what exists is not the same as soliciting it.
  */
-export type ToolFilter = "paid-for" | "declared-by-agents";
+/**
+ * What the list is narrowed to. **One choice of three**, not two checkboxes.
+ *
+ * It was two toggles, `paid-for` and `declared-by-agents`, and the user asked what the difference
+ * was (2026-10-27). The honest answer is that one **contains** the other: `paid-for` keeps rows
+ * with at least one *backed* claim, `declared-by-agents` keeps rows with at least one claim at
+ * all. Turning on the first made the second do nothing. Two controls where one dominates is not a
+ * choice, it is a trap — and it is why the labels could not be made clear: they were describing
+ * two points on one axis as if they were two axes.
+ *
+ * So: one axis, three points, nested outward from the strictest.
+ */
+export type ToolFilter = "all" | "used" | "paid";
 
-export const TOOL_FILTERS: readonly {id: ToolFilter; label: string; title: string}[] = [
-    {
-        id: "paid-for",
-        // "Declarations paid for", not "Paid for". The filter is about **declarations** — whether an
-        // agent's claim to have used the tool carries a position — and the terse label read as being
-        // about the tool, which hid rows displaying real TRUST on the tool's own vault. `TOOL_ORDERS`
-        // already had the unambiguous phrasing one entry up and this did not match it.
-        label: "Declarations paid for",
-        title: "At least one agent's declaration carries a position",
-    },
-    {
-        id: "declared-by-agents",
-        label: "Used by agents",
-        title: "An identified agent declared using it, rather than only being registered",
-    },
+/**
+ * The three points, widest first, so the control reads left to right as "loosen to tighten".
+ *
+ * No `title` tooltips. They carried one each — "At least one agent's declaration carries a
+ * position" — which the user named as part of the problem: a description hidden inside a button,
+ * reachable only by hovering and never on a touch screen. `rules/ui.md` puts an explanation in a
+ * `Hint` or in the code, not in a `title`.
+ */
+export const TOOL_FILTERS: readonly {id: ToolFilter; label: string}[] = [
+    {id: "all", label: "All"},
+    {id: "used", label: "Used"},
+    {id: "paid", label: "Paid for"},
 ];
 
 /**
@@ -169,17 +214,17 @@ export const TOOL_FILTERS: readonly {id: ToolFilter; label: string; title: strin
  * asked" and "the rows that exist cannot answer what you asked" are different sentences, and a
  * reader who registered the only tool on the list deserves the second.
  */
-export function matchesFilters(row: ToolRow, active: readonly ToolFilter[]): boolean {
-    return active.every((filter) => {
-        switch (filter) {
-            case "paid-for":
-                // `null` is "this read cannot say", not "nobody paid": pricing a registered row's
-                // declarations needs the per-edge vaults, which is `listTools`'s read.
-                return row.paidDeclarations !== null && row.paidDeclarations > 0;
-            case "declared-by-agents":
-                return row.declarations > 0;
-        }
-    });
+export function matchesFilter(row: ToolRow, filter: ToolFilter): boolean {
+    switch (filter) {
+        case "all":
+            return true;
+        case "used":
+            return row.declarations > 0;
+        case "paid":
+            // `null` is "this read cannot say", not "nobody paid": pricing a registered row's
+            // declarations needs the per-edge vaults, which is `listTools`'s read.
+            return row.paidDeclarations !== null && row.paidDeclarations > 0;
+    }
 }
 
 /**
@@ -189,13 +234,11 @@ export function matchesFilters(row: ToolRow, active: readonly ToolFilter[]): boo
  * excludes it on an unknown rather than on a no — and an empty list that says "none matches" when
  * the truth is "none can say" is a claim about those tools that this page has not read.
  */
-export function unknowableUnder(rows: readonly ToolRow[], active: readonly ToolFilter[]): number {
-    if (active.length === 0) return 0;
-    return rows.filter(
-        (row) =>
-            !matchesFilters(row, active) &&
-            active.some((filter) => filter === "paid-for" && row.paidDeclarations === null),
-    ).length;
+export function unknowableUnder(rows: readonly ToolRow[], filter: ToolFilter): number {
+    // Only `paid` can hide a row on an unknown: `used` reads `declarations`, which every row
+    // carries, and `all` hides nothing.
+    if (filter !== "paid") return 0;
+    return rows.filter((row) => row.paidDeclarations === null).length;
 }
 
 export type ToolCatalogView = {
