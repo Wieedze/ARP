@@ -336,6 +336,8 @@ export {
  * rehearsal and not in the thing (`rules/portability.md` point 4).
  */
 export {
+    CAPABILITY_PREDICATES,
+    findAgents,
     HIRE_SELECTORS,
     DelegationFrameworkMissingError,
     HireBoundMissingError,
@@ -344,6 +346,9 @@ export {
     prepareRateStake,
     type HireBound,
     type HireEnvironment,
+    type AgentCandidate,
+    type FindAgentsConfig,
+    type FindAgentsPage,
     type HirePlan,
     type RatePlan,
     type UnsignedDelegation,

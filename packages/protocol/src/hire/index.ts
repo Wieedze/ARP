@@ -9,3 +9,10 @@ export {
     type UnsignedDelegation,
 } from "./plan.js";
 export {prepareRate, prepareRateStake, type RatePlan} from "./rate.js";
+export {
+    CAPABILITY_PREDICATES,
+    findAgents,
+    type AgentCandidate,
+    type FindAgentsConfig,
+    type FindAgentsPage,
+} from "./find.js";
