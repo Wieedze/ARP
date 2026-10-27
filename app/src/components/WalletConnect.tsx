@@ -39,7 +39,11 @@ export function WalletConnect() {
 
     if (isConnectPending || status === "connecting" || status === "reconnecting") {
         return (
-            <button type="button" disabled className="px-3 py-1.5 text-[length:var(--text-body-sm)] font-mono">
+            <button
+                type="button"
+                disabled
+                className="h-7 px-2.5 font-mono text-[11px] uppercase tracking-[0.1em]"
+            >
                 Connecting…
             </button>
         );
@@ -47,7 +51,8 @@ export function WalletConnect() {
 
     if (!isConnected || !address) {
         // Prefer MetaMask if available, otherwise use the first available connector.
-        const primary = connectors.find((c) => c.id === "metaMask" || c.id === "injected") ?? connectors[0];
+        const primary =
+            connectors.find((c) => c.id === "metaMask" || c.id === "injected") ?? connectors[0];
         if (!primary) {
             return (
                 <span className="text-[length:var(--text-body-sm)] text-[color:var(--color-grey)]">
@@ -59,7 +64,7 @@ export function WalletConnect() {
             <button
                 type="button"
                 onClick={() => connect({connector: primary})}
-                className="px-3 py-1.5 text-[length:var(--text-body-sm)]"
+                className="h-7 px-2.5 font-mono text-[11px] uppercase tracking-[0.1em]"
             >
                 Connect wallet
             </button>
@@ -75,9 +80,12 @@ export function WalletConnect() {
                 onClick={() => setOpen((v) => !v)}
                 aria-haspopup="menu"
                 aria-expanded={open}
-                className="flex items-center gap-2 px-3 py-1.5 text-[length:var(--text-body-sm)] font-mono"
+                className="flex h-7 items-center gap-2 rounded-[var(--radius-control)] px-2.5 font-mono text-[11px]"
             >
-                <span className="size-2 bg-[color:var(--color-accent)]" aria-hidden />
+                <span
+                    className="size-[6px] rounded-full bg-[color:var(--color-accent)]"
+                    aria-hidden
+                />
                 {short}
             </button>
             {open ? (

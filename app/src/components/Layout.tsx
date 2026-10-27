@@ -58,18 +58,28 @@ export function Layout({children}: {children: ReactNode}) {
                 with no door (user, 2026-10-27). "Your agent", not "Register", because
                 `/register` beside it registers a *tool* and two items reading "Register" would be
                 the ambiguity that question was about. */}
+            {/* Balanced around the centred mark, and the balance is the whole point: the right
+                column had five text items plus a two-button chain toggle plus an address, against
+                two on the left. It overflowed, wrapped the address onto a second line and shoved
+                the mark off centre (user, with a screenshot, 2026-10-27).
+
+                Three and three now. **What you read** goes left — the two indexes and your own
+                positions, which is a page of figures like the others. **What you do** goes right,
+                with the chain and the wallet after it: both are state rather than destinations, so
+                they sit at the end rather than among the links. The toggle is one button now, not
+                two (`ChainToggle`). */}
             <NavSplit
                 left={
                     <>
                         <NavLink to="/agents">Agents</NavLink>
                         <NavLink to="/tools">Tools</NavLink>
+                        {isConnected ? <NavLink to="/profile">My profile</NavLink> : null}
                     </>
                 }
                 right={
                     <>
                         <NavLink to="/agent">Your agent</NavLink>
                         <NavLink to="/register">Add a tool</NavLink>
-                        {isConnected ? <NavLink to="/profile">My profile</NavLink> : null}
                         <ChainToggle />
                         <WalletConnect />
                     </>
