@@ -253,13 +253,15 @@ export type {
     RegistrationService,
 } from "./registration-file.js";
 
+/**
+ * The newest declarations an identified agent wrote, for a surface that claims the protocol is
+ * alive. Empty is the honest answer on mainnet today and must render as "nothing yet".
+ */
+export {getRecentDeclarations} from "./recent.js";
+export type {RecentConfig, RecentDeclaration} from "./recent.js";
+
 export {getAtomStanding} from "./atom-standing.js";
-export type {
-    AtomEdge,
-    AtomEdgeGroup,
-    AtomStanding,
-    AtomStandingConfig,
-} from "./atom-standing.js";
+export type {AtomEdge, AtomEdgeGroup, AtomStanding, AtomStandingConfig} from "./atom-standing.js";
 
 /**
  * Declaring what an agent used, and putting TRUST behind it — the write half of `docs/12`.

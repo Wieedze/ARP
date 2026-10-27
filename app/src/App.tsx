@@ -21,6 +21,7 @@ const AgentDirectory = lazy(() =>
 const AgentTrustPanel = lazy(() =>
     import("./pages/AgentTrustPanel").then((module) => ({default: module.AgentTrustPanel})),
 );
+const Landing = lazy(() => import("./pages/Landing").then((module) => ({default: module.Landing})));
 const YourAgent = lazy(() =>
     import("./pages/YourAgent").then((module) => ({default: module.YourAgent})),
 );
@@ -42,15 +43,19 @@ function App() {
     return (
         <Layout>
             <Routes>
-                {/* `/` is the tool catalogue now. It was `ModuleList`, reading ARP's own
-                    `ModuleRegistry`, and ADR `0051` retired that: ARP points at tools hosted
-                    elsewhere and keeps no catalogue. The root route pointing at a registry ARP
-                    wrote was the clearest remaining statement of the opposite. */}
+                {/* `/` is the landing, from the second design handoff's `landing.html`, which it
+                    marks approved as final. It was the tool catalogue, which was itself a
+                    replacement for `ModuleList` — ARP's own `ModuleRegistry`, retired by ADR
+                    `0051`. The catalogue keeps `/tools`.
+
+                    Everything on it reads from the chain, including the empty state: on mainnet
+                    there are zero declarations by an identified agent, and the page says so rather
+                    than showing a sample. */}
                 <Route
                     path="/"
                     element={
-                        <Suspense fallback={<RouteFallback label="tools" />}>
-                            <ToolCatalog />
+                        <Suspense fallback={<RouteFallback label="the front page" />}>
+                            <Landing />
                         </Suspense>
                     }
                 />

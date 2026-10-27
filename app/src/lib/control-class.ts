@@ -76,6 +76,20 @@ export const controlClass = `${SHAPE} border-[color:var(--color-rule-strong)]! $
 export const primaryControlClass = `${SHAPE} border-[color:var(--color-accent)]! text-[color:var(--color-accent)]! ${DISABLED}`;
 
 /**
+ * The one filled button in the app: a hero's call to action.
+ *
+ * {@link primaryControlClass} is bordered, which is right inside a confirmation panel — the panel
+ * carries the weight and a filled button there would shout over the figures it is confirming. On a
+ * hero there is no panel, and the reference's `.cta` is filled.
+ *
+ * `--color-accent-ink` on `--color-accent` measures **10.17:1** (`scripts/measure/contrast.ts`), so
+ * the one place ink sits on the accent clears AA comfortably. Both properties banged, and the
+ * background too: `index.css`'s unlayered `button { color }` would otherwise repaint the label.
+ */
+export const heroControlClass =
+    "px-5 py-2.5 text-[15px] font-bold bg-[color:var(--color-accent)]! text-[color:var(--color-accent-ink)]! border-[color:var(--color-accent)]!";
+
+/**
  * A text link rendered as an action.
  *
  * **No accent.** It was `text-[color:var(--color-accent)]!`, which put Saffron on every link in the
