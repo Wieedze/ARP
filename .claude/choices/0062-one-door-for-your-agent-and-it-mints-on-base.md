@@ -57,6 +57,46 @@ Base, the operator's own ETH, on a chain this app had never addressed.
 3. **The mint targets the canonical registry on Base**, not ARP's testnet copy.
    `services/identity-mint.ts`, `0x8004A169FB4a3325136EB29fA0ceB6D2e539a432`, chain 8453.
 
+4. **It mints `register(agentURI)`, never `register()`.** Added after the user asked whether
+   signing straight into the registry is the intended use. It is — but the no-argument form mints
+   an identity whose `tokenURI` is **empty**, and a second probe showed what that costs: agents
+   `6649` and `500000` on Base return an empty `tokenURI`, and they are exactly the rows this app
+   already renders as the indexer's stand-in, `Agent 8453:6649`.
+
+   The whole chain degrades from one missing argument: no `tokenURI` → `registrationFile` null →
+   `prepareIdentityAtom` falls back to the frozen recipe's defaults → the Intuition atom carries a
+   stand-in name → every reader sees a nameless agent. So the first version of this flow would have
+   minted into the half of the cohort nothing can say anything about.
+
+   The document's shape was read **off the chain**, not off a spec — agent `1`'s own file, 2,269
+   bytes of it:
+
+   ```json
+   {
+     "type": "https://eips.ethereum.org/EIPS/eip-8004#registration-v1",
+     "name": "ClawNews",
+     "description": "…",
+     "image": "…",
+     "services": [{ "name": "web", "endpoint": "https://clawnews.io" }],
+     "registrations": [{ "agentId": 1, "agentRegistry": "eip155:56:0x8004A169…" }],
+     "active": true,
+     "x402Support": false,
+     "supportedTrust": ["reputation"]
+   }
+   ```
+
+   `packages/protocol/src/registration-file.ts` builds it. **On chain as a
+   `data:application/json;base64,…` URI by default** — what agents `1` and `2340` carry. Agent
+   `1100000` instead points at `https://centralcity.ai/a/L8Blf4`; both forms are in use, and the
+   default follows ARP's own argument that a claim should be checkable without trusting a server.
+   The byte count is shown before signing, because it is the gas.
+
+   `name` is the only required field, because it is the only one whose absence causes the failure
+   above. `agentId: null` in the self-entry is the convention, not a gap — a fresh mint cannot know
+   its own id, and agent `1`'s file does the same for its Base entry. `setAgentURI` lets the owner
+   replace the document later, and the probe confirmed it reverts `Not authorized` for anybody
+   else.
+
 **Base only, and that is a decision rather than a limitation.** Intuition's mirror covers Base, so
 an identity minted on BSC is real and still unreadable by everything this app does next. `/agents`
 already says as much in its lookup form: BSC and Ethereum hold registry entries with no trust edges
@@ -111,6 +151,9 @@ happened to be reading.
   reader can be asked to switch to any of three networks depending on what they are doing. That is
   the protocol's actual shape (`docs/15` gap 1: identity on Base, staking on 1155), but it is one
   more thing to hold.
+- **A published document, written once.** The registration file goes on chain and the owner is the
+  only one who can replace it (`setAgentURI`). A typo in a name is a transaction to fix, not an
+  edit. The form shows the exact bytes before signing for that reason.
 - **Real ETH on mainnet Base.** Not covered by ADR `0017`, which is about TRUST deposits into
   existing vaults. It is the operator's own gas, human-signed, one click, and
   `security.md`'s canonical sentence is untouched — no agent or script signs it. But it is a new

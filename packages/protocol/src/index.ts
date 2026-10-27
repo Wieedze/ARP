@@ -219,6 +219,29 @@ export type {ToolUsage, ToolUsageConfig, ToolUsageEdge} from "./tool-usage.js";
  * pointing at it grouped by predicate. What a tag, a category or a protocol needs and `uses`-only
  * reading could not give them.
  */
+/**
+ * The ERC-8004 registration file — the document an `agentURI` points at.
+ *
+ * `register()` with no argument mints an identity whose `tokenURI` is empty, which is legal and
+ * says nothing: probed on Base, agents 6649 and 500000 are in exactly that state and are the rows
+ * this package already reports as `metadata.isFallback`. Minting with a file is what makes an
+ * identity readable.
+ */
+export {
+    buildRegistrationFile,
+    registrationUriBytes,
+    REGISTRATION_V1_TYPE,
+    serialiseRegistrationFile,
+    toRegistrationDataUri,
+    toRegistrationUrl,
+} from "./registration-file.js";
+export type {
+    RegistrationEntry,
+    RegistrationFile,
+    RegistrationInput,
+    RegistrationService,
+} from "./registration-file.js";
+
 export {getAtomStanding} from "./atom-standing.js";
 export type {
     AtomEdge,

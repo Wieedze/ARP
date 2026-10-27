@@ -5,7 +5,7 @@ import type {Address} from "viem";
 
 import {AgentImport} from "./AgentImport";
 import {controlClass, linkClass, primaryControlClass} from "../lib/control-class";
-import {useIdentityMint} from "../hooks/use-identity-mint";
+import {draftToAgentUri, useIdentityMint} from "../hooks/use-identity-mint";
 import {truncateMiddle} from "../services/trust-format";
 import {
     MINT_CHAIN,
@@ -173,20 +173,43 @@ type Phase =
  * Three explicit steps — price, confirm, sign — and nothing advances on its own. Same discipline as
  * the staking control (ADR `0017` safeguard 5): no effect, no retry that resubmits, and
  * `handleSign` reachable from exactly one click.
+ *
+ * ## The name is required, and that is the point of the form
+ *
+ * `register()` with no argument mints an identity whose `tokenURI` is empty. Probed on Base
+ * 2026-10-27, agents `6649` and `500000` are in exactly that state — and they are the rows this
+ * app already shows as `Agent 8453:6649`, the indexer's stand-in. An unnamed identity is a legal
+ * NFT that nothing can say anything about, so the form asks for the one field whose absence causes
+ * that, and the rest are optional.
+ *
+ * The document goes **on chain** as a `data:application/json;base64,…` URI, which is what agents
+ * `1` and `2340` carry. A hosted URL is cheaper and can stop resolving; ARP's argument is that a
+ * claim should be checkable without trusting a server, so the default follows the argument. The
+ * byte count is shown before signing, because it is the gas.
  */
 function MintIdentity() {
     const {address, isConnected, chainId} = useAccount();
     const {switchChainAsync, isPending: isSwitching} = useSwitchChain();
     const {quote, submit} = useIdentityMint();
     const [phase, setPhase] = useState<Phase>({step: "idle"});
+    const [name, setName] = useState("");
+    const [description, setDescription] = useState("");
+    const [endpoint, setEndpoint] = useState("");
     const headingId = useId();
+    const fieldId = useId();
 
     const onMintChain = chainId === MINT_CHAIN.id;
+    const hasName = name.trim() !== "";
 
     async function handleQuote(owner: Address) {
         setPhase({step: "quoting"});
         try {
-            setPhase({step: "confirm", quote: await quote(owner)});
+            const agentUri = draftToAgentUri({
+                name,
+                description: description.trim() === "" ? undefined : description,
+                webEndpoint: endpoint.trim() === "" ? undefined : endpoint,
+            });
+            setPhase({step: "confirm", quote: await quote(owner, agentUri)});
         } catch (error) {
             setPhase({step: "error", message: messageOf(error), hash: null});
         }
@@ -195,7 +218,9 @@ function MintIdentity() {
     async function handleSign(current: MintQuote) {
         setPhase({step: "signing", quote: current});
         try {
-            setPhase({step: "done", result: await submit()});
+            // The quote's own bytes, not a re-derivation: editing the form between the quote and
+            // the signature must not change what is signed for.
+            setPhase({step: "done", result: await submit(current.agentUri)});
         } catch (error) {
             setPhase({step: "error", message: messageOf(error), hash: null});
         }
@@ -247,11 +272,43 @@ function MintIdentity() {
                 />
             ) : (
                 <div className="mt-6">
+                    <div className="max-w-[32rem]">
+                        <Input
+                            id={`${fieldId}-name`}
+                            label="Name"
+                            value={name}
+                            onChange={setName}
+                            placeholder="What the agent is called"
+                        />
+                        <Input
+                            id={`${fieldId}-endpoint`}
+                            label="Endpoint"
+                            value={endpoint}
+                            onChange={setEndpoint}
+                            placeholder="https://… (optional)"
+                        />
+                        <div className="mt-4">
+                            <label
+                                htmlFor={`${fieldId}-description`}
+                                className="block font-mono uppercase tracking-wider text-[length:var(--text-label)] text-[color:var(--color-steel)]"
+                            >
+                                Description
+                            </label>
+                            <textarea
+                                id={`${fieldId}-description`}
+                                value={description}
+                                onChange={(event) => setDescription(event.target.value)}
+                                rows={3}
+                                placeholder="What it does (optional)"
+                                className="mt-2 w-full border border-[color:var(--color-rule-strong)] bg-transparent px-3 py-2 text-[length:var(--text-body-sm)] focus:border-[color:var(--color-accent)]"
+                            />
+                        </div>
+                    </div>
                     <button
                         type="button"
                         onClick={() => void handleQuote(address)}
-                        disabled={phase.step === "quoting"}
-                        className={controlClass}
+                        disabled={phase.step === "quoting" || !hasName}
+                        className={`mt-5 ${controlClass}`}
                     >
                         {phase.step === "quoting" ? "Reading the registry…" : "Check what it costs"}
                     </button>
@@ -303,6 +360,9 @@ function Confirm({
                 permanent and it cannot be un-minted.
             </p>
             <dl className="mt-4 grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 text-[length:var(--text-body-sm)]">
+                <Field label="Stored">
+                    {quote.uriBytes.toLocaleString("en-US")} bytes on chain
+                </Field>
                 <Field label="Gas">{quote.gas.toLocaleString("en-US")}</Field>
                 <Field label="Cost">
                     {cost ?? "fees unavailable — your wallet will show them"}
@@ -369,6 +429,40 @@ function Minted({result}: {result: MintResult}) {
             >
                 Now link your staking account →
             </Link>
+        </div>
+    );
+}
+
+function Input({
+    id,
+    label,
+    value,
+    onChange,
+    placeholder,
+}: {
+    id: string;
+    label: string;
+    value: string;
+    onChange: (next: string) => void;
+    placeholder: string;
+}) {
+    return (
+        <div className="mt-4 first:mt-0">
+            <label
+                htmlFor={id}
+                className="block font-mono uppercase tracking-wider text-[length:var(--text-label)] text-[color:var(--color-steel)]"
+            >
+                {label}
+            </label>
+            <input
+                id={id}
+                type="text"
+                autoComplete="off"
+                value={value}
+                placeholder={placeholder}
+                onChange={(event) => onChange(event.target.value)}
+                className="mt-2 w-full border border-[color:var(--color-rule-strong)] bg-transparent px-3 py-2 focus:border-[color:var(--color-accent)]"
+            />
         </div>
     );
 }

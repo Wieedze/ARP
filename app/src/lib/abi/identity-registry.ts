@@ -22,6 +22,33 @@ export const identityRegistryAbi = [
         inputs: [],
         outputs: [{name: "agentId", type: "uint256"}],
     },
+    /**
+     * The form that actually produces a readable identity. Probed on Base 8453 on 2026-10-27:
+     * it simulates from a zero-balance address, same as the no-arg form.
+     *
+     * `register()` leaves `tokenURI` empty, which is a legal identity that says nothing — and the
+     * state agents 6649 and 500000 are in. Everything downstream degrades from it: no `tokenURI`,
+     * no `registrationFile`, so `prepareIdentityAtom` falls back and the agent reads as
+     * `Agent 8453:6649`.
+     */
+    {
+        type: "function",
+        stateMutability: "nonpayable",
+        name: "register",
+        inputs: [{name: "agentURI", type: "string"}],
+        outputs: [{name: "agentId", type: "uint256"}],
+    },
+    /** Owner-only. Probed: it reverts `Not authorized` for anybody else. */
+    {
+        type: "function",
+        stateMutability: "nonpayable",
+        name: "setAgentURI",
+        inputs: [
+            {name: "agentId", type: "uint256"},
+            {name: "agentURI", type: "string"},
+        ],
+        outputs: [],
+    },
     {
         type: "function",
         stateMutability: "view",

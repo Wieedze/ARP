@@ -24,6 +24,10 @@ import {DEFAULT_TEST_ACCOUNT, DEFAULT_TEST_ADDRESS} from "./fixtures";
 
 const OTHER: Address = "0x1111111111111111111111111111111111111111";
 
+/** A registration file as the page would build one. Short on purpose; the shape is tested next door. */
+const AGENT_URI =
+    "data:application/json;base64,eyJ0eXBlIjoiaHR0cHM6Ly9laXBzLmV0aGVyZXVtLm9yZy9FSVBTL2VpcC04MDA0I3JlZ2lzdHJhdGlvbi12MSIsIm5hbWUiOiJQcm9iZSJ9";
+
 /** The `Registered(uint256 indexed agentId, string agentURI, address indexed to)` topic. */
 const REGISTERED_TOPIC = keccak256(toHex("Registered(uint256,string,address)"));
 
@@ -80,9 +84,15 @@ describe("quoteMint", () => {
         const quote = await quoteMint({
             publicClient: asPublic(client),
             owner: DEFAULT_TEST_ADDRESS,
+            agentUri: AGENT_URI,
         });
         expect(client.simulateContract).toHaveBeenCalledTimes(1);
         expect(quote.predictedTokenId).toBe("1137885");
+        // The document is priced, not merely passed along: `uriBytes` is the gas cost in the only
+        // unit a reader can act on, and the confirmation screen shows it.
+        expect(quote.agentUri).toBe(AGENT_URI);
+        expect(quote.uriBytes).toBe(AGENT_URI.length);
+        expect(client.simulateContract.mock.calls[0]?.[0]).toMatchObject({args: [AGENT_URI]});
         expect(quote.gas).toBe(120_000n);
         expect(quote.maxFeePerGas).toBe(1_000_000n);
     });
@@ -92,7 +102,11 @@ describe("quoteMint", () => {
             simulateContract: vi.fn().mockRejectedValue(new Error("execution reverted\nmore")),
         });
         await expect(
-            quoteMint({publicClient: asPublic(client), owner: DEFAULT_TEST_ADDRESS}),
+            quoteMint({
+                publicClient: asPublic(client),
+                owner: DEFAULT_TEST_ADDRESS,
+                agentUri: AGENT_URI,
+            }),
         ).rejects.toMatchObject({code: "reverted"});
     });
 
@@ -105,6 +119,7 @@ describe("quoteMint", () => {
         const quote = await quoteMint({
             publicClient: asPublic(client),
             owner: DEFAULT_TEST_ADDRESS,
+            agentUri: AGENT_URI,
         });
         expect(quote.maxFeePerGas).toBeNull();
         expect(quote.gas).toBe(120_000n);
@@ -116,7 +131,11 @@ describe("submitMint", () => {
         const wallet = makeWallet(1155);
         const client = makePublic();
         await expect(
-            submitMint({walletClient: asWallet(wallet), publicClient: asPublic(client)}),
+            submitMint({
+                walletClient: asWallet(wallet),
+                publicClient: asPublic(client),
+                agentUri: AGENT_URI,
+            }),
         ).rejects.toMatchObject({code: "wrong-chain"});
         expect(wallet.writeContract).not.toHaveBeenCalled();
         expect(client.simulateContract).not.toHaveBeenCalled();
@@ -129,7 +148,11 @@ describe("submitMint", () => {
         const wallet = makeWallet(MINT_CHAIN.id, 1155);
         const client = makePublic();
         await expect(
-            submitMint({walletClient: asWallet(wallet), publicClient: asPublic(client)}),
+            submitMint({
+                walletClient: asWallet(wallet),
+                publicClient: asPublic(client),
+                agentUri: AGENT_URI,
+            }),
         ).rejects.toMatchObject({code: "wrong-chain"});
         expect(wallet.writeContract).not.toHaveBeenCalled();
     });
@@ -139,7 +162,11 @@ describe("submitMint", () => {
         // produced it is what every other write path in this app refuses to do.
         const wallet = makeWallet();
         const client = makePublic();
-        await submitMint({walletClient: asWallet(wallet), publicClient: asPublic(client)});
+        await submitMint({
+            walletClient: asWallet(wallet),
+            publicClient: asPublic(client),
+            agentUri: AGENT_URI,
+        });
         expect(client.simulateContract).toHaveBeenCalledTimes(1);
         expect(wallet.writeContract).toHaveBeenCalledTimes(1);
         expect(wallet.writeContract.mock.calls[0]?.[0]).toMatchObject({
@@ -150,7 +177,11 @@ describe("submitMint", () => {
 
     it("names the chain on the write, so viem refuses a mismatch before building", async () => {
         const wallet = makeWallet();
-        await submitMint({walletClient: asWallet(wallet), publicClient: asPublic(makePublic())});
+        await submitMint({
+            walletClient: asWallet(wallet),
+            publicClient: asPublic(makePublic()),
+            agentUri: AGENT_URI,
+        });
         const sent = wallet.writeContract.mock.calls[0]?.[0] as {chain: {id: number}};
         expect(sent.chain.id).toBe(MINT_CHAIN.id);
     });
@@ -161,6 +192,7 @@ describe("submitMint", () => {
         const result = await submitMint({
             walletClient: asWallet(makeWallet()),
             publicClient: asPublic(makePublic()),
+            agentUri: AGENT_URI,
         });
         expect(result.tokenId).toBe("1137886");
         expect(result.chainId).toBe(MINT_CHAIN.id);
@@ -173,7 +205,11 @@ describe("submitMint", () => {
             waitForTransactionReceipt: vi.fn().mockResolvedValue({logs: []}),
         });
         await expect(
-            submitMint({walletClient: asWallet(makeWallet()), publicClient: asPublic(client)}),
+            submitMint({
+                walletClient: asWallet(makeWallet()),
+                publicClient: asPublic(client),
+                agentUri: AGENT_URI,
+            }),
         ).rejects.toMatchObject({code: "no-id-in-receipt"});
     });
 });

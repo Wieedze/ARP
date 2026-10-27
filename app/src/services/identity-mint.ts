@@ -9,7 +9,7 @@ import {
     type WalletClient,
 } from "viem";
 import {base} from "viem/chains";
-import {DEFAULT_IDENTITY_REGISTRY} from "@arp-protocol/core";
+import {DEFAULT_IDENTITY_REGISTRY, registrationUriBytes} from "@arp-protocol/core";
 
 import {identityRegistryAbi} from "../lib/abi/identity-registry";
 
@@ -37,6 +37,20 @@ import {identityRegistryAbi} from "../lib/abi/identity-registry";
  * identity minted anywhere else is real and still unreadable by everything this app does next.
  * BSC and Ethereum hold registry entries with no trust edges in the graph, which `/agents` already
  * says in its lookup form.
+ *
+ * ## It mints **with** a registration file, and that is not optional
+ *
+ * `register()` takes no argument and leaves `tokenURI` empty. That is a legal ERC-8004 identity
+ * which says nothing — no name, no description, no endpoint — and it is the state a large part of
+ * the cohort is in: probed on Base 2026-10-27, agents `6649` and `500000` both return an empty
+ * `tokenURI`. Those are exactly the rows this app already renders as the indexer's stand-in,
+ * `Agent 8453:6649` (`metadata.isFallback`).
+ *
+ * Everything downstream degrades from that one missing argument: no `tokenURI` → no
+ * `registrationFile` → `prepareIdentityAtom` falls back to the frozen recipe's defaults → the
+ * Intuition atom carries a stand-in name → every reader sees a nameless agent. So this module
+ * calls `register(string agentURI)`, which the same probe showed simulating from a zero-balance
+ * address. `packages/protocol/src/registration-file.ts` builds the document.
  *
  * ## What the simulation proves, and what it does not
  *
@@ -80,6 +94,10 @@ const registry = {address: MINT_REGISTRY, abi: identityRegistryAbi} as const;
 export type MintQuote = {
     /** The id the mint would take if it landed next. A prediction, not the outcome. */
     predictedTokenId: string;
+    /** The exact string that will be stored as `agentURI`. Shown before signing, byte for byte. */
+    agentUri: string;
+    /** What the registry will store. The gas cost in the only unit a reader can act on. */
+    uriBytes: number;
     /** The wallet that will own it. */
     owner: Address;
     chainId: number;
@@ -109,14 +127,17 @@ function assertOnMintChain(chainId: number | undefined): void {
 export async function quoteMint(params: {
     publicClient: PublicClient;
     owner: Address;
+    /** The document, already built. Required — see the header on why an empty one is not offered. */
+    agentUri: string;
 }): Promise<MintQuote> {
-    const {publicClient, owner} = params;
+    const {publicClient, owner, agentUri} = params;
 
     let predicted: bigint;
     try {
         const {result} = await publicClient.simulateContract({
             ...registry,
             functionName: "register",
+            args: [agentUri],
             account: owner,
         });
         predicted = result;
@@ -130,7 +151,12 @@ export async function quoteMint(params: {
     }
 
     const [gas, fees] = await Promise.all([
-        publicClient.estimateContractGas({...registry, functionName: "register", account: owner}),
+        publicClient.estimateContractGas({
+            ...registry,
+            functionName: "register",
+            args: [agentUri],
+            account: owner,
+        }),
         // Not fatal: a chain without EIP-1559 fee history still mints, the page just cannot
         // price it. Silence here would be the `claims.md` failure — a cost shown as zero.
         publicClient.estimateFeesPerGas().catch(() => null),
@@ -138,6 +164,8 @@ export async function quoteMint(params: {
 
     return {
         predictedTokenId: predicted.toString(),
+        agentUri,
+        uriBytes: registrationUriBytes(agentUri),
         owner,
         chainId: MINT_CHAIN.id,
         registry: MINT_REGISTRY,
@@ -147,6 +175,8 @@ export async function quoteMint(params: {
 }
 
 export type MintResult = {
+    /** What was stored, so a caller can show it without re-deriving it. */
+    agentUri: string;
     /** From the `Registered` event. The fact, as opposed to the quote's prediction. */
     tokenId: string;
     hash: Hex;
@@ -164,8 +194,10 @@ export type MintResult = {
 export async function submitMint(params: {
     walletClient: WalletClient<Transport, Chain, Account>;
     publicClient: PublicClient;
+    /** The same string the quote was priced against. Carried, not re-derived. */
+    agentUri: string;
 }): Promise<MintResult> {
-    const {walletClient, publicClient} = params;
+    const {walletClient, publicClient, agentUri} = params;
 
     assertOnMintChain(walletClient.chain?.id);
     assertOnMintChain(await walletClient.getChainId());
@@ -173,11 +205,12 @@ export async function submitMint(params: {
     const owner = walletClient.account.address;
     // Simulated again, immediately before signing: the quote may have been held while somebody
     // else changed the registry's state.
-    await quoteMint({publicClient, owner});
+    await quoteMint({publicClient, owner, agentUri});
 
     const hash = await walletClient.writeContract({
         ...registry,
         functionName: "register",
+        args: [agentUri],
         chain: MINT_CHAIN,
     });
     const receipt = await publicClient.waitForTransactionReceipt({hash});
@@ -191,7 +224,7 @@ export async function submitMint(params: {
         );
     }
 
-    return {tokenId, hash, owner, chainId: MINT_CHAIN.id};
+    return {tokenId, agentUri, hash, owner, chainId: MINT_CHAIN.id};
 }
 
 /**

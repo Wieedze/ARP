@@ -1,10 +1,16 @@
 import {useCallback} from "react";
 import {getWalletClient} from "@wagmi/core";
 import {createPublicClient, http, type Address, type Chain} from "viem";
+import {
+    buildRegistrationFile,
+    toRegistrationDataUri,
+    type RegistrationInput,
+} from "@arp-protocol/core";
 
 import {wagmiConfig} from "../lib/wagmi";
 import {
     MINT_CHAIN,
+    MINT_REGISTRY,
     quoteMint,
     submitMint,
     type MintQuote,
@@ -29,13 +35,27 @@ import {
  */
 const mintClient = createPublicClient({chain: MINT_CHAIN as Chain, transport: http()});
 
+/** What the page collects. The chain and the registry are this module's to supply, not the form's. */
+export type IdentityDraft = Omit<RegistrationInput, "chainId" | "registry">;
+
+/**
+ * The document, as a `data:` URI — built here so the quote and the write are priced against the
+ * **same bytes**, and so the page never has to assemble a published document itself.
+ */
+export function draftToAgentUri(draft: IdentityDraft): string {
+    return toRegistrationDataUri(
+        buildRegistrationFile({...draft, chainId: MINT_CHAIN.id, registry: MINT_REGISTRY}),
+    );
+}
+
 export function useIdentityMint() {
     const quote = useCallback(
-        (owner: Address): Promise<MintQuote> => quoteMint({publicClient: mintClient, owner}),
+        (owner: Address, agentUri: string): Promise<MintQuote> =>
+            quoteMint({publicClient: mintClient, owner, agentUri}),
         [],
     );
 
-    const submit = useCallback(async (): Promise<MintResult> => {
+    const submit = useCallback(async (agentUri: string): Promise<MintResult> => {
         // Requested without pinning a chain id: a client built for Base reports Base whatever the
         // wallet is really doing, and `submitMint` checks the wallet's own `eth_chainId` before it
         // builds anything.
@@ -43,7 +63,7 @@ export function useIdentityMint() {
         if (walletClient === null || walletClient.account === undefined) {
             throw new Error("No wallet client — reconnect your wallet and try again.");
         }
-        return submitMint({walletClient, publicClient: mintClient});
+        return submitMint({walletClient, publicClient: mintClient, agentUri});
     }, []);
 
     return {quote, submit};
