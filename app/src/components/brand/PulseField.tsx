@@ -76,6 +76,12 @@ export function PulseField({beats, backed}: {beats: number; backed: number}) {
             canvas.width = Math.round(width * dpr);
             canvas.height = Math.round(height * dpr);
             context?.setTransform(dpr, 0, 0, dpr, 0, 0);
+            // **Assigning width or height clears the bitmap**, per spec. Under
+            // `prefers-reduced-motion` nothing re-arms the loop, so a single resize left the hero
+            // permanently blank — measured: 2,107 painted pixels at mount, 0 after a resize, 0
+            // after resizing back. That is exactly the reader this branch exists to serve, so the
+            // still frame is redrawn here rather than waiting for a frame that never comes.
+            if (still) draw(0);
         }
 
         function draw(time: number) {
@@ -112,8 +118,10 @@ export function PulseField({beats, backed}: {beats: number; backed: number}) {
                 }
             }
 
-            // The core. Always warm: it is the subject everything else is about.
-            context.fillStyle = accent;
+            // Saffron means "somebody paid" on every surface in this app, so the core is warm
+            // only when something is actually on the record. At zero beats a warm core says the
+            // opposite of the figure beside it.
+            context.fillStyle = dots.length > 0 ? accent : rule;
             context.beginPath();
             context.arc(cx, cy, unit * 0.018, 0, Math.PI * 2);
             context.fill();
@@ -159,14 +167,13 @@ export function PulseField({beats, backed}: {beats: number; backed: number}) {
     }, [beats, backed]);
 
     return (
+        // **Hidden from the tree, deliberately.** It is a background behind the copy and every
+        // fact it could announce is already on screen as text — the beat card and the ticker both
+        // state the count. With `role="img"` a reader heard the same zero announced four times in
+        // four wordings, one of them as an image.
         <canvas
             ref={canvasRef}
-            role="img"
-            aria-label={
-                beats === 0
-                    ? "No declarations on this chain yet"
-                    : `${beats} declarations, ${backed} of them with a position behind them`
-            }
+            aria-hidden="true"
             className="absolute inset-0 block h-full w-full"
         />
     );

@@ -123,7 +123,8 @@ export async function getRecentDeclarations(
         if (tripleId === null || at === null || subjectId === null || objectId === null) continue;
 
         const term = readRecord(row, "term");
-        const vaults = term === null ? [] : ((term["vaults"] as unknown[]) ?? []);
+        const rawVaults = term === null ? null : term["vaults"];
+        const vaults = Array.isArray(rawVaults) ? rawVaults : [];
         const positions = readNumber(vaults[0] ?? null, "position_count") ?? 0;
 
         out.push({

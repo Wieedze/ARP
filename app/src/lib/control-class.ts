@@ -83,11 +83,20 @@ export const primaryControlClass = `${SHAPE} border-[color:var(--color-accent)]!
  * hero there is no panel, and the reference's `.cta` is filled.
  *
  * `--color-accent-ink` on `--color-accent` measures **10.17:1** (`scripts/measure/contrast.ts`), so
- * the one place ink sits on the accent clears AA comfortably. Both properties banged, and the
- * background too: `index.css`'s unlayered `button { color }` would otherwise repaint the label.
+ * the one place ink sits on the accent clears AA comfortably.
+ *
+ * **It is applied to an `<a>`, not a `<button>`, and that is why the radius is here.** Every other
+ * control in this app inherits `--radius-button` from `index.css`'s unlayered `button { }` rule; an
+ * anchor is not covered by it, so this shipped as the one hard-cornered control on the page —
+ * `border-radius: 0px` measured in the browser against the header button's 10px. The same slip made
+ * `border-[color:…]!` inert, because nothing set a width: a banged colour on a zero-width border
+ * paints nothing. Dropped rather than completed; the fill is the affordance.
+ *
+ * The `text-…!` bang stays load-bearing: `index.css`'s unlayered `a { color }` would otherwise
+ * repaint the label.
  */
 export const heroControlClass =
-    "px-5 py-2.5 text-[15px] font-bold bg-[color:var(--color-accent)]! text-[color:var(--color-accent-ink)]! border-[color:var(--color-accent)]!";
+    "px-5 py-2.5 text-[15px] font-bold rounded-[var(--radius-button)] bg-[color:var(--color-accent)]! text-[color:var(--color-accent-ink)]!";
 
 /**
  * A text link rendered as an action.

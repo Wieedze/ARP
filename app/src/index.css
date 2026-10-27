@@ -301,9 +301,15 @@ summary:focus-visible,
  * its own scale: a boxed figure, a card title, a rung's name.
  *
  * It exists because the three classes above set `font-size`, and they are unlayered, so they beat
- * a `text-[22px]` utility in `@layer utilities`. `type-section text-[22px]` renders at 52px and
- * looks like a mistake nobody made — the exact failure class `rules/ui.md` names, and it shipped
- * on seven call sites before a screenshot caught it. Setting the size here would reintroduce it.
+ * a `text-[26px]` utility in `@layer utilities`: the utility is inert and the element renders at
+ * `--text-section`, which is `clamp(28px, 4vw, 52px)` — 52px at desktop width. The exact failure
+ * class `rules/ui.md` names, and a screenshot caught it. Setting a size here would reintroduce it.
+ *
+ * **Two call sites had shipped with it** — `AgentDirectory.tsx` and `ToolCatalog.tsx`, both
+ * `type-section text-[26px]`, both fixed in `e8337d8`. That commit's message says nine and this
+ * comment said seven; the measured figure is **two**, and the other seven were written minutes
+ * later in `Landing.tsx` and never shipped. `rules/claims.md` §5 — one number, four copies, and
+ * two of them disagreed with each other as well as with the repo.
  */
 .type-face {
     font-family: var(--font-display);

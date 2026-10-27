@@ -2,9 +2,10 @@ import {Link} from "react-router-dom";
 import type {RecentDeclaration} from "@arp-protocol/core";
 
 import {PulseField} from "../components/brand/PulseField";
+import {Reveal} from "../components/brand/Reveal";
 import {useAgentCohort} from "../hooks/use-agent-cohort";
 import {useRecentDeclarations} from "../hooks/use-recent-declarations";
-import {useTripleCost} from "../hooks/use-triple-cost";
+import {useDeclarationCost} from "../hooks/use-declaration-cost";
 import {useChainChoice} from "../lib/chain-choice";
 import {heroControlClass, linkClass} from "../lib/control-class";
 import {formatTrust, truncateMiddle} from "../services/trust-format";
@@ -45,27 +46,35 @@ export function Landing() {
     const chain = useChainChoice();
     const recent = useRecentDeclarations(8);
     const cohort = useAgentCohort("economic-conviction", 0);
-    const tripleCost = useTripleCost();
+    const cost = useDeclarationCost();
 
     const declarations = recent.data ?? [];
     const backed = declarations.filter((row) => row.positions > 0).length;
     // An em dash until the chain answers. A placeholder figure here would be the copy this read
-    // exists to remove.
-    const acts = actsFor(
-        tripleCost.data === undefined ? "—" : `${formatTrust(tripleCost.data)} ${chain.symbol}`,
-    );
+    // exists to remove — and **one figure, used at both sites**, because the page carried this
+    // number twice and only one copy was corrected: Fig. 01 said `0.1 TRUST` with the chain's
+    // symbol interpolated beside it, which looked chain-aware while staying fixed. On testnet the
+    // two sites were 100× apart, eleven inches apart on screen (`rules/claims.md` §5).
+    const floor = cost.data === undefined ? "—" : `${formatTrust(cost.data.floor)} ${chain.symbol}`;
+    const acts = actsFor(floor);
 
     return (
         <>
-            <section className="relative mt-6 overflow-hidden rounded-[var(--radius-card)] border border-[color:var(--color-rule)]">
-                <div className="absolute inset-0">
+            {/* **No frame, and no inset.** The hero was a bordered card with
+                `clamp(24px,5vw,64px)` of padding, so its headline began 65px to the right of every
+                other heading on the page — measured at 1920px, h1 at 388 against 323 everywhere
+                else. The user read that as "tout est dans des cadres" and he was describing a real
+                misalignment, not a preference. The field bleeds past the shell on the right
+                instead, so the page runs to the edge rather than stopping in a dead margin. */}
+            <section className="relative mt-2">
+                <div className="absolute inset-y-0 left-0 right-[calc(50%-50vw)]">
                     <PulseField beats={declarations.length} backed={backed} />
                 </div>
 
                 {/* The copy sits in a 40rem column at the lower left, as the reference does. It
                     was the full width of the hero, which put an 88px headline straight across the
                     field's rings and made both unreadable. */}
-                <div className="relative flex min-h-[min(72vh,38rem)] max-w-[40rem] flex-col justify-end gap-6 p-[clamp(24px,5vw,64px)]">
+                <div className="relative flex min-h-[min(72vh,38rem)] max-w-[40rem] flex-col justify-end gap-6 py-[clamp(24px,5vw,64px)]">
                     <p className="font-mono text-[length:var(--text-label)] uppercase tracking-[0.08em] text-[color:var(--color-steel)]">
                         ARP · Agent Reputation Protocol
                     </p>
@@ -103,7 +112,12 @@ export function Landing() {
                         claims={[
                             [
                                 '"I am a DeFi agent."',
-                                `one gas fee · ${cohortSize(cohort.data?.total)} agents say things like it`,
+                                // `total` is the whole ERC-8004 cohort, not the agents making this
+                                // particular claim — `AgentPage.total` is "the whole cohort's
+                                // size", filtered on `implement -> ERC-8004` and nothing else. The
+                                // old wording read the figure against a population it does not
+                                // describe (`rules/claims.md` §2).
+                                `one gas fee · ${cohortSize(cohort.data?.total)} agents on the record, each asserted the same way`,
                             ],
                             [
                                 '"I use Slither and the SWC Registry."',
@@ -118,10 +132,7 @@ export function Landing() {
                     <Column
                         cost="Costs money"
                         claims={[
-                            [
-                                '"I used this agent."',
-                                `0.1 ${chain.symbol}, gone, with my address on it`,
-                            ],
+                            ['"I used this agent."', `${floor}, and the fee half never comes back`],
                             ['"I back this agent."', `${chain.symbol} on its atom, withdrawable`],
                             ['"That rating is wrong."', `${chain.symbol} against a signed claim`],
                         ]}
@@ -182,42 +193,46 @@ export function Landing() {
                 dim="Each one costs you something."
             >
                 <div className="grid gap-5 md:grid-cols-3">
-                    {acts.map((act) => (
-                        <article
-                            key={act.n}
-                            className={`flex flex-col gap-4 rounded-[var(--radius-card)] border p-5 ${
-                                act.primary
-                                    ? "border-[color:var(--color-accent)]"
-                                    : "border-[color:var(--color-rule)]"
-                            }`}
-                        >
-                            <span className="font-mono text-[length:var(--text-label)] text-[color:var(--color-steel)]">
-                                {act.n}
-                            </span>
-                            <h3 className="type-face text-[22px]">{act.title}</h3>
-                            <dl className="grid grid-cols-[auto_1fr] gap-x-5 gap-y-1.5 font-mono text-[length:var(--text-body-sm)]">
-                                {act.terms.map(([term, value]) => (
-                                    <div key={term} className="contents">
-                                        <dt className="text-[color:var(--color-steel)]">{term}</dt>
-                                        {/* Saffron marks a price on this page and nothing
-                                            else — the ladder's cost column and the beat figure
-                                            carry it too, and the handoff's own reference puts it
-                                            here (`<dd class="warm">`). */}
-                                        <dd
-                                            className={`text-right ${act.primary && term === "Costs from" ? "text-[color:var(--color-accent)]" : ""}`}
-                                        >
-                                            {value}
-                                        </dd>
-                                    </div>
-                                ))}
-                            </dl>
-                            <Link
-                                to={act.to}
-                                className={`mt-auto text-[length:var(--text-body-sm)] ${linkClass}`}
+                    {acts.map((act, index) => (
+                        <Reveal key={act.n} delayMs={index * 90} className="flex">
+                            <article
+                                className={`flex flex-1 flex-col gap-4 rounded-[var(--radius-card)] border p-5 ${
+                                    act.primary
+                                        ? "border-[color:var(--color-accent)]"
+                                        : "border-[color:var(--color-rule)]"
+                                }`}
                             >
-                                {act.cta} →
-                            </Link>
-                        </article>
+                                <span className="font-mono text-[length:var(--text-label)] text-[color:var(--color-steel)]">
+                                    {act.n}
+                                </span>
+                                <h3 className="type-face text-[22px]">{act.title}</h3>
+                                <dl className="grid grid-cols-[auto_1fr] gap-x-5 gap-y-1.5 font-mono text-[length:var(--text-body-sm)]">
+                                    {act.terms.map(([term, value]) => (
+                                        <div key={term} className="contents">
+                                            <dt className="text-[color:var(--color-steel)]">
+                                                {term}
+                                            </dt>
+                                            {/* The one figure on this page that wears the accent.
+                                            It is the primary action's own cost, inside the
+                                            primary action's own card, which is what
+                                            `rules/ui.md` spends the accent on — and the
+                                            reference puts it here too (`<dd class="warm">`). */}
+                                            <dd
+                                                className={`text-right ${act.primary && term === "Costs from" ? "text-[color:var(--color-accent)]" : ""}`}
+                                            >
+                                                {value}
+                                            </dd>
+                                        </div>
+                                    ))}
+                                </dl>
+                                <Link
+                                    to={act.to}
+                                    className={`mt-auto text-[length:var(--text-body-sm)] ${linkClass}`}
+                                >
+                                    {act.cta} →
+                                </Link>
+                            </article>
+                        </Reveal>
                     ))}
                 </div>
             </Section>
@@ -232,18 +247,21 @@ export function Landing() {
                         ARP has no opinion about any agent.
                     </span>
                     <br />
-                    <span className="text-[color:var(--color-accent)]">
+                    <span className="text-[color:var(--color-fg)]">
                         Every number is somebody&rsquo;s deposit.
                     </span>
                 </p>
             </section>
 
-            <Section figure="Fig. 04 · build against it" title="No API key." dim="No indexer.">
+            <Section
+                id="build"
+                figure="Fig. 04 · build against it"
+                title="No API key."
+                dim="No indexer."
+            >
                 <div className="grid items-center gap-10 lg:grid-cols-2">
                     <div className="flex flex-col gap-5">
-                        <p className="type-face text-[clamp(24px,3vw,34px)] text-[color:var(--color-accent)]">
-                            Never signs.
-                        </p>
+                        <p className="type-face text-[clamp(24px,3vw,34px)]">Never signs.</p>
                         <p className="font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
                             <code className="text-[color:var(--color-fg)]">@arp-protocol/core</code>{" "}
                             · holds no key, has no send path
@@ -272,7 +290,8 @@ export function Landing() {
 
 /* -------------------------------------------------------------------------- */
 
-/** `30,913`, or `—` while the cohort read is in flight. Never a guess. */
+/** `28,648`, or `—` while the cohort read is in flight. Never a guess. (The reference mock shows
+ *  `30,913`, which is the `same as` edge count rather than the cohort's.) */
 function cohortSize(total: number | null | undefined): string {
     return total === null || total === undefined ? "—" : total.toLocaleString("en-US");
 }
@@ -281,26 +300,33 @@ function Section({
     figure,
     title,
     dim,
+    id,
     children,
 }: {
     figure: string;
     title: string;
     dim: string;
+    /** An in-page anchor target. The hero's second CTA points at `#build`, and the port dropped
+     *  the reference's `<section id="build">` because this helper took no `id` — so the link
+     *  scrolled nowhere. */
+    id?: string;
     children: React.ReactNode;
 }) {
     return (
-        <section className="pt-24">
-            <div className="mb-8 flex flex-wrap items-end justify-between gap-6">
-                <h2 className="type-face text-[clamp(30px,4.4vw,56px)]">
-                    {title}
-                    <br />
-                    <span className="text-[color:var(--color-grey)]">{dim}</span>
-                </h2>
-                <span className="font-mono text-[length:var(--text-label)] uppercase tracking-[0.06em] text-[color:var(--color-steel)]">
-                    {figure}
-                </span>
-            </div>
-            {children}
+        <section id={id} className="scroll-mt-24 pt-24">
+            <Reveal>
+                <div className="mb-8 flex flex-wrap items-end justify-between gap-6">
+                    <h2 className="type-face text-[clamp(30px,4.4vw,56px)]">
+                        {title}
+                        <br />
+                        <span className="text-[color:var(--color-grey)]">{dim}</span>
+                    </h2>
+                    <span className="font-mono text-[length:var(--text-label)] uppercase tracking-[0.06em] text-[color:var(--color-steel)]">
+                        {figure}
+                    </span>
+                </div>
+            </Reveal>
+            <Reveal delayMs={120}>{children}</Reveal>
         </section>
     );
 }
@@ -374,7 +400,11 @@ function Beat({declarations, isPending}: {declarations: RecentDeclaration[]; isP
             <span className="flex items-center gap-2 border-b border-[color:var(--color-rule)] pb-2 font-mono text-[10px] uppercase tracking-[0.06em] text-[color:var(--color-steel)]">
                 <span
                     aria-hidden="true"
-                    className="h-[6px] w-[6px] rounded-full bg-[color:var(--color-accent)]"
+                    className={`h-[6px] w-[6px] rounded-full ${
+                        declarations.length > 0
+                            ? "bg-[color:var(--color-accent)]"
+                            : "bg-[color:var(--color-rule-strong)]"
+                    }`}
                 />
                 Pulse · {isPending ? "—" : declarations.length} on {chain.label.toLowerCase()}
             </span>
@@ -396,7 +426,11 @@ function Beat({declarations, isPending}: {declarations: RecentDeclaration[]; isP
                     <span className="font-mono text-[10px] text-[color:var(--color-steel)]">
                         Declared use · {relative(newest.at)}
                     </span>
-                    <strong className="type-face text-[20px] text-[color:var(--color-accent)]">
+                    <strong
+                        className={`type-face text-[20px] ${
+                            newest.assets === null ? "" : "text-[color:var(--color-accent)]"
+                        }`}
+                    >
                         {newest.assets === null
                             ? "no position"
                             : `${formatTrust(newest.assets)} ${chain.symbol}`}
