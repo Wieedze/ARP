@@ -1,6 +1,32 @@
 # Task 09 — Follow-ups the global review surfaced
 
-> **Status: NOT STARTED** (specified 2026-09-16).
+> **Status: COMPLETE** 2026-10-27. Re-walked item by item; most had been fixed by other work
+> without anybody recording it here, which is the hazard of a list like this one.
+>
+> | item                                                        | state                                                                                                                                                                                                                                                        |
+> | ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+> | P1 — the curve id                                           | fixed 2026-09-16, already recorded below                                                                                                                                                                                                                     |
+> | P2 — ARP mints a third `uses` predicate                     | **fixed, unrecorded.** `intuition-graph.ts:275` uses `INTUITION_USES_TERM_ID`, the published constant. The self-pinned predicate is gone.                                                                                                                    |
+> | P3 — `has tag` has no testnet constant                      | **fixed 2026-10-27** (`9c958c2`) — `HAS_TAG_TESTNET` plus `hasTagForWriting(chainId)`, which exists so the first thing to write a tag cannot get it wrong by omission                                                                                        |
+> | P4 — four TRUST formatters                                  | **fixed.** Two of the four files were deleted with their pages; the fourth, `formatWeiPlain`, is removed here and its two validation messages go through `formatTrust` — they were showing a `minDeposit` at 18 decimals one line from a row showing it at 8 |
+> | P5 — vault metrics implemented twice                        | **fixed, unrecorded.** `use-vault-metrics.ts` is deleted; the app uses the package                                                                                                                                                                           |
+> | Lower — `.env.example` dead var                             | removed here; `VITE_INTUITION_TESTNET_GRAPHQL` was read by nothing                                                                                                                                                                                           |
+> | Lower — `seed.ts`'s third chain definition                  | moot, the file is gone                                                                                                                                                                                                                                       |
+> | Lower — `packages/protocol/README.md` teaches `totalAssets` | already carries the warning at line 44                                                                                                                                                                                                                       |
+>
+> **Left open, deliberately**, with the reasons:
+>
+> - `client.ts` hardcoding three addresses `deployments/13579.json` owns, and
+>   `INTUITION_MAINNET_CHAIN_ID` restating a field on the chain object above it. Both are
+>   duplication without a live defect, and `src/arp/` is the one namespace allowed to name a chain
+>   (`rules/portability.md`).
+> - `packages/protocol/package.json` pointing `exports` at a gitignored `./dist`. Real, and it is a
+>   packaging decision rather than a follow-up: every script in the repo already builds the package
+>   first.
+>
+> Original status below.
+>
+> **NOT STARTED** (specified 2026-09-16).
 >
 > None of these blocks the four branches from merging. They were found by the cross-branch review and
 > a duplication scan after each branch had already passed its own review — which is exactly the class

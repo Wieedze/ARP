@@ -1,23 +1,30 @@
 # 0057 — Brand identity v0.3: The Source, Saffron, Archivo + Geist Mono
 
-**Status:** Proposed
-**Date:** 2026-10-21
-**Triggered by:** user request — art direction for the MVP, built in the "ARP · Brand identity" design canvas (pages v0.3 Identity and v0.4 Components).
+**Status:** Accepted — 2026-10-27, on the user's instruction to close everything open.
 
-> **Renumbered from 0032 on arrival, 2026-10-22.** `0032` is taken by *the `use` edge is a claim
-> about the identity* — the ADR that fixes the subject of every triple ARP writes, cited from eight
+> Implemented end to end since it was proposed: the tokens, the type scale, the tiered radii, the
+> `SourceMark`, the `Sigil`, the `RingLoader`, the `Hint` and the split nav are all live, and
+> `check:tokens` has guarded the palette since the day it landed. Two amendments are recorded where
+> they happened rather than here: the nav's centred mark moved left and then back
+> (`components/brand/NavSplit.tsx`), and `--text-display` was a flat 32px until the second handoff
+> replaced it with a clamp — which is where "ce n'est pas agréable" came from.
+> **Date:** 2026-10-21
+> **Triggered by:** user request — art direction for the MVP, built in the "ARP · Brand identity" design canvas (pages v0.3 Identity and v0.4 Components).
+
+> **Renumbered from 0032 on arrival, 2026-10-22.** `0032` is taken by _the `use` edge is a claim
+> about the identity_ — the ADR that fixes the subject of every triple ARP writes, cited from eight
 > places. The handoff drafted this as `0032` and `HANDOFF.md` step 0 says to copy it there, which
 > would have overwritten it. Nothing else about the decision changed.
 >
 > **Four of the handoff's assumptions about this repo are stale**, because it was written against the
 > tree before 2026-10-21's deletions. Recorded here so nobody re-derives them:
 >
-> | the handoff says | actually |
-> | --- | --- |
-> | `ModuleList` moves to `/modules`; `/tool/:id`, `/modules/new` need the new pattern | all three pages are **deleted** — `ModuleRegistry` went with ADR `0025`/`0051`/`0055`. There is no module surface to restyle. `/tools` and `/tool/atom/:atomId` are the live equivalents |
-> | domain tabs come "from the seed manifest domains" | `scripts/manifest-modules.json` is **deleted**. Tool domains have no seed source; the catalogue reads the graph |
-> | the profile page is new, at `/profile` | it **exists**, at `/me`, built 2026-10-21. The user asked for the route to be `/profile`, which is the rename this ADR's work carries |
-> | "Never shown: … shares" | a **redeem is denominated in shares** and cannot be stated in TRUST without inverting the bonding curve in the browser (ADR `0056`). The rule holds for a *holding* figure; a redeem form names its unit or it lies about what it takes. Flagged rather than resolved by fiat |
+> | the handoff says                                                                   | actually                                                                                                                                                                                                                                                                      |
+> | ---------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+> | `ModuleList` moves to `/modules`; `/tool/:id`, `/modules/new` need the new pattern | all three pages are **deleted** — `ModuleRegistry` went with ADR `0025`/`0051`/`0055`. There is no module surface to restyle. `/tools` and `/tool/atom/:atomId` are the live equivalents                                                                                      |
+> | domain tabs come "from the seed manifest domains"                                  | `scripts/manifest-modules.json` is **deleted**. Tool domains have no seed source; the catalogue reads the graph                                                                                                                                                               |
+> | the profile page is new, at `/profile`                                             | it **exists**, at `/me`, built 2026-10-21. The user asked for the route to be `/profile`, which is the rename this ADR's work carries                                                                                                                                         |
+> | "Never shown: … shares"                                                            | a **redeem is denominated in shares** and cannot be stated in TRUST without inverting the bonding curve in the browser (ADR `0056`). The rule holds for a _holding_ figure; a redeem form names its unit or it lies about what it takes. Flagged rather than resolved by fiat |
 
 ## Context
 
@@ -49,15 +56,18 @@ Unchanged and restated, because the first component drafts broke them: ARP shows
 ## Consequences
 
 **Positive:**
+
 - The logo, the sigils and the icons share one grammar, and the logo itself states the evidence ladder.
 - The hollow / filled sigil makes declared versus proven legible at 24px, which is the distinction `docs/14` says matters.
 
 **Negative:**
+
 - `app/src/index.css` tokens, fonts and every hand-tuned radius must change; the ADR 0028 cascade notes on button borders still apply.
 - Rounded corners move ARP closer to the "universally rounded" template signal `ui.md` warns about. Mitigated by keeping radii small and tiered, never `rounded-xl` everywhere.
 - The `Statements` / `Weight unknown.` losses recorded in ADR 0029 are not addressed here.
 
 **Neutral (worth knowing):**
+
 - All agent names, numbers and hashes on the canvas are invented sample data; `[PROVIDER]`, `[QUOTE]` and `[CEILING]` mark values only the app can supply.
 - Geist Mono and Archivo are both on Google Fonts; replacing two families with two keeps the bundle budget flat.
 

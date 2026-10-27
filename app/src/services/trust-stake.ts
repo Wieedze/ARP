@@ -11,6 +11,7 @@ import {
 } from "viem";
 
 import {multiVaultAbi} from "../lib/abi/multi-vault";
+import {formatTrust} from "./trust-format";
 
 /**
  * Staking on a term's vault — whichever Intuition chain the caller names.
@@ -189,24 +190,17 @@ export function parseStakeAmount(input: string, limits: StakeLimits): AmountChec
         return {
             status: "below-min",
             value,
-            message: `The MultiVault rejects deposits below its minDeposit of ${formatWeiPlain(limits.minDeposit)} ${limits.symbol}.`,
+            message: `The MultiVault rejects deposits below its minDeposit of ${formatTrust(limits.minDeposit)} ${limits.symbol}.`,
         };
     }
     if (value > limits.maxStake) {
         return {
             status: "above-max",
             value,
-            message: `This panel refuses more than ${formatWeiPlain(limits.maxStake)} ${limits.symbol} per transaction (VITE_MAX_STAKE_TRUST).`,
+            message: `This panel refuses more than ${formatTrust(limits.maxStake)} ${limits.symbol} per transaction (VITE_MAX_STAKE_TRUST).`,
         };
     }
     return {status: "ok", value};
-}
-
-/** 18-decimal wei to a plain decimal string, trailing zeros trimmed. */
-function formatWeiPlain(wei: bigint): string {
-    const whole = wei / 10n ** 18n;
-    const fraction = (wei % 10n ** 18n).toString().padStart(18, "0").replace(/0+$/, "");
-    return fraction === "" ? whole.toString() : `${whole}.${fraction}`;
 }
 
 export type StakeGuardCode =
@@ -717,7 +711,7 @@ export async function quoteRedeem(
     if (params.shares > maxShares) {
         throw new StakeGuardError(
             "exceeds-holding",
-            `You hold ${formatWeiPlain(maxShares)} shares in this vault and asked to redeem ${formatWeiPlain(params.shares)}. Nothing was sent.`,
+            `You hold ${formatTrust(maxShares)} shares in this vault and asked to redeem ${formatTrust(params.shares)}. Nothing was sent.`,
         );
     }
 
