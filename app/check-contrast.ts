@@ -28,6 +28,27 @@ const SUB_AA = ["--color-grey"];
 /** A line carrying any of these is display type, or is not text at all. */
 const ALLOWED = ["type-display", "type-title", "type-section", "aria-hidden"];
 
+/** WCAG's large-text floor: 18.66px, or 14px bold. Rounded up, because 18.66 is not a CSS value. */
+const LARGE_PX = 19;
+
+/**
+ * An explicit size at or above the large-text floor.
+ *
+ * `type-face` carries the display look and **no size**, so it is not on `ALLOWED` — a grey
+ * `type-face` could be 11px. What makes it safe is the size beside it, so this reads that size:
+ * `text-[26px]` and `text-[clamp(30px,4.4vw,56px)]` both qualify, the clamp on its **floor**,
+ * which is the smallest it will ever render.
+ */
+function largeEnough(text: string): boolean {
+    for (const [, clampFloor] of text.matchAll(/text-\[clamp\((\d+)px/g)) {
+        if (Number(clampFloor) >= LARGE_PX) return true;
+    }
+    for (const [, fixed] of text.matchAll(/text-\[(\d+)px\]/g)) {
+        if (Number(fixed) >= LARGE_PX) return true;
+    }
+    return false;
+}
+
 /** How far either side to look for the display class. Four covers a formatter-split className. */
 const WINDOW = 4;
 
@@ -49,6 +70,7 @@ for (const path of walk("src")) {
         if (!SUB_AA.some((token) => line.includes(token))) return;
         const near = lines.slice(Math.max(0, index - WINDOW), index + WINDOW + 1).join("\n");
         if (ALLOWED.some((marker) => near.includes(marker))) return;
+        if (largeEnough(near)) return;
         offences.push(`${path}:${index + 1}  ${trimmed.slice(0, 96)}`);
     });
 }
@@ -57,7 +79,8 @@ if (offences.length > 0) {
     console.error(
         `${offences.length} use(s) of a sub-AA token on non-display text.\n` +
             `--color-grey is 3.84:1 — it clears AA for 18.66px+ only (rules/ui.md).\n` +
-            `Use --color-steel (5.95:1), or add a display-type class, or mark it aria-hidden.\n`,
+            `Use --color-steel (5.95:1), or set a size of ${LARGE_PX}px or more, or add a\n` +
+            `display-type class, or mark it aria-hidden.\n`,
     );
     for (const offence of offences) console.error(`  ${offence}`);
     process.exit(1);

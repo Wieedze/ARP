@@ -296,6 +296,23 @@ summary:focus-visible,
     letter-spacing: -0.02em;
 }
 
+/**
+ * The display **face** without a size — for type that should look like the headings and be set at
+ * its own scale: a boxed figure, a card title, a rung's name.
+ *
+ * It exists because the three classes above set `font-size`, and they are unlayered, so they beat
+ * a `text-[22px]` utility in `@layer utilities`. `type-section text-[22px]` renders at 52px and
+ * looks like a mistake nobody made — the exact failure class `rules/ui.md` names, and it shipped
+ * on seven call sites before a screenshot caught it. Setting the size here would reintroduce it.
+ */
+.type-face {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-stretch: 125%;
+    letter-spacing: -0.02em;
+    line-height: 1;
+}
+
 /* -------------------------------------------------------------------------- */
 /* Trust panel                                                                 */
 /* -------------------------------------------------------------------------- */

@@ -159,7 +159,7 @@ function Fact({label, children}: {label: string; children: React.ReactNode}) {
             <dt className="font-mono text-[10px] uppercase tracking-[0.06em] text-[color:var(--color-steel)]">
                 {label}
             </dt>
-            <dd className="type-section text-[26px] leading-none tabular-nums">{children}</dd>
+            <dd className="type-face text-[26px] leading-none tabular-nums">{children}</dd>
         </div>
     );
 }
