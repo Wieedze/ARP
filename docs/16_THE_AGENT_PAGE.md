@@ -26,9 +26,11 @@ not the same kind of fact and the page must not render them as though they were.
 
 That is the whole design constraint. If you only take one thing from this brief, take that.
 
-An agent saying "I am a DeFi agent" costs nothing and proves nothing — 30,913 agents say things
-like it. Someone writing "I used this agent" costs them 0.1 TRUST that never comes back, with their
-address attached, permanently. One of those is worth the top of the page.
+An agent saying "I am a DeFi agent" costs nothing and proves nothing. Self-description is the
+cohort's whole vocabulary: on mainnet 1155, 2026-10-27, `scripts/measure/predicate-edges.ts` counts
+**57,574 `has type` edges and 58,015 `has tag`**, against **185 `uses`**. Someone writing "I used
+this agent" costs them a fee that never comes back — 0.1 TRUST on mainnet, 0.001 on testnet, read
+off `getTripleCost()` — with their address attached, permanently. One of those is worth the top of the page.
 
 ---
 
@@ -54,6 +56,7 @@ address attached, permanently. One of those is worth the top of the page.
 Ordered by how much the claim cost whoever made it. Not by how much space it needs.
 
 ### 1. Who it is
+
 Name, description, avatar.
 
 Roughly half the cohort registered with no metadata, so the indexer invents a name like
@@ -61,6 +64,7 @@ Roughly half the cohort registered with no metadata, so the indexer invents a na
 chosen name misdescribes the majority of the population.
 
 ### 2. Its sigil
+
 A generated dot glyph, 7×7, mirrored, no container and no connecting lines. Same agent, same glyph,
 everywhere, forever.
 
@@ -72,6 +76,7 @@ not a loading state. It is absent entirely for an agent that declared no tools �
 but its centre is the same glyph for every such agent, so it would stop being an identity.
 
 ### 3. Who used it ← **the most important section on the page**
+
 The strongest evidence that exists here. Other parties, each naming themselves, each having paid.
 
 Show: **how many distinct parties declared using it**, and **how many of those paid** to say so.
@@ -80,12 +85,14 @@ Then the list — who, and what each put behind their own claim.
 Not currently on this page at all. It is the gap this redesign exists to close.
 
 ### 4. Does it answer?
+
 Its registration file declares endpoints. Whether one of them responds is a **fact**, not a claim —
 so it ranks above everything below it.
 
 Not built yet. Design the slot; it will be filled.
 
 ### 5. What is posed on it
+
 The vault on the agent's own atom: how much TRUST, and **how many accounts**. Plus the viewer's own
 position if they have one.
 
@@ -93,16 +100,18 @@ This is attention, not endorsement — anyone can deposit here for any reason an
 other side. Do not let it read as approval.
 
 ### 6. Its curve
+
 How the position evolved over time, and the shape of the distribution: does one account hold most of
 it, did everyone arrive on the same day.
 
 Exists elsewhere in the product and moves here.
 
 ### 7. Three ways to add to the record, and they are different acts
+
 - **Back it** — put TRUST on its atom. Anyone, any reason, withdrawable. It stays yours; it is not a
   payment to the agent.
-- **Declare you used it** — write the edge. Costs 0.1 TRUST, gone, with your address on it. **This
-  is the product.**
+- **Declare you used it** — write the edge. Costs from 0.1 TRUST on mainnet and from 0.001 on
+  testnet, gone, with your address on it. **This is the product.**
 
 - **Take a side on an assessment** — back or contest what a trust provider published about it.
   That one lives with section 9, beside the claim it is about.
@@ -110,25 +119,29 @@ Exists elsewhere in the product and moves here.
 The second is not in the interface today. Design it as though it were.
 
 These are not a footer. They are half of what the page is for, and the ordering above is as much
-about *what a visitor can add* as about what they can read.
+about _what a visitor can add_ as about what they can read.
 
 ### 8. What it says it can do
+
 Declared capabilities: type, protocols, categories, tags, tools it uses.
 
 Lower and quieter than section 3. It is free to write.
 
 ### 9. What an assessor says
+
 A trust provider's published assessment, with its signature checked, and the ability to back or
 contest that assessment.
 
 One company's opinion, free to write. **Not ARP's opinion** — ARP has none.
 
 ### 10. Its technical identity
+
 CAIP-19, registry, token id, owner, registration file, URL. Every address clickable to the right
 explorer: the owner to **its own chain** (Base, BSC, Ethereum — never Intuition, which would be a
 live link to the wrong network), the atom to the Intuition portal.
 
 ### 11. What could not be read
+
 Which source failed, and where two sources disagree. Said out loud, not hidden.
 
 ---

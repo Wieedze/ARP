@@ -9,8 +9,8 @@ import type {DeclarePlan, StakePlan} from "./types.js";
  * Declaring that you used an **agent**: the same edge, pointed at an agent instead of a tool.
  *
  * It sat under `hire/` and the name was the error (ADR `0060`). Nothing about this needs a hire:
- * what makes the claim credible is that writing it costs 0.1 TRUST that does not come back, not
- * that a salary was paid. An agent that composed with another agent declares it here exactly as it
+ * what makes the claim credible is that writing it costs a fee that does not come back — read off
+ * `getTripleCost()`, 0.1 TRUST on 1155 against 0.001 on 13579 — not that a salary was paid. An agent that composed with another agent declares it here exactly as it
  * declares a tool.
  *
  * `tasks/25`: _"`rate` is `prepareDeclareUsed` plus `prepareStakeOnUsed` where the 'tool' is an
