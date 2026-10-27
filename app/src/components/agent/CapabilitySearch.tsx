@@ -96,7 +96,7 @@ export function CapabilityFilter({
             {/* The vocabulary is the graph's, not ours, so the examples are ones that return
                 something. Measured on mainnet 2026-10-27: `MCP Server` 50, the rest one each. */}
             <div className="mt-2 flex flex-wrap items-baseline gap-x-2 gap-y-1">
-                <span className="font-mono uppercase tracking-wider text-[length:var(--text-label)] text-[color:var(--color-grey)]">
+                <span className="font-mono uppercase tracking-wider text-[length:var(--text-label)] text-[color:var(--color-steel)]">
                     try
                 </span>
                 {SUGGESTIONS.map((suggestion) => (
@@ -211,7 +211,7 @@ function Candidates({page}: {page: NonNullable<ReturnType<typeof useFindAgents>[
                         <Link
                             to={`/atom/${candidate.atomId}`}
                             aria-label={`Open ${candidate.label ?? candidate.atomId}`}
-                            className="shrink-0 font-mono text-[color:var(--color-grey)]! opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100 hover:text-[color:var(--color-fg)]! focus-visible:opacity-100"
+                            className="shrink-0 font-mono text-[color:var(--color-steel)]! opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100 hover:text-[color:var(--color-fg)]! focus-visible:opacity-100"
                         >
                             →
                         </Link>

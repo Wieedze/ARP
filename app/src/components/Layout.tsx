@@ -94,7 +94,7 @@ export function Layout({children}: {children: ReactNode}) {
 
             {/* `overflow-hidden` is what makes the wordmark's crop a crop rather than a scrollbar. */}
             <footer className="mt-24 overflow-hidden border-t border-[color:var(--color-rule)] px-6 pt-7">
-                <div className="mx-auto w-full max-w-[1320px] flex flex-wrap items-center justify-between gap-3 text-[length:var(--text-label)] uppercase tracking-wider text-[color:var(--color-grey)]">
+                <div className="mx-auto w-full max-w-[1320px] flex flex-wrap items-center justify-between gap-3 text-[length:var(--text-label)] uppercase tracking-wider text-[color:var(--color-steel)]">
                     <span>
                         Agent Reputation Protocol —{" "}
                         <span className="text-[color:var(--color-steel)]">{chain.chain.name}</span>

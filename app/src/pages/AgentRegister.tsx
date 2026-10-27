@@ -405,7 +405,7 @@ export function AgentRegister() {
                                 : "Generate runtime keypair"}
                         </button>
                     ) : (
-                        <p className="text-[color:var(--color-grey)] text-[length:var(--text-body-sm)]">
+                        <p className="text-[color:var(--color-steel)] text-[length:var(--text-body-sm)]">
                             Available after step 1.
                         </p>
                     )}
@@ -471,7 +471,7 @@ export function AgentRegister() {
                             pending={step4Status === "pending"}
                         />
                     ) : (
-                        <p className="text-[color:var(--color-grey)] text-[length:var(--text-body-sm)]">
+                        <p className="text-[color:var(--color-steel)] text-[length:var(--text-body-sm)]">
                             Available after steps 1, 2, and 3.
                         </p>
                     )}
@@ -489,7 +489,7 @@ export function AgentRegister() {
                     {allDone ? (
                         <div className="text-[length:var(--text-body-sm)] text-[color:var(--color-steel)] space-y-4 max-w-[680px]">
                             <div className="border border-[color:var(--color-rule)] p-3">
-                                <p className="text-[length:var(--text-label)] uppercase tracking-wider text-[color:var(--color-grey)] mb-1">
+                                <p className="text-[length:var(--text-label)] uppercase tracking-wider text-[color:var(--color-steel)] mb-1">
                                     Bring-up
                                 </p>
                                 <p className="mb-3">
@@ -502,7 +502,7 @@ export function AgentRegister() {
                                             Runtime ready
                                         </p>
                                         <p>
-                                            <span className="text-[color:var(--color-grey)]">
+                                            <span className="text-[color:var(--color-steel)]">
                                                 fund tx
                                             </span>{" "}
                                             <a
@@ -515,7 +515,7 @@ export function AgentRegister() {
                                             </a>
                                         </p>
                                         <p>
-                                            <span className="text-[color:var(--color-grey)]">
+                                            <span className="text-[color:var(--color-steel)]">
                                                 approve tx
                                             </span>{" "}
                                             <a
@@ -532,7 +532,7 @@ export function AgentRegister() {
                                     <>
                                         {!generatedRuntime ? (
                                             <div className="mb-3">
-                                                <p className="text-[length:var(--text-body-sm)] text-[color:var(--color-grey)] mb-2">
+                                                <p className="text-[length:var(--text-body-sm)] text-[color:var(--color-steel)] mb-2">
                                                     Runtime private key isn't in this session's
                                                     memory (it lives only in the browser tab where
                                                     you ran step 2). Paste the key you saved to
@@ -553,7 +553,7 @@ export function AgentRegister() {
                                                     className="block w-full max-w-[680px] bg-transparent border border-[color:var(--color-rule)] px-3 py-1.5 font-mono text-[length:var(--text-body-sm)] focus:outline-none focus:border-[color:var(--color-accent)]"
                                                 />
                                                 {pastedRuntimeKey.length > 0 && !isValidPaste ? (
-                                                    <p className="mt-1 text-[length:var(--text-body-sm)] text-[color:var(--color-grey)]">
+                                                    <p className="mt-1 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
                                                         Expected{" "}
                                                         <span className="font-mono">0x</span> + 64
                                                         hex chars.
@@ -589,7 +589,7 @@ export function AgentRegister() {
                             </p>
                         </div>
                     ) : (
-                        <p className="text-[color:var(--color-grey)] text-[length:var(--text-body-sm)]">
+                        <p className="text-[color:var(--color-steel)] text-[length:var(--text-body-sm)]">
                             Available after steps 1 – 4.
                         </p>
                     )}
@@ -630,7 +630,7 @@ function DelegationForm({
                             disabled={pending}
                             className="w-32 bg-transparent border border-[color:var(--color-rule)] px-3 py-1.5 font-mono focus:outline-none focus:border-[color:var(--color-accent)]"
                         />
-                        <span className="font-mono text-[color:var(--color-grey)]">tTRUST</span>
+                        <span className="font-mono text-[color:var(--color-steel)]">tTRUST</span>
                     </div>
                 </label>
                 <fieldset>
@@ -767,7 +767,7 @@ function RoleBanner({operatorAddress}: {operatorAddress: string | null}) {
     return (
         <div className="mb-8 grid grid-cols-1 sm:grid-cols-2 gap-3 border border-[color:var(--color-rule)] p-4">
             <div>
-                <p className="text-[length:var(--text-label)] uppercase tracking-wider text-[color:var(--color-grey)] mb-1">
+                <p className="text-[length:var(--text-label)] uppercase tracking-wider text-[color:var(--color-steel)] mb-1">
                     Operator
                 </p>
                 <p className="font-mono text-[length:var(--text-body-sm)]">
@@ -778,7 +778,7 @@ function RoleBanner({operatorAddress}: {operatorAddress: string | null}) {
                 </p>
             </div>
             <div>
-                <p className="text-[length:var(--text-label)] uppercase tracking-wider text-[color:var(--color-grey)] mb-1">
+                <p className="text-[length:var(--text-label)] uppercase tracking-wider text-[color:var(--color-steel)] mb-1">
                     Agent runtime
                 </p>
                 <p className="font-mono text-[length:var(--text-body-sm)]">designated in step 2</p>
@@ -846,11 +846,11 @@ function Step({
         ? "text-[color:var(--color-accent)]"
         : pending
           ? "text-[color:var(--color-fg)]"
-          : "text-[color:var(--color-grey)]";
+          : "text-[color:var(--color-steel)]";
 
     return (
         <li className="grid grid-cols-[2.5rem_1fr] gap-x-4 border-b border-[color:var(--color-rule)] py-6">
-            <span className="font-mono text-[color:var(--color-grey)]">{n}.</span>
+            <span className="font-mono text-[color:var(--color-steel)]">{n}.</span>
             <div>
                 <div className="flex items-baseline justify-between gap-3 mb-1">
                     <h2 className="font-medium">{title}</h2>
@@ -886,7 +886,7 @@ function DoneLine({label, value, tx}: {label: string; value: string; tx: string 
                         href={`${deployments.chain.explorerUrl}/tx/${tx}`}
                         target="_blank"
                         rel="noreferrer"
-                        className="text-[color:var(--color-grey)]! hover:text-[color:var(--color-fg)]!"
+                        className="text-[color:var(--color-steel)]! hover:text-[color:var(--color-fg)]!"
                     >
                         {tx.slice(0, 8)}…{tx.slice(-6)} ↗
                     </a>

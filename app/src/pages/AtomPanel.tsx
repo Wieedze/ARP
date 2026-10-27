@@ -235,7 +235,7 @@ function Group({group, subject}: {group: GroupView; subject: string}) {
                             <span className="text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
                                 {group.label}
                             </span>
-                            <span className="min-w-0 truncate text-[length:var(--text-body-sm)] text-[color:var(--color-grey)]">
+                            <span className="min-w-0 truncate text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
                                 {subject}
                             </span>
                         </p>

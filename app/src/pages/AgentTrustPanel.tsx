@@ -286,7 +286,7 @@ export function AgentTrustPanel() {
                         </PanelSection>
                     ) : null}
 
-                    <p className="border-t border-[color:var(--color-rule)] pt-5 font-mono text-[length:var(--text-label)] text-[color:var(--color-grey)]">
+                    <p className="border-t border-[color:var(--color-rule)] pt-5 font-mono text-[length:var(--text-label)] text-[color:var(--color-steel)]">
                         Graph read from {chain.graphqlUrl}
                     </p>
                 </>

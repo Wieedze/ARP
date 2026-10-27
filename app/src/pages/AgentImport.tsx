@@ -558,7 +558,7 @@ function Step({
                 <span
                     className={`font-mono uppercase tracking-wider text-[length:var(--text-label)] ${
                         disabled
-                            ? "text-[color:var(--color-grey)]"
+                            ? "text-[color:var(--color-steel)]"
                             : "text-[color:var(--color-steel)]"
                     }`}
                 >

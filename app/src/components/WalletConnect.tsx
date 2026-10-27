@@ -55,7 +55,7 @@ export function WalletConnect() {
             connectors.find((c) => c.id === "metaMask" || c.id === "injected") ?? connectors[0];
         if (!primary) {
             return (
-                <span className="text-[length:var(--text-body-sm)] text-[color:var(--color-grey)]">
+                <span className="text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
                     No wallet detected
                 </span>
             );

@@ -44,7 +44,7 @@ export function PanelSection({
     return (
         <section className="grid gap-x-10 gap-y-5 border-t border-[color:var(--color-rule)] py-9 lg:grid-cols-[200px_minmax(0,1fr)]">
             <div className="flex flex-col gap-2.5 font-mono text-[11px] uppercase tracking-[0.06em]">
-                <span className="text-[color:var(--color-grey)]">{number}</span>
+                <span className="text-[color:var(--color-steel)]">{number}</span>
                 <h2 className="tracking-[0.08em] text-[color:var(--color-fg)]">{title}</h2>
             </div>
             <div className="flex min-w-0 flex-col gap-5">{children}</div>

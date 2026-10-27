@@ -340,7 +340,7 @@ function LookupForm() {
                 Open
             </button>
 
-            <p className="w-full font-mono text-[length:var(--text-label)] text-[color:var(--color-grey)]">
+            <p className="w-full font-mono text-[length:var(--text-label)] text-[color:var(--color-steel)]">
                 {LOOKUP_CHAINS.find((entry) => entry.id === chainId)?.note}
                 {trimmed !== "" && !isValid ? " · token ids are decimal" : ""}
             </p>
