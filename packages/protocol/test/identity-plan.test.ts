@@ -3,19 +3,10 @@ import type {Hex} from "viem";
 import {describe, expect, it} from "vitest";
 
 import type {MultiVaultReads} from "../src/declare/index.js";
-import {
-    IdentityTermHasNoPositionError,
-    prepareIdentityAtom,
-} from "../src/declare/index.js";
+import {IdentityTermHasNoPositionError, prepareIdentityAtom} from "../src/declare/index.js";
 import {canonicalAgentThing, canonicalCaipThing, thingUri} from "../src/declare/agent-atom.js";
 import {toCaip19} from "../src/caip.js";
-import {
-    AI_AGENT,
-    ERC8004,
-    HAS_TYPE,
-    IMPLEMENT,
-    SAME_AS,
-} from "../src/sources/intuition/terms.js";
+import {AI_AGENT, ERC8004, HAS_TYPE, IMPLEMENT, SAME_AS} from "../src/sources/intuition/terms.js";
 import {PinMismatchError, planIdentityAtom} from "../../../scripts/plan-identity-atom.js";
 
 const MULTI_VAULT = "0x2Ece8D4dEdcB9918A398528f3fa4688b1d2CAB91" as const;
@@ -53,7 +44,7 @@ function fakeReads(
         },
         // Distinct per edge. One shared id would make `termExists` on any edge answer for all
         // three, which is the opposite of what the "skips what exists" test is checking.
-        async tripleId(subject: Hex, predicate: Hex) {
+        async tripleId(_subject: Hex, predicate: Hex) {
             const seed = predicate === SAME_AS ? "73" : predicate === HAS_TYPE ? "74" : "75";
             return `0x${seed.repeat(32)}` as Hex;
         },
@@ -85,7 +76,6 @@ function fakeReads(
 }
 
 describe("prepareIdentityAtom", () => {
-
     it("gives every term it creates a position", async () => {
         // The defect this test exists for: `atomCost` and `tripleCost` were passed as `assets`, and
         // the fee comes out of `assets`, so the whole amount was fee. Measured on testnet 13579 on
@@ -178,7 +168,9 @@ describe("prepareIdentityAtom", () => {
 
     it("writes the edge in the direction `RESOLVE_AGENT_QUERY` reads", async () => {
         const plan = await prepareIdentityAtom({agent: AGENT, reads: fakeReads()});
-        expect(plan.uris.identity).toBe(thingUri(canonicalAgentThing(AGENT.chainId, AGENT.tokenId)));
+        expect(plan.uris.identity).toBe(
+            thingUri(canonicalAgentThing(AGENT.chainId, AGENT.tokenId)),
+        );
         expect(plan.uris.caip).toBe(thingUri(canonicalCaipThing(toCaip19(AGENT))));
     });
 });
@@ -193,7 +185,9 @@ describe("planIdentityAtom — the pin half that stayed in scripts/", () => {
             pin,
             pinner: honestPinner,
         });
-        expect(plan.uris.identity).toBe(thingUri(canonicalAgentThing(AGENT.chainId, AGENT.tokenId)));
+        expect(plan.uris.identity).toBe(
+            thingUri(canonicalAgentThing(AGENT.chainId, AGENT.tokenId)),
+        );
         expect(plan.calls).toHaveLength(5);
     });
 

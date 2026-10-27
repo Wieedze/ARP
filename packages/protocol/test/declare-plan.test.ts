@@ -1,5 +1,5 @@
 import {decodeFunctionData, parseEther} from "viem";
-import type {Address, Hex} from "viem";
+import type {Hex} from "viem";
 import {describe, expect, it} from "vitest";
 
 import {
@@ -13,17 +13,14 @@ import {
     prepareStakeOnUsed,
     toolAtomUri,
     toolThingDocument,
-    type MultiVaultReads,
     type ToolAtomCandidate,
     type ToolAtomLookup,
 } from "../src/declare/index.js";
 import {USE, USES} from "../src/sources/intuition/terms.js";
-import {asAgentIdentityAtom} from "../src/verify/subject.js";
 
 import {
     atomIdFor,
     fakeReads,
-    idFor,
     MULTI_VAULT,
     RECEIVER,
     SUBJECT,
@@ -31,7 +28,6 @@ import {
     OTHER_URI,
     TOOL_URI,
 } from "./helpers.js";
-
 
 /**
  * The three MultiVault functions a plan can encode, declared here rather than imported.
