@@ -5,7 +5,7 @@ import {useAccount} from "wagmi";
 import {linkClass} from "../lib/control-class";
 import {AgentBacking} from "../components/agent/AgentBacking";
 import {AgentIdentityPanel} from "../components/agent/AgentIdentityPanel";
-import {AssessmentRow} from "../components/agent/AssessmentRow";
+import {RatingRow} from "../components/agent/RatingRow";
 import {CapabilitySection} from "../components/agent/CapabilitySection";
 import {DeclaredUses} from "../components/usage/DeclaredUses";
 import {panelDomId, tabDomId} from "../components/agent/tab-ids";
@@ -219,7 +219,7 @@ export function AgentTrustPanel() {
 
                         <div className="min-w-0">
                             {/* First in the column, because it is the market on **this agent**,
-                                which is what the page is about. The assessments below it are one
+                                which is what the page is about. The ratings below it are one
                                 provider's opinion, which is the provider's business and runs
                                 beside this rather than feeding it (ADR `0056`).
 
@@ -263,14 +263,9 @@ export function AgentTrustPanel() {
                                     requestedTab={searchParams.get(TAB_PARAM)}
                                     onSelectTab={handleSelectTab}
                                     session={sessionQuery.data}
-                                    sessionError={sessionQuery.error}
                                 />
                             ) : (
-                                <StackedClaims
-                                    view={view}
-                                    session={sessionQuery.data}
-                                    sessionError={sessionQuery.error}
-                                />
+                                <StackedClaims view={view} session={sessionQuery.data} />
                             )}
 
                             <p className="mt-16 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)] max-w-[64ch]">
@@ -288,7 +283,6 @@ export function AgentTrustPanel() {
 type ClaimsProps = {
     view: TrustPanelView;
     session: StakeSession | undefined;
-    sessionError: Error | null;
 };
 
 /**
@@ -303,7 +297,6 @@ function TabbedClaims({
     requestedTab,
     onSelectTab,
     session,
-    sessionError,
 }: ClaimsProps & {
     baseId: string;
     requestedTab: string | null;
@@ -317,7 +310,7 @@ function TabbedClaims({
         <>
             {/* The tab labels are the section headings a reader sees; this one
                 keeps the document outline from jumping h1 → h3. */}
-            <h2 className="sr-only">Assessments and agent data</h2>
+            <h2 className="sr-only">Ratings and agent data</h2>
 
             <TrustPanelTabs
                 tabs={model.tabs}
@@ -337,12 +330,7 @@ function TabbedClaims({
                     /* Keyed on the row: without it React reuses the instance
                        across a tab switch and the stake control keeps the quote
                        it built for the previous provider's claim. */
-                    <AssessmentRow
-                        key={selected.row.id}
-                        row={selected.row}
-                        session={session}
-                        sessionError={sessionError}
-                    />
+                    <RatingRow key={selected.row.id} row={selected.row} session={session} />
                 ) : selected.kind === "arp" ? (
                     <ArpPosition />
                 ) : (
@@ -359,11 +347,11 @@ function TabbedClaims({
  * One provider covers 99.99% of this cohort, so this is the ordinary case, and
  * a tab strip over a single claim would be a control with no choice behind it.
  */
-function StackedClaims({view, session, sessionError}: ClaimsProps) {
+function StackedClaims({view, session}: ClaimsProps) {
     return (
         <>
             <section>
-                <h2 className="font-medium">Assessments</h2>
+                <h2 className="font-medium">Ratings</h2>
                 {view.rows.length === 0 ? (
                     <p className="mt-6 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)] max-w-[60ch]">
                         No trust provider has written an edge about this agent.
@@ -371,12 +359,7 @@ function StackedClaims({view, session, sessionError}: ClaimsProps) {
                 ) : (
                     <div className="mt-8 flex flex-col gap-14">
                         {view.rows.map((row) => (
-                            <AssessmentRow
-                                key={row.id}
-                                row={row}
-                                session={session}
-                                sessionError={sessionError}
-                            />
+                            <RatingRow key={row.id} row={row} session={session} />
                         ))}
                     </div>
                 )}
@@ -429,7 +412,7 @@ function AgentData({view, hasUnreadSources}: {view: TrustPanelView; hasUnreadSou
 }
 
 /**
- * ARP's own position. It has no assessment to publish yet and says so, rather
+ * ARP's own position. It has no rating to publish yet and says so, rather
  * than occupying the slot with a number it has not earned. Phase 3 is where
  * this changes, and it changes by ARP staking on its own reads first.
  */
@@ -441,7 +424,7 @@ function ArpPosition() {
                 insufficient evidence
             </p>
             <p className="mt-3 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)] max-w-[60ch]">
-                ARP publishes no assessment, and will not.
+                ARP publishes no rating, and will not.
             </p>
         </article>
     );

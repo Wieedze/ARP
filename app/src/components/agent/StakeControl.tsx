@@ -110,8 +110,8 @@ export type StakeClaim = ClaimShape & {
     /**
      * One line under the heading, or omitted.
      *
-     * On the claim and not hardcoded: it read "the market's confidence in this provider's assessment
-     * of this agent", which is false on a page with no provider and no assessment. Optional since
+     * On the claim and not hardcoded: it read "the market's confidence in this provider's rating
+     * of this agent", which is false on a page with no provider and no rating. Optional since
      * ADR `0058` — the agent backing form carries none, because the heading already says the act.
      */
     blurb?: string;
@@ -140,7 +140,7 @@ export function StakeControl({
     onInFlightChange,
     /**
      * The tag for this control's own heading, because its level depends on its parent and not on
-     * itself. `AssessmentRow` opens at `h3`, so `h4` is right there; `AgentBacking` opens at `h2`,
+     * itself. `RatingRow` opens at `h3`, so `h4` is right there; `AgentBacking` opens at `h2`,
      * where `h4` would skip a level. Hardcoding `h4` put an `h1 → h3 → h4` chain on the agent page
      * under the very `h2` that exists to stop the outline jumping.
      */
@@ -289,7 +289,7 @@ export function StakeControl({
         //
         // **Layout-neutral on purpose.** It had `mt-6 border-t … pt-5`, then `pl-5 border-l …`, and
         // both were wrong for one of the two callers — the first put an ambiguous second hairline
-        // in a list row, the second nested an identical left rail inside `AssessmentRow`'s own and
+        // in a list row, the second nested an identical left rail inside `RatingRow`'s own and
         // left the agent panel's form flush against the market panel. Spacing and the rail belong
         // to whichever container this sits in, and each caller provides its own.
         <section aria-labelledby={`${fieldId}-heading`}>

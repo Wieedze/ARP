@@ -7,7 +7,7 @@ import {panelDomId, tabDomId} from "./tab-ids";
 /**
  * The tab strip — and the panel's comparison device.
  *
- * Stacking let a reader see one provider's signed assessment beside another's
+ * Stacking let a reader see one provider's signed rating beside another's
  * unsigned one at the same time. That comparison is the page's editorial claim,
  * and a strip of bare names would destroy it. So every tab carries, from every
  * tab, the connector's verdict on that provider's document. The score, and what
@@ -20,7 +20,7 @@ import {panelDomId, tabDomId} from "./tab-ids";
 
 /** The second line for the two tabs that carry no provider's claim. */
 const STATIC_LINES: Record<"arp" | "agent", string> = {
-    arp: "no assessment",
+    arp: "no rating",
     agent: "capabilities",
 };
 
@@ -114,7 +114,7 @@ export function TrustPanelTabs({
     return (
         <div
             role="tablist"
-            aria-label="The agent's own data, assessments by provider, and ARP's own position"
+            aria-label="The agent's own data, ratings by provider, and ARP's own position"
             className="flex flex-wrap gap-x-5 gap-y-7"
         >
             {tabs.map((tab, index) => {

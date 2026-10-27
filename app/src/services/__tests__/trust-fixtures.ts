@@ -18,7 +18,7 @@ import type {Address} from "viem";
  * Builders for `AgentProfile` shapes, modelled on what the connector actually
  * returns from Intuition mainnet — including the parts that are awkward: a
  * `has trust provider` edge whose "resolver" is the provider's homepage, an
- * assessment edge whose document 404s, and a reviewer count that lives in a
+ * rating edge whose document 404s, and a reviewer count that lives in a
  * provider-specific `method` block rather than anywhere standardised.
  */
 
@@ -89,7 +89,7 @@ export function providerClaim(params: {
     };
 }
 
-export function assessmentDocument(params: {
+export function ratingDocument(params: {
     providerName: string;
     providerId: string;
     score: number;
@@ -101,7 +101,7 @@ export function assessmentDocument(params: {
     const raw: Record<string, unknown> = {
         agent: {chainId: 8453, registry: REGISTRY, tokenId: "2340"},
         provider: {id: params.providerId, name: params.providerName},
-        assessment: {score: params.score, scoreScale: "0-100"},
+        rating: {score: params.score, scoreScale: "0-100"},
     };
     if (params.numReviewers !== undefined) {
         raw["method"] = {
@@ -242,7 +242,7 @@ export function providerEdge(params: {
 }
 
 /** A `has trust assessment` edge. Its resolver is the live document. */
-export function assessmentEdge(params: {
+export function ratingEdge(params: {
     handle: string;
     providerName: string;
     fetch: AssessmentFetch;
@@ -253,9 +253,9 @@ export function assessmentEdge(params: {
         claim: providerClaim({
             relation: "has-trust-assessment",
             handle: params.handle,
-            providerName: `${params.providerName} — assessment`,
+            providerName: `${params.providerName} — rating`,
             label: `${params.providerName} — Clawnch trust assessment`,
-            resolverUrl: "https://api.example/assessment.json",
+            resolverUrl: "https://api.example/rating.json",
         }),
         fetch: params.fetch,
         signature: params.signature ?? UNVERIFIED,
@@ -315,12 +315,12 @@ export function richProfile(): AgentProfile {
                 providerName: "Deep3 Labs",
                 market: deep3Market,
             }),
-            assessmentEdge({
+            ratingEdge({
                 handle: `${DEEP3_TRIPLE}-doc`,
                 providerName: "Deep3 Labs",
                 fetch: okFetch(
-                    "https://api.deep3.example/assessment.json",
-                    assessmentDocument({
+                    "https://api.deep3.example/rating.json",
+                    ratingDocument({
                         providerName: "Deep3 Labs",
                         providerId: "deep3-labs",
                         score: 55.35,
@@ -337,12 +337,12 @@ export function richProfile(): AgentProfile {
                 providerName: "AsterPay KYA",
                 market: asterpayMarket,
             }),
-            assessmentEdge({
+            ratingEdge({
                 handle: `${ASTERPAY_TRIPLE}-doc`,
                 providerName: "AsterPay KYA",
                 fetch: okFetch(
-                    "https://api.asterpay.example/assessment.json",
-                    assessmentDocument({
+                    "https://api.asterpay.example/rating.json",
+                    ratingDocument({
                         providerName: "AsterPay KYA",
                         providerId: "asterpay-kya",
                         score: 59,

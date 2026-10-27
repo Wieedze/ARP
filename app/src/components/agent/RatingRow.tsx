@@ -8,25 +8,37 @@ import type {StakeSession} from "../../services/trust-stake";
 import {EvidenceRail} from "./EvidenceRail";
 import {MarketPanel} from "./MarketPanel";
 import {SCORE_SIZE_CLASS, SCORE_TONE_CLASS} from "./evidence-scale";
-import {StakeControl} from "./StakeControl";
 import {FreshnessLine, SignatureLine} from "./VerdictLines";
 
 /**
- * One provider's assessment of this agent, with the market on the claim that
- * the provider is worth listening to.
+ * One provider's rating of this agent, and the market that already exists on it.
  *
  * Score and reviewer count are given the same footing, which is the panel's
  * whole argument: the number is set at the size its evidence earns, and the
  * rail underneath it shows that evidence before the reader has parsed a digit.
+ *
+ * ## No stake control here any more (user, 2026-10-27)
+ *
+ * It carried one. The claim it let you bet on is `(agent, has trust provider, provider)` — "is this
+ * provider worth listening to about this agent" — and the user's objection was that he could not see
+ * why anybody would need it: _« je comprends pas pourquoi on en aurait besoin »_.
+ *
+ * He is right, and ADR `0056` had already answered it: **the market is on the agent's atom.** A
+ * second market, one layer removed, asking about a third party's opinion rather than about the
+ * agent, competed for the same attention and the same wallet. Measured on mainnet, Deep3 holds
+ * 99.99% of these edges, so in practice it was one market about one company's opinion.
+ *
+ * The **display stays**, because who vouches for an agent is real information and it is read for
+ * free. What is gone is the invitation to price it. `MarketPanel` still shows the positions anyone
+ * took while the control existed — removing the control does not unmake them.
  */
-export function AssessmentRow({
+export function RatingRow({
     row,
     session,
-    sessionError,
 }: {
     row: TrustRow;
+    /** For the curve the market figures are read at. No longer for a deposit — see above. */
     session: StakeSession | undefined;
-    sessionError: Error | null;
 }) {
     const {address} = useAccount();
     const vaultsQuery = useClaimVaults({
@@ -35,7 +47,7 @@ export function AssessmentRow({
         account: address ?? null,
     });
 
-    const isMismatch = row.assessment?.signature.status === "mismatch";
+    const isMismatch = row.rating?.signature.status === "mismatch";
 
     return (
         <article
@@ -82,11 +94,10 @@ export function AssessmentRow({
                 </div>
 
                 <div className="flex flex-col gap-5">
-                    {row.assessment === null ? (
+                    {row.rating === null ? (
                         <p className="text-[length:var(--text-body-sm)] text-[color:var(--color-steel)] max-w-[60ch]">
-                            No{" "}
-                            <span className="font-mono">has trust assessment</span> edge, so there
-                            is no document to check.
+                            No <span className="font-mono">has trust assessment</span> edge, so
+                            there is no document to check.
                         </p>
                     ) : (
                         <>
@@ -95,8 +106,8 @@ export function AssessmentRow({
                                     {describeFetchError(row.documentError)}
                                 </p>
                             ) : null}
-                            <SignatureLine verdict={row.assessment.signature} />
-                            <FreshnessLine verdict={row.assessment.freshness} />
+                            <SignatureLine verdict={row.rating.signature} />
+                            <FreshnessLine verdict={row.rating.freshness} />
                             {row.dimensions.length > 0 ? (
                                 <div>
                                     <p className="font-mono uppercase tracking-wider text-[length:var(--text-label)] text-[color:var(--color-steel)]">
@@ -141,33 +152,6 @@ export function AssessmentRow({
                     error={vaultsQuery.error}
                 />
             </div>
-
-            {/* `tripleId` is nullable on a `TrustRow`, for two reasons and not one: the graph gave
-                no `term_id`, or it gave one `asTermId` rejected as malformed. Either way there is
-                no vault to deposit into, so the control is absent rather than rendering a form
-                with nowhere to send. */}
-            {row.tripleId === null ? null : (
-                // The spacing and the rail are the container's, not the control's — the
-                // `<article>` already carries `pl-5 border-l`, so a second one inside it read as a
-                // double indent for no reason.
-                <div className="mt-6">
-                    <StakeControl
-                        claim={{
-                            target: {kind: "triple", tripleId: row.tripleId},
-                            heading: "Take a position on this claim",
-                            subject: row.providerName,
-                            predicate: "is a trust provider for this agent",
-                            blurb: "Your deposit is the market's confidence in this provider's assessment of this agent.",
-                            market: row.market,
-                        }}
-                        session={session}
-                        sessionError={sessionError}
-                        onSettled={() => {
-                            void vaultsQuery.refetch();
-                        }}
-                    />
-                </div>
-            )}
         </article>
     );
 }

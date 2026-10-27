@@ -90,20 +90,15 @@ export function MarketPanel({
     isLoading: boolean;
     error: Error | null;
 }) {
+    // No term id, no vault, so there is nothing to show. Two sentences used to explain *why* — one
+    // for a missing `has trust provider` edge, one for a malformed term id — and both said "nothing
+    // to take a position on", which stopped being the distinguishing fact the moment the stake
+    // control came off this row. `rules/ui.md`: no explanatory sentence inside a panel, and the
+    // reason belongs here rather than on screen.
     if (row.tripleId === null) {
         return (
-            <p className="text-[length:var(--text-body-sm)] text-[color:var(--color-steel)] max-w-[52ch]">
-                {row.providerClaim === null ? (
-                    <>
-                        No <span className="font-mono">has trust provider</span> edge backs this
-                        assessment, so there is no vault and nothing to take a position on.
-                    </>
-                ) : (
-                    <>
-                        This provider edge's identifier is not a 32-byte term id, so no vault can be
-                        addressed from it. Nothing is staked here and nothing can be.
-                    </>
-                )}
+            <p className="font-mono text-[length:var(--text-label)] uppercase tracking-wider text-[color:var(--color-steel)]">
+                no market
             </p>
         );
     }

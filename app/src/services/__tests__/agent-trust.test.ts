@@ -17,8 +17,8 @@ import {
 
 import {
     ASTERPAY_TRIPLE,
-    assessmentDocument,
-    assessmentEdge,
+    ratingDocument,
+    ratingEdge,
     claimMarket,
     DEEP3_TRIPLE,
     identity,
@@ -46,7 +46,7 @@ describe("readReviewerBasis", () => {
     });
 
     it("reports a document with no method block as not-published, never as zero", () => {
-        expect(readReviewerBasis({assessment: {score: 59}})).toEqual({kind: "not-published"});
+        expect(readReviewerBasis({rating: {score: 59}})).toEqual({kind: "not-published"});
         expect(readReviewerBasis(null)).toEqual({kind: "not-published"});
         expect(readReviewerBasis("nonsense")).toEqual({kind: "not-published"});
     });
@@ -93,7 +93,7 @@ describe("evidenceWeight", () => {
 });
 
 describe("joinProviderRows", () => {
-    it("pairs each provider edge with the assessment its document names", () => {
+    it("pairs each provider edge with the rating its document names", () => {
         const source = richProfile();
         const rows = joinProviderRows(source.assessments, source.markets);
 
@@ -120,9 +120,9 @@ describe("joinProviderRows", () => {
         const rows = joinProviderRows(source.assessments, source.markets);
 
         // Both provider edges "failed" to fetch — they point at a homepage, not
-        // a document. Only the assessment edge's fetch is the document's.
+        // a document. Only the rating edge's fetch is the document's.
         expect(rows[0].documentError).toBeNull();
-        expect(rows[0].documentUrl).toBe("https://api.example/assessment.json");
+        expect(rows[0].documentUrl).toBe("https://api.example/rating.json");
     });
 
     it("falls back to the label prefix when the document cannot be read", () => {
@@ -134,10 +134,10 @@ describe("joinProviderRows", () => {
                     providerName: "AsterPay KYA",
                     market,
                 }),
-                assessmentEdge({
+                ratingEdge({
                     handle: `${ASTERPAY_TRIPLE}-doc`,
                     providerName: "AsterPay KYA",
-                    fetch: notFoundFetch("https://api.asterpay.example/assessment.json"),
+                    fetch: notFoundFetch("https://api.asterpay.example/rating.json"),
                 }),
             ],
             [market],
@@ -156,7 +156,7 @@ describe("joinProviderRows", () => {
         expect(rows[0].market?.claimHandle).toBe(ASTERPAY_TRIPLE);
     });
 
-    it("renders a provider edge with no assessment edge behind it", () => {
+    it("renders a provider edge with no rating edge behind it", () => {
         const market = claimMarket(DEEP3_TRIPLE);
         const rows = joinProviderRows(
             [providerEdge({handle: DEEP3_TRIPLE, providerName: "Deep3 Labs", market})],
@@ -164,20 +164,20 @@ describe("joinProviderRows", () => {
         );
 
         expect(rows).toHaveLength(1);
-        expect(rows[0].assessment).toBeNull();
+        expect(rows[0].rating).toBeNull();
         expect(rows[0].providerMatch).toBe("none");
         expect(rows[0].tripleId).toBe(DEEP3_TRIPLE);
     });
 
-    it("keeps an orphan assessment with no triple to stake on", () => {
+    it("keeps an orphaned rating with no triple to stake on", () => {
         const rows = joinProviderRows(
             [
-                assessmentEdge({
+                ratingEdge({
                     handle: "0xorphan",
                     providerName: "Nobody",
                     fetch: okFetch(
                         "https://api.example/a.json",
-                        assessmentDocument({
+                        ratingDocument({
                             providerName: "Nobody",
                             providerId: "nobody",
                             score: 10,
@@ -467,12 +467,12 @@ describe("buildPanelTabs", () => {
             joinProviderRows(
                 [
                     providerEdge({handle: DEEP3_TRIPLE, providerName: "Deep3 Labs", market}),
-                    assessmentEdge({
+                    ratingEdge({
                         handle: `${DEEP3_TRIPLE}-doc`,
                         providerName: "Deep3 Labs",
                         fetch: okFetch(
-                            "https://api.deep3.example/assessment.json",
-                            assessmentDocument({
+                            "https://api.deep3.example/rating.json",
+                            ratingDocument({
                                 providerName: "Deep3 Labs",
                                 providerId: "deep3-labs",
                                 score: 55.35,
@@ -492,7 +492,7 @@ describe("buildPanelTabs", () => {
         });
     });
 
-    it("calls a provider edge with no assessment absent, not unverified", () => {
+    it("calls a provider edge with no rating absent, not unverified", () => {
         const market = claimMarket(DEEP3_TRIPLE);
         const model = buildPanelTabs(
             joinProviderRows(
@@ -511,7 +511,7 @@ describe("buildPanelTabs", () => {
         // The old rule was "the provider with the most evidence behind it".
         // Both of these publish a count, one of them 1,445 of them, and the
         // page still opens on what the agent is for rather than on a
-        // stranger's assessment of it.
+        // stranger's rating of it.
         const thin = claimMarket(ASTERPAY_TRIPLE);
         const deep = claimMarket(DEEP3_TRIPLE);
         const model = buildPanelTabs(
@@ -522,12 +522,12 @@ describe("buildPanelTabs", () => {
                         providerName: "Loud Scores",
                         market: thin,
                     }),
-                    assessmentEdge({
+                    ratingEdge({
                         handle: `${ASTERPAY_TRIPLE}-doc`,
                         providerName: "Loud Scores",
                         fetch: okFetch(
                             "https://api.example/loud.json",
-                            assessmentDocument({
+                            ratingDocument({
                                 providerName: "Loud Scores",
                                 providerId: "loud",
                                 score: 99,
@@ -537,12 +537,12 @@ describe("buildPanelTabs", () => {
                         signature: UNVERIFIED,
                     }),
                     providerEdge({handle: DEEP3_TRIPLE, providerName: "Deep3 Labs", market: deep}),
-                    assessmentEdge({
+                    ratingEdge({
                         handle: `${DEEP3_TRIPLE}-doc`,
                         providerName: "Deep3 Labs",
                         fetch: okFetch(
-                            "https://api.deep3.example/assessment.json",
-                            assessmentDocument({
+                            "https://api.deep3.example/rating.json",
+                            ratingDocument({
                                 providerName: "Deep3 Labs",
                                 providerId: "deep3-labs",
                                 score: 41,

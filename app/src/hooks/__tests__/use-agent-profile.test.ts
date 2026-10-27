@@ -3,7 +3,7 @@ import type {AgentProfile} from "@arp-protocol/core";
 
 import {
     ASTERPAY_TRIPLE,
-    assessmentEdge,
+    ratingEdge,
     claimMarket,
     DEEP3_TRIPLE,
     notFoundFetch,
@@ -67,7 +67,11 @@ describe("agentProfileQueryOptions", () => {
         const fetchProfile = vi.fn(async () => richProfile());
         const options = agentProfileQueryOptions(MAINNET, REF, 7n, fetchProfile);
         await options.queryFn();
-        expect(fetchProfile).toHaveBeenCalledWith(REF, 7n, "https://mainnet.intuition.sh/v1/graphql");
+        expect(fetchProfile).toHaveBeenCalledWith(
+            REF,
+            7n,
+            "https://mainnet.intuition.sh/v1/graphql",
+        );
     });
 
     it("never retries — every retry is another round of provider fetches", () => {
@@ -78,13 +82,17 @@ describe("agentProfileQueryOptions", () => {
         const {options, fetchProfile} = optionsOver(richProfile());
         const view = await options.queryFn();
 
-        expect(fetchProfile).toHaveBeenCalledWith(REF, undefined, "https://mainnet.intuition.sh/v1/graphql");
+        expect(fetchProfile).toHaveBeenCalledWith(
+            REF,
+            undefined,
+            "https://mainnet.intuition.sh/v1/graphql",
+        );
         expect(view.found).toBe(true);
         expect(view.rows).toHaveLength(2);
         expect(view.rows[0].score).toBe(55.35);
         expect(view.rows[0].weight).toBe("moderate");
-        expect(view.rows[0].assessment?.signature.status).toBe("verified");
-        expect(view.rows[1].assessment?.signature.status).toBe("unverified");
+        expect(view.rows[0].rating?.signature.status).toBe("verified");
+        expect(view.rows[1].rating?.signature.status).toBe("unverified");
     });
 
     it("renders a provider whose resolver is down, with what is still known", async () => {
@@ -97,10 +105,10 @@ describe("agentProfileQueryOptions", () => {
                         providerName: "AsterPay KYA",
                         market,
                     }),
-                    assessmentEdge({
+                    ratingEdge({
                         handle: `${ASTERPAY_TRIPLE}-doc`,
                         providerName: "AsterPay KYA",
-                        fetch: notFoundFetch("https://api.asterpay.example/assessment.json"),
+                        fetch: notFoundFetch("https://api.asterpay.example/rating.json"),
                     }),
                 ],
                 markets: [market],
@@ -134,7 +142,7 @@ describe("agentProfileQueryOptions", () => {
         expect(view.sourceErrors[0].message).toBe("RPC timeout");
     });
 
-    it("returns an empty assessment list when no provider has written an edge", async () => {
+    it("returns an empty rating list when no provider has written an edge", async () => {
         const {options} = optionsOver(profile());
         const view = await options.queryFn();
 

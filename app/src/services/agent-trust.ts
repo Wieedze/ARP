@@ -41,7 +41,7 @@ export type ReviewerBasis =
 /**
  * The editorial axis of the panel: how much a score's number is worth.
  *
- * Drives type size and colour in `AssessmentRow`, so a 64.36 on 1,445
+ * Drives type size and colour in `RatingRow`, so a 64.36 on 1,445
  * reviewers and a 59.95 on 2 cannot read the same at a glance.
  */
 export type EvidenceWeight =
@@ -53,7 +53,25 @@ export type EvidenceWeight =
     | "substantial"
     | "deep";
 
-/** How an assessment document was tied back to a provider edge in the graph. */
+/**
+ * ## "Rating", not "assessment" — and where the line is
+ *
+ * The user could not read the word (2026-10-27): _« trouve un autre mot que assessment, je
+ * comprends pas ce qu'il veut dire et c'est compliqué pour rien »_. **Rating** is the replacement,
+ * and it is not a new word in this project — it is `docs/09` §3's own name for this rung of the
+ * evidence ladder: _tier 2, Rated: "someone scored this agent 67.25"_.
+ *
+ * The rename stops at the boundary, deliberately. **Intuition's and the package's vocabulary keeps
+ * its spelling**: the on-chain predicate is literally `has trust assessment`, `ClaimRelation` is
+ * `"has-trust-assessment"`, and `ProviderAssessment` / `AssessmentDocument` / `AssessmentFetchError`
+ * are the package's types for that edge and the document it points at. Renaming those would make
+ * the types stop matching the predicate they read, and would put ARP's word in a third party's
+ * mouth (`rules/claims.md` §3).
+ *
+ * So: the graph says assessment, the screen says rating, and this file is the join.
+ */
+
+/** How a rating document was tied back to a provider edge in the graph. */
 export type ProviderMatch = "document" | "label-prefix" | "none";
 
 export type ScoreDimension = {name: string; value: number};
@@ -63,9 +81,9 @@ export type ScoreDimension = {name: string; value: number};
  * document that edge's provider published, joined.
  *
  * Both halves are nullable and for different reasons. `providerClaim === null`
- * means an assessment exists with no `has trust provider` edge behind it —
- * nothing to stake on. `assessment === null` means a provider is declared but
- * published no assessment edge — a market with no document under it.
+ * means a rating exists with no `has trust provider` edge behind it —
+ * nothing to stake on. `rating === null` means a provider is declared but
+ * published no rating edge — a market with no document under it.
  */
 export type TrustRow = {
     id: string;
@@ -73,7 +91,7 @@ export type TrustRow = {
     providerUrl: string | null;
     providerMatch: ProviderMatch;
     providerClaim: ProviderAssessment | null;
-    assessment: ProviderAssessment | null;
+    rating: ProviderAssessment | null;
     /** The `has trust provider` triple's term id — the vault a stake goes into. */
     tripleId: Hex | null;
     market: ClaimMarket | null;
@@ -169,11 +187,11 @@ function readCount(source: Record<string, unknown> | null, key: string): number 
 }
 
 /**
- * Pull the reviewer count out of a raw assessment document.
+ * Pull the reviewer count out of a raw rating document.
  *
  * Read from `raw`, not from the connector's narrowed view, because the count
  * is provider-specific and the connector deliberately narrows only the fields
- * ERC-8004 assessments share. This is a relayed claim — the provider's own
+ * ERC-8004 ratings share. This is a relayed claim — the provider's own
  * number, unverified by anyone, including us.
  */
 export function readReviewerBasis(raw: unknown): ReviewerBasis {
@@ -231,11 +249,11 @@ function documentErrorOf(entry: ProviderAssessment | null): AssessmentFetchError
 function rowFrom(
     id: string,
     providerEdge: ProviderAssessment | null,
-    assessmentEdge: ProviderAssessment | null,
+    ratingEdge: ProviderAssessment | null,
     providerMatch: ProviderMatch,
     markets: Map<string, ClaimMarket>,
 ): TrustRow {
-    const document = assessmentEdge?.fetch.status === "ok" ? assessmentEdge.fetch.document : null;
+    const document = ratingEdge?.fetch.status === "ok" ? ratingEdge.fetch.document : null;
     const reviewers = readReviewerBasis(document?.raw ?? null);
     const handle = providerEdge?.claim.sourceHandle ?? null;
 
@@ -243,24 +261,24 @@ function rowFrom(
         id,
         providerName:
             providerEdge?.claim.provider.name ??
-            (assessmentEdge === null ? null : providerNameOf(assessmentEdge)) ??
+            (ratingEdge === null ? null : providerNameOf(ratingEdge)) ??
             "Unnamed provider",
         // A `has trust provider` object atom's url is the provider's own site;
-        // the assessment atom's url is the document. Never interchange them.
+        // the rating atom's url is the document. Never interchange them.
         providerUrl: providerEdge?.claim.provider.url ?? document?.provider?.url ?? null,
         providerMatch,
         providerClaim: providerEdge,
-        assessment: assessmentEdge,
+        rating: ratingEdge,
         tripleId: asTermId(handle),
         market: handle === null ? null : (markets.get(handle) ?? null),
         score: document?.score ?? null,
         scoreScale: document?.scoreScale ?? null,
         riskLevel: document?.riskLevel ?? null,
-        dimensions: dimensionsOf(assessmentEdge),
+        dimensions: dimensionsOf(ratingEdge),
         reviewers,
         weight: evidenceWeight(reviewers),
-        documentUrl: assessmentEdge?.claim.resolverUrl ?? null,
-        documentError: documentErrorOf(assessmentEdge),
+        documentUrl: ratingEdge?.claim.resolverUrl ?? null,
+        documentError: documentErrorOf(ratingEdge),
     };
 }
 
@@ -273,18 +291,18 @@ function rowFrom(
  * they have to be matched.
  *
  * Preference order is deliberate. Matching on the **document's own**
- * `provider.name` is a claim by the publisher. Matching on the assessment
+ * `provider.name` is a claim by the publisher. Matching on the rating
  * atom's label prefix — `"AsterPay KYA — Captain Dackie trust assessment"` —
  * is a naming-convention guess, and it is the only thing left when the
  * document is unreachable, which is exactly when a reader most needs the row
  * to render. It is reported as `label-prefix` so the UI can say so.
  */
-export function joinProviderRows(assessments: ProviderAssessment[], markets: ClaimMarket[]) {
+export function joinProviderRows(ratings: ProviderAssessment[], markets: ClaimMarket[]) {
     const marketByHandle = new Map<string, ClaimMarket>();
     for (const market of markets) marketByHandle.set(market.claimHandle, market);
 
-    const providerEdges = assessments.filter((e) => e.claim.relation === "has-trust-provider");
-    const assessmentEdges = assessments.filter((e) => e.claim.relation === "has-trust-assessment");
+    const providerEdges = ratings.filter((e) => e.claim.relation === "has-trust-provider");
+    const ratingEdges = ratings.filter((e) => e.claim.relation === "has-trust-assessment");
     const taken = new Set<ProviderAssessment>();
     const rows: TrustRow[] = [];
 
@@ -296,7 +314,7 @@ export function joinProviderRows(assessments: ProviderAssessment[], markets: Cla
         if (name !== null) {
             const target = normalise(name);
             paired =
-                assessmentEdges.find((entry) => {
+                ratingEdges.find((entry) => {
                     if (taken.has(entry)) return false;
                     const declared = providerNameOf(entry);
                     return declared !== null && normalise(declared) === target;
@@ -305,7 +323,7 @@ export function joinProviderRows(assessments: ProviderAssessment[], markets: Cla
 
             if (paired === null) {
                 paired =
-                    assessmentEdges.find(
+                    ratingEdges.find(
                         (entry) =>
                             !taken.has(entry) &&
                             (entry.claim.label ?? "").trim().toLowerCase().startsWith(target),
@@ -326,11 +344,11 @@ export function joinProviderRows(assessments: ProviderAssessment[], markets: Cla
         );
     });
 
-    assessmentEdges.forEach((entry, index) => {
+    ratingEdges.forEach((entry, index) => {
         if (taken.has(entry)) return;
         rows.push(
             rowFrom(
-                entry.claim.sourceHandle ?? `assessment-${index}`,
+                entry.claim.sourceHandle ?? `rating-${index}`,
                 null,
                 entry,
                 "none",
@@ -423,7 +441,7 @@ export function shouldUseTabs(rows: TrustRow[]): boolean {
 /**
  * What a provider tab carries in the strip itself.
  *
- * Stacking let a reader see one provider's signed assessment beside another's
+ * Stacking let a reader see one provider's signed rating beside another's
  * unsigned one; tabs take that away, and this is what is put back. Deliberately
  * **no score**: a strip of scores would rank providers by the one variable
  * ADR 0018 argues is not the measure.
@@ -431,7 +449,7 @@ export function shouldUseTabs(rows: TrustRow[]): boolean {
 export type TabSummary = {
     /**
      * The connector's verdict, relayed. `absent` is the fourth case and not a
-     * verdict at all: no assessment edge, so nothing was ever checked.
+     * verdict at all: no rating edge, so nothing was ever checked.
      */
     signature: {status: SignatureVerdict["status"] | "absent"; label: string};
 };
@@ -449,7 +467,7 @@ export type PanelTabs = {
      * What the agent is for comes before anyone's opinion of it, and it is the
      * one tab that is about the agent rather than about a provider. This
      * replaces the earlier rule — the provider with the most evidence behind it
-     * — which opened the page on a stranger's assessment.
+     * — which opened the page on a stranger's rating.
      */
     defaultSlug: string;
 };
@@ -469,7 +487,7 @@ function slugify(value: string): string {
 }
 
 function summarise(row: TrustRow): TabSummary {
-    const verdict = row.assessment?.signature ?? null;
+    const verdict = row.rating?.signature ?? null;
     return {
         signature:
             verdict === null
@@ -485,7 +503,7 @@ function summarise(row: TrustRow): TabSummary {
  * before what anyone says about it.
  *
  * ARP gets a tab rather than a footnote because its abstention is a claim about
- * this agent and belongs beside the others: "no assessment" is only legible as
+ * this agent and belongs beside the others: "no rating" is only legible as
  * a position if it sits where a position would sit.
  *
  * Slugs go in the URL, so they are derived from the provider's name and made
