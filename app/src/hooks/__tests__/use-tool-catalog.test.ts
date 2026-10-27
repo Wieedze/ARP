@@ -83,7 +83,7 @@ describe("toolCatalogQueryOptions", () => {
         expect(fetchListing).toHaveBeenCalledWith("conviction", 2);
         expect(view.rows).toHaveLength(1);
         expect(view.rows[0]?.name).toBe("Trail of Bits — guidelines-advisor");
-        expect(view.rows[0]?.href).toBe("/tool/atom/0xba5844b5");
+        expect(view.rows[0]?.href).toBe("/atom/0xba5844b5");
         // The counter vault's creation dust is above zero, so the cell is populated.
         expect(view.rows[0]?.opposeTrust).not.toBeNull();
     });

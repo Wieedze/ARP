@@ -174,12 +174,12 @@ function Candidates({page}: {page: NonNullable<ReturnType<typeof useFindAgents>[
                                 </>
                             )}
                         </span>
-                        {/* `/tool/atom/:atomId` is really "an atom and the `uses` edges pointing
+                        {/* `/atom/:atomId` is really "an atom and the `uses` edges pointing
                             at it", and for an agent's identity atom those edges are **who declared
                             hiring it**. The content is right; the route's name is a leftover from
                             when only tools had one. Labelled for what it gives rather than for
                             where it goes. */}
-                        <Link to={`/tool/atom/${candidate.atomId}`} className={linkClass}>
+                        <Link to={`/atom/${candidate.atomId}`} className={linkClass}>
                             Who hired it →
                         </Link>
                     </li>

@@ -91,10 +91,9 @@ default and only `--execute` signs.
 | `/agent/:chainId/:tokenId` | one agent's trust surface, one tab per trust provider, with a staking control                                                                          | mainnet (read + write) |
 | `/agent`                   | mint an ERC-8004 identity                                                                                                                              | testnet 13579          |
 | `/agent/import`            | prove you own an existing agent, write its identity atom if the mirror has not, link your staking account                                              | mainnet                |
-| `/tools`                   | tools agents declared using                                                                                                                            | mainnet (read)         |
-| `/tool/atom/:atomId`       | one tool's standing — who declared using it, what is behind saying so, and both sides of each claim                                                    | mainnet (read + write) |
-| `/`                        | what ARP's own `ModuleRegistry` holds. **Legacy** under [ADR 0051](.claude/choices/0051-arp-points-and-prices-it-stores-nothing.md) and not in the nav | testnet                |
-| `/tool/:id`                | per-tool detail keyed on a `ModuleRegistry` id. Legacy for the same reason                                                                             | testnet                |
+| `/tools`                   | tools agents declared using                                                                                                                            | either, the toggle     |
+| `/atom/:atomId`            | one atom — a tool, a tag, a category, a protocol, an agent — its own market, and every claim pointing at it grouped by predicate                       | either, read only      |
+| `/`                        | the same list as `/tools`. It was ARP's own `ModuleRegistry`, retired by [ADR 0051](.claude/choices/0051-arp-points-and-prices-it-stores-nothing.md)   | either, the toggle     |
 
 `/hire` was a demo that the index works. It was never finished and is removed (2026-10-20); hiring is
 `tasks/25`.

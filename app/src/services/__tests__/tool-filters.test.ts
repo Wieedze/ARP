@@ -13,7 +13,7 @@ const row = (overrides: Partial<ToolRow> = {}): ToolRow => ({
     provenance: "declared",
     name: "github.com/crytic/slither",
     isUnnamed: false,
-    href: "/tool/atom/0xab",
+    href: "/atom/0xab",
     declarations: 3,
     paidDeclarations: 2,
     supportTrust: "1.0000",

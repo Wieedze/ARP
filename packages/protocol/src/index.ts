@@ -215,6 +215,19 @@ export {getToolUsage} from "./tool-usage.js";
 export type {ToolUsage, ToolUsageConfig, ToolUsageEdge} from "./tool-usage.js";
 
 /**
+ * The predicate-agnostic sibling of `getToolUsage`: one atom, its own market, and every edge
+ * pointing at it grouped by predicate. What a tag, a category or a protocol needs and `uses`-only
+ * reading could not give them.
+ */
+export {getAtomStanding} from "./atom-standing.js";
+export type {
+    AtomEdge,
+    AtomEdgeGroup,
+    AtomStanding,
+    AtomStandingConfig,
+} from "./atom-standing.js";
+
+/**
  * Declaring what an agent used, and putting TRUST behind it — the write half of `docs/12`.
  *
  * Returns **plans**, not transactions: `PreparedCall[]` for the agent's own runtime to sign with

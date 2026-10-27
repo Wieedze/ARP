@@ -10,7 +10,7 @@ import {UsageEdgeRow} from "../tool/UsageEdgeRow";
  *
  * ## Why this is not called `ToolUsage`
  *
- * It was the body of `/tool/atom/:atomId` and nothing else. `getToolUsage` knows nothing about
+ * It was the body of `/atom/:atomId` and nothing else. `getToolUsage` knows nothing about
  * tools — it takes an atom and returns the `uses` edges whose **object** is that atom:
  *
  * | the atom is…    | the edges mean…                        |

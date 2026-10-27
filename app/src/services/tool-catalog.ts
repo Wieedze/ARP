@@ -219,7 +219,7 @@ function rowOf(tool: ToolListing): ToolRow {
         provenance: "declared",
         name: named ? label : tool.atomId,
         isUnnamed: !named,
-        href: `/tool/atom/${tool.atomId}`,
+        href: `/atom/${tool.atomId}`,
         declarations: tool.edgeCount,
         paidDeclarations: tool.pricedEdges,
         supportTrust: formatTrust(tool.supportAssetsSum),
@@ -236,7 +236,7 @@ function registeredRowOf(tool: RegisteredTool): ToolRow {
         provenance: "registered",
         name: named ? label : tool.atomId,
         isUnnamed: !named,
-        href: `/tool/atom/${tool.atomId}`,
+        href: `/atom/${tool.atomId}`,
         declarations: tool.declarations,
         // `null`, not `0`: pricing a registered row's declarations needs the per-edge vaults, which
         // is `listTools`'s read, so this is **unknown** here. A zero under "paid for" would read as
@@ -267,7 +267,7 @@ function registeredRowOf(tool: RegisteredTool): ToolRow {
  * A collision keeps the declared row because it carries the per-edge market the page is about.
  *
  * The registered row's atom-vault figures answer the other question and are **not** reachable
- * anywhere in this app yet: `ToolUsagePanel` sums the edge vaults, and nothing deposits on a tool's
+ * anywhere in this app yet: `/atom/:atomId` sums the edge vaults per predicate, and nothing deposits on a tool's
  * atom. An earlier version of this sentence said they were — and the same sentence was corrected in
  * `ToolCatalogList` while this copy, the one that file imports its types from, kept the stale
  * version (`rules/claims.md` failure 5).

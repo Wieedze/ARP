@@ -1,5 +1,6 @@
 import {Link} from "react-router-dom";
 
+import {linkClass} from "../../lib/control-class";
 import type {CapabilityGroup} from "../../services/agent-trust";
 
 /**
@@ -12,6 +13,15 @@ import type {CapabilityGroup} from "../../services/agent-trust";
  * figure on screen rots where nobody can re-run it, and `use` is the wrong predicate for this claim
  * anyway — ADR `0030` found that `use` means "supports this protocol" while `uses` means "uses this
  * tool", so the number was answering a different question than the sentence asked.
+ *
+ * ## Every object is a link now, not just a tool
+ *
+ * Only `uses-tool` objects were linked, so a tool was clickable and a tag, a category, a protocol
+ * and a type were dead text — which the user noticed by walking the graph and finding every link
+ * led back to an agent (2026-10-27). They are all atoms with their own vaults, and `/atom/:id` is
+ * predicate-agnostic, so each one goes to its own page. The internal link wins over the object's
+ * own external url, because the standing of a thing is what this panel cannot otherwise show; the
+ * url is still reachable from the atom's page.
  */
 export function CapabilitySection({groups, count}: {groups: CapabilityGroup[]; count: number}) {
     if (count === 0) {
@@ -35,22 +45,21 @@ export function CapabilitySection({groups, count}: {groups: CapabilityGroup[]; c
                     <dd className="flex flex-wrap gap-x-4 gap-y-1 text-[length:var(--text-body-sm)]">
                         {group.entries.map((entry, index) => {
                             const label = entry.name ?? entry.label ?? "unnamed";
-                            // A `uses-tool` object is a tool, and a tool has a page: who else
-                            // declared using it and what they put behind saying so. `tasks/20` made
-                            // this edge render; until now it went nowhere. The internal link wins
-                            // over the object's own external url, because the standing of the tool
-                            // is what this panel cannot otherwise show.
-                            if (group.relation === "uses-tool" && entry.sourceHandle !== null) {
+                            // Gated on having an atom id, not on the relation. `sourceHandle` is
+                            // the object's term id and it is the only thing the link needs.
+                            if (entry.sourceHandle !== null) {
                                 return (
                                     <Link
                                         key={`${label}-${index}`}
-                                        to={`/tool/atom/${entry.sourceHandle}`}
-                                        className="font-mono text-[color:var(--color-accent)]"
+                                        to={`/atom/${entry.sourceHandle}`}
+                                        className={`font-mono ${linkClass}`}
                                     >
                                         {label}
                                     </Link>
                                 );
                             }
+                            // No term id means the edge's object was not resolvable, so there is
+                            // nowhere to go. The external url is the fallback, then plain text.
                             return entry.url !== null ? (
                                 <a
                                     key={`${label}-${index}`}

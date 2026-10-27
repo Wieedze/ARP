@@ -1,5 +1,5 @@
 import {lazy, Suspense} from "react";
-import {Navigate, Route, Routes} from "react-router-dom";
+import {Navigate, Route, Routes, useParams} from "react-router-dom";
 
 import {Layout} from "./components/Layout";
 import {AgentRegister} from "./pages/AgentRegister";
@@ -9,9 +9,7 @@ import {AgentRegister} from "./pages/AgentRegister";
  * pull the ERC-8004 connector and its graph transport, which nothing else in
  * the app needs, and most visits never open them.
  */
-const Profile = lazy(() =>
-    import("./pages/Profile").then((module) => ({default: module.Profile})),
-);
+const Profile = lazy(() => import("./pages/Profile").then((module) => ({default: module.Profile})));
 const ToolRegister = lazy(() =>
     import("./pages/ToolRegister").then((module) => ({default: module.ToolRegister})),
 );
@@ -30,8 +28,8 @@ const AgentImport = lazy(() =>
  * also falsified the comment above — the connector would then be something the eagerly loaded
  * bundle needs. `rules/ui.md`: lazy-load route-level code.
  */
-const ToolUsagePanel = lazy(() =>
-    import("./pages/ToolUsagePanel").then((module) => ({default: module.ToolUsagePanel})),
+const AtomPanel = lazy(() =>
+    import("./pages/AtomPanel").then((module) => ({default: module.AtomPanel})),
 );
 /** Same reason: it reads the Intuition graph, which nothing in the eager bundle needs. */
 const ToolCatalog = lazy(() =>
@@ -108,20 +106,33 @@ function App() {
                         </Suspense>
                     }
                 />
-                {/* Keyed on an ATOM. `/tool/:id` was the testnet `ModuleRegistry` page beside it
-                    and is gone with the registry (ADR `0051`); the nesting under `/tool/` is kept
-                    so existing links to this one still resolve. */}
+                {/* Keyed on an ATOM, and not on a tool. `/tool/atom/:atomId` read `uses` edges
+                    only, so a tool had a page and a tag, a category or a protocol did not — they
+                    are all atoms with their own vaults and the question is the same for each: who
+                    points at this, and what did they put behind saying so (user, 2026-10-27).
+                    `/tool/:id` was the testnet `ModuleRegistry` page and went with the registry
+                    (ADR `0051`). */}
                 <Route
-                    path="/tool/atom/:atomId"
+                    path="/atom/:atomId"
                     element={
-                        <Suspense fallback={<RouteFallback label="tool surface" />}>
-                            <ToolUsagePanel />
+                        <Suspense fallback={<RouteFallback label="atom" />}>
+                            <AtomPanel />
                         </Suspense>
                     }
                 />
+                {/* The old spelling, redirected rather than 404'd: links to it exist in commits, in
+                    ADRs and in whatever anybody bookmarked. `AtomRedirect` because `Navigate` cannot
+                    carry a param through. */}
+                <Route path="/tool/atom/:atomId" element={<AtomRedirect />} />
             </Routes>
         </Layout>
     );
+}
+
+/** `/tool/atom/:atomId` → `/atom/:atomId`, keeping the id. */
+function AtomRedirect() {
+    const {atomId} = useParams();
+    return <Navigate to={atomId === undefined ? "/tools" : `/atom/${atomId}`} replace />;
 }
 
 function RouteFallback({label}: {label: string}) {

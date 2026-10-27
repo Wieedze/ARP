@@ -160,7 +160,7 @@ export function ToolRegister() {
                 ) : null}
 
                 {/* A status **line**, not a region around the subtree — and this is the second
-                    time: `ToolUsagePanel` documents the same mistake, where a wrapper became the
+                    time: `AtomPanel` inherited the same lesson, where a wrapper became the
                     live region for everything under it and announced the amount field's help text
                     per keystroke. Here it would have read the whole pinnable JSON aloud the moment
                     the `<details>` opened. A live region announces every descendant mutation that
@@ -241,7 +241,7 @@ function Resolved(props: {
                                 key={candidate.termId}
                                 className="border-t border-[color:var(--color-rule)] py-2 text-[length:var(--text-body-sm)]"
                             >
-                                <Link to={`/tool/atom/${candidate.termId}`} className={linkClass}>
+                                <Link to={`/atom/${candidate.termId}`} className={linkClass}>
                                     {candidate.label ?? (
                                         <>
                                             <span className="sr-only">atom </span>
@@ -259,7 +259,7 @@ function Resolved(props: {
                 <div className="mt-8 max-w-[64ch]">
                     <p className="font-medium">This tool already has its atom.</p>
                     <Link
-                        to={`/tool/atom/${plan.atomId}`}
+                        to={`/atom/${plan.atomId}`}
                         className={`mt-4 inline-block ${linkClass}`}
                     >
                         See its declarations →
@@ -292,7 +292,7 @@ function Resolved(props: {
                         "No declared uses". The `exists` branch above was corrected and this one was
                         not — `rules/claims.md` failure 5, on the path that mattered more. */}
                     <Link
-                        to={`/tool/atom/${plan.atomId}`}
+                        to={`/atom/${plan.atomId}`}
                         className={`mt-2 inline-block ${linkClass}`}
                     >
                         See its declarations →

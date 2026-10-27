@@ -148,8 +148,12 @@ indirectly and genuinely: because in ERC-8004 plus MCP the tool _is_ an agent, t
 is the list of tools that actually work, on the order of a thousand of 300,000-plus. Without it you do not
 know what to rate. But the mechanism that rates them is the `uses` edge, and that is task 19.
 
-**A tool with its weight now has a page** — `/tool/atom/:atomId`, `tasks/23`. It is **not finished**
-(user, 2026-10-20), and its only inbound link is an agent's capability section (`tasks/28`).
+**Every atom has a page now** — `/atom/:atomId`, which replaced `/tool/atom/:atomId` on 2026-10-27.
+The old page read `uses` edges only, so a tool had somewhere to go and a tag, a category or a
+protocol did not; `getAtomStanding` does not presume the predicate, and `CapabilitySection` links
+every object rather than only the tools. The graph is walkable in both directions from an agent.
+The `uses`-scoped, tier-aware view (`docs/14`'s ladder) survives as `DeclaredUses`, which the agent
+page renders as its own "who declared using it" section.
 
 Tasks 13, 14, 21 and 22 are open. The earlier note that 13 and 14 would be "cleared alongside 18"
 did not happen.
