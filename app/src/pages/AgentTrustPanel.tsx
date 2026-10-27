@@ -7,9 +7,11 @@ import {AgentBacking} from "../components/agent/AgentBacking";
 import {AgentIdentityPanel} from "../components/agent/AgentIdentityPanel";
 import {AssessmentRow} from "../components/agent/AssessmentRow";
 import {CapabilitySection} from "../components/agent/CapabilitySection";
+import {DeclaredUses} from "../components/usage/DeclaredUses";
 import {panelDomId, tabDomId} from "../components/agent/tab-ids";
 import {TrustPanelTabs} from "../components/agent/TrustPanelTabs";
 import {UnreadSources} from "../components/agent/UnreadSources";
+import {useChainChoice} from "../lib/chain-choice";
 import {useAgentProfile} from "../hooks/use-agent-profile";
 import {useStakeSession} from "../hooks/use-stake-session";
 import {useTermVault} from "../hooks/use-term-vault";
@@ -20,7 +22,6 @@ import {
     shouldUseTabs,
     type TrustPanelView,
 } from "../services/agent-trust";
-import {ERC8004_GRAPHQL_URL} from "../services/erc8004-connector";
 import {asStakeTermId, type StakeSession} from "../services/trust-stake";
 
 /**
@@ -37,7 +38,8 @@ import {asStakeTermId, type StakeSession} from "../services/trust-stake";
  * claims live, and where the tabs are: the agent's own data first, then one per
  * provider, then ARP's own position.
  *
- * Every read here is Intuition **mainnet**, regardless of the wallet's chain.
+ * Every read follows the chain toggle (`lib/chain-choice.ts`). It used to be mainnet whatever
+ * the toggle said, which hid ARP's own testnet edges behind an empty panel.
  */
 
 const TAB_PARAM = "tab";
@@ -75,6 +77,7 @@ export function AgentTrustPanel() {
     const tokenId = parseTokenId(params.tokenId);
     const ref = chainId !== null && tokenId !== null ? {chainId, tokenId} : null;
 
+    const chain = useChainChoice();
     const [searchParams, setSearchParams] = useSearchParams();
     const baseId = useId();
 
@@ -145,8 +148,7 @@ export function AgentTrustPanel() {
                 ← agents
             </Link>
 
-            <div className="mt-4">
-            </div>
+            <div className="mt-4"></div>
 
             {profileQuery.isLoading ? (
                 <LoadingShape chainId={ref.chainId} tokenId={ref.tokenId} />
@@ -239,6 +241,21 @@ export function AgentTrustPanel() {
                                 </div>
                             )}
 
+                            {/* Who declared using **this agent** — section 03 of the delivered
+                                design, in our own implementation. The same component the atom page
+                                uses, because it is the same read: `uses` edges whose object is this
+                                atom. Keyed on the agent's atom rather than its token id, so it is
+                                absent for the same reason the backing section is — no atom, no
+                                edges to point at it. */}
+                            {backingAtomId === null ? null : (
+                                <div className="mb-16 pb-16 border-b border-[color:var(--color-rule)]">
+                                    <h2 className="font-medium">Who declared using it</h2>
+                                    <div className="mt-4">
+                                        <DeclaredUses atomId={backingAtomId} />
+                                    </div>
+                                </div>
+                            )}
+
                             {shouldUseTabs(view.rows) ? (
                                 <TabbedClaims
                                     view={view}
@@ -258,7 +275,7 @@ export function AgentTrustPanel() {
 
                             <p className="mt-16 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)] max-w-[64ch]">
                                 Graph read from{" "}
-                                <span className="font-mono">{ERC8004_GRAPHQL_URL}</span>.
+                                <span className="font-mono">{chain.graphqlUrl}</span>.
                             </p>
                         </div>
                     </div>
