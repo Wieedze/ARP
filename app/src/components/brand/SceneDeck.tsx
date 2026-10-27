@@ -41,6 +41,15 @@ import {SceneContext} from "./scene-context";
  *   share of readers only ever see the stacked version, so it is designed, not degraded.
  * - JavaScript has not run. The initial state is **stacked**, so a reader who never gets the effect
  *   gets the whole page rather than one screen of it. Motion never gates content.
+ *
+ * ## In-page anchors have to be taught
+ *
+ * A scene that is not the active one is `position: absolute` inside the sticky stage, so its box is
+ * nowhere near the scroll offset that would make it active. The browser's own anchor handling
+ * scrolls to the box and lands on the wrong scene: measured, clicking `#build` moved the page 268px
+ * and left the target at `opacity: 0`. So the deck **owns hash navigation** — it finds which scene
+ * holds the id and scrolls to that scene's band instead. A pinned deck that breaks its own links is
+ * worse than no deck.
  */
 
 /** Below these the deck stacks. A scene has to fit, and at 640px tall most of them do not. */
@@ -69,6 +78,57 @@ export function SceneDeck({children}: {children: ReactNode}) {
     const ref = useRef<HTMLDivElement | null>(null);
     const [pinned, setPinned] = useState(false);
     const [progress, setProgress] = useState(0);
+
+    // Hash navigation, because the browser's own lands on the wrong scene (see the docstring).
+    useEffect(() => {
+        const node = ref.current;
+        if (node === null || !pinned) return;
+
+        function bandOf(hash: string): number | null {
+            const id = hash.slice(1);
+            if (id === "" || node === null) return null;
+            const target = node.querySelector(`[id="${CSS.escape(id)}"]`);
+            if (target === null) return null;
+            const scene = target.closest("[data-scene]");
+            const index = Number(scene?.getAttribute("data-scene") ?? "-1");
+            if (!Number.isInteger(index) || index < 0) return null;
+            return window.scrollY + node.getBoundingClientRect().top + index * window.innerHeight;
+        }
+
+        function go(hash: string): boolean {
+            const top = bandOf(hash);
+            if (top === null) return false;
+            window.scrollTo({top, behavior: "smooth"});
+            return true;
+        }
+
+        function onClick(event: MouseEvent) {
+            if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey) {
+                return;
+            }
+            const anchor = (event.target as Element | null)?.closest?.("a[href^='#']");
+            const href = anchor?.getAttribute("href");
+            if (href === undefined || href === null) return;
+            if (go(href)) {
+                event.preventDefault();
+                history.replaceState(null, "", href);
+            }
+        }
+
+        function onHashChange() {
+            go(window.location.hash);
+        }
+
+        // A deep link that arrives with the page, not only one clicked once it is open.
+        if (window.location.hash !== "") requestAnimationFrame(() => go(window.location.hash));
+
+        document.addEventListener("click", onClick);
+        window.addEventListener("hashchange", onHashChange);
+        return () => {
+            document.removeEventListener("click", onClick);
+            window.removeEventListener("hashchange", onHashChange);
+        };
+    }, [pinned]);
 
     useEffect(() => {
         let frame = 0;
@@ -154,6 +214,7 @@ export function SceneDeck({children}: {children: ReactNode}) {
                                     // A scene nobody can see is out of the tab order and out of the
                                     // accessibility tree; otherwise six screens of links are
                                     // reachable at once and a reader has no idea where they are.
+                                    data-scene={index}
                                     aria-hidden={isActive ? undefined : true}
                                     inert={isActive ? undefined : true}
                                 >

@@ -96,6 +96,12 @@ describe("Landing", () => {
         });
     });
 
+    // **This covers the stacked page only, and that is a real limit.** `happy-dom` reports zero
+    // for every measurement, so `SceneDeck` never pins here and the pinned failure mode is
+    // invisible to it — a scene that is not active is `position: absolute` inside the sticky
+    // stage, so the browser's own anchor handling lands on the wrong scene. Measured in a real
+    // browser: `#build` moved the page 268px and left the target at `opacity: 0`. The deck now
+    // owns hash navigation, and only a browser check can prove it.
     it("gives every in-page anchor a target on the page", async () => {
         const {container} = renderWithProviders(<Landing />);
         await waitFor(() => expect(cost).toHaveBeenCalled());
