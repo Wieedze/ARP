@@ -3,7 +3,7 @@ import type {Hex} from "viem";
 import {describe, expect, it} from "vitest";
 
 import {multiVaultDeclareAbi} from "../src/declare/index.js";
-import {prepareRate} from "../src/hire/rate.js";
+import {prepareRate} from "../src/declare/rate.js";
 import {USES} from "../src/sources/intuition/terms.js";
 import {fakeReads, idFor, SUBJECT} from "./helpers.js";
 

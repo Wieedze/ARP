@@ -1,4 +1,4 @@
-import {createGraphqlTransport, type GraphqlTransport} from "../sources/intuition/graphql.js";
+import {createGraphqlTransport, type GraphqlTransport} from "./sources/intuition/graphql.js";
 import {
     COMPATIBLE_WITH,
     HAS_CATEGORY,
@@ -7,17 +7,21 @@ import {
     IMPLEMENT,
     SAME_AS,
     USE,
-} from "../sources/intuition/terms.js";
-import {defaultFetch, type FetchLike} from "../http.js";
-import {isRecord, readString} from "../json.js";
+} from "./sources/intuition/terms.js";
+import {defaultFetch, type FetchLike} from "./http.js";
+import {isRecord, readString} from "./json.js";
 
 /**
- * Who could do this job, from what agents have declared about themselves.
+ * Who is out there, from what agents have declared about themselves.
  *
- * The first step of `tasks/25`. A buyer cannot hire without a list, and the list has to come from
- * the graph rather than from ARP: ARP publishes no score and no ranking (ADR `0046`), so what this
- * returns is **what each agent said about itself and what the market put behind it**, in the order
- * the market put it there.
+ * **Discovery, not hiring.** It used to live under `hire/` and that was the wrong frame: ARP is not
+ * a marketplace and hiring a stranger needs their runtime address, which means you already know
+ * them (ADR `0060`). What this is for is the other direction — once agents declare what they used
+ * and pay to say so, this is how anyone reads the result.
+ *
+ * The list comes from the graph rather than from ARP: ARP publishes no score and no ranking
+ * (ADR `0046`), so what this returns is **what each agent said about itself and what the market put
+ * behind it**, in the order the market put it there.
  *
  * ## Capability edges by default, `uses` when there are any
  *

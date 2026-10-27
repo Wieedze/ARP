@@ -1,7 +1,6 @@
 import {useState} from "react";
 import {Link} from "react-router-dom";
 
-import {HireForm} from "../components/agent/HireForm";
 import {RingLoader} from "../components/brand/RingLoader";
 import {Sigil} from "../components/brand/Sigil";
 import {useFindAgents} from "../hooks/use-find-agents";
@@ -10,7 +9,14 @@ import {controlClass, linkClass} from "../lib/control-class";
 import {formatTrust, truncateMiddle} from "../services/trust-format";
 
 /**
- * Find an agent to hire. `tasks/25`'s first step, on screen.
+ * Who is out there, and what the market has put behind them.
+ *
+ * ## It was a hire page, and that was backwards (ADR `0060`)
+ *
+ * Hiring a stranger needs their runtime address, which you only have if you already know them — so
+ * a page that found agents could not hire them and a page that hired them did not need to find
+ * them. ARP is not a marketplace. What it is for is the record: an agent declares what it used and
+ * pays to say so, and **this is where anyone reads that record**.
  *
  * ## What this page is and is not
  *
@@ -28,7 +34,7 @@ import {formatTrust, truncateMiddle} from "../services/trust-format";
 
 const SUGGESTIONS = ["MCP Server", "defi", "smart_contracts", "A2A Agent", "trading"];
 
-export function Hire() {
+export function Discover() {
     const chain = useChainChoice();
     const [domain, setDomain] = useState("");
     const [submitted, setSubmitted] = useState("");
@@ -37,7 +43,7 @@ export function Hire() {
     return (
         <section>
             <h1 className="text-[length:var(--text-display)] leading-[var(--leading-display)] font-semibold tracking-tight">
-                Hire an agent
+                Who is out there
             </h1>
 
             <form
@@ -52,7 +58,7 @@ export function Hire() {
                         htmlFor="hire-domain"
                         className="block font-mono uppercase tracking-wider text-[length:var(--text-label)] text-[color:var(--color-steel)]"
                     >
-                        What should it be able to do
+                        What it says it can do
                     </label>
                     <input
                         id="hire-domain"
@@ -120,13 +126,6 @@ export function Hire() {
 }
 
 function Candidates({page}: {page: NonNullable<ReturnType<typeof useFindAgents>["data"]>}) {
-    /**
-     * One form open at a time, like the stake controls elsewhere: the form is ~280px against a
-     * ~70px row, so N open forms turn a dense list into a scroll. Opening another closes the first,
-     * which also empties it — nothing a buyer typed for one agent survives into another's budget.
-     */
-    const [open, setOpen] = useState<string | null>(null);
-
     return (
         <>
             <p className="font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
@@ -178,25 +177,6 @@ function Candidates({page}: {page: NonNullable<ReturnType<typeof useFindAgents>[
                         <Link to={`/tool/atom/${candidate.atomId}`} className={linkClass}>
                             Who hired it →
                         </Link>
-                        <button
-                            type="button"
-                            aria-expanded={open === candidate.atomId}
-                            onClick={() =>
-                                setOpen(open === candidate.atomId ? null : candidate.atomId)
-                            }
-                            className="px-2 py-1 text-[length:var(--text-body-sm)] border-[color:var(--color-rule-strong)]!"
-                        >
-                            {open === candidate.atomId ? "Close" : "Hire"}
-                        </button>
-                        {open === candidate.atomId ? (
-                            <div className="mt-4 w-full border-l border-[color:var(--color-rule-strong)] pl-5">
-                                <HireForm
-                                    agentLabel={
-                                        candidate.label ?? truncateMiddle(candidate.atomId)
-                                    }
-                                />
-                            </div>
-                        ) : null}
                     </li>
                 ))}
             </ul>

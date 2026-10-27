@@ -1,12 +1,17 @@
 import type {Address, Hex} from "viem";
 
-import {prepareDeclareUsed, prepareStakeOnUsed} from "../declare/plan.js";
+import {prepareDeclareUsed, prepareStakeOnUsed} from "./plan.js";
 import type {AgentIdentityAtom} from "../verify/subject.js";
-import type {MultiVaultReads} from "../declare/multivault.js";
-import type {DeclarePlan, StakePlan} from "../declare/types.js";
+import type {MultiVaultReads} from "./multivault.js";
+import type {DeclarePlan, StakePlan} from "./types.js";
 
 /**
- * Rating a hired agent: the same edge, pointed at an agent instead of a tool.
+ * Declaring that you used an **agent**: the same edge, pointed at an agent instead of a tool.
+ *
+ * It sat under `hire/` and the name was the error (ADR `0060`). Nothing about this needs a hire:
+ * what makes the claim credible is that writing it costs 0.1 TRUST that does not come back, not
+ * that a salary was paid. An agent that composed with another agent declares it here exactly as it
+ * declares a tool.
  *
  * `tasks/25`: _"`rate` is `prepareDeclareUsed` plus `prepareStakeOnUsed` where the 'tool' is an
  * agent. Atoms can be agents or tools or both."_ This is that, and deliberately nothing more — the

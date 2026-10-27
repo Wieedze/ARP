@@ -9,8 +9,8 @@ import {AgentRegister} from "./pages/AgentRegister";
  * pull the ERC-8004 connector and its graph transport, which nothing else in
  * the app needs, and most visits never open them.
  */
-const Hire = lazy(() =>
-    import("./pages/Hire").then((module) => ({default: module.Hire})),
+const Discover = lazy(() =>
+    import("./pages/Discover").then((module) => ({default: module.Discover})),
 );
 const Profile = lazy(() =>
     import("./pages/Profile").then((module) => ({default: module.Profile})),
@@ -96,10 +96,10 @@ function App() {
                     land on a blank page — and it is three lines against a dead end. */}
                 <Route path="/me" element={<Navigate to="/profile" replace />} />
                 <Route
-                    path="/hire"
+                    path="/discover"
                     element={
-                        <Suspense fallback={<RouteFallback label="candidates" />}>
-                            <Hire />
+                        <Suspense fallback={<RouteFallback label="agents" />}>
+                            <Discover />
                         </Suspense>
                     }
                 />

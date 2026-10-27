@@ -1,6 +1,6 @@
 import {describe, expect, it} from "vitest";
 
-import {CAPABILITY_PREDICATES, findAgents} from "../src/hire/find.js";
+import {CAPABILITY_PREDICATES, findAgents} from "../src/discover.js";
 import {HAS_CATEGORY, HAS_TYPE, SAME_AS} from "../src/sources/intuition/terms.js";
 
 type Row = {

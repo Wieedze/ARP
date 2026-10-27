@@ -1,5 +1,17 @@
 # Task 25 — Hire an agent, and rate it afterwards
 
+> **Status: OBJECTIVE SUPERSEDED — ADR `0060`, 2026-10-27.** `find` and `rate` are built and
+> shipped (`findAgents` in `src/discover.ts`, `prepareRate` in `src/declare/rate.ts`). **`hire` and
+> `pay` are out**, and not as a deferral: a delegation names its delegate by address, an agent's
+> runtime address is not on the graph, so a buyer can only hire an agent they already know. Closing
+> that gap is an agent marketplace, which `docs/01` rejects by name. The spec below is left as the
+> record of what was attempted and why it did not hold.
+>
+> What replaces it: ARP **records** a use rather than brokering one. The credible part of a
+> declaration is that writing it costs 0.1 TRUST irrecoverably (ADR `0056`), not that a salary was
+> paid — so the primary actor is an agent writing down what it already used, and discovery is how
+> anyone reads the result.
+>
 > **Status: NOT STARTED** (split out of `tasks/16` on 2026-10-19, which said to do exactly that if
 > half 1 grew. It did: the declare-and-deposit half landed as `packages/protocol/src/declare/` plus two MCP
 > tools, 44 tests and four ADRs.)

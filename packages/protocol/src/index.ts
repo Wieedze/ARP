@@ -323,33 +323,25 @@ export {
 } from "./tool-listing.js";
 
 /**
- * **Hire** — the buyer's half of `tasks/25`.
+ * **Discover** — who is out there, from what agents declared about themselves.
  *
- * `prepareHire` returns a bounded sub-delegation for the buyer to sign and the sentence each bound
- * is worth showing before they do. It holds no key and signs nothing (ADR `0038`), and the seller
- * signs nothing either: the budget comes out of the **buyer's** balance, so an agent that has never
- * heard of ARP can be hired without being asked for anything.
- *
- * The bounds are the **framework's own** enforcers, not ARP's. Measured 2026-10-27: the MetaMask
- * Delegation Framework is deployed on both Intuition chains at 1.3.0, while ARP's
- * `TrustStakeCapEnforcer` is on testnet 13579 alone — so a hire bounded by ours would work in the
- * rehearsal and not in the thing (`rules/portability.md` point 4).
+ * Not hiring. The buyer-to-stranger delegation that used to live here is gone (ADR `0060`): it
+ * needed the agent's runtime address, which you only have if you already know them, so it was a
+ * marketplace primitive answering a question ARP does not ask. What ARP is for is the record —
+ * an agent declares what it used and pays to say so — and this is how anyone reads that record.
  */
 export {
     CAPABILITY_PREDICATES,
     findAgents,
-    HIRE_SELECTORS,
-    DelegationFrameworkMissingError,
-    HireBoundMissingError,
-    prepareHire,
-    prepareRate,
-    prepareRateStake,
-    type HireBound,
-    type HireEnvironment,
     type AgentCandidate,
     type FindAgentsConfig,
     type FindAgentsPage,
-    type HirePlan,
-    type RatePlan,
-    type UnsignedDelegation,
-} from "./hire/index.js";
+} from "./discover.js";
+
+/**
+ * **Rate** — declaring that you used an agent, with a position behind it.
+ *
+ * `prepareDeclareUsed` pointed at an agent's existing atom instead of a tool's derived one. The
+ * predicate is `uses`, unchanged: ARP does not mint an agent-rating predicate (ADR `0030`).
+ */
+export {prepareRate, prepareRateStake, type RatePlan} from "./declare/rate.js";

@@ -53,7 +53,7 @@ export function Layout({children}: {children: ReactNode}) {
                     <>
                         <NavLink to="/agents">Agents</NavLink>
                         <NavLink to="/tools">Tools</NavLink>
-                        <NavLink to="/hire">Hire</NavLink>
+                        <NavLink to="/discover">Discover</NavLink>
                     </>
                 }
                 right={
