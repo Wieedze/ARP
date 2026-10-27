@@ -128,9 +128,9 @@ const CAPABILITY_GROUP_ORDER: {relation: CapabilityRelation; label: string}[] = 
     // object set is ERC-8004, x402, MCP, A2A and OASF: you do not *speak* a
     // schema or a payment scheme, and OASF alone is 16 of 153 edges. ADR 0030.
     //
-    // Note this group leads nothing today — zero `uses` edges have a subject
-    // the connector can reach — so the ordering is a bet on edges ARP has yet
-    // to write, not a current improvement.
+    // This group leads nothing today: zero `uses` edges have a subject the connector can reach.
+    // That is ARP's own non-activity rather than a fact about the graph (user, 2026-10-27), so the
+    // ordering is a bet on edges ARP has yet to write — which is exactly what it should be.
     {relation: "uses-tool", label: "Uses"},
     {relation: "has-type", label: "Type"},
     {relation: "implements", label: "Implements"},

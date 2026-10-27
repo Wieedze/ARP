@@ -16,7 +16,11 @@ import {INTUITION_MAX_PAGE} from "./tool-listing.js";
  * CAIP-19 atom is it (`docs/07`, ADR `0015`).
  *
  * That filter is right and it is why the catalogue is empty: measured on mainnet 1155 on 2026-10-21,
- * **0 of 185** `uses` edges have an identified subject. The rest are sentences anyone wrote on a
+ * **0 of 185** `uses` edges have an identified subject.
+ *
+ * **That zero is our own non-activity, not a property of the graph** (user, 2026-10-27): nobody has run this loop yet, ARP included. It is a reason to show something else today, never a reason to conclude the edge is the wrong one.
+ *
+ * The rest are sentences anyone wrote on a
  * shared public predicate — "Tip Jar uses Intuition" — whose objects are platforms and book titles.
  * Dropping the filter does not fill the catalogue, it fills it with that.
  *

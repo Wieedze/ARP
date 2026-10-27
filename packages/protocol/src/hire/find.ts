@@ -19,15 +19,21 @@ import {isRecord, readString} from "../json.js";
  * returns is **what each agent said about itself and what the market put behind it**, in the order
  * the market put it there.
  *
- * ## Why capability edges and not `uses`
+ * ## Capability edges by default, `uses` when there are any
  *
- * `listTools` reads `uses`, and measured on mainnet 1155 on 2026-10-22, **0 of 185** such edges have
- * an identified agent as their subject. A candidate list built on `uses` would be empty today.
+ * Measured on mainnet 1155 on 2026-10-22, **0 of 185** `uses` edges have an identified agent as
+ * their subject. **That is not a fact about the world and this module must not be built as though
+ * it were** — it is the state of a loop nobody has run yet, ARP's own included. Reading it as
+ * evidence that `uses` is the wrong signal would bake our non-deployment into the design, and the
+ * day an agent declares through ARP the better signal would be the one we had engineered around.
  *
- * Capability edges are a different population and they are populated: an agent declares
- * `has category`, `has tag`, `has type`, `implement`, `use` (the protocol one, ADR `0030`) and
- * `compatible with`. Those are what the trust panel already renders, so a candidate list built on
- * them shows the same facts a buyer would check by hand.
+ * So the default is capability edges, because they are populated today and a buyer can act on them
+ * now. `predicates` takes `USES` like any other, and the moment edges exist that is what a caller
+ * should search. The default is a statement about today's data, not about which edge is better.
+ *
+ * Capability edges are what an agent declares about itself — `has category`, `has tag`, `has type`,
+ * `implement`, `use` (the protocol one, ADR `0030`), `compatible with` — and what the trust panel
+ * already renders, so this list shows the same facts a buyer would check by hand.
  *
  * ## The filter that makes a result trustworthy, and its cost
  *
@@ -97,7 +103,12 @@ export type FindAgentsConfig = {
     transport?: GraphqlTransport;
     curveId?: number;
     limit?: number;
-    /** Narrow the search to one predicate, e.g. `HAS_CATEGORY`. Defaults to all six. */
+    /**
+     * Which predicates to search. Defaults to the six capability ones.
+     *
+     * `USES` belongs here as soon as any `uses` edge has an identified subject — see the module
+     * note on why the default is about today's data rather than about which edge is better.
+     */
     predicates?: readonly string[];
 };
 

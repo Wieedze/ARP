@@ -259,6 +259,8 @@ function registeredRowOf(tool: RegisteredTool): ToolRow {
  * anyone wrote on a shared public predicate, with platforms and book titles as objects. Widening the
  * filter fills the catalogue with those.
  *
+ * **That zero is our own non-activity, not a property of the graph** (user, 2026-10-27): nobody has run this loop yet, ARP included. It is a reason to show something else today, never a reason to conclude the edge is the wrong one.
+ *
  * A **registered** tool is an atom, so it never passes through that query at all, and a person can
  * create one without being an agent. Two reads, two populations, each honest about what it is.
  *

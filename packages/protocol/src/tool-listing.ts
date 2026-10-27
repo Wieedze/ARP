@@ -7,7 +7,9 @@ import {isRecord, readNumber, readString} from "./json.js";
  * The tools agents have declared using, with what stands behind each — the read `/tools` is built on.
  *
  * **It returns agent declarations only.** The `uses` predicate is shared, and most of what sits on it
- * is ordinary prose: measured 2026-10-20, **0 of 185** edges on mainnet 1155 and 1 of 144 on testnet
+ * is ordinary prose. **That zero is our own non-activity, not a property of the graph** (user, 2026-10-27): nobody has run this loop yet, ARP included. It is a reason to show something else today, never a reason to conclude the edge is the wrong one.
+ *
+ * Measured 2026-10-20, **0 of 185** edges on mainnet 1155 and 1 of 144 on testnet
  * 13579 have a subject carrying a `same as` edge, and the rest are sentences like "Tip Jar uses
  * Intuition". Those are not this protocol's data, so the filter is in the **query** — the subject must
  * carry a `same as` edge — rather than a group the caller is left to separate.
