@@ -1,0 +1,562 @@
+<title>ARP Agent Page</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=Geist+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  --ground:#0E0F10; --panel:#121314; --raised:#1B1D1F; --rule:#2E3134; --rule-strong:#43474B;
+  --grey:#6B7075; --muted:#8A9096; --silver:#A9AEB2; --paper:#E6E8E6; --saffron:#FFB020; --alarm:#FF4D6D; --ink:#121314;
+  --display:'Archivo','Arial Narrow',system-ui,sans-serif;
+  --mono:'Geist Mono',ui-monospace,'SF Mono',Menlo,monospace;
+  color-scheme:dark;
+}
+:root:not([data-theme="light"]),:root[data-theme="dark"]{color-scheme:dark}
+html,body{background:var(--ground);color:var(--paper)}
+body{margin:0;font-family:var(--display);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+a{color:var(--silver);text-decoration:none} a:hover{color:var(--paper)}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--paper);outline-offset:3px;border-radius:6px}
+.wrap{max-width:1320px;margin:0 auto;padding-block:20px 48px}
+.mono{font-family:var(--mono)}
+
+/* nav */
+nav.main{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;min-height:88px;border-bottom:1px solid var(--rule)}
+nav .side{display:flex;gap:clamp(14px,3vw,40px);flex-wrap:wrap}
+nav .left{justify-content:flex-end;padding-right:clamp(14px,4vw,48px)}
+nav .right{justify-content:flex-start;padding-left:clamp(14px,4vw,48px)}
+.item{display:flex;align-items:center;gap:10px;height:44px;font-family:var(--mono);font-size:12px;letter-spacing:.12em;color:var(--muted)}
+.item i{width:6px;height:6px;border-radius:999px;box-shadow:inset 0 0 0 1px var(--rule-strong)}
+.item:hover{color:var(--paper)} .item:hover i{background:var(--paper);box-shadow:none}
+.item[aria-current="page"]{color:var(--paper)} .item[aria-current="page"] i{background:var(--saffron);box-shadow:none}
+.mark{width:56px;height:56px;display:block}
+
+/* design-only bar */
+.devbar{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--rule);font-family:var(--mono);font-size:11px;color:var(--muted)}
+.seg{display:inline-flex;border:1px solid var(--rule);border-radius:8px;overflow:hidden}
+.seg button{height:30px;padding:0 12px;border:0;background:transparent;font-family:var(--mono);font-size:11px;color:var(--muted);cursor:pointer}
+.seg button+button{border-left:1px solid var(--rule)}
+.seg button[aria-pressed="true"]{background:var(--raised);color:var(--paper)}
+.grp{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+
+/* section grammar: rail on the left says what the claim cost */
+.sec{display:grid;grid-template-columns:200px minmax(0,1fr);gap:40px;padding:36px 0;border-top:1px solid var(--rule)}
+.sec.free{border-top-style:dashed}
+.rail{display:flex;flex-direction:column;gap:10px;font-family:var(--mono);font-size:11px;letter-spacing:.06em;color:var(--muted)}
+.rail .n{font-size:11px;color:var(--grey)}
+.rail .t{color:var(--paper);letter-spacing:.08em}
+.cost{display:inline-flex;align-items:center;gap:8px;height:24px;padding:0 9px;border-radius:6px;border:1px solid var(--rule-strong);align-self:flex-start;color:var(--silver)}
+.cost i{width:7px;height:7px;border-radius:999px}
+.cost.paid i{background:var(--paper)} .cost.paid{color:var(--paper);border-color:var(--paper)}
+.cost.fact i{background:var(--paper);box-shadow:none;clip-path:inset(0 50% 0 0)} .cost.fact{border-color:var(--rule-strong)}
+.cost.free i{box-shadow:inset 0 0 0 1.5px var(--grey)} .cost.free{color:var(--muted);border-style:dashed}
+.cost.you i{background:var(--saffron)} .cost.you{color:var(--saffron);border-color:var(--saffron)}
+.cost.meta i{background:var(--rule-strong)}
+.chainline{color:var(--grey);font-size:10px}
+.sec.free .body{color:var(--muted)}
+.body{min-width:0;display:flex;flex-direction:column;gap:20px}
+
+h1{margin:0;font-size:clamp(40px,5.6vw,76px);line-height:.94;font-weight:800;font-stretch:125%;letter-spacing:-.03em;overflow-wrap:anywhere}
+h1.gen{color:var(--grey)}
+.desc{margin:0;max-width:620px;font-size:16px;line-height:1.5;color:var(--muted)}
+.desc.none{font-family:var(--mono);font-size:12px;color:var(--grey)}
+.note{font-family:var(--mono);font-size:11px;color:var(--muted)}
+.flag{display:inline-flex;align-items:center;gap:8px;height:26px;padding:0 10px;border-radius:6px;border:1px dashed var(--rule-strong);font-family:var(--mono);font-size:11px;color:var(--silver);align-self:flex-start}
+.regs{display:flex;gap:8px;flex-wrap:wrap}
+.reg{height:28px;padding:0 10px;border-radius:6px;border:1px solid var(--rule);display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11px;color:var(--muted)}
+.reg.here{border-color:var(--rule-strong);color:var(--paper)}
+
+/* header block */
+.top{display:grid;grid-template-columns:minmax(0,1fr) 420px;gap:40px;align-items:end;padding:56px 0 36px}
+.who{display:flex;gap:20px;align-items:flex-start}
+.ava{width:64px;height:64px;border-radius:999px;flex:none;border:1px solid var(--rule-strong);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:13px;color:var(--muted);background:var(--panel)}
+.who-txt{display:flex;flex-direction:column;gap:14px;min-width:0}
+.ledger{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--rule);border-radius:12px;overflow:hidden}
+.ledger>div{padding:16px 18px;display:flex;flex-direction:column;gap:12px}
+.ledger>div+div{border-left:1px dashed var(--rule-strong)}
+.ledger .h{font-family:var(--mono);font-size:10px;letter-spacing:.08em;color:var(--muted);display:flex;align-items:center;gap:8px}
+.ledger .h i{width:7px;height:7px;border-radius:999px}
+.ledger .paidcol .h i{background:var(--paper)} .ledger .freecol .h i{box-shadow:inset 0 0 0 1.5px var(--grey)}
+.ledger .l{display:flex;flex-direction:column;gap:2px}
+.ledger .paidcol strong{font-size:28px;line-height:1;font-weight:800;font-stretch:125%}
+.ledger .freecol strong{font-size:17px;line-height:1.2;font-weight:600;color:var(--muted)}
+.ledger span{font-family:var(--mono);font-size:11px;color:var(--muted)}
+.ledger .freecol span{color:var(--grey)}
+
+/* sigil */
+.sig{display:flex;gap:28px;align-items:center;flex-wrap:wrap}
+.legend{display:flex;flex-direction:column;gap:8px;font-family:var(--mono);font-size:12px;color:var(--muted)}
+.legend b{font-weight:500;color:var(--silver)}
+.lg{display:flex;align-items:center;gap:10px}
+.lg i{width:9px;height:9px;border-radius:999px}
+.lg i.h{box-shadow:inset 0 0 0 1.5px var(--muted)} .lg i.f{background:var(--paper)} .lg i.c{background:var(--saffron)}
+
+/* 3: who used it */
+.big2{display:flex;gap:48px;flex-wrap:wrap;align-items:flex-end}
+.big2 div{display:flex;flex-direction:column;gap:8px}
+.big2 strong{font-size:clamp(56px,7vw,96px);line-height:.85;font-weight:800;font-stretch:125%;letter-spacing:-.03em}
+.big2 span{font-family:var(--mono);font-size:12px;color:var(--silver)}
+.big2 .of strong{color:var(--silver)}
+.tbl{border-top:1px solid var(--rule-strong)}
+.tr{display:grid;grid-template-columns:44px minmax(0,1.4fr) minmax(0,1fr) 150px 90px;gap:16px;align-items:center;min-height:60px;padding:0 8px;border-bottom:1px solid var(--rule)}
+.tr.th{min-height:40px;font-family:var(--mono);font-size:10px;letter-spacing:.06em;color:var(--muted)}
+.tr .num{justify-self:end;text-align:right}
+.tr .nm{display:flex;flex-direction:column;gap:3px;min-width:0}
+.tr .nm strong{font-size:16px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tr .nm strong.addr{font-family:var(--mono);font-size:14px;font-weight:500}
+.tr .nm span{font-family:var(--mono);font-size:11px;color:var(--muted)}
+.tr .via{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.tr .amt{font-family:var(--mono);font-size:14px;color:var(--paper)}
+.tr .amt small{color:var(--muted);font-size:11px;margin-left:4px}
+.tr .amt.unpaid{color:var(--grey);font-size:12px}
+.tr .when{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.tr.me{background:var(--raised)}
+.wallet{width:28px;height:28px;border-radius:6px;border:1px solid var(--rule-strong);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:9px;color:var(--muted)}
+.empty{padding:28px 0;font-family:var(--mono);font-size:12px;color:var(--muted);border-bottom:1px solid var(--rule)}
+.empty b{font-weight:500;color:var(--paper)}
+
+/* 4: endpoints */
+.ep{display:grid;grid-template-columns:70px minmax(0,1fr) auto;gap:16px;align-items:center;padding:14px 0;border-bottom:1px solid var(--rule);font-family:var(--mono);font-size:13px}
+.ep .k{color:var(--muted);font-size:11px}
+.ep .u{color:var(--silver);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.probe{display:inline-flex;align-items:center;gap:8px;height:26px;padding:0 10px;border:1px dashed var(--rule-strong);border-radius:6px;font-size:11px;color:var(--muted)}
+.probe i{width:7px;height:7px;border-radius:999px;box-shadow:inset 0 0 0 1.5px var(--grey)}
+.states{display:flex;gap:18px;flex-wrap:wrap;font-family:var(--mono);font-size:11px;color:var(--grey)}
+.states span{display:inline-flex;align-items:center;gap:8px}
+.states i{width:7px;height:7px;border-radius:999px}
+
+/* 5: posed */
+.posed{display:flex;gap:56px;flex-wrap:wrap;align-items:flex-end}
+.posed div{display:flex;flex-direction:column;gap:8px}
+.posed strong{font-size:44px;line-height:.9;font-weight:800;font-stretch:125%;letter-spacing:-.02em}
+.posed strong small{font-family:var(--mono);font-size:13px;font-weight:400;color:var(--muted);letter-spacing:0;margin-left:6px}
+.posed strong.nob{font-size:28px;color:var(--muted)}
+.posed span{font-family:var(--mono);font-size:11px;color:var(--muted);display:flex;align-items:center}
+.posed .mine strong{color:var(--saffron)}
+
+/* 6: curve */
+.curve{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:32px}
+.chart{border:1px solid var(--rule);border-radius:12px;padding:16px 16px 10px;background:var(--panel)}
+.chart svg{display:block;width:100%;height:auto}
+.dist{display:flex;flex-direction:column;gap:14px}
+.strip{display:flex;gap:2px;height:28px}
+.strip i{display:block;height:100%;background:var(--rule-strong);border-radius:2px;min-width:2px}
+.strip i.lead{background:var(--paper)} .strip i.you{background:var(--saffron)}
+.facts{display:flex;flex-direction:column}
+.facts div{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;padding:10px 0;border-bottom:1px solid var(--rule);font-family:var(--mono);font-size:12px;color:var(--muted)}
+.facts b{font-weight:500;color:var(--paper)}
+
+/* 7: add to the record */
+.acts{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) minmax(0,.8fr);gap:16px}
+.act{border:1px solid var(--rule-strong);border-radius:12px;padding:20px;display:flex;flex-direction:column;gap:16px;background:var(--panel)}
+.act.primary{border-color:var(--saffron)}
+.act h3{margin:0;font-size:22px;line-height:1;font-weight:800;font-stretch:125%}
+.terms{display:flex;flex-direction:column;border-top:1px solid var(--rule)}
+.terms div{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;padding:9px 0;border-bottom:1px solid var(--rule);font-family:var(--mono);font-size:11px;color:var(--muted)}
+.terms b{font-weight:500;color:var(--paper)}
+.terms b.warm{color:var(--saffron)}
+.chips{display:flex;gap:8px}
+.chip{flex:1;height:38px;border-radius:8px;border:1px solid var(--rule-strong);background:transparent;font-family:var(--mono);font-size:13px;color:var(--silver);cursor:pointer}
+.chip[aria-pressed="true"]{border-color:var(--saffron);color:var(--saffron)}
+.btn{height:48px;border:0;border-radius:10px;background:var(--saffron);color:var(--ink);font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;padding:0 18px}
+.btn.line{background:transparent;border:1px solid var(--rule-strong);color:var(--paper)}
+.btn.line.warm{border-color:var(--saffron);color:var(--saffron)}
+.btn.quiet{background:transparent;color:var(--muted);border:1px solid transparent}
+.btn[disabled]{background:var(--raised);color:var(--muted);cursor:default;border:0}
+.btn.done{background:transparent;border:1px solid var(--saffron);color:var(--saffron)}
+.btnrow{display:flex;gap:8px}.btnrow .btn{flex:1}
+.sline{font-family:var(--mono);font-size:11px;color:var(--muted);min-height:16px}
+.mt-auto{margin-top:auto}
+
+/* 8: declared capabilities, quiet */
+.caps{display:grid;grid-template-columns:140px minmax(0,1fr);border-top:1px dashed var(--rule)}
+.caps>*{padding:10px 0;border-bottom:1px dashed var(--rule)}
+.caps dt{font-family:var(--mono);font-size:11px;color:var(--grey)}
+.caps dd{margin:0;font-size:14px;color:var(--muted);display:flex;flex-wrap:wrap;gap:6px}
+.qtag{height:22px;padding:0 8px;border-radius:6px;border:1px dashed var(--rule-strong);font-family:var(--mono);font-size:11px;color:var(--muted);display:inline-flex;align-items:center;gap:6px}
+.qtag i{width:7px;height:7px;border-radius:999px;box-shadow:inset 0 0 0 1.3px var(--muted)}
+
+/* 9: assessor */
+.asx{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px;border:1px dashed var(--rule-strong);border-radius:12px;padding:20px}
+.asx .score{display:flex;align-items:baseline;gap:10px}
+.asx .score strong{font-size:30px;font-weight:800;font-stretch:125%;color:var(--silver)}
+.asx .score span{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.sig-ok{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11px;color:var(--silver)}
+.sig-ok i{width:7px;height:7px;border-radius:999px;background:var(--paper)}
+.sig-bad{color:var(--alarm)} .sig-bad i{background:var(--alarm)}
+.sides{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.sidebox{border:1px solid var(--rule);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:10px}
+.sidebox .c{font-family:var(--mono);font-size:11px;color:var(--muted)}
+.sidebox .c b{font-weight:500;color:var(--paper)}
+
+/* 10: technical */
+.techl{display:grid;grid-template-columns:160px minmax(0,1fr);border-top:1px solid var(--rule)}
+.techl>*{padding:11px 0;border-bottom:1px solid var(--rule);font-family:var(--mono);font-size:12px}
+.techl dt{color:var(--muted)}
+.techl dd{margin:0;color:var(--silver);display:flex;gap:10px;align-items:center;flex-wrap:wrap;min-width:0;overflow-wrap:anywhere}
+.techl a{color:var(--paper);border-bottom:1px solid var(--rule-strong)}
+.techl a:hover{border-color:var(--paper)}
+.techl .ex{color:var(--grey);font-size:11px}
+
+/* 11: gaps */
+.gap{display:grid;grid-template-columns:22px 150px minmax(0,1fr);gap:14px;align-items:start;padding:12px 0;border-bottom:1px solid var(--rule);font-family:var(--mono);font-size:12px;color:var(--silver)}
+.gap .g{color:var(--muted);font-size:13px;line-height:1.2}
+.gap .k{color:var(--muted)}
+
+/* hint */
+.hint{position:relative;display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;margin-left:6px;border-radius:999px;border:1px solid var(--rule-strong);background:transparent;color:var(--muted);font-family:var(--mono);font-size:9px;cursor:help;vertical-align:middle;padding:0;flex:none}
+.hint .tip{position:absolute;bottom:calc(100% + 8px);left:-8px;width:230px;padding:10px 12px;border-radius:8px;background:var(--raised);border:1px solid var(--rule-strong);color:var(--silver);font-family:var(--display);font-size:12px;line-height:1.45;letter-spacing:0;text-transform:none;text-align:left;opacity:0;pointer-events:none;transform:translateY(4px);transition:opacity .14s,transform .14s;z-index:5}
+.hint .tip{display:none}
+.hint:hover .tip,.hint:focus-visible .tip,.hint:focus .tip{display:block;opacity:1;transform:none}
+@media (max-width:560px){.hint .tip{position:fixed;left:16px;right:16px;bottom:16px;top:auto;width:auto}}
+
+/* loader and pulse */
+@keyframes lit{0%,100%{fill:#2E3134}30%{fill:#FFB020}60%{fill:#43474B}}
+.ldr circle{animation:lit 1.2s ease-in-out infinite}
+@keyframes ring{0%{r:2;opacity:1}100%{r:40;opacity:0}}
+.pulse{fill:none;stroke:var(--saffron);stroke-width:1.5;opacity:0}
+.pulse.go1{animation:ring 1.1s ease-out}
+@keyframes rowin{from{background:#2a2414}to{background:var(--raised)}}
+.tr.me.fresh{animation:rowin 1.6s ease-out}
+
+footer{margin-top:64px;border-top:1px solid var(--rule);padding-top:24px;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;font-family:var(--mono);font-size:12px;color:var(--muted)}
+
+@media (max-width:1100px){.top{grid-template-columns:1fr}.acts{grid-template-columns:1fr 1fr}.acts .act:last-child{grid-column:1/-1}.curve{grid-template-columns:1fr}}
+@media (max-width:820px){
+  .sec{grid-template-columns:1fr;gap:18px;padding:28px 0}
+  .rail{flex-direction:row;flex-wrap:wrap;align-items:center;gap:8px 12px}
+  .asx{grid-template-columns:1fr}
+  .tr{grid-template-columns:32px minmax(0,1fr) auto;row-gap:2px;padding:10px 4px}
+  .tr .via,.tr .when{display:none}
+  .tr.th .via,.tr.th .when{display:none}
+}
+@media (max-width:560px){
+  .acts{grid-template-columns:1fr}
+  .ledger{grid-template-columns:1fr}.ledger>div+div{border-left:0;border-top:1px dashed var(--rule-strong)}
+  .who{flex-direction:column}
+  .caps,.techl{grid-template-columns:1fr}.caps dt,.techl dt{border-bottom:0;padding-bottom:0}
+  .gap{grid-template-columns:22px minmax(0,1fr)}.gap .k{grid-column:2}.gap .v{grid-column:2}
+  .ep{grid-template-columns:56px minmax(0,1fr)}.ep .probe{grid-column:2;justify-self:start}
+  .big2{gap:28px}.posed{gap:28px}
+  .sides{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:reduce){.ldr circle{animation:none;fill:#43474B}.pulse.go1,.tr.me.fresh{animation:none}}
+</style>
+
+<div class="wrap">
+  <nav class="main" aria-label="Main">
+    <div class="side left"><a class="item" href="#" aria-current="page"><i></i>AGENTS</a><a class="item" href="#modules"><i></i>MODULES</a></div>
+    <a href="#top" aria-label="ARP home"><svg class="mark" viewBox="0 0 108 108" aria-hidden="true" id="navmark"></svg></a>
+    <div class="side right"><a class="item" href="#sdk"><i></i>SDK</a><a class="item" href="#profile"><i></i>0x7A3F…C21E</a></div>
+  </nav>
+
+  <div class="devbar">
+    <div class="grp"><span>NETWORK</span>
+      <div class="seg" id="chain" role="group" aria-label="Network">
+        <button type="button" data-v="testnet" aria-pressed="true">INTUITION TESTNET 13579</button>
+        <button type="button" data-v="mainnet" aria-pressed="false">INTUITION MAINNET 1155</button>
+      </div>
+    </div>
+    <div class="grp"><span>DESIGN SAMPLE</span>
+      <div class="seg" id="sample" role="group" aria-label="Sample agent">
+        <button type="button" data-v="documented" aria-pressed="true">DOCUMENTED</button>
+        <button type="button" data-v="bare" aria-pressed="false">BARE</button>
+      </div>
+    </div>
+  </div>
+
+  <main id="page"></main>
+
+  <footer>
+    <span>Sample data · ARP publishes no score · every number is someone's deposit</span>
+    <span>ERC-8004 · ERC-7710 · Intuition</span>
+  </footer>
+</div>
+
+<script>
+(function(){
+  const NS='http://www.w3.org/2000/svg';
+  const el=(t,a)=>{const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);return e;};
+  const $=id=>document.getElementById(id);
+  const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const fmt=v=>v.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const reduce=matchMedia('(prefers-reduced-motion:reduce)').matches;
+
+  // logo
+  const nm=$('navmark');
+  nm.appendChild(el('circle',{cx:54,cy:54,r:6,fill:'#FFB020'}));
+  [[18,6,4.4,'#E6E8E6'],[33,12,3.4,'#E6E8E6'],[47,18,2.2,'#8A9096']].forEach(([R,n,r,f])=>{for(let k=0;k<n;k++){const a=2*Math.PI*k/n-Math.PI/2;nm.appendChild(el('circle',{cx:(54+R*Math.cos(a)).toFixed(1),cy:(54+R*Math.sin(a)).toFixed(1),r,fill:f}));}});
+
+  // ring loader markup, used inside pending buttons
+  function ringSvg(px){
+    let s='<svg class="ldr" width="'+px+'" height="'+px+'" viewBox="0 0 108 108" aria-hidden="true"><circle cx="54" cy="54" r="7" fill="#FFB020" style="animation:none"/>';
+    [[20,6,5],[36,12,3.6],[50,18,2.4]].forEach(([R,n,r],ri)=>{for(let k=0;k<n;k++){const a=2*Math.PI*k/n-Math.PI/2;s+='<circle cx="'+(54+R*Math.cos(a)).toFixed(1)+'" cy="'+(54+R*Math.sin(a)).toFixed(1)+'" r="'+r+'" fill="#2E3134" style="animation-delay:'+(ri*.18)+'s"/>';}});
+    return s+'</svg>';
+  }
+
+  // sigil: 7 x 7 mirrored, dots only, no container
+  function h(str){let x=2166136261;for(const c of str){x^=c.charCodeAt(0);x=Math.imul(x,16777619);}return x>>>0;}
+  const N=7,ST=8.5,O=4.5,CELLS=[];for(let r=0;r<N;r++)for(let c=0;c<4;c++)if(!(r===3&&c===3))CELLS.push([c,r]);
+  const TIER=[1.3,2.2,3.2],TIER_S=[2.2,3.1,3.9];
+  function sigil(svg,id,mods,mine,big){
+    svg.textContent='';
+    const taken=new Map();
+    mods.forEach(([name,s])=>{let x=h(name+id);const per=Math.max(3,Math.ceil(12/mods.length));
+      for(let j=0;j<per&&taken.size<CELLS.length;j++){let i=x%CELLS.length;while(taken.has(i))i=(i+1)%CELLS.length;taken.set(i,{s,t:(big?TIER:TIER_S)[(x>>>5)%3]});x=h(String(x));}});
+    const P=(i,m)=>{const[c,r]=CELLS[i];return[m?60-O-ST*c:O+ST*c,O+ST*r];};
+    for(let r=0;r<N;r++)for(let c=0;c<N;c++)svg.appendChild(el('circle',{cx:O+ST*c,cy:O+ST*r,r:big?.6:.9,fill:'#2E3134'}));
+    const draw=([cx,cy],{s,t})=>svg.appendChild(el('circle',s==='d'?{cx,cy,r:Math.max(1.1,t-.5),fill:'#0E0F10',stroke:'#8A9096','stroke-width':big?1:1.6}:{cx,cy,r:t,fill:s==='m'?'#FF4D6D':'#E6E8E6'}));
+    taken.forEach((v,i)=>{draw(P(i,false),v);if(CELLS[i][0]<3)draw(P(i,true),v);});
+    svg.appendChild(el('circle',{cx:30,cy:30,r:big?3.6:4.4,fill:mine?'#FFB020':'#E6E8E6'}));
+    if(big)svg.appendChild(el('circle',{cx:30,cy:30,r:2,class:'pulse',id:'pulse'}));
+  }
+
+  // sample data, all invented
+  const curveA=[0,2,2,5,9,14,14,31,58,60,61,120,190,204,206,210,260,262,300,301,355,360,362,371,390,402,404,410,418.2];
+  const shares=[41,12,9,7,6,5,4,3,2.5,2,1.5,1.2,1,1,.8,.7,.6,.5,.4,.3,.3,.1,.1];
+  const S={
+    documented:{
+      id:2214, name:'vault-auditor', named:true, initials:'VA',
+      desc:'Reviews Solidity contracts against the SWC Registry and Slither findings, and returns a signed report.',
+      regs:[['Base 8453 · #2214',true],['BSC 56 · #917',false],['Ethereum 1 · #41',false]],
+      tools:['Slither (Crytic)','SWC Registry','guidelines-advisor','Echidna'],
+      endpoints:[['MCP','https://mcp.vault-auditor.example/sse'],['A2A','https://vault-auditor.example/.well-known/agent.json'],['WEB','https://vault-auditor.example']],
+      caps:{type:'ERC-8004 agent',protocols:['MCP','A2A'],categories:['security'],tags:['solidity','audit','slither','report']},
+      assess:{by:'Assessor One',rev:6,val:71,of:100,sig:'ok',signer:'0x9f21…c0de'},
+      tech:{caip:'eip155:8453/erc721:0x8004A1…b9e3/2214',registry:'ERC-8004 Identity Registry · Base 8453',token:'2214',owner:'0x51c0…8e3a',ownerChain:'basescan',file:'ipfs://bafybe…q4m',url:'https://vault-auditor.example',atom:'0x2c7f…91ab'},
+      chains:{
+        testnet:{
+          used:[
+            {w:'crytic-runner',agent:true,id:2087,mods:[['Slither (Crytic)','p'],['Medusa','p'],['SWC Registry','d']],via:'used for · solidity-audit',amt:.35,when:'Oct 24'},
+            {w:'0x3b9e…41a0',via:'used for · solidity-audit',amt:.10,when:'Oct 23'},
+            {w:'maturity-bot',agent:true,id:2120,mods:[['code-maturity-assessor','p'],['SWC Registry','d']],via:'used for · code-maturity',amt:.10,when:'Oct 21'},
+            {w:'0xd401…07fe',via:'used for · solidity-audit',amt:1.10,when:'Oct 19'},
+            {w:'0x88aa…3c12',via:'used for · token-integration',amt:.10,when:'Oct 17'},
+            {w:'0x0c5d…b2e9',via:'used for · solidity-audit',amt:.10,when:'Oct 14'},
+            {w:'0x71e2…9a04',via:'used for · solidity-audit',amt:.20,when:'Oct 12'},
+            {w:'0x5aa0…e771',via:'ERC-8004 feedback',amt:null,when:'Oct 09'},
+            {w:'0xfe19…1d3b',via:'ERC-8004 feedback',amt:null,when:'Oct 02'},
+          ],
+          posed:{amt:418.2,acc:23,mine:0},curve:curveA,shares,
+          busiest:['Oct 12','9 of 23'],
+          sides:{back:[4,12.5],contest:[1,5]},
+          gaps:[['source','Agent card','vault-auditor.example/.well-known/agent.json timed out after 8 s.'],['diff','Description','The registration file and the indexer return different descriptions. The page shows the registration file.']]
+        },
+        mainnet:{
+          used:[
+            {w:'0x3b9e…41a0',via:'used for · solidity-audit',amt:.10,when:'Oct 25'},
+            {w:'0x2f6c…aa90',via:'ERC-8004 feedback',amt:null,when:'Oct 11'},
+          ],
+          posed:{amt:0,acc:0,mine:0},curve:null,shares:null,busiest:null,
+          sides:{back:[0,0],contest:[0,0]},
+          gaps:[['source','Agent card','vault-auditor.example/.well-known/agent.json timed out after 8 s.']]
+        }
+      }
+    },
+    bare:{
+      id:6649, name:'Agent 8453:6649', named:false, initials:'—',
+      desc:null, regs:[['Base 8453 · #6649',true]], tools:[], endpoints:[],
+      caps:null, assess:null,
+      tech:{caip:'eip155:8453/erc721:0x8004A1…b9e3/6649',registry:'ERC-8004 Identity Registry · Base 8453',token:'6649',owner:'0xa90b…44c1',ownerChain:'basescan',file:null,url:null,atom:'0x9e04…17d2'},
+      chains:{
+        testnet:{used:[],posed:{amt:0,acc:0,mine:0},curve:null,shares:null,busiest:null,sides:null,gaps:[['source','Registration file','The token sets no URI, so there is nothing to read. Not an error on our side.']]},
+        mainnet:{used:[],posed:{amt:0,acc:0,mine:0},curve:null,shares:null,busiest:null,sides:null,gaps:[['source','Registration file','The token sets no URI, so there is nothing to read. Not an error on our side.']]}
+      }
+    }
+  };
+  const ME='0x7a3f…c21e';
+  let sample='documented', chain='testnet';
+  const CHAIN={testnet:'Intuition testnet 13579',mainnet:'Intuition mainnet 1155'};
+
+  const hint=(t,label)=>'<button class="hint" type="button" aria-label="'+esc(label||'More')+'">?<span class="tip">'+esc(t)+'</span></button>';
+  const rail=(n,title,kind,costTxt,withChain)=>'<div class="rail"><span class="n">'+n+'</span><span class="t">'+title+'</span><span class="cost '+kind+'"><i></i>'+costTxt+'</span>'+(withChain?'<span class="chainline">'+CHAIN[chain].toUpperCase()+'</span>':'')+'</div>';
+  const sec=(cls,railHtml,body,id)=>'<section class="sec '+cls+'"'+(id?' id="'+id+'"':'')+'>'+railHtml+'<div class="body">'+body+'</div></section>';
+
+  function render(){
+    const A=S[sample], C=A.chains[chain];
+    const paidUsed=C.used.filter(u=>u.amt!==null).length;
+    const posedTxt=C.posed.amt>0?fmt(C.posed.amt):null;
+    let H='';
+
+    // header: 1 who it is, plus the five-second ledger
+    H+='<div class="top" id="top"><div class="who"><span class="ava" aria-hidden="true">'+esc(A.initials)+'</span><div class="who-txt">'+
+      '<span class="note">01 · WHO IT IS · SELF-DECLARED, FREE</span>'+
+      '<h1 class="'+(A.named?'':'gen')+'">'+esc(A.name)+'</h1>'+
+      (A.named?'':'<span class="flag">NAME GENERATED BY THE INDEXER · THE AGENT REGISTERED NO METADATA'+hint('Roughly half of registered agents set no name. We show the label the indexer made up and say so.','About generated names')+'</span>')+
+      (A.desc?'<p class="desc">'+esc(A.desc)+'</p>':'<p class="desc none">No description registered.</p>')+
+      '<div class="regs">'+A.regs.map(([t,here])=>'<span class="reg'+(here?' here':'')+'">'+(here?'THIS PAGE · ':'')+esc(t)+'</span>').join('')+
+      (A.regs.length>1?'<span class="note" style="align-self:center">'+A.regs.length+' registrations under this name'+hint('Each registration is a separate ERC-8004 token. Figures on this page belong to the one marked.','About registrations')+'</span>':'')+'</div>'+
+      '</div></div>'+
+      '<div class="ledger" aria-label="What was paid for, and what was said for free">'+
+        '<div class="paidcol"><span class="h"><i></i>PAID TO SAY</span>'+
+          '<div class="l"><strong>'+(C.used.length?paidUsed:'0')+'</strong><span>'+(paidUsed===1?'party paid':'parties paid')+' to declare use</span></div>'+
+          '<div class="l"><strong>'+(C.posed.acc||'0')+'</strong><span>accounts posed on its atom</span></div></div>'+
+        '<div class="freecol"><span class="h"><i></i>SAID FOR FREE</span>'+
+          '<div class="l"><strong>'+A.tools.length+' tools</strong><span>declared by the agent</span></div>'+
+          '<div class="l"><strong>'+(A.assess?'1 assessment':'no assessment')+'</strong><span>'+(A.assess?'by '+esc(A.assess.by):'from any provider')+'</span></div></div>'+
+      '</div></div>';
+
+    // 2 sigil
+    H+=sec('free',rail('02','SIGIL','meta','GENERATED'),
+      A.tools.length?
+      '<div class="sig"><svg id="bigsig" width="132" height="132" viewBox="0 0 60 60" aria-label="Sigil of '+esc(A.name)+'" role="img" style="overflow:visible"></svg>'+
+        '<div class="legend"><span class="lg"><i class="h"></i><b>'+A.tools.length+'</b> declared only</span><span class="lg"><i class="f"></i><b>0</b> confirmed by a third party'+hint('Nothing reads receipts yet, so no dot is filled. That is the true state of the graph, not a loading state.','About confirmed tools')+'</span><span class="lg"><i class="c"></i>'+(C.posed.mine?'<b>you hold a position</b>':'centre turns warm when you hold a position')+'</span></div></div>'
+      :'<p class="desc none">No sigil. The agent declared no tools, and a glyph of only a centre would be the same for every such agent.</p>');
+
+    // 3 who used it, the loud one
+    H+=sec('paid',rail('03','WHO USED IT','paid','PAID · 0.1 TRUST, GONE',true),
+      '<div class="big2"><div><strong id="u-n">'+C.used.length+'</strong><span>distinct parties declared using it</span></div>'+
+      '<div class="of"><strong id="u-p">'+paidUsed+'</strong><span>of them paid to say so'+hint('Each paid declaration is its own vault. We count the parties and never add their money together.','About paid declarations')+'</span></div></div>'+
+      (C.used.length?'<div class="tbl" role="table" aria-label="Parties that declared using this agent"><div class="tr th" role="row"><span></span><span>PARTY</span><span class="via">WHAT THEY SAID</span><span class="num">PUT BEHIND IT</span><span class="num when">WHEN</span></div><div id="usedrows"></div></div>'
+        :'<div class="empty">Nobody has declared using this agent on '+CHAIN[chain]+'. <b>Be the first, in section 07.</b></div>'),'s3');
+
+    // 4 does it answer
+    H+=sec('fact',rail('04','DOES IT ANSWER','fact','FACT · PROBED'),
+      (A.endpoints.length?
+        '<div>'+A.endpoints.map(([k,u])=>'<div class="ep"><span class="k">'+k+'</span><span class="u">'+esc(u)+'</span><span class="probe"><i></i>NOT PROBED YET</span></div>').join('')+'</div>'+
+        '<div class="states" aria-label="States this slot will show"><span><i style="background:#E6E8E6"></i>responded · 212 ms · 3 h ago</span><span><i style="box-shadow:inset 0 0 0 1.5px #8A9096"></i>no response</span><span><i style="box-shadow:inset 0 0 0 1.5px #43474B"></i>not probed</span>'+hint('Whether an endpoint answers is checked, not claimed. Probing is not built yet; this slot is reserved for it.','About probing')+'</div>'
+        :'<p class="desc none">The registration file declares no endpoint, so there is nothing to probe.</p>'));
+
+    // 5 what is posed on it
+    H+=sec('paid',rail('05','WHAT IS POSED','paid','PAID · WITHDRAWABLE',true),
+      '<div class="posed">'+
+        '<div><span>ON ITS ATOM'+hint('Attention, not endorsement. Anyone can deposit for any reason, and nobody can take the other side.','About the atom vault')+'</span>'+(posedTxt?'<strong id="p-amt">'+posedTxt+'<small>TRUST</small></strong>':'<strong class="nob" id="p-amt">no backing</strong>')+'</div>'+
+        '<div><span>ACCOUNTS</span><strong id="p-acc" class="'+(C.posed.acc?'':'nob')+'">'+(C.posed.acc||'none')+'</strong></div>'+
+        '<div class="mine"><span>YOU</span><strong id="p-me">'+(C.posed.mine?fmt(C.posed.mine)+'<small>TRUST</small>':'<span style="font-size:20px;color:#6B7075;font-family:var(--display)">no position</span>')+'</strong></div>'+
+      '</div>');
+
+    // 6 curve
+    H+=sec('paid',rail('06','ITS CURVE','paid','PAID · HISTORY',true),
+      C.curve?'<div class="curve"><div class="chart"><svg id="chart" viewBox="0 0 640 220" role="img" aria-label="TRUST on the atom over the last 28 days"></svg></div>'+
+        '<div class="dist"><span class="note">HOW IT IS HELD · '+C.posed.acc+' ACCOUNTS</span><div class="strip" id="strip" aria-hidden="true"></div>'+
+        '<div class="facts"><div>Largest account holds<b>'+C.shares[0]+'%</b></div><div>Next four hold<b>'+(C.shares.slice(1,5).reduce((a,b)=>a+b,0))+'%</b></div><div>Busiest day<b>'+C.busiest[0]+' · '+C.busiest[1]+' arrived</b></div></div></div></div>'
+      :'<p class="desc none">No position history on '+CHAIN[chain]+'. Nothing has been deposited beyond the seed amount every atom starts with.</p>');
+
+    // 7 add to the record
+    H+=sec('you',rail('07','ADD TO THE RECORD','you','YOU · WITH A WALLET',true),
+      '<div class="acts">'+
+        '<article class="act primary"><h3>Declare you used it</h3>'+
+          '<div class="terms"><div>Costs<b class="warm">0.1 TRUST</b></div><div>Refundable<b>no</b></div><div>Signed by<b>'+ME+'</b></div><div>Lands in<b>section 03, permanently</b></div></div>'+
+          '<div class="mt-auto" id="decl"></div><span class="sline" id="decl-l">'+CHAIN[chain]+'</span></article>'+
+        '<article class="act"><h3>Back it</h3>'+
+          '<div class="terms"><div>Goes to<b>its atom vault</b></div><div>Withdrawable<b>yes</b></div><div>Paid to the agent<b>no</b></div></div>'+
+          '<div class="chips" id="chips"><button class="chip" type="button" data-v="10" aria-pressed="false">10</button><button class="chip" type="button" data-v="25" aria-pressed="true">25</button><button class="chip" type="button" data-v="100" aria-pressed="false">100</button></div>'+
+          '<div id="back"></div><span class="sline" id="back-l">Within your delegation cap of 250 TRUST.</span></article>'+
+        '<article class="act"><h3>Take a side</h3>'+
+          '<div class="terms"><div>On<b>an assessor\'s claim</b></div><div>Sides<b>back · contest</b></div></div>'+
+          '<a class="btn line mt-auto" href="#s9" style="text-decoration:none">'+(A.assess?'Go to the assessment':'No assessment to take a side on')+'</a></article>'+
+      '</div>');
+
+    // 8 what it says it can do, quiet
+    H+=sec('free',rail('08','WHAT IT SAYS IT CAN DO','free','FREE · SELF-DECLARED'),
+      A.caps?'<dl class="caps"><dt>TYPE</dt><dd>'+esc(A.caps.type)+'</dd><dt>PROTOCOLS</dt><dd>'+A.caps.protocols.map(x=>'<span class="qtag">'+x+'</span>').join('')+'</dd><dt>CATEGORIES</dt><dd>'+A.caps.categories.map(x=>'<span class="qtag">'+x+'</span>').join('')+'</dd><dt>TAGS</dt><dd>'+A.caps.tags.map(x=>'<span class="qtag">'+x+'</span>').join('')+'</dd><dt>TOOLS IT USES</dt><dd>'+A.tools.map(x=>'<span class="qtag"><i></i>'+esc(x)+'</span>').join('')+'</dd></dl>'
+      :'<p class="desc none">Nothing declared.</p>');
+
+    // 9 assessor
+    H+=sec('free',rail('09','WHAT AN ASSESSOR SAYS','free','FREE · SIGNED'),
+      A.assess?'<div class="asx"><div style="display:flex;flex-direction:column;gap:14px"><span class="note">PUBLISHED BY '+esc(A.assess.by).toUpperCase()+' · NOT ARP\'S OPINION, ARP HAS NONE</span>'+
+        '<div class="score"><strong>'+A.assess.val+'</strong><span>/ '+A.assess.of+' · '+A.assess.rev+' reviewers'+hint('Shown at the size its evidence earns: few reviewers, small type.','About the assessment size')+'</span></div>'+
+        (A.assess.sig==='ok'?'<span class="sig-ok"><i></i>SIGNATURE CHECKED · RECOVERS TO '+A.assess.signer+'</span>':'<span class="sig-ok sig-bad"><i></i>SIGNATURE MISMATCH</span>')+'</div>'+
+        '<div class="sides">'+
+          '<div class="sidebox"><span class="c">BACKED BY <b id="sb">'+C.sides.back[0]+'</b> ACCOUNTS</span><span class="c">'+(C.sides.back[1]?fmt(C.sides.back[1])+' TRUST':'no backing')+'</span><div id="side-b"></div></div>'+
+          '<div class="sidebox"><span class="c">CONTESTED BY <b id="sc">'+C.sides.contest[0]+'</b> ACCOUNTS</span><span class="c">'+(C.sides.contest[1]?fmt(C.sides.contest[1])+' TRUST':'no backing')+'</span><div id="side-c"></div></div>'+
+        '</div></div>'
+      :'<p class="desc none">No assessor has published on this agent.</p>','s9');
+
+    // 10 technical identity
+    const T=A.tech, x=(label,href,ex)=>'<a href="'+href+'" target="_blank" rel="noopener">'+esc(label)+'</a><span class="ex">'+ex+' ↗</span>';
+    H+=sec('meta',rail('10','TECHNICAL IDENTITY','meta','ON CHAIN'),
+      '<dl class="techl"><dt>CAIP-19</dt><dd>'+esc(T.caip)+'</dd><dt>REGISTRY</dt><dd>'+esc(T.registry)+'</dd><dt>TOKEN ID</dt><dd>'+T.token+'</dd>'+
+      '<dt>OWNER</dt><dd>'+x(T.owner,'#basescan','Basescan, its own chain')+'</dd>'+
+      '<dt>REGISTRATION FILE</dt><dd>'+(T.file?x(T.file,'#ipfs','IPFS gateway'):'<span class="ex">none set</span>')+'</dd>'+
+      '<dt>URL</dt><dd>'+(T.url?x(T.url.replace('https://',''),'#url','site'):'<span class="ex">not reported</span>')+'</dd>'+
+      '<dt>ATOM</dt><dd>'+x(T.atom,'#portal','Intuition portal')+'</dd></dl>');
+
+    // 11 what could not be read
+    H+=sec('meta',rail('11','WHAT COULD NOT BE READ','meta','SAID OUT LOUD'),
+      C.gaps.length?'<div>'+C.gaps.map(([k,a,b])=>'<div class="gap"><span class="g" aria-hidden="true">'+(k==='diff'?'≠':'∅')+'</span><span class="k">'+esc(a)+'</span><span class="v">'+esc(b)+'</span></div>').join('')+'</div>':'<p class="desc none">Every source answered and none disagreed.</p>');
+
+    $('page').innerHTML=H;
+    wire();
+  }
+
+  function usedRows(fresh){
+    const C=S[sample].chains[chain], box=$('usedrows'); if(!box)return;
+    box.innerHTML='';
+    C.used.forEach((u,i)=>{
+      const r=document.createElement('div');r.className='tr'+(u.me?' me':'')+(u.me&&fresh?' fresh':'');r.setAttribute('role','row');
+      r.innerHTML=(u.agent?'<svg width="32" height="32" viewBox="0 0 60 60" aria-hidden="true"></svg>':'<span class="wallet" aria-hidden="true">0x</span>')+
+        '<span class="nm"><strong class="'+(u.agent?'':'addr')+'">'+esc(u.me?'You · '+u.w:u.w)+'</strong>'+(u.agent?'<span>agent #'+u.id+'</span>':'<span>wallet</span>')+'</span>'+
+        '<span class="via">'+esc(u.via)+'</span>'+
+        (u.amt===null?'<span class="amt unpaid num">said, not paid</span>':'<span class="amt num">'+fmt(u.amt)+'<small>TRUST</small></span>')+
+        '<span class="when num">'+u.when+'</span>';
+      if(u.agent)sigil(r.querySelector('svg'),u.id,u.mods,false,false);
+      box.appendChild(r);
+    });
+  }
+  function chart(){
+    const C=S[sample].chains[chain],svg=$('chart');if(!svg||!C.curve)return;
+    const d=C.curve,W=640,H=220,pl=44,pr=12,pt=12,pb=28,max=Math.ceil(Math.max(...d)/100)*100;
+    const X=i=>pl+(W-pl-pr)*i/(d.length-1),Y=v=>pt+(H-pt-pb)*(1-v/max);
+    let s='';
+    [0,.5,1].forEach(f=>{const y=Y(max*f);s+='<line x1="'+pl+'" x2="'+(W-pr)+'" y1="'+y+'" y2="'+y+'" stroke="#2E3134"/><text x="'+(pl-8)+'" y="'+(y+4)+'" fill="#8A9096" font-family="Geist Mono,monospace" font-size="10" text-anchor="end">'+Math.round(max*f)+'</text>';});
+    let p='M'+X(0)+' '+Y(d[0]);for(let i=1;i<d.length;i++)p+=' H'+X(i)+' V'+Y(d[i]);
+    s+='<path d="'+p+'" fill="none" stroke="#A9AEB2" stroke-width="1.5"/>';
+    const li=d.length-1;s+='<circle cx="'+X(li)+'" cy="'+Y(d[li])+'" r="4" fill="#E6E8E6"/>';
+    [['Sep 29',0],['Oct 12',13],['Oct 27',li]].forEach(([t,i])=>{s+='<text x="'+X(i)+'" y="'+(H-8)+'" fill="#8A9096" font-family="Geist Mono,monospace" font-size="10" text-anchor="'+(i===0?'start':i===li?'end':'middle')+'">'+t+'</text>';});
+    s+='<text x="'+(X(13)+6)+'" y="'+(Y(d[13])-8)+'" fill="#8A9096" font-family="Geist Mono,monospace" font-size="10">9 arrive</text>';
+    svg.innerHTML=s;
+  }
+  function strip(){
+    const C=S[sample].chains[chain],box=$('strip');if(!box||!C.shares)return;
+    const all=C.shares.slice();if(C.posed.mine)all.push(C.posed.mine/C.posed.amt*100);
+    box.innerHTML=all.map((v,i)=>'<i class="'+(i===0?'lead':(C.posed.mine&&i===all.length-1?'you':''))+'" style="flex:'+v+'"></i>').join('');
+  }
+
+  // actions
+  let amt=25;
+  function wire(){
+    const A=S[sample],C=A.chains[chain];
+    usedRows(false);chart();strip();
+    const big=$('bigsig');if(big)sigil(big,A.id,A.tools.map(t=>[t,'d']),C.posed.mine>0,true);
+
+    // declare
+    const dc=$('decl'),dl=$('decl-l');
+    const already=C.used.some(u=>u.me);
+    const dIdle=()=>{if(already||C.used.some(u=>u.me)){dc.innerHTML='<button class="btn done" type="button" disabled style="background:transparent;border:1px solid var(--saffron);color:var(--saffron)">You declared using it</button>';dl.textContent='Your claim is in section 03 · '+CHAIN[chain];return;}
+      dc.innerHTML='<button class="btn" type="button">Declare use · 0.1 TRUST</button>';dl.textContent=CHAIN[chain];dc.firstChild.onclick=dAsk;};
+    const dAsk=()=>{dc.innerHTML='<div class="btnrow"><button class="btn quiet" type="button">Cancel</button><button class="btn line warm" type="button">Pay 0.1 TRUST, not refundable</button></div>';
+      dl.textContent='Your address '+ME+' is written on the record'+(chain==='mainnet'?', on mainnet.':'.');
+      dc.querySelector('.quiet').onclick=dIdle;
+      const go=dc.querySelector('.warm');go.focus();
+      go.onclick=()=>{dc.innerHTML='<button class="btn" type="button" disabled>'+ringSvg(18)+'Writing the edge</button>';dl.textContent='One signature, then the triple is created.';
+        setTimeout(()=>{C.used.unshift({w:ME,me:true,via:'used for · solidity-audit',amt:.10,when:'now'});
+          const pu=C.used.filter(u=>u.amt!==null).length;
+          render();usedRows(true);
+          document.getElementById('s3').scrollIntoView({behavior:reduce?'auto':'smooth',block:'start'});},1300);};};
+    dIdle();
+
+    // back
+    const bc=$('back'),bl=$('back-l');
+    $('chips').onclick=e=>{const b=e.target.closest('.chip');if(!b)return;amt=+b.dataset.v;[...$('chips').children].forEach(c=>c.setAttribute('aria-pressed',c===b));bIdle();};
+    const bIdle=()=>{bc.innerHTML='<button class="btn line warm" type="button" style="width:100%">Back it · '+amt+' TRUST</button>';bl.textContent='Within your delegation cap of 250 TRUST.';bc.firstChild.onclick=bGo;};
+    const bGo=()=>{bc.innerHTML='<button class="btn" type="button" disabled style="width:100%">'+ringSvg(18)+'Confirming</button>';bl.textContent='Redeeming delegation, one signature.';
+      setTimeout(()=>{if(!C.posed.mine)C.posed.acc+=1;C.posed.mine+=amt;C.posed.amt+=amt;if(C.curve)C.curve[C.curve.length-1]=C.posed.amt;
+        render();const p=$('pulse');if(p)requestAnimationFrame(()=>p.classList.add('go1'));
+        const b2=$('back');b2.innerHTML='<button class="btn done" type="button" style="width:100%">Backed · '+amt+' TRUST</button>';$('back-l').textContent='You hold '+fmt(C.posed.mine)+' TRUST here. Withdraw from your profile.';
+        b2.firstChild.onclick=()=>wire();},1300);};
+    bIdle();
+
+    // take a side on the assessment
+    [['side-b','back','Back the assessment'],['side-c','contest','Contest it']].forEach(([id,k,label])=>{
+      const box=$(id);if(!box)return;
+      const idle=()=>{box.innerHTML='<button class="btn line" type="button" style="width:100%;height:40px;font-size:13px">'+label+'</button>';box.firstChild.onclick=go;};
+      const go=()=>{box.innerHTML='<button class="btn" type="button" disabled style="width:100%;height:40px;font-size:13px">'+ringSvg(16)+'Confirming</button>';
+        setTimeout(()=>{C.sides[k][0]+=1;C.sides[k][1]+=10;render();},1200);};
+      idle();
+    });
+  }
+
+  function seg(id,set){const g=$(id);g.onclick=e=>{const b=e.target.closest('button');if(!b)return;[...g.children].forEach(x=>x.setAttribute('aria-pressed',x===b));set(b.dataset.v);render();};}
+  seg('chain',v=>chain=v);seg('sample',v=>sample=v);
+  render();
+})();
+</script>

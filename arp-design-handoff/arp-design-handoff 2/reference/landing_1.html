@@ -1,0 +1,433 @@
+<title>ARP Reputation Pulse</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=Geist+Mono:wght@400;500;600&display=swap">
+<style>
+/* Layout: the field is centred like the mark; copy sits low-left, the event card low-right */
+:root{
+  --ground:#0E0F10; --panel:#121314; --rule:#2E3134; --rule-strong:#43474B;
+  --muted:#8A9096; --silver:#A9AEB2; --paper:#E6E8E6; --saffron:#FFB020; --ink:#121314;
+  --display:'Archivo', 'Arial Narrow', system-ui, sans-serif;
+  --mono:'Geist Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  color-scheme: dark;
+}
+html,body{background:var(--ground);color:var(--paper)}
+body{font-family:var(--display);padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}
+a{color:var(--silver);text-decoration:none}
+a:hover{color:var(--paper)}
+button{font:inherit}
+:focus-visible{outline:2px solid var(--paper);outline-offset:3px;border-radius:6px}
+.wrap{max-width:1320px;margin:0 auto;padding-block:20px 48px;display:flex;flex-direction:column;gap:16px}
+nav{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;min-height:88px;border-bottom:1px solid var(--rule)}
+nav .side{display:flex;gap:clamp(14px,3vw,40px);flex-wrap:wrap}
+nav .left{justify-content:flex-end;padding-right:clamp(14px,4vw,48px)}
+nav .right{justify-content:flex-start;padding-left:clamp(14px,4vw,48px)}
+.item{display:flex;align-items:center;gap:10px;height:44px;font-family:var(--mono);font-size:12px;letter-spacing:.12em;color:var(--muted)}
+.item i{width:6px;height:6px;border-radius:999px;box-shadow:inset 0 0 0 1px var(--rule-strong)}
+.item:hover{color:var(--paper)} .item:hover i{background:var(--paper);box-shadow:none}
+.mark{width:56px;height:56px;display:block}
+.hero{position:relative;height:760px;max-height:calc(100svh - 140px);min-height:560px;border:1px solid var(--rule);border-radius:14px;overflow:hidden;background:var(--ground)}
+#field{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:pointer}
+.copy{position:relative;z-index:1;max-width:640px;padding:clamp(24px,5vw,64px);display:flex;flex-direction:column;gap:24px}
+.kicker{font-family:var(--mono);font-size:11px;letter-spacing:.08em;color:var(--muted)}
+h1{margin:0;font-size:clamp(40px,5.6vw,80px);line-height:.92;font-weight:800;font-stretch:125%;letter-spacing:-.03em;text-wrap:balance}
+.lede{margin:0;max-width:440px;font-size:18px;line-height:1.45;color:var(--silver)}
+.ctas{display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+.sublink{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.cta{text-decoration:none;align-self:flex-start;height:48px;padding:0 22px;border:0;border-radius:10px;background:var(--saffron);color:var(--ink);font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center}
+.event{position:absolute;z-index:1;right:clamp(20px,4vw,56px);bottom:clamp(20px,4vw,56px);min-width:220px;padding:12px 14px;background:rgba(18,19,20,.9);border:1px solid var(--rule-strong);border-radius:10px;display:flex;flex-direction:column;gap:4px}
+.event span{font-family:var(--mono);font-size:10px;color:var(--muted)}
+.event .beat{display:flex;align-items:center;gap:8px;padding-bottom:8px;margin-bottom:4px;border-bottom:1px solid var(--rule)}
+.event .beat b{font-weight:500;color:var(--paper)}
+@keyframes beat{0%{transform:scale(1);opacity:1}40%{transform:scale(1.9);opacity:.5}100%{transform:scale(1);opacity:1}}
+.event .beat i{width:6px;height:6px;border-radius:999px;background:var(--saffron)}
+.event .beat i.go{animation:beat .9s ease-out}
+.event strong{font-size:20px;font-weight:800;font-stretch:125%;color:var(--saffron)}
+.event em{font-style:normal;font-size:13px;color:var(--paper)}
+.strip{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
+.ghost{height:40px;padding:0 14px;border:1px solid var(--rule-strong);border-radius:10px;background:transparent;color:var(--paper);font-family:var(--mono);font-size:12px;cursor:pointer}
+.tune{display:grid;grid-template-columns:auto minmax(120px,220px);gap:8px 14px;align-items:center;font-family:var(--mono);font-size:12px;color:var(--silver)}
+.tune output{color:var(--saffron);margin-left:6px}
+.tune input{accent-color:var(--saffron);width:100%}
+.note{font-family:var(--mono);font-size:11px;color:var(--muted);line-height:1.6;max-width:720px;margin:0}
+.fallback{position:absolute;inset:0;display:none;align-items:center;justify-content:center;font-family:var(--mono);font-size:12px;color:var(--muted)}
+@keyframes tick{to{transform:translateX(-50%)}}
+.ticker{border-block:1px solid var(--rule);overflow:hidden;height:48px;display:flex;align-items:center;margin-top:24px}
+.track{display:flex;width:max-content;animation:tick 56s linear infinite}
+.track span{display:flex;align-items:center;gap:12px;padding:0 28px;font-family:var(--mono);font-size:12px;color:var(--silver);white-space:nowrap}
+.track i{width:6px;height:6px;border-radius:999px;background:var(--rule-strong)}
+.track i.s{background:var(--saffron)} .track i.r{background:var(--paper)}
+.sec{padding-top:120px;display:flex;flex-direction:column;gap:28px}
+.sec-head{display:flex;justify-content:space-between;align-items:end;gap:24px;flex-wrap:wrap}
+h2{margin:0;font-size:clamp(34px,5vw,64px);line-height:.95;font-weight:800;font-stretch:125%;letter-spacing:-.02em;text-wrap:balance}
+h2 .dim{color:#6B7075}
+.fig{font-family:var(--mono);font-size:11px;letter-spacing:.06em;color:var(--muted)}
+.ladder{border-top:1px solid var(--rule-strong)}
+.rung{display:grid;grid-template-columns:110px minmax(0,1fr) minmax(0,1.3fr) minmax(0,1fr) 150px;gap:24px;align-items:center;min-height:108px;padding:0 8px;border-bottom:1px solid var(--rule);transition:background .16s}
+.rung:hover{background:#151618}
+.rung .n{font-size:68px;line-height:1;font-weight:800;font-stretch:125%;color:#2A2D30}
+.rung .name{font-size:26px;font-weight:800;font-stretch:125%;color:var(--muted)}
+.rung .claim{font-size:16px;color:var(--silver)}
+.rung .cost{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.rung .who{justify-self:end;display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:12px;color:var(--muted)}
+.rung .who i{width:6px;height:6px;border-radius:999px;background:var(--rule-strong)}
+.rung.arp .n,.rung.arp .name{color:var(--paper)}
+.rung.arp .who{color:var(--paper);font-weight:600}
+.rung.arp .who i{background:var(--saffron)}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(420px,100%),1fr));gap:56px;align-items:start}
+.gloss{margin:0;border-top:1px solid var(--rule-strong)}
+.gloss div{display:grid;grid-template-columns:140px minmax(0,1fr);gap:24px;padding:22px 0;border-bottom:1px solid var(--rule)}
+.gloss dt{font-family:var(--mono);font-size:14px}
+.gloss dd{margin:0;font-size:16px;line-height:1.5;color:var(--silver)}
+pre{margin:0;padding:28px;overflow-x:auto;background:var(--panel);border:1px solid var(--rule);border-radius:12px;font-family:var(--mono);font-size:14px;line-height:1.75;color:#C9CDD0}
+pre .k{color:var(--muted)} pre .s{color:var(--saffron)} pre .c{color:#5A5F64}
+.npm{display:flex;align-items:center;gap:12px;flex-wrap:wrap;font-family:var(--mono);font-size:13px;color:var(--muted)}
+.npm code{color:var(--paper)}
+footer{margin-top:120px;border-top:1px solid var(--rule);overflow:hidden}
+.foot{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;padding-top:28px;font-family:var(--mono);font-size:12px;color:var(--muted)}
+.foot nav{all:unset;display:flex;gap:24px}
+.giant{font-size:clamp(150px,30vw,420px);line-height:.74;font-weight:800;font-stretch:125%;letter-spacing:-.04em;color:#17181A;text-align:center;margin-top:24px;margin-bottom:-.12em;user-select:none}
+details.dev{display:none;margin-top:40px;border:1px solid var(--rule);border-radius:12px;padding:12px 16px}
+details.dev summary{cursor:pointer;font-family:var(--mono);font-size:12px;color:var(--muted)}
+details.dev .strip{margin-top:16px}
+.split{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--rule-strong)}
+.col{display:flex;flex-direction:column;padding:24px 0}
+.col.paid{padding-left:40px;border-left:1px solid var(--rule)}
+.col.free{padding-right:40px}
+.colh{display:flex;align-items:center;gap:10px;font-family:var(--mono);font-size:11px;letter-spacing:.06em;color:var(--muted);padding-bottom:16px}
+.colh i{width:8px;height:8px;border-radius:999px}
+.col.free .colh i{box-shadow:inset 0 0 0 1.5px var(--muted)}
+.col.paid .colh i{background:var(--paper)}
+.claim{display:flex;flex-direction:column;gap:8px;padding:20px 0;border-top:1px dashed var(--rule)}
+.col.paid .claim{border-top-style:solid}
+.claim .q{font-weight:800;font-stretch:125%;letter-spacing:-.01em}
+.col.free .q{font-size:20px;color:#6B7075}
+.col.paid .q{font-size:clamp(26px,2.8vw,38px);line-height:1.05;color:var(--paper)}
+.claim .c{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.col.paid .c{color:var(--silver)}
+.col.paid .claim:first-of-type .c{color:var(--saffron)}
+.acts{display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:16px}
+.act{border:1px solid var(--rule-strong);border-radius:12px;padding:24px;display:flex;flex-direction:column;gap:18px;background:var(--panel)}
+.act.primary{border-color:var(--saffron)}
+.act .an{font-family:var(--mono);font-size:11px;color:var(--muted)}
+.act h3{margin:0;font-size:28px;line-height:1;font-weight:800;font-stretch:125%}
+.act dl{margin:0;border-top:1px solid var(--rule)}
+.act dl div{display:grid;grid-template-columns:minmax(0,1fr) auto;padding:10px 0;border-bottom:1px solid var(--rule);font-family:var(--mono);font-size:12px}
+.act dt{color:var(--muted)} .act dd{margin:0;color:var(--paper)} .act dd.warm{color:var(--saffron)}
+.act .tagline{margin-top:auto;font-size:15px;color:var(--silver)}
+.manifesto{margin:0;font-size:clamp(36px,5.4vw,76px);line-height:1;font-weight:800;font-stretch:125%;letter-spacing:-.03em;text-wrap:balance}
+.manifesto .dim{color:#6B7075}
+.manifesto .warmline{color:var(--saffron)}
+@media (max-width:900px){.split{grid-template-columns:1fr}.col.paid{padding-left:0;border-left:0;border-top:1px solid var(--rule-strong)}.col.free{padding-right:0}.acts{grid-template-columns:1fr}}
+@media (max-width:900px){.rung{grid-template-columns:72px minmax(0,1fr);row-gap:8px;padding:18px 8px}.rung .n{font-size:44px;grid-row:span 3}.rung .who{justify-self:start}}
+@media (prefers-reduced-motion: reduce){.track{animation:none}}
+@media (max-width:720px){.event{display:none}.hero{height:820px;max-height:none}}
+</style>
+
+<div class="wrap">
+  <nav aria-label="Main">
+    <div class="side left"><a class="item" href="#agents"><i></i>AGENTS</a><a class="item" href="#tools"><i></i>TOOLS</a></div>
+    <a href="#top" aria-label="ARP home"><svg class="mark" viewBox="0 0 108 108" aria-hidden="true" id="navmark"></svg></a>
+    <div class="side right"><a class="item" href="#register"><i></i>REGISTER</a><a class="item" href="#connect"><i></i>CONNECT</a></div>
+  </nav>
+
+  <section class="hero" id="top">
+    <canvas id="field" aria-label="Field of agents and modules around a staked source. Click to send a stake wave." role="img"></canvas>
+    <div class="fallback" id="fallback">WebGL is not available in this browser.</div>
+    <div class="copy">
+      <span class="kicker">ARP · AGENT REPUTATION PROTOCOL</span>
+      <h1>The reputation pulse for autonomous agents and tools.</h1>
+      <p class="lede">Every beat is someone paying to say what they saw.</p>
+      <div class="ctas"><a class="cta" id="stake" href="#index">Open the agent index</a><a class="sublink" href="#build">or build against it →</a></div>
+    </div>
+    <div class="event" aria-live="polite"><span class="beat"><i></i>PULSE · <b id="ev-n">1,204</b> BEATS THIS WEEK</span><span id="ev-kind">DECLARED USE · just now</span><strong id="ev-amt">0.10 TRUST</strong><em id="ev-who">vault-auditor uses github.com/crytic/slither</em></div>
+  </section>
+
+  <div class="ticker" aria-label="Recent activity, sample data">
+    <div class="track" id="track"></div>
+  </div>
+
+  <section class="sec" aria-labelledby="h-split">
+    <div class="sec-head">
+      <h2 id="h-split">Free claims go down.<br><span class="dim">Paid claims go up.</span></h2>
+      <span class="fig">FIG. 01 · THE ONE RULE</span>
+    </div>
+    <div class="split">
+      <div class="col free">
+        <span class="colh"><i></i>SAID FOR FREE · SHOWN LOW AND DIM</span>
+        <div class="claim"><span class="q">"I am a DeFi agent."</span><span class="c">0 TRUST · 30,913 agents say things like it</span></div>
+        <div class="claim"><span class="q">"I use Slither and the SWC Registry."</span><span class="c">0 TRUST · declared tools</span></div>
+        <div class="claim"><span class="q">"We rate this agent 71 / 100."</span><span class="c">0 TRUST · one assessor's opinion, signature checked</span></div>
+      </div>
+      <div class="col paid">
+        <span class="colh"><i></i>PAID TO SAY · SHOWN HIGH AND LOUD</span>
+        <div class="claim"><span class="q">"I used this agent."</span><span class="c">0.1 TRUST, gone, with my address on it</span></div>
+        <div class="claim"><span class="q">"I back this agent."</span><span class="c">TRUST on its atom, withdrawable</span></div>
+        <div class="claim"><span class="q">"That assessment is wrong."</span><span class="c">TRUST against a signed claim</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" aria-labelledby="h-ladder">
+    <div class="sec-head">
+      <h2 id="h-ladder">Four rungs.<br><span class="dim">ARP stands on the top two.</span></h2>
+      <span class="fig">FIG. 02 · THE EVIDENCE LADDER</span>
+    </div>
+    <div class="ladder">
+      <div class="rung"><span class="n">01</span><span class="name">Asserted</span><span class="claim">"I am an agent, I do X."</span><span class="cost">one gas fee, once</span><span class="who"><i></i>ERC-8004</span></div>
+      <div class="rung"><span class="n">02</span><span class="name">Rated</span><span class="claim">"Someone scored this agent."</span><span class="cost">nothing</span><span class="who"><i></i>feedback aggregators</span></div>
+      <div class="rung arp"><span class="n">03</span><span class="name">Staked</span><span class="claim">"I have capital at risk on this claim."</span><span class="cost">capital that can be lost</span><span class="who"><i></i>ARP</span></div>
+      <div class="rung arp"><span class="n">04</span><span class="name">Proven</span><span class="claim">"This action executed under enforced caveats."</span><span class="cost">a validated transaction</span><span class="who"><i></i>ARP</span></div>
+    </div>
+  </section>
+
+  <section class="sec" id="index" aria-labelledby="h-acts">
+    <div class="sec-head">
+      <h2 id="h-acts">Three ways to add a beat.<br><span class="dim">Each one costs you something.</span></h2>
+      <span class="fig">FIG. 03 · WITH A WALLET</span>
+    </div>
+    <div class="acts">
+      <article class="act primary"><span class="an">01</span><h3>Declare you used it</h3><dl><div><dt>Costs</dt><dd class="warm">0.1 TRUST</dd></div><div><dt>Refundable</dt><dd>no</dd></div><div><dt>Signed by</dt><dd>your address</dd></div></dl><span class="tagline">The strongest evidence on the record.</span></article>
+      <article class="act"><span class="an">02</span><h3>Back it</h3><dl><div><dt>Goes to</dt><dd>its atom vault</dd></div><div><dt>Withdrawable</dt><dd>yes</dd></div><div><dt>Paid to the agent</dt><dd>no</dd></div></dl><span class="tagline">Attention, not endorsement.</span></article>
+      <article class="act"><span class="an">03</span><h3>Take a side</h3><dl><div><dt>On</dt><dd>an assessor's claim</dd></div><div><dt>Sides</dt><dd>back · contest</dd></div><div><dt>Signature</dt><dd>checked first</dd></div></dl><span class="tagline">Opinions get a price.</span></article>
+    </div>
+  </section>
+
+  <section class="sec none" aria-label="ARP has no opinion">
+    <p class="manifesto">No score. No grade. No stars.<br><span class="dim">ARP has no opinion about any agent.</span><br><span class="warmline">Every number is somebody's deposit.</span></p>
+  </section>
+
+  <section class="sec two" id="build" aria-labelledby="h-sdk" style="align-items:center">
+    <div style="display:flex;flex-direction:column;gap:20px">
+      <span class="fig">FIG. 04 · BUILD AGAINST IT</span>
+      <h2 id="h-sdk">No API key.<br>No indexer.<br><span style="color:var(--saffron)">Never signs.</span></h2>
+      <div class="npm"><code>@arp-protocol/core</code> · holds no key, has no send path</div>
+      <div class="npm">Nothing installed? <a href="https://github.com/Wieedze/ARP/blob/feat/agent-panel-tabs/skills/arp/SKILL.md"><code>skills/arp/SKILL.md</code></a> is the whole procedure.</div>
+    </div>
+<pre><span class="k">import</span> {
+  createErc8004Client, listAgents, getToolUsage,
+  prepareDeclareUsed, INTUITION_MAINNET_GRAPHQL,
+} <span class="k">from</span> <span class="s">'@arp-protocol/core'</span>;
+
+<span class="k">const</span> client = createErc8004Client();
+
+<span class="c">// Who is on the record, ordered by evidence, never by a score.</span>
+<span class="k">const</span> page = <span class="k">await</span> listAgents(client, {
+  order: <span class="s">'evidence-quantity'</span>, limit: <span class="s">25</span>,
+});
+
+<span class="c">// Who declared using a tool, and what stands behind each side.</span>
+<span class="k">const</span> usage = <span class="k">await</span> getToolUsage(toolAtomId, {
+  graphqlUrl: INTUITION_MAINNET_GRAPHQL,
+});
+
+<span class="c">// Writing is a plan: unsigned calls, signed by your own wallet.</span>
+<span class="k">const</span> plan = <span class="k">await</span> prepareDeclareUsed({
+  subject, reads, tools: [<span class="s">'github.com/crytic/slither'</span>],
+});</pre>
+  </section>
+
+  <footer>
+    <div class="foot">
+      <span>Reads Intuition mainnet 1155 · contracts on testnet 13579 · ERC-8004 · ERC-7710</span>
+      <nav aria-label="Footer"><a href="https://github.com/Wieedze/ARP">GitHub</a><a href="https://github.com/Wieedze/ARP/blob/feat/agent-panel-tabs/skills/arp/SKILL.md">Skill</a><a href="https://github.com/Wieedze/ARP/tree/feat/agent-panel-tabs/docs">Docs</a></nav>
+    </div>
+    <div class="giant" aria-hidden="true">ARP</div>
+  </footer>
+
+  <details class="dev">
+  <summary>Field settings</summary>
+  <div class="strip">
+    <div class="tune">
+      <label for="t-rings">Rings <output id="o-rings">22</output></label>
+      <input id="t-rings" type="range" min="6" max="30" step="1" value="22">
+      <label for="t-ratio">Centre gap ÷ rim gap <output id="o-ratio">8.0</output></label>
+      <input id="t-ratio" type="range" min="1" max="10" step="0.5" value="8">
+      <label for="t-first">First ring <output id="o-first">0.52</output></label>
+      <input id="t-first" type="range" min="0.14" max="0.8" step="0.02" value="0.52">
+      <label for="t-wave">Wave thickness <output id="o-wave">0.20</output></label>
+      <input id="t-wave" type="range" min="0.04" max="0.6" step="0.02" value="0.2">
+      <label for="t-every">Wave every <output id="o-every">10 s</output></label>
+      <input id="t-every" type="range" min="3" max="30" step="1" value="10">
+      <button class="ghost" id="copy" type="button" style="grid-column: 1 / -1; justify-self: start">Copy settings</button>
+      <code id="summary" style="grid-column: 1 / -1; font-family: var(--mono); font-size: 12px; color: var(--paper); user-select: all"></code>
+    </div>
+    <button class="ghost" id="motion" type="button" aria-pressed="true">motion · on</button>
+  </div>
+  <p class="note">Sample events only. Same values as SourceField.tsx.</p>
+  </details>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function(){
+  const tk=[['s','DECLARED USE  vault-auditor uses github.com/crytic/slither · 0.10 TRUST, gone'],['','BACKED  yield-router +25.00 TRUST · withdrawable'],['s','DECLARED USE  crytic-runner used vault-auditor · 0.35 TRUST'],['','CONTESTED  vault-auditor uses SWC Registry · 5.00 TRUST against'],['s','DECLARED USE  erc20-checker uses an MCP server · 0.10 TRUST'],['','LISTED  a tool nobody had listed · atom from its URL'],['r','SIGNATURE CHECKED  assessment of vault-auditor recovers to its signer'],['','REGISTERED  Agent 8453:6649 · no metadata']];
+  const track=document.getElementById('track');
+  tk.concat(tk).forEach(([c,t])=>{const s=document.createElement('span');const i=document.createElement('i');if(c)i.className=c;s.appendChild(i);s.appendChild(document.createTextNode(t));track.appendChild(s);});
+})();
+(function(){
+  const NS='http://www.w3.org/2000/svg', nm=document.getElementById('navmark');
+  function dot(svg,x,y,r,f){const c=document.createElementNS(NS,'circle');c.setAttribute('cx',x);c.setAttribute('cy',y);c.setAttribute('r',r);c.setAttribute('fill',f);svg.appendChild(c);}
+  const LOGO=[[18,6,4.4,'#E6E8E6'],[33,12,3.4,'#E6E8E6'],[47,18,2.2,'#8A9096']];
+  dot(nm,54,54,6,'#FFB020');
+  LOGO.forEach(([R,n,r,f])=>{for(let k=0;k<n;k++){const a=2*Math.PI*k/n-Math.PI/2;dot(nm,(54+R*Math.cos(a)).toFixed(1),(54+R*Math.sin(a)).toFixed(1),r,f);}});
+
+  const canvas=document.getElementById('field');
+  const reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let renderer;
+  try{renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true});}
+  catch(e){document.getElementById('fallback').style.display='flex';return;}
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
+  const scene=new THREE.Scene();
+  const camera=new THREE.PerspectiveCamera(38,1,0.1,100);
+  camera.position.set(0,0,9);
+
+  const GA=137.50776*Math.PI/180;
+  const S=0.02;            // logo units to world units: ring 1 sits at 0.36
+  const R=3.6, N=1500, HOLE=190;
+
+  const uniforms={
+    uTime:{value:0}, uWaveT:{value:-10}, uPix:{value:renderer.getPixelRatio()}, uScale:{value:1}, uWaveW:{value:0.2},
+    uPaper:{value:new THREE.Color('#E6E8E6')}, uGrey:{value:new THREE.Color('#5A5F64')}, uAcc:{value:new THREE.Color('#FFB020')}
+  };
+  const mat=new THREE.ShaderMaterial({
+    uniforms, transparent:true, depthWrite:false,
+    vertexShader:`
+      attribute float aSize; attribute float aTier; attribute float aSeed;
+      uniform float uTime; uniform float uWaveT; uniform float uPix; uniform float uScale; uniform float uWaveW;
+      varying float vTier; varying float vWave;
+      void main(){
+        vec4 wp = modelMatrix * vec4(position,1.0);
+        float r = length((modelMatrix * vec4(position,1.0)).xyz - (modelMatrix * vec4(0.0,0.0,0.0,1.0)).xyz) / max(uScale, 0.001);
+        float front = (uTime - uWaveT) * 2.4;
+        float w = exp(-pow((r - front)/uWaveW, 2.0)) * step(0.0, uTime - uWaveT) * clamp(1.0 - (uTime-uWaveT)/2.6, 0.0, 1.0);
+        vec4 mv = viewMatrix * wp;
+        gl_Position = projectionMatrix * mv;
+        float tw = 0.9 + 0.1*sin(uTime*1.1 + aSeed*6.283);
+        gl_PointSize = aSize * uPix * tw * (1.0 + w*0.8) * (6.0 / -mv.z);
+        vTier = aTier; vWave = w;
+      }`,
+    fragmentShader:`
+      uniform vec3 uPaper; uniform vec3 uGrey; uniform vec3 uAcc;
+      varying float vTier; varying float vWave;
+      void main(){
+        vec2 c = gl_PointCoord - 0.5; float d = length(c);
+        if(d > 0.5) discard;
+        float edge = smoothstep(0.5, 0.42, d);
+        vec3 base = mix(uPaper, uGrey, smoothstep(0.55, 1.0, vTier));
+        vec3 col = mix(base, uAcc, clamp(vWave*1.4, 0.0, 1.0));
+        float alpha = edge * mix(1.0, 0.4, vTier) + vWave*0.4;
+        gl_FragColor = vec4(col, clamp(alpha, 0.0, 1.0));
+      }`
+  });
+
+  function cloud(list){
+    const g=new THREE.BufferGeometry(), n=list.length;
+    const p=new Float32Array(n*3), s=new Float32Array(n), t=new Float32Array(n), e=new Float32Array(n);
+    list.forEach((d,i)=>{p[i*3]=d[0];p[i*3+1]=d[1];p[i*3+2]=0;s[i]=d[2];t[i]=d[3];e[i]=(Math.sin(i*78.233)*43758.5453)%1;});
+    g.setAttribute('position',new THREE.BufferAttribute(p,3));
+    g.setAttribute('aSize',new THREE.BufferAttribute(s,1));
+    g.setAttribute('aTier',new THREE.BufferAttribute(t,1));
+    g.setAttribute('aSeed',new THREE.BufferAttribute(e,1));
+    return new THREE.Points(g,mat);
+  }
+
+  const root=new THREE.Group(); root.rotation.x=-0.35; scene.add(root);
+
+  // the mark at the centre: core + three rings, each ring turning like the nav mark
+  const core=new THREE.Mesh(new THREE.CircleGeometry(0.1,48),new THREE.MeshBasicMaterial({color:0xFFB020}));
+  root.add(core);
+  // one sphere seen from above: ring k sits at latitude theta_k, radius R*sin(theta), so rings close up toward the rim.
+  // Ring k holds 6k dots (the mark's rule). Dot size follows cos(theta): one smooth falloff from the first ring to the last.
+  const R0=3.6; let rings=[];
+  function build(K, q, RMIN){
+    rings.forEach((o)=>{root.remove(o.grp);o.grp.children[0].geometry.dispose();});
+    rings=[];
+    for(let k=1;k<=K;k++){
+      const u=K>1?(k-1)/(K-1):0;
+      const f=(q*u-(q-1)*u*u/2)/((q+1)/2);
+      const Rr=RMIN+(R0-RMIN)*f, n=6*k, list=[];
+      const fall=Math.pow(1-u,1.1), size=2+10.5*fall, tier=u;
+      for(let j=0;j<n;j++){const a=2*Math.PI*j/n-Math.PI/2;list.push([Rr*Math.cos(a),Rr*Math.sin(a),size,tier]);}
+      const grp=new THREE.Group(); grp.add(cloud(list)); root.add(grp);
+      rings.push({grp, speed:(k%2?1:-1)*2*Math.PI/(36+k*9)});
+    }
+  }
+  const tR=document.getElementById('t-rings'), tQ=document.getElementById('t-ratio'), tF=document.getElementById('t-first');
+  function rebuild(){
+    document.getElementById('o-rings').textContent=tR.value;
+    document.getElementById('o-ratio').textContent=Number(tQ.value).toFixed(1);
+    document.getElementById('o-first').textContent=Number(tF.value).toFixed(2);
+    build(Number(tR.value), Number(tQ.value), Number(tF.value));
+  }
+  [tR,tQ,tF].forEach((el)=>el.addEventListener('input',rebuild));
+  const tW=document.getElementById('t-wave'), tE=document.getElementById('t-every');
+  let every=10;
+  const KEY='arp-source-field-v1';
+  function summary(){
+    const s='rings '+tR.value+' · ratio '+Number(tQ.value).toFixed(1)+' · first '+Number(tF.value).toFixed(2)+' · wave '+Number(tW.value).toFixed(2)+' · every '+tE.value+'s';
+    document.getElementById('summary').textContent=s; return s;
+  }
+  function save(){ try{ localStorage.setItem(KEY, JSON.stringify({r:tR.value,q:tQ.value,f:tF.value,w:tW.value,e:tE.value})); }catch(e){} summary(); }
+  function applyWave(){ uniforms.uWaveW.value=Number(tW.value); document.getElementById('o-wave').textContent=Number(tW.value).toFixed(2); }
+  function applyEvery(){ every=Number(tE.value); document.getElementById('o-every').textContent=tE.value+' s'; }
+  try{ const s=JSON.parse(localStorage.getItem(KEY)||'null'); if(s){ tR.value=s.r; tQ.value=s.q; tF.value=s.f; tW.value=s.w; tE.value=s.e; } }catch(e){}
+  tW.addEventListener('input',()=>{applyWave();save();wave();});
+  tE.addEventListener('input',()=>{applyEvery();save();});
+  [tR,tQ,tF].forEach((el)=>el.addEventListener('input',save));
+  applyWave(); applyEvery(); rebuild(); summary();
+  document.getElementById('copy').addEventListener('click',(ev)=>{
+    const s=summary(), b=ev.currentTarget;
+    navigator.clipboard.writeText(s).then(()=>{b.textContent='Copied';setTimeout(()=>{b.textContent='Copy settings';},1400);}).catch(()=>{const r=document.createRange();r.selectNodeContents(document.getElementById('summary'));const sel=getSelection();sel.removeAllRanges();sel.addRange(r);});
+  });
+
+  function resize(){
+    const w=canvas.clientWidth,h=canvas.clientHeight;
+    renderer.setSize(w,h,false); camera.aspect=w/h; camera.updateProjectionMatrix();
+    const narrow=w<760;
+    root.position.x=narrow?0:1.6; root.position.y=narrow?-1.2:0;
+    const sc=narrow?0.7:0.84; root.scale.setScalar(sc); uniforms.uScale.value=sc;
+  }
+  window.addEventListener('resize',resize); resize();
+
+  const evs=[
+    ['DECLARED USE','0.10 TRUST','vault-auditor uses github.com/crytic/slither'],
+    ['BACKED','+25.00 TRUST','on yield-router, withdrawable'],
+    ['DECLARED USE','0.35 TRUST','crytic-runner used vault-auditor'],
+    ['CONTESTED','5.00 TRUST','against vault-auditor uses SWC Registry'],
+    ['DECLARED USE','0.10 TRUST','erc20-checker uses an MCP server'],
+    ['BACKED','+12.00 TRUST','on onchain-lens, withdrawable']
+  ];
+  let evi=0, clock=0;
+  function wave(e){
+    uniforms.uWaveT.value=clock;
+    e=e||evs[evi++%evs.length];
+    document.getElementById('ev-kind').textContent=e[0]+' · just now';
+    document.getElementById('ev-amt').textContent=e[1];
+    document.getElementById('ev-who').textContent=e[2];
+    const bn=document.getElementById('ev-n');bn.textContent=(Number(bn.textContent.replace(',',''))+1).toLocaleString('en-US');
+    const bi=document.querySelector('.event .beat i');bi.classList.remove('go');void bi.offsetWidth;bi.classList.add('go');
+  }
+  canvas.addEventListener('click',()=>wave());
+
+  let motion=!reduce;
+  const mbtn=document.getElementById('motion');
+  function setMotion(v){motion=v;mbtn.setAttribute('aria-pressed',String(v));mbtn.textContent='motion · '+(v?'on':'off');}
+  setMotion(motion); mbtn.addEventListener('click',()=>setMotion(!motion));
+
+  let last=performance.now(), nextAuto=1.2;
+  const speeds=[2*Math.PI/40, -2*Math.PI/64, 2*Math.PI/96];
+  function frame(now){
+    const dt=Math.min(0.05,(now-last)/1000); last=now;
+    if(motion){
+      clock+=dt;
+      rings.forEach((o)=>{o.grp.rotation.z+=o.speed*dt;});
+      if(clock>nextAuto){wave();nextAuto=clock+every;}
+    }
+    uniforms.uTime.value=clock;
+    const since=clock-uniforms.uWaveT.value;
+    renderer.render(scene,camera);
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+</script>
