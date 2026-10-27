@@ -1,6 +1,7 @@
 import {useState} from "react";
 import {Link} from "react-router-dom";
 
+import {HireForm} from "../components/agent/HireForm";
 import {RingLoader} from "../components/brand/RingLoader";
 import {Sigil} from "../components/brand/Sigil";
 import {useFindAgents} from "../hooks/use-find-agents";
@@ -119,6 +120,13 @@ export function Hire() {
 }
 
 function Candidates({page}: {page: NonNullable<ReturnType<typeof useFindAgents>["data"]>}) {
+    /**
+     * One form open at a time, like the stake controls elsewhere: the form is ~280px against a
+     * ~70px row, so N open forms turn a dense list into a scroll. Opening another closes the first,
+     * which also empties it — nothing a buyer typed for one agent survives into another's budget.
+     */
+    const [open, setOpen] = useState<string | null>(null);
+
     return (
         <>
             <p className="font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
@@ -170,6 +178,25 @@ function Candidates({page}: {page: NonNullable<ReturnType<typeof useFindAgents>[
                         <Link to={`/tool/atom/${candidate.atomId}`} className={linkClass}>
                             Who hired it →
                         </Link>
+                        <button
+                            type="button"
+                            aria-expanded={open === candidate.atomId}
+                            onClick={() =>
+                                setOpen(open === candidate.atomId ? null : candidate.atomId)
+                            }
+                            className="px-2 py-1 text-[length:var(--text-body-sm)] border-[color:var(--color-rule-strong)]!"
+                        >
+                            {open === candidate.atomId ? "Close" : "Hire"}
+                        </button>
+                        {open === candidate.atomId ? (
+                            <div className="mt-4 w-full border-l border-[color:var(--color-rule-strong)] pl-5">
+                                <HireForm
+                                    agentLabel={
+                                        candidate.label ?? truncateMiddle(candidate.atomId)
+                                    }
+                                />
+                            </div>
+                        ) : null}
                     </li>
                 ))}
             </ul>
