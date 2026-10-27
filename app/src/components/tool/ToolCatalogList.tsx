@@ -115,10 +115,11 @@ function Headers({curveId}: {curveId: number}) {
             aria-hidden
             className={`${ROW_GRID} hidden sm:grid pb-2 border-b border-[color:var(--color-rule-strong)] font-mono uppercase tracking-wider text-[length:var(--text-label)] text-[color:var(--color-steel)]`}
         >
-            {/* The same three words as the sort and the filters above. A column called
-                "Declarations" over a control called "Most used" made the reader translate. */}
+            {/* The same words as the controls above, and the same word `/agents` uses for the
+                same thing. **"Claims", never "Used"**: the number counts sentences agents wrote,
+                and whether the use happened is unknowable from outside (`docs/14`). */}
             <span>Tool</span>
-            <span className="text-right">Used</span>
+            <span className="text-right">Claims</span>
             <span className="text-right">Paid for</span>
             {/* The curve is part of a TRUST sum's population (`rules/claims.md` §2). It belongs on
                 the figure rather than in a footer line nobody needs twice. */}

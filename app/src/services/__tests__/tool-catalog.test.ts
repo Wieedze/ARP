@@ -1,7 +1,7 @@
 import {describe, expect, it} from "vitest";
 import type {ToolListing, ToolListingPage} from "@arp-protocol/core";
 
-import {buildToolCatalogView, TOOL_ORDERS} from "../tool-catalog";
+import {buildToolCatalogView, TOOL_FILTERS, TOOL_ORDERS} from "../tool-catalog";
 
 function tool(overrides: Partial<ToolListing> = {}): ToolListing {
     return {
@@ -95,6 +95,19 @@ describe("buildToolCatalogView", () => {
         //
         // Two things happen to a tool: an agent says it used it, and somebody puts money on it.
         // Count and amount. That is the whole space.
-        expect(TOOL_ORDERS.map((order) => order.label)).toEqual(["Most used", "Most staked"]);
+        expect(TOOL_ORDERS.map((order) => order.label)).toEqual(["Most claims", "Most staked"]);
+    });
+
+    it("never says a tool was used, only that somebody claimed it", () => {
+        // `docs/14`, first line: a runtime is unobservable from outside, so nothing this page reads
+        // can say a use happened. `declarations` counts sentences agents wrote. The label said
+        // "Most used" for one commit and the user caught it — "si on déclare qu'on l'utilise mais
+        // on l'utilise pas ?". A tier-4 word on tier-1 data (`docs/09` §3).
+        for (const label of [
+            ...TOOL_ORDERS.map((order) => order.label),
+            ...TOOL_FILTERS.map((filter) => filter.label),
+        ]) {
+            expect(label).not.toMatch(/\bused?\b/i);
+        }
     });
 });

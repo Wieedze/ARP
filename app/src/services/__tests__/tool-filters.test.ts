@@ -69,7 +69,7 @@ describe("matchesFilter", () => {
 
     it("offers three points and reads loosest first", () => {
         expect(TOOL_FILTERS.map((filter) => filter.id)).toEqual(["all", "used", "paid"]);
-        expect(TOOL_FILTERS.map((filter) => filter.label)).toEqual(["All", "Used", "Paid for"]);
+        expect(TOOL_FILTERS.map((filter) => filter.label)).toEqual(["All", "Claimed", "Paid for"]);
         // No tooltips: an explanation a reader must hover for is one a touch screen never gets.
         for (const filter of TOOL_FILTERS) {
             expect(filter).not.toHaveProperty("title");

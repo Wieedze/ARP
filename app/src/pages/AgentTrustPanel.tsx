@@ -219,7 +219,7 @@ export function AgentTrustPanel() {
                     </header>
 
                     {/* Numbered sections, in the order the page argues: who it is, what the market
-                        on it says, who used it, what others rate it. Each rung costs more to
+                        on it says, who declared using it, what others rate it. Each rung costs more to
                         produce than the one above it, and the ordering is what says so — the
                         reference's PAID/FREE pills are gone (user, 2026-10-27). */}
                     <PanelSection number="01" title="Identity">
@@ -252,7 +252,7 @@ export function AgentTrustPanel() {
                         edges whose object is this atom. Keyed on the agent's atom rather than its
                         token id, so it is absent for the same reason section 02 is. */}
                     {backingAtomId === null ? null : (
-                        <PanelSection number="03" title="Who used it">
+                        <PanelSection number="03" title="Who declared it">
                             <DeclaredUses atomId={backingAtomId} />
                         </PanelSection>
                     )}

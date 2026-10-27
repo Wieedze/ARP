@@ -80,10 +80,27 @@ export function curveLabelOf(curveId: number): string {
  * **put money on it**. Count and amount. That is the whole space, and it is what the user asked
  * for — _« ce qu'on veut voir c'est les plus populaires et les plus investis »_.
  *
- * | label       | reads          | the question                      |
- * | ----------- | -------------- | --------------------------------- |
- * | Most used   | `declarations` | how many agents said they used it |
- * | Most staked | `conviction`   | how much money is behind it       |
+ * | label        | reads          | the question                      |
+ * | ------------ | -------------- | --------------------------------- |
+ * | Most claims  | `declarations` | how many agents said they used it |
+ * | Most staked  | `conviction`   | how much money is behind it       |
+ *
+ * ## It says "claims", not "used", and the difference is the project
+ *
+ * It said **"Most used"** for one commit. The user caught it (2026-10-27): _« most used, c'est
+ * compliqué d'affirmer ça… si on déclare qu'on l'utilise mais on l'utilise pas ? »_
+ *
+ * `docs/14` answers that in its first line and the answer is blunt: **you cannot know.** A runtime
+ * is unobservable from outside, an SDK inside the agent's process only moves the lie one layer in,
+ * and proving what a program did internally needs a hardware root of trust or a zk proof — not an
+ * npm package. So `declarations` counts **sentences somebody wrote**, never uses that happened,
+ * and "used" was a tier-4 word on tier-1 data (`docs/09` §3's ladder).
+ *
+ * What the count *is* bounded by, and it is not nothing: the subject must carry a `same as` edge,
+ * so it is an identified ERC-8004 agent rather than anybody's prose — that filter is in the query
+ * (`tool-listing.ts`), not applied afterwards. And writing the edge costs 0.1 TRUST in a
+ * non-recoverable fee. A claim here is cheap talk that cost money, which is exactly the rung it
+ * sits on and exactly why the next column exists.
  *
  * **`priced-edges` is gone from this control**, and it was the default. It ranked by *how many of
  * the claims carry a position* — a count of backed claims, which sits between the other two and is
@@ -96,7 +113,7 @@ export function curveLabelOf(curveId: number): string {
  * list by the rung the ladder exists to demote.
  */
 export const TOOL_ORDERS: readonly {id: ToolListingOrder; label: string}[] = [
-    {id: "declarations", label: "Most used"},
+    {id: "declarations", label: "Most claims"},
     {id: "conviction", label: "Most staked"},
 ];
 
@@ -198,7 +215,7 @@ export type ToolFilter = "all" | "used" | "paid";
  */
 export const TOOL_FILTERS: readonly {id: ToolFilter; label: string}[] = [
     {id: "all", label: "All"},
-    {id: "used", label: "Used"},
+    {id: "used", label: "Claimed"},
     {id: "paid", label: "Paid for"},
 ];
 
@@ -219,6 +236,8 @@ export function matchesFilter(row: ToolRow, filter: ToolFilter): boolean {
         case "all":
             return true;
         case "used":
+            // At least one identified agent wrote a `uses` edge onto it. **Said**, not did —
+            // `docs/14`: a runtime is unobservable and nothing here is a receipt.
             return row.declarations > 0;
         case "paid":
             // `null` is "this read cannot say", not "nobody paid": pricing a registered row's
