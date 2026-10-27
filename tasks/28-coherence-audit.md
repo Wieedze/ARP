@@ -32,6 +32,16 @@ with the code. Read-only audit first, then fixes in small batches.
 
 ## Punch list
 
+> **Items 1, 2, 3, 5, 9, 11 and the `ToolDetail`/`RegisterModule` halves of 4 and 10 are MOOT as of
+> 2026-10-27.** `ToolDetail.tsx`, `RegisterModule.tsx` and `ModuleList.tsx` no longer exist —
+> `/tools` is `ToolCatalog`, `/register` is `ToolRegister`, `/tool/atom/:atomId` redirects to
+> `/atom/:atomId`, and `/` is the landing page. "marketplace" returns nothing in `app/src`, and so
+> do the apologetic and marketing patterns `rules/ui.md` forbids.
+>
+> They are left in place rather than deleted, because a punch list that quietly loses entries is
+> worse than one that says which entries died and how. Read each as closed-by-deletion unless its
+> text names a file that still exists.
+
 ### Front — displays something false
 
 1. `/tool/:id` "Reputation" shows the vault's raw `totalAssets` (`app/src/pages/ToolDetail.tsx:200`).
@@ -86,7 +96,7 @@ with the code. Read-only audit first, then fixes in small batches.
     - says `stakeOnUsedMethodologies` is "built", but it lives only in set-aside scripts and stakes on
       the atom (ADR `0039`);
     - still calls the registry question "open" (ADR `0027`).
-    `docs/12` is canonical: the table is the user's to update.
+      `docs/12` is canonical: the table is the user's to update.
 21. The doc status headers disagree on what is in charge:
     - `docs/00:3` says "ACTIVE PIVOT".
     - `docs/09:3` says "Active strategic commitment".
@@ -102,6 +112,36 @@ with the code. Read-only audit first, then fixes in small batches.
 25. Tasks 04 and 05 have no status line. Tasks 19 (step 1) and 20 have no post-mortem.
 26. "Connector" means three things: the project, the package, and the declare path. Settle it in one
     glossary line.
+
+### Added 2026-10-27, from the task 17 and 22 gates
+
+27. ~~Two ARP caveat enforcers are on Intuition mainnet 1155 while `CLAUDE.md`, `rules/security.md`
+    and `STATE.md` each said "No ARP contract is deployed to mainnet today".~~ **FIXED the same day,
+    ADR `0065`** — all four sites corrected plus a struck-through retraction in append-only ADR
+    `0022`. Listed here because it is the kind of defect this task exists for: a factual claim in a
+    **hard constraints** section that rotted the day a recorded decision changed the world.
+28. **`docs/09:35`'s "194 `use` edges" does not reproduce**, at six sites: `docs/08:125`,
+    `docs/09:35`, `docs/12:100`, `docs/13:85`, `tasks/08:78`, `tasks/23:49`.
+    `scripts/measure/predicate-edges.ts` gives 158 / 185 / 120 and gave the same on 2026-10-16, so
+    it is a different query and not a stale figure — Intuition has no deletion. Correct all six to
+    one measurement with its script; do **not** present 194 → 158 as a change.
+29. **The two deployment files record the same contracts in different shapes.**
+    `deployments/1155.json` nests the enforcers under `arp.enforcers` with a `status`;
+    `deployments/13579.json` puts them flat on `arp` as bare addresses. A reader of one shape finds
+    nothing in the other and reads it as absence. Pick one.
+30. **`bun run format:check` fails on 142 files, long-standing.** Two parts, and only the second is
+    a code change: the root script passed `--ignore-path .gitignore` only, so `.prettierignore` was
+    never consulted and `deployments/*.json` was flagged — **fixed 2026-10-27**, both paths are now
+    passed. The remaining 142 are ordinary unformatted files and a `--write` pass would bury any
+    real change under whitespace, so it needs its own commit.
+31. **`.claude/choices/INDEX.md` is generated and is never prettier-clean**, so
+    `build-claude-index.ts` re-dirties it on every ADR. Either the generator emits formatted output
+    or the file joins `.prettierignore`.
+32. **`scripts/measure/predicate-edges.ts` could not run** between `562d0fd` and 2026-10-27: that
+    commit moved it into `scripts/measure/` and its `new URL('../packages/…')` became
+    `scripts/packages/…`. Fixed. The lesson is the general one — `check:scripts` is a typecheck and
+    sees no runtime path, so **a committed script that throws reads as provenance**. Worth a sweep
+    of the other `new URL(…, import.meta.url)` sites in `scripts/`.
 
 Overlap: items 21–26 are prose. `tasks/27` (the prose pass) runs after the tool page, so these can
 wait for it unless one misleads a reader before then.

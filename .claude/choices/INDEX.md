@@ -2,7 +2,7 @@
 
 **Generated** 2026-10-27 by `scripts/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-63 decisions. Newest last. `choices/README.md` says when to write one.
+64 decisions. Newest last. `choices/README.md` says when to write one.
 
 ## Not accepted
 
@@ -78,3 +78,4 @@ Read these before relying on them.
 | [0062](0062-one-door-for-your-agent-and-it-mints-on-base.md) | 2026-10-27 | Accepted | One door for your agent, and the mint goes to Base |
 | [0063](0063-the-app-tests-components-now.md) | 2026-10-27 | Accepted | The app tests hooks and components, and ADR 0011's scope says so |
 | [0064](0064-a-uniform-sample-of-the-cohort-is-a-sample-of-one-operator.md) | 2026-10-27 | Accepted | A uniform sample of the ERC-8004 cohort is a sample of one operator |
+| [0065](0065-two-enforcers-are-on-mainnet-and-the-rules-said-none-was.md) | 2026-10-27 | Accepted | Two enforcers are on mainnet, and three files said none was |

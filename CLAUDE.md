@@ -101,11 +101,14 @@ Rules do not change silently. The audit trail is the point.
 
 ## Hard constraints (the very few that belong in the router)
 
-- **Default deployment target is Intuition Testnet** (changed from Base Sepolia per the hackathon pivot). Mainnet **deployment** remains out of scope; mainnet transactions are the separate question below.
+- **Default deployment target is Intuition Testnet** (changed from Base Sepolia per the hackathon pivot). Mainnet **deployment** is out of scope for anything new; two enforcers were deployed there in 2026-09 under ADR `0025` and that is the whole of it. Mainnet transactions are the separate question below.
 - **Do not deploy to mainnet without explicit user confirmation per session.**
 - **Do not commit secrets** (`.env`, private keys, API keys).
 - **Do not silently expand scope.** When in doubt, stop and ask. See `.claude/rules/workflow.md` for the scope discipline rule in full. The pivot doc has an explicit out-of-scope list — re-read it before adding anything.
-- **Mainnet: deployment vs transactions are different questions.** No ARP contract is on mainnet and none is planned. ADR `0017` authorises one narrow class of mainnet transaction — deposits into existing `has trust provider` vaults, signed by the operator. **Mainnet signing has exactly one canonical statement, in `.claude/rules/security.md` — read it
+- **Mainnet: deployment vs transactions are different questions.** No ARP **registry** is on mainnet
+  and none is planned (ADR `0025`); **two caveat enforcers are**, deployed 2026-09-16, and neither
+  has ever fired. The flat "no ARP contract is on mainnet" that stood here was false from
+  2026-09-16 — ADR `0065`, and `deployments/1155.json` is the record. ADR `0017` authorises one narrow class of mainnet transaction — deposits into existing `has trust provider` vaults, signed by the operator. **Mainnet signing has exactly one canonical statement, in `.claude/rules/security.md` — read it
   there rather than from a restatement.** Summary: ARP's own funds are never signed for automatically;
   an _agent operator's_ funds, under a delegation they signed, are the product (ADR `0036`). This
   bullet said "no agent or script may ever sign a mainnet transaction", which forbids `docs/12`
@@ -153,6 +156,9 @@ ARP/
 │                                      himself opened the wrong file
 ├── schemas/                           JSON Schemas for modules
 ├── deployments/                       per-chain deployment records
+├── measurements/                      raw output of a committed measurement, kept so a figure in a
+│                                      doc can be re-derived without asking a third party again.
+│                                      One file per run, never regenerated (ADR `0064`)
 └── .claude/                           Claude operating layer
     ├── README.md                      (this directory explained)
     ├── STATE.md                       ← **read this second, after CLAUDE.md**

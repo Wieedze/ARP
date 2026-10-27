@@ -42,9 +42,16 @@ does not change silently. This ADR is that record.
    thesis. `docs/09` §2 defines the ladder.
 
 4. **The mainnet constraint is restated rather than removed.** Contract deployment still requires
-   explicit per-session confirmation and none is planned. Deposits into existing vaults are
-   authorised by ADR 0017, narrowly. No agent or script may sign a mainnet transaction. The router
-   points at `.claude/rules/security.md`, which now carries the distinction in full.
+   explicit per-session confirmation and ~~none is planned~~ no _registry_ is planned. Deposits into
+   existing vaults are authorised by ADR 0017, narrowly. ~~No agent or script may sign a mainnet
+   transaction.~~ The router points at `.claude/rules/security.md`, which now carries the
+   distinction in full.
+
+   > **Struck 2026-10-27, in place, because this record is append-only.** Two corrections land here.
+   > "None is planned" was already untrue when written: the two caveat enforcers went to 1155 on
+   > 2026-09-16 (ADR `0025`, ADR `0065`). And the flat signing prohibition was narrowed by ADR
+   > `0035` — it governs **ARP's own funds**; an agent spending its operator's TRUST under a
+   > delegation that operator signed is the product (ADR `0036`), not a violation.
 
 ## Alternatives considered
 

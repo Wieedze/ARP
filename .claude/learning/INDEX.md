@@ -2,7 +2,7 @@
 
 **Generated** 2026-10-27 by `scripts/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-18 entries, one per completed task. Written by `task-verifier` on a pass.
+19 entries, one per completed task. Written by `task-verifier` on a pass.
 
 | # | task | verdict | entry |
 | --- | --- | --- | --- |
@@ -24,3 +24,4 @@
 | [16](16-make-the-testnet-rig-faithful.md) | `tasks/24-make-the-testnet-rig-faithful.md` | PASS | Make the testnet rig faithful |
 | [17](17-the-agent-sdk.md) | `tasks/16-the-agent-sdk.md` — half 1 only; half 2 split out to `tasks/25` | PASS | The connector an agent declares through (half 1) |
 | [18](18-the-tool-surface.md) | `tasks/23-the-tool-surface.md` | PASS | The tool surface |
+| [19](19-the-external-verifier.md) | `tasks/17-the-external-verifier.md` | PASS | The external verifier |

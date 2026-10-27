@@ -34,7 +34,8 @@ that matters, and the reason the module exists:
 | `not-checkable` | nothing to probe — templated, non-HTTP, empty         |
 | `inconclusive`  | the request failed in a way that may be **our** fault |
 
-**`not-checkable` is not a failure.** 82% of declared endpoints in the cohort land there, so
+**`not-checkable` is not a failure.** 82% of declared endpoints landed there in the 2026-10-16
+sample (4% on 2026-10-27 — the share follows whoever minted most recently), so
 rendering it beside a confirmed defect would mass-slander the cohort. `partitionByCheckability`
 exists so no caller re-implements that split. `classifyEndpoint` returns a discriminated union and
 never a boolean, for the same reason.
@@ -141,7 +142,8 @@ hardcode `chain: intuitionTestnet`. That binding is deliberate, but it means any
 - **Nothing has been signed or sent on any chain.** The whole write path is verified read-only
   against live mainnet: identity resolved, ids computed, costs read, plan priced. Crossing that line
   needs an operator who decides to spend.
-- No contract is deployed to mainnet, and none is planned.
+- No contract is deployed to mainnet **by this branch**, and no registry is planned there. Two
+  caveat enforcers have been on 1155 since 2026-09-16 (ADR `0025`); neither has ever fired.
 - `hire` and `rate` are not here. They moved to `tasks/25` with the full spec.
 - Phase 0 of the roadmap is **not** closed: identity resolution still does not route through
   `resolveAgent`, deferred with an owner (`tasks/19` step 1b).

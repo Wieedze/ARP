@@ -83,7 +83,25 @@ The `contract-reviewer` agent (in `.claude/agents/`) orchestrates these for you 
 ## Deployment posture
 
 - Default deployment target: **Intuition Testnet** (changed from Base Sepolia per `docs/00_HACKATHON_PIVOT.md`; ADR `0002`).
-- **Mainnet deployment** (Intuition mainnet or any other) requires explicit user confirmation per session. No ARP contract is deployed to mainnet today, and none is planned — the panel's staking targets Intuition's own MultiVault, not an ARP contract.
+- **Mainnet deployment** (Intuition mainnet or any other) requires explicit user confirmation per
+  session. That is the rule, and it stands on its own.
+
+  **No ARP _registry_ is on mainnet and none is planned** — `moduleRegistry` and `identityRegistry`
+  are both `null` in `deployments/1155.json`, deliberately, by ADR `0025`. The panel's staking
+  targets Intuition's own MultiVault, not an ARP contract.
+
+  **Two ARP caveat enforcers _are_ on mainnet**, deployed 2026-09-16 under that same ADR:
+  `TrustStakeCapEnforcer` `0x99921C234d4Ca518DC58ba63ff9bfD2Cc9435f34` (active — the guard rail
+  that bounds an agent's spend) and `DomainScopeEnforcer`
+  `0x4E20279EeE9f77673A4f1605E58607cD9A597d70` (inert; with no `ModuleRegistry` on 1155 it has
+  nothing to gate). Neither has ever fired — 0 `StakeCapChecked` logs over 10,014,303 blocks,
+  measured 2026-10-27 by `scripts/measure/enforcer-events.ts`.
+
+  This bullet read **"No ARP contract is deployed to mainnet today, and none is planned"** until
+  2026-10-27. That was false from 2026-09-16, in the file `CLAUDE.md` names as canonical, and the
+  reader it misled most is an agent deciding what it may deploy. ADR `0065`.
+  `deployments/<chainId>.json` is the record; do not restate its contents here a second time.
+
 - **Mainnet transactions are not the same question as mainnet deployment.** ADR `0017` authorises one narrow class: deposits into existing `has trust provider` triple vaults and their counter-triples on chain 1155, signed by the operator in their own wallet. It does not authorise contract deployment, atom or triple creation at scale (see ADR `0021` for that cost), or any stake initiated by an agent. Read the ADR before widening it.
 - **Mainnet signing, in one sentence, and the only place it is stated.** `CLAUDE.md` and
   `.claude/STATE.md` cite this bullet; if they ever restate it, they are wrong and this wins.
