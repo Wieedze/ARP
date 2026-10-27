@@ -15,6 +15,7 @@ const REGISTRY = "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432" as const;
 function listing(overrides: Partial<AgentListing> = {}): AgentListing {
     return {
         sourceHandle: "0xatom",
+        capabilities: [],
         ref: {chainId: 8453, tokenId: "1380", registry: REGISTRY},
         identities: [{chainId: 8453, tokenId: "1380", registry: REGISTRY}],
         identityEdgeCount: 1,
@@ -59,6 +60,63 @@ describe("COHORT_ORDERS", () => {
         for (const entry of COHORT_ORDERS) {
             expect(entry.label).not.toMatch(/best|top|rank|score|trust(ed|worthy)/i);
         }
+    });
+});
+
+describe("the row's glyph", () => {
+    /**
+     * Keyed on the object's **term id**, not its label: a tool or a category renamed upstream must
+     * not redraw every sigil that includes it, and the id is the only part of the edge that cannot
+     * change.
+     */
+    it("takes one module per declared capability, keyed on the object id", () => {
+        const row = toCohortRow(
+            listing({
+                capabilities: [
+                    {predicateId: "0xp1", objectId: "0xmcp", label: "MCP Server"},
+                    {predicateId: "0xp2", objectId: "0xdefi", label: "defi"},
+                ],
+            }),
+            0,
+        );
+        expect(row.modules).toEqual([
+            {name: "0xmcp", state: "declared"},
+            {name: "0xdefi", state: "declared"},
+        ]);
+    });
+
+    it("drops a duplicate object, which would claim twice the cells for one declaration", () => {
+        const row = toCohortRow(
+            listing({
+                capabilities: [
+                    {predicateId: "0xp1", objectId: "0xmcp", label: "MCP Server"},
+                    {predicateId: "0xp2", objectId: "0xmcp", label: "MCP Server"},
+                ],
+            }),
+            0,
+        );
+        expect(row.modules).toHaveLength(1);
+    });
+
+    /**
+     * The empty case is the one that matters: the list renders no glyph at all for it, because a
+     * glyph of nothing but its centre is identical for every such agent and would stop being an
+     * identity.
+     */
+    it("is empty when the agent declared nothing the read sampled", () => {
+        expect(toCohortRow(listing({capabilities: []}), 0).modules).toEqual([]);
+    });
+
+    /**
+     * Every state is `declared`. `proven` needs a third party's receipt and nothing in this app
+     * reads one — when a receipt source arrives, this is what should fail.
+     */
+    it("marks every module declared, because no receipt source exists yet", () => {
+        const row = toCohortRow(
+            listing({capabilities: [{predicateId: "0xp1", objectId: "0xa", label: "a"}]}),
+            0,
+        );
+        expect(row.modules.every((m) => m.state === "declared")).toBe(true);
     });
 });
 

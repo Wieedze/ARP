@@ -1,5 +1,6 @@
-import {useState} from "react";
 import {Link} from "react-router-dom";
+
+import {Sigil} from "../brand/Sigil";
 
 import type {CohortRow, CohortView} from "../../services/agent-cohort";
 
@@ -25,21 +26,23 @@ import type {CohortRow, CohortView} from "../../services/agent-cohort";
 const ROW_GRID =
     "grid grid-cols-[minmax(0,1fr)_minmax(7rem,10rem)] sm:grid-cols-[1.75rem_minmax(0,1fr)_5.5rem_minmax(8rem,11rem)] items-start gap-x-4 gap-y-0.5";
 
-function Avatar({src, name}: {src: string; name: string}) {
-    const [failed, setFailed] = useState(false);
-    if (failed) return <Placeholder />;
+/**
+ * The agent's generated glyph, in place of the avatar it chose.
+ *
+ * User decision, 2026-10-27: the sigil over the image. An avatar is whatever the agent uploaded and
+ * roughly half the cohort has none; the sigil is drawn from what it **declared**, so it carries
+ * information and is the same glyph for the same agent everywhere.
+ *
+ * Absent when nothing was declared — a glyph of nothing but its centre is identical for every such
+ * agent, so the hairline square stays for those. An empty square is honest about an empty
+ * declaration.
+ */
+function Glyph({row}: {row: CohortRow}) {
+    if (row.modules.length === 0) return <Placeholder />;
     return (
-        <img
-            src={src}
-            alt=""
-            aria-hidden
-            width={24}
-            height={24}
-            loading="lazy"
-            onError={() => setFailed(true)}
-            title={name}
-            className="hidden sm:block w-6 h-6 mt-0.5 object-cover border border-[color:var(--color-rule-strong)]"
-        />
+        <span className="hidden sm:block mt-0.5">
+            <Sigil agentId={row.key} modules={row.modules} size={28} />
+        </span>
     );
 }
 
@@ -48,7 +51,7 @@ function Placeholder() {
     return (
         <span
             aria-hidden
-            className="hidden sm:block w-6 h-6 mt-0.5 border border-[color:var(--color-rule)]"
+            className="hidden sm:block w-7 h-7 mt-0.5 border border-[color:var(--color-rule)]"
         />
     );
 }
@@ -60,11 +63,7 @@ function RowBody({row}: {row: CohortRow}) {
 
     return (
         <>
-            {row.imageUrl === null ? (
-                <Placeholder />
-            ) : (
-                <Avatar src={row.imageUrl} name={row.name} />
-            )}
+            <Glyph row={row} />
 
             <span className="min-w-0 row-span-2 sm:row-span-1">
                 <span className="block truncate font-medium leading-tight">{row.name}</span>

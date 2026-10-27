@@ -94,6 +94,15 @@ query AgentCapabilities($subjectId: String!, $predicateIds: [String!]) {
 export const IDENTITY_SAMPLE_LIMIT = 4;
 
 /**
+ * How many of an agent's capability edges the cohort read samples, for its sigil.
+ *
+ * Eight, because the glyph places `max(3, ceil(12 / n))` cells per module and the grid holds 27:
+ * at eight that is 24 claims, which fills it without overflowing. Reading more would cost a larger
+ * page for dots that cannot be drawn.
+ */
+export const CAPABILITY_SAMPLE_LIMIT = 8;
+
+/**
  * The cohort: every agent the ERC-8004 mirror knows about.
  *
  * Membership is `implement` → `ERC-8004`, by term id on both ends. The total
@@ -115,7 +124,7 @@ export const IDENTITY_SAMPLE_LIMIT = 4;
  * and simply sits on curve 2.
  */
 export const COHORT_QUERY = `
-query AgentCohort($predicateId: String!, $objectId: String!, $sameAsPredicateId: String!, $orderBy: [triples_order_by!]!, $limit: Int!, $offset: Int!) {
+query AgentCohort($predicateId: String!, $objectId: String!, $sameAsPredicateId: String!, $capabilityPredicateIds: [String!], $orderBy: [triples_order_by!]!, $limit: Int!, $offset: Int!) {
   total: triples_aggregate(
     where: {predicate_id: {_eq: $predicateId}, object_id: {_eq: $objectId}}
   ) {
@@ -146,6 +155,13 @@ query AgentCohort($predicateId: String!, $objectId: String!, $sameAsPredicateId:
         limit: ${IDENTITY_SAMPLE_LIMIT}
       ) {
         object { label ${THING} }
+      }
+      capabilities: as_subject_triples(
+        where: {predicate_id: {_in: $capabilityPredicateIds}}
+        limit: ${CAPABILITY_SAMPLE_LIMIT}
+      ) {
+        predicate_id
+        object { term_id label }
       }
     }
   }

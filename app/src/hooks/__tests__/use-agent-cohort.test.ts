@@ -8,6 +8,7 @@ const REGISTRY = "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432" as const;
 function listing(tokenId: string): AgentListing {
     return {
         sourceHandle: `0x${tokenId}`,
+        capabilities: [],
         ref: {chainId: 8453, tokenId, registry: REGISTRY},
         identities: [{chainId: 8453, tokenId, registry: REGISTRY}],
         identityEdgeCount: 1,

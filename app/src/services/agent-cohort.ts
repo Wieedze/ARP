@@ -1,3 +1,4 @@
+import type {SigilModule} from "../components/brand/sigil-geometry";
 import {ListAgentsFailedError, NoListingSourceError} from "@arp-protocol/core";
 import type {AgentListing, AgentListOrder, AgentPage} from "@arp-protocol/core";
 
@@ -35,6 +36,14 @@ export type CohortRow = {
     isFallbackMetadata: boolean;
     /** `null` when the graph holds no usable image — an empty string is not one. */
     imageUrl: string | null;
+    /**
+     * What the agent declared, as the sigil's input.
+     *
+     * Empty when it declared nothing the read samples — and then the row shows no glyph at all,
+     * because a glyph of nothing but its centre is the same glyph for every such agent and would
+     * stop being an identity.
+     */
+    modules: SigilModule[];
     /** The panel route, or `null` when no single identity could be established. */
     href: string | null;
     /** Set when the row cannot be linked, saying why rather than leaving a dead cell. */
@@ -66,6 +75,24 @@ export type CohortView = {
  * Oracle` is one — and an `<img src="">` resolves against the page URL, so it
  * would render a broken document as an avatar.
  */
+/**
+ * The agent's declarations, keyed on the **object's term id** rather than its label.
+ *
+ * A tool or a category renamed upstream must not redraw every sigil that includes it, and the id
+ * is the only part of the edge that cannot change. Every state is `declared`: `proven` needs a
+ * third party's receipt and nothing reads one yet.
+ */
+function modulesOf(listing: AgentListing): SigilModule[] {
+    const seen = new Set<string>();
+    const modules: SigilModule[] = [];
+    for (const capability of listing.capabilities) {
+        if (seen.has(capability.objectId)) continue;
+        seen.add(capability.objectId);
+        modules.push({name: capability.objectId, state: "declared"});
+    }
+    return modules;
+}
+
 function imageUrlOf(listing: AgentListing): string | null {
     const image = listing.metadata.image?.trim() ?? "";
     return image === "" ? null : image;
@@ -100,6 +127,7 @@ export function toCohortRow(listing: AgentListing, index: number): CohortRow {
         name: listing.metadata.name ?? "Unnamed atom",
         isFallbackMetadata: listing.metadata.isFallback,
         imageUrl: imageUrlOf(listing),
+        modules: modulesOf(listing),
         href: ref === null ? null : `/agent/${ref.chainId}/${ref.tokenId}`,
         identityProblem: identityProblemOf(listing),
         statementCount: listing.statementCount,

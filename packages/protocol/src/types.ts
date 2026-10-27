@@ -232,9 +232,25 @@ export type AgentAtomMarket = {
  * profile, not a substitute for one. Nothing here is checked — the metadata is
  * whatever the indexer holds and the market is whatever the graph prices.
  */
+/** One capability edge, as a listing samples it: enough to seed a glyph and to say why. */
+export type ListedCapability = {
+    predicateId: string;
+    /** The object's term id — stable, so a rename upstream does not redraw a sigil. */
+    objectId: string;
+    label: string | null;
+};
+
 export type AgentListing = {
     /** Source-scoped handle for the agent — an Intuition atom term id. Do not parse it. */
     sourceHandle: string;
+    /**
+     * A sample of what the agent declared about itself, for the generated glyph.
+     *
+     * A sample, not the set: the read caps it, so this says "at least these" and never "only
+     * these". Enough to make one agent's glyph differ from another's, which is the only thing it
+     * is for.
+     */
+    capabilities: ListedCapability[];
     /**
      * The ERC-8004 identity, when the source could establish exactly one.
      *

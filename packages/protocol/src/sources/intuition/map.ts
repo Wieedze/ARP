@@ -9,6 +9,7 @@ import type {
     CapabilityRelation,
     ClaimMarket,
     ClaimRelation,
+    ListedCapability,
     MarketSide,
     Provenance,
     ProviderClaim,
@@ -233,6 +234,20 @@ function mapIdentities(atom: unknown): ResolvedAgentRef[] {
  * `Ouro Proof-of-Compute Oracle` — claims sixteen token ids on its own. Picking
  * the first would link a reader to an agent this row may not be about.
  */
+/** The sampled capability edges, dropped rather than guessed when a row is malformed. */
+function mapListedCapabilities(atom: Record<string, unknown>): ListedCapability[] {
+    const rows = Array.isArray(atom["capabilities"]) ? atom["capabilities"] : [];
+    const out: ListedCapability[] = [];
+    for (const row of rows) {
+        const predicateId = readString(row, "predicate_id");
+        const object = readRecord(row, "object");
+        const objectId = readString(object, "term_id");
+        if (predicateId === null || objectId === null) continue;
+        out.push({predicateId, objectId, label: readString(object, "label")});
+    }
+    return out;
+}
+
 export function mapAgentListing(row: unknown): AgentListing | null {
     const atom = readRecord(row, "subject");
     if (atom === null) return null;
@@ -247,6 +262,7 @@ export function mapAgentListing(row: unknown): AgentListing | null {
 
     return {
         sourceHandle: handle,
+        capabilities: mapListedCapabilities(atom),
         ref: isIdentityAmbiguous ? null : (identities[0] ?? null),
         identities,
         identityEdgeCount,

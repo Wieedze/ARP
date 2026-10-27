@@ -281,6 +281,10 @@ export function intuitionSource(config: IntuitionSourceConfig = {}): TrustSource
                     predicateId: IMPLEMENT,
                     objectId: ERC8004,
                     sameAsPredicateId: SAME_AS,
+                    // The same set `getCapabilities` reads, not a second list beside it: a row's
+                    // glyph and the agent's own capability section must be drawn from one
+                    // vocabulary or they disagree about what the agent declared.
+                    capabilityPredicateIds: [...CAPABILITY_PREDICATE_IDS],
                     orderBy: COHORT_ORDER_BY[options.order],
                     limit: options.limit,
                     offset: options.offset,
