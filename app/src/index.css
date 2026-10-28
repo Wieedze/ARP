@@ -193,6 +193,18 @@ html,
 body {
     margin: 0;
     padding: 0;
+    /* **`clip`, not `hidden`.** A full-bleed element sized with `vw` overruns the page by the
+       scrollbar's width, because `vw` counts the scrollbar and `%` does not: the hero's field is
+       `calc(50% + 50vw)` and measured 8px past `clientWidth` at 1440 and at 1920, with nothing
+       clipping it, so the page scrolled sideways by 8px at every width that has a scrollbar
+       (`scripts/measure/landing-fit.ts`). No CSS unit excludes the scrollbar, so the bleed cannot
+       be made exact — it has to be cut.
+
+       `clip` rather than `hidden` because `hidden` creates a scroll container, and a scroll
+       container on `html` breaks `position: sticky` inside it — which is the whole of
+       `SceneDeck`'s mechanism. `clip` does not, per spec, and the measurement script asserts the
+       deck still pins. */
+    overflow-x: clip;
     /* The UI is dark-only. Without this the UA paints its own controls —
        select popups, radio circles, scrollbars — in the light palette, which
        lands as white chrome on a near-black page. */

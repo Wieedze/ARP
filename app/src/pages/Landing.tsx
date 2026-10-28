@@ -702,7 +702,15 @@ function SceneManifesto() {
                 `clamp(36px, 5.4vw, 72px)` is the reference's own figure, not `--text-display`'s
                 `clamp(44px, 6.4vw, 88px)`. This is the scene most likely to overflow a 680px-tall
                 pinned stage, and the stage is `overflow-hidden`, so it clips in silence. */}
-            <p className="mx-auto max-w-[22ch]">
+            {/* The size is on the paragraph **as well as** on each line, and `max-w-[22ch]` is
+                gone. Both are the same bug: `ch` resolves against the element's own font-size, so
+                with the size only on the children this paragraph was 22ch of **15px body text** —
+                189px wide, which wrapped three short lines into eighteen and made the scene 1296px
+                tall at every viewport. A pinned scene cannot scroll and the stage is
+                `overflow-hidden`, so it clipped in silence; `scripts/measure/landing-fit.ts`
+                caught it. The reference sets the size on the paragraph and has no max-width at
+                all, which is what this now does. */}
+            <p className="mx-auto type-face text-[clamp(36px,5.4vw,72px)] leading-[1.02]">
                 {MANIFESTO.map((line, lineIndex) => (
                     <span
                         key={line.text}

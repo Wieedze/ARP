@@ -1,9 +1,17 @@
 # Task 29 — The landing is a scene sequence, not a long page
 
-> **Status: BUILT, five browser checks outstanding** 2026-10-28 — ADRs `0066`, `0067`, `0068`,
-> `0069`, `0070`. Every gate in the repo is green and **none of them can see the pinned deck
-> moving**: the five checks in this file's Gate need a browser and the session that built it had
-> none. Not complete until they are run.
+> **Status: COMPLETE** 2026-10-28 — ADRs `0066`, `0067`, `0068`, `0069`, `0070`.
+>
+> All five browser checks **run and pass**, in Chromium, against the built bundle:
+> `scripts/measure/landing-fit.ts`. It found two defects nothing else could see — the manifesto
+> scene was 1296px tall at every viewport, and the page scrolled sideways by 8px wherever a
+> scrollbar exists. Both fixed and re-measured.
+>
+> An earlier version of this line said the checks could not be run because the session had no
+> browser. **That was asserted without testing it** — Chromium is in the image at
+> `/root/.cache/ms-playwright/`, and what was missing was a driver, not a browser.
+> `rules/claims.md` §1 applies to a blocker as much as to a figure, and the same false premise is
+> written in five other task files (`tasks/28` item 35).
 >
 > `arp-motion-reference/index.html` + `MOTION-V2.md` are the design base, at the user's
 > decision: _« garde tout ce qui vient de ce dossier, c'est la nouvelle base »_ and
@@ -69,7 +77,9 @@ because a utility cannot express "elements inside a scene that is not on yet".
 
 ## Gate
 
-All of these, and the browser checks `MOTION-V2.md` §5 lists.
+All of these, and the browser checks `MOTION-V2.md` §5 lists — which are now
+`scripts/measure/landing-fit.ts`, run against `vite preview` rather than `bun run dev`, because the
+dev server does not minify the CSS and that difference is where the word scale's defect lived.
 
 **What the suite does and does not reach, measured rather than assumed.** `happy-dom`'s viewport is
 **1024x768** with `prefers-reduced-motion` false, so `canPin()` is true and the deck **does** pin in
@@ -90,17 +100,47 @@ bun --filter '*' lint && bun --filter '*' test
 bun run check:scripts
 ```
 
-Browser, and not optional:
+Browser, and not optional — all five are in `scripts/measure/landing-fit.ts`:
+
+```
+cd app && bun run build && bunx vite preview --port 4173 &
+bun run scripts/measure/landing-fit.ts
+```
 
 1. At 1440×680, 1440×900 and 1920×1080 — every pinned scene sits between y = 88 and the bottom
-   edge. A scene that grows stops the deck pinning at that size, **silently**.
-2. One wheel notch from the top plays the full dive and lands on scene 1. A trackpad burst advances
-   exactly one scene. Past scene 6, native scroll resumes. `Home` and `End` still jump.
+   edge. A scene that grows stops the deck pinning at that size, **silently**. The script walks
+   each of the six bands and measures whichever scene becomes active there; a one-shot measurement
+   at scroll 0 checks one scene of six, which is how the manifesto's 1296px went unseen.
+2. One wheel notch from the top plays the full dive and lands on scene 1. A burst of six advances
+   exactly one more, so `SETTLE` is swallowing the tail. Past scene 6, native scroll resumes, and
+   `Home`/`End` still jump.
 3. `#build` lands on scene 6 with the target at `opacity: 1`. It once moved the page 268px and left
    the target invisible.
 4. Under `prefers-reduced-motion` and at 390px wide: stacked, nothing hidden, nothing moving, no
    horizontal scroll, the field above the hero copy.
-5. No sample name or amount from the reference anywhere on the page.
+5. No sample name or amount from the reference anywhere on the page. **`0.11 TRUST` is not one** —
+   it looks invented and is mainnet's real floor, `getTripleCost()` 0.1 plus `minDeposit` 0.01. The
+   first run of the script listed it as a sample and reported a correct chain figure as fabricated.
+
+Measured 2026-10-28, all three pinned viewports: every band activates its own scene, every scene
+fits, one notch gives scene 1, a burst of six gives scene 2, `#build` gives scene 5 at opacity 1.00.
+Both 390px and all three reduced-motion runs stack, hide nothing and do not scroll sideways.
+
+## What the browser found that no gate did
+
+Both were invisible to `tsc`, `eslint`, 459 tests, `check:tokens` and `check:contrast`.
+
+1. **Scene 4 was 1296px tall at every viewport**, and the stage is `overflow-hidden`, so it clipped
+   in silence. Caused by this task's own fix for `check:contrast`: moving the font-size off the
+   paragraph and onto its three lines made `max-w-[22ch]` resolve `ch` against **15px body text**
+   instead of 72px display, so the paragraph was 189px wide and three short lines wrapped into
+   eighteen. The reference sets the size on the paragraph and has no max-width; so does the code
+   now. **A correction is not exempt from the rule it corrects.**
+2. **The page scrolled sideways by 8px at every width with a scrollbar.** `calc(50% + 50vw)` counts
+   the scrollbar in `50vw` and not in `50%`, and no CSS unit excludes it, so the bleed cannot be
+   made exact — it has to be cut. `overflow-x: clip` on the root, **not `hidden`**: `hidden`
+   creates a scroll container, and a scroll container on `html` breaks the `position: sticky` the
+   deck is built on.
 
 ## Deliberately not carried over from the reference
 
