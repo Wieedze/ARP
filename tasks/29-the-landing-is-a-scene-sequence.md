@@ -1,6 +1,14 @@
 # Task 29 — The landing is a scene sequence, not a long page
 
-> **Status: COMPLETE** 2026-10-28 — ADRs `0066`, `0067`, `0068`, `0069`, `0070`.
+> **Status: BUILT AND GATED; two scope calls await the user** 2026-10-28 — ADRs `0066`, `0067`,
+> `0068`, `0069`, `0070`.
+>
+> The work is done and every check passes, static and in a browser. What is **not** settled is that
+> this file says _"Do not touch the other four pages"_ and four pages changed: `NavSplit` became
+> sticky on all five, and `RouteTransition` wraps the whole route tree. Both are disclosed below
+> under "Open, and the user's to settle" rather than absorbed, and `workflow.md` wants the user's
+> explicit yes or a `FUTURE.md` entry — neither of which a verifier or I can supply. **Not marked
+> complete until Max answers those two.**
 >
 > All five browser checks **run and pass**, in Chromium, against the built bundle:
 > `scripts/measure/landing-fit.ts`. It found two defects nothing else could see — the manifesto
@@ -34,9 +42,15 @@ None global. `.claude/rules/ui.md`, `code.md`, `claims.md`, `workflow.md`.
 
 - **Do not reinterpret the copy.** Eleven sentences are removals, not rephrasings
   (`MOTION-V2.md` §3). The list of what was tried and rejected in §2.3 is binding.
-- **Do not ship a sample.** The reference's `vault-auditor`, `crytic-runner`, `maturity-bot`,
-  `Echidna`, `0.1 TRUST` and `0.11 TRUST` are samples. Every figure in the app is a chain read or
-  a sentence saying there is none.
+- **Do not ship a sample.** The reference's `vault-auditor`, `crytic-runner`, `maturity-bot` and
+  `Echidna` are samples. Every figure in the app is a chain read or a sentence saying there is none.
+
+  **`0.1 TRUST` and `0.11 TRUST` are not samples**, though the reference lists `0.11` as one and
+  hardcodes both. They are mainnet's real fee and floor — `getTripleCost()` 0.1 plus `minDeposit`
+  0.01 — and chain 1155 is the app's default, so both are on screen and both are correct. An
+  earlier version of this line called them samples, which would have had the next reader delete two
+  working chain reads.
+
 - **Do not promise payment for `be hired`.** ADR `0060` took hire and pay out of scope.
 - **Do not touch the other four pages.** They have no motion and that inconsistency is real; it is
   the next task, not this one.
@@ -96,9 +110,20 @@ cd app && bun run lint
 cd app && bun run test
 cd app && bun run check:tokens
 cd app && bun run check:contrast
-bun --filter '*' lint && bun --filter '*' test
 bun run check:scripts
+bun --filter '*' test
+bun --filter '*' lint   # exits 127 — see below
 ```
+
+**`bun --filter '*' lint` cannot pass in this environment and never could**: `@arp/contracts lint`
+runs `solhint`, which is not installed and is not a dependency anywhere, so the filter exits **127**.
+Long-standing and recorded three times already (`STATE.md`, `learning/08`, `tasks/01`), and not a
+regression here. It is listed last and **not** chained with `&&`, because the first version of this
+Gate wrote `bun --filter '*' lint && bun --filter '*' test` — which means the test half never ran,
+so the Gate as written was unsatisfiable and was reported green anyway (`rules/claims.md` §4).
+
+So the honest scope: **lint is green over `app` and `packages/protocol`, and `contracts` has no
+working linter.** Say that rather than "lint 0".
 
 Browser, and not optional — all five are in `scripts/measure/landing-fit.ts`:
 
@@ -114,13 +139,17 @@ bun run scripts/measure/landing-fit.ts
 2. One wheel notch from the top plays the full dive and lands on scene 1. A burst of six advances
    exactly one more, so `SETTLE` is swallowing the tail. Past scene 6, native scroll resumes, and
    `Home`/`End` still jump.
-3. `#build` lands on scene 6 with the target at `opacity: 1`. It once moved the page 268px and left
-   the target invisible.
+3. `#build` lands on the **last** scene with the target at `opacity: 1`. It once moved the page
+   268px and left the target invisible. (`data-scene` is 0-based, so that is scene **5**; this line
+   said "scene 6" while every other item here and the script's own assertion are 0-based.)
 4. Under `prefers-reduced-motion` and at 390px wide: stacked, nothing hidden, nothing moving, no
    horizontal scroll, the field above the hero copy.
-5. No sample name or amount from the reference anywhere on the page. **`0.11 TRUST` is not one** —
-   it looks invented and is mainnet's real floor, `getTripleCost()` 0.1 plus `minDeposit` 0.01. The
-   first run of the script listed it as a sample and reported a correct chain figure as fabricated.
+5. No sample **name** from the reference anywhere on the page. **Neither amount is a sample**:
+   `0.1 TRUST` is mainnet's `getTripleCost()` and `0.11 TRUST` is that plus `minDeposit` 0.01, both
+   read live off chain 1155. The first run of the script listed `0.11` as sample data and reported a
+   correct chain figure as fabricated. The script asserts the names and **prints** the amounts, so a
+   wrong one is visible to a reader rather than caught by an assertion — a real limit, since nobody
+   reads the output of a passing run.
 
 Measured 2026-10-28, all three pinned viewports: every band activates its own scene, every scene
 fits, one notch gives scene 1, a burst of six gives scene 2, `#build` gives scene 5 at opacity 1.00.
@@ -136,11 +165,16 @@ Both were invisible to `tsc`, `eslint`, 459 tests, `check:tokens` and `check:con
    instead of 72px display, so the paragraph was 189px wide and three short lines wrapped into
    eighteen. The reference sets the size on the paragraph and has no max-width; so does the code
    now. **A correction is not exempt from the rule it corrects.**
-2. **The page scrolled sideways by 8px at every width with a scrollbar.** `calc(50% + 50vw)` counts
-   the scrollbar in `50vw` and not in `50%`, and no CSS unit excludes it, so the bleed cannot be
-   made exact — it has to be cut. `overflow-x: clip` on the root, **not `hidden`**: `hidden`
-   creates a scroll container, and a scroll container on `html` breaks the `position: sticky` the
-   deck is built on.
+2. **The page scrolled sideways by 8px — in the stacked path, above 900px.** `calc(50% + 50vw)`
+   counts the scrollbar in `50vw` and not in `50%`, so it overruns by **half** a scrollbar: 8px
+   against 15px, measured at 1440 and 1920. **Zero at 390px** (the field is `w-full` there) and
+   **zero whenever the deck pins** (both canvases are `fixed`, which contributes no scrollable
+   overflow). An earlier version of this line said "every width with a scrollbar", which is false
+   of both of those, and said "the scrollbar's width", which is twice the real figure.
+
+   No CSS unit excludes the scrollbar, so the bleed cannot be made exact — it has to be cut.
+   `overflow-x: clip` on the root, **not `hidden`**: `hidden` creates a scroll container, and a
+   scroll container on `html` breaks the `position: sticky` the deck is built on.
 
 ## Deliberately not carried over from the reference
 
@@ -154,16 +188,30 @@ Both were invisible to `tsc`, `eslint`, 459 tests, `check:tokens` and `check:con
 ## Open, and the user's to settle
 
 - **The nav became `sticky top-0 z-20` with an opaque background** (`NavSplit.tsx`), because the
-  deck assumed it: the stage reserves 88px for it and the Saffron cover computes its reach from the
-  farthest corner **below** y=88. Static, all three were wrong at once and the cover fell 16–68px
-  short of a top corner at the exact frame a scene swaps. It changes every page, which is why it is
-  listed here — it is a defensible improvement (`docs/18` §5 already called the nav fixed
-  furniture) but it was not asked for.
-- **The route transition reached all four other pages**, which this task said not to touch.
-  `RouteTransition` wraps the whole `<Routes>` tree, so `/agents`, `/tools`, `/atom/:atomId` and
-  `/agent` each gained a 200ms arrival fade. Defensible — the route scale is page-agnostic by
-  definition and `docs/18` §5 asks for it app-wide — but it is a change to four pages that were
-  out of scope, so it is listed here rather than assumed.
+  deck assumed it in three places: the stage reserves 88px for it, the field centres in what is
+  left, and the Saffron cover computes its reach from the farthest corner **below** y=88. Static,
+  all three were wrong at once and the cover fell **15.7 to 68.0px** short of a top corner at the
+  exact frame a scene swaps — reproduced independently by the verifier across the three Gate
+  viewports.
+
+  So this is nearer a **dependency** than an improvement: without it the deck is geometrically
+  wrong. It still changes every page, and it was not asked for, which is why it is here.
+
+  One measurement for the decision: the nav is **89px at 1440 and 1920 and 218px at 390** — it
+  wraps to three rows on a phone, so it occupies 26% of an 844px viewport, permanently, on all
+  five pages. `scripts/measure/landing-fit.ts` prints it and does not assert it.
+
+- **The route transition reached all four other pages**, which this task said not to touch, and
+  **the prohibition and the deliverable contradict each other in this file's own spec.** The task
+  lists the route scale as one of three to build (`docs/18` §5), and a route transition cannot
+  exist on one route: it fades whatever arrives, so `/agents`, `/tools`, `/atom/:atomId` and
+  `/agent` each gained a 200ms opacity fade. The prohibition was written about the **block and word
+  scales and the pages' own layout**, which are untouched — but it does not say so, and reading it
+  literally the task breached itself. Reversing it means deleting the route scale.
+
+  **Your call, and it is cheap either way**: keep it (one wrapper in `App.tsx`), or drop
+  `RouteTransition` and the route scale goes with it.
+
 - **Six viewports of deck with the nav as the only way out.** The deck owns the wheel while it owns
   the viewport, so a reader who wants to leave uses the nav, the scrollbar, `End`, or a link inside
   a scene. That is a consequence of ADR `0066` rather than a separate decision, and worth a look in

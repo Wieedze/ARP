@@ -87,6 +87,16 @@ const PROBE = String.raw`(() => {
         })),
         scrollWidth: doc.scrollWidth,
         clientWidth: doc.clientWidth,
+        clipped: (() => {
+            const before = doc.style.overflowX;
+            doc.style.overflowX = 'visible';
+            void doc.offsetWidth;
+            const over = doc.scrollWidth - doc.clientWidth;
+            doc.style.overflowX = before;
+            void doc.offsetWidth;
+            return over;
+        })(),
+        scrollbar: window.innerWidth - doc.clientWidth,
         navHeight: header === null ? 0 : Math.round(rect(header).height),
         navPosition: header === null ? null : getComputedStyle(header).position,
         // Scoped to the scene the reader is looking at. An inactive pinned scene is transparent
@@ -157,6 +167,8 @@ type Probe = {
   scenes: { index: string | null; active: boolean; inert: boolean; top: number; bottom: number }[];
   scrollWidth: number;
   clientWidth: number;
+  clipped: number;
+  scrollbar: number;
   navHeight: number;
   navPosition: string | null;
   hidden: number;
@@ -182,9 +194,19 @@ async function session(socketUrl: string) {
   });
   let nextId = 0;
   const pending = new Map<number, (value: unknown) => void>();
+  const events = new Map<string, ((params: Record<string, unknown>) => void)[]>();
   socket.addEventListener('message', (event) => {
-    const frame = JSON.parse(String(event.data)) as { id?: number; result?: unknown };
-    if (frame.id === undefined) return;
+    const frame = JSON.parse(String(event.data)) as {
+      id?: number;
+      result?: unknown;
+      method?: string;
+      params?: Record<string, unknown>;
+    };
+    if (frame.id === undefined) {
+      if (frame.method === undefined) return;
+      for (const handler of events.get(frame.method) ?? []) handler(frame.params ?? {});
+      return;
+    }
     pending.get(frame.id)?.(frame.result);
     pending.delete(frame.id);
   });
@@ -194,6 +216,12 @@ async function session(socketUrl: string) {
       const reply = new Promise<unknown>((resolve) => pending.set(id, resolve));
       socket.send(JSON.stringify({ id, method, params }));
       return reply;
+    },
+    /** Subscribe to a CDP event, for the ones that arrive unprompted. */
+    on(method: string, handler: (params: Record<string, unknown>) => void) {
+      const listeners = events.get(method) ?? [];
+      listeners.push(handler);
+      events.set(method, listeners);
     },
     close: () => socket.close(),
   };
@@ -242,6 +270,17 @@ for (const reduced of [false, true]) {
     const cdp = await session(socketUrl);
     await cdp.send('Page.enable');
     await cdp.send('Runtime.enable');
+    // A throw inside a scroll handler would leave every geometric assertion below passing.
+    await cdp.send('Log.enable');
+    const consoleErrors: string[] = [];
+    cdp.on('Log.entryAdded', (params) => {
+      const entry = (params as { entry?: { level?: string; text?: string } }).entry;
+      if (entry?.level === 'error') consoleErrors.push(entry.text ?? 'unknown');
+    });
+    cdp.on('Runtime.exceptionThrown', (params) => {
+      const details = (params as { exceptionDetails?: { text?: string } }).exceptionDetails;
+      consoleErrors.push(details?.text ?? 'uncaught exception');
+    });
     // Set before navigating, so the deck's one-time measurement at mount sees the real size.
     await cdp.send('Emulation.setDeviceMetricsOverride', {
       width: viewport.width,
@@ -288,6 +327,23 @@ for (const reduced of [false, true]) {
         `scrollWidth ${page.scrollWidth} > clientWidth ${page.clientWidth} (+${page.scrollWidth - page.clientWidth}px)`,
       );
     }
+    // **The check above cannot fail while `overflow-x: clip` is in place**, because `clip` clamps
+    // `scrollWidth` to `clientWidth` — the 162px bleed overrun this script's header cites as its
+    // reason for existing would be clipped and reported as passing. So the probe lifts the clip,
+    // measures, and restores it, and the figure is printed rather than failed: a bleed that runs
+    // past the viewport and is cut is the design, since no CSS unit excludes the scrollbar. It
+    // should be 0, or about half a scrollbar where a `calc(50% + 50vw)` element is in the stacked
+    // flow.
+    console.log(
+      `  bleed past the viewport, clip lifted: ${page.clipped}px (scrollbar ${page.scrollbar}px)`,
+    );
+    if (page.clipped > page.scrollbar) {
+      note(
+        where,
+        'the clip hides more than a scrollbar',
+        `${page.clipped}px past the viewport against a ${page.scrollbar}px scrollbar — a bleed should overrun by at most half of one`,
+      );
+    }
     if (page.hidden > 0) {
       note(
         where,
@@ -309,7 +365,10 @@ for (const reduced of [false, true]) {
     if (page.anchors.length > 0) {
       note(where, 'anchor with no target', page.anchors.join(', '));
     }
-    if (!reduced && !viewport.pins && page.fieldOverlapsCopy === true) {
+    // Below 900px the field sits above the copy rather than behind it, in **every** run at that
+    // width — the reduced-motion ones included, which is the configuration the Gate line is
+    // actually about. The guard used to exclude them and so fired in one run of eight.
+    if (viewport.width <= 900 && page.fieldOverlapsCopy === true) {
       note(where, 'field behind the hero copy', 'below 900px it sits above it, 320px tall');
     }
     if (page.pinned && page.navPosition !== 'sticky') {
@@ -428,7 +487,7 @@ for (const reduced of [false, true]) {
       );
     }
 
-    // --- Gate check 3: `#build` lands on scene 6, visible --------------------------------
+    // --- Gate check 3: `#build` lands on the LAST scene (`data-scene` is 0-based), visible --------------------------------
     //
     // It once moved the page 268px and left the target at `opacity: 0`, because an inactive
     // scene is `position: absolute` inside the sticky stage and the browser's own anchor
@@ -453,6 +512,10 @@ for (const reduced of [false, true]) {
       note(where, '#build landed on the wrong scene', `scene ${jumped.index}, want 5`);
     } else if (Number(jumped.opacity) < 0.99) {
       note(where, '#build landed on a transparent scene', `opacity ${jumped.opacity}`);
+    }
+
+    if (consoleErrors.length > 0) {
+      note(where, 'console errors', consoleErrors.slice(0, 3).join(' | '));
     }
 
     cdp.close();

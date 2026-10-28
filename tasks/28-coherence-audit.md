@@ -170,23 +170,45 @@ with the code. Read-only audit first, then fixes in small batches.
     rather than rewritten; `trust-format.ts`'s is an ordinary comment and is simply wrong. Found by
     the `tasks/29` verifier, outside that task's scope.
 
-35. **"There is no browser in the build environment" is false, and it is written in seven places.**
-    `tasks/14:86`, `tasks/08:211`, `tasks/12:69`, `tasks/11:91`, `.claude/learning/10:64`, and two
-    PR drafts (`03-erc8004-connector.md`, `04-agent-trust-panel.md`). Chromium is at
-    `/root/.cache/ms-playwright/chromium-1140/chrome-linux/chrome` and launches headless; what is
-    missing is a driver wired into the repo, which `scripts/measure/landing-fit.ts` now shows can
-    be done with `fetch` and a `WebSocket` and no new dependency.
+35. **"There is no browser in the build environment" is false, and it is written at 11 line sites
+    across 9 files.** Measured 2026-10-28 by grepping the concept rather than the sentence
+    (`no browser`, `browser was available`, `browser in the build`, `visual verification`,
+    `visually verified`) and reading every hit:
+
+    | file                                                                      | lines    |
+    | ------------------------------------------------------------------------- | -------- |
+    | `tasks/08-agent-trust-panel.md`                                           | 211      |
+    | `tasks/11-import-existing-erc8004-agent.md`                               | 91       |
+    | `tasks/12-agent-panel-tabs.md`                                            | 69       |
+    | `tasks/14-contrast-below-aa.md`                                           | 86       |
+    | `tasks/15-strip-the-panel-copy.md`                                        | 92       |
+    | `.claude/learning/10-agent-trust-panel.md`                                | 57, 64   |
+    | `.claude/learning/11-agent-directory-full-cohort.md`                      | 114, 157 |
+    | `.claude/choices/0029-the-page-states-facts-and-stops-explaining-them.md` | 140      |
+    | `.github/pull_request_drafts/04-agent-trust-panel.md`                     | 73       |
+
+    Chromium is at `/root/.cache/ms-playwright/chromium-1140/chrome-linux/chrome` and launches
+    headless; what was missing is a driver wired into the repo, which
+    `scripts/measure/landing-fit.ts` now shows can be done with `fetch` and a `WebSocket` and no new
+    dependency.
 
     This is `rules/claims.md` §1 applied to a **blocker** rather than to a figure: visual
     verification has been deferred across this project on a premise nobody tested, and
-    `tasks/08`'s own note — _"no browser was available, so the view model was checked against live
-    mainnet data"_ — is the cost. The task files are historical record and two of them are closed,
-    so the fix is a line in each saying the premise was wrong rather than a rewrite; the PR drafts
-    are unsent and should be corrected before they go out. The caveat in `learning/10` is
-    append-only and gets a struck-through note.
+    `learning/10:57` is the load-bearing one — _"nothing was visually verified … the two acceptance
+    criteria still resting on inference"_.
 
-    **Note the constraint rather than removing it**: the cache is under `/root`, so this works only
-    while the session runs as root. State that, not "no browser".
+    The task files are historical record and several are closed, so the fix is a line in each saying
+    the premise was wrong rather than a rewrite. `learning/10`, `learning/11` and `choices/0029` are
+    **append-only**, so those four lines get a struck-through note in place. The PR draft is unsent
+    and should be corrected before it goes out.
+
+    **State the real constraint rather than removing it**: the cache is under `/root`, so this works
+    while the session runs as root. "No browser" is what nobody checked; "no driver, and the browser
+    is root-owned" is what is true.
+
+    This item's own count was wrong twice before it was measured — "seven places" naming five, and a
+    `STATE.md` sentence that claimed "five task files and two post-mortems" and then enumerated four
+    and one. Grep the concept; read every hit.
 
 36. **`/` has motion and the other four pages have none.** `/agents`, `/tools`, `/atom/:atomId` and
     `/agent` do not have even the block-level reveal, and the step is visible the moment you leave

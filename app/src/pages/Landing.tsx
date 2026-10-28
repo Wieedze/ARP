@@ -43,9 +43,16 @@ import {cssVars} from "../lib/css-vars";
  * screen and it is the honest state: nobody has run this loop yet, ARP included. It is **ARP's own
  * non-activity, not a property of the graph** (the user's correction, 2026-10-27).
  *
- * The reference's `vault-auditor`, `crytic-runner`, `0.1 TRUST` and `0.11 TRUST` are **samples and
- * do not ship**. Scene 2's two cards are built from the one query the page already makes, grouped
- * two ways, and say there is nothing when there is nothing.
+ * The reference's `vault-auditor`, `crytic-runner`, `maturity-bot` and `Echidna` are **samples and
+ * do not ship** — `Landing.test.tsx` greps for them. Scene 2's two cards are built from the one
+ * query the page already makes, grouped two ways, and say there is nothing when there is nothing.
+ *
+ * **`0.1 TRUST` and `0.11 TRUST` are NOT samples**, and this comment said they were. Both are live
+ * reads off chain 1155, which is the default (`lib/chain-choice.ts` — mainnet unless `localStorage`
+ * says testnet): `getTripleCost()` is 0.1 and `getGeneralConfig().minDeposit` is 0.01, so the fee
+ * is 0.1 and the floor is 0.11. The reference hardcodes the same two numbers, which is why they
+ * were on its sample list and why they look invented. Measured on the running page, 2026-10-28:
+ * the DOM contains exactly those two amounts and zero sample names.
  */
 /**
  * The rail's names, in scene order. `MOTION-V2.md` §3's own headings for the six.

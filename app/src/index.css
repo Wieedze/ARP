@@ -193,17 +193,22 @@ html,
 body {
     margin: 0;
     padding: 0;
-    /* **`clip`, not `hidden`.** A full-bleed element sized with `vw` overruns the page by the
-       scrollbar's width, because `vw` counts the scrollbar and `%` does not: the hero's field is
-       `calc(50% + 50vw)` and measured 8px past `clientWidth` at 1440 and at 1920, with nothing
-       clipping it, so the page scrolled sideways by 8px at every width that has a scrollbar
-       (`scripts/measure/landing-fit.ts`). No CSS unit excludes the scrollbar, so the bleed cannot
-       be made exact — it has to be cut.
+    /* **`clip`, not `hidden`.** A full-bleed element sized with `calc(50% + 50vw)` overruns the
+       page by **half** the scrollbar's width, because `vw` counts the scrollbar and `%` does not
+       and only one of the two terms is a `vw`. Measured by lifting this rule at runtime and
+       re-measuring (`scripts/measure/landing-fit.ts`): the hero's field ran **8px** past
+       `clientWidth` against a 15px scrollbar, at 1440 and at 1920, with nothing clipping it.
 
+       **Only in the stacked path, and only above 900px.** Zero at 390px, where the field is
+       `max-[900px]:w-full`; zero whenever the deck pins, where both canvases are `position: fixed`
+       and so contribute no scrollable overflow. The first version of this comment said "every
+       width that has a scrollbar", which is false of both of those.
+
+       No CSS unit excludes the scrollbar, so the bleed cannot be made exact — it has to be cut.
        `clip` rather than `hidden` because `hidden` creates a scroll container, and a scroll
-       container on `html` breaks `position: sticky` inside it — which is the whole of
-       `SceneDeck`'s mechanism. `clip` does not, per spec, and the measurement script asserts the
-       deck still pins. */
+       container on `html` breaks `position: sticky` inside it, which is the whole of `SceneDeck`'s
+       mechanism. `clip` paired with `overflow-y: visible` does not, per spec, and the measurement
+       script checks the deck still pins at all three viewports. */
     overflow-x: clip;
     /* The UI is dark-only. Without this the UA paints its own controls —
        select popups, radio circles, scrollbars — in the light palette, which
