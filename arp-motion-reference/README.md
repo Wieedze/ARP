@@ -1,48 +1,55 @@
 # ARP — motion reference
 
-`index.html` is a **standalone, exact reproduction** of ARP's landing page as it stands on
-2026-10-27. Open it in a browser; no build, no install, nothing to run but the file. Every number in
-it is lifted from the running app, not approximated.
+`index.html` is the **design base** for the landing page: a standalone page, no build, nothing to
+run but the file. Open it in a browser. It is the visual and timing truth, and
+[`MOTION-V2.md`](MOTION-V2.md) is the build contract derived from it.
 
-It exists so a design agent can rework the page without reading the React app, and so that whatever
-comes back can be compared against what it replaces.
+**Where the two disagree, `MOTION-V2.md` wins** — it was written after the page and corrects parts
+of the page's own header comment.
 
-## Read the file's own comments first
+It replaced the 2026-10-27 reproduction of the then-current React page on 2026-10-28, at the user's
+decision: _« garde tout ce qui vient de ce dossier, c'est la nouvelle base. »_ The file it replaced
+is in git at `660989c`; it described the page as "a correct skeleton, not a design", which this one
+is not.
 
-The header comment splits everything into two lists:
+## What changed against the page it replaces
 
-- **Mechanism** — seven things that are load-bearing. Each one was arrived at by a failure, and each
-  failure is named. Change them if you have a better answer, but say which one you changed.
-- **Decoration** — the per-scene composition, what moves and in which direction, the stagger order,
-  type scale within a scene, the field, the rail. **This is where the creativity goes**, and the
-  current version has close to none: it is a correct skeleton, not a design.
+|                | 2026-10-27 reproduction                         | this                                                                                                               |
+| -------------- | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| hand-over      | neighbours overlap, `HOLD` 0.55                 | **no overlap** — a scene is gone at `GONE` 0.48, signed drift, 4% of a band empty between them                     |
+| input          | native scroll only, "nothing hijacks the wheel" | **one gesture, one scene**, glided over 1.7–2.9 s; the scrollbar stays native and the end scenes hand back         |
+| the field      | `PulseField` — dots read from chain counts      | **`SourceField`** — 22 rings of 6k dots, a Saffron core, and a dive into it on the first hand-over                 |
+| between scenes | nothing                                         | a **Saffron seed** per scene, half out of frame, that grows into a cover and opens onto the next                   |
+| word scale     | not built                                       | the hero h1 arrives word by word, delay from the **rendered** line                                                 |
+| route scale    | not built                                       | in 200 ms, opacity only, loader only past 150 ms. **The out-fade is in this file and not in the app** — ADR `0070` |
+| scenes         | hero + 4 figures + the evidence ladder          | **six**, the ladder removed                                                                                        |
 
 ## The numbers, in one place
 
-| what                     | value                                   | where it came from                                        |
-| ------------------------ | --------------------------------------- | --------------------------------------------------------- |
-| scene cross-fade         | **240ms**, `cubic-bezier(0.16, 1, 0.3, 1)` | 520ms first, and "il faut rendre ça plus fluide"        |
-| element reveal           | **260ms**, same curve                   | practitioner range for a scroll reveal is 150–250ms       |
-| stagger between siblings | **80ms**                                | far enough to read as a sequence, short enough not to wait |
-| scene slide              | **18px**                                | larger reads as a carousel rather than a hand-over         |
-| hold before hand-over    | **0.55** of a scene's band              | the rest is overlap, so neighbours cross-fade              |
-| stacks below             | **680px tall / 900px wide**             | a pinned scene cannot scroll, so it must fit               |
+Everything here is a token in the page's `:root`, or a JS constant named in `MOTION-V2.md` §1.
 
-## What it does not include
+| what                       | value                                                                                       |
+| -------------------------- | ------------------------------------------------------------------------------------------- |
+| element arrival, pinned    | `--scene-reveal` **700 ms**, `--scene-step` **150 ms**, `--scene-rise` **28px**             |
+| one word of the h1         | `--word-rise` **380 ms**, `--word-step` **34 ms**, `--line-step` **110 ms**                 |
+| total stagger of a heading | `--stagger-ceiling` **560 ms**, never more                                                  |
+| list rows                  | `--list-step` **30 ms**, first **8** only                                                   |
+| route                      | `--route-in` **200 ms**, `--loader-delay` **150 ms**. `--route-out` **120 ms** is here only |
+| hand-over                  | `GONE` 0.48 of a band, `SLIDE` 70px, `STEP` dive 2400 / seed 2900 / other 1700 ms           |
+| stacks below               | **680px tall / 900px wide** — a pinned scene cannot scroll, so it must fit                  |
 
-Two of the three motion scales in [`../docs/18_THE_MOTION_SPEC.md`](../docs/18_THE_MOTION_SPEC.md)
-are **not built**, and that spec is where their constraints are written:
+## What it asks of whoever builds it
 
-- **word-level arrival** — §4, including why splitting a headline into one `<span>` per word breaks
-  the accessible name;
-- **route transitions** — §5, which must be the _least_ visible of the three.
+`MOTION-V2.md` §0 lists **seven decisions that were the user's**, three of which go against a
+written rule in `.claude/rules/ui.md`. They are recorded as ADRs `0066`–`0069`, and what §4 and §5
+became is ADR `0070`. Read those before changing any of them back.
 
-The other four pages of the app (`/agents`, `/tools`, `/atom/:id`, `/agent`) have **no motion at
-all** today, not even the block-level reveal. That inconsistency is visible the moment you leave the
-landing page.
+§4 lists six traps that no checker in this repo sees. §5 is the definition of done.
 
 ## The one thing motion must not break
 
 Every figure on the real page is somebody's actual deposit, read live from a chain, and **the page
-shows nothing it has not read** — where there is no data it says so. Never animate a placeholder
-into a figure: the swap underneath is a lie the motion told.
+shows nothing it has not read** — where there is no data it says so. The sample names and amounts in
+this file (`vault-auditor`, `crytic-runner`, `0.11 TRUST`) are **samples and must not ship**: in the
+app each one is a chain read or a sentence saying there is none. Never animate a placeholder into a
+figure — the swap underneath is a lie the motion told.
