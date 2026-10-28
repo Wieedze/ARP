@@ -107,6 +107,78 @@
     /* Single motion curve, single duration. */
     --ease-out-quart: cubic-bezier(0.16, 1, 0.3, 1);
     --duration-base: 200ms;
+
+    /* ---------------------------------------------------------------------- */
+    /* Motion — the landing's scene deck (ADRs 0066-0069)                     */
+    /*                                                                        */
+    /* `arp-motion-reference/MOTION-V2.md` §1 is where these numbers come     */
+    /* from, and `arp-motion-reference/index.html` is the page they were tuned */
+    /* on. Every one of them is HERE rather than in a class, because          */
+    /* `check:tokens` can see a token and cannot see a magic number.          */
+    /* ---------------------------------------------------------------------- */
+
+    /* A whole scene handing over to the next. Short, because the pacing comes
+       from the glide (ADR 0066), not from the fade. */
+    --scene-fade: 240ms;
+
+    /* An element arriving INSIDE a pinned scene. Slower and further apart than
+       the stacked reveal below: it plays while the Saffron cover is opening, so
+       it has a second to fill rather than a quarter of one. */
+    --scene-reveal: 700ms;
+    --scene-step: 150ms;
+    --scene-rise: 28px;
+
+    /* The same thing stacked — no cover to wait for, so it is the practitioner
+       range for a scroll reveal (150-250ms) rather than the pinned timing. */
+    --reveal-fade: 260ms;
+    --reveal-step: 80ms;
+
+    /* Word scale: one word of a display heading. `--line-step` is per RENDERED
+       line, measured at runtime, because `--text-display` is a clamp() and the
+       wrap moves with the viewport. */
+    --word-rise: 380ms;
+    --word-step: 34ms;
+    --line-step: 110ms;
+    /* Total stagger of one heading, never more. Past ~600ms the reader is
+       waiting instead of reading, so a long line compresses its own step. */
+    --stagger-ceiling: 560ms;
+
+    /* List rows, the first `LIST_CAP` of them only — see `Reveal`'s docstring.
+       Tuned on three rows, an uncapped stagger is a 16s wait on two hundred. */
+    --list-step: 30ms;
+
+    /* Route scale, the least visible of the three (docs/18 §5). Opacity only,
+       no movement, and the loader appears only if the chunk is slower than
+       `--loader-delay` — so a cached route never shows one at all.
+       The design also specifies `--route-out: 120ms`; it is NOT defined here,
+       because holding the old page on screen for it delays the new route's
+       first paint, which §5 rejects. `RouteTransition` carries the argument. */
+    --route-in: 200ms;
+    --loader-delay: 150ms;
+
+    /* ---------------------------------------------------------------------- */
+    /* Per-element motion locals, declared here with their resting values.    */
+    /*                                                                        */
+    /* These are overridden inline, per element, because each one is DATA      */
+    /* about that element: which sibling it is, which rendered line it sits    */
+    /* on, how far through the manifesto the scroll has got. They are declared */
+    /* as tokens because `check:tokens` resolves every `var()` against the     */
+    /* @theme block and nothing else (ADR 0050) — an undeclared local would    */
+    /* fail the gate, and a gate with an allowlist stops being a gate.         */
+    /* ---------------------------------------------------------------------- */
+    --reveal-index: 0; /* which sibling, for the stagger */
+    --reveal-after: 0ms; /* a group that waits for another group */
+    --word-delay: 0ms; /* computed per word from its rendered line */
+    --line-index: 0; /* which authored line of a heading */
+    --row-index: 0; /* which row of a list */
+    --lit: 1; /* how lit one manifesto line is, 0 to 1 */
+
+    /* The illustrative diagram in Fig. 02 draws itself: a dot appears, a line
+       traces left to right. Per element, because each one is a beat of a
+       sequence a reader follows with their eyes. */
+    --draw-at: 0ms; /* when this part of the diagram starts */
+    --draw-for: 1200ms; /* how long it takes to trace */
+    --draw-length: 1000; /* the path's own length, in user units */
 }
 
 /* -------------------------------------------------------------------------- */
@@ -331,4 +403,249 @@ summary:focus-visible,
     font-variant-numeric: tabular-nums;
     letter-spacing: -0.045em;
     line-height: 0.92;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Motion — the scene deck's arrival rules                                     */
+/*                                                                            */
+/* Here and not in Tailwind classes, for one reason: every rule below is a     */
+/* DESCENDANT selector driven by state on an ancestor — "elements inside a     */
+/* scene that is not on yet". A utility cannot express that, and `data-*`      */
+/* variants would put the state on every leaf instead of on the scene, which   */
+/* is the whole point: one attribute flips and the subtree arrives.            */
+/*                                                                            */
+/* These are unlayered, so they beat Tailwind utilities on the same property   */
+/* without `!important`. That is deliberate here and it is also the trap        */
+/* `rules/ui.md` names: if you reach for `opacity-*` or `translate-*` on        */
+/* anything inside a scene, it will lose to this and no checker will say so.   */
+/* -------------------------------------------------------------------------- */
+
+/* ---- block scale: a heading, then its body, then its rows ---------------- */
+
+.arp-rev {
+    transition:
+        opacity var(--reveal-fade) var(--ease-out-quart),
+        transform var(--reveal-fade) var(--ease-out-quart);
+}
+
+/* A label or an eyebrow fades without sliding. One that moves reads as
+   misaligned with the title it belongs to, which is visible at 11px. */
+.arp-rev-fade {
+    transform: none !important;
+}
+
+.arp-scene[data-on="false"] .arp-rev {
+    opacity: 0;
+    transform: translateY(12px);
+}
+
+.arp-scene[data-on="true"]:not(.arp-scene-played) .arp-rev {
+    opacity: 1;
+    transform: none;
+    transition-delay: calc(var(--reveal-index) * var(--reveal-step) + var(--reveal-after));
+}
+
+/* ---- the same, pinned: slower, further, and waiting for the cover -------- */
+
+.arp-deck-pinned .arp-rev {
+    transition:
+        opacity var(--scene-reveal) var(--ease-out-quart),
+        transform var(--scene-reveal) var(--ease-out-quart);
+}
+
+.arp-deck-pinned .arp-scene[data-on="false"]:not(.arp-scene-played) .arp-rev:not(.arp-rev-fade) {
+    transform: translateY(var(--scene-rise));
+}
+
+.arp-deck-pinned .arp-scene[data-on="true"]:not(.arp-scene-played) .arp-rev {
+    transition-delay: calc(var(--reveal-index) * var(--scene-step) + var(--reveal-after));
+}
+
+/* A played scene shows everything, instantly, in both modes. The rules above all carry
+   `:not(.arp-scene-played)` as well: `.arp-scene[data-on=…]` is one specificity step above
+   `.arp-scene-played`, so excluding it only here would lose the tie. */
+.arp-scene-played .arp-rev,
+.arp-scene-played .arp-line,
+.arp-scene-played .arp-word,
+.arp-scene-played .arp-row {
+    opacity: 1;
+    transform: none;
+    transition: none;
+}
+
+/* ---- word scale: the hero's h1, one word at a time ---------------------- */
+
+/* `inline-block` keeps the space OUTSIDE the word, so the line wraps exactly
+   where it would for plain text. The delay is computed from the word's rendered
+   line at runtime (`--word-delay`), never from its index: an index-based stagger
+   crosses a clamp() line break and reads as a glitch at some widths only. */
+.arp-word {
+    display: inline-block;
+}
+
+.arp-scene[data-on="false"]:not(.arp-scene-played) .arp-words .arp-word {
+    opacity: 0;
+    transform: translateY(0.32em);
+}
+
+.arp-scene[data-on="true"]:not(.arp-scene-played) .arp-words .arp-word {
+    opacity: 1;
+    transform: none;
+    transition:
+        opacity var(--word-rise) var(--ease-out-quart),
+        transform var(--word-rise) var(--ease-out-quart);
+    transition-delay: var(--word-delay);
+}
+
+/* ---- authored-line scale: an h2 whose two lines are written as two ------- */
+
+.arp-line {
+    display: block;
+}
+
+.arp-scene[data-on="false"]:not(.arp-scene-played) .arp-lines .arp-line {
+    opacity: 0;
+    transform: translateY(0.22em);
+}
+
+.arp-scene[data-on="true"]:not(.arp-scene-played) .arp-lines .arp-line {
+    opacity: 1;
+    transform: none;
+    transition:
+        opacity var(--word-rise) var(--ease-out-quart),
+        transform var(--word-rise) var(--ease-out-quart);
+    transition-delay: calc(var(--line-index) * var(--line-step));
+}
+
+.arp-deck-pinned .arp-scene[data-on="true"]:not(.arp-scene-played) .arp-line {
+    transition-duration: var(--scene-reveal);
+    transition-delay: calc(var(--line-index) * var(--scene-step));
+}
+
+/* ---- list rows: capped, because a stagger tuned on three waits on two hundred */
+
+.arp-scene[data-on="false"]:not(.arp-scene-played) .arp-row {
+    opacity: 0;
+    transform: translateY(8px);
+}
+
+.arp-scene[data-on="true"]:not(.arp-scene-played) .arp-row {
+    opacity: 1;
+    transform: none;
+    transition:
+        opacity var(--reveal-fade) var(--ease-out-quart),
+        transform var(--reveal-fade) var(--ease-out-quart);
+    transition-delay: calc(var(--row-index) * var(--list-step) + var(--reveal-after));
+}
+
+/* ---- one manifesto line lighting up, scrubbed by scroll ------------------ */
+
+.arp-lit {
+    color: color-mix(in oklab, var(--color-fg) calc(var(--lit) * 100%), var(--color-grey));
+}
+
+/* ---- route scale: opacity only, and the loader only if the chunk is slow -- */
+
+.arp-route-in {
+    animation: arp-route-in var(--route-in) var(--ease-out-quart) both;
+}
+
+@keyframes arp-route-in {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+/* The loader is present from the first frame and invisible until the delay has
+   passed, so a cached chunk never shows one and no JS timer decides it. */
+.arp-route-loader {
+    animation: arp-route-in var(--route-in) var(--ease-out-quart) var(--loader-delay) both;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Reduced motion means none, not less (docs/18 §3)                            */
+/*                                                                            */
+/* The same composition, at full opacity and final position. Not a faster       */
+/* version of the animation — none of it. The deck also refuses to pin at all   */
+/* under this setting, so the reader gets an ordinary stacked document.         */
+/* -------------------------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+    .arp-rev,
+    .arp-scene,
+    .arp-word,
+    .arp-line,
+    .arp-row,
+    .arp-route-in,
+    .arp-route-loader {
+        animation: none !important;
+        transition: none !important;
+        opacity: 1 !important;
+        transform: none !important;
+    }
+
+    .arp-lit {
+        color: var(--color-fg);
+    }
+}
+
+/* -------------------------------------------------------------------------- */
+/* Fig. 02's diagram draws itself                                              */
+/*                                                                            */
+/* An SVG path traced by animating `stroke-dashoffset` from its own length to  */
+/* zero, and labels and dots that appear at a named moment. It is illustrative */
+/* — a picture of the mechanism, not a chart of data — so it is the one place  */
+/* on this page where a sequence is authored rather than measured.             */
+/*                                                                            */
+/* `--draw-length` has to be the path's real length or the dash never clears:  */
+/* it is set per path, beside the `d` attribute it describes.                  */
+/* -------------------------------------------------------------------------- */
+
+.arp-draw {
+    stroke-dasharray: var(--draw-length);
+    stroke-dashoffset: var(--draw-length);
+}
+
+.arp-scene[data-on="true"]:not(.arp-scene-played) .arp-draw {
+    stroke-dashoffset: 0;
+    transition: stroke-dashoffset var(--draw-for) linear var(--draw-at);
+}
+
+.arp-pop {
+    opacity: 0;
+}
+
+.arp-scene[data-on="true"]:not(.arp-scene-played) .arp-pop {
+    opacity: 1;
+    transition: opacity var(--reveal-fade) var(--ease-out-quart) var(--draw-at);
+}
+
+/* A diagram redraws for nobody. The rules above carry `:not(.arp-scene-played)` as well, because
+   `.arp-scene[data-on="true"]` is one specificity step above `.arp-scene-played` and would win the
+   `transition` outright — the exclusion has to be on the losing side's selector, not only here. */
+.arp-scene-played .arp-draw {
+    stroke-dashoffset: 0;
+    transition: none;
+}
+
+.arp-scene-played .arp-pop {
+    opacity: 1;
+    transition: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .arp-draw {
+        stroke-dasharray: none;
+        stroke-dashoffset: 0;
+    }
+
+    .arp-draw,
+    .arp-pop {
+        animation: none !important;
+        transition: none !important;
+        opacity: 1 !important;
+    }
 }

@@ -257,3 +257,26 @@ export function formatStakerCount(count: number): string {
 export function stakerLabel(count: number): string {
     return `${formatStakerCount(count)} distinct staker${count === 1 ? "" : "s"}`;
 }
+
+/**
+ * `3 days ago`. Coarse on purpose — the exact timestamp is on the atom's own page.
+ *
+ * Here with the other formatters rather than in the page that uses it: six branches and a clock
+ * read is not presentation, and `rules/code.md` wants a function shipped with tests. It was
+ * module-private in `Landing.tsx` and untested, which the task-29 verifier caught.
+ *
+ * `months` divides by 30 while `days < 31` guards the branch above it, so 31 to 59 days all read
+ * "a month ago". That is deliberate at this resolution and is the one thing worth knowing.
+ */
+export function relativeDay(iso: string, now = Date.now()): string {
+    const then = Date.parse(iso);
+    if (Number.isNaN(then)) return "at an unknown time";
+    const days = Math.floor((now - then) / 86_400_000);
+    // A timestamp in the future reads as today rather than as a negative count: an indexer a few
+    // seconds ahead of the browser's clock is ordinary and is not worth a sentence of its own.
+    if (days <= 0) return "today";
+    if (days === 1) return "yesterday";
+    if (days < 31) return `${days} days ago`;
+    const months = Math.floor(days / 30);
+    return months === 1 ? "a month ago" : `${months} months ago`;
+}

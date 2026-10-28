@@ -129,11 +129,20 @@ with the code. Read-only audit first, then fixes in small batches.
     `deployments/1155.json` nests the enforcers under `arp.enforcers` with a `status`;
     `deployments/13579.json` puts them flat on `arp` as bare addresses. A reader of one shape finds
     nothing in the other and reads it as absence. Pick one.
-30. **`bun run format:check` fails on 142 files, long-standing.** Two parts, and only the second is
+30. **`bun run format:check` fails repo-wide, long-standing.** Two parts, and only the second is
     a code change: the root script passed `--ignore-path .gitignore` only, so `.prettierignore` was
     never consulted and `deployments/*.json` was flagged — **fixed 2026-10-27**, both paths are now
-    passed. The remaining 142 are ordinary unformatted files and a `--write` pass would bury any
-    real change under whitespace, so it needs its own commit.
+    passed. The rest are ordinary unformatted files and a `--write` pass would bury any real change
+    under whitespace, so it needs its own commit.
+
+    **No count here on purpose**, which is what `STATE.md` already decided for the same figure and
+    this item had not caught up with: the number moves with every commit that touches a markdown
+    file, and five different values are in the repo's own record — 190 (`tasks/21:113`), 142 (this
+    item, as written), 141 (`learning/19:25`), 140 and 214 (both quoted in `STATE.md:247`, where the
+    214 turned out to come from a transient `git stash` state rather than from the repo). Run
+    `bunx prettier --check .`. Measured 2026-10-28 for the record: 138, after `tasks/29` formatted
+    the ten files it touched.
+
 31. **`.claude/choices/INDEX.md` is generated and is never prettier-clean**, so
     `build-claude-index.ts` re-dirties it on every ADR. Either the generator emits formatted output
     or the file joins `.prettierignore`.
@@ -142,6 +151,29 @@ with the code. Read-only audit first, then fixes in small batches.
     `scripts/packages/…`. Fixed. The lesson is the general one — `check:scripts` is a typecheck and
     sees no runtime path, so **a committed script that throws reads as provenance**. Worth a sweep
     of the other `new URL(…, import.meta.url)` sites in `scripts/`.
+
+### Added 2026-10-28, from closing `tasks/29`
+
+33. **`ChainToggle.tsx:4` cites ADR `0059`, which does not exist and never did.** No commit ever
+    added it — `git log --diff-filter=A -- '.claude/choices/0059*'` is empty — and ADR `0061` says
+    so in its own Context: _"A mainnet/testnet toggle was added on 2026-10-27 for reads only, and **without an
+    ADR** — there is no `0059`, the number is unused, and this file is the first record of the
+    toggle."_ So the gap is deliberate and documented; the **citation** is the defect, and it is in
+    the one file the ADR is about. `rules/claims.md` §3: a citation to a file that does not exist is
+    the failure that propagates furthest. One line — point it at `0061`, which is the first record
+    of the toggle as well as of the change to it. Checked at the same time: `0059` is the **only**
+    gap in `0001`-`0070`, and no other file cites it.
+
+34. **Two sites still say `app/` has no DOM test environment**, which `tasks/26` closed on
+    2026-10-27 (ADR `0063`): `app/src/services/trust-format.ts:254` and
+    `.claude/choices/0029-*.md:128`. The ADR is append-only, so its line is struck through in place
+    rather than rewritten; `trust-format.ts`'s is an ordinary comment and is simply wrong. Found by
+    the `tasks/29` verifier, outside that task's scope.
+
+35. **`/` has motion and the other four pages have none.** `/agents`, `/tools`, `/atom/:atomId` and
+    `/agent` do not have even the block-level reveal, and the step is visible the moment you leave
+    the landing page. Not a defect in `tasks/29` — explicitly out of its scope — but it is an
+    incoherence now, where before `tasks/29` it was a uniform absence.
 
 Overlap: items 21–26 are prose. `tasks/27` (the prose pass) runs after the tool page, so these can
 wait for it unless one misleads a reader before then.

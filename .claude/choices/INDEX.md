@@ -1,8 +1,8 @@
 # ADR index
 
-**Generated** 2026-10-27 by `scripts/build-claude-index.ts`. Do not edit by hand — rerun the script.
+**Generated** 2026-10-28 by `scripts/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-64 decisions. Newest last. `choices/README.md` says when to write one.
+69 decisions. Newest last. `choices/README.md` says when to write one.
 
 ## Not accepted
 
@@ -79,3 +79,8 @@ Read these before relying on them.
 | [0063](0063-the-app-tests-components-now.md) | 2026-10-27 | Accepted | The app tests hooks and components, and ADR 0011's scope says so |
 | [0064](0064-a-uniform-sample-of-the-cohort-is-a-sample-of-one-operator.md) | 2026-10-27 | Accepted | A uniform sample of the ERC-8004 cohort is a sample of one operator |
 | [0065](0065-two-enforcers-are-on-mainnet-and-the-rules-said-none-was.md) | 2026-10-27 | Accepted | Two enforcers are on mainnet, and three files said none was |
+| [0066](0066-one-gesture-plays-one-scene.md) | 2026-10-28 | Accepted | One gesture plays one whole scene |
+| [0067](0067-saffron-is-a-transition-material.md) | 2026-10-28 | Accepted | Saffron is a transition material, and the core is warm at zero |
+| [0068](0068-scenes-do-not-overlap.md) | 2026-10-28 | Accepted | Scenes do not overlap |
+| [0069](0069-the-landing-is-six-scenes.md) | 2026-10-28 | Accepted | The landing is six scenes, and the evidence ladder is not one of them |
+| [0070](0070-the-word-scale-is-built-and-the-out-fade-is-not.md) | 2026-10-28 | Accepted | The word scale is built; the route out-fade is not |

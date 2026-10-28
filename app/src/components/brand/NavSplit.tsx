@@ -78,7 +78,20 @@ function NavLink({to, children}: {to: string; children: ReactNode}) {
  */
 export function NavSplit({left, right}: {left: ReactNode; right: ReactNode}) {
     return (
-        <header className="border-b border-[color:var(--color-rule)] px-6">
+        // **Sticky, at `z-20`, with an opaque background** — added 2026-10-28 with the landing's
+        // scene deck, which assumed it (ADR `0066`).
+        //
+        // `docs/18` §5 already called the nav fixed furniture that should not move between routes,
+        // and the deck is built around a nav 88px tall: its stage reserves that band with
+        // `pt-[88px]`, and the Saffron cover computes its reach from the farthest corner **below**
+        // y=88 on the premise that something covers the rest. A static header made all three
+        // wrong at once — the reserved band showed bare ground on all six screens, and the cover
+        // fell 16–68px short of a top corner at the exact frame a scene swaps, which is the
+        // visible cut the design says was fixed.
+        //
+        // The background is load-bearing and not decoration: without it the deck's fixed field
+        // canvas (`z-0`) and its Saffron veil (`z-[15]`) both pass behind the nav's text.
+        <header className="sticky top-0 z-20 border-b border-[color:var(--color-rule)] bg-[color:var(--color-ground)] px-6">
             <div className="mx-auto flex min-h-[88px] w-full max-w-[1320px] flex-col items-center gap-y-3 py-3 md:grid md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] md:items-center">
                 <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 md:justify-end md:pr-[clamp(14px,4vw,48px)]">
                     {left}

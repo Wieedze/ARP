@@ -75,3 +75,47 @@ before building it.
 
 `/modules/new` is the current register page and still writes to `ModuleRegistry`, which ADR `0051`
 classes as legacy.
+
+## A gate for the Tailwind utility that does not exist
+
+**Found 2026-10-28, while closing `tasks/29`.** Not asked for — it goes here because it is a scope
+expansion on a task about motion, and `rules/workflow.md` says that is this file's job.
+
+`rules/ui.md` §Gates names two failure classes no static check sees, and the first one is **a
+Tailwind utility that does not exist**: v4 emits nothing, silently, so a typo and a real utility
+both pass `tsc`, `eslint` and `check:tokens`. `check:tokens` is explicit that it does not cover it
+— _"It reads `var()` references, not class names."_
+
+**It is checkable, and the measurement is committed**: `scripts/measure/emitted-utilities.ts`.
+Tailwind writes one rule per utility it recognises, so a utility that emitted nothing is simply
+absent from the built stylesheet; strip the CSS escaping and a selector reads exactly like the class
+it came from. Measured 2026-10-28, after `cd app && bun run build`: **351 utility tokens across
+`app/src`, every one with a rule.** Pass paths to narrow the population.
+
+**Three things to decide before making it a gate**, all of them in the script's own docstring:
+
+1. It needs `bun run build` first, so it is slow — it belongs next to the build, not in the
+   four-gate list.
+2. **It over-reports.** Tailwind scans source files as text, so a class-shaped string in a
+   _comment_ emits a real rule. This repo shipped a dead `.z-15{z-index:15}` generated from the
+   word `z-15` inside a docstring, which is `ui.md`'s "a string in a class name is a string to
+   every other tool here" arriving from the other direction.
+3. A naive extractor cries wolf: a first attempt reported 268 "missing" tokens, almost all of them
+   utilities the app had shipped for weeks, because the regex stopped at the `:` inside
+   `text-[color:var(--color-steel)]`. **A gate that cries wolf teaches people to silence it**,
+   which is what `check-contrast.ts` is careful about in its own docstring.
+
+**A claim made here that was false**, recorded because the correction is the useful part. `tasks/29`
+reported that `z-15` is "not on Tailwind's z-index scale of 0/10/20/30/40/50" and that `z-[15]` is
+"the spelling that works". **Both halves are wrong.** Under this repo's Tailwind v4 the `z-<number>`
+namespace is open: `.z-15{z-index:15}` was in the shipped stylesheet when the reviewer checked, and
+`z-37` emits too. `z-[15]` is harmless and was never required; it is still what the code uses,
+because changing it back now would be churn. The claim came from the default-scale documentation
+plus a shell check whose quoting was broken — it printed "NOT EMITTED" for sixteen utilities that
+all exist — and a reviewer disproved it with one command. `rules/claims.md`: **a correction is not
+exempt from the rule it corrects**, and the earlier count was the same failure in miniature — the
+same hand-check gave 119, then 140, then 165 from three different extractors over three different
+file lists. One script now defines the population.
+
+The second failure class — a utility **defeated by an unlayered rule** in `index.css` — stays
+uncovered, and a comment at the call site is still the only defence.

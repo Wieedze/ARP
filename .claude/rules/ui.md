@@ -26,7 +26,13 @@ The UI must not look like a generic shadcn/ui starter, a v0.dev export, or a Ver
   Full circles (`rounded-full`) are reserved for **dots and agent sigils**, so a circle on this
   surface always means "an agent".
 - Emoji in body copy or icons
-- "How it works" scrollytelling sections
+- "How it works" scrollytelling sections. **Amended 2026-10-28** (ADRs `0066`, `0069`): `/` is now
+  a six-scene pinned sequence, which is scrollytelling, so this bullet has to say what it still
+  rejects. It rejects a scroll-triggered **section** bolted onto an ordinary page to illustrate the
+  product's mechanics — the template signal is the decoration, not the scroll. What makes the deck
+  not that: each scene **states** a mechanism or **reads a figure off the chain**, and the figures
+  are real or the scene says there are none. A scene that illustrated how ARP works with an
+  animation standing in for data is still the thing this forbids
 - Generic skeleton loaders with the gray-block-on-gray-background pattern
 
 Strip these reflexes. If you find yourself reaching for one, stop.
@@ -42,7 +48,21 @@ Strip these reflexes. If you find yourself reaching for one, stop.
 - **One accent, and it is warm.** Saffron `--color-accent`, 10.4:1, spent on the primary action, the
   selected state, and the viewer's own position — nothing else. Ink on top of it is
   `--color-accent-ink`, never paper. `--color-alarm` remains the single semantic exception (ADR
-  `0018`): a signature mismatch, or a module used but never declared. Nothing decorative.
+  `0018`): a signature mismatch, or a module used but never declared. Nothing decorative **in a
+  resting state**.
+- **Saffron may carry a transition, and the mark's core is always warm** (ADR `0067`, amending the
+  bullet above on 2026-10-28). Three conditions, and they are the whole of the exception:
+  1. **It is motion, not state.** The accent carries a hand-over only while one is in flight.
+     Nothing is left warm when the motion settles.
+  2. **It is the mark, not a palette.** The Source Field's core and the seed spheres are the same
+     object the logo is. A border, a rule, a background or a tag does not get to cite this.
+  3. **A figure never wears it decoratively.** Unchanged and non-negotiable: an amount, a count or a
+     timestamp is Saffron only where ADR `0057` already allows it — the primary action's own cost
+     inside the primary action's own card, and the viewer's own position.
+
+  What this bought and what it cost is in ADR `0067`. The short version of the cost: "Saffron means
+  somebody paid" now needs "except while the page is moving".
+
 - **Text levels are named for what they are, not for an alpha step.** `--color-fg` paper 15.5:1,
   `--color-silver` 8.5:1 body secondary, `--color-steel` 5.9:1 labels and secondary text,
   `--color-grey` 3.8:1 **dim display text only — never body copy**. Surfaces: `--color-ground` the
@@ -55,7 +75,15 @@ Strip these reflexes. If you find yourself reaching for one, stop.
   opens one sentence on hover **and** keyboard focus. Explanations live in the code comment, the ADR
   and `docs/`, not on screen.
 - **No mouse-reactive effects.** No parallax, no repulsion, no hover tilt, no cursor trails — the
-  user rejected all four. Row hover is a background change and nothing else.
+  user rejected all four. Row hover is a background change and nothing else. **Scroll position is
+  allowed and the pointer is not** — that is the line, and it did not move.
+- **A pinned scene deck owns the gesture, and nothing else on any page may** (ADR `0066`). Inside
+  `SceneDeck` one wheel notch, swipe or key press plays a whole hand-over on a timer and the rest of
+  that gesture is swallowed. It is scroll-jacking, it was asked for, and it is bounded: the
+  scrollbar stays native, `Home` and `End` still jump, both ends hand back to native scroll, and the
+  deck refuses to pin at all under `prefers-reduced-motion` or below 680×900. **Do not copy the
+  pattern to an ordinary page** — a document that fights the wheel has no defence of the kind listed
+  there.
 - **One loader, and it is the mark.** `RingLoader` (ADR `0057` §6), static under
   `prefers-reduced-motion`. Not a grey block on a grey background.
 - **Agent identity is a `Sigil`**, generated from chain data and never drawn by hand: a dot per

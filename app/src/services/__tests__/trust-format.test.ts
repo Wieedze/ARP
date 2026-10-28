@@ -9,6 +9,7 @@ import {
     formatDuration,
     formatStakerCount,
     formatTrust,
+    relativeDay,
     stakerLabel,
     truncateMiddle,
 } from "../trust-format";
@@ -156,5 +157,41 @@ describe("stakerLabel", () => {
         // only announced copy. These two drifted apart once already.
         expect(stakerLabel(1445)).toBe("1,445 distinct stakers");
         expect(stakerLabel(1445)).toContain(formatStakerCount(1445));
+    });
+});
+
+describe("relativeDay", () => {
+    const now = Date.parse("2026-10-28T12:00:00.000Z");
+    const ago = (days: number, hours = 0) =>
+        new Date(now - days * 86_400_000 - hours * 3_600_000).toISOString();
+
+    it("says today for anything inside the last day", () => {
+        expect(relativeDay(ago(0), now)).toBe("today");
+        expect(relativeDay(ago(0, 23), now)).toBe("today");
+    });
+
+    it("reads a future timestamp as today rather than counting backwards", () => {
+        // An indexer a few seconds ahead of the browser's clock is ordinary. `-1 days ago` is not.
+        expect(relativeDay(new Date(now + 5_000).toISOString(), now)).toBe("today");
+    });
+
+    it("names yesterday, then counts days", () => {
+        expect(relativeDay(ago(1), now)).toBe("yesterday");
+        expect(relativeDay(ago(2), now)).toBe("2 days ago");
+        expect(relativeDay(ago(30), now)).toBe("30 days ago");
+    });
+
+    it("switches to months at 31 days, and 31 to 59 all read as one month", () => {
+        // `days < 31` guards the day branch while `months` divides by 30, so the whole of the
+        // second month collapses into "a month ago". Deliberate at this resolution.
+        expect(relativeDay(ago(31), now)).toBe("a month ago");
+        expect(relativeDay(ago(59), now)).toBe("a month ago");
+        expect(relativeDay(ago(60), now)).toBe("2 months ago");
+        expect(relativeDay(ago(400), now)).toBe("13 months ago");
+    });
+
+    it("says it does not know rather than printing NaN", () => {
+        expect(relativeDay("not a date", now)).toBe("at an unknown time");
+        expect(relativeDay("", now)).toBe("at an unknown time");
     });
 });

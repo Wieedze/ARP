@@ -1,8 +1,17 @@
 # 18 — Motion: the page as one continuous read
 
-**For:** the design agent. **Status:** a brief, not a decision.
-**Date:** 2026-10-27
+**For:** the design agent. **Status:** a brief, answered — see the box below.
+**Date:** 2026-10-27, annotated 2026-10-28
 **Surfaces:** `/` first (`app/src/pages/Landing.tsx`), then `/agents`, `/tools`, `/atom/:atomId`.
+
+> **Answered on 2026-10-28, and this file is now the brief plus its answer.** The design came back
+> as `arp-motion-reference/index.html` and `arp-motion-reference/MOTION-V2.md`, which is **the build
+> contract** — where it and this file disagree, it wins. All three scales are built on `/`. The
+> seven decisions it carried that were the user's rather than ours are ADRs `0066`–`0069`; what §4
+> and §5 became, including the one thing asked for here and deliberately not built, is ADR `0070`.
+>
+> §2 below describes components that no longer exist. It is left as written, because §3's three
+> rules were derived from them and the derivation is the useful part.
 
 Read `docs/12_THE_IDEA.md` first — it is short and it is the only canonical statement of what this
 protocol is. Read `.claude/rules/ui.md` second: it is the build contract, and three of its rules
@@ -20,11 +29,11 @@ The user's words, 2026-10-27:
 
 Three distinct asks, and they are not the same problem:
 
-| scale          | what arrives                                      | where it applies                        |
-| -------------- | ------------------------------------------------- | --------------------------------------- |
-| **word**       | words of a headline, one after another, fading in | the hero h1, each section's h2          |
-| **block**      | a heading, then its body, then its rows           | every section — **this one exists**     |
-| **route**      | one page leaving, the next arriving               | between `/`, `/agents`, `/tools`, …     |
+| scale     | what arrives                                      | where it applies                    |
+| --------- | ------------------------------------------------- | ----------------------------------- |
+| **word**  | words of a headline, one after another, fading in | the hero h1, each section's h2      |
+| **block** | a heading, then its body, then its rows           | every section — **this one exists** |
+| **route** | one page leaving, the next arriving               | between `/`, `/agents`, `/tools`, … |
 
 The route transition must be **the least visible of the three**. That is explicit: _"mais moins
 visible dans l'enchaînement des pages"_. A page change that announces itself is a page change the
@@ -36,7 +45,14 @@ that is the most useful page of any handoff.
 
 ---
 
-## 2. What exists today, and its contract
+## 2. What existed when this was written, and its contract
+
+**Superseded 2026-10-28.** `Reveal` is now CSS driven by one `data-on` attribute on the scene rather
+than an observer per element, its timings are tokens (`--reveal-fade` 260ms stacked,
+`--scene-reveal` 700ms pinned), and `delayMs` is `index` — an **order**, not a duration, because the
+two modes are nearly 2× apart and a millisecond value at the call site would hardcode one of them.
+`PulseField` is deleted; `SourceField` replaces it (ADR `0067`). The paragraphs below are kept
+because §3 was derived from them.
 
 `app/src/components/brand/Reveal.tsx` — block scale only, shipped 2026-10-27.
 
@@ -83,7 +99,7 @@ These are not preferences. Two of them were arrived at by the user rejecting wor
 
 ---
 
-## 4. Word scale — the part that does not exist
+## 4. Word scale — the part that did not exist (built 2026-10-28, ADR `0070`)
 
 The hardest of the three, and the one with real accessibility weight.
 
@@ -112,7 +128,7 @@ re-enters the viewport.
 
 ---
 
-## 5. Route scale — the least visible of the three
+## 5. Route scale — the least visible of the three (built 2026-10-28, ADR `0070`, minus the out-fade)
 
 Routes are in `app/src/App.tsx`, each lazy-loaded behind a `<Suspense>` with a `RouteFallback`. So
 there are already **three** states to design, not two: leaving, loading, arriving. The loading state

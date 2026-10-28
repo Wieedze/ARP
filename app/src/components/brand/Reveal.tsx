@@ -1,88 +1,60 @@
-import {useEffect, useRef, useState, type ReactNode} from "react";
-
-import {useScene} from "./scene-context";
+import type {CSSProperties, ReactNode} from "react";
 
 /**
- * Bring an element in once, when it first reaches the viewport.
+ * Bring an element in once, when its scene arrives.
+ *
+ * ## It is CSS, and the state is on the scene
+ *
+ * This used to own an `IntersectionObserver` per element and hold a `seen` boolean. It no longer
+ * owns anything: {@link import("./SceneDeck").SceneDeck} flips one `data-on` attribute on the
+ * scene, and `index.css`'s `.arp-scene[data-on] .arp-rev` rules bring the whole subtree in. One
+ * attribute, one paint, and a scene of twenty elements costs one observer instead of twenty.
+ *
+ * It also fixes a failure the per-element version had by construction: in a pinned deck every scene
+ * is mounted and inside the viewport the whole time, just transparent, so an observer fires for all
+ * of them at once and every stagger plays off-screen before anybody scrolls.
  *
  * ## Why this and not a motion library
  *
- * The ask was GSAP. This is the same effect in ~30 lines against ~70 kB, and `rules/ui.md`'s bundle
- * rule is there to ask that question — the same trade `PulseField` makes against Three.js. Nothing
- * here needs a timeline, an easing curve library or scroll scrubbing: one threshold, one
- * transition, once. If a later design wants sequenced timelines or scrubbing, that is the moment to
- * weigh a dependency, with a brief that names what it buys.
+ * The ask was GSAP. `docs/18` §6 sets the bar for a motion dependency — a timeline, scrubbed
+ * progress, or reversibility. The block scale needs none of the three: it is one transition, once.
+ * The deck's hand-over needs the second and got it in about sixty lines (ADR `0066`).
  *
  * ## The rules it obeys
  *
  * - **It is not mouse-reactive.** `rules/ui.md` rejects parallax, repulsion, hover tilt and cursor
- *   trails. This reads scroll position only through `IntersectionObserver`, never the pointer, and
- *   it never moves again after it has arrived.
- * - **`prefers-reduced-motion` skips it entirely** — the element is simply present, at its final
- *   position and opacity. Not a faster animation: none.
- * - **It never hides content it cannot bring back.** The hidden state is chosen at first render by
- *   {@link canAnimate}, which asks whether an `IntersectionObserver` exists at all — so a reader
- *   whose environment cannot reveal is never hidden in the first place. A reveal that can swallow
- *   the page is worse than no reveal. (The hidden state used to be set inside the effect, which is
- *   a cascading render and which eslint rejects outright.)
+ *   trails. Nothing here reads the pointer.
+ * - **`prefers-reduced-motion` skips it entirely** — the media query at the end of `index.css`
+ *   pins every one of these rules to its final state. Not a faster animation: none.
+ * - **It never hides content it cannot bring back.** The hidden state is a descendant selector
+ *   under `[data-on="false"]`, and the deck's initial attribute is `"true"` with a failsafe that
+ *   turns the first scene on regardless. A reader whose JavaScript never runs sees the whole page.
  */
-
-/** Whether this environment can both animate and observe. Read once, at first render. */
-function canAnimate(): boolean {
-    if (typeof window === "undefined") return false;
-    if (typeof IntersectionObserver === "undefined") return false;
-    return !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-}
-
-/** Far enough that an element has finished arriving before it is read, short enough to feel owed. */
-const ROOT_MARGIN = "0px 0px -12% 0px";
-
 export function Reveal({
     children,
-    /** Stagger within a group, in milliseconds. `index * 60` is the house step. */
-    delayMs = 0,
+    /**
+     * Which sibling this is. Multiplied by `--reveal-step` stacked, `--scene-step` pinned.
+     *
+     * It is an **order**, not a delay in ms: the two timings differ by nearly 2× and putting a
+     * millisecond value here would hardcode one of them at the call site.
+     */
+    index = 0,
+    /** Hold the whole group back, in ms — for a block that waits on another block's stagger. */
+    afterMs = 0,
+    /** Fade without sliding. For a label or an eyebrow, which reads as misaligned if it moves. */
+    fade = false,
     className = "",
 }: {
     children: ReactNode;
-    delayMs?: number;
+    index?: number;
+    afterMs?: number;
+    fade?: boolean;
     className?: string;
 }) {
-    const {pinned, isActive} = useScene();
-    const ref = useRef<HTMLDivElement | null>(null);
-    const [seen, setSeen] = useState(() => !canAnimate());
-
-    // Pinned, the trigger is the scene arriving; stacked, it is the element reaching the viewport.
-    const shown = pinned ? !canAnimate() || isActive : seen;
-
-    useEffect(() => {
-        const node = ref.current;
-        if (node === null) return;
-        if (pinned) return;
-        if (!canAnimate()) return;
-
-        const observer = new IntersectionObserver(
-            (entries) => {
-                for (const entry of entries) {
-                    if (!entry.isIntersecting) continue;
-                    setSeen(true);
-                    observer.disconnect();
-                }
-            },
-            {rootMargin: ROOT_MARGIN, threshold: 0.08},
-        );
-        observer.observe(node);
-        return () => observer.disconnect();
-    }, [pinned]);
-
     return (
         <div
-            ref={ref}
-            className={`motion-safe:transition-[opacity,transform] motion-safe:duration-[260ms] motion-safe:ease-[var(--ease-out-quart)] ${
-                shown ? "translate-y-0 opacity-100" : "translate-y-3 opacity-0"
-            } ${className}`}
-            // The delay is on the way **in** — which is the opposite of the usual reflex. Put it
-            // on the hidden state and the element waits before leaving, so a scene change drags.
-            style={shown ? {transitionDelay: `${delayMs}ms`} : undefined}
+            className={`arp-rev ${fade ? "arp-rev-fade" : ""} ${className}`}
+            style={{"--reveal-index": index, "--reveal-after": `${afterMs}ms`} as CSSProperties}
         >
             {children}
         </div>
