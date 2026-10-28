@@ -199,10 +199,9 @@ script: `scripts/measure/landing-fit.ts`. It drives Chromium over the DevTools P
 1920x1080 and 390x844 with and without reduced motion, and measures fit, sideways scroll, the wheel
 step, the `#build` jump and sample data. **Run 2026-10-28: all five pass.**
 
-**There IS a browser in this environment, and the belief that there is not is written at 11 line
-sites across 9 files** — the list is in `tasks/28` item 35, measured rather than estimated, after
-two wrong counts (including one sentence here that claimed "five task files and two post-mortems"
-and then enumerated four and one). Chromium is at
+**There IS a browser in this environment, and the belief that there is not is written at 14 line
+sites across 12 files** — the list is in `tasks/28` item 35, where the count was wrong three times
+before it was measured, once by a correction that dropped a site the stale sentence already had. Chromium is at
 `/root/.cache/ms-playwright/chromium-1140/chrome-linux/chrome` and launches headless; what was
 missing all along was a driver, not a browser. Visual verification has been deferred across this
 project on a premise nobody tested — `rules/claims.md` §1 applied to a blocker rather than to a

@@ -119,3 +119,43 @@ file lists. One script now defines the population.
 
 The second failure class — a utility **defeated by an unlayered rule** in `index.css` — stays
 uncovered, and a comment at the call site is still the only defence.
+
+## A script for the claim that exists at N sites and gets fixed at N−1
+
+**Found 2026-10-28, across four verification rounds on `tasks/29`.** Not asked for, and it is a
+change to how this repo checks itself, so it belongs here and needs its own task and ADR rather
+than being absorbed into a UI task.
+
+Four rounds of verification on one task. The work passed every round; the **sentences about it**
+failed every round. The items differed each time and the mechanism never did: **a figure or an
+enumeration exists at N sites and gets corrected at N−1.** `rules/claims.md` §5 is entirely about
+this and was being read each round, which is the point — attention is not the fix.
+
+Worst instance, because it is a new failure mode: a correction _destroyed_ a site the stale
+sentence already had. "five task files and two PR drafts" was replaced by a measured table that
+listed one PR draft. **Grep before overwriting, not after.**
+
+Three of the seven defects in the fourth round were mechanically detectable with no judgement at
+all:
+
+1. **A markdown table whose row count disagrees with the count asserted in the nearest sentence.**
+   Twice in one round — "11 line sites across 9 files" over a 12-row table, and "those four lines"
+   over five.
+2. **A figure in a file's header and again in its body with different scope.** The 8px overflow was
+   narrowed in the body and left unqualified in the header, 150 lines above it and the first thing a
+   reader hits.
+3. **"recorded N times" where a grep returns N+1.** `solhint` was "recorded three times"; it is
+   four.
+
+`scripts/measure/claim-sites.ts` — given a number, a phrase or a file list, print every site and
+flag any enumeration whose length disagrees with the count asserted beside it — would have caught
+four of the seven in one run.
+
+**`rules/claims.md` says "commit the script, not the number", and the rule has never been applied
+to itself.** That is the whole of the idea.
+
+Two things to decide first. What counts as "the nearest asserted count" is a heuristic, and a
+heuristic that cries wolf gets silenced — the same trap `check-contrast.ts` was careful about and
+`scripts/measure/emitted-utilities.ts` documents. And the grep has to be over the **concept**, not
+the sentence: the browser-premise sweep needed five different phrasings and 123 hits read by hand
+before the count was right, which no single pattern would have found.

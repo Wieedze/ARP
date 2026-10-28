@@ -116,9 +116,7 @@ const PROBE = String.raw`(() => {
             : null,
         samples: ["vault-auditor", "crytic-runner", "maturity-bot", "Echidna"]
             .filter((name) => (document.body.textContent ?? "").includes(name)),
-        amounts: [...document.querySelectorAll("dd, strong")]
-            .map((el) => el.textContent ?? "")
-            .filter((text) => /[\d.]+\s*t?TRUST/.test(text)),
+        amounts: (document.body.textContent ?? "").match(/[\d.]+\s*t?TRUST/g) ?? [],
         anchors: [...document.querySelectorAll('a[href^="#"]')]
             .map((a) => a.getAttribute("href"))
             .filter((href) => href !== null && document.querySelector(href) === null),
@@ -337,7 +335,11 @@ for (const reduced of [false, true]) {
     console.log(
       `  bleed past the viewport, clip lifted: ${page.clipped}px (scrollbar ${page.scrollbar}px)`,
     );
-    if (page.clipped > page.scrollbar) {
+    // `Math.ceil(scrollbar / 2)`, not `scrollbar`: the detail string below says a bleed should
+    // overrun by at most **half** a scrollbar, and the threshold used to allow a whole one — so
+    // anything from 9 to 15px passed while printing a figure the message calls wrong. The enforced
+    // number and the printed invariant have to be the same number.
+    if (page.clipped > Math.ceil(page.scrollbar / 2)) {
       note(
         where,
         'the clip hides more than a scrollbar',
@@ -375,10 +377,19 @@ for (const reduced of [false, true]) {
       note(where, 'nav is not sticky', `position: ${page.navPosition}; the deck assumes 88px`);
     }
 
+    // **Before the stacked `continue` below.** It was after it, so this was dead in five of the
+    // eight runs — both 390px runs and all three reduced-motion ones, which is the configuration
+    // most worth watching for a throw, because reduced motion is where `Reveal` and `Words` take
+    // their other code path. The same structural bug as the field-above-copy guard, one guard over,
+    // in the same commit that fixed that one.
+    if (consoleErrors.length > 0) {
+      note(where, 'console errors', consoleErrors.slice(0, 3).join(' | '));
+    }
+
     if (!page.pinned) {
       // Stacked, every scene is in the document flow and scrolls normally; "fit" is not a
-      // question. What matters here is the two checks already made above: no sideways
-      // scroll, and nothing left hidden.
+      // question. What matters here is the checks already made above: root scrollable overflow,
+      // nothing left hidden, and no console errors.
       console.log('  stacked — fit does not apply');
       cdp.close();
       child.kill();
@@ -514,10 +525,6 @@ for (const reduced of [false, true]) {
       note(where, '#build landed on a transparent scene', `opacity ${jumped.opacity}`);
     }
 
-    if (consoleErrors.length > 0) {
-      note(where, 'console errors', consoleErrors.slice(0, 3).join(' | '));
-    }
-
     cdp.close();
     child.kill();
     await sleep(300);
@@ -525,7 +532,17 @@ for (const reduced of [false, true]) {
 }
 
 if (findings.length === 0) {
-  console.log('\nEvery viewport passes: scenes fit, no sideways scroll, nothing left hidden.');
+  // **Says what it measured, which is narrower than "no sideways scroll."** It reads the
+  // document's own scrollable overflow, at the root, with the clip lifted. A nested
+  // `overflow-x: auto` strip scrolled sideways is invisible to it, and so is any leftward bleed,
+  // because left-side overflow never enters `scrollWidth` in LTR. **Latent on `/`, not live**
+  // (`claims.md` §1): the whole of `app/src` has one horizontal scroll container, a `<pre>` in
+  // `ToolRegister.tsx`, and no negative-left sites — so this is a limit of the sentence rather
+  // than of the page.
+  console.log(
+    '\nEvery viewport passes: scenes fit, no root overflow past half a scrollbar, nothing hidden,',
+  );
+  console.log('no console errors. A nested scroll container or a leftward bleed is NOT covered.');
   process.exit(0);
 }
 console.error(`\n${findings.length} finding(s):\n`);

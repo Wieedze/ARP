@@ -170,14 +170,14 @@ with the code. Read-only audit first, then fixes in small batches.
     rather than rewritten; `trust-format.ts`'s is an ordinary comment and is simply wrong. Found by
     the `tasks/29` verifier, outside that task's scope.
 
-35. **"There is no browser in the build environment" is false, and it is written at 11 line sites
-    across 9 files.** Measured 2026-10-28 by grepping the concept rather than the sentence
-    (`no browser`, `browser was available`, `browser in the build`, `visual verification`,
-    `visually verified`) and reading every hit:
+35. **"There is no browser in the build environment" is false, and it is written at 14 line sites
+    across 12 files.** Measured 2026-10-28 by grepping the word `browser` across every `.md`,
+    `.ts`, `.tsx` and `.css` outside `node_modules` — 123 hits — and reading each one:
 
     | file                                                                      | lines    |
     | ------------------------------------------------------------------------- | -------- |
     | `tasks/08-agent-trust-panel.md`                                           | 211      |
+    | `tasks/10-agent-directory-full-cohort.md`                                 | 87       |
     | `tasks/11-import-existing-erc8004-agent.md`                               | 91       |
     | `tasks/12-agent-panel-tabs.md`                                            | 69       |
     | `tasks/14-contrast-below-aa.md`                                           | 86       |
@@ -186,29 +186,53 @@ with the code. Read-only audit first, then fixes in small batches.
     | `.claude/learning/11-agent-directory-full-cohort.md`                      | 114, 157 |
     | `.claude/choices/0029-the-page-states-facts-and-stops-explaining-them.md` | 140      |
     | `.github/pull_request_drafts/04-agent-trust-panel.md`                     | 73       |
+    | `.github/pull_request_drafts/05-import-erc8004-agent.md`                  | 56       |
+    | `scripts/measure/contrast.ts`                                             | 4        |
+
+    **Deliberately not counted**, so the next sweep does not re-litigate them: `tasks/08:227` ("not
+    in a browser") states a method rather than the premise, and eleven hits of **"no browser flow
+    pins"** (`tasks/06`, `docs/08`, `docs/10`, `choices/0016`, `choices/0026`, two PR drafts) are a
+    different sense of the word — almost certainly where an earlier estimate of "seven places" came
+    from. One borderline: `choices/0050:49` rejects an alternative partly because it "would be slow,
+    need a browser or a build", an argument leaning on the premise.
 
     Chromium is at `/root/.cache/ms-playwright/chromium-1140/chrome-linux/chrome` and launches
     headless; what was missing is a driver wired into the repo, which
-    `scripts/measure/landing-fit.ts` now shows can be done with `fetch` and a `WebSocket` and no new
-    dependency.
+    `scripts/measure/landing-fit.ts` shows can be done with `fetch` and a `WebSocket` and no new
+    dependency. **State the real constraint rather than removing it**: the cache is under `/root`,
+    so this works while the session runs as root.
 
-    This is `rules/claims.md` §1 applied to a **blocker** rather than to a figure: visual
-    verification has been deferred across this project on a premise nobody tested, and
-    `learning/10:57` is the load-bearing one — _"nothing was visually verified … the two acceptance
+    This is `rules/claims.md` §1 applied to a **blocker** rather than to a figure — visual
+    verification has been deferred across this project on a premise nobody tested — and
+    `learning/10:57` is the load-bearing one: _"nothing was visually verified … the two acceptance
     criteria still resting on inference"_.
 
-    The task files are historical record and several are closed, so the fix is a line in each saying
-    the premise was wrong rather than a rewrite. `learning/10`, `learning/11` and `choices/0029` are
-    **append-only**, so those four lines get a struck-through note in place. The PR draft is unsent
-    and should be corrected before it goes out.
+    **How to fix each kind:**
+    - **`scripts/measure/contrast.ts:4` is code, not record. Just fix the clause** — done in the
+      same commit as this item. Its argument (compute a ratio, do not judge it) survives intact and
+      in fact gets stronger.
+    - **Two PR drafts**, 04 and 05, are unsent as far as the directory name says; correct them
+      before they go out.
+    - **Five lines are in append-only or immutable files** — `learning/10:57`, `learning/10:64`,
+      `learning/11:114`, `learning/11:157`, `choices/0029:140` — so they get a struck-through note
+      in place rather than a rewrite.
+    - **The six task files are historical record by choice, not by rule.** Nothing makes `tasks/`
+      append-only, so annotating rather than rewriting them is a judgement; `tasks/29` was rewritten
+      four times this week.
 
-    **State the real constraint rather than removing it**: the cache is under `/root`, so this works
-    while the session runs as root. "No browser" is what nobody checked; "no driver, and the browser
-    is root-owned" is what is true.
+    **And one convention question this exposed, which is not mine to settle.**
+    `.claude/choices/README.md:25` says an ADR is "immutable except for the `Status` field", which
+    is _stricter_ than append-only and does **not** authorise a struck-through note in the body —
+    yet ten ADRs already carry one (`0015`, `0022`, `0035`, `0036`, `0039`, `0042`, `0044`, `0045`,
+    `0046`, `0049`). Either the README is stale or the practice is. Decide which before annotating
+    `choices/0029`.
 
-    This item's own count was wrong twice before it was measured — "seven places" naming five, and a
-    `STATE.md` sentence that claimed "five task files and two post-mortems" and then enumerated four
-    and one. Grep the concept; read every hit.
+    This item's own count was wrong **three times** before it was measured: "seven places" naming
+    five, then "11 line sites across 9 files", and a `STATE.md` sentence that claimed "five task
+    files and two post-mortems" and then enumerated four and one. The second correction was the
+    worst of the three — it replaced a sentence that said "**two** PR drafts" with a table listing
+    one, so the fix destroyed a site the stale version already knew about. **Grep before
+    overwriting, not after.**
 
 36. **`/` has motion and the other four pages have none.** `/agents`, `/tools`, `/atom/:atomId` and
     `/agent` do not have even the block-level reveal, and the step is visible the moment you leave

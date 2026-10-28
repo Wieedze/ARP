@@ -12,8 +12,9 @@
 >
 > All five browser checks **run and pass**, in Chromium, against the built bundle:
 > `scripts/measure/landing-fit.ts`. It found two defects nothing else could see — the manifesto
-> scene was 1296px tall at every viewport, and the page scrolled sideways by 8px wherever a
-> scrollbar exists. Both fixed and re-measured.
+> scene was 1296px tall at every viewport, and the page scrolled sideways by 8px in the stacked
+> path above 900px. Both fixed and re-measured. (This line said "wherever a scrollbar exists",
+> which the body of this file corrects and this header did not — `claims.md` §5, again.)
 >
 > An earlier version of this line said the checks could not be run because the session had no
 > browser. **That was asserted without testing it** — Chromium is in the image at
@@ -116,9 +117,11 @@ bun --filter '*' lint   # exits 127 — see below
 ```
 
 **`bun --filter '*' lint` cannot pass in this environment and never could**: `@arp/contracts lint`
-runs `solhint`, which is not installed and is not a dependency anywhere, so the filter exits **127**.
-Long-standing and recorded three times already (`STATE.md`, `learning/08`, `tasks/01`), and not a
-regression here. It is listed last and **not** chained with `&&`, because the first version of this
+runs `solhint`, which is not installed and is not a dependency of any **ARP workspace** — it is
+declared in three vendored manifests under `contracts/lib/delegation-framework/lib/`, which is why
+"not a dependency anywhere" was wrong. The filter exits **127**. Long-standing and recorded four
+times already (`STATE.md:64`, `learning/08:45`, `tasks/01:53`, `tasks/06:12`), and not a regression
+here. It is listed last and **not** chained with `&&`, because the first version of this
 Gate wrote `bun --filter '*' lint && bun --filter '*' test` — which means the test half never ran,
 so the Gate as written was unsatisfiable and was reported green anyway (`rules/claims.md` §4).
 
@@ -137,8 +140,8 @@ bun run scripts/measure/landing-fit.ts
    each of the six bands and measures whichever scene becomes active there; a one-shot measurement
    at scroll 0 checks one scene of six, which is how the manifesto's 1296px went unseen.
 2. One wheel notch from the top plays the full dive and lands on scene 1. A burst of six advances
-   exactly one more, so `SETTLE` is swallowing the tail. Past scene 6, native scroll resumes, and
-   `Home`/`End` still jump.
+   exactly one more, so `SETTLE` is swallowing the tail. Past the **last** scene — scene 5, six
+   scenes being 0 to 5 — native scroll resumes, and `Home`/`End` still jump.
 3. `#build` lands on the **last** scene with the target at `opacity: 1`. It once moved the page
    268px and left the target invisible. (`data-scene` is 0-based, so that is scene **5**; this line
    said "scene 6" while every other item here and the script's own assertion are 0-based.)
@@ -147,9 +150,12 @@ bun run scripts/measure/landing-fit.ts
 5. No sample **name** from the reference anywhere on the page. **Neither amount is a sample**:
    `0.1 TRUST` is mainnet's `getTripleCost()` and `0.11 TRUST` is that plus `minDeposit` 0.01, both
    read live off chain 1155. The first run of the script listed `0.11` as sample data and reported a
-   correct chain figure as fabricated. The script asserts the names and **prints** the amounts, so a
-   wrong one is visible to a reader rather than caught by an assertion — a real limit, since nobody
-   reads the output of a passing run.
+   correct chain figure as fabricated.
+
+   The script asserts the **names** and **prints** the amounts, which is a real limit: nobody reads
+   the output of a passing run. It was worse than that until now — the probe's selector was
+   `dd, strong`, and the fee is interpolated into a `<p>`, so all eight runs printed `0.11 TRUST`
+   and never `0.1 TRUST`. It reads `body.textContent` now and prints both.
 
 Measured 2026-10-28, all three pinned viewports: every band activates its own scene, every scene
 fits, one notch gives scene 1, a burst of six gives scene 2, `#build` gives scene 5 at opacity 1.00.

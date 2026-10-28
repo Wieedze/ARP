@@ -1,9 +1,14 @@
 /**
  * WCAG contrast for every colour token, against every surface it can land on.
  *
- * `tasks/14` exists because a ratio was **computed** rather than judged — there is no browser in
- * the build environment, and "it looks fine" is how a 3.66:1 token survived review. This is that
- * computation, committed, so the next reviewer re-runs it instead of re-eyeballing it.
+ * `tasks/14` exists because a ratio was **computed** rather than judged: "it looks fine" is how a
+ * 3.66:1 token survived review. This is that computation, committed, so the next reviewer re-runs
+ * it instead of re-eyeballing it.
+ *
+ * This used to say "there is no browser in the build environment", which was **false** — Chromium
+ * is in the image and `scripts/measure/landing-fit.ts` drives it. The argument does not need it and
+ * is stronger without it: a ratio is arithmetic, and a browser would let you look at it rather than
+ * compute it, which is the mistake. `tasks/28` item 35 has the other thirteen sites of that claim.
  *
  *   bun run scripts/measure/contrast.ts
  */
