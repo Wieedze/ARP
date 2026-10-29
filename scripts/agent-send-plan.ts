@@ -57,6 +57,8 @@ const outcome = await sendPlan({
   chainId: Number(chainArg),
   rpcUrl,
   ...(arg('key') === undefined ? {} : { keyName: arg('key') as string }),
+  // `--pause <ms>`: Intuition's public RPC meters bytes over time, not per call. See `pauseMs`.
+  ...(arg('pause') === undefined ? {} : { pauseMs: Number(arg('pause')) }),
   execute: process.argv.includes('--execute'),
   onCall: (index, _call, hash, status, gasUsed) => {
     console.log(`  ${String(index + 1).padStart(2)}. ${status.padEnd(8)} ${hash}  gas ${gasUsed}`);

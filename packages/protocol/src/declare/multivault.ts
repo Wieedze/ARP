@@ -251,11 +251,7 @@ export function atomDataForUri(uri: string): Hex {
  * `cost + deposit`. `value` on the call must equal it.
  */
 export function encodeCreateAtom(atomData: Hex, assets: bigint): Hex {
-    return encodeFunctionData({
-        abi: multiVaultDeclareAbi,
-        functionName: "createAtoms",
-        args: [[atomData], [assets]],
-    });
+    return encodeCreateAtoms([{atomData, assets}]);
 }
 
 /** Same as {@link encodeCreateAtom}: `assets` is the deposit and the triple's fee comes out of it. */
@@ -265,10 +261,41 @@ export function encodeCreateTriple(
     objectId: Hex,
     assets: bigint,
 ): Hex {
+    return encodeCreateTriples([{subjectId, predicateId, objectId, assets}]);
+}
+
+/**
+ * Several atoms in one call, which is what the contract has always taken.
+ *
+ * `createAtoms` is plural on chain; the singular encoders above wrap a one-element array, and that
+ * was the whole of this package's reach until a job arrived with 662 of them. One transaction each
+ * would have been 662 signatures and 662 gas floors to say one thing.
+ *
+ * **`value` must equal the sum of `assets`**, and the caller computes it — the same contract as the
+ * singular form, applied to a list. A batch is atomic: one member that already exists reverts the
+ * whole call with `MultiVault_AtomExists`, so filter before encoding rather than after.
+ */
+export function encodeCreateAtoms(items: readonly {atomData: Hex; assets: bigint}[]): Hex {
+    return encodeFunctionData({
+        abi: multiVaultDeclareAbi,
+        functionName: "createAtoms",
+        args: [items.map((item) => item.atomData), items.map((item) => item.assets)],
+    });
+}
+
+/** Several triples in one call. Same contract as {@link encodeCreateAtoms}, four arrays instead of two. */
+export function encodeCreateTriples(
+    items: readonly {subjectId: Hex; predicateId: Hex; objectId: Hex; assets: bigint}[],
+): Hex {
     return encodeFunctionData({
         abi: multiVaultDeclareAbi,
         functionName: "createTriples",
-        args: [[subjectId], [predicateId], [objectId], [assets]],
+        args: [
+            items.map((item) => item.subjectId),
+            items.map((item) => item.predicateId),
+            items.map((item) => item.objectId),
+            items.map((item) => item.assets),
+        ],
     });
 }
 

@@ -18,7 +18,9 @@
 export {
     atomDataForUri,
     encodeCreateAtom,
+    encodeCreateAtoms,
     encodeCreateTriple,
+    encodeCreateTriples,
     encodeDeposit,
     encodeRedeem,
     multiVaultDeclareAbi,

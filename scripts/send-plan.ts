@@ -54,6 +54,17 @@ export type SendOptions = {
   /** Env var holding the key. Read, never printed. */
   keyName?: string;
   execute?: boolean;
+  /**
+   * Milliseconds to wait between calls. Default 0, which is what every plan before 2026-10-29
+   * needed: they were tens of calls carrying a few hundred bytes each.
+   *
+   * It exists because a 662-skill seed is not that. Intuition's public testnet RPC answered
+   * `eth_sendRawTransaction` with **"Bandwidth limit exceeded"** (code -31002) on the fifth batch
+   * of twenty — four had already landed, so it is a rate over time and not a size per call, and
+   * `eth_estimateGas` over the same calldata had passed. Waiting for a receipt is not pacing: the
+   * receipt comes back fast and the next 4 KB leaves immediately.
+   */
+  pauseMs?: number;
   /** Per-call progress, so a caller can show each receipt as it lands. */
   onCall?: (
     index: number,
@@ -118,7 +129,11 @@ export async function sendPlan(options: SendOptions): Promise<SendOutcome> {
 
   const wallet = createWalletClient({ account, transport: http(rpcUrl) });
   const hashes: Hex[] = [];
+  const pauseMs = options.pauseMs ?? 0;
   for (const [index, call] of calls.entries()) {
+    if (index > 0 && pauseMs > 0) {
+      await new Promise((done) => setTimeout(done, pauseMs));
+    }
     const hash = await wallet.sendTransaction({
       to: call.to,
       value: BigInt(call.value),
