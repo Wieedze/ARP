@@ -1,0 +1,3536 @@
+{
+  "measuredAt": "2026-10-29T08:55:30.757Z",
+  "source": "skills.sh",
+  "published": 20000,
+  "perRepo": [
+    {
+      "repo": "vercel-labs/skills",
+      "skills": 1,
+      "read": 1,
+      "sum": 4100928,
+      "max": 4100928
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skills": 55,
+      "read": 55,
+      "sum": 30605711,
+      "max": 1456291
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skills": 49,
+      "read": 49,
+      "sum": 16270959,
+      "max": 1311081
+    },
+    {
+      "repo": "vercel-labs/agent-browser",
+      "skills": 1,
+      "read": 1,
+      "sum": 1290660,
+      "max": 1290660
+    },
+    {
+      "repo": "flowkit-labs/skills",
+      "skills": 1,
+      "read": 1,
+      "sum": 1146143,
+      "max": 1146143
+    },
+    {
+      "repo": "designed-by-ai/skills",
+      "skills": 1,
+      "read": 1,
+      "sum": 1099222,
+      "max": 1099222
+    },
+    {
+      "repo": "anthropics/skills",
+      "skills": 20,
+      "read": 20,
+      "sum": 3617661,
+      "max": 1047191
+    },
+    {
+      "repo": "101-skills/superpowers",
+      "skills": 26,
+      "read": 26,
+      "sum": 4969255,
+      "max": 897738
+    },
+    {
+      "repo": "vercel-labs/agent-skills",
+      "skills": 10,
+      "read": 10,
+      "sum": 3048634,
+      "max": 850634
+    },
+    {
+      "repo": "magentosh/superpowers",
+      "skills": 26,
+      "read": 26,
+      "sum": 4350541,
+      "max": 788116
+    },
+    {
+      "repo": "remotion-dev/skills",
+      "skills": 13,
+      "read": 13,
+      "sum": 3121565,
+      "max": 705056
+    },
+    {
+      "repo": "leonxlnx/taste-skill",
+      "skills": 15,
+      "read": 15,
+      "sum": 5515911,
+      "max": 696958
+    },
+    {
+      "repo": "juliusbrussee/caveman",
+      "skills": 24,
+      "read": 24,
+      "sum": 4495689,
+      "max": 598800
+    },
+    {
+      "repo": "microsoft/azure-skills",
+      "skills": 42,
+      "read": 42,
+      "sum": 14419539,
+      "max": 582241
+    },
+    {
+      "repo": "qu-skills/superpowers",
+      "skills": 26,
+      "read": 26,
+      "sum": 3205244,
+      "max": 580564
+    },
+    {
+      "repo": "google/agents-cli",
+      "skills": 7,
+      "read": 7,
+      "sum": 3646303,
+      "max": 522101
+    },
+    {
+      "repo": "skills-shell/superpowers",
+      "skills": 26,
+      "read": 26,
+      "sum": 2680001,
+      "max": 485247
+    },
+    {
+      "repo": "larksuite/cli",
+      "skills": 29,
+      "read": 29,
+      "sum": 12057583,
+      "max": 481638
+    },
+    {
+      "repo": "lllllllama/rigorpilot-skills",
+      "skills": 12,
+      "read": 12,
+      "sum": 4311374,
+      "max": 480555
+    },
+    {
+      "repo": "prime-skills/runcomfy-agent-skills",
+      "skills": 30,
+      "read": 30,
+      "sum": 11788375,
+      "max": 441282
+    },
+    {
+      "repo": "its-a-skill-issue/superpowers",
+      "skills": 26,
+      "read": 26,
+      "sum": 2369719,
+      "max": 428787
+    },
+    {
+      "repo": "bankai-skills/superpowers",
+      "skills": 26,
+      "read": 26,
+      "sum": 2280582,
+      "max": 413557
+    },
+    {
+      "repo": "obra/superpowers",
+      "skills": 15,
+      "read": 15,
+      "sum": 3693645,
+      "max": 410196
+    },
+    {
+      "repo": "prisma/skills",
+      "skills": 10,
+      "read": 10,
+      "sum": 3566294,
+      "max": 398824
+    },
+    {
+      "repo": "emilkowalski/skills",
+      "skills": 16,
+      "read": 16,
+      "sum": 2790888,
+      "max": 397449
+    },
+    {
+      "repo": "pbakaus/impeccable",
+      "skills": 24,
+      "read": 24,
+      "sum": 1883454,
+      "max": 369485
+    },
+    {
+      "repo": "gencraft-labs/skills",
+      "skills": 5,
+      "read": 5,
+      "sum": 1618849,
+      "max": 324664
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skills": 71,
+      "read": 71,
+      "sum": 5924020,
+      "max": 240739
+    },
+    {
+      "repo": "higgsfield-ai/skills",
+      "skills": 10,
+      "read": 10,
+      "sum": 1325938,
+      "max": 222203
+    },
+    {
+      "repo": "firebase/agent-skills",
+      "skills": 23,
+      "read": 23,
+      "sum": 2096893,
+      "max": 177403
+    },
+    {
+      "repo": "cloudflare/skills",
+      "skills": 22,
+      "read": 22,
+      "sum": 1512734,
+      "max": 141287
+    }
+  ],
+  "rows": [
+    {
+      "repo": "vercel-labs/skills",
+      "skill": "find-skills",
+      "installs": 4100928
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "grill-me",
+      "installs": 1456291
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "grill-with-docs",
+      "installs": 1246867
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "improve-codebase-architecture",
+      "installs": 1189134
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "tdd",
+      "installs": 1165552
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "setup-matt-pocock-skills",
+      "installs": 1077188
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "handoff",
+      "installs": 1064380
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "triage",
+      "installs": 1011785
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "grilling",
+      "installs": 1010398
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "prototype",
+      "installs": 1009637
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "domain-modeling",
+      "installs": 902646
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "teach",
+      "installs": 884243
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "codebase-design",
+      "installs": 875044
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "diagnosing-bugs",
+      "installs": 859878
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "code-review",
+      "installs": 814531
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "implement",
+      "installs": 796867
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "ask-matt",
+      "installs": 787889
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "wayfinder",
+      "installs": 740107
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "to-spec",
+      "installs": 737287
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "to-tickets",
+      "installs": 733559
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "research",
+      "installs": 732568
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "wizard",
+      "installs": 573576
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "resolving-merge-conflicts",
+      "installs": 551126
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "to-questionnaire",
+      "installs": 517902
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "git-guardrails-claude-code",
+      "installs": 514745
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "setup-pre-commit",
+      "installs": 504174
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "writing-beats",
+      "installs": 497510
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "writing-shape",
+      "installs": 497097
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "writing-fragments",
+      "installs": 496444
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "scaffold-exercises",
+      "installs": 494837
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "migrate-to-shoehorn",
+      "installs": 490544
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "writing-for-agents",
+      "installs": 489275
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "wait-what",
+      "installs": 468980
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "loop-me",
+      "installs": 454697
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "claude-handoff",
+      "installs": 436148
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "setup-ts-deep-modules",
+      "installs": 382530
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "to-prd",
+      "installs": 351582
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "to-issues",
+      "installs": 339105
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "writing-great-skills",
+      "installs": 306548
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "implement-spec",
+      "installs": 303018
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "retro",
+      "installs": 295880
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "diagnose",
+      "installs": 227595
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "write-a-skill",
+      "installs": 219745
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "zoom-out",
+      "installs": 219148
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "caveman",
+      "installs": 214562
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "design-an-interface",
+      "installs": 208837
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "request-refactor-plan",
+      "installs": 202435
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "qa",
+      "installs": 198680
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "ubiquitous-language",
+      "installs": 197202
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "obsidian-vault",
+      "installs": 195515
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "edit-article",
+      "installs": 191782
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "pr",
+      "installs": 188023
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "review",
+      "installs": 89883
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "chief-of-staff",
+      "installs": 87125
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "batch-grill-me",
+      "installs": 61378
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "decision-mapping",
+      "installs": 42232
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skill": "hyperframes-cli",
+      "installs": 1311081
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skill": "hyperframes",
+      "installs": 1276987
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skill": "media-use",
+      "installs": 1181953
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skill": "hyperframes-registry",
+      "installs": 1073156
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skill": "hyperframes-animation",
+      "installs": 1004938
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skill": "hyperframes-core",
+      "installs": 930624
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skill": "hyperframes-creative",
+      "installs": 916673
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skill": "hyperframes-keyframes",
+      "installs": 754364
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skill": "hyperframes-audio",
+      "installs": 663435
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skill": "general-video",
+      "installs": 661308
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skill": "product-launch-video",
+      "installs": 538876
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skill": "remotion-to-hyperframes",
+      "installs": 531761
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skill": "faceless-explainer",
+      "installs": 521565
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skill": "motion-graphics",
+      "installs": 513886
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skill": "embedded-captions",
+      "installs": 453479
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skill": "hyperframes-studio",
+      "installs": 451208
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skill": "pr-to-video",
+      "installs": 448821
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skill": "slideshow",
+      "installs": 440155
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skill": "music-to-video",
+      "installs": 418860
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skill": "talking-head-recut",
+      "installs": 407508
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skill": "figma",
+      "installs": 353169
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skill": "hyperframes-media",
+      "installs": 141731
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skill": "website-to-video",
+      "installs": 97353
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skill": "gsap",
+      "installs": 92062
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skill": "website-to-hyperframes",
+      "installs": 89314
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skill": "css-animations",
+      "installs": 72305
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skill": "tailwind",
+      "installs": 70553
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skill": "animejs",
+      "installs": 70010
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skill": "three",
+      "installs": 69319
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skill": "lottie",
+      "installs": 69051
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skill": "waapi",
+      "installs": 68692
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skill": "motion-doctrine",
+      "installs": 61073
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skill": "captions-overlay",
+      "installs": 60824
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skill": "cut-the-curve",
+      "installs": 60592
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skill": "seam-craft",
+      "installs": 60270
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skill": "oversized-cursor",
+      "installs": 60061
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skill": "changelog-video",
+      "installs": 60058
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skill": "contribute-catalog",
+      "installs": 55491
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skill": "typegpu",
+      "installs": 50961
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skill": "graphic-overlays",
+      "installs": 29123
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skill": "frost-sequence-camera-orbit",
+      "installs": 10561
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skill": "cuboid-carousel",
+      "installs": 10548
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skill": "glass-shard-title",
+      "installs": 10559
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skill": "code-slice-hero",
+      "installs": 10557
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skill": "canopy-part-title",
+      "installs": 10557
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skill": "wireframe-portal-title",
+      "installs": 10554
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skill": "orbit-card",
+      "installs": 10554
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skill": "hyperframes-read-first",
+      "installs": 2415
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skill": "claude-design-hyperframes",
+      "installs": 2004
+    },
+    {
+      "repo": "vercel-labs/agent-browser",
+      "skill": "agent-browser",
+      "installs": 1290660
+    },
+    {
+      "repo": "flowkit-labs/skills",
+      "skill": "reddit-automation",
+      "installs": 1146143
+    },
+    {
+      "repo": "designed-by-ai/skills",
+      "skill": "design-mobile-apps",
+      "installs": 1099222
+    },
+    {
+      "repo": "anthropics/skills",
+      "skill": "frontend-design",
+      "installs": 1047191
+    },
+    {
+      "repo": "anthropics/skills",
+      "skill": "skill-creator",
+      "installs": 418317
+    },
+    {
+      "repo": "anthropics/skills",
+      "skill": "pptx",
+      "installs": 244610
+    },
+    {
+      "repo": "anthropics/skills",
+      "skill": "pdf",
+      "installs": 219042
+    },
+    {
+      "repo": "anthropics/skills",
+      "skill": "docx",
+      "installs": 209195
+    },
+    {
+      "repo": "anthropics/skills",
+      "skill": "webapp-testing",
+      "installs": 191618
+    },
+    {
+      "repo": "anthropics/skills",
+      "skill": "xlsx",
+      "installs": 189828
+    },
+    {
+      "repo": "anthropics/skills",
+      "skill": "mcp-builder",
+      "installs": 133613
+    },
+    {
+      "repo": "anthropics/skills",
+      "skill": "canvas-design",
+      "installs": 123814
+    },
+    {
+      "repo": "anthropics/skills",
+      "skill": "web-artifacts-builder",
+      "installs": 113786
+    },
+    {
+      "repo": "anthropics/skills",
+      "skill": "brand-guidelines",
+      "installs": 112081
+    },
+    {
+      "repo": "anthropics/skills",
+      "skill": "theme-factory",
+      "installs": 96570
+    },
+    {
+      "repo": "anthropics/skills",
+      "skill": "doc-coauthoring",
+      "installs": 95573
+    },
+    {
+      "repo": "anthropics/skills",
+      "skill": "algorithmic-art",
+      "installs": 90468
+    },
+    {
+      "repo": "anthropics/skills",
+      "skill": "internal-comms",
+      "installs": 81410
+    },
+    {
+      "repo": "anthropics/skills",
+      "skill": "slack-gif-creator",
+      "installs": 76467
+    },
+    {
+      "repo": "anthropics/skills",
+      "skill": "claude-api",
+      "installs": 75584
+    },
+    {
+      "repo": "anthropics/skills",
+      "skill": "template-skill",
+      "installs": 72200
+    },
+    {
+      "repo": "anthropics/skills",
+      "skill": "discernment-nudge",
+      "installs": 13332
+    },
+    {
+      "repo": "anthropics/skills",
+      "skill": "academy-guide",
+      "installs": 12962
+    },
+    {
+      "repo": "101-skills/superpowers",
+      "skill": "ai-video-generation",
+      "installs": 897738
+    },
+    {
+      "repo": "101-skills/superpowers",
+      "skill": "ai-image-generation",
+      "installs": 896473
+    },
+    {
+      "repo": "101-skills/superpowers",
+      "skill": "twitter-automation",
+      "installs": 896120
+    },
+    {
+      "repo": "101-skills/superpowers",
+      "skill": "ai-avatar-video",
+      "installs": 895863
+    },
+    {
+      "repo": "101-skills/superpowers",
+      "skill": "agent-browser",
+      "installs": 169430
+    },
+    {
+      "repo": "101-skills/superpowers",
+      "skill": "web-search",
+      "installs": 113330
+    },
+    {
+      "repo": "101-skills/superpowers",
+      "skill": "remotion-render",
+      "installs": 113025
+    },
+    {
+      "repo": "101-skills/superpowers",
+      "skill": "infsh-cli",
+      "installs": 113004
+    },
+    {
+      "repo": "101-skills/superpowers",
+      "skill": "agent-tools",
+      "installs": 112976
+    },
+    {
+      "repo": "101-skills/superpowers",
+      "skill": "python-executor",
+      "installs": 112974
+    },
+    {
+      "repo": "101-skills/superpowers",
+      "skill": "landing-page-design",
+      "installs": 57750
+    },
+    {
+      "repo": "101-skills/superpowers",
+      "skill": "product-photography",
+      "installs": 57291
+    },
+    {
+      "repo": "101-skills/superpowers",
+      "skill": "app-store-screenshots",
+      "installs": 57197
+    },
+    {
+      "repo": "101-skills/superpowers",
+      "skill": "character-design-sheet",
+      "installs": 57173
+    },
+    {
+      "repo": "101-skills/superpowers",
+      "skill": "storyboard-creation",
+      "installs": 57157
+    },
+    {
+      "repo": "101-skills/superpowers",
+      "skill": "video-ad-specs",
+      "installs": 57130
+    },
+    {
+      "repo": "101-skills/superpowers",
+      "skill": "competitor-teardown",
+      "installs": 57069
+    },
+    {
+      "repo": "101-skills/superpowers",
+      "skill": "youtube-thumbnail-design",
+      "installs": 57049
+    },
+    {
+      "repo": "101-skills/superpowers",
+      "skill": "product-hunt-launch",
+      "installs": 57031
+    },
+    {
+      "repo": "101-skills/superpowers",
+      "skill": "image-to-video",
+      "installs": 57021
+    },
+    {
+      "repo": "101-skills/superpowers",
+      "skill": "happyhorse",
+      "installs": 12840
+    },
+    {
+      "repo": "101-skills/superpowers",
+      "skill": "gpt-image",
+      "installs": 12788
+    },
+    {
+      "repo": "101-skills/superpowers",
+      "skill": "p-image",
+      "installs": 12760
+    },
+    {
+      "repo": "101-skills/superpowers",
+      "skill": "p-video",
+      "installs": 12739
+    },
+    {
+      "repo": "101-skills/superpowers",
+      "skill": "p-video-avatar",
+      "installs": 12669
+    },
+    {
+      "repo": "101-skills/superpowers",
+      "skill": "seedance",
+      "installs": 12658
+    },
+    {
+      "repo": "vercel-labs/agent-skills",
+      "skill": "vercel-react-best-practices",
+      "installs": 850634
+    },
+    {
+      "repo": "vercel-labs/agent-skills",
+      "skill": "web-design-guidelines",
+      "installs": 798599
+    },
+    {
+      "repo": "vercel-labs/agent-skills",
+      "skill": "vercel-composition-patterns",
+      "installs": 425674
+    },
+    {
+      "repo": "vercel-labs/agent-skills",
+      "skill": "vercel-react-native-skills",
+      "installs": 259549
+    },
+    {
+      "repo": "vercel-labs/agent-skills",
+      "skill": "deploy-to-vercel",
+      "installs": 174600
+    },
+    {
+      "repo": "vercel-labs/agent-skills",
+      "skill": "vercel-react-view-transitions",
+      "installs": 172823
+    },
+    {
+      "repo": "vercel-labs/agent-skills",
+      "skill": "vercel-cli-with-tokens",
+      "installs": 140031
+    },
+    {
+      "repo": "vercel-labs/agent-skills",
+      "skill": "vercel-optimize",
+      "installs": 115096
+    },
+    {
+      "repo": "vercel-labs/agent-skills",
+      "skill": "writing-guidelines",
+      "installs": 111095
+    },
+    {
+      "repo": "vercel-labs/agent-skills",
+      "skill": "vercel-deploy",
+      "installs": 533
+    },
+    {
+      "repo": "magentosh/superpowers",
+      "skill": "ai-image-generation",
+      "installs": 788116
+    },
+    {
+      "repo": "magentosh/superpowers",
+      "skill": "ai-video-generation",
+      "installs": 787706
+    },
+    {
+      "repo": "magentosh/superpowers",
+      "skill": "ai-avatar-video",
+      "installs": 787610
+    },
+    {
+      "repo": "magentosh/superpowers",
+      "skill": "twitter-automation",
+      "installs": 787493
+    },
+    {
+      "repo": "magentosh/superpowers",
+      "skill": "agent-browser",
+      "installs": 147818
+    },
+    {
+      "repo": "magentosh/superpowers",
+      "skill": "web-search",
+      "installs": 98390
+    },
+    {
+      "repo": "magentosh/superpowers",
+      "skill": "agent-tools",
+      "installs": 98356
+    },
+    {
+      "repo": "magentosh/superpowers",
+      "skill": "remotion-render",
+      "installs": 98349
+    },
+    {
+      "repo": "magentosh/superpowers",
+      "skill": "python-executor",
+      "installs": 98337
+    },
+    {
+      "repo": "magentosh/superpowers",
+      "skill": "infsh-cli",
+      "installs": 98183
+    },
+    {
+      "repo": "magentosh/superpowers",
+      "skill": "youtube-thumbnail-design",
+      "installs": 49844
+    },
+    {
+      "repo": "magentosh/superpowers",
+      "skill": "landing-page-design",
+      "installs": 49826
+    },
+    {
+      "repo": "magentosh/superpowers",
+      "skill": "image-to-video",
+      "installs": 49811
+    },
+    {
+      "repo": "magentosh/superpowers",
+      "skill": "product-photography",
+      "installs": 49809
+    },
+    {
+      "repo": "magentosh/superpowers",
+      "skill": "app-store-screenshots",
+      "installs": 49790
+    },
+    {
+      "repo": "magentosh/superpowers",
+      "skill": "competitor-teardown",
+      "installs": 49780
+    },
+    {
+      "repo": "magentosh/superpowers",
+      "skill": "product-hunt-launch",
+      "installs": 49768
+    },
+    {
+      "repo": "magentosh/superpowers",
+      "skill": "video-ad-specs",
+      "installs": 49762
+    },
+    {
+      "repo": "magentosh/superpowers",
+      "skill": "character-design-sheet",
+      "installs": 49756
+    },
+    {
+      "repo": "magentosh/superpowers",
+      "skill": "storyboard-creation",
+      "installs": 49738
+    },
+    {
+      "repo": "magentosh/superpowers",
+      "skill": "p-video-avatar",
+      "installs": 10445
+    },
+    {
+      "repo": "magentosh/superpowers",
+      "skill": "gpt-image",
+      "installs": 10438
+    },
+    {
+      "repo": "magentosh/superpowers",
+      "skill": "seedance",
+      "installs": 10402
+    },
+    {
+      "repo": "magentosh/superpowers",
+      "skill": "p-image",
+      "installs": 10386
+    },
+    {
+      "repo": "magentosh/superpowers",
+      "skill": "happyhorse",
+      "installs": 10325
+    },
+    {
+      "repo": "magentosh/superpowers",
+      "skill": "p-video",
+      "installs": 10303
+    },
+    {
+      "repo": "remotion-dev/skills",
+      "skill": "remotion-best-practices",
+      "installs": 705056
+    },
+    {
+      "repo": "remotion-dev/skills",
+      "skill": "remotion-render",
+      "installs": 233904
+    },
+    {
+      "repo": "remotion-dev/skills",
+      "skill": "remotion-create",
+      "installs": 232525
+    },
+    {
+      "repo": "remotion-dev/skills",
+      "skill": "remotion-captions",
+      "installs": 230480
+    },
+    {
+      "repo": "remotion-dev/skills",
+      "skill": "remotion-markup",
+      "installs": 226127
+    },
+    {
+      "repo": "remotion-dev/skills",
+      "skill": "remotion-interactivity",
+      "installs": 221018
+    },
+    {
+      "repo": "remotion-dev/skills",
+      "skill": "remotion-saas",
+      "installs": 218807
+    },
+    {
+      "repo": "remotion-dev/skills",
+      "skill": "remotion-docs",
+      "installs": 218550
+    },
+    {
+      "repo": "remotion-dev/skills",
+      "skill": "remotion-upgrade",
+      "installs": 210036
+    },
+    {
+      "repo": "remotion-dev/skills",
+      "skill": "remotion-multimedia",
+      "installs": 205181
+    },
+    {
+      "repo": "remotion-dev/skills",
+      "skill": "remotion-maps",
+      "installs": 203438
+    },
+    {
+      "repo": "remotion-dev/skills",
+      "skill": "remotion-studio",
+      "installs": 195617
+    },
+    {
+      "repo": "remotion-dev/skills",
+      "skill": "mediabunny",
+      "installs": 20826
+    },
+    {
+      "repo": "leonxlnx/taste-skill",
+      "skill": "design-taste-frontend",
+      "installs": 696958
+    },
+    {
+      "repo": "leonxlnx/taste-skill",
+      "skill": "high-end-visual-design",
+      "installs": 458840
+    },
+    {
+      "repo": "leonxlnx/taste-skill",
+      "skill": "redesign-existing-projects",
+      "installs": 458705
+    },
+    {
+      "repo": "leonxlnx/taste-skill",
+      "skill": "minimalist-ui",
+      "installs": 425113
+    },
+    {
+      "repo": "leonxlnx/taste-skill",
+      "skill": "full-output-enforcement",
+      "installs": 401051
+    },
+    {
+      "repo": "leonxlnx/taste-skill",
+      "skill": "gpt-taste",
+      "installs": 399515
+    },
+    {
+      "repo": "leonxlnx/taste-skill",
+      "skill": "industrial-brutalist-ui",
+      "installs": 396927
+    },
+    {
+      "repo": "leonxlnx/taste-skill",
+      "skill": "stitch-design-taste",
+      "installs": 394879
+    },
+    {
+      "repo": "leonxlnx/taste-skill",
+      "skill": "brandkit",
+      "installs": 390688
+    },
+    {
+      "repo": "leonxlnx/taste-skill",
+      "skill": "image-to-code",
+      "installs": 385899
+    },
+    {
+      "repo": "leonxlnx/taste-skill",
+      "skill": "imagegen-frontend-web",
+      "installs": 380123
+    },
+    {
+      "repo": "leonxlnx/taste-skill",
+      "skill": "imagegen-frontend-mobile",
+      "installs": 373769
+    },
+    {
+      "repo": "leonxlnx/taste-skill",
+      "skill": "design-taste-frontend-v1",
+      "installs": 330352
+    },
+    {
+      "repo": "leonxlnx/taste-skill",
+      "skill": "design-taste-frontend-v2-experimental",
+      "installs": 19539
+    },
+    {
+      "repo": "leonxlnx/taste-skill",
+      "skill": "image-taste-frontend",
+      "installs": 3553
+    },
+    {
+      "repo": "juliusbrussee/caveman",
+      "skill": "caveman",
+      "installs": 598800
+    },
+    {
+      "repo": "juliusbrussee/caveman",
+      "skill": "caveman-commit",
+      "installs": 419532
+    },
+    {
+      "repo": "juliusbrussee/caveman",
+      "skill": "caveman-compress",
+      "installs": 415543
+    },
+    {
+      "repo": "juliusbrussee/caveman",
+      "skill": "caveman-review",
+      "installs": 415471
+    },
+    {
+      "repo": "juliusbrussee/caveman",
+      "skill": "caveman-help",
+      "installs": 406533
+    },
+    {
+      "repo": "juliusbrussee/caveman",
+      "skill": "cavecrew",
+      "installs": 362584
+    },
+    {
+      "repo": "juliusbrussee/caveman",
+      "skill": "caveman-stats",
+      "installs": 361374
+    },
+    {
+      "repo": "juliusbrussee/caveman",
+      "skill": "caveman-explore",
+      "installs": 111050
+    },
+    {
+      "repo": "juliusbrussee/caveman",
+      "skill": "caveman-learn",
+      "installs": 110230
+    },
+    {
+      "repo": "juliusbrussee/caveman",
+      "skill": "safe-refactor",
+      "installs": 109916
+    },
+    {
+      "repo": "juliusbrussee/caveman",
+      "skill": "caveman-optimize",
+      "installs": 109242
+    },
+    {
+      "repo": "juliusbrussee/caveman",
+      "skill": "investigate-first",
+      "installs": 108822
+    },
+    {
+      "repo": "juliusbrussee/caveman",
+      "skill": "verify-and-stop",
+      "installs": 108386
+    },
+    {
+      "repo": "juliusbrussee/caveman",
+      "skill": "surgical-patch",
+      "installs": 108225
+    },
+    {
+      "repo": "juliusbrussee/caveman",
+      "skill": "lean-build",
+      "installs": 107814
+    },
+    {
+      "repo": "juliusbrussee/caveman",
+      "skill": "caveman-evidence-review",
+      "installs": 107921
+    },
+    {
+      "repo": "juliusbrussee/caveman",
+      "skill": "caveman-discover",
+      "installs": 107860
+    },
+    {
+      "repo": "juliusbrussee/caveman",
+      "skill": "caveman-manage",
+      "installs": 107650
+    },
+    {
+      "repo": "juliusbrussee/caveman",
+      "skill": "migration",
+      "installs": 107220
+    },
+    {
+      "repo": "juliusbrussee/caveman",
+      "skill": "caveman-setup",
+      "installs": 106853
+    },
+    {
+      "repo": "juliusbrussee/caveman",
+      "skill": "compress",
+      "installs": 45774
+    },
+    {
+      "repo": "juliusbrussee/caveman",
+      "skill": "ultracave",
+      "installs": 29587
+    },
+    {
+      "repo": "juliusbrussee/caveman",
+      "skill": "megacave",
+      "installs": 28789
+    },
+    {
+      "repo": "juliusbrussee/caveman",
+      "skill": "caveman-es",
+      "installs": 513
+    },
+    {
+      "repo": "microsoft/azure-skills",
+      "skill": "microsoft-foundry",
+      "installs": 582241
+    },
+    {
+      "repo": "microsoft/azure-skills",
+      "skill": "azure-diagnostics",
+      "installs": 573010
+    },
+    {
+      "repo": "microsoft/azure-skills",
+      "skill": "azure-prepare",
+      "installs": 572410
+    },
+    {
+      "repo": "microsoft/azure-skills",
+      "skill": "azure-ai",
+      "installs": 571803
+    },
+    {
+      "repo": "microsoft/azure-skills",
+      "skill": "azure-deploy",
+      "installs": 571446
+    },
+    {
+      "repo": "microsoft/azure-skills",
+      "skill": "azure-validate",
+      "installs": 570848
+    },
+    {
+      "repo": "microsoft/azure-skills",
+      "skill": "azure-storage",
+      "installs": 570335
+    },
+    {
+      "repo": "microsoft/azure-skills",
+      "skill": "azure-compliance",
+      "installs": 569994
+    },
+    {
+      "repo": "microsoft/azure-skills",
+      "skill": "appinsights-instrumentation",
+      "installs": 569744
+    },
+    {
+      "repo": "microsoft/azure-skills",
+      "skill": "azure-resource-lookup",
+      "installs": 569747
+    },
+    {
+      "repo": "microsoft/azure-skills",
+      "skill": "azure-resource-visualizer",
+      "installs": 569591
+    },
+    {
+      "repo": "microsoft/azure-skills",
+      "skill": "entra-app-registration",
+      "installs": 569553
+    },
+    {
+      "repo": "microsoft/azure-skills",
+      "skill": "azure-kusto",
+      "installs": 569413
+    },
+    {
+      "repo": "microsoft/azure-skills",
+      "skill": "azure-aigateway",
+      "installs": 568969
+    },
+    {
+      "repo": "microsoft/azure-skills",
+      "skill": "azure-messaging",
+      "installs": 560624
+    },
+    {
+      "repo": "microsoft/azure-skills",
+      "skill": "azure-compute",
+      "installs": 525447
+    },
+    {
+      "repo": "microsoft/azure-skills",
+      "skill": "azure-cloud-migrate",
+      "installs": 518276
+    },
+    {
+      "repo": "microsoft/azure-skills",
+      "skill": "azure-quotas",
+      "installs": 474038
+    },
+    {
+      "repo": "microsoft/azure-skills",
+      "skill": "azure-upgrade",
+      "installs": 467168
+    },
+    {
+      "repo": "microsoft/azure-skills",
+      "skill": "azure-enterprise-infra-planner",
+      "installs": 443743
+    },
+    {
+      "repo": "microsoft/azure-skills",
+      "skill": "azure-kubernetes",
+      "installs": 437868
+    },
+    {
+      "repo": "microsoft/azure-skills",
+      "skill": "azure-rbac",
+      "installs": 396677
+    },
+    {
+      "repo": "microsoft/azure-skills",
+      "skill": "airunway-aks-setup",
+      "installs": 363363
+    },
+    {
+      "repo": "microsoft/azure-skills",
+      "skill": "azure-cost",
+      "installs": 362649
+    },
+    {
+      "repo": "microsoft/azure-skills",
+      "skill": "azure-hosted-copilot-sdk",
+      "installs": 355277
+    },
+    {
+      "repo": "microsoft/azure-skills",
+      "skill": "entra-agent-id",
+      "installs": 339479
+    },
+    {
+      "repo": "microsoft/azure-skills",
+      "skill": "azure-reliability",
+      "installs": 302810
+    },
+    {
+      "repo": "microsoft/azure-skills",
+      "skill": "python-appservice-deploy",
+      "installs": 232921
+    },
+    {
+      "repo": "microsoft/azure-skills",
+      "skill": "azure-app-onboard",
+      "installs": 157525
+    },
+    {
+      "repo": "microsoft/azure-skills",
+      "skill": "azure-app-onboard-prereq",
+      "installs": 157329
+    },
+    {
+      "repo": "microsoft/azure-skills",
+      "skill": "azure-cost-optimization",
+      "installs": 155407
+    },
+    {
+      "repo": "microsoft/azure-skills",
+      "skill": "azure-observability",
+      "installs": 86214
+    },
+    {
+      "repo": "microsoft/azure-skills",
+      "skill": "discover-azure-skills",
+      "installs": 48800
+    },
+    {
+      "repo": "microsoft/azure-skills",
+      "skill": "azure-postgres",
+      "installs": 27799
+    },
+    {
+      "repo": "microsoft/azure-skills",
+      "skill": "markdown-token-optimizer",
+      "installs": 1050
+    },
+    {
+      "repo": "microsoft/azure-skills",
+      "skill": "sensei",
+      "installs": 984
+    },
+    {
+      "repo": "microsoft/azure-skills",
+      "skill": "skill-authoring",
+      "installs": 969
+    },
+    {
+      "repo": "microsoft/azure-skills",
+      "skill": "file-test-bug",
+      "installs": 928
+    },
+    {
+      "repo": "microsoft/azure-skills",
+      "skill": "analyze-test-run",
+      "installs": 831
+    },
+    {
+      "repo": "microsoft/azure-skills",
+      "skill": "azure-kusto-irql",
+      "installs": 753
+    },
+    {
+      "repo": "microsoft/azure-skills",
+      "skill": "azure-kusto-graph",
+      "installs": 753
+    },
+    {
+      "repo": "microsoft/azure-skills",
+      "skill": "azure-kusto-irql-graph",
+      "installs": 753
+    },
+    {
+      "repo": "qu-skills/superpowers",
+      "skill": "ai-avatar-video",
+      "installs": 580564
+    },
+    {
+      "repo": "qu-skills/superpowers",
+      "skill": "twitter-automation",
+      "installs": 580158
+    },
+    {
+      "repo": "qu-skills/superpowers",
+      "skill": "ai-video-generation",
+      "installs": 580029
+    },
+    {
+      "repo": "qu-skills/superpowers",
+      "skill": "ai-image-generation",
+      "installs": 579999
+    },
+    {
+      "repo": "qu-skills/superpowers",
+      "skill": "agent-browser",
+      "installs": 109583
+    },
+    {
+      "repo": "qu-skills/superpowers",
+      "skill": "infsh-cli",
+      "installs": 73196
+    },
+    {
+      "repo": "qu-skills/superpowers",
+      "skill": "agent-tools",
+      "installs": 73192
+    },
+    {
+      "repo": "qu-skills/superpowers",
+      "skill": "remotion-render",
+      "installs": 73117
+    },
+    {
+      "repo": "qu-skills/superpowers",
+      "skill": "web-search",
+      "installs": 73104
+    },
+    {
+      "repo": "qu-skills/superpowers",
+      "skill": "python-executor",
+      "installs": 73075
+    },
+    {
+      "repo": "qu-skills/superpowers",
+      "skill": "product-photography",
+      "installs": 36275
+    },
+    {
+      "repo": "qu-skills/superpowers",
+      "skill": "character-design-sheet",
+      "installs": 36257
+    },
+    {
+      "repo": "qu-skills/superpowers",
+      "skill": "storyboard-creation",
+      "installs": 36245
+    },
+    {
+      "repo": "qu-skills/superpowers",
+      "skill": "competitor-teardown",
+      "installs": 36214
+    },
+    {
+      "repo": "qu-skills/superpowers",
+      "skill": "youtube-thumbnail-design",
+      "installs": 36188
+    },
+    {
+      "repo": "qu-skills/superpowers",
+      "skill": "product-hunt-launch",
+      "installs": 36172
+    },
+    {
+      "repo": "qu-skills/superpowers",
+      "skill": "app-store-screenshots",
+      "installs": 36166
+    },
+    {
+      "repo": "qu-skills/superpowers",
+      "skill": "landing-page-design",
+      "installs": 36127
+    },
+    {
+      "repo": "qu-skills/superpowers",
+      "skill": "image-to-video",
+      "installs": 36127
+    },
+    {
+      "repo": "qu-skills/superpowers",
+      "skill": "video-ad-specs",
+      "installs": 36035
+    },
+    {
+      "repo": "qu-skills/superpowers",
+      "skill": "seedance",
+      "installs": 7986
+    },
+    {
+      "repo": "qu-skills/superpowers",
+      "skill": "p-video-avatar",
+      "installs": 7948
+    },
+    {
+      "repo": "qu-skills/superpowers",
+      "skill": "gpt-image",
+      "installs": 7913
+    },
+    {
+      "repo": "qu-skills/superpowers",
+      "skill": "happyhorse",
+      "installs": 7905
+    },
+    {
+      "repo": "qu-skills/superpowers",
+      "skill": "p-video",
+      "installs": 7877
+    },
+    {
+      "repo": "qu-skills/superpowers",
+      "skill": "p-image",
+      "installs": 7792
+    },
+    {
+      "repo": "google/agents-cli",
+      "skill": "google-agents-cli-adk-code",
+      "installs": 522101
+    },
+    {
+      "repo": "google/agents-cli",
+      "skill": "google-agents-cli-deploy",
+      "installs": 521146
+    },
+    {
+      "repo": "google/agents-cli",
+      "skill": "google-agents-cli-publish",
+      "installs": 520934
+    },
+    {
+      "repo": "google/agents-cli",
+      "skill": "google-agents-cli-workflow",
+      "installs": 520393
+    },
+    {
+      "repo": "google/agents-cli",
+      "skill": "google-agents-cli-eval",
+      "installs": 520663
+    },
+    {
+      "repo": "google/agents-cli",
+      "skill": "google-agents-cli-scaffold",
+      "installs": 520549
+    },
+    {
+      "repo": "google/agents-cli",
+      "skill": "google-agents-cli-observability",
+      "installs": 520517
+    },
+    {
+      "repo": "skills-shell/superpowers",
+      "skill": "ai-video-generation",
+      "installs": 485247
+    },
+    {
+      "repo": "skills-shell/superpowers",
+      "skill": "ai-image-generation",
+      "installs": 485209
+    },
+    {
+      "repo": "skills-shell/superpowers",
+      "skill": "twitter-automation",
+      "installs": 485201
+    },
+    {
+      "repo": "skills-shell/superpowers",
+      "skill": "ai-avatar-video",
+      "installs": 484914
+    },
+    {
+      "repo": "skills-shell/superpowers",
+      "skill": "agent-browser",
+      "installs": 91164
+    },
+    {
+      "repo": "skills-shell/superpowers",
+      "skill": "python-executor",
+      "installs": 61289
+    },
+    {
+      "repo": "skills-shell/superpowers",
+      "skill": "remotion-render",
+      "installs": 61209
+    },
+    {
+      "repo": "skills-shell/superpowers",
+      "skill": "infsh-cli",
+      "installs": 61204
+    },
+    {
+      "repo": "skills-shell/superpowers",
+      "skill": "agent-tools",
+      "installs": 61155
+    },
+    {
+      "repo": "skills-shell/superpowers",
+      "skill": "web-search",
+      "installs": 61087
+    },
+    {
+      "repo": "skills-shell/superpowers",
+      "skill": "storyboard-creation",
+      "installs": 30491
+    },
+    {
+      "repo": "skills-shell/superpowers",
+      "skill": "video-ad-specs",
+      "installs": 30447
+    },
+    {
+      "repo": "skills-shell/superpowers",
+      "skill": "landing-page-design",
+      "installs": 30444
+    },
+    {
+      "repo": "skills-shell/superpowers",
+      "skill": "youtube-thumbnail-design",
+      "installs": 30399
+    },
+    {
+      "repo": "skills-shell/superpowers",
+      "skill": "image-to-video",
+      "installs": 30394
+    },
+    {
+      "repo": "skills-shell/superpowers",
+      "skill": "competitor-teardown",
+      "installs": 30391
+    },
+    {
+      "repo": "skills-shell/superpowers",
+      "skill": "product-photography",
+      "installs": 30372
+    },
+    {
+      "repo": "skills-shell/superpowers",
+      "skill": "product-hunt-launch",
+      "installs": 30358
+    },
+    {
+      "repo": "skills-shell/superpowers",
+      "skill": "character-design-sheet",
+      "installs": 30328
+    },
+    {
+      "repo": "skills-shell/superpowers",
+      "skill": "app-store-screenshots",
+      "installs": 30292
+    },
+    {
+      "repo": "skills-shell/superpowers",
+      "skill": "p-video",
+      "installs": 6442
+    },
+    {
+      "repo": "skills-shell/superpowers",
+      "skill": "p-video-avatar",
+      "installs": 6418
+    },
+    {
+      "repo": "skills-shell/superpowers",
+      "skill": "gpt-image",
+      "installs": 6418
+    },
+    {
+      "repo": "skills-shell/superpowers",
+      "skill": "p-image",
+      "installs": 6397
+    },
+    {
+      "repo": "skills-shell/superpowers",
+      "skill": "happyhorse",
+      "installs": 6379
+    },
+    {
+      "repo": "skills-shell/superpowers",
+      "skill": "seedance",
+      "installs": 6352
+    },
+    {
+      "repo": "larksuite/cli",
+      "skill": "lark-doc",
+      "installs": 481638
+    },
+    {
+      "repo": "larksuite/cli",
+      "skill": "lark-base",
+      "installs": 479224
+    },
+    {
+      "repo": "larksuite/cli",
+      "skill": "lark-shared",
+      "installs": 478019
+    },
+    {
+      "repo": "larksuite/cli",
+      "skill": "lark-im",
+      "installs": 476017
+    },
+    {
+      "repo": "larksuite/cli",
+      "skill": "lark-drive",
+      "installs": 475781
+    },
+    {
+      "repo": "larksuite/cli",
+      "skill": "lark-sheets",
+      "installs": 475095
+    },
+    {
+      "repo": "larksuite/cli",
+      "skill": "lark-wiki",
+      "installs": 474636
+    },
+    {
+      "repo": "larksuite/cli",
+      "skill": "lark-whiteboard",
+      "installs": 473124
+    },
+    {
+      "repo": "larksuite/cli",
+      "skill": "lark-task",
+      "installs": 472982
+    },
+    {
+      "repo": "larksuite/cli",
+      "skill": "lark-calendar",
+      "installs": 471883
+    },
+    {
+      "repo": "larksuite/cli",
+      "skill": "lark-mail",
+      "installs": 470388
+    },
+    {
+      "repo": "larksuite/cli",
+      "skill": "lark-minutes",
+      "installs": 469822
+    },
+    {
+      "repo": "larksuite/cli",
+      "skill": "lark-vc",
+      "installs": 469614
+    },
+    {
+      "repo": "larksuite/cli",
+      "skill": "lark-event",
+      "installs": 469707
+    },
+    {
+      "repo": "larksuite/cli",
+      "skill": "lark-contact",
+      "installs": 469348
+    },
+    {
+      "repo": "larksuite/cli",
+      "skill": "lark-workflow-meeting-summary",
+      "installs": 468665
+    },
+    {
+      "repo": "larksuite/cli",
+      "skill": "lark-workflow-standup-report",
+      "installs": 467830
+    },
+    {
+      "repo": "larksuite/cli",
+      "skill": "lark-openapi-explorer",
+      "installs": 467774
+    },
+    {
+      "repo": "larksuite/cli",
+      "skill": "lark-skill-maker",
+      "installs": 467331
+    },
+    {
+      "repo": "larksuite/cli",
+      "skill": "lark-approval",
+      "installs": 443258
+    },
+    {
+      "repo": "larksuite/cli",
+      "skill": "lark-slides",
+      "installs": 423813
+    },
+    {
+      "repo": "larksuite/cli",
+      "skill": "lark-attendance",
+      "installs": 420815
+    },
+    {
+      "repo": "larksuite/cli",
+      "skill": "lark-okr",
+      "installs": 406877
+    },
+    {
+      "repo": "larksuite/cli",
+      "skill": "lark-markdown",
+      "installs": 388580
+    },
+    {
+      "repo": "larksuite/cli",
+      "skill": "lark-vc-agent",
+      "installs": 358041
+    },
+    {
+      "repo": "larksuite/cli",
+      "skill": "lark-apps",
+      "installs": 318779
+    },
+    {
+      "repo": "larksuite/cli",
+      "skill": "lark-note",
+      "installs": 245191
+    },
+    {
+      "repo": "larksuite/cli",
+      "skill": "lark-meeting",
+      "installs": 56830
+    },
+    {
+      "repo": "larksuite/cli",
+      "skill": "lark-whiteboard-cli",
+      "installs": 16521
+    },
+    {
+      "repo": "lllllllama/rigorpilot-skills",
+      "skill": "paper-context-resolver",
+      "installs": 480555
+    },
+    {
+      "repo": "lllllllama/rigorpilot-skills",
+      "skill": "repo-intake-and-plan",
+      "installs": 479753
+    },
+    {
+      "repo": "lllllllama/rigorpilot-skills",
+      "skill": "minimal-run-and-audit",
+      "installs": 479675
+    },
+    {
+      "repo": "lllllllama/rigorpilot-skills",
+      "skill": "env-and-assets-bootstrap",
+      "installs": 479565
+    },
+    {
+      "repo": "lllllllama/rigorpilot-skills",
+      "skill": "ai-research-explore",
+      "installs": 340903
+    },
+    {
+      "repo": "lllllllama/rigorpilot-skills",
+      "skill": "analyze-project",
+      "installs": 340773
+    },
+    {
+      "repo": "lllllllama/rigorpilot-skills",
+      "skill": "ai-research-reproduction",
+      "installs": 340578
+    },
+    {
+      "repo": "lllllllama/rigorpilot-skills",
+      "skill": "safe-debug",
+      "installs": 340250
+    },
+    {
+      "repo": "lllllllama/rigorpilot-skills",
+      "skill": "explore-code",
+      "installs": 340237
+    },
+    {
+      "repo": "lllllllama/rigorpilot-skills",
+      "skill": "run-train",
+      "installs": 340003
+    },
+    {
+      "repo": "lllllllama/rigorpilot-skills",
+      "skill": "explore-run",
+      "installs": 339977
+    },
+    {
+      "repo": "lllllllama/rigorpilot-skills",
+      "skill": "ai-paper-reproduction",
+      "installs": 9105
+    },
+    {
+      "repo": "prime-skills/runcomfy-agent-skills",
+      "skill": "video-edit",
+      "installs": 441282
+    },
+    {
+      "repo": "prime-skills/runcomfy-agent-skills",
+      "skill": "image-to-video",
+      "installs": 439518
+    },
+    {
+      "repo": "prime-skills/runcomfy-agent-skills",
+      "skill": "nano-banana-2",
+      "installs": 439208
+    },
+    {
+      "repo": "prime-skills/runcomfy-agent-skills",
+      "skill": "image-edit",
+      "installs": 438753
+    },
+    {
+      "repo": "prime-skills/runcomfy-agent-skills",
+      "skill": "nano-banana-edit",
+      "installs": 438585
+    },
+    {
+      "repo": "prime-skills/runcomfy-agent-skills",
+      "skill": "flux-kontext",
+      "installs": 438389
+    },
+    {
+      "repo": "prime-skills/runcomfy-agent-skills",
+      "skill": "wan-2-7",
+      "installs": 437831
+    },
+    {
+      "repo": "prime-skills/runcomfy-agent-skills",
+      "skill": "seedance-v2",
+      "installs": 437676
+    },
+    {
+      "repo": "prime-skills/runcomfy-agent-skills",
+      "skill": "gpt-image-edit",
+      "installs": 437669
+    },
+    {
+      "repo": "prime-skills/runcomfy-agent-skills",
+      "skill": "happyhorse-1-0",
+      "installs": 437580
+    },
+    {
+      "repo": "prime-skills/runcomfy-agent-skills",
+      "skill": "flux-2-klein",
+      "installs": 437412
+    },
+    {
+      "repo": "prime-skills/runcomfy-agent-skills",
+      "skill": "kling-3-0",
+      "installs": 414646
+    },
+    {
+      "repo": "prime-skills/runcomfy-agent-skills",
+      "skill": "codex-pet",
+      "installs": 403015
+    },
+    {
+      "repo": "prime-skills/runcomfy-agent-skills",
+      "skill": "ai-image-generation",
+      "installs": 384526
+    },
+    {
+      "repo": "prime-skills/runcomfy-agent-skills",
+      "skill": "ai-video-generation",
+      "installs": 384431
+    },
+    {
+      "repo": "prime-skills/runcomfy-agent-skills",
+      "skill": "runcomfy-cli",
+      "installs": 381600
+    },
+    {
+      "repo": "prime-skills/runcomfy-agent-skills",
+      "skill": "ai-avatar-video",
+      "installs": 381389
+    },
+    {
+      "repo": "prime-skills/runcomfy-agent-skills",
+      "skill": "face-swap",
+      "installs": 381264
+    },
+    {
+      "repo": "prime-skills/runcomfy-agent-skills",
+      "skill": "video-inpainting",
+      "installs": 379621
+    },
+    {
+      "repo": "prime-skills/runcomfy-agent-skills",
+      "skill": "image-inpainting",
+      "installs": 379142
+    },
+    {
+      "repo": "prime-skills/runcomfy-agent-skills",
+      "skill": "controlnet-pose",
+      "installs": 378873
+    },
+    {
+      "repo": "prime-skills/runcomfy-agent-skills",
+      "skill": "lipsync",
+      "installs": 378854
+    },
+    {
+      "repo": "prime-skills/runcomfy-agent-skills",
+      "skill": "video-extend",
+      "installs": 378458
+    },
+    {
+      "repo": "prime-skills/runcomfy-agent-skills",
+      "skill": "elevenlabs-music-generation",
+      "installs": 378348
+    },
+    {
+      "repo": "prime-skills/runcomfy-agent-skills",
+      "skill": "image-outpainting",
+      "installs": 378186
+    },
+    {
+      "repo": "prime-skills/runcomfy-agent-skills",
+      "skill": "relight",
+      "installs": 378077
+    },
+    {
+      "repo": "prime-skills/runcomfy-agent-skills",
+      "skill": "video-outpainting",
+      "installs": 377971
+    },
+    {
+      "repo": "prime-skills/runcomfy-agent-skills",
+      "skill": "ai-music",
+      "installs": 370459
+    },
+    {
+      "repo": "prime-skills/runcomfy-agent-skills",
+      "skill": "ace-step",
+      "installs": 369876
+    },
+    {
+      "repo": "prime-skills/runcomfy-agent-skills",
+      "skill": "gpt-image-2",
+      "installs": 85736
+    },
+    {
+      "repo": "its-a-skill-issue/superpowers",
+      "skill": "ai-image-generation",
+      "installs": 428787
+    },
+    {
+      "repo": "its-a-skill-issue/superpowers",
+      "skill": "twitter-automation",
+      "installs": 428689
+    },
+    {
+      "repo": "its-a-skill-issue/superpowers",
+      "skill": "ai-avatar-video",
+      "installs": 428649
+    },
+    {
+      "repo": "its-a-skill-issue/superpowers",
+      "skill": "ai-video-generation",
+      "installs": 428438
+    },
+    {
+      "repo": "its-a-skill-issue/superpowers",
+      "skill": "agent-browser",
+      "installs": 80549
+    },
+    {
+      "repo": "its-a-skill-issue/superpowers",
+      "skill": "remotion-render",
+      "installs": 53902
+    },
+    {
+      "repo": "its-a-skill-issue/superpowers",
+      "skill": "web-search",
+      "installs": 53881
+    },
+    {
+      "repo": "its-a-skill-issue/superpowers",
+      "skill": "agent-tools",
+      "installs": 53832
+    },
+    {
+      "repo": "its-a-skill-issue/superpowers",
+      "skill": "python-executor",
+      "installs": 53831
+    },
+    {
+      "repo": "its-a-skill-issue/superpowers",
+      "skill": "infsh-cli",
+      "installs": 53726
+    },
+    {
+      "repo": "its-a-skill-issue/superpowers",
+      "skill": "product-photography",
+      "installs": 27288
+    },
+    {
+      "repo": "its-a-skill-issue/superpowers",
+      "skill": "competitor-teardown",
+      "installs": 27262
+    },
+    {
+      "repo": "its-a-skill-issue/superpowers",
+      "skill": "landing-page-design",
+      "installs": 27235
+    },
+    {
+      "repo": "its-a-skill-issue/superpowers",
+      "skill": "youtube-thumbnail-design",
+      "installs": 27230
+    },
+    {
+      "repo": "its-a-skill-issue/superpowers",
+      "skill": "storyboard-creation",
+      "installs": 27227
+    },
+    {
+      "repo": "its-a-skill-issue/superpowers",
+      "skill": "character-design-sheet",
+      "installs": 27190
+    },
+    {
+      "repo": "its-a-skill-issue/superpowers",
+      "skill": "video-ad-specs",
+      "installs": 27179
+    },
+    {
+      "repo": "its-a-skill-issue/superpowers",
+      "skill": "image-to-video",
+      "installs": 27179
+    },
+    {
+      "repo": "its-a-skill-issue/superpowers",
+      "skill": "product-hunt-launch",
+      "installs": 27159
+    },
+    {
+      "repo": "its-a-skill-issue/superpowers",
+      "skill": "app-store-screenshots",
+      "installs": 27156
+    },
+    {
+      "repo": "its-a-skill-issue/superpowers",
+      "skill": "happyhorse",
+      "installs": 5627
+    },
+    {
+      "repo": "its-a-skill-issue/superpowers",
+      "skill": "p-image",
+      "installs": 5610
+    },
+    {
+      "repo": "its-a-skill-issue/superpowers",
+      "skill": "p-video-avatar",
+      "installs": 5551
+    },
+    {
+      "repo": "its-a-skill-issue/superpowers",
+      "skill": "seedance",
+      "installs": 5522
+    },
+    {
+      "repo": "its-a-skill-issue/superpowers",
+      "skill": "p-video",
+      "installs": 5511
+    },
+    {
+      "repo": "its-a-skill-issue/superpowers",
+      "skill": "gpt-image",
+      "installs": 5509
+    },
+    {
+      "repo": "bankai-skills/superpowers",
+      "skill": "ai-image-generation",
+      "installs": 413557
+    },
+    {
+      "repo": "bankai-skills/superpowers",
+      "skill": "ai-avatar-video",
+      "installs": 413506
+    },
+    {
+      "repo": "bankai-skills/superpowers",
+      "skill": "ai-video-generation",
+      "installs": 413446
+    },
+    {
+      "repo": "bankai-skills/superpowers",
+      "skill": "twitter-automation",
+      "installs": 413437
+    },
+    {
+      "repo": "bankai-skills/superpowers",
+      "skill": "agent-browser",
+      "installs": 77466
+    },
+    {
+      "repo": "bankai-skills/superpowers",
+      "skill": "python-executor",
+      "installs": 52315
+    },
+    {
+      "repo": "bankai-skills/superpowers",
+      "skill": "web-search",
+      "installs": 51859
+    },
+    {
+      "repo": "bankai-skills/superpowers",
+      "skill": "infsh-cli",
+      "installs": 51845
+    },
+    {
+      "repo": "bankai-skills/superpowers",
+      "skill": "agent-tools",
+      "installs": 51843
+    },
+    {
+      "repo": "bankai-skills/superpowers",
+      "skill": "remotion-render",
+      "installs": 51762
+    },
+    {
+      "repo": "bankai-skills/superpowers",
+      "skill": "app-store-screenshots",
+      "installs": 25967
+    },
+    {
+      "repo": "bankai-skills/superpowers",
+      "skill": "video-ad-specs",
+      "installs": 25934
+    },
+    {
+      "repo": "bankai-skills/superpowers",
+      "skill": "product-hunt-launch",
+      "installs": 25933
+    },
+    {
+      "repo": "bankai-skills/superpowers",
+      "skill": "product-photography",
+      "installs": 25930
+    },
+    {
+      "repo": "bankai-skills/superpowers",
+      "skill": "competitor-teardown",
+      "installs": 25918
+    },
+    {
+      "repo": "bankai-skills/superpowers",
+      "skill": "character-design-sheet",
+      "installs": 25917
+    },
+    {
+      "repo": "bankai-skills/superpowers",
+      "skill": "landing-page-design",
+      "installs": 25916
+    },
+    {
+      "repo": "bankai-skills/superpowers",
+      "skill": "storyboard-creation",
+      "installs": 25901
+    },
+    {
+      "repo": "bankai-skills/superpowers",
+      "skill": "youtube-thumbnail-design",
+      "installs": 25897
+    },
+    {
+      "repo": "bankai-skills/superpowers",
+      "skill": "image-to-video",
+      "installs": 25872
+    },
+    {
+      "repo": "bankai-skills/superpowers",
+      "skill": "happyhorse",
+      "installs": 5080
+    },
+    {
+      "repo": "bankai-skills/superpowers",
+      "skill": "p-video-avatar",
+      "installs": 5064
+    },
+    {
+      "repo": "bankai-skills/superpowers",
+      "skill": "gpt-image",
+      "installs": 5060
+    },
+    {
+      "repo": "bankai-skills/superpowers",
+      "skill": "p-image",
+      "installs": 5059
+    },
+    {
+      "repo": "bankai-skills/superpowers",
+      "skill": "p-video",
+      "installs": 5053
+    },
+    {
+      "repo": "bankai-skills/superpowers",
+      "skill": "seedance",
+      "installs": 5045
+    },
+    {
+      "repo": "obra/superpowers",
+      "skill": "brainstorming",
+      "installs": 410196
+    },
+    {
+      "repo": "obra/superpowers",
+      "skill": "systematic-debugging",
+      "installs": 312463
+    },
+    {
+      "repo": "obra/superpowers",
+      "skill": "writing-plans",
+      "installs": 287619
+    },
+    {
+      "repo": "obra/superpowers",
+      "skill": "using-superpowers",
+      "installs": 274206
+    },
+    {
+      "repo": "obra/superpowers",
+      "skill": "requesting-code-review",
+      "installs": 266279
+    },
+    {
+      "repo": "obra/superpowers",
+      "skill": "test-driven-development",
+      "installs": 263805
+    },
+    {
+      "repo": "obra/superpowers",
+      "skill": "verification-before-completion",
+      "installs": 257242
+    },
+    {
+      "repo": "obra/superpowers",
+      "skill": "executing-plans",
+      "installs": 247552
+    },
+    {
+      "repo": "obra/superpowers",
+      "skill": "subagent-driven-development",
+      "installs": 242039
+    },
+    {
+      "repo": "obra/superpowers",
+      "skill": "receiving-code-review",
+      "installs": 225418
+    },
+    {
+      "repo": "obra/superpowers",
+      "skill": "dispatching-parallel-agents",
+      "installs": 222189
+    },
+    {
+      "repo": "obra/superpowers",
+      "skill": "writing-skills",
+      "installs": 222046
+    },
+    {
+      "repo": "obra/superpowers",
+      "skill": "using-git-worktrees",
+      "installs": 221002
+    },
+    {
+      "repo": "obra/superpowers",
+      "skill": "finishing-a-development-branch",
+      "installs": 218445
+    },
+    {
+      "repo": "obra/superpowers",
+      "skill": "diagnosing-superpowers",
+      "installs": 23144
+    },
+    {
+      "repo": "prisma/skills",
+      "skill": "prisma-client-api",
+      "installs": 398824
+    },
+    {
+      "repo": "prisma/skills",
+      "skill": "prisma-database-setup",
+      "installs": 397603
+    },
+    {
+      "repo": "prisma/skills",
+      "skill": "prisma-cli",
+      "installs": 396138
+    },
+    {
+      "repo": "prisma/skills",
+      "skill": "prisma-postgres",
+      "installs": 389604
+    },
+    {
+      "repo": "prisma/skills",
+      "skill": "prisma-driver-adapter-implementation",
+      "installs": 384108
+    },
+    {
+      "repo": "prisma/skills",
+      "skill": "prisma-postgres-setup",
+      "installs": 384073
+    },
+    {
+      "repo": "prisma/skills",
+      "skill": "prisma-upgrade-v7",
+      "installs": 383885
+    },
+    {
+      "repo": "prisma/skills",
+      "skill": "prisma-compute",
+      "installs": 379040
+    },
+    {
+      "repo": "prisma/skills",
+      "skill": "prisma-mongodb-upgrade",
+      "installs": 377689
+    },
+    {
+      "repo": "prisma/skills",
+      "skill": "prisma-orm-setup",
+      "installs": 75330
+    },
+    {
+      "repo": "emilkowalski/skills",
+      "skill": "emil-design-eng",
+      "installs": 397449
+    },
+    {
+      "repo": "emilkowalski/skills",
+      "skill": "review-animations",
+      "installs": 264301
+    },
+    {
+      "repo": "emilkowalski/skills",
+      "skill": "apple-design",
+      "installs": 253138
+    },
+    {
+      "repo": "emilkowalski/skills",
+      "skill": "animation-vocabulary",
+      "installs": 246255
+    },
+    {
+      "repo": "emilkowalski/skills",
+      "skill": "improve-animations",
+      "installs": 231639
+    },
+    {
+      "repo": "emilkowalski/skills",
+      "skill": "find-animation-opportunities",
+      "installs": 216193
+    },
+    {
+      "repo": "emilkowalski/skills",
+      "skill": "pick-ui-library",
+      "installs": 192213
+    },
+    {
+      "repo": "emilkowalski/skills",
+      "skill": "prototype",
+      "installs": 181119
+    },
+    {
+      "repo": "emilkowalski/skills",
+      "skill": "animate",
+      "installs": 180309
+    },
+    {
+      "repo": "emilkowalski/skills",
+      "skill": "ask-sonner",
+      "installs": 147060
+    },
+    {
+      "repo": "emilkowalski/skills",
+      "skill": "animate-expo",
+      "installs": 144460
+    },
+    {
+      "repo": "emilkowalski/skills",
+      "skill": "write-swift",
+      "installs": 125653
+    },
+    {
+      "repo": "emilkowalski/skills",
+      "skill": "mobile-native",
+      "installs": 93590
+    },
+    {
+      "repo": "emilkowalski/skills",
+      "skill": "break-ui",
+      "installs": 72598
+    },
+    {
+      "repo": "emilkowalski/skills",
+      "skill": "animation-performance",
+      "installs": 43966
+    },
+    {
+      "repo": "emilkowalski/skills",
+      "skill": "remove-animations",
+      "installs": 945
+    },
+    {
+      "repo": "pbakaus/impeccable",
+      "skill": "impeccable",
+      "installs": 369485
+    },
+    {
+      "repo": "pbakaus/impeccable",
+      "skill": "polish",
+      "installs": 85170
+    },
+    {
+      "repo": "pbakaus/impeccable",
+      "skill": "critique",
+      "installs": 82636
+    },
+    {
+      "repo": "pbakaus/impeccable",
+      "skill": "audit",
+      "installs": 81858
+    },
+    {
+      "repo": "pbakaus/impeccable",
+      "skill": "animate",
+      "installs": 81731
+    },
+    {
+      "repo": "pbakaus/impeccable",
+      "skill": "adapt",
+      "installs": 81720
+    },
+    {
+      "repo": "pbakaus/impeccable",
+      "skill": "clarify",
+      "installs": 81211
+    },
+    {
+      "repo": "pbakaus/impeccable",
+      "skill": "optimize",
+      "installs": 81054
+    },
+    {
+      "repo": "pbakaus/impeccable",
+      "skill": "colorize",
+      "installs": 80875
+    },
+    {
+      "repo": "pbakaus/impeccable",
+      "skill": "bolder",
+      "installs": 80007
+    },
+    {
+      "repo": "pbakaus/impeccable",
+      "skill": "delight",
+      "installs": 79845
+    },
+    {
+      "repo": "pbakaus/impeccable",
+      "skill": "distill",
+      "installs": 79456
+    },
+    {
+      "repo": "pbakaus/impeccable",
+      "skill": "quieter",
+      "installs": 78653
+    },
+    {
+      "repo": "pbakaus/impeccable",
+      "skill": "typeset",
+      "installs": 64670
+    },
+    {
+      "repo": "pbakaus/impeccable",
+      "skill": "overdrive",
+      "installs": 62764
+    },
+    {
+      "repo": "pbakaus/impeccable",
+      "skill": "normalize",
+      "installs": 54317
+    },
+    {
+      "repo": "pbakaus/impeccable",
+      "skill": "extract",
+      "installs": 53221
+    },
+    {
+      "repo": "pbakaus/impeccable",
+      "skill": "frontend-design",
+      "installs": 53177
+    },
+    {
+      "repo": "pbakaus/impeccable",
+      "skill": "onboard",
+      "installs": 53082
+    },
+    {
+      "repo": "pbakaus/impeccable",
+      "skill": "harden",
+      "installs": 52985
+    },
+    {
+      "repo": "pbakaus/impeccable",
+      "skill": "teach-impeccable",
+      "installs": 50025
+    },
+    {
+      "repo": "pbakaus/impeccable",
+      "skill": "arrange",
+      "installs": 39112
+    },
+    {
+      "repo": "pbakaus/impeccable",
+      "skill": "shape",
+      "installs": 30040
+    },
+    {
+      "repo": "pbakaus/impeccable",
+      "skill": "layout",
+      "installs": 26360
+    },
+    {
+      "repo": "gencraft-labs/skills",
+      "skill": "ai-music",
+      "installs": 324664
+    },
+    {
+      "repo": "gencraft-labs/skills",
+      "skill": "video-edit",
+      "installs": 324466
+    },
+    {
+      "repo": "gencraft-labs/skills",
+      "skill": "ai-video-generation",
+      "installs": 323047
+    },
+    {
+      "repo": "gencraft-labs/skills",
+      "skill": "ai-image-generation",
+      "installs": 323544
+    },
+    {
+      "repo": "gencraft-labs/skills",
+      "skill": "image-to-video",
+      "installs": 323128
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "seo-audit",
+      "installs": 240739
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "copywriting",
+      "installs": 239034
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "marketing-psychology",
+      "installs": 167012
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "content-strategy",
+      "installs": 166642
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "ai-seo",
+      "installs": 153514
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "programmatic-seo",
+      "installs": 152395
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "copy-editing",
+      "installs": 151647
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "marketing-ideas",
+      "installs": 148854
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "ad-creative",
+      "installs": 136606
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "cold-email",
+      "installs": 129791
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "site-architecture",
+      "installs": 124938
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "churn-prevention",
+      "installs": 122902
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "sales-enablement",
+      "installs": 120716
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "customer-research",
+      "installs": 117208
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "revops",
+      "installs": 115343
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "lead-magnets",
+      "installs": 114957
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "competitor-profiling",
+      "installs": 96565
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "cro",
+      "installs": 92733
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "community-marketing",
+      "installs": 91483
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "image",
+      "installs": 89248
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "video",
+      "installs": 88046
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "directory-submissions",
+      "installs": 87521
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "social",
+      "installs": 87279
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "product-marketing",
+      "installs": 86549
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "analytics",
+      "installs": 86430
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "ads",
+      "installs": 84990
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "co-marketing",
+      "installs": 82135
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "pricing",
+      "installs": 81404
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "competitors",
+      "installs": 80605
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "schema",
+      "installs": 80425
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "emails",
+      "installs": 80308
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "launch",
+      "installs": 80198
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "ab-testing",
+      "installs": 79173
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "aso",
+      "installs": 77321
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "free-tools",
+      "installs": 75682
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "onboarding",
+      "installs": 75470
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "referrals",
+      "installs": 73830
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "signup",
+      "installs": 73541
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "paywalls",
+      "installs": 72455
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "popups",
+      "installs": 72308
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "marketing-plan",
+      "installs": 69826
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "prospecting",
+      "installs": 67226
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "social-content",
+      "installs": 67002
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "sms",
+      "installs": 66008
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "product-marketing-context",
+      "installs": 61190
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "pricing-strategy",
+      "installs": 61162
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "offers",
+      "installs": 59341
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "analytics-tracking",
+      "installs": 57817
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "page-cro",
+      "installs": 57463
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "public-relations",
+      "installs": 57002
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "launch-strategy",
+      "installs": 56040
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "schema-markup",
+      "installs": 55479
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "email-sequence",
+      "installs": 55135
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "paid-ads",
+      "installs": 54680
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "competitor-alternatives",
+      "installs": 54155
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "onboarding-cro",
+      "installs": 53642
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "form-cro",
+      "installs": 52599
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "free-tool-strategy",
+      "installs": 52335
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "referral-program",
+      "installs": 52294
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "ab-test-setup",
+      "installs": 52125
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "signup-flow-cro",
+      "installs": 51842
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "paywall-upgrade-cro",
+      "installs": 51438
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "popup-cro",
+      "installs": 51119
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "marketing-loops",
+      "installs": 49506
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "marketing-council",
+      "installs": 47530
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "attribution",
+      "installs": 40294
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "influencer-marketing",
+      "installs": 40223
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "events",
+      "installs": 24475
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "aso-audit",
+      "installs": 17794
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "conversion-tracking",
+      "installs": 4747
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "link-building",
+      "installs": 4534
+    },
+    {
+      "repo": "higgsfield-ai/skills",
+      "skill": "higgsfield-generate",
+      "installs": 222203
+    },
+    {
+      "repo": "higgsfield-ai/skills",
+      "skill": "higgsfield-product-photoshoot",
+      "installs": 200471
+    },
+    {
+      "repo": "higgsfield-ai/skills",
+      "skill": "higgsfield-soul-id",
+      "installs": 199358
+    },
+    {
+      "repo": "higgsfield-ai/skills",
+      "skill": "higgsfield-marketplace-cards",
+      "installs": 197275
+    },
+    {
+      "repo": "higgsfield-ai/skills",
+      "skill": "higgsfield-websites",
+      "installs": 139113
+    },
+    {
+      "repo": "higgsfield-ai/skills",
+      "skill": "higgsfield-video-explainer",
+      "installs": 127503
+    },
+    {
+      "repo": "higgsfield-ai/skills",
+      "skill": "higgsfield-youtube-thumbnail",
+      "installs": 105813
+    },
+    {
+      "repo": "higgsfield-ai/skills",
+      "skill": "higgsfield-brandkit",
+      "installs": 105652
+    },
+    {
+      "repo": "higgsfield-ai/skills",
+      "skill": "higgsfield-game-generation",
+      "installs": 26583
+    },
+    {
+      "repo": "higgsfield-ai/skills",
+      "skill": "higgsfield-faceless-video",
+      "installs": 1967
+    },
+    {
+      "repo": "firebase/agent-skills",
+      "skill": "firebase-basics",
+      "installs": 177403
+    },
+    {
+      "repo": "firebase/agent-skills",
+      "skill": "firebase-auth-basics",
+      "installs": 176317
+    },
+    {
+      "repo": "firebase/agent-skills",
+      "skill": "firebase-hosting-basics",
+      "installs": 171836
+    },
+    {
+      "repo": "firebase/agent-skills",
+      "skill": "firebase-app-hosting-basics",
+      "installs": 171201
+    },
+    {
+      "repo": "firebase/agent-skills",
+      "skill": "firebase-data-connect",
+      "installs": 170295
+    },
+    {
+      "repo": "firebase/agent-skills",
+      "skill": "firebase-security-rules-auditor",
+      "installs": 140233
+    },
+    {
+      "repo": "firebase/agent-skills",
+      "skill": "firebase-ai-logic-basics",
+      "installs": 137235
+    },
+    {
+      "repo": "firebase/agent-skills",
+      "skill": "firebase-firestore",
+      "installs": 136935
+    },
+    {
+      "repo": "firebase/agent-skills",
+      "skill": "firebase-crashlytics",
+      "installs": 133215
+    },
+    {
+      "repo": "firebase/agent-skills",
+      "skill": "xcode-project-setup",
+      "installs": 132248
+    },
+    {
+      "repo": "firebase/agent-skills",
+      "skill": "firebase-remote-config-basics",
+      "installs": 122785
+    },
+    {
+      "repo": "firebase/agent-skills",
+      "skill": "developing-genkit-js",
+      "installs": 62497
+    },
+    {
+      "repo": "firebase/agent-skills",
+      "skill": "developing-genkit-dart",
+      "installs": 62197
+    },
+    {
+      "repo": "firebase/agent-skills",
+      "skill": "extension-to-functions-codebase",
+      "installs": 57935
+    },
+    {
+      "repo": "firebase/agent-skills",
+      "skill": "developing-genkit-go",
+      "installs": 49492
+    },
+    {
+      "repo": "firebase/agent-skills",
+      "skill": "firebase-firestore-standard",
+      "installs": 37045
+    },
+    {
+      "repo": "firebase/agent-skills",
+      "skill": "firebase-firestore-enterprise-native-mode",
+      "installs": 36001
+    },
+    {
+      "repo": "firebase/agent-skills",
+      "skill": "firebase-ai-logic",
+      "installs": 34546
+    },
+    {
+      "repo": "firebase/agent-skills",
+      "skill": "developing-genkit-python",
+      "installs": 33597
+    },
+    {
+      "repo": "firebase/agent-skills",
+      "skill": "firestore-rules-creation",
+      "installs": 26805
+    },
+    {
+      "repo": "firebase/agent-skills",
+      "skill": "firestore-security-rules-auditor",
+      "installs": 20399
+    },
+    {
+      "repo": "firebase/agent-skills",
+      "skill": "firebase-local-env-setup",
+      "installs": 5111
+    },
+    {
+      "repo": "firebase/agent-skills",
+      "skill": "firebase-firestore-basics",
+      "installs": 1565
+    },
+    {
+      "repo": "cloudflare/skills",
+      "skill": "cloudflare",
+      "installs": 141287
+    },
+    {
+      "repo": "cloudflare/skills",
+      "skill": "wrangler",
+      "installs": 132666
+    },
+    {
+      "repo": "cloudflare/skills",
+      "skill": "workers-best-practices",
+      "installs": 129516
+    },
+    {
+      "repo": "cloudflare/skills",
+      "skill": "durable-objects",
+      "installs": 113410
+    },
+    {
+      "repo": "cloudflare/skills",
+      "skill": "web-perf",
+      "installs": 113187
+    },
+    {
+      "repo": "cloudflare/skills",
+      "skill": "agents-sdk",
+      "installs": 109306
+    },
+    {
+      "repo": "cloudflare/skills",
+      "skill": "cloudflare-email-service",
+      "installs": 105015
+    },
+    {
+      "repo": "cloudflare/skills",
+      "skill": "cloudflare-one",
+      "installs": 96051
+    },
+    {
+      "repo": "cloudflare/skills",
+      "skill": "turnstile-spin",
+      "installs": 95821
+    },
+    {
+      "repo": "cloudflare/skills",
+      "skill": "cloudflare-one-migrations",
+      "installs": 92179
+    },
+    {
+      "repo": "cloudflare/skills",
+      "skill": "sandbox-stable",
+      "installs": 71074
+    },
+    {
+      "repo": "cloudflare/skills",
+      "skill": "sandbox-next",
+      "installs": 70400
+    },
+    {
+      "repo": "cloudflare/skills",
+      "skill": "sandbox-migrate-to-next",
+      "installs": 70299
+    },
+    {
+      "repo": "cloudflare/skills",
+      "skill": "nextjs-on-cloudflare",
+      "installs": 45326
+    },
+    {
+      "repo": "cloudflare/skills",
+      "skill": "sandbox-sdk",
+      "installs": 32873
+    },
+    {
+      "repo": "cloudflare/skills",
+      "skill": "k2",
+      "installs": 23345
+    },
+    {
+      "repo": "cloudflare/skills",
+      "skill": "basin",
+      "installs": 23323
+    },
+    {
+      "repo": "cloudflare/skills",
+      "skill": "workers-profiling",
+      "installs": 15455
+    },
+    {
+      "repo": "cloudflare/skills",
+      "skill": "cf-cli",
+      "installs": 14058
+    },
+    {
+      "repo": "cloudflare/skills",
+      "skill": "gateway-workers",
+      "installs": 11017
+    },
+    {
+      "repo": "cloudflare/skills",
+      "skill": "building-ai-agent-on-cloudflare",
+      "installs": 3702
+    },
+    {
+      "repo": "cloudflare/skills",
+      "skill": "building-mcp-server-on-cloudflare",
+      "installs": 3424
+    }
+  ]
+}
