@@ -55,10 +55,20 @@ export function parseToolLabel(label: string | null): ToolLabel {
     return {kind: "repo", owner, repo, host};
 }
 
-/** What the row's first line says. The skill when there is one, else `owner/repo`. */
+/**
+ * What the row's first line says.
+ *
+ * A skill leads with its own name and nothing else: its line has to hold a name a person retypes,
+ * and `github.com/owner/repo?skill=` in front of it eats the width. Its repository goes on the
+ * second line.
+ *
+ * **A repository keeps its host**, and that is not an inconsistency. Its line is the only line it
+ * gets, so there is room; and dropping the host would make `github.com/x/y` and `gitlab.com/x/y`
+ * render identically, which is a false merge on screen of two atoms the chain keeps apart.
+ */
 export function primaryNameOf(parsed: ToolLabel): string {
     if (parsed.kind === "skill") return parsed.skill;
-    if (parsed.kind === "repo") return `${parsed.owner}/${parsed.repo}`;
+    if (parsed.kind === "repo") return `${parsed.host}/${parsed.owner}/${parsed.repo}`;
     return parsed.text;
 }
 

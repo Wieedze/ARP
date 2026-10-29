@@ -50,8 +50,17 @@ describe("what a row shows", () => {
 
     it("gives a repository no second line rather than one that repeats the first", () => {
         const parsed = parseToolLabel("github.com/stripe/agent-toolkit");
-        expect(primaryNameOf(parsed)).toBe("stripe/agent-toolkit");
         expect(sourceOf(parsed)).toBeNull();
+    });
+
+    it("keeps the host on a repository and drops it from a skill", () => {
+        // A repository's line is the only line it gets, so there is room — and without the host
+        // `github.com/x/y` and `gitlab.com/x/y` would render identically, a false merge on screen
+        // of two atoms the chain keeps apart. A skill's line has to hold a name a person retypes.
+        expect(primaryNameOf(parseToolLabel("github.com/stripe/agent-toolkit"))).toBe(
+            "github.com/stripe/agent-toolkit",
+        );
+        expect(primaryNameOf(parseToolLabel("github.com/x/y?skill=nano-banana"))).toBe("nano-banana");
     });
 
     it("never prettifies a name somebody has to retype", () => {

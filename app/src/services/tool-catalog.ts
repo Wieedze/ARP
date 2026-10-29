@@ -1,4 +1,5 @@
 import {seedTitleOf} from "../lib/tool-catalogue-seed";
+import {parseToolLabel, primaryNameOf, sourceOf} from "../lib/tool-label";
 import {formatTrust} from "./trust-format";
 import type {
     RegisteredTool,
@@ -137,6 +138,24 @@ export type ToolRow = {
     name: string;
     /** True when `name` is the atom id, so it can be set in mono. */
     isUnnamed: boolean;
+    /**
+     * `owner/repo` for a skill, `null` for anything else.
+     *
+     * A skill atom's label is the whole URL, because every field of its Thing derives from one
+     * (ADR `0054`) and nobody gets to type a name. `github.com/` is on all 716 of them, so a row
+     * showing it 716 times says nothing and crowds out the part that differs. The skill leads; its
+     * repository goes underneath, and a repository row gets nothing rather than a line repeating
+     * its own name.
+     */
+    source: string | null;
+    /**
+     * The atom's own label, kept raw.
+     *
+     * `name` is parsed for reading and `label` is the key: the description and the install count
+     * live beside the chain, keyed by exactly this string, so a lookup needs the value the graph
+     * gave rather than the one the page shows.
+     */
+    label: string | null;
     href: string;
     declarations: number;
     /**
@@ -284,7 +303,14 @@ export type ToolCatalogView = {
  */
 function displayNameOf(label: string | undefined, named: boolean): string | null {
     if (!named || label === undefined) return null;
-    return seedTitleOf(label) ?? label;
+    const seeded = seedTitleOf(label);
+    if (seeded !== null && seeded !== undefined) return seeded;
+    return primaryNameOf(parseToolLabel(label));
+}
+
+/** `owner/repo` under a skill's name, and nothing under anything else. */
+function sourceLineOf(label: string | undefined): string | null {
+    return label === undefined ? null : sourceOf(parseToolLabel(label));
 }
 
 function rowOf(tool: ToolListing): ToolRow {
@@ -295,6 +321,8 @@ function rowOf(tool: ToolListing): ToolRow {
         provenance: "declared",
         name: displayNameOf(label, named) ?? tool.atomId,
         isUnnamed: !named,
+        source: sourceLineOf(label),
+        label: label ?? null,
         href: `/atom/${tool.atomId}`,
         declarations: tool.edgeCount,
         paidDeclarations: tool.pricedEdges,
@@ -312,6 +340,8 @@ function registeredRowOf(tool: RegisteredTool): ToolRow {
         provenance: "registered",
         name: displayNameOf(label, named) ?? tool.atomId,
         isUnnamed: !named,
+        source: sourceLineOf(label),
+        label: label ?? null,
         href: `/atom/${tool.atomId}`,
         declarations: tool.declarations,
         // `null`, not `0`: pricing a registered row's declarations needs the per-edge vaults, which
@@ -362,4 +392,47 @@ export function buildToolCatalogView(
         truncated: page.truncated || (registered?.truncated ?? false),
         curveId: page.curveId,
     };
+}
+
+/**
+ * Flat, or one row per repository that opens.
+ *
+ * **Not a filter.** A filter removes rows; this decides how the same rows are laid out, so the two
+ * compose: a reader can narrow to `image` *and* group by repository. That is why it lives beside
+ * `Order` and not in the rail.
+ *
+ * It exists because the catalogue went from 53 rows to 716 on 2026-10-29 (ADR `0077`): 662 of them
+ * are skills, and 71 of those come from one repository. A flat list of 716 buries the question
+ * "who publishes this" under scrolling.
+ */
+export type ToolGrouping = "flat" | "repo";
+
+export const TOOL_GROUPINGS: readonly {id: ToolGrouping; label: string}[] = [
+    {id: "flat", label: "Flat"},
+    {id: "repo", label: "By repo"},
+];
+
+export type ToolGroup = {
+    /** `owner/repo`, or the row's own name when it could not be parsed as one. */
+    repo: string;
+    rows: ToolRow[];
+};
+
+/**
+ * Rows gathered under the repository they came from, keeping the order they arrived in.
+ *
+ * A repository's place in the list is its **best** row's place, not the sum of its rows: a
+ * repository with 71 ordinary skills would otherwise outrank one with a single excellent one, which
+ * is the aggregation question ADR `0077` settled by changing the unit rather than picking a rule.
+ * Here the caller has already ordered the rows, so first-seen is best-seen.
+ */
+export function groupByRepo(rows: readonly ToolRow[]): ToolGroup[] {
+    const groups = new Map<string, ToolRow[]>();
+    for (const row of rows) {
+        const parsed = parseToolLabel(row.name);
+        const key =
+            parsed.kind === "other" ? row.name : `${parsed.owner}/${parsed.repo}`;
+        groups.set(key, [...(groups.get(key) ?? []), row]);
+    }
+    return [...groups].map(([repo, list]) => ({repo, rows: list}));
 }

@@ -1,23 +1,26 @@
 import {useState} from "react";
 import {Link} from "react-router-dom";
 
-import {DomainControl} from "../components/tool/DomainControl";
+import {DomainRail} from "../components/tool/DomainRail";
 import {CurveControl, Segmented} from "../components/tool/ToolCatalogControls";
 import {linkClass} from "../lib/control-class";
 import type {ToolListingOrder} from "@arp-protocol/core";
 
 import {PageLoading} from "../components/brand/PageLoading";
 import {ToolCatalogList} from "../components/tool/ToolCatalogList";
-import {useDomainTree, useToolsInDomain} from "../hooks/use-domain-tree";
+import {useDomainTree} from "../hooks/use-domain-tree";
+import {useTagIndex} from "../hooks/use-tag-index";
 import {useToolCatalog} from "../hooks/use-tool-catalog";
 import {
     curveLabelOf,
     matchesFilter,
     TOOL_CURVES,
     TOOL_FILTERS,
+    TOOL_GROUPINGS,
     TOOL_ORDERS,
     unknowableUnder,
     type ToolFilter,
+    type ToolGrouping,
 } from "../services/tool-catalog";
 
 /**
@@ -62,9 +65,23 @@ export function ToolCatalog() {
      * they do. Here a reader names a need and the subtree under it is walked before anything is
      * ranked — the same call `arp_find_tools { domain }` makes for an agent, from the same code.
      */
-    const [domain, setDomain] = useState<string | null>(null);
+    const [picked, setPicked] = useState<ReadonlySet<string>>(() => new Set());
+    /**
+     * Flat or grouped by repository. **Not a filter** — it removes no row, it decides how the same
+     * rows are laid out, which is why it sits beside `Order` rather than in the rail.
+     */
+    const [grouping, setGrouping] = useState<ToolGrouping>("flat");
+    const toggleDomain = (domain: string) =>
+        setPicked((current) => {
+            const next = new Set(current);
+            // A second click on a picked domain removes it. Nothing here is radio-like: narrowing
+            // to "image or video" is one question, not two.
+            if (!next.delete(domain)) next.add(domain);
+            return next;
+        });
     const domains = useDomainTree();
-    const inDomain = useToolsInDomain(domain, domains.tree);
+    const tags = useTagIndex(domains.tree);
+    const inDomain = tags.index.idsUnder([...picked], domains.tree);
     const query = useToolCatalog(order, curveId);
     const view = query.data;
     /**
@@ -79,10 +96,7 @@ export function ToolCatalog() {
     // is for. `null` means no domain was picked — not "a domain with nothing in it", which is why
     // the hook returns `null` rather than an empty set.
     const visible = (view?.rows ?? [])
-        .filter(
-            (row) =>
-                inDomain.atomIds === null || inDomain.atomIds.has(row.key.toLowerCase()),
-        )
+        .filter((row) => inDomain === null || inDomain.has(row.key.toLowerCase()))
         .filter((row) => matchesFilter(row, filter));
     const unknowable = unknowableUnder(view?.rows ?? [], filter);
 
@@ -118,16 +132,29 @@ export function ToolCatalog() {
                         onChange={setFilter}
                         options={TOOL_FILTERS}
                     />
-                    <DomainControl
-                        selected={domain}
-                        options={domains.options}
-                        onChange={setDomain}
-                        disabled={domains.options.length === 0}
+                    <Segmented
+                        label="Group"
+                        selected={grouping}
+                        onChange={setGrouping}
+                        options={TOOL_GROUPINGS}
                     />
                 </div>
                 <CurveControl curveId={curveId} onChange={setCurveId} />
             </div>
 
+            {/* The rail is a column, not a drawer: at 13rem it costs a fifth of the width and
+                never hides, so a reader always sees what the list is narrowed to. Below `md` it
+                stacks above the list, where it is still short enough to scroll past. */}
+            <div className="grid gap-x-10 gap-y-8 pt-6 md:grid-cols-[13rem_minmax(0,1fr)] md:items-start">
+                <DomainRail
+                    options={domains.options}
+                    selected={picked}
+                    counts={(domain) => tags.index.countFor(domain, domains.tree)}
+                    onToggle={toggleDomain}
+                    onClear={() => setPicked(new Set())}
+                />
+
+                <div className="min-w-0">
             {/* The list survives a failed refetch: `keepPreviousData` still holds the rows, and
                 replacing them with an error would lose a good read to a transient one. */}
             {view === undefined ? (
@@ -174,7 +201,7 @@ export function ToolCatalog() {
                 </div>
             ) : (
                 <>
-                    <ToolCatalogList rows={visible} curveId={view.curveId} />
+                    <ToolCatalogList rows={visible} curveId={view.curveId} grouping={grouping} />
                     {/* Only when it happened: a prefix presented as the whole set is the one thing
                         this page could get wrong without anyone noticing. */}
                     {view.truncated ? (
@@ -185,6 +212,8 @@ export function ToolCatalog() {
                     {query.error === null ? null : <StaleNotice />}
                 </>
             )}
+                </div>
+            </div>
         </section>
     );
 }

@@ -1,7 +1,8 @@
 import {Link} from "react-router-dom";
 import {useChainChoice} from "../../lib/chain-choice";
+import {useSkillFacts, type SkillFact} from "../../hooks/use-skill-facts";
 
-import type {ToolRow} from "../../services/tool-catalog";
+import {groupByRepo, type ToolGroup, type ToolGrouping, type ToolRow} from "../../services/tool-catalog";
 
 /**
  * Tools as a list, not as N boxes.
@@ -48,7 +49,7 @@ function Figure({value, label}: {value: string; label: string}) {
     );
 }
 
-function Row({row}: {row: ToolRow}) {
+function Row({row, fact}: {row: ToolRow; fact: SkillFact | null}) {
     const {symbol} = useChainChoice();
     return (
         <li className="border-b border-[color:var(--color-rule)]">
@@ -71,14 +72,43 @@ function Row({row}: {row: ToolRow}) {
                         {row.name}
                         {/* Under the name, not a column: it qualifies the row rather than measuring
                             it, and a fifth column would be a fifth column on a list that reads
-                            down. */}
+                            down. The repository comes first because it is the part a reader scans
+                            for; what kind of row it is follows. */}
                         <span className="block font-sans font-normal text-[length:var(--text-label)] uppercase tracking-wider text-[color:var(--color-steel)]">
+                            {row.source === null ? null : (
+                                <span className="font-mono normal-case tracking-normal">
+                                    {row.source}
+                                    <span className="px-1.5 text-[color:var(--color-rule-strong)]">
+                                        ·
+                                    </span>
+                                </span>
+                            )}
                             {row.provenance === "registered"
                                 ? row.stakers === null || row.stakers === 0
                                     ? "registered"
                                     : `registered · ${row.stakers} on the tool`
                                 : "declared by agents"}
+                            {/* Installs sit here rather than in a fifth column. They are not a
+                                figure this page ranks on — they are somebody else's count and
+                                cannot tell two identical files apart — but they are what tells a
+                                reader whether anybody has ever run this. */}
+                            {fact?.installs === null || fact === null ? null : (
+                                <span className="font-mono normal-case tracking-normal">
+                                    <span className="px-1.5 text-[color:var(--color-rule-strong)]">
+                                        ·
+                                    </span>
+                                    {`${Intl.NumberFormat("en-US", {notation: "compact"}).format(fact.installs)} installs`}
+                                </span>
+                            )}
                         </span>
+                        {/* The author's own sentence, not ours. A list of slugs is not an index:
+                            this is the line that lets a reader pick without opening each row. One
+                            line, clipped — the full text is on the atom's page. */}
+                        {fact === null || fact.description.length === 0 ? null : (
+                            <span className="mt-0.5 block truncate font-sans text-[length:var(--text-body-sm)] font-normal text-[color:var(--color-silver)]">
+                                {fact.description}
+                            </span>
+                        )}
                     </span>
 
                     <Figure value={String(row.declarations)} label="declarations" />
@@ -130,13 +160,77 @@ function Headers({curveId}: {curveId: number}) {
     );
 }
 
-export function ToolCatalogList({rows, curveId}: {rows: ToolRow[]; curveId: number}) {
+/**
+ * One repository, with its skills folded away until asked for.
+ *
+ * `<details>` rather than a button and a piece of state: it opens with the keyboard, it is in the
+ * accessibility tree as a disclosure without an `aria-` attribute to get wrong, and the browser
+ * keeps the open ones open on its own.
+ *
+ * The count is the whole summary — 71 skills from one repository is the fact that decides whether
+ * a reader opens it, and it is why grouping exists at all.
+ */
+function RepoGroup({
+    group,
+    curveId,
+    factFor,
+}: {
+    group: ToolGroup;
+    curveId: number;
+    factFor: (label: string | null) => SkillFact | null;
+}) {
+    return (
+        <details className="border-b border-[color:var(--color-rule)]">
+            <summary className="flex cursor-pointer items-baseline justify-between gap-4 py-3 marker:content-[''] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[color:var(--color-accent)]">
+                <span className="min-w-0 truncate font-medium">{group.repo}</span>
+                <span className="shrink-0 font-mono text-[length:var(--text-body-sm)] tabular-nums text-[color:var(--color-steel)]">
+                    {group.rows.length}
+                </span>
+            </summary>
+            {/* Indented and hairlined on the left so an open group reads as belonging to its
+                repository rather than as the list resuming. */}
+            <ul className="mb-2 ml-3 border-l border-[color:var(--color-rule)] pl-4">
+                {group.rows.map((row) => (
+                    <Row key={row.key} row={row} fact={factFor(row.label)} />
+                ))}
+            </ul>
+            <span className="sr-only">{`on bonding curve ${curveId}`}</span>
+        </details>
+    );
+}
+
+export function ToolCatalogList({
+    rows,
+    curveId,
+    grouping = "flat",
+}: {
+    rows: ToolRow[];
+    curveId: number;
+    grouping?: ToolGrouping;
+}) {
+    const {factFor} = useSkillFacts();
+    if (grouping === "repo") {
+        // No column headers: a group's own line carries a name and a count and nothing a header
+        // would describe. The headers return with the rows, inside each open group.
+        return (
+            <div>
+                {groupByRepo(rows).map((group) => (
+                    <RepoGroup
+                        key={group.repo}
+                        group={group}
+                        curveId={curveId}
+                        factFor={factFor}
+                    />
+                ))}
+            </div>
+        );
+    }
     return (
         <div>
             <Headers curveId={curveId} />
             <ul>
                 {rows.map((row) => (
-                    <Row key={row.key} row={row} />
+                    <Row key={row.key} row={row} fact={factFor(row.label)} />
                 ))}
             </ul>
         </div>
