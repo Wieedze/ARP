@@ -1,6 +1,6 @@
 # Task 31 — ARP serves the content and signs the access
 
-**Status:** **PLAN ONLY — nothing in this file is built.** Pieces 1 and 2 of §3 are built and
+**Status:** **PLAN ONLY — nothing in this file is built.** Pieces 1 and 2 of §4 are built and
 committed (`bcbfbe4`); piece 3 is the whole of this task.
 **Required skills:** `intuition` (atoms and triples), `ethskills` (signatures).
 **Rules:** `code.md`, `security.md`, `portability.md`, `claims.md`, `workflow.md`.
@@ -34,7 +34,34 @@ population that comes through it.
 have to attest a computation, and the computation here is an LLM reading instructions — there is no
 statement to prove. Two signatures do the job and cost nothing.
 
-## 2. What it proves, exactly
+## 2. The value, and it is not display
+
+The user's objection, and it is the right one: _« il nous faut une valeur ajoutée aussi, ça ne peut
+pas être que du fork, du bootstrap et du display »_.
+
+With the node installed beside the agent, **ARP is present at four moments**:
+
+```
+discovery      the agent asks, ARP answers        ARP saw the question
+access         the agent fetches, ARP serves      ARP served the bytes
+invocation     the hook records the call          ARP saw the call
+declaration    the edge goes on chain             and it carries all three
+```
+
+That is no longer "somebody claims to have used something". It is **this agent found this tool
+through ARP, fetched it through ARP, and invoked it** — three moments, all through code ARP wrote,
+all timestamped, and one record that ties them.
+
+**Nobody else can produce that fact**, because nobody else is at all three places. An index that is
+only read produces nothing; this produces a record that did not exist before the agent came
+through.
+
+The honest reservation: the node runs on the agent's own machine, so it can be bypassed. But
+bypassing is a deliberate act, and an agent that bypasses loses the corroboration — its declaration
+falls back to being worth exactly what it was worth before, its own word. The mechanism does not
+need to be unavoidable. It needs to be worth not avoiding.
+
+## 3. What it proves, exactly
 
 **Access, not use.** The agent has the bytes. Whether they changed what it did stays unobservable,
 and no mechanism in this document changes that.
@@ -43,7 +70,7 @@ What makes it enough in practice is the user's own argument, which is sound: acc
 something, and declaring a use you did not make still earns nothing. A false declaration is an
 error that an identified agent pays for, against a reputation it cannot cheaply re-mint. The only
 case where lying pays is **self-dealing** — an agent declaring use of a tool it controls, so the
-stake returns to itself — and that is treated in §7.
+stake returns to itself — and that is treated in §8.
 
 The ladder, with this task's rung marked:
 
@@ -56,7 +83,7 @@ a TEE attests the harness         heavy, and not for a POC
 ZK                                no statement to prove
 ```
 
-## 3. Where the work already is
+## 4. Where the work already is
 
 | | | |
 | --- | --- | --- |
@@ -71,11 +98,11 @@ origin, so **the reference has to come from whoever served the content**.
 
 That is not a bonus. It is half the reason to do this at all.
 
-## 4. The shape
+## 5. The shape
 
 Three parts, in this order.
 
-### 4.1 A fetch endpoint on the node
+### 5.1 A fetch endpoint on the node
 
 ```
 GET /content/:atomId        →  the skill's SKILL.md, verbatim
@@ -93,7 +120,7 @@ repository and the answer is cacheable. **Measure the distinct layouts before wr
 resolver** — `scripts/measure/skill-content-duplicates.ts` already reads those trees and could
 report them.
 
-### 4.2 The receipt
+### 5.2 The receipt
 
 Returned beside the content, and signed by the node's key:
 
@@ -116,7 +143,7 @@ against a second node.
 **The hook logs `atom` as its `ref`**, which is the field `session.ts` already reads and which
 turns six candidates into one.
 
-### 4.3 How the caller identifies itself
+### 5.3 How the caller identifies itself
 
 The receipt names `to`, so the caller has to prove an address. The cheapest honest form is a
 challenge the node signs nothing for: the caller signs a nonce, the node verifies, serves, and
@@ -126,26 +153,30 @@ Open: whether an unauthenticated fetch is served at all. Serving it with `to: nu
 index open and makes the receipt worthless, which is probably right — the receipt is the product,
 not the content.
 
-## 5. What this changes about ARP
+## 6. What this changes about ARP
 
-Stated plainly, because it is the part that needs an ADR rather than a commit message.
+ARP becomes a path and not only an index: it holds a key, and that key signs receipts.
 
-**ARP becomes a path, not only an index.** Today everything it does is readable by anyone from the
-chain and from third parties, and it holds nothing. After this it holds a key that signs receipts,
-and the value of a corroborated declaration depends on that key being trusted.
+**A receipt can only add, never subtract**, and that is the property that makes the key
+uninteresting to worry about. A declaration already stands on its own — somebody identified paid to
+make it. The receipt says a second party saw the fetch. If a reader distrusts the signer, they
+ignore the receipt and are back to exactly the declaration they had before. There is no bottleneck
+to become, because nothing routes through the key: `arp_find_tools` stays open, the chain stays
+readable, and no receipt can revoke an edge.
 
-That is a centralisation, and it should be named rather than discovered:
+Two design requirements follow, and they are requirements rather than warnings:
 
-- A receipt is only worth what the node's key is worth. One node, one key, one party to compromise.
-- Several nodes with different keys would fix it, and the design must not assume one. A receipt
-  names its signer; a reader decides which signers it accepts, exactly as ARP's index already names
-  its attestor.
-- **A skill copied straight from GitHub stays invisible, and that is correct.** This cannot be
-  compulsory. The incentive is the only lever: an agent that comes through ARP gets a corroborated
-  declaration, one that copies from GitHub has only its own word. A difference in reputation, not a
-  barrier to entry.
+- **A receipt names its signer.** A reader decides which signers it accepts, the same way ARP's
+  index already names the attestor it reads through. Nothing assumes one node.
+- **The signing key signs receipts and nothing else.** It must not be a key that can move value
+  (ADR `0038`: the node plans and never sends).
 
-## 6. Deliverables
+**A skill copied straight from GitHub stays invisible, and that is correct.** This cannot be
+compulsory and should not try to be. An agent that comes through ARP gets a corroborated
+declaration; one that copies from GitHub has only its own word. That is a difference in what a
+claim is worth, not a gate on who may make one.
+
+## 7. Deliverables
 
 1. `packages/protocol/src/receipt.ts` — the payload shape, its canonical encoding, `sign` and
    `verify`. Pure, no transport, tested without a network. **The verification is the deliverable**,
@@ -154,29 +185,34 @@ That is a centralisation, and it should be named rather than discovered:
 3. The hook writes `ref` from the receipt.
 4. `arp_declare_session` on the node: takes a log, returns resolutions and the prepared calls for
    the resolved ones. **Plans, never signs** (ADR `0038`).
-5. A measurement of the repository layouts, committed, before 4.2's resolver exists.
-6. The ADR in §5.
+5. A measurement of the repository layouts, committed, before 5.2's resolver exists.
+6. The ADR in §6.
 7. `docs/14` gains the correction: a use is unwitnessable **in general**, and two-party
    corroboration is available where ARP is in the path. The current text is too absolute and the
    user said so.
 
-## 7. The attack this does not stop, and what does
+## 8. The one case where lying still pays
 
-Self-dealing. An agent that controls a tool fetches its own skill through ARP, gets a genuine
-receipt, declares, and stakes — all of it true, and all of it worthless as a signal.
+Everything above makes a false declaration expensive and pointless, **except when you own the tool
+you are praising**.
 
-The receipt cannot help: every step really happened. What helps is on the reading side, and none of
-it is in this task:
+Fetch your own skill through ARP, declare you used it, stake on it. Every step is real: the receipt
+is genuine, the call happened, the money moved. It is self-promotion wearing the shape of a
+recommendation, and the receipt cannot detect it because nothing was faked.
+
+What detects it is looking at **who** is declaring. One address declaring about a tool the same
+address created is not an opinion. Ten different addresses is. Neither check is in this task, and
+both belong on the reading side:
 
 - **count distinct declarers, not declarations.** One agent calling forty times is one opinion.
   `session.ts` already reports `calls` without weighting it, for this reason.
 - **look at whether the declarer and the tool share an address.** The registry has the tool's
   creator; the declaration has the agent's key.
 
-Both belong to whatever reads the graph, and ARP composes no score (ADR `0046`), so they are
-inputs a reader sees rather than a correction ARP applies.
+Both belong to whatever reads the graph. ARP composes no score (ADR `0046`), so these are figures a
+reader sees rather than a correction ARP applies on their behalf.
 
-## 8. Do not do in this task
+## 9. Do not do in this task
 
 - **Do not host content.** Fetch from the origin, pass it through, keep nothing. A cache of bytes
   is a mirror and a mirror is a different product with different obligations.
