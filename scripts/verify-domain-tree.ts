@@ -39,8 +39,9 @@ const IS_A_SUB_DOMAIN_OF = '0x9c2e2f2018dbfaa74fd3fd86cd54a62b16e771936f5d342e37
 const HAS_TAG = '0x7ec36d201c842dc787b45cb5bb753bea4cf849be3908fb1b0a7d067c3c3cc1f5';
 const ROOT = 'tool';
 
-/** A triple's vault type. 1 = TRIPLE, 2 = COUNTER_TRIPLE — a counter-triple authorises nothing. */
-const POSITIVE_TRIPLE = 1;
+// A triple's vault type is 1 for TRIPLE and 2 for COUNTER_TRIPLE, and a counter-triple authorises
+// nothing. Kept as a comment rather than an unused constant: nothing here reads the vault type yet,
+// and `noUnusedLocals` is right that a named value nobody reads is a claim nobody checks.
 
 const EDGES_Q = `query($pid: String!) {
   triples(where: {predicate_id: {_eq: $pid}}, limit: 500) {
@@ -169,7 +170,7 @@ if (contested.length > 0) {
     // Only the leaders are tied — the ones below them are ordinary dissent, and calling all four
     // "tied" was the first version of this line saying something the numbers contradict.
     const top = (list[0] as { shares: bigint }).shares;
-    list.forEach((entry, index) => {
+    list.forEach((entry) => {
       const mark = entry.shares === top ? (settled(list) ? 'retenu   ' : 'à égalité') : 'dissent  ';
       console.log(`    ${mark}  ${entry.parent.padEnd(18)} ${entry.shares} shares`);
     });

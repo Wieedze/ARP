@@ -86,7 +86,17 @@ for (const row of rows) {
     const body = await response.text();
     // The same JSON-LD the install count comes from. `description` is the author's own sentence.
     const found = /"description":"((?:[^"\\]|\\.)*)"/.exec(body);
-    const description = found?.[1] === undefined ? "" : JSON.parse(`"${found[1]}"`);
+    // Unescaping a JSON string literal by re-parsing it. Guarded because one malformed page would
+    // otherwise throw and discard every fetch completed before it — 600 requests for nothing.
+    let description = "";
+    if (found?.[1] !== undefined) {
+        try {
+            const parsed: unknown = JSON.parse(`"${found[1]}"`);
+            if (typeof parsed === "string") description = parsed;
+        } catch {
+            description = "";
+        }
+    }
     const haystack = `${row.skill.replace(/-/g, " ")} ${description}`.toLowerCase();
     const hit = DOMAINS.find((entry) => entry.words.some((word) => haystack.includes(word)));
     out.push({...row, description, domain: hit?.domain ?? null});

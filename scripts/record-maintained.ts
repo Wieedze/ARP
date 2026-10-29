@@ -124,7 +124,14 @@ console.log(`chain       ${chainId} (${targetName})`);
 console.log(`attestor    ${attestor}`);
 console.log(`stake       ${formatEther(stake)} per assertion (minDeposit, read from chain)\n`);
 
-const calls: unknown[] = [];
+/**
+ * A prepared call as it travels to `agent-send-plan.ts`: `value` is a decimal string, since JSON
+ * has no bigint. The same shape as `send-plan.ts`'s `SerialisedCall`, declared here rather than
+ * imported so a planning script carries no dependency on the one module that holds a key.
+ */
+type PlannedCall = {kind: string; chainId: number; to: Hex; value: string; data: Hex; why: string};
+
+const calls: PlannedCall[] = [];
 
 // The object atom has to exist before any triple can name it. It is on mainnet already and absent
 // from testnet, with the same id either way — a plain string's id is a pure function of the word.
@@ -255,9 +262,12 @@ for (const tool of (catalogue as {tools: {url: string; kind: string}[]}).tools) 
     await sleep(120);
 }
 
-const total = calls.reduce((sum, call) => sum + BigInt((call as {value: string}).value), 0n);
+const total = calls.reduce((sum, call) => sum + BigInt(call.value), 0n);
 console.log(
-    `\n${calls.length} calls · ${unchanged} already correct · ${skipped} not claimed · ${formatEther(total)} ${chainId === 1155 ? "TRUST" : "tTRUST"}`,
+    // Not `chainId === 1155 ? "TRUST" : "tTRUST"` — the mainnet refusal above narrows `chainId` to
+    // 13579, so `tsc` proves that branch unreachable. A ternary that cannot take one side is dead
+    // code dressed as a safeguard.
+    `\n${calls.length} calls · ${unchanged} already correct · ${skipped} not claimed · ${formatEther(total)} tTRUST`,
 );
 
 if (calls.length === 0) {

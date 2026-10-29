@@ -205,7 +205,14 @@ console.log(`atoms        ${newAtoms.length} to create, ${planned.length - newAt
 console.log(`source edges ${newTriples.length} to write, ${planned.length - newTriples.length} already on chain`);
 if (missingRepos.length > 0) console.log(`note         ${missingRepos.length} repository atoms unresolved`);
 
-const calls: unknown[] = [];
+/**
+ * A prepared call as it travels to `agent-send-plan.ts`: `value` is a decimal string, since JSON
+ * has no bigint. The same shape as `send-plan.ts`'s `SerialisedCall`, declared here rather than
+ * imported so a planning script carries no dependency on the one module that holds a key.
+ */
+type PlannedCall = {kind: string; chainId: number; to: Hex; value: string; data: Hex; why: string};
+
+const calls: PlannedCall[] = [];
 const chunk = <T>(list: readonly T[], size: number): T[][] =>
     Array.from({length: Math.ceil(list.length / size)}, (_, i) => list.slice(i * size, i * size + size));
 
@@ -240,7 +247,7 @@ for (const group of chunk(newTriples, BATCH)) {
     });
 }
 
-const total = calls.reduce((sum, call) => sum + BigInt((call as {value: string}).value), 0n);
+const total = calls.reduce((sum, call) => sum + BigInt(call.value), 0n);
 console.log(`\n${calls.length} calls in batches of ${BATCH} · ${formatEther(total)} tTRUST`);
 
 if (calls.length === 0) {

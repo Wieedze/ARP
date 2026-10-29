@@ -50,10 +50,8 @@ if (!Array.isArray(parsed) || parsed.length === 0) {
 // re-read when the count that landed is already known from the log.
 const skip = Number(arg('from') ?? 0);
 if (!Number.isInteger(skip) || skip < 0 || skip >= parsed.length) {
-  if (arg('from') !== undefined) {
-    console.error(`--from must be between 0 and ${parsed.length - 1}`);
-    process.exit(1);
-  }
+  console.error(`--from must be a whole number between 0 and ${parsed.length - 1}`);
+  process.exit(1);
 }
 const calls = skip > 0 ? parsed.slice(skip) : parsed;
 if (skip > 0) console.log(`resuming   skipping the first ${skip} call(s) of ${parsed.length}`);

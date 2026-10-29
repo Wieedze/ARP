@@ -308,7 +308,9 @@ const total = calls.reduce((sum, call) => sum + BigInt(call.value), 0n);
 
 console.log(
   `\n${atomCalls.length} atoms + ${tripleCalls.length} triples = ${calls.length} calls, ` +
-    `${formatEther(total)} ${chainId === 1155 ? 'TRUST' : 'tTRUST'}`,
+    // Not a ternary on `chainId`: the mainnet refusal above narrows it to 13579, so `tsc` proves
+    // the other branch unreachable.
+    `${formatEther(total)} tTRUST`,
 );
 
 if (calls.length === 0) {

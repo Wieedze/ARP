@@ -43,7 +43,7 @@
  */
 import {writeFileSync} from "node:fs";
 
-import {formatEther, stringToHex, type Hex} from "viem";
+import {formatEther, getAddress, stringToHex, type Hex} from "viem";
 
 import measured from "../measurements/skill-domains-2026-10-29.json";
 import {
@@ -131,7 +131,14 @@ console.log(
         : `             to mint: ${missingDomains.join(", ")}`,
 );
 
-const calls: unknown[] = [];
+/**
+ * A prepared call as it travels to `agent-send-plan.ts`: `value` is a decimal string, since JSON
+ * has no bigint. The same shape as `send-plan.ts`'s `SerialisedCall`, declared here rather than
+ * imported so a planning script carries no dependency on the one module that holds a key.
+ */
+type PlannedCall = {kind: string; chainId: number; to: Hex; value: string; data: Hex; why: string};
+
+const calls: PlannedCall[] = [];
 
 for (const group of [missingDomains]) {
     if (group.length === 0) continue;
@@ -232,8 +239,15 @@ for (const group of chunk(newTags, BATCH)) {
     });
 }
 
-const total = calls.reduce((sum, call) => sum + BigInt((call as {value: string}).value), 0n);
-const balance = await client.getBalance({address: (process.env["AGENT_ADDRESS"] ?? "0x0") as Hex});
+const total = calls.reduce((sum, call) => sum + BigInt(call.value), 0n);
+// `security.md`: fail loudly, no silent fallbacks. The earlier `?? "0x0"` printed a balance for
+// an address nobody holds, which reads as "you have nothing" rather than "you did not say who".
+const signer = process.env["AGENT_ADDRESS"];
+if (signer === undefined || !/^0x[0-9a-fA-F]{40}$/.test(signer)) {
+    console.error("AGENT_ADDRESS must be set to the address that will sign this plan.");
+    process.exit(1);
+}
+const balance = await client.getBalance({address: getAddress(signer)});
 console.log(`\n${calls.length} calls in batches of ${BATCH} · ${formatEther(total)} tTRUST`);
 console.log(`balance      ${formatEther(balance)} tTRUST`);
 
