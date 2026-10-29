@@ -60,6 +60,18 @@ function fakeReads(
         async defaultCurveId() {
             return 1n;
         },
+        // The three reads the exit path needs. An identity plan never redeems, so these throw
+        // rather than answer: a plausible return value here would let a future test about
+        // redemption pass against a mock that models none of it.
+        async counterTripleId(): Promise<Hex> {
+            throw new Error("counterTripleId: an identity plan does not touch a counter vault");
+        },
+        async sharesOf(): Promise<bigint> {
+            throw new Error("sharesOf: an identity plan does not read a position");
+        },
+        async previewRedeem(): Promise<{assetsAfterFees: bigint; sharesUsed: bigint}> {
+            throw new Error("previewRedeem: an identity plan never redeems");
+        },
         async minDeposit() {
             return state.minDeposit ?? parseEther("0.001");
         },
