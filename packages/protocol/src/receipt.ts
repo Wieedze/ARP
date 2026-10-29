@@ -39,9 +39,10 @@
  *
  * ## Why `path` is in the payload
  *
- * Measured 2026-10-29 by `scripts/measure/skill-layouts.ts`: of 662 catalogued skills, **42 exist
- * at two paths inside one repository** (`.agents/skills/<skill>/` beside `.claude/skills/<skill>/`,
- * byte-identical), 7 more at two paths that differ, and 19 distinct layouts across 31 repositories.
+ * Measured 2026-10-29 by `scripts/measure/skill-layouts.ts`: of 662 catalogued skills, **46 exist
+ * at several paths inside one repository** (`.agents/skills/<skill>/` beside
+ * `.claude/skills/<skill>/`, byte-identical), 2 more at paths that differ, and 19 distinct layouts
+ * across 31 repositories.
  * An atom names a repository and a skill; it does not name a file. Without `path` a verifier cannot
  * find the bytes the digest is over, so the second half of the verification would not exist.
  *

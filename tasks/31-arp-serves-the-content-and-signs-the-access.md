@@ -127,21 +127,31 @@ cacheable, which was always the fallback.
 
 What the 662 resolve to, and what the endpoint owes each case:
 
-|     |                                   | the endpoint                                     |
-| --- | --------------------------------- | ------------------------------------------------ |
-| 475 | one path, exact directory match   | serve                                            |
-| 42  | two paths, **identical blob sha** | serve either, name both in the receipt           |
-| 7   | two paths, **different content**  | **refuse** — which one the agent read is unknown |
-| 138 | no path at HEAD                   | **refuse**, 404 with the reason                  |
+|     |                                      | the endpoint                                     |
+| --- | ------------------------------------ | ------------------------------------------------ |
+| 475 | one path, exact directory match      | serve                                            |
+| 46  | several paths, **identical blob sha** | serve one, name the others in the receipt       |
+| 2   | several paths, **different content**  | **refuse** — which one the agent read is unknown |
+| 139 | no path at HEAD                      | **refuse**, 404 with the reason                  |
 
-So **517 of 662 are servable** and 145 are not. The 42 are a skill published twice inside one
-repository — `.agents/skills/<skill>/` beside `.claude/skills/<skill>/` — and since the bytes are
-the same file, choosing between them asserts nothing.
+So **521 of 662 are servable** and 141 are not. The 46 are a skill published once per runtime
+directory inside one repository — `.agents/skills/<skill>/` beside `.claude/skills/<skill>/`, and
+`pbakaus/impeccable` ships twenty of them — and since the bytes are the same file, choosing between
+them asserts nothing.
 
-**The 138 are the finding, not the defect.** Of them, 95 sit in a repository with **no uncatalogued
+**The 139 are the finding, not the defect.** Of them, 95 sit in a repository with **no uncatalogued
 directory**, so there is nothing there the name could have been renamed to: the file the catalogue
 points at is not in the repository. `mattpocock/skills` is the clearest case — 55 catalogued skills,
 38 directories at HEAD, all 38 catalogued, 17 names with nothing behind them.
+
+> **The first run of this measurement was wrong and the committed file is kept.** `0bc29d8` matched
+> a catalogued name against **any** directory in a path, so `plugins/caveman/skills/cavecrew/SKILL.md`
+> counted as a candidate for the skill `caveman`. It reported 49 ambiguities of which 42 shared
+> content, and 138 absent. The corrected run matches the **immediate parent only** and is
+> `measurements/skill-layouts-2026-10-29T2200.json`; the first is left beside it as the record of a
+> run that happened (ADR `0064`). **No resolved path changed** — the loose matcher never once landed
+> on a single wrong candidate in this population, which is luck and not a defence, because a single
+> wrong candidate resolves silently and is exactly what this measurement exists to prevent.
 
 That is a **per-skill liveness signal**, and it is the strongest kind this project has: one tree
 request re-derives it, with no credential and no trust in us, which is `docs/14`'s own test. It is
@@ -216,7 +226,8 @@ claim is worth, not a gate on who may make one.
 5. ~~A measurement of the repository layouts, committed, before 5.2's resolver exists.~~
    **Done 2026-10-29** — `scripts/measure/skill-layouts.ts`,
    `measurements/skill-layouts-2026-10-29.json`. The answer is in §5.1 and it changed the design:
-   the resolver reads the tree, and 145 of 662 skills are not servable at all.
+   the resolver reads the tree, and 141 of 662 skills are not servable at all. Corrected the same
+   day — see the note in §5.1 and `measurements/skill-layouts-2026-10-29T2200.json`.
 6. The ADR in §6.
 7. `docs/14` gains the correction: a use is unwitnessable **in general**, and two-party
    corroboration is available where ARP is in the path. The current text is too absolute and the

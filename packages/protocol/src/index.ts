@@ -487,6 +487,23 @@ export {
     type Resolution,
 } from "./session.js";
 
+/**
+ * Which file inside a repository a tool's atom refers to — read from the repository's own listing,
+ * because `scripts/measure/skill-layouts.ts` found 19 layouts across 31 repositories and 8 of them
+ * using more than one. A formula would be right most of the time, which is the worst outcome
+ * available: the wrong answers would be silent.
+ */
+export {
+    directoryOf,
+    rawContentUrl,
+    resolveContentPath,
+    skillFilesIn,
+    skillRefFromUrl,
+    type ContentPathResolution,
+    type RepositoryFile,
+    type SkillRef,
+} from "./content-path.js";
+
 export {
     contentDigest,
     contentReceiptDomain,

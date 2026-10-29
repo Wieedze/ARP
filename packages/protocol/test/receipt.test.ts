@@ -185,8 +185,8 @@ describe("contentReceiptTypedData", () => {
     });
 
     it("sends the path as the path, so a verifier can find the file", () => {
-        // 42 of 662 catalogued skills exist at two byte-identical paths in one repository, and 7
-        // more at two paths that differ (`scripts/measure/skill-layouts.ts`, 2026-10-29). An atom
+        // 46 of 662 catalogued skills exist at several byte-identical paths in one repository, and
+        // 2 more at paths that differ (`scripts/measure/skill-layouts.ts`, 2026-10-29). An atom
         // names a repository and a skill; only this field names the file.
         const data = contentReceiptTypedData(receipt(), TESTNET);
         expect(data.message.path).toBe("skills/product-photography/SKILL.md");

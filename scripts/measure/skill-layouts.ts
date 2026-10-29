@@ -98,12 +98,11 @@ for (const repo of repos) {
   await sleep(120);
 }
 
-/** The path with the segment that carried the skill's name replaced, so two repos can be compared. */
-function templateOf(path: string, segment: string): string {
+/** The path with the skill's own directory replaced, so two repositories can be compared. */
+function templateOf(path: string): string {
   const parts = path.split('/');
-  const at = parts.lastIndexOf(segment);
-  if (at === -1) return path;
-  parts[at] = '<skill>';
+  if (parts.length < 2) return path;
+  parts[parts.length - 2] = '<skill>';
   return parts.join('/');
 }
 
@@ -112,10 +111,17 @@ const located: Located[] = [];
 const ambiguous: { repo: string; skill: string; paths: string[]; sameContent: boolean }[] = [];
 const unlocated: { repo: string; skill: string; filesInRepo: number }[] = [];
 
-/** The directory each SKILL.md sits in — what a catalogued name is matched against. */
+/** The directory a SKILL.md sits in — the only segment a catalogued name is matched against. */
+function directoryOf(path: string): string {
+  const parts = path.split('/');
+  // A SKILL.md at the repository root has no directory. Returning the file's own name would make it
+  // a candidate for a skill called `SKILL.md`: no effect on this population, wrong anyway.
+  return parts.length < 2 ? '' : (parts[parts.length - 2] ?? '');
+}
+
+/** Every such directory in a repository, deduplicated. */
 function directoriesOf(repo: string): string[] {
-  const own = paths.get(repo) ?? [];
-  return [...new Set(own.map((path) => path.split('/').slice(-2)[0] ?? ''))];
+  return [...new Set((paths.get(repo) ?? []).map(directoryOf))];
 }
 
 for (const row of skills) {
@@ -124,13 +130,18 @@ for (const row of skills) {
 
   // Exact first, then case-folded. Nothing looser: a fuzzy match would be a guess about which file
   // belongs to which atom, and the endpoint built on this serves bytes under an atom's name.
-  const exact = inRepo.filter((path) => path.split('/').includes(row.skill));
+  //
+  // **The immediate parent and no other segment.** The first run of this script matched any
+  // directory in the path, which made `plugins/caveman/skills/cavecrew/SKILL.md` a candidate for
+  // the skill `caveman` and reported 49 ambiguities where there were far fewer. Worse than the
+  // count: a loose match can land on exactly one wrong file and resolve confidently, which is the
+  // silent failure this measurement exists to prevent. `measurements/skill-layouts-2026-10-29.json`
+  // is that first run; the correction is in the later file.
+  const exact = inRepo.filter((path) => directoryOf(path) === row.skill);
   const folded =
     exact.length > 0
       ? exact
-      : inRepo.filter((path) =>
-          path.split('/').some((part) => part.toLowerCase() === row.skill.toLowerCase()),
-        );
+      : inRepo.filter((path) => directoryOf(path).toLowerCase() === row.skill.toLowerCase());
 
   const only = folded[0];
   if (folded.length === 0) {
@@ -146,13 +157,11 @@ for (const row of skills) {
       sameContent: shas.size === 1,
     });
   } else if (only !== undefined) {
-    const segment =
-      only.split('/').find((part) => part.toLowerCase() === row.skill.toLowerCase()) ?? row.skill;
     located.push({
       repo: row.repo,
       skill: row.skill,
       path: only,
-      template: templateOf(only, segment),
+      template: templateOf(only),
       exact: exact.length > 0,
     });
   }
