@@ -4,9 +4,11 @@ import {describe, expect, it} from "vitest";
 
 import {
     contentDigest,
+    contentRequestTypedData,
     corroborationOf,
     contentReceiptTypedData,
     receiptMatchesContent,
+    recoverContentRequester,
     signContentReceipt,
     UNAUTHENTICATED,
     verifyContentReceipt,
@@ -154,6 +156,67 @@ describe("verifyContentReceipt", () => {
             status: "malformed",
             reason: "signature is not hex",
         });
+    });
+});
+
+describe("recoverContentRequester", () => {
+    const ATOM = `0x${"ab".repeat(32)}` as const;
+    const NONCE = keccak256(stringToBytes("caller-nonce"));
+
+    const ask = (account: typeof NODE, chainId = TESTNET) =>
+        account.signTypedData(contentRequestTypedData(ATOM, NONCE, chainId));
+
+    it("recovers the caller who asked", async () => {
+        const signature = await ask(OTHER);
+        expect(await recoverContentRequester(ATOM, NONCE, TESTNET, signature)).toBe(OTHER.address);
+    });
+
+    it("does not recover the caller on the other chain", async () => {
+        const signature = await ask(OTHER, TESTNET);
+        const elsewhere = await recoverContentRequester(ATOM, NONCE, MAINNET, signature);
+        expect(elsewhere).not.toBe(OTHER.address);
+    });
+
+    it("recovers nobody for a different atom or a different nonce", async () => {
+        const signature = await ask(OTHER);
+        const otherAtom = await recoverContentRequester(
+            `0x${"cd".repeat(32)}`,
+            NONCE,
+            TESTNET,
+            signature,
+        );
+        expect(otherAtom).not.toBe(OTHER.address);
+        const otherNonce = await recoverContentRequester(
+            ATOM,
+            keccak256(stringToBytes("else")),
+            TESTNET,
+            signature,
+        );
+        expect(otherNonce).not.toBe(OTHER.address);
+    });
+
+    it("returns null rather than throwing on a request that identifies nobody", async () => {
+        // An unauthenticated fetch is a SERVED state, not an error: the bytes go out and the
+        // receipt corroborates nobody. `tasks/31` §5.3.
+        expect(await recoverContentRequester(ATOM, NONCE, TESTNET, "0x")).toBeNull();
+        expect(await recoverContentRequester(ATOM, NONCE, TESTNET, "not hex" as Hex)).toBeNull();
+        expect(
+            await recoverContentRequester(ATOM, NONCE, TESTNET, `0x${"00".repeat(65)}`),
+        ).toBeNull();
+    });
+
+    it("makes a replayed request produce the same receipt, not a second one", async () => {
+        // The reason the CALLER supplies the nonce. Signing the same request twice yields the same
+        // `to` and the same nonce, so the node's receipt is byte-identical and a reader counting
+        // receipts counts one. A stolen signature buys a copy of a receipt that already exists.
+        const signature = await ask(OTHER);
+        const first = await recoverContentRequester(ATOM, NONCE, TESTNET, signature);
+        const second = await recoverContentRequester(ATOM, NONCE, TESTNET, signature);
+        expect(first).toBe(second);
+
+        const one = await sign(receipt({to: first, nonce: NONCE}));
+        const two = await sign(receipt({to: second, nonce: NONCE}));
+        expect(one.signature).toBe(two.signature);
     });
 });
 

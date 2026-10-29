@@ -504,13 +504,29 @@ export {
     type SkillRef,
 } from "./content-path.js";
 
+/**
+ * Serving a tool's content and signing for having served it. Every piece of IO is injected, so this
+ * holds no key and touches no network; `scripts/arp-content.ts` is the transport.
+ */
+export {
+    contentIndexOf,
+    serveContent,
+    type CataloguedAtom,
+    type ContentAnswer,
+    type ContentServeConfig,
+} from "./content-serve.js";
+
 export {
     contentDigest,
     contentReceiptDomain,
+    contentRequestDomain,
+    contentRequestTypedData,
     corroborationOf,
     contentReceiptTypedData,
     CONTENT_RECEIPT_TYPES,
+    CONTENT_REQUEST_TYPES,
     receiptMatchesContent,
+    recoverContentRequester,
     signContentReceipt,
     UNAUTHENTICATED,
     verifyContentReceipt,

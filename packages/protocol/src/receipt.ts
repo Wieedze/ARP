@@ -91,6 +91,25 @@ export const CONTENT_RECEIPT_TYPES = {
     ],
 } as const;
 
+/**
+ * What a caller signs to be named in a receipt.
+ *
+ * **The caller supplies the nonce and the node signs over it**, which is what makes this stateless
+ * without being replayable into a second record. Replaying a request signature produces a
+ * **byte-identical receipt** — same atom, same caller, same nonce — so it is the same receipt rather
+ * than a new one, and a reader counting receipts counts one. A server-issued challenge would need
+ * state for no gain; a bare timestamp would leave a window.
+ *
+ * It is also why a third party cannot manufacture receipts in somebody else's name: the only thing
+ * a stolen signature buys is a copy of a receipt that already exists.
+ */
+export const CONTENT_REQUEST_TYPES = {
+    ContentRequest: [
+        {name: "atom", type: "bytes32"},
+        {name: "nonce", type: "bytes32"},
+    ],
+} as const;
+
 /** The address that stands for "served to nobody in particular". */
 export const UNAUTHENTICATED = "0x0000000000000000000000000000000000000000" as const;
 
@@ -102,6 +121,45 @@ export const UNAUTHENTICATED = "0x0000000000000000000000000000000000000000" as c
  */
 export function contentReceiptDomain(chainId: number) {
     return {name: "ARP Content Receipt", version: "1", chainId} as const;
+}
+
+/** The domain a caller's request is signed under. Same separation, same reasons. */
+export function contentRequestDomain(chainId: number) {
+    return {name: "ARP Content Request", version: "1", chainId} as const;
+}
+
+/** The typed-data block a caller signs. Exported so a caller can build it without this package. */
+export function contentRequestTypedData(atom: Hex, nonce: Hex, chainId: number) {
+    return {
+        domain: contentRequestDomain(chainId),
+        types: CONTENT_REQUEST_TYPES,
+        primaryType: "ContentRequest" as const,
+        message: {atom, nonce},
+    };
+}
+
+/**
+ * Who asked, recovered from their signature, or `null` when the request does not identify anyone.
+ *
+ * `null` is a served state and not an error: an unauthenticated fetch gets the bytes and a receipt
+ * that corroborates nobody (`tasks/31` §5.3). The index stays open to anyone; the receipt is what
+ * has a price.
+ */
+export async function recoverContentRequester(
+    atom: Hex,
+    nonce: Hex,
+    chainId: number,
+    signature: Hex,
+): Promise<Address | null> {
+    if (!isHex(signature) || signature.length < 132) return null;
+    try {
+        return await recoverTypedDataAddress({
+            ...contentRequestTypedData(atom, nonce, chainId),
+            signature,
+        });
+    } catch {
+        return null;
+    }
 }
 
 /** The claim itself, with no signature attached. */

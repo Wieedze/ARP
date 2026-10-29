@@ -58,10 +58,7 @@ import {
   readReachabilityState,
 } from '../packages/protocol/src/declare/reachability-plan.js';
 import { verdictOf } from '../packages/protocol/src/reachability.js';
-import {
-  HAS_TAG,
-  IS_A_SUB_DOMAIN_OF,
-} from '../packages/protocol/src/sources/intuition/terms.js';
+import { HAS_TAG, IS_A_SUB_DOMAIN_OF } from '../packages/protocol/src/sources/intuition/terms.js';
 import catalogue from '../catalogue/tools.json';
 import { createErc8004Client } from '../packages/protocol/src/client.js';
 import { resolveAgent } from '../packages/protocol/src/profile.js';
@@ -75,8 +72,19 @@ import { intuitionSource } from '../packages/protocol/src/sources/intuition/inde
 import type { AgentListOrder } from '../packages/protocol/src/types.js';
 import { getToolUsage, type ToolUsage } from '../packages/protocol/src/tool-usage.js';
 import { TOOLS } from './arp-mcp-tools.js';
+import { receiptSigner, serveContentRequest } from './arp-content.js';
 
 const PORT = Number(process.env.PORT ?? 3002);
+
+/**
+ * The only key on ARP's side of the loop, and it signs content receipts and nothing else.
+ *
+ * ADR `0080`. It is not a wallet, it never holds TRUST, and it is not the key any plan is signed
+ * with — the plan path still has none (ADR `0038`), which is what keeps "ARP cannot spend an
+ * operator's funds" a structural property rather than a promise. Generated on first run into
+ * `.arp/receipt-key`; `ARP_NO_RECEIPTS=1` runs with none and the content path still works.
+ */
+const RECEIPT_SIGNER = receiptSigner();
 const PROTOCOL_VERSION = '2025-06-18';
 
 /**
@@ -202,7 +210,9 @@ function configuredAttestor(): string | undefined {
     try {
       return getAddress(address);
     } catch {
-      console.error(`ARP_DOMAIN_ATTESTOR is not a valid address: ${JSON.stringify(address)} — domain search disabled.`);
+      console.error(
+        `ARP_DOMAIN_ATTESTOR is not a valid address: ${JSON.stringify(address)} — domain search disabled.`,
+      );
       return undefined;
     }
   }
@@ -1093,7 +1103,7 @@ async function findTools(id: JsonRpcId, args: Record<string, unknown>) {
   } | null = null;
   if (domainRaw !== undefined) {
     const normalised = domainRaw.trim().toLowerCase();
-    const {domains, tools} = await toolsInDomain(
+    const { domains, tools } = await toolsInDomain(
       {
         graphqlUrl: GRAPHQL,
         hierarchyPredicate: IS_A_SUB_DOMAIN_OF,
@@ -1181,22 +1191,24 @@ async function findTools(id: JsonRpcId, args: Record<string, unknown>) {
           tags_from_others_hidden: domainScope.othersHidden,
         }),
     tools: [
-      ...page.tools.filter((tool) => inScope(tool.atomId)).map((tool) => ({
-        tool_atom_id: tool.atomId,
-        label: tool.label,
-        provenance: 'declared' as const,
-        ...seedFor(tool.label),
-        // Where to go and look. ARP hosts nothing; this is the pointer and the point.
-        hosted_at: tool.hostedAt,
-        atom_uri: tool.uri,
-        declarations: tool.edgeCount,
-        // How many of those declarations somebody paid to stand behind. Never a summed position
-        // count: positions are counted per vault and a sum across edges counts nothing (ADR `0023`).
-        paid_declarations: tool.pricedEdges,
-        support_assets_wei: tool.supportAssetsSum.toString(),
-        oppose_assets_wei: tool.opposeAssetsSum.toString(),
-        position_count: null,
-      })),
+      ...page.tools
+        .filter((tool) => inScope(tool.atomId))
+        .map((tool) => ({
+          tool_atom_id: tool.atomId,
+          label: tool.label,
+          provenance: 'declared' as const,
+          ...seedFor(tool.label),
+          // Where to go and look. ARP hosts nothing; this is the pointer and the point.
+          hosted_at: tool.hostedAt,
+          atom_uri: tool.uri,
+          declarations: tool.edgeCount,
+          // How many of those declarations somebody paid to stand behind. Never a summed position
+          // count: positions are counted per vault and a sum across edges counts nothing (ADR `0023`).
+          paid_declarations: tool.pricedEdges,
+          support_assets_wei: tool.supportAssetsSum.toString(),
+          oppose_assets_wei: tool.opposeAssetsSum.toString(),
+          position_count: null,
+        })),
       ...registeredRows,
     ].slice(0, limitRaw),
   });
@@ -1242,6 +1254,21 @@ export const handler = {
   port: PORT,
   async fetch(request: Request) {
     if (request.method === 'GET') {
+      // `GET /content/:atomId` — the one route that is not MCP and not an info document. It is the
+      // content path (ADR `0080`): the node fetches a skill from its origin, passes the bytes
+      // through and signs for having served them. It holds the only key on ARP's side, that key
+      // signs receipts and nothing else, and it cannot move value.
+      const path = new URL(request.url).pathname;
+      const content = /^\/content\/([^/]+)\/?$/.exec(path);
+      if (content !== null) {
+        return await serveContentRequest(
+          content[1] ?? '',
+          new URL(request.url).searchParams,
+          chainId,
+          RECEIPT_SIGNER,
+        );
+      }
+
       // Not part of MCP. A plain GET is what the verifier's non-protocol probe sends, and
       // answering it makes this endpoint `live` rather than `dead` for that path too.
       return Response.json({
@@ -1249,6 +1276,14 @@ export const handler = {
         description: 'Agent and tool reputation over the Intuition knowledge graph.',
         mcp: { protocolVersion: PROTOCOL_VERSION, tools: TOOLS.map((t) => t.name) },
         chain: { id: chainId, name: record.chain?.name ?? null },
+        // A receipt names its signer and a reader decides which signers it accepts (ADR `0080`
+        // constraint 4), so the address is published here rather than only inside a receipt. The
+        // key itself is never printed, never returned and never sent anywhere.
+        content: {
+          route: '/content/:atomId',
+          signer: RECEIPT_SIGNER?.address ?? null,
+          attests: 'access, never use',
+        },
       });
     }
     if (request.method !== 'POST') return new Response('method not allowed', { status: 405 });
@@ -1342,5 +1377,15 @@ if (import.meta.main) {
 
   Bun.serve(handler);
   log(`  tools:      ${TOOLS.map((t) => t.name).join(', ')}`);
-  log(`\nsigns nothing, sends nothing — the planners return calls for your own key.`);
+  log(`  content:    GET /content/:atomId`);
+  log(
+    `  receipts:   ${
+      RECEIPT_SIGNER === null ? 'none — ARP_NO_RECEIPTS=1' : `signed by ${RECEIPT_SIGNER.address}`
+    }`,
+  );
+  // This read "signs nothing, sends nothing" until 2026-10-29, and the first half stopped being
+  // true the moment the content route landed. The half that matters is unchanged and is the one
+  // worth printing: no plan is ever signed here, so this process cannot spend an operator's TRUST.
+  log(`\nsends nothing — the planners return calls for your own key, signed by you.`);
+  log(`The receipt key signs receipts and cannot move value (ADR 0080).`);
 }
