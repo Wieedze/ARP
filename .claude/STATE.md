@@ -50,9 +50,9 @@ What is on chain, 2026-10-29:
 | --- | --- |
 | 662 skill atoms, pinned | 0 pin failures |
 | 662 `source` edges | `(skill, source, repository)` — ADR `0078`, the term was already on chain |
-| 655 `has tag` edges | one each at the deepest domain; **7 match no keyword and are left untagged** |
+| `has tag` edges on skills | **325 held and correct**; 276 in flight. 203 were retired, not deleted — see below. **61 match no keyword and carry nothing** |
 | 53 `maintained` tags | 50 alive, 3 not — browserbase and prisma/mcp archived, paypal untouched 366 days |
-| 19 domains under `tool` | the 17 seeded, plus `method` and `writing` |
+| 18 domains under `tool` | the **16** seeded (not 17 — `domains.proposal.json` dropped `security`), plus `method` and `writing`. `image`, `audio` and `document` follow |
 
 Three findings worth carrying forward:
 
@@ -67,11 +67,11 @@ Three findings worth carrying forward:
   with `Bandwidth limit exceeded` (-31002) while `eth_estimateGas` passed at 5.1M gas, and once
   spent it refuses **reads** too. `scripts/send-plan-in-waves.sh` is the shape that works.
 
-**The tool registry is no longer empty — all 52 tool atoms are on testnet 13579, 2026-10-28.**
-`catalogue/tools.json` holds 52 curated tools (21 MCP servers published by the vendor that controls
+**The tool registry is no longer empty — all 53 tool atoms are on testnet 13579, 2026-10-28.**
+`catalogue/tools.json` holds 53 curated tools (22 MCP servers published by the vendor that controls
 the domain, 31 skill repos above 1M installs on skills.sh); `catalogue/registered-13579.json`
 records which of them exist on chain, with the six transaction hashes and the authorisation.
-**All 52 are registered** — the first 35 on a balance of 0.0791 tTRUST, the remaining 17 after the
+**All 53 are registered** — the first 35 on a balance of 0.0791 tTRUST, the remaining 18 after the
 user topped the signer up with 1 tTRUST the same day. Re-running the seed now plans nothing.
 
 Three things that were learned doing it, and each is load-bearing:

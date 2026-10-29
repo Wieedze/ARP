@@ -75,7 +75,7 @@ const ROOT = 'tool';
  * The tree and the tags, read from `catalogue/domains.proposal.json` rather than written here.
  *
  * They used to be two literals in this file, which was fine for a three-triple smoke test and is
- * not fine for 116 calls: the assignment of 53 tools to 17 domains is reviewable data, and a
+ * not fine for 116 calls: the assignment of 53 tools to 16 domains is reviewable data, and a
  * reviewer should be able to read it without reading a script. The file also carries *why* each
  * tool landed where it did, which a tuple cannot.
  *

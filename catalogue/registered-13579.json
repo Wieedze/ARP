@@ -285,5 +285,6 @@
       "atomId": "0x66fdb9d0c82e4694fd855eaa13d4d64791a6a217665b589746f68c52a9992f98"
     }
   ],
-  "_readable": "All 52 resolve on the testnet indexer. Creating an atom does not make it readable: the indexer resolves value.thing from the pinned CID, so scripts/pin-tool.ts ran over every URL afterwards. One atom (Alchemy) stayed 'Unknown' for several minutes and resolved after a re-pin \u2014 pinning is content-addressed, so a re-pin is free and changes no id."
+  "_readable": "All 53 resolve on the testnet indexer. Creating an atom does not make it readable: the indexer resolves value.thing from the pinned CID, so scripts/pin-tool.ts ran over every URL afterwards. One atom (Alchemy) stayed 'Unknown' for several minutes and resolved after a re-pin \u2014 pinning is content-addressed, so a re-pin is free and changes no id.",
+  "_count_correction": "`_readable` said 'All 52 resolve' until 2026-10-29 while `atoms` held 53 and `count` said 53. The data was right and the sentence was wrong \u2014 the exact break claims.md exists for. Corrected in place rather than struck through: this file is a record of a run, not an append-only log, and a wrong count in it is read as fact."
 }

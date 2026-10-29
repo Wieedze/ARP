@@ -14,7 +14,7 @@
  *
  *  ## Two new domain terms, and the one that was rejected
  *
- *  The table in `skill-domains-table.ts` placed 569 of 662 in the 17 domains already under `tool`.
+ *  The table in `skill-domains-table.ts` placed 569 of 662 in the 16 domains already under `tool`.
  *  Two clusters had no home, and keywords could not invent one:
  *
  *    - **`method`** — ~32 skills about *how a piece of work is conducted*: handing a session over,

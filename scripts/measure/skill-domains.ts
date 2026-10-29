@@ -1,4 +1,4 @@
-/** Do the 17 domains ARP seeded cover the 662 skills it catalogued?
+/** Do the domains ARP seeded cover the 662 skills it catalogued?
  *
  *      bun run scripts/measure/skill-domains.ts
  *      bun run scripts/measure/skill-domains.ts --json measurements/skill-domains-<date>.json
@@ -73,7 +73,10 @@ type Row = {repo: string; skill: string; installs: number | null};
 const rows = (installs as {rows: Row[]}).rows;
 
 console.log(`skills      ${rows.length}`);
-console.log(`domains     ${DOMAINS.length} seeded under \`tool\`\n`);
+// `DOMAINS.length` is how many this table can route to — NOT how many are on chain, which is
+// what the label used to say. Measured on 13579, 2026-10-29: 18 hierarchy edges under `tool` in
+// ARP's index, against 16 before `method` and `writing`. An array length is never a chain fact.
+console.log(`domains     ${DOMAINS.length} routable by this table\n`);
 
 type Classified = Row & {description: string; domain: string | null};
 const out: Classified[] = [];

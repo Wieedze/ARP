@@ -73,9 +73,22 @@ with the most TRUST is first by construction.
 **Neutral (worth knowing):**
 
 - Nothing here requires agents to hire agents, a payment rail, or a supply of callable agents —
-  measured at 3–15%, that supply does not exist. It requires a search people use.
+  ~~measured at 3–15%~~, that supply does not exist. It requires a search people use.
+
+  **Corrected 2026-10-29.** "3–15%" reads as an interval and is not one. It welded a **count** to a
+  **percentage** from a different measurement: ARP probed 122 parsed registration documents on Base
+  and **3 answered — 2.5%, Wilson 95% CI 0.8–7.0%** (`docs/14`); the third-party study reports
+  **15%** on a looser definition of callable. Two measurements, two numbers, and `claims.md` §2
+  forbids summing them into one. The conclusion is unchanged and is the stronger for being stated
+  as two: whichever is right, the supply is not there.
 - The ranking must read at least one thing money cannot buy for the negative above to be bounded.
-  Today that is `reachable`, which is why ADR `0077`'s work comes first.
+  Today that is `reachable`, which is why ~~ADR `0077`'s~~ that work comes first.
+
+  **Corrected 2026-10-29.** This reserved `0077` for the `reachable` work and **`0077` is now
+  "the unit is the skill, not the repository"** — a reader following the pointer lands on the wrong
+  document. No ADR covers `reachable` yet; `packages/protocol/src/reachability.ts` and
+  `docs/14_THE_WITNESS_PROBLEM.md` are what exist. Reserving a number in prose is how this happens,
+  so: do not.
 
 ## References
 

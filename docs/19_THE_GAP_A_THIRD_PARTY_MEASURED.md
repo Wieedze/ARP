@@ -164,11 +164,20 @@ Five consequences, ordered by how much they move:
 
    This said "the hire record goes first" until 2026-10-29, and the correction is not a reordering
    of preferences — **it is this document's own measurement applied to this document's own plan.**
-   A hire record needs a supply of agents that answer. §2 above reports 3 of 122 on Base, 2.5%,
-   Wilson 95% CI 0.8–7.0%, against the study's 15% on a looser definition. Whichever is right, a
-   market cannot be built on a population that is between 1% and 15% present; one would build the
-   venue and find nobody to hire. Finding the ones that answer is what comes before hiring them,
-   and it is the half ARP can produce today.
+
+   A hire record needs a supply of agents that answer, and there are **two** measurements of that
+   supply, not one interval:
+
+   | | callable on Base | source |
+   | --- | --- | --- |
+   | the study | **15%** | §2, "What it found" |
+   | ARP's own probe | **0.8–7.0%** — 3 of 122, Wilson 95% | §3, and `docs/14` |
+
+   They measure different things and §3 says so; welding them into "between 1% and 15%" would be
+   exactly the summing `claims.md` §2 forbids, and the first version of this paragraph did it.
+   The conclusion does not need the weld: **whichever is right, one would build the venue and find
+   nobody to hire.** Finding the ones that answer comes before hiring them, and it is the half ARP
+   can produce today.
 
 2. **The hire record goes second.** It is still the only layer that produces a two-party fact and
    the study's cause 2 is still the one nobody else is answering — that part was right and stands.
