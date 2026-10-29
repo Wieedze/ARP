@@ -294,7 +294,7 @@ describe("the handshake", () => {
     it("lists its tools with a schema", async () => {
         const {body} = await rpc("tools/list", undefined, 2);
         const tools = (body?.["result"] as {tools: {name: string; inputSchema: unknown}[]}).tools;
-        // All eleven, in order. A tool added without landing here is a tool the rig's declared
+        // All twelve, in order. A tool added without landing here is a tool the rig's declared
         // capabilities test cannot see either (`rig-files.test.ts`).
         //
         // `arp_identity` is first because a caller should ask it first: the identity atom is
@@ -306,6 +306,10 @@ describe("the handshake", () => {
             "arp_find_tools",
             "arp_tool_reputation",
             "arp_declare_used",
+            // Beside `arp_declare_used` rather than replacing it, because the two take their list
+            // from different places: that one from what the agent believes it used, this one from
+            // the runtime hook's own log (`tasks/31`).
+            "arp_declare_session",
             "arp_stake_on_used",
             // The market on an atom, both directions. ADR `0056`: the edge is a receipt and the
             // atom is the market, so they are separate tools — and the exit ships with the way in,
@@ -444,6 +448,103 @@ describe("arp_declare_used", () => {
         ]) {
             expect(errorOf((await call(args)).body).code).toBe(-32602);
         }
+    });
+});
+
+describe("arp_declare_session", () => {
+    const call = (args: Record<string, unknown>) =>
+        rpc("tools/call", {name: "arp_declare_session", arguments: args});
+    const plan = async (args: Record<string, unknown>) => payloadOf((await call(args)).body);
+
+    /** A log the hook could have written. `log` is passed, so no file is involved. */
+    const line = (over: Record<string, unknown>) =>
+        JSON.stringify({
+            at: "2026-10-29T18:00:00.000Z",
+            session: "s1",
+            kind: "skill",
+            source: null,
+            ref: null,
+            ...over,
+        });
+
+    it("plans only for what it can name exactly, and reports the rest", async () => {
+        // The whole point of taking the list from the runtime instead of from the agent. A name
+        // several repositories carry gets NO call: picking one would write an edge about a
+        // repository the agent may never have touched, with a position behind it.
+        const p = await plan({
+            agent_chain_id: 8453,
+            agent_token_id: "1380",
+            log: [
+                line({name: "brainstorming"}),
+                line({name: "product-photography"}),
+                line({name: "nothing-the-catalogue-has"}),
+                line({kind: "mcp", name: "stripe"}),
+            ].join("\n"),
+        });
+
+        const rows = p["invocations"] as {status: string; name: string}[];
+        const statusOf = (name: string) => rows.find((row) => row.name === name)?.status;
+        expect(statusOf("brainstorming")).toBe("resolved");
+        expect(statusOf("product-photography")).toBe("ambiguous");
+        expect(statusOf("nothing-the-catalogue-has")).toBe("unknown");
+        expect(statusOf("stripe")).toBe("unknown");
+
+        expect(p["planned_for"]).toBe(1);
+        expect(p["not_planned_for"]).toBe(3);
+    });
+
+    it("names every candidate on an ambiguous one rather than one of them", async () => {
+        const p = await plan({
+            agent_chain_id: 8453,
+            agent_token_id: "1380",
+            log: line({name: "product-photography"}),
+        });
+        const row = (p["invocations"] as {status: string; candidates?: unknown[]}[])[0];
+        expect(row?.status).toBe("ambiguous");
+        // Six, measured 2026-10-29. The figure is not asserted — the catalogue is real data and a
+        // number here would break on the next seed. What must hold is that it names more than one.
+        expect((row?.candidates ?? []).length).toBeGreaterThan(1);
+    });
+
+    it("says a resolved claim is the agent's own word when no receipt backs it", async () => {
+        // ADR `0080`. A declaration with no receipt is exactly the declaration this project has
+        // always had, and the response says which it is rather than leaving a reader to assume.
+        const p = await plan({
+            agent_chain_id: 8453,
+            agent_token_id: "1380",
+            log: line({name: "brainstorming"}),
+        });
+        const row = (p["invocations"] as {status: string; access?: string}[])[0];
+        expect(row?.access).toContain("your own word");
+    });
+
+    it("plans on the subject the graph resolved, and signs nothing", async () => {
+        const p = await plan({
+            agent_chain_id: 8453,
+            agent_token_id: "1380",
+            log: line({name: "brainstorming"}),
+        });
+        const planned = p["plan"] as Record<string, unknown>;
+        expect(planned["subject_atom_id"]).toBe(STUB_SUBJECT);
+        expect(planned["predicate_term_id"]).toBe(USES);
+        expect(String(planned["caveat"])).toContain("UNSIGNED");
+    });
+
+    it("plans nothing at all for a log it could name nothing in", async () => {
+        const p = await plan({
+            agent_chain_id: 8453,
+            agent_token_id: "1380",
+            log: line({name: "nothing-the-catalogue-has"}),
+        });
+        expect(p["planned_for"]).toBe(0);
+        expect(p["plan"]).toBeNull();
+    });
+
+    it("refuses a log that is not a string rather than reading the machine's own", async () => {
+        // Falling back to `.arp/session.jsonl` on a malformed argument would declare whatever
+        // happened to be on the host, for a caller who asked about something else.
+        const {body} = await call({agent_chain_id: 8453, agent_token_id: "1380", log: 42});
+        expect((body?.["error"] as {message: string}).message).toContain("JSONL");
     });
 });
 

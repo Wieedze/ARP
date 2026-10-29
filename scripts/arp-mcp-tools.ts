@@ -180,6 +180,44 @@ export const TOOLS = [
     },
   },
   {
+    name: 'arp_declare_session',
+    description:
+      "Plan the declaration of what THIS SESSION actually invoked, from the runtime hook's own " +
+      'log rather than from what you remember. Returns unsigned calls — ARP holds no key and ' +
+      'sends nothing. It plans ONLY for invocations it can name exactly: a skill name is ' +
+      'carried by several repositories (104 of 499 in the catalogue), so an ambiguous one is ' +
+      'reported with every candidate and gets no call. Where you fetched the tool through a ' +
+      'node, the response also says whether a receipt corroborates the access and who signed ' +
+      'it. A receipt attests ACCESS, never use.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        agent_chain_id: {
+          type: 'number',
+          description:
+            'The chain your ERC-8004 identity lives on — 8453 for the canonical registry.',
+        },
+        agent_token_id: {
+          type: 'string',
+          description: 'Your ERC-8004 token id, as a decimal string.',
+        },
+        log: {
+          type: 'string',
+          description:
+            "The hook's JSONL log. Omit it to read `.arp/session.jsonl`, which is where " +
+            '`scripts/arp-session-hook.ts` writes by default.',
+        },
+        declarer: {
+          type: 'string',
+          description:
+            'The address that will sign the calls. Used only to read a receipt: a receipt ' +
+            'signed by this same address corroborates nobody, and the response says so.',
+        },
+      },
+      required: ['agent_chain_id', 'agent_token_id'],
+    },
+  },
+  {
     name: 'arp_stake_on_used',
     description:
       'Plan deposits that put TRUST behind declarations already on chain. Returns unsigned ' +
@@ -332,13 +370,13 @@ export const TOOLS = [
     name: 'arp_record_reachable',
     description:
       'Probe a tool and plan the position that records what you found. Returns unsigned calls you ' +
-      'sign with YOUR key, so what lands is YOUR verdict — not ARP\'s. ARP\'s index reads one ' +
+      "sign with YOUR key, so what lands is YOUR verdict — not ARP's. ARP's index reads one " +
       "attestor's positions; everybody else's sit beside them, and a disagreement between them is " +
       'the signal to re-probe. That is what replaces an oracle here: the claim is reproducible, so ' +
       'a second observer costs one HTTP request and can contradict the first. ' +
       'One observation is enough, deliberately. The scheduled prober needs three consecutive ' +
-      'failures before it condemns, because it judges somebody else\'s service from the outside ' +
-      'and condemning takes an author\'s visibility away. You called the thing — you are reporting ' +
+      "failures before it condemns, because it judges somebody else's service from the outside " +
+      "and condemning takes an author's visibility away. You called the thing — you are reporting " +
       'what happened to you, and three confirmations would be asking you to doubt it. ' +
       'A TLS failure, a DNS failure or a 429 is NOT a verdict and plans nothing: the first two ' +
       'could be your network and the third is the host asking you to stop. A timeout IS a verdict. ' +

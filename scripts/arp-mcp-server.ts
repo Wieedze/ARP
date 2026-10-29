@@ -73,6 +73,17 @@ import type { AgentListOrder } from '../packages/protocol/src/types.js';
 import { getToolUsage, type ToolUsage } from '../packages/protocol/src/tool-usage.js';
 import { TOOLS } from './arp-mcp-tools.js';
 import { receiptSigner, serveContentRequest } from './arp-content.js';
+import {
+  parseSessionLog,
+  resolveInvocations,
+  type CataloguedSkill,
+} from '../packages/protocol/src/session.js';
+import {
+  corroborationOf,
+  verifyContentReceipt,
+  type SignedContentReceipt,
+} from '../packages/protocol/src/receipt.js';
+import sessionSkills from '../catalogue/skills-13579.json';
 
 const PORT = Number(process.env.PORT ?? 3002);
 
@@ -85,6 +96,45 @@ const PORT = Number(process.env.PORT ?? 3002);
  * `.arp/receipt-key`; `ARP_NO_RECEIPTS=1` runs with none and the content path still works.
  */
 const RECEIPT_SIGNER = receiptSigner();
+
+/** Where the hook writes, and where the fetch records what it fetched. Both overridable. */
+const SESSION_LOG = process.env['ARP_SESSION_LOG'] ?? '.arp/session.jsonl';
+const RECEIPTS_LOG = process.env['ARP_RECEIPTS'] ?? '.arp/receipts.jsonl';
+
+/** The catalogue `arp_declare_session` resolves a runtime's names against. */
+const sessionCatalogue = (sessionSkills as { skills: CataloguedSkill[] }).skills;
+
+/**
+ * The receipts this machine kept, keyed by atom id.
+ *
+ * Written by `scripts/arp-fetch-skill.ts`. Absent is the normal case and not an error: a
+ * declaration with no receipt is exactly the declaration this project has always had, which is
+ * ADR `0080`'s point — a receipt can only add.
+ *
+ * The last receipt for an atom wins. Fetching the same tool twice is the same tool, and the later
+ * fetch is the one whose digest matches what is on disk now.
+ */
+async function readLocalReceipts(): Promise<Map<string, SignedContentReceipt>> {
+  const held = new Map<string, SignedContentReceipt>();
+  let text: string;
+  try {
+    text = readFileSync(RECEIPTS_LOG, 'utf8');
+  } catch {
+    return held;
+  }
+  for (const line of text.split('\n')) {
+    if (line.trim().length === 0) continue;
+    try {
+      const row = JSON.parse(line) as { atom?: string; receipt?: SignedContentReceipt };
+      if (typeof row.atom !== 'string' || row.receipt === undefined) continue;
+      held.set(row.atom.toLowerCase(), row.receipt);
+    } catch {
+      // A half-written last line is how this file ends while a session runs.
+      continue;
+    }
+  }
+  return held;
+}
 const PROTOCOL_VERSION = '2025-06-18';
 
 /**
@@ -463,6 +513,112 @@ async function declareUsed(id: JsonRpcId, args: Record<string, unknown>) {
     lookup: toolAtoms,
   });
   return text(id, serialiseDeclarePlan(plan));
+}
+
+/**
+ * Declare what the session actually invoked, from the hook's log.
+ *
+ * `tasks/31` deliverable 4. The difference from `arp_declare_used` is where the list comes from:
+ * there the agent passes the tools it believes it used, which is the agent's word about the agent.
+ * Here the list is the runtime's own record, written by a hook the model never touched.
+ *
+ * **It plans only for what it can name exactly.** A skill's name is carried by several
+ * repositories, so an ambiguous one is reported with every candidate and gets no call. Picking one
+ * would write an edge about a repository the agent may never have touched, with a position behind
+ * it — worse on this project's ladder than no claim at all.
+ */
+async function declareSession(id: JsonRpcId, args: Record<string, unknown>) {
+  const agentChainId = args['agent_chain_id'];
+  const agentTokenId = args['agent_token_id'];
+  if (typeof agentChainId !== 'number' || !Number.isInteger(agentChainId) || agentChainId <= 0) {
+    return fail(id, -32602, 'agent_chain_id must be a positive integer');
+  }
+  if (typeof agentTokenId !== 'string' || !/^\d+$/.test(agentTokenId)) {
+    return fail(id, -32602, 'agent_token_id must be a decimal string');
+  }
+  const declarer = args['declarer'];
+  if (declarer !== undefined && !isAddress(declarer)) {
+    return fail(id, -32602, 'declarer must be a 20-byte hex address');
+  }
+
+  const given = args['log'];
+  if (given !== undefined && typeof given !== 'string') {
+    return fail(id, -32602, 'log must be the JSONL text of a session log');
+  }
+  let raw: string;
+  if (typeof given === 'string') {
+    raw = given;
+  } else {
+    try {
+      raw = readFileSync(SESSION_LOG, 'utf8');
+    } catch {
+      return fail(
+        id,
+        -32602,
+        `no log passed and ${SESSION_LOG} is not readable — wire scripts/arp-session-hook.ts as a PostToolUse hook, or pass \`log\``,
+      );
+    }
+  }
+
+  const resolutions = resolveInvocations(parseSessionLog(raw), sessionCatalogue);
+  const resolved = resolutions.filter((row) => row.status === 'resolved');
+
+  // The receipts the agent kept, read once. A resolution with no receipt is not a worse claim than
+  // a declaration has always been — it is exactly that claim, which is the point of ADR `0080`.
+  const receipts = await readLocalReceipts();
+  const corroboration = new Map<string, string>();
+  for (const row of resolved) {
+    if (row.status !== 'resolved') continue;
+    const held = receipts.get(row.atomId.toLowerCase());
+    if (held === undefined) continue;
+    const verdict = await verifyContentReceipt(held);
+    if (verdict.status !== 'valid') {
+      corroboration.set(row.atomId, `receipt did not verify: ${verdict.status}`);
+      continue;
+    }
+    const against = isAddress(declarer) ? declarer : (held.receipt.to ?? held.node);
+    const read = corroborationOf(held.receipt, verdict.signer, against);
+    corroboration.set(row.atomId, `${read.status} (signed by ${verdict.signer})`);
+  }
+
+  const plan =
+    resolved.length === 0
+      ? null
+      : await prepareDeclareUsed({
+          subject: await resolveDeclarationSubject({
+            agent: { chainId: agentChainId, tokenId: agentTokenId },
+            graphqlUrl: GRAPHQL,
+          }),
+          tools: resolved.map((row) => (row.status === 'resolved' ? row.url : '')),
+          reads,
+          lookup: toolAtoms,
+        });
+
+  return text(id, {
+    invocations: resolutions.map((row) => ({
+      status: row.status,
+      name: row.name,
+      calls: row.calls,
+      ...(row.status === 'resolved'
+        ? {
+            repo: row.repo,
+            url: row.url,
+            atom_id: row.atomId,
+            // What a second party says about the access, where one was asked. ADR `0080`: it
+            // attests ACCESS and never use, and a self-signed receipt is labelled, not refused.
+            access: corroboration.get(row.atomId) ?? 'no receipt — this is your own word',
+          }
+        : {}),
+      ...(row.status === 'ambiguous' ? { candidates: row.candidates } : {}),
+      ...(row.status === 'unknown' ? { kind: row.kind } : {}),
+    })),
+    // Said plainly, because the difference between "nothing was invoked" and "nothing could be
+    // named" is the difference between an idle session and a defect.
+    planned_for: resolved.length,
+    not_planned_for: resolutions.length - resolved.length,
+    plan: plan === null ? null : serialiseDeclarePlan(plan),
+    caveat: UNSIGNED_CAVEAT,
+  });
 }
 
 async function stakeOnUsed(id: JsonRpcId, args: Record<string, unknown>) {
@@ -1241,6 +1397,8 @@ async function callTool(id: JsonRpcId, params: Record<string, unknown> | undefin
         return await recordReachable(id, args);
       case 'arp_find_tools':
         return await findTools(id, args);
+      case 'arp_declare_session':
+        return await declareSession(id, args);
       default:
         return fail(id, -32602, `unknown tool: ${String(name)}`);
     }
