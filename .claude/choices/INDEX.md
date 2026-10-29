@@ -2,7 +2,7 @@
 
 **Generated** 2026-10-29 by `scripts/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-78 decisions. Newest last. `choices/README.md` says when to write one.
+79 decisions. Newest last. `choices/README.md` says when to write one.
 
 ## Not accepted
 
@@ -93,3 +93,4 @@ Read these before relying on them.
 | [0077](0077-the-unit-is-the-skill-not-the-repository.md) | 2026-10-29 | Accepted | The unit of the catalogue is the skill, not the repository |
 | [0078](0078-source-is-the-edge-from-a-skill-to-its-repository.md) | 2026-10-29 | Accepted | `source` is the edge from a skill back to the repository it came from |
 | [0079](0079-a-bulk-write-is-paced-by-bytes-not-by-gas.md) | 2026-10-29 | Accepted | A bulk write to Intuition is paced by bytes, not by gas |
+| [0080](0080-the-node-signs-for-what-it-served-and-for-nothing-else.md) | 2026-10-29 | Accepted | The node signs for what it served, and for nothing else |

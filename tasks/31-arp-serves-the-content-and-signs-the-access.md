@@ -127,12 +127,12 @@ cacheable, which was always the fallback.
 
 What the 662 resolve to, and what the endpoint owes each case:
 
-|     |                                      | the endpoint                                     |
-| --- | ------------------------------------ | ------------------------------------------------ |
-| 475 | one path, exact directory match      | serve                                            |
-| 46  | several paths, **identical blob sha** | serve one, name the others in the receipt       |
+|     |                                       | the endpoint                                     |
+| --- | ------------------------------------- | ------------------------------------------------ |
+| 475 | one path, exact directory match       | serve                                            |
+| 46  | several paths, **identical blob sha** | serve one, name the others in the receipt        |
 | 2   | several paths, **different content**  | **refuse** — which one the agent read is unknown |
-| 139 | no path at HEAD                      | **refuse**, 404 with the reason                  |
+| 139 | no path at HEAD                       | **refuse**, 404 with the reason                  |
 
 So **521 of 662 are servable** and 141 are not. The 46 are a skill published once per runtime
 directory inside one repository — `.agents/skills/<skill>/` beside `.claude/skills/<skill>/`, and
@@ -228,10 +228,15 @@ claim is worth, not a gate on who may make one.
    `measurements/skill-layouts-2026-10-29.json`. The answer is in §5.1 and it changed the design:
    the resolver reads the tree, and 141 of 662 skills are not servable at all. Corrected the same
    day — see the note in §5.1 and `measurements/skill-layouts-2026-10-29T2200.json`.
-6. The ADR in §6.
-7. `docs/14` gains the correction: a use is unwitnessable **in general**, and two-party
-   corroboration is available where ARP is in the path. The current text is too absolute and the
-   user said so.
+6. ~~The ADR in §6.~~ **Done 2026-10-29** — ADR `0080`. It carries the six constraints, the
+   EIP-712-over-EIP-191 reason (an atom id is the same on both chains), and the five alternatives
+   including the two that were rejected flatly: gating the index, and making the path compulsory.
+7. ~~`docs/14` gains the correction.~~ **Done 2026-10-29** — an amendment section, a row in the
+   ladder, and three drift signals. The correction turned out to be narrower and better than
+   planned: the original argument is about a **place**, not an impossibility. Its force is "a
+   connector inside the agent's process is under the agent's control", which says nothing about a
+   party on the other end of a fetch. **The document's opening sentence stays as written**, because
+   it is right about every agent ARP is not in the path of.
 
 ## 8. The one case where lying still pays
 

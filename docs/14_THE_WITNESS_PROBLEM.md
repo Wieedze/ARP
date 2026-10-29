@@ -24,6 +24,52 @@ execution. It does not need an npm package, and no npm package substitutes.
 **Stop selling the connector as verification.** It is a convenience for honest agents and a cheap way
 to produce edges. Those are real goods. Verification is not among them.
 
+## Amendment, 2026-10-29: the argument was about where to stand
+
+Everything above holds, and it is **too absolute by one case**. The user's correction:
+
+> _« si tu passes par ARP pour avoir l'accès à une info, alors l'info est calculée quelque part et
+> alors tu peux avoir la preuve de l'accès à cette info. Ça, couplé avec un call hook, est alors une
+> preuve suffisante d'utilisation ? via ARP en tout cas »_
+
+He is right, and the reason is that the argument above is about a **place**, not an impossibility.
+Its force is "a connector inside the agent's process is under the agent's control" — true, and it
+says nothing about a party on the **other end of a fetch**. An agent cannot put words in the mouth
+of something it had to ask.
+
+So there is one population where a second party exists: agents that fetched the tool **through ARP**.
+
+```
+the node's receipt    "I served this file to this key at T"    signed by the node
+the runtime's log     "I invoked this skill at T"              written by a hook, not by the model
+```
+
+Two records, two parties, interests that do not coincide, agreeing on a moment and an identity. By
+this document's own definition two sections down — _only what touched a third party_ — that is a
+fact.
+
+**Three limits, and none of them is negotiable:**
+
+1. **It attests access, not use.** The agent has the bytes. Whether they changed what it did stays
+   unobservable, exactly as stated above. Nothing here reaches "use".
+2. **It covers one population.** A skill copied straight from GitHub leaves no trace, and that is
+   correct rather than a gap to close. An agent that comes through ARP gets a corroborated
+   declaration; one that does not has its own word. That is a difference in what a claim is worth,
+   never a gate on who may make one.
+3. **It can only add.** A reader who distrusts the signer ignores the receipt and is back to the
+   declaration they already had. There is nothing to route through and no bottleneck to become.
+
+The hook is the other half and it is worth being precise about why it counts. A runtime hook is
+**configuration, not code the model runs**: it fires on the call, writes a line, and the model never
+touches the line. What it produces is not something the agent composed — it is something the agent
+is stuck with. That is structural rather than cryptographic, and it is the one rung available
+without a TEE.
+
+ADR `0080` is the decision and its constraints; `packages/protocol/src/receipt.ts` and
+`packages/protocol/src/content-path.ts` are the code; `tasks/31` is the plan. **The sentence at the
+top of this document stays as written**, because it is right about every agent ARP is not in the
+path of, which is almost all of them.
+
 ## What is a fact
 
 Only what touched a **third party**. An agent cannot fabricate an event whose source is somebody else.
@@ -166,9 +212,14 @@ ladder applied to usage rather than to trust.
 | ------------------------------------------------ | ---------------------------------------------------- |
 | payment, on-chain call, or delegation redemption | **fact**                                             |
 | tool and agent both declare the same edge        | **confirmed by two parties with opposing interests** |
+| the node served it and a hook logged the call    | **the access is a two-party fact** — not the use     |
 | only the tool declares                           | the word of a third party — strong                   |
 | only the agent declares, with stake behind it    | a priced assertion                                   |
 | only the agent declares, free                    | **nothing**                                          |
+
+The third row was added on 2026-10-29 with the amendment above. It sits below the two-party
+agreement and above a third party's word, because it is two parties on a narrower claim: what was
+**fetched**, not what was used.
 
 The bottom row is the one that gets mistaken for data. Its only weight is the TRUST staked behind it,
 which is a market pricing an opinion — not evidence that anything happened.
@@ -224,3 +275,9 @@ Carrying `docs/12`'s list forward, with two additions earned here:
 - **Anything that treats an agent's self-report as verified because it arrived through our SDK.** The
   transport does not authenticate the content.
 - **Anything that renders a free self-report beside a receipt without marking which is which.**
+- **Anything that reads a content receipt as proof of use.** It is proof of access, and the
+  amendment above says so three times because the slide from one to the other is the easiest
+  sentence in this document to write by accident.
+- **Anything that makes the content path compulsory** — gating the index behind a receipt, or
+  refusing to read a declaration that has none. That converts "worth more" into "allowed", and it
+  makes ARP the dependency ADR `0045` exists to keep it from being.
