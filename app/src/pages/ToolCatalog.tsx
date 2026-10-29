@@ -1,12 +1,14 @@
 import {useState} from "react";
 import {Link} from "react-router-dom";
 
+import {DomainControl} from "../components/tool/DomainControl";
 import {CurveControl, Segmented} from "../components/tool/ToolCatalogControls";
 import {linkClass} from "../lib/control-class";
 import type {ToolListingOrder} from "@arp-protocol/core";
 
 import {PageLoading} from "../components/brand/PageLoading";
 import {ToolCatalogList} from "../components/tool/ToolCatalogList";
+import {useDomainTree, useToolsInDomain} from "../hooks/use-domain-tree";
 import {useToolCatalog} from "../hooks/use-tool-catalog";
 import {
     curveLabelOf,
@@ -52,6 +54,17 @@ export function ToolCatalog() {
      * address here. What it has is one axis the reader moves along.
      */
     const [filter, setFilter] = useState<ToolFilter>("all");
+    /**
+     * What the tool is **for**, and `null` by default.
+     *
+     * The one axis on this page that no other listing can offer: npm's search for "payment" returns
+     * 25,501 rows ranked on the string, the MCP registry holds 11,582 servers with no field for what
+     * they do. Here a reader names a need and the subtree under it is walked before anything is
+     * ranked — the same call `arp_find_tools { domain }` makes for an agent, from the same code.
+     */
+    const [domain, setDomain] = useState<string | null>(null);
+    const domains = useDomainTree();
+    const inDomain = useToolsInDomain(domain, domains.tree);
     const query = useToolCatalog(order, curveId);
     const view = query.data;
     /**
@@ -61,7 +74,16 @@ export function ToolCatalog() {
      * and could not be reached by `useMemo`. Three branches read as three branches when they are not
      * nested inside an expression.
      */
-    const visible = (view?.rows ?? []).filter((row) => matchesFilter(row, filter));
+    // Two narrowings, and the domain one runs first because it is a different kind of question:
+    // `matchesFilter` asks what is known about a tool's declarations, the domain asks what the tool
+    // is for. `null` means no domain was picked — not "a domain with nothing in it", which is why
+    // the hook returns `null` rather than an empty set.
+    const visible = (view?.rows ?? [])
+        .filter(
+            (row) =>
+                inDomain.atomIds === null || inDomain.atomIds.has(row.key.toLowerCase()),
+        )
+        .filter((row) => matchesFilter(row, filter));
     const unknowable = unknowableUnder(view?.rows ?? [], filter);
 
     return (
@@ -69,8 +91,12 @@ export function ToolCatalog() {
             <header className="grid items-end gap-x-8 gap-y-6 pt-14 pb-10 md:grid-cols-[minmax(0,1fr)_auto]">
                 <h1 className="type-display">Tools</h1>
                 <dl className="flex overflow-hidden rounded-[var(--radius-card)] border border-[color:var(--color-rule)]">
+                    {/* The count of what is SHOWN, not of what was read. It was `view.rows.length`,
+                        which the `Show` filter could already contradict and the domain filter
+                        contradicts constantly — "57" over two rows is a false claim about the list
+                        the reader is looking at (`rules/claims.md`). */}
                     <Fact label="In the list">
-                        {view === undefined ? "—" : view.rows.length.toLocaleString("en-US")}
+                        {view === undefined ? "—" : visible.length.toLocaleString("en-US")}
                     </Fact>
                     <Fact label="Curve">{curveLabelOf(curveId)}</Fact>
                 </dl>
@@ -91,6 +117,12 @@ export function ToolCatalog() {
                         selected={filter}
                         onChange={setFilter}
                         options={TOOL_FILTERS}
+                    />
+                    <DomainControl
+                        selected={domain}
+                        options={domains.options}
+                        onChange={setDomain}
+                        disabled={domains.options.length === 0}
                     />
                 </div>
                 <CurveControl curveId={curveId} onChange={setCurveId} />

@@ -118,6 +118,11 @@ export {
     /** The trust pattern's other two edges. Read-only here; exported so a shell can be checked. */
     PROVIDED_BY as INTUITION_PROVIDED_BY_TERM_ID,
     TRUST_ASSESSMENT_SOURCE as INTUITION_TRUST_ASSESSMENT_SOURCE,
+    /**
+     * The hierarchy predicate. **Not published by Intuition** — unlike every other term here, it
+     * is absent from `docs/07`'s tables, and it carries zero edges on mainnet 1155.
+     */
+    IS_A_SUB_DOMAIN_OF as INTUITION_IS_A_SUB_DOMAIN_OF,
 } from "./sources/intuition/terms.js";
 
 export {
