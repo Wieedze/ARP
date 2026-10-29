@@ -210,7 +210,7 @@ describe("the dust rule", () => {
         read.mockResolvedValue(dusty);
         renderAt();
         await waitFor(() =>
-            expect(screen.getByRole("heading", {name: "uses"})).toBeInTheDocument(),
+            expect(screen.getByRole("heading", {name: /^uses /i})).toBeInTheDocument(),
         );
 
         // Scoped to the claim, not to the page. The atom's own vault is still backed here, and
@@ -234,10 +234,15 @@ describe("a claim reads as a sentence", () => {
             expect(screen.getByRole("link", {name: "Agent 13579:3"})).toBeInTheDocument(),
         );
 
-        const subject = screen.getByRole("link", {name: "Agent 13579:3"});
-        const sentence = subject.parentElement;
-        expect(sentence?.textContent).toContain("uses");
-        expect(sentence?.textContent).toContain("slither");
+        // **The sentence is stated once, in the heading the group holds.** It used to be on every
+        // row, which on an atom with 98 claims under one predicate is 98 copies of two words that
+        // never change (user, 2026-10-29). The complaint this test was written for — a bare
+        // subject leaving the reader to assemble the triple — is still answered: the frame is
+        // there, above the rows it frames, rather than absent.
+        const heading = screen.getByRole("heading", {name: /^uses /i});
+        expect(heading.textContent).toContain("uses");
+        expect(heading.textContent).toContain("slither");
+        expect(screen.getByRole("link", {name: "Agent 13579:3"})).toBeInTheDocument();
     });
 
     it("links every subject to its own atom, so the graph walks both ways", async () => {
@@ -289,7 +294,7 @@ describe("a claimant's sigil", () => {
         modulesRead.mockResolvedValue({"0xs1": ["0xtool-a", "0xtool-b", "0xtool-c"]});
         read.mockResolvedValue(standing());
         const {container} = renderAt();
-        await waitFor(() => expect(screen.getByRole("heading", {name: /^uses$/i})).toBeTruthy());
+        await waitFor(() => expect(screen.getByRole("heading", {name: /^uses /i})).toBeTruthy());
 
         // The glyph is `aria-hidden` by construction — `Sigil` marks itself so when it has no
         // `title`, because the agent's name is the next element and announcing the identity twice
@@ -306,7 +311,7 @@ describe("a claimant's sigil", () => {
         modulesRead.mockResolvedValue({});
         read.mockResolvedValue(standing());
         renderAt();
-        await waitFor(() => expect(screen.getByRole("heading", {name: /^uses$/i})).toBeTruthy());
+        await waitFor(() => expect(screen.getByRole("heading", {name: /^uses /i})).toBeTruthy());
         expect(screen.getAllByText("Agent 13579:3").length).toBeGreaterThan(0);
     });
 });
@@ -359,7 +364,7 @@ describe("the claim field", () => {
     it("names the whole triple when a claim takes focus, not only on hover", async () => {
         read.mockResolvedValue(standing());
         const {container} = renderAt();
-        await waitFor(() => expect(screen.getByRole("heading", {name: /^uses$/i})).toBeTruthy());
+        await waitFor(() => expect(screen.getByRole("heading", {name: /^uses /i})).toBeTruthy());
 
         const field = container.querySelector('[role="group"]');
         expect(field, "no claim field on the page").toBeTruthy();
@@ -396,7 +401,7 @@ describe("the claim field", () => {
     it("gives every claim a reachable link and an accessible name", async () => {
         read.mockResolvedValue(standing());
         const {container} = renderAt();
-        await waitFor(() => expect(screen.getByRole("heading", {name: /^uses$/i})).toBeTruthy());
+        await waitFor(() => expect(screen.getByRole("heading", {name: /^uses /i})).toBeTruthy());
 
         // The dots are real links rather than `<circle>`s precisely so this holds: focus rings,
         // keyboard order and names all come from the DOM instead of being rebuilt inside an SVG.
@@ -463,7 +468,7 @@ describe("the two writes", () => {
         // The regression this exists for: moved back under `groups.map`, the control sat at
         // y=17602 on a 250-edge atom and **every gate stayed green**. Document order is the one
         // thing a DOM test can hold onto, since `happy-dom` lays nothing out.
-        const group = screen.getByRole("heading", {name: /^uses$/i});
+        const group = screen.getByRole("heading", {name: /^uses /i});
         expect(
             declare.compareDocumentPosition(group) & Node.DOCUMENT_POSITION_FOLLOWING,
             "the declare control must precede the first predicate group",

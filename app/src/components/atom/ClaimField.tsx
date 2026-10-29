@@ -404,17 +404,6 @@ export function ClaimField({
                 // keeps every box inside its own space for the same offset.
                 className="relative flex min-h-[7.5rem] min-w-[min(19rem,100%)] max-w-[24rem] flex-1 flex-col gap-1 rounded-[var(--radius-button)] border border-[color:var(--color-rule-strong)] bg-[color:var(--color-bg)] px-3.5 py-3"
             >
-                <span className="flex items-center gap-2 border-b border-[color:var(--color-rule)] pb-2 font-mono text-[10px] uppercase tracking-[0.06em] text-[color:var(--color-steel)]">
-                    {/* The dot is lit when something is being described, like the pulse card's. */}
-                    <span
-                        className={`h-[6px] w-[6px] rounded-full ${
-                            current === undefined
-                                ? "bg-[color:var(--color-rule-strong)]"
-                                : "bg-[color:var(--color-accent)]"
-                        }`}
-                    />
-                    {`Claims · ${truncated ? `${edgeCount}+` : edgeCount}`}
-                </span>
                 {current === undefined ? null : (
                     <>
                         {/* **The subject leads.** It was the predicate, and the predicate is the
@@ -423,10 +412,18 @@ export function ClaimField({
                             The user, 2026-10-29: _« "available on" c'est le lien qui unit Base et
                             le sujet, c'est le cercle en lui-même, et je ne pense pas que ce soit
                             le plus utile »_. What varies dot to dot is who is making the claim. */}
-                        <span
-                            className={`truncate type-face text-[22px] leading-tight ${current.row.nameIsId ? "font-mono text-[16px]" : ""}`}
-                        >
-                            {current.row.name}
+                        {/* **No count above this.** The card carried `Claims · 98`, which the
+                            legend prints in full two inches below and which never changes as the
+                            head turns — the one line of the card that could not vary (user,
+                            2026-10-29). The lit dot says the card is reading something; the name
+                            says what. */}
+                        <span className="flex min-w-0 items-baseline gap-2">
+                            <span className="h-[6px] w-[6px] shrink-0 rounded-full bg-[color:var(--color-accent)]" />
+                            <span
+                                className={`min-w-0 truncate type-face text-[22px] leading-tight ${current.row.nameIsId ? "font-mono text-[16px]" : ""}`}
+                            >
+                                {current.row.name}
+                            </span>
                         </span>
                         {/* **Paper, not accent.** Somebody else's position, and `ui.md` spends the
                             accent on the primary action and on the viewer's own. ADR `0042`:

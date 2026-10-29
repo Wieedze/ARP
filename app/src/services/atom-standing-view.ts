@@ -148,7 +148,11 @@ function rowOf(edge: AtomEdge, symbol: string): EdgeRow {
     const hasName = label !== null && label.trim() !== "";
     return {
         tripleId: edge.tripleId,
-        name: hasName ? label : truncateMiddle(edge.subject.atomId),
+        // A subject that is a tool is labelled with its whole URL, because every field of its
+        // Thing derives from one (ADR `0054`). Down a list of 98 rows the host and the owner are
+        // the same on every line and only the last part differs, so it is parsed the way a
+        // catalogue row is.
+        name: hasName ? primaryNameOf(parseToolLabel(label)) : truncateMiddle(edge.subject.atomId),
         nameIsId: !hasName,
         subjectAtomId: edge.subject.atomId,
         backing: backingOf(edge.support.totalAssets, edge.support.positionCount ?? 0, symbol),
