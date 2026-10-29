@@ -210,7 +210,7 @@ describe("the dust rule", () => {
         read.mockResolvedValue(dusty);
         renderAt();
         await waitFor(() =>
-            expect(screen.getByRole("heading", {name: /^uses /i})).toBeInTheDocument(),
+            expect(screen.getByRole("heading", {name: /^uses$/i})).toBeInTheDocument(),
         );
 
         // Scoped to the claim, not to the page. The atom's own vault is still backed here, and
@@ -234,15 +234,10 @@ describe("a claim reads as a sentence", () => {
             expect(screen.getByRole("link", {name: "Agent 13579:3"})).toBeInTheDocument(),
         );
 
-        // **The sentence is stated once, in the heading the group holds.** It used to be on every
-        // row, which on an atom with 98 claims under one predicate is 98 copies of two words that
-        // never change (user, 2026-10-29). The complaint this test was written for — a bare
-        // subject leaving the reader to assemble the triple — is still answered: the frame is
-        // there, above the rows it frames, rather than absent.
-        const heading = screen.getByRole("heading", {name: /^uses /i});
-        expect(heading.textContent).toContain("uses");
-        expect(heading.textContent).toContain("slither");
-        expect(screen.getByRole("link", {name: "Agent 13579:3"})).toBeInTheDocument();
+        const subject = screen.getByRole("link", {name: "Agent 13579:3"});
+        const sentence = subject.parentElement;
+        expect(sentence?.textContent).toContain("uses");
+        expect(sentence?.textContent).toContain("slither");
     });
 
     it("links every subject to its own atom, so the graph walks both ways", async () => {
@@ -294,7 +289,7 @@ describe("a claimant's sigil", () => {
         modulesRead.mockResolvedValue({"0xs1": ["0xtool-a", "0xtool-b", "0xtool-c"]});
         read.mockResolvedValue(standing());
         const {container} = renderAt();
-        await waitFor(() => expect(screen.getByRole("heading", {name: /^uses /i})).toBeTruthy());
+        await waitFor(() => expect(screen.getByRole("heading", {name: /^uses$/i})).toBeTruthy());
 
         // The glyph is `aria-hidden` by construction — `Sigil` marks itself so when it has no
         // `title`, because the agent's name is the next element and announcing the identity twice
@@ -311,7 +306,7 @@ describe("a claimant's sigil", () => {
         modulesRead.mockResolvedValue({});
         read.mockResolvedValue(standing());
         renderAt();
-        await waitFor(() => expect(screen.getByRole("heading", {name: /^uses /i})).toBeTruthy());
+        await waitFor(() => expect(screen.getByRole("heading", {name: /^uses$/i})).toBeTruthy());
         expect(screen.getAllByText("Agent 13579:3").length).toBeGreaterThan(0);
     });
 });
@@ -364,7 +359,7 @@ describe("the claim field", () => {
     it("names the whole triple when a claim takes focus, not only on hover", async () => {
         read.mockResolvedValue(standing());
         const {container} = renderAt();
-        await waitFor(() => expect(screen.getByRole("heading", {name: /^uses /i})).toBeTruthy());
+        await waitFor(() => expect(screen.getByRole("heading", {name: /^uses$/i})).toBeTruthy());
 
         const field = container.querySelector('[role="group"]');
         expect(field, "no claim field on the page").toBeTruthy();
@@ -401,7 +396,7 @@ describe("the claim field", () => {
     it("gives every claim a reachable link and an accessible name", async () => {
         read.mockResolvedValue(standing());
         const {container} = renderAt();
-        await waitFor(() => expect(screen.getByRole("heading", {name: /^uses /i})).toBeTruthy());
+        await waitFor(() => expect(screen.getByRole("heading", {name: /^uses$/i})).toBeTruthy());
 
         // The dots are real links rather than `<circle>`s precisely so this holds: focus rings,
         // keyboard order and names all come from the DOM instead of being rebuilt inside an SVG.
@@ -468,7 +463,7 @@ describe("the two writes", () => {
         // The regression this exists for: moved back under `groups.map`, the control sat at
         // y=17602 on a 250-edge atom and **every gate stayed green**. Document order is the one
         // thing a DOM test can hold onto, since `happy-dom` lays nothing out.
-        const group = screen.getByRole("heading", {name: /^uses /i});
+        const group = screen.getByRole("heading", {name: /^uses$/i});
         expect(
             declare.compareDocumentPosition(group) & Node.DOCUMENT_POSITION_FOLLOWING,
             "the declare control must precede the first predicate group",
@@ -484,7 +479,7 @@ describe("the two writes", () => {
         expect(screen.getByRole("heading", {name: declareLabel})).toBeInTheDocument();
     });
 
-    it("offers no market on an atom that points at nothing, which is what a tag is", async () => {
+    it("offers neither write on an atom that points at nothing, which is what a tag is", async () => {
         // `/atom/:atomId` serves every atom, so without this the deposit control appeared on a
         // tag, a keyword and a person's name — a real-TRUST button on `Sanctioned Address`. The
         // user's scope for the market is "une bourse d'agents et d'outils" (ADR `0072`).
@@ -496,11 +491,17 @@ describe("the two writes", () => {
         //
         // `url: null`, not `""` — the reader normalises an empty url to `null`, and a fixture that
         // skips that normalisation tests a shape the app never receives.
+        //
+        // **The declare form went with it on 2026-10-29.** It was offered here and the market was
+        // not, which left "declare that your agent used this" on a domain, a keyword and a
+        // person's name. The user: « déclarer que notre agent utilise marketing, le domaine, quel
+        // intérêt ça a dans la boucle ? je pense aucun » — `(agent, uses, marketing)` is a
+        // sentence with no referent. An agent uses a tool or another agent, and that is the same
+        // scope the market already had.
         read.mockResolvedValue(standing({url: null, groups: tagGroups}));
         renderAt();
-        await waitFor(() =>
-            expect(screen.getByRole("heading", {name: declareLabel})).toBeInTheDocument(),
-        );
+        await waitFor(() => expect(screen.getByRole("heading", {name: /^has tag$/i})).toBeInTheDocument());
+        expect(screen.queryByRole("heading", {name: declareLabel})).not.toBeInTheDocument();
         expect(screen.queryByRole("heading", {name: marketLabel})).not.toBeInTheDocument();
     });
 

@@ -231,17 +231,28 @@ export function AtomPanel() {
                                     </section>
                                 )}
 
-                                <div
-                                    className={
-                                        view.offersMarket ? "mt-10 max-w-[48rem]" : "max-w-[48rem]"
-                                    }
-                                >
-                                    <DeclareUse
-                                        object={atomId as Hex}
-                                        objectLabel={view.title}
-                                        onDeclared={() => void query.refetch()}
-                                    />
-                                </div>
+                                {/* **Only where using it means something.** `/atom/:id` serves
+                                    every atom in a permissionless graph, so this form offered
+                                    "declare that your agent used this" on a domain, a keyword and
+                                    a person's name. The user, 2026-10-29: _« déclarer que notre
+                                    agent utilise marketing, le domaine, quel intérêt ça a dans la
+                                    boucle ? je pense aucun »_ — and he is right, `(agent, uses,
+                                    marketing)` is a sentence with no referent. An agent uses a
+                                    tool or another agent.
+
+                                    The same test the market uses (`offersMarket`, ADR `0072`):
+                                    two tests either of which is enough, because no single field
+                                    separates a thing from a word — `Sanctioned Address` and the
+                                    skill `docx` are both `Thing` on mainnet. */}
+                                {!view.offersMarket ? null : (
+                                    <div className="mt-10 max-w-[48rem]">
+                                        <DeclareUse
+                                            object={atomId as Hex}
+                                            objectLabel={view.title}
+                                            onDeclared={() => void query.refetch()}
+                                        />
+                                    </div>
+                                )}
                             </div>
                             {view.groups.length === 0 ? (
                                 <Empty atomId={view.atomId} />

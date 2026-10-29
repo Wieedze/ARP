@@ -235,7 +235,7 @@ export function ClaimField({
     const current = shown === null ? undefined : entries[shown];
 
     return (
-        <div className="relative flex flex-wrap items-start gap-x-24 gap-y-8">
+        <div className="relative flex flex-wrap items-start gap-x-16 gap-y-8">
             <div
                 // `sm:mt-10` is the card's half-height less the bar's depth: the bar lands
                 // `BAR_Y` of the box below the field's top, 1.21rem on a 22rem box, and the card's
@@ -402,7 +402,7 @@ export function ClaimField({
                 // pulled up. A negative margin lifted the card out of the flow and it landed on the
                 // rule above the section — the layout did not know it was there. Pushing the field
                 // keeps every box inside its own space for the same offset.
-                className="relative flex min-h-[7.5rem] min-w-[min(19rem,100%)] max-w-[24rem] flex-1 flex-col gap-1 rounded-[var(--radius-button)] border border-[color:var(--color-rule-strong)] bg-[color:var(--color-bg)] px-3.5 py-3"
+                className="relative flex min-h-[7.5rem] min-w-[min(22rem,100%)] max-w-[34rem] flex-1 flex-col gap-1 rounded-[var(--radius-button)] border border-[color:var(--color-rule-strong)] bg-[color:var(--color-bg)] px-3.5 py-3"
             >
                 {current === undefined ? null : (
                     <>

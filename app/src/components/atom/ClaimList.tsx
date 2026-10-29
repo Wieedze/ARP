@@ -63,23 +63,14 @@ export function Group({
     return (
         <section className="mb-12">
             <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 border-b border-[color:var(--color-rule-strong)] pb-2">
-                {/* **The sentence, once.** The heading was the predicate alone and every row
-                    repeated `<predicate> <object>` after its subject — on an atom with 98 claims
-                    under one predicate that is 98 copies of two words that never change, and the
-                    subject is the only part that does (user, 2026-10-29).
-
-                    It is not a reversal of 2026-10-27, which was the opposite complaint: a bare
-                    subject under a bare predicate left the reader to assemble
-                    `Agent 13579:3 — uses — this atom` themselves. A triple still reads as a
-                    statement; the frame is just stated at the top of the group it holds for
-                    instead of on every line inside it. */}
+                {/* **Reverted 2026-10-29.** The sentence briefly moved up here and off the rows;
+                    that was not what was asked and it undid 2026-10-27's fix, where a bare subject
+                    under a bare predicate left the reader to assemble the triple themselves. The
+                    rows carry the statement; this carries the predicate. */}
                 <h2
-                    className={`flex min-w-0 flex-wrap items-baseline gap-x-2 font-medium ${group.labelIsId ? "font-mono text-[length:var(--text-body-sm)]" : ""}`}
+                    className={`font-medium ${group.labelIsId ? "font-mono text-[length:var(--text-body-sm)]" : ""}`}
                 >
                     {group.label}
-                    <span className="min-w-0 truncate text-[length:var(--text-body-sm)] font-normal text-[color:var(--color-steel)]">
-                        {subject}
-                    </span>
                 </h2>
                 {group.backing === null ? null : (
                     <Backing amount={group.backing} positions={group.positions} />
@@ -147,6 +138,12 @@ export function Group({
                             >
                                 {row.name}
                             </Link>
+                            <span className="text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
+                                {group.label}
+                            </span>
+                            <span className="min-w-0 truncate text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
+                                {subject}
+                            </span>
                         </p>
                         <span className="flex items-center gap-4">
                             {row.backing === null ? null : (
