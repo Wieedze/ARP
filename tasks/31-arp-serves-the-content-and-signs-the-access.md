@@ -85,11 +85,11 @@ ZK                                no statement to prove
 
 ## 4. Where the work already is
 
-| | | |
-| --- | --- | --- |
-| 1 | the hook logs what was invoked | **built** — `scripts/arp-session-hook.ts` |
-| 2 | resolution refuses rather than guesses | **built** — `packages/protocol/src/session.ts`, 12 tests |
-| 3 | ARP serves the content and signs the access | **this task** |
+|     |                                             |                                                          |
+| --- | ------------------------------------------- | -------------------------------------------------------- |
+| 1   | the hook logs what was invoked              | **built** — `scripts/arp-session-hook.ts`                |
+| 2   | resolution refuses rather than guesses      | **built** — `packages/protocol/src/session.ts`, 12 tests |
+| 3   | ARP serves the content and signs the access | **this task**                                            |
 
 Piece 2 has an open gap that piece 3 closes as a side effect: a skill's **name** resolves to six
 repositories for `product-photography`, so a log line carrying only a name is unusable. What ends
@@ -114,11 +114,39 @@ catalogue), fetches from `raw.githubusercontent.com`, and returns the bytes with
 **ARP does not host anything.** It fetches on the caller's behalf from the origin the atom names.
 That keeps the authorship question where it belongs and means this cannot drift into a mirror.
 
-Open: the path inside a repository varies (`skills/<name>/SKILL.md` against `<name>/SKILL.md`,
-and `guides/.../SKILL.md` in the `superpowers` family). The tree API answers it in one request per
-repository and the answer is cacheable. **Measure the distinct layouts before writing the
-resolver** — `scripts/measure/skill-content-duplicates.ts` already reads those trees and could
-report them.
+#### The path, measured rather than assumed
+
+This was the task's open question and deliverable 5 closed it:
+`scripts/measure/skill-layouts.ts`, run 2026-10-29 over all 31 catalogued repositories and all 662
+catalogued skills, output in `measurements/skill-layouts-2026-10-29.json`.
+
+**The resolver cannot be a pure function of `(repo, skill)`.** There are **19 distinct layouts**,
+`skills/<skill>/SKILL.md` covers 215 of the located skills and `<skill>/SKILL.md` another 55, and
+**8 of the 31 repositories use more than one**. So it reads the tree — one request per repository,
+cacheable, which was always the fallback.
+
+What the 662 resolve to, and what the endpoint owes each case:
+
+|     |                                   | the endpoint                                     |
+| --- | --------------------------------- | ------------------------------------------------ |
+| 475 | one path, exact directory match   | serve                                            |
+| 42  | two paths, **identical blob sha** | serve either, name both in the receipt           |
+| 7   | two paths, **different content**  | **refuse** — which one the agent read is unknown |
+| 138 | no path at HEAD                   | **refuse**, 404 with the reason                  |
+
+So **517 of 662 are servable** and 145 are not. The 42 are a skill published twice inside one
+repository — `.agents/skills/<skill>/` beside `.claude/skills/<skill>/` — and since the bytes are
+the same file, choosing between them asserts nothing.
+
+**The 138 are the finding, not the defect.** Of them, 95 sit in a repository with **no uncatalogued
+directory**, so there is nothing there the name could have been renamed to: the file the catalogue
+points at is not in the repository. `mattpocock/skills` is the clearest case — 55 catalogued skills,
+38 directories at HEAD, all 38 catalogued, 17 names with nothing behind them.
+
+That is a **per-skill liveness signal**, and it is the strongest kind this project has: one tree
+request re-derives it, with no credential and no trust in us, which is `docs/14`'s own test. It is
+also sharper than `archived`, which is per-repository and the owner's own word. Whether it goes on
+chain is a separate decision and is not taken here — `docs/20` holds the line on which signals do.
 
 ### 5.2 The receipt
 
@@ -126,13 +154,13 @@ Returned beside the content, and signed by the node's key:
 
 ```jsonc
 {
-  "atom":    "0x02cc3ce7…",          // the tool, exactly
-  "url":     "github.com/magentosh/superpowers?skill=product-photography",
-  "sha256":  "…",                     // of the bytes served, so the content is pinned too
-  "to":      "0x…",                   // the caller's address, as it authenticated
-  "at":      "2026-10-29T18:00:00Z",
-  "node":    "0x…",                   // who is signing
-  "sig":     "0x…"                    // EIP-191 over the above, canonically encoded
+  "atom": "0x02cc3ce7…", // the tool, exactly
+  "url": "github.com/magentosh/superpowers?skill=product-photography",
+  "sha256": "…", // of the bytes served, so the content is pinned too
+  "to": "0x…", // the caller's address, as it authenticated
+  "at": "2026-10-29T18:00:00Z",
+  "node": "0x…", // who is signing
+  "sig": "0x…", // EIP-191 over the above, canonically encoded
 }
 ```
 
@@ -185,7 +213,10 @@ claim is worth, not a gate on who may make one.
 3. The hook writes `ref` from the receipt.
 4. `arp_declare_session` on the node: takes a log, returns resolutions and the prepared calls for
    the resolved ones. **Plans, never signs** (ADR `0038`).
-5. A measurement of the repository layouts, committed, before 5.2's resolver exists.
+5. ~~A measurement of the repository layouts, committed, before 5.2's resolver exists.~~
+   **Done 2026-10-29** — `scripts/measure/skill-layouts.ts`,
+   `measurements/skill-layouts-2026-10-29.json`. The answer is in §5.1 and it changed the design:
+   the resolver reads the tree, and 145 of 662 skills are not servable at all.
 6. The ADR in §6.
 7. `docs/14` gains the correction: a use is unwitnessable **in general**, and two-party
    corroboration is available where ARP is in the path. The current text is too absolute and the
