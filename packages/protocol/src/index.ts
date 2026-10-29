@@ -194,9 +194,14 @@ export {
     MCP_PROTOCOL_VERSION,
     // A probe fetches a URL somebody else supplied, from the machine it runs on. Exported because
     // the decision is the caller's: ARP's own rig probes its own endpoints on purpose.
+    // The scheme check `privateProbeTarget` assigns to its caller, in one place so both callers
+    // get it: one of them did not, and `file:///etc/passwd` reached `fetch`.
+    fetchableDocumentUrl,
+    IPFS_GATEWAY,
     privateProbeTarget,
     probeEndpoint,
 } from "./verify/probe.js";
+export type {FetchableUrl} from "./verify/probe.js";
 export type {ProbeOptions} from "./verify/probe.js";
 
 export {HostLimiter, hostOf} from "./verify/host-limiter.js";

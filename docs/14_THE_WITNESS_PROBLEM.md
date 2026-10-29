@@ -48,13 +48,7 @@ Two records, two parties, interests that do not coincide, agreeing on a moment a
 this document's own definition two sections down — _only what touched a third party_ — that is a
 fact.
 
-**Two parties only where the reader can tell the signer from the agent**, and that is the fourth
-limit below. A node the operator installs generates its own key, so its address differs from that
-operator's agent key while one hand holds both, and nothing in a receipt distinguishes that from a
-node somebody else runs. A reader names the signers it accepts (ADR `0080` constraint 4); to a
-reader who names none, this is the agent's word in a second place.
-
-**Three limits, and none of them is negotiable:**
+**Four limits, and none of them is negotiable:**
 
 1. **It attests access, not use.** The agent has the bytes. Whether they changed what it did stays
    unobservable, exactly as stated above. Nothing here reaches "use".
@@ -64,6 +58,17 @@ reader who names none, this is the agent's word in a second place.
    never a gate on who may make one.
 3. **It can only add.** A reader who distrusts the signer ignores the receipt and is back to the
    declaration they already had. There is nothing to route through and no bottleneck to become.
+4. **Two parties only where the reader can tell the signer from the agent.** A node the operator
+   installs generates its own key, so its address differs from that operator's agent key while one
+   hand holds both, and nothing in a receipt distinguishes that from a node somebody else runs. A
+   reader names the signers it accepts (ADR `0080` constraint 4); to a reader who names none, this
+   is the agent's word in a second place.
+
+   Added 2026-10-29 with the rest of this section, and it arrived as a paragraph above the list
+   saying "that is the fourth limit below" while the list said three — a count corrected in one of
+   two places, committed inside the fix for a count corrected in one of two places. `claims.md`
+   §5's last line is the one that covers it: re-check a retraction the way you would check the
+   claim.
 
 The hook is the other half and it is worth being precise about why it counts. A runtime hook is
 **configuration, not code the model runs**: it fires on the call, writes a line, and the model never
@@ -219,18 +224,27 @@ ladder applied to usage rather than to trust.
 | payment, on-chain call, or delegation redemption                                         | **fact**                                             |
 | tool and agent both declare the same edge                                                | **confirmed by two parties with opposing interests** |
 | the node served it and a hook logged the call, **signed by a signer the reader accepts** | **the access is a two-party fact** — not the use     |
-| the same, signed by a node nobody has named                                              | the agent's word in a second place, pinned to a hash |
 | only the tool declares                                                                   | the word of a third party — strong                   |
+| the same records, signed by a node nobody has named                                      | the agent's word in a second place, pinned to a hash |
 | only the agent declares, with stake behind it                                            | a priced assertion                                   |
 | only the agent declares, free                                                            | **nothing**                                          |
 
-The third and fourth rows were added on 2026-10-29 with the amendment above. The third sits below
-the two-party agreement and above a third party's word, because it is two parties on a narrower
-claim — what was **fetched**, not what was used. The fourth is the same records read by somebody who
-does not recognise the signer, and it sits where a self-report sits, because that is what it is.
-**In the shipped configuration every receipt lands on the fourth row**: `ARP_ACCEPTED_SIGNERS` is
-empty by default, so nothing has climbed the third rung yet — the rung is available to a reader who
-names a signer, and nobody has.
+Two rows were added on 2026-10-29 with the amendment above, and **they are not adjacent**, which is
+the whole point.
+
+The **accepted-signer** row sits below the two-party agreement and above a third party's word: it is
+two parties on a narrower claim — what was **fetched**, not what was used.
+
+The **unrecognised-signer** row sits **below** "only the tool declares", and the first draft of this
+table put it above. That was wrong by this document's own organising principle, two sections up:
+_only what touched a third party_. A tool's word about an agent is a third party's; the same records
+signed by a node nobody has named are the agent's word in a second place, however well the bytes are
+pinned. It outranks a bare priced assertion — because the pin is re-derivable by a stranger — and it
+does not outrank somebody else's testimony.
+
+**In the shipped configuration every receipt lands on that lower row.**
+`ARP_ACCEPTED_SIGNERS` is empty by default, so nothing has climbed the higher rung yet. The rung is
+available to a reader who names a signer, and nobody has.
 
 The bottom row is the one that gets mistaken for data. Its only weight is the TRUST staked behind it,
 which is a market pricing an opinion — not evidence that anything happened.

@@ -109,12 +109,53 @@ through. Closing it needs resolving the name and connecting to the resolved addr
 does not let you do. So it is a guard against the easy case and not a boundary. If your machine has
 something on loopback you would not want a caller to reach, do not open `ARP_HOST`.
 
-**Nothing is sent to us.** No telemetry, no analytics, no phone-home, no reporting endpoint. That
-one is worth checking rather than believing, and the check is `grep -rn "https\?://" scripts/ | grep
--v '^.*\*'` — the node's own modules carry six URL literals and none of them is ours. Do not take
-"the only literals in the code" for an answer, which an earlier draft of this said: a literal count
-is not a list of what gets fetched, because the two unfixed fetches above are built from values and
-not from literals at all.
+**And what it covers better than that caveat suggests**, because a caveat that undersells is a wrong
+claim too: `http://2130706433/`, `http://127.1/` and `http://0177.0.0.1/` are all refused — `URL`
+normalises those shorthands to a dotted quad before the guard sees them — and so is
+`http://[::ffff:127.0.0.1]/`, an IPv4-mapped IPv6 address, which **passed until 2026-10-29**. It
+arrives as `::ffff:7f00:1` in hex groups rather than the dotted form it was written in, so the first
+version of the unwrap matched nothing; its own test caught that. All four are asserted in
+`packages/protocol/test/probe-private.test.ts`.
+
+**A scheme other than http, https or ipfs is refused outright.** That is separate from the address
+check and it was missing until the same day: `file:///etc/passwd` walked through the private-address
+guard and Bun's `fetch` read it — 200, and the file's contents handed back to the caller. The
+registration path was the exposed one, because `privateProbeTarget` assigns the scheme check to its
+caller and that caller did not do it. `fetchableDocumentUrl` is now both halves in one place with
+the tests, and `ARP_ALLOW_PRIVATE_PROBE` is about addresses only — it is not a licence to read the
+disk.
+
+**Nothing is sent to us.** No telemetry, no analytics, no phone-home, no reporting endpoint.
+
+**Do not believe that, and do not believe a `grep` I hand you either.** Run the enumeration:
+
+```
+bun run scripts/measure/node-outbound.ts
+```
+
+It reads the six modules a running node actually loads and prints every host literal with its line,
+every `fetch` call site, and whether any host is ours. On 2026-10-29,
+`measurements/node-outbound-2026-10-29.json`: **6 host literals, 7 fetch call sites, 0 of the hosts
+ours.** It exits non-zero if that last number is ever not zero.
+
+This is a script rather than a sentence because the sentence was **wrong twice**. One draft said
+four hosts and "the only literals in the code"; the next said six literals and offered a grep over
+`scripts/` that returns 116 lines across 31 hosts, because its scope was a directory and the claim's
+scope was three files. Different sentences, identical failure — a security claim offered with a
+check whose scope does not match it. The script's scope is a named list, which is the one thing it
+cannot check for itself, and it says so.
+
+Three things it shows that a count alone would hide:
+
+- Two of the six literals (`localhost:`, `stdio`) are in **log lines** and fetched by nobody, and
+  `github.com` is in the probe's **user-agent**, which identifies the node and sends nothing. Three
+  of the six are destinations.
+- The Intuition graph and RPC are **absent from the literals and present in the node** — they come
+  from `deployments/<chainId>.json` at startup. Absence from a literal list is not absence from the
+  node, which is the trap a literal count sets.
+- `fetchCallSites` is deliberately **over-inclusive**: a definition and the stdio loop calling the
+  node's own handler are in it. A site it lists and should not is a reader's minute; a site it
+  misses is the claim being false.
 
 ## Every environment variable it reads
 

@@ -32,6 +32,68 @@ export const DEFAULT_USER_AGENT = "ARP-verifier/0.1 (+https://github.com/Wieedze
  * own testnet endpoints on purpose, and `ARP_ALLOW_PRIVATE_PROBE` is read where that decision is
  * made, not here.
  */
+/** The IPFS gateway a `ipfs://` registration document is read through. */
+export const IPFS_GATEWAY = "https://ipfs.io/ipfs/";
+
+export type FetchableUrl =
+    /** Fetch this. For an `ipfs://` document it is the gateway URL, not the original. */
+    | {status: "fetch"; url: string}
+    /** Do not fetch. `reason` is written for the caller that asked, not for a log. */
+    | {status: "refuse"; reason: string};
+
+/**
+ * Whether a published document's URL is one this process will fetch, and what to fetch.
+ *
+ * **The scheme check `privateProbeTarget` assigns to its caller**, in one place so both callers get
+ * it. That delegation was explicit — "not parseable is not private, the caller's own URL check is
+ * what refuses it" — and one of the two callers did not do it: `arp_agent_endpoints` passed an
+ * ERC-8004 `tokenURI`'s `registrationFile` straight to `fetch`, so `file:///etc/passwd` walked
+ * through the private-address guard and Bun's `fetch` read it. Measured 2026-10-29: 200, and the
+ * file's contents handed back to the caller. **Live rather than latent**, because the intended
+ * caller is a process on the operator's own machine, so binding loopback bounded nothing.
+ *
+ * A document somebody published is reachable over http(s), or addressed by `ipfs://`. Anything else
+ * — `file:`, `ftp:`, `jar:`, a bare path — reads the machine this runs on, and a `tokenURI` is a
+ * string somebody else controls. `data:` is handled before this: it carries its own bytes and
+ * there is nothing to fetch.
+ *
+ * The scheme is checked on **what was published**, before the gateway URL is built from it, so the
+ * check cannot be fooled by what we construct.
+ */
+export function fetchableDocumentUrl(
+    published: string,
+    options: {allowPrivate?: boolean} = {},
+): FetchableUrl {
+    const trimmed = published.trim();
+    if (!/^(https?|ipfs):\/\//i.test(trimmed)) {
+        return {
+            status: "refuse",
+            reason: "not an http, https or ipfs URL — this process fetches no other scheme",
+        };
+    }
+
+    const url = /^ipfs:\/\//i.test(trimmed)
+        ? `${IPFS_GATEWAY}${trimmed.slice("ipfs://".length)}`
+        : trimmed;
+
+    const local = options.allowPrivate === true ? null : privateProbeTarget(url);
+    if (local !== null) {
+        return {status: "refuse", reason: `${local} is not a public address`};
+    }
+    return {status: "fetch", url};
+}
+
+/** `::ffff:7f00:1` or `::ffff:127.0.0.1` as a dotted quad, or null when it is neither. */
+function unwrapMappedIpv4(host: string): string | null {
+    const dotted = /^::ffff:(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})$/.exec(host);
+    if (dotted?.[1] !== undefined) return dotted[1];
+    const hex = /^::ffff:([0-9a-f]{1,4}):([0-9a-f]{1,4})$/.exec(host);
+    if (hex?.[1] === undefined || hex[2] === undefined) return null;
+    const high = Number.parseInt(hex[1], 16);
+    const low = Number.parseInt(hex[2], 16);
+    return [high >> 8, high & 0xff, low >> 8, low & 0xff].join(".");
+}
+
 export function privateProbeTarget(url: string): string | null {
     let host: string;
     try {
@@ -48,10 +110,22 @@ export function privateProbeTarget(url: string): string | null {
     // fc00::/7 — IPv6 unique local.
     if (/^f[cd][0-9a-f]{0,2}:/.test(host)) return host;
 
+    // **An IPv4-mapped IPv6 address carries an IPv4 one.** `::ffff:127.0.0.1` reaches loopback and
+    // passed every check below, because none of them was looking at an IPv6 form.
+    //
+    // It arrives in **hex groups**, not in the dotted form it was written as: measured 2026-10-29,
+    // `new URL("http://[::ffff:127.0.0.1]/").hostname` is `[::ffff:7f00:1]`. The first draft of
+    // this unwrap matched the dotted form and so matched nothing — its own test caught that. Both
+    // spellings are handled, because a caller that did not come through `URL` can pass either.
+    const subject = unwrapMappedIpv4(host) ?? host;
+
     // Only an IPv4 LITERAL gets the range checks. `10.example.com` is a perfectly good public
     // hostname and a prefix test on the string refuses it — the test for that case is in
     // `probe-private.test.ts` and it caught this.
-    const quad = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/.exec(host);
+    //
+    // `URL` has already normalised the shorthands, which is worth knowing because the caveat above
+    // undersells it: `2130706433`, `127.1` and `0177.0.0.1` all arrive here as `127.0.0.1`.
+    const quad = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/.exec(subject);
     if (quad === null) return null;
     const [a, b] = [Number(quad[1]), Number(quad[2])];
 

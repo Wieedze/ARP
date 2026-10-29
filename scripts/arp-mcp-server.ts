@@ -66,7 +66,11 @@ import {
   partitionByCheckability,
   readDeclaredEndpoints,
 } from '../packages/protocol/src/verify/declaration.js';
-import { privateProbeTarget, probeEndpoint } from '../packages/protocol/src/verify/probe.js';
+import {
+  fetchableDocumentUrl,
+  privateProbeTarget,
+  probeEndpoint,
+} from '../packages/protocol/src/verify/probe.js';
 import { listAgents } from '../packages/protocol/src/listing.js';
 import { intuitionSource } from '../packages/protocol/src/sources/intuition/index.js';
 import type { AgentListOrder } from '../packages/protocol/src/types.js';
@@ -881,26 +885,26 @@ async function agentEndpoints(id: JsonRpcId, args: Record<string, unknown>) {
           : decodeURIComponent(payload),
       );
     } else {
-      const url = file.startsWith('ipfs://')
-        ? `https://ipfs.io/ipfs/${file.slice('ipfs://'.length)}`
-        : file;
-      // The second caller-steerable fetch in this node, and the one `43c4320` did not cover. The
-      // URL is an ERC-8004 `tokenURI`'s `registrationFile` — read from a registry whose address
-      // the CALLER supplies — so a contract returning `http://169.254.169.254/latest/meta-data/`
-      // would have its body handed back in `document`. Same guard as the probe, same escape hatch
-      // for a local rig, and bounded before that by the node binding loopback.
-      const local = process.env['ARP_ALLOW_PRIVATE_PROBE'] === '1' ? null : privateProbeTarget(url);
-      if (local !== null) {
+      // Both halves of the guard, in the package where `privateProbeTarget` assigns the scheme
+      // check to its caller — `fetchableDocumentUrl` is that check, and it has the tests. It
+      // refuses with `text` here where `probe()` refuses with `fail`, deliberately: there the URL
+      // *is* the parameter so a bad one is an invalid param, and here the caller's params were
+      // well-formed and the refusal is an answer *about the agent*, like the two outcomes below.
+      const fetchable = fetchableDocumentUrl(file, {
+        allowPrivate: process.env['ARP_ALLOW_PRIVATE_PROBE'] === '1',
+      });
+      if (fetchable.status === 'refuse') {
         return text(id, {
           caip19: toCaip19(agent),
           registration_file: file,
-          error: `refused: ${local} is not a public address`,
+          error: `refused: ${fetchable.reason}`,
           note:
-            'A registration document is published for strangers to read. Pointed at a private ' +
-            "address this would read the operator's own network and hand it back. Set " +
-            'ARP_ALLOW_PRIVATE_PROBE=1 if this is your own rig.',
+            'Published something this node will not fetch. A `tokenURI` is a string somebody ' +
+            'else controls, and a scheme or an address like that reads the machine the node ' +
+            'runs on rather than a document anybody published.',
         });
       }
+      const url = fetchable.url;
       const response = await fetch(url, { headers: { accept: 'application/json' } });
       if (!response.ok) {
         return text(id, {
