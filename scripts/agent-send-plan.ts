@@ -39,11 +39,24 @@ if (!rpcUrl) {
   process.exit(1);
 }
 
-const calls = JSON.parse(readFileSync(planPath, 'utf8')) as SerialisedCall[];
-if (!Array.isArray(calls) || calls.length === 0) {
+const parsed = JSON.parse(readFileSync(planPath, 'utf8')) as SerialisedCall[];
+if (!Array.isArray(parsed) || parsed.length === 0) {
   console.error(`${planPath} is not a non-empty array of calls`);
   process.exit(1);
 }
+
+// `--from <n>`: skip the first n calls, for resuming a plan the RPC cut short. A plan's calls are
+// deterministic, so re-planning would produce the same list minus what landed — this saves the
+// re-read when the count that landed is already known from the log.
+const skip = Number(arg('from') ?? 0);
+if (!Number.isInteger(skip) || skip < 0 || skip >= parsed.length) {
+  if (arg('from') !== undefined) {
+    console.error(`--from must be between 0 and ${parsed.length - 1}`);
+    process.exit(1);
+  }
+}
+const calls = skip > 0 ? parsed.slice(skip) : parsed;
+if (skip > 0) console.log(`resuming   skipping the first ${skip} call(s) of ${parsed.length}`);
 
 console.log(`plan       ${calls.length} call(s) for chain ${chainArg}`);
 for (const [index, call] of calls.entries()) {
