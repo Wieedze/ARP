@@ -2,9 +2,47 @@
 
 ## One-liner
 
-**ARP is a registry that points at AI things — agents, tools, MCP servers — and opens a priced market of opinion on them.** It stores none of them. Identity is ERC-8004, the trust graph is Intuition, and the priced declaration of use is ARP.
+**A reputation layer for autonomous agents.**
 
-A registry without registration: if a thing is listed here it is because it already exists somewhere else, and what ARP adds is the market (ADR `0051`).
+> Search by need. See what answers, and who paid to stand behind it.
+
+Identity is ERC-8004, the graph is Intuition, and the priced claim is ARP. It stores nothing: if a
+thing is listed here it is because it already exists somewhere else, and what ARP adds is the market
+(ADR `0051`).
+
+### Why **layer** and not **registry**, since 2026-10-29
+
+This line read **"ARP is a registry that points at AI things — agents, tools, MCP servers — and
+opens a priced market of opinion on them"**. Every clause of that is still true and it is no longer
+the lead, for one measured reason.
+
+A census dated 2026-10-02 counts **84,819 agent tools — 62,347 skills, 9,676 MCP servers, and
+10,411 marketplaces** carrying 172M installs between them. There are more storefronts than there are
+MCP servers. "Registry" is the most commoditised word in this market, and leading with it puts ARP
+in a comparison it cannot win against incumbents with more money and an audience.
+
+What none of those 10,411 has — checked against their own pages — is a **record of which listings
+work and who stands behind them**. That gap is the lead now, and the two additions to the old line
+say it:
+
+- **"search by need"** — the index is keyed by what a tool is *for*, not by its name. npm returns
+  25,501 rows for "payment", ranked on the string, `@types/payment` among the first.
+- **"what answers"** — the one claim here a third party can reproduce for the price of one HTTP
+  request, and therefore the only one ARP records as a fact rather than as a declaration
+  (`docs/14`, `docs/19`).
+
+The third clause is unchanged and is the oldest part of this project: **who paid to stand behind
+it**. ERC-8004's own Reputation Registry holds **569,148 feedback entries on Base 8453 with a mean
+score of 95.09 / 100** (`scripts/measure/erc8004-feedback.ts`, 2026-10-20). Free ratings converge on
+excellent and stop distinguishing anything; a claim that cost something does not.
+
+### Three words this positioning may never use
+
+`best`, `score`, and `verified` about a usage. ARP composes no ranking of quality (ADR `0046`), and
+the only thing it verifies is reachability. The discipline that follows is cheap: **there is no need
+to say "this is not proof" if the word "proof" is never used.**
+
+ADR `0075` carries the decision and what it trades away.
 
 > This line used to end "Domain-dimensional calibration is ARP". **Calibration is out** — not
 > deferred, out (ADR `0049`). It is a score, and a score that needs ground truth, which is `docs/12`'s

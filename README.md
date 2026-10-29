@@ -1,9 +1,18 @@
 # ARP — Agent Reputation Protocol
 
-> **A registry that points at AI things — agents, tools, MCP servers — and opens a priced market of
-> opinion on them.** It stores none of them. What is listed exists somewhere else; what ARP adds is
-> the market. Nobody is scored: every figure it shows is a deposit somebody else made, and every
-> position can be withdrawn, so what you read is current rather than accumulated.
+> **A reputation layer for autonomous agents.**
+>
+> Search by need. See what answers, and who paid to stand behind it.
+
+It stores nothing. What is listed exists somewhere else; what ARP adds is the market. Nobody is
+scored: every figure it shows is a deposit somebody else made, and every position can be withdrawn,
+so what you read is **current rather than accumulated**.
+
+That line led with **"a registry that points at AI things"** until 2026-10-29. A census dated
+2026-10-02 counts **10,411 agent marketplaces** against 9,676 MCP servers — more storefronts than
+servers — so "registry" is the one word in this market that distinguishes nothing. What none of
+those 10,411 publishes is which listings answer and who stands behind them. `docs/01` carries the
+amendment and ADR `0075` the decision.
 
 [docs/12_THE_IDEA.md](docs/12_THE_IDEA.md) is the canonical statement of the mechanism and the only
 one. Read it before `08`, `09` or `11` — those are analysis and they drifted.
