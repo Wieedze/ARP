@@ -54,6 +54,11 @@ import { getAddress } from 'viem';
 import { listRegisteredTools } from '../packages/protocol/src/registered-tools.js';
 import { toolsInDomain } from '../packages/protocol/src/domains.js';
 import {
+  planReachability,
+  readReachabilityState,
+} from '../packages/protocol/src/declare/reachability-plan.js';
+import { verdictOf } from '../packages/protocol/src/reachability.js';
+import {
   HAS_TAG,
   IS_A_SUB_DOMAIN_OF,
 } from '../packages/protocol/src/sources/intuition/terms.js';
@@ -100,28 +105,54 @@ const record = JSON.parse(
 
 const GRAPHQL_URL = process.env.INTUITION_GRAPHQL_URL ?? record.chain?.graphqlUrl;
 const RPC_URL = process.env.INTUITION_RPC_URL ?? record.chain?.rpcUrl;
-const MULTI_VAULT = (process.env.ARP_MULTI_VAULT ?? record.intuition?.multiVault) as
+const MULTI_VAULT_RAW = (process.env.ARP_MULTI_VAULT ?? record.intuition?.multiVault) as
   | `0x${string}`
   | undefined;
 
-if (!GRAPHQL_URL || !RPC_URL || !MULTI_VAULT) {
-  console.error(`deployments/${chainId}.json is missing a graphqlUrl, rpcUrl or multiVault`);
-  process.exit(1);
+/**
+ * Narrowed once, here, because the guard below cannot do it.
+ *
+ * `process.exit` is not typed `never`, so TypeScript keeps all three as `T | undefined` everywhere
+ * downstream and every use is an error. The repo never saw them: `scripts/` is outside `tsc -b`,
+ * outside eslint and outside `bun build`'s checks — `rules/claims.md` §4 names that gap by name.
+ * Two had accumulated by 2026-10-29. Re-assigning after the guard fixes every call site at once
+ * and keeps the loud failure the guard exists for.
+ */
+function required<T>(value: T | undefined, what: string): T {
+  if (value === undefined || value === null || value === '') {
+    console.error(`deployments/${chainId}.json is missing ${what}`);
+    process.exit(1);
+  }
+  return value;
 }
 
-const reads = multiVaultReads({ address: MULTI_VAULT, chainId, rpcUrl: RPC_URL });
+const GRAPHQL = required(GRAPHQL_URL, 'a graphqlUrl');
+const RPC = required(RPC_URL, 'an rpcUrl');
+const MULTI_VAULT = required(MULTI_VAULT_RAW, 'a multiVault');
+
+const reads = multiVaultReads({ address: MULTI_VAULT, chainId, rpcUrl: RPC });
 
 /**
  * So an `https://` tool reuses the atom it already has instead of minting a metadata-less one
  * beside it. Measured by `scripts/measure/tool-atom-shape.ts`: 78 of the 84 tool atoms on mainnet
  * `uses` edges are `ipfs://` and 77 of those resolve a pinned Thing. A graph read, no credential.
  */
-const toolAtoms = intuitionToolAtomLookup({ graphqlUrl: GRAPHQL_URL });
+const toolAtoms = intuitionToolAtomLookup({ graphqlUrl: GRAPHQL });
 
 /** The label every domain path climbs to. One word, no hyphen — the user's rule, 2026-10-28. It is
  *  a convention and the one arbitrary choice in the vocabulary, so it is named once here rather
  *  than repeated at each call site. */
 const DOMAIN_ROOT = 'tool';
+
+/**
+ * `reachable` — the object of the one claim here a third party can reproduce.
+ *
+ * A plain string, so its id follows from the word and is **the same on both chains**: verified
+ * 2026-10-29, `0x997fd60b…` on 1155 and on 13579, and already created on both. Nothing has to be
+ * minted to start recording.
+ */
+const REACHABLE_ATOM =
+  '0x997fd60b1bd203d0c579fb72eea70e585d2fbd68287a911b7cc0e7ed0eae0805' as `0x${string}`;
 
 /**
  * The address whose positions define ARP's domain tree.
@@ -206,7 +237,7 @@ const DOMAIN_ATTESTOR = configuredAttestor();
  * serving a mainnet directory is the kind of mix-up `rules/portability.md` rule 1 exists for.
  */
 const directory = createErc8004Client({
-  sources: [intuitionSource({ graphqlUrl: GRAPHQL_URL })],
+  sources: [intuitionSource({ graphqlUrl: GRAPHQL })],
 });
 
 type JsonRpcId = string | number | null;
@@ -391,7 +422,7 @@ async function toolReputation(id: JsonRpcId, args: Record<string, unknown>) {
   }
   const attestedBy = typeof args['attested_by'] === 'string' ? args['attested_by'] : undefined;
   const usage = await getToolUsage(toolAtomId, {
-    graphqlUrl: GRAPHQL_URL,
+    graphqlUrl: GRAPHQL,
     ...(attestedBy === undefined ? {} : { attestedBy }),
   });
   return text(id, serialise(usage));
@@ -413,7 +444,7 @@ async function declareUsed(id: JsonRpcId, args: Record<string, unknown>) {
 
   const subject = await resolveDeclarationSubject({
     agent: { chainId: agentChainId, tokenId: agentTokenId },
-    graphqlUrl: GRAPHQL_URL,
+    graphqlUrl: GRAPHQL,
   });
   const plan = await prepareDeclareUsed({
     subject,
@@ -708,6 +739,92 @@ async function probe(id: JsonRpcId, args: Record<string, unknown>) {
 }
 
 /**
+ * Probe an endpoint and plan the position that records what you found.
+ *
+ * The node has been producing the only reproducible claim in this system and throwing it away. This
+ * writes it — or rather, prepares the write: the caller signs with **its own** key, so what lands is
+ * *this agent's* verdict and not ARP's. ARP's index reads the attestor's positions; everybody
+ * else's sit beside them, and a disagreement between them is the signal to re-probe.
+ *
+ * **One observation is enough here, and that is deliberate.** The scheduled prober needs three
+ * consecutive down verdicts before condemning, because it is making a public judgement about
+ * somebody else's service from the outside and condemning takes an author's visibility away. An
+ * agent that called an endpoint and got nothing is reporting **what happened to it**. Asking it for
+ * three confirmations would be asking it to doubt its own experience.
+ *
+ * It plans and does not sign (ADR `0038`), like every other write path on this node.
+ */
+async function recordReachable(id: JsonRpcId, args: Record<string, unknown>) {
+  const url = args['url'];
+  if (typeof url !== 'string' || !/^https?:\/\//i.test(url)) {
+    return fail(id, -32602, 'url must be an http or https address');
+  }
+  const toolAtomId = args['tool_atom_id'];
+  if (!isTermId(toolAtomId)) {
+    return fail(id, -32602, 'tool_atom_id must be 0x + 32 bytes — arp_find_tools returns them');
+  }
+  const receiver = args['receiver'];
+  if (!isAddress(receiver)) return fail(id, -32602, 'receiver must be a 0x address');
+  const protocolRaw = args['protocol'];
+  if (protocolRaw !== undefined && protocolRaw !== 'mcp' && protocolRaw !== 'a2a') {
+    return fail(id, -32602, "protocol, when given, must be 'mcp' or 'a2a'");
+  }
+
+  const outcome = await probeEndpoint({
+    declaredUnder: 'endpoints',
+    name: protocolRaw ?? null,
+    protocol: (protocolRaw as 'mcp' | 'a2a' | undefined) ?? null,
+    version: null,
+    capabilities: [],
+    classification: { status: 'probeable', url, declared: url },
+  });
+
+  const verdict = verdictOf(outcome);
+  const curveId = await reads.defaultCurveId();
+  const state = await readReachabilityState(
+    reads,
+    receiver,
+    toolAtomId,
+    HAS_TAG,
+    REACHABLE_ATOM,
+    curveId,
+  );
+
+  // `minDeposit` read per call, never copied: it is 10x apart between chains and governance may
+  // move it (`rules/portability.md` rule 3).
+  const stake = await reads.minDeposit();
+  const plan = planReachability(state, [verdict], {
+    multiVault: MULTI_VAULT,
+    chainId,
+    receiver,
+    curveId,
+    stake,
+    toolLabel: url,
+    // First hand. See the note above.
+    condemnAfter: 1,
+  });
+
+  return text(id, {
+    url,
+    // The probe's own result, carried whole: a confirmed outcome holds the exact request, so
+    // anybody can reproduce this verdict with one curl. That is what replaces an oracle here.
+    outcome,
+    verdict,
+    triple_id: state.terms.triple,
+    counter_triple_id: state.terms.counter,
+    you_currently_assert: state.recorded,
+    // Nothing in this node creates it, but a caller that deposited by hand could, and resolving it
+    // silently would hide a contradiction the reader is entitled to see.
+    ...(state.bothSides ? { warning: 'this address holds a position on BOTH sides' } : {}),
+    would_become: plan.to,
+    why: plan.why,
+    calls: plan.calls.map(serialiseCall),
+    total_value_wei: plan.calls.reduce((sum, call) => sum + call.value, 0n).toString(),
+    caveat: UNSIGNED_CAVEAT,
+  });
+}
+
+/**
  * Does this agent have an identity atom — the thing a `uses` edge must carry as its subject?
  *
  * The most useful read here, because of what `scripts/measure/cohort-coverage.ts` measures: the atom
@@ -740,7 +857,7 @@ async function identity(id: JsonRpcId, args: Record<string, unknown>) {
   };
 
   try {
-    const subject = await resolveDeclarationSubject({ agent, graphqlUrl: GRAPHQL_URL });
+    const subject = await resolveDeclarationSubject({ agent, graphqlUrl: GRAPHQL });
     return text(id, {
       caip19: toCaip19(agent),
       identity_atom: subject,
@@ -974,7 +1091,7 @@ async function findTools(id: JsonRpcId, args: Record<string, unknown>) {
     const normalised = domainRaw.trim().toLowerCase();
     const {domains, tools} = await toolsInDomain(
       {
-        graphqlUrl: GRAPHQL_URL,
+        graphqlUrl: GRAPHQL,
         hierarchyPredicate: IS_A_SUB_DOMAIN_OF,
         tagPredicate: HAS_TAG,
         root: DOMAIN_ROOT,
@@ -998,12 +1115,12 @@ async function findTools(id: JsonRpcId, args: Record<string, unknown>) {
 
   const [page, registered] = await Promise.all([
     listTools({
-      graphqlUrl: GRAPHQL_URL,
+      graphqlUrl: GRAPHQL,
       order: orderRaw as ToolListingOrder,
       ...(curveRaw === undefined ? {} : { curveId: curveRaw }),
     }),
     listRegisteredTools({
-      graphqlUrl: GRAPHQL_URL,
+      graphqlUrl: GRAPHQL,
       ...(curveRaw === undefined ? {} : { curveId: curveRaw }),
     }),
   ]);
@@ -1104,6 +1221,8 @@ async function callTool(id: JsonRpcId, params: Record<string, unknown> | undefin
         return await probe(id, args);
       case 'arp_find_agents':
         return await findAgents(id, args);
+      case 'arp_record_reachable':
+        return await recordReachable(id, args);
       case 'arp_find_tools':
         return await findTools(id, args);
       default:
@@ -1208,8 +1327,8 @@ if (import.meta.main) {
 
   log(`ARP MCP node — ${stdio ? 'stdio' : `http://localhost:${PORT}`}`);
   log(`  chain:      ${chainId} (${record.chain?.name ?? 'unknown'}) via ARP_TARGET=${targetName}`);
-  log(`  graph:      ${GRAPHQL_URL}`);
-  log(`  rpc:        ${RPC_URL}`);
+  log(`  graph:      ${GRAPHQL}`);
+  log(`  rpc:        ${RPC}`);
   log(`  multivault: ${MULTI_VAULT}`);
 
   if (stdio) {

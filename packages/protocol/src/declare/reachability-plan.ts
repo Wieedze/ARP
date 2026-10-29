@@ -1,6 +1,11 @@
 import type {Address, Hex} from "viem";
 
-import {decideTransition, type RecordedState, type Verdict} from "../reachability.js";
+import {
+    decideTransition,
+    type RecordedState,
+    type TransitionOptions,
+    type Verdict,
+} from "../reachability.js";
 import {encodeDeposit, encodeRedeem, type MultiVaultReads} from "./multivault.js";
 import type {PreparedCall} from "./types.js";
 
@@ -107,9 +112,11 @@ export function planReachability(
         /** What to put behind the assertion. The caller reads `minDeposit` off the chain. */
         stake: bigint;
         toolLabel: string;
-    },
+    } & TransitionOptions,
 ): ReachabilityPlan {
-    const move = decideTransition(state.recorded, history);
+    const move = decideTransition(state.recorded, history, {
+        ...(options.condemnAfter === undefined ? {} : {condemnAfter: options.condemnAfter}),
+    });
     if (!move.change) {
         return {calls: [], from: state.recorded, to: state.recorded, why: move.why};
     }
@@ -136,7 +143,9 @@ export function planReachability(
         to: options.multiVault,
         value: options.stake,
         data: encodeDeposit(options.receiver, entering, options.curveId, 0n),
-        why: `${options.toolLabel} ${move.to === "up" ? "answers" : "does not answer"} — ${move.why}`,
+        // `move.why` already opens with "answers" or "does not answer", so prefixing it again read
+        // as "answers — answers — first record" in the plan an agent is asked to sign.
+        why: `${options.toolLabel}: ${move.why}`,
     });
 
     return {calls, from: move.from, to: move.to, why: move.why};

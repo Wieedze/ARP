@@ -294,7 +294,7 @@ describe("the handshake", () => {
     it("lists its tools with a schema", async () => {
         const {body} = await rpc("tools/list", undefined, 2);
         const tools = (body?.["result"] as {tools: {name: string; inputSchema: unknown}[]}).tools;
-        // All six, in order. A tool added without landing here is a tool the rig's declared
+        // All eleven, in order. A tool added without landing here is a tool the rig's declared
         // capabilities test cannot see either (`rig-files.test.ts`).
         //
         // `arp_identity` is first because a caller should ask it first: the identity atom is
@@ -312,9 +312,16 @@ describe("the handshake", () => {
             // because a deposit nobody can withdraw is a donation.
             "arp_take_position",
             "arp_exit_position",
-            // Where another agent said it can be reached, and whether that answers. Two tools,
-            // because what was published and what responds are two different facts.
+            // Where another agent said it can be reached, and whether that answers. Three tools,
+            // because what was published, what responds, and what you are willing to assert about
+            // it are three different things.
+            //
+            // `arp_record_reachable` is the only write path on this node whose subject is a FACT
+            // rather than a declaration: a probe is reproducible, so a second observer can
+            // contradict the first for the price of one HTTP request. Before it, the node produced
+            // that fact and discarded it.
             "arp_agent_endpoints",
+            "arp_record_reachable",
             "arp_probe_endpoint",
         ]);
         // By name, not by index: the order above is an assertion about the list, and a schema
@@ -323,6 +330,11 @@ describe("the handshake", () => {
         expect(byName.get("arp_tool_reputation")).toMatchObject({required: ["tool_atom_id"]});
         expect(byName.get("arp_identity")).toMatchObject({
             required: ["agent_chain_id", "agent_token_id"],
+        });
+        // `receiver` is required and is the caller's own address: this node plans, the caller
+        // signs, and what lands is the caller's verdict rather than ARP's (ADR `0038`).
+        expect(byName.get("arp_record_reachable")).toMatchObject({
+            required: ["url", "tool_atom_id", "receiver"],
         });
     });
 

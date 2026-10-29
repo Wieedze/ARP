@@ -329,6 +329,45 @@ export const TOOLS = [
     },
   },
   {
+    name: 'arp_record_reachable',
+    description:
+      'Probe a tool and plan the position that records what you found. Returns unsigned calls you ' +
+      'sign with YOUR key, so what lands is YOUR verdict — not ARP\'s. ARP\'s index reads one ' +
+      "attestor's positions; everybody else's sit beside them, and a disagreement between them is " +
+      'the signal to re-probe. That is what replaces an oracle here: the claim is reproducible, so ' +
+      'a second observer costs one HTTP request and can contradict the first. ' +
+      'One observation is enough, deliberately. The scheduled prober needs three consecutive ' +
+      'failures before it condemns, because it judges somebody else\'s service from the outside ' +
+      'and condemning takes an author\'s visibility away. You called the thing — you are reporting ' +
+      'what happened to you, and three confirmations would be asking you to doubt it. ' +
+      'A TLS failure, a DNS failure or a 429 is NOT a verdict and plans nothing: the first two ' +
+      'could be your network and the third is the host asking you to stop. A timeout IS a verdict. ' +
+      'An empty `calls` means nothing should change, which is the common case and not a failure — ' +
+      'read `why`. The response carries the probe whole, including the exact request, so anyone ' +
+      'can reproduce your verdict with one curl.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        url: { type: 'string', description: 'The http(s) endpoint you called.' },
+        tool_atom_id: {
+          type: 'string',
+          description: "The tool's atom id, 0x + 32 bytes. `arp_find_tools` returns them.",
+        },
+        receiver: {
+          type: 'string',
+          description: 'Your 0x address — the one that will hold the position and sign the calls.',
+        },
+        protocol: {
+          type: 'string',
+          description:
+            "'mcp' or 'a2a' to attempt that protocol's handshake, which is the strongest check " +
+            'available. Omitted does a plain reachability check.',
+        },
+      },
+      required: ['url', 'tool_atom_id', 'receiver'],
+    },
+  },
+  {
     name: 'arp_probe_endpoint',
     description:
       'Ask one endpoint whether it answers. Returns `confirmed` with a code (live, dead, ' +

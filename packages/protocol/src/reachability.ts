@@ -82,7 +82,25 @@ export type Transition =
  * agreement** — an endpoint behind a rate limiter would otherwise drift toward whatever it was
  * last recorded as, which is the opposite of what a rate limit tells us.
  */
-export function decideTransition(state: RecordedState, history: readonly Verdict[]): Transition {
+export type TransitionOptions = {
+    /**
+     * How many consecutive down verdicts condemn. Defaults to {@link DOWN_VERDICTS_TO_CONDEMN}.
+     *
+     * **Two roles, two numbers, and conflating them was a real mistake.** A systematic prober makes
+     * a *public* verdict about somebody else's service seen from outside, so three is right — to
+     * condemn is to take an author's visibility away. An agent that calls an endpoint and gets
+     * nothing is reporting **what happened to it**, first hand, and asking it for three
+     * confirmations is asking it to doubt its own experience. It passes 1.
+     */
+    condemnAfter?: number;
+};
+
+export function decideTransition(
+    state: RecordedState,
+    history: readonly Verdict[],
+    options: TransitionOptions = {},
+): Transition {
+    const condemnAfter = Math.max(1, options.condemnAfter ?? DOWN_VERDICTS_TO_CONDEMN);
     const verdicts = history.filter((entry) => entry !== "no-verdict");
     const newest = verdicts[0];
 
@@ -104,11 +122,11 @@ export function decideTransition(state: RecordedState, history: readonly Verdict
     if (state === "down") return {change: false, state, why: "does not answer, and that is already recorded"};
 
     const consecutive = countLeading(verdicts, "down");
-    if (consecutive < DOWN_VERDICTS_TO_CONDEMN) {
+    if (consecutive < condemnAfter) {
         return {
             change: false,
             state,
-            why: `${consecutive} of ${DOWN_VERDICTS_TO_CONDEMN} consecutive down verdicts — not condemned yet`,
+            why: `${consecutive} of ${condemnAfter} consecutive down verdicts — not condemned yet`,
         };
     }
     return {

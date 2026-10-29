@@ -100,3 +100,25 @@ describe("flipCost", () => {
         expect(flipCost("up", 1_000n)).toEqual({redeem: 1_000n, deposit: 1_000n});
     });
 });
+
+describe("decideTransition, first-hand", () => {
+    it("condemns on one down verdict when the caller says so", () => {
+        // The agent's policy, not the prober's. An agent that called an endpoint and got nothing is
+        // reporting what happened to it; asking it for three confirmations asks it to doubt its own
+        // experience. The prober's three exists because condemning takes an author's visibility.
+        const move = decideTransition("up", ["down"], {condemnAfter: 1});
+        expect(move.change).toBe(true);
+        if (move.change) expect(move.to).toBe("down");
+    });
+
+    it("never accepts a threshold below one", () => {
+        // Zero would condemn on a history with no down verdict in it at all.
+        const move = decideTransition("up", ["up"], {condemnAfter: 0});
+        expect(move.change).toBe(false);
+    });
+
+    it("still refuses to move on a non-verdict, whatever the threshold", () => {
+        const move = decideTransition("up", ["no-verdict"], {condemnAfter: 1});
+        expect(move.change).toBe(false);
+    });
+});
