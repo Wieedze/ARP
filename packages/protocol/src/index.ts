@@ -192,6 +192,9 @@ export {
     DEFAULT_PROBE_TIMEOUT_MS,
     DEFAULT_USER_AGENT,
     MCP_PROTOCOL_VERSION,
+    // A probe fetches a URL somebody else supplied, from the machine it runs on. Exported because
+    // the decision is the caller's: ARP's own rig probes its own endpoints on purpose.
+    privateProbeTarget,
     probeEndpoint,
 } from "./verify/probe.js";
 export type {ProbeOptions} from "./verify/probe.js";

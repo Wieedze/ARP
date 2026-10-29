@@ -8,6 +8,63 @@ import type {FetchLike} from "../http.js";
 export const DEFAULT_USER_AGENT = "ARP-verifier/0.1 (+https://github.com/Wieedze/ARP)";
 
 /**
+ * The host of `url` when it is one nobody outside this machine should be asked to fetch.
+ *
+ * Returns the offending host, or `null` when probing it is fine.
+ *
+ * ## Why a probe needs this at all
+ *
+ * A probe fetches a URL somebody else supplied, from the machine the node runs on. That is the
+ * shape of an SSRF, and it is not hypothetical: found 2026-10-29 while writing `docs/22` for people
+ * who would install the node. `Bun.serve` binds every interface when given no hostname, so an
+ * installed node listened on the LAN, and `arp_probe_endpoint` would fetch
+ * `http://169.254.169.254/latest/meta-data/` or `http://127.0.0.1:…/admin` and report the answer to
+ * whoever asked. Two fixes landed together: the node binds loopback by default, and this.
+ *
+ * ## What it does not cover, said here rather than implied
+ *
+ * **A hostname that resolves to a private address.** `example.com` pointing at `127.0.0.1`, or DNS
+ * rebinding between this check and the connection, both pass. Closing that needs resolving the name
+ * and connecting to the resolved address, which `fetch` does not expose. So this is a guard against
+ * the easy case, not a boundary, and `docs/22` says so in those words.
+ *
+ * It is exported rather than inlined because the caller is what decides: ARP's own rig probes its
+ * own testnet endpoints on purpose, and `ARP_ALLOW_PRIVATE_PROBE` is read where that decision is
+ * made, not here.
+ */
+export function privateProbeTarget(url: string): string | null {
+    let host: string;
+    try {
+        host = new URL(url).hostname.toLowerCase().replace(/^\[|\]$/g, "");
+    } catch {
+        // Not parseable is not private. The caller's own URL check is what refuses it.
+        return null;
+    }
+
+    if (host === "localhost" || host.endsWith(".localhost")) return host;
+    // `.internal` and `.local` are the names a cloud or an mDNS network answers on.
+    if (host.endsWith(".internal") || host.endsWith(".local")) return host;
+    if (host === "::1" || host === "0:0:0:0:0:0:0:1") return host;
+    // fc00::/7 — IPv6 unique local.
+    if (/^f[cd][0-9a-f]{0,2}:/.test(host)) return host;
+
+    // Only an IPv4 LITERAL gets the range checks. `10.example.com` is a perfectly good public
+    // hostname and a prefix test on the string refuses it — the test for that case is in
+    // `probe-private.test.ts` and it caught this.
+    const quad = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/.exec(host);
+    if (quad === null) return null;
+    const [a, b] = [Number(quad[1]), Number(quad[2])];
+
+    if (a === 127 || a === 10 || a === 0) return host;
+    if (a === 192 && b === 168) return host;
+    // 169.254.0.0/16 is link-local, and it is where every cloud metadata service lives.
+    if (a === 169 && b === 254) return host;
+    // 172.16.0.0/12 is 172.16 through 172.31 — not all of 172, which would refuse public hosts.
+    if (a === 172 && b >= 16 && b <= 31) return host;
+    return null;
+}
+
+/**
  * Probe timeout. Shorter than `http.ts`'s `DEFAULT_TIMEOUT_MS` (10 s) on purpose: that one is for
  * endpoints we have a relationship with, this one is for tens of thousands of strangers' servers,
  * and the name is distinct so the two cannot be confused at an import site.

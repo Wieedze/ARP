@@ -66,7 +66,7 @@ import {
   partitionByCheckability,
   readDeclaredEndpoints,
 } from '../packages/protocol/src/verify/declaration.js';
-import { probeEndpoint } from '../packages/protocol/src/verify/probe.js';
+import { privateProbeTarget, probeEndpoint } from '../packages/protocol/src/verify/probe.js';
 import { listAgents } from '../packages/protocol/src/listing.js';
 import { intuitionSource } from '../packages/protocol/src/sources/intuition/index.js';
 import type { AgentListOrder } from '../packages/protocol/src/types.js';
@@ -888,6 +888,18 @@ async function probe(id: JsonRpcId, args: Record<string, unknown>) {
   if (typeof url !== 'string' || !/^https?:\/\//i.test(url)) {
     return fail(id, -32602, 'url must be an http or https address');
   }
+  // `privateProbeTarget` lives in the package, with its boundary tests — 172.15 and 172.32 are
+  // public and only 172.16 through 172.31 are not, and `10.example.com` is a real host.
+  const local = process.env['ARP_ALLOW_PRIVATE_PROBE'] === '1' ? null : privateProbeTarget(url);
+  if (local !== null) {
+    return fail(
+      id,
+      -32602,
+      `${local} is not a public address. This probe exists to ask somebody else's endpoint ` +
+        "whether it answers; pointed at a private one it reads the operator's own network and " +
+        'reports it back. Set ARP_ALLOW_PRIVATE_PROBE=1 if you are probing your own rig.',
+    );
+  }
   const protocolRaw = args['protocol'];
   if (protocolRaw !== undefined && protocolRaw !== 'mcp' && protocolRaw !== 'a2a') {
     return fail(id, -32602, "protocol, when given, must be 'mcp' or 'a2a'");
@@ -1410,6 +1422,18 @@ async function callTool(id: JsonRpcId, params: Record<string, unknown> | undefin
 
 export const handler = {
   port: PORT,
+  /**
+   * Loopback by default, and that is a security decision rather than a convenience.
+   *
+   * `Bun.serve` binds every interface when no hostname is given, so this listened on the LAN —
+   * and `arp_probe_endpoint` fetches a URL the CALLER supplies. Together that made an installed
+   * node an open proxy into the operator's own network: anything that could reach the port could
+   * ask it to fetch `http://127.0.0.1:…` or a cloud metadata address and read the answer.
+   *
+   * Found 2026-10-29 while writing `docs/22` for people who would install this. `ARP_HOST=0.0.0.0`
+   * opens it deliberately, for somebody who meant to.
+   */
+  hostname: process.env['ARP_HOST'] ?? '127.0.0.1',
   async fetch(request: Request) {
     if (request.method === 'GET') {
       // `GET /content/:atomId` — the one route that is not MCP and not an info document. It is the
@@ -1534,6 +1558,9 @@ if (import.meta.main) {
   }
 
   Bun.serve(handler);
+  log(
+    `  listening:  ${handler.hostname}:${PORT}${handler.hostname === '127.0.0.1' ? ' (loopback only — ARP_HOST=0.0.0.0 to open it)' : ' — OPEN TO THE NETWORK'}`,
+  );
   log(`  tools:      ${TOOLS.map((t) => t.name).join(', ')}`);
   log(`  content:    GET /content/:atomId`);
   log(
