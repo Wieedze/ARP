@@ -279,16 +279,20 @@ export function ClaimField({
                         viewBox="0 0 1 1"
                         className="pointer-events-none absolute inset-0 overflow-visible"
                     >
+                        {/* `ringRadius`, not ring 0's. The reading moved to the outer ring and
+                            the drawing stayed here, so on an atom with two predicates the head sat
+                            on the small inner circle while naming dots from the big one — the lit
+                            dot and the head were never in the same place. */}
                         <polyline
-                            points={connector(rings[0]?.r ?? 0.42)}
+                            points={connector(ringRadius)}
                             fill="none"
                             stroke="var(--color-rule-strong)"
                             strokeWidth={1}
                             vectorEffect="non-scaling-stroke"
                         />
                         <circle
-                            cx={headAt(rings[0]?.r ?? 0.42).x}
-                            cy={headAt(rings[0]?.r ?? 0.42).y}
+                            cx={headAt(ringRadius).x}
+                            cy={headAt(ringRadius).y}
                             r={0.032}
                             fill="none"
                             stroke="var(--color-accent)"
