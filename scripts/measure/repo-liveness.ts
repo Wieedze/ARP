@@ -16,6 +16,8 @@
  *
  *  So this reports all three and ranks on the last two, because the first cannot fall.
  */
+import {writeFileSync} from "node:fs";
+
 import catalogue from "../../catalogue/tools.json";
 
 type Repo = {
@@ -27,6 +29,26 @@ type Repo = {
 };
 
 const rows = (catalogue as {tools: {url: string; kind: string}[]}).tools;
+function arg(name: string): string | undefined {
+    const index = process.argv.indexOf(`--${name}`);
+    return index === -1 ? undefined : process.argv[index + 1];
+}
+
+/**
+ * A token lifts GitHub from 60 requests an hour to 5,000, and the catalogue is 53 — so one
+ * unauthenticated run plus one `record-maintained.ts` pass exhausts the quota. A **classic token
+ * with no scopes selected** grants public read and nothing else. Read from the environment, never
+ * printed, and never prefixed `VITE_`.
+ */
+const githubHeaders: Record<string, string> = {
+    accept: "application/vnd.github+json",
+    "user-agent": "arp-measure",
+};
+const githubToken = process.env["GITHUB_TOKEN"]?.trim();
+if (githubToken !== undefined && githubToken.length > 0) {
+    githubHeaders["authorization"] = `Bearer ${githubToken}`;
+}
+
 const now = Date.now();
 const sleep = (ms: number): Promise<void> => new Promise((done) => setTimeout(done, ms));
 
@@ -36,7 +58,7 @@ const out: {slug: string; kind: string; stars: number; days: number | null; arch
 for (const tool of rows) {
     const slug = tool.url.replace("https://github.com/", "");
     const response = await fetch(`https://api.github.com/repos/${slug}`, {
-        headers: {accept: "application/vnd.github+json", "user-agent": "arp-measure"},
+        headers: githubHeaders,
         signal: AbortSignal.timeout(20000),
     });
     if (response.status === 403 || response.status === 429) {
@@ -79,6 +101,28 @@ for (const row of [...out].sort((a, b) => (b.days ?? 1e9) - (a.days ?? 1e9)).sli
 console.log(`\nstars against maintenance — the two do not agree:`);
 for (const row of [...out].sort((a, b) => b.stars - a.stars).slice(0, 8)) {
     console.log(`  ${String(row.stars).padStart(7)}★  pushed ${row.days ?? "?"}d ago  ${row.slug}`);
+}
+
+// These are time-varying third-party figures, so the run is kept rather than only the script:
+// ADR `0064`, one file per run, never regenerated. A reader re-deriving a figure quoted in a doc
+// needs the day it was read, not today's answer.
+const jsonPath = arg("json");
+if (jsonPath !== undefined) {
+    writeFileSync(
+        jsonPath,
+        JSON.stringify(
+            {
+                measuredAt: new Date().toISOString(),
+                source: "api.github.com/repos",
+                authenticated: githubToken !== undefined && githubToken.length > 0,
+                staleAfterDays: 180,
+                rows: out,
+            },
+            null,
+            2,
+        ),
+    );
+    console.log(`\nwritten to ${jsonPath}`);
 }
 
 // A module, not a global script — see the note in predicate-objects.ts.

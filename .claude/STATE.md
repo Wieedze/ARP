@@ -48,11 +48,11 @@ What is on chain, 2026-10-29:
 
 | | |
 | --- | --- |
-| 662 skill atoms, pinned | 0 pin failures |
+| 662 skill atoms, pinned | `scripts/pin-tool.ts` over every URL, 0 reported failures; the run's log is not kept, so that count is from the console and not from a file |
 | 662 `source` edges | `(skill, source, repository)` — ADR `0078`, the term was already on chain |
-| `has tag` edges on skills | **325 held and correct**; 276 in flight. 203 were retired, not deleted — see below. **61 match no keyword and carry nothing** |
+| `has tag` edges on skills | **601 held, 0 in disagreement** with the table that wrote them (`scripts/audit-skill-tags.ts`, 2026-10-29). 203 were retired, not deleted. **61 match no keyword and carry nothing** |
 | 53 `maintained` tags | 50 alive, 3 not — browserbase and prisma/mcp archived, paypal untouched 366 days |
-| 18 domains under `tool` | the **16** seeded (not 17 — `domains.proposal.json` dropped `security`), plus `method` and `writing`. `image`, `audio` and `document` follow |
+| 21 domains under `tool` | the **16** seeded (not 17 — `domains.proposal.json` dropped `security`), plus `method`, `writing`, `image`, `audio`, `document` |
 
 Three findings worth carrying forward:
 
@@ -63,6 +63,12 @@ Three findings worth carrying forward:
 - **The install count stays off chain**, in `measurements/skills-installs-2026-10-29.json`. It is
   somebody else's number and it changes; it belongs in a ranking input, never in a tag. Only
   `archived` and a 404 are authoritative enough to be verdicts (`scripts/record-maintained.ts`).
+- **A wrong tag is withdrawn by redeeming the position, not by deleting anything.** A keyword
+  table ordered general before specific — `blockchain` matched `token` in "cuts token usage" and in
+  "design tokens" — and wrote 203 wrong tags. They were retired the same day: the triple stays on
+  chain, unowned, and the claim leaves ARP's index. `scripts/audit-skill-tags.ts` reads what is
+  actually held from the indexer rather than replaying the table, which is how it found 528 skill
+  tags where the send log accounted for 296.
 - **A bulk write is paced by bytes, not by gas.** ADR `0079`. The RPC refused the seed three times
   with `Bandwidth limit exceeded` (-31002) while `eth_estimateGas` passed at 5.1M gas, and once
   spent it refuses **reads** too. `scripts/send-plan-in-waves.sh` is the shape that works.
