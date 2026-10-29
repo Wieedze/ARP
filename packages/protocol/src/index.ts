@@ -392,6 +392,23 @@ export {
  * `listTools` answers "what tools exist". Nothing answered "what tools are for taking a payment",
  * and that gap is what stood between the registry and an agent that can use it.
  */
+/**
+ * Reachability: from a probe's verdict to what ARP asserts on chain.
+ *
+ * The only claim in this system a third party can check for the price of one HTTP request, which
+ * is why it is the only one recorded as a fact rather than as a declaration.
+ */
+export {
+    decideTransition,
+    DOWN_VERDICTS_TO_CONDEMN,
+    flipCost,
+    verdictOf,
+    type FlipCost,
+    type RecordedState,
+    type Transition,
+    type Verdict,
+} from "./reachability.js";
+
 export {
     DomainTree,
     readDomainTree,

@@ -1,6 +1,6 @@
 # Post-mortem index
 
-**Generated** 2026-10-28 by `scripts/build-claude-index.ts`. Do not edit by hand — rerun the script.
+**Generated** 2026-10-29 by `scripts/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
 19 entries, one per completed task. Written by `task-verifier` on a pass.
 

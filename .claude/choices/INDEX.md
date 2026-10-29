@@ -1,8 +1,8 @@
 # ADR index
 
-**Generated** 2026-10-28 by `scripts/build-claude-index.ts`. Do not edit by hand — rerun the script.
+**Generated** 2026-10-29 by `scripts/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-73 decisions. Newest last. `choices/README.md` says when to write one.
+75 decisions. Newest last. `choices/README.md` says when to write one.
 
 ## Not accepted
 
@@ -88,3 +88,5 @@ Read these before relying on them.
 | [0072](0072-the-market-is-offered-to-agents-and-tools.md) | 2026-10-28 | Accepted | the market is offered on an agent or a tool, and no single field says which |
 | [0073](0073-a-reveal-answers-the-keyboard-or-it-is-a-mouse-effect.md) | 2026-10-28 | Accepted | a reveal answers the keyboard, or it is a mouse effect |
 | [0074](0074-a-tool-carries-one-tag-at-its-deepest-domain.md) | 2026-10-28 | Accepted | A tool carries one tag, at its deepest domain |
+| [0075](0075-what-is-sold-is-the-place-in-the-answer.md) | 2026-10-29 | Accepted | What is sold is the place in the answer, and your place comes from others |
+| [0076](0076-arp-plans-a-payment-and-never-holds-one.md) | 2026-10-29 | Accepted | ARP plans a payment and never holds one |
