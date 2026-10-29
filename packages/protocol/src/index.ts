@@ -466,3 +466,38 @@ export {
  * predicate is `uses`, unchanged: ARP does not mint an agent-rating predicate (ADR `0030`).
  */
 export {prepareRate, prepareRateStake, type RatePlan} from "./declare/rate.js";
+
+/**
+ * **Corroborate** — what a runtime actually invoked, and what a node signs for having served it.
+ *
+ * The two halves of `tasks/31`. `resolveInvocations` turns a hook's log into the tools ARP can
+ * name, and refuses a name several repositories carry rather than picking one. A receipt is the
+ * second party's side of the same moment: the node says it served these bytes to this key, and
+ * `verifyContentReceipt` plus `receiptMatchesContent` let a stranger check both halves without
+ * asking us for anything.
+ *
+ * Neither signs on its own account. `signContentReceipt` takes a signer the caller supplies, and
+ * that key must not be one that can move value (ADR `0038`).
+ */
+export {
+    parseSessionLog,
+    resolveInvocations,
+    type CataloguedSkill,
+    type Invocation,
+    type Resolution,
+} from "./session.js";
+
+export {
+    contentDigest,
+    contentReceiptDomain,
+    contentReceiptTypedData,
+    CONTENT_RECEIPT_TYPES,
+    receiptMatchesContent,
+    signContentReceipt,
+    UNAUTHENTICATED,
+    verifyContentReceipt,
+    type ContentReceipt,
+    type ReceiptVerdict,
+    type SignedContentReceipt,
+    type TypedDataSigner,
+} from "./receipt.js";
