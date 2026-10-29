@@ -8,6 +8,9 @@ import {ClaimField} from "../components/atom/ClaimField";
 import {AtomMarket} from "../components/market/AtomMarket";
 import {actionCardClass} from "../lib/surface-class";
 import {linkClass} from "../lib/control-class";
+import {useDomainTree} from "../hooks/use-domain-tree";
+import {useSkillFacts} from "../hooks/use-skill-facts";
+import {predicateLabelOf} from "../services/atom-standing-view";
 import {DeclareUse} from "../components/usage/DeclareUse";
 import {useAgentRefForAtom} from "../hooks/use-agent-ref-for-atom";
 import {useDeclaredModules} from "../hooks/use-declared-modules";
@@ -160,6 +163,7 @@ export function AtomPanel() {
                         agent that declared this — and it costs no query, because those agents are
                         the subjects of the `uses` edges the page already read. */}
                     <AtomSigil atomId={view.atomId} name={view.title} groups={view.groups} />
+                    <Signals view={view} />
                     <Claims view={view} />
                     <Identity view={view} />
                 </aside>
@@ -268,6 +272,64 @@ export function AtomPanel() {
 
 /** The atom's own facts, including its own vault — which is never summed with its edges'. */
 /**
+ * What a reader uses to judge a tool, from beside the chain rather than on it.
+ *
+ * A skill atom carries its URL and nothing else (ADR `0054`), so a description, an install count
+ * and a repository's stars have to come from somewhere; they are measured, dated and bundled
+ * (`scripts/build-skill-facts.ts`, `build-repo-facts.ts`).
+ *
+ * **"pushed 2d ago" is what `maintained` means**, and it is why the sentence is here rather than
+ * beside the on-chain `Status` edge, which can only say the word. The verdict is a yes or a no; the
+ * figure behind it is what lets a reader disagree with it.
+ *
+ * Stars last, and quietly: they are free to give and they never fall, so they say less than either
+ * of the other two. Measured 2026-10-29, `obra/superpowers` carries 307,944 and
+ * `101-skills/superpowers` carries 0, and both were pushed within two months.
+ */
+function Signals({view}: {view: AtomView}) {
+    const {factFor, repoFactFor} = useSkillFacts();
+    const skill = factFor(view.label);
+    // A skill's signals belong to the repository it came from, which is what its `source` edge
+    // says. A repository's own atom is its own source, so the label is tried directly as well.
+    const sourceLabel =
+        view.claims.find((claim) => claim.predicate === "source")?.objectLabel ?? view.label;
+    const repo = repoFactFor(sourceLabel);
+    if (skill === null && repo === null) return null;
+    return (
+        <dl className="mt-6 border-t border-[color:var(--color-rule)] pt-4 text-[length:var(--text-body-sm)]">
+            {skill === null || skill.description.length === 0 ? null : (
+                <Term label="What it does">
+                    <span className="text-[color:var(--color-silver)]">{skill.description}</span>
+                </Term>
+            )}
+            {skill?.installs === undefined || skill.installs === null ? null : (
+                <Term label="Installs">
+                    <span className="font-mono tabular-nums">
+                        {skill.installs.toLocaleString("en-US")}
+                    </span>
+                </Term>
+            )}
+            {repo === null ? null : (
+                <Term label="Its repository">
+                    <span className="block font-mono tabular-nums">
+                        {repo.gone
+                            ? "gone"
+                            : repo.archived
+                              ? "archived by its owner"
+                              : repo.days === null
+                                ? "no push date"
+                                : `pushed ${repo.days}d ago`}
+                    </span>
+                    <span className="block font-mono tabular-nums text-[color:var(--color-steel)]">
+                        {`${repo.stars.toLocaleString("en-US")} stars`}
+                    </span>
+                </Term>
+            )}
+        </dl>
+    );
+}
+
+/**
  * What the atom says about **itself** — its outgoing edges, each one a link.
  *
  * This page rendered only the incoming side until 2026-10-29, and for a whole population it came
@@ -279,11 +341,19 @@ export function AtomPanel() {
  * answer a question nobody asks first.
  */
 function Claims({view}: {view: AtomView}) {
+    // The domain tree is a separate, long-cached query, and it is what tells a `has tag` edge
+    // whether it is a domain. Read here rather than folded into the standing's cached value: a
+    // label derived from one query must not be frozen inside another's cache entry.
+    const domains = useDomainTree();
+    const labels = new Set(domains.options.map((option) => option.label));
     if (view.claims.length === 0) return null;
     return (
         <dl className="mt-6 border-t border-[color:var(--color-rule)] pt-4 text-[length:var(--text-body-sm)]">
             {view.claims.map((claim) => (
-                <Term key={claim.tripleId} label={claim.predicate}>
+                <Term
+                    key={claim.tripleId}
+                    label={predicateLabelOf(claim.predicate, claim.objectLabel, labels)}
+                >
                     <Link
                         to={`/atom/${claim.objectAtomId}`}
                         className={`${linkClass} ${claim.objectIsId ? "font-mono" : ""}`}

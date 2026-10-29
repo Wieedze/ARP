@@ -57,6 +57,14 @@ export type AtomView = {
     atomId: string;
     /** The atom's own name, or its id. */
     title: string;
+    /**
+     * The atom's raw label, kept beside the title.
+     *
+     * `title` is for reading and `label` is the key: the description, the install count and the
+     * repository's signals live beside the chain, keyed by exactly this string. A lookup needs
+     * the value the graph gave, not the one the page shows.
+     */
+    label: string | null;
     titleIsId: boolean;
     type: string | null;
     pinnedUri: string | null;
@@ -108,7 +116,10 @@ export type AtomView = {
 /** One outgoing edge, ready to render: a predicate, an object, and where the object lives. */
 export type ClaimView = {
     tripleId: string;
+    /** The predicate's own word, unrelabelled. {@link predicateLabelOf} names it at render time. */
     predicate: string;
+    /** The object's raw label, which is what decides how the predicate is named. */
+    objectLabel: string | null;
     object: string;
     objectIsId: boolean;
     objectAtomId: string;
@@ -149,16 +160,45 @@ function groupOf(group: AtomEdgeGroup, symbol: string): GroupView {
     };
 }
 
+/**
+ * What to call an outgoing edge on screen, read from its **object** rather than its predicate.
+ *
+ * `has tag` is overloaded on chain and ARP writes both meanings itself:
+ *
+ * ```
+ * (skill, has tag, image)       a domain
+ * (repository, has tag, maintained)   a liveness verdict
+ * ```
+ *
+ * Printing "has tag" twice is jargon; printing "Domain" twice would be a false label on the
+ * second. So the object decides, and `domains` is ARP's own tree — membership in it is the test,
+ * which also means a `has tag` edge somebody else wrote, pointing at something outside the tree,
+ * falls through to the predicate's own word rather than being claimed as a domain.
+ */
+export const LIVENESS_OBJECTS = new Set(["maintained", "reachable"]);
+
+export function predicateLabelOf(
+    predicate: string,
+    objectLabel: string | null,
+    domains: ReadonlySet<string>,
+): string {
+    if (predicate !== "has tag" || objectLabel === null) return predicate;
+    if (LIVENESS_OBJECTS.has(objectLabel)) return "Status";
+    return domains.has(objectLabel) ? "Domain" : predicate;
+}
+
 function claimOf(claim: AtomClaim, symbol: string): ClaimView {
     const label = claim.object.label;
     const named = label !== null && label.trim() !== "";
     const predicate = claim.predicate.label;
+    const named_predicate =
+        predicate === null || predicate.trim() === ""
+            ? truncateMiddle(claim.predicate.atomId)
+            : predicate;
     return {
         tripleId: claim.tripleId,
-        predicate:
-            predicate === null || predicate.trim() === ""
-                ? truncateMiddle(claim.predicate.atomId)
-                : predicate,
+        predicate: named_predicate,
+        objectLabel: label,
         // A tool's object is a URL, so it is parsed the same way a row's name is — `github.com/`
         // in front of every one of them says nothing.
         object: named ? primaryNameOf(parseToolLabel(label)) : truncateMiddle(claim.object.atomId),
@@ -172,6 +212,7 @@ export function buildAtomView(standing: AtomStanding, symbol: string): AtomView 
     const label = standing.label;
     const hasTitle = label !== null && label.trim() !== "";
     return {
+        label,
         atomId: standing.atomId,
         title: hasTitle ? label : truncateMiddle(standing.atomId, 14, 10),
         titleIsId: !hasTitle,

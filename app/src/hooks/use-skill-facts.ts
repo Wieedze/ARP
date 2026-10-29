@@ -20,13 +20,32 @@ import {useQuery} from "@tanstack/react-query";
 
 export type SkillFact = {description: string; installs: number | null};
 
+/**
+ * Signals about the repository a skill came from.
+ *
+ * `archived` and `days` are the two ARP puts on chain, because one is the owner's own declaration
+ * and the other decays on its own. `stars` are here because a reader judging a tool wants them and
+ * they are a signal of life — a weak one: free to give, and they never fall.
+ */
+export type RepoFact = {stars: number; days: number | null; archived: boolean; gone: boolean};
+
 export function useSkillFacts() {
     const query = useQuery({
         queryKey: ["skill-facts"],
-        queryFn: async (): Promise<Record<string, SkillFact>> => {
-            const module = await import("../data/skill-facts.json");
-            const loaded = module.default as {facts?: Record<string, SkillFact>};
-            return loaded.facts ?? {};
+        queryFn: async (): Promise<{
+            skills: Record<string, SkillFact>;
+            repos: Record<string, RepoFact>;
+        }> => {
+            // Both in one chunk: 5 KB of repository signals beside 45 KB of descriptions, wanted
+            // by the same pages at the same moment.
+            const [skills, repos] = await Promise.all([
+                import("../data/skill-facts.json"),
+                import("../data/repo-facts.json"),
+            ]);
+            return {
+                skills: (skills.default as {facts?: Record<string, SkillFact>}).facts ?? {},
+                repos: (repos.default as {facts?: Record<string, RepoFact>}).facts ?? {},
+            };
         },
         // A file in the bundle. It cannot go stale within a session.
         staleTime: Infinity,
@@ -37,7 +56,10 @@ export function useSkillFacts() {
         /** Keyed by the atom's label — the normalised URL without its scheme, which is what the
          * chain already gave the caller, so nothing is re-derived in the browser. */
         factFor: (label: string | null): SkillFact | null =>
-            label === null || facts === undefined ? null : (facts[label] ?? null),
+            label === null || facts === undefined ? null : (facts.skills[label] ?? null),
+        /** Keyed by the repository atom's label, `github.com/owner/repo`. */
+        repoFactFor: (label: string | null): RepoFact | null =>
+            label === null || facts === undefined ? null : (facts.repos[label] ?? null),
         isLoading: query.isLoading,
     };
 }

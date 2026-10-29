@@ -1,7 +1,7 @@
 import {describe, expect, it} from "vitest";
 import type {AtomStanding, MarketSide} from "@arp-protocol/core";
 
-import {buildAtomView, describePointers} from "../atom-standing-view";
+import {buildAtomView, predicateLabelOf, describePointers} from "../atom-standing-view";
 
 /**
  * The view layer's one job is the dust rule, so most of this file is about it.
@@ -202,5 +202,30 @@ describe("what the atom says about itself", () => {
         const unbacked = {...sourceClaim, support: side(980_000_000_000_000n, 0)};
         const view = buildAtomView(standing({claims: [unbacked]}), "TRUST");
         expect(view.claims[0]?.backing).toBeNull();
+    });
+});
+
+describe("predicateLabelOf", () => {
+    const domains = new Set(["image", "payment", "method"]);
+
+    it("names a has-tag edge for the kind of tag it is", () => {
+        // `has tag` is overloaded and ARP writes both meanings itself: a domain on a skill, a
+        // liveness verdict on a repository. Printing "has tag" twice is jargon; printing "Domain"
+        // twice would be a false label on the second.
+        expect(predicateLabelOf("has tag", "image", domains)).toBe("Domain");
+        expect(predicateLabelOf("has tag", "maintained", domains)).toBe("Status");
+        expect(predicateLabelOf("has tag", "reachable", domains)).toBe("Status");
+    });
+
+    it("keeps the predicate's own word for a tag outside ARP's tree", () => {
+        // The page serves every atom in a permissionless graph. Somebody else's `has tag` edge
+        // pointing at `Sanctioned Address` is not a domain, and claiming it as one would be the
+        // false label this function exists to avoid.
+        expect(predicateLabelOf("has tag", "Sanctioned Address", domains)).toBe("has tag");
+    });
+
+    it("leaves every other predicate alone", () => {
+        expect(predicateLabelOf("source", "github.com/x/y", domains)).toBe("source");
+        expect(predicateLabelOf("same as", "caip10:…", domains)).toBe("same as");
     });
 });
