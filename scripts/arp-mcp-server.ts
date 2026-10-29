@@ -793,12 +793,16 @@ async function recordReachable(id: JsonRpcId, args: Record<string, unknown>) {
   // `minDeposit` read per call, never copied: it is 10x apart between chains and governance may
   // move it (`rules/portability.md` rule 3).
   const stake = await reads.minDeposit();
+  // Read for the same reason as `stake`, and spent only when the claim is not on chain yet — which
+  // is the common case for a tool nobody has reported on before.
+  const tripleCost = await reads.tripleCost();
   const plan = planReachability(state, [verdict], {
     multiVault: MULTI_VAULT,
     chainId,
     receiver,
     curveId,
     stake,
+    tripleCost,
     toolLabel: url,
     // First hand. See the note above.
     condemnAfter: 1,

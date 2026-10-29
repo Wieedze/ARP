@@ -6,7 +6,7 @@ import {
     type TransitionOptions,
     type Verdict,
 } from "../reachability.js";
-import {encodeDeposit, encodeRedeem, type MultiVaultReads} from "./multivault.js";
+import {encodeCreateTriple, encodeDeposit, encodeRedeem, type MultiVaultReads} from "./multivault.js";
 import type {PreparedCall} from "./types.js";
 
 /**
@@ -56,6 +56,19 @@ export type ReachabilityTerms = {
     triple: Hex;
     /** Its counter. Derived, never created. */
     counter: Hex;
+    /** The three atoms it is made of, kept so a plan can create the triple when it is absent. */
+    subject: Hex;
+    predicate: Hex;
+    object: Hex;
+    /**
+     * Whether the triple is on chain yet.
+     *
+     * **A deposit on a term that does not exist reverts**, and that is not hypothetical: the first
+     * `maintained` run planned 53 deposits onto 53 triples none of which existed, and the chain
+     * refused the first one. The `reachable` path never hit it because the domain seeding had
+     * already written those triples, so the planner carried an assumption it never had to meet.
+     */
+    exists: boolean;
 };
 
 export type ReachabilityState = {
@@ -83,14 +96,20 @@ export async function readReachabilityState(
 ): Promise<ReachabilityState & {bothSides: boolean}> {
     const triple = await reads.tripleId(toolAtomId, hasTagPredicate, stateAtomId);
     const counter = await reads.counterTripleId(triple);
-    const [up, down] = await Promise.all([
+    const [up, down, exists] = await Promise.all([
         reads.sharesOf(account, triple, curveId),
         reads.sharesOf(account, counter, curveId),
+        reads.termExists(triple),
     ]);
 
     const bothSides = up > 0n && down > 0n;
     const recorded: RecordedState = up > 0n ? "up" : down > 0n ? "down" : "none";
-    return {terms: {triple, counter}, recorded, shares: up > 0n ? up : down, bothSides};
+    return {
+        terms: {triple, counter, subject: toolAtomId, predicate: hasTagPredicate, object: stateAtomId, exists},
+        recorded,
+        shares: up > 0n ? up : down,
+        bothSides,
+    };
 }
 
 export type ReachabilityPlan = {
@@ -123,6 +142,8 @@ export function planReachability(
         curveId: bigint;
         /** What to put behind the assertion. The caller reads `minDeposit` off the chain. */
         stake: bigint;
+        /** `getTripleCost()`, read off the chain. Only spent when the triple is absent. */
+        tripleCost: bigint;
         toolLabel: string;
     } & TransitionOptions,
 ): ReachabilityPlan {
@@ -136,6 +157,26 @@ export function planReachability(
     const calls: PreparedCall[] = [];
     const leaving = move.from === "up" ? state.terms.triple : state.terms.counter;
     const entering = move.to === "up" ? state.terms.triple : state.terms.counter;
+
+    if (!state.terms.exists) {
+        calls.push({
+            kind: "create-triple",
+            chainId: options.chainId,
+            to: options.multiVault,
+            // Exactly the fee, with nothing left over, so the creation mints **no shares**. The
+            // deposit below then lands on whichever side the verdict chose. Paying `cost + stake`
+            // here would be one call fewer and would put the position on the triple — which is
+            // wrong by half the time, since a `down` verdict belongs on the counter.
+            value: options.tripleCost,
+            data: encodeCreateTriple(
+                state.terms.subject,
+                state.terms.predicate,
+                state.terms.object,
+                options.tripleCost,
+            ),
+            why: `write the claim about ${options.toolLabel} — it did not exist yet`,
+        });
+    }
 
     if (move.from !== "none" && state.shares > 0n) {
         calls.push({
