@@ -252,7 +252,16 @@ export function buildAtomView(standing: AtomStanding, symbol: string): AtomView 
         ),
         ownPositions: standing.market?.positionCount ?? 0,
         groups: standing.groups.map((group) => groupOf(group, symbol)),
-        claims: standing.claims.map((claim) => claimOf(claim, symbol)),
+        // **Only the ones ARP stands behind.** An atom's outgoing edges are where it sits in an
+        // ontology, and an ontology is somebody's. The graph is permissionless: `design` carries
+        // `is a sub-domain of governance` from an unrelated project, and printing both parents the
+        // same way said ARP files design under governance. Measured 2026-10-29: ARP holds 1
+        // position on `design → tool` and 0 on `design → governance`.
+        //
+        // The incoming side is deliberately NOT filtered this way: who points at an atom is the
+        // market, and a venue that hid the claims it did not back would be curating the thing it
+        // exists to count.
+        claims: standing.claims.filter((claim) => claim.attestorBacked).map((claim) => claimOf(claim, symbol)),
         edgeCount: standing.edgeCount,
         truncated: standing.truncated,
     };

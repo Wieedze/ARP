@@ -63,7 +63,7 @@ const VAULT_SIDE = `
  * edges first so a truncated read loses the quiet tail rather than an arbitrary slice.
  */
 const ATOM_STANDING_QUERY = `
-query AtomStanding($atomId: String!, $curveId: numeric!, $limit: Int!) {
+query AtomStanding($atomId: String!, $curveId: numeric!, $limit: Int!, $attestor: String!) {
   atom: atoms(where: {term_id: {_eq: $atomId}}, limit: 1) {
     term_id
     label
@@ -90,7 +90,12 @@ query AtomStanding($atomId: String!, $curveId: numeric!, $limit: Int!) {
     term_id
     predicate { term_id label }
     object { term_id label type }
-    term { ${VAULT_SIDE} }
+    term {
+      ${VAULT_SIDE}
+      vaults(where: {curve_id: {_eq: $curveId}}, limit: 1) {
+        positions(where: {account_id: {_eq: $attestor}, shares: {_gt: "0"}}, limit: 1) { shares }
+      }
+    }
   }
 }`;
 
@@ -124,6 +129,20 @@ export type AtomEdge = {
  */
 export type AtomClaim = {
     tripleId: string;
+    /**
+     * Whether the configured attestor holds a position on this claim.
+     *
+     * An atom's outgoing edges are where it sits in an ontology, and **an ontology is somebody's**.
+     * The graph is permissionless: `design` carries `is a sub-domain of governance` from an
+     * unrelated project, and a page that printed both parents the same way said ARP files design
+     * under governance. It does not — measured 2026-10-29, ARP holds 1 position on
+     * `design → tool` and **0** on `design → governance`.
+     *
+     * The incoming side is not filtered this way and should not be: who points at an atom is the
+     * market, and a venue that hid the claims it did not back would be curating the thing it is
+     * supposed to be counting.
+     */
+    attestorBacked: boolean;
     predicate: {atomId: string; label: string | null};
     object: {atomId: string; label: string | null; type: string | null};
     support: MarketSide;
@@ -183,6 +202,14 @@ export type AtomStanding = {
 };
 
 export type AtomStandingConfig = {
+    /**
+     * Whose positions decide which outgoing claims are ARP's own ontology.
+     *
+     * **Checksummed, not lowercased.** The indexer returns `positions.account_id` checksummed and a
+     * filter in the wrong case matches nothing — which reads as "ARP backs none of this" rather
+     * than as a bad query.
+     */
+    attestor?: string;
     graphqlUrl?: string;
     fetch?: FetchLike;
     timeoutMs?: number;
@@ -213,6 +240,17 @@ function atomUrl(atom: Record<string, unknown> | null): string | null {
  * case and not an error — most atoms are the object of no triple at all. An id that resolves to
  * nothing comes back `exists: false`, so a caller can tell a typo from a quiet atom.
  */
+/** Whether the attestor's filtered `positions` came back non-empty on this term's read curve. */
+function heldByAttestor(term: unknown): boolean {
+    if (!isRecord(term)) return false;
+    const vaults = Array.isArray(term["vaults"]) ? term["vaults"] : [];
+    return vaults.some((vault) => {
+        if (!isRecord(vault)) return false;
+        const positions = vault["positions"];
+        return Array.isArray(positions) && positions.length > 0;
+    });
+}
+
 export async function getAtomStanding(
     atomId: string,
     config: AtomStandingConfig = {},
@@ -230,6 +268,9 @@ export async function getAtomStanding(
         atomId,
         curveId: config.curveId === undefined ? DEFAULT_CURVE_ID : String(config.curveId),
         limit,
+        // An address that cannot hold a position when none is configured: every claim then comes
+        // back unbacked, which is the truth rather than a silent pass.
+        attestor: config.attestor ?? "0x0000000000000000000000000000000000000000",
     });
 
     const atomRows = Array.isArray(data["atom"]) ? data["atom"] : [];
@@ -256,6 +297,7 @@ export async function getAtomStanding(
                 type: readString(object, "type"),
             },
             support: mapMarketSide(row["term"]),
+            attestorBacked: heldByAttestor(row["term"]),
         });
     }
 

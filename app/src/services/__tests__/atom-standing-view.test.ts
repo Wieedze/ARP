@@ -175,6 +175,10 @@ describe("what the atom says about itself", () => {
             type: "Thing",
         },
         support: side(0n, 1),
+        // Only the claims ARP stands behind reach the view: `design` carries
+        // `is a sub-domain of governance` from an unrelated project, and the page said ARP filed
+        // it there.
+        attestorBacked: true,
     };
 
     it("carries the outgoing edges through to the view", () => {

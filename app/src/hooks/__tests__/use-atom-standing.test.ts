@@ -2,6 +2,7 @@ import {describe, expect, it, vi} from "vitest";
 import type {AtomStanding} from "@arp-protocol/core";
 
 import {atomStandingQueryKey, atomStandingQueryOptions, isAtomId} from "../use-atom-standing";
+import {DOMAIN_ATTESTOR} from "../../services/domain-filter";
 
 const ATOM = `0x${"ab".repeat(32)}`;
 
@@ -86,7 +87,14 @@ describe("atomStandingQueryOptions", () => {
         await (
             atomStandingQueryOptions(TESTNET, ATOM, fetcher).queryFn as () => Promise<unknown>
         )();
-        expect(fetcher).toHaveBeenCalledWith(ATOM, {graphqlUrl: TESTNET.graphqlUrl});
+        // The attestor rides along: it decides which OUTGOING claims come back, because an atom's
+        // outgoing edges are where it sits in an ontology and an ontology is somebody's. Without
+        // it the page showed `design is a sub-domain of governance` from an unrelated project as
+        // if ARP had filed it there.
+        expect(fetcher).toHaveBeenCalledWith(ATOM, {
+            graphqlUrl: TESTNET.graphqlUrl,
+            attestor: DOMAIN_ATTESTOR,
+        });
     });
 
     it("labels the figures with the chain's own symbol", async () => {

@@ -2,6 +2,7 @@ import {useQuery} from "@tanstack/react-query";
 import {getAtomStanding, type AtomStanding} from "@arp-protocol/core";
 
 import {useChainChoice} from "../lib/chain-choice";
+import {DOMAIN_ATTESTOR} from "../services/domain-filter";
 import {buildAtomView, type AtomView} from "../services/atom-standing-view";
 
 /**
@@ -14,7 +15,7 @@ import {buildAtomView, type AtomView} from "../services/atom-standing-view";
 
 export type AtomStandingFetcher = (
     atomId: string,
-    config: {graphqlUrl: string; limit?: number},
+    config: {graphqlUrl: string; limit?: number; attestor?: string},
 ) => Promise<AtomStanding>;
 
 /** `0x` + 32 bytes. Anything else is a bad route param, not an atom nobody points at. */
@@ -31,7 +32,9 @@ export function isAtomId(value: string | undefined): value is string {
  * form, and `lib/chain-choice.ts` on why that trap is invisible).
  */
 export function atomStandingQueryKey(chainId: number, atomId: string | null) {
-    return ["intuition", chainId, "atom-standing", atomId] as const;
+    // The attestor is in the key: it decides which outgoing claims come back, so a cached answer
+    // read through one address must not be served under another.
+    return ["intuition", chainId, "atom-standing", atomId, DOMAIN_ATTESTOR] as const;
 }
 
 export function atomStandingQueryOptions(
@@ -44,7 +47,13 @@ export function atomStandingQueryOptions(
         queryFn: async (): Promise<AtomView> => {
             if (atomId === null) throw new Error("No atom to read.");
             return buildAtomView(
-                await fetchStanding(atomId, {graphqlUrl: chain.graphqlUrl}),
+                await fetchStanding(atomId, {
+                    graphqlUrl: chain.graphqlUrl,
+                    // Whose positions decide which outgoing claims are ARP's ontology. The same
+                    // address `/tools` and the MCP node read through, and not a per-request choice
+                    // — a reader who could swap it could make the index say anything.
+                    attestor: DOMAIN_ATTESTOR,
+                }),
                 chain.symbol,
             );
         },
