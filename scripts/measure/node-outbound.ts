@@ -1,4 +1,4 @@
-/** Every outbound connection the node can make, enumerated from its own source.
+/** Every host literal and every `fetch` call site in the node's own modules.
  *
  *      bun run scripts/measure/node-outbound.ts
  *      bun run scripts/measure/node-outbound.ts --json measurements/node-outbound-<date>.json
@@ -38,6 +38,14 @@
  *  from a value at runtime, and this can say where that happens and never what the value will be.
  *  That distinction is the point: the built ones are the ones that need a guard, and naming them is
  *  what `docs/22` has to do honestly.
+ *
+ *  **And it is not "every outbound connection", which its own first line used to claim.** A viem
+ *  `http()` transport opens one and is neither a host literal nor a `fetch` call — the Intuition
+ *  RPC reaches the network through `createPublicClient` in `declare/multivault.ts` and
+ *  `sources/erc8004-registry/`, and appears here only because `notLiterals` says so in prose. The
+ *  title is narrowed to what is actually enumerated rather than widening the patterns, because the
+ *  RPC is already disclosed twice in `docs/22` and a title that overclaims is the failure this
+ *  script exists to stop.
  */
 import { readFileSync, writeFileSync } from 'node:fs';
 
@@ -63,7 +71,13 @@ const MODULES = [
   'packages/protocol/src/http.ts',
 ] as const;
 
-type Site = { file: string; line: number; text: string };
+/**
+ * `outbound` is a call that leaves the machine. The other two are listed on purpose — an
+ * enumeration carrying a security claim should err toward listing — and labelled, because an
+ * unlabelled over-inclusive count cannot be compared against anything.
+ */
+type SiteKind = 'outbound' | 'definition' | 'inbound';
+type Site = { file: string; line: number; kind: SiteKind; text: string };
 
 const hosts = new Map<string, Site[]>();
 const fetches: Site[] = [];
@@ -85,7 +99,12 @@ for (const file of MODULES) {
   }
   text.split('\n').forEach((line, index) => {
     if (isComment(line)) return;
-    const site = { file, line: index + 1, text: line.trim().slice(0, 140) };
+    const site = (kind: SiteKind): Site => ({
+      file,
+      line: index + 1,
+      kind,
+      text: line.trim().slice(0, 140),
+    });
 
     // A call site, not a DEFINITION. `async fetch(request: Request)` is the node's own HTTP
     // handler — inbound, and the first run of this listed it as an outbound connection.
@@ -94,14 +113,21 @@ for (const file of MODULES) {
     // `const doFetch = options.fetch ?? globalThis.fetch`. A regex anchored on the bare word
     // missed the probe's own fetch entirely — the exact incompleteness that makes a security
     // claim wrong, in the script written to stop a security claim being wrong.
-    const isDefinition = /\b(async\s+)?fetch\s*\(\s*(request|req)\b/.test(line);
+    // `async fetch(request)` is the handler's definition and `handler.fetch(` is the stdio loop
+    // dispatching to it — both inbound. The second was labelled `outbound` by the first version of
+    // this classifier, which is the same over-count the labels exist to make visible.
+    const isInbound =
+      /\b(async\s+)?fetch\s*\(\s*(request|req)\b/.test(line) || /\bhandler\.fetch\s*\(/.test(line);
+    const isDefinition = /\b(function|const|let)\s+\w*[Ff]etch\b/.test(line);
     const isCall = /(?<![A-Za-z_$.])fetch\s*\(/.test(line) || /\b\w*[Ff]etch\s*\(/.test(line);
-    if (!isDefinition && isCall) fetches.push(site);
+    if (isCall) {
+      fetches.push(site(isInbound ? 'inbound' : isDefinition ? 'definition' : 'outbound'));
+    }
 
     for (const [, host] of line.matchAll(/https?:\/\/([A-Za-z0-9.\-[\]:]+)/g)) {
       if (host === undefined) continue;
       const found = hosts.get(host) ?? [];
-      found.push(site);
+      found.push(site('outbound'));
       hosts.set(host, found);
     }
   });
@@ -143,6 +169,7 @@ const out = {
     distinctLiteralHosts: hosts.size,
     literalSites: [...hosts.values()].reduce((sum, sites) => sum + sites.length, 0),
     fetchCallSites: fetches.length,
+    outboundFetchCallSites: fetches.filter((site) => site.kind === 'outbound').length,
     oursAmongThem: phoneHome.length,
   },
   literalHosts: [...hosts.entries()]
@@ -154,7 +181,9 @@ const out = {
 
 console.log(`${out.counts.modules} modules the running node reaches`);
 console.log(`${out.counts.distinctLiteralHosts} distinct host literals`);
-console.log(`${out.counts.fetchCallSites} fetch call sites`);
+console.log(
+  `${out.counts.fetchCallSites} fetch call sites, ${out.counts.outboundFetchCallSites} of them outbound`,
+);
 console.log(`${out.counts.oursAmongThem} of the hosts are ours`);
 console.log('');
 for (const row of out.literalHosts) {
@@ -162,7 +191,9 @@ for (const row of out.literalHosts) {
   for (const site of row.sites) console.log(`      ${site.file}:${site.line}`);
 }
 console.log('\nfetch call sites:');
-for (const site of fetches) console.log(`  ${site.file}:${site.line}  ${site.text.slice(0, 90)}`);
+for (const site of fetches) {
+  console.log(`  ${site.kind.padEnd(10)} ${site.file}:${site.line}  ${site.text.slice(0, 80)}`);
+}
 
 if (phoneHome.length > 0) {
   console.error(`\n${phoneHome.length} host(s) are ours: ${phoneHome.join(', ')}`);

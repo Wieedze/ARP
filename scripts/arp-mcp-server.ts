@@ -68,6 +68,8 @@ import {
 } from '../packages/protocol/src/verify/declaration.js';
 import {
   fetchableDocumentUrl,
+  MAX_DOCUMENT_HOPS,
+  nextDocumentHop,
   privateProbeTarget,
   probeEndpoint,
 } from '../packages/protocol/src/verify/probe.js';
@@ -904,8 +906,51 @@ async function agentEndpoints(id: JsonRpcId, args: Record<string, unknown>) {
             'runs on rather than a document anybody published.',
         });
       }
-      const url = fetchable.url;
-      const response = await fetch(url, { headers: { accept: 'application/json' } });
+      // **Redirects are followed by hand**, because `fetch` follows them itself and a guard on hop
+      // one is not a guard: measured 2026-10-29, a caller-controlled PUBLIC host answering
+      // `302 Location: http://169.254.169.254/…` returned the private body. Every hop goes through
+      // the same check. `probeEndpoint` has the same exposure and is NOT fixed here — a refused
+      // redirect has to mean something in its live/dead/inconclusive vocabulary, and that is a
+      // decision with its own ADR (`docs/22` discloses it).
+      let url = fetchable.url;
+      let response = await fetch(url, {
+        headers: { accept: 'application/json' },
+        redirect: 'manual',
+      });
+      for (
+        let hop = 0;
+        hop < MAX_DOCUMENT_HOPS && response.status >= 300 && response.status < 400;
+        hop += 1
+      ) {
+        const location = response.headers.get('location');
+        if (location === null) break;
+        const next = nextDocumentHop(url, location, {
+          allowPrivate: process.env['ARP_ALLOW_PRIVATE_PROBE'] === '1',
+        });
+        if (next.status === 'refuse') {
+          return text(id, {
+            caip19: toCaip19(agent),
+            registration_file: file,
+            error: `refused: ${next.reason}`,
+            note:
+              'The document redirected somewhere this node will not follow. A guard on the first ' +
+              'hop is not a guard, so every hop is checked the same way.',
+          });
+        }
+        url = next.url;
+        response = await fetch(url, {
+          headers: { accept: 'application/json' },
+          redirect: 'manual',
+        });
+      }
+      if (response.status >= 300 && response.status < 400) {
+        return text(id, {
+          caip19: toCaip19(agent),
+          registration_file: file,
+          error: `refused: more than ${MAX_DOCUMENT_HOPS} redirects`,
+          note: 'A document that needs more hops than that is not one anybody wants read.',
+        });
+      }
       if (!response.ok) {
         return text(id, {
           caip19: toCaip19(agent),

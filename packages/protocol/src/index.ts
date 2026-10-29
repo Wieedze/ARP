@@ -198,6 +198,8 @@ export {
     // get it: one of them did not, and `file:///etc/passwd` reached `fetch`.
     fetchableDocumentUrl,
     IPFS_GATEWAY,
+    MAX_DOCUMENT_HOPS,
+    nextDocumentHop,
     privateProbeTarget,
     probeEndpoint,
 } from "./verify/probe.js";

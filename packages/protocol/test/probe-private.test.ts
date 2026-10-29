@@ -1,6 +1,6 @@
 import {describe, expect, it} from "vitest";
 
-import {fetchableDocumentUrl, privateProbeTarget} from "../src/verify/probe.js";
+import {fetchableDocumentUrl, nextDocumentHop, privateProbeTarget} from "../src/verify/probe.js";
 
 describe("privateProbeTarget", () => {
     it.each([
@@ -119,5 +119,54 @@ describe("fetchableDocumentUrl", () => {
         expect(fetchableDocumentUrl("file:///etc/passwd", {allowPrivate: true}).status).toBe(
             "refuse",
         );
+    });
+});
+
+describe("nextDocumentHop", () => {
+    const FROM = "https://attacker.example/card.json";
+
+    it("refuses a redirect to a private address", () => {
+        // Measured 2026-10-29: a caller-controlled PUBLIC host answering
+        // `302 Location: http://169.254.169.254/latest/meta-data/` returned the private body,
+        // because `fetch` follows redirects and the guard had already said yes to hop one. No DNS
+        // control needed, so the "resolves to a private address" caveat does not cover it.
+        const answer = nextDocumentHop(FROM, "http://169.254.169.254/latest/meta-data/");
+        expect(answer.status).toBe("refuse");
+        expect(answer.status === "refuse" && answer.reason).toContain("169.254.169.254");
+    });
+
+    it("refuses a redirect to a scheme it would not have fetched", () => {
+        expect(nextDocumentHop(FROM, "file:///etc/passwd").status).toBe("refuse");
+    });
+
+    it("follows a redirect to another public document", () => {
+        expect(nextDocumentHop(FROM, "https://elsewhere.example/agent.json")).toEqual({
+            status: "fetch",
+            url: "https://elsewhere.example/agent.json",
+        });
+    });
+
+    it("resolves a relative Location against the hop it came from", () => {
+        // A relative Location cannot move the host, so it is always safe — but it has to be
+        // resolved or the next check runs on a string that is not a URL.
+        expect(nextDocumentHop(FROM, "/.well-known/agent.json")).toEqual({
+            status: "fetch",
+            url: "https://attacker.example/.well-known/agent.json",
+        });
+    });
+
+    it("refuses a Location that is not a URL at all", () => {
+        expect(nextDocumentHop(FROM, "http://[not a host]/").status).toBe("refuse");
+    });
+
+    it("names the hop in the reason, because the caller sees only the first url", () => {
+        const answer = nextDocumentHop(FROM, "http://127.0.0.1:8080/admin");
+        expect(answer.status === "refuse" && answer.reason).toContain("127.0.0.1:8080/admin");
+    });
+
+    it("lets a rig redirect to its own private endpoint when it says so", () => {
+        expect(
+            nextDocumentHop(FROM, "http://127.0.0.1:3002/agent.json", {allowPrivate: true}).status,
+        ).toBe("fetch");
     });
 });

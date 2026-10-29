@@ -222,3 +222,34 @@ permanent, and 203 `has tag` positions were already retired once because a keywo
 `blockchain` against design tokens. So whoever picks this up answers `docs/20`'s question first —
 whether a skill with no keyword match gets a tag at all — and the recording run follows from that
 answer rather than preceding it.
+
+## Decide what a refused redirect means to the probe
+
+Noted 2026-10-29, from `task-verifier`'s fourth round on `tasks/31`. **A known open hole, disclosed
+in `docs/22` rather than fixed**, which is the one thing in that document that is a hole and not a
+stated limit.
+
+`fetch` follows redirects by itself, so a guard on the first hop is not a guard. Measured with a
+local stand-in: a caller-controlled **public** host answering
+`302 Location: http://169.254.169.254/latest/meta-data/` returned the private body, and nothing in
+the first-hop check could have stopped it. No DNS control needed, so the "resolves to a private
+address" caveat does not cover it.
+
+`arp_agent_endpoints` **is fixed** — it follows redirects by hand, every hop through
+`nextDocumentHop`, at most `MAX_DOCUMENT_HOPS`. That route had no design question attached: it
+fetches a document, and a document that redirects to a private address is not one anybody published.
+
+`arp_probe_endpoint` is **not**, and the reason is the decision this task would need. Its verdict
+vocabulary is deliberate — `live`, `dead`, `serves-declared-protocol`, `inconclusive` — and
+documented on the principle that _a timeout is an answer about the agent, a TLS or DNS failure is
+not, because it could equally be us_. A refused redirect has to land somewhere in that vocabulary,
+and the choice is not obvious: an endpoint that redirects to loopback is arguably misconfigured
+(`dead`), arguably hostile, and arguably something we should decline to judge (`inconclusive`). The
+wrong answer publishes a verdict about a stranger on the strength of our own refusal, which is the
+failure `signature.ts` already guards against by never returning `mismatch` for a provider it has
+not studied.
+
+What the task is: pick the verdict, write the ADR, apply the same manual-redirect loop, and say in
+`docs/22` that the hole is closed. The exposure meanwhile is bounded by the node binding loopback —
+unlike the registration route, whose caller is a local process by design, which is exactly why that
+one was fixed first.

@@ -106,8 +106,31 @@ Both halves are fixed, 2026-10-29:
 **What that guard does not cover, said plainly.** A hostname that _resolves_ to a private address —
 `example.com` pointing at `127.0.0.1`, or DNS rebinding between the check and the connection — gets
 through. Closing it needs resolving the name and connecting to the resolved address, which `fetch`
-does not let you do. So it is a guard against the easy case and not a boundary. If your machine has
-something on loopback you would not want a caller to reach, do not open `ARP_HOST`.
+does not let you do. So it is a guard against the easy case and not a boundary.
+
+**A redirect was the other way through, and it needed no DNS at all.** `fetch` follows redirects by
+itself, so a caller-controlled **public** host answering
+`302 Location: http://169.254.169.254/latest/meta-data/` got the private body back. Measured
+2026-10-29, with a local stand-in: the body came through, and nothing in the first-hop check could
+have stopped it. **A guard on hop one is not a guard.**
+
+```
+arp_agent_endpoints    fixed. Redirects are followed by hand, every hop through the same
+                       check, at most three hops
+arp_probe_endpoint     NOT fixed, and this is the one thing in this document that is a
+                       known open hole rather than a stated limit
+```
+
+The probe is left for a reason rather than an oversight: a refused redirect has to **mean**
+something in its `live` / `dead` / `inconclusive` vocabulary, and that vocabulary is deliberate —
+"a timeout is an answer about the agent, a TLS or DNS failure is not, because it could equally be
+us". Deciding what a refused redirect is needs its own decision record, and it is in `FUTURE.md`.
+
+**And "do not open `ARP_HOST`" does not cover the registration route.** That advice bounds a caller
+who has to reach you over the network; `arp_agent_endpoints` is called by a process on your own
+machine by design. The chain is the one named at the bottom of this document: a stranger's
+`SKILL.md` telling your agent to call it with an attacker's registry. That is why that route is
+fixed in code and not merely disclosed.
 
 **And what it covers better than that caveat suggests**, because a caveat that undersells is a wrong
 claim too: `http://2130706433/`, `http://127.1/` and `http://0177.0.0.1/` are all refused — `URL`
@@ -127,16 +150,24 @@ disk.
 
 **Nothing is sent to us.** No telemetry, no analytics, no phone-home, no reporting endpoint.
 
-**Do not believe that, and do not believe a `grep` I hand you either.** Run the enumeration:
+**Do not believe that, and do not believe a `grep` I hand you either.** Run the enumeration — and
+read what it does **not** cover first: a viem `http()` transport opens a connection that is neither
+a host literal nor a `fetch` call, which is how the Intuition RPC reaches the network. It is named
+twice above as a configurable fixed host and it will not appear in the script's output.
 
 ```
 bun run scripts/measure/node-outbound.ts
 ```
 
 It reads the six modules a running node actually loads and prints every host literal with its line,
-every `fetch` call site, and whether any host is ours. On 2026-10-29,
-`measurements/node-outbound-2026-10-29.json`: **6 host literals, 7 fetch call sites, 0 of the hosts
-ours.** It exits non-zero if that last number is ever not zero.
+every `fetch` call site **labelled `outbound`, `inbound` or `definition`**, and whether any host is
+ours. On 2026-10-29, `measurements/node-outbound-2026-10-29.json`: **6 host literals, 9 call sites
+of which 6 are outbound, 0 of the hosts ours.** It exits non-zero if that last number is ever not
+zero.
+
+The six outbound ones are the whole of it: two on the registration route (the document and a
+redirect hop), two on the content route (a repository listing and the skill's bytes), the probe's,
+and the shared transport every graph read funnels through.
 
 This is a script rather than a sentence because the sentence was **wrong twice**. One draft said
 four hosts and "the only literals in the code"; the next said six literals and offered a grep over
@@ -153,9 +184,12 @@ Three things it shows that a count alone would hide:
 - The Intuition graph and RPC are **absent from the literals and present in the node** — they come
   from `deployments/<chainId>.json` at startup. Absence from a literal list is not absence from the
   node, which is the trap a literal count sets.
-- `fetchCallSites` is deliberately **over-inclusive**: a definition and the stdio loop calling the
-  node's own handler are in it. A site it lists and should not is a reader's minute; a site it
-  misses is the claim being false.
+- `fetchCallSites` is deliberately **over-inclusive and labelled**: a definition and the stdio
+  loop's call to the node's own inbound handler are in it, marked as such. A site it lists and
+  should not is a reader's minute; a site it misses is the claim being false. The labels exist
+  because an over-inclusive count with no labels cannot be compared against anything — and the
+  first version of the classifier called that self-dispatch `outbound`, which is the over-count
+  the labels were added to make visible.
 
 ## Every environment variable it reads
 

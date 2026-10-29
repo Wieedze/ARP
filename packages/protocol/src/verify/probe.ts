@@ -59,6 +59,14 @@ export type FetchableUrl =
  *
  * The scheme is checked on **what was published**, before the gateway URL is built from it, so the
  * check cannot be fooled by what we construct.
+ *
+ * `ipfs://../../etc/passwd` becomes `https://ipfs.io/ipfs/../../etc/passwd` and that is harmless,
+ * which is worth saying where somebody will later wonder: the authority is fixed by the prefix, so
+ * nothing in the published string can move the host off the gateway. It is a path traversal against
+ * a public gateway and it reads nothing local.
+ *
+ * **It checks one hop.** A redirect is the second half and `nextDocumentHop` is it — a guard on hop
+ * one is not a guard, and the caller has to loop.
  */
 export function fetchableDocumentUrl(
     published: string,
@@ -81,6 +89,45 @@ export function fetchableDocumentUrl(
         return {status: "refuse", reason: `${local} is not a public address`};
     }
     return {status: "fetch", url};
+}
+
+/**
+ * How many hops a published document may redirect through before this gives up.
+ *
+ * Three covers `http`→`https`, a shortener and a trailing-slash normalisation. A document that
+ * needs more is not a document somebody wants read.
+ */
+export const MAX_DOCUMENT_HOPS = 3;
+
+/**
+ * The next hop of a redirect, checked the way the first one was.
+ *
+ * **A guard on hop one is not a guard**, which is the whole reason this exists. Measured
+ * 2026-10-29: a caller-controlled **public** host answering
+ * `302 Location: http://169.254.169.254/latest/meta-data/` returned the private body, because
+ * `fetch` follows redirects by default and `fetchableDocumentUrl` had already said yes to the
+ * public first hop. No DNS control needed, so the "resolves to a private address" caveat does not
+ * cover it.
+ *
+ * `location` is resolved against `from`, because a `Location` may be relative — and a relative one
+ * cannot move the host, so it is the absolute ones that matter and both go through the same check.
+ */
+export function nextDocumentHop(
+    from: string,
+    location: string,
+    options: {allowPrivate?: boolean} = {},
+): FetchableUrl {
+    let absolute: string;
+    try {
+        absolute = new URL(location, from).toString();
+    } catch {
+        return {status: "refuse", reason: `redirected to something that is not a URL: ${location}`};
+    }
+    const answer = fetchableDocumentUrl(absolute, options);
+    if (answer.status === "refuse") {
+        return {status: "refuse", reason: `redirected to ${absolute}: ${answer.reason}`};
+    }
+    return answer;
 }
 
 /** `::ffff:7f00:1` or `::ffff:127.0.0.1` as a dotted quad, or null when it is neither. */
