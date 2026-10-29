@@ -1,8 +1,9 @@
 # ARP — Agent Reputation Protocol
 
-> **A reputation layer for autonomous agents.**
+> **ARP makes money flow to the tools agents actually use.**
 >
-> Search by need. See what answers, and who paid to stand behind it.
+> Agents record each tool call that works, on an open graph anyone can read, next to stars,
+> installs, uptime and paid calls. Stars show who looked. ARP shows who used it.
 
 It stores nothing. What is listed exists somewhere else; what ARP adds is the market. Nobody is
 scored: every figure it shows is a deposit somebody else made, and every position can be withdrawn,
