@@ -77,12 +77,23 @@ const headAt = (r: number) => ({
  * card's own left border stops it.
  */
 const RISE_DEGREES = 35;
+
+/**
+ * Where the horizontal bar sits, as a fraction of the box's height.
+ *
+ * **Above the head**, so the angled segment comes down onto the ring rather than climbing away
+ * from it — the user, 2026-10-29: _« la ligne horizontale est au-dessus et après un angle vers le
+ * bas pointe les cercles, donc inversé par rapport à maintenant »_. It was the box's mid-height,
+ * which at five minutes put the bar below the head and ran the line the other way.
+ *
+ * The card is raised to meet it, which is the same instruction's second half.
+ */
+const BAR_Y = 0.055;
+
 function connector(r: number): string {
     const head = headAt(r);
-    // Signed: the head is above the bar at five minutes and was below it at twenty, and the same
-    // expression draws both — a fall and a rise are one line with a different sign.
-    const corner = head.x + Math.abs(head.y - 0.5) / Math.tan((RISE_DEGREES * Math.PI) / 180);
-    return `${head.x},${head.y} ${corner},0.5 1.32,0.5`;
+    const corner = head.x + (head.y - BAR_Y) / Math.tan((RISE_DEGREES * Math.PI) / 180);
+    return `${head.x},${head.y} ${corner},${BAR_Y} 1.32,${BAR_Y}`;
 }
 
 /**
@@ -172,10 +183,25 @@ export function ClaimField({
     const [beat, setBeat] = useState(0);
     /** Whether the nearest dot is fully inside the head, as opposed to merely closest to it. */
     const [inHead, setInHead] = useState(false);
-    const ringDots = rings[0]?.drawn ?? 0;
-    // Pulled out of the effect so it depends on a number rather than on `rings`, which `claimField`
+    /**
+     * The **outer** ring carries the head — the user asked for that one, and it is the biggest and
+     * the one a reader's eye is already on.
+     *
+     * Three of its properties differ from ring 0's and all three are in the arithmetic below: its
+     * radius, its period (`110 + ring * 40` seconds) and its **direction**, which alternates. A
+     * reading that assumed `+360deg` would run the head backwards on every odd ring, naming a dot
+     * that had already passed.
+     */
+    const headRingIndex = rings.length === 0 ? 0 : rings.length - 1;
+    const headRing = rings[headRingIndex];
+    const ringDots = headRing?.drawn ?? 0;
+    // Pulled out of the effect so it depends on numbers rather than on `rings`, which `claimField`
     // rebuilds every render — the array would restart the interval on each one.
-    const ringRadius = rings[0]?.r ?? 0.42;
+    const ringRadius = headRing?.r ?? 0.42;
+    // Where this ring's dots start in the flattened list. `claimField` numbers them through the
+    // groups in render order, so a ring's first dot carries its own offset and nothing has to be
+    // recomputed.
+    const ringIndexBase = dots.find((dot) => dot.ring === headRingIndex)?.index ?? 0;
     useEffect(() => {
         if (ringDots < 1) return;
         const read = () => {
@@ -183,12 +209,15 @@ export function ClaimField({
             const time = animation?.currentTime;
             const ms = typeof time === "number" ? time : 0;
             // 110s per turn, set as `--orbit-for` on ring 0 below.
-            const turned = ((ms / 110_000) * 360) % 360;
+            const period = (110 + headRingIndex * 40) * 1000;
+            const sign = headRingIndex % 2 === 0 ? 1 : -1;
+            const turned = (((ms / period) * 360 * sign) % 360 + 360) % 360;
             // A dot's resting angle is -90 + p * step; the head is at HEAD_DEGREES. Solve for p.
             const step = 360 / ringDots;
             const exact = ((HEAD_DEGREES + 90 - turned) % 360) / step;
             const at = Math.round(exact);
-            setBeat(((at % ringDots) + ringDots) % ringDots);
+            const within = ((at % ringDots) + ringDots) % ringDots;
+            setBeat(Math.max(ringIndexBase, 0) + within);
             // How far the nearest dot still is from the head's centre, as an angle. The dot is
             // only *inside* when the whole of it fits, which is a smaller window than "nearest".
             const offBy = Math.abs(exact - at) * step;
@@ -199,14 +228,14 @@ export function ClaimField({
         // three seconds at this ring's size.
         const id = window.setInterval(read, 250);
         return () => window.clearInterval(id);
-    }, [ringDots, ringRadius]);
+    }, [ringDots, ringRadius, headRingIndex, ringIndexBase]);
 
     // Hover and focus win over the cadence: a reader who reached for a dot asked for that one.
     const shown = active ?? (entries.length === 0 ? null : beat % entries.length);
     const current = shown === null ? undefined : entries[shown];
 
     return (
-        <div className="relative flex flex-wrap items-center gap-x-24 gap-y-8">
+        <div className="relative flex flex-wrap items-start gap-x-24 gap-y-8">
             <div
                 className={`relative aspect-square w-full max-w-[22rem] shrink-0 ${entering ? "arp-claim-enter" : ""}`}
                 role="group"
@@ -366,7 +395,10 @@ export function ClaimField({
             <div
                 aria-hidden="true"
                 data-claim-sentence={current === undefined ? "none" : "one"}
-                className="relative flex min-h-[7.5rem] min-w-[min(19rem,100%)] max-w-[24rem] flex-1 flex-col gap-1 rounded-[var(--radius-button)] border border-[color:var(--color-rule-strong)] bg-[color:var(--color-bg)] px-3.5 py-3"
+                // Top-aligned and lifted so its middle meets the bar. `BAR_Y` of a square box whose width
+                // is at most 22rem is 1.2rem from the top, and the card is 7.5rem tall — hence the
+                // offset. Below `sm` the two stack and the lift comes off, where there is no bar.
+                className="relative mt-0 flex min-h-[7.5rem] min-w-[min(19rem,100%)] max-w-[24rem] flex-1 flex-col gap-1 rounded-[var(--radius-button)] border border-[color:var(--color-rule-strong)] bg-[color:var(--color-bg)] px-3.5 py-3 sm:-mt-10"
             >
                 <span className="flex items-center gap-2 border-b border-[color:var(--color-rule)] pb-2 font-mono text-[10px] uppercase tracking-[0.06em] text-[color:var(--color-steel)]">
                     {/* The dot is lit when something is being described, like the pulse card's. */}

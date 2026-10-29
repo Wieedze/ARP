@@ -2,7 +2,7 @@ import {INTUITION_USES_TERM_ID} from "@arp-protocol/core";
 import type {AtomClaim, AtomEdge, AtomEdgeGroup, AtomStanding} from "@arp-protocol/core";
 
 import {formatTrust, truncateMiddle} from "./trust-format";
-import {parseToolLabel, primaryNameOf} from "../lib/tool-label";
+import {parseToolLabel, primaryNameOf, sourceOf} from "../lib/tool-label";
 
 /**
  * What the atom page renders, derived from `getAtomStanding` and nothing else.
@@ -55,8 +55,18 @@ export type GroupView = {
 
 export type AtomView = {
     atomId: string;
-    /** The atom's own name, or its id. */
+    /**
+     * What the page calls this atom.
+     *
+     * A tool atom's label is its whole normalised URL, because every field of its Thing derives
+     * from one (ADR `0054`) and nobody gets to type a name. At display size that is
+     * `github.com/leonxlnx/taste-skill?skill=gpt-taste` across two lines, where the part a reader
+     * came for is six characters at the end. So a skill is called by its own name and its
+     * repository goes in {@link subtitle}.
+     */
     title: string;
+    /** `owner/repo` under a skill's name, and `null` for anything that is not one. */
+    subtitle: string | null;
     /**
      * The atom's raw label, kept beside the title.
      *
@@ -213,8 +223,9 @@ export function buildAtomView(standing: AtomStanding, symbol: string): AtomView 
     const hasTitle = label !== null && label.trim() !== "";
     return {
         label,
+        subtitle: label === null ? null : sourceOf(parseToolLabel(label)),
         atomId: standing.atomId,
-        title: hasTitle ? label : truncateMiddle(standing.atomId, 14, 10),
+        title: hasTitle ? primaryNameOf(parseToolLabel(label)) : truncateMiddle(standing.atomId, 14, 10),
         titleIsId: !hasTitle,
         type: standing.type,
         pinnedUri: standing.pinnedUri,

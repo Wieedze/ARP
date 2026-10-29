@@ -155,6 +155,14 @@ export function AtomPanel() {
             >
                 {view.title}
             </h1>
+            {/* The repository, under the name rather than inside it. A skill's atom label is its
+                whole URL — at display size `github.com/leonxlnx/taste-skill?skill=gpt-taste` runs
+                across two lines and buries the six characters a reader came for. */}
+            {view.subtitle === null ? null : (
+                <p className="mt-2 font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
+                    {view.subtitle}
+                </p>
+            )}
 
             <div className="mt-10 grid gap-x-12 gap-y-10 md:grid-cols-[18rem_1fr] md:items-start">
                 <aside>
@@ -169,6 +177,7 @@ export function AtomPanel() {
                 </aside>
 
                 <div className="min-w-0">
+                    <Describes view={view} />
                     {!view.exists ? (
                         <Missing atomId={view.atomId} />
                     ) : (
@@ -272,6 +281,28 @@ export function AtomPanel() {
 
 /** The atom's own facts, including its own vault — which is never summed with its edges'. */
 /**
+ * The author's own sentence about the thing, at the head of the column a reader reads.
+ *
+ * It was a `Term` in the metadata column, between an install count and an IPFS CID, set at label
+ * size. That is where an atom id belongs and not where a description does: it is the one piece of
+ * prose on the page and the only thing that says what the tool is **for**.
+ *
+ * Not ours and not a caveat — `rules/ui.md` forbids a sentence that explains our choices, and this
+ * explains the tool. It is measured, dated and bundled (`scripts/build-skill-facts.ts`), because a
+ * skill atom carries its URL and nothing else (ADR `0054`).
+ */
+function Describes({view}: {view: AtomView}) {
+    const {factFor} = useSkillFacts();
+    const fact = factFor(view.label);
+    if (fact === null || fact.description.length === 0) return null;
+    return (
+        <p className="mb-10 max-w-[62ch] border-b border-[color:var(--color-rule)] pb-8 text-[length:18px] leading-[1.5] text-[color:var(--color-silver)]">
+            {fact.description}
+        </p>
+    );
+}
+
+/**
  * What a reader uses to judge a tool, from beside the chain rather than on it.
  *
  * A skill atom carries its URL and nothing else (ADR `0054`), so a description, an install count
@@ -297,11 +328,6 @@ function Signals({view}: {view: AtomView}) {
     if (skill === null && repo === null) return null;
     return (
         <dl className="mt-6 border-t border-[color:var(--color-rule)] pt-4 text-[length:var(--text-body-sm)]">
-            {skill === null || skill.description.length === 0 ? null : (
-                <Term label="What it does">
-                    <span className="text-[color:var(--color-silver)]">{skill.description}</span>
-                </Term>
-            )}
             {skill?.installs === undefined || skill.installs === null ? null : (
                 <Term label="Installs">
                     <span className="font-mono tabular-nums">
