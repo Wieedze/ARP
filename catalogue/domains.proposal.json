@@ -1,0 +1,535 @@
+{
+ "_status": "PROPOSAL. Nothing here is on the chain yet except where `verdict` says `reuse` — those atoms already exist and were not created by ARP. No transaction has been sent for this file.",
+ "_rule": "The user's instruction, 2026-10-28: find the terms that are useful to us first; where one is already on the chain take that one; do not bend the list to fit what happens to be there. So every term below was chosen from what the 53 tools in tools.json say they do, and only then checked against the chain by scripts/measure/term-availability.ts.",
+ "_normalisation": "Lowercase, accents stripped. No hyphenation step any more: a multi-word label is refused, not joined. Applied before anything is hashed, because `Design` and `design` are two nodes for ever on a graph with no deletion.",
+ "_singular": "Singular, always. Measured: `tool` and `payment` exist as plain strings on both chains and `tools`/`payments` do not, so the plural mints the near-duplicate this construction exists to avoid.",
+ "_construction": "Plain-string atoms (atom_type TextObject), never pinned Things. A pinned Thing hashes a document with three free-text fields, which is what split 53 labels across 118 atoms on mainnet 1155.",
+ "_notReused": {
+  "developer tools": "Exists on mainnet 1155 as a plain string with that exact spelling — a space and a capital D. Not adopted: it violates the normalisation rule, and bending the rule to reuse one node is precisely how `Design` ended up beside `design`. Recorded so the choice is visible rather than silent.",
+  "indexing": "Exists as a plain string on both chains and is a good term, but no tool in the catalogue is about indexing. A domain nobody's tool sits under is a term we do not need yet."
+ },
+ "root": "tool",
+ "predicate": {
+  "hierarchy": "is a sub-domain of",
+  "tagging": "has tag",
+  "_note": "`is a sub-domain of` exists as a plain string on 13579 and nowhere on 1155. Adopted because it is the phrase that says what we mean, not because another repo publishes with it — the user asked for that repo to be set aside, and the phrase stands on its own."
+ },
+ "domains": [
+  {
+   "label": "payment",
+   "verdict": "reuse",
+   "uses": 2,
+   "why": "stripe + paypal. Already attached on 13579 by the 2026-10-28 test."
+  },
+  {
+   "label": "database",
+   "verdict": "reuse",
+   "uses": 0,
+   "why": "neon, prisma (x2), supabase"
+  },
+  {
+   "label": "browser",
+   "verdict": "reuse",
+   "uses": 0,
+   "why": "browserbase, vercel-labs/agent-browser. `browser-automation` would have had to be minted and says no more than this."
+  },
+  {
+   "label": "blockchain",
+   "verdict": "reuse",
+   "uses": 7,
+   "why": "alchemy. Seven existing uses on 13579 — reusing pools that signal. On mainnet this label is SPLIT across 3 pinned Things with no plain string, so the port is not symmetric."
+  },
+  {
+   "label": "design",
+   "verdict": "reuse",
+   "uses": 8,
+   "why": "figma, mobbin, taste-skill, impeccable, emilkowalski, designed-by-ai. Eight existing uses."
+  },
+  {
+   "label": "collaboration",
+   "verdict": "reuse",
+   "uses": 1,
+   "why": "atlassian, monday, notion, lark. Chosen over minting `project-management` because all four are team-work tools and Notion and Lark are not project managers."
+  },
+  {
+   "label": "infrastructure",
+   "verdict": "reuse",
+   "uses": 5,
+   "why": "terraform, cloudflare (x2), azure-skills, firebase, microsoft/mcp"
+  },
+  {
+   "label": "website",
+   "verdict": "reuse",
+   "uses": 0,
+   "why": "webflow"
+  },
+  {
+   "label": "automation",
+   "verdict": "reuse",
+   "uses": 0,
+   "why": "zapier"
+  },
+  {
+   "label": "video",
+   "verdict": "reuse",
+   "uses": 0,
+   "why": "hyperframes, remotion, runcomfy, higgsfield, gencraft"
+  },
+  {
+   "label": "marketing",
+   "verdict": "reuse",
+   "uses": 0,
+   "why": "marketingskills"
+  },
+  {
+   "label": "development",
+   "verdict": "reuse",
+   "uses": 0,
+   "why": "the ~16 agent-skill repos. Chosen over minting `software-development`, which says the same thing in a spelling nobody else writes."
+  },
+  {
+   "label": "security",
+   "verdict": "reuse",
+   "uses": 2,
+   "why": "snyk. Carries 2 pinned siblings on 13579, so this label is partly fragmented already — reuse takes the plain string and leaves them."
+  },
+  {
+   "label": "scraping",
+   "verdict": "mint",
+   "uses": 0,
+   "why": "apify. `web` exists but means everything; `data-extraction` does not exist either."
+  },
+  {
+   "label": "quality",
+   "verdict": "reuse",
+   "uses": 3,
+   "why": "sonarqube. Replaces the hyphenated `code-quality` under the one-word rule, and it turned out to be the better term anyway: `quality` already carries 3 uses on 13579, while `code-quality` existed nowhere. `code` was rejected as too broad — every skill repo is about code."
+  },
+  {
+   "label": "observability",
+   "verdict": "mint",
+   "uses": 0,
+   "why": "grafana. The industry's own word for it; `monitoring` and `analytics` are both absent anyway."
+  },
+  {
+   "label": "api",
+   "verdict": "mint",
+   "uses": 0,
+   "why": "postman. `testing` exists but Postman is about APIs first."
+  },
+  {
+   "label": "card",
+   "verdict": "reuse",
+   "uses": 0,
+   "why": "Second level under `payment`, for stripe/agent-toolkit. Replaces `card-payment`, which breaks the one-word rule and is already on chain. `card` exists as a plain string with 2 positions."
+  }
+ ],
+ "secondLevel": [
+  {
+   "child": "card",
+   "parent": "payment",
+   "verdict": "to create",
+   "why": "replaces the card-payment edge; stripe/agent-toolkit moves onto it"
+  }
+ ],
+ "_cost": {
+  "atomsToMint": [
+   "scraping",
+   "observability",
+   "api",
+   "mcp"
+  ],
+  "firstLevelDomains": 16,
+  "hierarchyTriplesToCreate": 15,
+  "secondLevelTriplesToCreate": 1,
+  "tagTriplesAxis1": 43,
+  "tagTriplesAxis2": 53,
+  "_note": "`payment -> tool` already exists, and `security` is dropped, so 15 hierarchy triples. Axis 1 tags only the 43 classified tools. Axis 2 tags all 53, because `kind` is known for every one of them even where the purpose is not.",
+  "totalCalls": 116,
+  "readTheCostsAgainBeforeSending": "scripts/measure/domain-seed-costs.ts"
+ },
+ "_openQuestion": "Depth. This is one level under the root plus the single `card-payment` the test left. 17 domains for 53 tools averages 3 tools each, and the `development` bucket alone would hold about 16 — which is a bucket, not a domain. A second level under `development` is the obvious next cut, and it needs the skill repos to say what they are for; 7 of them say only \"Agent superpowers\".",
+ "_oneWordRule": "One word. No hyphens, ever. The user's rule, 2026-10-28: « tout ne doit faire que un mot pas de mot tiret jamais ok si quelque chose est bancale on crer un nouveau termes ». Enforced in scripts/seed-domain-tree.ts by assertOneWord, which refuses the plan rather than hyphenating — the previous version hyphenated, and that is how card-payment reached the chain. Predicates are not covered: `has tag` and `is a sub-domain of` are the ecosystem's existing phrases, not vocabulary ARP picks.",
+ "_ruleViolationOnChain": {
+  "label": "card-payment",
+  "atom": "0x486470d2bbb5b9b67077505c43f5dedc1c36c4d378d293f2e08dad0750457b1c",
+  "what": "Created on 13579 on 2026-10-28 by the first domain-tree test, about an hour before the one-word rule was stated, together with two edges: `card-payment is a sub-domain of payment` and `stripe/agent-toolkit has tag card-payment`. It breaks the rule.",
+  "whyItHappened": "normaliseLabel collapsed whitespace to hyphens instead of refusing a multi-word label, so the script produced a compound rather than rejecting one. The guard now refuses it: running seed-domain-tree.ts unchanged exits with `refusing \"card-payment\"`.",
+  "whatCannotBeDone": "Deletion. Intuition has none. The atom and both edges are permanent.",
+  "theOnlyRetirement": "Deposit on each edge's counter-triple, which every triple is born with. That is the mechanism docs/18 claims for `macro-grant` under `micro-grants`, so retiring this is the first real test of it — on an edge ARP published itself rather than on somebody else's.",
+  "untilThen": "Both edges carry one position each, so the reading rule still returns them. A reader descending `payment` sees stripe twice, once under `card` and once under `card-payment`."
+ },
+ "_axes": {
+  "why": "Two axes, because `card` and `mcp` answer different questions and one tree cannot hold both. Measured: the indexer does the intersection in one query — 10 atoms carry both `DeFi` and `Base Ecosystem` on mainnet 1155, filtered with _and over two as_subject_triples. So `card + mcp` is answerable without anything new being built.",
+  "does": {
+   "shape": "hierarchical",
+   "root": "tool",
+   "role": "A SCOPE. This is what a delegation is bounded on, and what the path witness climbs."
+  },
+  "is": {
+   "shape": "flat, no root",
+   "terms": [
+    "mcp",
+    "skill"
+   ],
+   "role": "A FILTER, not a scope. A hierarchy exists so a delegation on a parent covers the children; there is no parent/child relation between `mcp` and `skill`, so a tree there would be decoration. Already in the catalogue as the unused `kind` field: 22 mcp-server, 31 skill-repo.",
+   "verdict": {
+    "skill": "reuse",
+    "mcp": "mint"
+   }
+  },
+  "rejected": {
+   "agent": "Not a tag. All 53 tools in the catalogue are agent-facing — that is the selection criterion — so every tool would carry it and it would carry no information. The atom exists on 13579 with 2 uses; ARP is not one of them."
+  }
+ },
+ "_toolAssignment": {
+  "basis": "Axis 1 comes from each repository's OWN published description (`purpose` in tools.json, read from the GitHub API 2026-10-28). Axis 2 comes from the catalogue's `kind`. Nothing here is inferred from an organisation's name: a wrong tag is worse than no tag, because it is indelible.",
+  "assigned": 43,
+  "unassigned": 10,
+  "perDomain": {
+   "development": 7,
+   "design": 6,
+   "infrastructure": 6,
+   "collaboration": 4,
+   "automation": 3,
+   "video": 3,
+   "quality": 2,
+   "browser": 2,
+   "database": 2,
+   "blockchain": 1,
+   "scraping": 1,
+   "observability": 1,
+   "payment": 1,
+   "api": 1,
+   "card": 1,
+   "website": 1,
+   "marketing": 1
+  },
+  "unassignedTools": [
+   {
+    "url": "https://github.com/prisma/mcp",
+    "does": null,
+    "is": "mcp",
+    "basis": "no description published"
+   },
+   {
+    "url": "https://github.com/snyk/saw-mcp",
+    "does": null,
+    "is": "mcp",
+    "basis": "no description published"
+   },
+   {
+    "url": "https://github.com/101-skills/superpowers",
+    "does": null,
+    "is": "skill",
+    "basis": "publishes only \"Agent superpowers\""
+   },
+   {
+    "url": "https://github.com/prisma/skills",
+    "does": null,
+    "is": "skill",
+    "basis": "no description published"
+   },
+   {
+    "url": "https://github.com/qu-skills/superpowers",
+    "does": null,
+    "is": "skill",
+    "basis": "publishes only \"Agent superpowers\""
+   },
+   {
+    "url": "https://github.com/skills-shell/superpowers",
+    "does": null,
+    "is": "skill",
+    "basis": "publishes only \"Agent superpowers\""
+   },
+   {
+    "url": "https://github.com/bankai-skills/superpowers",
+    "does": null,
+    "is": "skill",
+    "basis": "publishes only \"Agent superpowers\""
+   },
+   {
+    "url": "https://github.com/gencraft-labs/skills",
+    "does": null,
+    "is": "skill",
+    "basis": "no description published"
+   },
+   {
+    "url": "https://github.com/higgsfield-ai/skills",
+    "does": null,
+    "is": "skill",
+    "basis": "no description published"
+   },
+   {
+    "url": "https://github.com/flowkit-labs/skills",
+    "does": null,
+    "is": "skill",
+    "basis": "no description published"
+   }
+  ],
+  "_whyUnassigned": "7 repositories publish no description at all and 4 publish only \"Agent superpowers\". Tagging those from the vendor's name would be a guess dressed as a reading. They need a human, or a fetch of the repo's README — not a default.",
+  "tools": [
+   {
+    "url": "https://github.com/mobbin/mobbin-mcp-server",
+    "does": "design",
+    "is": "mcp",
+    "basis": "the repository's own published description"
+   },
+   {
+    "url": "https://github.com/SonarSource/sonarqube-mcp-server",
+    "does": "quality",
+    "is": "mcp",
+    "basis": "the repository's own published description"
+   },
+   {
+    "url": "https://github.com/alchemyplatform/alchemy-mcp-server",
+    "does": "blockchain",
+    "is": "mcp",
+    "basis": "the repository's own published description"
+   },
+   {
+    "url": "https://github.com/apify/apify-mcp-server",
+    "does": "scraping",
+    "is": "mcp",
+    "basis": "the repository's own published description"
+   },
+   {
+    "url": "https://github.com/atlassian/atlassian-mcp-server",
+    "does": "collaboration",
+    "is": "mcp",
+    "basis": "the repository's own published description"
+   },
+   {
+    "url": "https://github.com/browserbase/mcp-server-browserbase",
+    "does": "browser",
+    "is": "mcp",
+    "basis": "the repository's own published description"
+   },
+   {
+    "url": "https://github.com/cloudflare/mcp-server-cloudflare",
+    "does": "infrastructure",
+    "is": "mcp",
+    "basis": "the repository's own published description"
+   },
+   {
+    "url": "https://github.com/figma/mcp-server-guide",
+    "does": "design",
+    "is": "mcp",
+    "basis": "the repository's own published description"
+   },
+   {
+    "url": "https://github.com/grafana/mcp-grafana",
+    "does": "observability",
+    "is": "mcp",
+    "basis": "the repository's own published description"
+   },
+   {
+    "url": "https://github.com/hashicorp/terraform-mcp-server",
+    "does": "infrastructure",
+    "is": "mcp",
+    "basis": "the repository's own published description"
+   },
+   {
+    "url": "https://github.com/makenotion/notion-mcp-server",
+    "does": "collaboration",
+    "is": "mcp",
+    "basis": "the repository's own published description"
+   },
+   {
+    "url": "https://github.com/microsoft/mcp",
+    "does": "infrastructure",
+    "is": "mcp",
+    "basis": "the repository's own published description"
+   },
+   {
+    "url": "https://github.com/mondaycom/mcp",
+    "does": "collaboration",
+    "is": "mcp",
+    "basis": "the repository's own published description"
+   },
+   {
+    "url": "https://github.com/neondatabase/mcp-server-neon",
+    "does": "database",
+    "is": "mcp",
+    "basis": "the repository's own published description"
+   },
+   {
+    "url": "https://github.com/paypal/paypal-mcp-server",
+    "does": "payment",
+    "is": "mcp",
+    "basis": "the repository's own published description"
+   },
+   {
+    "url": "https://github.com/postmanlabs/postman-mcp-server",
+    "does": "api",
+    "is": "mcp",
+    "basis": "the repository's own published description"
+   },
+   {
+    "url": "https://github.com/stripe/agent-toolkit",
+    "does": "card",
+    "is": "mcp",
+    "basis": "the repository's own published description"
+   },
+   {
+    "url": "https://github.com/supabase/mcp",
+    "does": "database",
+    "is": "mcp",
+    "basis": "the repository's own published description"
+   },
+   {
+    "url": "https://github.com/webflow/mcp-server",
+    "does": "website",
+    "is": "mcp",
+    "basis": "the repository's own published description"
+   },
+   {
+    "url": "https://github.com/zapier/zapier-mcp",
+    "does": "automation",
+    "is": "mcp",
+    "basis": "the repository's own published description"
+   },
+   {
+    "url": "https://github.com/mattpocock/skills",
+    "does": "development",
+    "is": "skill",
+    "basis": "the repository's own published description"
+   },
+   {
+    "url": "https://github.com/heygen-com/hyperframes",
+    "does": "video",
+    "is": "skill",
+    "basis": "the repository's own published description"
+   },
+   {
+    "url": "https://github.com/microsoft/azure-skills",
+    "does": "infrastructure",
+    "is": "skill",
+    "basis": "the repository's own published description"
+   },
+   {
+    "url": "https://github.com/larksuite/cli",
+    "does": "collaboration",
+    "is": "skill",
+    "basis": "the repository's own published description"
+   },
+   {
+    "url": "https://github.com/prime-skills/runcomfy-agent-skills",
+    "does": "video",
+    "is": "skill",
+    "basis": "the repository's own published description"
+   },
+   {
+    "url": "https://github.com/leonxlnx/taste-skill",
+    "does": "design",
+    "is": "skill",
+    "basis": "the repository's own published description"
+   },
+   {
+    "url": "https://github.com/coreyhaines31/marketingskills",
+    "does": "marketing",
+    "is": "skill",
+    "basis": "the repository's own published description"
+   },
+   {
+    "url": "https://github.com/juliusbrussee/caveman",
+    "does": "development",
+    "is": "skill",
+    "basis": "the repository's own published description"
+   },
+   {
+    "url": "https://github.com/lllllllama/rigorpilot-skills",
+    "does": "quality",
+    "is": "skill",
+    "basis": "the repository's own published description"
+   },
+   {
+    "url": "https://github.com/vercel-labs/skills",
+    "does": "development",
+    "is": "skill",
+    "basis": "the repository's own published description"
+   },
+   {
+    "url": "https://github.com/magentosh/superpowers",
+    "does": "automation",
+    "is": "skill",
+    "basis": "the repository's own published description"
+   },
+   {
+    "url": "https://github.com/obra/superpowers",
+    "does": "development",
+    "is": "skill",
+    "basis": "the repository's own published description"
+   },
+   {
+    "url": "https://github.com/google/agents-cli",
+    "does": "development",
+    "is": "skill",
+    "basis": "the repository's own published description"
+   },
+   {
+    "url": "https://github.com/anthropics/skills",
+    "does": "development",
+    "is": "skill",
+    "basis": "the repository's own published description"
+   },
+   {
+    "url": "https://github.com/remotion-dev/skills",
+    "does": "video",
+    "is": "skill",
+    "basis": "the repository's own published description"
+   },
+   {
+    "url": "https://github.com/vercel-labs/agent-skills",
+    "does": "development",
+    "is": "skill",
+    "basis": "the repository's own published description"
+   },
+   {
+    "url": "https://github.com/emilkowalski/skills",
+    "does": "design",
+    "is": "skill",
+    "basis": "the repository's own published description"
+   },
+   {
+    "url": "https://github.com/firebase/agent-skills",
+    "does": "infrastructure",
+    "is": "skill",
+    "basis": "the repository's own published description"
+   },
+   {
+    "url": "https://github.com/its-a-skill-issue/superpowers",
+    "does": "automation",
+    "is": "skill",
+    "basis": "the repository's own published description"
+   },
+   {
+    "url": "https://github.com/pbakaus/impeccable",
+    "does": "design",
+    "is": "skill",
+    "basis": "the repository's own published description"
+   },
+   {
+    "url": "https://github.com/cloudflare/skills",
+    "does": "infrastructure",
+    "is": "skill",
+    "basis": "the repository's own published description"
+   },
+   {
+    "url": "https://github.com/vercel-labs/agent-browser",
+    "does": "browser",
+    "is": "skill",
+    "basis": "the repository's own published description"
+   },
+   {
+    "url": "https://github.com/designed-by-ai/skills",
+    "does": "design",
+    "is": "skill",
+    "basis": "the repository's own published description"
+   }
+  ]
+ },
+ "_emptyDomain": {
+  "security": "Ends up with ZERO tools. snyk/saw-mcp is the only security tool in the catalogue and it publishes no description, so it is unassigned. By this file's own rule — a domain nobody's tool sits under is a term we do not need yet — `security` should not be created until Snyk is classified. The atom already exists on chain with 2 uses, so nothing is lost by waiting."
+ }
+}

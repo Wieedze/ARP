@@ -20,11 +20,29 @@ import {AtomPanel} from "./AtomPanel";
 
 vi.mock("@arp-protocol/core", async () => {
     const actual = await vi.importActual<Record<string, unknown>>("@arp-protocol/core");
-    return {...actual, getAtomStanding: vi.fn()};
+    return {
+        ...actual,
+        getAtomStanding: vi.fn(),
+        resolveAgentRefForAtom: vi.fn(),
+        getDeclaredModulesFor: vi.fn(),
+    };
 });
 
-const {getAtomStanding} = await import("@arp-protocol/core");
+const {getAtomStanding, resolveAgentRefForAtom, getDeclaredModulesFor} =
+    await import("@arp-protocol/core");
 const read = getAtomStanding as unknown as ReturnType<typeof vi.fn>;
+/**
+ * The identity behind an atom, which decides whether this page renders at all.
+ *
+ * `null` by default — "no identity found", the ordinary case for a tool, a tag or one of ARP's own
+ * rig agents. The redirect case has its own test below.
+ */
+const refRead = resolveAgentRefForAtom as unknown as ReturnType<typeof vi.fn>;
+/**
+ * Each claimant's declared tools, for the sigil beside its claim. `{}` by default — no glyph, the
+ * dot instead, which is the state of most of the testnet rig.
+ */
+const modulesRead = getDeclaredModulesFor as unknown as ReturnType<typeof vi.fn>;
 
 const ATOM = `0x${"ab".repeat(32)}`;
 
@@ -43,6 +61,9 @@ function standing(overrides: Partial<AtomStanding> = {}): AtomStanding {
         label: "slither",
         type: "Thing",
         pinnedUri: "ipfs://bafkreiexample",
+        // **What the atom points at**, and the test for offering its market. The default fixture
+        // is a tool, so it has one; the tag case below passes `url: null`.
+        url: "https://github.com/crytic/slither",
         market: side(6_035_865_850_000_000_000n, 1),
         exists: true,
         groups: [
@@ -68,6 +89,30 @@ function standing(overrides: Partial<AtomStanding> = {}): AtomStanding {
         ...overrides,
     } as unknown as AtomStanding;
 }
+
+/** A tag's edges: many, and none of them `uses`. The shape of `Sanctioned Address` on mainnet. */
+const tagGroups = [
+    {
+        predicate: {atomId: "0xhastag", label: "has tag"},
+        edges: [
+            {
+                tripleId: "0xt1",
+                subject: {atomId: "0xs9", label: "caip10:…", type: "Thing"},
+                support: side(1n, 1),
+                oppose: side(0n, null),
+            },
+        ],
+        assets: 1n,
+        positions: 1,
+    },
+];
+
+beforeEach(() => {
+    refRead.mockReset();
+    refRead.mockResolvedValue(null);
+    modulesRead.mockReset();
+    modulesRead.mockResolvedValue({});
+});
 
 function renderAt(atomId = ATOM) {
     return renderWithProviders(<AtomPanel />, {
@@ -230,6 +275,137 @@ describe("the figures", () => {
     });
 });
 
+describe("a claimant's sigil", () => {
+    /**
+     * The user asked for each declaring agent's glyph beside its claim.
+     *
+     * A sigil's input is what that agent declared **using**, which the standing read does not carry
+     * — it returns the edges pointing *at* this atom, and a sigil is about edges pointing *out* of
+     * its subject. So it is a second read, batched into one query for the whole page rather than
+     * one per row.
+     */
+    it("draws the glyph for a claimant that declared something", async () => {
+        modulesRead.mockResolvedValue({"0xs1": ["0xtool-a", "0xtool-b", "0xtool-c"]});
+        read.mockResolvedValue(standing());
+        const {container} = renderAt();
+        await waitFor(() => expect(screen.getByRole("heading", {name: /^uses$/i})).toBeTruthy());
+
+        // The glyph is `aria-hidden` by construction — `Sigil` marks itself so when it has no
+        // `title`, because the agent's name is the next element and announcing the identity twice
+        // is noise. So it is found as a node, not by role.
+        await waitFor(() =>
+            expect(container.querySelectorAll('svg[aria-hidden="true"]').length).toBeGreaterThan(0),
+        );
+    });
+
+    it("falls back to the claim dot when the agent declared nothing", async () => {
+        // Not a gap: `agent-sigil.ts` refuses a glyph of nothing but its core, because that is the
+        // same glyph for every such agent and would stop being an identity. The dot still carries
+        // the state — filled is `positions > 0`, ADR `0042`, the count and never the amount.
+        modulesRead.mockResolvedValue({});
+        read.mockResolvedValue(standing());
+        renderAt();
+        await waitFor(() => expect(screen.getByRole("heading", {name: /^uses$/i})).toBeTruthy());
+        expect(screen.getByText("Agent 13579:3")).toBeInTheDocument();
+    });
+});
+
+describe("one page per agent", () => {
+    /**
+     * An agent had **two** pages: the directory knows its `chainId/tokenId` and links to the trust
+     * panel, while a capability search and the claim field know only its atom id and landed here.
+     * Same agent, two destinations, depending on where the reader clicked.
+     *
+     * So an atom that resolves to an identity sends the reader on, and every link in the app
+     * converges on the panel whatever id it was holding.
+     */
+    it("sends an agent's atom to the agent's own page", async () => {
+        refRead.mockResolvedValue({chainId: 8453, tokenId: "6649"});
+        read.mockResolvedValue(standing());
+        renderWithProviders(<AtomPanel />, {
+            route: {path: "/atom/:atomId", at: `/atom/${ATOM}`},
+        });
+
+        // The atom view must not appear at all — not even for a frame. Rendering it while the
+        // identity is in flight would flash the page the reader is being moved away from, which is
+        // why `AtomPanel` waits for both reads before it draws anything.
+        await waitFor(() => expect(screen.queryByText(/reading the atom/i)).toBeNull());
+        expect(screen.queryByRole("heading", {name: "slither"})).toBeNull();
+    });
+
+    it("stays on the atom page when no identity is found, which is the rig's case", async () => {
+        // `null` is "no identity found", never "not an agent". ARP's own testnet agents have no
+        // `same as` edge (`tasks/19` step 1b; measured 2026-10-28 — 30,913 on mainnet, none ours on
+        // testnet), and this page is a complete view of them.
+        refRead.mockResolvedValue(null);
+        read.mockResolvedValue(standing());
+        renderAt();
+        await waitFor(() =>
+            expect(screen.getByRole("heading", {name: "slither"})).toBeInTheDocument(),
+        );
+    });
+});
+
+describe("the claim field", () => {
+    /**
+     * The constellation that replaced "N claims across M predicates".
+     *
+     * The behaviour worth asserting is the one `rules/ui.md` cares about: the edge a claim composes
+     * is revealed on **keyboard focus**, not only on hover. A reveal a mouse alone can reach is the
+     * mouse-reactive effect the rule rejects; one that answers the keyboard is a disclosure, which
+     * `Hint` already established on this surface. ADR `0073`.
+     */
+    it("names the whole triple when a claim takes focus, not only on hover", async () => {
+        read.mockResolvedValue(standing());
+        const {container} = renderAt();
+        await waitFor(() => expect(screen.getByRole("heading", {name: /^uses$/i})).toBeTruthy());
+
+        const field = container.querySelector('[role="group"]');
+        expect(field, "no claim field on the page").toBeTruthy();
+        const dot = field?.querySelector("a");
+        expect(dot, "the field has no focusable claim").toBeTruthy();
+
+        // The link carries the whole triple as its accessible name, so focus announces it once
+        // and completely. A visible sentence plus a live region would announce twice, and a live
+        // region firing on hover says nothing to a reader who navigates by focus.
+        expect(dot?.textContent).toContain("Agent 13579:3");
+        expect(dot?.textContent).toContain("uses");
+        expect(dot?.textContent).toContain("slither");
+
+        // The visible echo is empty until something is active, and its slot is already in the DOM
+        // so revealing it moves no layout.
+        const slot = container.querySelector("[data-claim-sentence]");
+        expect(slot?.getAttribute("data-claim-sentence")).toBe("none");
+
+        (dot as HTMLAnchorElement).focus();
+        await waitFor(() => expect(slot?.getAttribute("data-claim-sentence")).toBe("one"));
+        expect(slot?.textContent).toContain("Agent 13579:3");
+    });
+
+    it("gives every claim a reachable link and an accessible name", async () => {
+        read.mockResolvedValue(standing());
+        const {container} = renderAt();
+        await waitFor(() => expect(screen.getByRole("heading", {name: /^uses$/i})).toBeTruthy());
+
+        // The dots are real links rather than `<circle>`s precisely so this holds: focus rings,
+        // keyboard order and names all come from the DOM instead of being rebuilt inside an SVG.
+        const links = [...(container.querySelector('[role="group"]')?.querySelectorAll("a") ?? [])];
+        expect(links.length).toBe(1);
+        for (const link of links) {
+            expect(link.getAttribute("href")).toMatch(/^\/atom\/0x/);
+            expect(link.textContent ?? "").not.toBe("");
+        }
+    });
+
+    it("says how many claims there are, and marks a capped read as a floor", async () => {
+        // The sentence this replaced carried `250+`; dropping it would have rendered a count the
+        // reader knows is a floor as a total (`rules/claims.md`).
+        read.mockResolvedValue(standing({edgeCount: 250, truncated: true}));
+        renderAt();
+        await waitFor(() => expect(screen.getByText(/250\+/)).toBeInTheDocument());
+    });
+});
+
 describe("a failed read", () => {
     it("says the read failed instead of rendering an empty atom", async () => {
         // An empty page reads as "there is nothing here", which is the one thing it does not mean.
@@ -239,5 +415,138 @@ describe("a failed read", () => {
             expect(screen.getByRole("heading", {name: /the read failed/i})).toBeInTheDocument(),
         );
         expect(screen.getByText(/indexer unreachable/)).toBeInTheDocument();
+    });
+});
+
+describe("the two writes", () => {
+    /**
+     * The page's writes, and the behaviours worth asserting are **presence, order and scope**.
+     *
+     * They were `<details>` collapsed by default, which a reviewer's measurement argued for and the
+     * user rejected: what you can do on an atom should be legible on arrival. So the assertions
+     * moved from "the disclosure is shut" to "the heading is there and the evidence still follows".
+     *
+     * `rules/code.md` says behaviourally and means it — a snapshot would have passed with the
+     * control missing from the branch that needs it most, and again with it 17,602px down.
+     */
+    const declareLabel = /declare that your agent used this/i;
+    /** The card's own control heading, now that the section above it is gone. */
+    const marketLabel = /^take a position$/i;
+
+    it("shows both writes open on an atom the chain holds", async () => {
+        read.mockResolvedValue(standing());
+        renderAt();
+        await waitFor(() =>
+            expect(screen.getByRole("heading", {name: declareLabel})).toBeInTheDocument(),
+        );
+        expect(screen.getByRole("heading", {name: marketLabel})).toBeInTheDocument();
+        // Open means the form is reachable without a click, which is the whole of the change.
+        expect(screen.getByLabelText(/your agent/i)).toBeInTheDocument();
+    });
+
+    it("puts both writes before the evidence, which a careless `else` would undo", async () => {
+        read.mockResolvedValue(standing());
+        renderAt();
+        const declare = await screen.findByRole("heading", {name: declareLabel});
+
+        // The regression this exists for: moved back under `groups.map`, the control sat at
+        // y=17602 on a 250-edge atom and **every gate stayed green**. Document order is the one
+        // thing a DOM test can hold onto, since `happy-dom` lays nothing out.
+        const group = screen.getByRole("heading", {name: /^uses$/i});
+        expect(
+            declare.compareDocumentPosition(group) & Node.DOCUMENT_POSITION_FOLLOWING,
+            "the declare control must precede the first predicate group",
+        ).toBeTruthy();
+    });
+
+    it("offers the write on an atom nobody points at, which is the first declaration", async () => {
+        // The branch that matters most and the one a careless `else` would have dropped: `Empty`
+        // says "a row appears when somebody writes one", and this is where they write it.
+        read.mockResolvedValue(standing({groups: [], edgeCount: 0}));
+        renderAt();
+        await waitFor(() => expect(screen.getByText(/nothing points at it/i)).toBeInTheDocument());
+        expect(screen.getByRole("heading", {name: declareLabel})).toBeInTheDocument();
+    });
+
+    it("offers no market on an atom that points at nothing, which is what a tag is", async () => {
+        // `/atom/:atomId` serves every atom, so without this the deposit control appeared on a
+        // tag, a keyword and a person's name — a real-TRUST button on `Sanctioned Address`. The
+        // user's scope for the market is "une bourse d'agents et d'outils" (ADR `0072`).
+        //
+        // `type` cannot decide it: measured on mainnet, that tag and the skill `docx` are **both**
+        // `Thing`. Nor can the url alone — the testnet rig's tools carry `url: ""` and a real
+        // name, so that test hid the market on an actual tool. A tag fails **both** halves: no
+        // url, and every edge on it is `has tag` rather than `uses`.
+        //
+        // `url: null`, not `""` — the reader normalises an empty url to `null`, and a fixture that
+        // skips that normalisation tests a shape the app never receives.
+        read.mockResolvedValue(standing({url: null, groups: tagGroups}));
+        renderAt();
+        await waitFor(() =>
+            expect(screen.getByRole("heading", {name: declareLabel})).toBeInTheDocument(),
+        );
+        expect(screen.queryByRole("heading", {name: marketLabel})).not.toBeInTheDocument();
+    });
+
+    it("offers neither for an id the chain does not hold", async () => {
+        // There is no object to write a claim about, and the controls would invite paying a
+        // non-recoverable fee to assert a use of nothing, or to back nothing.
+        read.mockResolvedValue(standing({exists: false, groups: [], edgeCount: 0}));
+        renderAt();
+        await waitFor(() => expect(screen.getByText(/no such atom/i)).toBeInTheDocument());
+        expect(screen.queryByRole("heading", {name: declareLabel})).not.toBeInTheDocument();
+        expect(screen.queryByRole("heading", {name: marketLabel})).not.toBeInTheDocument();
+    });
+
+    it("asks for the agent as chain and token, never as a bare id", async () => {
+        // ADR `0027`: the registry is at one address on several chains, so a bare token id names a
+        // different agent on each. The field has to teach the shape before the guard refuses it.
+        read.mockResolvedValue(standing());
+        renderAt();
+        const field = await screen.findByLabelText(/your agent/i);
+        expect(field).toHaveAttribute("placeholder", "8453/1380");
+    });
+
+    it("disables the lookup and says why while no wallet is connected", async () => {
+        // `renderWithProviders` mounts the real wagmi config, whose only connector finds no
+        // `window.ethereum` here — so this is the state a first-time reader is in.
+        read.mockResolvedValue(standing());
+        renderAt();
+        expect(await screen.findByRole("button", {name: /check it/i})).toBeDisabled();
+        expect(screen.getByText(/connect the wallet that owns the agent/i)).toBeInTheDocument();
+    });
+
+    it("states the mainnet refusal as one line and never as the column's headline", async () => {
+        // Mainnet is the **default** chain, and `security.md` authorises a human in the panel under
+        // ADR `0017` — which covers a deposit into a `has trust provider` vault, not creating a
+        // `uses` edge. So the refusal is the ordinary case. The regression this guards is the first
+        // version of that branch: an `h2` in display type at the top of the column, which made the
+        // loudest element on every atom page a feature announcing that it does not work.
+        read.mockResolvedValue(standing());
+        const {container} = renderWithProviders(<AtomPanel />, {
+            mainnet: true,
+            route: {path: "/atom/:atomId", at: `/atom/${ATOM}`},
+        });
+        await waitFor(() =>
+            expect(screen.getByText(/declaring a use is not open on/i)).toBeInTheDocument(),
+        );
+        expect(screen.queryByLabelText(/your agent/i)).not.toBeInTheDocument();
+        for (const node of container.querySelectorAll("h1, h2, h3")) {
+            expect(node.textContent ?? "").not.toMatch(/not open/i);
+        }
+    });
+
+    it("solicits no deposit on the edge", async () => {
+        // ADR `0056` §1, on the user's measured objection: nobody takes the other side of
+        // `X used Y`, so a control to add TRUST there would be a fee for nothing. The market beside
+        // it is on the **atom**, a different vault, and says so.
+        read.mockResolvedValue(standing());
+        renderAt();
+        await waitFor(() =>
+            expect(screen.getByRole("heading", {name: declareLabel})).toBeInTheDocument(),
+        );
+        for (const forbidden of [/add trust/i, /back this claim/i, /stake on this edge/i]) {
+            expect(screen.queryByRole("button", {name: forbidden})).not.toBeInTheDocument();
+        }
     });
 });

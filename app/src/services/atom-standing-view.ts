@@ -1,3 +1,4 @@
+import {INTUITION_USES_TERM_ID} from "@arp-protocol/core";
 import type {AtomEdge, AtomEdgeGroup, AtomStanding} from "@arp-protocol/core";
 
 import {formatTrust, truncateMiddle} from "./trust-format";
@@ -58,6 +59,34 @@ export type AtomView = {
     titleIsId: boolean;
     type: string | null;
     pinnedUri: string | null;
+    /**
+     * Whether to offer this atom's market at all.
+     *
+     * `/atom/:atomId` serves **every** atom, so without a test the deposit control appeared on a
+     * tag, a keyword and a person's name. The user's scope for the market is _« une bourse
+     * d'agents et d'outils »_ (ADR `0056`), not every node in a permissionless graph.
+     *
+     * **No single field decides it, and the first attempt got that wrong in the worst direction.**
+     * `type` cannot: measured on mainnet, the tag `Sanctioned Address` and the skill `docx` are
+     * both `Thing`. A non-empty `url` looked like the answer — a tool points at something, a tag
+     * does not — and it is right for every atom written by `toolThing` or by the skills.sh
+     * cohort. But the testnet rig's tools predate that recipe and carry `url: ""` with a real name
+     * and description, so the url test **hid the market on an actual tool**
+     * (`Trail of Bits — secure-workflow-guide`, seen by the user). A false negative here is worse
+     * than the false positive it was guarding: it removes the market from the things the market is
+     * for.
+     *
+     * So it is two tests, either of which is enough:
+     *
+     * 1. the atom **points at something** — a non-empty `url` in its pinned Thing;
+     * 2. somebody has declared **using** it — it is the object of at least one `uses` edge
+     *    (ADR `0030`'s frozen predicate id, never the label).
+     *
+     * A tag fails both: `Sanctioned Address` has an empty url and its 250+ edges are all
+     * `has tag`. A freshly registered tool passes the first before anyone has used it; a legacy
+     * rig tool passes the second.
+     */
+    offersMarket: boolean;
     exists: boolean;
     /** The atom's **own** vault — a different market from any edge, and never summed with one. */
     ownBacking: string | null;
@@ -109,6 +138,12 @@ export function buildAtomView(standing: AtomStanding, symbol: string): AtomView 
         titleIsId: !hasTitle,
         type: standing.type,
         pinnedUri: standing.pinnedUri,
+        offersMarket:
+            standing.url !== null ||
+            standing.groups.some(
+                (group) =>
+                    group.predicate.atomId.toLowerCase() === INTUITION_USES_TERM_ID.toLowerCase(),
+            ),
         exists: standing.exists,
         ownBacking: backingOf(
             standing.market?.totalAssets ?? null,

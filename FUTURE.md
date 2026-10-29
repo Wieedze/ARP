@@ -159,3 +159,37 @@ heuristic that cries wolf gets silenced — the same trap `check-contrast.ts` wa
 `scripts/measure/emitted-utilities.ts` documents. And the grep has to be over the **concept**, not
 the sentence: the browser-premise sweep needed five different phrasings and 123 hits read by hand
 before the count was right, which no single pattern would have found.
+
+## An agent that arrives with no wallet
+
+Asked 2026-10-28. The loop today assumes the agent's operator already has a funded key on 13579
+and an ERC-8004 registration. Opening it to an agent that has neither means a hosted signer
+(Privy or equivalent, embedded wallet) and probably a relayer paying the gas, so the operator
+signs nothing and funds nothing on first contact.
+
+Deliberately not built, and not next: it changes who holds the key, which is the one question
+`.claude/rules/security.md` is strictest about. The loop has to run end to end with a key the
+operator holds before it is worth asking whether someone else can hold it.
+
+## The attestor is one wallet, and one key
+
+Asked 2026-10-28, the user's own framing: _« pour la suite on fera un safe multi sig ou autre
+solution avec plusieurs wallet je ne sais pas mais on trouvera au moment venu, je veux d'abord
+prouver mon idée »_.
+
+ARP's domain index is the set of hierarchy and `has tag` triples that **one address** holds a
+position on — `0x906f3A52…` on 13579, compiled into the MCP node as its default. Which makes that
+key load-bearing infrastructure: **lose it and the index freezes in place.** No triple can be added
+to it and none removed, for ever, because both operations are a position change signed by that
+address. What is in stays in and what is out never gets in.
+
+Acceptable on testnet, where the index is a rehearsal and the whole thing can be re-seeded under a
+new address for about 0.23 tTRUST. Not acceptable the day the index means anything, and the fix is
+not a code change — it is deciding what the attestor *is*: a Safe multisig, a threshold of named
+curators, or something else.
+
+Deliberately not built, and deliberately not next. The reason is the user's: the mechanism has to
+be proven before the governance of it is worth designing. Note what it is **not** blocked on,
+though — nothing in `packages/protocol/src/domains.ts` cares whether the attestor is an EOA or a
+contract, because it only ever reads positions by address. So this is a key-management decision
+with no refactor behind it.

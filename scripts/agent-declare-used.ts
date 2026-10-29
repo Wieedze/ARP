@@ -265,10 +265,22 @@ if (process.argv.includes('--simulate')) {
 const jsonPath = arg('json');
 if (jsonPath !== undefined) {
   const all = [...plan.calls, ...stakeCalls];
+  // Only the six fields `send-plan.ts` reads. Spreading the whole call carried its `preview`,
+  // whose `shares` and `assetsAfterFees` are BigInt, and `JSON.stringify` throws on those rather
+  // than dropping them — so `--json` failed for every plan that had a call in it and succeeded
+  // only on the empty one. The same defect was in `agent-identity-atom.ts`; both are the same
+  // mistake, which is that a plan's call is richer than the thing that sends it.
   writeFileSync(
     jsonPath,
     `${JSON.stringify(
-      all.map((call) => ({ ...call, value: call.value.toString() })),
+      all.map((call) => ({
+        kind: call.kind,
+        chainId,
+        to: call.to,
+        value: call.value.toString(),
+        data: call.data,
+        why: call.why,
+      })),
       null,
       2,
     )}\n`,

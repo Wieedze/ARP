@@ -138,7 +138,7 @@ describe("listTools", () => {
     });
 
     it('treats the literal string "null" as no pointer, because three tools carry it', async () => {
-        // Measured 2026-10-20 over the 80 distinct tools on mainnet `uses` edges: 28 carry no url
+        // Re-measured 2026-10-28 over the 85 distinct tools on mainnet `uses` edges: 28 carry no url
         // and three carry the four characters `null`. A pointer that reads as a URL and is not one
         // would send an agent to `https://null`.
         const {transport} = transportOf([

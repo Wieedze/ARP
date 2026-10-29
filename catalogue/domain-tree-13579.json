@@ -1,0 +1,73 @@
+{
+ "_note": "The first domain-tree edges ARP published, on Intuition testnet 13579. A record, not a source of truth: every id below is a pure function of its label or its normalised URL, so re-deriving this file needs only those. Permanent — Intuition has no deletion.",
+ "_authorisation": "Signed by the agent session using AGENT_PRIVATE_KEY on the user's explicit instruction on 2026-10-28 (« ok go on va faire un test en testnet »). ADR 0037's three conditions: the key was never read into the agent's context, the signer address was checked against AGENT_ADDRESS in .env before signing, and this file is the record. security.md scopes its automation prohibition to mainnet.",
+ "_construction": "Domain atoms are PLAIN STRINGS (atom_type TextObject), not pinned Things. A pinned Thing hashes a document with three free-text fields, which is what split 53 labels across 118 atoms on mainnet — DeFi×5, Gaming×4, Security×4, and Infra's two differ only by a description and by a url that is the literal string \"null\" in one of them (scripts/measure/tag-object-discipline.ts, 2026-10-28). A plain string has no document to disagree about.",
+ "_normalisation": "Lowercase, accents stripped, whitespace collapsed to single hyphens, applied before anything is hashed. The rule exists because `Design` and `design` are two nodes for ever on this graph, and that exact pair is already on 13579 with the typo `motion-desing` attached to one of them.",
+ "_assets": "Each term was created with cost + minDeposit read off the chain at plan time: 0.002000000001 for the atom, 0.002000000002 for each triple. Passing the cost alone creates a term with ZERO positions (ADR 0053), and an edge with no position carries no path under the reading rule — so the deposit is not optional here, it is what makes the edge readable.",
+ "chainId": 13579,
+ "multiVault": "0x2Ece8D4dEdcB9918A398528f3fa4688b1d2CAB91",
+ "signer": "0x906f3A52ec089f8D4E9127F91C6bE5Ae0d18f91f",
+ "publishedAt": "2026-10-28",
+ "balanceBefore": "0.907250261122",
+ "balanceAfter": "0.896999223513",
+ "spent": "0.010251037609",
+ "root": "tool",
+ "predicates": {
+  "is a sub-domain of": {
+   "termId": "0x9c2e2f2018dbfaa74fd3fd86cd54a62b16e771936f5d342e3751db8d0c046f80",
+   "why": "The atom the liquid-democracy repo already publishes with on 13579, so a domain minted in either project is the same node. 42 edges there before this run, 0 on mainnet 1155."
+  },
+  "has tag": {
+   "termId": "0x7ec36d201c842dc787b45cb5bb753bea4cf849be3908fb1b0a7d067c3c3cc1f5",
+   "why": "52,781 edges on 13579 and 58,064 on 1155 — the same atom on both chains. NOT hasTagForWriting(13579), which returns 0x6de69cc0… on the authority of docs/07_INTUITION_ERC8004_PARTNER_GUIDE.md:1025; that atom carries 311 edges on 13579, 0.6% of the chain's has-tag edges. hasTagForWriting has no callers, so nothing had been written the wrong way."
+  }
+ },
+ "atoms": {
+  "tool": {
+   "termId": "0xd6cc02f562e37deba5f949487a3d29fead3f71934d43b41b4fb2fe10c062ca3e",
+   "created": false,
+   "note": "Already existed as a plain string, with the same id on 1155 and 13579, and had never been used as the object of a triple."
+  },
+  "payment": {
+   "termId": "0xdf8da6c901961b14f138e608273e9e2bd3556b8cc8dd26b93002eef1f0a62b21",
+   "created": false,
+   "note": "Same — already existed, unused. Chosen over `payments` because it was already there: minting the plural would have been the near-duplicate this whole construction exists to avoid. Singular is therefore the rule."
+  },
+  "card-payment": {
+   "termId": "0x486470d2bbb5b9b67077505c43f5dedc1c36c4d378d293f2e08dad0750457b1c",
+   "created": true,
+   "tx": "0xa656b7b9ec1b2aeb04966c4216f2ef40e1c4119c5ba739ed9e07c57bc1fff268",
+   "_ruleViolation": "BREAKS THE ONE-WORD RULE, stated by the user about an hour after this was signed: a domain is one word, never hyphenated. The atom and its two edges are permanent — Intuition has no deletion. The replacement is `card`, which already exists as a plain string. Retiring this one means depositing on each edge's counter-triple, not removing it. See catalogue/domains.proposal.json `_ruleViolationOnChain`."
+  }
+ },
+ "edges": [
+  {
+   "triple": "payment — is a sub-domain of — tool",
+   "tx": "0x51edb38c8b44150afb49538230dab3e8748bbf238591e42a59961fd21d59f9d6"
+  },
+  {
+   "triple": "card-payment — is a sub-domain of — payment",
+   "tx": "0x1e24224484008bafb2deb4dd71a4bafe9ecea3e2382dd9c6c8bb5b9aaf5e7eae"
+  },
+  {
+   "triple": "https://github.com/stripe/agent-toolkit — has tag — card-payment",
+   "tx": "0x547075e6ebb83e0e4e7529e7f9a9ce72e18c4975360a35df851958ca07312851"
+  },
+  {
+   "triple": "https://github.com/paypal/paypal-mcp-server — has tag — payment",
+   "tx": "0x48c08984f1047d9a0d5be6c53c30ea91117085717e75cbed10d07a238bf153af"
+  }
+ ],
+ "_verified": {
+  "script": "scripts/verify-domain-tree.ts",
+  "readAt": "2026-10-28",
+  "down": "from \"payment\": 2 domains (payment, card-payment), 2 tools — stripe/agent-toolkit under card-payment, paypal/paypal-mcp-server under payment. One domain given, tools returned at two depths.",
+  "up": "card-payment → payment → tool, a witness of 3. payment → tool, a witness of 2.",
+  "graphState": "44 `is a sub-domain of` edges on 13579 after this run, 43 carrying at least one position."
+ },
+ "_twoDefectsTheTestFound": [
+  "The reading rule's threshold was written as position_count > 1 and is position_count >= 1. `assets = cost + minDeposit` gives the creator exactly one position and `assets = cost` gives zero, so one is what separates a paid edge from an abandoned one. With > 1 the script reported ARP's own four fresh edges as carrying nothing. The figure > 1 answers a different question — whether anyone other than the publisher has backed the edge — and is worth ranking on later, not for deciding whether a path exists.",
+  "docs/18 states that tied parents leave a node unsettled; the first version of the script picked the first one the indexer returned anyway. Testnet supplied the case on the first run: `motion design`'s edges to `design` and to `UX` hold identical share counts, because both were created the same way and nobody has deposited since. A rule that silently breaks a tie is the owner rule wearing the stake rule's name, so pathToRoot now refuses."
+ ],
+ "_idDerivation": "The atom id is calculateAtomId(data) on the MultiVault, NOT keccak256 of the data: keccak256(stringToHex(\"tool\")) is 0x6563ece9… and the atom is 0xd6cc02f5…. It is still a pure function of the data, so anyone recomputes it from the label with one eth_call — but it has to be read from the contract rather than hashed locally, and declare/multivault.ts's atomDataForUri docstring claiming \"keccak256 of these exact bytes is the atom id\" is wrong."
+}

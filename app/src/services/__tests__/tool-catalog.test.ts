@@ -1,6 +1,7 @@
 import {describe, expect, it} from "vitest";
 import type {ToolListing, ToolListingPage} from "@arp-protocol/core";
 
+import {SEED_TOOLS} from "../../lib/tool-catalogue-seed";
 import {buildToolCatalogView, TOOL_FILTERS, TOOL_ORDERS} from "../tool-catalog";
 
 function tool(overrides: Partial<ToolListing> = {}): ToolListing {
@@ -109,5 +110,52 @@ describe("buildToolCatalogView", () => {
         ]) {
             expect(label).not.toMatch(/\bused?\b/i);
         }
+    });
+});
+
+describe("the seed title", () => {
+    it("shows the app's name for a seeded tool and keeps the URL as the identity", () => {
+        // The atom's label IS the URL minus its scheme — `toolThing` derives it, so the graph
+        // never carries "Stripe". The readable name is this app's, which is why it can change
+        // without a write (user, 2026-10-28: « le nom peut etre dans le front »).
+        const view = buildToolCatalogView(
+            page([tool({atomId: "0xst", label: "github.com/stripe/agent-toolkit"})]),
+        );
+        expect(view.rows[0]?.name).toBe("Stripe");
+        expect(view.rows[0]?.isUnnamed).toBe(false);
+    });
+
+    it("matches a label the graph returned with a scheme or a trailing slash", () => {
+        for (const label of [
+            "https://github.com/stripe/agent-toolkit",
+            "github.com/stripe/agent-toolkit/",
+            "GitHub.com/Stripe/Agent-Toolkit",
+        ]) {
+            expect(buildToolCatalogView(page([tool({label})])).rows[0]?.name).toBe("Stripe");
+        }
+    });
+
+    it("falls back to the label, never to an invented name", () => {
+        // A tool nobody seeded reads as its URL. `seedTitleOf` returns null rather than guessing:
+        // naming a thing we know nothing about is the one move this surface cannot make.
+        const view = buildToolCatalogView(page([tool({label: "github.com/crytic/slither"})]));
+        expect(view.rows[0]?.name).toBe("github.com/crytic/slither");
+        expect(view.rows[0]?.isUnnamed).toBe(false);
+    });
+
+    it("leaves an unnamed atom unnamed", () => {
+        const view = buildToolCatalogView(page([tool({atomId: "0xbb", label: null})]));
+        expect(view.rows[0]?.name).toBe("0xbb");
+        expect(view.rows[0]?.isUnnamed).toBe(true);
+    });
+
+    it("never writes a seed title into anything addressable on chain", () => {
+        // The guard that matters: a title is display only. Every seed entry's url is the whole of
+        // its identity, so a title change can never move an atom id.
+        for (const seed of SEED_TOOLS) {
+            expect(seed.url).toMatch(/^https:\/\/[^\s]+$/);
+            expect(seed.title.length).toBeGreaterThan(0);
+        }
+        expect(new Set(SEED_TOOLS.map((seed) => seed.url)).size).toBe(SEED_TOOLS.length);
     });
 });

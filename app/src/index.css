@@ -171,6 +171,8 @@
     --word-delay: 0ms; /* computed per word from its rendered line */
     --line-index: 0; /* which authored line of a heading */
     --row-index: 0; /* which row of a list */
+    --orbit-for: 90s; /* how long one ring of the claim field takes to turn */
+    --orbit-to: 360deg; /* and which way — negative reverses it */
     --lit: 1; /* how lit one manifesto line is, 0 to 1 */
 
     /* The illustrative diagram in Fig. 02 draws itself: a dot appears, a line
@@ -553,6 +555,57 @@ summary:focus-visible,
         opacity var(--reveal-fade) var(--ease-out-quart),
         transform var(--reveal-fade) var(--ease-out-quart);
     transition-delay: calc(var(--row-index) * var(--list-step) + var(--reveal-after));
+}
+
+/* ---- the claim field: dots arriving, and the edge a hover draws ---------- */
+
+/* **Outside a scene**, unlike `.arp-row` above, whose rules are all scoped to
+   `.arp-scene[data-on]`. The atom page has no deck, so the arrival is driven by
+   a class the element has from its first paint and removed one frame later —
+   the same opacity-and-lift vocabulary at the same tokens, reusing
+   `--row-index`, `--list-step` and the `LIST_CAP` the stagger is capped at. */
+.arp-claim {
+    opacity: 1;
+    transform: none;
+    transition:
+        opacity var(--reveal-fade) var(--ease-out-quart),
+        transform var(--reveal-fade) var(--ease-out-quart);
+    transition-delay: calc(var(--row-index) * var(--list-step) + var(--reveal-after));
+}
+
+.arp-claim-enter .arp-claim {
+    opacity: 0;
+    transform: scale(0.4);
+}
+
+/* Each ring turns, the way the landing's field does. There it is a rAF loop
+   recomputing every point's angle per frame, because those points also breathe
+   and dive; here nothing moves but the angle, so one transform on a wrapper is
+   the whole of it and the compositor does the work.
+
+   `--orbit-for` is set per ring by the component: slower further out, and the
+   direction alternates, so it reads as a constellation rather than one wheel. */
+@keyframes arp-orbit {
+    to {
+        transform: rotate(var(--orbit-to, 360deg));
+    }
+}
+
+.arp-orbit {
+    animation: arp-orbit var(--orbit-for, 90s) linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .arp-claim,
+    .arp-claim-enter .arp-claim {
+        transition: none !important;
+        opacity: 1 !important;
+        transform: none !important;
+    }
+
+    .arp-orbit {
+        animation: none;
+    }
 }
 
 /* ---- one manifesto line lighting up, scrubbed by scroll ------------------ */

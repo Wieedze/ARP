@@ -111,6 +111,18 @@ export function hasTagForWriting(chainId: number): string {
 export const HAS_CATEGORY =
     "0x96c20ddd7f83034666e200aa976cbe2249946bf76a7c66333212be82f284ad4b" as const;
 
+/**
+ * `is a sub-domain of` — the hierarchy predicate. A plain-string atom, so its id follows from the
+ * phrase and is the same wherever the phrase is used.
+ *
+ * **Not published by Intuition** — it is not in `docs/07`'s vocabulary tables, unlike every other
+ * term in this file. Measured 2026-10-28: 44 triples on testnet 13579 and **zero** on mainnet 1155,
+ * where no atom carries the phrase at all. So a reader on 1155 will find nothing, and that is the
+ * state of the chain rather than a configuration error.
+ */
+export const IS_A_SUB_DOMAIN_OF =
+    "0x9c2e2f2018dbfaa74fd3fd86cd54a62b16e771936f5d342e3751db8d0c046f80" as const;
+
 /** `has trust provider`. Published. */
 export const HAS_TRUST_PROVIDER =
     "0xdc3c5639b39f9b6553b75b37c47fa4810961392b28956234ba9f401a98f43888" as const;

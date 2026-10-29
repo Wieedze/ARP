@@ -1,0 +1,119 @@
+{
+ "generatedAt": "2026-10-28T19:40:00+00:00",
+ "why": "Before inventing a domain vocabulary for ARP, measure which classification predicate the Intuition graph already carries, what it points at, and whether any hierarchy predicate exists. Evidence for docs/18_THE_DOMAIN_TREE.md.",
+ "scripts": [
+  "scripts/measure/classification-vocabulary.ts",
+  "scripts/measure/tag-object-discipline.ts"
+ ],
+ "note": "Two chains, two populations. Never summed.",
+ "chains": {
+  "1155": {
+   "atomTypesTheIndexerStores": 14,
+   "atomTypeList": "Account, ByteObject, Caip10, FollowAction, JsonObject, Keywords, Organization, OrganizationPredicate, Person, PersonPredicate, TextObject, Thing, ThingPredicate, Unknown",
+   "definedTermIsNotAnAtomType": "A query filtering type = DefinedTerm fails outright: 'invalid input value for enum atom_type'. The intuition-data-structures classification spec names it; the indexer does not store it.",
+   "atomsTypedKeywords": 1,
+   "classificationPredicatesInUse": {
+    "has tag 0x7ec36d20 (Keywords, pins schema.org/keywords)": 58064,
+    "has type 0xa632a943 (Thing)": 57574,
+    "has tag 0x6de69cc0 (TextObject, pins the string)": 1285,
+    "in context of 0x892054b0 (Thing)": 1227,
+    "has category 0x96c20ddd (Thing)": 120,
+    "is a 0xf499d9dc (Thing)": 53,
+    "belongs to 0x837ceea4 (Thing)": 12,
+    "is a 0xf5aef11b (Thing)": 3,
+    "about 0xfd859e4e (TextObject)": 1,
+    "belongs to 0x3317b232 (Thing)": 1,
+    "has type 0x3facdb2c (TextObject)": 1,
+    "is a 0x5a7a37ea (Thing)": 1
+   },
+   "hierarchyPredicateEdges": {
+    "is a sub-domain of": 0,
+    "subConceptOf": 0,
+    "sub concept of": 0,
+    "part of": 0,
+    "partOf": 0,
+    "consequence": "No hierarchy predicate exists on mainnet at all."
+   },
+   "candidateLabelsPresentButNeverUsedAsPredicate": 8,
+   "hasTagObjectSide": {
+    "distinctObjects": 1666,
+    "labelled": 1656,
+    "readAsProse_over4WordsOrPunctuation": 93,
+    "groupsDifferingOnlyByCaseOrWhitespace": 31,
+    "caseExamples": "overrated/Overrated, Trustworthy/trustworthy, Football/FOOTBALL, Anoma/'ANOMA ', Ronin/ronin",
+    "sampledTagObjectsThatAreThemselvesTagged": "104 of 250",
+    "sampledTagAtomsCarryingMoreThanOnePosition": "157 of 249",
+    "positionCountDistribution": {
+     "0": 38,
+     "1": 54,
+     "2": 62,
+     "3": 16,
+     "4": 10,
+     "5": 5,
+     "6": 3,
+     "7": 3,
+     "8": 1,
+     "9": 1,
+     "11": 1,
+     "13": 1
+    }
+   }
+  },
+  "13579": {
+   "atomTypesTheIndexerStores": 16,
+   "atomTypeList": "same as 1155 plus Book, Caip22",
+   "atomsTypedKeywords": 1,
+   "classificationPredicatesInUse": {
+    "has tag 0x7ec36d20 (Keywords)": 52781,
+    "has type 0xa632a943 (Thing)": 729,
+    "has tag 0x6de69cc0 (TextObject)": 311,
+    "has type 0x3facdb2c (TextObject)": 268,
+    "has category 0xddde1d94 (TextObject)": 88,
+    "is a 0xf499d9dc (Thing)": 88,
+    "has category 0x96c20ddd (Thing)": 54,
+    "is a sub-domain of 0x9c2e2f20 (TextObject)": 42,
+    "has tag 0x9a3fbe31 (Thing)": 30,
+    "in context of 0x61a88b9c (Thing)": 29,
+    "about 0xfd859e4e (TextObject)": 10,
+    "has tag 0x825699ea (Thing)": 9,
+    "has tag 0x7cb24656 (Thing)": 8,
+    "about 0x227d3568 (Thing)": 7,
+    "has type 0xf4801341 (Thing)": 7,
+    "belongs to 0x837ceea4 (Thing)": 5,
+    "has tag 0x2254b148 (Thing)": 4,
+    "about 0xa4dd0ac8 (Thing)": 2,
+    "is a 0x5a7a37ea (Thing)": 2,
+    "keywords 0x2ad117b6 (TextObject)": 2
+   },
+   "hasTagObjectSide": {
+    "distinctObjects": 1036,
+    "readAsProse_over4WordsOrPunctuation": 43,
+    "groupsDifferingOnlyByCaseOrWhitespace": 15,
+    "sampledTagObjectsThatAreThemselvesTagged": "95 of 250"
+   },
+   "isASubDomainOf": {
+    "predicateTermId": "0x9c2e2f2018dbfaa74fd3fd86cd54a62b16e771936f5d342e3751db8d0c046f80",
+    "edges": 42,
+    "fromLiquidDemoManifest13579": 16,
+    "publishedLaterByHand": 26,
+    "breakdownOfThose26": {
+     "timestampedTestNodes_labelled_rehearsal_ISO8601": 9,
+     "oneChildWithFiveDifferentParents_motion_design": 5,
+     "legitimateDesignAndLegalSubtreeAbsentFromTheManifest": 7,
+     "typo_motion_desing": 1,
+     "invertedHierarchy_macro_grant_under_micro_grants": 1,
+     "unusableLabel_empty": 1,
+     "unusableLabel_270_x_characters": 1,
+     "caseSplit_Design_attachedToRootBesideDesign": 1
+    },
+    "breakdownSums": 26
+   }
+  }
+ },
+ "thirdPartyContradiction": {
+  "source": "docs/07_INTUITION_ERC8004_PARTNER_GUIDE.md:1025",
+  "itSays": "use 0x7ec36d20 for mainnet writes and 0x6de69cc0 for testnet writes to match each network's in-use vocabulary",
+  "measured": "on testnet 13579, 0x7ec36d20 carries 52781 edges and 0x6de69cc0 carries 311 — the guide's recommended testnet atom holds 0.6% of that chain's has-tag edges",
+  "reachability": "LATENT, not live: packages/protocol/src/sources/intuition/terms.ts exports hasTagForWriting and nothing calls it. ARP has never written a has-tag edge on either chain, so zero edges are affected."
+ }
+}

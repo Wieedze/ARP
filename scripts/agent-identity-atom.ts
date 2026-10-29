@@ -100,10 +100,21 @@ if (plan.calls.length === 0) {
 
 const jsonPath = arg('json');
 if (jsonPath !== undefined && plan.calls.length > 0) {
+  // Only the six fields `send-plan.ts` reads, and `value` as a decimal string. Spreading the
+  // whole call carried its `preview`, whose `shares` and `assetsAfterFees` are BigInt, and
+  // `JSON.stringify` throws on those rather than dropping them — so `--json` failed for every
+  // agent that had anything to plan, and succeeded only when there was nothing to write.
   writeFileSync(
     jsonPath,
     `${JSON.stringify(
-      plan.calls.map((call) => ({ ...call, value: call.value.toString() })),
+      plan.calls.map((call) => ({
+        kind: call.kind,
+        chainId: plan.chainId,
+        to: call.to,
+        value: call.value.toString(),
+        data: call.data,
+        why: call.why,
+      })),
       null,
       2,
     )}\n`,

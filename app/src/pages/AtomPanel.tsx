@@ -1,12 +1,19 @@
-import {Link, useParams} from "react-router-dom";
+import {Navigate, useParams} from "react-router-dom";
+import type {Hex} from "viem";
 
 import {PageLoading} from "../components/brand/PageLoading";
+import {AtomSigil} from "../components/atom/AtomSigil";
+import {Backing, Empty, Group} from "../components/atom/ClaimList";
+import {ClaimField} from "../components/atom/ClaimField";
+import {AtomMarket} from "../components/market/AtomMarket";
+import {actionCardClass} from "../lib/surface-class";
+import {DeclareUse} from "../components/usage/DeclareUse";
+import {useAgentRefForAtom} from "../hooks/use-agent-ref-for-atom";
+import {useDeclaredModules} from "../hooks/use-declared-modules";
 import {useAtomStanding, isAtomId} from "../hooks/use-atom-standing";
 import {useChainChoice} from "../lib/chain-choice";
-import {linkClass} from "../lib/control-class";
-import {describePointers, type AtomView, type GroupView} from "../services/atom-standing-view";
+import {type AtomView} from "../services/atom-standing-view";
 import {truncateMiddle} from "../services/trust-format";
-import {StakerCount} from "../components/agent/StakerCount";
 
 /**
  * `/atom/:atomId` — one atom, its own market, and everything that points at it.
@@ -27,11 +34,19 @@ import {StakerCount} from "../components/agent/StakerCount";
  * The old route redirects here rather than 404ing — links to it exist in commits, in ADRs and in
  * whatever the user has bookmarked.
  *
- * ## What it reads and does not write
+ * ## What it writes, and the one thing it still does not
  *
- * Reads only. The deposit on an agent lives on the agent's page where its subject is unmistakable
- * (ADR `0017` safeguard 4), and the `uses` edge is a receipt rather than a market worth soliciting
- * a position on (ADR `0056`).
+ * It writes **one** claim: `(your agent, uses, this atom)`, through `DeclareUse` at the head of the
+ * column. That is `docs/12` point 3, which had no page anywhere until now — it lived in
+ * `scripts/agent-declare-used.ts` and in the MCP server, so the centre of the mechanism was
+ * reachable by an agent and not by the human holding its key.
+ *
+ * It still solicits **no deposit**. The market on an agent lives on the agent's page where its
+ * subject is unmistakable (ADR `0017` safeguard 4), and the `uses` edge is a receipt rather than a
+ * market worth taking a position on beyond the one it is born with (ADR `0056` §1, ADR `0053`).
+ *
+ * This section read **"Reads only"** until the declare control shipped. Left visible rather than
+ * silently replaced, because the sentence was cited as the page's contract.
  *
  * ## The predicates are whatever the graph holds
  *
@@ -45,6 +60,33 @@ export function AtomPanel() {
     const {atomId} = useParams();
     const valid = isAtomId(atomId);
     const query = useAtomStanding(valid ? atomId : null);
+    /**
+     * **An agent has one page, and this is what makes that true.**
+     *
+     * The directory knows an agent's `chainId/tokenId` and links to its panel; a capability search
+     * and the claim field know only its atom id and landed here. Same agent, two destinations,
+     * depending on where the reader clicked — which is what the user asked to end.
+     *
+     * So an atom that **is** an agent sends the reader on, and every link in the app converges on
+     * the panel whatever id it was holding. `replace`, so Back returns to where they came from
+     * rather than bouncing through here.
+     *
+     * `null` is "no identity found", never "not an agent": ARP's own rig agents on 13579 have no
+     * `same as` edge (`tasks/19` step 1b, measured again today — 30,913 such edges on mainnet,
+     * none of them ours on testnet), so they stay on this page, which is a complete view of them.
+     */
+    const agentRef = useAgentRefForAtom(valid ? atomId : null);
+    /**
+     * Every claimant's declared tools, for the sigil beside its claim — **one query for the page**.
+     *
+     * The user asked for each declaring agent's glyph here. A sigil's input is the tools that agent
+     * declared using, which the standing read does not carry: it returns the edges pointing *at*
+     * this atom, and a sigil is about edges pointing *out* of its subject.
+     */
+    const subjectIds = (query.data?.groups ?? []).flatMap((group) =>
+        group.rows.map((row) => row.subjectAtomId),
+    );
+    const modules = useDeclaredModules(subjectIds);
     const chain = useChainChoice();
 
     if (!valid) {
@@ -59,7 +101,15 @@ export function AtomPanel() {
         );
     }
 
-    if (query.isPending) {
+    if (agentRef.data != null) {
+        return <Navigate to={`/agent/${agentRef.data.chainId}/${agentRef.data.tokenId}`} replace />;
+    }
+
+    // Both reads, not just the standing one. Rendering the atom view while the identity is still
+    // in flight would show a page for half a second and then replace it — a flash of the thing the
+    // reader is being moved away from. The identity read is one query and runs in parallel with the
+    // heavier standing read, so waiting for it costs nothing in practice.
+    if (query.isPending || agentRef.isPending) {
         return (
             <PageLoading label="Reading the atom">
                 reading {truncateMiddle(atomId)} and everything pointing at it on{" "}
@@ -82,27 +132,133 @@ export function AtomPanel() {
     const view = query.data;
 
     return (
-        <section className="mt-10 grid gap-x-12 gap-y-10 md:grid-cols-[18rem_1fr] md:items-start">
-            <aside>
-                <h1 className={`type-title ${view.titleIsId ? "font-mono" : ""}`}>{view.title}</h1>
-                <Identity view={view} />
-            </aside>
+        <section className="mt-10">
+            {/* **The title spans the page; it is not metadata.**
+                It lived in the 18rem aside, where `--text-title` clamps to 76px against 288px of
+                column — so `Trail of Bits — secure-workflow-guide` rendered as nine lines of
+                broken words (`Trail / of / Bits / — / secur / e- / workf / low- / guide`), while
+                the right column sat nearly empty. The grid template is fixed, so the aside never
+                borrowed that space however little the evidence needed.
 
-            <div className="min-w-0">
-                {!view.exists ? (
-                    <Missing atomId={view.atomId} />
-                ) : view.groups.length === 0 ? (
-                    <Empty atomId={view.atomId} />
-                ) : (
-                    <>
-                        <p className="mb-8 font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
-                            {describePointers(view)}
-                        </p>
-                        {view.groups.map((group) => (
-                            <Group key={group.predicateAtomId} group={group} subject={view.title} />
-                        ))}
-                    </>
-                )}
+                `overflow-wrap: anywhere` stays on `.type-title` and is still right: a bare
+                66-character atom id has no break opportunity at all and must be allowed to wrap
+                mid-token. Across the full width it only bites for an id, which is what it is for.
+
+                `tasks/28` item 39, found while building this control, filed, and then fixed when
+                the user saw it — filing a defect is not the same as leaving it. */}
+            <h1
+                className={`type-title ${view.titleIsId ? "font-mono" : ""} max-w-[24ch] md:max-w-[32ch]`}
+            >
+                {view.title}
+            </h1>
+
+            <div className="mt-10 grid gap-x-12 gap-y-10 md:grid-cols-[18rem_1fr] md:items-start">
+                <aside>
+                    {/* The glyph sits where an agent's does on its own panel: at the top of the
+                        identity column, above the facts. It is the sigil inverted — a dot per
+                        agent that declared this — and it costs no query, because those agents are
+                        the subjects of the `uses` edges the page already read. */}
+                    <AtomSigil atomId={view.atomId} name={view.title} groups={view.groups} />
+                    <Identity view={view} />
+                </aside>
+
+                <div className="min-w-0">
+                    {!view.exists ? (
+                        <Missing atomId={view.atomId} />
+                    ) : (
+                        <>
+                            {/* **The market leads, full width; the declaration follows.** Five
+                            shapes have been measured here. At the foot of the column the control
+                            sat at y=17602 on a 250-edge atom — unreachable. Open and stacked at the
+                            head it pushed the first evidence row from y~230 to y~501. Collapsed
+                            into disclosures it cost a click, which the user rejected. Side by side
+                            it fit, but gave the two writes equal weight and gave the market half a
+                            column for a value line, a backers list and two controls.
+
+                            The user's ordering (2026-10-28): _« take position plutôt en haut et
+                            plus large avec plus de place »_. The market is the busier object and
+                            the one a reader arrives for; the declaration is a short form and reads
+                            fine under it at a form's width.
+
+                            Both are offered on an atom nobody points at too: `Empty` says "a row
+                            appears when somebody writes one", and this is where they write it.
+
+                            `atomId` is the route param this component already narrowed with
+                            `isAtomId`, the 32-byte hex test. */}
+                            <div className="mb-10 border-b border-[color:var(--color-rule-strong)] pb-10">
+                                {/* Only for an agent or a tool — the user's scope for the market,
+                                _« une bourse d'agents et d'outils »_, not every node in a
+                                permissionless graph. ADR `0072`: two tests, because no single field
+                                carries the distinction and the first version used the url alone and
+                                hid the market on an actual tool. */}
+                                {!view.offersMarket ? null : (
+                                    <section>
+                                        {/* **No heading above the card.** It said "Take a
+                                        position, or exit" while the card's own control says "Take
+                                        a position" an inch below — the same instruction twice,
+                                        which is what the user cut. The card's control heading is
+                                        now the section's, which is why `AtomMarket` lifts it to
+                                        `h2` when it has no heading of its own: without that the
+                                        outline would skip `h1` to `h3`.
+
+                                        One card. The value line, the figures, the support list and
+                                        the two controls are one thing a reader acts on; carding
+                                        each separately read as unrelated blocks. */}
+                                        <div className={actionCardClass}>
+                                            <AtomMarket
+                                                atomTermId={atomId as Hex}
+                                                name={view.title}
+                                                nameIsId={view.titleIsId}
+                                                backHeading="Take a position"
+                                                heading={null}
+                                            />
+                                        </div>
+                                    </section>
+                                )}
+
+                                <div
+                                    className={
+                                        view.offersMarket ? "mt-10 max-w-[48rem]" : "max-w-[48rem]"
+                                    }
+                                >
+                                    <DeclareUse
+                                        object={atomId as Hex}
+                                        objectLabel={view.title}
+                                        onDeclared={() => void query.refetch()}
+                                    />
+                                </div>
+                            </div>
+                            {view.groups.length === 0 ? (
+                                <Empty atomId={view.atomId} />
+                            ) : (
+                                <>
+                                    {/* The field, not the sentence. It read
+                                    "250+ claims across one predicate", which is the whole of what
+                                    the page said about its own subject — the user asked for
+                                    _« des cercles qui constellent comme le logo autour de l'atom »_
+                                    instead. `describePointers` survives for the places that still
+                                    want one line of prose. */}
+                                    <div className="mb-10">
+                                        <ClaimField
+                                            groups={view.groups}
+                                            subject={view.title}
+                                            edgeCount={view.edgeCount}
+                                            truncated={view.truncated}
+                                        />
+                                    </div>
+                                    {view.groups.map((group) => (
+                                        <Group
+                                            key={group.predicateAtomId}
+                                            group={group}
+                                            subject={view.title}
+                                            modules={modules.data ?? {}}
+                                        />
+                                    ))}
+                                </>
+                            )}
+                        </>
+                    )}
+                </div>
             </div>
         </section>
     );
@@ -110,7 +266,6 @@ export function AtomPanel() {
 
 /** The atom's own facts, including its own vault — which is never summed with its edges'. */
 function Identity({view}: {view: AtomView}) {
-    const chain = useChainChoice();
     return (
         <>
             <dl className="mt-6 border-t border-[color:var(--color-rule)] pt-4 text-[length:var(--text-body-sm)]">
@@ -135,45 +290,31 @@ function Identity({view}: {view: AtomView}) {
                     Absent when nobody has backed it. It read "no backing", which is a sentence
                     about an absence — an empty cell says the same thing and says it faster. */}
                 {view.ownBacking === null ? null : (
-                    <Term label="Backed">
+                    <Term label="Support">
                         <Backing amount={view.ownBacking} positions={view.ownPositions} />
                     </Term>
                 )}
             </dl>
 
-            <a
-                href={`${chain.explorerUrl}/address/${view.atomId}`}
-                target="_blank"
-                rel="noreferrer"
-                className={`mt-6 inline-block text-[length:var(--text-body-sm)] ${linkClass}`}
-            >
-                Explorer →
-            </a>
-        </>
-    );
-}
+            {/* **There is no "Explorer →" here any more, and nothing replaces it.**
+                It pointed at `${explorerUrl}/address/${termId}`, which was dead: a term id is 32
+                bytes and the explorer wants 20 —
+                `GET /api/v2/addresses/0x99b0…3710a` answers
+                `Invalid format. Expected ~r/^0x([A-Fa-f0-9]{40})$/`, while the HTML route returns
+                200 because it is an SPA shell. So it looked reachable and was not, which is worse
+                than its absence.
 
-/**
- * A staked figure: the person mark with its count, then the amount.
- *
- * `StakerCount` was already exactly what the user asked for — _« juste un svg avec une personne et
- * un chiffre ainsi que la somme totale »_ — and this page was spelling it out in words instead
- * (`1 distinct staker`). The mark says "accounts" without the noun, the digit says how many, and
- * the amount follows.
- *
- * The count is never dropped. ADR `0023`: every vault on this surface holds one or two positions,
- * so an amount on its own suggests a depth of opinion that is not there, and the count is the part
- * that stops it reading as a market. `StakerCount` carries the announced label, so a screen reader
- * still hears "1 distinct staker" where the screen shows a glyph and a digit.
- */
-function Backing({amount, positions}: {amount: string; positions: number}) {
-    return (
-        <span className="flex shrink-0 items-center gap-3 font-mono text-[length:var(--text-body-sm)] tabular-nums">
-            <span className="text-[color:var(--color-steel)]">
-                <StakerCount count={positions} />
-            </span>
-            <span>{amount}</span>
-        </span>
+                Three candidates were checked and none resolves a term id. The explorer: no route.
+                `app.intuition.systems/atom/<id>`: a consumer landing page, **byte-identical for a
+                real id and a bogus one** and carrying neither label — measured in a browser, not
+                inferred from a 200. `computeAtomWalletAddr(atomId)` is a real 20-byte address but
+                a different object, and presenting an atom's wallet as "the atom" is the same
+                category error one level in.
+
+                The id itself is in the `dl` above, in mono, selectable. That is the honest
+                surface. ADR `0054`: the id is a pure function of the atom's data, so it is
+                reproducible without any third party — which is the better answer than a link. */}
+        </>
     );
 }
 
@@ -188,74 +329,6 @@ function Term({label, children}: {label: string; children: React.ReactNode}) {
     );
 }
 
-/**
- * One predicate's edges.
- *
- * The predicate is the heading because it is what the claims say. A reader scanning this page is
- * asking "what is said about this thing", and the answer is a list of verbs with subjects under
- * them.
- */
-function Group({group, subject}: {group: GroupView; subject: string}) {
-    return (
-        <section className="mb-12">
-            <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 border-b border-[color:var(--color-rule-strong)] pb-2">
-                <h2
-                    className={`font-medium ${group.labelIsId ? "font-mono text-[length:var(--text-body-sm)]" : ""}`}
-                >
-                    {group.label}
-                </h2>
-                {group.backing === null ? null : (
-                    <Backing amount={group.backing} positions={group.positions} />
-                )}
-            </div>
-            <ul>
-                {group.rows.map((row) => (
-                    <li
-                        key={row.tripleId}
-                        className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 border-b border-[color:var(--color-rule)] py-3"
-                    >
-                        {/* The **whole sentence**, not just its subject. A row used to read
-                            "Agent 13579:3" under a heading "uses", leaving the reader to assemble
-                            `Agent 13579:3 — uses — this atom` themselves (user, 2026-10-27, with a
-                            screenshot). A triple is a statement and reads as one.
-
-                            Weighted so the new information leads: the subject is the only part
-                            that changes down the list, so it carries the colour and the link. The
-                            predicate is steel and the object is the page you are already on, so it
-                            is dimmest — present for the grammar, not for the eye. Every subject is
-                            an atom, so every subject links to its own page: the graph is walkable
-                            in both directions. */}
-                        <p className="flex min-w-0 flex-wrap items-baseline gap-x-2">
-                            <Link
-                                to={`/atom/${row.subjectAtomId}`}
-                                className={`min-w-0 truncate ${row.nameIsId ? "font-mono" : ""} ${linkClass}`}
-                            >
-                                {row.name}
-                            </Link>
-                            <span className="text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
-                                {group.label}
-                            </span>
-                            <span className="min-w-0 truncate text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
-                                {subject}
-                            </span>
-                        </p>
-                        <span className="flex items-center gap-4">
-                            {row.backing === null ? null : (
-                                <Backing amount={row.backing} positions={row.positions} />
-                            )}
-                            {row.opposition === null ? null : (
-                                <span className="font-mono text-[length:var(--text-body-sm)] tabular-nums text-[color:var(--color-alarm)]">
-                                    against {row.opposition}
-                                </span>
-                            )}
-                        </span>
-                    </li>
-                ))}
-            </ul>
-        </section>
-    );
-}
-
 /** The id resolves to nothing. Different from an atom nobody points at, and said differently. */
 function Missing({atomId}: {atomId: string}) {
     return (
@@ -265,25 +338,6 @@ function Missing({atomId}: {atomId: string}) {
                 <span className="font-mono">{truncateMiddle(atomId)}</span> is a well-formed id that
                 this chain&rsquo;s graph does not hold. It may exist on the other chain, or not yet
                 exist at all.
-            </p>
-        </div>
-    );
-}
-
-/**
- * The atom is there and nothing points at it — the ordinary case for most atoms.
- *
- * Says what would be here, per `rules/ui.md`, and does not pretend the absence is informative:
- * nobody pointing at something is not evidence against it.
- */
-function Empty({atomId}: {atomId: string}) {
-    return (
-        <div>
-            <h2 className="text-[length:var(--text-body)] font-medium">Nothing points at it</h2>
-            <p className="mt-3 max-w-[70ch] text-[color:var(--color-steel)]">
-                No claim on this chain has{" "}
-                <span className="font-mono">{truncateMiddle(atomId)}</span> as its object. A row
-                appears when somebody writes one — a declared use, a tag, a category.
             </p>
         </div>
     );

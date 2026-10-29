@@ -7,6 +7,7 @@ import {
     truncateMiddle,
 } from "../../services/trust-format";
 import {Hint} from "../brand/Hint";
+import {useDeclaredModules} from "../../hooks/use-declared-modules";
 import {Sigil} from "../brand/Sigil";
 
 /**
@@ -24,10 +25,38 @@ import {Sigil} from "../brand/Sigil";
  * the header**, where the reference puts it and where an identity mark belongs; the fields are the
  * body of a numbered section like every other.
  *
- * The fields run in two columns now rather than one 17rem stack, because they are short values and
- * a single column of seven made the section four screens tall on a phone and a thin ribbon on a
- * desktop.
+ * **They are back in one column, and the reason is different from the one that moved them out.**
+ * They ran in two because they were the body of a full-width numbered section, where a single
+ * stack of seven was a thin ribbon. They now sit in the page's 18rem identity column — the shape
+ * the user asked for after seeing the atom page: _« la page tools est vraiment mieux, je voudrais
+ * la même chose pour la page detailed agent »_ — where two columns would be two strips of four
+ * characters each.
  */
+
+/**
+ * A fact that **decides** something, set above the reference.
+ *
+ * The section had seven fields in one grid at one weight, one size and one colour — the user's
+ * verdict: _« la hiérarchie d'importance, là c'est pas pratique, tout est pareil »_. He is right,
+ * and `rules/ui.md` says so first: hierarchy comes from type weight and size, not from boxes.
+ *
+ * The split is by consequence, not by taste. **Owner** decides who may declare for this agent —
+ * `services/declare-use.ts` refuses every other wallet. **Registration file** decides whether
+ * anything it claims can be checked at all. Those two change what a reader can do. A CAIP-19 and a
+ * registry address are true, necessary, and never the first question.
+ */
+function LeadField({label, children}: {label: string; children: React.ReactNode}) {
+    return (
+        <div>
+            <dt className="font-mono uppercase tracking-wider text-[length:var(--text-label)] text-[color:var(--color-steel)]">
+                {label}
+            </dt>
+            <dd className="mt-1.5 font-mono text-[length:var(--text-body)] break-all">
+                {children}
+            </dd>
+        </div>
+    );
+}
 
 function Field({label, children}: {label: string; children: React.ReactNode}) {
     return (
@@ -35,7 +64,7 @@ function Field({label, children}: {label: string; children: React.ReactNode}) {
             <dt className="font-mono uppercase tracking-wider text-[length:var(--text-label)] text-[color:var(--color-steel)]">
                 {label}
             </dt>
-            <dd className="mt-1 font-mono text-[length:var(--text-body-sm)] break-all">
+            <dd className="mt-1 font-mono text-[length:var(--text-body-sm)] break-all text-[color:var(--color-silver)]">
                 {children}
             </dd>
         </div>
@@ -72,7 +101,28 @@ export function AgentSigil({
     viewerStaked?: boolean;
     size?: number;
 }) {
-    const modules = sigilModulesOf(view.capabilities);
+    /**
+     * **The direct read first, because the indirect one is empty here and it is not the data's
+     * fault.**
+     *
+     * `sigilModulesOf(view.capabilities)` walks the capability groups, which the profile builds by
+     * resolving the agent's ERC-8004 identity to its Intuition atom — and that resolution is the
+     * `same as` join `tasks/19` step 1b records as **zero edges on testnet**. So for every agent on
+     * ARP's own rig the `uses-tool` group is empty, the glyph returned `null`, and the agent page
+     * showed no sigil at all while its declarations plainly existed: the user reported exactly that,
+     * on an agent whose glyph was rendering **in the claim rows of a tool's page** a screen away.
+     *
+     * The rows get it right because they query by the subject's **atom id**, which the page already
+     * has as `atomTermId`. Same read, same shape, no join.
+     *
+     * The capability groups stay as the fallback rather than being dropped: they carry mainnet
+     * agents whose atom the page resolved through a path this read does not cover.
+     */
+    const declared = useDeclaredModules(view.atomTermId === null ? [] : [view.atomTermId]);
+    const direct = (view.atomTermId === null ? [] : (declared.data?.[view.atomTermId] ?? [])).map(
+        (name) => ({name, state: "declared" as const}),
+    );
+    const modules = direct.length > 0 ? direct : sigilModulesOf(view.capabilities);
     if (modules.length === 0) return null;
 
     return (
@@ -99,54 +149,67 @@ export function AgentIdentityPanel({view}: {view: TrustPanelView}) {
     const ownerUrl = view.owner === null ? null : chainAddressExplorerUrl(view.chainId, view.owner);
 
     return (
-        <dl className="grid gap-x-10 gap-y-3 sm:grid-cols-2">
-            <Field label="CAIP-19">{view.caip19}</Field>
-            <Field label="Registry">
-                {explorerUrl !== null ? (
-                    <a href={explorerUrl} target="_blank" rel="noreferrer">
-                        {truncateMiddle(view.registry, 10, 8)} ↗
-                    </a>
-                ) : (
-                    truncateMiddle(view.registry, 10, 8)
-                )}
-            </Field>
-            <Field label="Token id">{view.tokenId}</Field>
-            <Field label="Owner">
-                {view.owner === null ? (
-                    <span className="text-[color:var(--color-steel)]">not read</span>
-                ) : ownerUrl === null ? (
-                    truncateMiddle(view.owner, 10, 8)
-                ) : (
-                    <a href={ownerUrl} target="_blank" rel="noreferrer">
-                        {truncateMiddle(view.owner, 10, 8)} ↗
-                    </a>
-                )}
-            </Field>
-            <Field label="Intuition atom">
-                {view.atomTermId === null ? (
-                    <span className="text-[color:var(--color-steel)]">
-                        not in the Intuition graph
-                    </span>
-                ) : (
-                    <a href={intuitionAtomUrl(view.atomTermId)} target="_blank" rel="noreferrer">
-                        {truncateMiddle(view.atomTermId, 12, 8)} ↗
-                    </a>
-                )}
-            </Field>
-            <Field label="Registration file">
-                {view.registrationFile === null ? (
-                    <span className="text-[color:var(--color-steel)]">none published</span>
-                ) : (
-                    registrationFileSummary(view.registrationFile)
-                )}
-            </Field>
-            {view.url !== null ? (
-                <Field label={view.isFallbackMetadata ? "URL (indexer stand-in)" : "URL"}>
-                    <a href={view.url} target="_blank" rel="noreferrer">
-                        {truncateMiddle(view.url, 30, 10)} ↗
-                    </a>
+        <dl>
+            {/* The two facts that decide something, above the reference and at body size rather
+                than the label size everything else here uses. */}
+            <div className="grid gap-y-5">
+                <LeadField label="Owner">
+                    {view.owner === null ? (
+                        <span className="text-[color:var(--color-steel)]">not read</span>
+                    ) : ownerUrl === null ? (
+                        truncateMiddle(view.owner, 10, 8)
+                    ) : (
+                        <a href={ownerUrl} target="_blank" rel="noreferrer">
+                            {truncateMiddle(view.owner, 10, 8)} ↗
+                        </a>
+                    )}
+                </LeadField>
+                <LeadField label="Registration file">
+                    {view.registrationFile === null ? (
+                        <span className="text-[color:var(--color-steel)]">none published</span>
+                    ) : (
+                        registrationFileSummary(view.registrationFile)
+                    )}
+                </LeadField>
+            </div>
+
+            {/* The plumbing. True, necessary, and never the first question — so it is set quieter
+                and below, instead of competing with the two above it. */}
+            <div className="mt-8 grid gap-y-3">
+                <Field label="CAIP-19">{view.caip19}</Field>
+                <Field label="Registry">
+                    {explorerUrl !== null ? (
+                        <a href={explorerUrl} target="_blank" rel="noreferrer">
+                            {truncateMiddle(view.registry, 10, 8)} ↗
+                        </a>
+                    ) : (
+                        truncateMiddle(view.registry, 10, 8)
+                    )}
                 </Field>
-            ) : null}
+                <Field label="Token id">{view.tokenId}</Field>
+                <Field label="Intuition atom">
+                    {view.atomTermId === null ? (
+                        <span className="text-[color:var(--color-steel)]">
+                            not in the Intuition graph
+                        </span>
+                    ) : (
+                        <a
+                            href={intuitionAtomUrl(view.atomTermId)}
+                            target="_blank"
+                            rel="noreferrer"
+                        >
+                            {truncateMiddle(view.atomTermId, 12, 8)} ↗
+                        </a>
+                    )}
+                </Field>
+                {view.url !== null ? (
+                    <Field label={view.isFallbackMetadata ? "URL (indexer stand-in)" : "URL"}>
+                        <a href={view.url} target="_blank" rel="noreferrer">
+                            {truncateMiddle(view.url, 30, 10)} ↗
+                        </a>
+                    </Field>
+                ) : null}
+            </div>
         </dl>
     );
 }

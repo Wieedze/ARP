@@ -1,3 +1,4 @@
+import {seedTitleOf} from "../lib/tool-catalogue-seed";
 import {formatTrust} from "./trust-format";
 import type {
     RegisteredTool,
@@ -273,13 +274,26 @@ export type ToolCatalogView = {
     curveId: number;
 };
 
+/**
+ * The name this app shows for a tool row: its seed title if we have one, else the atom's own label.
+ *
+ * The seed title is front-end only and overrides the label on purpose — the label *is* the URL
+ * (`toolThing` derives it), so "Stripe" and `github.com/stripe/agent-toolkit` are the same atom
+ * read two ways, and the URL stays visible on the atom page. `null` when there is neither, so the
+ * caller falls back to the atom id and `isUnnamed` keeps meaning "the graph named nothing".
+ */
+function displayNameOf(label: string | undefined, named: boolean): string | null {
+    if (!named || label === undefined) return null;
+    return seedTitleOf(label) ?? label;
+}
+
 function rowOf(tool: ToolListing): ToolRow {
     const label = tool.label?.trim();
     const named = label !== undefined && label.length > 0;
     return {
         key: tool.atomId,
         provenance: "declared",
-        name: named ? label : tool.atomId,
+        name: displayNameOf(label, named) ?? tool.atomId,
         isUnnamed: !named,
         href: `/atom/${tool.atomId}`,
         declarations: tool.edgeCount,
@@ -296,7 +310,7 @@ function registeredRowOf(tool: RegisteredTool): ToolRow {
     return {
         key: tool.atomId,
         provenance: "registered",
-        name: named ? label : tool.atomId,
+        name: displayNameOf(label, named) ?? tool.atomId,
         isUnnamed: !named,
         href: `/atom/${tool.atomId}`,
         declarations: tool.declarations,

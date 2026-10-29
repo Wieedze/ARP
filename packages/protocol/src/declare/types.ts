@@ -12,8 +12,15 @@ import type {Address, Hex} from "viem";
  * runtime cannot explain to its operator is a plan the operator should refuse.
  */
 export type PreparedCall = {
-    /** What the call does. Discriminated so a caller can render a plan without decoding calldata. */
-    kind: "create-atom" | "create-triple" | "deposit";
+    /**
+     * What the call does. Discriminated so a caller can render a plan without decoding calldata.
+     *
+     * `redeem` joined the three on 2026-10-28 with `declare/market.ts`. It was briefly written as a
+     * `deposit`, which would have had every surface that renders a plan by its kind label a
+     * withdrawal as a deposit — the one call in the package that sends no value, announced as the
+     * one that sends the most.
+     */
+    kind: "create-atom" | "create-triple" | "deposit" | "redeem";
     /**
      * The chain this call is valid on, **on the call and not only on the plan**.
      *

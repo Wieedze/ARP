@@ -39,6 +39,8 @@ import {
   intuitionToolAtomLookup,
   multiVaultReads,
   prepareDeclareUsed,
+  prepareMarketExit,
+  prepareMarketPosition,
   prepareStakeOnUsed,
   resolveDeclarationSubject,
   type DeclarePlan,
@@ -47,7 +49,22 @@ import {
 } from '../packages/protocol/src/declare/index.js';
 import { toCaip19 } from '../packages/protocol/src/caip.js';
 import { listTools, type ToolListingOrder } from '../packages/protocol/src/tool-listing.js';
+import { getAddress } from 'viem';
+
+import { listRegisteredTools } from '../packages/protocol/src/registered-tools.js';
+import { toolsInDomain } from '../packages/protocol/src/domains.js';
+import {
+  HAS_TAG,
+  IS_A_SUB_DOMAIN_OF,
+} from '../packages/protocol/src/sources/intuition/terms.js';
+import catalogue from '../catalogue/tools.json';
 import { createErc8004Client } from '../packages/protocol/src/client.js';
+import { resolveAgent } from '../packages/protocol/src/profile.js';
+import {
+  partitionByCheckability,
+  readDeclaredEndpoints,
+} from '../packages/protocol/src/verify/declaration.js';
+import { probeEndpoint } from '../packages/protocol/src/verify/probe.js';
 import { listAgents } from '../packages/protocol/src/listing.js';
 import { intuitionSource } from '../packages/protocol/src/sources/intuition/index.js';
 import type { AgentListOrder } from '../packages/protocol/src/types.js';
@@ -100,6 +117,85 @@ const reads = multiVaultReads({ address: MULTI_VAULT, chainId, rpcUrl: RPC_URL }
  * `uses` edges are `ipfs://` and 77 of those resolve a pinned Thing. A graph read, no credential.
  */
 const toolAtoms = intuitionToolAtomLookup({ graphqlUrl: GRAPHQL_URL });
+
+/** The label every domain path climbs to. One word, no hyphen — the user's rule, 2026-10-28. It is
+ *  a convention and the one arbitrary choice in the vocabulary, so it is named once here rather
+ *  than repeated at each call site. */
+const DOMAIN_ROOT = 'tool';
+
+/**
+ * The address whose positions define ARP's domain tree.
+ *
+ * A term is in the tree because this address paid to put it there, by creating it with a deposit or
+ * by backing one somebody else created — the two are the same act (the user, 2026-10-28). It is a
+ * published reading and not a permission: nobody is prevented from writing, and a caller can read
+ * the unfiltered graph instead. On 13579 the hierarchy predicate carries 60 triples and this
+ * address has a position on 17 of them; the other 43 belong to a different project and to its test
+ * runs.
+ *
+ * Checksummed, because the indexer's `positions.account_id` is and a lowercase filter returns zero
+ * rows — which reads as "nobody staked" rather than as a bad query.
+ */
+/**
+ * ARP's published domain attestor — the address whose positions are ARP's index.
+ *
+ * A **default**, not a fallback to the operator's own address. ADR `0045` has every operator run
+ * this node on their own machine, so the attestor has to travel with the code: an operator who
+ * clones the repo and starts the node must get ARP's index without configuring anything.
+ *
+ * The first version of this read `ARP_DOMAIN_ATTESTOR ?? AGENT_ADDRESS`, which was right for one
+ * laptop and wrong for a distributed node: `AGENT_ADDRESS` is the *operator's own* agent, it has no
+ * position on any ARP domain, so every operator's node would have read an **empty index** and
+ * reported that ARP has filed nothing. Silent, and indistinguishable from an empty registry.
+ *
+ * Override it with `ARP_DOMAIN_ATTESTOR` to read somebody else's index, or your own once you have
+ * filed domains yourself. Blank it to disable domain search altogether — the search then refuses
+ * rather than falling back to the unfiltered graph.
+ */
+const ARP_DOMAIN_ATTESTOR = '0x906f3A52ec089f8D4E9127F91C6bE5Ae0d18f91f';
+
+function configuredAttestor(): string | undefined {
+  const raw = process.env['ARP_DOMAIN_ATTESTOR'] ?? ARP_DOMAIN_ATTESTOR;
+  // `??` alone let an EMPTY string through, because an empty string is not nullish: the guard below
+  // saw a value, the query ran with `account_id: ""`, and every domain came back with nothing in
+  // it. A search that silently returns zero rows reads as "this domain is empty", not as "this node
+  // is misconfigured" — the same trap as the lowercase address, one level up.
+  if (raw === undefined || raw.trim().length === 0) return undefined;
+  const address = raw.trim();
+  if (/^0x[0-9a-f]{40}$/.test(address) || /^0x[0-9A-F]{40}$/.test(address)) {
+    // Normalised rather than refused. The indexer's `positions.account_id` is checksummed and a
+    // lowercase filter matches nothing, so a perfectly valid address written in lower case would
+    // return an empty index for every domain — which reads as "ARP has filed nothing" rather than
+    // as a configuration mistake. `getAddress` throws on a bad address and returns the checksummed
+    // form otherwise, so this both fixes the case and validates the value.
+    try {
+      return getAddress(address);
+    } catch {
+      console.error(`ARP_DOMAIN_ATTESTOR is not a valid address: ${JSON.stringify(address)} — domain search disabled.`);
+      return undefined;
+    }
+  }
+  if (!/^0x[0-9a-fA-F]{40}$/.test(address)) {
+    // Refused at load, not at call time. A malformed attestor cannot produce a correct index, and
+    // failing at the first search would make it look like a data problem.
+    // `console.error`, not `log`: this runs at module load and `log` is declared further down, so
+    // calling it here threw a ReferenceError and took the whole server down before it could serve
+    // anything. stderr is the right stream in both transports anyway — on stdio, stdout is the
+    // protocol.
+    console.error(
+      `ARP_DOMAIN_ATTESTOR is not a 0x address: ${JSON.stringify(address)} — domain search disabled.`,
+    );
+    return undefined;
+  }
+  return address;
+}
+
+/**
+ * The address whose positions define this node's domain index. Set once, at load.
+ *
+ * Not a request parameter, deliberately — see the note in `findTools`.
+ */
+const DOMAIN_ATTESTOR = configuredAttestor();
 
 /**
  * The directory read, pointed at the same graph as everything else here.
@@ -364,6 +460,254 @@ async function stakeOnUsed(id: JsonRpcId, args: Record<string, unknown>) {
 }
 
 /**
+ * Join the market on an atom.
+ *
+ * **A different act from `arp_stake_on_used`**, and the server keeps them apart for the reason ADR
+ * `0056` does: backing a `uses` edge says *this claim is true* and is attributable to whoever wrote
+ * it; depositing on an atom says *this thing is worth something* and anyone may do it for any
+ * reason. The two are never summed.
+ *
+ * This is the gap that made the node read-only on the thing it exists for: measured 2026-10-28,
+ * **2,354 TRUST across 23 positions** sits on 39 skill atoms on mainnet 1155, and until now not one
+ * wei of it was reachable from here.
+ */
+async function takePosition(id: JsonRpcId, args: Record<string, unknown>) {
+  const termId = args['term_id'];
+  const receiver = args['receiver'];
+  if (!isTermId(termId)) return fail(id, -32602, 'term_id must be 0x + 32 bytes');
+  if (!isAddress(receiver)) return fail(id, -32602, 'receiver must be a 0x address');
+
+  const amountRaw = args['amount_wei'];
+  if (typeof amountRaw !== 'string' || !/^\d+$/.test(amountRaw)) {
+    return fail(id, -32602, 'amount_wei must be a decimal string of wei');
+  }
+  const curveRaw = args['curve_id'];
+  if (curveRaw !== undefined && (typeof curveRaw !== 'number' || !Number.isInteger(curveRaw))) {
+    return fail(id, -32602, 'curve_id must be an integer');
+  }
+  const minSharesRaw = args['min_shares'];
+  if (
+    minSharesRaw !== undefined &&
+    (typeof minSharesRaw !== 'string' || !/^\d+$/.test(minSharesRaw))
+  ) {
+    return fail(id, -32602, 'min_shares must be a decimal string');
+  }
+
+  const plan = await prepareMarketPosition({
+    termId,
+    amount: BigInt(amountRaw),
+    receiver,
+    reads,
+    ...(curveRaw === undefined ? {} : { curveId: BigInt(curveRaw) }),
+    ...(minSharesRaw === undefined ? {} : { minShares: BigInt(minSharesRaw) }),
+  });
+
+  return text(id, {
+    term_id: plan.termId,
+    receiver: plan.receiver,
+    curve_id: plan.curveId.toString(),
+    amount_wei: plan.amount.toString(),
+    shares: plan.shares.toString(),
+    assets_after_fees_wei: plan.assetsAfterFees.toString(),
+    min_deposit_wei: plan.minDeposit.toString(),
+    chain_id: plan.chainId,
+    calls: plan.calls.map(serialiseCall),
+    caveat: UNSIGNED_CAVEAT,
+  });
+}
+
+/**
+ * Leave the market on an atom.
+ *
+ * It ships with the way in rather than after it: ADR `0056`, in the user's own words — *a deposit
+ * nobody can withdraw is a donation*, and a one-directional market is a collection box.
+ *
+ * The call it returns sends **no value**, which is unique on this server. What the redemption
+ * fetches is read from `previewRedeem` rather than derived from the share count, because the exit
+ * fee is governance-configurable and curve 2 is not linear in shares.
+ */
+async function exitPosition(id: JsonRpcId, args: Record<string, unknown>) {
+  const termId = args['term_id'];
+  const account = args['account'];
+  const receiver = args['receiver'];
+  if (!isTermId(termId)) return fail(id, -32602, 'term_id must be 0x + 32 bytes');
+  if (!isAddress(account)) return fail(id, -32602, 'account must be a 0x address');
+  if (!isAddress(receiver)) return fail(id, -32602, 'receiver must be a 0x address');
+
+  const sharesRaw = args['shares'];
+  if (sharesRaw !== undefined && (typeof sharesRaw !== 'string' || !/^\d+$/.test(sharesRaw))) {
+    return fail(id, -32602, 'shares must be a decimal string');
+  }
+  const curveRaw = args['curve_id'];
+  if (curveRaw !== undefined && (typeof curveRaw !== 'number' || !Number.isInteger(curveRaw))) {
+    return fail(id, -32602, 'curve_id must be an integer');
+  }
+  const minAssetsRaw = args['min_assets'];
+  if (
+    minAssetsRaw !== undefined &&
+    (typeof minAssetsRaw !== 'string' || !/^\d+$/.test(minAssetsRaw))
+  ) {
+    return fail(id, -32602, 'min_assets must be a decimal string');
+  }
+
+  const plan = await prepareMarketExit({
+    termId,
+    account,
+    receiver,
+    reads,
+    ...(sharesRaw === undefined ? {} : { shares: BigInt(sharesRaw) }),
+    ...(curveRaw === undefined ? {} : { curveId: BigInt(curveRaw) }),
+    ...(minAssetsRaw === undefined ? {} : { minAssets: BigInt(minAssetsRaw) }),
+  });
+
+  return text(id, {
+    term_id: plan.termId,
+    receiver: plan.receiver,
+    curve_id: plan.curveId.toString(),
+    shares: plan.shares.toString(),
+    held_shares: plan.held.toString(),
+    assets_after_fees_wei: plan.assetsAfterFees.toString(),
+    chain_id: plan.chainId,
+    calls: plan.calls.map(serialiseCall),
+    caveat: UNSIGNED_CAVEAT,
+  });
+}
+
+/**
+ * Where another agent said it can be reached.
+ *
+ * **ARP is not in the path of what you do with it.** `docs/12`: unplug ARP's servers and every
+ * agent-to-agent call still completes. This hands over an address the agent published about itself;
+ * the call that follows is between the two of you, and ADR `0060` is why there is no step in
+ * between — a delegation names its delegate by address, an agent's runtime address is not on the
+ * graph, so brokering a meeting is a promise with no mechanism. Handing over a published address is
+ * not brokering.
+ *
+ * Declared, **not verified**: an agent writes its own card. `arp_probe_endpoint` is the separate
+ * question, deliberately separate, because what was published and what answers are two facts.
+ */
+async function agentEndpoints(id: JsonRpcId, args: Record<string, unknown>) {
+  const agentChainId = args['agent_chain_id'];
+  const agentTokenId = args['agent_token_id'];
+  if (typeof agentChainId !== 'number' || !Number.isInteger(agentChainId) || agentChainId <= 0) {
+    return fail(id, -32602, 'agent_chain_id must be a positive integer');
+  }
+  if (typeof agentTokenId !== 'string' || !/^\d+$/.test(agentTokenId)) {
+    return fail(id, -32602, 'agent_token_id must be a decimal string');
+  }
+  const registryRaw = args['registry'];
+  if (registryRaw !== undefined && !isAddress(registryRaw)) {
+    return fail(id, -32602, 'registry, when given, must be a 20-byte hex address');
+  }
+
+  const agent = {
+    chainId: agentChainId,
+    tokenId: agentTokenId,
+    ...(registryRaw === undefined ? {} : { registry: registryRaw }),
+  };
+  const identity = await resolveAgent(directory, agent);
+  const file = identity?.registrationFile ?? null;
+  if (file === null || file.trim() === '') {
+    return text(id, {
+      caip19: toCaip19(agent),
+      registration_file: null,
+      note: 'This agent registered without a document, so it published no way in.',
+    });
+  }
+
+  let document: unknown;
+  try {
+    if (file.startsWith('data:')) {
+      // Inline in the tokenURI — the shape an agent picks when it wants no hosting dependency.
+      const comma = file.indexOf(',');
+      const payload = file.slice(comma + 1);
+      document = JSON.parse(
+        file.slice(0, comma).includes(';base64')
+          ? Buffer.from(payload, 'base64').toString('utf8')
+          : decodeURIComponent(payload),
+      );
+    } else {
+      const url = file.startsWith('ipfs://')
+        ? `https://ipfs.io/ipfs/${file.slice('ipfs://'.length)}`
+        : file;
+      const response = await fetch(url, { headers: { accept: 'application/json' } });
+      if (!response.ok) {
+        return text(id, {
+          caip19: toCaip19(agent),
+          registration_file: file,
+          error: `the host answered ${response.status}`,
+          note: 'Published something we could not read, which is a different answer from publishing nothing.',
+        });
+      }
+      document = await response.json();
+    }
+  } catch (error) {
+    return text(id, {
+      caip19: toCaip19(agent),
+      registration_file: file,
+      error: error instanceof Error ? error.message : String(error),
+      note: 'Published something we could not read, which is a different answer from publishing nothing.',
+    });
+  }
+
+  // Split, never merged: showing them as one list implies the second group failed a check it was
+  // never given.
+  const { probeable, notCheckable } = partitionByCheckability(readDeclaredEndpoints(document));
+  return text(id, {
+    caip19: toCaip19(agent),
+    registration_file: file,
+    callable: probeable.map((endpoint) => ({
+      name: endpoint.name,
+      protocol: endpoint.protocol,
+      version: endpoint.version,
+      url: endpoint.classification.status === 'probeable' ? endpoint.classification.url : null,
+      capabilities: endpoint.capabilities,
+    })),
+    not_callable: notCheckable.map((endpoint) => ({
+      name: endpoint.name,
+      declared:
+        endpoint.classification.status === 'probeable' ? null : endpoint.classification.declared,
+      why: endpoint.classification.status === 'probeable' ? null : endpoint.classification.code,
+    })),
+    note: "The agent's own claim about itself. `arp_probe_endpoint` asks whether one answers.",
+  });
+}
+
+/**
+ * Does this endpoint answer?
+ *
+ * The verdict vocabulary is the prober's and the asymmetry in it is principled: a timeout **is** an
+ * answer about the agent, because an endpoint that cannot respond in eight seconds is not serving
+ * callers; a TLS or DNS failure is **not**, because it could equally be us; a `429` is never a
+ * verdict, it is the host asking us to stop. Some genuinely dead endpoints therefore land in
+ * `inconclusive` — a true positive given up rather than a false accusation risked, and the observed
+ * body is carried so a caller can draw its own conclusion from the same evidence.
+ *
+ * It lives here and not in the app for one reason: a probe in a browser would be every reader of a
+ * page firing at somebody else's host.
+ */
+async function probe(id: JsonRpcId, args: Record<string, unknown>) {
+  const url = args['url'];
+  if (typeof url !== 'string' || !/^https?:\/\//i.test(url)) {
+    return fail(id, -32602, 'url must be an http or https address');
+  }
+  const protocolRaw = args['protocol'];
+  if (protocolRaw !== undefined && protocolRaw !== 'mcp' && protocolRaw !== 'a2a') {
+    return fail(id, -32602, "protocol, when given, must be 'mcp' or 'a2a'");
+  }
+
+  const outcome = await probeEndpoint({
+    declaredUnder: 'endpoints',
+    name: protocolRaw ?? null,
+    protocol: (protocolRaw as 'mcp' | 'a2a' | undefined) ?? null,
+    version: null,
+    capabilities: [],
+    classification: { status: 'probeable', url, declared: url },
+  });
+  return text(id, { url, outcome });
+}
+
+/**
  * Does this agent have an identity atom — the thing a `uses` edge must carry as its subject?
  *
  * The most useful read here, because of what `scripts/measure/cohort-coverage.ts` measures: the atom
@@ -509,11 +853,64 @@ async function findAgents(id: JsonRpcId, args: Record<string, unknown>) {
  *
  * `hosted_at` is the field that makes this actionable: ARP stores no tool, so an agent reads the
  * listing, **goes to the host**, and decides for itself. It is a home page, not a call target — 28
- * of the 80 distinct tools on mainnet carry none at all.
+ * of the 85 distinct tools on mainnet `uses` edges carry none at all, and 9 more carry the string
+ * `"null"` (re-measured 2026-10-28; it was 80 and 3 on 2026-10-20).
  *
- * Agent declarations only: the `uses` predicate is shared and most of what sits on it is ordinary
- * prose, filtered out in the query rather than returned under a caveat.
+ * **None of those 85 is reachable through the declared read, and that is the point of the second
+ * one.** `listTools` requires the subject to be an identified agent — a `same as` edge — and
+ * measured 2026-10-28, **zero** of the 186 mainnet `uses` edges has one. Three of 167 do on
+ * testnet. So the declared population is a real zero on mainnet, which is our own non-activity
+ * and not a property of the graph, and a catalogue built on it alone answers nothing.
+ *
+ * ## Two populations, and it used to return one
+ *
+ * A **declared** tool is the object of an agent's `uses` edge. A **registered** tool is an atom
+ * somebody created, which needs no agent and carries a market of its own (ADR `0039`). Returning
+ * only the first made the whole catalogue invisible to an agent until somebody had already
+ * declared something — and nobody had, ARP included, so on testnet this answered with an empty
+ * list while 52 registered tools sat one query away.
+ *
+ * `provenance` says which read a row came from, because the two answer different questions and a
+ * merged list that hid the difference would be the kind of summed figure `rules/claims.md`
+ * forbids. A collision keeps the declared row: it carries the per-edge market this tool is about.
+ *
+ * Agent declarations only on the declared side: the `uses` predicate is shared and most of what
+ * sits on it is ordinary prose, filtered out in the query rather than returned under a caveat.
+ * That filter is why `arp_find_tools` no longer answers with Bitcoin and Obsidian.
+ *
+ * ## `title` and `purpose` are this repo's, not the chain's
+ *
+ * Read from `catalogue/tools.json`. The atom carries only its URL (ADR `0054`), so a readable name
+ * cannot come from the graph; and `purpose` is the description each repository publishes about
+ * itself, quoted and dated, never written by us. Absent for a tool we have not catalogued, which
+ * is most of the graph — a caller gets `null` and the URL, not a guess.
  */
+/**
+ * `catalogue/tools.json`'s entry for an atom label, as the two fields a caller gets.
+ *
+ * Keyed on the label the graph returns, which `toolThing` writes as the URL minus its scheme.
+ * Tolerant of a scheme, a trailing slash and case, because a hand-registered atom may carry any
+ * of them. Both fields are `null` for a tool nobody catalogued — a caller then has the URL, which
+ * is the identity and was always enough.
+ */
+function seedFor(label: string | null): { title: string | null; purpose: string | null } {
+  if (label === null) return { title: null, purpose: null };
+  const key = label
+    .trim()
+    .toLowerCase()
+    .replace(/^https?:\/\//, '')
+    .replace(/\/+$/, '');
+  const hit = SEED_BY_KEY.get(key);
+  return { title: hit?.title ?? null, purpose: hit?.purpose ?? null };
+}
+
+const SEED_BY_KEY = new Map(
+  (catalogue.tools as { url: string; title: string; purpose: string | null }[]).map((tool) => [
+    tool.url.replace(/^https:\/\//, '').toLowerCase(),
+    tool,
+  ]),
+);
+
 async function findTools(id: JsonRpcId, args: Record<string, unknown>) {
   const orderRaw = args['order'] ?? 'priced-edges';
   if (orderRaw !== 'priced-edges' && orderRaw !== 'conviction' && orderRaw !== 'declarations') {
@@ -532,30 +929,155 @@ async function findTools(id: JsonRpcId, args: Record<string, unknown>) {
   if (curveRaw !== undefined && (typeof curveRaw !== 'number' || !Number.isInteger(curveRaw))) {
     return fail(id, -32602, 'curve_id must be an integer');
   }
+  const domainRaw = args['domain'];
+  if (domainRaw !== undefined && typeof domainRaw !== 'string') {
+    return fail(id, -32602, 'domain must be a string');
+  }
+  // Whose index to read is **not** a request parameter, and that is the safety net (the user,
+  // 2026-10-28: « je ne veux pas que ce soit modulable par un agent ou un mcp ou n'importe quoi,
+  // c'est le filet de sécurité du classement des info »).
+  //
+  // The reasoning: `has tag` and the hierarchy are permissionless to write, so the only thing
+  // separating ARP's index from anything anybody published is which positions it is read through.
+  // A caller that can pass its own attestor — or `any` — can make the index say whatever it likes,
+  // and then a curated index guarantees nothing. An earlier version of this handler took
+  // `attestor` from the arguments; it was wrong for exactly one turn.
+  //
+  // The attestor is a property of the NODE, not of the request. Anybody who wants a different
+  // index runs a node with a different `ARP_DOMAIN_ATTESTOR`. Nobody changes it per call.
+  const attestor = DOMAIN_ATTESTOR;
+  if (domainRaw !== undefined && attestor === undefined) {
+    // Refuses rather than falling back to the unfiltered graph. The fallback is the failure this
+    // whole design exists to prevent, and it would have been silent: a search returning more rows
+    // than it should looks like a better answer, not like a missing guard rail.
+    return fail(
+      id,
+      -32603,
+      'this node has no domain attestor configured, so it cannot answer a domain search. ' +
+        'Set ARP_DOMAIN_ATTESTOR (or AGENT_ADDRESS) to the address whose filings are the index. ' +
+        'Reading the hierarchy unfiltered would return every triple anybody has ever published ' +
+        'under the predicate, which is not an index.',
+    );
+  }
 
-  const page = await listTools({
-    graphqlUrl: GRAPHQL_URL,
-    order: orderRaw as ToolListingOrder,
-    ...(curveRaw === undefined ? {} : { curveId: curveRaw }),
-  });
+  // Searching by need, which is the whole reason this parameter exists: the agent names a domain
+  // and the subtree under it is resolved before anything is ranked. A tool carries one tag at its
+  // deepest domain and the ancestors are derived (ADR `0074`), so `payment` has to descend to
+  // `card` before it can find Stripe.
+  let domainScope: {
+    domains: string[];
+    atomIds: Set<string>;
+    backed: Set<string>;
+    othersHidden: number;
+  } | null = null;
+  if (domainRaw !== undefined) {
+    const normalised = domainRaw.trim().toLowerCase();
+    const {domains, tools} = await toolsInDomain(
+      {
+        graphqlUrl: GRAPHQL_URL,
+        hierarchyPredicate: IS_A_SUB_DOMAIN_OF,
+        tagPredicate: HAS_TAG,
+        root: DOMAIN_ROOT,
+        attestor,
+      },
+      normalised,
+    );
+    // `has tag` is permissionless to write: anybody can publish `(anything, has tag, payment)` for
+    // the price of one triple. An index is therefore a *reading* of those filings, and `attestor`
+    // picks whose — ARP's by default, the caller's own, somebody else's, or none at all.
+    const kept = tools.filter((tool) => tool.attestorBacked);
+    domainScope = {
+      domains,
+      atomIds: new Set(kept.map((tool) => tool.atomId.toLowerCase())),
+      backed: new Set(
+        tools.filter((tool) => tool.attestorBacked).map((tool) => tool.atomId.toLowerCase()),
+      ),
+      othersHidden: tools.length - kept.length,
+    };
+  }
+
+  const [page, registered] = await Promise.all([
+    listTools({
+      graphqlUrl: GRAPHQL_URL,
+      order: orderRaw as ToolListingOrder,
+      ...(curveRaw === undefined ? {} : { curveId: curveRaw }),
+    }),
+    listRegisteredTools({
+      graphqlUrl: GRAPHQL_URL,
+      ...(curveRaw === undefined ? {} : { curveId: curveRaw }),
+    }),
+  ]);
+
+  const declared = new Set(page.tools.map((tool) => tool.atomId.toLowerCase()));
+  const registeredRows = registered.tools
+    .filter((tool) => !declared.has(tool.atomId.toLowerCase()))
+    .filter((tool) => domainScope === null || domainScope.atomIds.has(tool.atomId.toLowerCase()))
+    .map((tool) => ({
+      tool_atom_id: tool.atomId,
+      label: tool.label,
+      provenance: 'registered' as const,
+      ...seedFor(tool.label),
+      hosted_at: tool.url,
+      atom_uri: tool.uri,
+      declarations: tool.declarations,
+      // `null`, not `0`: pricing a registered row's declarations needs the per-edge vaults, which
+      // is `listTools`'s read. A zero under "paid for" would read as "nobody paid", a claim this
+      // read cannot make.
+      paid_declarations: null,
+      support_assets_wei: tool.assets.toString(),
+      oppose_assets_wei: null,
+      // Creating a term seeds its vault with `minShare` (ADR `0042`), so assets alone never say
+      // whether anybody staked. This does.
+      position_count: tool.positionCount,
+    }));
+
+  const inScope = (atomId: string): boolean =>
+    domainScope === null || domainScope.atomIds.has(atomId.toLowerCase());
 
   return text(id, {
     curve_id: page.curveId,
     edges_read: page.edgesRead,
-    truncated: page.truncated,
-    tools: page.tools.slice(0, limitRaw).map((tool) => ({
-      tool_atom_id: tool.atomId,
-      label: tool.label,
-      // Where to go and look. ARP hosts nothing; this is the pointer and the point.
-      hosted_at: tool.hostedAt,
-      atom_uri: tool.uri,
-      declarations: tool.edgeCount,
-      // How many of those declarations somebody paid to stand behind. Never a summed position
-      // count: positions are counted per vault and a sum across edges counts nothing (ADR `0023`).
-      paid_declarations: tool.pricedEdges,
-      support_assets_wei: tool.supportAssetsSum.toString(),
-      oppose_assets_wei: tool.opposeAssetsSum.toString(),
-    })),
+    truncated: page.truncated || registered.truncated,
+    purpose_read_at: catalogue.readAt,
+    // Present only when a domain was asked for. `domains_walked` is the derivation made visible:
+    // a tool tagged `card` comes back under `payment` because the hierarchy says so, and the
+    // reader should be able to see which hop did it rather than take the filter on trust.
+    ...(domainScope === null
+      ? {}
+      : {
+          domain: String(domainRaw).trim().toLowerCase(),
+          domains_walked: domainScope.domains,
+          domain_tagged_tools: domainScope.atomIds.size,
+          // Whose tree was walked. Named in the response because "the domain tree" is a reading,
+          // not a fact about the chain, and a reader should never have to guess whose it was.
+          // Echoed verbatim although the caller cannot set it. "The domain tree" is a reading
+          // and not a fact about the chain, so a reader must never have to guess whose it was —
+          // and an address in the wrong case returns an empty tree, which this makes diagnosable
+          // instead of looking like "this domain has nothing in it".
+          domain_attestor: attestor,
+          // How many filings under this domain this attestor does not back, and were left out.
+          // Reported even when zero, so a reader never wonders whether the question was asked.
+          tags_from_others_hidden: domainScope.othersHidden,
+        }),
+    tools: [
+      ...page.tools.filter((tool) => inScope(tool.atomId)).map((tool) => ({
+        tool_atom_id: tool.atomId,
+        label: tool.label,
+        provenance: 'declared' as const,
+        ...seedFor(tool.label),
+        // Where to go and look. ARP hosts nothing; this is the pointer and the point.
+        hosted_at: tool.hostedAt,
+        atom_uri: tool.uri,
+        declarations: tool.edgeCount,
+        // How many of those declarations somebody paid to stand behind. Never a summed position
+        // count: positions are counted per vault and a sum across edges counts nothing (ADR `0023`).
+        paid_declarations: tool.pricedEdges,
+        support_assets_wei: tool.supportAssetsSum.toString(),
+        oppose_assets_wei: tool.opposeAssetsSum.toString(),
+        position_count: null,
+      })),
+      ...registeredRows,
+    ].slice(0, limitRaw),
   });
 }
 
@@ -570,8 +1092,16 @@ async function callTool(id: JsonRpcId, params: Record<string, unknown> | undefin
         return await declareUsed(id, args);
       case 'arp_stake_on_used':
         return await stakeOnUsed(id, args);
+      case 'arp_take_position':
+        return await takePosition(id, args);
+      case 'arp_exit_position':
+        return await exitPosition(id, args);
       case 'arp_identity':
         return await identity(id, args);
+      case 'arp_agent_endpoints':
+        return await agentEndpoints(id, args);
+      case 'arp_probe_endpoint':
+        return await probe(id, args);
       case 'arp_find_agents':
         return await findAgents(id, args);
       case 'arp_find_tools':

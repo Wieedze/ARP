@@ -262,6 +262,7 @@ export {getRecentDeclarations} from "./recent.js";
 export type {RecentConfig, RecentDeclaration} from "./recent.js";
 
 export {getAtomStanding} from "./atom-standing.js";
+export {getDeclaredModulesFor, resolveAgentRefForAtom} from "./atom-standing.js";
 export type {AtomEdge, AtomEdgeGroup, AtomStanding, AtomStandingConfig} from "./atom-standing.js";
 
 /**
@@ -298,6 +299,8 @@ export {
     NonPositiveAmountError,
     normaliseToolUrl,
     prepareDeclareUsed,
+    prepareMarketExit,
+    prepareMarketPosition,
     prepareIdentityAtom,
     prepareStakeOnUsed,
     resolveDeclarationSubject,
@@ -314,6 +317,8 @@ export {
 export type {
     AgentThing,
     DeclarePlan,
+    MarketExitPlan,
+    MarketPositionPlan,
     DelegatedPlan,
     DelegationLike,
     IdentityAtomPlan,
@@ -345,14 +350,18 @@ export {
     getAccountActivity,
     getAccountHoldings,
     getTermActivity,
+    getTermBackers,
     getTermShape,
+    getTermValueHistory,
     INTUITION_MAX_POSITIONS_PAGE,
     type AccountActivityBucket,
     type AccountHoldings,
     type TermActivityBucket,
+    type TermBacker,
     type TermActivityGrain,
     type TermShape,
     type TermShapeConfig,
+    type TermValuePoint,
 } from "./term-shape.js";
 
 export {
@@ -371,6 +380,23 @@ export {
     type ToolListingOrder,
     type ToolListingPage,
 } from "./tool-listing.js";
+
+/**
+ * The domain tree: searching by **need** rather than by atom id, and the path witness.
+ *
+ * `listTools` answers "what tools exist". Nothing answered "what tools are for taking a payment",
+ * and that gap is what stood between the registry and an agent that can use it.
+ */
+export {
+    DomainTree,
+    readDomainTree,
+    readHierarchy,
+    toolsInDomain,
+    type DomainsConfig,
+    type HierarchyTriple,
+    type PathResult,
+    type TaggedTool,
+} from "./domains.js";
 
 /**
  * **Discover** — who is out there, from what agents declared about themselves.

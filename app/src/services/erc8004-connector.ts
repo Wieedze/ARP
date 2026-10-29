@@ -4,7 +4,9 @@ import {
     getAgentProfile,
     getToolUsage,
     INTUITION_MAINNET_GRAPHQL,
+    intuitionMainnet,
     intuitionSource,
+    intuitionTestnet,
     listAgents,
     type AgentPage,
     type AgentProfile,
@@ -13,6 +15,24 @@ import {
     type ListAgentsOptions,
     type ToolUsage,
 } from "@arp-protocol/core";
+
+/**
+ * The chains the registry source reads beyond ERC-8004's canonical three.
+ *
+ * ARP's own `IdentityRegistry` is on Intuition testnet 13579 and nowhere else, so an agent that
+ * registers itself there is invisible to a source that only knows Base, BSC and Ethereum. It was:
+ * measured 2026-10-28, token 6's owner and its 821-byte `tokenURI` were both on chain while the
+ * panel rendered "owner not read / none published", because `clientFor(13579)` returned null and
+ * the source answered null for every call.
+ *
+ * Naming the chains here rather than in the package is the arrangement `rules/portability.md`
+ * asks for — the package takes them as config, and `src/arp/chains.ts` is the one place in this
+ * repo that defines them.
+ */
+const ARP_CHAINS = {
+    [intuitionTestnet.id]: intuitionTestnet,
+    [intuitionMainnet.id]: intuitionMainnet,
+};
 
 /**
  * The app's single `Erc8004Client`.
@@ -74,7 +94,7 @@ export function erc8004Client(
                 graphqlUrl,
                 ...(curveId === undefined ? {} : {curveId}),
             }),
-            erc8004RegistrySource(),
+            erc8004RegistrySource({chains: ARP_CHAINS}),
         ],
     });
     clients.set(key, client);
@@ -97,7 +117,7 @@ export function erc8004Client(
 export function erc8004RegistryClient(): Erc8004Client {
     const existing = clients.get(REGISTRY_ONLY_KEY);
     if (existing !== undefined) return existing;
-    const client = createErc8004Client({sources: [erc8004RegistrySource()]});
+    const client = createErc8004Client({sources: [erc8004RegistrySource({chains: ARP_CHAINS})]});
     clients.set(REGISTRY_ONLY_KEY, client);
     return client;
 }

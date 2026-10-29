@@ -1,6 +1,6 @@
 # Project state
 
-**Updated** 2026-10-28 (task 29 — the landing is a scene sequence; ADRs `0066`-`0070`).
+**Updated** 2026-10-28 (task 30 — declaring a use has a page; ADR `0071`).
 Hand-maintained — a task does not close without updating this file (`workflow.md`, task-close
 protocol).
 
@@ -36,6 +36,32 @@ directory.
 
 ## Where the work is right now
 
+**The tool registry is no longer empty — all 52 tool atoms are on testnet 13579, 2026-10-28.**
+`catalogue/tools.json` holds 52 curated tools (21 MCP servers published by the vendor that controls
+the domain, 31 skill repos above 1M installs on skills.sh); `catalogue/registered-13579.json`
+records which of them exist on chain, with the six transaction hashes and the authorisation.
+**All 52 are registered** — the first 35 on a balance of 0.0791 tTRUST, the remaining 17 after the
+user topped the signer up with 1 tTRUST the same day. Re-running the seed now plans nothing.
+
+Three things that were learned doing it, and each is load-bearing:
+
+- **`arp_find_tools` returned nothing at all, on both chains.** It read only declared tools, and
+  `listTools` requires the subject to be an identified agent — measured 2026-10-28, **zero** of the
+  186 mainnet `uses` edges has one, and 3 of 167 on testnet. It now reads registered atoms too and
+  says which population each row came from. The two figures are never added.
+- **`assets` must be `cost + minDeposit`.** Passing the cost alone creates an atom with no position
+  — on the chain, not a market (ADR `0053`). All 35 report `position_count` 1.
+- **Creating an atom does not make it readable.** The indexer resolves `value.thing` from the CID,
+  so the document has to be pinned as well; 34 of 35 resolved within a minute, Alchemy's had not at
+  the time of writing.
+
+**The name and the purpose live in the repo, not in the atom** (user, 2026-10-28: _« le nom peut
+etre dans le front »_). An atom carries its normalised URL and nothing else. An opaque id
+(`arp:tool:00123`) was proposed the same day and rejected: it buys the one property the title
+already gives and costs derivability. **OASF was evaluated as the tag vocabulary and rejected** —
+between 0.8.0 and 1.1.0, 84 of the 85 shared ids name a different skill, so an unversioned OASF tag
+on an immutable atom changes meaning under the reader.
+
 **Branch** `feat/agent-panel-tabs`, pushed up to `fc541ec` (2026-10-20). Read the remote rather than this line: `git rev-parse origin/feat/agent-panel-tabs`.
 
 **The layout changed on 2026-10-19 (ADR `0041`), at the user's request** — _"ça devient le bordel,
@@ -59,8 +85,8 @@ git rev-list --count origin/feat/agent-panel-tabs..HEAD
 
 The remote SHA above is stable between pushes, so it stays.
 
-**Tests**: protocol **413 passed / 4 skipped** · app **402 passed / 2 skipped** · contracts **17
-passed** (measured 2026-10-27). `tsc -b` 0, `eslint .` 0, `check:tokens` 45, `check:contrast` 0,
+**Tests**: protocol **418 passed / 4 skipped** · app **485 passed / 2 skipped** · contracts **17
+passed** (measured 2026-10-28). `tsc -b` 0, `eslint .` 0, `check:tokens` 67, `check:contrast` 0,
 `check:scripts` 0. **`bun run lint` at the root also fails on `solhint: command not found`** — not
 installed; no Solidity gate runs from an agent session.
 
@@ -121,6 +147,7 @@ and task 20 commits and does not describe them.**
 | 26     | the app has no DOM test environment                       | **done** 2026-10-27 (`c5af7fc`) with `tasks/13` — `happy-dom` under a second Vitest project, because `environmentMatchGlobs` was removed in Vitest 4 and fails silently                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | 27     | a pass over the prose: slop, redundancy, over-explanation | **steps 1-3 done** 2026-10-27 (`dc3ef0b`) — the front-facing half: both READMEs, the publishable skill, the UI copy (already clean). Six **factual** errors came out of `README.md` with the prose. **Steps 4-6 not done**: `docs/` (16 files, 5,967 lines), the rest of `.claude/rules/`, and 31 task files + 65 ADRs + 19 post-mortems                                                                                                                                                                                                                                                                                                                                         |
 | 29     | the landing is a scene sequence                           | **built and gated** 2026-10-28, including all five browser checks (`scripts/measure/landing-fit.ts`, which found two defects no other gate could see). **Not closed**: the task forbids touching the other four pages and two changes did — the sticky nav and the route fade — both disclosed in `tasks/29` and awaiting the user's yes or no — the design session's delivery, built as delivered. Six scenes, one gesture per scene, Saffron hand-overs, the word and route scales. Seven of its decisions were the user's: ADRs `0066`-`0069`, three of which amend `rules/ui.md`. What `docs/18` §4-§5 became, and the one thing in it deliberately not built, is ADR `0070` |
+| 30     | declaring a use has no page                               | **built, reviewed twice, fixed** 2026-10-28 — `/atom/:atomId` writes `(your agent, uses, this atom)`, and the atom's own market is reachable there. ADR `0071`. The ERC-8004 `owner` is the authority; mainnet is refused pending the user's ADR. Two review rounds, **twelve** findings, **four of them created by fixing the first eight**                                                                                                                                                                                                                                                                                                                                     |
 | 28     | coherence audit — code, front, docs                       | **first batch done** 2026-10-20 (ADR `0044`); **eight items marked moot** 2026-10-27 (`ToolDetail`, `RegisterModule`, `ModuleList` deleted); **item 27 fixed** (the mainnet sentence, ADR `0065`). Six items added 2026-10-27 from the task 17 and 22 gates — the `194` at six sites, the two deployment-file shapes, `format:check`'s standing failure, `INDEX.md`'s generator output, and the `new URL(…, import.meta.url)` sweep. Mint vs "mints nothing" is still the user's                                                                                                                                                                                                 |
 
 **Recommended order** — `docs/15_ROADMAP.md` is the full version with what testnet can and cannot
@@ -250,9 +277,20 @@ The "no" branch **mints in the canonical registry on Base 8453**, not in ARP's o
 simulated it from a zero-balance address on both Base and BSC. The five-step testnet bring-up moved
 to `/rig`, named for what it is and out of the nav.
 
-**Still not built, and it is the centre of the mechanism**: declaring a use has no page. "An agent
-deposits TRUST on the modules it actually used" (`docs/12` point 3) exists only in
-`scripts/agent-declare-used.ts` and the MCP server. `/atom/:atomId` is where it belongs.
+**Declaring a use has a page now** — `/atom/:atomId`, task 30, ADR `0071`. `docs/12` point 3 lived
+only in `scripts/agent-declare-used.ts` and the MCP server until 2026-10-28, so the centre of the
+mechanism was reachable by an agent and not by the human holding its key. The ERC-8004 `owner` is
+the authority to declare for an agent; **mainnet is refused** until the user widens ADR `0017`,
+because that ADR covers a deposit into a `has trust provider` vault and not the creation of a `uses`
+edge.
+
+**What an agent still cannot do is reach the market.** The market is on the atom (ADR `0056`) and
+the node only deposits on the edge — `arp_stake_on_used` calls `prepareStakeOnUsed`. Measured
+2026-10-28: **2,354 TRUST sits on 39 skill atoms** on mainnet 1155 across 23 positions, and none of
+it is reachable through ARP. The human side is wired (`components/market/AtomMarket.tsx`, which was
+`AgentBacking` until the name was the only agent-specific thing left in it); the two MCP tools are
+not. Nor is `arp_find_tools` useful for the question: its population is the objects of `uses` edges,
+which on mainnet are Intuition, Base, Ethereum, IPFS, Claude, Obsidian and Bitcoin.
 
 ## Known defects, not yet fixed
 
@@ -275,6 +313,8 @@ deposits TRUST on the modules it actually used" (`docs/12` point 3) exists only 
 | ~~`--color-fg-40` at 3.66:1, below AA~~ **CLOSED 2026-10-27** (`c5784b7`) — the token is gone, the palette is measured and sorted, and `app/check-contrast.ts` is the gate that keeps it that way                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | task 14 — closed                                                                                                         | closed                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
 | ~~`code.md:86` requires a test framework the repo does not have~~ **CLOSED 2026-10-27** (`c5af7fc`, ADR `0063`) — the app tests components under a second Vitest project with `happy-dom`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | task 13 — closed, with `tasks/26`                                                                                        | closed                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
 | 21 triples stranded on a predicate ARP minted and abandoned                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | ADR 0030                                                                                                                 | testnet only, 2.1e-11 tTRUST; **not migrable**, Intuition has no deletion                                                                                                                                                                                                                                                                                                                                                                                                              |
+| **Every term-id link to the block explorer is dead.** `AtomPanel`'s aside points at `${explorerUrl}/address/${termId}`; a term id is 32 bytes and the explorer wants 20 — `GET /api/v2/addresses/0x99b0…3710a` answers `Invalid format. Expected ~r/^0x([A-Fa-f0-9]{40})$/`, while the HTML route returns 200 because it is an SPA shell                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            | `tasks/28` item 38                                                                                                       | **live, cosmetic** — a link that looks reachable and is not. `tasks/30` propagated the pattern to two new links before a reviewer measured it; those two are fixed. The remaining fix is a decision: remove it, or point at `computeAtomWalletAddr(atomId)`, a real address but a different object                                                                                                                                                                                     |
+| **`vercel.json` builds two directories that no longer exist.** Its `buildCommand` is `cd sdk && … cd ../erc8004 && …`, both deleted by ADR `0041`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | unrecorded before 2026-10-28                                                                                             | **live** — the deploy config cannot succeed. The app is a static Vite SPA, so any static host plus the `/(.*)` → `index.html` rewrite replaces it                                                                                                                                                                                                                                                                                                                                      |
 | `identity-registry.ts` declares `totalAgents()`, which reverts on the canonical registry                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            | unrecorded                                                                                                               | needs a task                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 
 ## Decisions that govern everything

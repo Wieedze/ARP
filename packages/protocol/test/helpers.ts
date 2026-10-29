@@ -143,7 +143,6 @@ export function recordedEthCall(recorded: Record<string, {ownerOf: unknown; toke
     };
 }
 
-
 /* -------------------------------------------------------------------------- */
 /* A fake MultiVault reader, shared by every planner test                      */
 /*                                                                            */
@@ -204,6 +203,10 @@ export function fakeReads(
          * way `ZeroPositionError` is reachable with a non-zero `birthDeposit`.
          */
         feeBps?: bigint;
+        /** What an account holds, keyed by lower-cased term id. */
+        held?: Record<string, bigint>;
+        /** The exit fee the redeem preview takes, in basis points. */
+        exitBps?: bigint;
     } = {},
 ): MultiVaultReads & {reads: string[]} {
     const existing = state.existing ?? new Set<string>();
@@ -291,6 +294,24 @@ export function fakeReads(
                 throw new Error(`previewDeposit on a term that does not exist: ${termId}`);
             }
             return {shares: assets, assetsAfterFees: assets};
+        },
+        /** What the account holds. Keyed by term only — one holder is enough for a planner test. */
+        async sharesOf(_account: Address, termId: Hex, _curveId: bigint) {
+            reads.push("sharesOf");
+            return state.held?.[termId.toLowerCase()] ?? 0n;
+        },
+        /**
+         * The exit side of `previewDeposit`, and **lossy by default like it is not**: `exitBps`
+         * defaults to 0 so an assertion about an amount stays about the amount, and the one test
+         * that needs the fee to bite sets it.
+         */
+        async previewRedeem(termId: Hex, _curveId: bigint, shares: bigint) {
+            reads.push("previewRedeem");
+            if (!existing.has(termId.toLowerCase())) {
+                throw new Error(`previewRedeem on a term that does not exist: ${termId}`);
+            }
+            const fee = (shares * (state.exitBps ?? 0n)) / 10_000n;
+            return {assetsAfterFees: shares - fee, sharesUsed: shares};
         },
     };
 }

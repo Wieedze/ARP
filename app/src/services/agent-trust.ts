@@ -390,6 +390,21 @@ export function buildTrustPanel(profile: AgentProfile): TrustPanelView {
     const withOwner = profile.identities.find((entry) => entry.owner !== null) ?? null;
     const withRegistrationFile =
         profile.identities.find((entry) => entry.registrationFile !== null) ?? null;
+    // The same search `owner` and `registrationFile` already do, for the name — and it was missing.
+    //
+    // `profile.identity` is the first source that answered, which is the graph, whose name for an
+    // agent that never published one is the indexer's stand-in `Agent 13579:6`. The registry source
+    // reads `tokenURI` and has the real one. So an agent that registered itself with an 821-byte
+    // document rendered as "Agent 13579:6 — registered without metadata" beside a row reading
+    // "REGISTRATION FILE · inline data URI · 821 chars" (measured 2026-10-28, testnet token 6).
+    //
+    // Preferring a named identity is not preferring a source: whichever one carries a real name
+    // wins, and if none does the stand-in is still shown and still flagged.
+    const named =
+        profile.identities.find(
+            (entry) => !entry.metadata.isFallback && entry.metadata.name !== null,
+        ) ?? null;
+    const metadata = named?.metadata ?? identity?.metadata ?? null;
     const capabilities = groupCapabilities(profile);
 
     return {
@@ -398,11 +413,13 @@ export function buildTrustPanel(profile: AgentProfile): TrustPanelView {
         tokenId: profile.ref.tokenId,
         registry: profile.ref.registry,
         found: identity !== null,
-        name: identity?.metadata.name ?? null,
-        description: identity?.metadata.description ?? null,
-        image: identity?.metadata.image ?? null,
-        isFallbackMetadata: identity?.metadata.isFallback ?? false,
-        url: identity?.metadata.url ?? null,
+        name: metadata?.name ?? null,
+        description: metadata?.description ?? null,
+        image: metadata?.image ?? null,
+        // True of the metadata actually rendered, not of some other source's. A page that shows a
+        // real name must not also say the name is a stand-in.
+        isFallbackMetadata: metadata?.isFallback ?? false,
+        url: metadata?.url ?? null,
         owner: withOwner?.owner ?? null,
         registrationFile: withRegistrationFile?.registrationFile ?? null,
         atomTermId: identity?.sourceHandle ?? null,

@@ -561,3 +561,160 @@ export async function getAccountActivity(
 
     return {buckets, openingNet, truncated: deposits >= limit || redemptions >= limit};
 }
+
+/** One point on a vault's value line: what it held, and when. */
+export type TermValuePoint = {
+    /** ISO 8601, the moment the signal landed. */
+    at: string;
+    /** What the vault held in TRUST wei immediately after it. */
+    value: bigint;
+};
+
+/**
+ * A vault's value over time, reconstructed from its signals.
+ *
+ * ## Why this is not {@link getTermActivity}
+ *
+ * That one answers "how busy was this", and its `volume` is **absolute**: a redemption adds to it,
+ * because a signal links to either a deposit or a redemption and `delta` is positive for both. A
+ * reader taking it for value would see an exit as an arrival. This answers "what is it worth",
+ * which needs the **direction**, and `signals` carries it — `deposit_id` set means in,
+ * `redemption_id` set means out.
+ *
+ * ## It reconciles with the vault, and that was measured rather than assumed
+ *
+ * Probed on testnet 13579 on 2026-10-28 against
+ * `0xdee4a5d8…61d5` (`Trail of Bits — secure-workflow-guide`): six signals, all deposits of
+ * 0.00098, running total **0.00588000**, and the vault's own `total_assets` **0.00588000**. Exact,
+ * because `signal.delta` is `assets_after_fees` for a deposit and `assets` for a redemption — the
+ * amounts that actually enter and leave.
+ *
+ * It is a **live value over time**, not a cumulative: it falls when somebody exits, which is the
+ * distinction ADR `0046` §3 draws — "50 TRUST staked since the beginning" is false if 40 were
+ * withdrawn, and a line that only rises would be that false statement drawn.
+ *
+ * ## One curve at a time
+ *
+ * `curveId` is required and not defaulted. A term has a vault per curve with its own assets and its
+ * own price; summing them would put a figure from one beside a figure from the other, which is the
+ * same trap {@link getTermActivity} documents for its buckets.
+ *
+ * @param limit how many signals to read, newest-last. The indexer caps a page at 250 whatever this
+ *        says (`INTUITION_MAX_PAGE`), so a busier term returns a **suffix** of its history and the
+ *        line starts partway up. Said rather than hidden: a caller showing the first point as
+ *        "the beginning" would be wrong on any term with more than `limit` signals.
+ */
+export async function getTermValueHistory(
+    termId: string,
+    curveId: bigint | number,
+    config: TermShapeConfig & {limit?: number} = {},
+): Promise<TermValuePoint[]> {
+    const transport = buildTransport(config);
+    const data = await transport.request(
+        `query TermValue($termId: String!, $curveId: numeric!, $limit: Int!) {
+  signals(
+    where: {term_id: {_eq: $termId}, curve_id: {_eq: $curveId}}
+    order_by: {created_at: asc}
+    limit: $limit
+  ) { created_at delta deposit_id redemption_id }
+}`,
+        {termId, curveId: String(curveId), limit: config.limit ?? 250},
+    );
+
+    const rows = Array.isArray(data["signals"]) ? data["signals"] : [];
+    const points: TermValuePoint[] = [];
+    let running = 0n;
+    for (const row of rows) {
+        if (!isRecord(row)) continue;
+        const at = readString(row, "created_at");
+        const delta = bigintFrom(row["delta"]);
+        if (at === null) continue;
+        // `deposit_id` present means TRUST entered; `redemption_id` means it left. Neither present
+        // is a signal shape this reader does not know, and it is skipped rather than guessed at.
+        const isDeposit = row["deposit_id"] !== null && row["deposit_id"] !== undefined;
+        const isRedemption = row["redemption_id"] !== null && row["redemption_id"] !== undefined;
+        if (!isDeposit && !isRedemption) continue;
+        running += isDeposit ? delta : -delta;
+        points.push({at, value: running < 0n ? 0n : running});
+    }
+    return points;
+}
+
+/** One account holding a position on a term's vault. */
+export type TermBacker = {
+    /** The holder's address, as the indexer stores it. */
+    account: string;
+    /** Its own atom, when the graph has one — so a reader can stay in the app rather than leave. */
+    atomId: string | null;
+    /** A name, when the graph has one. Usually the truncated address. */
+    label: string | null;
+    shares: bigint;
+    /** TRUST in, after fees, over the life of the position. */
+    deposited: bigint;
+    /** TRUST out. Non-zero means this backer has already taken some of it back. */
+    redeemed: bigint;
+    /** When the position was **opened**, which does not move when the account deposits again. */
+    openedAt: string | null;
+};
+
+/**
+ * Who holds a position on a term, largest first.
+ *
+ * {@link getTermShape} reads positions to compute concentration and breadth and returns only the
+ * aggregates; this returns the rows, because "who" is a different question from "how concentrated"
+ * and a reader asked for the list.
+ *
+ * **Ordered by shares, not by assets.** Shares are what a position *is*; assets are what it would
+ * fetch at the current price, which is the same ordering only while one curve is in play — and this
+ * reader is per curve for the reason {@link getTermActivity} documents.
+ *
+ * **The page caps at 100 rows**, not 250: probed on the `positions` table, where `limit: 250` also
+ * returns 100 while `atoms` and `triples` return 250. A term with more backers returns its hundred
+ * largest, so a caller printing the length as a count would be wrong — use {@link TermShape}'s
+ * `positionCount`, which comes from an aggregate and is exact.
+ *
+ * A term is born with `minShare` in its vault and nobody behind it (ADR `0042`), so an empty list
+ * is the ordinary state of a freshly created term and not a failure.
+ */
+export async function getTermBackers(
+    termId: string,
+    curveId: bigint | number,
+    config: TermShapeConfig & {limit?: number} = {},
+): Promise<TermBacker[]> {
+    const transport = buildTransport(config);
+    const data = await transport.request(
+        `query TermBackers($termId: String!, $curveId: numeric!, $limit: Int!) {
+  positions(
+    where: {term_id: {_eq: $termId}, curve_id: {_eq: $curveId}}
+    order_by: {shares: desc}
+    limit: $limit
+  ) {
+    shares
+    created_at
+    total_deposit_assets_after_total_fees
+    total_redeem_assets_for_receiver
+    account { id label atom_id }
+  }
+}`,
+        {termId, curveId: String(curveId), limit: config.limit ?? 100},
+    );
+
+    const rows = Array.isArray(data["positions"]) ? data["positions"] : [];
+    const backers: TermBacker[] = [];
+    for (const row of rows) {
+        if (!isRecord(row)) continue;
+        const account = isRecord(row["account"]) ? row["account"] : null;
+        const address = account === null ? null : readString(account, "id");
+        if (address === null) continue;
+        backers.push({
+            account: address,
+            atomId: account === null ? null : readString(account, "atom_id"),
+            label: account === null ? null : readString(account, "label"),
+            shares: bigintFrom(row["shares"]),
+            deposited: bigintFrom(row["total_deposit_assets_after_total_fees"]),
+            redeemed: bigintFrom(row["total_redeem_assets_for_receiver"]),
+            openedAt: readString(row, "created_at"),
+        });
+    }
+    return backers;
+}

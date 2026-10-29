@@ -50,18 +50,18 @@ export function TermShapePanel({
                 )}
                 {shape.span === null ? null : (
                     <Reading
-                        label="Backers arrived"
+                        label="Support arrived"
                         value={shape.span}
                         note={
                             shape.arrivedTogether
-                                ? "every backer opened on the same day"
+                                ? "every supporter opened on the same day"
                                 : undefined
                         }
                     />
                 )}
                 {shape.breadth === null ? null : (
                     <Reading
-                        label="Its backers"
+                        label="Its supporters"
                         value={shape.breadth}
                         note={
                             shape.breadthSampled

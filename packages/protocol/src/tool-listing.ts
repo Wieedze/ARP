@@ -82,7 +82,8 @@ export type ToolListing = {
      * Where the tool is **hosted** — the pinned Thing's `url`. The pointer, and the whole reason a
      * listing is useful to an agent: discover, go look, decide.
      *
-     * `null` for 28 of the 80 distinct tools on mainnet `uses` edges, measured 2026-10-20, and
+     * `null` for 28 of the **85** distinct tools on mainnet `uses` edges, re-measured 2026-10-28
+     * (9 more carry the string `"null"`), and
      * three of the rest carry the literal string `"null"`, which is normalised away here. The ones
      * that do carry a url carry a home page — `https://colony.io`, `https://www.ethereum.org/` —
      * which is what a pointer holds. It is **not** a call target and must not be used as one

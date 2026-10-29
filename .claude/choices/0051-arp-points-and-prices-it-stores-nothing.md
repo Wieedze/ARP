@@ -55,7 +55,8 @@ deployed, it carries the rig's 14 tools and ADR `0025` already keeps it off main
 path for "register a tool" is **writing the tool's atom**, not filling the contract's fields.
 
 **And a field this corrects.** Earlier the same day, a tool atom's Thing `url` was called unusable
-because, measured over the 80 distinct tools on mainnet `uses` edges, 52 carry one and they are home
+because, measured over the ~~80~~ **85** distinct tools on mainnet `uses` edges (2026-10-28),
+52 carry one and they are home
 pages — `https://colony.io`, `https://www.ethereum.org/`, `https://atlas.box/tools/slack` (28 carry
 none, and three carry the literal string `"null"`). That judgement was **wrong under this decision**:
 "where the thing is" is exactly what a pointer holds. `url` is unusable as a **call target**, and
@@ -95,7 +96,8 @@ being a call target is what ARP has just declined to be.
 
 **Neutral (worth knowing):**
 
-- A pointer with a dirty target is still a pointer: three of the 80 tools carry `"null"` as a url and
+- A pointer with a dirty target is still a pointer: ~~three of the 80 tools~~ **nine of the 85**
+  (re-measured 2026-10-28; the 2026-10-20 figures stood above) carry `"null"` as a url and
   28 carry none. Whether a tool with no pointer may carry a market is a display question, not a
   protocol one.
 - `atlas.box/tools/…` appears as the url of several tools, so another directory already indexes part

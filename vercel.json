@@ -1,9 +1,13 @@
 {
-  "buildCommand": "cd sdk && bun run build && cd ../erc8004 && bun run build && cd ../app && bun run build",
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "cd app && bun run build",
   "outputDirectory": "app/dist",
   "installCommand": "bun install",
   "framework": null,
   "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
   ]
 }

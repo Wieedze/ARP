@@ -16,11 +16,25 @@ import {useId, useState} from "react";
 export function Hint({
     children,
     label,
+    align = "left",
 }: {
     /** One sentence. If it needs two, the thing it explains is the problem. */
     children: React.ReactNode;
     /** What the button is for, e.g. "What 'declared' means". Announced before the sentence. */
     label: string;
+    /**
+     * Which edge the panel grows from. `"right"` for a hint in the right-hand part of a layout.
+     *
+     * **It is a prop because CSS cannot decide it.** The panel was centred on the button
+     * (`left-1/2 -translate-x-1/2`), which clipped at phone width — measured at 390px with the
+     * button at left:64, the panel ran from -38 to 182 and `html`'s `overflow-x: clip` cut the
+     * first characters of every line. Anchoring it to the button's left edge fixes that and
+     * **moves the same bug to the other side**: measured with the anchor hard right at 390px, the
+     * panel ran 375 → 595. There is no collision detection in CSS, so neither edge is safe by
+     * default and the call site is the only thing that knows. Both current call sites sit left of
+     * their container, which is why that is the default.
+     */
+    align?: "left" | "right";
 }) {
     const [open, setOpen] = useState(false);
     const tooltipId = useId();
@@ -47,7 +61,11 @@ export function Hint({
                 <span
                     id={tooltipId}
                     role="tooltip"
-                    className="absolute bottom-[calc(100%+6px)] left-1/2 z-10 w-[220px] -translate-x-1/2 rounded-[var(--radius-control)] border border-[color:var(--color-rule-strong)] bg-[color:var(--color-raised)] px-3 py-2 text-[length:var(--text-body-sm)] leading-[var(--leading-body)] text-[color:var(--color-silver)]"
+                    // Anchored to one edge of the button and never centred — see `align`. The panel
+                    // is 220px, which is already narrower than any phone; the `min()` only engages
+                    // below a 252px viewport, so it is a floor rather than the thing that makes it
+                    // fit. An earlier version of this comment credited it with the fit.
+                    className={`absolute bottom-[calc(100%+6px)] ${align === "right" ? "right-0" : "left-0"} z-10 w-[min(220px,calc(100vw-2rem))] rounded-[var(--radius-control)] border border-[color:var(--color-rule-strong)] bg-[color:var(--color-raised)] px-3 py-2 text-[length:var(--text-body-sm)] leading-[var(--leading-body)] text-[color:var(--color-silver)]`}
                 >
                     {children}
                 </span>

@@ -34,17 +34,24 @@ describe("erc8004RegistrySource", () => {
         expect(identity?.provenance.sourceId).toBe("erc8004-registry");
     });
 
-    it("exposes the registration file URI without parsing it", async () => {
+    it("reads name, description and image out of an inline registration file", async () => {
+        // This test asserted the opposite until 2026-10-28 — "exposes the registration file URI
+        // without parsing it", with the metadata all null and a comment calling parsing "a later
+        // phase". The phase ended when an agent registered itself: testnet token 6's 821-byte
+        // document named it "ARP Loop Agent" and every reader saw `Agent 13579:6` instead.
+        //
+        // Capabilities are still not inferred here, which is what that comment was really about.
         const identity = await recordedRegistrySource().resolveAgent(CLAWNCH);
         expect(identity?.registrationFile?.startsWith("data:application/json;base64,")).toBe(true);
-        // Parsing it into capabilities is a later phase. Nothing is inferred here.
-        expect(identity?.metadata).toEqual({
-            name: null,
-            description: null,
-            image: null,
-            url: null,
-            isFallback: false,
-        });
+        // The fixture is Clawnch 2340, recorded off Base. Its own name carries emoji, which is
+        // worth asserting verbatim: this source reports what the agent wrote, and sanitising it
+        // here would be this package inventing a second name for one agent.
+        expect(identity?.metadata.name).toBe("\u{1F99E} Clawnch \u{1F99E}");
+        expect(identity?.metadata.description).not.toBeNull();
+        // Never a stand-in: everything here came off the chain.
+        expect(identity?.metadata.isFallback).toBe(false);
+        // `url` is not in the registration file's shape; the indexer's stand-in supplies it.
+        expect(identity?.metadata.url).toBeNull();
     });
 
     it("returns null for a token id that was never minted", async () => {

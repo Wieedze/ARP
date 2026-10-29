@@ -79,12 +79,12 @@ describe("buildTermShapeView", () => {
         expect(one.arrivedTogether).toBe(false);
     });
 
-    it("says 'other' positions, because a backer holds this one by definition", () => {
+    it("says 'other' positions, because a supporter holds this one by definition", () => {
         expect(buildTermShapeView(shape({medianBackerBreadth: 12})).breadth).toBe(
-            "half its backers hold 12+ other positions",
+            "half its supporters hold 12+ other positions",
         );
         expect(buildTermShapeView(shape({medianBackerBreadth: 0})).breadth).toBe(
-            "half its backers hold nothing else",
+            "half its supporters hold nothing else",
         );
     });
 

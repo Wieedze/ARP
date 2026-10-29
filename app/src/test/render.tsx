@@ -2,11 +2,24 @@ import {QueryClient, QueryClientProvider} from "@tanstack/react-query";
 import {render as rtlRender, type RenderResult} from "@testing-library/react";
 import {MemoryRouter, Route, Routes} from "react-router-dom";
 import type {ReactElement, ReactNode} from "react";
+import {WagmiProvider} from "wagmi";
 
 import {ChainChoiceContext, choiceFor, type ChainChoiceValue} from "../lib/chain-choice";
+import {wagmiConfig} from "../lib/wagmi";
 
 /**
- * Render a component with the three providers every page in this app assumes.
+ * Render a component with the four providers every page in this app assumes.
+ *
+ * **`WagmiProvider` joined the list when `/atom/:atomId` gained a write control.** It said "three"
+ * and meant it — no page with a wallet control had a DOM test, so `useAccount` had never been
+ * rendered here, and the first page to reach for it failed with
+ * `useConfig must be used within WagmiProvider` from a test file that did not mention wallets.
+ *
+ * The **real** config, not a stub. Its only connector is `injected()`, which finds no
+ * `window.ethereum` under `happy-dom` and so leaves every test disconnected — which is the state
+ * worth testing by default, since it is what a first-time reader sees. A hand-built config would
+ * also have to satisfy wagmi's `Register` interface, and a second definition of the app's chains is
+ * a second place for them to drift.
  *
  * **The chain is passed explicitly and never read from storage.** `ChainChoiceProvider` calls
  * `readStored()`, which reads `localStorage` — so a test would inherit whatever a previous test
@@ -49,11 +62,15 @@ export function renderWithProviders(
                 </Routes>
             );
         return (
-            <QueryClientProvider client={client}>
-                <ChainChoiceContext.Provider value={chain}>
-                    <MemoryRouter initialEntries={[options.route?.at ?? "/"]}>{inner}</MemoryRouter>
-                </ChainChoiceContext.Provider>
-            </QueryClientProvider>
+            <WagmiProvider config={wagmiConfig}>
+                <QueryClientProvider client={client}>
+                    <ChainChoiceContext.Provider value={chain}>
+                        <MemoryRouter initialEntries={[options.route?.at ?? "/"]}>
+                            {inner}
+                        </MemoryRouter>
+                    </ChainChoiceContext.Provider>
+                </QueryClientProvider>
+            </WagmiProvider>
         );
     }
 

@@ -14,6 +14,44 @@ import type {Address, Hex, PublicClient, Transport} from "viem";
 export const multiVaultDeclareAbi = [
     {
         type: "function",
+        stateMutability: "nonpayable",
+        name: "redeem",
+        inputs: [
+            {name: "receiver", type: "address"},
+            {name: "termId", type: "bytes32"},
+            {name: "curveId", type: "uint256"},
+            {name: "shares", type: "uint256"},
+            {name: "minAssets", type: "uint256"},
+        ],
+        outputs: [{name: "", type: "uint256"}],
+    },
+    {
+        type: "function",
+        stateMutability: "view",
+        name: "previewRedeem",
+        inputs: [
+            {name: "termId", type: "bytes32"},
+            {name: "curveId", type: "uint256"},
+            {name: "shares", type: "uint256"},
+        ],
+        outputs: [
+            {name: "assetsAfterFees", type: "uint256"},
+            {name: "sharesUsed", type: "uint256"},
+        ],
+    },
+    {
+        type: "function",
+        stateMutability: "view",
+        name: "getShares",
+        inputs: [
+            {name: "account", type: "address"},
+            {name: "termId", type: "bytes32"},
+            {name: "curveId", type: "uint256"},
+        ],
+        outputs: [{name: "", type: "uint256"}],
+    },
+    {
+        type: "function",
         stateMutability: "view",
         name: "calculateAtomId",
         inputs: [{name: "atomData", type: "bytes"}],
@@ -167,7 +205,16 @@ export const multiVaultDeclareAbi = [
     },
 ] as const;
 
-/** The atom data for a canonical URI. `keccak256` of these exact bytes is the atom id. */
+/**
+ * The atom data for a canonical URI. `calculateAtomId` of these exact bytes is the atom id.
+ *
+ * This line said **`keccak256` of these exact bytes is the atom id** until 2026-10-28, and that is
+ * false: `keccak256(stringToHex("tool"))` is `0x6563ece9…` while the atom on both chains is
+ * `0xd6cc02f5…`. The id is still a pure function of the data — which is the property every
+ * derivation in this package rests on — but it has to be read from the contract
+ * ({@link MultiVaultReads.atomId}), not hashed locally. Found by a script that trusted the comment
+ * and printed ids that matched nothing on chain.
+ */
 export function atomDataForUri(uri: string): Hex {
     return stringToHex(uri);
 }
@@ -215,6 +262,35 @@ export function encodeCreateTriple(
     });
 }
 
+/**
+ * Leaving a vault, which ships with entering it rather than after it.
+ *
+ * ADR `0056`, in the user's own words: _« soit on mise sur un agent soit on retire notre mise »_ —
+ * **a deposit nobody can withdraw is a donation**, and a one-directional market is a collection
+ * box. The app has had both since that ADR; the connector has had only the way in, so an agent
+ * could take a position through ARP and not leave one.
+ *
+ * **Not payable.** Unlike every other call this module encodes, a redeem sends no value — the
+ * caller must set `value: 0n`, and a plan that carries one here would be sending TRUST to collect
+ * TRUST.
+ *
+ * `minAssets` is the slippage floor. Zero accepts any price, which on a bonding curve between
+ * planning and signing is how a position leaves for less than it was quoted.
+ */
+export function encodeRedeem(
+    receiver: Address,
+    termId: Hex,
+    curveId: bigint,
+    shares: bigint,
+    minAssets: bigint,
+): Hex {
+    return encodeFunctionData({
+        abi: multiVaultDeclareAbi,
+        functionName: "redeem",
+        args: [receiver, termId, curveId, shares, minAssets],
+    });
+}
+
 export function encodeDeposit(
     receiver: Address,
     termId: Hex,
@@ -246,6 +322,19 @@ export type MultiVaultReads = {
     atomCost(): Promise<bigint>;
     tripleCost(): Promise<bigint>;
     defaultCurveId(): Promise<bigint>;
+    /** What `account` holds of `termId` on this curve. The ceiling on any exit. */
+    sharesOf(account: Address, termId: Hex, curveId: bigint): Promise<bigint>;
+    /**
+     * What redeeming `shares` would actually fetch, **before** anything is signed.
+     *
+     * Read, never computed: the exit fee is a governance parameter and the curve is not linear in
+     * shares on curve 2, so there is no arithmetic from a share count to an amount.
+     */
+    previewRedeem(
+        termId: Hex,
+        curveId: bigint,
+        shares: bigint,
+    ): Promise<{assetsAfterFees: bigint; sharesUsed: bigint}>;
     /**
      * The smallest deposit the protocol accepts, from `getGeneralConfig()`.
      *
@@ -373,6 +462,25 @@ export function multiVaultReads(config: MultiVaultReadsConfig): MultiVaultReads 
                 functionName: "getGeneralConfig",
             });
             return general.minDeposit;
+        },
+        async sharesOf(account: Address, termId: Hex, curveId: bigint): Promise<bigint> {
+            return client.readContract({
+                ...contract,
+                functionName: "getShares",
+                args: [account, termId, curveId],
+            });
+        },
+        async previewRedeem(
+            termId: Hex,
+            curveId: bigint,
+            shares: bigint,
+        ): Promise<{assetsAfterFees: bigint; sharesUsed: bigint}> {
+            const [assetsAfterFees, sharesUsed] = await client.readContract({
+                ...contract,
+                functionName: "previewRedeem",
+                args: [termId, curveId, shares],
+            });
+            return {assetsAfterFees, sharesUsed};
         },
         async previewAtomCreate(termId: Hex, assets: bigint): Promise<TermPreview> {
             const [shares, assetsAfterFixedFees, assetsAfterFees] = await client.readContract({

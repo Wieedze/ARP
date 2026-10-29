@@ -2,7 +2,7 @@
 
 **Generated** 2026-10-28 by `scripts/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-69 decisions. Newest last. `choices/README.md` says when to write one.
+73 decisions. Newest last. `choices/README.md` says when to write one.
 
 ## Not accepted
 
@@ -84,3 +84,7 @@ Read these before relying on them.
 | [0068](0068-scenes-do-not-overlap.md) | 2026-10-28 | Accepted | Scenes do not overlap |
 | [0069](0069-the-landing-is-six-scenes.md) | 2026-10-28 | Accepted | The landing is six scenes, and the evidence ladder is not one of them |
 | [0070](0070-the-word-scale-is-built-and-the-out-fade-is-not.md) | 2026-10-28 | Accepted | The word scale is built; the route out-fade is not |
+| [0071](0071-owning-the-token-is-the-authority-to-declare.md) | 2026-10-28 | Accepted | owning the ERC-8004 token is the authority to declare, and mainnet is not open yet |
+| [0072](0072-the-market-is-offered-to-agents-and-tools.md) | 2026-10-28 | Accepted | the market is offered on an agent or a tool, and no single field says which |
+| [0073](0073-a-reveal-answers-the-keyboard-or-it-is-a-mouse-effect.md) | 2026-10-28 | Accepted | a reveal answers the keyboard, or it is a mouse effect |
+| [0074](0074-a-tool-carries-one-tag-at-its-deepest-domain.md) | 2026-10-28 | Accepted | A tool carries one tag, at its deepest domain |

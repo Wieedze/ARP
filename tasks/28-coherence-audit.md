@@ -247,3 +247,65 @@ wait for it unless one misleads a reader before then.
 - Touch the tool pages or `/hire` beyond what is listed as theirs.
 - Decide the mint question.
 - Rename `ModuleRegistry`, routes, or code identifiers (ADR `0044`).
+
+37. **`app/src/lib/wagmi.ts`'s docstring is a fourth site for the false mainnet sentence.** It
+    asserts _"No ARP contract is deployed on 1155 and none is addressed from it."_ ADR `0065`
+    corrected that claim and `.claude/STATE.md`'s defect table lists **three** contradicting sites —
+    `CLAUDE.md`'s hard constraints, `.claude/rules/security.md`'s deployment posture, and `STATE.md`'s
+    own constraints list. This one is not among them. Two enforcers are on 1155
+    (`deployments/1155.json`, `eth_getCode` confirmed 2026-10-27). Found 2026-10-28 while building
+    `tasks/30`; `claims.md` §5 — a sentence written four times gets corrected three.
+
+38. **`AtomPanel`'s "Explorer →" link is dead, and so was every term-id link built from that
+    pattern.** `app/src/pages/AtomPanel.tsx` points the aside's explorer link at
+    `${chain.explorerUrl}/address/${view.atomId}`. A term id is **32 bytes** and the explorer wants
+    20 — measured 2026-10-28:
+    `GET https://testnet.explorer.intuition.systems/api/v2/addresses/0x99b0…3710a` answers
+    `Invalid format. Expected ~r/^0x([A-Fa-f0-9]{40})$/`, while a real 20-byte address returns a
+    balance. The HTML route returns 200 regardless because it is an SPA shell, so the link looks
+    reachable and is not. Found while building `tasks/30`, which **propagated** the same pattern to
+    two new links before a reviewer measured it; those two are fixed (the subject atom goes to the
+    app's own `/atom/:atomId`, the edge id went back to plain text, since nothing resolves a triple
+    id there). **Closed the same day**: removed rather than aimed elsewhere. Three candidates were checked and
+    none resolves a term id — the explorer has no route, `app.intuition.systems/atom/<id>` returns a
+    consumer landing page **byte-identical for a real id and a bogus one** (measured in a browser,
+    because a 200 from an SPA is what fooled the original), and `computeAtomWalletAddr(atomId)` is a
+    real address but a different object. The id stays on screen in mono, selectable.
+
+39. **An atom's title breaks mid-word on every detail page.** `Sanctioned Address` renders as
+    `Sanct / ioned / Addr / ess`. `.type-title` carries `overflow-wrap: anywhere` so a bare
+    66-character atom id can wrap at all, `--text-title` clamps to 76px, and the aside is 18rem =
+    288px — "Sanctioned" at 76px needs roughly 400px. The break is the token and the column
+    disagreeing, not a bug in either. Left deliberately while building `tasks/30`: the fix is a
+    layout decision (lower the clamp in a narrow column, widen the aside, or `hyphens: auto` with a
+    `lang`, which breaks at syllables with a visible hyphen and reads as typography).
+
+40. **The Intuition indexer allows 75 requests per minute and nothing in this repo said so.** Its
+    own headers: `x-ratelimit-limit-minute: 75`, `ratelimit-reset` in seconds. A browser GraphQL
+    call costs **two** — the `OPTIONS` preflight counts. Exhausting it returns 429, and that 429
+    surfaces in a browser as `Failed to fetch` rather than as an HTTP error, so it reads exactly
+    like an outage. It happened to the user on 2026-10-28 while measurement scripts and a
+    browser-driving review agent shared his IP. No script in `scripts/measure/` carries a request
+    budget or a backoff, and `CLAUDE.md`'s courtesy note is advice rather than a mechanism.
+
+41. **`Sparkline` draws its line in Saffron, which `rules/ui.md` reserves for three other things.**
+    `app/src/components/Sparkline.tsx` sets `stroke-[color:var(--color-accent)]`. The rule: the
+    accent is "spent on the primary action, the selected state, and the viewer's own position —
+    nothing else", and ADR `0067`'s amendment allows it to carry **motion**, not a resting state. A
+    value line is none of those. Pre-existing at two call sites (`Profile.tsx`,
+    `TermShapePanel.tsx`) and now a third (`AtomMarket`'s value curve, 2026-10-28), so the fix is a
+    one-line change to a shared component that repaints three surfaces — the user's call, not a
+    silent edit. `--color-silver` (8.57:1) or `--color-steel` (5.95:1) would both read as data
+    rather than as an action.
+
+42. ~~**ARP's own testnet agents have no reachable agent page.**~~ **CLOSED 2026-10-28** by
+    `identityRegistryFor(chainId)` in `app/src/lib/deployments.ts`: the ref now carries its chain's
+    registry and `/agent/13579/4` resolves against `0xC165A2AD…b4490d5A`, verified in a browser.
+    The original finding: `/agent/13579/4` answers _"No agent
+    there — nothing resolves for `eip155:13579/erc721:0x8004A169FB4a3325136EB29fA0ceB6D2e539a432/4`.
+    The sources answered cleanly; the agent is simply not registered under that token id."_ The page
+    resolves every chain against the **canonical** registry address, and
+    `deployments/13579.json` records `identityRegistry: null`. So the rig agents that carry the only
+    real `uses` edges this project has written are unreachable by their own route — found
+    2026-10-28 while checking why their sigil did not render, which it does on a tool's page one
+    screen away.

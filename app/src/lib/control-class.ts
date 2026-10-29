@@ -115,8 +115,34 @@ export const heroControlClass =
  * `underline!` is `text-decoration-line` with importance, which is what wins. The offset is an
  * ordinary utility and needs no bang.
  *
+ * **There is deliberately no `decoration-*` here, and the story is worth the paragraph.** This
+ * module shipped `decoration-[color:var(--color-rule-strong)]` without a bang, and it was **inert**
+ * for the reason above one property further along: `text-decoration` is a **shorthand**, so the
+ * unlayered `a` rule resets `text-decoration-color` to `currentcolor` and beats the layered
+ * utility. Measured in the browser, the class on an `<a>` computed `rgb(169, 174, 178)` —
+ * `--color-silver`, i.e. currentColor — while the identical class on a `<span>` computed
+ * `rgb(67, 71, 75)`.
+ *
+ * Adding the bang made it apply, and **made the app worse**: `--color-rule-strong` on
+ * `--color-ground` measures **2.05:1** (`scripts/measure/contrast.ts`), under WCAG 2.1 SC 1.4.11's
+ * 3:1 for a cue that identifies a component — and this file's own argument is that the underline
+ * *is* the affordance. Link text is `--color-silver`, dimmer than the `--color-fg` prose around it,
+ * so the underline is the only positive cue a link has. currentColor draws it at **8.57:1**.
+ *
+ * So the inert utility had been shipping the **better** value for weeks, and the intended one had
+ * no design authority at all: `arp-design-handoff/reference/*.html` sets anchors to the silver
+ * token with `text-decoration: none`, in all four files — the handoff has no underlines, and its
+ * affordance is the silver-to-paper hover. (That sentence quoted the reference's CSS verbatim at
+ * first, and `check:tokens` rejected the file: the gate scans text, so a `var()` written as an
+ * **example in a comment** is a call site to it. `rules/ui.md` warns about exactly this, and it
+ * happened here inside the paragraph about a different cascade trap.) The rule-strong colour was
+ * a plausible token that happened never to apply. It is gone rather than corrected to
+ * `--color-steel` (5.95:1), because the thing to match is what the app has actually been showing.
+ *
+ * The lesson is not "add the bang". It is that **a utility measured inert is not yet a defect** —
+ * what it would do when it applied had never been checked.
+ *
  * The hover shift works again now that the colour is not banged here: the base `a:hover` rule
  * fires, and an unbanged `hover:text-*` added later would still be inert against it.
  */
-export const linkClass =
-    "underline! underline-offset-4 decoration-[color:var(--color-rule-strong)]";
+export const linkClass = "underline! underline-offset-4";

@@ -3,16 +3,19 @@ import {Link, useParams, useSearchParams} from "react-router-dom";
 import {useAccount} from "wagmi";
 
 import {linkClass} from "../lib/control-class";
-import {AgentBacking} from "../components/agent/AgentBacking";
+import {AtomMarket} from "../components/market/AtomMarket";
 import {AgentIdentityPanel, AgentSigil} from "../components/agent/AgentIdentityPanel";
-import {PanelSection} from "../components/agent/PanelSection";
 import {RatingRow} from "../components/agent/RatingRow";
 import {CapabilitySection} from "../components/agent/CapabilitySection";
-import {DeclaredUses} from "../components/usage/DeclaredUses";
 import {panelDomId, tabDomId} from "../components/agent/tab-ids";
 import {TrustPanelTabs} from "../components/agent/TrustPanelTabs";
 import {UnreadSources} from "../components/agent/UnreadSources";
 import {useChainChoice} from "../lib/chain-choice";
+import {identityRegistryFor} from "../lib/deployments";
+import {AgentClaims, AgentDeclareCard} from "../components/agent/AgentClaims";
+import {SectionTabs} from "../components/agent/SectionTabs";
+import {AgentEndpoints} from "../components/agent/AgentEndpoints";
+import {actionCardClass} from "../lib/surface-class";
 import {useAgentProfile} from "../hooks/use-agent-profile";
 import {useStakeSession} from "../hooks/use-stake-session";
 import {useTermVault} from "../hooks/use-term-vault";
@@ -44,6 +47,15 @@ import {asStakeTermId, type StakeSession} from "../services/trust-stake";
  */
 
 const TAB_PARAM = "tab";
+/**
+ * The outer strip's own query parameter.
+ *
+ * Separate from `tab`, which the **ratings** strip inside one of these sections already owns. Two
+ * strips sharing one parameter would have a provider slug select a section and a section slug
+ * select a provider — each silently falling back to its default, which looks like the link simply
+ * not working.
+ */
+const SECTION_PARAM = "section";
 
 function parseTokenId(value: string | undefined): string | null {
     if (value === undefined || !/^\d+$/.test(value)) return null;
@@ -76,7 +88,18 @@ export function AgentTrustPanel() {
     const params = useParams();
     const chainId = parseChainId(params.chainId);
     const tokenId = parseTokenId(params.tokenId);
-    const ref = chainId !== null && tokenId !== null ? {chainId, tokenId} : null;
+    // The registry travels with the ref. Without it the panel resolved every chain against the
+    // canonical Base address and ARP's own testnet agents had no page at all — `tasks/28` item 42.
+    const ref =
+        chainId !== null && tokenId !== null
+            ? {
+                  chainId,
+                  tokenId,
+                  ...(identityRegistryFor(chainId) === undefined
+                      ? {}
+                      : {registry: identityRegistryFor(chainId)}),
+              }
+            : null;
 
     const chain = useChainChoice();
     const [searchParams, setSearchParams] = useSearchParams();
@@ -93,10 +116,32 @@ export function AgentTrustPanel() {
     // Checked, not asserted: `atomTermId` comes off a source handle typed `string`, and a malformed
     // term id would become the address a deposit is sent to.
     const backingAtomId = asStakeTermId(view?.atomTermId ?? null);
+
+    /**
+     * The sections, as tabs.
+     *
+     * Built from the view rather than fixed: "Not read" is offered only when something actually
+     * failed — an always-present "nothing failed" tab is a row of reassurance, which is not
+     * information — and "Claims" needs an atom to have claims about.
+     */
+    const sectionTabs = [
+        ...(backingAtomId === null ? [] : [{slug: "claims", label: "Claims"}]),
+        {slug: "endpoints", label: "Endpoints"},
+        {slug: "ratings", label: "Ratings", count: view?.rows.length ?? null},
+        {slug: "capabilities", label: "Capabilities", count: view?.capabilityCount ?? null},
+        ...((view?.sourceErrors.length ?? 0) > 0 || (view?.conflicts.length ?? 0) > 0
+            ? [{slug: "unread", label: "Not read"}]
+            : []),
+    ];
+    const requestedSection = searchParams.get(SECTION_PARAM);
+    const selectedSection =
+        sectionTabs.find((tab) => tab.slug === requestedSection)?.slug ??
+        sectionTabs[0]?.slug ??
+        "endpoints";
     /**
      * Whether the connected wallet holds a position here, for the sigil's core.
      *
-     * The same query key `AgentBacking` uses, so react-query serves one request for both rather
+     * The same query key `AtomMarket` uses, so react-query serves one request for both rather
      * than two: the alternative was threading the answer up out of a child, which would have made
      * the identity column depend on the market section's render.
      */
@@ -113,6 +158,17 @@ export function AgentTrustPanel() {
      * opened before it left the agent. The URL still changes, so the link is
      * still shareable and a refresh still lands on the same tab.
      */
+    function handleSelectSection(slug: string) {
+        setSearchParams(
+            (current) => {
+                const next = new URLSearchParams(current);
+                next.set(SECTION_PARAM, slug);
+                return next;
+            },
+            {replace: true},
+        );
+    }
+
     function handleSelectTab(slug: string) {
         setSearchParams(
             (current) => {
@@ -204,8 +260,8 @@ export function AgentTrustPanel() {
                             </p>
                             {view.isFallbackMetadata ? (
                                 <p className="mt-5 inline-flex max-w-[64ch] rounded-[var(--radius-tag)] border border-dashed border-[color:var(--color-rule-strong)] px-3 py-1.5 font-mono text-[length:var(--text-label)] text-[color:var(--color-silver)]">
-                                    Name and URL are the indexer&rsquo;s stand-in — this agent
-                                    registered without metadata
+                                    Name and URL are the indexer&rsquo;s stand-in — no source
+                                    published a name for this agent
                                 </p>
                             ) : view.description !== null ? (
                                 <p className="mt-5 max-w-[62ch] text-[color:var(--color-silver)]">
@@ -218,15 +274,23 @@ export function AgentTrustPanel() {
                         ) : null}
                     </header>
 
-                    {/* Numbered sections, in the order the page argues: who it is, what the market
-                        on it says, who declared using it, what others rate it. Each rung costs more to
-                        produce than the one above it, and the ordering is what says so — the
-                        reference's PAID/FREE pills are gone (user, 2026-10-27). */}
-                    <PanelSection number="01" title="Identity">
-                        <AgentIdentityPanel view={view} />
-                    </PanelSection>
+                    {/* **The atom page's shell**, which the user asked for after using both:
+                        _« la page tools est vraiment mieux, je voudrais la même chose pour la page
+                        detailed agent »_. Identity in an 18rem column, everything else beside it.
 
-                    {/* The market on **this agent**, which is what the page is about. The ratings
+                        The numbered rail is gone with it. It existed to make the page's **order**
+                        visible — identity, the market, who used it, what others say — and each rung
+                        does cost more to produce than the one above. That argument survives in the
+                        ordering itself; what it does not need is a 200px column repeating it in
+                        mono beside every section. `PanelSection` is deleted rather than left
+                        unused (`rules/code.md`). */}
+                    <div className="grid gap-x-12 gap-y-10 md:grid-cols-[18rem_1fr] md:items-start">
+                        <aside>
+                            <AgentIdentityPanel view={view} />
+                        </aside>
+
+                        <div className="flex min-w-0 flex-col gap-12">
+                            {/* The market on **this agent**, which is what the page is about. The ratings
                         below are one provider's opinion, which runs beside this rather than feeding
                         it (ADR `0056`).
 
@@ -234,61 +298,102 @@ export function AgentTrustPanel() {
                         would be a form with nowhere to send. Measured on mainnet 1155 — most of the
                         mirrored cohort does resolve to one, and the ones that do not are the honest
                         gap. */}
-                    {backingAtomId === null ? null : (
-                        <PanelSection number="02" title="Backing">
-                            {/* The same string the `h1` above uses. `view.tokenId` alone made the
+                            {backingAtomId === null ? null : (
+                                <section>
+                                    <h2 className="font-medium">Support</h2>
+                                    <div className="mt-5">
+                                        {/* The same string the `h1` above uses. `view.tokenId` alone made the
                                 confirmation read "deposit onto 2340" while the heading said
                                 "Token 2340" — the one screen where the subject has to be
                                 unmistakable (ADR `0017` safeguard 4). */}
-                            <AgentBacking
-                                atomTermId={backingAtomId}
-                                name={view.name ?? `Token ${view.tokenId}`}
-                                nameIsId={view.name === null}
-                            />
-                        </PanelSection>
-                    )}
+                                        {/* **An action card**, the same shape the atom page gives the same
+                                component — the design reference's `.act`: a stronger border, the
+                                panel background, 20px of padding. A thing you can act on separates
+                                harder than a thing you read, and this section was neither: a figure
+                                row and a form on the page background, at the weight of everything
+                                around them. The user's verdict on that: « tout est pareil ». */}
+                                        <div className={actionCardClass}>
+                                            <AtomMarket
+                                                atomTermId={backingAtomId}
+                                                name={view.name ?? `Token ${view.tokenId}`}
+                                                nameIsId={view.name === null}
+                                                heading={null}
+                                            />
+                                        </div>
+                                    </div>
+                                </section>
+                            )}
 
-                    {/* The same component the atom page uses, because it is the same read: `uses`
-                        edges whose object is this atom. Keyed on the agent's atom rather than its
-                        token id, so it is absent for the same reason section 02 is. */}
-                    {backingAtomId === null ? null : (
-                        <PanelSection number="03" title="Who declared it">
-                            <DeclaredUses atomId={backingAtomId} />
-                        </PanelSection>
-                    )}
+                            {/* **The declaration card stays above the strip.** It is one of the
+                                page's two writes, and putting a write behind a tab hides it behind
+                                a click. `(my agent) uses (this agent)` is a real claim — ADR `0056`
+                                §2: a client writes it with its own identity atom as the subject. */}
+                            {backingAtomId === null ? null : (
+                                <AgentDeclareCard
+                                    atomId={backingAtomId}
+                                    name={view.name ?? `Token ${view.tokenId}`}
+                                />
+                            )}
 
-                    <PanelSection number="04" title="Ratings">
-                        {shouldUseTabs(view.rows) ? (
-                            <TabbedClaims
-                                view={view}
-                                baseId={baseId}
-                                requestedTab={searchParams.get(TAB_PARAM)}
-                                onSelectTab={handleSelectTab}
-                                session={sessionQuery.data}
-                            />
-                        ) : (
-                            <StackedClaims view={view} session={sessionQuery.data} />
-                        )}
-                    </PanelSection>
+                            {/* **Everything a reader reads, as tabs.** Five answers stacked meant
+                                scrolling past four to reach the fifth (user, 2026-10-28). The strip
+                                carries them; the actions above it do not move. */}
+                            <div>
+                                <SectionTabs
+                                    tabs={sectionTabs}
+                                    selectedSlug={selectedSection}
+                                    baseId={`${baseId}-section`}
+                                    onSelect={handleSelectSection}
+                                />
+                                <div
+                                    role="tabpanel"
+                                    id={panelDomId(`${baseId}-section`, selectedSection)}
+                                    aria-labelledby={tabDomId(`${baseId}-section`, selectedSection)}
+                                    tabIndex={0}
+                                    className="mt-8"
+                                >
+                                    {selectedSection === "claims" && backingAtomId !== null ? (
+                                        <AgentClaims
+                                            atomId={backingAtomId}
+                                            name={view.name ?? `Token ${view.tokenId}`}
+                                        />
+                                    ) : null}
+                                    {selectedSection === "endpoints" ? (
+                                        <AgentEndpoints registrationFile={view.registrationFile} />
+                                    ) : null}
+                                    {selectedSection === "ratings" ? (
+                                        shouldUseTabs(view.rows) ? (
+                                            <TabbedClaims
+                                                view={view}
+                                                baseId={baseId}
+                                                requestedTab={searchParams.get(TAB_PARAM)}
+                                                onSelectTab={handleSelectTab}
+                                                session={sessionQuery.data}
+                                            />
+                                        ) : (
+                                            <StackedClaims
+                                                view={view}
+                                                session={sessionQuery.data}
+                                            />
+                                        )
+                                    ) : null}
+                                    {selectedSection === "capabilities" ? (
+                                        <CapabilitySection
+                                            groups={view.capabilities}
+                                            count={view.capabilityCount}
+                                        />
+                                    ) : null}
+                                    {selectedSection === "unread" ? (
+                                        <UnreadSources view={view} />
+                                    ) : null}
+                                </div>
+                            </div>
 
-                    <PanelSection number="05" title="Capabilities">
-                        <CapabilitySection
-                            groups={view.capabilities}
-                            count={view.capabilityCount}
-                        />
-                    </PanelSection>
-
-                    {/* Only when something actually failed. An always-present "nothing failed"
-                        section would be a row of reassurance, which is not information. */}
-                    {view.sourceErrors.length > 0 || view.conflicts.length > 0 ? (
-                        <PanelSection number="06" title="Not read">
-                            <UnreadSources view={view} />
-                        </PanelSection>
-                    ) : null}
-
-                    <p className="border-t border-[color:var(--color-rule)] pt-5 font-mono text-[length:var(--text-label)] text-[color:var(--color-steel)]">
-                        Graph read from {chain.graphqlUrl}
-                    </p>
+                            <p className="border-t border-[color:var(--color-rule)] pt-5 font-mono text-[length:var(--text-label)] text-[color:var(--color-steel)]">
+                                Graph read from {chain.graphqlUrl}
+                            </p>
+                        </div>
+                    </div>
                 </>
             )}
         </article>

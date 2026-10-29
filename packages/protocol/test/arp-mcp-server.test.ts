@@ -124,11 +124,12 @@ const ethCallReturns: Record<string, Hex> = {
     // chain's answer to a fee-only deposit, and `ZeroPositionError` is covered in `declare-plan`
     // against a reader whose arithmetic a test can state. Here the point is only that the plan
     // asks.
-    [selector("function previewAtomCreate(bytes32,uint256) view returns (uint256,uint256,uint256)")]:
-        encodeAbiParameters(
-            [{type: "uint256"}, {type: "uint256"}, {type: "uint256"}],
-            [980n, 1000n, 980n],
-        ),
+    [selector(
+        "function previewAtomCreate(bytes32,uint256) view returns (uint256,uint256,uint256)",
+    )]: encodeAbiParameters(
+        [{type: "uint256"}, {type: "uint256"}, {type: "uint256"}],
+        [980n, 1000n, 980n],
+    ),
     [selector(
         "function previewTripleCreate(bytes32,uint256) view returns (uint256,uint256,uint256)",
     )]: encodeAbiParameters(
@@ -306,6 +307,15 @@ describe("the handshake", () => {
             "arp_tool_reputation",
             "arp_declare_used",
             "arp_stake_on_used",
+            // The market on an atom, both directions. ADR `0056`: the edge is a receipt and the
+            // atom is the market, so they are separate tools — and the exit ships with the way in,
+            // because a deposit nobody can withdraw is a donation.
+            "arp_take_position",
+            "arp_exit_position",
+            // Where another agent said it can be reached, and whether that answers. Two tools,
+            // because what was published and what responds are two different facts.
+            "arp_agent_endpoints",
+            "arp_probe_endpoint",
         ]);
         // By name, not by index: the order above is an assertion about the list, and a schema
         // assertion keyed on position silently moves to a different tool when it changes.

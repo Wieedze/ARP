@@ -20,11 +20,22 @@ export {
     encodeCreateAtom,
     encodeCreateTriple,
     encodeDeposit,
+    encodeRedeem,
     multiVaultDeclareAbi,
     multiVaultReads,
     type MultiVaultReads,
     type MultiVaultReadsConfig,
 } from "./multivault.js";
+
+export {
+    BelowMinimumError,
+    InsufficientSharesError,
+    prepareMarketExit,
+    prepareMarketPosition,
+    TermNotFoundError,
+    type MarketExitPlan,
+    type MarketPositionPlan,
+} from "./market.js";
 
 export {
     AmbiguousToolAtomError,

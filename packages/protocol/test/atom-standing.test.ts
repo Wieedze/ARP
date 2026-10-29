@@ -213,4 +213,47 @@ describe("getAtomStanding", () => {
         // And on no predicate, which is the whole reason this reader exists beside `getToolUsage`.
         expect(seen[0]?.query).not.toContain("predicate_id");
     });
+    it("reports an empty url as absent, because that is what a tag carries", async () => {
+        // The field the app gates its deposit control on. Measured on mainnet 1155 on 2026-10-28:
+        // the tag `Sanctioned Address` carries `url: ""` inside its pinned Thing, not a missing
+        // field — so a caller testing truthiness on the raw value would read a tag as a thing that
+        // points somewhere. Normalised here, once, rather than at every call site.
+        const withEmpty = {
+            atom: [
+                {
+                    term_id: TAG_ATOM,
+                    label: "Sanctioned Address",
+                    type: "Thing",
+                    data: "ipfs://bafkreiexample",
+                    value: {thing: {url: ""}},
+                    term: null,
+                },
+            ],
+            triples: [],
+        };
+        const standing = await getAtomStanding(TAG_ATOM, {
+            transport: {request: async () => withEmpty},
+        });
+        expect(standing.url).toBeNull();
+    });
+
+    it("carries the url when the atom points at something", async () => {
+        const withUrl = {
+            atom: [
+                {
+                    term_id: TAG_ATOM,
+                    label: "docx",
+                    type: "Thing",
+                    data: "ipfs://bafkreiexample",
+                    value: {thing: {url: "https://github.com/anthropics/skills"}},
+                    term: null,
+                },
+            ],
+            triples: [],
+        };
+        const standing = await getAtomStanding(TAG_ATOM, {
+            transport: {request: async () => withUrl},
+        });
+        expect(standing.url).toBe("https://github.com/anthropics/skills");
+    });
 });

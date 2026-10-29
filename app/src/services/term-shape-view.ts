@@ -24,7 +24,7 @@ import type {TermShape} from "@arp-protocol/core";
  *
  * The strong signal is **overlap**: a cluster is the same addresses backing the same claims, and
  * giving each address an independent history is what actually costs money. It is pairwise over a
- * term's backers, so its cost grows with the square of their number, and it is not computed —
+ * term's supporters, so its cost grows with the square of their number, and it is not computed —
  * `FUTURE.md` carries the reasoning.
  */
 export type TermShapeView = {
@@ -41,7 +41,7 @@ export type TermShapeView = {
     /** True when one account holds more than half. A fact, not a verdict. */
     isDominated: boolean;
     /**
-     * "Nov 2025 → Oct 2026" — the span over which **backers arrived**, or `null` when there are
+     * "Nov 2025 → Oct 2026" — the span over which **support arrived**, or `null` when there are
      * none.
      *
      * Not the span over which money arrived: a position's timestamp is when an account opened it and
@@ -49,9 +49,9 @@ export type TermShapeView = {
      * term. The copy said "deposits span" and meant this.
      */
     span: string | null;
-    /** True when every backer opened on the same day — the cheapest sybil signature. */
+    /** True when every supporter opened on the same day — the cheapest sybil signature. */
     arrivedTogether: boolean;
-    /** "half its backers hold 12+ other positions", or `null` when it has none. */
+    /** "half its supporters hold 12+ other positions", or `null` when it has none. */
     breadth: string | null;
     /** True when `breadth` is over a prefix of the backers rather than all of them. */
     breadthSampled: boolean;
@@ -104,8 +104,8 @@ export function buildTermShapeView(shape: TermShape): TermShapeView {
             shape.medianBackerBreadth === null
                 ? null
                 : shape.medianBackerBreadth === 0
-                  ? "half its backers hold nothing else"
-                  : `half its backers hold ${shape.medianBackerBreadth}+ other positions`,
+                  ? "half its supporters hold nothing else"
+                  : `half its supporters hold ${shape.medianBackerBreadth}+ other positions`,
         breadthSampled: shape.backersSampled,
         positionCount: shape.positionCount,
     };

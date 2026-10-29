@@ -35,13 +35,41 @@ import {SourceMark} from "./SourceMark";
  * (`HANDOFF.md` §3). One hairline, nothing else.
  */
 
+/**
+ * Which paths light a nav item.
+ *
+ * **A prefix cannot decide this, and the previous rule got it exactly backwards.** It was
+ * `pathname === to || pathname.startsWith(`${to}/`)`, with a comment claiming that
+ * `/agent/8453/2340` "still lights Agents". It does not: that path starts with `/agent/`, so it lit
+ * **Your agent** — the user saw the marker jump to his own agent every time he opened someone
+ * else's. The comment described the intent and the code did the opposite, which is why it survived.
+ *
+ * The routes genuinely do not separate by prefix:
+ *
+ * | path | section |
+ * | --- | --- |
+ * | `/agent`, `/agent/import` | Your agent — one operator's own |
+ * | `/agent/8453/6649` | Agents — somebody else's, reached from the directory |
+ * | `/agents` | Agents |
+ *
+ * So the two items that collide say which paths are theirs, and everything else keeps the prefix
+ * rule, which is right for `/tools`, `/register` and `/profile`.
+ */
+const SECTION_PATHS: Record<string, (pathname: string) => boolean> = {
+    // An agent detail is `/agent/<numeric chain>/<token>`; `/agent/import` is not.
+    "/agents": (pathname) => pathname === "/agents" || /^\/agent\/\d+\//.test(pathname),
+    "/agent": (pathname) => pathname === "/agent" || pathname === "/agent/import",
+};
+
 function NavLink({to, children}: {to: string; children: ReactNode}) {
     const {pathname} = useLocation();
-    // Exact for `/`, prefix otherwise, so `/agent/8453/2340` still lights "Agents"… except that
-    // `/agent` and `/agents` are different items and `startsWith` would light both. The trailing
-    // boundary check is what keeps them apart.
+    const section = SECTION_PATHS[to];
     const current =
-        to === "/" ? pathname === "/" : pathname === to || pathname.startsWith(`${to}/`);
+        section !== undefined
+            ? section(pathname)
+            : to === "/"
+              ? pathname === "/"
+              : pathname === to || pathname.startsWith(`${to}/`);
 
     return (
         <Link
@@ -109,4 +137,4 @@ export function NavSplit({left, right}: {left: ReactNode; right: ReactNode}) {
     );
 }
 
-export {NavLink};
+export {NavLink, SECTION_PATHS};

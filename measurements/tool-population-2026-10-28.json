@@ -1,0 +1,23 @@
+{
+ "generatedAt": "2026-10-28T15:36:25.524144+00:00",
+ "why": "Re-measurement of the tool population behind rules/claims.md failures 1 and 2: a docstring attached '80 distinct tools on mainnet' to a function that can reach none of them.",
+ "query": "triples where predicate.label = 'uses', limit 500, reading object.term_id and object.value.thing.url",
+ "chains": {
+  "1155": {
+   "usesEdges": 186,
+   "distinctObjects": 85,
+   "objectsWithNoUrl": 28,
+   "objectsWithUrlLiterallyNull": 9,
+   "usesEdgesWhoseSubjectHasSameAs": 0,
+   "consequence": "listTools returns 0 rows on mainnet. The 85 are latent, not listed."
+  },
+  "13579": {
+   "usesEdges": 167,
+   "distinctObjects": 83,
+   "objectsWithNoUrl": 43,
+   "objectsWithUrlLiterallyNull": 1,
+   "usesEdgesWhoseSubjectHasSameAs": 3
+  }
+ },
+ "supersedes": "The 2026-10-20 figures (80 distinct, 3 null) quoted in ADR 0051, packages/protocol/src/tool-listing.ts and the MCP tool description."
+}

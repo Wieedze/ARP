@@ -77,6 +77,19 @@ Strip these reflexes. If you find yourself reaching for one, stop.
 - **No mouse-reactive effects.** No parallax, no repulsion, no hover tilt, no cursor trails — the
   user rejected all four. Row hover is a background change and nothing else. **Scroll position is
   allowed and the pointer is not** — that is the line, and it did not move.
+- **A reveal may answer the pointer when it also answers the keyboard** (ADR `0073`, amending the
+  bullet above on 2026-10-28). Three conditions, all of them:
+  1. **The keyboard reaches it.** `onFocus`/`onBlur` alongside `onMouseEnter`/`onMouseLeave`. A
+     reveal only a mouse can reach is the effect the bullet above rejects, and it fails this file's
+     own keyboard-reachability rule as well.
+  2. **It reveals a fact, not a motion.** Data the page already holds — a claim's predicate, a
+     figure's caveat. A decoration that merely responds is still forbidden.
+  3. **It moves no layout.** The slot is in the DOM at its final size before anything is hovered.
+     A surface that reflows under the pointer is the pointer moving things.
+
+  `Hint` has always met all three and was never a breach; `ClaimField`'s edge is the second case.
+  The four named effects meet none of them.
+
 - **A pinned scene deck owns the gesture, and nothing else on any page may** (ADR `0066`). Inside
   `SceneDeck` one wheel notch, swipe or key press plays a whole hand-over on a timer and the rest of
   that gesture is swallowed. It is scroll-jacking, it was asked for, and it is bounded: the

@@ -372,6 +372,63 @@ describe("buildTrustPanel", () => {
         expect(view.name).toBe("Agent 8453:6649");
     });
 
+    it("prefers a real name over the indexer's stand-in, whichever source has it", () => {
+        // Measured on testnet token 6, 2026-10-28: the agent registered itself with an 821-byte
+        // document naming it "ARP Loop Agent", and the page rendered "Agent 13579:6 — registered
+        // without metadata" because the name came from `profile.identity`, the first source that
+        // answered, which is the graph. The owner and the registration file beside it were read
+        // from the registry source correctly, so the page contradicted itself in one header.
+        const fallback = identity({
+            metadata: {
+                name: "Agent 13579:6",
+                description: "ERC-8004 agent 13579:6",
+                image: null,
+                url: "https://8004scan.io/agents/13579/6",
+                isFallback: true,
+            },
+        });
+        const registered = identity({
+            metadata: {
+                name: "ARP Loop Agent",
+                description: "Reads the ARP tool registry.",
+                image: null,
+                url: null,
+                isFallback: false,
+            },
+        });
+        const view = buildTrustPanel(
+            profile({identity: fallback, identities: [fallback, registered]}),
+        );
+
+        expect(view.name).toBe("ARP Loop Agent");
+        expect(view.description).toBe("Reads the ARP tool registry.");
+        // The flag describes the metadata actually shown. A page cannot print a real name and
+        // also say the name is a stand-in.
+        expect(view.isFallbackMetadata).toBe(false);
+    });
+
+    it("still flags the stand-in when no source published a name", () => {
+        const fallback = identity({
+            metadata: {
+                name: "Agent 13579:7",
+                description: null,
+                image: null,
+                url: null,
+                isFallback: true,
+            },
+        });
+        const unnamed = identity({
+            metadata: {name: null, description: null, image: null, url: null, isFallback: false},
+        });
+        const view = buildTrustPanel(
+            profile({identity: fallback, identities: [fallback, unnamed]}),
+        );
+
+        // `unnamed` is not a fallback but has no name, so it must not win and blank the header.
+        expect(view.name).toBe("Agent 13579:7");
+        expect(view.isFallbackMetadata).toBe(true);
+    });
+
     it("takes owner and registration file from whichever source answered", () => {
         const graph = identity();
         const registry = identity({

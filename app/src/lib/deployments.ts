@@ -71,3 +71,23 @@ export type Deployments = {
         }>;
     };
 };
+
+/**
+ * The ERC-8004 registry an agent on this chain lives in, or `undefined` for the canonical one.
+ *
+ * **ARP's own testnet agents were unreachable without this.** `/agent/13579/4` answered *"No agent
+ * there"*: the panel resolved every chain against `DEFAULT_IDENTITY_REGISTRY`, the canonical
+ * `0x8004A169…e539a432` on Base, which has no code on 13579. So the rig agents that carry the only
+ * real `uses` edges this project has written had no page of their own, while their glyph rendered
+ * fine in the claim rows of a tool's page.
+ *
+ * It asks the deployment record rather than naming a chain: `deployments.chain.chainId` is whichever
+ * chain this file describes, so the comparison stays true if that ever changes.
+ *
+ * `undefined` for every other chain, which lets `resolveRef` apply the canonical default — the
+ * right answer for Base, and the one `rules/portability.md` wants the package to keep making on its
+ * own.
+ */
+export function identityRegistryFor(chainId: number): Address | undefined {
+    return chainId === deployments.chain.chainId ? deployments.arp.identityRegistry : undefined;
+}

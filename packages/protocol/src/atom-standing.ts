@@ -1,4 +1,6 @@
 import {defaultFetch, DEFAULT_TIMEOUT_MS, type FetchLike} from "./http.js";
+import {parseCaip19} from "./caip.js";
+import {USES} from "./sources/intuition/terms.js";
 import {isRecord, readRecord, readString} from "./json.js";
 import {createGraphqlTransport, type GraphqlTransport} from "./sources/intuition/graphql.js";
 import {mapMarketSide} from "./sources/intuition/map.js";
@@ -112,6 +114,18 @@ export type AtomStanding = {
     label: string | null;
     /** `type` as the indexer resolved it — `Thing`, `Person`, `TextObject`… */
     type: string | null;
+    /**
+     * The `url` inside the atom's pinned Thing, when it has one — **what this atom points at**.
+     *
+     * The field that separates a thing from a word, and `type` does not do it: measured on mainnet
+     * 1155 on 2026-10-28, the tag `Sanctioned Address` and the skill `docx` are **both** `Thing`,
+     * and only the second carries a url (`https://github.com/anthropics/skills`). A tool or an
+     * agent points at something that exists somewhere; a tag, a keyword or a person's name does
+     * not. ADR `0051`'s framing exactly — ARP points at things.
+     *
+     * `null` for an atom with no pinned Thing or no url in it. Never inferred from the label.
+     */
+    url: string | null;
     /** The pinned URI, when the atom has one. */
     pinnedUri: string | null;
     /**
@@ -152,6 +166,14 @@ export type AtomStandingConfig = {
 const MAX_PAGE = 250;
 
 const provenance = provenanceFor("intuition");
+
+/** `value.thing.url`, or `null`. An empty string is `null`: the tag atoms carry `""`, not absence. */
+function atomUrl(atom: Record<string, unknown> | null): string | null {
+    if (atom === null) return null;
+    const thing = readRecord(readRecord(atom, "value"), "thing");
+    const url = thing === null ? null : readString(thing, "url");
+    return url === null || url.trim() === "" ? null : url;
+}
 
 /**
  * Read one atom and everything that points at it.
@@ -231,6 +253,7 @@ export async function getAtomStanding(
         label: atom === null ? null : readString(atom, "label"),
         type: atom === null ? null : readString(atom, "type"),
         pinnedUri: atom === null ? null : readString(atom, "data"),
+        url: atomUrl(atom),
         market: atom === null ? null : mapMarketSide(atom["term"]),
         exists: atom !== null,
         groups,
@@ -238,4 +261,138 @@ export async function getAtomStanding(
         truncated: rows.length >= limit,
         provenance: provenance("claim", atomId),
     };
+}
+
+/**
+ * The ERC-8004 identity an atom stands for, when it is an agent's.
+ *
+ * ## Why this exists
+ *
+ * An agent had **two pages**. The directory knows an agent's `chainId/tokenId` and linked to the
+ * trust panel; a capability search and the claim field know only its **atom id** and linked to the
+ * atom page. Same agent, two destinations, depending on where you clicked — the user's words:
+ * _« que ce ne soit plus qu'une seule page qu'on accède dans tous les cas »_.
+ *
+ * This is the missing direction. `resolveCanonicalAgentAtom` goes ref → atom; nothing went back.
+ *
+ * ## It works where the agents are, and not where the rig is
+ *
+ * The mirror writes `(Agent 8453:6649) same as (eip155:8453/erc721:0x8004…/6649)`. Measured
+ * 2026-10-28: **30,913** such edges on mainnet 1155 and the shape is exactly this. On testnet 13579
+ * there are 882 `same as` edges and they are social handles — ARP's own rig agents have none, which
+ * is `tasks/19` step 1b's blocker seen from the other side. So a caller gets `null` for a rig agent
+ * and must treat that as "no identity found", never as "not an agent".
+ *
+ * One query, and it reads the edge in **both** directions: the mirror's own orientation is
+ * atom → CAIP-19, but nothing in the canon forbids the reverse and a reader that assumed one would
+ * silently return `null` for half the graph if that ever changed.
+ */
+export async function resolveAgentRefForAtom(
+    atomId: string,
+    config: AtomStandingConfig = {},
+): Promise<{chainId: number; tokenId: string} | null> {
+    const transport =
+        config.transport ??
+        createGraphqlTransport({
+            url: config.graphqlUrl ?? INTUITION_MAINNET_GRAPHQL,
+            fetch: config.fetch ?? defaultFetch(),
+            timeoutMs: config.timeoutMs ?? DEFAULT_TIMEOUT_MS,
+        });
+
+    const data = await transport.request(
+        `query AgentRefForAtom($atomId: String!) {
+  out: triples(
+    where: {subject_id: {_eq: $atomId}, predicate: {label: {_eq: "same as"}}}
+    limit: 10
+  ) { object { label } }
+  back: triples(
+    where: {object_id: {_eq: $atomId}, predicate: {label: {_eq: "same as"}}}
+    limit: 10
+  ) { subject { label } }
+}`,
+        {atomId},
+    );
+
+    const labels: string[] = [];
+    for (const [key, side] of [
+        ["out", "object"],
+        ["back", "subject"],
+    ] as const) {
+        const rows = Array.isArray(data[key]) ? data[key] : [];
+        for (const row of rows) {
+            if (!isRecord(row)) continue;
+            const other = readRecord(row, side);
+            const label = other === null ? null : readString(other, "label");
+            if (label !== null) labels.push(label);
+        }
+    }
+
+    for (const label of labels) {
+        const ref = parseCaip19(label);
+        if (ref !== null) return {chainId: ref.chainId, tokenId: ref.tokenId};
+    }
+    return null;
+}
+
+/**
+ * What each of several subjects declared using, in **one** query.
+ *
+ * The input a sigil needs, for a page that shows many agents at once. A tool's page lists every
+ * agent that declared it, and the user asked for each one's glyph beside its claim — one read per
+ * agent would be thirty-six round trips on a busy atom, which is a fan-out nobody asked for.
+ *
+ * Returns term ids, not names: `agent-sigil.ts`'s `moduleKey` prefers the Intuition term id for the
+ * reason it gives — a tool renamed upstream must not re-draw every sigil that includes it.
+ *
+ * **Only `uses` edges**, matched on ADR `0030`'s frozen predicate id and never on a label. ADR
+ * `0057` §5: a sigil cell is a declared tool. `implements`, `has tag` and the rest are different
+ * claims, and mixing them in would make the glyph a count of assorted statements.
+ *
+ * The indexer caps a page at 250 rows, so a caller passing many subjects gets a **prefix**: the
+ * agents at the end of the list come back with fewer modules than they have, which draws a sparser
+ * glyph rather than a wrong one. Pass the subjects a page actually shows.
+ */
+export async function getDeclaredModulesFor(
+    subjectIds: readonly string[],
+    config: AtomStandingConfig & {predicateId?: string} = {},
+): Promise<Record<string, string[]>> {
+    if (subjectIds.length === 0) return {};
+
+    const transport =
+        config.transport ??
+        createGraphqlTransport({
+            url: config.graphqlUrl ?? INTUITION_MAINNET_GRAPHQL,
+            fetch: config.fetch ?? defaultFetch(),
+            timeoutMs: config.timeoutMs ?? DEFAULT_TIMEOUT_MS,
+        });
+
+    const data = await transport.request(
+        `query DeclaredModulesFor($subjects: [String!], $predicate: String!, $limit: Int!) {
+  triples(
+    where: {subject_id: {_in: $subjects}, predicate_id: {_eq: $predicate}}
+    limit: $limit
+  ) { subject { term_id } object { term_id } }
+}`,
+        {
+            subjects: [...new Set(subjectIds)],
+            predicate: config.predicateId ?? USES,
+            limit: 250,
+        },
+    );
+
+    const rows = Array.isArray(data["triples"]) ? data["triples"] : [];
+    const modules: Record<string, string[]> = {};
+    for (const row of rows) {
+        if (!isRecord(row)) continue;
+        const subject = readRecord(row, "subject");
+        const object = readRecord(row, "object");
+        const subjectId = subject === null ? null : readString(subject, "term_id");
+        const objectId = object === null ? null : readString(object, "term_id");
+        if (subjectId === null || objectId === null) continue;
+        const list = (modules[subjectId] ??= []);
+        // A duplicate would claim a second set of cells for one tool, which reads as a busier
+        // agent — the same guard `sigilModulesOf` makes for its own input.
+        if (!list.includes(objectId)) list.push(objectId);
+    }
+    return modules;
 }

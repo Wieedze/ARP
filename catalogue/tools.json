@@ -1,0 +1,328 @@
+{
+  "_note": "The catalogue's seed. Read by app/src/lib/tool-catalogue-seed.ts and by the MCP server. NONE of it is on chain: a tool's atom derives every field from its normalised URL (packages/protocol/src/declare/tool-thing.ts), so `url` is the identity and `title` and `purpose` are this repo's, changeable without a write. User decision 2026-10-28: \u00ab le nom peut etre dans le front \u00bb.",
+  "_purposeSource": "Each tool's `purpose` is the description the repository publishes about itself, read from the GitHub API on 2026-10-28. Never written by us: a sentence we invented about a tool we have not run is exactly the kind of claim rules/claims.md forbids. `null` where the repository publishes none \u2014 7 of 52 \u2014 and a reader sees the URL instead.",
+  "_selection": "measurements/catalogue-sources-2026-10-28.json. 21 MCP servers published by the vendor that controls the domain in the official MCP registry; 31 skill repos above 1,000,000 installs on skills.sh. Every URL returned HTTP 200 on 2026-10-28. Mobbin was added on 2026-10-28 after the user pointed at it: it meets the same rule (com.mobbin, DNS-verified, repo HTTP 200) and was missed because the registry sweep truncated at com.s* and the vendor shortlist was hand-written. The shortlist is a bias, not a ranking \u2014 the registry holds 9,128+ namespaces and nothing in it measures standing.",
+  "readAt": "2026-10-28",
+  "tools": [
+    {
+      "url": "https://github.com/mobbin/mobbin-mcp-server",
+      "title": "Mobbin",
+      "kind": "mcp-server",
+      "purpose": "Official Mobbin MCP server repository"
+    },
+    {
+      "url": "https://github.com/SonarSource/sonarqube-mcp-server",
+      "title": "SonarQube",
+      "kind": "mcp-server",
+      "purpose": "Official SonarQube MCP Server for code quality and security in AI agents"
+    },
+    {
+      "url": "https://github.com/alchemyplatform/alchemy-mcp-server",
+      "title": "Alchemy",
+      "kind": "mcp-server",
+      "purpose": "Alchemy's official MCP Server. Allow AI agents to interact with Alchemy's blockchain APIs."
+    },
+    {
+      "url": "https://github.com/apify/apify-mcp-server",
+      "title": "Apify",
+      "kind": "mcp-server",
+      "purpose": "The Apify MCP server enables your AI agents to extract data from social media, search engines, maps, e-commerce sites, or any other website using thousands of ready-made scrapers, crawlers, and automation tools available on the Apify Store."
+    },
+    {
+      "url": "https://github.com/atlassian/atlassian-mcp-server",
+      "title": "Atlassian",
+      "kind": "mcp-server",
+      "purpose": "Official remote MCP server for Atlassian. Securely connect Jira, Confluence, Jira Service Management, Bitbucket, and Compass to Claude, ChatGPT, Cursor, VS Code, and other AI tools using OAuth 2.1 or API tokens."
+    },
+    {
+      "url": "https://github.com/browserbase/mcp-server-browserbase",
+      "title": "Browserbase",
+      "kind": "mcp-server",
+      "purpose": "Allow LLMs to control a browser with Browserbase and Stagehand",
+      "archived": true
+    },
+    {
+      "url": "https://github.com/cloudflare/mcp-server-cloudflare",
+      "title": "Cloudflare",
+      "kind": "mcp-server",
+      "purpose": "Product specific Cloudflare MCP servers"
+    },
+    {
+      "url": "https://github.com/figma/mcp-server-guide",
+      "title": "Figma",
+      "kind": "mcp-server",
+      "purpose": "A guide on how to use the Figma MCP server"
+    },
+    {
+      "url": "https://github.com/grafana/mcp-grafana",
+      "title": "Grafana",
+      "kind": "mcp-server",
+      "purpose": "MCP server for Grafana"
+    },
+    {
+      "url": "https://github.com/hashicorp/terraform-mcp-server",
+      "title": "HashiCorp Terraform",
+      "kind": "mcp-server",
+      "purpose": "The Terraform MCP Server provides seamless integration with Terraform ecosystem, enabling advanced automation and interaction capabilities for Infrastructure as Code (IaC) development."
+    },
+    {
+      "url": "https://github.com/makenotion/notion-mcp-server",
+      "title": "Notion",
+      "kind": "mcp-server",
+      "purpose": "Official Notion MCP Server"
+    },
+    {
+      "url": "https://github.com/microsoft/mcp",
+      "title": "Microsoft",
+      "kind": "mcp-server",
+      "purpose": "Catalog of official Microsoft MCP (Model Context Protocol) server implementations for AI-powered data access and tool integration"
+    },
+    {
+      "url": "https://github.com/mondaycom/mcp",
+      "title": "monday.com",
+      "kind": "mcp-server",
+      "purpose": "Enable AI agents to work reliably - giving them secure access to structured data, tools to take action, and the context needed to make smart decisions."
+    },
+    {
+      "url": "https://github.com/neondatabase/mcp-server-neon",
+      "title": "Neon",
+      "kind": "mcp-server",
+      "purpose": "MCP server for interacting with Neon Management API and databases"
+    },
+    {
+      "url": "https://github.com/paypal/paypal-mcp-server",
+      "title": "PayPal",
+      "kind": "mcp-server",
+      "purpose": null
+    },
+    {
+      "url": "https://github.com/postmanlabs/postman-mcp-server",
+      "title": "Postman",
+      "kind": "mcp-server",
+      "purpose": "Postman MCP Server \u2014 connect AI agents (Claude Code, Cursor, VS Code Copilot, Gemini CLI) to your Postman collections, OpenAPI specs, and environments via Model Context Protocol (MCP)"
+    },
+    {
+      "url": "https://github.com/prisma/mcp",
+      "title": "Prisma",
+      "kind": "mcp-server",
+      "purpose": null,
+      "archived": true
+    },
+    {
+      "url": "https://github.com/snyk/saw-mcp",
+      "title": "Snyk",
+      "kind": "mcp-server",
+      "purpose": null
+    },
+    {
+      "url": "https://github.com/stripe/agent-toolkit",
+      "title": "Stripe",
+      "kind": "mcp-server",
+      "purpose": "One-stop shop for building AI-powered products and businesses with Stripe."
+    },
+    {
+      "url": "https://github.com/supabase/mcp",
+      "title": "Supabase",
+      "kind": "mcp-server",
+      "purpose": "Connect Supabase to your AI assistants"
+    },
+    {
+      "url": "https://github.com/webflow/mcp-server",
+      "title": "Webflow",
+      "kind": "mcp-server",
+      "purpose": "Model Context Protocol (MCP) server for the Webflow Data API."
+    },
+    {
+      "url": "https://github.com/zapier/zapier-mcp",
+      "title": "Zapier",
+      "kind": "mcp-server",
+      "purpose": "Official plugin distribution for the hosted Zapier MCP server. Install it in your AI client and connect to thousands of apps."
+    },
+    {
+      "url": "https://github.com/mattpocock/skills",
+      "title": "Matt Pocock \u2014 Skills",
+      "kind": "skill-repo",
+      "purpose": "Skills for Real Engineers. Straight from my .agents directory."
+    },
+    {
+      "url": "https://github.com/heygen-com/hyperframes",
+      "title": "HeyGen Hyperframes",
+      "kind": "skill-repo",
+      "purpose": "Write HTML. Render video. Built for agents."
+    },
+    {
+      "url": "https://github.com/microsoft/azure-skills",
+      "title": "Microsoft Azure Skills",
+      "kind": "skill-repo",
+      "purpose": "Official agent plugin providing skills and MCP server configurations for Azure scenarios."
+    },
+    {
+      "url": "https://github.com/larksuite/cli",
+      "title": "Lark CLI",
+      "kind": "skill-repo",
+      "purpose": "The official Lark/\u98de\u4e66 CLI tool, maintained by the larksuite team \u2014 built for humans and AI Agents. Covers core business domains including Messenger, Docs, Base, Sheets, Calendar, Mail, Tasks, Meetings, and more, with 200+ commands and 20+ AI Agent Skills."
+    },
+    {
+      "url": "https://github.com/prime-skills/runcomfy-agent-skills",
+      "title": "RunComfy Agent Skills",
+      "kind": "skill-repo",
+      "purpose": "RunComfy AI media skills for Claude agents \u2014 incremental publish test"
+    },
+    {
+      "url": "https://github.com/leonxlnx/taste-skill",
+      "title": "Taste",
+      "kind": "skill-repo",
+      "purpose": "Agent skills that give coding agents taste: art direction, reference images and a browser check instead of generic AI pages"
+    },
+    {
+      "url": "https://github.com/coreyhaines31/marketingskills",
+      "title": "Marketing Skills",
+      "kind": "skill-repo",
+      "purpose": "Marketing skills for Claude Code and AI agents. CRO, copywriting, SEO, analytics, and growth engineering."
+    },
+    {
+      "url": "https://github.com/juliusbrussee/caveman",
+      "title": "Caveman",
+      "kind": "skill-repo",
+      "purpose": "\ud83e\udea8 why use many token when few token do trick. Viral skill + proxy for coding agents that cuts 65% of tokens by talking like a caveman."
+    },
+    {
+      "url": "https://github.com/101-skills/superpowers",
+      "title": "Superpowers (101-skills)",
+      "kind": "skill-repo",
+      "purpose": "Agent superpowers"
+    },
+    {
+      "url": "https://github.com/lllllllama/rigorpilot-skills",
+      "title": "RigorPilot",
+      "kind": "skill-repo",
+      "purpose": "README-first research reproduction skills with bounded execution, auditable evidence, and byte-preserving README annotations."
+    },
+    {
+      "url": "https://github.com/vercel-labs/skills",
+      "title": "Vercel Labs \u2014 Skills",
+      "kind": "skill-repo",
+      "purpose": "The open agent skills tool - npx skills"
+    },
+    {
+      "url": "https://github.com/magentosh/superpowers",
+      "title": "Superpowers (magentosh)",
+      "kind": "skill-repo",
+      "purpose": "inference.sh Agent skills for using our API to give your agents access to hundreds of apps and other agents"
+    },
+    {
+      "url": "https://github.com/obra/superpowers",
+      "title": "Superpowers (obra)",
+      "kind": "skill-repo",
+      "purpose": "An agentic skills framework & software development methodology that works."
+    },
+    {
+      "url": "https://github.com/google/agents-cli",
+      "title": "Google Agents CLI",
+      "kind": "skill-repo",
+      "purpose": "The CLI and skills that turn any coding assistant into an expert at creating, evaluating, and deploying AI agents on Google Cloud."
+    },
+    {
+      "url": "https://github.com/anthropics/skills",
+      "title": "Anthropic Skills",
+      "kind": "skill-repo",
+      "purpose": "Public repository for Agent Skills"
+    },
+    {
+      "url": "https://github.com/prisma/skills",
+      "title": "Prisma Skills",
+      "kind": "skill-repo",
+      "purpose": null
+    },
+    {
+      "url": "https://github.com/remotion-dev/skills",
+      "title": "Remotion Skills",
+      "kind": "skill-repo",
+      "purpose": "Agent Skills"
+    },
+    {
+      "url": "https://github.com/vercel-labs/agent-skills",
+      "title": "Vercel Labs \u2014 Agent Skills",
+      "kind": "skill-repo",
+      "purpose": "Vercel's official collection of agent skills"
+    },
+    {
+      "url": "https://github.com/qu-skills/superpowers",
+      "title": "Superpowers (qu-skills)",
+      "kind": "skill-repo",
+      "purpose": "Agent superpowers"
+    },
+    {
+      "url": "https://github.com/emilkowalski/skills",
+      "title": "Emil Kowalski \u2014 Skills",
+      "kind": "skill-repo",
+      "purpose": "Skills for Designers and Engineers."
+    },
+    {
+      "url": "https://github.com/skills-shell/superpowers",
+      "title": "Superpowers (skills-shell)",
+      "kind": "skill-repo",
+      "purpose": "Agent superpowers"
+    },
+    {
+      "url": "https://github.com/firebase/agent-skills",
+      "title": "Firebase Agent Skills",
+      "kind": "skill-repo",
+      "purpose": "Agent Skills for Firebase"
+    },
+    {
+      "url": "https://github.com/its-a-skill-issue/superpowers",
+      "title": "Superpowers (skill-issue)",
+      "kind": "skill-repo",
+      "purpose": "inference.sh Agent skills for using our API to give your agents access to hundreds of apps and other agents"
+    },
+    {
+      "url": "https://github.com/bankai-skills/superpowers",
+      "title": "Superpowers (bankai)",
+      "kind": "skill-repo",
+      "purpose": "Agent superpowers"
+    },
+    {
+      "url": "https://github.com/gencraft-labs/skills",
+      "title": "Gencraft Labs \u2014 Skills",
+      "kind": "skill-repo",
+      "purpose": null
+    },
+    {
+      "url": "https://github.com/pbakaus/impeccable",
+      "title": "Impeccable",
+      "kind": "skill-repo",
+      "purpose": "The design vocabulary for your coding agent. Steer with polish and bolder, review with critique and audit, catch AI slop before it ships."
+    },
+    {
+      "url": "https://github.com/cloudflare/skills",
+      "title": "Cloudflare Skills",
+      "kind": "skill-repo",
+      "purpose": "Skills for teaching agents how to build on Cloudflare."
+    },
+    {
+      "url": "https://github.com/higgsfield-ai/skills",
+      "title": "Higgsfield Skills",
+      "kind": "skill-repo",
+      "purpose": null
+    },
+    {
+      "url": "https://github.com/vercel-labs/agent-browser",
+      "title": "Vercel Labs \u2014 Agent Browser",
+      "kind": "skill-repo",
+      "purpose": "Browser automation CLI for AI agents"
+    },
+    {
+      "url": "https://github.com/flowkit-labs/skills",
+      "title": "FlowKit Labs \u2014 Skills",
+      "kind": "skill-repo",
+      "purpose": null
+    },
+    {
+      "url": "https://github.com/designed-by-ai/skills",
+      "title": "Designed by AI \u2014 Skills",
+      "kind": "skill-repo",
+      "purpose": "Agent skills"
+    }
+  ]
+}

@@ -140,7 +140,7 @@ export function StakeControl({
     onInFlightChange,
     /**
      * The tag for this control's own heading, because its level depends on its parent and not on
-     * itself. `RatingRow` opens at `h3`, so `h4` is right there; `AgentBacking` opens at `h2`,
+     * itself. `RatingRow` opens at `h3`, so `h4` is right there; `AtomMarket` opens at `h2`,
      * where `h4` would skip a level. Hardcoding `h4` put an `h1 → h3 → h4` chain on the agent page
      * under the very `h2` that exists to stop the outline jumping.
      */
