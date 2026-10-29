@@ -121,6 +121,64 @@ for (const [pair, count] of [...pairs].sort((a, b) => b[1] - a[1]).slice(0, 15))
 }
 if (pairs.size === 0) console.log("  none");
 
+/**
+ * A shared **name** and a shared **content** are not the same finding, and separating them is the
+ * whole point of this script.
+ *
+ * A skill's name is the directory its SKILL.md sits in — `guides/agent/affirmations/SKILL.md` is
+ * the skill `affirmations` — which is also what `npx skills add --skill` takes.
+ */
+function skillNameOf(path: string): string {
+    const parts = path.split("/");
+    return parts.length >= 2 ? (parts[parts.length - 2] ?? path) : path;
+}
+
+const byName = new Map<string, {repo: string; sha: string}[]>();
+for (const [repo, own] of files) {
+    for (const [path, sha] of own) {
+        const name = skillNameOf(path);
+        byName.set(name, [...(byName.get(name) ?? []), {repo, sha}]);
+    }
+}
+
+let sameNameSameFile = 0;
+let sameNameDifferentFile = 0;
+let withinOneRepo = 0;
+const divergent: {name: string; repos: number; contents: number}[] = [];
+for (const [name, holders_] of byName) {
+    // **Distinct repositories, not entries.** Counting entries made `impeccable` read as "25
+    // repositories" when it is 25 copies inside ONE — `pbakaus/impeccable` ships the same skill
+    // under `.agent/`, `.agents/`, `.claude/`, `.cursor/` and twenty-one more runtime directories.
+    // A within-repo duplicate is a packaging choice; a cross-repo one is the finding.
+    const repos = new Set(holders_.map((row) => row.repo));
+    if (repos.size < 2) {
+        if (holders_.length > 1) withinOneRepo += 1;
+        continue;
+    }
+    // One sha per repository: a repo shipping its own skill 25 times still holds one content.
+    const perRepo = new Map<string, Set<string>>();
+    for (const row of holders_) {
+        perRepo.set(row.repo, (perRepo.get(row.repo) ?? new Set()).add(row.sha));
+    }
+    const contents = new Set(holders_.map((row) => row.sha)).size;
+    if (contents === 1) sameNameSameFile += 1;
+    else {
+        sameNameDifferentFile += 1;
+        divergent.push({name, repos: repos.size, contents});
+    }
+}
+
+console.log(`
+${byName.size} distinct skill NAMES`);
+console.log(`  ${sameNameSameFile} carried by several repositories with the SAME file`);
+console.log(`  ${sameNameDifferentFile} carried by several repositories with DIFFERENT files`);
+console.log(`  ${withinOneRepo} repeated inside ONE repository — a packaging choice, not a copy`);
+console.log(`
+same name, different content — a name proves nothing:`);
+for (const row of divergent.sort((a, b) => b.contents - a.contents).slice(0, 12)) {
+    console.log(`  ${row.name.padEnd(32)} ${row.repos} repos, ${row.contents} different files`);
+}
+
 const jsonPath = arg("json");
 if (jsonPath !== undefined) {
     writeFileSync(
@@ -139,6 +197,13 @@ if (jsonPath !== undefined) {
                     distinct: new Set(own.values()).size,
                 })),
                 pairs: [...pairs].map(([pair, files_]) => ({pair, files: files_})),
+                names: {
+                    distinct: byName.size,
+                    sharedSameFile: sameNameSameFile,
+                    sharedDifferentFile: sameNameDifferentFile,
+                    repeatedWithinOneRepo: withinOneRepo,
+                    divergent,
+                },
             },
             null,
             2,

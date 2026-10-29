@@ -1,5 +1,5 @@
 {
-  "measuredAt": "2026-10-29T14:14:14.108Z",
+  "measuredAt": "2026-10-29T14:20:10.905Z",
   "source": "api.github.com git/trees, blob sha = git hash-object",
   "reposRead": 31,
   "truncatedRepos": 0,
@@ -227,5 +227,58 @@
       "pair": "qu-skills/superpowers ↔ skills-shell/superpowers",
       "files": 86
     }
-  ]
+  ],
+  "names": {
+    "distinct": 499,
+    "sharedSameFile": 104,
+    "sharedDifferentFile": 9,
+    "repeatedWithinOneRepo": 58,
+    "divergent": [
+      {
+        "name": "prototype",
+        "repos": 2,
+        "contents": 2
+      },
+      {
+        "name": "triage",
+        "repos": 2,
+        "contents": 2
+      },
+      {
+        "name": "ai-avatar-video",
+        "repos": 8,
+        "contents": 2
+      },
+      {
+        "name": "ai-image-generation",
+        "repos": 8,
+        "contents": 2
+      },
+      {
+        "name": "ai-video-generation",
+        "repos": 8,
+        "contents": 2
+      },
+      {
+        "name": "image-to-video",
+        "repos": 8,
+        "contents": 2
+      },
+      {
+        "name": "nano-banana-2",
+        "repos": 8,
+        "contents": 2
+      },
+      {
+        "name": "agent-browser",
+        "repos": 7,
+        "contents": 2
+      },
+      {
+        "name": "remotion-render",
+        "repos": 7,
+        "contents": 2
+      }
+    ]
+  }
 }
