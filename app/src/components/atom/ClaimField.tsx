@@ -90,9 +90,18 @@ const RISE_DEGREES = 35;
  */
 const BAR_Y = 0.055;
 
-function connector(r: number): string {
-    const head = headAt(r);
-    const corner = head.x + (head.y - BAR_Y) / Math.tan((RISE_DEGREES * Math.PI) / 180);
+/**
+ * Head → a 35° segment → a horizontal bar reaching past the box into the gap.
+ *
+ * It takes a **point**, not a radius: the head follows the selected dot, so it is no longer always
+ * on one circle at one angle.
+ *
+ * The corner is always to the **right** of the head, whichever side of the bar the head is on —
+ * the card is over there, and a corner that crossed back would draw the line through the field it
+ * came from.
+ */
+function connector(head: {x: number; y: number}): string {
+    const corner = head.x + Math.abs(head.y - BAR_Y) / Math.tan((RISE_DEGREES * Math.PI) / 180);
     return `${head.x},${head.y} ${corner},${BAR_Y} 1.32,${BAR_Y}`;
 }
 
@@ -180,6 +189,8 @@ export function ClaimField({
      * whole field, which is the common case by a wide margin.
      */
     const ringRef = useRef<HTMLDivElement | null>(null);
+    /** Every ring's wrapper, so the head can read the phase of whichever one it is following. */
+    const ringRefs = useRef<(HTMLDivElement | null)[]>([]);
     const [beat, setBeat] = useState(0);
     /** Whether the nearest dot is fully inside the head, as opposed to merely closest to it. */
     const [inHead, setInHead] = useState(false);
@@ -202,6 +213,22 @@ export function ClaimField({
     // groups in render order, so a ring's first dot carries its own offset and nothing has to be
     // recomputed.
     const ringIndexBase = dots.find((dot) => dot.ring === headRingIndex)?.index ?? 0;
+
+    /**
+     * Where the head is drawn, in box fractions.
+     *
+     * **It follows the selection.** At rest it sits at {@link HEAD_DEGREES} on the outer ring and
+     * the rings pass through it; when a dot is hovered **or focused**, it slides onto that dot and
+     * stays on it — which, since the dot is turning, means tracking it every frame.
+     *
+     * This is not the mouse-reactive effect `ui.md` forbids, and the distinction is the reason
+     * ADR `0073`'s keyboard condition is worth keeping rather than a nuisance: a marker that
+     * follows the selection is **what a selection looks like**, and focus is a selection too. The
+     * same movement driven by the pointer alone — and unreachable by `Tab` — would be the parallax
+     * and the hover-tilt this project refused four times.
+     */
+    const [followed, setFollowed] = useState<{x: number; y: number} | null>(null);
+
     useEffect(() => {
         if (ringDots < 1) return;
         const read = () => {
@@ -229,6 +256,51 @@ export function ClaimField({
         const id = window.setInterval(read, 250);
         return () => window.clearInterval(id);
     }, [ringDots, ringRadius, headRingIndex, ringIndexBase]);
+
+    /**
+     * Track the selected dot, at frame rate, for as long as it is selected.
+     *
+     * Sixty times a second only while something is hovered or focused — the dot is turning, and
+     * a head that updated four times a second would lag visibly behind it. Idle, this effect does
+     * nothing at all.
+     *
+     * Under `prefers-reduced-motion` the rings do not turn, so the dot does not move and one read
+     * is the whole of it.
+     */
+    const selected = active === null ? undefined : dots.find((dot) => dot.index === active);
+    useEffect(() => {
+        const ring = selected === undefined ? undefined : rings[selected.ring];
+        // Nothing to follow: return without touching state. The previous run's cleanup already
+        // released the head, which is where that belongs — a synchronous `setState` in an
+        // effect's body is a cascading render, and the lint rule is right about it.
+        if (selected === undefined || ring === undefined) return;
+        // The dot's resting angle, recovered from the place `claimField` put it.
+        const base = Math.atan2(selected.cy - 0.5, selected.cx - 0.5);
+        let frame = 0;
+        const follow = () => {
+            const wrapper = ringRefs.current[selected.ring];
+            const time = wrapper?.getAnimations?.()[0]?.currentTime;
+            const ms = typeof time === "number" ? time : 0;
+            const period = (110 + selected.ring * 40) * 1000;
+            const sign = selected.ring % 2 === 0 ? 1 : -1;
+            const turned = ((ms / period) * Math.PI * 2 * sign) % (Math.PI * 2);
+            setFollowed({
+                x: 0.5 + ring.r * Math.cos(base + turned),
+                y: 0.5 + ring.r * Math.sin(base + turned),
+            });
+            frame = requestAnimationFrame(follow);
+        };
+        frame = requestAnimationFrame(follow);
+        return () => {
+            cancelAnimationFrame(frame);
+            // Back to rest. `headPoint` derives the resting place from `ringRadius`, so clearing
+            // is the whole of it — nothing here stores what a prop already says.
+            setFollowed(null);
+        };
+    }, [selected, rings]);
+
+    /** Where the head is drawn: on the selected dot while there is one, at rest otherwise. */
+    const headPoint = followed ?? headAt(ringRadius);
 
     // Hover and focus win over the cadence: a reader who reached for a dot asked for that one.
     const shown = active ?? (entries.length === 0 ? null : beat % entries.length);
@@ -284,15 +356,15 @@ export function ClaimField({
                             on the small inner circle while naming dots from the big one — the lit
                             dot and the head were never in the same place. */}
                         <polyline
-                            points={connector(ringRadius)}
+                            points={connector(headPoint)}
                             fill="none"
                             stroke="var(--color-rule-strong)"
                             strokeWidth={1}
                             vectorEffect="non-scaling-stroke"
                         />
                         <circle
-                            cx={headAt(ringRadius).x}
-                            cy={headAt(ringRadius).y}
+                            cx={headPoint.x}
+                            cy={headPoint.y}
                             r={0.032}
                             fill="none"
                             stroke="var(--color-accent)"
@@ -305,7 +377,10 @@ export function ClaimField({
                 {rings.map((ring) => (
                     <div
                         key={ring.ring}
-                        ref={ring.ring === 0 ? ringRef : undefined}
+                        ref={(element) => {
+                            ringRefs.current[ring.ring] = element;
+                            if (ring.ring === headRingIndex) ringRef.current = element;
+                        }}
                         className="arp-orbit pointer-events-none absolute inset-0"
                         style={cssVars({
                             "--orbit-for": `${110 + ring.ring * 40}s`,
