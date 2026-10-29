@@ -204,7 +204,21 @@ edges re-measured 2026-10-27), **27** (the prose pass), **28** (the coherence pu
 **29**'s two scope questions (the sticky nav and the route fade, both of which touched pages that
 task said not to touch — the user's yes or no closes it).
 
-**`tasks/31` is built, 2026-10-29 — all seven deliverables.** ARP is now a path and not only an
+**`tasks/31` is COMPLETE, 2026-10-29 — all seven deliverables, `task-verifier` PASS on the fourth
+pass.** Post-mortem `.claude/learning/20-arp-serves-the-content-and-signs-the-access.md`, and it
+carries the finding worth more than the feature: **nine blockers across four review rounds and not
+one was a crash.** Every one was a claim that could not be wrong, a label reporting the strongest
+verdict for the weakest case, or a sentence corrected in five places out of six — two of them
+committed _inside_ the fix for the same class. Every figure re-derived from a committed measurement
+was exact first try in both rounds; every hand-maintained figure was wrong in both. It proposes a
+**sixth check for `claims.md`**, unapplied, which is the user's decision and needs an ADR.
+
+**Two live security defects came out of writing `docs/22`, not out of writing code** — the node
+bound every interface while a tool fetched a caller's URL, and `file:///etc/passwd` walked through
+the guard. A third, redirect-following, the verifier measured. One hole is left **open and
+disclosed**: `arp_probe_endpoint` still follows redirects, because a refused redirect has to mean
+something in its verdict vocabulary and that needs an ADR (`FUTURE.md`).
+ARP is now a path and not only an
 index: the node holds one key, it signs content receipts and nothing else, and it cannot move value.
 ADR `0038` is unamended — the plan path still has no key.
 

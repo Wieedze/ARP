@@ -1,7 +1,22 @@
 # Task 31 — ARP serves the content and signs the access
 
-**Status:** **BUILT.** All seven deliverables are done, 2026-10-29 — see §7, each marked with what
-landed. The open question the plan did not know it had (whose node signs) was put to the user and
+**Status:** **COMPLETE.** All seven deliverables done and `task-verifier` PASS on the fourth pass,
+2026-10-29. Commits `0bc29d8`..`280fd4c`. Post-mortem:
+`.claude/learning/20-arp-serves-the-content-and-signs-the-access.md`.
+
+**Three FAILs first, nine blockers across them, and not one was a crash** — every one was a claim
+that could not be wrong, a label reporting the strongest verdict for the weakest case, or a sentence
+corrected in five places out of six. Two were committed _inside_ the fix for the same class. The
+post-mortem's finding is the contrast that explains it: every figure re-derived from a committed
+measurement was exact on the first try in both verification rounds, and every hand-maintained figure
+was wrong in both.
+
+Two live security defects came out of **writing the install-facing document**, not out of writing
+code: the node bound every interface while one tool fetched a caller's URL, and `file:///etc/passwd`
+walked through the guard because `privateProbeTarget` delegates the scheme check to its caller and
+one caller did not do it. A third — redirect-following — came out of the verifier measuring it.
+
+All seven deliverables are in §7, each marked with what landed. The open question the plan did not know it had (whose node signs) was put to the user and
 answered: both, and the receipt says which. ADR `0080`.
 
 The plan's own overclaim is corrected in §2 rather than deleted: _"nobody else can produce that

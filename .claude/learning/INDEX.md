@@ -2,7 +2,7 @@
 
 **Generated** 2026-10-29 by `scripts/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-19 entries, one per completed task. Written by `task-verifier` on a pass.
+20 entries, one per completed task. Written by `task-verifier` on a pass.
 
 | # | task | verdict | entry |
 | --- | --- | --- | --- |
@@ -25,3 +25,4 @@
 | [17](17-the-agent-sdk.md) | `tasks/16-the-agent-sdk.md` — half 1 only; half 2 split out to `tasks/25` | PASS | The connector an agent declares through (half 1) |
 | [18](18-the-tool-surface.md) | `tasks/23-the-tool-surface.md` | PASS | The tool surface |
 | [19](19-the-external-verifier.md) | `tasks/17-the-external-verifier.md` | PASS | The external verifier |
+| [20](20-arp-serves-the-content-and-signs-the-access.md) | `tasks/31-arp-serves-the-content-and-signs-the-access.md` | PASS | ARP serves the content and signs the access |

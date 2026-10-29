@@ -923,7 +923,18 @@ async function agentEndpoints(id: JsonRpcId, args: Record<string, unknown>) {
         hop += 1
       ) {
         const location = response.headers.get('location');
-        if (location === null) break;
+        if (location === null) {
+          // A 3xx with no `Location` is a broken origin, not a redirect chain. Breaking here fell
+          // through to the hop-budget branch below, which told a reader debugging that origin
+          // "more than 3 redirects" after zero of them — the outcome was right and the sentence
+          // was not.
+          return text(id, {
+            caip19: toCaip19(agent),
+            registration_file: file,
+            error: `the host answered ${response.status} with no Location header`,
+            note: 'A redirect that does not say where. Nothing was followed and nothing was read.',
+          });
+        }
         const next = nextDocumentHop(url, location, {
           allowPrivate: process.env['ARP_ALLOW_PRIVATE_PROBE'] === '1',
         });
