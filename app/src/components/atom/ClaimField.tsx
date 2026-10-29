@@ -237,10 +237,10 @@ export function ClaimField({
     return (
         <div className="relative flex flex-wrap items-start gap-x-16 gap-y-8">
             <div
-                // `sm:mt-10` is the card's half-height less the bar's depth: the bar lands
+                // `sm:mt-8` is the card's half-height less the bar's depth: the bar lands
                 // `BAR_Y` of the box below the field's top, 1.21rem on a 22rem box, and the card's
-                // middle is 3.75rem below the row's top. Stacked, there is no bar and no offset.
-                className={`relative aspect-square w-full max-w-[22rem] shrink-0 sm:mt-10 ${entering ? "arp-claim-enter" : ""}`}
+                // middle is 3.25rem below the row's top. Stacked, there is no bar and no offset.
+                className={`relative aspect-square w-full max-w-[22rem] shrink-0 sm:mt-8 ${entering ? "arp-claim-enter" : ""}`}
                 role="group"
                 aria-label={`Claims about ${subject}`}
             >
@@ -402,33 +402,35 @@ export function ClaimField({
                 // pulled up. A negative margin lifted the card out of the flow and it landed on the
                 // rule above the section — the layout did not know it was there. Pushing the field
                 // keeps every box inside its own space for the same offset.
-                className="relative flex min-h-[7.5rem] min-w-[min(22rem,100%)] max-w-[34rem] flex-1 flex-col gap-1 rounded-[var(--radius-button)] border border-[color:var(--color-rule-strong)] bg-[color:var(--color-bg)] px-3.5 py-3"
+                className="relative flex min-h-[6.5rem] min-w-[min(22rem,100%)] max-w-[34rem] flex-1 flex-col gap-1 rounded-[var(--radius-button)] border border-[color:var(--color-rule-strong)] bg-[color:var(--color-bg)] px-3.5 py-3"
             >
                 {current === undefined ? null : (
                     <>
-                        {/* **The subject leads.** It was the predicate, and the predicate is the
-                            ring: identical on all 98 of this atom's claims, so it changed nothing
-                            as the head turned and told a reader nothing about the dot under it.
-                            The user, 2026-10-29: _« "available on" c'est le lien qui unit Base et
-                            le sujet, c'est le cercle en lui-même, et je ne pense pas que ce soit
-                            le plus utile »_. What varies dot to dot is who is making the claim. */}
-                        {/* **No count above this.** The card carried `Claims · 98`, which the
-                            legend prints in full two inches below and which never changes as the
-                            head turns — the one line of the card that could not vary (user,
-                            2026-10-29). The lit dot says the card is reading something; the name
-                            says what. */}
-                        <span className="flex min-w-0 items-baseline gap-2">
+                        {/* **The pulse card's own structure**, which the user asked for by name: a
+                            lit dot and a word on a header rule, then the content under it. The dot
+                            was inline with the name for a revision and floated beside 22px display
+                            type with nothing to sit against.
+
+                            The header carries the **predicate**, which is the ring the head is on
+                            — so it changes when an atom has several, and it is the word the card
+                            needs before the subject makes a sentence. It carried the claim count
+                            instead, which the legend prints below and which never changed. */}
+                        <span className="flex items-center gap-2 border-b border-[color:var(--color-rule)] pb-2 font-mono text-[10px] uppercase tracking-[0.06em] text-[color:var(--color-steel)]">
                             <span className="h-[6px] w-[6px] shrink-0 rounded-full bg-[color:var(--color-accent)]" />
-                            <span
-                                className={`min-w-0 truncate type-face text-[22px] leading-tight ${current.row.nameIsId ? "font-mono text-[16px]" : ""}`}
-                            >
-                                {current.row.compactName}
-                            </span>
+                            <span className="min-w-0 truncate">{current.predicate}</span>
+                        </span>
+                        <span
+                            className={`min-w-0 truncate type-face text-[22px] leading-tight ${current.row.nameIsId ? "font-mono text-[16px]" : ""}`}
+                        >
+                            {current.row.compactName}
                         </span>
                         {/* **Paper, not accent.** Somebody else's position, and `ui.md` spends the
                             accent on the primary action and on the viewer's own. ADR `0042`:
                             creating a term seeds its vault, so an amount is not evidence anybody
-                            staked — `positions` is, and a claim nobody paid for says so. */}
+                            staked — `positions` is, and a claim nobody paid for says so.
+
+                            The object is gone from here: it is the page the reader is already on,
+                            so the card was ending every line with its own address. */}
                         <span className="font-mono text-[length:var(--text-body)] tabular-nums">
                             {current.row.backing === null ? (
                                 <span className="text-[color:var(--color-steel)]">
@@ -442,11 +444,6 @@ export function ClaimField({
                                     </span>
                                 </>
                             )}
-                        </span>
-                        {/* The predicate last and quiet — it completes the sentence rather than
-                            opening it, and it is the one word the legend below already carries. */}
-                        <span className="truncate font-mono text-[10px] text-[color:var(--color-steel)]">
-                            {`${current.predicate} ${subject}`}
                         </span>
                         {/* Only when somebody took the other side. A counter-triple exists for
                             every triple at the same price and 969 of 285,775 chain-wide have ever
