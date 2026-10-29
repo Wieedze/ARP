@@ -2,7 +2,7 @@
 
 **Generated** 2026-10-29 by `scripts/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-79 decisions. Newest last. `choices/README.md` says when to write one.
+80 decisions. Newest last. `choices/README.md` says when to write one.
 
 ## Not accepted
 
@@ -94,3 +94,4 @@ Read these before relying on them.
 | [0078](0078-source-is-the-edge-from-a-skill-to-its-repository.md) | 2026-10-29 | Accepted | `source` is the edge from a skill back to the repository it came from |
 | [0079](0079-a-bulk-write-is-paced-by-bytes-not-by-gas.md) | 2026-10-29 | Accepted | A bulk write to Intuition is paced by bytes, not by gas |
 | [0080](0080-the-node-signs-for-what-it-served-and-for-nothing-else.md) | 2026-10-29 | Accepted | The node signs for what it served, and for nothing else |
+| [0081](0081-a-claim-a-stranger-checks-ships-with-its-command.md) | 2026-10-30 | Accepted | A claim a stranger is asked to check ships with the command that checks it |

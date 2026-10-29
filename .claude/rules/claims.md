@@ -8,7 +8,7 @@ statements in one session were wrong while every underlying measurement was righ
 reviewers re-derived the numbers and got the same values. The break was never in the measurement. It
 was always in the step from the measurement to the sentence. See ADR 0031.
 
-## The five failures, and the check that stops each
+## The six failures, and the check that stops each
 
 ### 1. A consequence stated without measuring what bounds it
 
@@ -103,7 +103,37 @@ script prints, and a dated re-measurement was presented as a time series an appe
 forbids. **Re-check a retraction the way you would check the claim** — a sentence written to fix a
 claims error is not exempt from this rule.
 
-## Two habits that prevent the first four
+### 6. A claim offered to a stranger as checkable, with no way for them to check it
+
+> Claimed, in the document written for people deciding whether to install the node: "the node's own
+> modules carry **six URL literals** and none of them is ours", with the `grep` to run.
+> True — and the `grep` returned **116 lines across 31 hosts**, because its scope was a directory
+> and the claim's scope was three files.
+
+**Check: a claim offered to a stranger as checkable ships with the command that checks it, and the
+command's scope is verified against the claim's scope before the claim is written down.**
+
+The five checks above all catch a claim that is **wrong**. This one catches a claim that is **right
+and unverifiable by the reader it was written for** — a different failure, and the worse one in a
+document whose whole purpose is that somebody does not have to trust us.
+
+The scope clause is the load-bearing half. The claim above was accurate about the three node
+scripts. What failed was that the command swept `scripts/`, which holds measurement scripts and
+demos no node ever loads, and the number a reader got back was nineteen times the number they were
+told. A reader who runs your check and gets a different answer does not conclude that your scope was
+wrong. They conclude the document is wrong, and they are not being unreasonable.
+
+Added 2026-10-30, on the user's decision, after the same section of `docs/22` failed **three review
+rounds running** for this one reason — a security claim offered with a check whose scope did not
+match it. ADR `0081`, post-mortem `.claude/learning/20-*`. The sentence that closed it was not a
+better sentence: it was `scripts/measure/node-outbound.ts`, whose output the document now quotes.
+
+**And the evidence that this is the right lever rather than more care.** Across those rounds, every
+figure re-derived from a committed measurement was exact on the first try — both times. Every
+hand-maintained figure was wrong — both times. Four rounds of care were applied by an author trying
+hard. The variable was never the care. It was whether a number had a script behind it.
+
+## Three habits, and the first two prevent failures 1 to 4
 
 **Commit the script, not the number.** Every figure in a doc, ADR, task file or report that came from
 a measurement names the script that produces it. `scripts/measure-*.ts` exist for this. A number
@@ -114,11 +144,19 @@ rung of the ladder.
 Over 88,243 agents that is 741 to 6,160 — a range too wide to position on, which is itself the useful
 finding. Wilson, not normal approximation, at these counts.
 
+**Run the command before you write it down.** Not the claim — the **command**. Paste it, run it,
+read what comes back, and only then write the sentence that cites it. Check 6 exists because this
+was not done: the `grep` was composed from what it ought to match rather than from what it did.
+
 ## Scope of this rule
 
 It governs what is written in: completion reports, commit messages, ADRs, task files, post-mortems,
 `docs/`, PR descriptions, and answers to the user. Code comments too — a comment asserting a number
 is subject to the same rule, and `code.md` already forbids comments that misdescribe state.
 
-It does not slow ordinary work. Four of the five checks are a single query or a single `grep`. The
-cost of skipping them is paid by whoever reads the claim next and believes it.
+It does not slow ordinary work. Four of the six checks are a single query or a single `grep`, and a
+fifth is running a command you were about to write down anyway. Only check 6's other half — writing
+a script where none exists — costs real time, and it is required of one narrow class: a claim a
+stranger is being asked to verify.
+
+The cost of skipping any of them is paid by whoever reads the claim next and believes it.
