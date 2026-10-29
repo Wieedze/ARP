@@ -240,6 +240,12 @@ export function fakeReads(
             uriByAtomId.set(id, uri);
             return id;
         },
+        async counterTripleId(tripleId: Hex) {
+            reads.push(`getCounterIdFromTripleId:${tripleId}`);
+            // Deterministic and distinct from the triple, which is all a caller can rely on. The
+            // contract derives it from the three terms; the fake only has to be a stable bijection.
+            return idFor("c0un", tripleId);
+        },
         async tripleId(subject: Hex, predicate: Hex, objectId: Hex) {
             reads.push(`calculateTripleId:${subject}:${predicate}`);
             // Keyed off the URI when this reader computed the atom id, and off the object id

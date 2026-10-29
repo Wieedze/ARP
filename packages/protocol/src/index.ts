@@ -393,6 +393,21 @@ export {
  * and that gap is what stood between the registry and an agent that can use it.
  */
 /**
+ * Reachability, the planning half: the calls that move what an address asserts about one endpoint.
+ *
+ * Plans, never signs (ADR `0038`). The caller signs with its own key, which is what lets an agent
+ * record a verdict ARP's attestor did not make — the point rather than a limitation, since the one
+ * reproducible claim in this system deserves more than one observer.
+ */
+export {
+    planReachability,
+    readReachabilityState,
+    type ReachabilityPlan,
+    type ReachabilityState,
+    type ReachabilityTerms,
+} from "./declare/reachability-plan.js";
+
+/**
  * Reachability: from a probe's verdict to what ARP asserts on chain.
  *
  * The only claim in this system a third party can check for the price of one HTTP request, which

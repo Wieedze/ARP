@@ -69,6 +69,16 @@ export const multiVaultDeclareAbi = [
         outputs: [{name: "", type: "bytes32"}],
     },
     {
+        // `pure`, so it costs nothing and needs no triple to exist: the counter's id is derived
+        // from the same three terms. Every triple is born with one (ADR `0053`), so this is how a
+        // caller addresses the disagreeing side without having created anything.
+        type: "function",
+        stateMutability: "pure",
+        name: "getCounterIdFromTripleId",
+        inputs: [{name: "tripleId", type: "bytes32"}],
+        outputs: [{name: "", type: "bytes32"}],
+    },
+    {
         type: "function",
         stateMutability: "view",
         name: "isTermCreated",
@@ -318,6 +328,8 @@ export type MultiVaultReads = {
     readonly chainId: number;
     atomId(atomData: Hex): Promise<Hex>;
     tripleId(subjectId: Hex, predicateId: Hex, objectId: Hex): Promise<Hex>;
+    /** The id of a triple's counter — the vault that disagrees with it. */
+    counterTripleId(tripleId: Hex): Promise<Hex>;
     termExists(termId: Hex): Promise<boolean>;
     atomCost(): Promise<bigint>;
     tripleCost(): Promise<bigint>;
@@ -434,6 +446,13 @@ export function multiVaultReads(config: MultiVaultReadsConfig): MultiVaultReads 
                 ...contract,
                 functionName: "calculateTripleId",
                 args: [subjectId, predicateId, objectId],
+            });
+        },
+        async counterTripleId(tripleId: Hex): Promise<Hex> {
+            return client.readContract({
+                ...contract,
+                functionName: "getCounterIdFromTripleId",
+                args: [tripleId],
             });
         },
         async termExists(termId: Hex): Promise<boolean> {
