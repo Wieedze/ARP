@@ -69,6 +69,7 @@ query AtomStanding($atomId: String!, $curveId: numeric!, $limit: Int!, $attestor
     label
     data
     type
+    value { thing { url } }
     term { ${VAULT_SIDE} }
   }
   triples(

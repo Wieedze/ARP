@@ -256,4 +256,21 @@ describe("getAtomStanding", () => {
         });
         expect(standing.url).toBe("https://github.com/anthropics/skills");
     });
+
+    it("asks the indexer for the url it reads", async () => {
+        // The mock above answered with `value.thing.url` while the query never requested it, so
+        // the test passed and every live read came back `url: null` — which hid the market on
+        // every tool nobody had declared using (2026-10-29, `gpt-taste`). The mock cannot see
+        // that; only the query text can.
+        let sent = "";
+        await getAtomStanding(TAG_ATOM, {
+            transport: {
+                request: async (query: string) => {
+                    sent = query;
+                    return {atom: [], triples: []};
+                },
+            },
+        });
+        expect(sent.replace(/\s+/g, " ")).toContain("value { thing { url } }");
+    });
 });
