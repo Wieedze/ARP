@@ -55,10 +55,16 @@ all timestamped, and one record that ties them.
 **Nobody else can produce that fact**, because nobody else is at all three places — **and that is
 true only while the node is run by somebody the reader distinguishes from the agent.** If the
 agent's own operator runs it, one party holds both keys and the receipt is the operator's word in a
-second place. ADR `0080`'s open question is exactly this, and it is unsettled: it decides that a
-node may hold a receipt key and leaves whose node to the user. The sentence above was written
-without that qualifier, which made the plan's strongest claim rest on an unstated assumption about
-who runs the process. An index that is
+second place.
+
+Settled 2026-10-29, ADR `0080`: **both kinds of node sign, and the receipt names which.** The local
+node keeps working with nothing of ours reachable, so `0045`'s unplug test holds; a receipt from a
+signer that is not the agent is the one a stranger weighs. A self-signed receipt is **labelled, not
+refused** — a forged one costs the agent the price of the claim and earns a reputation on a tool it
+never used, which is worth nothing the day somebody picks an agent by it. The reader's check is one
+comparison: the receipt's `node` against the address that declared.
+
+An index that is
 only read produces nothing; this produces a record that did not exist before the agent came
 through.
 

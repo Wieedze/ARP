@@ -4,6 +4,7 @@ import {describe, expect, it} from "vitest";
 
 import {
     contentDigest,
+    corroborationOf,
     contentReceiptTypedData,
     receiptMatchesContent,
     signContentReceipt,
@@ -153,6 +154,53 @@ describe("verifyContentReceipt", () => {
             status: "malformed",
             reason: "signature is not hex",
         });
+    });
+});
+
+describe("corroborationOf", () => {
+    const AGENT = CALLER;
+
+    it("is a two-party fact when the signer is not the declarer", async () => {
+        const verdict = await verifyContentReceipt(await sign(receipt()));
+        expect(
+            verdict.status === "valid" && corroborationOf(receipt(), verdict.signer, AGENT),
+        ).toEqual({status: "second-party", signer: NODE.address});
+    });
+
+    it("says self-signed when one hand holds both keys", () => {
+        // ADR `0080`: the node an operator installs holds its own key, so this is the normal case
+        // for a local node and it is REPORTED rather than refused. A forged one costs the agent the
+        // price of the claim and earns a reputation on a tool it never used.
+        const body = receipt({to: NODE.address});
+        expect(corroborationOf(body, NODE.address, NODE.address)).toEqual({
+            status: "self-signed",
+            signer: NODE.address,
+        });
+    });
+
+    it("says so when the receipt is about a different caller", () => {
+        // A real receipt, correctly signed, for somebody else's fetch. Letting it corroborate this
+        // declaration would be the easiest forgery in the system: present a stranger's receipt.
+        expect(corroborationOf(receipt({to: OTHER.address}), NODE.address, AGENT)).toEqual({
+            status: "other-caller",
+            servedTo: OTHER.address,
+        });
+    });
+
+    it("corroborates nobody on an unauthenticated fetch", () => {
+        expect(corroborationOf(receipt({to: null}), NODE.address, AGENT)).toEqual({
+            status: "names-nobody",
+        });
+        expect(corroborationOf(receipt({to: UNAUTHENTICATED}), NODE.address, AGENT)).toEqual({
+            status: "names-nobody",
+        });
+    });
+
+    it("compares addresses by checksum, not by spelling", () => {
+        // Two spellings of one address are one address. A string comparison here would report a
+        // second party where there is one hand, which is the wrong direction to be wrong in.
+        const lower = CALLER.toLowerCase() as typeof CALLER;
+        expect(corroborationOf(receipt({to: lower}), lower, CALLER).status).toBe("self-signed");
     });
 });
 

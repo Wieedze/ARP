@@ -142,7 +142,8 @@ the bytes the digest is over.
 
 - A declaration from an agent that came through the node is a two-party fact about the access.
   Nobody else can produce it, because nobody else is at the discovery, the fetch and the call —
-  **subject to the open question below about whose node signs.**
+  **and only where the signer is not the agent's own node**, which the resolution below settles by
+  making the two distinguishable from the receipt rather than by forbidding one of them.
 - `session.ts`'s ambiguity problem closes as a side effect: the response carries the atom it is, the
   hook logs that as its `ref`, and six candidates become one.
 - Verification is public and cheap. `verifyContentReceipt` recovers the signer;
@@ -195,7 +196,48 @@ the bytes the digest is over.
 - Nothing is on mainnet. Chain 13579 throughout, and `security.md`'s mainnet-signing statement is
   unaffected — a receipt key is not a key that signs a transaction.
 
-## The open question this decision does not answer
+## Resolved 2026-10-29: both nodes sign, and the receipt says which
+
+**The user's decision, asked as a choice of three and answered « ok le trois ».** Both nodes exist
+and they do different jobs:
+
+|                                | holds a key                | what its receipt is worth                         |
+| ------------------------------ | -------------------------- | ------------------------------------------------- |
+| the node the operator installs | **yes**, generated locally | the operator's own word, pinned to a content hash |
+| a node run by somebody else    | yes                        | a two-party fact about the access                 |
+
+So ADR `0045`'s unplug test still passes on this path: the local node serves, signs and keeps
+working with nothing of ours reachable. And the receipt a stranger weighs is the one from a signer
+that is not the agent.
+
+**A self-signed receipt is labelled, not refused.** The user's reasoning, and it is the right one:
+
+> _« un agent peut faire un faux tampon (même si ça ne sert à rien en fait) — le but de l'agent
+> c'est de déclarer du vrai pour l'utilité future »_
+
+A forged local receipt costs the agent the price of the claim and earns it a reputation on a tool it
+never used, which is worth nothing the day somebody picks an agent by that reputation. So the
+mechanism does not have to prevent it. It has to **name the signer**, which constraint 4 already
+requires, and that constraint now has a concrete consequence rather than only a principle:
+
+> **A reader compares the receipt's `node` to the address that made the declaration.** Same hand,
+> and the receipt corroborates nobody — stated, never silently discounted. ARP composes no score
+> (ADR `0046`), so this is a figure a reader sees, exactly like the distinct-declarer count and the
+> declarer-creator overlap in `tasks/31` §8.
+
+A self-signed receipt is still not worthless to its own operator: it pins the bytes and the path, so
+the operator can re-derive what their agent actually held. It is an audit trail that happens to be
+verifiable by anyone who re-fetches.
+
+## What the resolution leaves open
+
+**Not the signer. The host.** Where a non-local node runs, who pays for it, and what it charges are
+a product decision with its own ADR. What is settled here is that the two kinds of node are
+distinguishable from the receipt alone, which is the property any answer to that needs.
+
+---
+
+### The argument that got here, kept because it is the reasoning and not the conclusion
 
 **Whose node signs?** It decides that a node may hold a receipt key. It does not decide who runs
 that node, and the answer changes what a receipt is worth to a stranger.

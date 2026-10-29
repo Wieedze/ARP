@@ -507,6 +507,7 @@ export {
 export {
     contentDigest,
     contentReceiptDomain,
+    corroborationOf,
     contentReceiptTypedData,
     CONTENT_RECEIPT_TYPES,
     receiptMatchesContent,
@@ -514,6 +515,7 @@ export {
     UNAUTHENTICATED,
     verifyContentReceipt,
     type ContentReceipt,
+    type Corroboration,
     type ReceiptVerdict,
     type SignedContentReceipt,
     type TypedDataSigner,

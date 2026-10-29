@@ -239,6 +239,57 @@ export async function verifyContentReceipt(signed: SignedContentReceipt): Promis
     };
 }
 
+/** What a receipt adds to a declaration made by a given address. */
+export type Corroboration =
+    /** Two parties: the node that served is not the address that declared. */
+    | {status: "second-party"; signer: Address}
+    /** One hand holds both keys. Real, pinned to a content hash, and corroborating nobody. */
+    | {status: "self-signed"; signer: Address}
+    /** The receipt is about a different caller than the one who declared. */
+    | {status: "other-caller"; servedTo: Address}
+    /** The fetch was unauthenticated, so the receipt names no caller at all. */
+    | {status: "names-nobody"};
+
+/**
+ * What a receipt is worth **to a reader**, given who made the declaration.
+ *
+ * ADR `0080`, resolved on the user's decision 2026-10-29: both the node an operator installs and a
+ * node somebody else runs hold a key and sign. So a receipt's value is not a property of the
+ * receipt — it is the relationship between three addresses, and this is the comparison that reads
+ * it.
+ *
+ * ```
+ * receipt.to     the caller the node served
+ * signer         who signed, recovered by `verifyContentReceipt`
+ * declaredBy     the address that wrote the edge on chain
+ * ```
+ *
+ * **A self-signed receipt is reported, never refused.** The user's reasoning: a forged local
+ * receipt costs the agent the price of the claim and earns it a reputation on a tool it never used,
+ * which is worth nothing the day somebody picks an agent by that reputation. So the mechanism does
+ * not have to prevent it — it has to say which hand stamped it.
+ *
+ * It is a **figure a reader sees**, not a correction ARP applies: ADR `0046` composes no score, and
+ * this returns a status rather than a weight. The same shape as the distinct-declarer count and the
+ * declarer-creator overlap in `tasks/31` §8.
+ *
+ * Hand it a `signer` that came from a `valid` verdict. A signer this never checked is an address
+ * from the envelope, and comparing addresses nobody recovered answers a different question.
+ */
+export function corroborationOf(
+    receipt: ContentReceipt,
+    signer: Address,
+    declaredBy: Address,
+): Corroboration {
+    const served = receipt.to === null ? UNAUTHENTICATED : getAddress(receipt.to);
+    if (served === UNAUTHENTICATED) return {status: "names-nobody"};
+
+    const declarer = getAddress(declaredBy);
+    if (served !== declarer) return {status: "other-caller", servedTo: served};
+    if (getAddress(signer) === declarer) return {status: "self-signed", signer: declarer};
+    return {status: "second-party", signer: getAddress(signer)};
+}
+
 /**
  * Whether the bytes in hand are the bytes the receipt names.
  *
