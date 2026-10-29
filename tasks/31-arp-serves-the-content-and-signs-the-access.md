@@ -52,7 +52,13 @@ That is no longer "somebody claims to have used something". It is **this agent f
 through ARP, fetched it through ARP, and invoked it** — three moments, all through code ARP wrote,
 all timestamped, and one record that ties them.
 
-**Nobody else can produce that fact**, because nobody else is at all three places. An index that is
+**Nobody else can produce that fact**, because nobody else is at all three places — **and that is
+true only while the node is run by somebody the reader distinguishes from the agent.** If the
+agent's own operator runs it, one party holds both keys and the receipt is the operator's word in a
+second place. ADR `0080`'s open question is exactly this, and it is unsettled: it decides that a
+node may hold a receipt key and leaves whose node to the user. The sentence above was written
+without that qualifier, which made the plan's strongest claim rest on an unstated assumption about
+who runs the process. An index that is
 only read produces nothing; this produces a record that did not exist before the agent came
 through.
 

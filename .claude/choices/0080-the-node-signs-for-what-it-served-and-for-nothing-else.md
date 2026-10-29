@@ -17,11 +17,11 @@ ARP from composing that into a score, `docs/09` §3's ladder puts it on the **st
 somebody paid to say it, and nothing in the system could move it further. The rungs above needed a
 second party, and ARP had no way to be one, because ARP was only ever read:
 
-| | |
-| --- | --- |
-| ADR `0038` | the connector prepares calls and **never signs or sends**. No key anywhere in the package |
+|            |                                                                                                                               |
+| ---------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| ADR `0038` | the connector prepares calls and **never signs or sends**. No key anywhere in the package                                     |
 | ADR `0045` | the node runs on the operator's machine. ARP has **no visibility into what an agent executes**, and that half is load-bearing |
-| ADR `0035` | ARP is not a party to the loop. _« je ne dois pas exister dans cette boucle »_ |
+| ADR `0035` | ARP is not a party to the loop. _« je ne dois pas exister dans cette boucle »_                                                |
 
 **If ARP serves the content, ARP is a party to that exchange** — not to the agent's execution, which
 stays unobservable, but to the fetch. And a party can sign:
@@ -141,7 +141,8 @@ the bytes the digest is over.
 **Positive:**
 
 - A declaration from an agent that came through the node is a two-party fact about the access.
-  Nobody else can produce it, because nobody else is at the discovery, the fetch and the call.
+  Nobody else can produce it, because nobody else is at the discovery, the fetch and the call —
+  **subject to the open question below about whose node signs.**
 - `session.ts`'s ambiguity problem closes as a side effect: the response carries the atom it is, the
   hook logs that as its `ref`, and six candidates become one.
 - Verification is public and cheap. `verifyContentReceipt` recovers the signer;
@@ -174,9 +175,17 @@ the bytes the digest is over.
 
 **Neutral (worth knowing):**
 
-- ADR `0045`'s invariant is about the **request** path — an agent reaching another agent — and that
+- ADR `0045`'s **invariant** is about the request path — an agent reaching another agent — and that
   is untouched: ARP still cannot make an agent reachable. What this adds is an **optional** content
   path. An agent that cannot reach the node still declares; it declares without corroboration.
+
+  **But this ADR amends `0045` and the first version of this paragraph said it did not.** ADR
+  `0045`:56 states _"The node holds no key"_ as a decision, and this gives it one. The sentence
+  above was written as though only the invariant were in question, which is the `claims.md` §5
+  failure — a decision stated in two places and corrected in one — committed inside the ADR that
+  changes it. `0045`'s reasoning for that sentence is in the **open question** below, because it is
+  an argument against this decision and not merely a wording to patch.
+
 - ADR `0046` is untouched. A receipt is one more figure beside the others, never a weight. It does
   not rank, it does not gate and it composes with nothing.
 - The key's location, rotation and what an installer is trusting are **not settled here**. The node
@@ -185,6 +194,44 @@ the bytes the digest is over.
   substitute for it.
 - Nothing is on mainnet. Chain 13579 throughout, and `security.md`'s mainnet-signing statement is
   unaffected — a receipt key is not a key that signs a transaction.
+
+## The open question this decision does not answer
+
+**Whose node signs?** It decides that a node may hold a receipt key. It does not decide who runs
+that node, and the answer changes what a receipt is worth to a stranger.
+
+ADR `0045` decided ARP ships a node **the operator runs**, so that unplugging ARP's hosted services
+leaves a declaration, a stake and an agent-to-agent call still completing. It then argued, about a
+different receipt, that the node could hold no key — _"it cannot forge a receipt, because forging
+one requires the agent to sign a digest for work it did not do and the agent is the thing that does
+the work."_
+
+Turn that around and it is an argument against this ADR:
+
+> **If the agent's operator runs the node, the node is not a second party to that agent.** One
+> party holds both keys. The receipt is self-signed, and "two records, two parties" collapses to
+> one.
+
+The constraint that bears on it is already in the decision — a receipt **names its signer**, and a
+reader decides which signers it accepts. So the mechanism is not broken; what is unsettled is where
+its value is:
+
+| who runs the serving node                       | what a receipt is worth to a stranger      |
+| ----------------------------------------------- | ------------------------------------------ |
+| a party the reader distinguishes from the agent | a two-party fact about the access          |
+| the agent's own operator                        | the operator's own word, in a second place |
+
+Both rows are coherent and they imply different products. The first concentrates the value in a
+node somebody else runs — which is an argument for a hosted one, and therefore against `0045`'s
+unplug test for this path. The second is a self-audit trail, cheap and honest and much weaker than
+`tasks/31` §2 claims when it says _"nobody else can produce that fact"_.
+
+**That sentence in `tasks/31` is true only of the first row**, and the task does not say so. It is
+the strongest claim in the plan and it rests on an unstated assumption about who runs the process.
+
+This is the user's decision and it is not taken here. Nothing in the built code depends on it:
+`receipt.ts` takes a signer as an argument, so the same module serves either answer, and the route
+that needs a key is deliberately not built yet.
 
 ## References
 
