@@ -16,12 +16,16 @@ import {
     matchesFilter,
     TOOL_CURVES,
     TOOL_FILTERS,
+    livenessOf,
+    rankTools,
     TOOL_GROUPINGS,
-    TOOL_ORDERS,
+    TOOL_SORT_AXES,
     unknowableUnder,
     type ToolFilter,
     type ToolGrouping,
+    type ToolSortAxis,
 } from "../services/tool-catalog";
+import {useSkillFacts} from "../hooks/use-skill-facts";
 
 /**
  * `/tools` — tools agents declared using, with what is staked behind each.
@@ -43,7 +47,20 @@ export function ToolCatalog() {
     // `conviction`, not `priced-edges`. The old default ranked by how many claims carry a position
     // and is gone from the control (`TOOL_ORDERS`); money behind a claim is what separates it from
     // an assertion, so the list opens on the amount rather than on a free count.
-    const [order, setOrder] = useState<ToolListingOrder>("conviction");
+    // The chain read's own order, which no longer decides what the reader sees: the list is
+    // gated and sorted here, over the whole population rather than a page of it. Kept because the
+    // query takes one, and `conviction` makes the cache warm on the figure most readers open with.
+    const order: ToolListingOrder = "conviction";
+    /**
+     * Which axis the list is sorted on, above the liveness gate.
+     *
+     * **Not a weight.** Composing one score means deciding how much stake is worth against
+     * popularity, and that is chosen rather than measured — publish it and whoever has capital
+     * pushes on whichever term weighs most. So the page gates and sorts: the gate is liveness,
+     * which nobody can pay to change, and above it the axis belongs to the reader with every
+     * figure beside the others.
+     */
+    const [axis, setAxis] = useState<ToolSortAxis>("staked");
     // Curve 1 is the default because it is the durable signal: linear, so a position's gain follows
     // the tool's growth rather than the holder's timing. Curve 2 is where the money sits today, and
     // that is a different question — `TOOL_CURVES` has the measurement.
@@ -95,9 +112,19 @@ export function ToolCatalog() {
     // `matchesFilter` asks what is known about a tool's declarations, the domain asks what the tool
     // is for. `null` means no domain was picked — not "a domain with nothing in it", which is why
     // the hook returns `null` rather than an empty set.
-    const visible = (view?.rows ?? [])
-        .filter((row) => inDomain === null || inDomain.has(row.key.toLowerCase()))
-        .filter((row) => matchesFilter(row, filter));
+    const {factFor, repoFactFor} = useSkillFacts();
+    const visible = rankTools(
+        (view?.rows ?? [])
+            .filter((row) => inDomain === null || inDomain.has(row.key.toLowerCase()))
+            .filter((row) => matchesFilter(row, filter)),
+        axis,
+        (row) => ({
+            // A skill's liveness is its repository's: `source` names it, and the row's own label
+            // is tried too, for a repository's own entry.
+            liveness: livenessOf(repoFactFor(row.source === null ? row.label : `github.com/${row.source}`)),
+            installs: factFor(row.label)?.installs ?? null,
+        }),
+    );
     const unknowable = unknowableUnder(view?.rows ?? [], filter);
 
     return (
@@ -122,9 +149,9 @@ export function ToolCatalog() {
                 <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
                     <Segmented
                         label="Order"
-                        selected={order}
-                        onChange={setOrder}
-                        options={TOOL_ORDERS}
+                        selected={axis}
+                        onChange={setAxis}
+                        options={TOOL_SORT_AXES}
                     />
                     <Segmented
                         label="Show"

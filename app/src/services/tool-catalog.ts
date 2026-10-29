@@ -436,3 +436,68 @@ export function groupByRepo(rows: readonly ToolRow[]): ToolGroup[] {
     }
     return [...groups].map(([repo, list]) => ({repo, rows: list}));
 }
+
+/**
+ * Whether a tool answers, which is the one input nobody can be paid to change.
+ *
+ * `dead` is the owner's own word — a repository they archived, or one that is gone. `unknown` is
+ * not a soft no: it is a tool whose repository this build carries no reading for, and sorting it
+ * with the dead would be asserting something about it.
+ */
+export type Liveness = "alive" | "unknown" | "dead";
+
+export function livenessOf(fact: {archived: boolean; gone: boolean} | null): Liveness {
+    if (fact === null) return "unknown";
+    return fact.gone || fact.archived ? "dead" : "alive";
+}
+
+/**
+ * The axes a reader can sort by. **Not weights** — one at a time, and the row shows all of them.
+ *
+ * ADR `0046` refused a composed score and this is why it still holds while the page still answers
+ * "which do I pick". Composing one means choosing how much a million installs is worth against two
+ * TRUST staked, and that is a decision rather than a measurement: publish it and whoever has
+ * capital pushes on the heaviest term, at about $0.00005 an address.
+ *
+ * So the page gates and sorts instead. The gate is liveness, which cannot be bought. Above it the
+ * axis belongs to the reader, and every axis's figure sits on the row beside the others, so it is
+ * visible which one is doing the work.
+ */
+export type ToolSortAxis = "staked" | "claims" | "installs";
+
+export const TOOL_SORT_AXES: readonly {id: ToolSortAxis; label: string}[] = [
+    {id: "staked", label: "Most staked"},
+    {id: "claims", label: "Most claims"},
+    {id: "installs", label: "Most installs"},
+];
+
+const LIVENESS_RANK: Record<Liveness, number> = {alive: 0, unknown: 1, dead: 2};
+
+/**
+ * Gate, then sort. A tool that does not answer sorts below one that does, whatever either staked.
+ *
+ * `installs` lives beside the chain rather than on it (a skill atom carries its URL and nothing
+ * else, ADR `0054`), so the sort happens here rather than in the query — which the page can afford
+ * because it reads the whole population rather than a page of it.
+ */
+export function rankTools(
+    rows: readonly ToolRow[],
+    axis: ToolSortAxis,
+    read: (row: ToolRow) => {liveness: Liveness; installs: number | null},
+): ToolRow[] {
+    return [...rows].sort((left, right) => {
+        const a = read(left);
+        const b = read(right);
+        if (LIVENESS_RANK[a.liveness] !== LIVENESS_RANK[b.liveness]) {
+            return LIVENESS_RANK[a.liveness] - LIVENESS_RANK[b.liveness];
+        }
+        if (axis === "installs") return (b.installs ?? -1) - (a.installs ?? -1);
+        if (axis === "claims") return right.declarations - left.declarations;
+        // `staked` is the position COUNT before the amount: creating a term seeds its vault, so an
+        // amount alone ranks a tool nobody staked on above nothing at all (ADR `0042`).
+        const leftStakers = left.stakers ?? 0;
+        const rightStakers = right.stakers ?? 0;
+        if (leftStakers !== rightStakers) return rightStakers - leftStakers;
+        return right.supportTrust.localeCompare(left.supportTrust, "en", {numeric: true});
+    });
+}
