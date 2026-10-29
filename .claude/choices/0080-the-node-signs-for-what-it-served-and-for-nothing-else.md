@@ -239,8 +239,15 @@ Two more from the same review, both of the same family — a verdict that could 
 
 What the review **confirmed**, measured over all 662 rows on 13579: every recorded atom id equals
 `calculateAtomId(stringToHex(toolAtomUri(url)))` on the MultiVault, zero mismatches, zero
-collisions, and `calculateAtomId` is **not** plain `keccak256` of the same bytes (0 of 601 matched a
-local keccak) — so the decision not to derive ids at startup was right.
+collisions, and `calculateAtomId` is **not** plain `keccak256` of the same bytes (**0 of 662**
+agreed with a local keccak) — so the decision not to derive ids at startup was right. Re-derivable:
+`scripts/measure/catalogue-atom-ids.ts`, `measurements/catalogue-atom-ids-2026-10-29.json`.
+
+> That figure read **0 of 601** until the verification round. The claim is about `calculateAtomId`
+> as a **function**, so its denominator is every row the derivation runs on — all 662 — and scoping
+> it to the recorded subset borrowed the denominator from the sentence beside it and understated
+> the evidence. `claims.md` §2, and the same shape as that rule's own "89 of 89 lost the
+> denominator the script prints". Two sites carried it and the grep found both.
 
 ---
 

@@ -32,16 +32,23 @@ import {
   verifyContentReceipt,
   type SignedContentReceipt,
 } from '../packages/protocol/src/receipt.js';
-import skills from '../catalogue/skills-13579.json';
+import { catalogueFor } from './arp-content.js';
 
 const BASE = process.env['ARP_NODE'] ?? 'http://localhost:3099';
 
 type Row = { repo: string; skill: string; url: string; atom: string | null };
-const rows = (skills as { skills: Row[] }).skills;
 
-function pick(repo: string, skill: string): Row {
-  const found = rows.find((row) => row.repo === repo && row.skill === skill && row.atom !== null);
-  if (found === undefined) throw new Error(`${repo} ${skill} is not in the catalogue with an atom`);
+/** The catalogue for the chain the node is actually on — the last module-scope `skills-13579` import. */
+function pick(chainId: number, repo: string, skill: string): Row {
+  const found = catalogueFor(chainId).find(
+    (row) => row.repo === repo && row.skill === skill && row.atom !== null,
+  );
+  if (found === undefined) {
+    throw new Error(
+      `${repo} ?skill=${skill} is not recorded for chain ${chainId}. Only 13579 has a ` +
+        'catalogue today — start the node with ARP_TARGET=testnet.',
+    );
+  }
   return found;
 }
 
@@ -59,7 +66,7 @@ console.log('');
 
 // A throwaway key standing in for an agent's runtime key. One off-chain signature, then gone.
 const agent = privateKeyToAccount(generatePrivateKey());
-const target = pick('obra/superpowers', 'brainstorming');
+const target = pick(chainId, 'obra/superpowers', 'brainstorming');
 const atom = target.atom as Hex;
 const nonce = keccak256(stringToBytes(`verify-${Date.now()}`));
 const signature = await agent.signTypedData(contentRequestTypedData(atom, nonce, chainId));

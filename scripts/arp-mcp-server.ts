@@ -587,6 +587,21 @@ async function declareSession(id: JsonRpcId, args: Record<string, unknown>) {
     }
   }
 
+  // A node on a chain with no recorded catalogue would answer `unknown` for every invocation —
+  // "I have never heard of any of your tools" — when the truth is that this node is pointed at a
+  // chain where no skill is recorded. That is the trap `configuredAttestor` documents three hundred
+  // lines up in this same file: a result of zero reads as "the world is empty" rather than as "this
+  // node is misconfigured". The info document prints `catalogued_skills`, which is the right
+  // instinct in the wrong place — an agent reads the tool response, not the document.
+  if (sessionCatalogue.length === 0) {
+    return fail(
+      id,
+      -32602,
+      `no skill catalogue is recorded for chain ${chainId}, so nothing in a log can be named. ` +
+        'Only 13579 has one today: start the node with ARP_TARGET=testnet to use this tool.',
+    );
+  }
+
   const resolutions = resolveInvocations(parseSessionLog(raw), sessionCatalogue);
   const resolved = resolutions.filter((row) => row.status === 'resolved');
 

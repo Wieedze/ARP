@@ -376,7 +376,10 @@ export function corroborationOf(
 
     const who = getAddress(signer);
     if (who === declarer) return {status: "self-signed", signer: declarer};
-    if (accepted.some((address) => getAddress(address) === who)) {
+    // `isAddress` before `getAddress`, because `getAddress` throws and every other input to this
+    // function is REPORTED rather than thrown. A caller handing it a user-supplied list would get
+    // an exception where the module's whole contract is a verdict.
+    if (accepted.some((address) => isAddress(address) && getAddress(address) === who)) {
         return {status: "second-party", signer: who};
     }
     return {status: "unknown-signer", signer: who};

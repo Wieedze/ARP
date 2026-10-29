@@ -105,7 +105,8 @@ const indexes = new Map<number, ReadonlyMap<string, string>>();
  * catalogued" about a tool that is in the catalogue was simply false.
  *
  * Deriving the missing ids is `calculateAtomId` on the MultiVault, a chain read, and confirmed by
- * measurement to be **not** plain `keccak256` of the same bytes — 0 of 601 matched a local keccak.
+ * measurement to be **not** plain `keccak256` of the same bytes — 0 of 662 agreed with a local
+ * keccak (`scripts/measure/catalogue-atom-ids.ts`).
  * So it cannot be computed here, and a module that resolves identities must not need a chain to be
  * reachable.
  */

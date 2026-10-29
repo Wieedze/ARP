@@ -1,4 +1,4 @@
-import {keccak256, stringToBytes, type Hex} from "viem";
+import {keccak256, stringToBytes, type Address, type Hex} from "viem";
 import {privateKeyToAccount} from "viem/accounts";
 import {describe, expect, it} from "vitest";
 
@@ -257,6 +257,20 @@ describe("corroborationOf", () => {
         const lower = NODE.address.toLowerCase() as typeof NODE.address;
         expect(corroborationOf(receipt(), NODE.address, AGENT, [lower]).status).toBe(
             "second-party",
+        );
+    });
+
+    it("ignores a malformed entry in the accepted list instead of throwing", () => {
+        // Every other input to this function is reported — `malformed`, `unknown-signer`,
+        // `names-nobody`. `getAddress` throws, so an app passing a user-supplied list got an
+        // exception where the contract is a verdict.
+        const accepted = ["not an address", NODE.address] as unknown as Address[];
+        expect(corroborationOf(receipt(), NODE.address, CALLER, accepted).status).toBe(
+            "second-party",
+        );
+        const onlyBad = ["0xnope"] as unknown as Address[];
+        expect(corroborationOf(receipt(), NODE.address, CALLER, onlyBad).status).toBe(
+            "unknown-signer",
         );
     });
 
