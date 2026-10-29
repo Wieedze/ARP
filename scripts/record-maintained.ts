@@ -44,8 +44,36 @@ import type {Verdict} from "../packages/protocol/src/reachability.js";
 
 const TARGETS = {mainnet: 1155, testnet: 13579} as const;
 
-/** See the header: a judgement, not a reading. */
+/**
+ * How long a **server** may go unpushed before ARP stops asserting it is maintained.
+ *
+ * A judgement, not a reading, and named so that moving it is a visible act. Measured 2026-10-29
+ * across all 53 (`scripts/measure/repo-liveness.ts`): 40 pushed within 30 days, and the stale tail
+ * runs 366, 167, 100, 87, 78, 58 — **there is no clean gap**. At 30 days it would flip on every
+ * repository that ships monthly; at 365 it would call a repository dead for a year maintained.
+ */
 const STALE_AFTER_DAYS = 180;
+
+/**
+ * The kinds for which **silence** condemns. A recent push speaks for every kind.
+ *
+ * The asymmetry is the whole point, and an earlier version got it wrong by being symmetric. A push
+ * last week is evidence of maintenance whatever the repository holds — there is nothing ambiguous
+ * about somebody working on it. Silence is the half that depends on the kind:
+ *
+ * ```
+ * a server   code with dependencies  they age without it, so silence is decay
+ * a skill    a file of instructions  once it is right there is nothing left to push
+ * ```
+ *
+ * So a quiet skill gets **no verdict** — finished and abandoned look identical from here, and ARP
+ * publishes what it can defend. A quiet server gets `down`.
+ *
+ * The user, 2026-10-29: _« oui mais si ils sont maintenus je veux le savoir »_. The version this
+ * replaces said nothing at all about a skill, **including one pushed yesterday**, which threw away
+ * the half of the signal that is not ambiguous.
+ */
+const SILENCE_CONDEMNS = new Set(["mcp-server"]);
 
 /** `maintained` — a plain string, so its id follows from the word and is the same on both chains. */
 const MAINTAINED = stringToHex("maintained");
@@ -85,10 +113,11 @@ const {createPublicClient, http} = await import("viem");
 const client = createPublicClient({transport: http(rpcUrl)});
 const reads = multiVaultReads({address: multiVault, chainId, client});
 
-const [curveId, stake, atomCost] = await Promise.all([
+const [curveId, stake, atomCost, tripleCost] = await Promise.all([
     reads.defaultCurveId(),
     reads.minDeposit(),
     reads.atomCost(),
+    reads.tripleCost(),
 ]);
 
 console.log(`chain       ${chainId} (${targetName})`);
@@ -114,15 +143,35 @@ if (!(await reads.termExists(maintainedId))) {
     });
 }
 
+/**
+ * A token lifts GitHub from 60 requests an hour to 5,000, and the whole catalogue is 53.
+ *
+ * Read from the environment and never printed. A **classic token with no scopes selected** is the
+ * right one: it grants public read and literally nothing else, so leaking it costs nothing. `.env`
+ * is gitignored (line 6) and has never been committed — and the name carries no `VITE_` prefix,
+ * which would ship it to a browser.
+ */
+const githubHeaders: Record<string, string> = {
+    accept: "application/vnd.github+json",
+    "user-agent": "arp",
+};
+const githubToken = process.env["GITHUB_TOKEN"];
+if (githubToken !== undefined && githubToken.trim().length > 0) {
+    githubHeaders["authorization"] = `Bearer ${githubToken.trim()}`;
+    console.log("github      authenticated — 5,000 requests an hour\n");
+} else {
+    console.log("github      unauthenticated — 60 requests an hour; set GITHUB_TOKEN for 5,000\n");
+}
+
 const sleep = (ms: number): Promise<void> => new Promise((done) => setTimeout(done, ms));
 const now = Date.now();
 let unchanged = 0;
 let skipped = 0;
 
-for (const tool of (catalogue as {tools: {url: string}[]}).tools) {
+for (const tool of (catalogue as {tools: {url: string; kind: string}[]}).tools) {
     const slug = tool.url.replace("https://github.com/", "");
     const response = await fetch(`https://api.github.com/repos/${slug}`, {
-        headers: {accept: "application/vnd.github+json", "user-agent": "arp"},
+        headers: githubHeaders,
         signal: AbortSignal.timeout(20000),
     });
     if (response.status === 403 || response.status === 429) {
@@ -131,19 +180,37 @@ for (const tool of (catalogue as {tools: {url: string}[]}).tools) {
     }
     const repo = (await response.json()) as {pushed_at?: string; archived?: boolean};
 
-    // A 404 and an archive are both the answer "no". Anything else without a push date is not an
-    // answer at all — GitHub replied something we did not understand, so nothing is claimed.
+    // A 404 and an archive are the owner's own word, and they are the only authoritative signals
+    // here. Everything below them is our inference, and for a skill the inference is wrong.
     let verdict: Verdict;
-    if (response.status === 404 || repo.archived === true) verdict = "down";
-    else if (repo.pushed_at === undefined) verdict = "no-verdict";
-    else {
-        const days = (now - Date.parse(repo.pushed_at)) / 86_400_000;
-        verdict = days <= STALE_AFTER_DAYS ? "up" : "down";
+    let reason: string;
+    if (response.status === 404) {
+        verdict = "down";
+        reason = "404 — gone";
+    } else if (repo.archived === true) {
+        verdict = "down";
+        reason = "archived by its owner";
+    } else if (repo.pushed_at === undefined) {
+        verdict = "no-verdict";
+        reason = "GitHub answered without a push date";
+    } else {
+        const days = Math.round((now - Date.parse(repo.pushed_at)) / 86_400_000);
+        if (days <= STALE_AFTER_DAYS) {
+            // Whatever the repository holds, somebody is working on it. Nothing ambiguous here.
+            verdict = "up";
+            reason = `pushed ${days}d ago`;
+        } else if (SILENCE_CONDEMNS.has(tool.kind)) {
+            verdict = "down";
+            reason = `pushed ${days}d ago`;
+        } else {
+            verdict = "no-verdict";
+            reason = `pushed ${days}d ago — a quiet skill reads as finished or abandoned alike`;
+        }
     }
 
     if (verdict === "no-verdict") {
         skipped += 1;
-        console.log(`  ?       ${slug}  — GitHub answered without a push date, nothing claimed`);
+        console.log(`  —       ${slug}  · ${reason}`);
         await sleep(120);
         continue;
     }
@@ -163,6 +230,7 @@ for (const tool of (catalogue as {tools: {url: string}[]}).tools) {
         receiver: attestor as Hex,
         curveId,
         stake,
+        tripleCost,
         toolLabel: slug,
         // One reading of an authoritative source, not three observations of a flaky one. GitHub
         // saying `archived: true` is the owner's own declaration; there is nothing to confirm.
@@ -172,7 +240,7 @@ for (const tool of (catalogue as {tools: {url: string}[]}).tools) {
     if (plan.calls.length === 0) {
         unchanged += 1;
     } else {
-        console.log(`  ${plan.to === "up" ? "ALIVE " : "STALE "}  ${slug}  — ${plan.why}`);
+        console.log(`  ${plan.to === "up" ? "ALIVE " : "STALE "}  ${slug}  · ${reason}`);
         for (const call of plan.calls) {
             calls.push({
                 kind: call.kind,
