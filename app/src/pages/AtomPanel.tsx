@@ -10,7 +10,7 @@ import {actionCardClass} from "../lib/surface-class";
 import {linkClass} from "../lib/control-class";
 import {useDomainTree} from "../hooks/use-domain-tree";
 import {useSkillFacts} from "../hooks/use-skill-facts";
-import {predicateLabelOf} from "../services/atom-standing-view";
+import {LIVENESS_OBJECTS, predicateLabelOf} from "../services/atom-standing-view";
 import {DeclareUse} from "../components/usage/DeclareUse";
 import {useAgentRefForAtom} from "../hooks/use-agent-ref-for-atom";
 import {useDeclaredModules} from "../hooks/use-declared-modules";
@@ -177,6 +177,7 @@ export function AtomPanel() {
                 </aside>
 
                 <div className="min-w-0">
+                    <Verdict view={view} />
                     <Describes view={view} />
                     {!view.exists ? (
                         <Missing atomId={view.atomId} />
@@ -348,21 +349,83 @@ function Signals({view}: {view: AtomView}) {
             )}
             {repo === null ? null : (
                 <Term label="Its repository">
-                    <span className="block font-mono tabular-nums">
-                        {repo.gone
-                            ? "gone"
-                            : repo.archived
-                              ? "archived by its owner"
-                              : repo.days === null
-                                ? "no push date"
-                                : `pushed ${repo.days}d ago`}
-                    </span>
                     <span className="block font-mono tabular-nums text-[color:var(--color-steel)]">
                         {`${repo.stars.toLocaleString("en-US")} stars`}
                     </span>
                 </Term>
             )}
         </dl>
+    );
+}
+
+/**
+ * A liveness verdict, as three facts rather than a badge.
+ *
+ * ```
+ * the verdict    what ARP asserts            on chain, and withdrawable
+ * the evidence   the fact it rests on        anybody can re-read it
+ * the stake      what ARP put behind it      what keeps it from being a badge
+ * ```
+ *
+ * The third line is the point and it is why this is not a label. A badge is somebody's opinion
+ * rendered as a fact; this is a claim with a price on it, and ARP can be made to withdraw it by
+ * redeeming the position — which it did to 203 tags on the day this was written.
+ *
+ * **ARP is the witness here, not a relay.** `maintained` rests on `archived` and `pushed_at`, which
+ * are the repository owner's own record; `reachable` rests on a call ARP made, and `probe.ts`
+ * carries the exact request so a reader can repeat it. Neither reads an uptime service, and that is
+ * deliberate — republishing somebody else's verdict would be the bottom rung of `docs/09` §3's
+ * ladder wearing the clothes of the top one.
+ */
+function Verdict({view}: {view: AtomView}) {
+    const {repoFactFor} = useSkillFacts();
+    const sourceLabel =
+        view.claims.find((claim) => claim.predicate === "source")?.objectLabel ?? view.label;
+    const repo = repoFactFor(sourceLabel);
+    const onChain = view.claims.find(
+        (claim) => claim.objectLabel === "maintained" || claim.objectLabel === "reachable",
+    );
+    if (repo === null && onChain === undefined) return null;
+
+    const dead = repo !== null && (repo.gone || repo.archived);
+    const evidence =
+        repo === null
+            ? null
+            : repo.gone
+              ? "the repository is gone"
+              : repo.archived
+                ? "archived by its owner"
+                : repo.days === null
+                  ? "no push date"
+                  : `pushed ${repo.days}d ago`;
+
+    return (
+        <div className="mb-8 flex flex-wrap items-baseline gap-x-5 gap-y-1 border-y border-[color:var(--color-rule)] py-3">
+            <span className="flex items-baseline gap-2.5">
+                <span
+                    className={`h-[7px] w-[7px] rounded-full ${
+                        dead
+                            ? "bg-[color:var(--color-alarm)]"
+                            : "bg-[color:var(--color-accent)]"
+                    }`}
+                />
+                <span className="font-mono text-[length:var(--text-label)] uppercase tracking-[0.08em]">
+                    {onChain?.objectLabel ?? (dead ? "not maintained" : "maintained")}
+                </span>
+            </span>
+            {evidence === null ? null : (
+                <span className="font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-silver)]">
+                    {evidence}
+                </span>
+            )}
+            {/* What ARP put behind saying it. Absent rather than zero when nothing stands behind
+                the claim — ADR `0042`, a figure must never appear where no position does. */}
+            {onChain?.backing === undefined || onChain.backing === null ? null : (
+                <span className="font-mono text-[length:var(--text-body-sm)] tabular-nums text-[color:var(--color-steel)]">
+                    {`${onChain.backing} behind it`}
+                </span>
+            )}
+        </div>
     );
 }
 
@@ -383,10 +446,13 @@ function Claims({view}: {view: AtomView}) {
     // label derived from one query must not be frozen inside another's cache entry.
     const domains = useDomainTree();
     const labels = new Set(domains.options.map((option) => option.label));
-    if (view.claims.length === 0) return null;
+    // Filtered first: an atom whose only outgoing edge is its liveness verdict would otherwise
+    // render an empty list under a rule, and `Verdict` has already said that one.
+    const claims = view.claims.filter((claim) => !LIVENESS_OBJECTS.has(claim.objectLabel ?? ""));
+    if (claims.length === 0) return null;
     return (
         <dl className="mt-6 border-t border-[color:var(--color-rule)] pt-4 text-[length:var(--text-body-sm)]">
-            {view.claims.map((claim) => (
+            {claims.map((claim) => (
                 <Term
                     key={claim.tripleId}
                     label={predicateLabelOf(claim.predicate, claim.objectLabel, labels)}
