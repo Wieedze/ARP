@@ -213,24 +213,63 @@ export function ClaimField({
                 ))}
             </div>
 
-            {/* The claim the active dot composes, as the sentence a triple is. The slot is always
-                in the DOM with a reserved height, so revealing it moves nothing — a field that
-                reflowed on hover would be the mouse-reactive effect `ui.md` actually forbids. */}
-            <p
+            {/* **What the dot under the pointer is worth**, not just what it says.
+                The user, 2026-10-29: _« un genre de module qui décrit la valeur des atomes qui
+                gravitent autour »_. It replaced a one-line sentence that named the triple and gave
+                no figure — so a reader could see that a claim existed and never what anybody had
+                put behind it, which is the one distinction this whole page argues about.
+
+                The slot keeps its height whether or not a dot is active: a panel that appeared
+                would push the field down under the pointer, which is the mouse-reactive effect
+                `ui.md` forbids and ADR `0073`'s third condition names. Hover **and** focus feed it
+                (first condition), and every figure in it is already on the page (second). */}
+            <div
                 aria-hidden="true"
                 data-claim-sentence={current === undefined ? "none" : "one"}
-                className="mt-4 min-h-[1.5rem] basis-full text-[length:var(--text-body-sm)]"
+                className="mt-4 min-h-[5.5rem] basis-full border-t border-[color:var(--color-rule)] pt-3 text-[length:var(--text-body-sm)]"
             >
                 {current === undefined ? null : (
-                    <span className="flex flex-wrap items-baseline gap-x-2">
-                        <span className="font-medium">{current.row.name}</span>
-                        <span className="text-[color:var(--color-steel)]">{current.predicate}</span>
-                        <span className="min-w-0 truncate text-[color:var(--color-steel)]">
-                            {subject}
-                        </span>
-                    </span>
+                    <>
+                        <p className="flex flex-wrap items-baseline gap-x-2">
+                            <span
+                                className={`min-w-0 truncate font-medium ${current.row.nameIsId ? "font-mono" : ""}`}
+                            >
+                                {current.row.name}
+                            </span>
+                            <span className="font-mono text-[length:var(--text-label)] text-[color:var(--color-steel)]">
+                                {current.predicate}
+                            </span>
+                        </p>
+                        {/* **The figure, or its absence said out loud.** ADR `0042`: creating a
+                            term seeds its vault, so an amount is not evidence that anybody staked
+                            — `positions` is. A claim nobody paid for is the common case and it has
+                            to be visibly weightless rather than quietly blank (`docs/17` §4). */}
+                        <p className="mt-2 font-mono tabular-nums">
+                            {current.row.backing === null ? (
+                                <span className="text-[color:var(--color-steel)]">
+                                    nothing behind it
+                                </span>
+                            ) : (
+                                <>
+                                    {current.row.backing}
+                                    <span className="text-[color:var(--color-steel)]">
+                                        {` · ${current.row.positions} ${current.row.positions === 1 ? "position" : "positions"}`}
+                                    </span>
+                                </>
+                            )}
+                        </p>
+                        {/* Only when somebody took it. A counter-triple exists for every triple at
+                            the same price and 969 of 285,775 chain-wide have ever carried one, so
+                            an empty counter means "nobody bothered" and never "everybody agrees"
+                            — printing a zero here would say the second. */}
+                        {current.row.opposition === null ? null : (
+                            <p className="mt-1 font-mono tabular-nums text-[color:var(--color-alarm)]">
+                                {`${current.row.opposition} against`}
+                            </p>
+                        )}
+                    </>
                 )}
-            </p>
+            </div>
 
             {/* The legend. It names each ring and says what the ring does not: the total, when the
                 cap bit, and the group's own backing. */}

@@ -381,6 +381,13 @@ describe("the claim field", () => {
         (dot as HTMLAnchorElement).focus();
         await waitFor(() => expect(slot?.getAttribute("data-claim-sentence")).toBe("one"));
         expect(slot?.textContent).toContain("Agent 13579:3");
+
+        // **And what the claim is worth, not only what it says.** The slot named the triple and
+        // gave no figure, so a reader could see that a claim existed and never what anybody had
+        // put behind it — the one distinction this page argues about. A claim nobody paid for says
+        // so rather than going blank (ADR `0042`, `docs/17` §4).
+        const text = slot?.textContent ?? "";
+        expect(/position|nothing behind it/.test(text)).toBe(true);
     });
 
     it("gives every claim a reachable link and an accessible name", async () => {
