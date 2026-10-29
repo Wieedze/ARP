@@ -1,7 +1,15 @@
 # Task 31 — ARP serves the content and signs the access
 
-**Status:** **PLAN ONLY — nothing in this file is built.** Pieces 1 and 2 of §4 are built and
-committed (`bcbfbe4`); piece 3 is the whole of this task.
+**Status:** **BUILT.** All seven deliverables are done, 2026-10-29 — see §7, each marked with what
+landed. The open question the plan did not know it had (whose node signs) was put to the user and
+answered: both, and the receipt says which. ADR `0080`.
+
+The plan's own overclaim is corrected in §2 rather than deleted: _"nobody else can produce that
+fact"_ holds only where the signer is not the agent's own node.
+
+What is **not** here and is owed: a written account of the node's files and its trust surface for
+whoever installs it. The trust surface itself is written at the top of `scripts/arp-content.ts`,
+where the code is; what is missing is the operator-facing version.
 **Required skills:** `intuition` (atoms and triples), `ethskills` (signatures).
 **Rules:** `code.md`, `security.md`, `portability.md`, `claims.md`, `workflow.md`.
 **Reviewers:** `intuition-integrator`, then `task-verifier`.
@@ -231,10 +239,19 @@ claim is worth, not a gate on who may make one.
 1. `packages/protocol/src/receipt.ts` — the payload shape, its canonical encoding, `sign` and
    `verify`. Pure, no transport, tested without a network. **The verification is the deliverable**,
    not the signing: a receipt nobody else can check is a log entry.
-2. A `/content/:atomId` route on the node, with the repository-layout resolver and its cache.
-3. The hook writes `ref` from the receipt.
-4. `arp_declare_session` on the node: takes a log, returns resolutions and the prepared calls for
-   the resolved ones. **Plans, never signs** (ADR `0038`).
+2. ~~A `/content/:atomId` route on the node, with the repository-layout resolver and its cache.~~
+   **Done 2026-10-29** — `packages/protocol/src/content-path.ts` (21 tests),
+   `content-serve.ts` (21 tests, every piece of IO injected), `scripts/arp-content.ts` (the
+   transport, the key, the cache), and one route in `scripts/arp-mcp-server.ts`. Walked end to end
+   by `scripts/verify-content-route.ts`: the digest the receipt carries is what `sha256sum` prints
+   on the downloaded file.
+3. ~~The hook writes `ref` from the receipt.~~ **Done 2026-10-29** —
+   `scripts/arp-fetch-skill.ts` records the fetch, `refForInvocation` reads it back, and the hook
+   fills `ref`. On `product-photography`, which six repositories carry: **resolved** with the ref,
+   **ambiguous with 6 candidates** without it.
+4. ~~`arp_declare_session` on the node.~~ **Done 2026-10-29** — takes a log, reports every
+   invocation with its resolution, plans only for the exactly-named ones, and says for each
+   whether a receipt corroborates the access and who signed it. Plans, never signs.
 5. ~~A measurement of the repository layouts, committed, before 5.2's resolver exists.~~
    **Done 2026-10-29** — `scripts/measure/skill-layouts.ts`,
    `measurements/skill-layouts-2026-10-29.json`. The answer is in §5.1 and it changed the design:

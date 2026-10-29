@@ -192,7 +192,7 @@ and task 20 commits and does not describe them.**
 | 29     | the landing is a scene sequence                           | **built and gated** 2026-10-28, including all five browser checks (`scripts/measure/landing-fit.ts`, which found two defects no other gate could see). **Not closed**: the task forbids touching the other four pages and two changes did — the sticky nav and the route fade — both disclosed in `tasks/29` and awaiting the user's yes or no — the design session's delivery, built as delivered. Six scenes, one gesture per scene, Saffron hand-overs, the word and route scales. Seven of its decisions were the user's: ADRs `0066`-`0069`, three of which amend `rules/ui.md`. What `docs/18` §4-§5 became, and the one thing in it deliberately not built, is ADR `0070` |
 | 30     | declaring a use has no page                               | **built, reviewed twice, fixed** 2026-10-28 — `/atom/:atomId` writes `(your agent, uses, this atom)`, and the atom's own market is reachable there. ADR `0071`. The ERC-8004 `owner` is the authority; mainnet is refused pending the user's ADR. Two review rounds, **twelve** findings, **four of them created by fixing the first eight**                                                                                                                                                                                                                                                                                                                                     |
 | 28     | coherence audit — code, front, docs                       | **first batch done** 2026-10-20 (ADR `0044`); **eight items marked moot** 2026-10-27 (`ToolDetail`, `RegisterModule`, `ModuleList` deleted); **item 27 fixed** (the mainnet sentence, ADR `0065`). Six items added 2026-10-27 from the task 17 and 22 gates — the `194` at six sites, the two deployment-file shapes, `format:check`'s standing failure, `INDEX.md`'s generator output, and the `new URL(…, import.meta.url)` sweep. Mint vs "mints nothing" is still the user's                                                                                                                                                                                                 |
-| 31     | ARP serves the content and signs the access               | **in progress** 2026-10-29. Deliverable 5 done (`0bc29d8`) — `scripts/measure/skill-layouts.ts`: 19 layouts over 31 repositories, 8 of them use more than one, so the resolver reads the tree. **521 of 662 skills are servable**; 139 have no file at HEAD, and 95 of those sit in a repository with no uncatalogued directory — a per-skill liveness signal one tree request re-derives. The first run of that measurement was wrong (any directory in the path, not the immediate parent) and was corrected the same day — no resolved path changed, the ambiguity counts did; `measurements/skill-layouts-2026-10-29T2200.json` supersedes the file `0bc29d8` committed. Deliverable 1 done (`a179e58`) — `packages/protocol/src/receipt.ts`, EIP-712 rather than the EIP-191 the task sketched, because an atom id is the same on 13579 and on 1155 (ADR `0054`) and the signed domain is the only thing that separates them; 25 tests. Deliverables 6 and 7 done (`ADR 0080`, `docs/14`'s amendment) — the correction is narrower than planned: the original argument is about a **place**, so its opening sentence stands and only the fetch case is carved out. **Left: 2's route (it needs the key), 3, 4** |
+| 31     | ARP serves the content and signs the access               | **in progress** 2026-10-29. Deliverable 5 done (`0bc29d8`) — `scripts/measure/skill-layouts.ts`: 19 layouts over 31 repositories, 8 of them use more than one, so the resolver reads the tree. **521 of 662 skills are servable**; 139 have no file at HEAD, and 95 of those sit in a repository with no uncatalogued directory — a per-skill liveness signal one tree request re-derives. The first run of that measurement was wrong (any directory in the path, not the immediate parent) and was corrected the same day — no resolved path changed, the ambiguity counts did; `measurements/skill-layouts-2026-10-29T2200.json` supersedes the file `0bc29d8` committed. Deliverable 1 done (`a179e58`) — `packages/protocol/src/receipt.ts`, EIP-712 rather than the EIP-191 the task sketched, because an atom id is the same on 13579 and on 1155 (ADR `0054`) and the signed domain is the only thing that separates them; 25 tests. **All seven done the same day.** `receipt.ts` (EIP-712, because an atom id is the same on 13579 and 1155 and the signed domain is the only thing that separates them), `content-path.ts` and `content-serve.ts` (every piece of IO injected), `scripts/arp-content.ts` + one route, the hook filling `ref` from the fetch, `arp_declare_session`, ADR `0080`, and `docs/14`'s amendment. Verified end to end: the digest a receipt carries is what `sha256sum` prints on the downloaded file. **The open question the plan did not know it had** — whose node signs — went to the user and was answered: both kinds sign, the receipt names which, and a self-signed one is labelled rather than refused. **Owed:** the operator-facing account of the node's files and trust surface (the surface itself is written at the top of `scripts/arp-content.ts`) |
 
 **Recommended order** — `docs/15_ROADMAP.md` is the full version with what testnet can and cannot
 prove. The old short form here read **"next is 17 → 25"** and both halves are now wrong: 17's gate
@@ -203,13 +203,30 @@ edges re-measured 2026-10-27), **27** (the prose pass), **28** (the coherence pu
 **29**'s two scope questions (the sticky nav and the route fade, both of which touched pages that
 task said not to touch — the user's yes or no closes it).
 
-**What is actually being worked on, 2026-10-29: `tasks/31`.** Four of its seven deliverables are
-done — the measurement, `receipt.ts`, the path resolver, the ADR and the `docs/14` correction. What
-is left is the **route** on `scripts/arp-mcp-server.ts`, and it is left because it needs a key. ADR
-`0080` settles that the node may hold one, that it signs receipts and nothing else, and that it
-cannot move value; it deliberately does **not** settle where the key lives or what an installer is
-trusting. The user has asked for a written account of the node's files and its trust surface before
-anyone is asked to install it, and that account is owed before the route ships.
+**`tasks/31` is built, 2026-10-29 — all seven deliverables.** ARP is now a path and not only an
+index: the node holds one key, it signs content receipts and nothing else, and it cannot move value.
+ADR `0038` is unamended — the plan path still has no key.
+
+**The two things to know before touching it:**
+
+1. **A receipt attests ACCESS, never use**, and `docs/14`'s opening sentence still stands. What the
+   amendment carves out is one population: agents that fetched through a node. The argument it
+   corrects was about a *place* — a connector inside the agent's process is under the agent's
+   control, which says nothing about a party on the other end of a fetch.
+2. **Both kinds of node sign** (ADR `0080`, the user's decision). A node the operator installs
+   holds its own key, so its receipt is the operator's word in a second place; a node somebody else
+   runs is a second party. `corroborationOf` is the one comparison that tells them apart, and a
+   self-signed receipt is **labelled, not refused** — forging one costs the agent the price of the
+   claim and earns a reputation on a tool it never used.
+
+**Owed, and the user asked for it explicitly:** an operator-facing account of the node's files and
+its trust surface, before anyone is asked to install it. The surface is written at the top of
+`scripts/arp-content.ts` — derived fetch target, nothing executed, nothing cached but a listing,
+0600 key, eight named refusals — but that is where the code is, not where an installer looks.
+
+**One trap for anyone running the node by hand:** `packages/protocol/test/arp-mcp-server.test.ts`
+spawns its own server on **port 3099**. A node left running there makes six of its tests fail
+against the real testnet instead of the stub, and it reads as a code defect.
 
 Everything runs on **testnet 13579 for now** — the rig is already deployed there and nothing needs
 simulating. What testnet will never prove is **one** thing, not two, and that is a correction:
