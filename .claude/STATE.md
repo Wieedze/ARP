@@ -56,10 +56,16 @@ What is on chain, 2026-10-29:
 
 Three findings worth carrying forward:
 
-- **177 of the 662 are copies.** Six repositories named `superpowers` hold 26 identical skills each,
-  copied from `obra/superpowers` which holds 15, and **two of the copies out-install the original**.
-  An install count cannot tell a copy from its author's. That is the limit of every popularity
-  signal and the gap ARP fills — which is why `source` was worth paying for.
+- **116 of 531 distinct SKILL.md files exist in more than one repository**, measured by content
+  hash (`scripts/measure/skill-content-duplicates.ts`). The six repositories named `superpowers`
+  carry 86 files each, **all 86 byte-identical across all six**. Anyone can reproduce it with
+  `git hash-object` and no credential — `docs/14`'s test, met exactly.
+
+  **This said "copied from `obra/superpowers`" until it was measured, and that was false**: it
+  shares zero files with any of them and is a different project with the same repository name. A
+  shared name was read as evidence of shared content. ADR `0078` carries the struck-through
+  original. An install count cannot tell any of this apart, which is still why `source` was worth
+  paying for.
 - **The install count stays off chain**, in `measurements/skills-installs-2026-10-29.json`. It is
   somebody else's number and it changes; it belongs in a ranking input, never in a tag. Only
   `archived` and a 404 are authoritative enough to be verdicts (`scripts/record-maintained.ts`).

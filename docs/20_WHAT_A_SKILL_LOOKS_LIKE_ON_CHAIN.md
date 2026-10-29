@@ -79,26 +79,34 @@ Checked before anything was written. ADR `0077`.
 
 ## 4. Why `source` was worth paying for
 
-Measured 2026-10-29 (`measurements/skills-installs-2026-10-29.json`): **177 of 662 skills are
-copies**.
+Measured 2026-10-29 **by content hash**, not by name
+(`scripts/measure/skill-content-duplicates.ts`): of **531** distinct SKILL.md files in the
+catalogue, **116 exist in more than one repository**.
 
 ```
-obra/superpowers                15 skills      3,693,645 installs   ← the author
-101-skills/superpowers          26 skills      4,969,255
-magentosh/superpowers           26 skills      4,350,541
-qu-skills/superpowers           26 skills      3,205,244
-skills-shell/superpowers        26 skills      2,680,001
-its-a-skill-issue/superpowers   26 skills      2,369,719
-bankai-skills/superpowers       26 skills      2,280,582
+101-skills/superpowers          86 SKILL.md
+magentosh/superpowers           86 SKILL.md       all 86 byte-identical
+qu-skills/superpowers           86 SKILL.md       across all six, every one
+skills-shell/superpowers        86 SKILL.md       of the fifteen pairs
+its-a-skill-issue/superpowers   86 SKILL.md
+bankai-skills/superpowers       86 SKILL.md
+
+obra/superpowers                15 SKILL.md       ZERO shared with any of them
 ```
 
-Two of the copies out-install the original, and the six together carry **5.4×** his total.
-`ai-video-generation` exists 8 times; `remotion-render` 7 times, with `remotion-dev` itself among
-them.
+> **Corrected 2026-10-29.** This said the six were "copied from `obra/superpowers`" and that "two
+> of the copies out-install the original". **Both are false.** It shares no file with any of them
+> and is a different project carrying the same repository name. The shared *name* was read as
+> evidence of shared content; only a hash is. `claims.md` §3 — a claim about a third party needs a
+> source, and a repository name is not one.
 
-**An install count cannot tell a copy from its author's.** That is the limit of every popularity
-signal, and it is the work nobody else is doing. The `source` edge does not settle who was first —
-a fork's `source` points at the fork — but it makes the question askable, which it was not before.
+The copy finding survives the correction and is stronger for being measured: GitHub's blob sha is
+`sha1("blob " + length + "\0" + content)`, so **anyone can reproduce it** with
+`git hash-object SKILL.md` and no credential at all. That is `docs/14`'s test met exactly.
+
+**An install count cannot tell any of this apart.** It is somebody else's number and it ranks
+nothing it can verify. The `source` edge does not settle who was first either — a fork's `source`
+points at the fork — but it makes the question askable, which it was not before.
 
 ## 5. The index is a reading, not the chain
 

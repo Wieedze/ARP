@@ -1,0 +1,231 @@
+{
+  "measuredAt": "2026-10-29T14:14:14.108Z",
+  "source": "api.github.com git/trees, blob sha = git hash-object",
+  "reposRead": 31,
+  "truncatedRepos": 0,
+  "distinctContents": 531,
+  "sharedContents": 116,
+  "perRepo": [
+    {
+      "repo": "mattpocock/skills",
+      "files": 38,
+      "distinct": 38
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "files": 26,
+      "distinct": 20
+    },
+    {
+      "repo": "microsoft/azure-skills",
+      "files": 94,
+      "distinct": 56
+    },
+    {
+      "repo": "larksuite/cli",
+      "files": 37,
+      "distinct": 37
+    },
+    {
+      "repo": "prime-skills/runcomfy-agent-skills",
+      "files": 30,
+      "distinct": 30
+    },
+    {
+      "repo": "leonxlnx/taste-skill",
+      "files": 1,
+      "distinct": 1
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "files": 54,
+      "distinct": 54
+    },
+    {
+      "repo": "juliusbrussee/caveman",
+      "files": 28,
+      "distinct": 23
+    },
+    {
+      "repo": "101-skills/superpowers",
+      "files": 86,
+      "distinct": 86
+    },
+    {
+      "repo": "lllllllama/rigorpilot-skills",
+      "files": 11,
+      "distinct": 11
+    },
+    {
+      "repo": "vercel-labs/skills",
+      "files": 3,
+      "distinct": 3
+    },
+    {
+      "repo": "magentosh/superpowers",
+      "files": 86,
+      "distinct": 86
+    },
+    {
+      "repo": "obra/superpowers",
+      "files": 15,
+      "distinct": 15
+    },
+    {
+      "repo": "google/agents-cli",
+      "files": 16,
+      "distinct": 9
+    },
+    {
+      "repo": "anthropics/skills",
+      "files": 20,
+      "distinct": 20
+    },
+    {
+      "repo": "prisma/skills",
+      "files": 10,
+      "distinct": 10
+    },
+    {
+      "repo": "remotion-dev/skills",
+      "files": 12,
+      "distinct": 12
+    },
+    {
+      "repo": "vercel-labs/agent-skills",
+      "files": 9,
+      "distinct": 9
+    },
+    {
+      "repo": "qu-skills/superpowers",
+      "files": 86,
+      "distinct": 86
+    },
+    {
+      "repo": "emilkowalski/skills",
+      "files": 16,
+      "distinct": 16
+    },
+    {
+      "repo": "skills-shell/superpowers",
+      "files": 86,
+      "distinct": 86
+    },
+    {
+      "repo": "firebase/agent-skills",
+      "files": 13,
+      "distinct": 13
+    },
+    {
+      "repo": "its-a-skill-issue/superpowers",
+      "files": 86,
+      "distinct": 86
+    },
+    {
+      "repo": "bankai-skills/superpowers",
+      "files": 86,
+      "distinct": 86
+    },
+    {
+      "repo": "gencraft-labs/skills",
+      "files": 33,
+      "distinct": 33
+    },
+    {
+      "repo": "pbakaus/impeccable",
+      "files": 26,
+      "distinct": 24
+    },
+    {
+      "repo": "cloudflare/skills",
+      "files": 19,
+      "distinct": 19
+    },
+    {
+      "repo": "higgsfield-ai/skills",
+      "files": 9,
+      "distinct": 9
+    },
+    {
+      "repo": "vercel-labs/agent-browser",
+      "files": 11,
+      "distinct": 11
+    },
+    {
+      "repo": "flowkit-labs/skills",
+      "files": 1,
+      "distinct": 1
+    },
+    {
+      "repo": "designed-by-ai/skills",
+      "files": 1,
+      "distinct": 1
+    }
+  ],
+  "pairs": [
+    {
+      "pair": "gencraft-labs/skills ↔ prime-skills/runcomfy-agent-skills",
+      "files": 30
+    },
+    {
+      "pair": "101-skills/superpowers ↔ bankai-skills/superpowers",
+      "files": 86
+    },
+    {
+      "pair": "101-skills/superpowers ↔ its-a-skill-issue/superpowers",
+      "files": 86
+    },
+    {
+      "pair": "101-skills/superpowers ↔ magentosh/superpowers",
+      "files": 86
+    },
+    {
+      "pair": "101-skills/superpowers ↔ qu-skills/superpowers",
+      "files": 86
+    },
+    {
+      "pair": "101-skills/superpowers ↔ skills-shell/superpowers",
+      "files": 86
+    },
+    {
+      "pair": "bankai-skills/superpowers ↔ its-a-skill-issue/superpowers",
+      "files": 86
+    },
+    {
+      "pair": "bankai-skills/superpowers ↔ magentosh/superpowers",
+      "files": 86
+    },
+    {
+      "pair": "bankai-skills/superpowers ↔ qu-skills/superpowers",
+      "files": 86
+    },
+    {
+      "pair": "bankai-skills/superpowers ↔ skills-shell/superpowers",
+      "files": 86
+    },
+    {
+      "pair": "its-a-skill-issue/superpowers ↔ magentosh/superpowers",
+      "files": 86
+    },
+    {
+      "pair": "its-a-skill-issue/superpowers ↔ qu-skills/superpowers",
+      "files": 86
+    },
+    {
+      "pair": "its-a-skill-issue/superpowers ↔ skills-shell/superpowers",
+      "files": 86
+    },
+    {
+      "pair": "magentosh/superpowers ↔ qu-skills/superpowers",
+      "files": 86
+    },
+    {
+      "pair": "magentosh/superpowers ↔ skills-shell/superpowers",
+      "files": 86
+    },
+    {
+      "pair": "qu-skills/superpowers ↔ skills-shell/superpowers",
+      "files": 86
+    }
+  ]
+}

@@ -281,3 +281,53 @@ describe("toolsInDomain", () => {
         expect(seen).toHaveLength(1);
     });
 });
+
+describe("toolsInDomain, paging", () => {
+    /** A transport that pages: each request answers the slice `offset` asks for. */
+    function pagingTransportOf(all: unknown[]) {
+        const state = {requests: 0};
+        return {
+            get requests() {
+                return state.requests;
+            },
+            transport: {
+                async request(_query: string, variables?: Record<string, unknown>) {
+                    state.requests += 1;
+                    const limit = Number(variables?.["limit"] ?? 250);
+                    const offset = Number(variables?.["offset"] ?? 0);
+                    return {triples: all.slice(offset, offset + limit)};
+                },
+            },
+        };
+    }
+
+    const tagged = Array.from({length: 700}, (_, i) => ({
+        term_id: `0xt${i}`,
+        subject: {term_id: `0xa${i}`, label: `example.com/t${i}`, value: {thing: {url: null}}},
+        object: {data: "payment"},
+        term: {vaults: [{position_count: 1, total_shares: "1"}]},
+    }));
+
+    it("reads every page, not the first one", async () => {
+        // The defect: the indexer caps this at 250 whatever `limit` asks for, so a reader asking
+        // for the root got 250 of ARP's ~700 tag positions and a tree missing two thirds of its
+        // leaves — silently, because nothing said the answer was a prefix.
+        const tree = DomainTree.from("tool", [edge("payment", "tool")]);
+        const paging = pagingTransportOf(tagged);
+        const {tools} = await toolsInDomain({...CONFIG, transport: paging.transport}, "payment", {
+            tree,
+        });
+        expect(tools).toHaveLength(700);
+        expect(paging.requests).toBe(3);
+    });
+
+    it("stops at maxRows rather than walking for ever", async () => {
+        const tree = DomainTree.from("tool", [edge("payment", "tool")]);
+        const paging = pagingTransportOf(tagged);
+        const {tools} = await toolsInDomain({...CONFIG, transport: paging.transport}, "payment", {
+            tree,
+            maxRows: 300,
+        });
+        expect(tools.length).toBeLessThan(700);
+    });
+});

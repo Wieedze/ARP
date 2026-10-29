@@ -29,10 +29,14 @@
  *
  *  `(skill, source, repository)`.
  *
- *  Measured 2026-10-29: of 662 skill pages, **177 are copies** — six repositories named
- *  `superpowers` hold 26 identical skills each, `ai-video-generation` appears 8 times,
- *  `remotion-render` 7 times with `remotion-dev` itself among them. An install count cannot tell a
- *  copy from its original, and two of the copies out-install `obra/superpowers`.
+ *  Measured 2026-10-29 by content hash (`measure/skill-content-duplicates.ts`): of **531** distinct
+ *  SKILL.md files in the catalogue, **116 exist in more than one repository**. Six repositories
+ *  named `superpowers` carry 86 files each, **all 86 byte-identical across all six**.
+ *
+ *  An earlier version of this paragraph said they were copies of `obra/superpowers`. **They are
+ *  not** — it shares **zero** files with any of them and is a different project with the same
+ *  repository name. The shared *name* was read as evidence; only the content is. An install count
+ *  cannot tell any of this apart, which is the point.
  *
  *  Scheme A keeps them apart on its own — a copy and its original differ in the `<repo>` half of
  *  the URL, so they are different atoms whatever they are called. The `source` edge is what makes

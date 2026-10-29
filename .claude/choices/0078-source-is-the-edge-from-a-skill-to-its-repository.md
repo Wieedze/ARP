@@ -9,11 +9,28 @@
 ADR `0077` made the skill the unit. 662 skill atoms then needed one edge each saying where they came
 from, and the reason is not bookkeeping:
 
-Measured 2026-10-29, **177 of the 662 are copies**. Six repositories named `superpowers` hold 26
-identical skills each, copied from `obra/superpowers` which holds 15. `ai-video-generation` appears
-8 times, `remotion-render` 7 times with `remotion-dev` itself among them. And the install count
-cannot tell a copy from its original — **two of the copies out-install `obra/superpowers`, and the
-six together carry 5× his total**.
+~~Measured 2026-10-29, **177 of the 662 are copies**. Six repositories named `superpowers` hold 26~~
+~~identical skills each, copied from `obra/superpowers` which holds 15. `ai-video-generation` appears~~
+~~8 times, `remotion-render` 7 times with `remotion-dev` itself among them. And the install count~~
+~~cannot tell a copy from its original — **two of the copies out-install `obra/superpowers`, and the~~
+~~six together carry 5× his total**.~~
+
+> **Corrected 2026-10-29**, the same day, by `scripts/measure/skill-content-duplicates.ts`. The
+> decision below stands; its evidence was wrong in one direction and understated in the other.
+>
+> **False:** that the six were copied from `obra/superpowers`. It shares **zero** SKILL.md files
+> with any of them — it is a different project carrying the same repository name, so "two of the
+> copies out-install the original" compared it to repositories it has nothing to do with. The
+> shared **name** was read as evidence of shared content, which `claims.md` §3 forbids: a claim
+> about a third party needs a source, and a repository name is not one.
+>
+> **True, and stronger:** of **531** distinct SKILL.md files in the catalogue, **116 exist in more
+> than one repository**. The six `superpowers` repositories carry **86 files each, all 86
+> byte-identical across every one of the fifteen pairs**. Proven by GitHub's blob sha —
+> `sha1("blob " + length + "\0" + content)` — which anyone reproduces with `git hash-object` and no
+> credential. The user's test, in his words: _« si le contenu est bien le même »_.
+>
+> 177 was a count of shared **names**. A shared name is a hint; a matching hash is a fact.
 
 That is the limit of every popularity signal, and it is the gap ARP exists to fill. Telling which
 one came from the author is work nobody else is doing.

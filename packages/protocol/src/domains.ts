@@ -25,6 +25,8 @@ const DEFAULT_TIMEOUT_MS = 10_000;
 /** The indexer's hard page cap, re-stated here rather than imported to keep this module free of a
  *  dependency on the tool listing. See `tool-listing.ts` for how it was probed. */
 const MAX_PAGE = 250;
+/** Eight pages at the cap. ARP holds ~700 tag positions on 13579 today and the set grows. */
+const DEFAULT_MAX_TAGGED = 2_000;
 
 /**
  * **Our** tree: the hierarchy triples the attestor holds a position on.
@@ -106,8 +108,24 @@ const ALL_HIERARCHY_QUERY = `query($pid: String!, $limit: Int!, $offset: Int!) {
  * 97 carry an ARP position. So the exposure is latent today, and becomes live the first time
  * somebody else uses the registry.
  */
-const TAGGED_QUERY = `query($pid: String!, $domains: [String!], $limit: Int!, $who: String!) {
-  triples(where: {predicate_id: {_eq: $pid}, object: {data: {_in: $domains}}}, limit: $limit) {
+/**
+ * **The indexer caps this at 250 rows** whatever `limit` asks for, so it is read page by page.
+ *
+ * Without `offset` this returned a prefix and said nothing: measured on testnet 13579, 2026-10-29,
+ * ARP holds ~700 `has tag` positions, so a reader asking for the root got 250 of them and a tree
+ * that silently lost two thirds of its leaves. `order_by: term_id` makes the paging stable —
+ * without it two pages can repeat or skip a row and the caller cannot tell which.
+ *
+ * The cap is **per table**: the same indexer caps `positions` at 100. Neither number may be reused
+ * for the other query without measuring it.
+ */
+const TAGGED_QUERY = `query($pid: String!, $domains: [String!], $limit: Int!, $offset: Int!, $who: String!) {
+  triples(
+    where: {predicate_id: {_eq: $pid}, object: {data: {_in: $domains}}}
+    limit: $limit
+    offset: $offset
+    order_by: {term_id: asc}
+  ) {
     term_id
     subject { term_id label value { thing { url name } } }
     object { data }
@@ -394,23 +412,36 @@ export async function readDomainTree(config: DomainsConfig): Promise<DomainTree>
 export async function toolsInDomain(
     config: DomainsConfig,
     domain: string,
-    options: {tree?: DomainTree; limit?: number} = {},
+    options: {
+        tree?: DomainTree;
+        /** Rows per request, clamped at the indexer's cap. */
+        limit?: number;
+        /** Ceiling on the whole walk, not a page size. */
+        maxRows?: number;
+    } = {},
 ): Promise<{domains: string[]; tools: TaggedTool[]}> {
     const tree = options.tree ?? (await readDomainTree(config));
     const domains = tree.subtree(domain);
     if (domains.length === 0) return {domains: [], tools: []};
 
     const transport = transportFor(config);
-    const data = await transport.request(TAGGED_QUERY, {
-        pid: config.tagPredicate,
-        domains,
-        limit: Math.min(options.limit ?? MAX_PAGE, MAX_PAGE),
-        // An address that cannot hold a position, when no attestor is configured: every row then
-        // comes back `attestorBacked: false`, which is the truth rather than a silent pass.
-        who: config.attestor ?? "0x0000000000000000000000000000000000000000",
-    });
-
-    const rows = Array.isArray(data["triples"]) ? data["triples"] : [];
+    const limit = Math.min(options.limit ?? MAX_PAGE, MAX_PAGE);
+    const maxRows = options.maxRows ?? DEFAULT_MAX_TAGGED;
+    const rows: unknown[] = [];
+    for (let offset = 0; ; offset += limit) {
+        const data = await transport.request(TAGGED_QUERY, {
+            pid: config.tagPredicate,
+            domains,
+            limit,
+            offset,
+            // An address that cannot hold a position, when no attestor is configured: every row then
+            // comes back `attestorBacked: false`, which is the truth rather than a silent pass.
+            who: config.attestor ?? "0x0000000000000000000000000000000000000000",
+        });
+        const page = Array.isArray(data["triples"]) ? data["triples"] : [];
+        rows.push(...page);
+        if (page.length < limit || rows.length >= maxRows) break;
+    }
     const tools: TaggedTool[] = [];
     for (const row of rows) {
         if (!isRecord(row)) continue;
