@@ -106,18 +106,42 @@ export type RegisteredToolsConfig = {
     timeoutMs?: number;
     transport?: GraphqlTransport;
     curveId?: number;
-    /** Defaults to, and is clamped at, {@link INTUITION_MAX_PAGE}. */
+    /** Rows per request. Defaults to, and is clamped at, {@link INTUITION_MAX_PAGE}. */
     limit?: number;
+    /**
+     * Stop after this many rows and report `truncated`. A ceiling on an unbounded walk, not a page
+     * size — 716 on testnet 2026-10-29, and the set grows with every registration.
+     */
+    maxRows?: number;
     order?: RegisteredToolsOrder;
 };
 
 const DEFAULT_CURVE_ID = 1;
 const DEFAULT_TIMEOUT_MS = 10_000;
+/** Eight pages at the indexer's cap. Enough for the whole set today, with room to grow. */
+const DEFAULT_MAX_ROWS = 2_000;
 const INTUITION_MAINNET_GRAPHQL = "https://mainnet.intuition.sh/v1/graphql";
 
+/**
+ * **The indexer caps this query at 250 rows**, whatever `limit` asks for, so the whole set is read
+ * page by page and `offset` is not optional.
+ *
+ * Measured on testnet 13579, 2026-10-29: `limit: 500` returns 250, `limit: 250` returns 250. The
+ * cap is per table — the same indexer caps `positions` at **100** — so neither number may be reused
+ * for the other query without measuring it.
+ *
+ * Reading one page was not merely incomplete, it was **wrong about its own ordering**: 716 atoms
+ * carried the description and the sort ran over the arbitrary 250 the indexer returned first, under
+ * a heading that says "by conviction". A prefix sorted is not a ranking.
+ */
 const REGISTERED_TOOLS_QUERY = `
-query RegisteredTools($description: String!, $uses: String!, $sameAs: String!, $curveId: numeric!, $limit: Int!) {
-  atoms(where: {value: {thing: {description: {_eq: $description}}}}, limit: $limit) {
+query RegisteredTools($description: String!, $uses: String!, $sameAs: String!, $curveId: numeric!, $limit: Int!, $offset: Int!) {
+  atoms(
+    where: {value: {thing: {description: {_eq: $description}}}}
+    limit: $limit
+    offset: $offset
+    order_by: {term_id: asc}
+  ) {
     term_id
     label
     data
@@ -164,16 +188,30 @@ export async function listRegisteredTools(
 
     const curveId = config.curveId ?? DEFAULT_CURVE_ID;
     const limit = Math.min(config.limit ?? INTUITION_MAX_PAGE, INTUITION_MAX_PAGE);
+    const maxRows = config.maxRows ?? DEFAULT_MAX_ROWS;
 
-    const data = await transport.request(REGISTERED_TOOLS_QUERY, {
-        description: TOOL_THING_DESCRIPTION,
-        uses: USES,
-        sameAs: SAME_AS,
-        curveId: String(curveId),
-        limit,
-    });
+    // Page until a short page or the ceiling. `order_by: term_id` makes the paging stable: without
+    // it two pages can repeat or skip a row, and the caller cannot tell which.
+    const rows: unknown[] = [];
+    let truncated = false;
+    for (let offset = 0; ; offset += limit) {
+        const data = await transport.request(REGISTERED_TOOLS_QUERY, {
+            description: TOOL_THING_DESCRIPTION,
+            uses: USES,
+            sameAs: SAME_AS,
+            curveId: String(curveId),
+            limit,
+            offset,
+        });
+        const page = Array.isArray(data["atoms"]) ? data["atoms"] : [];
+        rows.push(...page);
+        if (page.length < limit) break;
+        if (rows.length >= maxRows) {
+            truncated = true;
+            break;
+        }
+    }
 
-    const rows = Array.isArray(data["atoms"]) ? data["atoms"] : [];
     const tools: RegisteredTool[] = [];
     for (const row of rows) {
         if (!isRecord(row)) continue;
@@ -219,5 +257,5 @@ export async function listRegisteredTools(
         return b.declarations - a.declarations;
     });
 
-    return {curveId, tools, truncated: rows.length >= limit};
+    return {curveId, tools, truncated};
 }

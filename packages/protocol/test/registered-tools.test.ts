@@ -130,3 +130,60 @@ describe("listRegisteredTools", () => {
         expect(page.tools[0]?.declarations).toBe(4);
     });
 });
+
+/** A transport that pages: each request returns the slice `offset` asks for. */
+function pagingTransportOf(all: unknown[]): {transport: GraphqlTransport; requests: number} {
+    const state = {requests: 0};
+    return {
+        get requests() {
+            return state.requests;
+        },
+        transport: {
+            async request(_query: string, variables?: Record<string, unknown>) {
+                state.requests += 1;
+                const limit = Number(variables?.["limit"] ?? INTUITION_MAX_PAGE);
+                const offset = Number(variables?.["offset"] ?? 0);
+                return {atoms: all.slice(offset, offset + limit)};
+            },
+        },
+    };
+}
+
+describe("listRegisteredTools, paging", () => {
+    // The defect: the indexer caps this query at 250 rows whatever `limit` asks for, so one request
+    // read 250 of the 716 atoms carrying the description on testnet — and then SORTED them under a
+    // heading that says "by conviction". A prefix sorted is not a ranking.
+    const many = Array.from({length: 716}, (_, i) =>
+        atom(`0x${String(i).padStart(64, "0")}`, `example.com/t${i}`, i, String(i)),
+    );
+
+    it("reads every page, not the first one", async () => {
+        const paging = pagingTransportOf(many);
+        const page = await listRegisteredTools({transport: paging.transport});
+        expect(page.tools).toHaveLength(716);
+        expect(page.truncated).toBe(false);
+        // 716 at the 250 cap: three full pages and a short one that ends the walk.
+        expect(paging.requests).toBe(3);
+    });
+
+    it("ranks over the whole set rather than over the first page", async () => {
+        const page = await listRegisteredTools({transport: pagingTransportOf(many).transport});
+        // The highest position count is in the last page, so a single-page read could not find it.
+        expect(page.tools[0]?.positionCount).toBe(715);
+    });
+
+    it("stops at maxRows and says so", async () => {
+        const page = await listRegisteredTools({
+            transport: pagingTransportOf(many).transport,
+            maxRows: 300,
+        });
+        expect(page.truncated).toBe(true);
+        expect(page.tools.length).toBeLessThan(716);
+    });
+
+    it("asks for an offset on every request", async () => {
+        const paging = pagingTransportOf(many);
+        await listRegisteredTools({transport: paging.transport, limit: 100});
+        expect(paging.requests).toBe(8);
+    });
+});
