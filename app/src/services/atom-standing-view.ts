@@ -2,7 +2,7 @@ import {INTUITION_USES_TERM_ID} from "@arp-protocol/core";
 import type {AtomClaim, AtomEdge, AtomEdgeGroup, AtomStanding} from "@arp-protocol/core";
 
 import {formatTrust, truncateMiddle} from "./trust-format";
-import {parseToolLabel, primaryNameOf, sourceOf} from "../lib/tool-label";
+import {compactNameOf, parseToolLabel, primaryNameOf, sourceOf} from "../lib/tool-label";
 
 /**
  * What the atom page renders, derived from `getAtomStanding` and nothing else.
@@ -35,6 +35,8 @@ export type EdgeRow = {
     name: string;
     nameIsId: boolean;
     subjectAtomId: string;
+    /** The subject's name with the host dropped, for the card, which shows one at a time. */
+    compactName: string;
     /** `null` when no position stands behind the claim — ADR `0042`. */
     backing: string | null;
     positions: number;
@@ -153,6 +155,9 @@ function rowOf(edge: AtomEdge, symbol: string): EdgeRow {
         // the same on every line and only the last part differs, so it is parsed the way a
         // catalogue row is.
         name: hasName ? primaryNameOf(parseToolLabel(label)) : truncateMiddle(edge.subject.atomId),
+        compactName: hasName
+            ? compactNameOf(parseToolLabel(label))
+            : truncateMiddle(edge.subject.atomId),
         nameIsId: !hasName,
         subjectAtomId: edge.subject.atomId,
         backing: backingOf(edge.support.totalAssets, edge.support.positionCount ?? 0, symbol),

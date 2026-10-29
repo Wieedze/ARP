@@ -73,6 +73,19 @@ export function primaryNameOf(parsed: ToolLabel): string {
 }
 
 /**
+ * The same name with the host dropped, for a surface that shows one thing at a time.
+ *
+ * {@link primaryNameOf} keeps `github.com/` on a repository because a list row is the only line
+ * that repository gets, and without it `github.com/x/y` and `gitlab.com/x/y` render identically.
+ * A card showing one subject has no such ambiguity to resolve and the host is six characters of
+ * the same text on every one — the user, 2026-10-29: _« enlève les github.com dans la card »_.
+ */
+export function compactNameOf(parsed: ToolLabel): string {
+    if (parsed.kind === "repo") return `${parsed.owner}/${parsed.repo}`;
+    return primaryNameOf(parsed);
+}
+
+/**
  * What the row's second line says, or `null` when it would repeat the first.
  *
  * A repository row has nowhere else to go, so it gets no second line rather than one that says the

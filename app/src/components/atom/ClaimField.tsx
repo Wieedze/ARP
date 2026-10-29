@@ -422,7 +422,7 @@ export function ClaimField({
                             <span
                                 className={`min-w-0 truncate type-face text-[22px] leading-tight ${current.row.nameIsId ? "font-mono text-[16px]" : ""}`}
                             >
-                                {current.row.name}
+                                {current.row.compactName}
                             </span>
                         </span>
                         {/* **Paper, not accent.** Somebody else's position, and `ui.md` spends the
