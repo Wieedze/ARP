@@ -172,6 +172,7 @@
     --line-index: 0; /* which authored line of a heading */
     --row-index: 0; /* which row of a list */
     --orbit-for: 90s; /* how long one ring of the claim field takes to turn */
+    --claim-dot: 10px; /* one claim's mark in the field, set per dot by positions */
     --orbit-to: 360deg; /* and which way — negative reverses it */
     --lit: 1; /* how lit one manifesto line is, 0 to 1 */
 
@@ -608,8 +609,393 @@ summary:focus-visible,
     }
 }
 
+/* ---- the claim field v2: the loupe, the card, the legend ----------------- */
+
+/* Plain classes rather than utilities, on purpose: a Tailwind utility that does
+   not exist emits nothing, and the unlayered `:focus-visible` and `button`
+   rules above beat utilities anyway. Every value is a token. */
+.arp-cf {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 28px 4rem;
+}
+
+.arp-cf-field {
+    position: relative;
+    aspect-ratio: 1;
+    width: 100%;
+    max-width: 22rem;
+    flex: none;
+    /* The bar sits 4% of the field above its top, 0.88rem on a 22rem field, so
+       this puts it halfway down the card's reserved 6.5rem (3.25rem). */
+    margin-top: 4.125rem;
+}
+
+.arp-cf-field.is-small {
+    max-width: 12rem;
+    margin-top: 0;
+}
+
+.arp-cf-ring {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+.arp-cf-track {
+    position: absolute;
+    border-radius: 999px;
+    border: 1px solid var(--color-rule);
+}
+
+.arp-cf-track.is-dashed {
+    border-style: dashed;
+}
+
+.arp-cf-grain {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    fill: var(--color-steel);
+    opacity: 0.75;
+}
+
+.arp-cf-core {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    z-index: 3;
+    width: 14px;
+    height: 14px;
+    border-radius: 999px;
+    background: var(--color-accent);
+    transform: translate(-50%, -50%);
+}
+
+/* The loupe and its line. Above the dots, below the card, which stops the line
+   at its border. */
+.arp-cf-link {
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    pointer-events: none;
+}
+
+.arp-cf-link polyline {
+    fill: none;
+    stroke: var(--color-rule-strong);
+    stroke-width: 1;
+    vector-effect: non-scaling-stroke;
+}
+
+.arp-cf-link circle {
+    fill: none;
+    stroke: var(--color-silver);
+    stroke-width: 1.25;
+    vector-effect: non-scaling-stroke;
+    transition: stroke var(--duration-base) var(--ease-out-quart);
+}
+
+.arp-cf-link.is-on polyline {
+    stroke: var(--color-steel);
+}
+
+.arp-cf-link.is-on circle {
+    stroke: var(--color-accent);
+}
+
+/* A dot is an `<a>`, and the unlayered `a:focus-visible` rule above sets `border-radius: 1px` — it
+   wins on specificity (0,1,1) over `.arp-cf-dot` (0,1,0), so the keyboard ring around a circular
+   mark rendered as a near-square box. `ui.md` names this failure class and nothing static sees it.
+   The selector is `a.arp-cf-dot` to outrank it. */
+a.arp-cf-dot:focus-visible {
+    border-radius: 999px;
+}
+
+/* A dot: a real link, a 28px invisible target around the drawn mark. */
+.arp-cf-dot {
+    position: absolute;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    margin: -14px 0 0 -14px;
+    border-radius: 999px;
+    pointer-events: auto;
+}
+
+.arp-cf-mark {
+    display: block;
+    box-sizing: border-box;
+    width: var(--claim-dot);
+    height: var(--claim-dot);
+    border-radius: 999px;
+    border: 1.5px solid var(--color-steel);
+    transition:
+        transform 150ms var(--ease-out-quart),
+        background-color 150ms var(--ease-out-quart),
+        border-color 150ms var(--ease-out-quart);
+}
+
+.arp-cf-dot.is-filled .arp-cf-mark {
+    background: var(--color-fg);
+    border-color: var(--color-fg);
+}
+
+/* Somebody took the other side: the alarm, the one semantic exception to the
+   one accent, because a counter-position is a fact that contradicts the claim.
+   An outline, not a shadow: `ui.md` forbids box-shadow. */
+.arp-cf-dot.is-opposed .arp-cf-mark {
+    outline: 1.5px solid var(--color-alarm);
+    outline-offset: 2px;
+}
+
+/* Saffron is the light: the claim the loupe reads is a selected state. */
+.arp-cf-dot.is-lit .arp-cf-mark {
+    background: var(--color-accent);
+    border-color: var(--color-accent);
+    transform: scale(1.6);
+}
+
+/* The card: reserved height, never moves. */
+.arp-cf-card {
+    position: relative;
+    z-index: 5;
+    display: flex;
+    flex: 1 1 22rem;
+    flex-direction: column;
+    gap: 6px;
+    min-width: min(22rem, 100%);
+    max-width: 34rem;
+    min-height: 6.5rem;
+    padding: 12px 16px;
+    border: 1px solid var(--color-rule-strong);
+    border-radius: var(--radius-card);
+    background: var(--color-bg);
+    /* The card is a link; the unlayered `a` rule would turn its text silver. */
+    color: var(--color-fg);
+    transition: background-color var(--duration-base) var(--ease-out-quart);
+}
+
+a.arp-cf-card:hover {
+    color: var(--color-fg);
+    background: var(--color-raised);
+}
+
+.arp-cf-card-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--color-rule);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-steel);
+}
+
+.arp-cf-card-head i {
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: var(--color-rule-strong);
+}
+
+.arp-cf-card.is-lit .arp-cf-card-head i {
+    background: var(--color-accent);
+}
+
+.arp-cf-subject {
+    overflow: hidden;
+    font-family: var(--font-display);
+    font-size: 20px;
+    font-weight: 800;
+    font-stretch: 125%;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.arp-cf-subject.is-id {
+    font-family: var(--font-mono);
+    font-size: 16px;
+    font-weight: 500;
+    font-stretch: normal;
+    letter-spacing: 0;
+}
+
+.arp-cf-figure {
+    font-family: var(--font-mono);
+    font-size: var(--text-body-sm);
+    color: var(--color-fg);
+}
+
+.arp-cf-figure span,
+.arp-cf-figure.is-none {
+    color: var(--color-steel);
+}
+
+.arp-cf-against {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--color-alarm);
+}
+
+/* The total and the key. */
+.arp-cf-total {
+    display: flex;
+    flex-basis: 100%;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 18px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--color-steel);
+}
+
+.arp-cf-total b {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--color-fg);
+}
+
+.arp-cf-key {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin-left: auto;
+}
+
+.arp-cf-key > span {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.arp-cf-key i {
+    box-sizing: border-box;
+    width: 9px;
+    height: 9px;
+    border-radius: 999px;
+    border: 1.5px solid var(--color-steel);
+}
+
+.arp-cf-key i.is-filled {
+    background: var(--color-fg);
+    border-color: var(--color-fg);
+}
+
+.arp-cf-key i.is-opposed {
+    outline: 1.5px solid var(--color-alarm);
+    outline-offset: 2px;
+}
+
+/* The legend: one row per ring, the folded ring's members under it. */
+.arp-cf-legend {
+    display: grid;
+    flex-basis: 100%;
+    grid-template-columns: repeat(auto-fill, minmax(min(19rem, 100%), 1fr));
+    gap: 0 32px;
+    margin: 0;
+    border-top: 1px solid var(--color-rule);
+}
+
+.arp-cf-legend-row {
+    display: grid;
+    grid-template-columns: 18px minmax(0, 1fr) auto;
+    align-items: baseline;
+    gap: 10px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--color-rule);
+}
+
+.arp-cf-legend dt {
+    overflow: hidden;
+    min-width: 0;
+    font-size: 14px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.arp-cf-legend dt.is-id {
+    font-family: var(--font-mono);
+    font-size: 12px;
+}
+
+.arp-cf-legend-row.is-member dt {
+    color: var(--color-silver);
+}
+
+.arp-cf-legend dd {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    text-align: right;
+    white-space: nowrap;
+    color: var(--color-steel);
+}
+
+.arp-cf-ringno {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    /* `--color-grey` is 3.84:1 and `rules/ui.md` allows it on dim DISPLAY text only. This is the
+       smallest text on the surface, so it takes `--color-steel` at 5.9:1. It shipped as grey
+       because `check-contrast.ts` walked only `.ts` and `.tsx`, and this component is plain CSS. */
+    color: var(--color-steel);
+}
+
+/* Zero claims. */
+.arp-cf-zero {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 28px;
+}
+
+.arp-cf-empty {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--color-steel);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .arp-cf-mark,
+    .arp-cf-link circle {
+        transition: none;
+    }
+}
+
+/* Below 640px the card goes under the field and the line would cross the page:
+   it is hidden, the loupe still moves. */
+@media (max-width: 640px) {
+    .arp-cf-field {
+        max-width: none;
+        margin-top: 0;
+    }
+
+    .arp-cf-card {
+        min-width: 0;
+    }
+
+    .arp-cf-link polyline {
+        display: none;
+    }
+}
+
 /* ---- one manifesto line lighting up, scrubbed by scroll ------------------ */
 
+/* display-only: applied on one element, `Landing.tsx` manifesto lines, at
+   `text-[clamp(36px,5.4vw,72px)]` — floor 36px, so the grey end of the mix clears AA large. */
 .arp-lit {
     color: color-mix(in oklab, var(--color-fg) calc(var(--lit) * 100%), var(--color-grey));
 }

@@ -91,6 +91,38 @@ function standing(overrides: Partial<AtomStanding> = {}): AtomStanding {
     } as unknown as AtomStanding;
 }
 
+/**
+ * Two claims under one predicate, with distinct subjects and distinct standings.
+ *
+ * The default fixture has one claim, which is why the focus assertion below went vacuous: with a
+ * single dot the card reads it from first paint and focus cannot change anything. Two is the
+ * smallest fixture in which "focus moves the reading head" is a falsifiable statement.
+ */
+const twoClaims = [
+    {
+        predicate: {atomId: "0xp-uses", label: "uses"},
+        edges: [
+            {
+                tripleId: "0xe1",
+                subject: {atomId: "0xs1", label: "Agent 13579:3", type: "Thing"},
+                support: side(1_980_000_000_000_000n, 1),
+                oppose: side(0n, null),
+            },
+            {
+                tripleId: "0xe2",
+                subject: {atomId: "0xs2", label: "Agent 13579:4", type: "Thing"},
+                // Nobody paid for this one. `positionCount: 0` is the case `docs/17` §4 asks the
+                // card to state rather than leave blank, and ADR `0042` is why the amount alone
+                // cannot say it: creating the term seeded the vault.
+                support: side(1_000_000_000_000_000n, 0),
+                oppose: side(0n, null),
+            },
+        ],
+        assets: 2_980_000_000_000_000n,
+        positions: 1,
+    },
+];
+
 /** A tag's edges: many, and none of them `uses`. The shape of `Sanctioned Address` on mainnet. */
 const tagGroups = [
     {
@@ -373,24 +405,72 @@ describe("the claim field", () => {
         expect(dot?.textContent).toContain("uses");
         expect(dot?.textContent).toContain("slither");
 
-        // The visible echo is empty until something is active, and its slot is already in the DOM
-        // so revealing it moves no layout.
         // The card reads a claim from its first paint — it follows the rotation on its own, and
-        // hover or focus only takes it over. It was empty until something was active, which is
-        // what this asserted.
+        // hover or focus only takes it over. Its slot is in the DOM at its final size before
+        // anything is pointed at, which is ADR `0073`'s third condition.
         const slot = container.querySelector("[data-claim-sentence]");
         expect(slot?.getAttribute("data-claim-sentence")).toBe("one");
 
         (dot as HTMLAnchorElement).focus();
         await waitFor(() => expect(slot?.getAttribute("data-claim-sentence")).toBe("one"));
         expect(slot?.textContent).toContain("Agent 13579:3");
+        // The card is a link to what it shows, the same target as the dot it reads, and not a
+        // second tab stop: the dot is already that link.
+        expect(slot?.tagName).toBe("A");
+        expect(slot?.getAttribute("href")).toBe(dot?.getAttribute("href"));
+        expect(slot?.getAttribute("tabindex")).toBe("-1");
 
         // **And what the claim is worth, not only what it says.** The slot named the triple and
         // gave no figure, so a reader could see that a claim existed and never what anybody had
-        // put behind it — the one distinction this page argues about. A claim nobody paid for says
-        // so rather than going blank (ADR `0042`, `docs/17` §4).
-        const text = slot?.textContent ?? "";
-        expect(/position|nothing behind it/.test(text)).toBe(true);
+        // put behind it — the one distinction this page argues about.
+        //
+        // This read `/position|nothing behind it/`, a disjunction that passed on either branch and
+        // so tested neither. The fixture's claim has one position, so it is the first branch; the
+        // zero-position branch is the test below.
+        expect(slot?.textContent ?? "").toMatch(/position/);
+    });
+
+    it("moves the reading head to the claim that takes focus", async () => {
+        // ADR `0073`'s first condition, made falsifiable. Deleting `onFocus`/`onBlur` from the dot
+        // left the whole suite green, because the assertion above compares the card against the
+        // claim it already reads at rest. With two claims, focusing the second must move the card
+        // to the second — which no amount of hover wiring can do.
+        read.mockResolvedValue(standing({groups: twoClaims, edgeCount: 2}));
+        const {container} = renderAt();
+        await waitFor(() => expect(screen.getByRole("heading", {name: /^uses$/i})).toBeTruthy());
+
+        const field = container.querySelector('[role="group"]');
+        const dots = [...(field?.querySelectorAll("a") ?? [])] as HTMLAnchorElement[];
+        expect(dots.length, "two claims should be two focusable dots").toBe(2);
+        const slot = container.querySelector("[data-claim-sentence]");
+
+        const second = dots.find((dot) => (dot.textContent ?? "").includes("Agent 13579:4"));
+        expect(second, "no dot for the second claim").toBeTruthy();
+        (second as HTMLAnchorElement).focus();
+        await waitFor(() => expect(slot?.textContent).toContain("Agent 13579:4"));
+
+        // And back the other way, so the card follows focus rather than latching on first use.
+        const first = dots.find((dot) => (dot.textContent ?? "").includes("Agent 13579:3"));
+        (first as HTMLAnchorElement).focus();
+        await waitFor(() => expect(slot?.textContent).toContain("Agent 13579:3"));
+    });
+
+    it("says a claim nobody paid for rather than going blank", async () => {
+        // The other half of the disjunction above, and a spec item that had no test. An amount
+        // cannot say it: creating a term seeds its vault, so `assets > 0` only means the term
+        // exists. The position count is the discriminator (ADR `0042`).
+        read.mockResolvedValue(standing({groups: twoClaims, edgeCount: 2}));
+        const {container} = renderAt();
+        await waitFor(() => expect(screen.getByRole("heading", {name: /^uses$/i})).toBeTruthy());
+
+        const field = container.querySelector('[role="group"]');
+        const dots = [...(field?.querySelectorAll("a") ?? [])] as HTMLAnchorElement[];
+        const unpaid = dots.find((dot) => (dot.textContent ?? "").includes("Agent 13579:4"));
+        (unpaid as HTMLAnchorElement).focus();
+
+        const slot = container.querySelector("[data-claim-sentence]");
+        await waitFor(() => expect(slot?.textContent).toContain("Agent 13579:4"));
+        expect(slot?.textContent ?? "").toContain("nothing behind it");
     });
 
     it("gives every claim a reachable link and an accessible name", async () => {
@@ -500,7 +580,9 @@ describe("the two writes", () => {
         // scope the market already had.
         read.mockResolvedValue(standing({url: null, groups: tagGroups}));
         renderAt();
-        await waitFor(() => expect(screen.getByRole("heading", {name: /^has tag$/i})).toBeInTheDocument());
+        await waitFor(() =>
+            expect(screen.getByRole("heading", {name: /^has tag$/i})).toBeInTheDocument(),
+        );
         expect(screen.queryByRole("heading", {name: declareLabel})).not.toBeInTheDocument();
         expect(screen.queryByRole("heading", {name: marketLabel})).not.toBeInTheDocument();
     });
