@@ -2,7 +2,7 @@
 
 **Generated** 2026-10-29 by `scripts/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-75 decisions. Newest last. `choices/README.md` says when to write one.
+78 decisions. Newest last. `choices/README.md` says when to write one.
 
 ## Not accepted
 
@@ -90,3 +90,6 @@ Read these before relying on them.
 | [0074](0074-a-tool-carries-one-tag-at-its-deepest-domain.md) | 2026-10-28 | Accepted | A tool carries one tag, at its deepest domain |
 | [0075](0075-what-is-sold-is-the-place-in-the-answer.md) | 2026-10-29 | Accepted | What is sold is the place in the answer, and your place comes from others |
 | [0076](0076-arp-plans-a-payment-and-never-holds-one.md) | 2026-10-29 | Accepted | ARP plans a payment and never holds one |
+| [0077](0077-the-unit-is-the-skill-not-the-repository.md) | 2026-10-29 | Accepted | The unit of the catalogue is the skill, not the repository |
+| [0078](0078-source-is-the-edge-from-a-skill-to-its-repository.md) | 2026-10-29 | Accepted | `source` is the edge from a skill back to the repository it came from |
+| [0079](0079-a-bulk-write-is-paced-by-bytes-not-by-gas.md) | 2026-10-29 | Accepted | A bulk write to Intuition is paced by bytes, not by gas |

@@ -159,10 +159,20 @@ growing one. And anyone building on ERC-8004 who has discovered what the study m
 
 Five consequences, ordered by how much they move:
 
-1. **The hire record goes first.** It is the only layer that produces a two-party fact, and the
-   study's cause 2 is the one nobody else is answering. Everything built so far serves it.
-2. **`reachable` goes second**, because one does not hire what does not answer, and because it is
-   the only verifiable claim in the system. The probe already produces the verdict and discards it.
+1. **`reachable` goes first.** It is the only verifiable claim in the system, and the probe already
+   produces the verdict and discards it.
+
+   This said "the hire record goes first" until 2026-10-29, and the correction is not a reordering
+   of preferences — **it is this document's own measurement applied to this document's own plan.**
+   A hire record needs a supply of agents that answer. §2 above reports 3 of 122 on Base, 2.5%,
+   Wilson 95% CI 0.8–7.0%, against the study's 15% on a looser definition. Whichever is right, a
+   market cannot be built on a population that is between 1% and 15% present; one would build the
+   venue and find nobody to hire. Finding the ones that answer is what comes before hiring them,
+   and it is the half ARP can produce today.
+
+2. **The hire record goes second.** It is still the only layer that produces a two-party fact and
+   the study's cause 2 is still the one nobody else is answering — that part was right and stands.
+   What was wrong was putting it before the thing that gives it something to operate on.
 3. **The reputation rule is amended before it is built.** Accounts *with standing*, and the amount
    beside the count. 90.6% is what a count-only rule gets you.
 4. **The domain tree is vindicated and stays.** Cause 1 is exactly what it answers, and the tree is

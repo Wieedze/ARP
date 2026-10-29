@@ -36,6 +36,37 @@ directory.
 
 ## Where the work is right now
 
+**The catalogue's unit changed from the repository to the skill, 2026-10-29 — 662 skills on testnet
+13579, each tagged.** ADR `0077`. The 31 skill repositories hold 662 skills between them (71 in
+one, 1 in another), and skills.sh counts installations per skill because
+`npx skills add <repo> --skill <name>` is what a person runs. A skill is
+`github.com/<owner>/<repo>?skill=<name>` — the install command's two arguments, a pure function,
+nothing that can move. `…#<name>` was measured and rejected: `normaliseToolUrl` drops the fragment,
+so 55 skills would have hashed to one atom, permanently.
+
+What is on chain, 2026-10-29:
+
+| | |
+| --- | --- |
+| 662 skill atoms, pinned | 0 pin failures |
+| 662 `source` edges | `(skill, source, repository)` — ADR `0078`, the term was already on chain |
+| 655 `has tag` edges | one each at the deepest domain; **7 match no keyword and are left untagged** |
+| 53 `maintained` tags | 50 alive, 3 not — browserbase and prisma/mcp archived, paypal untouched 366 days |
+| 19 domains under `tool` | the 17 seeded, plus `method` and `writing` |
+
+Three findings worth carrying forward:
+
+- **177 of the 662 are copies.** Six repositories named `superpowers` hold 26 identical skills each,
+  copied from `obra/superpowers` which holds 15, and **two of the copies out-install the original**.
+  An install count cannot tell a copy from its author's. That is the limit of every popularity
+  signal and the gap ARP fills — which is why `source` was worth paying for.
+- **The install count stays off chain**, in `measurements/skills-installs-2026-10-29.json`. It is
+  somebody else's number and it changes; it belongs in a ranking input, never in a tag. Only
+  `archived` and a 404 are authoritative enough to be verdicts (`scripts/record-maintained.ts`).
+- **A bulk write is paced by bytes, not by gas.** ADR `0079`. The RPC refused the seed three times
+  with `Bandwidth limit exceeded` (-31002) while `eth_estimateGas` passed at 5.1M gas, and once
+  spent it refuses **reads** too. `scripts/send-plan-in-waves.sh` is the shape that works.
+
 **The tool registry is no longer empty — all 52 tool atoms are on testnet 13579, 2026-10-28.**
 `catalogue/tools.json` holds 52 curated tools (21 MCP servers published by the vendor that controls
 the domain, 31 skill repos above 1M installs on skills.sh); `catalogue/registered-13579.json`
