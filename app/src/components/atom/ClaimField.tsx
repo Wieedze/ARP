@@ -1,4 +1,4 @@
-import {useEffect, useState} from "react";
+import {useEffect, useRef, useState} from "react";
 import {Link} from "react-router-dom";
 
 import {cssVars} from "../../lib/css-vars";
@@ -46,6 +46,39 @@ import {claimField, MAX_DOTS_PER_RING} from "./claim-field-geometry";
  * `MAX_DOTS_PER_RING` draws 36 and the ring's label says how many it has — a field quietly showing
  * 36 of 250 is the kind of claim `rules/claims.md` exists to stop.
  */
+/**
+ * Where the reading head sits, in degrees from the positive x axis with y down — so 0° is three
+ * o'clock and a positive angle goes clockwise, which is the convention `claim-field-geometry` uses.
+ *
+ * 20° puts it just below the right edge, which is what lets the connector leave it rising at 35°
+ * and flatten into a horizontal bar at the card's own mid-height. Any higher and the rising
+ * segment has no height to rise through; any lower and it crosses the ring it came from.
+ */
+const HEAD_DEGREES = 20;
+
+/** Ring 0's radius as a fraction of the box, for the head and the line that leaves it. */
+const headAt = (r: number) => ({
+    x: 0.5 + r * Math.cos((HEAD_DEGREES * Math.PI) / 180),
+    y: 0.5 + r * Math.sin((HEAD_DEGREES * Math.PI) / 180),
+});
+
+/**
+ * Head → a 35° rise → a horizontal bar reaching past the box into the gap.
+ *
+ * The bar sits at `y = 0.5`, the box's own mid-height, because the card is centred against a square
+ * box and that is where its middle is. The rise is 35° so the corner's x follows from the head's
+ * depth rather than being chosen — `dx = dy / tan 35°`.
+ *
+ * It overshoots to 1.22 so the bar crosses the 3rem gap whatever the box's measured width; the
+ * card's own left border stops it.
+ */
+const RISE_DEGREES = 35;
+function connector(r: number): string {
+    const head = headAt(r);
+    const corner = head.x + (head.y - 0.5) / Math.tan((RISE_DEGREES * Math.PI) / 180);
+    return `${head.x},${head.y} ${corner},0.5 1.22,0.5`;
+}
+
 export function ClaimField({
     groups,
     subject,
@@ -98,10 +131,53 @@ export function ClaimField({
         return () => cancelAnimationFrame(frame);
     }, []);
 
-    const current = active === null ? undefined : entries[active];
+    /**
+     * Which claim sits under the reading head, read from the rotation itself.
+     *
+     * The user's model, 2026-10-29: _« un petit cercle coaxial avec les cercles qui défilent, et
+     * lorsqu'un cercle passe dans la loupe on affiche les données dans la card »_. So the card is
+     * not on a timer that happens to look synchronised — it reads the dot that is **actually**
+     * there.
+     *
+     * The phase comes from `getAnimations()[0].currentTime`, the browser's own clock for the CSS
+     * animation, not from `performance.now()` since mount. The difference is not pedantic: a
+     * backgrounded tab pauses the animation and a wall clock does not, so the two part ways and
+     * the card would name a dot that is no longer under the head. Under `prefers-reduced-motion`
+     * the animation never advances, `currentTime` stays at 0, and the head reads whichever dot is
+     * parked there — still, and correct.
+     *
+     * Ring 0 only. The head sits on its radius, the outer one when a single predicate draws the
+     * whole field, which is the common case by a wide margin.
+     */
+    const ringRef = useRef<HTMLDivElement | null>(null);
+    const [beat, setBeat] = useState(0);
+    const ringDots = rings[0]?.drawn ?? 0;
+    useEffect(() => {
+        if (ringDots < 1) return;
+        const read = () => {
+            const animation = ringRef.current?.getAnimations?.()[0];
+            const time = animation?.currentTime;
+            const ms = typeof time === "number" ? time : 0;
+            // 110s per turn, set as `--orbit-for` on ring 0 below.
+            const turned = ((ms / 110_000) * 360) % 360;
+            // A dot's resting angle is -90 + p * step; the head is at HEAD_DEGREES. Solve for p.
+            const step = 360 / ringDots;
+            const at = Math.round(((HEAD_DEGREES + 90 - turned) % 360) / step);
+            setBeat(((at % ringDots) + ringDots) % ringDots);
+        };
+        read();
+        // Four times a second. A rAF loop would be sixty, to move a number that changes every
+        // three seconds at this ring's size.
+        const id = window.setInterval(read, 250);
+        return () => window.clearInterval(id);
+    }, [ringDots]);
+
+    // Hover and focus win over the cadence: a reader who reached for a dot asked for that one.
+    const shown = active ?? (entries.length === 0 ? null : beat % entries.length);
+    const current = shown === null ? undefined : entries[shown];
 
     return (
-        <div className="flex flex-wrap items-center gap-x-12 gap-y-8">
+        <div className="relative flex flex-wrap items-center gap-x-12 gap-y-8">
             <div
                 className={`relative aspect-square w-full max-w-[22rem] shrink-0 ${entering ? "arp-claim-enter" : ""}`}
                 role="group"
@@ -127,9 +203,44 @@ export function ClaimField({
                     className="absolute left-1/2 top-1/2 h-[14px] w-[14px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[color:var(--color-accent)]"
                 />
 
+                {/* **The reading head, and the line to the card.** A ring on ring 0's own radius,
+                    a segment rising out of it at 35°, then a bar at the card's mid-height.
+
+                    It does **not** turn: the rings pass through it. That is the whole mechanism —
+                    the card names the dot that is under this ring, read from the rotation's own
+                    clock rather than from a timer that happens to look synchronised.
+
+                    `overflow-visible` so the bar can cross the gap to the card. `vector-effect`
+                    keeps it one hairline at every size, as `ui.md`'s rules are hairlines. */}
+                {rings.length === 0 ? null : (
+                    <svg
+                        aria-hidden="true"
+                        viewBox="0 0 1 1"
+                        className="pointer-events-none absolute inset-0 overflow-visible"
+                    >
+                        <polyline
+                            points={connector(rings[0]?.r ?? 0.42)}
+                            fill="none"
+                            stroke="var(--color-rule-strong)"
+                            strokeWidth={1}
+                            vectorEffect="non-scaling-stroke"
+                        />
+                        <circle
+                            cx={headAt(rings[0]?.r ?? 0.42).x}
+                            cy={headAt(rings[0]?.r ?? 0.42).y}
+                            r={0.032}
+                            fill="none"
+                            stroke="var(--color-accent)"
+                            strokeWidth={1}
+                            vectorEffect="non-scaling-stroke"
+                        />
+                    </svg>
+                )}
+
                 {rings.map((ring) => (
                     <div
                         key={ring.ring}
+                        ref={ring.ring === 0 ? ringRef : undefined}
                         className="arp-orbit pointer-events-none absolute inset-0"
                         style={cssVars({
                             "--orbit-for": `${110 + ring.ring * 40}s`,
@@ -173,7 +284,7 @@ export function ClaimField({
                                         // The scale is on `transform`, which the arrival already
                                         // animates, so the two compose instead of fighting.
                                         className={`arp-claim pointer-events-auto absolute h-[10px] w-[10px] rounded-full border transition-[transform,background-color,border-color] duration-150 ${
-                                            active === dot.index
+                                            shown === dot.index
                                                 ? "-translate-x-1/2 -translate-y-1/2 scale-[1.8] border-[color:var(--color-accent)] bg-[color:var(--color-accent)]"
                                                 : backed
                                                   ? "-translate-x-1/2 -translate-y-1/2 border-[color:var(--color-fg)] bg-[color:var(--color-fg)]"
@@ -213,59 +324,66 @@ export function ClaimField({
                 ))}
             </div>
 
-            {/* **What the dot under the pointer is worth**, not just what it says.
-                The user, 2026-10-29: _« un genre de module qui décrit la valeur des atomes qui
-                gravitent autour »_. It replaced a one-line sentence that named the triple and gave
-                no figure — so a reader could see that a claim existed and never what anybody had
-                put behind it, which is the one distinction this whole page argues about.
+            {/* **The card the field points at**, to the right of it and on the pulse card's own
+                grammar — the user asked for that one by name, 2026-10-29. It reads what the lit
+                dot is worth, not only what it says: the slot it replaced named the triple and gave
+                no figure, so a reader could see that a claim existed and never what anybody had
+                put behind it, which is the one distinction this page argues about.
 
-                The slot keeps its height whether or not a dot is active: a panel that appeared
-                would push the field down under the pointer, which is the mouse-reactive effect
-                `ui.md` forbids and ADR `0073`'s third condition names. Hover **and** focus feed it
-                (first condition), and every figure in it is already on the page (second). */}
+                It keeps its height empty or full. A card that appeared would push the field under
+                the pointer, which is the mouse-reactive effect `ui.md` forbids and ADR `0073`'s
+                third condition names. Hover **and** focus feed it (first condition), and every
+                figure in it is already on the page (second). */}
             <div
                 aria-hidden="true"
                 data-claim-sentence={current === undefined ? "none" : "one"}
-                className="mt-4 min-h-[5.5rem] basis-full border-t border-[color:var(--color-rule)] pt-3 text-[length:var(--text-body-sm)]"
+                className="relative flex min-h-[7.5rem] min-w-[min(19rem,100%)] max-w-[24rem] flex-1 flex-col gap-1 rounded-[var(--radius-button)] border border-[color:var(--color-rule-strong)] bg-[color:var(--color-bg)] px-3.5 py-3"
             >
+                <span className="flex items-center gap-2 border-b border-[color:var(--color-rule)] pb-2 font-mono text-[10px] uppercase tracking-[0.06em] text-[color:var(--color-steel)]">
+                    {/* The dot is lit when something is being described, like the pulse card's. */}
+                    <span
+                        className={`h-[6px] w-[6px] rounded-full ${
+                            current === undefined
+                                ? "bg-[color:var(--color-rule-strong)]"
+                                : "bg-[color:var(--color-accent)]"
+                        }`}
+                    />
+                    {`Claims · ${truncated ? `${edgeCount}+` : edgeCount}`}
+                </span>
                 {current === undefined ? null : (
                     <>
-                        <p className="flex flex-wrap items-baseline gap-x-2">
-                            <span
-                                className={`min-w-0 truncate font-medium ${current.row.nameIsId ? "font-mono" : ""}`}
-                            >
-                                {current.row.name}
-                            </span>
-                            <span className="font-mono text-[length:var(--text-label)] text-[color:var(--color-steel)]">
-                                {current.predicate}
-                            </span>
-                        </p>
-                        {/* **The figure, or its absence said out loud.** ADR `0042`: creating a
-                            term seeds its vault, so an amount is not evidence that anybody staked
-                            — `positions` is. A claim nobody paid for is the common case and it has
-                            to be visibly weightless rather than quietly blank (`docs/17` §4). */}
-                        <p className="mt-2 font-mono tabular-nums">
+                        <span className="font-mono text-[10px] text-[color:var(--color-steel)]">
+                            {current.predicate}
+                        </span>
+                        {/* **The figure leads, and paper rather than accent.** It is somebody
+                            else's position, and `ui.md` spends the accent on the primary action
+                            and on the viewer's own. ADR `0042`: creating a term seeds its vault,
+                            so an amount is not evidence that anybody staked — `positions` is, and
+                            a claim nobody paid for says so instead of going blank. */}
+                        <span className="type-face text-[26px] leading-none tabular-nums">
                             {current.row.backing === null ? (
-                                <span className="text-[color:var(--color-steel)]">
+                                <span className="text-[length:var(--text-body)] text-[color:var(--color-steel)]">
                                     nothing behind it
                                 </span>
                             ) : (
-                                <>
-                                    {current.row.backing}
-                                    <span className="text-[color:var(--color-steel)]">
-                                        {` · ${current.row.positions} ${current.row.positions === 1 ? "position" : "positions"}`}
-                                    </span>
-                                </>
+                                current.row.backing
                             )}
-                        </p>
+                        </span>
+                        <span className="truncate text-[13px] text-[color:var(--color-fg)]">
+                            {current.row.name}
+                        </span>
                         {/* Only when somebody took it. A counter-triple exists for every triple at
-                            the same price and 969 of 285,775 chain-wide have ever carried one, so
-                            an empty counter means "nobody bothered" and never "everybody agrees"
-                            — printing a zero here would say the second. */}
-                        {current.row.opposition === null ? null : (
-                            <p className="mt-1 font-mono tabular-nums text-[color:var(--color-alarm)]">
+                            the same price and 969 of 285,775 chain-wide have ever carried a
+                            position — an empty one means "nobody bothered", never "everybody
+                            agrees", and a zero here would say the second. */}
+                        {current.row.opposition === null ? (
+                            <span className="font-mono text-[10px] text-[color:var(--color-steel)]">
+                                {`${current.row.positions} ${current.row.positions === 1 ? "position" : "positions"}`}
+                            </span>
+                        ) : (
+                            <span className="font-mono text-[10px] text-[color:var(--color-alarm)]">
                                 {`${current.row.opposition} against`}
-                            </p>
+                            </span>
                         )}
                     </>
                 )}
@@ -273,7 +391,7 @@ export function ClaimField({
 
             {/* The legend. It names each ring and says what the ring does not: the total, when the
                 cap bit, and the group's own backing. */}
-            <dl className="min-w-0 text-[length:var(--text-body-sm)]">
+            <dl className="min-w-0 basis-full text-[length:var(--text-body-sm)]">
                 <div className="mb-5 border-b border-[color:var(--color-rule)] pb-3">
                     <dt className="sr-only">Claims in total</dt>
                     <dd className="font-mono tabular-nums">

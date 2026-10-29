@@ -272,7 +272,7 @@ describe("the figures", () => {
     it("marks a truncated read as a floor rather than a total", async () => {
         read.mockResolvedValue(standing({edgeCount: 250, truncated: true}));
         renderAt();
-        await waitFor(() => expect(screen.getByText(/250\+/)).toBeInTheDocument());
+        await waitFor(() => expect(screen.getAllByText(/250\+/).length).toBeGreaterThan(0));
     });
 });
 
@@ -307,7 +307,7 @@ describe("a claimant's sigil", () => {
         read.mockResolvedValue(standing());
         renderAt();
         await waitFor(() => expect(screen.getByRole("heading", {name: /^uses$/i})).toBeTruthy());
-        expect(screen.getByText("Agent 13579:3")).toBeInTheDocument();
+        expect(screen.getAllByText("Agent 13579:3").length).toBeGreaterThan(0);
     });
 });
 
@@ -375,8 +375,11 @@ describe("the claim field", () => {
 
         // The visible echo is empty until something is active, and its slot is already in the DOM
         // so revealing it moves no layout.
+        // The card reads a claim from its first paint — it follows the rotation on its own, and
+        // hover or focus only takes it over. It was empty until something was active, which is
+        // what this asserted.
         const slot = container.querySelector("[data-claim-sentence]");
-        expect(slot?.getAttribute("data-claim-sentence")).toBe("none");
+        expect(slot?.getAttribute("data-claim-sentence")).toBe("one");
 
         (dot as HTMLAnchorElement).focus();
         await waitFor(() => expect(slot?.getAttribute("data-claim-sentence")).toBe("one"));
@@ -410,7 +413,7 @@ describe("the claim field", () => {
         // reader knows is a floor as a total (`rules/claims.md`).
         read.mockResolvedValue(standing({edgeCount: 250, truncated: true}));
         renderAt();
-        await waitFor(() => expect(screen.getByText(/250\+/)).toBeInTheDocument());
+        await waitFor(() => expect(screen.getAllByText(/250\+/).length).toBeGreaterThan(0));
     });
 });
 
