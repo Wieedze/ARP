@@ -57,23 +57,35 @@ Nothing is written to your home directory, your shell profile, your git config o
 
 ## Every outbound connection
 
-Four fixed hosts, the first two configurable:
+Five fixed hosts, the first two configurable:
 
 ```
 the Intuition graph    reads. Set by ARP_TARGET, or INTUITION_GRAPHQL_URL
 the Intuition RPC      reads. Set by ARP_TARGET, or INTUITION_RPC_URL
 api.github.com         one file listing per repository, cached ten minutes
 raw.githubusercontent.com   the skill's own bytes, passed through, never cached
+ipfs.io                an agent's registration document, when it published an `ipfs://` one
 ```
 
-**And one that is not fixed, which you should know about before you install this.**
-`arp_probe_endpoint` fetches **a URL the caller supplies**. That is its job — it exists to ask
-another agent's endpoint whether it answers, and ADR `0045` is explicit that ARP can verify such an
-endpoint and cannot provide one. It means the node will connect to a host chosen by whoever is
-calling it.
+**And two that are not fixed, which you should know about before you install this.** Both exist for
+the same reason and ADR `0045` is explicit about it: ARP can **verify** another agent's endpoint and
+cannot **provide** one. Verifying means connecting to a host somebody else chose.
 
-The first draft of this document claimed four hosts and said that a fifth would be a finding. That
-was wrong, and finding out why changed the code:
+```
+arp_probe_endpoint     fetches a URL the caller passes directly
+arp_agent_endpoints    fetches the `registrationFile` out of an ERC-8004 `tokenURI` — read from
+                       a registry whose ADDRESS the caller supplies, so the URL is reachable
+                       through two hops rather than one
+```
+
+Both now refuse a private target. The second one did not until this document was written: naming
+every outbound connection is what found it, which is the argument for writing such a section at
+all.
+
+An earlier draft of this document said there were four hosts, that the probe was the only unfixed
+fetch, and that the four were "the only literals in the code" — a sentence that invited the grep
+that disproves it. All three were wrong. The first version of this section is also what changed the
+code:
 
 > `Bun.serve` binds **every interface** when it is given no hostname. So an installed node listened
 > on the local network, and anything that could reach the port could ask it to fetch
@@ -84,9 +96,9 @@ Both halves are fixed, 2026-10-29:
 
 - **The node binds `127.0.0.1` by default.** `ARP_HOST=0.0.0.0` opens it, for somebody who meant
   to. The startup line says which, every time.
-- **The probe refuses a private target.** Loopback, `10/8`, `172.16/12`, `192.168/16`,
-  `169.254/16`, `0/8`, IPv6 loopback and unique-local, `localhost`, `.internal`, `.local`.
-  `ARP_ALLOW_PRIVATE_PROBE=1` if you are probing your own rig. The guard is
+- **Both caller-steerable fetches refuse a private target.** Loopback, `10/8`, `172.16/12`,
+  `192.168/16`, `169.254/16`, `0/8`, IPv6 loopback and unique-local, `localhost`, `.internal`,
+  `.local`. `ARP_ALLOW_PRIVATE_PROBE=1` if you are probing your own rig. The guard is
   `privateProbeTarget` in `packages/protocol/src/verify/probe.ts` and its boundaries are tested:
   `172.15` and `172.32` are public and only `172.16`–`172.31` are not, and `10.example.com` is a
   real host that an earlier version of the guard refused.
@@ -97,9 +109,12 @@ through. Closing it needs resolving the name and connecting to the resolved addr
 does not let you do. So it is a guard against the easy case and not a boundary. If your machine has
 something on loopback you would not want a caller to reach, do not open `ARP_HOST`.
 
-**Nothing is sent to us.** No telemetry, no analytics, no phone-home, no reporting endpoint — and
-that one you can check by grepping for a hostname, because the four fixed hosts above are the only
-literals in the code.
+**Nothing is sent to us.** No telemetry, no analytics, no phone-home, no reporting endpoint. That
+one is worth checking rather than believing, and the check is `grep -rn "https\?://" scripts/ | grep
+-v '^.*\*'` — the node's own modules carry six URL literals and none of them is ours. Do not take
+"the only literals in the code" for an answer, which an earlier draft of this said: a literal count
+is not a list of what gets fetched, because the two unfixed fetches above are built from values and
+not from literals at all.
 
 ## Every environment variable it reads
 

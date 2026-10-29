@@ -48,6 +48,12 @@ Two records, two parties, interests that do not coincide, agreeing on a moment a
 this document's own definition two sections down — _only what touched a third party_ — that is a
 fact.
 
+**Two parties only where the reader can tell the signer from the agent**, and that is the fourth
+limit below. A node the operator installs generates its own key, so its address differs from that
+operator's agent key while one hand holds both, and nothing in a receipt distinguishes that from a
+node somebody else runs. A reader names the signers it accepts (ADR `0080` constraint 4); to a
+reader who names none, this is the agent's word in a second place.
+
 **Three limits, and none of them is negotiable:**
 
 1. **It attests access, not use.** The agent has the bytes. Whether they changed what it did stays
@@ -208,18 +214,23 @@ also costs at least `minDeposit`, so the bound on how many edges a party can sta
 What the interface must never do is render these at the same weight. This is `docs/09` §3's evidence
 ladder applied to usage rather than to trust.
 
-| What we have                                     | What we know                                         |
-| ------------------------------------------------ | ---------------------------------------------------- |
-| payment, on-chain call, or delegation redemption | **fact**                                             |
-| tool and agent both declare the same edge        | **confirmed by two parties with opposing interests** |
-| the node served it and a hook logged the call    | **the access is a two-party fact** — not the use     |
-| only the tool declares                           | the word of a third party — strong                   |
-| only the agent declares, with stake behind it    | a priced assertion                                   |
-| only the agent declares, free                    | **nothing**                                          |
+| What we have                                                                             | What we know                                         |
+| ---------------------------------------------------------------------------------------- | ---------------------------------------------------- |
+| payment, on-chain call, or delegation redemption                                         | **fact**                                             |
+| tool and agent both declare the same edge                                                | **confirmed by two parties with opposing interests** |
+| the node served it and a hook logged the call, **signed by a signer the reader accepts** | **the access is a two-party fact** — not the use     |
+| the same, signed by a node nobody has named                                              | the agent's word in a second place, pinned to a hash |
+| only the tool declares                                                                   | the word of a third party — strong                   |
+| only the agent declares, with stake behind it                                            | a priced assertion                                   |
+| only the agent declares, free                                                            | **nothing**                                          |
 
-The third row was added on 2026-10-29 with the amendment above. It sits below the two-party
-agreement and above a third party's word, because it is two parties on a narrower claim: what was
-**fetched**, not what was used.
+The third and fourth rows were added on 2026-10-29 with the amendment above. The third sits below
+the two-party agreement and above a third party's word, because it is two parties on a narrower
+claim — what was **fetched**, not what was used. The fourth is the same records read by somebody who
+does not recognise the signer, and it sits where a self-report sits, because that is what it is.
+**In the shipped configuration every receipt lands on the fourth row**: `ARP_ACCEPTED_SIGNERS` is
+empty by default, so nothing has climbed the third rung yet — the rung is available to a reader who
+names a signer, and nobody has.
 
 The bottom row is the one that gets mistaken for data. Its only weight is the TRUST staked behind it,
 which is a market pricing an opinion — not evidence that anything happened.
@@ -269,7 +280,8 @@ market lives on the atoms, in both directions.
 
 ## Drift signals
 
-Carrying `docs/12`'s list forward, with two additions earned here:
+Carrying `docs/12`'s list forward, with four additions earned here — two from 2026-10-16 and two
+from the 2026-10-29 amendment:
 
 - Anything that needs visibility into execution is the wrong design.
 - **Anything that treats an agent's self-report as verified because it arrived through our SDK.** The

@@ -100,8 +100,12 @@ export const CONTENT_RECEIPT_TYPES = {
  * than a new one, and a reader counting receipts counts one. A server-issued challenge would need
  * state for no gain; a bare timestamp would leave a window.
  *
- * It is also why a third party cannot manufacture receipts in somebody else's name: the only thing
- * a stolen signature buys is a copy of a receipt that already exists.
+ * It is also why **a third party whose signer the reader does not accept** cannot manufacture
+ * receipts in somebody else's name: the only thing a stolen request signature buys is a copy of a
+ * receipt that already exists. It is not a bound on a node the reader *does* accept — a receipt
+ * carries no caller signature, so any node can put any address in `to` and a verifier takes its
+ * word. That is coherent with constraint 4 rather than a hole in it: accepting a signer is
+ * accepting what it says about who it served.
  */
 export const CONTENT_REQUEST_TYPES = {
     ContentRequest: [

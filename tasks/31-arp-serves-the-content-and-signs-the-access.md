@@ -138,7 +138,9 @@ That keeps the authorship question where it belongs and means this cannot drift 
 
 This was the task's open question and deliverable 5 closed it:
 `scripts/measure/skill-layouts.ts`, run 2026-10-29 over all 31 catalogued repositories and all 662
-catalogued skills, output in `measurements/skill-layouts-2026-10-29.json`.
+catalogued skills. **The figures below are from `measurements/skill-layouts-2026-10-29T2200.json`**
+— the corrected run. `measurements/skill-layouts-2026-10-29.json` is the first run and its numbers
+are wrong; see the note at the end of this section.
 
 **The resolver cannot be a pure function of `(repo, skill)`.** There are **19 distinct layouts**,
 `skills/<skill>/SKILL.md` covers 215 of the located skills and `<skill>/SKILL.md` another 55, and
@@ -238,9 +240,13 @@ claim is worth, not a gate on who may make one.
 
 ## 7. Deliverables
 
-1. `packages/protocol/src/receipt.ts` — the payload shape, its canonical encoding, `sign` and
-   `verify`. Pure, no transport, tested without a network. **The verification is the deliverable**,
-   not the signing: a receipt nobody else can check is a log entry.
+1. ~~`packages/protocol/src/receipt.ts` — the payload shape, its **canonical encoding**, `sign`
+   and `verify`.~~ **Done 2026-10-29**, 40 tests, and the spec's "canonical encoding" was
+   **deliberately not built**: EIP-712 replaces it, because an atom id is a pure function of its
+   URL (ADR `0054`) so the same tool has the same id on 13579 and 1155, and only a signed domain
+   separates them. Hand-rolled canonical JSON would also have been a standing footgun. The
+   verification was the deliverable and it has two halves — `verifyContentReceipt` for the
+   signature and `receiptMatchesContent` for the bytes, the second needing no key of ours at all.
 2. ~~A `/content/:atomId` route on the node, with the repository-layout resolver and its cache.~~
    **Done 2026-10-29** — `packages/protocol/src/content-path.ts` (21 tests),
    `content-serve.ts` (21 tests, every piece of IO injected), `scripts/arp-content.ts` (the
@@ -263,7 +269,8 @@ claim is worth, not a gate on who may make one.
    EIP-712-over-EIP-191 reason (an atom id is the same on both chains), and the five alternatives
    including the two that were rejected flatly: gating the index, and making the path compulsory.
 7. ~~`docs/14` gains the correction.~~ **Done 2026-10-29** — an amendment section, a row in the
-   ladder, and three drift signals. The correction turned out to be narrower and better than
+   ladder, two more rows than planned, and **two** drift signals (not three — it had three before
+   this task and has five now). The correction turned out to be narrower and better than
    planned: the original argument is about a **place**, not an impossibility. Its force is "a
    connector inside the agent's process is under the agent's control", which says nothing about a
    party on the other end of a fetch. **The document's opening sentence stays as written**, because

@@ -103,6 +103,8 @@ const rawKey = process.env['ARP_AGENT_PRIVATE_KEY']?.trim();
 const nonce = keccak256(stringToBytes(`${atom}-${Date.now()}`));
 let query = `nonce=${nonce}`;
 if (rawKey !== undefined && rawKey.length > 0) {
+  // The cast adds the `0x` prefix viem's type wants. `privateKeyToAccount` throws on anything that
+  // is not a key, which is the validation — asserting the shape here would only move the error.
   const account = privateKeyToAccount((rawKey.startsWith('0x') ? rawKey : `0x${rawKey}`) as Hex);
   const signature = await account.signTypedData(contentRequestTypedData(atom, nonce, chainId));
   query += `&by=${account.address}&sig=${signature}`;
@@ -118,6 +120,9 @@ if (!response.ok) {
 const bytes = new Uint8Array(await response.arrayBuffer());
 const header = response.headers.get('x-arp-receipt');
 const signed = header === null ? null : (JSON.parse(header) as SignedContentReceipt);
+// The receipt's own url first: it is what the node says it served, and the index is this repo's
+// record of the same thing. They agree unless the catalogue is stale, and the receipt is the one
+// under a signature.
 const url = signed?.receipt.url ?? contentIndexFor(chainId).get(atom) ?? target;
 const ref = skillRefFromUrl(url);
 

@@ -142,6 +142,8 @@ export function receiptSigner(): TypedDataSigner | null {
   const fromEnv = process.env['ARP_RECEIPT_KEY']?.trim();
   let key: Hex;
   if (fromEnv !== undefined && fromEnv.length > 0) {
+    // The cast adds the prefix viem's type wants. `privateKeyToAccount` below throws on anything
+    // that is not a key, so the validation is there rather than asserted here.
     key = (fromEnv.startsWith('0x') ? fromEnv : `0x${fromEnv}`) as Hex;
     // Nothing here can tell a funded key from an empty one, and reading a balance would need every
     // chain it might hold value on. So it says so once, loudly, on stderr — which is where a stdio
