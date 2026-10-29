@@ -63,6 +63,57 @@ export type Resolution =
     | {status: "ambiguous"; name: string; candidates: {repo: string; url: string}[]; calls: number}
     | {status: "unknown"; name: string; kind: "skill" | "mcp"; calls: number};
 
+/**
+ * One fetch that went through a node, as the local receipt record keeps it.
+ *
+ * Written by whatever did the fetching (`scripts/arp-fetch-skill.ts`), read by the hook. It is the
+ * only thing on the machine that knows a skill's *name* and its *atom* at the same time.
+ */
+export type FetchedRef = {
+    skill: string;
+    atom: string;
+    url: string;
+    /** ISO 8601. Only used to report, never to break a tie — see below. */
+    at: string;
+};
+
+/**
+ * The atom a skill's name refers to, when the local record settles it beyond doubt.
+ *
+ * This is how `ref` stops being empty. A runtime hands a name, and a name is consistent with
+ * several atoms — 104 of the catalogue's 499 distinct names are carried by more than one
+ * repository. What ends it is that the agent **fetched** one, and the fetch recorded which.
+ *
+ * **It refuses on a tie rather than taking the most recent.** If two different atoms were fetched
+ * under one name, which one the agent then invoked is unknowable, and "the latest" is a guess
+ * wearing a heuristic. Returning `null` sends it back to `resolveInvocations`, which reports it as
+ * ambiguous with every candidate named — the behaviour the whole module exists for.
+ *
+ * A `source` narrows it first when the runtime gave one, which is the only other thing that can.
+ */
+export function refForInvocation(
+    name: string,
+    source: string | null,
+    fetched: readonly FetchedRef[],
+): string | null {
+    const bare = name.includes(":") ? (name.split(":").pop() ?? name) : name;
+    let matches = fetched.filter((row) => row.skill === bare);
+    if (source !== null && matches.length > 1) {
+        const narrowed = matches.filter((row) => source.includes(repoOf(row.url)));
+        if (narrowed.length > 0) matches = narrowed;
+    }
+
+    const atoms = new Set(matches.map((row) => row.atom.toLowerCase()));
+    if (atoms.size !== 1) return null;
+    return matches[0]?.atom ?? null;
+}
+
+/** `owner/repo` out of a tool URL, or the URL itself when it is not one. */
+function repoOf(url: string): string {
+    const parts = /github\.com\/([^/?#]+)\/([^/?#]+)/.exec(url);
+    return parts === null ? url : `${parts[1]}/${parts[2]}`;
+}
+
 /** Parse a JSONL log. A corrupt line loses itself, never the session's whole record. */
 export function parseSessionLog(text: string): Invocation[] {
     const out: Invocation[] = [];
@@ -142,7 +193,9 @@ export function resolveInvocations(
         let matches = catalogue.filter((row) => row.skill === bare);
         // A source narrows it when the runtime gave one, which is the only other thing that can.
         if (invocation.source !== null && matches.length > 1) {
-            const narrowed = matches.filter((row) => invocation.source?.includes(row.repo) === true);
+            const narrowed = matches.filter(
+                (row) => invocation.source?.includes(row.repo) === true,
+            );
             if (narrowed.length > 0) matches = narrowed;
         }
 

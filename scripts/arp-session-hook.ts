@@ -51,112 +51,160 @@
  * `$ARP_SESSION_LOG`, or `.arp/session.jsonl` beside the working directory. One JSON object per
  * line, appended, never rewritten — a log a later step reads is a log nothing may edit.
  */
-import {appendFileSync, mkdirSync} from "node:fs";
-import {dirname, join} from "node:path";
+import { appendFileSync, existsSync, mkdirSync, readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+
+import { refForInvocation, type FetchedRef } from '../packages/protocol/src/session.js';
 
 type HookPayload = {
-    session_id?: string;
-    tool_name?: string;
-    tool_input?: Record<string, unknown>;
-    cwd?: string;
+  session_id?: string;
+  tool_name?: string;
+  tool_input?: Record<string, unknown>;
+  cwd?: string;
 };
 
 type Invocation = {
-    at: string;
-    session: string | null;
-    kind: "skill" | "mcp";
-    /** The skill's name, or the MCP server's. */
-    name: string;
-    /** Where the runtime says it came from, when it says. Never inferred. */
-    source: string | null;
-    /**
-     * The tool's URL or its atom id, when either is in the payload.
-     *
-     * **This is what makes the record exact**, and a name never can: `product-photography` is
-     * carried by six repositories with identical files, so a name resolves to six atoms or none.
-     * An atom id is a pure function of a normalised URL (ADR `0054`), so the two are the same
-     * information and either ends the ambiguity.
-     *
-     * Empty today, because a runtime hands a skill's name and not its origin. It fills the moment
-     * ARP serves the content: the response carries the atom it is, the agent logs that, and
-     * nothing has to be guessed. That is the part of "ARP as the access path" that is about
-     * identification rather than about a business model.
-     */
-    ref: string | null;
+  at: string;
+  session: string | null;
+  kind: 'skill' | 'mcp';
+  /** The skill's name, or the MCP server's. */
+  name: string;
+  /** Where the runtime says it came from, when it says. Never inferred. */
+  source: string | null;
+  /**
+   * The tool's URL or its atom id, when either is in the payload.
+   *
+   * **This is what makes the record exact**, and a name never can: `product-photography` is
+   * carried by six repositories with identical files, so a name resolves to six atoms or none.
+   * An atom id is a pure function of a normalised URL (ADR `0054`), so the two are the same
+   * information and either ends the ambiguity.
+   *
+   * **Filled from `.arp/receipts.jsonl` since 2026-10-29**, which is where
+   * `scripts/arp-fetch-skill.ts` records what was fetched through a node. The fetch is the one
+   * moment a skill's name and its atom are in the same place, so it writes both down and this
+   * reads them back. `tasks/31` deliverable 3.
+   *
+   * Still empty for a skill nobody fetched through a node, and **still empty when two different
+   * atoms were fetched under one name** — `refForInvocation` refuses a tie rather than taking
+   * the most recent, because which one the agent then invoked is unknowable and a heuristic
+   * there would write an edge about a repository it may never have touched.
+   */
+  ref: string | null;
 };
 
+/**
+ * What was fetched through a node, from the local record.
+ *
+ * Read fresh on every call rather than cached: a hook process is short-lived, and a fetch that
+ * happened one tool call ago has to be visible to the next one. A missing or corrupt file is an
+ * empty list — the hook's job is to keep a record, never to stop a session.
+ */
+function fetchedRefs(cwd: string): FetchedRef[] {
+  const path = process.env['ARP_RECEIPTS'] ?? join(cwd, '.arp', 'receipts.jsonl');
+  if (!existsSync(path)) return [];
+  let text: string;
+  try {
+    text = readFileSync(path, 'utf8');
+  } catch {
+    return [];
+  }
+  const rows: FetchedRef[] = [];
+  for (const line of text.split('\n')) {
+    if (line.trim().length === 0) continue;
+    try {
+      const row = JSON.parse(line) as Partial<FetchedRef>;
+      if (typeof row.skill !== 'string' || typeof row.atom !== 'string') continue;
+      rows.push({
+        skill: row.skill,
+        atom: row.atom,
+        url: typeof row.url === 'string' ? row.url : '',
+        at: typeof row.at === 'string' ? row.at : '',
+      });
+    } catch {
+      // A half-written last line is the normal way this file ends while a session runs.
+      continue;
+    }
+  }
+  return rows;
+}
+
 function readString(from: Record<string, unknown> | undefined, key: string): string | null {
-    const value = from?.[key];
-    return typeof value === "string" && value.trim().length > 0 ? value.trim() : null;
+  const value = from?.[key];
+  return typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
 }
 
 /** What this call invoked, or `null` for the calls nobody registers. */
-function invocationOf(payload: HookPayload): Omit<Invocation, "at" | "session"> | null {
-    const tool = payload.tool_name;
-    if (typeof tool !== "string" || tool.length === 0) return null;
+function invocationOf(
+  payload: HookPayload,
+  fetched: readonly FetchedRef[],
+): Omit<Invocation, 'at' | 'session'> | null {
+  const tool = payload.tool_name;
+  if (typeof tool !== 'string' || tool.length === 0) return null;
 
-    if (tool === "Skill") {
-        const name = readString(payload.tool_input, "skill");
-        if (name === null) return null;
-        // A plugin skill is `plugin:skill`; a directory-scoped one is `path:skill`. Both halves are
-        // kept, because the half before the colon is the only thing that tells two skills with the
-        // same name apart — and 104 names in the catalogue are carried by more than one repository.
-        return {
-            kind: "skill",
-            name,
-            source: readString(payload.tool_input, "source"),
-            // Whatever the payload offers, in the order of exactness. A 0x id or a URL both
-            // resolve to one atom; a name does not.
-            ref:
-                readString(payload.tool_input, "atom_id") ??
-                readString(payload.tool_input, "tool_atom_id") ??
-                readString(payload.tool_input, "url"),
-        };
-    }
+  if (tool === 'Skill') {
+    const name = readString(payload.tool_input, 'skill');
+    if (name === null) return null;
+    // A plugin skill is `plugin:skill`; a directory-scoped one is `path:skill`. Both halves are
+    // kept, because the half before the colon is the only thing that tells two skills with the
+    // same name apart — and 104 names in the catalogue are carried by more than one repository.
+    const source = readString(payload.tool_input, 'source');
+    return {
+      kind: 'skill',
+      name,
+      source,
+      // Whatever the payload offers, in the order of exactness, and then what the agent
+      // actually fetched. A 0x id or a URL both resolve to one atom; a name does not.
+      ref:
+        readString(payload.tool_input, 'atom_id') ??
+        readString(payload.tool_input, 'tool_atom_id') ??
+        readString(payload.tool_input, 'url') ??
+        refForInvocation(name, source, fetched),
+    };
+  }
 
-    // `mcp__<server>__<tool>`. The server is what ARP catalogues; the tool within it is not.
-    const mcp = /^mcp__([^_]+(?:_[^_]+)*?)__/.exec(tool);
-    if (mcp?.[1] !== undefined) {
-        return {
-            kind: "mcp",
-            name: mcp[1],
-            source: null,
-            ref: readString(payload.tool_input, "url"),
-        };
-    }
+  // `mcp__<server>__<tool>`. The server is what ARP catalogues; the tool within it is not.
+  const mcp = /^mcp__([^_]+(?:_[^_]+)*?)__/.exec(tool);
+  if (mcp?.[1] !== undefined) {
+    return {
+      kind: 'mcp',
+      name: mcp[1],
+      source: null,
+      ref: readString(payload.tool_input, 'url'),
+    };
+  }
 
-    return null;
+  return null;
 }
 
-let raw = "";
+let raw = '';
 for await (const chunk of process.stdin) raw += chunk;
 
 let payload: HookPayload;
 try {
-    payload = JSON.parse(raw) as HookPayload;
+  payload = JSON.parse(raw) as HookPayload;
 } catch {
-    // A hook that throws on a payload it did not expect blocks the tool call it was watching.
-    // Silence is the right failure here: the log loses a line, the session does not stop.
-    process.exit(0);
+  // A hook that throws on a payload it did not expect blocks the tool call it was watching.
+  // Silence is the right failure here: the log loses a line, the session does not stop.
+  process.exit(0);
 }
 
-const invocation = invocationOf(payload);
+const cwd = payload.cwd ?? process.cwd();
+const invocation = invocationOf(payload, fetchedRefs(cwd));
 if (invocation === null) process.exit(0);
 
-const path =
-    process.env["ARP_SESSION_LOG"] ?? join(payload.cwd ?? process.cwd(), ".arp", "session.jsonl");
+const path = process.env['ARP_SESSION_LOG'] ?? join(cwd, '.arp', 'session.jsonl');
 
 const line: Invocation = {
-    at: new Date().toISOString(),
-    session: readString(payload as Record<string, unknown>, "session_id"),
-    ...invocation,
+  at: new Date().toISOString(),
+  session: readString(payload as Record<string, unknown>, 'session_id'),
+  ...invocation,
 };
 
 try {
-    mkdirSync(dirname(path), {recursive: true});
-    appendFileSync(path, `${JSON.stringify(line)}\n`);
+  mkdirSync(dirname(path), { recursive: true });
+  appendFileSync(path, `${JSON.stringify(line)}\n`);
 } catch {
-    // Same reason as above. A session must not fail because a record could not be kept.
+  // Same reason as above. A session must not fail because a record could not be kept.
 }
 
 // A module, not a global script — see the note in scripts/measure/predicate-objects.ts.

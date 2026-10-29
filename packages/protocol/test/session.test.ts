@@ -1,6 +1,11 @@
 import {describe, expect, it} from "vitest";
 
-import {parseSessionLog, resolveInvocations, type CataloguedSkill} from "../src/session.js";
+import {
+    parseSessionLog,
+    refForInvocation,
+    resolveInvocations,
+    type CataloguedSkill,
+} from "../src/session.js";
 
 /** Six repositories carry `product-photography` with byte-identical files. Measured 2026-10-29. */
 const CATALOGUE: CataloguedSkill[] = [
@@ -53,6 +58,74 @@ describe("parseSessionLog", () => {
     });
 });
 
+describe("refForInvocation", () => {
+    const fetched = [
+        {
+            skill: "product-photography",
+            atom: "0xaa",
+            url: "https://github.com/magentosh/superpowers?skill=product-photography",
+            at: "2026-10-29T18:00:00.000Z",
+        },
+        {
+            skill: "brainstorming",
+            atom: "0xcc",
+            url: "https://github.com/obra/superpowers?skill=brainstorming",
+            at: "2026-10-29T18:01:00.000Z",
+        },
+    ];
+
+    it("resolves a name the local record settles", () => {
+        // This is how `ref` stops being empty: the agent FETCHED one of the six, and the fetch
+        // recorded which. A name on its own never could.
+        expect(refForInvocation("product-photography", null, fetched)).toBe("0xaa");
+    });
+
+    it("takes the bare half of a plugin-qualified name", () => {
+        expect(refForInvocation("superpowers:brainstorming", null, fetched)).toBe("0xcc");
+    });
+
+    it("refuses when two different atoms were fetched under one name", () => {
+        // Not "the most recent". Which one the agent then invoked is unknowable, and a heuristic
+        // here would write an edge about a repository it may never have touched — with a position
+        // behind it. Null sends it back to `resolveInvocations`, which names every candidate.
+        const both = [
+            ...fetched,
+            {
+                skill: "product-photography",
+                atom: "0xbb",
+                url: "https://github.com/101-skills/superpowers?skill=product-photography",
+                at: "2026-10-29T19:00:00.000Z",
+            },
+        ];
+        expect(refForInvocation("product-photography", null, both)).toBeNull();
+    });
+
+    it("lets a source break what two fetches could not", () => {
+        const both = [
+            ...fetched,
+            {
+                skill: "product-photography",
+                atom: "0xbb",
+                url: "https://github.com/101-skills/superpowers?skill=product-photography",
+                at: "2026-10-29T19:00:00.000Z",
+            },
+        ];
+        const source = "~/.claude/plugins/101-skills/superpowers/skills/product-photography";
+        expect(refForInvocation("product-photography", source, both)).toBe("0xbb");
+    });
+
+    it("accepts two fetches of the same atom as one answer", () => {
+        // Fetching twice is not an ambiguity. It is the same tool, asked for twice.
+        const twice = [fetched[0]!, {...fetched[0]!, at: "2026-10-29T20:00:00.000Z"}];
+        expect(refForInvocation("product-photography", null, twice)).toBe("0xaa");
+    });
+
+    it("is null for a name nothing fetched", () => {
+        expect(refForInvocation("never-asked-for", null, fetched)).toBeNull();
+        expect(refForInvocation("product-photography", null, [])).toBeNull();
+    });
+});
+
 describe("resolveInvocations", () => {
     it("refuses a name several repositories carry", () => {
         // The defect this exists to prevent: picking one would write an edge about a repository
@@ -76,7 +149,10 @@ describe("resolveInvocations", () => {
     });
 
     it("resolves a name only one repository carries", () => {
-        const [only] = resolveInvocations(parseSessionLog(line({name: "brainstorming"})), CATALOGUE);
+        const [only] = resolveInvocations(
+            parseSessionLog(line({name: "brainstorming"})),
+            CATALOGUE,
+        );
         expect(only?.status === "resolved" && only.repo).toBe("obra/superpowers");
     });
 
