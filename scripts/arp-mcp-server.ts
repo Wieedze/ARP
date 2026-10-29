@@ -49,7 +49,7 @@ import {
 } from '../packages/protocol/src/declare/index.js';
 import { toCaip19 } from '../packages/protocol/src/caip.js';
 import { listTools, type ToolListingOrder } from '../packages/protocol/src/tool-listing.js';
-import { getAddress } from 'viem';
+import { getAddress, type Address } from 'viem';
 
 import { listRegisteredTools } from '../packages/protocol/src/registered-tools.js';
 import { toolsInDomain } from '../packages/protocol/src/domains.js';
@@ -72,7 +72,7 @@ import { intuitionSource } from '../packages/protocol/src/sources/intuition/inde
 import type { AgentListOrder } from '../packages/protocol/src/types.js';
 import { getToolUsage, type ToolUsage } from '../packages/protocol/src/tool-usage.js';
 import { TOOLS } from './arp-mcp-tools.js';
-import { receiptSigner, serveContentRequest } from './arp-content.js';
+import { catalogueFor, receiptSigner, serveContentRequest } from './arp-content.js';
 import {
   parseSessionLog,
   resolveInvocations,
@@ -83,7 +83,6 @@ import {
   verifyContentReceipt,
   type SignedContentReceipt,
 } from '../packages/protocol/src/receipt.js';
-import sessionSkills from '../catalogue/skills-13579.json';
 
 const PORT = Number(process.env.PORT ?? 3002);
 
@@ -100,9 +99,6 @@ const RECEIPT_SIGNER = receiptSigner();
 /** Where the hook writes, and where the fetch records what it fetched. Both overridable. */
 const SESSION_LOG = process.env['ARP_SESSION_LOG'] ?? '.arp/session.jsonl';
 const RECEIPTS_LOG = process.env['ARP_RECEIPTS'] ?? '.arp/receipts.jsonl';
-
-/** The catalogue `arp_declare_session` resolves a runtime's names against. */
-const sessionCatalogue = (sessionSkills as { skills: CataloguedSkill[] }).skills;
 
 /**
  * The receipts this machine kept, keyed by atom id.
@@ -160,6 +156,37 @@ type DeploymentRecord = {
 const record = JSON.parse(
   readFileSync(new URL(`../deployments/${chainId}.json`, import.meta.url), 'utf8'),
 ) as DeploymentRecord;
+
+/**
+ * The catalogue `arp_declare_session` resolves a runtime's names against, for THIS node's chain.
+ *
+ * It was `catalogue/skills-13579.json` imported at module scope while `ARP_TARGET` defaults to
+ * mainnet, so a default-run node resolved testnet atom ids and would have planned against 1155 —
+ * where those atoms do not exist and where a create pair costs 0.22 TRUST against 0.004, measured
+ * 2026-10-29. `rules/portability.md` rule 1 and rule 3 in one line of code.
+ */
+const sessionCatalogue: CataloguedSkill[] = catalogueFor(chainId);
+
+/**
+ * The signers THIS node's reader accepts, from `ARP_ACCEPTED_SIGNERS`.
+ *
+ * ADR `0080` constraint 4 as configuration rather than a principle. Empty is the honest default and
+ * it is why `corroborationOf` reports `unknown-signer`: a node an operator installs generates its
+ * own key, so its address differs from that operator's agent key while the same hand holds both.
+ * Nothing in a receipt tells that apart from a genuinely separate node, so the reader has to say.
+ */
+let accepted: Address[] | null = null;
+function acceptedSigners(): Address[] {
+  // Lazy, and that is not a style choice: the first version read `isAddress` — a `const` helper
+  // declared further down this file — at module initialisation, so the process died in the
+  // temporal dead zone while `tsc --noEmit` stayed green. `claims.md` §4, found by starting it.
+  if (accepted !== null) return accepted;
+  accepted = (process.env['ARP_ACCEPTED_SIGNERS'] ?? '')
+    .split(',')
+    .map((entry) => entry.trim())
+    .filter((entry): entry is Address => isAddress(entry));
+  return accepted;
+}
 
 const GRAPHQL_URL = process.env.INTUITION_GRAPHQL_URL ?? record.chain?.graphqlUrl;
 const RPC_URL = process.env.INTUITION_RPC_URL ?? record.chain?.rpcUrl;
@@ -576,8 +603,19 @@ async function declareSession(id: JsonRpcId, args: Record<string, unknown>) {
       corroboration.set(row.atomId, `receipt did not verify: ${verdict.status}`);
       continue;
     }
-    const against = isAddress(declarer) ? declarer : (held.receipt.to ?? held.node);
-    const read = corroborationOf(held.receipt, verdict.signer, against);
+    // **Only against the address that will sign.** This fell back to `held.receipt.to` when
+    // `declarer` was omitted, which made `served === declarer` true by construction and the
+    // verdict a constant: every receipt that verified read as corroborating, computed against the
+    // node's own claim about who it served. A missing declarer is a missing input, and saying so
+    // is the only honest answer.
+    if (!isAddress(declarer)) {
+      corroboration.set(
+        row.atomId,
+        'a receipt is held — pass `declarer` (the address that will sign) to have it assessed',
+      );
+      continue;
+    }
+    const read = corroborationOf(held.receipt, verdict.signer, declarer, acceptedSigners());
     corroboration.set(row.atomId, `${read.status} (signed by ${verdict.signer})`);
   }
 
@@ -610,6 +648,10 @@ async function declareSession(id: JsonRpcId, args: Record<string, unknown>) {
           }
         : {}),
       ...(row.status === 'ambiguous' ? { candidates: row.candidates } : {}),
+      // One tool carries this name and the catalogue has no atom id for it. 61 of 662 rows on
+      // 13579, and their atoms DO exist on chain — so the URL goes out, because a caller that can
+      // derive the id itself has everything it needs.
+      ...(row.status === 'unrecorded' ? { repo: row.repo, url: row.url } : {}),
       ...(row.status === 'unknown' ? { kind: row.kind } : {}),
     })),
     // Said plainly, because the difference between "nothing was invoked" and "nothing could be
@@ -1465,6 +1507,11 @@ export const handler = {
           route: '/content/:atomId',
           signer: RECEIPT_SIGNER?.address ?? null,
           attests: 'access, never use',
+          // What THIS node's reader accepts as a second party. Empty means it names none, and a
+          // receipt from any signer reads as `unknown-signer` — the honest default, because an
+          // operator-run node's key is unlinkable to that operator's agent key (ADR `0080`).
+          accepted_signers: acceptedSigners(),
+          catalogued_skills: sessionCatalogue.length,
         },
       });
     }

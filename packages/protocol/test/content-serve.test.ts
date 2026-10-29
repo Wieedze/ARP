@@ -92,11 +92,17 @@ describe("serveContent", () => {
         expect(verdict).toEqual({status: "valid", signer: NODE.address, namesNobody: false});
         expect(receiptMatchesContent(answer.receipt!.receipt, CONTENT)).toBe(true);
 
-        // And what it is worth to a reader: the node is not the agent, so two parties.
+        // And what it is worth to a reader. **Not `second-party` by default**: this node generated
+        // its own key, so its address differs from the agent's while the same hand could hold
+        // both, and nothing in the receipt tells that apart. The reader says which signers it
+        // accepts, and only then is it two parties (ADR `0080` constraint 4).
         expect(corroborationOf(answer.receipt!.receipt, NODE.address, AGENT.address)).toEqual({
-            status: "second-party",
+            status: "unknown-signer",
             signer: NODE.address,
         });
+        expect(
+            corroborationOf(answer.receipt!.receipt, NODE.address, AGENT.address, [NODE.address]),
+        ).toEqual({status: "second-party", signer: NODE.address});
     });
 
     it("names the path it served, not just the repository", async () => {

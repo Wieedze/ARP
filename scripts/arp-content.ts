@@ -19,10 +19,17 @@
  *  ARP_NO_RECEIPTS=1     no key at all. The content path still works
  *  ```
  *
- *  **It cannot move value.** It is not a wallet, it never holds TRUST, and it is not the key any
- *  plan is signed with — the plan path still has none (ADR `0038`). Losing it lets somebody forge
- *  corroboration under this node's name; it lets them spend nothing. A reader who stops accepting
- *  the signer is back to the declaration they already had.
+ *  **A generated key cannot move value.** It is not a wallet, it never holds TRUST, and it is not
+ *  the key any plan is signed with — the plan path still has none (ADR `0038`). Losing it lets
+ *  somebody forge corroboration under this node's name; it lets them spend nothing. A reader who
+ *  stops accepting the signer is back to the declaration they already had.
+ *
+ *  **`ARP_RECEIPT_KEY` is the operator's own risk, and this is a convention rather than a
+ *  guarantee.** Nothing here can tell a funded key from an empty one, so hand the node a funded
+ *  key and ADR `0080` constraint 3 is broken by configuration. It warns and carries on, because
+ *  refusing would need a balance read on every chain the key might hold value on. The earlier
+ *  wording of this paragraph stated flatly that the key *cannot* move value, which was a property
+ *  of the generated key read as a property of the module.
  *
  *  **Only the address is ever printed.** The key is read, used and never logged, never returned in
  *  a response, and never sent anywhere.
@@ -47,28 +54,80 @@ import {
   type ContentAnswer,
 } from '../packages/protocol/src/content-serve.js';
 import { recoverContentRequester, type TypedDataSigner } from '../packages/protocol/src/receipt.js';
-import skills from '../catalogue/skills-13579.json';
 
 /** A listing changes when somebody pushes. Ten minutes is a compromise nobody has measured. */
 const LISTING_TTL_MS = 10 * 60 * 1000;
 const FETCH_TIMEOUT_MS = 15_000;
 const KEY_PATH = '.arp/receipt-key';
 
-type CataloguedSkill = { url: string; atom: string | null };
+export type CataloguedSkill = { repo: string; skill: string; url: string; atom: string | null };
+
+const catalogues = new Map<number, CataloguedSkill[]>();
 
 /**
- * Atom id to URL, over every catalogued skill that has one.
+ * The catalogue recorded for one chain, or an empty list.
  *
- * 601 of 662 on 2026-10-29. The other 61 were never tagged, so no run recorded their id, and
- * deriving one is `calculateAtomId` on the MultiVault — a chain read this must not depend on. They
- * answer `unknown-atom`, which is accurate: nothing here knows them.
+ * **Read at call time and keyed by chain, not imported.** It was `import skills from
+ * '../catalogue/skills-13579.json'` at module scope in a process whose chain is configurable, so a
+ * node started on its default target — mainnet 1155 — served atom ids drawn from the testnet
+ * record and stamped 1155 into every receipt's domain. `rules/portability.md` rule 1 names that
+ * shape: no chain constant at module scope.
+ *
+ * An absent file is an empty catalogue and not an error. There is no `catalogue/skills-1155.json`
+ * because no skill was seeded on mainnet, and the honest consequence is that a mainnet node knows
+ * no skills — which the refusal says in those words.
  */
-export const contentIndex = contentIndexOf(
-  (skills as { skills: CataloguedSkill[] }).skills.map((row) => ({
-    atom: row.atom as Hex,
-    url: row.url,
-  })),
-);
+export function catalogueFor(chainId: number): CataloguedSkill[] {
+  const held = catalogues.get(chainId);
+  if (held !== undefined) return held;
+  let rows: CataloguedSkill[] = [];
+  try {
+    const raw = readFileSync(
+      new URL(`../catalogue/skills-${chainId}.json`, import.meta.url),
+      'utf8',
+    );
+    rows = (JSON.parse(raw) as { skills?: CataloguedSkill[] }).skills ?? [];
+  } catch {
+    rows = [];
+  }
+  catalogues.set(chainId, rows);
+  return rows;
+}
+
+const indexes = new Map<number, ReadonlyMap<string, string>>();
+
+/**
+ * Atom id to URL, for one chain's catalogue.
+ *
+ * 601 of 662 rows on 13579 carry a recorded id, 2026-10-29. **The other 61 do have atoms on
+ * chain** — measured, every one of them `isTermCreated` — and what is missing is the recorded id in
+ * the JSON, not the atom. So they are reported as `unrecorded` rather than unknown: saying "not
+ * catalogued" about a tool that is in the catalogue was simply false.
+ *
+ * Deriving the missing ids is `calculateAtomId` on the MultiVault, a chain read, and confirmed by
+ * measurement to be **not** plain `keccak256` of the same bytes — 0 of 601 matched a local keccak.
+ * So it cannot be computed here, and a module that resolves identities must not need a chain to be
+ * reachable.
+ */
+export function contentIndexFor(chainId: number): ReadonlyMap<string, string> {
+  const held = indexes.get(chainId);
+  if (held !== undefined) return held;
+  const index = contentIndexOf(
+    catalogueFor(chainId).map((row) => ({
+      // Narrowed by `contentIndexOf`, which skips anything that is not a 0x string. The cast is
+      // the shape the parameter asks for, not an assertion that the value is one.
+      atom: row.atom as Hex,
+      url: row.url,
+    })),
+  );
+  indexes.set(chainId, index);
+  return index;
+}
+
+/** Whether a URL is catalogued on this chain at all, for telling `unrecorded` from `unknown`. */
+export function isCatalogued(chainId: number, url: string): boolean {
+  return catalogueFor(chainId).some((row) => row.url === url);
+}
 
 /**
  * The signing identity, or null.
@@ -83,6 +142,14 @@ export function receiptSigner(): TypedDataSigner | null {
   let key: Hex;
   if (fromEnv !== undefined && fromEnv.length > 0) {
     key = (fromEnv.startsWith('0x') ? fromEnv : `0x${fromEnv}`) as Hex;
+    // Nothing here can tell a funded key from an empty one, and reading a balance would need every
+    // chain it might hold value on. So it says so once, loudly, on stderr — which is where a stdio
+    // node's diagnostics go, because stdout is the protocol channel.
+    console.error(
+      'ARP_RECEIPT_KEY is set. A receipt key should be able to sign receipts and nothing else ' +
+        '(ADR 0080): do not give this process a key that holds funds. Unset it to have one ' +
+        'generated instead.',
+    );
   } else if (existsSync(KEY_PATH)) {
     key = readFileSync(KEY_PATH, 'utf8').trim() as Hex;
   } else {
@@ -101,7 +168,16 @@ export function receiptSigner(): TypedDataSigner | null {
 
 const listings = new Map<string, { at: number; files: RepositoryFile[] }>();
 
-/** A repository's SKILL.md paths and their blob shas, cached. One request per repository. */
+/**
+ * A repository's SKILL.md paths and their blob shas, cached. One request per repository.
+ *
+ * The cache is ten minutes and the content is fetched live from `HEAD`, so the two can disagree:
+ * after a push that makes two previously-identical paths differ, `resolveContentPath` can still
+ * take its "identical sha, serve one and name the others" decision on the stale listing. The
+ * **digest is always over the bytes actually served**, so the receipt stays honest about what was
+ * served — it is `alsoAt` that can be wrong, and `alsoAt` is the field whose whole claim is that
+ * choosing between those paths asserts nothing.
+ */
 async function listing(repo: string): Promise<readonly RepositoryFile[]> {
   const cached = listings.get(repo);
   if (cached !== undefined && Date.now() - cached.at < LISTING_TTL_MS) return cached.files;
@@ -171,12 +247,18 @@ async function requester(
 }
 
 /** What each refusal is, as a status and a sentence. A caller that cannot tell them apart retries wrong. */
-function refusal(answer: ContentAnswer): { code: number; reason: string } {
+function refusal(answer: ContentAnswer, chainId: number): { code: number; reason: string } {
   switch (answer.status) {
     case 'bad-atom-id':
       return { code: 400, reason: 'an atom id is 0x followed by 64 hex characters' };
     case 'unknown-atom':
-      return { code: 404, reason: 'not a catalogued tool on this chain' };
+      return {
+        code: 404,
+        reason:
+          `no tool with that atom id is recorded for chain ${chainId}. Either it is not ` +
+          'catalogued, or it is catalogued with no atom id recorded — 61 of 662 rows on 13579 ' +
+          'are the second case, and their atoms do exist on chain',
+      };
     case 'not-a-file':
       return { code: 404, reason: `${answer.url} is catalogued but has no file to serve` };
     case 'absent':
@@ -220,7 +302,7 @@ export async function serveContentRequest(
   try {
     answer = await serveContent(atomId, {
       chainId,
-      index: contentIndex,
+      index: contentIndexFor(chainId),
       listing,
       raw,
       signer,
@@ -237,7 +319,7 @@ export async function serveContentRequest(
   }
 
   if (answer.status !== 'served') {
-    const { code, reason } = refusal(answer);
+    const { code, reason } = refusal(answer, chainId);
     return Response.json({ error: answer.status, reason }, { status: code });
   }
 

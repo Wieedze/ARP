@@ -217,7 +217,9 @@ ARP becomes a path and not only an index: it holds a key, and that key signs rec
 
 **A receipt can only add, never subtract**, and that is the property that makes the key
 uninteresting to worry about. A declaration already stands on its own — somebody identified paid to
-make it. The receipt says a second party saw the fetch. If a reader distrusts the signer, they
+make it. The receipt says somebody else saw the fetch — **a second party only where the reader
+recognises the signer**, since an operator's own node generates a key unlinkable to their agent's
+(ADR `0080`'s amendment). If a reader distrusts the signer, they
 ignore the receipt and are back to exactly the declaration they had before. There is no bottleneck
 to become, because nothing routes through the key: `arp_find_tools` stays open, the chain stays
 readable, and no receipt can revoke an edge.

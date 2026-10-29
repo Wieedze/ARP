@@ -196,7 +196,59 @@ the bytes the digest is over.
 - Nothing is on mainnet. Chain 13579 throughout, and `security.md`'s mainnet-signing statement is
   unaffected — a receipt key is not a key that signs a transaction.
 
-## Resolved 2026-10-29: both nodes sign, and the receipt says which
+## Amended hours later: the receipt cannot say which — the reader decides
+
+`intuition-integrator`, same day, on the code this ADR authorised. The resolution below is kept as
+written and its headline sentence is wrong:
+
+> **"the receipt says which"** — it does not, and `corroborationOf`'s first version proved it by
+> labelling every locally-served receipt `second-party`.
+
+The node an operator installs **generates its own key**, so its address differs from that
+operator's agent key while the same hand holds both. Three keys, one operator, and the label said
+two parties — the strongest verdict for the weakest case. `self-signed` was unreachable except by
+deliberately pointing `ARP_RECEIPT_KEY` at the declaring key, which nobody will do.
+
+The mistake was comparing **keys** where this ADR argues about **hands**, and no better comparison
+closes it: an operator-run node's key is unlinkable to their agent's key.
+
+**What does distinguish them is the reader, and this ADR had already said so.** Constraint 4: _a
+reader decides which signers it accepts, the same way ARP's index already names the attestor it
+reads through._ So that decision is a parameter rather than a principle:
+
+| verdict          | when                                                                                                                                           |
+| ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `second-party`   | the signer differs from the declarer **and the reader accepts that signer**                                                                    |
+| `unknown-signer` | the signer differs and the reader does not know it. May be a second party, may be the operator's own node, and nothing in the receipt can tell |
+| `self-signed`    | the signer **is** the declaring address. One key, the only visible same-hand case                                                              |
+| `other-caller`   | a genuine receipt about somebody else's fetch                                                                                                  |
+| `names-nobody`   | the fetch was unauthenticated                                                                                                                  |
+
+`ARP_ACCEPTED_SIGNERS` is where a node's reader names them, and **empty is the honest default**.
+
+Two more from the same review, both of the same family — a verdict that could not be wrong:
+
+- `arp_declare_session` computed the comparison against `receipt.to` when `declarer` was omitted,
+  so `served === declarer` held by construction and the verdict was a constant. It now says what is
+  missing instead of answering.
+- The node defaulted to **mainnet 1155** while importing `catalogue/skills-13579.json` at module
+  scope, so a default-run node resolved testnet atom ids and stamped 1155 into every receipt's
+  domain — for atoms that are not on 1155, where a create pair costs **0.22 TRUST against 0.004**.
+  The catalogue is now read per chain at call time, and a mainnet node holds zero skills and says
+  so. `rules/portability.md` rules 1 and 3.
+
+What the review **confirmed**, measured over all 662 rows on 13579: every recorded atom id equals
+`calculateAtomId(stringToHex(toolAtomUri(url)))` on the MultiVault, zero mismatches, zero
+collisions, and `calculateAtomId` is **not** plain `keccak256` of the same bytes (0 of 601 matched a
+local keccak) — so the decision not to derive ids at startup was right.
+
+---
+
+### The resolution as written, kept because its reasoning stands
+
+**Both nodes sign, and the receipt says which** — the second half amended above.
+
+## Resolved 2026-10-29: both nodes sign
 
 **The user's decision, asked as a choice of three and answered « ok le trois ».** Both nodes exist
 and they do different jobs:
@@ -224,6 +276,10 @@ requires, and that constraint now has a concrete consequence rather than only a 
 > and the receipt corroborates nobody — stated, never silently discounted. ARP composes no score
 > (ADR `0046`), so this is a figure a reader sees, exactly like the distinct-declarer count and the
 > declarer-creator overlap in `tasks/31` §8.
+
+**That comparison is necessary and not sufficient, which the amendment above sets out.** Equal
+addresses prove one hand; unequal addresses prove nothing, because an operator's node key and their
+agent key are different keys.
 
 A self-signed receipt is still not worthless to its own operator: it pins the bytes and the path, so
 the operator can re-derive what their agent actually held. It is an audit trail that happens to be

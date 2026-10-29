@@ -114,8 +114,10 @@ INTUITION_RPC_URL      override the RPC
 ARP_MULTI_VAULT        override the contract address
 ARP_DOMAIN_ATTESTOR    whose domain tags to read. A property of the node, never a request parameter
 GITHUB_TOKEN           optional. Raises GitHub's 60-requests-an-hour limit on file listings
-ARP_RECEIPT_KEY        a key you manage, instead of the generated one
+ARP_RECEIPT_KEY        a key you manage, instead of the generated one. Never a funded one
 ARP_NO_RECEIPTS        set to 1 to run with no key at all
+ARP_ACCEPTED_SIGNERS   comma-separated. Which receipt signers THIS node's reader accepts
+ARP_CHAIN_ID           which chain's catalogue scripts/session-log.ts reads
 ARP_SESSION_LOG        where the hook writes. Default .arp/session.jsonl
 ARP_RECEIPTS           where fetches are recorded. Default .arp/receipts.jsonl
 ```
@@ -146,6 +148,12 @@ publishes its current signer at `GET /` so anyone can see which key they are bei
 `ARP_NO_RECEIPTS=1` runs with no key. The content route still serves bytes; what you lose is the
 corroboration.
 
+**`ARP_RECEIPT_KEY` is your own risk and the code cannot check it.** Nothing here can tell a funded
+key from an empty one — that would need a balance read on every chain it might hold value on — so
+it warns on stderr and carries on. Do not hand this process a key that holds funds. ADR `0080`
+constraint 3 is a convention the code states and does not enforce, and an earlier draft of this
+document said it did.
+
 ## What a receipt proves, and what it does not
 
 **Access, not use.** It says the bytes left this node and reached that caller. Whether they changed
@@ -153,10 +161,17 @@ what the agent did is not observable by anything, and no mechanism here pretends
 `docs/14` is the long version.
 
 And the part worth knowing before you put weight on one: **a receipt signed by a node you run
-yourself is your own word in a second place.** One party holds both keys. That is not a defect — it
+yourself is your own word in a second place.** One hand holds both keys. That is not a defect — it
 pins the bytes, so you can re-derive what your agent actually held — but it is not corroboration to
-a stranger. `corroborationOf` in `packages/protocol/src/receipt.ts` is the one comparison that
-distinguishes the two, and it reports rather than refuses (ADR `0080`).
+a stranger.
+
+**And nothing in the receipt can tell the two apart.** Your node generates its own key, so its
+address differs from your agent's while you hold both. A reader therefore has to say which signers
+it accepts — `ARP_ACCEPTED_SIGNERS`, and **empty is the default**, which makes an unrecognised
+signer read as `unknown-signer`: not corroborated, not dismissed. `corroborationOf` in
+`packages/protocol/src/receipt.ts` is that comparison and it reports rather than refuses (ADR
+`0080`). Its first version called every locally-served receipt a second party, which was the
+strongest verdict for the weakest case.
 
 Anyone can check a receipt without asking us anything:
 
@@ -166,6 +181,25 @@ sha256sum SKILL.md          # compare to the digest in the receipt
 
 That is why the digest is sha256 and not keccak256. The signature half is
 `verifyContentReceipt`, and the path the receipt names is the path to re-fetch.
+
+## It only knows the chain it is pointed at
+
+The catalogue is a **per-chain record**: an atom id is a pure function of a tool's URL, so the same
+tool has a different recorded id on each chain, and `catalogue/skills-<chainId>.json` is the record
+for one of them.
+
+Today only 13579 has one. `ARP_TARGET` still defaults to **mainnet**, so a default-run node holds
+**zero** catalogued skills and says so at `GET /` — `catalogued_skills: 0` — and refuses a testnet
+atom id with the reason rather than serving it. Point it at testnet to use the content path:
+
+```
+ARP_TARGET=testnet bun run scripts/arp-mcp-server.ts
+```
+
+That mattered more than it looks. Before this was per-chain, the catalogue was imported at module
+scope from the 13579 file while the chain was configurable, so a default node served testnet atom
+ids and stamped **1155** into every receipt's domain — for atoms that do not exist there, and where
+a create pair costs 0.22 TRUST against 0.004. Measured 2026-10-29.
 
 ## What it refuses, so you can tell a bug from an answer
 

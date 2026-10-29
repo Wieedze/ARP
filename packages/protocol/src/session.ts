@@ -61,6 +61,20 @@ export type CataloguedSkill = {
 export type Resolution =
     | {status: "resolved"; name: string; repo: string; url: string; atomId: string; calls: number}
     | {status: "ambiguous"; name: string; candidates: {repo: string; url: string}[]; calls: number}
+    /**
+     * Exactly one tool carries this name and the catalogue has no atom id recorded for it.
+     *
+     * **Not ambiguous and not unknown**, and it used to be reported as the first: a single match
+     * with a null atom fell through to the `ambiguous` branch and came back as "ambiguous with one
+     * candidate", which is a contradiction in the output an agent reads and tells it the name is
+     * carried by several repositories when it is carried by one.
+     *
+     * 61 of 662 rows on 13579 are in this state, 2026-10-29. Measured: **every one of their atoms
+     * exists on chain** — what is missing is the recorded id in the catalogue, so this says that
+     * rather than implying the tool is unknown. The URL is carried, because a caller that can
+     * derive the id itself has everything it needs.
+     */
+    | {status: "unrecorded"; name: string; repo: string; url: string; calls: number}
     | {status: "unknown"; name: string; kind: "skill" | "mcp"; calls: number};
 
 /**
@@ -170,8 +184,14 @@ export function resolveInvocations(
         }
 
         if (invocation.ref !== null) {
+            // An atom id is compared case-folded. Live data is lowercase on both sides today, so
+            // this was latent — but a checksummed ref fell through to NAME matching, which refuses
+            // on any of the 104 names more than one repository carries. A URL is not folded: its
+            // path and query are case-sensitive and an atom id is a pure function of them.
+            const ref = invocation.ref;
+            const folded = ref.toLowerCase();
             const byRef = catalogue.find(
-                (row) => row.atom === invocation.ref || row.url === invocation.ref,
+                (row) => row.atom?.toLowerCase() === folded || row.url === ref,
             );
             if (byRef !== undefined && byRef.atom !== null) {
                 out.push({
@@ -211,6 +231,11 @@ export function resolveInvocations(
                 atomId: only.atom,
                 calls: n,
             });
+        } else if (matches.length === 1 && only !== undefined) {
+            // One match, no recorded id. This fell into the branch below and reported "ambiguous
+            // with one candidate" — a contradiction, and it told the caller its name was carried by
+            // several repositories when it is carried by one.
+            out.push({status: "unrecorded", name: bare, repo: only.repo, url: only.url, calls: n});
         } else {
             out.push({
                 status: "ambiguous",

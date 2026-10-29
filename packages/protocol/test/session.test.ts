@@ -142,6 +142,13 @@ describe("resolveInvocations", () => {
         expect(only?.status === "resolved" && only.repo).toBe("101-skills/superpowers");
     });
 
+    it("resolves a checksummed atom id, which used to fall through to the name", () => {
+        // Latent rather than live — every atom id in the catalogue and every one a receipt carries
+        // is lowercase — but falling through meant refusing on any of the 104 ambiguous names.
+        const [only] = resolveInvocations(parseSessionLog(line({ref: "0xBB"})), CATALOGUE);
+        expect(only?.status === "resolved" && only.repo).toBe("101-skills/superpowers");
+    });
+
     it("resolves on a URL too, because an id is a pure function of one", () => {
         const ref = "https://github.com/magentosh/superpowers?skill=product-photography";
         const [only] = resolveInvocations(parseSessionLog(line({ref})), CATALOGUE);
@@ -173,6 +180,35 @@ describe("resolveInvocations", () => {
         const log = parseSessionLog(line({kind: "mcp", name: "arp"}));
         const [only] = resolveInvocations(log, CATALOGUE);
         expect(only?.status).toBe("unknown");
+    });
+
+    it("says unrecorded for one match with no atom id, not ambiguous", () => {
+        // 61 of 662 catalogue rows on 13579 are in this state, and measured 2026-10-29 every one
+        // of their atoms EXISTS on chain — it is the recorded id that is missing. This came back
+        // as `{status: "ambiguous", candidates: [one]}`, which is a contradiction and told the
+        // caller the name was carried by several repositories when it is carried by one.
+        const catalogue: CataloguedSkill[] = [
+            {
+                repo: "vercel-labs/skills",
+                skill: "find-skills",
+                url: "https://github.com/vercel-labs/skills?skill=find-skills",
+                atom: null,
+            },
+        ];
+        const [only] = resolveInvocations(parseSessionLog(line({name: "find-skills"})), catalogue);
+        expect(only?.status).toBe("unrecorded");
+        expect(only?.status === "unrecorded" && only.url).toBe(
+            "https://github.com/vercel-labs/skills?skill=find-skills",
+        );
+    });
+
+    it("stays ambiguous when two carry the name and neither has an id", () => {
+        const catalogue: CataloguedSkill[] = [
+            {repo: "a/x", skill: "t", url: "https://github.com/a/x?skill=t", atom: null},
+            {repo: "b/y", skill: "t", url: "https://github.com/b/y?skill=t", atom: null},
+        ];
+        const [only] = resolveInvocations(parseSessionLog(line({name: "t"})), catalogue);
+        expect(only?.status).toBe("ambiguous");
     });
 
     it("counts repeats without letting them weigh anything", () => {

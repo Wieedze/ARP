@@ -55,7 +55,7 @@ import {
   type SignedContentReceipt,
 } from '../packages/protocol/src/receipt.js';
 import { skillRefFromUrl } from '../packages/protocol/src/content-path.js';
-import { contentIndex } from './arp-content.js';
+import { contentIndexFor } from './arp-content.js';
 
 const BASE = process.env['ARP_NODE'] ?? 'http://localhost:3002';
 const RECEIPTS = '.arp/receipts.jsonl';
@@ -71,10 +71,10 @@ if (target === undefined || target.startsWith('--')) {
   process.exit(1);
 }
 
-/** An atom id, or a tool URL resolved to one through the catalogue this repository ships. */
-function atomIdOf(input: string): Hex | null {
+/** An atom id, or a tool URL resolved to one through the catalogue recorded for that chain. */
+function atomIdOf(input: string, chainId: number): Hex | null {
   if (/^0x[0-9a-fA-F]{64}$/.test(input)) return input.toLowerCase() as Hex;
-  for (const [atom, url] of contentIndex) {
+  for (const [atom, url] of contentIndexFor(chainId)) {
     if (url === input || url.replace('https://', '') === input.replace('https://', '')) {
       return atom as Hex;
     }
@@ -82,16 +82,18 @@ function atomIdOf(input: string): Hex | null {
   return null;
 }
 
-const atom = atomIdOf(target);
-if (atom === null) {
-  console.error(`${target} is neither an atom id nor a catalogued tool URL.`);
-  process.exit(1);
-}
-
+// The node's chain first, because the catalogue is per chain and a URL resolves to a different
+// atom id on each — the id is a pure function of the URL, so the record is what differs.
 const info = (await (await fetch(BASE)).json()) as { chain?: { id?: number } };
 const chainId = info.chain?.id;
 if (typeof chainId !== 'number') {
   console.error(`${BASE} did not answer with a chain id. Is the node running?`);
+  process.exit(1);
+}
+
+const atom = atomIdOf(target, chainId);
+if (atom === null) {
+  console.error(`${target} is neither an atom id nor a tool URL catalogued on chain ${chainId}.`);
   process.exit(1);
 }
 
@@ -116,7 +118,7 @@ if (!response.ok) {
 const bytes = new Uint8Array(await response.arrayBuffer());
 const header = response.headers.get('x-arp-receipt');
 const signed = header === null ? null : (JSON.parse(header) as SignedContentReceipt);
-const url = signed?.receipt.url ?? contentIndex.get(atom) ?? target;
+const url = signed?.receipt.url ?? contentIndexFor(chainId).get(atom) ?? target;
 const ref = skillRefFromUrl(url);
 
 const out = arg('out') ?? `.arp/skills/${ref?.skill ?? atom}/SKILL.md`;

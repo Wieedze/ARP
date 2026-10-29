@@ -299,9 +299,18 @@ export async function verifyContentReceipt(signed: SignedContentReceipt): Promis
 
 /** What a receipt adds to a declaration made by a given address. */
 export type Corroboration =
-    /** Two parties: the node that served is not the address that declared. */
+    /** The signer differs from the declarer AND the reader named it as one it accepts. */
     | {status: "second-party"; signer: Address}
-    /** One hand holds both keys. Real, pinned to a content hash, and corroborating nobody. */
+    /**
+     * The signer differs from the declarer and the reader does not know it.
+     *
+     * **This is not "two parties".** A node an operator installs generates its own key
+     * (`scripts/arp-content.ts`), so its address differs from that operator's agent key while the
+     * same hand holds both. Addresses cannot tell that apart from a genuinely separate node, and
+     * saying "second-party" here was reporting the strongest verdict for the weakest case.
+     */
+    | {status: "unknown-signer"; signer: Address}
+    /** The signer IS the declaring address. One key, and the only same-hand case that is visible. */
     | {status: "self-signed"; signer: Address}
     /** The receipt is about a different caller than the one who declared. */
     | {status: "other-caller"; servedTo: Address}
@@ -309,26 +318,43 @@ export type Corroboration =
     | {status: "names-nobody"};
 
 /**
- * What a receipt is worth **to a reader**, given who made the declaration.
+ * What a receipt is worth **to a reader**, given who made the declaration and which signers the
+ * reader accepts.
  *
- * ADR `0080`, resolved on the user's decision 2026-10-29: both the node an operator installs and a
- * node somebody else runs hold a key and sign. So a receipt's value is not a property of the
- * receipt — it is the relationship between three addresses, and this is the comparison that reads
- * it.
+ * ADR `0080`: both the node an operator installs and a node somebody else runs hold a key and
+ * sign, so a receipt's value is not a property of the receipt.
  *
  * ```
  * receipt.to     the caller the node served
  * signer         who signed, recovered by `verifyContentReceipt`
  * declaredBy     the address that wrote the edge on chain
+ * accepted       the signers THIS reader recognises. Empty is the honest default
  * ```
  *
- * **A self-signed receipt is reported, never refused.** The user's reasoning: a forged local
- * receipt costs the agent the price of the claim and earns it a reputation on a tool it never used,
- * which is worth nothing the day somebody picks an agent by that reputation. So the mechanism does
- * not have to prevent it — it has to say which hand stamped it.
+ * ## Why `accepted` exists, and why the first version of this was wrong
  *
- * It is a **figure a reader sees**, not a correction ARP applies: ADR `0046` composes no score, and
- * this returns a status rather than a weight. The same shape as the distinct-declarer count and the
+ * The first version returned `second-party` whenever the signer differed from the declarer. In the
+ * shipped configuration that is **every locally-served receipt**: the node generates a fresh key,
+ * the caller signs with another, and the declaring address is a third. Three keys, one operator,
+ * and the label said two parties. `self-signed` was unreachable except by deliberately configuring
+ * `ARP_RECEIPT_KEY` to the declaring key, which nobody will do.
+ *
+ * The mistake was comparing **keys** where ADR `0080` argues about **hands**, and that cannot be
+ * closed by a better comparison: an operator-run node's key is unlinkable to their agent's key.
+ * Nothing in a receipt distinguishes it from a node somebody else runs.
+ *
+ * What does distinguish them is **the reader**, which is constraint 4 of the ADR and was already
+ * written down: _a reader decides which signers it accepts, the same way ARP's index already names
+ * the attestor it reads through._ So that decision is a parameter. With no `accepted` list a
+ * reader gets `unknown-signer` and the truth: this may be a second party, and it may be the
+ * operator's own node, and the receipt cannot say.
+ *
+ * ## It reports and never refuses
+ *
+ * The user's reasoning, and it is why none of these is an error: a forged local receipt costs the
+ * agent the price of the claim and earns it a reputation on a tool it never used, which is worth
+ * nothing the day somebody picks an agent by that reputation. A status, never a weight — ADR
+ * `0046` composes no score, and this is the same shape as the distinct-declarer count and the
  * declarer-creator overlap in `tasks/31` §8.
  *
  * Hand it a `signer` that came from a `valid` verdict. A signer this never checked is an address
@@ -338,14 +364,22 @@ export function corroborationOf(
     receipt: ContentReceipt,
     signer: Address,
     declaredBy: Address,
+    accepted: readonly Address[] = [],
 ): Corroboration {
     const served = receipt.to === null ? UNAUTHENTICATED : getAddress(receipt.to);
     if (served === UNAUTHENTICATED) return {status: "names-nobody"};
 
     const declarer = getAddress(declaredBy);
+    // A genuine receipt about somebody else's fetch. Without this the easiest forgery in the
+    // system is to present a stranger's valid receipt.
     if (served !== declarer) return {status: "other-caller", servedTo: served};
-    if (getAddress(signer) === declarer) return {status: "self-signed", signer: declarer};
-    return {status: "second-party", signer: getAddress(signer)};
+
+    const who = getAddress(signer);
+    if (who === declarer) return {status: "self-signed", signer: declarer};
+    if (accepted.some((address) => getAddress(address) === who)) {
+        return {status: "second-party", signer: who};
+    }
+    return {status: "unknown-signer", signer: who};
 }
 
 /**

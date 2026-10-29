@@ -1,8 +1,14 @@
 import {spawn, type ChildProcess} from "node:child_process";
 import {createServer, type Server} from "node:http";
+import {rmSync, writeFileSync} from "node:fs";
+import {tmpdir} from "node:os";
+import {join} from "node:path";
 
-import {encodeAbiParameters, parseEther, toFunctionSelector} from "viem";
+import {encodeAbiParameters, keccak256, parseEther, stringToBytes, toFunctionSelector} from "viem";
 import type {Hex} from "viem";
+import {privateKeyToAccount} from "viem/accounts";
+
+import {signContentReceipt} from "../src/receipt.js";
 import {afterAll, beforeAll, describe, expect, it} from "vitest";
 
 import {USES} from "../src/sources/intuition/terms.js";
@@ -25,6 +31,13 @@ import {USES} from "../src/sources/intuition/terms.js";
  * was red — the gate-scope failure `rules/claims.md` check 4 exists for.
  */
 const PORT = 3099;
+/** A receipt record the spawned node reads, so the corroboration verdict is exercised for real. */
+const RECEIPTS_PATH = join(tmpdir(), `arp-receipts-${process.pid}.jsonl`);
+const RECEIPT_NODE = privateKeyToAccount(`0x${"77".repeat(32)}`);
+const DECLARER = privateKeyToAccount(`0x${"88".repeat(32)}`);
+/** `obra/superpowers ?skill=brainstorming` — one carrier, so the name alone resolves. */
+const BRAINSTORMING_ATOM =
+    "0xf205a19595893612b5b716e6e5742d036c70a2cc82cf6581c394cbe3b9310885" as const;
 const BASE = `http://127.0.0.1:${PORT}/mcp`;
 let server: ChildProcess | null = null;
 let stub: Server | null = null;
@@ -211,6 +224,29 @@ beforeAll(async () => {
     });
     await new Promise<void>((resolve) => stub!.listen(PORT + 1, "127.0.0.1", resolve));
 
+    // One receipt, signed by a key this node's reader accepts, served to the address that will
+    // declare. Written before the server starts, because the node reads the file per request.
+    const signed = await signContentReceipt(
+        {
+            atom: BRAINSTORMING_ATOM,
+            url: "https://github.com/obra/superpowers?skill=brainstorming",
+            path: "skills/brainstorming/SKILL.md",
+            digest: keccak256(stringToBytes("whatever")),
+            to: DECLARER.address,
+            servedAt: 1_793_462_400,
+            nonce: keccak256(stringToBytes("n")),
+        },
+        13579,
+        {
+            address: RECEIPT_NODE.address,
+            signTypedData: (data) => RECEIPT_NODE.signTypedData(data),
+        },
+    );
+    writeFileSync(
+        RECEIPTS_PATH,
+        `${JSON.stringify({skill: "brainstorming", atom: BRAINSTORMING_ATOM, receipt: signed})}\n`,
+    );
+
     server = spawn("bun", ["run", "scripts/arp-mcp-server.ts"], {
         cwd: new URL("../../..", import.meta.url).pathname,
         env: {
@@ -220,6 +256,11 @@ beforeAll(async () => {
             INTUITION_GRAPHQL_URL: `http://127.0.0.1:${PORT + 1}/v1/graphql`,
             INTUITION_RPC_URL: `http://127.0.0.1:${PORT + 1}/rpc`,
             ARP_MULTI_VAULT: MULTI_VAULT,
+            // A receipt the node will read, and the signer this node's reader accepts. Both are
+            // what `corroborationOf`'s wiring needs to be visible at all: without them the
+            // verdict is a constant and the bug that made it one is invisible.
+            ARP_RECEIPTS: RECEIPTS_PATH,
+            ARP_ACCEPTED_SIGNERS: RECEIPT_NODE.address,
         },
         stdio: "ignore",
     });
@@ -241,6 +282,7 @@ beforeAll(async () => {
 }, 20_000);
 
 afterAll(async () => {
+    rmSync(RECEIPTS_PATH, {force: true});
     server?.kill();
     await new Promise<void>((resolve) => {
         if (stub === null) return resolve();
@@ -506,16 +548,63 @@ describe("arp_declare_session", () => {
         expect((row?.candidates ?? []).length).toBeGreaterThan(1);
     });
 
-    it("says a resolved claim is the agent's own word when no receipt backs it", async () => {
-        // ADR `0080`. A declaration with no receipt is exactly the declaration this project has
-        // always had, and the response says which it is rather than leaving a reader to assume.
+    it("reads a held receipt against the DECLARER, not against the receipt's own claim", async () => {
+        // The bug this exists to catch: `against` fell back to `receipt.to` when `declarer` was
+        // omitted, which made `served === declarer` true by construction and the verdict a
+        // constant. Nothing tested the path with a real receipt, so it was invisible.
+        //
+        // The signer here is in `ARP_ACCEPTED_SIGNERS`, which is the only thing that can make a
+        // receipt read as a second party: an operator-run node's key is unlinkable to that
+        // operator's agent key, so addresses cannot tell the two apart (ADR `0080`).
+        const p = await plan({
+            agent_chain_id: 8453,
+            agent_token_id: "1380",
+            declarer: DECLARER.address,
+            log: line({name: "brainstorming"}),
+        });
+        const row = (p["invocations"] as {status: string; access?: string}[])[0];
+        expect(row?.access).toContain("second-party");
+        expect(row?.access).toContain(RECEIPT_NODE.address);
+    });
+
+    it("reads the same receipt as other-caller for a different declarer", async () => {
+        // A genuine receipt, correctly signed and accepted, about somebody else's fetch. Letting
+        // it corroborate this declaration is the easiest forgery in the system.
+        const p = await plan({
+            agent_chain_id: 8453,
+            agent_token_id: "1380",
+            declarer: `0x${"99".repeat(20)}`,
+            log: line({name: "brainstorming"}),
+        });
+        const row = (p["invocations"] as {status: string; access?: string}[])[0];
+        expect(row?.access).toContain("other-caller");
+    });
+
+    it("refuses to assess a held receipt when no declarer was given", async () => {
+        // It used to answer anyway, against the receipt's own `to`. Saying what is missing is the
+        // only honest answer when the comparison has no second address.
         const p = await plan({
             agent_chain_id: 8453,
             agent_token_id: "1380",
             log: line({name: "brainstorming"}),
         });
         const row = (p["invocations"] as {status: string; access?: string}[])[0];
-        expect(row?.access).toContain("your own word");
+        expect(row?.access).toContain("pass `declarer`");
+    });
+
+    it("says a resolved claim is the agent's own word when no receipt backs it", async () => {
+        // ADR `0080`. A declaration with no receipt is exactly the declaration this project has
+        // always had, and the response says which it is rather than leaving a reader to assume.
+        // A name the fixture holds no receipt for — `brainstorming` has one, by design above.
+        const p = await plan({
+            agent_chain_id: 8453,
+            agent_token_id: "1380",
+            declarer: DECLARER.address,
+            log: line({name: "using-git-worktrees"}),
+        });
+        const rows = p["invocations"] as {status: string; access?: string}[];
+        const resolved = rows.find((row) => row.status === "resolved");
+        expect(resolved?.access ?? "").toContain("your own word");
     });
 
     it("plans on the subject the graph resolved, and signs nothing", async () => {
