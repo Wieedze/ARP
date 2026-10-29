@@ -24,6 +24,7 @@ const standing = (): AtomStanding =>
         pinnedUri: null,
         market: null,
         exists: true,
+        claims: [],
         groups: [],
         edgeCount: 0,
         truncated: false,

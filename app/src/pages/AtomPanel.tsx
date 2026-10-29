@@ -1,4 +1,4 @@
-import {Navigate, useParams} from "react-router-dom";
+import {Link, Navigate, useParams} from "react-router-dom";
 import type {Hex} from "viem";
 
 import {PageLoading} from "../components/brand/PageLoading";
@@ -7,6 +7,7 @@ import {Backing, Empty, Group} from "../components/atom/ClaimList";
 import {ClaimField} from "../components/atom/ClaimField";
 import {AtomMarket} from "../components/market/AtomMarket";
 import {actionCardClass} from "../lib/surface-class";
+import {linkClass} from "../lib/control-class";
 import {DeclareUse} from "../components/usage/DeclareUse";
 import {useAgentRefForAtom} from "../hooks/use-agent-ref-for-atom";
 import {useDeclaredModules} from "../hooks/use-declared-modules";
@@ -159,6 +160,7 @@ export function AtomPanel() {
                         agent that declared this — and it costs no query, because those agents are
                         the subjects of the `uses` edges the page already read. */}
                     <AtomSigil atomId={view.atomId} name={view.title} groups={view.groups} />
+                    <Claims view={view} />
                     <Identity view={view} />
                 </aside>
 
@@ -265,6 +267,42 @@ export function AtomPanel() {
 }
 
 /** The atom's own facts, including its own vault — which is never summed with its edges'. */
+/**
+ * What the atom says about **itself** — its outgoing edges, each one a link.
+ *
+ * This page rendered only the incoming side until 2026-10-29, and for a whole population it came
+ * out blank: a skill atom's edges point outward — `source` to the repository it came from,
+ * `has tag` to the domain it is filed under — and nothing points back at it. 662 atoms whose every
+ * fact was already on chain had nothing on screen.
+ *
+ * Above `Identity` because it answers what a reader arrived for; the atom id and the pinned CID
+ * answer a question nobody asks first.
+ */
+function Claims({view}: {view: AtomView}) {
+    if (view.claims.length === 0) return null;
+    return (
+        <dl className="mt-6 border-t border-[color:var(--color-rule)] pt-4 text-[length:var(--text-body-sm)]">
+            {view.claims.map((claim) => (
+                <Term key={claim.tripleId} label={claim.predicate}>
+                    <Link
+                        to={`/atom/${claim.objectAtomId}`}
+                        className={`${linkClass} ${claim.objectIsId ? "font-mono" : ""}`}
+                    >
+                        {claim.object}
+                    </Link>
+                    {/* Only when somebody put something behind it. A claim nobody paid for is the
+                        common case here and an empty space says so faster than a zero. */}
+                    {claim.backing === null ? null : (
+                        <span className="block font-mono text-[length:var(--text-label)] text-[color:var(--color-steel)]">
+                            {claim.backing}
+                        </span>
+                    )}
+                </Term>
+            ))}
+        </dl>
+    );
+}
+
 function Identity({view}: {view: AtomView}) {
     return (
         <>

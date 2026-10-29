@@ -30,6 +30,7 @@ function standing(overrides: Partial<AtomStanding> = {}): AtomStanding {
         pinnedUri: "ipfs://bafkreiexample",
         market: side(147_470_299_949_236_919_744n, 4305),
         exists: true,
+        claims: [],
         groups: [
             {
                 predicate: {atomId: "0xp-prefers", label: "prefers"},
@@ -158,5 +159,48 @@ describe("describePointers", () => {
     it("says nothing points at it rather than printing a zero", () => {
         const view = buildAtomView(standing({groups: [], edgeCount: 0}), "TRUST");
         expect(describePointers(view)).toBe("nothing points at it");
+    });
+});
+
+describe("what the atom says about itself", () => {
+    // The defect this covers: the page rendered only incoming edges, and a skill atom's edges all
+    // point outward — `source` to its repository, `has tag` to its domain. 662 atoms whose every
+    // fact was on chain had an empty page.
+    const sourceClaim = {
+        tripleId: "0xc1",
+        predicate: {atomId: "0xp-source", label: "source"},
+        object: {
+            atomId: "0xo1",
+            label: "github.com/firebase/agent-skills",
+            type: "Thing",
+        },
+        support: side(0n, 1),
+    };
+
+    it("carries the outgoing edges through to the view", () => {
+        const view = buildAtomView(standing({claims: [sourceClaim]}), "TRUST");
+        expect(view.claims).toHaveLength(1);
+        expect(view.claims[0]?.predicate).toBe("source");
+        expect(view.claims[0]?.objectAtomId).toBe("0xo1");
+    });
+
+    it("parses an object that is a tool URL instead of printing the whole thing", () => {
+        const view = buildAtomView(standing({claims: [sourceClaim]}), "TRUST");
+        expect(view.claims[0]?.object).toBe("github.com/firebase/agent-skills");
+        expect(view.claims[0]?.objectIsId).toBe(false);
+    });
+
+    it("falls back to the object's id when the graph named nothing", () => {
+        const unnamed = {...sourceClaim, object: {...sourceClaim.object, label: null}};
+        const view = buildAtomView(standing({claims: [unnamed]}), "TRUST");
+        expect(view.claims[0]?.objectIsId).toBe(true);
+    });
+
+    it("shows no figure behind a claim nobody paid for", () => {
+        // The dust rule, applied to the outgoing side: one position is the creator's own, and the
+        // figure means something when somebody else arrives.
+        const unbacked = {...sourceClaim, support: side(980_000_000_000_000n, 0)};
+        const view = buildAtomView(standing({claims: [unbacked]}), "TRUST");
+        expect(view.claims[0]?.backing).toBeNull();
     });
 });

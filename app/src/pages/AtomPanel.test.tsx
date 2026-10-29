@@ -66,6 +66,7 @@ function standing(overrides: Partial<AtomStanding> = {}): AtomStanding {
         url: "https://github.com/crytic/slither",
         market: side(6_035_865_850_000_000_000n, 1),
         exists: true,
+        claims: [],
         groups: [
             {
                 predicate: {atomId: "0xp-uses", label: "uses"},

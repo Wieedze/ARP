@@ -1,7 +1,8 @@
 import {INTUITION_USES_TERM_ID} from "@arp-protocol/core";
-import type {AtomEdge, AtomEdgeGroup, AtomStanding} from "@arp-protocol/core";
+import type {AtomClaim, AtomEdge, AtomEdgeGroup, AtomStanding} from "@arp-protocol/core";
 
 import {formatTrust, truncateMiddle} from "./trust-format";
+import {parseToolLabel, primaryNameOf} from "../lib/tool-label";
 
 /**
  * What the atom page renders, derived from `getAtomStanding` and nothing else.
@@ -92,8 +93,27 @@ export type AtomView = {
     ownBacking: string | null;
     ownPositions: number;
     groups: GroupView[];
+    /**
+     * What the atom says about **itself** — its outgoing edges.
+     *
+     * The page rendered only incoming ones until 2026-10-29 and a whole population came out blank:
+     * a skill's edges point outward (`source` to its repository, `has tag` to its domain) and
+     * nothing points back, so 662 atoms whose every fact was on chain had an empty page.
+     */
+    claims: ClaimView[];
     edgeCount: number;
     truncated: boolean;
+};
+
+/** One outgoing edge, ready to render: a predicate, an object, and where the object lives. */
+export type ClaimView = {
+    tripleId: string;
+    predicate: string;
+    object: string;
+    objectIsId: boolean;
+    objectAtomId: string;
+    /** What stands behind this claim, or `null` when nobody has put anything behind it. */
+    backing: string | null;
 };
 
 /** A figure, or `null` when nothing stands behind it. The only place this decision is made. */
@@ -129,6 +149,25 @@ function groupOf(group: AtomEdgeGroup, symbol: string): GroupView {
     };
 }
 
+function claimOf(claim: AtomClaim, symbol: string): ClaimView {
+    const label = claim.object.label;
+    const named = label !== null && label.trim() !== "";
+    const predicate = claim.predicate.label;
+    return {
+        tripleId: claim.tripleId,
+        predicate:
+            predicate === null || predicate.trim() === ""
+                ? truncateMiddle(claim.predicate.atomId)
+                : predicate,
+        // A tool's object is a URL, so it is parsed the same way a row's name is — `github.com/`
+        // in front of every one of them says nothing.
+        object: named ? primaryNameOf(parseToolLabel(label)) : truncateMiddle(claim.object.atomId),
+        objectIsId: !named,
+        objectAtomId: claim.object.atomId,
+        backing: backingOf(claim.support.totalAssets, claim.support.positionCount ?? 0, symbol),
+    };
+}
+
 export function buildAtomView(standing: AtomStanding, symbol: string): AtomView {
     const label = standing.label;
     const hasTitle = label !== null && label.trim() !== "";
@@ -152,6 +191,7 @@ export function buildAtomView(standing: AtomStanding, symbol: string): AtomView 
         ),
         ownPositions: standing.market?.positionCount ?? 0,
         groups: standing.groups.map((group) => groupOf(group, symbol)),
+        claims: standing.claims.map((claim) => claimOf(claim, symbol)),
         edgeCount: standing.edgeCount,
         truncated: standing.truncated,
     };

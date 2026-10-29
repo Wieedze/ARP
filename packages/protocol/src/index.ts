@@ -268,7 +268,13 @@ export type {RecentConfig, RecentDeclaration} from "./recent.js";
 
 export {getAtomStanding} from "./atom-standing.js";
 export {getDeclaredModulesFor, resolveAgentRefForAtom} from "./atom-standing.js";
-export type {AtomEdge, AtomEdgeGroup, AtomStanding, AtomStandingConfig} from "./atom-standing.js";
+export type {
+    AtomClaim,
+    AtomEdge,
+    AtomEdgeGroup,
+    AtomStanding,
+    AtomStandingConfig,
+} from "./atom-standing.js";
 
 /**
  * Declaring what an agent used, and putting TRUST behind it — the write half of `docs/12`.

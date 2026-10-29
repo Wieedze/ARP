@@ -82,6 +82,16 @@ query AtomStanding($atomId: String!, $curveId: numeric!, $limit: Int!) {
     term { ${VAULT_SIDE} }
     counter_term { ${VAULT_SIDE} }
   }
+  claims: triples(
+    where: {subject_id: {_eq: $atomId}}
+    order_by: {term: {total_assets: desc}}
+    limit: $limit
+  ) {
+    term_id
+    predicate { term_id label }
+    object { term_id label type }
+    term { ${VAULT_SIDE} }
+  }
 }`;
 
 /** One edge pointing at the atom, and the market on that one claim. */
@@ -100,6 +110,25 @@ export type AtomEdge = {
     oppose: MarketSide;
 };
 
+/**
+ * One edge **from** the atom — what it says about itself, rather than what others say about it.
+ *
+ * This read had only the incoming side until 2026-10-29, and for a whole population that made the
+ * page blank: a skill atom's edges point outward (`source` to its repository, `has tag` to its
+ * domain) and nothing points back at it, so a page built to render `triples(object_id)` had
+ * nothing to show for 662 atoms whose facts were all on chain.
+ *
+ * No counter side here. A counter-triple exists for every triple, but the question "does anybody
+ * disagree that this skill came from that repository" is not one this page asks — and 969 of
+ * 285,775 chain-wide have ever carried a position (`measure/counter-side-usage.ts`).
+ */
+export type AtomClaim = {
+    tripleId: string;
+    predicate: {atomId: string; label: string | null};
+    object: {atomId: string; label: string | null; type: string | null};
+    support: MarketSide;
+};
+
 /** The edges that share one predicate, which is the only grouping the graph itself supports. */
 export type AtomEdgeGroup = {
     predicate: {atomId: string; label: string | null};
@@ -112,6 +141,8 @@ export type AtomEdgeGroup = {
 export type AtomStanding = {
     atomId: string;
     label: string | null;
+    /** What this atom says about itself — see {@link AtomClaim}. */
+    claims: AtomClaim[];
     /** `type` as the indexer resolved it — `Thing`, `Person`, `TextObject`… */
     type: string | null;
     /**
@@ -204,6 +235,30 @@ export async function getAtomStanding(
     const atomRows = Array.isArray(data["atom"]) ? data["atom"] : [];
     const atom = atomRows.length > 0 && isRecord(atomRows[0]) ? atomRows[0] : null;
 
+    const claimRows = Array.isArray(data["claims"]) ? data["claims"] : [];
+    const claims: AtomClaim[] = [];
+    for (const row of claimRows) {
+        if (!isRecord(row)) continue;
+        const tripleId = readString(row, "term_id");
+        const predicate = readRecord(row, "predicate");
+        const predicateId = predicate === null ? null : readString(predicate, "term_id");
+        const object = readRecord(row, "object");
+        const objectId = object === null ? null : readString(object, "term_id");
+        // Dropped rather than guessed, for the same reason an incoming edge is: the predicate is
+        // what the claim says and the object is what it says it about. Neither has a default.
+        if (tripleId === null || predicateId === null || objectId === null) continue;
+        claims.push({
+            tripleId,
+            predicate: {atomId: predicateId, label: readString(predicate, "label")},
+            object: {
+                atomId: objectId,
+                label: readString(object, "label"),
+                type: readString(object, "type"),
+            },
+            support: mapMarketSide(row["term"]),
+        });
+    }
+
     const rows = Array.isArray(data["triples"]) ? data["triples"] : [];
     // A Map, so the groups come out in the order the query ranked them rather than alphabetically.
     // The busiest predicate first is the useful order and it is the one the graph just computed.
@@ -251,6 +306,7 @@ export async function getAtomStanding(
     return {
         atomId,
         label: atom === null ? null : readString(atom, "label"),
+        claims,
         type: atom === null ? null : readString(atom, "type"),
         pinnedUri: atom === null ? null : readString(atom, "data"),
         url: atomUrl(atom),
