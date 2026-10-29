@@ -50,11 +50,15 @@ import {claimField, MAX_DOTS_PER_RING} from "./claim-field-geometry";
  * Where the reading head sits, in degrees from the positive x axis with y down — so 0° is three
  * o'clock and a positive angle goes clockwise, which is the convention `claim-field-geometry` uses.
  *
- * 20° puts it just below the right edge, which is what lets the connector leave it rising at 35°
- * and flatten into a horizontal bar at the card's own mid-height. Any higher and the rising
- * segment has no height to rise through; any lower and it crosses the ring it came from.
+ * **Five minutes on a clock face**, which is −60° here: a clock's minute is 6° and its zero is
+ * twelve o'clock, 90° back from this axis. It was 20, which reads as twenty minutes past.
+ *
+ * The angle and the connector's 35° are coupled, and moving the head up made them expensive: from
+ * five minutes the line has to fall `0.866 r` to reach the card's mid-height, and at 35° that
+ * costs `1.237 r` of width — more than the gap had. The gap widened rather than the angle
+ * steepening, because the angle is the thing that was asked for.
  */
-const HEAD_DEGREES = 20;
+const HEAD_DEGREES = -60;
 
 /** Ring 0's radius as a fraction of the box, for the head and the line that leaves it. */
 const headAt = (r: number) => ({
@@ -75,9 +79,24 @@ const headAt = (r: number) => ({
 const RISE_DEGREES = 35;
 function connector(r: number): string {
     const head = headAt(r);
-    const corner = head.x + (head.y - 0.5) / Math.tan((RISE_DEGREES * Math.PI) / 180);
-    return `${head.x},${head.y} ${corner},0.5 1.22,0.5`;
+    // Signed: the head is above the bar at five minutes and was below it at twenty, and the same
+    // expression draws both — a fall and a rise are one line with a different sign.
+    const corner = head.x + Math.abs(head.y - 0.5) / Math.tan((RISE_DEGREES * Math.PI) / 180);
+    return `${head.x},${head.y} ${corner},0.5 1.32,0.5`;
 }
+
+/**
+ * How close a dot has to be to the head, in degrees, to count as **inside** it.
+ *
+ * The user, 2026-10-29: the dot went warm as soon as it was the nearest one — from half a step
+ * away — and should go warm only _« quand tout le cercle est dans la loupe »_.
+ *
+ * So it is a containment test, not a proximity one: the dot's centre has to be within
+ * `headRadius − dotRadius` of the head's centre. The head is `0.032` of the box and a dot is 10px
+ * on a box of at most 22rem, which is `0.0142` of it — leaving `0.0178`, an arc of `0.0178 / r`
+ * radians on ring 0. At the outer radius that is 2.4°, against a 10° step for a full ring.
+ */
+const HEAD_BITE = 0.0178;
 
 export function ClaimField({
     groups,
@@ -151,7 +170,12 @@ export function ClaimField({
      */
     const ringRef = useRef<HTMLDivElement | null>(null);
     const [beat, setBeat] = useState(0);
+    /** Whether the nearest dot is fully inside the head, as opposed to merely closest to it. */
+    const [inHead, setInHead] = useState(false);
     const ringDots = rings[0]?.drawn ?? 0;
+    // Pulled out of the effect so it depends on a number rather than on `rings`, which `claimField`
+    // rebuilds every render — the array would restart the interval on each one.
+    const ringRadius = rings[0]?.r ?? 0.42;
     useEffect(() => {
         if (ringDots < 1) return;
         const read = () => {
@@ -162,22 +186,27 @@ export function ClaimField({
             const turned = ((ms / 110_000) * 360) % 360;
             // A dot's resting angle is -90 + p * step; the head is at HEAD_DEGREES. Solve for p.
             const step = 360 / ringDots;
-            const at = Math.round(((HEAD_DEGREES + 90 - turned) % 360) / step);
+            const exact = ((HEAD_DEGREES + 90 - turned) % 360) / step;
+            const at = Math.round(exact);
             setBeat(((at % ringDots) + ringDots) % ringDots);
+            // How far the nearest dot still is from the head's centre, as an angle. The dot is
+            // only *inside* when the whole of it fits, which is a smaller window than "nearest".
+            const offBy = Math.abs(exact - at) * step;
+            setInHead(offBy <= (HEAD_BITE / ringRadius) * (180 / Math.PI));
         };
         read();
         // Four times a second. A rAF loop would be sixty, to move a number that changes every
         // three seconds at this ring's size.
         const id = window.setInterval(read, 250);
         return () => window.clearInterval(id);
-    }, [ringDots]);
+    }, [ringDots, ringRadius]);
 
     // Hover and focus win over the cadence: a reader who reached for a dot asked for that one.
     const shown = active ?? (entries.length === 0 ? null : beat % entries.length);
     const current = shown === null ? undefined : entries[shown];
 
     return (
-        <div className="relative flex flex-wrap items-center gap-x-12 gap-y-8">
+        <div className="relative flex flex-wrap items-center gap-x-24 gap-y-8">
             <div
                 className={`relative aspect-square w-full max-w-[22rem] shrink-0 ${entering ? "arp-claim-enter" : ""}`}
                 role="group"
@@ -284,7 +313,7 @@ export function ClaimField({
                                         // The scale is on `transform`, which the arrival already
                                         // animates, so the two compose instead of fighting.
                                         className={`arp-claim pointer-events-auto absolute h-[10px] w-[10px] rounded-full border transition-[transform,background-color,border-color] duration-150 ${
-                                            shown === dot.index
+                                            shown === dot.index && (active !== null || inHead)
                                                 ? "-translate-x-1/2 -translate-y-1/2 scale-[1.8] border-[color:var(--color-accent)] bg-[color:var(--color-accent)]"
                                                 : backed
                                                   ? "-translate-x-1/2 -translate-y-1/2 border-[color:var(--color-fg)] bg-[color:var(--color-fg)]"
@@ -352,35 +381,45 @@ export function ClaimField({
                 </span>
                 {current === undefined ? null : (
                     <>
-                        <span className="font-mono text-[10px] text-[color:var(--color-steel)]">
-                            {current.predicate}
+                        {/* **The subject leads.** It was the predicate, and the predicate is the
+                            ring: identical on all 98 of this atom's claims, so it changed nothing
+                            as the head turned and told a reader nothing about the dot under it.
+                            The user, 2026-10-29: _« "available on" c'est le lien qui unit Base et
+                            le sujet, c'est le cercle en lui-même, et je ne pense pas que ce soit
+                            le plus utile »_. What varies dot to dot is who is making the claim. */}
+                        <span
+                            className={`truncate type-face text-[22px] leading-tight ${current.row.nameIsId ? "font-mono text-[16px]" : ""}`}
+                        >
+                            {current.row.name}
                         </span>
-                        {/* **The figure leads, and paper rather than accent.** It is somebody
-                            else's position, and `ui.md` spends the accent on the primary action
-                            and on the viewer's own. ADR `0042`: creating a term seeds its vault,
-                            so an amount is not evidence that anybody staked — `positions` is, and
-                            a claim nobody paid for says so instead of going blank. */}
-                        <span className="type-face text-[26px] leading-none tabular-nums">
+                        {/* **Paper, not accent.** Somebody else's position, and `ui.md` spends the
+                            accent on the primary action and on the viewer's own. ADR `0042`:
+                            creating a term seeds its vault, so an amount is not evidence anybody
+                            staked — `positions` is, and a claim nobody paid for says so. */}
+                        <span className="font-mono text-[length:var(--text-body)] tabular-nums">
                             {current.row.backing === null ? (
-                                <span className="text-[length:var(--text-body)] text-[color:var(--color-steel)]">
+                                <span className="text-[color:var(--color-steel)]">
                                     nothing behind it
                                 </span>
                             ) : (
-                                current.row.backing
+                                <>
+                                    {current.row.backing}
+                                    <span className="text-[color:var(--color-steel)]">
+                                        {` · ${current.row.positions} ${current.row.positions === 1 ? "position" : "positions"}`}
+                                    </span>
+                                </>
                             )}
                         </span>
-                        <span className="truncate text-[13px] text-[color:var(--color-fg)]">
-                            {current.row.name}
+                        {/* The predicate last and quiet — it completes the sentence rather than
+                            opening it, and it is the one word the legend below already carries. */}
+                        <span className="truncate font-mono text-[10px] text-[color:var(--color-steel)]">
+                            {`${current.predicate} ${subject}`}
                         </span>
-                        {/* Only when somebody took it. A counter-triple exists for every triple at
-                            the same price and 969 of 285,775 chain-wide have ever carried a
-                            position — an empty one means "nobody bothered", never "everybody
-                            agrees", and a zero here would say the second. */}
-                        {current.row.opposition === null ? (
-                            <span className="font-mono text-[10px] text-[color:var(--color-steel)]">
-                                {`${current.row.positions} ${current.row.positions === 1 ? "position" : "positions"}`}
-                            </span>
-                        ) : (
+                        {/* Only when somebody took the other side. A counter-triple exists for
+                            every triple at the same price and 969 of 285,775 chain-wide have ever
+                            carried a position — an empty one means "nobody bothered", never
+                            "everybody agrees", and a zero here would say the second. */}
+                        {current.row.opposition === null ? null : (
                             <span className="font-mono text-[10px] text-[color:var(--color-alarm)]">
                                 {`${current.row.opposition} against`}
                             </span>
