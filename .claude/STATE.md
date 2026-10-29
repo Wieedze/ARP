@@ -234,6 +234,24 @@ its trust surface, before anyone is asked to install it. The surface is written 
 spawns its own server on **port 3099**. A node left running there makes six of its tests fail
 against the real testnet instead of the stub, and it reads as a code defect.
 
+**Two decisions taken on `intuition-integrator`'s argument rather than alone:**
+
+1. **`ARP_TARGET` stays on mainnet.** It is no longer a spend defect — with an empty mainnet
+   catalogue nothing resolves and `plan` is null, so a default node cannot plan a mainnet write at
+   all — and every other tool on the server is mainnet-first by the measurements (`implement →
+   ERC-8004`: 28,648 triples on 1155 against 254 on 13579). What the fix had to add instead was a
+   **loud** emptiness: `arp_declare_session` refuses once and names `ARP_TARGET=testnet`, because
+   662 silent `unknown`s read as "I have never heard of your tools" rather than "this node is on
+   the wrong chain" — the same trap `configuredAttestor` documents in that file.
+2. **Recording the 61 missing atom ids is a new task**, in `FUTURE.md`. Their atoms exist on chain,
+   so it is a catalogue re-record at zero cost; what blocks it is `docs/20`'s classification
+   question, since the tagger **declined** those 61 rather than missing them.
+
+**Two measurement scripts now back every figure above:** `scripts/measure/skill-layouts.ts` and
+`scripts/measure/catalogue-atom-ids.ts`. The second exists because the review's figures had reached
+four documents and several code comments with no way to re-derive them, and re-deriving found one
+wrong denominator.
+
 Everything runs on **testnet 13579 for now** — the rig is already deployed there and nothing needs
 simulating. What testnet will never prove is **one** thing, not two, and that is a correction:
 `DomainScopeEnforcer` has no mainnet mechanism (it gates `ModuleRegistry.registerModule`, which ADR
