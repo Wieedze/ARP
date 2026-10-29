@@ -237,7 +237,10 @@ export function ClaimField({
     return (
         <div className="relative flex flex-wrap items-start gap-x-24 gap-y-8">
             <div
-                className={`relative aspect-square w-full max-w-[22rem] shrink-0 ${entering ? "arp-claim-enter" : ""}`}
+                // `sm:mt-10` is the card's half-height less the bar's depth: the bar lands
+                // `BAR_Y` of the box below the field's top, 1.21rem on a 22rem box, and the card's
+                // middle is 3.75rem below the row's top. Stacked, there is no bar and no offset.
+                className={`relative aspect-square w-full max-w-[22rem] shrink-0 sm:mt-10 ${entering ? "arp-claim-enter" : ""}`}
                 role="group"
                 aria-label={`Claims about ${subject}`}
             >
@@ -395,10 +398,11 @@ export function ClaimField({
             <div
                 aria-hidden="true"
                 data-claim-sentence={current === undefined ? "none" : "one"}
-                // Top-aligned and lifted so its middle meets the bar. `BAR_Y` of a square box whose width
-                // is at most 22rem is 1.2rem from the top, and the card is 7.5rem tall — hence the
-                // offset. Below `sm` the two stack and the lift comes off, where there is no bar.
-                className="relative mt-0 flex min-h-[7.5rem] min-w-[min(19rem,100%)] max-w-[24rem] flex-1 flex-col gap-1 rounded-[var(--radius-button)] border border-[color:var(--color-rule-strong)] bg-[color:var(--color-bg)] px-3.5 py-3 sm:-mt-10"
+                // Top-aligned, and the FIELD is pushed down to meet it rather than the card being
+                // pulled up. A negative margin lifted the card out of the flow and it landed on the
+                // rule above the section — the layout did not know it was there. Pushing the field
+                // keeps every box inside its own space for the same offset.
+                className="relative flex min-h-[7.5rem] min-w-[min(19rem,100%)] max-w-[24rem] flex-1 flex-col gap-1 rounded-[var(--radius-button)] border border-[color:var(--color-rule-strong)] bg-[color:var(--color-bg)] px-3.5 py-3"
             >
                 <span className="flex items-center gap-2 border-b border-[color:var(--color-rule)] pb-2 font-mono text-[10px] uppercase tracking-[0.06em] text-[color:var(--color-steel)]">
                     {/* The dot is lit when something is being described, like the pulse card's. */}
