@@ -1,0 +1,145 @@
+# 20 — What a skill looks like on chain
+
+Written 2026-10-29, after 662 skills, 662 `source` edges and ~530 `has tag` edges went onto
+Intuition testnet 13579. It is the map of what is written, what is deliberately **not** written,
+and which line separates them.
+
+`docs/18` is the domain tree's theory. This is the thing that got built on top of it.
+
+## 1. The whole picture
+
+```mermaid
+flowchart TB
+    subgraph OFF["Off chain — read from third parties, never asserted"]
+        GH["GitHub API<br/>pushed_at · archived · 404"]
+        SH["skills.sh pages<br/>JSON-LD install count · description"]
+        NPM["npm downloads API<br/>the one popularity figure that falls"]
+    end
+
+    subgraph DERIVE["Derived here, reproducibly"]
+        CLS["scripts/skill-domains-table.ts<br/>a keyword table, not a judgement<br/>no match → no tag"]
+        VER["scripts/record-maintained.ts<br/>archived · 404 → down<br/>recent push → up<br/>a quiet skill → NO VERDICT"]
+    end
+
+    subgraph CHAIN["Intuition 13579 — permanent, no deletion"]
+        SK(["skill atom<br/>github.com/OWNER/REPO?skill=NAME"])
+        RP(["repository atom"])
+        DOM(["domain atom<br/>a plain string: image · method · payment"])
+        MT(["maintained"])
+        SK -->|source| RP
+        SK -->|has tag| DOM
+        RP -->|has tag| MT
+        DOM -->|is a sub domain of| TOOL(["tool"])
+    end
+
+    subgraph INDEX["ARP's index — not the chain, a reading of it"]
+        POS["the positions ONE attestor holds<br/>shares > 0"]
+    end
+
+    SH --> CLS
+    GH --> VER
+    CLS -.->|one tag, at the deepest domain| SK
+    VER -.-> RP
+    SH -.->|"stays off chain — it changes"| RANK["ranking input"]
+    NPM -.-> RANK
+    CHAIN --> POS
+    POS --> MCP["arp_find_tools · /tools"]
+    RANK --> MCP
+```
+
+## 2. The line, in one sentence
+
+**A fact goes on chain when it is the owner's own word or a thing we called; a figure that moves
+stays off it.**
+
+| | on chain | why |
+| --- | --- | --- |
+| `archived`, a 404 | yes | the owner's own declaration, and it does not come back |
+| a recent push | yes | somebody is working on it, whatever the repository holds |
+| **a long silence on a skill** | **no** | finished and abandoned look identical, so ARP says nothing |
+| an install count | **no** | somebody else's number, it changes, and a copy can out-install its author |
+| a domain tag | yes | derived from a committed table a third party can re-run |
+| **no keyword matched** | **no** | 61 of 662 carry nothing. A wrong tag is permanent |
+
+The three abstentions are the point. `docs/14` is the argument; this is the table.
+
+## 3. What identifies a skill
+
+```
+https://github.com/<owner>/<repo>?skill=<name>
+```
+
+The two arguments of `npx skills add <repo> --skill <name>` and nothing else. No request to resolve
+it, nothing in it that can move, and the atom id is a pure function of the two strings.
+
+**`…/<repo>#<name>` was the shape that nearly shipped.** `normaliseToolUrl` drops the fragment — a
+fragment is a scroll position — so all 55 of one repository's skills would have hashed to the
+repository's own atom. One atom for 55 things, permanently, with nothing to notice at write time.
+Checked before anything was written. ADR `0077`.
+
+## 4. Why `source` was worth paying for
+
+Measured 2026-10-29 (`measurements/skills-installs-2026-10-29.json`): **177 of 662 skills are
+copies**.
+
+```
+obra/superpowers                15 skills      3,693,645 installs   ← the author
+101-skills/superpowers          26 skills      4,969,255
+magentosh/superpowers           26 skills      4,350,541
+qu-skills/superpowers           26 skills      3,205,244
+skills-shell/superpowers        26 skills      2,680,001
+its-a-skill-issue/superpowers   26 skills      2,369,719
+bankai-skills/superpowers       26 skills      2,280,582
+```
+
+Two of the copies out-install the original, and the six together carry **5.4×** his total.
+`ai-video-generation` exists 8 times; `remotion-render` 7 times, with `remotion-dev` itself among
+them.
+
+**An install count cannot tell a copy from its author's.** That is the limit of every popularity
+signal, and it is the work nobody else is doing. The `source` edge does not settle who was first —
+a fork's `source` points at the fork — but it makes the question askable, which it was not before.
+
+## 5. The index is a reading, not the chain
+
+Anyone may write `(anything, has tag, anything)`; Intuition is permissionless and that is the
+feature. So the chain is not an index, and ARP does not try to make it one.
+
+**ARP's index is the set of triples one chosen address holds a position in**, `shares > 0`
+(`packages/protocol/src/domains.ts`). That address is a property of the **node**, never of the
+request — an agent cannot widen its own scope by asking.
+
+Two consequences worth stating together, because the second is what makes the first bearable:
+
+- Everything ARP asserts **costs something**, and the cost is what makes it attributable.
+- **Everything ARP asserts can be withdrawn.** Redeeming the position removes the claim from the
+  index and returns the stake less the exit fee. The triple stays on chain, unowned and unasserted
+  — which is the honest record: ARP said it, then stopped.
+
+That second property was used the day it was built. A keyword table ordered general before specific
+wrote ~203 tags that were wrong — `blockchain` matched `token` in "cuts token usage" and in
+"design tokens" — and they were retired by `scripts/audit-skill-tags.ts`, which reads what ARP
+actually holds from the indexer rather than replaying the table that wrote it. **A script that
+audits its own memory of what it wrote cannot find a write it forgot**, and that one found 528
+skill tags where the send log accounted for 296.
+
+## 6. What is on chain today
+
+Measured on testnet 13579, 2026-10-29. Re-derive with `scripts/audit-skill-tags.ts`.
+
+| | |
+| --- | --- |
+| skill atoms, pinned | 662 |
+| `source` edges | 662 |
+| `has tag` edges on skills | ~530 written, 203 retired, the remainder pending |
+| `maintained` tags on repositories | 53 — 50 alive, 3 not |
+| domains under `tool` | 21 routable, `method` · `writing` · `image` · `audio` · `document` new |
+| skills carrying no tag | 61 — nothing matched, so nothing is claimed |
+
+## Evidence ladder
+
+This serves the **staked** rung: a tag is a paid, attributable claim, and a term with no position
+on it is on the chain without being in anyone's index. It moves ARP up it by making 662 skills
+findable rather than merely written — with the caveat §5 records, that a *wrong* staked claim is
+worse on that ladder than no claim at all, which is why the retirement path was built before the
+tagging was finished rather than after.
