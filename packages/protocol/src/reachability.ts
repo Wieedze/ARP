@@ -108,18 +108,21 @@ export function decideTransition(
         return {change: false, state, why: "no verdict in the history — nothing is claimed"};
     }
 
+    // The wording never names the evidence. This module serves `reachable`, where "up" means an
+    // endpoint answered, AND `maintained`, where it means a repository is still pushed to. A `why`
+    // that said "answers" read as "answers — first record" about a git repository.
     if (newest === "up") {
-        if (state === "up") return {change: false, state, why: "answers, and that is already recorded"};
+        if (state === "up") return {change: false, state, why: "alive, and that is already recorded"};
         return {
             change: true,
             from: state,
             to: "up",
-            why: state === "none" ? "answers — first record" : "answers again — one success rehabilitates",
+            why: state === "none" ? "alive — first record" : "alive again — one success rehabilitates",
         };
     }
 
     // newest === "down"
-    if (state === "down") return {change: false, state, why: "does not answer, and that is already recorded"};
+    if (state === "down") return {change: false, state, why: "not alive, and that is already recorded"};
 
     const consecutive = countLeading(verdicts, "down");
     if (consecutive < condemnAfter) {

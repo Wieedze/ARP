@@ -89,3 +89,15 @@ export {
     prepareIdentityAtom,
     type IdentityAtomPlan,
 } from "./identity-plan.js";
+
+/**
+ * Liveness, the planning half. One shape, two tags — `reachable` for an endpoint we called,
+ * `maintained` for a repository whose owner still pushes to it. Which one is `stateAtomId`.
+ */
+export {
+    planReachability,
+    readReachabilityState,
+    type ReachabilityPlan,
+    type ReachabilityState,
+    type ReachabilityTerms,
+} from "./reachability-plan.js";

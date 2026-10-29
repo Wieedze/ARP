@@ -10,7 +10,19 @@ import {encodeDeposit, encodeRedeem, type MultiVaultReads} from "./multivault.js
 import type {PreparedCall} from "./types.js";
 
 /**
- * Prepared calls that move what an address asserts about one endpoint's reachability.
+ * Prepared calls that move what an address asserts about whether a tool is **alive**.
+ *
+ * One shape, two tags, because the evidence differs by population and must not be conflated:
+ *
+ * ```
+ * an endpoint   `reachable`    we called it and it answered
+ * a repository  `maintained`   its owner pushed recently and has not archived it
+ * ```
+ *
+ * `stateAtomId` is which one. Folding them into a single word would hide which evidence applies,
+ * and `docs/14` forbids rendering two kinds of evidence as one. Measured 2026-10-29: all 53
+ * catalogued tools are github.com URLs, so `reachable` applies to none of them and `maintained`
+ * applies to every one.
  *
  * **Plans, never signs** (ADR `0038`). The caller signs with its own key, which is what lets an
  * agent record a verdict ARP's attestor did not make — and that is the point rather than a
@@ -66,10 +78,10 @@ export async function readReachabilityState(
     account: Address,
     toolAtomId: Hex,
     hasTagPredicate: Hex,
-    reachableAtomId: Hex,
+    stateAtomId: Hex,
     curveId: bigint,
 ): Promise<ReachabilityState & {bothSides: boolean}> {
-    const triple = await reads.tripleId(toolAtomId, hasTagPredicate, reachableAtomId);
+    const triple = await reads.tripleId(toolAtomId, hasTagPredicate, stateAtomId);
     const counter = await reads.counterTripleId(triple);
     const [up, down] = await Promise.all([
         reads.sharesOf(account, triple, curveId),
@@ -133,7 +145,7 @@ export function planReachability(
             // Redeem is NOT payable. A value here would be sending TRUST to collect TRUST.
             value: 0n,
             data: encodeRedeem(options.receiver, leaving, options.curveId, state.shares, 0n),
-            why: `stop asserting ${options.toolLabel} ${move.from === "up" ? "answers" : "does not answer"}`,
+            why: `stop asserting ${options.toolLabel} is ${move.from === "up" ? "alive" : "not alive"}`,
         });
     }
 
