@@ -2,7 +2,12 @@ import {Link} from "react-router-dom";
 import {useChainChoice} from "../../lib/chain-choice";
 import {useSkillFacts, type SkillFact} from "../../hooks/use-skill-facts";
 
-import {groupByRepo, type ToolGroup, type ToolGrouping, type ToolRow} from "../../services/tool-catalog";
+import {
+    groupByRepo,
+    type ToolGroup,
+    type ToolGrouping,
+    type ToolRow,
+} from "../../services/tool-catalog";
 
 /**
  * Tools as a list, not as N boxes.
@@ -75,7 +80,7 @@ function Row({row, fact}: {row: ToolRow; fact: SkillFact | null}) {
                             down. The repository comes first because it is the part a reader scans
                             for; what kind of row it is follows. */}
                         {/* **Only what differs between rows.** "REGISTERED · 1 ON THE TOOL" used
-                            to sit here and was identical on all 716: a line that cannot vary is
+                            to sit here and was identical on all 715: a line that cannot vary is
                             not information, it is the width it occupies. `declared by agents` is
                             kept because it is rare and it changes what the figures mean. */}
                         <span className="block font-mono text-[length:var(--text-label)] font-normal text-[color:var(--color-steel)]">
@@ -110,8 +115,11 @@ function Row({row, fact}: {row: ToolRow; fact: SkillFact | null}) {
                     </span>
 
                     {/* A zero is blanked, not printed. On a page where nothing has been declared
-                        yet, a column of 716 zeros reads as data and is noise. */}
-                    <Figure value={row.declarations === 0 ? "" : String(row.declarations)} label="declarations" />
+                        yet, a column of 715 zeros reads as data and is noise. */}
+                    <Figure
+                        value={row.declarations === 0 ? "" : String(row.declarations)}
+                        label="declarations"
+                    />
                     {/* An unknown stays empty rather than printing a zero, like the oppose cell
                         below. A registered row's declarations are counted but not priced: pricing
                         them needs the per-edge vaults, which is the declared read. */}
@@ -125,7 +133,7 @@ function Row({row, fact}: {row: ToolRow; fact: SkillFact | null}) {
                     />
                     <span className="font-mono text-[length:var(--text-body-sm)] tabular-nums text-right leading-tight">
                         {/* **Creation dust is not a stake.** Creating a term seeds its vault with
-                            `minDeposit` (ADR `0042`), so every one of the 716 registered rows
+                            `minDeposit` (ADR `0042`), so every one of the 715 registered rows
                             reported 0.00098 tTRUST under "Staked" while nobody had staked on any
                             of them. `positionCount` is the discriminator: one position is the
                             creator's own, and the figure appears when somebody else arrives. */}
@@ -228,12 +236,7 @@ export function ToolCatalogList({
         return (
             <div>
                 {groupByRepo(rows).map((group) => (
-                    <RepoGroup
-                        key={group.repo}
-                        group={group}
-                        curveId={curveId}
-                        factFor={factFor}
-                    />
+                    <RepoGroup key={group.repo} group={group} curveId={curveId} factFor={factFor} />
                 ))}
             </div>
         );

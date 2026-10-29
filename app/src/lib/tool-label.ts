@@ -11,7 +11,7 @@
  *            └ owner ────┘ └ repo ───────────┘        └ skill ─┘
  * ```
  *
- * `github.com/` is on **all 716** of them, so showing it 716 times says nothing. What differs is
+ * `github.com/` is on **all 715** of them, so showing it 715 times says nothing. What differs is
  * the three parts after it, and a skill's own name is what a person types into
  * `npx skills add <repo> --skill <name>`.
  *
@@ -62,27 +62,22 @@ export function parseToolLabel(label: string | null): ToolLabel {
  * and `github.com/owner/repo?skill=` in front of it eats the width. Its repository goes on the
  * second line.
  *
- * **A repository keeps its host**, and that is not an inconsistency. Its line is the only line it
- * gets, so there is room; and dropping the host would make `github.com/x/y` and `gitlab.com/x/y`
- * render identically, which is a false merge on screen of two atoms the chain keeps apart.
+ * **No host, on a repository either** — the user, 2026-10-29: _« n'affiche que les noms, sinon
+ * c'est vraiment pas esthétique »_, with the platform as a sort and a filter instead. The host stays
+ * in {@link ToolLabel}, which is where a filter reads it. It used to be kept on a repository so that
+ * `github.com/x/y` and `gitlab.com/x/y` would not render alike; measured 2026-10-29 all 53 tools in
+ * `catalogue/tools.json` and all 662 skills in `skill-facts.json` are on `github.com` — 715 keys,
+ * zero on another host — so that collision has no instance today, and the filter is what tells two
+ * platforms apart when one arrives.
+ *
+ * Both figures come from committed generators rather than from a reading: `scripts/seed-skills.ts`
+ * writes the catalogue and `scripts/build-skill-facts.ts` the facts. `claims.md` asks for the
+ * script and not the number, and that applies to a comment.
  */
 export function primaryNameOf(parsed: ToolLabel): string {
     if (parsed.kind === "skill") return parsed.skill;
-    if (parsed.kind === "repo") return `${parsed.host}/${parsed.owner}/${parsed.repo}`;
-    return parsed.text;
-}
-
-/**
- * The same name with the host dropped, for a surface that shows one thing at a time.
- *
- * {@link primaryNameOf} keeps `github.com/` on a repository because a list row is the only line
- * that repository gets, and without it `github.com/x/y` and `gitlab.com/x/y` render identically.
- * A card showing one subject has no such ambiguity to resolve and the host is six characters of
- * the same text on every one — the user, 2026-10-29: _« enlève les github.com dans la card »_.
- */
-export function compactNameOf(parsed: ToolLabel): string {
     if (parsed.kind === "repo") return `${parsed.owner}/${parsed.repo}`;
-    return primaryNameOf(parsed);
+    return parsed.text;
 }
 
 /**

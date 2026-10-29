@@ -142,8 +142,8 @@ export type ToolRow = {
      * `owner/repo` for a skill, `null` for anything else.
      *
      * A skill atom's label is the whole URL, because every field of its Thing derives from one
-     * (ADR `0054`) and nobody gets to type a name. `github.com/` is on all 716 of them, so a row
-     * showing it 716 times says nothing and crowds out the part that differs. The skill leads; its
+     * (ADR `0054`) and nobody gets to type a name. `github.com/` is on all 715 of them, so a row
+     * showing it 715 times says nothing and crowds out the part that differs. The skill leads; its
      * repository goes underneath, and a repository row gets nothing rather than a line repeating
      * its own name.
      */
@@ -401,8 +401,9 @@ export function buildToolCatalogView(
  * compose: a reader can narrow to `image` *and* group by repository. That is why it lives beside
  * `Order` and not in the rail.
  *
- * It exists because the catalogue went from 53 rows to 716 on 2026-10-29 (ADR `0077`): 662 of them
- * are skills, and 71 of those come from one repository. A flat list of 716 buries the question
+ * It exists because the catalogue went from 53 rows to 715 on 2026-10-29 (ADR `0077`): 662 of them
+ * are skills and 53 are the repositories and servers they came from. 71 of the skills come from one
+ * repository. A flat list of 715 buries the question
  * "who publishes this" under scrolling.
  */
 export type ToolGrouping = "flat" | "repo";
@@ -430,8 +431,7 @@ export function groupByRepo(rows: readonly ToolRow[]): ToolGroup[] {
     const groups = new Map<string, ToolRow[]>();
     for (const row of rows) {
         const parsed = parseToolLabel(row.name);
-        const key =
-            parsed.kind === "other" ? row.name : `${parsed.owner}/${parsed.repo}`;
+        const key = parsed.kind === "other" ? row.name : `${parsed.owner}/${parsed.repo}`;
         groups.set(key, [...(groups.get(key) ?? []), row]);
     }
     return [...groups].map(([repo, list]) => ({repo, rows: list}));

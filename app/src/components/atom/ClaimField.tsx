@@ -1,123 +1,56 @@
-import {useEffect, useRef, useState} from "react";
+import {useEffect, useMemo, useRef, useState} from "react";
 import {Link} from "react-router-dom";
 
 import {cssVars} from "../../lib/css-vars";
+import {Hint} from "../brand/Hint";
 import {LIST_CAP} from "../brand/row-motion";
 
-import type {GroupView} from "../../services/atom-standing-view";
-import {claimField, MAX_DOTS_PER_RING} from "./claim-field-geometry";
+import type {EdgeRow, GroupView} from "../../services/atom-standing-view";
+import {
+    claimField,
+    claimGrain,
+    dotDiameter,
+    foldGroups,
+    GRAIN_R,
+    LOUPE,
+    loupeLine,
+    loupeRest,
+    SIZE_BY_POSITIONS,
+} from "./claim-field-geometry";
+import {useClaimLoupe} from "./use-claim-loupe";
 
 /**
- * Every claim about this atom, as a constellation around it.
+ * Every claim about this atom, as a constellation around it, read through a loupe.
  *
- * It replaces a sentence — _"250+ claims across one predicate"_ — which the user rejected as the
- * whole of what the page said about its own subject. The ask: _« soit avec des blocks soit avec des
- * cercles qui constellent comme le logo autour de l'atom du tool »_.
+ * v2, "hover first" (`CLAIM-FIELD-V2.md`). The reading head and its line to the card are the
+ * original's; what changed is how they move and what the field draws when the data is awkward.
  *
  * ## Why circles are allowed here, and what they mean
  *
  * `rules/ui.md` reserves `rounded-full` for dots and agent sigils, so that **a circle on this
- * surface always means "an agent"**. Every dot here is the subject of a claim, and a subject is an
- * agent or an account — so the rule is satisfied by what the data is, not worked around.
- *
- * Three states, each read straight off the data and none invented:
+ * surface always means "an agent"**. Every dot is the subject of a claim, and a subject is an agent
+ * or an account, so the rule is satisfied by what the data is.
  *
  * | | means |
  * | --- | --- |
- * | filled | a position stands behind the claim |
+ * | filled | a position stands behind the claim (`positions > 0`, never the amount: ADR `0042`) |
  * | hollow | declared, with nothing behind it |
- * | ringed | somebody took the other side |
+ * | alarm ring | somebody took the other side. The one semantic exception to the one accent |
+ * | larger | more **accounts** behind it, log scale, capped (`SIZE_BY_POSITIONS`) |
+ * | grain | claims past the 36 drawn on a ring, decoration of a count the legend states |
  *
- * **Filled is `positionCount`, never the amount.** ADR `0042`: creating a term seeds its vaults
- * with `minShare`, so `assets > 0` means "this term exists" and three "has stake?" checks in this
- * repo were wrong for exactly that reason. There is deliberately **no size scale** — a dot sized by
- * TRUST would invent a ladder the data does not carry, and `docs/14` is explicit that the thing an
- * interface must never do is render rungs at a weight it chose.
+ * ## The loupe
+ *
+ * Rests at -60° on the outer ring, tied to the card by a line the whole time. Hover **and** focus
+ * make it glide to a dot and ride it (ADR `0073`); with nobody pointing it tours, one claim every
+ * 4 s. See `useClaimLoupe`.
  *
  * ## It is real links, not an SVG
  *
- * Absolutely positioned `<Link>`s rather than `<circle>`s inside one `<svg>`: focus rings come from
- * `index.css`'s unlayered `:focus-visible` and work for free, each dot has a real accessible name,
- * and keyboard order follows the DOM. An SVG would have needed every one of those rebuilt.
- *
- * ## The cap is stated, not hidden
- *
- * One mainnet tag carries 250+ edges on a single predicate, and a ring of 250 dots is a solid line.
- * `MAX_DOTS_PER_RING` draws 36 and the ring's label says how many it has — a field quietly showing
- * 36 of 250 is the kind of claim `rules/claims.md` exists to stop.
+ * Absolutely positioned `<Link>`s: focus rings come from `index.css`'s unlayered `:focus-visible`,
+ * each dot has a real accessible name, and keyboard order follows the DOM. Only the loupe, the line
+ * and the grain are SVG, and all three are `aria-hidden`.
  */
-/**
- * Where the reading head sits, in degrees from the positive x axis with y down — so 0° is three
- * o'clock and a positive angle goes clockwise, which is the convention `claim-field-geometry` uses.
- *
- * **Five minutes on a clock face**, which is −60° here: a clock's minute is 6° and its zero is
- * twelve o'clock, 90° back from this axis. It was 20, which reads as twenty minutes past.
- *
- * The angle and the connector's 35° are coupled, and moving the head up made them expensive: from
- * five minutes the line has to fall `0.866 r` to reach the card's mid-height, and at 35° that
- * costs `1.237 r` of width — more than the gap had. The gap widened rather than the angle
- * steepening, because the angle is the thing that was asked for.
- */
-const HEAD_DEGREES = -60;
-
-/** Ring 0's radius as a fraction of the box, for the head and the line that leaves it. */
-const headAt = (r: number) => ({
-    x: 0.5 + r * Math.cos((HEAD_DEGREES * Math.PI) / 180),
-    y: 0.5 + r * Math.sin((HEAD_DEGREES * Math.PI) / 180),
-});
-
-/**
- * Head → a 35° rise → a horizontal bar reaching past the box into the gap.
- *
- * The bar sits at `y = 0.5`, the box's own mid-height, because the card is centred against a square
- * box and that is where its middle is. The rise is 35° so the corner's x follows from the head's
- * depth rather than being chosen — `dx = dy / tan 35°`.
- *
- * It overshoots to 1.22 so the bar crosses the 3rem gap whatever the box's measured width; the
- * card's own left border stops it.
- */
-const RISE_DEGREES = 35;
-
-/**
- * Where the horizontal bar sits, as a fraction of the box's height.
- *
- * **Above the head**, so the angled segment comes down onto the ring rather than climbing away
- * from it — the user, 2026-10-29: _« la ligne horizontale est au-dessus et après un angle vers le
- * bas pointe les cercles, donc inversé par rapport à maintenant »_. It was the box's mid-height,
- * which at five minutes put the bar below the head and ran the line the other way.
- *
- * The card is raised to meet it, which is the same instruction's second half.
- */
-const BAR_Y = 0.055;
-
-/**
- * Head → a 35° segment → a horizontal bar reaching past the box into the gap.
- *
- * It takes a **point**, not a radius: the head follows the selected dot, so it is no longer always
- * on one circle at one angle.
- *
- * The corner is always to the **right** of the head, whichever side of the bar the head is on —
- * the card is over there, and a corner that crossed back would draw the line through the field it
- * came from.
- */
-function connector(head: {x: number; y: number}): string {
-    const corner = head.x + Math.abs(head.y - BAR_Y) / Math.tan((RISE_DEGREES * Math.PI) / 180);
-    return `${head.x},${head.y} ${corner},${BAR_Y} 1.32,${BAR_Y}`;
-}
-
-/**
- * How close a dot has to be to the head, in degrees, to count as **inside** it.
- *
- * The user, 2026-10-29: the dot went warm as soon as it was the nearest one — from half a step
- * away — and should go warm only _« quand tout le cercle est dans la loupe »_.
- *
- * So it is a containment test, not a proximity one: the dot's centre has to be within
- * `headRadius − dotRadius` of the head's centre. The head is `0.032` of the box and a dot is 10px
- * on a box of at most 22rem, which is `0.0142` of it — leaving `0.0178`, an arc of `0.0178 / r`
- * radians on ring 0. At the outer radius that is 2.4°, against a 10° step for a full ring.
- */
-const HEAD_BITE = 0.0178;
-
 export function ClaimField({
     groups,
     subject,
@@ -130,39 +63,48 @@ export function ClaimField({
     edgeCount: number;
     /**
      * The read hit the indexer's cap, so {@link edgeCount} is a **floor** and the groups are a
-     * prefix.
-     *
-     * Carried here because the sentence this field replaced carried it — `describePointers`
-     * printed `250+`. Dropping it was a real regression and a test caught it: a count rendered as
-     * a total when the reader knows it is a floor is `rules/claims.md`'s whole subject.
+     * prefix. Printed as `250+`: a floor rendered as a total is `rules/claims.md`'s whole subject.
      */
     truncated: boolean;
 }) {
-    // The rows flattened **with their predicate**, because a dot has to be able to say the whole
-    // triple — subject, predicate, object — and the object is this page.
-    const entries = groups.flatMap((group) =>
-        group.rows.map((row) => ({row, predicate: group.label})),
-    );
-    const {rings, dots} = claimField(groups.map((group) => group.rows.length));
+    // Groups past `MAX_RINGS - 1` share the last ring. Each row keeps its own predicate, so a dot
+    // on the folded ring still names its whole triple.
+    const layout = useMemo(() => {
+        const shown = foldGroups(groups);
+        const entries = shown.flatMap((ring) =>
+            ring.members.flatMap((group) =>
+                // `predicate` says the triple; `heading` is what the card prints, the relation
+                // read from this page's side when there is a word for it.
+                group.rows.map((row) => ({
+                    row,
+                    predicate: group.label,
+                    heading: group.inverse ?? group.label,
+                })),
+            ),
+        );
+        const {rings, dots} = claimField(
+            shown.map((ring) => ring.members.reduce((sum, group) => sum + group.rows.length, 0)),
+        );
+        return {shown, entries, rings, dots};
+    }, [groups]);
+    const {shown, entries, rings, dots} = layout;
+
+    const outer = rings[rings.length - 1];
+    const fieldRef = useRef<HTMLDivElement>(null);
+    const headRef = useRef<SVGCircleElement>(null);
+    const lineRef = useRef<SVGPolylineElement>(null);
+    const {reading, point, release, dotRef} = useClaimLoupe({
+        fieldRef,
+        headRef,
+        lineRef,
+        dots,
+        outerRadius: outer?.r ?? 0,
+        outerRing: outer?.ring ?? 0,
+    });
 
     /**
-     * Which claim the pointer or the keyboard is on.
-     *
-     * **Hover *and* focus**, which is the condition under which `rules/ui.md`'s "no mouse-reactive
-     * effects" is not being broken but read correctly. That rule rejects parallax, repulsion, hover
-     * tilt and cursor trails — the pointer *moving* things. This reveals a fact that is already on
-     * the page, the way `Hint` does, and `Hint` is the precedent: it opens on hover **and keyboard
-     * focus** for exactly this reason. A reveal that only a mouse can reach is the thing to avoid.
-     * ADR `0073`.
-     */
-    const [active, setActive] = useState<number | null>(null);
-
-    /**
-     * One frame of the entering state, then the dots settle.
-     *
-     * The class is on the container, not on each dot, so one state change drives the whole field
-     * and React does not re-render 36 links. Under `prefers-reduced-motion` the CSS neutralises
-     * both halves and the dots are simply there.
+     * One frame of the entering state, then the dots settle. The class is on the container, so
+     * one state change drives the whole field. Under reduced motion the CSS neutralises it.
      */
     const [entering, setEntering] = useState(true);
     useEffect(() => {
@@ -170,406 +112,295 @@ export function ClaimField({
         return () => cancelAnimationFrame(frame);
     }, []);
 
-    /**
-     * Which claim sits under the reading head, read from the rotation itself.
-     *
-     * The user's model, 2026-10-29: _« un petit cercle coaxial avec les cercles qui défilent, et
-     * lorsqu'un cercle passe dans la loupe on affiche les données dans la card »_. So the card is
-     * not on a timer that happens to look synchronised — it reads the dot that is **actually**
-     * there.
-     *
-     * The phase comes from `getAnimations()[0].currentTime`, the browser's own clock for the CSS
-     * animation, not from `performance.now()` since mount. The difference is not pedantic: a
-     * backgrounded tab pauses the animation and a wall clock does not, so the two part ways and
-     * the card would name a dot that is no longer under the head. Under `prefers-reduced-motion`
-     * the animation never advances, `currentTime` stays at 0, and the head reads whichever dot is
-     * parked there — still, and correct.
-     *
-     * Ring 0 only. The head sits on its radius, the outer one when a single predicate draws the
-     * whole field, which is the common case by a wide margin.
-     */
-    const ringRef = useRef<HTMLDivElement | null>(null);
-    /** Every ring's wrapper, so the head can read the phase of whichever one it is following. */
-    const ringRefs = useRef<(HTMLDivElement | null)[]>([]);
-    const [beat, setBeat] = useState(0);
-    /** Whether the nearest dot is fully inside the head, as opposed to merely closest to it. */
-    const [inHead, setInHead] = useState(false);
-    /**
-     * The **outer** ring carries the head — the user asked for that one, and it is the biggest and
-     * the one a reader's eye is already on.
-     *
-     * Three of its properties differ from ring 0's and all three are in the arithmetic below: its
-     * radius, its period (`110 + ring * 40` seconds) and its **direction**, which alternates. A
-     * reading that assumed `+360deg` would run the head backwards on every odd ring, naming a dot
-     * that had already passed.
-     */
-    const headRingIndex = rings.length === 0 ? 0 : rings.length - 1;
-    const headRing = rings[headRingIndex];
-    const ringDots = headRing?.drawn ?? 0;
-    // Pulled out of the effect so it depends on numbers rather than on `rings`, which `claimField`
-    // rebuilds every render — the array would restart the interval on each one.
-    const ringRadius = headRing?.r ?? 0.42;
-    // Where this ring's dots start in the flattened list. `claimField` numbers them through the
-    // groups in render order, so a ring's first dot carries its own offset and nothing has to be
-    // recomputed.
-    const ringIndexBase = dots.find((dot) => dot.ring === headRingIndex)?.index ?? 0;
+    if (groups.length === 0 || outer === undefined) {
+        return <ZeroField subject={subject} />;
+    }
 
-    /**
-     * Where the head is drawn, in box fractions.
-     *
-     * **It follows the selection.** At rest it sits at {@link HEAD_DEGREES} on the outer ring and
-     * the rings pass through it; when a dot is hovered **or focused**, it slides onto that dot and
-     * stays on it — which, since the dot is turning, means tracking it every frame.
-     *
-     * This is not the mouse-reactive effect `ui.md` forbids, and the distinction is the reason
-     * ADR `0073`'s keyboard condition is worth keeping rather than a nuisance: a marker that
-     * follows the selection is **what a selection looks like**, and focus is a selection too. The
-     * same movement driven by the pointer alone — and unreachable by `Tab` — would be the parallax
-     * and the hover-tilt this project refused four times.
-     */
-    const [followed, setFollowed] = useState<{x: number; y: number} | null>(null);
-
-    useEffect(() => {
-        if (ringDots < 1) return;
-        const read = () => {
-            const animation = ringRef.current?.getAnimations?.()[0];
-            const time = animation?.currentTime;
-            const ms = typeof time === "number" ? time : 0;
-            // 110s per turn, set as `--orbit-for` on ring 0 below.
-            const period = (110 + headRingIndex * 40) * 1000;
-            const sign = headRingIndex % 2 === 0 ? 1 : -1;
-            const turned = (((ms / period) * 360 * sign) % 360 + 360) % 360;
-            // A dot's resting angle is -90 + p * step; the head is at HEAD_DEGREES. Solve for p.
-            const step = 360 / ringDots;
-            const exact = ((HEAD_DEGREES + 90 - turned) % 360) / step;
-            const at = Math.round(exact);
-            const within = ((at % ringDots) + ringDots) % ringDots;
-            setBeat(Math.max(ringIndexBase, 0) + within);
-            // How far the nearest dot still is from the head's centre, as an angle. The dot is
-            // only *inside* when the whole of it fits, which is a smaller window than "nearest".
-            const offBy = Math.abs(exact - at) * step;
-            setInHead(offBy <= (HEAD_BITE / ringRadius) * (180 / Math.PI));
-        };
-        read();
-        // Four times a second. A rAF loop would be sixty, to move a number that changes every
-        // three seconds at this ring's size.
-        const id = window.setInterval(read, 250);
-        return () => window.clearInterval(id);
-    }, [ringDots, ringRadius, headRingIndex, ringIndexBase]);
-
-    /**
-     * Track the selected dot, at frame rate, for as long as it is selected.
-     *
-     * Sixty times a second only while something is hovered or focused — the dot is turning, and
-     * a head that updated four times a second would lag visibly behind it. Idle, this effect does
-     * nothing at all.
-     *
-     * Under `prefers-reduced-motion` the rings do not turn, so the dot does not move and one read
-     * is the whole of it.
-     */
-    const selected = active === null ? undefined : dots.find((dot) => dot.index === active);
-    useEffect(() => {
-        const ring = selected === undefined ? undefined : rings[selected.ring];
-        // Nothing to follow: return without touching state. The previous run's cleanup already
-        // released the head, which is where that belongs — a synchronous `setState` in an
-        // effect's body is a cascading render, and the lint rule is right about it.
-        if (selected === undefined || ring === undefined) return;
-        // The dot's resting angle, recovered from the place `claimField` put it.
-        const base = Math.atan2(selected.cy - 0.5, selected.cx - 0.5);
-        let frame = 0;
-        const follow = () => {
-            const wrapper = ringRefs.current[selected.ring];
-            const time = wrapper?.getAnimations?.()[0]?.currentTime;
-            const ms = typeof time === "number" ? time : 0;
-            const period = (110 + selected.ring * 40) * 1000;
-            const sign = selected.ring % 2 === 0 ? 1 : -1;
-            const turned = ((ms / period) * Math.PI * 2 * sign) % (Math.PI * 2);
-            setFollowed({
-                x: 0.5 + ring.r * Math.cos(base + turned),
-                y: 0.5 + ring.r * Math.sin(base + turned),
-            });
-            frame = requestAnimationFrame(follow);
-        };
-        frame = requestAnimationFrame(follow);
-        return () => {
-            cancelAnimationFrame(frame);
-            // Back to rest. `headPoint` derives the resting place from `ringRadius`, so clearing
-            // is the whole of it — nothing here stores what a prop already says.
-            setFollowed(null);
-        };
-    }, [selected, rings]);
-
-    /** Where the head is drawn: on the selected dot while there is one, at rest otherwise. */
-    const headPoint = followed ?? headAt(ringRadius);
-
-    // Hover and focus win over the cadence: a reader who reached for a dot asked for that one.
-    const shown = active ?? (entries.length === 0 ? null : beat % entries.length);
-    const current = shown === null ? undefined : entries[shown];
+    const current = reading.index === null ? undefined : entries[reading.index];
+    // The loupe is driven by a dot's position in `dots`, the card by its claim index.
+    const currentPosition = dots.findIndex((dot) => dot.index === reading.index);
+    const rest = loupeRest(outer.r);
+    const anyOpposition = groups.some((group) => group.rows.some((row) => row.opposition !== null));
 
     return (
-        <div className="relative flex flex-wrap items-start gap-x-16 gap-y-8">
+        <div className="arp-cf">
             <div
-                // `sm:mt-8` is the card's half-height less the bar's depth: the bar lands
-                // `BAR_Y` of the box below the field's top, 1.21rem on a 22rem box, and the card's
-                // middle is 3.25rem below the row's top. Stacked, there is no bar and no offset.
-                className={`relative aspect-square w-full max-w-[22rem] shrink-0 sm:mt-8 ${entering ? "arp-claim-enter" : ""}`}
+                ref={fieldRef}
+                className={`arp-cf-field ${entering ? "arp-claim-enter" : ""}`}
                 role="group"
                 aria-label={`Claims about ${subject}`}
             >
-                {/* **One wrapper per ring, and it turns.** The dots live inside it rather than
-                    beside it, so the ring and its claims rotate together — the alternative was
-                    recomputing every angle per frame, which is what the landing's field does
-                    because its points also breathe and dive. Nothing here moves but the angle.
-
-                    Slower further out and alternating direction, so it reads as a constellation
-                    rather than one wheel. Neutralised under `prefers-reduced-motion` by the rule
-                    that neutralises every other arrival in the app. */}
-                {/* The atom itself, at the centre, and it does **not** turn: it is the thing
-                    every ring is about. The one Saffron mark on the field — `ui.md` allows the
-                    accent on the mark, and ADR `0067` on the mark's core specifically.
-
-                    It was lost once: a replacement that spanned from the rings to the dots took
-                    everything between them, and the core sat in that gap. A screenshot caught it,
-                    which is the only thing that could have. */}
-                <span
+                {/* The loupe and its line to the card. Drawn from the first paint at the resting
+                    place, then the hook writes them every frame without re-rendering. */}
+                <svg
+                    className={`arp-cf-link ${reading.lit ? "is-on" : ""}`}
+                    viewBox="0 0 1 1"
+                    preserveAspectRatio="none"
                     aria-hidden="true"
-                    className="absolute left-1/2 top-1/2 h-[14px] w-[14px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[color:var(--color-accent)]"
-                />
+                >
+                    <polyline ref={lineRef} points={loupeLine(rest)} />
+                    <circle ref={headRef} cx={rest.x} cy={rest.y} r={LOUPE.radius} />
+                </svg>
 
-                {/* **The reading head, and the line to the card.** A ring on ring 0's own radius,
-                    a segment rising out of it at 35°, then a bar at the card's mid-height.
+                {/* The atom itself. It does not turn: it is the thing every ring is about. The
+                    one Saffron mark at rest (ADR `0067`). */}
+                <span aria-hidden="true" className="arp-cf-core" />
 
-                    It does **not** turn: the rings pass through it. That is the whole mechanism —
-                    the card names the dot that is under this ring, read from the rotation's own
-                    clock rather than from a timer that happens to look synchronised.
-
-                    `overflow-visible` so the bar can cross the gap to the card. `vector-effect`
-                    keeps it one hairline at every size, as `ui.md`'s rules are hairlines. */}
-                {rings.length === 0 ? null : (
-                    <svg
-                        aria-hidden="true"
-                        viewBox="0 0 1 1"
-                        className="pointer-events-none absolute inset-0 overflow-visible"
-                    >
-                        {/* `ringRadius`, not ring 0's. The reading moved to the outer ring and
-                            the drawing stayed here, so on an atom with two predicates the head sat
-                            on the small inner circle while naming dots from the big one — the lit
-                            dot and the head were never in the same place. */}
-                        <polyline
-                            points={connector(headPoint)}
-                            fill="none"
-                            stroke="var(--color-rule-strong)"
-                            strokeWidth={1}
-                            vectorEffect="non-scaling-stroke"
-                        />
-                        <circle
-                            cx={headPoint.x}
-                            cy={headPoint.y}
-                            r={0.032}
-                            fill="none"
-                            stroke="var(--color-accent)"
-                            strokeWidth={1}
-                            vectorEffect="non-scaling-stroke"
-                        />
-                    </svg>
-                )}
-
-                {rings.map((ring) => (
-                    <div
-                        key={ring.ring}
-                        ref={(element) => {
-                            ringRefs.current[ring.ring] = element;
-                            if (ring.ring === headRingIndex) ringRef.current = element;
-                        }}
-                        className="arp-orbit pointer-events-none absolute inset-0"
-                        style={cssVars({
-                            "--orbit-for": `${110 + ring.ring * 40}s`,
-                            "--orbit-to": ring.ring % 2 === 0 ? "360deg" : "-360deg",
-                        })}
-                    >
-                        <span
-                            aria-hidden="true"
-                            className="absolute rounded-full border border-[color:var(--color-rule)]"
-                            style={{
-                                left: `${(0.5 - ring.r) * 100}%`,
-                                top: `${(0.5 - ring.r) * 100}%`,
-                                width: `${ring.r * 200}%`,
-                                height: `${ring.r * 200}%`,
-                            }}
-                        />
-                        {dots
-                            .filter((dot) => dot.ring === ring.ring)
-                            .map((dot) => {
+                {rings.map((ring) => {
+                    const grain = claimGrain(ring);
+                    return (
+                        <div
+                            key={ring.ring}
+                            className="arp-orbit arp-cf-ring"
+                            style={cssVars({
+                                "--orbit-for": `${110 + ring.ring * 40}s`,
+                                "--orbit-to": ring.ring % 2 === 0 ? "360deg" : "-360deg",
+                            })}
+                        >
+                            <span
+                                aria-hidden="true"
+                                className="arp-cf-track"
+                                style={{
+                                    left: `${(0.5 - ring.r) * 100}%`,
+                                    top: `${(0.5 - ring.r) * 100}%`,
+                                    width: `${ring.r * 200}%`,
+                                    height: `${ring.r * 200}%`,
+                                }}
+                            />
+                            {grain.length === 0 ? null : (
+                                <svg className="arp-cf-grain" viewBox="0 0 1 1" aria-hidden="true">
+                                    {grain.map((g, k) => (
+                                        <circle key={k} cx={g.cx} cy={g.cy} r={GRAIN_R} />
+                                    ))}
+                                </svg>
+                            )}
+                            {dots.map((dot, position) => {
+                                if (dot.ring !== ring.ring) return null;
                                 const entry = entries[dot.index];
                                 if (entry === undefined) return null;
-                                const {row} = entry;
-                                const backed = row.positions > 0;
+                                const {row, predicate} = entry;
+                                const lit = reading.lit && reading.index === dot.index;
                                 return (
                                     <Link
                                         key={row.tripleId}
+                                        ref={dotRef(position)}
                                         to={`/atom/${row.subjectAtomId}`}
-                                        title={`${row.name} — ${backed ? `${row.backing} behind it` : "nothing behind it"}`}
-                                        onMouseEnter={() => setActive(dot.index)}
-                                        onMouseLeave={() => setActive(null)}
-                                        onFocus={() => setActive(dot.index)}
-                                        onBlur={() => setActive(null)}
-                                        // **Saffron is the light.** `ui.md` forbids `box-shadow`,
-                                        // glow and gradients outright, and reserves the accent for
-                                        // the primary action, the selected state and the viewer's
-                                        // own position. A dot under the pointer or the keyboard
-                                        // **is** a selected state, so the brightest colour in the
-                                        // palette arriving on it is the design system's own idea of
-                                        // luminous — and it needs no shadow to say it.
-                                        //
-                                        // The scale is on `transform`, which the arrival already
-                                        // animates, so the two compose instead of fighting.
-                                        className={`arp-claim pointer-events-auto absolute h-[10px] w-[10px] rounded-full border transition-[transform,background-color,border-color] duration-150 ${
-                                            shown === dot.index && (active !== null || inHead)
-                                                ? "-translate-x-1/2 -translate-y-1/2 scale-[1.8] border-[color:var(--color-accent)] bg-[color:var(--color-accent)]"
-                                                : backed
-                                                  ? "-translate-x-1/2 -translate-y-1/2 border-[color:var(--color-fg)] bg-[color:var(--color-fg)]"
-                                                  : "-translate-x-1/2 -translate-y-1/2 border-[color:var(--color-steel)]"
-                                        } ${row.opposition === null ? "" : "ring-2 ring-[color:var(--color-steel)] ring-offset-2 ring-offset-[color:var(--color-ground)]"}`}
+                                        onMouseEnter={() => point(position)}
+                                        onMouseLeave={() => release(position)}
+                                        onFocus={() => point(position)}
+                                        onBlur={() => release(position)}
+                                        className={`arp-claim arp-cf-dot ${row.positions > 0 ? "is-filled" : ""} ${row.opposition === null ? "" : "is-opposed"} ${lit ? "is-lit" : ""}`}
                                         style={{
                                             left: `${dot.cx * 100}%`,
                                             top: `${dot.cy * 100}%`,
-                                            // The stagger `rowMotion` would give, inline because the dot also
-                                            // carries its own position and a second style object would fight it.
                                             ...cssVars({
+                                                "--claim-dot": `${dotDiameter(row.positions).toFixed(1)}px`,
                                                 "--row-index": Math.min(dot.index, LIST_CAP - 1),
                                             }),
                                         }}
                                     >
-                                        {/* **The whole triple, on the link itself.** A visible sentence plus a
-                                    live region would announce twice, and a live region firing on
-                                    *hover* says nothing to a reader who navigates by focus. One name,
-                                    complete, announced when the dot is reached.
-
-                                    **Not the word "backed".** `AtomPanel`'s dust-rule test watches for
-                                    it anywhere on the page, because ADR `0042` is that a figure must
-                                    never appear where no position stands behind it — and a row's
-                                    legitimate figure tripping that guard is the guard working. "behind
-                                    it" says the same thing and is the phrasing this field already uses
-                                    elsewhere. */}
+                                        <span aria-hidden="true" className="arp-cf-mark" />
+                                        {/* The whole triple, on the link itself. Not the word
+                                            "backed": `AtomPanel`'s dust test watches for it. */}
                                         <span className="sr-only">
-                                            {row.name} {entry.predicate} {subject} —{" "}
-                                            {backed
-                                                ? `${row.backing} behind it`
-                                                : "nothing behind it"}
+                                            {claimSentence(row, predicate, subject)}
                                         </span>
                                     </Link>
                                 );
                             })}
-                    </div>
-                ))}
+                        </div>
+                    );
+                })}
             </div>
 
-            {/* **The card the field points at**, to the right of it and on the pulse card's own
-                grammar — the user asked for that one by name, 2026-10-29. It reads what the lit
-                dot is worth, not only what it says: the slot it replaced named the triple and gave
-                no figure, so a reader could see that a claim existed and never what anybody had
-                put behind it, which is the one distinction this page argues about.
+            {/* The card the loupe is tied to. Reserved height, so it never moves the layout.
 
-                It keeps its height empty or full. A card that appeared would push the field under
-                the pointer, which is the mouse-reactive effect `ui.md` forbids and ADR `0073`'s
-                third condition names. Hover **and** focus feed it (first condition), and every
-                figure in it is already on the page (second). */}
-            <div
-                aria-hidden="true"
-                data-claim-sentence={current === undefined ? "none" : "one"}
-                // Top-aligned, and the FIELD is pushed down to meet it rather than the card being
-                // pulled up. A negative margin lifted the card out of the flow and it landed on the
-                // rule above the section — the layout did not know it was there. Pushing the field
-                // keeps every box inside its own space for the same offset.
-                className="relative flex min-h-[6.5rem] min-w-[min(22rem,100%)] max-w-[34rem] flex-1 flex-col gap-1 rounded-[var(--radius-button)] border border-[color:var(--color-rule-strong)] bg-[color:var(--color-bg)] px-3.5 py-3"
-            >
-                {current === undefined ? null : (
-                    <>
-                        {/* **The pulse card's own structure**, which the user asked for by name: a
-                            lit dot and a word on a header rule, then the content under it. The dot
-                            was inline with the name for a revision and floated beside 22px display
-                            type with nothing to sit against.
+                **A link to whatever it shows**, the user's ask (2026-10-29): what the card puts
+                forward is one click away. Hovering it holds the loupe on that claim, or the tour
+                would swap the target out from under the pointer on its way to click.
 
-                            The header carries the **predicate**, which is the ring the head is on
-                            — so it changes when an atom has several, and it is the word the card
-                            needs before the subject makes a sentence. It carried the claim count
-                            instead, which the legend prints below and which never changed. */}
-                        <span className="flex items-center gap-2 border-b border-[color:var(--color-rule)] pb-2 font-mono text-[10px] uppercase tracking-[0.06em] text-[color:var(--color-steel)]">
-                            <span className="h-[6px] w-[6px] shrink-0 rounded-full bg-[color:var(--color-accent)]" />
-                            <span className="min-w-0 truncate">{current.predicate}</span>
+                `aria-hidden` and out of the tab order: the dot already is this same link, with
+                the whole triple as its name, and a second tab stop whose target changes every
+                four seconds would be a keyboard trap of a different kind. */}
+            {current === undefined ? (
+                <div aria-hidden="true" data-claim-sentence="none" className="arp-cf-card" />
+            ) : (
+                <Link
+                    to={`/atom/${current.row.subjectAtomId}`}
+                    aria-hidden="true"
+                    tabIndex={-1}
+                    data-claim-sentence="one"
+                    className={`arp-cf-card ${reading.lit ? "is-lit" : ""}`}
+                    onMouseEnter={() => point(currentPosition)}
+                    onMouseLeave={() => release(currentPosition)}
+                >
+                    <div className="arp-cf-card-head">
+                        <i />
+                        <span>{current.heading}</span>
+                    </div>
+                    <CardBody row={current.row} />
+                </Link>
+            )}
+
+            <div className="arp-cf-total">
+                <span>
+                    <b>{truncated ? `${edgeCount}+` : edgeCount}</b>{" "}
+                    {edgeCount === 1 && !truncated ? "claim" : "claims"} about {subject}
+                </span>
+                {/* The key explains fill and the alarm ring and said nothing about SIZE, while a
+                    dot grows from 10px to 17px with its position count. A reader seeing a bigger
+                    dot beside a card reading an amount has every reason to read it as more money —
+                    usually right by correlation, and inverted on a dust-heavy claim, which is the
+                    reading ADR `0042` exists to prevent. `ui.md` forbids the explanatory sentence
+                    and names the remedy. Outside the `aria-hidden` key, because a `Hint` inside it
+                    would be off the keyboard path and so not a `Hint` at all. */}
+                {SIZE_BY_POSITIONS ? (
+                    <Hint label="What a dot's size means">
+                        A dot&rsquo;s size is how many accounts hold a position, never how much they
+                        put in.
+                    </Hint>
+                ) : null}
+                <span className="arp-cf-key" aria-hidden="true">
+                    <span>
+                        <i className="is-filled" />a position behind it
+                    </span>
+                    <span>
+                        <i />
+                        nothing behind it
+                    </span>
+                    {anyOpposition ? (
+                        <span>
+                            <i className="is-opposed" />
+                            someone took the other side
                         </span>
-                        <span
-                            className={`min-w-0 truncate type-face text-[22px] leading-tight ${current.row.nameIsId ? "font-mono text-[16px]" : ""}`}
-                        >
-                            {current.row.compactName}
-                        </span>
-                        {/* **Paper, not accent.** Somebody else's position, and `ui.md` spends the
-                            accent on the primary action and on the viewer's own. ADR `0042`:
-                            creating a term seeds its vault, so an amount is not evidence anybody
-                            staked — `positions` is, and a claim nobody paid for says so.
+                    ) : null}
+                </span>
+            </div>
 
-                            The object is gone from here: it is the page the reader is already on,
-                            so the card was ending every line with its own address. */}
-                        <span className="font-mono text-[length:var(--text-body)] tabular-nums">
-                            {current.row.backing === null ? (
-                                <span className="text-[color:var(--color-steel)]">
-                                    nothing behind it
+            <dl className="arp-cf-legend">
+                {shown.map((ring, index) => {
+                    const drawn = rings[index]!;
+                    const isLast = index === shown.length - 1;
+                    const plus = truncated && isLast ? "+" : "";
+                    const head = ring.folded
+                        ? {
+                              label: `+${ring.members.length} other predicates`,
+                              labelIsId: false,
+                              backing: null,
+                          }
+                        : {
+                              ...ring.members[0]!,
+                              label: ring.members[0]!.inverse ?? ring.members[0]!.label,
+                          };
+                    const count =
+                        drawn.total > drawn.drawn
+                            ? `${drawn.total}${plus} · ${drawn.drawn} drawn, the rest as grain`
+                            : `${drawn.total}${plus} ${drawn.total === 1 && plus === "" ? "claim" : "claims"}`;
+                    return (
+                        <div key={index} className="arp-cf-legend-group">
+                            <div className="arp-cf-legend-row">
+                                <span className="arp-cf-ringno">
+                                    {String(index + 1).padStart(2, "0")}
                                 </span>
-                            ) : (
-                                <>
-                                    {current.row.backing}
-                                    <span className="text-[color:var(--color-steel)]">
-                                        {` · ${current.row.positions} ${current.row.positions === 1 ? "position" : "positions"}`}
-                                    </span>
-                                </>
-                            )}
+                                <dt className={head.labelIsId ? "is-id" : ""}>{head.label}</dt>
+                                <dd>
+                                    {count}
+                                    {head.backing === null ? null : ` · ${head.backing}`}
+                                </dd>
+                            </div>
+                            {/* Never sum across groups: the folded ring lists each of its members
+                                with its own count and its own backing. */}
+                            {ring.folded
+                                ? ring.members.map((member, k) => {
+                                      const memberPlus =
+                                          plus !== "" && k === ring.members.length - 1 ? "+" : "";
+                                      const n = member.rows.length;
+                                      return (
+                                          <div
+                                              key={member.predicateAtomId}
+                                              className="arp-cf-legend-row is-member"
+                                          >
+                                              <span className="arp-cf-ringno" />
+                                              <dt className={member.labelIsId ? "is-id" : ""}>
+                                                  {member.inverse ?? member.label}
+                                              </dt>
+                                              <dd>
+                                                  {n}
+                                                  {memberPlus}{" "}
+                                                  {n === 1 && memberPlus === ""
+                                                      ? "claim"
+                                                      : "claims"}
+                                                  {member.backing === null
+                                                      ? null
+                                                      : ` · ${member.backing}`}
+                                              </dd>
+                                          </div>
+                                      );
+                                  })
+                                : null}
+                        </div>
+                    );
+                })}
+            </dl>
+        </div>
+    );
+}
+
+/** The accessible name of a dot: the triple, then what stands behind it. */
+function claimSentence(row: EdgeRow, predicate: string, subject: string): string {
+    const behind =
+        row.positions > 0 && row.backing !== null
+            ? `${row.backing} behind it, ${row.positions} ${row.positions === 1 ? "position" : "positions"}`
+            : "nothing behind it";
+    const against = row.opposition === null ? "" : `, ${row.opposition} against`;
+    return `${row.name} ${predicate} ${subject}, ${behind}${against}`;
+}
+
+/** The figure line of the card. Paper, not accent: it is somebody else's position. */
+function CardBody({row}: {row: EdgeRow}) {
+    const filled = row.positions > 0 && row.backing !== null;
+    return (
+        <>
+            <div className={`arp-cf-subject ${row.nameIsId ? "is-id" : ""}`}>{row.name}</div>
+            <div className={`arp-cf-figure ${filled ? "" : "is-none"}`} data-claim-figure>
+                {filled ? (
+                    <>
+                        {row.backing}{" "}
+                        <span>
+                            · {row.positions} {row.positions === 1 ? "position" : "positions"}
                         </span>
-                        {/* Only when somebody took the other side. A counter-triple exists for
-                            every triple at the same price and 969 of 285,775 chain-wide have ever
-                            carried a position — an empty one means "nobody bothered", never
-                            "everybody agrees", and a zero here would say the second. */}
-                        {current.row.opposition === null ? null : (
-                            <span className="font-mono text-[10px] text-[color:var(--color-alarm)]">
-                                {`${current.row.opposition} against`}
-                            </span>
-                        )}
                     </>
+                ) : (
+                    "nothing behind it"
                 )}
             </div>
+            {row.opposition === null ? null : (
+                <div className="arp-cf-against">{row.opposition} against</div>
+            )}
+        </>
+    );
+}
 
-            {/* The legend. It names each ring and says what the ring does not: the total, when the
-                cap bit, and the group's own backing. */}
-            <dl className="min-w-0 basis-full text-[length:var(--text-body-sm)]">
-                <div className="mb-5 border-b border-[color:var(--color-rule)] pb-3">
-                    <dt className="sr-only">Claims in total</dt>
-                    <dd className="font-mono tabular-nums">
-                        {truncated ? `${edgeCount}+` : edgeCount}{" "}
-                        <span className="text-[color:var(--color-steel)]">
-                            {edgeCount === 1 && !truncated ? "claim" : "claims"}
-                        </span>
-                    </dd>
-                </div>
-                {groups.map((group, index) => (
-                    <div key={group.predicateAtomId} className="mt-4 first:mt-0">
-                        <dt
-                            className={`font-medium ${group.labelIsId ? "font-mono text-[length:var(--text-body-sm)]" : ""}`}
-                        >
-                            <span
-                                aria-hidden="true"
-                                className="mr-3 inline-block h-[8px] w-[8px] rounded-full border border-[color:var(--color-rule-strong)] align-middle"
-                                style={{opacity: 1 - index * 0.18}}
-                            />
-                            {group.label}
-                        </dt>
-                        <dd className="mt-1 ml-5 font-mono tabular-nums text-[color:var(--color-steel)]">
-                            {group.rows.length > MAX_DOTS_PER_RING
-                                ? `${group.rows.length} claims, ${MAX_DOTS_PER_RING} drawn`
-                                : `${group.rows.length} ${group.rows.length === 1 ? "claim" : "claims"}`}
-                            {group.backing === null ? null : ` · ${group.backing}`}
-                        </dd>
-                    </div>
-                ))}
-            </dl>
+/** Nothing points at the atom yet: a dashed ring around the core, and one line saying so. */
+function ZeroField({subject}: {subject: string}) {
+    const r = 0.42;
+    return (
+        <div className="arp-cf-zero">
+            <div className="arp-cf-field is-small" aria-hidden="true">
+                <span
+                    className="arp-cf-track is-dashed"
+                    style={{
+                        left: `${(0.5 - r) * 100}%`,
+                        top: `${(0.5 - r) * 100}%`,
+                        width: `${r * 200}%`,
+                        height: `${r * 200}%`,
+                    }}
+                />
+                <span className="arp-cf-core" />
+            </div>
+            <p className="arp-cf-empty">
+                Nothing points at {subject} yet. A claim made about it appears here as a dot.
+            </p>
         </div>
     );
 }
