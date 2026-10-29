@@ -185,7 +185,7 @@ address. What is in stays in and what is out never gets in.
 
 Acceptable on testnet, where the index is a rehearsal and the whole thing can be re-seeded under a
 new address for about 0.23 tTRUST. Not acceptable the day the index means anything, and the fix is
-not a code change — it is deciding what the attestor *is*: a Safe multisig, a threshold of named
+not a code change — it is deciding what the attestor _is_: a Safe multisig, a threshold of named
 curators, or something else.
 
 Deliberately not built, and deliberately not next. The reason is the user's: the mechanism has to
@@ -193,3 +193,32 @@ be proven before the governance of it is worth designing. Note what it is **not*
 though — nothing in `packages/protocol/src/domains.ts` cares whether the attestor is an EOA or a
 contract, because it only ever reads positions by address. So this is a key-management decision
 with no refactor behind it.
+
+## Record the 61 missing atom ids in the catalogue
+
+Noted 2026-10-29, from `intuition-integrator`'s review of `tasks/31`. **Not built, and the reviewer's
+own argument is why it should not be built there:** task 31 writes nothing to a chain, and "while
+we're at it, the catalogue could also record the other 61" is `workflow.md`'s first drift signal
+verbatim.
+
+`catalogue/skills-13579.json` carries a recorded atom id for 601 of its 662 rows. The other 61 have
+`atom: null` and `untagged: true` — **the same 61 rows**, verified, so it is one gap seen from two
+sides.
+
+**Their atoms already exist on chain.** All 61, `isTermCreated` true, measured by
+`scripts/measure/catalogue-atom-ids.ts` and recorded in
+`measurements/catalogue-atom-ids-2026-10-29.json`, which prints the repo, the skill, the URL and the
+derived id for each under `unrecordedOnChain`. So this is a **catalogue re-record, not an atom
+creation**, and it costs nothing on chain.
+
+What it would buy: those 61 skills become resolvable by atom id, so the content route can serve them
+and `resolveInvocations` can name them. Today they are reported `unrecorded` — carrying the repo and
+the URL, so a caller who can derive the id has everything it needs. The state is correctly named
+rather than broken, which is why this is a convenience and not a defect.
+
+**The question that blocks it is classification, not recording.** `counts.notTaggedButClassifiable`
+is 0: the tagger **declined** these 61 rather than missing them. `docs/20` says a wrong tag is
+permanent, and 203 `has tag` positions were already retired once because a keyword table matched
+`blockchain` against design tokens. So whoever picks this up answers `docs/20`'s question first —
+whether a skill with no keyword match gets a tag at all — and the recording run follows from that
+answer rather than preceding it.
