@@ -3,7 +3,13 @@ import {verifyMessage, type Address} from "viem";
 import {generatePrivateKey, privateKeyToAccount} from "viem/accounts";
 import {describe, expect, it} from "vitest";
 
-import {getAgentEndpoints, resolveAgentEndpoint, type DirectoryConfig} from "../src/directory.js";
+import {
+    getAgentEndpoints,
+    isSameAgent,
+    resolveAgentEndpoint,
+    type DirectoryConfig,
+    type DirectorySubject,
+} from "../src/directory.js";
 import {
     createHandshakeVerifier,
     endpointBindingDocument,
@@ -13,6 +19,12 @@ import {
 
 const REGISTRY = "0xC165A2AD2E540A4069E02834009161E2b4490d5A";
 const AGENT_ATOM = `0x${"aa".repeat(32)}`;
+/** Agent 7, whose atom the claims hang on. */
+const SUBJECT: DirectorySubject = {
+    agentAtom: AGENT_ATOM,
+    agentRegistry: `eip155:13579:${REGISTRY}`,
+    agentId: "7",
+};
 const owner = privateKeyToAccount(generatePrivateKey());
 const node = privateKeyToAccount(generatePrivateKey());
 const stranger = privateKeyToAccount(generatePrivateKey());
@@ -21,7 +33,11 @@ function chainOf(state: {owner: Address}): HandshakeChain {
     return {ownerOf: async () => state.owner, verifyMessage: (args) => verifyMessage(args)};
 }
 
-async function bind(endpoint: string, chain: HandshakeChain): Promise<EndpointBinding> {
+async function bind(
+    endpoint: string,
+    chain: HandshakeChain,
+    agentId = "7",
+): Promise<EndpointBinding> {
     const v = createHandshakeVerifier({
         chain,
         domain: "arp.example",
@@ -29,7 +45,7 @@ async function bind(endpoint: string, chain: HandshakeChain): Promise<EndpointBi
     });
     const challenge = await v.challenge({
         agentRegistry: `eip155:13579:${REGISTRY}`,
-        agentId: "7",
+        agentId,
         nodePublicKey: node.publicKey,
         endpoint,
     });
@@ -73,12 +89,17 @@ function graph(
                 };
             }
             if (query.includes("query EndpointProofs")) {
+                const triple = String(variables["triple"]).toLowerCase();
                 return {
                     triples: [
-                        ...proofs.map((proof) => ({
-                            object_id: proof.tripleId.toUpperCase().replace("0X", "0x"),
-                            subject: {term_id: "0x02", data: proof.document},
-                        })),
+                        ...proofs
+                            .filter((proof) => proof.tripleId.toLowerCase() === triple)
+                            .map((proof) => ({
+                                object_id: proof.tripleId.toUpperCase().replace("0X", "0x"),
+                                subject: {term_id: "0x02", data: proof.document},
+                            })),
+                        // An indexer that ignored the filter: a context on another triple.
+                        {object_id: "0xdead", subject: {term_id: "0x03", data: "ipfs://stray"}},
                         {object_id: null, subject: null},
                         7,
                     ],
@@ -123,14 +144,17 @@ describe("getAgentEndpoints", () => {
         const cfg = config(transport, chain, {
             "ipfs://good": JSON.parse(endpointBindingDocument(good)),
         });
-        const listed = await getAgentEndpoints(AGENT_ATOM, cfg);
+        const listed = await getAgentEndpoints(SUBJECT, cfg);
         expect(listed.map((entry) => [entry.endpoint, entry.status])).toEqual([
             ["https://a.example", "bound"],
             ["https://b.example", "unproven"],
         ]);
         expect(seen[0]).toMatchObject({subject: AGENT_ATOM, hasEndpoint: "0xe1", limit: 10});
-        expect(seen[1]).toEqual({triples: ["0xa1", "0xb1"], inContextOf: "0xc1"});
-        expect(await resolveAgentEndpoint(AGENT_ATOM, cfg)).toBe("https://a.example");
+        expect(seen.slice(1)).toEqual([
+            {triple: "0xa1", inContextOf: "0xc1", limit: 5},
+            {triple: "0xb1", inContextOf: "0xc1", limit: 5},
+        ]);
+        expect(await resolveAgentEndpoint(SUBJECT, cfg)).toBe("https://a.example");
     });
 
     it("reads a transferred token as transferred, and resolves nothing", async () => {
@@ -146,9 +170,9 @@ describe("getAgentEndpoints", () => {
             chain,
             {"ipfs://d": JSON.parse(endpointBindingDocument(binding))},
         );
-        const [entry] = await getAgentEndpoints(AGENT_ATOM, cfg);
+        const [entry] = await getAgentEndpoints(SUBJECT, cfg);
         expect(entry?.status).toBe("transferred");
-        expect(await resolveAgentEndpoint(AGENT_ATOM, cfg)).toBeNull();
+        expect(await resolveAgentEndpoint(SUBJECT, cfg)).toBeNull();
     });
 
     it("keeps the best proof, and reports proofs that are unreadable, foreign or for another endpoint", async () => {
@@ -172,7 +196,7 @@ describe("getAgentEndpoints", () => {
                 "ipfs://good": JSON.parse(endpointBindingDocument(good)),
             },
         );
-        const [entry] = await getAgentEndpoints(AGENT_ATOM, cfg);
+        const [entry] = await getAgentEndpoints(SUBJECT, cfg);
         expect(entry?.status).toBe("bound");
         expect(entry?.proofs.map((proof) => proof.status)).toEqual([
             "unreadable",
@@ -187,7 +211,7 @@ describe("getAgentEndpoints", () => {
         const cfg = config(graph([], [], seen), chainOf({owner: owner.address}), {});
         // The one malformed row the fake always adds has no endpoint, so it is dropped too.
         expect(
-            await getAgentEndpoints(AGENT_ATOM, {
+            await getAgentEndpoints(SUBJECT, {
                 ...cfg,
                 transport: {
                     async request(query, variables) {
@@ -204,7 +228,7 @@ describe("getAgentEndpoints", () => {
         const chain = chainOf({owner: owner.address});
         const good = await bind("https://a.example", chain);
         const urls: string[] = [];
-        const listed = await getAgentEndpoints(AGENT_ATOM, {
+        const listed = await getAgentEndpoints(SUBJECT, {
             graphqlUrl: "https://testnet.intuition.sh/v1/graphql",
             predicates: {hasEndpoint: "0xe1", inContextOf: "0xc1"},
             chain,
@@ -229,5 +253,125 @@ describe("getAgentEndpoints", () => {
             "unreadable",
             "unreadable",
         ]);
+    });
+
+    it("reads another agent's valid binding under this agent's atom as invalid, and resolves nothing", async () => {
+        // The attack: the owner of agent 8 completes a genuine handshake for 8, writes
+        // (agent 7's atom, has endpoint, E) and attaches the binding to it.
+        const chain = chainOf({owner: owner.address});
+        const foreign = await bind("https://attacker.example", chain, "8");
+        const cfg = config(
+            graph(
+                [{tripleId: "0xa1", endpoint: "https://attacker.example"}],
+                [{tripleId: "0xa1", document: "ipfs://foreign"}],
+            ),
+            chain,
+            {"ipfs://foreign": JSON.parse(endpointBindingDocument(foreign))},
+        );
+        const [entry] = await getAgentEndpoints(SUBJECT, cfg);
+        expect(entry?.status).toBe("unproven");
+        expect(entry?.proofs).toMatchObject([
+            {status: "invalid", reason: "the document binds another agent"},
+        ]);
+        expect(await resolveAgentEndpoint(SUBJECT, cfg)).toBeNull();
+        // The same binding read for its own agent is bound: the check is the subject, not the proof.
+        expect(await resolveAgentEndpoint({...SUBJECT, agentId: "8"}, cfg)).toBe(
+            "https://attacker.example",
+        );
+    });
+
+    it("keeps the genuine endpoint when a newer foreign binding is attached beside it", async () => {
+        const chain = chainOf({owner: owner.address});
+        const genuine = await bind("https://a.example", chain);
+        const foreign = await bind("https://attacker.example", chain, "8");
+        const cfg = config(
+            graph(
+                [
+                    {tripleId: "0xb1", endpoint: "https://attacker.example"},
+                    {tripleId: "0xa1", endpoint: "https://a.example"},
+                ],
+                [
+                    {tripleId: "0xb1", document: "ipfs://foreign"},
+                    {tripleId: "0xa1", document: "ipfs://genuine"},
+                ],
+            ),
+            chain,
+            {
+                "ipfs://foreign": JSON.parse(endpointBindingDocument(foreign)),
+                "ipfs://genuine": JSON.parse(endpointBindingDocument(genuine)),
+            },
+        );
+        expect(await resolveAgentEndpoint(SUBJECT, cfg)).toBe("https://a.example");
+    });
+
+    it("checks at most maxProofsPerClaim proofs per claim, oldest first", async () => {
+        const chain = chainOf({owner: owner.address});
+        const good = await bind("https://a.example", chain);
+        const fetched: string[] = [];
+        const junk = Array.from({length: 7}, (_, i) => ({
+            tripleId: "0xa1",
+            document: `ipfs://j${i}`,
+        }));
+        const seen: Record<string, unknown>[] = [];
+        const cfg: DirectoryConfig = {
+            ...config(
+                graph(
+                    [{tripleId: "0xa1", endpoint: "https://a.example"}],
+                    [{tripleId: "0xa1", document: "ipfs://good"}, ...junk],
+                    seen,
+                ),
+                chain,
+                {},
+            ),
+            maxProofsPerClaim: 3,
+            async fetchDocument(uri) {
+                fetched.push(uri);
+                if (uri === "ipfs://good") return JSON.parse(endpointBindingDocument(good));
+                throw new Error("gateway answered 404");
+            },
+        };
+        const [entry] = await getAgentEndpoints(SUBJECT, cfg);
+        expect(seen[1]).toMatchObject({limit: 3});
+        // The fake ignores `limit`, as a misbehaving indexer would; the reader still stops at 3.
+        expect(fetched).toEqual(["ipfs://good", "ipfs://j0", "ipfs://j1"]);
+        expect(entry?.status).toBe("bound");
+    });
+
+    it("refuses a subject that names no ERC-8004 agent", async () => {
+        const cfg = config(graph([], []), chainOf({owner: owner.address}), {});
+        await expect(
+            getAgentEndpoints({...SUBJECT, agentRegistry: "eip155:13579"}, cfg),
+        ).rejects.toBeInstanceOf(TypeError);
+        await expect(getAgentEndpoints({...SUBJECT, agentId: "x"}, cfg)).rejects.toThrow(
+            "not an ERC-8004 agent id",
+        );
+    });
+});
+
+describe("isSameAgent", () => {
+    const seven = {agentRegistry: `eip155:13579:${REGISTRY}`, agentId: "7"};
+
+    it("matches one token whatever the registry address's case", () => {
+        expect(
+            isSameAgent(seven, {
+                agentRegistry: `eip155:13579:${REGISTRY.toLowerCase()}`,
+                agentId: "7",
+            }),
+        ).toBe(true);
+    });
+
+    it("tells apart another token, another registry and another chain, and refuses malformed ids", () => {
+        expect(isSameAgent(seven, {...seven, agentId: "8"})).toBe(false);
+        expect(
+            isSameAgent(seven, {
+                agentRegistry: `eip155:13579:0x${"11".repeat(20)}`,
+                agentId: "7",
+            }),
+        ).toBe(false);
+        expect(isSameAgent(seven, {agentRegistry: `eip155:1155:${REGISTRY}`, agentId: "7"})).toBe(
+            false,
+        );
+        expect(isSameAgent(seven, {...seven, agentId: "07"})).toBe(false);
+        expect(isSameAgent({...seven, agentRegistry: "nope"}, seven)).toBe(false);
     });
 });

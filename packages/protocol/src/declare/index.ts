@@ -106,6 +106,7 @@ export {
 
 /** The endpoint binding on Intuition (task 39c): the claim and the signed handshake attached to it. */
 export {
+    AgentAtomMismatchError,
     MissingAgentAtomError,
     prepareEndpointBinding,
     type EndpointBindingPlan,

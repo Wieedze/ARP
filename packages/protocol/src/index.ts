@@ -631,13 +631,17 @@ export {
 export {handshakeChain} from "./handshake-chain.js";
 export {handshakeFetchHandler, handshakeStatusOf} from "./handshake-http.js";
 export {
+    DEFAULT_MAX_PROOFS_PER_CLAIM,
     getAgentEndpoints,
+    isSameAgent,
     resolveAgentEndpoint,
     type DirectoryConfig,
+    type DirectorySubject,
     type EndpointProof,
     type ListedEndpoint,
 } from "./directory.js";
 export {
+    AgentAtomMismatchError,
     MissingAgentAtomError,
     prepareEndpointBinding,
     type EndpointBindingPlan,

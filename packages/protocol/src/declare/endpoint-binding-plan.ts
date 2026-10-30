@@ -1,5 +1,9 @@
 import type {Hex} from "viem";
 
+import {toCaip19} from "../caip.js";
+import {normaliseEndpoint, parseAgentRegistry, type EndpointBinding} from "../handshake.js";
+import {SAME_AS} from "../sources/intuition/terms.js";
+import {canonicalCaipThing, thingUri} from "./agent-atom.js";
 import {IdentityTermHasNoPositionError} from "./identity-plan.js";
 import {
     atomDataForUri,
@@ -25,6 +29,13 @@ import type {PreparedCall} from "./types.js";
  * **The predicates are parameters, not constants.** Read from the graph before anything was
  * minted (`portability.md`, `scripts/measure/endpoint-predicate.ts`); the ids on testnet 13579 are
  * recorded in `data/deployments/13579.json` under `arp.endpointBinding`.
+ *
+ * **The plan takes the binding, not its parts.** The endpoint is read off it, and the agent atom
+ * must carry the `same as` edge to the binding's own ERC-8004 id, so a plan cannot attach one
+ * agent's handshake to another agent's claim. The directory refuses that pairing on read anyway
+ * (ADR `0095` §7); refusing it here keeps the fee from being spent on a claim that reads `invalid`.
+ * The document URI is still the caller's word: its CID depends on how the pinning service encodes,
+ * and a URI that is not this binding's document reads `invalid` or `unreadable`, never `bound`.
  *
  * **Plans, never signs** (ADR `0038`). The operator's wallet or ARP's sponsoring service signs it.
  */
@@ -60,11 +71,27 @@ export class MissingAgentAtomError extends Error {
     }
 }
 
+/** The agent atom does not name the agent the binding is for. */
+export class AgentAtomMismatchError extends Error {
+    readonly agentAtom: Hex;
+    readonly caip19: string;
+
+    constructor(agentAtom: Hex, caip19: string) {
+        super(
+            `agent atom ${agentAtom} has no \`same as\` edge to ${caip19}, the agent this binding ` +
+                "was signed for. Attaching it there would put one agent's handshake on another's claim.",
+        );
+        this.name = "AgentAtomMismatchError";
+        this.agentAtom = agentAtom;
+        this.caip19 = caip19;
+    }
+}
+
 export async function prepareEndpointBinding(params: {
     reads: MultiVaultReads;
     agentAtom: Hex;
-    /** The normalised endpoint the binding names. */
-    endpoint: string;
+    /** The verified binding, as `createHandshakeVerifier` returned it. Its endpoint is the claim's. */
+    binding: EndpointBinding;
     /** `ipfs://<cid>` of the pinned binding document. */
     documentUri: string;
     predicates: {hasEndpoint: Hex; inContextOf: Hex};
@@ -76,8 +103,25 @@ export async function prepareEndpointBinding(params: {
             `the binding document must be pinned: expected ipfs://, got ${params.documentUri}`,
         );
     }
-    const {reads} = params;
-    const endpointData = atomDataForUri(params.endpoint);
+    const {reads, binding} = params;
+    const endpoint = binding.endpoint;
+    if (normaliseEndpoint(endpoint) !== endpoint) {
+        throw new Error(`the binding's endpoint is not normalised: ${endpoint}`);
+    }
+    const registry = parseAgentRegistry(binding.agentRegistry);
+    if (registry === null || !/^(0|[1-9][0-9]*)$/.test(binding.agentId)) {
+        throw new Error(
+            `the binding names no ERC-8004 agent: ${binding.agentRegistry} / ${binding.agentId}`,
+        );
+    }
+    const caip19 = toCaip19({
+        chainId: registry.chainId,
+        registry: registry.registry,
+        tokenId: binding.agentId,
+    });
+    const caipAtom = await reads.atomId(atomDataForUri(thingUri(canonicalCaipThing(caip19))));
+    const sameAsTriple = await reads.tripleId(params.agentAtom, SAME_AS, caipAtom);
+    const endpointData = atomDataForUri(endpoint);
     const documentData = atomDataForUri(params.documentUri);
     const [endpointAtom, documentAtom] = await Promise.all([
         reads.atomId(endpointData),
@@ -96,6 +140,7 @@ export async function prepareEndpointBinding(params: {
 
     const [
         agentExists,
+        sameAsExists,
         endpointExists,
         documentExists,
         bindingExists,
@@ -105,6 +150,7 @@ export async function prepareEndpointBinding(params: {
         minDeposit,
     ] = await Promise.all([
         reads.termExists(params.agentAtom),
+        reads.termExists(sameAsTriple),
         reads.termExists(endpointAtom),
         reads.termExists(documentAtom),
         reads.termExists(bindingTriple),
@@ -114,6 +160,7 @@ export async function prepareEndpointBinding(params: {
         reads.minDeposit(),
     ]);
     if (!agentExists) throw new MissingAgentAtomError(params.agentAtom);
+    if (!sameAsExists) throw new AgentAtomMismatchError(params.agentAtom, caip19);
 
     const birth = params.birthDeposit ?? minDeposit;
     const atomAssets = atomCost + birth;
@@ -137,7 +184,7 @@ export async function prepareEndpointBinding(params: {
             kind: "create-atom",
             value: atomAssets,
             data: encodeCreateAtom(endpointData, atomAssets),
-            why: `the endpoint's atom, ${params.endpoint}`,
+            why: `the endpoint's atom, ${endpoint}`,
             preview: await preview("atom", endpointAtom, atomAssets),
         });
     }
@@ -164,7 +211,7 @@ export async function prepareEndpointBinding(params: {
                 endpointAtom,
                 tripleAssets,
             ),
-            why: `the agent has endpoint ${params.endpoint}`,
+            why: `the agent has endpoint ${endpoint}`,
             preview: await preview("triple", bindingTriple, tripleAssets),
         });
     }

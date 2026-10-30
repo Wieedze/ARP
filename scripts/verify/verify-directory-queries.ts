@@ -40,12 +40,21 @@ const unique = [...new Set((subjects.data?.triples ?? []).map((row) => row.subje
 console.log(
   `testnet 13579, ${new Date().toISOString()}: ${unique.length} subjects of has endpoint`,
 );
+// The subjects are not ARP agents, so no agent id is known for them. Any well-formed one serves: a
+// proof would be checked against it, and none is expected.
+const placeholder = {
+  agentRegistry: `eip155:13579:${deployments.arp.identityRegistry}`,
+  agentId: '0',
+};
 for (const subject of unique) {
-  const listed = await getAgentEndpoints(subject, {
-    graphqlUrl: GRAPHQL,
-    predicates: { hasEndpoint, inContextOf },
-    chain,
-  });
+  const listed = await getAgentEndpoints(
+    { agentAtom: subject, ...placeholder },
+    {
+      graphqlUrl: GRAPHQL,
+      predicates: { hasEndpoint, inContextOf },
+      chain,
+    },
+  );
   for (const entry of listed) {
     console.log(
       `  ${subject.slice(0, 10)}…  ${entry.status.padEnd(10)} ${entry.endpoint.slice(0, 70)}`,

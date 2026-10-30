@@ -10,7 +10,7 @@ not accepted: the user has not reviewed these choices.
 ADR `0094` §1 fixes the shape: the node generates a key, sends the agent id and its public key, the
 directory reads the token's owner and returns a challenge, the owner signs it in the shape of
 Sign-In with Ethereum, and the binding goes on Intuition as a triple with a predicate read from the
-graph. Building it forced six choices the ADR does not make.
+graph. Building it forced seven choices the ADR does not make.
 
 ## Decision
 
@@ -40,6 +40,34 @@ graph. Building it forced six choices the ADR does not make.
    `@arp-protocol/graphql` where every other query document is. Task 42 is editing that package in
    the same wave, and task 39 owns only new files in `packages/protocol`. Moving them is one
    mechanical commit once both are merged.
+7. **A proof counts only for the agent the reader asked about.** `getAgentEndpoints` takes the
+   agent (`agentRegistry` + `agentId`) beside its atom, and a binding that names another agent reads
+   `invalid`. Both triples on the read path are permissionless: without this, the owner of any token
+   could make a genuine handshake for their own token, write `(victim's atom, has endpoint, E)`,
+   attach their binding, and become the victim's newest `bound` endpoint — the one hirers pay. The
+   write side refuses the same pairing: `prepareEndpointBinding` takes the binding itself, reads the
+   endpoint off it, and requires the agent atom's `same as` edge to the binding's CAIP-19 id. Found
+   in review on 2026-10-30, before any directory was hosted; the three `has endpoint` subjects on
+   testnet all read `unproven` (`scripts/verify/verify-directory-queries.ts`), so it was **latent**.
+
+   **What a third party can still do is deny, not divert.** The read keeps the newest `limit`
+   claims (default 10) and, per claim, the oldest `maxProofsPerClaim` proofs (default 5), each its
+   own query. Two griefs survive, and both end in `null`, never in the griefer's endpoint:
+   - **Crowding out the claim.** Ten newer `has endpoint` claims push the genuine one out of the
+     window. Each needs a new triple and a new endpoint atom, so at least ten triple fees and ten
+     atom fees: about 0.02 TRUST on 13579 and about 2 TRUST on 1155, from the costs
+     `portability.md` measured on 2026-10-19 (0.001000000002 and 0.001000000001 against
+     0.100000000002 and 0.100000000001). The birth deposits come back; the fees do not. A reader
+     who suspects it raises `limit`.
+   - **Crowding out the proof.** Junk contexts on a claim that predate its genuine proof. A context
+     triple names an existing claim, so this needs the claim written before its owner writes it,
+     which means guessing the endpoint, or a re-handshake on an endpoint already buried in junk.
+     Five junk contexts cost five triple fees and five atom fees, one document atom each.
+
+   `maxProofsPerClaim` also bounds what one claim can make a reader spend: at most five document
+   fetches and ten chain reads. A ranking that cannot be crowded (by stake, or by the binding's
+   document atom) would need either a field this read has not validated or the document before the
+   query, and was not built.
 
 ## Alternatives considered
 
@@ -69,6 +97,9 @@ graph. Building it forced six choices the ADR does not make.
   runs with a stable name (`ARP_NODE_PUBLIC_URL`). The node says so when it starts a quick one.
 - No directory is hosted. `handshakeFetchHandler` is the handler a hosted service mounts; where it
   runs is open.
+- A reader has to know the agent's id, not only its atom (7). The atom alone says where claims hang,
+  not whose they are.
+- A third party can still make an agent unresolvable for the price of its fees (7).
 
 **Neutral (worth knowing):**
 
