@@ -19,7 +19,11 @@ measure of whether ARP is useful to them. Tools never pay.
 - The index, the MCP tools and `GET /content/:atomId` (`apps/mcp/src/content.ts:281`) answer HTTP
   402 with x402 payment requirements when unpaid.
 - The standard is used: a signed USDC authorisation, settled by a facilitator. Base Sepolia while
-  on testnet. Check the facilitator's current docs and supported networks before choosing one.
+  on testnet.
+- **Use the official x402 packages, not a hand-rolled 402** (user decision, 2026-10-30: depend on
+  what exists). First step of the task: read the x402 Foundation's current docs and the
+  `coinbase/x402` repository, record the package names and versions chosen, and whether the
+  testnet facilitator needs an API key. If it does, that is a question for the user, not a guess.
 
 ### 41b — The node
 
