@@ -1,0 +1,121 @@
+{
+ "_note": "ADR 0087 applied on testnet 13579 to the last six MCP servers of the catalogue, each validated by the user on 2026-10-30 (« ok » after the dry run). Neon, PayPal and Webflow by remote endpoint (data/catalogue/remote-endpoints.json); Microsoft's two servers, Terraform's and SonarQube's Docker images, and PayPal's and Webflow's packages by hand (data/catalogue/validated-packages.json, with the proof accepted for each). PayPal and Webflow have two identities each, both `source` → the repository. New kind tag `docker image` (ADR 0088). Re-deriving: scripts/seed/plan-tool-identity.ts, which plans 0 calls for these.",
+ "_authorisation": "Signed by the agent session with AGENT_PRIVATE_KEY on the user's instruction of 2026-10-30 (« ok », after the dry run of these 18 calls was shown). ADR 0037: the key was never read into the agent's context, send-plan.ts checked the signer against AGENT_ADDRESS, and this file is the record.",
+ "chainId": 13579,
+ "signer": "0x906f3A52ec089f8D4E9127F91C6bE5Ae0d18f91f",
+ "publishedAt": "2026-10-30",
+ "balanceBefore": "1.148844007627",
+ "balanceAfter": "1.068626334347",
+ "_balanceNote": "The difference, 0.08021767328, is the 0.09000000008 deposited, less what the 12 redemptions returned, plus gas.",
+ "_after": "21 of the 22 catalogued MCP servers now carry their identity off the repository; zapier/zapier-mcp, found to have a public endpoint after this run, waits for the user.",
+ "calls": [
+  {
+   "kind": "create-atom",
+   "value": "20000000010000000",
+   "why": "https://mcp.neon.tech/mcp, https://mcp.paypal.com/mcp, https://mcp.webflow.com/sse, https://npmjs.com/package/@azure/mcp, https://npmjs.com/package/@microsoft/fabric-mcp, https://hub.docker.com/r/hashicorp/terraform-mcp-server, the tag \"docker image\", https://hub.docker.com/r/sonarsource/sonarqube-mcp, https://npmjs.com/package/@paypal/mcp, https://npmjs.com/package/webflow-mcp-server",
+   "tx": "0xc3db1e5b39dd915c7211d3044cf95e18e69f49895bbd66c329e6e63d5a472853"
+  },
+  {
+   "kind": "create-triple",
+   "value": "16000000016000000",
+   "why": "mcp.neon.tech/mcp source neondatabase/mcp-server-neon; mcp.neon.tech/mcp has tag remote server; mcp.neon.tech/mcp has tag mcp; mcp.neon.tech/mcp has tag database; mcp.paypal.com/mcp source paypal/paypal-mcp-server; mcp.paypal.com/mcp has tag remote server; mcp.paypal.com/mcp has tag mcp; mcp.paypal.com/mcp has tag payment",
+   "tx": "0xe6f78a1f3290997f66d3117be7638b69e781aebdb0dfab189e77c42c7f8d2a35"
+  },
+  {
+   "kind": "create-triple",
+   "value": "16000000016000000",
+   "why": "mcp.webflow.com/sse source webflow/mcp-server; mcp.webflow.com/sse has tag remote server; mcp.webflow.com/sse has tag mcp; mcp.webflow.com/sse has tag website; npmjs.com/package/@azure/mcp source microsoft/mcp; npmjs.com/package/@azure/mcp has tag npm package; npmjs.com/package/@azure/mcp has tag mcp; npmjs.com/package/@azure/mcp has tag infrastructure",
+   "tx": "0xac1d7da4f2b3f64a2bf82ec9ccb9205bd3c1035d2b41da5b2d503f3c80ef1e3c"
+  },
+  {
+   "kind": "create-triple",
+   "value": "16000000016000000",
+   "why": "npmjs.com/package/@microsoft/fabric-mcp source microsoft/mcp; npmjs.com/package/@microsoft/fabric-mcp has tag npm package; npmjs.com/package/@microsoft/fabric-mcp has tag mcp; hub.docker.com/r/hashicorp/terraform-mcp-server source hashicorp/terraform-mcp-server; hub.docker.com/r/hashicorp/terraform-mcp-server has tag docker image; hub.docker.com/r/hashicorp/terraform-mcp-server has tag mcp; hub.docker.com/r/hashicorp/terraform-mcp-server has tag infrastructure; hub.docker.com/r/sonarsource/sonarqube-mcp source SonarSource/sonarqube-mcp-server",
+   "tx": "0xf78737b7b2fdaf77cd9898ac38dd222e8300daab059b961acd0a41f6e67b3b12"
+  },
+  {
+   "kind": "create-triple",
+   "value": "16000000016000000",
+   "why": "hub.docker.com/r/sonarsource/sonarqube-mcp has tag docker image; hub.docker.com/r/sonarsource/sonarqube-mcp has tag mcp; hub.docker.com/r/sonarsource/sonarqube-mcp has tag quality; npmjs.com/package/@paypal/mcp source paypal/paypal-mcp-server; npmjs.com/package/@paypal/mcp has tag npm package; npmjs.com/package/@paypal/mcp has tag mcp; npmjs.com/package/@paypal/mcp has tag payment; npmjs.com/package/webflow-mcp-server source webflow/mcp-server",
+   "tx": "0xfc1fa71cb5379033eaa746389901c56b5f9067d4b117f6aafee99d50c5ea156f"
+  },
+  {
+   "kind": "create-triple",
+   "value": "6000000006000000",
+   "why": "npmjs.com/package/webflow-mcp-server has tag npm package; npmjs.com/package/webflow-mcp-server has tag mcp; npmjs.com/package/webflow-mcp-server has tag website",
+   "tx": "0x356e4492a01d33aea01b0b2e13789a1d9491ad39fdf288b2efe0d0d82160d01a"
+  },
+  {
+   "kind": "redeem",
+   "value": "0",
+   "why": "retire \"neondatabase/mcp-server-neon has tag mcp\"",
+   "tx": "0x7235bdb542a60243e447b6b238c2b3a18d18d32e71e9bd3ee2f8dcd3af5c5be0"
+  },
+  {
+   "kind": "redeem",
+   "value": "0",
+   "why": "retire \"neondatabase/mcp-server-neon has tag database\"",
+   "tx": "0x6a0155f20ea96d0c108c2e0ea7802a6f75fbcf63be8bf19f1b3dbc4717a31343"
+  },
+  {
+   "kind": "redeem",
+   "value": "0",
+   "why": "retire \"paypal/paypal-mcp-server has tag mcp\"",
+   "tx": "0xed45eee69be4b2a54c844a333608748eaa7736eec48998c4db528b0fa705d41d"
+  },
+  {
+   "kind": "redeem",
+   "value": "0",
+   "why": "retire \"paypal/paypal-mcp-server has tag payment\"",
+   "tx": "0x39e5d2b7e3843552574f7a5511da0da31659282bef2293baf2079c21c6c72a78"
+  },
+  {
+   "kind": "redeem",
+   "value": "0",
+   "why": "retire \"webflow/mcp-server has tag mcp\"",
+   "tx": "0x5a0289cb9520453daf2208ff090535d41b590e123fc4aabd71195952bdabde61"
+  },
+  {
+   "kind": "redeem",
+   "value": "0",
+   "why": "retire \"webflow/mcp-server has tag website\"",
+   "tx": "0xd52e7ba242a9dc6dc538159a93251c853bead0f517d992e0e76f17aff2b0e809"
+  },
+  {
+   "kind": "redeem",
+   "value": "0",
+   "why": "retire \"microsoft/mcp has tag mcp\"",
+   "tx": "0x7d75e430b0e112f945ae2c8accbb0a620ad8f4eec0e47c7c059af3197eb4d681"
+  },
+  {
+   "kind": "redeem",
+   "value": "0",
+   "why": "retire \"microsoft/mcp has tag infrastructure\"",
+   "tx": "0x2f84750d382e006453abfe1147c45cda56d48e42cb9630120f59551172f93378"
+  },
+  {
+   "kind": "redeem",
+   "value": "0",
+   "why": "retire \"hashicorp/terraform-mcp-server has tag mcp\"",
+   "tx": "0x1a96312d430d2fad038e000ff3e993ecd98ce7a12a2133952cf5a552e2342e3e"
+  },
+  {
+   "kind": "redeem",
+   "value": "0",
+   "why": "retire \"hashicorp/terraform-mcp-server has tag infrastructure\"",
+   "tx": "0xb739809710199e98bd974747df1590894447f1f810a517e1b4452f9a648a1ffc"
+  },
+  {
+   "kind": "redeem",
+   "value": "0",
+   "why": "retire \"SonarSource/sonarqube-mcp-server has tag mcp\"",
+   "tx": "0x3d68b9f5068250250f53cbecb890862983373e61a4aef2d81547d1d847d332d6"
+  },
+  {
+   "kind": "redeem",
+   "value": "0",
+   "why": "retire \"SonarSource/sonarqube-mcp-server has tag quality\"",
+   "tx": "0xb08e38c868c272b47f6a410d955723194523a707a1f18fbc0a92e0f2edb40325"
+  }
+ ]
+}

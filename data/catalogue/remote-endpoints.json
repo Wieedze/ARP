@@ -62,7 +62,31 @@
       "endpoint": "https://containers.mcp.cloudflare.com/mcp",
       "from": "README, one of several servers in this repository",
       "validated": "2026-10-30"
+    },
+    {
+      "repo": "neondatabase/mcp-server-neon",
+      "endpoint": "https://mcp.neon.tech/mcp",
+      "from": "README (12 mentions), and the deprecation message of @neondatabase/mcp-server-neon names it",
+      "validated": "2026-10-30"
+    },
+    {
+      "repo": "paypal/paypal-mcp-server",
+      "endpoint": "https://mcp.paypal.com/mcp",
+      "from": "not the README: the probe found it on PayPal's domain, answering with the MCP OAuth header",
+      "validated": "2026-10-30"
+    },
+    {
+      "repo": "webflow/mcp-server",
+      "endpoint": "https://mcp.webflow.com/sse",
+      "from": "README. `/mcp` answers too; `/sse` is the URL the README tells an agent to configure, so it is the one a hook will see",
+      "validated": "2026-10-30"
+    },
+    {
+      "repo": "zapier/zapier-mcp",
+      "endpoint": "https://mcp.zapier.com/api/v1/connect",
+      "from": "README, and it answers with the MCP OAuth header. Each user's own URL is a different thing; this one is public",
+      "pending": "shown to the user 2026-10-30, not yet validated"
     }
   ],
-  "_notProbed": "zapier/zapier-mcp: each user gets their own URL, so there is no public identity to probe."
+  "_zapier": "Until 2026-10-30 this file said Zapier had no public identity because each user gets their own URL. That was wrong: the README also names a public OAuth endpoint, mcp.zapier.com/api/v1/connect."
 }

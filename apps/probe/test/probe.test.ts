@@ -195,8 +195,12 @@ describe('the service', () => {
     expect(((await response.json()) as { window: { days: number } }).window.days).toBe(30);
   });
 
-  test('the bundled list holds the eight packages and the candidate endpoints, Zapier excluded', () => {
+  test('the bundled list holds the eight packages and only endpoints with a public URL', () => {
     expect(TARGETS.filter((target) => target.kind !== 'endpoint')).toHaveLength(8);
-    expect(TARGETS.some((target) => target.url.includes('zapier'))).toBe(false);
+    expect(
+      TARGETS.filter((target) => target.kind === 'endpoint').every((t) =>
+        t.url.startsWith('https://'),
+      ),
+    ).toBe(true);
   });
 });

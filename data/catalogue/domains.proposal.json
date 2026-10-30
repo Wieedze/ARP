@@ -162,6 +162,10 @@
   {
    "label": "remote server",
    "why": "The kind tag of a tool reached only as a hosted endpoint (ADR 0087), the counterpart of `npm package`. `remote` alone says where, not what."
+  },
+  {
+   "label": "docker image",
+   "why": "The kind tag of a tool distributed as a container image (ADR 0087), beside `npm package` and `pypi package`. `docker` alone names the tool that runs it, not the thing."
   }
  ],
  "_ruleViolationOnChain": {

@@ -30,12 +30,16 @@
  *  is not enough: a README can cite somebody else's package, and a wrong atom is permanent.
  *  Everything unconfirmed is printed for the user and planned for nobody.
  *
- *  ## A remote endpoint is planned only once the user validated it
+ *  ## Validated by the user: remote endpoints, and packages the registry does not confirm
  *
  *  `data/catalogue/remote-endpoints.json` lists candidates; an entry with `validated` is one the user
  *  accepted from `apps/probe`'s reading (an MCP OAuth `resource_metadata` header, or a JSON-RPC
  *  result to `initialize`). It is tagged `remote server` in place of a registry's kind. The probe
  *  determines; this plans; a person signs — the probe never writes (ADR `0089`).
+ *
+ *  `data/catalogue/validated-packages.json` holds packages and Docker images the confirmation rule
+ *  above does not reach — a monorepo publishing several, an image, or a package whose registry
+ *  record names no repository — each with the proof the user accepted, written beside it.
  */
 import {writeFileSync} from "node:fs";
 
@@ -43,6 +47,7 @@ import {formatEther, getAddress, stringToHex, type Hex} from "viem";
 
 import catalogue from "../../data/catalogue/tools.json";
 import remoteEndpoints from "../../data/catalogue/remote-endpoints.json";
+import validatedPackages from "../../data/catalogue/validated-packages.json";
 import proposal from "../../data/catalogue/domains.proposal.json";
 import {
     atomDataForUri,
@@ -60,7 +65,12 @@ const TARGETS = {mainnet: 1155, testnet: 13579} as const;
 const SOURCE = "0xe6b33153a6f58b47bcfe074cd154447608d5788e96446246536ddb9cd84105a4" as Hex;
 
 /** The kind tags. Compounds, so each is listed in `domains.proposal.json` `compounds` (ADR `0088`). */
-const KIND_TAG = {npm: "npm package", pypi: "pypi package", endpoint: "remote server"} as const;
+const KIND_TAG = {
+    npm: "npm package",
+    pypi: "pypi package",
+    docker: "docker image",
+    endpoint: "remote server",
+} as const;
 
 function arg(name: string): string | undefined {
     const index = process.argv.indexOf(`--${name}`);
@@ -301,30 +311,51 @@ for (const {repoUrl, repo, resolution} of resolved) {
     }
 }
 
-/** `domain` overrides the repository's: `null` when the repository's tag does not describe this
- *  server — one repository can publish several, and each carries only what it does. */
-type Endpoint = {repo: string; endpoint: string; validated?: string; domain?: string | null};
-const validated = (remoteEndpoints as {endpoints: Endpoint[]}).endpoints.filter((row) => row.validated !== undefined);
-console.log(`\nendpoints    ${validated.length} validated by the user`);
-for (const row of validated) {
+/** An identity the user validated by hand rather than one the registry confirmed. `domain`
+ *  overrides the repository's: `null` when the repository's tag does not describe this server — one
+ *  repository can publish several, and each carries only what it does. */
+type Validated = {repo: string; kind: keyof typeof KIND_TAG; url: string; domain?: string | null};
+
+async function planIdentity(row: Validated): Promise<void> {
     const repoUrl = `https://github.com/${row.repo}`;
     const tags = tagsOf.get(repoUrl);
-    const url = normaliseToolUrl(row.endpoint);
+    const url = normaliseToolUrl(row.url);
     const repoId = await reads.atomId(atomDataForUri(toolAtomUri(repoUrl)));
-    const endpointData = atomDataForUri(toolAtomUri(url));
-    const endpointId = await reads.atomId(endpointData);
-    if (!(await reads.termExists(endpointId))) newAtoms.push({data: endpointData, why: url});
+    const data = atomDataForUri(toolAtomUri(url));
+    const id = await reads.atomId(data);
+    if (!(await reads.termExists(id))) newAtoms.push({data, why: url});
     const name = url.slice("https://".length);
 
-    await planTriple(endpointId, SOURCE, repoId, `${name} source ${row.repo}`);
+    await planTriple(id, SOURCE, repoId, `${name} source ${row.repo}`);
     const does = row.domain !== undefined ? row.domain : (tags?.does ?? null);
-    const labels = [KIND_TAG.endpoint, tags?.is ?? "mcp", ...(does ? [does] : [])];
-    for (const label of labels) {
-        await planTriple(endpointId, HAS_TAG as Hex, await labelAtom(label), `${name} has tag ${label}`);
+    for (const label of [KIND_TAG[row.kind], tags?.is ?? "mcp", ...(does ? [does] : [])]) {
+        await planTriple(id, HAS_TAG as Hex, await labelAtom(label), `${name} has tag ${label}`);
     }
     for (const label of [tags?.is ?? "mcp", ...(tags?.does ? [tags.does] : [])]) {
         await planRedeem(repoId, await labelAtom(label), `retire "${row.repo} has tag ${label}"`);
     }
+}
+
+type Endpoint = {repo: string; endpoint: string; validated?: string; domain?: string | null};
+const endpointRows = (remoteEndpoints as {endpoints: Endpoint[]}).endpoints.filter(
+    (row) => row.validated !== undefined,
+);
+type PackageRow = {repo: string; registry: "npm" | "pypi" | "docker"; name: string; domain?: string | null};
+const packageRows = (validatedPackages as {packages: PackageRow[]}).packages;
+console.log(`
+validated    ${endpointRows.length} endpoints, ${packageRows.length} packages and images`);
+
+for (const row of endpointRows) {
+    await planIdentity({repo: row.repo, kind: "endpoint", url: row.endpoint, domain: row.domain});
+}
+for (const row of packageRows) {
+    const url =
+        row.registry === "docker"
+            ? `https://hub.docker.com/r/${row.name}`
+            : row.registry === "npm"
+              ? `https://www.npmjs.com/package/${row.name}`
+              : `https://pypi.org/project/${row.name}`;
+    await planIdentity({repo: row.repo, kind: row.registry, url, domain: row.domain});
 }
 
 if (newAtoms.length > 0) {

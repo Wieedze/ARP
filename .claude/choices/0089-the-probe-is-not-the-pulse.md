@@ -40,4 +40,6 @@ merge them, and merging them would be wrong.
   program, as ADR `0082` holds. The endpoints ADR `0087` still has to validate are read from its
   first cycle, triggered locally.
 - The probe is ARP's own measurement. It reads as `measured by ARP`, never as `verified`.
-- A per-user endpoint (Zapier's) has no public identity and is not probed.
+- ~~A per-user endpoint (Zapier's) has no public identity and is not probed.~~ Wrong the same day:
+  Zapier's README also names a public OAuth endpoint, `mcp.zapier.com/api/v1/connect`, and that one is
+  probed. A per-user URL is still never probed — it is somebody's credential, not a tool's identity.
