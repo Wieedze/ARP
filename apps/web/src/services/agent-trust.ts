@@ -72,9 +72,9 @@ export type EvidenceWeight =
  */
 
 /** How a rating document was tied back to a provider edge in the graph. */
-export type ProviderMatch = "document" | "label-prefix" | "none";
+type ProviderMatch = "document" | "label-prefix" | "none";
 
-export type ScoreDimension = {name: string; value: number};
+type ScoreDimension = {name: string; value: number};
 
 /**
  * One provider's row: the graph edge whose vault the market prices, and the

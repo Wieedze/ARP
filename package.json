@@ -28,11 +28,6 @@
     "check:scripts": "bunx tsc -p tsconfig.scripts.json --noEmit",
     "check": "bun run check:scripts && bun run --cwd apps/web check:tokens && bun run --cwd apps/web check:contrast"
   },
-  "dependencies": {
-    "@metamask/delegation-core": "^2.2.1",
-    "@metamask/delegation-deployments": "^1.4.0",
-    "@metamask/smart-accounts-kit": "^1.6.0"
-  },
   "devDependencies": {
     "@types/bun": "^1.4.4",
     "prettier": "^3.3.3",

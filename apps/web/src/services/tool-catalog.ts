@@ -129,7 +129,7 @@ export const TOOL_ORDERS: readonly {id: ToolListingOrder; label: string}[] = [
  * tool, the other a market on a claim about it (ADR `0039`). A tool can be in both, and then it
  * appears once with its declarations counted.
  */
-export type ToolProvenance = "registered" | "declared";
+type ToolProvenance = "registered" | "declared";
 
 export type ToolRow = {
     key: string;

@@ -11,7 +11,7 @@
  * came out of a misparse would be printed as the author's own sentence.
  */
 
-export type SkillSection = {
+type SkillSection = {
     heading: string;
     /** The first line of the first fenced block under the heading. */
     command: string;

@@ -128,7 +128,7 @@ export type StakeLimits = {
 export const MIN_SHARES_TOLERANCE_BPS = 100n;
 
 /** The ceiling's fallback when `VITE_MAX_STAKE_TRUST` is unset or unparseable. */
-export const DEFAULT_MAX_STAKE_TRUST = "1";
+const DEFAULT_MAX_STAKE_TRUST = "1";
 
 /**
  * Parse the per-transaction ceiling from the environment.
@@ -452,7 +452,7 @@ export function assertWalletOnChain(expected: StakeChain, chainId: number | unde
  * clear message and a failed transaction the user paid for. Returns the shares
  * the call would mint.
  */
-export function simulateStake(
+function simulateStake(
     publicClient: PublicClient,
     quote: StakeQuote,
     account: Address,
@@ -731,7 +731,7 @@ export async function quoteRedeem(
 }
 
 /** `eth_call` the redemption before signing. Read-only; returns what the call would pay out. */
-export function simulateRedeem(
+function simulateRedeem(
     publicClient: PublicClient,
     quote: RedeemQuote,
     account: Address,

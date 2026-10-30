@@ -29,9 +29,6 @@ import { pinThing } from './intuition-pin.js';
 
 export type { IdentityAtomPlan };
 
-/** Kept as the module's own name for the plan, so existing callers do not all have to change. */
-export type IdentityPlan = IdentityAtomPlan;
-
 export class PinMismatchError extends Error {
   override readonly name = 'PinMismatchError';
   constructor(which: string, returned: string, expected: string) {

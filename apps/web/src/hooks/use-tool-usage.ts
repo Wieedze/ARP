@@ -1,6 +1,3 @@
-import {useChainChoice} from "../lib/chain-choice";
-import {useQuery} from "@tanstack/react-query";
-
 import {fetchToolUsage} from "../services/erc8004-connector";
 import {buildToolUsageView, type ToolUsageView} from "../services/tool-usage-view";
 
@@ -57,9 +54,4 @@ export function toolUsageQueryOptions(
         staleTime: 60_000,
         retry: 0,
     };
-}
-
-export function useToolUsage(toolAtomId: string | null) {
-    const chain = useChainChoice();
-    return useQuery(toolUsageQueryOptions(chain, toolAtomId));
 }

@@ -120,11 +120,6 @@ export function contentIndexFor(chainId: number): ReadonlyMap<string, string> {
   return index;
 }
 
-/** Whether a URL is catalogued on this chain at all, for telling `unrecorded` from `unknown`. */
-export function isCatalogued(chainId: number, url: string): boolean {
-  return catalogueFor(chainId).some((row) => row.url === url);
-}
-
 /**
  * The signing identity, or null.
  *

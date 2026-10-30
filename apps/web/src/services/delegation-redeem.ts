@@ -18,7 +18,6 @@ import {
 } from "viem";
 import {privateKeyToAccount} from "viem/accounts";
 
-import {identityRegistryAbi} from "../lib/abi/identity-registry";
 import {multiVaultAbi} from "../lib/abi/multi-vault";
 import {intuitionTestnet} from "../lib/chains";
 import {deployments} from "../lib/deployments";
@@ -48,7 +47,6 @@ import {pinThing, type PinAuth} from "./intuition-pin";
 
 const MULTI_VAULT = deployments.intuition.multiVault;
 const MODULE_REGISTRY = deployments.arp.moduleRegistry;
-const IDENTITY_REGISTRY = deployments.arp.identityRegistry;
 
 const moduleRegistryAbi = [
     {
@@ -360,35 +358,6 @@ export function caip10Uri(
 }
 
 /**
- * Ensure the **CAIP-10 account atom** for `address` exists on chain,
- * creating it under the compose delegation if needed.
- *
- * Use this for an agent's **identity** atom — the on-chain account that
- * holds its reputation positions. Unlike `redeemEnsureAtomForThing`, no
- * IPFS pin is performed: the URI is deterministic, so the Intuition
- * indexer types the atom as an `Account` and renders the address itself
- * as the label. This makes a `(agent, uses, tool)` triple resolve to the
- * agent's account on the explorer and keeps the triple subject identical
- * to the position holder read by the reputation queries.
- */
-export async function redeemEnsureAtomForCaip10(
-    params: RedeemCommon & {
-        address: Address;
-        publicClient: PublicClient;
-        chainId?: number;
-    },
-): Promise<{atomId: Hex; uri: string; created: boolean; tx?: Hex}> {
-    const uri = caip10Uri(params.address, params.chainId);
-    const result = await redeemEnsureAtomForURI({
-        signedDelegation: params.signedDelegation,
-        agentWalletClient: params.agentWalletClient,
-        uri,
-        publicClient: params.publicClient,
-    });
-    return {...result, uri};
-}
-
-/**
  * Pin a Thing, check if the resulting atom exists on chain, and create it
  * under the compose delegation if not. Mirrors `ensureAtomForThing` from
  * `intuition-graph.ts` but routes the create through `redeemDelegation`
@@ -396,8 +365,8 @@ export async function redeemEnsureAtomForCaip10(
  *
  * `pinAuth` is required, not optional: pinning is gated behind Intuition's
  * partner API (ADR 0016) and only a Node entry point can supply the key.
- * `redeemEnsureAtomForURI` and `redeemEnsureAtomForCaip10` stay credential-free
- * — they derive the URI rather than pinning it.
+ * `redeemEnsureAtomForURI` stays credential-free — it derives the URI rather
+ * than pinning it.
  */
 export async function redeemEnsureAtomForThing(
     params: RedeemCommon & {
@@ -514,7 +483,3 @@ export async function redeemDeclareTriple(
     return {tripleId, created: true, tx};
 }
 
-// Re-export the identity registry address so the agent loop can sanity-check
-// at startup that the runtime keypair matches the on-chain runtime wallet.
-export const IDENTITY_REGISTRY_ADDRESS = IDENTITY_REGISTRY;
-export const identityRegistryAbiFragment = identityRegistryAbi;
