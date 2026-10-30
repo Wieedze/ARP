@@ -69,18 +69,18 @@ Written down because this document exists to stop a specific failure, which has 
 
 ## The state of it
 
-| Piece                                                           | Status                                                 |
-| --------------------------------------------------------------- | ------------------------------------------------------ |
-| `ModuleRegistry` — modules with domain + schema                 | built, deployed                                        |
-| `declareUsesTriple` — `(agent, uses, tool)`                     | built                                                  |
-| `stakeOnUsedMethodologies` — stake on what was actually used    | built                                                  |
-| `DomainScopeEnforcer`, `TrustStakeCapEnforcer` — the guard rail | built, deployed on testnet 13579                       |
-| Tool and agent reputation surfaced in the UI                    | built                                                  |
-| **Adoption of an existing ERC-8004 agent**                      | **missing — the whole gap**                            |
-| **The guard rail on the chain where the agents are**            | **missing — enforcers are on testnet, agents are not** |
-| Install handshake, the endpoint bound to the ERC-8004 token     | designed, ADR `0094` — not built                       |
-| A proof as the condition of a sponsored deposit                 | designed, ADR `0094` — not built                       |
-| Revenue: x402 in USDC                                           | designed, ADR `0094` — not built                       |
+| Piece                                                           | Status                                                                         |
+| --------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| `ModuleRegistry` — modules with domain + schema                 | built, deployed                                                                |
+| `declareUsesTriple` — `(agent, uses, tool)`                     | built                                                                          |
+| `stakeOnUsedMethodologies` — stake on what was actually used    | built                                                                          |
+| `DomainScopeEnforcer`, `TrustStakeCapEnforcer` — the guard rail | built, deployed on testnet 13579                                               |
+| Tool and agent reputation surfaced in the UI                    | built                                                                          |
+| **Adoption of an existing ERC-8004 agent**                      | **missing — the whole gap**                                                    |
+| **The guard rail on the chain where the agents are**            | **missing — enforcers are on testnet, agents are not**                         |
+| Install handshake, the endpoint bound to the ERC-8004 token     | designed, ADR `0094` — not built                                               |
+| A proof as the condition of a sponsored deposit                 | built for hire proofs, not running yet; content receipts refused until task 41 |
+| Revenue: x402 in USDC                                           | designed, ADR `0094` — not built                                               |
 
 The mechanism works today for agents ARP mints. It does not work for the agents that already exist — **28,720** reachable out of a registry whose next id is **444,562**, measured 2026-10-21 — and those are the population, so that gap is what stands between this and a live system. Worse than it reads: the mirror has not moved since 2026-09-16 while the registry kept going, so for roughly **fourteen agents in fifteen** the identity atom does **not exist** and has to be written (`scripts/agent/agent-identity-atom.ts`, ADR `0047`). `/agent/import` writes it now rather than waiting.
 

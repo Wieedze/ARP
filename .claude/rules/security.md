@@ -37,21 +37,25 @@ Walk through each item for every contract change. Document the result (clean pas
 ### Signature replay
 
 - If signatures are used (EIP-712, EIP-1271), they include a nonce + chainId + verifying contract.
-- Signatures are in use, so this section applies. Six sites: `contracts/src/erc8004/IdentityRegistry.sol`
+- Signatures are in use, so this section applies. Seven sites: `contracts/src/erc8004/IdentityRegistry.sol`
   (ARP's testnet deployment of the reference registry, which verifies signatures); MetaMask
-  Delegation Framework delegations (EIP-712, signed in the app); the operator's EIP-712
-  statement on import (`apps/web/src/services/agent-import.ts`); the MCP server's content receipt
+  Delegation Framework delegations (EIP-712, signed in the app, verified by `apps/sponsor` before
+  it publishes one); the operator's EIP-712 statement on import
+  (`apps/web/src/services/agent-import.ts`); the MCP server's content receipt
   (`packages/protocol/src/receipt.ts`); the node's hire receipt
-  (`packages/protocol/src/hire-receipt.ts`, ADR `0083`); and `ReceiptEnforcer`
+  (`packages/protocol/src/hire-receipt.ts`, ADR `0083`); the agent's sponsor request
+  (`packages/protocol/src/sponsor/request.ts`, ADR `0096`); and `ReceiptEnforcer`
   (`contracts/src/enforcers/ReceiptEnforcer.sol`, task 43, not deployed), which verifies that hire
-  receipt on chain. Both receipts carry no verifying contract. For the content receipt the cause
-  still holds: no contract checks it. **For the hire receipt it stopped holding on 2026-10-30**:
-  `ReceiptEnforcer` checks it, against the v1 domain as signed, so the signature names no verifier
-  and a receipt consumed there can be sponsored again at a second verifier. That is a deviation from
-  the bullet above, rated Medium, and whether to accept it or move to a v2 receipt that names its
-  verifier is an open decision in ADR `0098`. A new signature site gets checked against the bullet
-  above before it ships. The list said three until 2026-10-30, and the two receipts were missing
-  from it; it said five, with "no contract checks them" of both receipts, until the enforcer was
+  receipt on chain. Both receipts and the sponsor request carry no verifying contract. For the
+  content receipt the cause still holds: no contract checks it. The sponsor request's nonce is the
+  proof it is bound to, which the service spends once. **For the hire receipt the cause stopped
+  holding on 2026-10-30**: `ReceiptEnforcer` checks it, against the v1 domain as signed, so the
+  signature names no verifier and a receipt consumed there can be sponsored again at a second
+  verifier. That is a deviation from the bullet above, rated Medium, and whether to accept it or move
+  to a v2 receipt that names its verifier is an open decision in ADR `0098`. A new signature site
+  gets checked against the bullet above before it ships. The list said three until 2026-10-30, and
+  the two receipts were missing from it; it said five until the sponsor request was added the same
+  day (ADR `0096`), and six, with "no contract checks them" of both receipts, until the enforcer was
   added the same day (ADR `0098`).
 
 ### Oracles / external data

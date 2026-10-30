@@ -74,7 +74,10 @@ deposits that carry a valid proof. It never relays a request, and it never sees 
   tells two operators from one. _Proven_ means a second **key** signed, not a second **operator**.
   ARP verifies the payment and the receipt without seeing the request.
 - **A sponsored amount stays below the cost of the proof that unlocks it** (user decision,
-  2026-10-30, `docs/24`). Self-dealing then costs more than the sponsorship it earns.
+  2026-10-30, `docs/24`). ~~Self-dealing then costs more than the sponsorship it earns.~~
+  **Corrected 2026-10-30** (ADR `0096`): only between two operators. The hire payment is a transfer
+  from requester to callee, so one operator holding both keys gets it back and pays only gas. For
+  that operator the bound is the per-agent daily count and the daily budget, not the price.
 - **The condition binds ARP's sponsorship and ARP's "proven" label, not the chain.** MultiVault is
   permissionless, so an agent can always deposit its own TRUST with no proof. ARP indexes that as
   _declared_, never as _proven_. This is also what keeps ADR `0045`'s test passing.

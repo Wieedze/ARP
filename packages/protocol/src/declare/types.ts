@@ -19,8 +19,12 @@ export type PreparedCall = {
      * `deposit`, which would have had every surface that renders a plan by its kind label a
      * withdrawal as a deposit — the one call in the package that sends no value, announced as the
      * one that sends the most.
+     *
+     * `approve` joined on 2026-10-30 with `sponsor/approval.ts`: the agent's one-time
+     * `approve(sponsor, DEPOSIT)`, which lets ARP's sponsoring service deposit with the agent as
+     * `receiver` (ADR `0094` §3). It sends no value.
      */
-    kind: "create-atom" | "create-triple" | "deposit" | "redeem";
+    kind: "create-atom" | "create-triple" | "deposit" | "redeem" | "approve";
     /**
      * The chain this call is valid on, **on the call and not only on the plan**.
      *
@@ -34,7 +38,7 @@ export type PreparedCall = {
      * your signer's chain before sending.
      */
     chainId: number;
-    /** The contract to call. Always the MultiVault for these three kinds. */
+    /** The contract to call. Always the MultiVault, for every kind. */
     to: Address;
     /** Native TRUST this call sends. A fee for the two creates; the stake for a deposit. */
     value: bigint;
