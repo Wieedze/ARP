@@ -11,12 +11,12 @@ claim below points at a file and a line so you can check it rather than believe 
 This document used to call the MCP server "the node". There are three programs, and they do not
 share a trust surface, so each is described on its own and you install only the one you need.
 
-|                | the MCP server — `apps/mcp`                           | the node — `apps/node`                                | the hook — `apps/hook`           |
-| -------------- | ----------------------------------------------------- | ----------------------------------------------------- | -------------------------------- |
-| launched by    | your MCP client, over stdio                           | you, as a server                                      | your runtime, on every tool call |
-| reachable from | your machine (`127.0.0.1`)                            | **every interface** — it is the address you publish   | nowhere; it reads stdin          |
-| key            | `.arp/receipt-key`, generated, signs content receipts | your agent's `AGENT_PRIVATE_KEY`, signs hire receipts | none                             |
-| network        | the graph, the RPC, GitHub — counted below            | the RPC only                                          | none                             |
+|                | the MCP server — `apps/mcp`                           | the node — `apps/node`                               | the hook — `apps/hook`           |
+| -------------- | ----------------------------------------------------- | ---------------------------------------------------- | -------------------------------- |
+| launched by    | your MCP client, over stdio                           | you, as a server                                     | your runtime, on every tool call |
+| reachable from | your machine (`127.0.0.1`)                            | `127.0.0.1`, and a tunnel you rent is the way in     | nowhere; it reads stdin          |
+| key            | `.arp/receipt-key`, generated, signs content receipts | `~/.arp/node.key`, generated, or `AGENT_PRIVATE_KEY` | none                             |
+| network        | the graph, the RPC, GitHub — counted below            | the RPC; the tunnel binary, if it starts one         | none                             |
 
 Sections up to "If you want to verify" are about the **MCP server**. The node and the hook have a
 section each after it.
@@ -387,42 +387,66 @@ with their own tools.
 ## The node — `apps/node`
 
 ```
-AGENT_PRIVATE_KEY=… AGENT_REGISTRY=eip155:13579:0xC165… AGENT_ID=2 \
+AGENT_REGISTRY=eip155:13579:0xC165… AGENT_ID=2 \
   AGENT_NODE_PORT=3100 bun run apps/node/src/node.ts
 curl -s localhost:3100/healthz
 ```
 
-| variable                        | default                    | what it is                                                            |
-| ------------------------------- | -------------------------- | --------------------------------------------------------------------- |
-| `AGENT_PRIVATE_KEY`             | required                   | the agent's key; signs hire receipts, never a transaction             |
-| `INTUITION_RPC_URL`             | required                   | the chain payments are read on — also the receipt's `chainId`         |
-| `AGENT_REGISTRY` + `AGENT_ID`   | both unset                 | the agent as its ERC-8004 registration file names it; both or neither |
-| `AGENT_NODE_MIN_BUDGET`         | `0.001`                    | the smallest payment accepted, in the chain's native unit             |
-| `AGENT_NODE_LEDGER`             | `.arp/node-payments.jsonl` | every payment already used, one line each                             |
-| `AGENT_NODE_MAX_BODY_BYTES`     | `65536`                    | larger bodies are a `413`                                             |
-| `AGENT_NODE_HANDLER_TIMEOUT_MS` | `60000`                    | a slower handler is a `504`, and the payment is released              |
-| `AGENT_NODE_RATE_LIMIT`         | `30`                       | `POST /task` per client IP per minute, paid or not; then `429`        |
+**Reached through a tunnel you rent** (task 39, ADR `0094`). The node listens on `127.0.0.1` only.
+`cloudflared` or `ngrok`, found on `PATH`, is started as a child of the node and prints a public
+`https://` URL, which the node prints in turn. With `cloudflared` that is a quick tunnel
+(`cloudflared tunnel --url http://127.0.0.1:<port>`): no account, a `trycloudflare.com` address, and a
+new address on every start, so a binding made over it holds until the node restarts and
+`arp init --node` runs again after. A stable address — a named tunnel on your own Cloudflare account,
+given as `ARP_NODE_PUBLIC_URL` — is a follow-up. ARP builds no relay and carries none of the traffic.
+
+**Bound to your agent once, by its owner** — `arp init --node`. The node sends the directory your
+agent's id, its public key and its endpoint; the directory reads the token's owner and returns a
+Sign-In with Ethereum message; the owner signs it in their own wallet and pastes the signature, and
+the node key signs it too. `verifyEndpointBinding` (`@arp-protocol/core`) re-checks the result
+against the registry with nothing from ARP, and a transfer of the token voids it (ADR `0095`). No
+directory is hosted yet: `--directory` names one.
+
+| variable                        | default                    | what it is                                                                                                                             |
+| ------------------------------- | -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `AGENT_PRIVATE_KEY`             | unset                      | used instead of the node key file when set                                                                                             |
+| `ARP_NODE_KEY_FILE`             | `~/.arp/node.key`          | the node key, created 0600 on first start; refused if others can read                                                                  |
+| `ARP_NODE_TUNNEL`               | `auto`                     | `auto`, `cloudflared`, `ngrok`, `configured` or `none` (localhost)                                                                     |
+| `ARP_NODE_PUBLIC_URL`           | unset                      | the `https` URL of a tunnel you run; `auto` prefers it                                                                                 |
+| `INTUITION_RPC_URL`             | required                   | the chain payments are read on — also the receipt's `chainId`                                                                          |
+| `AGENT_REGISTRY` + `AGENT_ID`   | both unset                 | the agent as its ERC-8004 registration file names it; both or neither                                                                  |
+| `AGENT_NODE_MIN_BUDGET`         | `0.001`                    | the smallest payment accepted, in the chain's native unit                                                                              |
+| `AGENT_NODE_LEDGER`             | `.arp/node-payments.jsonl` | every payment already used, one line each                                                                                              |
+| `AGENT_NODE_MAX_BODY_BYTES`     | `65536`                    | larger bodies are a `413`                                                                                                              |
+| `AGENT_NODE_HANDLER_TIMEOUT_MS` | `60000`                    | a slower handler is a `504`, and the payment is released                                                                               |
+| `AGENT_NODE_RATE_LIMIT`         | `30`                       | `POST /task` per client per minute, paid or not; then `429`. Behind a tunnel the client is its `cf-connecting-ip` or `x-forwarded-for` |
 
 What makes an agent reachable: it listens at the address the agent publishes in its ERC-8004
 registration file, checks on chain that the requester paid it before doing any work, and returns a
 receipt signed with the agent's key (ADR `0045`, format ADR `0083`). The work itself is yours — `ARP_NODE_HANDLER`
 names a module exporting `handle(payload, context)`; without one it echoes.
 
-**It signs receipts and never transactions.** The key is the agent's because a hire receipt must be
-signed by the agent, and a signature is not a spend. Its only outbound connection is the RPC it
-reads the payment from, it loads one module you name, and it writes one file — the ledger below:
+**It signs receipts and never transactions.** The key signs because a hire receipt must be signed,
+and a signature is not a spend. It is also the address a hirer pays, since the payment check below
+requires the payment be sent to it. Its own outbound connection is the RPC it reads the payment
+from; it starts at most one child, the tunnel binary, whose connection is to Cloudflare or ngrok; it
+loads one module you name; and it writes two files — the node key on first start, and the ledger
+below:
 
 ```
-grep -nE "createPublicClient\(|writeFile|appendFile|mkdir|import\(|async fetch\(" apps/node/src/node.ts apps/node/src/task.ts
+grep -nE "createPublicClient\(|writeFile|appendFile|mkdir|import\(|async fetch\(|spawnChild\(" apps/node/src/node.ts apps/node/src/task.ts apps/node/src/node-key.ts apps/node/src/tunnel.ts
 ```
 
-prints six lines on 2026-10-30: the `node:fs` import, the ledger's `mkdirSync` and `appendFileSync`
+prints ten lines on 2026-10-30: the ledger's `node:fs` import, `mkdirSync` and `appendFileSync`
 (`task.ts:6`, `:85`, `:86`), the server's own inbound `fetch(request)` handler (`task.ts:246`), your
-handler's import (`node.ts:112`) and the RPC client (`node.ts:120`).
+handler's import (`node.ts:122`), the RPC client (`node.ts:130`), the node key's `node:fs` import,
+`mkdirSync` and `writeFileSync` (`node-key.ts:19`, `:64`, `:66`), and the tunnel's child process
+(`tunnel.ts:177`). `register.ts` is not in it: it runs only under `arp init --node`, never in the
+node.
 
-**It binds every interface**, unlike the MCP server, because being reached is its job:
-`serveFetch({ port, maxBodyBytes })` in `main()` at `apps/node/src/node.ts:142` passes no hostname,
-and `node:http` then listens on every interface.
+**It binds `127.0.0.1`**, like the MCP server: `serveFetch` in `main()` in `apps/node/src/node.ts`
+passes `hostname: '127.0.0.1'`. Until 2026-10-30 it passed none and listened on every interface,
+because it was the address the agent published; the tunnel is that address now.
 
 **One payment buys one job.** Before any work the node checks that the payment is mined and did
 not revert, was sent to this agent, came from the declared requester and paid at least
@@ -445,8 +469,10 @@ chainId }`, with the payment's chain. The layout follows x402's signed receipt a
 identity string.
 
 1. `verifyHireReceipt(receipt)` (`@arp-protocol/core`) recovers the signer.
-2. `getAgentWallet(agentId)` on the registry `agentRegistry` names should be that signer — on
-   2026-10-30, testnet 13579, agent 2's wallet was `0x9C985BEF…` and so was the recovered key.
+2. That signer should be the agent's: either `getAgentWallet(agentId)` on the registry
+   `agentRegistry` names, for a node run with `AGENT_PRIVATE_KEY` — on 2026-10-30, testnet 13579,
+   agent 2's wallet was `0x9C985BEF…` and so was the recovered key — or the `nodeAddress` of an
+   endpoint binding `verifyEndpointBinding` reads as `bound`, for a node with a generated key.
 3. `getTransaction(payment)` on `chainId` should show `requester` paying the agent `paid`, and
    `hireReceiptMatches(receipt, payload, result)` should hold for the JSON you sent and received.
 

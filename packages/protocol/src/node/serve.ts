@@ -17,7 +17,7 @@ export type FetchHandler = (request: Request, ip: string) => Response | Promise<
 
 export type ServeOptions = {
     port: number;
-    /** Omitted, every interface — which is what the node wants and the MCP server refuses. */
+    /** Omitted, every interface. The MCP server defaults to `127.0.0.1`; the node always passes it, because a tunnel is its way in (task 39). */
     hostname?: string;
     /** A body over this many bytes is refused with 413 before it is read whole. */
     maxBodyBytes?: number;
