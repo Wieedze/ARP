@@ -57,6 +57,13 @@ Copy `cli-v0/files-packages-cli/` in, add it to the workspaces, `bun install`, r
 footer, `arp status <tool>`, `arp init`, the session line. Columns needing the network show
 `not enough data`, as v0's own first verdict rule already says.
 
+### Phase 5 — the probe
+
+ADR `0089`. In `apps/api`, beside the GitHub and skills.sh reads: one `initialize` per remote
+endpoint (answers, asks for auth, does not answer, with the time it took), and for a package its
+registry record. Dated, off chain, no colour. In the Worker only, no separate script: its first
+cycle, triggered locally, is the reading the endpoints ADR `0087` still needs are validated from. It fills docs/16 §4 and the tool page's same block.
+
 ## 3. Decisions for the user before the phase that needs them
 
 1. **Phase 3 — where the CLI lives, and the two hooks.** The handoff's package is
