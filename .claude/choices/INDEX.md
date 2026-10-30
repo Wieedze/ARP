@@ -2,7 +2,7 @@
 
 **Generated** 2026-10-30 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-94 decisions. Newest last. `choices/README.md` says when to write one.
+95 decisions. Newest last. `choices/README.md` says when to write one.
 
 ## Not accepted
 
@@ -18,6 +18,8 @@ Read these before relying on them.
 - **0088** (Accepted. Amends the one-word rule of 2026-10-28 (`scripts/seed/seed-domain-tree.ts`,) — A label is one word, unless a compound is necessary
 - **0090** (Accepted. Extended 2026-10-30 by task 33i — see "Extension: captures" at the end.) — What the hook records: outcome and identity, never content or credentials
 - **0093** (Accepted. **Renumbered from `0089` on 2026-10-30**: it shared that number with `0089-one-installer-one-package-thin-manifests.md`, which was written first. Commits before the rename cite it as `0089`.) — The probe is not the pulse
+- **0094** (Accepted. **Amended 2026-10-30 for testnet**: everything is sponsored. User decision,) — ARP is the directory and the verifier, never the relay; a proof is the condition of a sponsored deposit
+- **0095** (Proposed) — The install handshake binds a node key that both the owner and the node sign for
 - **0098** (Accepted for point 9 (user decision, 2026-10-30, _« ok option 2 »_); the rest Proposed, reviewed by `contract-reviewer` (PASS, 2026-10-30); one decision open) — The receipt enforcer verifies the v1 hire receipt as signed, and binds the term through its terms
 
 ## All
@@ -116,5 +118,6 @@ Read these before relying on them.
 | [0091](0091-the-agent-s-activity-reaches-the-browser-through-a-local-feed.md) | 2026-10-30 | Accepted | The agent's activity reaches the browser through a local, read-only feed |
 | [0092](0092-arp-sponsors-delegation-publication-on-testnet.md) | 2026-10-30 | Accepted | ARP sponsors the publication of delegations, on testnet, from its treasury |
 | [0093](0093-the-probe-is-not-the-pulse.md) | 2026-10-30 | Accepted. **Renumbered from `0089` on 2026-10-30**: it shared that number with `0089-one-installer-one-package-thin-manifests.md`, which was written first. Commits before the rename cite it as `0089`. | The probe is not the pulse |
-| [0094](0094-arp-is-the-directory-and-the-verifier-never-the-relay.md) | 2026-10-30 | Accepted | ARP is the directory and the verifier, never the relay; a proof is the condition of a sponsored deposit |
+| [0094](0094-arp-is-the-directory-and-the-verifier-never-the-relay.md) | 2026-10-30 | Accepted. **Amended 2026-10-30 for testnet**: everything is sponsored. User decision, | ARP is the directory and the verifier, never the relay; a proof is the condition of a sponsored deposit |
+| [0095](0095-the-handshake-binds-a-node-key-both-keys-sign.md) | 2026-10-30 | Proposed | The install handshake binds a node key that both the owner and the node sign for |
 | [0098](0098-the-receipt-enforcer-verifies-the-v1-hire-receipt-as-signed.md) | 2026-10-30 | Accepted for point 9 (user decision, 2026-10-30, _« ok option 2 »_); the rest Proposed, reviewed by `contract-reviewer` (PASS, 2026-10-30); one decision open | The receipt enforcer verifies the v1 hire receipt as signed, and binds the term through its terms |
