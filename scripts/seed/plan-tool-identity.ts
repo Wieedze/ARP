@@ -35,7 +35,7 @@
  *  `data/catalogue/remote-endpoints.json` lists candidates; an entry with `validated` is one the user
  *  accepted from `apps/probe`'s reading (an MCP OAuth `resource_metadata` header, or a JSON-RPC
  *  result to `initialize`). It is tagged `remote server` in place of a registry's kind. The probe
- *  determines; this plans; a person signs — the probe never writes (ADR `0089`).
+ *  determines; this plans; a person signs — the probe never writes (ADR `0093`).
  *
  *  `data/catalogue/validated-packages.json` holds packages and Docker images the confirmation rule
  *  above does not reach — a monorepo publishing several, an image, or a package whose registry

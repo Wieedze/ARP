@@ -8,7 +8,7 @@
  *  record instead — the latest version, when it was published, and whether it is deprecated.
  *
  *  Neither outcome is good or bad here. `asks-for-auth` is a server answering; `no-answer` is a
- *  read that failed from Cloudflare at that minute. The page states which, and when (ADR `0089`).
+ *  read that failed from Cloudflare at that minute. The page states which, and when (ADR `0093`).
  */
 import type { Target } from './targets.ts';
 

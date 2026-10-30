@@ -9,7 +9,7 @@
  *
  *  **What it is.** A dated fact measured by ARP: "this server answered ARP from Cloudflare at
  *  14:10". It is not the pulse — whether a tool works for the operators who use it comes from their
- *  signed reports and the `uses` triples (ADR `0089`). A server can answer `initialize` and fail
+ *  signed reports and the `uses` triples (ADR `0093`). A server can answer `initialize` and fail
  *  every real call.
  *
  *  **What it is not.** Never written on chain, never a score, never a colour. It holds no key and

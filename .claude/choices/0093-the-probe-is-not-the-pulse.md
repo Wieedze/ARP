@@ -1,6 +1,6 @@
-# 0089 — The probe is not the pulse
+# 0093 — The probe is not the pulse
 
-**Status:** Accepted
+**Status:** Accepted. **Renumbered from `0089` on 2026-10-30**: it shared that number with `0089-one-installer-one-package-thin-manifests.md`, which was written first. Commits before the rename cite it as `0089`.
 **Date:** 2026-10-30
 **Triggered by:** the user, 2026-10-30. Asked whether a cron should check every server in real time,
 they approved the distinction below: _« ça c'est trop bien »_.
