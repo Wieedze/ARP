@@ -1,10 +1,12 @@
 import {describe, expect, it} from "vitest";
 
-import {browseUrlOf, compactNameOf, parseToolLabel, primaryNameOf, sourceOf} from "../tool-label";
+import {browseUrlOf, parseToolLabel, primaryNameOf, sourceOf} from "../tool-label";
 
 describe("parseToolLabel", () => {
     it("splits a skill into owner, repo and skill", () => {
-        const parsed = parseToolLabel("github.com/prime-skills/runcomfy-agent-skills?skill=nano-banana");
+        const parsed = parseToolLabel(
+            "github.com/prime-skills/runcomfy-agent-skills?skill=nano-banana",
+        );
         expect(parsed).toEqual({
             kind: "skill",
             owner: "prime-skills",
@@ -53,14 +55,14 @@ describe("what a row shows", () => {
         expect(sourceOf(parsed)).toBeNull();
     });
 
-    it("keeps the host on a repository and drops it from a skill", () => {
-        // A repository's line is the only line it gets, so there is room — and without the host
-        // `github.com/x/y` and `gitlab.com/x/y` would render identically, a false merge on screen
-        // of two atoms the chain keeps apart. A skill's line has to hold a name a person retypes.
-        expect(primaryNameOf(parseToolLabel("github.com/stripe/agent-toolkit"))).toBe(
-            "github.com/stripe/agent-toolkit",
+    it("names a repository and a skill without their host", () => {
+        // The platform is a filter, not part of the name (user, 2026-10-29). It is still parsed.
+        const repo = parseToolLabel("github.com/stripe/agent-toolkit");
+        expect(primaryNameOf(repo)).toBe("stripe/agent-toolkit");
+        expect(repo.kind === "repo" ? repo.host : null).toBe("github.com");
+        expect(primaryNameOf(parseToolLabel("github.com/x/y?skill=nano-banana"))).toBe(
+            "nano-banana",
         );
-        expect(primaryNameOf(parseToolLabel("github.com/x/y?skill=nano-banana"))).toBe("nano-banana");
     });
 
     it("never prettifies a name somebody has to retype", () => {
@@ -82,25 +84,5 @@ describe("browseUrlOf", () => {
 
     it("has nowhere to send a label it could not parse", () => {
         expect(browseUrlOf(parseToolLabel("not a url"))).toBeNull();
-    });
-});
-
-describe("compactNameOf", () => {
-    it("drops the host from a repository, which primaryNameOf keeps", () => {
-        // A list row is the only line a repository gets, so it keeps the host and `github.com/x/y`
-        // stays distinct from `gitlab.com/x/y`. A card shows one subject at a time and has no such
-        // ambiguity to resolve — there the host is the same six characters on every one.
-        const parsed = parseToolLabel("github.com/stripe/agent-toolkit");
-        expect(primaryNameOf(parsed)).toBe("github.com/stripe/agent-toolkit");
-        expect(compactNameOf(parsed)).toBe("stripe/agent-toolkit");
-    });
-
-    it("changes nothing for a skill, which never carried the host", () => {
-        const parsed = parseToolLabel("github.com/x/y?skill=nano-banana");
-        expect(compactNameOf(parsed)).toBe("nano-banana");
-    });
-
-    it("leaves a label it could not parse exactly as it found it", () => {
-        expect(compactNameOf(parseToolLabel("Agent 13579:3"))).toBe("Agent 13579:3");
     });
 });

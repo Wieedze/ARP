@@ -900,57 +900,31 @@ a.arp-cf-card:hover {
     outline-offset: 2px;
 }
 
-/* The legend: one row per ring, the folded ring's members under it. */
-.arp-cf-legend {
-    display: grid;
-    flex-basis: 100%;
-    grid-template-columns: repeat(auto-fill, minmax(min(19rem, 100%), 1fr));
-    gap: 0 32px;
-    margin: 0;
-    border-top: 1px solid var(--color-rule);
+/* Each ring's name, on the field at six o'clock. Below the dots, which pass over it. */
+.arp-cf-names {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
 }
 
-.arp-cf-legend-row {
-    display: grid;
-    grid-template-columns: 18px minmax(0, 1fr) auto;
-    align-items: baseline;
-    gap: 10px;
-    padding: 10px 0;
-    border-bottom: 1px solid var(--color-rule);
-}
-
-.arp-cf-legend dt {
-    overflow: hidden;
-    min-width: 0;
-    font-size: 14px;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-}
-
-.arp-cf-legend dt.is-id {
+.arp-cf-name {
+    position: absolute;
+    left: 50%;
+    padding: 1px 7px;
+    border: 1px solid var(--color-rule);
+    border-radius: var(--radius-tag);
+    background: var(--color-ground);
     font-family: var(--font-mono);
-    font-size: 12px;
-}
-
-.arp-cf-legend-row.is-member dt {
+    font-size: 10.5px;
+    white-space: nowrap;
     color: var(--color-silver);
+    transform: translate(-50%, -50%);
 }
 
-.arp-cf-legend dd {
-    margin: 0;
-    font-family: var(--font-mono);
-    font-size: 11px;
-    text-align: right;
-    white-space: nowrap;
-    color: var(--color-steel);
-}
-
-.arp-cf-ringno {
-    font-family: var(--font-mono);
-    font-size: 10px;
-    /* `--color-grey` is 3.84:1 and `rules/ui.md` allows it on dim DISPLAY text only. This is the
-       smallest text on the surface, so it takes `--color-steel` at 5.9:1. It shipped as grey
-       because `check-contrast.ts` walked only `.ts` and `.tsx`, and this component is plain CSS. */
+.arp-cf-name b {
+    margin-left: 4px;
+    font-weight: 500;
     color: var(--color-steel);
 }
 

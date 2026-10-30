@@ -1,7 +1,7 @@
 import {describe, expect, it} from "vitest";
 import type {AtomStanding, MarketSide} from "@arp-protocol/core";
 
-import {buildAtomView, predicateLabelOf, describePointers} from "../atom-standing-view";
+import {buildAtomView, predicateLabelOf, describePointers, inverseOf} from "../atom-standing-view";
 
 /**
  * The view layer's one job is the dust rule, so most of this file is about it.
@@ -190,7 +190,7 @@ describe("what the atom says about itself", () => {
 
     it("parses an object that is a tool URL instead of printing the whole thing", () => {
         const view = buildAtomView(standing({claims: [sourceClaim]}), "TRUST");
-        expect(view.claims[0]?.object).toBe("github.com/firebase/agent-skills");
+        expect(view.claims[0]?.object).toBe("firebase/agent-skills");
         expect(view.claims[0]?.objectIsId).toBe(false);
     });
 
@@ -231,5 +231,45 @@ describe("predicateLabelOf", () => {
     it("leaves every other predicate alone", () => {
         expect(predicateLabelOf("source", "github.com/x/y", domains)).toBe("source");
         expect(predicateLabelOf("same as", "caip10:…", domains)).toBe("same as");
+    });
+});
+
+describe("a predicate read from the object's side", () => {
+    it("calls a repository's incoming `source` edges its skills", () => {
+        // `(skill, source, repository)` under a heading `source` read as "the sources of this
+        // repository", which is the inverse of what it says.
+        expect(
+            inverseOf("source", [
+                "github.com/emilkowalski/skills?skill=write-swift",
+                "github.com/emilkowalski/skills?skill=animate",
+            ]),
+        ).toBe("skills");
+    });
+
+    it("claims no inverse when one subject is not a skill", () => {
+        // Anybody may write `source` between any two atoms; the word is only earned by the data.
+        expect(inverseOf("source", ["github.com/x/y?skill=a", "Agent 13579:3"])).toBeNull();
+        expect(inverseOf("source", ["github.com/x/y?skill=a", null])).toBeNull();
+    });
+
+    it("leaves every other predicate as its own word", () => {
+        expect(inverseOf("uses", ["github.com/x/y?skill=a"])).toBeNull();
+        expect(inverseOf("source", [])).toBeNull();
+    });
+});
+
+describe("the way out to the code", () => {
+    it("links a skill to the repository it lives in, and a repository to itself", () => {
+        const skill = buildAtomView(
+            standing({label: "github.com/leonxlnx/taste-skill?skill=gpt-taste"}),
+            "TRUST",
+        );
+        expect(skill.browseUrl).toBe("https://github.com/leonxlnx/taste-skill");
+        const repo = buildAtomView(standing({label: "github.com/emilkowalski/skills"}), "TRUST");
+        expect(repo.browseUrl).toBe("https://github.com/emilkowalski/skills");
+    });
+
+    it("has no link for an atom that is not a repository", () => {
+        expect(buildAtomView(standing({label: "AI"}), "TRUST").browseUrl).toBeNull();
     });
 });

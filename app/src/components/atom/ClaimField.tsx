@@ -16,6 +16,7 @@ import {
     loupeLine,
     loupeRest,
     SIZE_BY_POSITIONS,
+    type ShownRing,
 } from "./claim-field-geometry";
 import {useClaimLoupe} from "./use-claim-loupe";
 
@@ -211,6 +212,36 @@ export function ClaimField({
                         </div>
                     );
                 })}
+
+                {/* **Each ring names itself where it sits**, at six o'clock, outside the turning
+                    wrappers so the name holds still while the dots pass over it. It replaced a
+                    legend grid under the field that read as detached from the drawing. */}
+                <div className="arp-cf-names" aria-hidden="true">
+                    {shown.map((ring, index) => {
+                        const drawn = rings[index];
+                        if (drawn === undefined) return null;
+                        const plus = truncated && index === shown.length - 1 ? "+" : "";
+                        return (
+                            <span
+                                key={index}
+                                className="arp-cf-name"
+                                style={{top: `${(0.5 + drawn.r) * 100}%`}}
+                                title={
+                                    ring.folded
+                                        ? ring.members
+                                              .map(
+                                                  (member) =>
+                                                      `${member.label} ${member.rows.length}`,
+                                              )
+                                              .join(", ")
+                                        : undefined
+                                }
+                            >
+                                {ringLabel(ring)} <b>{`${drawn.total}${plus}`}</b>
+                            </span>
+                        );
+                    })}
+                </div>
             </div>
 
             {/* The card the loupe is tied to. Reserved height, so it never moves the layout.
@@ -277,73 +308,34 @@ export function ClaimField({
                 </span>
             </div>
 
-            <dl className="arp-cf-legend">
-                {shown.map((ring, index) => {
-                    const drawn = rings[index]!;
-                    const isLast = index === shown.length - 1;
-                    const plus = truncated && isLast ? "+" : "";
-                    const head = ring.folded
-                        ? {
-                              label: `+${ring.members.length} other predicates`,
-                              labelIsId: false,
-                              backing: null,
-                          }
-                        : {
-                              ...ring.members[0]!,
-                              label: ring.members[0]!.inverse ?? ring.members[0]!.label,
-                          };
-                    const count =
-                        drawn.total > drawn.drawn
-                            ? `${drawn.total}${plus} · ${drawn.drawn} drawn, the rest as grain`
-                            : `${drawn.total}${plus} ${drawn.total === 1 && plus === "" ? "claim" : "claims"}`;
-                    return (
-                        <div key={index} className="arp-cf-legend-group">
-                            <div className="arp-cf-legend-row">
-                                <span className="arp-cf-ringno">
-                                    {String(index + 1).padStart(2, "0")}
-                                </span>
-                                <dt className={head.labelIsId ? "is-id" : ""}>{head.label}</dt>
-                                <dd>
-                                    {count}
-                                    {head.backing === null ? null : ` · ${head.backing}`}
-                                </dd>
-                            </div>
-                            {/* Never sum across groups: the folded ring lists each of its members
-                                with its own count and its own backing. */}
-                            {ring.folded
-                                ? ring.members.map((member, k) => {
-                                      const memberPlus =
-                                          plus !== "" && k === ring.members.length - 1 ? "+" : "";
-                                      const n = member.rows.length;
-                                      return (
-                                          <div
-                                              key={member.predicateAtomId}
-                                              className="arp-cf-legend-row is-member"
-                                          >
-                                              <span className="arp-cf-ringno" />
-                                              <dt className={member.labelIsId ? "is-id" : ""}>
-                                                  {member.inverse ?? member.label}
-                                              </dt>
-                                              <dd>
-                                                  {n}
-                                                  {memberPlus}{" "}
-                                                  {n === 1 && memberPlus === ""
-                                                      ? "claim"
-                                                      : "claims"}
-                                                  {member.backing === null
-                                                      ? null
-                                                      : ` · ${member.backing}`}
-                                              </dd>
-                                          </div>
-                                      );
-                                  })
-                                : null}
-                        </div>
-                    );
-                })}
-            </dl>
+            {/* The counts per ring, for a reader who cannot see the names on the field. */}
+            <ul className="sr-only">
+                {shown.map((ring, index) => (
+                    <li key={index}>
+                        {ringLabel(ring)}:{" "}
+                        {ringCount(
+                            rings[index]?.total ?? 0,
+                            truncated && index === shown.length - 1,
+                        )}
+                    </li>
+                ))}
+            </ul>
         </div>
     );
+}
+
+/**
+ * A ring's name: its predicate read from this page's side when there is a word for it, or how many
+ * predicates the folded ring holds.
+ */
+function ringLabel(ring: ShownRing<GroupView>): string {
+    const first = ring.members[0];
+    if (ring.folded || first === undefined) return `+${ring.members.length} other predicates`;
+    return first.inverse ?? first.label;
+}
+
+function ringCount(total: number, floor: boolean): string {
+    return `${total}${floor ? "+" : ""} ${total === 1 && !floor ? "claim" : "claims"}`;
 }
 
 /** The accessible name of a dot: the triple, then what stands behind it. */

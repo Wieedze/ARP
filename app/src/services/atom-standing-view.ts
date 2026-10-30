@@ -2,7 +2,7 @@ import {INTUITION_USES_TERM_ID} from "@arp-protocol/core";
 import type {AtomClaim, AtomEdge, AtomEdgeGroup, AtomStanding} from "@arp-protocol/core";
 
 import {formatTrust, truncateMiddle} from "./trust-format";
-import {compactNameOf, parseToolLabel, primaryNameOf, sourceOf} from "../lib/tool-label";
+import {browseUrlOf, parseToolLabel, primaryNameOf, sourceOf} from "../lib/tool-label";
 
 /**
  * What the atom page renders, derived from `getAtomStanding` and nothing else.
@@ -35,8 +35,8 @@ export type EdgeRow = {
     name: string;
     nameIsId: boolean;
     subjectAtomId: string;
-    /** The subject's name with the host dropped, for the card, which shows one at a time. */
-    compactName: string;
+    /** The subject's raw label: the key its description is filed under, beside the chain. */
+    label: string | null;
     /** `null` when no position stands behind the claim — ADR `0042`. */
     backing: string | null;
     positions: number;
@@ -49,6 +49,19 @@ export type GroupView = {
     /** What the predicate says, or its id. The graph lets anyone use any atom as a predicate. */
     label: string;
     labelIsId: boolean;
+    /**
+     * The relation read from **this** page's side, when there is a word for it, else `null`.
+     *
+     * Every group here is a claim **about** this atom, so it is the triple's object, and the
+     * predicate reads the other way. `(review-animations, source, emilkowalski/skills)` filed under
+     * a heading `source` on the repository's page read as "the sources of this repository", which
+     * is the inverse of what it says (the user, 2026-10-29). When it is set, the rows are this
+     * atom's members and carry only their names.
+     *
+     * The chain is not relabelled: {@link label} stays the predicate's own word, and the accessible
+     * name of each claim still says the whole triple with it.
+     */
+    inverse: string | null;
     rows: EdgeRow[];
     /** The group's summed backing, or `null` when no position stands behind any of it. */
     backing: string | null;
@@ -69,6 +82,14 @@ export type AtomView = {
     title: string;
     /** `owner/repo` under a skill's name, and `null` for anything that is not one. */
     subtitle: string | null;
+    /**
+     * The repository on its platform, for a person to open: a repository's own page, or the one a
+     * skill lives in. `null` when the label is not a repository URL. Never a call target (ADR
+     * `0051`).
+     */
+    browseUrl: string | null;
+    /** The `url` inside the atom's pinned Thing: what it identifies. `null` when it has none. */
+    url: string | null;
     /**
      * The atom's raw label, kept beside the title.
      *
@@ -155,15 +176,32 @@ function rowOf(edge: AtomEdge, symbol: string): EdgeRow {
         // the same on every line and only the last part differs, so it is parsed the way a
         // catalogue row is.
         name: hasName ? primaryNameOf(parseToolLabel(label)) : truncateMiddle(edge.subject.atomId),
-        compactName: hasName
-            ? compactNameOf(parseToolLabel(label))
-            : truncateMiddle(edge.subject.atomId),
+        label,
         nameIsId: !hasName,
         subjectAtomId: edge.subject.atomId,
         backing: backingOf(edge.support.totalAssets, edge.support.positionCount ?? 0, symbol),
         positions: edge.support.positionCount ?? 0,
         opposition: backingOf(edge.oppose.totalAssets, edge.oppose.positionCount ?? 0, symbol),
     };
+}
+
+/**
+ * The word for a predicate read backwards, or `null`.
+ *
+ * Decided by the **subjects**, the way {@link predicateLabelOf} is decided by the object: the graph
+ * is permissionless and anybody may write `source` between any two atoms, so the inverse is only
+ * claimed when every subject is a skill. ARP writes `(skill, source, repository)` and nothing else
+ * with it (ADR `0078`). Anything else keeps the full sentence.
+ */
+export function inverseOf(
+    predicate: string | null,
+    subjects: readonly (string | null)[],
+): string | null {
+    if (predicate !== "source" || subjects.length === 0) return null;
+    const allSkills = subjects.every(
+        (label) => label !== null && parseToolLabel(label).kind === "skill",
+    );
+    return allSkills ? "skills" : null;
 }
 
 function groupOf(group: AtomEdgeGroup, symbol: string): GroupView {
@@ -173,6 +211,10 @@ function groupOf(group: AtomEdgeGroup, symbol: string): GroupView {
         predicateAtomId: group.predicate.atomId,
         label: hasLabel ? label : truncateMiddle(group.predicate.atomId),
         labelIsId: !hasLabel,
+        inverse: inverseOf(
+            label,
+            group.edges.map((edge) => edge.subject.label),
+        ),
         rows: group.edges.map((edge) => rowOf(edge, symbol)),
         backing: backingOf(group.assets, group.positions, symbol),
         positions: group.positions,
@@ -233,8 +275,12 @@ export function buildAtomView(standing: AtomStanding, symbol: string): AtomView 
     return {
         label,
         subtitle: label === null ? null : sourceOf(parseToolLabel(label)),
+        browseUrl: label === null ? null : browseUrlOf(parseToolLabel(label)),
+        url: standing.url,
         atomId: standing.atomId,
-        title: hasTitle ? primaryNameOf(parseToolLabel(label)) : truncateMiddle(standing.atomId, 14, 10),
+        title: hasTitle
+            ? primaryNameOf(parseToolLabel(label))
+            : truncateMiddle(standing.atomId, 14, 10),
         titleIsId: !hasTitle,
         type: standing.type,
         pinnedUri: standing.pinnedUri,
@@ -261,7 +307,9 @@ export function buildAtomView(standing: AtomStanding, symbol: string): AtomView 
         // The incoming side is deliberately NOT filtered this way: who points at an atom is the
         // market, and a venue that hid the claims it did not back would be curating the thing it
         // exists to count.
-        claims: standing.claims.filter((claim) => claim.attestorBacked).map((claim) => claimOf(claim, symbol)),
+        claims: standing.claims
+            .filter((claim) => claim.attestorBacked)
+            .map((claim) => claimOf(claim, symbol)),
         edgeCount: standing.edgeCount,
         truncated: standing.truncated,
     };

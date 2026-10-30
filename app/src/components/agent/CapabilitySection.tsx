@@ -2,6 +2,7 @@ import {Link} from "react-router-dom";
 
 import {linkClass} from "../../lib/control-class";
 import type {CapabilityGroup} from "../../services/agent-trust";
+import {parseToolLabel, primaryNameOf} from "../../lib/tool-label";
 
 /**
  * What the graph says this agent is for.
@@ -44,7 +45,11 @@ export function CapabilitySection({groups, count}: {groups: CapabilityGroup[]; c
                     </dt>
                     <dd className="flex flex-wrap gap-x-4 gap-y-1 text-[length:var(--text-body-sm)]">
                         {group.entries.map((entry, index) => {
-                            const label = entry.name ?? entry.label ?? "unnamed";
+                            // Names only: a tool's label is its URL, and the skill or `owner/repo`
+                            // is the part a reader recognises (user, 2026-10-29).
+                            const label = primaryNameOf(
+                                parseToolLabel(entry.name ?? entry.label ?? "unnamed"),
+                            );
                             // Gated on having an atom id, not on the relation. `sourceHandle` is
                             // the object's term id and it is the only thing the link needs.
                             if (entry.sourceHandle !== null) {

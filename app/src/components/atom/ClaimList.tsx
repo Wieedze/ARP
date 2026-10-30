@@ -1,5 +1,6 @@
 import {Link} from "react-router-dom";
 
+import {useSkillFacts} from "../../hooks/use-skill-facts";
 import {linkClass} from "../../lib/control-class";
 
 import type {GroupView} from "../../services/atom-standing-view";
@@ -60,6 +61,7 @@ export function Group({
     /** Each claimant's declared tool ids, keyed by its atom id. Empty while the read is in flight. */
     modules: Record<string, string[]>;
 }) {
+    const {factFor} = useSkillFacts();
     return (
         <section className="mb-12">
             <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 border-b border-[color:var(--color-rule-strong)] pb-2">
@@ -70,7 +72,7 @@ export function Group({
                 <h2
                     className={`font-medium ${group.labelIsId ? "font-mono text-[length:var(--text-body-sm)]" : ""}`}
                 >
-                    {group.label}
+                    {group.inverse ?? group.label}
                 </h2>
                 {group.backing === null ? null : (
                     <Backing amount={group.backing} positions={group.positions} />
@@ -138,12 +140,24 @@ export function Group({
                             >
                                 {row.name}
                             </Link>
-                            <span className="text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
-                                {group.label}
-                            </span>
-                            <span className="min-w-0 truncate text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
-                                {subject}
-                            </span>
+                            {/* **Members, not sentences, when the heading reads from this side.**
+                                Under "skills" on a repository's page, `source emilkowalski/skills`
+                                after every name was the page's own address, sixteen times. The
+                                description takes its place: it says what the skill is for. */}
+                            {group.inverse === null ? (
+                                <>
+                                    <span className="text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
+                                        {group.label}
+                                    </span>
+                                    <span className="min-w-0 truncate text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
+                                        {subject}
+                                    </span>
+                                </>
+                            ) : (
+                                <span className="basis-full truncate pl-[calc(8px+0.75rem)] text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
+                                    {factFor(row.label)?.description}
+                                </span>
+                            )}
                         </p>
                         <span className="flex items-center gap-4">
                             {row.backing === null ? null : (
