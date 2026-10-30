@@ -1,8 +1,8 @@
 import {useState} from "react";
-import {Link} from "react-router-dom";
+import {Link, useSearchParams} from "react-router-dom";
 
 import {DomainRail} from "../components/tool/DomainRail";
-import {CurveControl, Segmented} from "../components/tool/ToolCatalogControls";
+import {Segmented} from "../components/tool/ToolCatalogControls";
 import {linkClass} from "../lib/control-class";
 import type {ToolListingOrder} from "@arp-protocol/core";
 
@@ -12,17 +12,15 @@ import {useDomainTree} from "../hooks/use-domain-tree";
 import {useTagIndex} from "../hooks/use-tag-index";
 import {useToolCatalog} from "../hooks/use-tool-catalog";
 import {
-    curveLabelOf,
-    matchesFilter,
-    TOOL_CURVES,
-    TOOL_FILTERS,
     livenessOf,
     rankTools,
+    TOOL_CURVES,
     TOOL_GROUPINGS,
+    TOOL_INDEXES,
     TOOL_SORT_AXES,
-    unknowableUnder,
-    type ToolFilter,
+    toolIndexOf,
     type ToolGrouping,
+    type ToolIndex,
     type ToolSortAxis,
 } from "../services/tool-catalog";
 import {useSkillFacts} from "../hooks/use-skill-facts";
@@ -64,16 +62,16 @@ export function ToolCatalog() {
     // Curve 1 is the default because it is the durable signal: linear, so a position's gain follows
     // the tool's growth rather than the holder's timing. Curve 2 is where the money sits today, and
     // that is a different question — `TOOL_CURVES` has the measurement.
-    const [curveId, setCurveId] = useState(TOOL_CURVES[0]?.id ?? 1);
     /**
-     * What the list is narrowed to, and `all` by default.
-     *
-     * A default narrowing is a ranking wearing another name. The question was "can we highlight
-     * the good ones?", and the answer is that ARP has no opinion to highlight with (ADR `0046`) —
-     * a badge granted by two metrics is two metrics somebody farms, and a sybil costs $0.00005 an
-     * address here. What it has is one axis the reader moves along.
+     * The curve the figures are read at. Fixed: the user took the control off this page
+     * (2026-10-29), and the profile page, where a position is held on one curve or the other,
+     * keeps it.
      */
-    const [filter, setFilter] = useState<ToolFilter>("all");
+    const curveId = TOOL_CURVES[0]?.id ?? 1;
+    const [searchParams, setSearchParams] = useSearchParams();
+    const index: ToolIndex = searchParams.get("index") === "repos" ? "repos" : "skills";
+    const chooseIndex = (next: ToolIndex) =>
+        setSearchParams(next === "skills" ? {} : {index: next}, {replace: true});
     /**
      * What the tool is **for**, and `null` by default.
      *
@@ -116,30 +114,43 @@ export function ToolCatalog() {
     const visible = rankTools(
         (view?.rows ?? [])
             .filter((row) => inDomain === null || inDomain.has(row.key.toLowerCase()))
-            .filter((row) => matchesFilter(row, filter)),
+            .filter((row) => toolIndexOf(row) === index),
         axis,
         (row) => ({
             // A skill's liveness is its repository's: `source` names it, and the row's own label
             // is tried too, for a repository's own entry.
-            liveness: livenessOf(repoFactFor(row.source === null ? row.label : `github.com/${row.source}`)),
+            liveness: livenessOf(
+                repoFactFor(row.source === null ? row.label : `github.com/${row.source}`),
+            ),
             installs: factFor(row.label)?.installs ?? null,
         }),
     );
-    const unknowable = unknowableUnder(view?.rows ?? [], filter);
+    const countIn = (which: ToolIndex) =>
+        (view?.rows ?? []).filter((row) => toolIndexOf(row) === which).length;
 
     return (
         <section>
             <header className="grid items-end gap-x-8 gap-y-6 pt-14 pb-10 md:grid-cols-[minmax(0,1fr)_auto]">
-                <h1 className="type-display">Tools</h1>
+                <div>
+                    <h1 className="type-display">Tools</h1>
+                    {/* **Two indexes, one read.** Skills and repositories are filed in the same
+                        catalogue, and the user asked for them to read as two lists. So the switch
+                        is set in display type under the title, as a choice of what page you are on,
+                        not as one more toolbar control. */}
+                    <IndexTabs
+                        selected={index}
+                        onChange={chooseIndex}
+                        countIn={view === undefined ? null : countIn}
+                    />
+                </div>
                 <dl className="flex overflow-hidden rounded-[var(--radius-card)] border border-[color:var(--color-rule)]">
                     {/* The count of what is SHOWN, not of what was read. It was `view.rows.length`,
-                        which the `Show` filter could already contradict and the domain filter
+                        which the index and the domain filter
                         contradicts constantly — "57" over two rows is a false claim about the list
                         the reader is looking at (`rules/claims.md`). */}
                     <Fact label="In the list">
                         {view === undefined ? "—" : visible.length.toLocaleString("en-US")}
                     </Fact>
-                    <Fact label="Curve">{curveLabelOf(curveId)}</Fact>
                 </dl>
             </header>
 
@@ -153,20 +164,17 @@ export function ToolCatalog() {
                         onChange={setAxis}
                         options={TOOL_SORT_AXES}
                     />
-                    <Segmented
-                        label="Show"
-                        selected={filter}
-                        onChange={setFilter}
-                        options={TOOL_FILTERS}
-                    />
-                    <Segmented
-                        label="Group"
-                        selected={grouping}
-                        onChange={setGrouping}
-                        options={TOOL_GROUPINGS}
-                    />
+                    {/* Grouping by repository only means something for skills: a repository
+                        is its own group. */}
+                    {index === "skills" ? (
+                        <Segmented
+                            label="Group"
+                            selected={grouping}
+                            onChange={setGrouping}
+                            options={TOOL_GROUPINGS}
+                        />
+                    ) : null}
                 </div>
-                <CurveControl curveId={curveId} onChange={setCurveId} />
             </div>
 
             {/* The rail is a column, not a drawer: at 13rem it costs a fifth of the width and
@@ -182,66 +190,117 @@ export function ToolCatalog() {
                 />
 
                 <div className="min-w-0">
-            {/* The list survives a failed refetch: `keepPreviousData` still holds the rows, and
+                    {/* The list survives a failed refetch: `keepPreviousData` still holds the rows, and
                 replacing them with an error would lose a good read to a transient one. */}
-            {view === undefined ? (
-                query.error === null ? (
-                    <PageLoading label="Reading the tools">
-                        reading declared tools from the intuition graph
-                    </PageLoading>
-                ) : (
-                    <Failure error={query.error} onRetry={() => void query.refetch()} />
-                )
-            ) : visible.length === 0 && view.rows.length > 0 && filter !== "all" ? (
-                // A filtered-to-empty list is a different state from an empty catalogue, and
-                // saying so is the difference between "nothing matches what you asked" and
-                // "nothing exists" — the second would be a false claim about the graph.
-                <div className="max-w-[60ch]">
-                    <p className="font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
-                        no rows match
-                    </p>
-                    {/* Two different states and one sentence each. "None can answer" is not "none
-                        matches": every filter here is about declarations, and a registered-only row
-                        has no per-edge figures, so it is excluded on an unknown rather than on a
-                        no. A reader who registered the only tool on the list deserves the first. */}
-                    <p className="mt-3 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
-                        {unknowable === view.rows.length
-                            ? "No agent has declared using these yet, so the filters cannot answer."
-                            : "Turn a filter off to see them."}
-                    </p>
-                </div>
-            ) : view.rows.length === 0 ? (
-                // An empty region with nothing in it reads as a failed read, so the state is said.
-                // And it says what would fill it, per `rules/ui.md`, because on this page the answer
-                // is one click away and the emptiness is not informative about any tool.
-                <div className="max-w-[60ch]">
-                    <p className="font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
-                        nothing here yet
-                    </p>
-                    <p className="mt-3 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
-                        A row appears when somebody registers a tool, or an agent declares using
-                        one.
-                    </p>
-                    <Link to="/register" className={`mt-4 inline-block ${linkClass}`}>
-                        Register the first one →
-                    </Link>
-                </div>
-            ) : (
-                <>
-                    <ToolCatalogList rows={visible} curveId={view.curveId} grouping={grouping} />
-                    {/* Only when it happened: a prefix presented as the whole set is the one thing
+                    {view === undefined ? (
+                        query.error === null ? (
+                            <PageLoading label="Reading the tools">
+                                reading declared tools from the intuition graph
+                            </PageLoading>
+                        ) : (
+                            <Failure error={query.error} onRetry={() => void query.refetch()} />
+                        )
+                    ) : visible.length === 0 && view.rows.length > 0 ? (
+                        // Narrowed to empty, which is a different state from an empty catalogue: "nothing
+                        // matches what you asked" against "nothing exists", and the second would be false.
+                        <div className="max-w-[60ch]">
+                            <p className="font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
+                                no rows match
+                            </p>
+                            <p className="mt-3 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
+                                {picked.size > 0
+                                    ? "Clear the domain filter to see them."
+                                    : `None in ${index === "skills" ? "skills" : "repositories"} yet.`}
+                            </p>
+                        </div>
+                    ) : view.rows.length === 0 ? (
+                        // An empty region with nothing in it reads as a failed read, so the state is said.
+                        // And it says what would fill it, per `rules/ui.md`, because on this page the answer
+                        // is one click away and the emptiness is not informative about any tool.
+                        <div className="max-w-[60ch]">
+                            <p className="font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
+                                nothing here yet
+                            </p>
+                            <p className="mt-3 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
+                                A row appears when somebody registers a tool, or an agent declares
+                                using one.
+                            </p>
+                            <Link
+                                to="/register?what=tool"
+                                className={`mt-4 inline-block ${linkClass}`}
+                            >
+                                Register the first one →
+                            </Link>
+                        </div>
+                    ) : (
+                        <>
+                            <ToolCatalogList
+                                rows={visible}
+                                curveId={view.curveId}
+                                grouping={grouping}
+                            />
+                            {/* Only when it happened: a prefix presented as the whole set is the one thing
                         this page could get wrong without anyone noticing. */}
-                    {view.truncated ? (
-                        <p className="mt-6 text-[length:var(--text-label)] text-[color:var(--color-steel)]">
-                            The read hit its limit — these are the first rows, not all of them.
-                        </p>
-                    ) : null}
-                    {query.error === null ? null : <StaleNotice />}
-                </>
-            )}
+                            {view.truncated ? (
+                                <p className="mt-6 text-[length:var(--text-label)] text-[color:var(--color-steel)]">
+                                    The read hit its limit — these are the first rows, not all of
+                                    them.
+                                </p>
+                            ) : null}
+                            {query.error === null ? null : <StaleNotice />}
+                        </>
+                    )}
                 </div>
             </div>
         </section>
+    );
+}
+
+/**
+ * The two indexes as two words in display type, the current one in paper and the other dim.
+ *
+ * Buttons with `aria-pressed`, like `Segmented`: it switches what the list shows, it does not
+ * navigate. The count rides beside each word so the reader sees both sizes before choosing.
+ */
+function IndexTabs({
+    selected,
+    onChange,
+    countIn,
+}: {
+    selected: ToolIndex;
+    onChange: (next: ToolIndex) => void;
+    countIn: ((which: ToolIndex) => number) | null;
+}) {
+    return (
+        <div
+            role="group"
+            aria-label="Index"
+            className="mt-6 flex flex-wrap items-baseline gap-x-8 gap-y-2"
+        >
+            {TOOL_INDEXES.map((entry) => {
+                const isSelected = entry.id === selected;
+                return (
+                    <button
+                        key={entry.id}
+                        type="button"
+                        aria-pressed={isSelected}
+                        onClick={() => onChange(entry.id)}
+                        // Banged: `index.css`'s unlayered `button { border; color }` beats any
+                        // utility, as `lib/control-class` lists.
+                        className={`flex items-baseline gap-2 border-0! border-b-2! bg-transparent px-0 pb-1 type-face text-[26px] leading-none ${
+                            isSelected
+                                ? "border-[color:var(--color-accent)]! text-[color:var(--color-fg)]!"
+                                : "border-transparent! text-[color:var(--color-grey)]! hover:text-[color:var(--color-silver)]!"
+                        }`}
+                    >
+                        {entry.label}
+                        <span className="font-mono text-[length:var(--text-body-sm)] tabular-nums text-[color:var(--color-steel)]">
+                            {countIn === null ? "—" : countIn(entry.id).toLocaleString("en-US")}
+                        </span>
+                    </button>
+                );
+            })}
+        </div>
     );
 }
 

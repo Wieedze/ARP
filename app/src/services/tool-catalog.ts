@@ -188,96 +188,25 @@ export type ToolRow = {
 };
 
 /**
- * What a reader can narrow the list to. **Their** choice, not a ranking ARP publishes.
+ * Which of the page's two indexes a row belongs to.
  *
- * This is the whole shape of the answer to "can we highlight the good ones?". No: a badge granted by
- * metrics is a badge somebody farms, and a sybil costs $0.00005 an address on this graph. ARP
- * publishes no score (ADR `0046`). What it can do is let the reader say what they are looking for —
- * and two readers can want different things, which is the point of showing dimensions at all.
+ * One read, shown as two lists (the user, 2026-10-29: _« comme si c'était deux index différents,
+ * même si ça ne l'est pas »_). A skill carries its repository in `source`; everything else, the
+ * repositories and the MCP servers among them, is the other index.
  *
- * Each filter is a **fact about the row**, never a judgment of the tool:
- *
- * | filter | keeps | why a reader would want it |
- * | --- | --- | --- |
- * | `paid-for` | rows where somebody paid to stand behind a declaration | separates a claim from a free assertion |
- * | `declared-by-agents` | rows an agent declared using | separates used from merely registered |
- *
- * None is the default. The default is everything, because a default filter is a ranking wearing
- * another name.
- *
- * **There was a third, `contested`, and ADR `0056` removed it.** Measured on mainnet 1155,
- * 2026-10-21: 1 of the 185 `uses` edges has ever been contradicted, and 969 of 285,775 triples
- * chain-wide. A control that narrows 185 rows to 1 is not a choice, and offering it told the reader
- * to look for a disagreement that is not there. The `Against` figure still shows on a row that has
- * one — displaying what exists is not the same as soliciting it.
+ * It replaced the `All / Claimed / Paid for` control, which the user found unreadable and never
+ * moved off `All`; nothing narrows the list by its figures now, and every figure is still on the
+ * row.
  */
-/**
- * What the list is narrowed to. **One choice of three**, not two checkboxes.
- *
- * It was two toggles, `paid-for` and `declared-by-agents`, and the user asked what the difference
- * was (2026-10-27). The honest answer is that one **contains** the other: `paid-for` keeps rows
- * with at least one *backed* claim, `declared-by-agents` keeps rows with at least one claim at
- * all. Turning on the first made the second do nothing. Two controls where one dominates is not a
- * choice, it is a trap — and it is why the labels could not be made clear: they were describing
- * two points on one axis as if they were two axes.
- *
- * So: one axis, three points, nested outward from the strictest.
- */
-export type ToolFilter = "all" | "used" | "paid";
+export type ToolIndex = "skills" | "repos";
 
-/**
- * The three points, widest first, so the control reads left to right as "loosen to tighten".
- *
- * No `title` tooltips. They carried one each — "At least one agent's declaration carries a
- * position" — which the user named as part of the problem: a description hidden inside a button,
- * reachable only by hovering and never on a touch screen. `rules/ui.md` puts an explanation in a
- * `Hint` or in the code, not in a `title`.
- */
-export const TOOL_FILTERS: readonly {id: ToolFilter; label: string}[] = [
-    {id: "all", label: "All"},
-    {id: "used", label: "Claimed"},
-    {id: "paid", label: "Paid for"},
+export const TOOL_INDEXES: readonly {id: ToolIndex; label: string}[] = [
+    {id: "skills", label: "Skills"},
+    {id: "repos", label: "Repositories"},
 ];
 
-/**
- * Does this row satisfy every filter the reader turned on?
- *
- * **Every filter here is about declarations, and a registered-only row fails all three.** That is
- * correct and it is also why the labels say "declarations": a row can carry real TRUST on the
- * tool's own vault and still be hidden by all three, because nobody has *declared using* it.
- * Hiding it is right; implying nobody paid for it would not be.
- *
- * `countsAsUnknown` exists so the empty state can say which happened. "No rows match what you
- * asked" and "the rows that exist cannot answer what you asked" are different sentences, and a
- * reader who registered the only tool on the list deserves the second.
- */
-export function matchesFilter(row: ToolRow, filter: ToolFilter): boolean {
-    switch (filter) {
-        case "all":
-            return true;
-        case "used":
-            // At least one identified agent wrote a `uses` edge onto it. **Said**, not did —
-            // `docs/14`: a runtime is unobservable and nothing here is a receipt.
-            return row.declarations > 0;
-        case "paid":
-            // `null` is "this read cannot say", not "nobody paid": pricing a registered row's
-            // declarations needs the per-edge vaults, which is `listTools`'s read.
-            return row.paidDeclarations !== null && row.paidDeclarations > 0;
-    }
-}
-
-/**
- * Of the rows a filter hid, how many did it hide because the read **cannot answer**?
- *
- * Not a count of non-matches. A registered row has no per-edge figures, so every declaration filter
- * excludes it on an unknown rather than on a no — and an empty list that says "none matches" when
- * the truth is "none can say" is a claim about those tools that this page has not read.
- */
-export function unknowableUnder(rows: readonly ToolRow[], filter: ToolFilter): number {
-    // Only `paid` can hide a row on an unknown: `used` reads `declarations`, which every row
-    // carries, and `all` hides nothing.
-    if (filter !== "paid") return 0;
-    return rows.filter((row) => row.paidDeclarations === null).length;
+export function toolIndexOf(row: ToolRow): ToolIndex {
+    return row.source === null ? "repos" : "skills";
 }
 
 export type ToolCatalogView = {

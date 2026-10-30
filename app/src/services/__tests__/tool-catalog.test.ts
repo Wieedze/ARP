@@ -2,7 +2,7 @@ import {describe, expect, it} from "vitest";
 import type {ToolListing, ToolListingPage} from "@arp-protocol/core";
 
 import {SEED_TOOLS} from "../../lib/tool-catalogue-seed";
-import {buildToolCatalogView, TOOL_FILTERS, TOOL_ORDERS} from "../tool-catalog";
+import {buildToolCatalogView, TOOL_ORDERS} from "../tool-catalog";
 
 function tool(overrides: Partial<ToolListing> = {}): ToolListing {
     return {
@@ -104,10 +104,7 @@ describe("buildToolCatalogView", () => {
         // can say a use happened. `declarations` counts sentences agents wrote. The label said
         // "Most used" for one commit and the user caught it — "si on déclare qu'on l'utilise mais
         // on l'utilise pas ?". A tier-4 word on tier-1 data (`docs/09` §3).
-        for (const label of [
-            ...TOOL_ORDERS.map((order) => order.label),
-            ...TOOL_FILTERS.map((filter) => filter.label),
-        ]) {
+        for (const label of TOOL_ORDERS.map((order) => order.label)) {
             expect(label).not.toMatch(/\bused?\b/i);
         }
     });
@@ -136,10 +133,10 @@ describe("the seed title", () => {
     });
 
     it("falls back to the label, never to an invented name", () => {
-        // A tool nobody seeded reads as its URL. `seedTitleOf` returns null rather than guessing:
+        // A tool nobody seeded reads as its repository, from its URL. `seedTitleOf` returns null rather than guessing:
         // naming a thing we know nothing about is the one move this surface cannot make.
         const view = buildToolCatalogView(page([tool({label: "github.com/crytic/slither"})]));
-        expect(view.rows[0]?.name).toBe("github.com/crytic/slither");
+        expect(view.rows[0]?.name).toBe("crytic/slither");
         expect(view.rows[0]?.isUnnamed).toBe(false);
     });
 

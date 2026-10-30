@@ -77,7 +77,13 @@ const MAINNET = {chainId: 1155, graphqlUrl: "https://mainnet.intuition.sh/v1/gra
 describe("toolCatalogQueryOptions", () => {
     it("passes the order through and maps the page to rows", async () => {
         const fetchListing = vi.fn(async () => pageOf());
-        const options = toolCatalogQueryOptions(MAINNET, "conviction", 2, fetchListing, noneRegistered);
+        const options = toolCatalogQueryOptions(
+            MAINNET,
+            "conviction",
+            2,
+            fetchListing,
+            noneRegistered,
+        );
         const view = await options.queryFn();
 
         expect(fetchListing).toHaveBeenCalledWith("conviction", 2);
@@ -132,7 +138,7 @@ describe("toolCatalogQueryOptions", () => {
         const view = await options.queryFn();
 
         expect(view.rows.map((row) => row.provenance)).toEqual(["declared", "registered"]);
-        expect(view.rows[1]?.name).toBe("github.com/crytic/slither");
+        expect(view.rows[1]?.name).toBe("crytic/slither");
         // Positions on the tool's own atom. Not folded into `paidDeclarations`, which counts edges
         // carrying a position — summing the two would be ADR `0023`'s per-vault-versus-across-edges
         // error.
