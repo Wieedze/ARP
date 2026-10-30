@@ -39,81 +39,111 @@ export function withMcpServer(config: Json, name: string, entry: Json | null): J
   return next;
 }
 
-type HookCommand = { type: 'command'; command: string; async?: boolean; timeout?: number };
-type MatcherGroup = { matcher?: string; hooks: unknown[] };
+/**
+ * How one runtime registers a hook. Two shapes exist in the docs read for task 33:
+ *
+ * | shape | file | runtimes |
+ * | --- | --- | --- |
+ * | `nested` | `hooks.<Event>: [{ matcher, hooks: [entry] }]` | Claude Code, Codex, Gemini CLI |
+ * | `flat` | `{ version: 1, hooks: { <event>: [entry] } }` | Cursor, Copilot |
+ */
+export type HookSpec = {
+  shape: 'nested' | 'flat';
+  events: readonly { name: string; matcher?: string }[];
+  /** The entry for one command, in this runtime's field names and timeout unit. */
+  entry: (command: string) => Json;
+};
 
-/** The two events the hook needs: a failed call reaches only the second (ADR `0090`). */
-export const HOOK_EVENTS = ['PostToolUse', 'PostToolUseFailure'] as const;
+/** Claude Code: a failed call reaches only `PostToolUseFailure` (ADR `0090`). */
+export const CLAUDE_HOOKS: HookSpec = {
+  shape: 'nested',
+  events: [
+    { name: 'PostToolUse', matcher: '*' },
+    { name: 'PostToolUseFailure', matcher: '*' },
+  ],
+  entry: (command) => ({ type: 'command', command, async: true, timeout: 10 }),
+};
 
 function isOurs(hook: unknown, marker: string): boolean {
   return isRecord(hook) && typeof hook.command === 'string' && hook.command.includes(marker);
 }
 
-function strip(groups: unknown, marker: string): MatcherGroup[] {
-  if (!Array.isArray(groups)) return [];
-  const kept: MatcherGroup[] = [];
-  for (const group of groups) {
-    if (!isRecord(group) || !Array.isArray(group.hooks)) continue;
+/** One event's list without our entries. Everything we did not write keeps every field it had. */
+function strip(list: unknown, spec: HookSpec, marker: string): unknown[] {
+  if (!Array.isArray(list)) return [];
+  if (spec.shape === 'flat') return list.filter((entry) => !isOurs(entry, marker));
+  const kept: unknown[] = [];
+  for (const group of list) {
+    if (!isRecord(group) || !Array.isArray(group.hooks)) {
+      kept.push(group);
+      continue;
+    }
     const rest = group.hooks.filter((hook) => !isOurs(hook, marker));
-    // A group we did not write keeps every field it had; only our hooks leave it.
     if (rest.length > 0) kept.push({ ...group, hooks: rest });
   }
   return kept;
 }
 
+function ours(list: unknown, spec: HookSpec, marker: string): unknown[] {
+  if (!Array.isArray(list)) return [];
+  if (spec.shape === 'flat') return list.filter((entry) => isOurs(entry, marker));
+  return list.flatMap((group) =>
+    isRecord(group) && Array.isArray(group.hooks)
+      ? group.hooks.filter((hook) => isOurs(hook, marker))
+      : [],
+  );
+}
+
 /**
- * Claude Code's `hooks` with ours on both events, any earlier copy of ours dropped first.
- * Ours are recognised by `marker`, a path only `init` writes. Every other hook stays.
+ * The runtime's `hooks` with ours on every event of `spec`, any earlier copy of ours dropped first,
+ * or with ours removed when `command` is `null`. Ours are recognised by `marker`, a path only
+ * `init` writes. Every other hook stays.
  */
-export function withArpHooks(settings: Json, command: string | null, marker: string): Json {
+export function withHooks(
+  settings: Json,
+  spec: HookSpec,
+  command: string | null,
+  marker: string,
+): Json {
   const hooks: Json = isRecord(settings.hooks) ? { ...settings.hooks } : {};
-  for (const event of HOOK_EVENTS) {
-    const kept = strip(hooks[event], marker);
+  for (const event of spec.events) {
+    const kept = strip(hooks[event.name], spec, marker);
     if (command !== null) {
-      const ours: HookCommand = { type: 'command', command, async: true, timeout: 10 };
-      kept.push({ matcher: '*', hooks: [ours] });
+      const entry = spec.entry(command);
+      kept.push(
+        spec.shape === 'flat'
+          ? entry
+          : { ...(event.matcher === undefined ? {} : { matcher: event.matcher }), hooks: [entry] },
+      );
     }
-    if (kept.length > 0) hooks[event] = kept;
-    else delete hooks[event];
+    if (kept.length > 0) hooks[event.name] = kept;
+    else delete hooks[event.name];
   }
   const next: Json = { ...settings, hooks };
-  if (Object.keys(hooks).length === 0) delete next.hooks;
+  if (Object.keys(hooks).length === 0) {
+    delete next.hooks;
+    // A flat file we created holds only `version` once ours is gone; it is empty.
+    if (spec.shape === 'flat' && Object.keys(next).length === 1 && 'version' in next) return {};
+  } else if (spec.shape === 'flat' && next.version === undefined) {
+    return { version: 1, ...next };
+  }
   return next;
 }
 
-/** Our hook entries only, by event: what `init` shows the operator before writing. */
-export function arpHooksOf(settings: Json, marker: string): Json {
+/** Our entries only, by event: what `init` shows the operator before writing. */
+export function hooksOf(settings: Json, spec: HookSpec, marker: string): Json {
   if (!isRecord(settings.hooks)) return {};
   const out: Json = {};
-  for (const event of HOOK_EVENTS) {
-    const groups = settings.hooks[event];
-    if (!Array.isArray(groups)) continue;
-    const ours = groups.flatMap((group) =>
-      isRecord(group) && Array.isArray(group.hooks)
-        ? group.hooks.filter((hook) => isOurs(hook, marker))
-        : [],
-    );
-    if (ours.length > 0) out[event] = ours;
+  for (const event of spec.events) {
+    const found = ours(settings.hooks[event.name], spec, marker);
+    if (found.length > 0) out[event.name] = found;
   }
   return out;
 }
 
-export function hasArpHook(settings: Json, marker: string): boolean {
-  if (!isRecord(settings.hooks)) return false;
-  // `as`: narrowed by the isRecord check on the first line.
-  const hooks = settings.hooks as Json;
-  return HOOK_EVENTS.every((event) => {
-    const groups = hooks[event];
-    return (
-      Array.isArray(groups) &&
-      groups.some(
-        (group) =>
-          isRecord(group) &&
-          Array.isArray(group.hooks) &&
-          group.hooks.some((hook) => isOurs(hook, marker)),
-      )
-    );
-  });
+export function hasHooks(settings: Json, spec: HookSpec, marker: string): boolean {
+  const found = hooksOf(settings, spec, marker);
+  return spec.events.every((event) => event.name in found);
 }
 
 const TOML_BEGIN = '# >>> arp — managed by `arp init`, removed by `arp uninstall` >>>';

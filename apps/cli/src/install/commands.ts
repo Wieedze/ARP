@@ -47,6 +47,7 @@ export type Flags = {
   dryRun: boolean;
   project: boolean;
   print: boolean;
+  capture: boolean;
   runtimes: RuntimeId[] | null;
 };
 
@@ -57,6 +58,7 @@ export function parseFlags(args: readonly string[]): Flags | Error {
     dryRun: false,
     project: false,
     print: false,
+    capture: false,
     runtimes: null,
   };
   for (let i = 0; i < args.length; i += 1) {
@@ -66,6 +68,7 @@ export function parseFlags(args: readonly string[]): Flags | Error {
     else if (arg === '--dry-run' || arg === '-n') flags.dryRun = true;
     else if (arg === '--project') flags.project = true;
     else if (arg === '--print') flags.print = true;
+    else if (arg === '--capture') flags.capture = true;
     else if (arg === '--runtime') {
       const list = (args[i + 1] ?? '').split(',').filter((name) => name.length > 0);
       i += 1;
@@ -87,8 +90,10 @@ function selected(env: InstallEnv, flags: Flags): Runtime[] {
   );
 }
 
-function installsHook(runtimes: readonly Runtime[]): boolean {
-  return runtimes.some((runtime) => runtime.id === 'claude' || runtime.id === 'grok');
+function installsHook(runtimes: readonly Runtime[], capture: boolean): boolean {
+  return capture
+    ? runtimes.length > 0
+    : runtimes.some((runtime) => runtime.id === 'claude' || runtime.id === 'grok');
 }
 
 function read(path: string): string | null {
@@ -207,7 +212,7 @@ async function change(
 }
 
 export async function init(env: InstallEnv, flags: Flags, cliPath: string): Promise<number> {
-  const commands = commandsFor(env, cliPath);
+  const commands = commandsFor(env, cliPath, flags.capture);
   if (flags.print) {
     env.out(JSON.stringify({ mcpServers: { arp: commands.mcp } }, null, 2));
     return EXIT.ok;
@@ -222,7 +227,7 @@ export async function init(env: InstallEnv, flags: Flags, cliPath: string): Prom
     runtime: runtime.name,
     steps: runtime.install(env, commands, flags.project),
   }));
-  if (installsHook(runtimes)) {
+  if (installsHook(runtimes, flags.capture)) {
     plan.push({ runtime: 'hook', steps: [hookFileStep(env, commands, false)] });
   }
   return change(env, flags, plan, 'Install');
@@ -236,7 +241,12 @@ export async function uninstall(env: InstallEnv, flags: Flags, cliPath: string):
     steps: runtime.remove(env, commands, flags.project),
   }));
   plan.push({ runtime: 'hook', steps: [hookFileStep(env, commands, true)] });
-  return change(env, flags, plan, 'Remove');
+  const code = await change(env, flags, plan, 'Remove');
+  // Captures are the operator's to hand over or delete; uninstall says where they are, nothing more.
+  const captures = join(env.home, '.arp', 'captures');
+  if (existsSync(captures))
+    env.out(`Captures kept in ${captures}. Delete them when you no longer need them.`);
+  return code;
 }
 
 const INITIALIZE = `${JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'initialize', params: {} })}\n`;
@@ -251,7 +261,7 @@ export function doctor(env: InstallEnv, flags: Flags, cliPath: string): number {
     for (const [what, ok] of runtime.check(env, commands, flags.project))
       rows.push([runtime.name, what, ok]);
   }
-  if (installsHook(runtimes)) {
+  if (installsHook(runtimes, false)) {
     const installed = read(commands.hookFile);
     const packaged = read(join(env.dist, 'hook.js'));
     rows.push(['hook', `${commands.hookFile} present`, installed !== null]);

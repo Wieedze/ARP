@@ -1,4 +1,4 @@
-import { mkdtempSync, readFileSync, rmSync, writeFileSync, existsSync } from 'node:fs';
+import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -208,4 +208,36 @@ test('a payload that is not JSON exits 0 and writes nothing — the session must
   const { exitCode, lines } = run('not json');
   expect(exitCode).toBe(0);
   expect(lines).toHaveLength(0);
+});
+
+test('--capture keeps the shape and the names, and redacts every argument, response and error', () => {
+  const proc = Bun.spawnSync(['bun', HOOK, '--capture'], {
+    stdin: new TextEncoder().encode(
+      JSON.stringify({
+        hook_event_name: 'PostToolUseFailure',
+        tool_name: 'mcp__github__create_issue',
+        tool_use_id: 't9',
+        tool_input: { name: 'SENTINEL-in-args', body: 'SENTINEL-body' },
+        error: 'HTTP 401 SENTINEL-in-error',
+        duration_ms: 12,
+      }),
+    ),
+    env: { ...process.env, HOME: dir, ARP_SESSION_LOG: log, ARP_RECEIPTS: receipts },
+  });
+  expect(proc.exitCode).toBe(0);
+  const captures = join(dir, '.arp', 'captures');
+  const files = readdirSync(captures);
+  expect(files).toHaveLength(1);
+  expect(files[0]).toEndWith('-PostToolUseFailure.json');
+  const text = readFileSync(join(captures, files[0] ?? ''), 'utf8');
+  expect(text).not.toContain('SENTINEL');
+  expect(JSON.parse(text)).toMatchObject({
+    hook_event_name: 'PostToolUseFailure',
+    tool_name: 'mcp__github__create_issue',
+    tool_use_id: 't9',
+    tool_input: { name: '<string:16>', body: '<string:13>' },
+    duration_ms: 12,
+  });
+  // The normal record is still written: capture is in addition, not instead.
+  expect(readFileSync(log, 'utf8')).toContain('"call":"t9"');
 });

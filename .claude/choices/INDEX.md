@@ -15,6 +15,7 @@ Read these before relying on them.
 - **0082** (Accepted. Amends `0041` (a `packages/graphql` under the protocol package).) — Three apps: the MCP server, the agent node and the runtime hook are different programs
 - **0087** (Accepted, one point open (below)) — A tool is its package, and its repository is its source
 - **0088** (Accepted. Amends the one-word rule of 2026-10-28 (`scripts/seed/seed-domain-tree.ts`,) — A label is one word, unless a compound is necessary
+- **0090** (Accepted. **Extended 2026-10-30 (task 33i):** `arp hook --capture` writes a second) — What the hook records: outcome and identity, never content or credentials
 
 ## All
 
@@ -109,6 +110,6 @@ Read these before relying on them.
 | [0088](0088-a-label-is-one-word-unless-a-compound-is-necessary.md) | 2026-10-30 | Accepted. Amends the one-word rule of 2026-10-28 (`scripts/seed/seed-domain-tree.ts`, | A label is one word, unless a compound is necessary |
 | [0089](0089-one-installer-one-package-thin-manifests.md) | 2026-10-30 | Accepted | One installer: one npm package, a thin native manifest per runtime |
 | [0089](0089-the-probe-is-not-the-pulse.md) | 2026-10-30 | Accepted | The probe is not the pulse |
-| [0090](0090-what-the-hook-records.md) | 2026-10-30 | Accepted | What the hook records: outcome and identity, never content or credentials |
+| [0090](0090-what-the-hook-records.md) | 2026-10-30 | Accepted. **Extended 2026-10-30 (task 33i):** `arp hook --capture` writes a second | What the hook records: outcome and identity, never content or credentials |
 | [0091](0091-the-agent-s-activity-reaches-the-browser-through-a-local-feed.md) | 2026-10-30 | Accepted | The agent's activity reaches the browser through a local, read-only feed |
 | [0092](0092-arp-sponsors-delegation-publication-on-testnet.md) | 2026-10-30 | Accepted | ARP sponsors the publication of delegations, on testnet, from its treasury |

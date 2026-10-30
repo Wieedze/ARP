@@ -67,12 +67,14 @@
  * line, appended, never rewritten — a log a later step reads is a log nothing may edit.
  */
 import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { homedir } from 'node:os';
 import { dirname, join } from 'node:path';
 
 import { type FetchedRef, normaliseToolUrl, refForInvocation } from '@arp-protocol/core';
 
 import { type Classified, classifyCall } from './classify.ts';
 import { readMcpServers, serverUrlOf } from './mcp-config.ts';
+import { capture } from './capture.ts';
 import { type PayloadFormat, type ToolCall, toolCallOf } from './payload.ts';
 
 type Invocation = {
@@ -251,6 +253,9 @@ try {
   // Silence is the right failure here: the log loses a line, the session does not stop.
   process.exit(0);
 }
+
+// `arp hook --capture` (task 33i): keep this payload, redacted, before anything can exit.
+if (process.argv.includes('--capture')) capture(parsed, join(homedir(), '.arp', 'captures'));
 
 const call = toolCallOf(parsed);
 if (call === null) process.exit(0);

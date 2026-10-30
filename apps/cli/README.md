@@ -23,7 +23,7 @@ arp init               do it: asks first, backs up every file it edits
 arp doctor             check it: entries present, hook in place, the server answers
 ```
 
-`init` finds Claude Code, Grok Build, Cursor, Gemini CLI and Codex on this machine. It adds the MCP
+`init` finds Claude Code, Grok Build, Cursor, Gemini CLI, Codex and Copilot (VS Code, CLI) on this machine. It adds the MCP
 server to each one, and the hook to Claude Code (Grok Build reads Claude Code's files). For any
 other MCP client, `arp init --print` prints the entry to paste. `--yes` and `--no-input` are for
 scripts, `--runtime claude,cursor` narrows the run, and `--project` writes the project's files.

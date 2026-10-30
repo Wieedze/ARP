@@ -39,9 +39,11 @@ usage
     --dry-run, -n        show the changes, write nothing
     --yes, -y            agree without a prompt
     --no-input           never prompt; fail if a change needs agreement
-    --runtime a,b        only these: claude, grok, cursor, gemini, codex
+    --runtime a,b        only these: claude, grok, cursor, gemini, codex, copilot
     --project            the project's files instead of your user ones
     --print              (init) print the MCP entry for any other client, write nothing
+    --capture            (init) hook every runtime and keep each payload, redacted, in
+                         ~/.arp/captures/ — to teach the hook a new runtime
   arp --version
   arp --help
 

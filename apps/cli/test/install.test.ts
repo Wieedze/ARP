@@ -14,7 +14,7 @@ import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 
 import { doctor, EXIT, init, parseFlags, uninstall, type Flags } from '../src/install/commands.ts';
-import { withArpHooks, withCodexServer, withMcpServer } from '../src/install/edits.ts';
+import { CLAUDE_HOOKS, withCodexServer, withHooks, withMcpServer } from '../src/install/edits.ts';
 import type { InstallEnv, RunResult } from '../src/install/env.ts';
 
 let home: string;
@@ -79,11 +79,21 @@ describe('edits', () => {
       },
       theme: 'dark',
     };
-    const once = withArpHooks(settings, '"node" "/h/.arp/bin/hook.js"', '/.arp/bin/hook.js');
-    const twice = withArpHooks(once, '"node" "/h/.arp/bin/hook.js"', '/.arp/bin/hook.js');
+    const once = withHooks(
+      settings,
+      CLAUDE_HOOKS,
+      '"node" "/h/.arp/bin/hook.js"',
+      '/.arp/bin/hook.js',
+    );
+    const twice = withHooks(
+      once,
+      CLAUDE_HOOKS,
+      '"node" "/h/.arp/bin/hook.js"',
+      '/.arp/bin/hook.js',
+    );
     expect(twice).toEqual(once);
     expect(JSON.stringify(once)).toContain('theirs');
-    expect(withArpHooks(once, null, '/.arp/bin/hook.js')).toEqual(settings);
+    expect(withHooks(once, CLAUDE_HOOKS, null, '/.arp/bin/hook.js')).toEqual(settings);
 
     const servers = withMcpServer({ mcpServers: { github: { url: 'x' } } }, 'arp', {
       command: 'n',
@@ -268,6 +278,77 @@ describe('init', () => {
   });
 });
 
+describe('init --capture (task 33i)', () => {
+  test('without --capture, Cursor, Gemini, Codex and Copilot get no hook', async () => {
+    for (const dir of ['.cursor', '.gemini', '.codex', '.copilot']) mkdirSync(join(home, dir));
+    await init(env(), flags(['--yes']), CLI);
+    expect(existsSync(join(home, '.cursor', 'hooks.json'))).toBe(false);
+    expect(at(json(join(home, '.gemini', 'settings.json')), 'hooks')).toBeUndefined();
+    expect(existsSync(join(home, '.codex', 'hooks.json'))).toBe(false);
+    expect(existsSync(join(home, '.copilot', 'hooks', 'arp.json'))).toBe(false);
+    expect(existsSync(join(home, '.arp', 'bin', 'hook.js'))).toBe(false);
+  });
+
+  test('with --capture, each runtime gets a capturing hook in its own format', async () => {
+    for (const dir of ['.cursor', '.gemini', '.codex', '.copilot']) mkdirSync(join(home, dir));
+    expect(await init(env(), flags(['--yes', '--capture']), CLI)).toBe(EXIT.ok);
+    const cursor = json(join(home, '.cursor', 'hooks.json'));
+    expect(at(cursor, 'version')).toBe(1);
+    expect(String(at(cursor, 'hooks', 'afterMCPExecution', 0, 'command'))).toEndWith(
+      'hook.js" --capture',
+    );
+    const gemini = json(join(home, '.gemini', 'settings.json'));
+    expect(at(gemini, 'mcpServers', 'arp')).toBeDefined();
+    expect(at(gemini, 'hooks', 'AfterTool', 0, 'matcher')).toBe('mcp_.*');
+    expect(at(gemini, 'hooks', 'AfterTool', 0, 'hooks', 0, 'timeout')).toBe(10_000);
+    expect(at(json(join(home, '.codex', 'hooks.json')), 'hooks', 'PostToolUse', 0, 'matcher')).toBe(
+      'mcp__.*',
+    );
+    expect(
+      at(
+        json(join(home, '.copilot', 'hooks', 'arp.json')),
+        'hooks',
+        'postToolUse',
+        0,
+        'timeoutSec',
+      ),
+    ).toBe(10);
+    expect(existsSync(join(home, '.arp', 'bin', 'hook.js'))).toBe(true);
+  });
+
+  test('uninstall removes every capturing hook and the files that held only ours', async () => {
+    for (const dir of ['.cursor', '.gemini', '.codex', '.copilot']) mkdirSync(join(home, dir));
+    writeFileSync(join(home, '.gemini', 'settings.json'), '{"theme":"x"}');
+    await init(env(), flags(['--yes', '--capture']), CLI);
+    expect(await uninstall(env(), flags(['--yes']), CLI)).toBe(EXIT.ok);
+    expect(json(join(home, '.gemini', 'settings.json'))).toEqual({ theme: 'x' });
+    expect(existsSync(join(home, '.cursor', 'hooks.json'))).toBe(false);
+    expect(existsSync(join(home, '.copilot', 'hooks', 'arp.json'))).toBe(false);
+    expect(existsSync(join(home, '.codex', 'hooks.json'))).toBe(false);
+  });
+});
+
+describe('after --capture', () => {
+  test('a plain init takes the capturing hooks out of the runtimes the hook cannot read yet', async () => {
+    for (const dir of ['.cursor', '.gemini', '.codex', '.copilot']) mkdirSync(join(home, dir));
+    await init(env(), flags(['--yes', '--capture']), CLI);
+    expect(await init(env(), flags(['--yes']), CLI)).toBe(EXIT.ok);
+    expect(existsSync(join(home, '.cursor', 'hooks.json'))).toBe(false);
+    expect(existsSync(join(home, '.codex', 'hooks.json'))).toBe(false);
+    expect(existsSync(join(home, '.copilot', 'hooks', 'arp.json'))).toBe(false);
+    expect(at(json(join(home, '.gemini', 'settings.json')), 'hooks')).toBeUndefined();
+    expect(at(json(join(home, '.gemini', 'settings.json')), 'mcpServers', 'arp')).toBeDefined();
+  });
+
+  test('uninstall says where the captures are and leaves them', async () => {
+    mkdirSync(join(home, '.arp', 'captures'), { recursive: true });
+    writeFileSync(join(home, '.arp', 'captures', 'one.json'), '{}');
+    await uninstall(env(), flags(['--yes']), CLI);
+    expect(lines.join('\n')).toContain('Captures kept in');
+    expect(existsSync(join(home, '.arp', 'captures', 'one.json'))).toBe(true);
+  });
+});
+
 describe('uninstall and doctor', () => {
   test('uninstall removes ours and only ours', async () => {
     mkdirSync(join(home, '.claude'));
@@ -276,7 +357,7 @@ describe('uninstall and doctor', () => {
     await init(env(), flags(['--yes']), CLI);
     expect(await uninstall(env(), flags(['--yes']), CLI)).toBe(EXIT.ok);
     expect(json(join(home, '.claude', 'settings.json'))).toEqual({ theme: 'dark' });
-    expect(json(join(home, '.claude.json'))).toEqual({});
+    expect(existsSync(join(home, '.claude.json'))).toBe(false);
     expect(existsSync(join(home, '.codex', 'config.toml'))).toBe(false);
     expect(existsSync(join(home, '.arp', 'bin', 'hook.js'))).toBe(false);
   });
