@@ -234,10 +234,16 @@ with the code. Read-only audit first, then fixes in small batches.
     one, so the fix destroyed a site the stale version already knew about. **Grep before
     overwriting, not after.**
 
-36. **`/` has motion and the other four pages have none.** `/agents`, `/tools`, `/atom/:atomId` and
-    `/agent` do not have even the block-level reveal, and the step is visible the moment you leave
-    the landing page. Not a defect in `tasks/29` — explicitly out of its scope — but it is an
-    incoherence now, where before `tasks/29` it was a uniform absence.
+36. **`/` has motion and no other route does.** Not "the other four pages" — corrected 2026-10-30,
+    the same undercount as items 38 and 39 and found the same way, by grepping the wording instead
+    of re-reading the file. `App.tsx` carries **13** `<Route>` entries; `RouteTransition` wraps all
+    of them, so every route fades in, and **none of them but `/` has the block-level reveal or the
+    word scale**. The step is visible the moment you leave the landing page.
+
+    Not a defect in `tasks/29` — explicitly out of its scope, and the user's yes of 2026-10-30
+    explicitly did not cover it either. It is an incoherence now, where before `tasks/29` it was a
+    uniform absence. Read the count off the router rather than from this line (`rules/claims.md`
+    §2): a count of routes in a growing router rots.
 
 Overlap: items 21–26 are prose. `tasks/27` (the prose pass) runs after the tool page, so these can
 wait for it unless one misleads a reader before then.

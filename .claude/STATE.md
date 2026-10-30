@@ -1,6 +1,7 @@
 # Project state
 
-**Updated** 2026-10-30 (task 32 — three apps over two packages; ADR `0082`).
+**Updated** 2026-10-30 (task 29 closed — the landing's scene deck; ADRs `0066`-`0070`,
+`learning/22`. Before that: task 32 — three apps over two packages, ADR `0082`).
 Hand-maintained — a task does not close without updating this file (`workflow.md`, task-close
 protocol).
 
@@ -129,10 +130,25 @@ git rev-list --count origin/feat/agent-panel-tabs..HEAD
 
 The remote SHA above is stable between pushes, so it stays.
 
-**Tests**: protocol **418 passed / 4 skipped** · app **485 passed / 2 skipped** · contracts **17
-passed** (measured 2026-10-28). `tsc -b` 0, `eslint .` 0, `check:tokens` 67, `check:contrast` 0,
-`check:scripts` 0. **`bun run lint` at the root also fails on `solhint: command not found`** — not
-installed; no Solidity gate runs from an agent session.
+**Tests**, measured 2026-10-30 at `f13e2b5` with `bun run test` at the root — **eight workspaces**,
+which is the shape `0082` left:
+
+```
+graphql    8        protocol  613 (+4 skipped)     mcp   26     node  21
+hook       8        api        14                  web  587 (+2 skipped)   contracts 17
+```
+
+`tsc -b` 0, `eslint .` 0 over `apps/{web,mcp,node,hook,api}` and `packages/{graphql,protocol}`,
+`check:tokens` **70**, `check:contrast` 0, `check:scripts` 0. **`bun run lint` at the root still
+fails on `solhint: command not found`** — not installed; no Solidity gate runs from an agent
+session.
+
+**Do not trust the block above either — run the command.** It said *"protocol 418 / app 485 /
+check:tokens 67, measured 2026-10-28"* until 2026-10-30, against 613 / 587 / 70, and it had missed
+three whole workspaces that did not exist when it was written. The lesson is the one three lines
+above about commit counts and it was not transferred: **a hand-maintained count in a growing
+repository is stale the moment it is written.** It is kept here with its date only so a reader can
+tell whether this file has been touched since the code was.
 
 The app count went **down** from 276 at one point in the day, deliberately: `mainnet-routes.test.ts`
 replaced nine tests over a hand-written route list with four that read the source. Fewer tests, one
@@ -190,20 +206,24 @@ and task 20 commits and does not describe them.**
 | 25     | hire an agent, and rate it afterwards                     | **objective superseded — ADR `0060`.** `find` and `rate` shipped (`src/discover.ts`, `src/declare/rate.ts`); **`hire` and `pay` removed**, because a delegation names its delegate by address and an agent's runtime address is not on the graph — so a buyer can only hire an agent they already know, and closing that is a marketplace. ARP records a use, it does not broker one                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 | 26     | the app has no DOM test environment                       | **done** 2026-10-27 (`c5af7fc`) with `tasks/13` — `happy-dom` under a second Vitest project, because `environmentMatchGlobs` was removed in Vitest 4 and fails silently                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | 27     | a pass over the prose: slop, redundancy, over-explanation | **steps 1-3 done** 2026-10-27 (`dc3ef0b`) — the front-facing half: both READMEs, the publishable skill, the UI copy (already clean). Six **factual** errors came out of `README.md` with the prose. **Steps 4-6 not done**: `docs/` (16 files, 5,967 lines), the rest of `.claude/rules/`, and 31 task files + 65 ADRs + 19 post-mortems                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
-| 29     | the landing is a scene sequence                           | **built and gated** 2026-10-28, including all five browser checks (`scripts/measure/landing-fit.ts`, which found two defects no other gate could see). **Not closed**: the task forbids touching the other four pages and two changes did — the sticky nav and the route fade — both disclosed in `tasks/29` and awaiting the user's yes or no — the design session's delivery, built as delivered. Six scenes, one gesture per scene, Saffron hand-overs, the word and route scales. Seven of its decisions were the user's: ADRs `0066`-`0069`, three of which amend `rules/ui.md`. What `docs/18_THE_MOTION_SPEC.md` §4-§5 became, and the one thing in it deliberately not built, is ADR `0070`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| 29     | the landing is a scene sequence                           | **COMPLETE** 2026-10-30, `task-verifier` PASS on the second pass (`f13e2b5`; post-mortem `learning/22`). The design session's delivery, built as delivered: six scenes, one gesture per scene, Saffron hand-overs, the word and route scales. Seven of its decisions were the user's — ADRs `0066`-`0070`, three of which amend `rules/ui.md`; what `docs/18_THE_MOTION_SPEC.md` §4-§5 became is `0070`. **The scope breach is authorised, not absorbed**: the task forbade touching the other pages and the sticky nav + route fade reached every route; the user said yes 2026-10-30 (_« 5 oui il reste »_), to the **mechanism** — the figure he was shown, 89px/218px/26%/five pages, was stale by a third and is now 65px/202px/24%/13 routes. **The first verifier pass FAILed on eight items, none of them in the page**, and the two worth carrying: the browser gate clicked a link the user had cut, so it **could only fail** and reported a working deck as broken; and it held `const NAV = 88`, the **fifth** copy of a number `nav-height.ts` exists to hold once. Both lived in `scripts/`, which no app gate reads. **Still open**: the other routes have no block or word scale, and the gate has no assertion for `Home`/`End` or for native scroll past scene 5 — so four of its five Gate items are asserted, not five |
 | 30     | declaring a use has no page                               | **built, reviewed twice, fixed** 2026-10-28 — `/atom/:atomId` writes `(your agent, uses, this atom)`, and the atom's own market is reachable there. ADR `0071`. The ERC-8004 `owner` is the authority; mainnet is refused pending the user's ADR. Two review rounds, **twelve** findings, **four of them created by fixing the first eight**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | 28     | coherence audit — code, front, docs                       | **first batch done** 2026-10-20 (ADR `0044`); **eight items marked moot** 2026-10-27 (`ToolDetail`, `RegisterModule`, `ModuleList` deleted); **item 27 fixed** (the mainnet sentence, ADR `0065`). Six items added 2026-10-27 from the task 17 and 22 gates — the `194` at six sites, the two deployment-file shapes, `format:check`'s standing failure, `INDEX.md`'s generator output, and the `new URL(…, import.meta.url)` sweep. Mint vs "mints nothing" is still the user's                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | 31     | ARP serves the content and signs the access               | **built and verified** 2026-10-29, all seven deliverables. ARP is now a path and not only an index: the node holds one key, it signs content receipts and nothing else, and it cannot move value — ADR `0038` unamended, the plan path still has no key. `receipt.ts` (40 tests, EIP-712 **not** the EIP-191 the task sketched, because an atom id is the same on 13579 and 1155 and the signed domain is the only thing that separates them), `content-path.ts` + `content-serve.ts` (21 each, every piece of IO injected), `apps/mcp/src/content.ts` + one route, the hook filling `ref` from the fetch, `arp_declare_session`, ADR `0080`, `docs/14`'s amendment, and `docs/22` — the operator-facing account, which is what the user asked for and is no longer owed. **521 of 662 skills are servable** (`measurements/skill-layouts-2026-10-29T2200.json`); 139 have no file at HEAD and 95 of those sit in a repository with nothing a rename could have been, which is a per-skill liveness signal one listing request re-derives. Verified end to end: the digest a receipt carries is what `sha256sum` prints on the downloaded file. **Three review rounds, eight blockers**, and the pattern in all of them was a claim rather than a crash — see the two entries below |
-| 32     | three apps over two packages: mcp, node, hook          | **built and walked** 2026-10-30 on `refactor/monorepo-apps`. `apps/{web,mcp,node,hook}` and `packages/{graphql,protocol}`; the MCP server, the node and the hook left `scripts/` for workspaces with their own gates, and the 25 Intuition query documents left `protocol` for `@arp-protocol/graphql` (ADR `0082`, amending `0041`). Each app builds to one readable JS file with `viem` external; nothing published. Same test counts before and after (graphql 8 + protocol 596 = the 604 protocol had; mcp 41; web 581). The loop walked on testnet 13579 through the moved code: dry, then a new `(agent 6, uses, flux-2-klein)` edge `0xc994c7a0…` + deposit `0xd2125e19…` (0.003 tTRUST), the content route, the hook → session-log → `arp_declare_session` chain, and a hire 3 → 2 (`0xf3649dbe…` payment, `0xd90c43fe…` deposit). Signed by ARP's own testnet keys on the user's instruction (ADR `0037`). The walk found two defects, below |
+| 32     | three apps over two packages: mcp, node, hook          | **built and walked** 2026-10-30 on `refactor/monorepo-apps`. `apps/{web,mcp,node,hook}` and `packages/{graphql,protocol}`; the MCP server, the node and the hook left `scripts/` for workspaces with their own gates, and the 25 Intuition query documents left `protocol` for `@arp-protocol/graphql` (ADR `0082`, amending `0041`). Each app builds to one readable JS file with `viem` external; nothing published. Same test counts before and after, **measured at the time of the move and not since** (graphql 8 + protocol 596 = the 604 protocol had; mcp 41; web 581) — `mcp` is 26 today because `bcc673b` split `server.ts` into one file per tool group afterwards, so read the counts from the block above the task table, not from this row. The loop walked on testnet 13579 through the moved code: dry, then a new `(agent 6, uses, flux-2-klein)` edge `0xc994c7a0…` + deposit `0xd2125e19…` (0.003 tTRUST), the content route, the hook → session-log → `arp_declare_session` chain, and a hire 3 → 2 (`0xf3649dbe…` payment, `0xd90c43fe…` deposit). Signed by ARP's own testnet keys on the user's instruction (ADR `0037`). The walk found two defects, below |
 
 **Recommended order** — `docs/15_ROADMAP.md` is the full version with what testnet can and cannot
 prove. The old short form here read **"next is 17 → 25"** and both halves are now wrong: 17's gate
 ran on 2026-10-27, and **25's objective was superseded by ADR `0060`** — `hire` and `pay` were
 removed, because a delegation names its delegate by address and an agent's runtime address is not on
 the graph. What is left: **19 step 1b** (blocked — the `same as` → CAIP-10 join does not exist, 0
-edges re-measured 2026-10-27), **27** (the prose pass), **28** (the coherence punch list) and
-**29**'s two scope questions (the sticky nav and the route fade, both of which touched pages that
-task said not to touch — the user's yes or no closes it).
+edges re-measured 2026-10-27), **27** (the prose pass) and **28** (the coherence punch list).
+
+**29 is closed, 2026-10-30.** Its two scope questions — the sticky nav and the route fade, both of
+which touched pages that task said not to touch — were answered yes by the user and verified; see
+the table row and `learning/22`. What it leaves behind is **the next UI task**: every route other
+than `/` still has no block-level reveal and no word scale, so the step is visible the moment you
+leave the landing. The user's yes covered the nav and the fade and explicitly not that.
 
 **`tasks/31` is COMPLETE, 2026-10-29 — all seven deliverables, `task-verifier` PASS on the fourth
 pass.** Post-mortem `.claude/learning/20-arp-serves-the-content-and-signs-the-access.md`, and it
@@ -313,15 +333,21 @@ every object rather than only the tools. The graph is walkable in both direction
 The `uses`-scoped, tier-aware view (`docs/14`'s ladder) survives as `DeclaredUses`, which the agent
 page renders as its own "who declared using it" section.
 
-Tasks 13, 14, 21, 22 and 17 all closed on 2026-10-27. **29** is built and gated on 2026-10-28 and
-is **not closed**: two changes breach its own "do not touch the other four pages" and need the
-user's yes or no (see its header). What remains open is **19 step 1b** (blocked on a join that does
-not exist), **27**, **28** and **29**'s two scope questions.
+Tasks 13, 14, 21, 22 and 17 all closed on 2026-10-27. **29 closed on 2026-10-30** — built and
+gated 2026-10-28, the user said yes to both scope questions, `task-verifier` PASS on the second
+pass (`f13e2b5`, `learning/22`). What remains open is **19 step 1b** (blocked on a join that does
+not exist), **27** and **28**.
 
-**Only `/` has motion beyond the route fade.** `RouteTransition` wraps every route, so all five
-pages arrive with a 200ms opacity fade — but `/agents`, `/tools`, `/atom/:atomId` and `/agent` have
-no block-level reveal and no word scale, and the step is visible the moment you leave the landing
-page. Deliberately out of scope for task 29; it is the next UI task, not a defect in that one.
+(This paragraph said 29 was "not closed" and needed the user's yes **in a third place**, after the
+table row and the recommended order were both corrected. One number, three sites — `claims.md` §5,
+and the sweep that found it was `grep -rn "other four pages"`, not re-reading the file.)
+
+**Only `/` has motion beyond the route fade.** `RouteTransition` wraps every route — **13 of them
+in `App.tsx`**, not five — so every page arrives with a 200ms opacity fade, but none of them has a
+block-level reveal or a word scale, and the step is visible the moment you leave the landing page.
+Deliberately out of scope for task 29 and explicitly outside the user's yes; it is the next UI
+task, not a defect in that one. Read the count off `App.tsx` rather than this line: a tally of
+routes in a growing router rots, and "all five pages" is what this said while there were thirteen.
 
 **The deck's scroll-driven half is outside every gate in this repo, and its structure is not.**
 `happy-dom`'s viewport is 1024x768 with `prefers-reduced-motion` false, so `canPin()` is true and
