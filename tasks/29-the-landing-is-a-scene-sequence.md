@@ -1,14 +1,20 @@
 # Task 29 — The landing is a scene sequence, not a long page
 
-> **Status: BUILT AND GATED; two scope calls await the user** 2026-10-28 — ADRs `0066`, `0067`,
-> `0068`, `0069`, `0070`.
+> **Status: BOTH SCOPE CALLS ANSWERED — the user said yes, 2026-10-30.** _« 5 oui il reste »_, to
+> the question as it was put: the sticky nav and the route fade stay. ADRs `0066`, `0067`, `0068`,
+> `0069`, `0070`.
 >
-> The work is done and every check passes, static and in a browser. What is **not** settled is that
-> this file says _"Do not touch the other four pages"_ and four pages changed: `NavSplit` became
-> sticky on all five, and `RouteTransition` wraps the whole route tree. Both are disclosed below
-> under "Open, and the user's to settle" rather than absorbed, and `workflow.md` wants the user's
-> explicit yes or a `FUTURE.md` entry — neither of which a verifier or I can supply. **Not marked
-> complete until Max answers those two.**
+> The work was done and gated on 2026-10-28, static and in a browser. What was **not** settled is
+> that this file says _"Do not touch the other four pages"_ and four pages changed: `NavSplit`
+> became sticky on all five, and `RouteTransition` wraps the whole route tree. Both were disclosed
+> below under "Open, and the user's to settle" rather than absorbed, because `workflow.md` wants the
+> user's explicit yes or a `FUTURE.md` entry and neither a verifier nor I can supply one. **That yes
+> is now on the record**, so the breach is an authorised scope expansion rather than drift, and the
+> two changes stay where they are.
+>
+> **What the yes does not cover**, and it is written here so nobody reads it wider than it was
+> asked: the other four pages still have no block-level reveal and no word scale, so the step is
+> visible the moment you leave `/`. That is the next UI task, not part of this one.
 >
 > All five browser checks **run and pass**, in Chromium, against the built bundle:
 > `scripts/measure/landing-fit.ts`. It found two defects nothing else could see — the manifesto

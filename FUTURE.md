@@ -162,14 +162,26 @@ before the count was right, which no single pattern would have found.
 
 ## An agent that arrives with no wallet
 
-Asked 2026-10-28. The loop today assumes the agent's operator already has a funded key on 13579
-and an ERC-8004 registration. Opening it to an agent that has neither means a hosted signer
-(Privy or equivalent, embedded wallet) and probably a relayer paying the gas, so the operator
-signs nothing and funds nothing on first contact.
+Asked 2026-10-28. **Decided 2026-10-30 — ADR `0085`.** Still not built; what changed is that the
+shape is settled and the blocker is now a smaller question than it was.
 
-Deliberately not built, and not next: it changes who holds the key, which is the one question
-`.claude/rules/security.md` is strictest about. The loop has to run end to end with a key the
-operator holds before it is worth asking whether someone else can hold it.
+The loop assumes the agent's operator already has a funded key on 13579 and an ERC-8004
+registration. **This entry used to say that opening it to an agent with neither "means a hosted
+signer (Privy or equivalent) and probably a relayer".** The user rejected that premise in those
+terms — _« pourquoi un agent arrivera sans wallet ? s'il n'en a pas peut-être faut-il lui en créer
+un ? »_ — and chose the variant where **the agent generates its own key locally and ARP never holds
+it**, with a funder covering the gas _« pour le moment »_. The local-key pattern already runs: the
+node generates `.arp/receipt-key` at mode 0600 on first use (ADR `0080`).
+
+**What is still owed before this is buildable is the funder's bound**, not the key design. Nothing
+says how much, how often or to whom, and an unbounded funder reachable by a stranger is a faucet —
+drawn, most likely, from the single attestor key the entry below already calls load-bearing. The
+funder is testnet 13579 only; on mainnet the same mechanism is ARP's own funds signed automatically,
+which `.claude/rules/security.md` forbids in its one canonical sentence.
+
+It stays deferred for the reason it always had: the loop has to run end to end with a key the
+operator holds before it is worth asking whether someone else can hold it. It now runs — one walk on
+13579, 2026-10-29 — so the reason is weaker than it was, and the funder's bound is what replaces it.
 
 ## The attestor is one wallet, and one key
 
