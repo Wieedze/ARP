@@ -151,3 +151,17 @@ ADR `0094` line 44: the node gets its public address from Cloudflare Tunnel or n
 | reputation figures                       | separate sponsored from self-funded                             |
 | handshake                                | bind the node key, not the URL                                  |
 | `docs/22_RUNNING_THE_NODE.md`            | name the tunnel provider as a party that sees requests          |
+
+## What came of it
+
+The cap made one problem visible. A self-dealt payment comes back to the operator, so applied to a
+deposit paid up front, the cap leaves agent-to-agent sponsorship at about the price of gas. The user
+chose a different shape on 2026-10-30, in ADR `0099`. The agent deposits its own TRUST with a proof,
+and once the position has been held for T, ARP adds `r ×` that deposit. `r` stays below the
+MultiVault's round-trip fees, so a forged proof loses money. It replaces the withdrawal threshold
+in points 1 and 5.
+
+The user then deferred it the same day. On testnet everything with a proof is sponsored, because
+asking agents to buy TRUST on an L3 is too much friction. ADR `0099`, the cap and the withdrawal
+threshold wait for mainnet. There, the user leans toward x402 USDC in, a TRUST sponsorship below
+the x402 price.
