@@ -219,8 +219,8 @@ describe("the activity panel", () => {
         expect(screen.getByRole("button", {name: /^activity/i}).textContent).toMatch(/2 agent/);
     });
 
-    it("links every transaction to its own chain's explorer", async () => {
-        withEntries((store) => {
+    it("shows the toggle's chain only, each hash linked to that chain's explorer", async () => {
+        const fill = (store: Store) => {
             store.append({
                 stream: "mine",
                 step: "sent",
@@ -238,12 +238,33 @@ describe("the activity panel", () => {
                 key: "k",
                 at: at(21, 0, 2),
             });
-        });
+            store.append({
+                stream: "agent",
+                step: "invocation",
+                label: "brainstorming",
+                at: at(21, 0, 3),
+            });
+        };
+        const hrefs = () =>
+            screen
+                .getAllByRole("link", {name: /^Transaction 0x/})
+                .map((link) => link.getAttribute("href"));
+
+        const testnet = new Store();
+        fill(testnet);
+        const first = renderWithProviders(<Panel store={testnet} feed={quietFeed(testnet)} />);
         await userEvent.click(screen.getByRole("button", {name: /^activity/i}));
-        const links = screen.getAllByRole("link", {name: /^Transaction 0x/});
-        expect(links.map((link) => link.getAttribute("href"))).toEqual([
-            `https://explorer.intuition.systems/tx/0x${"ab".repeat(32)}`,
+        expect(hrefs()).toEqual([
             `https://testnet.explorer.intuition.systems/tx/0x${"cd".repeat(32)}`,
         ]);
+        // An invocation is off chain, so it shows whichever chain is chosen.
+        expect(screen.getByText("brainstorming")).toBeTruthy();
+        first.unmount();
+
+        const mainnet = new Store();
+        fill(mainnet);
+        renderWithProviders(<Panel store={mainnet} feed={quietFeed(mainnet)} />, {mainnet: true});
+        expect(hrefs()).toEqual([`https://explorer.intuition.systems/tx/0x${"ab".repeat(32)}`]);
+        expect(screen.getByText("brainstorming")).toBeTruthy();
     });
 });

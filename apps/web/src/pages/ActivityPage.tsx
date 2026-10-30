@@ -1,10 +1,18 @@
-import type {ActivityEvent as AgentEvent} from "@arp-protocol/core";
+import {useMemo} from "react";
 import type {Hex} from "viem";
 
 import {useActivityTrace} from "../hooks/use-activity-trace";
 import {useAgentActivity} from "../hooks/use-agent-activity";
+import {useTermLabels} from "../hooks/use-term-labels";
+import {useChainChoice} from "../lib/chain-choice";
 import {amountOf, explorerTxUrl} from "../lib/chain-amounts";
-import type {AgentFeed, FeedStatus, TracedInvocation} from "../services/agent-feed";
+import {
+    timelineRows,
+    type AgentFeed,
+    type FeedStatus,
+    type TimelineRow,
+    type TracedInvocation,
+} from "../services/agent-feed";
 
 /**
  * What the operator's agent triggered, and what it said about it on chain.
@@ -105,54 +113,69 @@ function InvocationRow({row}: {row: TracedInvocation}) {
     );
 }
 
-function RecordRow({event}: {event: AgentEvent}) {
-    let what: string;
-    let detail: React.ReactNode = null;
-    switch (event.source) {
-        case "session":
-            what = `${event.kind} ${event.name}`;
-            detail = [event.outcome ?? "", event.ms === null ? "" : `${event.ms}ms`]
-                .filter(Boolean)
-                .join(" · ");
-            break;
-        case "receipt":
-            what = `receipt ${event.name}`;
-            detail = event.signer === null ? null : `signed ${short(event.signer)}`;
-            break;
-        case "sent":
-            what = `${event.kind}${event.status === "dry" ? " · dry run" : event.status === "reverted" ? " · reverted" : ""}`;
-            detail = (
-                <>
-                    <span className="tabular-nums">{amountOf(event.value, event.chainId)}</span>{" "}
-                    <TxLink chainId={event.chainId} hash={event.hash} />
-                </>
-            );
-            break;
-    }
+function TimelineLine({row}: {row: TimelineRow}) {
     return (
-        <li className="grid grid-cols-[4.5rem_minmax(0,1fr)] gap-x-3 py-[3px]">
-            <span className={`${CELL} text-[color:var(--color-steel)] tabular-nums`}>
-                {clock(event.at)}
-            </span>
-            <span className={`${CELL} min-w-0 text-[color:var(--color-silver)]`}>
-                <span className="text-[color:var(--color-fg)]">{what}</span>
-                {detail === null || detail === "" ? null : (
-                    <span>
-                        {"  "}
-                        {detail}
-                    </span>
+        <tr>
+            <td className={`${TD} text-[color:var(--color-steel)] tabular-nums`}>
+                {clock(row.at)}
+            </td>
+            <td className={`${TD} text-[color:var(--color-fg)]`}>{row.who}</td>
+            <td
+                className={`${TD} ${row.lane === "off" ? "text-[color:var(--color-fg)]" : "text-[color:var(--color-steel)]"}`}
+            >
+                {row.off ?? "—"}
+            </td>
+            <td
+                className={`${TD} ${row.lane === "on" ? "text-[color:var(--color-fg)]" : "text-[color:var(--color-silver)]"}`}
+            >
+                {row.on !== null ? (
+                    row.on
+                ) : row.consequences.length === 0 ? (
+                    <span className="text-[color:var(--color-steel)]">—</span>
+                ) : (
+                    row.consequences.map((consequence, index) => (
+                        <span key={`${consequence.label}-${index}`} className="mr-3 inline-block">
+                            {`${consequence.label} `}
+                            <TxLink chainId={consequence.chainId} hash={consequence.hash} />
+                        </span>
+                    ))
                 )}
-            </span>
-        </li>
+            </td>
+            <td className={`${TD} text-right`}>
+                {row.tx === null ? null : <TxLink chainId={row.tx.chainId} hash={row.tx.hash} />}
+            </td>
+        </tr>
     );
 }
 
 export function ActivityPage({feed}: {feed?: AgentFeed} = {}) {
-    const {events, status} = useAgentActivity(feed);
-    const trace = useActivityTrace(events);
-    const newestFirst = [...events].reverse();
-    const offChain = newestFirst.filter((event) => event.source !== "sent");
-    const onChain = newestFirst.filter((event) => event.source === "sent");
+    const chain = useChainChoice();
+    const {events: all, status} = useAgentActivity(feed);
+    // The toggle decides which chain's transactions are shown. Off-chain events belong to no chain
+    // and stay on both.
+    const events = useMemo(
+        () => all.filter((event) => event.source !== "sent" || event.chainId === chain.chainId),
+        [all, chain.chainId],
+    );
+    const {trace, tripleIdOf} = useActivityTrace(events);
+    const ids = events.flatMap((event) =>
+        event.source === "sent"
+            ? event.decoded.fn === "createTriples"
+                ? [...event.decoded.subjects, ...event.decoded.objects]
+                : event.decoded.fn === "deposit"
+                  ? [event.decoded.termId]
+                  : []
+            : event.source === "session" && event.ref !== null && event.ref.startsWith("0x")
+              ? [event.ref]
+              : [],
+    );
+    const names = useTermLabels(ids);
+    const timeline = timelineRows(events, {chainId: chain.chainId, names, tripleIdOf});
+    // The feed's agent, as the rows name it: by identity on a chain where it has one, else by wallet.
+    const agent =
+        timeline.find((row) => row.lane === "on")?.who ??
+        timeline.find((row) => row.off?.startsWith("invoked") === true)?.who ??
+        "—";
     const declared = trace.filter((row) => row.declaration?.status === "success").length;
     const staked = trace.filter((row) =>
         row.stakes.some((stake) => stake.status === "success"),
@@ -163,6 +186,12 @@ export function ActivityPage({feed}: {feed?: AgentFeed} = {}) {
             <header className="grid items-end gap-x-8 gap-y-6 pt-14 pb-10 md:grid-cols-[minmax(0,1fr)_auto]">
                 <h1 className="type-display">Activity</h1>
                 <dl className="flex overflow-hidden rounded-[var(--radius-card)] border border-[color:var(--color-rule)]">
+                    <Fact label="Agent">
+                        <span className="text-[18px]">{agent}</span>
+                    </Fact>
+                    <Fact label="Chain">
+                        <span className="text-[18px]">{chain.label}</span>
+                    </Fact>
                     <Fact label="Invoked">{trace.length}</Fact>
                     <Fact label="Declared">{declared}</Fact>
                     <Fact label="Staked">{staked}</Fact>
@@ -215,28 +244,35 @@ export function ActivityPage({feed}: {feed?: AgentFeed} = {}) {
                 </table>
             )}
 
-            <div className="mt-14 grid gap-x-10 gap-y-10 md:grid-cols-2">
-                <div>
-                    <h2 className={`${LABEL} mb-2 border-b border-[color:var(--color-rule)] pb-2`}>
-                        Off chain
-                    </h2>
-                    <ol>
-                        {offChain.map((event, index) => (
-                            <RecordRow key={`off-${index}`} event={event} />
-                        ))}
-                    </ol>
-                </div>
-                <div>
-                    <h2 className={`${LABEL} mb-2 border-b border-[color:var(--color-rule)] pb-2`}>
-                        Signed
-                    </h2>
-                    <ol>
-                        {onChain.map((event, index) => (
-                            <RecordRow key={`on-${index}`} event={event} />
-                        ))}
-                    </ol>
-                </div>
-            </div>
+            <h2 className={`${LABEL} mt-14 mb-2`} id="activity-timeline">
+                Timeline
+            </h2>
+            <table aria-labelledby="activity-timeline" className="w-full border-collapse">
+                <thead>
+                    <tr>
+                        <th scope="col" className={`${TH} w-[5.5rem]`}>
+                            Time
+                        </th>
+                        <th scope="col" className={`${TH} w-[12rem]`}>
+                            Who
+                        </th>
+                        <th scope="col" className={TH}>
+                            Off chain
+                        </th>
+                        <th scope="col" className={TH}>
+                            On chain
+                        </th>
+                        <th scope="col" className={`${TH} w-[8rem] text-right`}>
+                            Transaction
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {timeline.map((row) => (
+                        <TimelineLine key={row.key} row={row} />
+                    ))}
+                </tbody>
+            </table>
         </section>
     );
 }

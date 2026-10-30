@@ -19,7 +19,10 @@ const keyOf = (d: Pick<Declared, "subject" | "predicate" | "object">) =>
  * calldata, so each declared `(subject, predicate, object)` is read once through
  * `calculateTripleId` — a pure function on chain, so it never goes stale and is cached forever.
  */
-export function useActivityTrace(events: readonly AgentEvent[]): TracedInvocation[] {
+export function useActivityTrace(events: readonly AgentEvent[]): {
+    trace: TracedInvocation[];
+    tripleIdOf: (subject: Hex, predicate: Hex, object: Hex) => Hex | undefined;
+} {
     const declared = useMemo(() => {
         const out = new Map<string, Declared>();
         for (const event of events) {
@@ -69,11 +72,9 @@ export function useActivityTrace(events: readonly AgentEvent[]): TracedInvocatio
         return out;
     }, [declared, landed]);
 
-    return useMemo(
-        () =>
-            traceInvocations(events, (subject, predicate, object) =>
-                ids.get(keyOf({subject, predicate, object})),
-            ),
-        [events, ids],
-    );
+    return useMemo(() => {
+        const tripleIdOf = (subject: Hex, predicate: Hex, object: Hex) =>
+            ids.get(keyOf({subject, predicate, object}));
+        return {trace: traceInvocations(events, tripleIdOf), tripleIdOf};
+    }, [events, ids]);
 }

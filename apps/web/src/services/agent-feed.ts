@@ -394,3 +394,202 @@ export function traceInvocations(
     }
     return [...byKey.values()].sort((a, b) => b.lastAt.localeCompare(a.lastAt));
 }
+
+/** What a term is called, as `getTermLabels` returns it. */
+export type TermName =
+    | {kind: "atom"; label: string}
+    | {kind: "triple"; subject: string; predicate: string; object: string};
+
+/** One line of the timeline: who acted, what happened off chain, what landed on chain, and the
+ *  transaction that proves the second. */
+export type TimelineRow = {
+    key: string;
+    at: string;
+    who: string;
+    /** Off chain: an invocation, or a receipt. For an on-chain row, the invocation that caused it. */
+    off: string | null;
+    /** On chain: what the transaction says. For an invocation, empty — its `consequences` say it. */
+    on: string | null;
+    tx: {chainId: number; hash: Hex} | null;
+    consequences: {label: "declared" | "staked"; chainId: number; hash: Hex | null}[];
+    lane: "off" | "on";
+};
+
+const shortId = (value: string) => (value.length > 14 ? `${value.slice(0, 10)}…` : value);
+
+/**
+ * Wallet → the agent it signed for, read from the declarations themselves: a create-triple's subject
+ * is the declaring agent's identity atom, and the indexer names it (`Agent 13579:8`). No guess — a
+ * wallet that declared nothing stays an address.
+ */
+export function agentsByWallet(
+    events: readonly AgentEvent[],
+    names: ReadonlyMap<string, TermName>,
+): Map<string, string> {
+    const out = new Map<string, string>();
+    for (const event of events) {
+        if (
+            event.source !== "sent" ||
+            event.signer === null ||
+            event.decoded.fn !== "createTriples"
+        )
+            continue;
+        const subject = event.decoded.subjects[0];
+        const name = subject === undefined ? undefined : names.get(subject.toLowerCase());
+        if (name?.kind === "atom") out.set(event.signer.toLowerCase(), name.label);
+    }
+    return out;
+}
+
+/**
+ * The feed's events as one timeline, newest first, for the chain the reader chose. Off-chain events
+ * are on every chain's timeline; a transaction is on its own chain's only.
+ *
+ * Links run both ways, on ids: an invocation lists the declaration and stakes it led to, and each
+ * of those names the invocation that caused it.
+ */
+export function timelineRows(
+    events: readonly AgentEvent[],
+    context: {
+        chainId: number;
+        names: ReadonlyMap<string, TermName>;
+        tripleIdOf: (subject: Hex, predicate: Hex, object: Hex) => Hex | undefined;
+    },
+): TimelineRow[] {
+    const onThisChain = events.filter(
+        (event) => event.source !== "sent" || event.chainId === context.chainId,
+    );
+    const invoked = namesOf(onThisChain);
+    const wallets = agentsByWallet(onThisChain, context.names);
+    const who = (address: string | null) =>
+        address === null ? "—" : (wallets.get(address.toLowerCase()) ?? shortId(address));
+    // Every line of the hook's log is this one agent's, because the feed is one agent's directory.
+    const feedAgent = (() => {
+        for (const event of onThisChain) {
+            if (event.source === "sent" && event.signer !== null) return who(event.signer);
+            if (event.source === "receipt" && event.to !== null) return who(event.to);
+        }
+        return "this agent";
+    })();
+    const objectName = (id: string) => {
+        const name = context.names.get(id.toLowerCase());
+        return invoked.get(id.toLowerCase()) ?? (name?.kind === "atom" ? name.label : shortId(id));
+    };
+    const lastInvocation = (ref: string, before: string) => {
+        let found: AgentEvent | undefined;
+        for (const event of onThisChain) {
+            if (
+                event.source !== "session" ||
+                event.ref?.toLowerCase() !== ref.toLowerCase() ||
+                event.at > before
+            )
+                continue;
+            found = event;
+        }
+        return found === undefined || found.source !== "session"
+            ? null
+            : `invoked ${found.name} ${found.at.slice(11, 19)}`;
+    };
+
+    // Triple id → its object, so a deposit can name the tool it stands behind and its cause.
+    const objectOfTriple = new Map<string, string>();
+    for (const event of onThisChain) {
+        if (event.source !== "sent" || event.decoded.fn !== "createTriples") continue;
+        const {subjects, predicates, objects} = event.decoded;
+        objects.forEach((object, index) => {
+            const subject = subjects[index];
+            const predicate = predicates[index];
+            if (subject === undefined || predicate === undefined) return;
+            const triple = context.tripleIdOf(subject, predicate, object);
+            if (triple !== undefined) objectOfTriple.set(triple.toLowerCase(), object);
+        });
+    }
+
+    const traced = traceInvocations(onThisChain, context.tripleIdOf);
+    const rows: TimelineRow[] = onThisChain.map((event): TimelineRow => {
+        const key = agentEventKey(event);
+        switch (event.source) {
+            case "session": {
+                const trace = traced.find(
+                    (row) =>
+                        row.kind === event.kind &&
+                        (row.ref ?? row.name) === (event.ref ?? event.name),
+                );
+                const consequences: TimelineRow["consequences"] = [];
+                if (trace?.declaration !== null && trace?.declaration !== undefined) {
+                    consequences.push({
+                        label: "declared",
+                        chainId: trace.declaration.chainId,
+                        hash: trace.declaration.hash,
+                    });
+                }
+                for (const stake of trace?.stakes ?? []) {
+                    consequences.push({label: "staked", chainId: stake.chainId, hash: stake.hash});
+                }
+                const outcome =
+                    event.outcome !== null && event.outcome !== "ok" ? ` · ${event.outcome}` : "";
+                return {
+                    key,
+                    at: event.at,
+                    who: feedAgent,
+                    off: `invoked ${event.kind} ${event.name}${outcome}`,
+                    on: null,
+                    tx: null,
+                    consequences,
+                    lane: "off",
+                };
+            }
+            case "receipt":
+                return {
+                    key,
+                    at: event.at,
+                    who: `content server ${event.signer === null ? "" : shortId(event.signer)}`.trim(),
+                    off: `served ${event.name} to ${who(event.to)} · signed receipt, not a transaction`,
+                    on: null,
+                    tx: null,
+                    consequences: [],
+                    lane: "off",
+                };
+            case "sent": {
+                const dry =
+                    event.status === "dry"
+                        ? "dry run · "
+                        : event.status === "reverted"
+                          ? "reverted · "
+                          : "";
+                let on: string;
+                let cause: string | null = null;
+                if (event.decoded.fn === "createTriples") {
+                    const object = event.decoded.objects[0];
+                    on =
+                        object === undefined ? "declares" : `declares uses → ${objectName(object)}`;
+                    if (object !== undefined) cause = lastInvocation(object, event.at);
+                } else if (event.decoded.fn === "deposit") {
+                    const object = objectOfTriple.get(event.decoded.termId.toLowerCase());
+                    const name = context.names.get(event.decoded.termId.toLowerCase());
+                    const claim =
+                        object !== undefined
+                            ? `uses → ${objectName(object)}`
+                            : name?.kind === "triple"
+                              ? `${name.predicate} → ${name.object}`
+                              : shortId(event.decoded.termId);
+                    on = `stakes on ${claim}`;
+                    if (object !== undefined) cause = lastInvocation(object, event.at);
+                } else {
+                    on = event.kind;
+                }
+                return {
+                    key,
+                    at: event.at,
+                    who: who(event.signer),
+                    off: cause === null ? null : `← ${cause}`,
+                    on: `${dry}${on}`,
+                    tx: event.hash === null ? null : {chainId: event.chainId, hash: event.hash},
+                    consequences: [],
+                    lane: "on",
+                };
+            }
+        }
+    });
+    return rows.reverse();
+}

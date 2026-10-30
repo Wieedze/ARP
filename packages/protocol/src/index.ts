@@ -519,6 +519,9 @@ export {
     type InvocationOutcome,
 } from "./activity.js";
 
+/** What the indexer calls a term — an atom's label or a triple's three — for naming raw ids. */
+export {getTermLabels, type TermLabel, type TermLabelsConfig} from "./term-labels.js";
+
 /**
  * Which file inside a repository a tool's atom refers to — read from the repository's own listing,
  * because `scripts/measure/skill-layouts.ts` found 19 layouts across 31 repositories and 8 of them

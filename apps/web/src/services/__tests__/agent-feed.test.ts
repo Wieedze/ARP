@@ -7,6 +7,7 @@ import {
     AgentFeed,
     entryFor,
     namesOf,
+    timelineRows,
     traceInvocations,
     type EventSourceLike,
     type ReadReceipt,
@@ -210,5 +211,63 @@ describe("AgentFeed", () => {
         });
         broken.start();
         expect(broken.status()).toBe("offline");
+    });
+});
+
+describe("timelineRows", () => {
+    const tripleIdOf = (s: Hex, p: Hex, o: Hex) =>
+        s === AGENT && p === USES && o === SKILL ? TRIPLE : undefined;
+    const names = new Map([[AGENT.toLowerCase(), {kind: "atom" as const, label: "Agent 13579:8"}]]);
+    const receipt: AgentEvent = {
+        source: "receipt",
+        at: "2026-10-30T11:04:52Z",
+        name: "brainstorming",
+        url: null,
+        atom: SKILL,
+        signer: "0x76dc846361405D145cf899dAE3512225EC8A5111",
+        to: WALLET,
+    };
+    const events = [
+        receipt,
+        invoked("2026-10-30T13:10:36Z"),
+        declared("success", HASH1),
+        staked(TRIPLE, HASH2),
+    ];
+
+    it("names who acted: the agent by its identity atom, the receipt by the server that signed it", () => {
+        const rows = timelineRows(events, {chainId: 13579, names, tripleIdOf});
+        expect(rows.map((row) => row.who)).toEqual([
+            "Agent 13579:8",
+            "Agent 13579:8",
+            "Agent 13579:8",
+            "content server 0x76dc8463…",
+        ]);
+        expect(rows[3]?.off).toBe(
+            "served brainstorming to Agent 13579:8 · signed receipt, not a transaction",
+        );
+    });
+
+    it("links both ways: the invocation lists what it led to, each transaction names its cause", () => {
+        const rows = timelineRows(events, {chainId: 13579, names, tripleIdOf});
+        const [stake, declaration, invocation] = rows;
+        expect(stake).toMatchObject({
+            on: "stakes on uses → brainstorming",
+            off: "← invoked brainstorming 13:10:36",
+            tx: {hash: HASH2},
+        });
+        expect(declaration).toMatchObject({
+            on: "declares uses → brainstorming",
+            off: "← invoked brainstorming 13:10:36",
+        });
+        expect(invocation?.consequences).toEqual([
+            {label: "declared", chainId: 13579, hash: HASH1},
+            {label: "staked", chainId: 13579, hash: HASH2},
+        ]);
+    });
+
+    it("on the other chain, the transactions are gone and the off-chain events stay", () => {
+        const rows = timelineRows(events, {chainId: 1155, names, tripleIdOf});
+        expect(rows.map((row) => row.lane)).toEqual(["off", "off"]);
+        expect(rows[0]?.consequences).toEqual([]);
     });
 });

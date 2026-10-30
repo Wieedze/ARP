@@ -70,10 +70,12 @@ export function useChainActivity(
                     row.object.label ?? row.object.atomId
                 } · ${row.positions} position${row.positions === 1 ? "" : "s"}`,
                 key: row.tripleId,
-                // The indexer's own record of the transaction, so the line opens on the explorer.
+                // The chain it was read on, always, so the bar can follow the toggle; and the
+                // indexer's own record of the transaction, so the line opens on the explorer.
+                chainId: chain.chainId,
                 ...(row.txHash !== null && /^0x[0-9a-fA-F]{64}$/.test(row.txHash)
                     ? // Matched against a 32-byte hex pattern on the line above.
-                      {tx: row.txHash as Hex, chainId: chain.chainId}
+                      {tx: row.txHash as Hex}
                     : {}),
                 ...(Number.isNaN(at) ? {} : {at}),
             });

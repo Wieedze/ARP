@@ -50,6 +50,22 @@ below:
 - **Clickable hashes.** Every hash in the bar is a link to its own chain's explorer.
 - **Navbar.** `Activity` is in the left group.
 
+## Amended 2026-10-30 — who did what, and the toggle
+
+The user: « on doit voir le lien entre offchain et on chain … c'est quoi cette signature ? … il faut
+aussi les id agent », and « tout doit répondre au switch mainnet et testnet ».
+
+- **Who.** `getTermLabels` (`packages/protocol/src/term-labels.ts`, query `ATOM_LABELS_QUERY`) reads
+  what the chosen chain's indexer calls each id. The query was checked live on both chains first. A
+  wallet is named by the identity atom it declared from, so `0xB86F…` reads `Agent 13579:8`. A
+  wallet that declared nothing stays an address. The `0x76dc…` on a receipt is named for what it is:
+  the content server that signed it, with « signed receipt, not a transaction ».
+- **The link.** `/activity`'s two columns became one timeline: Time · Who · Off chain · On chain ·
+  Transaction. Each transaction names the invocation that caused it, and each invocation lists the
+  declaration and stakes it led to. Both joins are on ids (`timelineRows`).
+- **The toggle.** The bar and the page show only the chosen chain's transactions; off-chain events
+  show on both. Chain-stream entries now always carry their chain.
+
 ## Do not do in this task
 
 - ~~Instrument the web app's own write sites.~~ Withdrawn the same day, see the amendment above.

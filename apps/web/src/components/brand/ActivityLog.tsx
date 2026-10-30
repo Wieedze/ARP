@@ -5,6 +5,7 @@ import {useActivityLog} from "../../hooks/use-activity-log";
 import {useAgentActivity} from "../../hooks/use-agent-activity";
 import {useChainActivity} from "../../hooks/use-chain-activity";
 import {amountOf, explorerTxUrl} from "../../lib/chain-amounts";
+import {useChainChoice} from "../../lib/chain-choice";
 import {intuitionTestnet} from "../../lib/chains";
 import type {ActivityEvent, ActivityLog as Store} from "../../services/activity-log";
 import type {AgentFeed, FeedStatus} from "../../services/agent-feed";
@@ -128,7 +129,13 @@ function Row({entry}: {entry: ActivityEvent}) {
 
 export function ActivityLog({store, feed}: {store?: Store; feed?: AgentFeed} = {}) {
     const [open, setOpen] = useState(readOpen);
-    const entries = useActivityLog(store);
+    const chain = useChainChoice();
+    const logged = useActivityLog(store);
+    // The toggle decides which chain's transactions show. An entry with no chain — an invocation, a
+    // receipt — happened off chain and shows on both.
+    const entries = logged.filter(
+        (entry) => entry.chainId === undefined || entry.chainId === chain.chainId,
+    );
     // Always connected, open or not: the bar's count is how a demo shows the agent acted.
     const agent = useAgentActivity(feed);
     // The ambient half. Polled only while the panel is open: a closed panel nobody reads is not a
