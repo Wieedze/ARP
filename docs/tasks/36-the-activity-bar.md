@@ -84,9 +84,23 @@ Further commits, gates and screenshots only, **no `task-verifier` run**:
   Most declared, plus Most installs (skills) or Most stars (repositories). Flat/By repo is removed.
   The index sits beside the title. "Most declared", not "Most used", is the user's choice.
 
+Review of `f5d1c84` and `79ad7ea`, 2026-10-30 (branch `fix/36-verified`). Gates green before and
+after; four defects found by reading the diffs, fixed:
+
+- `timelineRows` listed every declaration and stake under **every** invocation of the same skill,
+  including calls made after the transaction, while the transaction named only the last call before
+  it. The two directions of the link now come from one join, and a reverted call is no longer listed
+  as a consequence. Two tests pin it.
+- `agentsByWallet` is exported and had no test of its own; it has one.
+- Two comments misdescribed the code: `ActivityPage`'s header still described two columns, and
+  `ToolCatalog`'s `order` comment said the list opens on the amount, when it opens on Most declared.
+- `ToolCatalog.tsx` and `ToolCatalogList.tsx` were not prettier-formatted.
+
+`task-verifier` could not be run from that session (no agent tool in a workflow subagent).
+
 ## Open
 
-- `task-verifier` on `f5d1c84` and `79ad7ea`.
+- `task-verifier` on `f5d1c84`, `79ad7ea` and the fix above.
 - `/profile` into `/activity`, per task 35's split (`/activity` = what happened, positions
   included). Not started; the user decides.
 - The commits from `353df6d` to `79ad7ea` are not pushed.
