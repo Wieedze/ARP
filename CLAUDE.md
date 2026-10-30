@@ -149,6 +149,8 @@ ARP/
 │   ├── 21_RUNNING_THE_LOOP.md
 │   ├── 22_RUNNING_THE_NODE.md       (the operator-facing account: every file, every env var,
 │   │                                every outbound connection, and what it does NOT protect)
+│   ├── 23_INSTALLING_ARP.md         (one installer per runtime, how ARP gets listed and used,
+│   │                                the practices it follows — research; the plan is docs/tasks/33)
 │   ├── tasks/                       atomic task files
 │   ├── design/                      design handoffs and references: `arp-design-handoff/` (the
 │   │                                build contract, ADR `0057`), `arp-motion-reference/`, the
