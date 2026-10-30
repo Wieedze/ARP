@@ -2,7 +2,7 @@
 
 **Generated** 2026-10-30 by `scripts/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-81 decisions. Newest last. `choices/README.md` says when to write one.
+82 decisions. Newest last. `choices/README.md` says when to write one.
 
 ## Not accepted
 
@@ -98,3 +98,4 @@ Read these before relying on them.
 | [0080](0080-the-node-signs-for-what-it-served-and-for-nothing-else.md) | 2026-10-29 | Accepted | The node signs for what it served, and for nothing else |
 | [0081](0081-a-claim-a-stranger-checks-ships-with-its-command.md) | 2026-10-30 | Accepted | A claim a stranger is asked to check ships with the command that checks it |
 | [0082](0082-two-apps-the-mcp-and-the-node.md) | 2026-10-30 | Accepted. Amends `0041` (a `packages/graphql` under the protocol package). | Three apps: the MCP server, the agent node and the runtime hook are different programs |
+| [0083](0083-the-hire-receipt-is-eip712-named-like-erc8004.md) | 2026-10-30 | Accepted | The hire receipt is EIP-712, names the agent like ERC-8004, and uses the payment as its nonce |

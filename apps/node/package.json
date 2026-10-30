@@ -12,15 +12,16 @@
     "README.md"
   ],
   "scripts": {
-    "start": "bun run src/node.ts",
-    "build": "bun build src/node.ts --outdir dist --entry-naming 'arp-[name].js' --target=bun --external viem --external 'viem/*' --banner '#!/usr/bin/env bun'",
-    "test": "bun test",
-    "lint": "tsc --noEmit -p tsconfig.json"
+    "start": "bun run --cwd ../../packages/protocol build && bun run src/node.ts",
+    "build": "bun run --cwd ../../packages/protocol build && bun build src/node.ts --outdir dist --entry-naming 'arp-[name].js' --target=bun --external viem --external 'viem/*' --banner '#!/usr/bin/env bun'",
+    "test": "bun run --cwd ../../packages/protocol build && bun test",
+    "lint": "bun run --cwd ../../packages/protocol build && tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
     "viem": "2.52.0"
   },
   "devDependencies": {
+    "@arp-protocol/core": "workspace:*",
     "@types/bun": "^1.4.4",
     "typescript": "~6.0.2"
   },

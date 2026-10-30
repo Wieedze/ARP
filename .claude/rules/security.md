@@ -37,11 +37,14 @@ Walk through each item for every contract change. Document the result (clean pas
 ### Signature replay
 
 - If signatures are used (EIP-712, EIP-1271), they include a nonce + chainId + verifying contract.
-- Signatures are in use, so this section applies. Three sites: `contracts/src/erc8004/IdentityRegistry.sol`
+- Signatures are in use, so this section applies. Five sites: `contracts/src/erc8004/IdentityRegistry.sol`
   (ARP's testnet deployment of the reference registry, which verifies signatures); MetaMask
-  Delegation Framework delegations (EIP-712, signed in the app); and the operator's EIP-712
-  statement on import (`apps/web/src/services/agent-import.ts`). A new signature site gets checked
-  against the bullet above before it ships.
+  Delegation Framework delegations (EIP-712, signed in the app); the operator's EIP-712
+  statement on import (`apps/web/src/services/agent-import.ts`); the MCP server's content receipt
+  (`packages/protocol/src/receipt.ts`); and the node's hire receipt
+  (`packages/protocol/src/hire-receipt.ts`, ADR `0083`). The last two carry no verifying contract,
+  with cause — no contract checks them. A new signature site gets checked against the bullet above
+  before it ships. The list said three until 2026-10-30, and the two receipts were missing from it.
 
 ### Oracles / external data
 

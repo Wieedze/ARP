@@ -1,12 +1,18 @@
 /** What the node does with a request, separated from where it reads its configuration.
  *
  *  `node.ts` reads the environment and listens; this file is the part a test can construct — the
- *  payment check, the ledger of payments already spent, and the receipt.
+ *  limits, the payment check, the ledger of payments already spent, and the receipt.
  */
 import { existsSync, appendFileSync, mkdirSync, readFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 
-import { formatEther, keccak256, toHex } from 'viem';
+import {
+  HIRE_RECEIPT_VERSION,
+  hireDigest,
+  signHireReceipt,
+  type HireReceipt,
+} from '@arp-protocol/core';
+import { formatEther, isAddress } from 'viem';
 import type { Address, Hex, LocalAccount, PublicClient } from 'viem';
 
 /** What the operator's handler receives. Everything the node verified, nothing it assumed. */
@@ -84,43 +90,102 @@ export class PaymentLedger {
   }
 }
 
+/**
+ * The agent as ERC-8004 names it: `eip155:<chainId>:<identityRegistry>` plus the token id.
+ *
+ * The registry's chain is written out rather than taken from the payment's, because the two need
+ * not coincide — on mainnet the identity is on Base 8453 and the staking on 1155
+ * (`.claude/rules/portability.md` point 2).
+ */
+export type AgentIdentity = { agentRegistry: string; agentId: bigint };
+
+/**
+ * How much an unpaid stranger can make the node do. Every `POST /task` costs two RPC reads before
+ * the node knows whether it was paid, so a flood of invented hashes is a bill for the operator.
+ */
+export type NodeLimits = {
+  /** Largest body accepted, in bytes. `Bun.serve` enforces it as well; this is the same number. */
+  maxBodyBytes: number;
+  /** A handler that has not answered by then is a 504, and the payment is released. */
+  handlerTimeoutMs: number;
+  /** `POST /task` requests per client per minute, paid or not. */
+  requestsPerMinute: number;
+};
+
+export const DEFAULT_LIMITS: NodeLimits = {
+  maxBodyBytes: 64 * 1024,
+  handlerTimeoutMs: 60_000,
+  requestsPerMinute: 30,
+};
+
 export type NodeOptions = {
   account: LocalAccount;
   publicClient: Pick<PublicClient, 'getTransaction' | 'getTransactionReceipt'>;
+  /** The chain payments are read on — the receipt's EIP-712 domain. */
+  chainId: number;
+  identity: AgentIdentity | null;
   minBudget: bigint;
   handle: TaskHandler;
   handlerPath: string | null;
   ledger: PaymentLedger;
+  limits?: Partial<NodeLimits>;
+  /** Milliseconds. Injected so a test can move the rate-limit window. */
+  now?: () => number;
 };
 
-type TaskBody = { paymentTxHash?: Hex; requesterAddress?: Address; payload?: unknown };
+type TaskBody = { paymentTxHash?: unknown; requesterAddress?: unknown; payload?: unknown };
+
+const TX_HASH = /^0x[0-9a-fA-F]{64}$/;
+const RATE_WINDOW_MS = 60_000;
+/** Past this many distinct clients the expired windows are swept, so the map cannot grow forever. */
+const RATE_SWEEP_AT = 10_000;
+
+function bigintSafe(_key: string, inner: unknown): unknown {
+  return typeof inner === 'bigint' ? inner.toString() : inner;
+}
 
 function json(value: unknown, status = 200): Response {
-  return new Response(
-    JSON.stringify(
-      value,
-      (_key, inner) => (typeof inner === 'bigint' ? inner.toString() : inner),
-      2,
-    ),
-    { status, headers: { 'content-type': 'application/json' } },
-  );
+  return new Response(JSON.stringify(value, bigintSafe, 2), {
+    status,
+    headers: { 'content-type': 'application/json' },
+  });
 }
 
-/**
- * The receipt binds **this** request to **this** result.
- *
- * `requestHash` covers the requester, the payment and the payload; `resultHash` covers the output.
- * Signing their concatenation means a receipt cannot be lifted onto another request or another
- * answer — which is what a caller needs before paying to stand behind a claim about this agent.
- */
-export function digest(value: unknown): Hex {
-  return keccak256(
-    toHex(JSON.stringify(value, (_k, v) => (typeof v === 'bigint' ? v.toString() : v))),
-  );
+class Timeout extends Error {}
+
+function withTimeout<T>(work: Promise<T>, ms: number): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const expiry = new Promise<never>((_resolve, reject) => {
+    timer = setTimeout(() => reject(new Timeout()), ms);
+  });
+  return Promise.race([work, expiry]).finally(() => clearTimeout(timer));
 }
 
-export function createNode(options: NodeOptions): { fetch(request: Request): Promise<Response> } {
-  const { account, publicClient, minBudget, handle, handlerPath, ledger } = options;
+export function createNode(options: NodeOptions): {
+  fetch(request: Request, client?: string): Promise<Response>;
+} {
+  const { account, publicClient, chainId, identity, minBudget, handle, handlerPath, ledger } =
+    options;
+  const limits: NodeLimits = { ...DEFAULT_LIMITS, ...options.limits };
+  const now = options.now ?? Date.now;
+  const windows = new Map<string, { start: number; count: number }>();
+
+  /** A fixed one-minute window per client. Crude, and enough to make a flood cost its sender. */
+  function overLimit(client: string): boolean {
+    const at = now();
+    if (windows.size > RATE_SWEEP_AT) {
+      for (const [key, window] of windows) {
+        if (at - window.start >= RATE_WINDOW_MS) windows.delete(key);
+      }
+    }
+    const window = windows.get(client);
+    if (window === undefined || at - window.start >= RATE_WINDOW_MS) {
+      windows.set(client, { start: at, count: 1 });
+      return false;
+    }
+    window.count += 1;
+    return window.count > limits.requestsPerMinute;
+  }
 
   /**
    * The checks, in order, before any work happens.
@@ -134,11 +199,10 @@ export function createNode(options: NodeOptions): { fetch(request: Request): Pro
    * still in the mempool, which can be replaced before it lands, and for one that reverted, whose
    * `value` field is still set although nothing moved.
    */
-  async function verifyPayment(body: TaskBody): Promise<TaskContext | { error: string }> {
-    if (!body.paymentTxHash || !body.requesterAddress) {
-      return { error: 'paymentTxHash and requesterAddress are required' };
-    }
-    const hash = body.paymentTxHash;
+  async function verifyPayment(
+    hash: Hex,
+    requester: Address,
+  ): Promise<TaskContext | { error: string }> {
     const tx = await publicClient.getTransaction({ hash }).catch(() => null);
     if (tx === null) return { error: `payment tx ${hash} not found` };
     const receipt = await publicClient.getTransactionReceipt({ hash }).catch(() => null);
@@ -152,19 +216,34 @@ export function createNode(options: NodeOptions): { fetch(request: Request): Pro
         error: `payment ${formatEther(tx.value)} is below this agent's minimum ${formatEther(minBudget)}`,
       };
     }
-    if (tx.from.toLowerCase() !== body.requesterAddress.toLowerCase()) {
+    if (tx.from.toLowerCase() !== requester.toLowerCase()) {
       return { error: `payment came from ${tx.from}, not from the declared requester` };
     }
-    return {
-      requester: body.requesterAddress,
-      paid: tx.value,
-      paymentTxHash: hash,
-      agent: account.address,
-    };
+    return { requester, paid: tx.value, paymentTxHash: hash, agent: account.address };
+  }
+
+  async function readBody(request: Request): Promise<TaskBody | Response> {
+    const declared = Number(request.headers.get('content-length') ?? '0');
+    if (declared > limits.maxBodyBytes) {
+      return json({ error: `body over ${limits.maxBodyBytes} bytes` }, 413);
+    }
+    const text = await request.text();
+    if (new TextEncoder().encode(text).byteLength > limits.maxBodyBytes) {
+      return json({ error: `body over ${limits.maxBodyBytes} bytes` }, 413);
+    }
+    try {
+      const parsed: unknown = JSON.parse(text);
+      if (typeof parsed !== 'object' || parsed === null) {
+        return json({ error: 'body is not a JSON object' }, 400);
+      }
+      return parsed as TaskBody;
+    } catch {
+      return json({ error: 'body is not JSON' }, 400);
+    }
   }
 
   return {
-    async fetch(request: Request): Promise<Response> {
+    async fetch(request: Request, client = 'unknown'): Promise<Response> {
       const url = new URL(request.url);
 
       if (request.method === 'GET' && url.pathname === '/healthz') {
@@ -186,61 +265,83 @@ export function createNode(options: NodeOptions): { fetch(request: Request): Pro
         return json({ error: 'POST /task, or GET /healthz' }, 404);
       }
 
-      let body: TaskBody;
-      try {
-        body = (await request.json()) as TaskBody;
-      } catch {
-        return json({ error: 'body is not JSON' }, 400);
+      if (overLimit(client)) {
+        return json({ error: `more than ${limits.requestsPerMinute} requests a minute` }, 429);
       }
 
-      const spentError = (hash: Hex) =>
-        json({ error: `payment tx ${hash} was already used for a job` }, 409);
-      // Checked before the RPC calls as well as after, so a replay costs the node nothing.
-      if (body.paymentTxHash && ledger.isSpent(body.paymentTxHash))
-        return spentError(body.paymentTxHash);
+      const body = await readBody(request);
+      if (body instanceof Response) return body;
 
-      const verified = await verifyPayment(body);
+      // Shape before the chain: a malformed hash or address would cost two RPC reads to refuse.
+      const { paymentTxHash: hash, requesterAddress: requester } = body;
+      if (typeof hash !== 'string' || !TX_HASH.test(hash)) {
+        return json({ error: 'paymentTxHash must be a 32-byte 0x-prefixed hex hash' }, 400);
+      }
+      if (typeof requester !== 'string' || !isAddress(requester)) {
+        return json({ error: 'requesterAddress must be an address' }, 400);
+      }
+      const payment = hash as Hex; // The regex above is the 0x + 64 hex check `Hex` stands for.
+
+      const spentError = () =>
+        json({ error: `payment tx ${payment} was already used for a job` }, 409);
+      // Checked before the RPC calls as well as after, so a replay costs the node nothing.
+      if (ledger.isSpent(payment)) return spentError();
+
+      const verified = await verifyPayment(payment, requester);
       if ('error' in verified) return json(verified, 402);
-      if (!ledger.claim(verified.paymentTxHash)) return spentError(verified.paymentTxHash);
+      if (!ledger.claim(payment)) return spentError();
 
       let result: unknown;
+      let requestHash: Hex;
+      let resultHash: Hex;
       try {
-        result = await handle(body.payload, verified);
+        const answer = await withTimeout(handle(body.payload, verified), limits.handlerTimeoutMs);
+        // The result as it will cross the wire, so the requester hashes exactly what it receives.
+        result = JSON.parse(JSON.stringify(answer ?? null, bigintSafe)) as unknown;
+        requestHash = hireDigest(body.payload ?? null);
+        resultHash = hireDigest(result);
       } catch (error) {
-        ledger.release(verified.paymentTxHash);
+        ledger.release(payment);
+        if (error instanceof Timeout) {
+          return json(
+            { error: `handler did not answer within ${limits.handlerTimeoutMs} ms` },
+            504,
+          );
+        }
         // The message, not a stack: enough for the caller to retry or report, nothing about the host.
         return json({ error: `handler failed: ${String(error).slice(0, 300)}` }, 500);
       }
 
-      const requestHash = digest({
+      const receipt: HireReceipt = {
+        version: HIRE_RECEIPT_VERSION,
+        agentRegistry: identity?.agentRegistry ?? '',
+        agentId: (identity?.agentId ?? 0n).toString(),
         requester: verified.requester,
-        paymentTxHash: verified.paymentTxHash,
+        payment,
         paid: verified.paid.toString(),
-        payload: body.payload ?? null,
-      });
-      const resultHash = digest(result ?? null);
+        requestHash,
+        resultHash,
+        issuedAt: Math.floor(now() / 1000),
+      };
 
       try {
-        ledger.commit(verified.paymentTxHash, {
+        ledger.commit(payment, {
           requester: verified.requester,
           requestHash,
-          at: new Date().toISOString(),
+          at: new Date(now()).toISOString(),
         });
       } catch (error) {
         // No receipt without a record: a receipt the ledger forgot is a payment the next restart
         // would accept again.
-        ledger.release(verified.paymentTxHash);
+        ledger.release(payment);
         return json({ error: `could not record the payment: ${String(error).slice(0, 300)}` }, 500);
       }
 
-      const signature = await account.signMessage({
-        message: { raw: keccak256(`${requestHash}${resultHash.slice(2)}` as Hex) },
+      const signed = await signHireReceipt(receipt, chainId, {
+        address: account.address,
+        signTypedData: (data) => account.signTypedData(data),
       });
-
-      return json({
-        result,
-        receipt: { agent: account.address, requestHash, resultHash, signature },
-      });
+      return json({ result, receipt: signed });
     },
   };
 }

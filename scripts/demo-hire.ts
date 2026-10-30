@@ -19,7 +19,8 @@
  *
  *    1. the hirer **paid** — a transaction, on chain, from the hirer to the hired agent
  *    2. the hired agent **verified that payment** before doing anything (`agent-node.ts`)
- *    3. it returned a **receipt signed by its own runtime key**, binding this request to this result
+ *    3. it returned an **EIP-712 receipt signed by its own runtime key**, binding this payment, this
+ *       request and this result on this chain (`packages/protocol/src/hire-receipt.ts`)
  *    4. the hirer then **deposited TRUST** on `(hirer, uses, hired)` — which it can withdraw, so the
  *       figure says what it thinks now rather than what it thought once
  *
@@ -31,15 +32,7 @@
  */
 import { readFileSync } from 'node:fs';
 
-import {
-  createPublicClient,
-  createWalletClient,
-  formatEther,
-  http,
-  keccak256,
-  parseEther,
-  recoverMessageAddress,
-} from 'viem';
+import { createPublicClient, createWalletClient, formatEther, http, parseEther } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
 import type { Address, Hex } from 'viem';
 
@@ -51,6 +44,11 @@ import {
   resolveDeclarationSubject,
   type PreparedCall,
 } from '../packages/protocol/src/declare/index.js';
+import {
+  hireReceiptMatches,
+  verifyHireReceipt,
+  type SignedHireReceipt,
+} from '../packages/protocol/src/hire-receipt.js';
 import { getToolUsage } from '../packages/protocol/src/tool-usage.js';
 import { canonicalAgentThing, thingUri } from './intuition-pin.js';
 import { sendPlan, type SerialisedCall } from './send-plan.js';
@@ -149,38 +147,47 @@ let receiptOk = false;
 if (paymentTxHash === undefined) {
   console.log('  skipped — no payment to present. Re-run with --execute.');
 } else {
+  const payload = { job: arg('job') ?? 'demo', at: new Date().toISOString() };
   const response = await fetch(`${nodeUrl}/task`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({
-      paymentTxHash,
-      requesterAddress: hirerAccount.address,
-      payload: { job: arg('job') ?? 'demo', at: new Date().toISOString() },
-    }),
+    body: JSON.stringify({ paymentTxHash, requesterAddress: hirerAccount.address, payload }),
     signal: AbortSignal.timeout(60_000),
   });
   const body = (await response.json()) as {
     result?: unknown;
-    receipt?: { agent: Address; requestHash: Hex; resultHash: Hex; signature: Hex };
+    receipt?: SignedHireReceipt;
     error?: string;
   };
   if (!response.ok || body.receipt === undefined) {
     console.error(`  the node refused: ${body.error ?? response.status}`);
     process.exit(3);
   }
-  const signer = await recoverMessageAddress({
-    message: {
-      raw: keccak256(`${body.receipt.requestHash}${body.receipt.resultHash.slice(2)}` as Hex),
-    },
-    signature: body.receipt.signature,
-  });
-  receiptOk = signer.toLowerCase() === body.receipt.agent.toLowerCase();
+  const signed = body.receipt;
+  const verdict = await verifyHireReceipt(signed);
+  // Each of these is a way a valid signature can still be about something else.
+  const problems = [
+    verdict.status !== 'valid' && `signature ${verdict.status}`,
+    signed.agent.toLowerCase() !== health.agent.toLowerCase() && 'signed by another agent',
+    signed.chainId !== chainId && `receipt is for chain ${signed.chainId}`,
+    signed.receipt.payment.toLowerCase() !== paymentTxHash.toLowerCase() && 'names another payment',
+    signed.receipt.requester.toLowerCase() !== hirerAccount.address.toLowerCase() &&
+      'names another requester',
+    !hireReceiptMatches(signed.receipt, payload, body.result) &&
+      'hashes do not match this exchange',
+  ].filter((problem): problem is string => typeof problem === 'string');
+  receiptOk = problems.length === 0;
   console.log(`  result     ${JSON.stringify(body.result).slice(0, 110)}`);
   console.log(
-    `  signed by  ${signer}  ${receiptOk ? '— matches the agent that answered' : '— MISMATCH'}`,
+    `  receipt    EIP-712 on ${signed.chainId}, ${signed.receipt.agentRegistry || 'no ERC-8004 identity'}` +
+      `${signed.receipt.agentRegistry ? ` #${signed.receipt.agentId}` : ''}`,
+  );
+  console.log(
+    `  signed by  ${verdict.status === 'valid' ? verdict.signer : signed.agent}  ` +
+      `${receiptOk ? '— the agent that answered, about this payment and this exchange' : `— ${problems.join('; ')}`}`,
   );
   if (!receiptOk) {
-    console.error('\n  REFUSED — the receipt was not signed by the agent that answered it.');
+    console.error('\n  REFUSED — the receipt is not about this hire.');
     process.exit(3);
   }
 }

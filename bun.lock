@@ -51,10 +51,14 @@
     "apps/node": {
       "name": "@arp/node",
       "version": "0.0.1",
+      "bin": {
+        "arp-node": "dist/arp-node.js",
+      },
       "dependencies": {
         "viem": "2.52.0",
       },
       "devDependencies": {
+        "@arp-protocol/core": "workspace:*",
         "@types/bun": "^1.4.4",
         "typescript": "~6.0.2",
       },

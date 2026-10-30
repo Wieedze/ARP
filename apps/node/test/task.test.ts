@@ -3,11 +3,13 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
-import { keccak256, parseEther, recoverMessageAddress } from 'viem';
+import { parseEther } from 'viem';
 import type { Address, Hex } from 'viem';
 import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts';
 
-import { createNode, echo, PaymentLedger, type TaskHandler } from '../src/task.ts';
+import { hireReceiptMatches, verifyHireReceipt, type SignedHireReceipt } from '@arp-protocol/core';
+
+import { createNode, echo, type NodeLimits, PaymentLedger, type TaskHandler } from '../src/task.ts';
 
 const agent = privateKeyToAccount(generatePrivateKey());
 const requester: Address = '0x00000000000000000000000000000000000000aa';
@@ -35,6 +37,7 @@ function chain(txs: Record<Hex, Tx>) {
   };
 }
 
+const REGISTRY = 'eip155:13579:0xC165A2ADc0000000000000000000000000000001';
 const PAID: Hex = `0x${'01'.repeat(32)}`;
 const paid: Tx = { to: agent.address, from: requester, value: MIN };
 
@@ -46,13 +49,22 @@ afterEach(() => rmSync(dir, { recursive: true, force: true }));
 
 function node(
   txs: Record<Hex, Tx>,
-  options: { handle?: TaskHandler; ledger?: PaymentLedger } = {},
+  options: {
+    handle?: TaskHandler;
+    ledger?: PaymentLedger;
+    limits?: Partial<NodeLimits>;
+    now?: () => number;
+  } = {},
 ) {
   return createNode({
     account: agent,
     // The two methods the node calls, with the shapes it reads. The rest of viem's surface is unused.
     publicClient: chain(txs) as never,
+    chainId: 13579,
+    identity: { agentRegistry: REGISTRY, agentId: 2n },
     minBudget: MIN,
+    limits: options.limits,
+    now: options.now,
     handle: options.handle ?? echo,
     handlerPath: null,
     ledger: options.ledger ?? new PaymentLedger(join(dir, 'ledger.jsonl')),
@@ -66,17 +78,35 @@ function task(body: unknown): Request {
 const hire = { paymentTxHash: PAID, requesterAddress: requester, payload: { q: 1 } };
 
 describe('the payment check', () => {
-  test('a valid payment gets a result and a receipt the agent signed', async () => {
+  test('a valid payment gets a result and an EIP-712 receipt about this hire', async () => {
     const response = await node({ [PAID]: paid }).fetch(task(hire));
     expect(response.status).toBe(200);
-    const { receipt } = (await response.json()) as {
-      receipt: { requestHash: Hex; resultHash: Hex; signature: Hex };
+    const { result, receipt } = (await response.json()) as {
+      result: unknown;
+      receipt: SignedHireReceipt;
     };
-    const signer = await recoverMessageAddress({
-      message: { raw: keccak256(`${receipt.requestHash}${receipt.resultHash.slice(2)}` as Hex) },
-      signature: receipt.signature,
+    expect(await verifyHireReceipt(receipt)).toEqual({ status: 'valid', signer: agent.address });
+    expect(receipt.chainId).toBe(13579);
+    expect(receipt.receipt).toMatchObject({
+      agentRegistry: REGISTRY,
+      agentId: '2',
+      requester,
+      payment: PAID,
+      paid: MIN.toString(),
     });
-    expect(signer).toBe(agent.address);
+    // What the requester can re-derive from the JSON it sent and the JSON it got back.
+    expect(hireReceiptMatches(receipt.receipt, hire.payload, result)).toBe(true);
+  });
+
+  test('a result with a bigint is hashed as it crosses the wire', async () => {
+    const big: TaskHandler = async () => ({ wei: 10n ** 30n });
+    const response = await node({ [PAID]: paid }, { handle: big }).fetch(task(hire));
+    const { result, receipt } = (await response.json()) as {
+      result: unknown;
+      receipt: SignedHireReceipt;
+    };
+    expect(result).toEqual({ wei: (10n ** 30n).toString() });
+    expect(hireReceiptMatches(receipt.receipt, hire.payload, result)).toBe(true);
   });
 
   test.each([
@@ -153,6 +183,66 @@ describe('one payment, one job', () => {
     const path = join(dir, 'ledger.jsonl');
     await Bun.write(path, `${JSON.stringify({ paymentTxHash: PAID })}\n{"paymentTx`);
     expect(new PaymentLedger(path).isSpent(PAID)).toBe(true);
+  });
+});
+
+describe('what an unpaid stranger can make it do', () => {
+  test('a malformed hash or address is refused before any chain read', async () => {
+    let reads = 0;
+    const counting = {
+      getTransaction: async () => {
+        reads += 1;
+        throw new Error('not found');
+      },
+      getTransactionReceipt: async () => {
+        reads += 1;
+        throw new Error('not found');
+      },
+    };
+    const n = createNode({
+      account: agent,
+      publicClient: counting as never, // Only the two reads, counted.
+      chainId: 13579,
+      identity: null,
+      minBudget: MIN,
+      handle: echo,
+      handlerPath: null,
+      ledger: new PaymentLedger(null),
+    });
+    expect((await n.fetch(task({ ...hire, paymentTxHash: '0x1234' }))).status).toBe(400);
+    expect((await n.fetch(task({ ...hire, requesterAddress: 'alice' }))).status).toBe(400);
+    expect((await n.fetch(task('a string'))).status).toBe(400);
+    expect(reads).toBe(0);
+  });
+
+  test('a body over the limit is a 413', async () => {
+    const n = node({ [PAID]: paid }, { limits: { maxBodyBytes: 100 } });
+    const response = await n.fetch(task({ ...hire, payload: 'x'.repeat(200) }));
+    expect(response.status).toBe(413);
+  });
+
+  test('a handler that does not answer in time is a 504, and the payment can be used again', async () => {
+    let calls = 0;
+    const hangs: TaskHandler = async (payload) => {
+      calls += 1;
+      if (calls === 1) await new Promise(() => {});
+      return payload;
+    };
+    const n = node({ [PAID]: paid }, { handle: hangs, limits: { handlerTimeoutMs: 20 } });
+    expect((await n.fetch(task(hire))).status).toBe(504);
+    expect((await n.fetch(task(hire))).status).toBe(200);
+  });
+
+  test('past the per-minute limit a client gets 429, another client does not, and the window resets', async () => {
+    let at = 0;
+    const n = node({}, { limits: { requestsPerMinute: 2 }, now: () => at });
+    const bad = () => task({ ...hire, paymentTxHash: '0x1' });
+    expect((await n.fetch(bad(), 'a')).status).toBe(400);
+    expect((await n.fetch(bad(), 'a')).status).toBe(400);
+    expect((await n.fetch(bad(), 'a')).status).toBe(429);
+    expect((await n.fetch(bad(), 'b')).status).toBe(400);
+    at = 60_000;
+    expect((await n.fetch(bad(), 'a')).status).toBe(400);
   });
 });
 

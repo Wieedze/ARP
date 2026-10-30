@@ -370,13 +370,25 @@ with their own tools.
 ## The node — `apps/node`
 
 ```
-AGENT_PRIVATE_KEY=… AGENT_NODE_PORT=3100 bun run apps/node/src/node.ts
+AGENT_PRIVATE_KEY=… AGENT_REGISTRY=eip155:13579:0xC165… AGENT_ID=2 \
+  AGENT_NODE_PORT=3100 bun run apps/node/src/node.ts
 curl -s localhost:3100/healthz
 ```
 
+| variable                        | default                    | what it is                                                            |
+| ------------------------------- | -------------------------- | --------------------------------------------------------------------- |
+| `AGENT_PRIVATE_KEY`             | required                   | the agent's key; signs hire receipts, never a transaction             |
+| `INTUITION_RPC_URL`             | required                   | the chain payments are read on — also the receipt's `chainId`         |
+| `AGENT_REGISTRY` + `AGENT_ID`   | both unset                 | the agent as its ERC-8004 registration file names it; both or neither |
+| `AGENT_NODE_MIN_BUDGET`         | `0.001`                    | the smallest payment accepted, in the chain's native unit             |
+| `AGENT_NODE_LEDGER`             | `.arp/node-payments.jsonl` | every payment already used, one line each                             |
+| `AGENT_NODE_MAX_BODY_BYTES`     | `65536`                    | larger bodies are a `413`                                             |
+| `AGENT_NODE_HANDLER_TIMEOUT_MS` | `60000`                    | a slower handler is a `504`, and the payment is released              |
+| `AGENT_NODE_RATE_LIMIT`         | `30`                       | `POST /task` per client IP per minute, paid or not; then `429`        |
+
 What makes an agent reachable: it listens at the address the agent publishes in its ERC-8004
 registration file, checks on chain that the requester paid it before doing any work, and returns a
-receipt signed with the agent's key (ADR `0045`). The work itself is yours — `ARP_NODE_HANDLER`
+receipt signed with the agent's key (ADR `0045`, format ADR `0083`). The work itself is yours — `ARP_NODE_HANDLER`
 names a module exporting `handle(payload, context)`; without one it echoes.
 
 **It signs receipts and never transactions.** The key is the agent's because a hire receipt must be
@@ -388,11 +400,11 @@ grep -nE "createPublicClient\(|writeFile|appendFile|mkdir|import\(|async fetch\(
 ```
 
 prints six lines on 2026-10-30: the `node:fs` import, the ledger's `mkdirSync` and `appendFileSync`
-(`task.ts:6`, `:79`, `:80`), the server's own inbound `fetch(request)` handler (`task.ts:162`), your
-handler's import (`node.ts:60`) and the RPC client (`node.ts:70`).
+(`task.ts:6`, `:85`, `:86`), the server's own inbound `fetch(request)` handler (`task.ts:246`), your
+handler's import (`node.ts:110`) and the RPC client (`node.ts:118`).
 
 **It binds every interface**, unlike the MCP server, because being reached is its job:
-`Bun.serve(handler)` at `apps/node/src/node.ts:80` passes no hostname.
+`Bun.serve(handler)` at `apps/node/src/node.ts:141` passes no hostname.
 
 **One payment buys one job.** Before any work the node checks that the payment is mined and did
 not revert, was sent to this agent, came from the declared requester and paid at least
@@ -406,6 +418,21 @@ presented twice and served twice. After the fix the same payment against the bui
 `200`, then `409`, then `409` again after a restart. **The ledger starts empty**, so a payment a
 node accepted before it existed is accepted once more; and deleting the file forgets every payment
 in it. Keep it where the node's state lives.
+
+**The receipt is EIP-712, and a stranger checks it in three steps** (ADR `0083`). The node answers
+`{ result, receipt: { format: "eip712", receipt, chainId, agent, signature } }`, where `receipt`
+names the agent's ERC-8004 identity, the requester, the payment, the amount, the hashes of the
+payload and of the result, and the time. The domain is `{ name: "ARP Hire Receipt", version: "1",
+chainId }`, with the payment's chain. The layout follows x402's signed receipt and ERC-8004's
+identity string.
+
+1. `verifyHireReceipt(receipt)` (`@arp-protocol/core`) recovers the signer.
+2. `getAgentWallet(agentId)` on the registry `agentRegistry` names should be that signer — on
+   2026-10-30, testnet 13579, agent 2's wallet was `0x9C985BEF…` and so was the recovered key.
+3. `getTransaction(payment)` on `chainId` should show `requester` paying the agent `paid`, and
+   `hireReceiptMatches(receipt, payload, result)` should hold for the JSON you sent and received.
+
+The hashes are keccak256 over RFC 8785 canonical JSON, so step 3 needs no library of ours.
 
 ## The hook — `apps/hook`
 
