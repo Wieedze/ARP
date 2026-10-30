@@ -37,5 +37,5 @@
 ## Suggestions for future tasks
 
 - Price an attack from the code's actual checks (the query and the loop that filters it), not from what the protocol intends.
-- Task 40's sponsoring service should send the binding and context triples atomically. That closes the proof-crowding window.
+- ~~Task 40's sponsoring service should send the binding and context triples atomically.~~ Done in the plan instead, 2026-10-30: `prepareEndpointBinding` returns both as one `createTriples` call (`scripts/measure/nested-triple-batch.ts`), so task 40 has only to submit that call whole.
 - Re-run `node-outbound.ts` and re-quote `docs/22` in a docs task of its own.

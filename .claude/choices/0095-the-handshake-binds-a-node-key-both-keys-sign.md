@@ -66,15 +66,19 @@ graph. Building it forced seven choices the ADR does not make.
      reader drops rows whose subject has no `data`. So the floor is five triple fees: about 0.005
      TRUST on 13579 and about 0.5 TRUST on 1155. It needs the claim on chain before its proof is,
      and there are three ways to get that: guess the endpoint and write the claim first; catch a
-     re-handshake on an endpoint already buried in junk; or **use the window between the owner's
-     own two triples**. `prepareEndpointBinding`
+     re-handshake on an endpoint already buried in junk; or use the window between the owner's
+     own two triples. **The third is closed by the plan** (amended 2026-10-30, after the merge of
+     `dev`): `prepareEndpointBinding`
      (`packages/protocol/src/declare/endpoint-binding-plan.ts`) returns the binding triple and the
-     context triple as separate `PreparedCall`s, and nothing in this task batches them. The binding
-     triple is public the moment it lands, so whenever the calls go out as separate transactions,
-     anyone watching can attach five junk contexts before the genuine one. **That window is left
-     open on purpose here:** the plan does not choose how its calls are submitted (ADR `0038`), and
-     the submitter — the operator's wallet, or task 40's sponsoring service — is where it closes.
-     On the write side, one atomic transaction carrying both triples closes it, and nothing short of that does. A reader
+     context triple **together, as one `createTriples` call**, binding first, so whoever submits it
+     — the operator's wallet, a delegation redemption, or task 40's sponsoring service, which
+     must submit that call whole — sends both in one transaction, and the binding is never on chain without
+     its proof. That one call works was measured, not assumed: `scripts/measure/nested-triple-batch.ts`
+     simulates it with `eth_call` on testnet 13579 (2026-10-30) — inner then outer in one call
+     succeeds, outer then inner reverts, and the outer triple alone reverts. A submitter that can
+     batch further may put the two atoms in the same transaction; the triples are the pair that
+     must not be split. The first two ways stay open: a claim somebody else wrote first is on chain
+     before any proof, and the plan then writes the context triple alone. A reader
      who suspects it raises `maxProofsPerClaim`.
 
    `maxProofsPerClaim` also bounds what one claim can make a reader spend: at most five document
@@ -106,8 +110,11 @@ graph. Building it forced seven choices the ADR does not make.
 
 - A generated node key now receives hire payments, so `~/.arp/node.key` is worth what that address
   holds.
-- Quick tunnels hand out a new hostname on every start, so a binding needs a tunnel the operator
-  runs with a stable name (`ARP_NODE_PUBLIC_URL`). The node says so when it starts a quick one.
+- The first real tunnel is a Cloudflare quick tunnel (`cloudflared tunnel --url`, no account, a
+  `trycloudflare.com` address), and it hands out a new hostname on every start: a binding made over
+  one holds until the node restarts, and the operator runs `arp init --node` again after. The node
+  says so when it starts one. A stable hostname (a named tunnel on the operator's Cloudflare
+  account, given as `ARP_NODE_PUBLIC_URL`) is a follow-up.
 - No directory is hosted. `handshakeFetchHandler` is the handler a hosted service mounts; where it
   runs is open.
 - A reader has to know the agent's id, not only its atom (7). The atom alone says where claims hang,
