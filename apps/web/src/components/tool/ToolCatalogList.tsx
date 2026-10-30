@@ -8,8 +8,10 @@ import {type ToolRow} from "../../services/tool-catalog";
  * Tools as a list, not as N boxes.
  *
  * One grid, one hairline under each row, every figure in mono and right-aligned so the columns read
- * down. Four columns and no more: the name, how many declarations exist, how many somebody paid to
- * stand behind, and the TRUST summed across them. Nothing restates a column in prose.
+ * down. Four columns and no more: the name, the deposits that passed ARP's proof gate ("Usage"),
+ * every other deposit ("Declared"), and the TRUST summed across the edges. Proven first, by the
+ * user's decision (ADR `0094` §2), and never weighted against each other. Nothing restates a column
+ * in prose.
  *
  * **A row says which population it came from**, under the name and in small type rather than as a
  * fifth column. The figure means something different in each: a `declared` row's TRUST is summed
@@ -47,6 +49,10 @@ function Figure({value, label}: {value: string; label: string}) {
             </span>
         </span>
     );
+}
+
+function countText(count: number | null): string {
+    return count === null || count === 0 ? "" : String(count);
 }
 
 function Row({row, fact, stars}: {row: ToolRow; fact: SkillFact | null; stars: number | null}) {
@@ -93,7 +99,8 @@ function Row({row, fact, stars}: {row: ToolRow; fact: SkillFact | null; stars: n
                             {/* A repository's own figure, which its "Most stars" order sorts on. */}
                             {stars === null ? null : (
                                 <>
-                                    {row.source === null && (fact === null || fact.installs === null) ? null : (
+                                    {row.source === null &&
+                                    (fact === null || fact.installs === null) ? null : (
                                         <span className="px-1.5 text-[color:var(--color-rule-strong)]">
                                             ·
                                         </span>
@@ -121,22 +128,11 @@ function Row({row, fact, stars}: {row: ToolRow; fact: SkillFact | null; stars: n
                     </span>
 
                     {/* A zero is blanked, not printed. On a page where nothing has been declared
-                        yet, a column of 715 zeros reads as data and is noise. */}
-                    <Figure
-                        value={row.declarations === 0 ? "" : String(row.declarations)}
-                        label="declarations"
-                    />
-                    {/* An unknown stays empty rather than printing a zero, like the oppose cell
-                        below. A registered row's declarations are counted but not priced: pricing
-                        them needs the per-edge vaults, which is the declared read. */}
-                    <Figure
-                        value={
-                            row.paidDeclarations === null || row.paidDeclarations === 0
-                                ? ""
-                                : String(row.paidDeclarations)
-                        }
-                        label="paid for"
-                    />
+                        yet, a column of 715 zeros reads as data and is noise. An unknown stays
+                        empty too, like the oppose cell below: a registered row's deposits are on
+                        its edges, which is the declared read. */}
+                    <Figure value={countText(row.provenDeposits)} label="usage" />
+                    <Figure value={countText(row.declaredDeposits)} label="declared" />
                     <span className="font-mono text-[length:var(--text-body-sm)] tabular-nums text-right leading-tight">
                         {/* **Creation dust is not a stake.** Creating a term seeds its vault with
                             `minDeposit` (ADR `0042`), so every one of the 715 registered rows
@@ -172,12 +168,14 @@ function Headers({curveId}: {curveId: number}) {
             aria-hidden
             className={`${ROW_GRID} hidden sm:grid pb-2 border-b border-[color:var(--color-rule-strong)] font-mono uppercase tracking-wider text-[length:var(--text-label)] text-[color:var(--color-steel)]`}
         >
-            {/* The same words as the controls above, and the same word `/agents` uses for the
-                same thing. **"Claims", never "Used"**: the number counts sentences agents wrote,
-                and whether the use happened is unknowable from outside (`docs/14`). */}
+            {/* **"Usage" only for what passed the proof gate.** The user rejected "Most used" for
+                unproven edges (2026-10-27): whether a use happened is unknowable from outside
+                (`docs/14`). A sponsored deposit carries a proof that it did — a payment another
+                party made, or a fetch through ARP (ADR `0094` §2) — so the word is true of that
+                column and of nothing else here. */}
             <span>Tool</span>
-            <span className="text-right">Claims</span>
-            <span className="text-right">Paid for</span>
+            <span className="text-right">Usage</span>
+            <span className="text-right">Declared</span>
             {/* The curve is part of a TRUST sum's population (`rules/claims.md` §2). It belongs on
                 the figure rather than in a footer line nobody needs twice. */}
             <span className="text-right" title={`Read on bonding curve ${curveId}`}>

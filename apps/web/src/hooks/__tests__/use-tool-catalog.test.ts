@@ -17,6 +17,8 @@ function tool(atomId: string, overrides: Partial<ToolListing> = {}): ToolListing
         type: "Thing",
         edgeCount: 1,
         pricedEdges: 1,
+        provenDeposits: 0,
+        declaredDeposits: 1,
         supportAssetsSum: 1_980_000_001_000_000n,
         opposeAssetsSum: 1_000_000n,
         ...overrides,
@@ -24,7 +26,7 @@ function tool(atomId: string, overrides: Partial<ToolListing> = {}): ToolListing
 }
 
 function pageOf(): ToolListingPage {
-    return {curveId: 1, edgesRead: 1, truncated: false, tools: [tool("0xba5844b5")]};
+    return {curveId: 1, edgesRead: 1, truncated: false, sponsor: null, tools: [tool("0xba5844b5")]};
 }
 
 function registered(atomId: string, overrides: Partial<RegisteredTool> = {}): RegisteredTool {
@@ -86,12 +88,30 @@ describe("toolCatalogQueryOptions", () => {
         );
         const view = await options.queryFn();
 
-        expect(fetchListing).toHaveBeenCalledWith("conviction", 2);
+        expect(fetchListing).toHaveBeenCalledWith("conviction", 2, null);
         expect(view.rows).toHaveLength(1);
         expect(view.rows[0]?.name).toBe("Trail of Bits — guidelines-advisor");
         expect(view.rows[0]?.href).toBe("/atom/0xba5844b5");
         // The counter vault's creation dust is above zero, so the cell is populated.
         expect(view.rows[0]?.opposeTrust).not.toBeNull();
+    });
+
+    it("passes the chain's sponsor to the read and keys on it", async () => {
+        // The sponsor decides which deposits read as proven, so a page read without one must
+        // never be served from cache once one is configured.
+        const sponsor = "0x906f3A52ec089f8D4E9127F91C6bE5Ae0d18f91f";
+        const fetchListing = vi.fn(async () => pageOf());
+        const options = toolCatalogQueryOptions(
+            {chainId: 13579, graphqlUrl: "https://testnet.intuition.sh/v1/graphql", sponsor},
+            "conviction",
+            1,
+            fetchListing,
+            noneRegistered,
+        );
+        await options.queryFn();
+        expect(fetchListing).toHaveBeenCalledWith("conviction", 1, sponsor);
+        expect(options.queryKey).toEqual(toolCatalogQueryKey(13579, "conviction", 1, sponsor));
+        expect(options.queryKey).not.toEqual(toolCatalogQueryKey(13579, "conviction", 1));
     });
 
     it("keeps the previous page while a new order loads", () => {
@@ -139,9 +159,8 @@ describe("toolCatalogQueryOptions", () => {
 
         expect(view.rows.map((row) => row.provenance)).toEqual(["declared", "registered"]);
         expect(view.rows[1]?.name).toBe("crytic/slither");
-        // Positions on the tool's own atom. Not folded into `paidDeclarations`, which counts edges
-        // carrying a position — summing the two would be ADR `0023`'s per-vault-versus-across-edges
-        // error.
+        // Positions on the tool's own atom. Not folded into the deposit counts, which count events
+        // across edges — summing the two would be ADR `0023`'s per-vault-versus-across-edges error.
         expect(view.rows[1]?.stakers).toBe(1);
         expect(view.rows[0]?.stakers).toBeNull();
     });

@@ -157,15 +157,25 @@ export type ToolRow = {
      */
     label: string | null;
     href: string;
+    /** How many `uses` edges point at the tool. Sorts `/tools`, where no column shows it. */
     declarations: number;
     /**
-     * How many of this tool's declarations carry at least one position, or `null` when this read
-     * cannot say.
+     * Deposits on the tool's edges that ARP's sponsoring service sent, so each one passed the proof
+     * gate (ADR `0094` §2). The "Usage" column, and the only figure on the page that word is true
+     * of. `null` when this read cannot say.
      *
-     * Never a summed position count: positions are counted per vault, and a sum across an atom's
-     * edges is a count of nothing a reader recognises (ADR `0023`).
+     * Read from the deposit events, not from positions: a position merges a sponsored deposit with
+     * the agent's own, and a withdrawal does not say which part it takes.
      */
-    paidDeclarations: number | null;
+    provenDeposits: number | null;
+    /**
+     * Every other deposit on the tool's edges, the creation deposit of each edge included. The
+     * "Declared" column. `null` when this read cannot say.
+     *
+     * It replaced "Paid for", which counted edges carrying a position and equalled the edge count
+     * for every edge ARP writes, because a term is born with its creator's position (ADR `0053`).
+     */
+    declaredDeposits: number | null;
     supportTrust: string;
     /**
      * TRUST deposited against the tool's declarations, or `null`.
@@ -180,9 +190,9 @@ export type ToolRow = {
     /**
      * How many positions stand on the tool's own atom. `null` for a `declared` row.
      *
-     * Not foldable into `paidDeclarations`: that counts **edges** carrying a position, this counts
-     * positions in **one** vault. Summing them would be the per-vault-versus-across-edges error
-     * ADR `0023` predicted in writing.
+     * Not foldable into the deposit counts: those count **events** across the tool's edges, this
+     * counts positions in **one** vault, the atom's. Summing them would be the
+     * per-vault-versus-across-edges error ADR `0023` predicted in writing.
      */
     stakers: number | null;
 };
@@ -254,7 +264,8 @@ function rowOf(tool: ToolListing): ToolRow {
         label: label ?? null,
         href: `/atom/${tool.atomId}`,
         declarations: tool.edgeCount,
-        paidDeclarations: tool.pricedEdges,
+        provenDeposits: tool.provenDeposits,
+        declaredDeposits: tool.declaredDeposits,
         supportTrust: formatTrust(tool.supportAssetsSum),
         opposeTrust: tool.opposeAssetsSum > 0n ? formatTrust(tool.opposeAssetsSum) : null,
         stakers: null,
@@ -273,11 +284,12 @@ function registeredRowOf(tool: RegisteredTool): ToolRow {
         label: label ?? null,
         href: `/atom/${tool.atomId}`,
         declarations: tool.declarations,
-        // `null`, not `0`: pricing a registered row's declarations needs the per-edge vaults, which
-        // is `listTools`'s read, so this is **unknown** here. A zero under "paid for" would read as
-        // "nobody paid", which is a claim this read cannot make — the same distinction the oppose
-        // column makes two cells over by staying empty.
-        paidDeclarations: null,
+        // `null`, not `0`: a registered row's deposits are on its edges, which is `listTools`'s
+        // read, so they are **unknown** here. A tool whose edges that read did find appears as a
+        // declared row instead and carries both figures. A zero would read as "nobody deposited",
+        // a claim this read cannot make — the oppose column stays empty for the same reason.
+        provenDeposits: null,
+        declaredDeposits: null,
         supportTrust: formatTrust(tool.assets),
         opposeTrust: null,
         stakers: tool.positionCount,
