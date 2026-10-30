@@ -346,6 +346,8 @@ wait for it unless one misleads a reader before then.
     back in is the one path, and the copy now says only that. Five comment sites went with it: one
     in `AgentRegister.tsx`'s step-5 docstring and four in `apps/web/src/services/delegation-redeem.ts`
     (two naming the script, two pointing at it as "the setup script" and "the equivalent script").
-    The check: `grep -rn "approve-sa" --exclude-dir=node_modules .` returns one hit
-    outside worktrees, ADR `0033`'s list of what was set aside — append-only and historically true,
-    so left.
+    The check, run from the repo root:
+    `grep -rn "approve-sa" --exclude-dir=node_modules --exclude-dir=worktrees --exclude=28-coherence-audit.md .`
+    prints one line, `.claude/choices/0033-the-hackathon-surface-is-set-aside.md:44` — ADR `0033`'s
+    list of what was set aside, append-only and historically true, so left. This file is excluded
+    because this entry names the script three times itself.
