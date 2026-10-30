@@ -68,3 +68,15 @@ Written as 31; renumbered 32 when `origin/dev` was merged, because dev had lande
 - `/gas` and `/deposit` refuse an agent held by the sponsor wallet itself (task 40 §3).
 - `security.md`'s signature sites are seven after the merge: this branch's sponsor request and
   dev's `ReceiptEnforcer` (ADR `0098`).
+
+## Amended after the wording fix (2026-10-30, `b3e9496`)
+
+- "Creates no triple" was too broad. `/publish` calls `planPublishDelegation` with no `birthDeposit`
+  (`apps/sponsor/src/service.ts:541`), so `register.ts:263-266` falls back to `minDeposit`. Every
+  delegation-register term it creates is therefore born with a sponsor-held position (task 37c, ADR
+  `0053`). The service header and ADR `0096` item 8 now say "creates no `uses` triple" and name this
+  exception. It is latent: `main.ts:227` sets `publish: null`.
+- Verifier re-ran `apps/sponsor` lint and test (41 pass) and `packages/protocol` lint and test (696
+  pass, 4 skipped). The old wording grep over `*.md` and `*.ts` found nothing left.
+- Lesson: a sentence about what a service "never creates" has to name the route. One service with
+  two routes needs two answers.
