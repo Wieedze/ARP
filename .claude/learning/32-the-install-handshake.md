@@ -1,4 +1,4 @@
-# 29 — The install handshake: a rented tunnel, and the node bound to its ERC-8004 token
+# 32 — The install handshake: a rented tunnel, and the node bound to its ERC-8004 token
 
 **Task:** `docs/tasks/39-the-install-handshake.md`
 **Completed:** 2026-10-30

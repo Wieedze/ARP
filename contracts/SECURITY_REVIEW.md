@@ -518,3 +518,222 @@ None at critical/high/medium/low. The three INFO items already documented (4, 5,
 
 Ready for `task-verifier` and Task 02b sign-off.
 
+
+---
+
+# Security review — `ReceiptEnforcer` (Task 43)
+
+**Reviewed:** 2026-10-30
+**Commit:** `3f13f21` (`fix(contract): ReceiptEnforcer caps value at paid…`), on `feat/43-receipt-enforcer`, over `d4c857f`; code reviewed by `contract-reviewer` at `3f13f21` plus the CR-1 header note
+**Scope:** `src/enforcers/ReceiptEnforcer.sol` (398 lines incl. NatSpec), `test/enforcers/ReceiptEnforcer.t.sol` (40 tests)
+**Reviewer:** the author's pre-merge sweep (the threat model below), then the `contract-reviewer` procedure (`.claude/agents/contract-reviewer.md`, with `secure-workflow-guide` and `guidelines-advisor`), 2026-10-30. The procedure ran inside the workflow session that revised the contract, not as a separately spawned agent: this session had no way to spawn one. Its output is the section "`contract-reviewer` pass" below.
+**Design record:** ADR `0098`.
+
+## What this rung holds
+
+**"An accepted key signed this receipt." Not "a payment was made."** User decision, 2026-10-30,
+verbatim _« ok option 2 »_ (ADR `0098` point 9). The enforcer reads no transaction: `payment` and
+`paid` are what the signer asserts. The sponsoring service of task 40 reads the payment transaction
+and stays the real guard on payment. `TrustStakeCapEnforcer`, composed with this enforcer, bounds the
+abuse when an accepted key signs a receipt for a payment that never happened. Nothing below says the
+contract holds the payment.
+
+## Threat model
+
+### Reentrancy
+No external call apart from the `ecrecover` precompile, made through OZ `ECDSA.tryRecover` as a
+staticcall. One storage write (`_paymentUsed[key] = true`), then an event. **Clean.**
+
+### Access control
+All four hooks revert with `OnlyDelegationManager(caller)` unless `msg.sender` is the immutable
+`DELEGATION_MANAGER`, which is set in the constructor and cannot be zero. The guard is required here,
+unlike in `TrustStakeCapEnforcer`: the replay key is readable from a pending redemption, so an
+ungated hook would let anyone burn a receipt by front-running it
+(`test_beforeHook_revertsForStrangerCaller`). There is no owner and no admin. **Clean.**
+
+### Integer arithmetic
+`block.timestamp - issuedAt` is computed only after `issuedAt <= block.timestamp` has been checked,
+so it cannot underflow. `value > paid` is a comparison, no arithmetic. There is no `unchecked` block
+and no division. **Clean.**
+
+### Input validation
+- `_terms`: `receiptChainId != 0`, `maxAge != 0`, `1 <= bindings.length <= MAX_BINDINGS (32)`, or
+  `InvalidTerms`.
+- `_args`: a malformed ABI encoding reverts in `abi.decode`. `version` must be 1. The signature must
+  be 65 bytes with low `s`, otherwise `InvalidSignature` (OZ rejects malleable signatures,
+  `test_beforeHook_revertsOnHighSSignature`).
+- Execution: single call in default mode only, exactly 132 bytes of calldata starting with the
+  `deposit(address,bytes32,uint256,uint256)` selector, `receiver == _redeemer`, and native
+  `value <= receipt.paid` or `DepositExceedsPaid(value, paid)`
+  (`test_beforeHook_acceptsValueEqualToPaid`, `test_beforeHook_revertsWhenValueExceedsPaid`,
+  `testFuzz_beforeHook_valueOverPaidReverts`). `paid` is the signer's statement, so this bounds the
+  deposit by the receipt, not by the payment.
+- Freshness: `issuedAt <= block.timestamp` and `block.timestamp - issuedAt <= maxAge`. The
+  proposer's timestamp tolerance (~15 s) moves either edge by seconds, which is irrelevant against a
+  `maxAge` of hours or days; NatSpec on `beforeHook` says not to choose a `maxAge` of seconds.
+  `forge lint`'s two `block-timestamp` warnings on this file are these two comparisons (lines 284-285).
+
+### Front-running / MEV
+This is covered by the access-control guard above. Inside a real redemption the redeemer is the
+`DelegationManager`'s `msg.sender`, so a third party cannot take over another agent's receipt:
+`requester == _redeemer` and `receiver == _redeemer`.
+
+### Signature replay
+- **Nonce**: the receipt's `payment`. The used set is keyed by `keccak256(abi.encode(chainId, payment))`,
+  so one payment hash unlocks one deposit here, even when the node signs two receipts for it
+  (`test_beforeHook_revertsOnSecondReceiptForOnePayment`).
+- **Chain id**: in the EIP-712 domain and pinned by `_terms` (`test_beforeHook_revertsOnOtherChainDomain`).
+- **Verifying contract**: **absent from the v1 receipt's domain**. Rated Medium as INFO-R1 below.
+
+### Oracles / external data
+None. The payment is not read (see "What this rung holds").
+
+### DoS via unbounded loops
+The binding lookup is bounded by `MAX_BINDINGS = 32`.
+
+### Upgradeability
+None. No proxy and no `delegatecall`.
+
+### Events
+The single state write is paired with `ReceiptConsumed(delegationHash, paymentKey, signer, requester, termId)`.
+
+## Findings
+
+- **INFO-R1 (Medium): cross-verifier replay.** Re-rated from Info on 2026-10-30. The signed domain
+  has no `verifyingContract`, so a receipt consumed here is not consumed at another verifier. One
+  payment can be sponsored once by task 40's service and once by this enforcer, both from ARP's
+  funds. **Service-side mitigation** (ADR `0098`): before it pays, the service calls
+  `isPaymentUsed(chainId, payment)` on every deployment it knows and refuses on true. That closes
+  _enforcer first, service second_. It does not close _service first, enforcer second_: the
+  enforcer cannot read the service's ledger, and only the DelegationManager can call its hooks. That
+  order is bounded by `TrustStakeCapEnforcer`'s cap and by `paid`. **Open, the user's decision**:
+  accept the deviation, or move to a v2 receipt that names its verifier (ADR `0098`, "Open
+  decision").
+- **INFO-R2: amount against `paid`. Fixed in `3f13f21`.** The execution's `value` must be at most
+  `receipt.paid`. What remains is that `paid` is signed, not read; the service compares it with the
+  payment.
+- **INFO-R3: key rotation** means signing a new delegation, or adding a binding next to the old one.
+- **INFO-R4: `pragma solidity 0.8.23`**, as in INFO-5, to match the vendored framework.
+
+## Test coverage
+
+`cd contracts && forge coverage --no-match-coverage "(test|script|lib)/"`, 2026-10-30, at `3f13f21`:
+
+| File | Lines | Statements | Branches | Functions |
+|---|---:|---:|---:|---:|
+| `src/enforcers/ReceiptEnforcer.sol` | 100.00% (58/58) | 100.00% (80/80) | 100.00% (15/15) | 100.00% (13/13) |
+
+The run's "Total" row (50.33% lines) includes `src/erc8004/IdentityRegistry.sol` at 0% (0/75), which
+has no test suite on this branch; it is not a figure about this contract.
+
+40 tests, two of them fuzz (256 runs each), all pass. One checks a signature that viem produced
+through `signHireReceipt`. `cd contracts && forge test` runs every suite in `contracts/test/`: 57
+tests in 3 suites (40 `ReceiptEnforcer`, 15 `TrustStakeCapEnforcer`, 2 invariants), 0 failed.
+
+## Gas
+
+`cd contracts && forge test --match-contract ReceiptEnforcerTest --gas-report`, at `3f13f21`:
+
+- Deployment: **1,085,111 gas / 4,980 bytes**
+- `beforeHook`: min 41,540 / avg 45,306 / median 44,800 / max 137,240 (547 calls). These calls are
+  mostly the fuzz runs, which revert; the min and median are reverting calls, not the happy path.
+- `hashReceipt`: 2,286. `isPaymentUsed`: 2,700. `getTermsInfo`: 1,763.
+
+The happy path, from `forge test --match-test test_beforeHook_acceptsAndConsumes -vvvv --isolate`:
+one `beforeHook` with one binding costs **66,564 gas** in its call frame (66,247 before the value
+check). `ecrecover` is 3,000 of that, and the cold `SSTORE` about 22,100. Signature recovery is a
+small part of the hook; the state write and the ABI decode of `_terms` and `_args` set the cost.
+
+## `contract-reviewer` pass (2026-10-30)
+
+### Step 1: Slither (`secure-workflow-guide` step 1)
+
+`cd contracts && slither src/enforcers/ReceiptEnforcer.sol --compile-force-framework foundry --filter-paths "lib/"`,
+Slither 0.11.5, 101 detectors: **12 results, none High or Medium.** Triage:
+
+| Detector | Site | Triage |
+|---|---|---|
+| `uninitialized-local` | `_requireBinding`, `signerKnown` (line 384) | False positive. A `bool` starts `false`, which is the intended "signer not seen yet". |
+| `unused-return` | `_recoverSigner`, the third value of `ECDSA.tryRecover` | Accepted. It is the error argument; any error other than `NoError` reverts `InvalidSignature` already. |
+| `unused-return` | `_depositTerm`, the `target` of `ExecutionLib.decodeSingle` | Accepted by design. The target is `AllowedTargetsEnforcer`'s to check (ADR `0098` point 8). |
+| `timestamp` | `beforeHook`, lines 284-285 | Accepted and documented: the ~15 s proposer tolerance against a `maxAge` of hours. Same two lines as `forge lint`'s `block-timestamp`. |
+| `naming-convention` (x8) | `_terms`, `_args`, `_mode`, `_executionCallData`, `_delegationHash`, `_redeemer`, `DELEGATION_MANAGER` | Accepted. The parameter names are `ICaveatEnforcer`'s; the immutable follows `code.md`'s constant naming, as in `TrustStakeCapEnforcer`. |
+
+### Step 2: special features
+
+- Upgradeability: none. `grep -n "delegatecall\|assembly\|selfdestruct\|tx.origin" src/enforcers/ReceiptEnforcer.sol` returns nothing; no proxy, no initializer.
+- ERC conformance: the contract is not a token, and moves no token. `slither-check-erc` does not apply.
+- Signature standard: EIP-712 digest checked against a viem signature (`test_viemVector_digestAndSignatureVerify`).
+
+### Step 3: printers
+
+`slither … --print inheritance,vars-and-auth,function-summary`:
+
+- Inheritance: `ReceiptEnforcer -> CaveatEnforcer -> ICaveatEnforcer`. One line, no shadowing.
+- Variables and authorization: the only storage written after construction is `_paymentUsed`, only by
+  `beforeHook`, only under `msg.sender != DELEGATION_MANAGER` reverting. All four hooks carry that
+  condition. `DELEGATION_MANAGER` is written only by the constructor.
+
+### Step 4: properties
+
+1. One `(chainId, payment)` unlocks at most one deposit through a deployment
+   (`test_beforeHook_revertsOnSameReceiptTwice`, `test_beforeHook_revertsOnSecondReceiptForOnePayment`).
+2. Only `DELEGATION_MANAGER` changes state (`test_beforeHook_revertsForStrangerCaller` and the three no-op hooks' tests).
+3. A deposit passes only if an accepted binding names the recovered signer, the agent and the term (fuzzed by `testFuzz_beforeHook_rejectsTamperedPaid`).
+4. `value <= receipt.paid` (`testFuzz_beforeHook_valueOverPaidReverts`).
+
+The used set is a one-way boolean with one writer, so a stateful fuzzing harness (Echidna, or a
+Foundry invariant as for `TrustStakeCapEnforcer`) would restate property 1. Not added; recorded here
+as the property it would check.
+
+### Step 5: manual review
+
+- **Privacy:** none on chain; a receipt is public once redeemed, which is intended.
+- **Front-running:** gated hooks, plus `requester == receiver == _redeemer`. A copied receipt is
+  useless to anyone but the agent it names, even under an open delegation or one the copier signs.
+- **Cryptography:** OZ `ECDSA.tryRecover`: 65-byte signatures only, low `s`, zero signer refused.
+  EIP-712 `string` field hashed per spec. The domain lacks `verifyingContract`: INFO-R1.
+- **Cross-chain units:** see CR-1.
+
+### `guidelines-advisor`
+
+- Documentation: NatSpec on every external and public function, the event and every error; the
+  header states the threat model and what the rung holds.
+- Architecture: verification on chain, the payment read off chain (the service). Correct split for
+  a contract that cannot read another chain's transaction.
+- Functions: one hook, four private helpers, each one job. Inheritance one level.
+- Events: the one state write emits `ReceiptConsumed`, three indexed fields.
+- Dependencies: the vendored delegation framework and its bundled OZ; no copied code.
+- Testing: 40 tests, 2 fuzz, 100% on all four coverage measures, a cross-implementation vector.
+- Compiler: `0.8.23` pinned to the framework (INFO-R4).
+
+### New finding
+
+- **CR-1 (Low): `value <= paid` compares two currencies when `receiptChainId != block.chainid`.**
+  `paid` is the payment chain's native wei (`apps/node/src/task.ts:222`, `paid: tx.value`); `value`
+  is this chain's. `_terms` accepts any non-zero `receiptChainId`. **Latent**: every test and every
+  plan so far has the payment and the deposit on one chain. Mitigated by documentation in the
+  contract header; the bound is still `TrustStakeCapEnforcer`'s cap. Requiring
+  `receiptChainId == block.chainid` would close it and forbid a cross-chain payment; that choice is
+  left to whoever designs the cross-chain path.
+
+### `contract-reviewer` verdict
+
+**PASS. No Critical, no High.** One Medium, INFO-R1, is open: under this repo's severity table a
+Medium is to be addressed or accepted in writing, and that is the user's decision between keeping v1
+and a v2 receipt (ADR `0098`, "Open decision"). **Do not deploy until it is taken.** One Low, CR-1,
+documented. Coverage 100% (58/58 lines, 15/15 branches). Gas 66,564 on the happy path.
+
+## Verdict (the author's sweep, before `contract-reviewer`)
+
+**PASS, with one Medium open by decision**, from the author's sweep. Superseded by the
+`contract-reviewer` verdict above, which agrees.
+
+- Threat model: clean on nine items. Signature replay carries INFO-R1, Medium, open for the user.
+- What the rung holds is stated, and matches the user's decision: a signature, not a payment.
+- Coverage: 100% on lines, statements, branches and functions of `ReceiptEnforcer.sol`.
+- Tests: 40, all green.
+- Gas: 66,564 on the happy path, inside the per-enforcer 100k budget used for Task 02b.
+- Not deployed. No transaction on any chain.
+
+Ready for `task-verifier`.
