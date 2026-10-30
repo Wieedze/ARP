@@ -2,7 +2,7 @@
 
 **Generated** 2026-10-30 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-92 decisions. Newest last. `choices/README.md` says when to write one.
+93 decisions. Newest last. `choices/README.md` says when to write one.
 
 ## Not accepted
 
@@ -16,6 +16,7 @@ Read these before relying on them.
 - **0087** (Accepted, one point open (below)) — A tool is its package, and its repository is its source
 - **0088** (Accepted. Amends the one-word rule of 2026-10-28 (`scripts/seed/seed-domain-tree.ts`,) — A label is one word, unless a compound is necessary
 - **0090** (Accepted. Extended 2026-10-30 by task 33i — see "Extension: captures" at the end.) — What the hook records: outcome and identity, never content or credentials
+- **0093** (Accepted. **Renumbered from `0089` on 2026-10-30**: it shared that number with `0089-one-installer-one-package-thin-manifests.md`, which was written first. Commits before the rename cite it as `0089`.) — The probe is not the pulse
 
 ## All
 
@@ -109,7 +110,8 @@ Read these before relying on them.
 | [0087](0087-a-tool-is-its-package-and-its-repo-is-its-source.md) | 2026-10-30 | Accepted, one point open (below) | A tool is its package, and its repository is its source |
 | [0088](0088-a-label-is-one-word-unless-a-compound-is-necessary.md) | 2026-10-30 | Accepted. Amends the one-word rule of 2026-10-28 (`scripts/seed/seed-domain-tree.ts`, | A label is one word, unless a compound is necessary |
 | [0089](0089-one-installer-one-package-thin-manifests.md) | 2026-10-30 | Accepted | One installer: one npm package, a thin native manifest per runtime |
-| [0089](0089-the-probe-is-not-the-pulse.md) | 2026-10-30 | Accepted | The probe is not the pulse |
 | [0090](0090-what-the-hook-records.md) | 2026-10-30 | Accepted. Extended 2026-10-30 by task 33i — see "Extension: captures" at the end. | What the hook records: outcome and identity, never content or credentials |
 | [0091](0091-the-agent-s-activity-reaches-the-browser-through-a-local-feed.md) | 2026-10-30 | Accepted | The agent's activity reaches the browser through a local, read-only feed |
 | [0092](0092-arp-sponsors-delegation-publication-on-testnet.md) | 2026-10-30 | Accepted | ARP sponsors the publication of delegations, on testnet, from its treasury |
+| [0093](0093-the-probe-is-not-the-pulse.md) | 2026-10-30 | Accepted. **Renumbered from `0089` on 2026-10-30**: it shared that number with `0089-one-installer-one-package-thin-manifests.md`, which was written first. Commits before the rename cite it as `0089`. | The probe is not the pulse |
+| [0094](0094-arp-is-the-directory-and-the-verifier-never-the-relay.md) | 2026-10-30 | Accepted | ARP is the directory and the verifier, never the relay; a proof is the condition of a sponsored deposit |
