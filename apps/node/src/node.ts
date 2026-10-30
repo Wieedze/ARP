@@ -181,7 +181,7 @@ export async function main(): Promise<void> {
 
   process.stderr.write(`agent node on ${local}\n`);
   process.stderr.write(
-    `  public     ${running.publicUrl ?? 'none (ARP_NODE_TUNNEL=none): localhost only'}${running.publicUrl !== null && !running.stable ? ' — changes on every start; bind a named tunnel with ARP_NODE_PUBLIC_URL' : ''}\n`,
+    `  public     ${running.publicUrl ?? 'none (ARP_NODE_TUNNEL=none): localhost only'}${running.publicUrl !== null && !running.stable ? ' — a new address on every start: run arp init --node again after a restart' : ''}\n`,
   );
   process.stderr.write(`  tunnel     ${tunnel.kind}\n`);
   process.stderr.write(`  agent      ${account.address}\n`);

@@ -11,10 +11,19 @@
  *  | `configured`             | nothing started: `ARP_NODE_PUBLIC_URL` is a tunnel you run yourself |
  *  | `none`                   | localhost only, for development. Nobody else can reach the node    |
  *
- *  **A quick tunnel's hostname changes on every start.** `cloudflared tunnel --url` and a free ngrok
- *  session both hand out a fresh one, which is fine for trying the node and useless for a binding on
- *  chain. A binding wants a hostname that stays: a named Cloudflare tunnel or a reserved ngrok
- *  domain, run by the operator and given here as `ARP_NODE_PUBLIC_URL`.
+ *  **The first real tunnel is a Cloudflare quick tunnel** (task 39a): `cloudflared tunnel --url
+ *  http://127.0.0.1:<port>`, no account, a `trycloudflare.com` hostname. Cloudflare's page
+ *  (developers.cloudflare.com/cloudflare-one/networks/connectors/cloudflare-tunnel/do-more-with-tunnels/trycloudflare/,
+ *  read 2026-10-30) says it needs no account or domain, has no uptime guarantee, takes 200
+ *  in-flight requests before answering `429`, and does not carry Server-Sent Events — the node
+ *  serves none. `--url` and `--no-autoupdate` were checked against `cloudflared tunnel --help` of
+ *  cloudflared 2026.5.0.
+ *
+ *  **A quick tunnel's hostname changes on every start**, and so does a free ngrok session's. A
+ *  binding made over one holds until the node restarts; after that the operator runs
+ *  `arp init --node` again. A hostname that stays — a named Cloudflare tunnel, which needs the
+ *  operator's Cloudflare account, or a reserved ngrok domain — is a follow-up, and is given here as
+ *  `ARP_NODE_PUBLIC_URL` today.
  *
  *  Process handling is injected (`Spawn`), so tests drive a scripted child and never start a tunnel.
  */

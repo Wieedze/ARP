@@ -394,9 +394,11 @@ curl -s localhost:3100/healthz
 
 **Reached through a tunnel you rent** (task 39, ADR `0094`). The node listens on `127.0.0.1` only.
 `cloudflared` or `ngrok`, found on `PATH`, is started as a child of the node and prints a public
-`https://` URL, which the node prints in turn. A quick tunnel's URL changes on every start, so for an
-endpoint you bind, run a named tunnel yourself and give its URL as `ARP_NODE_PUBLIC_URL`. ARP builds
-no relay and carries none of the traffic.
+`https://` URL, which the node prints in turn. With `cloudflared` that is a quick tunnel
+(`cloudflared tunnel --url http://127.0.0.1:<port>`): no account, a `trycloudflare.com` address, and a
+new address on every start, so a binding made over it holds until the node restarts and
+`arp init --node` runs again after. A stable address — a named tunnel on your own Cloudflare account,
+given as `ARP_NODE_PUBLIC_URL` — is a follow-up. ARP builds no relay and carries none of the traffic.
 
 **Bound to your agent once, by its owner** — `arp init --node`. The node sends the directory your
 agent's id, its public key and its endpoint; the directory reads the token's owner and returns a
