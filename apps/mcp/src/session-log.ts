@@ -9,7 +9,7 @@
 import { readFileSync } from 'node:fs';
 
 import { catalogueFor } from './content.js';
-import { parseSessionLog, resolveInvocations } from '../../../packages/protocol/src/session.js';
+import { parseSessionLog, resolveInvocations } from '@arp-protocol/core';
 
 function arg(name: string): string | undefined {
   const index = process.argv.indexOf(`--${name}`);

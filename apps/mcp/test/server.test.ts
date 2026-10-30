@@ -8,10 +8,9 @@ import {encodeAbiParameters, keccak256, parseEther, stringToBytes, toFunctionSel
 import type {Hex} from "viem";
 import {privateKeyToAccount} from "viem/accounts";
 
-import {signContentReceipt} from "../../../packages/protocol/src/receipt.js";
+import {INTUITION_USES_TERM_ID as USES, signContentReceipt} from "@arp-protocol/core";
 import {afterAll, beforeAll, describe, expect, it} from "vitest";
 
-import {USES} from "../../../packages/protocol/src/sources/intuition/terms.js";
 
 /**
  * ARP's MCP server, over a real HTTP round trip.

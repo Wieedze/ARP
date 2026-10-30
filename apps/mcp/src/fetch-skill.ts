@@ -51,10 +51,10 @@ import { privateKeyToAccount } from 'viem/accounts';
 import {
   contentRequestTypedData,
   receiptMatchesContent,
-  verifyContentReceipt,
   type SignedContentReceipt,
-} from '../../../packages/protocol/src/receipt.js';
-import { skillRefFromUrl } from '../../../packages/protocol/src/content-path.js';
+  skillRefFromUrl,
+  verifyContentReceipt,
+} from '@arp-protocol/core';
 import { contentIndexFor } from './content.js';
 
 const BASE = process.env['ARP_NODE'] ?? 'http://localhost:3002';

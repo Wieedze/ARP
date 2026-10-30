@@ -36,59 +36,52 @@
 import { readFileSync } from 'node:fs';
 
 import {
+  type AgentListOrder,
+  type CataloguedSkill,
+  corroborationOf,
+  createErc8004Client,
+  type DeclarePlan,
+  fetchableDocumentUrl,
+  getToolUsage,
+  INTUITION_HAS_TAG_MAINNET as HAS_TAG,
+  intuitionSource,
   intuitionToolAtomLookup,
+  INTUITION_IS_A_SUB_DOMAIN_OF as IS_A_SUB_DOMAIN_OF,
+  listAgents,
+  listRegisteredTools,
+  listTools,
+  MAX_DOCUMENT_HOPS,
   multiVaultReads,
+  nextDocumentHop,
+  parseSessionLog,
+  partitionByCheckability,
+  planReachability,
+  type PreparedCall,
   prepareDeclareUsed,
   prepareMarketExit,
   prepareMarketPosition,
   prepareStakeOnUsed,
-  resolveDeclarationSubject,
-  type DeclarePlan,
-  type PreparedCall,
-  type StakePlan,
-} from '../../../packages/protocol/src/declare/index.js';
-import { toCaip19 } from '../../../packages/protocol/src/caip.js';
-import { listTools, type ToolListingOrder } from '../../../packages/protocol/src/tool-listing.js';
-import { getAddress, type Address } from 'viem';
-
-import { listRegisteredTools } from '../../../packages/protocol/src/registered-tools.js';
-import { toolsInDomain } from '../../../packages/protocol/src/domains.js';
-import {
-  planReachability,
-  readReachabilityState,
-} from '../../../packages/protocol/src/declare/reachability-plan.js';
-import { verdictOf } from '../../../packages/protocol/src/reachability.js';
-import { HAS_TAG, IS_A_SUB_DOMAIN_OF } from '../../../packages/protocol/src/sources/intuition/terms.js';
-import catalogue from '../../../catalogue/tools.json';
-import { createErc8004Client } from '../../../packages/protocol/src/client.js';
-import { resolveAgent } from '../../../packages/protocol/src/profile.js';
-import {
-  partitionByCheckability,
-  readDeclaredEndpoints,
-} from '../../../packages/protocol/src/verify/declaration.js';
-import {
-  fetchableDocumentUrl,
-  MAX_DOCUMENT_HOPS,
-  nextDocumentHop,
   privateProbeTarget,
   probeEndpoint,
-} from '../../../packages/protocol/src/verify/probe.js';
-import { listAgents } from '../../../packages/protocol/src/listing.js';
-import { intuitionSource } from '../../../packages/protocol/src/sources/intuition/index.js';
-import type { AgentListOrder } from '../../../packages/protocol/src/types.js';
-import { getToolUsage, type ToolUsage } from '../../../packages/protocol/src/tool-usage.js';
+  readDeclaredEndpoints,
+  readReachabilityState,
+  resolveAgent,
+  resolveDeclarationSubject,
+  resolveInvocations,
+  type SignedContentReceipt,
+  type StakePlan,
+  toCaip19,
+  type ToolListingOrder,
+  toolsInDomain,
+  type ToolUsage,
+  verdictOf,
+  verifyContentReceipt,
+} from '@arp-protocol/core';
+import { getAddress, type Address } from 'viem';
+
+import catalogue from '../../../catalogue/tools.json';
 import { TOOLS } from './tools.js';
 import { catalogueFor, receiptSigner, serveContentRequest } from './content.js';
-import {
-  parseSessionLog,
-  resolveInvocations,
-  type CataloguedSkill,
-} from '../../../packages/protocol/src/session.js';
-import {
-  corroborationOf,
-  verifyContentReceipt,
-  type SignedContentReceipt,
-} from '../../../packages/protocol/src/receipt.js';
 
 const PORT = Number(process.env.PORT ?? 3002);
 

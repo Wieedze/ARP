@@ -54,7 +54,7 @@
 import { appendFileSync, existsSync, mkdirSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 
-import { refForInvocation, type FetchedRef } from '../../../packages/protocol/src/session.js';
+import { type FetchedRef, refForInvocation } from '@arp-protocol/core';
 
 type HookPayload = {
   session_id?: string;

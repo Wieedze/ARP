@@ -5,11 +5,14 @@
   "description": "A runtime PostToolUse hook: records what a session invoked, as the runtime sees it, to .arp/session.jsonl.",
   "type": "module",
   "scripts": {
-    "lint": "tsc --noEmit -p tsconfig.json"
+    "lint": "bun run --cwd ../../packages/protocol build && tsc --noEmit -p tsconfig.json"
   },
   "devDependencies": {
     "@types/bun": "^1.4.4",
     "typescript": "~6.0.2"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "@arp-protocol/core": "workspace:*"
+  }
 }

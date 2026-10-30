@@ -47,13 +47,14 @@ import { dirname } from 'node:path';
 import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts';
 import type { Address, Hex } from 'viem';
 
-import type { RepositoryFile } from '../../../packages/protocol/src/content-path.js';
 import {
-  contentIndexOf,
-  serveContent,
   type ContentAnswer,
-} from '../../../packages/protocol/src/content-serve.js';
-import { recoverContentRequester, type TypedDataSigner } from '../../../packages/protocol/src/receipt.js';
+  contentIndexOf,
+  recoverContentRequester,
+  type RepositoryFile,
+  serveContent,
+  type TypedDataSigner,
+} from '@arp-protocol/core';
 
 /** A listing changes when somebody pushes. Ten minutes is a compromise nobody has measured. */
 const LISTING_TTL_MS = 10 * 60 * 1000;

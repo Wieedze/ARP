@@ -495,8 +495,10 @@ export {prepareRate, prepareRateStake, type RatePlan} from "./declare/rate.js";
  */
 export {
     parseSessionLog,
+    refForInvocation,
     resolveInvocations,
     type CataloguedSkill,
+    type FetchedRef,
     type Invocation,
     type Resolution,
 } from "./session.js";

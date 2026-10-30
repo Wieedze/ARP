@@ -5,11 +5,12 @@
   "description": "The ARP MCP server: reads the graph, prepares unsigned plans, serves a skill's file and signs a receipt for it. Signs no transaction.",
   "type": "module",
   "scripts": {
-    "start": "bun run src/server.ts",
-    "test": "vitest run",
-    "lint": "tsc --noEmit -p tsconfig.json"
+    "start": "bun run --cwd ../../packages/protocol build && bun run src/server.ts",
+    "test": "bun run --cwd ../../packages/protocol build && vitest run",
+    "lint": "bun run --cwd ../../packages/protocol build && tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
+    "@arp-protocol/core": "workspace:*",
     "viem": "2.52.0"
   },
   "devDependencies": {
