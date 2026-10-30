@@ -61,8 +61,8 @@ const BINDINGS_QUERY = `query EndpointBindings($subject: String!, $hasEndpoint: 
  *
  * One query per claim, oldest first: junk attached after the genuine proof cannot push it out of
  * the window, and junk on one claim cannot crowd out another claim's proof. Junk attached before it
- * can — including between the owner's binding and context triples when they are sent as separate
- * transactions (ADR `0095` §7).
+ * can, when the claim reached the chain before its proof. `prepareEndpointBinding` writes the
+ * owner's two triples in one call so that their own write never opens that gap (ADR `0095` §7).
  */
 const CONTEXTS_QUERY = `query EndpointProofs($triple: String!, $inContextOf: String!, $limit: Int!) {
   triples(

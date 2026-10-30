@@ -1,4 +1,4 @@
-import {keccak256, parseEther, stringToHex, type Hex} from "viem";
+import {decodeFunctionData, keccak256, parseEther, stringToHex, type Hex} from "viem";
 import {describe, expect, it} from "vitest";
 
 import {canonicalCaipThing, thingUri} from "../src/declare/agent-atom.js";
@@ -9,7 +9,7 @@ import {
     prepareEndpointBinding,
     type MultiVaultReads,
 } from "../src/declare/index.js";
-import {atomDataForUri} from "../src/declare/multivault.js";
+import {atomDataForUri, multiVaultDeclareAbi} from "../src/declare/multivault.js";
 import type {EndpointBinding} from "../src/handshake.js";
 import {SAME_AS} from "../src/sources/intuition/terms.js";
 
@@ -110,23 +110,15 @@ const params = (
 const hexOf = (value: string) => value.slice(2).toLowerCase();
 
 describe("prepareEndpointBinding", () => {
-    it("writes two atoms, the binding triple, then the proof attached to it, each with a position", async () => {
+    it("writes two atoms, then the binding triple and its proof together in one call", async () => {
         const plan = await prepareEndpointBinding(params(fakeReads()));
         expect(plan.calls.map((call) => call.kind)).toEqual([
             "create-atom",
             "create-atom",
             "create-triple",
-            "create-triple",
         ]);
         expect(plan.endpointAtom).toBe(keccak256(atomDataForUri(ENDPOINT)));
         expect(plan.calls[0]?.data.toLowerCase()).toContain(hexOf(stringToHex(ENDPOINT)));
-        const [, , binding, context] = plan.calls;
-        for (const term of [AGENT_ATOM, HAS_ENDPOINT, plan.endpointAtom]) {
-            expect(binding?.data.toLowerCase()).toContain(hexOf(term));
-        }
-        for (const term of [plan.documentAtom, IN_CONTEXT_OF, plan.bindingTriple]) {
-            expect(context?.data.toLowerCase()).toContain(hexOf(term));
-        }
         for (const call of plan.calls) {
             expect(call.chainId).toBe(13579);
             expect(call.to).toBe(MULTI_VAULT);
@@ -135,6 +127,45 @@ describe("prepareEndpointBinding", () => {
         expect(plan.totalValue).toBe(
             2n * (atomCost + parseEther("0.001")) + 2n * (tripleCost + parseEther("0.001")),
         );
+    });
+
+    it("puts the binding triple first and its context triple second in the one call", async () => {
+        const plan = await prepareEndpointBinding(params(fakeReads()));
+        const triples = plan.calls.filter((call) => call.kind === "create-triple");
+        // One call, so one transaction for any submitter: the binding is never on chain without
+        // its proof, which is the window ADR 0095 §7 says a griefer would use.
+        expect(triples).toHaveLength(1);
+        const [call] = triples;
+        const {functionName, args} = decodeFunctionData({
+            abi: multiVaultDeclareAbi,
+            data: call!.data,
+        });
+        expect(functionName).toBe("createTriples");
+        expect(args).toEqual([
+            [AGENT_ATOM, plan.documentAtom],
+            [HAS_ENDPOINT, IN_CONTEXT_OF],
+            [plan.endpointAtom, plan.bindingTriple],
+            [tripleCost + parseEther("0.001"), tripleCost + parseEther("0.001")],
+        ]);
+        expect(call!.value).toBe(2n * (tripleCost + parseEther("0.001")));
+        expect(call!.why).toContain(ENDPOINT);
+        expect(call!.why).toContain("signed handshake");
+    });
+
+    it("plans the context triple alone when the binding triple is already on chain", async () => {
+        const first = await prepareEndpointBinding(params(fakeReads()));
+        const plan = await prepareEndpointBinding(
+            params(
+                fakeReads({
+                    existing: [first.endpointAtom, first.documentAtom, first.bindingTriple],
+                }),
+            ),
+        );
+        expect(plan.calls).toHaveLength(1);
+        const {args} = decodeFunctionData({abi: multiVaultDeclareAbi, data: plan.calls[0]!.data});
+        expect(args[0]).toEqual([plan.documentAtom]);
+        expect(args[2]).toEqual([plan.bindingTriple]);
+        expect(plan.totalValue).toBe(tripleCost + parseEther("0.001"));
     });
 
     it("plans nothing when every term exists, and says so", async () => {
@@ -207,6 +238,6 @@ describe("prepareEndpointBinding", () => {
             params(fakeReads({feeAll: true}), {birthDeposit: 0n}),
         );
         expect(plan.calls[0]?.value).toBe(atomCost);
-        expect(plan.calls[2]?.value).toBe(tripleCost);
+        expect(plan.calls[2]?.value).toBe(2n * tripleCost);
     });
 });

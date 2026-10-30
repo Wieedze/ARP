@@ -8,7 +8,7 @@ import {IdentityTermHasNoPositionError} from "./identity-plan.js";
 import {
     atomDataForUri,
     encodeCreateAtom,
-    encodeCreateTriple,
+    encodeCreateTriples,
     type MultiVaultReads,
 } from "./multivault.js";
 import type {PreparedCall} from "./types.js";
@@ -37,6 +37,12 @@ import type {PreparedCall} from "./types.js";
  * The document URI is still the caller's word: its CID depends on how the pinning service encodes,
  * and a URI that is not this binding's document reads `invalid` or `unreadable`, never `bound`.
  *
+ * **The two triples travel as one call** (ADR `0095` §7). `calls` holds at most three: the
+ * endpoint atom, the document atom, then one `createTriples` carrying the binding triple and its
+ * context triple together, so whoever submits the plan sends both in one transaction. A submitter
+ * that can batch further — task 40's sponsoring service — may put the atoms in that transaction
+ * too; the triples are the pair that must not be split.
+ *
  * **Plans, never signs** (ADR `0038`). The operator's wallet or ARP's sponsoring service signs it.
  */
 export type EndpointBindingPlan = {
@@ -52,6 +58,7 @@ export type EndpointBindingPlan = {
         bindingTriple: boolean;
         contextTriple: boolean;
     };
+    /** In execution order. One call creates whichever triples are missing — both at once, when both are. */
     calls: PreparedCall[];
     totalValue: bigint;
     chainId: number;
@@ -198,36 +205,60 @@ export async function prepareEndpointBinding(params: {
             preview: await preview("atom", documentAtom, atomAssets),
         });
     }
-    // The binding triple before the context triple: the second names the first as its object, and
-    // `createTriples` reverts on a term that does not exist yet.
+    // **Both triples in one call, the binding first.** The context triple names the binding triple
+    // as its object, and `createTriples` creates its members in order, so the pair is one atomic
+    // call and the binding is never on chain without its proof. Measured on testnet 13579 by
+    // `scripts/measure/nested-triple-batch.ts` (2026-10-30, `eth_call` only): inner-then-outer in
+    // one call succeeds, outer-then-inner reverts, and the outer triple alone reverts.
+    //
+    // Two calls would leave a window: the binding triple is public the moment it lands, and anyone
+    // watching can attach junk contexts that predate the genuine proof and crowd it out of the
+    // directory's read (ADR `0095` §7). One call is one transaction for **any** submitter — a
+    // wallet, a delegation redemption, or task 40's sponsoring service — so the plan closes the
+    // window rather than leaving it to the submitter's care.
+    const triples: {
+        item: {subjectId: Hex; predicateId: Hex; objectId: Hex; assets: bigint};
+        termId: Hex;
+        why: string;
+    }[] = [];
     if (!bindingExists) {
-        calls.push({
-            ...base,
-            kind: "create-triple",
-            value: tripleAssets,
-            data: encodeCreateTriple(
-                params.agentAtom,
-                params.predicates.hasEndpoint,
-                endpointAtom,
-                tripleAssets,
-            ),
+        triples.push({
+            item: {
+                subjectId: params.agentAtom,
+                predicateId: params.predicates.hasEndpoint,
+                objectId: endpointAtom,
+                assets: tripleAssets,
+            },
+            termId: bindingTriple,
             why: `the agent has endpoint ${endpoint}`,
-            preview: await preview("triple", bindingTriple, tripleAssets),
         });
     }
     if (!contextExists) {
+        triples.push({
+            item: {
+                subjectId: documentAtom,
+                predicateId: params.predicates.inContextOf,
+                objectId: bindingTriple,
+                assets: tripleAssets,
+            },
+            termId: contextTriple,
+            why: "the owner's signed handshake, attached to that claim",
+        });
+    }
+    if (triples.length > 0) {
+        // Every member is previewed, so a term born with no position is refused whichever it is.
+        // The call carries one preview; members are priced alike, so the first stands for them.
+        const previews = [];
+        for (const triple of triples) {
+            previews.push(await preview("triple", triple.termId, triple.item.assets));
+        }
         calls.push({
             ...base,
             kind: "create-triple",
-            value: tripleAssets,
-            data: encodeCreateTriple(
-                documentAtom,
-                params.predicates.inContextOf,
-                bindingTriple,
-                tripleAssets,
-            ),
-            why: "the owner's signed handshake, attached to that claim",
-            preview: await preview("triple", contextTriple, tripleAssets),
+            value: triples.reduce((sum, triple) => sum + triple.item.assets, 0n),
+            data: encodeCreateTriples(triples.map((triple) => triple.item)),
+            why: triples.map((triple) => triple.why).join(", and "),
+            preview: previews[0],
         });
     }
 
