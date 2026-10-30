@@ -2,7 +2,7 @@
 
 **Generated** 2026-10-30 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-28 entries, one per completed task. Written by `task-verifier` on a pass.
+29 entries, one per completed task. Written by `task-verifier` on a pass.
 
 | # | task | verdict | entry |
 | --- | --- | --- | --- |
@@ -34,3 +34,4 @@
 | [26](26-one-installer-33c.md) | `docs/tasks/33-one-installer.md` §4 33c | PASS, on the second pass | One installer, 33c: `arp init`, `arp uninstall`, `arp doctor` |
 | [27](27-one-installer-33i-capture.md) | `docs/tasks/33-one-installer.md` §4 33i. Capture tooling only. Per-runtime adapters wait on real captures from the user. | PASS, on the second pass | One installer, 33i (first half): `arp hook --capture` and `arp init --capture` |
 | [28](28-one-installer-33d-claude-gemini.md) | `docs/tasks/33-one-installer.md` §33d (first part; Codex deferred) | PASS (third pass) | One installer, 33d first part: Claude Code plugin and Gemini extension |
+| [29](29-the-install-handshake.md) | `docs/tasks/39-the-install-handshake.md` | PASS (second pass; the first failed on ADR `0095` §7's griefing costs) | The install handshake: a rented tunnel, and the node bound to its ERC-8004 token |
