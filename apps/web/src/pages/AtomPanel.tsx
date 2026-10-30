@@ -17,7 +17,7 @@ import {useDeclaredModules} from "../hooks/use-declared-modules";
 import {useAtomStanding, isAtomId} from "../hooks/use-atom-standing";
 import {useChainChoice} from "../lib/chain-choice";
 import {type AtomView} from "../services/atom-standing-view";
-import {truncateMiddle} from "../services/trust-format";
+import {intuitionPortalUrl, truncateMiddle} from "../services/trust-format";
 import {parseToolLabel} from "../lib/tool-label";
 import {RepoPage} from "./RepoPage";
 import {SkillPage} from "./SkillPage";
@@ -522,11 +522,24 @@ function Claims({view}: {view: AtomView}) {
 }
 
 function Identity({view}: {view: AtomView}) {
+    const chain = useChainChoice();
+
     return (
         <>
             <dl className="mt-6 border-t border-[color:var(--color-rule)] pt-4 text-[length:var(--text-body-sm)]">
+                {/* The id opens on Intuition's portal, on the chain this page reads — the user's
+                    decision, 2026-10-30: _« le lien terms id doit emmener vers le portal, vers
+                    l'atom ou triple Intuition »_. `intuitionPortalUrl` is the one builder, probed
+                    on both hosts; a hand-written URL here would be the fourth copy. */}
                 <Term label="Atom">
-                    <span className="font-mono break-all">{view.atomId}</span>
+                    <a
+                        href={intuitionPortalUrl("atom", view.atomId, chain.isMainnet)}
+                        target="_blank"
+                        rel="noreferrer"
+                        className={`font-mono break-all ${linkClass}`}
+                    >
+                        {view.atomId}
+                    </a>
                 </Term>
                 {view.type === null ? null : (
                     <Term label="Type">
@@ -552,24 +565,26 @@ function Identity({view}: {view: AtomView}) {
                 )}
             </dl>
 
-            {/* **There is no "Explorer →" here any more, and nothing replaces it.**
-                It pointed at `${explorerUrl}/address/${termId}`, which was dead: a term id is 32
-                bytes and the explorer wants 20 —
-                `GET /api/v2/addresses/0x99b0…3710a` answers
-                `Invalid format. Expected ~r/^0x([A-Fa-f0-9]{40})$/`, while the HTML route returns
-                200 because it is an SPA shell. So it looked reachable and was not, which is worse
-                than its absence.
+            {/* **The id above is the link, and it was not for three days.**
 
-                Three candidates were checked and none resolves a term id. The explorer: no route.
-                `app.intuition.systems/atom/<id>`: a consumer landing page, **byte-identical for a
-                real id and a bogus one** and carrying neither label — measured in a browser, not
-                inferred from a 200. `computeAtomWalletAddr(atomId)` is a real 20-byte address but
-                a different object, and presenting an atom's wallet as "the atom" is the same
-                category error one level in.
+                It first pointed at `${explorerUrl}/address/${termId}`, which was dead: a term id is
+                32 bytes and the block explorer wants 20 — `GET /api/v2/addresses/0x99b0…3710a`
+                answers `Invalid format. Expected ~r/^0x([A-Fa-f0-9]{40})$/`, while the HTML route
+                returns 200 because it is an SPA shell. So it looked reachable and was not, which is
+                worse than its absence, and it was removed.
 
-                The id itself is in the `dl` above, in mono, selectable. That is the honest
-                surface. ADR `0054`: the id is a pure function of the atom's data, so it is
-                reproducible without any third party — which is the better answer than a link. */}
+                **What stood here then was "three candidates were checked and none resolves a term
+                id", and that sentence outlived its own evidence.** The three it checked were the
+                block explorer (no route), `app.intuition.systems/atom/<id>` (a consumer landing
+                page, byte-identical for a real id and a bogus one) and
+                `computeAtomWalletAddr(atomId)` (a real address, a different object). It never
+                checked the **portal** — and `portal.intuition.systems/explore/atom/{id}` answers,
+                probed 2026-10-27, `/explore/triple/{id}` on 2026-10-29, both hosts. Three other
+                pages have linked it since; this one kept the note that said it could not be done.
+                `rules/claims.md` §5: the copy that survives a correction is the one nobody greps.
+
+                The id stays selectable, in mono, because ADR `0054` makes it a pure function of the
+                atom's data — reproducible with no third party, which the link is not. */}
         </>
     );
 }

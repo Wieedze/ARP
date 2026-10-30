@@ -265,14 +265,35 @@ wait for it unless one misleads a reader before then.
     balance. The HTML route returns 200 regardless because it is an SPA shell, so the link looks
     reachable and is not. Found while building `tasks/30`, which **propagated** the same pattern to
     two new links before a reviewer measured it; those two are fixed (the subject atom goes to the
-    app's own `/atom/:atomId`, the edge id went back to plain text, since nothing resolves a triple
-    id there). **Closed the same day**: removed rather than aimed elsewhere. Three candidates were checked and
-    none resolves a term id — the explorer has no route, `app.intuition.systems/atom/<id>` returns a
-    consumer landing page **byte-identical for a real id and a bogus one** (measured in a browser,
-    because a 200 from an SPA is what fooled the original), and `computeAtomWalletAddr(atomId)` is a
-    real address but a different object. The id stays on screen in mono, selectable.
+    app's own `/atom/:atomId`, the edge id went back to plain text). Closed the same day by removing
+    the links rather than aiming them elsewhere.
 
-39. **An atom's title breaks mid-word on every detail page.** `Sanctioned Address` renders as
+    **Reopened and properly closed 2026-10-30, on the user's decision**: _« le lien terms id doit
+    emmener vers le portal, vers l'atom ou triple Intuition »_. The id links to
+    `portal.intuition.systems/explore/{atom,triple}/{termId}` through `intuitionPortalUrl`, on the
+    chain the page reads.
+
+    **The sentence that stood here was "three candidates were checked and none resolves a term id",
+    and it was the wrong conclusion from a right measurement.** The three were the block explorer
+    (no route), `app.intuition.systems/atom/<id>` (a consumer landing page byte-identical for a real
+    id and a bogus one, measured in a browser because a 200 from an SPA is what fooled the original)
+    and `computeAtomWalletAddr(atomId)` (a real address, a different object). **The portal was not
+    among them**, and `/explore/atom/{id}` had already been probed on 2026-10-27 — by this repo,
+    recorded in `trust-format.ts`, and linked from three other pages. So the claim was falsified in
+    the codebase before it was written down here. `rules/claims.md` §3 in its own house: a negative
+    result about a third party is a claim, and "we checked three places" is not "there is no place".
+
+    The id stays on screen in mono and selectable either way, because ADR `0054` makes it a pure
+    function of the atom's data.
+
+39. ~~**An atom's title breaks mid-word on every detail page.**~~ **ALREADY FIXED** — verified
+    2026-10-30 after the user chose "lower the clamp": there was nothing left to lower. The fix
+    taken was better than the one filed — the title came **out** of the 18rem column and spans the
+    page on all four detail routes (`AtomPanel.tsx:173`, `SkillPage.tsx:86`, `RepoPage.tsx:73`,
+    `AgentTrustPanel.tsx:252`, each `h1` above its grid), so a 76px ceiling has 1,200px to work in
+    instead of 288. `AtomPanel`'s own comment records it — _"filing a defect is not the same as
+    leaving it"_ — and this item was never struck. A decision was asked of the user for work already
+    done, which is the cost of a punch list nobody re-walks. The original report: `Sanctioned Address` renders as
     `Sanct / ioned / Addr / ess`. `.type-title` carries `overflow-wrap: anywhere` so a bare
     66-character atom id can wrap at all, `--text-title` clamps to 76px, and the aside is 18rem =
     288px — "Sanctioned" at 76px needs roughly 400px. The break is the token and the column

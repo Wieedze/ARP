@@ -14,7 +14,7 @@ import {
     type AgentTokenRef,
     type DeclaredUse,
 } from "../../services/declare-use";
-import {formatTrust, truncateMiddle} from "../../services/trust-format";
+import {formatTrust, intuitionPortalUrl, truncateMiddle} from "../../services/trust-format";
 
 /**
  * The declare control on `/atom/:atomId` — `(your agent, uses, this atom)`.
@@ -350,10 +350,20 @@ function Resolved(props: {
 
                 So the subject goes to the app's **own** route, which resolves and is where every
                 other atom on this page already points — `AtomPanel`'s "the graph is walkable in
-                both directions". The edge stays plain text: nothing resolves a triple id on that
-                explorer. */}
+                both directions".
+
+                **The edge used to be plain text on the ground that "nothing resolves a triple id on
+                that explorer".** True of the block explorer and never asked of the portal:
+                `portal.intuition.systems/explore/triple/{id}` answers 200 on both hosts, probed
+                2026-10-29. It is a link now, on the user's decision of 2026-10-30, and it goes to
+                the portal rather than in-app because ARP has no page for a triple — the claim is
+                rendered here and nowhere else. */}
             <Field label="Subject atom" value={plan.subject} to={`/atom/${plan.subject}`} />
-            <Field label="Edge" value={plan.tripleId} />
+            <Field
+                label="Edge"
+                value={plan.tripleId}
+                href={intuitionPortalUrl("triple", plan.tripleId, props.chain.isMainnet)}
+            />
 
             {plan.exists ? (
                 <p className="mt-8 font-medium">This agent has already declared using this atom.</p>
