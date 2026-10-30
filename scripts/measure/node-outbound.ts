@@ -57,13 +57,23 @@ function arg(name: string): string | undefined {
 /**
  * The files a running MCP server loads. Hand-maintained, which is this measurement's own weak point.
  *
- * `server.ts` is the entry point; `content.ts` is the content route; `tools.ts` is the tool
+ * `server.ts` is the entry point and the dispatch; `config.ts` is what it reads at load;
+ * `handlers/` is one file per tool group; `content.ts` is the content route; `tools.ts` is the tool
  * schemas. The three package modules are the ones those reach that fetch anything —
  * `content-path.ts` builds the raw URL, `probe.ts` holds both guards and the probe itself, and
  * `http.ts` is the shared transport, in `packages/graphql` since ADR `0082`.
  */
 const MODULES = [
   'apps/mcp/src/server.ts',
+  'apps/mcp/src/config.ts',
+  'apps/mcp/src/rpc.ts',
+  'apps/mcp/src/serialise.ts',
+  'apps/mcp/src/handlers/agents.ts',
+  'apps/mcp/src/handlers/declare.ts',
+  'apps/mcp/src/handlers/find-tools.ts',
+  'apps/mcp/src/handlers/positions.ts',
+  'apps/mcp/src/handlers/reachability.ts',
+  'apps/mcp/src/handlers/reputation.ts',
   'apps/mcp/src/content.ts',
   'apps/mcp/src/tools.ts',
   'packages/protocol/src/content-path.ts',
