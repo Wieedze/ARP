@@ -76,8 +76,10 @@ On `feat/40-sponsoring-service`. ADR `0096`, post-mortem `.claude/learning/32-th
   compares against the `receiver`.
 - **40d.** ADR `0092`'s limits, in configuration and printed on `GET /`. **Testnet sponsors every
   proven hire** (ADR `0094` as amended): the withdrawal threshold is optional and unset, and the
-  cost-of-proof rule is `belowProofCost: false`. Both are mainnet rules. The agent needs no TRUST of
-  its own (ADR `0096` item 8).
+  cost-of-proof rule is `belowProofCost: false`. Both are mainnet rules. The agent pays nothing for
+  the approval or the deposit; it does pay the hire (more than zero), and the creation of the
+  `(requester, uses, hired agent)` triple when it is not on chain yet, which `/deposit` refuses with
+  a 400 and the service does not create (ADR `0096` item 8).
 - **§3.** No mainnet: `main.ts` refuses any chain but 13579. No transfer to the agent's wallet but
   the approval gas. No deposit with the service as receiver: `/gas` and `/deposit` refuse an agent
   whose ERC-8004 holder is the sponsor wallet (ADR `0096` item 7).

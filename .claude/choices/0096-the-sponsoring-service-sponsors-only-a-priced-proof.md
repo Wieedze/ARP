@@ -81,10 +81,17 @@ atom, uses, X)`, where X is the content receipt's tool atom, or the hired agent'
    holder is the sponsor wallet's own address. A deposit with the service as receiver is what task
    40 §3 forbids, and gas sent to that holder goes back to the key that sent it. Added on the
    testnet amendment, 2026-10-30.
-8. **The agent needs no TRUST of its own to be sponsored on testnet.** `/gas` pays for its one
-   `approve`, the service pays the deposit, and with the price rule and the withdrawal threshold off
-   nothing reads the agent's balance or its holdings. What a hire proof needs is a mined payment of
-   more than zero from the requester to the callee: that is the hire, not a stake.
+8. **On testnet the agent pays nothing for the approval or the deposit, and pays the rest
+   itself.** `/gas` pays for its one `approve`, the service pays the deposit, and with the price
+   rule and the withdrawal threshold off nothing reads the agent's balance or its holdings. Two
+   costs stay the agent's. The hire: a mined payment of more than zero from the requester to the
+   callee. And the `(requester, uses, hired agent)` triple, when it is not on chain yet, which is
+   the normal case for a first hire: `planSponsoredDeposit` throws `SponsoredTermMissingError` on a
+   term that does not exist, `/deposit` returns it as a 400, and the agent sends `createTriples`
+   itself at `getTripleCost()` plus whatever it attaches. The service creates no triple: a create
+   call it sent would open the term's first position in its own name, which task 40 §3 forbids.
+   Whether it should is a decision for the user, not made here. Corrected 2026-10-30; the item
+   first said the agent needed no TRUST of its own, which was false whenever the triple was missing.
 
 And one place where the task text and the rules disagreed: the workflow asked for the key "read from
 env". ADR `0089` §3 and task 37c say a 0600 file, never an environment variable. The environment

@@ -33,9 +33,13 @@
  *  refused by `/gas` and `/deposit`: a deposit with the service as receiver would be ARP paying
  *  itself a position, and the approval gas would go back to the key that sent it.
  *
- *  **On testnet the agent needs no TRUST of its own** (ADR `0094` as amended): `/gas` pays for its
- *  `approve`, the service pays the deposit, and the cost-of-proof rule and the withdrawal threshold
- *  are mainnet rules, off here. What a hire proof costs is the hire itself, not a stake.
+ *  **On testnet the agent pays nothing for the approval or the deposit** (ADR `0094` as amended):
+ *  `/gas` pays for its `approve`, the service pays the deposit, and the cost-of-proof rule and the
+ *  withdrawal threshold are mainnet rules, off here. It does pay two things itself: the hire, a
+ *  mined payment of more than zero, and the `(requester, uses, hired agent)` triple's creation when
+ *  that triple is not on chain yet, which on a first hire it usually is not. `/deposit` refuses a
+ *  term that does not exist (`SponsoredTermMissingError`, a 400) and this service creates none: a
+ *  create call it sent would open the term's first position in its own name (task 40 §3).
  *
  *  **A refusal always leaves the agent a way.** A 409 for a missing approval carries the approve
  *  call; a 429 carries the call the agent can send itself. Unplugging this service costs an agent
