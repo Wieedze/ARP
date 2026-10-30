@@ -59,8 +59,10 @@ const BINDINGS_QUERY = `query EndpointBindings($subject: String!, $hasEndpoint: 
 /**
  * `object_id`, not `object { … }`: the object is a triple, and a nested position resolves `null`.
  *
- * One query per claim, oldest first: a proof is written with its claim, so junk attached later
- * cannot push it out of the window, and junk on one claim cannot crowd out another claim's proof.
+ * One query per claim, oldest first: junk attached after the genuine proof cannot push it out of
+ * the window, and junk on one claim cannot crowd out another claim's proof. Junk attached before it
+ * can — including between the owner's binding and context triples when they are sent as separate
+ * transactions (ADR `0095` §7).
  */
 const CONTEXTS_QUERY = `query EndpointProofs($triple: String!, $inContextOf: String!, $limit: Int!) {
   triples(

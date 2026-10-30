@@ -54,15 +54,28 @@ graph. Building it forced seven choices the ADR does not make.
    claims (default 10) and, per claim, the oldest `maxProofsPerClaim` proofs (default 5), each its
    own query. Two griefs survive, and both end in `null`, never in the griefer's endpoint:
    - **Crowding out the claim.** Ten newer `has endpoint` claims push the genuine one out of the
-     window. Each needs a new triple and a new endpoint atom, so at least ten triple fees and ten
-     atom fees: about 0.02 TRUST on 13579 and about 2 TRUST on 1155, from the costs
-     `portability.md` measured on 2026-10-19 (0.001000000002 and 0.001000000001 against
-     0.100000000002 and 0.100000000001). The birth deposits come back; the fees do not. A reader
-     who suspects it raises `limit`.
-   - **Crowding out the proof.** Junk contexts on a claim that predate its genuine proof. A context
-     triple names an existing claim, so this needs the claim written before its owner writes it,
-     which means guessing the endpoint, or a re-handshake on an endpoint already buried in junk.
-     Five junk contexts cost five triple fees and five atom fees, one document atom each.
+     window. Each needs a new triple, and nothing else: the object can be **any existing atom**,
+     because the read takes `object.data ?? object.label` with no check on it
+     (`packages/protocol/src/directory.ts`, the `BINDINGS_QUERY` loop), and a griefer who only
+     wants to deny does not care what endpoint it names. So the floor is ten triple fees: about
+     0.01 TRUST on 13579 and about 1 TRUST on 1155, from the `getTripleCost()` values
+     `portability.md` measured on 2026-10-19 (0.001000000002 against 0.100000000002). The birth
+     deposits come back; the fees do not. A reader who suspects it raises `limit`.
+   - **Crowding out the proof.** Junk contexts on a claim that predate its genuine proof. The junk
+     subject can also be any existing atom, because `CONTEXTS_QUERY` applies `limit` before the
+     reader drops rows whose subject has no `data`. So the floor is five triple fees: about 0.005
+     TRUST on 13579 and about 0.5 TRUST on 1155. It needs the claim on chain before its proof is,
+     and there are three ways to get that: guess the endpoint and write the claim first; catch a
+     re-handshake on an endpoint already buried in junk; or **use the window between the owner's
+     own two triples**. `prepareEndpointBinding`
+     (`packages/protocol/src/declare/endpoint-binding-plan.ts`) returns the binding triple and the
+     context triple as separate `PreparedCall`s, and nothing in this task batches them. The binding
+     triple is public the moment it lands, so whenever the calls go out as separate transactions,
+     anyone watching can attach five junk contexts before the genuine one. **That window is left
+     open on purpose here:** the plan does not choose how its calls are submitted (ADR `0038`), and
+     the submitter — the operator's wallet, or task 40's sponsoring service — is where it closes.
+     On the write side, one atomic transaction carrying both triples closes it, and nothing short of that does. A reader
+     who suspects it raises `maxProofsPerClaim`.
 
    `maxProofsPerClaim` also bounds what one claim can make a reader spend: at most five document
    fetches and ten chain reads. A ranking that cannot be crowded (by stake, or by the binding's
