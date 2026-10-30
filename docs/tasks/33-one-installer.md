@@ -5,6 +5,7 @@ verified on its own, and the parts that publish are confirmed by the user every 
 **Required skills:** none beyond the repo's own.
 **Rules:** `code.md`, `security.md` (a key moves to a file), `portability.md`, `claims.md`, `workflow.md`.
 **Reviewers:** `task-verifier` per sub-task.
+**ADRs:** `0089` (one installer, the decisions in §3), `0090` (what the hook records, 33a).
 **Research:** `docs/23_INSTALLING_ARP.md`. Every third-party fact below comes from there or from the
 sources listed in §6.
 

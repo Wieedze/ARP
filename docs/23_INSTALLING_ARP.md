@@ -2,6 +2,7 @@
 
 **Status:** research and direction, 2026-10-30. Not a task. The decision it records is the user's:
 _« je veux un seul installer, pense friction et surtout pense comme une entreprise professionnelle »_.
+The decisions taken from it are ADR `0089` (one installer) and ADR `0090` (what the hook records).
 Everything about a third party below cites the page it came from; everything about this repo cites a
 file and a line.
 

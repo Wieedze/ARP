@@ -2,7 +2,7 @@
 
 **Generated** 2026-10-30 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-87 decisions. Newest last. `choices/README.md` says when to write one.
+89 decisions. Newest last. `choices/README.md` says when to write one.
 
 ## Not accepted
 
@@ -106,3 +106,5 @@ Read these before relying on them.
 | [0086](0086-the-repo-is-sorted-by-kind.md) | 2026-10-30 | Accepted | The repo is sorted by kind: code, data, docs, scripts |
 | [0087](0087-a-tool-is-its-package-and-its-repo-is-its-source.md) | 2026-10-30 | Accepted, one point open (below) | A tool is its package, and its repository is its source |
 | [0088](0088-a-label-is-one-word-unless-a-compound-is-necessary.md) | 2026-10-30 | Accepted. Amends the one-word rule of 2026-10-28 (`scripts/seed/seed-domain-tree.ts`, | A label is one word, unless a compound is necessary |
+| [0089](0089-one-installer-one-package-thin-manifests.md) | 2026-10-30 | Accepted | One installer: one npm package, a thin native manifest per runtime |
+| [0090](0090-what-the-hook-records.md) | 2026-10-30 | Accepted | What the hook records: outcome and identity, never content or credentials |

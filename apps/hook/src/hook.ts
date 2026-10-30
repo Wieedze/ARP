@@ -59,6 +59,8 @@
  * empty when it is not, and `arp_declare_session` refuses to resolve the ambiguous ones rather
  * than picking.
  *
+ * What a line holds, and what it never holds, is ADR `0090`.
+ *
  * ## Where it writes
  *
  * `$ARP_SESSION_LOG`, or `.arp/session.jsonl` beside the working directory. One JSON object per

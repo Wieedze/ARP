@@ -2,7 +2,7 @@
 
 **Task:** `docs/tasks/33-one-installer.md` (sub-task 33a only; 33b–33h not started)
 **Completed:** 2026-10-30
-**Commit:** uncommitted
+**Commit:** `0581b9e`
 **Verifier verdict:** PASS (second pass; the first failed on the three items under Surprises)
 
 ## What shipped
@@ -18,7 +18,7 @@
 ## Surprises
 
 - **The configured MCP URL is the operator's, and it can carry a key.** It was reproduced on the first pass: `?apiKey=SENTINEL` reached `.arp/session.jsonl` verbatim, because `normaliseToolUrl` keeps the query. The `docs/design/cli-v0` original has the same gap. Moving the ref from an argument to configuration fixed one leak and opened another.
-- The log lives in the *operator's* project, whose `.gitignore` does not know `.arp/`. ARP's own `.gitignore:59` gave false comfort.
+- The log lives in the _operator's_ project, whose `.gitignore` does not know `.arp/`. ARP's own `.gitignore:59` gave false comfort.
 - Doc line references to `hook.ts:12` and `hook.ts:52` went stale as soon as the header grew. The docs now cite sections instead.
 
 ## Decisions made
@@ -27,11 +27,11 @@
 - **Path tokens: heuristic, origin fallback** — a segment of 24+ `[A-Za-z0-9_-]` characters mixing letters and digits drops the whole path. Accepted cost: two servers on one host that differ only by such a path share a ref. Residual, verified by a run: a shorter token (`sk_live_9f8e7d6c5b4a`, 19 characters) passes through. Latent today, because `resolveInvocations` (`packages/protocol/src/session.ts`) never reads an MCP ref. It becomes live when an MCP ref is turned into an atom.
 - **Log stays per working directory** (`docs/23` §6.4), settled here.
 
-No ADR written. These decisions are recorded in task 33 and `docs/23`; consider an ADR before the MCP ref feeds an atom.
+Recorded afterwards as ADR `0090` (what the hook records) and ADR `0089` (the installer this sub-task opens).
 
 ## Rules touched
 
-- `.claude/rules/security.md` — sufficient, but the log's privacy has to cover the operator's *configuration*, not only arguments and responses.
+- `.claude/rules/security.md` — sufficient, but the log's privacy has to cover the operator's _configuration_, not only arguments and responses.
 - `.claude/rules/claims.md` — check 5 caught the stale line references; citing a section rather than a line avoids the next round.
 - `.claude/rules/code.md` — sufficient.
 
