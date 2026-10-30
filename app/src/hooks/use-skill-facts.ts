@@ -27,7 +27,20 @@ export type SkillFact = {description: string; installs: number | null};
  * and the other decays on its own. `stars` are here because a reader judging a tool wants them and
  * they are a signal of life — a weak one: free to give, and they never fall.
  */
-export type RepoFact = {stars: number; days: number | null; archived: boolean; gone: boolean};
+export type RepoFact = {
+    stars: number;
+    days: number | null;
+    archived: boolean;
+    gone: boolean;
+    /** The owner's own one-line summary on GitHub, or `null` when they wrote none (7 of 53). */
+    description: string | null;
+};
+
+/**
+ * What ARP wrote for a skill: its atom and its domain tag, `null` for the 61 no keyword matched.
+ * From `catalogue/skills-13579.json`, which `scripts/audit-skill-tags.ts` checks against the chain.
+ */
+export type CatalogueEntry = {atom: string | null; domain: string | null};
 
 export function useSkillFacts() {
     const query = useQuery({
@@ -35,16 +48,23 @@ export function useSkillFacts() {
         queryFn: async (): Promise<{
             skills: Record<string, SkillFact>;
             repos: Record<string, RepoFact>;
+            catalogue: Record<string, CatalogueEntry>;
+            measuredOn: string | null;
         }> => {
             // Both in one chunk: 5 KB of repository signals beside 45 KB of descriptions, wanted
             // by the same pages at the same moment.
-            const [skills, repos] = await Promise.all([
+            const [skills, repos, catalogue] = await Promise.all([
                 import("../data/skill-facts.json"),
                 import("../data/repo-facts.json"),
+                import("../data/skill-catalogue.json"),
             ]);
             return {
                 skills: (skills.default as {facts?: Record<string, SkillFact>}).facts ?? {},
                 repos: (repos.default as {facts?: Record<string, RepoFact>}).facts ?? {},
+                catalogue:
+                    (catalogue.default as {skills?: Record<string, CatalogueEntry>}).skills ?? {},
+                // Both files were measured on the same day; the date is printed beside the figures.
+                measuredOn: (skills.default as {_measuredOn?: string})._measuredOn ?? null,
             };
         },
         // A file in the bundle. It cannot go stale within a session.
@@ -60,6 +80,13 @@ export function useSkillFacts() {
         /** Keyed by the repository atom's label, `github.com/owner/repo`. */
         repoFactFor: (label: string | null): RepoFact | null =>
             label === null || facts === undefined ? null : (facts.repos[label] ?? null),
+        /** ARP's record of a skill: its atom id and the domain it was tagged with, or `null`. */
+        catalogueFor: (label: string | null): CatalogueEntry | null =>
+            label === null || facts === undefined ? null : (facts.catalogue[label] ?? null),
+        /** Every skill label the bundled facts know, for comparing one repository with another. */
+        skillLabels: facts === undefined ? [] : Object.keys(facts.skills),
+        /** The day the figures were read, `YYYY-MM-DD`: a dated copy, never a live read. */
+        measuredOn: facts?.measuredOn ?? null,
         isLoading: query.isLoading,
     };
 }
