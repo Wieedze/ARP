@@ -9,7 +9,7 @@
  *  ## What it is for
  *
  *  One tree has to serve two readings, or the guard rail does not guard the search
- *  (`docs/18_THE_DOMAIN_TREE.md`):
+ *  (`docs/25_THE_DOMAIN_TREE.md`):
  *
  *    - **down**, from a domain to the tools under it — what `arp_find_tools` needs and has never had;
  *    - **up**, from a tool's domain to the domain a delegation was scoped on — the path an agent

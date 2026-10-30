@@ -18,7 +18,7 @@ import {
  * tools exist"; nothing answered "what tools are for taking a payment", and that gap is the one
  * thing standing between the registry and an agent that can use it.
  *
- * Two traversals, over one set of triples (`docs/18_THE_DOMAIN_TREE.md`):
+ * Two traversals, over one set of triples (`docs/25_THE_DOMAIN_TREE.md`):
  *
  *   - **down** — a domain to every tool under it, at any depth. What a search needs.
  *   - **up** — a domain to the root, triple by triple. The witness an agent presents, because the
@@ -163,7 +163,7 @@ export class DomainTree {
     /**
      * Is the best parent actually ahead of the second?
      *
-     * A tie is not a parent. `docs/18` states the rule that way and the first implementation picked
+     * A tie is not a parent. `docs/25` states the rule that way and the first implementation picked
      * whichever the indexer returned first anyway — testnet supplied the case immediately, with
      * `motion design` holding identical shares to two different parents. Breaking a tie silently is
      * the owner rule wearing the stake rule's name.
