@@ -113,6 +113,18 @@ describe("the row's glyph", () => {
      * Every state is `declared`. `proven` needs a third party's receipt and nothing in this app
      * reads one — when a receipt source arrives, this is what should fail.
      */
+    /**
+     * The agent's page seeds its glyph with the atom id. The row key carries the page index, and
+     * seeding on it drew another glyph for the same agent whenever the order moved it.
+     */
+    it("seeds on the agent's atom, so its position on the page cannot redraw it", () => {
+        const first = toCohortRow(listing(), 0, "TRUST");
+        const later = toCohortRow(listing(), 7, "TRUST");
+        expect(first.sigilId).toBe("0xatom");
+        expect(later.sigilId).toBe(first.sigilId);
+        expect(later.key).not.toBe(first.key);
+    });
+
     it("marks every module declared, because no receipt source exists yet", () => {
         const row = toCohortRow(
             listing({capabilities: [{predicateId: "0xp1", objectId: "0xa", label: "a"}]}),

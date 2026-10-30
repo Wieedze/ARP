@@ -31,6 +31,11 @@ export const COHORT_ORDERS: readonly {
 
 export type CohortRow = {
     key: string;
+    /**
+     * The glyph's seed: the agent's atom id, the one the agent's page seeds with. The row `key`
+     * carries the page index and would draw another glyph for the same agent under another order.
+     */
+    sigilId: string;
     name: string;
     /** True when `name` is the indexer's `Agent 8453:NNNN` stand-in, not a chosen one. */
     isFallbackMetadata: boolean;
@@ -129,6 +134,7 @@ export function toCohortRow(listing: AgentListing, index: number, symbol: string
 
     return {
         key: `${listing.sourceHandle}-${index}`,
+        sigilId: listing.sourceHandle,
         name: listing.metadata.name ?? "Unnamed atom",
         isFallbackMetadata: listing.metadata.isFallback,
         imageUrl: imageUrlOf(listing),

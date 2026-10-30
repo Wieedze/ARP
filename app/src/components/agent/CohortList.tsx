@@ -41,7 +41,7 @@ function Glyph({row}: {row: CohortRow}) {
     if (row.modules.length === 0) return <Placeholder />;
     return (
         <span className="hidden sm:block mt-0.5">
-            <Sigil agentId={row.key} modules={row.modules} size={28} />
+            <Sigil agentId={row.sigilId} modules={row.modules} size={28} />
         </span>
     );
 }

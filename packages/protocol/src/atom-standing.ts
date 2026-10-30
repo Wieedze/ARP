@@ -1,6 +1,7 @@
 import {defaultFetch, DEFAULT_TIMEOUT_MS, type FetchLike} from "./http.js";
 import {parseCaip19} from "./caip.js";
-import {USES} from "./sources/intuition/terms.js";
+import {CAPABILITY_PREDICATE_IDS, USES} from "./sources/intuition/terms.js";
+import {CAPABILITY_SAMPLE_LIMIT} from "./sources/intuition/queries.js";
 import {isRecord, readRecord, readString} from "./json.js";
 import {createGraphqlTransport, type GraphqlTransport} from "./sources/intuition/graphql.js";
 import {mapMarketSide} from "./sources/intuition/map.js";
@@ -494,4 +495,52 @@ export async function getDeclaredModulesFor(
         if (!list.includes(objectId)) list.push(objectId);
     }
     return modules;
+}
+
+/**
+ * One agent's glyph input, read **exactly as the directory reads it**: the cohort query's own
+ * `capabilities` sample — the same predicates, the same cap, the same nesting under the atom.
+ *
+ * The directory draws its row glyphs from that sample, and the agent's page drew from `uses` edges
+ * only, so an agent had a sigil in the list and none on its own page (user, 2026-10-30: _« les
+ * sigil ici dans agent ne sont jamais présents dans l'agent »_ — measured, 25 of 25 listed agents
+ * on each chain carried a sampled edge and 0 a `uses` edge). The user chose the list's reading for
+ * both. Order matters: `sigilDots` probes linearly on a collision, so the same set in another order
+ * can draw another glyph — which is why this mirrors the query rather than refiltering a wider one.
+ */
+export async function getListedCapabilitiesFor(
+    subjectId: string,
+    config: AtomStandingConfig = {},
+): Promise<string[]> {
+    const transport =
+        config.transport ??
+        createGraphqlTransport({
+            url: config.graphqlUrl ?? INTUITION_MAINNET_GRAPHQL,
+            fetch: config.fetch ?? defaultFetch(),
+            timeoutMs: config.timeoutMs ?? DEFAULT_TIMEOUT_MS,
+        });
+
+    const data = await transport.request(
+        `query ListedCapabilitiesFor($subject: String!, $predicates: [String!]) {
+  atoms(where: {term_id: {_eq: $subject}}, limit: 1) {
+    capabilities: as_subject_triples(
+      where: {predicate_id: {_in: $predicates}}
+      limit: ${CAPABILITY_SAMPLE_LIMIT}
+    ) { object { term_id } }
+  }
+}`,
+        {subject: subjectId, predicates: [...CAPABILITY_PREDICATE_IDS]},
+    );
+
+    const atoms = Array.isArray(data["atoms"]) ? data["atoms"] : [];
+    const atom = atoms[0];
+    const rows = isRecord(atom) && Array.isArray(atom["capabilities"]) ? atom["capabilities"] : [];
+    const ids: string[] = [];
+    for (const row of rows) {
+        const object = isRecord(row) ? readRecord(row, "object") : null;
+        const objectId = object === null ? null : readString(object, "term_id");
+        // The directory's `modulesOf` drops duplicates the same way, so both draw one set.
+        if (objectId !== null && !ids.includes(objectId)) ids.push(objectId);
+    }
+    return ids;
 }

@@ -8,7 +8,7 @@ import {
     truncateMiddle,
 } from "../../services/trust-format";
 import {Hint} from "../brand/Hint";
-import {useDeclaredModules} from "../../hooks/use-declared-modules";
+import {useListedCapabilities} from "../../hooks/use-listed-capabilities";
 import {Sigil} from "../brand/Sigil";
 
 /**
@@ -80,17 +80,22 @@ function registrationFileSummary(uri: string): string {
 }
 
 /**
- * The agent's mark, for the page header.
+ * The agent's mark, for the page header — the **same glyph the directory draws** for it.
  *
- * Generated from the chain rather than relayed from a source: a dot per tool the agent declared
- * using, placed by a hash of the tool and the agent, so the same agent draws the same glyph
- * everywhere and forever.
+ * Generated from the chain rather than relayed from a source: a dot per edge the agent declared
+ * about itself, placed by a hash of the edge's object and the agent's atom, so the same agent draws
+ * the same glyph in the list and here.
+ *
+ * It used to read `uses` edges only (ADR `0057` §5) while the list read the cohort's whole
+ * capability sample, and no listed agent carries a `uses` edge — measured 2026-10-30, 0 of 25 on
+ * each chain — so every agent had a glyph in the list and none on its page. The user chose the
+ * list's reading for both. The seed is the agent's atom id for the same reason: the list's row key
+ * moved with the page's order.
  *
  * Every dot is hollow, and that is the state of the graph rather than a loading state — `proven`
- * needs a third party's receipt and nothing reads one yet (`services/agent-sigil.ts`). The `Hint`
- * says so on demand, instead of a sentence sitting in the header.
+ * needs a third party's receipt and nothing reads one yet (`services/agent-sigil.ts`).
  *
- * `null` when the agent declared no tools: a glyph of nothing but its core is the same glyph for
+ * `null` when the agent declared nothing: a glyph of nothing but its core is the same glyph for
  * every such agent, so it would stop being an identity and start being decoration.
  */
 export function AgentSigil({
@@ -102,44 +107,29 @@ export function AgentSigil({
     viewerStaked?: boolean;
     size?: number;
 }) {
-    /**
-     * **The direct read first, because the indirect one is empty here and it is not the data's
-     * fault.**
-     *
-     * `sigilModulesOf(view.capabilities)` walks the capability groups, which the profile builds by
-     * resolving the agent's ERC-8004 identity to its Intuition atom — and that resolution is the
-     * `same as` join `tasks/19` step 1b records as **zero edges on testnet**. So for every agent on
-     * ARP's own rig the `uses-tool` group is empty, the glyph returned `null`, and the agent page
-     * showed no sigil at all while its declarations plainly existed: the user reported exactly that,
-     * on an agent whose glyph was rendering **in the claim rows of a tool's page** a screen away.
-     *
-     * The rows get it right because they query by the subject's **atom id**, which the page already
-     * has as `atomTermId`. Same read, same shape, no join.
-     *
-     * The capability groups stay as the fallback rather than being dropped: they carry mainnet
-     * agents whose atom the page resolved through a path this read does not cover.
-     */
-    const declared = useDeclaredModules(view.atomTermId === null ? [] : [view.atomTermId]);
-    const direct = (view.atomTermId === null ? [] : (declared.data?.[view.atomTermId] ?? [])).map(
-        (name) => ({name, state: "declared" as const}),
-    );
-    const modules = direct.length > 0 ? direct : sigilModulesOf(view.capabilities);
+    const listed = useListedCapabilities(view.atomTermId);
+    // No atom resolved means no row in the directory to match, so the profile's own `uses` group
+    // is the only reading there is.
+    const modules =
+        view.atomTermId === null
+            ? sigilModulesOf(view.capabilities)
+            : (listed.data ?? []).map((name) => ({name, state: "declared" as const}));
     if (modules.length === 0) return null;
 
     return (
         <div className="flex shrink-0 items-start gap-2">
             <Sigil
-                agentId={view.caip19}
+                agentId={view.atomTermId ?? view.caip19}
                 modules={modules}
                 viewerStaked={viewerStaked}
                 size={size}
-                title={`${view.name ?? view.tokenId}: ${modules.length} declared ${
-                    modules.length === 1 ? "tool" : "tools"
+                title={`${view.name ?? view.tokenId}: ${modules.length} ${
+                    modules.length === 1 ? "declaration" : "declarations"
                 }, none proven`}
             />
             <Hint label="What this glyph shows">
-                One dot per tool this agent declared using. Hollow means nobody has confirmed it —
-                no receipt source exists yet.
+                One dot per thing this agent declared about itself — tools, types, tags. Hollow
+                means nobody has confirmed it.
             </Hint>
         </div>
     );

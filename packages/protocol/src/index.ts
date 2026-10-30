@@ -277,7 +277,11 @@ export {getRecentDeclarations} from "./recent.js";
 export type {RecentConfig, RecentDeclaration} from "./recent.js";
 
 export {getAtomStanding} from "./atom-standing.js";
-export {getDeclaredModulesFor, resolveAgentRefForAtom} from "./atom-standing.js";
+export {
+    getDeclaredModulesFor,
+    getListedCapabilitiesFor,
+    resolveAgentRefForAtom,
+} from "./atom-standing.js";
 export type {
     AtomClaim,
     AtomEdge,

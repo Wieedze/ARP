@@ -1,6 +1,8 @@
 import {describe, expect, it} from "vitest";
 
-import {getAtomStanding} from "../src/atom-standing.js";
+import {getAtomStanding, getListedCapabilitiesFor} from "../src/atom-standing.js";
+import {CAPABILITY_SAMPLE_LIMIT} from "../src/sources/intuition/queries.js";
+import {CAPABILITY_PREDICATE_IDS} from "../src/sources/intuition/terms.js";
 import type {GraphqlTransport} from "../src/sources/intuition/graphql.js";
 
 /**
@@ -272,5 +274,46 @@ describe("getAtomStanding", () => {
             },
         });
         expect(sent.replace(/\s+/g, " ")).toContain("value { thing { url } }");
+    });
+});
+
+describe("getListedCapabilitiesFor", () => {
+    /**
+     * The agent's page draws the directory's glyph, so it has to read the directory's sample: the
+     * same predicates and the same cap. A wider read refiltered would change the order, and the
+     * glyph probes linearly on a collision.
+     */
+    it("asks for the cohort's own capability sample", async () => {
+        const seen: {query: string; variables: unknown}[] = [];
+        await getListedCapabilitiesFor("0xagent", {transport: transport({atoms: []}, seen)});
+        expect(seen[0]?.query).toContain(`limit: ${CAPABILITY_SAMPLE_LIMIT}`);
+        expect(seen[0]?.variables).toEqual({
+            subject: "0xagent",
+            predicates: [...CAPABILITY_PREDICATE_IDS],
+        });
+    });
+
+    it("keeps the indexer's order and drops a repeated object, as the directory does", async () => {
+        const ids = await getListedCapabilitiesFor("0xagent", {
+            transport: transport({
+                atoms: [
+                    {
+                        capabilities: [
+                            {object: {term_id: "0xb"}},
+                            {object: {term_id: "0xa"}},
+                            {object: {term_id: "0xb"}},
+                            {object: null},
+                        ],
+                    },
+                ],
+            }),
+        });
+        expect(ids).toEqual(["0xb", "0xa"]);
+    });
+
+    it("is empty for an atom the graph does not hold", async () => {
+        expect(await getListedCapabilitiesFor("0xnone", {transport: transport({atoms: []})})).toEqual(
+            [],
+        );
     });
 });
