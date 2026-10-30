@@ -46,9 +46,6 @@ export type SeedTool = {
 /** The whole seed, MCP servers first. */
 export const SEED_TOOLS: readonly SeedTool[] = catalogue.tools as readonly SeedTool[];
 
-/** The date `purpose` was read. Quoted beside the sentence rather than left undated. */
-export const SEED_READ_AT: string = catalogue.readAt;
-
 const byKey: ReadonlyMap<string, SeedTool> = new Map(
     SEED_TOOLS.map((tool) => [tool.url.replace(/^https:\/\//, "").toLowerCase(), tool]),
 );
@@ -59,7 +56,7 @@ const byKey: ReadonlyMap<string, SeedTool> = new Map(
  * Tolerant of the three spellings a label arrives in — with a scheme, with a trailing slash, in
  * any case — because `toolThing` writes one form and a hand-registered atom may carry another.
  */
-export function seedToolOf(atomLabel: string): SeedTool | null {
+function seedToolOf(atomLabel: string): SeedTool | null {
     const key = atomLabel
         .trim()
         .toLowerCase()

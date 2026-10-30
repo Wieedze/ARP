@@ -32,7 +32,7 @@ function provenance(origin: string | null) {
     return {sourceId: "intuition", kind: "claim" as const, origin};
 }
 
-export function marketSide(overrides: Partial<MarketSide> = {}): MarketSide {
+function marketSide(overrides: Partial<MarketSide> = {}): MarketSide {
     return {
         totalMarketCap: 993_846_395_273_540_461n,
         totalAssets: 988_487_499_998_074_999n,

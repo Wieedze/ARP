@@ -54,7 +54,7 @@ import {
  * does not typecheck at the one call site that asks the wallet to switch. The union is also the
  * honest type: there are two chains and adding a third is a decision, not a value.
  */
-export type ArpChainId = typeof intuitionMainnet.id | typeof intuitionTestnet.id;
+type ArpChainId = typeof intuitionMainnet.id | typeof intuitionTestnet.id;
 
 export type ChainChoice = {
     chain: Chain;

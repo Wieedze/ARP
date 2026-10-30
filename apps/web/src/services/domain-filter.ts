@@ -36,9 +36,6 @@ export const DOMAIN_ATTESTOR = "0x906f3A52ec089f8D4E9127F91C6bE5Ae0d18f91f";
 /** The label every domain path climbs to. A convention, and the one arbitrary choice here. */
 export const DOMAIN_ROOT = "tool";
 
-/** `all` is not a domain — it is the absence of the filter, and it is the default. */
-export type DomainChoice = string | "all";
-
 export function domainsConfigFor(graphqlUrl: string): DomainsConfig {
     return {
         graphqlUrl,

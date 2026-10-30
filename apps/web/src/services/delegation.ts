@@ -1,13 +1,10 @@
 import {
-    signDelegation as sdkSignDelegationViaEOA,
     type Caveat,
     type Delegation,
     type Implementation,
     type MetaMaskSmartAccount,
 } from "@metamask/smart-accounts-kit";
 import {bytesToHex, type Hex} from "viem";
-
-import {deployments} from "../lib/deployments";
 
 /**
  * Build + sign ARP delegations.
@@ -27,7 +24,7 @@ import {deployments} from "../lib/deployments";
  */
 
 /** `ROOT_AUTHORITY` per the Delegation Framework — top-level (no parent). */
-export const ROOT_AUTHORITY: Hex =
+const ROOT_AUTHORITY: Hex =
     "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff";
 
 const ZERO_SALT: Hex = `0x${"00".repeat(32)}`;
@@ -71,8 +68,7 @@ export function randomSalt(): Hex {
  * DelegationManager can validate the signature (it falls back to ERC-1271
  * which calls `isValidSignature` on the SA's bytecode). MetaMask SAs
  * deploy lazily on the first userOp — so for first-use, send a no-op
- * userOp through a Bundler before relying on this. Until the UI bundler
- * is wired (Task 04b), use `signDelegationViaEOA` for demos.
+ * userOp through a Bundler before relying on this.
  */
 export async function signDelegationAs<TImpl extends Implementation>(params: {
     delegation: Omit<Delegation, "signature">;
@@ -80,36 +76,6 @@ export async function signDelegationAs<TImpl extends Implementation>(params: {
 }): Promise<Delegation> {
     const signature = await params.smartAccount.signDelegation({
         delegation: params.delegation,
-    });
-    return {...params.delegation, signature};
-}
-
-/**
- * Sign a delegation with an EOA private key directly. The signer becomes
- * the delegator — no Smart Account intermediation, just standard ECDSA
- * over EIP-712 typed data. Validated by the DelegationManager via
- * `ecrecover` (the cheapest validation path).
- *
- * Used by the Task 03b Phase 4 CLI demo to keep the on-chain flow
- * working before Smart Account deployment infrastructure (Bundler) is
- * wired up. ADR records this choice.
- *
- * @param chainId               Defaults to Intuition Testnet (13579) per
- *                              `deployments/13579.json`.
- * @param delegationManager     Defaults to the deployed DelegationManager
- *                              address from the same file.
- */
-export async function signDelegationViaEOA(params: {
-    delegation: Omit<Delegation, "signature">;
-    privateKey: Hex;
-    chainId?: number;
-    delegationManager?: Hex;
-}): Promise<Delegation> {
-    const signature = await sdkSignDelegationViaEOA({
-        privateKey: params.privateKey,
-        delegation: params.delegation,
-        chainId: params.chainId ?? deployments.chain.chainId,
-        delegationManager: params.delegationManager ?? deployments.metamaskDelegationFramework.delegationManager,
     });
     return {...params.delegation, signature};
 }

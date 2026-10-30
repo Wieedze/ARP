@@ -15,7 +15,7 @@
 /** 7 × 7 grid in a 60-unit viewBox. `STEP` and `ORIGIN` place a cell's centre. */
 export const GRID = 7;
 export const STEP = 8.5;
-export const ORIGIN = 4.5;
+const ORIGIN = 4.5;
 
 /**
  * The cells a module may claim: columns 0–3, rows 0–6, minus the centre (3,3).

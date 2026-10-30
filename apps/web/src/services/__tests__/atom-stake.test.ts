@@ -4,7 +4,7 @@ import {parseEther, type Address, type Hex} from "viem";
 import {deployments} from "../../lib/deployments";
 import {intuitionTestnet} from "../../lib/chains";
 import {multiVaultAbi} from "../../lib/abi/multi-vault";
-import {depositOnAtom, readVaultState} from "../atom-stake";
+import {depositOnAtom} from "../atom-stake";
 
 import {
     DEFAULT_TEST_ADDRESS,
@@ -100,50 +100,5 @@ describe("depositOnAtom", () => {
             depositOnAtom({atomId: ATOM_ID, amount: 1n, walletClient: wc, publicClient: pc}),
         ).rejects.toThrow("RPC down");
         expect(wc.writeContract).not.toHaveBeenCalled();
-    });
-});
-
-describe("readVaultState", () => {
-    it("returns {totalAssets, totalShares, curveId} from the chain", async () => {
-        const pc = makeMockPublicClient();
-        pc.readContract.mockImplementation(
-            readContractDispatcher({
-                getBondingCurveConfig: {
-                    registry: "0x0000000000000000000000000000000000000001" as Address,
-                    defaultCurveId: 3n,
-                },
-                getVault: [1_000n, 999n],
-            }),
-        );
-
-        const state = await readVaultState({atomId: ATOM_ID, publicClient: pc});
-
-        expect(state).toEqual({totalAssets: 1_000n, totalShares: 999n, curveId: 3n});
-
-        const getVaultCall = pc.readContract.mock.calls.find(
-            (c: unknown[]) => (c[0] as {functionName: string}).functionName === "getVault",
-        );
-        expect(getVaultCall?.[0]).toMatchObject({
-            address: MULTI_VAULT,
-            functionName: "getVault",
-            args: [ATOM_ID, 3n],
-        });
-    });
-
-    it("returns zero totals when the vault has no deposits yet", async () => {
-        const pc = makeMockPublicClient();
-        pc.readContract.mockImplementation(
-            readContractDispatcher({
-                getBondingCurveConfig: {
-                    registry: "0x0000000000000000000000000000000000000001" as Address,
-                    defaultCurveId: 1n,
-                },
-                getVault: [0n, 0n],
-            }),
-        );
-
-        const state = await readVaultState({atomId: ATOM_ID, publicClient: pc});
-        expect(state.totalAssets).toBe(0n);
-        expect(state.totalShares).toBe(0n);
     });
 });

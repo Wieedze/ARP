@@ -60,26 +60,3 @@ export async function depositOnAtom(params: {
         chain: intuitionTestnet,
     });
 }
-
-/**
- * Read the current state of an atom vault: total assets staked, total
- * shares outstanding. Returns `{ totalAssets: 0n, totalShares: 0n }` if
- * the atom exists but has no deposits.
- */
-export async function readVaultState(params: {
-    atomId: Hex;
-    publicClient: PublicClient;
-}): Promise<{totalAssets: bigint; totalShares: bigint; curveId: bigint}> {
-    const curveConfig = await params.publicClient.readContract({
-        address: MULTI_VAULT,
-        abi: multiVaultAbi,
-        functionName: "getBondingCurveConfig",
-    });
-    const [totalAssets, totalShares] = await params.publicClient.readContract({
-        address: MULTI_VAULT,
-        abi: multiVaultAbi,
-        functionName: "getVault",
-        args: [params.atomId, curveConfig.defaultCurveId],
-    });
-    return {totalAssets, totalShares, curveId: curveConfig.defaultCurveId};
-}

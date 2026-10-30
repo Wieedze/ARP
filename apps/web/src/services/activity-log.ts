@@ -35,7 +35,7 @@ export type ActivityStream = "mine" | "chain";
  * The first four are `docs/12`'s own sequence and exist only on `mine`. `confirmed` is a receipt
  * from the chain for something `mine` sent. `landed` is somebody else's write, seen from outside.
  */
-export type ActivityStep =
+type ActivityStep =
     | "discovery"
     | "access"
     | "receipt"

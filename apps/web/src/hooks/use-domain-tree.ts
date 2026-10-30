@@ -1,5 +1,5 @@
 import {useQuery} from "@tanstack/react-query";
-import {readDomainTree, toolsInDomain, type DomainTree} from "@arp-protocol/core";
+import {readDomainTree, type DomainTree} from "@arp-protocol/core";
 
 import {useChainChoice} from "../lib/chain-choice";
 import {domainOptionsOf, domainsConfigFor, type DomainOption} from "../services/domain-filter";
@@ -31,31 +31,6 @@ export function useDomainTree(): DomainTreeQuery {
     return {
         tree: query.data,
         options: query.data === undefined ? [] : domainOptionsOf(query.data),
-        error: query.error instanceof Error ? query.error : null,
-    };
-}
-
-/**
- * The atom ids of every tool filed under `domain`, at any depth, or `null` when no domain is picked.
- *
- * `null` rather than an empty set, and the difference is load-bearing: an empty set means "this
- * domain has nothing in it" and `null` means "no filter". A caller that conflated them would hide
- * the whole catalogue the moment somebody picked an empty domain.
- */
-export function useToolsInDomain(domain: string | null, tree: DomainTree | undefined) {
-    const chain = useChainChoice();
-    const query = useQuery({
-        queryKey: ["tools-in-domain", chain.graphqlUrl, domain],
-        queryFn: async () => {
-            if (domain === null || tree === undefined) return null;
-            const {tools} = await toolsInDomain(domainsConfigFor(chain.graphqlUrl), domain, {tree});
-            return new Set(tools.map((tool) => tool.atomId.toLowerCase()));
-        },
-        enabled: domain !== null && tree !== undefined,
-    });
-    return {
-        atomIds: domain === null ? null : (query.data ?? null),
-        isLoading: query.isLoading,
         error: query.error instanceof Error ? query.error : null,
     };
 }
