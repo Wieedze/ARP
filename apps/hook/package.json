@@ -13,6 +13,7 @@
   ],
   "scripts": {
     "build": "bun run --cwd ../../packages/protocol build && bun build src/hook.ts --outdir dist --entry-naming 'arp-[name].js' --target=bun --external viem --external 'viem/*' --banner '#!/usr/bin/env bun'",
+    "test": "bun run --cwd ../../packages/protocol build && bun test",
     "lint": "bun run --cwd ../../packages/protocol build && tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
