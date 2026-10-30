@@ -52,7 +52,7 @@ the tool gains reputation, and so does the agent  ← docs/12 point 4
 **ARP is not a party to any of it.** It supplies the connector the agent declares through, the
 enforcers that bound the spend, and the read surface that makes the result legible.
 
-Three pieces close it, and they are `tasks/16`'s first half:
+Three pieces close it, and they are `docs/tasks/16`'s first half:
 
 1. **The connector** an agent declares what it used through.
 2. **The delegation** its operator signed, with `DomainScopeEnforcer` and `TrustStakeCapEnforcer` as
@@ -69,7 +69,7 @@ operator's, the bound is a caveat they signed, and ARP neither holds the funds n
 
 **Positive**
 
-- The blocker I had reported does not exist. `tasks/16` half 1 is unblocked and is the real next step.
+- The blocker I had reported does not exist. `docs/tasks/16` half 1 is unblocked and is the real next step.
 - The risk shape is right: ARP cannot lose anyone's money by operating, because it never holds or
   signs for any. The caveats are the operator's own limit on their own agent.
 - It settles who is on the hook for a bad stake — the operator who signed the cap. Not ARP.
@@ -88,4 +88,4 @@ operator's, the bound is a caveat they signed, and ARP neither holds the funds n
 
 - Nothing in `docs/12` changes. This ADR restates its points 3 and 5 against a misreading of them,
   which is what `docs/12`'s drift-signal section exists to catch — and this is the fourth time.
-- `tasks/16`'s hire half is unaffected.
+- `docs/tasks/16`'s hire half is unaffected.

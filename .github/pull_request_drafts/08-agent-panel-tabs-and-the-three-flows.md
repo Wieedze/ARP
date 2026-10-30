@@ -144,9 +144,9 @@ hardcode `chain: intuitionTestnet`. That binding is deliberate, but it means any
   needs an operator who decides to spend.
 - No contract is deployed to mainnet **by this branch**, and no registry is planned there. Two
   caveat enforcers have been on 1155 since 2026-09-16 (ADR `0025`); neither has ever fired.
-- `hire` and `rate` are not here. They moved to `tasks/25` with the full spec.
+- `hire` and `rate` are not here. They moved to `docs/tasks/25` with the full spec.
 - Phase 0 of the roadmap is **not** closed: identity resolution still does not route through
-  `resolveAgent`, deferred with an owner (`tasks/19` step 1b).
+  `resolveAgent`, deferred with an owner (`docs/tasks/19` step 1b).
 
 ## A correction this branch makes to its own record — ADR `0040`
 
@@ -171,7 +171,7 @@ of invested in positions.
 
 **What these gates do not cover**, and it is worth a reviewer's attention: `scripts/` is inside **no
 typecheck and no lint** — there is no root `tsconfig.json` and no root eslint config. This branch
-added two scripts there, so it widened that gap rather than narrowing it. `tasks/21` owns it, and
+added two scripts there, so it widened that gap rather than narrowing it. `docs/tasks/21` owns it, and
 it is not zero-cost to close: two ad-hoc configs disagreed on the error count (6 against 24), so it
 needs measuring with a committed one. The write path itself is inside every gate, because it lives
 in the package and not in `scripts/`.

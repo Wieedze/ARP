@@ -2,11 +2,11 @@
 
 **Status:** Accepted
 **Date:** 2026-10-19
-**Triggered by:** `tasks/23` — caught by its own gate, on the fixture the task file named in advance
+**Triggered by:** `docs/tasks/23` — caught by its own gate, on the fixture the task file named in advance
 
 ## Context
 
-`tasks/23` wrote the test before the code existed:
+`docs/tasks/23` wrote the test before the code existed:
 
 > "**one tool demonstrates the whole ladder at once.** IPFS's seven incoming edges include
 > `(Infura, uses, IPFS)`, `(Fleek, …)` and `(Pinata, …)` with **zero** stake — free assertions,
@@ -67,7 +67,7 @@ Four sites were wrong and are corrected:
 The MCP one is the serious one. That surface exists for other agents to read, its response carries
 the caveat _"an edge with `staked=false` carries no weight at all"_, and the flag was **never
 false** — so the caveat was inert and the field reported `docs/14`'s **nothing** as evidence. Shipped
-in `tasks/16` and passed four verifier rounds, because every round tested the shape and none ran it
+in `docs/tasks/16` and passed four verifier rounds, because every round tested the shape and none ran it
 against a tool with free edges.
 
 A rendered amount is also suppressed when no position exists. `<0.00000001 TRUST` beside a free
@@ -117,7 +117,7 @@ a copy". It is deliberately **not** done here, and the page states the mismatch 
 > The real reasons are design ones, and smaller: an extra chain round trip per page load; a cache
 > key that currently argues in writing against carrying a curve (`app/src/hooks/use-tool-usage.ts`);
 > and **no designed behaviour when the chain's curve differs from the one the positions were read
-> on** — which is the case the `off-curve` state papers over. `tasks/23` carries the full version
+> on** — which is the case the `off-curve` state papers over. `docs/tasks/23` carries the full version
 > and the cost ledger: that deferral has produced one live sort defect, one live counts defect and
 > one latent caption defect across three review rounds.
 >
@@ -143,7 +143,7 @@ a copy". It is deliberately **not** done here, and the page states the mismatch 
 - The ladder renders at different weights, which is `docs/14:156`'s one requirement of this surface.
 - The MCP surface stops reporting free assertions as staked. Verified live after the fix: 3 of
   IPFS's 7 edges, which is the true figure.
-- `tasks/23`'s gate did the job it was specified to do, against the fixture named for it, a month
+- `docs/tasks/23`'s gate did the job it was specified to do, against the fixture named for it, a month
   before the code existed. That is the strongest argument in this repo for writing the gate into the
   task file.
 
@@ -173,4 +173,4 @@ a copy". It is deliberately **not** done here, and the page states the mismatch 
   the `2 × minShare` comes from
 - Related doc: `docs/14_THE_WITNESS_PROBLEM.md:154-165` — the ladder, and the bottom row that "gets
   mistaken for data"
-- Related task: `tasks/23-the-tool-surface.md` — the gate, and the fixture it named
+- Related task: `docs/tasks/23-the-tool-surface.md` — the gate, and the fixture it named

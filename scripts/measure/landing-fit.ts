@@ -8,7 +8,7 @@
  *  `SceneDeck`'s stage is `position: sticky` and `overflow-hidden`, and a pinned scene **cannot
  *  scroll** — that is the point of it. So a scene taller than the space under the nav is cut off
  *  **with no way to reach the rest, and in silence**: nothing throws, nothing logs, and the page
- *  looks finished. `tasks/29`'s Gate asks for three viewports because the failure appears at one
+ *  looks finished. `docs/tasks/29`'s Gate asks for three viewports because the failure appears at one
  *  size and not another, and because a scene that grows later re-breaks it without touching the
  *  deck.
  *

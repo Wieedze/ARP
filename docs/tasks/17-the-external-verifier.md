@@ -67,7 +67,7 @@ Every earlier plan stalled on an empty graph. One measurement, with the script t
 
 (The "194 `use` triples" this paragraph used to open with comes from `docs/09:35` and **does not
 reproduce**; the other two figures of its trio do. Intuition has no deletion, so it is a different
-query and not a graph that shrank. Correcting the six places that quote it is `tasks/28`.)
+query and not a graph that shrank. Correcting the six places that quote it is `docs/tasks/28`.)
 
 Filling that graph needed somebody to adopt something. This does not. It is also the only signal that **moves on its
 own**, which is what makes a rating dynamic rather than a snapshot, and what gives a market

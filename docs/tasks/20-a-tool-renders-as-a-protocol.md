@@ -36,7 +36,7 @@ The fix is still necessary rather than cosmetic: ARP was about to write `uses` e
 subjects that _are_ reachable, which converts a latent defect into a live one. It is a defect fixed
 before it could fire, which is worth saying plainly instead of inflating.
 
-`tasks/19` step 5 says the tiers of evidence must render distinguishably. A tool filed as a protocol
+`docs/tasks/19` step 5 says the tiers of evidence must render distinguishably. A tool filed as a protocol
 is the same class of error one level down: two different kinds of fact in one bucket.
 
 ## Do

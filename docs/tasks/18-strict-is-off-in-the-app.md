@@ -4,7 +4,7 @@
 > `.claude/learning/15-strict-is-off-in-the-app.md` · `task-verifier` PASS.
 > Measured cost was indeed zero errors. Both `tsconfig.app.json` and `tsconfig.node.json` got the
 > flag. **The `scripts/` gate gap is NOT closed by this** — it is not zero-cost and now has its own
-> task, `tasks/21`.
+> task, `docs/tasks/21`.
 
 ## The finding
 

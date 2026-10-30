@@ -250,7 +250,7 @@ export async function prepareDeclareUsed(params: {
      * The case a hired agent is in: it reached the graph through `same as` from its ERC-8004 token
      * and already has an identity atom, so deriving a second one from a URL would be the
      * fragmentation ADR `0054` exists to prevent. `rate` in `src/hire/` is this parameter and
-     * nothing else — `tasks/25` says rating is `prepareDeclareUsed` plus `prepareStakeOnUsed`, and
+     * nothing else — `docs/tasks/25` says rating is `prepareDeclareUsed` plus `prepareStakeOnUsed`, and
      * a parallel implementation would be a second place for the edge's shape to drift.
      *
      * An atom here that the chain does not have raises rather than being created: a plan cannot

@@ -221,7 +221,7 @@ describe("serveContent", () => {
     });
 
     it("serves an unauthenticated fetch, with a receipt that corroborates nobody", async () => {
-        // `tasks/31` §5.3: the index stays open to anyone and the receipt is what has a price.
+        // `docs/tasks/31` §5.3: the index stays open to anyone and the receipt is what has a price.
         const answer = await serveContent(SKILL_ATOM, config({to: null}));
         expect(answer.status).toBe("served");
         if (answer.status !== "served") return;

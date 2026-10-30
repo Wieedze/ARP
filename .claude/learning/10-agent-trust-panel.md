@@ -1,6 +1,6 @@
 # 10 — The agent trust panel, with a live mainnet stake control
 
-**Task:** `tasks/08-agent-trust-panel.md`
+**Task:** `docs/tasks/08-agent-trust-panel.md`
 **Completed:** 2026-09-16
 **Commit:** `b8a63ee` (branch `feat/agent-trust-panel`, 9 commits from `9c60ef6`)
 **Verifier verdict:** PASS (second pass; first pass failed on dead surface)
@@ -27,7 +27,7 @@
 
 ## Surprises
 
-- **The task file contradicts itself.** Its body (§"The staking control — live, with real TRUST") says the control ships enabled; its acceptance checklist and out-of-scope list, written earlier the same day, say disabled. ADR 0017 resolves it and says so explicitly ("Supersedes: the 'ship it disabled' provision"). The stale lines were left in the task file — amending a spec mid-task is the scope move `workflow.md` warns about — so **the next reader of `tasks/08` will hit the same contradiction.**
+- **The task file contradicts itself.** Its body (§"The staking control — live, with real TRUST") says the control ships enabled; its acceptance checklist and out-of-scope list, written earlier the same day, say disabled. ADR 0017 resolves it and says so explicitly ("Supersedes: the 'ship it disabled' provision"). The stale lines were left in the task file — amending a spec mid-task is the scope move `workflow.md` warns about — so **the next reader of `docs/tasks/08` will hit the same contradiction.**
 - **`MarketSide.totalAssets` from the connector is the wrong number for a vault display.** It is the *term* total, folding in the triple's underlying atom vaults, and runs ~1,000× the vault balance (0.988 vs 0.0009875 TRUST on Clawnch's AsterPay claim). The panel reads `getVault` from the MultiVault instead, with `marketCap` as the indexer fallback. Caught by checking the indexer against the chain, not by reading types.
 - **A `has trust provider` edge's object atom carries the provider's *homepage*, not its document.** The connector dutifully fetches `https://deep3.ai` and gets HTTP 500. That is a true read and not a document failure, and surfacing it as one would have libelled the provider. The provider edge's fetch result is never shown as the document's failure.
 - **The two edges have nothing to join on but the document or the label.** The assessment atom carries no pointer back to the provider atom. When the document is unreachable — exactly when the row matters most — only the label prefix is left, so the join reports which method it used and the UI says "a naming convention, not a proof".

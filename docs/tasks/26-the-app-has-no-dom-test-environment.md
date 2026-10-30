@@ -1,6 +1,6 @@
 # Task 26 — The app has no DOM test environment, and it cost eight defects on one page
 
-> **Status: COMPLETE** 2026-10-27 — ADR `0063`, closing `tasks/13` with it.
+> **Status: COMPLETE** 2026-10-27 — ADR `0063`, closing `docs/tasks/13` with it.
 >
 > Two projects in `app/vitest.config.ts`: `*.test.ts` on `node`, `*.test.tsx` on `happy-dom`.
 > 19 component tests across `AtomPanel` and `UsageEdgeRow`; the app suite is 402.
@@ -14,7 +14,7 @@
 >
 > Original status below.
 >
-> **NOT STARTED** (recorded 2026-10-19, from three review rounds on `tasks/23` — two
+> **NOT STARTED** (recorded 2026-10-19, from three review rounds on `docs/tasks/23` — two
 > `ui-reviewer`, one `task-verifier`).
 > ADR `0011` chose no DOM environment for `app/`. This is the bill for that choice, itemised.
 
@@ -24,10 +24,10 @@
 functions — which is why `agent-trust.ts`, `tool-usage-view.ts` and the query-options pattern are
 tested at all — but nothing asserts what a component puts on screen.
 
-**`tasks/13` has recorded this gap since 2026-09-17** — `code.md:86` requires React Testing Library
+**`docs/tasks/13` has recorded this gap since 2026-09-17** — `code.md:86` requires React Testing Library
 and the repo has none. This file is the evidence for it, not a second gap; close them together.
 
-Three review rounds on **one page** (`tasks/23`) found eight defects that a single render assertion
+Three review rounds on **one page** (`docs/tasks/23`) found eight defects that a single render assertion
 would each have caught. They are not hypothetical and none was found by a test:
 
 | what shipped                                                                                                                                            | the assertion that would have caught it                    |
@@ -59,7 +59,7 @@ which are about what the DOM contains.
   hooks/components**"_, and hooks **are** tested now — `use-agent-profile`, `use-agent-cohort` and
   `use-tool-usage` all test their exported query options. Nobody recorded that the scope moved. It
   moved for a good reason (the options are pure and the contract is the thing that breaks), and the
-  ADR should say so rather than being quietly outgrown. The page from `tasks/23` renders five states from one read and
+  ADR should say so rather than being quietly outgrown. The page from `docs/tasks/23` renders five states from one read and
   decides, per edge, which of three things to say about money. That is a different thing to test.
 
 - **Not snapshot testing.** `rules/code.md`: "tested behaviourally, not by checking implementation
@@ -75,7 +75,7 @@ which are about what the DOM contains.
 1. Add `jsdom` and `@testing-library/react` to `app/` as devDependencies, with the justification
    `rules/ui.md`'s bundle rule asks for in the PR description — they are dev-only and ship nothing.
 2. Wire the environment in `app/vitest.config.ts`. Note that file is **in neither tsconfig project**
-   (`tasks/21`, measured at zero errors to add), so fix that in the same change or it stays outside
+   (`docs/tasks/21`, measured at zero errors to add), so fix that in the same change or it stays outside
    the typecheck it is configuring.
 3. Tests for `ToolUsagePanel` over fixtures that already exist: the all-free tool, the mixed
    priced/off-curve/free tool, the empty state, the malformed atom id, and the loading and error
@@ -99,7 +99,7 @@ two are already covered: they were moved into `tool-usage-view.ts` and have muta
 the environment that exists, so demanding a DOM reproduction of them would be asking for a second
 test of the same thing.
 
-A test that cannot be made to fail has not been shown to work — `tasks/24` learned that the hard
+A test that cannot be made to fail has not been shown to work — `docs/tasks/24` learned that the hard
 way, and the two already-closed rows were each verified by reverting the fix.
 
 ## Which tier of the evidence ladder does this serve?

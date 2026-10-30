@@ -1,6 +1,6 @@
 # 11 — The agent directory lists the whole cohort
 
-**Task:** `tasks/10-agent-directory-full-cohort.md`
+**Task:** `docs/tasks/10-agent-directory-full-cohort.md`
 **Completed:** 2026-09-16
 **Commit:** `26da3b8` (branch `feat/agent-trust-panel`, 8 commits from `dd2fc7f`)
 **Verifier verdict:** PASS (second pass; first pass held on an open `ui-reviewer` gate, not on code)

@@ -2,7 +2,7 @@
 
 **Status:** Accepted
 **Date:** 2026-10-28
-**Triggered by:** a `ui-reviewer` finding on `tasks/30`, then the user's decision.
+**Triggered by:** a `ui-reviewer` finding on `docs/tasks/30`, then the user's decision.
 
 ## Context
 

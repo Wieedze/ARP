@@ -11,7 +11,7 @@ import {useChainChoice} from "../lib/chain-choice";
  * linked to the atom page — the same agent, two destinations, depending on where you clicked.
  *
  * `null` means "no identity found", **never** "not an agent": ARP's own testnet rig agents have no
- * `same as` edge at all (`tasks/19` step 1b), so on 13579 this answers `null` for agents that
+ * `same as` edge at all (`docs/tasks/19` step 1b), so on 13579 this answers `null` for agents that
  * plainly are agents. The page degrades to the atom view there, which is a complete view.
  */
 export function agentRefForAtomQueryKey(chainId: number, atomId: string | null) {

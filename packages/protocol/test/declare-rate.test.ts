@@ -46,7 +46,7 @@ describe("prepareRate", () => {
     });
 
     /**
-     * `tasks/25`: **do not invent an agent-rating predicate.** `tasks/09` records what happened the
+     * `docs/tasks/25`: **do not invent an agent-rating predicate.** `docs/tasks/09` records what happened the
      * last time ARP minted its own — a node its own connector could not read (ADR `0030`).
      */
     it("uses the `uses` predicate, unchanged", async () => {

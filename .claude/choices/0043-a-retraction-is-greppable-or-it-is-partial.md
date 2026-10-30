@@ -2,7 +2,7 @@
 
 **Status:** Accepted
 **Date:** 2026-10-19
-**Triggered by:** a `task-verifier` round on `tasks/23`, which named the pattern after its third
+**Triggered by:** a `task-verifier` round on `docs/tasks/23`, which named the pattern after its third
 instance in two rounds and left the rule change as the author's call
 
 ## Context
@@ -13,10 +13,10 @@ written down — and landed at one site out of two or four:
 | what was corrected                                                                               | fixed in              | left stale in                                                    |
 | ------------------------------------------------------------------------------------------------ | --------------------- | ---------------------------------------------------------------- |
 | `TrustStakeCapEnforcer` bounds the deposit only → it caps native `value`                         | the code              | ADR `0042`, which the code points at                             |
-| the deferral "changes the connector's read contract, which the trust panel shares" → it does not | `tasks/23`            | ADR `0042` **and** the code comment, which both point at the ADR |
+| the deferral "changes the connector's read contract, which the trust panel shares" → it does not | `docs/tasks/23`            | ADR `0042` **and** the code comment, which both point at the ADR |
 | six defects → eight                                                                              | the table, `STATE.md` | the same file's **title**, its prose and its **Gate**            |
 
-The third is the sharpest. `tasks/26`'s Gate demanded "the six defects in the table are each
+The third is the sharpest. `docs/tasks/26`'s Gate demanded "the six defects in the table are each
 reproduced as a failing test" over a table of **eight**, two of which the same file said were
 already closed without the environment the task exists to add. As written the gate could not be
 satisfied — and the gate is the thing that decides whether the task was done.
@@ -92,4 +92,4 @@ Two properties of this repo make the check load-bearing rather than tidy:
 - Related ADR: `.claude/choices/0031-claims-carry-their-bounds.md` — the original four checks
 - Related ADR: `.claude/choices/0042-a-vault-s-assets-are-not-evidence-of-a-stake.md` — carries two
   of the three retractions, struck through in place
-- Related task: `tasks/23-the-tool-surface.md`, `tasks/26-the-app-has-no-dom-test-environment.md`
+- Related task: `docs/tasks/23-the-tool-surface.md`, `docs/tasks/26-the-app-has-no-dom-test-environment.md`

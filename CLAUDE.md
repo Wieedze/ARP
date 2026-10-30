@@ -22,7 +22,7 @@ If three layers conflict, the higher-numbered (= more recent) wins. The original
    recommended order, and the claim checks. One read instead of the whole of `.claude/choices/`
    and `.claude/learning/`.
    It is hand-maintained, so a task does not close without updating it.
-3. The task file in `tasks/`. Note its `Required skills` and `Do not do in this task` sections.
+3. The task file in `docs/tasks/`. Note its `Required skills` and `Do not do in this task` sections.
 4. The three source-of-authority docs above, in order.
 5. `docs/01_PROJECT_CONTEXT.md` for framing.
 6. The rules from `.claude/rules/` that match the task type (see routing table below).
@@ -149,7 +149,7 @@ ARP/
 │   ├── 21_RUNNING_THE_LOOP.md
 │   └── 22_RUNNING_THE_NODE.md       (the operator-facing account: every file, every env var,
 │                                     every outbound connection, and what it does NOT protect)
-├── tasks/                             atomic task files
+├── docs/tasks/                             atomic task files
 ├── contracts/                         Solidity (Foundry)
 ├── apps/                              what RUNS (ADR 0082)
 │   ├── web/                           TypeScript UI. Bound to testnet at module load, deliberately

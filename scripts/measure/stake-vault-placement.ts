@@ -7,7 +7,7 @@
  *
  *  `getToolUsage` prices the **triple**. the deleted `agent-stake-on-use.ts` deposited on the **object
  *  atom**. Both cannot be right, and this measures which one the ecosystem actually uses before
- *  `tasks/16` picks one — the question is load-bearing, because a deposit in the wrong vault is
+ *  `docs/tasks/16` picks one — the question is load-bearing, because a deposit in the wrong vault is
  *  invisible to the reader and permanent.
  *
  *      bun run scripts/measure/stake-vault-placement.ts                 # mainnet 1155

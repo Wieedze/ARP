@@ -1,7 +1,7 @@
 import type { JsonRpcReply } from '../helpers/shapes.js';
 /** Has ARP's own caveat enforcer ever fired on mainnet?
  *
- *  Step 4 of `tasks/22` — the one evidence source in this project that is both tier 4 (proven) and
+ *  Step 4 of `docs/tasks/22` — the one evidence source in this project that is both tier 4 (proven) and
  *  already deployed. `TrustStakeCapEnforcer` emits `StakeCapChecked` on every pass of its
  *  `beforeHook`, and that hook is unreachable without an actual delegation redemption, so one log
  *  is a fact about a redemption that happened. No self-report, no counterparty.
@@ -22,7 +22,7 @@ const STAKE_CAP_CHECKED = '0x0ccea75bd08495eda9f6cfa676f71860054e889fb1c28333351
  * The two deployment files record the same two contracts in **different shapes**: 1155 nests them
  * under `arp.enforcers` with a `status`, 13579 puts them flat on `arp` as bare addresses. Reading
  * only the nested one silently found nothing on testnet, which looked like "no enforcer there"
- * rather than "wrong key". Both are read here; the divergence itself belongs on `tasks/28`.
+ * rather than "wrong key". Both are read here; the divergence itself belongs on `docs/tasks/28`.
  */
 type Enforcer = { address: string; status?: string };
 type Log = { topics: string[]; transactionHash: string; blockNumber: string };

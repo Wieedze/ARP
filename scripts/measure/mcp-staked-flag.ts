@@ -9,7 +9,7 @@
  *  at all". Until ADR `0042` the field read `totalAssets > 0n`, which is true of **every** edge
  *  that exists — creating a triple seeds both of its vaults with `minShare` — so the flag was never
  *  false, the caveat was inert, and the surface other agents read reported `docs/14`'s *nothing* as
- *  evidence. It shipped in `tasks/16` and survived four verifier rounds, because no round ran it
+ *  evidence. It shipped in `docs/tasks/16` and survived four verifier rounds, because no round ran it
  *  against a tool with free edges.
  *
  *  This compares the server's answer against the graph's own position counts, which is the

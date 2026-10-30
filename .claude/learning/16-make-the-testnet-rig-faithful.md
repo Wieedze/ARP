@@ -1,6 +1,6 @@
 # 16 — Make the testnet rig faithful
 
-**Task:** `tasks/24-make-the-testnet-rig-faithful.md`
+**Task:** `docs/tasks/24-make-the-testnet-rig-faithful.md`
 **Completed:** 2026-10-19
 **Commit:** `80284f5`, `ab5a582`, `1ee1044`, `3c64868`, `2587883`, then `0a468ff` and `e79eed2`
 closing two verifier punch lists, all on `feat/agent-panel-tabs`
@@ -102,7 +102,7 @@ itself. Third and fourth occurrences; the line already warned it had been wrong 
   the three new agents cannot — which is why the gate walks `1,2,3,4,5`. Better than the spec, and
   the gate had to widen for it to count.
 - **Step 3 (route identity resolution through `resolveAgent`) deferred, not done**, and owned by
-  `tasks/19` step 1b. On the rig both chains are 13579, so there is no join to route through — gap 1
+  `docs/tasks/19` step 1b. On the rig both chains are 13579, so there is no join to route through — gap 1
   says never shortcut it because the chains coincide, and building it there would have been that
   shortcut. `docs/15_ROADMAP.md` now says Phase 0 is **not** closed.
 - **`rig-confirmed` points at `localhost`.** A local fixture that says so is honest; borrowing a

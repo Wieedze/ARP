@@ -9,7 +9,7 @@ utilisé cet agent ou cet outil qui est register, c'est plus ça je pense »_
 
 ## Context
 
-`tasks/25` is called "hire an agent, and rate it afterwards", and its four verbs are `find → hire →
+`docs/tasks/25` is called "hire an agent, and rate it afterwards", and its four verbs are `find → hire →
 pay → rate`. Taken literally, the hire half was built: `prepareHire` returned a bounded
 sub-delegation, and `/hire` let a human fill in an agent's address and a budget and sign it.
 
@@ -22,7 +22,7 @@ page was useless to them and the hire page was useless to everyone else.
 Closing that gap needs a directory of reachable agents with their endpoints and their keys. That is
 an agent marketplace. `docs/01` and `docs/12` both say ARP is not one.
 
-**And the hire was never the point.** `tasks/25`'s own framing calls it "the second half of the
+**And the hire was never the point.** `docs/tasks/25`'s own framing calls it "the second half of the
 loop", where the loop's product is the **edge**: `(someone, uses, something)` with money behind it.
 The hire is one occasion that produces such an edge. It is not the only one and it is not the
 common one.
@@ -75,7 +75,7 @@ exist first.
 
 **Negative:**
 
-- `tasks/25`'s stated objective is not met and will not be as written. Its `hire` and `pay` verbs
+- `docs/tasks/25`'s stated objective is not met and will not be as written. Its `hire` and `pay` verbs
   are out; `find` and `rate` survive as `findAgents` and `prepareRate`. The task file needs
   rewriting rather than closing.
 - 11 tests go with the deleted code. They were good tests of a thing that should not ship.
@@ -98,4 +98,4 @@ exist first.
   publishes no score, and the obligations it declined), `0030` (do not mint a predicate carelessly),
   `0038` (prepare, never sign — upheld by the removed code and still upheld by what remains)
 - Related doc: `docs/01_PROJECT_CONTEXT.md` (not a marketplace), `docs/12_THE_IDEA.md` points 3–5
-- Related task: `tasks/25` — objective superseded; `find` and `rate` survive
+- Related task: `docs/tasks/25` — objective superseded; `find` and `rate` survive

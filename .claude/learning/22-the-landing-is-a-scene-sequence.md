@@ -1,6 +1,6 @@
 # 22 — The landing is a scene sequence, not a long page
 
-**Task:** `tasks/29-the-landing-is-a-scene-sequence.md`
+**Task:** `docs/tasks/29-the-landing-is-a-scene-sequence.md`
 **Completed:** 2026-10-30
 **Commit:** `26450c6` (build) · `2da6c26` (two browser defects) · `f13e2b5` (verifier punch list)
 **Verifier verdict:** PASS — second pass. First FAIL: eight items, **none of them in the page** —

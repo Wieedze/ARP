@@ -33,10 +33,10 @@ confirmed or contested by the counterparty, and is readable by ARP's own connect
 > outside `tsc -b` and its `noUnusedLocals`; there is no eslint config at the repo root, so
 > `eslint .` from `app/` never sees `scripts/`; and `bun build` strips types without checking unused
 > locals. **The two files that carry this task's fix are outside every gate it reports.** Worth its
-> own change — related to `tasks/18`, wider than it.
+> own change — related to `docs/tasks/18`, wider than it.
 >
 > Steps 2–5 remain. **The gate below is not yet demonstrated** — see the note at its end.
-> Deferred to `tasks/20`: both predicates still map to one relation and bucket as `protocols`, so a
+> Deferred to `docs/tasks/20`: both predicates still map to one relation and bucket as `protocols`, so a
 > tool renders as a protocol.
 
 `app/src/services/intuition-graph.ts:157-180` pins a Thing named `"uses"` with an ARP-specific
@@ -175,7 +175,7 @@ resolution, and adding an authority is the single biggest scope risk in this tas
 > carries the *larger* position is **unmeasured** — one query, not yet run, and ADR `0042` cuts both
 > ways on it: `minShare` dust sits on both vaults, so that lone counter position may be creation dust
 > rather than disagreement. Either way the Gate is asking for a case the data has at most one of.
-> Same shape as `tasks/26`'s Gate demanding six reproductions from a table of eight (recorded in ADR
+> Same shape as `docs/tasks/26`'s Gate demanding six reproductions from a table of eight (recorded in ADR
 > `0043`).
 >
 > The half that survives is the first: **one edge confirmed by both parties**, which is a real and

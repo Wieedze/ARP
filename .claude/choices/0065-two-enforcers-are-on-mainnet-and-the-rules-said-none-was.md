@@ -2,7 +2,7 @@
 
 **Status:** Accepted
 **Date:** 2026-10-27
-**Triggered by:** `tasks/22`'s step-4 measurement, which had to read `data/deployments/1155.json` to find the enforcer addresses
+**Triggered by:** `docs/tasks/22`'s step-4 measurement, which had to read `data/deployments/1155.json` to find the enforcer addresses
 
 ## Context
 
@@ -84,7 +84,7 @@ canonical statement — read it there rather than from a restatement").
 - The two deployment files record the same two contracts in **different shapes** — 1155 nests them
   under `arp.enforcers` with a `status`, 13579 puts them flat on `arp` as bare addresses. Reading
   only one shape found nothing on testnet and looked like absence rather than a wrong key. That
-  divergence is on `tasks/28`, not fixed here.
+  divergence is on `docs/tasks/28`, not fixed here.
 - The mainnet enforcers having never fired is a fact about adoption. On testnet the same enforcer
   has 122 `StakeCapChecked` logs across 108 transactions and 9 delegations — of which 93
   transactions are ARP's own rig agent, which proves the machinery and not the market.
@@ -97,6 +97,6 @@ canonical statement — read it there rather than from a restatement").
 - Related rule: `.claude/rules/security.md` — deployment posture, and the canonical mainnet-signing
   statement that this correction sits beside
 - Related rule: `.claude/rules/claims.md` §5 — grep the old wording before committing a correction
-- Related task: `tasks/22-the-chain-as-witness.md` — the measurement that surfaced it
+- Related task: `docs/tasks/22-the-chain-as-witness.md` — the measurement that surfaced it
 - Measured by: `scripts/measure/enforcer-events.ts`
 - Record: `data/deployments/1155.json`

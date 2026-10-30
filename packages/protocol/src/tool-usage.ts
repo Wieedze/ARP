@@ -32,7 +32,7 @@ import type {MarketSide, Provenance} from "./types.js";
  *     2** (`scripts/measure/stake-vault-placement.ts`), which the per-vault fields exclude and the
  *     term-level totals include.
  *
- * Reading it from the chain is the fix and belongs with `tasks/23`, because it changes what the
+ * Reading it from the chain is the fix and belongs with `docs/tasks/23`, because it changes what the
  * tool surface displays.
  */
 const DEFAULT_CURVE_ID = "1";

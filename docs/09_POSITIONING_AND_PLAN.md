@@ -163,7 +163,7 @@ passes; a failed gate is information, not a delay to push through.
 
 ### Phase 0 — Unblock the write path
 
-`tasks/06-pin-writes-server-side.md`. Pinning moved to a gated endpoint and ARP never followed; every
+`docs/tasks/06-pin-writes-server-side.md`. Pinning moved to a gated endpoint and ARP never followed; every
 atom-minting path in the repo is dead. The partner key is in hand.
 
 **Gate — PASSED 2026-09-16.** `bun run verify:pin` returns MATCH: the canonical recipe for agent
@@ -332,4 +332,4 @@ own, because the router does not change silently.
 - `docs/02_ARCHITECTURE.md` — locked decisions, unchanged by this document
 - `docs/00_HACKATHON_PIVOT.md` — superseded; historical record
 - ADR `0015` (canonical ERC-8004 pattern), `0016` (server-side writes), `0010` (two-layer model), `0012` (agent positioning)
-- `tasks/06-pin-writes-server-side.md` — Phase 0
+- `docs/tasks/06-pin-writes-server-side.md` — Phase 0

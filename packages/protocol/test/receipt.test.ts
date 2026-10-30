@@ -119,7 +119,7 @@ describe("verifyContentReceipt", () => {
     });
 
     it("says a receipt serving an unauthenticated caller names nobody", async () => {
-        // `tasks/31` §5.3: the index stays open and the receipt is what has a price. A caller that
+        // `docs/tasks/31` §5.3: the index stays open and the receipt is what has a price. A caller that
         // proved no address gets bytes and a receipt that corroborates nothing — reported, because
         // a reader must be able to tell that case from a receipt naming an agent.
         const verdict = await verifyContentReceipt(await sign(receipt({to: null})));
@@ -197,7 +197,7 @@ describe("recoverContentRequester", () => {
 
     it("returns null rather than throwing on a request that identifies nobody", async () => {
         // An unauthenticated fetch is a SERVED state, not an error: the bytes go out and the
-        // receipt corroborates nobody. `tasks/31` §5.3.
+        // receipt corroborates nobody. `docs/tasks/31` §5.3.
         expect(await recoverContentRequester(ATOM, NONCE, TESTNET, "0x")).toBeNull();
         expect(await recoverContentRequester(ATOM, NONCE, TESTNET, "not hex" as Hex)).toBeNull();
         expect(

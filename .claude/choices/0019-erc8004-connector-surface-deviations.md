@@ -2,11 +2,11 @@
 
 **Status:** Accepted
 **Date:** 2026-09-16
-**Triggered by:** `tasks/07-erc8004-connector.md`, two-axis review of `feat/erc8004-connector`
+**Triggered by:** `docs/tasks/07-erc8004-connector.md`, two-axis review of `feat/erc8004-connector`
 
 ## Context
 
-`tasks/07-erc8004-connector.md` publishes an exact public surface under "Surface":
+`docs/tasks/07-erc8004-connector.md` publishes an exact public surface under "Surface":
 
 ```ts
 verifyAssessmentSignature(doc): SignatureVerdict

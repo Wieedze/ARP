@@ -77,7 +77,7 @@ is stuck with. That is structural rather than cryptographic, and it is the one r
 without a TEE.
 
 ADR `0080` is the decision and its constraints; `packages/protocol/src/receipt.ts` and
-`packages/protocol/src/content-path.ts` are the code; `tasks/31` is the plan. **The sentence at the
+`packages/protocol/src/content-path.ts` are the code; `docs/tasks/31` is the plan. **The sentence at the
 top of this document stays as written**, because it is right about every agent ARP is not in the
 path of, which is almost all of them.
 
@@ -90,7 +90,7 @@ Only what touched a **third party**. An agent cannot fabricate an event whose so
 | A payment to the tool        | The payee is a third party. You cannot have paid someone who received nothing.                                                                                                                          |
 | An on-chain call to the tool | The chain recorded it, not the agent.                                                                                                                                                                   |
 | A delegation redemption      | `TrustStakeCapEnforcer` (`0x99921C234d4Ca518DC58ba63ff9bfD2Cc9435f34`, chain 1155) emits `StakeCapChecked(delegationHash, newCumulative, cap)` on every pass. Unreachable without an actual redemption. |
-| **The agent's own calldata** | A transaction is a fact the chain recorded, not the agent. Needs no hook and no adoption, and works **retroactively** on history that already exists. `tasks/22`.                                       |
+| **The agent's own calldata** | A transaction is a fact the chain recorded, not the agent. Needs no hook and no adoption, and works **retroactively** on history that already exists. `docs/tasks/22`.                                       |
 
 The last row was a user proposal, and it came with a correction worth keeping: the instinct is to
 reach for a hook that fires when a skill is called, but **a hook has to be installed, which is

@@ -101,7 +101,7 @@ default and only `--execute` signs.
 | `/`                        | the front page. Every figure on it is read from the chain in view, including the empty state                                                                                                                                   | either, the toggle                    |
 
 `/hire` was a demo that the index works. It was never finished and is removed (2026-10-20); hiring is
-`tasks/25`.
+`docs/tasks/25`.
 
 ### One path, and four jobs on it
 
@@ -308,7 +308,7 @@ ARP/
 │   ├── 13_THE_THREE_FLOWS.md, 14_THE_WITNESS_PROBLEM.md, 15_ROADMAP.md
 │   └── 16_THE_AGENT_PAGE.md, 17_THE_ATOM_PAGE.md
 │                                   ← design briefs, handed to a design agent. Not decisions
-├── tasks/                          ← Atomic work units
+├── docs/tasks/                          ← Atomic work units
 └── .claude/                        ← Claude operating layer (rules, skills, agents, ADRs, post-mortems)
 ```
 

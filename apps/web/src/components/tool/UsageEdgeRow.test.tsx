@@ -6,7 +6,7 @@ import {UsageEdgeRow} from "./UsageEdgeRow";
 import type {ToolUsageEdgeView} from "../../services/tool-usage-view";
 
 /**
- * The first component tests in this repo. `tasks/26` is the bill they pay.
+ * The first component tests in this repo. `docs/tasks/26` is the bill they pay.
  *
  * Eight defects shipped on one page across three review rounds, three of them live on mainnet data.
  * Two were closed by moving pure functions into `tool-usage-view.ts`, where the node environment

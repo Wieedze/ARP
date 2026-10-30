@@ -1,6 +1,6 @@
 # 21 — Three apps over two packages: mcp, node, hook
 
-**Task:** `tasks/32-two-apps-the-mcp-and-the-node.md`
+**Task:** `docs/tasks/32-two-apps-the-mcp-and-the-node.md`
 **Completed:** 2026-10-30
 **Commit:** `064e3df`..`10959f9` on `refactor/monorepo-apps`
 **Verifier verdict:** PASS — second pass. First FAIL: hook snippet not pointing at the bin, and
@@ -25,17 +25,17 @@
 - A hook snippet written as a repo-relative `bun run apps/hook/src/hook.ts` works only inside this
   repo. Fixed to an absolute path to the bundle, run once from a foreign directory.
 - The task's own §4 grep filters on `^./`, but this environment's grep prints no `./` prefix, so
-  the filter excludes nothing. The hits were read by hand: all of them are in tasks/, data/measurements/,
+  the filter excludes nothing. The hits were read by hand: all of them are in docs/tasks/, data/measurements/,
   choices/ and learning/.
 
 ## Decisions made
 
 - **Scripts import apps by relative path, not by package name** (deviation from deliverable 6):
   scripts/ is not a workspace, and `@arp/mcp` has no `exports`. Only `verify-content-route.ts`
-  imports an app. Recorded in `223b40f` and in tasks/32 §5.
+  imports an app. Recorded in `223b40f` and in docs/tasks/32 §5.
 - **`apps/mcp/src/data.ts`**: deployments and catalogue are imported as a map keyed by chain id, so
   the bundle carries them. Consequence: they are frozen at build time. Edit `data/deployments/*.json`,
-  rebuild. Not an ADR. Recorded in `18d478b` and in tasks/32 §5.
+  rebuild. Not an ADR. Recorded in `18d478b` and in docs/tasks/32 §5.
 - ADR: `.claude/choices/0082-two-apps-the-mcp-and-the-node.md`.
 
 ## Rules touched

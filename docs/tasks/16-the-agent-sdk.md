@@ -7,7 +7,7 @@
 > missing."_
 >
 > Half 1 — declare and deposit — shipped as `packages/protocol/src/declare/`, two MCP tools, a
-> runnable example and 44 tests. Half 2 — hire and rate — moved to **`tasks/25`**, which this file
+> runnable example and 44 tests. Half 2 — hire and rate — moved to **`docs/tasks/25`**, which this file
 > told us to do if half 1 grew.
 >
 > **The design decision, and it is the load-bearing one: the connector prepares calls and never
@@ -81,7 +81,7 @@ package is a second surface for runtimes that do not speak MCP, and it comes aft
 Beyond `docs/12`'s own drift list, two mistakes made in this project and worth naming here:
 
 - **Not liveness scoring.** Probing whether an endpoint answers and staking on the result is ARP
-  producing one more score, which `docs/01` rejects. The verifier (`tasks/17`) is for **discovery** —
+  producing one more score, which `docs/01` rejects. The verifier (`docs/tasks/17`) is for **discovery** —
   knowing who can be hired — never for the stake.
 - **Not an attestation scheme to design first.** ADR `0034`'s deposit-as-attestation is real and only
   matters once edges are being written. It is not a prerequisite.
@@ -118,7 +118,7 @@ The last is the serious one: it would work, and nobody would see it.
 **The unlock: a third party needs no API key.** A tool's atom derives from its `schemaURI` (ADR 0008),
 so `ensureAtomForURI` pins nothing. The agent's canonical atom already exists for the mirrored cohort.
 And the canonical `uses` predicate exists on-chain — use its constant instead of minting one. That
-also closes `tasks/09` priority 2, where ARP mints a `uses` predicate its own connector cannot read.
+also closes `docs/tasks/09` priority 2, where ARP mints a `uses` predicate its own connector cannot read.
 
 So: a funded wallet, and that is all.
 
@@ -142,7 +142,7 @@ sub-delegation, pay, get a receipt.
 **Rating needs no new mechanism.** An agent that hired another and was satisfied declares
 `(A, uses, B)` and stakes on B — the same primitive as Half 1, with B being a tool that happens to be
 an agent. The README already says atoms can be agents or tools or both. **Do not invent an
-agent-rating predicate**; `tasks/09` records what happens when ARP mints its own.
+agent-rating predicate**; `docs/tasks/09` records what happens when ARP mints its own.
 
 The shape, roughly:
 
@@ -188,8 +188,8 @@ Names are a suggestion. Argue for better ones.
 - [x] The canonical `uses` predicate is used, not a minted one. Asserted against the frozen constant,
       and asserted **not** to be `USE` — the pair ADR `0030` had to disentangle.
 - [→] `hire` produces a bounded sub-delegation that the existing specialist server accepts — **moved
-  to `tasks/25`**, with half 2.
-- [→] `rate` writes `(A, uses, B)` and stakes — no new predicate — **moved to `tasks/25`**.
+  to `docs/tasks/25`**, with half 2.
+- [→] `rate` writes `(A, uses, B)` and stakes — no new predicate — **moved to `docs/tasks/25`**.
 - [x] A README a third party can follow without reading this repo. `packages/protocol/README.md` §"Declaring
       what your agent used": what you need, the plan, the ordering constraint, both costs read from
       the chain, and both signing modes.

@@ -44,7 +44,7 @@
 > browser. **That was asserted without testing it** — Chromium is in the image at
 > `/root/.cache/ms-playwright/`, and what was missing was a driver, not a browser.
 > `rules/claims.md` §1 applies to a blocker as much as to a figure, and the same false premise is
-> written in five other task files (`tasks/28` item 35).
+> written in five other task files (`docs/tasks/28` item 35).
 >
 > `arp-motion-reference/index.html` + `MOTION-V2.md` are the design base, at the user's
 > decision: _« garde tout ce qui vient de ce dossier, c'est la nouvelle base »_ and
@@ -144,7 +144,7 @@ bun --filter '*' lint   # exits 127 — see below
 runs `solhint`, which is not installed and is not a dependency of any **ARP workspace** — it is
 declared in three vendored manifests under `contracts/lib/delegation-framework/lib/`, which is why
 "not a dependency anywhere" was wrong. The filter exits **127**. Long-standing and recorded four
-times already (`STATE.md:64`, `learning/08:45`, `tasks/01:53`, `tasks/06:12`), and not a regression
+times already (`STATE.md:64`, `learning/08:45`, `docs/tasks/01:53`, `docs/tasks/06:12`), and not a regression
 here. It is listed last and **not** chained with `&&`, because the first version of this
 Gate wrote `bun --filter '*' lint && bun --filter '*' test` — which means the test half never ran,
 so the Gate as written was unsatisfiable and was reported green anyway (`rules/claims.md` §4).

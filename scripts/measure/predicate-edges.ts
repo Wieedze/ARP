@@ -14,7 +14,7 @@ import type { GraphqlReply } from '../helpers/shapes.js';
  *  **Re-run 2026-10-27: 158, 185 and `has category` 120 — unchanged, to the edge.** Worth the line,
  *  because `docs/09:35` quotes a trio of "194 `use`, 184 `uses`, 120 `has category`" and two of the
  *  three reproduce here. Intuition has no deletion, so 194 → 158 cannot be a graph that shrank; it
- *  is a different query. Do not read the pair as a time series — `tasks/17` briefly did.
+ *  is a different query. Do not read the pair as a time series — `docs/tasks/17` briefly did.
  *
  *  It also could not run at all between `562d0fd` and 2026-10-27: that commit moved this file into
  *  `scripts/measure/` and the `../packages/…` below became `scripts/packages/…`, so it threw ENOENT.
@@ -57,5 +57,5 @@ for (const [name, pid] of lines) {
 // A module, not a global script. Without this TypeScript treats every top-level
 // `const` here as sharing one scope with every other import-free file in `scripts/`,
 // which produced 21 phantom redeclarations and 20 "await outside a module" errors the
-// first time this directory was typechecked (`tasks/21`). Bun already runs it as a module.
+// first time this directory was typechecked (`docs/tasks/21`). Bun already runs it as a module.
 export {};

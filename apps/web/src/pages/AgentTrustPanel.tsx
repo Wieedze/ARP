@@ -89,7 +89,7 @@ export function AgentTrustPanel() {
     const chainId = parseChainId(params.chainId);
     const tokenId = parseTokenId(params.tokenId);
     // The registry travels with the ref. Without it the panel resolved every chain against the
-    // canonical Base address and ARP's own testnet agents had no page at all — `tasks/28` item 42.
+    // canonical Base address and ARP's own testnet agents had no page at all — `docs/tasks/28` item 42.
     const ref =
         chainId !== null && tokenId !== null
             ? {

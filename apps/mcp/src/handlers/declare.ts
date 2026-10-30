@@ -97,7 +97,7 @@ export async function declareUsed(id: JsonRpcId, args: Record<string, unknown>) 
 /**
  * Declare what the session actually invoked, from the hook's log.
  *
- * `tasks/31` deliverable 4. The difference from `arp_declare_used` is where the list comes from:
+ * `docs/tasks/31` deliverable 4. The difference from `arp_declare_used` is where the list comes from:
  * there the agent passes the tools it believes it used, which is the agent's word about the agent.
  * Here the list is the runtime's own record, written by a hook the model never touched.
  *

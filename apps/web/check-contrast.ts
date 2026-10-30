@@ -1,7 +1,7 @@
 /**
  * Every use of a sub-AA colour token sits on display type, or this fails.
  *
- * `tasks/14` found `--color-fg-40` at 3.66:1 carrying meaning at 11px. ADR `0057` replaced that
+ * `docs/tasks/14` found `--color-fg-40` at 3.66:1 carrying meaning at 11px. ADR `0057` replaced that
  * palette, and `scripts/measure/contrast.ts` re-measured the new one: **one** text token is below
  * AA body, `--color-grey` at 3.84:1 — which `rules/ui.md` already restricts to "dim display text
  * only — never body copy."

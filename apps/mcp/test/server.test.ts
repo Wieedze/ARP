@@ -26,7 +26,7 @@ import {afterAll, beforeAll, describe, expect, it} from "vitest";
  *
  * Node's `child_process` and `http` rather than `Bun.spawn` and `Bun.serve`: the server is Bun-run
  * and may use them, but this package must typecheck without `@types/bun`, which is installed nowhere
- * in the repo (`tasks/21`). An earlier draft used the Bun globals, the suite went green, and `tsc`
+ * in the repo (`docs/tasks/21`). An earlier draft used the Bun globals, the suite went green, and `tsc`
  * was red — the gate-scope failure `rules/claims.md` check 4 exists for.
  */
 const PORT = 3099;
@@ -349,7 +349,7 @@ describe("the handshake", () => {
             "arp_declare_used",
             // Beside `arp_declare_used` rather than replacing it, because the two take their list
             // from different places: that one from what the agent believes it used, this one from
-            // the runtime hook's own log (`tasks/31`).
+            // the runtime hook's own log (`docs/tasks/31`).
             "arp_declare_session",
             "arp_stake_on_used",
             // The market on an atom, both directions. ADR `0056`: the edge is a receipt and the

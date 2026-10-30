@@ -22,7 +22,7 @@
  *  The files are `data:` URIs on purpose: 18 of the sampled mainnet agents do it that way, and it
  *  carries no uptime obligation. A pinned file would need a CID that is actually valid — 18
  *  permanent testnet atoms already exist for strings like `ipfs://bafkreislither…` that are not CIDs
- *  (`tasks/20` appendix), and that mistake is not worth repeating for a test rig.
+ *  (`docs/tasks/20` appendix), and that mistake is not worth repeating for a test rig.
  *
  *  Shapes follow the 2026-10-16 cohort measurement rather than what is convenient:
  *    - `services[]`, not `endpoints[]` — 106 occurrences against 2 across 150 random Base ids

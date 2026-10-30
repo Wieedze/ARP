@@ -26,7 +26,7 @@ This supersedes the original Task 01 scope, which assumed an empty repo + pnpm. 
 - [x] Default `Counter.sol`, `Counter.t.sol`, `Counter.s.sol`, auto-generated `README.md` removed
 - [x] `contracts/foundry.toml` written with:
   - solc 0.8.24, optimizer 200, via_ir false, ffi false
-  - `fs_permissions` for read-only access to `../data/deployments`
+  - `fs_permissions` for read-only access to `../../data/deployments`
   - `[fmt]` block with project conventions
   - `[rpc_endpoints]` mapping `intuition_testnet` to `${INTUITION_TESTNET_RPC_URL}`
   - `[etherscan]` mapping `intuition_testnet` to the testnet Blockscout-style verifier

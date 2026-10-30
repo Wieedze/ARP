@@ -62,12 +62,12 @@ Already in the working tree. Six atomic commits:
 2. `docs` — `08`, the measured ecosystem analysis.
 3. `docs` — `09`, positioning and plan.
 4. `feat(scripts)` — `verify:pin`, `.env.example`, `package.json`.
-5. `docs(adr)` — `0015`, `0016`, and `tasks/06`.
+5. `docs(adr)` — `0015`, `0016`, and `docs/tasks/06`.
 6. `fix(ui)` — stray character in the delegation summary.
 
 ### `feat/pin-writes-server-side` — Phase 0
 
-Spec: `tasks/06-pin-writes-server-side.md`. Decision: ADR 0016.
+Spec: `docs/tasks/06-pin-writes-server-side.md`. Decision: ADR 0016.
 
 `pinThing` targets `pin.intuition.systems` and takes its credential as an **explicit parameter**, so
 only Node entry points can supply one and browser code loses the call by construction. Threaded

@@ -13,7 +13,7 @@ stated without measuring what bounds it, numbers summed across contexts, a third
 something they did not say, a green gate whose scope did not cover the change, and a retraction that
 landed in one place out of several.
 
-`tasks/31` produced a failure none of the five names. `docs/22_RUNNING_THE_NODE.md` is written for
+`docs/tasks/31` produced a failure none of the five names. `docs/22_RUNNING_THE_NODE.md` is written for
 somebody deciding whether to install the node — a stranger, by construction, and the document's
 entire purpose is that they do not have to trust us. Its outbound-connection section failed **three
 review rounds running**, for the same reason each time:

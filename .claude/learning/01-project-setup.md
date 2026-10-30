@@ -1,6 +1,6 @@
 ## 01 — Project setup (post-pivot)
 
-**Task:** `tasks/01-project-setup.md`
+**Task:** `docs/tasks/01-project-setup.md`
 **Completed:** 2026-06-01
 **Commit:** uncommitted
 **Verifier verdict:** PASS

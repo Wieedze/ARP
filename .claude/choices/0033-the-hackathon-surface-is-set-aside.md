@@ -6,7 +6,7 @@
 
 > **Answered 2026-10-20.** This ADR left open "whether `/hire` [stays] in the app". The user decided
 > to delete it, and it is gone — along with `use-agents` and `use-agent-reputation`, which nothing
-> else referenced. Hiring is `tasks/25`.
+> else referenced. Hiring is `docs/tasks/25`.
 est a mettre de coté"_, after asking why ARP's own agents mattered when the point is the agents
 already in the ERC-8004 registry.
 
@@ -25,7 +25,7 @@ Measured 2026-10-17, read-only:
 | edges touching them            | 16, of which **12 point at fabricated CIDs** — `invalid path "/ipfs/bafkreislither…": invalid cid` |
 
 So the demo footprint is small, testnet-only, and mostly garbage: `ensureAtomForURI` minted atoms for
-placeholder strings that are not CIDs (the `tasks/20` appendix defect, visible in the graph).
+placeholder strings that are not CIDs (the `docs/tasks/20` appendix defect, visible in the graph).
 
 ADR `0032` had accepted a cost on the strength of these agents: because they have no ERC-8004
 identity, they would need minting into the canonical registry before they could carry a `uses` edge.
@@ -58,15 +58,15 @@ the identity by construction.
 
 - The write path moves where it belongs. It was going to be exercised by ARP's demo agents through
   `scripts/`; it will be exercised by external agents through the connector and the MCP server
-  (`tasks/16`). `scripts/agent-loop.ts` stops being load-bearing — which is why the fix that made it
+  (`docs/tasks/16`). `scripts/agent-loop.ts` stops being load-bearing — which is why the fix that made it
   throw rather than write a bad subject was still worth making, and is now its last act.
-- `tasks/19` steps 2–5 are no longer blocked on minting anything.
+- `docs/tasks/19` steps 2–5 are no longer blocked on minting anything.
 - The forward surface is the part that was already forward-looking: the verifier
   (`erc8004/src/verify/`), `getToolUsage`, the panel and the directory.
 
 **Negative**
 
-- **The only working end-to-end hire demo is set aside**, and `tasks/16` has not replaced it. Between
+- **The only working end-to-end hire demo is set aside**, and `docs/tasks/16` has not replaced it. Between
   now and then there is nothing to show of the hire loop.
 - `ModuleRegistry` still backs eight files in `app/src` and `sdk/src`. ADR `0025` already kept it off
   mainnet; this decision does not remove it from the app, and whether `/hire`, `RegisterModule` and

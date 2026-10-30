@@ -48,7 +48,7 @@ describe("the rig declares what it claims to declare", () => {
     it("encodes to a `data:` URI with no hosting obligation", () => {
         // 18 of the sampled mainnet agents do it this way. A pinned file would need a CID that is
         // actually valid, and 18 permanent testnet atoms already exist for strings that are not
-        // CIDs (tasks/20 appendix).
+        // CIDs (docs/tasks/20 appendix).
         for (const file of FILES) {
             const uri = dataUri(file.doc);
             expect(uri.startsWith("data:application/json;base64,")).toBe(true);

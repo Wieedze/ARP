@@ -29,7 +29,7 @@ if (!target) {
 }
 
 /** Distinct objects in one request instead of paginating every edge — the endpoint rate-limits, and
- *  `tasks/17` makes courtesy on a third-party host a hard requirement, not a preference. */
+ *  `docs/tasks/17` makes courtesy on a third-party host a hard requirement, not a preference. */
 const DISTINCT = `query ($pid: String!) {
   triples(where: { predicate_id: { _eq: $pid } }, distinct_on: [object_id], limit: 500) {
     object_id
@@ -77,7 +77,7 @@ for (const [name, pid, histogram] of [
   ['has trust provider', HAS_TRUST_PROVIDER, true],
   // One assessment source per agent-provider pair, so its objects carry ~1 edge each: the distinct
   // count is the shape, and a per-object loop would be hundreds of requests for nothing. It
-  // rate-limited the host once. `tasks/17` makes courtesy a hard requirement.
+  // rate-limited the host once. `docs/tasks/17` makes courtesy a hard requirement.
   ['has trust assessment', HAS_TRUST_ASSESSMENT, false],
 ] as const) {
   const total = (await gql<{ triples_aggregate: { aggregate: { count: number } } }>(TOTAL, { pid }))

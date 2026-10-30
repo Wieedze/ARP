@@ -70,7 +70,7 @@ the enforcer's name suggests more protection than it gives.
 
 **Positive**
 
-- `tasks/16` is unblocked and is the project's front task. It is the loop itself.
+- `docs/tasks/16` is unblocked and is the project's front task. It is the loop itself.
 - The risk sits with the party that chose it: an operator who signed a cap for their own agent.
 - `docs/12`'s two recorded gaps are now both addressable — the guard rail is on the right chain, and
   this is the authorisation for the adoption half.

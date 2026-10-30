@@ -114,7 +114,7 @@ type Invocation = {
    * **Filled from `.arp/receipts.jsonl` since 2026-10-29**, which is where
    * `apps/mcp/src/fetch-skill.ts` records what was fetched through an MCP server. The fetch is the one
    * moment a skill's name and its atom are in the same place, so it writes both down and this
-   * reads them back. `tasks/31` deliverable 3.
+   * reads them back. `docs/tasks/31` deliverable 3.
    *
    * Still empty for a skill nobody fetched through an MCP server, and **still empty when two different
    * atoms were fetched under one name** — `refForInvocation` refuses a tie rather than taking

@@ -13,7 +13,7 @@
 > 1. **Step 1's key does not exist.** The step specifies `same as` → the agent's CAIP-10 operating
 >    account (ADR `0026`). Re-run 2026-10-27, `scripts/measure/caip10-join.ts`: 20 caip10-labelled
 >    atoms on testnet, **0 edges of any predicate point at one**. The sender side cannot be
->    resolved today, which is `tasks/19` step 1b's blocker and not separately fixable here.
+>    resolved today, which is `docs/tasks/19` step 1b's blocker and not separately fixable here.
 > 2. **There is nothing in the calldata to read even if it could.** New:
 >    `scripts/measure/tool-addressability.ts` classifies every distinct object of a `uses` edge by
 >    its atom URI, because a tool is witnessable from calldata only if it is a contract.
@@ -112,7 +112,7 @@ receipts.
 2. If the fraction justifies it, derive `(agent, uses, tool)` candidates from decoded calls, with the
    transaction hash as the evidence handle so any edge reproduces from the chain.
 3. Write them at the **fact** tier, distinguishable from a self-report. A tier that renders like the
-   one below it is the defect `tasks/20` just fixed.
+   one below it is the defect `docs/tasks/20` just fixed.
 4. The agent's own delegation redemptions are the same class and already exist:
    `TrustStakeCapEnforcer` (`0x99921C234d4Ca518DC58ba63ff9bfD2Cc9435f34`, chain 1155) emits
    `StakeCapChecked(delegationHash, newCumulative, cap)` on every pass, and it is unreachable without

@@ -1,6 +1,6 @@
 /** Walk the ERC-8004 cohort and record whether each agent's published identity holds up.
  *
- *  Phase 1 of `docs/13_THE_THREE_FLOWS.md`, the gate of `tasks/17`. Needs nobody's consent: a
+ *  Phase 1 of `docs/13_THE_THREE_FLOWS.md`, the gate of `docs/tasks/17`. Needs nobody's consent: a
  *  registration file is a document the agent chose to publish at an address it chose, and fetching
  *  it is a request anyone may make.
  *
@@ -14,14 +14,14 @@
  *  A2A endpoint until 2026-10-27; see `a2aCandidates` in `verify/probe.ts`.) Signs nothing, writes
  *  nothing on chain.
  *
- *  Courtesy is not optional here (`tasks/17`):
+ *  Courtesy is not optional here (`docs/tasks/17`):
  *    - every request identifies the client and the timeout is 8 s
  *    - requests are serialised PER HOST, not globally, because one operator accounted for 38 of 108
  *      declared endpoints in the 2026-10-16 sample — a global limit still points its whole budget at
  *      one server
  *    - a 429 or 503 closes that host for its Retry-After and is never recorded as a verdict
  *    - a document hash is recorded per agent, so a future version can skip an unchanged one.
- *      **It does not skip today** — nothing reads it back (`tasks/21`).
+ *      **It does not skip today** — nothing reads it back (`docs/tasks/21`).
  *
  *  The output separates three groups and never merges them. `not-checkable` is NOT a defect, and
  *  rendering it beside a confirmed failure would mass-slander the cohort. Its share moves a lot
@@ -131,7 +131,7 @@ const TARGET = pickTarget();
  * `--tools` asks a confirmed MCP server what it serves.
  *
  * Opt-in because it is a second request per endpoint and one request is the courtesy baseline
- * (`tasks/17`). Worth passing: 0 of ~110 parsed documents across repeated n=200 samples (scripts/measure/cohort-skills.ts; the zero is stable, the denominator varies) declared a capability, while
+ * (`docs/tasks/17`). Worth passing: 0 of ~110 parsed documents across repeated n=200 samples (scripts/measure/cohort-skills.ts; the zero is stable, the denominator varies) declared a capability, while
  * every confirmed MCP server listed its tools — the runtime is where that data lives.
  */
 const WANTS_TOOLS = process.argv.includes('--tools');
@@ -390,7 +390,7 @@ function summarise(agents: AgentResult[]): void {
 
   console.log(`\n${'═'.repeat(72)}`);
   // The chain, first line. The previous version printed neither, and its output was pasted into
-  // tasks/24 and data/deployments/13579.json where it reads identically to a Base run.
+  // docs/tasks/24 and data/deployments/13579.json where it reads identically to a Base run.
   console.log(`${TARGET.label}`);
   console.log(`  registry ${TARGET.registry}  ·  chain ${TARGET.chainId}`);
   console.log(`n = ${n} agents · ${requestsMade} network requests\n`);
@@ -467,14 +467,14 @@ const outPath =
 // NOT A CACHE YET. A previous run is read only to report how many agents it held — nothing consumes
 // it, and `verifyAgent` always re-fetches and re-probes. Kept because the file is the natural place
 // for one and the count is useful to an operator, but the header no longer claims caching that does
-// not exist, and `tasks/21` carries it as a defect. Wiring it up needs the document hash compared
+// not exist, and `docs/tasks/21` carries it as a defect. Wiring it up needs the document hash compared
 // before the fetch, which is a change to `verifyAgent`, not to this block.
 let previousCount = 0;
 try {
   const previous = JSON.parse(readFileSync(outPath, 'utf8')) as Report;
   previousCount = previous.agents.filter((a) => a.documentHash !== null).length;
   console.log(
-    `a previous run at ${outPath} held ${previousCount} agents — NOT reused, see tasks/21`,
+    `a previous run at ${outPath} held ${previousCount} agents — NOT reused, see docs/tasks/21`,
   );
 } catch {
   // No previous run. Expected on a first walk.
@@ -488,7 +488,7 @@ const CONCURRENCY = 8;
  * One walk at a time, enforced by a lock file.
  *
  * Added because I started two walks by accident and for about five minutes both probed the same
- * third-party hosts — doubling a load nobody asked for, which `tasks/17` calls a hard requirement,
+ * third-party hosts — doubling a load nobody asked for, which `docs/tasks/17` calls a hard requirement,
  * and interleaving two progress counters into one log so the output was unreadable. The courtesy
  * rules are all per-host and per-request; none of them can see a second process.
  *
@@ -500,7 +500,7 @@ if (existsSync(lockPath) && !process.argv.includes('--force')) {
   const held = readFileSync(lockPath, 'utf8').trim();
   console.error(
     `another walk holds ${lockPath}: ${held}\n` +
-      `Two walks probe the same hosts twice over, which tasks/17 forbids. Wait for it, or pass\n` +
+      `Two walks probe the same hosts twice over, which docs/tasks/17 forbids. Wait for it, or pass\n` +
       `--force if that process is gone.`,
   );
   process.exit(1);

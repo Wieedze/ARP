@@ -30,7 +30,7 @@ export type ProvenanceTier =
  *
  * | rung                | what it would need                                                      |
  * | ------------------- | ----------------------------------------------------------------------- |
- * | `fact`              | a payment, an on-chain call or a delegation redemption — `tasks/22`      |
+ * | `fact`              | a payment, an on-chain call or a delegation redemption — `docs/tasks/22`      |
  * | `confirmed-by-both` | the tool declaring the same edge, which nothing writes                  |
  * | `tool-declared`     | the same, from the tool's side alone                                     |
  *
@@ -73,7 +73,7 @@ export const UNREACHABLE_TIERS: readonly ProvenanceTier[] = [
  *
  * `1000000` wei is `getGeneralConfig().minShare`, and it is there because the triple was created,
  * not because anyone backed it. An earlier version of this function read `totalAssets > 0n` and so
- * called all seven edges priced — including the three `tasks/23` names as the design fixture
+ * called all seven edges priced — including the three `docs/tasks/23` names as the design fixture
  * precisely because they are free. The task's warning was literal: _"if those three render like the
  * fourth, the page has failed."_ It did, and the live gate is what caught it.
  *
@@ -118,7 +118,7 @@ export function tierForEdge(edge: ToolUsageEdge): ProvenanceTier {
  * a million. Said out loud rather than left as an unmarked hardcode.
  *
  * Reading `defaultCurveId` from the chain is the real fix, and `packages/protocol/src/tool-usage.ts:26`
- * assigns it to this task. **Why it is deferred is in `tasks/23`, not here** — an earlier version of
+ * assigns it to this task. **Why it is deferred is in `docs/tasks/23`, not here** — an earlier version of
  * this comment asserted a reason that turned out to be false, and a reason stated in two places
  * drifts in one of them (ADR `0042`).
  */
@@ -197,7 +197,7 @@ const emptyTierCounts = (): Record<ProvenanceTier, number> => ({
 /**
  * Order: priced first, then off-curve, then free. Within a group, heaviest first.
  *
- * Not a ranking — `tasks/23` puts composing edges into a score out of scope, and this orders rather
+ * Not a ranking — `docs/tasks/23` puts composing edges into a score out of scope, and this orders rather
  * than scores. It exists because the alternative is the graph's own order, which is arbitrary, and
  * an arbitrary order puts a free assertion above a priced one often enough to mislead.
  *

@@ -14,7 +14,7 @@
 > The page is `app/src/pages/ToolUsagePanel.tsx` at `/tool/atom/:atomId`, with
 > `services/tool-usage-view.ts`, `hooks/use-tool-usage.ts`, `components/tool/` and 26 tests (18 on the view, 8 on the hook's contract).
 >
-> **The dependency line was wrong and is removed.** It said "depends on `tasks/19` steps 2–5" — the
+> **The dependency line was wrong and is removed.** It said "depends on `docs/tasks/19` steps 2–5" — the
 > write path. The page reads edges that already exist, and this file's own measurement says so (84
 > atoms, 64 with positions). Nothing was blocked.
 >
@@ -128,7 +128,7 @@ each edge read both vaults.
 ## Out of scope
 
 - A ranking or a score. Composing edges into one number is a separate decision and needs its own ADR.
-- Writing edges — that is `tasks/19` steps 2–4.
+- Writing edges — that is `docs/tasks/19` steps 2–4.
 - Any staking control on this page in the first version. Reading first; `ADR 0017`'s seven safeguards
   apply the moment a deposit becomes possible, and they are acceptance criteria, not advice.
 
@@ -178,12 +178,12 @@ different weight, which is `docs/14:156`'s one requirement of this surface.
   review rounds, so the next reader should know the fix is small and the design question is the
   blocker. ADR `0042`.
 
-- **No DOM test environment in `app/`** (ADR `0011`) — now **`tasks/26`**, which `tasks/13` has
+- **No DOM test environment in `app/`** (ADR `0011`) — now **`docs/tasks/26`**, which `docs/tasks/13` has
   recorded as an open gap since September; both rows are in `STATE.md` and now cross-reference each
-  other. `tasks/26` carries the eight defects three review rounds found on this one page as its
+  other. `docs/tasks/26` carries the eight defects three review rounds found on this one page as its
   case. Each was one render assertion away from being
   caught, and three were live on mainnet data.
-- **`--color-fg-40` is 3.66:1, below AA** (`tasks/14`). This page uses `--color-fg-60` throughout
+- **`--color-fg-40` is 3.66:1, below AA** (`docs/tasks/14`). This page uses `--color-fg-60` throughout
   rather than adding two new instances.
 
 ## What round 2 changed, and the design it corrected

@@ -1,6 +1,6 @@
 # 19 — The external verifier
 
-**Task:** `tasks/17-the-external-verifier.md`
+**Task:** `docs/tasks/17-the-external-verifier.md`
 **Completed:** 2026-10-27 (specified 2026-10-16, built 2026-10-16/17, gate run and closed 2026-10-27)
 **Commit:** `uncommitted` at verification time — working tree on `feat/agent-panel-tabs`
 **Verifier verdict:** PASS — third pass. Two FAILs first, and **both failed on claims, never on
@@ -23,7 +23,7 @@ is the gate run and its artefacts.
 
 Gates at verification: `tsc -b` 0, `eslint .` 0, app 402+2, protocol 413+4, `check:tokens` 45,
 `check:contrast` 0, `check:scripts` 0, `format:check` 141 pre-existing warnings — none of them a
-file this task touched, and that gate has never been green (`tasks/28`). Nothing was signed or sent;
+file this task touched, and that gate has never been green (`docs/tasks/28`). Nothing was signed or sent;
 the walks are `eth_call` and HTTP GET.
 
 ## Surprises
@@ -99,10 +99,10 @@ its third recorded instance.
 - **Assert counts, not just verdicts, wherever courtesy is a requirement.** Three confirmed results
   and one confirmed result look identical from the outside.
 - **A figure in a doc cites a script; run the script before citing it.** One of them had been dead
-  for 41 days and `tsc` cannot see it. Worth a `tasks/28` item: a smoke-run of every
+  for 41 days and `tsc` cannot see it. Worth a `docs/tasks/28` item: a smoke-run of every
   `scripts/measure/*.ts` that takes no argument.
 - **`docs/08`'s `use` 194 does not reproduce** — `predicate-edges.ts` gives 158/185/120 on both
   2026-10-16 and 2026-10-27, and `docs/09:35`'s trio matches on two of three. It is a different
-  query, not a shrinking graph, and it is cited at six sites. `tasks/28`.
+  query, not a shrinking graph, and it is cited at six sites. `docs/tasks/28`.
 - The next walk costs **373** requests instead of 551. Record it when it runs; it is the only
   evidence the fix worked in the wild.

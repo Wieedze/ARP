@@ -1,6 +1,6 @@
 ## 02 — Module Registry contract
 
-**Task:** `tasks/02-contract-mvp.md`
+**Task:** `docs/tasks/02-contract-mvp.md`
 **Completed:** 2026-06-01
 **Commit:** uncommitted
 **Verifier verdict:** PASS

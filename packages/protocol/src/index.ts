@@ -484,7 +484,7 @@ export {prepareRate, prepareRateStake, type RatePlan} from "./declare/rate.js";
 /**
  * **Corroborate** — what a runtime actually invoked, and what a node signs for having served it.
  *
- * The two halves of `tasks/31`. `resolveInvocations` turns a hook's log into the tools ARP can
+ * The two halves of `docs/tasks/31`. `resolveInvocations` turns a hook's log into the tools ARP can
  * name, and refuses a name several repositories carry rather than picking one. A receipt is the
  * second party's side of the same moment: the node says it served these bytes to this key, and
  * `verifyContentReceipt` plus `receiptMatchesContent` let a stranger check both halves without

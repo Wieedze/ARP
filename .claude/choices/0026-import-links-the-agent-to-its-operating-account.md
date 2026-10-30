@@ -2,7 +2,7 @@
 
 **Status:** Accepted
 **Date:** 2026-09-16
-**Triggered by:** `tasks/11-import-existing-erc8004-agent.md`, which names this as "the one design question, and it is yours to settle"
+**Triggered by:** `docs/tasks/11-import-existing-erc8004-agent.md`, which names this as "the one design question, and it is yours to settle"
 
 ## Context
 
@@ -170,7 +170,7 @@ data.", image: "", url: ""}`), so publishing it needs the partner pinning key an
 
 ## References
 
-- Related task: `tasks/11-import-existing-erc8004-agent.md`
+- Related task: `docs/tasks/11-import-existing-erc8004-agent.md`
 - Related doc: `docs/12_THE_IDEA.md` (the mechanism), `docs/07_INTUITION_ERC8004_PARTNER_GUIDE.md`
   (Appendix B term ids, the owner-atom recipe, the duplicate-node warning)
 - Related ADR: `0014` (CAIP-10 account atom as the position-holder identity), `0015` (canonical atom

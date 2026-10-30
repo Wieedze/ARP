@@ -2,7 +2,7 @@ import { highestTokenId } from './erc8004-population.js';
 import type { JsonRpcReply } from '../helpers/shapes.js';
 /** Do cohort agents actually transact on-chain? Read-only, keyless.
  *
- *  The precondition for `tasks/22` — the chain as witness. If these accounts never transact there is
+ *  The precondition for `docs/tasks/22` — the chain as witness. If these accounts never transact there is
  *  no calldata to derive usage from.
  *
  *      bun run scripts/measure/cohort-onchain-activity.ts 120
@@ -15,7 +15,7 @@ import type { JsonRpcReply } from '../helpers/shapes.js';
  *  platform rather than an agent doing work. And a nonce counts every transaction, including the one
  *  that minted the agent. So this establishes that the accounts are active, and nothing about whether
  *  what they call is a tool. The operating account is reached through `same as` (ADR 0026), which is
- *  what tasks/22 step 1 must use instead.
+ *  what docs/tasks/22 step 1 must use instead.
  *
  *  `ownerOf(tokenId)` gives the account that holds the agent's ERC-8004 token; its nonce is the
  *  number of transactions it has ever sent. A nonce of 0 means that account has never transacted,

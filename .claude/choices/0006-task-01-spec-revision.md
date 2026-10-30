@@ -6,7 +6,7 @@
 
 ## Context
 
-When Task 01 was executed on 2026-06-01, two material drifts from the original `tasks/01-project-setup.md` spec emerged:
+When Task 01 was executed on 2026-06-01, two material drifts from the original `docs/tasks/01-project-setup.md` spec emerged:
 
 1. **Package manager**: the spec assumed `pnpm` (with workspace setup via `pnpm init`). The repo was already scaffolded with **Bun** (root `bun.lock` from `2026-05-19`, `package.json` workspaces field, Bun-style filter scripts `bun --filter app dev`). The `app/package.json` lists no pnpm-specific config; everything is Bun-flavored.
 
@@ -18,7 +18,7 @@ A third smaller deviation: `forge install --no-commit` is the spec's command, bu
 
 ## Decision
 
-`tasks/01-project-setup.md` is **rewritten in place** to reflect the post-pivot reality. Concretely:
+`docs/tasks/01-project-setup.md` is **rewritten in place** to reflect the post-pivot reality. Concretely:
 
 - All references to `pnpm` are replaced with `bun`. Workspace commands use `bun --filter`, install is `bun install`, ad-hoc binaries via `bun x`.
 - All references to Base Sepolia, Basescan, and their env vars are replaced with Intuition Testnet equivalents.
@@ -30,7 +30,7 @@ The original spec is not preserved verbatim in the file — git history holds it
 
 ## Alternatives considered
 
-- **Leave the spec as-is, document the deviations only in the completion report and the post-mortem.** Rejected — every future re-reader of `tasks/01-project-setup.md` would have to cross-check against the ADR + the post-mortem + the actual repo state to know what was actually done. Rewriting the spec at the source removes that lookup.
+- **Leave the spec as-is, document the deviations only in the completion report and the post-mortem.** Rejected — every future re-reader of `docs/tasks/01-project-setup.md` would have to cross-check against the ADR + the post-mortem + the actual repo state to know what was actually done. Rewriting the spec at the source removes that lookup.
 - **Add a "Post-pivot addendum" section to the original spec without rewriting it.** Rejected as messy — the pnpm/Base Sepolia language would still read as authoritative in most of the file, with a small "actually it's bun/intuition" footnote. Confusing.
 - **Migrate the repo back to pnpm to match the original spec.** Rejected as user-confirmed: *"bun cest essentiel"*. Bun is the chosen package manager, and the lockfile already exists. Churn for zero gain.
 - **Keep Base Sepolia as a parallel test target alongside Intuition Testnet.** Rejected — the pivot explicitly scopes mainnet AND Base Sepolia out. Multi-chain support is out of scope per the pivot.
@@ -38,12 +38,12 @@ The original spec is not preserved verbatim in the file — git history holds it
 ## Consequences
 
 **Positive:**
-- Future readers of `tasks/01-project-setup.md` see the spec that was actually executed, with the divergence summary inline.
+- Future readers of `docs/tasks/01-project-setup.md` see the spec that was actually executed, with the divergence summary inline.
 - The Deliverables checklist now matches what's on disk — `task-verifier` can verify cleanly.
 - New tasks (02b, 03b, 04b) reference Bun-based commands by default. No risk of someone copy-pasting `pnpm install` into a script.
 
 **Negative:**
-- The git log for `tasks/01-project-setup.md` is the only place where the original pnpm/Base Sepolia version is preserved. A reader looking at the current file does not see the pre-pivot history without `git log -p`. Mitigation: this ADR + the breadcrumb in the file's "Changes from the original spec" section.
+- The git log for `docs/tasks/01-project-setup.md` is the only place where the original pnpm/Base Sepolia version is preserved. A reader looking at the current file does not see the pre-pivot history without `git log -p`. Mitigation: this ADR + the breadcrumb in the file's "Changes from the original spec" section.
 - One more ADR to maintain.
 
 **Neutral (worth knowing):**
@@ -52,8 +52,8 @@ The original spec is not preserved verbatim in the file — git history holds it
 
 ## References
 
-- Original spec (git history): pre-2026-06-01 version of `tasks/01-project-setup.md`
-- Revised spec: `tasks/01-project-setup.md` (current)
+- Original spec (git history): pre-2026-06-01 version of `docs/tasks/01-project-setup.md`
+- Revised spec: `docs/tasks/01-project-setup.md` (current)
 - Pivot brief: `docs/00_HACKATHON_PIVOT.md`
 - Earlier ADRs: `0002-hackathon-pivot-metamask-cookoff.md`, `0005-intuition-skill-vendored-locally.md`
 - Chain reference: `data/deployments/13579.json`

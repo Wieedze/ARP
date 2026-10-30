@@ -2,7 +2,7 @@
 
 **Status:** Accepted
 **Date:** 2026-10-19
-**Triggered by:** `tasks/16` — found while deciding what `prepareStakeOnUsed` should target
+**Triggered by:** `docs/tasks/16` — found while deciding what `prepareStakeOnUsed` should target
 
 > **Narrowed by ADR `0056`, 2026-10-21.** The decision stands for the planner: a deposit that is
 > made goes on the edge. What `0056` removes is **reason 2 below** — the counter-vault does not make

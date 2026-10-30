@@ -32,7 +32,7 @@ This directory configures how Claude works on this repository. It is **not** pro
 
 ```
 CLAUDE.md
-└── tasks/NN-*.md
+└── docs/tasks/NN-*.md
     ├── docs referenced
     ├── .claude/rules/* (only those that match the task type)
     ├── global skills listed in the task

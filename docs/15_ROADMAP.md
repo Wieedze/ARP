@@ -95,15 +95,15 @@ read them and the discovery path never runs. `setAgentURI()` exists.
 - Point identity resolution at the real code path, per gap 1.
 
 **Gate**: the verifier reads all three off the testnet registry and classifies them. **Met
-2026-10-19** over ids 1,2,3,4,5 — see `tasks/24`.
+2026-10-19** over ids 1,2,3,4,5 — see `docs/tasks/24`.
 
 **But the third bullet is deferred, so Phase 0 is not closed.** Identity resolution still does not go
-through `resolveAgent`; `tasks/24` records why and who owns it. Gap 1 below therefore has an owner
+through `resolveAgent`; `docs/tasks/24` records why and who owns it. Gap 1 below therefore has an owner
 rather than a reader's assumption that Phase 0 handled it.
 
 ### Phase 1 — the loop. This is the product.
 
-- **The connector** — **built** 2026-10-19 (`tasks/16` half 1, ADR `0038`). It prepares the calls
+- **The connector** — **built** 2026-10-19 (`docs/tasks/16` half 1, ADR `0038`). It prepares the calls
   and the agent signs and sends them. Build and send were fused in `delegation-redeem.ts`;
   `packages/protocol/src/declare/` separates them, which is what keeps ARP out of the loop — no key, no gas,
   no signature — and preserves the package's own invariant: _never signs, never sends_. This bullet
@@ -127,9 +127,9 @@ closed**, for the same reason Phase 0 is not.
 
 ### Phase 2 — make the result visible.
 
-- The tool page (`tasks/23`) — the read service exists, the page does not. Without it the edges have
+- The tool page (`docs/tasks/23`) — the read service exists, the page does not. Without it the edges have
   no reader.
-- Finish the verifier gate (`tasks/17`) — 100 agents in one walk.
+- Finish the verifier gate (`docs/tasks/17`) — 100 agents in one walk.
 
 ### Phase 3 — what mainnet needs and testnet will not give.
 

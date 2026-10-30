@@ -206,7 +206,7 @@ Three things about it are worth keeping:
   of an order sorted by conviction showing 0.0000 is the kind of result that is either a finding or a
   bug, and checking which took one graph query.
 - `tsc` would have caught it in a second. It did not, because **`scripts/` is outside every
-  typecheck** (`tasks/21`). That known defect now has a concrete cost: a wrong figure on the surface
+  typecheck** (`docs/tasks/21`). That known defect now has a concrete cost: a wrong figure on the surface
   third parties read.
 - The fix keeps `null` as `null`. `position_count` and `vault_count` are reported as the source gives
   them, and `vault_count` matters: on that agent curve 1 held 0.00098 TRUST and curve 2 held 12.28,

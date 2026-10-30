@@ -110,7 +110,7 @@ own work.** Verification is unit tests over a mocked wallet client, `previewDepo
 
 - Related doc: `docs/09_POSITIONING_AND_PLAN.md` §2 (the evidence ladder), §6 (credible commitment)
 - Related doc: `docs/08_ERC8004_AGENT_LAYER_OPPORTUNITY.md` O6 (the curation market)
-- Related task: `tasks/08-agent-trust-panel.md` — the safeguards are its acceptance criteria
+- Related task: `docs/tasks/08-agent-trust-panel.md` — the safeguards are its acceptance criteria
 - Related skill: `.claude/skills/intuition/operations/deposit.md`, `reference/simulation.md`
 - Related rule: `.claude/rules/security.md` (deployment posture), `CLAUDE.md` (mainnet constraint)
 - Supersedes: the "ship it disabled" provision of `docs/10` §2, written before this decision

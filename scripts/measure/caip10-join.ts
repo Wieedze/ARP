@@ -1,7 +1,7 @@
 import type { GraphqlReply } from '../helpers/shapes.js';
 /** Does anything point AT a `caip10:` atom on Intuition? Read-only.
  *
- *  The evidence for `tasks/19` step 1b. ADR 0026 specifies
+ *  The evidence for `docs/tasks/19` step 1b. ADR 0026 specifies
  *  `(canonical agent atom, same as, CAIP-10 of the operating account)` and agent-import.ts
  *  implements it — but measured 2026-10-16 on both chains, ZERO edges of any predicate point at a
  *  caip10 atom, over 20 such atoms on testnet. The import passes its tests and has never written a
@@ -84,5 +84,5 @@ if (ids.length) {
 // A module, not a global script. Without this TypeScript treats every top-level
 // `const` here as sharing one scope with every other import-free file in `scripts/`,
 // which produced 21 phantom redeclarations and 20 "await outside a module" errors the
-// first time this directory was typechecked (`tasks/21`). Bun already runs it as a module.
+// first time this directory was typechecked (`docs/tasks/21`). Bun already runs it as a module.
 export {};

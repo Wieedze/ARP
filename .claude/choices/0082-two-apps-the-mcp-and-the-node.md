@@ -130,4 +130,4 @@ Four questions the split left open, put to the user and answered 2026-10-30:
 - Related doc: `docs/22_RUNNING_THE_NODE.md`
 - Related ADR: `0041` (one protocol package), `0045` (the node), `0064` (measurements are append-only),
   `0080` (the node signs for what it served)
-- Task: `tasks/32-two-apps-the-mcp-and-the-node.md`
+- Task: `docs/tasks/32-two-apps-the-mcp-and-the-node.md`

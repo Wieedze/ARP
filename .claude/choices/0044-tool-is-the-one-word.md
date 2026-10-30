@@ -2,7 +2,7 @@
 
 **Status:** Accepted
 **Date:** 2026-10-20
-**Triggered by:** user request — a coherence audit (`tasks/28`), then _"tool comme mot unique"_.
+**Triggered by:** user request — a coherence audit (`docs/tasks/28`), then _"tool comme mot unique"_.
 
 ## Context
 
@@ -50,7 +50,7 @@ The two rule lines are corrected in place: `workflow.md` now names Intuition Tes
 **Neutral (worth knowing):**
 
 - ~~`/hire` was left untouched: it is unfinished (user, 2026-10-20), so its copy will be written when
-  `tasks/25` builds it.~~ — **deleted instead**, 2026-10-20: the user chose removal over finishing it.
+  `docs/tasks/25` builds it.~~ — **deleted instead**, 2026-10-20: the user chose removal over finishing it.
 - `docs/12` still says "module". It is canonical and was not reworded.
 
 ## References
@@ -58,4 +58,4 @@ The two rule lines are corrected in place: `workflow.md` now names Intuition Tes
 - Related rule: `.claude/rules/workflow.md`, `.claude/rules/security.md`
 - Related doc: `docs/12_THE_IDEA.md`, `docs/14_THE_WITNESS_PROBLEM.md`
 - Related ADR: `0002`, `0030`
-- Task: `tasks/28-coherence-audit.md`
+- Task: `docs/tasks/28-coherence-audit.md`

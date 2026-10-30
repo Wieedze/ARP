@@ -2,11 +2,11 @@
 
 **Status:** Accepted
 **Date:** 2026-10-27
-**Triggered by:** `tasks/17` gate run — the first walk of 100 agents
+**Triggered by:** `docs/tasks/17` gate run — the first walk of 100 agents
 
 ## Context
 
-`tasks/17`'s gate asked for liveness and endpoint classification over 100 agents, reproducible, with
+`docs/tasks/17`'s gate asked for liveness and endpoint classification over 100 agents, reproducible, with
 the three outcome groups visibly separated. Two walks ran on 2026-10-27 against Base 8453's
 `0x8004A169FB4a3325136EB29fA0ceB6D2e539a432`, both kept under `data/measurements/`:
 
@@ -65,7 +65,7 @@ third-party hosts a request each and the report must stay reproducible from a co
   same script that prints the number.
 - The concentration is itself a measured finding about ERC-8004 on Base, and it is the kind that
   bears on positioning: a registry whose mass is bulk mints by a few platforms is an argument for
-  evidence that moves on its own, which is what `tasks/17` builds.
+  evidence that moves on its own, which is what `docs/tasks/17` builds.
 - Two raw walks are committed, so a reviewer reproduces any confirmed row with one `curl` without
   touching a third-party host a second time.
 
@@ -98,7 +98,7 @@ third-party hosts a request each and the report must stay reproducible from a co
 - Related ADR: `.claude/choices/0047-the-mirror-is-a-prerequisite-and-signing-is-a-separate-program.md`
   §"the stale constant was a sampling bias" (line 115) — the fix this extends and does not replace.
   Its title names its first topic only; the sampling half is further down
-- Related task: `tasks/17-the-external-verifier.md` — the gate that produced it
+- Related task: `docs/tasks/17-the-external-verifier.md` — the gate that produced it
 - Artefacts, with the invocation that produced each — the invocation is what
   `rules/claims.md`'s "commit the script, not the number" is really asking for, and the two walks
   are indistinguishable without it:

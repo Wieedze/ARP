@@ -2,7 +2,7 @@
 
 **Status:** Accepted
 **Date:** 2026-06-01
-**Triggered by:** Task 03 Phase B implementation. The original task spec (`tasks/03-deploy-and-seed.md`) assumed external IPFS pinning via Pinata for the JSON Schema, and a separate Intuition atom for each module's identity. The user pointed at the Intuition skill (`.claude/skills/intuition/reference/schemas.md`) which exposes a native `pinThing` GraphQL mutation. After review of the API shape, "Option A" — collapse the two URIs into one — was chosen and is now load-bearing for the rest of the protocol.
+**Triggered by:** Task 03 Phase B implementation. The original task spec (`docs/tasks/03-deploy-and-seed.md`) assumed external IPFS pinning via Pinata for the JSON Schema, and a separate Intuition atom for each module's identity. The user pointed at the Intuition skill (`.claude/skills/intuition/reference/schemas.md`) which exposes a native `pinThing` GraphQL mutation. After review of the API shape, "Option A" — collapse the two URIs into one — was chosen and is now load-bearing for the rest of the protocol.
 
 ## Context
 
@@ -47,7 +47,7 @@ Verification: the module record's `schemaURI` and the corresponding atom's URI i
 
 - **Pin the JSON Schema to Pinata, separate Intuition atom URI** (the original spec). Rejected — new external dependency (Pinata JWT), new env var, two URIs to keep in sync, no real consumer of a pinned-schema-vs-pinned-Thing distinction in the MVP.
 - **Pin JSON Schema via Intuition `pinThing` by stuffing the schema into `description`**. Rejected — abuses the field's semantic (it's for human-readable text), hits the eventual length limit, and breaks the GraphQL contract semantically.
-- **No on-chain `schemaURI` at all** (move it to off-chain only). Rejected — the contract surface includes `schemaURI` per `tasks/02-contract-mvp.md` and `docs/02_ARCHITECTURE.md`; removing it would be a real spec change.
+- **No on-chain `schemaURI` at all** (move it to off-chain only). Rejected — the contract surface includes `schemaURI` per `docs/tasks/02-contract-mvp.md` and `docs/02_ARCHITECTURE.md`; removing it would be a real spec change.
 - **Pin the JSON Schema separately via Intuition's GraphQL by using a different mutation** (none exists for free-form data). Rejected — no such mutation.
 
 ## Consequences

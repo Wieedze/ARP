@@ -2,7 +2,7 @@
 
 **Status:** Accepted
 **Date:** 2026-06-01
-**Triggered by:** Task 02 execution — measured `registerModule` cost consistently lands at 280–340 k for short real inputs and up to ~810 k for max-length inputs. Original spec at `tasks/02-contract-mvp.md` said `registerModule < 200k gas`. Both my pre-merge sweep (`contracts/SECURITY_REVIEW.md`) and the `contract-reviewer` agent's independent walkthrough recommended accepting the deviation rather than refactoring. User concurred.
+**Triggered by:** Task 02 execution — measured `registerModule` cost consistently lands at 280–340 k for short real inputs and up to ~810 k for max-length inputs. Original spec at `docs/tasks/02-contract-mvp.md` said `registerModule < 200k gas`. Both my pre-merge sweep (`contracts/SECURITY_REVIEW.md`) and the `contract-reviewer` agent's independent walkthrough recommended accepting the deviation rather than refactoring. User concurred.
 
 ## Context
 
@@ -46,7 +46,7 @@ Trades off:
 
 The realistic success-path gas target for `registerModule` is **~300 000 gas** for typical inputs (short name, short domain, ~50-byte schemaURI, optional short description), with worst-case **~810 000 gas** for maximum-length inputs across all fields.
 
-The original 200 k target is dropped. The task spec (`tasks/02-contract-mvp.md`) and the rules-level gas guidance in `.claude/rules/solidity.md` referring to a 200 k goal for `registerModule` should be read in light of this ADR. No code change. No follow-up task.
+The original 200 k target is dropped. The task spec (`docs/tasks/02-contract-mvp.md`) and the rules-level gas guidance in `.claude/rules/solidity.md` referring to a 200 k goal for `registerModule` should be read in light of this ADR. No code change. No follow-up task.
 
 The behavior of the contract is unchanged.
 
@@ -72,7 +72,7 @@ The behavior of the contract is unchanged.
 
 ## References
 
-- Spec being revised: `tasks/02-contract-mvp.md` (gas targets section + report format)
+- Spec being revised: `docs/tasks/02-contract-mvp.md` (gas targets section + report format)
 - Measurement source: `contracts/SECURITY_REVIEW.md` (Gas section + `contract-reviewer` verdict)
 - Rule referencing 200 k: `.claude/rules/solidity.md` (Gas section — generic guidance, not contract-specific; no edit needed)
 - Related: `.claude/learning/02-contract-mvp.md` (post-mortem)

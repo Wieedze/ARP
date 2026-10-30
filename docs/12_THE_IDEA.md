@@ -30,7 +30,7 @@ It costs money, it is bounded by a contract, and it is about **usage**, not opin
 ## What ARP is not
 
 - **Not a registry.** ARP mints into ERC-8004's registry and reads from it; it never keeps an identity namespace of its own. Being an on-ramp to the standard is being its client, not its competitor.
-- **Not a marketplace.** `/hire` was a demo that the index works; it was never finished and is now removed. Hiring is `tasks/25`, and the delegation there caps the **buyer's** own spend so the seller needs no relationship with ARP.
+- **Not a marketplace.** `/hire` was a demo that the index works; it was never finished and is now removed. Hiring is `docs/tasks/25`, and the delegation there caps the **buyer's** own spend so the seller needs no relationship with ARP.
 - **Not consumer-facing.** B2B infrastructure — agents, dApps and protocols consume it (`docs/01`).
 - **Not a scorer.** ARP publishes no score, rating or assessment of any agent. It makes staking
   possible and reads the result; every figure it surfaces is a deposit somebody else made. ARP cannot

@@ -2,7 +2,7 @@
 
 **Status:** Accepted. Amended by `0082` (2026-10-30): a `packages/graphql` read layer goes under it.
 **Date:** 2026-10-19
-**Triggered by:** the user, during `tasks/16`: _"pourquoi tout vit dans erc8004 ? […] faut revoir
+**Triggered by:** the user, during `docs/tasks/16`: _"pourquoi tout vit dans erc8004 ? […] faut revoir
 l'organisation du projet, ça devient le bordel, et le but c'est d'avoir un projet clair et
 maintenable et auditable"_
 
@@ -21,7 +21,7 @@ Three problems, and only the third is the one the question named:
 
 1. **The names lied.** `erc8004` reads as "an implementation of the ERC-8004 standard". It was the
    protocol layer entire. `sdk` reads as "the package a consumer imports" — and so does the other
-   one. An auditor could not tell which to import, and neither could the author: `tasks/16`'s own
+   one. An auditor could not tell which to import, and neither could the author: `docs/tasks/16`'s own
    constraint section says "read paths come from `@arp-protocol/erc8004` and `@arp-protocol/sdk`"
    without saying which does what.
 2. **Two packages did one job.** Both were read-only clients over the same two chains, with no
@@ -69,7 +69,7 @@ audit trail this reorganisation exists to serve.
 
 Flagged to the user rather than decided unilaterally. The flat directory is navigable by prefix in
 the meantime — 10 `measure-*`, 7 `agent-*`, 3 `verify-*` — and the real pain there is that
-`scripts/` is inside no typecheck and no lint, which is `tasks/21` and is unaffected by any rename.
+`scripts/` is inside no typecheck and no lint, which is `docs/tasks/21` and is unaffected by any rename.
 
 ## The same question for citations of the old path
 
@@ -94,7 +94,7 @@ triaged:
 | **`.gitignore`'s dead `sdk/dist/` block**                                                                                                                                      | **removed**, replaced by `packages/*/dist/` |
 | **`README.md`'s link to `sdk/README.md`** — a broken link on the repo's front page                                                                                             | **fixed**                                   |
 | **`README.md`'s directory map**, still listing `sdk/` and labelling it `@arp-protocol/core`                                                                                    | **fixed**                                   |
-| **`tasks/09` and `tasks/21`** — **open** task files with actionable items citing `sdk/src/…`                                                                                   | **fixed**                                   |
+| **`docs/tasks/09` and `docs/tasks/21`** — **open** task files with actionable items citing `sdk/src/…`                                                                                   | **fixed**                                   |
 | ADRs `0038`–`0040`, written the same day but before the rename                                                                                                                 | a forwarding note at the top of each        |
 | **four live code comments** — `scripts/rig-registration-files.ts`, `scripts/verify-rig-claims.ts`, `app/src/services/__tests__/trust-fixtures.ts`, `scripts/arp-mcp-server.ts` | **fixed**                                   |
 
@@ -106,7 +106,7 @@ them send a reader somewhere that does not exist.
 **And the sweep itself missed two, for a structural reason worth more than the fixes.** Every pattern
 it used — `erc8004/`, `@arp-protocol/erc8004`, `@arp-protocol/sdk`, `sdk/`, `DEFAULT_DEPLOYMENT` —
 was anchored on a slash or an `@`, so **a bare `erc8004` token in prose could not match any of
-them**. Two survived exactly there: `scripts/arp-mcp-server.ts:10`, and `tasks/09:104` in a bullet
+them**. Two survived exactly there: `scripts/arp-mcp-server.ts:10`, and `docs/tasks/09:104` in a bullet
 whose other two references had already been rewritten twice. The search that closes the class is the
 bare token, triaged by hand:
 
@@ -173,12 +173,12 @@ committed — confirmed with `git ls-files`, 0 tracked files under `packages/pro
   passed / 4 skipped, app `tsc` 0, `lint` 0, 205 passed / 2 skipped.
 - `packages/protocol/test/` keeps two relative imports that reach up into `scripts/`, now at
   `../../../`. They exist because the connector's tests assert the rig's fixtures, and they are the
-  reason two scripts are inside a typecheck by accident (`tasks/21`).
+  reason two scripts are inside a typecheck by accident (`docs/tasks/21`).
 
 ## References
 
 - Related rule: `.claude/rules/portability.md` rule 1 — rewritten to name the new path
 - Related ADR: `.claude/choices/0038-the-write-path-is-a-plan-not-a-transaction.md` — why the write
   path is in this package at all
-- Related task: `.claude/../tasks/21-scripts-is-outside-every-gate.md` — the `scripts/` gap, which no
+- Related task: `docs/tasks/21-scripts-is-outside-every-gate.md` — the `scripts/` gap, which no
   rename addresses

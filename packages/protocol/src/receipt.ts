@@ -8,7 +8,7 @@
  *
  * ## What a receipt is for
  *
- * `tasks/31`. A declaration — "this agent used this tool" — is the agent's word about the agent,
+ * `docs/tasks/31`. A declaration — "this agent used this tool" — is the agent's word about the agent,
  * which `docs/14` puts on the bottom rung. If ARP served the bytes, ARP is a second party to the
  * exchange and can say so:
  *
@@ -48,7 +48,7 @@
  *
  * ## Why EIP-712 and not a signed JSON string
  *
- * `tasks/31` §5.2 sketched EIP-191 over a canonical encoding. EIP-712 is used instead:
+ * `docs/tasks/31` §5.2 sketched EIP-191 over a canonical encoding. EIP-712 is used instead:
  *
  * - **Domain separation is the replay guard that actually matters here.** An atom id is a pure
  *   function of its URL (ADR `0054`), so *the same tool has the same atom id on 13579 and on 1155*.
@@ -146,7 +146,7 @@ export function contentRequestTypedData(atom: Hex, nonce: Hex, chainId: number) 
  * Who asked, recovered from their signature, or `null` when the request does not identify anyone.
  *
  * `null` is a served state and not an error: an unauthenticated fetch gets the bytes and a receipt
- * that corroborates nobody (`tasks/31` §5.3). The index stays open to anyone; the receipt is what
+ * that corroborates nobody (`docs/tasks/31` §5.3). The index stays open to anyone; the receipt is what
  * has a price.
  */
 export async function recoverContentRequester(
@@ -236,7 +236,7 @@ export type TypedDataSigner = {
  * Produce a signed receipt.
  *
  * The signer is passed in rather than constructed, so the key stays in whatever process holds it.
- * `tasks/31` §9: the key that signs a receipt must not be a key that can move value.
+ * `docs/tasks/31` §9: the key that signs a receipt must not be a key that can move value.
  */
 export async function signContentReceipt(
     receipt: ContentReceipt,
@@ -296,7 +296,7 @@ export async function verifyContentReceipt(signed: SignedContentReceipt): Promis
         status: "valid",
         signer: recovered,
         // An unauthenticated fetch gets a receipt that corroborates nothing, on purpose: the index
-        // stays open to anyone and the receipt is what has a price. `tasks/31` §5.3.
+        // stays open to anyone and the receipt is what has a price. `docs/tasks/31` §5.3.
         namesNobody: receipt.to === null || getAddress(receipt.to) === UNAUTHENTICATED,
     };
 }
@@ -359,7 +359,7 @@ export type Corroboration =
  * agent the price of the claim and earns it a reputation on a tool it never used, which is worth
  * nothing the day somebody picks an agent by that reputation. A status, never a weight — ADR
  * `0046` composes no score, and this is the same shape as the distinct-declarer count and the
- * declarer-creator overlap in `tasks/31` §8.
+ * declarer-creator overlap in `docs/tasks/31` §8.
  *
  * Hand it a `signer` that came from a `valid` verdict. A signer this never checked is an address
  * from the envelope, and comparing addresses nobody recovered answers a different question.

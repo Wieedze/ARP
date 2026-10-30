@@ -330,7 +330,7 @@ export async function getAtomStanding(
  * The mirror writes `(Agent 8453:6649) same as (eip155:8453/erc721:0x8004…/6649)`. Measured
  * 2026-10-28: **30,913** such edges on mainnet 1155 and the shape is exactly this. On testnet 13579
  * there are 882 `same as` edges and they are social handles — ARP's own rig agents have none, which
- * is `tasks/19` step 1b's blocker seen from the other side. So a caller gets `null` for a rig agent
+ * is `docs/tasks/19` step 1b's blocker seen from the other side. So a caller gets `null` for a rig agent
  * and must treat that as "no identity found", never as "not an agent".
  *
  * One query, and it reads the edge in **both** directions: the mirror's own orientation is

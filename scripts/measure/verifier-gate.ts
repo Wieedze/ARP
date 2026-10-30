@@ -2,7 +2,7 @@
  *
  *      bun run scripts/measure/verifier-gate.ts <cohort.json>
  *
- *  The gate of `tasks/17` asks for two things a walk alone does not give: the three groups
+ *  The gate of `docs/tasks/17` asks for two things a walk alone does not give: the three groups
  *  **visibly separated**, and any `confirmed` row reproducible by a reviewer in one request. The
  *  first is `verify-cohort.ts`'s own summary; this adds the second, and re-derives the first from
  *  the written file so neither needs a second pass over a hundred third-party hosts.
@@ -65,7 +65,7 @@ for (const status of ['read', 'no-token-uri', 'unreachable']) {
   console.log(`  ${status.padEnd(14)} ${String(n).padStart(4)}`);
 }
 
-// The numbering is `tasks/17` §"The three groups"'s, not this script's: 1 is the confirmed fact,
+// The numbering is `docs/tasks/17` §"The three groups"'s, not this script's: 1 is the confirmed fact,
 // 2 is unprobeable, 3 is "we might be wrong". It was 1 and 2 swapped here, which separated them
 // correctly and mislabelled them against the spec a reviewer reads alongside the output.
 //

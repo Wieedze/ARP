@@ -2,7 +2,7 @@
 
 **Status:** Accepted
 **Date:** 2026-10-27
-**Triggered by:** `tasks/26`, closing `tasks/13` with it
+**Triggered by:** `docs/tasks/26`, closing `docs/tasks/13` with it
 **Supersedes the scope of:** `0011-app-test-scope-services-only.md`
 
 ## Context
@@ -17,7 +17,7 @@ and `use-stake-session` all test their exported query options. The scope moved f
 the options are pure, and the key, the guard and the mapping are the parts that break — but an ADR
 that says "no hooks" while the repo tests hooks is misdescribing itself.
 
-**Components shipped defects nothing could catch.** `tasks/26` itemises eight, found across three
+**Components shipped defects nothing could catch.** `docs/tasks/26` itemises eight, found across three
 review rounds on **one page**, three of them live on mainnet data:
 
 - a sidebar printing `Staked for <0.00000001 across 0 positions` beside a banner saying nobody had
@@ -43,9 +43,9 @@ decide what a number means.**
 Splitting by extension rather than by directory means a file's environment is visible at its name,
 and the 383 existing node tests keep running without a DOM they do not need.
 
-`happy-dom`, not `jsdom` which `tasks/26` names: the same contract, faster, and both are dev-only.
+`happy-dom`, not `jsdom` which `docs/tasks/26` names: the same contract, faster, and both are dev-only.
 
-`rules/code.md`'s line about React Testing Library — the one `tasks/13` recorded as unsatisfiable —
+`rules/code.md`'s line about React Testing Library — the one `docs/tasks/13` recorded as unsatisfiable —
 is satisfiable now, and says so.
 
 ## Alternatives considered
@@ -92,11 +92,11 @@ is satisfiable now, and says so.
   `.tsx` test runs in `node`, and the only symptom is `document is not defined` at the first render
   — which reads as a missing dependency rather than a dead config key. The first version of this
   config had it.
-- `app/vitest.config.ts` is still in neither tsconfig project (`tasks/21`, measured at zero errors
+- `app/vitest.config.ts` is still in neither tsconfig project (`docs/tasks/21`, measured at zero errors
   to add). Left there deliberately rather than folded in here.
 
 ## References
 
 - Supersedes the scope of: `.claude/choices/0011-app-test-scope-services-only.md`
-- Closes: `tasks/13-a-rule-the-repo-cannot-satisfy.md`, `tasks/26-the-app-has-no-dom-test-environment.md`
+- Closes: `docs/tasks/13-a-rule-the-repo-cannot-satisfy.md`, `docs/tasks/26-the-app-has-no-dom-test-environment.md`
 - Related rule: `.claude/rules/code.md` — the line that was unsatisfiable

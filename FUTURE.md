@@ -78,7 +78,7 @@ classes as legacy.
 
 ## A gate for the Tailwind utility that does not exist
 
-**Found 2026-10-28, while closing `tasks/29`.** Not asked for — it goes here because it is a scope
+**Found 2026-10-28, while closing `docs/tasks/29`.** Not asked for — it goes here because it is a scope
 expansion on a task about motion, and `rules/workflow.md` says that is this file's job.
 
 `rules/ui.md` §Gates names two failure classes no static check sees, and the first one is **a
@@ -105,7 +105,7 @@ it came from. Measured 2026-10-28, after `cd apps/web && bun run build`: **351 u
    `text-[color:var(--color-steel)]`. **A gate that cries wolf teaches people to silence it**,
    which is what `check-contrast.ts` is careful about in its own docstring.
 
-**A claim made here that was false**, recorded because the correction is the useful part. `tasks/29`
+**A claim made here that was false**, recorded because the correction is the useful part. `docs/tasks/29`
 reported that `z-15` is "not on Tailwind's z-index scale of 0/10/20/30/40/50" and that `z-[15]` is
 "the spelling that works". **Both halves are wrong.** Under this repo's Tailwind v4 the `z-<number>`
 namespace is open: `.z-15{z-index:15}` was in the shipped stylesheet when the reviewer checked, and
@@ -122,7 +122,7 @@ uncovered, and a comment at the call site is still the only defence.
 
 ## A script for the claim that exists at N sites and gets fixed at N−1
 
-**Found 2026-10-28, across four verification rounds on `tasks/29`.** Not asked for, and it is a
+**Found 2026-10-28, across four verification rounds on `docs/tasks/29`.** Not asked for, and it is a
 change to how this repo checks itself, so it belongs here and needs its own task and ADR rather
 than being absorbed into a UI task.
 
@@ -208,7 +208,7 @@ with no refactor behind it.
 
 ## Record the 61 missing atom ids in the catalogue
 
-Noted 2026-10-29, from `intuition-integrator`'s review of `tasks/31`. **Not built, and the reviewer's
+Noted 2026-10-29, from `intuition-integrator`'s review of `docs/tasks/31`. **Not built, and the reviewer's
 own argument is why it should not be built there:** task 31 writes nothing to a chain, and "while
 we're at it, the catalogue could also record the other 61" is `workflow.md`'s first drift signal
 verbatim.
@@ -237,7 +237,7 @@ answer rather than preceding it.
 
 ## Decide what a refused redirect means to the probe
 
-Noted 2026-10-29, from `task-verifier`'s fourth round on `tasks/31`. **A known open hole, disclosed
+Noted 2026-10-29, from `task-verifier`'s fourth round on `docs/tasks/31`. **A known open hole, disclosed
 in `docs/22` rather than fixed**, which is the one thing in that document that is a hole and not a
 stated limit.
 

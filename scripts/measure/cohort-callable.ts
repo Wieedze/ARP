@@ -12,7 +12,7 @@
  *  95% CI 42.9-60.3%) and 3 answer one (2.5%, CI 0.8-7.0%). Quote the interval, not the point
  *  estimate — at n=3 the extrapolation spans 741 to 6,160 agents. A declared endpoint that cannot be
  *  probed (templated `{placeholder}`, CAIP or ENS identifier) is skipped, never counted as dead:
- *  see the three groups in `tasks/17-the-external-verifier.md`. */
+ *  see the three groups in `docs/tasks/17-the-external-verifier.md`. */
 import { highestTokenId } from './erc8004-population.js';
 import type { JsonRpcReply } from '../helpers/shapes.js';
 const RPC = 'https://base-rpc.publicnode.com';

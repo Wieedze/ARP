@@ -1,6 +1,6 @@
 # 15 — `strict` is off in the app
 
-**Task:** `tasks/18-strict-is-off-in-the-app.md`
+**Task:** `docs/tasks/18-strict-is-off-in-the-app.md`
 **Completed:** 2026-10-16
 **Commit:** `6b351ee` on `feat/agent-panel-tabs`
 **Verifier verdict:** PASS — `task-verifier` first pass. `ui-reviewer` deliberately not run; see
@@ -70,8 +70,8 @@ file, not the config. The commit message never claimed format clean, which was r
   ran. Both files set `"noEmit": true`, so `tsc` emits nothing and the flag cannot change a byte of
   the bundle — there is no rendered surface for a design review to see. Precedent is not overturned:
   the held `ui-reviewer` gates in `learning/11` and `learning/13` were real UI changes.
-- **`scripts/` left alone.** Recorded at `tasks/19-the-use-edge-and-its-witness.md:35` as "worth its
-  own change — related to `tasks/18`, wider than it", and in `STATE.md`'s defect table. Measured above
+- **`scripts/` left alone.** Recorded at `docs/tasks/19-the-use-edge-and-its-witness.md:35` as "worth its
+  own change — related to `docs/tasks/18`, wider than it", and in `STATE.md`'s defect table. Measured above
   as not zero-cost. Widening would have been the "while we're at it" drift signal firing on a
   one-line commit.
 

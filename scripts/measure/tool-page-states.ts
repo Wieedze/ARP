@@ -89,7 +89,7 @@ for (const row of rows) {
     edges: 0,
     positions: 0,
     // Omitted until 2026-10-27, so the first edge on any tool did `undefined + n` and every
-    // count after it was NaN. Found by `tsconfig.scripts.json`'s first run (`tasks/21`) — the
+    // count after it was NaN. Found by `tsconfig.scripts.json`'s first run (`docs/tasks/21`) — the
     // comment below already explained why the field matters, in a file whose default object
     // did not have it.
     opposePositions: 0,

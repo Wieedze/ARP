@@ -12,7 +12,7 @@
  *  3. an ERC-8004 identity    register() then setAgentURI() on ARP's testnet registry
  *  4. its identity atom       the subject every `uses` edge needs (ADR 0047)
  *  5. three skills            fetched through the content server, so each has a receipt and the
- *                             hook can name its atom (tasks/31)
+ *                             hook can name its atom (docs/tasks/31)
  *  6. the runtime             .claude/settings.json (the hook), .mcp.json (the MCP server),
  *                             CLAUDE.md (the loop), bin/arp-sign (the only thing that signs)
  *  ```

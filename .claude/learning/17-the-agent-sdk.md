@@ -1,6 +1,6 @@
 # 17 — The connector an agent declares through (half 1)
 
-**Task:** `tasks/16-the-agent-sdk.md` — half 1 only; half 2 split out to `tasks/25`
+**Task:** `docs/tasks/16-the-agent-sdk.md` — half 1 only; half 2 split out to `docs/tasks/25`
 **Completed:** 2026-10-19
 **Commit:** `be5bf85` (feature), `63a27dd` (one protocol package), then `be311a6`, `9022321`,
 `a714f25` closing three verifier punch lists, all on `feat/agent-panel-tabs`
@@ -64,7 +64,7 @@ immediately. It also returns legitimate hits (third-party `.well-known` URLs, th
 has to be read rather than piped into `sed`. Recorded in ADR `0041`.
 
 **`sed` over two names that merged into one produces a sentence naming the same package twice.**
-`tasks/16:155` read "come from `@arp-protocol/core` and `@arp-protocol/core`" for three rounds, and
+`docs/tasks/16:155` read "come from `@arp-protocol/core` and `@arp-protocol/core`" for three rounds, and
 no sweep could find it — both names were current.
 
 **A test count has to be re-derived per file, not added up.** `282 = 248 + 34` was arithmetic over a
@@ -82,7 +82,7 @@ the line telling the reader to re-run it pointed at a directory that commit had 
   the enforcer reads it. ADR: `.claude/choices/0040-*.md`.
 - **One protocol package** — `erc8004/` + `sdk/` → `packages/protocol`. ADR:
   `.claude/choices/0041-*.md`, which also carries the stale-path policy and the sweep.
-- **Half 2 deferred** rather than grown — `tasks/25`, as this task file instructed.
+- **Half 2 deferred** rather than grown — `docs/tasks/25`, as this task file instructed.
 
 ## Rules touched
 

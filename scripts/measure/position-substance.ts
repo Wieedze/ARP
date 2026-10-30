@@ -101,5 +101,5 @@ console.log(
 // A module, not a global script. Without this TypeScript treats every top-level
 // `const` here as sharing one scope with every other import-free file in `scripts/`,
 // which produced 21 phantom redeclarations and 20 "await outside a module" errors the
-// first time this directory was typechecked (`tasks/21`). Bun already runs it as a module.
+// first time this directory was typechecked (`docs/tasks/21`). Bun already runs it as a module.
 export {};

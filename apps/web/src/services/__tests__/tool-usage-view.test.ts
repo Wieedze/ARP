@@ -11,7 +11,7 @@ import {
 } from "../tool-usage-view";
 
 /**
- * The fixture is IPFS's shape on mainnet, which `tasks/23` names as the design fixture because its
+ * The fixture is IPFS's shape on mainnet, which `docs/tasks/23` names as the design fixture because its
  * seven incoming edges demonstrate the whole ladder at once: three free assertions beside one
  * priced edge that also has a counter side. If those three ever render like the fourth, the page
  * has failed, so the tests are written against that shape rather than against a tidy one.
@@ -69,7 +69,7 @@ describe("tierForEdge", () => {
     });
 
     it("is NOT fooled by the dust a triple's creation leaves in its vault", () => {
-        // The live defect, and the one tasks/23 predicted in writing. Measured on mainnet
+        // The live defect, and the one docs/tasks/23 predicted in writing. Measured on mainnet
         // 2026-10-19: every created triple's vault holds exactly `minShare` = 1000000 wei with ZERO
         // positions, because creating it deposited that — not because anyone backed it. Infura,
         // Fleek, Pinata and AnyType all declare using IPFS in exactly this state. An earlier
@@ -257,7 +257,7 @@ describe("buildToolUsageView", () => {
  * The two predicates that lived in the page and were each wrong once there.
  *
  * Both are pure functions of the view, and both shipped broken because a `.tsx` is out of reach of
- * this environment (`tasks/26`). They are here now, with the exact shapes that broke them.
+ * this environment (`docs/tasks/26`). They are here now, with the exact shapes that broke them.
  */
 const DUST_WEI = 1_000_000n;
 const OFF_CURVE_WEI = 4_940_000_000_000_000_000n;

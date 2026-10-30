@@ -21,7 +21,7 @@
  *  .arp/skills/<name>/SKILL.md   the bytes, unchanged, so the digest still checks
  *  ```
  *
- *  The hook reads the first and fills `ref`. That is `tasks/31` deliverable 3, and it is the half
+ *  The hook reads the first and fills `ref`. That is `docs/tasks/31` deliverable 3, and it is the half
  *  of the content path that is about identification rather than about evidence.
  *
  *  ## What it verifies before keeping anything
@@ -40,7 +40,7 @@
  *  `ARP_AGENT_PRIVATE_KEY`, optional, used for exactly one off-chain EIP-712 signature so the
  *  receipt can name the caller. **Nothing is sent to a chain and nothing is signed for a chain.**
  *  Without it the fetch still works and the receipt names nobody, which is a served state and not
- *  an error (`tasks/31` §5.3).
+ *  an error (`docs/tasks/31` §5.3).
  */
 import { mkdirSync, writeFileSync, appendFileSync } from 'node:fs';
 import { dirname } from 'node:path';

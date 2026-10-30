@@ -8,7 +8,7 @@
  *
  * ## What it is for
  *
- * `tasks/31`, ADR `0080`. A declaration is the agent's word about the agent. If the node served the
+ * `docs/tasks/31`, ADR `0080`. A declaration is the agent's word about the agent. If the node served the
  * bytes, the node is a second party to that fetch and can sign for it, and the agent's hook log is
  * the other half. **It attests access, never use.**
  *
@@ -28,7 +28,7 @@
  *
  * **Nothing is stored but a listing.** `cache` holds repository file listings, which are public
  * metadata. The content is passed through: a cache of bytes is a mirror, and a mirror is a
- * different product with different obligations (`tasks/31` §9).
+ * different product with different obligations (`docs/tasks/31` §9).
  *
  * **The key signs receipts and cannot move value** (ADR `0080` constraint 3). It is passed in as a
  * signer, so this module cannot sign without being handed the ability, and it never appears in an

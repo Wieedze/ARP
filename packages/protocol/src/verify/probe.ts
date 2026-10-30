@@ -202,7 +202,7 @@ export type ProbeOptions = {
      * `FetchLike`, not `typeof globalThis.fetch`. Under Bun's lib types the global is an **object**
      * carrying `preconnect`, so a counting or caching wrapper — which is the only reason to inject
      * one — could not satisfy it. `scripts/verify-cohort.ts` has such a wrapper and was the thing
-     * that could not typecheck (`tasks/21`). The prober only ever calls it with a string URL.
+     * that could not typecheck (`docs/tasks/21`). The prober only ever calls it with a string URL.
      */
     fetch?: FetchLike;
     /**
@@ -486,7 +486,7 @@ async function probeMcp(url: string, options: ProbeOptions): Promise<ProbeOutcom
  * `…/agent-card.json/.well-known/agent-card.json` first — a path that cannot exist — then a second
  * one, and only then the URL itself, which is what answered. Measured on the 2026-10-27 walk: that
  * is **three requests per endpoint where one would do, 89 times against a single host**, and
- * `tasks/17` calls one request per endpoint per run a hard requirement. The walk's results were
+ * `docs/tasks/17` calls one request per endpoint per run a hard requirement. The walk's results were
  * unaffected (every one of the 89 won on the third candidate) but the courtesy cost was real.
  */
 function a2aCandidates(url: string): string[] {

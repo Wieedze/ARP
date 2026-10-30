@@ -2,7 +2,7 @@
 
 **Status:** Accepted
 **Date:** 2026-10-19
-**Triggered by:** `tasks/16` — found while writing down what the delegated write path is bounded by
+**Triggered by:** `docs/tasks/16` — found while writing down what the delegated write path is bounded by
 
 > **Paths in this ADR predate the 2026-10-19 reorganisation.** Read `erc8004/src/…` as
 > `packages/protocol/src/…` and `@arp-protocol/erc8004` as `@arp-protocol/core`. The text is left as
@@ -69,7 +69,7 @@ is a property of signing with your own key, not a defect in the enforcer, and AD
 
 **Positive:**
 
-- The delegated write path from `tasks/16` is bounded by the cap for **every** call it produces,
+- The delegated write path from `docs/tasks/16` is bounded by the cap for **every** call it produces,
   fees included. That is better than the repo believed, and it is now checkable.
 - `docs/15`'s "two gaps testnet cannot close" is down to one-and-a-half: the mainnet domain mechanism
   is untouched, and the fee gap is narrower than stated.
@@ -83,7 +83,7 @@ is a property of signing with your own key, not a defect in the enforcer, and AD
 **Neutral (worth knowing):**
 
 - This changes no code. Five claims and one rule were wrong; the contract was right all along and
-  has been since `tasks/02b`.
+  has been since `docs/tasks/02b`.
 - The counter-check still holds from ADR `0036`: a fee is non-recoverable and a deposit is not, so
   an operator reading "cap: 1 TRUST" should be told it is a spend cap and not an exposure limit.
 

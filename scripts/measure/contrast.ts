@@ -1,14 +1,14 @@
 /**
  * WCAG contrast for every colour token, against every surface it can land on.
  *
- * `tasks/14` exists because a ratio was **computed** rather than judged: "it looks fine" is how a
+ * `docs/tasks/14` exists because a ratio was **computed** rather than judged: "it looks fine" is how a
  * 3.66:1 token survived review. This is that computation, committed, so the next reviewer re-runs
  * it instead of re-eyeballing it.
  *
  * This used to say "there is no browser in the build environment", which was **false** — Chromium
  * is in the image and `scripts/measure/landing-fit.ts` drives it. The argument does not need it and
  * is stronger without it: a ratio is arithmetic, and a browser would let you look at it rather than
- * compute it, which is the mistake. `tasks/28` item 35 has the other thirteen sites of that claim.
+ * compute it, which is the mistake. `docs/tasks/28` item 35 has the other thirteen sites of that claim.
  *
  *   bun run scripts/measure/contrast.ts
  */
@@ -35,7 +35,7 @@ function luminance(hex: string): number {
   // All three channels linearised. The first draft of this function passed red and green
   // through `channel()` and left **blue raw**, which inflated every luminance by up to 18 and
   // produced a table where `--color-accent` read 2.38:1 against the page. Caught by hand-checking
-  // one cell against the WCAG formula — which is the whole reason `tasks/14` says "measured, not
+  // one cell against the WCAG formula — which is the whole reason `docs/tasks/14` says "measured, not
   // eyeballed": a wrong computation is as confident as a right one.
   return (
     0.2126 * channel((n >> 16) & 255) + 0.7152 * channel((n >> 8) & 255) + 0.0722 * channel(n & 255)

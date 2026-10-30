@@ -1,6 +1,6 @@
 /** ARP's MCP server — the surface an agent reads tool reputation through, and declares through.
  *
- *  Phase 1 of `docs/15_ROADMAP.md`, the first half of `tasks/16`. **Run it yourself** (ADR `0045`):
+ *  Phase 1 of `docs/15_ROADMAP.md`, the first half of `docs/tasks/16`. **Run it yourself** (ADR `0045`):
  *  the invariant is that ARP is never in the path of a request, and code on the operator's machine
  *  is not in the path while a host they must reach is.
  *

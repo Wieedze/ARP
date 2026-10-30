@@ -300,7 +300,7 @@ export async function findAgents(id: JsonRpcId, args: Record<string, unknown>) {
       // `null` stays `null` and is never coerced to `0`. The first draft of this read a field that
       // does not exist (`totalAssets`) and `?? 0n`'d the `undefined`, so it reported **0 TRUST for
       // an agent carrying 13** — ADR `0042`'s family with the sign flipped, and it shipped because
-      // `scripts/` is outside every typecheck (`tasks/21`).
+      // `scripts/` is outside every typecheck (`docs/tasks/21`).
       own_atom_market:
         agent.market === null
           ? null

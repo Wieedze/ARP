@@ -79,7 +79,7 @@ export function AtomPanel() {
      * rather than bouncing through here.
      *
      * `null` is "no identity found", never "not an agent": ARP's own rig agents on 13579 have no
-     * `same as` edge (`tasks/19` step 1b, measured again today — 30,913 such edges on mainnet,
+     * `same as` edge (`docs/tasks/19` step 1b, measured again today — 30,913 such edges on mainnet,
      * none of them ours on testnet), so they stay on this page, which is a complete view of them.
      */
     const agentRef = useAgentRefForAtom(valid ? atomId : null);
@@ -167,7 +167,7 @@ export function AtomPanel() {
                 66-character atom id has no break opportunity at all and must be allowed to wrap
                 mid-token. Across the full width it only bites for an id, which is what it is for.
 
-                `tasks/28` item 39, found while building this control, filed, and then fixed when
+                `docs/tasks/28` item 39, found while building this control, filed, and then fixed when
                 the user saw it — filing a defect is not the same as leaving it. */}
             <h1
                 className={`type-title ${view.titleIsId ? "font-mono" : ""} max-w-[24ch] md:max-w-[32ch]`}

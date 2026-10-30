@@ -2,7 +2,7 @@
 
 **Status:** Accepted
 **Date:** 2026-10-29
-**Triggered by:** `tasks/31` §6, which says this decision needs an ADR because it changes what ARP
+**Triggered by:** `docs/tasks/31` §6, which says this decision needs an ADR because it changes what ARP
 **is**. The user's correction that made it necessary, 2026-10-29: _« si tu passes par ARP pour avoir
 l'accès à une info, alors l'info est calculée quelque part et alors tu peux avoir la preuve de
 l'accès à cette info »_
@@ -84,7 +84,7 @@ Six constraints, and they are the decision rather than commentary on it:
 
 ### The receipt is EIP-712, not the EIP-191 the task sketched
 
-`tasks/31` §5.2 proposed EIP-191 over a canonical encoding. The reason for changing it is specific
+`docs/tasks/31` §5.2 proposed EIP-191 over a canonical encoding. The reason for changing it is specific
 and is the kind of thing that is invisible until it is exploited:
 
 **An atom id is a pure function of its normalised URL** (ADR `0054`). So the same tool has the
@@ -282,7 +282,7 @@ requires, and that constraint now has a concrete consequence rather than only a 
 > **A reader compares the receipt's `node` to the address that made the declaration.** Same hand,
 > and the receipt corroborates nobody — stated, never silently discounted. ARP composes no score
 > (ADR `0046`), so this is a figure a reader sees, exactly like the distinct-declarer count and the
-> declarer-creator overlap in `tasks/31` §8.
+> declarer-creator overlap in `docs/tasks/31` §8.
 
 **That comparison is necessary and not sufficient, which the amendment above sets out.** Equal
 addresses prove one hand; unequal addresses prove nothing, because an operator's node key and their
@@ -329,9 +329,9 @@ its value is:
 Both rows are coherent and they imply different products. The first concentrates the value in a
 node somebody else runs — which is an argument for a hosted one, and therefore against `0045`'s
 unplug test for this path. The second is a self-audit trail, cheap and honest and much weaker than
-`tasks/31` §2 claims when it says _"nobody else can produce that fact"_.
+`docs/tasks/31` §2 claims when it says _"nobody else can produce that fact"_.
 
-**That sentence in `tasks/31` is true only of the first row**, and the task does not say so. It is
+**That sentence in `docs/tasks/31` is true only of the first row**, and the task does not say so. It is
 the strongest claim in the plan and it rests on an unstated assumption about who runs the process.
 
 This is the user's decision and it is not taken here. Nothing in the built code depends on it:
@@ -340,7 +340,7 @@ that needs a key is deliberately not built yet.
 
 ## References
 
-- Triggered by: `tasks/31-arp-serves-the-content-and-signs-the-access.md` §6
+- Triggered by: `docs/tasks/31-arp-serves-the-content-and-signs-the-access.md` §6
 - Code: `packages/protocol/src/receipt.ts`, `packages/protocol/src/content-path.ts`,
   `packages/protocol/src/session.ts`, `scripts/arp-session-hook.ts`
 - Measurement: `data/measurements/skill-layouts-2026-10-29T2200.json`,

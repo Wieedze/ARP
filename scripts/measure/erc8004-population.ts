@@ -7,7 +7,7 @@ import { createPublicClient, http, toFunctionSelector, type Hex } from 'viem';
  *
  * Five measurement scripts imported `./erc8004-population.js`. **The file was never committed** —
  * no git history, no deleted blob — so all five threw on import and had been dead for as long as
- * they existed. Nothing caught it, because `scripts/` was outside every gate (`tasks/21`); the
+ * they existed. Nothing caught it, because `scripts/` was outside every gate (`docs/tasks/21`); the
  * first run of `tsconfig.scripts.json` surfaced it as four `TS2307`s.
  *
  * The implementation below is lifted from `cohort-coverage.ts`, which kept a private copy and so

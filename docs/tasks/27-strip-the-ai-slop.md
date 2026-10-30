@@ -14,7 +14,7 @@
 >    reads. Four slop sentences cut by the table's own tests.
 > 3. `app/src` UI copy — **already clean**: "marketplace" returns nothing, and so do the
 >    apologetic and marketing patterns. `app/README.md` was still the Vite template and is now
->    real (`tasks/28` item 22).
+>    real (`docs/tasks/28` item 22).
 >
 > **Not done**, and not claimed: steps **4** (`docs/` — 16 files, 5,967 lines), **5**
 > (`.claude/rules/` — two sentences cut, the rest untouched) and **6** (31 task files, 65 ADRs,
@@ -29,7 +29,7 @@
 
 The repo has **43 ADRs, 18 post-mortems, 31 task files and 16 docs**, almost all written by me in a
 few weeks. Count them rather than quoting this line:
-`ls .claude/choices/[0-9]*.md .claude/learning/[0-9]*.md tasks/*.md docs/*.md | wc -l`.
+`ls .claude/choices/[0-9]*.md .claude/learning/[0-9]*.md docs/tasks/*.md docs/*.md | wc -l`.
 (The first draft of this sentence said 44, 27 and 15 — three of its four figures wrong, in a task
 file about prose that misstates things. `claims.md` check 5 caught it before the commit.) Three habits have compounded in them:
 
@@ -64,7 +64,7 @@ and the record is half of what this project is.
   assertion.
 - **Scope caveats on a green gate.** `claims.md` check 4. "tsc clean over `app/src`; `scripts/` is
   outside every gate" reads like hedging and is the opposite.
-- **The reason a deferral was deferred**, once it is the true reason. `tasks/23` has one that was
+- **The reason a deferral was deferred**, once it is the true reason. `docs/tasks/23` has one that was
   false for a commit.
 
 ## Order

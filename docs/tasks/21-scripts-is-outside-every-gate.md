@@ -120,7 +120,7 @@ config.
 - Do not relax a flag to make the count smaller. If `strict` is genuinely wrong for a script, say so
   in the task and record why.
 - Do not refactor `scripts/` beyond what the diagnostics require.
-- Do not enable `recommendedTypeChecked` — that is still the separate proposal from `tasks/18`.
+- Do not enable `recommendedTypeChecked` — that is still the separate proposal from `docs/tasks/18`.
 
 ## Which tier of the evidence ladder does this serve?
 

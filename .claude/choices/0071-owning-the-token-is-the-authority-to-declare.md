@@ -2,7 +2,7 @@
 
 **Status:** Accepted
 **Date:** 2026-10-28
-**Triggered by:** `tasks/30`, and the user's instruction — _« on doit finir les feature de
+**Triggered by:** `docs/tasks/30`, and the user's instruction — _« on doit finir les feature de
 decouverte utilisation et toute la boucle »_, with the order settled in the same exchange: the app's
 empty cells first, the catalogue seed after.
 

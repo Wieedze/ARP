@@ -26,7 +26,7 @@ with the code. Read-only audit first, then fixes in small batches.
   - `security.md` no longer says "no signatures".
   - `CLAUDE.md`'s directory map and its mainnet sentence are corrected.
 - Status lines:
-  - `tasks/04c` is marked complete, then set aside.
+  - `docs/tasks/04c` is marked complete, then set aside.
   - `STATE.md` has the corrected test count, remote SHA, task-23 line, hire (task 25) line, and this
     task.
 
@@ -87,7 +87,7 @@ with the code. Read-only audit first, then fixes in small batches.
 18. `packages/protocol/src/arp/client.ts:66-72` has two doc blocks on `TESTNET_DEPLOYMENT`.
     `DEFAULT_CURVE_ID` is defined twice inside the package.
 19. Scripts deep-import `../packages/protocol/src/...` instead of `@arp-protocol/core`, so the public
-    export surface is not what they exercise. (`scripts/` gates are `tasks/21`.)
+    export surface is not what they exercise. (`scripts/` gates are `docs/tasks/21`.)
 
 ### Docs and tracking
 
@@ -121,7 +121,7 @@ with the code. Read-only audit first, then fixes in small batches.
     `0022`. Listed here because it is the kind of defect this task exists for: a factual claim in a
     **hard constraints** section that rotted the day a recorded decision changed the world.
 28. **`docs/09:35`'s "194 `use` edges" does not reproduce**, at six sites: `docs/08:125`,
-    `docs/09:35`, `docs/12:100`, `docs/13:85`, `tasks/08:78`, `tasks/23:49`.
+    `docs/09:35`, `docs/12:100`, `docs/13:85`, `docs/tasks/08:78`, `docs/tasks/23:49`.
     `scripts/measure/predicate-edges.ts` gives 158 / 185 / 120 and gave the same on 2026-10-16, so
     it is a different query and not a stale figure — Intuition has no deletion. Correct all six to
     one measurement with its script; do **not** present 194 → 158 as a change.
@@ -137,10 +137,10 @@ with the code. Read-only audit first, then fixes in small batches.
 
     **No count here on purpose**, which is what `STATE.md` already decided for the same figure and
     this item had not caught up with: the number moves with every commit that touches a markdown
-    file, and five different values are in the repo's own record — 190 (`tasks/21:113`), 142 (this
+    file, and five different values are in the repo's own record — 190 (`docs/tasks/21:113`), 142 (this
     item, as written), 141 (`learning/19:25`), 140 and 214 (both quoted in `STATE.md:247`, where the
     214 turned out to come from a transient `git stash` state rather than from the repo). Run
-    `bunx prettier --check .`. Measured 2026-10-28 for the record: 138, after `tasks/29` formatted
+    `bunx prettier --check .`. Measured 2026-10-28 for the record: 138, after `docs/tasks/29` formatted
     the ten files it touched.
 
 31. **`.claude/choices/INDEX.md` is generated and is never prettier-clean**, so
@@ -152,7 +152,7 @@ with the code. Read-only audit first, then fixes in small batches.
     sees no runtime path, so **a committed script that throws reads as provenance**. Worth a sweep
     of the other `new URL(…, import.meta.url)` sites in `scripts/`.
 
-### Added 2026-10-28, from closing `tasks/29`
+### Added 2026-10-28, from closing `docs/tasks/29`
 
 33. **`ChainToggle.tsx:4` cites ADR `0059`, which does not exist and never did.** No commit ever
     added it — `git log --diff-filter=A -- '.claude/choices/0059*'` is empty — and ADR `0061` says
@@ -164,11 +164,11 @@ with the code. Read-only audit first, then fixes in small batches.
     of the toggle as well as of the change to it. Checked at the same time: `0059` is the **only**
     gap in `0001`-`0070`, and no other file cites it.
 
-34. **Two sites still say `app/` has no DOM test environment**, which `tasks/26` closed on
+34. **Two sites still say `app/` has no DOM test environment**, which `docs/tasks/26` closed on
     2026-10-27 (ADR `0063`): `app/src/services/trust-format.ts:254` and
     `.claude/choices/0029-*.md:128`. The ADR is append-only, so its line is struck through in place
     rather than rewritten; `trust-format.ts`'s is an ordinary comment and is simply wrong. Found by
-    the `tasks/29` verifier, outside that task's scope.
+    the `docs/tasks/29` verifier, outside that task's scope.
 
 35. **"There is no browser in the build environment" is false, and it is written at 14 line sites
     across 12 files.** Measured 2026-10-28 by grepping the word `browser` across every `.md`,
@@ -176,12 +176,12 @@ with the code. Read-only audit first, then fixes in small batches.
 
     | file                                                                      | lines    |
     | ------------------------------------------------------------------------- | -------- |
-    | `tasks/08-agent-trust-panel.md`                                           | 211      |
-    | `tasks/10-agent-directory-full-cohort.md`                                 | 87       |
-    | `tasks/11-import-existing-erc8004-agent.md`                               | 91       |
-    | `tasks/12-agent-panel-tabs.md`                                            | 69       |
-    | `tasks/14-contrast-below-aa.md`                                           | 86       |
-    | `tasks/15-strip-the-panel-copy.md`                                        | 92       |
+    | `docs/tasks/08-agent-trust-panel.md`                                           | 211      |
+    | `docs/tasks/10-agent-directory-full-cohort.md`                                 | 87       |
+    | `docs/tasks/11-import-existing-erc8004-agent.md`                               | 91       |
+    | `docs/tasks/12-agent-panel-tabs.md`                                            | 69       |
+    | `docs/tasks/14-contrast-below-aa.md`                                           | 86       |
+    | `docs/tasks/15-strip-the-panel-copy.md`                                        | 92       |
     | `.claude/learning/10-agent-trust-panel.md`                                | 57, 64   |
     | `.claude/learning/11-agent-directory-full-cohort.md`                      | 114, 157 |
     | `.claude/choices/0029-the-page-states-facts-and-stops-explaining-them.md` | 140      |
@@ -189,9 +189,9 @@ with the code. Read-only audit first, then fixes in small batches.
     | `.github/pull_request_drafts/05-import-erc8004-agent.md`                  | 56       |
     | `scripts/measure/contrast.ts`                                             | 4        |
 
-    **Deliberately not counted**, so the next sweep does not re-litigate them: `tasks/08:227` ("not
+    **Deliberately not counted**, so the next sweep does not re-litigate them: `docs/tasks/08:227` ("not
     in a browser") states a method rather than the premise, and eleven hits of **"no browser flow
-    pins"** (`tasks/06`, `docs/08`, `docs/10`, `choices/0016`, `choices/0026`, two PR drafts) are a
+    pins"** (`docs/tasks/06`, `docs/08`, `docs/10`, `choices/0016`, `choices/0026`, two PR drafts) are a
     different sense of the word — almost certainly where an earlier estimate of "seven places" came
     from. One borderline: `choices/0050:49` rejects an alternative partly because it "would be slow,
     need a browser or a build", an argument leaning on the premise.
@@ -216,8 +216,8 @@ with the code. Read-only audit first, then fixes in small batches.
     - **Five lines are in append-only or immutable files** — `learning/10:57`, `learning/10:64`,
       `learning/11:114`, `learning/11:157`, `choices/0029:140` — so they get a struck-through note
       in place rather than a rewrite.
-    - **The six task files are historical record by choice, not by rule.** Nothing makes `tasks/`
-      append-only, so annotating rather than rewriting them is a judgement; `tasks/29` was rewritten
+    - **The six task files are historical record by choice, not by rule.** Nothing makes `docs/tasks/`
+      append-only, so annotating rather than rewriting them is a judgement; `docs/tasks/29` was rewritten
       four times this week.
 
     **And one convention question this exposed, which is not mine to settle.**
@@ -240,12 +240,12 @@ with the code. Read-only audit first, then fixes in small batches.
     of them, so every route fades in, and **none of them but `/` has the block-level reveal or the
     word scale**. The step is visible the moment you leave the landing page.
 
-    Not a defect in `tasks/29` — explicitly out of its scope, and the user's yes of 2026-10-30
-    explicitly did not cover it either. It is an incoherence now, where before `tasks/29` it was a
+    Not a defect in `docs/tasks/29` — explicitly out of its scope, and the user's yes of 2026-10-30
+    explicitly did not cover it either. It is an incoherence now, where before `docs/tasks/29` it was a
     uniform absence. Read the count off the router rather than from this line (`rules/claims.md`
     §2): a count of routes in a growing router rots.
 
-Overlap: items 21–26 are prose. `tasks/27` (the prose pass) runs after the tool page, so these can
+Overlap: items 21–26 are prose. `docs/tasks/27` (the prose pass) runs after the tool page, so these can
 wait for it unless one misleads a reader before then.
 
 ## Do not do in this task
@@ -260,7 +260,7 @@ wait for it unless one misleads a reader before then.
     `CLAUDE.md`'s hard constraints, `.claude/rules/security.md`'s deployment posture, and `STATE.md`'s
     own constraints list. This one is not among them. Two enforcers are on 1155
     (`data/deployments/1155.json`, `eth_getCode` confirmed 2026-10-27). Found 2026-10-28 while building
-    `tasks/30`; `claims.md` §5 — a sentence written four times gets corrected three.
+    `docs/tasks/30`; `claims.md` §5 — a sentence written four times gets corrected three.
 
 38. **`AtomPanel`'s "Explorer →" link is dead, and so was every term-id link built from that
     pattern.** `app/src/pages/AtomPanel.tsx` points the aside's explorer link at
@@ -269,7 +269,7 @@ wait for it unless one misleads a reader before then.
     `GET https://testnet.explorer.intuition.systems/api/v2/addresses/0x99b0…3710a` answers
     `Invalid format. Expected ~r/^0x([A-Fa-f0-9]{40})$/`, while a real 20-byte address returns a
     balance. The HTML route returns 200 regardless because it is an SPA shell, so the link looks
-    reachable and is not. Found while building `tasks/30`, which **propagated** the same pattern to
+    reachable and is not. Found while building `docs/tasks/30`, which **propagated** the same pattern to
     two new links before a reviewer measured it; those two are fixed (the subject atom goes to the
     app's own `/atom/:atomId`, the edge id went back to plain text). Closed the same day by removing
     the links rather than aiming them elsewhere.
@@ -303,7 +303,7 @@ wait for it unless one misleads a reader before then.
     `Sanct / ioned / Addr / ess`. `.type-title` carries `overflow-wrap: anywhere` so a bare
     66-character atom id can wrap at all, `--text-title` clamps to 76px, and the aside is 18rem =
     288px — "Sanctioned" at 76px needs roughly 400px. The break is the token and the column
-    disagreeing, not a bug in either. Left deliberately while building `tasks/30`: the fix is a
+    disagreeing, not a bug in either. Left deliberately while building `docs/tasks/30`: the fix is a
     layout decision (lower the clamp in a narrow column, widen the aside, or `hyphens: auto` with a
     `lang`, which breaks at syllables with a visible hyphen and reads as typography).
 

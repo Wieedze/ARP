@@ -74,7 +74,7 @@ does not change silently. This ADR is that record.
 
 **Negative:**
 
-- Tasks 02b–05b in `tasks/` still reference the retired check in their own headers. They are complete
+- Tasks 02b–05b in `docs/tasks/` still reference the retired check in their own headers. They are complete
   and historical, so they are left alone; a reader of an old task file will see a check that no longer
   applies. Noted here rather than rewriting shipped history.
 

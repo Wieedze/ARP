@@ -1,6 +1,6 @@
 # 14 — Strip the panel's copy down
 
-**Task:** `tasks/15-strip-the-panel-copy.md`
+**Task:** `docs/tasks/15-strip-the-panel-copy.md`
 **Completed:** 2026-10-16
 **Commit:** `3689e19` (fixes) on `feat/agent-panel-tabs`; implementation `7ccf585`..`99dafd8`
 **Verifier verdict:** PASS — `ui-reviewer` at `3689e19`, `task-verifier` second pass at `d8418b8`.
@@ -73,7 +73,7 @@ stripping explanatory copy, check whether a sentence was carrying a _scale_ and 
 - `.claude/rules/workflow.md` — **sufficient, and load-bearing.** Its scope discipline is what kept
   the `strict` flag out of a UI copy commit. Both reviewers independently reached the same answer:
   zero measured cost is what makes the drift signal fire, not what exempts it. Recorded as
-  `tasks/18-strict-is-off-in-the-app.md`.
+  `docs/tasks/18-strict-is-off-in-the-app.md`.
 - `.claude/rules/code.md` — **violated repo-wide, not by this task.** `app/tsconfig.app.json` has
   never set `strict: true`, which `code.md` calls non-negotiable. Measured: enabling it costs **zero
   errors**, so the app code is already compliant and only the declaration was missing. Consequence

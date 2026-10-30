@@ -105,5 +105,5 @@ the work. Neutralised by the same `prefers-reduced-motion` block as every other 
 **One thing this cost, recorded because only a screenshot could have caught it.** Removing the edge
 meant replacing a span of JSX that ran from the rings to the dots — and the **centre core sat in
 that gap**. The atom disappeared from its own field, every gate stayed green, and the loss was
-visible only in a rendered image. The same lesson as `tasks/29`'s word scale and `tasks/30`'s money
+visible only in a rendered image. The same lesson as `docs/tasks/29`'s word scale and `docs/tasks/30`'s money
 figure: a change that passes `tsc`, `eslint` and 497 tests can still delete the subject of the page.

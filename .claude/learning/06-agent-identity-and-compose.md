@@ -1,6 +1,6 @@
 # 06 — Agent identity + tool composition UI
 
-**Task:** `tasks/04b-agent-identity-and-compose.md`
+**Task:** `docs/tasks/04b-agent-identity-and-compose.md`
 **Completed:** 2026-06-03
 **Commit:** `8da9808` (test suite, last in chain) — preceded by `58f76b6`, `d92b7e3`, `7573b10`, `4632d40`, `1317adf`, `004b30f`, `53216a8`, `f66033f`
 **Verifier verdict:** PASS

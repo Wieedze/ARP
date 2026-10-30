@@ -143,7 +143,7 @@ describe("resolveContentPath", () => {
 
     it("says absent for a skill whose file is not in the repository", () => {
         // 139 of 662 catalogued skills are in this state, and 95 of those sit in a repository with
-        // nothing uncatalogued the name could have been renamed to. `tasks/31` §5.1.
+        // nothing uncatalogued the name could have been renamed to. `docs/tasks/31` §5.1.
         expect(
             resolveContentPath({repo: "magentosh/superpowers", skill: "to-prd"}, MAGENTOSH),
         ).toEqual({status: "absent"});

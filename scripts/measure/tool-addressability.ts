@@ -1,7 +1,7 @@
 import type { GraphqlReply } from '../helpers/shapes.js';
 /** Of the tools agents actually declare, how many are addressable on a chain at all?
  *
- *  The gate of `tasks/22`. That task reads an agent's calldata to witness a tool use without
+ *  The gate of `docs/tasks/22`. That task reads an agent's calldata to witness a tool use without
  *  anyone's cooperation — the strongest evidence class there is — and its own limit section says
  *  the subset it covers is unknown: *"Most tools are not contracts. An MCP server, a REST API, an
  *  LLM call — none leave calldata."*

@@ -1,6 +1,6 @@
 # Task 13 — `code.md` requires a test tool the repo does not have
 
-> **Status: COMPLETE** 2026-10-27, with `tasks/26` — they were one gap. `code.md:86` is
+> **Status: COMPLETE** 2026-10-27, with `docs/tasks/26` — they were one gap. `code.md:86` is
 > satisfiable now: `app/vitest.config.ts` runs `*.test.tsx` on `happy-dom` with
 > `@testing-library/react`. ADR `0063` records the scope move that ADR `0011` had outgrown.
 >

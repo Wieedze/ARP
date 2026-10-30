@@ -1,6 +1,6 @@
 # 20 — ARP serves the content and signs the access
 
-**Task:** `tasks/31-arp-serves-the-content-and-signs-the-access.md`
+**Task:** `docs/tasks/31-arp-serves-the-content-and-signs-the-access.md`
 **Completed:** 2026-10-29 (built, reviewed and closed the same day)
 **Commit:** `0bc29d8`..`280fd4c` on `feat/agent-panel-tabs`
 **Verifier verdict:** PASS — fourth pass. Three FAILs first, nine blockers across them, and
@@ -165,7 +165,7 @@ this repo's own argument says an assertion is worth least.
   did not, which is how `file://` reached `fetch`.
 - **Run the domain reviewer before the verifier, never alongside.** `intuition-integrator` returned
   FAIL with three blockers that the verifier would otherwise have spent a whole pass on — the same
-  lesson `tasks/15` recorded and `workflow.md` already states.
+  lesson `docs/tasks/15` recorded and `workflow.md` already states.
 
 ## Evidence ladder
 

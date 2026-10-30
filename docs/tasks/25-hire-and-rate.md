@@ -12,7 +12,7 @@
 > paid — so the primary actor is an agent writing down what it already used, and discovery is how
 > anyone reads the result.
 >
-> **Status: NOT STARTED** (split out of `tasks/16` on 2026-10-19, which said to do exactly that if
+> **Status: NOT STARTED** (split out of `docs/tasks/16` on 2026-10-19, which said to do exactly that if
 > half 1 grew. It did: the declare-and-deposit half landed as `packages/protocol/src/declare/` plus two MCP
 > tools, 44 tests and four ADRs.)
 >
@@ -25,7 +25,7 @@ The second half of the loop. Half 1 answers "what did this agent use, and what i
 tool. This answers "who should I hire, and was it any good".
 
 ```
-find a candidate for a domain          ← reads the verifier's output (tasks/17) and the tool surface
+find a candidate for a domain          ← reads the verifier's output (docs/tasks/17) and the tool surface
 sign a bounded sub-delegation          ← the buyer's own cap, so the seller needs no relationship
 pay, and get a receipt                 ← an execution receipt is a fact, not a report
 declare (A, uses, B) and stake on B    ← the rating, with no new mechanism
@@ -55,12 +55,12 @@ const job = await hire(candidates[0], { budget, domain }); // bounded sub-delega
 await rate(candidates[0], { amount, side: 'support' }); // (A, uses, B) + stake on the edge
 ```
 
-Names are a suggestion from `tasks/16`. Argue for better ones.
+Names are a suggestion from `docs/tasks/16`. Argue for better ones.
 
 ## Hard constraints
 
 - **Do not invent an agent-rating predicate.** `(A, uses, B)` with B an agent is the rating.
-  `tasks/09` priority 2 records what happened when ARP minted its own predicate: a node its own
+  `docs/tasks/09` priority 2 records what happened when ARP minted its own predicate: a node its own
   connector could not read (ADR `0030`).
 - **The stake goes on the edge**, per ADR `0039`. Same vault as half 1, same reason.
 - **Prepare, do not sign** (ADR `0038`). `hire` returns the sub-delegation to sign and the calls to
@@ -73,9 +73,9 @@ Names are a suggestion from `tasks/16`. Argue for better ones.
 
 ## Depends on
 
-- `tasks/23` — the tool surface. Without a page showing a tool with its weight, `findAgents` returns
+- `docs/tasks/23` — the tool surface. Without a page showing a tool with its weight, `findAgents` returns
   a list nobody can judge.
-- `tasks/17`'s gate at 100 agents, for the candidate list to be worth reading at all.
+- `docs/tasks/17`'s gate at 100 agents, for the candidate list to be worth reading at all.
 
 ## Out of scope
 

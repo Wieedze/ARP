@@ -2,7 +2,7 @@
 
 **Status:** Accepted
 **Date:** 2026-09-17
-**Triggered by:** `tasks/12-agent-panel-tabs.md` — four decisions the task left to judgement, and one
+**Triggered by:** `docs/tasks/12-agent-panel-tabs.md` — four decisions the task left to judgement, and one
 extension of ADR 0018 that a later reader would otherwise read as a violation of it.
 
 ## Context
@@ -145,7 +145,7 @@ foreground weight instead — the device `FreshnessLine` already uses for stale 
 
 ## References
 
-- Related task: `tasks/12-agent-panel-tabs.md`
+- Related task: `docs/tasks/12-agent-panel-tabs.md`
 - Related ADR: `.claude/choices/0018-trust-panel-design-and-join.md` (the alarm colour and the
   evidence scale this extends rather than reopens)
 - Related ADR: `.claude/choices/0017-arp-stakes-real-trust-on-mainnet.md` (why the stake control must

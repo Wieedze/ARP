@@ -1,6 +1,6 @@
 # 08 — Restore the Intuition write path, server-side only
 
-**Task:** `tasks/06-pin-writes-server-side.md`
+**Task:** `docs/tasks/06-pin-writes-server-side.md`
 **Completed:** 2026-09-16
 **Commit:** `f482588` (docs on top of `1e9b92b`)
 **Verifier verdict:** PASS

@@ -39,7 +39,7 @@
  *  A repository's file listing, for `LISTING_TTL_MS`. It is public metadata and it is what saves a
  *  tree request per fetch. **The content is never cached** — it is read from the origin and passed
  *  through, because a cache of bytes is a mirror and a mirror is a different product with different
- *  obligations (`tasks/31` §9).
+ *  obligations (`docs/tasks/31` §9).
  */
 import { chmodSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';

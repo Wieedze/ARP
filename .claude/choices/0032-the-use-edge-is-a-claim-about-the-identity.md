@@ -2,7 +2,7 @@
 
 **Status:** Accepted
 **Date:** 2026-10-16
-**Triggered by:** `tasks/19` step 1b. Measuring before building on the join revealed the join does
+**Triggered by:** `docs/tasks/19` step 1b. Measuring before building on the join revealed the join does
 not exist, and the user chose between the two options the measurement left open.
 
 ## Context
@@ -51,7 +51,7 @@ Consequences of that framing:
 **Positive**
 
 - One write per edge instead of two, and no public connector change.
-- `tasks/19`'s step 1 gate becomes reachable: a triple written by the write path is returned by
+- `docs/tasks/19`'s step 1 gate becomes reachable: a triple written by the write path is returned by
   `getAgentProfile` for the same agent. Nothing in the repo passes that test today.
 - ADR `0026`'s `same as` link stays worth writing for provenance, but **nothing depends on it**. An
   unexecuted write path is no longer load-bearing.
@@ -66,7 +66,7 @@ Consequences of that framing:
 - The 21 stranded triples stay stranded on a `caip10:` subject _as well as_ on an orphan predicate.
   Still not migrable, still testnet, still ~2.1 × 10⁻¹¹ tTRUST.
 - An edge on the identity says nothing about which account did the work. Where that matters — a
-  delegation receipt, an on-chain call (`tasks/22`) — the evidence carries its own account and the
+  delegation receipt, an on-chain call (`docs/tasks/22`) — the evidence carries its own account and the
   edge is the index rather than the record.
 
 **Neutral**

@@ -61,7 +61,7 @@ Both delegations name the runtime EOA as `delegate` and the operator's Smart Acc
 - Related doc: `docs/00_HACKATHON_PIVOT.md` (the recast narrative this ADR enables)
 - Related ADR: `.claude/choices/0009-smart-account-deploy-via-simple-factory.md` (SA must be deployed before delegations are validated)
 - Related ADR: `.claude/choices/0010-scope-reanchor-two-layer-reputation-and-track-selection.md` (the two-layer model this delegation split serves)
-- Related task: `tasks/04c-agent-autonomous-positioning.md`
+- Related task: `docs/tasks/04c-agent-autonomous-positioning.md`
 - Related code:
   - `app/src/lib/caveat-builder.ts` (`composeAndStakeCaveats`, `publishModuleCaveats`)
   - `app/src/services/delegation-redeem.ts` (the agent-side redeem helpers)

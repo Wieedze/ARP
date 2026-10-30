@@ -13,10 +13,10 @@ import type {DeclarePlan, StakePlan} from "./types.js";
  * `getTripleCost()`, 0.1 TRUST on 1155 against 0.001 on 13579 — not that a salary was paid. An agent that composed with another agent declares it here exactly as it
  * declares a tool.
  *
- * `tasks/25`: _"`rate` is `prepareDeclareUsed` plus `prepareStakeOnUsed` where the 'tool' is an
+ * `docs/tasks/25`: _"`rate` is `prepareDeclareUsed` plus `prepareStakeOnUsed` where the 'tool' is an
  * agent. Atoms can be agents or tools or both."_ This is that, and deliberately nothing more — the
  * hard constraint in the same task is **do not invent an agent-rating predicate**, because
- * `tasks/09` records what happened when ARP minted its own: a node its own connector could not read
+ * `docs/tasks/09` records what happened when ARP minted its own: a node its own connector could not read
  * (ADR `0030`). The predicate is `uses`, unchanged.
  *
  * ## The one thing that could not be reused as it stood
@@ -36,7 +36,7 @@ import type {DeclarePlan, StakePlan} from "./types.js";
  *
  * ## No `oppose` here
  *
- * `tasks/25` names `rate(candidate, {amount, side})`. The side is not implemented, and that is a
+ * `docs/tasks/25` names `rate(candidate, {amount, side})`. The side is not implemented, and that is a
  * decision rather than an omission: measured on mainnet 1155 on 2026-10-21, **1 of 185** `uses`
  * edges has ever carried a counter-position (ADR `0056`). A verb called `rate` whose main documented
  * option is the one nobody uses would be describing a mechanism rather than a market. Opposing an

@@ -134,7 +134,7 @@ Hard parts, named now:
 with the _not checkable_ and _we might be wrong_ cases visibly separated from the confirmed facts. A
 reviewer must be able to take any confirmed row and reproduce it with one `curl`.
 
-Full spec and the measured table: `tasks/17-the-external-verifier.md`.
+Full spec and the measured table: `docs/tasks/17-the-external-verifier.md`.
 
 ### Phase 2 — hire
 

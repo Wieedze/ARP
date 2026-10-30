@@ -1,6 +1,6 @@
 # 05 — Smart Account + Delegation SDK Integration
 
-**Task:** `tasks/03b-smart-account-integration.md`
+**Task:** `docs/tasks/03b-smart-account-integration.md`
 **Completed:** 2026-06-03
 **Commit:** `50bd274` (phases 2-4), `bc80950` (phase 1)
 **Verifier verdict:** PASS

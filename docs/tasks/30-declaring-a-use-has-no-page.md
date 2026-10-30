@@ -107,14 +107,14 @@ which 0.1 never comes back. **Opening it is one deleted guard plus an ADR the us
 `docs/09` §3 — asserted, rated, staked, proven. This serves **staked**, and it moves ARP up the
 ladder by making the rung reachable: every `uses` edge written here is born with a position (ADR
 `0053`) and carries a non-recoverable fee (ADR `0056` §1), so the claim costs its author money. It
-does not reach **proven** — that needs the counterparty, which is `docs/14` and `tasks/19` step 1b.
+does not reach **proven** — that needs the counterparty, which is `docs/14` and `docs/tasks/19` step 1b.
 
 ## Found while building, not fixed here
 
 `app/src/lib/wagmi.ts`'s docstring asserts _"No ARP contract is deployed on 1155 and none is
 addressed from it."_ That is the false mainnet sentence ADR `0065` corrected, at a **fourth** site —
 `STATE.md`'s defect table lists three (`CLAUDE.md`, `security.md`, `STATE.md` itself) and this is not
-among them. `claims.md` §5: a sentence written four times gets corrected three. Added to `tasks/28`.
+among them. `claims.md` §5: a sentence written four times gets corrected three. Added to `docs/tasks/28`.
 
 ## `ui-reviewer` round 1: FAIL, seven findings, all fixed
 
@@ -237,7 +237,7 @@ and both are reachable whatever the atom's size.
 | F   | fixes 2 and 3 shipped with no tests                                                                  | the block is rewritten for the disclosures, with an order regression and an `open === false` assertion |
 | nit | the `min()` width clamp was credited with the phone fit; it only engages below 252px                 | comment corrected                                                                                      |
 
-E's pattern is **pre-existing** in the same file's "Explorer →" link and is recorded as `tasks/28`
+E's pattern is **pre-existing** in the same file's "Explorer →" link and is recorded as `docs/tasks/28`
 item 38 rather than fixed here.
 
 ### What the two rounds cost, and what that says
@@ -321,7 +321,7 @@ beginning" drawn, which the ADR calls false when 40 were withdrawn.
 Rendered through the existing `Sparkline`, which is hand-rolled SVG and adds no dependency. One
 thing it inherits is a rule breach: that component strokes in Saffron, which `ui.md` reserves for
 the primary action, the selected state and the viewer's own position. Pre-existing at two call
-sites, now three, filed as `tasks/28` item 41 rather than changed silently across three surfaces.
+sites, now three, filed as `docs/tasks/28` item 41 rather than changed silently across three surfaces.
 
 ### The market leads, and its backers are a list
 
@@ -341,7 +341,7 @@ held" is a different question from "by whom".
 
 **Each row leads somewhere real.** The account's own atom when the graph has one — keeping the
 reader in the app and the graph walkable both ways — and the block explorer otherwise, where a
-20-byte address _does_ resolve, unlike the 32-byte term ids of `tasks/28` item 38.
+20-byte address _does_ resolve, unlike the 32-byte term ids of `docs/tasks/28` item 38.
 
 Two things stated rather than hidden. The list is capped at **100** rows by the indexer, where
 `atoms` and `triples` cap at 250, so its length is not the count: `TermShape.positionCount` comes
@@ -479,7 +479,7 @@ So `/atom/:atomId` sends an agent's atom on to its panel, `replace` so Back retu
 came from. Every link in the app now converges on one page whatever id it was holding.
 
 **`null` means "no identity found", never "not an agent".** ARP's own testnet agents have no
-`same as` edge — `tasks/19` step 1b's blocker, seen from the other side — so they stay on the atom
+`same as` edge — `docs/tasks/19` step 1b's blocker, seen from the other side — so they stay on the atom
 page, which is a complete view of them. The degradation is tested, not assumed.
 
 And the page waits for **both** reads before drawing: rendering the atom view while the identity is
@@ -528,7 +528,7 @@ Two causes, and only one of them was a bug.
 
 **The bug.** `AgentSigil` fed on `sigilModulesOf(view.capabilities)`, and the capability groups are
 built by resolving the agent's ERC-8004 identity to its Intuition atom — the `same as` join
-`tasks/19` step 1b records as **zero edges on testnet**. So every rig agent's glyph returned `null`
+`docs/tasks/19` step 1b records as **zero edges on testnet**. So every rig agent's glyph returned `null`
 while its declarations plainly existed: the user reported it on an agent whose glyph was rendering
 **in the claim rows of a tool's page**, one screen away. Those rows query by the subject's **atom
 id**, which the panel already has as `atomTermId`. Same read, no join. The capability walk stays as
@@ -544,7 +544,7 @@ glyph because that agent declared nothing.
 **A third thing, found while checking, unrelated and recorded.** `/agent/13579/4` answers
 _"No agent there"_: the page resolves against the **canonical** registry address
 `0x8004A169…e539a432` on chain 13579, and `data/deployments/13579.json` records `identityRegistry: null`.
-So ARP's own testnet rig agents have no reachable agent page at all. Filed as `tasks/28` item 42.
+So ARP's own testnet rig agents have no reachable agent page at all. Filed as `docs/tasks/28` item 42.
 
 ### A tool's glyph is the sigil inverted
 
@@ -586,7 +586,7 @@ chains get `undefined`, which lets the package apply its canonical default — t
 Base, and the decision `rules/portability.md` wants the package to keep making alone.
 
 Verified in a browser: `/agent/13579/4` now resolves against `0xC165A2AD…b4490d5A` and **the sigil
-renders**. `tasks/28` item 42 is closed by this.
+renders**. `docs/tasks/28` item 42 is closed by this.
 
 ### The nav marker followed the wrong section
 

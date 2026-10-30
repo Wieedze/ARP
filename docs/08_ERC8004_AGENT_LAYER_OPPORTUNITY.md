@@ -542,7 +542,7 @@ construction. `INTUITION_PIN_API_KEY` is documented in `.env.example` with an ex
 the `VITE_` prefix, and `bun run verify:pin` validates the key while also proving the canonical
 agent-atom recipe reproduces byte-for-byte.
 
-Execution plan: `tasks/06-pin-writes-server-side.md`. Phase 1 (O1 + O6) is read-side and does not
+Execution plan: `docs/tasks/06-pin-writes-server-side.md`. Phase 1 (O1 + O6) is read-side and does not
 wait on it.
 
 ---

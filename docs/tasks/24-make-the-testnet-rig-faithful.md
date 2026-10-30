@@ -3,7 +3,7 @@
 > **Status: COMPLETE, WITH STEP 3 DEFERRED** 2026-10-19 · commits `2587883`..`5787660` ·
 > post-mortem `.claude/learning/16-make-the-testnet-rig-faithful.md` · `task-verifier` PASS on the
 > third round. Phase 0 of `docs/15_ROADMAP.md`, which **Phase 0 does not close** — step 3 is
-> deferred to `tasks/19` step 1b, and `docs/15` says so.
+> deferred to `docs/tasks/19` step 1b, and `docs/15` says so.
 >
 > Three verifier rounds, and what failed each time was the record rather than the rig: two
 > vacuous tests, an unreproducible number, a false header, a count of commits wrong four times,
@@ -79,7 +79,7 @@ classification, not the capability recovery. The rig looks complete and exercise
    > by raw `eth_call`, which is a different path from the one that will hit Base. The task's own
    > Gate does not test it, which is how it slipped past the first verification.
    >
-   > **Owned by `tasks/19` step 1b's successor**, because the two are the same problem seen from two
+   > **Owned by `docs/tasks/19` step 1b's successor**, because the two are the same problem seen from two
    > sides: on mainnet an agent's identity is on Base 8453 and its atom on 1155, joined by `same as`,
    > and _nothing_ resolves that join today — ADR `0032` chose the registration-derived atom as the
    > subject, and `scripts/measure/caip10-join.ts` shows zero edges exist to make the join. Doing it
@@ -98,7 +98,7 @@ classification, not the capability recovery. The rig looks complete and exercise
 - Do not host the registration files anywhere ARP has to keep running. A `data:` URI is how 18 of
   the sampled mainnet agents do it and it has no uptime obligation.
 - Do not fabricate a CID. `ensureAtomForURI` already minted 18 permanent testnet atoms for strings
-  like `ipfs://bafkreislither…` that are not valid CIDs (`tasks/20` appendix). If a file is pinned,
+  like `ipfs://bafkreislither…` that are not valid CIDs (`docs/tasks/20` appendix). If a file is pinned,
   pin it for real.
 - Do not deploy anything. Everything needed is already on 13579.
 

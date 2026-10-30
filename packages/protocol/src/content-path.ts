@@ -6,7 +6,7 @@
  *
  * ## Why this is not a formula
  *
- * `tasks/31` planned `GET /content/:atomId`. An atom id is a pure function of its normalised URL
+ * `docs/tasks/31` planned `GET /content/:atomId`. An atom id is a pure function of its normalised URL
  * (ADR `0054`), so the endpoint can recover `github.com/<owner>/<repo>?skill=<name>` without asking
  * anyone. **It cannot recover the path**, and `raw.githubusercontent.com` needs one.
  *
@@ -38,7 +38,7 @@
  * signature. `session.ts` refuses an ambiguous *name* for the same reason — a false claim that cost
  * something is worse on this project's ladder than no claim at all.
  *
- * The 139 are the finding rather than the defect, and `tasks/31` §5.1 records it: 95 of them sit in
+ * The 139 are the finding rather than the defect, and `docs/tasks/31` §5.1 records it: 95 of them sit in
  * a repository with no uncatalogued directory, so there is nothing there the name could have been
  * renamed to. The file the catalogue points at is not in the repository. That is a **per-skill
  * liveness signal** anyone can re-derive with one listing request, which is sharper than `archived`

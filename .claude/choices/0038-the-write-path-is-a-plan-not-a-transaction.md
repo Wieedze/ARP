@@ -2,7 +2,7 @@
 
 **Status:** Accepted
 **Date:** 2026-10-19
-**Triggered by:** `tasks/16` — the connector an agent declares through
+**Triggered by:** `docs/tasks/16` — the connector an agent declares through
 
 > **Paths in this ADR predate the 2026-10-19 reorganisation.** Read `erc8004/src/…` as
 > `packages/protocol/src/…` and `@arp-protocol/erc8004` as `@arp-protocol/core`. The text is left as

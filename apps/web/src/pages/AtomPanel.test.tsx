@@ -8,7 +8,7 @@ import {AtomPanel} from "./AtomPanel";
 /**
  * The page's states, rendered.
  *
- * `tasks/26`: the six defects that survived three review rounds were all about **what the DOM
+ * `docs/tasks/26`: the six defects that survived three review rounds were all about **what the DOM
  * contains** — a figure printed beside a banner denying it, a live region that was not one, copy
  * describing a layout the page did not have. None of them is reachable from a node environment,
  * and all of them are one assertion away here.
@@ -368,7 +368,7 @@ describe("one page per agent", () => {
 
     it("stays on the atom page when no identity is found, which is the rig's case", async () => {
         // `null` is "no identity found", never "not an agent". ARP's own testnet agents have no
-        // `same as` edge (`tasks/19` step 1b; measured 2026-10-28 — 30,913 on mainnet, none ours on
+        // `same as` edge (`docs/tasks/19` step 1b; measured 2026-10-28 — 30,913 on mainnet, none ours on
         // testnet), and this page is a complete view of them.
         refRead.mockResolvedValue(null);
         read.mockResolvedValue(standing());

@@ -198,7 +198,7 @@ export function AtomMarket({
                 for the list and for it to be clickable, so each row leads somewhere real: the
                 account's own atom when the graph has one — keeping the reader in the app and the
                 graph walkable both ways — and the block explorer otherwise, where a 20-byte address
-                does resolve (unlike a 32-byte term id, which is `tasks/28` item 38).
+                does resolve (unlike a 32-byte term id, which is `docs/tasks/28` item 38).
 
                 The length is **not** the count: the indexer caps `positions` at 100 rows, where
                 `atoms` and `triples` cap at 250. `Positions` in the shape panel below comes from an
