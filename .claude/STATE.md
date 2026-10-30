@@ -37,6 +37,8 @@ directory.
 
 ## Where the work is right now
 
+**The repo was sorted by kind on 2026-10-30, ADR `0086`.** Data now lives under `data/` (`catalogue/`, `deployments/`, `measurements/`). Tasks, the design handoffs and references are under `docs/`. The flat scripts went into `scripts/{agent,seed,build,verify,demo,deploy}/`. The ADR's table maps every old path to its new one; read an older commit's paths through it.
+
 **The catalogue's unit changed from the repository to the skill, 2026-10-29 — 662 skills on testnet
 13579, each tagged.** ADR `0077`. The 31 skill repositories hold 662 skills between them (71 in
 one, 1 in another), and skills.sh counts installations per skill because

@@ -2,7 +2,7 @@
 
 **Generated** 2026-10-30 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-84 decisions. Newest last. `choices/README.md` says when to write one.
+85 decisions. Newest last. `choices/README.md` says when to write one.
 
 ## Not accepted
 
@@ -101,3 +101,4 @@ Read these before relying on them.
 | [0083](0083-the-hire-receipt-is-eip712-named-like-erc8004.md) | 2026-10-30 | Accepted | The hire receipt is EIP-712, names the agent like ERC-8004, and uses the payment as its nonce |
 | [0084](0084-a-worker-in-front-of-github-and-skills-sh.md) | 2026-10-30 | Accepted | A Worker in front of GitHub and skills.sh, as a cache and never a source |
 | [0085](0085-an-agent-with-no-wallet-generates-its-own-key.md) | 2026-10-30 | Accepted | An agent with no wallet generates its own key, and a funder covers the gas for now |
+| [0086](0086-the-repo-is-sorted-by-kind.md) | 2026-10-30 | Accepted | The repo is sorted by kind: code, data, docs, scripts |

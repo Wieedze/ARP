@@ -280,22 +280,24 @@ ARP/
 │       ├── enforcers/              ← DomainScopeEnforcer, TrustStakeCapEnforcer
 │       └── erc8004/                ← IdentityRegistry + interfaces
 ├── scripts/                        ← personal tooling, never imported by apps/ or packages/
-│   ├── helpers/                    ← what several scripts share (shapes, send-plan, pinning)
-│   ├── test/                       ← `bun run test:scripts`
-│   ├── demo-adopt.ts               ← an agent from nothing to a readable position
-│   ├── demo-hire.ts                ← a second agent discovers, calls, verifies, rates
-│   ├── helpers/send-plan.ts        ← the ONLY place that signs
-│   ├── pin-tool.ts                 ← make a derived tool atom readable
+│   ├── agent/                      ← plan as an agent: mint, identity atom, declare, send a plan
+│   ├── seed/                       ← write the catalogue to the chain
+│   ├── build/                      ← generate the files the app bundles
+│   ├── verify/                     ← re-check a claim against the chain
+│   ├── demo/                       ← demo-adopt (nothing → a readable position), demo-hire
+│   ├── deploy/                     ← three-phase contract deploy
 │   ├── measure/*.ts                ← every number in this repo is re-runnable from one of these
-│   ├── deploy.sh                   ← three-phase contract deploy
-│   └── agent-server*.ts, agent-loop.ts, agent-auditor.ts
-│                                     ← the set-aside hackathon surface (ADR 0033). Historical
-│                                       record, not a dependency. Do not copy from them
+│   ├── sandbox/                    ← a Claude Code sandbox that walks the whole loop on testnet
+│   ├── helpers/                    ← what several scripts share. helpers/send-plan.ts is the ONLY
+│   │                                 place that signs
+│   └── test/                       ← `bun run test:scripts`
 ├── skills/arp/SKILL.md             ← PUBLISHABLE: how to USE ARP with nothing installed.
 │                                     `.claude/skills/arp-contributing/` is the other one —
 │                                     how to work ON this repo
-├── schemas/                        ← JSON schemas for seed modules
-├── data/deployments/                    ← Deployed addresses per network (13579.json, 1155.json)
+├── data/                           ← committed data, no code
+│   ├── catalogue/                  ← curated tools and skills, the domain tree
+│   ├── deployments/                ← deployed addresses per network (13579.json, 1155.json)
+│   └── measurements/               ← raw output of a measurement, one file per run
 ├── FUTURE.md                       ← asked for, deliberately not built yet
 ├── docs/                           ← Strategic + architectural reference
 │   ├── 12_THE_IDEA.md              ← THE canonical mechanism. Read this first
@@ -306,9 +308,11 @@ ARP/
 │   ├── 08–11                       ← analysis, NOT commitment. They drifted; 12 corrects them
 │   ├── 00_HACKATHON_PIVOT.md       ← historical record (deadline 2026-06-15, past)
 │   ├── 13_THE_THREE_FLOWS.md, 14_THE_WITNESS_PROBLEM.md, 15_ROADMAP.md
-│   └── 16_THE_AGENT_PAGE.md, 17_THE_ATOM_PAGE.md
-│                                   ← design briefs, handed to a design agent. Not decisions
-├── docs/tasks/                          ← Atomic work units
+│   ├── 16_THE_AGENT_PAGE.md, 17_THE_ATOM_PAGE.md
+│   │                               ← design briefs, handed to a design agent. Not decisions
+│   ├── tasks/                      ← atomic work units
+│   ├── design/                     ← design handoffs and references
+│   └── reference/                  ← third-party material kept for reading
 └── .claude/                        ← Claude operating layer (rules, skills, agents, ADRs, post-mortems)
 ```
 

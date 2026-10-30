@@ -147,9 +147,13 @@ ARP/
 │   ├── 20_WHAT_A_SKILL_LOOKS_LIKE_ON_CHAIN.md   (and the open classification question — whether a
 │   │                                skill matching no keyword gets a tag at all)
 │   ├── 21_RUNNING_THE_LOOP.md
-│   └── 22_RUNNING_THE_NODE.md       (the operator-facing account: every file, every env var,
-│                                     every outbound connection, and what it does NOT protect)
-├── docs/tasks/                             atomic task files
+│   ├── 22_RUNNING_THE_NODE.md       (the operator-facing account: every file, every env var,
+│   │                                every outbound connection, and what it does NOT protect)
+│   ├── tasks/                       atomic task files
+│   ├── design/                      design handoffs and references: `arp-design-handoff/` (the
+│   │                                build contract, ADR `0057`), `arp-motion-reference/`, the
+│   │                                page and claim-field ports
+│   └── reference/                   third-party material kept for reading, not citing
 ├── contracts/                         Solidity (Foundry)
 ├── apps/                              what RUNS (ADR 0082)
 │   ├── web/                           TypeScript UI. Bound to testnet at module load, deliberately
@@ -166,20 +170,24 @@ ARP/
 │       │                              Never signs, never sends (ADR 0038); no chain constant
 │       └── src/arp/                   ARP's OWN contracts (the folded-in `sdk/`) — the one place
 │                                      here that names a chain: `TESTNET_DEPLOYMENT`
-├── scripts/                           personal tooling — measure/, helpers/ (shared), test/, and flat
-│                                      agent-*, verify-*, demo-*. Typechecked by `check:scripts`, tested
-│                                      by `test:scripts`, linted by nothing. apps/ and packages/ never
-│                                      import it — not even their tests
+├── data/                              committed data, no code
+│   ├── catalogue/                     the curated tool and skill lists, the domain tree
+│   ├── deployments/                   per-chain deployment records
+│   └── measurements/                  raw output of a committed measurement, kept so a figure in a
+│                                      doc can be re-derived without asking a third party again.
+│                                      One file per run, never regenerated (ADR `0064`)
+├── scripts/                           personal tooling, sorted by what it does: agent/ (plan and
+│                                      sign as an agent), seed/ (write the catalogue to the chain),
+│                                      build/ (generate files the app bundles), verify/, demo/,
+│                                      deploy/, measure/, sandbox/, helpers/ (shared), test/.
+│                                      Typechecked by `check:scripts`, tested by `test:scripts`,
+│                                      linted by nothing. apps/ and packages/ never import it —
+│                                      not even their tests
 ├── skills/arp/SKILL.md                **publishable** — how to USE ARP with nothing installed
 │                                      (ADR 0052). The one for working ON this repo is
 │                                      `.claude/skills/arp-contributing/` — renamed because one
 │                                      character of difference was not enough and the author
 │                                      himself opened the wrong file
-├── schemas/                           JSON Schemas for modules
-├── data/deployments/                       per-chain deployment records
-├── data/measurements/                      raw output of a committed measurement, kept so a figure in a
-│                                      doc can be re-derived without asking a third party again.
-│                                      One file per run, never regenerated (ADR `0064`)
 └── .claude/                           Claude operating layer
     ├── README.md                      (this directory explained)
     ├── STATE.md                       ← **read this second, after CLAUDE.md**
