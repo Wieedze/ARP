@@ -1,4 +1,4 @@
-import {useEffect, useLayoutEffect, useRef} from "react";
+import {Fragment, useEffect, useLayoutEffect, useRef} from "react";
 
 import {retimeWords} from "./words-timing";
 
@@ -68,11 +68,14 @@ export function Words({text, className = ""}: {text: string; className?: string}
         <span className={`arp-words ${className}`}>
             <span className="sr-only">{text}</span>
             <span aria-hidden="true" ref={ref}>
+                {/* The space goes **between** the spans, not inside them. `.arp-word` is an
+                    inline-block, and a trailing space inside one is dropped at the end of its own
+                    box, so the headline rendered as "Thereputation pulsefor…". */}
                 {words.map((word, index) => (
-                    <span key={`${index}-${word}`} className="arp-word">
-                        {word}
+                    <Fragment key={`${index}-${word}`}>
+                        <span className="arp-word">{word}</span>
                         {index < words.length - 1 ? " " : null}
-                    </span>
+                    </Fragment>
                 ))}
             </span>
         </span>

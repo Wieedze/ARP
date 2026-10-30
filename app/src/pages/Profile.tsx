@@ -84,7 +84,7 @@ function Positions({view}: {view: ProfileView}) {
                     A position appears when you back a tool or an agent.
                 </p>
                 <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2">
-                    <Link to="/register" className={linkClass}>
+                    <Link to="/register?what=tool" className={linkClass}>
                         Register a tool →
                     </Link>
                     <Link to="/tools" className={linkClass}>

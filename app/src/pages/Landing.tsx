@@ -1,4 +1,4 @@
-import type {CSSProperties} from "react";
+import {useEffect, useState, type CSSProperties} from "react";
 import {Link} from "react-router-dom";
 import type {RecentDeclaration} from "@arp-protocol/core";
 
@@ -17,6 +17,7 @@ import {heroControlClass, linkClass} from "../lib/control-class";
 import {groupRecent} from "../services/recent-declarations-view";
 import {formatTrust, relativeDay, truncateMiddle} from "../services/trust-format";
 import {cssVars} from "../lib/css-vars";
+import {parseToolLabel, primaryNameOf} from "../lib/tool-label";
 
 /**
  * `/` — the front page, as six scenes that hand over through Saffron.
@@ -54,14 +55,6 @@ import {cssVars} from "../lib/css-vars";
  * were on its sample list and why they look invented. Measured on the running page, 2026-10-28:
  * the DOM contains exactly those two amounts and zero sample names.
  */
-/**
- * The rail's names, in scene order. `MOTION-V2.md` §3's own headings for the six.
- *
- * Here and not in the deck: a name belongs beside the scene it describes, and the deck has no
- * business knowing what its scenes are about.
- */
-const SCENE_NAMES = ["Pulse", "What you see", "Why", "For you", "No score", "Build"] as const;
-
 /**
  * How many declarations the page asks for.
  *
@@ -107,7 +100,7 @@ export function Landing() {
     const fee = cost.data === undefined ? "—" : `${formatTrust(cost.data.fee)} ${chain.symbol}`;
 
     return (
-        <SceneDeck names={SCENE_NAMES}>
+        <SceneDeck>
             <ScenePulse read={read} />
             <SceneRecord read={read} />
             <SceneWhy fee={fee} />
@@ -159,21 +152,13 @@ function ScenePulse({read}: {read: Read<RecentDeclaration[]>}) {
                 <h1 className="type-face text-[clamp(36px,4.4vw,60px)]">
                     <Words text="The reputation pulse for autonomous agents and tools." />
                 </h1>
-                {/* One move after the title, with no stagger inside it — the answer to a headline
-                    is one sentence, and staggering it would read as a second headline. */}
-                <Reveal index={1} afterMs={AFTER_TITLE}>
-                    <p className="max-w-[44ch] text-[length:18px] leading-[1.45] text-[color:var(--color-silver)]">
-                        Every beat is someone paying to say what they saw.
-                    </p>
-                </Reveal>
+                {/* The sentence under the title and the "or build against it" link were cut by
+                    the user, 2026-10-29: the call to action follows the title directly. */}
                 <Reveal index={1} afterMs={AFTER_TITLE}>
                     <div className="flex flex-wrap items-center gap-5">
                         <Link to="/agents" className={heroControlClass}>
                             Open the agent index
                         </Link>
-                        <a href="#build" className={`font-mono text-[12px] ${linkClass}`}>
-                            or build against it →
-                        </a>
                     </div>
                 </Reveal>
                 <Reveal fade index={2} afterMs={AFTER_TITLE + 160}>
@@ -195,20 +180,48 @@ function ScenePulse({read}: {read: Read<RecentDeclaration[]>}) {
 const AFTER_TITLE = 780;
 
 /**
- * The newest declaration, under the call to action.
+ * How long the pulse card holds one declaration before the next. Long enough to read a line, and
+ * held while the pointer or the keyboard is on the card.
+ */
+const BEAT_MS = 4000;
+
+/**
+ * The recent declarations, one at a time, under the call to action.
+ *
+ * It showed the newest and nothing else, so the card read as a static label. It now walks the
+ * page it already read, newest first and round again (the user, 2026-10-29: _« la card pourrait
+ * afficher différentes infos qui changent, comme prévu à la base »_). Nothing new is fetched.
  *
  * Real or absent. The reference shows `0.10 TRUST · vault-auditor uses github.com/crytic/slither`
  * as sample data; on mainnet today the honest version of that card is empty, and saying so is the
  * page's most load-bearing sentence.
+ *
+ * **Not a live region.** It was `aria-live="polite"` when it changed once per load; a card that
+ * changes every four seconds would interrupt a screen reader every four seconds. It holds still
+ * under `prefers-reduced-motion`, and on hover or focus, so it can be read.
  */
 function Beat({read}: {read: Read<RecentDeclaration[]>}) {
     const chain = useChainChoice();
     const rows = read.status === "ok" ? read.data : [];
-    const newest = rows[0];
+    const [beat, setBeat] = useState(0);
+    const [held, setHeld] = useState(false);
+    const count = rows.length;
+
+    useEffect(() => {
+        if (count < 2 || held) return;
+        if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
+        const id = window.setInterval(() => setBeat((value) => value + 1), BEAT_MS);
+        return () => window.clearInterval(id);
+    }, [count, held]);
+
+    const newest = count === 0 ? undefined : rows[beat % count];
 
     return (
         <div
-            aria-live="polite"
+            onMouseEnter={() => setHeld(true)}
+            onMouseLeave={() => setHeld(false)}
+            onFocus={() => setHeld(true)}
+            onBlur={() => setHeld(false)}
             className="flex min-w-[min(20rem,70vw)] max-w-[26rem] flex-col gap-1 rounded-[var(--radius-button)] border border-[color:var(--color-rule-strong)] bg-[color:var(--color-bg)]/90 px-3.5 py-3"
         >
             <span className="flex items-center gap-2 border-b border-[color:var(--color-rule)] pb-2 font-mono text-[10px] uppercase tracking-[0.06em] text-[color:var(--color-steel)]">
@@ -912,8 +925,11 @@ function Dot({on, className = ""}: {on: boolean; className?: string}) {
     );
 }
 
+/** Names only: a tool's label is its URL, and the card prints the skill or `owner/repo` of it. */
 function label(end: {atomId: string; label: string | null}): string {
-    return end.label ?? truncateMiddle(end.atomId, 8, 6);
+    return end.label === null
+        ? truncateMiddle(end.atomId, 8, 6)
+        : primaryNameOf(parseToolLabel(end.label));
 }
 
 /** The three beats of Fig. 02. The fee is the chain's, read at call time. */

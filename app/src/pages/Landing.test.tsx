@@ -1,5 +1,5 @@
 import {describe, expect, it, vi, beforeEach} from "vitest";
-import {screen, waitFor} from "@testing-library/react";
+import {act, screen, waitFor} from "@testing-library/react";
 import type {RecentDeclaration} from "@arp-protocol/core";
 
 import {renderWithProviders} from "../test/render";
@@ -111,8 +111,9 @@ describe("Landing", () => {
         const {container} = renderWithProviders(<Landing />);
         await waitFor(() => expect(cost).toHaveBeenCalled());
 
+        // None since 2026-10-29, when the user cut "or build against it →". The guard stays for
+        // the next one rather than asserting that one exists.
         const anchors = [...container.querySelectorAll('a[href^="#"]')];
-        expect(anchors.length).toBeGreaterThan(0);
         for (const anchor of anchors) {
             const id = (anchor.getAttribute("href") ?? "").slice(1);
             expect(container.querySelector(`#${id}`), `no target for #${id}`).not.toBeNull();
@@ -174,6 +175,35 @@ describe("Landing", () => {
         expect(await screen.findByText(/Agent One uses Slither/)).toBeTruthy();
     });
 
+    it("walks the recent declarations, and names a tool by its name, not its URL", async () => {
+        vi.useFakeTimers({shouldAdvanceTime: true});
+        try {
+            recent.mockResolvedValue([
+                declaration({
+                    tripleId: "0x01",
+                    subject: {atomId: "a", label: "Agent One"},
+                    object: {
+                        atomId: "t1",
+                        label: "github.com/obra/superpowers?skill=brainstorming",
+                    },
+                }),
+                declaration({
+                    tripleId: "0x02",
+                    subject: {atomId: "b", label: "Agent Two"},
+                    object: {atomId: "t2", label: "github.com/crytic/slither"},
+                }),
+            ]);
+            renderWithProviders(<Landing />);
+            expect(await screen.findByText("Agent One uses brainstorming")).toBeTruthy();
+            await act(async () => {
+                vi.advanceTimersByTime(4000);
+            });
+            expect(await screen.findByText("Agent Two uses crytic/slither")).toBeTruthy();
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
     it("groups one query two ways, so both cards of Fig. 01 read real edges", async () => {
         recent.mockResolvedValue([
             declaration({
@@ -230,13 +260,25 @@ describe("Landing", () => {
         }
     });
 
-    it("says where the reader is, which the rail shipped without", async () => {
+    it("shows no scene counter and no rail, which the user removed", async () => {
         const {container} = renderWithProviders(<Landing />);
         await waitFor(() => expect(cost).toHaveBeenCalled());
 
-        // `MOTION-V2.md` §2.1.6. The dots alone shipped first while `SceneRail`'s own docstring
-        // already described the name beside them — the kind of comment `rules/code.md` forbids.
-        expect(container.textContent).toContain("01 / 06 · Pulse");
+        // The user, 2026-10-29: the `01 / 06 · PULSE` label and the dots on the right go.
+        expect(container.textContent).not.toMatch(/\d{2} \/ \d{2}/);
+    });
+
+    it("keeps a space between the headline's words", async () => {
+        const {container} = renderWithProviders(<Landing />);
+        await waitFor(() => expect(cost).toHaveBeenCalled());
+
+        // Each word is an inline-block, which drops a space at the end of its own box. The space
+        // has to sit between the boxes, or the headline reads "Thereputation pulsefor".
+        const words = container.querySelector("h1 [aria-hidden='true']");
+        expect(words?.textContent).toBe("The reputation pulse for autonomous agents and tools.");
+        for (const word of words?.querySelectorAll(".arp-word") ?? []) {
+            expect(word.textContent).not.toMatch(/\s/);
+        }
     });
 
     it("keeps the headline as one sentence for assistive technology", async () => {

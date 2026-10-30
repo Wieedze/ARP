@@ -2,6 +2,7 @@ import {type ReactNode} from "react";
 import {Link, useLocation} from "react-router-dom";
 
 import {SourceMark} from "./SourceMark";
+import {NAV_HEIGHT} from "./nav-height";
 
 /**
  * The nav: items left, **the mark in the middle**, items right.
@@ -48,7 +49,7 @@ import {SourceMark} from "./SourceMark";
  *
  * | path | section |
  * | --- | --- |
- * | `/agent`, `/agent/import` | Your agent — one operator's own |
+ * | `/agent`, `/agent/import` | redirects to `/register?what=agent` since 2026-10-29 |
  * | `/agent/8453/6649` | Agents — somebody else's, reached from the directory |
  * | `/agents` | Agents |
  *
@@ -58,7 +59,6 @@ import {SourceMark} from "./SourceMark";
 const SECTION_PATHS: Record<string, (pathname: string) => boolean> = {
     // An agent detail is `/agent/<numeric chain>/<token>`; `/agent/import` is not.
     "/agents": (pathname) => pathname === "/agents" || /^\/agent\/\d+\//.test(pathname),
-    "/agent": (pathname) => pathname === "/agent" || pathname === "/agent/import",
 };
 
 function NavLink({to, children}: {to: string; children: ReactNode}) {
@@ -110,9 +110,9 @@ export function NavSplit({left, right}: {left: ReactNode; right: ReactNode}) {
         // scene deck, which assumed it (ADR `0066`).
         //
         // `docs/18` §5 already called the nav fixed furniture that should not move between routes,
-        // and the deck is built around a nav 88px tall: its stage reserves that band with
-        // `pt-[88px]`, and the Saffron cover computes its reach from the farthest corner **below**
-        // y=88 on the premise that something covers the rest. A static header made all three
+        // and the deck is built around a nav `NAV_HEIGHT` tall: its stage reserves that band, and
+        // the Saffron cover computes its reach from the farthest corner **below** it on the
+        // premise that something covers the rest. A static header made all three
         // wrong at once — the reserved band showed bare ground on all six screens, and the cover
         // fell 16–68px short of a top corner at the exact frame a scene swaps, which is the
         // visible cut the design says was fixed.
@@ -120,13 +120,16 @@ export function NavSplit({left, right}: {left: ReactNode; right: ReactNode}) {
         // The background is load-bearing and not decoration: without it the deck's fixed field
         // canvas (`z-0`) and its Saffron veil (`z-[15]`) both pass behind the nav's text.
         <header className="sticky top-0 z-20 border-b border-[color:var(--color-rule)] bg-[color:var(--color-ground)] px-6">
-            <div className="mx-auto flex min-h-[88px] w-full max-w-[1320px] flex-col items-center gap-y-3 py-3 md:grid md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] md:items-center">
+            <div
+                className="mx-auto flex w-full max-w-[1320px] flex-col items-center gap-y-3 py-3 md:grid md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] md:items-center"
+                style={{minHeight: NAV_HEIGHT}}
+            >
                 <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 md:justify-end md:pr-[clamp(14px,4vw,48px)]">
                     {left}
                 </div>
 
                 <Link to="/" aria-label="ARP, home" className="flex items-center justify-center">
-                    <SourceMark size={56} />
+                    <SourceMark size={40} />
                 </Link>
 
                 <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 md:justify-start md:pl-[clamp(14px,4vw,48px)]">

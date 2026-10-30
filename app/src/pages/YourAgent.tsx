@@ -49,7 +49,7 @@ import {
 
 const BRANCH_PARAM = "have";
 
-export function YourAgent() {
+export function YourAgent({heading = true}: {heading?: boolean} = {}) {
     const [searchParams, setSearchParams] = useSearchParams();
     const branch = searchParams.get(BRANCH_PARAM);
 
@@ -70,9 +70,12 @@ export function YourAgent() {
 
     return (
         <section>
-            <header className="mt-8 mb-10">
-                <h1 className="type-display">Your agent</h1>
-            </header>
+            {/* No title inside `/register`, which carries its own. */}
+            {heading ? (
+                <header className="mt-8 mb-10">
+                    <h1 className="type-display">Your agent</h1>
+                </header>
+            ) : null}
 
             <fieldset className="border-0 p-0 m-0">
                 <legend className="text-[length:var(--text-body)] font-medium">
@@ -103,7 +106,7 @@ export function YourAgent() {
     );
 }
 
-function Choice({
+export function Choice({
     selected,
     onClick,
     children,
@@ -422,7 +425,7 @@ function Minted({result}: {result: MintResult}) {
                 </a>
             </p>
             <Link
-                to={`/agent?have=yes`}
+                to={`/register?what=agent&have=yes`}
                 className={`mt-4 inline-block text-[length:var(--text-body-sm)] ${linkClass}`}
             >
                 Now link your staking account →

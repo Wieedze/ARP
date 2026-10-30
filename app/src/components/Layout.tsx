@@ -77,13 +77,14 @@ export function Layout({children}: {children: ReactNode}) {
                     <>
                         <NavLink to="/agents">Agents</NavLink>
                         <NavLink to="/tools">Tools</NavLink>
-                        {isConnected ? <NavLink to="/profile">My profile</NavLink> : null}
+                        {isConnected ? <NavLink to="/profile">Invest</NavLink> : null}
                     </>
                 }
                 right={
                     <>
-                        <NavLink to="/agent">Your agent</NavLink>
-                        <NavLink to="/register">Add a tool</NavLink>
+                        {/* One item for one act: registering an agent or a tool is a choice made
+                            on the page (user, 2026-10-29), not two doors in the nav. */}
+                        <NavLink to="/register">Register</NavLink>
                         <ChainToggle />
                         <WalletConnect />
                     </>

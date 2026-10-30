@@ -30,7 +30,7 @@ import {formatTrust, truncateMiddle} from "../services/trust-format";
  * question — a market on the tool itself, open to anyone for any reason". This screen is that
  * question.
  */
-export function ToolRegister() {
+export function ToolRegister({heading = true}: {heading?: boolean} = {}) {
     const actions = useToolRegister();
     const {isConnected, chainId} = useAccount();
     const {switchChainAsync, isPending: isSwitching} = useSwitchChain();
@@ -86,12 +86,15 @@ export function ToolRegister() {
 
     return (
         <section>
-            <header className="mt-8 mb-12">
-                <h1 className="type-display">Register a tool</h1>
-                <p className="mt-3 max-w-[64ch] text-[color:var(--color-steel)]">
-                    The same URL always lands on the same market, whoever registers it.
-                </p>
-            </header>
+            {/* No title inside `/register`, which carries its own. */}
+            {heading ? (
+                <header className="mt-8 mb-12">
+                    <h1 className="type-display">Register a tool</h1>
+                    <p className="mt-3 max-w-[64ch] text-[color:var(--color-steel)]">
+                        The same URL always lands on the same market, whoever registers it.
+                    </p>
+                </header>
+            ) : null}
 
             <div className="max-w-[48rem]">
                 <label

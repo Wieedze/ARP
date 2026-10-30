@@ -1,8 +1,9 @@
 import {lazy, Suspense} from "react";
-import {Navigate, Route, Routes, useParams} from "react-router-dom";
+import {Navigate, Route, Routes, useLocation, useParams} from "react-router-dom";
 
 import {PageLoading} from "./components/brand/PageLoading";
 import {RouteTransition} from "./components/brand/RouteTransition";
+import {ScrollToTop} from "./components/brand/ScrollToTop";
 
 import {Layout} from "./components/Layout";
 import {AgentRegister} from "./pages/AgentRegister";
@@ -13,9 +14,6 @@ import {AgentRegister} from "./pages/AgentRegister";
  * the app needs, and most visits never open them.
  */
 const Profile = lazy(() => import("./pages/Profile").then((module) => ({default: module.Profile})));
-const ToolRegister = lazy(() =>
-    import("./pages/ToolRegister").then((module) => ({default: module.ToolRegister})),
-);
 const AgentDirectory = lazy(() =>
     import("./pages/AgentDirectory").then((module) => ({default: module.AgentDirectory})),
 );
@@ -23,8 +21,8 @@ const AgentTrustPanel = lazy(() =>
     import("./pages/AgentTrustPanel").then((module) => ({default: module.AgentTrustPanel})),
 );
 const Landing = lazy(() => import("./pages/Landing").then((module) => ({default: module.Landing})));
-const YourAgent = lazy(() =>
-    import("./pages/YourAgent").then((module) => ({default: module.YourAgent})),
+const Register = lazy(() =>
+    import("./pages/Register").then((module) => ({default: module.Register})),
 );
 /**
  * The tool surface is split for the same reason and measured: importing it statically grew the
@@ -43,6 +41,7 @@ const ToolCatalog = lazy(() =>
 function App() {
     return (
         <Layout>
+            <ScrollToTop />
             {/* The third motion scale, and the one that has to be hardest to notice (`docs/18`
                 §5): the arriving page fades in over 200ms, opacity only, and back and forward
                 swap with no transition at all. Why there is no out-fade is in the component. */}
@@ -69,19 +68,14 @@ function App() {
                     appeared in no nav, so the only way to reach either was to know the URL (user,
                     2026-10-27). `?have=yes|no` carries the branch, so it is shareable and Back
                     returns to the question. */}
-                    <Route
-                        path="/agent"
-                        element={
-                            <Suspense fallback={<RouteFallback label="your agent" />}>
-                                <YourAgent />
-                            </Suspense>
-                        }
-                    />
+                    {/* Now a branch of `/register` (user, 2026-10-29). Redirected with its query, so a
+                    link carrying `?have=` still lands on the branch it named. */}
+                    <Route path="/agent" element={<AgentRedirectToRegister />} />
                     {/* The old spelling of the "yes" branch. Redirected, not removed: it is linked from
                     commits, ADRs and task files. */}
                     <Route
                         path="/agent/import"
-                        element={<Navigate to="/agent?have=yes" replace />}
+                        element={<Navigate to="/register?what=agent&have=yes" replace />}
                     />
                     {/* The five-step testnet bring-up, named for what it is. It mints into ARP's **own**
                     copy of the registry on 13579, designates a runtime wallet, deploys a Smart
@@ -121,8 +115,8 @@ function App() {
                     <Route
                         path="/register"
                         element={
-                            <Suspense fallback={<RouteFallback label="register a tool" />}>
-                                <ToolRegister />
+                            <Suspense fallback={<RouteFallback label="register" />}>
+                                <Register />
                             </Suspense>
                         }
                     />
@@ -181,3 +175,11 @@ function RouteFallback({label}: {label: string}) {
 }
 
 export default App;
+
+/** `/agent?have=yes` → `/register?what=agent&have=yes`: the branch moved, the query did not. */
+function AgentRedirectToRegister() {
+    const {search} = useLocation();
+    const params = new URLSearchParams(search);
+    params.set("what", "agent");
+    return <Navigate to={`/register?${params.toString()}`} replace />;
+}

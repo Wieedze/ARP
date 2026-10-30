@@ -1,6 +1,7 @@
 import {useEffect, useRef} from "react";
 
 import {CORE_FRACTION, RINGS_GEOMETRY, TILT, clamp, lerp, smooth} from "./source-field-geometry";
+import {NAV_HEIGHT} from "./nav-height";
 
 /**
  * The hero's field, and the Saffron that carries every hand-over.
@@ -47,7 +48,7 @@ const MAX_DPR = 2;
 const ZOOM_MAX = 70;
 
 /** The sticky nav's height (`NavSplit`). The field centres in what is left of the viewport. */
-const NAV = 88;
+const NAV = NAV_HEIGHT;
 
 /** Dot sizes in `source-field-geometry` are px at this rim, so every size scales from it. */
 const TUNED_RIM = 300;
@@ -321,7 +322,7 @@ function drawSeeds(
         const start = height * seed.r0;
 
         // The farthest **visible** corner. The nav is `sticky top-0 z-20` with an opaque
-        // `--color-ground` background and is 88px tall, so it covers the veil's top band and a
+        // `--color-ground` background and is `NAV_HEIGHT` tall, so it covers the veil's top band and a
         // disc that reaches the real top corners has already covered more than the reader can see.
         // Getting this wrong the other way left a dark sliver that snapped shut at the end instead
         // of closing — and it was wrong here for a different reason until 2026-10-28, when the nav

@@ -4,6 +4,7 @@ import {SceneContext} from "./scene-context";
 import {GONE, handOver, heroClear, opensAt} from "./scene-hand-over";
 import {SourceField} from "./SourceField";
 import {clamp} from "./source-field-geometry";
+import {NAV_HEIGHT} from "./nav-height";
 
 /**
  * A scroll-driven sequence of full-viewport scenes: one at a time, handing over through Saffron.
@@ -78,7 +79,7 @@ const SETTLE = 300;
 
 /** `NavSplit`'s height. It is `sticky top-0 z-20`, so the stage reserves this band and the
  *  deck's negative margin puts band 0 at the top of the page. */
-const NAV = 88;
+const NAV = NAV_HEIGHT;
 
 function canPin(): boolean {
     if (typeof window === "undefined") return false;
@@ -86,20 +87,7 @@ function canPin(): boolean {
     return window.innerHeight >= MIN_HEIGHT && window.innerWidth >= MIN_WIDTH;
 }
 
-export function SceneDeck({
-    children,
-    /**
-     * One short name per scene, for the rail's `02 / 06 · NAME` label.
-     *
-     * A prop rather than something read off the children, because the name belongs beside the
-     * scene it describes — which is the page, not the deck — and introspecting children for a
-     * `data-name` would make the deck care what its scenes render.
-     */
-    names = [],
-}: {
-    children: ReactNode;
-    names?: readonly string[];
-}) {
+export function SceneDeck({children}: {children: ReactNode}) {
     const scenes = Children.toArray(children);
     const ref = useRef<HTMLDivElement | null>(null);
     const [pinned, setPinned] = useState(false);
@@ -204,7 +192,7 @@ export function SceneDeck({
             window.scrollY + deck.getBoundingClientRect().top + index * window.innerHeight;
 
         /** Owned as soon as the deck is under the nav, not once its top has reached 0 — otherwise
-         *  the first 88px scroll natively and the first notch is spent before anything plays.
+         *  the first `NAV` px scroll natively and the first notch is spent before anything plays.
          *
          *  An arrow rather than a `function`, and so is `go` below: TypeScript carries the
          *  non-null narrowing of `deck` into a closure created after the guard, but not into a
@@ -383,11 +371,13 @@ export function SceneDeck({
             // actually visible, which clips a pinned scene. Harmless above `MIN_WIDTH`, correct
             // below it. The negative margin puts band 0 at the top of the page, so the first notch
             // plays the dive instead of scrolling the stage into place.
-            className="arp-deck-pinned -mt-[88px]"
-            style={{height: `${scenes.length * 100}svh`}}
+            className="arp-deck-pinned"
+            style={{height: `${scenes.length * 100}svh`, marginTop: -NAV}}
         >
-            <SceneRail count={scenes.length} active={active} names={names} />
-            <div className="sticky top-0 flex h-[100svh] items-center overflow-hidden pt-[88px]">
+            <div
+                className="sticky top-0 flex h-[100svh] items-center overflow-hidden"
+                style={{paddingTop: NAV}}
+            >
                 <SourceField pinned progress={progress} />
                 <div className="relative z-[1] w-full">
                     {scenes.map((scene, index) => {
@@ -505,55 +495,5 @@ function StackedScenes({scenes}: {scenes: readonly ReactNode[]}) {
                 </div>
             ))}
         </div>
-    );
-}
-
-/**
- * The progress rail: one mark per scene, the active one filled, and `02 / 06 · NAME` below it.
- *
- * Without it a pinned deck gives no sense of how long the story is, and a scrollbar that moves
- * while the screen does not is disorienting on its own. The label is the half that says *where* —
- * `MOTION-V2.md` §2.1.6 — and the dots alone shipped first while this docstring already described
- * it, which is the kind of comment `rules/code.md` forbids.
- *
- * `aria-hidden` on both: the active scene is the only one in the accessibility tree, so a reader
- * using one is never lost in the way this exists to answer, and "02 / 06" announced on every step
- * would be noise.
- */
-function SceneRail({
-    count,
-    active,
-    names,
-}: {
-    count: number;
-    active: number;
-    names: readonly string[];
-}) {
-    const pad = (value: number) => String(value).padStart(2, "0");
-    return (
-        <>
-            <div
-                className="pointer-events-none fixed right-6 top-1/2 z-10 hidden -translate-y-1/2 flex-col gap-2 lg:flex"
-                aria-hidden="true"
-            >
-                {Array.from({length: count}, (_, index) => (
-                    <span
-                        key={index}
-                        className={`h-[6px] w-[6px] rounded-full transition-colors duration-200 ${
-                            index === active
-                                ? "bg-[color:var(--color-accent)]"
-                                : "bg-[color:var(--color-rule-strong)]"
-                        }`}
-                    />
-                ))}
-            </div>
-            <p
-                className="pointer-events-none fixed bottom-[22px] right-6 z-10 hidden font-mono text-[length:var(--text-label)] uppercase tracking-[0.08em] text-[color:var(--color-steel)] lg:block"
-                aria-hidden="true"
-            >
-                {pad(active + 1)} / {pad(count)}
-                {names[active] === undefined ? null : ` · ${names[active]}`}
-            </p>
-        </>
     );
 }
