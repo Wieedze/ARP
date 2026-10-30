@@ -26,21 +26,32 @@
  */
 import type {Hex} from "viem";
 
-/** Where an entry came from. `mine` is this browser; `chain` is anybody. */
-export type ActivityStream = "mine" | "chain";
+/**
+ * Where an entry came from. `mine` is this browser; `agent` is the operator's agent, read from the
+ * local feed (`apps/mcp/src/activity-feed.ts`); `chain` is anybody.
+ *
+ * `agent` is a third stream and not a kind of `mine`: those entries were recorded by programs on
+ * this machine — the runtime hook, the skill fetcher, the signer — and this browser only relays
+ * them. The one exception is `confirmed`, which this browser read from the chain itself.
+ */
+export type ActivityStream = "mine" | "agent" | "chain";
 
 /**
  * Which moment of the loop an entry belongs to.
  *
- * The first four are `docs/12`'s own sequence and exist only on `mine`. `confirmed` is a receipt
- * from the chain for something `mine` sent. `landed` is somebody else's write, seen from outside.
+ * The first five are `docs/12`'s own sequence and exist on `mine` and `agent`. `stake` is a deposit
+ * behind a declaration, and `simulated` a call priced and estimated but never signed. `confirmed`
+ * is a receipt from the chain for something `mine` or `agent` sent. `landed` is somebody else's
+ * write, seen from outside.
  */
-type ActivityStep =
+export type ActivityStep =
     | "discovery"
     | "access"
     | "receipt"
     | "invocation"
     | "declaration"
+    | "stake"
+    | "simulated"
     | "confirmed"
     | "landed"
     | "refused";
@@ -59,6 +70,8 @@ export type ActivityEvent = {
     readonly tx?: Hex;
     /** Wei, as a decimal string. A number would lose precision on any real figure. */
     readonly costWei?: string;
+    /** The chain `costWei` was spent on, which decides its unit. Absent means testnet 13579. */
+    readonly chainId?: number;
     /**
      * What makes this entry the same event as another one, for a producer that re-reads.
      *

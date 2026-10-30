@@ -1,6 +1,7 @@
 /** Read a runtime's session log and name what it invoked.
  *
  *      bun run apps/mcp/src/session-log.ts [--log .arp/session.jsonl]
+ *      bun run apps/mcp/src/session-log.ts --serve [--dir .arp] [--port 3003]
  *
  *  A thin reader. The resolution lives in `@arp-protocol/core` (`src/session.ts`), where it is
  *  pure and tested — a function that decided what ARP asserts had no business importing a file
@@ -8,12 +9,26 @@
  */
 import { readFileSync } from 'node:fs';
 
+import { DEFAULT_ACTIVITY_ORIGINS, DEFAULT_ACTIVITY_PORT, serveActivity } from './activity-feed.js';
 import { catalogueFor } from './content.js';
 import { parseSessionLog, resolveInvocations } from '@arp-protocol/core';
 
 function arg(name: string): string | undefined {
   const index = process.argv.indexOf(`--${name}`);
   return index === -1 ? undefined : process.argv[index + 1];
+}
+
+// `--serve`: the same records, streamed to a browser on this machine (`activity-feed.ts`).
+if (process.argv.includes('--serve')) {
+  const dir = arg('dir') ?? process.env['ARP_ACTIVITY_DIR'] ?? '.arp';
+  const port = Number(arg('port') ?? process.env['ARP_ACTIVITY_PORT'] ?? DEFAULT_ACTIVITY_PORT);
+  const extra = (process.env['ARP_ACTIVITY_ORIGINS'] ?? '')
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter((origin) => origin.length > 0);
+  const feed = await serveActivity({ dir, port, origins: [...DEFAULT_ACTIVITY_ORIGINS, ...extra] });
+  console.log(`activity feed  http://127.0.0.1:${feed.port}/events  reading ${dir}`);
+  await new Promise<never>(() => {});
 }
 
 const path = arg('log') ?? process.env['ARP_SESSION_LOG'] ?? '.arp/session.jsonl';

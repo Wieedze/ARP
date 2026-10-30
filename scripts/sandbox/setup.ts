@@ -291,6 +291,7 @@ const BUN = process.execPath;
 const MCP = join(REPO, 'apps/mcp/dist/arp-server.js');
 const FETCH = join(REPO, 'apps/mcp/dist/arp-fetch-skill.js');
 const HOOK = join(REPO, 'apps/hook/dist/arp-hook.js');
+const SESSION_LOG = join(REPO, 'apps/mcp/dist/arp-session-log.js');
 
 const files: Record<string, string> = {
   '.mcp.json': JSON.stringify(
@@ -310,7 +311,13 @@ const files: Record<string, string> = {
     {
       enableAllProjectMcpServers: true,
       hooks: {
-        PostToolUse: [{ matcher: '*', hooks: [{ type: 'command', command: `${BUN} ${HOOK}` }] }],
+        // Both events, async, as task 33a wires it: a failed call reaches only the second.
+        PostToolUse: [
+          { matcher: '*', hooks: [{ type: 'command', command: `${BUN} ${HOOK}`, async: true }] },
+        ],
+        PostToolUseFailure: [
+          { matcher: '*', hooks: [{ type: 'command', command: `${BUN} ${HOOK}`, async: true }] },
+        ],
       },
       permissions: {
         // The agent signs through bin/arp-sign and never sees the key. These keep it that way.
@@ -328,7 +335,13 @@ const files: Record<string, string> = {
 # The key is read from ${KEY_FILE} by the signer process and never printed.
 set -euo pipefail
 set -a; . "${KEY_FILE}"; set +a
-exec "${BUN}" "${join(REPO, 'scripts/agent/agent-send-plan.ts')}" --chain ${CHAIN_ID} --plan "$1" --key SANDBOX_AGENT_KEY "\${@:2}"
+exec "${BUN}" "${join(REPO, 'scripts/agent/agent-send-plan.ts')}" --chain ${CHAIN_ID} --plan "$1" --key SANDBOX_AGENT_KEY --log .arp/sent.jsonl "\${@:2}"
+`,
+  'bin/arp-activity': `#!/usr/bin/env bash
+# The local activity feed: streams .arp/ to the web app's activity bar and /activity page.
+# Read-only, 127.0.0.1 only. Leave it running in a terminal during a demo.
+set -euo pipefail
+exec "${BUN}" "${SESSION_LOG}" --serve --dir .arp "$@"
 `,
   'bin/arp-fetch-skill': `#!/usr/bin/env bash
 # Fetch a catalogued skill through ARP's content server and install it as a Claude Code skill.

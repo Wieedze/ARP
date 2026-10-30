@@ -13,6 +13,9 @@ import {AgentRegister} from "./pages/AgentRegister";
  * pull the ERC-8004 connector and its graph transport, which nothing else in
  * the app needs, and most visits never open them.
  */
+const ActivityPage = lazy(() =>
+    import("./pages/ActivityPage").then((module) => ({default: module.ActivityPage})),
+);
 const Profile = lazy(() => import("./pages/Profile").then((module) => ({default: module.Profile})));
 const AgentDirectory = lazy(() =>
     import("./pages/AgentDirectory").then((module) => ({default: module.AgentDirectory})),
@@ -146,6 +149,15 @@ function App() {
                     ADRs and in whatever anybody bookmarked. `AtomRedirect` because `Navigate` cannot
                     carry a param through. */}
                     <Route path="/tool/atom/:atomId" element={<AtomRedirect />} />
+                    {/* What the operator's agent triggered and declared, from the local feed. */}
+                    <Route
+                        path="/activity"
+                        element={
+                            <Suspense fallback={<RouteFallback label="activity" />}>
+                                <ActivityPage />
+                            </Suspense>
+                        }
+                    />
                 </Routes>
             </RouteTransition>
         </Layout>

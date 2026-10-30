@@ -234,11 +234,23 @@ ARP_ACCEPTED_SIGNERS   comma-separated. Which receipt signers THIS server's read
 ARP_CHAIN_ID           which chain's catalogue apps/mcp/src/session-log.ts reads
 ARP_SESSION_LOG        where the hook writes. Default .arp/session.jsonl
 ARP_RECEIPTS           where fetches are recorded. Default .arp/receipts.jsonl
+ARP_ACTIVITY_DIR       session-log.ts --serve only: the directory it tails. Default .arp
+ARP_ACTIVITY_PORT      session-log.ts --serve only: its port. Default 3003, on 127.0.0.1
+ARP_ACTIVITY_ORIGINS   session-log.ts --serve only: comma-separated origins added to the CORS list
 ```
 
 `GITHUB_TOKEN` is the only one that is a credential, it is read server-side only, and it is sent to
 `api.github.com` and nowhere else. It needs **no scopes** — public repository listings are public.
 Give it none.
+
+**`session-log.ts --serve` opens a second listener**, and only when asked: the activity feed the web
+app's activity bar reads (ADR `0091`). It binds `127.0.0.1:3003`, reads `.arp/session.jsonl`,
+`receipts.jsonl` and `sent.jsonl`, and writes nothing. It makes no outbound connection. CORS
+answers only for the web app's origins (Vite's ports on `localhost` and `127.0.0.1`, plus
+`ARP_ACTIVITY_ORIGINS`). A request whose `Host` is not `127.0.0.1:<port>` or `localhost:<port>`
+gets 403, which is what stops a DNS-rebinding page that CORS alone would let through. What it
+serves is your agent's record: skill and MCP names, receipts, transaction hashes, the signer's
+address. Run it only while you want a browser to see that.
 
 ## The key, and what losing it would cost you
 

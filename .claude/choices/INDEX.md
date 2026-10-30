@@ -2,7 +2,7 @@
 
 **Generated** 2026-10-30 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-90 decisions. Newest last. `choices/README.md` says when to write one.
+91 decisions. Newest last. `choices/README.md` says when to write one.
 
 ## Not accepted
 
@@ -109,3 +109,4 @@ Read these before relying on them.
 | [0089](0089-one-installer-one-package-thin-manifests.md) | 2026-10-30 | Accepted | One installer: one npm package, a thin native manifest per runtime |
 | [0089](0089-the-probe-is-not-the-pulse.md) | 2026-10-30 | Accepted | The probe is not the pulse |
 | [0090](0090-what-the-hook-records.md) | 2026-10-30 | Accepted | What the hook records: outcome and identity, never content or credentials |
+| [0091](0091-the-agent-s-activity-reaches-the-browser-through-a-local-feed.md) | 2026-10-30 | Accepted | The agent's activity reaches the browser through a local, read-only feed |

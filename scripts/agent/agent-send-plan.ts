@@ -12,7 +12,7 @@
  *  `@arp-protocol/core` must never hold a key (ADR `0038`): the connector plans, the agent's own
  *  runtime signs.
  */
-import { readFileSync } from 'node:fs';
+import { appendFileSync, readFileSync } from 'node:fs';
 
 import { formatEther } from 'viem';
 
@@ -27,7 +27,7 @@ const chainArg = arg('chain');
 const planPath = arg('plan');
 if (!chainArg || !planPath) {
   console.error(
-    'usage: --chain <id> --plan <file.json> [--key AGENT_PRIVATE_KEY] [--execute]\n' +
+    'usage: --chain <id> --plan <file.json> [--key AGENT_PRIVATE_KEY] [--execute] [--log <file.jsonl>]\n' +
       '  The plan is a JSON array of prepared calls with `value` as a decimal string.',
   );
   process.exit(1);
@@ -74,6 +74,37 @@ if (!Number.isInteger(skip) || skip < 0 || skip >= parsed.length) {
 const calls = skip > 0 ? parsed.slice(skip) : parsed;
 if (skip > 0) console.log(`resuming   skipping the first ${skip} call(s) of ${parsed.length}`);
 
+// `--log <file>`: one JSON line per call, dry or sent, for the activity feed
+// (`apps/mcp/src/activity-feed.ts`). Written after the run, when the signer is known; a plan is a
+// handful of calls, so nothing is lost that the console did not also print.
+const logPath = arg('log');
+type Landed = { index: number; hash: string | null; status: string; gasUsed: bigint | null };
+const landed: Landed[] = [];
+/** A dry run logs every call as `dry`; a real run logs only the calls that reached the chain. */
+function writeLog(dry: boolean, signer: string): void {
+  if (logPath === undefined) return;
+  const rows = dry
+    ? calls.map((_, index) => ({ index, hash: null, status: 'dry', gasUsed: null }))
+    : landed;
+  const lines = rows.map((row) => {
+    const call = calls[row.index]!;
+    return JSON.stringify({
+      at: new Date().toISOString(),
+      chainId: Number(chainArg),
+      status: row.status === 'dry' ? 'dry' : row.status === 'success' ? 'success' : 'reverted',
+      hash: row.hash,
+      signer,
+      to: call.to,
+      value: String(call.value),
+      gasUsed: row.gasUsed === null ? null : row.gasUsed.toString(),
+      kind: call.kind,
+      why: call.why,
+      data: call.data,
+    });
+  });
+  if (lines.length > 0) appendFileSync(logPath, `${lines.join('\n')}\n`);
+}
+
 console.log(`plan       ${calls.length} call(s) for chain ${chainArg}`);
 for (const [index, call] of calls.entries()) {
   console.log(
@@ -90,6 +121,7 @@ const outcome = await sendPlan({
   ...(arg('pause') === undefined ? {} : { pauseMs: Number(arg('pause')) }),
   execute: process.argv.includes('--execute'),
   onCall: (index, _call, hash, status, gasUsed) => {
+    landed.push({ index, hash, status, gasUsed });
     console.log(`  ${String(index + 1).padStart(2)}. ${status.padEnd(8)} ${hash}  gas ${gasUsed}`);
   },
 });
@@ -99,6 +131,7 @@ if (outcome.status === 'refused') {
   process.exit(3);
 }
 if (outcome.status === 'dry-run') {
+  writeLog(true, outcome.signer);
   console.log(`\nsigner     ${outcome.signer}`);
   console.log(`balance    ${formatEther(outcome.balance)}`);
   console.log(`plan total ${formatEther(outcome.total)}`);
@@ -106,12 +139,14 @@ if (outcome.status === 'dry-run') {
   process.exit(0);
 }
 if (outcome.status === 'reverted') {
+  writeLog(false, outcome.signer);
   console.error(
     `\nSTOPPED — call ${(outcome.revertedAt ?? 0) + 1} reverted. ${outcome.revertedAt ?? 0} call(s) landed before it.`,
   );
   process.exit(4);
 }
 
+writeLog(false, outcome.signer);
 console.log(
   `\nall ${calls.length} landed. balance ${formatEther(outcome.balanceBefore)} → ${formatEther(outcome.balanceAfter)}`,
 );

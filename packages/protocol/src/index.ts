@@ -504,6 +504,22 @@ export {
 } from "./session.js";
 
 /**
+ * What an agent did, as one ordered stream: the hook's session log, the skill receipts and the
+ * signer's log, each line turned into an event. Pure, so the local feed and the browser share it.
+ */
+export {
+    activityFromLine,
+    activityFromRecord,
+    activityFromWire,
+    decodeMultiVaultCall,
+    orderActivity,
+    type ActivityEvent,
+    type ActivitySource,
+    type DecodedCall,
+    type InvocationOutcome,
+} from "./activity.js";
+
+/**
  * Which file inside a repository a tool's atom refers to — read from the repository's own listing,
  * because `scripts/measure/skill-layouts.ts` found 19 layouts across 31 repositories and 8 of them
  * using more than one. A formula would be right most of the time, which is the worst outcome

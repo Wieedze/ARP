@@ -3,6 +3,7 @@ import {useAccount} from "wagmi";
 
 import {useChainChoice} from "../lib/chain-choice";
 
+import {ActivityLog} from "./brand/ActivityLog";
 import {ChainToggle} from "./brand/ChainToggle";
 import {NavLink, NavSplit} from "./brand/NavSplit";
 import {Watermark} from "./brand/Watermark";
@@ -36,7 +37,8 @@ export function Layout({children}: {children: ReactNode}) {
            a fragment, so the footer sat directly under whatever the page rendered — on a short
            page or a loading one it rode up the screen and then jumped back down when the content
            arrived (user, 2026-10-27). */
-        <div className="flex min-h-screen flex-col">
+        /* `pb-9` is the collapsed activity bar's height, so the fixed bar never sits on the footer. */
+        <div className="flex min-h-screen flex-col pb-9">
             {/*
              * Agents · Tools on the left, Register · My profile on the right (user, 2026-10-20,
              * one row since 2026-10-27). The handoff's left pair is "AGENTS, MODULES"; there is
@@ -123,6 +125,7 @@ export function Layout({children}: {children: ReactNode}) {
                     <Watermark />
                 </div>
             </footer>
+            <ActivityLog />
         </div>
     );
 }
