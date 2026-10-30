@@ -30,14 +30,21 @@
  *
  *  **One payment, one job.** Every accepted payment is appended to `AGENT_NODE_LEDGER`
  *  (`.arp/node-payments.jsonl` by default) and refused the second time — `task.ts`.
+ *
+ *  **It binds `127.0.0.1`, and a tunnel the operator rents is the one way in** (task 39a, ADR
+ *  `0094`): `cloudflared` or `ngrok`, detected on `PATH` or named by `ARP_NODE_TUNNEL`, or one the
+ *  operator runs and names with `ARP_NODE_PUBLIC_URL`. `tunnel.ts` says which. ARP builds no relay.
+ *
+ *  **The key** is `AGENT_PRIVATE_KEY` when set, else the node key in `~/.arp/node.key`, generated on
+ *  first start (`node-key.ts`). It is the key `arp init --node` binds to the agent.
  */
 import { join } from 'node:path';
 
 import { serveFetch } from '@arp-protocol/core/node';
 
 import { createPublicClient, formatEther, http, parseEther } from 'viem';
-import { privateKeyToAccount } from 'viem/accounts';
-import type { Hex } from 'viem';
+
+import { resolveNodeKey } from './node-key.ts';
 
 import {
   type AgentIdentity,
@@ -48,6 +55,7 @@ import {
   PaymentLedger,
   type TaskHandler,
 } from './task.ts';
+import { chooseTunnel, clientAddress, startTunnel } from './tunnel.ts';
 
 export type { TaskContext, TaskHandler } from './task.ts';
 
@@ -76,12 +84,14 @@ if (!rpcUrl) {
   console.error('no RPC: set INTUITION_RPC_URL or INTUITION_TESTNET_RPC_URL');
   process.exit(1);
 }
-const rawKey = process.env.AGENT_PRIVATE_KEY;
-if (!rawKey) {
-  console.error('AGENT_PRIVATE_KEY is not set — the node signs receipts with the agent identity.');
+let nodeKey: ReturnType<typeof resolveNodeKey>;
+try {
+  nodeKey = resolveNodeKey(process.env);
+} catch (error) {
+  console.error(error instanceof Error ? error.message : String(error));
   process.exit(1);
 }
-const account = privateKeyToAccount((rawKey.startsWith('0x') ? rawKey : `0x${rawKey}`) as Hex);
+const account = nodeKey.account;
 
 /**
  * Who the receipt says signed. Both or neither: `AGENT_REGISTRY` is the string the agent's
@@ -136,14 +146,48 @@ const node = createNode({
  * Start the node. `arp node` calls this (`apps/cli`); `bun src/node.ts` reaches it through
  * `import.meta.main`, which Node 22 does not set.
  *
- * No hostname: the node binds every interface, because it is the address the agent publishes.
+ * Loopback only. Until 2026-10-30 it passed no hostname and listened on every interface, because it
+ * was the address the agent published; the tunnel is that address now, and nothing else should
+ * reach the port.
  */
 export async function main(): Promise<void> {
-  await serveFetch({ port: PORT, maxBodyBytes: LIMITS.maxBodyBytes }, (request, ip) =>
-    node.fetch(request, ip),
+  const tunnel = chooseTunnel(process.env);
+  if (tunnel instanceof Error) {
+    process.stderr.write(`${tunnel.message}\n`);
+    process.exit(1);
+  }
+  await serveFetch(
+    { port: PORT, hostname: '127.0.0.1', maxBodyBytes: LIMITS.maxBodyBytes },
+    (request, ip) => node.fetch(request, clientAddress(request, ip)),
   );
-  process.stderr.write(`agent node on http://localhost:${PORT}\n`);
+  const local = `http://127.0.0.1:${PORT}`;
+  let running: Awaited<ReturnType<typeof startTunnel>>;
+  try {
+    running = await startTunnel(tunnel, local, {
+      onDown: (code) =>
+        process.stderr.write(`tunnel exited (${code ?? 'signal'}); the node is unreachable\n`),
+    });
+  } catch (error) {
+    process.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`);
+    process.exit(1);
+  }
+  for (const signal of ['SIGINT', 'SIGTERM'] as const) {
+    process.on(signal, () => {
+      running.stop();
+      process.exit(0);
+    });
+  }
+  process.on('exit', () => running.stop());
+
+  process.stderr.write(`agent node on ${local}\n`);
+  process.stderr.write(
+    `  public     ${running.publicUrl ?? 'none (ARP_NODE_TUNNEL=none): localhost only'}${running.publicUrl !== null && !running.stable ? ' — changes on every start; bind a named tunnel with ARP_NODE_PUBLIC_URL' : ''}\n`,
+  );
+  process.stderr.write(`  tunnel     ${tunnel.kind}\n`);
   process.stderr.write(`  agent      ${account.address}\n`);
+  process.stderr.write(
+    `  key        ${nodeKey.source === 'env' ? 'AGENT_PRIVATE_KEY' : `${nodeKey.path}${nodeKey.created ? ' (created)' : ''}`}\n`,
+  );
   process.stderr.write(`  min budget ${formatEther(MIN_BUDGET)}\n`);
   process.stderr.write(`  handler    ${handlerPath ?? 'echo (no handler configured)'}\n`);
   process.stderr.write(`  chain      ${chainId}\n`);
