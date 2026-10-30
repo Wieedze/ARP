@@ -24,6 +24,8 @@ import {
   ADR_0092_LIMITS,
   intuitionTestnet,
   multiVaultReads,
+  NoAgentIdentityError,
+  resolveDeclarationSubject,
   type PreparedCall,
   type SponsorLimits,
 } from '@arp-protocol/core';
@@ -153,7 +155,12 @@ const wallet: SponsorWallet = {
   },
 };
 
-const ownerOfAbi = parseAbi(['function ownerOf(uint256 tokenId) view returns (address)']);
+const registryAbi = parseAbi([
+  'function ownerOf(uint256 tokenId) view returns (address)',
+  'function getAgentWallet(uint256 agentId) view returns (address)',
+]);
+const REGISTRY_REF = /^eip155:([1-9][0-9]*):(0x[0-9a-fA-F]{40})$/;
+const ZERO: Address = '0x0000000000000000000000000000000000000000';
 
 const service = createSponsor({
   chainId: intuitionTestnet.id,
@@ -171,11 +178,43 @@ const service = createSponsor({
       return publicClient
         .readContract({
           address: registry,
-          abi: ownerOfAbi,
+          abi: registryAbi,
           functionName: 'ownerOf',
           args: [agentId],
         })
         .catch(() => null);
+    },
+    async agentWalletOf(registry, agentId) {
+      // Unset reads as the zero address; a registry without the getter reverts. Both mean none.
+      const wallet = await publicClient
+        .readContract({
+          address: registry,
+          abi: registryAbi,
+          functionName: 'getAgentWallet',
+          args: [agentId],
+        })
+        .catch(() => null);
+      return wallet === null || wallet === ZERO ? null : wallet;
+    },
+  },
+  identities: {
+    async identityAtom({ agentRegistry, agentId }) {
+      const match = REGISTRY_REF.exec(agentRegistry);
+      if (match === null) return null;
+      try {
+        return await resolveDeclarationSubject({
+          agent: {
+            chainId: Number(match[1]),
+            tokenId: agentId,
+            registry: match[2] as Address, // Matched as 40 hex digits on the line above.
+          },
+          graphqlUrl: deployments.chain.graphqlUrl,
+        });
+      } catch (error) {
+        // No atom is an answer about the agent. Anything else is the graph failing, and a 500.
+        if (error instanceof NoAgentIdentityError) return null;
+        throw error;
+      }
     },
   },
   registries,

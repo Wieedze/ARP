@@ -618,6 +618,8 @@ export {
 } from "./sponsor/request.js";
 export {
     checkSponsorProof,
+    type AgentIdentityRef,
+    type AgentKeyReads,
     type PaymentReads,
     type ProofCheckContext,
     type ProofVerdict,

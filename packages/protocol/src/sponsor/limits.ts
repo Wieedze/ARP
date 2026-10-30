@@ -20,7 +20,11 @@ export type SponsorLimits = {
     depositAmount: bigint;
     depositsPerAgentPerDay: number;
     publicationsPerDelegatorPerDay: number;
-    /** Everything the service sends in one UTC day — deposits, gas, publication fees — in wei. */
+    /**
+     * The `value` the service sends in one UTC day, in wei: deposits, the approval-gas transfers,
+     * publication fees. The gas the service's own transactions burn is **not** counted; the
+     * service's balance is what bounds that.
+     */
     dailyBudget: bigint;
     /** Sent once, ever, to each registered agent, for its own `approve` transaction. */
     approvalGas: bigint;
@@ -43,7 +47,7 @@ export const ADR_0092_LIMITS = {
 export type SponsorRecord = {
     kind: "deposit" | "gas" | "publish";
     subject: Address;
-    /** Wei the service sent for it, fees included. */
+    /** The `value` the service sent for it, in wei. A publication's term fees are in it; the gas of the transaction is not. */
     value: bigint;
     /** Milliseconds since the epoch. */
     at: number;

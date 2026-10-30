@@ -29,7 +29,7 @@ import {
     SponsoredTermMissingError,
     SponsoredZeroSharesError,
 } from "../src/sponsor/plan.js";
-import {checkSponsorProof, type PaymentReads} from "../src/sponsor/proof.js";
+import {checkSponsorProof, type AgentKeyReads, type PaymentReads} from "../src/sponsor/proof.js";
 import {
     signSponsorRequest,
     sponsorProofDigest,
@@ -172,11 +172,22 @@ describe("checkSponsorProof", () => {
     const paid: Record<Hex, Tx> = {
         [PAYMENT]: {from: AGENT.address, to: CALLEE.address, value: 5n * MILLI},
     };
-    const context = (txs = paid) => ({
+    const REGISTRY_ADDRESS: Address = "0xC165A2ADc0000000000000000000000000000001";
+    const REGISTRY = `eip155:13579:${REGISTRY_ADDRESS}`;
+    /** Agent 9 is held by `holder` and has `wallet` as its agentWallet, in `REGISTRY` only. */
+    const agents = (holder: Address | null = CALLEE.address, wallet: Address | null = null) => ({
+        ownerOf: async (registry: Address, id: bigint) =>
+            registry.toLowerCase() === REGISTRY_ADDRESS.toLowerCase() && id === 9n ? holder : null,
+        agentWalletOf: async (registry: Address, id: bigint) =>
+            registry.toLowerCase() === REGISTRY_ADDRESS.toLowerCase() && id === 9n ? wallet : null,
+    });
+    const context = (txs = paid, keys: AgentKeyReads = agents()) => ({
         receiver: AGENT.address,
         chainId: TESTNET,
         payments: payments(txs),
         acceptedContentSigners: [NODE.address],
+        acceptedRegistries: [REGISTRY],
+        agents: keys,
     });
 
     it("proves a hire whose payment is on chain, priced at what was paid", async () => {
@@ -190,8 +201,50 @@ describe("checkSponsorProof", () => {
             strength: "strong",
             cost: 5n * MILLI,
             id: `hire:${TESTNET}:${PAYMENT}`,
-            object: null,
+            object: {kind: "agent", agentRegistry: REGISTRY, agentId: "9"},
         });
+    });
+
+    it("proves a hire signed by the agent's agentWallet rather than its holder", async () => {
+        const verdict = await checkSponsorProof(
+            {kind: "hire", receipt: await signHire(hire())},
+            context(paid, agents(NODE.address, CALLEE.address)),
+        );
+        expect(verdict.status).toBe("proven");
+    });
+
+    it.each([
+        [
+            "a signer that is neither the holder nor the agentWallet",
+            agents(NODE.address, null),
+            /neither the holder nor the agentWallet/,
+        ],
+        ["an agent that is not registered", agents(null), /not registered/],
+        [
+            "a registry whose read fails",
+            {
+                ownerOf: async () => {
+                    throw new Error("rpc down");
+                },
+                agentWalletOf: async () => null,
+            },
+            /not registered/,
+        ],
+    ])("refuses a hire receipt from %s", async (_label, keys, reason) => {
+        const verdict = await checkSponsorProof(
+            {kind: "hire", receipt: await signHire(hire())},
+            context(paid, keys),
+        );
+        expect(verdict.status === "refused" && verdict.reason).toMatch(reason);
+    });
+
+    it("refuses a hire receipt naming a registry that is not accepted", async () => {
+        const other = "eip155:13579:0x0000000000000000000000000000000000000bad";
+        const verdict = await checkSponsorProof(
+            {kind: "hire", receipt: await signHire(hire({agentRegistry: other}))},
+            context(),
+        );
+        expect(verdict.status === "refused" && verdict.reason).toMatch(/not accepted/);
     });
 
     it.each([
@@ -294,7 +347,7 @@ describe("checkSponsorProof", () => {
             kind: "content",
             strength: "access",
             cost: null,
-            object: TERM,
+            object: {kind: "atom", atom: TERM},
         });
     });
 

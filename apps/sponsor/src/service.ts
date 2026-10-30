@@ -19,12 +19,24 @@
  *  **One spend at a time.** Every route that sends runs inside one queue, so two requests cannot
  *  both pass the day's count, or both spend one proof, before either is recorded.
  *
+ *  **Recorded before it is sent.** A deposit and a gas transfer are reserved in the ledger before
+ *  the key is used and settled after (`ledger.ts`), so a send whose outcome is lost to a failing RPC
+ *  still spends its proof, and the agent's gas, once.
+ *
+ *  **The edge is the proof's edge.** A sponsored deposit is on `(requester, uses, X)`, where the
+ *  subject is the requesting agent's identity atom and X is what the proof is about: the tool atom
+ *  a content receipt names, or the identity atom of the agent a hire receipt says was hired. Any
+ *  other `uses` triple is refused, so a deposit this service paid for is _proven_ about that edge
+ *  and no other.
+ *
  *  **A refusal always leaves the agent a way.** A 409 for a missing approval carries the approve
  *  call; a 429 carries the call the agent can send itself. Unplugging this service costs an agent
  *  its sponsorship and the _proven_ label, never a capability (ADR `0094`, ADR `0092` item 6).
  */
 import {
   checkDepositLimits,
+  type AgentIdentityRef,
+  type AgentKeyReads,
   checkGasLimits,
   checkPublishLimits,
   checkSponsorProof,
@@ -64,9 +76,15 @@ export type SponsorWallet = {
   sendGas(to: Address, value: bigint): Promise<{ hash: Hex; status: 'success' | 'reverted' }>;
 };
 
-/** Who holds an ERC-8004 token, or `null` when the token does not exist. */
-export type AgentOwnerReads = {
-  ownerOf(registry: Address, agentId: bigint): Promise<Address | null>;
+/** Who holds an ERC-8004 token, or `null` when it does not exist, and the `agentWallet` it set. */
+export type AgentOwnerReads = AgentKeyReads;
+
+/**
+ * An agent's identity atom: the registration-derived atom a `uses` edge carries as its subject
+ * (ADR `0032`), or `null` when the graph has none for it. `main.ts` resolves it through `same as`.
+ */
+export type AgentIdentityAtoms = {
+  identityAtom(agent: AgentIdentityRef): Promise<Hex | null>;
 };
 
 /** The delegation register's part. Absent, `POST /publish` answers 503 and spends nothing. */
@@ -85,6 +103,7 @@ export type SponsorOptions = {
   reads: MultiVaultReads;
   payments: PaymentReads;
   owners: AgentOwnerReads;
+  identities: AgentIdentityAtoms;
   /** The ERC-8004 registries whose agents are sponsored, as `eip155:<chainId>:<address>`. */
   registries: readonly string[];
   /** The canonical `uses` predicate. A sponsored deposit is on a `(agent, uses, tool)` triple. */
@@ -145,11 +164,16 @@ export function createSponsor(options: SponsorOptions): {
     return run;
   }
 
-  /** The allow-list, at the last step before a key is used. */
-  async function sendToMultiVault(call: PreparedCall) {
+  /** The allow-list. Checked before a spend is reserved, so a refused call burns no proof. */
+  function assertMultiVault(call: PreparedCall): void {
     if (getAddress(call.to) !== multiVault || call.chainId !== chainId) {
       throw new Error(`refusing a call to ${call.to} on chain ${call.chainId}`);
     }
+  }
+
+  /** The allow-list again, at the last step before a key is used. */
+  async function sendToMultiVault(call: PreparedCall) {
+    assertMultiVault(call);
     return wallet.send(call);
   }
 
@@ -196,9 +220,11 @@ export function createSponsor(options: SponsorOptions): {
         approvalGasWei: limits.approvalGas,
         withdrawalThresholdBps: limits.withdrawalThresholdBps ?? 'unset',
         spentTodayWei: spentOnDay(ledger.records, now()),
+        spentCounts: 'value sent only; the gas of the service’s own transactions is not counted',
+        pendingSends: ledger.pending().length,
       },
       proofs: {
-        hire: 'accepted: the payment on chain and the callee node’s hire receipt',
+        hire: 'accepted: the payment on chain, and a hire receipt signed by the hired agent’s holder or agentWallet. The edge must be (requester identity, uses, hired agent identity). The payment is a transfer: one operator holding both agents gets it back, so for that operator the bound is the daily count and budget, not the price.',
         content:
           options.acceptedContentSigners.length === 0
             ? 'no signer accepted'
@@ -216,10 +242,21 @@ export function createSponsor(options: SponsorOptions): {
     return exclusive(async () => {
       const decision = checkGasLimits(ledger.records, { agent: agent.owner, now: now(), limits });
       if (!decision.ok) return json({ error: decision.reason }, 429);
+      const key = `gas:${agent.owner.toLowerCase()}`;
+      ledger.reserve({
+        kind: 'gas',
+        subject: agent.owner,
+        value: limits.approvalGas,
+        at: now(),
+        key,
+      });
+      // A throw from here on leaves the reservation pending, which `checkGasLimits` counts as sent.
       const sent = await wallet.sendGas(agent.owner, limits.approvalGas);
-      if (sent.status !== 'success')
+      if (sent.status !== 'success') {
+        ledger.settle('gas', key, { status: 'reverted', hash: sent.hash });
         return json({ error: `gas transfer ${sent.hash} reverted` }, 502);
-      ledger.append({ kind: 'gas', subject: agent.owner, value: limits.approvalGas, at: now() });
+      }
+      ledger.settle('gas', key, { status: 'success', hash: sent.hash });
       return json({
         sent: sent.hash,
         to: agent.owner,
@@ -283,13 +320,14 @@ export function createSponsor(options: SponsorOptions): {
       chainId,
       payments,
       acceptedContentSigners: options.acceptedContentSigners,
+      acceptedRegistries: options.registries,
+      agents: owners,
     });
     if (proven.status !== 'proven') return json({ error: proven.reason }, 403);
-    if (proven.object !== null && proven.object.toLowerCase() !== triple.objectId.toLowerCase()) {
-      return json({ error: 'the proof is about another tool than the triple names' }, 400);
-    }
-    // ADR `0094` §2: a sponsored amount stays below the cost of the proof that unlocks it, so
-    // self-dealing costs more than the sponsorship it earns. An unpriced proof has no "below".
+    // ADR `0094` §2: a sponsored amount stays below the cost of the proof that unlocks it. An
+    // unpriced proof has no "below". Between two operators that makes a faked hire cost more than
+    // it earns; one operator holding both agents gets the payment back, so for that one the bound
+    // is the daily count and the budget below, not this.
     if (proven.cost === null) {
       return json(
         { error: `a ${proven.kind} proof has no price yet, so it cannot unlock a sponsorship` },
@@ -303,6 +341,36 @@ export function createSponsor(options: SponsorOptions): {
         },
         403,
       );
+    }
+
+    // The edge is the proof's: `(requester, uses, what the proof is about)`, both as atoms.
+    const subject = await options.identities.identityAtom({
+      agentRegistry: request.agentRegistry,
+      agentId: request.agentId,
+    });
+    if (subject === null) {
+      return json({ error: `agent ${request.agentId} has no identity atom on the graph` }, 403);
+    }
+    if (subject.toLowerCase() !== triple.subjectId.toLowerCase()) {
+      return json(
+        {
+          error: `the triple's subject is not agent ${request.agentId}'s identity atom ${subject}`,
+        },
+        400,
+      );
+    }
+    const object =
+      proven.object.kind === 'atom'
+        ? proven.object.atom
+        : await options.identities.identityAtom(proven.object);
+    if (object === null) {
+      return json(
+        { error: 'the agent the proof says was hired has no identity atom on the graph' },
+        403,
+      );
+    }
+    if (object.toLowerCase() !== triple.objectId.toLowerCase()) {
+      return json({ error: `the proof is about ${object}, not the object the triple names` }, 400);
     }
 
     return exclusive(async () => {
@@ -345,10 +413,8 @@ export function createSponsor(options: SponsorOptions): {
       }
 
       const before = await reads.sharesOf(agent, request.termId, plan.curveId);
-      const sent = await sendToMultiVault(plan.call);
-      if (sent.status !== 'success') return json({ error: `deposit ${sent.hash} reverted` }, 502);
-      const after = await reads.sharesOf(agent, request.termId, plan.curveId);
-      ledger.append({
+      assertMultiVault(plan.call);
+      ledger.reserve({
         kind: 'deposit',
         subject: agent,
         value: plan.call.value,
@@ -356,14 +422,28 @@ export function createSponsor(options: SponsorOptions): {
         key: proven.id,
         termId: request.termId,
         curveId: plan.curveId,
-        shares: after > before ? after - before : 0n,
+      });
+      // From here a throw leaves the proof spent: the deposit may have landed.
+      const sent = await sendToMultiVault(plan.call);
+      if (sent.status !== 'success') {
+        ledger.settle('deposit', proven.id, { status: 'reverted', hash: sent.hash });
+        return json({ error: `deposit ${sent.hash} reverted` }, 502);
+      }
+      // A failing read must not leave a mined deposit unsettled: the shares stay unknown instead,
+      // and `sponsoredPositions` skips a row without them.
+      const after = await reads.sharesOf(agent, request.termId, plan.curveId).catch(() => null);
+      const shares = after === null ? null : after > before ? after - before : 0n;
+      ledger.settle('deposit', proven.id, {
+        status: 'success',
+        hash: sent.hash,
+        ...(shares === null ? {} : { shares }),
       });
       return json({
         sent: sent.hash,
         receiver: agent,
         termId: request.termId,
         valueWei: plan.call.value,
-        shares: after > before ? after - before : 0n,
+        shares,
         proof: { kind: proven.kind, strength: proven.strength },
       });
     });
@@ -427,23 +507,31 @@ export function createSponsor(options: SponsorOptions): {
       });
       if (!decision.ok) return json({ error: decision.reason, documentUri, plan }, 429);
 
+      plan.calls.forEach(assertMultiVault);
       const sent: Hex[] = [];
       let spent = 0n;
-      for (const call of plan.calls) {
-        const result = await sendToMultiVault(call);
-        if (result.status !== 'success') break;
-        sent.push(result.hash);
-        spent += call.value;
-      }
-      // Recorded even when it stopped half way: what was sent was spent.
-      if (spent > 0n) {
-        ledger.append({
-          kind: 'publish',
-          subject: parsed.delegator,
-          value: spent,
-          at: now(),
-          key: delegationHash(parsed),
-        });
+      try {
+        for (const call of plan.calls) {
+          // Counted before the send: a throw while it is awaited may still have spent it.
+          spent += call.value;
+          const result = await sendToMultiVault(call);
+          if (result.status !== 'success') {
+            spent -= call.value;
+            break;
+          }
+          sent.push(result.hash);
+        }
+      } finally {
+        // Recorded even when it stopped half way, or threw: what was sent was spent.
+        if (spent > 0n) {
+          ledger.append({
+            kind: 'publish',
+            subject: parsed.delegator,
+            value: spent,
+            at: now(),
+            key: delegationHash(parsed),
+          });
+        }
       }
       if (sent.length < plan.calls.length) {
         return json(

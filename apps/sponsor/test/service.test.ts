@@ -77,6 +77,12 @@ type World = {
   terms: Set<string>;
   simulateOk: boolean;
   pinned: string[];
+  /** The wallet broadcasts, then throws while the receipt is awaited: `main.ts`'s `mined`. */
+  sendThrows: boolean;
+  /** Every `sharesOf` after the first send throws: the RPC failing once the deposit is out. */
+  sharesThrowAfterSend: boolean;
+  /** Sends that come back reverted. */
+  revert: boolean;
 };
 
 function world(): World {
@@ -87,6 +93,9 @@ function world(): World {
     terms: new Set([TERM.toLowerCase()]),
     simulateOk: true,
     pinned: [],
+    sendThrows: false,
+    sharesThrowAfterSend: false,
+    revert: false,
   };
 }
 
@@ -106,11 +115,13 @@ function fakeWallet(w: World): SponsorWallet {
       } else {
         w.terms.add(`created:${w.sent.length}`);
       }
-      return { hash: hash(), status: 'success' };
+      if (w.sendThrows) throw new Error('timed out waiting for the receipt');
+      return { hash: hash(), status: w.revert ? 'reverted' : 'success' };
     },
     sendGas: async (to, value) => {
       w.gas.push({ to, value });
-      return { hash: hash(), status: 'success' };
+      if (w.sendThrows) throw new Error('timed out waiting for the receipt');
+      return { hash: hash(), status: w.revert ? 'reverted' : 'success' };
     },
   };
 }
@@ -136,8 +147,10 @@ function fakeReads(w: World, chainId = CHAIN): MultiVaultReads {
       assetsAfterFixedFees: 1n,
       assetsAfterFees: 1n,
     }),
-    sharesOf: async (account: Address, termId: Hex) =>
-      w.shares.get(`${account.toLowerCase()}:${termId.toLowerCase()}`) ?? 0n,
+    sharesOf: async (account: Address, termId: Hex) => {
+      if (w.sharesThrowAfterSend && w.sent.length > 0) throw new Error('rpc unavailable');
+      return w.shares.get(`${account.toLowerCase()}:${termId.toLowerCase()}`) ?? 0n;
+    },
   } as unknown as MultiVaultReads; // Every member the service reaches is above; the rest are never called.
 }
 
@@ -149,11 +162,24 @@ const payments = (value = 5n * MILLI) => ({
   getTransactionReceipt: async () => ({ status: 'success' as const }),
 });
 
-const owners = (held: Record<string, Address> = { '7': AGENT.address, '8': CALLEE.address }) => ({
+const owners = (
+  held: Record<string, Address> = { '7': AGENT.address, '8': CALLEE.address },
+  wallets: Record<string, Address> = {},
+) => ({
   ownerOf: async (registry: Address, agentId: bigint) =>
     registry.toLowerCase() === REGISTRY_ADDRESS.toLowerCase()
       ? (held[agentId.toString()] ?? null)
       : null,
+  agentWalletOf: async (registry: Address, agentId: bigint) =>
+    registry.toLowerCase() === REGISTRY_ADDRESS.toLowerCase()
+      ? (wallets[agentId.toString()] ?? null)
+      : null,
+});
+
+/** Agent 7 (the requester) is `SUBJECT` on the graph, agent 8 (the one hired) is `OBJECT`. */
+const identities = (atoms: Record<string, Hex> = { '7': SUBJECT, '8': OBJECT }) => ({
+  identityAtom: async ({ agentRegistry, agentId }: { agentRegistry: string; agentId: string }) =>
+    agentRegistry === REGISTRY ? (atoms[agentId] ?? null) : null,
 });
 
 function sponsor(w: World, over: Partial<Parameters<typeof createSponsor>[0]> = {}) {
@@ -163,6 +189,7 @@ function sponsor(w: World, over: Partial<Parameters<typeof createSponsor>[0]> = 
     reads: fakeReads(w),
     payments: payments(),
     owners: owners(),
+    identities: identities(),
     registries: [REGISTRY],
     usesPredicate: USES,
     limits: LIMITS,
@@ -174,12 +201,12 @@ function sponsor(w: World, over: Partial<Parameters<typeof createSponsor>[0]> = 
   });
 }
 
-async function hireProof(paid = 5n * MILLI): Promise<SponsorProof> {
+async function hireProof(paid = 5n * MILLI, by = CALLEE, agentId = '8'): Promise<SponsorProof> {
   const receipt = await signHireReceipt(
     {
       version: 1,
       agentRegistry: REGISTRY,
-      agentId: '8',
+      agentId,
       requester: AGENT.address,
       payment: PAYMENT,
       paid: paid.toString(),
@@ -188,7 +215,7 @@ async function hireProof(paid = 5n * MILLI): Promise<SponsorProof> {
       issuedAt: 1_793_000_000,
     },
     CHAIN,
-    { address: CALLEE.address, signTypedData: (data) => CALLEE.signTypedData(data) },
+    { address: by.address, signTypedData: (data) => by.signTypedData(data) },
   );
   // Through JSON, as the service receives it: bigints become strings and nothing else changes.
   return JSON.parse(JSON.stringify({ kind: 'hire', receipt })) as SponsorProof;
@@ -243,6 +270,7 @@ describe('GET /', () => {
     expect(info.chainId).toBe(CHAIN);
     expect(info.sponsor).toBe(SPONSOR);
     expect(info.limits.withdrawalThresholdBps).toBe('unset');
+    expect(info.limits.pendingSends).toBe(0);
     expect(info.limits.depositsPerAgentPerDay).toBe(2);
     expect(info.limits.dailyBudgetWei).toBe((10n ** 18n).toString());
     expect(info.approve.kind).toBe('approve');
@@ -438,6 +466,140 @@ describe('POST /deposit', () => {
     expect(notUses.status).toBe(400);
   });
 
+  test("sponsors only the proof's edge: (requester identity, uses, hired agent identity)", async () => {
+    const proof = await hireProof();
+    // The term id check runs first, so each of these names a triple the fake reads accept.
+    const otherSubject: Hex = `0x${'5c'.repeat(32)}`;
+    const reads = (w: World, s: Hex, o: Hex): MultiVaultReads => ({
+      ...fakeReads(w),
+      tripleId: async (a: Hex, p: Hex, b: Hex) =>
+        a === s && p === USES && b === o ? TERM : SUBJECT,
+    });
+    const wrongSubject = world();
+    const a = await call(
+      sponsor(wrongSubject, { reads: reads(wrongSubject, otherSubject, OBJECT) }),
+      '/deposit',
+      await depositBody(proof, AGENT, {
+        triple: { subjectId: otherSubject, predicateId: USES, objectId: OBJECT },
+      }),
+    );
+    expect(a.status).toBe(400);
+    expect(String(a.body.error)).toMatch(/subject is not agent 7/);
+    expect(wrongSubject.sent).toHaveLength(0);
+
+    const wrongObject = world();
+    const b = await call(
+      sponsor(wrongObject, { reads: reads(wrongObject, SUBJECT, otherSubject) }),
+      '/deposit',
+      await depositBody(proof, AGENT, {
+        triple: { subjectId: SUBJECT, predicateId: USES, objectId: otherSubject },
+      }),
+    );
+    expect(b.status).toBe(400);
+    expect(String(b.body.error)).toMatch(/not the object the triple names/);
+    expect(wrongObject.sent).toHaveLength(0);
+  });
+
+  test('refuses when either agent has no identity atom on the graph', async () => {
+    const noRequester = world();
+    const a = await call(
+      sponsor(noRequester, { identities: identities({ '8': OBJECT }) }),
+      '/deposit',
+      await depositBody(await hireProof()),
+    );
+    expect(a.status).toBe(403);
+    expect(String(a.body.error)).toMatch(/agent 7 has no identity atom/);
+    const noCallee = world();
+    const b = await call(
+      sponsor(noCallee, { identities: identities({ '7': SUBJECT }) }),
+      '/deposit',
+      await depositBody(await hireProof()),
+    );
+    expect(b.status).toBe(403);
+    expect(String(b.body.error)).toMatch(/hired has no identity atom/);
+    expect([...noRequester.sent, ...noCallee.sent]).toHaveLength(0);
+  });
+
+  test('refuses a hire receipt whose signer is not the registered agent it names', async () => {
+    // Agent 8 is held by CALLEE; a receipt signed by NODE for agent 8, paid to NODE, is not agent 8's.
+    const w = world();
+    const toNode = {
+      getTransaction: async () => ({ from: AGENT.address, to: NODE.address, value: 5n * MILLI }),
+      getTransactionReceipt: async () => ({ status: 'success' as const }),
+    };
+    const res = await call(
+      sponsor(w, { payments: toNode }),
+      '/deposit',
+      await depositBody(await hireProof(5n * MILLI, NODE)),
+    );
+    expect(res.status).toBe(403);
+    expect(String(res.body.error)).toMatch(/neither the holder nor the agentWallet/);
+    // The same receipt is the agent's once NODE is agent 8's agentWallet.
+    const ok = await call(
+      sponsor(world(), {
+        payments: toNode,
+        owners: owners(undefined, { '8': NODE.address }),
+      }),
+      '/deposit',
+      await depositBody(await hireProof(5n * MILLI, NODE)),
+    );
+    expect(ok.status).toBe(200);
+    // And an agent id that is not registered at all.
+    const unregistered = await call(
+      sponsor(world()),
+      '/deposit',
+      await depositBody(await hireProof(5n * MILLI, CALLEE, '99')),
+    );
+    expect(unregistered.status).toBe(403);
+    expect(String(unregistered.body.error)).toMatch(/not registered/);
+  });
+
+  test('a read that fails after the deposit landed still spends the proof', async () => {
+    const w = world();
+    w.sharesThrowAfterSend = true;
+    const ledger = new SponsorLedger(null);
+    const service = sponsor(w, { ledger });
+    const proof = await hireProof();
+    const first = await call(service, '/deposit', await depositBody(proof));
+    expect(first.status).toBe(200);
+    expect(first.body.shares).toBeNull();
+    expect(ledger.records).toHaveLength(1);
+    expect(ledger.pending()).toHaveLength(0);
+    w.sharesThrowAfterSend = false;
+    const again = await call(service, '/deposit', await depositBody(proof));
+    expect(again.status).toBe(409);
+    expect(w.sent).toHaveLength(1);
+  });
+
+  test('a send that throws after broadcast leaves the proof spent and the spend pending', async () => {
+    const w = world();
+    w.sendThrows = true;
+    const ledger = new SponsorLedger(null);
+    const service = sponsor(w, { ledger });
+    const proof = await hireProof();
+    const first = await call(service, '/deposit', await depositBody(proof));
+    expect(first.status).toBe(500);
+    expect(ledger.pending()).toHaveLength(1);
+    expect(ledger.records[0]?.value).toBe(MILLI);
+    w.sendThrows = false;
+    const again = await call(service, '/deposit', await depositBody(proof));
+    expect(again.status).toBe(409);
+    expect(w.sent).toHaveLength(1);
+  });
+
+  test('a reverted deposit spends nothing, so the proof can be retried', async () => {
+    const w = world();
+    w.revert = true;
+    const ledger = new SponsorLedger(null);
+    const service = sponsor(w, { ledger });
+    const proof = await hireProof();
+    expect((await call(service, '/deposit', await depositBody(proof))).status).toBe(502);
+    expect(ledger.records).toHaveLength(0);
+    w.revert = false;
+    expect((await call(service, '/deposit', await depositBody(proof))).status).toBe(200);
+    expect(w.sent).toHaveLength(2);
+  });
+
   test('never sends a call for another chain than its own', async () => {
     const w = world();
     const res = await call(
@@ -461,6 +623,33 @@ describe('POST /gas', () => {
     const second = await call(service, '/gas', { agentRegistry: REGISTRY, agentId: '7' });
     expect(second.status).toBe(429);
     expect(w.gas).toHaveLength(1);
+  });
+
+  test('a gas transfer that throws after broadcast is not sent a second time', async () => {
+    const w = world();
+    w.sendThrows = true;
+    const service = sponsor(w);
+    expect((await call(service, '/gas', { agentRegistry: REGISTRY, agentId: '7' })).status).toBe(
+      500,
+    );
+    w.sendThrows = false;
+    const again = await call(service, '/gas', { agentRegistry: REGISTRY, agentId: '7' });
+    expect(again.status).toBe(429);
+    expect(w.gas).toHaveLength(1);
+  });
+
+  test('a reverted gas transfer can be retried', async () => {
+    const w = world();
+    w.revert = true;
+    const service = sponsor(w);
+    expect((await call(service, '/gas', { agentRegistry: REGISTRY, agentId: '7' })).status).toBe(
+      502,
+    );
+    w.revert = false;
+    expect((await call(service, '/gas', { agentRegistry: REGISTRY, agentId: '7' })).status).toBe(
+      200,
+    );
+    expect(w.gas).toHaveLength(2);
   });
 
   test('sends nothing to an unregistered agent', async () => {
@@ -569,6 +758,34 @@ describe('POST /publish', () => {
     expect(w.pinned).toHaveLength(0);
   });
 
+  test('records what a publication spent when a send throws half way', async () => {
+    const w = world();
+    const publish = config(w);
+    const ledger = new SponsorLedger(null);
+    const wallet = fakeWallet(w);
+    let calls = 0;
+    const flaky: SponsorWallet = {
+      ...wallet,
+      send: async (c) => {
+        calls += 1;
+        if (calls === 2) {
+          w.sent.push(c);
+          throw new Error('timed out waiting for the receipt');
+        }
+        return wallet.send(c);
+      },
+    };
+    const res = await call(sponsor(w, { publish, ledger, wallet: flaky }), '/publish', {
+      delegation: await delegation(),
+      agentRegistry: REGISTRY,
+      agentId: '7',
+    });
+    expect(res.status).toBe(500);
+    // Both calls are counted: the one that landed and the one whose outcome is unknown.
+    expect(ledger.records).toHaveLength(1);
+    expect(ledger.records[0]?.value).toBe(w.sent[0]!.value + w.sent[1]!.value);
+  });
+
   test('stops at two publications a day per delegator', async () => {
     const w = world();
     const ledger = new SponsorLedger(null);
@@ -621,6 +838,35 @@ describe('the ledger', () => {
     ]);
     expect(second.has('deposit', 'k')).toBe(true);
     expect(second.has('gas', 'k')).toBe(false);
+  });
+
+  test('reloads a pending reservation as spent, and a settlement onto its row', () => {
+    dir = mkdtempSync(join(tmpdir(), 'sponsor-ledger-'));
+    const path = join(dir, 'ledger.jsonl');
+    const first = new SponsorLedger(path);
+    const row = { kind: 'deposit' as const, subject: AGENT.address, value: MILLI, at: NOW };
+    first.reserve({ ...row, key: 'lost', termId: TERM, curveId: 1n });
+    first.reserve({ ...row, key: 'landed', termId: TERM, curveId: 1n });
+    first.settle('deposit', 'landed', { status: 'success', hash: PAYMENT, shares: 9n });
+    first.reserve({ ...row, key: 'reverted' });
+    first.settle('deposit', 'reverted', { status: 'reverted', hash: PAYMENT });
+    expect(() => first.reserve({ ...row, key: 'lost' })).toThrow(/already reserved/);
+    expect(() => first.settle('deposit', 'nope', { status: 'reverted', hash: PAYMENT })).toThrow(
+      /no pending/,
+    );
+
+    const second = new SponsorLedger(path);
+    expect(second.has('deposit', 'lost')).toBe(true);
+    expect(second.has('deposit', 'landed')).toBe(true);
+    expect(second.has('deposit', 'reverted')).toBe(false);
+    expect(second.pending().map((r) => r.key)).toEqual(['lost']);
+    expect(second.records.map((r) => [r.key, r.shares])).toEqual([
+      ['lost', undefined],
+      ['landed', 9n],
+    ]);
+    // A reverted reservation frees its key for a new one.
+    second.reserve({ ...row, key: 'reverted' });
+    expect(second.has('deposit', 'reverted')).toBe(true);
   });
 });
 

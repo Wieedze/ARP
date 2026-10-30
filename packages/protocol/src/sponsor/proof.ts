@@ -18,12 +18,28 @@ import {corroborationOf, verifyContentReceipt, type SignedContentReceipt} from "
  *
  * **What `strong` means, and what it does not.** `docs/24`, as ADR `0094` was corrected: one
  * operator running both agents can pay itself and have its own second node sign. _Proven_ means a
- * second **key** signed, never a second operator. The bound on that is economic, and it is
- * {@link ProvenProof.cost}: the service sponsors less than the proof cost to make.
+ * second **key** signed, and that key is a registered agent's, never that a second operator exists.
+ *
+ * **The payment is a transfer, not a burn.** {@link ProvenProof.cost} is what the requester paid
+ * the callee, and the service sponsors less than that. Between two operators, that makes faking a
+ * hire cost more than the sponsorship it earns. One operator holding both keys gets the payment
+ * back and is out only the gas of the payment, so for that operator the price rule bounds nothing:
+ * what bounds it is the per-agent daily count and the daily budget (`limits.ts`).
  */
 export type SponsorProof =
     | {kind: "hire"; receipt: SignedHireReceipt}
     | {kind: "content"; receipt: SignedContentReceipt};
+
+/** Who may sign as an ERC-8004 agent: the token's holder, or the `agentWallet` it set. */
+export type AgentKeyReads = {
+    /** The holder of `agentId` in `registry`, or `null` when the token does not exist. */
+    ownerOf(registry: Address, agentId: bigint): Promise<Address | null>;
+    /** The agent's `agentWallet`, or `null` when none is set or the registry has none. */
+    agentWalletOf(registry: Address, agentId: bigint): Promise<Address | null>;
+};
+
+/** An ERC-8004 identity as the receipts name it: `eip155:<chainId>:<registry>` and a decimal id. */
+export type AgentIdentityRef = {agentRegistry: string; agentId: string};
 
 /** The two chain reads a hire proof needs. A viem `PublicClient` satisfies it. */
 export type PaymentReads = {
@@ -47,8 +63,14 @@ export type ProvenProof = {
     cost: bigint | null;
     /** A key that identifies the proof, so one proof sponsors one deposit. */
     id: string;
-    /** The object the proof is about, when it names one as an atom: a content receipt's tool atom. */
-    object: Hex | null;
+    /**
+     * What the `uses` edge's object must be for this proof to back it.
+     *
+     * A content receipt names the tool's atom. A hire receipt names the agent that was hired, and
+     * the edge is `(hirer, uses, agent)` (`hire-receipt.ts`), so the object is that agent's identity
+     * atom, which the caller resolves: it is a graph read this module does not make.
+     */
+    object: {kind: "atom"; atom: Hex} | ({kind: "agent"} & AgentIdentityRef);
 };
 
 export type ProofVerdict = ProvenProof | {status: "refused"; reason: string};
@@ -64,7 +86,45 @@ export type ProofCheckContext = {
      * receipt, which is the honest default (`corroborationOf`'s `accepted`).
      */
     acceptedContentSigners: readonly Address[];
+    /**
+     * The ERC-8004 registries whose agents count, as `eip155:<chainId>:<address>`. A hire receipt
+     * signed as an agent of any other registry is refused.
+     */
+    acceptedRegistries: readonly string[];
+    /** Reads the hired agent's keys, so the receipt's signer is checked to be that agent. */
+    agents: AgentKeyReads;
 };
+
+const REGISTRY = /^eip155:([1-9][0-9]*):(0x[0-9a-fA-F]{40})$/;
+const DECIMAL = /^(0|[1-9][0-9]*)$/;
+
+/**
+ * Whether `signer` may sign as agent `agentId` of `agentRegistry`: the registry is accepted, the
+ * token exists, and the signer is its holder or its `agentWallet`. `hire-receipt.ts` leaves this
+ * read to the verifier; without it a receipt's callee could be any key at all.
+ */
+async function signsAsAgent(
+    signer: Address,
+    agent: AgentIdentityRef,
+    context: ProofCheckContext,
+): Promise<string | null> {
+    const match = REGISTRY.exec(agent.agentRegistry);
+    const accepted = new Set(context.acceptedRegistries.map((r) => r.toLowerCase()));
+    if (match === null || !accepted.has(agent.agentRegistry.toLowerCase())) {
+        return `hire receipt names registry ${agent.agentRegistry}, which is not accepted`;
+    }
+    if (!DECIMAL.test(agent.agentId)) return `hire receipt names agent id ${agent.agentId}`;
+    const registry = getAddress(match[2] ?? "");
+    const id = BigInt(agent.agentId);
+    const owner = await context.agents.ownerOf(registry, id).catch(() => null);
+    if (owner === null) {
+        return `hire receipt names agent ${agent.agentId}, not registered in ${agent.agentRegistry}`;
+    }
+    if (getAddress(owner) === signer) return null;
+    const wallet = await context.agents.agentWalletOf(registry, id).catch(() => null);
+    if (wallet !== null && getAddress(wallet) === signer) return null;
+    return `hire receipt is signed by ${signer}, which is neither the holder nor the agentWallet of agent ${agent.agentId}`;
+}
 
 function refused(reason: string): ProofVerdict {
     return {status: "refused", reason};
@@ -89,6 +149,9 @@ async function checkHire(
         return refused(`hire receipt names requester ${receipt.requester}, not ${receiver}`);
     }
     if (callee === receiver) return refused("hire receipt is signed by the requester itself");
+    const hired = {agentRegistry: receipt.agentRegistry, agentId: String(receipt.agentId)};
+    const notTheAgent = await signsAsAgent(callee, hired, context);
+    if (notTheAgent !== null) return refused(notTheAgent);
 
     const tx = await context.payments.getTransaction({hash: receipt.payment}).catch(() => null);
     if (tx === null) return refused(`payment ${receipt.payment} not found`);
@@ -117,7 +180,7 @@ async function checkHire(
         strength: "strong",
         cost: tx.value,
         id: `hire:${context.chainId}:${receipt.payment.toLowerCase()}`,
-        object: null,
+        object: {kind: "agent", ...hired},
     };
 }
 
@@ -146,7 +209,7 @@ async function checkContent(
         strength: "access",
         cost: null,
         id: `content:${context.chainId}:${read.signer.toLowerCase()}:${signed.receipt.nonce.toLowerCase()}`,
-        object: signed.receipt.atom,
+        object: {kind: "atom", atom: signed.receipt.atom},
     };
 }
 
