@@ -1,7 +1,9 @@
 # Task 43 — The receipt enforcer: "no proof, no deposit", held by a contract
 
-**Status:** **PLAN**, 2026-10-30. Not started. After task 40, which holds the rule in a service first.
-**ADR:** `0094` §2.
+**Status:** **BUILT, pending review**, 2026-10-30, on branch `feat/43-receipt-enforcer`. Not deployed.
+`contract-reviewer` and `task-verifier` have not run yet. Design choices are in ADR `0098`.
+Planned after task 40, which holds the rule in a service first.
+**ADR:** `0094` §2, `0098`.
 **Required skills:** `mms-smart-accounts-kit` (`references/delegations.md`), `ethskills`,
 `secure-workflow-guide`, `guidelines-advisor`.
 **Rules:** `code.md`, `solidity.md`, `security.md`, `metamask-delegation.md`, `claims.md`,
