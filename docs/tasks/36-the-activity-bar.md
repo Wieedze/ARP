@@ -38,4 +38,4 @@ here rather than duplicated, and its labels moved to English with the rest of th
 
 ## Completion note
 
-See the commit and `.claude/learning/` for the post-mortem.
+2026-10-30, commit `353df6d`. `ui-reviewer` FAIL (8 findings, fixed); `task-verifier` FAIL (3, fixed), then PASS. Post-mortem `.claude/learning/25-the-activity-bar.md`, ADR `0091`.
