@@ -5,7 +5,7 @@
 **Surfaces:** `/` first (`apps/web/src/pages/Landing.tsx`), then `/agents`, `/tools`, `/atom/:atomId`.
 
 > **Answered on 2026-10-28, and this file is now the brief plus its answer.** The design came back
-> as `docs/design/arp-motion-reference/index.html` and `docs/design/arp-motion-reference/MOTION-V2.md`, which is **the build
+> as `docs/design/motion/index.html` and `docs/design/motion/MOTION-V2.md`, which is **the build
 > contract** — where it and this file disagree, it wins. All three scales are built on `/`. The
 > seven decisions it carried that were the user's rather than ours are ADRs `0066`–`0069`; what §4
 > and §5 became, including the one thing asked for here and deliberately not built, is ADR `0070`.

@@ -138,7 +138,7 @@ export function AtomPanel() {
 
     const view = query.data;
 
-    // A skill and a repository have their own pages (`arp-pages/`); every other atom keeps this one.
+    // A skill and a repository have their own pages (`docs/design/pages/`); every other atom keeps this one.
     const kind = view.exists && view.label !== null ? parseToolLabel(view.label).kind : null;
     if (kind === "repo") {
         return <RepoPage view={view} atomId={atomId as Hex} modules={modules.data ?? {}} />;

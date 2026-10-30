@@ -2,7 +2,7 @@
 
 **Status:** Accepted
 **Date:** 2026-10-28
-**Triggered by:** user decision, relayed through `docs/design/arp-motion-reference/MOTION-V2.md` §0 D3 and D4
+**Triggered by:** user decision, relayed through `docs/design/motion/MOTION-V2.md` §0 D3 and D4
 
 ## Context
 
@@ -101,7 +101,7 @@ that better than a grey dot nobody can read as an assertion.
 
 ## References
 
-- Build contract: `docs/design/arp-motion-reference/MOTION-V2.md` §0 D3, D4, §2.2, §2.3
+- Build contract: `docs/design/motion/MOTION-V2.md` §0 D3, D4, §2.2, §2.3
 - Amends rule: `.claude/rules/ui.md` (§Design language, "One accent")
 - Related ADR: `.claude/choices/0057-brand-identity-the-source.md` (the one-accent rule),
   `.claude/choices/0018-trust-panel-design-and-join.md` (`--color-alarm`, the only prior exception)

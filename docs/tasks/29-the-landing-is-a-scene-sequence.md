@@ -46,7 +46,7 @@
 > `rules/claims.md` §1 applies to a blocker as much as to a figure, and the same false premise is
 > written in five other task files (`docs/tasks/28` item 35).
 >
-> `docs/design/arp-motion-reference/index.html` + `MOTION-V2.md` are the design base, at the user's
+> `docs/design/motion/index.html` + `MOTION-V2.md` are the design base, at the user's
 > decision: _« garde tout ce qui vient de ce dossier, c'est la nouvelle base »_ and
 > _« surtout garde bien tous les textes et tout ce qui a été fait dans le design »_.
 

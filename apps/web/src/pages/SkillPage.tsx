@@ -28,7 +28,7 @@ import {formatDay, githubApiUrlOf, LABEL} from "../lib/atom-page";
 /**
  * `/atom/:atomId` when the atom is a skill: `github.com/<owner>/<repo>?skill=<name>` (ADR `0077`).
  *
- * The build contract is `arp-skill-page/SKILL-PAGE.md`. Top to bottom: what the skill is (its name,
+ * The build contract is `docs/design/pages/skill/SKILL-PAGE.md`. Top to bottom: what the skill is (its name,
  * its SKILL.md, the line that installs it), what is written about it on chain and what is measured
  * about it elsewhere, its own market, every claim about it, and the record.
  *

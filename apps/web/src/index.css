@@ -60,7 +60,7 @@
        `--text-display` was a flat 32px, which is where "ce n'est pas agréable" came from
        (user, 2026-10-27): every page title sat a hair above body copy, so nothing on any
        screen was the loudest thing on it. The second design handoff
-       (`docs/design/arp-design-handoff/arp-design-handoff 2/reference/`) sets a fluid clamp, and the
+       (`docs/design/brand/v2/reference/`) sets a fluid clamp, and the
        clamps below are its numbers, not ours.
 
        Two sizes, because the references use two. A listing's title is a statement — one or
@@ -111,8 +111,8 @@
     /* ---------------------------------------------------------------------- */
     /* Motion — the landing's scene deck (ADRs 0066-0069)                     */
     /*                                                                        */
-    /* `docs/design/arp-motion-reference/MOTION-V2.md` §1 is where these numbers come     */
-    /* from, and `docs/design/arp-motion-reference/index.html` is the page they were tuned */
+    /* `docs/design/motion/MOTION-V2.md` §1 is where these numbers come     */
+    /* from, and `docs/design/motion/index.html` is the page they were tuned */
     /* on. Every one of them is HERE rather than in a class, because          */
     /* `check:tokens` can see a token and cannot see a magic number.          */
     /* ---------------------------------------------------------------------- */

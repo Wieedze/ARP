@@ -1,0 +1,2331 @@
+From 1747b5fe8304723359a2295e8509042c1d20115d Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Fri, 30 Oct 2026 11:21:29 +0100
+Subject: [PATCH] feat(cli): the usage hook, the local database and arp status
+ (v0, week 1)
+
+A Claude Code hook records every MCP tool call on the machine: tool,
+function, outcome category, status code, duration. Never an argument, a
+response or an error message. arp status reads it back per tool, most
+urgent first, with the network column present but not yet read.
+
+Hooks run async and exit 0 on any failure, so the agent's call is never
+affected (ADR 0045). Nothing leaves the machine in this version.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01LbBB4eJoCL2vCKjJ4BjBLY
+---
+ bun.lock                             |  14 ++
+ package.json                         |   3 +-
+ packages/cli/README.md               |  48 ++++++
+ packages/cli/package.json            |  27 +++
+ packages/cli/src/classify.ts         | 106 ++++++++++++
+ packages/cli/src/cli.ts              |  14 ++
+ packages/cli/src/db.ts               |  83 +++++++++
+ packages/cli/src/hook.ts             | 182 ++++++++++++++++++++
+ packages/cli/src/install.ts          | 124 ++++++++++++++
+ packages/cli/src/main.ts             | 221 ++++++++++++++++++++++++
+ packages/cli/src/mcp-config.ts       | 136 +++++++++++++++
+ packages/cli/src/paths.ts            |  17 ++
+ packages/cli/src/status.ts           | 245 +++++++++++++++++++++++++++
+ packages/cli/src/tool-id.ts          |  13 ++
+ packages/cli/src/tool-name.ts        |  22 +++
+ packages/cli/src/verdict.ts          | 119 +++++++++++++
+ packages/cli/test/classify.test.ts   |  88 ++++++++++
+ packages/cli/test/helpers.ts         |  60 +++++++
+ packages/cli/test/hook.test.ts       | 144 ++++++++++++++++
+ packages/cli/test/install.test.ts    |  51 ++++++
+ packages/cli/test/mcp-config.test.ts |  84 +++++++++
+ packages/cli/test/process.test.ts    |  68 ++++++++
+ packages/cli/test/status.test.ts     |  79 +++++++++
+ packages/cli/test/tool-name.test.ts  |  27 +++
+ packages/cli/test/verdict.test.ts    |  53 ++++++
+ packages/cli/tsconfig.build.json     |  14 ++
+ packages/cli/tsconfig.json           |  19 +++
+ packages/cli/vitest.config.ts        |   9 +
+ 28 files changed, 2069 insertions(+), 1 deletion(-)
+ create mode 100644 packages/cli/README.md
+ create mode 100644 packages/cli/package.json
+ create mode 100644 packages/cli/src/classify.ts
+ create mode 100644 packages/cli/src/cli.ts
+ create mode 100644 packages/cli/src/db.ts
+ create mode 100644 packages/cli/src/hook.ts
+ create mode 100644 packages/cli/src/install.ts
+ create mode 100644 packages/cli/src/main.ts
+ create mode 100644 packages/cli/src/mcp-config.ts
+ create mode 100644 packages/cli/src/paths.ts
+ create mode 100644 packages/cli/src/status.ts
+ create mode 100644 packages/cli/src/tool-id.ts
+ create mode 100644 packages/cli/src/tool-name.ts
+ create mode 100644 packages/cli/src/verdict.ts
+ create mode 100644 packages/cli/test/classify.test.ts
+ create mode 100644 packages/cli/test/helpers.ts
+ create mode 100644 packages/cli/test/hook.test.ts
+ create mode 100644 packages/cli/test/install.test.ts
+ create mode 100644 packages/cli/test/mcp-config.test.ts
+ create mode 100644 packages/cli/test/process.test.ts
+ create mode 100644 packages/cli/test/status.test.ts
+ create mode 100644 packages/cli/test/tool-name.test.ts
+ create mode 100644 packages/cli/test/verdict.test.ts
+ create mode 100644 packages/cli/tsconfig.build.json
+ create mode 100644 packages/cli/tsconfig.json
+ create mode 100644 packages/cli/vitest.config.ts
+
+diff --git a/bun.lock b/bun.lock
+index 546b813..d92eae6 100644
+--- a/bun.lock
++++ b/bun.lock
+@@ -57,6 +57,18 @@
+       "name": "@arp/contracts",
+       "version": "0.0.0",
+     },
++    "packages/cli": {
++      "name": "@arp-protocol/cli",
++      "version": "0.0.1",
++      "bin": {
++        "arp": "./dist/cli.js",
++      },
++      "devDependencies": {
++        "@types/node": "^24.12.2",
++        "typescript": "~6.0.2",
++        "vitest": "^4.1.8",
++      },
++    },
+     "packages/protocol": {
+       "name": "@arp-protocol/core",
+       "version": "0.0.1",
+@@ -85,6 +97,8 @@
+ 
+     "@adraffy/ens-normalize": ["@adraffy/ens-normalize@1.11.1", "", {}, "sha512-nhCBV3quEgesuf7c7KYfperqSS14T8bYuvJ8PcLJp6znkZpFc0AuW4qBtr8eKVyPPe/8RSr7sglCWPU5eaxwKQ=="],
+ 
++    "@arp-protocol/cli": ["@arp-protocol/cli@workspace:packages/cli"],
++
+     "@arp-protocol/core": ["@arp-protocol/core@workspace:packages/protocol"],
+ 
+     "@arp/app": ["@arp/app@workspace:app"],
+diff --git a/package.json b/package.json
+index 70c6051..ec45a15 100644
+--- a/package.json
++++ b/package.json
+@@ -10,7 +10,8 @@
+   "workspaces": [
+     "app",
+     "contracts",
+-    "packages/protocol"
++    "packages/protocol",
++    "packages/cli"
+   ],
+   "scripts": {
+     "demo": "bun scripts/demo.ts",
+diff --git a/packages/cli/README.md b/packages/cli/README.md
+new file mode 100644
+index 0000000..d8b8eb2
+--- /dev/null
++++ b/packages/cli/README.md
+@@ -0,0 +1,48 @@
++# @arp-protocol/cli
++
++When a tool your agent uses fails, is it you, or everyone?
++
++This version answers the first half, on your machine: a Claude Code hook records every MCP tool
++call, and `arp status` shows, per tool, how many calls, how many worked, and how long they took.
++**Nothing leaves your machine in this version.** The network column (how the same tool does for
++other agents) and the public declaration arrive in the next ones.
++
++```bash
++npx @arp-protocol/cli init      # Node 22.13 or later
++# restart Claude Code, use your agent, then
++arp status
++```
++
++## Commands
++
++| command                          | effect                                                                                    |
++| -------------------------------- | ----------------------------------------------------------------------------------------- |
++| `arp init [--project]`           | install the hooks in `~/.claude/settings.json` (or the project's), create `~/.arp/arp.db` |
++| `arp status`                     | every tool over 7 days, most urgent first                                                 |
++| `arp status <tool>`              | one tool by day, its failures by category, its changes                                    |
++| `arp status --days 30`, `--json` | another window; the same data as JSON                                                     |
++| `arp ignore <tool>`              | never publish this tool                                                                   |
++| `arp forget [--uninstall]`       | erase the local database (and remove the hooks)                                           |
++
++## What is recorded, and what never is
++
++Per call: the tool, the function name, `ok` or a failure category (`tool_error`, `auth`,
++`timeout`, `unreachable`, `payment`), at most a status code such as `502`, the duration, the time
++and the session id.
++
++**Never**: an argument, the content of an answer, a full error message, a header, a key. A test
++passes a known string through a call and searches the database file for it.
++
++A server started from a script or a local path, or served from localhost, is **private**: it
++appears in `arp status` and is never published.
++
++## How it stays out of your agent's way
++
++- The tool call hooks are registered `async`: Claude Code does not wait for them.
++- The hook's own work is well under the 20 ms budget (measured over 1,000 calls in the tests);
++  starting the process costs about 80 to 90 ms on a laptop, which is why it runs asynchronously.
++- It makes no network request, and if anything fails (a locked database, a full disk) it exits 0
++  in silence. `ARP_DEBUG=1` prints the reason.
++- Calls are kept 90 days, then folded into one count per day and per tool.
++
++`ARP_HOME` moves the database elsewhere.
+diff --git a/packages/cli/package.json b/packages/cli/package.json
+new file mode 100644
+index 0000000..14e4eda
+--- /dev/null
++++ b/packages/cli/package.json
+@@ -0,0 +1,27 @@
++{
++  "name": "@arp-protocol/cli",
++  "version": "0.0.1",
++  "description": "See what your agent's tools do. A Claude Code hook records every MCP tool call on this machine, and `arp status` says, per tool, how often it works for you. Nothing leaves the machine in this version.",
++  "type": "module",
++  "bin": {
++    "arp": "./dist/cli.js"
++  },
++  "files": [
++    "dist",
++    "README.md"
++  ],
++  "engines": {
++    "node": ">=22.13"
++  },
++  "scripts": {
++    "test": "tsc -p tsconfig.build.json && vitest run",
++    "build": "tsc -p tsconfig.build.json",
++    "lint": "tsc --noEmit -p tsconfig.json",
++    "prepublishOnly": "bun run build"
++  },
++  "devDependencies": {
++    "@types/node": "^24.12.2",
++    "typescript": "~6.0.2",
++    "vitest": "^4.1.8"
++  }
++}
+diff --git a/packages/cli/src/classify.ts b/packages/cli/src/classify.ts
+new file mode 100644
+index 0000000..a1a7730
+--- /dev/null
++++ b/packages/cli/src/classify.ts
+@@ -0,0 +1,106 @@
++/**
++ * Succeeded or failed, and how: the only thing the hook keeps from a tool's answer.
++ *
++ * | outcome | rule |
++ * | --- | --- |
++ * | `ok` | an answer, with no protocol error and no error flag |
++ * | `tool_error` | the tool answered with an error: MCP `isError`, HTTP 5xx, or a failure nothing below explains |
++ * | `auth` | 401 or 403, or an authentication message: counted apart, usually configuration |
++ * | `timeout` | no answer in time |
++ * | `unreachable` | DNS, TLS, connection refused or reset |
++ * | `payment` | x402: a 402 or a refused payment |
++ *
++ * A call the user cancelled or refused is **not counted** (`null`).
++ *
++ * The text of an answer is read only when the call already failed, to put it in a category, and is
++ * never returned: the result carries an outcome and at most a status code.
++ *
++ * **The input shape is not fully documented.** Claude Code documents `PostToolUseFailure` as a
++ * distinct event but, at the time of writing, not the exact fields of its payload or of
++ * `tool_response`. So this reads defensively: any of `error`, `tool_response` (string or object),
++ * `isError`, `is_error`, `status`, `statusCode`. `test/classify.test.ts` pins the shapes seen so
++ * far; a new shape falls through to `tool_error` on a failure and `ok` otherwise, never to a throw.
++ */
++export type Outcome = 'ok' | 'tool_error' | 'auth' | 'timeout' | 'unreachable' | 'payment';
++
++export type Classified = { outcome: Outcome; code: string | null };
++
++const CANCELLED =
++  /\b(interrupted|cancel(l)?ed|aborted) by (the )?user\b|\buser (rejected|denied|declined)\b|\bpermission denied by user\b/i;
++const AUTH =
++  /\b(unauthori[sz]ed|forbidden|invalid (api )?(key|token)|authentication|not authenticated|expired token)\b/i;
++const TIMEOUT = /\b(timed? ?out|timeout|deadline exceeded|ETIMEDOUT)\b/i;
++const UNREACHABLE =
++  /\b(ENOTFOUND|EAI_AGAIN|ECONNREFUSED|ECONNRESET|EHOSTUNREACH|ENETUNREACH|getaddrinfo|certificate|TLS|SSL|socket hang up|connection refused|fetch failed)\b/i;
++const PAYMENT =
++  /\b(payment required|insufficient (funds|balance)|payment (failed|refused|rejected)|x402)\b/i;
++const STATUS = /\b(40[123]|429|5\d\d)\b/;
++
++function isRecord(value: unknown): value is Record<string, unknown> {
++  return typeof value === 'object' && value !== null && !Array.isArray(value);
++}
++
++/** Every string a failure might carry, from the places a payload has been seen to put one. */
++function failureText(input: Record<string, unknown>): string {
++  const parts: string[] = [];
++  const push = (value: unknown) => {
++    if (typeof value === 'string') parts.push(value);
++    else if (isRecord(value)) {
++      for (const key of ['error', 'message', 'reason']) {
++        if (typeof value[key] === 'string') parts.push(value[key]);
++      }
++      const content = value.content;
++      if (Array.isArray(content)) {
++        for (const item of content) {
++          if (isRecord(item) && typeof item.text === 'string') parts.push(item.text);
++        }
++      }
++    }
++  };
++  push(input.error);
++  push(input.tool_response);
++  return parts.join('\n').slice(0, 4000);
++}
++
++function statusOf(input: Record<string, unknown>): number | null {
++  for (const holder of [input, input.tool_response, input.error]) {
++    if (!isRecord(holder)) continue;
++    for (const key of ['status', 'statusCode', 'status_code']) {
++      const value = holder[key];
++      if (typeof value === 'number' && Number.isInteger(value)) return value;
++    }
++  }
++  return null;
++}
++
++function flaggedError(response: unknown): boolean {
++  if (!isRecord(response)) return false;
++  return response.isError === true || response.is_error === true;
++}
++
++function categorise(text: string, status: number | null): Classified {
++  const found = STATUS.exec(text);
++  const match = status ?? (found === null ? null : Number(found[0]));
++  const code = match === null ? null : String(match);
++  if (match === 402 || PAYMENT.test(text)) return { outcome: 'payment', code };
++  if (match === 401 || match === 403 || AUTH.test(text)) return { outcome: 'auth', code };
++  if (TIMEOUT.test(text)) return { outcome: 'timeout', code };
++  if (UNREACHABLE.test(text)) return { outcome: 'unreachable', code };
++  return { outcome: 'tool_error', code };
++}
++
++/**
++ * @param event the hook event: `PostToolUse` or `PostToolUseFailure`.
++ * @param input the event's stdin payload, as parsed JSON.
++ */
++export function classifyCall(event: string, input: Record<string, unknown>): Classified | null {
++  if (input.is_interrupt === true) return null;
++
++  const failed = event === 'PostToolUseFailure' || flaggedError(input.tool_response);
++  const status = statusOf(input);
++  if (!failed && (status === null || status < 400)) return { outcome: 'ok', code: null };
++
++  const text = failureText(input);
++  if (CANCELLED.test(text)) return null;
++  return categorise(text, status);
++}
+diff --git a/packages/cli/src/cli.ts b/packages/cli/src/cli.ts
+new file mode 100644
+index 0000000..40fec3b
+--- /dev/null
++++ b/packages/cli/src/cli.ts
+@@ -0,0 +1,14 @@
++#!/usr/bin/env node
++/**
++ * The `arp` binary.
++ *
++ * `node:sqlite` prints an ExperimentalWarning when first loaded. The default printer is removed
++ * before anything is imported, so the hook's stdout and stderr stay clean; `main` is imported
++ * dynamically for that reason, after this line runs.
++ */
++process.removeAllListeners('warning');
++
++const { main } = await import('./main.js');
++process.exitCode = await main(process.argv.slice(2));
++
++export {};
+diff --git a/packages/cli/src/db.ts b/packages/cli/src/db.ts
+new file mode 100644
+index 0000000..c5beffa
+--- /dev/null
++++ b/packages/cli/src/db.ts
+@@ -0,0 +1,83 @@
++import { mkdirSync } from 'node:fs';
++import { dirname } from 'node:path';
++import { DatabaseSync } from 'node:sqlite';
++
++/**
++ * The local database, `~/.arp/arp.db`.
++ *
++ * Everything the hook sees stays here. **What is never stored**: an argument, a response, a full
++ * error message, a header, a key. An error is reduced to its category and at most a short code
++ * (`502`). `test/privacy.test.ts` passes a known string through a call and searches the file for
++ * it.
++ *
++ * `node:sqlite` rather than a native module: `npx @arp-protocol/cli` must work without a compiler,
++ * and the hook must start fast, so nothing heavier than the runtime itself is loaded on its path.
++ */
++export type Db = DatabaseSync;
++
++const SCHEMA = `
++CREATE TABLE IF NOT EXISTS tools (
++    tool_id        TEXT PRIMARY KEY,
++    name           TEXT NOT NULL,
++    kind           TEXT NOT NULL,
++    url            TEXT NOT NULL DEFAULT '',
++    public         INTEGER NOT NULL DEFAULT 0,
++    ignored        INTEGER NOT NULL DEFAULT 0,
++    atom_id        TEXT,
++    functions_hash TEXT,
++    host           TEXT,
++    first_seen     TEXT NOT NULL,
++    last_seen      TEXT NOT NULL
++);
++CREATE TABLE IF NOT EXISTS calls (
++    ts          TEXT NOT NULL,
++    tool_id     TEXT NOT NULL REFERENCES tools(tool_id),
++    function    TEXT NOT NULL,
++    outcome     TEXT NOT NULL,
++    code        TEXT,
++    duration_ms INTEGER,
++    session     TEXT
++);
++CREATE INDEX IF NOT EXISTS calls_tool_ts ON calls(tool_id, ts);
++CREATE TABLE IF NOT EXISTS calls_daily (
++    day       TEXT NOT NULL,
++    tool_id   TEXT NOT NULL,
++    calls     INTEGER NOT NULL,
++    ok        INTEGER NOT NULL,
++    PRIMARY KEY (day, tool_id)
++);
++CREATE TABLE IF NOT EXISTS changes (
++    ts      TEXT NOT NULL,
++    tool_id TEXT NOT NULL REFERENCES tools(tool_id),
++    kind    TEXT NOT NULL,
++    before  TEXT,
++    after   TEXT,
++    shown   INTEGER NOT NULL DEFAULT 0
++);
++CREATE TABLE IF NOT EXISTS sync (
++    ts      TEXT NOT NULL,
++    tool_id TEXT NOT NULL,
++    triple  TEXT,
++    tx      TEXT,
++    status  TEXT NOT NULL
++);
++CREATE TABLE IF NOT EXISTS pending (
++    call_id TEXT PRIMARY KEY,
++    started INTEGER NOT NULL
++);
++`;
++
++/**
++ * Open (and create) the database.
++ *
++ * `busy_timeout` is short on purpose: the hook would rather drop one event than make the agent
++ * wait, and the caller treats any throw as "skip this event".
++ */
++export function openDb(path: string, { busyMs = 50 }: { busyMs?: number } = {}): Db {
++  mkdirSync(dirname(path), { recursive: true });
++  const db = new DatabaseSync(path);
++  db.exec(`PRAGMA busy_timeout = ${Math.max(0, Math.floor(busyMs))};`);
++  db.exec('PRAGMA journal_mode = WAL;');
++  db.exec(SCHEMA);
++  return db;
++}
+diff --git a/packages/cli/src/hook.ts b/packages/cli/src/hook.ts
+new file mode 100644
+index 0000000..d378c10
+--- /dev/null
++++ b/packages/cli/src/hook.ts
+@@ -0,0 +1,182 @@
++import { classifyCall } from './classify.js';
++import type { Db } from './db.js';
++import { readMcpServers, sourceOf, type ServerEntry, type ToolSource } from './mcp-config.js';
++import { toolIdOf } from './tool-id.js';
++import { parseMcpToolName } from './tool-name.js';
++
++/**
++ * What the hook does with one event. Pure apart from the database handed to it, so the tests drive
++ * it in-process and the performance budget is measured on the work itself.
++ *
++ * | event | effect |
++ * | --- | --- |
++ * | `PreToolUse` | remember the start time under the call's id |
++ * | `PostToolUse`, `PostToolUseFailure` | classify, measure, write one row in `calls`, forget the rest |
++ * | `SessionStart` | read the MCP configuration, record each server's source, note a host change, and return the alerts to put in front of the agent |
++ *
++ * It never makes a network request, never modifies a call, and never sees more than it keeps for
++ * longer than this function runs.
++ */
++export type HookInput = Record<string, unknown>;
++
++export type HookResult = {
++  /** Text for Claude Code to add to the session, `SessionStart` only. */
++  context?: string;
++};
++
++type Clock = { now: () => number };
++
++const PENDING_TTL_MS = 60 * 60 * 1000;
++
++function str(value: unknown): string | null {
++  return typeof value === 'string' && value.length > 0 ? value : null;
++}
++
++function upsertTool(
++  db: Db,
++  server: string,
++  source: ToolSource,
++  iso: string,
++): { hostBefore: string | null; id: string } {
++  const id = toolIdOf(server);
++  const row = db.prepare('SELECT host FROM tools WHERE tool_id = ?').get(id);
++  const hostBefore = row !== undefined && typeof row.host === 'string' ? row.host : null;
++  const url = source.kind === 'private' ? '' : source.url;
++  const host = source.kind === 'private' ? null : source.host;
++  const kind = source.kind;
++  const isPublic = source.kind === 'private' ? 0 : 1;
++  if (row === undefined) {
++    db.prepare(
++      'INSERT INTO tools (tool_id, name, kind, url, public, host, first_seen, last_seen) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
++    ).run(id, server, kind, url, isPublic, host, iso, iso);
++  } else {
++    db.prepare(
++      'UPDATE tools SET kind = ?, url = ?, public = ?, host = ?, last_seen = ? WHERE tool_id = ?',
++    ).run(kind, url, isPublic, host, iso, id);
++  }
++  return { hostBefore, id };
++}
++
++/** A call to a server the session start did not see: resolve it now, from configuration only. */
++function ensureTool(
++  db: Db,
++  server: string,
++  cwd: string | null,
++  iso: string,
++  servers?: Map<string, ServerEntry>,
++): string {
++  const id = toolIdOf(server);
++  const known = db.prepare('SELECT 1 AS x FROM tools WHERE tool_id = ?').get(id);
++  if (known !== undefined) {
++    db.prepare('UPDATE tools SET last_seen = ? WHERE tool_id = ?').run(iso, id);
++    return id;
++  }
++  const map = servers ?? (cwd === null ? new Map<string, ServerEntry>() : readMcpServers({ cwd }));
++  upsertTool(db, server, sourceOf(map.get(server)), iso);
++  return id;
++}
++
++function onPre(db: Db, input: HookInput, clock: Clock): void {
++  const id = str(input.tool_use_id);
++  if (id === null || parseMcpToolName(String(input.tool_name ?? '')) === null) return;
++  const now = clock.now();
++  db.prepare('INSERT OR REPLACE INTO pending (call_id, started) VALUES (?, ?)').run(id, now);
++  db.prepare('DELETE FROM pending WHERE started < ?').run(now - PENDING_TTL_MS);
++}
++
++function onPost(
++  db: Db,
++  event: string,
++  input: HookInput,
++  clock: Clock,
++  servers?: Map<string, ServerEntry>,
++): void {
++  const name = parseMcpToolName(String(input.tool_name ?? ''));
++  if (name === null) return;
++  const classified = classifyCall(event, input);
++  const callId = str(input.tool_use_id);
++  const now = clock.now();
++
++  let duration: number | null = null;
++  if (callId !== null) {
++    const started = db.prepare('SELECT started FROM pending WHERE call_id = ?').get(callId);
++    if (started !== undefined && typeof started.started === 'number')
++      duration = Math.max(0, now - started.started);
++    db.prepare('DELETE FROM pending WHERE call_id = ?').run(callId);
++  }
++  // A cancelled call is not counted at all.
++  if (classified === null) return;
++
++  const iso = new Date(now).toISOString();
++  const toolId = ensureTool(db, name.server, str(input.cwd), iso, servers);
++  db.prepare(
++    'INSERT INTO calls (ts, tool_id, function, outcome, code, duration_ms, session) VALUES (?, ?, ?, ?, ?, ?, ?)',
++  ).run(iso, toolId, name.fn, classified.outcome, classified.code, duration, str(input.session_id));
++}
++
++function onSessionStart(
++  db: Db,
++  input: HookInput,
++  clock: Clock,
++  servers?: Map<string, ServerEntry>,
++): HookResult {
++  const cwd = str(input.cwd);
++  const map = servers ?? (cwd === null ? new Map<string, ServerEntry>() : readMcpServers({ cwd }));
++  const iso = new Date(clock.now()).toISOString();
++  for (const [server, entry] of map) {
++    const source = sourceOf(entry);
++    const { hostBefore, id } = upsertTool(db, server, source, iso);
++    const hostAfter = source.kind === 'private' ? null : source.host;
++    if (hostBefore !== null && hostAfter !== null && hostBefore !== hostAfter) {
++      db.prepare(
++        "INSERT INTO changes (ts, tool_id, kind, before, after) VALUES (?, ?, 'host_changed', ?, ?)",
++      ).run(iso, id, hostBefore, hostAfter);
++    }
++  }
++  return { context: pendingAlerts(db) };
++}
++
++/**
++ * The changes the agent has not been told about, once each, as one line per tool. Marked shown in
++ * the same breath, so the next session does not repeat them.
++ */
++function pendingAlerts(db: Db): string | undefined {
++  const rows = db
++    .prepare(
++      'SELECT c.rowid AS id, t.name AS name, c.kind AS kind, c.before AS before, c.after AS after FROM changes c JOIN tools t ON t.tool_id = c.tool_id WHERE c.shown = 0 ORDER BY c.ts',
++    )
++    .all();
++  if (rows.length === 0) return undefined;
++  const lines = rows.map((row) => {
++    const name = String(row.name);
++    if (row.kind === 'host_changed')
++      return `ARP: MCP server ${name} moved from ${String(row.before)} to ${String(row.after)}.`;
++    return `ARP: MCP server ${name} changed (${String(row.kind)}).`;
++  });
++  db.prepare('UPDATE changes SET shown = 1 WHERE shown = 0').run();
++  return lines.join('\n');
++}
++
++export function handleHookEvent(
++  db: Db,
++  input: HookInput,
++  {
++    clock = { now: () => Date.now() },
++    servers,
++  }: { clock?: Clock; servers?: Map<string, ServerEntry> } = {},
++): HookResult {
++  const event = String(input.hook_event_name ?? '');
++  switch (event) {
++    case 'PreToolUse':
++      onPre(db, input, clock);
++      return {};
++    case 'PostToolUse':
++    case 'PostToolUseFailure':
++      onPost(db, event, input, clock, servers);
++      return {};
++    case 'SessionStart':
++      return onSessionStart(db, input, clock, servers);
++    default:
++      return {};
++  }
++}
+diff --git a/packages/cli/src/install.ts b/packages/cli/src/install.ts
+new file mode 100644
+index 0000000..1bd6295
+--- /dev/null
++++ b/packages/cli/src/install.ts
+@@ -0,0 +1,124 @@
++import { cpSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
++import { dirname, join } from 'node:path';
++
++/**
++ * Register the hooks in Claude Code's settings, and nothing else in that file.
++ *
++ * | event | matcher | how |
++ * | --- | --- | --- |
++ * | `PreToolUse` | `mcp__.*` | `async`: never makes the agent wait |
++ * | `PostToolUse` | `mcp__.*` | `async` |
++ * | `PostToolUseFailure` | `mcp__.*` | `async` |
++ * | `SessionStart` | all | synchronous, short timeout: its output is the context line the agent reads |
++ *
++ * **Idempotent**: running `arp init` twice leaves one copy of each hook. Ours are recognised by the
++ * command pointing into `~/.arp/cli/`, and every other hook in the file is kept as it was.
++ *
++ * The command runs a copy of the CLI under `~/.arp/cli/` with the current `node`, rather than
++ * `npx …`: `npx` costs hundreds of milliseconds per call and its cache can be cleaned, which would
++ * silently disable the hook.
++ */
++export const HOOK_EVENTS = ['PreToolUse', 'PostToolUse', 'PostToolUseFailure'] as const;
++
++export type HookCommand = { type: 'command'; command: string; timeout?: number; async?: boolean };
++type MatcherGroup = { matcher?: string; hooks: HookCommand[] };
++
++function isRecord(value: unknown): value is Record<string, unknown> {
++  return typeof value === 'object' && value !== null && !Array.isArray(value);
++}
++
++export function cliHome(arpHomeDir: string): string {
++  return join(arpHomeDir, 'cli');
++}
++
++export function hookCommand(nodePath: string, arpHomeDir: string): string {
++  return `"${nodePath}" "${join(cliHome(arpHomeDir), 'cli.js')}" hook`;
++}
++
++function isOurs(hook: unknown, marker: string): boolean {
++  return isRecord(hook) && typeof hook.command === 'string' && hook.command.includes(marker);
++}
++
++/** Merge our hooks into a parsed settings object, dropping any earlier copy of ours. */
++export function withArpHooks(
++  settings: Record<string, unknown>,
++  command: string,
++  marker: string,
++): Record<string, unknown> {
++  const hooks: Record<string, unknown> = isRecord(settings.hooks) ? { ...settings.hooks } : {};
++  const strip = (groups: unknown): MatcherGroup[] => {
++    if (!Array.isArray(groups)) return [];
++    const kept: MatcherGroup[] = [];
++    for (const group of groups) {
++      if (!isRecord(group) || !Array.isArray(group.hooks)) continue;
++      const rest = group.hooks.filter((hook) => !isOurs(hook, marker));
++      // Only the parsed shape changes; a group we did not write keeps its own fields.
++      if (rest.length > 0) kept.push({ ...group, hooks: rest } as MatcherGroup); // safe: hooks is an array checked above
++    }
++    return kept;
++  };
++  for (const event of HOOK_EVENTS) {
++    hooks[event] = [
++      ...strip(hooks[event]),
++      { matcher: 'mcp__.*', hooks: [{ type: 'command', command, timeout: 10, async: true }] },
++    ];
++  }
++  hooks.SessionStart = [
++    ...strip(hooks.SessionStart),
++    { hooks: [{ type: 'command', command, timeout: 5 }] },
++  ];
++  return { ...settings, hooks };
++}
++
++/** Remove our hooks only. Used by `arp forget --uninstall` and by the tests. */
++export function withoutArpHooks(
++  settings: Record<string, unknown>,
++  marker: string,
++): Record<string, unknown> {
++  if (!isRecord(settings.hooks)) return settings;
++  const hooks: Record<string, unknown> = {};
++  for (const [event, groups] of Object.entries(settings.hooks)) {
++    if (!Array.isArray(groups)) {
++      hooks[event] = groups;
++      continue;
++    }
++    const kept = groups
++      .filter(isRecord)
++      .map((group) =>
++        Array.isArray(group.hooks)
++          ? { ...group, hooks: group.hooks.filter((hook) => !isOurs(hook, marker)) }
++          : group,
++      )
++      .filter((group) => !Array.isArray(group.hooks) || group.hooks.length > 0);
++    if (kept.length > 0) hooks[event] = kept;
++  }
++  if (Object.keys(hooks).length === 0) {
++    const { hooks: _dropped, ...rest } = settings;
++    return rest;
++  }
++  return { ...settings, hooks };
++}
++
++export function readSettings(path: string): Record<string, unknown> {
++  if (!existsSync(path)) return {};
++  const parsed: unknown = JSON.parse(readFileSync(path, 'utf8'));
++  if (!isRecord(parsed)) throw new Error(`${path} is not a JSON object`);
++  return parsed;
++}
++
++export function writeSettings(path: string, settings: Record<string, unknown>): void {
++  mkdirSync(dirname(path), { recursive: true });
++  writeFileSync(path, `${JSON.stringify(settings, null, 2)}\n`);
++}
++
++/** Copy the built CLI next to the database, so the hook does not depend on an `npx` cache. */
++export function installCli(fromDir: string, arpHomeDir: string): string {
++  const to = cliHome(arpHomeDir);
++  mkdirSync(to, { recursive: true });
++  cpSync(fromDir, to, {
++    recursive: true,
++    filter: (src) => !src.endsWith('.map') && !src.endsWith('.d.ts'),
++  });
++  writeFileSync(join(to, 'package.json'), `${JSON.stringify({ type: 'module' })}\n`);
++  return to;
++}
+diff --git a/packages/cli/src/main.ts b/packages/cli/src/main.ts
+new file mode 100644
+index 0000000..e70204f
+--- /dev/null
++++ b/packages/cli/src/main.ts
+@@ -0,0 +1,221 @@
++import { existsSync, rmSync } from 'node:fs';
++import { homedir } from 'node:os';
++import { dirname, join } from 'node:path';
++import { fileURLToPath } from 'node:url';
++
++import { openDb, type Db } from './db.js';
++import { handleHookEvent } from './hook.js';
++import {
++  hookCommand,
++  installCli,
++  readSettings,
++  withArpHooks,
++  withoutArpHooks,
++  writeSettings,
++} from './install.js';
++import { arpHome, dbPath } from './paths.js';
++import { compact, readStatus, renderStatus, renderToolDetail } from './status.js';
++
++const USAGE = `arp: see what your agent's tools do.
++
++  arp init [--project]       install the Claude Code hooks and the local database
++  arp status [tool]          every tool over 7 days, or one tool in detail
++             [--days N] [--json]
++  arp ignore <tool>          never publish this tool
++  arp forget [--uninstall]   erase the local database (and remove the hooks)
++  arp sync                   publish now (arrives in a later version)
++`;
++
++function readStdin(limitMs: number): Promise<string> {
++  return new Promise((resolve) => {
++    if (process.stdin.isTTY) {
++      resolve('');
++      return;
++    }
++    let data = '';
++    const done = () => resolve(data);
++    const timer = setTimeout(done, limitMs);
++    process.stdin.setEncoding('utf8');
++    process.stdin.on('data', (chunk: string) => {
++      data += chunk;
++    });
++    process.stdin.on('end', () => {
++      clearTimeout(timer);
++      done();
++    });
++    process.stdin.on('error', () => {
++      clearTimeout(timer);
++      done();
++    });
++  });
++}
++
++/**
++ * The hook entry point. **It always exits 0**: a locked or missing database, a malformed payload,
++ * a full disk, all end here in silence, and the agent's call is never affected (ADR `0045`).
++ * `ARP_DEBUG=1` writes the reason to stderr, which Claude Code shows nobody on exit 0.
++ */
++async function runHook(): Promise<number> {
++  try {
++    const raw = await readStdin(2000);
++    const parsed: unknown = JSON.parse(raw);
++    if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) return 0;
++    const db = openDb(dbPath());
++    try {
++      // Narrowed to a non-array object above; the handler reads every field defensively.
++      const result = handleHookEvent(db, parsed as Record<string, unknown>);
++      if (result.context !== undefined) {
++        process.stdout.write(
++          JSON.stringify({
++            hookSpecificOutput: {
++              hookEventName: 'SessionStart',
++              additionalContext: result.context,
++            },
++          }),
++        );
++      }
++    } finally {
++      db.close();
++    }
++  } catch (error) {
++    if (process.env.ARP_DEBUG === '1') process.stderr.write(`arp hook: ${String(error)}\n`);
++  }
++  return 0;
++}
++
++function flag(args: string[], name: string): boolean {
++  return args.includes(name);
++}
++
++function option(args: string[], name: string): string | undefined {
++  const at = args.indexOf(name);
++  return at >= 0 ? args[at + 1] : undefined;
++}
++
++function withDb<T>(fn: (db: Db) => T): T {
++  const db = openDb(dbPath(), { busyMs: 1000 });
++  try {
++    return fn(db);
++  } finally {
++    db.close();
++  }
++}
++
++function settingsPath(project: boolean): string {
++  return project
++    ? join(process.cwd(), '.claude', 'settings.json')
++    : join(homedir(), '.claude', 'settings.json');
++}
++
++function init(args: string[]): number {
++  const home = arpHome();
++  const project = flag(args, '--project');
++  withDb(() => undefined);
++  installCli(dirname(fileURLToPath(import.meta.url)), home);
++  const path = settingsPath(project);
++  const marker = join(home, 'cli');
++  writeSettings(
++    path,
++    withArpHooks(readSettings(path), hookCommand(process.execPath, home), marker),
++  );
++  process.stdout.write(
++    [
++      `Hooks installed in ${path}.`,
++      `Local database: ${dbPath()}. Calls are recorded here and nothing leaves this machine in this version.`,
++      'Restart Claude Code, use your agent, then run: arp status',
++      '',
++    ].join('\n'),
++  );
++  return 0;
++}
++
++function status(args: string[]): number {
++  const daysRaw = option(args, '--days');
++  const days = daysRaw === undefined ? 7 : Number(daysRaw);
++  if (!Number.isInteger(days) || days <= 0) {
++    process.stderr.write('--days takes a positive whole number of days.\n');
++    return 1;
++  }
++  const json = flag(args, '--json');
++  const tool = args.find((arg, i) => !arg.startsWith('--') && args[i - 1] !== '--days');
++  if (!existsSync(dbPath())) {
++    process.stdout.write(json ? '[]\n' : 'Nothing recorded yet. Run arp init first.\n');
++    return 0;
++  }
++  return withDb((db) => {
++    compact(db, new Date());
++    if (tool !== undefined) {
++      const detail = renderToolDetail(db, tool, { days });
++      if (detail === null) {
++        process.stderr.write(`No tool named ${tool}. Run arp status to see the names.\n`);
++        return 1;
++      }
++      process.stdout.write(detail);
++      return 0;
++    }
++    const result = readStatus(db, { days });
++    process.stdout.write(
++      json ? `${JSON.stringify(result, null, 2)}\n` : renderStatus(result, days),
++    );
++    return 0;
++  });
++}
++
++function ignore(args: string[]): number {
++  const tool = args[0];
++  if (tool === undefined) {
++    process.stderr.write('Usage: arp ignore <tool>\n');
++    return 1;
++  }
++  return withDb((db) => {
++    const changed = db.prepare('UPDATE tools SET ignored = 1 WHERE name = ?').run(tool);
++    if (changed.changes === 0) {
++      process.stderr.write(`No tool named ${tool}.\n`);
++      return 1;
++    }
++    process.stdout.write(`${tool} will never be published.\n`);
++    return 0;
++  });
++}
++
++function forget(args: string[]): number {
++  const path = dbPath();
++  for (const file of [path, `${path}-wal`, `${path}-shm`]) rmSync(file, { force: true });
++  if (flag(args, '--uninstall')) {
++    const home = arpHome();
++    for (const project of [false, true]) {
++      const settings = settingsPath(project);
++      if (existsSync(settings))
++        writeSettings(settings, withoutArpHooks(readSettings(settings), join(home, 'cli')));
++    }
++    rmSync(join(home, 'cli'), { recursive: true, force: true });
++    process.stdout.write('Local database erased and hooks removed.\n');
++    return 0;
++  }
++  process.stdout.write('Local database erased.\n');
++  return 0;
++}
++
++export async function main(argv: string[]): Promise<number> {
++  const [command, ...args] = argv;
++  switch (command) {
++    case 'hook':
++      return runHook();
++    case 'init':
++      return init(args);
++    case 'status':
++      return status(args);
++    case 'ignore':
++      return ignore(args);
++    case 'forget':
++      return forget(args);
++    case 'sync':
++      process.stdout.write(
++        'Publishing arrives in a later version. Nothing has left this machine.\n',
++      );
++      return 0;
++    default:
++      process.stdout.write(USAGE);
++      return command === undefined || command === 'help' || command === '--help' ? 0 : 1;
++  }
++}
+diff --git a/packages/cli/src/mcp-config.ts b/packages/cli/src/mcp-config.ts
+new file mode 100644
+index 0000000..8031df7
+--- /dev/null
++++ b/packages/cli/src/mcp-config.ts
+@@ -0,0 +1,136 @@
++import { readFileSync } from 'node:fs';
++import { homedir } from 'node:os';
++import { join } from 'node:path';
++
++/**
++ * Which MCP servers this user has configured, and what each one **is**, so a call to
++ * `mcp__github__create_issue` can be tied to a tool somebody else can name too.
++ *
++ * Read at session start, never per call. Sources, later ones winning for the same name, which is
++ * how Claude Code scopes them:
++ *
++ * 1. `~/.claude.json` → `mcpServers` (user scope),
++ * 2. `~/.claude.json` → `projects[<cwd>].mcpServers` (local scope),
++ * 3. `<cwd>/.mcp.json` → `mcpServers` (project scope).
++ *
++ * A file that is missing or unreadable is skipped: the hook never fails because of configuration.
++ */
++export type ServerEntry =
++  | { transport: 'remote'; url: string }
++  | { transport: 'local'; command: string; args: string[] };
++
++export type ToolSource =
++  /** A remote MCP server: its URL is the tool. */
++  | { kind: 'mcp_remote'; url: string; host: string }
++  /** A local server started from a published package: the package page is the tool. */
++  | { kind: 'mcp_local'; url: string; host: string }
++  /** A script, a private path, anything nobody else can name. Shown locally, never published. */
++  | { kind: 'private' };
++
++function isRecord(value: unknown): value is Record<string, unknown> {
++  return typeof value === 'object' && value !== null && !Array.isArray(value);
++}
++
++function readJson(path: string): unknown {
++  try {
++    return JSON.parse(readFileSync(path, 'utf8'));
++  } catch {
++    return undefined;
++  }
++}
++
++function entryOf(raw: unknown): ServerEntry | null {
++  if (!isRecord(raw)) return null;
++  if (typeof raw.url === 'string' && raw.url.length > 0)
++    return { transport: 'remote', url: raw.url };
++  if (typeof raw.command === 'string' && raw.command.length > 0) {
++    const args = Array.isArray(raw.args)
++      ? raw.args.filter((a): a is string => typeof a === 'string')
++      : [];
++    return { transport: 'local', command: raw.command, args };
++  }
++  return null;
++}
++
++function collect(into: Map<string, ServerEntry>, servers: unknown): void {
++  if (!isRecord(servers)) return;
++  for (const [name, raw] of Object.entries(servers)) {
++    const entry = entryOf(raw);
++    if (entry !== null) into.set(name, entry);
++  }
++}
++
++export function readMcpServers({
++  cwd,
++  home = homedir(),
++}: {
++  cwd: string;
++  home?: string;
++}): Map<string, ServerEntry> {
++  const servers = new Map<string, ServerEntry>();
++  const user = readJson(join(home, '.claude.json'));
++  if (isRecord(user)) {
++    collect(servers, user.mcpServers);
++    if (isRecord(user.projects)) {
++      const project = user.projects[cwd];
++      if (isRecord(project)) collect(servers, project.mcpServers);
++    }
++  }
++  const shared = readJson(join(cwd, '.mcp.json'));
++  if (isRecord(shared)) collect(servers, shared.mcpServers);
++  return servers;
++}
++
++/**
++ * The package a launcher runs: the first argument that is not a flag.
++ *
++ * `npx -y @scope/pkg@1.2 --stdio` → `@scope/pkg`. The version is dropped: the tool is the package,
++ * and a version bump must not become a new atom.
++ */
++function packageArg(args: readonly string[]): string | null {
++  const first = args.find((arg) => !arg.startsWith('-'));
++  if (first === undefined) return null;
++  const at = first.lastIndexOf('@');
++  return at > 0 ? first.slice(0, at) : first;
++}
++
++const NPM_LAUNCHERS = new Set(['npx', 'bunx', 'pnpx']);
++const PYPI_LAUNCHERS = new Set(['uvx', 'pipx']);
++
++/**
++ * What a configured server is, in the order the spec resolves it: a remote URL, then a published
++ * package's page on npm or PyPI, else private.
++ *
++ * The URL is returned raw. Normalising it (ADR `0054`) is `@arp-protocol/core`'s job and happens
++ * outside the hook, so the hook never loads that package.
++ */
++export function sourceOf(entry: ServerEntry | undefined): ToolSource {
++  if (entry === undefined) return { kind: 'private' };
++  if (entry.transport === 'remote') {
++    try {
++      const url = new URL(entry.url);
++      if (url.protocol !== 'https:' && url.protocol !== 'http:') return { kind: 'private' };
++      if (url.hostname === 'localhost' || url.hostname === '127.0.0.1' || url.hostname === '::1') {
++        return { kind: 'private' };
++      }
++      return { kind: 'mcp_remote', url: entry.url, host: url.hostname };
++    } catch {
++      return { kind: 'private' };
++    }
++  }
++  const launcher = entry.command.split(/[\\/]/).pop() ?? entry.command;
++  const args = launcher === 'pipx' && entry.args[0] === 'run' ? entry.args.slice(1) : entry.args;
++  const pkg = packageArg(args);
++  if (pkg === null || pkg.startsWith('.') || pkg.startsWith('/')) return { kind: 'private' };
++  if (NPM_LAUNCHERS.has(launcher)) {
++    return {
++      kind: 'mcp_local',
++      url: `https://www.npmjs.com/package/${pkg}`,
++      host: 'www.npmjs.com',
++    };
++  }
++  if (PYPI_LAUNCHERS.has(launcher)) {
++    return { kind: 'mcp_local', url: `https://pypi.org/project/${pkg}`, host: 'pypi.org' };
++  }
++  return { kind: 'private' };
++}
+diff --git a/packages/cli/src/paths.ts b/packages/cli/src/paths.ts
+new file mode 100644
+index 0000000..42972e2
+--- /dev/null
++++ b/packages/cli/src/paths.ts
+@@ -0,0 +1,17 @@
++import { homedir } from 'node:os';
++import { join } from 'node:path';
++
++/**
++ * Where ARP keeps its state on this machine: `~/.arp`, or `ARP_HOME` when set.
++ *
++ * The override exists for tests and for a user who wants the database elsewhere. It is read on
++ * every call rather than once, so a test can point two runs at two directories.
++ */
++export function arpHome(env: NodeJS.ProcessEnv = process.env): string {
++  const override = env.ARP_HOME;
++  return override !== undefined && override.length > 0 ? override : join(homedir(), '.arp');
++}
++
++export function dbPath(env: NodeJS.ProcessEnv = process.env): string {
++  return join(arpHome(env), 'arp.db');
++}
+diff --git a/packages/cli/src/status.ts b/packages/cli/src/status.ts
+new file mode 100644
+index 0000000..9fe6f35
+--- /dev/null
++++ b/packages/cli/src/status.ts
+@@ -0,0 +1,245 @@
++import type { Db } from './db.js';
++import {
++  urgency,
++  verdictFor,
++  verdictText,
++  type LocalStats,
++  type NetworkReading,
++  type Verdict,
++} from './verdict.js';
++
++/**
++ * `arp status`: read from the local database only, under a second, with no network call.
++ *
++ * The `network` column is empty in this version: the reading of other agents' reports arrives with
++ * week 3. The column is already in the output so the shape a script parses does not change.
++ */
++export type ToolStatus = {
++  name: string;
++  kind: string;
++  url: string;
++  isPublic: boolean;
++  isIgnored: boolean;
++  calls: number;
++  /** `ok / calls`, or `null` with no calls. */
++  you: number | null;
++  medianMs: number | null;
++  outcomes: Record<string, number>;
++  network: NetworkReading | null;
++  verdict: Verdict;
++};
++
++export type Alert = {
++  tool: string;
++  kind: string;
++  before: string | null;
++  after: string | null;
++  ts: string;
++};
++
++export const RETENTION_DAYS = 90;
++
++function median(values: number[]): number | null {
++  if (values.length === 0) return null;
++  const sorted = [...values].sort((a, b) => a - b);
++  const mid = Math.floor(sorted.length / 2);
++  return sorted.length % 2 === 1 ? sorted[mid]! : Math.round((sorted[mid - 1]! + sorted[mid]!) / 2);
++}
++
++/**
++ * Calls older than the retention window become one row per day and per tool, then go. The daily
++ * rows keep the counts `arp status --days 365` would need, and nothing else.
++ */
++export function compact(db: Db, now: Date): void {
++  const cutoff = new Date(now.getTime() - RETENTION_DAYS * 86_400_000).toISOString();
++  db.exec('BEGIN');
++  try {
++    db.prepare(
++      `INSERT INTO calls_daily (day, tool_id, calls, ok)
++             SELECT substr(ts, 1, 10), tool_id, COUNT(*), SUM(outcome = 'ok') FROM calls WHERE ts < ?
++             GROUP BY substr(ts, 1, 10), tool_id
++             ON CONFLICT(day, tool_id) DO UPDATE SET calls = calls + excluded.calls, ok = ok + excluded.ok`,
++    ).run(cutoff);
++    db.prepare('DELETE FROM calls WHERE ts < ?').run(cutoff);
++    db.exec('COMMIT');
++  } catch (error) {
++    db.exec('ROLLBACK');
++    throw error;
++  }
++}
++
++export function readStatus(
++  db: Db,
++  {
++    days = 7,
++    now = new Date(),
++    network = new Map<string, NetworkReading>(),
++  }: { days?: number; now?: Date; network?: Map<string, NetworkReading> } = {},
++): { tools: ToolStatus[]; alerts: Alert[] } {
++  const since = new Date(now.getTime() - days * 86_400_000).toISOString();
++  const tools = db.prepare('SELECT tool_id, name, kind, url, public, ignored FROM tools').all();
++  const out: ToolStatus[] = [];
++  for (const tool of tools) {
++    const id = String(tool.tool_id);
++    const rows = db
++      .prepare('SELECT outcome, duration_ms FROM calls WHERE tool_id = ? AND ts >= ?')
++      .all(id, since);
++    const outcomes: Record<string, number> = {};
++    const durations: number[] = [];
++    for (const row of rows) {
++      const outcome = String(row.outcome);
++      outcomes[outcome] = (outcomes[outcome] ?? 0) + 1;
++      if (typeof row.duration_ms === 'number') durations.push(row.duration_ms);
++    }
++    const daily =
++      days > RETENTION_DAYS
++        ? db
++            .prepare(
++              'SELECT COALESCE(SUM(calls), 0) AS calls, COALESCE(SUM(ok), 0) AS ok FROM calls_daily WHERE tool_id = ? AND day >= ?',
++            )
++            .get(id, since.slice(0, 10))
++        : undefined;
++    const calls = rows.length + Number(daily?.calls ?? 0);
++    const ok = (outcomes.ok ?? 0) + Number(daily?.ok ?? 0);
++    const change = db
++      .prepare('SELECT MAX(ts) AS ts FROM changes WHERE tool_id = ? AND ts >= ?')
++      .get(id, since);
++    const local: LocalStats = {
++      calls,
++      ok,
++      auth: outcomes.auth ?? 0,
++      medianMs: median(durations),
++      lastChange: typeof change?.ts === 'string' ? change.ts : null,
++    };
++    const reading = network.get(id) ?? null;
++    out.push({
++      name: String(tool.name),
++      kind: String(tool.kind),
++      url: String(tool.url),
++      isPublic: tool.public === 1,
++      isIgnored: tool.ignored === 1,
++      calls,
++      you: calls === 0 ? null : ok / calls,
++      medianMs: local.medianMs,
++      outcomes,
++      network: reading,
++      verdict: verdictFor(local, reading, now),
++    });
++  }
++  out.sort(
++    (a, b) =>
++      urgency(a.verdict) - urgency(b.verdict) || b.calls - a.calls || a.name.localeCompare(b.name),
++  );
++
++  const alerts = db
++    .prepare(
++      'SELECT t.name AS tool, c.kind AS kind, c.before AS before, c.after AS after, c.ts AS ts FROM changes c JOIN tools t ON t.tool_id = c.tool_id WHERE c.ts >= ? ORDER BY c.ts DESC',
++    )
++    .all(since)
++    .map((row) => ({
++      tool: String(row.tool),
++      kind: String(row.kind),
++      before: typeof row.before === 'string' ? row.before : null,
++      after: typeof row.after === 'string' ? row.after : null,
++      ts: String(row.ts),
++    }));
++  return { tools: out, alerts };
++}
++
++const pct = (value: number | null) => (value === null ? '' : `${Math.round(value * 100)} %`);
++
++function alertLine(alert: Alert): string {
++  if (alert.kind === 'host_changed')
++    return `! ${alert.tool} moved from ${alert.before ?? '?'} to ${alert.after ?? '?'} (${alert.ts.slice(0, 10)})`;
++  return `! ${alert.tool}: ${alert.kind} (${alert.ts.slice(0, 10)})`;
++}
++
++/** The plain text table. Columns: tool, calls, you, network, median, verdict. */
++export function renderStatus(
++  { tools, alerts }: { tools: ToolStatus[]; alerts: Alert[] },
++  days: number,
++): string {
++  if (tools.length === 0) {
++    return 'No MCP tool call recorded yet. Use your agent with an MCP server, then run arp status again.\n';
++  }
++  const lines: string[] = [];
++  for (const alert of alerts) lines.push(alertLine(alert));
++  if (alerts.length > 0) lines.push('');
++  const header = ['tool', 'calls', 'you', 'network', 'median', 'verdict'];
++  const body = tools.map((tool) => [
++    tool.name + (tool.isPublic && !tool.isIgnored ? '' : ' (private)'),
++    String(tool.calls),
++    pct(tool.you),
++    tool.network === null
++      ? 'not read yet'
++      : `${pct(tool.network.success)} of ${tool.network.operators}`,
++    tool.medianMs === null ? '' : `${tool.medianMs} ms`,
++    verdictText(tool.verdict),
++  ]);
++  const widths = header.map((h, i) => Math.max(h.length, ...body.map((row) => row[i]!.length)));
++  const fmt = (row: string[]) =>
++    row
++      .map((cell, i) =>
++        i === 0 || i === row.length - 1 ? cell.padEnd(widths[i]!) : cell.padStart(widths[i]!),
++      )
++      .join('   ')
++      .trimEnd();
++  lines.push(fmt(header), ...body.map(fmt), '', `Last ${days} days, this machine only.`);
++  return `${lines.join('\n')}\n`;
++}
++
++/** `arp status <tool>`: one tool, by day, by error category. */
++export function renderToolDetail(
++  db: Db,
++  name: string,
++  { days = 7, now = new Date() }: { days?: number; now?: Date } = {},
++): string | null {
++  const tool = db
++    .prepare('SELECT tool_id, name, kind, url, public, ignored FROM tools WHERE name = ?')
++    .get(name);
++  if (tool === undefined) return null;
++  const since = new Date(now.getTime() - days * 86_400_000).toISOString();
++  const id = String(tool.tool_id);
++  const byDay = db
++    .prepare(
++      "SELECT substr(ts, 1, 10) AS day, COUNT(*) AS calls, SUM(outcome = 'ok') AS ok FROM calls WHERE tool_id = ? AND ts >= ? GROUP BY day ORDER BY day",
++    )
++    .all(id, since);
++  const byOutcome = db
++    .prepare(
++      "SELECT outcome, code, COUNT(*) AS n FROM calls WHERE tool_id = ? AND ts >= ? AND outcome != 'ok' GROUP BY outcome, code ORDER BY n DESC",
++    )
++    .all(id, since);
++  const changes = db
++    .prepare(
++      'SELECT ts, kind, before, after FROM changes WHERE tool_id = ? ORDER BY ts DESC LIMIT 10',
++    )
++    .all(id);
++  const lines = [
++    `${String(tool.name)}  ${String(tool.kind)}  ${tool.url === '' ? 'private, never published' : String(tool.url)}${tool.ignored === 1 ? '  (ignored)' : ''}`,
++    '',
++    'day          calls   you',
++    ...byDay.map(
++      (row) =>
++        `${String(row.day)}   ${String(row.calls).padStart(5)}   ${pct(Number(row.ok) / Number(row.calls)).padStart(5)}`,
++    ),
++    '',
++    byOutcome.length === 0 ? 'No failure in the window.' : 'failures',
++    ...byOutcome.map(
++      (row) =>
++        `  ${String(row.outcome)}${typeof row.code === 'string' ? ` ${row.code}` : ''}   ${String(row.n)}`,
++    ),
++  ];
++  if (changes.length > 0) {
++    lines.push(
++      '',
++      'changes',
++      ...changes.map(
++        (row) =>
++          `  ${String(row.ts).slice(0, 10)}  ${String(row.kind)}  ${String(row.before ?? '')} -> ${String(row.after ?? '')}`,
++      ),
++    );
++  }
++  lines.push('', 'What other agents switched to: not read yet in this version.');
++  return `${lines.join('\n')}\n`;
++}
+diff --git a/packages/cli/src/tool-id.ts b/packages/cli/src/tool-id.ts
+new file mode 100644
+index 0000000..f6e7984
+--- /dev/null
++++ b/packages/cli/src/tool-id.ts
+@@ -0,0 +1,13 @@
++import { createHash } from 'node:crypto';
++
++/**
++ * The local id of a tool: a fingerprint of the **server name** the user configured.
++ *
++ * The spec suggested a fingerprint of the normalised URL. Keyed by URL, a server that moves to
++ * another host would become a second tool and the "host changed" alert, which compares the URL a
++ * name pointed at before and after, could never fire. The name is what the user and the agent call
++ * the tool; the URL is a property of it that can change, and the `tools` row records it.
++ */
++export function toolIdOf(server: string): string {
++  return createHash('sha256').update(`mcp-server:${server}`).digest('hex').slice(0, 16);
++}
+diff --git a/packages/cli/src/tool-name.ts b/packages/cli/src/tool-name.ts
+new file mode 100644
+index 0000000..91e8e32
+--- /dev/null
++++ b/packages/cli/src/tool-name.ts
+@@ -0,0 +1,22 @@
++/**
++ * Split Claude Code's name for an MCP tool call into its server and its function.
++ *
++ * Claude Code names them `mcp__<server>__<function>`, and a plugin's server
++ * `mcp__plugin_<plugin>_<server>__<function>`. The server segment is kept whole: it is the key the
++ * user's MCP configuration uses, and the hook only needs to find it there.
++ *
++ * Anything else (`Bash`, `Edit`) is not an MCP tool and returns `null`: the hook is registered on
++ * `mcp__.*`, but a matcher is a regex and a wrong match must not become a tool.
++ */
++export type McpToolName = { server: string; fn: string };
++
++export function parseMcpToolName(toolName: string): McpToolName | null {
++  if (!toolName.startsWith('mcp__')) return null;
++  const rest = toolName.slice('mcp__'.length);
++  const split = rest.indexOf('__');
++  if (split <= 0) return null;
++  const server = rest.slice(0, split);
++  const fn = rest.slice(split + 2);
++  if (fn.length === 0) return null;
++  return { server, fn };
++}
+diff --git a/packages/cli/src/verdict.ts b/packages/cli/src/verdict.ts
+new file mode 100644
+index 0000000..1b8c4b1
+--- /dev/null
++++ b/packages/cli/src/verdict.ts
+@@ -0,0 +1,119 @@
++/**
++ * The verdict of `arp status`, one per tool: the first rule that applies.
++ *
++ * | verdict | condition |
++ * | --- | --- |
++ * | `not enough data` | fewer than 10 calls from this agent, or fewer than 3 other operators in the network reading |
++ * | `broken everywhere` | network success under 75 % and this agent's under 75 % |
++ * | `only you: check config` | network at least 90 %, this agent more than 20 points below. `check credentials` when more than half its failures are `auth` |
++ * | `changed <date>` | a change of functions, host or price in the last 7 days |
++ * | `slow for you` | this agent's median duration over twice the network's |
++ * | `ok` | none of the above |
++ *
++ * ARP grades nobody (ADR `0046`): the network figures are an average of what other agents
++ * published, with their count, and a verdict compares this machine with that average. The
++ * thresholds are starting values, to be revisited after the first ten users.
++ *
++ * Until the network reading exists (week 3 of the v0), `network` is `null`, so every tool reads
++ * `not enough data` and the `you` column carries the information. That is the spec's rule, kept
++ * literally rather than inventing a verdict from local data alone.
++ */
++export const THRESHOLDS = {
++  minCalls: 10,
++  minOperators: 3,
++  broken: 0.75,
++  networkHealthy: 0.9,
++  gapPoints: 0.2,
++  slowFactor: 2,
++  changedDays: 7,
++} as const;
++
++export type NetworkReading = {
++  /** Success rate published by other agents for the same atom, past week, 0 to 1. */
++  success: number;
++  /** Distinct operators behind it. */
++  operators: number;
++  medianMs: number | null;
++};
++
++export type LocalStats = {
++  calls: number;
++  ok: number;
++  auth: number;
++  medianMs: number | null;
++  /** The most recent change in the window, ISO date, or `null`. */
++  lastChange: string | null;
++};
++
++export type Verdict =
++  | { kind: 'not enough data' }
++  | { kind: 'broken everywhere' }
++  | { kind: 'only you'; hint: 'check config' | 'check credentials' }
++  | { kind: 'changed'; on: string }
++  | { kind: 'slow for you' }
++  | { kind: 'ok' };
++
++export function verdictFor(local: LocalStats, network: NetworkReading | null, now: Date): Verdict {
++  if (
++    local.calls < THRESHOLDS.minCalls ||
++    network === null ||
++    network.operators < THRESHOLDS.minOperators
++  ) {
++    return { kind: 'not enough data' };
++  }
++  const you = local.ok / local.calls;
++  if (network.success < THRESHOLDS.broken && you < THRESHOLDS.broken)
++    return { kind: 'broken everywhere' };
++  if (
++    network.success >= THRESHOLDS.networkHealthy &&
++    network.success - you > THRESHOLDS.gapPoints
++  ) {
++    const failures = local.calls - local.ok;
++    return {
++      kind: 'only you',
++      hint: failures > 0 && local.auth / failures > 0.5 ? 'check credentials' : 'check config',
++    };
++  }
++  if (local.lastChange !== null) {
++    const age = now.getTime() - new Date(local.lastChange).getTime();
++    if (age <= THRESHOLDS.changedDays * 86_400_000)
++      return { kind: 'changed', on: local.lastChange.slice(0, 10) };
++  }
++  if (
++    local.medianMs !== null &&
++    network.medianMs !== null &&
++    local.medianMs > THRESHOLDS.slowFactor * network.medianMs
++  ) {
++    return { kind: 'slow for you' };
++  }
++  return { kind: 'ok' };
++}
++
++export function verdictText(verdict: Verdict): string {
++  switch (verdict.kind) {
++    case 'only you':
++      return `only you: ${verdict.hint}`;
++    case 'changed':
++      return `changed ${verdict.on}`;
++    default:
++      return verdict.kind;
++  }
++}
++
++/** How urgent a verdict is, for sorting `arp status`: the first rows are the ones to act on. */
++export function urgency(verdict: Verdict): number {
++  switch (verdict.kind) {
++    case 'broken everywhere':
++      return 0;
++    case 'only you':
++      return 1;
++    case 'changed':
++      return 2;
++    case 'slow for you':
++      return 3;
++    case 'ok':
++      return 4;
++    case 'not enough data':
++      return 5;
++  }
++}
+diff --git a/packages/cli/test/classify.test.ts b/packages/cli/test/classify.test.ts
+new file mode 100644
+index 0000000..c6b163f
+--- /dev/null
++++ b/packages/cli/test/classify.test.ts
+@@ -0,0 +1,88 @@
++import { classifyCall } from '../src/classify.js';
++
++describe('classifyCall', () => {
++  it('reads an answer with no error as ok', () => {
++    expect(
++      classifyCall('PostToolUse', { tool_response: { content: [{ type: 'text', text: 'done' }] } }),
++    ).toEqual({ outcome: 'ok', code: null });
++    expect(classifyCall('PostToolUse', { tool_response: 'plain text' })).toEqual({
++      outcome: 'ok',
++      code: null,
++    });
++    expect(classifyCall('PostToolUse', {})).toEqual({ outcome: 'ok', code: null });
++  });
++
++  it('does not read the text of a successful answer, even when it mentions an error', () => {
++    // A search result about "401 errors" is a successful call.
++    const result = classifyCall('PostToolUse', {
++      tool_response: { content: [{ type: 'text', text: 'How to fix 401 Unauthorized' }] },
++    });
++    expect(result).toEqual({ outcome: 'ok', code: null });
++  });
++
++  it('treats the MCP error flag as a tool error', () => {
++    expect(
++      classifyCall('PostToolUse', {
++        tool_response: { isError: true, content: [{ type: 'text', text: 'boom' }] },
++      }),
++    ).toEqual({ outcome: 'tool_error', code: null });
++  });
++
++  it('puts each failure in its category, with at most a status code', () => {
++    expect(classifyCall('PostToolUseFailure', { error: 'HTTP 502 Bad Gateway' })).toEqual({
++      outcome: 'tool_error',
++      code: '502',
++    });
++    expect(classifyCall('PostToolUseFailure', { error: 'Request failed with status 401' })).toEqual(
++      { outcome: 'auth', code: '401' },
++    );
++    expect(classifyCall('PostToolUseFailure', { error: 'Forbidden' })).toEqual({
++      outcome: 'auth',
++      code: null,
++    });
++    expect(
++      classifyCall('PostToolUseFailure', { error: 'MCP error -32001: Request timed out' }),
++    ).toEqual({ outcome: 'timeout', code: null });
++    expect(
++      classifyCall('PostToolUseFailure', { error: 'getaddrinfo ENOTFOUND api.example.dev' }),
++    ).toEqual({ outcome: 'unreachable', code: null });
++    expect(classifyCall('PostToolUseFailure', { error: '402 Payment Required' })).toEqual({
++      outcome: 'payment',
++      code: '402',
++    });
++    expect(
++      classifyCall('PostToolUseFailure', {
++        error: { message: 'connect ECONNREFUSED 127.0.0.1:3000' },
++      }),
++    ).toEqual({ outcome: 'unreachable', code: null });
++    expect(classifyCall('PostToolUseFailure', { error: 'something odd' })).toEqual({
++      outcome: 'tool_error',
++      code: null,
++    });
++  });
++
++  it('prefers a numeric status field over the text', () => {
++    expect(classifyCall('PostToolUseFailure', { error: { status: 403, message: 'nope' } })).toEqual(
++      { outcome: 'auth', code: '403' },
++    );
++  });
++
++  it('does not count a call the user cancelled or refused', () => {
++    expect(classifyCall('PostToolUseFailure', { is_interrupt: true, error: 'x' })).toBeNull();
++    expect(
++      classifyCall('PostToolUseFailure', { error: 'The user rejected this tool call' }),
++    ).toBeNull();
++    expect(classifyCall('PostToolUseFailure', { error: 'Interrupted by user' })).toBeNull();
++  });
++
++  it('never throws on a shape it has not seen', () => {
++    for (const odd of [
++      { error: 42 },
++      { error: null },
++      { tool_response: [1, 2] },
++      { tool_response: { content: 'x' } },
++    ]) {
++      expect(() => classifyCall('PostToolUseFailure', odd)).not.toThrow();
++    }
++  });
++});
+diff --git a/packages/cli/test/helpers.ts b/packages/cli/test/helpers.ts
+new file mode 100644
+index 0000000..5b10803
+--- /dev/null
++++ b/packages/cli/test/helpers.ts
+@@ -0,0 +1,60 @@
++import { mkdtempSync } from 'node:fs';
++import { tmpdir } from 'node:os';
++import { join } from 'node:path';
++
++import { openDb, type Db } from '../src/db.js';
++
++export function tempDir(): string {
++  return mkdtempSync(join(tmpdir(), 'arp-cli-'));
++}
++
++export function tempDb(): { db: Db; path: string; dir: string } {
++  const dir = tempDir();
++  const path = join(dir, 'arp.db');
++  return { db: openDb(path), path, dir };
++}
++
++/** A clock the test moves by hand. */
++export function fakeClock(start = Date.parse('2026-11-02T10:00:00Z')) {
++  let t = start;
++  return { now: () => t, advance: (ms: number) => (t += ms) };
++}
++
++export function pre(tool: string, id: string, extra: Record<string, unknown> = {}) {
++  return {
++    hook_event_name: 'PreToolUse',
++    tool_name: tool,
++    tool_use_id: id,
++    session_id: 's1',
++    cwd: '/nowhere',
++    ...extra,
++  };
++}
++
++export function post(tool: string, id: string, extra: Record<string, unknown> = {}) {
++  return {
++    hook_event_name: 'PostToolUse',
++    tool_name: tool,
++    tool_use_id: id,
++    session_id: 's1',
++    cwd: '/nowhere',
++    ...extra,
++  };
++}
++
++export function failure(
++  tool: string,
++  id: string,
++  error: unknown,
++  extra: Record<string, unknown> = {},
++) {
++  return {
++    hook_event_name: 'PostToolUseFailure',
++    tool_name: tool,
++    tool_use_id: id,
++    session_id: 's1',
++    cwd: '/nowhere',
++    error,
++    ...extra,
++  };
++}
+diff --git a/packages/cli/test/hook.test.ts b/packages/cli/test/hook.test.ts
+new file mode 100644
+index 0000000..abfb74e
+--- /dev/null
++++ b/packages/cli/test/hook.test.ts
+@@ -0,0 +1,144 @@
++import { readFileSync } from 'node:fs';
++
++import { handleHookEvent } from '../src/hook.js';
++import type { ServerEntry } from '../src/mcp-config.js';
++import { failure, fakeClock, post, pre, tempDb } from './helpers.js';
++
++const servers = new Map<string, ServerEntry>([
++  ['github', { transport: 'remote', url: 'https://api.githubcopilot.com/mcp/' }],
++  ['notes', { transport: 'local', command: 'node', args: ['./notes.js'] }],
++]);
++
++describe('the hook', () => {
++  it('records one call with its duration, from the start time noted before it', () => {
++    const { db } = tempDb();
++    const clock = fakeClock();
++    handleHookEvent(db, pre('mcp__github__create_issue', 'c1'), { clock, servers });
++    clock.advance(340);
++    handleHookEvent(db, post('mcp__github__create_issue', 'c1'), { clock, servers });
++    const rows = db.prepare('SELECT function, outcome, duration_ms, session FROM calls').all();
++    expect(rows).toEqual([
++      { function: 'create_issue', outcome: 'ok', duration_ms: 340, session: 's1' },
++    ]);
++    expect(db.prepare('SELECT COUNT(*) AS n FROM pending').get()).toEqual({ n: 0 });
++    const tool = db.prepare('SELECT name, kind, url, public, host FROM tools').get();
++    expect(tool).toEqual({
++      name: 'github',
++      kind: 'mcp_remote',
++      url: 'https://api.githubcopilot.com/mcp/',
++      public: 1,
++      host: 'api.githubcopilot.com',
++    });
++  });
++
++  it('records a call with no start time, without a duration', () => {
++    const { db } = tempDb();
++    handleHookEvent(db, post('mcp__github__list', 'c9'), { clock: fakeClock(), servers });
++    expect(db.prepare('SELECT duration_ms FROM calls').get()).toEqual({ duration_ms: null });
++  });
++
++  it('records a failure in its category', () => {
++    const { db } = tempDb();
++    handleHookEvent(db, failure('mcp__github__list', 'c2', 'Request failed with status 401'), {
++      clock: fakeClock(),
++      servers,
++    });
++    expect(db.prepare('SELECT outcome, code FROM calls').get()).toEqual({
++      outcome: 'auth',
++      code: '401',
++    });
++  });
++
++  it('does not count a cancelled call', () => {
++    const { db } = tempDb();
++    handleHookEvent(db, failure('mcp__github__list', 'c3', 'x', { is_interrupt: true }), {
++      clock: fakeClock(),
++      servers,
++    });
++    expect(db.prepare('SELECT COUNT(*) AS n FROM calls').get()).toEqual({ n: 0 });
++  });
++
++  it('ignores tools that are not MCP tools', () => {
++    const { db } = tempDb();
++    handleHookEvent(db, post('Bash', 'c4'), { clock: fakeClock(), servers });
++    expect(db.prepare('SELECT COUNT(*) AS n FROM calls').get()).toEqual({ n: 0 });
++  });
++
++  it('keeps a script-launched server private', () => {
++    const { db } = tempDb();
++    handleHookEvent(db, post('mcp__notes__add', 'c5'), { clock: fakeClock(), servers });
++    expect(db.prepare('SELECT kind, url, public FROM tools').get()).toEqual({
++      kind: 'private',
++      url: '',
++      public: 0,
++    });
++  });
++
++  it('never stores an argument or a response', () => {
++    const { db, path } = tempDb();
++    const secret = 'SENTINEL-7f3a9c-do-not-store';
++    const clock = fakeClock();
++    handleHookEvent(db, pre('mcp__github__search', 'c6', { tool_input: { query: secret } }), {
++      clock,
++      servers,
++    });
++    handleHookEvent(
++      db,
++      post('mcp__github__search', 'c6', {
++        tool_input: { query: secret },
++        tool_response: { content: [{ type: 'text', text: secret }] },
++      }),
++      { clock, servers },
++    );
++    handleHookEvent(
++      db,
++      failure('mcp__github__search', 'c7', `HTTP 500 while handling ${secret}`, {
++        tool_input: { query: secret },
++      }),
++      { clock, servers },
++    );
++    db.close();
++    for (const file of [path, `${path}-wal`]) {
++      let bytes = '';
++      try {
++        bytes = readFileSync(file).toString('latin1');
++      } catch {
++        continue;
++      }
++      expect(bytes.includes(secret)).toBe(false);
++    }
++  });
++});
++
++describe('session start', () => {
++  it('notes a host change once, and tells the agent once', () => {
++    const { db } = tempDb();
++    const clock = fakeClock();
++    const before = new Map<string, ServerEntry>([
++      ['search', { transport: 'remote', url: 'https://api.foo.dev/mcp' }],
++    ]);
++    const after = new Map<string, ServerEntry>([
++      ['search', { transport: 'remote', url: 'https://api.foo.io/mcp' }],
++    ]);
++    expect(
++      handleHookEvent(
++        db,
++        { hook_event_name: 'SessionStart', cwd: '/x' },
++        { clock, servers: before },
++      ),
++    ).toEqual({ context: undefined });
++    clock.advance(1000);
++    const first = handleHookEvent(
++      db,
++      { hook_event_name: 'SessionStart', cwd: '/x' },
++      { clock, servers: after },
++    );
++    expect(first.context).toBe('ARP: MCP server search moved from api.foo.dev to api.foo.io.');
++    const second = handleHookEvent(
++      db,
++      { hook_event_name: 'SessionStart', cwd: '/x' },
++      { clock, servers: after },
++    );
++    expect(second.context).toBeUndefined();
++  });
++});
+diff --git a/packages/cli/test/install.test.ts b/packages/cli/test/install.test.ts
+new file mode 100644
+index 0000000..626aec9
+--- /dev/null
++++ b/packages/cli/test/install.test.ts
+@@ -0,0 +1,51 @@
++import { withArpHooks, withoutArpHooks } from '../src/install.js';
++
++const marker = '/home/u/.arp/cli';
++const command = `"/usr/bin/node" "${marker}/cli.js" hook`;
++const theirs = { type: 'command', command: '/opt/lint.sh' };
++
++describe('installing the hooks', () => {
++  it("adds one hook per event, keeping the user's own", () => {
++    const before = {
++      model: 'opus',
++      hooks: { PostToolUse: [{ matcher: 'Edit', hooks: [theirs] }] },
++    };
++    const after = withArpHooks(before, command, marker);
++    expect(after.model).toBe('opus');
++    const hooks = after.hooks as Record<
++      string,
++      { matcher?: string; hooks: { command: string; async?: boolean }[] }[]
++    >; // shape built by withArpHooks
++    expect(hooks.PostToolUse).toHaveLength(2);
++    expect(hooks.PostToolUse![0]!.hooks[0]!.command).toBe('/opt/lint.sh');
++    expect(hooks.PostToolUse![1]).toEqual({
++      matcher: 'mcp__.*',
++      hooks: [{ type: 'command', command, timeout: 10, async: true }],
++    });
++    expect(hooks.PreToolUse).toHaveLength(1);
++    expect(hooks.PostToolUseFailure).toHaveLength(1);
++    expect(hooks.SessionStart).toEqual([{ hooks: [{ type: 'command', command, timeout: 5 }] }]);
++  });
++
++  it('is idempotent', () => {
++    const once = withArpHooks({}, command, marker);
++    expect(withArpHooks(once, command, marker)).toEqual(once);
++  });
++
++  it('leaves no empty hooks object behind', () => {
++    expect(withoutArpHooks(withArpHooks({ model: 'opus' }, command, marker), marker)).toEqual({
++      model: 'opus',
++    });
++  });
++
++  it('removes only its own hooks', () => {
++    const installed = withArpHooks(
++      { hooks: { PostToolUse: [{ matcher: 'Edit', hooks: [theirs] }] } },
++      command,
++      marker,
++    );
++    expect(withoutArpHooks(installed, marker)).toEqual({
++      hooks: { PostToolUse: [{ matcher: 'Edit', hooks: [theirs] }] },
++    });
++  });
++});
+diff --git a/packages/cli/test/mcp-config.test.ts b/packages/cli/test/mcp-config.test.ts
+new file mode 100644
+index 0000000..fba905a
+--- /dev/null
++++ b/packages/cli/test/mcp-config.test.ts
+@@ -0,0 +1,84 @@
++import { mkdirSync, writeFileSync } from 'node:fs';
++import { join } from 'node:path';
++
++import { readMcpServers, sourceOf } from '../src/mcp-config.js';
++import { tempDir } from './helpers.js';
++
++describe('readMcpServers', () => {
++  it('merges user, local and project scope, later winning', () => {
++    const home = tempDir();
++    const cwd = join(home, 'proj');
++    mkdirSync(cwd);
++    writeFileSync(
++      join(home, '.claude.json'),
++      JSON.stringify({
++        mcpServers: {
++          github: { url: 'https://api.githubcopilot.com/mcp/' },
++          shared: { command: 'npx', args: ['-y', 'old-pkg'] },
++        },
++        projects: {
++          [cwd]: { mcpServers: { local: { command: 'uvx', args: ['mcp-server-time'] } } },
++        },
++      }),
++    );
++    writeFileSync(
++      join(cwd, '.mcp.json'),
++      JSON.stringify({
++        mcpServers: { shared: { command: 'npx', args: ['-y', '@scope/new-pkg@2.1.0'] } },
++      }),
++    );
++    const servers = readMcpServers({ cwd, home });
++    expect([...servers.keys()].sort()).toEqual(['github', 'local', 'shared']);
++    expect(servers.get('shared')).toEqual({
++      transport: 'local',
++      command: 'npx',
++      args: ['-y', '@scope/new-pkg@2.1.0'],
++    });
++  });
++
++  it('returns nothing when no file exists or one is broken', () => {
++    const home = tempDir();
++    writeFileSync(join(home, '.claude.json'), '{not json');
++    expect(readMcpServers({ cwd: home, home }).size).toBe(0);
++  });
++});
++
++describe('sourceOf', () => {
++  it('resolves a remote server to its URL', () => {
++    expect(sourceOf({ transport: 'remote', url: 'https://mcp.example.dev/sse' })).toEqual({
++      kind: 'mcp_remote',
++      url: 'https://mcp.example.dev/sse',
++      host: 'mcp.example.dev',
++    });
++  });
++
++  it('resolves an npx or uvx server to its package page, without the version', () => {
++    expect(
++      sourceOf({ transport: 'local', command: 'npx', args: ['-y', '@scope/pkg@1.2.3', '--stdio'] }),
++    ).toEqual({
++      kind: 'mcp_local',
++      url: 'https://www.npmjs.com/package/@scope/pkg',
++      host: 'www.npmjs.com',
++    });
++    expect(
++      sourceOf({ transport: 'local', command: '/usr/local/bin/uvx', args: ['mcp-server-fetch'] }),
++    ).toEqual({
++      kind: 'mcp_local',
++      url: 'https://pypi.org/project/mcp-server-fetch',
++      host: 'pypi.org',
++    });
++  });
++
++  it('keeps a script, a local path or localhost private', () => {
++    expect(sourceOf({ transport: 'local', command: 'node', args: ['./server.js'] })).toEqual({
++      kind: 'private',
++    });
++    expect(sourceOf({ transport: 'local', command: 'npx', args: ['./local-dir'] })).toEqual({
++      kind: 'private',
++    });
++    expect(sourceOf({ transport: 'remote', url: 'http://localhost:3000/mcp' })).toEqual({
++      kind: 'private',
++    });
++    expect(sourceOf(undefined)).toEqual({ kind: 'private' });
++  });
++});
+diff --git a/packages/cli/test/process.test.ts b/packages/cli/test/process.test.ts
+new file mode 100644
+index 0000000..ed405ef
+--- /dev/null
++++ b/packages/cli/test/process.test.ts
+@@ -0,0 +1,68 @@
++import { spawnSync } from 'node:child_process';
++import { existsSync, writeFileSync } from 'node:fs';
++import { join } from 'node:path';
++import { fileURLToPath } from 'node:url';
++
++import { handleHookEvent } from '../src/hook.js';
++import type { ServerEntry } from '../src/mcp-config.js';
++import { post, pre, tempDb, tempDir } from './helpers.js';
++
++const cli = fileURLToPath(new URL('../dist/cli.js', import.meta.url));
++
++function runHook(env: Record<string, string>, payload: unknown) {
++  return spawnSync(process.execPath, [cli, 'hook'], {
++    input: JSON.stringify(payload),
++    env: { ...process.env, ...env },
++    encoding: 'utf8',
++  });
++}
++
++describe('the hook process', () => {
++  it.runIf(existsSync(cli))('records a call end to end', () => {
++    const home = tempDir();
++    expect(runHook({ ARP_HOME: home }, pre('mcp__github__list', 'a1')).status).toBe(0);
++    expect(runHook({ ARP_HOME: home }, post('mcp__github__list', 'a1')).status).toBe(0);
++    const status = spawnSync(process.execPath, [cli, 'status', '--json'], {
++      env: { ...process.env, ARP_HOME: home },
++      encoding: 'utf8',
++    });
++    expect(status.status).toBe(0);
++    expect(JSON.parse(status.stdout).tools[0].calls).toBe(1);
++    expect(status.stderr).toBe('');
++  });
++
++  it.runIf(existsSync(cli))('exits 0 in silence when the database cannot be opened', () => {
++    const blocker = join(tempDir(), 'not-a-dir');
++    writeFileSync(blocker, 'a file where the directory should be');
++    const result = runHook({ ARP_HOME: blocker }, post('mcp__github__list', 'a2'));
++    expect(result.status).toBe(0);
++    expect(result.stdout).toBe('');
++    expect(result.stderr).toBe('');
++  });
++
++  it.runIf(existsSync(cli))('exits 0 on a payload that is not JSON', () => {
++    const result = spawnSync(process.execPath, [cli, 'hook'], {
++      input: '{oops',
++      env: { ...process.env, ARP_HOME: tempDir() },
++      encoding: 'utf8',
++    });
++    expect(result.status).toBe(0);
++    expect(result.stdout).toBe('');
++  });
++});
++
++describe('the performance budget', () => {
++  it('adds under 20 ms per call, writing included, over 1,000 calls', () => {
++    const { db } = tempDb();
++    const servers = new Map<string, ServerEntry>([
++      ['github', { transport: 'remote', url: 'https://api.githubcopilot.com/mcp/' }],
++    ]);
++    const start = performance.now();
++    for (let i = 0; i < 1000; i += 1) {
++      handleHookEvent(db, pre('mcp__github__list', `x${i}`), { servers });
++      handleHookEvent(db, post('mcp__github__list', `x${i}`), { servers });
++    }
++    const perCall = (performance.now() - start) / 1000;
++    expect(perCall).toBeLessThan(20);
++  });
++});
+diff --git a/packages/cli/test/status.test.ts b/packages/cli/test/status.test.ts
+new file mode 100644
+index 0000000..0bfc52e
+--- /dev/null
++++ b/packages/cli/test/status.test.ts
+@@ -0,0 +1,79 @@
++import { handleHookEvent } from '../src/hook.js';
++import type { ServerEntry } from '../src/mcp-config.js';
++import { compact, readStatus, renderStatus, renderToolDetail } from '../src/status.js';
++import { failure, fakeClock, post, pre, tempDb } from './helpers.js';
++
++const servers = new Map<string, ServerEntry>([
++  ['github', { transport: 'remote', url: 'https://api.githubcopilot.com/mcp/' }],
++  [
++    'postgres',
++    { transport: 'local', command: 'npx', args: ['-y', '@modelcontextprotocol/server-postgres'] },
++  ],
++]);
++
++function seed() {
++  const { db } = tempDb();
++  const clock = fakeClock(Date.parse('2026-11-09T10:00:00Z'));
++  for (let i = 0; i < 12; i += 1) {
++    handleHookEvent(db, pre('mcp__github__list', `g${i}`), { clock, servers });
++    clock.advance(200 + i);
++    handleHookEvent(db, post('mcp__github__list', `g${i}`), { clock, servers });
++  }
++  for (let i = 0; i < 5; i += 1) {
++    handleHookEvent(db, failure('mcp__postgres__query', `p${i}`, 'HTTP 503'), { clock, servers });
++  }
++  handleHookEvent(db, post('mcp__postgres__query', 'p9'), { clock, servers });
++  return { db, now: new Date(clock.now()) };
++}
++
++describe('arp status', () => {
++  it('computes calls, success and median per tool', () => {
++    const { db, now } = seed();
++    const { tools } = readStatus(db, { now });
++    const github = tools.find((t) => t.name === 'github')!;
++    expect(github.calls).toBe(12);
++    expect(github.you).toBe(1);
++    expect(github.medianMs).toBe(206);
++    const postgres = tools.find((t) => t.name === 'postgres')!;
++    expect(postgres.outcomes).toEqual({ tool_error: 5, ok: 1 });
++    expect(postgres.you).toBeCloseTo(1 / 6);
++  });
++
++  it('sorts by urgency, then by calls', () => {
++    const { db, now } = seed();
++    // Without a network reading every verdict is "not enough data", so calls decide.
++    expect(readStatus(db, { now }).tools.map((t) => t.name)).toEqual(['github', 'postgres']);
++  });
++
++  it('renders a table with the network column marked as not read', () => {
++    const { db, now } = seed();
++    const text = renderStatus(readStatus(db, { now }), 7);
++    expect(text).toContain('tool');
++    expect(text).toContain('not read yet');
++    expect(text).toContain('not enough data');
++    expect(text.split('\n')[1]).toMatch(/^github\s+12\s+100 %/);
++  });
++
++  it('details one tool by day and by failure', () => {
++    const { db, now } = seed();
++    const text = renderToolDetail(db, 'postgres', { now })!;
++    expect(text).toContain('https://www.npmjs.com/package/@modelcontextprotocol/server-postgres');
++    expect(text).toContain('tool_error 503   5');
++    expect(renderToolDetail(db, 'nope', { now })).toBeNull();
++  });
++
++  it('folds calls older than 90 days into daily counts', () => {
++    const { db } = seed();
++    compact(db, new Date('2027-03-01T00:00:00Z'));
++    expect(db.prepare('SELECT COUNT(*) AS n FROM calls').get()).toEqual({ n: 0 });
++    expect(db.prepare('SELECT SUM(calls) AS calls, SUM(ok) AS ok FROM calls_daily').get()).toEqual({
++      calls: 18,
++      ok: 13,
++    });
++  });
++
++  it('says so when nothing is recorded', () => {
++    const { db } = tempDb();
++    expect(renderStatus(readStatus(db), 7)).toContain('No MCP tool call recorded yet');
++  });
++});
+diff --git a/packages/cli/test/tool-name.test.ts b/packages/cli/test/tool-name.test.ts
+new file mode 100644
+index 0000000..c35f535
+--- /dev/null
++++ b/packages/cli/test/tool-name.test.ts
+@@ -0,0 +1,27 @@
++import { parseMcpToolName } from '../src/tool-name.js';
++import { toolIdOf } from '../src/tool-id.js';
++
++describe('parseMcpToolName', () => {
++  it('splits server and function', () => {
++    expect(parseMcpToolName('mcp__github__create_issue')).toEqual({
++      server: 'github',
++      fn: 'create_issue',
++    });
++    expect(parseMcpToolName('mcp__plugin_acme_search__query')).toEqual({
++      server: 'plugin_acme_search',
++      fn: 'query',
++    });
++    expect(parseMcpToolName('mcp__a__b__c')).toEqual({ server: 'a', fn: 'b__c' });
++  });
++
++  it('refuses what is not an MCP tool', () => {
++    for (const name of ['Bash', 'mcp__', 'mcp__github', 'mcp____x', 'mcp__github__'])
++      expect(parseMcpToolName(name)).toBeNull();
++  });
++
++  it('gives one server one stable id', () => {
++    expect(toolIdOf('github')).toBe(toolIdOf('github'));
++    expect(toolIdOf('github')).not.toBe(toolIdOf('gitlab'));
++    expect(toolIdOf('github')).toMatch(/^[0-9a-f]{16}$/);
++  });
++});
+diff --git a/packages/cli/test/verdict.test.ts b/packages/cli/test/verdict.test.ts
+new file mode 100644
+index 0000000..116ca03
+--- /dev/null
++++ b/packages/cli/test/verdict.test.ts
+@@ -0,0 +1,53 @@
++import { verdictFor, verdictText, type LocalStats, type NetworkReading } from '../src/verdict.js';
++
++const now = new Date('2026-11-10T12:00:00Z');
++const local = (over: Partial<LocalStats> = {}): LocalStats => ({
++  calls: 40,
++  ok: 39,
++  auth: 0,
++  medianMs: 300,
++  lastChange: null,
++  ...over,
++});
++const net = (over: Partial<NetworkReading> = {}): NetworkReading => ({
++  success: 0.97,
++  operators: 12,
++  medianMs: 280,
++  ...over,
++});
++
++describe('verdictFor, first rule wins', () => {
++  it('says not enough data under 10 calls, under 3 operators, or with no network reading', () => {
++    expect(verdictFor(local({ calls: 9, ok: 9 }), net(), now).kind).toBe('not enough data');
++    expect(verdictFor(local(), net({ operators: 2 }), now).kind).toBe('not enough data');
++    expect(verdictFor(local(), null, now).kind).toBe('not enough data');
++  });
++
++  it('says broken everywhere when both sides are under 75 %', () => {
++    expect(verdictFor(local({ ok: 10 }), net({ success: 0.05 }), now).kind).toBe(
++      'broken everywhere',
++    );
++  });
++
++  it('says only you when the network works and this agent is 20 points below', () => {
++    expect(verdictText(verdictFor(local({ ok: 24 }), net(), now))).toBe('only you: check config');
++    expect(verdictText(verdictFor(local({ ok: 24, auth: 10 }), net(), now))).toBe(
++      'only you: check credentials',
++    );
++  });
++
++  it('says changed for a change in the last 7 days', () => {
++    expect(verdictText(verdictFor(local({ lastChange: '2026-11-08T09:00:00Z' }), net(), now))).toBe(
++      'changed 2026-11-08',
++    );
++    expect(verdictFor(local({ lastChange: '2026-10-30T09:00:00Z' }), net(), now).kind).toBe('ok');
++  });
++
++  it('says slow for you over twice the network median', () => {
++    expect(verdictFor(local({ medianMs: 900 }), net(), now).kind).toBe('slow for you');
++  });
++
++  it('says ok otherwise', () => {
++    expect(verdictFor(local(), net(), now).kind).toBe('ok');
++  });
++});
+diff --git a/packages/cli/tsconfig.build.json b/packages/cli/tsconfig.build.json
+new file mode 100644
+index 0000000..e16a7bb
+--- /dev/null
++++ b/packages/cli/tsconfig.build.json
+@@ -0,0 +1,14 @@
++{
++  "extends": "./tsconfig.json",
++  "compilerOptions": {
++    "noEmit": false,
++    "declaration": false,
++    "declarationMap": false,
++    "sourceMap": false,
++    "outDir": "./dist",
++    "rootDir": "./src",
++    "types": ["node"]
++  },
++  "include": ["src/**/*"],
++  "exclude": ["src/**/*.test.ts", "src/**/__tests__/**"]
++}
+diff --git a/packages/cli/tsconfig.json b/packages/cli/tsconfig.json
+new file mode 100644
+index 0000000..bd7967d
+--- /dev/null
++++ b/packages/cli/tsconfig.json
+@@ -0,0 +1,19 @@
++{
++  "compilerOptions": {
++    "target": "ES2023",
++    "lib": ["ES2023"],
++    "module": "ESNext",
++    "moduleResolution": "Bundler",
++    "strict": true,
++    "noUnusedLocals": true,
++    "noUnusedParameters": true,
++    "noFallthroughCasesInSwitch": true,
++    "noEmit": true,
++    "esModuleInterop": true,
++    "resolveJsonModule": true,
++    "isolatedModules": true,
++    "skipLibCheck": true,
++    "types": ["vitest/globals", "node"]
++  },
++  "include": ["src/**/*", "test/**/*"]
++}
+diff --git a/packages/cli/vitest.config.ts b/packages/cli/vitest.config.ts
+new file mode 100644
+index 0000000..dea6bf9
+--- /dev/null
++++ b/packages/cli/vitest.config.ts
+@@ -0,0 +1,9 @@
++import { defineConfig } from 'vitest/config';
++
++export default defineConfig({
++  test: {
++    globals: true,
++    include: ['test/**/*.test.ts'],
++    environment: 'node',
++  },
++});
+-- 
+2.43.0
+

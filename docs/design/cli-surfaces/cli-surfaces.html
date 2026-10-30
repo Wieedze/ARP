@@ -1,0 +1,382 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>ARP Status Design</title>
+
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=Geist+Mono:wght@400;500;600&display=swap">
+<!--
+  ARP · design of the v0 surfaces from "Spec : hook d'usage et arp status":
+  the terminal (arp init, arp status, arp status <tool>, the session line), the badges, and the
+  public tool page the badge links to. Every tool name is a real MCP server; every figure is a sample.
+-->
+<style>
+/* Layout: three numbered surfaces stacked, each a stage on graphite. Terminal in Geist Mono,
+   page in Archivo, one Saffron core as the brand mark. */
+:root{
+  --ground:#0e0f10;--bg:#121314;--raised:#1b1d1f;--raised-2:#232629;
+  --rule:#2e3134;--rule-strong:#43474b;
+  --grey:#6b7075;--steel:#8a9096;--silver:#a9aeb2;--fg:#e6e8e6;
+  --accent:#ffb020;--accent-ink:#121314;--alarm:#ff4d6d;
+  --term:#0a0b0c;
+  --display:"Archivo","Arial Narrow",system-ui,sans-serif;--mono:"Geist Mono",ui-monospace,Menlo,monospace;
+  --r-tag:6px;--r-ctl:8px;--r-card:12px;
+  color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+html,body{background:var(--ground);color:var(--fg)}
+body{margin:0;font-family:var(--display);font-size:15px;line-height:1.5;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:1120px;margin:0 auto;padding-block:32px 110px}
+.label{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--steel)}
+.sample{display:inline-block;font-family:var(--mono);font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--grey);border:1px dashed var(--rule-strong);border-radius:var(--r-tag);padding:1px 6px;vertical-align:middle}
+.face{font-weight:800;font-stretch:125%;letter-spacing:-.02em;line-height:.95}
+:focus-visible{outline:2px solid var(--fg);outline-offset:3px;border-radius:4px}
+a{color:inherit}
+.top{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:baseline;padding-bottom:16px;border-bottom:1px solid var(--rule);margin-bottom:44px}
+h1{margin:0;font-size:clamp(36px,6vw,72px);text-wrap:balance}
+.intro{margin:14px 0 0;max-width:60ch;color:var(--silver);font-size:16px}
+nav.toc{display:flex;gap:8px;flex-wrap:wrap;margin-top:22px}
+nav.toc a{font-family:var(--mono);font-size:12px;text-decoration:none;border:1px solid var(--rule);border-radius:var(--r-ctl);padding:6px 10px;color:var(--silver)}
+nav.toc a:hover{border-color:var(--rule-strong);color:var(--fg)}
+section.surface{margin-top:84px}
+.sh{display:flex;align-items:baseline;gap:16px;flex-wrap:wrap;padding-bottom:12px;margin-bottom:24px;border-bottom:1px solid var(--rule-strong)}
+.sh .n{font-family:var(--mono);font-size:12px;color:var(--grey)}
+.sh h2{margin:0;font-size:28px;font-weight:800;font-stretch:115%;letter-spacing:-.01em}
+.sh p{margin:0;flex-basis:100%;color:var(--steel);font-size:14px;max-width:70ch}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,30rem),1fr));gap:22px}
+.note{margin:10px 2px 0;font-size:13px;color:var(--steel);max-width:62ch}
+.note b{color:var(--silver);font-weight:600}
+
+/* ---- 1. terminal --------------------------------------------------------- */
+.term{border:1px solid var(--rule-strong);border-radius:var(--r-card);background:var(--term);overflow:hidden;min-width:0}
+.term-bar{display:flex;align-items:center;gap:7px;padding:9px 12px;border-bottom:1px solid var(--rule)}
+.term-bar i{width:9px;height:9px;border-radius:999px;background:var(--raised-2)}
+.term-bar span{margin-left:8px;font-family:var(--mono);font-size:11px;color:var(--grey)}
+.term pre{margin:0;padding:16px 18px 20px;font-family:var(--mono);font-size:12.5px;line-height:1.62;color:var(--silver);overflow-x:auto;white-space:pre}
+.t-p{color:var(--grey)}
+.t-c{color:var(--fg)}
+.t-b{color:var(--fg);font-weight:600}
+.t-d{color:var(--grey)}
+.t-ok{color:var(--fg)}
+.t-al{color:var(--alarm)}
+.t-al-b{color:var(--alarm);font-weight:600}
+.t-ac{color:var(--accent)}
+.t-u{text-decoration:underline;text-decoration-color:var(--rule-strong);text-underline-offset:3px}
+.wide{grid-column:1/-1}
+.legend{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,26rem),1fr));gap:0 28px;margin-top:18px}
+.legend div{display:grid;grid-template-columns:11rem 1fr;gap:12px;padding:9px 0;border-bottom:1px solid var(--rule);font-size:13px}
+.legend code{font-family:var(--mono);font-size:12px}
+.legend span{color:var(--steel)}
+
+/* the session line, as Claude Code shows it */
+.cc{border:1px solid var(--rule-strong);border-radius:var(--r-card);background:#151617;padding:16px 18px;font-family:var(--mono);font-size:12.5px;line-height:1.6;color:var(--silver);min-width:0;overflow-x:auto}
+.cc .hk{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border-left:2px solid var(--rule-strong);background:var(--bg);border-radius:0 var(--r-ctl) var(--r-ctl) 0;margin:10px 0}
+.cc .hk b{color:var(--fg);font-weight:500}
+.cc .who{color:var(--grey);font-size:11px;letter-spacing:.06em;text-transform:uppercase}
+
+/* ---- 2. badges ----------------------------------------------------------- */
+.stage{border:1px solid var(--rule);border-radius:var(--r-card);padding:22px;display:flex;flex-direction:column;gap:16px;min-width:0}
+.stage.light{background:#ffffff;border-color:#d0d7de}
+.stage.dark{background:#0d1117;border-color:#30363d}
+.stage .cap{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase}
+.stage.light .cap{color:#57606a}
+.stage.dark .cap{color:#7d8590}
+.readme{font-family:-apple-system,"Segoe UI",Helvetica,Arial,sans-serif;font-size:14px}
+.stage.light .readme{color:#1f2328}
+.stage.dark .readme{color:#e6edf3}
+.readme h3{margin:0 0 8px;font-size:20px;font-weight:600;font-family:inherit}
+.badges{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.badges svg{display:block;height:22px;width:auto}
+.spec{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,22rem),1fr));gap:0 32px;margin-top:20px}
+.spec div{display:grid;grid-template-columns:9rem 1fr;gap:12px;padding:9px 0;border-bottom:1px solid var(--rule);font-size:13px}
+.spec dt{color:var(--steel)}
+.spec dd{margin:0;font-family:var(--mono);font-size:12px;color:var(--silver);overflow-wrap:anywhere}
+.snippet{display:flex;margin-top:18px;border:1px solid var(--rule-strong);border-radius:var(--r-ctl);background:var(--bg);overflow:hidden;max-width:52rem}
+.snippet code{flex:1;min-width:0;padding:11px 14px;font-family:var(--mono);font-size:12px;color:var(--fg);overflow-x:auto;white-space:nowrap}
+.snippet button{border:0;border-left:1px solid var(--rule-strong);background:transparent;color:var(--silver);font-family:var(--mono);font-size:11px;padding:0 14px;cursor:pointer}
+.snippet button:hover{background:var(--raised);color:var(--fg)}
+
+/* ---- 3. public tool page ------------------------------------------------- */
+.page{border:1px solid var(--rule-strong);border-radius:var(--r-card);background:var(--ground);padding:28px clamp(16px,3vw,36px) 34px}
+.page .crumbs{display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-family:var(--mono);font-size:12px;color:var(--steel)}
+.kind{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--fg);border:1px solid var(--rule-strong);border-radius:var(--r-tag);padding:2px 7px}
+.page h3.title{margin:14px 0 0;font-size:clamp(34px,5.6vw,68px);overflow-wrap:anywhere}
+.page .url{margin-top:10px;font-family:var(--mono);font-size:14px;color:var(--silver)}
+.head-stats{margin-top:28px;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,13rem),1fr));border:1px solid var(--rule-strong);border-radius:var(--r-card);background:var(--bg)}
+.head-stats>div{padding:18px 20px;border-right:1px solid var(--rule);display:flex;flex-direction:column;gap:6px;min-width:0}
+.head-stats>div:last-child{border-right:0}
+.head-stats b{font-family:var(--mono);font-size:34px;font-weight:500;letter-spacing:-.02em;line-height:1}
+.head-stats span{font-size:13px;color:var(--silver)}
+.head-stats em{font-style:normal;font-family:var(--mono);font-size:10.5px;color:var(--grey)}
+.hint{position:relative;display:inline-flex;width:15px;height:15px;border-radius:999px;border:1px solid var(--rule-strong);color:var(--steel);font-family:var(--mono);font-size:10px;align-items:center;justify-content:center;cursor:help;vertical-align:middle;margin-left:6px;background:none;padding:0}
+.hint span{position:absolute;left:50%;bottom:calc(100% + 8px);transform:translateX(-50%);width:max-content;max-width:min(16rem,70vw);background:var(--raised);border:1px solid var(--rule-strong);border-radius:var(--r-ctl);padding:8px 10px;font-family:var(--display);font-size:12.5px;line-height:1.4;color:var(--silver);text-transform:none;letter-spacing:0;display:none;z-index:20;text-align:left;font-style:normal}
+.hint:hover span,.hint:focus-visible span{display:block}
+.pblk{margin-top:48px}
+.pblk-h{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;padding-bottom:10px;margin-bottom:16px;border-bottom:1px solid var(--rule-strong)}
+.pblk-h h4{margin:0;font-size:20px;font-weight:700;font-stretch:110%}
+.chart svg{display:block;width:100%;height:auto;overflow:visible}
+.axis{font-family:var(--mono);font-size:10px;fill:var(--grey)}
+.gridl{stroke:var(--rule);stroke-width:1}
+.timeline{display:grid;gap:0}
+.timeline>div{display:grid;grid-template-columns:7.5rem 9rem minmax(0,1fr);gap:16px;padding:11px 0;border-bottom:1px solid var(--rule);font-size:13.5px;align-items:baseline}
+.timeline time{font-family:var(--mono);font-size:12px;color:var(--steel)}
+.timeline .k{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--silver)}
+.timeline .k.al{color:var(--alarm)}
+.timeline code{font-family:var(--mono);font-size:12.5px;color:var(--fg)}
+.cols2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,24rem),1fr));gap:40px}
+.rows>div{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px;padding:10px 0;border-bottom:1px solid var(--rule);font-size:13.5px;align-items:baseline}
+.rows .nm{font-family:var(--mono);font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rows .v{font-family:var(--mono);font-size:12px;color:var(--steel);white-space:nowrap}
+.bar{display:inline-block;height:4px;border-radius:999px;background:var(--steel);vertical-align:middle;margin-right:10px}
+.verify{border:1px dashed var(--rule-strong);border-radius:var(--r-card);padding:18px 20px;display:grid;gap:12px}
+.verify .row{display:grid;grid-template-columns:10rem minmax(0,1fr);gap:16px;font-size:13px}
+.verify dt{color:var(--steel)}
+.verify dd{margin:0;font-family:var(--mono);font-size:12px;color:var(--silver);overflow-wrap:anywhere}
+.verify dd a{color:var(--fg);text-decoration:none;border-bottom:1px solid var(--rule-strong)}
+.btn{height:38px;padding:0 16px;border-radius:var(--r-ctl);font-family:var(--display);font-weight:600;font-size:14px;cursor:pointer;border:1px solid var(--rule-strong);background:transparent;color:var(--fg)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.cta{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:20px}
+.cta code{font-family:var(--mono);font-size:12px;color:var(--steel)}
+@media (max-width:640px){.timeline>div{grid-template-columns:1fr}.verify .row{grid-template-columns:1fr;gap:2px}.head-stats>div{border-right:0;border-bottom:1px solid var(--rule)}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <span class="label">Design · ARP v0 surfaces · from the spec "hook d'usage et arp status"</span>
+    <span class="label">Tool names real · every figure <span class="sample">sample</span></span>
+  </div>
+  <h1 class="face">When a tool fails, is it you or everyone?</h1>
+  <p class="intro">Three surfaces answer it. The terminal, where the developer looks. The badge, which shows it. The public page the badge opens, where every figure can be checked.</p>
+  <nav class="toc" aria-label="Surfaces"><a href="#terminal">1 · Terminal</a><a href="#badges">2 · Badges</a><a href="#page">3 · Public tool page</a></nav>
+
+  <!-- 1. TERMINAL ---------------------------------------------------------->
+  <section class="surface" id="terminal" aria-labelledby="t-h">
+    <div class="sh"><span class="n">01</span><h2 id="t-h">Terminal</h2>
+      <p>Mono, left aligned, no box drawing. Colour carries state only: red for a tool broken for you or everyone, paper for a fact, grey for what is not known yet. The alerts come first, before the table, because they are why someone runs the command.</p></div>
+    <div class="grid2">
+      <div class="term wide" role="img" aria-label="arp status output">
+        <div class="term-bar"><i></i><i></i><i></i><span>~/agent · arp status</span></div>
+<pre><span class="t-p">$</span> <span class="t-c">arp status</span>
+
+<span class="t-al-b">!</span> <span class="t-b">weather-x402</span>   fails for <span class="t-b">41 of 43</span> operators since Tue 14:02 UTC
+<span class="t-al-b">!</span> <span class="t-b">postgres</span>       fails <span class="t-b">39 %</span> of your calls, works for <span class="t-b">98 %</span> of others
+<span class="t-b">~</span> <span class="t-b">github</span>         create_issue renamed to issues.create   <span class="t-d">Thu 09:40</span>
+
+<span class="t-d">tool             calls     you        network     median   verdict</span>
+<span class="t-c">weather-x402</span>        88     <span class="t-al">4 %</span>     <span class="t-al">5 %</span> <span class="t-d">of 43</span>     2.1 s   <span class="t-al-b">broken everywhere</span>
+<span class="t-c">postgres</span>           214    <span class="t-al">61 %</span>    98 % <span class="t-d">of 120</span>    180 ms   <span class="t-al-b">only you: check credentials</span>
+<span class="t-c">github</span>             392    99 %    99 % <span class="t-d">of 312</span>    410 ms   <span class="t-b">changed Thu 30 Oct</span>
+<span class="t-c">firecrawl</span>           57    96 %    95 % <span class="t-d">of 64</span>     3.8 s   slow for you
+<span class="t-c">supabase</span>           126   100 %    99 % <span class="t-d">of 88</span>     220 ms   ok
+<span class="t-c">sentry</span>               6   100 %    97 % <span class="t-d">of 51</span>     340 ms   <span class="t-d">not enough data</span>
+<span class="t-c">notes</span> <span class="t-d">private</span>        31   100 %          <span class="t-d">never shared</span>   12 ms   <span class="t-d">not enough data</span>
+
+<span class="t-d">Last 7 days. Network: 1,284 weekly reports, read today 06:00 UTC.</span>
+<span class="t-d">arp status postgres  ·  one tool in detail</span></pre>
+      </div>
+
+      <div>
+        <div class="term" role="img" aria-label="arp status for one tool">
+          <div class="term-bar"><i></i><i></i><i></i><span>arp status postgres</span></div>
+<pre><span class="t-p">$</span> <span class="t-c">arp status postgres</span>
+
+<span class="t-b">postgres</span>  <span class="t-d">npm</span> <span class="t-u">@modelcontextprotocol/server-postgres</span>
+<span class="t-al-b">only you: check credentials</span>
+<span class="t-d">61 % for you, 98 % for 120 operators.
+Most of your failures are auth: the server answers, it refuses you.</span>
+
+<span class="t-d">day          calls    you   network</span>
+Thu 23 Oct      30   100 %      98 %
+Fri 24 Oct      28   100 %      98 %
+Mon 27 Oct      41    <span class="t-al">44 %</span>      98 %
+Tue 28 Oct      38    <span class="t-al">39 %</span>      97 %
+Wed 29 Oct      35    <span class="t-al">43 %</span>      98 %
+
+<span class="t-d">failures</span>
+  auth 401              <span class="t-b">71</span>
+  timeout                 9
+  tool_error 500          3
+
+<span class="t-d">changes</span>   none seen
+<span class="t-d">others moved to</span>   none, 120 still use it</pre>
+        </div>
+        <p class="note"><b>The detail explains the verdict</b> in one line of fact, then the days, then the failures by category. "Others moved to" is the question a developer asks when a tool is broken everywhere.</p>
+      </div>
+
+      <div>
+        <div class="term" role="img" aria-label="arp init output">
+          <div class="term-bar"><i></i><i></i><i></i><span>npx @arp-protocol/cli init</span></div>
+<pre><span class="t-p">$</span> <span class="t-c">npx @arp-protocol/cli init</span>
+
+<span class="t-ac">●</span> <span class="t-b">ARP</span>  <span class="t-d">see what your agent's tools do</span>
+
+  hooks        ~/.claude/settings.json      <span class="t-b">added</span>
+  database     ~/.arp/arp.db                <span class="t-b">created</span>
+  identity     Agent 8453:44512             <span class="t-b">created</span>
+  sponsor      1.5 TRUST, about 10 tools    <span class="t-b">granted</span>
+
+Publish the public tools your agent uses?
+Arguments and answers never leave this machine.
+<span class="t-c">› Yes</span>   <span class="t-d">No, only on arp sync</span>
+
+<span class="t-d">Restart Claude Code, use your agent, then run</span>
+  <span class="t-c">arp status</span></pre>
+        </div>
+        <p class="note"><b>The one Saffron mark</b> is the core of the logo, on the first line. Each setup step is one row with its outcome. The consent question says in one line what never leaves the machine.</p>
+      </div>
+
+      <div class="cc wide" role="img" aria-label="The line Claude Code shows at session start">
+        <span class="who">Claude Code · session start</span>
+        <div class="hk"><span class="t-d">SessionStart hook</span></div>
+        <div class="hk"><b>ARP</b>&nbsp;weather-x402 is failing for 41 of 43 operators since Tue 14:02 UTC. Prefer another weather tool.</div>
+        <div class="hk"><b>ARP</b>&nbsp;github renamed create_issue to issues.create on Thu 30 Oct.</div>
+        <span class="t-d">&gt; </span><span style="color:var(--fg)">get tomorrow's forecast for Marseille and file it as an issue</span>
+      </div>
+    </div>
+    <div class="legend" aria-label="Verdicts">
+      <div><code class="t-al-b">broken everywhere</code><span>red, bold. Act now: it is not you.</span></div>
+      <div><code class="t-al-b">only you: …</code><span>red, bold, with the hint. Act now: it is you.</span></div>
+      <div><code class="t-b">changed &lt;date&gt;</code><span>paper, bold. Read before the next call.</span></div>
+      <div><code>slow for you</code><span>paper, regular.</span></div>
+      <div><code>ok</code><span>paper, regular.</span></div>
+      <div><code class="t-d">not enough data</code><span>grey: a fact we do not have.</span></div>
+    </div>
+  </section>
+
+  <!-- 2. BADGES ------------------------------------------------------------->
+  <section class="surface" id="badges" aria-labelledby="b-h">
+    <div class="sh"><span class="n">02</span><h2 id="b-h">Badges</h2>
+      <p>Two segments, like every README badge, so it sits in a row of them. The left one is the mark: graphite, the Saffron core, ARP. The right one is the fact, computed from public data only. No colour for good or bad: a badge that turned red would be a score.</p></div>
+    <div class="grid2">
+      <div class="stage light">
+        <span class="cap">GitHub README · light</span>
+        <div class="readme"><h3>weather-agent</h3>
+          <div class="badges" id="b-light"></div></div>
+      </div>
+      <div class="stage dark">
+        <span class="cap">GitHub README · dark</span>
+        <div class="readme"><h3>github-mcp-server</h3>
+          <div class="badges" id="b-dark"></div></div>
+      </div>
+    </div>
+    <dl class="spec">
+      <div><dt>Agent</dt><dd>badge.arp.xyz/agent/8453/44512.svg → "uses 7 working tools"</dd></div>
+      <div><dt>Tool</dt><dd>badge.arp.xyz/tool/&lt;atom&gt;.svg → "used by 312 operators"</dd></div>
+      <div><dt>Nothing yet</dt><dd>"no declared use yet", in grey text, never hidden</dd></div>
+      <div><dt>Height</dt><dd>20 px, 11 px Geist Mono, radius 4, like shields.io</dd></div>
+      <div><dt>Counts</dt><dd>operators, not agents: one operator with 100 agents counts once</dd></div>
+      <div><dt>Opens</dt><dd>the public page below, every figure linked to the graph</dd></div>
+    </dl>
+    <div class="snippet"><code id="md">[![ARP](https://badge.arp.xyz/tool/0x6f2c…e1a9.svg)](https://arp.xyz/tool/0x6f2c…e1a9)</code><button type="button" id="copy">Copy</button></div>
+    <p class="note"><b>arp badge</b> prints that line, ready for a README.</p>
+  </section>
+
+  <!-- 3. PUBLIC PAGE -------------------------------------------------------->
+  <section class="surface" id="page" aria-labelledby="p-h">
+    <div class="sh"><span class="n">03</span><h2 id="p-h">Public tool page</h2>
+      <p>What the badge opens. It extends the tool page of the site with what the reports add: how the tool does across operators, week by week, what changed, where people went, and how to check every number without ARP.</p></div>
+
+    <div class="page">
+      <div class="crumbs"><span class="kind">Tool</span><span>MCP server · remote</span><span class="sample">sample</span></div>
+      <h3 class="title face">github</h3>
+      <div class="url">api.githubcopilot.com/mcp</div>
+
+      <div class="head-stats">
+        <div><b>312</b><span>operators use it</span><em>uses triples on Intuition</em></div>
+        <div><b>99 %</b><span>of calls worked last week <button class="hint" type="button" aria-label="About this figure">?<span>The average of what operators reported, each counted once. ARP does not grade the tool.</span></button></span><em>reported by 287 operators</em></div>
+        <div><b>410 ms</b><span>median call</span><em>same reports</em></div>
+        <div><b>Thu 30 Oct</b><span>last change</span><em>function renamed</em></div>
+      </div>
+
+      <div class="pblk">
+        <div class="pblk-h"><h4>Calls that worked, by week</h4><span class="label">operators reporting under each week</span></div>
+        <div class="chart" id="chart"></div>
+      </div>
+
+      <div class="pblk">
+        <div class="pblk-h"><h4>What changed</h4><span class="label">seen by operators' hooks</span></div>
+        <div class="timeline">
+          <div><time>Thu 30 Oct</time><span class="k">functions</span><span><code>create_issue</code> renamed to <code>issues.create</code></span></div>
+          <div><time>Tue 14 Oct</time><span class="k al">outage</span><span>success fell to 62 % for 4 hours, 201 operators reporting</span></div>
+          <div><time>Mon 22 Sep</time><span class="k">functions</span><span>added <code>projects.list</code>, <code>projects.get</code></span></div>
+          <div><time>Fri 5 Sep</time><span class="k">host</span><span>moved from <code>api.github.com/mcp</code> to <code>api.githubcopilot.com/mcp</code></span></div>
+        </div>
+      </div>
+
+      <div class="pblk cols2">
+        <div>
+          <div class="pblk-h"><h4>Most used functions</h4><span class="label">share of calls</span></div>
+          <div class="rows" id="fns"></div>
+        </div>
+        <div>
+          <div class="pblk-h"><h4>Where operators went</h4><span class="label">stopped this, started that</span></div>
+          <div class="rows">
+            <div><span class="nm">gitlab</span><span class="v">4 operators</span></div>
+            <div><span class="nm">linear</span><span class="v">2 operators</span></div>
+            <div><span class="nm">nowhere else</span><span class="v">3 operators</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="pblk">
+        <div class="pblk-h"><h4>Check it yourself</h4><span class="label">nothing here needs ARP</span></div>
+        <dl class="verify">
+          <div class="row"><dt>Weekly reports</dt><dd><a href="#">ipfs://bafy…7wq4</a> · 1,284 signed reports, week of 27 Oct</dd></div>
+          <div class="row"><dt>Merkle root</dt><dd><a href="#">0x9e41…c0d2</a> on Intuition, Mon 3 Nov 00:12 UTC</dd></div>
+          <div class="row"><dt>Recompute</dt><dd>npx @arp-protocol/cli verify github --week 2026-10-27</dd></div>
+          <div class="row"><dt>Rules</dt><dd>signed by an ERC-8004 identity · one operator counts once · only agents that declared the tool</dd></div>
+        </dl>
+      </div>
+
+      <div class="cta">
+        <button class="btn primary" type="button">Declare you use it</button>
+        <button class="btn" type="button">See it on the graph</button>
+        <code>or let arp init do it on the first call that works</code>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+const $=s=>document.querySelector(s);
+/* badge: two segments, measured with the mono font's average advance */
+function badge({right,muted=false,theme='light'}){
+  const ch=6.6, padL=8, core=10, lText='ARP';
+  const lw=Math.round(padL+core+5+lText.length*ch+8), rw=Math.round(8+right.length*ch+8), w=lw+rw;
+  const rightBg=theme==='light'?'#eaeef2':'#21262d', rightFg=muted?(theme==='light'?'#6e7781':'#7d8590'):(theme==='light'?'#1f2328':'#e6edf3');
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} 20" width="${w}" height="20" role="img" aria-label="ARP: ${right}">
+    <clipPath id="c${w}${theme}${right.length}"><rect width="${w}" height="20" rx="4"/></clipPath>
+    <g clip-path="url(#c${w}${theme}${right.length})"><rect width="${lw}" height="20" fill="#121314"/><rect x="${lw}" width="${rw}" height="20" fill="${rightBg}"/></g>
+    <circle cx="${padL+4}" cy="10" r="3.6" fill="#ffb020"/>
+    <text x="${padL+core+4}" y="14" font-family="Geist Mono,ui-monospace,Menlo,monospace" font-size="11" font-weight="600" fill="#e6e8e6">${lText}</text>
+    <text x="${lw+8}" y="14" font-family="Geist Mono,ui-monospace,Menlo,monospace" font-size="11" fill="${rightFg}">${right}</text></svg>`;
+}
+const shield=(l,r,lc,rc,fg='#fff')=>{const w1=l.length*6.2+12,w2=r.length*6.2+12;return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w1+w2} 20" width="${w1+w2}" height="20" aria-hidden="true"><rect width="${w1}" height="20" rx="3" fill="${lc}"/><rect x="${w1-3}" width="${w2+3}" height="20" rx="3" fill="${rc}"/><text x="6" y="14" font-family="Verdana,sans-serif" font-size="11" fill="#fff">${l}</text><text x="${w1+6}" y="14" font-family="Verdana,sans-serif" font-size="11" fill="${fg}">${r}</text></svg>`;};
+$('#b-light').innerHTML=shield('build','passing','#555','#4c1')+shield('npm','v2.4.1','#555','#007ec6')+badge({right:'uses 7 working tools',theme:'light'})+badge({right:'no declared use yet',muted:true,theme:'light'});
+$('#b-dark').innerHTML=shield('license','MIT','#555','#97ca00')+badge({right:'used by 312 operators',theme:'dark'})+shield('release','v0.9.2','#555','#007ec6');
+
+/* weekly success chart: bars to scale, the dip annotated */
+(function(){
+  const W=[[ '15 Sep',99.1,240],['22 Sep',98.8,251],['29 Sep',99.2,258],['6 Oct',99.0,266],['13 Oct',91.4,271],['20 Oct',98.9,279],['27 Oct',99.3,287]];
+  const w=760,h=200,pl=34,pb=26,pt=10,lo=80,hi=100,bw=(w-pl)/W.length;
+  const y=v=>pt+(h-pt-pb)*(1-(v-lo)/(hi-lo));
+  let s=`<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="Share of calls that worked each week, between 91 and 99 percent">`;
+  [80,90,100].forEach(v=>{s+=`<line class="gridl" x1="${pl}" x2="${w}" y1="${y(v)}" y2="${y(v)}"/><text class="axis" x="0" y="${y(v)+3}">${v} %</text>`;});
+  W.forEach(([d,v,n],i)=>{const x=pl+i*bw+bw*.25,bh=h-pb-y(v),last=i===W.length-1,dip=v<95;
+    s+=`<rect x="${x.toFixed(1)}" y="${y(v).toFixed(1)}" width="${(bw*.5).toFixed(1)}" height="${bh.toFixed(1)}" rx="2" fill="${dip?'var(--alarm)':last?'var(--fg)':'var(--steel)'}"/>`;
+    s+=`<text class="axis" x="${(x+bw*.25).toFixed(1)}" y="${y(v)-6}" text-anchor="middle" style="fill:${dip?'var(--alarm)':'var(--silver)'}">${v.toFixed(1)}</text>`;
+    s+=`<text class="axis" x="${(x+bw*.25).toFixed(1)}" y="${h-10}" text-anchor="middle">${d}</text>`;
+    s+=`<text class="axis" x="${(x+bw*.25).toFixed(1)}" y="${h+4}" text-anchor="middle" style="font-size:9px">${n}</text>`;});
+  $('#chart').innerHTML=s+'</svg>';
+})();
+$('#fns').innerHTML=[['issues.create',31],['repos.get_file',24],['pulls.list',17],['search.code',12],['issues.list',9]].map(([f,p])=>`<div><span class="nm"><span class="bar" style="width:${p*3}px"></span>${f}</span><span class="v">${p} %</span></div>`).join('');
+$('#copy').addEventListener('click',async e=>{try{await navigator.clipboard.writeText($('#md').textContent);e.target.textContent='Copied';}catch{const r=document.createRange();r.selectNodeContents($('#md'));const s=getSelection();s.removeAllRanges();s.addRange(r);}setTimeout(()=>e.target.textContent='Copy',1600);});
+</script>
+
+</body>
+</html>

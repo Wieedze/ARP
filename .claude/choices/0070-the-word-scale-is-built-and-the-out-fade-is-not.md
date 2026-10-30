@@ -116,7 +116,7 @@ make deliberately rather than inside a motion pass.
 ## References
 
 - Brief: `docs/18_THE_MOTION_SPEC.md` §4, §5, §7
-- Build contract: `docs/design/arp-motion-reference/MOTION-V2.md` §2.4, §2.5
+- Build contract: `docs/design/motion/MOTION-V2.md` §2.4, §2.5
 - Related ADR: `.claude/choices/0066-one-gesture-plays-one-scene.md`,
   `.claude/choices/0068-scenes-do-not-overlap.md`
 - Related rule: `.claude/rules/ui.md` (reduced motion, and the bundle rule §6 answers)

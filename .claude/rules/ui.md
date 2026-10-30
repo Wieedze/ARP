@@ -5,7 +5,7 @@ Load for every task touching `apps/web/`. Compose with `docs/05_UI_DESIGN.md` wh
 > **Amended 2026-10-22 by ADR `0057` — "The Source".** The identity changed: graphite neutrals,
 > **Saffron `#FFB020`** in place of cyan, **Archivo + Geist Mono** in place of Inter + JetBrains
 > Mono, and tiered corners in place of "nothing above 4px". The build contract is
-> `docs/design/arp-design-handoff/HANDOFF.md`; `docs/design/arp-design-handoff/reference/*.html` is the visual truth.
+> `docs/design/brand/v1/HANDOFF.md`; `docs/design/brand/v1/reference/*.html` is the visual truth.
 >
 > **The handoff's section 8 (screens and routes) is deliberately NOT adopted** — user decision,
 > 2026-10-22: _« garde les règles du design mais garde notre implémentation »_. So the tokens, the

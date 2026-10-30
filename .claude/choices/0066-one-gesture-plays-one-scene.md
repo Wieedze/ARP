@@ -2,7 +2,7 @@
 
 **Status:** Accepted
 **Date:** 2026-10-28
-**Triggered by:** user decision, relayed through `docs/design/arp-motion-reference/MOTION-V2.md` §0 D1
+**Triggered by:** user decision, relayed through `docs/design/motion/MOTION-V2.md` §0 D1
 
 ## Context
 
@@ -93,7 +93,7 @@ fallback has no gesture handling at all.
 
 ## References
 
-- Build contract: `docs/design/arp-motion-reference/MOTION-V2.md` §0 D1, §2.1 item 5
+- Build contract: `docs/design/motion/MOTION-V2.md` §0 D1, §2.1 item 5
 - Related ADR: `.claude/choices/0068-scenes-do-not-overlap.md` (the other half of the hand-over)
 - Related rule: `.claude/rules/ui.md`
 - Related doc: `docs/18_THE_MOTION_SPEC.md` §6 (when a motion dependency is justified)

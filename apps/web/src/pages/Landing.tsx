@@ -24,7 +24,7 @@ import {parseToolLabel, primaryNameOf} from "../lib/tool-label";
  *
  * ## Where it comes from
  *
- * `docs/design/arp-motion-reference/index.html` is the design base and `docs/design/arp-motion-reference/MOTION-V2.md` is
+ * `docs/design/motion/index.html` is the design base and `docs/design/motion/MOTION-V2.md` is
  * the build contract beside it — the user's decision, 2026-10-28: _« garde tout ce qui vient de ce
  * dossier, c'est la nouvelle base »_, and _« surtout garde bien tous les textes et tout ce qui a
  * été fait dans le design »_. So **the copy here is the reference's copy**, to the word, and the

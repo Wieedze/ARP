@@ -97,5 +97,32 @@ After each group, every gate came back green:
 
 **Neutral (worth knowing):**
 
-- `docs/design/arp-design-handoff/arp-design-handoff 2/` is a second, older copy of the handoff that
+- `docs/design/arp-design-handoff/arp-design-handoff 2/` is a second, ~~older~~ **newer** (amendment below) copy of the handoff that
   was already tracked before this move. It moved as it was, and it is not reconciled here.
+
+## Amended 2026-10-30 — `docs/design/` is named by what each folder holds
+
+The table above records where things landed on 2026-10-30 morning. The same afternoon the folders
+were renamed after what they are, and the second handoff bundle (`arp-handoff/`, untracked) was
+split into them. `docs/design/README.md` is the index.
+
+| was                                                    | is                                        |
+| ------------------------------------------------------ | ----------------------------------------- |
+| `arp-design-handoff/`                                  | `brand/v1/`                               |
+| `arp-design-handoff/arp-design-handoff 2/`             | `brand/v2/`                               |
+| `arp-motion-reference/`                                | `motion/`                                 |
+| `arp-claim-field-handoff.md`                           | `claim-field/v1-handoff.md`               |
+| `claim-field-port/`                                    | `claim-field/v2/`                         |
+| `arp-handoff/claim-field/`                             | `claim-field/v2-ring-names/`              |
+| `arp-pages/{agent,repo,skill}/`, `arp-handoff/pages/`  | `pages/{agent,repo,skill,tool}/`          |
+| `ARP Agent Page.html`                                  | `pages/agent/agent-page-v1.html`          |
+| `arp-handoff/surfaces/`                                | `cli-surfaces/`                           |
+| `arp-handoff/badges/`                                  | `readme-badges/`                          |
+| `arp-handoff/cli/`, and its identical copy `arp-cli-v0/` at the root | `cli-v0/`                   |
+
+Dropped, because a newer copy of the same thing is kept: `arp-skill-page/` and
+`arp-pages/claim-field/` (git has them).
+
+**Correction to the bullet above.** `arp-design-handoff 2/` is the **newer** copy, not the older:
+its `reference/` files are dated 2026-10-27 against 2026-10-22, it adds `agent-page.html`, and its
+`HANDOFF.md` already knows the ADR was numbered `0057`. Hence `v2`.

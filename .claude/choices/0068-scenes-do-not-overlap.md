@@ -2,7 +2,7 @@
 
 **Status:** Accepted
 **Date:** 2026-10-28
-**Triggered by:** user decision, relayed through `docs/design/arp-motion-reference/MOTION-V2.md` §0 D2
+**Triggered by:** user decision, relayed through `docs/design/motion/MOTION-V2.md` §0 D2
 
 ## Context
 
@@ -81,7 +81,7 @@ leaves before anyone notices it moved.
 
 ## References
 
-- Build contract: `docs/design/arp-motion-reference/MOTION-V2.md` §0 D2, §2.1 item 2
+- Build contract: `docs/design/motion/MOTION-V2.md` §0 D2, §2.1 item 2
 - Related ADR: `.claude/choices/0066-one-gesture-plays-one-scene.md` (the input half),
   `.claude/choices/0067-saffron-is-a-transition-material.md` (what fills the gap)
 - Related doc: `docs/18_THE_MOTION_SPEC.md`

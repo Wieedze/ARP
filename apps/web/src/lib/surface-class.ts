@@ -5,7 +5,7 @@
  * `button`/`a` rules defeat utilities unless they carry `!`. A container has no such problem, so
  * these are ordinary class strings and the two concerns do not belong in one module.
  *
- * The shape is the design reference's own, `docs/design/arp-design-handoff/reference/agents.html`'s `.stake`:
+ * The shape is the design reference's own, `docs/design/brand/v1/reference/agents.html`'s `.stake`:
  * a 1px border, `--radius-card` (12px) and 18px of padding on the page background. The border is
  * `--color-rule` rather than the reference's `rule-strong`, matching the three cards the app had
  * already shipped (`Landing.tsx`, `ToolCatalog.tsx`, `AgentDirectory.tsx`) and `rules/ui.md`'s own
@@ -19,7 +19,7 @@ export const cardClass =
 /**
  * An **action** card, which is a different object from {@link cardClass}.
  *
- * The design reference's own `.act`, from `arp-design-handoff 2/reference/agent-page.html`: a 1px
+ * The design reference's own `.act`, from `docs/design/brand/v2/reference/agent-page.html`: a 1px
  * **rule-strong** border, a 12px radius, 20px of padding, on the **panel** background — and
  * `.act.primary` swaps the border colour for **saffron** and changes nothing else.
  *

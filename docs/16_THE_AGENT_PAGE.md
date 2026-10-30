@@ -162,7 +162,7 @@ cannot be read. "Not reported" and "none" are different sentences.
 
 ## The design system is already decided
 
-Do not redesign it. It is in `docs/design/arp-design-handoff/HANDOFF.md` and ADR `0057`.
+Do not redesign it. It is in `docs/design/brand/v1/HANDOFF.md` and ADR `0057`.
 
 - Graphite neutrals, **one warm accent** spent only on the primary action, the selected state, and
   the viewer's own position.

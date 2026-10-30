@@ -15,7 +15,7 @@ import {COHORT_ORDERS, describeCohortFailure, orderLabel} from "../services/agen
  *
  * ## Rebuilt 2026-10-27 from the second design handoff
  *
- * `docs/design/arp-design-handoff/arp-design-handoff 2/reference/agents.html`. The user's verdict on what was
+ * `docs/design/brand/v2/reference/agents.html`. The user's verdict on what was
  * here: _« tout est mal disposé, surtout en haut avec le find capability et le titre erc8004
  * agents, ça ne va pas du tout. Le whole cohort non plus, enfin rien ne va. »_ Three specific
  * faults, and each one is fixed by the reference rather than by taste:

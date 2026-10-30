@@ -314,7 +314,7 @@ is the list of tools that actually work, on the order of a thousand of 300,000-p
 know what to rate. But the mechanism that rates them is the `uses` edge, and that is task 19.
 
 **`docs/18_THE_MOTION_SPEC.md` is answered and is no longer a handoff.** The design came back on
-2026-10-28 as `docs/design/arp-motion-reference/index.html` plus `MOTION-V2.md` — **the build contract**, and
+2026-10-28 as `docs/design/motion/index.html` plus `MOTION-V2.md` — **the build contract**, and
 where it and `docs/18_THE_MOTION_SPEC.md` disagree it wins. Built as delivered (task 29); the user's instruction was
 _« garde tout ce qui vient de ce dossier, c'est la nouvelle base »_ and _« surtout garde bien tous
 les textes et tout ce qui a ete fait dans le design »_, so the copy on `/` is the reference's copy

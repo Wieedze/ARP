@@ -5,7 +5,7 @@ import {LABEL} from "../../lib/atom-page";
 /**
  * The parts the skill page and the repository page share: the install line, the two panels'
  * frame, the record's rows and the section heading. One system, so one copy
- * (`arp-pages/README.md`).
+ * (`docs/design/pages/`).
  */
 
 /** An install command and a Copy button. It wraps rather than scrolls. */

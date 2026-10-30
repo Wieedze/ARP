@@ -159,7 +159,7 @@ which is the general fix for the unbounded column and belongs in its own task.
 A round-1 finding was that `decoration-[color:var(--color-rule-strong)]` was inert against the
 unlayered `a { text-decoration: none }` shorthand. Adding the bang made it apply and made the app
 **less legible**: 2.05:1 against currentColor's 8.57:1, under SC 1.4.11's 3:1, in the module whose
-own argument is that the underline is the affordance. `docs/design/arp-design-handoff/reference/*.html` has no
+own argument is that the underline is the affordance. `docs/design/brand/v1/reference/*.html` has no
 underlines at all, so the token had never been specified for this.
 
 The utility is removed. **A utility measured inert is not yet a defect** — what it would do once it

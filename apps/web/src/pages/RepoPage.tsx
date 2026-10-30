@@ -22,7 +22,7 @@ import {intuitionPortalUrl} from "../services/trust-format";
  * `/atom/:atomId` when the atom is a repository: `github.com/<owner>/<repo>`, the object of its
  * skills' `source` edges.
  *
- * The build contract is `arp-pages/repo/REPO-PAGE.md`. Top to bottom: the repository, what is
+ * The build contract is `docs/design/pages/repo/REPO-PAGE.md`. Top to bottom: the repository, what is
  * written about it and measured about it, its own market, the skills it publishes, the other
  * repositories that publish the same pack (only when there are any), every other claim about it,
  * and the record.
