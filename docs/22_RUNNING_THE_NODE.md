@@ -458,6 +458,10 @@ The hashes are keccak256 over RFC 8785 canonical JSON, so step 3 needs no librar
 cd apps/hook && bun run build      # once: writes apps/hook/dist/arp-hook.js
 ```
 
+`arp init` writes this for you (`@arp-protocol/cli`, `apps/cli`): it copies the hook to
+`~/.arp/bin/hook.js`, registers it on both events, and backs up `settings.json` first. `arp
+uninstall` takes it out again. By hand, it is:
+
 <!-- prettier-ignore -->
 ```jsonc
 // your runtime's .claude/settings.json — the path is absolute, because the hook runs in your

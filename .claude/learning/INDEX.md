@@ -2,7 +2,7 @@
 
 **Generated** 2026-10-30 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-25 entries, one per completed task. Written by `task-verifier` on a pass.
+26 entries, one per completed task. Written by `task-verifier` on a pass.
 
 | # | task | verdict | entry |
 | --- | --- | --- | --- |
@@ -31,3 +31,4 @@
 | [23](23-one-installer-33a.md) | `docs/tasks/33-one-installer.md` (sub-task 33a only; 33b–33h not started) | PASS (second pass; the first failed on the three items under Surprises) | Task 33a: the hook sees what each runtime sends |
 | [24](24-one-installer-33b.md) | `docs/tasks/33-one-installer.md` (sub-task 33b only; 33c–33h not started) | PASS (second pass; the first failed on five stale sentences, none in the code) | Task 33b: `@arp-protocol/cli`, built for Node |
 | [25](25-the-activity-bar.md) | `docs/tasks/36-the-activity-bar.md` | PASS (second run; the first failed on 3 findings plus a missing STATE | The activity bar: what the agent triggered, and what it declared |
+| [26](26-one-installer-33c.md) | `docs/tasks/33-one-installer.md` §4 33c | PASS, on the second pass | One installer, 33c: `arp init`, `arp uninstall`, `arp doctor` |

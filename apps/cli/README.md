@@ -15,14 +15,24 @@ All three run on your machine, and none of them signs a transaction.
 - **What the hook records**, and what it never records, is
   [ADR `0090`](https://github.com/Wieedze/ARP/blob/main/.claude/choices/0090-what-the-hook-records.md).
 
-`arp init`, which wires the MCP server and the hook into your runtime, comes next. Until then, see
-`docs/22` for the settings to add by hand.
+## Install into your runtime
+
+```
+arp init --dry-run     see what would change
+arp init               do it: asks first, backs up every file it edits
+arp doctor             check it: entries present, hook in place, the server answers
+```
+
+`init` finds Claude Code, Grok Build, Cursor, Gemini CLI and Codex on this machine. It adds the MCP
+server to each one, and the hook to Claude Code (Grok Build reads Claude Code's files). For any
+other MCP client, `arp init --print` prints the entry to paste. `--yes` and `--no-input` are for
+scripts, `--runtime claude,cursor` narrows the run, and `--project` writes the project's files.
 
 ## Uninstall
 
 ```
+arp uninstall          removes what init added, and nothing else
 npm uninstall -g @arp-protocol/cli
 ```
 
-Then remove the `arp` entries you added to your runtime's settings, and the `.arp/` directory in
-each project.
+The `.arp/` directory in each project is the hook's log. Delete it if you want it gone.

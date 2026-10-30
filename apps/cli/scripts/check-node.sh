@@ -79,6 +79,15 @@ kill "$node_pid" "$stub" 2>/dev/null || true
 [[ -n "$health" ]] || fail "arp node did not answer /healthz"
 pass "arp node serves /healthz over a real socket"
 
+mkdir -p "$work/home/.claude"
+(cd "$work/project" && clean "$arp" init --yes --runtime claude >/dev/null) || fail "arp init"
+grep -q '"arp"' "$work/home/.claude.json" || fail "arp init wrote no MCP entry"
+[[ -f "$work/home/.arp/bin/hook.js" ]] || fail "arp init copied no hook"
+(cd "$work/project" && clean env ARP_NO_RECEIPTS=1 "$arp" doctor --runtime claude >/dev/null) || fail "arp doctor after init"
+(cd "$work/project" && clean "$arp" uninstall --yes --runtime claude >/dev/null) || fail "arp uninstall"
+[[ ! -f "$work/home/.arp/bin/hook.js" ]] || fail "arp uninstall left the hook"
+pass "arp init, doctor and uninstall, against a clean home"
+
 (cd "$work/project" && clean npx --yes --package "$work/$tarball" arp --version >/dev/null) || fail "npx <tarball>"
 pass "npx --package <tarball> arp --version"
 
