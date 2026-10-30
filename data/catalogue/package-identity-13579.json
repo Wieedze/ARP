@@ -1,0 +1,143 @@
+{
+ "_note": "ADR 0087 applied on testnet 13579: eight MCP servers whose package the registry confirms (its record points back at the repository) now have their package as identity, linked to the repository by `source`, tagged with its kind, `mcp` and its domain. ARP's positions on the repository's `mcp` and domain tags were redeemed: those triples leave ARP's reading and stay on chain. Re-deriving this needs only scripts/seed/plan-package-identity.ts, which now plans 0 calls.",
+ "_authorisation": "Signed by the agent session with AGENT_PRIVATE_KEY on the user's instruction of 2026-10-30 (« c'est juste pour le testnet donc vazy »), for the 20 calls listed beforehand. ADR 0037: the key was never read into the agent's context, send-plan.ts checked the signer against AGENT_ADDRESS, and this file is the record.",
+ "chainId": 13579,
+ "signer": "0x906f3A52ec089f8D4E9127F91C6bE5Ae0d18f91f",
+ "publishedAt": "2026-10-30",
+ "balanceBefore": "1.285000083568",
+ "balanceAfter": "1.215853775796",
+ "_balanceNote": "The difference, 0.069146307772, is the 0.082000000072 deposited, less what the 15 redemptions returned, plus gas.",
+ "packages": {
+  "alchemyplatform/alchemy-mcp-server": "npmjs.com/package/@alchemy/mcp-server",
+  "apify/apify-mcp-server": "npmjs.com/package/@apify/actors-mcp-server",
+  "browserbase/mcp-server-browserbase": "npmjs.com/package/@browserbasehq/mcp",
+  "grafana/mcp-grafana": "pypi.org/project/mcp-grafana",
+  "makenotion/notion-mcp-server": "npmjs.com/package/@notionhq/notion-mcp-server",
+  "mondaycom/mcp": "npmjs.com/package/@mondaydotcomorg/monday-api-mcp",
+  "postmanlabs/postman-mcp-server": "npmjs.com/package/@postman/postman-mcp-server",
+  "snyk/saw-mcp": "pypi.org/project/snyk-apiweb-mcp"
+ },
+ "_notMigrated": "14 of the 22: nine reached only as a remote endpoint (Supabase, Atlassian, Cloudflare, Figma, Terraform, Prisma, Mobbin, Zapier, Stripe), three whose package the registry does not confirm (Neon, PayPal, Webflow), and SonarQube and Microsoft. Their repository atom still carries `mcp` until the user validates an identity for each.",
+ "calls": [
+  {
+   "kind": "create-atom",
+   "value": "20000000010000000",
+   "why": "https://npmjs.com/package/@alchemy/mcp-server, the tag \"npm package\", https://npmjs.com/package/@apify/actors-mcp-server, https://npmjs.com/package/@browserbasehq/mcp, https://pypi.org/project/mcp-grafana, the tag \"pypi package\", https://npmjs.com/package/@notionhq/notion-mcp-server, https://npmjs.com/package/@mondaydotcomorg/monday-api-mcp, https://npmjs.com/package/@postman/postman-mcp-server, https://pypi.org/project/snyk-apiweb-mcp",
+   "tx": "0x4ad777c01ae765a905bcd13fdb16f6a308cb91079e691b878ecbd14c18819aa0"
+  },
+  {
+   "kind": "create-triple",
+   "value": "16000000016000000",
+   "why": "@alchemy/mcp-server source alchemyplatform/alchemy-mcp-server; @alchemy/mcp-server has tag npm package; @alchemy/mcp-server has tag mcp; @alchemy/mcp-server has tag blockchain; @apify/actors-mcp-server source apify/apify-mcp-server; @apify/actors-mcp-server has tag npm package; @apify/actors-mcp-server has tag mcp; @apify/actors-mcp-server has tag scraping",
+   "tx": "0x00dc20cb4b64e4262e5be4a3776dee7617d8767e0d1676447e038624e1a2c4e8"
+  },
+  {
+   "kind": "create-triple",
+   "value": "16000000016000000",
+   "why": "@browserbasehq/mcp source browserbase/mcp-server-browserbase; @browserbasehq/mcp has tag npm package; @browserbasehq/mcp has tag mcp; @browserbasehq/mcp has tag browser; mcp-grafana source grafana/mcp-grafana; mcp-grafana has tag pypi package; mcp-grafana has tag mcp; mcp-grafana has tag observability",
+   "tx": "0x9582e6fa57db05fd6b84b4557da41634284e5d0a189ddcd3d81bb6a1f0480791"
+  },
+  {
+   "kind": "create-triple",
+   "value": "16000000016000000",
+   "why": "@notionhq/notion-mcp-server source makenotion/notion-mcp-server; @notionhq/notion-mcp-server has tag npm package; @notionhq/notion-mcp-server has tag mcp; @notionhq/notion-mcp-server has tag collaboration; @mondaydotcomorg/monday-api-mcp source mondaycom/mcp; @mondaydotcomorg/monday-api-mcp has tag npm package; @mondaydotcomorg/monday-api-mcp has tag mcp; @mondaydotcomorg/monday-api-mcp has tag collaboration",
+   "tx": "0x5f499ba5e943047a43fb13d8016ade1c38e4be3e80773294d3063821f1d3db82"
+  },
+  {
+   "kind": "create-triple",
+   "value": "14000000014000000",
+   "why": "@postman/postman-mcp-server source postmanlabs/postman-mcp-server; @postman/postman-mcp-server has tag npm package; @postman/postman-mcp-server has tag mcp; @postman/postman-mcp-server has tag api; snyk-apiweb-mcp source snyk/saw-mcp; snyk-apiweb-mcp has tag pypi package; snyk-apiweb-mcp has tag mcp",
+   "tx": "0x5aab27c8d9db46c53e71a67073956921c4925371192905db166ee850faea7294"
+  },
+  {
+   "kind": "redeem",
+   "value": "0",
+   "why": "retire \"alchemyplatform/alchemy-mcp-server has tag mcp\"",
+   "tx": "0x42a7b8867343d912e72e599cec7d4b289cab7c7d185f31d98aae66e378b8372d"
+  },
+  {
+   "kind": "redeem",
+   "value": "0",
+   "why": "retire \"alchemyplatform/alchemy-mcp-server has tag blockchain\"",
+   "tx": "0x4aef9a5b2ddfbb414359665cd1fe0affa7efeb0d46b1f4348ada1e19892a44a3"
+  },
+  {
+   "kind": "redeem",
+   "value": "0",
+   "why": "retire \"apify/apify-mcp-server has tag mcp\"",
+   "tx": "0x3591ec5bbf249f0419c0854d597c64ca92c79df89f04bc8e930101f8c3104dab"
+  },
+  {
+   "kind": "redeem",
+   "value": "0",
+   "why": "retire \"apify/apify-mcp-server has tag scraping\"",
+   "tx": "0x926385a154f1bb41b82761e12122fba1ec565ef1b70792a46f40911539c84824"
+  },
+  {
+   "kind": "redeem",
+   "value": "0",
+   "why": "retire \"browserbase/mcp-server-browserbase has tag mcp\"",
+   "tx": "0xdaf3594eb687fa83d4c8b45409fd54ce86429e7e023121af449584c9dbecd4ec"
+  },
+  {
+   "kind": "redeem",
+   "value": "0",
+   "why": "retire \"browserbase/mcp-server-browserbase has tag browser\"",
+   "tx": "0x15ff15237d6c79f9640631b6b687c948c73e544829f7c0c00749f168e71aca4a"
+  },
+  {
+   "kind": "redeem",
+   "value": "0",
+   "why": "retire \"grafana/mcp-grafana has tag mcp\"",
+   "tx": "0x28bb17345cd51ffbac06302072e5b8a7c46338909965109825aa4b6e0fb14fd1"
+  },
+  {
+   "kind": "redeem",
+   "value": "0",
+   "why": "retire \"grafana/mcp-grafana has tag observability\"",
+   "tx": "0x93705c4871c64b42b0b3f25feab22cbd1b1c6d79cb66da73946cce2f413bebd9"
+  },
+  {
+   "kind": "redeem",
+   "value": "0",
+   "why": "retire \"makenotion/notion-mcp-server has tag mcp\"",
+   "tx": "0x6b9df68cdc63c0d42bcf316e655ab0e9cc51610e2615ca756d41705b4e7771e0"
+  },
+  {
+   "kind": "redeem",
+   "value": "0",
+   "why": "retire \"makenotion/notion-mcp-server has tag collaboration\"",
+   "tx": "0x284f94174e9738e72b7f8ae85f7d2c668ad3d593ccf95d9dea05131cfdf6e7e2"
+  },
+  {
+   "kind": "redeem",
+   "value": "0",
+   "why": "retire \"mondaycom/mcp has tag mcp\"",
+   "tx": "0x5e5fe1fc5dbd83b645f5be773e7a7b45c670d419cadcb626fc0c391ef32d54b0"
+  },
+  {
+   "kind": "redeem",
+   "value": "0",
+   "why": "retire \"mondaycom/mcp has tag collaboration\"",
+   "tx": "0x7bfa1df94f9cfd71f2a260432eb26ef5eaa089b20f0097c9c4baaf3ac8914574"
+  },
+  {
+   "kind": "redeem",
+   "value": "0",
+   "why": "retire \"postmanlabs/postman-mcp-server has tag mcp\"",
+   "tx": "0x52a04bb267910ce4a7ac317083aeba7d0004bb5c0ab84394a149d6a7df887bbe"
+  },
+  {
+   "kind": "redeem",
+   "value": "0",
+   "why": "retire \"postmanlabs/postman-mcp-server has tag api\"",
+   "tx": "0x0b78689876a2f97e563bbf6278c11be52327408cb5095e018f1d22adf2693c56"
+  },
+  {
+   "kind": "redeem",
+   "value": "0",
+   "why": "retire \"snyk/saw-mcp has tag mcp\"",
+   "tx": "0x99c8c4a93edddfdadc1506fc6511df9d070c9681bd11d11138a3202ee556fa9e"
+  }
+ ]
+}
