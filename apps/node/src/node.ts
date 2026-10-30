@@ -33,6 +33,8 @@
  */
 import { join } from 'node:path';
 
+import { serveFetch } from '@arp-protocol/core/node';
+
 import { createPublicClient, formatEther, http, parseEther } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
 import type { Hex } from 'viem';
@@ -130,15 +132,16 @@ const node = createNode({
   limits: LIMITS,
 });
 
-export const handler = {
-  port: PORT,
-  maxRequestBodySize: LIMITS.maxBodyBytes,
-  fetch: (request: Request, server: { requestIP(request: Request): { address: string } | null }) =>
-    node.fetch(request, server.requestIP(request)?.address ?? 'unknown'),
-};
-
-if (import.meta.main) {
-  Bun.serve(handler);
+/**
+ * Start the node. `arp node` calls this (`apps/cli`); `bun src/node.ts` reaches it through
+ * `import.meta.main`, which Node 22 does not set.
+ *
+ * No hostname: the node binds every interface, because it is the address the agent publishes.
+ */
+export async function main(): Promise<void> {
+  await serveFetch({ port: PORT, maxBodyBytes: LIMITS.maxBodyBytes }, (request, ip) =>
+    node.fetch(request, ip),
+  );
   process.stderr.write(`agent node on http://localhost:${PORT}\n`);
   process.stderr.write(`  agent      ${account.address}\n`);
   process.stderr.write(`  min budget ${formatEther(MIN_BUDGET)}\n`);
@@ -153,3 +156,5 @@ if (import.meta.main) {
   );
   process.stderr.write(`\nIt signs receipts and never transactions.\n`);
 }
+
+if (import.meta.main) await main();

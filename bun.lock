@@ -20,6 +20,24 @@
         "wrangler": "4.151.0",
       },
     },
+    "apps/cli": {
+      "name": "@arp-protocol/cli",
+      "version": "0.0.1",
+      "bin": {
+        "arp": "dist/cli.js",
+      },
+      "dependencies": {
+        "viem": "2.52.0",
+      },
+      "devDependencies": {
+        "@arp-protocol/core": "workspace:*",
+        "@arp/hook": "workspace:*",
+        "@arp/mcp": "workspace:*",
+        "@arp/node": "workspace:*",
+        "@types/bun": "^1.4.4",
+        "typescript": "~6.0.2",
+      },
+    },
     "apps/hook": {
       "name": "@arp/hook",
       "version": "0.0.1",
@@ -147,6 +165,8 @@
     "@adobe/css-tools": ["@adobe/css-tools@4.5.0", "", {}, "sha512-6OzddxPio9UiWTCemp4N8cYLV2ZN1ncRnV1cVGtve7dhPOtRkleRyx32GQCYSwDYgaHU3USMm84tNsvKzRCa1Q=="],
 
     "@adraffy/ens-normalize": ["@adraffy/ens-normalize@1.11.1", "", {}, "sha512-nhCBV3quEgesuf7c7KYfperqSS14T8bYuvJ8PcLJp6znkZpFc0AuW4qBtr8eKVyPPe/8RSr7sglCWPU5eaxwKQ=="],
+
+    "@arp-protocol/cli": ["@arp-protocol/cli@workspace:apps/cli"],
 
     "@arp-protocol/core": ["@arp-protocol/core@workspace:packages/protocol"],
 

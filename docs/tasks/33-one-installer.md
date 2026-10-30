@@ -1,6 +1,6 @@
 # Task 33 — One installer: npx, and a native package per runtime
 
-**Status:** **PLAN**, 2026-10-30. **33a COMPLETE** 2026-10-30, `task-verifier` PASS on the second pass, post-mortem `.claude/learning/23-one-installer-33a.md`. 33b–33h not started. It splits into the sub-tasks in §4. Each one is
+**Status:** **PLAN**, 2026-10-30. **33a COMPLETE** 2026-10-30, `task-verifier` PASS on the second pass, post-mortem `.claude/learning/23-one-installer-33a.md`. **33b COMPLETE** 2026-10-30, post-mortem `.claude/learning/24-one-installer-33b.md`. 33c–33h not started. It splits into the sub-tasks in §4. Each one is
 verified on its own, and the parts that publish are confirmed by the user every time (task 32 §2.12).
 **Required skills:** none beyond the repo's own.
 **Rules:** `code.md`, `security.md` (a key moves to a file), `portability.md`, `claims.md`, `workflow.md`.
@@ -57,10 +57,11 @@ never disagree.
 
 1. **Node ≥ 22 is the runtime the install requires, not Bun.** `npx` means npm, and npm means Node.
    Bun-specific code on the agent side, measured with
-   `grep -rn "Bun\." apps/mcp/src apps/node/src apps/hook/src packages/*/src`, amounts to four call
-   sites: stdio at `apps/mcp/src/server.ts:244` and `:246`, and `Bun.serve` at `:284` and at
-   `apps/node/src/node.ts:141`. The other hits are comments. Development keeps Bun; only the build
-   targets Node.
+   `grep -rn "Bun\." apps/mcp/src apps/node/src apps/hook/src packages/*/src`, amounts to ~~four~~ **six** call
+   sites at HEAD `8348af3`: stdio at `apps/mcp/src/server.ts:244` and `:246`, `Bun.serve` at `:284`
+   and at `apps/node/src/node.ts:141`, and — missed by that grep, found in 33b —
+   `import.meta.main` at `server.ts:268` and `node.ts:140`, which Node 22 does not set. The other
+   hits are comments. Development keeps Bun; only the build targets Node. All six ported in 33b.
 2. **The hook does not run through `npx` on each call.** That would download or resolve the package
    on every tool call. `init` resolves the installed file once and writes its absolute path. Plugins
    use their root variable instead (`${CLAUDE_PLUGIN_ROOT}`, `${extensionPath}`). The hook is
@@ -126,12 +127,22 @@ The hook, before any packaging work, because every package ships it.
 - New app `apps/cli`. It depends on `apps/mcp`, `apps/node` and `apps/hook` through their exports,
   not through copies.
 - Port the four Bun call sites (§3.1) behind small adapters (`node:http`, `process.stdin`). Keep
-  `bun test` and the gates.
+  `bun test` and the gates. **There were six, not four**: the §3.1 grep matched `Bun\.` and missed
+  `import.meta.main` at `apps/mcp/src/server.ts` and `apps/node/src/node.ts`, which Node 22 does not
+  set. Both entries now export `main()`, and the CLI calls it.
 - `bun build --target=node`, one file per entry, with a `#!/usr/bin/env node` banner.
   `engines.node >=22`.
 - **Gate:** run `npx` against a locally packed tarball (`npm pack`, then `npx ./arp-protocol-cli-*.tgz
 --help`) in a clean container with Node and no Bun. A green `bun test` says nothing about this
   (`claims.md` check 4).
+
+**Done 2026-10-30.** `apps/cli` (`@arp-protocol/cli`, `arp mcp|hook|node`, `--help`,
+`--version`, exit 2 on an unknown command), each program imported only when its command runs. The
+shared server adapter is `@arp-protocol/core/node` (`serveFetch`, `linesOf`), a subpath export so
+the web bundle never sees `node:http`. The container gate became a clean `PATH` instead: Docker has
+no daemon on this machine. `apps/cli/scripts/check-node.sh` packs the tarball, installs it with
+Node 22 and `env -i` (no Bun reachable, checked), and runs every command, including the node over a
+real socket against a stub RPC, and `npx --package <tarball> arp`.
 
 ### 33c — `arp init`, `arp uninstall`, `arp doctor`
 

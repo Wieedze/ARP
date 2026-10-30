@@ -2,7 +2,7 @@
 
 **Generated** 2026-10-30 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-23 entries, one per completed task. Written by `task-verifier` on a pass.
+24 entries, one per completed task. Written by `task-verifier` on a pass.
 
 | # | task | verdict | entry |
 | --- | --- | --- | --- |
@@ -29,3 +29,4 @@
 | [21](21-two-apps-the-mcp-and-the-node.md) | `docs/tasks/32-two-apps-the-mcp-and-the-node.md` | PASS | Three apps over two packages: mcp, node, hook |
 | [22](22-the-landing-is-a-scene-sequence.md) | `docs/tasks/29-the-landing-is-a-scene-sequence.md` | PASS | The landing is a scene sequence, not a long page |
 | [23](23-one-installer-33a.md) | `docs/tasks/33-one-installer.md` (sub-task 33a only; 33b–33h not started) | PASS (second pass; the first failed on the three items under Surprises) | Task 33a: the hook sees what each runtime sends |
+| [24](24-one-installer-33b.md) | `docs/tasks/33-one-installer.md` (sub-task 33b only; 33c–33h not started) | PASS (second pass; the first failed on five stale sentences, none in the code) | Task 33b: `@arp-protocol/cli`, built for Node |

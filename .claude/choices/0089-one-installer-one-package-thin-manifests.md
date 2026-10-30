@@ -40,8 +40,9 @@ its key, so ADR `0082` holds.
 
 Five choices are part of this decision:
 
-1. **Node ≥ 22 is what the install requires, not Bun.** `npx` means npm, and npm means Node. Four
-   Bun call sites need porting (`docs/tasks/33` §3.1). Development keeps Bun.
+1. **Node ≥ 22 is what the install requires, not Bun.** `npx` means npm, and npm means Node. ~~Four~~
+   **Six** Bun call sites needed porting (`docs/tasks/33` §3.1, corrected in 33b: the count missed
+   two `import.meta.main`). Development keeps Bun.
 2. **The hook is never run through `npx` per call.** `init` resolves the installed file once, and a
    plugin uses its root variable instead.
 3. **Keys live in a 0600 file, not in an environment variable** (clig.dev, "Environment

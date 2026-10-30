@@ -34,6 +34,7 @@
  *      single number is a decision nobody has made (`docs/01` rejects being one more score).
  */
 
+import { linesOf, serveFetch } from '@arp-protocol/core/node';
 import { TOOLS } from './tools.js';
 import { serveContentRequest } from './content.js';
 import {
@@ -144,7 +145,8 @@ export const handler = {
   /**
    * Loopback by default, and that is a security decision rather than a convenience.
    *
-   * `Bun.serve` binds every interface when no hostname is given, so this listened on the LAN —
+   * `Bun.serve` binds every interface when no hostname is given, and so does `serveFetch`
+   * (`node:http`), which replaced it in task 33b. So this listened on the LAN —
    * and `arp_probe_endpoint` fetches a URL the CALLER supplies. Together that made an installed
    * server an open proxy into the operator's own network: anything that could reach the port could
    * ask it to fetch `http://127.0.0.1:…` or a cloud metadata address and read the answer.
@@ -237,36 +239,28 @@ export const handler = {
  * desynchronises the client, and the failure looks like a malformed server rather than a log.
  */
 async function serveStdio(): Promise<void> {
-  const encoder = new TextEncoder();
-  const decoder = new TextDecoder();
-  let buffered = '';
+  const send = (line: string) =>
+    new Promise<void>((resolve) => process.stdout.write(`${line}\n`, () => resolve()));
 
-  const send = (line: string) => Bun.write(Bun.stdout, encoder.encode(`${line}\n`));
-
-  for await (const chunk of Bun.stdin.stream()) {
-    buffered += decoder.decode(chunk as Uint8Array, { stream: true });
-    let newline = buffered.indexOf('\n');
-    while (newline !== -1) {
-      const line = buffered.slice(0, newline).trim();
-      buffered = buffered.slice(newline + 1);
-      newline = buffered.indexOf('\n');
-      if (line.length === 0) continue;
-
-      const response = await handler.fetch(
-        new Request(`http://stdio/`, {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: line,
-        }),
-      );
-      if (response.status === 202) continue;
-      await send(await response.text());
-    }
+  for await (const line of linesOf(process.stdin)) {
+    const response = await handler.fetch(
+      new Request(`http://stdio/`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: line,
+      }),
+    );
+    if (response.status === 202) continue;
+    await send(await response.text());
   }
 }
 
-if (import.meta.main) {
-  const stdio = process.argv.includes('--stdio') || process.env.ARP_TRANSPORT === 'stdio';
+/**
+ * Start the server. `arp mcp` calls this (`apps/cli`); `bun src/server.ts` reaches it through
+ * `import.meta.main`, which Node 22 does not set — so under Node only the CLI starts it.
+ */
+export async function main(argv: readonly string[] = process.argv): Promise<void> {
+  const stdio = argv.includes('--stdio') || process.env.ARP_TRANSPORT === 'stdio';
   // stderr in both modes: the banner is a diagnostic, and on stdio stdout belongs to the protocol.
   const log = (line: string) => process.stderr.write(`${line}\n`);
 
@@ -281,7 +275,12 @@ if (import.meta.main) {
     process.exit(0);
   }
 
-  Bun.serve(handler);
+  // 1 MiB. `Bun.serve` refused bodies over 128 MiB by default and `serveFetch` refuses none unless
+  // told; a JSON-RPC call to this server is a few kilobytes.
+  await serveFetch(
+    { port: PORT, hostname: handler.hostname, maxBodyBytes: 1024 * 1024 },
+    (request) => handler.fetch(request),
+  );
   log(
     `  listening:  ${handler.hostname}:${PORT}${handler.hostname === '127.0.0.1' ? ' (loopback only — ARP_HOST=0.0.0.0 to open it)' : ' — OPEN TO THE NETWORK'}`,
   );
@@ -298,3 +297,5 @@ if (import.meta.main) {
   log(`\nsends nothing — the planners return calls for your own key, signed by you.`);
   log(`The receipt key signs receipts and cannot move value (ADR 0080).`);
 }
+
+if (import.meta.main) await main();

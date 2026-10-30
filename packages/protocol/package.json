@@ -7,6 +7,10 @@
         ".": {
             "types": "./dist/index.d.ts",
             "default": "./dist/index.js"
+        },
+        "./node": {
+            "types": "./dist/node/index.d.ts",
+            "default": "./dist/node/index.js"
         }
     },
     "main": "./dist/index.js",
@@ -52,5 +56,6 @@
     "license": "MIT",
     "publishConfig": {
         "access": "public"
-    }
+    },
+    "sideEffects": false
 }

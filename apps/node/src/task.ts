@@ -104,7 +104,7 @@ export type AgentIdentity = { agentRegistry: string; agentId: bigint };
  * the node knows whether it was paid, so a flood of invented hashes is a bill for the operator.
  */
 export type NodeLimits = {
-  /** Largest body accepted, in bytes. `Bun.serve` enforces it as well; this is the same number. */
+  /** Largest body accepted, in bytes. `serveFetch` enforces it as well, before the body is read whole; this is the same number. */
   maxBodyBytes: number;
   /** A handler that has not answered by then is a 504, and the payment is released. */
   handlerTimeoutMs: number;

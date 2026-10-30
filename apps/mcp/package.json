@@ -4,6 +4,9 @@
   "private": true,
   "description": "The ARP MCP server: reads the graph, prepares unsigned plans, serves a skill's file and signs a receipt for it. Signs no transaction.",
   "type": "module",
+  "exports": {
+    "./server": "./src/server.ts"
+  },
   "bin": {
     "arp-mcp": "dist/arp-server.js",
     "arp-fetch-skill": "dist/arp-fetch-skill.js",

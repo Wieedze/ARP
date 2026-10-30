@@ -1,0 +1,44 @@
+{
+  "name": "@arp-protocol/cli",
+  "version": "0.0.1",
+  "description": "ARP's agent-side programs in one binary: the MCP server, the runtime hook that records what an agent used, and the opt-in hire node. Runs on Node 22 or later.",
+  "type": "module",
+  "bin": {
+    "arp": "dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "bun run --cwd ../../packages/protocol build && rm -rf dist && bun build src/cli.ts --outdir dist --target=node --format=esm --splitting --entry-naming '[name].js' --chunk-naming 'chunks/[name]-[hash].js' --external viem --external 'viem/*' --external ./hook.js --external @metamask/smart-accounts-kit --banner '#!/usr/bin/env node' && bun build ../hook/src/hook.ts --outfile dist/hook.js --target=node --format=esm --external viem --external 'viem/*'",
+    "test": "bun run build && bun test",
+    "lint": "bun run --cwd ../../packages/protocol build && tsc --noEmit -p tsconfig.json",
+    "check:node": "bun run build && bash scripts/check-node.sh"
+  },
+  "dependencies": {
+    "viem": "2.52.0"
+  },
+  "devDependencies": {
+    "@arp-protocol/core": "workspace:*",
+    "@arp/hook": "workspace:*",
+    "@arp/mcp": "workspace:*",
+    "@arp/node": "workspace:*",
+    "@types/bun": "^1.4.4",
+    "typescript": "~6.0.2"
+  },
+  "keywords": [
+    "mcp",
+    "claude-code",
+    "agent",
+    "erc-8004",
+    "intuition"
+  ],
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  }
+}

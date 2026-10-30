@@ -36,7 +36,12 @@ hosted.
 bun run apps/mcp/src/server.ts --stdio    # for an MCP client to launch
 ARP_TARGET=testnet bun run apps/mcp/src/server.ts
 apps/mcp/dist/arp-server.js --stdio       # the same, as one file: cd apps/mcp && bun run build
+arp mcp                                   # the same under Node 22: @arp-protocol/cli (apps/cli)
 ```
+
+`@arp-protocol/cli` holds the three programs behind one `arp` binary and runs on Node 22 without
+Bun (ADR `0089`). It is built and checked (`cd apps/cli && bun run check:node`) but **not yet
+published**, so `arp` means `node apps/cli/dist/cli.js` until it is.
 
 ## The three things that matter before you install anything
 
@@ -401,10 +406,11 @@ grep -nE "createPublicClient\(|writeFile|appendFile|mkdir|import\(|async fetch\(
 
 prints six lines on 2026-10-30: the `node:fs` import, the ledger's `mkdirSync` and `appendFileSync`
 (`task.ts:6`, `:85`, `:86`), the server's own inbound `fetch(request)` handler (`task.ts:246`), your
-handler's import (`node.ts:110`) and the RPC client (`node.ts:118`).
+handler's import (`node.ts:112`) and the RPC client (`node.ts:120`).
 
 **It binds every interface**, unlike the MCP server, because being reached is its job:
-`Bun.serve(handler)` at `apps/node/src/node.ts:141` passes no hostname.
+`serveFetch({ port, maxBodyBytes })` in `main()` at `apps/node/src/node.ts:142` passes no hostname,
+and `node:http` then listens on every interface.
 
 **One payment buys one job.** Before any work the node checks that the payment is mined and did
 not revert, was sent to this agent, came from the declared requester and paid at least
