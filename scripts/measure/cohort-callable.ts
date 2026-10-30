@@ -14,7 +14,7 @@
  *  probed (templated `{placeholder}`, CAIP or ENS identifier) is skipped, never counted as dead:
  *  see the three groups in `tasks/17-the-external-verifier.md`. */
 import { highestTokenId } from './erc8004-population.js';
-import type { JsonRpcReply } from './shapes.js';
+import type { JsonRpcReply } from '../helpers/shapes.js';
 const RPC = 'https://base-rpc.publicnode.com';
 const REGISTRY = '0x8004A169FB4a3325136EB29fA0ceB6D2e539a432';
 const UA = 'ARP-verifier/0.0 (measurement)';

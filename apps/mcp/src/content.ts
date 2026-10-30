@@ -2,7 +2,7 @@
  *
  *  The decisions are in `packages/protocol/src/content-serve.ts`, which holds no key and touches no
  *  network. This file is the transport: it reads the key, caches the listings, does the two fetches
- *  and shapes the HTTP. Same split as the rest of `scripts/` (`rules/portability.md`).
+ *  and shapes the HTTP. Same split as the rest of `apps/mcp` (`rules/portability.md`).
  *
  *  ## The key, and what an operator is trusting
  *

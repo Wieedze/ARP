@@ -15,7 +15,7 @@ import { formatEther } from 'viem';
 import type { Address } from 'viem';
 
 import { multiVaultReads } from '../packages/protocol/src/declare/index.js';
-import { planIdentityAtom } from './plan-identity-atom.js';
+import { planIdentityAtom } from './helpers/plan-identity-atom.js';
 
 const TARGETS = { mainnet: 1155, testnet: 13579 } as const;
 

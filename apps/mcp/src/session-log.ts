@@ -4,7 +4,7 @@
  *
  *  A thin reader. The resolution lives in `@arp-protocol/core` (`src/session.ts`), where it is
  *  pure and tested — a function that decided what ARP asserts had no business importing a file
- *  path, and `scripts/` has no test harness to catch it if it did.
+ *  path, and the scripts it was first written for had no test harness to catch it if it did.
  */
 import { readFileSync } from 'node:fs';
 

@@ -1,4 +1,4 @@
-import type { JsonRpcReply } from './shapes.js';
+import type { JsonRpcReply } from '../helpers/shapes.js';
 /** Has ARP's own caveat enforcer ever fired on mainnet?
  *
  *  Step 4 of `tasks/22` — the one evidence source in this project that is both tier 4 (proven) and

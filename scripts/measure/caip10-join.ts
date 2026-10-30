@@ -1,4 +1,4 @@
-import type { GraphqlReply } from './shapes.js';
+import type { GraphqlReply } from '../helpers/shapes.js';
 /** Does anything point AT a `caip10:` atom on Intuition? Read-only.
  *
  *  The evidence for `tasks/19` step 1b. ADR 0026 specifies

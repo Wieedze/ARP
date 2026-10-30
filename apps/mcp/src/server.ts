@@ -15,7 +15,7 @@
  *
  *  MCP over HTTP is JSON-RPC with three methods — `initialize`, `tools/list`, `tools/call` — so it
  *  is hand-rolled rather than pulling a dependency. `@arp-protocol/core` holds the protocol logic; this file is
- *  a transport over it, which is why it lives in `scripts/` and not in the connector
+ *  a transport over it, which is why it lives in `apps/mcp` and not in the connector
  *  (`rules/portability.md`).
  *
  *  **It signs nothing and sends nothing.** One tool reads. The two planners return prepared calls

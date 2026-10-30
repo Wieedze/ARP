@@ -1,4 +1,4 @@
-import type {GraphqlReply} from "./shapes.js";
+import type {GraphqlReply} from "../helpers/shapes.js";
 /** What classification vocabulary already exists on Intuition, and how much is actually used?
  *
  *  The evidence for the domain-tree design question: ARP needs one vocabulary to say what a tool is

@@ -2,7 +2,7 @@
   "name": "arp-module-registry-mvp",
   "version": "0.0.0",
   "private": true,
-  "description": "ARP Module Registry — MVP. First on-chain deliverable of the Agent Reputation Protocol.",
+  "description": "ARP Module Registry \u2014 MVP. First on-chain deliverable of the Agent Reputation Protocol.",
   "engines": {
     "node": ">=20",
     "bun": ">=1.2"
@@ -17,11 +17,11 @@
     "packages/protocol"
   ],
   "scripts": {
-    "demo": "bun scripts/demo.ts",
     "verify:pin": "bun scripts/verify-pin-key.ts",
     "dev": "bun --filter @arp/app dev",
     "build": "bun --filter '*' build",
-    "test": "bun --filter '*' test",
+    "test": "bun --filter '*' test && bun run test:scripts",
+    "test:scripts": "bun test ./scripts/test",
     "lint": "bun --filter '*' lint",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\" --ignore-path .gitignore --ignore-path .prettierignore",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\" --ignore-path .gitignore --ignore-path .prettierignore",

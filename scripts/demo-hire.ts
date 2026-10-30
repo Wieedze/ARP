@@ -50,8 +50,8 @@ import {
   type SignedHireReceipt,
 } from '../packages/protocol/src/hire-receipt.js';
 import { getToolUsage } from '../packages/protocol/src/tool-usage.js';
-import { canonicalAgentThing, thingUri } from './intuition-pin.js';
-import { sendPlan, type SerialisedCall } from './send-plan.js';
+import { canonicalAgentThing, thingUri } from './helpers/intuition-pin.js';
+import { sendPlan, type SerialisedCall } from './helpers/send-plan.js';
 
 const TARGETS = { mainnet: 1155, testnet: 13579 } as const;
 const arg = (name: string) => {

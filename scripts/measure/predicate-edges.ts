@@ -1,4 +1,4 @@
-import type { GraphqlReply } from './shapes.js';
+import type { GraphqlReply } from '../helpers/shapes.js';
 /** Edge count per predicate on Intuition mainnet, for every id the connector freezes.
  *
  *  The basis for task 19 step 1 — which predicate ARP should write `(agent, use, tool)` on.

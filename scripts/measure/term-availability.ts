@@ -1,4 +1,4 @@
-import type {GraphqlReply} from "./shapes.js";
+import type {GraphqlReply} from "../helpers/shapes.js";
 /** For each term ARP wants, is it already on the chain, and in what state?
  *
  *      bun run scripts/measure/term-availability.ts

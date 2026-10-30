@@ -29,7 +29,7 @@
  *   INTUITION_PIN_API_KEY_HEADER   optional; defaults to "apikey"
  */
 
-import { PIN_ENDPOINT, canonicalAgentThing, pinThing } from './intuition-pin.js';
+import { PIN_ENDPOINT, canonicalAgentThing, pinThing } from './helpers/intuition-pin.js';
 
 const INDEXER_MAINNET = 'https://mainnet.intuition.sh/v1/graphql';
 

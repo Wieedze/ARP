@@ -153,8 +153,10 @@ ARP/
 │       │                              Never signs, never sends (ADR 0038); no chain constant
 │       └── src/arp/                   ARP's OWN contracts (the folded-in `sdk/`) — the one place
 │                                      here that names a chain: `TESTNET_DEPLOYMENT`
-├── scripts/                           flat `.ts` — measure-*, agent-*, verify-*, demo-*. Typechecked
-│                                      by `check:scripts`, linted by nothing (tasks/21)
+├── scripts/                           personal tooling — measure/, helpers/ (shared), test/, and flat
+│                                      agent-*, verify-*, demo-*. Typechecked by `check:scripts`, tested
+│                                      by `test:scripts`, linted by nothing. apps/ and packages/ never
+│                                      import it — not even their tests
 ├── skills/arp/SKILL.md                **publishable** — how to USE ARP with nothing installed
 │                                      (ADR 0052). The one for working ON this repo is
 │                                      `.claude/skills/arp-contributing/` — renamed because one

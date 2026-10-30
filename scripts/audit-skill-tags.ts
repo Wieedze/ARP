@@ -33,7 +33,7 @@ import {formatEther, getAddress, type Hex} from "viem";
 import measured from "../measurements/skill-domains-2026-10-29.json";
 import {encodeRedeem, multiVaultReads} from "../packages/protocol/src/declare/index.js";
 import {HAS_TAG} from "../packages/protocol/src/sources/intuition/terms.js";
-import {classifySkill} from "./skill-domains-table.js";
+import {classifySkill} from "./helpers/skill-domains-table.js";
 
 const TARGETS = {
     mainnet: {chainId: 1155, graphql: "https://mainnet.intuition.sh/v1/graphql"},

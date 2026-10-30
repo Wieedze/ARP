@@ -1,14 +1,14 @@
-import {describe, expect, it} from "vitest";
+import {describe, expect, it} from "bun:test";
 
-import {TOOLS} from "../src/tools.js";
+import {TOOLS} from "../../apps/mcp/src/tools.js";
 import {
     classifyEndpoint,
     type EndpointClassification,
     type NotCheckableCode,
     partitionByCheckability,
     readDeclaredEndpoints,
-} from "@arp-protocol/core";
-import {FILES, OWN_ENDPOINT, dataUri} from "../../../scripts/rig-registration-files.js";
+} from "../../packages/protocol/src/index.js";
+import {FILES, OWN_ENDPOINT, dataUri} from "../rig-registration-files.js";
 
 /**
  * The testnet rig's registration files, run through the real classifier.

@@ -47,7 +47,7 @@ const CREATE_PREVIEW = [ATOM_ASSETS, ATOM_ASSETS, ATOM_ASSETS] as const;
 
 // Pinning is gated behind Intuition's partner API (ADR 0016); every helper
 // that pins now takes the credential as a required parameter.
-// `PinAuth` is branded so only `scripts/pin-env.ts` can mint one from a real
+// `PinAuth` is branded so only `scripts/helpers/pin-env.ts` can mint one from a real
 // key. A test fixture is the other legitimate producer, and the assertion is
 // what makes that deliberate rather than accidental.
 const PIN_AUTH = {apiKey: "test-partner-key"} as unknown as PinAuth;
@@ -223,7 +223,7 @@ describe("ensureAtomForURI", () => {
      * that case (measured on both chains 2026-10-21), so the refusal costs nothing.
      *
      * This file held the third copy of the bug. The package planner and
-     * `scripts/plan-identity-atom.ts` were corrected first; these write paths were missed.
+     * `scripts/helpers/plan-identity-atom.ts` were corrected first; these write paths were missed.
      */
     it("refuses to create an atom that would buy no shares", async () => {
         const pc = makeMockPublicClient();

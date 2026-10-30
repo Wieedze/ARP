@@ -278,10 +278,12 @@ ARP/
 │       ├── ModuleRegistry.sol
 │       ├── enforcers/              ← DomainScopeEnforcer, TrustStakeCapEnforcer
 │       └── erc8004/                ← IdentityRegistry + interfaces
-├── scripts/                        ← flat Bun scripts, typechecked by `tsconfig.scripts.json`
+├── scripts/                        ← personal tooling, never imported by apps/ or packages/
+│   ├── helpers/                    ← what several scripts share (shapes, send-plan, pinning)
+│   ├── test/                       ← `bun run test:scripts`
 │   ├── demo-adopt.ts               ← an agent from nothing to a readable position
 │   ├── demo-hire.ts                ← a second agent discovers, calls, verifies, rates
-│   ├── send-plan.ts                ← the ONLY place that signs
+│   ├── helpers/send-plan.ts        ← the ONLY place that signs
 │   ├── pin-tool.ts                 ← make a derived tool atom readable
 │   ├── measure/*.ts                ← every number in this repo is re-runnable from one of these
 │   ├── deploy.sh                   ← three-phase contract deploy

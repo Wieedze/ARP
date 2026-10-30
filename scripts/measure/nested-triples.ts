@@ -1,4 +1,4 @@
-import type {GraphqlReply} from "./shapes.js";
+import type {GraphqlReply} from "../helpers/shapes.js";
 /** How much of the graph is **nested** — a triple used as the subject, predicate or object of
  *  another triple?
  *

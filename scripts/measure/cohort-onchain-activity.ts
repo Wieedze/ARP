@@ -1,5 +1,5 @@
 import { highestTokenId } from './erc8004-population.js';
-import type { JsonRpcReply } from './shapes.js';
+import type { JsonRpcReply } from '../helpers/shapes.js';
 /** Do cohort agents actually transact on-chain? Read-only, keyless.
  *
  *  The precondition for `tasks/22` — the chain as witness. If these accounts never transact there is

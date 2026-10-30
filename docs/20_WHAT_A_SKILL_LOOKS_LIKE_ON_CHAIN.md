@@ -17,7 +17,7 @@ flowchart TB
     end
 
     subgraph DERIVE["Derived here, reproducibly"]
-        CLS["scripts/skill-domains-table.ts<br/>a keyword table, not a judgement<br/>no match → no tag"]
+        CLS["scripts/helpers/skill-domains-table.ts<br/>a keyword table, not a judgement<br/>no match → no tag"]
         VER["scripts/record-maintained.ts<br/>archived · 404 → down<br/>recent push → up<br/>a quiet skill → NO VERDICT"]
     end
 

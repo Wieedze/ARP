@@ -1,4 +1,4 @@
-import type { GraphqlReply } from './shapes.js';
+import type { GraphqlReply } from '../helpers/shapes.js';
 /** Of the tools agents actually declare, how many are addressable on a chain at all?
  *
  *  The gate of `tasks/22`. That task reads an agent's calldata to witness a tool use without

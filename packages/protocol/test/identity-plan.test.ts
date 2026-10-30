@@ -7,17 +7,9 @@ import {IdentityTermHasNoPositionError, prepareIdentityAtom} from "../src/declar
 import {canonicalAgentThing, canonicalCaipThing, thingUri} from "../src/declare/agent-atom.js";
 import {toCaip19} from "../src/caip.js";
 import {AI_AGENT, ERC8004, HAS_TYPE, IMPLEMENT, SAME_AS} from "../src/sources/intuition/terms.js";
-import {PinMismatchError, planIdentityAtom} from "../../../scripts/plan-identity-atom.js";
 
 const MULTI_VAULT = "0x2Ece8D4dEdcB9918A398528f3fa4688b1d2CAB91" as const;
 const AGENT = {chainId: 8453, tokenId: "999999"} as const;
-
-/** Returns the URI the recipe computes, so the plan's pin check passes without a credential. */
-const honestPinner = async (thing: Parameters<typeof thingUri>[0]) => ({
-    status: 200,
-    uri: thingUri(thing),
-    body: "",
-});
 
 /**
  * A reader over stated chain state, with the previews modelling the one property that matters: the
@@ -184,41 +176,5 @@ describe("prepareIdentityAtom", () => {
             thingUri(canonicalAgentThing(AGENT.chainId, AGENT.tokenId)),
         );
         expect(plan.uris.caip).toBe(thingUri(canonicalCaipThing(toCaip19(AGENT))));
-    });
-});
-
-describe("planIdentityAtom — the pin half that stayed in scripts/", () => {
-    const pin = {apiKey: "test", headerName: "apikey"};
-
-    it("returns the package's plan when the API agrees with the recipe", async () => {
-        const plan = await planIdentityAtom({
-            agent: AGENT,
-            reads: fakeReads(),
-            pin,
-            pinner: honestPinner,
-        });
-        expect(plan.uris.identity).toBe(
-            thingUri(canonicalAgentThing(AGENT.chainId, AGENT.tokenId)),
-        );
-        expect(plan.calls).toHaveLength(5);
-    });
-
-    /**
-     * The check that makes the credential optional rather than load-bearing.
-     *
-     * The atom id is `ipfs://` + the CID of bytes computed locally, so the recipe already knows the
-     * answer. If the API returns a different URI, one of the two has drifted — and minting on
-     * either is permanent, because Intuition has no deletion. So the plan is refused rather than
-     * resolved in the API's favour.
-     */
-    it("refuses when the pinning API returns a URI the recipe does not compute", async () => {
-        await expect(
-            planIdentityAtom({
-                agent: AGENT,
-                reads: fakeReads(),
-                pin,
-                pinner: async () => ({status: 200, uri: "ipfs://bafkreidrifted", body: ""}),
-            }),
-        ).rejects.toThrow(PinMismatchError);
     });
 });

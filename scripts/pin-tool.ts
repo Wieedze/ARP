@@ -15,8 +15,8 @@
  * Exits non-zero if the API's serialisation disagrees with the local recipe, because a mismatch
  * means the bytes that got pinned are not the bytes the atom id derives from.
  */
-import { pinThing } from './intuition-pin.js';
-import { requirePinAuth } from './pin-env.js';
+import { pinThing } from './helpers/intuition-pin.js';
+import { requirePinAuth } from './helpers/pin-env.js';
 import { DEFAULT_HEADER_NAME } from '../apps/web/src/services/intuition-pin.js';
 import {
   isToolUrl,

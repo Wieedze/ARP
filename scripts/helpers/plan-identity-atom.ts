@@ -22,7 +22,7 @@ import {
   thingUri,
   type IdentityAtomPlan,
   type MultiVaultReads,
-} from '../packages/protocol/src/index.js';
+} from '../../packages/protocol/src/index.js';
 import type { Address } from 'viem';
 
 import { pinThing } from './intuition-pin.js';

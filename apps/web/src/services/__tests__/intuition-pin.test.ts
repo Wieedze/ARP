@@ -3,7 +3,7 @@ import {afterEach, describe, expect, it, vi} from "vitest";
 import {deployments} from "../../lib/deployments";
 import {PIN_ENDPOINT, PinAuthError, pinThing, type PinAuth} from "../intuition-pin";
 
-// `PinAuth` is branded so only `scripts/pin-env.ts` can mint one from a real
+// `PinAuth` is branded so only `scripts/helpers/pin-env.ts` can mint one from a real
 // key. A test fixture is the other legitimate producer, and the assertion is
 // what makes that deliberate rather than accidental.
 const AUTH = {apiKey: "test-partner-key"} as unknown as PinAuth;

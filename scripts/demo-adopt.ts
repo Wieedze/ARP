@@ -43,8 +43,8 @@ import { getAgentProfile } from '../packages/protocol/src/profile.js';
 import { intuitionSource } from '../packages/protocol/src/sources/intuition/index.js';
 import { getToolUsage } from '../packages/protocol/src/tool-usage.js';
 import { asAgentIdentityAtom } from '../packages/protocol/src/verify/subject.js';
-import { planIdentityAtom } from './plan-identity-atom.js';
-import { sendPlan, type SerialisedCall } from './send-plan.js';
+import { planIdentityAtom } from './helpers/plan-identity-atom.js';
+import { sendPlan, type SerialisedCall } from './helpers/send-plan.js';
 
 const TARGETS = { mainnet: 1155, testnet: 13579 } as const;
 

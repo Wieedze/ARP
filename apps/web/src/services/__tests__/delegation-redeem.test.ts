@@ -53,7 +53,7 @@ const TX_HASH = `0x${"ee".repeat(32)}` as Hex;
 
 // Pinning is gated behind Intuition's partner API (ADR 0016); the credential
 // is a required parameter on every helper that pins.
-// `PinAuth` is branded so only `scripts/pin-env.ts` can mint one from a real
+// `PinAuth` is branded so only `scripts/helpers/pin-env.ts` can mint one from a real
 // key. A test fixture is the other legitimate producer, and the assertion is
 // what makes that deliberate rather than accidental.
 const PIN_AUTH = {apiKey: "test-partner-key"} as unknown as PinAuth;

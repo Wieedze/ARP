@@ -16,7 +16,7 @@ import { readFileSync } from 'node:fs';
 
 import { formatEther } from 'viem';
 
-import { sendPlan, type SerialisedCall } from './send-plan.js';
+import { sendPlan, type SerialisedCall } from './helpers/send-plan.js';
 
 function arg(name: string): string | undefined {
   const index = process.argv.indexOf(`--${name}`);

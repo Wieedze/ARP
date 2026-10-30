@@ -20,7 +20,7 @@
  * `PinAuth` is **branded** (see below), so this module exports no way to build
  * one: a browser file importing only from `apps/web/src/services/` cannot produce a
  * credential at all, and `{apiKey: "…"}` is a type error rather than a leak. The
- * single sanctioned constructor is `requirePinAuth()` in `scripts/pin-env.ts`,
+ * single sanctioned constructor is `requirePinAuth()` in `scripts/helpers/pin-env.ts`,
  * which is Node-only. Any other production requires a deliberate, commented type
  * assertion — greppable in review, which is the point: no TypeScript brand can
  * stop a caller who sets out to lie, it can only stop the accident.
@@ -33,7 +33,7 @@ export const PIN_ENDPOINT = 'https://pin.intuition.systems/v1/graphql';
 
 /**
  * Intuition's documented header for the partner key. Exported so
- * `scripts/pin-env.ts` resolves the same default this module applies — one
+ * `scripts/helpers/pin-env.ts` resolves the same default this module applies — one
  * literal, no drift.
  */
 export const DEFAULT_HEADER_NAME = 'apikey';
@@ -48,7 +48,7 @@ declare const pinAuthBrand: unique symbol;
 
 /**
  * Partner credential for the pinning API. Obtain one from `requirePinAuth()` in
- * `scripts/pin-env.ts`; it cannot be written as an object literal.
+ * `scripts/helpers/pin-env.ts`; it cannot be written as an object literal.
  *
  * `headerName` exists only so a scheme change upstream (e.g. a move to
  * `Authorization: Bearer`) does not require a code change; it defaults to

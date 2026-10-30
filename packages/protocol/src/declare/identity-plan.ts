@@ -18,7 +18,7 @@ import type {PreparedCall} from "./types.js";
  *
  * ## Why this is in the package and not in a script
  *
- * It was in `scripts/plan-identity-atom.ts`, which pins first and therefore needs the partner
+ * It was in `scripts/helpers/plan-identity-atom.ts`, which pins first and therefore needs the partner
  * credential (ADR `0016`). That made the whole path unreachable from the browser — `PinAuth` is a
  * branded type and app code cannot construct one, which is the leak that brand closes. So the UI
  * could not give an agent an identity atom, and that is the gap `docs/12` calls "the whole gap":

@@ -54,7 +54,7 @@ import {
 } from "../packages/protocol/src/declare/index.js";
 import {HAS_TAG, IS_A_SUB_DOMAIN_OF} from "../packages/protocol/src/sources/intuition/terms.js";
 import {normaliseToolUrl, toolAtomUri} from "../packages/protocol/src/declare/tool-thing.js";
-import {classifySkill, SKILL_DOMAINS} from "./skill-domains-table.js";
+import {classifySkill, SKILL_DOMAINS} from "./helpers/skill-domains-table.js";
 
 const TARGETS = {mainnet: 1155, testnet: 13579} as const;
 

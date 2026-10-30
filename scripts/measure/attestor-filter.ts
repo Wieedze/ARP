@@ -1,4 +1,4 @@
-import type { GraphqlReply } from './shapes.js';
+import type { GraphqlReply } from '../helpers/shapes.js';
 /** Which `uses` edges does ONE account vouch for? Read-only.
  *
  *  The evidence for ADR 0034 — the deposit is the attestation. A position is recorded against the

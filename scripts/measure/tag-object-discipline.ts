@@ -1,4 +1,4 @@
-import type {GraphqlReply} from "./shapes.js";
+import type {GraphqlReply} from "../helpers/shapes.js";
 /** The object side of `has tag`: how many distinct tags, and is any of it hierarchical?
  *
  *  `classification-vocabulary.ts` establishes that one predicate carries essentially all the

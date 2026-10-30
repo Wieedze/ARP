@@ -1,4 +1,4 @@
-import type { GraphqlReply } from './shapes.js';
+import type { GraphqlReply } from '../helpers/shapes.js';
 /** Could `getCapabilities` ever reach an edge on a given predicate?
  *
  *  It only runs on a subject returned by `resolveSubject`, which filters on `same as`. So an edge

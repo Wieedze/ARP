@@ -72,7 +72,7 @@ export class PredicateNotOnChainError extends Error {
  * 1,000,000 wei.
  *
  * This file was the third copy of that bug. The planner in `@arp-protocol/core` and
- * `scripts/plan-identity-atom.ts` were both corrected first; these three write paths were the copies
+ * `scripts/helpers/plan-identity-atom.ts` were both corrected first; these three write paths were the copies
  * the correction missed, which is `rules/claims.md` failure 5 in code.
  */
 export class PositionlessTermError extends Error {

@@ -1,4 +1,4 @@
-import type { GraphqlReply } from './shapes.js';
+import type { GraphqlReply } from '../helpers/shapes.js';
 /** What do the existing edges on each candidate `use`/`uses` predicate actually assert?
  *
  *  The evidence for ADR 0030: the two predicates do not mean the same thing, so publication and

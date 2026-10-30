@@ -13,7 +13,7 @@
  *  Intuition's own pins are retrievable from third-party IPFS gateways, so the gated partner API
  *  (ADR `0016`) is one pinning service rather than a gate on the path.
  */
-import type { AgentThing } from '../packages/protocol/src/declare/agent-atom.js';
+import type { AgentThing } from '../../packages/protocol/src/declare/agent-atom.js';
 
 export {
   canonicalAgentThing,
@@ -21,7 +21,7 @@ export {
   thingDocument,
   thingUri,
   type AgentThing,
-} from '../packages/protocol/src/declare/agent-atom.js';
+} from '../../packages/protocol/src/declare/agent-atom.js';
 
 export const PIN_ENDPOINT = 'https://pin.intuition.systems/v1/graphql';
 

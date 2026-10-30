@@ -19,7 +19,7 @@
  *   INTUITION_PIN_API_KEY_HEADER   optional — defaults to "apikey"
  */
 
-import { DEFAULT_HEADER_NAME, type PinAuth } from '../apps/web/src/services/intuition-pin';
+import { DEFAULT_HEADER_NAME, type PinAuth } from '../../apps/web/src/services/intuition-pin';
 
 /**
  * Return the partner pinning credential, or throw with the remediation.
