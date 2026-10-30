@@ -14,6 +14,7 @@
     "apps/hook",
     "apps/cli",
     "apps/api",
+    "apps/probe",
     "contracts",
     "packages/graphql",
     "packages/protocol"

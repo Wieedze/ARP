@@ -21,7 +21,7 @@ merge them, and merging them would be wrong.
 | | the probe | the pulse |
 | --- | --- | --- |
 | says | "this server answered ARP from Cloudflare at 14:10" | "it works for the operators who use it" |
-| from | `apps/api`'s cron, one `initialize` per remote endpoint; a package's registry record (latest version, date, deprecated) since a package cannot be probed | the CLI's signed weekly reports, and the `uses` triples |
+| from | `apps/probe`'s cron, one `initialize` per remote endpoint; a package's registry record (latest version, date, deprecated) since a package cannot be probed | the CLI's signed weekly reports, and the `uses` triples |
 | kind | a dated third-party fact, like GitHub's stars | operators' evidence |
 | stored | off chain, cached and dated (ADR `0084`). **Never written as a triple** | reports on IPFS, a Merkle root on chain |
 
@@ -33,8 +33,11 @@ merge them, and merging them would be wrong.
 
 ## Consequences
 
-- **No separate script** (the user, 2026-10-30: _« pas de script »_). The probe lives in the Worker
-  only. The endpoints ADR `0087` still has to validate are checked by the Worker's first cycle,
-  triggered locally, and that reading is what the user validates from.
+- **No separate script** (the user, 2026-10-30: _« pas de script »_), and **its own service** (_« ok
+  ça me paraît aussi très bien »_): `apps/probe`, a Worker beside `apps/api` rather than inside it.
+  Three reasons: the cadence differs (minutes against `apps/api`'s daily cycle); the probe is a
+  time series and needs history, so D1 rather than KV's last value; and one trust surface per
+  program, as ADR `0082` holds. The endpoints ADR `0087` still has to validate are read from its
+  first cycle, triggered locally.
 - The probe is ARP's own measurement. It reads as `measured by ARP`, never as `verified`.
 - A per-user endpoint (Zapier's) has no public identity and is not probed.

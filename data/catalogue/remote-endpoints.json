@@ -1,0 +1,40 @@
+{
+  "_note": "Remote MCP endpoints for the catalogue's servers that have no confirmed package (ADR 0087). CANDIDATES, not identities: nothing here is on chain. Each was read from the repository's README on 2026-10-30, except where `from` says otherwise. apps/probe reads this list; a candidate becomes an identity only when the user validates it from the probe's reading.",
+  "endpoints": [
+    { "repo": "supabase/mcp", "endpoint": "https://mcp.supabase.com/mcp", "from": "README" },
+    { "repo": "figma/mcp-server-guide", "endpoint": "https://mcp.figma.com/mcp", "from": "README" },
+    { "repo": "prisma/mcp", "endpoint": "https://mcp.prisma.io/mcp", "from": "README" },
+    {
+      "repo": "atlassian/atlassian-mcp-server",
+      "endpoint": "https://mcp.atlassian.com/v2/mcp",
+      "from": "README"
+    },
+    {
+      "repo": "hashicorp/terraform-mcp-server",
+      "endpoint": "https://mcp.terraform.io/mcp",
+      "from": "README"
+    },
+    { "repo": "mobbin/mobbin-mcp-server", "endpoint": "https://mobbin.com/mcp", "from": "README" },
+    {
+      "repo": "mobbin/mobbin-mcp-server",
+      "endpoint": "https://api.mobbin.com/mcp",
+      "from": "README"
+    },
+    {
+      "repo": "stripe/agent-toolkit",
+      "endpoint": "https://mcp.stripe.com",
+      "from": "not the README: known to the agent that wrote this file, to be checked"
+    },
+    {
+      "repo": "cloudflare/mcp-server-cloudflare",
+      "endpoint": "https://docs.mcp.cloudflare.com/mcp",
+      "from": "README, one of several servers in this repository"
+    },
+    {
+      "repo": "cloudflare/mcp-server-cloudflare",
+      "endpoint": "https://containers.mcp.cloudflare.com/mcp",
+      "from": "README, one of several servers in this repository"
+    }
+  ],
+  "_notProbed": "zapier/zapier-mcp: each user gets their own URL, so there is no public identity to probe."
+}

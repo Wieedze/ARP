@@ -59,10 +59,11 @@ footer, `arp status <tool>`, `arp init`, the session line. Columns needing the n
 
 ### Phase 5 — the probe
 
-ADR `0089`. In `apps/api`, beside the GitHub and skills.sh reads: one `initialize` per remote
-endpoint (answers, asks for auth, does not answer, with the time it took), and for a package its
-registry record. Dated, off chain, no colour. In the Worker only, no separate script: its first
-cycle, triggered locally, is the reading the endpoints ADR `0087` still needs are validated from. It fills docs/16 §4 and the tool page's same block.
+ADR `0089`. Its own service, `apps/probe`: a Worker with a five-minute cron, a D1 history, and a
+read route. One `initialize` per remote endpoint (answers, asks for auth, does not answer, with
+the time it took), and for a package its registry record. Dated, off chain, no colour. Local
+first; a deploy waits for the user. Its first cycle is the reading the endpoints ADR `0087` still
+needs are validated from. It fills docs/16 §4 and the tool page's same block.
 
 ## 3. Decisions for the user before the phase that needs them
 
