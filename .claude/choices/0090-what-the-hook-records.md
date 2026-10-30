@@ -1,17 +1,6 @@
 # 0090 — What the hook records: outcome and identity, never content or credentials
 
-**Status:** Accepted. **Extended 2026-10-30 (task 33i):** `arp hook --capture` writes a second
-file, `~/.arp/captures/`, redacted **deny by default** (`apps/hook/src/capture.ts`):
-
-- **At the top level:** a listed set of naming strings (event, tool, ids, model) and every number and
-  boolean are kept. A URL keeps its scheme and host only.
-- **At every deeper level:** strings become their length, numbers become `<number>`, booleans are
-  kept, and a key is kept only if it is identifier-shaped.
-
-That residue (top-level numbers, deep booleans, field names) is accepted explicitly, because an
-adapter needs the payload's structure. It is not the same rule as the session log, which keeps
-only the duration. The first version listed content fields instead, and the verifier got a password, a
-token, a card number and nested names through it.
+**Status:** Accepted. Extended 2026-10-30 by task 33i — see "Extension: captures" at the end.
 **Date:** 2026-10-30
 **Triggered by:** task `docs/tasks/33-one-installer.md` 33a, and its first `task-verifier` FAIL.
 Post-mortem `.claude/learning/23-one-installer-33a.md`.
@@ -113,3 +102,19 @@ The rules this takes:
 - Related ADRs: `0054` (an atom id is a function of a normalised URL), `0087` (a tool is its
   package), `0089` (one installer)
 - Triggered by post-mortem: `.claude/learning/23-one-installer-33a.md`
+
+## Extension: captures (task 33i, 2026-10-30)
+
+`arp hook --capture` writes a second
+file, `~/.arp/captures/`, redacted **deny by default** (`apps/hook/src/capture.ts`):
+
+- **At the top level:** a listed set of naming strings (event, tool, ids, model) and every number and
+  boolean are kept. A URL keeps its scheme and host only.
+- **At every deeper level:** strings become their length, numbers become `<number>`, booleans are
+  kept, and a key is kept only if it is identifier-shaped and not credential-shaped (20 or more
+  characters mixing letters and digits, such as `AKIA…` or `ghp_…`).
+
+That residue (top-level numbers, deep booleans, field names) is accepted explicitly, because an
+adapter needs the payload's structure. It is not the same rule as the session log, which keeps
+only the duration. The first version listed content fields instead, and the verifier got a password, a
+token, a card number and nested names through it.
