@@ -40,12 +40,9 @@ import {useSkillFacts} from "../hooks/use-skill-facts";
  */
 
 export function ToolCatalog() {
-    // `conviction`, not `priced-edges`. The old default ranked by how many claims carry a position
-    // and is gone from the control (`TOOL_ORDERS`); money behind a claim is what separates it from
-    // an assertion, so the list opens on the amount rather than on a free count.
-    // The chain read's own order, which no longer decides what the reader sees: the list is
-    // gated and sorted here, over the whole population rather than a page of it. Kept because the
-    // query takes one, and `conviction` makes the cache warm on the figure most readers open with.
+    // The chain read's own order, which does not decide what the reader sees: the list is gated
+    // and sorted here on `axis`, over the whole population rather than a page of it. Kept because
+    // the query takes one; `conviction` is only what keeps the cache key stable.
     const order: ToolListingOrder = "conviction";
     /**
      * Which axis the list is sorted on, above the liveness gate.
@@ -71,7 +68,9 @@ export function ToolCatalog() {
     const axes = toolSortAxesFor(index);
     // Installs are a skill's figure and stars a repository's: switching index keeps the reader's
     // axis when the other index has it, and falls back to "declared" when it does not.
-    const axis: ToolSortAxis = axes.some((entry) => entry.id === chosenAxis) ? chosenAxis : "declared";
+    const axis: ToolSortAxis = axes.some((entry) => entry.id === chosenAxis)
+        ? chosenAxis
+        : "declared";
     const chooseIndex = (next: ToolIndex) =>
         setSearchParams(next === "skills" ? {} : {index: next}, {replace: true});
     /**

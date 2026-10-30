@@ -93,7 +93,8 @@ function Row({row, fact, stars}: {row: ToolRow; fact: SkillFact | null; stars: n
                             {/* A repository's own figure, which its "Most stars" order sorts on. */}
                             {stars === null ? null : (
                                 <>
-                                    {row.source === null && (fact === null || fact.installs === null) ? null : (
+                                    {row.source === null &&
+                                    (fact === null || fact.installs === null) ? null : (
                                         <span className="px-1.5 text-[color:var(--color-rule-strong)]">
                                             ·
                                         </span>
