@@ -1,39 +1,67 @@
 {
-  "_note": "Remote MCP endpoints for the catalogue's servers that have no confirmed package (ADR 0087). CANDIDATES, not identities: nothing here is on chain. Each was read from the repository's README on 2026-10-30, except where `from` says otherwise. apps/probe reads this list; a candidate becomes an identity only when the user validates it from the probe's reading.",
+  "_note": "Remote MCP endpoints for the catalogue's servers that have no confirmed package (ADR 0087). CANDIDATES, not identities: nothing here is on chain. Each was read from the repository's README on 2026-10-30, except where `from` says otherwise. apps/probe reads this list; a candidate becomes an identity only when the user validates it from the probe's reading. `validated` is the date the user accepted an endpoint from apps/probe's first reading (2026-10-30: « les identités des 8 endpoints c'est super »): an MCP OAuth `resource_metadata` header, or a JSON-RPC result to `initialize`.",
   "endpoints": [
-    { "repo": "supabase/mcp", "endpoint": "https://mcp.supabase.com/mcp", "from": "README" },
-    { "repo": "figma/mcp-server-guide", "endpoint": "https://mcp.figma.com/mcp", "from": "README" },
-    { "repo": "prisma/mcp", "endpoint": "https://mcp.prisma.io/mcp", "from": "README" },
+    {
+      "repo": "supabase/mcp",
+      "endpoint": "https://mcp.supabase.com/mcp",
+      "from": "README",
+      "validated": "2026-10-30"
+    },
+    {
+      "repo": "figma/mcp-server-guide",
+      "endpoint": "https://mcp.figma.com/mcp",
+      "from": "README",
+      "validated": "2026-10-30"
+    },
+    {
+      "repo": "prisma/mcp",
+      "endpoint": "https://mcp.prisma.io/mcp",
+      "from": "README",
+      "validated": "2026-10-30"
+    },
     {
       "repo": "atlassian/atlassian-mcp-server",
       "endpoint": "https://mcp.atlassian.com/v2/mcp",
-      "from": "README"
+      "from": "README",
+      "validated": "2026-10-30"
     },
     {
       "repo": "hashicorp/terraform-mcp-server",
       "endpoint": "https://mcp.terraform.io/mcp",
-      "from": "README"
+      "from": "README",
+      "probe": "401 without the MCP OAuth header: nothing says it is MCP. Not validated."
     },
-    { "repo": "mobbin/mobbin-mcp-server", "endpoint": "https://mobbin.com/mcp", "from": "README" },
+    {
+      "repo": "mobbin/mobbin-mcp-server",
+      "endpoint": "https://mobbin.com/mcp",
+      "from": "README",
+      "probe": "200 with an HTML page: a documentation page, not the endpoint. Not validated."
+    },
     {
       "repo": "mobbin/mobbin-mcp-server",
       "endpoint": "https://api.mobbin.com/mcp",
-      "from": "README"
+      "from": "README",
+      "validated": "2026-10-30"
     },
     {
       "repo": "stripe/agent-toolkit",
       "endpoint": "https://mcp.stripe.com",
-      "from": "not the README: known to the agent that wrote this file, to be checked"
+      "from": "not the README: known to the agent that wrote this file, to be checked",
+      "validated": "2026-10-30"
     },
     {
       "repo": "cloudflare/mcp-server-cloudflare",
       "endpoint": "https://docs.mcp.cloudflare.com/mcp",
-      "from": "README, one of several servers in this repository"
+      "from": "README, one of several servers in this repository",
+      "validated": "2026-10-30",
+      "domain": null,
+      "domainWhy": "It searches Cloudflare's documentation; the repository's `infrastructure` is not what it does. Left without a domain, like Prisma — one can be added later (the user, 2026-10-30)."
     },
     {
       "repo": "cloudflare/mcp-server-cloudflare",
       "endpoint": "https://containers.mcp.cloudflare.com/mcp",
-      "from": "README, one of several servers in this repository"
+      "from": "README, one of several servers in this repository",
+      "validated": "2026-10-30"
     }
   ],
   "_notProbed": "zapier/zapier-mcp: each user gets their own URL, so there is no public identity to probe."

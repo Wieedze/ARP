@@ -158,6 +158,10 @@
   {
    "label": "pypi package",
    "why": "The same tag for PyPI, so the two registries read alike."
+  },
+  {
+   "label": "remote server",
+   "why": "The kind tag of a tool reached only as a hosted endpoint (ADR 0087), the counterpart of `npm package`. `remote` alone says where, not what."
   }
  ],
  "_ruleViolationOnChain": {

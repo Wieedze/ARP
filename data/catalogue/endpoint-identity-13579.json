@@ -1,0 +1,132 @@
+{
+ "_note": "ADR 0087 applied on testnet 13579 to remote endpoints: eight MCP servers reached only as a hosted endpoint, each validated by the user from apps/probe's reading (data/catalogue/remote-endpoints.json, `validated`), now have the endpoint as identity, linked to the repository by `source`, tagged `remote server`, `mcp` and their domain. docs.mcp.cloudflare.com/mcp carries no domain by the user's decision. ARP's positions on the repositories' `mcp` and domain tags were redeemed. Re-deriving: scripts/seed/plan-tool-identity.ts, which plans 0 calls for these.",
+ "_authorisation": "Signed by the agent session with AGENT_PRIVATE_KEY on the user's instruction of 2026-10-30 (« oui », after the dry run of these 18 calls was shown). ADR 0037: the key was never read into the agent's context, send-plan.ts checked the signer against AGENT_ADDRESS, and this file is the record.",
+ "chainId": 13579,
+ "signer": "0x906f3A52ec089f8D4E9127F91C6bE5Ae0d18f91f",
+ "publishedAt": "2026-10-30",
+ "balanceBefore": "1.215853775796",
+ "balanceAfter": "1.148844007627",
+ "_balanceNote": "The difference, 0.067009768169, is the 0.078000000069 deposited, less what the 13 redemptions returned, plus gas.",
+ "endpoints": {
+  "supabase/mcp": "mcp.supabase.com/mcp",
+  "figma/mcp-server-guide": "mcp.figma.com/mcp",
+  "prisma/mcp": "mcp.prisma.io/mcp",
+  "atlassian/atlassian-mcp-server": "mcp.atlassian.com/v2/mcp",
+  "mobbin/mobbin-mcp-server": "api.mobbin.com/mcp",
+  "stripe/agent-toolkit": "mcp.stripe.com",
+  "cloudflare/mcp-server-cloudflare": [
+   "docs.mcp.cloudflare.com/mcp",
+   "containers.mcp.cloudflare.com/mcp"
+  ]
+ },
+ "calls": [
+  {
+   "kind": "create-atom",
+   "value": "18000000009000000",
+   "why": "https://mcp.supabase.com/mcp, the tag \"remote server\", https://mcp.figma.com/mcp, https://mcp.prisma.io/mcp, https://mcp.atlassian.com/v2/mcp, https://api.mobbin.com/mcp, https://mcp.stripe.com, https://docs.mcp.cloudflare.com/mcp, https://containers.mcp.cloudflare.com/mcp",
+   "tx": "0x91bee9346fc4c5a3dbd070a26f72bf9867fb32b6cce963cec5ef05b4bc1d50cf"
+  },
+  {
+   "kind": "create-triple",
+   "value": "16000000016000000",
+   "why": "mcp.supabase.com/mcp source supabase/mcp; mcp.supabase.com/mcp has tag remote server; mcp.supabase.com/mcp has tag mcp; mcp.supabase.com/mcp has tag database; mcp.figma.com/mcp source figma/mcp-server-guide; mcp.figma.com/mcp has tag remote server; mcp.figma.com/mcp has tag mcp; mcp.figma.com/mcp has tag design",
+   "tx": "0x9203d31c5900279733c2941d5779e977aad94a3ccc876dc71ace3da51f97e852"
+  },
+  {
+   "kind": "create-triple",
+   "value": "16000000016000000",
+   "why": "mcp.prisma.io/mcp source prisma/mcp; mcp.prisma.io/mcp has tag remote server; mcp.prisma.io/mcp has tag mcp; mcp.atlassian.com/v2/mcp source atlassian/atlassian-mcp-server; mcp.atlassian.com/v2/mcp has tag remote server; mcp.atlassian.com/v2/mcp has tag mcp; mcp.atlassian.com/v2/mcp has tag collaboration; api.mobbin.com/mcp source mobbin/mobbin-mcp-server",
+   "tx": "0x156146eeeab9adec45775f1c357eb65e45abeab81e50f10c0b498ef90b915f17"
+  },
+  {
+   "kind": "create-triple",
+   "value": "16000000016000000",
+   "why": "api.mobbin.com/mcp has tag remote server; api.mobbin.com/mcp has tag mcp; api.mobbin.com/mcp has tag design; mcp.stripe.com source stripe/agent-toolkit; mcp.stripe.com has tag remote server; mcp.stripe.com has tag mcp; mcp.stripe.com has tag card; docs.mcp.cloudflare.com/mcp source cloudflare/mcp-server-cloudflare",
+   "tx": "0x289b0aee553f5dd28a9fb8c9a329a262ee33b51cd2e58725d4678d5c251610b7"
+  },
+  {
+   "kind": "create-triple",
+   "value": "12000000012000000",
+   "why": "docs.mcp.cloudflare.com/mcp has tag remote server; docs.mcp.cloudflare.com/mcp has tag mcp; containers.mcp.cloudflare.com/mcp source cloudflare/mcp-server-cloudflare; containers.mcp.cloudflare.com/mcp has tag remote server; containers.mcp.cloudflare.com/mcp has tag mcp; containers.mcp.cloudflare.com/mcp has tag infrastructure",
+   "tx": "0x3107de6de8892be12a862f395bdd1e2aa16a9e6d0803613318e3a513e7de0f51"
+  },
+  {
+   "kind": "redeem",
+   "value": "0",
+   "why": "retire \"supabase/mcp has tag mcp\"",
+   "tx": "0xa8c46f74fc06011e7417cb7e76cc836ac614052096d7a2734e973a2d0a0e2f7e"
+  },
+  {
+   "kind": "redeem",
+   "value": "0",
+   "why": "retire \"supabase/mcp has tag database\"",
+   "tx": "0x0c0de4d4d62fb7439859483ff814d82e002b68cffd826783598ab16d138c2d8d"
+  },
+  {
+   "kind": "redeem",
+   "value": "0",
+   "why": "retire \"figma/mcp-server-guide has tag mcp\"",
+   "tx": "0x8fb839f22c65067a52cb75e4cca24535143a2ad21443fa4cb50bfb4924db763c"
+  },
+  {
+   "kind": "redeem",
+   "value": "0",
+   "why": "retire \"figma/mcp-server-guide has tag design\"",
+   "tx": "0x32cc7259d0cf4a72705a30fc6bce838e8c108c2255013527b732422564781fff"
+  },
+  {
+   "kind": "redeem",
+   "value": "0",
+   "why": "retire \"prisma/mcp has tag mcp\"",
+   "tx": "0xc3da64b14e960768bd7a50a11af3a7d42f9a46f4d072564df166b63c9d679b00"
+  },
+  {
+   "kind": "redeem",
+   "value": "0",
+   "why": "retire \"atlassian/atlassian-mcp-server has tag mcp\"",
+   "tx": "0xa6d246ecb59172bb762d4b64ba84acbd5fa0df659859efd727c77c2644b8a42d"
+  },
+  {
+   "kind": "redeem",
+   "value": "0",
+   "why": "retire \"atlassian/atlassian-mcp-server has tag collaboration\"",
+   "tx": "0x6049974e097170a6629456a8c35b67d1058ac4567574de4ee19da6e81439a271"
+  },
+  {
+   "kind": "redeem",
+   "value": "0",
+   "why": "retire \"mobbin/mobbin-mcp-server has tag mcp\"",
+   "tx": "0xd8b0fe46fe06e9f9e64be03d2d5c6c5e633b183bc0c18284bd32b679e8bb7695"
+  },
+  {
+   "kind": "redeem",
+   "value": "0",
+   "why": "retire \"mobbin/mobbin-mcp-server has tag design\"",
+   "tx": "0x91462d2f946b7ad07348b6c3c80fc84cec23d591ed5a037df8a920cba21ac4d4"
+  },
+  {
+   "kind": "redeem",
+   "value": "0",
+   "why": "retire \"stripe/agent-toolkit has tag mcp\"",
+   "tx": "0x633f182c59d1f8c911374946df95a88fcade7ec2f3c737e8b21f9542d625ec02"
+  },
+  {
+   "kind": "redeem",
+   "value": "0",
+   "why": "retire \"stripe/agent-toolkit has tag card\"",
+   "tx": "0xee55b0a2b2cabe2333c3bb961f2df45d6d69f400dcee002e1730269b93b5fcd0"
+  },
+  {
+   "kind": "redeem",
+   "value": "0",
+   "why": "retire \"cloudflare/mcp-server-cloudflare has tag mcp\"",
+   "tx": "0x6ee27aded21bf65ebc3d5e3cad1b09f4d78ff1db47a421697d8512855c4fda7f"
+  },
+  {
+   "kind": "redeem",
+   "value": "0",
+   "why": "retire \"cloudflare/mcp-server-cloudflare has tag infrastructure\"",
+   "tx": "0x48b676cb0d2f86434ba876a579b2103acc7c486fa63daaaf17a43d8ac337dc82"
+  }
+ ]
+}

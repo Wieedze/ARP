@@ -1,6 +1,7 @@
-/** Move each catalogued MCP server's identity from its repository to its package, and price it.
+/** Move each catalogued MCP server's identity from its repository to what an agent calls — its
+ *  package, or its remote endpoint — and price it.
  *
- *      ARP_TARGET=testnet AGENT_ADDRESS=0x… bun run scripts/seed/plan-package-identity.ts [--json /tmp/p.json]
+ *      ARP_TARGET=testnet AGENT_ADDRESS=0x… bun run scripts/seed/plan-tool-identity.ts [--json /tmp/p.json]
  *      bun run scripts/agent/agent-send-plan.ts --chain 13579 --plan /tmp/p.json --execute
  *
  *  Plans and prints. **Signs nothing and sends nothing** — `agent-send-plan.ts` is the only place
@@ -28,12 +29,20 @@
  *  this repository (`repository.url` on npm, `project_urls` on PyPI). A package that merely exists
  *  is not enough: a README can cite somebody else's package, and a wrong atom is permanent.
  *  Everything unconfirmed is printed for the user and planned for nobody.
+ *
+ *  ## A remote endpoint is planned only once the user validated it
+ *
+ *  `data/catalogue/remote-endpoints.json` lists candidates; an entry with `validated` is one the user
+ *  accepted from `apps/probe`'s reading (an MCP OAuth `resource_metadata` header, or a JSON-RPC
+ *  result to `initialize`). It is tagged `remote server` in place of a registry's kind. The probe
+ *  determines; this plans; a person signs — the probe never writes (ADR `0089`).
  */
 import {writeFileSync} from "node:fs";
 
 import {formatEther, getAddress, stringToHex, type Hex} from "viem";
 
 import catalogue from "../../data/catalogue/tools.json";
+import remoteEndpoints from "../../data/catalogue/remote-endpoints.json";
 import proposal from "../../data/catalogue/domains.proposal.json";
 import {
     atomDataForUri,
@@ -51,7 +60,7 @@ const TARGETS = {mainnet: 1155, testnet: 13579} as const;
 const SOURCE = "0xe6b33153a6f58b47bcfe074cd154447608d5788e96446246536ddb9cd84105a4" as Hex;
 
 /** The kind tags. Compounds, so each is listed in `domains.proposal.json` `compounds` (ADR `0088`). */
-const KIND_TAG = {npm: "npm package", pypi: "pypi package"} as const;
+const KIND_TAG = {npm: "npm package", pypi: "pypi package", endpoint: "remote server"} as const;
 
 function arg(name: string): string | undefined {
     const index = process.argv.indexOf(`--${name}`);
@@ -265,6 +274,8 @@ async function planTriple(subjectId: Hex, predicateId: Hex, objectId: Hex, why: 
 async function planRedeem(subjectId: Hex, objectId: Hex, why: string): Promise<void> {
     const id = await reads.tripleId(subjectId, HAS_TAG as Hex, objectId);
     if (!(await reads.termExists(id))) return;
+    // Two endpoints from one repository retire the same repository tag: once, or the second fails.
+    if (redeems.some((redeem) => redeem.termId === id)) return;
     const shares = await reads.sharesOf(attestor, id, curveId);
     if (shares === 0n) return;
     const preview = await reads.previewRedeem(id, curveId, shares);
@@ -287,6 +298,32 @@ for (const {repoUrl, repo, resolution} of resolved) {
     }
     for (const label of [tags?.is ?? "mcp", ...(tags?.does ? [tags.does] : [])]) {
         await planRedeem(repoId, await labelAtom(label), `retire "${repo} has tag ${label}"`);
+    }
+}
+
+/** `domain` overrides the repository's: `null` when the repository's tag does not describe this
+ *  server — one repository can publish several, and each carries only what it does. */
+type Endpoint = {repo: string; endpoint: string; validated?: string; domain?: string | null};
+const validated = (remoteEndpoints as {endpoints: Endpoint[]}).endpoints.filter((row) => row.validated !== undefined);
+console.log(`\nendpoints    ${validated.length} validated by the user`);
+for (const row of validated) {
+    const repoUrl = `https://github.com/${row.repo}`;
+    const tags = tagsOf.get(repoUrl);
+    const url = normaliseToolUrl(row.endpoint);
+    const repoId = await reads.atomId(atomDataForUri(toolAtomUri(repoUrl)));
+    const endpointData = atomDataForUri(toolAtomUri(url));
+    const endpointId = await reads.atomId(endpointData);
+    if (!(await reads.termExists(endpointId))) newAtoms.push({data: endpointData, why: url});
+    const name = url.slice("https://".length);
+
+    await planTriple(endpointId, SOURCE, repoId, `${name} source ${row.repo}`);
+    const does = row.domain !== undefined ? row.domain : (tags?.does ?? null);
+    const labels = [KIND_TAG.endpoint, tags?.is ?? "mcp", ...(does ? [does] : [])];
+    for (const label of labels) {
+        await planTriple(endpointId, HAS_TAG as Hex, await labelAtom(label), `${name} has tag ${label}`);
+    }
+    for (const label of [tags?.is ?? "mcp", ...(tags?.does ? [tags.does] : [])]) {
+        await planRedeem(repoId, await labelAtom(label), `retire "${row.repo} has tag ${label}"`);
     }
 }
 
