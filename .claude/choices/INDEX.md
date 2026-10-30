@@ -1,15 +1,17 @@
 # ADR index
 
-**Generated** 2026-10-29 by `scripts/build-claude-index.ts`. Do not edit by hand — rerun the script.
+**Generated** 2026-10-30 by `scripts/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-80 decisions. Newest last. `choices/README.md` says when to write one.
+81 decisions. Newest last. `choices/README.md` says when to write one.
 
 ## Not accepted
 
 Read these before relying on them.
 
 - **0015** (Accepted in part — the trust-provider role is **rejected** by ADR `0046`) — Adopt the canonical Intuition ERC-8004 pattern; ARP publishes as a trust provider
+- **0041** (Accepted. Amended by `0082` (2026-10-30): a `packages/graphql` read layer goes under it.) — One protocol package, not two, and it is called what it is
 - **0057** (Accepted — 2026-10-27, on the user's instruction to close everything open.) — Brand identity v0.3: The Source, Saffron, Archivo + Geist Mono
+- **0082** (Accepted. Amends `0041` (a `packages/graphql` under the protocol package).) — Three apps: the MCP server, the agent node and the runtime hook are different programs
 
 ## All
 
@@ -55,7 +57,7 @@ Read these before relying on them.
 | [0038](0038-the-write-path-is-a-plan-not-a-transaction.md) | 2026-10-19 | Accepted | The write path is a plan, not a transaction |
 | [0039](0039-the-deposit-goes-on-the-edge.md) | 2026-10-19 | Accepted | The deposit goes on the edge, not on the tool's atom |
 | [0040](0040-the-cap-bounds-the-amount-not-the-kind.md) | 2026-10-19 | Accepted | The cap bounds the amount, not the kind |
-| [0041](0041-one-protocol-package-not-two.md) | 2026-10-19 | Accepted | One protocol package, not two, and it is called what it is |
+| [0041](0041-one-protocol-package-not-two.md) | 2026-10-19 | Accepted. Amended by `0082` (2026-10-30): a `packages/graphql` read layer goes under it. | One protocol package, not two, and it is called what it is |
 | [0042](0042-a-vault-s-assets-are-not-evidence-of-a-stake.md) | 2026-10-19 | Accepted | A vault's assets are not evidence of a stake; its position count is |
 | [0043](0043-a-retraction-is-greppable-or-it-is-partial.md) | 2026-10-19 | Accepted | A retraction is greppable, or it is partial |
 | [0044](0044-tool-is-the-one-word.md) | 2026-10-20 | Accepted | "Tool" is the one word on screen; two rule lines corrected |
@@ -95,3 +97,4 @@ Read these before relying on them.
 | [0079](0079-a-bulk-write-is-paced-by-bytes-not-by-gas.md) | 2026-10-29 | Accepted | A bulk write to Intuition is paced by bytes, not by gas |
 | [0080](0080-the-node-signs-for-what-it-served-and-for-nothing-else.md) | 2026-10-29 | Accepted | The node signs for what it served, and for nothing else |
 | [0081](0081-a-claim-a-stranger-checks-ships-with-its-command.md) | 2026-10-30 | Accepted | A claim a stranger is asked to check ships with the command that checks it |
+| [0082](0082-two-apps-the-mcp-and-the-node.md) | 2026-10-30 | Accepted. Amends `0041` (a `packages/graphql` under the protocol package). | Three apps: the MCP server, the agent node and the runtime hook are different programs |

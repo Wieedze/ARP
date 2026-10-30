@@ -1,6 +1,6 @@
 # 0041 — One protocol package, not two, and it is called what it is
 
-**Status:** Accepted
+**Status:** Accepted. Amended by `0082` (2026-10-30): a `packages/graphql` read layer goes under it.
 **Date:** 2026-10-19
 **Triggered by:** the user, during `tasks/16`: _"pourquoi tout vit dans erc8004 ? […] faut revoir
 l'organisation du projet, ça devient le bordel, et le but c'est d'avoir un projet clair et
