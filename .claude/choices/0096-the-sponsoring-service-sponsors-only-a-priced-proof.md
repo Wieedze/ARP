@@ -1,6 +1,11 @@
 # 0096 — The sponsoring service sponsors only a proof with a price, and keeps its record on disk
 
-**Status:** Proposed
+**Status:** Proposed. **Amended 2026-10-30 for testnet**, after ADR `0094`'s status line recorded
+the user's decision, verbatim: _« pour le testnet on s'en fout on fait tout sponsored »_. On testnet
+every proven hire is sponsored whatever it paid: the "strictly below the price" half of the decision
+below and the withdrawal threshold are **mainnet rules**, off here (`SponsorLimits.belowProofCost`
+is `false` and `withdrawalThresholdBps` unset in `apps/sponsor/src/main.ts`). A content receipt is
+still refused until `docs/tasks/41`. ADR `0092`'s count and budget stay.
 **Date:** 2026-10-30
 **Triggered by:** `docs/tasks/40-the-sponsoring-service.md` and `docs/tasks/37-the-delegation-register.md`
 (37b, 37c), built together as `apps/sponsor`.
@@ -20,17 +25,19 @@ A hire proof has a cost: the payment, read from the chain. A content receipt has
 through ARP is free until x402 puts a price on it (`docs/tasks/41`). So the two statements of ADR
 `0094` §2 cannot both hold for the content path. Nothing is "below" an unknown price.
 
-Five smaller choices were forced while building it, and none is written anywhere else. Items 4 and 5,
-and the second half of item 2, were added on review the same day.
+Smaller choices were forced while building it, and none is written anywhere else. Items 4, 5 and 6,
+and the second half of item 2, were added on review the same day; 7 and 8 with the testnet amendment.
 
 ## Decision
 
-**A proof unlocks a sponsorship only when it has a price, and the sponsored amount is strictly below
-that price.** A content receipt is verified (signature, accepted signer, `corroborationOf` against
-the receiver) and then refused with "no price yet". Task 41 turns it on by binding a fetch to its
+**A proof unlocks a sponsorship only when it has a price, and, on mainnet, the sponsored amount is
+strictly below that price** (on testnet the second half is off, see the status line). A content
+receipt is verified (signature, accepted signer, `corroborationOf` against the receiver) and then
+refused with "no price yet". Task 41 turns it on by binding a fetch to its
 x402 settlement. The service's info route says so.
 
-Five more choices go with it:
+Eight more choices go with it (the list said five while it held six; 7 and 8 came with the
+testnet amendment):
 
 1. **A hire proof is priced only on the chain where the deposit is made.** A payment on another chain
    is in another unit, and comparing the two would be summing across chains (`claims.md` check 2).
@@ -70,13 +77,22 @@ atom, uses, X)`, where X is the content receipt's tool atom, or the hired agent'
    this is one agent, and the edge would be `(A, uses, A)`. `checkSponsorProof` refuses a receipt
    whose `(agentRegistry, agentId)` is the request's own, and the service refuses a triple whose
    subject and object atoms are equal, for two ids that resolve to one atom.
+7. **The service is never its own agent.** `/gas` and `/deposit` refuse an agent whose ERC-8004
+   holder is the sponsor wallet's own address. A deposit with the service as receiver is what task
+   40 §3 forbids, and gas sent to that holder goes back to the key that sent it. Added on the
+   testnet amendment, 2026-10-30.
+8. **The agent needs no TRUST of its own to be sponsored on testnet.** `/gas` pays for its one
+   `approve`, the service pays the deposit, and with the price rule and the withdrawal threshold off
+   nothing reads the agent's balance or its holdings. What a hire proof needs is a mined payment of
+   more than zero from the requester to the callee: that is the hire, not a stake.
 
 And one place where the task text and the rules disagreed: the workflow asked for the key "read from
 env". ADR `0089` §3 and task 37c say a 0600 file, never an environment variable. The environment
 names the file (`SPONSOR_KEY_FILE`), and the file's mode is checked before it is read.
 
 **Rule change.** `security.md`'s list of signature sites goes from five to six: the agent's sponsor
-request (`packages/protocol/src/sponsor/request.ts`). Its domain carries the chain and no verifying
+request (`packages/protocol/src/sponsor/request.ts`). Merged with ADR `0098`'s `ReceiptEnforcer`
+from `dev` the same day, the list is seven. Its domain carries the chain and no verifying
 contract, because no contract checks it. Its nonce is the proof it is bound to, which the service
 spends once.
 
@@ -95,9 +111,9 @@ spends once.
 
 **Positive:**
 
-- Every sponsored hire deposit is backed by a payment on chain larger than the sponsorship, and sits
-  on the edge between the two agents that payment connects. Between two operators, faking one costs
-  more than it earns. One operator holding both agents recovers the payment, so for that operator
+- Every sponsored hire deposit is backed by a payment on chain, and sits on the edge between the two
+  agents that payment connects. On mainnet the payment is larger than the sponsorship. Between two
+  operators, faking one then costs more than it earns. One operator holding both agents recovers the payment, so for that operator
   the bound is the daily count per agent and the daily budget, not the price.
 - Neither a restart nor a send whose outcome was lost can replay a proof.
 

@@ -5,9 +5,8 @@
 **Commit:** `c8d5d41` on `feat/40-sponsoring-service` (this post-mortem lands on top of it)
 **Verifier verdict:** PASS (second pass)
 
-Numbered 31, not 29: parallel worktrees already hold 29 (three of them) and 30. `learning/INDEX.md`
-was not regenerated on this branch, so parallel branches do not conflict on it. Regenerate after
-merge.
+Written as 31; renumbered 32 when `origin/dev` was merged, because dev had landed
+`31-the-receipt-enforcer.md` the same day. Both `INDEX.md` files were regenerated on the merge.
 
 ## What shipped
 
@@ -60,3 +59,12 @@ merge.
   ARP ever mints testnet agents with that key (ADR `0047`).
 - When a protocol type widens (`PreparedCall.kind` gained `approve`), run every consumer's gate, not
   only the new app's.
+
+## Amended after the merge with dev (2026-10-30)
+
+- The user decided testnet sponsors everything (ADR `0094` status line). The cost-of-proof rule is
+  now `SponsorLimits.belowProofCost`, `false` on testnet; the withdrawal threshold stays unset. A
+  content receipt is still refused until task 41. ADR `0096` status line and items 7, 8.
+- `/gas` and `/deposit` refuse an agent held by the sponsor wallet itself (task 40 §3).
+- `security.md`'s signature sites are seven after the merge: this branch's sponsor request and
+  dev's `ReceiptEnforcer` (ADR `0098`).

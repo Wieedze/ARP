@@ -1,6 +1,7 @@
 # Task 37 — The delegation register: published on Intuition, found by the agent, sponsored on testnet
 
-**Status:** **PLAN**, 2026-10-30. Not started.
+**Status:** **PARTLY BUILT**, 2026-10-30: 37b and 37c are built, with task 40, in `apps/sponsor`;
+37a, 37d and 37e are not started. Completion note at the end.
 **ADR:** `0092` (sponsoring on testnet; amends `0045` and `security.md`).
 **Required skills:** `mms-smart-accounts-kit` (`references/delegations.md`), `intuition`.
 **Rules:** `code.md`, `security.md`, `metamask-delegation.md`, `portability.md`, `claims.md`,
@@ -138,3 +139,21 @@ New app, because it runs and holds a key (ADR `0082`).
 The delegation is `docs/12` point 5's guard rail. Today nobody but the operator's browser can see
 it. Once it is published, a third party can check the bound an agent operates under. It makes the
 **staked** rung inspectable. It does not move a claim up a rung.
+
+## 7. Completion note — 37b and 37c, 2026-10-30
+
+On `feat/40-sponsoring-service`, with task 40. ADR `0096`, post-mortem
+`.claude/learning/32-the-sponsoring-service.md`, `task-verifier` PASS on the second pass.
+
+- **37b.** `planPublishDelegation` and `delegationDocument` in
+  `packages/protocol/src/delegation/register.ts`: plans only, each call skipped when its term
+  exists, nothing signed.
+- **37c.** Built as `POST /publish` in `apps/sponsor`, not a separate `apps/relay`: one service holds
+  the one treasury key for publications and for task 40's deposits. The signature is verified before
+  anything is pinned; the per-delegator limit and the daily budget answer 429 with the plan.
+  **Two departures from the text above:** the daily counts are kept in an append-only JSONL ledger,
+  not in memory, because a restart would replay task 40's deposits (ADR `0096` item 2); and
+  `main.ts` answers 503 on `/publish`, because the pinning service (§4.3) and the two predicate ids
+  (37a) are not decided or read yet. The route is tested with both injected.
+- **Not done:** the end-to-end walk on 13579 in §3, so there are no transaction hashes to record;
+  37a, 37d and 37e.
