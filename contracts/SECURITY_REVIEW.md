@@ -518,3 +518,85 @@ None at critical/high/medium/low. The three INFO items already documented (4, 5,
 
 Ready for `task-verifier` and Task 02b sign-off.
 
+
+---
+
+# Security review — `ReceiptEnforcer` (Task 43)
+
+**Reviewed:** 2026-10-30
+**Scope:** `src/enforcers/ReceiptEnforcer.sol` (347 lines incl. NatSpec), `test/enforcers/ReceiptEnforcer.t.sol`
+**Reviewer:** author's pre-merge sweep against `.claude/rules/security.md` and `metamask-delegation.md`. **Pending: `contract-reviewer`.**
+**Design record:** ADR `0098`.
+
+## Threat model
+
+### Reentrancy
+No external call apart from the `ecrecover` precompile, made through OZ `ECDSA.tryRecover` as a
+staticcall. One storage write (`_paymentUsed[key] = true`), then an event. **Clean.**
+
+### Access control
+All four hooks revert with `OnlyDelegationManager(caller)` unless `msg.sender` is the immutable
+`DELEGATION_MANAGER`, which is set in the constructor and cannot be zero. The guard is required here,
+unlike in `TrustStakeCapEnforcer`: the replay key is readable from a pending redemption, so an
+ungated hook would let anyone burn a receipt by front-running it
+(`test_beforeHook_revertsForStrangerCaller`). There is no owner and no admin. **Clean.**
+
+### Integer arithmetic
+`block.timestamp - issuedAt` is computed only after `issuedAt <= block.timestamp` has been checked,
+so it cannot underflow. There is no `unchecked` block and no division. **Clean.**
+
+### Input validation
+- `_terms`: `receiptChainId != 0`, `maxAge != 0`, `1 <= bindings.length <= MAX_BINDINGS (32)`, or
+  `InvalidTerms`.
+- `_args`: a malformed ABI encoding reverts in `abi.decode`. `version` must be 1. The signature must
+  be 65 bytes with low `s`, otherwise `InvalidSignature` (OZ rejects malleable signatures,
+  `test_beforeHook_revertsOnHighSSignature`).
+- Execution: single call in default mode only, exactly 132 bytes of calldata starting with the
+  `deposit(address,bytes32,uint256,uint256)` selector, and `receiver == _redeemer`.
+
+### Front-running / MEV
+This is covered by the access-control guard above. Inside a real redemption the redeemer is the
+`DelegationManager`'s `msg.sender`, so a third party cannot take over another agent's receipt:
+`requester == _redeemer` and `receiver == _redeemer`.
+
+### Signature replay
+- **Nonce**: the receipt's `payment`. The used set is keyed by `keccak256(abi.encode(chainId, payment))`,
+  so one payment unlocks one deposit, even when the node signs two receipts for it
+  (`test_beforeHook_revertsOnSecondReceiptForOnePayment`).
+- **Chain id**: in the EIP-712 domain and pinned by `_terms` (`test_beforeHook_revertsOnOtherChainDomain`).
+- **Verifying contract**: **absent from the v1 receipt's domain**. Accepted as INFO-R1 below.
+
+### Oracles / external data
+None.
+
+### DoS via unbounded loops
+The binding lookup is bounded by `MAX_BINDINGS = 32`.
+
+### Upgradeability
+None. No proxy and no `delegatecall`.
+
+### Events
+The single state write is paired with `ReceiptConsumed(delegationHash, paymentKey, signer, requester, termId)`.
+
+## Findings
+
+- **INFO-R1: cross-verifier replay.** The signed domain has no `verifyingContract`, so a receipt
+  consumed here is not consumed at another verifier (a second deployment, or task 40's sponsoring
+  service). Closing it needs a v2 receipt (ADR `0098`). Until then, run one verifier per receipt
+  chain, or have the service read `isPaymentUsed`.
+- **INFO-R2: amount not bound to `paid`.** ADR `0094` says a sponsored amount stays below the cost of
+  the proof. This is not enforced here, and is left open for the reviewer. `TrustStakeCapEnforcer`
+  bounds the amount in the meantime.
+- **INFO-R3: key rotation** means signing a new delegation, or adding a binding next to the old one.
+- **INFO-R4: `pragma solidity 0.8.23`**, as in INFO-5, to match the vendored framework.
+
+## Coverage, tests, gas
+
+Re-run with `cd contracts && forge coverage --no-match-coverage "(test|script|lib)/"`:
+`ReceiptEnforcer.sol` 100% lines (52/52), statements (76/76), branches (14/14) and functions (12/12).
+There are 36 tests, one of them a fuzz, and all pass. One of them checks a signature that viem
+produced through `signHireReceipt`.
+
+Gas, from `forge test --match-test test_beforeHook_acceptsAndConsumes -vvvv --isolate`: one
+`beforeHook` with one binding costs 66,247 gas in its call frame. `ecrecover` is 3,000 of that, and
+the cold `SSTORE` about 22,100.
