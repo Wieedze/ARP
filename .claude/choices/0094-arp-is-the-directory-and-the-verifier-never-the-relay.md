@@ -1,6 +1,10 @@
 # 0094 — ARP is the directory and the verifier, never the relay; a proof is the condition of a sponsored deposit
 
-**Status:** Accepted
+**Status:** Accepted. **Amended 2026-10-30 for testnet**: everything is sponsored. User decision,
+verbatim: _« pour le testnet on s'en fout on fait tout sponsored »_. The anti-abuse rules (the
+withdrawal threshold, a sponsored amount below the cost of the proof, ADR `0095`'s hold-then-match)
+are mainnet questions, decided before mainnet. ADR `0092`'s limits stay: they protect the treasury,
+not the signal.
 **Date:** 2026-10-30
 **Triggered by:** user decisions on 2026-10-30, across sessions arp-34, arp-41 and arp-63, consolidated
 in arp-63. The design was stress-tested against the MultiVault source before this ADR was written.
