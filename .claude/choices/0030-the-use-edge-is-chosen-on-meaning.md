@@ -45,7 +45,7 @@ Two further facts settled it:
 - `bucketFor` in `erc8004/src/sources/intuition/index.ts` files relation `uses` under
   `capabilities.protocols`, which is correct for `use`'s 153/158 and 166/166. Writing a tool edge on
   `use` would make ARP's own connector render **a tool as a protocol** — precisely the tier
-  flattening `tasks/19` step 5 exists to prevent.
+  flattening `docs/tasks/19` step 5 exists to prevent.
 - For ARP's **reads** the choice is a no-op: `terms.ts` puts _both_ ids in
   `CAPABILITY_PREDICATE_IDS` and `map.ts` maps both to relation `uses`. So nothing is stranded from
   ARP's own queries either way, and the whole weight of the publication argument was
@@ -106,7 +106,7 @@ Also decided:
   Semantics wins anyway; a noisy neighbourhood is survivable, a wrong predicate is permanent.
 - **The read side could not distinguish the two.** Both mapped to relation `uses` and bucketed to
   `protocols`. Splitting them changes the connector's public `Capabilities` type, so it was recorded
-  as `tasks/20` rather than smuggled into this fix, and landed there as `supports-protocol` /
+  as `docs/tasks/20` rather than smuggled into this fix, and landed there as `supports-protocol` /
   `uses-tool`.
 
   **That defect was latent, not live, and an earlier draft of this ADR overstated it.** Measured

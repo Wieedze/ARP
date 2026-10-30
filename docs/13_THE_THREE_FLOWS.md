@@ -9,7 +9,7 @@
 
 ```mermaid
 flowchart TB
-    subgraph REG["ERC-8004 registries · Base 88,243 · BSC · Ethereum"]
+    subgraph REG["ERC-8004 registries · Base 310k · BSC · Ethereum"]
         RF["registration file<br/>services[] or endpoints[] · x402 · sometimes capabilities"]
     end
 
@@ -17,7 +17,7 @@ flowchart TB
         A1["fetch registration file"] --> A0{"resolves?"}
         A0 -->|"no · 37%"| A4["confirmed: identity unreachable"]
         A0 -->|yes| A2{"probeable endpoint?"}
-        A2 -->|"no · 82% templated or CAIP/ENS"| A8["not checkable — NOT a defect"]
+        A2 -->|"no · templated or CAIP/ENS"| A8["not checkable — NOT a defect"]
         A2 -->|yes| A3{"answers?"}
         A3 -->|no| A4
         A3 -->|yes| A5{"declares a protocol?"}
@@ -55,8 +55,15 @@ flowchart TB
     R -.durable conclusions only.-> G
 ```
 
-The arrow that matters: **`RF → A1` needs no consent.** Everything in flow A runs on 88,243 agents
-whether they have heard of ARP or not.
+The arrow that matters: **`RF → A1` needs no consent.** Everything in flow A runs on every agent in
+the registry, whether they have heard of ARP or not.
+
+Flow B is narrower, and the gap is the finding. The `uses` edge needs the agent's **identity atom**,
+which Intuition's mirror writes, and the mirror holds **28,648** — unchanged since 2026-09-16 while
+the registry tripled, so **9.2%** coverage and falling (highest minted id 309,925 on 2026-10-20,
+`scripts/measure/cohort-coverage.ts`). For the other nine in ten the atom does not exist and must be
+written: `scripts/agent/agent-identity-atom.ts`, ADR `0047`. Every count here moves at ~44,000 agents a
+day, so run the script rather than quoting this paragraph.
 
 ---
 
@@ -75,7 +82,7 @@ A feeds discovery for C. C produces the best signal. B is the optional middle.
 ## Why A comes first
 
 Every plan before this one stalled on the same thing: the graph is empty, and filling it needed
-somebody to adopt something. 194 `use` triples against 88,243 agents.
+somebody to adopt something. 194 `use` triples against a registry past 309,000.
 
 **A breaks that without asking anyone.** A registration file naming six MCP tools either serves them
 or it does not, and finding out is a request anyone may make. The result is a fact about the agent
@@ -100,7 +107,9 @@ Hard parts, named now:
   n = 140 random ids on 2026-10-16: of 90 declared endpoints, 76% carry an unsubstituted
   `{placeholder}` and 7% are a CAIP address or ENS name rather than a URL. **Only 16 of 90 were
   probeable.** Those 82% must report _not checkable_, never _failing_ — get this wrong and the
-  verifier mass-slanders the cohort on its first run.
+  verifier mass-slanders the cohort on its first run. **The share is not stable**: on 2026-10-27 it
+  was 4% of 186 endpoints, because a uniform sample of a registry one operator minted most of is a
+  sample of that operator (ADR `0064`). The rule is the part that holds; the proportion is not.
 - **The volume is in the document layer, not the endpoint layer.** 23% of sampled ids have no
   `tokenURI`; of those that do, **37% publish a registration file that does not resolve**. One GET
   establishes it — the cheapest and most abundant confirmed fact available.
@@ -113,7 +122,7 @@ Hard parts, named now:
   agent is broken"_ from _"we spoke the protocol wrong"_ and say which.
   **Reporting a false defect is this component's version of a false `mismatch`**, and the connector's
   rule applies unchanged: when unsure, say unverified, never accuse.
-- **Rate and courtesy.** Probing 88,243 third-party endpoints is a load somebody else pays for. Back
+- **Rate and courtesy.** Probing 300,000-plus third-party endpoints is a load somebody else pays for. Back
   off, cache by document hash, identify the client, honour `robots`-equivalent signals. Limit per
   host, not globally: Termix alone accounts for 38 of 108 endpoints in the sample, so a global limit
   still hammers one host.
@@ -125,7 +134,7 @@ Hard parts, named now:
 with the _not checkable_ and _we might be wrong_ cases visibly separated from the confirmed facts. A
 reviewer must be able to take any confirmed row and reproduce it with one `curl`.
 
-Full spec and the measured table: `tasks/17-the-external-verifier.md`.
+Full spec and the measured table: `docs/tasks/17-the-external-verifier.md`.
 
 ### Phase 2 — hire
 
@@ -150,8 +159,9 @@ make that choice attractive by having data already.
 
 ## What stays true throughout
 
-ARP is never in anyone's runtime. The verifier reads what agents publish. The MCP server is a tool an
-agent chooses to call. The hire bounds the buyer, never the seller.
+ARP is never in the path of a request. The verifier reads what agents publish. The connector is a node
+the operator runs, not a host they depend on, and it holds no key (ADR `0045`). The hire bounds the
+buyer, never the seller.
 
 If a design step needs visibility into execution, it is the wrong step — `docs/12`'s drift list says so
 and it has been right every time.

@@ -1,0 +1,32 @@
+{
+  "name": "@arp/node",
+  "version": "0.0.1",
+  "private": true,
+  "description": "The agent node: listens at the address an agent publishes, checks on chain that the requester paid, and signs a receipt. Signs no transaction.",
+  "type": "module",
+  "exports": {
+    "./node": "./src/node.ts"
+  },
+  "bin": {
+    "arp-node": "dist/arp-node.js"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "start": "bun run --cwd ../../packages/protocol build && bun run src/node.ts",
+    "build": "bun run --cwd ../../packages/protocol build && bun build src/node.ts --outdir dist --entry-naming 'arp-[name].js' --target=bun --external viem --external 'viem/*' --banner '#!/usr/bin/env bun'",
+    "test": "bun run --cwd ../../packages/protocol build && bun test",
+    "lint": "bun run --cwd ../../packages/protocol build && tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "viem": "2.52.0"
+  },
+  "devDependencies": {
+    "@arp-protocol/core": "workspace:*",
+    "@types/bun": "^1.4.4",
+    "typescript": "~6.0.2"
+  },
+  "license": "MIT"
+}

@@ -1,6 +1,6 @@
 # 08 — Restore the Intuition write path, server-side only
 
-**Task:** `tasks/06-pin-writes-server-side.md`
+**Task:** `docs/tasks/06-pin-writes-server-side.md`
 **Completed:** 2026-09-16
 **Commit:** `f482588` (docs on top of `1e9b92b`)
 **Verifier verdict:** PASS
@@ -20,7 +20,7 @@
 
 - The type system does the enforcement, not review discipline — but only after a second pass. Making `pinAuth` *required* stops a caller forgetting it; it does not stop a caller inventing one, because a structural `{apiKey: string}` satisfies the parameter anywhere. Review caught the module comment and ADR 0016 both overclaiming this. The brand fixes it: `pinThing(args, {apiKey: "leaked"})` is now TS2345. `bunx tsc -b` in `app/` is the leak check; `grep -rn "process.env" app/src/services/` → empty is the belt-and-braces half.
 - `stakeOnUsedMethodologies` calls `requirePinAuth()` *inside itself* rather than taking the credential as a param. That is why its two callers (`scripts/agent-server.ts`, `scripts/agent-server-specialist.ts`) needed no change at all. Sanctioned by ADR 0016 point 3 (it is a `scripts/` module), but the consequence is worth knowing: those two servers fail on a missing key at first-request time, not at boot.
-- `scripts/verify-pin-key.ts` keeps its own standalone `pinThing`. Deliberate — a preflight tool that shares the code path it is preflighting proves less — and explicitly carved out in `pin-env.ts`'s header. Do not "dedupe" it later without reading that comment.
+- `scripts/verify/verify-pin-key.ts` keeps its own standalone `pinThing`. Deliberate — a preflight tool that shares the code path it is preflighting proves less — and explicitly carved out in `pin-env.ts`'s header. Do not "dedupe" it later without reading that comment.
 
 ## Decisions made
 
@@ -28,7 +28,7 @@
 - **`PinAuth` is nominal, not structural** — an unexported `unique symbol` brand, minted only by `requirePinAuth()` through one commented assertion. This is what actually delivers ADR 0016's "by construction rather than by convention"; without it the claim was false. No new ADR: it implements 0016's stated intent rather than changing it.
 - **403 is treated as 401** — a key that exists but is not entitled is the same operator problem as no key, and deserves the same remediation rather than a bare `pinThing HTTP 403`.
 - **`headerName` is configurable but defaults** — a scheme change upstream (e.g. `Authorization: Bearer`) then needs an env var, not a code change. ADR: same (point 4).
-- **`scripts/pin-env.ts` follows prettier style (2-space/single-quote) rather than its neighbours'** — it matches `scripts/verify-pin-key.ts`, the sibling added by the same ADR. No ADR; recorded here.
+- **`scripts/pin-env.ts` follows prettier style (2-space/single-quote) rather than its neighbours'** — it matches `scripts/verify/verify-pin-key.ts`, the sibling added by the same ADR. No ADR; recorded here.
 
 ## Rules touched
 

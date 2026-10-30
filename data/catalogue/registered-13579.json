@@ -1,0 +1,290 @@
+{
+  "_note": "Tool atoms registered on Intuition testnet 13579 from data/catalogue/tools.json. The atom id is a pure function of the normalised URL (ADR 0054), so this file is a record and not a source of truth \u2014 re-deriving it needs only the URL. Permanent: Intuition has no deletion.",
+  "_authorisation": "Signed by the agent session using AGENT_PRIVATE_KEY, on the user's explicit instruction on 2026-10-28 (\u00ab tout sur testnet \u00bb). ADR 0037's three conditions: the key was never read into the agent's context, the signer address was verified against AGENT_ADDRESS in .env before signing, and this file is the record. security.md scopes its automation prohibition to mainnet.",
+  "_assets": "Each atom was created with assets = getAtomCost() + minDeposit = 0.002000000001 tTRUST, read off the chain at plan time. Passing the cost alone would have created an atom with NO position \u2014 on the chain but not a market (ADR 0053). Every one of the 35 reports position_count 1 and total_assets 980000001000000 wei.",
+  "_incomplete": "Complete: all 52 tools in data/catalogue/tools.json are registered. The first 35 landed on a balance of 0.0791 tTRUST; the remaining 17 after the user topped the signer up with 1 tTRUST the same day. Re-running scripts/seed/seed-tool-catalogue.ts now plans nothing, which is the idempotence the URL-derived atom id buys.",
+  "chainId": 13579,
+  "registeredAt": "2026-10-28",
+  "signer": "0x906f3A52ec089f8D4E9127F91C6bE5Ae0d18f91f",
+  "script": "ARP_TARGET=testnet bun run scripts/seed/seed-tool-catalogue.ts --limit 35 --json <plan> && bun run scripts/agent/agent-send-plan.ts --chain 13579 --plan <plan> --execute",
+  "txs": [
+    "0x1931a28233bd38e0b7cd2aab18da66e35a2c2c8c7ef4dd9e45f4257bbe3698cb",
+    "0xed75cf64888acb8220cb801e59ca6051613bc077d21aca43c06d1b832e75fd38",
+    "0xb64b6fb58b589599cb4b239c93d192d00e0df267a9cb06513e5c3a1df72c820d",
+    "0x16a4aa1152853939b1f6ff4d3425b9eb722abd921ddd4972a525a4d97541b778",
+    "0x4d6748c9c1a677f6899053035d93314224a90960debc9b041df7f11ab9be8ae5",
+    "0x6b35e3e810dedd549beb7ffd82b50ec5ca7ad8220876ac70e4466177954719e7"
+  ],
+  "balanceBefore": "0.079092684686",
+  "balanceAfter": "0.973718702834",
+  "count": 53,
+  "atoms": [
+    {
+      "url": "https://github.com/SonarSource/sonarqube-mcp-server",
+      "title": "SonarQube",
+      "atomId": "0x2617a53fe37eb6dc12f1b3e58233ba2afc029102019b438ccfb6335d9fdd94a5"
+    },
+    {
+      "url": "https://github.com/alchemyplatform/alchemy-mcp-server",
+      "title": "Alchemy",
+      "atomId": "0x298ea573e12ae9a351016dcc1c9fcfaa3891ee2b9bd7ffe860441d7dd1a21579"
+    },
+    {
+      "url": "https://github.com/apify/apify-mcp-server",
+      "title": "Apify",
+      "atomId": "0xd71e775af275789441848ebc271025ff8a129b1ec4172f5cbf7e57cd822413f4"
+    },
+    {
+      "url": "https://github.com/atlassian/atlassian-mcp-server",
+      "title": "Atlassian",
+      "atomId": "0xe536afc31569cd8c01bcbb50296caf729d3cf965ea187b6cc00e3e538acb40cc"
+    },
+    {
+      "url": "https://github.com/browserbase/mcp-server-browserbase",
+      "title": "Browserbase",
+      "atomId": "0x3e69c554f34586e589aed4fd737f7766e9d1c4bb79e5e274c60dfa368e6c45a1"
+    },
+    {
+      "url": "https://github.com/cloudflare/mcp-server-cloudflare",
+      "title": "Cloudflare",
+      "atomId": "0x2d1bbb1b0ebb30a7e5f64c34cc7e609a0b724e18c391647d38765009d2cae52d"
+    },
+    {
+      "url": "https://github.com/figma/mcp-server-guide",
+      "title": "Figma",
+      "atomId": "0xc960a5721a5cffc3a46438ad24f48cc9b5c3dea24b108474d7f4e9f59b8ab099"
+    },
+    {
+      "url": "https://github.com/grafana/mcp-grafana",
+      "title": "Grafana",
+      "atomId": "0xc54febb52e5387f5aecd478c4fc11a7c6c7d4c8951590a6c51edffe96a378187"
+    },
+    {
+      "url": "https://github.com/hashicorp/terraform-mcp-server",
+      "title": "HashiCorp Terraform",
+      "atomId": "0x9d7b638fb60d7b7acf2b66d3ec4a03570125ede43d513635a99a84f032ea288e"
+    },
+    {
+      "url": "https://github.com/makenotion/notion-mcp-server",
+      "title": "Notion",
+      "atomId": "0x3cad5ce97bdf159105a63a3c1eda8a465499fdbb45b6040258192422de93ce82"
+    },
+    {
+      "url": "https://github.com/microsoft/mcp",
+      "title": "Microsoft",
+      "atomId": "0xcbbdeb0761287867cda0c3aa0551d7b864fce75c28cfcfbd34cd3a7806f4126f"
+    },
+    {
+      "url": "https://github.com/mondaycom/mcp",
+      "title": "monday.com",
+      "atomId": "0x62c9eeaf76f6db09ae09a03f84f2a218eb84f509d0e874b3931ab4a9b70f3f0c"
+    },
+    {
+      "url": "https://github.com/neondatabase/mcp-server-neon",
+      "title": "Neon",
+      "atomId": "0xaaca71a854a2cb176192684b5ba9fc9cecf7afb3aed75bcfd2943b5a0b47be06"
+    },
+    {
+      "url": "https://github.com/paypal/paypal-mcp-server",
+      "title": "PayPal",
+      "atomId": "0xb4a31f63cd4efceab135433c9a95d289b5fe1562eecddbbc198dcdb80640e09e"
+    },
+    {
+      "url": "https://github.com/postmanlabs/postman-mcp-server",
+      "title": "Postman",
+      "atomId": "0x53815c263044071b2740a68e0c6f74cbee0fee9162a038c10e699e4276af573d"
+    },
+    {
+      "url": "https://github.com/prisma/mcp",
+      "title": "Prisma",
+      "atomId": "0xb0818289cdec40de5d9f895c566e9a6709742e7743f801b93d702a452379a61f"
+    },
+    {
+      "url": "https://github.com/snyk/saw-mcp",
+      "title": "Snyk",
+      "atomId": "0xb0951052670a56b69d2b1ef4c9af67abcd421bcf381057b532b4c3a37e33c9a4"
+    },
+    {
+      "url": "https://github.com/stripe/agent-toolkit",
+      "title": "Stripe",
+      "atomId": "0x0b3a3918a59a9f4a8b919a1b57fbdf0aa4e5c79146e46898fe429a61d0710b6d"
+    },
+    {
+      "url": "https://github.com/supabase/mcp",
+      "title": "Supabase",
+      "atomId": "0xf51e8cd8e02ea4ec6f69b941884a5e612d8bf8eb8744151487d193bb1f9f6c9d"
+    },
+    {
+      "url": "https://github.com/webflow/mcp-server",
+      "title": "Webflow",
+      "atomId": "0xeae5fc2e1e7d297b545017ad96b57dbcd0108aa3fa6e72507fb7bb6f0f100959"
+    },
+    {
+      "url": "https://github.com/zapier/zapier-mcp",
+      "title": "Zapier",
+      "atomId": "0xf99a854c5bc4cc0e91c5956b54e79571d9d73336d11f490bd33faf68754d4590"
+    },
+    {
+      "url": "https://github.com/mattpocock/skills",
+      "title": "Matt Pocock \u2014 Skills",
+      "atomId": "0xf687378bf9c4c97cbe6c1f17c6e6313860a29124aad8ff77fe81de06dcfa543a"
+    },
+    {
+      "url": "https://github.com/heygen-com/hyperframes",
+      "title": "HeyGen Hyperframes",
+      "atomId": "0x5efbeee47ed0d75e42ce85a0f8ae6cc969c674c8ac77644f1bb5a6a854ad8f1c"
+    },
+    {
+      "url": "https://github.com/microsoft/azure-skills",
+      "title": "Microsoft Azure Skills",
+      "atomId": "0xb4d9a3c34a8db78b95a3522839b31f43910b99ec6b9bae0e3727171b567dedcb"
+    },
+    {
+      "url": "https://github.com/larksuite/cli",
+      "title": "Lark CLI",
+      "atomId": "0x051caf889d52f616e90cb8a7254bcad11bbb7f884189119cc3a31a606e31f459"
+    },
+    {
+      "url": "https://github.com/prime-skills/runcomfy-agent-skills",
+      "title": "RunComfy Agent Skills",
+      "atomId": "0x657f8e0bc12078c1288b4a2679fa10216285d814d5cd34e126665fbaa8828f89"
+    },
+    {
+      "url": "https://github.com/leonxlnx/taste-skill",
+      "title": "Taste",
+      "atomId": "0xe561385e9ad63ef7fac58e95b13ec4d7210616ddb196676f7bb0e384808cabbf"
+    },
+    {
+      "url": "https://github.com/coreyhaines31/marketingskills",
+      "title": "Marketing Skills",
+      "atomId": "0x2f01eabcb2b4f62dd61059f26c0931531f55347d847d172678f439b77ef4d3d3"
+    },
+    {
+      "url": "https://github.com/juliusbrussee/caveman",
+      "title": "Caveman",
+      "atomId": "0xcd1d84460ba783f074412a19b88c290411812d5b44ef2d54056a3d3dbf326de9"
+    },
+    {
+      "url": "https://github.com/101-skills/superpowers",
+      "title": "Superpowers (101-skills)",
+      "atomId": "0x57fd7fd2f303338750c2b4d1ecbe0192e7b55bc918e768afb8296a7e7b747c37"
+    },
+    {
+      "url": "https://github.com/lllllllama/rigorpilot-skills",
+      "title": "RigorPilot",
+      "atomId": "0xf195c19c8604e94446e83e9f872469924d385644afb4ba354cae1d5ef855ff7f"
+    },
+    {
+      "url": "https://github.com/vercel-labs/skills",
+      "title": "Vercel Labs \u2014 Skills",
+      "atomId": "0xc6b6a6b0f474c75e75d3edd001f53780fa9c83598a5c24938141d73ef4a82953"
+    },
+    {
+      "url": "https://github.com/magentosh/superpowers",
+      "title": "Superpowers (magentosh)",
+      "atomId": "0x185b15df64c47eb7e3a2a3b93da3d5c89ccd672d3998a555281b2fe79498c019"
+    },
+    {
+      "url": "https://github.com/obra/superpowers",
+      "title": "Superpowers (obra)",
+      "atomId": "0xb7696e40d457e6188891cc7c8243aad249799346a29178fb564c359ca9065bd6"
+    },
+    {
+      "url": "https://github.com/google/agents-cli",
+      "title": "Google Agents CLI",
+      "atomId": "0xd9342c725eb38eca99bb2d4b43b321d800828e323f1fc72bec08dace031715fe"
+    },
+    {
+      "url": "https://github.com/anthropics/skills",
+      "title": "Anthropic Skills",
+      "atomId": "0xc0ff7cf4257436e3ff03f338272bf64b2dfee51be70bbfc35515bd8615cb6fb2"
+    },
+    {
+      "url": "https://github.com/prisma/skills",
+      "title": "Prisma Skills",
+      "atomId": "0x4600d0c0063045e609342f7afe35afa1a241a353652d922352cf6a522ee4da50"
+    },
+    {
+      "url": "https://github.com/remotion-dev/skills",
+      "title": "Remotion Skills",
+      "atomId": "0xca076aeffdde1c9be2072740c79a35ea1dfc2f5c329393b9e7509294aa8d1587"
+    },
+    {
+      "url": "https://github.com/vercel-labs/agent-skills",
+      "title": "Vercel Labs \u2014 Agent Skills",
+      "atomId": "0xd3b5d5905d0cef1341b77b993b8b6c5bf004a232668fb43cd72d130e1082cd92"
+    },
+    {
+      "url": "https://github.com/qu-skills/superpowers",
+      "title": "Superpowers (qu-skills)",
+      "atomId": "0xc191c608285f2d5a4f0bc23bb231b786a7c08ca0f8cfb86e0c15985e43d538b5"
+    },
+    {
+      "url": "https://github.com/emilkowalski/skills",
+      "title": "Emil Kowalski \u2014 Skills",
+      "atomId": "0x3483d7d8939e2b8ab03cef6c2fe87ce4948472fed9531b51e7967780e21840d6"
+    },
+    {
+      "url": "https://github.com/skills-shell/superpowers",
+      "title": "Superpowers (skills-shell)",
+      "atomId": "0x371e034f69312721965306eb2a5ab4d02edfad6cbfed08a5c37b31d361bc26da"
+    },
+    {
+      "url": "https://github.com/firebase/agent-skills",
+      "title": "Firebase Agent Skills",
+      "atomId": "0xa8c3eb7f120e9f290b030bb9d4ce6681b7284f551d0bdec3178762649d6cb83a"
+    },
+    {
+      "url": "https://github.com/its-a-skill-issue/superpowers",
+      "title": "Superpowers (skill-issue)",
+      "atomId": "0x236c5f89c4758f85b05c950724bde05a7b4cbf4741449b3077ea7e8a813e0c43"
+    },
+    {
+      "url": "https://github.com/bankai-skills/superpowers",
+      "title": "Superpowers (bankai)",
+      "atomId": "0x6ba335c6127b3e8f38381e79e62830268011f2572ac3b41e455ca2c057867820"
+    },
+    {
+      "url": "https://github.com/gencraft-labs/skills",
+      "title": "Gencraft Labs \u2014 Skills",
+      "atomId": "0xf2a176240c58d6d7c3a0773ea1f81aecd6ddfcf986d6acf337b8453d3d068295"
+    },
+    {
+      "url": "https://github.com/pbakaus/impeccable",
+      "title": "Impeccable",
+      "atomId": "0xaf42375c8863874ea65fb4c56aba7a25ab6f132dbd5b7d90f1497225ff22af5a"
+    },
+    {
+      "url": "https://github.com/cloudflare/skills",
+      "title": "Cloudflare Skills",
+      "atomId": "0x396f2f735702927f957f45f2363b1df2a133cdeb3b970acf51bfb735edf62f7f"
+    },
+    {
+      "url": "https://github.com/higgsfield-ai/skills",
+      "title": "Higgsfield Skills",
+      "atomId": "0x8b6dbf7d61febd2fe111131d6f1d674558b517f913bda8c28743000c12661fbb"
+    },
+    {
+      "url": "https://github.com/vercel-labs/agent-browser",
+      "title": "Vercel Labs \u2014 Agent Browser",
+      "atomId": "0x864283d57e13ec25f3b17c4bf2f3f3ae6a4a8af9b1226137c889cecded19aadd"
+    },
+    {
+      "url": "https://github.com/flowkit-labs/skills",
+      "title": "FlowKit Labs \u2014 Skills",
+      "atomId": "0x7fd1f8070cc6a847edc9dcab17b13c23e5538a0c67557a189be32d1b5fc53e87"
+    },
+    {
+      "url": "https://github.com/designed-by-ai/skills",
+      "title": "Designed by AI \u2014 Skills",
+      "atomId": "0x78eb5077a94a22f56da7bccdb4f1922785e1b80e0432cebdbf4859df641e7b65"
+    },
+    {
+      "url": "https://github.com/mobbin/mobbin-mcp-server",
+      "title": "Mobbin",
+      "atomId": "0x66fdb9d0c82e4694fd855eaa13d4d64791a6a217665b589746f68c52a9992f98"
+    }
+  ],
+  "_readable": "All 53 resolve on the testnet indexer. Creating an atom does not make it readable: the indexer resolves value.thing from the pinned CID, so scripts/seed/pin-tool.ts ran over every URL afterwards. One atom (Alchemy) stayed 'Unknown' for several minutes and resolved after a re-pin \u2014 pinning is content-addressed, so a re-pin is free and changes no id.",
+  "_count_correction": "`_readable` said 'All 52 resolve' until 2026-10-29 while `atoms` held 53 and `count` said 53. The data was right and the sentence was wrong \u2014 the exact break claims.md exists for. Corrected in place rather than struck through: this file is a record of a run, not an append-only log, and a wrong count in it is read as fact."
+}

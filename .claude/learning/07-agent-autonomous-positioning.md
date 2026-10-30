@@ -1,6 +1,6 @@
 # 07 — Agent autonomous positioning under bounded delegation
 
-**Task:** `tasks/04c-agent-autonomous-positioning.md`
+**Task:** `docs/tasks/04c-agent-autonomous-positioning.md`
 **Completed:** 2026-06-03
 **Commit:** `9ef78ff` (doc fix on top of `4878185`, `70dace7`, `8e8985f`, `596065d`)
 **Verifier verdict:** PASS

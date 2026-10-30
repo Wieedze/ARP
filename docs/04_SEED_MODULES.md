@@ -85,7 +85,7 @@ Schemas use JSON Schema draft 2020-12 for validation. Each file includes:
 
 ## IPFS upload
 
-Upload is handled as part of the deployment script (`scripts/deploy.ts` or equivalent). Use a pinning service — do not rely on public gateway retention. Acceptable services: Pinata, Web3.Storage, Filebase. Record the resulting `ipfs://bafy...` URIs in `deployments/base-sepolia.json` alongside the contract addresses.
+Upload is handled as part of the deployment script (`scripts/deploy/deploy.ts` or equivalent). Use a pinning service — do not rely on public gateway retention. Acceptable services: Pinata, Web3.Storage, Filebase. Record the resulting `ipfs://bafy...` URIs in `data/deployments/base-sepolia.json` alongside the contract addresses.
 
 ## Intuition atom creation
 

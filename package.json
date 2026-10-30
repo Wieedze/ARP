@@ -2,33 +2,37 @@
   "name": "arp-module-registry-mvp",
   "version": "0.0.0",
   "private": true,
-  "description": "ARP Module Registry — MVP. First on-chain deliverable of the Agent Reputation Protocol.",
+  "description": "ARP Module Registry \u2014 MVP. First on-chain deliverable of the Agent Reputation Protocol.",
   "engines": {
     "node": ">=20",
     "bun": ">=1.2"
   },
   "workspaces": [
-    "app",
+    "apps/web",
+    "apps/mcp",
+    "apps/node",
+    "apps/hook",
+    "apps/cli",
+    "apps/api",
+    "apps/probe",
     "contracts",
-    "sdk",
-    "erc8004"
+    "packages/graphql",
+    "packages/protocol"
   ],
   "scripts": {
-    "demo": "bun scripts/demo.ts",
-    "verify:pin": "bun scripts/verify-pin-key.ts",
-    "dev": "bun --filter app dev",
+    "verify:pin": "bun scripts/verify/verify-pin-key.ts",
+    "dev": "bun --filter @arp/app dev",
     "build": "bun --filter '*' build",
-    "test": "bun --filter '*' test",
+    "test": "bun --filter '*' test && bun run test:scripts",
+    "test:scripts": "bun test ./scripts/test",
     "lint": "bun --filter '*' lint",
-    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\" --ignore-path .gitignore",
-    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\" --ignore-path .gitignore"
-  },
-  "dependencies": {
-    "@metamask/delegation-core": "^2.2.1",
-    "@metamask/delegation-deployments": "^1.4.0",
-    "@metamask/smart-accounts-kit": "^1.6.0"
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\" --ignore-path .gitignore --ignore-path .prettierignore",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\" --ignore-path .gitignore --ignore-path .prettierignore",
+    "check:scripts": "bunx tsc -p tsconfig.scripts.json --noEmit",
+    "check": "bun run check:scripts && bun run --cwd apps/web check:tokens && bun run --cwd apps/web check:contrast"
   },
   "devDependencies": {
+    "@types/bun": "^1.4.4",
     "prettier": "^3.3.3",
     "viem": "2.52.0"
   },

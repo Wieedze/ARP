@@ -1,0 +1,432 @@
+{
+  "measuredAt": "2026-10-29T12:28:37.466Z",
+  "source": "api.github.com/repos",
+  "authenticated": true,
+  "staleAfterDays": 180,
+  "rows": [
+    {
+      "slug": "mobbin/mobbin-mcp-server",
+      "kind": "mcp-server",
+      "stars": 65,
+      "days": 2,
+      "archived": false,
+      "gone": false
+    },
+    {
+      "slug": "SonarSource/sonarqube-mcp-server",
+      "kind": "mcp-server",
+      "stars": 676,
+      "days": 0,
+      "archived": false,
+      "gone": false
+    },
+    {
+      "slug": "alchemyplatform/alchemy-mcp-server",
+      "kind": "mcp-server",
+      "stars": 88,
+      "days": 35,
+      "archived": false,
+      "gone": false
+    },
+    {
+      "slug": "apify/apify-mcp-server",
+      "kind": "mcp-server",
+      "stars": 13741,
+      "days": 0,
+      "archived": false,
+      "gone": false
+    },
+    {
+      "slug": "atlassian/atlassian-mcp-server",
+      "kind": "mcp-server",
+      "stars": 1132,
+      "days": 1,
+      "archived": false,
+      "gone": false
+    },
+    {
+      "slug": "browserbase/mcp-server-browserbase",
+      "kind": "mcp-server",
+      "stars": 3397,
+      "days": 101,
+      "archived": true,
+      "gone": false
+    },
+    {
+      "slug": "cloudflare/mcp-server-cloudflare",
+      "kind": "mcp-server",
+      "stars": 4430,
+      "days": 7,
+      "archived": false,
+      "gone": false
+    },
+    {
+      "slug": "figma/mcp-server-guide",
+      "kind": "mcp-server",
+      "stars": 2127,
+      "days": 1,
+      "archived": false,
+      "gone": false
+    },
+    {
+      "slug": "grafana/mcp-grafana",
+      "kind": "mcp-server",
+      "stars": 3626,
+      "days": 0,
+      "archived": false,
+      "gone": false
+    },
+    {
+      "slug": "hashicorp/terraform-mcp-server",
+      "kind": "mcp-server",
+      "stars": 1554,
+      "days": 0,
+      "archived": false,
+      "gone": false
+    },
+    {
+      "slug": "makenotion/notion-mcp-server",
+      "kind": "mcp-server",
+      "stars": 4686,
+      "days": 1,
+      "archived": false,
+      "gone": false
+    },
+    {
+      "slug": "microsoft/mcp",
+      "kind": "mcp-server",
+      "stars": 3809,
+      "days": 0,
+      "archived": false,
+      "gone": false
+    },
+    {
+      "slug": "mondaycom/mcp",
+      "kind": "mcp-server",
+      "stars": 436,
+      "days": 0,
+      "archived": false,
+      "gone": false
+    },
+    {
+      "slug": "neondatabase/mcp-server-neon",
+      "kind": "mcp-server",
+      "stars": 658,
+      "days": 1,
+      "archived": false,
+      "gone": false
+    },
+    {
+      "slug": "paypal/paypal-mcp-server",
+      "kind": "mcp-server",
+      "stars": 13,
+      "days": 366,
+      "archived": false,
+      "gone": false
+    },
+    {
+      "slug": "postmanlabs/postman-mcp-server",
+      "kind": "mcp-server",
+      "stars": 325,
+      "days": 6,
+      "archived": false,
+      "gone": false
+    },
+    {
+      "slug": "prisma/mcp",
+      "kind": "mcp-server",
+      "stars": 49,
+      "days": 3,
+      "archived": true,
+      "gone": false
+    },
+    {
+      "slug": "snyk/saw-mcp",
+      "kind": "mcp-server",
+      "stars": 8,
+      "days": 20,
+      "archived": false,
+      "gone": false
+    },
+    {
+      "slug": "stripe/agent-toolkit",
+      "kind": "mcp-server",
+      "stars": 1993,
+      "days": 0,
+      "archived": false,
+      "gone": false
+    },
+    {
+      "slug": "supabase/mcp",
+      "kind": "mcp-server",
+      "stars": 2982,
+      "days": 0,
+      "archived": false,
+      "gone": false
+    },
+    {
+      "slug": "webflow/mcp-server",
+      "kind": "mcp-server",
+      "stars": 140,
+      "days": 3,
+      "archived": false,
+      "gone": false
+    },
+    {
+      "slug": "zapier/zapier-mcp",
+      "kind": "mcp-server",
+      "stars": 450,
+      "days": 7,
+      "archived": false,
+      "gone": false
+    },
+    {
+      "slug": "mattpocock/skills",
+      "kind": "skill-repo",
+      "stars": 306202,
+      "days": 0,
+      "archived": false,
+      "gone": false
+    },
+    {
+      "slug": "heygen-com/hyperframes",
+      "kind": "skill-repo",
+      "stars": 75162,
+      "days": 0,
+      "archived": false,
+      "gone": false
+    },
+    {
+      "slug": "microsoft/azure-skills",
+      "kind": "skill-repo",
+      "stars": 1602,
+      "days": 0,
+      "archived": false,
+      "gone": false
+    },
+    {
+      "slug": "larksuite/cli",
+      "kind": "skill-repo",
+      "stars": 17881,
+      "days": 0,
+      "archived": false,
+      "gone": false
+    },
+    {
+      "slug": "prime-skills/runcomfy-agent-skills",
+      "kind": "skill-repo",
+      "stars": 61,
+      "days": 167,
+      "archived": false,
+      "gone": false
+    },
+    {
+      "slug": "leonxlnx/taste-skill",
+      "kind": "skill-repo",
+      "stars": 105080,
+      "days": 0,
+      "archived": false,
+      "gone": false
+    },
+    {
+      "slug": "coreyhaines31/marketingskills",
+      "kind": "skill-repo",
+      "stars": 57227,
+      "days": 2,
+      "archived": false,
+      "gone": false
+    },
+    {
+      "slug": "juliusbrussee/caveman",
+      "kind": "skill-repo",
+      "stars": 115941,
+      "days": 0,
+      "archived": false,
+      "gone": false
+    },
+    {
+      "slug": "101-skills/superpowers",
+      "kind": "skill-repo",
+      "stars": 16,
+      "days": 59,
+      "archived": false,
+      "gone": false
+    },
+    {
+      "slug": "lllllllama/rigorpilot-skills",
+      "kind": "skill-repo",
+      "stars": 486,
+      "days": 36,
+      "archived": false,
+      "gone": false
+    },
+    {
+      "slug": "vercel-labs/skills",
+      "kind": "skill-repo",
+      "stars": 37097,
+      "days": 0,
+      "archived": false,
+      "gone": false
+    },
+    {
+      "slug": "magentosh/superpowers",
+      "kind": "skill-repo",
+      "stars": 4,
+      "days": 87,
+      "archived": false,
+      "gone": false
+    },
+    {
+      "slug": "obra/superpowers",
+      "kind": "skill-repo",
+      "stars": 307944,
+      "days": 6,
+      "archived": false,
+      "gone": false
+    },
+    {
+      "slug": "google/agents-cli",
+      "kind": "skill-repo",
+      "stars": 6214,
+      "days": 2,
+      "archived": false,
+      "gone": false
+    },
+    {
+      "slug": "anthropics/skills",
+      "kind": "skill-repo",
+      "stars": 184644,
+      "days": 1,
+      "archived": false,
+      "gone": false
+    },
+    {
+      "slug": "prisma/skills",
+      "kind": "skill-repo",
+      "stars": 77,
+      "days": 1,
+      "archived": false,
+      "gone": false
+    },
+    {
+      "slug": "remotion-dev/skills",
+      "kind": "skill-repo",
+      "stars": 5859,
+      "days": 3,
+      "archived": false,
+      "gone": false
+    },
+    {
+      "slug": "vercel-labs/agent-skills",
+      "kind": "skill-repo",
+      "stars": 33193,
+      "days": 1,
+      "archived": false,
+      "gone": false
+    },
+    {
+      "slug": "qu-skills/superpowers",
+      "kind": "skill-repo",
+      "stars": 4,
+      "days": 57,
+      "archived": false,
+      "gone": false
+    },
+    {
+      "slug": "emilkowalski/skills",
+      "kind": "skill-repo",
+      "stars": 51277,
+      "days": 1,
+      "archived": false,
+      "gone": false
+    },
+    {
+      "slug": "skills-shell/superpowers",
+      "kind": "skill-repo",
+      "stars": 2,
+      "days": 57,
+      "archived": false,
+      "gone": false
+    },
+    {
+      "slug": "firebase/agent-skills",
+      "kind": "skill-repo",
+      "stars": 491,
+      "days": 1,
+      "archived": false,
+      "gone": false
+    },
+    {
+      "slug": "its-a-skill-issue/superpowers",
+      "kind": "skill-repo",
+      "stars": 0,
+      "days": 53,
+      "archived": false,
+      "gone": false
+    },
+    {
+      "slug": "bankai-skills/superpowers",
+      "kind": "skill-repo",
+      "stars": 0,
+      "days": 59,
+      "archived": false,
+      "gone": false
+    },
+    {
+      "slug": "gencraft-labs/skills",
+      "kind": "skill-repo",
+      "stars": 0,
+      "days": 23,
+      "archived": false,
+      "gone": false
+    },
+    {
+      "slug": "pbakaus/impeccable",
+      "kind": "skill-repo",
+      "stars": 94248,
+      "days": 0,
+      "archived": false,
+      "gone": false
+    },
+    {
+      "slug": "cloudflare/skills",
+      "kind": "skill-repo",
+      "stars": 3206,
+      "days": 1,
+      "archived": false,
+      "gone": false
+    },
+    {
+      "slug": "higgsfield-ai/skills",
+      "kind": "skill-repo",
+      "stars": 1799,
+      "days": 2,
+      "archived": false,
+      "gone": false
+    },
+    {
+      "slug": "vercel-labs/agent-browser",
+      "kind": "skill-repo",
+      "stars": 44821,
+      "days": 0,
+      "archived": false,
+      "gone": false
+    },
+    {
+      "slug": "flowkit-labs/skills",
+      "kind": "skill-repo",
+      "stars": 25,
+      "days": 78,
+      "archived": false,
+      "gone": false
+    },
+    {
+      "slug": "designed-by-ai/skills",
+      "kind": "skill-repo",
+      "stars": 21,
+      "days": 23,
+      "archived": false,
+      "gone": false
+    }
+  ]
+}

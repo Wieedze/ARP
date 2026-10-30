@@ -1,0 +1,130 @@
+import type {MarketSide} from "@arp-protocol/core";
+
+import type {TrustRow} from "../../services/agent-trust";
+import type {ClaimVaults, VaultPosition} from "../../services/trust-stake";
+import {formatTrust, truncateMiddle} from "../../services/trust-format";
+
+import {useChainChoice} from "../../lib/chain-choice";
+import {StakerCount} from "./StakerCount";
+
+/**
+ * The live market on one `has trust provider` claim.
+ *
+ * Two numbers come from two places. Balances are read from the MultiVault,
+ * because that is the vault a deposit lands in and it is correct before the
+ * indexer is. Position counts come from the indexer, because the contract does
+ * not expose them. Neither is presented as the other.
+ *
+ * The staker count appears on every side, always — see `StakerCount` for why a
+ * TRUST figure is never shown here without it.
+ *
+ * The symbol comes from the toggle. It was hardcoded `TRUST` while `useClaimVaults` read the
+ * mainnet MultiVault whatever the toggle said; both now follow it, so a testnet reader sees testnet
+ * balances in `tTRUST` beside a deposit that goes to testnet.
+ */
+
+function SideColumn({
+    title,
+    side,
+    vault,
+    isLoading,
+}: {
+    title: string;
+    side: MarketSide | null;
+    vault: VaultPosition | undefined;
+    isLoading: boolean;
+}) {
+    const chain = useChainChoice();
+    const onChainAssets = vault?.totalAssets ?? null;
+    // `marketCap` is the curve's own vault, which is what `getVault` returns and
+    // what a deposit joins. `totalAssets` on a MarketSide is the term-level
+    // total, which folds in the triple's underlying atom vaults and runs three
+    // orders of magnitude higher — showing it here would overstate the claim.
+    const indexerAssets = side?.marketCap ?? null;
+
+    return (
+        <div className="border-t border-[color:var(--color-rule)] pt-3">
+            <p className="font-mono uppercase tracking-wider text-[length:var(--text-label)] text-[color:var(--color-steel)]">
+                {title}
+            </p>
+            <p className="mt-2 font-mono text-[length:var(--text-body)]">
+                {onChainAssets !== null
+                    ? `${formatTrust(onChainAssets)} ${chain.symbol}`
+                    : isLoading
+                      ? "reading vault…"
+                      : indexerAssets !== null
+                        ? `${formatTrust(indexerAssets)} ${chain.symbol}`
+                        : "—"}
+            </p>
+            <p className="mt-1 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
+                {side === null ? (
+                    "no market data"
+                ) : side.positionCount === null ? (
+                    "position count not reported by the indexer"
+                ) : (
+                    <StakerCount count={side.positionCount} />
+                )}
+            </p>
+            {vault !== undefined && vault.shares !== null && vault.shares > 0n ? (
+                <p className="mt-2 font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-accent)]">
+                    your position: {formatTrust(vault.shares)} shares
+                </p>
+            ) : null}
+            {vault !== undefined ? (
+                <p className="mt-2 font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-steel)] break-all">
+                    {truncateMiddle(vault.termId, 10, 8)}
+                </p>
+            ) : null}
+        </div>
+    );
+}
+
+export function MarketPanel({
+    row,
+    vaults,
+    isLoading,
+    error,
+}: {
+    row: TrustRow;
+    vaults: ClaimVaults | undefined;
+    isLoading: boolean;
+    error: Error | null;
+}) {
+    // No term id, no vault, so there is nothing to show. Two sentences used to explain *why* — one
+    // for a missing `has trust provider` edge, one for a malformed term id — and both said "nothing
+    // to take a position on", which stopped being the distinguishing fact the moment the stake
+    // control came off this row. `rules/ui.md`: no explanatory sentence inside a panel, and the
+    // reason belongs here rather than on screen.
+    if (row.tripleId === null) {
+        return (
+            <p className="font-mono text-[length:var(--text-label)] uppercase tracking-wider text-[color:var(--color-steel)]">
+                no market
+            </p>
+        );
+    }
+
+    return (
+        <div>
+            <div className="grid sm:grid-cols-2 gap-x-8 gap-y-4">
+                <SideColumn
+                    title="Support"
+                    side={row.market?.support ?? null}
+                    vault={vaults?.support}
+                    isLoading={isLoading}
+                />
+                <SideColumn
+                    title="Opposition"
+                    side={row.market?.opposition ?? null}
+                    vault={vaults?.opposition}
+                    isLoading={isLoading}
+                />
+            </div>
+            {error !== null ? (
+                <p className="mt-3 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
+                    Vault balances could not be read: {error.message}. The indexer figures above are
+                    what is left.
+                </p>
+            ) : null}
+        </div>
+    );
+}

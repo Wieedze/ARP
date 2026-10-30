@@ -1,6 +1,6 @@
 # NN — <task title>
 
-**Task:** `tasks/NN-*.md`
+**Task:** `docs/tasks/NN-*.md`
 **Completed:** YYYY-MM-DD
 **Commit:** <SHA or `uncommitted`>
 **Verifier verdict:** PASS

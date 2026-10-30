@@ -1,0 +1,674 @@
+{
+ "generatedAt": "2026-10-28T14:49:43.780174+00:00",
+ "why": "Catalogue seed selection. Source popularity is a SELECTION signal only; it is never written into a tool atom's hashed document, because an install snapshot makes the atom non-reproducible (packages/protocol/src/declare/tool-thing.ts).",
+ "sources": {
+  "skillsSh": {
+   "url": "https://www.skills.sh/",
+   "read": "RSC flight payload, key initialSkills",
+   "skills": 600,
+   "repos": 90,
+   "caveat": "source is not always owner/repo \u2014 e.g. open.feishu.cn, larksuite/cli"
+  },
+  "mcpRegistry": {
+   "url": "https://registry.modelcontextprotocol.io/v0/servers",
+   "sweptRows": 30000,
+   "distinctServers": 11582,
+   "namespaces": 9128,
+   "sweepTruncatedAt": "com.sapiensinteticos",
+   "alphabeticalFrom": "ac.inference.sh/mcp",
+   "caveat": "namespace DNS verification proves authenticity, not standing: app.vercel.*, app.netlify.* and app.railway.up.* pass it with a free subdomain. 42 of the 72 shortlist matches in the swept range were those three platforms."
+  },
+  "oasf": {
+   "url": "https://schema.oasf.outshift.com/api/skills",
+   "liveSchemaVersion": "1.1.0",
+   "skills_1_1_0": 496,
+   "skills_0_8_0": 122
+  }
+ },
+ "oasfIdStability": {
+  "finding": "Neither the path nor the integer id is stable across OASF versions.",
+  "idsInBothVersions": 85,
+  "pathIdenticalAcrossVersions": 1,
+  "sameIdDifferentSkill": 84,
+  "idsRetired": 37,
+  "idsAdded": 411,
+  "example": {
+   "id": "1004",
+   "0.8.0": "agent_orchestration/agent_coordination",
+   "1.1.0": "cybersecurity/threat_modeling"
+  },
+  "consequence": "An unversioned OASF tag written to an immutable atom changes meaning under the reader. Only a version-pinned form (oasf:1.1.0:<id>) is safe."
+ },
+ "skillsRepos": [
+  {
+   "source": "mattpocock/skills",
+   "url": "https://github.com/mattpocock/skills",
+   "skills": 54,
+   "installs": 30435971,
+   "official": false
+  },
+  {
+   "source": "open.feishu.cn",
+   "url": null,
+   "skills": 28,
+   "installs": 21927932,
+   "official": false
+  },
+  {
+   "source": "heygen-com/hyperframes",
+   "url": "https://github.com/heygen-com/hyperframes",
+   "skills": 31,
+   "installs": 15611274,
+   "official": false
+  },
+  {
+   "source": "microsoft/azure-skills",
+   "url": "https://github.com/microsoft/azure-skills",
+   "skills": 32,
+   "installs": 14309891,
+   "official": true
+  },
+  {
+   "source": "larksuite/cli",
+   "url": "https://github.com/larksuite/cli",
+   "skills": 27,
+   "installs": 11967835,
+   "official": false
+  },
+  {
+   "source": "prime-skills/runcomfy-agent-skills",
+   "url": "https://github.com/prime-skills/runcomfy-agent-skills",
+   "skills": 30,
+   "installs": 11779642,
+   "official": false
+  },
+  {
+   "source": "leonxlnx/taste-skill",
+   "url": "https://github.com/leonxlnx/taste-skill",
+   "skills": 13,
+   "installs": 5488353,
+   "official": false
+  },
+  {
+   "source": "coreyhaines31/marketingskills",
+   "url": "https://github.com/coreyhaines31/marketingskills",
+   "skills": 45,
+   "installs": 4688618,
+   "official": false
+  },
+  {
+   "source": "juliusbrussee/caveman",
+   "url": "https://github.com/juliusbrussee/caveman",
+   "skills": 20,
+   "installs": 4373289,
+   "official": false
+  },
+  {
+   "source": "101-skills/superpowers",
+   "url": "https://github.com/101-skills/superpowers",
+   "skills": 10,
+   "installs": 4304912,
+   "official": false
+  },
+  {
+   "source": "lllllllama/rigorpilot-skills",
+   "url": "https://github.com/lllllllama/rigorpilot-skills",
+   "skills": 11,
+   "installs": 4290833,
+   "official": false
+  },
+  {
+   "source": "vercel-labs/skills",
+   "url": "https://github.com/vercel-labs/skills",
+   "skills": 1,
+   "installs": 4088520,
+   "official": true
+  },
+  {
+   "source": "magentosh/superpowers",
+   "url": "https://github.com/magentosh/superpowers",
+   "skills": 10,
+   "installs": 3774345,
+   "official": false
+  },
+  {
+   "source": "obra/superpowers",
+   "url": "https://github.com/obra/superpowers",
+   "skills": 14,
+   "installs": 3660134,
+   "official": false
+  },
+  {
+   "source": "google/agents-cli",
+   "url": "https://github.com/google/agents-cli",
+   "skills": 7,
+   "installs": 3626728,
+   "official": false
+  },
+  {
+   "source": "anthropics/skills",
+   "url": "https://github.com/anthropics/skills",
+   "skills": 18,
+   "installs": 3581541,
+   "official": true
+  },
+  {
+   "source": "prisma/skills",
+   "url": "https://github.com/prisma/skills",
+   "skills": 10,
+   "installs": 3549445,
+   "official": true
+  },
+  {
+   "source": "remotion-dev/skills",
+   "url": "https://github.com/remotion-dev/skills",
+   "skills": 12,
+   "installs": 3044904,
+   "official": true
+  },
+  {
+   "source": "vercel-labs/agent-skills",
+   "url": "https://github.com/vercel-labs/agent-skills",
+   "skills": 9,
+   "installs": 3033429,
+   "official": true
+  },
+  {
+   "source": "qu-skills/superpowers",
+   "url": "https://github.com/qu-skills/superpowers",
+   "skills": 10,
+   "installs": 2779908,
+   "official": false
+  },
+  {
+   "source": "emilkowalski/skills",
+   "url": "https://github.com/emilkowalski/skills",
+   "skills": 14,
+   "installs": 2721777,
+   "official": false
+  },
+  {
+   "source": "skills-shell/superpowers",
+   "url": "https://github.com/skills-shell/superpowers",
+   "skills": 5,
+   "installs": 2004376,
+   "official": false
+  },
+  {
+   "source": "firebase/agent-skills",
+   "url": "https://github.com/firebase/agent-skills",
+   "skills": 13,
+   "installs": 1790284,
+   "official": true
+  },
+  {
+   "source": "its-a-skill-issue/superpowers",
+   "url": "https://github.com/its-a-skill-issue/superpowers",
+   "skills": 5,
+   "installs": 1780956,
+   "official": false
+  },
+  {
+   "source": "bankai-skills/superpowers",
+   "url": "https://github.com/bankai-skills/superpowers",
+   "skills": 5,
+   "installs": 1717642,
+   "official": false
+  },
+  {
+   "source": "gencraft-labs/skills",
+   "url": "https://github.com/gencraft-labs/skills",
+   "skills": 5,
+   "installs": 1568181,
+   "official": false
+  },
+  {
+   "source": "pbakaus/impeccable",
+   "url": "https://github.com/pbakaus/impeccable",
+   "skills": 15,
+   "installs": 1469100,
+   "official": false
+  },
+  {
+   "source": "cloudflare/skills",
+   "url": "https://github.com/cloudflare/skills",
+   "skills": 13,
+   "installs": 1330502,
+   "official": true
+  },
+  {
+   "source": "higgsfield-ai/skills",
+   "url": "https://github.com/higgsfield-ai/skills",
+   "skills": 8,
+   "installs": 1289145,
+   "official": false
+  },
+  {
+   "source": "vercel-labs/agent-browser",
+   "url": "https://github.com/vercel-labs/agent-browser",
+   "skills": 1,
+   "installs": 1279394,
+   "official": true
+  },
+  {
+   "source": "uizze.sh",
+   "url": null,
+   "skills": 2,
+   "installs": 1203168,
+   "official": false
+  },
+  {
+   "source": "flowkit-labs/skills",
+   "url": "https://github.com/flowkit-labs/skills",
+   "skills": 1,
+   "installs": 1135846,
+   "official": false
+  },
+  {
+   "source": "designed-by-ai/skills",
+   "url": "https://github.com/designed-by-ai/skills",
+   "skills": 1,
+   "installs": 1081603,
+   "official": false
+  },
+  {
+   "source": "stablyai/orca",
+   "url": "https://github.com/stablyai/orca",
+   "skills": 3,
+   "installs": 946859,
+   "official": false
+  },
+  {
+   "source": "addyosmani/agent-skills",
+   "url": "https://github.com/addyosmani/agent-skills",
+   "skills": 14,
+   "installs": 926628,
+   "official": false
+  },
+  {
+   "source": "supabase/agent-skills",
+   "url": "https://github.com/supabase/agent-skills",
+   "skills": 2,
+   "installs": 811514,
+   "official": true
+  },
+  {
+   "source": "firecrawl/cli",
+   "url": "https://github.com/firecrawl/cli",
+   "skills": 8,
+   "installs": 659878,
+   "official": true
+  },
+  {
+   "source": "convex/agent-skills",
+   "url": "https://github.com/convex/agent-skills",
+   "skills": 6,
+   "installs": 654891,
+   "official": false
+  },
+  {
+   "source": "autonnel/autonnel-skills",
+   "url": "https://github.com/autonnel/autonnel-skills",
+   "skills": 6,
+   "installs": 635805,
+   "official": false
+  },
+  {
+   "source": "greensock/gsap-skills",
+   "url": "https://github.com/greensock/gsap-skills",
+   "skills": 8,
+   "installs": 560317,
+   "official": false
+  },
+  {
+   "source": "neondatabase/agent-skills",
+   "url": "https://github.com/neondatabase/agent-skills",
+   "skills": 2,
+   "installs": 529395,
+   "official": true
+  },
+  {
+   "source": "nextlevelbuilder/ui-ux-pro-max-skill",
+   "url": "https://github.com/nextlevelbuilder/ui-ux-pro-max-skill",
+   "skills": 1,
+   "installs": 420423,
+   "official": false
+  },
+  {
+   "source": "liarjsdev/liarjs-skills",
+   "url": "https://github.com/liarjsdev/liarjs-skills",
+   "skills": 4,
+   "installs": 420093,
+   "official": false
+  },
+  {
+   "source": "kepano/obsidian-skills",
+   "url": "https://github.com/kepano/obsidian-skills",
+   "skills": 5,
+   "installs": 405343,
+   "official": false
+  },
+  {
+   "source": "googleworkspace/cli",
+   "url": "https://github.com/googleworkspace/cli",
+   "skills": 5,
+   "installs": 360401,
+   "official": true
+  },
+  {
+   "source": "antibrow/anti-detect-browser-skills",
+   "url": "https://github.com/antibrow/anti-detect-browser-skills",
+   "skills": 3,
+   "installs": 358692,
+   "official": false
+  },
+  {
+   "source": "shadcn/ui",
+   "url": "https://github.com/shadcn/ui",
+   "skills": 1,
+   "installs": 271099,
+   "official": false
+  },
+  {
+   "source": "uizze/uizze",
+   "url": "https://github.com/uizze/uizze",
+   "skills": 2,
+   "installs": 252786,
+   "official": false
+  },
+  {
+   "source": "firecrawl/skills",
+   "url": "https://github.com/firecrawl/skills",
+   "skills": 4,
+   "installs": 246407,
+   "official": true
+  },
+  {
+   "source": "scrapegraphai/just-scrape",
+   "url": "https://github.com/scrapegraphai/just-scrape",
+   "skills": 1,
+   "installs": 245007,
+   "official": false
+  },
+  {
+   "source": "stripe/ai",
+   "url": "https://github.com/stripe/ai",
+   "skills": 3,
+   "installs": 243068,
+   "official": true
+  },
+  {
+   "source": "wind-alice/alicemarket",
+   "url": "https://github.com/wind-alice/alicemarket",
+   "skills": 1,
+   "installs": 225213,
+   "official": false
+  },
+  {
+   "source": "microsoft/playwright-cli",
+   "url": "https://github.com/microsoft/playwright-cli",
+   "skills": 1,
+   "installs": 198999,
+   "official": true
+  },
+  {
+   "source": "browser-act/skills",
+   "url": "https://github.com/browser-act/skills",
+   "skills": 2,
+   "installs": 193485,
+   "official": false
+  },
+  {
+   "source": "tt-a1i/archify",
+   "url": "https://github.com/tt-a1i/archify",
+   "skills": 1,
+   "installs": 180850,
+   "official": false
+  },
+  {
+   "source": "sentry/dev",
+   "url": "https://github.com/sentry/dev",
+   "skills": 1,
+   "installs": 175594,
+   "official": false
+  },
+  {
+   "source": "wshobson/agents",
+   "url": "https://github.com/wshobson/agents",
+   "skills": 2,
+   "installs": 165070,
+   "official": false
+  },
+  {
+   "source": "momentic-ai/skills",
+   "url": "https://github.com/momentic-ai/skills",
+   "skills": 2,
+   "installs": 137016,
+   "official": false
+  },
+  {
+   "source": "arvindrk/extract-design-system",
+   "url": "https://github.com/arvindrk/extract-design-system",
+   "skills": 1,
+   "installs": 130752,
+   "official": false
+  },
+  {
+   "source": "better-auth/skills",
+   "url": "https://github.com/better-auth/skills",
+   "skills": 1,
+   "installs": 127523,
+   "official": true
+  },
+  {
+   "source": "shadcn-ui/ui",
+   "url": "https://github.com/shadcn-ui/ui",
+   "skills": 1,
+   "installs": 126765,
+   "official": false
+  },
+  {
+   "source": "dietrichgebert/ponytail",
+   "url": "https://github.com/dietrichgebert/ponytail",
+   "skills": 1,
+   "installs": 109712,
+   "official": false
+  },
+  {
+   "source": "2dmurali/review-loop-skill",
+   "url": "https://github.com/2dmurali/review-loop-skill",
+   "skills": 1,
+   "installs": 107232,
+   "official": false
+  },
+  {
+   "source": "solana-foundation/solana-dev-skill",
+   "url": "https://github.com/solana-foundation/solana-dev-skill",
+   "skills": 1,
+   "installs": 102461,
+   "official": false
+  },
+  {
+   "source": "currents-dev/playwright-best-practices-skill",
+   "url": "https://github.com/currents-dev/playwright-best-practices-skill",
+   "skills": 1,
+   "installs": 99306,
+   "official": false
+  },
+  {
+   "source": "browser-use/browser-use",
+   "url": "https://github.com/browser-use/browser-use",
+   "skills": 1,
+   "installs": 98447,
+   "official": true
+  },
+  {
+   "source": "typesafe-ai/skills",
+   "url": "https://github.com/typesafe-ai/skills",
+   "skills": 1,
+   "installs": 97032,
+   "official": false
+  },
+  {
+   "source": "intellectronica/agent-skills",
+   "url": "https://github.com/intellectronica/agent-skills",
+   "skills": 1,
+   "installs": 96074,
+   "official": false
+  },
+  {
+   "source": "mastra-ai/skills",
+   "url": "https://github.com/mastra-ai/skills",
+   "skills": 1,
+   "installs": 86051,
+   "official": true
+  },
+  {
+   "source": "vercel/turborepo",
+   "url": "https://github.com/vercel/turborepo",
+   "skills": 1,
+   "installs": 85699,
+   "official": true
+  },
+  {
+   "source": "mcollina/skills",
+   "url": "https://github.com/mcollina/skills",
+   "skills": 1,
+   "installs": 84324,
+   "official": false
+  },
+  {
+   "source": "spillwavesolutions/design-doc-mermaid",
+   "url": "https://github.com/spillwavesolutions/design-doc-mermaid",
+   "skills": 1,
+   "installs": 83652,
+   "official": false
+  },
+  {
+   "source": "nrwl/nx-ai-agents-config",
+   "url": "https://github.com/nrwl/nx-ai-agents-config",
+   "skills": 1,
+   "installs": 78750,
+   "official": false
+  },
+  {
+   "source": "nexscope-ai/amazon-skills",
+   "url": "https://github.com/nexscope-ai/amazon-skills",
+   "skills": 1,
+   "installs": 78191,
+   "official": false
+  },
+  {
+   "source": "nutlope/hallmark",
+   "url": "https://github.com/nutlope/hallmark",
+   "skills": 1,
+   "installs": 76248,
+   "official": false
+  },
+  {
+   "source": "degausai/wonda",
+   "url": "https://github.com/degausai/wonda",
+   "skills": 1,
+   "installs": 74605,
+   "official": false
+  },
+  {
+   "source": "herdrdev/herdr",
+   "url": "https://github.com/herdrdev/herdr",
+   "skills": 1,
+   "installs": 74344,
+   "official": false
+  },
+  {
+   "source": "agentix-cloud/skills",
+   "url": "https://github.com/agentix-cloud/skills",
+   "skills": 1,
+   "installs": 74308,
+   "official": false
+  },
+  {
+   "source": "squirrelscan/skills",
+   "url": "https://github.com/squirrelscan/skills",
+   "skills": 1,
+   "installs": 74264,
+   "official": false
+  },
+  {
+   "source": "jakubkrehel/make-interfaces-feel-better",
+   "url": "https://github.com/jakubkrehel/make-interfaces-feel-better",
+   "skills": 1,
+   "installs": 73873,
+   "official": false
+  },
+  {
+   "source": "expo/skills",
+   "url": "https://github.com/expo/skills",
+   "skills": 1,
+   "installs": 71078,
+   "official": true
+  },
+  {
+   "source": "agent.qq.com",
+   "url": null,
+   "skills": 1,
+   "installs": 68939,
+   "official": false
+  },
+  {
+   "source": "vercel/ai",
+   "url": "https://github.com/vercel/ai",
+   "skills": 1,
+   "installs": 66625,
+   "official": true
+  },
+  {
+   "source": "google-labs-code/stitch-skills",
+   "url": "https://github.com/google-labs-code/stitch-skills",
+   "skills": 1,
+   "installs": 64992,
+   "official": true
+  },
+  {
+   "source": "addyosmani/web-quality-skills",
+   "url": "https://github.com/addyosmani/web-quality-skills",
+   "skills": 1,
+   "installs": 64827,
+   "official": false
+  },
+  {
+   "source": "msmps/opentui-skill",
+   "url": "https://github.com/msmps/opentui-skill",
+   "skills": 1,
+   "installs": 64469,
+   "official": false
+  },
+  {
+   "source": "anthropics/claude-code",
+   "url": "https://github.com/anthropics/claude-code",
+   "skills": 1,
+   "installs": 63896,
+   "official": true
+  },
+  {
+   "source": "nexscope-ai/ecommerce-skills",
+   "url": "https://github.com/nexscope-ai/ecommerce-skills",
+   "skills": 1,
+   "installs": 62901,
+   "official": false
+  },
+  {
+   "source": "cloudflare/security-audit-skill",
+   "url": "https://github.com/cloudflare/security-audit-skill",
+   "skills": 1,
+   "installs": 62566,
+   "official": true
+  },
+  {
+   "source": "insforge/insforge-skills",
+   "url": "https://github.com/insforge/insforge-skills",
+   "skills": 1,
+   "installs": 61202,
+   "official": false
+  }
+ ]
+}

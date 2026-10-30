@@ -1,6 +1,6 @@
 # 13 — Tabs on the agent panel, one per provider
 
-**Task:** `tasks/12-agent-panel-tabs.md`
+**Task:** `docs/tasks/12-agent-panel-tabs.md`
 **Completed:** 2026-09-17
 **Commit:** `7146d8d` (branch `feat/agent-panel-tabs`, 5 commits from `de8ea64`)
 **Verifier verdict:** PASS (second pass; first pass held on an open `ui-reviewer` gate, not on code)

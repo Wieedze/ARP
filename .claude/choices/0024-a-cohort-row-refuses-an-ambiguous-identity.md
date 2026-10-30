@@ -2,7 +2,7 @@
 
 **Status:** Accepted
 **Date:** 2026-09-16
-**Triggered by:** `tasks/10-agent-directory-full-cohort.md`
+**Triggered by:** `docs/tasks/10-agent-directory-full-cohort.md`
 
 ## Context
 
@@ -78,4 +78,4 @@ A row with no `ref` renders without a link and says why in place of the identity
 - Related rule: `.claude/rules/code.md`
 - Related ADR: `.claude/choices/0014-agent-identity-as-caip10-atom.md`,
   `.claude/choices/0019-erc8004-connector-surface-deviations.md`
-- Task: `tasks/10-agent-directory-full-cohort.md`
+- Task: `docs/tasks/10-agent-directory-full-cohort.md`

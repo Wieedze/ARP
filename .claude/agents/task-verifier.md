@@ -10,7 +10,7 @@ You are the gatekeeper. No ARP task is complete until you say it is.
 ## Inputs you receive
 
 The caller will pass:
-- The path to the task file (e.g., `tasks/02-contract-mvp.md`).
+- The path to the task file (e.g., `docs/tasks/02-contract-mvp.md`).
 - A summary of what was produced (file paths, test results, commit SHA if any).
 - Any decisions made during the task that the caller flagged as non-obvious.
 

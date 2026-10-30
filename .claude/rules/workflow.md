@@ -74,7 +74,7 @@ A task is **not** complete until the `task-verifier` agent has returned a pass. 
 8. **Update `.claude/STATE.md`** — the task table, and anything in "known defects" the task closed or
    discovered. `STATE.md` is the one file an agent reads to orient itself; a stale one misleads
    rather than merely lagging.
-9. **Run `bun run scripts/build-claude-index.ts`** if the task added an ADR or a post-mortem.
+9. **Run `bun run scripts/build/build-claude-index.ts`** if the task added an ADR or a post-mortem.
 
 Run `ui-reviewer` / `contract-reviewer` / `intuition-integrator` **before** `task-verifier`, not
 alongside it. The verifier's acceptance criteria include the domain reviewer's verdict, so running
@@ -106,7 +106,7 @@ Stop and ask, do not guess, when:
 - A task file contradicts an architecture doc.
 - The user's instruction would expand scope.
 - An Intuition atom schema or integration detail is ambiguous.
-- The deployment target is ambiguous (default Base Sepolia, but confirm if mainnet is implied).
+- The deployment target is ambiguous (default Intuition Testnet 13579, but confirm if mainnet is implied).
 - A rule and a task spec disagree.
 
 Ten minutes of clarification saves a day of rework. The cost of asking is near zero. The cost of guessing wrong is the cost of the rework plus the trust damage.

@@ -29,7 +29,7 @@ See `TEMPLATE.md`. Five sections:
 
 `NN-task-slug.md` where `NN` is the next sequential number and `task-slug` matches the originating task file.
 
-Example: task `tasks/02-contract-mvp.md` produces `learning/01-contract-mvp.md` (if it's the first post-mortem).
+Example: task `docs/tasks/02-contract-mvp.md` produces `learning/01-contract-mvp.md` (if it's the first post-mortem).
 
 ## Updating the rules
 

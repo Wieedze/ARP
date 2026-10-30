@@ -1,0 +1,313 @@
+import type {ToolUsage, ToolUsageEdge} from "@arp-protocol/core";
+
+/**
+ * A tool's standing, shaped for the page.
+ *
+ * The connector answers "what is on the graph"; this answers "what may be shown, and at what
+ * weight". The split matters because the second question has an answer the first does not contain:
+ * **how much an edge is worth knowing**, which `docs/14`'s ladder settles and which no amount of
+ * vault data states on its own.
+ */
+
+/**
+ * The ladder of knowledge, `docs/14_THE_WITNESS_PROBLEM.md:160-165`, verbatim in its order.
+ *
+ * `docs/14:156`: _"What the interface must never do is render these at the same weight."_ That is
+ * the whole reason this module exists rather than the page reading vault numbers directly.
+ */
+export type ProvenanceTier =
+    | "fact"
+    | "confirmed-by-both"
+    | "tool-declared"
+    | "priced-assertion"
+    | "free-assertion";
+
+/**
+ * Which rungs this data can reach **today**, and which it cannot.
+ *
+ * Only the bottom two are derivable from a `uses` edge and its vaults. The top three need
+ * information nothing in this repo reads yet:
+ *
+ * | rung                | what it would need                                                      |
+ * | ------------------- | ----------------------------------------------------------------------- |
+ * | `fact`              | a payment, an on-chain call or a delegation redemption — `docs/tasks/22`      |
+ * | `confirmed-by-both` | the tool declaring the same edge, which nothing writes                  |
+ * | `tool-declared`     | the same, from the tool's side alone                                     |
+ *
+ * They are named rather than omitted. A page that shows only what it can measure, with no sign that
+ * the scale continues above, reports a priced assertion as the best evidence that exists — which is
+ * the flattening `docs/14` warns about, arrived at from the other direction.
+ */
+export const DERIVABLE_TIERS: readonly ProvenanceTier[] = ["priced-assertion", "free-assertion"];
+
+/**
+ * The complement of {@link DERIVABLE_TIERS}, kept so a test can assert the two cover every tier.
+ *
+ * It had a second consumer — the panel's struck-through ladder — and ADR `0056` removed it, because
+ * a page listing the evidence it cannot reach is the UI arguing its own epistemology. The set stays
+ * because the exhaustiveness check is real: a new `ProvenanceTier` in neither list is a tier nothing
+ * accounts for.
+ */
+export const UNREACHABLE_TIERS: readonly ProvenanceTier[] = [
+    "fact",
+    "confirmed-by-both",
+    "tool-declared",
+];
+
+/**
+ * The rung one edge sits on.
+ *
+ * Two outcomes, because two is what the data supports. An edge with stake behind it is a priced
+ * assertion; an edge with none is, in `docs/14`'s word, **nothing** — "the one that gets mistaken
+ * for data".
+ *
+ * **Keyed on the position count, not on the assets, and that is not a stylistic choice.** Creating
+ * a triple seeds both of its vaults with `minShare`, so `total_assets` is **never zero** for an
+ * edge that exists. Measured on mainnet 1155, IPFS's seven incoming edges, 2026-10-19:
+ *
+ * ```
+ * Infura   term 1000000  vaults [(curve 1, 0 positions, 1000000)]
+ * Fleek    term 1000000  vaults [(curve 1, 0 positions, 1000000)]
+ * Relics   term 80000000001000000  vaults [(curve 1, 8 positions, 80000000001000000)]
+ * ```
+ *
+ * `1000000` wei is `getGeneralConfig().minShare`, and it is there because the triple was created,
+ * not because anyone backed it. An earlier version of this function read `totalAssets > 0n` and so
+ * called all seven edges priced — including the three `docs/tasks/23` names as the design fixture
+ * precisely because they are free. The task's warning was literal: _"if those three render like the
+ * fourth, the page has failed."_ It did, and the live gate is what caught it.
+ *
+ * A position is the honest discriminator: an account holds at most one per vault, so
+ * `positionCount > 0` means somebody actually deposited, and the dust-only vaults all report zero.
+ * See ADR `0042`.
+ */
+export function tierForEdge(edge: ToolUsageEdge): ProvenanceTier {
+    return (edge.support.positionCount ?? 0) > 0 ? "priced-assertion" : "free-assertion";
+}
+
+/**
+ * Assets far above the creation dust, with no position on the curve this read is scoped to.
+ *
+ * `getToolUsage` pairs an **all-curve** `totalAssets` with a `positionCount` scoped to one vault
+ * (`packages/protocol/src/sources/intuition/map.ts:126-137`), which are two different populations —
+ * and on mainnet **89.33% of the TRUST on `uses` edges sits on curve 2** (219.543848 of 245.776495
+ * TRUST, measured 2026-10-19 by `scripts/measure/stake-vault-placement.ts`) while the
+ * counts read curve 1. So an edge can hold real capital and report zero positions here.
+ *
+ * This said 91.6%, which is not a figure anything produces: `packages/protocol/src/tool-usage.ts:22`
+ * already carried **89%** for the same quantity, four lines above the line this deferral cites. **Live on 1 of 185 edges** today, which is latent-ish rather than widespread, and
+ * the cost of getting it wrong is printing "This is not evidence" over 4.94 TRUST.
+ *
+ * Calling such an edge `free-assertion` would be a lie, and `priced-assertion` would claim a market
+ * this read cannot see. So it is **not a rung at all** — it is `isOffCurve`, a flag beside
+ * `isContested`, which this file already documents as "not a rung — an orthogonal signal on the
+ * same edge". Carrying it as a sixth `ProvenanceTier` member forced it to pick a tone in the rung
+ * table, put a non-rung in `DERIVABLE_TIERS`, and made the sort rank it above the edges this page
+ * can actually read.
+ *
+ * **The ceiling is safe against a governance floor, not against an observation.** Creation dust is
+ * `minShare` per touched vault — 1e6 each, up to ~4e6 observed. The smallest deposit the protocol
+ * *accepts* is `getGeneralConfig().minDeposit`: **1e16 on mainnet 1155, 1e15 on testnet 13579**
+ * (`docs/15_ROADMAP.md:56`). So 1e9 sits 250× above the dust — 2.4 orders, not three — and at least
+ * seven orders below anything the protocol will take. An "observed smallest stake" can be beaten by
+ * the next deposit; a protocol floor cannot without governance moving.
+ *
+ * Those two values are a **copy** of a governance-configurable field, and `rules/portability.md`
+ * says to read such values from the chain rather than trust a copy. The copy is load-bearing only
+ * for the size of the gap, which is seven orders — it would survive the floor moving by a factor of
+ * a million. Said out loud rather than left as an unmarked hardcode.
+ *
+ * Reading `defaultCurveId` from the chain is the real fix, and `packages/protocol/src/tool-usage.ts:26`
+ * assigns it to this task. **Why it is deferred is in `docs/tasks/23`, not here** — an earlier version of
+ * this comment asserted a reason that turned out to be false, and a reason stated in two places
+ * drifts in one of them (ADR `0042`).
+ */
+const DUST_CEILING = 1_000_000_000n;
+
+/**
+ * Capital is on the term but not on the curve this read is scoped to, so the position count here is
+ * **unknown rather than zero**.
+ *
+ * One predicate per side, because deriving one and forgetting the other is the bug. The support side
+ * had this and the oppose side did not, so opposition capital on a non-default curve still read as
+ * "nobody has taken the other side" — and downstream, as "you would be the first". Reachability on
+ * the support side is 1 of 185 mainnet edges; on the oppose side it is **unmeasured**, because
+ * nothing has read the counter-vaults.
+ */
+function hasOffCurveStake(side: ToolUsageEdge["support"]): boolean {
+    return (side.positionCount ?? 0) === 0 && (side.totalAssets ?? 0n) > DUST_CEILING;
+}
+
+/** One edge, with its rung and the two sides of its market. */
+export type ToolUsageEdgeView = {
+    tripleId: string;
+    agent: ToolUsageEdge["agent"];
+    tier: ProvenanceTier;
+    supportAssets: bigint;
+    supportPositions: number;
+    opposeAssets: bigint;
+    opposePositions: number;
+    /**
+     * Capital is behind this claim on a bonding curve this read is not scoped to. Not a rung — see
+     * {@link tierForEdge}'s note. The tier stays `free-assertion`, because no position exists on
+     * the curve read; this says the page cannot see the whole market, and so no figure is shown.
+     */
+    isOffCurve: boolean;
+    /**
+     * The same thing on the counter-vault. Kept separate from {@link isOffCurve} rather than
+     * `||`-ed into it: they answer different questions, and a reader asking "can I say nobody has
+     * opposed this" must not get an answer derived from the support side.
+     */
+    isOppositionOffCurve: boolean;
+    /**
+     * Someone has staked the other way. Not a rung — an orthogonal signal on the same edge.
+     *
+     * Also keyed on positions, for the same reason: the counter-vault carries its own `minShare`
+     * from creation, so every edge on the graph has non-zero assets against it. Reading the assets
+     * marked all seven of IPFS's edges contested, which is the same defect wearing a different hat.
+     */
+    isContested: boolean;
+};
+
+export type ToolUsageView = {
+    toolAtomId: string;
+    label: string | null;
+    pinnedUri: string | null;
+    edges: ToolUsageEdgeView[];
+    totals: ToolUsage["totals"];
+    /** How many edges sit on each rung. The Ladder renders it, so the page says what it shows. */
+    tierCounts: Record<ProvenanceTier, number>;
+    /** True when no agent has declared using this tool at all. */
+    isEmpty: boolean;
+    /**
+     * True when every edge is free. The page says so rather than letting a column of zeroes read as
+     * a weak market: `docs/14` puts a free assertion at **nothing**, not at a low number.
+     */
+    isEntirelyUnpriced: boolean;
+};
+
+const emptyTierCounts = (): Record<ProvenanceTier, number> => ({
+    fact: 0,
+    "confirmed-by-both": 0,
+    "tool-declared": 0,
+    "priced-assertion": 0,
+    "free-assertion": 0,
+});
+
+/**
+ * Order: priced first, then off-curve, then free. Within a group, heaviest first.
+ *
+ * Not a ranking — `docs/tasks/23` puts composing edges into a score out of scope, and this orders rather
+ * than scores. It exists because the alternative is the graph's own order, which is arbitrary, and
+ * an arbitrary order puts a free assertion above a priced one often enough to mislead.
+ *
+ * **Grouped before weighed, and that is the fix for a live defect.** Sorting on `supportAssets`
+ * alone put the off-curve edge first, because its all-curve 4.94 TRUST outweighs the 0.08 the page
+ * can actually read — so the top row went to the one edge whose market this page cannot see. Live
+ * on 1 of 84 tool pages.
+ */
+function rankOf(edge: ToolUsageEdgeView): number {
+    if (edge.tier === "priced-assertion") return 0;
+    return edge.isOffCurve ? 1 : 2;
+}
+
+function compareEdges(a: ToolUsageEdgeView, b: ToolUsageEdgeView): number {
+    if (rankOf(a) !== rankOf(b)) return rankOf(a) - rankOf(b);
+    if (a.supportAssets !== b.supportAssets) return a.supportAssets > b.supportAssets ? -1 : 1;
+    if (a.supportPositions !== b.supportPositions) return b.supportPositions - a.supportPositions;
+    return a.tripleId.localeCompare(b.tripleId);
+}
+
+export function buildToolUsageView(usage: ToolUsage): ToolUsageView {
+    const tierCounts = emptyTierCounts();
+    const edges = usage.edges.map((edge): ToolUsageEdgeView => {
+        const tier = tierForEdge(edge);
+        tierCounts[tier] += 1;
+        const opposePositions = edge.oppose.positionCount ?? 0;
+        return {
+            tripleId: edge.tripleId,
+            agent: edge.agent,
+            tier,
+            supportAssets: edge.support.totalAssets ?? 0n,
+            supportPositions: edge.support.positionCount ?? 0,
+            opposeAssets: edge.oppose.totalAssets ?? 0n,
+            opposePositions,
+            isOffCurve: hasOffCurveStake(edge.support),
+            isOppositionOffCurve: hasOffCurveStake(edge.oppose),
+            isContested: opposePositions > 0,
+        };
+    });
+    edges.sort(compareEdges);
+
+    return {
+        toolAtomId: usage.toolAtomId,
+        label: usage.label,
+        pinnedUri: usage.pinnedUri,
+        edges,
+        totals: usage.totals,
+        tierCounts,
+        isEmpty: edges.length === 0,
+        isEntirelyUnpriced:
+            edges.length > 0 &&
+            tierCounts["priced-assertion"] === 0 &&
+            !edges.some((edge) => edge.isOffCurve),
+    };
+}
+
+/**
+ * What is on screen, in words, counted rather than implied.
+ *
+ * **Lives here and not in the page, because it has now been wrong twice.** Round 1 printed
+ * "1 priced assertion · 1 staked off-curve · 3 free assertion" — a label where a plural belonged.
+ * Round 2 fixed that and introduced a worse one: off-curve edges keep `tier === "free-assertion"`,
+ * so counting the rungs from `tierCounts` and then appending the off-curve count counted the same
+ * edge twice. On the one mainnet page where an off-curve edge exists it has exactly one edge, so
+ * the line read "1 free assertion · 1 staked off-curve" above a single row labelled
+ * `Staked off-curve` — two items for one edge, and a free assertion nowhere on the page.
+ *
+ * Both failures were pure functions of the view sitting in a `.tsx` that no test could reach. The
+ * third fix arrives with a test instead of with a third review.
+ *
+ * Plurals are built by hand: lowercasing a label does not pluralise it.
+ */
+export function describeCounts(view: ToolUsageView): string {
+    const plural = (n: number, one: string) => `${n} ${one}${n === 1 ? "" : "s"}`;
+    const offCurve = view.edges.filter((edge) => edge.isOffCurve).length;
+    const parts = DERIVABLE_TIERS.flatMap((tier) => {
+        // Off-curve edges carry the free tier, so subtract them or they are counted twice.
+        const onRung =
+            tier === "free-assertion" ? view.tierCounts[tier] - offCurve : view.tierCounts[tier];
+        return onRung > 0 ? [plural(onRung, TIER_NOUN[tier])] : [];
+    });
+    if (offCurve > 0) parts.push(`${offCurve} staked off-curve`);
+    return parts.join(" · ");
+}
+
+/** The noun for each rung, lowercase and singular. Pluralised by {@link describeCounts}. */
+const TIER_NOUN: Record<ProvenanceTier, string> = {
+    fact: "fact",
+    "confirmed-by-both": "edge confirmed by both",
+    "tool-declared": "tool-declared edge",
+    "priced-assertion": "priced assertion",
+    "free-assertion": "free assertion",
+};
+
+/**
+ * Whether this edge opens a run of its kind, so the caption prints once rather than once per row.
+ *
+ * **Keyed on what the row actually renders from**, which is the tier *and* `isOffCurve` — not on the
+ * tier alone. Off-curve shares `free-assertion`, and `rankOf` sorts it between priced and free, so
+ * keying on the tier made the first genuinely free row see the same tier above it and render with
+ * **no caption at all**. The sentence dropped is `docs/14`'s *nothing*, which `tier-scale.ts` says
+ * must never be decoration "because that is the row that gets mistaken for data".
+ *
+ * Latent rather than live when found: it needs a tool with an off-curve edge *and* a free edge, and
+ * the single off-curve atom on mainnet has one edge.
+ */
+export function opensRun(edges: readonly ToolUsageEdgeView[], index: number): boolean {
+    const edge = edges[index];
+    if (edge === undefined) return false;
+    const previous = edges[index - 1];
+    if (previous === undefined) return true;
+    return previous.tier !== edge.tier || previous.isOffCurve !== edge.isOffCurve;
+}

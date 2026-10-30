@@ -2,7 +2,7 @@
 
 **Status:** Accepted
 **Date:** 2026-09-16
-**Triggered by:** `tasks/10-agent-directory-full-cohort.md`
+**Triggered by:** `docs/tasks/10-agent-directory-full-cohort.md`
 
 ## Context
 
@@ -107,4 +107,4 @@ The UI states the scope where the numbers appear: `1 position · 2 curves`.
 - Related doc: `docs/08_ERC8004_AGENT_LAYER_OPPORTUNITY.md`
 - Related ADR: `.claude/choices/0018-trust-panel-design-and-join.md`,
   `.claude/choices/0019-erc8004-connector-surface-deviations.md`
-- Task: `tasks/10-agent-directory-full-cohort.md`
+- Task: `docs/tasks/10-agent-directory-full-cohort.md`

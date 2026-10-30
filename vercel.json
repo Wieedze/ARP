@@ -1,9 +1,0 @@
-{
-  "buildCommand": "cd sdk && bun run build && cd ../erc8004 && bun run build && cd ../app && bun run build",
-  "outputDirectory": "app/dist",
-  "installCommand": "bun install",
-  "framework": null,
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
-  ]
-}

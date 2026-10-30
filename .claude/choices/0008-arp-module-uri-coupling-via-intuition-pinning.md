@@ -2,7 +2,7 @@
 
 **Status:** Accepted
 **Date:** 2026-06-01
-**Triggered by:** Task 03 Phase B implementation. The original task spec (`tasks/03-deploy-and-seed.md`) assumed external IPFS pinning via Pinata for the JSON Schema, and a separate Intuition atom for each module's identity. The user pointed at the Intuition skill (`.claude/skills/intuition/reference/schemas.md`) which exposes a native `pinThing` GraphQL mutation. After review of the API shape, "Option A" — collapse the two URIs into one — was chosen and is now load-bearing for the rest of the protocol.
+**Triggered by:** Task 03 Phase B implementation. The original task spec (`docs/tasks/03-deploy-and-seed.md`) assumed external IPFS pinning via Pinata for the JSON Schema, and a separate Intuition atom for each module's identity. The user pointed at the Intuition skill (`.claude/skills/intuition/reference/schemas.md`) which exposes a native `pinThing` GraphQL mutation. After review of the API shape, "Option A" — collapse the two URIs into one — was chosen and is now load-bearing for the rest of the protocol.
 
 ## Context
 
@@ -41,13 +41,13 @@ The flow at deploy time (implemented in `scripts/seed.ts`):
 2. Call `ModuleRegistry.registerModule(name, "solidity-audit", URI, description)` on-chain — `URI` lands in the `schemaURI` field.
 3. Call `MultiVault.createAtoms([stringToHex(URI)], [atomCost])` — the atom data is the same URI, so the atom's identity URI matches `schemaURI`.
 
-Verification: the module record's `schemaURI` and the corresponding atom's URI in `deployments/13579.json` are byte-identical.
+Verification: the module record's `schemaURI` and the corresponding atom's URI in `data/deployments/13579.json` are byte-identical.
 
 ## Alternatives considered
 
 - **Pin the JSON Schema to Pinata, separate Intuition atom URI** (the original spec). Rejected — new external dependency (Pinata JWT), new env var, two URIs to keep in sync, no real consumer of a pinned-schema-vs-pinned-Thing distinction in the MVP.
 - **Pin JSON Schema via Intuition `pinThing` by stuffing the schema into `description`**. Rejected — abuses the field's semantic (it's for human-readable text), hits the eventual length limit, and breaks the GraphQL contract semantically.
-- **No on-chain `schemaURI` at all** (move it to off-chain only). Rejected — the contract surface includes `schemaURI` per `tasks/02-contract-mvp.md` and `docs/02_ARCHITECTURE.md`; removing it would be a real spec change.
+- **No on-chain `schemaURI` at all** (move it to off-chain only). Rejected — the contract surface includes `schemaURI` per `docs/tasks/02-contract-mvp.md` and `docs/02_ARCHITECTURE.md`; removing it would be a real spec change.
 - **Pin the JSON Schema separately via Intuition's GraphQL by using a different mutation** (none exists for free-form data). Rejected — no such mutation.
 
 ## Consequences
@@ -74,6 +74,6 @@ Verification: the module record's `schemaURI` and the corresponding atom's URI i
 - Vendored procedure: `.claude/skills/intuition/operations/create-atoms.md` (atom creation via `MultiVault.createAtoms`).
 - Implementation: `scripts/seed.ts`.
 - Dev reference (not pinned): `schemas/solidity-audit.v1.json`.
-- Deployment record: `deployments/13579.json` → `arp.modules[0].schemaURI == arp.intuitionAtoms[0].uri`.
+- Deployment record: `data/deployments/13579.json` → `arp.modules[0].schemaURI == arp.intuitionAtoms[0].uri`.
 - Related ADR: `0003-metamask-skills-vendored-locally.md` (skills-as-procedural-knowledge pattern).
 - Post-mortem: `.claude/learning/04-deploy-and-seed.md`.

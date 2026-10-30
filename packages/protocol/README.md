@@ -1,0 +1,458 @@
+# `@arp-protocol/core`
+
+A read-only connector for the ERC-8004 agent layer.
+
+Give it an ERC-8004 identity — `(chainId, tokenId)` — and it returns one merged profile: every trust
+provider's assessment with its **EIP-712 signature actually verified** and its **declared freshness
+window actually enforced**, the agent's capability declarations, and the live market on each provider
+claim.
+
+Providers publish signed assessment documents and declare how long they stay valid. Consumers read
+the number off a URL and trust it. This package checks both, and reports what it could not check
+rather than rounding it up to a pass.
+
+## Install
+
+```sh
+bun add @arp-protocol/core
+```
+
+`viem` is the only runtime dependency. `@metamask/smart-accounts-kit` is needed **only** for
+delegated signing (see below) and is imported lazily, so a direct-mode consumer never loads it.
+
+## The one call
+
+```ts
+import {createErc8004Client, getAgentProfile} from "@arp-protocol/core";
+
+const client = createErc8004Client();
+const profile = await getAgentProfile(client, {chainId: 8453, tokenId: "2340"});
+
+for (const entry of profile.assessments) {
+    console.log(
+        entry.claim.provider.name,
+        entry.signature.status, // "verified" | "mismatch" | "unverified"
+        entry.freshness.status, // "fresh" | "stale" | "unknown"
+        entry.market?.support.positionCount, // distinct stakers — see the warning below
+    );
+}
+```
+
+> **On market numbers.** `positionCount` is the field to lead with: these vaults typically hold one
+> or two positions, so a market cap shown without its staker count misrepresents the market.
+>
+> `support.totalAssets` is the **term**-level total, not the vault balance, and the two differ by
+> roughly three orders of magnitude — 0.988 against 0.0009875 TRUST on a live claim measured
+> 2026-09-16. If you need the vault balance, read `getVault(termId, curveId)` on the MultiVault
+> directly; this package deliberately does not, because it is read-only and holds no chain client.
+> ARP's own panel reads the chain for exactly this reason.
+
+`registry` defaults to the ERC-8004 Identity Registry at
+`0x8004A169FB4a3325136EB29fA0ceB6D2e539a432`, which is deployed at the same address on Base, BSC and
+Ethereum.
+
+## Listing the cohort
+
+Everything above is keyed by an identity. `listAgents` is the read for when you do not have one yet.
+
+```ts
+import {createErc8004Client, listAgents} from "@arp-protocol/core";
+
+const client = createErc8004Client();
+const page = await listAgents(client, {order: "evidence-quantity", limit: 25, offset: 0});
+
+console.log(page.total); // ~28,700 on mainnet — the graph's count, not page.agents.length
+for (const agent of page.agents) {
+    console.log(
+        agent.metadata.name,
+        agent.metadata.isFallback, // `Agent 8453:6649` is the indexer's stand-in, not a name
+        agent.statementCount, // how many statements exist about it
+        agent.market?.totalMarketCap,
+        agent.market?.positionCount, // always read this beside the cap
+        agent.ref?.tokenId, // from the `same as` edge, never parsed from the label
+    );
+}
+```
+
+Two orders, and only two:
+
+- `evidence-quantity` — how many statements the graph holds about the agent. The mirrored shell gives
+  every agent exactly five, so anything above five is somebody having bothered.
+- `economic-conviction` — what is staked on the agent's own atom.
+
+**There is no order by score, and one should not be added.** A provider's score is the claim this
+package exists to qualify; making it the ranking key would undo that in a single control.
+
+Some caveats that are the point rather than footnotes:
+
+- **The page is the source's, not yours.** It is ordered and paged by the indexer and returned
+  untouched. Re-ranking the union of several pages client-side makes the order a property of the
+  window instead of the cohort, and presents the result as if it were the latter.
+- **`market.totalMarketCap` and `market.positionCount` are both summed across every bonding curve**,
+  deliberately, so the two figures describe the same thing. That makes `positionCount` a count of
+  positions rather than of distinct stakers — an account staked on two curves counts twice. The
+  per-vault `MarketSide.positionCount` is the one that equals the distinct-staker count.
+- **`ref` is `null` when the identity is not unambiguous.** Clawnch's atom carries a second `same as`
+  edge to `did:web:clawn.ch`, which is ignored; one mainnet atom claims sixteen ERC-8004 token ids,
+  and that one gets `isIdentityAmbiguous` and no `ref` rather than an arbitrary pick.
+- **`listAgents` is optional on `TrustSource` and only Intuition implements it.** A registry contract
+  cannot be enumerated, so a registry-only client raises `NoListingSourceError` instead of returning
+  an empty page that would read as "there are no agents".
+- **The listing has its own deadline**, `DEFAULT_LIST_TIMEOUT_MS` (30s), separate from the 10s every
+  other read gets. Ordering the whole cohort is a different kind of read, and this endpoint's latency
+  on it is wildly variable: measured at 0.78s, at 9.1s, and not returning inside 25s — on the same
+  query, within an hour, with both orders affected alike. Override with `intuitionSource({listTimeoutMs})`.
+  When every listing source fails, `ListAgentsFailedError.timedOut` says whether it was a deadline
+  (worth retrying) or an answer (not).
+
+## The pieces, separately
+
+Everything is composable and keyed by the ERC-8004 identity. No public signature mentions an
+Intuition term id.
+
+```ts
+resolveAgent(client, ref); // AgentIdentity | null — null means "not there", not "error"
+getAssessments(client, ref); // ProviderClaim[]
+getCapabilities(client, ref); // Capabilities[] — one per source that answered
+getMarkets(client, ref); // ClaimMarket[]
+marketCapableSources(client); // which sources can price a claim at all
+listAgents(client, options); // AgentPage — one window onto the cohort
+listingCapableSources(client); // which sources can enumerate agents at all
+```
+
+Four functions are pure — no client, no network, no configuration. **A consumer who wants nothing
+from ARP except the ability to check a provider's signature can import just that.**
+
+```ts
+import {
+    canonicalizeRfc8785,
+    verifyAssessmentSignature,
+    assessFreshness,
+    fetchAssessment,
+} from "@arp-protocol/core";
+
+const document = await (await fetch(resolverUrl)).json();
+const verdict = await verifyAssessmentSignature(document);
+const freshness = assessFreshness(document);
+```
+
+## Running it without Intuition
+
+Intuition is _a_ source, not _the_ source. Drop it entirely:
+
+```ts
+import {createErc8004Client, erc8004RegistrySource, getAgentProfile} from "@arp-protocol/core";
+
+const client = createErc8004Client({sources: [erc8004RegistrySource()]});
+const profile = await getAgentProfile(client, {chainId: 56, tokenId: "17"});
+```
+
+This reads the ERC-8004 Identity Registry contract directly on Base (8453), BSC (56) and Ethereum
+(1). It needs no graph, no API key and no TRUST. It reaches the roughly 73,000 agents on BSC and
+Ethereum that the Intuition graph — which mirrors Base only — cannot see.
+
+It answers narrowly and says so: identity, owner, and the raw `registrationFile` URI. It has no trust
+claims, no capabilities, and no `getMarkets`. `getMarkets` is optional on `TrustSource` for exactly
+this reason — a source that cannot see stake declines to answer, instead of returning `[]` and
+letting you read "nobody is backing this claim" into "we cannot see backing".
+
+Custom sources implement `TrustSource` and slot into the `sources` array in whatever order you want.
+Where two sources disagree on a field, both answers are kept in `profile.conflicts`; no winner is
+picked for you.
+
+## What it cannot verify
+
+- **Most documents are not signed at all.** Of the providers live on mainnet today, Deep3 Labs signs
+  and AsterPay KYA does not. An unsigned document gets `unverified`, never `verified`.
+- **Provider identity is unproven.** Anyone can publish an assessment under any provider name. The
+  only real gate today is control of the resolver URL. Nothing here proves the address writing a
+  provider's graph edges is one that provider controls.
+- **`verified` means one thing only**: the EIP-712 signature recovers to the address the document
+  itself names as the signer. It says nothing about whether the score is honest, the method sound, or
+  the signer trustworthy.
+- **The signed-value mapping is empirical, not specified.** The signed struct's field _names_ are
+  published in the document; the _values_ behind `provider` and `agent` are not specified anywhere.
+  The mapping this package uses — `provider.id` and the CAIP-19 asset id — was established by
+  recovering Deep3's declared signer from its live documents, and is marked `confirmed` on that
+  basis. A document whose struct shape does not match any confirmed strategy gets `unverified` with
+  the attempts recorded, never a guess.
+- **`mismatch` is reserved for real red flags, and is scoped to providers we have studied.** A
+  strategy is confirmed _against a provider_, never universally: `providerIdCaip19Strategy` carries
+  `confirmedProviderIds: ["deep3-labs"]` because that is whose declared signer it was actually shown
+  to recover. `mismatch` is returned only when a strategy confirmed for _this document's_ provider
+  applied cleanly and recovered a _different_ address.
+
+    The consequence is deliberate and worth stating plainly: **a provider outside that list gets
+    `unverified` even when their document is genuinely tampered.** Another provider can publish the
+    same three field names and encode `agent` differently, in which case our reconstruction recovers a
+    meaningless address — and publishing `mismatch` on that basis would be a public accusation against
+    someone who did nothing wrong. We trade a true positive about a stranger for never crying wolf
+    about one. Confirming a provider means recovering their own declared signer from their own live
+    documents and adding their `provider.id` to that list; nothing less.
+
+    `verified` is _not_ gated this way. Vouching for a signature that demonstrably checks out costs
+    nobody anything, so any provider can reach it on an exact match.
+
+- **Capabilities are relayed, never inferred.** Nothing is read out of the registration file yet; the
+  URI is exposed and that is all.
+- **Provider identity in the graph is not checked against the document.** Nothing verifies that the
+  `provider.id` inside a document matches the provider atom whose edge pointed us at it. An
+  impersonator who copies a known `provider.id` will get `mismatch` (which is the intent), but the
+  graph-side binding is unproven either way.
+- **No caching.** Every call is a live read, and each source method runs its own preflight, so a full
+  profile is several round trips. If that becomes a problem it is a measured follow-up, not a
+  guess-driven optimisation.
+
+## Predicate resolution
+
+No predicate is ever resolved by label. On mainnet `use`, `implement`, `has tag` and `Base` each
+resolve to several atoms, and `has trust provider` resolves to two — picking the first match reads a
+different graph than the one the ecosystem writes to. Every term id is frozen in
+`src/sources/intuition/terms.ts` with its source: published in the Intuition partner guide, or
+resolved once with an explicit zero/multiple-match check whose result and date are recorded inline.
+
+## Tests
+
+```sh
+bun run test         # hermetic: recorded fixtures, no network
+bun run build        # ESM + .d.ts into dist/
+bun run lint         # tsc --noEmit
+```
+
+> **`bun run build` is a precondition for every consumer.** This package's `exports` point at
+> `dist/`, which is gitignored, so anything importing `@arp-protocol/core` — an app, a script, a
+> one-off probe — reads whatever was last built. A stale `dist/` fails _silently_ and plausibly: it
+> once reported agents with zero trust providers, which looked exactly like a regression in the
+> connector rather than an old build. `apps/web/`'s `dev`, `build` and `test` scripts run this build
+> first for that reason. A standalone script has to do it itself.
+
+Fixtures are real responses recorded from mainnet on 2026-09-16 — three live agents, three cohort
+pages, and four live provider documents, including one provider whose advertised resolver URL 404s. Mocking sits at the
+network boundary only, so the GraphQL transport, the document narrowing and the signature check all
+run for real.
+
+One live smoke test is opt-in:
+
+```sh
+ERC8004_LIVE=1 bun run test
+```
+
+It resolves a real agent against `https://mainnet.intuition.sh/v1/graphql`, re-verifies a live
+signature, and reads a page of the cohort in both orders on a deliberately generous deadline — it
+asserts that the _result_ is correct, never that it arrived quickly. Latency is printed by a separate
+observation that cannot fail the suite, because a test that fails on somebody else's p95 trains a
+reader to ignore it. It catches indexer schema drift, which
+recorded fixtures cannot catch by construction — a fixture answers whatever it is asked, so a query
+whose _variable declarations_ the indexer rejects passes every hermetic test and fails in production.
+That happened once already, to the market read's `$curveId`.
+
+## Declaring what your agent used
+
+The other half: an agent says which tools it used, and puts TRUST behind the claim. The tool gains
+reputation, and so does the agent.
+
+**What you need: a funded wallet and an ERC-8004 identity.** No API key, no account with anyone, no
+relationship with ARP. A tool's atom is derived from its URI and your identity atom already exists
+if your agent is in the Base mirror, so nothing has to be pinned.
+
+**This package prepares the calls. It never signs them and never sends them.** You get a list of
+`{to, value, data, why}` and sign it with your own key. ARP holds no key and has no send path, so it
+cannot spend your TRUST even by mistake.
+
+```ts
+import {
+    multiVaultReads,
+    prepareDeclareUsed,
+    prepareStakeOnUsed,
+    resolveDeclarationSubject,
+} from "@arp-protocol/core";
+
+// 1. The subject of the claim: your agent's identity atom, resolved from its ERC-8004 token.
+const subject = await resolveDeclarationSubject({agent: {chainId: 8453, tokenId: "1380"}});
+
+// 2. A reader for the chain you are writing to. Addresses differ per chain — pass yours.
+const reads = multiVaultReads({
+    address: "0x6E35cF57A41fA15eA0EaE9C33e751b01A784Fe7e", // Intuition MultiVault, chain 1155
+    chainId: 1155,
+    rpcUrl: "https://rpc.intuition.systems/http",
+});
+
+// 3. The plan. Nothing has happened yet.
+const plan = await prepareDeclareUsed({
+    subject,
+    tools: ["ipfs://bafkrei…", "https://tools.example.org/semgrep.json"],
+    reads,
+    // Needed whenever a tool is an https:// endpoint — see "Which atom a tool gets" below.
+    lookup: intuitionToolAtomLookup({graphqlUrl}),
+});
+
+console.log(plan.totalValue); // what signing this will cost you, in wei
+
+for (const call of plan.calls) {
+    // Check the chain on EVERY call, not once on the plan. Each MultiVault is codeless on the
+    // other chain, and a value-bearing call to a codeless address does not revert — it is a plain
+    // transfer that succeeds. Signing a 13579 plan against 1155 loses the fee with no error.
+    if (call.chainId !== (await wallet.getChainId())) throw new Error("wrong chain");
+
+    const hash = await wallet.sendTransaction({
+        to: call.to,
+        value: call.value,
+        data: call.data,
+    }); // your key
+    // Wait for the receipt before the next call. `plan.calls` is ordered because an atom must
+    // exist before the edge that references it, and `sendTransaction` resolves on the hash, not
+    // on inclusion — so firing them without waiting reverts the create-triple.
+    await publicClient.waitForTransactionReceipt({hash});
+}
+```
+
+`plan.tools` says which ids already existed, so running it twice is visibly a no-op rather than a
+silent one.
+
+Then put TRUST behind it. Declaring and staking are separate transactions on purpose: the
+declaration is a statement, the deposit is what makes it cost something.
+
+**Declaring alone leaves an edge with no position on it, and that matters more than it sounds.**
+`createTriples` is paid with `assets = tripleCost`, and the cost is deducted in full — measured on
+mainnet, `getTripleCost()` is `1e17 + 2e6` against a `tripleCreationProtocolFee` of `1e17` and two
+`minShare`s of `1e6`, so the remainder available to deposit is **zero**. The declarer takes no
+position on the edge it just created. Any reader filtering on who stands behind an edge will skip
+it, including this package's own `getToolUsage({attestedBy})`. So a declare-only run spends a
+non-recoverable fee on a claim nobody is backing — including you. Stake, or expect the edge to read
+as unbacked.
+
+```ts
+const stake = await prepareStakeOnUsed({
+    targets: plan.tools.map((tool) => ({tripleId: tool.tripleId, amount: 10_000_000_000_000_000n})),
+    receiver: myAddress, // who holds the position
+    reads,
+});
+```
+
+`stake.minDeposit` is the protocol's floor on that chain, read per plan — **1e16 (0.01 TRUST) on
+mainnet 1155 against 1e15 (0.001) on testnet 13579**, so an amount tuned on testnet is a tenth of
+what mainnet accepts. An amount below it is refused with `BelowMinDepositError` rather than sent.
+
+**The deposit lands on the edge, not on the tool's atom.** The edge is the claim _you_ made, so a
+reader can attribute the position back to you, and it is the vault a tool-reputation read prices. The
+atom's vault is the market on the tool itself, open to anyone for any reason — on Intuition mainnet on
+2026-10-19, 74 of the 185 existing `uses` edges had stake only there, where no reader of the edge can
+see it (`scripts/measure/stake-vault-placement.ts`).
+
+**An earlier version of this paragraph justified the edge by its counter-vault** — "anyone can take
+the other side". The counter-vault is real and costs what agreement costs, but it is all but unused:
+measured 2026-10-21 on the same chain, **1** of those 185 edges has ever been contradicted and 969 of
+285,775 triples chain-wide (`scripts/measure/counter-side-usage.ts`). ADR `0056` acts on that for
+ARP's own surfaces — the edge is created rather than staked on there, and the market is on the atoms.
+This planner still offers the edge deposit, because an agent that wants to put more behind its own
+attributed claim is not wrong to; what changed is the reason given for it.
+
+### Which atom a tool gets
+
+For a **content address** — `ipfs://`, `ar://` — the atom id derives from the URI, because the URI
+_is_ the pinned document. Nothing else is needed.
+
+For an **`https://` endpoint** it is not that simple, and getting it wrong is permanent. Measured on
+mainnet over the 84 tool atoms on `uses` edges (`scripts/measure/tool-atom-shape.ts`): **78 are
+`ipfs://`** and 77 of those resolve a pinned Thing with metadata; the only two raw-URL atoms in the whole set are `schema.org` vocabulary
+terms, not tools. So minting an atom straight from an `https://` URL puts the tool on an id with no
+metadata, beside whatever atom it really has — and the tool's reputation splits across both, with
+no way to merge them.
+
+So a URL gets a **Thing derived from the URL itself**, every field a pure function of it
+(`normaliseToolUrl` + `toolThing`, ADR `0054`). Same URL in, same document, same CID, same atom id —
+on any machine, with no credential and no network. The free-text `name` is what forks an atom, and
+removing the field removes the fork. Measured on mainnet 2026-10-21 over all 90,608 atoms whose
+Thing carries a URL (`scripts/measure/url-atom-fragmentation.ts`): 3,256 URLs are held by more than
+one atom, and **2,022 atoms are in excess of the names present** — they share both a URL and a name
+with another atom, which nothing but duplication explains. `https://trenches.bid` has **53 atoms all
+named "Clawlett"**; `https://github.com` has 5, labelled "GitHub" twice and "github.com" three times.
+
+```ts
+import {normaliseToolUrl, toolAtomUri} from "@arp-protocol/core";
+
+normaliseToolUrl("http://www.github.com/crytic/slither/#readme");
+// "https://github.com/crytic/slither"
+toolAtomUri("github.com/crytic/slither");
+// "ipfs://bafkreidf2beugrdbzvidlwibi46fhyanrh7v3noaucjahsllu2xjqtas44"
+```
+
+Pinning that document is a **separate step** — `bun run scripts/seed/pin-tool.ts <url>`. It makes the atom
+read as a name instead of a hash, because Intuition's indexer resolves `value.thing` from the CID. It
+is not needed to know the id, to plan, to create, or to stake.
+
+Reusing an atom that **already exists** is still preferred over minting a derived one. Pass a
+`lookup`:
+
+```ts
+import {intuitionToolAtomLookup} from "@arp-protocol/core";
+
+const lookup = intuitionToolAtomLookup({graphqlUrl: "https://mainnet.intuition.sh/v1/graphql"});
+```
+
+It is a graph read. **No API key** — the pinning credential is for _minting_ an atom, which this
+never does. Then:
+
+Both the raw and the normalised spelling are searched, because an atom carries whatever URL its
+creator typed. Then:
+
+- **one match** → that atom is used as the object, `atomSource` is `existing-thing`, and no atom is
+  created.
+- **no match** → the plan derives the canonical Thing, `atomSource` is `derived-thing`, and
+  `plannedTool.pinDocument` carries the exact bytes to pin.
+- **several matches** → `AmbiguousToolAtomError`, and the planner refuses. `https://github.com`
+  resolves to **five** atoms today; picking one of them for you would write a permanent edge onto an
+  arbitrary id. Pass the `ipfs://` URI of the atom you mean.
+
+A URI that is neither a content address nor an http(s) URL — a `did:`, an `npm:` specifier — is the
+one case left that mints a bare URI atom, and `plannedTool.bareUrlWarning` says so before you sign.
+
+### What it costs
+
+Read from the chain on every plan, never hardcoded, because it is governance-configurable and
+differs by two orders of magnitude between chains. Measured 2026-10-19:
+
+| chain           | `getAtomCost()` | `getTripleCost()` |
+| --------------- | --------------- | ----------------- |
+| Intuition 1155  | 0.100000000001  | 0.100000000002    |
+| Intuition 13579 | 0.001000000001  | 0.001000000002    |
+
+Creating a term is a **fee** — it does not come back. A deposit is a position, and it does. Check
+`plan.totalValue` before you sign.
+
+### Two ways to sign
+
+**Direct** — your agent's wallet signs the calls as they come, and its own TRUST is spent. Minimal
+friction, and the way to start.
+
+**Delegated** — your operator signs one delegation up front, with caveats bounding what the agent
+may spend per period, and the runtime redeems against it. The delegator's TRUST is spent, within the
+bound the operator set.
+
+```ts
+import {toDelegatedCalls} from "@arp-protocol/core";
+
+const delegated = await toDelegatedCalls({
+    calls: plan.calls,
+    delegations: signedDelegation, // or [leaf, …, root] for a chain
+    delegationManager: "0xdb9B1e94B5b69Df7e401DDbedE43491141047dB3",
+});
+// delegated.calls each send 0 — a redemption spends the DELEGATOR's balance.
+// delegated.delegatorValue is what the delegator actually spends.
+```
+
+Delegated mode needs `@metamask/smart-accounts-kit` installed; direct mode does not, and the import
+is lazy so you only pay for it if you use it. One redemption per call, never a batch — the caveat
+enforcers reject batch execution modes, which is the whole reason they can bound a spend.
+
+The guard rail is not the price of entry: you can start direct and add the delegation later without
+changing anything else.
+
+## Never signs, never sends
+
+No wallet client, no private key, no send path anywhere in this package. Every read is
+unauthenticated, and the write half returns unsigned calls for your own key.
+
+This used to read "read-only throughout, no write path of any kind", which stopped being true when
+the planners landed. The invariant that matters is narrower and unchanged: nothing here can move
+your funds.

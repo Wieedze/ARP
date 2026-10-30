@@ -1,0 +1,50 @@
+{
+  "name": "@arp/app",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "bun run --cwd ../../packages/protocol build && vite",
+    "build": "bun run --cwd ../../packages/protocol build && tsc -b && vite build",
+    "lint": "eslint .",
+    "preview": "vite preview",
+    "test": "bun run --cwd ../../packages/protocol build && vitest run",
+    "test:watch": "bun run --cwd ../../packages/protocol build && vitest",
+    "check:tokens": "bun run check-css-tokens.ts",
+    "check:contrast": "bun run check-contrast.ts"
+  },
+  "dependencies": {
+    "@arp-protocol/core": "^0.0.1",
+    "@metamask/delegation-core": "^2.2.1",
+    "@metamask/delegation-deployments": "^1.4.0",
+    "@metamask/smart-accounts-kit": "^1.6.0",
+    "@tanstack/react-query": "^5.100.1",
+    "@wagmi/core": "^3.1.0",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5",
+    "react-router-dom": "^7.16.0",
+    "viem": "2.52.0",
+    "wagmi": "^3.6.4"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@tailwindcss/vite": "^4.2.4",
+    "@testing-library/jest-dom": "^7.0.1",
+    "@testing-library/react": "^16.3.3",
+    "@testing-library/user-event": "^14.6.8",
+    "@types/node": "^24.12.2",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.1",
+    "eslint": "^10.2.1",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.2",
+    "globals": "^17.5.0",
+    "happy-dom": "^21.0.4",
+    "tailwindcss": "^4.2.4",
+    "typescript": "~6.0.2",
+    "typescript-eslint": "^8.58.2",
+    "vite": "^8.0.10",
+    "vitest": "^4.1.8"
+  }
+}

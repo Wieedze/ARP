@@ -16,7 +16,7 @@ The caller passes:
 ## Skills to load
 
 - Local (vendored): `.claude/skills/intuition/SKILL.md` + the `operations/` and `reference/` subdirs — the authoritative procedural guide (canonical V2 ABIs, addresses, encoding patterns). Read the SKILL.md fully, then load the operation files for the specific task (atoms, triples, deposit, redeem, etc.).
-- Local: `.claude/skills/arp/SKILL.md` — ARP-specific Intuition patterns (especially the "Intuition atom coupling" section).
+- Local: `.claude/skills/arp-contributing/SKILL.md` — ARP-specific Intuition patterns (especially the "Intuition atom coupling" section).
 - Project: `docs/02_ARCHITECTURE.md` — locked decisions on the on-chain ↔ Intuition boundary.
 
 ## Procedure

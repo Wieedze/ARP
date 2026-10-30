@@ -1,6 +1,6 @@
 # 12 — Import an existing ERC-8004 agent
 
-**Task:** `tasks/11-import-existing-erc8004-agent.md`
+**Task:** `docs/tasks/11-import-existing-erc8004-agent.md`
 **Completed:** 2026-09-16
 **Commit:** `a39a914` (branch `feat/import-erc8004-agent`, 7 commits from `f72d4d0`)
 **Verifier verdict:** PASS

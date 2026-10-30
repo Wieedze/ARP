@@ -1,0 +1,148 @@
+{
+ "measuredAt": "2026-10-29T22:45:45.229Z",
+ "question": "Every host the node names in source, and every fetch call site. `docs/22` quotes this rather than a hand-maintained count, because that count was wrong twice.",
+ "limits": "Text, not execution. A LITERAL host is one the source names; a BUILT url is assembled from a value at runtime and this cannot say what the value will be — which is why the built ones are the ones that carry a guard. `modules` is hand-maintained and is what this cannot check. A literal is not necessarily a fetch target either — a host in a log line or a user-agent string is a literal and is fetched by nobody, so read `literalHosts` against `fetchCallSites` rather than as a list of destinations. And `fetchCallSites` is deliberately OVER-inclusive: a definition, or the stdio loop calling the node's own handler, appears here too. An enumeration written to carry a security claim should err that way — a site it lists and should not is a reader's minute, and a site it misses is the claim being false.",
+ "notLiterals": "The Intuition graph and RPC are absent from `literalHosts` BECAUSE they are config — read from data/deployments/<chainId>.json or INTUITION_GRAPHQL_URL / INTUITION_RPC_URL at startup. Their absence here is correct and is not their absence from the node. Two more hosts are reachable and are not literals either, by design: the url a caller passes to arp_probe_endpoint, and the registrationFile out of an ERC-8004 tokenURI read through a registry whose address the caller supplies. Both go through `fetchableDocumentUrl` or `privateProbeTarget` first.",
+ "modules": [
+  "scripts/arp-mcp-server.ts",
+  "scripts/arp-content.ts",
+  "scripts/arp-mcp-tools.ts",
+  "packages/protocol/src/content-path.ts",
+  "packages/protocol/src/verify/probe.ts",
+  "packages/protocol/src/http.ts"
+ ],
+ "unread": [],
+ "counts": {
+  "modules": 6,
+  "distinctLiteralHosts": 6,
+  "literalSites": 6,
+  "fetchCallSites": 9,
+  "outboundFetchCallSites": 6,
+  "oursAmongThem": 0
+ },
+ "literalHosts": [
+  {
+   "host": "api.github.com",
+   "sites": [
+    {
+     "file": "scripts/arp-content.ts",
+     "line": 195,
+     "kind": "outbound",
+     "text": "const response = await fetch(`https://api.github.com/repos/${repo}/git/trees/HEAD?recursive=1`, {"
+    }
+   ]
+  },
+  {
+   "host": "github.com",
+   "sites": [
+    {
+     "file": "packages/protocol/src/verify/probe.ts",
+     "line": 8,
+     "kind": "outbound",
+     "text": "export const DEFAULT_USER_AGENT = \"ARP-verifier/0.1 (+https://github.com/Wieedze/ARP)\";"
+    }
+   ]
+  },
+  {
+   "host": "ipfs.io",
+   "sites": [
+    {
+     "file": "packages/protocol/src/verify/probe.ts",
+     "line": 36,
+     "kind": "outbound",
+     "text": "export const IPFS_GATEWAY = \"https://ipfs.io/ipfs/\";"
+    }
+   ]
+  },
+  {
+   "host": "localhost:",
+   "sites": [
+    {
+     "file": "scripts/arp-mcp-server.ts",
+     "line": 1677,
+     "kind": "outbound",
+     "text": "log(`ARP MCP node — ${stdio ? 'stdio' : `http://localhost:${PORT}`}`);"
+    }
+   ]
+  },
+  {
+   "host": "raw.githubusercontent.com",
+   "sites": [
+    {
+     "file": "packages/protocol/src/content-path.ts",
+     "line": 181,
+     "kind": "outbound",
+     "text": "return `https://raw.githubusercontent.com/${ref.repo}/${commit}/${encoded}`;"
+    }
+   ]
+  },
+  {
+   "host": "stdio",
+   "sites": [
+    {
+     "file": "scripts/arp-mcp-server.ts",
+     "line": 1660,
+     "kind": "outbound",
+     "text": "new Request(`http://stdio/`, {"
+    }
+   ]
+  }
+ ],
+ "fetchCallSites": [
+  {
+   "file": "scripts/arp-mcp-server.ts",
+   "line": 916,
+   "kind": "outbound",
+   "text": "let response = await fetch(url, {"
+  },
+  {
+   "file": "scripts/arp-mcp-server.ts",
+   "line": 941,
+   "kind": "outbound",
+   "text": "response = await fetch(url, {"
+  },
+  {
+   "file": "scripts/arp-mcp-server.ts",
+   "line": 1560,
+   "kind": "inbound",
+   "text": "async fetch(request: Request) {"
+  },
+  {
+   "file": "scripts/arp-mcp-server.ts",
+   "line": 1659,
+   "kind": "inbound",
+   "text": "const response = await handler.fetch("
+  },
+  {
+   "file": "scripts/arp-content.ts",
+   "line": 195,
+   "kind": "outbound",
+   "text": "const response = await fetch(`https://api.github.com/repos/${repo}/git/trees/HEAD?recursive=1`, {"
+  },
+  {
+   "file": "scripts/arp-content.ts",
+   "line": 214,
+   "kind": "outbound",
+   "text": "const response = await fetch(url, { signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });"
+  },
+  {
+   "file": "packages/protocol/src/verify/probe.ts",
+   "line": 268,
+   "kind": "outbound",
+   "text": "const response = await doFetch(request.url, {"
+  },
+  {
+   "file": "packages/protocol/src/http.ts",
+   "line": 72,
+   "kind": "definition",
+   "text": "export function defaultFetch(): FetchLike {"
+  },
+  {
+   "file": "packages/protocol/src/http.ts",
+   "line": 78,
+   "kind": "outbound",
+   "text": "return (input, init) => globalThis.fetch(input, init);"
+  }
+ ],
+ "oursAmongThem": []
+}

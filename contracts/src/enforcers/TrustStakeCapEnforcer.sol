@@ -18,7 +18,7 @@ import {ModeCode} from "delegation-framework/utils/Types.sol";
 ///         (or different delegators sharing the same agent) do not interfere.
 ///         Target and calldata semantics are ignored — only the `value`
 ///         field of the execution matters. Compose with other enforcers
-///         (`AllowedTargetsEnforcer`, `DomainScopeEnforcer`, etc.) to bound
+///         (`AllowedTargetsEnforcer`, `AllowedMethodsEnforcer`, etc.) to bound
 ///         the action's shape.
 ///
 ///         `block.timestamp` is the rolling-window clock. Miner manipulation

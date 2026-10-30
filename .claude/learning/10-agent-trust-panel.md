@@ -1,6 +1,6 @@
 # 10 — The agent trust panel, with a live mainnet stake control
 
-**Task:** `tasks/08-agent-trust-panel.md`
+**Task:** `docs/tasks/08-agent-trust-panel.md`
 **Completed:** 2026-09-16
 **Commit:** `b8a63ee` (branch `feat/agent-trust-panel`, 9 commits from `9c60ef6`)
 **Verifier verdict:** PASS (second pass; first pass failed on dead surface)
@@ -9,7 +9,7 @@
 
 - `app/src/services/erc8004-connector.ts` — the app's single `Erc8004Client`, pinned to the Intuition **mainnet** indexer. Never `deployments.chain.graphqlUrl`.
 - `app/src/services/agent-trust.ts` — `AgentProfile` → `TrustPanelView`. Owns the two-edge join (`has trust provider` × `has trust assessment`) and the evidence-weight bands.
-- `app/src/services/trust-stake.ts` — the whole staking surface: session reads, `previewDeposit` quoting, `deriveMinShares`, `assertMainnetWallet`, `simulateStake`, `submitStake`. The seven ADR-0017 safeguards are numbered in its header and each maps to a named function.
+- `app/src/services/trust-stake.ts` — the whole staking surface: session reads, `previewDeposit` quoting, `deriveMinShares`, ~~`assertMainnetWallet`~~ (renamed `assertWalletOnChain` on 2026-10-27, ADR `0061` — the chain is a parameter now), `simulateStake`, `submitStake`. The seven ADR-0017 safeguards are numbered in its header and each maps to a named function.
 - `app/src/services/trust-format.ts` — freshness phrasing, TRUST amounts, distinct-staker copy, fetch-error sentences. Pure, no clock of its own.
 - `app/src/hooks/{use-agent-profile,use-stake-session,use-claim-vaults,use-stake-actions}.ts` — lifecycle only. `use-stake-actions` returns callbacks, deliberately not a mutation.
 - `app/src/pages/AgentTrustPanel.tsx` — `/agent/:chainId/:tokenId`.
@@ -27,7 +27,7 @@
 
 ## Surprises
 
-- **The task file contradicts itself.** Its body (§"The staking control — live, with real TRUST") says the control ships enabled; its acceptance checklist and out-of-scope list, written earlier the same day, say disabled. ADR 0017 resolves it and says so explicitly ("Supersedes: the 'ship it disabled' provision"). The stale lines were left in the task file — amending a spec mid-task is the scope move `workflow.md` warns about — so **the next reader of `tasks/08` will hit the same contradiction.**
+- **The task file contradicts itself.** Its body (§"The staking control — live, with real TRUST") says the control ships enabled; its acceptance checklist and out-of-scope list, written earlier the same day, say disabled. ADR 0017 resolves it and says so explicitly ("Supersedes: the 'ship it disabled' provision"). The stale lines were left in the task file — amending a spec mid-task is the scope move `workflow.md` warns about — so **the next reader of `docs/tasks/08` will hit the same contradiction.**
 - **`MarketSide.totalAssets` from the connector is the wrong number for a vault display.** It is the *term* total, folding in the triple's underlying atom vaults, and runs ~1,000× the vault balance (0.988 vs 0.0009875 TRUST on Clawnch's AsterPay claim). The panel reads `getVault` from the MultiVault instead, with `marketCap` as the indexer fallback. Caught by checking the indexer against the chain, not by reading types.
 - **A `has trust provider` edge's object atom carries the provider's *homepage*, not its document.** The connector dutifully fetches `https://deep3.ai` and gets HTTP 500. That is a true read and not a document failure, and surfacing it as one would have libelled the provider. The provider edge's fetch result is never shown as the document's failure.
 - **The two edges have nothing to join on but the document or the label.** The assessment atom carries no pointer back to the provider atom. When the document is unreachable — exactly when the row matters most — only the label prefix is left, so the join reports which method it used and the UI says "a naming convention, not a proof".

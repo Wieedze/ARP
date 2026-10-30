@@ -55,11 +55,11 @@ A partner API key now exists, held locally and outside the repo.
    rule in `.claude/rules/security.md`.
 4. `INTUITION_PIN_API_KEY` is documented in `.env.example` with an explicit prohibition on the
    `VITE_` prefix. `INTUITION_PIN_API_KEY_HEADER` is optional and defaults to `apikey`.
-5. `bun run verify:pin` (`scripts/verify-pin-key.ts`) validates the key and, in the same pass,
+5. `bun run verify:pin` (`scripts/verify/verify-pin-key.ts`) validates the key and, in the same pass,
    confirms that the canonical agent-atom recipe from `docs/07` reproduces byte-for-byte against a
    known mainnet atom. It prints a key fingerprint, never the key.
 
-The execution plan is `tasks/06-pin-writes-server-side.md`.
+The execution plan is `docs/tasks/06-pin-writes-server-side.md`.
 
 ## Alternatives considered
 
@@ -112,6 +112,6 @@ The execution plan is `tasks/06-pin-writes-server-side.md`.
 
 - Related doc: `docs/08_ERC8004_AGENT_LAYER_OPPORTUNITY.md` §8 (the regression, measured)
 - Related doc: `docs/07_INTUITION_ERC8004_PARTNER_GUIDE.md` (pinning API, canonical recipe)
-- Related task: `tasks/06-pin-writes-server-side.md`
+- Related task: `docs/tasks/06-pin-writes-server-side.md`
 - Related rule: `.claude/rules/security.md` (no API keys in client code), `.claude/rules/code.md` (service purity)
 - Related ADR: `0015` (canonical ERC-8004 pattern — unchanged in direction), `0005` (vendored intuition skill — re-sync flagged), `0008` (module URI coupling via Intuition pinning — the mechanism this restores)

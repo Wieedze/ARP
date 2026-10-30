@@ -1,0 +1,1017 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>ARP Repository Page</title>
+
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=Geist+Mono:wght@400;500;600&display=swap">
+<!--
+  ARP · the repository page, design reference for /atom/:atomId when the atom is a repository.
+  Real: both repositories, every skill they publish with its description and domain tag (catalogue,
+  testnet 13579), GitHub stars and last push, skills.sh installs (read 2026-10-29), and the five
+  repositories that publish the same 26 skills, word for word, as 101-skills/superpowers.
+  Sample: the market, the curves, every agent and every position. Marked "sample". Never ship them.
+-->
+<style>
+*,*::before,*::after{box-sizing:border-box}
+.wrap{overflow-x:clip}
+/* Layout: one column of evidence. Title band, then the two things a reader came for side by side
+   (who uses it, the market and its curves), then provenance, then the record. */
+:root{
+  --color-ground:#0e0f10;--color-bg:#121314;--color-raised:#1b1d1f;--color-raised-2:#232629;
+  --color-rule:#2e3134;--color-rule-strong:#43474b;
+  --color-grey:#6b7075;--color-steel:#8a9096;--color-silver:#a9aeb2;--color-fg:#e6e8e6;
+  --color-accent:#ffb020;--color-accent-dim:rgba(255,176,32,.16);--color-accent-ink:#121314;
+  --color-alarm:#ff4d6d;
+  --font-display:"Archivo","Arial Narrow",system-ui,sans-serif;--font-mono:"Geist Mono",ui-monospace,Menlo,monospace;
+  --ease-out-quart:cubic-bezier(0.16,1,0.3,1);--duration-base:200ms;--reveal-fade:260ms;--list-step:30ms;
+  --radius-tag:6px;--radius-control:8px;--radius-card:12px;
+  color-scheme:dark;
+}
+html,body{background:var(--color-ground);color:var(--color-fg)}
+body{margin:0;font-family:var(--font-display);font-size:15px;line-height:1.5;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:1160px;margin:0 auto;padding-block:28px 96px}
+.label{font-family:var(--font-mono);font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--color-steel)}
+.mono{font-family:var(--font-mono)}
+.num{font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+.face{font-weight:800;font-stretch:125%;letter-spacing:-.02em;line-height:.95}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--color-fg);outline-offset:3px;border-radius:4px}
+h2{margin:0;font-size:22px;font-weight:700;font-stretch:110%;letter-spacing:-.01em}
+.sample{display:inline-block;font-family:var(--font-mono);font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-grey);border:1px dashed var(--color-rule-strong);border-radius:var(--radius-tag);padding:1px 6px;vertical-align:middle}
+
+/* design-only bar */
+.bar{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:center;justify-content:space-between;padding-bottom:16px;margin-bottom:40px;border-bottom:1px solid var(--color-rule)}
+.seg{display:inline-flex;border:1px solid var(--color-rule);border-radius:var(--radius-control);overflow:hidden;flex-wrap:wrap}
+.seg button{height:30px;padding:0 12px;border:0;background:transparent;font-family:var(--font-mono);font-size:11px;color:var(--color-steel);cursor:pointer}
+.seg button+button{border-left:1px solid var(--color-rule)}
+.seg button[aria-pressed="true"]{background:var(--color-raised);color:var(--color-fg)}
+.grp{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+
+/* Hint: a 15px "?" that opens one sentence on hover and focus */
+.hint{position:relative;display:inline-flex;width:15px;height:15px;border-radius:999px;border:1px solid var(--color-rule-strong);color:var(--color-steel);font-family:var(--font-mono);font-size:10px;align-items:center;justify-content:center;cursor:help;vertical-align:middle;margin-left:6px;background:none;padding:0}
+.hint span{position:absolute;left:50%;bottom:calc(100% + 8px);transform:translateX(-50%);width:max-content;max-width:min(17rem,70vw);background:var(--color-raised);border:1px solid var(--color-rule-strong);border-radius:var(--radius-control);padding:8px 10px;font-family:var(--font-display);font-size:12.5px;line-height:1.4;color:var(--color-silver);text-transform:none;letter-spacing:0;display:none;pointer-events:none;z-index:20;white-space:normal;text-align:left}
+.hint:hover span,.hint:focus-visible span{display:block}
+
+/* ---- title band ---------------------------------------------------------- */
+.crumbs{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;font-family:var(--font-mono);font-size:12px;color:var(--color-steel)}
+.crumbs a{text-decoration:none;color:var(--color-silver)}
+.crumbs a:hover{color:var(--color-fg)}
+.crumbs .sep{color:var(--color-grey)}
+.kind{font-family:var(--font-mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--color-fg);border:1px solid var(--color-rule-strong);border-radius:var(--radius-tag);padding:2px 7px}
+h1{margin:18px 0 0;font-size:clamp(44px,8.2vw,112px);overflow-wrap:anywhere;text-wrap:balance}
+.from{margin-top:14px;display:flex;flex-wrap:wrap;gap:10px 22px;align-items:baseline}
+.from .repo{font-family:var(--font-mono);font-size:15px;color:var(--color-silver)}
+.from .repo a{text-decoration:none;border-bottom:1px solid var(--color-rule-strong)}
+.from .repo a:hover{border-color:var(--color-fg);color:var(--color-fg)}
+.desc{margin:16px 0 0;max-width:62ch;color:var(--color-silver);font-size:18px}
+.install{margin-top:22px;display:flex;max-width:38rem;border:1px solid var(--color-rule-strong);border-radius:var(--radius-control);background:var(--color-bg);overflow:hidden}
+.install code{flex:1;min-width:0;padding:11px 14px;font-family:var(--font-mono);font-size:13px;color:var(--color-fg);overflow-x:auto;white-space:nowrap}
+.install code b{color:var(--color-steel);font-weight:400}
+.install button{border:0;border-left:1px solid var(--color-rule-strong);background:transparent;color:var(--color-silver);font-family:var(--font-mono);font-size:11px;padding:0 14px;cursor:pointer}
+.install button:hover{color:var(--color-fg);background:var(--color-raised)}
+/* what is written about it, on chain: each chip is a triple with its own market */
+.facts{margin-top:22px;display:flex;flex-wrap:wrap;gap:8px}
+.fact{display:inline-flex;align-items:center;gap:8px;height:30px;padding:0 11px;border:1px solid var(--color-rule);border-radius:var(--radius-tag);font-size:13px;text-decoration:none;color:var(--color-fg)}
+.fact:hover{border-color:var(--color-rule-strong);background:#17191a}
+.fact .p{font-family:var(--font-mono);font-size:10.5px;color:var(--color-steel);text-transform:lowercase}
+.fact .o{font-family:var(--font-mono);font-size:12.5px}
+.fact i{width:7px;height:7px;border-radius:999px;background:var(--color-fg)}
+.fact i.free{background:none;border:1.25px solid var(--color-steel)}
+.fact i.down{background:var(--color-alarm)}
+.offline{margin-top:26px;display:flex;flex-wrap:wrap;gap:10px 28px;align-items:baseline;padding:10px 14px;border:1px dashed var(--color-rule-strong);border-radius:var(--radius-control);max-width:max-content}
+.offline .label{color:var(--color-grey)}
+.offline .v{font-family:var(--font-mono);font-size:13px;color:var(--color-silver)}
+.offline .v b{font-weight:500;color:var(--color-fg)}
+
+/* ---- the lead: market + curves ------------------------------------------ */
+.lead{margin-top:56px;display:grid;grid-template-columns:minmax(0,22rem) minmax(0,1fr);gap:0;border:1px solid var(--color-rule-strong);border-radius:var(--radius-card);background:var(--color-bg)}
+.market{padding:22px 22px 24px;border-right:1px solid var(--color-rule);display:flex;flex-direction:column;gap:18px}
+.value .big{font-family:var(--font-mono);font-size:40px;line-height:1;font-weight:500;letter-spacing:-.02em;margin-top:8px}
+.value .big small{font-size:15px;color:var(--color-steel);margin-left:6px;letter-spacing:0}
+.value .none{margin-top:10px;font-family:var(--font-mono);font-size:14px;color:var(--color-steel)}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:7px 16px;margin:0;font-size:13px}
+.kv dt{color:var(--color-steel)}
+.kv dd{margin:0;text-align:right;font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+.conc{height:6px;border-radius:999px;background:var(--color-raised-2);overflow:hidden;display:flex}
+.conc span{display:block;height:100%}
+.conc .a{background:var(--color-fg)}
+.conc .b{background:var(--color-steel)}
+.mine{display:flex;justify-content:space-between;align-items:baseline;padding:10px 12px;border:1px solid var(--color-accent-dim);border-radius:var(--radius-control);background:rgba(255,176,32,.05);font-size:13px}
+.mine .num{color:var(--color-accent)}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:auto}
+.btn{height:40px;padding:0 18px;border-radius:var(--radius-control);font-family:var(--font-display);font-weight:600;font-size:14px;cursor:pointer;border:1px solid var(--color-rule-strong);background:transparent;color:var(--color-fg)}
+.btn.primary{background:var(--color-accent);border-color:var(--color-accent);color:var(--color-accent-ink)}
+.btn:hover{filter:brightness(1.08)}
+.curves{padding:22px 22px 18px;min-width:0;display:flex;flex-direction:column;gap:16px}
+.curves-h{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.chart{min-width:0}
+.chart-h{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:6px}
+.chart-h .t{font-size:13px;color:var(--color-silver)}
+.chart-h .num{font-size:12px;color:var(--color-steel)}
+.chart svg{display:block;width:100%;height:auto;overflow:visible}
+.chart .axis{font-family:var(--font-mono);font-size:9.5px;fill:var(--color-grey)}
+.chart .grid{stroke:var(--color-rule);stroke-width:1}
+.curves .empty{padding:40px 0;text-align:center;font-family:var(--font-mono);font-size:12px;color:var(--color-steel);border:1px dashed var(--color-rule);border-radius:var(--radius-control)}
+
+/* ---- sections ------------------------------------------------------------ */
+section.blk{margin-top:72px}
+.blk-h{display:flex;align-items:baseline;justify-content:space-between;gap:12px 24px;flex-wrap:wrap;margin-bottom:22px;padding-bottom:12px;border-bottom:1px solid var(--color-rule-strong)}
+.blk-h .label{color:var(--color-grey)}
+
+/* copies */
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:620px;font-size:13.5px}
+th{font-family:var(--font-mono);font-size:10px;font-weight:400;letter-spacing:.08em;text-transform:uppercase;color:var(--color-steel);text-align:right;padding:0 12px 10px;border-bottom:1px solid var(--color-rule-strong);white-space:nowrap}
+th:first-child,td:first-child{text-align:left;padding-left:0}
+th.off{color:var(--color-grey)}
+th .src{display:block;font-size:9px;letter-spacing:.04em;text-transform:none;color:var(--color-grey);margin-top:2px}
+td{padding:12px;border-bottom:1px solid var(--color-rule);text-align:right;font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+td.off{color:var(--color-silver)}
+td.repo{font-family:var(--font-mono);font-size:13.5px}
+td.repo a{text-decoration:none}
+td.repo a:hover{text-decoration:underline}
+tr.here td{background:var(--color-raised)}
+tr.here td:first-child{box-shadow:inset 2px 0 0 var(--color-fg)}
+.here-tag{margin-left:10px;font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-steel)}
+.live{display:inline-flex;align-items:center;gap:6px;justify-content:flex-end}
+.live i{width:7px;height:7px;border-radius:999px;background:var(--color-fg)}
+.live i.none{background:none;border:1.25px solid var(--color-steel)}
+td .zero{color:var(--color-grey)}
+.offnote{margin-top:12px;font-family:var(--font-mono);font-size:11px;color:var(--color-grey)}
+
+/* record */
+.record{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,24rem),1fr));gap:0 40px}
+.record dl{margin:0}
+.record .row{display:grid;grid-template-columns:9rem minmax(0,1fr);gap:16px;padding:11px 0;border-bottom:1px solid var(--color-rule);font-size:13px}
+.record dt{color:var(--color-steel)}
+.record dd{margin:0;font-family:var(--font-mono);font-size:12.5px;overflow-wrap:anywhere;color:var(--color-silver)}
+.record dd a{color:var(--color-fg);text-decoration:none;border-bottom:1px solid var(--color-rule-strong)}
+
+
+/* the two panels under the install line: what is claimed, what is measured elsewhere */
+.about{margin-top:28px;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,22rem),1fr));gap:16px}
+.panel{border:1px solid var(--color-rule);border-radius:var(--radius-card);padding:14px 18px 16px;display:flex;flex-direction:column;gap:12px}
+.panel .label{display:flex;align-items:center;gap:8px}
+.panel .when{margin-left:auto;color:var(--color-grey);letter-spacing:.04em;text-transform:none}
+.cls{margin:0;display:grid;gap:0}
+.cls>div{display:grid;grid-template-columns:7rem minmax(0,1fr);gap:12px;padding:7px 0;border-top:1px solid var(--color-rule);font-size:13.5px}
+.cls>div:first-child{border-top:0}
+.cls dt{color:var(--color-steel)}
+.cls dd{margin:0;font-family:var(--font-mono);font-size:13px}
+.cls a{text-decoration:none;border-bottom:1px solid var(--color-rule-strong)}
+.cls a:hover{border-color:var(--color-fg)}
+.cls .sep{color:var(--color-grey);margin:0 6px}
+.state{display:inline-flex;align-items:center;gap:7px}
+.state i{width:7px;height:7px;border-radius:999px;background:var(--color-fg)}
+.sig{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.sig>div{display:flex;flex-direction:column;gap:2px;min-width:0}
+.sig b{font-size:26px;font-weight:500;letter-spacing:-.02em;line-height:1.1}
+.sig span{font-size:13px;color:var(--color-silver)}
+.sig em{font-style:normal;font-family:var(--font-mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--color-grey)}
+.variant{border-left:1px solid var(--color-rule-strong);padding-left:18px}
+.vdesc{margin:0 0 14px;max-width:70ch;color:var(--color-silver);font-size:14.5px}
+@media (max-width:520px){.sig{grid-template-columns:1fr 1fr}.sig b{font-size:22px}}
+
+
+.dscr{margin-top:26px;max-width:46rem;border-top:1px solid var(--color-rule-strong);padding-top:14px}
+.dscr-h{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.dscr-h .src{color:var(--color-grey);letter-spacing:.04em}
+.lede{margin:10px 0 0;font-size:clamp(20px,2.4vw,26px);line-height:1.3;color:var(--color-fg);text-wrap:balance}
+.covers{list-style:none;margin:14px 0 0;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,20rem),1fr));gap:0 28px}
+.covers li{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:8px 0;border-bottom:1px solid var(--color-rule);font-size:14px;color:var(--color-silver);min-width:0}
+.covers code{font-family:var(--font-mono);font-size:12px;color:var(--color-steel);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+
+/* claim field, from the v2 reference */
+/* ---- the component ------------------------------------------------------- */
+.cf{display:flex;flex-wrap:wrap;align-items:flex-start;gap:28px 4rem}
+.cf-field{position:relative;aspect-ratio:1;width:100%;max-width:22rem;flex:none;margin-top:2rem}
+.cf-ring{position:absolute;inset:0;pointer-events:none}
+.cf-orbit{animation:cf-orbit var(--orbit-for,120s) linear infinite}
+@keyframes cf-orbit{to{transform:rotate(var(--orbit-to,360deg))}}
+/* hover first: pointing at any claim holds every ring still, so the target does not slide
+   away from the pointer. It also holds still on keyboard focus: same state, same look. */
+
+.cf-track{position:absolute;border-radius:999px;border:1px solid var(--color-rule)}
+.cf-grain{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.cf-core{position:absolute;left:50%;top:50%;width:14px;height:14px;border-radius:999px;background:var(--color-accent);transform:translate(-50%,-50%);z-index:3}
+.cf-link{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none;z-index:4}
+.cf-link polyline{fill:none;stroke:var(--color-rule-strong);stroke-width:1;vector-effect:non-scaling-stroke}
+.cf-link circle{fill:none;stroke:var(--color-silver);stroke-width:1.25;vector-effect:non-scaling-stroke;transition:stroke var(--duration-base)}
+.cf-link.on polyline{stroke:var(--color-steel)}
+.cf-link.on circle{stroke:var(--color-accent)}
+
+/* a dot: a real link with a 28px invisible target, the drawn mark inside it */
+.cf-dot{position:absolute;width:28px;height:28px;margin:-14px 0 0 -14px;border-radius:999px;pointer-events:auto;display:flex;align-items:center;justify-content:center;z-index:2}
+.cf-dot i{display:block;width:var(--d,10px);height:var(--d,10px);border-radius:999px;box-sizing:border-box;border:1.5px solid var(--color-steel);transition:transform 150ms var(--ease-out-quart),background-color 150ms,border-color 150ms}
+.cf-dot.backed i{background:var(--color-fg);border-color:var(--color-fg)}
+.cf-dot.opposed i{box-shadow:0 0 0 2px var(--color-ground),0 0 0 3.5px var(--color-alarm)}
+.cf-dot.lit i{background:var(--color-accent);border-color:var(--color-accent);transform:scale(1.6)}
+.cf-dot:focus-visible{outline-offset:0}
+
+/* arrival: one class on the field, a stagger capped at 8 */
+.cf-dot{transition:opacity var(--reveal-fade) var(--ease-out-quart),transform var(--reveal-fade) var(--ease-out-quart);transition-delay:calc(var(--row-index,0) * var(--list-step))}
+.cf-enter .cf-dot{opacity:0;transform:scale(.4)}
+
+/* the card: reserved height, never moves */
+.cf-card{position:relative;z-index:5;flex:1 1 22rem;min-width:min(22rem,100%);max-width:34rem;min-height:6.5rem;border:1px solid var(--color-rule-strong);border-radius:var(--radius-card);background:var(--color-bg);padding:12px 16px;display:flex;flex-direction:column;gap:6px}
+.cf-card-h{display:flex;align-items:center;gap:10px;padding-bottom:10px;border-bottom:1px solid var(--color-rule);font-family:var(--font-mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--color-steel)}
+.cf-card-h i{width:8px;height:8px;border-radius:999px;background:var(--color-rule-strong)}
+.cf-card.is-pointing .cf-card-h i{background:var(--color-accent)}
+.cf-card-h .why{margin-left:auto;color:var(--color-grey)}
+.cf-subj{font-size:20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cf-subj.id{font-family:var(--font-mono);font-weight:500;font-size:16px;letter-spacing:0}
+.cf-fig{font-family:var(--font-mono);font-size:13px;color:var(--color-fg)}
+.cf-fig span{color:var(--color-steel)}
+.cf-fig.none{color:var(--color-steel)}
+.cf-opp{font-family:var(--font-mono);font-size:12px;color:var(--color-alarm)}
+.cf-opp:empty{display:none}
+.cf-empty{font-family:var(--font-mono);font-size:12px;color:var(--color-steel)}
+
+/* legend */
+.cf-legend{flex-basis:100%;margin:0;border-top:1px solid var(--color-rule);display:grid;grid-template-columns:repeat(auto-fill,minmax(19rem,1fr));gap:0 32px}
+.cf-legend>div{display:grid;grid-template-columns:18px minmax(0,1fr) auto;gap:10px;align-items:baseline;padding:10px 0;border-bottom:1px solid var(--color-rule)}
+.cf-legend dt{font-size:14px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cf-legend dt.id{font-family:var(--font-mono);font-size:12px}
+.cf-legend dd{margin:0;font-family:var(--font-mono);font-size:11px;color:var(--color-steel);text-align:right;white-space:nowrap}
+.cf-legend .ringno{font-family:var(--font-mono);font-size:10px;color:var(--color-grey)}
+.cf-total{flex-basis:100%;display:flex;gap:18px;align-items:baseline;flex-wrap:wrap;font-family:var(--font-mono);font-size:12px;color:var(--color-steel)}
+.cf-total b{font-weight:500;color:var(--color-fg);font-size:14px}
+.cf-key{display:inline-flex;gap:14px;flex-wrap:wrap;margin-left:auto}
+.cf-key span{display:inline-flex;align-items:center;gap:6px}
+.cf-key i{width:9px;height:9px;border-radius:999px;box-sizing:border-box;border:1.5px solid var(--color-steel)}
+.cf-key i.f{background:var(--color-fg);border-color:var(--color-fg)}
+.cf-key i.o{box-shadow:0 0 0 2px var(--color-ground),0 0 0 3.5px var(--color-alarm)}
+
+/* zero claims */
+.cf-zero{display:flex;align-items:center;gap:28px;flex-wrap:wrap}
+.cf-zero .cf-field{max-width:12rem}
+
+.still .cf-orbit{animation:none}
+.still .cf-dot{transition:none!important}
+.still .cf-enter .cf-dot{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){.cf-orbit{animation:none}.cf-dot{transition:none!important}.cf-enter .cf-dot{opacity:1;transform:none}}
+@media (max-width:640px){.cf-field{max-width:none;margin-top:0}.cf-card{min-width:0}.cf-link polyline{display:none}}
+
+/* ring names, on the field */
+.cf-names{position:absolute;inset:0;pointer-events:none;z-index:1}
+.cf-name{position:absolute;left:50%;transform:translate(-50%,-50%);padding:1px 7px;border-radius:var(--radius-tag);background:var(--color-ground);border:1px solid var(--color-rule);font-family:var(--font-mono);font-size:10.5px;color:var(--color-silver);white-space:nowrap}
+.cf-name b{font-weight:500;color:var(--color-steel);margin-left:4px}
+
+
+@media (max-width:860px){
+  .lead{grid-template-columns:1fr}
+  .market{border-right:0;border-bottom:1px solid var(--color-rule)}
+}
+</style>
+<style>
+.title-repo .owner{color:var(--color-steel);font-weight:700}
+.title-repo .slash{color:var(--color-grey);font-weight:400;margin:0 .04em}
+h1.title-repo{font-size:clamp(40px,7vw,96px)}
+.counts{display:flex;flex-wrap:wrap;gap:6px}
+.dchip{display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 9px;border:1px solid var(--color-rule);border-radius:var(--radius-tag);font-family:var(--font-mono);font-size:12px;color:var(--color-fg);text-decoration:none}
+.dchip b{font-weight:500;color:var(--color-steel)}
+.dchip.none{color:var(--color-steel);border-style:dashed}
+/* the skills table */
+.skills table{min-width:760px}
+.skills td.name{font-family:var(--font-mono);font-size:13.5px;text-align:left;padding-left:0}
+.skills td.name a{text-decoration:none}
+.skills td.name a:hover{text-decoration:underline}
+.skills td.d{font-family:var(--font-display);font-size:13.5px;color:var(--color-silver);text-align:left;white-space:normal;max-width:30rem;min-width:16rem}
+.skills td.dom{text-align:left}
+.skills th.l{text-align:left}
+.bar-cell{display:flex;align-items:center;gap:10px;justify-content:flex-end}
+.bar-cell .track{width:90px;height:4px;border-radius:999px;background:var(--color-raised-2);overflow:hidden}
+.bar-cell .fill{height:100%;background:var(--color-steel)}
+.skills tr:hover td{background:#17191a}
+/* the same pack elsewhere */
+.pack-lede{margin:0 0 16px;max-width:64ch;color:var(--color-silver);font-size:15px}
+.pack-sum{display:flex;flex-wrap:wrap;gap:12px 36px;margin:0 0 18px}
+.pack-sum div{display:flex;flex-direction:column}
+.pack-sum b{font-family:var(--font-mono);font-size:26px;font-weight:500;letter-spacing:-.02em}
+.pack-sum span{font-size:13px;color:var(--color-silver)}
+.pack-sum em{font-style:normal;font-family:var(--font-mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--color-grey)}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <div class="bar">
+    <span class="label">Design reference · repository page · everything marked <span class="sample">sample</span> is invented</span>
+    <div class="grp">
+      <span class="label">Case</span>
+      <div class="seg" id="case" role="group" aria-label="Sample case">
+        <button type="button" data-v="remotion-dev/skills" aria-pressed="true">remotion-dev/skills</button>
+        <button type="button" data-v="101-skills/superpowers" aria-pressed="false">101-skills/superpowers</button>
+      </div>
+    </div>
+  </div>
+
+  <header>
+    <div class="crumbs"><span class="kind">Repository</span><span>github.com</span></div>
+    <h1 class="face title-repo" id="title"></h1>
+    <div class="install">
+      <code id="cmd"></code>
+      <button type="button" id="copy">Copy</button>
+    </div>
+    <div class="about">
+      <div class="panel">
+        <span class="label">Classification</span>
+        <dl class="cls">
+          <div><dt>Repository</dt><dd id="c-state"></dd></div>
+          <div><dt>Skills</dt><dd id="c-skills"></dd></div>
+          <div><dt>Domains</dt><dd><div class="counts" id="c-domains"></div></dd></div>
+        </dl>
+      </div>
+      <div class="panel ext">
+        <span class="label">External signals <span class="when">29 Oct 2026</span>
+          <button class="hint" type="button" aria-label="About these figures">?<span>Read from GitHub and skills.sh. They change, so ARP does not write them on chain.</span></button></span>
+        <div class="sig" id="sig"></div>
+      </div>
+    </div>
+  </header>
+
+  <div class="lead" id="lead"></div>
+
+  <section class="blk skills" aria-labelledby="sk-h">
+    <div class="blk-h">
+      <h2 id="sk-h"></h2>
+      <span class="label">Ordered by skills.sh installs</span>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr>
+          <th class="l">Skill</th><th class="l">Description</th><th class="l">Domain</th>
+          <th>Agents using <span class="src">sample</span></th>
+          <th>Behind it <span class="src">sample</span></th>
+          <th class="off">Installs <span class="src">skills.sh</span></th>
+        </tr></thead>
+        <tbody id="sk-body"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="blk" id="pack" aria-labelledby="pk-h" hidden>
+    <div class="blk-h">
+      <h2 id="pk-h">The same 26 skills, in 5 other repositories
+        <button class="hint" type="button" aria-label="How this is matched">?<span>Every skill name and every description match. ARP does not say which repository came first.</span></button>
+      </h2>
+    </div>
+    <div class="pack-sum" id="pk-sum"></div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Repository</th><th class="off">Stars <span class="src">GitHub</span></th><th class="off">Last push <span class="src">GitHub</span></th><th class="off">Installs, all 26 <span class="src">skills.sh</span></th></tr></thead>
+        <tbody id="pk-body"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="blk" aria-labelledby="used-h">
+    <div class="blk-h">
+      <h2 id="used-h">Relations</h2>
+      <span class="label">Claims about this repository, besides its skills <span class="sample">sample</span></span>
+    </div>
+    <div id="used-mount"></div>
+  </section>
+
+  <section class="blk" aria-labelledby="rec-h">
+    <div class="blk-h"><h2 id="rec-h">On the record</h2><span class="label">Intuition testnet 13579</span></div>
+    <div class="record"><dl id="rec-a"></dl><dl id="rec-b"></dl></div>
+  </section>
+</div>
+
+<script>
+/* REAL: skills, descriptions, domains, installs, stars, last push. Built from catalogue/skills-13579.json
+   and measurements/*-2026-10-29.json. */
+const REPOS={
+"remotion-dev/skills": {
+"stars": 5859,
+"days": 3,
+"archived": false,
+"rows": [
+{
+"skill": "remotion-best-practices",
+"atom": "0xe652da4ab528497cda9ed0d4b6952377f4f402f2cfa7a907dd33fde879173e0f",
+"domain": "video",
+"installs": 705056,
+"desc": "Router for all Remotion skills"
+},
+{
+"skill": "remotion-render",
+"atom": "0x9988fb7d9d023065bb154bed0b1362b1cb7b8b5e460268bebef4db7ff724882f",
+"domain": "video",
+"installs": 233904,
+"desc": "Export a Remotion video"
+},
+{
+"skill": "remotion-create",
+"atom": "0x58550890beac5487e315470ab7271d5245aeb9330c638d20740fa3accbf81c73",
+"domain": "video",
+"installs": 232525,
+"desc": "Create a new Remotion video"
+},
+{
+"skill": "remotion-captions",
+"atom": "0xe0d897d8b0df37ab45105ed4eadd3f3c6394fb0d001d09e254c973b17124ec10",
+"domain": "video",
+"installs": 230480,
+"desc": "Transcribing, displaying and animating captions"
+},
+{
+"skill": "remotion-markup",
+"atom": "0x7374eb2c98a71116df6805f059bd7a9822200f1c4cacb97bbb7f99945c65329c",
+"domain": "video",
+"installs": 226127,
+"desc": "Content, animation and effects best practices"
+},
+{
+"skill": "remotion-interactivity",
+"atom": "0x81f29bbe6694abb73e05feeae17bd3a9040a9dd8cad09de30cc4a788744a4d42",
+"domain": "video",
+"installs": 221018,
+"desc": "Structure Remotion markup for interactivity"
+},
+{
+"skill": "remotion-saas",
+"atom": "0x70f99fdee2ca3fa703b50544015545fec4a12e3caa62abff0b2387043a9b7f59",
+"domain": "video",
+"installs": 218807,
+"desc": "Build an app with Remotion"
+},
+{
+"skill": "remotion-docs",
+"atom": "0xc8c6b4fffb48399e495f44651e3bb8c6f549603011789b747ccc70f4507a05aa",
+"domain": "video",
+"installs": 218550,
+"desc": "Search Remotion documentation"
+},
+{
+"skill": "remotion-upgrade",
+"atom": "0x47130258bc78b096106bba06e37f774182f6c835dd121ff3770db1bf8149336e",
+"domain": "video",
+"installs": 210036,
+"desc": "Upgrade Remotion, and related packages"
+},
+{
+"skill": "remotion-multimedia",
+"atom": "0x4947a517c2cab2cdfdf452b3799a88229f8f94d7917045a76c1c9add2607d926",
+"domain": "video",
+"installs": 205181,
+"desc": "Interacting with Mediabunny"
+},
+{
+"skill": "remotion-maps",
+"atom": "0x8144b493e73c41a6d2d44c582e159a00198f99e19b678b9c92568517565b43cf",
+"domain": "video",
+"installs": 203438,
+"desc": "Remotion Map animation knowledge"
+},
+{
+"skill": "remotion-studio",
+"atom": "0xe1aebb84b312e769d8c3399ea9fd920cbb1a215e786b0f2e851c763ac9df6d5f",
+"domain": "video",
+"installs": 195617,
+"desc": "Preview a Remotion video"
+},
+{
+"skill": "mediabunny",
+"atom": null,
+"domain": null,
+"installs": 20826,
+"desc": "Multimedia handling with the Mediabunny library"
+}
+]
+},
+"101-skills/superpowers": {
+"stars": 16,
+"days": 59,
+"archived": false,
+"rows": [
+{
+"skill": "ai-video-generation",
+"atom": "0x0bca6892a13c061dfe98478e2bb900841a9b1b4acf3a83f69d05a78a8b25cf15",
+"domain": "video",
+"installs": 897738,
+"desc": "Generate AI videos with Google Veo, Seedance 2.0, HappyHorse, Wan, Grok and 40+ models via inference.sh CLI"
+},
+{
+"skill": "ai-image-generation",
+"atom": "0x292e8811bd1b75c12aed312e8e510e1375993977f18ab1d68752f114e4100b84",
+"domain": "image",
+"installs": 896473,
+"desc": "Generate AI images with GPT-Image-2, FLUX, Gemini, Grok, Seedream, Reve and 50+ models via inference.sh CLI"
+},
+{
+"skill": "twitter-automation",
+"atom": "0xeec2a0d3be32741d360edc3dd78386c9fbe34d35e88215c8d058a26cdb98236d",
+"domain": "automation",
+"installs": 896120,
+"desc": "Automate Twitter/X with posting, engagement, and user management via inference.sh CLI"
+},
+{
+"skill": "ai-avatar-video",
+"atom": "0x02e6522163cb12b1ce4a7858547822ef667b6fcf31f36bc2613fa4ad99fee936",
+"domain": "video",
+"installs": 895863,
+"desc": "Create AI avatar and talking head videos via inference.sh CLI"
+},
+{
+"skill": "agent-browser",
+"atom": "0xd54d6e9e2652cd32a4b9f163a4058a6e72701e6020ccb2c6e261b2d3294a3ea1",
+"domain": "video",
+"installs": 169430,
+"desc": "Browser automation for AI agents via inference.sh"
+},
+{
+"skill": "web-search",
+"atom": "0xe2ab12bbf5bfabccbce85153f538267d595c3e7d5100020ad757a87e2b617ca5",
+"domain": "scraping",
+"installs": 113330,
+"desc": "Web search and content extraction with Tavily and Exa via inference.sh CLI"
+},
+{
+"skill": "remotion-render",
+"atom": "0xa5a90111af923d0e99940e58fc7e96cb146c454c68e440dc6efe36446198e7ee",
+"domain": "video",
+"installs": 113025,
+"desc": "Render videos from React/Remotion component code via inference.sh"
+},
+{
+"skill": "infsh-cli",
+"atom": "0x69f3938dffabab2ea92c2d87c44411c798eb1457666c60075136ff526d1704cc",
+"domain": "video",
+"installs": 113004,
+"desc": "Run AI apps via inference.sh CLI - image generation, video creation, LLMs, search, 3D, Twitter automation"
+},
+{
+"skill": "agent-tools",
+"atom": "0x732bfa1a17062e4424ecffa903a7f8440550ed618642273f1fb79158f0de275b",
+"domain": "video",
+"installs": 112976,
+"desc": "Run AI apps via inference.sh CLI - image generation, video creation, LLMs, search, 3D, Twitter automation"
+},
+{
+"skill": "python-executor",
+"atom": "0x34f504ac79b1817e4ecb54d0cc89c21d4597b63b9f7403052a739ecd3d8804b6",
+"domain": "video",
+"installs": 112974,
+"desc": "Execute Python code in a safe sandboxed environment via [inference.sh](https://inference.sh)"
+},
+{
+"skill": "landing-page-design",
+"atom": "0xe00bd5ad31fdb9769002f99a5f64def656c5ac89e3992d2b26198ad6f088fad4",
+"domain": "design",
+"installs": 57750,
+"desc": "Landing page conversion optimization with layout rules, hero section design, and CTA psychology"
+},
+{
+"skill": "product-photography",
+"atom": "0x94ce5e59f3704910ba7000b3aad23ebc60488383650f18e105b6872bcdd41b21",
+"domain": "image",
+"installs": 57291,
+"desc": "AI product photography with studio lighting, lifestyle shots, and packshot conventions"
+},
+{
+"skill": "app-store-screenshots",
+"atom": "0xd36369f1aa3da229353bcfa356e2ae99a53b6fc2ec8880d4c4b860cf5718f9da",
+"domain": "video",
+"installs": 57197,
+"desc": "App Store and Google Play screenshot creation with exact platform specs"
+},
+{
+"skill": "character-design-sheet",
+"atom": "0x9208862b72411afa6923c58bee6a0db061804f3ec9439b5c4df0fc96844993fe",
+"domain": "design",
+"installs": 57173,
+"desc": "Character consistency across AI-generated images with reference sheets and LoRA techniques"
+},
+{
+"skill": "storyboard-creation",
+"atom": "0xbc0e1cad612d6ad15cbf00e8de1aeae26fd0e4d57474e2648616161c9bbe6caf",
+"domain": "video",
+"installs": 57157,
+"desc": "Film and video storyboarding with shot vocabulary, continuity rules, and panel layout"
+},
+{
+"skill": "video-ad-specs",
+"atom": "0x481892d5cd99ad20b16d97081fa8ef9a3d7e54c9018a4b0864bb1d74c1e24aff",
+"domain": "video",
+"installs": 57130,
+"desc": "Video ad creation with exact platform-specific specs for TikTok, Instagram, YouTube, Facebook, LinkedIn"
+},
+{
+"skill": "competitor-teardown",
+"atom": null,
+"domain": null,
+"installs": 57069,
+"desc": "Structured competitive analysis with feature matrices, SWOT, positioning maps, and UX review"
+},
+{
+"skill": "youtube-thumbnail-design",
+"atom": "0x2fe6afa7d8f74680cf48c2052fa11ebf1c91f4f537baa23cb060eaea4de43d00",
+"domain": "video",
+"installs": 57049,
+"desc": "YouTube thumbnail design with specific dimensions, contrast rules, and mobile preview optimization"
+},
+{
+"skill": "product-hunt-launch",
+"atom": "0x8df13b6e237fc4f2d551063443fdd2035ae9965c21db71b799e2174122eef2d5",
+"domain": "marketing",
+"installs": 57031,
+"desc": "Product Hunt launch optimization with specific specs, timing, and gallery strategy"
+},
+{
+"skill": "image-to-video",
+"atom": "0x78ea97b4ac6437ed63b6ea5bd71d904b2ec3584887b8a8a27e7bc3b60a58cb22",
+"domain": "video",
+"installs": 57021,
+"desc": "Still-to-video conversion guide: model selection, motion prompting, and camera movement"
+},
+{
+"skill": "happyhorse",
+"atom": "0xc2025ddd02b2a3bfded981e3c7dca5e1a69bb2ad7c8a05ee977b6915a358d191",
+"domain": "video",
+"installs": 12840,
+"desc": "Generate and edit videos with Alibaba HappyHorse 1.0 models via inference.sh CLI"
+},
+{
+"skill": "gpt-image",
+"atom": "0xaa1d50c7440dfa5cd172ebe43e75d244321df629669a2b322ce4903d2bf0e9d7",
+"domain": "image",
+"installs": 12788,
+"desc": "Generate and edit images with OpenAI GPT-Image-2 via inference.sh CLI"
+},
+{
+"skill": "p-image",
+"atom": "0x20742e2c4ec657475336b9a5b8eb78b37a61fe8687efb4067bd8e6c7b24bc61a",
+"domain": "image",
+"installs": 12760,
+"desc": "Generate images with Pruna P-Image models via inference.sh CLI"
+},
+{
+"skill": "p-video",
+"atom": "0xb3274cd4b7a47df417850f06906600bf677a97a28568cf7d855a8473ee6bf2b6",
+"domain": "video",
+"installs": 12739,
+"desc": "Generate videos with Pruna P-Video and WAN models via inference.sh CLI"
+},
+{
+"skill": "p-video-avatar",
+"atom": "0x50a52d2443c1d7d110ea68388e76ed30e3f07ae7e17d3b4a5ab5dfdf98c19c43",
+"domain": "video",
+"installs": 12669,
+"desc": "Generate talking head avatar videos with Pruna P-Video-Avatar via inference.sh CLI"
+},
+{
+"skill": "seedance",
+"atom": "0x4aebbb033ab9bf6d4e8105e82b0dc52a1e93682034609e78c97e98a7baba46c6",
+"domain": "video",
+"installs": 12658,
+"desc": "Generate videos with ByteDance Seedance 2.0 via inference.sh CLI"
+}
+],
+"samePack": [
+{
+"repo": "bankai-skills/superpowers",
+"stars": 0,
+"days": 59,
+"installs": 2280582
+},
+{
+"repo": "its-a-skill-issue/superpowers",
+"stars": 0,
+"days": 53,
+"installs": 2369719
+},
+{
+"repo": "magentosh/superpowers",
+"stars": 4,
+"days": 87,
+"installs": 4350541
+},
+{
+"repo": "qu-skills/superpowers",
+"stars": 4,
+"days": 57,
+"installs": 3205244
+},
+{
+"repo": "skills-shell/superpowers",
+"stars": 2,
+"days": 57,
+"installs": 2680001
+}
+]
+}
+};
+
+
+/* SAMPLE: what the chain would hold about each repository */
+const AGENTS=['clip-cutter','promo-renderer','Agent 13579:41','reel-composer','caption-forge','Agent 13579:7'];
+function rows(list,seed){return list.map((nm,k)=>{const backed=k%3!==2;const pos=backed?Math.max(1,Math.round(7/(k+1))):0;
+  return {tripleId:`t${seed}-${k}`,name:nm,nameIsId:/^(Agent |0x)/.test(nm),subjectAtomId:`a${k}`,backing:backed?(0.08*pos+0.0099).toFixed(4)+' tTRUST':null,positions:pos,opposition:null};});}
+function group(label,rs){const pos=rs.reduce((s,r)=>s+r.positions,0);return {predicateAtomId:label,label,labelIsId:false,rows:rs,backing:pos?rs.filter(r=>r.backing).reduce((s,r)=>s+parseFloat(r.backing),0).toFixed(4)+' tTRUST':null,positions:pos};}
+const SAMPLE={
+  'remotion-dev/skills':{maintained:true,groups:[group('uses',rows(AGENTS.slice(0,4),1)),group('recommends',rows(['reel-composer','storyboard-bot'],2))],
+    market:{assets:'2.6400',positions:14,largest:2600,top3:5400,first:'2026-09-02',last:'2026-10-26',mine:null},activity:true,
+    usage:{'remotion-best-practices':[9,'2.1020'],'remotion-render':[13,'4.2180'],'remotion-create':[5,'0.6200'],'remotion-captions':[3,'0.2100'],'remotion-studio':[1,'0.0500']}},
+  '101-skills/superpowers':{maintained:true,groups:[group('uses',rows(['Agent 13579:118'],3))],
+    market:{assets:'0.000001',positions:0},activity:false,
+    usage:{'remotion-render':[2,'0.3100'],'ai-video-generation':[1,'0.0500']}},
+};
+</script>
+<script>
+/* ---------------------------------------------------------------------------
+   GEOMETRY. Same as claim-field-geometry.ts, plus the fold and the grain.
+   --------------------------------------------------------------------------- */
+const INNER=0.17, OUTER=0.42, MAX_DOTS=36, MAX_RINGS=5;
+function layout(groups){
+  // fold everything past ring 5 into one last ring
+  let shown=groups, folded=null;
+  if(groups.length>MAX_RINGS){
+    shown=groups.slice(0,MAX_RINGS-1);
+    const rest=groups.slice(MAX_RINGS-1);
+    folded={label:`+${rest.length} other predicates`,rows:rest.flatMap(g=>g.rows.map(r=>({...r,_pred:g.label}))),labelIsId:false,members:rest};
+    shown=[...shown,folded];
+  }
+  const n=shown.length, rings=[], dots=[];
+  shown.forEach((g,i)=>{
+    const total=g.rows.length, drawn=Math.min(total,MAX_DOTS);
+    const r = n===1?OUTER:INNER+(i/(n-1))*(OUTER-INNER);
+    const step=drawn?2*Math.PI/drawn:0, offset=(i%2)*(step/2);
+    rings.push({i,r,drawn,total,g});
+    for(let k=0;k<drawn;k++){const a=-Math.PI/2+offset+k*step;dots.push({ring:i,k,row:g.rows[k],pred:g.rows[k]._pred||g.label,cx:.5+r*Math.cos(a),cy:.5+r*Math.sin(a)});}
+  });
+  return {rings,dots,folded};
+}
+// mass by position count, never by amount. free = base, hollow.
+const dotSize=(pos)=> pos>0 ? Math.min(10+3.2*Math.log2(pos),17) : 10;
+
+/* ---------------------------------------------------------------------------
+   RENDER
+   --------------------------------------------------------------------------- */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let still=matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+function render(key){
+  const C=key, mount=$('#used-mount');
+  const edgeCount=C.groups.reduce((s,g)=>s+g.rows.length,0);
+  if(!C.groups.length){
+    mount.innerHTML=`<div class="cf-zero"><div class="cf-field" aria-hidden="true"><span class="cf-track" style="left:${(.5-OUTER)*100}%;top:${(.5-OUTER)*100}%;width:${OUTER*200}%;height:${OUTER*200}%;border-style:dashed"></span><span class="cf-core"></span></div>
+      <p class="cf-empty">Nothing points at ${esc(C.subject)} yet. A claim made about it appears here as a dot.</p></div>`;
+    return;
+  }
+  const {rings,dots,folded}=layout(C.groups);
+  let h=`<div class="cf"><div class="cf-field cf-enter" id="field" role="group" aria-label="Claims about ${esc(C.subject)}">`;
+  // the loupe and its line to the card: always drawn, resting at -60° on the outer ring
+  h+=`<svg class="cf-link" id="link" viewBox="0 0 1 1" preserveAspectRatio="none" aria-hidden="true"><polyline id="bar" points=""/><circle id="head" cx="0" cy="0" r="0.032"/></svg>`;
+  h+=`<span class="cf-core" aria-hidden="true"></span>`;
+  rings.forEach(R=>{
+    const dur=110+R.i*40, to=R.i%2?'-360deg':'360deg';
+    h+=`<div class="cf-ring cf-orbit" data-ring="${R.i}" style="--orbit-for:${dur}s;--orbit-to:${to}">`;
+    h+=`<span class="cf-track" aria-hidden="true" style="left:${(.5-R.r)*100}%;top:${(.5-R.r)*100}%;width:${R.r*200}%;height:${R.r*200}%"></span>`;
+    // grain: every claim past the drawn ones, as stipple in the gaps. aria-hidden; the legend says the count.
+    if(R.total>R.drawn){
+      const extra=R.total-R.drawn, step=2*Math.PI/R.drawn, off=(R.i%2)*(step/2);
+      let g='';
+      for(let e=0;e<extra;e++){
+        // spread evenly between the drawn dots, never on top of one
+        const slot=e%R.drawn, layer=Math.floor(e/R.drawn), per=Math.ceil(extra/R.drawn);
+        const f=(layer+1)/(per+1);
+        const a=-Math.PI/2+off+(slot+f)*step;
+        // one row on the ring; a second row only when the ring is genuinely crowded
+        const jr=R.r+(per>6?((layer%2)?0.007:-0.007):0);
+        g+=`<circle cx="${(.5+jr*Math.cos(a)).toFixed(4)}" cy="${(.5+jr*Math.sin(a)).toFixed(4)}" r="0.0036"/>`;
+      }
+      h+=`<svg class="cf-grain" viewBox="0 0 1 1" aria-hidden="true"><g fill="var(--color-steel)" opacity=".75">${g}</g></svg>`;
+    }
+    dots.filter(d=>d.ring===R.i).forEach((d,idx)=>{
+      const r=d.row, backed=r.positions>0, global=dots.indexOf(d);
+      const name=`${r.name} ${d.pred} ${C.subject}, ${backed?r.backing+' behind it, '+r.positions+(r.positions===1?' position':' positions'):'nothing behind it'}${r.opposition?', '+r.opposition+' against':''}`;
+      h+=`<a class="cf-dot${backed?' backed':''}${r.opposition?' opposed':''}" href="#" data-i="${global}" style="left:${d.cx*100}%;top:${d.cy*100}%;--d:${dotSize(r.positions).toFixed(1)}px;--row-index:${Math.min(global,7)}" aria-label="${esc(name)}"><i></i></a>`;
+    });
+    h+=`</div>`;
+  });
+  // each ring names itself where it sits, at six o'clock, outside the turning wrapper so the label stays put
+  h+=`<div class="cf-names" aria-hidden="true">`+rings.map(R=>{const g=R.g;const n=R.total;
+    const tip=g===folded?g.members.map(m=>`${m.label} ${m.rows.length}`).join(', '):'';
+    return `<span class="cf-name${g.labelIsId?' id':''}" style="top:${((.5+R.r)*100).toFixed(2)}%"${tip?` title="${esc(tip)}"`:''}>${esc(g.label)} <b>${C.truncated&&R.i===rings.length-1?n+'+':n}</b></span>`;}).join('')+`</div>`;
+  h+=`</div>`;
+  // card
+  h+=`<div class="cf-card" id="card" aria-hidden="true"><div class="cf-card-h"><i></i><span id="c-pred"></span><span class="why" id="c-why"></span></div><div class="face cf-subj" id="c-subj"></div><div class="cf-fig" id="c-fig"></div><div class="cf-opp" id="c-opp"></div></div>`;
+  // totals + legend
+  h+=`<div class="cf-total"><span><b>${C.truncated?edgeCount+'+':edgeCount}</b> ${edgeCount===1&&!C.truncated?'claim':'claims'} about ${esc(C.subject)}</span>
+     <span class="cf-key"><span><i class="f"></i>a position behind it</span><span><i></i>nothing behind it</span>${C.groups.some(g=>g.rows.some(r=>r.opposition))?'<span><i class="o"></i>someone took the other side</span>':''}</span></div>`;
+  h+=`</div>`;
+  mount.innerHTML=h;
+  wire(C,dots);
+}
+
+/* ---------------------------------------------------------------------------
+   THE LOUPE. Rests at HEAD_DEGREES on the outer ring and reads whatever passes
+   under it. Point at a dot (mouse or Tab) and it glides there and rides it;
+   let go and it glides home. The line to the card is drawn the whole time.
+   --------------------------------------------------------------------------- */
+const HEAD_DEGREES=-60, RISE_DEGREES=35, BAR_Y=0.055, HEAD_R=0.032, DOT_R=0.0142;
+const GLIDE_MS=160;   // time constant of the glide: ~95% of the way in 480ms
+const TOUR_MS=4000;   // with nobody pointing, the loupe moves to the next claim every 4 s
+function wire(C,dots){
+  const field=$('#field'), card=$('#card'), link=$('#link'), head=$('#head'), bar=$('#bar');
+  requestAnimationFrame(()=>requestAnimationFrame(()=>field.classList.remove('cf-enter')));
+  const outerRing=Math.max(...dots.map(d=>d.ring));
+  const outerR=layout(C.groups).rings[outerRing].r;
+  const rest={x:.5+outerR*Math.cos(HEAD_DEGREES*Math.PI/180), y:.5+outerR*Math.sin(HEAD_DEGREES*Math.PI/180)};
+  const cur={...rest};
+  let pointing=null, shown=-1, last=performance.now(), alive=true;
+  // the tour: starts at the resting place, then visits each claim in the graph's order
+  let touring=null, nextTour=performance.now()+TOUR_MS;
+  const els=[...field.querySelectorAll('.cf-dot')];
+  function centre(el){const f=field.getBoundingClientRect(),b=el.getBoundingClientRect();return {x:(b.left+b.width/2-f.left)/f.width,y:(b.top+b.height/2-f.top)/f.height};}
+  function fill(i,isPointing,lit){
+    const d=dots[i]; if(!d) return;
+    if(i!==shown){
+      shown=i; const r=d.row, backed=r.positions>0;
+      $('#c-pred').textContent=d.pred;
+      const sj=$('#c-subj'); sj.textContent=r.name; sj.classList.toggle('id',r.nameIsId);
+      const f=$('#c-fig'); f.classList.toggle('none',!backed);
+      f.innerHTML=backed?`${esc(r.backing)} <span>· ${r.positions} ${r.positions===1?'position':'positions'}</span>`:'nothing behind it';
+      $('#c-opp').textContent=r.opposition?`${r.opposition} against`:'';
+    }
+    $('#c-why').textContent='';
+    card.classList.toggle('is-pointing',lit);
+    els.forEach((el,k)=>el.classList.toggle('lit',k===i&&lit));
+    link.classList.toggle('on',lit);
+  }
+  // at rest: the nearest outer-ring dot to the loupe is what the card reads;
+  // it lights only when the whole dot is inside the loupe
+  function underHead(){
+    let best=-1,bd=1e9;
+    els.forEach((el,k)=>{ if(dots[k].ring!==outerRing) return; const c=centre(el); const dd=Math.hypot(c.x-cur.x,c.y-cur.y); if(dd<bd){bd=dd;best=k;} });
+    return {i:best, inside: bd <= (HEAD_R-DOT_R)+0.002};
+  }
+  function drawLink(){
+    head.setAttribute('cx',cur.x.toFixed(4)); head.setAttribute('cy',cur.y.toFixed(4));
+    const cornerX=cur.x+Math.abs(cur.y-BAR_Y)/Math.tan(RISE_DEGREES*Math.PI/180);
+    // start the line on the loupe's rim, not its centre
+    const ang=Math.atan2(BAR_Y-cur.y, cornerX-cur.x);
+    const sx=cur.x+HEAD_R*Math.cos(ang), sy=cur.y+HEAD_R*Math.sin(ang);
+    bar.setAttribute('points',`${sx.toFixed(4)},${sy.toFixed(4)} ${cornerX.toFixed(4)},${BAR_Y} 1.6,${BAR_Y}`);
+  }
+  let pollAt=0, lockedOn=null;
+  const LOCK=0.006;   // about 2px on a 22rem field
+  function frame(now){
+    if(!alive||!document.body.contains(field)){alive=false;return;}
+    const dt=Math.min(64,now-last); last=now;
+    if(pointing===null && !still && els.length && now>=nextTour){
+      touring = touring===null ? 0 : (touring+1)%els.length;
+      nextTour = now+TOUR_MS;
+    }
+    const held = pointing!==null ? pointing : touring;
+    const target = held===null ? rest : centre(els[held]);
+    // once the loupe has arrived, it locks onto the dot: an ease alone always trails a moving
+    // target by a pixel or so, which reads as "not centred"
+    if(held!==lockedOn) lockedOn=null;
+    if(lockedOn===null && Math.hypot(target.x-cur.x,target.y-cur.y)<LOCK) lockedOn=held;
+    const k = still || (lockedOn!==null && held===lockedOn) ? 1 : 1-Math.exp(-dt/GLIDE_MS);
+    cur.x+=(target.x-cur.x)*k; cur.y+=(target.y-cur.y)*k;
+    drawLink();
+    if(held!==null){ fill(held,pointing!==null,true); }
+    else if(now>=pollAt){ pollAt=now+120; const u=underHead(); if(u.i>=0) fill(u.i,false,u.inside); }
+    requestAnimationFrame(frame);
+  }
+  els.forEach((el,i)=>{
+    const on=()=>{pointing=i;};
+    // letting go resumes the tour from the claim you were on, after a full beat
+    const off=()=>{if(pointing===i){ pointing=null; touring=i; nextTour=performance.now()+TOUR_MS; }};
+    el.addEventListener('mouseenter',on);el.addEventListener('focus',on);
+    el.addEventListener('mouseleave',off);el.addEventListener('blur',off);
+    el.addEventListener('click',e=>e.preventDefault());
+  });
+  drawLink(); const u=underHead(); if(u.i>=0) fill(u.i,false,u.inside);
+  requestAnimationFrame(frame);
+}
+
+
+</script>
+<script>
+/* SAMPLE: weekly activity, 14 weeks */
+function weeks(kind){
+  const out=[];const start=new Date('2026-07-27');
+  for(let i=0;i<14;i++){const d=new Date(start);d.setDate(d.getDate()+7*i);
+    let s=0,v=0;
+    if(kind===true&&i>=7){const t=i-7;s=[2,1,4,3,6,5,9][t];v=[0.31,0.05,0.92,0.4,1.6,0.7,2.1][t];}
+    if(kind==='one'&&i===12){s=1;v=0.11;}
+    out.push({bucket:d,signals:s,volume:v});}
+  return out;
+}
+</script>
+<script>
+/*CF_JS*/
+</script>
+<script>
+const fmtDate=d=>d.toLocaleDateString('en-GB',{day:'numeric',month:'short'});
+const pct=b=>(b/100).toFixed(0)+'%';
+
+function chart(data,key,{h=92,fmt}){
+  const W=560,H=h,PL=0,PB=18,PT=6;const max=Math.max(...data.map(d=>d[key]),0);
+  const top=max===0?1:niceMax(max);const bw=(W-PL)/data.length;
+  let s=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${key} per week">`;
+  [0,.5,1].forEach(f=>{const y=PT+(H-PT-PB)*(1-f);s+=`<line class="grid" x1="0" x2="${W}" y1="${y}" y2="${y}"/>`;if(f>0)s+=`<text class="axis" x="0" y="${y-3}" text-anchor="start">${fmt(top*f)}</text>`;});
+  if(key==='signals'){
+    data.forEach((d,i)=>{const hh=(H-PT-PB)*(d[key]/top);const x=PL+i*bw+bw*.22;const last=i===data.length-1;
+      if(d[key]>0)s+=`<rect x="${x.toFixed(1)}" y="${(H-PB-hh).toFixed(1)}" width="${(bw*.56).toFixed(1)}" height="${hh.toFixed(1)}" rx="1.5" fill="${last?'var(--color-fg)':'var(--color-steel)'}"/>`;
+      else s+=`<rect x="${x.toFixed(1)}" y="${H-PB-1}" width="${(bw*.56).toFixed(1)}" height="1" fill="var(--color-rule-strong)"/>`;});
+  }else{
+    const pts=data.map((d,i)=>[PL+i*bw+bw/2,H-PB-(H-PT-PB)*(d[key]/top)]);
+    const line=pts.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ');
+    s+=`<path d="${line} L${pts.at(-1)[0].toFixed(1)},${H-PB} L${pts[0][0].toFixed(1)},${H-PB} Z" fill="var(--color-fg)" opacity=".08"/>`;
+    s+=`<path d="${line}" fill="none" stroke="var(--color-fg)" stroke-width="1.5" vector-effect="non-scaling-stroke"/>`;
+    const e=pts.at(-1);s+=`<circle cx="${e[0].toFixed(1)}" cy="${e[1].toFixed(1)}" r="3" fill="var(--color-fg)"/>`;
+  }
+  [0,Math.floor(data.length/2),data.length-1].forEach(i=>{s+=`<text class="axis" x="${(PL+i*bw+bw/2).toFixed(1)}" y="${H-3}" text-anchor="${i===0?'start':i===data.length-1?'end':'middle'}">${fmtDate(data[i].bucket)}</text>`;});
+  return s+`</svg>`;
+}
+function niceMax(m){const p=Math.pow(10,Math.floor(Math.log10(m)));const n=m/p;return (n<=1?1:n<=2?2:n<=5?5:10)*p;}
+
+function lead(C){
+  const M=C.market, backed=M.positions>0;
+  let m=`<div class="market"><div class="value"><span class="label">Behind the repository itself <span class="sample">sample</span></span>`;
+  m+= backed ? `<div class="big">${M.assets}<small>tTRUST</small></div>` : `<div class="none">Nobody is behind it yet.</div>`;
+  m+=`</div>`;
+  if(backed){
+    m+=`<dl class="kv"><dt>Positions</dt><dd>${M.positions}</dd>
+      <dt>Largest holder <button class="hint" type="button" aria-label="About the largest holder">?<span>Share of all shares held by the single biggest account. High means this looks like one person.</span></button></dt><dd>${pct(M.largest)}</dd>
+      <dt>Top three</dt><dd>${pct(M.top3)}</dd>
+      <dt>First backer</dt><dd>${M.first}</dd><dt>Latest backer</dt><dd>${M.last}</dd></dl>
+      <div class="conc" aria-hidden="true"><span class="a" style="width:${M.largest/100}%"></span><span class="b" style="width:${(M.top3-M.largest)/100}%"></span></div>`;
+  }
+  if(M.mine) m+=`<div class="mine"><span>Your position</span><span class="num">${M.mine} tTRUST</span></div>`;
+  m+=`<div class="actions"><button class="btn primary" type="button">Take a position</button>${M.mine?'<button class="btn" type="button">Exit</button>':''}</div></div>`;
+  let c=`<div class="curves"><div class="curves-h"><span class="label">Activity on this repository's market, per week <span class="sample">sample</span>
+    <button class="hint" type="button" aria-label="About these curves">?<span>Money moving, not a price. A redemption counts here exactly like a deposit.</span></button></span>
+    <div class="seg" role="group" aria-label="Grain"><button type="button" aria-pressed="false">day</button><button type="button" aria-pressed="true">week</button><button type="button" aria-pressed="false">month</button></div></div>`;
+  if(!C.activity){c+=`<div class="empty">Nothing has moved on this market yet.</div>`;}
+  else{const W=weeks(C.activity);const tS=W.reduce((s,d)=>s+d.signals,0),tV=W.reduce((s,d)=>s+d.volume,0);
+    c+=`<div class="chart"><div class="chart-h"><span class="t">Signals</span><span class="num">${tS} deposits and redemptions</span></div>${chart(W,'signals',{fmt:v=>Math.round(v)})}</div>`;
+    c+=`<div class="chart"><div class="chart-h"><span class="t">Value moved</span><span class="num">${tV.toFixed(2)} tTRUST, either way</span></div>${chart(W,'volume',{h:110,fmt:v=>v.toFixed(v<1?2:1)})}</div>`;}
+  c+=`</div>`;
+  $('#lead').innerHTML=m+c;
+}
+
+
+const fmt=n=>n.toLocaleString('en-US');
+function header(key,R,S){
+  const [owner,name]=key.split('/');
+  $('#title').innerHTML=`<span class="owner">${owner}</span><span class="slash">/</span>${name}`;
+  $('#cmd').innerHTML=`<b>$</b> npx skills add ${key}`;
+  $('#c-state').innerHTML= R.archived ? '<span class="state"><i style="background:var(--color-alarm)"></i>archived</span>'
+    : S.maintained ? '<span class="state"><i></i>maintained</span>' : '<span class="label">no verdict</span>';
+  $('#c-skills').innerHTML=`<span class="num">${R.rows.length}</span> <span style="color:var(--color-steel)">on chain, each pointing here by <span class="mono">source</span></span>`;
+  const by={};R.rows.forEach(r=>{const d=r.domain||'';by[d]=(by[d]||0)+1;});
+  $('#c-domains').innerHTML=Object.entries(by).sort((a,b)=>(a[0]===''?1:b[0]===''?-1:b[1]-a[1])).map(([d,n])=> d?`<a class="dchip" href="#">${d} <b>${n}</b></a>`:`<span class="dchip none" title="No keyword matched, so nothing is claimed">no tag <b>${n}</b></span>`).join('');
+  const total=R.rows.reduce((s,r)=>s+(r.installs||0),0);
+  $('#sig').innerHTML=`<div><b class="num">${fmt(R.stars)}</b><span>stars</span><em>GitHub</em></div>
+    <div><b class="num">${R.days} days</b><span>since last push</span><em>GitHub</em></div>
+    <div><b class="num">${fmt(total)}</b><span>installs, all skills</span><em>skills.sh</em></div>`;
+}
+function skills(key,R,S){
+  $('#sk-h').textContent=`${R.rows.length} skills`;
+  const max=Math.max(...R.rows.map(r=>r.installs||0));
+  $('#sk-body').innerHTML=R.rows.map(r=>{const u=S.usage[r.skill];return `<tr>
+    <td class="name"><a href="#">${r.skill}</a></td>
+    <td class="d">${r.desc}</td>
+    <td class="dom">${r.domain?`<a class="dchip" href="#">${r.domain}</a>`:'<span class="dchip none">no tag</span>'}</td>
+    <td>${u?u[0]:'<span class="zero">0</span>'}</td>
+    <td>${u?u[1]+' tTRUST':'<span class="zero">nothing</span>'}</td>
+    <td class="off"><span class="bar-cell"><span>${fmt(r.installs||0)}</span><span class="track" aria-hidden="true"><span class="fill" style="width:${((r.installs||0)/max*100).toFixed(1)}%;display:block"></span></span></span></td></tr>`;}).join('');
+}
+function pack(R){
+  const P=R.samePack; const sec=$('#pack');
+  if(!P||!P.length){sec.hidden=true;return;}
+  sec.hidden=false;
+  const own=R.rows.reduce((s,r)=>s+(r.installs||0),0), others=P.reduce((s,p)=>s+p.installs,0);
+  $('#pk-sum').innerHTML=`<div><b>${P.length+1}</b><span>repositories, one pack</span><em>catalogue</em></div>
+    <div><b>${fmt(own)}</b><span>installs here</span><em>skills.sh</em></div>
+    <div><b>${fmt(others)}</b><span>installs in the other ${P.length}</span><em>skills.sh</em></div>`;
+  $('#pk-body').innerHTML=[...P].sort((a,b)=>b.installs-a.installs).map(p=>`<tr><td class="repo"><a href="#">${p.repo}</a></td><td class="off">${fmt(p.stars)}</td><td class="off">${p.days} days</td><td class="off">${fmt(p.installs)}</td></tr>`).join('');
+}
+function record(key,R,S){
+  const tagged=R.rows.filter(r=>r.domain).length;
+  $('#rec-a').innerHTML=`<div class="row"><dt>Identifies</dt><dd><a href="#">https://github.com/${key}</a></dd></div>
+    <div class="row"><dt>has tag</dt><dd>${S.maintained?'maintained':'nothing'}</dd></div>`;
+  $('#rec-b').innerHTML=`<div class="row"><dt>source, incoming</dt><dd>${R.rows.length} skills</dd></div>
+    <div class="row"><dt>has tag, on its skills</dt><dd>${tagged} of ${R.rows.length}, one domain each</dd></div>
+    <div class="row"><dt>Written by</dt><dd>ARP's attestor, which can withdraw it</dd></div>`;
+}
+function show(key){const R=REPOS[key],S=SAMPLE[key];header(key,R,S);lead(S);skills(key,R,S);pack(R);render({subject:key,groups:S.groups,truncated:false});record(key,R,S);}
+$('#copy').addEventListener('click',async e=>{const t=$('#cmd').textContent.replace(/^\$\s*/,'');try{await navigator.clipboard.writeText(t);e.target.textContent='Copied';}catch{const r=document.createRange();r.selectNodeContents($('#cmd'));const s=getSelection();s.removeAllRanges();s.addRange(r);}setTimeout(()=>e.target.textContent='Copy',1600);});
+$('#case').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;[...$('#case').children].forEach(x=>x.setAttribute('aria-pressed',x===b));show(b.dataset.v);});
+document.addEventListener('click',e=>{const s=e.target.closest('.curves .seg button');if(!s)return;[...s.parentNode.children].forEach(x=>x.setAttribute('aria-pressed',x===s));});
+show('remotion-dev/skills');
+</script>
+
+</body>
+</html>

@@ -3,7 +3,6 @@ pragma solidity 0.8.23;
 
 import {Script, console2} from "forge-std/Script.sol";
 
-import {DomainScopeEnforcer} from "../src/enforcers/DomainScopeEnforcer.sol";
 import {TrustStakeCapEnforcer} from "../src/enforcers/TrustStakeCapEnforcer.sol";
 
 /// @title  DeployEnforcers
@@ -15,11 +14,14 @@ import {TrustStakeCapEnforcer} from "../src/enforcers/TrustStakeCapEnforcer.sol"
 ///
 ///         Pragma is `0.8.23` strict (matches the enforcers + vendored
 ///         delegation-framework). Sibling script `DeployRegistry.s.sol`
-///         handles `ModuleRegistry` separately under its own `^0.8.24`.
+///         `ModuleRegistry` and `DomainScopeEnforcer` were deployed here too and are gone
+///         (ADR `0051`, and the domain scope with it). One enforcer is left, deliberately:
+///         a cumulative cap over a rolling period is the thing MetaMask's stock `valueLte`
+///         does not give, since that bounds one redemption rather than a budget.
 contract DeployEnforcers is Script {
     function run()
         external
-        returns (DomainScopeEnforcer domainScopeEnforcer, TrustStakeCapEnforcer trustStakeCapEnforcer)
+        returns (TrustStakeCapEnforcer trustStakeCapEnforcer)
     {
         uint256 deployerKey = vm.envUint("PRIVATE_KEY");
         address deployer = vm.addr(deployerKey);
@@ -29,11 +31,8 @@ contract DeployEnforcers is Script {
         console2.log("ChainId: ", block.chainid);
 
         vm.startBroadcast(deployerKey);
-        domainScopeEnforcer = new DomainScopeEnforcer();
         trustStakeCapEnforcer = new TrustStakeCapEnforcer();
         vm.stopBroadcast();
-
-        console2.log("DomainScopeEnforcer deployed:   ", address(domainScopeEnforcer));
         console2.log("TrustStakeCapEnforcer deployed: ", address(trustStakeCapEnforcer));
     }
 }

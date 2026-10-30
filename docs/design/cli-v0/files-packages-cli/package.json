@@ -1,0 +1,27 @@
+{
+  "name": "@arp-protocol/cli",
+  "version": "0.0.1",
+  "description": "See what your agent's tools do. A Claude Code hook records every MCP tool call on this machine, and `arp status` says, per tool, how often it works for you. Nothing leaves the machine in this version.",
+  "type": "module",
+  "bin": {
+    "arp": "./dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=22.13"
+  },
+  "scripts": {
+    "test": "tsc -p tsconfig.build.json && vitest run",
+    "build": "tsc -p tsconfig.build.json",
+    "lint": "tsc --noEmit -p tsconfig.json",
+    "prepublishOnly": "bun run build"
+  },
+  "devDependencies": {
+    "@types/node": "^24.12.2",
+    "typescript": "~6.0.2",
+    "vitest": "^4.1.8"
+  }
+}

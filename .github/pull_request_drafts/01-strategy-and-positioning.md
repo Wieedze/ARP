@@ -87,7 +87,7 @@ That MATCH is the gate on Phase 0. It means ARP can derive any agent's canonical
 
 - **No change to `CLAUDE.md`'s source-of-authority list.** `docs/09` §10 proposes re-pointing it and retiring the narrative-preservation check, but the router does not change silently — that needs its own ADR and your acceptance of `docs/09` first.
 - No capability indexing, no trust-provider publication, no mainnet writes.
-- `integration8004.txt` at the repo root is left untracked; it duplicates `docs/07`, which is now properly committed. Probably delete it.
+- `docs/reference/integration8004.txt` at the repo root is left untracked; it duplicates `docs/07`, which is now properly committed. Probably delete it.
 
 ## Which tier of the evidence ladder does this serve?
 

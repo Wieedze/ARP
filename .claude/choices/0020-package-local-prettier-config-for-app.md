@@ -2,7 +2,7 @@
 
 **Status:** Accepted
 **Date:** 2026-09-16
-**Triggered by:** `tasks/08-agent-trust-panel.md` acceptance criterion "`prettier --check` clean",
+**Triggered by:** `docs/tasks/08-agent-trust-panel.md` acceptance criterion "`prettier --check` clean",
 and the `task-verifier` note that adding a second config is a recorded decision.
 
 ## Context
@@ -70,7 +70,7 @@ Clearing them is a chore of its own, not part of a feature branch.
 
 ## References
 
-- Related task: `tasks/08-agent-trust-panel.md`
+- Related task: `docs/tasks/08-agent-trust-panel.md`
 - Related ADR: `.claude/choices/0019-erc8004-connector-surface-deviations.md` (the same problem, solved
   the same way, one task earlier)
 - Related rule: `.claude/rules/workflow.md` (git hygiene; the recording protocol this ADR follows)

@@ -83,18 +83,18 @@ Parameters:
 - `_delegator` — the Smart Account that granted the delegation.
 - `_redeemer` — the address operating under the delegation (ARP's "agent").
 
-None of the four hooks are `view`. State mutations are permitted — required for `TrustStakeCapEnforcer`. The hooks differ in *when* they fire relative to the execution and the caveat chain:
+None of the four hooks are `view`. State mutations are permitted — required for `TrustStakeCapEnforcer`. The hooks differ in _when_ they fire relative to the execution and the caveat chain:
 
-| Hook | Fires |
-|---|---|
+| Hook            | Fires                                                        |
+| --------------- | ------------------------------------------------------------ |
 | `beforeAllHook` | Once per redemption, before any caveat-specific `beforeHook` |
-| `beforeHook` | Once per caveat, before the execution |
-| `afterHook` | Once per caveat, after the execution |
-| `afterAllHook` | Once per redemption, after all caveat-specific `afterHook`s |
+| `beforeHook`    | Once per caveat, before the execution                        |
+| `afterHook`     | Once per caveat, after the execution                         |
+| `afterAllHook`  | Once per redemption, after all caveat-specific `afterHook`s  |
 
 For ARP MVP, both enforcers do their validation in `beforeHook` and leave the other three as no-ops (still required to be present to satisfy the interface).
 
-> **Bear Trap caveat**: the Bear Trap brief at `docs/06_BEAR_TRAP_REFERENCE.md` shows a simplified 2-hook signature with parameter order `(terms, execution, mode, args, delegationHash, delegator, delegate)`. That signature is **stale**. Follow the 4-hook signature above. Bear Trap's *patterns* (custom errors, mode guards, `delegationHash`-keyed state, single-purpose enforcers) are still correct; only the signature changed.
+> **Bear Trap caveat**: the Bear Trap brief at `docs/06_BEAR_TRAP_REFERENCE.md` shows a simplified 2-hook signature with parameter order `(terms, execution, mode, args, delegationHash, delegator, delegate)`. That signature is **stale**. Follow the 4-hook signature above. Bear Trap's _patterns_ (custom errors, mode guards, `delegationHash`-keyed state, single-purpose enforcers) are still correct; only the signature changed.
 
 ### `DomainScopeEnforcer` (Task 02b)
 
@@ -197,8 +197,8 @@ If x402 integration grows beyond following the docs (e.g., custom resource-prici
 ## Storage
 
 - Smart Account addresses → app state (in-memory or localStorage, never in code).
-- Signed delegations → client-side storage. The hackathon does not require on-chain delegation publication. If a future task requires it, that's a new decision documented as an ADR.
-- Enforcer contract addresses → `deployments/<chainId>.json`, same convention as `ModuleRegistry`.
+- Signed delegations → client-side storage, **and on testnet 13579 an index on Intuition** (IPFS document + `delegate to` / `in context of` triples), published by ARP's sponsor relay or by the operator — ADR `0092`, `docs/tasks/37`. Mainnet publication is a new ADR.
+- Enforcer contract addresses → `data/deployments/<chainId>.json`, same convention as `ModuleRegistry`.
 
 ## Testing
 

@@ -1,16 +1,28 @@
 # ARP — Agent Reputation Protocol
 
-> **The on-chain trust layer for autonomous agents.** ARP provides what agent runtimes are missing: verifiable identity, composable reputation, bounded autonomy, and an economic-conviction marketplace for tools — all on a public chain. Runtime-agnostic.
+> **ARP makes money flow to the tools agents actually use.**
+>
+> Agents record each tool call that works, on an open graph anyone can read, next to stars,
+> installs, uptime and paid calls. Stars show who looked. ARP shows who used it.
+
+It stores nothing. What is listed exists somewhere else; what ARP adds is the market. Nobody is
+scored: every figure it shows is a deposit somebody else made, and every position can be withdrawn,
+so what you read is **current rather than accumulated**.
+
+That line led with **"a registry that points at AI things"** until 2026-10-29. A census dated
+2026-10-02 counts **10,411 agent marketplaces** against 9,676 MCP servers — more storefronts than
+servers — so "registry" is the one word in this market that distinguishes nothing. What none of
+those 10,411 publishes is which listings answer and who stands behind them. `docs/01` carries the
+amendment and ADR `0075` the decision.
+
+[docs/12_THE_IDEA.md](docs/12_THE_IDEA.md) is the canonical statement of the mechanism and the only
+one. Read it before `08`, `09` or `11` — those are analysis and they drifted.
 
 ## Positioning
 
-Agent runtimes today have solid **compute layers** (orchestration, tool invocation, payments) but rely on off-chain trust:
-
-- "Which agent should I hire?" → static listings or reviews
-- "Is this agent's reputation real?" → no skin in the game
-- "Can I delegate a budget safely?" → custom auth per integration
-
-ARP is the missing **trust + reputation layer** that any runtime can plug into:
+Agent runtimes have compute layers — orchestration, tool invocation, payments — and take trust
+off-chain: a listing, a review, a score, none of which cost anything to produce. ARP is the layer
+where an opinion costs something, and any runtime can read it:
 
 | Layer                                           | Provider                                    |
 | ----------------------------------------------- | ------------------------------------------- |
@@ -19,76 +31,150 @@ ARP is the missing **trust + reputation layer** that any runtime can plug into:
 | **Coordination chain + graph**                  | Intuition (atoms + triples + bonding curve) |
 | **Bounded autonomy + payments**                 | MetaMask Smart Accounts Kit (ERC-7710)      |
 
-ARP's own contracts are deployed on **Intuition Testnet** (chainId 13579). The trust panel additionally **reads Intuition mainnet** (chainId 1155), where the 28,648 ERC-8004 agents live, and can **stake real TRUST** there — see _Two networks_ below.
+ARP's own contracts are deployed on **Intuition Testnet** (chainId 13579). The trust panel and the
+tool surfaces **read Intuition mainnet** (chainId 1155), where the mirrored ERC-8004 agents are, and
+can **stake real TRUST** there — see _Two networks_ below.
 
-Originally built for the MetaMask Dev Cook-Off (deadline 2026-06-15, now past). The current strategic commitment is [docs/09_POSITIONING_AND_PLAN.md](docs/09_POSITIONING_AND_PLAN.md).
+Originally built for the MetaMask Dev Cook-Off (deadline 2026-06-15, now past); that surface is
+**set aside** and kept as historical record ([ADR 0033](.claude/choices/0033-the-hackathon-surface-is-set-aside.md)).
+`docs/09` is analysis, not commitment — it drifted and [ADR 0049](.claude/choices/0049-arp-does-not-calibrate.md)
+corrects it.
 
 ## What ARP gives you
 
-1. **Verifiable identity** — every agent is an ERC-8004 NFT with an explicit `runtime wallet` binding. Compatible with the wider Trustless Agents ecosystem.
-2. **Composable reputation** — agents (and tools, and humans) stake real tTRUST on Intuition atoms. The bonding curve is the price-discovery engine for "is this tool actually valuable?". Stakes are public, sortable, queryable.
-3. **Bounded autonomy** — operators sign ERC-7710 delegations with caveat enforcers. The agent runtime executes within those bounds; the framework reverts on out-of-scope attempts before any state change. No custom auth.
-4. **Recursive composition** — atoms can be agents OR tools OR both. Triples express `(thing, uses, thing)`. The graph self-describes the entire ecosystem at every level of nesting.
+1. **Verifiable identity** — an agent is an ERC-8004 NFT. ARP mints one into the canonical registry
+   or imports one that already exists, and gives it the Intuition atom everything else reads from.
+   The atom's id is the hash of a document derived from the agent's identity, so it is computable
+   offline with no credential — which is why ARP can write it rather than wait for a mirror.
+2. **A market, not a score** — an agent declares the tools it used, and the declaration costs a
+   non-recoverable fee: from 0.1 TRUST on mainnet, from 0.001 on testnet, read off
+   `getTripleCost()` rather than copied. The market is a deposit on the agent's or the tool's
+   own atom, in both directions: you buy in, or you take your money back out. A position can be
+   withdrawn, so what is displayed is current rather than accumulated
+   ([ADR 0056](.claude/choices/0056-the-market-on-an-agent-is-on-its-atom-and-the-edge-is-a-receipt.md),
+   [ADR 0046](.claude/choices/0046-arp-scores-nobody.md)).
+3. **One atom per URL** — a tool's atom derives from its normalised URL and nothing else, so two
+   people registering the same tool land on the same market instead of forking it
+   ([ADR 0054](.claude/choices/0054-a-tool-atom-is-derived-from-its-url.md)).
+4. **Bounded autonomy** — operators sign ERC-7710 delegations with caveat enforcers. The runtime
+   executes within those bounds; the framework reverts on out-of-scope attempts before any state
+   change.
+5. **Nothing in the request path** — ARP ships a node the operator runs and never hosts one they
+   have to reach. The test is mechanical: unplug ARP's servers and every declaration, every stake
+   and every agent-to-agent call still completes
+   ([ADR 0045](.claude/choices/0045-the-invariant-is-the-request-path-not-the-runtime.md)).
 
 ## The core primitives
 
 ```
 Atom        a thing — agent, tool, label, identity. Has a vault.
 Triple      a directed claim: (subject, predicate, object) of atoms.
-Stake       tTRUST locked into an atom's vault — economic conviction.
+Stake       TRUST deposited into a vault, withdrawable — economic conviction.
 Delegation  ERC-7710 signed authorization, scoped by caveat enforcers.
 ```
 
-That's it. Everything else is emergent.
+## What is live, and where
 
-## End-to-end demo flow (today)
+### The loop, walked for real
 
-ARP runs three personas in parallel on Intuition Testnet. The demo exercises all three.
-
-### Operator (browser, `/agent`)
-
-One-time setup, then walks away:
-
-1. Mints an ERC-8004 agent NFT.
-2. Generates a runtime keypair and binds it via `setAgentWallet`.
-3. Deploys a MetaMask Smart Account.
-4. Signs two delegations once:
-   - **Publish** — `DomainScopeEnforcer([allowedDomains])` + `TrustStakeCapEnforcer(cap, period)` gating `ModuleRegistry.registerModule`.
-   - **Compose** — stock `AllowedTargetsEnforcer([MultiVault])` + `AllowedMethodsEnforcer([deposit, createAtoms, createTriples])` + `TrustStakeCapEnforcer(cap, period)` gating Intuition staking + graph writes.
-
-### Agent runtime (terminal)
-
-The repo ships two example runtimes that consume the signed delegations: 5. `scripts/agent-approve-sa.ts` — one-time MultiVault approval so the Smart Account can deposit on the runtime's behalf. 6. `scripts/agent-loop.ts` — autonomous walk of `scripts/manifest-modules.json` (14 tools across 4 domains). Publishes new modules, ensures tool atoms exist, declares `(agent, uses, tool)` triples, stakes tTRUST on each tool. Exercises both revert paths (`DomainNotAllowed`, `StakeExceedsCap`) so the bounds visibly hold. 7. `scripts/agent-server.ts` — on-demand HTTP runtime that accepts a paid audit job, runs it via the Trail of Bits methodologies, **fuzzy-matches the methodologies it actually used** against the registry, and stakes on each matched tool under the compose delegation. Optionally sub-contracts a specialist via a signed leaf delegation (A2A) — `scripts/agent-server-specialist.ts` is the receiving counterpart.
-
-### Consumer (browser, `/hire` and `/tool/:id`)
-
-8. `/` — modules ranked by TVL desc with a live distinct-stakers count. Slither + Mythril climb as runtimes stake; new modules appear as they publish.
-9. `/tool/:id` — per-tool detail. Live vault metrics, an optional stake form for human EOAs (economic conviction without an agent identity), and a `@arp-protocol/sdk` snippet showing how a runtime declares + stakes automatically.
-10. `/hire` — pick a domain, see the top agents ranked by reputation, pay one in tTRUST, get back a signed audit report with the on-chain stakes the agent placed during execution. If A2A is enabled, the result page also renders the sub-delegation chain (`requester → auditor → specialist`) and the specialist's independently-signed receipt.
-
-### Build a runtime against ARP (`@arp-protocol/sdk`)
-
-Any TypeScript runtime can plug into ARP's trust layer in a few lines — no API key, no indexer, no signing baked in:
-
-```ts
-import { createArpClient, findTopAgents, getReputation } from '@arp-protocol/sdk';
-
-const arp = createArpClient();
-
-// "Who should I delegate this Solidity audit to?"
-const candidates = await findTopAgents(arp, {
-  domain: 'solidity-audit',
-  minStake: 1_000_000_000_000n,
-});
-
-// "Is this agent's track record real?"
-const rep = await getReputation(arp, candidates[0].runtimeWallet);
-console.log(`${rep.totalStaked} wei across ${rep.distinctAtomCount} tools`);
+```
+bun run scripts/demo/demo-adopt.ts --agent 8453/<tokenId> --tool <url> --stake 0.01 --execute
+bun run scripts/demo/demo-hire.ts  --agent 8453/<tokenId> --node http://localhost:3100 --execute
 ```
 
-See [`sdk/`](sdk/README.md) for the full surface and a working write-path example. `scripts/agent-server.ts` is the canonical reference runtime — it discovers, hires, executes, and stakes end-to-end using only `@arp-protocol/sdk` + `viem`.
+`demo-adopt` takes an agent from nothing to a readable position: the identity atom, the `same as`
+edge, the `(agent, uses, tool)` declaration, the stake behind it, and the page it is read from.
+`demo-hire` is a second agent discovering the first, calling it, verifying the signed receipt, and
+pricing a rating of the result. Both ran end-to-end on testnet 13579 on 2026-10-20; both are dry by
+default and only `--execute` signs.
 
-ARP doesn't compute agents — that's the runtime layer's job. ARP is purely declarative + coordination + economic accounting.
+### Pages
+
+| route                      | what it is                                                                                                                                                                                                                     | chain                                 |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------- |
+| `/agents`                  | the mirrored ERC-8004 cohort, paged, ordered by measures of evidence and never by a score                                                                                                                                      | mainnet 1155 (read)                   |
+| `/agent/:chainId/:tokenId` | one agent's trust surface, one tab per trust provider, with a staking control                                                                                                                                                  | mainnet (read + write)                |
+| `/agent`                   | **one door for your agent.** One question — does it already have an ERC-8004 id? — then either prove you own it and link your staking account, or mint one                                                                     | Base 8453 to mint, the toggle to link |
+| `/rig`                     | the five-step testnet bring-up: mint into ARP's own registry copy, designate a runtime wallet, deploy a Smart Account, sign two delegations, fund it. A rehearsal of `docs/12` point 5, consumed by `scripts/`. Not in the nav | testnet 13579                         |
+| `/tools`                   | tools agents declared using                                                                                                                                                                                                    | either, the toggle                    |
+| `/atom/:atomId`            | one atom — a tool, a tag, a category, a protocol, an agent — its own market, and every claim pointing at it grouped by predicate                                                                                               | either, read only                     |
+| `/`                        | the front page. Every figure on it is read from the chain in view, including the empty state                                                                                                                                   | either, the toggle                    |
+
+`/hire` was a demo that the index works. It was never finished and is removed (2026-10-20); hiring is
+`docs/tasks/25`.
+
+### One path, and four jobs on it
+
+The skill, the MCP server and the node are not three alternatives. They do different jobs on one
+path:
+
+|                    | what it is                                                                                                  | when you want it                                                       |
+| ------------------ | ----------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| **the skill**      | [`skills/arp/SKILL.md`](skills/arp/SKILL.md) — the whole procedure, as public reads and calls you sign      | always. It is the source of truth and it replaces the other two        |
+| **the MCP server** | `apps/mcp/src/server.ts`, stdio — it _prepares_ the same calls                                           | when you would rather not encode calldata. Holds no key, sends nothing |
+| **the node**       | `apps/node/src/node.ts` — an inbound endpoint other agents reach you at. Signs receipts, never transactions | only for being **hired**. Irrelevant to reading, declaring or listing  |
+
+And the four jobs, because they need different things and only one of them needs a wallet at all:
+
+| you want to                                   | you need                                                |
+| --------------------------------------------- | ------------------------------------------------------- |
+| **check** a tool or an agent before using it  | nothing — public reads, no wallet, no identity          |
+| **declare** what you used, and pay to mean it | a funded wallet + an ERC-8004 identity                  |
+| **list** a tool nobody has listed             | a funded wallet. An atom has no subject, so no identity |
+| **be hired**                                  | an endpoint you run                                     |
+
+**Using** ARP needs nothing installed; **being used** needs an endpoint you provide
+([ADR 0045](.claude/choices/0045-the-invariant-is-the-request-path-not-the-runtime.md)). Unplug
+ARP's servers and every read, declaration and stake above still completes.
+
+### The delegation guard rail
+
+Deployed on testnet 13579, where ARP's contracts are. `DomainScopeEnforcer` bounds where an agent may
+stake; `TrustStakeCapEnforcer` caps the native value it may spend per rolling period — **the amount,
+not the kind**, so fees count against it too and an agent can exhaust a cap and hold no position.
+Out-of-scope attempts revert before any state change. The agent-server surface that drove them is
+**set aside** ([ADR 0033](.claude/choices/0033-the-hackathon-surface-is-set-aside.md)) and kept as
+historical record.
+
+### Build against ARP (`@arp-protocol/core`)
+
+No API key, no indexer of your own, no signing baked in. Every call below was executed against
+Intuition mainnet on 2026-10-21 before being written here, and the outputs are the real ones.
+
+```ts
+import { getToolUsage, listTools, normaliseToolUrl, toolAtomUri } from '@arp-protocol/core';
+
+const GRAPHQL = 'https://mainnet.intuition.sh/v1/graphql';
+
+// "Which tools have agents declared using, and how many of those declarations
+//  did somebody pay to stand behind?"
+const page = await listTools({ graphqlUrl: GRAPHQL, order: 'priced-edges' });
+//   → 0 tools. Honest, and the state of the world: `listTools` keeps only edges whose
+//     subject carries a `same as` edge — an agent declaration rather than ordinary prose —
+//     and 0 of mainnet's 185 `uses` edges do.
+
+// "What is one tool's standing?" — both sides of every claim about it.
+const usage = await getToolUsage('0x014f7789…a2ce060b', { graphqlUrl: GRAPHQL });
+//   → "Colony", 1 edge. support 1000000 wei across 0 positions: that is `minShare`,
+//     the dust every term is seeded with at creation, so nobody has staked (ADR 0042).
+
+// The atom id of a tool, from its URL alone. No credential, no network, no pinning.
+normaliseToolUrl('http://www.github.com/crytic/slither/');
+//   → 'https://github.com/crytic/slither'
+toolAtomUri('github.com/crytic/slither');
+//   → 'ipfs://bafkreidf2beugrdbzvidlwibi46fhyanrh7v3noaucjahsllu2xjqtas44'
+```
+
+Writing is a **plan**, never a transaction: `prepareDeclareUsed`, `prepareStakeOnUsed` and
+`prepareIdentityAtom` return calls with their previewed shares, and the package holds no key and has
+no send path ([ADR 0038](.claude/choices/0038-the-write-path-is-a-plan-not-a-transaction.md)). You
+sign them with your own wallet. [`packages/protocol/README.md`](packages/protocol/README.md) has the
+full surface.
+
+**Or use it with nothing installed.** [`skills/arp/SKILL.md`](skills/arp/SKILL.md) is the whole
+procedure — term ids, the atom recipes, the four queries, the write order — readable by any agent
+that can sign a transaction and make an HTTP request
+([ADR 0052](.claude/choices/0052-the-procedure-is-the-product-for-the-use-half.md)).
 
 ## Deployed contracts (Intuition Testnet, chainId 13579)
 
@@ -99,39 +185,69 @@ ARP doesn't compute agents — that's the runtime layer's job. ARP is purely dec
 | `DomainScopeEnforcer`                        | [`0x516B82E29e3Ca46Ca810FC2EEf348932b198f7f9`](https://testnet.explorer.intuition.systems/address/0x516B82E29e3Ca46Ca810FC2EEf348932b198f7f9) |
 | `TrustStakeCapEnforcer`                      | [`0x7BB56819E9a413B8B4668C5cAF5C494c41dC0F8E`](https://testnet.explorer.intuition.systems/address/0x7BB56819E9a413B8B4668C5cAF5C494c41dC0F8E) |
 
-Composes with the MetaMask Delegation Framework v1.3.0 (`DelegationManager` at `0xdb9B1e94B5b69Df7e401DDbedE43491141047dB3`) and Intuition's MultiVault (`0x2Ece8D4dEdcB9918A398528f3fa4688b1d2CAB91`). Full address set in [deployments/13579.json](deployments/13579.json).
+Composes with the MetaMask Delegation Framework v1.3.0 (`DelegationManager` at `0xdb9B1e94B5b69Df7e401DDbedE43491141047dB3`) and Intuition's MultiVault (`0x2Ece8D4dEdcB9918A398528f3fa4688b1d2CAB91`). Full address set in [data/deployments/13579.json](data/deployments/13579.json).
 
 ## Two networks, and which one spends money
 
-This is the sharpest thing to understand before running anything.
+|                                                         | Intuition Testnet 13579       | Intuition mainnet 1155           |
+| ------------------------------------------------------- | ----------------------------- | -------------------------------- |
+| ARP's registries (`ModuleRegistry`, `IdentityRegistry`) | deployed here                 | **not deployed, not planned**    |
+| ARP's two caveat enforcers                              | deployed here                 | deployed 2026-09-16, never fired |
+| The mirrored ERC-8004 agents                            | absent                        | here                             |
+| What the panels read                                    | —                             | here                             |
+| What staking spends                                     | tTRUST (free from the faucet) | **real TRUST**                   |
 
-|                                                                   | Intuition Testnet 13579       | Intuition mainnet 1155        |
-| ----------------------------------------------------------------- | ----------------------------- | ----------------------------- |
-| ARP's contracts (`ModuleRegistry`, enforcers, `IdentityRegistry`) | deployed here                 | **not deployed, not planned** |
-| The 28,648 ERC-8004 agents                                        | absent                        | here                          |
-| What the trust panel reads                                        | —                             | here                          |
-| What staking spends                                               | tTRUST (free from the faucet) | **real TRUST**                |
+The panels read mainnet because that is where the cohort is, and reads are free and keyless.
 
-The panel reads mainnet because that is where the cohort is, and reads are free and keyless. Staking
-from the panel deposits **real TRUST** into Intuition's own MultiVault — not an ARP contract. That is
+**How big the cohort is, and the gap that matters more.** Measured 2026-10-21 by
+`scripts/measure/registry-mintability.ts`: Intuition reaches **28,720** agents through a `same as`
+edge, against a canonical Base registry whose **next id is 444,562**. So roughly **one agent in
+fifteen** has an Intuition identity atom, and the other fourteen have to have one written — which is
+why `/agent/import` writes it rather than waiting
+([ADR 0047](.claude/choices/0047-the-mirror-is-a-prerequisite-and-signing-is-a-separate-program.md)).
+The mirror has not moved since 2026-09-16; the registry has. Re-run the script rather than quoting
+these — and do not quote a daily rate, because two observations the same day imply rates 2.6× apart.
+
+Staking deposits **real TRUST** into Intuition's own MultiVault — not an ARP contract. That is
 authorised deliberately and narrowly by [ADR 0017](.claude/choices/0017-arp-stakes-real-trust-on-mainnet.md),
-behind seven safeguards including a 1 TRUST ceiling and a confirmation step, and **no agent or script
-may ever sign a mainnet transaction** — every one is signed by the operator in their own wallet.
+behind seven safeguards including a 1 TRUST ceiling and a confirmation step. Every mainnet
+transaction this app sends is signed by a human in their own wallet.
+
+**The rule is narrower than "no agent may ever sign on mainnet"**, and the qualifier matters because
+the broad version forbids the product. It is: **no ARP agent, script or automated process may sign a
+mainnet transaction with ARP's own funds.** An external agent depositing _its own operator's_ TRUST,
+bounded by caveats that operator signed, is `docs/12` points 3 and 5 — the mechanism, not a
+violation. The one canonical statement is in
+[`.claude/rules/security.md`](.claude/rules/security.md); if this paragraph ever disagrees with it,
+that file wins.
 
 ## What's not in this MVP
 
-Stated honestly so reviewers don't infer claims the code doesn't back:
-
 - **No payment-per-call** — tools are not invoked or paid for inside ARP. Tool monetization for a creator happens via bonding-curve appreciation as others stake. Pay-per-use is a separate concern, out of scope.
 - **No off-chain execution** — ARP is declarative + coordination. The actual agent runtime (LLM calls, tool invocations, result delivery) lives outside this repo.
-- **No verification of declarations** — when an agent declares "I use tool X", the only economic check is its own stake. There is no proof-of-usage layer in this MVP.
-- **No dispute mechanism** — false declarations cannot be challenged or slashed on-chain by a third party in this MVP.
+- **No verification of declarations** — when an agent declares "I use tool X", the only economic
+  check is its own stake. There is no proof-of-usage layer, and there is not going to be one: it
+  needs ground truth and this mechanism deliberately does not
+  ([ADR 0049](.claude/choices/0049-arp-does-not-calibrate.md)).
+- **No slashing** — a false declaration cannot be confiscated. What it costs is the non-recoverable
+  fee to write it, per declaration, forever: from 0.1 TRUST on mainnet and from 0.001 on testnet,
+  read off `getTripleCost()`.
+
+  **Contestability is available and all but unused, and this bullet used to lead on it.** Intuition
+  gives every triple a counter-vault for free, so anyone _can_ deposit against a claim. Measured on
+  mainnet 1155, 2026-10-21 (`scripts/measure/counter-side-usage.ts`): **1** of the 185 `uses` edges
+  has ever been contradicted, and **969 of 285,775** triples chain-wide — 0.34%. Nobody takes the
+  other side of a statement of fact, because there is no resolution mechanism that would pay them
+  for being right. So the live guards are the **cost of writing** and the fact that a position can
+  be **withdrawn**, which is what keeps a figure current rather than accumulated
+  ([ADR 0056](.claude/choices/0056-the-market-on-an-agent-is-on-its-atom-and-the-edge-is-a-receipt.md)).
 
 ## Stack
 
 - **Runtime & package manager** — Bun 1.2+ (workspaces, installs, scripts)
 - **Contracts** — Solidity 0.8.24, Foundry
-- **Chain** — Intuition Testnet (chainId 13579)
+- **Chains** — Intuition Testnet 13579 (ARP's own contracts) and Intuition mainnet 1155 (the
+  cohort), chosen by a toggle that governs reads and writes alike
 - **Frontend** — Vite + React 19 + TypeScript + Tailwind v4
 - **Wallet & accounts** — viem 2 + Wagmi 3 + `@metamask/smart-accounts-kit`
 - **Delegation** — ERC-7710 + MetaMask Delegation Framework v1.3.0, with ARP-custom caveat enforcers
@@ -144,38 +260,59 @@ Stated honestly so reviewers don't infer claims the code doesn't back:
 ARP/
 ├── CLAUDE.md                       ← Router for Claude Code (rules, skills, agents)
 ├── README.md                       ← This file
-├── app/                            ← Vite + React + TS + Tailwind v4 UI
-│   └── src/{services,hooks,components,pages,lib}
-├── sdk/                            ← @arp-protocol/sdk — runtime-agnostic reads
-│   ├── README.md
-│   └── src/{client,modules,agents,types,abi}
+├── apps/                           ← what runs (ADR 0082)
+│   ├── web/                        ← Vite + React + TS + Tailwind v4 UI
+│   │   └── src/{services,hooks,components,pages,lib}
+│   ├── mcp/                        ← the MCP server, stdio or HTTP. Signs no transaction
+│   ├── node/                       ← the inbound endpoint. Signs receipts, never transactions
+│   ├── hook/                       ← the runtime PostToolUse hook. No network
+│   └── api/                        ← Cloudflare Worker: GitHub + skills.sh facts, cached. Local only
+├── packages/                       ← what is imported
+│   ├── graphql/                    ← @arp-protocol/graphql — transport + Intuition query documents
+│   └── protocol/                   ← @arp-protocol/core — the protocol layer (ADR 0041)
+│       ├── README.md               ← the surface a third party reads
+│       ├── src/                    ← identity, graph, verifier, tool usage,
+│       │                             declare/stake plans. Never signs, never sends
+│       └── src/arp/                ← ARP's own contracts (the folded-in `sdk/`)
 ├── contracts/                      ← Foundry workspace (Solidity)
 │   └── src/
 │       ├── ModuleRegistry.sol
 │       ├── enforcers/              ← DomainScopeEnforcer, TrustStakeCapEnforcer
 │       └── erc8004/                ← IdentityRegistry + interfaces
-├── scripts/                        ← Bun scripts (deploy + runtimes)
-│   ├── deploy.sh                   ← three-phase contract deploy
-│   ├── seed.ts                     ← seed the first module + atom
-│   ├── agent-approve-sa.ts         ← one-time runtime → SA DEPOSIT approval
-│   ├── agent-loop.ts               ← autonomous runtime (walks the manifest)
-│   ├── agent-server.ts             ← on-demand HTTP runtime (hire flow)
-│   ├── agent-server-specialist.ts  ← A2A counterpart, accepts sub-delegations
-│   ├── agent-auditor.ts            ← LLM-driven audit (Trail of Bits skills)
-│   ├── agent-stake-on-use.ts       ← fuzzy-match used methodologies → stake
-│   ├── setup-second-agent.ts       ← one-shot specialist provisioning
-│   └── manifest-modules.json       ← demo manifest (14 tools / 4 domains)
-├── schemas/                        ← JSON schemas for seed modules
-├── deployments/                    ← Deployed addresses per network (13579.json)
+├── scripts/                        ← personal tooling, never imported by apps/ or packages/
+│   ├── agent/                      ← plan as an agent: mint, identity atom, declare, send a plan
+│   ├── seed/                       ← write the catalogue to the chain
+│   ├── build/                      ← generate the files the app bundles
+│   ├── verify/                     ← re-check a claim against the chain
+│   ├── demo/                       ← demo-adopt (nothing → a readable position), demo-hire
+│   ├── deploy/                     ← three-phase contract deploy
+│   ├── measure/*.ts                ← every number in this repo is re-runnable from one of these
+│   ├── sandbox/                    ← a Claude Code sandbox that walks the whole loop on testnet
+│   ├── helpers/                    ← what several scripts share. helpers/send-plan.ts is the ONLY
+│   │                                 place that signs
+│   └── test/                       ← `bun run test:scripts`
+├── skills/arp/SKILL.md             ← PUBLISHABLE: how to USE ARP with nothing installed.
+│                                     `.claude/skills/arp-contributing/` is the other one —
+│                                     how to work ON this repo
+├── data/                           ← committed data, no code
+│   ├── catalogue/                  ← curated tools and skills, the domain tree
+│   ├── deployments/                ← deployed addresses per network (13579.json, 1155.json)
+│   └── measurements/               ← raw output of a measurement, one file per run
+├── FUTURE.md                       ← asked for, deliberately not built yet
 ├── docs/                           ← Strategic + architectural reference
-│   ├── 00_HACKATHON_PIVOT.md       ← Current strategic commitment
-│   ├── 01_PROJECT_CONTEXT.md
-│   ├── 02_ARCHITECTURE.md          ← Locked decisions
+│   ├── 12_THE_IDEA.md              ← THE canonical mechanism. Read this first
+│   ├── 01_PROJECT_CONTEXT.md       ← positioning, still authoritative
+│   ├── 02_ARCHITECTURE.md          ← locked decisions
 │   ├── 03_MVP_SCOPE.md
-│   ├── 04_SEED_MODULES.md
 │   ├── 05_UI_DESIGN.md
-│   └── 06_BEAR_TRAP_REFERENCE.md   ← Enforcer pattern reference
-├── tasks/                          ← Atomic work units (01 → 05b)
+│   ├── 08–11                       ← analysis, NOT commitment. They drifted; 12 corrects them
+│   ├── 00_HACKATHON_PIVOT.md       ← historical record (deadline 2026-06-15, past)
+│   ├── 13_THE_THREE_FLOWS.md, 14_THE_WITNESS_PROBLEM.md, 15_ROADMAP.md
+│   ├── 16_THE_AGENT_PAGE.md, 17_THE_ATOM_PAGE.md
+│   │                               ← design briefs, handed to a design agent. Not decisions
+│   ├── tasks/                      ← atomic work units
+│   ├── design/                     ← design handoffs and references
+│   └── reference/                  ← third-party material kept for reading
 └── .claude/                        ← Claude operating layer (rules, skills, agents, ADRs, post-mortems)
 ```
 

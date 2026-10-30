@@ -2,7 +2,7 @@
 
 **Status:** Accepted
 **Date:** 2026-09-17
-**Triggered by:** `tasks/15-strip-the-panel-copy.md` — the user read the running app and asked for the
+**Triggered by:** `docs/tasks/15-strip-the-panel-copy.md` — the user read the running app and asked for the
 prose to go. Three of the removals reverse decisions recorded in ADR 0018 and ADR 0028, and one
 reverses the default they chose, so the reversal needs a record of its own.
 
@@ -141,7 +141,7 @@ on mainnet move to the confirmation step, where they bite.
 
 ## References
 
-- Related task: `tasks/15-strip-the-panel-copy.md`
+- Related task: `docs/tasks/15-strip-the-panel-copy.md`
 - Related ADR: `.claude/choices/0018-trust-panel-design-and-join.md` (the evidence scale and the
   staker-count rule this keeps, in a shorter form)
 - Related ADR: `.claude/choices/0028-tab-strip-carries-the-comparison.md` (the default tab and the

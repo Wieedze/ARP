@@ -1,5 +1,5 @@
 # Foundry configuration for ARP contracts.
-# Chain target: Intuition Testnet (chainId 13579). See ../deployments/13579.json.
+# Chain target: Intuition Testnet (chainId 13579). See ../data/deployments/13579.json.
 
 [profile.default]
 src = "src"
@@ -17,8 +17,8 @@ optimizer_runs = 200
 via_ir = false
 ffi = false
 
-# Read-only access to ../deployments so scripts can resolve external addresses.
-fs_permissions = [{ access = "read", path = "../deployments" }]
+# Read-only access to ../data/deployments so scripts can resolve external addresses.
+fs_permissions = [{ access = "read", path = "../data/deployments" }]
 
 # Remappings for the delegation-framework consumption chain. The framework
 # itself depends on @account-abstraction, @erc7579, @openzeppelin/contracts,

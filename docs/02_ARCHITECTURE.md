@@ -6,12 +6,12 @@ These are **locked decisions**. If you believe one is wrong, flag it explicitly 
 
 ARP does not dual-write. Each piece of data has exactly one canonical source. Derived outputs are computed deterministically by indexers, not stored redundantly.
 
-| Data | Canonical source | Notes |
-|---|---|---|
-| Evaluation modules (ontology, schemas) | Intuition atoms | Native fit. No ERC-8004 mirror. |
-| Raw attestations (agent stake + prediction) | ERC-8004 Reputation Registry | Standard-native. All explorers read it. |
-| Calibrated scores (per agent, per domain) | **Not stored** — derived by indexer | `algo + input = result`. Reproducible. |
-| On-chain composability anchor | Merkle root checkpoint, periodic | Single periodic write, not per-score. |
+| Data                                          | Canonical source                 | Notes                                                           |
+| --------------------------------------------- | -------------------------------- | --------------------------------------------------------------- |
+| Evaluation modules (ontology, schemas)        | Intuition atoms                  | Native fit. No ERC-8004 mirror.                                 |
+| Raw attestations (agent stake + prediction)   | ERC-8004 Reputation Registry     | Standard-native. All explorers read it.                         |
+| ~~Calibrated scores (per agent, per domain)~~ | **Removed** — ADR `0049`         | ARP does not calibrate. There are no scores to store or derive. |
+| On-chain composability anchor                 | Merkle root checkpoint, periodic | Single periodic write, not per-score.                           |
 
 ### Why this pattern
 
@@ -19,9 +19,14 @@ Dual-writing the same data to two bases is an antipattern. Even well-engineered 
 
 Modern web3 infrastructure (Lens, EAS, Farcaster, The Graph) converged on the "indexer-as-truth for derived data" pattern. ARP follows suit.
 
-### Implications for future ZK work
+### ~~Implications for future ZK work~~ — removed, ADR `0049`
 
-The Merkle root checkpoint is a placeholder for a more rigorous primitive: a ZK proof that the indexer ran the calibration algorithm correctly on the canonical inputs. Noir (Aztec) is the target framework. This is out of scope for the MVP but the Merkle pattern is designed to be replaced without migration.
+This section planned a ZK proof that the indexer ran **the calibration algorithm** correctly on the
+canonical inputs, with Noir as the target. There is no calibration algorithm and no indexer, so there
+is nothing to prove. The preceding paragraph's "indexer-as-truth for derived data" pattern goes with
+it: ARP derives nothing. Every figure it surfaces is a position on a public graph, which a reader
+verifies by querying the graph rather than by trusting a proof about our arithmetic — a stronger
+property than the one this section was reaching for.
 
 ## The four components of ARP (full protocol)
 
@@ -30,7 +35,7 @@ The complete ARP protocol has four components. **This MVP builds only component 
 1. **Module Registry** — on-chain contract where evaluation modules are registered. Each module defines a domain (e.g. "solidity-audit") and a schema for what an attestation in that domain looks like.
 2. **Admission Contract** — verifies an ERC-8004 `agentId` exists before admitting an agent to ARP. Extension of the standard, not a parallel registry.
 3. **Reputation Loop** — agent stakes TRUST on an attestation, attestation is written via ERC-8004's `postFeedback`, indexer updates the derived score.
-4. **Forked Indexer** — consumes ERC-8004 events + Intuition atoms + module definitions. Outputs calibrated scores, queryable via API.
+4. ~~**Forked Indexer** — outputs calibrated scores~~ — **removed, ADR `0049`.** ARP does not calibrate, so there is no score to serve. Measured 2026-10-20, an indexer of our own would buy cohort-wide discovery and nothing else: per-agent reads already work from the chain (`getClients`, `getLastIndex` on the Reputation Registry; the Intuition graph for everything else), and it would take on the uptime obligations ADR `0046` was glad to drop.
 
 ## SDK interface (target shape, for future work)
 
@@ -58,6 +63,7 @@ This MVP implements the write path for `registerModule` only, and a read path fo
 This MVP touches ERC-8004 indirectly — we do not call its contracts in the first iteration. The Module Registry stores a reference to the domain and schema; ERC-8004 agents will later cite modules when posting feedback.
 
 However, the Module Registry must be **compatible with future ERC-8004 consumers**:
+
 - Module IDs should be stable and globally addressable
 - Module schemas should be publishable URIs (IPFS preferred)
 - The registry address should be deterministically derivable (CREATE2 recommended for mainnet)
@@ -71,6 +77,7 @@ Each on-chain module registration is **mirrored as an Intuition atom** at regist
 - The atom creation happens within the same user transaction flow (frontend orchestrated), so atomicity is reasonable
 
 The atom schema:
+
 - Type: `ARP_MODULE`
 - Predicate links: `module → hasDomain → domain`, `module → hasSchema → schemaURI`, `module → createdBy → address`
 
@@ -92,8 +99,9 @@ Refer to the Intuition skill for actual atom creation APIs. Do not hardcode Intu
 ## What is not in this architecture
 
 Explicitly not addressed in this document:
+
 - TRUST token staking mechanism (component 3 of full ARP)
-- Calibration algorithm (the differentiation — spec comes separately)
+- ~~Calibration algorithm (the differentiation)~~ — **not deferred, removed.** ADR `0049`. The differentiation is in `docs/01`, and all four items of it are built.
 - Validation Registry integration
 - Cross-chain module registration
 - DAO governance of the registry

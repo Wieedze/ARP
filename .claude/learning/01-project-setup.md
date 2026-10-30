@@ -1,6 +1,6 @@
 ## 01 — Project setup (post-pivot)
 
-**Task:** `tasks/01-project-setup.md`
+**Task:** `docs/tasks/01-project-setup.md`
 **Completed:** 2026-06-01
 **Commit:** uncommitted
 **Verifier verdict:** PASS
@@ -13,7 +13,7 @@
 - `app/package.json` — added `@metamask/smart-accounts-kit@1.6.0`, `@metamask/delegation-core@2.2.1`, `@metamask/delegation-deployments@1.4.0`.
 - `app/src/lib/chains.ts` — `intuitionTestnet` via `viem.defineChain`; `VITE_INTUITION_TESTNET_*` env overrides with skill defaults as fallback.
 - `.env.example` — Foundry block (`INTUITION_TESTNET_RPC_URL`, `PRIVATE_KEY`, `ETHERSCAN_API_KEY`) + Vite block (`VITE_INTUITION_TESTNET_{RPC_URL,CHAIN_ID,EXPLORER,GRAPHQL}`, `VITE_WALLETCONNECT_PROJECT_ID`). All Base Sepolia / Basescan vars dropped.
-- `deployments/13579.json` — chain metadata, Intuition MultiVault address, full MetaMask Delegation Framework v1.3.0 address bundle (manager + 3 implementations + 30 enforcers), ARP placeholder keys (`moduleRegistry`, `domainScopeEnforcer`, `trustStakeCapEnforcer` = null).
+- `data/deployments/13579.json` — chain metadata, Intuition MultiVault address, full MetaMask Delegation Framework v1.3.0 address bundle (manager + 3 implementations + 30 enforcers), ARP placeholder keys (`moduleRegistry`, `domainScopeEnforcer`, `trustStakeCapEnforcer` = null).
 
 Toolchain green: `forge build` (Nothing to compile), `bun x tsc --noEmit -p tsconfig.app.json` (exit 0), `bun run build` (193 KB / 60 KB gzipped in ~130 ms).
 
@@ -45,7 +45,7 @@ No rule needs revision.
 ## Suggestions for future tasks
 
 - Task 02 (ModuleRegistry) starts with empty `contracts/src/`, `contracts/test/`, `contracts/script/`. First file written there is the registry contract.
-- Task 03 (deploy) will need the `deployments/13579.json` `arp.*` placeholders populated. Idempotency rule from `security.md` applies.
+- Task 03 (deploy) will need the `data/deployments/13579.json` `arp.*` placeholders populated. Idempotency rule from `security.md` applies.
 - Task 04 (UI core) wires Wagmi + connectors + hooks. The MetaMask SDK packages are already installed and the chain is already defined — no install step needed there.
 - Other task files (02, 03, 04, 05) hard-code Base Sepolia / pnpm in places from the pre-pivot draft. Apply the same revision pattern (and document with a fresh ADR) before executing each.
 - The `delegation-framework` lib's pragma is `0.8.23` while ARP uses `^0.8.24`. Compatible today; record an ADR if a future contract change forces a pragma update.

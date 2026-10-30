@@ -1,0 +1,43 @@
+{
+  "_note": "Packages and Docker images whose identity the user validated by hand on 2026-10-30 (ADR 0087), because the automatic rule in scripts/seed/plan-tool-identity.ts (a single package whose registry record points back at the repository) does not reach them. Each carries the proof that was accepted. Read by plan-tool-identity.ts.",
+  "packages": [
+    {
+      "repo": "microsoft/mcp",
+      "registry": "npm",
+      "name": "@azure/mcp",
+      "proof": "registry → repo: repository.url is github.com/microsoft/mcp. Not automatic only because the repository publishes several servers."
+    },
+    {
+      "repo": "microsoft/mcp",
+      "registry": "npm",
+      "name": "@microsoft/fabric-mcp",
+      "domain": null,
+      "domainWhy": "Fabric is a data platform; the repository's `infrastructure` does not describe it. No domain until one fits.",
+      "proof": "registry → repo, as above."
+    },
+    {
+      "repo": "hashicorp/terraform-mcp-server",
+      "registry": "docker",
+      "name": "hashicorp/terraform-mcp-server",
+      "proof": "Docker Hub: namespace `hashicorp` is the repository's owner, and the image's description links github.com/hashicorp/terraform-mcp-server."
+    },
+    {
+      "repo": "SonarSource/sonarqube-mcp-server",
+      "registry": "docker",
+      "name": "sonarsource/sonarqube-mcp",
+      "proof": "Docker Hub: namespace `sonarsource` is the repository's owner, and the description links github.com/SonarSource/sonarqube-mcp-server. The README names this image 37 times."
+    },
+    {
+      "repo": "paypal/paypal-mcp-server",
+      "registry": "npm",
+      "name": "@paypal/mcp",
+      "proof": "repo → registry and publisher, not registry → repo: the npm record names no repository, but the README names the package and its maintainers are PayPal's accounts (`paypal-sdks`, `braintree`)."
+    },
+    {
+      "repo": "webflow/mcp-server",
+      "registry": "npm",
+      "name": "webflow-mcp-server",
+      "proof": "repo → registry and publisher: the npm record names no repository, but the README names the package and its one maintainer is `webflow-bot`."
+    }
+  ]
+}

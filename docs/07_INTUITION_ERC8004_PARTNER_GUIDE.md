@@ -2,7 +2,7 @@
 
 > Vendored verbatim from the Intuition partner guide (Notion page, JavaScript-walled — not
 > fetchable by tooling): https://intuition-systems.notion.site/intuition-8004-agent-reputation-partner-guide
-> Snapshot supplied by the user on 2026-07-23 (`integration8004.txt`). The Notion tables were
+> Snapshot supplied by the user on 2026-07-23 (`docs/reference/integration8004.txt`). The Notion tables were
 > flattened to alternating lines by the copy; the prose, code blocks, and all Appendix B term IDs
 > are faithful to the snapshot. On conflict, the live Notion page wins. Adoption of this pattern
 > is recorded in ADR 0015 (`.claude/choices/0015-adopt-canonical-intuition-erc8004-pattern.md`).

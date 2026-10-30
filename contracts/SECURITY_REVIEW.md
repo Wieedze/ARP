@@ -488,7 +488,7 @@ Independent walkthrough matches the pre-merge sweep. No new findings.
 ### Scope discipline (the "Do not do in this task" surface)
 
 Verified clean. Files touched in this task:
-- New: `src/enforcers/DomainScopeEnforcer.sol`, `src/enforcers/TrustStakeCapEnforcer.sol`, `test/enforcers/DomainScopeEnforcer.t.sol`, `test/enforcers/TrustStakeCapEnforcer.t.sol`, `tasks/02b-caveat-enforcers.md`.
+- New: `src/enforcers/DomainScopeEnforcer.sol`, `src/enforcers/TrustStakeCapEnforcer.sol`, `test/enforcers/DomainScopeEnforcer.t.sol`, `test/enforcers/TrustStakeCapEnforcer.t.sol`, `docs/tasks/02b-caveat-enforcers.md`.
 - Modified: `contracts/foundry.toml` (remappings + auto-detect for the new framework imports), `contracts/SECURITY_REVIEW.md` (this document).
 
 No deploy script touched. No TypeScript helper. No UI. No TRUST token contract. No `ModuleRegistry.sol` change. Scope held.

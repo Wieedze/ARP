@@ -1,6 +1,6 @@
 # 04 — Deploy and seed (Task 03)
 
-**Task:** `tasks/03-deploy-and-seed.md`
+**Task:** `docs/tasks/03-deploy-and-seed.md`
 **Completed:** 2026-06-02
 **Commit:** `48432e4` (Phase A — deploy) + uncommitted Phase B (seed.ts, deployments delta, package.json/bun.lock)
 **Verifier verdict:** PASS (with notes — see "Suggestions")
@@ -9,9 +9,9 @@
 
 - `contracts/script/DeployRegistry.s.sol` — `^0.8.24` script, direct `new ModuleRegistry()`.
 - `contracts/script/DeployEnforcers.s.sol` — `0.8.23` strict script, direct `new DomainScopeEnforcer()` + `new TrustStakeCapEnforcer()`.
-- `scripts/deploy.sh` — chains both Foundry scripts; dry-run by default, `--broadcast` for real.
+- `scripts/deploy/deploy.sh` — chains both Foundry scripts; dry-run by default, `--broadcast` for real.
 - `scripts/seed.ts` — Bun + viem; pins Thing via Intuition `pinThing` GraphQL, registers module, creates Intuition atom; idempotent on both.
-- `deployments/13579.json` — populated with `arp.deployer/moduleRegistry/domainScopeEnforcer/trustStakeCapEnforcer`, the seeded module, and the atom id.
+- `data/deployments/13579.json` — populated with `arp.deployer/moduleRegistry/domainScopeEnforcer/trustStakeCapEnforcer`, the seeded module, and the atom id.
 - `schemas/solidity-audit.v1.json` — JSON Schema Draft 2020-12 for the attestation shape; dev reference (not pinned — on-chain `schemaURI` points at the Intuition-pinned Thing per Option A).
 - Live on Intuition Testnet (chainId 13579):
   - `ModuleRegistry` `0x777C28eCb4688D647B535098d11fB87A9746334f` — `totalModules() == 1`.
@@ -28,7 +28,7 @@
 
 ## Decisions made
 
-- **Enforcers deployed in Phase A alongside ModuleRegistry.** Original Task 03 spec only mentioned `ModuleRegistry`; enforcers were nominally Task 02b's deliverable. Deploying them together is a small in-scope extension justified by Task 03b (Smart Account integration) needing on-chain enforcer addresses. Noted at the top of `tasks/03-deploy-and-seed.md`. No standalone ADR — borderline call; lean towards "write ADR" next time.
+- **Enforcers deployed in Phase A alongside ModuleRegistry.** Original Task 03 spec only mentioned `ModuleRegistry`; enforcers were nominally Task 02b's deliverable. Deploying them together is a small in-scope extension justified by Task 03b (Smart Account integration) needing on-chain enforcer addresses. Noted at the top of `docs/tasks/03-deploy-and-seed.md`. No standalone ADR — borderline call; lean towards "write ADR" next time.
 - **Option A: schemaURI == Intuition atom URI** (both point at the same `pinThing` output). Substantive architectural decision affecting the on-chain → graph data model. No ADR yet — should be recorded under `.claude/choices/0008-*.md`.
 - **Two Foundry scripts, not one (cross-pragma).** Implementation choice driven by the strict-pragma requirement. Not worth an ADR (standard practice when strict pragmas differ).
 - **Defer `forge verify-contract` to Task 05.** Intuition Testnet's Blockscout-style explorer accepts unverified contracts and does not block downstream work. Mention in post-mortem only.

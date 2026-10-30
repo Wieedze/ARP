@@ -14,9 +14,9 @@ contracts/broadcast/
 contracts/lib/
 
 # vite / app build
-app/dist/
-app/.vite/
-app/node_modules/
+apps/web/dist/
+apps/web/.vite/
+apps/web/node_modules/
 
 # os
 .DS_Store
@@ -44,8 +44,20 @@ coverage/
 .cursor/
 .agents/
 
-# sdk build output
-sdk/dist/
+# package build output (each package also ignores its own `dist/`)
+packages/*/dist/
+apps/*/dist/
 
 # Raw paste of the Intuition partner guide; docs/07 is the vendored copy that counts.
-integration8004.txt
+docs/reference/integration8004.txt
+
+# TypeScript incremental build state — a build artifact, not source.
+*.tsbuildinfo
+
+# The node generates a receipt-signing key here on first run (ADR 0080).
+# It signs receipts and cannot move value, and it still never belongs in a commit.
+.arp/
+
+# Cloudflare Worker local state and secrets
+.dev.vars
+.wrangler/

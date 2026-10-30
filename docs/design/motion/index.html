@@ -1,0 +1,2430 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>ARP Motion v2</title>
+        <link
+            href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=Geist+Mono:wght@400;500;600&display=swap"
+            rel="stylesheet"
+        />
+
+        <!--
+          ============================================================================
+          WHAT THIS FILE IS
+
+          Design proposal v2 against docs/design/motion/index.html (2026-10-27)
+          and docs/18_THE_MOTION_SPEC.md. Same six scenes, same copy, same tokens.
+          What changes is how the scenes hand over and how each one arrives.
+
+          ----------------------------------------------------------------------------
+          MECHANISM KEPT, all seven, unchanged in substance:
+
+            1. Cross-fade on CONTINUOUS progress, still tied to the scroll. TWO
+               CHANGES, both deliberate, both to argue with:
+               a. the fade runs through smoothstep instead of linearly (kept from
+                  wieedze useScrollytelling), so a hand-over eases in and out;
+               b. neighbours NO LONGER OVERLAP. v1 held for 0.55 of a band and faded
+                  over the rest, so two scenes of 52px headings were on screen at
+                  once, one over the other (screenshot at progress 1.8: "Back what
+                  you use" through "Four rungs"). Now a scene starts drifting on the
+                  first frame of a hand-over (ease-out), fades late (ease-in) and
+                  is gone at 0.48; the next one rises in and slows as it lands. The jump v1 fixed does not come
+                  back, because opacity is still continuous in scroll, and the gap
+                  with nothing on screen is 4% of a band, too short to read as a cut.
+            2. 240ms scene fade, 260ms block reveal.
+            3. position: sticky, never JS pinning. CHANGED in v2, at the user's
+               request ("1 scroll déclenche toute l'animation jusqu'à la scène
+               suivante, sinon ça fait saccadé"): inside the pinned deck, ONE
+               wheel gesture, one swipe or one key press plays the whole hand-over
+               to the next scene on a timer (STEP below). The scrollbar stays
+               native and draggable, the page is still a normal scroll position,
+               Home and End still jump, and the first and last scenes hand back to
+               native scroll, so nothing traps the reader. This is the line v1
+               refused ("nothing hijacks the wheel"); it is a decision to record.
+            4. Refuses to pin below 680px tall or 900px wide, under reduced motion,
+               before JS. NOT ONE SCENE GOT TALLER: measured at 1440x680, every scene
+               fits between the nav and the bottom edge (see the check at the end).
+            5. The deck owns hash navigation.
+            6. Inactive scenes are inert + aria-hidden.
+            7. Pinned, stagger is triggered by the scene becoming active.
+
+          MECHANISM ADDED, each with the failure it prevents:
+
+            8. Words of the hero h1 arrive word by word, but the delay is computed
+               from the RENDERED LINE (offsetTop), not the word index. An index-based
+               delay staggers across a clamp() line break and reads as a glitch at
+               some widths only. Recomputed on resize, no re-split.
+            9. One readable sentence in the accessibility tree: the h1 holds a
+               visually hidden full-text copy, the animated words are aria-hidden.
+           10. Total word stagger is CAPPED at --stagger-ceiling (560ms). Past ~600ms
+               the reader waits instead of reading. A long line compresses its step.
+           11. A scene plays ONCE. Coming back shows its words and blocks instantly.
+               The scene still fades in; nothing inside it replays. A leaving scene
+               also keeps its rows: v1 hid them while the scene was still fading.
+           12. Figures never animate. Mono text is data. A row of numbers arrives as
+               a block or not at all.
+           13. Lists stagger AT MOST 8 rows (--list-cap). Row 9 onward arrives with
+               row 8. Tuned on 3 rows, an uncapped stagger is a 16s wait on 200.
+           14. Route: out 120ms, in 200ms, opacity only, no movement. The loader
+               appears only if the chunk takes longer than 150ms. Back and forward
+               (popstate) swap instantly, with no transition at all.
+
+          New tokens, all to be added to app/src/index.css so check:tokens passes:
+            --word-rise --word-step --line-step --stagger-ceiling --list-step
+            --list-cap (JS constant, documented) --route-out --route-in
+            --loader-delay. The scene fade and reveal tokens were already here.
+
+          SAFFRON HAND-OVERS (the user's request, 2026-10-27: "zoomer dans
+          l'animation et entrer dans le safran, puis un jeu de bandeau ou de cercle
+          safran"). Scroll-scrubbed, so reversible, and never on a route change:
+          docs/18 rejects wipes and colour flashes for ROUTES, and these stay
+          inside one page. They spend the accent outside rules/ui.md's three uses
+          (primary action, selected state, your own position): that is a decision
+          for the user to record, not one this file makes. The full cover only
+          happens around each midpoint, where the deck swaps the active scene.
+
+          DECORATION, mine, change freely:
+            the Source Field turning in the hero, the rail labels, the manifesto
+            lighting line by line as you scroll through it, the ladder's second beat.
+          ============================================================================
+        -->
+
+        <style>
+            :root {
+                --color-ground: #0e0f10;
+                --color-bg: #121314;
+                --color-raised: #1b1d1f;
+                --color-rule: #2e3134;
+                --color-rule-strong: #43474b;
+                --color-grey: #6b7075;
+                --color-numeral: #2a2d30;
+                --color-watermark: #17181a;
+                --color-steel: #8a9096;
+                --color-silver: #a9aeb2;
+                --color-fg: #e6e8e6;
+                --color-accent: #ffb020;
+                --color-accent-ink: #121314;
+                --color-alarm: #ff4d6d;
+
+                --font-display: "Archivo", "Arial Narrow", system-ui, sans-serif;
+                --font-sans: "Archivo", system-ui, sans-serif;
+                --font-mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+                --text-display: clamp(44px, 6.4vw, 88px);
+                --text-section: clamp(28px, 4vw, 52px);
+                --text-body: 15px;
+                --text-body-sm: 13px;
+                --text-label: 11px;
+
+                --radius-tag: 6px;
+                --radius-control: 8px;
+                --radius-button: 10px;
+                --radius-card: 12px;
+
+                --leading-display: 0.92;
+                --leading-section: 0.95;
+                --leading-body: 1.5;
+
+                --ease-out-quart: cubic-bezier(0.16, 1, 0.3, 1);
+                --duration-base: 200ms;
+
+                --scene-fade: 240ms;
+                --scene-slide: 18px;
+                --reveal-fade: 260ms;
+                --reveal-step: 80ms;
+                /* inside the pinned deck the hand-over is 1.7 s, so a scene's own
+                   elements arrive slower and further apart, while the cover opens */
+                --scene-reveal: 700ms;
+                --scene-step: 150ms;
+                --scene-rise: 28px;
+
+                /* NEW, v2 */
+                --word-rise: 380ms; /* one word, opacity + rise */
+                --word-step: 34ms; /* between words on the same rendered line */
+                --line-step: 110ms; /* between rendered lines */
+                --stagger-ceiling: 560ms; /* total stagger of one heading, never more */
+                --list-step: 30ms; /* between list rows, first 8 only */
+                --route-out: 120ms;
+                --route-in: 200ms;
+                --loader-delay: 150ms; /* a cached route never shows a loader */
+            }
+
+            * {
+                box-sizing: border-box;
+            }
+            html {
+                scroll-behavior: smooth;
+            }
+            body {
+                margin: 0;
+                background: var(--color-ground);
+                color: var(--color-fg);
+                font-family: var(--font-sans);
+                font-size: var(--text-body);
+                line-height: var(--leading-body);
+                -webkit-font-smoothing: antialiased;
+                overflow-x: hidden;
+            }
+            .face {
+                font-family: var(--font-display);
+                font-weight: 800;
+                font-stretch: 125%;
+                letter-spacing: -0.02em;
+                line-height: 1;
+            }
+            .label {
+                font-family: var(--font-mono);
+                font-size: var(--text-label);
+                text-transform: uppercase;
+                letter-spacing: 0.08em;
+                color: var(--color-steel);
+            }
+            .mono {
+                font-family: var(--font-mono);
+                font-size: var(--text-body-sm);
+            }
+            .dim {
+                color: var(--color-grey);
+            }
+            .silver {
+                color: var(--color-silver);
+            }
+            .steel {
+                color: var(--color-steel);
+            }
+            .sr {
+                position: absolute;
+                width: 1px;
+                height: 1px;
+                overflow: hidden;
+                clip: rect(0 0 0 0);
+                white-space: nowrap;
+            }
+            :focus-visible {
+                outline: 2px solid var(--color-fg);
+                outline-offset: 3px;
+                border-radius: 6px;
+            }
+
+            /* ---- shell ----------------------------------------------------------- */
+            nav.top {
+                position: sticky;
+                top: 0;
+                z-index: 20;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 28px;
+                height: 88px;
+                border-bottom: 1px solid var(--color-rule);
+                background: var(--color-ground);
+            }
+            .shell {
+                width: 100%;
+                max-width: 1320px;
+                margin: 0 auto;
+                padding: 0 24px;
+            }
+
+            /* ---- the deck -------------------------------------------------------- */
+            #deck[data-pinned="true"] {
+                /* the stage starts under the nav, so band 0 is the top of the page
+                   and the first scroll plays the dive instead of moving the stage */
+                margin-top: -88px;
+                height: calc(var(--scenes) * 100svh);
+            }
+            #deck[data-pinned="true"] .stage {
+                position: sticky;
+                top: 0;
+                display: flex;
+                align-items: center;
+                height: 100svh;
+                /* The nav is sticky above the stage: centre the scene in what is left. */
+                padding-top: 88px;
+                overflow: hidden;
+            }
+            .stage-inner {
+                position: relative;
+                width: 100%;
+            }
+            #deck[data-pinned="true"] .scene {
+                will-change: opacity, transform;
+                transition:
+                    opacity var(--scene-fade) var(--ease-out-quart),
+                    transform var(--scene-fade) var(--ease-out-quart);
+            }
+            #deck[data-pinned="true"] .scene[data-active="false"] {
+                position: absolute;
+                inset-inline: 0;
+                top: 0;
+                pointer-events: none;
+            }
+            #deck[data-pinned="false"] .scene {
+                padding: 64px 0;
+            }
+            #deck[data-pinned="false"] .scene:first-child {
+                padding-top: 0;
+            }
+
+            /* The field: the Source turning, in the hero only, pinned or stacked.
+               It bleeds past the 1320 shell to the viewport edge. */
+            .field {
+                position: absolute;
+                pointer-events: none;
+            }
+            #deck[data-pinned="true"] .field {
+                position: fixed;
+                inset: 0;
+                width: 100vw;
+                height: 100svh;
+                z-index: 0;
+            }
+            #veil {
+                display: none;
+                position: fixed;
+                inset: 0;
+                width: 100vw;
+                height: 100svh;
+                z-index: 15; /* above the scenes, below the nav (20) */
+                pointer-events: none;
+            }
+            #deck[data-pinned="true"] #veil {
+                display: block;
+            }
+            #deck[data-pinned="true"] .stage-inner {
+                z-index: 1;
+            }
+            #deck[data-pinned="false"] .field {
+                top: 0;
+                left: 0;
+                /* a canvas is a replaced element: left + right alone leave it at
+                   its intrinsic 300px, so the size is explicit */
+                width: calc(50% + 50vw);
+                height: 100%;
+            }
+
+            /* ---- block reveal: same contract as Reveal.tsx ----------------------- */
+            .rev {
+                transition:
+                    opacity var(--reveal-fade) var(--ease-out-quart),
+                    transform var(--reveal-fade) var(--ease-out-quart);
+            }
+            /* labels and eyebrows FADE, they do not slide (kept from wieedze
+               Entrance: an eyebrow that moves looks misaligned with its title) */
+            .rev.fade {
+                transform: none !important;
+            }
+            .js .scene[data-on="false"] .rev {
+                opacity: 0;
+                transform: translateY(12px);
+            }
+            .js .scene.played .rev {
+                opacity: 1;
+                transform: none;
+                transition: none;
+            }
+            .scene[data-on="true"] .rev {
+                opacity: 1;
+                transform: none;
+                transition-delay: calc(var(--i, 0) * var(--reveal-step) + var(--after, 0ms));
+            }
+
+            #deck[data-pinned="true"] .rev {
+                transition:
+                    opacity var(--scene-reveal) var(--ease-out-quart),
+                    transform var(--scene-reveal) var(--ease-out-quart);
+            }
+            .js #deck[data-pinned="true"] .scene[data-on="false"]:not(.played) .rev:not(.fade) {
+                transform: translateY(var(--scene-rise));
+            }
+            #deck[data-pinned="true"] .scene[data-on="true"]:not(.played) .rev {
+                transition-delay: calc(var(--i, 0) * var(--scene-step) + var(--after, 0ms));
+            }
+            #deck[data-pinned="true"] .scene[data-on="true"] .lines .ln {
+                transition-duration: var(--scene-reveal);
+                transition-delay: calc(var(--l, 0) * var(--scene-step));
+            }
+            #deck[data-pinned="true"] .scene.played .rev,
+            #deck[data-pinned="true"] .lines.played .ln {
+                transition: none;
+            }
+
+            /* ---- scene 2: the problem ------------------------------------------- */
+            .field-of-claims {
+                padding: 18px 0 10px;
+                border-top: 1px solid var(--color-rule-strong);
+            }
+            .claims {
+                width: 100%;
+                height: auto;
+                display: block;
+            }
+            .claims-key {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 8px 28px;
+                align-items: center;
+                padding-top: 14px;
+                border-top: 1px solid var(--color-rule);
+            }
+            .claims-key span {
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+                font-size: 11px;
+            }
+            .claims-key i {
+                width: 8px;
+                height: 8px;
+                border-radius: 999px;
+            }
+            .claims-key .k-h {
+                box-shadow: inset 0 0 0 1.2px var(--color-rule-strong);
+            }
+            .claims-key .k-f {
+                background: var(--color-fg);
+            }
+            .claims .pop {
+                transform-box: fill-box;
+                transform-origin: center;
+                transition: transform 520ms var(--ease-out-quart), opacity 520ms var(--ease-out-quart);
+            }
+            .js #deck[data-pinned="true"] .scene[data-on="false"]:not(.played) .claims .pop {
+                transform: scale(0);
+                opacity: 0;
+            }
+            #deck[data-pinned="true"] .scene[data-on="true"]:not(.played) .claims .pop {
+                transition-delay: calc(900ms + var(--k, 0) * 90ms);
+            }
+            /* ---- scene 5: four jobs ---------------------------------------------- */
+            .jobs {
+                display: grid;
+                gap: 16px;
+                grid-template-columns: repeat(4, minmax(0, 1fr));
+            }
+            .jobs .row-name {
+                font-size: 19px;
+                line-height: 1.08;
+            }
+            .jobs dl {
+                grid-template-columns: auto 1fr;
+            }
+            .final-cta {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 16px 24px;
+                align-items: center;
+                margin-top: 20px;
+                padding-top: 18px;
+                border-top: 1px solid var(--color-rule);
+            }
+
+            /* ---- scene 6: the usual way vs ARP ------------------------------------ */
+            .vs {
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 20px;
+            }
+            .vs-col {
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+                padding: 16px 22px;
+                border: 1px solid var(--color-rule);
+                border-radius: var(--radius-card);
+            }
+            .vs-col.ours {
+                border-color: var(--color-rule-strong);
+                background: var(--color-bg);
+            }
+            .vs-col ul {
+                list-style: none;
+                margin: 0;
+                padding: 0;
+            }
+            .vs-col li {
+                display: flex;
+                align-items: center;
+                gap: 14px;
+                padding: 9px 0;
+                border-bottom: 1px solid var(--color-rule);
+                font-size: 15px;
+                color: var(--color-steel);
+            }
+            .vs-col li:last-child {
+                border-bottom: 0;
+            }
+            .vs-col.ours li {
+                color: var(--color-fg);
+            }
+            .vs-col i {
+                width: 9px;
+                height: 9px;
+                flex: none;
+                border-radius: 999px;
+            }
+            .vs-col i.x {
+                box-shadow: inset 0 0 0 1.5px var(--color-grey);
+            }
+            .vs-col i.o {
+                background: var(--color-fg);
+            }
+
+            /* ---- scene 2: what you can see --------------------------------------- */
+            .peek {
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 20px;
+            }
+            .peek-card {
+                display: flex;
+                flex-direction: column;
+                border: 1px solid var(--color-rule-strong);
+                border-radius: var(--radius-card);
+                background: var(--color-bg);
+                overflow: hidden;
+            }
+            .peek-h {
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+                padding: 18px 20px 16px;
+                border-bottom: 1px solid var(--color-rule);
+            }
+            .peek-who {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                min-width: 0;
+            }
+            .peek-av {
+                position: relative;
+                width: 30px;
+                height: 30px;
+                flex: none;
+            }
+            .peek-av i,
+            .peek-av b {
+                position: absolute;
+                width: 6px;
+                height: 6px;
+                border-radius: 999px;
+                background: var(--color-fg);
+                left: 12px;
+                top: 12px;
+            }
+            .peek-av b {
+                width: 8px;
+                height: 8px;
+                left: 11px;
+                top: 11px;
+            }
+            .peek-av i:nth-child(1) { transform: translate(0, -11px); }
+            .peek-av i:nth-child(2) { transform: translate(9.5px, -5.5px); }
+            .peek-av i:nth-child(3) { transform: translate(9.5px, 5.5px); }
+            .peek-av i:nth-child(4) { transform: translate(0, 11px); background: transparent; box-shadow: inset 0 0 0 1.5px var(--color-steel); }
+            .peek-av i:nth-child(5) { transform: translate(-9.5px, 5.5px); }
+            .peek-av i:nth-child(6) { transform: translate(-9.5px, -5.5px); }
+            .peek-tool {
+                width: 22px;
+                height: 22px;
+                flex: none;
+                border-radius: 999px;
+                box-shadow: inset 0 0 0 1.5px var(--color-silver);
+            }
+            .peek-rows {
+                list-style: none;
+                margin: 0;
+                padding: 4px 20px;
+            }
+            .peek-rows li {
+                display: grid;
+                grid-template-columns: 14px minmax(0, 1fr) auto;
+                gap: 12px;
+                align-items: center;
+                padding: 11px 0;
+                border-bottom: 1px solid var(--color-rule);
+                font-size: 15px;
+            }
+            .peek-rows li:last-child {
+                border-bottom: 0;
+            }
+            .peek-rows .mono {
+                font-size: 11px;
+            }
+            .dot {
+                width: 9px;
+                height: 9px;
+                border-radius: 999px;
+            }
+            .dot.f { background: var(--color-fg); }
+            .dot.h { box-shadow: inset 0 0 0 1.5px var(--color-steel); }
+            .dot.a { background: var(--color-silver); }
+            .peek-foot {
+                margin: auto 0 0;
+                padding: 12px 20px 16px;
+                border-top: 1px solid var(--color-rule);
+                font-size: 11px;
+            }
+            /* rows arrive one after another, the second card after the first */
+            .peek .pr {
+                transition: opacity 520ms var(--ease-out-quart), transform 520ms var(--ease-out-quart);
+            }
+            .js #deck[data-pinned="true"] .scene[data-on="false"]:not(.played) .peek .pr {
+                opacity: 0;
+                transform: translateX(-10px);
+            }
+            #deck[data-pinned="true"] .scene[data-on="true"]:not(.played) .peek .pr {
+                transition-delay: calc(700ms + var(--r, 0) * 140ms);
+            }
+            .still .peek .pr {
+                transition: none !important;
+                opacity: 1 !important;
+                transform: none !important;
+            }
+
+            /* ---- scene 3: how a reputation grows ---------------------------------- */
+            .why {
+                display: grid;
+                grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+                gap: 48px;
+                align-items: center;
+                padding-top: 12px;
+                border-top: 1px solid var(--color-rule-strong);
+            }
+            .why-steps {
+                list-style: none;
+                margin: 0;
+                padding: 0;
+            }
+            .why-steps li {
+                display: grid;
+                grid-template-columns: 2.5rem minmax(0, 1fr);
+                gap: 12px;
+                padding: 14px 0;
+                border-bottom: 1px solid var(--color-rule);
+            }
+            .why-steps li p {
+                margin: 6px 0 0;
+                max-width: 44ch;
+            }
+            .why-steps .why-own {
+                display: block;
+                border-bottom: 0;
+                padding-top: 16px;
+            }
+            .evo {
+                width: 100%;
+                height: auto;
+                display: block;
+                overflow: visible;
+            }
+            .evo .dlab {
+                font: 400 10px var(--font-mono);
+                letter-spacing: 0.06em;
+                text-transform: uppercase;
+                fill: var(--color-steel);
+            }
+            .evo .dlab-dim {
+                fill: var(--color-grey);
+            }
+            .evo .pop {
+                transform-box: fill-box;
+                transform-origin: center;
+                transition: transform 600ms var(--ease-out-quart), opacity 600ms var(--ease-out-quart);
+            }
+            .evo .draw {
+                transition: stroke-dashoffset var(--dur, 700ms) cubic-bezier(0.4, 0, 0.2, 1);
+            }
+            .evo .lab-end {
+                font: 500 12px var(--font-mono);
+                letter-spacing: 0.04em;
+                fill: var(--color-fg);
+            }
+            .evo .lab-end.warm {
+                fill: var(--color-accent);
+            }
+            .js #deck[data-pinned="true"] .scene[data-on="false"]:not(.played) .evo .pop {
+                transform: scale(0);
+                opacity: 0;
+            }
+            .js #deck[data-pinned="true"] .scene[data-on="false"]:not(.played) .evo .draw {
+                stroke-dashoffset: var(--len);
+            }
+            #deck[data-pinned="true"] .scene[data-on="true"]:not(.played) .evo .pop,
+            #deck[data-pinned="true"] .scene[data-on="true"]:not(.played) .evo .draw {
+                transition-delay: var(--t, 0ms);
+            }
+            .still .evo .pop,
+            .still .evo .draw {
+                transition: none !important;
+                transform: none !important;
+                opacity: 1 !important;
+                stroke-dashoffset: 0 !important;
+            }
+
+            /* ---- scene 2: three steps -------------------------------------------- */
+            .steps {
+                position: relative;
+                display: grid;
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+                gap: 40px;
+                padding-top: 8px;
+                border-top: 1px solid var(--color-rule-strong);
+            }
+            /* a hairline through the three diagrams, drawn left to right as the
+               steps arrive: one story, not three cards */
+            .thread {
+                position: absolute;
+                left: 0;
+                right: 0;
+                /* the diagrams' centre line: 8px padding + half of a 260 x 152 svg */
+                top: 84px;
+                height: 1px;
+                background: var(--color-rule);
+                transform-origin: 0 50%;
+                pointer-events: none;
+            }
+            .step {
+                position: relative;
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+            }
+            .step p {
+                margin: 0;
+                max-width: 36ch;
+            }
+            .step-name {
+                margin: 0;
+                font-size: 22px;
+            }
+            .dia {
+                width: 100%;
+                max-width: 260px;
+                height: auto;
+                margin-bottom: 6px;
+                overflow: visible;
+            }
+            .dia .dlab {
+                font: 400 10px var(--font-mono);
+                letter-spacing: 0.06em;
+                text-transform: uppercase;
+                fill: var(--color-steel);
+            }
+            .dia .pop {
+                transform-box: fill-box;
+                transform-origin: center;
+                transition: transform 520ms var(--ease-out-quart), opacity 520ms var(--ease-out-quart);
+            }
+            .js #deck[data-pinned="true"] .scene[data-on="false"]:not(.played) .dia .pop {
+                transform: scale(0);
+                opacity: 0;
+            }
+            #deck[data-pinned="true"] .scene[data-on="true"]:not(.played) .dia .pop {
+                /* the dots of step 03 arrive one after another, after the step */
+                transition-delay: calc(var(--i, 0) * var(--scene-step) + 360ms + var(--k, 0) * 70ms);
+            }
+            .step:nth-child(3) .dia .pop {
+                /* step 02's warm dot lands with its step */
+            }
+            .js #deck[data-pinned="true"] .scene[data-on="false"]:not(.played) .thread {
+                transform: scaleX(0);
+            }
+            #deck[data-pinned="true"] .thread {
+                transition: transform 1400ms var(--ease-out-quart) 250ms;
+            }
+            .still .dia .pop,
+            .still .thread {
+                transition: none !important;
+                transform: none !important;
+                opacity: 1 !important;
+            }
+
+            /* ---- word scale ------------------------------------------------------ */
+            .words .w {
+                display: inline-block;
+                /* inline-block keeps the space outside the word so lines wrap as
+                   they would for plain text */
+            }
+            .js .scene[data-on="false"] .words:not(.played) .w {
+                opacity: 0;
+                transform: translateY(0.32em);
+            }
+            .scene[data-on="true"] .words .w {
+                opacity: 1;
+                transform: none;
+                transition:
+                    opacity var(--word-rise) var(--ease-out-quart),
+                    transform var(--word-rise) var(--ease-out-quart);
+                transition-delay: var(--d, 0ms);
+            }
+            .words.played .w {
+                transition: none !important;
+            }
+
+            /* ---- authored-line scale, for h2 (two lines, each one unit) --------- */
+            .lines .ln {
+                display: block;
+            }
+            .js .scene[data-on="false"] .lines:not(.played) .ln {
+                opacity: 0;
+                transform: translateY(0.22em);
+            }
+            .scene[data-on="true"] .lines .ln {
+                opacity: 1;
+                transform: none;
+                transition:
+                    opacity var(--word-rise) var(--ease-out-quart),
+                    transform var(--word-rise) var(--ease-out-quart);
+                transition-delay: calc(var(--l, 0) * var(--line-step));
+            }
+            .lines.played .ln {
+                transition: none !important;
+            }
+
+            /* ---- reduced motion: the same composition, still -------------------- */
+            @media (prefers-reduced-motion: reduce) {
+                html {
+                    scroll-behavior: auto;
+                }
+            }
+            .still .rev,
+            .still .scene,
+            .still .w,
+            .still .ln {
+                transition: none !important;
+                opacity: 1 !important;
+                transform: none !important;
+            }
+
+            /* ---- rail ------------------------------------------------------------- */
+            #rail {
+                position: fixed;
+                right: 24px;
+                top: 50%;
+                z-index: 10;
+                display: none;
+                flex-direction: column;
+                align-items: flex-end;
+                gap: 10px;
+                transform: translateY(-50%);
+                pointer-events: none;
+            }
+            #deck[data-pinned="true"] ~ #rail {
+                display: flex;
+            }
+            #rail .m {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                height: 10px;
+            }
+            #where {
+                position: fixed;
+                right: 24px;
+                bottom: 22px;
+                z-index: 10;
+                display: none;
+                pointer-events: none;
+            }
+            #deck[data-pinned="true"] ~ #where {
+                display: block;
+            }
+            #rail .m b {
+                font: 500 10px/1 var(--font-mono);
+                letter-spacing: 0.08em;
+                text-transform: uppercase;
+                color: var(--color-steel);
+                opacity: 0;
+                transform: translateX(4px);
+                transition:
+                    opacity var(--duration-base) var(--ease-out-quart),
+                    transform var(--duration-base) var(--ease-out-quart);
+            }
+            #rail .m i {
+                width: 6px;
+                height: 6px;
+                border-radius: 999px;
+                background: var(--color-rule-strong);
+                transition: background-color var(--duration-base) var(--ease-out-quart);
+            }
+            #rail .m[data-on="true"] i {
+                background: var(--color-accent);
+            }
+            #rail .m[data-on="true"] b {
+                opacity: 1;
+                transform: none;
+            }
+
+            /* ---- pieces (unchanged from v1 unless noted) ------------------------- */
+            .hero {
+                position: relative;
+            }
+            .hero-copy {
+                position: relative;
+                display: flex;
+                flex-direction: column;
+                justify-content: flex-end;
+                gap: 24px;
+                max-width: min(40rem, 44vw);
+                min-height: min(46svh, 24rem);
+                padding: clamp(16px, 4vw, 48px) 0;
+            }
+            h1 {
+                margin: 0;
+                font-size: clamp(36px, 4.4vw, 60px);
+            }
+            h2 {
+                margin: 0;
+                font-size: clamp(30px, 4.4vw, 56px);
+            }
+            .cta {
+                white-space: nowrap;
+                display: inline-flex;
+                align-items: center;
+                height: 48px;
+                padding: 0 22px;
+                border: 0;
+                border-radius: var(--radius-button);
+                background: var(--color-accent);
+                color: var(--color-accent-ink);
+                font-weight: 700;
+                font-size: 15px;
+                text-decoration: none;
+            }
+            .quiet {
+                font-family: var(--font-mono);
+                font-size: 12px;
+                color: var(--color-silver);
+                text-decoration: underline;
+                text-underline-offset: 4px;
+                text-decoration-color: var(--color-rule-strong);
+            }
+            .beat {
+                position: relative;
+                align-self: flex-start;
+                max-width: 30rem;
+                margin-top: 12px;
+                display: flex;
+                flex-direction: column;
+                gap: 4px;
+                min-width: min(18rem, 70vw);
+                padding: 12px 14px;
+                border: 1px solid var(--color-rule-strong);
+                border-radius: var(--radius-button);
+                background: color-mix(in srgb, var(--color-bg) 90%, transparent);
+            }
+            .beat-head {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                padding-bottom: 8px;
+                border-bottom: 1px solid var(--color-rule);
+                font-family: var(--font-mono);
+                font-size: 10px;
+                text-transform: uppercase;
+                letter-spacing: 0.06em;
+                color: var(--color-steel);
+            }
+            .beat-dot {
+                width: 6px;
+                height: 6px;
+                border-radius: 999px;
+                background: var(--color-rule-strong);
+            }
+            .ticker {
+                display: flex;
+                align-items: center;
+                height: 48px;
+                margin-top: 16px;
+                border-top: 1px solid var(--color-rule);
+                border-bottom: 1px solid var(--color-rule);
+                font-family: var(--font-mono);
+                font-size: var(--text-body-sm);
+                color: var(--color-steel);
+            }
+            .sec-head {
+                display: flex;
+                flex-wrap: wrap;
+                align-items: flex-end;
+                justify-content: space-between;
+                gap: 24px;
+                margin-bottom: 28px;
+            }
+            .rows {
+                border-top: 1px solid var(--color-rule-strong);
+            }
+            .row {
+                display: grid;
+                gap: 24px;
+                align-items: baseline;
+                padding: 22px 0;
+                border-bottom: 1px solid var(--color-rule);
+                grid-template-columns: 5rem minmax(0, 1fr) minmax(0, 1.1fr);
+            }
+            .row.rung {
+                grid-template-columns: 5rem minmax(0, 1fr) minmax(0, 1.3fr) minmax(0, 1fr) 9rem;
+                align-items: center;
+                padding: 18px 0;
+            }
+            .row.off {
+                color: var(--color-steel);
+            }
+            .numeral {
+                font-size: clamp(34px, 5vw, 56px);
+                color: var(--color-numeral);
+            }
+            /* The ladder's second beat: the two ARP rungs light AFTER every row has
+               arrived, so the eye lands on them last. Static paper when still. */
+            .row.rung:not(.off) .numeral {
+                color: var(--color-fg);
+            }
+            .js .scene[data-on="false"] .row.rung:not(.off) .numeral {
+                color: var(--color-numeral);
+            }
+            .scene[data-on="true"] .row.rung:not(.off) .numeral {
+                transition: color 420ms var(--ease-out-quart);
+                transition-delay: calc(5 * var(--reveal-step) + 160ms);
+            }
+            .row-name {
+                font-size: 22px;
+            }
+            .who {
+                display: flex;
+                align-items: center;
+                justify-content: flex-end;
+                gap: 8px;
+                font-family: var(--font-mono);
+                font-size: var(--text-body-sm);
+            }
+            .who i {
+                width: 6px;
+                height: 6px;
+                border-radius: 999px;
+                background: var(--color-rule-strong);
+            }
+            .row.rung:not(.off) .who i {
+                background: var(--color-accent);
+            }
+            .cards {
+                display: grid;
+                gap: 20px;
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+            }
+            .card {
+                display: flex;
+                flex-direction: column;
+                gap: 16px;
+                padding: 20px;
+                border: 1px solid var(--color-rule);
+                border-radius: var(--radius-card);
+                background: var(--color-ground);
+            }
+            .card.primary {
+                border-color: var(--color-accent);
+            }
+            .card dl {
+                display: grid;
+                grid-template-columns: auto 1fr;
+                gap: 6px 20px;
+                margin: 0;
+                font-family: var(--font-mono);
+                font-size: var(--text-body-sm);
+            }
+            .card dt {
+                color: var(--color-steel);
+            }
+            .card dd {
+                margin: 0;
+                text-align: right;
+            }
+            .card.primary dd.warm {
+                color: var(--color-accent);
+            }
+
+            /* The manifesto lights line by line as you scroll through its hold:
+               grey (3.8:1, legible as display text) to paper. Never hidden, so the
+               statement is readable at every scroll position. --lit is set by JS
+               from scroll progress; 1 when still or stacked. */
+            .manifesto {
+                font-size: clamp(36px, 5.4vw, 72px);
+                line-height: 1.02;
+                margin: 0;
+            }
+            .manifesto .lit {
+                display: block;
+                color: color-mix(
+                    in srgb,
+                    var(--color-fg) calc(var(--lit, 1) * 100%),
+                    var(--color-grey)
+                );
+            }
+            .manifesto .stay {
+                display: block;
+                color: var(--color-grey);
+            }
+            .manifesto .row3 {
+                display: flex;
+                gap: 0.32em;
+                flex-wrap: wrap;
+            }
+            .manifesto .row3 .lit {
+                display: inline;
+            }
+
+            pre {
+                margin: 0;
+                padding: 24px;
+                border: 1px solid var(--color-rule);
+                border-radius: var(--radius-card);
+                background: var(--color-bg);
+                font-family: var(--font-mono);
+                font-size: var(--text-body-sm);
+                color: var(--color-silver);
+                overflow-x: auto;
+            }
+            pre b {
+                color: var(--color-steel);
+                font-weight: 400;
+            }
+            .build {
+                display: grid;
+                gap: 40px;
+                align-items: center;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            /* ---- lab sections (outside the deck) -------------------------------- */
+            .lab {
+                scroll-margin-top: 88px;
+                padding: 96px 0 0;
+                border-top: 1px solid var(--color-rule);
+                margin-top: 64px;
+            }
+            .lab + .lab {
+                margin-top: 0;
+            }
+            .lab-head {
+                display: flex;
+                justify-content: space-between;
+                align-items: flex-end;
+                gap: 24px;
+                flex-wrap: wrap;
+                margin-bottom: 24px;
+            }
+            .seg {
+                display: inline-flex;
+                border: 1px solid var(--color-rule);
+                border-radius: var(--radius-control);
+                overflow: hidden;
+            }
+            .seg button {
+                height: 32px;
+                padding: 0 12px;
+                border: 0;
+                background: transparent;
+                font-family: var(--font-mono);
+                font-size: 11px;
+                color: var(--color-steel);
+                cursor: pointer;
+            }
+            .seg button + button {
+                border-left: 1px solid var(--color-rule);
+            }
+            .seg button[aria-pressed="true"] {
+                background: var(--color-raised);
+                color: var(--color-fg);
+            }
+            .ctrl {
+                display: flex;
+                gap: 12px 20px;
+                flex-wrap: wrap;
+                align-items: center;
+            }
+            .ctrl .label {
+                margin-right: 4px;
+            }
+            .ghost {
+                height: 32px;
+                padding: 0 12px;
+                border: 1px solid var(--color-rule-strong);
+                border-radius: var(--radius-control);
+                background: transparent;
+                color: var(--color-fg);
+                font-family: var(--font-mono);
+                font-size: 11px;
+                cursor: pointer;
+            }
+            .pair {
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 16px;
+            }
+            .pane {
+                border: 1px solid var(--color-rule);
+                border-radius: var(--radius-card);
+                overflow: hidden;
+                background: var(--color-ground);
+                min-width: 0;
+            }
+            .pane-h {
+                display: flex;
+                justify-content: space-between;
+                gap: 12px;
+                padding: 10px 14px;
+                border-bottom: 1px solid var(--color-rule);
+            }
+            .viewport {
+                position: relative;
+                overflow: hidden;
+            }
+            .canvasw {
+                transform-origin: 0 0;
+                container-type: inline-size;
+                padding: 28px;
+            }
+            .canvasw h1.labh {
+                font-size: clamp(36px, 4.4cqi, 60px);
+                max-width: 40rem;
+            }
+            .facts {
+                font-family: var(--font-mono);
+                font-size: 11px;
+                color: var(--color-steel);
+                padding: 10px 14px;
+                border-top: 1px solid var(--color-rule);
+            }
+            .facts b {
+                font-weight: 500;
+                color: var(--color-fg);
+            }
+
+            /* mini app for the route scale */
+            .mini {
+                display: flex;
+                flex-direction: column;
+                height: 440px;
+            }
+            .mini-nav {
+                display: flex;
+                gap: 6px;
+                align-items: center;
+                padding: 10px 12px;
+                border-bottom: 1px solid var(--color-rule);
+            }
+            .mini-nav a {
+                height: 28px;
+                padding: 0 10px;
+                border-radius: var(--radius-control);
+                display: inline-flex;
+                align-items: center;
+                font-family: var(--font-mono);
+                font-size: 11px;
+                letter-spacing: 0.06em;
+                text-transform: uppercase;
+                color: var(--color-steel);
+                text-decoration: none;
+                cursor: pointer;
+            }
+            .mini-nav a[aria-current="page"] {
+                color: var(--color-fg);
+                background: var(--color-raised);
+            }
+            .mini-nav .back {
+                margin-left: auto;
+            }
+            .mini-body {
+                position: relative;
+                flex: 1;
+                overflow: auto;
+                padding: 18px;
+            }
+            .mini-out {
+                transition: opacity var(--route-out) linear;
+            }
+            .mini-out.leaving {
+                opacity: 0;
+            }
+            .mini-in {
+                animation: route-in var(--route-in) var(--ease-out-quart) both;
+            }
+            @keyframes route-in {
+                from {
+                    opacity: 0;
+                }
+            }
+            .still .mini-out,
+            .still .mini-in {
+                transition: none !important;
+                animation: none !important;
+                opacity: 1 !important;
+            }
+            .mini-load {
+                position: absolute;
+                inset: 0;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            .mini-foot {
+                padding: 8px 12px;
+                border-top: 1px solid var(--color-rule);
+                font-family: var(--font-mono);
+                font-size: 10px;
+                color: var(--color-steel);
+            }
+            .lrow {
+                display: grid;
+                grid-template-columns: 2.5rem minmax(0, 1fr) auto;
+                gap: 12px;
+                padding: 9px 0;
+                border-bottom: 1px solid var(--color-rule);
+                font-family: var(--font-mono);
+                font-size: 12px;
+                color: var(--color-silver);
+            }
+            .lrow span:first-child {
+                color: var(--color-grey);
+            }
+            .lrow.in {
+                animation: row-in var(--reveal-fade) var(--ease-out-quart) both;
+                animation-delay: var(--rd, 0ms);
+            }
+            @keyframes row-in {
+                from {
+                    opacity: 0;
+                    transform: translateY(6px);
+                }
+            }
+            .still .lrow.in {
+                animation: none;
+            }
+            @keyframes lit {
+                0%,
+                100% {
+                    fill: #2e3134;
+                }
+                30% {
+                    fill: #ffb020;
+                }
+                60% {
+                    fill: #43474b;
+                }
+            }
+            .ldr circle {
+                animation: lit 1.2s ease-in-out infinite;
+            }
+            .still .ldr circle {
+                animation: none;
+                fill: #43474b;
+            }
+
+            .prose {
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 40px;
+            }
+            .prose h3 {
+                margin: 0 0 12px;
+                font-size: 22px;
+            }
+            .prose ul {
+                margin: 0;
+                padding: 0;
+                list-style: none;
+                border-top: 1px solid var(--color-rule);
+            }
+            .prose li {
+                padding: 12px 0;
+                border-bottom: 1px solid var(--color-rule);
+                color: var(--color-silver);
+                font-size: 14px;
+            }
+            .prose li b {
+                color: var(--color-fg);
+                font-weight: 600;
+            }
+            .verdict {
+                display: grid;
+                grid-template-columns: 9rem minmax(0, 1fr) 7rem;
+                gap: 20px;
+                padding: 14px 0;
+                border-bottom: 1px solid var(--color-rule);
+                align-items: baseline;
+            }
+            .verdict .v {
+                font-family: var(--font-mono);
+                font-size: 11px;
+                text-transform: uppercase;
+                letter-spacing: 0.08em;
+                text-align: right;
+            }
+
+            #motion-switch {
+                position: fixed;
+                left: 16px;
+                bottom: 16px;
+                z-index: 30;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                padding: 6px 6px 6px 12px;
+                border: 1px solid var(--color-rule-strong);
+                border-radius: var(--radius-button);
+                background: var(--color-bg);
+            }
+
+            footer {
+                margin-top: 96px;
+                padding: 28px 24px 0;
+                border-top: 1px solid var(--color-rule);
+                overflow: hidden;
+            }
+            .wordmark {
+                display: block;
+                width: 100%;
+                margin-top: 24px;
+                font-size: clamp(150px, 30vw, 420px);
+                line-height: 0.74;
+                color: var(--color-watermark);
+                text-align: center;
+            }
+
+            @media (max-width: 600px) {
+                nav.top {
+                    gap: 14px;
+                }
+                nav.top .label {
+                    font-size: 10px;
+                    letter-spacing: 0.04em;
+                }
+            }
+            @media (max-width: 900px) {
+                /* narrow: the field sits ABOVE the copy, never behind body text */
+                #deck[data-pinned="false"] .field {
+                    width: 100%;
+                    height: 320px;
+                }
+                .hero-copy {
+                    padding-top: 320px;
+                    min-height: 0;
+                    max-width: none;
+                }
+                .thread {
+                    display: none;
+                }
+                .cards,
+                .vs,
+                .peek,
+                .why,
+                .jobs,
+                .steps,
+                .build,
+                .pair,
+                .prose {
+                    grid-template-columns: 1fr;
+                }
+                .row,
+                .row.rung {
+                    grid-template-columns: 1fr;
+                    gap: 8px;
+                }
+                .who {
+                    justify-content: flex-start;
+                }
+                .beat {
+                    position: static;
+                    margin-top: 24px;
+                }
+                .verdict {
+                    grid-template-columns: 1fr;
+                    gap: 4px;
+                }
+                .verdict .v {
+                    text-align: left;
+                }
+            }
+        </style>
+        <script>
+            document.documentElement.classList.add("js");
+        </script>
+    </head>
+
+    <body>
+        <nav class="top" aria-label="Main">
+            <span class="label">Agents</span>
+            <span class="label">Tools</span>
+            <span class="face" style="font-size: 18px">ARP</span>
+            <span class="label">Your agent</span>
+            <span class="label">Add a tool</span>
+        </nav>
+
+        <div id="deck" class="shell" data-pinned="false" style="--scenes: 6">
+            <div class="stage">
+                <canvas class="field" id="field" aria-hidden="true"></canvas>
+                <canvas id="veil" aria-hidden="true"></canvas>
+                <div class="stage-inner">
+                    <!-- ===== SCENE 1 — the hero ================================= -->
+                    <section class="scene hero" data-scene="0" data-active="true" data-on="false" data-name="Pulse">
+                        <div class="hero-copy">
+                            <p class="label rev fade" style="--i: 0">ARP · Agent Reputation Protocol</p>
+                            <h1 class="face words" id="h1">
+                                The reputation pulse for autonomous agents and tools.
+                            </h1>
+                            <!-- kept from wieedze Hero: after the title, the answer rises
+                                 as ONE move, no stagger inside it -->
+                            <p class="silver rev answer" style="font-size: 18px; max-width: 44ch; margin: 0">
+                                Every beat is someone paying to say what they saw.
+                            </p>
+                            <div class="rev answer" style="display: flex; flex-wrap: wrap; gap: 16px 20px; align-items: center">
+                                <a class="cta" href="#">Open the agent index</a>
+                                <a class="quiet" href="#build">or build against it →</a>
+                            </div>
+                            <!-- v4: the pulse status moved out of the field: as a floating
+                                 card and a full-width ticker it covered the animation -->
+                            <div class="beat rev fade answer2">
+                                <span class="beat-head"><i class="beat-dot"></i> Pulse · 0 on mainnet</span>
+                                <span style="font-size: 13px">No declaration on this chain yet. Nobody has run the loop here, including us.</span>
+                            </div>
+                        </div>
+</section>
+
+                    <!-- ===== SCENE 2 — what you can see ========================== -->
+                    <!-- v4, from the user (2026-10-28): what moves people is the tools,
+                         choosing an agent, and watching which tools are used. Two cards,
+                         two readers. Not "hire": ADR 0060 took hire and pay out of scope;
+                         find and rate are what ships. Sample names, not data. -->
+                    <section class="scene" data-scene="1" data-active="false" data-on="false" data-name="What you see">
+                        <div class="sec-head">
+                            <h2 class="face lines">
+                                <span class="ln" style="--l: 0">See what every agent runs on.</span>
+                                <span class="ln dim" style="--l: 1">Choose by its tools. Earn as yours spreads.</span>
+                            </h2>
+                            <span class="label rev fade" style="--i: 2">Fig. 01 · two ways to read the record</span>
+                        </div>
+                        <div class="peek">
+                            <article class="peek-card rev" style="--i: 2">
+                                <header class="peek-h">
+                                    <span class="label">Choosing an agent</span>
+                                    <span class="peek-who"><span class="peek-av" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><b></b></span><span class="face" style="font-size: 20px">vault-auditor</span><span class="mono steel" style="font-size: 11px">#2214</span></span>
+                                </header>
+                                <ul class="peek-rows">
+                                    <li class="pr" style="--r: 0"><i class="dot f"></i><span>Slither (Crytic)</span><span class="mono steel">used · proven</span></li>
+                                    <li class="pr" style="--r: 1"><i class="dot f"></i><span>SWC Registry</span><span class="mono steel">used · proven</span></li>
+                                    <li class="pr" style="--r: 2"><i class="dot f"></i><span>guidelines-advisor</span><span class="mono steel">used · proven</span></li>
+                                    <li class="pr" style="--r: 3"><i class="dot h"></i><span>Echidna</span><span class="mono steel">declared only</span></li>
+                                </ul>
+                                <p class="peek-foot mono steel">What it says it uses, and what it paid to prove. Then rate it, at a price.</p>
+                            </article>
+                            <article class="peek-card rev" style="--i: 3">
+                                <header class="peek-h">
+                                    <span class="label">Your tool or your skill</span>
+                                    <span class="peek-who"><span class="peek-tool" aria-hidden="true"></span><span class="face" style="font-size: 20px">github.com/crytic/slither</span></span>
+                                </header>
+                                <ul class="peek-rows">
+                                    <li class="pr" style="--r: 4"><i class="dot a"></i><span>crytic-runner</span><span class="mono steel">declared use · 2h</span></li>
+                                    <li class="pr" style="--r: 5"><i class="dot a"></i><span>vault-auditor</span><span class="mono steel">declared use · 5h</span></li>
+                                    <li class="pr" style="--r: 6"><i class="dot a"></i><span>0x3b9e…41a0</span><span class="mono steel">declared use · 1d</span></li>
+                                    <li class="pr" style="--r: 7"><i class="dot a"></i><span>maturity-bot</span><span class="mono steel">declared use · 3d</span></li>
+                                </ul>
+                                <p class="peek-foot mono steel">Every agent that paid to say it used it, and when. List it first and hold a position: each agent that backs it after you pays more on the curve.</p>
+                            </article>
+                        </div>
+                    </section>
+
+                    <!-- ===== SCENE 3 — why anyone would ========================= -->
+                    <!-- v4, from the user (2026-10-28): "your agent uses something, it
+                         takes a position, others arrive and do the same; the point is to
+                         show the reputation of tools and agents evolving, and a way to
+                         earn with your own agent, or your own agents." One diagram that
+                         evolves while the three steps arrive. The only warm dot is YOUR
+                         position. A picture of the mechanism, not data. -->
+                    <section class="scene" data-scene="2" data-active="false" data-on="false" data-name="Why">
+                        <div class="sec-head">
+                            <h2 class="face lines">
+                                <span class="ln" style="--l: 0">Your agent uses something.</span>
+                                <span class="ln dim" style="--l: 1">Others follow. Both reputations grow.</span>
+                            </h2>
+                            <span class="label rev fade" style="--i: 2">Fig. 02 · how a reputation grows</span>
+                        </div>
+                        <div class="why">
+                            <ol class="why-steps">
+                                <li class="rev" style="--i: 2"><span class="label">01</span><div><h3 class="face step-name">Your agent uses a tool</h3><p class="silver">It says so on chain: a 0.1 TRUST fee that does not come back, its address on it for good.</p></div></li>
+                                <li class="rev" style="--i: 5"><span class="label">02</span><div><h3 class="face step-name">It takes a position</h3><p class="silver">TRUST into the tool's vault. Not a payment to anyone: it stays yours, withdraw it whenever you want.</p></div></li>
+                                <li class="rev" style="--i: 9"><span class="label">03</span><div><h3 class="face step-name">Others arrive and do the same</h3><p class="silver">Each deposit after yours is priced higher on the curve. The tool's record grows, and so does your agent's, which backed it first.</p></div></li>
+                                <li class="rev fade why-own" style="--i: 13"><span class="mono steel">Run several agents? Each one builds its own record.</span></li>
+                            </ol>
+                            <div class="rev fade evo-wrap" style="--i: 2"><svg class="evo" viewBox="0 0 720 300" role="img" aria-label="Your agent arrives first and takes a position on a tool. Five other agents arrive after it and do the same. With each arrival the tool's reputation steps up, and your position grows with it."><line x1="60" y1="250" x2="520" y2="250" stroke="var(--color-rule-strong)" stroke-width="1"/><path class="draw" d="M60 250 H80 V222.1 H164 V199.2 H248 V171.3 H332 V138.5 H416 V100.8 H500 V59.8 H520" fill="none" stroke="var(--color-fg)" stroke-width="2" stroke-dasharray="1400" style="--len:1400;--t:600ms;--dur:3200ms"/><path class="draw" d="M80 232.0 L164 227.0 L248 220.5 L332 212.3 L416 202.4 L500 191.0 L520 187.7" fill="none" stroke="var(--color-accent)" stroke-width="2" stroke-dasharray="700" style="--len:700;--t:900ms;--dur:2900ms"/><text class="pop lab-end" style="--t:3600ms" x="530" y="63.8">the tool's reputation</text><text class="pop lab-end warm" style="--t:3700ms" x="530" y="191.7">your position</text><circle class="pop" style="--t:600ms" cx="80" cy="250" r="7" fill="var(--color-accent)"/><text class="pop dlab" style="--t:600ms" x="80" y="278" text-anchor="middle">your agent</text><circle class="pop" style="--t:1120ms" cx="164" cy="250" r="6" fill="var(--color-silver)"/><circle class="pop" style="--t:1640ms" cx="248" cy="250" r="6" fill="var(--color-silver)"/><circle class="pop" style="--t:2160ms" cx="332" cy="250" r="6" fill="var(--color-silver)"/><circle class="pop" style="--t:2680ms" cx="416" cy="250" r="6" fill="var(--color-silver)"/><circle class="pop" style="--t:3200ms" cx="500" cy="250" r="6" fill="var(--color-silver)"/><text class="pop dlab" style="--t:2160ms" x="332" y="278" text-anchor="middle">other agents arrive and do the same</text></svg></div>
+                        </div>
+                    </section>
+
+                    <!-- ===== SCENE 5 — what you can do =========================== -->
+                    <!-- v3 replaces "Three ways to add a beat": the README's four jobs,
+                         each with what it needs. Reading first, because it is free. -->
+                    <section class="scene" data-scene="3" data-active="false" data-on="false" data-name="For you">
+                        <div class="sec-head">
+                            <h2 class="face lines">
+                                <span class="ln" style="--l: 0">Start by reading.</span>
+                                <span class="ln dim" style="--l: 1">It costs nothing.</span>
+                            </h2>
+                            <span class="label rev fade" style="--i: 2">Fig. 03 · four things you can do</span>
+                        </div>
+                        <div class="jobs">
+                            <article class="card rev" style="--i: 2">
+                                <span class="label">01 · check</span>
+                                <h3 class="face row-name" style="margin: 0">See who paid to stand behind an agent or a tool</h3>
+                                <dl><dt>Needs</dt><dd>nothing</dd><dt>Wallet</dt><dd>no</dd></dl>
+                                <a class="quiet" href="#" style="margin-top: auto">Open the index →</a>
+                            </article>
+                            <article class="card primary rev" style="--i: 3">
+                                <span class="label">02 · declare</span>
+                                <h3 class="face row-name" style="margin: 0">Say what your agent used</h3>
+                                <dl><dt>Costs from</dt><dd class="warm">0.11 TRUST</dd><dt>Needs</dt><dd>wallet + ERC-8004 id</dd></dl>
+                                <a class="quiet" href="#" style="margin-top: auto">Find a tool →</a>
+                            </article>
+                            <article class="card rev" style="--i: 4">
+                                <span class="label">03 · list</span>
+                                <h3 class="face row-name" style="margin: 0">Add a tool that is not listed yet</h3>
+                                <dl><dt>You give</dt><dd>its URL</dd><dt>Needs</dt><dd>a wallet with TRUST</dd></dl>
+                                <a class="quiet" href="#" style="margin-top: auto">Add a tool →</a>
+                            </article>
+                            <article class="card rev" style="--i: 5">
+                                <span class="label">04 · be hired</span>
+                                <h3 class="face row-name" style="margin: 0">Let other agents find yours and call it</h3>
+                                <dl><dt>Needs</dt><dd>an endpoint you run</dd><dt>ARP hosts</dt><dd>nothing</dd></dl>
+                                <a class="quiet" href="#" style="margin-top: auto">Your agent →</a>
+                            </article>
+                        </div>
+                    </section>
+
+                    <!-- ===== SCENE 5 — the manifesto ============================ -->
+                    <section class="scene" data-scene="4" data-active="false" data-on="false" data-name="No score">
+                        <p class="face manifesto" id="manifesto">
+                            <span class="row3"><span class="lit" style="--lit: 1">No score.</span><span class="lit" style="--lit: 1">No grade.</span><span class="lit" style="--lit: 1">No stars.</span></span>
+                            <span class="stay">Just what agents really use.</span>
+                            <span class="lit" style="--lit: 1">On the record, for anyone to check.</span>
+                        </p>
+                    </section>
+
+                    <!-- ===== SCENE 6 — build against it ========================= -->
+                    <!-- v4: "No API key. No indexer." said nothing on its own. Shown as
+                         the usual way against ARP's, each line a fact from the README
+                         ("Build against ARP", "Nothing in the request path", ADR 0045). -->
+                    <section class="scene" id="build" data-scene="5" data-active="false" data-on="false" data-name="Build">
+                        <div class="sec-head">
+                            <h2 class="face lines">
+                                <span class="ln" style="--l: 0">Plug in without asking anyone.</span>
+                                <span class="ln dim" style="--l: 1">It lives on a public chain, not on our servers.</span>
+                            </h2>
+                            <span class="label rev fade" style="--i: 2">Fig. 04 · build against it</span>
+                        </div>
+                        <div class="vs">
+                            <div class="vs-col rev" style="--i: 2">
+                                <span class="label">The usual way</span>
+                                <ul>
+                                    <li><i class="x"></i>Ask a company for an API key</li>
+                                    <li><i class="x"></i>Depend on its servers and its indexer</li>
+                                    <li><i class="x"></i>Trust the score it hands back</li>
+                                    <li><i class="x"></i>Lose everything if it shuts down</li>
+                                </ul>
+                            </div>
+                            <div class="vs-col ours rev" style="--i: 3">
+                                <span class="label">With ARP</span>
+                                <ul>
+                                    <li><i class="o"></i>One package, or just read the skill</li>
+                                    <li><i class="o"></i>Read the chain directly, no key, no account</li>
+                                    <li><i class="o"></i>Check every figure yourself: each one is a deposit</li>
+                                    <li><i class="o"></i>Unplug ARP's servers: every read and declaration still works</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="final-cta rev" style="--i: 4">
+                            <a class="cta" href="#">Open the agent index</a>
+                            <a class="quiet" href="#">Read the skill, nothing to install →</a>
+                            <span class="mono steel" style="margin-left: auto">@arp-protocol/core</span>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </div>
+
+        <div id="rail" aria-hidden="true"></div>
+        <div id="where" class="label" aria-hidden="true"></div>
+
+        <!-- ===================================================================== -->
+        <div class="shell">
+            <section class="lab" aria-labelledby="lab-word">
+                <div class="lab-head">
+                    <div>
+                        <p class="label" style="margin: 0 0 10px">Lab · word scale</p>
+                        <h2 class="face" id="lab-word" style="font-size: var(--text-section)">
+                            The hero headline at four widths.<br /><span class="dim">Animated beside still.</span>
+                        </h2>
+                    </div>
+                    <div class="ctrl">
+                        <span class="label">Width</span>
+                        <div class="seg" id="lab-w" role="group" aria-label="Simulated viewport width">
+                            <button type="button" data-v="1920" aria-pressed="false">1920</button>
+                            <button type="button" data-v="1440" aria-pressed="true">1440</button>
+                            <button type="button" data-v="1024" aria-pressed="false">1024</button>
+                            <button type="button" data-v="390" aria-pressed="false">390</button>
+                        </div>
+                        <button class="ghost" id="lab-replay" type="button">Replay</button>
+                    </div>
+                </div>
+                <div class="pair">
+                    <div class="pane">
+                        <div class="pane-h"><span class="label">Animated</span><span class="label" id="lab-px">1440 px</span></div>
+                        <div class="viewport" id="vp-a"><div class="canvasw" id="cw-a"><div class="scene" data-on="false" id="sc-a"><h1 class="face labh words" id="lab-h-a">The reputation pulse for autonomous agents and tools.</h1></div></div></div>
+                        <div class="facts" id="lab-facts">—</div>
+                    </div>
+                    <div class="pane">
+                        <div class="pane-h"><span class="label">Reduced motion · the same composition, still</span></div>
+                        <div class="viewport still" id="vp-b"><div class="canvasw" id="cw-b"><div class="scene" data-on="true"><h1 class="face labh">The reputation pulse for autonomous agents and tools.</h1></div></div></div>
+                        <div class="facts">0 ms. Nothing moves, nothing waits.</div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="lab" aria-labelledby="lab-route">
+                <div class="lab-head">
+                    <div>
+                        <p class="label" style="margin: 0 0 10px">Lab · route scale and list stagger</p>
+                        <h2 class="face" id="lab-route" style="font-size: var(--text-section)">
+                            A page change you do not wait through.<br /><span class="dim">The nav never moves.</span>
+                        </h2>
+                    </div>
+                    <div class="ctrl">
+                        <span class="label">Chunk</span>
+                        <div class="seg" id="r-chunk" role="group" aria-label="Lazy chunk timing">
+                            <button type="button" data-v="0" aria-pressed="true">cached</button>
+                            <button type="button" data-v="90" aria-pressed="false">90 ms</button>
+                            <button type="button" data-v="700" aria-pressed="false">700 ms</button>
+                        </div>
+                        <span class="label">Agents</span>
+                        <div class="seg" id="r-n" role="group" aria-label="Rows in the agent list">
+                            <button type="button" data-v="0" aria-pressed="false">0</button>
+                            <button type="button" data-v="1" aria-pressed="false">1</button>
+                            <button type="button" data-v="200" aria-pressed="true">200</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="pair">
+                    <div class="pane"><div class="pane-h"><span class="label">Animated</span></div><div class="mini" id="mini-a"></div></div>
+                    <div class="pane"><div class="pane-h"><span class="label">Reduced motion</span></div><div class="mini still" id="mini-b"></div></div>
+                </div>
+            </section>
+
+            <section class="lab" aria-labelledby="lab-notes">
+                <div class="lab-head">
+                    <div>
+                        <p class="label" style="margin: 0 0 10px">Notes · docs/18 §7 and §8</p>
+                        <h2 class="face" id="lab-notes" style="font-size: var(--text-section)">
+                            What each scale earns.<br /><span class="dim">What I kept from wieedze, what I dropped.</span>
+                        </h2>
+                    </div>
+                </div>
+                <div style="border-top: 1px solid var(--color-rule-strong); margin-bottom: 48px">
+                    <div class="verdict"><span class="face row-name">Block</span><span class="silver">Already shipped and defensible on pacing: a heading, then its rows, so each claim lands on its own. Kept as is, plus one rule: labels fade, they do not slide.</span><span class="v" style="color: var(--color-fg)">build</span></div>
+                    <div class="verdict"><span class="face row-name">Word</span><span class="silver">Earns its line in two places only. The hero h1, word by word, because it is the first thing read and the delay follows the rendered line. The manifesto, lit line by line by the scroll, because it paces a statement without hiding it. Word by word on every h2 would only look better: h2s arrive by authored line instead. Figures never animate.</span><span class="v" style="color: var(--color-fg)">build two</span></div>
+                    <div class="verdict"><span class="face row-name">Route</span><span class="silver">Earns its line by removing a flash, not by adding a move: today the loader appears without transition even when the chunk is cached. Opacity only, 120 out and 200 in, loader after 150 ms, nothing on back and forward.</span><span class="v" style="color: var(--color-fg)">build</span></div>
+                    <div class="verdict"><span class="face row-name">Saffron</span><span class="silver">Your call, and it breaks a written rule: the accent is meant for the primary action, the selected state and your own position. The dive into the core and the dots and discs between scenes spend it as decoration. If you keep them, the rule in rules/ui.md has to say so.</span><span class="v" style="color: var(--color-accent)">to decide</span></div>
+                    <div class="verdict"><span class="face row-name">GSAP</span><span class="silver">Still not justified. The dive and the Saffron hand-overs are scrubbed and reversible, which is GSAP's case, but they are pure functions of the deck's own progress, a few lines of canvas each. The hero sequence is three CSS delays.</span><span class="v steel">no dependency</span></div>
+                </div>
+                <div class="prose">
+                    <div>
+                        <h3 class="face">Kept from wieedze</h3>
+                        <ul>
+                            <li><b>Native sticky and live geometry.</b> useScrollytelling reads progress from the track's rect every frame. Same as the ARP deck, kept.</li>
+                            <li><b>Hold, then ease through.</b> Its smoothstep warp makes the hand-over start and end softly. Applied to the ARP fade, which was linear.</li>
+                            <li><b>Visible by default.</b> gsap.from everywhere: without JS nothing is hidden. Same rule as Reveal's canAnimate, extended to words.</li>
+                            <li><b>Beats, not a cascade.</b> Entrance orders beats: the title lands first, the eyebrow fades with it without sliding, the rest follows. Kept as the hero order.</li>
+                            <li><b>The answer as one move.</b> Hero.tsx raises lede, tagline and cue as one tween with no stagger. Kept for the lede and the CTA row.</li>
+                            <li><b>Back and forward are instant.</b> SmoothScroll skips its route effect on popstate. Kept for the route scale.</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3 class="face">Dropped</h3>
+                        <ul>
+                            <li><b>Lenis.</b> It lags the whole page behind the wheel, everywhere. ARP takes the wheel only inside the deck, one gesture per scene, and leaves native scroll everywhere else.</li>
+                            <li><b>The 0.8 to 1.4 s durations.</b> Right for a portfolio headline you watch, wrong for a page of figures you read. ARP stays at 240 to 380 ms with a 560 ms ceiling.</li>
+                            <li><b>"in public." sliding in from the side.</b> A sideways move reads as a carousel.</li>
+                            <li><b>The scale-back on leaving panels.</b> Scaling mono text by 3 to 4% softens its rendering, and every figure here is mono.</li>
+                            <li><b>Sheets sliding over sheets.</b> A curtain. docs/18 rejects it for routes and the cross-fade already owns the page.</li>
+                            <li><b>The bobbing scroll arrow.</b> Perpetual motion next to text. The rail says where you are instead.</li>
+                            <li><b>The long empty beat between panels.</b> wieedze leaves a real pause with nothing on screen. ARP keeps it to 4% of a band: enough that two headings never sit on top of each other, too short to read as a cut.</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <div id="motion-switch">
+            <span class="label">Motion</span>
+            <div class="seg" id="motion" role="group" aria-label="Preview motion setting">
+                <button type="button" data-v="system" aria-pressed="true">system</button>
+                <button type="button" data-v="off" aria-pressed="false">reduced</button>
+            </div>
+        </div>
+
+        <footer>
+            <span class="label">Agent Reputation Protocol — Intuition</span>
+            <span class="face wordmark">ARP</span>
+        </footer>
+
+        <script type="module">
+            const root = document.documentElement;
+            const css = (n) => getComputedStyle(root).getPropertyValue(n).trim();
+            const ms = (n) => parseFloat(css(n)) || 0;
+            let forceStill = false;
+            const reducedMQ = window.matchMedia("(prefers-reduced-motion: reduce)");
+            const reduced = () => forceStill || reducedMQ.matches;
+
+            /* ==================================================================
+               WORD SPLIT. One sentence for assistive tech, animated words hidden
+               from it. Delay from the RENDERED line, capped at the ceiling.
+               ================================================================== */
+            function split(h) {
+                if (h.dataset.split) return;
+                const text = h.textContent.trim().replace(/\s+/g, " ");
+                h.textContent = "";
+                const sr = document.createElement("span");
+                sr.className = "sr";
+                sr.textContent = text;
+                const vis = document.createElement("span");
+                vis.setAttribute("aria-hidden", "true");
+                text.split(" ").forEach((word, i, all) => {
+                    const w = document.createElement("span");
+                    w.className = "w";
+                    w.textContent = word;
+                    vis.appendChild(w);
+                    if (i < all.length - 1) vis.appendChild(document.createTextNode(" "));
+                });
+                h.append(sr, vis);
+                h.dataset.split = "1";
+                time(h);
+            }
+            function time(h) {
+                const words = [...h.querySelectorAll(".w")];
+                if (!words.length) return { lines: 0, total: 0 };
+                let line = -1, top = null, inLine = 0;
+                const slots = words.map((w) => {
+                    const t = w.offsetTop;
+                    if (top === null || Math.abs(t - top) > 4) { line++; top = t; inLine = 0; }
+                    else inLine++;
+                    return [line, inLine];
+                });
+                const LS = ms("--line-step"), WS = ms("--word-step"), CEIL = ms("--stagger-ceiling");
+                const raw = slots.map(([l, k]) => l * LS + k * WS);
+                const max = Math.max(...raw);
+                const k = max > CEIL ? CEIL / max : 1;
+                words.forEach((w, i) => w.style.setProperty("--d", Math.round(raw[i] * k) + "ms"));
+                const total = Math.round(max * k) + ms("--word-rise");
+                h.dataset.total = String(total);
+                h.dataset.lines = String(line + 1);
+                return { lines: line + 1, total };
+            }
+
+            const heroH1 = document.getElementById("h1");
+            split(heroH1);
+            // The hero's answer waits for the words: one move, after the title.
+            const heroTotal = () => Number(heroH1.dataset.total || 0);
+            function timeHeroAnswer() {
+                const after = Math.max(heroTotal() - 160, 0);
+                document.querySelectorAll(".hero .answer").forEach((e) => e.style.setProperty("--after", after + "ms"));
+                document.querySelectorAll(".hero .answer2").forEach((e) => e.style.setProperty("--after", after + 160 + "ms"));
+            }
+            timeHeroAnswer();
+
+            /* ==================================================================
+               THE DECK. Same mechanism as v1; fade through smoothstep.
+               ================================================================== */
+            const MIN_HEIGHT = 680, MIN_WIDTH = 900;
+            // px of drift at one scene's distance: text starts moving on the first
+            // frame of a hand-over, slowly, and keeps moving until it is gone
+            const SLIDE = 70;
+            // v2: a scene is fully opaque within HOLD of its centre and gone by GONE.
+            // Text never overlaps text; the gap between them is short enough to read as one
+            // short beat between them (GONE < 0.5 leaves 4% of a band empty).
+            const HOLD = 0.3, GONE = 0.48;
+            const deck = document.getElementById("deck");
+            const stage = deck.querySelector(".stage");
+            const scenes = [...deck.querySelectorAll(".scene")];
+            const hero = scenes[0];
+            const field = document.getElementById("field");
+            const veil = document.getElementById("veil");
+            const rail = document.getElementById("rail");
+            rail.innerHTML = scenes.map(() => `<span class="m"><i></i></span>`).join("");
+            const where = document.getElementById("where");
+            const marks = [...rail.children];
+            const smooth = (t) => t * t * (3 - 2 * t);
+            const clamp = (v, a = 0, b = 1) => Math.min(Math.max(v, a), b);
+
+            const canPin = () => !reduced() && window.innerHeight >= MIN_HEIGHT && window.innerWidth >= MIN_WIDTH;
+            let pinned = null, progress = 0;
+
+            function setOn(scene, on) {
+                if (scene.dataset.on === "true" && on) return;
+                if (scene.dataset.on === "true" && !on) {
+                    // leaving: headings already played stay played (no replay on return)
+                    scene.querySelectorAll(".words,.lines").forEach((e) => e.classList.add("played"));
+                    scene.classList.add("played");
+                }
+                scene.dataset.on = String(on);
+            }
+
+            // Stacked: reveal on first intersection, once.
+            const io = new IntersectionObserver((entries) => {
+                for (const e of entries) if (e.isIntersecting && pinned === false) { setOn(e.target, true); io.unobserve(e.target); }
+            }, { rootMargin: "0px 0px -12% 0px", threshold: 0.08 });
+
+            function mode() {
+                const on = canPin();
+                if (on === pinned) return;
+                pinned = on;
+                deck.dataset.pinned = String(on);
+                root.classList.toggle("still", reduced());
+                if (on) { stage.prepend(field); }
+                else {
+                    hero.prepend(field);
+                    for (const s of scenes) {
+                        s.dataset.active = "true"; s.style.opacity = ""; s.style.transform = ""; s.inert = false; s.removeAttribute("aria-hidden");
+                        if (reduced()) setOn(s, true); else io.observe(s);
+                    }
+                    setLit(1);
+                }
+                resizeField();
+            }
+
+            const manifesto = document.getElementById("manifesto");
+            const lits = [...manifesto.querySelectorAll(".lit")];
+            function setLit(all, p) {
+                lits.forEach((el, i) => {
+                    let v = all;
+                    if (p !== undefined) {
+                        // Lit across the first part of scene 4's hold, one line after another.
+                        const t = clamp((p - 3.58) / 0.34) * lits.length;
+                        v = smooth(clamp(t - i));
+                    }
+                    el.style.setProperty("--lit", v.toFixed(3));
+                });
+            }
+
+            function paint() {
+                mode();
+                const box = deck.getBoundingClientRect();
+                const inView = pinned && box.top <= 1 && box.bottom >= window.innerHeight - 1;
+                rail.style.visibility = where.style.visibility = veil.style.visibility = inView ? "visible" : "hidden";
+                field.style.visibility = !pinned || inView ? "visible" : "hidden";
+                if (!pinned) return;
+                const top = box.top;
+                progress = clamp(-top / window.innerHeight, 0, scenes.length - 1);
+                const active = Math.round(progress);
+                scenes.forEach((scene, i) => {
+                    // Signed distance. Leaving (d > 0): the text starts drifting up on
+                    // the first frame (ease-out) and fades late (ease-in), so it is
+                    // seen moving before it goes. Arriving (d < 0): it rises into
+                    // place and slows down as it lands. Gone by GONE either way, so
+                    // two scenes of text are never on screen together.
+                    const d = progress - i;
+                    const t = clamp(Math.abs(d) / GONE);
+                    let y, op;
+                    if (d >= 0) { y = -SLIDE * (1 - (1 - t) * (1 - t)); op = 1 - t * t; }
+                    else { y = SLIDE * t * t; op = 1 - smooth(t); }
+                    scene.dataset.active = String(i === active);
+                    scene.style.opacity = String(op);
+                    scene.style.transform = `translate3d(0, ${y.toFixed(1)}px, 0)`;
+                    scene.inert = i !== active;
+                    scene.setAttribute("aria-hidden", i === active ? "false" : "true");
+                    // A scene's elements start arriving as the cover OPENS onto it,
+                    // not at the midpoint swap, where the Saffron still hides them.
+                    const opens = i === 0 ? -1 : i === 1 ? -0.33 : -0.2;
+                    setOn(scene, i === active && d >= opens);
+                });
+                marks.forEach((m, i) => (m.dataset.on = String(i === active)));
+                where.textContent = `${String(active + 1).padStart(2, "0")} / ${String(scenes.length).padStart(2, "0")} · ${scenes[active].dataset.name}`;
+                setLit(0, progress);
+            }
+
+            /* ==================================================================
+               ONE GESTURE, ONE SCENE. Inside the pinned deck a wheel gesture, a
+               swipe or a key press plays the full hand-over to the next scene,
+               eased, over STEP ms. Input during the move is ignored, and so is
+               trackpad inertia for 300ms after it. The first event of a scroll triggers.
+               ================================================================== */
+            const STEP = { dive: 2400, seed: 2900, other: 1700 }; // ms; the dive into the core is longer
+            let endedAt = 0;
+            // sine in-out: it leaves at once, gently (a cubic in-out sat still for the
+            // first fifth of the move, which read as a delay before the animation)
+            const easeInOut = (t) => 0.5 - 0.5 * Math.cos(Math.PI * t);
+            let moving = false;
+            const bandTop = (i) => window.scrollY + deck.getBoundingClientRect().top + i * window.innerHeight;
+            function deckOwns() {
+                if (!pinned) return false;
+                const b = deck.getBoundingClientRect();
+                // owned as soon as the deck is under the nav, not only once its top
+                // has reached 0: the first 88px used to scroll natively, so the
+                // first notches of the wheel were spent before anything played
+                return b.top <= 89 && b.bottom >= window.innerHeight - 1;
+            }
+            function glideTo(i, ms) {
+                const from = window.scrollY, to = bandTop(i);
+                if (Math.abs(to - from) < 2) return;
+                moving = true;
+                const t0 = performance.now();
+                const tick = (now) => {
+                    const t = clamp((now - t0) / ms);
+                    window.scrollTo({ top: from + (to - from) * easeInOut(t), behavior: "instant" });
+                    if (t < 1) requestAnimationFrame(tick);
+                    else { moving = false; endedAt = performance.now(); }
+                };
+                requestAnimationFrame(tick);
+            }
+            function step(dir) {
+                const here = progress;
+                const target = dir > 0 ? Math.floor(here + 0.02) + 1 : Math.ceil(here - 0.02) - 1;
+                // the first and last scenes hand back to native scroll
+                if (target < 0 || target > scenes.length - 1) return false;
+                const dive = Math.min(target, Math.round(here)) === 0;
+                const seedStep = Math.min(target, Math.round(here)) >= 1;
+                glideTo(target, dive ? STEP.dive : seedStep ? STEP.seed : STEP.other);
+                return true;
+            }
+            window.addEventListener("wheel", (e) => {
+                if (!deckOwns() || e.ctrlKey || e.deltaY === 0) return;
+                const now = performance.now();
+                // The FIRST event of any scroll plays the whole hand-over. Only the
+                // tail of the gesture that started a move is swallowed: events
+                // during the move, and for 300ms after it (trackpad inertia).
+                const settling = moving || now - endedAt < 300;
+                if (settling) { e.preventDefault(); return; }
+                if (step(Math.sign(e.deltaY))) e.preventDefault();
+            }, { passive: false });
+            let touchY = null;
+            window.addEventListener("touchstart", (e) => { touchY = e.touches[0].clientY; }, { passive: true });
+            window.addEventListener("touchmove", (e) => {
+                if (!deckOwns() || touchY === null) return;
+                const dy = touchY - e.touches[0].clientY;
+                const leaving = (progress >= scenes.length - 1.001 && dy > 0) || (progress <= 0.001 && dy < 0);
+                if (moving || !leaving) e.preventDefault();
+            }, { passive: false });
+            window.addEventListener("touchend", (e) => {
+                if (touchY === null || !deckOwns() || moving) { touchY = null; return; }
+                const dy = touchY - e.changedTouches[0].clientY;
+                touchY = null;
+                if (Math.abs(dy) > 30) step(Math.sign(dy));
+            });
+            window.addEventListener("keydown", (e) => {
+                if (!deckOwns() || e.target.closest?.("input,textarea,select,[contenteditable]")) return;
+                const down = ["ArrowDown", "PageDown"].includes(e.key) || (e.key === " " && !e.shiftKey);
+                const up = ["ArrowUp", "PageUp"].includes(e.key) || (e.key === " " && e.shiftKey);
+                if (!down && !up) return;
+                if (moving) { e.preventDefault(); return; }
+                if (step(down ? 1 : -1)) e.preventDefault();
+            });
+
+            function go(hash) {
+                if (!pinned || !hash || hash === "#") return false;
+                const target = deck.querySelector(`[id="${CSS.escape(hash.slice(1))}"]`);
+                const scene = target?.closest("[data-scene]");
+                if (!scene) return false;
+                glideTo(Number(scene.dataset.scene), STEP.other);
+                return true;
+            }
+            document.addEventListener("click", (event) => {
+                const a = event.target.closest?.("a[href^='#']");
+                if (!a || event.button !== 0 || event.metaKey || event.ctrlKey) return;
+                if (a.getAttribute("href") === "#") { event.preventDefault(); return; }
+                if (go(a.getAttribute("href"))) { event.preventDefault(); history.replaceState(null, "", a.getAttribute("href")); }
+            });
+            window.addEventListener("hashchange", () => go(location.hash));
+
+            let frame = 0;
+            const onScroll = () => { cancelAnimationFrame(frame); frame = requestAnimationFrame(paint); };
+            window.addEventListener("scroll", onScroll, { passive: true });
+            window.addEventListener("resize", () => {
+                time(heroH1); timeHeroAnswer(); labTime();
+                if (canPin() !== pinned) pinned = null;
+                resizeField();
+                onScroll();
+            });
+
+            // Failsafe: motion never gates content. If a heading has not shown
+            // within 1.5 s of being armed, it is shown.
+            setTimeout(() => { if (hero.dataset.on !== "true") setOn(hero, true); }, 1500);
+
+            /* ==================================================================
+               THE FIELD. The approved Source Field (SourceField.tsx), in Canvas 2D:
+               a Saffron core, 22 rings of 6k dots, gaps shrinking from the centre
+               to the rim by 8, first ring at 0.52 of a 3.6 rim, dot size falling
+               off with distance, each ring turning at its own speed, alternating
+               direction. Tilted like the 3D one (y squashed by cos 0.35). It lives
+               in the hero and leaves with it. A clock, not a cursor; still under
+               reduced motion. No wave here: in the app the wave answers a real
+               declaration, and this page has none to show.
+               ================================================================== */
+            const ctx = field.getContext("2d");
+            const vctx = veil.getContext("2d");
+            const RINGS_N = 22, RATIO = 8, FIRST = 0.52, RIM = 3.6;
+            const rings = [];
+            for (let k = 1; k <= RINGS_N; k++) {
+                const u = (k - 1) / (RINGS_N - 1);
+                const f = (RATIO * u - ((RATIO - 1) * u * u) / 2) / ((RATIO + 1) / 2);
+                const fall = Math.pow(1 - u, 1.1);
+                rings.push({ R: (FIRST + (RIM - FIRST) * f) / RIM, n: 6 * k, size: 0.45 + 2.4 * fall, u,
+                             speed: ((k % 2 ? 1 : -1) * 2 * Math.PI) / (36 + k * 9) });
+            }
+            const TILT = Math.cos(0.35);
+            const CORE = (0.1 / RIM) * 1.6; // core radius as a fraction of the rim
+            let fw = 0, fh = 0;
+            function fit(canvas, c) {
+                const dpr = Math.min(window.devicePixelRatio || 1, 2);
+                const box = canvas.getBoundingClientRect();
+                canvas.width = Math.round(box.width * dpr); canvas.height = Math.round(box.height * dpr);
+                c.setTransform(dpr, 0, 0, dpr, 0, 0);
+                return box;
+            }
+            function resizeField() {
+                const box = fit(field, ctx);
+                fw = box.width; fh = box.height;
+                fit(veil, vctx);
+                draw(performance.now(), true);
+            }
+            const paper = [230, 232, 230], grey = [90, 95, 100];
+            const lerp = (a, b, t) => a + (b - a) * t;
+
+            /* Where the field sits, and how far we have zoomed into it.
+               Stacked: in the hero, no zoom. Pinned: the whole viewport, and the
+               first hand-over is a dive into the Saffron core (zoom 1 -> 70). */
+            const ZMAX = 70;
+            function geometry() {
+                const wide = fw > 900;
+                if (!pinned) {
+                    const rim = Math.min(wide ? fw * 0.26 : fw * 0.44, fh * 0.5);
+                    return { cx: wide ? fw * 0.72 : fw / 2, cy: fh / 2, rim, z: 1, a: 0 };
+                }
+                const top = 88, room = fh - top;
+                const rim = Math.min(room * 0.52, fw * 0.25); // big, but clear of the copy on the left
+                const a = clamp(progress / 0.65); // dive, 0 -> 1, from the first frame; the zoom is exponential, so it starts slow on its own
+                const z = Math.exp(a * Math.log(ZMAX));
+                return {
+                    cx: lerp(fw * 0.76, fw * 0.5, a),
+                    cy: lerp(top + room / 2, fh / 2, a),
+                    rim, z, a,
+                };
+            }
+
+            function draw(time, once) {
+                ctx.clearRect(0, 0, fw, fh);
+                const { cx, cy, rim, z, a } = geometry();
+                const px = rim / 300; // dot sizes tuned at a 300px rim
+                const sec = reduced() ? 0 : time / 1000;
+                // dots stream past the edges and thin out as we dive
+                const dotsAlpha = 1 - smooth(clamp((z - 2.5) / 9));
+                if (dotsAlpha > 0.002) {
+                    for (const ring of rings) {
+                        const g = clamp((ring.u - 0.55) / 0.45);
+                        const m = g * g * (3 - 2 * g);
+                        const c = paper.map((v, i) => Math.round(v + (grey[i] - v) * m));
+                        ctx.fillStyle = `rgba(${c[0]},${c[1]},${c[2]},${((1 - 0.6 * ring.u) * dotsAlpha).toFixed(3)})`;
+                        const turn = sec * ring.speed;
+                        const R = ring.R * rim * z;
+                        if (R > Math.hypot(fw, fh) * 1.2) continue;
+                        const r = Math.max(ring.size * px * 1.6 * Math.pow(z, 0.75), 0.7);
+                        for (let i = 0; i < ring.n; i++) {
+                            const an = (i / ring.n) * Math.PI * 2 - Math.PI / 2 + turn;
+                            ctx.beginPath();
+                            ctx.arc(cx + Math.cos(an) * R, cy + Math.sin(an) * R * TILT, r, 0, Math.PI * 2);
+                            ctx.fill();
+                        }
+                    }
+                }
+                const coreR = Math.max(rim * CORE, 4) * z;
+                if (!pinned || a < 0.02) {
+                    ctx.fillStyle = css("--color-accent");
+                    ctx.beginPath();
+                    ctx.arc(cx, cy, coreR, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                if (pinned) drawVeil(cx, cy, coreR, a);
+                if (!once && !reduced()) requestAnimationFrame((tm) => draw(tm));
+            }
+
+            /* THE VEIL: Saffron above the scenes, only during a hand-over.
+               0 -> 1  the core grows past the screen, then a hole opens from the
+                       centre onto the next scene: you go through the source.
+               1 -> 2  Saffron dots swell from the bottom up into a cover, then shrink away.
+               2 -> 3  a disc grows from the rail, then opens from the centre.
+               3 -> 4  the same dots, in a diagonal wave from bottom-left to top-right.
+               4 -> 5  a disc grows from the centre, then opens.
+               Scroll-scrubbed and reversible: scroll back and it plays backwards.
+               Everything is covered only around the exact midpoint, which is
+               where the deck swaps the active scene, so the swap is never seen. */
+            const KINDS = [null, null, null, null, null]; // every hand-over after the dive is a seed()
+            /* THE SEEDS. Every scene after the hero already holds a Saffron
+               sphere, half out of the frame, each in a different place, in a spot
+               the scene leaves empty. Scrolling grows it, slowly, a ring of dots
+               leading its edge, until it covers the screen; then the cover opens
+               onto the next scene, each time a different way. You fly over
+               something that was there all along, not a wipe from nowhere.
+                 scene 2 -> 3  bottom-right corner, opens from the bottom centre
+                 scene 3 -> 4  left edge,           opens from the left edge
+                 scene 4 -> 5  top-right corner,    opens from the centre
+                 scene 5 -> 6  bottom centre,       opens from the bottom-left    */
+            const SEEDS = {
+                1: { ox: 0.9, oy: 1.06, r0: 0.17, hx: 0.5, hy: 1.0 },
+                2: { ox: -0.06, oy: 0.56, r0: 0.13, hx: 0.0, hy: 0.5 },
+                3: { ox: 1.04, oy: 0.16, r0: 0.14, hx: 0.5, hy: 0.5 },
+                4: { ox: 0.5, oy: 1.1, r0: 0.16, hx: 0.0, hy: 1.0 },
+            };
+            function seed() {
+                let drew = false;
+                for (const key of Object.keys(SEEDS)) {
+                    const n = Number(key), S = SEEDS[n];
+                    const p = progress;
+                    if (p < n - 0.14 || p >= n + 0.9) continue;
+                    drew = true;
+                    const ox = fw * S.ox, oy = fh * S.oy, r0 = fh * S.r0;
+                    // the farthest VISIBLE corner (the nav covers the top 88px): the disc
+                    // reaches it exactly as cin reaches 1, not earlier, so the last dark
+                    // sliver closes at the slowest point of the move instead of snapping
+                    const far = Math.max(...[[0, 88], [fw, 88], [0, fh], [fw, fh]].map(([x, y]) => Math.hypot(x - ox, y - oy))) + 2;
+                    const appear = smooth(clamp((p - (n - 0.14)) / 0.14));
+                    const w = clamp((p - (n + 0.1)) / 0.8);
+                    const cin = 1 - Math.pow(1 - smooth(clamp(w / 0.62)), 1.8); // decelerates hard at the end
+                    const cout = smooth(clamp((w - 0.62) / 0.38));
+                    vctx.fillStyle = css("--color-accent");
+                    if (cout <= 0) {
+                        // eases in AND out: it slows down as it closes, so the last of the
+                        // dots are absorbed at walking pace instead of flung off-screen
+                        const R = r0 * appear + (far - r0) * cin;
+                        vctx.beginPath();
+                        vctx.arc(ox, oy, R, 0, Math.PI * 2);
+                        vctx.fill();
+                        if (false) { // leading dots removed at the user's request
+                            // the leading dots are absorbed by the edge as it closes:
+                            // their gap and their size both go to zero together, so
+                            // nothing pops out at the moment the cover completes
+                            const fade = smooth(clamp((1 - cin) / 0.45));
+                            for (const [gap, size] of [[26, 7], [52, 4.5]]) {
+                                const rr = R + gap * fade;
+                                const k = Math.max(12, Math.round((2 * Math.PI * rr) / 34));
+                                const s2 = size * fade;
+                                if (s2 < 0.25) continue;
+                                for (let i = 0; i < k; i++) {
+                                    const an = (i / k) * Math.PI * 2;
+                                    const x = ox + Math.cos(an) * rr, y = oy + Math.sin(an) * rr;
+                                    if (x < -10 || y < -10 || x > fw + 10 || y > fh + 10) continue;
+                                    vctx.beginPath();
+                                    vctx.arc(x, y, s2, 0, Math.PI * 2);
+                                    vctx.fill();
+                                }
+                            }
+                        }
+                        continue;
+                    }
+                    // Uncover: one smooth opening, a circle growing from a point that
+                    // differs per hand-over. (A grid of shrinking dots was tried here
+                    // and read as coarse.)
+                    const hx = fw * S.hx, hy = fh * S.hy;
+                    const reach = Math.max(...[[0, 0], [fw, 0], [0, fh], [fw, fh]].map(([x, y]) => Math.hypot(x - hx, y - hy))) * 1.02;
+                    const hole = Math.pow(cout, 1.15) * reach;
+                    vctx.beginPath();
+                    vctx.rect(0, 0, fw, fh);
+                    vctx.arc(hx, hy, Math.max(hole, 0.1), 0, Math.PI * 2, true);
+                    vctx.fill("evenodd");
+                }
+                return drew;
+            }
+            function drawVeil(cx, cy, coreR, a) {
+                vctx.clearRect(0, 0, fw, fh);
+                const acc = css("--color-accent");
+                const diag = Math.hypot(fw, fh);
+                vctx.fillStyle = acc;
+                if (progress < 1) {
+                    if (a < 0.02) return;
+                    const hole = smooth(clamp((progress - 0.66) / 0.3)) * diag * 0.62;
+                    vctx.beginPath();
+                    vctx.arc(cx, cy, coreR, 0, Math.PI * 2);
+                    if (hole > 0) vctx.arc(fw / 2, fh / 2, hole, 0, Math.PI * 2, true);
+                    vctx.fill("evenodd");
+                    if (!seed()) return;
+                    return;
+                }
+                if (seed()) return;
+                const n = Math.floor(progress);
+                const kind = KINDS[n];
+                if (!kind) return;
+                const w = clamp((progress - (n + 0.27)) / 0.46);
+                if (w <= 0 || w >= 1) return;
+                const cin = smooth(clamp(w * 2)), cout = smooth(clamp(w * 2 - 1));
+                if (kind === "up" || kind === "left") {
+                    // Dots, not stripes: the page's own grammar. A grid of Saffron
+                    // dots swells until they overlap into a full cover, in a wave
+                    // (bottom to top, or bottom-left to top-right), then shrinks
+                    // away in the same order. Round from the first frame to the last.
+                    const cell = Math.max(64, Math.min(fw, fh) / 9);
+                    const cols = Math.ceil(fw / cell) + 1, rows = Math.ceil(fh / cell) + 1;
+                    const RMAX = cell * 0.76; // > cell / sqrt(2): neighbours close the gaps
+                    const SPREAD = 0.5;
+                    for (let r = 0; r < rows; r++) {
+                        for (let c = 0; c < cols; c++) {
+                            const x = c * cell + (r % 2 ? cell / 2 : 0) - cell / 4;
+                            const y = fh - r * cell + cell / 4;
+                            const order = kind === "up" ? r / (rows - 1) : (r / (rows - 1) + c / (cols - 1)) / 2;
+                            const lag = order * SPREAD;
+                            const gi = smooth(clamp((cin - lag) / (1 - SPREAD)));
+                            const go = smooth(clamp((cout - lag) / (1 - SPREAD)));
+                            const rad = RMAX * (gi - go);
+                            if (rad <= 0.3) continue;
+                            vctx.beginPath();
+                            vctx.arc(x, y, rad, 0, Math.PI * 2);
+                            vctx.fill();
+                        }
+                    }
+                    return;
+                }
+                const ox = kind === "disc-rail" ? fw - 27 : fw / 2;
+                const oy = fh / 2;
+                const R = cin * Math.hypot(Math.max(ox, fw - ox), fh) * 1.02;
+                const hole = cout * diag * 0.62;
+                vctx.beginPath();
+                vctx.arc(ox, oy, R, 0, Math.PI * 2);
+                if (hole > 0) vctx.arc(fw / 2, fh / 2, hole, 0, Math.PI * 2, true);
+                vctx.fill("evenodd");
+            }
+
+            /* ==================================================================
+               LAB · WORD. Same split and timing, in a scaled frame.
+               ================================================================== */
+            const labA = document.getElementById("lab-h-a");
+            split(labA);
+            let labW = 1440;
+            function labTime() {
+                for (const [vpId, cwId] of [["vp-a", "cw-a"], ["vp-b", "cw-b"]]) {
+                    const vp = document.getElementById(vpId), cw = document.getElementById(cwId);
+                    const k = vp.clientWidth / labW;
+                    cw.style.width = labW + "px";
+                    cw.style.transform = `scale(${k})`;
+                    vp.style.height = cw.offsetHeight * k + "px";
+                }
+                const r = time(labA);
+                document.getElementById("lab-px").textContent = labW + " px";
+                document.getElementById("lab-facts").innerHTML = `<b>${r.lines}</b> rendered lines · stagger capped at <b>${ms("--stagger-ceiling")} ms</b> · last word settled at <b>${r.total} ms</b>`;
+            }
+            function labPlay() {
+                const cw = document.getElementById("sc-a");
+                labA.classList.remove("played");
+                cw.dataset.on = "false";
+                void cw.offsetWidth;
+                requestAnimationFrame(() => requestAnimationFrame(() => (cw.dataset.on = "true")));
+            }
+            seg("lab-w", (v) => { labW = Number(v); labTime(); labPlay(); });
+            document.getElementById("lab-replay").onclick = labPlay;
+            const labIO = new IntersectionObserver((e) => { if (e[0].isIntersecting) { labPlay(); labIO.disconnect(); } }, { threshold: 0.4 });
+            labIO.observe(document.getElementById("vp-a"));
+
+            /* ==================================================================
+               LAB · ROUTE. Out 120, in 200, opacity only. Loader only past 150.
+               Back and forward: instant. Lists: first 8 rows stagger, cap.
+               ================================================================== */
+            const LIST_CAP = 8; // documented with --list-step
+            let chunkMs = 0, nRows = 200;
+            const ROUTES = { landing: "Landing", agents: "Agents", tools: "Tools" };
+            function ringSvg(px) {
+                let s = `<svg class="ldr" width="${px}" height="${px}" viewBox="0 0 108 108" aria-hidden="true"><circle cx="54" cy="54" r="7" fill="#43474b" style="animation:none"/>`;
+                [[20, 6, 5], [36, 12, 3.6], [50, 18, 2.4]].forEach(([R, n, r], ri) => { for (let k = 0; k < n; k++) { const a = (2 * Math.PI * k) / n - Math.PI / 2; s += `<circle cx="${(54 + R * Math.cos(a)).toFixed(1)}" cy="${(54 + R * Math.sin(a)).toFixed(1)}" r="${r}" fill="#2e3134" style="animation-delay:${ri * 0.18}s"/>`; } });
+                return s + "</svg>";
+            }
+            function view(route, still) {
+                const step = ms("--list-step");
+                if (route === "agents") {
+                    if (nRows === 0) return `<p class="label" style="margin:0 0 8px">Agents · 0</p><p class="silver" style="margin:0;font-size:14px">No agent on this chain yet. Rows appear here once one is registered.</p>`;
+                    let rows = "";
+                    for (let i = 0; i < nRows; i++) {
+                        const d = still ? 0 : Math.min(i, LIST_CAP - 1) * step;
+                        rows += `<div class="lrow in" style="--rd:${d}ms"><span>${String(i + 1).padStart(3, "0")}</span><span>Agent 8453:${6649 + i * 7}</span><span>—</span></div>`;
+                    }
+                    return `<p class="label" style="margin:0 0 8px">Agents · ${nRows}</p>${rows}`;
+                }
+                if (route === "tools") return `<p class="label" style="margin:0 0 8px">Tools</p><p class="face" style="margin:0;font-size:28px">Tools agents declared using.</p><p class="silver" style="font-size:14px">No declaration on this chain yet.</p>`;
+                return `<p class="label" style="margin:0 0 8px">Landing</p><p class="face" style="margin:0;font-size:28px">The reputation pulse for autonomous agents and tools.</p>`;
+            }
+            function mini(id, still) {
+                const el = document.getElementById(id);
+                el.innerHTML = `<div class="mini-nav">${Object.entries(ROUTES).map(([k, v]) => `<a data-r="${k}">${v}</a>`).join("")}<a class="back" data-back="1">← Back</a></div><div class="mini-body"><div class="mini-out"></div></div><div class="mini-foot">footer · fixed furniture, never moves</div>`;
+                const body = el.querySelector(".mini-body");
+                const hist = ["landing"];
+                let token = 0;
+                function render(route, how) {
+                    el.querySelectorAll("[data-r]").forEach((a) => a.setAttribute("aria-current", a.dataset.r === route ? "page" : "false"));
+                    const my = ++token;
+                    const out = body.querySelector(".mini-out");
+                    const arrive = () => {
+                        if (my !== token) return;
+                        body.innerHTML = `<div class="mini-out ${how === "pop" || still ? "" : "mini-in"}">${view(route, still || how === "pop")}</div>`;
+                        body.scrollTop = 0;
+                    };
+                    if (how === "pop" || how === "first") { arrive(); return; }
+                    const outMs = still ? 0 : ms("--route-out");
+                    out.classList.add("leaving");
+                    setTimeout(() => {
+                        if (my !== token) return;
+                        // the loader only when the chunk is slower than the threshold
+                        let loaderT = null;
+                        if (chunkMs > 0) loaderT = setTimeout(() => { if (my === token) body.innerHTML = `<div class="mini-load">${ringSvg(28)}</div>`; }, ms("--loader-delay"));
+                        setTimeout(() => { clearTimeout(loaderT); arrive(); }, chunkMs);
+                        if (chunkMs === 0) { /* cached: nothing in between */ }
+                    }, outMs);
+                }
+                el.addEventListener("click", (e) => {
+                    const a = e.target.closest("a"); if (!a) return;
+                    if (a.dataset.back) { if (hist.length > 1) { hist.pop(); render(hist[hist.length - 1], "pop"); } return; }
+                    if (hist[hist.length - 1] === a.dataset.r) return;
+                    hist.push(a.dataset.r); render(a.dataset.r, "push");
+                });
+                render("landing", "first");
+                return (r) => { hist.push(r); render(r, "push"); };
+            }
+            const navA = mini("mini-a", false), navB = mini("mini-b", true);
+            // Mirror clicks so both panes show the same route.
+            for (const [src, dst] of [["mini-a", "mini-b"], ["mini-b", "mini-a"]]) {
+                document.getElementById(src).addEventListener("click", (e) => {
+                    if (e.isTrusted === false) return;
+                    const a = e.target.closest("a"); if (!a) return;
+                    const twin = document.getElementById(dst).querySelector(a.dataset.back ? "[data-back]" : `[data-r="${a.dataset.r}"]`);
+                    twin?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+                });
+            }
+            seg("r-chunk", (v) => (chunkMs = Number(v)));
+            seg("r-n", (v) => (nRows = Number(v)));
+
+            /* ---- helpers ---------------------------------------------------- */
+            function seg(id, set) {
+                const g = document.getElementById(id);
+                g.addEventListener("click", (e) => {
+                    const b = e.target.closest("button"); if (!b) return;
+                    [...g.children].forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+                    set(b.dataset.v);
+                });
+            }
+            seg("motion", (v) => {
+                forceStill = v === "off";
+                root.classList.toggle("still", reduced());
+                pinned = null; onScroll(); requestAnimationFrame((t) => draw(t));
+            });
+            reducedMQ.addEventListener("change", () => { pinned = null; onScroll(); });
+
+            mode();
+            paint();
+            labTime();
+            requestAnimationFrame(() => { if (pinned) setOn(hero, true); requestAnimationFrame((t) => draw(t)); });
+            if (location.hash) requestAnimationFrame(() => go(location.hash));
+
+            // Exposed for the fit check: every scene between the nav and the edge.
+            window.__fit = () => scenes.map((s) => { const prev = s.dataset.active; const r = s.getBoundingClientRect(); return { scene: s.dataset.name, top: Math.round(r.top), bottom: Math.round(r.bottom), vh: window.innerHeight }; });
+        </script>
+    </body>
+</html>

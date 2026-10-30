@@ -1,6 +1,6 @@
 # 09 — `@arp-protocol/erc8004`: the source-neutral ERC-8004 read connector
 
-**Task:** `tasks/07-erc8004-connector.md`
+**Task:** `docs/tasks/07-erc8004-connector.md`
 **Completed:** 2026-09-16
 **Commit:** `cba9aa5` (on top of `032d851`, `7d899ef`, `238b30f`, `20b0a9e`, `3dd8d37`, `430ed00`)
 **Verifier verdict:** PASS

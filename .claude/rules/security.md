@@ -37,7 +37,14 @@ Walk through each item for every contract change. Document the result (clean pas
 ### Signature replay
 
 - If signatures are used (EIP-712, EIP-1271), they include a nonce + chainId + verifying contract.
-- The MVP does **not** use signatures. If a future task introduces them, this section must be revisited.
+- Signatures are in use, so this section applies. Five sites: `contracts/src/erc8004/IdentityRegistry.sol`
+  (ARP's testnet deployment of the reference registry, which verifies signatures); MetaMask
+  Delegation Framework delegations (EIP-712, signed in the app); the operator's EIP-712
+  statement on import (`apps/web/src/services/agent-import.ts`); the MCP server's content receipt
+  (`packages/protocol/src/receipt.ts`); and the node's hire receipt
+  (`packages/protocol/src/hire-receipt.ts`, ADR `0083`). The last two carry no verifying contract,
+  with cause — no contract checks them. A new signature site gets checked against the bullet above
+  before it ships. The list said three until 2026-10-30, and the two receipts were missing from it.
 
 ### Oracles / external data
 
@@ -79,8 +86,81 @@ The `contract-reviewer` agent (in `.claude/agents/`) orchestrates these for you 
 ## Deployment posture
 
 - Default deployment target: **Intuition Testnet** (changed from Base Sepolia per `docs/00_HACKATHON_PIVOT.md`; ADR `0002`).
-- **Mainnet deployment** (Intuition mainnet or any other) requires explicit user confirmation per session. No ARP contract is deployed to mainnet today, and none is planned — the panel's staking targets Intuition's own MultiVault, not an ARP contract.
+- **Mainnet deployment** (Intuition mainnet or any other) requires explicit user confirmation per
+  session. That is the rule, and it stands on its own.
+
+  **No ARP _registry_ is on mainnet and none is planned** — `moduleRegistry` and `identityRegistry`
+  are both `null` in `data/deployments/1155.json`, deliberately, by ADR `0025`. The panel's staking
+  targets Intuition's own MultiVault, not an ARP contract.
+
+  **Two ARP caveat enforcers _are_ on mainnet**, deployed 2026-09-16 under that same ADR:
+  `TrustStakeCapEnforcer` `0x99921C234d4Ca518DC58ba63ff9bfD2Cc9435f34` (active — the guard rail
+  that bounds an agent's spend) and `DomainScopeEnforcer`
+  `0x4E20279EeE9f77673A4f1605E58607cD9A597d70` (inert; with no `ModuleRegistry` on 1155 it has
+  nothing to gate). Neither has ever fired — 0 `StakeCapChecked` logs over 10,014,303 blocks,
+  measured 2026-10-27 by `scripts/measure/enforcer-events.ts`.
+
+  This bullet read **"No ARP contract is deployed to mainnet today, and none is planned"** until
+  2026-10-27. That was false from 2026-09-16, in the file `CLAUDE.md` names as canonical, and the
+  reader it misled most is an agent deciding what it may deploy. ADR `0065`.
+  `data/deployments/<chainId>.json` is the record; do not restate its contents here a second time.
+
 - **Mainnet transactions are not the same question as mainnet deployment.** ADR `0017` authorises one narrow class: deposits into existing `has trust provider` triple vaults and their counter-triples on chain 1155, signed by the operator in their own wallet. It does not authorise contract deployment, atom or triple creation at scale (see ADR `0021` for that cost), or any stake initiated by an agent. Read the ADR before widening it.
-- **No agent, script or automated process may sign a mainnet transaction.** Verification of staking code is unit tests over a mocked wallet client, `previewDeposit` reads, and `eth_call` simulation. A passing test suite is not a reason to spend real TRUST.
-- Every deployment writes its addresses to `deployments/<chainId>.json`. Idempotent — re-running on the same chain does not redeploy unless `--force` is passed.
+- **Mainnet signing, in one sentence, and the only place it is stated.** `CLAUDE.md` and
+  `.claude/STATE.md` cite this bullet; if they ever restate it, they are wrong and this wins.
+
+  **No ARP agent, script or automated process may sign a mainnet transaction with ARP's own funds.**
+
+  The qualifier is deliberate and was added with ADR `0035`. Four cases, which earlier wordings
+  collapsed:
+
+  | Whose funds                                             | Who signs                            | Mainnet?                                                 |
+  | ------------------------------------------------------- | ------------------------------------ | -------------------------------------------------------- |
+  | **ARP's own**                                           | a script or agent, automatically     | **never**                                                |
+  | ARP's own                                               | a human in the panel                 | yes, ADR `0017`, seven safeguards                        |
+  | **An agent operator's**, under a delegation they signed | the agent                            | yes **after the path is proven on testnet** — ADR `0036` |
+  | An agent operator's                                     | an agent session with their raw key  | **testnet 13579 only** — ADR `0037`                      |
+  | ARP's own                                               | the sponsor relay, within its limits | **testnet 13579 only** — ADR `0092`                      |
+  | ARP's own                                               | the sponsoring service, for a deposit that carries a verified proof, within the same limits | **testnet 13579 only** — ADR `0094`                      |
+
+  Row 3 is the product (`docs/12` points 3 and 5), so a flat "no agent may ever sign a mainnet
+  transaction" forbids the thing being built. Row 1 is the development hazard the rule exists for.
+  Verification of staking code is unit tests over a mocked wallet client, `previewDeposit` reads, and
+  `eth_call` simulation. A passing test suite is not a reason to spend real TRUST.
+
+  **Read the scope of that sentence carefully — it was misread once, badly.** It governs _this
+  repo's_ development: do not let a script spend the operator's TRUST while you are testing it. It
+  does **not** govern the protocol's design, and it cannot: `docs/12` point 3 is _"the agent runs, it
+  deposits TRUST on the modules it actually used"_, and point 5 is _"the agent operates under a signed
+  delegation whose caveats are the guard rail"_. **An external agent depositing its own operator's
+  TRUST, bounded by caveats that operator signed, is the product**, not a rule violation. A rule file
+  cannot forbid the canonical mechanism.
+
+  Two different signers, and conflating them is the error:
+
+  | Who signs                        | What                                      | Rule                                                                                                              |
+  | -------------------------------- | ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+  | A human in ARP's panel           | a deposit on a `has trust provider` claim | ADR `0017`. The UI never auto-stakes; a human clicks.                                                             |
+  | An **external agent's operator** | one delegation, once                      | `docs/12` point 5. ARP does not sign the delegation. On testnet its relay may pay to **publish** it (ADR `0092`). |
+
+  **Testnet 13579 is permitted, and that is now written rather than inferred** (ADR `0037`). An agent
+  session may sign there with the operator's key when the user asks for that specific action, on
+  three conditions: the key is never read into the agent's context, its address is verified against
+  the expected account first, and the effect is recorded where a later reader looks. It covers the
+  action asked for and not a standing licence — approval of one mint is not approval of a loop. This
+  paragraph exists because the rule's silence about testnet got filled by inference from an ADR that
+  did not cover it.
+
+  **One standing licence exists, and it is narrow** (ADR `0092`, the user's decision 2026-10-30):
+  the sponsor relay may publish an operator's **signed, verified** delegation to IPFS and index it
+  on Intuition **testnet 13579**, paid by ARP's treasury key, within a per-delegator daily limit and
+  a global daily budget. It verifies the signature before it pins or writes anything. Mainnet needs
+  a new ADR.
+
+  ADR `0017` scopes _itself_ away from the second case — it says it does not authorise "any automated
+  or agent-initiated stake". That makes agent-initiated staking **not yet authorised**, not
+  forbidden, and it needs its own ADR. The risk calculus there is different in kind, because the
+  TRUST at stake is the agent operator's and the bound is a caveat they signed.
+
+- Every deployment writes its addresses to `data/deployments/<chainId>.json`. Idempotent — re-running on the same chain does not redeploy unless `--force` is passed.
 - `.env.example` documents the Intuition Testnet RPC, explorer URL, and chain ID. Update it whenever a new env var is introduced.

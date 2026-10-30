@@ -1,6 +1,6 @@
 ## 03 — Caveat enforcers (Task 02b)
 
-**Task:** `tasks/02b-caveat-enforcers.md`
+**Task:** `docs/tasks/02b-caveat-enforcers.md`
 **Completed:** 2026-06-02
 **Commit:** uncommitted
 **Verifier verdict:** PASS
@@ -13,7 +13,7 @@
 - `contracts/test/enforcers/TrustStakeCapEnforcer.t.sol` — 239 lines. 15 unit/fuzz + 2 invariants (`invariant_cumulativeNeverExceedsCap`, `invariant_windowStartMonotonic`) under a bounded `TrustStakeCapHandler` ghost. 256 runs × 500 calls = 128 000 calls per invariant, 0 reverts. Includes per-delegation state isolation, exact-cap, cumulative-cap, window-reset, zero-period rejection.
 - `contracts/SECURITY_REVIEW.md` — appended ~250 lines under "Security review — Caveat enforcers (Task 02b)". Per-enforcer threat-model walkthrough (10 items each), coverage + gas, `contract-reviewer` agent's independent re-walk + design-decision assessment + narrative-preservation concur, three INFO items (INFO-4/5/6).
 - `contracts/foundry.toml` — removed Task 02's `skip = ["lib/delegation-framework/**"]` workaround. Added full remappings for `@account-abstraction`, `@erc7579`, `@openzeppelin/contracts`, `@bytes-utils`, `@solidity-stringutils`, `delegation-framework/`. Enabled `auto_detect_solc = true` so `ModuleRegistry` stays `^0.8.24` while enforcers stay `0.8.23` strict to match the vendored framework. Trimmed `lib/delegation-framework/lib/{FCL,FreshCryptoLib,SCL}` + `lib/delegation-framework/test/` at install time — they don't compile under our remappings and we don't consume them.
-- `tasks/02b-caveat-enforcers.md` — task spec authored from the hackathon pivot brief; marked COMPLETE with this post-mortem reference.
+- `docs/tasks/02b-caveat-enforcers.md` — task spec authored from the hackathon pivot brief; marked COMPLETE with this post-mortem reference.
 
 ## Surprises
 
@@ -43,7 +43,7 @@ No rule needs revision.
 
 ## Suggestions for future tasks
 
-- Task 03 deployment script should deploy both enforcers + `ModuleRegistry` together. Write deployed addresses to `deployments/13579.json::arp.{moduleRegistry, domainScopeEnforcer, trustStakeCapEnforcer}`. Constructor on each enforcer takes no args. Idempotent skip-if-set guard recommended.
+- Task 03 deployment script should deploy both enforcers + `ModuleRegistry` together. Write deployed addresses to `data/deployments/13579.json::arp.{moduleRegistry, domainScopeEnforcer, trustStakeCapEnforcer}`. Constructor on each enforcer takes no args. Idempotent skip-if-set guard recommended.
 - Task 03b (Smart Account integration) constructs the `caveats` array in TypeScript. Each entry references one of the deployed enforcer addresses + an ABI-encoded `terms` blob. Use `viem`'s `encodeAbiParameters` for the terms; the encoding must match the on-chain `abi.decode` signatures exactly:
   - `DomainScopeEnforcer.terms` = `encodeAbiParameters([{ type: 'bytes32[]' }], [allowedDomainHashes])`
   - `TrustStakeCapEnforcer.terms` = `encodeAbiParameters([{ type: 'uint256' }, { type: 'uint256' }], [cap, period])`

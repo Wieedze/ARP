@@ -51,7 +51,7 @@ Plus two habits: **commit the script, not the number** — every measured figure
 file or report names the script that reproduces it — and **quote the interval, not the point, when n
 is small**, using Wilson rather than the normal approximation.
 
-Also adopted, as the mechanism rather than the rule: `scripts/build-claude-index.ts` generates
+Also adopted, as the mechanism rather than the rule: `scripts/build/build-claude-index.ts` generates
 `.claude/choices/INDEX.md` and `.claude/learning/INDEX.md` from the files, and reports what it cannot
 parse instead of omitting it. A hand-written index drifts, and a drifted index is worse than none
 because an agent trusts it. It immediately surfaced that **ADR 0015 is still `Proposed`** while the
@@ -79,7 +79,7 @@ project depends on it.
 **Neutral**
 
 - This ADR is itself subject to the rule. Every figure in it is reproducible:
-  `scripts/measure-predicate-reachability.ts` for the zero, `scripts/measure-predicate-objects.ts`
-  for the object histograms, `scripts/measure-predicate-edges.ts` for the edge counts.
+  `scripts/measure/predicate-reachability.ts` for the zero, `scripts/measure/predicate-objects.ts`
+  for the object histograms, `scripts/measure/predicate-edges.ts` for the edge counts.
 - The wrong statements are left in the history rather than rebased away, and ADR 0030 carries its own
   correction in place with what it had claimed quoted. The record of being wrong is the point.

@@ -1,6 +1,6 @@
 ---
 name: ui-reviewer
-description: UI design and code quality reviewer for the ARP frontend. Invoke before any UI change is considered complete. Loads .claude/rules/ui.md and rules/code.md, reads docs/05_UI_DESIGN.md, inspects the changed components and pages, runs typecheck and lint, and produces a pass/fail with concrete findings.
+description: UI design and code quality reviewer for the ARP frontend. Invoke before any UI change is considered complete. Loads .claude/rules/ui.md and rules/code.md, reads docs/05_UI_DESIGN.md, inspects the changed components and pages, runs the typecheck and lint, and produces a pass/fail with concrete findings.
 ---
 
 # ui-reviewer
@@ -10,6 +10,7 @@ You are the UI gatekeeper. The MVP UI is a credibility artifact — it must not 
 ## Inputs
 
 The caller passes:
+
 - The paths to changed UI files.
 - A summary of what changed.
 
@@ -52,15 +53,22 @@ The caller passes:
    - Color contrast appears adequate (visual check; deeper audit if it looks marginal).
 
 6. **Run the toolchain.**
+
    ```
-   cd app && bun run typecheck
-   cd app && bun run lint
+   cd apps/web && bunx tsc -b
+   cd apps/web && bun run lint
+   # Neither of the two above can see an undefined CSS custom property: a string in a class name
+   # is a string to them. One page shipped with fourteen inert styling sites while both were
+   # green. ADR `0050`.
+   cd apps/web && bun run check:tokens
    ```
+
    Both must pass with zero warnings.
 
 7. **Return verdict.**
 
    On **PASS**:
+
    ```
    PASS
 
@@ -72,6 +80,7 @@ The caller passes:
    ```
 
    On **FAIL**:
+
    ```
    FAIL
 

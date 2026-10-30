@@ -2,7 +2,7 @@
 
 **Status:** Accepted
 **Date:** 2026-09-16
-**Triggered by:** `tasks/08-agent-trust-panel.md` — three decisions made during the build that the
+**Triggered by:** `docs/tasks/08-agent-trust-panel.md` — three decisions made during the build that the
 task did not pre-specify and that a later reader would otherwise have to reverse-engineer.
 
 ## Context
@@ -117,7 +117,7 @@ The provider edge's own fetch result is **never** surfaced as the document's fai
 
 ## References
 
-- Related task: `tasks/08-agent-trust-panel.md`
+- Related task: `docs/tasks/08-agent-trust-panel.md`
 - Related ADR: `.claude/choices/0017-arp-stakes-real-trust-on-mainnet.md` (the mainnet authorisation
   and the seven safeguards this panel implements)
 - Related ADR: `.claude/choices/0019-erc8004-connector-surface-deviations.md` (why `mismatch` is
