@@ -9,12 +9,15 @@
  *   "hooks": {
  *     "PostToolUse": [
  *       {"matcher": "*", "hooks": [
- *         {"type": "command", "command": "bun run apps/hook/src/hook.ts"}
+ *         {"type": "command", "command": "bun /path/to/ARP/apps/hook/dist/arp-hook.js"}
  *       ]}
  *     ]
  *   }
  * }
  * ```
+ *
+ * The path is absolute because the hook runs in *your* project, not this one. Build the file once
+ * with `cd apps/hook && bun run build`.
  *
  * ## Why this is not a nicer way of asking the agent
  *
@@ -109,11 +112,11 @@ type Invocation = {
    * information and either ends the ambiguity.
    *
    * **Filled from `.arp/receipts.jsonl` since 2026-10-29**, which is where
-   * `apps/mcp/src/fetch-skill.ts` records what was fetched through a node. The fetch is the one
+   * `apps/mcp/src/fetch-skill.ts` records what was fetched through an MCP server. The fetch is the one
    * moment a skill's name and its atom are in the same place, so it writes both down and this
    * reads them back. `tasks/31` deliverable 3.
    *
-   * Still empty for a skill nobody fetched through a node, and **still empty when two different
+   * Still empty for a skill nobody fetched through an MCP server, and **still empty when two different
    * atoms were fetched under one name** — `refForInvocation` refuses a tie rather than taking
    * the most recent, because which one the agent then invoked is unknowable and a heuristic
    * there would write an edge about a repository it may never have touched.
@@ -122,7 +125,7 @@ type Invocation = {
 };
 
 /**
- * What was fetched through a node, from the local record.
+ * What was fetched through an MCP server, from the local record.
  *
  * Read fresh on every call rather than cached: a hook process is short-lived, and a fetch that
  * happened one tool call ago has to be visible to the next one. A missing or corrupt file is an

@@ -178,8 +178,10 @@ bun run scripts/measure/node-outbound.ts
 It reads the six modules a running server actually loads and prints every host literal with its line,
 every `fetch` call site **labelled `outbound`, `inbound` or `definition`**, and whether any host is
 ours. On 2026-10-30, after the move to `apps/mcp` and `packages/graphql`,
-`measurements/node-outbound-2026-10-30.json`: **6 host literals, 9 call sites of which 6 are
-outbound, 0 of the hosts ours** — the same figures as the 2026-10-29 run, at new paths. It exits non-zero if that last number is ever not
+`measurements/node-outbound-2026-10-30T0220.json`: **6 host literals, 9 call sites of which 6 are
+outbound, 0 of the hosts ours** — the same figures as the 2026-10-29 run, at new paths. (The
+script keeps its old name. `node-outbound-2026-10-30.json`, from the same day, has the same
+figures, and its prose still calls the MCP server "the node".) It exits non-zero if that last number is ever not
 zero.
 
 The six outbound ones are the whole of it: two on the registration route (the document and a
@@ -401,10 +403,15 @@ happened, not that it paid for this job.
 
 ## The hook — `apps/hook`
 
+```
+cd apps/hook && bun run build      # once: writes apps/hook/dist/arp-hook.js
+```
+
 ```jsonc
-// your runtime's .claude/settings.json
+// your runtime's .claude/settings.json — the path is absolute, because the hook runs in your
+// project and not in this one
 {"hooks": {"PostToolUse": [{"matcher": "*", "hooks": [
-  {"type": "command", "command": "bun run apps/hook/src/hook.ts"}
+  {"type": "command", "command": "bun /path/to/ARP/apps/hook/dist/arp-hook.js"}
 ]}]}}
 ```
 

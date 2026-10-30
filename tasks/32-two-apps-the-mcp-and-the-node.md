@@ -73,3 +73,20 @@ grep -rn "scripts/arp-mcp\|scripts/agent-node\|scripts/arp-content\|scripts/arp-
 ```
 
 The last command returns nothing, or each hit is explained in the report.
+
+## 5. What landed, and the three things a reader should know
+
+Commits `064e3df`..HEAD on `refactor/monorepo-apps`. Every deliverable above landed except as
+noted here.
+
+- **Deliverable 6 deviates.** Scripts that stay in `scripts/` import an app by **relative path**,
+  not by package name: `scripts/` is not a workspace and `@arp/mcp` declares no `exports`, so a
+  package-name import would resolve only by hoisting and would be a deep import anyway. Only one
+  script imports an app at all (`verify-content-route.ts:35`); the other five name app paths in
+  comments or strings.
+- **The MCP bundle freezes its data at build time.** `apps/mcp/src/data.ts` imports every chain's
+  `deployments/<chain>.json` and `catalogue/skills-<chain>.json`, so a rebuilt file is needed after
+  either changes. From source nothing changed in practice — the import reads the repo's files.
+- **Vercel.** The root `vercel.json` now builds `apps/web`. If the Vercel project's Root Directory
+  setting is `app`, it points at a directory that no longer exists and has to be changed in the
+  dashboard; the repo cannot show which it is.

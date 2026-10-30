@@ -33,7 +33,7 @@ different and checkable thing.
 a wallet with tTRUST       about 0.01 for one full walk, from the faucet
 an ERC-8004 token          on 13579, so the agent has an identity to speak as
 AGENT_PRIVATE_KEY in .env  read by the sender, never printed, never in an agent's context
-the node running           bun run apps/mcp/src/server.ts, on :3002
+the MCP server running     bun run apps/mcp/src/server.ts, on :3002
 ```
 
 Nothing else. No account with us, no key from us, no allowlist.
@@ -41,7 +41,8 @@ Nothing else. No account with us, no key from us, no allowlist.
 ## 3. The four commands
 
 ```bash
-# the node answers questions. It signs nothing and stores nothing.
+# the MCP server answers questions. It signs no transaction; its one key, .arp/receipt-key,
+# signs content receipts and nothing else (ADR 0080).
 ARP_TARGET=testnet bun run apps/mcp/src/server.ts
 
 # dry first. Prints every figure and spends nothing.
@@ -67,7 +68,7 @@ arp_find_tools { domain: "image" }
 
 Asked over HTTP, so the same call from anywhere returns the same rows. The answer names the
 **attestor** it was read through, because `has tag` is permissionless to write and a filing is only
-an index when read through one chosen set of positions. That address is a property of the node, not
+an index when read through one chosen set of positions. That address is a property of the MCP server, not
 a request parameter — an agent cannot widen its own scope by asking.
 
 ### Step 2 — the answer

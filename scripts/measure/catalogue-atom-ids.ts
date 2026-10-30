@@ -11,15 +11,15 @@
  *  `catalogue/skills-<chainId>.json` the same way. `rules/portability.md` rule 1, and the reason it
  *  is written this way rather than with an `ARP_TARGET` default is the defect this file was asked
  *  for alongside: a module-scope `catalogue/skills-13579.json` in a process whose chain was
- *  configurable served testnet ids from a mainnet node.
+ *  configurable served testnet ids from a mainnet MCP server.
  *
  *  ## The question it exists to answer
  *
  *  `packages/protocol/src/content-serve.ts` builds a **reverse index**: atom id to tool URL, from
  *  each row's *recorded* `atom`. Every consequence of the content path rides on that index being
  *  right, because the id is the only input to `GET /content/:atomId` and the URL it yields is what
- *  the node fetches and what the receipt names under a signature. An id mapped to the wrong URL
- *  would make the node sign for the wrong tool, and `receipt.ts` cannot detect it: the digest is
+ *  the MCP server fetches and what the receipt names under a signature. An id mapped to the wrong URL
+ *  would make the MCP server sign for the wrong tool, and `receipt.ts` cannot detect it: the digest is
  *  over whatever bytes came back from whatever URL the index gave.
  *
  *  ADR `0054` says a tool's atom derives from its normalised URL, so the whole set is re-derivable.
@@ -173,7 +173,7 @@ const derived = await pool(rows, 16, async (row): Promise<Derived> => {
 const recorded = derived.filter((row) => row.recorded !== null);
 const unrecorded = derived.filter((row) => row.recorded === null);
 
-/** The finding that would mean the node signs for the wrong tool. */
+/** The finding that would mean the MCP server signs for the wrong tool. */
 const mismatched = recorded.filter(
   (row) => row.derived.toLowerCase() !== row.recorded!.toLowerCase(),
 );
@@ -243,7 +243,7 @@ console.log(`rows                       ${out.counts.rows}`);
 console.log(`  with a recorded atom     ${out.counts.recorded}`);
 console.log(`  with none                ${out.counts.unrecorded}`);
 console.log('');
-console.log(`recorded id != derived id  ${out.counts.mismatched}   <- a wrong one makes the node sign for the wrong tool`);
+console.log(`recorded id != derived id  ${out.counts.mismatched}   <- a wrong one makes the MCP server sign for the wrong tool`);
 console.log(`recorded id not on chain   ${out.counts.recordedNotOnChain}`);
 console.log(
   `unrecorded, atom on chain  ${out.counts.unrecordedOnChain}   <- "unknown" is the wrong word ` +

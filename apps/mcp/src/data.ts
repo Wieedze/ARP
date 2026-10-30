@@ -15,7 +15,7 @@ export const DEPLOYMENTS: Readonly<Record<number, unknown>> = {
   13579: deployment13579,
 };
 
-// No `skills-1155.json`: no skill was seeded on mainnet, so a mainnet node knows none.
+// No `skills-1155.json`: no skill was seeded on mainnet, so a mainnet server knows none.
 export const SKILL_CATALOGUES: Readonly<Record<number, { skills?: CataloguedSkill[] }>> = {
   13579: skills13579,
 };

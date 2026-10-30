@@ -1,4 +1,4 @@
-/** The node's content path: the IO behind `GET /content/:atomId`.
+/** The server's content path: the IO behind `GET /content/:atomId`.
  *
  *  The decisions are in `packages/protocol/src/content-serve.ts`, which holds no key and touches no
  *  network. This file is the transport: it reads the key, caches the listings, does the two fetches
@@ -6,26 +6,26 @@
  *
  *  ## The key, and what an operator is trusting
  *
- *  ADR `0080`, resolved on the user's decision 2026-10-29: **both kinds of node sign.** The node an
- *  operator installs holds its own key, and so does a node somebody else runs. The receipt names
+ *  ADR `0080`, resolved on the user's decision 2026-10-29: **both kinds of server sign.** The server an
+ *  operator installs holds its own key, and so does a server somebody else runs. The receipt names
  *  its signer and a reader compares that to the address that declared — same hand, and the receipt
  *  corroborates nobody. `corroborationOf` is that comparison.
  *
  *  So this generates a key on first run rather than asking for one:
  *
  *  ```
- *  ARP_RECEIPT_KEY=0x…   a key the operator manages. For a hosted node
+ *  ARP_RECEIPT_KEY=0x…   a key the operator manages. For a hosted server
  *  .arp/receipt-key      generated on first run, mode 0600, gitignored
  *  ARP_NO_RECEIPTS=1     no key at all. The content path still works
  *  ```
  *
  *  **A generated key cannot move value.** It is not a wallet, it never holds TRUST, and it is not
  *  the key any plan is signed with — the plan path still has none (ADR `0038`). Losing it lets
- *  somebody forge corroboration under this node's name; it lets them spend nothing. A reader who
+ *  somebody forge corroboration under this server's name; it lets them spend nothing. A reader who
  *  stops accepting the signer is back to the declaration they already had.
  *
  *  **`ARP_RECEIPT_KEY` is the operator's own risk, and this is a convention rather than a
- *  guarantee.** Nothing here can tell a funded key from an empty one, so hand the node a funded
+ *  guarantee.** Nothing here can tell a funded key from an empty one, so hand the server a funded
  *  key and ADR `0080` constraint 3 is broken by configuration. It warns and carries on, because
  *  refusing would need a balance read on every chain the key might hold value on. The earlier
  *  wording of this paragraph stated flatly that the key *cannot* move value, which was a property
@@ -72,13 +72,13 @@ const catalogues = new Map<number, CataloguedSkill[]>();
  *
  * **Keyed by chain, never a single chain's file.** It was `import skills from
  * '../catalogue/skills-13579.json'` at module scope in a process whose chain is configurable, so a
- * node started on its default target — mainnet 1155 — served atom ids drawn from the testnet
+ * server started on its default target — mainnet 1155 — served atom ids drawn from the testnet
  * record and stamped 1155 into every receipt's domain. `rules/portability.md` rule 1 names that
  * shape: no chain constant at module scope.
  *
  * `data.ts` holds every chain's record so a bundle carries them (ADR `0082`); the lookup is still
- * by the chain this node was started on. An absent chain is an empty catalogue and not an error. There is no `catalogue/skills-1155.json`
- * because no skill was seeded on mainnet, and the honest consequence is that a mainnet node knows
+ * by the chain this server was started on. An absent chain is an empty catalogue and not an error. There is no `catalogue/skills-1155.json`
+ * because no skill was seeded on mainnet, and the honest consequence is that a mainnet server knows
  * no skills — which the refusal says in those words.
  */
 export function catalogueFor(chainId: number): CataloguedSkill[] {
@@ -142,7 +142,7 @@ export function receiptSigner(): TypedDataSigner | null {
     key = (fromEnv.startsWith('0x') ? fromEnv : `0x${fromEnv}`) as Hex;
     // Nothing here can tell a funded key from an empty one, and reading a balance would need every
     // chain it might hold value on. So it says so once, loudly, on stderr — which is where a stdio
-    // node's diagnostics go, because stdout is the protocol channel.
+    // server's diagnostics go, because stdout is the protocol channel.
     console.error(
       'ARP_RECEIPT_KEY is set. A receipt key should be able to sign receipts and nothing else ' +
         '(ADR 0080): do not give this process a key that holds funds. Unset it to have one ' +

@@ -8,7 +8,7 @@
  *
  *  ## The question it exists to answer
  *
- *  `tasks/31` plans a `GET /content/:atomId` endpoint on the node. An atom's id is a pure function
+ *  `tasks/31` plans a `GET /content/:atomId` endpoint on the MCP server. An atom's id is a pure function
  *  of its URL (ADR `0054`), so the endpoint can recover `github.com/<owner>/<repo>?skill=<name>`
  *  without asking anyone. What it cannot recover is **the path**: `raw.githubusercontent.com` needs
  *  one, and nothing in the atom carries it.

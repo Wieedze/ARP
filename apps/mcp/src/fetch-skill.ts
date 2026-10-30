@@ -1,10 +1,10 @@
-/** Fetch a skill through a node, keep the receipt, and leave the hook able to name the atom.
+/** Fetch a skill through a server, keep the receipt, and leave the hook able to name the atom.
  *
  *      bun run apps/mcp/src/fetch-skill.ts <atomId|url> [--out <path>]
  *      ARP_NODE=http://localhost:3002 bun run apps/mcp/src/fetch-skill.ts 0xf205…
  *      ARP_AGENT_PRIVATE_KEY=0x… bun run apps/mcp/src/fetch-skill.ts 0xf205…   # named in the receipt
  *
- *  This is the agent's side of the content path. Without it the node's receipt exists and nothing
+ *  This is the agent's side of the content path. Without it the server's receipt exists and nothing
  *  on the agent's machine knows it does.
  *
  *  ## The one thing it is for
@@ -82,12 +82,12 @@ function atomIdOf(input: string, chainId: number): Hex | null {
   return null;
 }
 
-// The node's chain first, because the catalogue is per chain and a URL resolves to a different
+// The server's chain first, because the catalogue is per chain and a URL resolves to a different
 // atom id on each — the id is a pure function of the URL, so the record is what differs.
 const info = (await (await fetch(BASE)).json()) as { chain?: { id?: number } };
 const chainId = info.chain?.id;
 if (typeof chainId !== 'number') {
-  console.error(`${BASE} did not answer with a chain id. Is the node running?`);
+  console.error(`${BASE} did not answer with a chain id. Is the server running?`);
   process.exit(1);
 }
 
@@ -120,7 +120,7 @@ if (!response.ok) {
 const bytes = new Uint8Array(await response.arrayBuffer());
 const header = response.headers.get('x-arp-receipt');
 const signed = header === null ? null : (JSON.parse(header) as SignedContentReceipt);
-// The receipt's own url first: it is what the node says it served, and the index is this repo's
+// The receipt's own url first: it is what the server says it served, and the index is this repo's
 // record of the same thing. They agree unless the catalogue is stale, and the receipt is the one
 // under a signature.
 const url = signed?.receipt.url ?? contentIndexFor(chainId).get(atom) ?? target;
@@ -135,7 +135,7 @@ console.log(`path      ${response.headers.get('x-arp-path')}`);
 console.log(`bytes     ${bytes.byteLength}  →  ${out}`);
 
 if (signed === null) {
-  console.log('receipt   none — the node is running without a signing key');
+  console.log('receipt   none — the server is running without a signing key');
   process.exit(0);
 }
 

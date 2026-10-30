@@ -1,4 +1,4 @@
-/** Walk the node's content path end to end, against a running node.
+/** Walk the MCP server's content path end to end, against a running MCP server.
  *
  *      ARP_TARGET=testnet PORT=3099 bun run apps/mcp/src/server.ts &
  *      bun run scripts/verify-content-route.ts                       # defaults to :3099
@@ -11,8 +11,8 @@
  *  What it proves, in order:
  *
  *  ```
- *  the bytes arrive            a real SKILL.md from a real repository, at the path the node found
- *  the signature recovers      the receipt was signed by the address the node publishes
+ *  the bytes arrive            a real SKILL.md from a real repository, at the path the MCP server found
+ *  the signature recovers      the receipt was signed by the address the MCP server publishes
  *  the content matches         sha256 of the bytes received equals the digest in the receipt
  *  the corroboration is read   the signer is not the agent, so it is a second party
  *  the refusals are distinct   a caller can tell "no such skill" from "bad id" from "no file"
@@ -38,7 +38,7 @@ const BASE = process.env['ARP_NODE'] ?? 'http://localhost:3099';
 
 type Row = { repo: string; skill: string; url: string; atom: string | null };
 
-/** The catalogue for the chain the node is actually on — the last module-scope `skills-13579` import. */
+/** The catalogue for the chain the MCP server is actually on — the last module-scope `skills-13579` import. */
 function pick(chainId: number, repo: string, skill: string): Row {
   const found = catalogueFor(chainId).find(
     (row) => row.repo === repo && row.skill === skill && row.atom !== null,
@@ -46,7 +46,7 @@ function pick(chainId: number, repo: string, skill: string): Row {
   if (found === undefined) {
     throw new Error(
       `${repo} ?skill=${skill} is not recorded for chain ${chainId}. Only 13579 has a ` +
-        'catalogue today — start the node with ARP_TARGET=testnet.',
+        'catalogue today — start the MCP server with ARP_TARGET=testnet.',
     );
   }
   return found;
@@ -98,7 +98,7 @@ if (signed === null) {
     failures.push(`the signature did not verify: ${JSON.stringify(verdict)}`);
   } else {
     if (verdict.signer !== info.content?.signer) {
-      failures.push(`recovered ${verdict.signer}, but the node publishes ${info.content?.signer}`);
+      failures.push(`recovered ${verdict.signer}, but the MCP server publishes ${info.content?.signer}`);
     }
     // THE check. A stranger runs `sha256sum` and gets this number without a library of ours.
     const matches = receiptMatchesContent(signed.receipt, bytes);
@@ -107,11 +107,11 @@ if (signed === null) {
 
     // Two readings of the same receipt, because that is the whole of ADR `0080`'s resolution: a
     // receipt's worth is not a property of the receipt, it is whether the reader accepts the
-    // signer. This script stands for a reader who accepts the node it is talking to.
+    // signer. This script stands for a reader who accepts the MCP server it is talking to.
     const unnamed = corroborationOf(signed.receipt, verdict.signer, agent.address);
     const named = corroborationOf(signed.receipt, verdict.signer, agent.address, [verdict.signer]);
     console.log(`reader who names nobody     ${unnamed.status}`);
-    console.log(`reader who accepts the node ${named.status}`);
+    console.log(`reader who accepts the MCP server ${named.status}`);
     if (unnamed.status !== 'unknown-signer') {
       failures.push(`a reader naming nobody should get unknown-signer, got ${unnamed.status}`);
     }

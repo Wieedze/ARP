@@ -1,4 +1,4 @@
-/** Every host literal and every `fetch` call site in the node's own modules.
+/** Every host literal and every `fetch` call site in the MCP server's own modules.
  *
  *      bun run scripts/measure/node-outbound.ts
  *      bun run scripts/measure/node-outbound.ts --json measurements/node-outbound-<date>.json
@@ -7,7 +7,7 @@
  *
  *  ## Why this is a script and not a sentence
  *
- *  `docs/22` exists so somebody deciding whether to install the node can see what it reaches. Its
+ *  `docs/22` exists so somebody deciding whether to install the MCP server can see what it reaches. Its
  *  outbound section has been wrong **twice**, in two review rounds, for the same reason both times:
  *
  *  ```
@@ -17,7 +17,7 @@
  *                                                                  the claim's scope was 3 files
  *  ```
  *
- *  Different sentences, identical failure: a security claim about what the node fetches, offered
+ *  Different sentences, identical failure: a security claim about what the MCP server fetches, offered
  *  with a check whose scope does not match the claim. Four rounds of careful prose did not close
  *  it, and `claims.md` already names the lever — **commit the script, not the number.** Every
  *  figure in this task that came from a committed measurement was exact on the first try in both
@@ -27,9 +27,9 @@
  *
  *  ## The scope is a list, deliberately, and not a glob
  *
- *  `MODULES` below names the files the running node actually reaches. A glob over `scripts/` is
- *  what produced the 116 — it swept measurement scripts, demos and seeders that no node ever
- *  loads. If the node grows a module, add it here; the list being hand-maintained is the one thing
+ *  `MODULES` below names the files the running MCP server actually reaches. A glob over `scripts/` is
+ *  what produced the 116 — it swept measurement scripts, demos and seeders that no MCP server ever
+ *  loads. If the MCP server grows a module, add it here; the list being hand-maintained is the one thing
  *  this cannot check for itself, and it says so rather than implying otherwise.
  *
  *  ## What it cannot tell you
@@ -55,7 +55,7 @@ function arg(name: string): string | undefined {
 }
 
 /**
- * The files a running node loads. Hand-maintained, which is this measurement's own weak point.
+ * The files a running MCP server loads. Hand-maintained, which is this measurement's own weak point.
  *
  * `server.ts` is the entry point; `content.ts` is the content route; `tools.ts` is the tool
  * schemas. The three package modules are the ones those reach that fetch anything —
@@ -106,7 +106,7 @@ for (const file of MODULES) {
       text: line.trim().slice(0, 140),
     });
 
-    // A call site, not a DEFINITION. `async fetch(request: Request)` is the node's own HTTP
+    // A call site, not a DEFINITION. `async fetch(request: Request)` is the MCP server's own HTTP
     // handler — inbound, and the first run of this listed it as an outbound connection.
     //
     // And **any identifier ending in `fetch`**, because `probe.ts` calls `doFetch(...)` after
@@ -133,7 +133,7 @@ for (const file of MODULES) {
   });
 }
 
-/** Hosts that are ARP's own. If any of these appear, the node phones home and `docs/22` lies. */
+/** Hosts that are ARP's own. If any of these appear, the MCP server phones home and `docs/22` lies. */
 const OURS = ['arp', 'wieedze'];
 const phoneHome = [...hosts.keys()].filter((host) =>
   OURS.some((ours) => host.toLowerCase().includes(ours)),
@@ -142,7 +142,7 @@ const phoneHome = [...hosts.keys()].filter((host) =>
 const out = {
   measuredAt: new Date().toISOString(),
   question:
-    'Every host the node names in source, and every fetch call site. `docs/22` quotes this ' +
+    'Every host the MCP server names in source, and every fetch call site. `docs/22` quotes this ' +
     'rather than a hand-maintained count, because that count was wrong twice.',
   limits:
     'Text, not execution. A LITERAL host is one the source names; a BUILT url is assembled from ' +
@@ -151,13 +151,13 @@ const out = {
     'A literal is not necessarily a fetch target either — a host in a log line or a user-agent ' +
     'string is a literal and is fetched by nobody, so read `literalHosts` against ' +
     '`fetchCallSites` rather than as a list of destinations. And `fetchCallSites` is deliberately ' +
-    "OVER-inclusive: a definition, or the stdio loop calling the node's own handler, appears " +
+    "OVER-inclusive: a definition, or the stdio loop calling the MCP server's own handler, appears " +
     'here too. An enumeration written to carry a security claim should err that way — a site it ' +
     "lists and should not is a reader's minute, and a site it misses is the claim being false.",
   notLiterals:
     'The Intuition graph and RPC are absent from `literalHosts` BECAUSE they are config — read ' +
     'from deployments/<chainId>.json or INTUITION_GRAPHQL_URL / INTUITION_RPC_URL at startup. ' +
-    'Their absence here is correct and is not their absence from the node. Two more hosts are ' +
+    'Their absence here is correct and is not their absence from the MCP server. Two more hosts are ' +
     'reachable and are not literals either, by design: the url a caller passes to ' +
     'arp_probe_endpoint, and the registrationFile out of an ERC-8004 tokenURI read through a ' +
     'registry whose address the caller supplies. Both go through `fetchableDocumentUrl` or ' +
@@ -179,7 +179,7 @@ const out = {
   oursAmongThem: phoneHome,
 };
 
-console.log(`${out.counts.modules} modules the running node reaches`);
+console.log(`${out.counts.modules} modules the running MCP server reaches`);
 console.log(`${out.counts.distinctLiteralHosts} distinct host literals`);
 console.log(
   `${out.counts.fetchCallSites} fetch call sites, ${out.counts.outboundFetchCallSites} of them outbound`,

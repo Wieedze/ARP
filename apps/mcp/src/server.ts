@@ -1,4 +1,4 @@
-/** ARP's MCP node — the surface an agent reads tool reputation through, and declares through.
+/** ARP's MCP server — the surface an agent reads tool reputation through, and declares through.
  *
  *  Phase 1 of `docs/15_ROADMAP.md`, the first half of `tasks/16`. **Run it yourself** (ADR `0045`):
  *  the invariant is that ARP is never in the path of a request, and code on the operator's machine
@@ -27,7 +27,7 @@
  *    - not meant to be a host an agent depends on — and today it is one. Planning lives here: atom
  *      resolution, the refuse-on-ambiguous rule, the cost reads. If this process is down an agent
  *      cannot build its plan. "The agent chooses to call it", which this comment used to argue, is
- *      true of signing and false of planning. ADR `0045` moves this to a node the operator runs; the
+ *      true of signing and false of planning. ADR `0045` moves this to a server the operator runs; the
  *      dependency is real until then and is stated here rather than defended.
  *    - not a scorer. It returns what was staked and by whom, with provenance. Composing that into a
  *      single number is a decision nobody has made (`docs/01` rejects being one more score).
@@ -162,22 +162,22 @@ if (recorded === undefined) {
 const record = recorded as DeploymentRecord;
 
 /**
- * The catalogue `arp_declare_session` resolves a runtime's names against, for THIS node's chain.
+ * The catalogue `arp_declare_session` resolves a runtime's names against, for THIS server's chain.
  *
  * It was `catalogue/skills-13579.json` imported at module scope while `ARP_TARGET` defaults to
- * mainnet, so a default-run node resolved testnet atom ids and would have planned against 1155 —
+ * mainnet, so a default-run server resolved testnet atom ids and would have planned against 1155 —
  * where those atoms do not exist and where a create pair costs 0.22 TRUST against 0.004, measured
  * 2026-10-29. `rules/portability.md` rule 1 and rule 3 in one line of code.
  */
 const sessionCatalogue: CataloguedSkill[] = catalogueFor(chainId);
 
 /**
- * The signers THIS node's reader accepts, from `ARP_ACCEPTED_SIGNERS`.
+ * The signers THIS server's reader accepts, from `ARP_ACCEPTED_SIGNERS`.
  *
  * ADR `0080` constraint 4 as configuration rather than a principle. Empty is the honest default and
- * it is why `corroborationOf` reports `unknown-signer`: a node an operator installs generates its
+ * it is why `corroborationOf` reports `unknown-signer`: a server an operator installs generates its
  * own key, so its address differs from that operator's agent key while the same hand holds both.
- * Nothing in a receipt tells that apart from a genuinely separate node, so the reader has to say.
+ * Nothing in a receipt tells that apart from a genuinely separate server, so the reader has to say.
  */
 let accepted: Address[] | null = null;
 function acceptedSigners(): Address[] {
@@ -260,12 +260,12 @@ const REACHABLE_ATOM =
  * ARP's published domain attestor — the address whose positions are ARP's index.
  *
  * A **default**, not a fallback to the operator's own address. ADR `0045` has every operator run
- * this node on their own machine, so the attestor has to travel with the code: an operator who
- * clones the repo and starts the node must get ARP's index without configuring anything.
+ * this server on their own machine, so the attestor has to travel with the code: an operator who
+ * clones the repo and starts the server must get ARP's index without configuring anything.
  *
  * The first version of this read `ARP_DOMAIN_ATTESTOR ?? AGENT_ADDRESS`, which was right for one
  * laptop and wrong for a distributed node: `AGENT_ADDRESS` is the *operator's own* agent, it has no
- * position on any ARP domain, so every operator's node would have read an **empty index** and
+ * position on any ARP domain, so every operator's server would have read an **empty index** and
  * reported that ARP has filed nothing. Silent, and indistinguishable from an empty registry.
  *
  * Override it with `ARP_DOMAIN_ATTESTOR` to read somebody else's index, or your own once you have
@@ -278,7 +278,7 @@ function configuredAttestor(): string | undefined {
   const raw = process.env['ARP_DOMAIN_ATTESTOR'] ?? ARP_DOMAIN_ATTESTOR;
   // `??` alone let an EMPTY string through, because an empty string is not nullish: the guard below
   // saw a value, the query ran with `account_id: ""`, and every domain came back with nothing in
-  // it. A search that silently returns zero rows reads as "this domain is empty", not as "this node
+  // it. A search that silently returns zero rows reads as "this domain is empty", not as "this server
   // is misconfigured" — the same trap as the lowercase address, one level up.
   if (raw === undefined || raw.trim().length === 0) return undefined;
   const address = raw.trim();
@@ -313,7 +313,7 @@ function configuredAttestor(): string | undefined {
 }
 
 /**
- * The address whose positions define this node's domain index. Set once, at load.
+ * The address whose positions define this server's domain index. Set once, at load.
  *
  * Not a request parameter, deliberately — see the note in `findTools`.
  */
@@ -324,7 +324,7 @@ const DOMAIN_ATTESTOR = configuredAttestor();
  *
  * Only the Intuition source: the registry source answers per-agent questions and cannot list, and
  * `listAgents` throws `NoListingSourceError` rather than silently returning an empty page when no
- * source can. Explicit about `graphqlUrl` because the default is mainnet, and a testnet node
+ * source can. Explicit about `graphqlUrl` because the default is mainnet, and a testnet server
  * serving a mainnet directory is the kind of mix-up `rules/portability.md` rule 1 exists for.
  */
 const directory = createErc8004Client({
@@ -591,18 +591,18 @@ async function declareSession(id: JsonRpcId, args: Record<string, unknown>) {
     }
   }
 
-  // A node on a chain with no recorded catalogue would answer `unknown` for every invocation —
-  // "I have never heard of any of your tools" — when the truth is that this node is pointed at a
+  // A server on a chain with no recorded catalogue would answer `unknown` for every invocation —
+  // "I have never heard of any of your tools" — when the truth is that this server is pointed at a
   // chain where no skill is recorded. That is the trap `configuredAttestor` documents three hundred
   // lines up in this same file: a result of zero reads as "the world is empty" rather than as "this
-  // node is misconfigured". The info document prints `catalogued_skills`, which is the right
+  // server is misconfigured". The info document prints `catalogued_skills`, which is the right
   // instinct in the wrong place — an agent reads the tool response, not the document.
   if (sessionCatalogue.length === 0) {
     return fail(
       id,
       -32602,
       `no skill catalogue is recorded for chain ${chainId}, so nothing in a log can be named. ` +
-        'Only 13579 has one today: start the node with ARP_TARGET=testnet to use this tool.',
+        'Only 13579 has one today: start the server with ARP_TARGET=testnet to use this tool.',
     );
   }
 
@@ -625,7 +625,7 @@ async function declareSession(id: JsonRpcId, args: Record<string, unknown>) {
     // **Only against the address that will sign.** This fell back to `held.receipt.to` when
     // `declarer` was omitted, which made `served === declarer` true by construction and the
     // verdict a constant: every receipt that verified read as corroborating, computed against the
-    // node's own claim about who it served. A missing declarer is a missing input, and saying so
+    // server's own claim about who it served. A missing declarer is a missing input, and saying so
     // is the only honest answer.
     if (!isAddress(declarer)) {
       corroboration.set(
@@ -725,7 +725,7 @@ async function stakeOnUsed(id: JsonRpcId, args: Record<string, unknown>) {
  * it; depositing on an atom says *this thing is worth something* and anyone may do it for any
  * reason. The two are never summed.
  *
- * This is the gap that made the node read-only on the thing it exists for: measured 2026-10-28,
+ * This is the gap that made the server read-only on the thing it exists for: measured 2026-10-28,
  * **2,354 TRUST across 23 positions** sits on 39 skill atoms on mainnet 1155, and until now not one
  * wei of it was reachable from here.
  */
@@ -899,8 +899,8 @@ async function agentEndpoints(id: JsonRpcId, args: Record<string, unknown>) {
           registration_file: file,
           error: `refused: ${fetchable.reason}`,
           note:
-            'Published something this node will not fetch. A `tokenURI` is a string somebody ' +
-            'else controls, and a scheme or an address like that reads the machine the node ' +
+            'Published something this server will not fetch. A `tokenURI` is a string somebody ' +
+            'else controls, and a scheme or an address like that reads the machine the server ' +
             'runs on rather than a document anybody published.',
         });
       }
@@ -942,7 +942,7 @@ async function agentEndpoints(id: JsonRpcId, args: Record<string, unknown>) {
             registration_file: file,
             error: `refused: ${next.reason}`,
             note:
-              'The document redirected somewhere this node will not follow. A guard on the first ' +
+              'The document redirected somewhere this server will not follow. A guard on the first ' +
               'hop is not a guard, so every hop is checked the same way.',
           });
         }
@@ -1051,7 +1051,7 @@ async function probe(id: JsonRpcId, args: Record<string, unknown>) {
 /**
  * Probe an endpoint and plan the position that records what you found.
  *
- * The node has been producing the only reproducible claim in this system and throwing it away. This
+ * The server has been producing the only reproducible claim in this system and throwing it away. This
  * writes it — or rather, prepares the write: the caller signs with **its own** key, so what lands is
  * *this agent's* verdict and not ARP's. ARP's index reads the attestor's positions; everybody
  * else's sit beside them, and a disagreement between them is the signal to re-probe.
@@ -1062,7 +1062,7 @@ async function probe(id: JsonRpcId, args: Record<string, unknown>) {
  * agent that called an endpoint and got nothing is reporting **what happened to it**. Asking it for
  * three confirmations would be asking it to doubt its own experience.
  *
- * It plans and does not sign (ADR `0038`), like every other write path on this node.
+ * It plans and does not sign (ADR `0038`), like every other write path on this server.
  */
 async function recordReachable(id: JsonRpcId, args: Record<string, unknown>) {
   const url = args['url'];
@@ -1127,7 +1127,7 @@ async function recordReachable(id: JsonRpcId, args: Record<string, unknown>) {
     triple_id: state.terms.triple,
     counter_triple_id: state.terms.counter,
     you_currently_assert: state.recorded,
-    // Nothing in this node creates it, but a caller that deposited by hand could, and resolving it
+    // Nothing in this server creates it, but a caller that deposited by hand could, and resolving it
     // silently would hide a contradiction the reader is entitled to see.
     ...(state.bothSides ? { warning: 'this address holds a position on BOTH sides' } : {}),
     would_become: plan.to,
@@ -1374,8 +1374,8 @@ async function findTools(id: JsonRpcId, args: Record<string, unknown>) {
   // and then a curated index guarantees nothing. An earlier version of this handler took
   // `attestor` from the arguments; it was wrong for exactly one turn.
   //
-  // The attestor is a property of the NODE, not of the request. Anybody who wants a different
-  // index runs a node with a different `ARP_DOMAIN_ATTESTOR`. Nobody changes it per call.
+  // The attestor is a property of the SERVER, not of the request. Anybody who wants a different
+  // index runs a server with a different `ARP_DOMAIN_ATTESTOR`. Nobody changes it per call.
   const attestor = DOMAIN_ATTESTOR;
   if (domainRaw !== undefined && attestor === undefined) {
     // Refuses rather than falling back to the unfiltered graph. The fallback is the failure this
@@ -1384,7 +1384,7 @@ async function findTools(id: JsonRpcId, args: Record<string, unknown>) {
     return fail(
       id,
       -32603,
-      'this node has no domain attestor configured, so it cannot answer a domain search. ' +
+      'this server has no domain attestor configured, so it cannot answer a domain search. ' +
         'Set ARP_DOMAIN_ATTESTOR (or AGENT_ADDRESS) to the address whose filings are the index. ' +
         'Reading the hierarchy unfiltered would return every triple anybody has ever published ' +
         'under the predicate, which is not an index.',
@@ -1559,7 +1559,7 @@ export const handler = {
    *
    * `Bun.serve` binds every interface when no hostname is given, so this listened on the LAN —
    * and `arp_probe_endpoint` fetches a URL the CALLER supplies. Together that made an installed
-   * node an open proxy into the operator's own network: anything that could reach the port could
+   * server an open proxy into the operator's own network: anything that could reach the port could
    * ask it to fetch `http://127.0.0.1:…` or a cloud metadata address and read the answer.
    *
    * Found 2026-10-29 while writing `docs/22` for people who would install this. `ARP_HOST=0.0.0.0`
@@ -1569,7 +1569,7 @@ export const handler = {
   async fetch(request: Request) {
     if (request.method === 'GET') {
       // `GET /content/:atomId` — the one route that is not MCP and not an info document. It is the
-      // content path (ADR `0080`): the node fetches a skill from its origin, passes the bytes
+      // content path (ADR `0080`): the server fetches a skill from its origin, passes the bytes
       // through and signs for having served them. It holds the only key on ARP's side, that key
       // signs receipts and nothing else, and it cannot move value.
       const path = new URL(request.url).pathname;
@@ -1597,9 +1597,9 @@ export const handler = {
           route: '/content/:atomId',
           signer: RECEIPT_SIGNER?.address ?? null,
           attests: 'access, never use',
-          // What THIS node's reader accepts as a second party. Empty means it names none, and a
+          // What THIS server's reader accepts as a second party. Empty means it names none, and a
           // receipt from any signer reads as `unknown-signer` — the honest default, because an
-          // operator-run node's key is unlinkable to that operator's agent key (ADR `0080`).
+          // operator-run server's key is unlinkable to that operator's agent key (ADR `0080`).
           accepted_signers: acceptedSigners(),
           catalogued_skills: sessionCatalogue.length,
         },
@@ -1683,7 +1683,7 @@ if (import.meta.main) {
   // stderr in both modes: the banner is a diagnostic, and on stdio stdout belongs to the protocol.
   const log = (line: string) => process.stderr.write(`${line}\n`);
 
-  log(`ARP MCP node — ${stdio ? 'stdio' : `http://localhost:${PORT}`}`);
+  log(`ARP MCP server — ${stdio ? 'stdio' : `http://localhost:${PORT}`}`);
   log(`  chain:      ${chainId} (${record.chain?.name ?? 'unknown'}) via ARP_TARGET=${targetName}`);
   log(`  graph:      ${GRAPHQL}`);
   log(`  rpc:        ${RPC}`);

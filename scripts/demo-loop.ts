@@ -1,6 +1,6 @@
 /** The whole loop from a need to a receipt, in one command.
  *
- *      # the node has to be running: ARP_TARGET=testnet bun run apps/mcp/src/server.ts
+ *      # the MCP server has to be running: ARP_TARGET=testnet bun run apps/mcp/src/server.ts
  *      ARP_TARGET=testnet bun run scripts/demo-loop.ts --need image --agent 13579/6
  *      ARP_TARGET=testnet bun run scripts/demo-loop.ts --need image --agent 13579/6 --execute
  *
@@ -15,7 +15,7 @@
  *
  *  That step is the whole argument. Anyone can stake on a tool they were told to stake on.
  *
- *  So this asks the node a real question over HTTP, prints the answer a third party would get for
+ *  So this asks the MCP server a real question over HTTP, prints the answer a third party would get for
  *  the same question, picks from it, and hands the result to `demo-adopt` — the real script, as a
  *  subprocess, rather than a second copy of the walk. A demo that reimplements the thing it
  *  demonstrates proves only that the demo works.
@@ -53,7 +53,7 @@ const pick = Number(arg("pick") ?? 1);
 if (need === undefined || agent === undefined) {
     console.error(
         "usage: --need <domain> --agent <chainId>/<tokenId> [--pick <n>] [--stake <TRUST>] [--node <url>] [--execute]\n" +
-            "the node must be running: ARP_TARGET=testnet bun run apps/mcp/src/server.ts",
+            "the MCP server must be running: ARP_TARGET=testnet bun run apps/mcp/src/server.ts",
     );
     process.exit(1);
 }
@@ -65,7 +65,7 @@ console.log(`node       ${node}`);
 console.log(`mode       ${execute ? "EXECUTE — this signs" : "dry run"}\n`);
 
 console.log(line);
-console.log("1. The question, asked of the node over HTTP\n");
+console.log("1. The question, asked of the MCP server over HTTP\n");
 console.log(`   arp_find_tools { domain: "${need}" }\n`);
 
 type Found = {tool_atom_id: string; label: string | null; positions?: number};
@@ -81,7 +81,7 @@ const response = await fetch(node, {
     signal: AbortSignal.timeout(60_000),
 });
 if (!response.ok) {
-    console.error(`   the node answered ${response.status}. Is it running on ${node}?`);
+    console.error(`   the MCP server answered ${response.status}. Is it running on ${node}?`);
     process.exit(1);
 }
 const body = (await response.json()) as {
@@ -89,12 +89,12 @@ const body = (await response.json()) as {
     error?: {message?: string};
 };
 if (body.error !== undefined) {
-    console.error(`   the node refused: ${body.error.message}`);
+    console.error(`   the MCP server refused: ${body.error.message}`);
     process.exit(1);
 }
 const text = body.result?.content?.[0]?.text;
 if (text === undefined) {
-    console.error("   the node answered without content.");
+    console.error("   the MCP server answered without content.");
     process.exit(1);
 }
 const answer = JSON.parse(text) as {

@@ -100,7 +100,7 @@ export const TOOLS = [
             'the broad word and let the walk do the work. Omit it to list everything. A domain ' +
             'whose chain of hierarchy triples up to the root has one unfunded link returns ' +
             'nothing from above that link: the hierarchy has to be paid for, and that is the ' +
-            'mechanism, not a fault. The index you are reading is the one this node is configured with, and you cannot change it per call — that is deliberate: `has tag` and the hierarchy are permissionless to WRITE, so the filings are only an index when read through one chosen set of positions. The response names it in `domain_attestor`.',
+            'mechanism, not a fault. The index you are reading is the one this server is configured with, and you cannot change it per call — that is deliberate: `has tag` and the hierarchy are permissionless to WRITE, so the filings are only an index when read through one chosen set of positions. The response names it in `domain_attestor`.',
         },
         order: {
           type: 'string',
@@ -187,7 +187,7 @@ export const TOOLS = [
       'sends nothing. It plans ONLY for invocations it can name exactly: a skill name is ' +
       'carried by several repositories (104 of 499 in the catalogue), so an ambiguous one is ' +
       'reported with every candidate and gets no call. Where you fetched the tool through a ' +
-      'node, the response also says whether a receipt corroborates the access and who signed ' +
+      'server, the response also says whether a receipt corroborates the access and who signed ' +
       'it. A receipt attests ACCESS, never use.',
     inputSchema: {
       type: 'object',
