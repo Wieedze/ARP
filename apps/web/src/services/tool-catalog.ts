@@ -157,7 +157,10 @@ export type ToolRow = {
      */
     label: string | null;
     href: string;
-    /** How many `uses` edges point at the tool. Sorts `/tools`, where no column shows it. */
+    /**
+     * How many `uses` edges point at the tool. No column shows it, so it sorts `/tools` only as a
+     * tiebreak, after the Declared and Usage figures the reader can see.
+     */
     declarations: number;
     /**
      * Deposits on the tool's edges that ARP's sponsoring service sent, so each one passed the proof
@@ -367,7 +370,8 @@ export type ToolSortAxis = "declared" | "installs" | "stars";
  * Two axes per index, and only ones that mean something there (user, 2026-10-30).
  *
  * "Most staked" and "Most claims" were two orders of the same thing, and read as noise. **Declared**
- * is the one ARP measures: how many agents declare a `uses` edge to the tool. Not "used": the user
+ * is the one ARP measures: the Declared column, deposits on the tool's `uses` edges that did not
+ * pass the proof gate (task 42), so the order reads down the figure it is named for. Not "used": the user
  * asked for that word and, reminded of 2026-10-27, chose "declared" — a declaration is a signed
  * sentence, not an observed use (`docs/14`). Stake behind those edges
  * is the tiebreak and stays on the row, not a separate order. The second axis is somebody else's
@@ -409,6 +413,17 @@ export function rankTools(
         if (axis === "installs" && a.installs !== b.installs)
             return (b.installs ?? -1) - (a.installs ?? -1);
         if (axis === "stars" && a.stars !== b.stars) return (b.stars ?? -1) - (a.stars ?? -1);
+        // **The order reads down the column it is named for.** "Most declared" sorts on the
+        // Declared figure, deposits that did not pass the proof gate, and not on the edge count:
+        // two edges with three deposits each print 6 and rank above three edges with one each,
+        // which print 3. It sorted on `declarations` until review found the Declared column not
+        // reading down in order under its own sort. `null` (unknown) ranks below a known zero.
+        const leftDeclared = left.declaredDeposits ?? -1;
+        const rightDeclared = right.declaredDeposits ?? -1;
+        if (leftDeclared !== rightDeclared) return rightDeclared - leftDeclared;
+        const leftProven = left.provenDeposits ?? -1;
+        const rightProven = right.provenDeposits ?? -1;
+        if (leftProven !== rightProven) return rightProven - leftProven;
         if (right.declarations !== left.declarations) return right.declarations - left.declarations;
         // Then the stake, as the tiebreak: the position COUNT before the amount, because creating a
         // term seeds its vault, so an amount alone ranks a tool nobody staked on above nothing at

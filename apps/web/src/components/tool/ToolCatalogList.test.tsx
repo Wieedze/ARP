@@ -3,6 +3,7 @@ import {screen} from "@testing-library/react";
 
 import {renderWithProviders} from "../../test/render";
 import type {ToolRow} from "../../services/tool-catalog";
+import {rankTools} from "../../services/tool-catalog";
 import {ToolCatalogList} from "./ToolCatalogList";
 
 /**
@@ -66,5 +67,50 @@ describe("ToolCatalogList", () => {
         expect(first?.textContent).toContain("usage2declared");
         expect(second?.textContent).toContain("usagedeclared");
         expect(second?.textContent).not.toMatch(/\d(usage|declared)/);
+    });
+
+    it("reads the Declared column down in order under Most declared", () => {
+        // The sort and the column name the same count. Edge counts are chosen to disagree with it,
+        // so a sort on edges would print 3 above 6.
+        const rows = [
+            row({
+                key: "0x01",
+                name: "wide",
+                declarations: 3,
+                provenDeposits: 0,
+                declaredDeposits: 3,
+            }),
+            row({
+                key: "0x02",
+                name: "deep",
+                declarations: 2,
+                provenDeposits: 0,
+                declaredDeposits: 6,
+            }),
+            row({
+                key: "0x03",
+                name: "mid",
+                declarations: 5,
+                provenDeposits: 0,
+                declaredDeposits: 4,
+            }),
+        ];
+        const ranked = rankTools(rows, "declared", () => ({
+            liveness: "alive",
+            installs: null,
+            stars: null,
+        }));
+        renderWithProviders(<ToolCatalogList rows={ranked} curveId={1} />);
+        const figures = screen
+            .getAllByRole("link")
+            .map((link) => /(\d+)declared/.exec(link.textContent ?? "")?.[1])
+            .map(Number);
+        expect(figures).toEqual([6, 4, 3]);
+    });
+
+    it("says where a declared row came from without the word its Declared column uses", () => {
+        renderWithProviders(<ToolCatalogList rows={[row()]} curveId={1} />);
+        expect(screen.getByText(/named by agents/i)).toBeTruthy();
+        expect(screen.queryByText(/declared by agents/i)).toBeNull();
     });
 });

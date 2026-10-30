@@ -82,8 +82,11 @@ function Row({row, fact, stars}: {row: ToolRow; fact: SkillFact | null; stars: n
                             for; what kind of row it is follows. */}
                         {/* **Only what differs between rows.** "REGISTERED · 1 ON THE TOOL" used
                             to sit here and was identical on all 715: a line that cannot vary is
-                            not information, it is the width it occupies. `declared by agents` is
-                            kept because it is rare and it changes what the figures mean. */}
+                            not information, it is the width it occupies. `named by agents` is
+                            kept because it is rare and it changes what the figures mean. It said
+                            "declared by agents" until the Declared column arrived (task 42), and
+                            one row then carried "declared" for two different things: where the
+                            row came from, and a count of deposits. */}
                         <span className="block font-mono text-[length:var(--text-label)] font-normal text-[color:var(--color-steel)]">
                             {row.source}
                             {fact?.installs === null || fact === null ? null : (
@@ -110,7 +113,7 @@ function Row({row, fact, stars}: {row: ToolRow; fact: SkillFact | null; stars: n
                             )}
                             {row.provenance === "declared" ? (
                                 <span className="pl-1.5 font-sans uppercase tracking-wider">
-                                    · declared by agents
+                                    · named by agents
                                 </span>
                             ) : null}
                         </span>
