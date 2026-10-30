@@ -57,9 +57,19 @@ Five more choices go with it:
 5. **The deposit is on the proof's edge and no other.** The triple must be `(requester's identity
 atom, uses, X)`, where X is the content receipt's tool atom, or the hired agent's identity atom
    for a hire (`hire-receipt.ts`: the edge is `(hirer, uses, agent)`). Both identity atoms are
-   resolved through `same as` (ADR `0032`, `resolveDeclarationSubject`). An agent with no identity
-   atom is refused, not sponsored on its operating wallet's atom. Without this, any registered
-   agent with any hire could have a sponsored, and so _proven_, deposit put on any `uses` triple.
+   resolved through `same as` (ADR `0032`) by `resolveIdentityAtomStrict`, which answers
+   _ambiguous_ instead of taking the first row when two atoms claim one identity: `same as` is
+   permissionless and the read is unordered, so with a second claimant the edge paid for would be
+   chosen by whoever wrote it. An ambiguous identity is a 409, an absent one a 403, and neither is
+   sponsored on the operating wallet's atom. The predicate is the canonical `uses` term the declare
+   path writes, not a setting. Without this, any registered agent with any hire could have a
+   sponsored, and so _proven_, deposit put on any `uses` triple.
+6. **A hire of oneself is refused, by identity and by atom.** The signer check in item 4 accepts an
+   `agentWallet`, so a holder paying its own agent's `agentWallet`, which then signs a receipt naming
+   that same agent, passes `callee !== receiver`. ADR `0094` accepts two agents under one operator;
+   this is one agent, and the edge would be `(A, uses, A)`. `checkSponsorProof` refuses a receipt
+   whose `(agentRegistry, agentId)` is the request's own, and the service refuses a triple whose
+   subject and object atoms are equal, for two ids that resolve to one atom.
 
 And one place where the task text and the rules disagreed: the workflow asked for the key "read from
 env". ADR `0089` §3 and task 37c say a 0600 file, never an environment variable. The environment
@@ -99,7 +109,9 @@ spends once.
   mirrors ARP's registry, so ARP writes them (ADR `0047`); until it has, a hire between those agents
   is refused.
 - The service now reads the graph (two `same as` resolutions per deposit) as well as the chain. A
-  graph that fails answers 500 and spends nothing.
+  graph that fails answers 500 and spends nothing. An agent whose CAIP-19 has a second `same as`
+  claimant cannot be sponsored until that is resolved, and anyone can write that second claim: a
+  griefing route against one agent's sponsorship, not against its capability.
 
 **Neutral (worth knowing):**
 
