@@ -81,13 +81,14 @@ const ROOT = 'tool';
  *
  * Two things in that file are deliberately NOT planned here:
  *
- *   - **`card-payment`**, already on chain and breaking the one-word rule. `assertOneWord` refuses
+ *   - **`card-payment`**, already on chain and breaking the label rule with its hyphen. `assertLabel` refuses
  *     it, so it cannot be re-planned by accident; its replacement `card` is in the proposal.
  *   - **`security`**, which ends up with zero tools because snyk/saw-mcp publishes no description.
  *     A domain nobody's tool sits under is a term we do not need yet.
  */
 type Proposal = {
   domains: {label: string; verdict: string}[];
+  compounds: {label: string; why: string}[];
   secondLevel: {child: string; parent: string}[];
   _toolAssignment: {
     tools: {url: string; does: string; is: string}[];
@@ -121,7 +122,8 @@ const TAGS: readonly [string, string][] = [
  * The normalisation rule, applied before anything is hashed: lowercase, accents stripped.
  *
  * An atom's identity is its bytes, so `Design` and `design` are two nodes for ever, with no repair
- * available on a graph that has no deletion. Measured on testnet 13579: that exact pair exists,
+ * available on a graph that has no deletion. Inner whitespace collapses to one space for the same
+ * reason, now that a compound can pass (ADR `0088`): `npm  package` and `npm package` would be two. Measured on testnet 13579: that exact pair exists,
  * with the typo `motion-desing` attached to one of them.
  */
 function normaliseLabel(raw: string): string {
@@ -129,32 +131,39 @@ function normaliseLabel(raw: string): string {
     .normalize('NFD')
     .replace(/[̀-ͯ]/g, '')
     .toLowerCase()
-    .trim();
+    .trim()
+    .replace(/\s+/g, ' ');
 }
 
 /**
- * **One word. No hyphens, ever.** The user's rule, 2026-10-28: _« tout ne doit faire que un mot pas
- * de mot tiret jamais ok si quelque chose est bancale on crer un nouveau termes »_.
+ * **One word by default, two when necessary, a hyphen never.**
  *
- * It is enforced here rather than trusted, because the previous version of this file *hyphenated*
- * multi-word labels instead of refusing them, and that is how `card-payment` reached 13579 — one
- * atom and two edges, permanent, created about an hour before the rule was stated. A rule that
- * lives only in a conversation gets broken by the next script that runs.
+ * The user's rule, 2026-10-28: _« tout ne doit faire que un mot pas de mot tiret jamais ok si
+ * quelque chose est bancale on crer un nouveau termes »_. Amended 2026-10-30, ADR `0088`: _« oui je
+ * veux autoriser quand c'est nécessaire »_ — a compound is sometimes the only honest term
+ * (`npm package`).
  *
- * The compounds it refuses all had a one-word term available that nobody had to invent:
- * `browser-automation` → `browser`, `project-management` → `collaboration`,
- * `software-development` → `development`, `code-quality` → `quality` (3 existing uses on 13579),
- * `card-payment` → `card`. Where no one-word term fits, the instruction is to coin one — not to
- * join two with a hyphen.
+ * "When necessary" is enforced, not trusted: a label with a space passes only if
+ * `domains.proposal.json` lists it under `compounds` with the reason no single word fits. The
+ * compounds refused before all had one available — `browser-automation` → `browser`,
+ * `project-management` → `collaboration`, `software-development` → `development`, `code-quality` →
+ * `quality`, `card-payment` → `card` — so the default stays a refusal.
+ *
+ * A hyphen or an underscore is refused outright, listed or not. The previous version of this file
+ * *hyphenated* multi-word labels instead of refusing them, and that is how `card-payment` reached
+ * 13579 — one atom and two edges, permanent. A compound is written with a space.
  *
  * Predicates are **not** covered: `has tag` and `is a sub-domain of` are the ecosystem's existing
- * phrases, not vocabulary ARP chooses, and `has tag` alone carries 58,064 edges. If that reading is
- * wrong the predicate list is the only thing that changes.
+ * phrases, not vocabulary ARP chooses.
  */
-function assertOneWord(label: string): void {
-  if (/[-\s_]/.test(label)) {
+function assertLabel(label: string, compounds: ReadonlyMap<string, string>): void {
+  if (/[-_]/.test(label)) {
+    console.error(`refusing "${label}": never a hyphen or an underscore. Write a compound with a space.`);
+    process.exit(1);
+  }
+  if (label.includes(' ') && !compounds.get(label)?.trim()) {
     console.error(
-      `refusing "${label}": a domain is one word, never hyphenated. Coin a new term instead of joining two.`,
+      `refusing "${label}": one word unless necessary. List it under \`compounds\` in domains.proposal.json with why no single word fits.`,
     );
     process.exit(1);
   }
@@ -219,7 +228,8 @@ for (const [, domain] of TAGS) labels.add(normaliseLabel(domain));
 
 // Every label, including the root, before a single id is derived: the check has to run before the
 // plan is built or it is advice rather than a guard.
-for (const label of labels) assertOneWord(label);
+const compounds = new Map(plan.compounds.map((entry) => [normaliseLabel(entry.label), entry.why]));
+for (const label of labels) assertLabel(label, compounds);
 
 type PlannedCall = {
   kind: string;

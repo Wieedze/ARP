@@ -2,7 +2,7 @@
 
 **Generated** 2026-10-30 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-85 decisions. Newest last. `choices/README.md` says when to write one.
+87 decisions. Newest last. `choices/README.md` says when to write one.
 
 ## Not accepted
 
@@ -12,6 +12,8 @@ Read these before relying on them.
 - **0041** (Accepted. Amended by `0082` (2026-10-30): a `packages/graphql` read layer goes under it.) — One protocol package, not two, and it is called what it is
 - **0057** (Accepted — 2026-10-27, on the user's instruction to close everything open.) — Brand identity v0.3: The Source, Saffron, Archivo + Geist Mono
 - **0082** (Accepted. Amends `0041` (a `packages/graphql` under the protocol package).) — Three apps: the MCP server, the agent node and the runtime hook are different programs
+- **0087** (Accepted, one point open (below)) — A tool is its package, and its repository is its source
+- **0088** (Accepted. Amends the one-word rule of 2026-10-28 (`scripts/seed/seed-domain-tree.ts`,) — A label is one word, unless a compound is necessary
 
 ## All
 
@@ -102,3 +104,5 @@ Read these before relying on them.
 | [0084](0084-a-worker-in-front-of-github-and-skills-sh.md) | 2026-10-30 | Accepted | A Worker in front of GitHub and skills.sh, as a cache and never a source |
 | [0085](0085-an-agent-with-no-wallet-generates-its-own-key.md) | 2026-10-30 | Accepted | An agent with no wallet generates its own key, and a funder covers the gas for now |
 | [0086](0086-the-repo-is-sorted-by-kind.md) | 2026-10-30 | Accepted | The repo is sorted by kind: code, data, docs, scripts |
+| [0087](0087-a-tool-is-its-package-and-its-repo-is-its-source.md) | 2026-10-30 | Accepted, one point open (below) | A tool is its package, and its repository is its source |
+| [0088](0088-a-label-is-one-word-unless-a-compound-is-necessary.md) | 2026-10-30 | Accepted. Amends the one-word rule of 2026-10-28 (`scripts/seed/seed-domain-tree.ts`, | A label is one word, unless a compound is necessary |

@@ -1,7 +1,7 @@
 {
  "_status": "PROPOSAL. Nothing here is on the chain yet except where `verdict` says `reuse` — those atoms already exist and were not created by ARP. No transaction has been sent for this file.",
  "_rule": "The user's instruction, 2026-10-28: find the terms that are useful to us first; where one is already on the chain take that one; do not bend the list to fit what happens to be there. So every term below was chosen from what the 53 tools in tools.json say they do, and only then checked against the chain by scripts/measure/term-availability.ts.",
- "_normalisation": "Lowercase, accents stripped. No hyphenation step any more: a multi-word label is refused, not joined. Applied before anything is hashed, because `Design` and `design` are two nodes for ever on a graph with no deletion.",
+ "_normalisation": "Lowercase, accents stripped, inner whitespace collapsed to one space. No hyphenation step: a compound is written with a space and must be listed under `compounds`. Applied before anything is hashed, because `Design` and `design` are two nodes for ever on a graph with no deletion.",
  "_singular": "Singular, always. Measured: `tool` and `payment` exist as plain strings on both chains and `tools`/`payments` do not, so the plural mints the near-duplicate this construction exists to avoid.",
  "_construction": "Plain-string atoms (atom_type TextObject), never pinned Things. A pinned Thing hashes a document with three free-text fields, which is what split 53 labels across 118 atoms on mainnet 1155.",
  "_notReused": {
@@ -149,7 +149,8 @@
   "readTheCostsAgainBeforeSending": "scripts/measure/domain-seed-costs.ts"
  },
  "_openQuestion": "Depth. This is one level under the root plus the single `card-payment` the test left. 17 domains for 53 tools averages 3 tools each, and the `development` bucket alone would hold about 16 — which is a bucket, not a domain. A second level under `development` is the obvious next cut, and it needs the skill repos to say what they are for; 7 of them say only \"Agent superpowers\".",
- "_oneWordRule": "One word. No hyphens, ever. The user's rule, 2026-10-28: « tout ne doit faire que un mot pas de mot tiret jamais ok si quelque chose est bancale on crer un nouveau termes ». Enforced in scripts/seed/seed-domain-tree.ts by assertOneWord, which refuses the plan rather than hyphenating — the previous version hyphenated, and that is how card-payment reached the chain. Predicates are not covered: `has tag` and `is a sub-domain of` are the ecosystem's existing phrases, not vocabulary ARP picks.",
+ "_oneWordRule": "One word by default, two when necessary, a hyphen never. The user's rule, 2026-10-28: « tout ne doit faire que un mot pas de mot tiret jamais ok si quelque chose est bancale on crer un nouveau termes ». Amended 2026-10-30 (ADR 0088): « oui je veux autoriser quand c'est nécessaire ». A label with a space passes only when it is listed under `compounds` with the reason no single word fits; a hyphen or underscore is refused regardless. Enforced in scripts/seed/seed-domain-tree.ts by assertLabel. Predicates are not covered: `has tag` and `is a sub-domain of` are the ecosystem's existing phrases, not vocabulary ARP picks.",
+ "compounds": [],
  "_ruleViolationOnChain": {
   "label": "card-payment",
   "atom": "0x486470d2bbb5b9b67077505c43f5dedc1c36c4d378d293f2e08dad0750457b1c",
