@@ -103,3 +103,10 @@ export {
     type ReachabilityState,
     type ReachabilityTerms,
 } from "./reachability-plan.js";
+
+/** The endpoint binding on Intuition (task 39c): the claim and the signed handshake attached to it. */
+export {
+    MissingAgentAtomError,
+    prepareEndpointBinding,
+    type EndpointBindingPlan,
+} from "./endpoint-binding-plan.js";
