@@ -70,16 +70,11 @@ calls the hook.
 
 ## 4. Decisions for the user, before the step that needs them
 
-1. **Delegations from another browser.** They are invisible today, because storage is local. The
-   options:
-   - accept it, and say so on the page with a `Hint`;
-   - import a pasted blob;
-   - read them from the chain. A delegation is not on chain until it is redeemed, so this would
-     only find the redeemed ones.
-
-   Recommendation: the first two.
-
-2. **Mainnet.** ADR `0036` allows delegated staking on 1155 "once the path has been proven on
+1. ~~**Delegations from another browser.**~~ **Decided 2026-10-30**: they are published on Intuition
+   testnet, as Hourglass does, paid by ARP's sponsor relay within daily limits. ADR `0092`, built in
+   `docs/tasks/37-the-delegation-register.md`. Pasting a blob stays as the fallback for import.
+2. ~~**Mainnet.**~~ **Decided 2026-10-30**: testnet only until it is validated with Intuition (ADR
+   `0092`). ADR `0036` allows delegated staking on 1155 "once the path has been proven on
    testnet end to end". It has not been. Recommendation: the page signs and revokes on **13579
    only**, and on 1155 it shows the toggle and nothing that signs, until that proof exists.
 3. **What else counts as a setting.** Candidates that live on the operator's machine rather than in

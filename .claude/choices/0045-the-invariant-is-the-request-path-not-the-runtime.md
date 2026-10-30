@@ -1,6 +1,7 @@
 # 0045 — the invariant is the request path, not the runtime
 
-**Status:** Accepted
+**Status:** Accepted. **Amended by ADR `0092`** (2026-10-30): ARP may host a service that pays or
+speeds things up, if unplugging it costs the operator money or a click and never a capability.
 **Date:** 2026-10-20
 **Triggered by:** user request — "ca ce nest plus vrai: Not in anyone's runtime", then "oui ca me
 parrait bien cette histoire de noeud"

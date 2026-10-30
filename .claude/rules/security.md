@@ -114,12 +114,13 @@ The `contract-reviewer` agent (in `.claude/agents/`) orchestrates these for you 
   The qualifier is deliberate and was added with ADR `0035`. Four cases, which earlier wordings
   collapsed:
 
-  | Whose funds                                             | Who signs                           | Mainnet?                                                 |
-  | ------------------------------------------------------- | ----------------------------------- | -------------------------------------------------------- |
-  | **ARP's own**                                           | a script or agent, automatically    | **never**                                                |
-  | ARP's own                                               | a human in the panel                | yes, ADR `0017`, seven safeguards                        |
-  | **An agent operator's**, under a delegation they signed | the agent                           | yes **after the path is proven on testnet** — ADR `0036` |
-  | An agent operator's                                     | an agent session with their raw key | **testnet 13579 only** — ADR `0037`                      |
+  | Whose funds                                             | Who signs                            | Mainnet?                                                 |
+  | ------------------------------------------------------- | ------------------------------------ | -------------------------------------------------------- |
+  | **ARP's own**                                           | a script or agent, automatically     | **never**                                                |
+  | ARP's own                                               | a human in the panel                 | yes, ADR `0017`, seven safeguards                        |
+  | **An agent operator's**, under a delegation they signed | the agent                            | yes **after the path is proven on testnet** — ADR `0036` |
+  | An agent operator's                                     | an agent session with their raw key  | **testnet 13579 only** — ADR `0037`                      |
+  | ARP's own                                               | the sponsor relay, within its limits | **testnet 13579 only** — ADR `0092`                      |
 
   Row 3 is the product (`docs/12` points 3 and 5), so a flat "no agent may ever sign a mainnet
   transaction" forbids the thing being built. Row 1 is the development hazard the rule exists for.
@@ -136,10 +137,10 @@ The `contract-reviewer` agent (in `.claude/agents/`) orchestrates these for you 
 
   Two different signers, and conflating them is the error:
 
-  | Who signs                        | What                                      | Rule                                                     |
-  | -------------------------------- | ----------------------------------------- | -------------------------------------------------------- |
-  | A human in ARP's panel           | a deposit on a `has trust provider` claim | ADR `0017`. The UI never auto-stakes; a human clicks.    |
-  | An **external agent's operator** | one delegation, once                      | `docs/12` point 5. ARP is not a party and signs nothing. |
+  | Who signs                        | What                                      | Rule                                                                                                              |
+  | -------------------------------- | ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+  | A human in ARP's panel           | a deposit on a `has trust provider` claim | ADR `0017`. The UI never auto-stakes; a human clicks.                                                             |
+  | An **external agent's operator** | one delegation, once                      | `docs/12` point 5. ARP does not sign the delegation. On testnet its relay may pay to **publish** it (ADR `0092`). |
 
   **Testnet 13579 is permitted, and that is now written rather than inferred** (ADR `0037`). An agent
   session may sign there with the operator's key when the user asks for that specific action, on
@@ -148,6 +149,12 @@ The `contract-reviewer` agent (in `.claude/agents/`) orchestrates these for you 
   action asked for and not a standing licence — approval of one mint is not approval of a loop. This
   paragraph exists because the rule's silence about testnet got filled by inference from an ADR that
   did not cover it.
+
+  **One standing licence exists, and it is narrow** (ADR `0092`, the user's decision 2026-10-30):
+  the sponsor relay may publish an operator's **signed, verified** delegation to IPFS and index it
+  on Intuition **testnet 13579**, paid by ARP's treasury key, within a per-delegator daily limit and
+  a global daily budget. It verifies the signature before it pins or writes anything. Mainnet needs
+  a new ADR.
 
   ADR `0017` scopes _itself_ away from the second case — it says it does not authorise "any automated
   or agent-initiated stake". That makes agent-initiated staking **not yet authorised**, not

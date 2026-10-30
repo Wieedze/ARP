@@ -2,7 +2,7 @@
 
 **Generated** 2026-10-30 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-91 decisions. Newest last. `choices/README.md` says when to write one.
+92 decisions. Newest last. `choices/README.md` says when to write one.
 
 ## Not accepted
 
@@ -10,6 +10,7 @@ Read these before relying on them.
 
 - **0015** (Accepted in part — the trust-provider role is **rejected** by ADR `0046`) — Adopt the canonical Intuition ERC-8004 pattern; ARP publishes as a trust provider
 - **0041** (Accepted. Amended by `0082` (2026-10-30): a `packages/graphql` read layer goes under it.) — One protocol package, not two, and it is called what it is
+- **0045** (Accepted. **Amended by ADR `0092`** (2026-10-30): ARP may host a service that pays or) — the invariant is the request path, not the runtime
 - **0057** (Accepted — 2026-10-27, on the user's instruction to close everything open.) — Brand identity v0.3: The Source, Saffron, Archivo + Geist Mono
 - **0082** (Accepted. Amends `0041` (a `packages/graphql` under the protocol package).) — Three apps: the MCP server, the agent node and the runtime hook are different programs
 - **0087** (Accepted, one point open (below)) — A tool is its package, and its repository is its source
@@ -63,7 +64,7 @@ Read these before relying on them.
 | [0042](0042-a-vault-s-assets-are-not-evidence-of-a-stake.md) | 2026-10-19 | Accepted | A vault's assets are not evidence of a stake; its position count is |
 | [0043](0043-a-retraction-is-greppable-or-it-is-partial.md) | 2026-10-19 | Accepted | A retraction is greppable, or it is partial |
 | [0044](0044-tool-is-the-one-word.md) | 2026-10-20 | Accepted | "Tool" is the one word on screen; two rule lines corrected |
-| [0045](0045-the-invariant-is-the-request-path-not-the-runtime.md) | 2026-10-20 | Accepted | the invariant is the request path, not the runtime |
+| [0045](0045-the-invariant-is-the-request-path-not-the-runtime.md) | 2026-10-20 | Accepted. **Amended by ADR `0092`** (2026-10-30): ARP may host a service that pays or | the invariant is the request path, not the runtime |
 | [0046](0046-arp-scores-nobody.md) | 2026-10-20 | Accepted | ARP scores nobody; it makes staking possible and reads the result |
 | [0047](0047-the-mirror-is-a-prerequisite-and-signing-is-a-separate-program.md) | 2026-10-20 | Accepted | the mirror is a prerequisite nobody listed, and signing is a separate program |
 | [0048](0048-arp-does-not-mirror-8004-feedback.md) | 2026-10-20 | Accepted | ARP does not mirror ERC-8004 feedback; it reads it beside its own claims |
@@ -110,3 +111,4 @@ Read these before relying on them.
 | [0089](0089-the-probe-is-not-the-pulse.md) | 2026-10-30 | Accepted | The probe is not the pulse |
 | [0090](0090-what-the-hook-records.md) | 2026-10-30 | Accepted | What the hook records: outcome and identity, never content or credentials |
 | [0091](0091-the-agent-s-activity-reaches-the-browser-through-a-local-feed.md) | 2026-10-30 | Accepted | The agent's activity reaches the browser through a local, read-only feed |
+| [0092](0092-arp-sponsors-delegation-publication-on-testnet.md) | 2026-10-30 | Accepted | ARP sponsors the publication of delegations, on testnet, from its treasury |
