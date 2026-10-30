@@ -54,7 +54,7 @@ fallback has no gesture handling at all.
 - **Snap on scroll end** (debounce, then animate to the nearest band). The reader sees the raw
   scrubbed motion first and a correction afterwards, which is the "jump then fade" failure v1 was
   built to avoid, arriving from the other direction.
-- **A scroll library (GSAP ScrollTrigger, Lenis).** `docs/18` §6 sets the bar for a motion
+- **A scroll library (GSAP ScrollTrigger, Lenis).** `docs/18_THE_MOTION_SPEC.md` §6 sets the bar for a motion
   dependency: a timeline, scrubbed progress, or reversibility. This needs the second, and it now has
   it in about 60 lines. Revisit if route transitions and the veil want to share a timeline.
 - **Buttons or a "next" affordance instead of the wheel.** Honest and accessible, and rejected: the

@@ -137,7 +137,18 @@ ARP/
 │   ├── 14_THE_WITNESS_PROBLEM.md
 │   ├── 15_ROADMAP.md
 │   ├── 16_THE_AGENT_PAGE.md         (design brief — the agent page)
-│   └── 17_THE_ATOM_PAGE.md          (design brief — the atom page's gravity field + curves)
+│   ├── 17_THE_ATOM_PAGE.md          (design brief — the atom page's gravity field + curves)
+│   ├── 18_THE_MOTION_SPEC.md        **two files are numbered 18.** This one is answered — the
+│   │                                design came back as `arp-motion-reference/MOTION-V2.md`,
+│   │                                which wins where they disagree (task 29, ADR `0070`)
+│   ├── 18_THE_DOMAIN_TREE.md        the other 18, added two days later onto a number already in
+│   │                                use. **Cite either by its full filename, never as `docs/18`**
+│   ├── 19_THE_GAP_A_THIRD_PARTY_MEASURED.md
+│   ├── 20_WHAT_A_SKILL_LOOKS_LIKE_ON_CHAIN.md   (and the open classification question — whether a
+│   │                                skill matching no keyword gets a tag at all)
+│   ├── 21_RUNNING_THE_LOOP.md
+│   └── 22_RUNNING_THE_NODE.md       (the operator-facing account: every file, every env var,
+│                                     every outbound connection, and what it does NOT protect)
 ├── tasks/                             atomic task files
 ├── contracts/                         Solidity (Foundry)
 ├── apps/                              what RUNS (ADR 0082)

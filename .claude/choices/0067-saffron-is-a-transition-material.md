@@ -91,7 +91,7 @@ that better than a grey dot nobody can read as an assertion.
   Readers with `prefers-reduced-motion` never see it: the deck stacks and the veil is not drawn.
 - `PulseField.tsx` is deleted rather than amended, and with it the reasoning quoted above. A
   comment that argues for behaviour the file no longer has is worse than none (`rules/code.md`), and
-  git is where the argument lives now. `docs/18` §2 still describes the old component and is
+  git is where the argument lives now. `docs/18_THE_MOTION_SPEC.md` §2 still describes the old component and is
   corrected in the same commit.
 
 **Neutral (worth knowing):**

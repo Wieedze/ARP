@@ -1,4 +1,4 @@
-import {useEffect, useState, type CSSProperties} from "react";
+import {useEffect, useState} from "react";
 import {Link} from "react-router-dom";
 import type {RecentDeclaration} from "@arp-protocol/core";
 
@@ -599,7 +599,7 @@ function GrowthDiagram() {
                     cy="250"
                     r="6"
                     fill="var(--color-silver)"
-                    style={{"--draw-at": `${1120 + index * 520}ms`} as CSSProperties}
+                    style={cssVars({"--draw-at": `${1120 + index * 520}ms`})}
                 />
             ))}
             <text

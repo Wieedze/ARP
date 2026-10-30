@@ -4,7 +4,7 @@ Written 2026-10-29, after 662 skills, 662 `source` edges and ~530 `has tag` edge
 Intuition testnet 13579. It is the map of what is written, what is deliberately **not** written,
 and which line separates them.
 
-`docs/18` is the domain tree's theory. This is the thing that got built on top of it.
+`docs/18_THE_DOMAIN_TREE.md` is the domain tree's theory. This is the thing that got built on top of it.
 
 ## 1. The whole picture
 

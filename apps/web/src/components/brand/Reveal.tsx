@@ -1,4 +1,6 @@
-import type {CSSProperties, ReactNode} from "react";
+import type {ReactNode} from "react";
+
+import {cssVars} from "../../lib/css-vars";
 
 /**
  * Bring an element in once, when its scene arrives.
@@ -54,7 +56,7 @@ export function Reveal({
     return (
         <div
             className={`arp-rev ${fade ? "arp-rev-fade" : ""} ${className}`}
-            style={{"--reveal-index": index, "--reveal-after": `${afterMs}ms`} as CSSProperties}
+            style={cssVars({"--reveal-index": index, "--reveal-after": `${afterMs}ms`})}
         >
             {children}
         </div>

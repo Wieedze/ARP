@@ -79,7 +79,7 @@ None global. `.claude/rules/ui.md`, `code.md`, `claims.md`, `workflow.md`.
 `.claude/rules/ui.md` is amended in the same commit for D1, D3 and D4, per `CLAUDE.md`'s "When to
 update a rule".
 
-### The three motion scales (`docs/18` §1)
+### The three motion scales (`docs/18_THE_MOTION_SPEC.md` §1)
 
 | scale | state before                  | state now                                                           |
 | ----- | ----------------------------- | ------------------------------------------------------------------- |
@@ -112,11 +112,11 @@ uncovered: the gesture stepping, the hand-over in situ, the dive, the four Saffr
 scrubbed manifesto and the `played` set.
 
 ```
-cd app && bunx tsc -b
-cd app && bun run lint
-cd app && bun run test
-cd app && bun run check:tokens
-cd app && bun run check:contrast
+cd apps/web && bunx tsc -b
+cd apps/web && bun run lint
+cd apps/web && bun run test
+cd apps/web && bun run check:tokens
+cd apps/web && bun run check:contrast
 bun run check:scripts
 bun --filter '*' test
 bun --filter '*' lint   # exits 127 — see below
@@ -137,7 +137,7 @@ working linter.** Say that rather than "lint 0".
 Browser, and not optional — all five are in `scripts/measure/landing-fit.ts`:
 
 ```
-cd app && bun run build && bunx vite preview --port 4173 &
+cd apps/web && bun run build && bunx vite preview --port 4173 &
 bun run scripts/measure/landing-fit.ts
 ```
 
@@ -209,15 +209,36 @@ Both were invisible to `tsc`, `eslint`, 459 tests, `check:tokens` and `check:con
   So this is nearer a **dependency** than an improvement: without it the deck is geometrically
   wrong. It still changes every page, and it was not asked for, which is why it is here.
 
-  One measurement for the decision: the nav is **89px at 1440 and 1920 and 218px at 390** — it
-  wraps to three rows on a phone, so it occupies 26% of an 844px viewport, permanently, on all
-  five pages. `scripts/measure/landing-fit.ts` prints it and does not assert it.
+  One measurement for the decision, **re-measured 2026-10-30 because the first version of it was
+  wrong by a third**: the nav is **65px at 1440 and 1920 and 202px at 390** — it wraps to three rows
+  on a phone, so it occupies **24%** of an 844px viewport, permanently, on every route.
+  `scripts/measure/landing-fit.ts` prints it and does not assert it.
 
-- **The route transition reached all four other pages**, which this task said not to touch, and
+  It said **89px / 218px / 26% / all five pages** when the question was put to the user, and
+  `NAV_HEIGHT` went 88 → 64 on 2026-10-29 (`apps/web/src/components/brand/nav-height.ts:10`:
+  _"the user found 88 too tall"_) — so the only evidence this file offered a future reader for the
+  decision described a nav that had stopped existing. **The yes was to the mechanism, not to the
+  number**, and it still stands: the nav is sticky because the deck's geometry depends on it, at
+  whatever height it is set to. Read the constant, not this paragraph.
+
+  The same correction had already missed a **fifth** site, outside `apps/web` where no app gate
+  looks: `scripts/measure/landing-fit.ts` carried `const NAV = 88`, making its own fit assertion
+  24px stricter than the product — and at 1440x680 band 5 sits at exactly 88, one pixel from
+  failing a page nobody had touched. It imports `NAV_HEIGHT` now. `rules/claims.md` §5, and this is
+  the clearest instance of it in the repo: a number unified into one module, corrected in that
+  module, and left stale in the script whose job is to check the thing the number describes.
+
+- **The route transition reached every other route**, which this task said not to touch, and
   **the prohibition and the deliverable contradict each other in this file's own spec.** The task
-  lists the route scale as one of three to build (`docs/18` §5), and a route transition cannot
-  exist on one route: it fades whatever arrives, so `/agents`, `/tools`, `/atom/:atomId` and
-  `/agent` each gained a 200ms opacity fade. The prohibition was written about the **block and word
+  lists the route scale as one of three to build (`docs/18_THE_MOTION_SPEC.md` §5), and a route
+  transition cannot exist on one route: it fades whatever arrives.
+
+  **"All four other pages" was an undercount, corrected 2026-10-30.** `App.tsx` carries **13**
+  `<Route>` entries and `RouteTransition` wraps all of them, so beyond `/agents`, `/tools`,
+  `/atom/:atomId` and `/agent` the fade also reaches `/profile`, `/register`, `/rig`,
+  `/agent/import`, `/agent/:chainId/:tokenId`, `/me` and `/tool/atom/:atomId`. The sticky nav is on
+  every page, not five. Neither changes the decision; both needed a date (`rules/claims.md` §2),
+  and a count of routes in a growing router is the kind of figure that rots — read `App.tsx`. The prohibition was written about the **block and word
   scales and the pages' own layout**, which are untouched — but it does not say so, and reading it
   literally the task breached itself. Reversing it means deleting the route scale.
 

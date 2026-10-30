@@ -6,7 +6,7 @@
 
 ## Context
 
-`docs/18` asked for three motion scales and said each had to earn its own line. Two did not exist
+`docs/18_THE_MOTION_SPEC.md` asked for three motion scales and said each had to earn its own line. Two did not exist
 when it was written:
 
 - **§4, word scale** — the words of a display heading arriving one after another. The brief called

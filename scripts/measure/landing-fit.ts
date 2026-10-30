@@ -42,8 +42,17 @@ export {};
 
 const CHROME = '/root/.cache/ms-playwright/chromium-1140/chrome-linux/chrome';
 
-/** The nav is `sticky top-0` and 88px tall, so a pinned scene starts below it. */
-const NAV = 88;
+/**
+ * The nav is `sticky top-0`, so a pinned scene starts below it.
+ *
+ * **Imported, not restated.** It said `88` until 2026-10-30, while the product has been 64 since
+ * 2026-10-29 — `nav-height.ts` exists because the number was in four places and says so in its own
+ * docstring. This was the fifth, outside `apps/web` where no app gate looks, and `check:scripts`
+ * typechecks a wrong constant as happily as a right one. The fit assertion below was therefore 24px
+ * stricter than the geometry it checks, and at 1440x680 band 5 sits at exactly 88 — one pixel from
+ * failing a page nobody had touched. `rules/claims.md` §5.
+ */
+import { NAV_HEIGHT as NAV } from '../../apps/web/src/components/brand/nav-height.js';
 
 const PORT = 9333;
 
@@ -374,7 +383,7 @@ for (const reduced of [false, true]) {
       note(where, 'field behind the hero copy', 'below 900px it sits above it, 320px tall');
     }
     if (page.pinned && page.navPosition !== 'sticky') {
-      note(where, 'nav is not sticky', `position: ${page.navPosition}; the deck assumes 88px`);
+      note(where, 'nav is not sticky', `position: ${page.navPosition}; the deck assumes ${NAV}px`);
     }
 
     // **Before the stacked `continue` below.** It was after it, so this was dead in five of the
@@ -505,8 +514,23 @@ for (const reduced of [false, true]) {
     // handling scrolls to its box.
     await cdp.send('Runtime.evaluate', { expression: BAND(0), returnByValue: true });
     await sleep(1200);
+
+    // **Drive the hash; do not click a link.** This clicked `a[href="#build"]` until 2026-10-30,
+    // and the user cut that link's copy on 2026-10-29 — so `?.click()` became a silent no-op and
+    // the deck was reported as having landed on the scene it never left. **A check that could only
+    // fail**, which is the exact mirror of the "check that could no longer fail" this gate was
+    // already written to avoid. `Landing.test.tsx` disclosed the removal in a comment; this script,
+    // which lives outside `apps/web` and outside every app gate, did not inherit it.
+    //
+    // The hash IS the mechanism this Gate line is about. How many anchors point at it is a separate
+    // fact, so it is printed and never asserted: cutting a link again cannot break this check.
+    const anchorReply = (await cdp.send('Runtime.evaluate', {
+      expression: String.raw`String(document.querySelectorAll('a[href^="#build"]').length)`,
+      returnByValue: true,
+    })) as { result?: { value?: string } };
+    const anchors = anchorReply.result?.value ?? '?';
     await cdp.send('Runtime.evaluate', {
-      expression: String.raw`document.querySelector('a[href="#build"]')?.click()`,
+      expression: String.raw`(location.hash = '#build', '')`,
       returnByValue: true,
     });
     await sleep(2600);
@@ -518,7 +542,9 @@ for (const reduced of [false, true]) {
       index: string | null;
       opacity: string;
     };
-    console.log(`  #build -> scene ${jumped.index} at opacity ${jumped.opacity}`);
+    console.log(
+      `  #build -> scene ${jumped.index} at opacity ${jumped.opacity} (${anchors} in-page anchor(s))`,
+    );
     if (jumped.index !== '5') {
       note(where, '#build landed on the wrong scene', `scene ${jumped.index}, want 5`);
     } else if (Number(jumped.opacity) < 0.99) {
