@@ -317,6 +317,40 @@ contract ReceiptEnforcerTest is Test {
         );
     }
 
+    /// The deposit may spend exactly what the receipt says was paid.
+    function test_beforeHook_acceptsValueEqualToPaid() public {
+        ReceiptEnforcer.HireReceipt memory r = _receipt();
+        _hook(_terms(), _args(r), _depositWithValue(REDEEMER, TERM, r.paid));
+        assertTrue(enforcer.isPaymentUsed(CHAIN, PAYMENT));
+    }
+
+    function test_beforeHook_acceptsValueBelowPaid() public {
+        ReceiptEnforcer.HireReceipt memory r = _receipt();
+        _hook(_terms(), _args(r), _depositWithValue(REDEEMER, TERM, r.paid - 1));
+    }
+
+    function test_beforeHook_revertsWhenValueExceedsPaid() public {
+        ReceiptEnforcer.HireReceipt memory r = _receipt();
+        _hookReverts(
+            abi.encodeWithSelector(ReceiptEnforcer.DepositExceedsPaid.selector, r.paid + 1, r.paid),
+            _terms(),
+            _args(r),
+            _depositWithValue(REDEEMER, TERM, r.paid + 1)
+        );
+        assertFalse(enforcer.isPaymentUsed(CHAIN, PAYMENT));
+    }
+
+    function testFuzz_beforeHook_valueOverPaidReverts(uint256 value) public {
+        ReceiptEnforcer.HireReceipt memory r = _receipt();
+        value = bound(value, r.paid + 1, type(uint256).max);
+        _hookReverts(
+            abi.encodeWithSelector(ReceiptEnforcer.DepositExceedsPaid.selector, value, r.paid),
+            _terms(),
+            _args(r),
+            _depositWithValue(REDEEMER, TERM, value)
+        );
+    }
+
     function test_beforeHook_revertsOnBatchMode() public {
         ModeCode mode = ModeLib.encode(CALLTYPE_BATCH, EXECTYPE_DEFAULT, MODE_DEFAULT, ModePayload.wrap(0x00));
         _modeReverts(mode, "CaveatEnforcer:invalid-call-type", _terms(), _args(_receipt()));
@@ -470,9 +504,13 @@ contract ReceiptEnforcerTest is Test {
     }
 
     function _deposit(address receiver, bytes32 termId) internal pure returns (bytes memory) {
+        return _depositWithValue(receiver, termId, 0.001 ether);
+    }
+
+    function _depositWithValue(address receiver, bytes32 termId, uint256 value) internal pure returns (bytes memory) {
         bytes memory call =
             abi.encodeWithSignature("deposit(address,bytes32,uint256,uint256)", receiver, termId, uint256(1), 0);
-        return ExecutionLib.encodeSingle(MULTIVAULT, 0.001 ether, call);
+        return ExecutionLib.encodeSingle(MULTIVAULT, value, call);
     }
 
     function _singleDefault() internal pure returns (ModeCode) {
