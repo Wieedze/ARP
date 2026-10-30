@@ -336,3 +336,18 @@ wait for it unless one misleads a reader before then.
     real `uses` edges this project has written are unreachable by their own route — found
     2026-10-28 while checking why their sigil did not render, which it does on a tool's page one
     screen away.
+
+43. ~~**`/agent` step 5 told an operator to run a script that does not exist.**~~ **FIXED
+    2026-10-30** on `fix/28-dead-script-reference`. `scripts/agent-approve-sa.ts` was deleted in
+    `bf20de0`, and the copy shown when the runtime key is not in memory still said "or run
+    `bun scripts/agent-approve-sa.ts` instead" (`apps/web/src/pages/AgentRegister.tsx`). Nothing under
+    `scripts/agent/` replaced it — `grep -rln "grantSmartAccountDepositApproval\|fundAndApproveRuntime" scripts`
+    finds no file — so the instruction was removed rather than repointed: pasting the saved key
+    back in is the one path, and the copy now says only that. Five comment sites went with it: one
+    in `AgentRegister.tsx`'s step-5 docstring and four in `apps/web/src/services/delegation-redeem.ts`
+    (two naming the script, two pointing at it as "the setup script" and "the equivalent script").
+    The check, run from the repo root:
+    `grep -rn "approve-sa" --exclude-dir=node_modules --exclude-dir=worktrees --exclude=28-coherence-audit.md .`
+    prints one line, `.claude/choices/0033-the-hackathon-surface-is-set-aside.md:44` — ADR `0033`'s
+    list of what was set aside, append-only and historically true, so left. This file is excluded
+    because this entry names the script three times itself.

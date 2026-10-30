@@ -189,15 +189,15 @@ const approvalAbi = [
  * is the SA (executeFromExecutor) and the check is
  * `sender == receiver || approvals[receiver][sender] & DEPOSIT`.
  *
- * **Operator workflow** — call this **once** via `scripts/agent-approve-sa.ts`
- * after funding the runtime EOA with gas. The approval persists on chain
+ * **Operator workflow** — called **once**, by `fundAndApproveRuntime` at
+ * `/agent` step 5, after funding the runtime EOA with gas. The approval persists on chain
  * until explicitly revoked. A runtime assumes it is already granted
  * and surfaces a clear pointer if a stake reverts with the matching
  * selector.
  *
  * MultiVault's `approvals` mapping is `internal` with no public getter,
  * so this helper does not attempt an existence check — that is the
- * operator's discipline by running the setup script once.
+ * operator's discipline by running step 5 once.
  *
  * @returns The transaction hash.
  */
@@ -219,8 +219,9 @@ export async function grantSmartAccountDepositApproval(params: {
 
 /**
  * One-click runtime bring-up performed from the operator's browser at
- * `/agent` step 5. Combines the two transactions that previously
- * required `scripts/agent-approve-sa.ts`:
+ * `/agent` step 5. Combines the two transactions that a separate script
+ * used to send; that script was deleted in `bf20de0` and nothing
+ * replaced it, so this is the only path:
  *
  *   1. Operator sends `fundAmount` of tTRUST to the runtime EOA so it
  *      has gas to operate. Signed via the operator's wallet (MetaMask
@@ -231,8 +232,8 @@ export async function grantSmartAccountDepositApproval(params: {
  *      locally, no popup.
  *
  * The runtime's private key never leaves the browser tab; it is only
- * available during the same session as step 2. After page refresh the
- * operator must run the equivalent script.
+ * available during the same session as step 2. After a page refresh the
+ * operator pastes the saved key back in at step 5.
  */
 export async function fundAndApproveRuntime(params: {
     operatorWalletClient: WalletClient<Transport, Chain, Account>;
