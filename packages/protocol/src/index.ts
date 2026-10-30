@@ -727,3 +727,14 @@ export {
     type PublishDelegationPlan,
     type TypedDataVerifier,
 } from "./delegation/register.js";
+
+/**
+ * Whether a delegation is revoked (`docs/tasks/37` 37a's `isDisabled`): a failed read is
+ * `"unknown"`, never `"enabled"`.
+ */
+export {
+    DISABLED_DELEGATIONS_ABI,
+    readDelegationState,
+    type DelegationOnChainState,
+    type DisabledDelegationsReader,
+} from "./delegation/state.js";
