@@ -21,10 +21,11 @@ import {corroborationOf, verifyContentReceipt, type SignedContentReceipt} from "
  * second **key** signed, and that key is a registered agent's, never that a second operator exists.
  *
  * **The payment is a transfer, not a burn.** {@link ProvenProof.cost} is what the requester paid
- * the callee, and the service sponsors less than that. Between two operators, that makes faking a
- * hire cost more than the sponsorship it earns. One operator holding both keys gets the payment
- * back and is out only the gas of the payment, so for that operator the price rule bounds nothing:
- * what bounds it is the per-agent daily count and the daily budget (`limits.ts`).
+ * the callee. On mainnet the service will sponsor less than that (`SponsorLimits.belowProofCost`,
+ * off on testnet, ADR `0094` as amended). Between two operators, that makes faking a hire cost more
+ * than the sponsorship it earns. One operator holding both keys gets the payment back and is out
+ * only the gas of the payment, so for that operator the price rule bounds nothing: what bounds it is
+ * the per-agent daily count and the daily budget (`limits.ts`).
  */
 export type SponsorProof =
     | {kind: "hire"; receipt: SignedHireReceipt}
@@ -56,9 +57,9 @@ export type ProvenProof = {
      * proof has no price this module can read.
      *
      * A content receipt is `null` today: a fetch through ARP is free until x402 puts a price on it
-     * (`docs/tasks/41`). The service refuses an unpriced proof, because ADR `0094` §2 requires a
-     * sponsored amount to stay **below** the cost of the proof that unlocks it, and nothing is below
-     * an unknown.
+     * (`docs/tasks/41`). The service refuses an unpriced proof until that task binds a fetch to its
+     * payment. On mainnet ADR `0094` §2 also requires a sponsored amount to stay **below** the cost
+     * of the proof that unlocks it, and nothing is below an unknown.
      */
     cost: bigint | null;
     /** A key that identifies the proof, so one proof sponsors one deposit. */

@@ -11,9 +11,13 @@ import {getAddress, type Address, type Hex} from "viem";
  * service's own balance is the hard limit behind both.
  *
  * Two values the user has **not** set are required configuration rather than defaults: the amount
- * of one sponsored deposit and the gas sent for the one-time `approve`. And the withdrawal threshold
- * is `null` until the user sets it, which this module reads as "not enforced" and the service's
- * info route prints as unset.
+ * of one sponsored deposit and the gas sent for the one-time `approve`.
+ *
+ * **Two rules here are mainnet rules and are off on testnet** (ADR `0094`, amended 2026-10-30, user
+ * decision: _« pour le testnet on s'en fout on fait tout sponsored »_): the withdrawal threshold and
+ * the rule that a sponsored amount stays below the cost of its proof. Both protect the signal
+ * against self-dealing, not the treasury, and are decided before mainnet. ADR `0092`'s count and
+ * budget stay on: they protect the treasury.
  */
 export type SponsorLimits = {
     /** The fixed amount of one sponsored deposit, in wei. Never a share of a payment (ADR `0094` §4). */
@@ -30,9 +34,16 @@ export type SponsorLimits = {
     approvalGas: bigint;
     /**
      * Past this share of its sponsored shares withdrawn, in basis points, an agent is no longer
-     * sponsored. `null`: not set by the user, not enforced.
+     * sponsored. A **mainnet** rule: `null`, not enforced, on testnet, where everything proven is
+     * sponsored (ADR `0094` as amended).
      */
     withdrawalThresholdBps: number | null;
+    /**
+     * Refuse a proof whose cost is not strictly above the sponsored amount (ADR `0094` §2). A
+     * **mainnet** rule: `false` on testnet, so any proven hire, whatever it paid, is sponsored. An
+     * unpriced proof (a content receipt, until `docs/tasks/41`) is refused either way.
+     */
+    belowProofCost: boolean;
 };
 
 /** The three values ADR `0092` item 3 fixed. The other three have no default on purpose. */

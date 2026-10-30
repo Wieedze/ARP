@@ -11,8 +11,12 @@
  *  other chain, reads the key from a 0600 file and never from the environment, and never prints it.
  *
  *  **Two values the user has not set have no default** and the service refuses to start without
- *  them: the amount of one sponsored deposit, and the gas sent for the agent's `approve`. The
- *  withdrawal threshold is optional and unset by default (`docs/tasks/40` 40d).
+ *  them: the amount of one sponsored deposit, and the gas sent for the agent's `approve`.
+ *
+ *  **On testnet everything proven is sponsored** (ADR `0094`, amended 2026-10-30). The withdrawal
+ *  threshold and the cost-of-proof rule are mainnet rules: the threshold is unset unless
+ *  `SPONSOR_WITHDRAWAL_THRESHOLD_BPS` is given, which a testnet run leaves unset, and the cost rule
+ *  is off with no setting to turn it on here. ADR `0092`'s count and budget stay.
  *
  *  **Publication is off.** Its pinning service is undecided (`docs/tasks/37` §4.3) and its two
  *  predicates have not been read from the graph yet (ADR `0092` item 7), so `POST /publish` answers
@@ -91,10 +95,13 @@ const limits: SponsorLimits = {
     'SPONSOR_PUBLICATIONS_PER_DELEGATOR_PER_DAY',
     ADR_0092_LIMITS.publicationsPerDelegatorPerDay,
   ),
+  // A mainnet rule (ADR `0094` as amended): leave it unset on testnet.
   withdrawalThresholdBps:
     threshold === undefined
       ? null
       : Math.min(10_000, count('SPONSOR_WITHDRAWAL_THRESHOLD_BPS', 10_000)),
+  // A mainnet rule (ADR `0094` §2 as amended): on testnet a hire is sponsored whatever it paid.
+  belowProofCost: false,
 };
 
 // The predicate the declare path writes (`declare/plan.ts`) and every reader filters on. Not

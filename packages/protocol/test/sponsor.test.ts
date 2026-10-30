@@ -413,6 +413,7 @@ describe("limits", () => {
         depositAmount: MILLI,
         approvalGas: MILLI / 10n,
         withdrawalThresholdBps: null,
+        belowProofCost: false,
     };
     const DAY = 86_400_000;
     const at = 20_000 * DAY + 3_600_000;

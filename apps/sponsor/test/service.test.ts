@@ -43,7 +43,8 @@ const AGENT_KEY = `0x${'11'.repeat(32)}` as const;
 const AGENT = privateKeyToAccount(AGENT_KEY);
 const CALLEE = privateKeyToAccount(`0x${'22'.repeat(32)}`);
 const NODE = privateKeyToAccount(`0x${'33'.repeat(32)}`);
-const SPONSOR = privateKeyToAccount(`0x${'44'.repeat(32)}`).address;
+const SPONSOR_ACCOUNT = privateKeyToAccount(`0x${'44'.repeat(32)}`);
+const SPONSOR = SPONSOR_ACCOUNT.address;
 const STRANGER = privateKeyToAccount(`0x${'55'.repeat(32)}`);
 
 const CHAIN = 13579;
@@ -66,6 +67,7 @@ const LIMITS: SponsorLimits = {
   depositsPerAgentPerDay: 2,
   publicationsPerDelegatorPerDay: 2,
   withdrawalThresholdBps: null,
+  belowProofCost: false,
 };
 
 const depositAbi = parseAbi([
@@ -238,10 +240,11 @@ async function depositBody(
   proof: SponsorProof,
   signer = AGENT,
   over: Record<string, unknown> = {},
+  agent: Address = AGENT.address,
 ) {
   const request = {
     version: 1,
-    agent: AGENT.address,
+    agent,
     agentRegistry: REGISTRY,
     agentId: '7',
     termId: TERM,
@@ -283,6 +286,7 @@ describe('GET /', () => {
     expect(info.chainId).toBe(CHAIN);
     expect(info.sponsor).toBe(SPONSOR);
     expect(info.limits.withdrawalThresholdBps).toBe('unset');
+    expect(info.limits.belowProofCost).toBe(false);
     expect(info.limits.pendingSends).toBe(0);
     expect(info.limits.depositsPerAgentPerDay).toBe(2);
     expect(info.limits.dailyBudgetWei).toBe((10n ** 18n).toString());
@@ -449,16 +453,41 @@ describe('POST /deposit', () => {
     expect(w.sent).toHaveLength(0);
   });
 
-  test('refuses a proof that cost no more than the sponsored amount', async () => {
+  test('on testnet sponsors a hire that cost no more than the sponsored amount', async () => {
+    const w = world();
+    const proof = await hireProof(1n);
+    const res = await call(
+      sponsor(w, { payments: payments(1n) }),
+      '/deposit',
+      await depositBody(proof),
+    );
+    expect(res.status).toBe(200);
+    expect(w.sent).toHaveLength(1);
+  });
+
+  test('with the mainnet cost rule on, refuses a proof that cost no more than the amount', async () => {
     const w = world();
     const proof = await hireProof(MILLI);
     const res = await call(
-      sponsor(w, { payments: payments(MILLI) }),
+      sponsor(w, { payments: payments(MILLI), limits: { ...LIMITS, belowProofCost: true } }),
       '/deposit',
       await depositBody(proof),
     );
     expect(res.status).toBe(403);
     expect(String(res.body.error)).toMatch(/not more than/);
+    expect(w.sent).toHaveLength(0);
+  });
+
+  test("refuses an agent held by the sponsor's own key, before it reads the proof", async () => {
+    const w = world();
+    const service = sponsor(w, { owners: owners({ '7': SPONSOR, '8': CALLEE.address }) });
+    const res = await call(
+      service,
+      '/deposit',
+      await depositBody(await hireProof(), SPONSOR_ACCOUNT, {}, SPONSOR),
+    );
+    expect(res.status).toBe(403);
+    expect(String(res.body.error)).toMatch(/sponsoring service itself/);
     expect(w.sent).toHaveLength(0);
   });
 
@@ -728,6 +757,15 @@ describe('POST /gas', () => {
       200,
     );
     expect(w.gas).toHaveLength(2);
+  });
+
+  test("sends no gas to an agent held by the sponsor's own key", async () => {
+    const w = world();
+    const service = sponsor(w, { owners: owners({ '7': SPONSOR }) });
+    const res = await call(service, '/gas', { agentRegistry: REGISTRY, agentId: '7' });
+    expect(res.status).toBe(403);
+    expect(String(res.body.error)).toMatch(/sponsoring service itself/);
+    expect(w.gas).toHaveLength(0);
   });
 
   test('sends nothing to an unregistered agent', async () => {

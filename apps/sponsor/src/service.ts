@@ -29,6 +29,14 @@
  *  other `uses` triple is refused, so a deposit this service paid for is _proven_ about that edge
  *  and no other.
  *
+ *  **The service is never its own agent.** An agent whose ERC-8004 holder is the sponsor wallet is
+ *  refused by `/gas` and `/deposit`: a deposit with the service as receiver would be ARP paying
+ *  itself a position, and the approval gas would go back to the key that sent it.
+ *
+ *  **On testnet the agent needs no TRUST of its own** (ADR `0094` as amended): `/gas` pays for its
+ *  `approve`, the service pays the deposit, and the cost-of-proof rule and the withdrawal threshold
+ *  are mainnet rules, off here. What a hire proof costs is the hire itself, not a stake.
+ *
  *  **A refusal always leaves the agent a way.** A 409 for a missing approval carries the approve
  *  call; a 429 carries the call the agent can send itself. Unplugging this service costs an agent
  *  its sponsorship and the _proven_ label, never a capability (ADR `0094`, ADR `0092` item 6).
@@ -207,6 +215,17 @@ export function createSponsor(options: SponsorOptions): {
     return { owner: getAddress(owner) };
   }
 
+  /** A 403 when the agent's holder is this service's own key, `null` otherwise. */
+  function refuseOwnAgent(owner: Address, agentId: unknown): Response | null {
+    if (owner !== getAddress(wallet.address)) return null;
+    return json(
+      {
+        error: `agent ${String(agentId)} is held by the sponsoring service itself, which sponsors no position of its own`,
+      },
+      403,
+    );
+  }
+
   function info() {
     return {
       service: 'ARP sponsoring service',
@@ -221,6 +240,7 @@ export function createSponsor(options: SponsorOptions): {
         dailyBudgetWei: limits.dailyBudget,
         approvalGasWei: limits.approvalGas,
         withdrawalThresholdBps: limits.withdrawalThresholdBps ?? 'unset',
+        belowProofCost: limits.belowProofCost,
         spentTodayWei: spentOnDay(ledger.records, now()),
         spentCounts: 'value sent only; the gas of the service’s own transactions is not counted',
         pendingSends: ledger.pending().length,
@@ -230,7 +250,7 @@ export function createSponsor(options: SponsorOptions): {
         content:
           options.acceptedContentSigners.length === 0
             ? 'no signer accepted'
-            : 'verified, but refused until a fetch has a price (docs/tasks/41)',
+            : 'verified, but refused until a fetch is bound to its payment (docs/tasks/41)',
       },
       approve: planDepositApproval({ multiVault, chainId, sponsor: wallet.address }),
       publish: options.publish === null ? 'disabled' : 'enabled',
@@ -241,6 +261,8 @@ export function createSponsor(options: SponsorOptions): {
   async function gas(body: Body): Promise<Response> {
     const agent = await ownerOfAgent(body.agentRegistry, body.agentId);
     if ('error' in agent) return json({ error: agent.error }, agent.status);
+    const own = refuseOwnAgent(agent.owner, body.agentId);
+    if (own !== null) return own;
     return exclusive(async () => {
       const decision = checkGasLimits(ledger.records, { agent: agent.owner, now: now(), limits });
       if (!decision.ok) return json({ error: decision.reason }, 429);
@@ -311,6 +333,8 @@ export function createSponsor(options: SponsorOptions): {
         403,
       );
     }
+    const own = refuseOwnAgent(registered.owner, request.agentId);
+    if (own !== null) return own;
 
     const tripleId = await reads.tripleId(triple.subjectId, triple.predicateId, triple.objectId);
     if (tripleId.toLowerCase() !== request.termId.toLowerCase()) {
@@ -327,17 +351,21 @@ export function createSponsor(options: SponsorOptions): {
       agents: owners,
     });
     if (proven.status !== 'proven') return json({ error: proven.reason }, 403);
-    // ADR `0094` §2: a sponsored amount stays below the cost of the proof that unlocks it. An
-    // unpriced proof has no "below". Between two operators that makes a faked hire cost more than
-    // it earns; one operator holding both agents gets the payment back, so for that one the bound
-    // is the daily count and the budget below, not this.
+    // An unpriced proof (a content receipt) is refused until `docs/tasks/41` binds a fetch to its
+    // payment, on every chain.
     if (proven.cost === null) {
       return json(
-        { error: `a ${proven.kind} proof has no price yet, so it cannot unlock a sponsorship` },
+        {
+          error: `a ${proven.kind} proof has no price yet, so it cannot unlock a sponsorship (docs/tasks/41)`,
+        },
         403,
       );
     }
-    if (limits.depositAmount >= proven.cost) {
+    // ADR `0094` §2, a mainnet rule (off on testnet, where every proven hire is sponsored): a
+    // sponsored amount stays below the cost of the proof that unlocks it. Between two operators
+    // that makes a faked hire cost more than it earns; one operator holding both agents gets the
+    // payment back, so for that one the bound is the daily count and the budget, not this.
+    if (limits.belowProofCost && limits.depositAmount >= proven.cost) {
       return json(
         {
           error: `the proof cost ${proven.cost} wei, not more than the ${limits.depositAmount} sponsored`,
