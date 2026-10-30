@@ -1,26 +1,44 @@
 # Task 29 — The landing is a scene sequence, not a long page
 
-> **Status: BOTH SCOPE CALLS ANSWERED — the user said yes, 2026-10-30.** _« 5 oui il reste »_, to
-> the question as it was put: the sticky nav and the route fade stay. ADRs `0066`, `0067`, `0068`,
-> `0069`, `0070`.
+> **Status: COMPLETE — `task-verifier` PASS, 2026-10-30.** Commit `f13e2b5`, post-mortem
+> `.claude/learning/22-the-landing-is-a-scene-sequence.md`. Two verifier passes: a FAIL with eight
+> items, **none of them in the page**, then a pass. ADRs `0066`, `0067`, `0068`, `0069`, `0070`.
+>
+> **BOTH SCOPE CALLS ANSWERED — the user said yes, 2026-10-30.** _« 5 oui il reste »_, to the
+> question as it was put: the sticky nav and the route fade stay.
 >
 > The work was done and gated on 2026-10-28, static and in a browser. What was **not** settled is
-> that this file says _"Do not touch the other four pages"_ and four pages changed: `NavSplit`
-> became sticky on all five, and `RouteTransition` wraps the whole route tree. Both were disclosed
-> below under "Open, and the user's to settle" rather than absorbed, because `workflow.md` wants the
-> user's explicit yes or a `FUTURE.md` entry and neither a verifier nor I can supply one. **That yes
-> is now on the record**, so the breach is an authorised scope expansion rather than drift, and the
-> two changes stay where they are.
+> that this file says _"Do not touch the other four pages"_ and every other route changed:
+> `NavSplit` became sticky on all of them, and `RouteTransition` wraps the whole route tree. Both
+> were disclosed below under "Open, and the user's to settle" rather than absorbed, because
+> `workflow.md` wants the user's explicit yes or a `FUTURE.md` entry and neither a verifier nor I
+> can supply one. **That yes is now on the record**, so the breach is an authorised scope expansion
+> rather than drift, and the two changes stay where they are. ("All five pages" and "all four other
+> pages" were both undercounts — `App.tsx` carries 13 routes. Corrected below, dated.)
 >
 > **What the yes does not cover**, and it is written here so nobody reads it wider than it was
-> asked: the other four pages still have no block-level reveal and no word scale, so the step is
+> asked: the other routes still have no block-level reveal and no word scale, so the step is
 > visible the moment you leave `/`. That is the next UI task, not part of this one.
 >
-> All five browser checks **run and pass**, in Chromium, against the built bundle:
-> `scripts/measure/landing-fit.ts`. It found two defects nothing else could see — the manifesto
-> scene was 1296px tall at every viewport, and the page scrolled sideways by 8px in the stacked
-> path above 900px. Both fixed and re-measured. (This line said "wherever a scrollbar exists",
-> which the body of this file corrects and this header did not — `claims.md` §5, again.)
+> **The browser checks run and pass in Chromium against the built bundle**
+> (`scripts/measure/landing-fit.ts`, exit 0, re-measured first-party 2026-10-30 after the
+> directory move) — **and four of the five Gate items are fully asserted, not five.** Gate item 2
+> has three clauses and the script asserts one: one notch plays one scene, and a burst of six
+> advances exactly one more. There is **no assertion** that `Home`/`End` still jump or that native
+> scroll resumes past scene 5, so those two remain checked by hand and by nothing else. This line
+> said "all five browser checks run and pass" through two review rounds, which is `claims.md` §4 —
+> a gate cited as green over a scope wider than it covers. Adding the two assertions is the next
+> touch of that script; the wording is narrowed rather than the gap papered over.
+>
+> It found two defects nothing else could see — the manifesto scene was 1296px tall at every
+> viewport, and the page scrolled sideways by 8px in the stacked path above 900px. Both fixed and
+> re-measured. (This line said "wherever a scrollbar exists", which the body of this file corrects
+> and this header did not — `claims.md` §5, again.)
+>
+> And the check itself was wrong for two days: it clicked `a[href="#build"]`, the user cut that
+> link on 2026-10-29, and `?.click()` became a silent no-op reporting the deck as having landed on
+> the scene it never left — **a check that could only fail**, caught by the verifier's second pass.
+> It drives `location.hash` now. The deck's hash navigation was never broken.
 >
 > An earlier version of this line said the checks could not be run because the session had no
 > browser. **That was asserted without testing it** — Chromium is in the image at
@@ -131,8 +149,12 @@ here. It is listed last and **not** chained with `&&`, because the first version
 Gate wrote `bun --filter '*' lint && bun --filter '*' test` — which means the test half never ran,
 so the Gate as written was unsatisfiable and was reported green anyway (`rules/claims.md` §4).
 
-So the honest scope: **lint is green over `app` and `packages/protocol`, and `contracts` has no
-working linter.** Say that rather than "lint 0".
+So the honest scope, **re-measured 2026-10-30** because the reorg moved every workspace under it:
+**`eslint` is green over `apps/web` and `packages/protocol`; `apps/{mcp,node,hook,api}` and
+`packages/graphql` answer `lint` with `tsc -p tsconfig.build.json`, which is a typecheck and not a
+linter; and `contracts` has no working linter at all.** Say that rather than "lint 0". This line
+named `app` and `packages/protocol` only, which was true of a layout that no longer exists
+(ADR `0082`).
 
 Browser, and not optional — all five are in `scripts/measure/landing-fit.ts`:
 
@@ -141,13 +163,20 @@ cd apps/web && bun run build && bunx vite preview --port 4173 &
 bun run scripts/measure/landing-fit.ts
 ```
 
-1. At 1440×680, 1440×900 and 1920×1080 — every pinned scene sits between y = 88 and the bottom
-   edge. A scene that grows stops the deck pinning at that size, **silently**. The script walks
-   each of the six bands and measures whichever scene becomes active there; a one-shot measurement
-   at scroll 0 checks one scene of six, which is how the manifesto's 1296px went unseen.
+1. At 1440×680, 1440×900 and 1920×1080 — every pinned scene sits between `NAV_HEIGHT` and the
+   bottom edge. A scene that grows stops the deck pinning at that size, **silently**. The script
+   walks each of the six bands and measures whichever scene becomes active there; a one-shot
+   measurement at scroll 0 checks one scene of six, which is how the manifesto's 1296px went
+   unseen. (**This said `y = 88` until 2026-10-30** — the sixth copy of a number that has been 64
+   since 2026-10-29 and lives in exactly one module, `nav-height.ts`. Name the constant, not the
+   value.)
 2. One wheel notch from the top plays the full dive and lands on scene 1. A burst of six advances
    exactly one more, so `SETTLE` is swallowing the tail. Past the **last** scene — scene 5, six
    scenes being 0 to 5 — native scroll resumes, and `Home`/`End` still jump.
+
+   **Only the first sentence is asserted.** The script has no assertion for `Home`/`End` or for
+   native scroll resuming past scene 5; both are checked by hand and by nothing else. See the
+   header — this item is why "all five browser checks pass" was narrowed to four.
 3. `#build` lands on the **last** scene with the target at `opacity: 1`. It once moved the page
    268px and left the target invisible. (`data-scene` is 0-based, so that is scene **5**; this line
    said "scene 6" while every other item here and the script's own assertion are 0-based.)
@@ -163,9 +192,15 @@ bun run scripts/measure/landing-fit.ts
    `dd, strong`, and the fee is interpolated into a `<p>`, so all eight runs printed `0.11 TRUST`
    and never `0.1 TRUST`. It reads `body.textContent` now and prints both.
 
-Measured 2026-10-28, all three pinned viewports: every band activates its own scene, every scene
-fits, one notch gives scene 1, a burst of six gives scene 2, `#build` gives scene 5 at opacity 1.00.
-Both 390px and all three reduced-motion runs stack, hide nothing and do not scroll sideways.
+Measured 2026-10-28 and **re-measured 2026-10-30 by the verifier**, exit 0, all three pinned
+viewports: every band activates its own scene, every scene fits, one notch gives scene 1, a burst of
+six gives scene 2, `#build` gives scene 5 at opacity 1.00. Both 390px and all three reduced-motion
+runs stack, hide nothing and do not scroll sideways.
+
+The re-run was not ceremony: eight commits touched the landing surface between the two dates
+(`684e136`, `c1fcb94`, `e55f2ae`, `36a8763`, `53c022c`, `c037c58`, `064e3df`, `e2781ac`), one of
+which lowered the nav and one of which cut the `#build` link. The nav now reports **65px** at 1440
+and 1920 and **202px** at 390, against the 89/218 this file quoted on 10-28.
 
 ## What the browser found that no gate did
 

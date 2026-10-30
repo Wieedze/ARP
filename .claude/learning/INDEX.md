@@ -2,7 +2,7 @@
 
 **Generated** 2026-10-30 by `scripts/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-21 entries, one per completed task. Written by `task-verifier` on a pass.
+22 entries, one per completed task. Written by `task-verifier` on a pass.
 
 | # | task | verdict | entry |
 | --- | --- | --- | --- |
@@ -27,3 +27,4 @@
 | [19](19-the-external-verifier.md) | `tasks/17-the-external-verifier.md` | PASS | The external verifier |
 | [20](20-arp-serves-the-content-and-signs-the-access.md) | `tasks/31-arp-serves-the-content-and-signs-the-access.md` | PASS | ARP serves the content and signs the access |
 | [21](21-two-apps-the-mcp-and-the-node.md) | `tasks/32-two-apps-the-mcp-and-the-node.md` | PASS | Three apps over two packages: mcp, node, hook |
+| [22](22-the-landing-is-a-scene-sequence.md) | `tasks/29-the-landing-is-a-scene-sequence.md` | PASS | The landing is a scene sequence, not a long page |
