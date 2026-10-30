@@ -2,7 +2,7 @@
 
 **Status:** Accepted
 **Date:** 2026-10-28
-**Triggered by:** user decision, relayed through `arp-motion-reference/MOTION-V2.md` §0 D5, D6, D7
+**Triggered by:** user decision, relayed through `docs/design/arp-motion-reference/MOTION-V2.md` §0 D5, D6, D7
 
 ## Context
 
@@ -111,7 +111,7 @@ ship — `Landing.test.tsx` greps for them.
 
 ## References
 
-- Build contract: `arp-motion-reference/MOTION-V2.md` §0 D5–D7, §3
+- Build contract: `docs/design/arp-motion-reference/MOTION-V2.md` §0 D5–D7, §3
 - Related ADR: `.claude/choices/0060-arp-records-it-does-not-broker.md` (why `be hired` cannot
   promise payment), `.claude/choices/0046-arp-scores-nobody.md` (the manifesto's source),
   `.claude/choices/0053-every-term-is-born-with-a-position.md` (the declaration floor the

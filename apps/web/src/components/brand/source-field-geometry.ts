@@ -5,7 +5,7 @@
  * decision and the drawing is a loop over it, so the part worth testing is the part with no
  * `CanvasRenderingContext2D` in it.
  *
- * The values are ported from the approved reference (`arp-motion-reference/index.html`, §2.2 of the
+ * The values are ported from the approved reference (`docs/design/arp-motion-reference/index.html`, §2.2 of the
  * build contract beside it), where they were tuned in a browser. They are not derived from anything
  * — changing one changes the mark, so they are stated once, here.
  */

@@ -2,7 +2,7 @@
 
 **For:** Claude Code. **Component:** `app/src/components/atom/ClaimField.tsx` (used by `AtomPanel.tsx` and `AgentClaims.tsx`). **Reference:** `claim-field.html` next to this file. Open it in a browser, switch cases with the top bar, and use the reduced-motion toggle. It is the visual and behavioural truth. Every name and figure in its `CASES` blob is a sample: never ship one.
 
-It answers `arp-claim-field-handoff.md` §12 (hover first) and §13 (weak points 1 to 5). **The reading head (the loupe) and its line to the card stay, exactly as in the original**: resting at -60° on the outer ring, tied to the card the whole time. What is new is how it moves. It obeys ADR 0073: a reveal answers the keyboard, reveals a fact the page holds, and moves no layout.
+It answers `docs/design/arp-claim-field-handoff.md` §12 (hover first) and §13 (weak points 1 to 5). **The reading head (the loupe) and its line to the card stay, exactly as in the original**: resting at -60° on the outer ring, tied to the card the whole time. What is new is how it moves. It obeys ADR 0073: a reveal answers the keyboard, reveals a fact the page holds, and moves no layout.
 
 ---
 

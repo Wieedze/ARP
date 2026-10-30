@@ -1,7 +1,7 @@
 # Motion v2: the landing as a scene sequence
 
 **For:** Claude Code, working in this repo. **From:** the design session of 2026-10-27/28 with Maxime.
-**Reference:** `arp-motion-reference/index.html` (replaced by v2). Open it in a browser: it needs no build. The page is the visual and timing truth. **Where its header comment and this file disagree, this file wins**: the header was written early in the session and some of it is stale.
+**Reference:** `docs/design/arp-motion-reference/index.html` (replaced by v2). Open it in a browser: it needs no build. The page is the visual and timing truth. **Where its header comment and this file disagree, this file wins**: the header was written early in the session and some of it is stale.
 
 Read `docs/18_THE_MOTION_SPEC.md` and `.claude/rules/ui.md` first. This file says what changed against them and why.
 

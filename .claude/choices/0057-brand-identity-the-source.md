@@ -79,5 +79,5 @@ Unchanged and restated, because the first component drafts broke them: ARP shows
 - Related ADR: `0018`, `0028`, `0029`, `0056` (the market and its exit — the shares conflict above),
   `0032` (whose number this draft claimed), `0050` (the token gate that polices §1), `0051`/`0055`
   (why the module surface in the handoff's route table no longer exists)
-- Source package: `arp-design-handoff/` — `HANDOFF.md` is the build contract, `reference/*.html` the
+- Source package: `docs/design/arp-design-handoff/` — `HANDOFF.md` is the build contract, `reference/*.html` the
   visual truth, `components/SourceField.tsx` the one component delivered ready

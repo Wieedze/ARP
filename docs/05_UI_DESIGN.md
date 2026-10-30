@@ -8,7 +8,7 @@
 > The live token list is `apps/web/src/index.css`'s `@theme` block, which `check:tokens` polices.
 >
 > Read `.claude/rules/ui.md` first — it carries the amendment in the form a task needs. The build
-> contract is `arp-design-handoff/HANDOFF.md`; its **section 8 (screens and routes) was not
+> contract is `docs/design/arp-design-handoff/HANDOFF.md`; its **section 8 (screens and routes) was not
 > adopted**, by user decision, so the pages keep the structure they have.
 >
 > Anything in this file about colour values, font families or radii is historical. Everything about

@@ -6,7 +6,7 @@
  * decoration. A pure function is the only version of that a test can pin (`rules/code.md`), and the
  * reference implementation lived inside a 700-line HTML page where nothing could reach it.
  *
- * Ported from `arp-design-handoff/reference/agents.html`'s `sigil()`, values unchanged. ADR `0057`
+ * Ported from `docs/design/arp-design-handoff/reference/agents.html`'s `sigil()`, values unchanged. ADR `0057`
  * §5. **The reference's connecting lines are deliberately not ported**: `HANDOFF.md` §4 records that
  * the user tried links, containers and backgrounds, and rejected all three. Its `MODE !== 'linked'`
  * guard means that code was already dead in the approved version.

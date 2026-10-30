@@ -130,7 +130,7 @@ export const heroControlClass =
  * so the underline is the only positive cue a link has. currentColor draws it at **8.57:1**.
  *
  * So the inert utility had been shipping the **better** value for weeks, and the intended one had
- * no design authority at all: `arp-design-handoff/reference/*.html` sets anchors to the silver
+ * no design authority at all: `docs/design/arp-design-handoff/reference/*.html` sets anchors to the silver
  * token with `text-decoration: none`, in all four files — the handoff has no underlines, and its
  * affordance is the silver-to-paper hover. (That sentence quoted the reference's CSS verbatim at
  * first, and `check:tokens` rejected the file: the gate scans text, so a `var()` written as an

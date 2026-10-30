@@ -197,7 +197,7 @@ not new glyphs. One identity, one mark, everywhere.
 
 ## 7. What to deliver
 
-A single self-contained HTML file, as before, in `arp-design-handoff/.../reference/`.
+A single self-contained HTML file, as before, in `docs/design/arp-design-handoff/.../reference/`.
 
 - Fed by a JSON blob at the top shaped like §3, so the wiring is obvious.
 - **The empty, the one, and the two-hundred cases all rendered** — not just the flattering one.

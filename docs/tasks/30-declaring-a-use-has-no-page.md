@@ -192,7 +192,7 @@ Round 1 said `linkClass`'s `decoration-[color:var(--color-rule-strong)]` was ine
 
 Under WCAG 2.1 SC 1.4.11's 3:1 for a cue identifying a component, in the module whose own argument
 is that _the underline is the affordance_. And the intended value had no design authority:
-`arp-design-handoff/reference/*.html` is `a{color:var(--silver);text-decoration:none}` in all four
+`docs/design/arp-design-handoff/reference/*.html` is `a{color:var(--silver);text-decoration:none}` in all four
 files — **the handoff has no underlines at all**.
 
 So the utility had been shipping the better value for weeks. `decoration-*` is **removed** rather
@@ -264,7 +264,7 @@ What the screenshot showed, and what each thing became:
 | the disclosure marker | the browser's default triangle                                                            | a mono `+` / `−` in a `--radius-tag` box, flipped by `group-open:`                                          |
 
 The card shape is the design reference's own `.stake` —
-`arp-design-handoff/reference/agents.html`: 1px border, 12px radius, 18px padding on the page
+`docs/design/arp-design-handoff/reference/agents.html`: 1px border, 12px radius, 18px padding on the page
 background. The border is `--color-rule` rather than the reference's `rule-strong`, matching the
 three cards the app had already shipped and `rules/ui.md`'s split (hairlines separate; `rule-strong`
 is for control borders). It lives in `app/src/lib/surface-class.ts`, deliberately **not** in
@@ -612,7 +612,7 @@ prefix rule, and four tests now hold it — the rule it replaced had none.
 > « peut-être un meilleur UI qui reprenne notre design system »_
 
 **There was a design reference for this page and nobody had opened it.**
-`arp-design-handoff/arp-design-handoff 2/reference/agent-page.html` — cited in `PanelSection`'s own
+`docs/design/arp-design-handoff/arp-design-handoff 2/reference/agent-page.html` — cited in `PanelSection`'s own
 docstring, never read. It answers all three complaints in its own CSS:
 
 | the reference says                                                                                  | the page did                                   |
