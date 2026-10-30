@@ -24,7 +24,7 @@
 > Verified against live mainnet 1155 on 2026-10-19, read-only, nothing signed and nothing sent:
 >
 > ```
-> bun run scripts/agent-declare-used.ts --agent 8453/1380 --tool ipfs://bafkreiarpslitherschema \
+> bun run scripts/agent/agent-declare-used.ts --agent 8453/1380 --tool ipfs://bafkreiarpslitherschema \
 >     --tool https://mcp.gmchain.xyz/mcp
 >
 > subject atom  0x45078ae569def2264355f77e592028dd6f1f5d6373c204fe82bf3141ab1861fb

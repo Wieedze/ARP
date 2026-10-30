@@ -37,7 +37,7 @@ Three parts, and the third is the product:
    — a website, a package, an MCP endpoint — and ARP records only that it exists and where.
 2. **An agent and a tool are the same shape.** Both are a thing that lives elsewhere; ARP's
    contribution to both is an atom pointing at it and the positions people take on claims about it.
-   `scripts/agent-identity-atom.ts` already does this for an agent — pin a Thing, create the atom,
+   `scripts/agent/agent-identity-atom.ts` already does this for an agent — pin a Thing, create the atom,
    link it. A tool is the same operation with a different Thing.
 3. **The market is the output.** Deposits on claims, priced and withdrawable, ~~with the
    counter-claim free~~. Trend, trust and whatever a consumer builds on them come from positions, not

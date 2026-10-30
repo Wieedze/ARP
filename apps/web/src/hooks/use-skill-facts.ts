@@ -42,7 +42,7 @@ export type RepoFact = {
 
 /**
  * What ARP wrote for a skill: its atom and its domain tag, `null` for the 61 no keyword matched.
- * From `data/catalogue/skills-13579.json`, which `scripts/audit-skill-tags.ts` checks against the chain.
+ * From `data/catalogue/skills-13579.json`, which `scripts/verify/audit-skill-tags.ts` checks against the chain.
  */
 export type CatalogueEntry = {atom: string | null; domain: string | null};
 

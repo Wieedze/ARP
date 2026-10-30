@@ -30,7 +30,7 @@ operator's key, and the precedent will be cited.
 
 Two further facts the verifier established and that bear on the shape of this:
 
-- `scripts/rig-registration-files.ts` asserts in its own header that it "signs nothing and sends
+- `scripts/seed/rig-registration-files.ts` asserts in its own header that it "signs nothing and sends
   nothing… the operator runs them with their own key". True of the script, and **not what happened**.
 - `data/deployments/13579.json` said the agents were "minted by the deployer", which a later reader takes
   as a human at a keyboard.

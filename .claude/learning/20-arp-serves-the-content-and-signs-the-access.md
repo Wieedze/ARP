@@ -18,7 +18,7 @@
   `scripts/arp-mcp-server.ts` gained `GET /content/:atomId` and `arp_declare_session`.
 - `scripts/arp-fetch-skill.ts` + `refForInvocation` in `session.ts` — the hook fills `ref` from the
   fetch, which turns six candidates into one for `product-photography`.
-- `scripts/verify-content-route.ts` — walks it end to end: the digest a receipt carries is what
+- `scripts/verify/verify-content-route.ts` — walks it end to end: the digest a receipt carries is what
   `sha256sum` prints on the downloaded file.
 - `scripts/measure/skill-layouts.ts` + `data/measurements/skill-layouts-2026-10-29T2200.json` — 19
   layouts over 31 repositories, 8 using more than one, **521 of 662 skills servable**.

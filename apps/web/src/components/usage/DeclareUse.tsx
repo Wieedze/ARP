@@ -20,7 +20,7 @@ import {formatTrust, intuitionPortalUrl, truncateMiddle} from "../../services/tr
  * The declare control on `/atom/:atomId` — `(your agent, uses, this atom)`.
  *
  * Beside `DeclaredUses`, which is the read side of the same edge. The write side had no page at all
- * until now: `docs/12` point 3 lived in `scripts/agent-declare-used.ts` and in the MCP server, so
+ * until now: `docs/12` point 3 lived in `scripts/agent/agent-declare-used.ts` and in the MCP server, so
  * the centre of the mechanism was reachable by an agent and not by the human holding its key.
  *
  * ## Why it lives on the atom's page and not on a page of its own

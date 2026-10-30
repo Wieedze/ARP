@@ -106,5 +106,5 @@ console.log(
 );
 console.log(
   `\nThe mirror is the on-ramp for the covered share only. For the rest, the identity atom does\n` +
-    `not exist and must be written — scripts/agent-identity-atom.ts (ADR 0047).`,
+    `not exist and must be written — scripts/agent/agent-identity-atom.ts (ADR 0047).`,
 );

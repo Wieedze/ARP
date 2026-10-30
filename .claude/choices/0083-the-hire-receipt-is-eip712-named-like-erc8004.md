@@ -64,7 +64,7 @@ The limits in the same change: 64 KiB body, 60 s handler timeout (a `504` releas
 
 **Negative:**
 
-- Breaking change to the wire format. The one consumer, `scripts/demo-hire.ts`, moved with it.
+- Breaking change to the wire format. The one consumer, `scripts/demo/demo-hire.ts`, moved with it.
 - Recovery alone still proves a key, not an agent; step 2 is the verifier's to run and nothing here
   runs it for them.
 - The rate limit is per IP and in memory: a restart resets it, and many IPs evade it.

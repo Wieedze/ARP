@@ -15,7 +15,7 @@ discipline rather than design. See "Surprises".
 - `scripts/arp-mcp-tools.ts` + `scripts/arp-mcp-server.ts` — `arp_declare_used` and
   `arp_stake_on_used` at the MCP wire. Confirmed served by an independent gate run: the capability
   list recovered from `:3002` is `arp_tool_reputation, arp_declare_used, arp_stake_on_used`.
-- `scripts/agent-declare-used.ts` — the runnable example. Mainnet 1155, read-only.
+- `scripts/agent/agent-declare-used.ts` — the runnable example. Mainnet 1155, read-only.
 - `packages/protocol/README.md` §"Declaring what your agent used" — what you need, the plan, the
   ordering constraint, both costs read from the chain, both signing modes.
 - `scripts/measure/tool-atom-shape.ts` — committed in round 4 because the 84/78/77 breakdown had

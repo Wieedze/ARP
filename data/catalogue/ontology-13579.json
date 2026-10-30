@@ -33,7 +33,7 @@
   "_note": "Both kinds are classified, and there are slightly more skill repos than MCP servers. The 10 unclassified are the repositories that publish no description, or publish only \"Agent superpowers\" — they carry their axis-2 tag and nothing else, because tagging them from the vendor's name would be a guess dressed as a reading."
  },
  "_verified": {
-  "script": "scripts/verify-domain-tree.ts · packages/protocol/src/domains.ts",
+  "script": "scripts/verify/verify-domain-tree.ts · packages/protocol/src/domains.ts",
   "hierarchyTriplesOnChain": 60,
   "carryingAtLeastOnePosition": 59,
   "ourDomainsWithAValidWitness": "16 of 17",
@@ -219,6 +219,6 @@
   "returned": "0.0009801",
   "balance": "0.660799835087 -> 0.661762490487 — the first transaction in this project that gave money back",
   "stillOnChain": "Yes, for ever. A reader without the attestor filter still sees it.",
-  "script": "scripts/retire-domain-edge.ts"
+  "script": "scripts/seed/retire-domain-edge.ts"
  }
 }

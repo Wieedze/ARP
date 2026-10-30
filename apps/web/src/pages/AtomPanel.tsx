@@ -45,7 +45,7 @@ import {SkillPage} from "./SkillPage";
  *
  * It writes **one** claim: `(your agent, uses, this atom)`, through `DeclareUse` at the head of the
  * column. That is `docs/12` point 3, which had no page anywhere until now — it lived in
- * `scripts/agent-declare-used.ts` and in the MCP server, so the centre of the mechanism was
+ * `scripts/agent/agent-declare-used.ts` and in the MCP server, so the centre of the mechanism was
  * reachable by an agent and not by the human holding its key.
  *
  * It still solicits **no deposit**. The market on an agent lives on the agent's page where its
@@ -339,7 +339,7 @@ export function AtomPanel() {
  * prose on the page and the only thing that says what the tool is **for**.
  *
  * Not ours and not a caveat — `rules/ui.md` forbids a sentence that explains our choices, and this
- * explains the tool. It is measured, dated and bundled (`scripts/build-skill-facts.ts`), because a
+ * explains the tool. It is measured, dated and bundled (`scripts/build/build-skill-facts.ts`), because a
  * skill atom carries its URL and nothing else (ADR `0054`).
  */
 function Describes({view}: {view: AtomView}) {
@@ -363,7 +363,7 @@ function Describes({view}: {view: AtomView}) {
  *
  * A skill atom carries its URL and nothing else (ADR `0054`), so a description, an install count
  * and a repository's stars have to come from somewhere; they are measured, dated and bundled
- * (`scripts/build-skill-facts.ts`, `build-repo-facts.ts`).
+ * (`scripts/build/build-skill-facts.ts`, `build-repo-facts.ts`).
  *
  * **"pushed 2d ago" is what `maintained` means**, and it is why the sentence is here rather than
  * beside the on-chain `Status` edge, which can only say the word. The verdict is a yes or a no; the

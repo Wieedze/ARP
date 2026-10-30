@@ -18,7 +18,7 @@
     "packages/protocol"
   ],
   "scripts": {
-    "verify:pin": "bun scripts/verify-pin-key.ts",
+    "verify:pin": "bun scripts/verify/verify-pin-key.ts",
     "dev": "bun --filter @arp/app dev",
     "build": "bun --filter '*' build",
     "test": "bun --filter '*' test && bun run test:scripts",

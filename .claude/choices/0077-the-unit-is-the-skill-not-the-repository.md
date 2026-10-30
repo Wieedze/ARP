@@ -76,4 +76,4 @@ edge at its domain.
 - Related ADR: `.claude/choices/0078-source-is-the-edge-from-a-skill-to-its-repository.md`
 - Related ADR: `.claude/choices/0054-*` — tool URLs as the atom's only input
 - Measurement: `data/measurements/skills-installs-2026-10-29.json`, `scripts/measure/skills-installs.ts`
-- Script: `scripts/seed-skills.ts`
+- Script: `scripts/seed/seed-skills.ts`

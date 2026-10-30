@@ -46,7 +46,7 @@ hands a name and not an origin. What ends the ambiguity is a **reference**, and 
 come from whoever served the bytes.
 
 **The node holds no key today.** `scripts/arp-mcp-server.ts` has none; the only keys in the
-repository are in `scripts/demo-*.ts` and `scripts/agent-send-plan.ts`, and they are the agent's.
+repository are in `scripts/demo-*.ts` and `scripts/agent/agent-send-plan.ts`, and they are the agent's.
 This ADR introduces the first one on ARP's side, which is why it exists.
 
 ## Decision

@@ -9,7 +9,7 @@ empty cells first, the catalogue seed after.
 ## Context
 
 `docs/12` point 3 — _"the agent runs, it deposits TRUST on the modules it actually used"_ — is the
-centre of the mechanism and had **no page**. It existed in `scripts/agent-declare-used.ts` and in
+centre of the mechanism and had **no page**. It existed in `scripts/agent/agent-declare-used.ts` and in
 `arp-mcp-server.ts`, so it was reachable by an agent and not by the human holding the agent's key.
 `.claude/STATE.md` has named this as "still not built, and it is the centre of the mechanism" since
 2026-10-27, and `tool-register.ts`'s own table names it from the other side: a person registers the

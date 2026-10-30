@@ -69,7 +69,7 @@ Written down because this document exists to stop a specific failure, which has 
 | **Adoption of an existing ERC-8004 agent**                      | **missing — the whole gap**                            |
 | **The guard rail on the chain where the agents are**            | **missing — enforcers are on testnet, agents are not** |
 
-The mechanism works today for agents ARP mints. It does not work for the agents that already exist — **28,720** reachable out of a registry whose next id is **444,562**, measured 2026-10-21 — and those are the population, so that gap is what stands between this and a live system. Worse than it reads: the mirror has not moved since 2026-09-16 while the registry kept going, so for roughly **fourteen agents in fifteen** the identity atom does **not exist** and has to be written (`scripts/agent-identity-atom.ts`, ADR `0047`). `/agent/import` writes it now rather than waiting.
+The mechanism works today for agents ARP mints. It does not work for the agents that already exist — **28,720** reachable out of a registry whose next id is **444,562**, measured 2026-10-21 — and those are the population, so that gap is what stands between this and a live system. Worse than it reads: the mirror has not moved since 2026-09-16 while the registry kept going, so for roughly **fourteen agents in fifteen** the identity atom does **not exist** and has to be written (`scripts/agent/agent-identity-atom.ts`, ADR `0047`). `/agent/import` writes it now rather than waiting.
 
 ## What closes it
 

@@ -8,13 +8,13 @@ closing two verifier punch lists, all on `feat/agent-panel-tabs`
 
 ## What shipped
 
-- `scripts/rig-registration-files.ts` — the three registration files as `data:` URIs, exported so
+- `scripts/seed/rig-registration-files.ts` — the three registration files as `data:` URIs, exported so
   they are tested rather than eyeballed. Prints the mint calls; signs nothing.
 - `scripts/arp-mcp-server.ts` + `scripts/arp-mcp-tools.ts` — ARP's own MCP server, so the gate's
   `confirmed` case stops depending on a third party's uptime. Hand-rolled JSON-RPC; reads only.
-- `scripts/verify-cohort.ts` — `--target` (Base or Intuition testnet) and `--tools`. First thing
+- `scripts/verify/verify-cohort.ts` — `--target` (Base or Intuition testnet) and `--tools`. First thing
   written under `rules/portability.md`.
-- `scripts/verify-rig-claims.ts` — asserts each fixture's `exercises` prose against what the probe
+- `scripts/verify/verify-rig-claims.ts` — asserts each fixture's `exercises` prose against what the probe
   observed, plus document hashes against `data/deployments/13579.json`. Exits non-zero on a mismatch.
 - `scripts/measure/cohort-skills.ts` — committed so the "0 of ~110 documents declare a capability"
   figure can be re-run.
@@ -51,7 +51,7 @@ collapse to one value. Measured: flipping `rig-dead` between `confirmed/dead` an
 `inconclusive/transport-error` leaves the unit suite green. The mutation demonstrated as proof was a
 *different* mutation from the one that shipped. `confirmed` against `inconclusive` is not derivable
 from the document — both are `probeable` before a request is sent — so the probe is the only
-authority, and `scripts/verify-rig-claims.ts` reading the gate report is where it belongs. Verified
+authority, and `scripts/verify/verify-rig-claims.ts` reading the gate report is where it belongs. Verified
 both ways at `e79eed2`: the shipped mutation now exits 1, and an un-re-minted fixture edit shows
 DRIFT.
 
@@ -144,8 +144,8 @@ itself. Third and fourth occurrences; the line already warned it had been wrong 
 - **Re-read the artifact after fixing it.** Across two punch lists, four items were reported closed
   and were not: a stale `Updated` date, a duplicated sentence introduced by the fix, a docstring
   naming two of three figures, and the commit counts. Each was visible in the file.
-- `scripts/arp-mcp-server.ts` and `scripts/verify-cohort.ts` are inside **no** typecheck and no lint.
-  `scripts/arp-mcp-tools.ts` and `scripts/rig-registration-files.ts` are inside the connector's, by
+- `scripts/arp-mcp-server.ts` and `scripts/verify/verify-cohort.ts` are inside **no** typecheck and no lint.
+  `scripts/arp-mcp-tools.ts` and `scripts/seed/rig-registration-files.ts` are inside the connector's, by
   accident, because its tests import them. Task 21.
 
 ## Which tier of the evidence ladder does this serve?

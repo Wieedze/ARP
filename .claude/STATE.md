@@ -49,9 +49,9 @@ What is on chain, 2026-10-29:
 
 |                           |                                                                                                                                                                                      |
 | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 662 skill atoms, pinned   | `scripts/pin-tool.ts` over every URL, 0 reported failures; the run's log is not kept, so that count is from the console and not from a file                                          |
+| 662 skill atoms, pinned   | `scripts/seed/pin-tool.ts` over every URL, 0 reported failures; the run's log is not kept, so that count is from the console and not from a file                                          |
 | 662 `source` edges        | `(skill, source, repository)` — ADR `0078`, the term was already on chain                                                                                                            |
-| `has tag` edges on skills | **601 held, 0 in disagreement** with the table that wrote them (`scripts/audit-skill-tags.ts`, 2026-10-29). 203 were retired, not deleted. **61 match no keyword and carry nothing** |
+| `has tag` edges on skills | **601 held, 0 in disagreement** with the table that wrote them (`scripts/verify/audit-skill-tags.ts`, 2026-10-29). 203 were retired, not deleted. **61 match no keyword and carry nothing** |
 | 53 `maintained` tags      | 50 alive, 3 not — browserbase and prisma/mcp archived, paypal untouched 366 days                                                                                                     |
 | 21 domains under `tool`   | the **16** seeded (not 17 — `domains.proposal.json` dropped `security`), plus `method`, `writing`, `image`, `audio`, `document`                                                      |
 
@@ -70,16 +70,16 @@ Three findings worth carrying forward:
 
 - **The install count stays off chain**, in `data/measurements/skills-installs-2026-10-29.json`. It is
   somebody else's number and it changes; it belongs in a ranking input, never in a tag. Only
-  `archived` and a 404 are authoritative enough to be verdicts (`scripts/record-maintained.ts`).
+  `archived` and a 404 are authoritative enough to be verdicts (`scripts/seed/record-maintained.ts`).
 - **A wrong tag is withdrawn by redeeming the position, not by deleting anything.** A keyword
   table ordered general before specific — `blockchain` matched `token` in "cuts token usage" and in
   "design tokens" — and wrote 203 wrong tags. They were retired the same day: the triple stays on
-  chain, unowned, and the claim leaves ARP's index. `scripts/audit-skill-tags.ts` reads what is
+  chain, unowned, and the claim leaves ARP's index. `scripts/verify/audit-skill-tags.ts` reads what is
   actually held from the indexer rather than replaying the table, which is how it found 528 skill
   tags where the send log accounted for 296.
 - **A bulk write is paced by bytes, not by gas.** ADR `0079`. The RPC refused the seed three times
   with `Bandwidth limit exceeded` (-31002) while `eth_estimateGas` passed at 5.1M gas, and once
-  spent it refuses **reads** too. `scripts/send-plan-in-waves.sh` is the shape that works.
+  spent it refuses **reads** too. `scripts/deploy/send-plan-in-waves.sh` is the shape that works.
 
 **The tool registry is no longer empty — all 53 tool atoms are on testnet 13579, 2026-10-28.**
 `data/catalogue/tools.json` holds 53 curated tools (22 MCP servers published by the vendor that controls
@@ -162,11 +162,11 @@ commit's own message stated the measured 292. And the command it told you to re-
 the worst place in the file to get wrong twice.)
 
 **What those gates do NOT cover** (`claims.md` check 4): `apps/mcp/src/server.ts`,
-`scripts/verify-cohort.ts`, `scripts/agent-declare-used.ts` and
+`scripts/verify/verify-cohort.ts`, `scripts/agent/agent-declare-used.ts` and
 `scripts/measure/stake-vault-placement.ts` are inside **no typecheck and no lint** — there is no root
 `tsconfig.json` and no root eslint config. Task 16 added two of those four, so the gap `docs/tasks/21`
 owns got wider rather than narrower. `apps/mcp/src/tools.ts` and
-`scripts/rig-registration-files.ts` _are_ inside the connector's typecheck, incidentally, because its
+`scripts/seed/rig-registration-files.ts` _are_ inside the connector's typecheck, incidentally, because its
 tests import them — a partial closure nobody designed.
 
 The write path itself is inside every gate, because it lives in `packages/protocol/src/declare/` and not in
@@ -412,7 +412,7 @@ simulated it from a zero-balance address on both Base and BSC. The five-step tes
 to `/rig`, named for what it is and out of the nav.
 
 **Declaring a use has a page now** — `/atom/:atomId`, task 30, ADR `0071`. `docs/12` point 3 lived
-only in `scripts/agent-declare-used.ts` and the MCP server until 2026-10-28, so the centre of the
+only in `scripts/agent/agent-declare-used.ts` and the MCP server until 2026-10-28, so the centre of the
 mechanism was reachable by an agent and not by the human holding its key. The ERC-8004 `owner` is
 the authority to declare for an agent; **mainnet is refused** until the user widens ADR `0017`,
 because that ADR covers a deposit into a `has trust provider` vault and not the creation of a `uses`
@@ -541,8 +541,8 @@ assessment`), which it only reads — so what ARP writes is a claim about **comp
 - **0047** — **the mirror is a prerequisite nobody listed, and signing is a separate program.**
   The identity atom a `uses` edge needs is written by **Intuition's mirror**, which covers Base — so
   an unmirrored agent (every ARP rig agent on testnet: 728 `same as` edges there, none ours) cannot
-  declare at all until someone writes it. `scripts/agent-identity-atom.ts` writes what the mirror
-  would have, from recipes **read off mainnet**. `scripts/agent-send-plan.ts` is the **only script
+  declare at all until someone writes it. `scripts/agent/agent-identity-atom.ts` writes what the mirror
+  would have, from recipes **read off mainnet**. `scripts/agent/agent-send-plan.ts` is the **only script
   here that signs**, and refuses by default. **The first real `uses` edge exists**: chain 13579,
   2026-10-20, `(Agent 13579:3) uses (Trail of Bits — guidelines-advisor)`, edge `0x5999d4d1…`,
   support positionCount **1**, counter 1e6 wei at positionCount **0** — ADR `0042`'s dust, first-party.
@@ -553,7 +553,7 @@ assessment`), which it only reads — so what ARP writes is a claim about **comp
   reaches **28,720** — unchanged in substance since 2026-09-16 — so coverage is **6.46% and falling**
   (it was 9.2% on 2026-10-20; the denominator grows, the numerator does not). Read it
   with `scripts/measure/cohort-coverage.ts`; the population is read, never hardcoded
-  (`scripts/erc8004-population.ts`).
+  (`scripts/helpers/erc8004-population.ts`).
   **The node ships over stdio** (`--stdio`), one dispatch for both transports, diagnostics on stderr
   because stdout is the protocol channel. New tool `arp_identity` — ask it first; it answers whether
   an agent has the atom everything else needs.
@@ -610,8 +610,8 @@ scripts/measure/predicate-objects.ts       what `use` vs `uses` edges actually a
 scripts/measure/predicate-reachability.ts  whether a defect is live or latent
 scripts/measure/stake-vault-placement.ts   whether a stake sits on the edge or the object atom
 scripts/measure/counter-side-usage.ts      whether anybody ever takes the other side, and what an act costs
-scripts/build-claude-index.ts              regenerate the ADR and post-mortem indexes
-scripts/verify-pin-key.ts                  validate the partner key, prove recipe determinism
+scripts/build/build-claude-index.ts              regenerate the ADR and post-mortem indexes
+scripts/verify/verify-pin-key.ts                  validate the partner key, prove recipe determinism
 ```
 
 ## The failure mode this project has, and the rule for it

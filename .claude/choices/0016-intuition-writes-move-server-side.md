@@ -55,7 +55,7 @@ A partner API key now exists, held locally and outside the repo.
    rule in `.claude/rules/security.md`.
 4. `INTUITION_PIN_API_KEY` is documented in `.env.example` with an explicit prohibition on the
    `VITE_` prefix. `INTUITION_PIN_API_KEY_HEADER` is optional and defaults to `apikey`.
-5. `bun run verify:pin` (`scripts/verify-pin-key.ts`) validates the key and, in the same pass,
+5. `bun run verify:pin` (`scripts/verify/verify-pin-key.ts`) validates the key and, in the same pass,
    confirms that the canonical agent-atom recipe from `docs/07` reproduces byte-for-byte against a
    known mainnet atom. It prints a key fingerprint, never the key.
 

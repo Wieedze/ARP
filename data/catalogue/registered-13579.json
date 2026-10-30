@@ -2,11 +2,11 @@
   "_note": "Tool atoms registered on Intuition testnet 13579 from data/catalogue/tools.json. The atom id is a pure function of the normalised URL (ADR 0054), so this file is a record and not a source of truth \u2014 re-deriving it needs only the URL. Permanent: Intuition has no deletion.",
   "_authorisation": "Signed by the agent session using AGENT_PRIVATE_KEY, on the user's explicit instruction on 2026-10-28 (\u00ab tout sur testnet \u00bb). ADR 0037's three conditions: the key was never read into the agent's context, the signer address was verified against AGENT_ADDRESS in .env before signing, and this file is the record. security.md scopes its automation prohibition to mainnet.",
   "_assets": "Each atom was created with assets = getAtomCost() + minDeposit = 0.002000000001 tTRUST, read off the chain at plan time. Passing the cost alone would have created an atom with NO position \u2014 on the chain but not a market (ADR 0053). Every one of the 35 reports position_count 1 and total_assets 980000001000000 wei.",
-  "_incomplete": "Complete: all 52 tools in data/catalogue/tools.json are registered. The first 35 landed on a balance of 0.0791 tTRUST; the remaining 17 after the user topped the signer up with 1 tTRUST the same day. Re-running scripts/seed-tool-catalogue.ts now plans nothing, which is the idempotence the URL-derived atom id buys.",
+  "_incomplete": "Complete: all 52 tools in data/catalogue/tools.json are registered. The first 35 landed on a balance of 0.0791 tTRUST; the remaining 17 after the user topped the signer up with 1 tTRUST the same day. Re-running scripts/seed/seed-tool-catalogue.ts now plans nothing, which is the idempotence the URL-derived atom id buys.",
   "chainId": 13579,
   "registeredAt": "2026-10-28",
   "signer": "0x906f3A52ec089f8D4E9127F91C6bE5Ae0d18f91f",
-  "script": "ARP_TARGET=testnet bun run scripts/seed-tool-catalogue.ts --limit 35 --json <plan> && bun run scripts/agent-send-plan.ts --chain 13579 --plan <plan> --execute",
+  "script": "ARP_TARGET=testnet bun run scripts/seed/seed-tool-catalogue.ts --limit 35 --json <plan> && bun run scripts/agent/agent-send-plan.ts --chain 13579 --plan <plan> --execute",
   "txs": [
     "0x1931a28233bd38e0b7cd2aab18da66e35a2c2c8c7ef4dd9e45f4257bbe3698cb",
     "0xed75cf64888acb8220cb801e59ca6051613bc077d21aca43c06d1b832e75fd38",
@@ -285,6 +285,6 @@
       "atomId": "0x66fdb9d0c82e4694fd855eaa13d4d64791a6a217665b589746f68c52a9992f98"
     }
   ],
-  "_readable": "All 53 resolve on the testnet indexer. Creating an atom does not make it readable: the indexer resolves value.thing from the pinned CID, so scripts/pin-tool.ts ran over every URL afterwards. One atom (Alchemy) stayed 'Unknown' for several minutes and resolved after a re-pin \u2014 pinning is content-addressed, so a re-pin is free and changes no id.",
+  "_readable": "All 53 resolve on the testnet indexer. Creating an atom does not make it readable: the indexer resolves value.thing from the pinned CID, so scripts/seed/pin-tool.ts ran over every URL afterwards. One atom (Alchemy) stayed 'Unknown' for several minutes and resolved after a re-pin \u2014 pinning is content-addressed, so a re-pin is free and changes no id.",
   "_count_correction": "`_readable` said 'All 52 resolve' until 2026-10-29 while `atoms` held 53 and `count` said 53. The data was right and the sentence was wrong \u2014 the exact break claims.md exists for. Corrected in place rather than struck through: this file is a record of a run, not an append-only log, and a wrong count in it is read as fact."
 }

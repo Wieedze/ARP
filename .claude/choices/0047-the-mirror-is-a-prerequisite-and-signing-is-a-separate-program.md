@@ -32,14 +32,14 @@ Two more things surfaced on the way, both measured:
 
 ## Decision
 
-**1. ARP writes what the mirror would have written.** `scripts/agent-identity-atom.ts` pins both
+**1. ARP writes what the mirror would have written.** `scripts/agent/agent-identity-atom.ts` pins both
 canonical Things, computes both atom ids and the triple id locally, reports which already exist, and
 plans only the missing calls. Content-addressed, so it is idempotent by construction — a second run
 plans nothing. The recipes live in `scripts/intuition-pin.ts`, extracted so `verify-pin-key.ts` and
 this script share one copy: a single differing character yields a different CID and therefore a
 duplicate, permanent, fragmented atom.
 
-**2. Planning and signing are separate programs.** `scripts/agent-send-plan.ts` is the **only script
+**2. Planning and signing are separate programs.** `scripts/agent/agent-send-plan.ts` is the **only script
 in this repo that signs**. It takes a plan as JSON and carries three guards, each for a hazard this
 repo has either hit or written down:
 
@@ -119,7 +119,7 @@ registry. Agents minted before the 44,000-a-day rate are not a random sample of 
 the direction of the bias is unknown and probably optimistic. `docs/14`'s "1–7% answer" describes the
 first 88,243 agents, and that is now stated where the table is.
 
-Fixed by reading it: `scripts/erc8004-population.ts` exports `highestTokenId()`, and all five callers
+Fixed by reading it: `scripts/helpers/erc8004-population.ts` exports `highestTokenId()`, and all five callers
 use it. Both counts in this section come from `git grep -l`, which is the only reason they are
 written down at all.
 

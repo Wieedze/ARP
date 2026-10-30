@@ -235,7 +235,7 @@ export async function identity(id: JsonRpcId, args: Record<string, unknown>) {
           'No identity atom on the graph, so this agent cannot declare yet. The atom is written ' +
           "by Intuition's mirror; measured 2026-10-20 the mirror holds 28,648 of a registry whose " +
           'highest minted id is 309,925, so this is the common case and not a fault of yours. ' +
-          'Writing it needs two atoms and a `same as` triple — `scripts/agent-identity-atom.ts`, ' +
+          'Writing it needs two atoms and a `same as` triple — `scripts/agent/agent-identity-atom.ts`, ' +
           'ADR 0047. The atom ids are computable locally from your identity alone, with no API key.',
       });
     }

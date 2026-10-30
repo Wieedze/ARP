@@ -74,7 +74,7 @@ A task is **not** complete until the `task-verifier` agent has returned a pass. 
 8. **Update `.claude/STATE.md`** — the task table, and anything in "known defects" the task closed or
    discovered. `STATE.md` is the one file an agent reads to orient itself; a stale one misleads
    rather than merely lagging.
-9. **Run `bun run scripts/build-claude-index.ts`** if the task added an ADR or a post-mortem.
+9. **Run `bun run scripts/build/build-claude-index.ts`** if the task added an ADR or a post-mortem.
 
 Run `ui-reviewer` / `contract-reviewer` / `intuition-integrator` **before** `task-verifier`, not
 alongside it. The verifier's acceptance criteria include the domain reviewer's verdict, so running

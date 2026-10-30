@@ -2,7 +2,7 @@
  * Read the Intuition partner pinning credential from the environment.
  *
  * This is the **only** place in the repo that reads `INTUITION_PIN_API_KEY`
- * outside of `scripts/verify-pin-key.ts`, and the only sanctioned constructor of
+ * outside of `scripts/verify/verify-pin-key.ts`, and the only sanctioned constructor of
  * a `PinAuth`. `apps/web/src/services/` never touches the environment and exports no
  * way to build a credential: `PinAuth` is a branded type, so `{apiKey: "…"}` is
  * a type error everywhere, and browser code importing only from the services

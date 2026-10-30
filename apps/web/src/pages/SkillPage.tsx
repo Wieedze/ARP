@@ -316,7 +316,7 @@ function Classification({view, source}: {view: AtomView; source: ClaimView | nul
                             />
                             {/* **The request the verdict rests on**, so a reader can repeat it:
                                 `maintained` is `archived` and `pushed_at` from this one call
-                                (`scripts/record-maintained.ts`). */}
+                                (`scripts/seed/record-maintained.ts`). */}
                             {evidenceUrl === null ? (
                                 liveness.object
                             ) : (

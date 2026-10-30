@@ -18,7 +18,7 @@ import {MAX_STAKE_WEI, type StakeChain} from "./trust-stake";
  * ## The cell this fills, and the one it deliberately does not
  *
  * `docs/12` point 3 — _"it deposits TRUST on the modules it actually used"_ — had no page. It
- * existed in `scripts/agent-declare-used.ts` and in the MCP server, so the centre of the mechanism
+ * existed in `scripts/agent/agent-declare-used.ts` and in the MCP server, so the centre of the mechanism
  * was reachable by an agent and not by the human holding the agent's key. `tool-register.ts`'s own
  * table names the gap from the other side: a person registers the tool's atom *here*, and an agent
  * writes the edge "through the MCP or the skill". This is that row, with a human signer.

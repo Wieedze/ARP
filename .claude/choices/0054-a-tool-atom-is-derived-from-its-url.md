@@ -77,7 +77,7 @@ both the raw and the normalised spelling before deciding, because an atom on the
 whatever URL its creator typed. Several hits remain an error, not a coin flip
 (`AmbiguousToolAtomError`).
 
-Pinning is a **separate step** (`scripts/pin-tool.ts`). It makes the document readable — Intuition's
+Pinning is a **separate step** (`scripts/seed/pin-tool.ts`). It makes the document readable — Intuition's
 indexer resolves `value.thing` from the CID — and is not needed to know the id, to plan, to create,
 or to stake. Same split as the identity atom's (ADR `0016`): the plan needs no credential, the
 legibility does.
@@ -138,4 +138,4 @@ legibility does.
 - Related ADR: `.claude/choices/0030-the-use-edge-is-chosen-on-meaning.md`
 - Related rule: `.claude/rules/portability.md`
 - Skill: `.claude/skills/intuition/SKILL.md` — "plain string versions are legacy duplicates"
-- Scripts: `scripts/measure/url-atom-fragmentation.ts`, `scripts/pin-tool.ts`
+- Scripts: `scripts/measure/url-atom-fragmentation.ts`, `scripts/seed/pin-tool.ts`

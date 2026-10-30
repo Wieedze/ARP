@@ -359,7 +359,7 @@ Stated because a security note that lists only its strengths is marketing.
 ## If you want to verify all of this rather than read it
 
 ```
-bun run scripts/verify-content-route.ts    # against a running server
+bun run scripts/verify/verify-content-route.ts    # against a running server
 ```
 
 It fetches a real skill, recovers the receipt's signer, re-hashes the bytes that arrived, and prints

@@ -69,7 +69,7 @@
     }
   },
   "arp": {
-    "_note": "Populated by scripts/deploy.sh. Addresses are EOA-nonce-derived (CREATE), so re-running with a new nonce will produce different addresses. To redeploy, increment the nonce assumption \u2014 there is no on-chain idempotency guard.",
+    "_note": "Populated by scripts/deploy/deploy.sh. Addresses are EOA-nonce-derived (CREATE), so re-running with a new nonce will produce different addresses. To redeploy, increment the nonce assumption \u2014 there is no on-chain idempotency guard.",
     "deployer": "0xE596096F4176b682E300d73963e7B04B383C1AA1",
     "deployedAt": "2026-06-01T13:30:00Z",
     "moduleRegistry": "0xc9a2f66775828017e984E8be077fA2d17e0A41F4",
@@ -120,7 +120,7 @@
           "_endpointNote": "ARP's own MCP server, local by default. ARP_MCP_ENDPOINT regenerates the file and setAgentURI can update the agent \u2014 but that escape hatch is a rehearsal prop: portability.md rule 4 says any step that works because ARP can write to the registry is not a step, and on mainnet ARP owns no registry. The real fix is a public endpoint.",
           "tx": "0xce4fee69c692ddf57d4537b23479d78384a9e2d06b733b532e419055ed50a086",
           "documentSha256_16": "478ac85cd6b2357f",
-          "_documentShaNote": "sha256 of the data: URI, first 16 hex. Lets repo-vs-chain drift be detected: the fixtures in scripts/rig-registration-files.ts are the source of truth for three permanent mints, and an edit to FILES would otherwise diverge silently. Checked by scripts/verify-rig-claims.ts against a gate report. ONLY REPRODUCIBLE WITH ARP_MCP_ENDPOINT UNSET: OWN_ENDPOINT reads the environment and the document is hashed after substitution, so anyone with it exported sees a false DRIFT."
+          "_documentShaNote": "sha256 of the data: URI, first 16 hex. Lets repo-vs-chain drift be detected: the fixtures in scripts/seed/rig-registration-files.ts are the source of truth for three permanent mints, and an edit to FILES would otherwise diverge silently. Checked by scripts/verify/verify-rig-claims.ts against a gate report. ONLY REPRODUCIBLE WITH ARP_MCP_ENDPOINT UNSET: OWN_ENDPOINT reads the environment and the document is hashed after substitution, so anyone with it exported sees a false DRIFT."
         },
         "4": {
           "slug": "rig-dead",
@@ -139,7 +139,7 @@
         }
       },
       "gate": {
-        "command": "bun run scripts/verify-cohort.ts --target intuition-testnet --ids 1,2,3,4,5 --tools --out /tmp/gate.json && bun run scripts/verify-rig-claims.ts /tmp/gate.json",
+        "command": "bun run scripts/verify/verify-cohort.ts --target intuition-testnet --ids 1,2,3,4,5 --tools --out /tmp/gate.json && bun run scripts/verify/verify-rig-claims.ts /tmp/gate.json",
         "ranAt": "2026-10-19",
         "result": "5 agents: 2 with no tokenURI (40%), 3 read. 4 endpoints: 2 confirmed (serves-declared-protocol, dead), 2 not-checkable (templated, non-http-identifier), 0 inconclusive, 1 capability list recovered (arp_tool_reputation).",
         "_requires": "apps/mcp/src/server.ts listening on :3002, or agent 3 reports inconclusive. The confirmed branch is therefore reproducible only on a host running that server \u2014 a known limit of this gate until ARP has a public endpoint.",

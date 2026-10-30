@@ -14,7 +14,7 @@
 > key on the user's explicit ask — ADR `0037`**, which also says what that does not extend to.
 >
 > ```
-> bun run scripts/verify-cohort.ts --target intuition-testnet --ids 1,2,3,4,5 --tools
+> bun run scripts/verify/verify-cohort.ts --target intuition-testnet --ids 1,2,3,4,5 --tools
 >
 > 5 agents · 2 with no tokenURI (40%) · 3 read · 4 endpoints
 >   CONFIRMED      2   serves-declared-protocol ×1 · dead ×1
@@ -75,7 +75,7 @@ classification, not the capability recovery. The rig looks complete and exercise
    `docs/15_ROADMAP.md` and it will not fail until migration.
 
    > **DEFERRED, not done** (2026-10-19). `git diff` over `erc8004/src app/src` across this task's
-   > commits is empty: `resolveAgent` is untouched and `scripts/verify-cohort.ts` reads `tokenURI`
+   > commits is empty: `resolveAgent` is untouched and `scripts/verify/verify-cohort.ts` reads `tokenURI`
    > by raw `eth_call`, which is a different path from the one that will hit Base. The task's own
    > Gate does not test it, which is how it slipped past the first verification.
    >

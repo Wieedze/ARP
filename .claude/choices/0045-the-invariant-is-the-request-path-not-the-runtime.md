@@ -33,7 +33,7 @@ being read as "ARP is not a dependency" while a dependency existed.
 The missing half of the mechanism needs more, not less. For an agent to **receive** a request, another
 agent must be able to reach it. MCP is client→server: ARP's server cannot make an agent reachable.
 The agent must run its own endpoint and publish it in its ERC-8004 registration file. That is why, in
-the cohort measured by `scripts/verify-cohort.ts` and `scripts/measure/cohort-endpoints.ts` on Base
+the cohort measured by `scripts/verify/verify-cohort.ts` and `scripts/measure/cohort-endpoints.ts` on Base
 8453, 2026-10-16: 82% of declared endpoints are not probeable at all, and **1–7%** answer (Wilson,
 n=122). ARP can verify such an endpoint. It cannot provide one.
 

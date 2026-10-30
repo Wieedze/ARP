@@ -377,7 +377,7 @@ toolAtomUri("github.com/crytic/slither");
 // "ipfs://bafkreidf2beugrdbzvidlwibi46fhyanrh7v3noaucjahsllu2xjqtas44"
 ```
 
-Pinning that document is a **separate step** — `bun run scripts/pin-tool.ts <url>`. It makes the atom
+Pinning that document is a **separate step** — `bun run scripts/seed/pin-tool.ts <url>`. It makes the atom
 read as a name instead of a hash, because Intuition's indexer resolves `value.thing` from the CID. It
 is not needed to know the id, to plan, to create, or to stake.
 

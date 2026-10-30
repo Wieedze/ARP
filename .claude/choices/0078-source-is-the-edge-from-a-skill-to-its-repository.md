@@ -96,4 +96,4 @@ tiret, jamais »_, and a term already on chain is reused rather than minted.
 - Related ADR: `.claude/choices/0077-the-unit-is-the-skill-not-the-repository.md`
 - Related rule: `.claude/rules/claims.md` — cite a third party to a file and a line
 - Measurement: `data/measurements/skills-installs-2026-10-29.json`
-- Script: `scripts/seed-skills.ts`
+- Script: `scripts/seed/seed-skills.ts`

@@ -59,7 +59,7 @@
   }
  ],
  "_verified": {
-  "script": "scripts/verify-domain-tree.ts",
+  "script": "scripts/verify/verify-domain-tree.ts",
   "readAt": "2026-10-28",
   "down": "from \"payment\": 2 domains (payment, card-payment), 2 tools — stripe/agent-toolkit under card-payment, paypal/paypal-mcp-server under payment. One domain given, tools returned at two depths.",
   "up": "card-payment → payment → tool, a witness of 3. payment → tool, a witness of 2.",

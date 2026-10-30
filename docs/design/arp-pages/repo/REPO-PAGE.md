@@ -31,7 +31,7 @@ Real in the reference: both repositories, every skill they publish with its desc
 
 ## 3. Worth a look before shipping
 
-The catalogue tags several `101-skills/superpowers` skills with domains that read wrong (`agent-browser` and `python-executor` as `video`). They are the real tags on chain. Worth running `scripts/audit-skill-tags.ts` on them.
+The catalogue tags several `101-skills/superpowers` skills with domains that read wrong (`agent-browser` and `python-executor` as `video`). They are the real tags on chain. Worth running `scripts/verify/audit-skill-tags.ts` on them.
 
 ## 4. Done means
 

@@ -96,7 +96,7 @@ triaged:
 | **`README.md`'s directory map**, still listing `sdk/` and labelling it `@arp-protocol/core`                                                                                    | **fixed**                                   |
 | **`docs/tasks/09` and `docs/tasks/21`** — **open** task files with actionable items citing `sdk/src/…`                                                                                   | **fixed**                                   |
 | ADRs `0038`–`0040`, written the same day but before the rename                                                                                                                 | a forwarding note at the top of each        |
-| **four live code comments** — `scripts/rig-registration-files.ts`, `scripts/verify-rig-claims.ts`, `app/src/services/__tests__/trust-fixtures.ts`, `scripts/arp-mcp-server.ts` | **fixed**                                   |
+| **four live code comments** — `scripts/seed/rig-registration-files.ts`, `scripts/verify/verify-rig-claims.ts`, `app/src/services/__tests__/trust-fixtures.ts`, `scripts/arp-mcp-server.ts` | **fixed**                                   |
 
 **What the sweep says about the first pass:** it was right on the code and the configs that matter,
 and wrong in places a hand-built list of "live files" could not help but miss — a front-page link,

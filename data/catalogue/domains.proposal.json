@@ -149,7 +149,7 @@
   "readTheCostsAgainBeforeSending": "scripts/measure/domain-seed-costs.ts"
  },
  "_openQuestion": "Depth. This is one level under the root plus the single `card-payment` the test left. 17 domains for 53 tools averages 3 tools each, and the `development` bucket alone would hold about 16 — which is a bucket, not a domain. A second level under `development` is the obvious next cut, and it needs the skill repos to say what they are for; 7 of them say only \"Agent superpowers\".",
- "_oneWordRule": "One word. No hyphens, ever. The user's rule, 2026-10-28: « tout ne doit faire que un mot pas de mot tiret jamais ok si quelque chose est bancale on crer un nouveau termes ». Enforced in scripts/seed-domain-tree.ts by assertOneWord, which refuses the plan rather than hyphenating — the previous version hyphenated, and that is how card-payment reached the chain. Predicates are not covered: `has tag` and `is a sub-domain of` are the ecosystem's existing phrases, not vocabulary ARP picks.",
+ "_oneWordRule": "One word. No hyphens, ever. The user's rule, 2026-10-28: « tout ne doit faire que un mot pas de mot tiret jamais ok si quelque chose est bancale on crer un nouveau termes ». Enforced in scripts/seed/seed-domain-tree.ts by assertOneWord, which refuses the plan rather than hyphenating — the previous version hyphenated, and that is how card-payment reached the chain. Predicates are not covered: `has tag` and `is a sub-domain of` are the ecosystem's existing phrases, not vocabulary ARP picks.",
  "_ruleViolationOnChain": {
   "label": "card-payment",
   "atom": "0x486470d2bbb5b9b67077505c43f5dedc1c36c4d378d293f2e08dad0750457b1c",

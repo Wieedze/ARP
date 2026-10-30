@@ -29,7 +29,7 @@ If three layers conflict, the higher-numbered (= more recent) wins. The original
 7. The global skills listed in the task's `Required skills` section.
 8. `.claude/skills/arp-contributing/SKILL.md`.
 9. Scan `.claude/choices/INDEX.md` for ADRs that touch this area — generated, so rerun
-   `scripts/build-claude-index.ts` after adding one.
+   `scripts/build/build-claude-index.ts` after adding one.
 10. Scan `.claude/learning/INDEX.md` for post-mortems on similar prior tasks.
 
 ## Routing table — what to load by task type
@@ -205,11 +205,11 @@ ARP/
     │   ├── ui-reviewer.md
     │   └── intuition-integrator.md
     ├── learning/                      append-only post-mortems
-    │   ├── INDEX.md                   (generated — scripts/build-claude-index.ts)
+    │   ├── INDEX.md                   (generated — scripts/build/build-claude-index.ts)
     │   ├── README.md
     │   └── TEMPLATE.md
     └── choices/                       append-only ADRs
-        ├── INDEX.md                   (generated — scripts/build-claude-index.ts)
+        ├── INDEX.md                   (generated — scripts/build/build-claude-index.ts)
         ├── README.md
         ├── TEMPLATE.md
         └── NNNN-*.md                  (one per decision — list them from INDEX.md)

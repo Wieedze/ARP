@@ -39,7 +39,7 @@ the quota out.
 2. **Filter before encoding** — a batch is atomic, so one member that already exists reverts all of
    it with `MultiVault_AtomExists`.
 3. **Resume by count** — a plan's calls are deterministic and ordered, so `--from <n>` skips what
-   landed. `scripts/send-plan-in-waves.sh` counts successes, sleeps, and resumes until the plan is
+   landed. `scripts/deploy/send-plan-in-waves.sh` counts successes, sleeps, and resumes until the plan is
    exhausted, stopping loudly on any failure that is not the quota.
 4. **Pace the reads too** — `Promise.all` over 662 rows is 662 requests leaving at once. Six at a
    time with a 120 ms gap.
@@ -82,4 +82,4 @@ the quota out.
 
 - Related rule: `.claude/rules/portability.md` — costs are read from the chain, not from a copy
 - Related ADR: `.claude/choices/0038-*` — the connector plans, the runtime signs
-- Scripts: `scripts/send-plan-in-waves.sh`, `scripts/send-plan.ts`, `scripts/seed-skills.ts`
+- Scripts: `scripts/deploy/send-plan-in-waves.sh`, `scripts/send-plan.ts`, `scripts/seed/seed-skills.ts`

@@ -221,7 +221,7 @@ async function send(calls: SerialisedCall[]): Promise<Hex[]> {
 step(3, `mint its ERC-8004 identity on ${REGISTRY}`);
 if (state.agent !== undefined && state.agentId === undefined) {
   const [hash] = await send(
-    plan('register-agent.ts', ['--address', state.agent, '--name', 'ARP Sandbox Agent']),
+    plan('agent/register-agent.ts', ['--address', state.agent, '--name', 'ARP Sandbox Agent']),
   );
   if (hash !== undefined) {
     const receipt = await client.getTransactionReceipt({ hash });
@@ -239,7 +239,7 @@ if (state.agent !== undefined && state.agentId === undefined) {
 }
 if (state.agentId !== undefined && state.uriSet !== true && state.agent !== undefined) {
   const hashes = await send(
-    plan('register-agent.ts', [
+    plan('agent/register-agent.ts', [
       '--address',
       state.agent,
       '--name',
@@ -258,7 +258,7 @@ console.log(`  agent id   ${state.agentId ?? '(not yet minted)'}`);
 // ── 4 ── the identity atom ──────────────────────────────────────────────────────────────────────
 step(4, 'its identity atom — the subject of every `uses` edge');
 if (state.agentId !== undefined && state.identityAtom !== true) {
-  const calls = plan('agent-identity-atom.ts', [
+  const calls = plan('agent/agent-identity-atom.ts', [
     '--agent',
     `${CHAIN_ID}/${state.agentId}`,
     '--registry',
@@ -328,7 +328,7 @@ const files: Record<string, string> = {
 # The key is read from ${KEY_FILE} by the signer process and never printed.
 set -euo pipefail
 set -a; . "${KEY_FILE}"; set +a
-exec "${BUN}" "${join(REPO, 'scripts/agent-send-plan.ts')}" --chain ${CHAIN_ID} --plan "$1" --key SANDBOX_AGENT_KEY "\${@:2}"
+exec "${BUN}" "${join(REPO, 'scripts/agent/agent-send-plan.ts')}" --chain ${CHAIN_ID} --plan "$1" --key SANDBOX_AGENT_KEY "\${@:2}"
 `,
   'bin/arp-fetch-skill': `#!/usr/bin/env bash
 # Fetch a catalogued skill through ARP's content server and install it as a Claude Code skill.

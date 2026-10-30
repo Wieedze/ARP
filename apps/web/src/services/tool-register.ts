@@ -38,7 +38,7 @@ import {MAX_STAKE_WEI, type StakeChain} from "./trust-stake";
  * Every field of the Thing derives from the normalised URL (ADR `0054`), so the atom id is a pure
  * function of what the operator typed — computable before any request, with no credential. The
  * planning step below is **two reads and no secrets**; what needs a credential is pinning, and
- * pinning only makes the document readable. `scripts/pin-tool.ts` does it, retroactively, and the id
+ * pinning only makes the document readable. `scripts/seed/pin-tool.ts` does it, retroactively, and the id
  * does not change.
  *
  * ## Chain

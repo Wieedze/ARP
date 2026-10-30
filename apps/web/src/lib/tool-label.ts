@@ -70,8 +70,8 @@ export function parseToolLabel(label: string | null): ToolLabel {
  * zero on another host — so that collision has no instance today, and the filter is what tells two
  * platforms apart when one arrives.
  *
- * Both figures come from committed generators rather than from a reading: `scripts/seed-skills.ts`
- * writes the catalogue and `scripts/build-skill-facts.ts` the facts. `claims.md` asks for the
+ * Both figures come from committed generators rather than from a reading: `scripts/seed/seed-skills.ts`
+ * writes the catalogue and `scripts/build/build-skill-facts.ts` the facts. `claims.md` asks for the
  * script and not the number, and that applies to a comment.
  */
 export function primaryNameOf(parsed: ToolLabel): string {

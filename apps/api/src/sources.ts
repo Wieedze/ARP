@@ -90,7 +90,7 @@ export async function readTree(
 }
 
 /**
- * Where a description is cut, as `scripts/build-skill-facts.ts` cut it: median 448 characters over
+ * Where a description is cut, as `scripts/build/build-skill-facts.ts` cut it: median 448 characters over
  * the 662, and a list row has room for about two lines. The full text is the SKILL.md itself.
  */
 const CUT_AT = 200;

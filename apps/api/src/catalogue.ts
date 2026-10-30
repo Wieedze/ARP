@@ -9,7 +9,7 @@ import tools from '../../../data/catalogue/tools.json';
 export type Skill = { repo: string; skill: string };
 export type Repo = { slug: string; kind: string };
 
-// Committed files with this shape; `scripts/record-skills-catalogue.ts` and the catalogue's own note define it.
+// Committed files with this shape; `scripts/seed/record-skills-catalogue.ts` and the catalogue's own note define it.
 export const SKILLS: readonly Skill[] = (skills13579 as { skills: Skill[] }).skills.map(
   ({ repo, skill }) => ({
     repo,

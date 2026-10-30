@@ -18,7 +18,7 @@ flowchart TB
 
     subgraph DERIVE["Derived here, reproducibly"]
         CLS["scripts/helpers/skill-domains-table.ts<br/>a keyword table, not a judgement<br/>no match → no tag"]
-        VER["scripts/record-maintained.ts<br/>archived · 404 → down<br/>recent push → up<br/>a quiet skill → NO VERDICT"]
+        VER["scripts/seed/record-maintained.ts<br/>archived · 404 → down<br/>recent push → up<br/>a quiet skill → NO VERDICT"]
     end
 
     subgraph CHAIN["Intuition 13579 — permanent, no deletion"]
@@ -133,14 +133,14 @@ Two consequences worth stating together, because the second is what makes the fi
 
 That second property was used the day it was built. A keyword table ordered general before specific
 wrote ~203 tags that were wrong — `blockchain` matched `token` in "cuts token usage" and in
-"design tokens" — and they were retired by `scripts/audit-skill-tags.ts`, which reads what ARP
+"design tokens" — and they were retired by `scripts/verify/audit-skill-tags.ts`, which reads what ARP
 actually holds from the indexer rather than replaying the table that wrote it. **A script that
 audits its own memory of what it wrote cannot find a write it forgot**, and that one found 528
 skill tags where the send log accounted for 296.
 
 ## 6. What is on chain today
 
-Measured on testnet 13579, 2026-10-29. Re-derive with `scripts/audit-skill-tags.ts`.
+Measured on testnet 13579, 2026-10-29. Re-derive with `scripts/verify/audit-skill-tags.ts`.
 
 |                                   |                                                                        |
 | --------------------------------- | ---------------------------------------------------------------------- |

@@ -78,8 +78,8 @@ Delegation  ERC-7710 signed authorization, scoped by caveat enforcers.
 ### The loop, walked for real
 
 ```
-bun run scripts/demo-adopt.ts --agent 8453/<tokenId> --tool <url> --stake 0.01 --execute
-bun run scripts/demo-hire.ts  --agent 8453/<tokenId> --node http://localhost:3100 --execute
+bun run scripts/demo/demo-adopt.ts --agent 8453/<tokenId> --tool <url> --stake 0.01 --execute
+bun run scripts/demo/demo-hire.ts  --agent 8453/<tokenId> --node http://localhost:3100 --execute
 ```
 
 `demo-adopt` takes an agent from nothing to a readable position: the identity atom, the `same as`

@@ -201,7 +201,7 @@ export type ProbeOptions = {
      *
      * `FetchLike`, not `typeof globalThis.fetch`. Under Bun's lib types the global is an **object**
      * carrying `preconnect`, so a counting or caching wrapper — which is the only reason to inject
-     * one — could not satisfy it. `scripts/verify-cohort.ts` has such a wrapper and was the thing
+     * one — could not satisfy it. `scripts/verify/verify-cohort.ts` has such a wrapper and was the thing
      * that could not typecheck (`docs/tasks/21`). The prober only ever calls it with a string URL.
      */
     fetch?: FetchLike;

@@ -8,7 +8,7 @@ import {
     partitionByCheckability,
     readDeclaredEndpoints,
 } from "../../packages/protocol/src/index.js";
-import {FILES, OWN_ENDPOINT, dataUri} from "../rig-registration-files.js";
+import {FILES, OWN_ENDPOINT, dataUri} from "../seed/rig-registration-files.js";
 
 /**
  * The testnet rig's registration files, run through the real classifier.
@@ -220,7 +220,7 @@ describe("`exercises` is checked against the classifier, not trusted as prose", 
      * shipped lived exactly there*. Measured: flipping `rig-dead`'s claim between `confirmed/dead`
      * and `inconclusive/transport-error` leaves this suite green.
      *
-     * `scripts/verify-rig-claims.ts` closes that family by reading the gate's report, because the
+     * `scripts/verify/verify-rig-claims.ts` closes that family by reading the gate's report, because the
      * probe is the only authority on it. Reporting these tests as closing "the class" was wrong by
      * one level.
      */

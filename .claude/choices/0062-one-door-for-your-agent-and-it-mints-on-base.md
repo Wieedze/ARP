@@ -16,7 +16,7 @@ reached either. 1,828 lines of UI with no door, which is why the user had never 
 whether they were not in fact the same page.
 
 **The action at the centre of the mechanism had no page at all.** "Declare you used this tool" —
-`docs/12` point 3 — existed only in `scripts/agent-declare-used.ts` and the MCP server.
+`docs/12` point 3 — existed only in `scripts/agent/agent-declare-used.ts` and the MCP server.
 
 And the page with the most machinery was writing into the wrong registry. `/agent` minted into
 **ARP's own copy** of the ERC-8004 reference implementation on Intuition testnet 13579. That is what

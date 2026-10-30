@@ -11,7 +11,7 @@ re-measured in a browser. 485 app tests.
 ## Why
 
 `docs/12` point 3 — _"the agent runs, it deposits TRUST on the modules it actually used"_ — is the
-centre of the mechanism and had **no page**. It lived in `scripts/agent-declare-used.ts` and in
+centre of the mechanism and had **no page**. It lived in `scripts/agent/agent-declare-used.ts` and in
 `arp-mcp-server.ts`, so it was reachable by an agent and not by the human holding the agent's key.
 `.claude/STATE.md` has carried it as _"still not built, and it is the centre of the mechanism"_ since
 2026-10-27, and named where it belongs: `/atom/:atomId`.
@@ -99,7 +99,7 @@ which 0.1 never comes back. **Opening it is one deleted guard plus an ADR the us
 - Do not touch `app/src/services/atom-stake.ts`. Its `depositOnAtom` is dead and wrong — no caller,
   deposits on the atom while `getToolUsage` prices the triple, and reads a testnet address at module
   scope. Removing it is its own change; it is recorded in `STATE.md`'s defect table instead.
-- Do not delete `scripts/agent-declare-used.ts`. The CLI is still the path for an agent with no
+- Do not delete `scripts/agent/agent-declare-used.ts`. The CLI is still the path for an agent with no
   browser, and `scripts/measure/` is required by `claims.md` regardless.
 
 ## Evidence ladder

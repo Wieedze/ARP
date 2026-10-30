@@ -266,7 +266,7 @@ claim is worth, not a gate on who may make one.
    **Done 2026-10-29** — `packages/protocol/src/content-path.ts` (21 tests),
    `content-serve.ts` (21 tests, every piece of IO injected), `scripts/arp-content.ts` (the
    transport, the key, the cache), and one route in `scripts/arp-mcp-server.ts`. Walked end to end
-   by `scripts/verify-content-route.ts`: the digest the receipt carries is what `sha256sum` prints
+   by `scripts/verify/verify-content-route.ts`: the digest the receipt carries is what `sha256sum` prints
    on the downloaded file.
 3. ~~The hook writes `ref` from the receipt.~~ **Done 2026-10-29** —
    `scripts/arp-fetch-skill.ts` records the fetch, `refForInvocation` reads it back, and the hook

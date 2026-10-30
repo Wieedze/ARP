@@ -9,7 +9,7 @@
 
 - `contracts/script/DeployRegistry.s.sol` — `^0.8.24` script, direct `new ModuleRegistry()`.
 - `contracts/script/DeployEnforcers.s.sol` — `0.8.23` strict script, direct `new DomainScopeEnforcer()` + `new TrustStakeCapEnforcer()`.
-- `scripts/deploy.sh` — chains both Foundry scripts; dry-run by default, `--broadcast` for real.
+- `scripts/deploy/deploy.sh` — chains both Foundry scripts; dry-run by default, `--broadcast` for real.
 - `scripts/seed.ts` — Bun + viem; pins Thing via Intuition `pinThing` GraphQL, registers module, creates Intuition atom; idempotent on both.
 - `data/deployments/13579.json` — populated with `arp.deployer/moduleRegistry/domainScopeEnforcer/trustStakeCapEnforcer`, the seeded module, and the atom id.
 - `schemas/solidity-audit.v1.json` — JSON Schema Draft 2020-12 for the attestation shape; dev reference (not pinned — on-chain `schemaURI` points at the Intuition-pinned Thing per Option A).

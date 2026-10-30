@@ -46,16 +46,16 @@ Nothing else. No account with us, no key from us, no allowlist.
 ARP_TARGET=testnet bun run apps/mcp/src/server.ts
 
 # dry first. Prints every figure and spends nothing.
-ARP_TARGET=testnet bun run scripts/demo-loop.ts --need image --agent 13579/6 --stake 0.002
+ARP_TARGET=testnet bun run scripts/demo/demo-loop.ts --need image --agent 13579/6 --stake 0.002
 
 # then for real.
-ARP_TARGET=testnet bun run scripts/demo-loop.ts --need image --agent 13579/6 --stake 0.002 --execute
+ARP_TARGET=testnet bun run scripts/demo/demo-loop.ts --need image --agent 13579/6 --stake 0.002 --execute
 ```
 
 `--need` is a domain in the tree. List them yourself rather than taking ours:
 
 ```bash
-bun run scripts/verify-domain-tree.ts
+bun run scripts/verify/verify-domain-tree.ts
 ```
 
 ## 4. What each step proves, and what it does not
@@ -169,4 +169,4 @@ node       http://localhost:3002/
                                            the edge carries 1 position, 0.00297 tTRUST
 ```
 
-Reproduce it with `scripts/demo-loop.ts`, or disbelieve it with the GraphQL query in §5.
+Reproduce it with `scripts/demo/demo-loop.ts`, or disbelieve it with the GraphQL query in §5.

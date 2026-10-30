@@ -6,7 +6,7 @@
 > **Shipped**: `packages/protocol/src/verify/{declaration,probe,host-limiter,subject}.ts`, exported from the
 > connector, **39 tests** — 15 in `verify-declaration.test.ts`, 24 in `verify-probe.test.ts`. (This
 > said 41 and `STATE.md` said 48; neither was ever right. Count them:
-> `grep -c '    it(' packages/protocol/test/verify-{declaration,probe}.test.ts`.) `scripts/verify-cohort.ts` walks a range or a list and writes a JSON surface.
+> `grep -c '    it(' packages/protocol/test/verify-{declaration,probe}.test.ts`.) `scripts/verify/verify-cohort.ts` walks a range or a list and writes a JSON surface.
 > Verified live against six real documents and five MCP endpoints.
 >
 > **Gate run 2026-10-27 — passed, and the result is not what the gate expected.** Two walks of 100
@@ -159,7 +159,7 @@ Separately, agent 8453:2340 (Clawnch) declares six MCP tools and a standard clie
   of the document, and therefore unit-testable without fixtures of the whole internet.
 - A prober that performs the network part, with the courtesy rules below, and returns group 1/2/3
   per endpoint plus what it sent.
-- `scripts/verify-cohort.ts` — walks a range or a list, writes results to a local JSON surface.
+- `scripts/verify/verify-cohort.ts` — walks a range or a list, writes results to a local JSON surface.
 - Tests: the two spellings, every class in the table, and at least one fixture per group-3 shape.
   Fixtures are recorded live responses, with the date and id they came from.
 

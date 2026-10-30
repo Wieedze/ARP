@@ -103,9 +103,9 @@ third-party hosts a request each and the report must stay reproducible from a co
   `rules/claims.md`'s "commit the script, not the number" is really asking for, and the two walks
   are indistinguishable without it:
   - `data/measurements/cohort-base-uniform-100-2026-10-27.json` —
-    `bun run scripts/verify-cohort.ts --count 100 --out <path>`
+    `bun run scripts/verify/verify-cohort.ts --count 100 --out <path>`
   - `data/measurements/cohort-base-ids1-100-2026-10-27.json` —
-    `bun run scripts/verify-cohort.ts --from 1 --to 100 --out <path>`
+    `bun run scripts/verify/verify-cohort.ts --from 1 --to 100 --out <path>`
 
   **Retention**: one file per walk, named `<target>-<shape>-<n>-<date>.json`, added and never
   regenerated. Re-running a walk to reproduce a row costs a hundred third-party hosts a request
