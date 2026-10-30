@@ -6,20 +6,29 @@ import type {PreparedCall} from "../declare/types.js";
  * The agent's one-time `approve(sponsor, DEPOSIT)`, which is what lets ARP's sponsoring service
  * deposit with the agent as `receiver` (ADR `0094` §3).
  *
- * Read on 2026-10-30 from a local checkout of `intuition-contracts-v2` (ADR `0094` cites one at
- * `2bb93d2`; the commit of this one was not re-checked), **not** from the deployed contract on
- * 13579 — that re-read is still owed before the first live call:
+ * Read off the deployed contract on 13579, 2026-10-30, block 9374997, by
+ * `scripts/measure/multivault-sponsor-abi.ts` (output: `data/measurements/multivault-sponsor-abi-2026-10-30.json`).
+ * Read-only, `eth_getCode` and `eth_call`, nothing sent. The MultiVault is an EIP-1967 proxy whose
+ * implementation is `0x7b320b9a88e89032ef60aec88b8826e479922f94`, and:
  *
- * - `approve(address sender, ApprovalTypes approvalType)` at `MultiVault.sol:362`. `msg.sender` is
- *   the receiver, so only the agent can grant it, and it reverts when `sender == msg.sender`.
- * - `ApprovalTypes { NONE, DEPOSIT, REDEMPTION, BOTH }` at `IMultiVault.sol:28`, so `DEPOSIT` is 1.
- * - `deposit` checks `_isApprovedToDeposit(_msgSender(), receiver)` at `:673`, which is
- *   `sender == receiver || approvals[receiver][sender] & DEPOSIT` at `:1591`.
- * - `approvals` is `internal` (`:53`) and nothing exposes it, so whether an agent has approved is
- *   learnt by simulating the deposit, not by a read.
+ * - the implementation dispatches both `approve(address,uint8)` (`0x4342e966`) and
+ *   `deposit(address,bytes32,uint256,uint256)` (`0x2fb1d270`);
+ * - `approve(B, 1)` from A executes, `approve(A, 1)` from A reverts
+ *   `MultiVault_CannotApproveOrRevokeSelf()`, and `approve(B, 4)` reverts bare, as the ABI decoder
+ *   does for an enum value out of range — so `ApprovalTypes` has four members and `DEPOSIT` is 1;
+ * - `deposit(B, …)` from A with no approval reverts `MultiVault_SenderNotApproved()`, and
+ *   `deposit(A, …)` from A gets past the approval check and fails on the minimum deposit instead —
+ *   the `sender == receiver` branch.
+ *
+ * The source those calls agree with, from a local checkout of `intuition-contracts-v2`:
+ * `approve(address sender, ApprovalTypes approvalType)` checks `receiver == sender` with
+ * `receiver = msg.sender`, so only the agent can grant it; `ApprovalTypes { NONE, DEPOSIT,
+ * REDEMPTION, BOTH }`; `_isApprovedToDeposit` is `sender == receiver || approvals[receiver][sender]
+ * & DEPOSIT`. `approvals` is `internal` and nothing exposes it, so whether an agent has approved is
+ * learnt by simulating the deposit, not by a read.
  *
  * **DEPOSIT and never BOTH.** `BOTH` would also let the sponsor redeem the agent's shares to any
- * receiver it names (`_isApprovedToRedeem`, `:1599`). The agent owns the position because only the
+ * receiver it names (`_isApprovedToRedeem`). The agent owns the position because only the
  * agent can leave it.
  */
 export const DEPOSIT_APPROVAL = 1;
