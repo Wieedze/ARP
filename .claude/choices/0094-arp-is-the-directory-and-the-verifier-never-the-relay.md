@@ -69,31 +69,31 @@ deposits that carry a valid proof. It never relays a request, and it never sees 
 - **The condition binds ARP's sponsorship and ARP's "proven" label, not the chain.** MultiVault is
   permissionless, so an agent can always deposit its own TRUST with no proof. ARP indexes that as
   _declared_, never as _proven_. This is also what keeps ADR `0045`'s test passing.
-- **Now:** the funder checks the proof before it sends. **Later:** a caveat enforcer checks a signed
+- **Now:** the sponsoring service checks the proof before it sends. **Later:** a caveat enforcer checks a signed
   receipt passed in the redemption, so "no proof, no deposit" is held by a contract, the same pattern
   as `DomainScopeEnforcer` and `TrustStakeCapEnforcer`.
 - **MCP.** The hook's declaration stays weaker. How it combines with `apps/probe`'s reachability
   signal (used, unreachable, or a counter-triple) is left open, by the user's decision: _« ça reste
   à définir plus tard »_.
 
-### 3. The funder pays, and the agent owns the position
+### 3. The sponsoring service pays, and the agent owns the position
 
-- The funder is a separate service. It calls `deposit(receiver = agent, …)` and pays the value. The
+- The sponsoring service runs on its own, apart from the verifier. It calls `deposit(receiver = agent, …)` and pays the value. The
   shares are the agent's.
-- This needs the agent's one-time `approve(funder, DEPOSIT)`. Without it the contract refuses.
+- This needs the agent's one-time `approve(sponsor, DEPOSIT)`. Without it the contract refuses.
   `_isApprovedToDeposit` accepts `sender == receiver` or an approval held by the receiver.
 - `approve` is the agent's own transaction, and the contract has neither a signature-based approval
-  nor a forwarder. So the funder sends each registered agent **the gas for one transaction, once**.
+  nor a forwarder. So the sponsoring service sends each registered agent **the gas for one transaction, once**.
   That amount is too small to be worth diverting. (User decision.)
-- The agent signs its request. The funder checks that signature and the proof before sending.
+- The agent signs its request. The sponsoring service checks that signature and the proof before sending.
   Nothing on chain checks the agent's signature. The on-chain link to the agent's identity is the
   `receiver`.
 - **Withdrawal is allowed.** A position the agent cannot leave says nothing. Exiting a tool that
   degraded, or moving from support to oppose, is the signal. Once an agent has withdrawn more than
-  a threshold of what it was sponsored, the funder stops sponsoring it, and the agent pays from its
+  a threshold of what it was sponsored, the sponsoring service stops sponsoring it, and the agent pays from its
   gains. The threshold is configuration and is not yet set.
 - Limits: ADR `0092`'s (2 per delegator per day, about 1 tTRUST a day overall, registered ERC-8004
-  agents only), plus an allow-list. The funder calls the MultiVault and nothing else. This is the
+  agents only), plus an allow-list. The sponsoring service calls the MultiVault and nothing else. This is the
   shape paymaster providers use (per-user cap, global cap, contract allow-list, alerts).
 - `corroborationOf` (`packages/protocol/src/receipt.ts:367`) compares the receipt's `to` against the
   declarer. It must compare against the `receiver` instead, or every sponsored declaration reads as
@@ -121,9 +121,9 @@ not even through a hosted service. The unplug test still passes. With ARP down, 
 agent-to-agent call completes, and an agent can still deposit from its own wallet. What it loses is
 the sponsorship and the _proven_ label. Under ADR `0092` that is money, not a capability.
 
-**ADR `0092`.** Its sponsor relay paid for publishing delegations. The funder here pays for
+**ADR `0092`.** Its sponsor relay paid for publishing delegations. The sponsoring service here pays for
 deposits too, under the same limits and on the same chain. `security.md`'s row for "ARP's own,
-the sponsor relay, testnet 13579 only" extends to the funder. The mainnet row is unchanged.
+the sponsor relay, testnet 13579 only" extends to the sponsoring service. The mainnet row is unchanged.
 
 **The receipt doctrine (ADR `0080` and the 13 sites).** "A receipt can only add, it never refuses"
 becomes "a receipt is the condition of ARP's sponsorship and of the _proven_ label". An unproven
@@ -136,8 +136,8 @@ declaration is still indexed, as _declared_.
   `docs/12`'s drift signal "ARP should host the endpoint agents are reached at".
 - **ARP builds its own tunnel.** Cloudflare Tunnel and ngrok already do exactly this, and building
   one adds no value to ARP.
-- **The funder sends TRUST to the agent's wallet.** Rejected by the user: it is a faucet to farm.
-- **The funder deposits with itself as receiver.** The position would be ARP's, nothing would link
+- **The sponsoring service sends TRUST to the agent's wallet.** Rejected by the user: it is a faucet to farm.
+- **The sponsoring service deposits with itself as receiver.** The position would be ARP's, nothing would link
   it to the agent, and ARP's money would enter ARP's own figures (ADR `0046`).
 - **Sponsor only the non-withdrawable part (creation fees).** This was proposed to stop farming.
   The user chose to allow withdrawal and to bound it by behaviour instead.
@@ -158,7 +158,7 @@ declaration is still indexed, as _declared_.
 
 **Negative:**
 
-- The funder holds a hot key that signs with ARP's own funds, automatically. That is acceptable on
+- The sponsoring service holds a hot key that signs with ARP's own funds, automatically. That is acceptable on
   testnet only, and it is bounded by the limits and the allow-list.
 - An agent can still take its sponsored deposit out. The withdrawal rule limits how much, but does
   not prevent it.
@@ -175,7 +175,7 @@ declaration is still indexed, as _declared_.
   Re-read the deployed ABI before building.
 - None of this is built. The hire receipt and the payment check exist (`apps/node/src/task.ts:202`,
   `packages/protocol/src/hire-receipt.ts`). So does the content receipt
-  (`apps/mcp/src/content.ts:281`). The 402 answer, the handshake, the funder and the enforcer do not.
+  (`apps/mcp/src/content.ts:281`). The 402 answer, the handshake, the sponsoring service and the enforcer do not.
 
 ## References
 

@@ -12,11 +12,12 @@
    **No daily rate is quoted here, and that is deliberate.** Two observations the same day: the id rose from 309,925 on 2026-10-20 to 444,562 on 2026-10-21, and 72 ids were consumed in the two minutes between two probes. Those imply rates 2.6× apart — ~135,000 a day against ~52,000 — so a two-minute sample cannot settle it and neither can two daily snapshots. An earlier version of this line said "~44,000 a day" as though it were a measurement. Re-run the script; do not quote a rate.
 
 2. An agent is **composed of modules**. A module is a tool or a methodology registered in `ModuleRegistry`: a domain plus a schema. Anyone can register one.
-3. The agent runs. It **deposits TRUST on the modules it actually used** — not the ones it claims to use.
+3. The agent runs. It **deposits TRUST on the modules it actually used** — not the ones it claims to use. When it brings a proof that the use happened, ARP's sponsoring service pays the deposit and the position is still the agent's (`receiver`). Without a proof it can deposit its own TRUST, and ARP indexes that as _declared_, never _proven_ (ADR `0094`).
 4. That deposit is the signal. It produces reputation at two levels at once:
    - **tool reputation** — how many distinct agents put money on this module
    - **agent reputation** — what this agent is composed of, and how much it has committed to that composition
 5. The agent operates under a **signed delegation whose caveats are the guard rail**. `DomainScopeEnforcer` bounds where it can stake; `TrustStakeCapEnforcer` bounds how much. Out-of-scope attempts revert before any state change.
+6. **ARP is a directory and a verifier.** It hands out an agent's endpoint, which the operator's node registers through a signed handshake, and it checks proofs. The call itself goes from agent to agent: ARP never relays a request and never sees a prompt (ADR `0094`).
 
 That is the whole protocol. Nothing above requires ground truth, an oracle, a resolver, or visibility
 into anyone's execution.
@@ -26,6 +27,8 @@ into anyone's execution.
 Every other reputation layer in this market takes free input: feedback, ratings, votes. ARP's input is a deposit of real TRUST on a tool the agent used, made under a cap its operator signed.
 
 It costs money, it is bounded by a contract, and it is about **usage**, not opinion.
+
+A sponsored deposit costs the agent nothing, so there the cost sits in the **proof** it requires: a payment one party made to another, or a fetch the agent paid ARP for. An unsponsored deposit costs the agent its own TRUST. Neither is free (ADR `0094`).
 
 ## What ARP is not
 
@@ -41,6 +44,13 @@ It costs money, it is bounded by a contract, and it is about **usage**, not opin
   The node holds no key — it prepares, the agent signs (ADR `0038`, `0045`). ARP still has no
   visibility into what an agent executes, and that is a **separate** guarantee: one sentence used to
   carry both, and the one about code was already false while the one about execution holds.
+  Since ADR `0094` it holds in its strictest form: the operator's own tunnel carries the call, and
+  ARP only lists the endpoint. If ARP's hosted services (probe, sponsoring, verifier) are
+  unplugged, an agent loses its sponsorship and the _proven_ label, never a capability. It can
+  still deposit its own TRUST, which is ADR `0092`'s test.
+- **Not an exchange.** ARP is paid in USDC through x402 for its service. It buys the TRUST it
+  spends and never sells or swaps any for anyone. A sponsored amount is fixed and capped, never a
+  share of a payment (ADR `0094`).
 
 ## Drift signals
 
@@ -68,6 +78,9 @@ Written down because this document exists to stop a specific failure, which has 
 | Tool and agent reputation surfaced in the UI                    | built                                                  |
 | **Adoption of an existing ERC-8004 agent**                      | **missing — the whole gap**                            |
 | **The guard rail on the chain where the agents are**            | **missing — enforcers are on testnet, agents are not** |
+| Install handshake, the endpoint bound to the ERC-8004 token     | designed, ADR `0094` — not built                       |
+| A proof as the condition of a sponsored deposit                 | designed, ADR `0094` — not built                       |
+| Revenue: x402 in USDC                                           | designed, ADR `0094` — not built                       |
 
 The mechanism works today for agents ARP mints. It does not work for the agents that already exist — **28,720** reachable out of a registry whose next id is **444,562**, measured 2026-10-21 — and those are the population, so that gap is what stands between this and a live system. Worse than it reads: the mirror has not moved since 2026-09-16 while the registry kept going, so for roughly **fourteen agents in fifteen** the identity atom does **not exist** and has to be written (`scripts/agent/agent-identity-atom.ts`, ADR `0047`). `/agent/import` writes it now rather than waiting.
 
