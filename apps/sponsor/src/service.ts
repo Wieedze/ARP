@@ -59,6 +59,7 @@ import {
   type SignedSponsorRequest,
   type SponsorLimits,
   type SponsorProof,
+  type StrictIdentityAtom,
   type TypedDataVerifier,
 } from '@arp-protocol/core';
 import { getAddress, isAddress, isHex, type Address, type Hex } from 'viem';
@@ -81,10 +82,11 @@ export type AgentOwnerReads = AgentKeyReads;
 
 /**
  * An agent's identity atom: the registration-derived atom a `uses` edge carries as its subject
- * (ADR `0032`), or `null` when the graph has none for it. `main.ts` resolves it through `same as`.
+ * (ADR `0032`). `main.ts` resolves it through `same as` with `resolveIdentityAtomStrict`, which
+ * answers `ambiguous` rather than picking when two atoms claim one identity.
  */
 export type AgentIdentityAtoms = {
-  identityAtom(agent: AgentIdentityRef): Promise<Hex | null>;
+  identityAtom(agent: AgentIdentityRef): Promise<StrictIdentityAtom>;
 };
 
 /** The delegation register's part. Absent, `POST /publish` answers 503 and spends nothing. */
@@ -317,6 +319,7 @@ export function createSponsor(options: SponsorOptions): {
 
     const proven = await checkSponsorProof(proof, {
       receiver: agent,
+      requester: { agentRegistry: request.agentRegistry, agentId: request.agentId },
       chainId,
       payments,
       acceptedContentSigners: options.acceptedContentSigners,
@@ -344,13 +347,17 @@ export function createSponsor(options: SponsorOptions): {
     }
 
     // The edge is the proof's: `(requester, uses, what the proof is about)`, both as atoms.
-    const subject = await options.identities.identityAtom({
+    const subjectRead = await options.identities.identityAtom({
       agentRegistry: request.agentRegistry,
       agentId: request.agentId,
     });
-    if (subject === null) {
+    if (subjectRead.status === 'none') {
       return json({ error: `agent ${request.agentId} has no identity atom on the graph` }, 403);
     }
+    if (subjectRead.status === 'ambiguous') {
+      return json({ error: `agent ${request.agentId}: ${subjectRead.reason}` }, 409);
+    }
+    const subject = subjectRead.atom;
     if (subject.toLowerCase() !== triple.subjectId.toLowerCase()) {
       return json(
         {
@@ -359,18 +366,29 @@ export function createSponsor(options: SponsorOptions): {
         400,
       );
     }
-    const object =
-      proven.object.kind === 'atom'
-        ? proven.object.atom
-        : await options.identities.identityAtom(proven.object);
-    if (object === null) {
-      return json(
-        { error: 'the agent the proof says was hired has no identity atom on the graph' },
-        403,
-      );
+    let object: Hex;
+    if (proven.object.kind === 'atom') {
+      object = proven.object.atom;
+    } else {
+      const objectRead = await options.identities.identityAtom(proven.object);
+      if (objectRead.status === 'none') {
+        return json(
+          { error: 'the agent the proof says was hired has no identity atom on the graph' },
+          403,
+        );
+      }
+      if (objectRead.status === 'ambiguous') {
+        return json({ error: `the agent the proof says was hired: ${objectRead.reason}` }, 409);
+      }
+      object = objectRead.atom;
     }
     if (object.toLowerCase() !== triple.objectId.toLowerCase()) {
       return json({ error: `the proof is about ${object}, not the object the triple names` }, 400);
+    }
+    // A second guard on the same case `checkSponsorProof` refuses by identity: two references that
+    // resolve to one atom are one agent, and `(A, uses, A)` is not agent calls agent.
+    if (subject.toLowerCase() === object.toLowerCase()) {
+      return json({ error: 'the triple is the agent using itself, which no proof backs' }, 403);
     }
 
     return exclusive(async () => {

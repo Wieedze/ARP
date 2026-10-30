@@ -13,7 +13,9 @@ import {
   type MultiVaultReads,
   type PreparedCall,
   type SponsorLimits,
+  type AgentIdentityAtom,
   type SponsorProof,
+  type StrictIdentityAtom,
 } from '@arp-protocol/core';
 import { signDelegation } from '@metamask/smart-accounts-kit';
 import {
@@ -178,8 +180,19 @@ const owners = (
 
 /** Agent 7 (the requester) is `SUBJECT` on the graph, agent 8 (the one hired) is `OBJECT`. */
 const identities = (atoms: Record<string, Hex> = { '7': SUBJECT, '8': OBJECT }) => ({
-  identityAtom: async ({ agentRegistry, agentId }: { agentRegistry: string; agentId: string }) =>
-    agentRegistry === REGISTRY ? (atoms[agentId] ?? null) : null,
+  identityAtom: async ({
+    agentRegistry,
+    agentId,
+  }: {
+    agentRegistry: string;
+    agentId: string;
+  }): Promise<StrictIdentityAtom> => {
+    const atom = agentRegistry === REGISTRY ? atoms[agentId] : undefined;
+    // The fixture's atoms stand for what `asAgentIdentityAtom` would have returned for them.
+    return atom === undefined
+      ? { status: 'none' }
+      : { status: 'found', atom: atom as AgentIdentityAtom };
+  },
 });
 
 function sponsor(w: World, over: Partial<Parameters<typeof createSponsor>[0]> = {}) {
@@ -279,6 +292,71 @@ describe('GET /', () => {
 });
 
 describe('POST /deposit', () => {
+  /** `(SUBJECT, uses, SUBJECT)` is the term the request signs, so the check under test is reached. */
+  const selfTriple = (w: World): MultiVaultReads => ({
+    ...fakeReads(w),
+    tripleId: async (s: Hex, p: Hex, o: Hex) =>
+      s === SUBJECT && p === USES && o === SUBJECT ? TERM : keccak256(`0x${s.slice(2)}`),
+  });
+
+  test("refuses a hire of the requester's own agent through its agentWallet", async () => {
+    // Agent 7 is the requester, held by AGENT, and CALLEE is its agentWallet. The holder pays the
+    // wallet, the wallet signs a receipt naming agent 7: two keys, one agent.
+    const w = world();
+    const service = sponsor(w, {
+      owners: owners({ '7': AGENT.address }, { '7': CALLEE.address }),
+      reads: selfTriple(w),
+    });
+    const res = await call(
+      service,
+      '/deposit',
+      await depositBody(await hireProof(5n * MILLI, CALLEE, '7'), AGENT, {
+        triple: { subjectId: SUBJECT, predicateId: USES, objectId: SUBJECT },
+      }),
+    );
+    expect(res.status).toBe(403);
+    expect(res.body.error).toMatch(/the requester itself/);
+    expect(w.sent).toHaveLength(0);
+  });
+
+  test.each([
+    ['the requester', '7'],
+    ['the hired agent', '8'],
+  ])('refuses, and sends nothing, when two atoms claim %s through `same as`', async (_l, id) => {
+    const w = world();
+    const base = identities();
+    const service = sponsor(w, {
+      identities: {
+        identityAtom: async (agent) =>
+          agent.agentId === id
+            ? { status: 'ambiguous', reason: `more than one atom claims this identity: ${OBJECT}` }
+            : base.identityAtom(agent),
+      },
+    });
+    const res = await call(service, '/deposit', await depositBody(await hireProof()));
+    expect(res.status).toBe(409);
+    expect(res.body.error).toMatch(/more than one atom/);
+    expect(w.sent).toHaveLength(0);
+  });
+
+  test('refuses a triple whose subject and object are one atom, even for two agent ids', async () => {
+    const w = world();
+    const service = sponsor(w, {
+      identities: identities({ '7': SUBJECT, '8': SUBJECT }),
+      reads: selfTriple(w),
+    });
+    const res = await call(
+      service,
+      '/deposit',
+      await depositBody(await hireProof(), AGENT, {
+        triple: { subjectId: SUBJECT, predicateId: USES, objectId: SUBJECT },
+      }),
+    );
+    expect(res.status).toBe(403);
+    expect(res.body.error).toMatch(/using itself/);
+    expect(w.sent).toHaveLength(0);
+  });
+
   test('deposits with the agent as receiver, once per proof', async () => {
     const w = world();
     const service = sponsor(w);

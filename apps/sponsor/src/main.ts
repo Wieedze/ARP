@@ -2,7 +2,7 @@
  *
  *      SPONSOR_KEY_FILE=~/.arp/sponsor.key \
  *      SPONSOR_DEPOSIT_WEI=… SPONSOR_APPROVAL_GAS_WEI=… \
- *      SPONSOR_USES_PREDICATE=0x… SPONSOR_REGISTRIES=eip155:13579:0x… \
+ *      SPONSOR_REGISTRIES=eip155:13579:0x… \
  *      bun run apps/sponsor/src/main.ts
  *
  *  **It holds ARP's treasury key and signs with ARP's own funds, automatically.** That is the row
@@ -22,10 +22,10 @@ import { join } from 'node:path';
 
 import {
   ADR_0092_LIMITS,
+  INTUITION_USES_TERM_ID,
   intuitionTestnet,
   multiVaultReads,
-  NoAgentIdentityError,
-  resolveDeclarationSubject,
+  resolveIdentityAtomStrict,
   type PreparedCall,
   type SponsorLimits,
 } from '@arp-protocol/core';
@@ -34,7 +34,6 @@ import {
   createPublicClient,
   createWalletClient,
   http,
-  isHex,
   parseAbi,
   type Address,
   type Hex,
@@ -98,9 +97,9 @@ const limits: SponsorLimits = {
       : Math.min(10_000, count('SPONSOR_WITHDRAWAL_THRESHOLD_BPS', 10_000)),
 };
 
-const usesPredicate = required('SPONSOR_USES_PREDICATE');
-if (!isHex(usesPredicate) || usesPredicate.length !== 66)
-  fail('SPONSOR_USES_PREDICATE must be a bytes32 term id');
+// The predicate the declare path writes (`declare/plan.ts`) and every reader filters on. Not
+// configurable: a sponsored deposit on any other `uses` atom would be invisible to all of them.
+const usesPredicate: Hex = INTUITION_USES_TERM_ID;
 const registries = required('SPONSOR_REGISTRIES')
   .split(',')
   .map((entry) => entry.trim());
@@ -200,21 +199,17 @@ const service = createSponsor({
   identities: {
     async identityAtom({ agentRegistry, agentId }) {
       const match = REGISTRY_REF.exec(agentRegistry);
-      if (match === null) return null;
-      try {
-        return await resolveDeclarationSubject({
-          agent: {
-            chainId: Number(match[1]),
-            tokenId: agentId,
-            registry: match[2] as Address, // Matched as 40 hex digits on the line above.
-          },
-          graphqlUrl: deployments.chain.graphqlUrl,
-        });
-      } catch (error) {
-        // No atom is an answer about the agent. Anything else is the graph failing, and a 500.
-        if (error instanceof NoAgentIdentityError) return null;
-        throw error;
-      }
+      if (match === null) return { status: 'none' };
+      // A graph failure throws, and is a 500: only an answer about the agent is a refusal.
+      return resolveIdentityAtomStrict({
+        agent: {
+          chainId: Number(match[1]),
+          tokenId: agentId,
+          // Lower case, so a receipt's mis-checksummed registry is not a `resolveRef` TypeError.
+          registry: (match[2] ?? '').toLowerCase() as Address, // 40 hex digits, matched above.
+        },
+        graphqlUrl: deployments.chain.graphqlUrl,
+      });
     },
   },
   registries,
