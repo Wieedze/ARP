@@ -24,13 +24,23 @@
  *  **The work is the operator's.** `ARP_NODE_HANDLER` points at a module exporting
  *  `handle(payload, context)`. Without one the node echoes, which is enough to prove the protocol
  *  and proves nothing about an agent.
+ *
+ *  **One payment, one job.** Every accepted payment is appended to `AGENT_NODE_LEDGER`
+ *  (`.arp/node-payments.jsonl` by default) and refused the second time — `task.ts`.
  */
-import { createPublicClient, formatEther, http, keccak256, parseEther, toHex } from 'viem';
+import { join } from 'node:path';
+
+import { createPublicClient, formatEther, http, parseEther } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
-import type { Address, Hex } from 'viem';
+import type { Hex } from 'viem';
+
+import { createNode, echo, PaymentLedger, type TaskHandler } from './task.ts';
+
+export type { TaskContext, TaskHandler } from './task.ts';
 
 const PORT = Number(process.env.AGENT_NODE_PORT ?? 3100);
 const MIN_BUDGET = parseEther(process.env.AGENT_NODE_MIN_BUDGET ?? '0.001');
+const LEDGER = process.env.AGENT_NODE_LEDGER ?? join(process.cwd(), '.arp', 'node-payments.jsonl');
 
 const rpcUrl = process.env.INTUITION_RPC_URL ?? process.env.INTUITION_TESTNET_RPC_URL;
 if (!rpcUrl) {
@@ -43,25 +53,6 @@ if (!rawKey) {
   process.exit(1);
 }
 const account = privateKeyToAccount((rawKey.startsWith('0x') ? rawKey : `0x${rawKey}`) as Hex);
-const publicClient = createPublicClient({ transport: http(rpcUrl) });
-
-/** What the operator's handler receives. Everything the node verified, nothing it assumed. */
-export type TaskContext = {
-  requester: Address;
-  /** Native value the requester actually moved, verified on chain. */
-  paid: bigint;
-  paymentTxHash: Hex;
-  agent: Address;
-};
-export type TaskHandler = (payload: unknown, context: TaskContext) => Promise<unknown>;
-
-const echo: TaskHandler = async (payload, context) => ({
-  echoed: payload,
-  note:
-    'No handler configured, so this node proves the protocol and nothing about the agent. Set ' +
-    'ARP_NODE_HANDLER to a module exporting `handle(payload, context)`.',
-  paidWei: context.paid.toString(),
-});
 
 const handlerPath = process.env.ARP_NODE_HANDLER;
 let handle: TaskHandler = echo;
@@ -74,124 +65,16 @@ if (handlerPath !== undefined) {
   handle = module.handle;
 }
 
-type TaskBody = { paymentTxHash?: Hex; requesterAddress?: Address; payload?: unknown };
+const node = createNode({
+  account,
+  publicClient: createPublicClient({ transport: http(rpcUrl) }),
+  minBudget: MIN_BUDGET,
+  handle,
+  handlerPath: handlerPath ?? null,
+  ledger: new PaymentLedger(LEDGER),
+});
 
-function json(value: unknown, status = 200): Response {
-  return new Response(
-    JSON.stringify(
-      value,
-      (_key, inner) => (typeof inner === 'bigint' ? inner.toString() : inner),
-      2,
-    ),
-    { status, headers: { 'content-type': 'application/json' } },
-  );
-}
-
-/**
- * The four checks, in order, before any work happens.
- *
- * Every one of them failed somewhere in this project's history or in a review of it: a tx that does
- * not exist, a payment to a different address than the runtime holds, a payment below the floor, and
- * a requester claiming someone else's payment. The last is the one that matters most — without it a
- * caller could point at any payment on the chain and claim its credit.
- */
-async function verifyPayment(body: TaskBody): Promise<TaskContext | { error: string }> {
-  if (!body.paymentTxHash || !body.requesterAddress) {
-    return { error: 'paymentTxHash and requesterAddress are required' };
-  }
-  const tx = await publicClient.getTransaction({ hash: body.paymentTxHash }).catch(() => null);
-  if (tx === null) return { error: `payment tx ${body.paymentTxHash} not found` };
-  if (!tx.to || tx.to.toLowerCase() !== account.address.toLowerCase()) {
-    return { error: `payment recipient ${tx.to ?? 'none'} is not this agent ${account.address}` };
-  }
-  if (tx.value < MIN_BUDGET) {
-    return {
-      error: `payment ${formatEther(tx.value)} is below this agent's minimum ${formatEther(MIN_BUDGET)}`,
-    };
-  }
-  if (tx.from.toLowerCase() !== body.requesterAddress.toLowerCase()) {
-    return { error: `payment came from ${tx.from}, not from the declared requester` };
-  }
-  return {
-    requester: body.requesterAddress,
-    paid: tx.value,
-    paymentTxHash: body.paymentTxHash,
-    agent: account.address,
-  };
-}
-
-/**
- * The receipt binds **this** request to **this** result.
- *
- * `requestHash` covers the requester, the payment and the payload; `resultHash` covers the output.
- * Signing their concatenation means a receipt cannot be lifted onto another request or another
- * answer — which is what a caller needs before paying to stand behind a claim about this agent.
- */
-function digest(value: unknown): Hex {
-  return keccak256(
-    toHex(JSON.stringify(value, (_k, v) => (typeof v === 'bigint' ? v.toString() : v))),
-  );
-}
-
-export const handler = {
-  port: PORT,
-  async fetch(request: Request): Promise<Response> {
-    const url = new URL(request.url);
-
-    if (request.method === 'GET' && url.pathname === '/healthz') {
-      return json({ ok: true, agent: account.address, minBudgetWei: MIN_BUDGET.toString() });
-    }
-
-    if (request.method === 'GET' && url.pathname === '/') {
-      // Not part of any protocol. The verifier's non-protocol probe sends a plain GET, and
-      // answering it makes this endpoint `live` rather than `dead` for that path too.
-      return json({
-        agent: account.address,
-        endpoints: [{ path: '/task', method: 'POST', description: 'hire this agent' }],
-        minBudgetWei: MIN_BUDGET.toString(),
-        handler: handlerPath ?? null,
-      });
-    }
-
-    if (request.method !== 'POST' || url.pathname !== '/task') {
-      return json({ error: 'POST /task, or GET /healthz' }, 404);
-    }
-
-    let body: TaskBody;
-    try {
-      body = (await request.json()) as TaskBody;
-    } catch {
-      return json({ error: 'body is not JSON' }, 400);
-    }
-
-    const verified = await verifyPayment(body);
-    if ('error' in verified) return json(verified, 402);
-
-    let result: unknown;
-    try {
-      result = await handle(body.payload, verified);
-    } catch (error) {
-      // The message, not a stack: enough for the caller to retry or report, nothing about the host.
-      return json({ error: `handler failed: ${String(error).slice(0, 300)}` }, 500);
-    }
-
-    const requestHash = digest({
-      requester: verified.requester,
-      paymentTxHash: verified.paymentTxHash,
-      paid: verified.paid.toString(),
-      payload: body.payload ?? null,
-    });
-    const resultHash = digest(result ?? null);
-    const signature = await account.signMessage({
-      message: { raw: keccak256(`${requestHash}${resultHash.slice(2)}` as Hex) },
-    });
-
-    return json({
-      result,
-      receipt: { agent: account.address, requestHash, resultHash, signature },
-    });
-  },
-};
+export const handler = { port: PORT, fetch: node.fetch };
 
 if (import.meta.main) {
   Bun.serve(handler);
@@ -199,5 +82,6 @@ if (import.meta.main) {
   process.stderr.write(`  agent      ${account.address}\n`);
   process.stderr.write(`  min budget ${formatEther(MIN_BUDGET)}\n`);
   process.stderr.write(`  handler    ${handlerPath ?? 'echo (no handler configured)'}\n`);
+  process.stderr.write(`  ledger     ${LEDGER}\n`);
   process.stderr.write(`\nIt signs receipts and never transactions.\n`);
 }

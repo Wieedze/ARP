@@ -380,26 +380,32 @@ receipt signed with the agent's key (ADR `0045`). The work itself is yours — `
 names a module exporting `handle(payload, context)`; without one it echoes.
 
 **It signs receipts and never transactions.** The key is the agent's because a hire receipt must be
-signed by the agent, and a signature is not a spend. It writes no file. Its only outbound
-connection is the RPC it reads the payment from, and it loads one module you name:
+signed by the agent, and a signature is not a spend. Its only outbound connection is the RPC it
+reads the payment from, it loads one module you name, and it writes one file — the ledger below:
 
 ```
-grep -nE "fetch\(|createPublicClient\(|writeFile|appendFile|mkdir|import\(" apps/node/src/node.ts
+grep -nE "createPublicClient\(|writeFile|appendFile|mkdir|import\(|async fetch\(" apps/node/src/node.ts apps/node/src/task.ts
 ```
 
-prints three lines on 2026-10-30: the RPC client (`:46`), your handler's import (`:69`), and the
-server's own inbound `fetch(request)` handler (`:138`).
+prints six lines on 2026-10-30: the `node:fs` import, the ledger's `mkdirSync` and `appendFileSync`
+(`task.ts:6`, `:79`, `:80`), the server's own inbound `fetch(request)` handler (`task.ts:162`), your
+handler's import (`node.ts:60`) and the RPC client (`node.ts:70`).
 
 **It binds every interface**, unlike the MCP server, because being reached is its job:
-`Bun.serve(handler)` at `apps/node/src/node.ts:197` passes no hostname.
+`Bun.serve(handler)` at `apps/node/src/node.ts:80` passes no hostname.
 
-**Not fixed, and you should know it before you put weight on a hire.** The node checks that the
-payment exists, was sent to this agent, came from the declared requester and paid at least
-`AGENT_NODE_MIN_BUDGET` (`apps/node/src/node.ts:104-113`) — and it
-does **not** remember a payment it has already accepted. On 2026-10-30, testnet 13579, one 0.001
-payment (`0xf3649dbe…`) was presented twice and served twice. So one payment buys any number of
-jobs and receipts, and a rating anchored to "a payment the agent verified" says the payment
-happened, not that it paid for this job.
+**One payment buys one job.** Before any work the node checks that the payment is mined and did
+not revert, was sent to this agent, came from the declared requester and paid at least
+`AGENT_NODE_MIN_BUDGET` — and that it has not been used before. Every accepted payment is appended
+to `AGENT_NODE_LEDGER` (`.arp/node-payments.jsonl` in the working directory by default), read back
+at start, and a second presentation is a `409`. A payment whose handler failed is released, so the
+requester can retry with it.
+
+Until 2026-10-30 there was no ledger: on testnet 13579 one 0.001 payment (`0xf3649dbe…`) was
+presented twice and served twice. After the fix the same payment against the built node answered
+`200`, then `409`, then `409` again after a restart. **The ledger starts empty**, so a payment a
+node accepted before it existed is accepted once more; and deleting the file forgets every payment
+in it. Keep it where the node's state lives.
 
 ## The hook — `apps/hook`
 
