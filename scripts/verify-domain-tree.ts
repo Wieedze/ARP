@@ -81,16 +81,28 @@ if (chainId === undefined) {
 }
 const url = GRAPHQL[chainId] as string;
 
+/**
+ * One query, retried on a rate limit. A 429 used to come back as a body without `data`, which
+ * surfaced three frames later as a `TypeError` — a rate limit read as a crash in the verifier.
+ */
 async function ask<T>(query: string, variables: Record<string, unknown>): Promise<T> {
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ query, variables }),
-    signal: AbortSignal.timeout(60000),
-  });
-  const body = (await response.json()) as { data?: T; errors?: unknown };
-  if (body.errors !== undefined) throw new Error(JSON.stringify(body.errors));
-  return body.data as T;
+  for (let attempt = 0; ; attempt++) {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ query, variables }),
+      signal: AbortSignal.timeout(60000),
+    });
+    if (response.status === 429 && attempt < 5) {
+      await new Promise((resolve) => setTimeout(resolve, 2000 * 2 ** attempt));
+      continue;
+    }
+    if (!response.ok) throw new Error(`indexer answered ${response.status} ${response.statusText}`);
+    const body = (await response.json()) as { data?: T; errors?: unknown };
+    if (body.errors !== undefined) throw new Error(JSON.stringify(body.errors));
+    if (body.data === undefined) throw new Error('indexer answered without data');
+    return body.data;
+  }
 }
 
 /** Shares behind a triple, summed across curves. The ranking input. */
