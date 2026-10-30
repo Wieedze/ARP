@@ -8,6 +8,22 @@
 
 ---
 
+## 0. Amendment, 2026-10-30 — the user's decisions, which this task now carries
+
+The user, on `/profile`, `/rig` and the wallet menu (session arp-63, 2026-10-30):
+
+- **A wallet menu.** The wallet button opens a menu: copy the address, **Account** (opens
+  `/account`), disconnect. _« un bouton account dans le menu wallet (copy wallet, disconnect et
+  setting) pour permettre la gestion des délégations »_.
+- **`/profile` goes.** What it shows (positions on atoms and on triples, net of withdrawals) moves
+  into `/activity`, per this task's own split. Then `/profile` and the `/me` redirect are removed.
+  _« profile j'ai l'impression que ça sert à rien »_.
+- **`/rig` goes.** Its steps 1-2 are superseded by `/agent`. Steps 3-4 (signing a delegation with
+  ARP's caveats) are the only UI that signs one, and they move into `/account`. Then `/rig` and its
+  page (`apps/web/src/pages/AgentRegister.tsx`) are removed. _« /rig sert plus à rien ? »_.
+- Delegations are listed through task 37a's discovery read (merged with task 40). On testnet,
+  publication is sponsored (ADR `0092`).
+
 ## 1. Why
 
 The user, 2026-10-30: _« je veux une page account pour gérer les délégations et tout ce qui est
