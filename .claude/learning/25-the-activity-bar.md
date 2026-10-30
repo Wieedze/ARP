@@ -35,3 +35,12 @@
 - Any server that binds 127.0.0.1 for a browser: add a Host allowlist plus a foreign-Host test from the start.
 - A new process, listener or env var under `apps/`: update `docs/22` in the same change.
 - A re-validator for data off a socket: validate every field that reaches a throwing parser (`BigInt`, `new URL`), not only its type.
+
+## Amendment 2026-10-30: every transaction, clickable (uncommitted at verification)
+
+- `services/tx-record.ts` (`waitAndRecord` and three helpers) is at 17 service sites, plus deposit and redeem in `use-stake-actions`. The indexer's `transaction_hash` reaches `RecentDeclaration.txHash`. Every hash in the bar links to its own chain's explorer. `Activity` is in the nav.
+- `task-verifier`: FAIL, then PASS.
+  - Two copies of a retracted sentence ("the indexer reports no transaction hash at all") survived in comments. A third copy was line-wrapped and only the author found it. The task file's no-wait list also missed `redeemStakeOnAtom`.
+  - Lesson: when an amendment adds a field, grep for the comment that justified its absence, and grep across line breaks.
+- The `mine` path is proven by unit tests (`tx-record.test.ts`, 3), not live. The bar showed "0 yours" because no wallet transaction was sent during the check. The live screenshot proves only the agent and chain links.
+- ~~Left open:~~ Fixed before the amendment was committed: task file line 46 says every caller of `redeemArpDelegation` waits. Two of them, `redeemRegisterModule` and `redeemStakeOnAtom`, do not, as the previous line says. The code is unreachable, but the sentence is wrong.

@@ -12,6 +12,7 @@ function row(overrides: Partial<RecentDeclaration> = {}): RecentDeclaration {
     return {
         tripleId: `0x${Math.random().toString(16).slice(2)}`,
         at: new Date().toISOString(),
+        txHash: null,
         subject: {atomId: "a", label: "Agent A"},
         object: {atomId: "t", label: "Tool T"},
         assets: null,

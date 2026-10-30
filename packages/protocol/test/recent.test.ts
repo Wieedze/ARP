@@ -11,10 +11,12 @@ function edge(params: {
     object?: string | null;
     assets?: string;
     positions?: number;
+    tx?: string | null;
 }) {
     return {
         term_id: params.id,
         created_at: params.at,
+        transaction_hash: params.tx === undefined ? `0x${"ab".repeat(32)}` : params.tx,
         subject: {term_id: "agent-1", label: params.subject ?? "Agent One"},
         object: {term_id: "tool-1", label: params.object ?? "Slither"},
         term: {
@@ -68,6 +70,16 @@ describe("getRecentDeclarations", () => {
         // The position count is the test, never the amount (ADR `0042`).
         expect(rows[0]).toMatchObject({tripleId: "backed", assets: 5000000n, positions: 1});
         expect(rows[1]).toMatchObject({tripleId: "bare", assets: null, positions: 0});
+    });
+
+    it("carries the transaction that wrote the triple, and null when the indexer has none", async () => {
+        const {transport} = transportOf([
+            edge({id: "with", at: "2026-10-20T10:00:00Z", tx: `0x${"12".repeat(32)}`}),
+            edge({id: "without", at: "2026-10-19T10:00:00Z", tx: null}),
+        ]);
+        const rows = await getRecentDeclarations({transport});
+        expect(rows[0]?.txHash).toBe(`0x${"12".repeat(32)}`);
+        expect(rows[1]?.txHash).toBeNull();
     });
 
     it("drops a row missing any of the four fields a reader needs", async () => {

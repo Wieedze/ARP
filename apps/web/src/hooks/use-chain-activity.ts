@@ -1,5 +1,6 @@
 import {useEffect} from "react";
 import {useQuery} from "@tanstack/react-query";
+import type {Hex} from "viem";
 
 import {useChainChoice} from "../lib/chain-choice";
 import {activityLog, type ActivityLog} from "../services/activity-log";
@@ -54,8 +55,8 @@ export function useChainActivity(
         // Oldest first, so appending in order leaves the panel reading top to bottom like the rest
         // of the log. The indexer returns newest first.
         for (const row of [...rows].reverse()) {
-            // Keyed on the triple id because the indexer reports no transaction hash at all, and
-            // every poll re-reads a window that overlaps the last one.
+            // Keyed on the triple id, which every row has, rather than on `txHash`, which can be
+            // null — and every poll re-reads a window that overlaps the last one.
             if (log.has(row.tripleId)) continue;
             const at = Date.parse(row.at);
             log.append({
@@ -69,10 +70,15 @@ export function useChainActivity(
                     row.object.label ?? row.object.atomId
                 } · ${row.positions} position${row.positions === 1 ? "" : "s"}`,
                 key: row.tripleId,
+                // The indexer's own record of the transaction, so the line opens on the explorer.
+                ...(row.txHash !== null && /^0x[0-9a-fA-F]{64}$/.test(row.txHash)
+                    ? // Matched against a 32-byte hex pattern on the line above.
+                      {tx: row.txHash as Hex, chainId: chain.chainId}
+                    : {}),
                 ...(Number.isNaN(at) ? {} : {at}),
             });
         }
-    }, [query.data, log]);
+    }, [query.data, log, chain.chainId]);
 
     return query;
 }

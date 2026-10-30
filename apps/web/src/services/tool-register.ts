@@ -12,6 +12,7 @@ import {
 import type {Account, Chain, Hex, PublicClient, Transport, WalletClient} from "viem";
 
 import {MAX_STAKE_WEI, type StakeChain} from "./trust-stake";
+import {waitAndRecord} from "./tx-record";
 
 /**
  * Register a tool: create the atom its URL derives from, or find the one that already exists.
@@ -274,6 +275,6 @@ export async function submitToolRegistration(params: {
         value: registration.assets,
         chain: registration.chain.chain,
     });
-    await publicClient.waitForTransactionReceipt({hash});
+    await waitAndRecord(publicClient, hash, {label: "register tool"});
     return hash;
 }

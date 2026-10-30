@@ -13,6 +13,7 @@ import {generatePrivateKey, privateKeyToAccount} from "viem/accounts";
 import {identityRegistryAbi} from "../lib/abi/identity-registry";
 import {intuitionTestnet} from "../lib/chains";
 import {deployments} from "../lib/deployments";
+import {waitAndRecord} from "./tx-record";
 
 const ADDRESS = deployments.arp.identityRegistry;
 
@@ -55,7 +56,7 @@ export async function registerAgent(params: {
         args: [],
         chain: intuitionTestnet,
     });
-    const receipt = await params.publicClient.waitForTransactionReceipt({hash: tx});
+    const receipt = await waitAndRecord(params.publicClient, tx, {label: "register agent"});
 
     // Recover the agentId from the Registered event. `to` is indexed; the
     // event signature matches the ABI item we provided.
@@ -167,7 +168,7 @@ export async function designateAgentRuntimeWallet(params: {
         args: [params.agentId, account.address, deadline, signature],
         chain: intuitionTestnet,
     });
-    await params.publicClient.waitForTransactionReceipt({hash: tx});
+    await waitAndRecord(params.publicClient, tx, {label: "set agent wallet"});
 
     return {
         agentWalletAddress: account.address,

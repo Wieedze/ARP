@@ -3,17 +3,12 @@ import {
     toMetaMaskSmartAccount,
     type MetaMaskSmartAccount,
 } from "@metamask/smart-accounts-kit";
-import {
-    type Account,
-    type Chain,
-    type Hex,
-    type Transport,
-    type WalletClient,
-} from "viem";
+import {type Account, type Chain, type Hex, type Transport, type WalletClient} from "viem";
 import {type PrivateKeyAccount} from "viem/accounts";
 
 import {intuitionTestnet} from "../lib/chains";
 import {publicClient} from "../lib/clients";
+import {waitAndRecord} from "./tx-record";
 
 /**
  * Construct a MetaMask Hybrid Smart Account for the given owner.
@@ -99,6 +94,6 @@ export async function deploySmartAccountIfNeeded(params: {
         data: factoryData,
         chain: intuitionTestnet,
     });
-    await publicClient.waitForTransactionReceipt({hash});
+    await waitAndRecord(publicClient, hash, {label: "fund smart account"});
     return hash;
 }

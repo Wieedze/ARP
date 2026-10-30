@@ -12,6 +12,7 @@ import {base} from "viem/chains";
 import {DEFAULT_IDENTITY_REGISTRY, registrationUriBytes} from "@arp-protocol/core";
 
 import {identityRegistryAbi} from "../lib/abi/identity-registry";
+import {waitAndRecord} from "./tx-record";
 
 /**
  * Mint a **real** ERC-8004 identity, in the canonical registry.
@@ -213,7 +214,7 @@ export async function submitMint(params: {
         args: [agentUri],
         chain: MINT_CHAIN,
     });
-    const receipt = await publicClient.waitForTransactionReceipt({hash});
+    const receipt = await waitAndRecord(publicClient, hash, {label: "mint identity"});
 
     const tokenId = tokenIdFromReceipt(receipt.logs, owner);
     if (tokenId === null) {

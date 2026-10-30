@@ -49,8 +49,8 @@ describe("ActivityLog", () => {
 
     it("knows an event it already recorded, whatever its case", () => {
         // The chain poller re-reads an overlapping window every tick, so without this it appends
-        // the same write for ever. Keyed on whatever the producer can recognise — a triple id from
-        // the indexer, which reports no transaction hash at all — and case-folded because both
+        // the same write for ever. Keyed on whatever the producer can always recognise — a triple
+        // id from the indexer, whose transaction hash can be null — and case-folded because both
         // spellings occur.
         const log = new ActivityLog({now: tick()});
         const key = `0x${"ab".repeat(32)}`;

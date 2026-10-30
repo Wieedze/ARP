@@ -10,6 +10,7 @@ query RecentDeclarations($uses: String!, $sameAs: String!, $limit: Int!) {
   ) {
     term_id
     created_at
+    transaction_hash
     subject { term_id label }
     object { term_id label }
     term {

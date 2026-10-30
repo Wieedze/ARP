@@ -55,6 +55,7 @@ function declaration(overrides: Partial<RecentDeclaration> = {}): RecentDeclarat
     return {
         tripleId: `0x${"cd".repeat(32)}`,
         at: new Date().toISOString(),
+        txHash: null,
         subject: {atomId: "agent-1", label: "Agent One"},
         object: {atomId: "tool-1", label: "Slither"},
         assets: null,

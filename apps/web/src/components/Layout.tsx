@@ -79,6 +79,9 @@ export function Layout({children}: {children: ReactNode}) {
                     <>
                         <NavLink to="/agents">Agents</NavLink>
                         <NavLink to="/tools">Tools</NavLink>
+                        {/* What happened: the agent's calls, declarations and stakes, and every
+                            transaction this browser sent (user, 2026-10-30). */}
+                        <NavLink to="/activity">Activity</NavLink>
                         {isConnected ? <NavLink to="/profile">Invest</NavLink> : null}
                     </>
                 }

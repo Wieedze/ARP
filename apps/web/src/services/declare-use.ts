@@ -11,6 +11,7 @@ import type {Account, Address, Chain, Hex, PublicClient, Transport, WalletClient
 
 import {verifyAgentOwnership} from "./agent-import";
 import {MAX_STAKE_WEI, type StakeChain} from "./trust-stake";
+import {waitAndRecord} from "./tx-record";
 
 /**
  * Declare a use: write `(your agent, uses, this atom)` from the atom's own page.
@@ -400,7 +401,7 @@ export async function submitUseDeclaration(params: {
             value: call.value,
             chain: declaration.chain.chain,
         });
-        await publicClient.waitForTransactionReceipt({hash});
+        await waitAndRecord(publicClient, hash, {label: "declare use"});
         last = hash;
     }
 

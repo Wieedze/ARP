@@ -4,7 +4,7 @@ import {Link} from "react-router-dom";
 import {useActivityLog} from "../../hooks/use-activity-log";
 import {useAgentActivity} from "../../hooks/use-agent-activity";
 import {useChainActivity} from "../../hooks/use-chain-activity";
-import {amountOf} from "../../lib/chain-amounts";
+import {amountOf, explorerTxUrl} from "../../lib/chain-amounts";
 import {intuitionTestnet} from "../../lib/chains";
 import type {ActivityEvent, ActivityLog as Store} from "../../services/activity-log";
 import type {AgentFeed, FeedStatus} from "../../services/agent-feed";
@@ -67,6 +67,7 @@ const STEP_LABEL: Record<ActivityEvent["step"], string> = {
     declaration: "declared",
     stake: "staked",
     simulated: "dry run",
+    sent: "sent",
     confirmed: "confirmed",
     landed: "on chain",
     refused: "refused",
@@ -101,10 +102,20 @@ function Row({entry}: {entry: ActivityEvent}) {
                 <span className="text-[color:var(--color-fg)]">{entry.label}</span>
                 {entry.detail === undefined ? null : <span>{`  ${entry.detail}`}</span>}
                 {entry.tx === undefined ? null : (
-                    <span className="text-[color:var(--color-steel)]">{`  ${entry.tx.slice(
-                        0,
-                        10,
-                    )}…`}</span>
+                    <>
+                        {"  "}
+                        <a
+                            href={explorerTxUrl(entry.chainId ?? intuitionTestnet.id, entry.tx)}
+                            target="_blank"
+                            rel="noreferrer"
+                            aria-label={`Transaction ${entry.tx} on the explorer, opens in a new tab`}
+                            // `!` because the base-layer `a` rule beats a plain utility (`rules/ui.md`, Gates).
+                            className="text-[color:var(--color-steel)]! hover:text-[color:var(--color-fg)]!"
+                        >
+                            {`${entry.tx.slice(0, 10)}…`}
+                            <span aria-hidden="true"> ↗</span>
+                        </a>
+                    </>
                 )}
                 {entry.costWei === undefined ? null : (
                     <span className="text-[color:var(--color-steel)]">{`  ${amountOf(entry.costWei, entry.chainId ?? intuitionTestnet.id)}`}</span>

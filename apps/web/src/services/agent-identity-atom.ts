@@ -7,6 +7,7 @@ import {
 import type {Account, Address, Chain, Hex, PublicClient, Transport, WalletClient} from "viem";
 
 import {MAX_STAKE_WEI, type StakeChain} from "./trust-stake";
+import {waitAndRecord} from "./tx-record";
 
 /**
  * Give an agent the Intuition identity atom everything else depends on.
@@ -144,7 +145,7 @@ export async function submitIdentityAtom(params: {
             value: call.value,
             chain: chain.chain,
         });
-        await publicClient.waitForTransactionReceipt({hash});
+        await waitAndRecord(publicClient, hash, {label: "identity atom"});
         txs.push(hash);
     }
     return {txs, plan};

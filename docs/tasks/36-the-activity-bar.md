@@ -30,10 +30,29 @@ demo is the reverse: the agent runs in Claude Code and the browser watches. A br
 `ActivityLog` already existed (`c037c58`, 2026-10-30 02:30) and nothing mounted it. It is extended
 here rather than duplicated, and its labels moved to English with the rest of the app.
 
+## Amended 2026-10-30 — every transaction, clickable
+
+The user, after the first commit: « tout ce qui se passe on-chain a un id de tx et doit être dans
+les logs d'activité et cliquable vers l'explorer », and « un accès dans la navbar ». So the first
+"Do not do" bullet — *instrument the web app's own write sites* — is withdrawn, and struck through
+below:
+
+- `services/tx-record.ts`: `waitAndRecord` replaces `waitForTransactionReceipt` at all 17 service
+  sites that wait for a receipt. `recordSent` and `recordSettled` are used in `use-stake-actions`
+  (deposit, redeem), where sending and waiting are two calls. Each records `sent` with the hash,
+  then `confirmed` or `refused`, on the waiting client's chain.
+  - Three functions send without waiting: `depositOnAtom`, `redeemRegisterModule` and
+    `redeemStakeOnAtom`. Nothing in the product calls any of them (grepped 2026-10-30).
+    `redeemCreateAtom` doesn't wait either, but both its callers do; `redeemArpDelegation` is the
+    send underneath all of them.
+- **Chain stream.** The indexer's `transaction_hash` now rides on `RecentDeclaration.txHash`. It was
+  checked live on both chains before it was added to the query.
+- **Clickable hashes.** Every hash in the bar is a link to its own chain's explorer.
+- **Navbar.** `Activity` is in the left group.
+
 ## Do not do in this task
 
-- Instrument the web app's own write sites: there are about twenty (`grep -rn waitForTransactionReceipt
-  apps/web/src`). The `mine` stream exists and nothing feeds it yet.
+- ~~Instrument the web app's own write sites.~~ Withdrawn the same day, see the amendment above.
 - Add an `arp activity` command to the CLI. arp-41 takes it once this lands.
 
 ## Completion note

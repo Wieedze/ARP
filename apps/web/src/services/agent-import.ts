@@ -24,6 +24,7 @@ import {multiVaultAbi} from "../lib/abi/multi-vault";
 
 import {erc8004GraphClient, erc8004RegistryClient} from "./erc8004-connector";
 import {assertWalletOnChain, MAX_STAKE_WEI, type StakeChain} from "./trust-stake";
+import {waitAndRecord} from "./tx-record";
 
 /**
  * Importing an ERC-8004 agent that already exists — the second door, beside the
@@ -596,7 +597,7 @@ export async function submitOperatorLink(params: {
             value: plan.atomAssets,
             chain: plan.chain.chain,
         });
-        await publicClient.waitForTransactionReceipt({hash: atomTx});
+        await waitAndRecord(publicClient, atomTx, {label: "create atom"});
         result.atomTx = atomTx;
     }
 
@@ -614,7 +615,7 @@ export async function submitOperatorLink(params: {
             value: plan.tripleAssets,
             chain: plan.chain.chain,
         });
-        await publicClient.waitForTransactionReceipt({hash: tripleTx});
+        await waitAndRecord(publicClient, tripleTx, {label: "create triple"});
         result.tripleTx = tripleTx;
     }
 

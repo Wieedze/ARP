@@ -218,4 +218,32 @@ describe("the activity panel", () => {
         expect(screen.getByText(/→ brainstorming/)).toBeTruthy();
         expect(screen.getByRole("button", {name: /^activity/i}).textContent).toMatch(/2 agent/);
     });
+
+    it("links every transaction to its own chain's explorer", async () => {
+        withEntries((store) => {
+            store.append({
+                stream: "mine",
+                step: "sent",
+                label: "deposit",
+                tx: `0x${"ab".repeat(32)}`,
+                chainId: 1155,
+                at: at(21, 0, 1),
+            });
+            store.append({
+                stream: "chain",
+                step: "landed",
+                label: "uses",
+                tx: `0x${"cd".repeat(32)}`,
+                chainId: 13579,
+                key: "k",
+                at: at(21, 0, 2),
+            });
+        });
+        await userEvent.click(screen.getByRole("button", {name: /^activity/i}));
+        const links = screen.getAllByRole("link", {name: /^Transaction 0x/});
+        expect(links.map((link) => link.getAttribute("href"))).toEqual([
+            `https://explorer.intuition.systems/tx/0x${"ab".repeat(32)}`,
+            `https://testnet.explorer.intuition.systems/tx/0x${"cd".repeat(32)}`,
+        ]);
+    });
 });

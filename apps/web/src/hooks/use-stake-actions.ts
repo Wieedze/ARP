@@ -4,6 +4,7 @@ import type {Address, Hex} from "viem";
 
 import {useChainChoice} from "../lib/chain-choice";
 import {wagmiConfig} from "../lib/wagmi";
+import {recordSent, recordSettled, recordUnsettled} from "../services/tx-record";
 import {
     quoteRedeem,
     quoteStake,
@@ -61,7 +62,17 @@ export function useStakeActions() {
             // The quote's own client, not the hook's: if the toggle moved after the quote was
             // priced, the simulation has to run against the chain the quote was priced on so the
             // guard reports a mismatch instead of a revert.
-            return submitStake({walletClient, publicClient: chain.client, quote: stake});
+            const hash = await submitStake({
+                walletClient,
+                publicClient: chain.client,
+                quote: stake,
+            });
+            recordSent(hash, {
+                label: "deposit",
+                chainId: stake.chain.chainId,
+                valueWei: stake.assets,
+            });
+            return hash;
         },
         [chain],
     );
@@ -89,14 +100,27 @@ export function useStakeActions() {
             if (walletClient === null || walletClient.account === undefined) {
                 throw new Error("No wallet client — reconnect your wallet and try again.");
             }
-            return submitRedeem({walletClient, publicClient: chain.client, quote: exit});
+            const hash = await submitRedeem({
+                walletClient,
+                publicClient: chain.client,
+                quote: exit,
+            });
+            recordSent(hash, {label: "redeem", chainId: exit.chain.chainId});
+            return hash;
         },
         [chain],
     );
 
     const awaitReceipt = useCallback(
         async (hash: Hex): Promise<void> => {
-            await chain.client.waitForTransactionReceipt({hash});
+            let receipt;
+            try {
+                receipt = await chain.client.waitForTransactionReceipt({hash});
+            } catch (cause) {
+                recordUnsettled(hash, cause);
+                throw cause;
+            }
+            recordSettled(hash, receipt);
         },
         [chain],
     );

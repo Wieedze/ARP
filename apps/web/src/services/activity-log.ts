@@ -52,6 +52,7 @@ export type ActivityStep =
     | "declaration"
     | "stake"
     | "simulated"
+    | "sent"
     | "confirmed"
     | "landed"
     | "refused";
@@ -75,9 +76,10 @@ export type ActivityEvent = {
     /**
      * What makes this entry the same event as another one, for a producer that re-reads.
      *
-     * Not `tx`: the chain stream comes from the indexer, which reports a triple id and no
-     * transaction hash at all. So the key is whatever the producer can recognise — a triple id
-     * there, a transaction hash for our own sends — and `tx` stays a display field.
+     * Not `tx`: a chain-stream row is identified by its triple id, and the indexer's
+     * `transaction_hash` can be null on a row it has not finished indexing. So the key is whatever
+     * the producer can always recognise — a triple id there, a transaction hash for our own sends —
+     * and `tx` stays a display field.
      */
     readonly key?: string;
 };

@@ -15,6 +15,7 @@ import {intuitionTestnet} from "../lib/chains";
 import {deployments} from "../lib/deployments";
 
 import {pinThing, type PinAuth} from "./intuition-pin";
+import {waitAndRecord} from "./tx-record";
 
 const MULTI_VAULT = deployments.intuition.multiVault;
 
@@ -171,7 +172,7 @@ export async function ensureAtomForThing(params: {
         value: assets,
         chain: intuitionTestnet,
     });
-    await params.publicClient.waitForTransactionReceipt({hash: tx});
+    await waitAndRecord(params.publicClient, tx, {label: "create atom"});
     return {atomId, uri, created: true, tx};
 }
 
@@ -223,7 +224,7 @@ export async function ensureAtomForURI(params: {
         value: assets,
         chain: intuitionTestnet,
     });
-    await params.publicClient.waitForTransactionReceipt({hash: tx});
+    await waitAndRecord(params.publicClient, tx, {label: "create atom"});
     return {atomId, created: true, tx};
 }
 
@@ -313,6 +314,6 @@ export async function declareUsesTriple(params: {
         value: assets,
         chain: intuitionTestnet,
     });
-    await params.publicClient.waitForTransactionReceipt({hash: tx});
+    await waitAndRecord(params.publicClient, tx, {label: "create triple"});
     return {tripleId, created: true, tx};
 }

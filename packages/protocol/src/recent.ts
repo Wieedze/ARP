@@ -46,6 +46,8 @@ export type RecentDeclaration = {
     tripleId: string;
     /** When the edge was written, ISO 8601 as the indexer reports it. */
     at: string;
+    /** The transaction that created the triple, so a reader can open it on the explorer. */
+    txHash: string | null;
     subject: {atomId: string; label: string | null};
     object: {atomId: string; label: string | null};
     /**
@@ -119,6 +121,7 @@ export async function getRecentDeclarations(
         out.push({
             tripleId,
             at,
+            txHash: readString(row, "transaction_hash"),
             subject: {atomId: subjectId, label: readString(subject, "label")},
             object: {atomId: objectId, label: readString(object, "label")},
             assets: positions > 0 ? readBigInt(term, "total_assets") : null,

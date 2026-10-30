@@ -1,8 +1,4 @@
-import {
-    createExecution,
-    type Delegation,
-    type ExecutionStruct,
-} from "@metamask/smart-accounts-kit";
+import {createExecution, type Delegation, type ExecutionStruct} from "@metamask/smart-accounts-kit";
 import {
     createWalletClient,
     encodeFunctionData,
@@ -24,6 +20,7 @@ import {deployments} from "../lib/deployments";
 
 import {redeemArpDelegation} from "./agent-action";
 import {pinThing, type PinAuth} from "./intuition-pin";
+import {waitAndRecord} from "./tx-record";
 
 /**
  * Agent-side helpers that wrap `redeemArpDelegation` for each concrete ARP
@@ -216,7 +213,7 @@ export async function grantSmartAccountDepositApproval(params: {
         args: [params.smartAccountAddress, APPROVAL_DEPOSIT],
         chain: intuitionTestnet,
     });
-    await params.publicClient.waitForTransactionReceipt({hash: tx});
+    await waitAndRecord(params.publicClient, tx, {label: "approve"});
     return tx;
 }
 
@@ -250,7 +247,7 @@ export async function fundAndApproveRuntime(params: {
         to: runtimeAccount.address,
         value: params.fundAmount,
     });
-    await params.publicClient.waitForTransactionReceipt({hash: fundTx});
+    await waitAndRecord(params.publicClient, fundTx, {label: "fund runtime"});
 
     const runtimeWalletClient = createWalletClient({
         account: runtimeAccount,
@@ -338,7 +335,7 @@ export async function redeemEnsureAtomForURI(
         atomData,
         atomCost,
     });
-    await params.publicClient.waitForTransactionReceipt({hash: tx});
+    await waitAndRecord(params.publicClient, tx, {label: "redeem · create atom"});
     return {atomId, created: true, tx};
 }
 
@@ -350,10 +347,7 @@ export async function redeemEnsureAtomForURI(
  * call site that references the same identity must produce the exact same
  * string, regardless of input checksum casing.
  */
-export function caip10Uri(
-    address: Address,
-    chainId: number = intuitionTestnet.id,
-): string {
+export function caip10Uri(address: Address, chainId: number = intuitionTestnet.id): string {
     return `caip10:eip155:${chainId}:${address.toLowerCase()}`;
 }
 
@@ -414,7 +408,7 @@ export async function redeemEnsureAtomForThing(
         atomData,
         atomCost,
     });
-    await params.publicClient.waitForTransactionReceipt({hash: tx});
+    await waitAndRecord(params.publicClient, tx, {label: "redeem · create atom"});
     return {atomId, uri, created: true, tx};
 }
 
@@ -479,7 +473,6 @@ export async function redeemDeclareTriple(
         execution,
         agentWalletClient: params.agentWalletClient,
     });
-    await params.publicClient.waitForTransactionReceipt({hash: tx});
+    await waitAndRecord(params.publicClient, tx, {label: "redeem delegation"});
     return {tripleId, created: true, tx};
 }
-
