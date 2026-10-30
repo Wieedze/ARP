@@ -38,8 +38,11 @@
  *  withdrawal threshold are mainnet rules, off here. It does pay two things itself: the hire, a
  *  mined payment of more than zero, and the `(requester, uses, hired agent)` triple's creation when
  *  that triple is not on chain yet, which on a first hire it usually is not. `/deposit` refuses a
- *  term that does not exist (`SponsoredTermMissingError`, a 400) and this service creates none: a
- *  create call it sent would open the term's first position in its own name (task 40 §3).
+ *  term that does not exist (`SponsoredTermMissingError`, a 400) and this service creates no `uses`
+ *  triple: a create call it sent would open that term's first position in its own name (task 40
+ *  §3). `/publish` is the exception, by design: its delegation-register atoms and triples are sent
+ *  at `cost + minDeposit`, so each one it creates is born with a sponsor-held position (task 37c,
+ *  ADR `0053`).
  *
  *  **A refusal always leaves the agent a way.** A 409 for a missing approval carries the approve
  *  call; a 429 carries the call the agent can send itself. Unplugging this service costs an agent

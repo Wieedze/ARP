@@ -88,8 +88,11 @@ atom, uses, X)`, where X is the content receipt's tool atom, or the hired agent'
    callee. And the `(requester, uses, hired agent)` triple, when it is not on chain yet, which is
    the normal case for a first hire: `planSponsoredDeposit` throws `SponsoredTermMissingError` on a
    term that does not exist, `/deposit` returns it as a 400, and the agent sends `createTriples`
-   itself at `getTripleCost()` plus whatever it attaches. The service creates no triple: a create
-   call it sent would open the term's first position in its own name, which task 40 §3 forbids.
+   itself at `getTripleCost()` plus whatever it attaches. The service creates no `uses` triple: a
+   create call it sent would open that term's first position in its own name, which task 40 §3
+   forbids. `/publish` is not covered by this and does create terms: the delegation-register atoms
+   and triples it sends carry `cost + minDeposit`, so each is born with a sponsor-held position, as
+   task 37c and ADR `0053` authorise.
    Whether it should is a decision for the user, not made here. Corrected 2026-10-30; the item
    first said the agent needed no TRUST of its own, which was false whenever the triple was missing.
 
