@@ -1,0 +1,19 @@
+{
+  "name": "@arp/api",
+  "version": "0.0.1",
+  "private": true,
+  "description": "A Cloudflare Worker that reads GitHub and skills.sh on a schedule, keeps the result in KV, and serves it to the web app. A cache, never a source: every answer says where it read and when.",
+  "type": "module",
+  "scripts": {
+    "dev": "bun run --cwd ../../packages/protocol build && wrangler dev --test-scheduled",
+    "test": "bun run --cwd ../../packages/protocol build && bun test",
+    "lint": "bun run --cwd ../../packages/protocol build && tsc --noEmit -p tsconfig.json"
+  },
+  "devDependencies": {
+    "@arp-protocol/core": "workspace:*",
+    "@types/bun": "^1.4.4",
+    "typescript": "~6.0.2",
+    "wrangler": "4.151.0"
+  },
+  "license": "MIT"
+}

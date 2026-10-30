@@ -57,3 +57,7 @@ integration8004.txt
 # The node generates a receipt-signing key here on first run (ADR 0080).
 # It signs receipts and cannot move value, and it still never belongs in a commit.
 .arp/
+
+# Cloudflare Worker local state and secrets
+.dev.vars
+.wrangler/

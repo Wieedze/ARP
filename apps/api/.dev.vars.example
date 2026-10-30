@@ -1,0 +1,5 @@
+# Copy to .dev.vars (gitignored). Read by `wrangler dev` only.
+# A classic GitHub token with NO scopes: public read, 5,000 requests an hour instead of 60.
+GITHUB_TOKEN=
+# Enables POST /refresh locally. Leave empty to disable the endpoint.
+REFRESH_SECRET=

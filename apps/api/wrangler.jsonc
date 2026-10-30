@@ -1,0 +1,12 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "arp-api",
+  "main": "src/worker.ts",
+  "compatibility_date": "2026-10-01",
+  // Local only for now (`bun run dev`). `wrangler dev` simulates this namespace on disk, so the id
+  // is a placeholder until a real one is created for a deploy.
+  "kv_namespaces": [{ "binding": "FACTS", "id": "arp-facts-local" }],
+  // One slice every ten minutes while a refresh cycle is running, a no-op otherwise — see refresh.ts.
+  "triggers": { "crons": ["*/10 * * * *"] },
+  "vars": { "REFRESH_EVERY_HOURS": "24" }
+}

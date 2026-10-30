@@ -265,7 +265,8 @@ ARP/
 │   │   └── src/{services,hooks,components,pages,lib}
 │   ├── mcp/                        ← the MCP server, stdio or HTTP. Signs no transaction
 │   ├── node/                       ← the inbound endpoint. Signs receipts, never transactions
-│   └── hook/                       ← the runtime PostToolUse hook. No network
+│   ├── hook/                       ← the runtime PostToolUse hook. No network
+│   └── api/                        ← Cloudflare Worker: GitHub + skills.sh facts, cached. Local only
 ├── packages/                       ← what is imported
 │   ├── graphql/                    ← @arp-protocol/graphql — transport + Intuition query documents
 │   └── protocol/                   ← @arp-protocol/core — the protocol layer (ADR 0041)

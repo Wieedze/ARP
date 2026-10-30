@@ -12,6 +12,7 @@
     "apps/mcp",
     "apps/node",
     "apps/hook",
+    "apps/api",
     "contracts",
     "packages/graphql",
     "packages/protocol"

@@ -1,4 +1,7 @@
-import {useQuery} from "@tanstack/react-query";
+import {useQuery, useQueryClient} from "@tanstack/react-query";
+
+import {liveFacts} from "./use-live-facts";
+import {dayOf} from "../services/facts-api";
 
 /**
  * The two things a skill atom cannot carry: a one-line description and an install count.
@@ -12,10 +15,11 @@ import {useQuery} from "@tanstack/react-query";
  * a reader who never opens `/tools` should not pay for them. A dynamic `import()` makes it its own
  * chunk; the query keeps one copy for the session.
  *
- * Why it is a file and not a fetch: measured 2026-10-29, **skills.sh sends no CORS header**, so a
- * browser cannot read it at all. `raw.githubusercontent.com` can, and that is where the full
- * SKILL.md comes from on a detail page — one skill at a time, which is a request worth making. A
- * description is needed for every row, and 662 requests to render one page is not a design.
+ * **Read from ARP's Worker when one is configured** (`VITE_ARP_API_URL`, `apps/api`), which reads
+ * GitHub and skills.sh on a schedule: measured 2026-10-29, skills.sh sends no CORS header and the
+ * GitHub API allows 60 requests an hour per visitor, so a browser cannot read either for 662 rows.
+ * The bundled copy is the fallback — no Worker, or one that is down, gives the last dated copy
+ * rather than empty rows. The date printed is the day the figures were read, either way.
  */
 
 export type SkillFact = {description: string; installs: number | null};
@@ -43,6 +47,7 @@ export type RepoFact = {
 export type CatalogueEntry = {atom: string | null; domain: string | null};
 
 export function useSkillFacts() {
+    const client = useQueryClient();
     const query = useQuery({
         queryKey: ["skill-facts"],
         queryFn: async (): Promise<{
@@ -51,25 +56,35 @@ export function useSkillFacts() {
             catalogue: Record<string, CatalogueEntry>;
             measuredOn: string | null;
         }> => {
+            // ARP's own record, not somebody else's figure: it stays bundled whatever the source.
+            const catalogue = (await import("../data/skill-catalogue.json")).default as {
+                skills?: Record<string, CatalogueEntry>;
+            };
+            const live = await liveFacts(client);
+            if (live !== null) {
+                return {
+                    skills: live.skills,
+                    repos: live.repos,
+                    catalogue: catalogue.skills ?? {},
+                    measuredOn: dayOf(live.read.skills.oldest),
+                };
+            }
             // Both in one chunk: 5 KB of repository signals beside 45 KB of descriptions, wanted
             // by the same pages at the same moment.
-            const [skills, repos, catalogue] = await Promise.all([
+            const [skills, repos] = await Promise.all([
                 import("../data/skill-facts.json"),
                 import("../data/repo-facts.json"),
-                import("../data/skill-catalogue.json"),
             ]);
             return {
                 skills: (skills.default as {facts?: Record<string, SkillFact>}).facts ?? {},
                 repos: (repos.default as {facts?: Record<string, RepoFact>}).facts ?? {},
-                catalogue:
-                    (catalogue.default as {skills?: Record<string, CatalogueEntry>}).skills ?? {},
+                catalogue: catalogue.skills ?? {},
                 // Both files were measured on the same day; the date is printed beside the figures.
                 measuredOn: (skills.default as {_measuredOn?: string})._measuredOn ?? null,
             };
         },
-        // A file in the bundle. It cannot go stale within a session.
-        staleTime: Infinity,
-        gcTime: Infinity,
+        // The Worker refreshes once a day; five minutes is a session that sees a new read.
+        staleTime: 5 * 60 * 1000,
     });
     const facts = query.data;
     return {
@@ -85,7 +100,7 @@ export function useSkillFacts() {
             label === null || facts === undefined ? null : (facts.catalogue[label] ?? null),
         /** Every skill label the bundled facts know, for comparing one repository with another. */
         skillLabels: facts === undefined ? [] : Object.keys(facts.skills),
-        /** The day the figures were read, `YYYY-MM-DD`: a dated copy, never a live read. */
+        /** The day the figures were read, `YYYY-MM-DD` — the oldest read when they came live. */
         measuredOn: facts?.measuredOn ?? null,
         isLoading: query.isLoading,
     };

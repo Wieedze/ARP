@@ -144,7 +144,9 @@ ARP/
 │   ├── web/                           TypeScript UI. Bound to testnet at module load, deliberately
 │   ├── mcp/                           the MCP server — stdio or HTTP, signs no transaction
 │   ├── node/                          the agent node — listens, checks a payment, signs a receipt
-│   └── hook/                          the runtime PostToolUse hook — no network
+│   ├── hook/                          the runtime PostToolUse hook — no network
+│   └── api/                           Cloudflare Worker — GitHub's and skills.sh's figures, cached
+│                                      and dated, never chain data (ADR 0084). Local only for now
 ├── packages/                          what is IMPORTED
 │   ├── graphql/                       `@arp-protocol/graphql` — HTTP transport, GraphQL client, every
 │   │                                  Intuition query document. Knows the schema, nothing about ARP
