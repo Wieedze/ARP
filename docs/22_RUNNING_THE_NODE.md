@@ -18,8 +18,8 @@ GitHub. That property is the whole of ADR `0045` and it is the reason this is in
 hosted.
 
 ```
-bun run scripts/arp-mcp-server.ts --stdio    # for an MCP client to launch
-ARP_TARGET=testnet bun run scripts/arp-mcp-server.ts
+bun run apps/mcp/src/server.ts --stdio    # for an MCP client to launch
+ARP_TARGET=testnet bun run apps/mcp/src/server.ts
 ```
 
 ## The three things that matter before you install anything
@@ -33,7 +33,7 @@ and it cannot move value.
 **It executes nothing it fetches.** A skill's file is Markdown. It is returned with
 `content-type: text/plain`, `x-content-type-options: nosniff` and
 `content-disposition: attachment`, never rendered, never parsed, never written to disk by the node
-(`scripts/arp-content.ts`, the response at the end of `serveContentRequest`). Your agent reads it;
+(`apps/mcp/src/content.ts`, the response at the end of `serveContentRequest`). Your agent reads it;
 the node does not.
 
 **It cannot be made to fetch somewhere else.** This is the one that would matter most if it were
@@ -207,7 +207,7 @@ GITHUB_TOKEN           optional. Raises GitHub's 60-requests-an-hour limit on fi
 ARP_RECEIPT_KEY        a key you manage, instead of the generated one. Never a funded one
 ARP_NO_RECEIPTS        set to 1 to run with no key at all
 ARP_ACCEPTED_SIGNERS   comma-separated. Which receipt signers THIS node's reader accepts
-ARP_CHAIN_ID           which chain's catalogue scripts/session-log.ts reads
+ARP_CHAIN_ID           which chain's catalogue apps/mcp/src/session-log.ts reads
 ARP_SESSION_LOG        where the hook writes. Default .arp/session.jsonl
 ARP_RECEIPTS           where fetches are recorded. Default .arp/receipts.jsonl
 ```
@@ -283,7 +283,7 @@ Today only 13579 has one. `ARP_TARGET` still defaults to **mainnet**, so a defau
 atom id with the reason rather than serving it. Point it at testnet to use the content path:
 
 ```
-ARP_TARGET=testnet bun run scripts/arp-mcp-server.ts
+ARP_TARGET=testnet bun run apps/mcp/src/server.ts
 ```
 
 That mattered more than it looks. Before this was per-chain, the catalogue was imported at module

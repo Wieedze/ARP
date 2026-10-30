@@ -305,7 +305,7 @@ export function AgentRegister() {
         // done. It cited ADR `0056`, which is a different decision entirely.
         return [
             `# Paste into scripts/.env. The runtime that reads this is the one you run:`,
-            `# scripts/agent-node.ts to be reachable, or your own, through`,
+            `# apps/node/src/node.ts to be reachable, or your own, through`,
             `# @arp-protocol/core or skills/arp/SKILL.md.`,
             ``,
             pkLine,

@@ -1,6 +1,6 @@
 /** The whole loop from a need to a receipt, in one command.
  *
- *      # the node has to be running: ARP_TARGET=testnet bun run scripts/arp-mcp-server.ts
+ *      # the node has to be running: ARP_TARGET=testnet bun run apps/mcp/src/server.ts
  *      ARP_TARGET=testnet bun run scripts/demo-loop.ts --need image --agent 13579/6
  *      ARP_TARGET=testnet bun run scripts/demo-loop.ts --need image --agent 13579/6 --execute
  *
@@ -53,7 +53,7 @@ const pick = Number(arg("pick") ?? 1);
 if (need === undefined || agent === undefined) {
     console.error(
         "usage: --need <domain> --agent <chainId>/<tokenId> [--pick <n>] [--stake <TRUST>] [--node <url>] [--execute]\n" +
-            "the node must be running: ARP_TARGET=testnet bun run scripts/arp-mcp-server.ts",
+            "the node must be running: ARP_TARGET=testnet bun run apps/mcp/src/server.ts",
     );
     process.exit(1);
 }

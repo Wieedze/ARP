@@ -5,7 +5,7 @@
  *
  *  Exists because the unit tests **cannot** close this class, and reporting that they did was wrong.
  *
- *  `packages/protocol/test/rig-files.test.ts` checks the *checkability* axis — `probeable` against
+ *  `apps/mcp/test/rig-files.test.ts` checks the *checkability* axis — `probeable` against
  *  `not-checkable` — and, inside `not-checkable`, the code. That is everything derivable from the
  *  document alone. But `confirmed` and `inconclusive` are both `probeable` before a request is sent,
  *  so a unit test cannot tell them apart, and **the mutation that actually shipped lives exactly

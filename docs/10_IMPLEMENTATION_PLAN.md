@@ -77,7 +77,7 @@ implementation. Three test suites follow the signature. The vendored `intuition`
 staleness note.
 
 **Gate**: `bun run verify:pin` green (already passing), `bun run test` green, no `process.env` read
-anywhere under `app/src/services/`.
+anywhere under `apps/web/src/services/`.
 
 ### `feat/erc8004-connector` — Phase 1 · O1
 

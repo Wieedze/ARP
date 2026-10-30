@@ -5,7 +5,7 @@
 > `#FFB020`**, not cyan; the type is **Archivo + Geist Mono**, not Inter + JetBrains Mono; the
 > neutrals are graphite with named levels (`ground` / `bg` / `raised` and `fg` / `silver` / `steel` /
 > `grey`), not an alpha ramp; and corners are **tiered** 6 / 8 / 10 / 12px rather than capped at 4.
-> The live token list is `app/src/index.css`'s `@theme` block, which `check:tokens` polices.
+> The live token list is `apps/web/src/index.css`'s `@theme` block, which `check:tokens` polices.
 >
 > Read `.claude/rules/ui.md` first — it carries the amendment in the form a task needs. The build
 > contract is `arp-design-handoff/HANDOFF.md`; its **section 8 (screens and routes) was not

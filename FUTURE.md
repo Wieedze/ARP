@@ -59,7 +59,7 @@ controls rather than a GitHub URL — and that choice is permanent too.
 
 ## A "How it works" tab
 
-**Noted in the nav since 2026-10-20**, `app/src/components/Layout.tsx`. Its own comment says why it
+**Noted in the nav since 2026-10-20**, `apps/web/src/components/Layout.tsx`. Its own comment says why it
 is not built: _"its content is a decision, not a layout."_
 
 ## One screen for register and declare
@@ -89,8 +89,8 @@ both pass `tsc`, `eslint` and `check:tokens`. `check:tokens` is explicit that it
 **It is checkable, and the measurement is committed**: `scripts/measure/emitted-utilities.ts`.
 Tailwind writes one rule per utility it recognises, so a utility that emitted nothing is simply
 absent from the built stylesheet; strip the CSS escaping and a selector reads exactly like the class
-it came from. Measured 2026-10-28, after `cd app && bun run build`: **351 utility tokens across
-`app/src`, every one with a rule.** Pass paths to narrow the population.
+it came from. Measured 2026-10-28, after `cd apps/web && bun run build`: **351 utility tokens across
+`apps/web/src`, every one with a rule.** Pass paths to narrow the population.
 
 **Three things to decide before making it a gate**, all of them in the script's own docstring:
 

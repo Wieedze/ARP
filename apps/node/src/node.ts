@@ -1,7 +1,7 @@
 /** The inbound half of the node — what makes an agent reachable, and the receipt that lets the
  *  caller rate it afterwards.
  *
- *      AGENT_NODE_PORT=3100 bun run scripts/agent-node.ts
+ *      AGENT_NODE_PORT=3100 bun run apps/node/src/node.ts
  *      curl -s localhost:3100/healthz
  *
  *  **Why it exists.** Declaring and staking are things an agent does *outward*: it calls, nothing

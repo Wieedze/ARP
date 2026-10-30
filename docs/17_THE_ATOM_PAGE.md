@@ -2,7 +2,7 @@
 
 **For:** the design agent. **Status:** a brief, not a decision.
 **Date:** 2026-10-27
-**Route:** `/atom/:atomId` — `app/src/pages/AtomPanel.tsx`
+**Route:** `/atom/:atomId` — `apps/web/src/pages/AtomPanel.tsx`
 
 Read `docs/12_THE_IDEA.md` first. It is short and it is the only canonical statement of the
 mechanism. This brief assumes it.
@@ -190,7 +190,7 @@ From `.claude/rules/ui.md`, and they are not negotiable:
 
 An agent's identity mark is generated from chain data — a dot per declared module, fill carrying
 its state, size carrying its tier, Saffron centre when the viewer holds a position. It is in
-`app/src/components/brand/Sigil.tsx`. **Orbiting nodes that are agents should be their sigils**,
+`apps/web/src/components/brand/Sigil.tsx`. **Orbiting nodes that are agents should be their sigils**,
 not new glyphs. One identity, one mark, everywhere.
 
 ---

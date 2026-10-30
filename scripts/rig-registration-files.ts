@@ -39,7 +39,7 @@ const RPC = 'https://testnet.rpc.intuition.systems/http';
 const TYPE = 'https://eips.ethereum.org/EIPS/eip-8004#registration-v1';
 
 /**
- * `rig-confirmed` points at **ARP's own MCP server** (`scripts/arp-mcp-server.ts`).
+ * `rig-confirmed` points at **ARP's own MCP server** (`apps/mcp/src/server.ts`).
  *
  * It borrowed a third party's endpoint until 2026-10-19, which made the gate's `confirmed` case
  * depend on somebody else's uptime. ARP now runs one, so the dependency is gone.
@@ -59,7 +59,7 @@ export const OWN_ENDPOINT = process.env.ARP_MCP_ENDPOINT ?? 'http://localhost:30
 export type RigFile = { slug: string; exercises: string; doc: Record<string, unknown> };
 
 /**
- * Exported so the rig is **tested, not eyeballed**. `packages/protocol/test/rig-files.test.ts` runs them
+ * Exported so the rig is **tested, not eyeballed**. `apps/mcp/test/rig-files.test.ts` runs them
  * through the real classifier and asserts each produces the group it claims to exercise — a rig
  * whose fixtures were never checked is the same failure as a fixture set covering one member of a
  * nine-member union (task 15).

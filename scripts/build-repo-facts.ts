@@ -1,4 +1,4 @@
-/** Build `app/src/data/repo-facts.json` — the signals a reader uses to judge a repository.
+/** Build `apps/web/src/data/repo-facts.json` — the signals a reader uses to judge a repository.
  *
  *      bun run scripts/build-repo-facts.ts
  *
@@ -63,7 +63,7 @@ const out = {
   facts,
 };
 
-const path = 'app/src/data/repo-facts.json';
+const path = 'apps/web/src/data/repo-facts.json';
 writeFileSync(path, `${JSON.stringify(out, null, 0)}\n`);
 console.log(`${Object.keys(facts).length} repositories`);
 console.log(`written to ${path}`);

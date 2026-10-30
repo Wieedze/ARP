@@ -309,7 +309,7 @@ export type Corroboration =
      * The signer differs from the declarer and the reader does not know it.
      *
      * **This is not "two parties".** A node an operator installs generates its own key
-     * (`scripts/arp-content.ts`), so its address differs from that operator's agent key while the
+     * (`apps/mcp/src/content.ts`), so its address differs from that operator's agent key while the
      * same hand holds both. Addresses cannot tell that apart from a genuinely separate node, and
      * saying "second-party" here was reporting the strongest verdict for the weakest case.
      */

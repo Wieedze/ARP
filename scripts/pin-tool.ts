@@ -17,7 +17,7 @@
  */
 import { pinThing } from './intuition-pin.js';
 import { requirePinAuth } from './pin-env.js';
-import { DEFAULT_HEADER_NAME } from '../app/src/services/intuition-pin.js';
+import { DEFAULT_HEADER_NAME } from '../apps/web/src/services/intuition-pin.js';
 import {
   isToolUrl,
   normaliseToolUrl,

@@ -4,7 +4,7 @@ Load when writing anything that touches a chain. The goal is mainnet; testnet is
 
 ## The one rule
 
-**New protocol logic goes in `packages/protocol/`, not in `app/`.**
+**New protocol logic goes in `packages/protocol/`, not in `apps/web/`.**
 
 Measured 2026-10-19:
 
@@ -12,8 +12,8 @@ Measured 2026-10-19:
 | ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------- |
 | `packages/protocol/src` (not `arp/`) | **zero** chain bindings. Config takes `graphqlUrl` and `rpcUrls` keyed by `chainId`; a plan carries its `chainId`.     |
 | `packages/protocol/src/arp`          | **names both chains, on purpose** — `defineChain` for 13579 and 1155, plus `TESTNET_DEPLOYMENT` as a visible fallback  |
-| `app/src/lib/deployments.ts:1`       | `import deploymentsJson from "../../../deployments/13579.json"` — ARP's **own** deployment, still bound at module load |
-| `app/src`                            | **11** sites hardcode `chain: intuitionTestnet`, all of them ARP's own contracts — re-measured 2026-10-27              |
+| `apps/web/src/lib/deployments.ts:1`       | `import deploymentsJson from "../../../deployments/13579.json"` — ARP's **own** deployment, still bound at module load |
+| `apps/web/src`                            | **11** sites hardcode `chain: intuitionTestnet`, all of them ARP's own contracts — re-measured 2026-10-27              |
 
 Re-measured 2026-10-19 after ADR `0041` folded `sdk/` in, because that fold made the old version of
 this table wrong: it said the package had **zero** chain references, which stopped being true the
@@ -40,12 +40,12 @@ So "real value is at stake" is answered by `isMainnet` on the chain a quote was 
 the quote carries and the confirmation step prints. If you are adding a write, carry the chain on the
 thing you priced; do not re-read a toggle at signing time.
 
-**What still holds unchanged:** anything built in `app/` against ARP's own contracts inherits the
+**What still holds unchanged:** anything built in `apps/web/` against ARP's own contracts inherits the
 testnet world and has to be ported later, site by site. The protocol package does not. So the loop —
 prepare a call, resolve an identity, read a tool's standing — still belongs there.
 
 That reason is why the answer to "why does everything live in the protocol package?" is not "move it
-into `app/`". ADR `0041` renamed the package because the **name** was wrong, and left the boundary
+into `apps/web/`". ADR `0041` renamed the package because the **name** was wrong, and left the boundary
 where the measurement puts it.
 
 ## What portable actually requires
@@ -83,7 +83,7 @@ contract at call time. `deployments/1155.json` says this in its own note about `
 
 ## The exception
 
-The trust panel's staking path stays in `app/`. It is UI, it is human-signed, and ADR `0017`'s
+The trust panel's staking path stays in `apps/web/`. It is UI, it is human-signed, and ADR `0017`'s
 safeguards are UI behaviour. Do not move it into the connector: the connector never signs and never
 sends, and that invariant is worth more than the symmetry.
 

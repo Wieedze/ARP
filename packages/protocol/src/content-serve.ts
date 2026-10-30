@@ -3,7 +3,7 @@
  *
  * Every piece of IO is injected — the repository listing, the fetch, the clock, the signer — so this
  * is testable with no network and holds no key. The node supplies the real ones
- * (`scripts/arp-mcp-server.ts`), which is the same split as the rest of the package: the protocol
+ * (`apps/mcp/src/server.ts`), which is the same split as the rest of the package: the protocol
  * layer describes, the transport acts.
  *
  * ## What it is for

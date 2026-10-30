@@ -123,7 +123,7 @@ This is in Rust, but the pattern is what matters:
 - The exact domain separator they use (`name="DelegationManager"`, `version="1"`, `chainId`, `verifyingContract`)
 - The structure of the delegation object before signing
 
-For ARP, the equivalent will be a TypeScript helper in `app/src/lib/delegation.ts` doing the same EIP-712 signing via viem.
+For ARP, the equivalent will be a TypeScript helper in `apps/web/src/lib/delegation.ts` doing the same EIP-712 signing via viem.
 
 ---
 

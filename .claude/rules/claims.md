@@ -52,17 +52,17 @@ the kind of sentence that gets quoted back as settled.
 ### 4. "The checks pass" without verifying the checks cover the change
 
 > Claimed: "tsc 0, lint 0, tests pass."
-> True for the repo, **false for the two files the commit existed to fix**. `app/tsconfig.app.json`
+> True for the repo, **false for the two files the commit existed to fix**. `apps/web/tsconfig.app.json`
 > includes only `src`, so `scripts/` is outside `tsc -b` and its `noUnusedLocals`; there is no eslint
 > config at the repo root, so `eslint .` from `app/` never sees `scripts/`; `bun build` strips types
 > without checking unused locals. A dead variable survived all three.
 
 **Check:** before citing a green check, confirm its scope includes the files you changed. `tsc -b`
-over `app/src` says nothing about `scripts/`. A passing suite over mocked transport says the variable
+over `apps/web/src` says nothing about `scripts/`. A passing suite over mocked transport says the variable
 was passed, not that the query was valid — that one cost a live mainnet outage earlier in the same
 project.
 
-Name the gate's scope when it does not cover everything: "tsc clean over `app/src`; `scripts/` is
+Name the gate's scope when it does not cover everything: "tsc clean over `apps/web/src`; `scripts/` is
 outside every gate."
 
 ### 5. A correction that landed in one place

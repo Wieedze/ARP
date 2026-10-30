@@ -1,0 +1,15 @@
+{
+  "name": "@arp/hook",
+  "version": "0.0.1",
+  "private": true,
+  "description": "A runtime PostToolUse hook: records what a session invoked, as the runtime sees it, to .arp/session.jsonl.",
+  "type": "module",
+  "scripts": {
+    "lint": "tsc --noEmit -p tsconfig.json"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.4.4",
+    "typescript": "~6.0.2"
+  },
+  "license": "MIT"
+}

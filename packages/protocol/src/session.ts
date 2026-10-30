@@ -80,7 +80,7 @@ export type Resolution =
 /**
  * One fetch that went through a node, as the local receipt record keeps it.
  *
- * Written by whatever did the fetching (`scripts/arp-fetch-skill.ts`), read by the hook. It is the
+ * Written by whatever did the fetching (`apps/mcp/src/fetch-skill.ts`), read by the hook. It is the
  * only thing on the machine that knows a skill's *name* and its *atom* at the same time.
  */
 export type FetchedRef = {

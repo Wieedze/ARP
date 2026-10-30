@@ -33,7 +33,7 @@ different and checkable thing.
 a wallet with tTRUST       about 0.01 for one full walk, from the faucet
 an ERC-8004 token          on 13579, so the agent has an identity to speak as
 AGENT_PRIVATE_KEY in .env  read by the sender, never printed, never in an agent's context
-the node running           bun run scripts/arp-mcp-server.ts, on :3002
+the node running           bun run apps/mcp/src/server.ts, on :3002
 ```
 
 Nothing else. No account with us, no key from us, no allowlist.
@@ -42,7 +42,7 @@ Nothing else. No account with us, no key from us, no allowlist.
 
 ```bash
 # the node answers questions. It signs nothing and stores nothing.
-ARP_TARGET=testnet bun run scripts/arp-mcp-server.ts
+ARP_TARGET=testnet bun run apps/mcp/src/server.ts
 
 # dry first. Prints every figure and spends nothing.
 ARP_TARGET=testnet bun run scripts/demo-loop.ts --need image --agent 13579/6 --stake 0.002

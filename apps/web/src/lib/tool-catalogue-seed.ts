@@ -1,4 +1,4 @@
-import catalogue from "../../../catalogue/tools.json";
+import catalogue from "../../../../catalogue/tools.json";
 
 /**
  * The catalogue's seed: 52 tool URLs, with the name and the sentence this app shows for each.

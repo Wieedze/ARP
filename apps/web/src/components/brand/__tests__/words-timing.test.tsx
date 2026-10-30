@@ -25,7 +25,7 @@ const CEILING = 560;
  *
  * `source` is how `index.css` authors them. `built` is what the minifier emits — it rewrites a time
  * to whichever unit is shorter, so `110ms` becomes `.11s` and `34ms` survives because `.034s` is
- * longer. Measured in `app/dist/assets/*.css`.
+ * longer. Measured in `apps/web/dist/assets/*.css`.
  *
  * **The suite only had the source shape, and that is how the bug shipped**: `parseFloat(".11s")` is
  * 0.11, so in production the ceiling was 0.56 and every delay scaled to 0 or 1ms. Both shapes are

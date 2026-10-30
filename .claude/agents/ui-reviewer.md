@@ -55,12 +55,12 @@ The caller passes:
 6. **Run the toolchain.**
 
    ```
-   cd app && bunx tsc -b
-   cd app && bun run lint
+   cd apps/web && bunx tsc -b
+   cd apps/web && bun run lint
    # Neither of the two above can see an undefined CSS custom property: a string in a class name
    # is a string to them. One page shipped with fourteen inert styling sites while both were
    # green. ADR `0050`.
-   cd app && bun run check:tokens
+   cd apps/web && bun run check:tokens
    ```
 
    Both must pass with zero warnings.

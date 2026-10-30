@@ -14,7 +14,7 @@
  */
 import { readFileSync } from 'node:fs';
 
-const CSS = readFileSync(new URL('../../app/src/index.css', import.meta.url), 'utf8');
+const CSS = readFileSync(new URL('../../apps/web/src/index.css', import.meta.url), 'utf8');
 
 /** `--color-foo: #aabbcc;` — the only form `@theme` uses for a literal colour. */
 function tokens(): Map<string, string> {

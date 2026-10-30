@@ -2,7 +2,7 @@
 
 **For:** the design agent. **Status:** a brief, answered — see the box below.
 **Date:** 2026-10-27, annotated 2026-10-28
-**Surfaces:** `/` first (`app/src/pages/Landing.tsx`), then `/agents`, `/tools`, `/atom/:atomId`.
+**Surfaces:** `/` first (`apps/web/src/pages/Landing.tsx`), then `/agents`, `/tools`, `/atom/:atomId`.
 
 > **Answered on 2026-10-28, and this file is now the brief plus its answer.** The design came back
 > as `arp-motion-reference/index.html` and `arp-motion-reference/MOTION-V2.md`, which is **the build
@@ -54,7 +54,7 @@ two modes are nearly 2× apart and a millisecond value at the call site would ha
 `PulseField` is deleted; `SourceField` replaces it (ADR `0067`). The paragraphs below are kept
 because §3 was derived from them.
 
-`app/src/components/brand/Reveal.tsx` — block scale only, shipped 2026-10-27.
+`apps/web/src/components/brand/Reveal.tsx` — block scale only, shipped 2026-10-27.
 
 - `IntersectionObserver` at `threshold: 0.08`, `rootMargin: "0px 0px -12% 0px"`.
 - Transition `opacity, transform` over **620ms**, `cubic-bezier(0.2, 0.65, 0.3, 1)`, from
@@ -65,11 +65,11 @@ because §3 was derived from them.
 Measured in a browser, 1440×980: **11 elements hidden at load, 0 still hidden after a full scroll**,
 and **0 ever hidden** under `prefers-reduced-motion: reduce`.
 
-`app/src/components/brand/PulseField.tsx` — the hero's particle field. Canvas 2D, ~80 lines, no
+`apps/web/src/components/brand/PulseField.tsx` — the hero's particle field. Canvas 2D, ~80 lines, no
 dependency. It is driven by real chain data (`beats`, `backed`) and draws the mark alone when those
 are zero. Do not replace it with a library without reading §6.
 
-`app/src/index.css` already defines the motion tokens: `--duration-base: 200ms` and
+`apps/web/src/index.css` already defines the motion tokens: `--duration-base: 200ms` and
 `--ease-out-quart: cubic-bezier(0.16, 1, 0.3, 1)`. **A new duration or curve belongs there**, not in
 a class — `bun run check:tokens` enforces that every `var(--…)` resolves, and a page shipped once
 against five custom properties that did not exist while `tsc` and `eslint` were both green
@@ -130,7 +130,7 @@ re-enters the viewport.
 
 ## 5. Route scale — the least visible of the three (built 2026-10-28, ADR `0070`, minus the out-fade)
 
-Routes are in `app/src/App.tsx`, each lazy-loaded behind a `<Suspense>` with a `RouteFallback`. So
+Routes are in `apps/web/src/App.tsx`, each lazy-loaded behind a `<Suspense>` with a `RouteFallback`. So
 there are already **three** states to design, not two: leaving, loading, arriving. The loading state
 is `PageLoading` — a centred `RingLoader` with the footer held down — and it currently appears
 without transition.

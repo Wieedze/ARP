@@ -1,6 +1,6 @@
 /** Does ARP's MCP server tell the truth about which edges are staked?
  *
- *      bun run scripts/arp-mcp-server.ts                          # in another shell
+ *      bun run apps/mcp/src/server.ts                          # in another shell
  *      bun run scripts/measure/mcp-staked-flag.ts                 # IPFS on mainnet
  *      bun run scripts/measure/mcp-staked-flag.ts 0x<atom id>
  *
@@ -52,7 +52,7 @@ const mcp = await fetch(SERVER, {
   signal: AbortSignal.timeout(60000),
 }).catch((error: unknown) => {
   console.error(`the server at ${SERVER} did not answer: ${String(error).slice(0, 160)}`);
-  console.error('start it with: bun run scripts/arp-mcp-server.ts');
+  console.error('start it with: bun run apps/mcp/src/server.ts');
   process.exit(1);
 });
 

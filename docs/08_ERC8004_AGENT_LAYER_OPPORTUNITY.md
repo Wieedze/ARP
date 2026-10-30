@@ -511,7 +511,7 @@ POST https://pin.intuition.systems/v1/graphql  -> 401 {"message":"No API key fou
 ```
 
 Pinning moved to the gated `pin.intuition.systems`, exactly as `docs/07` describes. ARP never
-followed the move: `app/src/services/intuition-pin.ts` still posts to `deployments.chain.graphqlUrl`,
+followed the move: `apps/web/src/services/intuition-pin.ts` still posts to `deployments.chain.graphqlUrl`,
 which is now read-only.
 
 Broken call sites — checked one by one, not assumed:

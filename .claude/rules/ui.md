@@ -1,6 +1,6 @@
 # UI rules
 
-Load for every task touching `app/`. Compose with `docs/05_UI_DESIGN.md` which holds the visual spec.
+Load for every task touching `apps/web/`. Compose with `docs/05_UI_DESIGN.md` which holds the visual spec.
 
 > **Amended 2026-10-22 by ADR `0057` — "The Source".** The identity changed: graphite neutrals,
 > **Saffron `#FFB020`** in place of cyan, **Archivo + Geist Mono** in place of Inter + JetBrains
@@ -141,10 +141,10 @@ Strip these reflexes. If you find yourself reaching for one, stop.
 Four, and the fourth exists because the other three cannot see it:
 
 ```
-cd app && bunx tsc -b
-cd app && bun run lint
-cd app && bun run test
-cd app && bun run check:tokens
+cd apps/web && bunx tsc -b
+cd apps/web && bun run lint
+cd apps/web && bun run test
+cd apps/web && bun run check:tokens
 ```
 
 `check:tokens` checks that every `var(--…)` resolves to a token `index.css` defines. It is also what

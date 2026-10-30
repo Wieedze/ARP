@@ -15,7 +15,38 @@
         "viem": "2.52.0",
       },
     },
-    "app": {
+    "apps/hook": {
+      "name": "@arp/hook",
+      "version": "0.0.1",
+      "devDependencies": {
+        "@types/bun": "^1.4.4",
+        "typescript": "~6.0.2",
+      },
+    },
+    "apps/mcp": {
+      "name": "@arp/mcp",
+      "version": "0.0.1",
+      "dependencies": {
+        "viem": "2.52.0",
+      },
+      "devDependencies": {
+        "@types/bun": "^1.4.4",
+        "typescript": "~6.0.2",
+        "vitest": "^4.1.8",
+      },
+    },
+    "apps/node": {
+      "name": "@arp/node",
+      "version": "0.0.1",
+      "dependencies": {
+        "viem": "2.52.0",
+      },
+      "devDependencies": {
+        "@types/bun": "^1.4.4",
+        "typescript": "~6.0.2",
+      },
+    },
+    "apps/web": {
       "name": "@arp/app",
       "version": "0.0.0",
       "dependencies": {
@@ -87,9 +118,15 @@
 
     "@arp-protocol/core": ["@arp-protocol/core@workspace:packages/protocol"],
 
-    "@arp/app": ["@arp/app@workspace:app"],
+    "@arp/app": ["@arp/app@workspace:apps/web"],
 
     "@arp/contracts": ["@arp/contracts@workspace:contracts"],
+
+    "@arp/hook": ["@arp/hook@workspace:apps/hook"],
+
+    "@arp/mcp": ["@arp/mcp@workspace:apps/mcp"],
+
+    "@arp/node": ["@arp/node@workspace:apps/node"],
 
     "@babel/code-frame": ["@babel/code-frame@7.29.7", "", { "dependencies": { "@babel/helper-validator-identifier": "^7.29.7", "js-tokens": "^4.0.0", "picocolors": "^1.1.1" } }, "sha512-Aup7aUOfpbAUg2ROOJN6Iw5f9DMBlzu0mIkm/malLQFN/YQgO48wCj0Kxa3sEHJvPVFg7siR+qRInwXd2qhQKw=="],
 

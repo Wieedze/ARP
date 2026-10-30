@@ -1,8 +1,8 @@
 /** Fetch a skill through a node, keep the receipt, and leave the hook able to name the atom.
  *
- *      bun run scripts/arp-fetch-skill.ts <atomId|url> [--out <path>]
- *      ARP_NODE=http://localhost:3002 bun run scripts/arp-fetch-skill.ts 0xf205…
- *      ARP_AGENT_PRIVATE_KEY=0x… bun run scripts/arp-fetch-skill.ts 0xf205…   # named in the receipt
+ *      bun run apps/mcp/src/fetch-skill.ts <atomId|url> [--out <path>]
+ *      ARP_NODE=http://localhost:3002 bun run apps/mcp/src/fetch-skill.ts 0xf205…
+ *      ARP_AGENT_PRIVATE_KEY=0x… bun run apps/mcp/src/fetch-skill.ts 0xf205…   # named in the receipt
  *
  *  This is the agent's side of the content path. Without it the node's receipt exists and nothing
  *  on the agent's machine knows it does.
@@ -11,7 +11,7 @@
  *
  *  A runtime hands a skill's **name** and not its origin, and a name does not identify a tool: 104
  *  of the catalogue's 499 distinct names are carried by more than one repository with identical
- *  files. So `scripts/arp-session-hook.ts` could record what was invoked and never which atom it
+ *  files. So `apps/hook/src/hook.ts` could record what was invoked and never which atom it
  *  was, and `resolveInvocations` refused every ambiguous one rather than guessing.
  *
  *  The fetch is the only moment both facts are in the same place. So it writes them down:
@@ -53,9 +53,9 @@ import {
   receiptMatchesContent,
   verifyContentReceipt,
   type SignedContentReceipt,
-} from '../packages/protocol/src/receipt.js';
-import { skillRefFromUrl } from '../packages/protocol/src/content-path.js';
-import { contentIndexFor } from './arp-content.js';
+} from '../../../packages/protocol/src/receipt.js';
+import { skillRefFromUrl } from '../../../packages/protocol/src/content-path.js';
+import { contentIndexFor } from './content.js';
 
 const BASE = process.env['ARP_NODE'] ?? 'http://localhost:3002';
 const RECEIPTS = '.arp/receipts.jsonl';
@@ -67,7 +67,7 @@ function arg(name: string): string | undefined {
 
 const target = process.argv[2];
 if (target === undefined || target.startsWith('--')) {
-  console.error('usage: bun run scripts/arp-fetch-skill.ts <atomId|url> [--out <path>]');
+  console.error('usage: bun run apps/mcp/src/fetch-skill.ts <atomId|url> [--out <path>]');
   process.exit(1);
 }
 

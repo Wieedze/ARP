@@ -1,4 +1,4 @@
-import deploymentsJson from "../../../deployments/13579.json";
+import deploymentsJson from "../../../../deployments/13579.json";
 
 import type {Address, Hex} from "viem";
 

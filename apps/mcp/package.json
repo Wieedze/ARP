@@ -1,0 +1,21 @@
+{
+  "name": "@arp/mcp",
+  "version": "0.0.1",
+  "private": true,
+  "description": "The ARP MCP server: reads the graph, prepares unsigned plans, serves a skill's file and signs a receipt for it. Signs no transaction.",
+  "type": "module",
+  "scripts": {
+    "start": "bun run src/server.ts",
+    "test": "vitest run",
+    "lint": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "viem": "2.52.0"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.4.4",
+    "typescript": "~6.0.2",
+    "vitest": "^4.1.8"
+  },
+  "license": "MIT"
+}

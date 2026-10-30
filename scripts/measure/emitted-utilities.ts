@@ -1,13 +1,13 @@
 /** Every Tailwind class a file uses has a rule in the built stylesheet.
  *
- *      cd app && bun run build
+ *      cd apps/web && bun run build
  *      bun run scripts/measure/emitted-utilities.ts [path ...]
  *
  *  ## The failure class it measures
  *
  *  `.claude/rules/ui.md` §Gates names two failure classes no static check sees, and the first is
  *  **a Tailwind utility that does not exist**: v4 emits nothing for it, silently, so a typo and a
- *  real utility both pass `tsc`, `eslint` and `check:tokens`. `app/check-css-tokens.ts` is explicit
+ *  real utility both pass `tsc`, `eslint` and `check:tokens`. `apps/web/check-css-tokens.ts` is explicit
  *  that it does not cover this — _"It reads `var()` references, not class names."_
  *
  *  Tailwind writes one rule per utility it recognises, so a utility that emitted nothing is simply
@@ -36,7 +36,7 @@
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
-const APP = new URL('../../app/', import.meta.url).pathname;
+const APP = new URL('../../apps/web/', import.meta.url).pathname;
 
 /** Classes this project defines itself, in `index.css`, rather than through Tailwind. */
 const OURS = /^(arp-|type-|ring-loader$|score-numeral$)/;
@@ -50,7 +50,7 @@ function builtStylesheet(): string {
   try {
     names = readdirSync(dir).filter((name) => name.endsWith('.css'));
   } catch {
-    throw new Error(`No ${dir}. Run \`cd app && bun run build\` first.`);
+    throw new Error(`No ${dir}. Run \`cd apps/web && bun run build\` first.`);
   }
   if (names.length === 0) throw new Error(`No stylesheet in ${dir}.`);
   // Escaping removed, so `.text-\[color\:var\(--x\)\]` reads as `.text-[color:var(--x)]`.
@@ -99,7 +99,7 @@ for (const path of targets) {
   }
 }
 
-const where = process.argv.slice(2).length > 0 ? `${targets.length} named file(s)` : 'app/src';
+const where = process.argv.slice(2).length > 0 ? `${targets.length} named file(s)` : 'apps/web/src';
 console.log(`${population.size} utility tokens across ${where}`);
 if (missing.length === 0) {
   console.log('every one has a rule in the built stylesheet.');

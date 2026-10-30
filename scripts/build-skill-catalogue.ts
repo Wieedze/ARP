@@ -1,4 +1,4 @@
-/** Build `app/src/data/skill-catalogue.json`: each skill's atom id and the domain ARP tagged it with.
+/** Build `apps/web/src/data/skill-catalogue.json`: each skill's atom id and the domain ARP tagged it with.
  *
  *      bun run scripts/build-skill-catalogue.ts
  *
@@ -34,7 +34,7 @@ const out = {
     skills,
 };
 
-const path = "app/src/data/skill-catalogue.json";
+const path = "apps/web/src/data/skill-catalogue.json";
 writeFileSync(path, `${JSON.stringify(out)}\n`);
 const untagged = data.skills.filter((row) => row.domain === null).length;
 console.log(`${data.skills.length} skills, ${untagged} with no domain tag`);

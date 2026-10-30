@@ -1,13 +1,13 @@
 import {describe, expect, it} from "vitest";
 
-import {TOOLS} from "../../../scripts/arp-mcp-tools.js";
-import type {EndpointClassification, NotCheckableCode} from "../src/verify/types.js";
+import {TOOLS} from "../src/tools.js";
+import type {EndpointClassification, NotCheckableCode} from "../../../packages/protocol/src/verify/types.js";
 import {FILES, OWN_ENDPOINT, dataUri} from "../../../scripts/rig-registration-files.js";
 import {
     classifyEndpoint,
     partitionByCheckability,
     readDeclaredEndpoints,
-} from "../src/verify/declaration.js";
+} from "../../../packages/protocol/src/verify/declaration.js";
 
 /**
  * The testnet rig's registration files, run through the real classifier.

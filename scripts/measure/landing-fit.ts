@@ -1,6 +1,6 @@
 /** Does every pinned scene of the landing page fit on screen, and does the page ever scroll sideways?
  *
- *      cd app && bun run build && bunx vite preview --port 4173 &
+ *      cd apps/web && bun run build && bunx vite preview --port 4173 &
  *      bun run scripts/measure/landing-fit.ts [url]
  *
  *  ## Why this is a script and not a note to check by hand
@@ -536,7 +536,7 @@ if (findings.length === 0) {
   // document's own scrollable overflow, at the root, with the clip lifted. A nested
   // `overflow-x: auto` strip scrolled sideways is invisible to it, and so is any leftward bleed,
   // because left-side overflow never enters `scrollWidth` in LTR. **Latent on `/`, not live**
-  // (`claims.md` §1): the whole of `app/src` has one horizontal scroll container, a `<pre>` in
+  // (`claims.md` §1): the whole of `apps/web/src` has one horizontal scroll container, a `<pre>` in
   // `ToolRegister.tsx`, and no negative-left sites — so this is a limit of the sentence rather
   // than of the page.
   console.log(

@@ -9,7 +9,7 @@
  *   "hooks": {
  *     "PostToolUse": [
  *       {"matcher": "*", "hooks": [
- *         {"type": "command", "command": "bun run scripts/arp-session-hook.ts"}
+ *         {"type": "command", "command": "bun run apps/hook/src/hook.ts"}
  *       ]}
  *     ]
  *   }
@@ -54,7 +54,7 @@
 import { appendFileSync, existsSync, mkdirSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 
-import { refForInvocation, type FetchedRef } from '../packages/protocol/src/session.js';
+import { refForInvocation, type FetchedRef } from '../../../packages/protocol/src/session.js';
 
 type HookPayload = {
   session_id?: string;
@@ -109,7 +109,7 @@ type Invocation = {
    * information and either ends the ambiguity.
    *
    * **Filled from `.arp/receipts.jsonl` since 2026-10-29**, which is where
-   * `scripts/arp-fetch-skill.ts` records what was fetched through a node. The fetch is the one
+   * `apps/mcp/src/fetch-skill.ts` records what was fetched through a node. The fetch is the one
    * moment a skill's name and its atom are in the same place, so it writes both down and this
    * reads them back. `tasks/31` deliverable 3.
    *

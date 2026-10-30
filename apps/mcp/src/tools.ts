@@ -205,7 +205,7 @@ export const TOOLS = [
           type: 'string',
           description:
             "The hook's JSONL log. Omit it to read `.arp/session.jsonl`, which is where " +
-            '`scripts/arp-session-hook.ts` writes by default.',
+            '`apps/hook/src/hook.ts` writes by default.',
         },
         declarer: {
           type: 'string',

@@ -4,10 +4,10 @@
  *  the invariant is that ARP is never in the path of a request, and code on the operator's machine
  *  is not in the path while a host they must reach is.
  *
- *      bun run scripts/arp-mcp-server.ts --stdio              # for an MCP client to launch
- *      bun run scripts/arp-mcp-server.ts                      # mainnet 1155, listens on :3002
- *      ARP_TARGET=testnet bun run scripts/arp-mcp-server.ts   # testnet 13579
- *      PORT=4000 bun run scripts/arp-mcp-server.ts
+ *      bun run apps/mcp/src/server.ts --stdio              # for an MCP client to launch
+ *      bun run apps/mcp/src/server.ts                      # mainnet 1155, listens on :3002
+ *      ARP_TARGET=testnet bun run apps/mcp/src/server.ts   # testnet 13579
+ *      PORT=4000 bun run apps/mcp/src/server.ts
  *
  *  Two transports over **one** dispatch: `handler.fetch` is the only place a method is handled, and
  *  the stdio loop wraps it rather than re-implementing it. In stdio mode **stdout is the protocol
@@ -46,49 +46,49 @@ import {
   type DeclarePlan,
   type PreparedCall,
   type StakePlan,
-} from '../packages/protocol/src/declare/index.js';
-import { toCaip19 } from '../packages/protocol/src/caip.js';
-import { listTools, type ToolListingOrder } from '../packages/protocol/src/tool-listing.js';
+} from '../../../packages/protocol/src/declare/index.js';
+import { toCaip19 } from '../../../packages/protocol/src/caip.js';
+import { listTools, type ToolListingOrder } from '../../../packages/protocol/src/tool-listing.js';
 import { getAddress, type Address } from 'viem';
 
-import { listRegisteredTools } from '../packages/protocol/src/registered-tools.js';
-import { toolsInDomain } from '../packages/protocol/src/domains.js';
+import { listRegisteredTools } from '../../../packages/protocol/src/registered-tools.js';
+import { toolsInDomain } from '../../../packages/protocol/src/domains.js';
 import {
   planReachability,
   readReachabilityState,
-} from '../packages/protocol/src/declare/reachability-plan.js';
-import { verdictOf } from '../packages/protocol/src/reachability.js';
-import { HAS_TAG, IS_A_SUB_DOMAIN_OF } from '../packages/protocol/src/sources/intuition/terms.js';
-import catalogue from '../catalogue/tools.json';
-import { createErc8004Client } from '../packages/protocol/src/client.js';
-import { resolveAgent } from '../packages/protocol/src/profile.js';
+} from '../../../packages/protocol/src/declare/reachability-plan.js';
+import { verdictOf } from '../../../packages/protocol/src/reachability.js';
+import { HAS_TAG, IS_A_SUB_DOMAIN_OF } from '../../../packages/protocol/src/sources/intuition/terms.js';
+import catalogue from '../../../catalogue/tools.json';
+import { createErc8004Client } from '../../../packages/protocol/src/client.js';
+import { resolveAgent } from '../../../packages/protocol/src/profile.js';
 import {
   partitionByCheckability,
   readDeclaredEndpoints,
-} from '../packages/protocol/src/verify/declaration.js';
+} from '../../../packages/protocol/src/verify/declaration.js';
 import {
   fetchableDocumentUrl,
   MAX_DOCUMENT_HOPS,
   nextDocumentHop,
   privateProbeTarget,
   probeEndpoint,
-} from '../packages/protocol/src/verify/probe.js';
-import { listAgents } from '../packages/protocol/src/listing.js';
-import { intuitionSource } from '../packages/protocol/src/sources/intuition/index.js';
-import type { AgentListOrder } from '../packages/protocol/src/types.js';
-import { getToolUsage, type ToolUsage } from '../packages/protocol/src/tool-usage.js';
-import { TOOLS } from './arp-mcp-tools.js';
-import { catalogueFor, receiptSigner, serveContentRequest } from './arp-content.js';
+} from '../../../packages/protocol/src/verify/probe.js';
+import { listAgents } from '../../../packages/protocol/src/listing.js';
+import { intuitionSource } from '../../../packages/protocol/src/sources/intuition/index.js';
+import type { AgentListOrder } from '../../../packages/protocol/src/types.js';
+import { getToolUsage, type ToolUsage } from '../../../packages/protocol/src/tool-usage.js';
+import { TOOLS } from './tools.js';
+import { catalogueFor, receiptSigner, serveContentRequest } from './content.js';
 import {
   parseSessionLog,
   resolveInvocations,
   type CataloguedSkill,
-} from '../packages/protocol/src/session.js';
+} from '../../../packages/protocol/src/session.js';
 import {
   corroborationOf,
   verifyContentReceipt,
   type SignedContentReceipt,
-} from '../packages/protocol/src/receipt.js';
+} from '../../../packages/protocol/src/receipt.js';
 
 const PORT = Number(process.env.PORT ?? 3002);
 
@@ -109,7 +109,7 @@ const RECEIPTS_LOG = process.env['ARP_RECEIPTS'] ?? '.arp/receipts.jsonl';
 /**
  * The receipts this machine kept, keyed by atom id.
  *
- * Written by `scripts/arp-fetch-skill.ts`. Absent is the normal case and not an error: a
+ * Written by `apps/mcp/src/fetch-skill.ts`. Absent is the normal case and not an error: a
  * declaration with no receipt is exactly the declaration this project has always had, which is
  * ADR `0080`'s point — a receipt can only add.
  *
@@ -160,7 +160,7 @@ type DeploymentRecord = {
 };
 
 const record = JSON.parse(
-  readFileSync(new URL(`../deployments/${chainId}.json`, import.meta.url), 'utf8'),
+  readFileSync(new URL(`../../../deployments/${chainId}.json`, import.meta.url), 'utf8'),
 ) as DeploymentRecord;
 
 /**
@@ -588,7 +588,7 @@ async function declareSession(id: JsonRpcId, args: Record<string, unknown>) {
       return fail(
         id,
         -32602,
-        `no log passed and ${SESSION_LOG} is not readable — wire scripts/arp-session-hook.ts as a PostToolUse hook, or pass \`log\``,
+        `no log passed and ${SESSION_LOG} is not readable — wire apps/hook/src/hook.ts as a PostToolUse hook, or pass \`log\``,
       );
     }
   }

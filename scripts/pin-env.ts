@@ -3,7 +3,7 @@
  *
  * This is the **only** place in the repo that reads `INTUITION_PIN_API_KEY`
  * outside of `scripts/verify-pin-key.ts`, and the only sanctioned constructor of
- * a `PinAuth`. `app/src/services/` never touches the environment and exports no
+ * a `PinAuth`. `apps/web/src/services/` never touches the environment and exports no
  * way to build a credential: `PinAuth` is a branded type, so `{apiKey: "…"}` is
  * a type error everywhere, and browser code importing only from the services
  * layer cannot produce one (ADR 0016). Node entry points close that gap here and
@@ -19,7 +19,7 @@
  *   INTUITION_PIN_API_KEY_HEADER   optional — defaults to "apikey"
  */
 
-import { DEFAULT_HEADER_NAME, type PinAuth } from '../app/src/services/intuition-pin';
+import { DEFAULT_HEADER_NAME, type PinAuth } from '../apps/web/src/services/intuition-pin';
 
 /**
  * Return the partner pinning credential, or throw with the remediation.

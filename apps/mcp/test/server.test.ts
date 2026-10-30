@@ -8,10 +8,10 @@ import {encodeAbiParameters, keccak256, parseEther, stringToBytes, toFunctionSel
 import type {Hex} from "viem";
 import {privateKeyToAccount} from "viem/accounts";
 
-import {signContentReceipt} from "../src/receipt.js";
+import {signContentReceipt} from "../../../packages/protocol/src/receipt.js";
 import {afterAll, beforeAll, describe, expect, it} from "vitest";
 
-import {USES} from "../src/sources/intuition/terms.js";
+import {USES} from "../../../packages/protocol/src/sources/intuition/terms.js";
 
 /**
  * ARP's MCP server, over a real HTTP round trip.
@@ -247,7 +247,7 @@ beforeAll(async () => {
         `${JSON.stringify({skill: "brainstorming", atom: BRAINSTORMING_ATOM, receipt: signed})}\n`,
     );
 
-    server = spawn("bun", ["run", "scripts/arp-mcp-server.ts"], {
+    server = spawn("bun", ["run", "apps/mcp/src/server.ts"], {
         cwd: new URL("../../..", import.meta.url).pathname,
         env: {
             ...process.env,

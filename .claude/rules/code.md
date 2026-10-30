@@ -9,8 +9,8 @@ The codebase has three layers. Mixing them is a defect.
 | Layer                  | Responsibility                                                            | Examples                                          |
 | ---------------------- | ------------------------------------------------------------------------- | ------------------------------------------------- |
 | **Domain / contracts** | On-chain state and invariants. Pure business logic.                       | `contracts/src/*.sol`                             |
-| **Services**           | Off-chain logic that talks to chain, Intuition, IPFS. No UI concerns.     | `app/src/services/*.ts`, `app/src/lib/*.ts`       |
-| **Presentation**       | React components, hooks, pages. No business logic, no direct chain calls. | `app/src/components/*.tsx`, `app/src/pages/*.tsx` |
+| **Services**           | Off-chain logic that talks to chain, Intuition, IPFS. No UI concerns.     | `apps/web/src/services/*.ts`, `apps/web/src/lib/*.ts`       |
+| **Presentation**       | React components, hooks, pages. No business logic, no direct chain calls. | `apps/web/src/components/*.tsx`, `apps/web/src/pages/*.tsx` |
 
 Rules:
 
@@ -88,7 +88,7 @@ A function shipped without tests is not done. Coverage targets:
 
   **This line was unsatisfiable from 2026-09-17 to 2026-10-27** — `tasks/13` recorded that the repo
   had no DOM environment, so the rule demanded a tool nobody could run. It is satisfiable now
-  (`app/vitest.config.ts`, two projects, `@testing-library/react` on `happy-dom`), and the bill for
+  (`apps/web/vitest.config.ts`, two projects, `@testing-library/react` on `happy-dom`), and the bill for
   the gap is itemised in `tasks/26`: eight defects on one page across three review rounds.
 
   **Behaviourally** is load-bearing and is the reason snapshots are named: a snapshot of that page

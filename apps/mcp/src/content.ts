@@ -47,13 +47,13 @@ import { dirname } from 'node:path';
 import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts';
 import type { Address, Hex } from 'viem';
 
-import type { RepositoryFile } from '../packages/protocol/src/content-path.js';
+import type { RepositoryFile } from '../../../packages/protocol/src/content-path.js';
 import {
   contentIndexOf,
   serveContent,
   type ContentAnswer,
-} from '../packages/protocol/src/content-serve.js';
-import { recoverContentRequester, type TypedDataSigner } from '../packages/protocol/src/receipt.js';
+} from '../../../packages/protocol/src/content-serve.js';
+import { recoverContentRequester, type TypedDataSigner } from '../../../packages/protocol/src/receipt.js';
 
 /** A listing changes when somebody pushes. Ten minutes is a compromise nobody has measured. */
 const LISTING_TTL_MS = 10 * 60 * 1000;
@@ -68,7 +68,7 @@ const catalogues = new Map<number, CataloguedSkill[]>();
  * The catalogue recorded for one chain, or an empty list.
  *
  * **Read at call time and keyed by chain, not imported.** It was `import skills from
- * '../catalogue/skills-13579.json'` at module scope in a process whose chain is configurable, so a
+ * '../../../catalogue/skills-13579.json'` at module scope in a process whose chain is configurable, so a
  * node started on its default target — mainnet 1155 — served atom ids drawn from the testnet
  * record and stamped 1155 into every receipt's domain. `rules/portability.md` rule 1 names that
  * shape: no chain constant at module scope.
@@ -83,7 +83,7 @@ export function catalogueFor(chainId: number): CataloguedSkill[] {
   let rows: CataloguedSkill[] = [];
   try {
     const raw = readFileSync(
-      new URL(`../catalogue/skills-${chainId}.json`, import.meta.url),
+      new URL(`../../../catalogue/skills-${chainId}.json`, import.meta.url),
       'utf8',
     );
     rows = (JSON.parse(raw) as { skills?: CataloguedSkill[] }).skills ?? [];

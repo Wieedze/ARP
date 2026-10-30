@@ -1,7 +1,7 @@
 /** The second half of the loop: one agent hires another, then pays to say so.
  *
  *      # terminal 1 — the agent being hired runs its node
- *      AGENT_PRIVATE_KEY=$AGENT2_PRIVATE_KEY AGENT_NODE_PORT=3100 bun run scripts/agent-node.ts
+ *      AGENT_PRIVATE_KEY=$AGENT2_PRIVATE_KEY AGENT_NODE_PORT=3100 bun run apps/node/src/node.ts
  *
  *      # terminal 2 — the hirer
  *      ARP_TARGET=testnet bun run scripts/demo-hire.ts \

@@ -27,7 +27,7 @@ const TARGETS = {
   testnet: { label: 'Intuition testnet 13579', url: 'https://testnet.intuition.sh/v1/graphql' },
 } as const;
 
-/** Must match `app/src/services/tool-usage-view.ts`'s ceiling, or the two disagree silently. */
+/** Must match `apps/web/src/services/tool-usage-view.ts`'s ceiling, or the two disagree silently. */
 const DUST_CEILING = 1_000_000_000n;
 /** The curve `getToolUsage` scopes its position counts to. Also a copy — see ADR `0042`. */
 const READ_CURVE = '1';

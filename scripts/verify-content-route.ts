@@ -1,6 +1,6 @@
 /** Walk the node's content path end to end, against a running node.
  *
- *      ARP_TARGET=testnet PORT=3099 bun run scripts/arp-mcp-server.ts &
+ *      ARP_TARGET=testnet PORT=3099 bun run apps/mcp/src/server.ts &
  *      bun run scripts/verify-content-route.ts                       # defaults to :3099
  *      ARP_NODE=http://localhost:3002 bun run scripts/verify-content-route.ts
  *
@@ -32,7 +32,7 @@ import {
   verifyContentReceipt,
   type SignedContentReceipt,
 } from '../packages/protocol/src/receipt.js';
-import { catalogueFor } from './arp-content.js';
+import { catalogueFor } from '../apps/mcp/src/content.js';
 
 const BASE = process.env['ARP_NODE'] ?? 'http://localhost:3099';
 

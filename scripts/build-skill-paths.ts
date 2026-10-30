@@ -1,4 +1,4 @@
-/** Build `app/src/data/skill-paths.json`: where each skill's SKILL.md sits inside its repository.
+/** Build `apps/web/src/data/skill-paths.json`: where each skill's SKILL.md sits inside its repository.
  *
  *      bun run scripts/build-skill-paths.ts
  *
@@ -42,7 +42,7 @@ const out = {
     paths,
 };
 
-const path = "app/src/data/skill-paths.json";
+const path = "apps/web/src/data/skill-paths.json";
 writeFileSync(path, `${JSON.stringify(out)}\n`);
 console.log(`${data.located.length} located, ${identical} with identical copies, ${Object.keys(paths).length} in all`);
 console.log(`written to ${path}`);

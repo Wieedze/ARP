@@ -63,9 +63,9 @@ function arg(name: string): string | undefined {
  * `http.ts` is the shared transport.
  */
 const MODULES = [
-  'scripts/arp-mcp-server.ts',
-  'scripts/arp-content.ts',
-  'scripts/arp-mcp-tools.ts',
+  'apps/mcp/src/server.ts',
+  'apps/mcp/src/content.ts',
+  'apps/mcp/src/tools.ts',
   'packages/protocol/src/content-path.ts',
   'packages/protocol/src/verify/probe.ts',
   'packages/protocol/src/http.ts',

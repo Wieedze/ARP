@@ -1,4 +1,4 @@
-/** Build `app/src/data/skill-facts.json` — the two things about a skill the chain does not carry.
+/** Build `apps/web/src/data/skill-facts.json` — the two things about a skill the chain does not carry.
  *
  *      bun run scripts/build-skill-facts.ts
  *
@@ -101,7 +101,7 @@ const out = {
     facts,
 };
 
-const path = "app/src/data/skill-facts.json";
+const path = "apps/web/src/data/skill-facts.json";
 writeFileSync(path, `${JSON.stringify(out, null, 0)}\n`);
 
 const described = Object.values(facts).filter((fact) => fact.description.length > 0).length;

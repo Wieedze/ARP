@@ -520,7 +520,7 @@ export {
 
 /**
  * Serving a tool's content and signing for having served it. Every piece of IO is injected, so this
- * holds no key and touches no network; `scripts/arp-content.ts` is the transport.
+ * holds no key and touches no network; `apps/mcp/src/content.ts` is the transport.
  */
 export {
     contentIndexOf,

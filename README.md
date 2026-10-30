@@ -111,8 +111,8 @@ path:
 |                    | what it is                                                                                                  | when you want it                                                       |
 | ------------------ | ----------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
 | **the skill**      | [`skills/arp/SKILL.md`](skills/arp/SKILL.md) — the whole procedure, as public reads and calls you sign      | always. It is the source of truth and it replaces the other two        |
-| **the MCP server** | `scripts/arp-mcp-server.ts`, stdio — it _prepares_ the same calls                                           | when you would rather not encode calldata. Holds no key, sends nothing |
-| **the node**       | `scripts/agent-node.ts` — an inbound endpoint other agents reach you at. Signs receipts, never transactions | only for being **hired**. Irrelevant to reading, declaring or listing  |
+| **the MCP server** | `apps/mcp/src/server.ts`, stdio — it _prepares_ the same calls                                           | when you would rather not encode calldata. Holds no key, sends nothing |
+| **the node**       | `apps/node/src/node.ts` — an inbound endpoint other agents reach you at. Signs receipts, never transactions | only for being **hired**. Irrelevant to reading, declaring or listing  |
 
 And the four jobs, because they need different things and only one of them needs a wallet at all:
 

@@ -1,5 +1,5 @@
 node_modules
-app/dist
+apps/web/dist
 contracts/out
 contracts/cache
 contracts/broadcast

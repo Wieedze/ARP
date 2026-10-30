@@ -9,16 +9,16 @@
  * endpoint is network-agnostic — one key serves testnet 13579 and mainnet 1155 —
  * so it is a module constant here rather than a per-chain deployment field.
  *
- * The credential is an **explicit parameter**. No module under `app/src/services/`
+ * The credential is an **explicit parameter**. No module under `apps/web/src/services/`
  * reads a *credential* from the ambient environment — that is the invariant, and
- * `grep -rn "process.env" app/src/services/` is how it is checked. (Non-secret
+ * `grep -rn "process.env" apps/web/src/services/` is how it is checked. (Non-secret
  * build-time config does appear: `trust-stake.ts` reads
  * `import.meta.env.VITE_MAX_STAKE_TRUST`, a UI ceiling that is deliberately
  * public.) Passing the key rather than reading it keeps this module pure and
  * testable without an environment.
  *
  * `PinAuth` is **branded** (see below), so this module exports no way to build
- * one: a browser file importing only from `app/src/services/` cannot produce a
+ * one: a browser file importing only from `apps/web/src/services/` cannot produce a
  * credential at all, and `{apiKey: "…"}` is a type error rather than a leak. The
  * single sanctioned constructor is `requirePinAuth()` in `scripts/pin-env.ts`,
  * which is Node-only. Any other production requires a deliberate, commented type

@@ -32,7 +32,7 @@
  * The first version was `Number.parseFloat(raw) || 0`, which is correct for the source — the tokens
  * are authored in `ms` — and wrong for the artifact. A CSS minifier rewrites a time to whichever
  * unit is shorter, and `lightningcss` did exactly that to six of the eight motion tokens.
- * Measured in `app/dist/assets/*.css`:
+ * Measured in `apps/web/dist/assets/*.css`:
  *
  * ```
  * --line-step:.11s          (source: 110ms)

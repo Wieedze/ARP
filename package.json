@@ -8,21 +8,24 @@
     "bun": ">=1.2"
   },
   "workspaces": [
-    "app",
+    "apps/web",
+    "apps/mcp",
+    "apps/node",
+    "apps/hook",
     "contracts",
     "packages/protocol"
   ],
   "scripts": {
     "demo": "bun scripts/demo.ts",
     "verify:pin": "bun scripts/verify-pin-key.ts",
-    "dev": "bun --filter app dev",
+    "dev": "bun --filter @arp/app dev",
     "build": "bun --filter '*' build",
     "test": "bun --filter '*' test",
     "lint": "bun --filter '*' lint",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\" --ignore-path .gitignore --ignore-path .prettierignore",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\" --ignore-path .gitignore --ignore-path .prettierignore",
     "check:scripts": "bunx tsc -p tsconfig.scripts.json --noEmit",
-    "check": "bun run check:scripts && bun run --cwd app check:tokens && bun run --cwd app check:contrast"
+    "check": "bun run check:scripts && bun run --cwd apps/web check:tokens && bun run --cwd apps/web check:contrast"
   },
   "dependencies": {
     "@metamask/delegation-core": "^2.2.1",

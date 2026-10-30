@@ -1,6 +1,6 @@
 /** Read a runtime's session log and name what it invoked.
  *
- *      bun run scripts/session-log.ts [--log .arp/session.jsonl]
+ *      bun run apps/mcp/src/session-log.ts [--log .arp/session.jsonl]
  *
  *  A thin reader. The resolution lives in `@arp-protocol/core` (`src/session.ts`), where it is
  *  pure and tested — a function that decided what ARP asserts had no business importing a file
@@ -8,8 +8,8 @@
  */
 import { readFileSync } from 'node:fs';
 
-import { catalogueFor } from './arp-content.js';
-import { parseSessionLog, resolveInvocations } from '../packages/protocol/src/session.js';
+import { catalogueFor } from './content.js';
+import { parseSessionLog, resolveInvocations } from '../../../packages/protocol/src/session.js';
 
 function arg(name: string): string | undefined {
   const index = process.argv.indexOf(`--${name}`);
