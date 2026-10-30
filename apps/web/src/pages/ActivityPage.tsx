@@ -19,10 +19,10 @@ import {
  *
  * Two parts. **Invocations** is one row per skill or MCP server the runtime called, joined on ids
  * to the declaration that names it and the stakes on that declaration (`traceInvocations`). Below
- * it, **the record** is the same events unjoined, in two columns: what never touches a chain
- * (the hook's lines, the content receipts) beside what was signed for one.
+ * it, **the timeline** is every event once, as Time · Who · Off chain · On chain · Transaction
+ * (`timelineRows`): each transaction names the invocation it answers, and that invocation lists it.
  *
- * Everything is newest first, the three lists alike: a demo watches the top of the page.
+ * Both are newest first: a demo watches the top of the page.
  *
  * Everything here is relayed from the local feed, so it is a local program's record. The
  * explorer link on each hash is how a reader takes the chain's word instead.

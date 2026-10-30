@@ -5,6 +5,7 @@ import type {Hex} from "viem";
 import {ActivityLog} from "../activity-log";
 import {
     AgentFeed,
+    agentsByWallet,
     entryFor,
     namesOf,
     timelineRows,
@@ -33,7 +34,7 @@ const invoked = (at: string, outcome: "ok" | "timeout" = "ok"): AgentEvent => ({
     outcome,
     ms: 5,
 });
-const declared = (status: "dry" | "success", hash: Hex | null): AgentEvent => ({
+const declared = (status: "dry" | "success" | "reverted", hash: Hex | null): AgentEvent => ({
     source: "sent",
     at: "2026-10-30T13:11:00Z",
     chainId: 13579,
@@ -269,5 +270,60 @@ describe("timelineRows", () => {
         const rows = timelineRows(events, {chainId: 1155, names, tripleIdOf});
         expect(rows.map((row) => row.lane)).toEqual(["off", "off"]);
         expect(rows[0]?.consequences).toEqual([]);
+    });
+
+    it("a transaction is listed under the invocation it answers, not under every call of the skill", () => {
+        const twice = [
+            invoked("2026-10-30T13:10:36Z"),
+            declared("success", HASH1),
+            staked(TRIPLE, HASH2),
+            invoked("2026-10-30T13:20:00Z"),
+        ];
+        const rows = timelineRows(twice, {chainId: 13579, names, tripleIdOf});
+        const invocations = rows.filter((row) => row.lane === "off");
+        expect(invocations.map((row) => row.at)).toEqual([
+            "2026-10-30T13:20:00Z",
+            "2026-10-30T13:10:36Z",
+        ]);
+        expect(invocations[0]?.consequences).toEqual([]);
+        expect(invocations[1]?.consequences.map((c) => c.hash)).toEqual([HASH1, HASH2]);
+    });
+
+    it("a reverted call names its cause but is not listed as something the invocation led to", () => {
+        const reverted = declared("reverted", HASH1);
+        const rows = timelineRows([invoked("2026-10-30T13:10:36Z"), reverted], {
+            chainId: 13579,
+            names,
+            tripleIdOf,
+        });
+        expect(rows[0]).toMatchObject({off: "← invoked brainstorming 13:10:36"});
+        expect(rows[1]?.consequences).toEqual([]);
+    });
+
+    it("a dry run names its cause, and only the real send that follows it is a consequence", () => {
+        const rows = timelineRows(
+            [invoked("2026-10-30T13:10:36Z"), declared("dry", null), declared("success", HASH1)],
+            {chainId: 13579, names, tripleIdOf},
+        );
+        const invocation = rows.find((row) => row.lane === "off");
+        const dryRun = rows.find((row) => row.lane !== "off" && row.tx === null);
+        expect(invocation?.consequences).toEqual([
+            {label: "declared", chainId: 13579, hash: HASH1},
+        ]);
+        expect(dryRun).toMatchObject({off: "← invoked brainstorming 13:10:36"});
+    });
+});
+
+describe("agentsByWallet", () => {
+    it("names a wallet by the identity atom it declared from, and nothing else", () => {
+        const names = new Map([
+            [AGENT.toLowerCase(), {kind: "atom" as const, label: "Agent 13579:8"}],
+        ]);
+        expect(agentsByWallet([declared("success", HASH1)], names)).toEqual(
+            new Map([[WALLET.toLowerCase(), "Agent 13579:8"]]),
+        );
+        // A deposit says nothing about whose identity the wallet holds, and an unnamed atom is no name.
+        expect(agentsByWallet([staked(TRIPLE, HASH2)], names).size).toBe(0);
+        expect(agentsByWallet([declared("success", HASH1)], new Map()).size).toBe(0);
     });
 });

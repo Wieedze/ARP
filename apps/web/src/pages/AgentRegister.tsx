@@ -267,9 +267,10 @@ export function AgentRegister() {
     /**
      * Step 5 — fund the runtime EOA from the operator's wallet and let
      * the runtime grant the MultiVault DEPOSIT approval to the Smart
-     * Account. Replaces `scripts/agent-approve-sa.ts`. Only works in the
-     * same session as step 2 (the runtime private key lives in component
-     * state). FUND_AMOUNT covers many approve + stake txns.
+     * Account. The only path that does this: the script that once did was
+     * deleted in `bf20de0`. Needs the runtime key — in component state
+     * from step 2, or pasted back in. FUND_AMOUNT covers many approve +
+     * stake txns.
      */
     async function handleBringUpRuntime() {
         if (!activeRuntimeKey || !smartAccountAddress) return;
@@ -536,11 +537,7 @@ export function AgentRegister() {
                                                     Runtime private key isn't in this session's
                                                     memory (it lives only in the browser tab where
                                                     you ran step 2). Paste the key you saved to
-                                                    re-enable the button, or run{" "}
-                                                    <span className="font-mono">
-                                                        bun scripts/agent-approve-sa.ts
-                                                    </span>{" "}
-                                                    instead.
+                                                    re-enable the button.
                                                 </p>
                                                 <input
                                                     type="password"

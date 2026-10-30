@@ -6,7 +6,7 @@
  *  Read-only. Signs nothing. Two GraphQL queries, no RPC.
  *
  *  This is the test, not the transactions. A tree that only exists as a plan proves nothing; what
- *  has to hold is that **one** set of edges answers both readings (`docs/18_THE_DOMAIN_TREE.md`):
+ *  has to hold is that **one** set of edges answers both readings (`docs/25_THE_DOMAIN_TREE.md`):
  *
  *    - **down** — given a domain, every tool under it, at any depth. What `arp_find_tools` needs.
  *    - **up** — given a domain, the path to the root, edge by edge. The witness an agent presents,
@@ -161,7 +161,7 @@ for (const list of parentsOf.values()) list.sort((a, b) => (b.shares > a.shares 
 /**
  * Is the top parent actually ahead of the second?
  *
- * `docs/18` states the rule as "where two parent edges are within noise of each other, the node has
+ * `docs/25` states the rule as "where two parent edges are within noise of each other, the node has
  * no settled parent and the UI says so rather than picking". The first run of this script picked
  * anyway, and testnet handed it the case immediately: `motion design`'s edges to `design` and to
  * `UX` hold **identical** share counts, because both were created the same way and nobody has

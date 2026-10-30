@@ -23,6 +23,9 @@ test that an endpoint answers.
 - `arp node` starts behind an existing tunnel (Cloudflare Tunnel or ngrok), detected or configured,
   and prints the public URL it got. ARP builds no relay.
 - The node binds to localhost only. The tunnel is the one way in.
+- **The first real tunnel is a Cloudflare quick tunnel** (`cloudflared tunnel --url http://localhost:<port>`),
+  which needs no account and gives a `trycloudflare.com` address. A stable address needs the user's
+  Cloudflare account and is a follow-up. Check cloudflared's current docs before relying on the flag.
 
 ### 39b — The handshake, three steps
 
@@ -31,6 +34,8 @@ test that an endpoint answers.
 2. ARP reads the token's owner from the registry and returns a challenge: nonce, expiry, chain id.
 3. The owner signs the challenge in the shape of Sign-In with Ethereum (EIP-4361). ARP checks the
    signer owns the token, then binds the node key to the agent.
+
+Use viem's SIWE helpers (`viem/siwe`), already a dependency, rather than a new package.
 
 Replay: the nonce is single-use, the expiry is short, the chain id is in the message. A transfer of
 the token voids the binding until a new handshake.
