@@ -552,3 +552,22 @@ export {
     type SignedContentReceipt,
     type TypedDataSigner,
 } from "./receipt.js";
+
+/**
+ * The receipt an agent's node signs when it is hired — EIP-712, the agent named the way ERC-8004
+ * names it, the payment as the nonce. `apps/node` signs it, `scripts/demo-hire.ts` verifies it.
+ */
+export {
+    HIRE_RECEIPT_TYPES,
+    HIRE_RECEIPT_VERSION,
+    hireDigest,
+    hireReceiptDomain,
+    hireReceiptMatches,
+    hireReceiptTypedData,
+    signHireReceipt,
+    verifyHireReceipt,
+    type HireReceipt,
+    type HireReceiptSigner,
+    type HireReceiptVerdict,
+    type SignedHireReceipt,
+} from "./hire-receipt.js";
