@@ -1,9 +1,12 @@
 # 0098 — The receipt enforcer verifies the v1 hire receipt as signed, and binds the term through its terms
 
-**Status:** Accepted for point 9 (user decision, 2026-10-30, _« ok option 2 »_); the rest Proposed, pending `contract-reviewer`; one decision open
+**Status:** Accepted for point 9 (user decision, 2026-10-30, _« ok option 2 »_); the rest Proposed, reviewed by `contract-reviewer` (PASS, 2026-10-30); one decision open
 **Status, in full:** point 9, what the contract rung holds, is Accepted on the user's words,
-verbatim _« ok option 2 »_. Points 1 to 8, 10 and 11 are Proposed, pending `contract-reviewer`. One
-decision is open and is the user's: see "Open decision".
+verbatim _« ok option 2 »_: the rung holds "an accepted key signed the receipt", not "a payment was
+made". Points 1 to 8, 10 and 11 are Proposed and passed `contract-reviewer` on 2026-10-30: no
+Critical or High, INFO-R1 (Medium) open on the decision below, one new Low, CR-1, documented
+(`contracts/SECURITY_REVIEW.md`, "`contract-reviewer` pass"). One decision is open and is the
+user's: see "Open decision". Do not deploy until it is taken.
 **Date:** 2026-10-30
 **Triggered by:** `docs/tasks/43-the-receipt-enforcer.md`, under ADR `0094` §2 ("Later: a caveat
 enforcer checks a signed receipt passed in the redemption").
@@ -81,7 +84,9 @@ gap, and close it with a v2 receipt later.**
     after the binding check, so a tampered receipt still fails as `SignerNotAccepted`. Because of
     point 9, this bounds the deposit by what the signer **states** was paid, which is ADR `0094`'s
     "a sponsored amount stays below the cost of the proof" as far as a contract can hold it. The
-    service holds the rest by comparing `paid` with the payment it reads.
+    service holds the rest by comparing `paid` with the payment it reads. `paid` is the payment
+    chain's native wei, so the bound means something only when `receiptChainId == block.chainid`
+    (CR-1, Low, documented in the contract header).
 11. **Rule change, `.claude/rules/security.md` signature replay.** The rule's site list said five,
     and said of both receipts that they carry no verifying contract "with cause — no contract checks
     them". With this enforcer that is false for the hire receipt. The rule now lists six sites,
