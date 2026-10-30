@@ -83,8 +83,10 @@ const FEED_LABEL: Record<FeedStatus, string> = {
 function Row({entry}: {entry: ActivityEvent}) {
     const mine = entry.stream === "mine";
     return (
+        // The transaction link has its own column, pinned to the right edge, so every hash lines up
+        // in one place whatever the row says (user, 2026-10-30). The fixed width is a hash's.
         <li
-            className={`grid grid-cols-[4.5rem_7rem_1fr] gap-x-3 px-4 py-[3px] ${
+            className={`grid grid-cols-[4.5rem_7rem_minmax(0,1fr)_7.5rem] gap-x-3 px-4 py-[3px] ${
                 entry.stream === "chain" ? "opacity-70" : ""
             }`}
         >
@@ -98,27 +100,26 @@ function Row({entry}: {entry: ActivityEvent}) {
             >
                 {STEP_LABEL[entry.step]}
             </span>
-            <span className="min-w-0 font-mono text-[11px] leading-[1.7] text-[color:var(--color-silver)]">
+            <span className="min-w-0 truncate font-mono text-[11px] leading-[1.7] text-[color:var(--color-silver)]">
                 <span className="text-[color:var(--color-fg)]">{entry.label}</span>
                 {entry.detail === undefined ? null : <span>{`  ${entry.detail}`}</span>}
-                {entry.tx === undefined ? null : (
-                    <>
-                        {"  "}
-                        <a
-                            href={explorerTxUrl(entry.chainId ?? intuitionTestnet.id, entry.tx)}
-                            target="_blank"
-                            rel="noreferrer"
-                            aria-label={`Transaction ${entry.tx} on the explorer, opens in a new tab`}
-                            // `!` because the base-layer `a` rule beats a plain utility (`rules/ui.md`, Gates).
-                            className="text-[color:var(--color-steel)]! hover:text-[color:var(--color-fg)]!"
-                        >
-                            {`${entry.tx.slice(0, 10)}…`}
-                            <span aria-hidden="true"> ↗</span>
-                        </a>
-                    </>
-                )}
                 {entry.costWei === undefined ? null : (
                     <span className="text-[color:var(--color-steel)]">{`  ${amountOf(entry.costWei, entry.chainId ?? intuitionTestnet.id)}`}</span>
+                )}
+            </span>
+            <span className="text-right font-mono text-[11px] leading-[1.7] tabular-nums">
+                {entry.tx === undefined ? null : (
+                    <a
+                        href={explorerTxUrl(entry.chainId ?? intuitionTestnet.id, entry.tx)}
+                        target="_blank"
+                        rel="noreferrer"
+                        aria-label={`Transaction ${entry.tx} on the explorer, opens in a new tab`}
+                        // `!` because the base-layer `a` rule beats a plain utility (`rules/ui.md`, Gates).
+                        className="text-[color:var(--color-steel)]! hover:text-[color:var(--color-fg)]!"
+                    >
+                        {`${entry.tx.slice(0, 10)}…`}
+                        <span aria-hidden="true"> ↗</span>
+                    </a>
                 )}
             </span>
         </li>
