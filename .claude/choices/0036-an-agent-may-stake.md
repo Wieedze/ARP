@@ -29,7 +29,7 @@ What makes it safe is not a prohibition. It is the structure already in place:
 
 - **The operator signs once, with a cap.** `TrustStakeCapEnforcer` bounds how much per rolling
   period; `DomainScopeEnforcer` bounds where. An out-of-scope or over-cap attempt reverts **before
-  any state change**. Both are deployed on mainnet 1155 (`deployments/1155.json`).
+  any state change**. Both are deployed on mainnet 1155 (`data/deployments/1155.json`).
 - **ARP holds no funds and signs nothing.** It cannot lose anyone's money by operating, because it
   never has any. The TRUST is the operator's, and the limit is the operator's own.
 - **The deposit is recoverable.** A position can be redeemed. A fee cannot — see the costs below.

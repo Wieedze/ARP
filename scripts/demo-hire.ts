@@ -81,13 +81,13 @@ const ref = (tokenId: string) => ({
 });
 
 const record = JSON.parse(
-  readFileSync(new URL(`../deployments/${chainId}.json`, import.meta.url), 'utf8'),
+  readFileSync(new URL(`../data/deployments/${chainId}.json`, import.meta.url), 'utf8'),
 ) as { chain?: { rpcUrl?: string; graphqlUrl?: string }; intuition?: { multiVault?: string } };
 const rpcUrl = process.env.INTUITION_RPC_URL ?? record.chain?.rpcUrl;
 const graphqlUrl = process.env.INTUITION_GRAPHQL_URL ?? record.chain?.graphqlUrl;
 const multiVault = record.intuition?.multiVault as Address | undefined;
 if (!rpcUrl || !graphqlUrl || !multiVault) {
-  console.error(`deployments/${chainId}.json is incomplete`);
+  console.error(`data/deployments/${chainId}.json is incomplete`);
   process.exit(1);
 }
 const rawKey = process.env.PRIVATE_KEY;

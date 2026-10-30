@@ -153,8 +153,8 @@ That keeps the authorship question where it belongs and means this cannot drift 
 
 This was the task's open question and deliverable 5 closed it:
 `scripts/measure/skill-layouts.ts`, run 2026-10-29 over all 31 catalogued repositories and all 662
-catalogued skills. **The figures below are from `measurements/skill-layouts-2026-10-29T2200.json`**
-— the corrected run. `measurements/skill-layouts-2026-10-29.json` is the first run and its numbers
+catalogued skills. **The figures below are from `data/measurements/skill-layouts-2026-10-29T2200.json`**
+— the corrected run. `data/measurements/skill-layouts-2026-10-29.json` is the first run and its numbers
 are wrong; see the note at the end of this section.
 
 **The resolver cannot be a pure function of `(repo, skill)`.** There are **19 distinct layouts**,
@@ -185,7 +185,7 @@ points at is not in the repository. `mattpocock/skills` is the clearest case —
 > a catalogued name against **any** directory in a path, so `plugins/caveman/skills/cavecrew/SKILL.md`
 > counted as a candidate for the skill `caveman`. It reported 49 ambiguities of which 42 shared
 > content, and 138 absent. The corrected run matches the **immediate parent only** and is
-> `measurements/skill-layouts-2026-10-29T2200.json`; the first is left beside it as the record of a
+> `data/measurements/skill-layouts-2026-10-29T2200.json`; the first is left beside it as the record of a
 > run that happened (ADR `0064`). **No resolved path changed** — the loose matcher never once landed
 > on a single wrong candidate in this population, which is luck and not a defence, because a single
 > wrong candidate resolves silently and is exactly what this measurement exists to prevent.
@@ -277,9 +277,9 @@ claim is worth, not a gate on who may make one.
    whether a receipt corroborates the access and who signed it. Plans, never signs.
 5. ~~A measurement of the repository layouts, committed, before 5.2's resolver exists.~~
    **Done 2026-10-29** — `scripts/measure/skill-layouts.ts`,
-   `measurements/skill-layouts-2026-10-29.json`. The answer is in §5.1 and it changed the design:
+   `data/measurements/skill-layouts-2026-10-29.json`. The answer is in §5.1 and it changed the design:
    the resolver reads the tree, and 141 of 662 skills are not servable at all. Corrected the same
-   day — see the note in §5.1 and `measurements/skill-layouts-2026-10-29T2200.json`.
+   day — see the note in §5.1 and `data/measurements/skill-layouts-2026-10-29T2200.json`.
 6. ~~The ADR in §6.~~ **Done 2026-10-29** — ADR `0080`. It carries the six constraints, the
    EIP-712-over-EIP-191 reason (an atom id is the same on both chains), and the five alternatives
    including the two that were rejected flatly: gating the index, and making the path compulsory.

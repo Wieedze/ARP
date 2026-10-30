@@ -3,7 +3,7 @@
  "chainId": 13579,
  "multiVault": "0x2Ece8D4dEdcB9918A398528f3fa4688b1d2CAB91",
  "rpcUrl": "https://testnet.rpc.intuition.systems/http",
- "source": "catalogue/skills-13579.json",
+ "source": "data/catalogue/skills-13579.json",
  "method": "calculateAtomId(stringToHex(toolAtomUri(url))) and isTermCreated(id), both read off the MultiVault. Read-only: two eth_calls per row, nothing signed.",
  "counts": {
   "rows": 662,

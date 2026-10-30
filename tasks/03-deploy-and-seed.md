@@ -20,7 +20,7 @@ Load both before starting.
 - [ ] `schemas/solidity-audit.v1.json`, `schemas/url-classification.v1.json`, `schemas/claim-verification.v1.json` — filled with JSON Schema drafts per `docs/04_SEED_MODULES.md`
 - [ ] `scripts/upload-schemas.ts` — TypeScript script to pin schemas to IPFS
 - [ ] `scripts/create-atoms.ts` — TypeScript script to create Intuition atoms for each seeded module
-- [ ] `deployments/base-sepolia.json` — structured record of all addresses, module IDs, atom IDs, IPFS URIs
+- [ ] `data/deployments/base-sepolia.json` — structured record of all addresses, module IDs, atom IDs, IPFS URIs
 - [ ] `ModuleRegistry` deployed and verified on Basescan (Base Sepolia)
 - [ ] Three modules registered on-chain with their schemas pinned to IPFS
 - [ ] Three Intuition atoms created and linked via triples
@@ -57,7 +57,7 @@ forge script script/Deploy.s.sol --rpc-url base_sepolia --broadcast --verify
 
 If Basescan verification through Foundry fails, run `forge verify-contract` manually. Document the exact command used.
 
-Write the resulting address to `deployments/base-sepolia.json`.
+Write the resulting address to `data/deployments/base-sepolia.json`.
 
 ### 4. Write the seeding script
 
@@ -71,7 +71,7 @@ Run it:
 forge script script/SeedModules.s.sol --rpc-url base_sepolia --broadcast
 ```
 
-Capture the emitted `ModuleRegistered` events and record the module IDs in `deployments/base-sepolia.json`.
+Capture the emitted `ModuleRegistered` events and record the module IDs in `data/deployments/base-sepolia.json`.
 
 ### 5. Write the Intuition atom creation script
 
@@ -79,7 +79,7 @@ Capture the emitted `ModuleRegistered` events and record the module IDs in `depl
 - For each of the three seeded modules, create an `ARP_MODULE` atom in Intuition
 - Attach triples linking the atom to: its on-chain module ID, its domain, its schema URI, its creator address
 - Refer to the intuition-protocol skill for the actual SDK calls — do not guess
-- Record the resulting atom IDs in `deployments/base-sepolia.json`
+- Record the resulting atom IDs in `data/deployments/base-sepolia.json`
 
 The script should be idempotent: re-running it should detect existing atoms and not duplicate.
 
@@ -87,9 +87,9 @@ The script should be idempotent: re-running it should detect existing atoms and 
 
 - Open Basescan, confirm the contract is verified and the three `registerModule` transactions are visible
 - Open the Intuition explorer (or use the Intuition SDK to query), confirm the three atoms exist and are linked
-- Confirm `deployments/base-sepolia.json` is complete and accurate
+- Confirm `data/deployments/base-sepolia.json` is complete and accurate
 
-## deployments/base-sepolia.json schema
+## data/deployments/base-sepolia.json schema
 
 ```json
 {
@@ -159,7 +159,7 @@ INTUITION_SIGNER_PRIVATE_KEY=
 - 3 modules registered: IDs 1, 2, 3
 - 3 IPFS schemas pinned: <CIDs>
 - 3 Intuition atoms created: <atom IDs>
-- deployments/base-sepolia.json updated
+- data/deployments/base-sepolia.json updated
 
 **Decisions made**
 - [Any non-obvious choices]

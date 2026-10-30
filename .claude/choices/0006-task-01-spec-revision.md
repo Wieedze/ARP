@@ -56,5 +56,5 @@ The original spec is not preserved verbatim in the file — git history holds it
 - Revised spec: `tasks/01-project-setup.md` (current)
 - Pivot brief: `docs/00_HACKATHON_PIVOT.md`
 - Earlier ADRs: `0002-hackathon-pivot-metamask-cookoff.md`, `0005-intuition-skill-vendored-locally.md`
-- Chain reference: `deployments/13579.json`
+- Chain reference: `data/deployments/13579.json`
 - Post-mortem (written by task-verifier on pass): `.claude/learning/01-project-setup.md`

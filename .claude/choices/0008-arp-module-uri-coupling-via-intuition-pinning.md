@@ -41,7 +41,7 @@ The flow at deploy time (implemented in `scripts/seed.ts`):
 2. Call `ModuleRegistry.registerModule(name, "solidity-audit", URI, description)` on-chain — `URI` lands in the `schemaURI` field.
 3. Call `MultiVault.createAtoms([stringToHex(URI)], [atomCost])` — the atom data is the same URI, so the atom's identity URI matches `schemaURI`.
 
-Verification: the module record's `schemaURI` and the corresponding atom's URI in `deployments/13579.json` are byte-identical.
+Verification: the module record's `schemaURI` and the corresponding atom's URI in `data/deployments/13579.json` are byte-identical.
 
 ## Alternatives considered
 
@@ -74,6 +74,6 @@ Verification: the module record's `schemaURI` and the corresponding atom's URI i
 - Vendored procedure: `.claude/skills/intuition/operations/create-atoms.md` (atom creation via `MultiVault.createAtoms`).
 - Implementation: `scripts/seed.ts`.
 - Dev reference (not pinned): `schemas/solidity-audit.v1.json`.
-- Deployment record: `deployments/13579.json` → `arp.modules[0].schemaURI == arp.intuitionAtoms[0].uri`.
+- Deployment record: `data/deployments/13579.json` → `arp.modules[0].schemaURI == arp.intuitionAtoms[0].uri`.
 - Related ADR: `0003-metamask-skills-vendored-locally.md` (skills-as-procedural-knowledge pattern).
 - Post-mortem: `.claude/learning/04-deploy-and-seed.md`.

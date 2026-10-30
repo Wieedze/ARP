@@ -2,7 +2,7 @@
  * Minimal ABI fragment for Intuition's MultiVault.
  *
  * Address-free on purpose: the same contract is deployed on testnet (see
- * `deployments/13579.json`) and on mainnet (`lib/intuition-mainnet.ts`), and
+ * `data/deployments/13579.json`) and on mainnet (`lib/intuition-mainnet.ts`), and
  * this file is used against both. The caller supplies the address; getting it
  * from the wrong module is the mistake this file must not help anyone make.
  *

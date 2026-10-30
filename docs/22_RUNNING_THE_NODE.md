@@ -178,7 +178,7 @@ bun run scripts/measure/node-outbound.ts
 It reads the six modules a running server actually loads and prints every host literal with its line,
 every `fetch` call site **labelled `outbound`, `inbound` or `definition`**, and whether any host is
 ours. On 2026-10-30, after the move to `apps/mcp` and `packages/graphql`,
-`measurements/node-outbound-2026-10-30T0220.json`: **6 host literals, 9 call sites of which 6 are
+`data/measurements/node-outbound-2026-10-30T0220.json`: **6 host literals, 9 call sites of which 6 are
 outbound, 0 of the hosts ours** — the same figures as the 2026-10-29 run, at new paths. (The
 script keeps its old name. `node-outbound-2026-10-30.json`, from the same day, has the same
 figures, and its prose still calls the MCP server "the node".) It exits non-zero if that last number is ever not
@@ -201,7 +201,7 @@ Three things it shows that a count alone would hide:
   `github.com` is in the probe's **user-agent**, which identifies the server and sends nothing. Three
   of the six are destinations.
 - The Intuition graph and RPC are **absent from the literals and present in the server** — they come
-  from `deployments/<chainId>.json` at startup. Absence from a literal list is not absence from the
+  from `data/deployments/<chainId>.json` at startup. Absence from a literal list is not absence from the
   server, which is the trap a literal count sets.
 - `fetchCallSites` is deliberately **over-inclusive and labelled**: a definition and the stdio
   loop's call to the server's own inbound handler are in it, marked as such. A site it lists and
@@ -294,7 +294,7 @@ That is why the digest is sha256 and not keccak256. The signature half is
 ## It only knows the chain it is pointed at
 
 The catalogue is a **per-chain record**: an atom id is a pure function of a tool's URL, so the same
-tool has a different recorded id on each chain, and `catalogue/skills-<chainId>.json` is the record
+tool has a different recorded id on each chain, and `data/catalogue/skills-<chainId>.json` is the record
 for one of them.
 
 Today only 13579 has one. `ARP_TARGET` still defaults to **mainnet**, so a default-run server holds
@@ -328,7 +328,7 @@ not failures:
 
 `absent` is worth a sentence: 139 of the 662 catalogued skills no longer have a file in the
 repository the catalogue points at. That is a measurement
-(`measurements/skill-layouts-2026-10-29T2200.json`), it is re-derivable with one listing request,
+(`data/measurements/skill-layouts-2026-10-29T2200.json`), it is re-derivable with one listing request,
 and it is the server telling you the truth rather than failing.
 
 **A listing it could not read is not an empty repository.** If GitHub rate-limits us the server
@@ -343,7 +343,7 @@ Stated because a security note that lists only its strengths is marketing.
   The server proves which bytes you got; it says nothing about whether those bytes are safe to follow.
   That is prompt injection and it is the real risk in this whole area. Read what you install.
 - **The catalogue's judgement.** 662 skills are listed because they crossed an install-count
-  threshold on skills.sh (`measurements/catalogue-sources-2026-10-28.json`). That is a popularity
+  threshold on skills.sh (`data/measurements/catalogue-sources-2026-10-28.json`). That is a popularity
   figure, it is somebody else's number, and ARP publishes no score (ADR `0046`). A listing is not a
   recommendation.
 - **A dishonest declaration.** An agent can declare a use it did not make. It costs the price of the

@@ -83,5 +83,5 @@ not. That Stripe is about payment is **recomputed on every read** by walking
 - Related ADR: `.claude/choices/0053-*` (a term created with the fee alone has no position)
 - Related ADR: `.claude/choices/0054-*` (a tool atom derives every field from its normalised URL —
   the same natural-key argument, applied there to tools and here to vocabulary)
-- Record of what is on chain: `catalogue/domain-tree-13579.json`
-- Proposal: `catalogue/domains.proposal.json`
+- Record of what is on chain: `data/catalogue/domain-tree-13579.json`
+- Proposal: `data/catalogue/domains.proposal.json`

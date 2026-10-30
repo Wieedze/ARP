@@ -442,7 +442,7 @@ export type MultiVaultReadsConfig = {
  * need a chain definition for them, and requiring one would mean this package carrying a
  * definition of every Intuition chain it might ever read.
  *
- * Costs are read **per plan**, never cached across plans and never copied from `deployments/`.
+ * Costs are read **per plan**, never cached across plans and never copied from `data/deployments/`.
  * `getAtomCost`, `getTripleCost` and `defaultCurveId` are governance-configurable, and the triple
  * cost is 100× higher on mainnet than on testnet.
  */

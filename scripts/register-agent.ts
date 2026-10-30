@@ -62,7 +62,7 @@ if (chainId === undefined) {
   process.exit(1);
 }
 if (chainId === 1155) {
-  // ARP owns no registry on 1155 (`deployments/1155.json`, both null by ADR `0025`), so there is
+  // ARP owns no registry on 1155 (`data/deployments/1155.json`, both null by ADR `0025`), so there is
   // nothing to register against — and `rules/security.md` scopes mainnet writes to ADR `0017`.
   console.error('refusing mainnet: ARP has no identity registry on 1155, deliberately.');
   process.exit(1);
@@ -78,7 +78,7 @@ if (address === undefined || !/^0x[0-9a-fA-F]{40}$/.test(address)) {
   process.exit(1);
 }
 
-const record = (await import(`../deployments/${chainId}.json`)) as {
+const record = (await import(`../data/deployments/${chainId}.json`)) as {
   default: { arp: { identityRegistry: string } };
 };
 const registry = record.default.arp.identityRegistry as Hex;

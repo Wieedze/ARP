@@ -9,7 +9,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=Geist+Mono:wght@400;500;600&display=swap">
 <!--
   ARP · the agent page, design reference for /agent/:chainId/:tokenId (docs/16), in the system of the
-  skill and repository pages. Real: the tool atoms it declares (catalogue/tools.json urls).
+  skill and repository pages. Real: the tool atoms it declares (data/catalogue/tools.json urls).
   Sample: the agent, every party, position, curve point, endpoint and assessment. Never ship them.
   The order is docs/16's: paid claims up and loud, free claims down and dim.
 -->
@@ -398,7 +398,7 @@ section.blk.dim .blk-h h2{color:var(--color-silver)}
 </div>
 
 <script>
-/* SAMPLE: one agent in three states. The tools are real tool atoms from catalogue/tools.json. */
+/* SAMPLE: one agent in three states. The tools are real tool atoms from data/catalogue/tools.json. */
 const TOOLS=['SonarSource/sonarqube-mcp-server','snyk/saw-mcp','alchemyplatform/alchemy-mcp-server','grafana/mcp-grafana','supabase/mcp'];
 const PARTIES=['treasury-ops','Agent 13579:41','0x3b9e…41a0','risk-desk','Agent 13579:118','audit-relay','0x71c2…9f04'];
 function rows(list,seed,paidEvery=1){return list.map((nm,k)=>{const backed=k<5;const pos=backed?Math.max(1,Math.round(8/(k+1))):0;

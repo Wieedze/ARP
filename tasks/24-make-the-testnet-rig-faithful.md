@@ -10,7 +10,7 @@
 > and a claim of mine that the new unit tests closed a class they cannot. ADRs `0037`.
 >
 > Agents **3, 4 and 5** minted on `0xC165A2AD…`; ids, transactions and document hashes in
-> `deployments/13579.json` under `arp.rigAgents`. **Signed by an agent session with the operator's
+> `data/deployments/13579.json` under `arp.rigAgents`. **Signed by an agent session with the operator's
 > key on the user's explicit ask — ADR `0037`**, which also says what that does not extend to.
 >
 > ```

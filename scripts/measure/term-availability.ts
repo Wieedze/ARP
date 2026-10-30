@@ -24,7 +24,7 @@ import type {GraphqlReply} from "../helpers/shapes.js";
  *  in one of them. That is why construction, not just the label, is reported here.
  */
 
-/** The terms the 53 tools in `catalogue/tools.json` actually dictate, one cluster each.
+/** The terms the 53 tools in `data/catalogue/tools.json` actually dictate, one cluster each.
  *
  *  Singular, lowercase, hyphenated — the normalisation rule. Singular is not a style choice: `tool`
  *  and `payment` were already on both chains as plain strings while `tools` and `payments` were

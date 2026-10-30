@@ -8,7 +8,7 @@
 ## What shipped
 
 - `contracts/src/erc8004/IdentityRegistry.sol` — ChaosChain ERC-8004 reference port to OpenZeppelin v5 (drop-in `_exists` / `_isApprovedOrOwner` shims, `_transfer` → `_update` for agentWallet reset on transfer)
-- `deployments/13579.json::arp.identityRegistry` — `0xC165A2AD2E540A4069E02834009161E2b4490d5A` on Intuition Testnet
+- `data/deployments/13579.json::arp.identityRegistry` — `0xC165A2AD2E540A4069E02834009161E2b4490d5A` on Intuition Testnet
 - `app/src/services/agent-identity.ts` — `registerAgent`, `findAgentIdByOwner` (event-log scan), `designateAgentRuntimeWallet` (browser keypair gen + EIP-712 self-sign + on-chain `setAgentWallet`)
 - `app/src/services/atom-stake.ts` — `depositOnAtom`, `readVaultState`
 - `app/src/services/intuition-pin.ts` — `pinThing` against Hasura GraphQL endpoint

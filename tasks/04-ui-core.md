@@ -63,7 +63,7 @@ No modal. No drawer. A dropdown.
 Generate typed bindings for `ModuleRegistry` using `wagmi cli` or by manually writing the ABI into `app/src/contracts/ModuleRegistry.ts`. Export:
 
 ```typescript
-export const MODULE_REGISTRY_ADDRESS = '0x...' // from deployments/base-sepolia.json
+export const MODULE_REGISTRY_ADDRESS = '0x...' // from data/deployments/base-sepolia.json
 export const moduleRegistryAbi = [...] as const
 ```
 

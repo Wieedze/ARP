@@ -26,7 +26,7 @@ This supersedes the original Task 01 scope, which assumed an empty repo + pnpm. 
 - [x] Default `Counter.sol`, `Counter.t.sol`, `Counter.s.sol`, auto-generated `README.md` removed
 - [x] `contracts/foundry.toml` written with:
   - solc 0.8.24, optimizer 200, via_ir false, ffi false
-  - `fs_permissions` for read-only access to `../deployments`
+  - `fs_permissions` for read-only access to `../data/deployments`
   - `[fmt]` block with project conventions
   - `[rpc_endpoints]` mapping `intuition_testnet` to `${INTUITION_TESTNET_RPC_URL}`
   - `[etherscan]` mapping `intuition_testnet` to the testnet Blockscout-style verifier
@@ -34,8 +34,8 @@ This supersedes the original Task 01 scope, which assumed an empty repo + pnpm. 
 - [x] `ICaveatEnforcer.sol` source cross-checked against the vendored `mms-smart-accounts-kit/references/delegations.md` skill — 4-hook signature confirmed
 - [x] `app/` has `@metamask/smart-accounts-kit`, `@metamask/delegation-core`, `@metamask/delegation-deployments` added via `bun add`
 - [x] `app/src/lib/chains.ts` defines `intuitionTestnet` via `viem.defineChain` with `VITE_INTUITION_TESTNET_*` env overrides and Intuition skill defaults as fallback
-- [x] `.env.example` rewritten for Intuition Testnet — Foundry vars + Vite `VITE_*` vars with pre-filled defaults from `deployments/13579.json`
-- [x] `deployments/13579.json` populated with chain metadata + Intuition contracts + MetaMask Delegation Framework v1.3.0 bundle + ARP placeholder keys
+- [x] `.env.example` rewritten for Intuition Testnet — Foundry vars + Vite `VITE_*` vars with pre-filled defaults from `data/deployments/13579.json`
+- [x] `data/deployments/13579.json` populated with chain metadata + Intuition contracts + MetaMask Delegation Framework v1.3.0 bundle + ARP placeholder keys
 - [x] `forge build` passes (nothing to compile yet, but lib resolves)
 - [x] `bun x tsc --noEmit -p tsconfig.app.json` passes
 - [x] `bun run build` succeeds and emits a 193 KB / 60 KB gzipped bundle
@@ -84,7 +84,7 @@ bun run build
 Foundry initialized in contracts/, delegation-framework v1.3.0 vendored in
 lib/, MetaMask SDK trio added to app/ (smart-accounts-kit, delegation-core,
 delegation-deployments), chains.ts defines intuitionTestnet via viem, env
-files + deployments/13579.json wired to Intuition Testnet.
+files + data/deployments/13579.json wired to Intuition Testnet.
 
 **What I decided**
 - Kept Bun (existing lockfile, spec aligned via ADR 0006 + this file).

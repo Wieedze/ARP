@@ -10,7 +10,7 @@ import type { JsonRpcReply } from '../helpers/shapes.js';
  *
  *  Read-only: `eth_getLogs` over a block range, chunked. Signs nothing.
  *
- *  **The addresses are read from `deployments/<chainId>.json`**, not written here — that file is
+ *  **The addresses are read from `data/deployments/<chainId>.json`**, not written here — that file is
  *  the record, and a second copy in a script is the fifth site of a number nobody greps
  *  (`rules/claims.md` §5).
  */
@@ -57,7 +57,7 @@ async function rpc(url: string, method: string, params: unknown[]): Promise<unkn
 }
 
 for (const chainId of [1155, 13579]) {
-  const file = JSON.parse(readFileSync(`deployments/${chainId}.json`, 'utf8')) as Deployment;
+  const file = JSON.parse(readFileSync(`data/deployments/${chainId}.json`, 'utf8')) as Deployment;
   const url = file.chain.rpcUrl;
   const enforcers = enforcersOf(file);
 

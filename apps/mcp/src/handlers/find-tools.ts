@@ -1,4 +1,4 @@
-import catalogue from '../../../../catalogue/tools.json';
+import catalogue from '../../../../data/catalogue/tools.json';
 import {
   INTUITION_HAS_TAG_MAINNET as HAS_TAG,
   INTUITION_IS_A_SUB_DOMAIN_OF as IS_A_SUB_DOMAIN_OF,
@@ -12,7 +12,7 @@ import { GRAPHQL, DOMAIN_ROOT, DOMAIN_ATTESTOR } from '../config.js';
 import { type JsonRpcId, fail, text } from '../rpc.js';
 
 /**
- * `catalogue/tools.json`'s entry for an atom label, as the two fields a caller gets.
+ * `data/catalogue/tools.json`'s entry for an atom label, as the two fields a caller gets.
  *
  * Keyed on the label the graph returns, which `toolThing` writes as the URL minus its scheme.
  * Tolerant of a scheme, a trailing slash and case, because a hand-registered atom may carry any
@@ -73,7 +73,7 @@ const SEED_BY_KEY = new Map(
  *
  * ## `title` and `purpose` are this repo's, not the chain's
  *
- * Read from `catalogue/tools.json`. The atom carries only its URL (ADR `0054`), so a readable name
+ * Read from `data/catalogue/tools.json`. The atom carries only its URL (ADR `0054`), so a readable name
  * cannot come from the graph; and `purpose` is the description each repository publishes about
  * itself, quoted and dated, never written by us. Absent for a tool we have not catalogued, which
  * is most of the graph — a caller gets `null` and the URL, not a guess.

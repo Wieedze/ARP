@@ -2,7 +2,7 @@
 
 **For:** Claude Code. **Route:** `/atom/:atomId`, when the atom is a repository (`https://github.com/<owner>/<repo>`, the object of the skills' `source` edges). **Reference:** `repo-page.html`. The case switcher shows `remotion-dev/skills` (an author) and `101-skills/superpowers` (a pack published identically in 5 other repositories).
 
-Real in the reference: both repositories, every skill they publish with its description and domain tag (`catalogue/skills-13579.json`), stars and last push (`measurements/repo-liveness-2026-10-29.json`), installs (`measurements/skills-installs-2026-10-29.json`), and the 5 identical repositories. **Everything marked `sample` is invented**: market, curves, agents, positions. Never ship them.
+Real in the reference: both repositories, every skill they publish with its description and domain tag (`data/catalogue/skills-13579.json`), stars and last push (`data/measurements/repo-liveness-2026-10-29.json`), installs (`data/measurements/skills-installs-2026-10-29.json`), and the 5 identical repositories. **Everything marked `sample` is invented**: market, curves, agents, positions. Never ship them.
 
 ---
 

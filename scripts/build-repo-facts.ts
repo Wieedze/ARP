@@ -27,7 +27,7 @@
  */
 import { writeFileSync } from 'node:fs';
 
-import liveness from '../measurements/repo-liveness-2026-10-29T2000.json';
+import liveness from '../data/measurements/repo-liveness-2026-10-29T2000.json';
 
 type Fact = {
   stars: number;

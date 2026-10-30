@@ -2,7 +2,7 @@
 
 **For:** Claude Code. **Route:** `/agent/:chainId/:tokenId` (`AgentTrustPanel`). **Brief:** `docs/16_THE_AGENT_PAGE.md`, whose order this follows. **Reference:** `agent-page.html`, with three cases: used by 7, nobody yet, no metadata.
 
-Real in the reference: the tool atoms it declares (`catalogue/tools.json`). **Everything else is a sample**: the agent, parties, positions, curves, endpoints, assessment, ids. Never ship them.
+Real in the reference: the tool atoms it declares (`data/catalogue/tools.json`). **Everything else is a sample**: the agent, parties, positions, curves, endpoints, assessment, ids. Never ship them.
 
 The rule of the page, from docs/16: **free claims go down and dim, paid claims go up and loud.**
 

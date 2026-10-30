@@ -4,7 +4,7 @@
  *
  *  Read-only. Signs nothing. One GitHub API request per repository, serialised.
  *
- *  Every tool in `catalogue/tools.json` is a github.com URL, so `reachable` — a protocol handshake
+ *  Every tool in `data/catalogue/tools.json` is a github.com URL, so `reachable` — a protocol handshake
  *  — applies to none of them. The question for a repository is different and has a better answer
  *  than the obvious one:
  *
@@ -18,7 +18,7 @@
  */
 import { writeFileSync } from 'node:fs';
 
-import catalogue from '../../catalogue/tools.json';
+import catalogue from '../../data/catalogue/tools.json';
 
 type Repo = {
   stargazers_count?: number;

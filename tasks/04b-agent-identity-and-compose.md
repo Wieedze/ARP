@@ -32,7 +32,7 @@ Concretely, the UI now exposes two flows:
 
 ### On-chain prerequisite
 
-- [x] Vendor ChaosChain's ERC-8004 reference IdentityRegistry, port to OpenZeppelin v5, deploy on Intuition Testnet. Address in `deployments/13579.json` as `arp.identityRegistry`. (commit `58f76b6`)
+- [x] Vendor ChaosChain's ERC-8004 reference IdentityRegistry, port to OpenZeppelin v5, deploy on Intuition Testnet. Address in `data/deployments/13579.json` as `arp.identityRegistry`. (commit `58f76b6`)
 
 ### Service layer (`app/src/services/`)
 

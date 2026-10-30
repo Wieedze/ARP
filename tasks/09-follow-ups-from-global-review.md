@@ -16,7 +16,7 @@
 >
 > **Left open, deliberately**, with the reasons:
 >
-> - `client.ts` hardcoding three addresses `deployments/13579.json` owns, and
+> - `client.ts` hardcoding three addresses `data/deployments/13579.json` owns, and
 >   `INTUITION_MAINNET_CHAIN_ID` restating a field on the chain object above it. Both are
 >   duplication without a live defect, and `src/arp/` is the one namespace allowed to name a chain
 >   (`rules/portability.md`).
@@ -114,7 +114,7 @@ delegates to it for agents and reputation. The `Deposited` event signature is de
 
 ## Lower
 
-- `packages/protocol/src/arp/client.ts:74-76` hardcodes three addresses `deployments/13579.json` already owns, with a
+- `packages/protocol/src/arp/client.ts:74-76` hardcodes three addresses `data/deployments/13579.json` already owns, with a
   comment telling the reader to hand-update them.
 - The testnet chain is defined three times (`app/src/lib/chains.ts:14`, `packages/protocol/src/arp/client.ts:16`,
   `scripts/seed.ts:152`) with differing completeness — `seed.ts`'s copy omits `blockExplorers` and

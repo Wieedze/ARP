@@ -131,7 +131,7 @@ the standard" and was the protocol layer entire, while two packages did one job 
 written anywhere. `arp/` is that boundary — everything under it reads ARP's own deployment.
 
 `app/` does **not** absorb the protocol layer, and the reason is measured:
-`app/src/lib/deployments.ts:1` imports `deployments/13579.json` **at module load**, and ~12 sites
+`app/src/lib/deployments.ts:1` imports `data/deployments/13579.json` **at module load**, and ~12 sites
 hardcode `chain: intuitionTestnet`. That binding is deliberate, but it means anything built in
 `app/` needs porting site by site for mainnet, which is the goal.
 

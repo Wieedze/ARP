@@ -49,7 +49,7 @@ if (!apiKey) {
 }
 
 const record = JSON.parse(
-  readFileSync(new URL(`../deployments/${chainId}.json`, import.meta.url), 'utf8'),
+  readFileSync(new URL(`../data/deployments/${chainId}.json`, import.meta.url), 'utf8'),
 ) as { chain?: { rpcUrl?: string; name?: string }; intuition?: { multiVault?: string } };
 
 const rpcUrl = process.env.INTUITION_RPC_URL ?? record.chain?.rpcUrl;
@@ -57,7 +57,7 @@ const multiVault = (process.env.ARP_MULTI_VAULT ?? record.intuition?.multiVault)
   | Address
   | undefined;
 if (!rpcUrl || !multiVault) {
-  console.error(`deployments/${chainId}.json is missing a rpcUrl or multiVault`);
+  console.error(`data/deployments/${chainId}.json is missing a rpcUrl or multiVault`);
   process.exit(1);
 }
 

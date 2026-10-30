@@ -101,7 +101,7 @@ Do not show a full stack trace in production.
 - Configure build: `pnpm --filter app build`, output directory `app/dist`
 - Set all required environment variables (public env vars only — `VITE_PUBLIC_RPC_URL`, `VITE_CONTRACT_ADDRESS`, etc. — never private keys in the UI)
 - Deploy and verify the live URL
-- Set a custom domain if one is available, otherwise document the Vercel-provided URL in `deployments/base-sepolia.json`
+- Set a custom domain if one is available, otherwise document the Vercel-provided URL in `data/deployments/base-sepolia.json`
 
 ### 7. Final smoke test
 
@@ -146,7 +146,7 @@ With this task complete:
 - [ ] UI live at a public URL
 - [ ] All UI states and flows working
 - [ ] Documentation in `docs/` reflects reality
-- [ ] `deployments/base-sepolia.json` complete
+- [ ] `data/deployments/base-sepolia.json` complete
 - [ ] Repo is ready to be shared with Billy
 
 ## Report format when complete

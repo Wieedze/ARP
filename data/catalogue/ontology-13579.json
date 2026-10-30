@@ -1,5 +1,5 @@
 {
- "_note": "The ontology ARP published on Intuition testnet 13579 on 2026-10-28. A record, not a source of truth: every id is a pure function of its label or its normalised URL, so re-deriving this needs only catalogue/domains.proposal.json. Permanent — Intuition has no deletion.",
+ "_note": "The ontology ARP published on Intuition testnet 13579 on 2026-10-28. A record, not a source of truth: every id is a pure function of its label or its normalised URL, so re-deriving this needs only data/catalogue/domains.proposal.json. Permanent — Intuition has no deletion.",
  "_authorisation": "Signed by the agent session using AGENT_PRIVATE_KEY on the user's explicit instruction on 2026-10-28 (« ok vazy »), for the 115 calls quoted to them beforehand. ADR 0037's three conditions: the key was never read into the agent's context, the signer address was checked against AGENT_ADDRESS in .env before signing, and this file is the record.",
  "chainId": 13579,
  "signer": "0x906f3A52ec089f8D4E9127F91C6bE5Ae0d18f91f",

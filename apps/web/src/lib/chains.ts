@@ -3,7 +3,7 @@ import { defineChain } from "viem";
 /**
  * Intuition Testnet chain definition.
  *
- * Canonical reference: deployments/13579.json (chain section).
+ * Canonical reference: data/deployments/13579.json (chain section).
  * MetaMask Delegation Framework v1.3.0 is deployed on this chain — see
  * the same file's metamaskDelegationFramework section for contract addresses.
  *

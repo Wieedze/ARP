@@ -80,7 +80,7 @@ also receive a program that opens a public port and holds the agent's key. Share
 
 - Every living reference to the old paths moves: `README.md`, `docs/21`, `docs/22`, `CLAUDE.md`'s
   directory map, `.claude/STATE.md`, `rules/portability.md` (its `app/src/lib/deployments.ts:1`
-  row), `rules/ui.md` (its `cd app` gates), `vercel.json`, `deployments/13579.json:145`.
+  row), `rules/ui.md` (its `cd app` gates), `vercel.json`, `data/deployments/13579.json:145`.
 - `scripts/measure/node-outbound.ts:66-68` names the files whose outbound hosts `docs/22` quotes. It
   is repointed and **re-run**, and `docs/22` quotes the new measurement file — the old one stays,
   append-only (ADR `0064`).
@@ -88,7 +88,7 @@ also receive a program that opens a public port and holds the agent's key. Share
 
 **Neutral (worth knowing):**
 
-- Append-only records (ADRs, post-mortems, `measurements/`) keep the old paths. They were true when
+- Append-only records (ADRs, post-mortems, `data/measurements/`) keep the old paths. They were true when
   written.
 - `@arp-protocol/core`'s index may not export everything the MCP server imports by deep path today.
   Whatever is missing is either exported or the import was reaching past the package's surface,

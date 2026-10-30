@@ -30,7 +30,7 @@ import {writeFileSync} from "node:fs";
 
 import {formatEther, getAddress, type Hex} from "viem";
 
-import measured from "../measurements/skill-domains-2026-10-29.json";
+import measured from "../data/measurements/skill-domains-2026-10-29.json";
 import {encodeRedeem, multiVaultReads} from "../packages/protocol/src/declare/index.js";
 import {HAS_TAG} from "../packages/protocol/src/sources/intuition/terms.js";
 import {classifySkill} from "./helpers/skill-domains-table.js";
@@ -173,7 +173,7 @@ if (retire.length === 0) {
     process.exit(0);
 }
 
-const record = (await import(`../deployments/${target.chainId}.json`)) as {
+const record = (await import(`../data/deployments/${target.chainId}.json`)) as {
     default: {intuition: {multiVault: string}; chain: {rpcUrl: string}};
 };
 const multiVault = record.default.intuition.multiVault as Hex;

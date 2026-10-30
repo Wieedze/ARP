@@ -1,7 +1,7 @@
 /** Where a skill's `SKILL.md` actually sits inside its repository.
  *
  *      GITHUB_TOKEN=… bun run scripts/measure/skill-layouts.ts
- *      GITHUB_TOKEN=… bun run scripts/measure/skill-layouts.ts --json measurements/skill-layouts-<date>.json
+ *      GITHUB_TOKEN=… bun run scripts/measure/skill-layouts.ts --json data/measurements/skill-layouts-<date>.json
  *
  *  Read-only. One GitHub tree request per repository — 31 of them — so the unauthenticated quota of
  *  60 an hour covers a run, and a token only makes it comfortable.
@@ -39,7 +39,7 @@
  */
 import { writeFileSync } from 'node:fs';
 
-import catalogue from '../../catalogue/skills-13579.json';
+import catalogue from '../../data/catalogue/skills-13579.json';
 
 function arg(name: string): string | undefined {
   const index = process.argv.indexOf(`--${name}`);
@@ -135,7 +135,7 @@ for (const row of skills) {
   // directory in the path, which made `plugins/caveman/skills/cavecrew/SKILL.md` a candidate for
   // the skill `caveman` and reported 49 ambiguities where there were far fewer. Worse than the
   // count: a loose match can land on exactly one wrong file and resolve confidently, which is the
-  // silent failure this measurement exists to prevent. `measurements/skill-layouts-2026-10-29.json`
+  // silent failure this measurement exists to prevent. `data/measurements/skill-layouts-2026-10-29.json`
   // is that first run; the correction is in the later file.
   const exact = inRepo.filter((path) => directoryOf(path) === row.skill);
   const folded =

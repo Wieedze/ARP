@@ -10,8 +10,8 @@ import {formatEther} from "viem";
 
 import {multiVaultReads} from "../../packages/protocol/src/declare/index.js";
 
-import mainnetDeployment from "../../deployments/1155.json";
-import testnetDeployment from "../../deployments/13579.json";
+import mainnetDeployment from "../../data/deployments/1155.json";
+import testnetDeployment from "../../data/deployments/13579.json";
 
 const TARGETS = {mainnet: 1155, testnet: 13579} as const;
 const RPCS: Record<number, string> = {
@@ -23,7 +23,7 @@ const targetName = (process.env.ARP_TARGET ?? "testnet") as keyof typeof TARGETS
 const chainId = TARGETS[targetName];
 if (chainId === undefined) throw new Error(`unknown ARP_TARGET ${String(targetName)}`);
 
-/** Read from `deployments/`, never from a constant here: the address differs per chain and a
+/** Read from `data/deployments/`, never from a constant here: the address differs per chain and a
  *  default at module scope is what `rules/portability.md` rule 1 forbids. */
 const MULTIVAULTS: Record<number, string> = {
     1155: (mainnetDeployment as {intuition: {multiVault: string}}).intuition.multiVault,

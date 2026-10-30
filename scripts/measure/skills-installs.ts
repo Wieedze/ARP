@@ -1,7 +1,7 @@
 /** How many people installed each catalogued skill, read from skills.sh.
  *
  *      bun run scripts/measure/skills-installs.ts
- *      bun run scripts/measure/skills-installs.ts --json measurements/skills-installs-<date>.json
+ *      bun run scripts/measure/skills-installs.ts --json data/measurements/skills-installs-<date>.json
  *
  *  Read-only. Signs nothing. One request per skill page, serialised, with a courtesy delay.
  *
@@ -48,7 +48,7 @@
  *
  *  Both are printed. Choosing between them is a decision for an ADR, not for a measurement.
  */
-import catalogue from "../../catalogue/tools.json";
+import catalogue from "../../data/catalogue/tools.json";
 import {writeFileSync} from "node:fs";
 
 const SITEMAPS = [

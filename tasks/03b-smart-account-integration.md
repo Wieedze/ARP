@@ -29,7 +29,7 @@ Pure TypeScript / SDK work — Task 04b adds the React UI on top of these servic
 ## Deliverables
 
 - [x] `app/src/lib/clients.ts` — viem publicClient + walletClient factory bound to Intuition Testnet
-- [x] `app/src/lib/deployments.ts` — typed import of `deployments/13579.json` for in-app consumption
+- [x] `app/src/lib/deployments.ts` — typed import of `data/deployments/13579.json` for in-app consumption
 - [x] `app/src/lib/caveat-builder.ts` — `domainScopeCaveat(allowedDomains[])` + `trustStakeCapCaveat(cap, period)` returning raw `Caveat` structs with ABI-encoded `terms` matching the Solidity decode signatures
 - [x] `app/src/services/smart-account.ts` — `createUserSmartAccount({owner, signer, deploySalt?})` factory + `deploySmartAccountIfNeeded` helper that materializes the SA on-chain via `SimpleFactory`
 - [x] `app/src/services/delegation.ts` — `buildDelegation(...)`, `signDelegationAs(...)` (SA path), `signDelegationViaEOA(...)` (utility), `randomSalt()`, `serialize/deserialize`
@@ -60,7 +60,7 @@ Pure TypeScript / SDK work — Task 04b adds the React UI on top of these servic
 - Do not write the Bundler / userOp orchestration (Task 04b).
 - Do not modify any deployed contract.
 - Do not introduce a new Solidity contract.
-- Do not change the existing `deployments/13579.json` structure.
+- Do not change the existing `data/deployments/13579.json` structure.
 
 ## On-chain proof
 

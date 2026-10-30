@@ -66,7 +66,7 @@ export function parseToolLabel(label: string | null): ToolLabel {
  * c'est vraiment pas esthétique »_, with the platform as a sort and a filter instead. The host stays
  * in {@link ToolLabel}, which is where a filter reads it. It used to be kept on a repository so that
  * `github.com/x/y` and `gitlab.com/x/y` would not render alike; measured 2026-10-29 all 53 tools in
- * `catalogue/tools.json` and all 662 skills in `skill-facts.json` are on `github.com` — 715 keys,
+ * `data/catalogue/tools.json` and all 662 skills in `skill-facts.json` are on `github.com` — 715 keys,
  * zero on another host — so that collision has no instance today, and the filter is what tells two
  * platforms apart when one arrives.
  *

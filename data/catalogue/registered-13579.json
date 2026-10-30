@@ -1,8 +1,8 @@
 {
-  "_note": "Tool atoms registered on Intuition testnet 13579 from catalogue/tools.json. The atom id is a pure function of the normalised URL (ADR 0054), so this file is a record and not a source of truth \u2014 re-deriving it needs only the URL. Permanent: Intuition has no deletion.",
+  "_note": "Tool atoms registered on Intuition testnet 13579 from data/catalogue/tools.json. The atom id is a pure function of the normalised URL (ADR 0054), so this file is a record and not a source of truth \u2014 re-deriving it needs only the URL. Permanent: Intuition has no deletion.",
   "_authorisation": "Signed by the agent session using AGENT_PRIVATE_KEY, on the user's explicit instruction on 2026-10-28 (\u00ab tout sur testnet \u00bb). ADR 0037's three conditions: the key was never read into the agent's context, the signer address was verified against AGENT_ADDRESS in .env before signing, and this file is the record. security.md scopes its automation prohibition to mainnet.",
   "_assets": "Each atom was created with assets = getAtomCost() + minDeposit = 0.002000000001 tTRUST, read off the chain at plan time. Passing the cost alone would have created an atom with NO position \u2014 on the chain but not a market (ADR 0053). Every one of the 35 reports position_count 1 and total_assets 980000001000000 wei.",
-  "_incomplete": "Complete: all 52 tools in catalogue/tools.json are registered. The first 35 landed on a balance of 0.0791 tTRUST; the remaining 17 after the user topped the signer up with 1 tTRUST the same day. Re-running scripts/seed-tool-catalogue.ts now plans nothing, which is the idempotence the URL-derived atom id buys.",
+  "_incomplete": "Complete: all 52 tools in data/catalogue/tools.json are registered. The first 35 landed on a balance of 0.0791 tTRUST; the remaining 17 after the user topped the signer up with 1 tTRUST the same day. Re-running scripts/seed-tool-catalogue.ts now plans nothing, which is the idempotence the URL-derived atom id buys.",
   "chainId": 13579,
   "registeredAt": "2026-10-28",
   "signer": "0x906f3A52ec089f8D4E9127F91C6bE5Ae0d18f91f",

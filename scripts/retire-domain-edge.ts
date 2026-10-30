@@ -75,7 +75,7 @@ if (attestor === undefined) {
   process.exit(1);
 }
 
-const record = (await import(`../deployments/${chainId}.json`)) as {
+const record = (await import(`../data/deployments/${chainId}.json`)) as {
   default: { intuition: { multiVault: string }; chain: { rpcUrl: string } };
 };
 const multiVault = record.default.intuition.multiVault as Hex;

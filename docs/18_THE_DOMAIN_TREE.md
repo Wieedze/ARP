@@ -5,7 +5,7 @@ are made.
 
 Every figure here is from `scripts/measure/classification-vocabulary.ts` and
 `scripts/measure/tag-object-discipline.ts`, run 2026-10-28, recorded in
-`measurements/classification-vocabulary-2026-10-28.json`. Two chains, two populations, never summed.
+`data/measurements/classification-vocabulary-2026-10-28.json`. Two chains, two populations, never summed.
 
 ## 1. The job
 

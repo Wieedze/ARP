@@ -1,7 +1,7 @@
 /** Do the domains ARP seeded cover the 662 skills it catalogued?
  *
  *      bun run scripts/measure/skill-domains.ts
- *      bun run scripts/measure/skill-domains.ts --json measurements/skill-domains-<date>.json
+ *      bun run scripts/measure/skill-domains.ts --json data/measurements/skill-domains-<date>.json
  *
  *  Read-only. Signs nothing, and touches no RPC — skills.sh and the Intuition **indexer** are
  *  different hosts from the chain's RPC, whose byte quota the seed is currently spending.
@@ -31,7 +31,7 @@
  */
 import {writeFileSync} from "node:fs";
 
-import installs from "../../measurements/skills-installs-2026-10-29.json";
+import installs from "../../data/measurements/skills-installs-2026-10-29.json";
 
 /**
  * The domains ARP seeded under `tool`, read from the chain on 2026-10-29, and the words that land

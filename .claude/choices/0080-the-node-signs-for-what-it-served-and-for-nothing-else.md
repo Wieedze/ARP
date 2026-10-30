@@ -231,7 +231,7 @@ Two more from the same review, both of the same family — a verdict that could 
 - `arp_declare_session` computed the comparison against `receipt.to` when `declarer` was omitted,
   so `served === declarer` held by construction and the verdict was a constant. It now says what is
   missing instead of answering.
-- The node defaulted to **mainnet 1155** while importing `catalogue/skills-13579.json` at module
+- The node defaulted to **mainnet 1155** while importing `data/catalogue/skills-13579.json` at module
   scope, so a default-run node resolved testnet atom ids and stamped 1155 into every receipt's
   domain — for atoms that are not on 1155, where a create pair costs **0.22 TRUST against 0.004**.
   The catalogue is now read per chain at call time, and a mainnet node holds zero skills and says
@@ -241,7 +241,7 @@ What the review **confirmed**, measured over all 662 rows on 13579: every record
 `calculateAtomId(stringToHex(toolAtomUri(url)))` on the MultiVault, zero mismatches, zero
 collisions, and `calculateAtomId` is **not** plain `keccak256` of the same bytes (**0 of 662**
 agreed with a local keccak) — so the decision not to derive ids at startup was right. Re-derivable:
-`scripts/measure/catalogue-atom-ids.ts`, `measurements/catalogue-atom-ids-2026-10-29.json`.
+`scripts/measure/catalogue-atom-ids.ts`, `data/measurements/catalogue-atom-ids-2026-10-29.json`.
 
 > That figure read **0 of 601** until the verification round. The claim is about `calculateAtomId`
 > as a **function**, so its denominator is every row the derivation runs on — all 662 — and scoping
@@ -343,7 +343,7 @@ that needs a key is deliberately not built yet.
 - Triggered by: `tasks/31-arp-serves-the-content-and-signs-the-access.md` §6
 - Code: `packages/protocol/src/receipt.ts`, `packages/protocol/src/content-path.ts`,
   `packages/protocol/src/session.ts`, `scripts/arp-session-hook.ts`
-- Measurement: `measurements/skill-layouts-2026-10-29T2200.json`,
+- Measurement: `data/measurements/skill-layouts-2026-10-29T2200.json`,
   `scripts/measure/skill-layouts.ts`
 - Related rule: `.claude/rules/security.md`, `.claude/rules/claims.md`
 - Related doc: `docs/14_THE_WITNESS_PROBLEM.md` (corrected by this),

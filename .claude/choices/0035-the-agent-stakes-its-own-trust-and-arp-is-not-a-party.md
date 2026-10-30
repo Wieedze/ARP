@@ -56,7 +56,7 @@ Three pieces close it, and they are `tasks/16`'s first half:
 
 1. **The connector** an agent declares what it used through.
 2. **The delegation** its operator signed, with `DomainScopeEnforcer` and `TrustStakeCapEnforcer` as
-   the guard rail. Both are deployed on mainnet 1155 — `deployments/1155.json` — so `docs/12`'s
+   the guard rail. Both are deployed on mainnet 1155 — `data/deployments/1155.json` — so `docs/12`'s
    second recorded gap, "the guard rail on the chain where the agents are", is closed.
 3. **The deposit** on the tools.
 

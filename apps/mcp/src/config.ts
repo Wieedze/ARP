@@ -31,7 +31,7 @@ export const RECEIPTS_LOG = process.env['ARP_RECEIPTS'] ?? '.arp/receipts.jsonl'
  * Which chain this server plans against — config with a default, never a module constant.
  *
  * `rules/portability.md` rule 1, and rule 3 is why it matters here: a triple costs 0.1 TRUST on
- * 1155 and 0.001 on 13579. The addresses and URLs come from `deployments/<chainId>.json`, looked
+ * 1155 and 0.001 on 13579. The addresses and URLs come from `data/deployments/<chainId>.json`, looked
  * up by this chain in `data.ts`, so a mainnet server cannot be served a testnet constant.
  */
 const TARGETS = { mainnet: 1155, testnet: 13579 } as const;
@@ -49,7 +49,7 @@ type DeploymentRecord = {
 
 const recorded = DEPLOYMENTS[chainId];
 if (recorded === undefined) {
-  console.error(`no deployments/${chainId}.json`);
+  console.error(`no data/deployments/${chainId}.json`);
   process.exit(1);
 }
 // The record is JSON this repo writes; `required` below checks each field before it is used.
@@ -58,7 +58,7 @@ export const record = recorded as DeploymentRecord;
 /**
  * The catalogue `arp_declare_session` resolves a runtime's names against, for THIS server's chain.
  *
- * It was `catalogue/skills-13579.json` imported at module scope while `ARP_TARGET` defaults to
+ * It was `data/catalogue/skills-13579.json` imported at module scope while `ARP_TARGET` defaults to
  * mainnet, so a default-run server resolved testnet atom ids and would have planned against 1155 —
  * where those atoms do not exist and where a create pair costs 0.22 TRUST against 0.004, measured
  * 2026-10-29. `rules/portability.md` rule 1 and rule 3 in one line of code.
@@ -103,7 +103,7 @@ const MULTI_VAULT_RAW = (process.env.ARP_MULTI_VAULT ?? record.intuition?.multiV
  */
 function required<T>(value: T | undefined, what: string): T {
   if (value === undefined || value === null || value === '') {
-    console.error(`deployments/${chainId}.json is missing ${what}`);
+    console.error(`data/deployments/${chainId}.json is missing ${what}`);
     process.exit(1);
   }
   return value;

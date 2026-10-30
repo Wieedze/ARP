@@ -59,7 +59,7 @@ the tool gains reputation, and so does the agent  ← docs/12 point 4
 
 1. **The connector** the agent declares what it used through.
 2. **The delegation** its operator signed, with `DomainScopeEnforcer` and `TrustStakeCapEnforcer` as
-   the guard rail. Both are on mainnet 1155 (`deployments/1155.json`), so `docs/12`'s second gap —
+   the guard rail. Both are on mainnet 1155 (`data/deployments/1155.json`), so `docs/12`'s second gap —
    "the guard rail on the chain where the agents are" — is already closed.
 3. **The deposit** on the tools.
 

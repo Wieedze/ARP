@@ -42,7 +42,7 @@ import { sendPlan, type SerialisedCall } from '../helpers/send-plan.js';
 
 const REPO = resolve(import.meta.dir, '../..');
 const CHAIN_ID = 13579;
-const deployment = JSON.parse(readFileSync(join(REPO, 'deployments/13579.json'), 'utf8')) as {
+const deployment = JSON.parse(readFileSync(join(REPO, 'data/deployments/13579.json'), 'utf8')) as {
   chain: { rpcUrl: string };
   arp: { identityRegistry: Address };
 };

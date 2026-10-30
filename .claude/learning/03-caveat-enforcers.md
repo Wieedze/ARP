@@ -43,7 +43,7 @@ No rule needs revision.
 
 ## Suggestions for future tasks
 
-- Task 03 deployment script should deploy both enforcers + `ModuleRegistry` together. Write deployed addresses to `deployments/13579.json::arp.{moduleRegistry, domainScopeEnforcer, trustStakeCapEnforcer}`. Constructor on each enforcer takes no args. Idempotent skip-if-set guard recommended.
+- Task 03 deployment script should deploy both enforcers + `ModuleRegistry` together. Write deployed addresses to `data/deployments/13579.json::arp.{moduleRegistry, domainScopeEnforcer, trustStakeCapEnforcer}`. Constructor on each enforcer takes no args. Idempotent skip-if-set guard recommended.
 - Task 03b (Smart Account integration) constructs the `caveats` array in TypeScript. Each entry references one of the deployed enforcer addresses + an ABI-encoded `terms` blob. Use `viem`'s `encodeAbiParameters` for the terms; the encoding must match the on-chain `abi.decode` signatures exactly:
   - `DomainScopeEnforcer.terms` = `encodeAbiParameters([{ type: 'bytes32[]' }], [allowedDomainHashes])`
   - `TrustStakeCapEnforcer.terms` = `encodeAbiParameters([{ type: 'uint256' }, { type: 'uint256' }], [cap, period])`

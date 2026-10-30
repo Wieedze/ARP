@@ -6,9 +6,9 @@
  */
 import type { CataloguedSkill } from './content.js';
 
-import deployment1155 from '../../../deployments/1155.json';
-import deployment13579 from '../../../deployments/13579.json';
-import skills13579 from '../../../catalogue/skills-13579.json';
+import deployment1155 from '../../../data/deployments/1155.json';
+import deployment13579 from '../../../data/deployments/13579.json';
+import skills13579 from '../../../data/catalogue/skills-13579.json';
 
 export const DEPLOYMENTS: Readonly<Record<number, unknown>> = {
   1155: deployment1155,

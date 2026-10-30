@@ -543,7 +543,7 @@ glyph because that agent declared nothing.
 
 **A third thing, found while checking, unrelated and recorded.** `/agent/13579/4` answers
 _"No agent there"_: the page resolves against the **canonical** registry address
-`0x8004A169…e539a432` on chain 13579, and `deployments/13579.json` records `identityRegistry: null`.
+`0x8004A169…e539a432` on chain 13579, and `data/deployments/13579.json` records `identityRegistry: null`.
 So ARP's own testnet rig agents have no reachable agent page at all. Filed as `tasks/28` item 42.
 
 ### A tool's glyph is the sigil inverted
@@ -577,7 +577,7 @@ comment already said so: _"this group leads nothing today."_
 **3. ARP's own testnet agents had no page at all**, which is where the declarations actually are.
 `/agent/13579/4` answered _"No agent there"_ because the panel resolved every chain against
 `DEFAULT_IDENTITY_REGISTRY` — the canonical `0x8004A169…` on Base, which has no code on 13579 —
-while `deployments/13579.json` records ARP's own `identityRegistry`
+while `data/deployments/13579.json` records ARP's own `identityRegistry`
 `0xC165A2AD2E540A4069E02834009161E2b4490d5A`.
 
 `identityRegistryFor(chainId)` is the fix, and it names no chain: it compares against

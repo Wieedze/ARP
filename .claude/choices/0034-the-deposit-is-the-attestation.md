@@ -71,7 +71,7 @@ Excalidraw and ChatGPT at once, so gas amortises across an attestation set.
   separately record that ARP wrote it. Accepted deliberately: belief is the useful claim, and
   authorship without belief is worth nothing to a reader.
 - **The attestor address has to be published**, or the filter is unusable by anyone but ARP. It needs
-  a home in `deployments/<chainId>.json` and ideally an atom of its own, and it becomes a key whose
+  a home in `data/deployments/<chainId>.json` and ideally an atom of its own, and it becomes a key whose
   rotation breaks every historical filter that pinned the old one.
 
 **Neutral**

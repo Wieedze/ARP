@@ -108,7 +108,7 @@ Rules do not change silently. The audit trail is the point.
 - **Mainnet: deployment vs transactions are different questions.** No ARP **registry** is on mainnet
   and none is planned (ADR `0025`); **two caveat enforcers are**, deployed 2026-09-16, and neither
   has ever fired. The flat "no ARP contract is on mainnet" that stood here was false from
-  2026-09-16 — ADR `0065`, and `deployments/1155.json` is the record. ADR `0017` authorises one narrow class of mainnet transaction — deposits into existing `has trust provider` vaults, signed by the operator. **Mainnet signing has exactly one canonical statement, in `.claude/rules/security.md` — read it
+  2026-09-16 — ADR `0065`, and `data/deployments/1155.json` is the record. ADR `0017` authorises one narrow class of mainnet transaction — deposits into existing `has trust provider` vaults, signed by the operator. **Mainnet signing has exactly one canonical statement, in `.claude/rules/security.md` — read it
   there rather than from a restatement.** Summary: ARP's own funds are never signed for automatically;
   an _agent operator's_ funds, under a delegation they signed, are the product (ADR `0036`). This
   bullet said "no agent or script may ever sign a mainnet transaction", which forbids `docs/12`
@@ -176,8 +176,8 @@ ARP/
 │                                      character of difference was not enough and the author
 │                                      himself opened the wrong file
 ├── schemas/                           JSON Schemas for modules
-├── deployments/                       per-chain deployment records
-├── measurements/                      raw output of a committed measurement, kept so a figure in a
+├── data/deployments/                       per-chain deployment records
+├── data/measurements/                      raw output of a committed measurement, kept so a figure in a
 │                                      doc can be re-derived without asking a third party again.
 │                                      One file per run, never regenerated (ADR `0064`)
 └── .claude/                           Claude operating layer

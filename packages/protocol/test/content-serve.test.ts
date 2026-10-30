@@ -16,7 +16,7 @@ const CONFLICT_ATOM = `0x${"ef".repeat(32)}` as const;
 const GONE_ATOM = `0x${"12".repeat(32)}` as const;
 const SERVER_ATOM = `0x${"34".repeat(32)}` as const;
 
-/** Real URLs and real layouts, from `measurements/skill-layouts-2026-10-29T2200.json`. */
+/** Real URLs and real layouts, from `data/measurements/skill-layouts-2026-10-29T2200.json`. */
 const INDEX = contentIndexOf([
     {atom: SKILL_ATOM, url: "https://github.com/magentosh/superpowers?skill=product-photography"},
     {atom: DUPLICATE_ATOM, url: "https://github.com/heygen-com/hyperframes?skill=motion-doctrine"},

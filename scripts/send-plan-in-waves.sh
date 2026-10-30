@@ -24,7 +24,7 @@ wave=0
 # Transaction hashes go here, one per line, and they are the point of keeping a record at all.
 # The first version wrote each wave to a mktemp file and deleted it, so the hashes of 500+ writes
 # were gone the moment the wave ended — the terms are re-derivable (ids are pure functions of the
-# URL), a hash is not. `catalogue/*-13579.json` exists to hold them.
+# URL), a hash is not. `data/catalogue/*-13579.json` exists to hold them.
 hashes="${plan%.json}.hashes.txt"
 : >"$hashes"
 

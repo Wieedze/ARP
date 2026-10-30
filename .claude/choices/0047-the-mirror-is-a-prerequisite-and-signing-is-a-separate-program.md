@@ -22,7 +22,7 @@ Two more things surfaced on the way, both measured:
 - **The canonical registry has no code on 13579.** `eth_getCode` of
   `0x8004A169FB4a3325136EB29fA0ceB6D2e539a432` returns `0x` there. The CREATE2 "same address
   everywhere" claim holds for the chains it was deployed to, and 13579 is not one. ARP's own agents
-  live in the registry ARP deployed (`deployments/13579.json` → `arp.identityRegistry`), so the path
+  live in the registry ARP deployed (`data/deployments/13579.json` → `arp.identityRegistry`), so the path
   needs the registry as a **parameter**, which `caip.ts` already supported and no caller passed.
 - **The `same as` direction is not guessable.** `RESOLVE_AGENT_QUERY` filters on the **object**'s
   Thing name and returns the **subject**, so the edge is `(identity atom, same as, caip19 atom)`.

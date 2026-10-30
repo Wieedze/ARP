@@ -38,8 +38,8 @@
  */
 import {writeFileSync} from "node:fs";
 
-import installs from "../measurements/skills-installs-2026-10-29.json";
-import domains from "../measurements/skill-domains-2026-10-29.json";
+import installs from "../data/measurements/skills-installs-2026-10-29.json";
+import domains from "../data/measurements/skill-domains-2026-10-29.json";
 
 const MEASURED_ON = "2026-10-29";
 

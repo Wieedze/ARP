@@ -16,7 +16,7 @@
  */
 import {writeFileSync} from "node:fs";
 
-import layouts from "../measurements/skill-layouts-2026-10-29T2200.json";
+import layouts from "../data/measurements/skill-layouts-2026-10-29T2200.json";
 
 type Located = {repo: string; skill: string; path: string};
 type Ambiguous = {repo: string; skill: string; paths: string[]; sameContent: boolean};

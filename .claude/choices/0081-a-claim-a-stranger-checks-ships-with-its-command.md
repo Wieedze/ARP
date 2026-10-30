@@ -118,6 +118,6 @@ That sweep is check 5 applied to the file that defines it.
   it and carries the round-by-round record
 - Rule changed: `.claude/rules/claims.md` (check 6, third habit, three counts), `.claude/rules/00-INDEX.md`
 - The worked example: `docs/22_RUNNING_THE_NODE.md`, `scripts/measure/node-outbound.ts`,
-  `measurements/node-outbound-2026-10-29.json`
+  `data/measurements/node-outbound-2026-10-29.json`
 - Related ADR: `0031` (claims.md's origin — the five failures), `0043` (check 5, the retraction
   sweep), `0064` (one measurement file per run), `0080` (the node signs for what it served)

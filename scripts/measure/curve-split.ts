@@ -12,7 +12,7 @@
  */
 import {createPublicClient, formatEther, http, parseAbi} from "viem";
 
-import record from "../../deployments/1155.json";
+import record from "../../data/deployments/1155.json";
 
 const client = createPublicClient({transport: http("https://rpc.intuition.systems/http")});
 const multiVault = record.intuition.multiVault as `0x${string}`;

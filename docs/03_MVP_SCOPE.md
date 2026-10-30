@@ -55,7 +55,7 @@ Each seed module has:
 
 - This `docs/` folder, kept in sync with reality
 - Every task file updated with completion notes
-- Contract addresses recorded in `deployments/base-sepolia.json`
+- Contract addresses recorded in `data/deployments/base-sepolia.json`
 
 ## Out of scope (explicitly)
 
@@ -91,7 +91,7 @@ The MVP is complete when **all** of the following are true:
 - [ ] UI can list modules, view details, and register new ones (with wallet)
 - [ ] A user (Billy) can open the URL on a phone and understand what ARP is in under 30 seconds
 - [ ] A developer (future contributor) can clone the repo, run locally, and understand the codebase without asking questions
-- [ ] Every contract address and atom ID recorded in `deployments/base-sepolia.json`
+- [ ] Every contract address and atom ID recorded in `data/deployments/base-sepolia.json`
 - [ ] README and all docs match reality
 
 ## Non-goals for the demo conversation

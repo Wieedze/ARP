@@ -74,7 +74,7 @@ const agent = {
 };
 
 const record = JSON.parse(
-  readFileSync(new URL(`../deployments/${chainId}.json`, import.meta.url), 'utf8'),
+  readFileSync(new URL(`../data/deployments/${chainId}.json`, import.meta.url), 'utf8'),
 ) as {
   chain?: { rpcUrl?: string; graphqlUrl?: string; name?: string };
   intuition?: { multiVault?: string };
@@ -85,7 +85,7 @@ const multiVault = (process.env.ARP_MULTI_VAULT ?? record.intuition?.multiVault)
   | Address
   | undefined;
 if (!rpcUrl || !graphqlUrl || !multiVault) {
-  console.error(`deployments/${chainId}.json is missing a rpcUrl, graphqlUrl or multiVault`);
+  console.error(`data/deployments/${chainId}.json is missing a rpcUrl, graphqlUrl or multiVault`);
   process.exit(1);
 }
 

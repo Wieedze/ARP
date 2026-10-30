@@ -1,4 +1,4 @@
-/** Write `catalogue/skills-<chainId>.json` — the record of what ARP put on chain for the skills.
+/** Write `data/catalogue/skills-<chainId>.json` — the record of what ARP put on chain for the skills.
  *
  *      ARP_TARGET=testnet bun run scripts/record-skills-catalogue.ts
  *
@@ -22,7 +22,7 @@ import {writeFileSync} from "node:fs";
 
 import {getAddress} from "viem";
 
-import measured from "../measurements/skill-domains-2026-10-29.json";
+import measured from "../data/measurements/skill-domains-2026-10-29.json";
 import {HAS_TAG} from "../packages/protocol/src/sources/intuition/terms.js";
 import {classifySkill} from "./helpers/skill-domains-table.js";
 
@@ -158,7 +158,7 @@ const record = {
     skills,
 };
 
-const path = `catalogue/skills-${target.chainId}.json`;
+const path = `data/catalogue/skills-${target.chainId}.json`;
 writeFileSync(path, `${JSON.stringify(record, null, 2)}\n`);
 console.log(`${skills.length} skills · ${tagged} tagged · ${untagged} deliberately untagged`);
 console.log(`written to ${path}`);

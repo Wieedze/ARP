@@ -1,7 +1,7 @@
 /** Every host literal and every `fetch` call site in the MCP server's own modules.
  *
  *      bun run scripts/measure/node-outbound.ts
- *      bun run scripts/measure/node-outbound.ts --json measurements/node-outbound-<date>.json
+ *      bun run scripts/measure/node-outbound.ts --json data/measurements/node-outbound-<date>.json
  *
  *  Reads files. No network, no chain, nothing to sign.
  *
@@ -166,7 +166,7 @@ const out = {
     "lists and should not is a reader's minute, and a site it misses is the claim being false.",
   notLiterals:
     'The Intuition graph and RPC are absent from `literalHosts` BECAUSE they are config — read ' +
-    'from deployments/<chainId>.json or INTUITION_GRAPHQL_URL / INTUITION_RPC_URL at startup. ' +
+    'from data/deployments/<chainId>.json or INTUITION_GRAPHQL_URL / INTUITION_RPC_URL at startup. ' +
     'Their absence here is correct and is not their absence from the MCP server. Two more hosts are ' +
     'reachable and are not literals either, by design: the url a caller passes to ' +
     'arp_probe_endpoint, and the registrationFile out of an ERC-8004 tokenURI read through a ' +

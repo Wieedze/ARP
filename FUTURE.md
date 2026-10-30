@@ -213,13 +213,13 @@ own argument is why it should not be built there:** task 31 writes nothing to a 
 we're at it, the catalogue could also record the other 61" is `workflow.md`'s first drift signal
 verbatim.
 
-`catalogue/skills-13579.json` carries a recorded atom id for 601 of its 662 rows. The other 61 have
+`data/catalogue/skills-13579.json` carries a recorded atom id for 601 of its 662 rows. The other 61 have
 `atom: null` and `untagged: true` — **the same 61 rows**, verified, so it is one gap seen from two
 sides.
 
 **Their atoms already exist on chain.** All 61, `isTermCreated` true, measured by
 `scripts/measure/catalogue-atom-ids.ts` and recorded in
-`measurements/catalogue-atom-ids-2026-10-29.json`, which prints the repo, the skill, the URL and the
+`data/measurements/catalogue-atom-ids-2026-10-29.json`, which prints the repo, the skill, the URL and the
 derived id for each under `unrecordedOnChain`. So this is a **catalogue re-record, not an atom
 creation**, and it costs nothing on chain.
 

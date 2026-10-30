@@ -390,7 +390,7 @@ function summarise(agents: AgentResult[]): void {
 
   console.log(`\n${'═'.repeat(72)}`);
   // The chain, first line. The previous version printed neither, and its output was pasted into
-  // tasks/24 and deployments/13579.json where it reads identically to a Base run.
+  // tasks/24 and data/deployments/13579.json where it reads identically to a Base run.
   console.log(`${TARGET.label}`);
   console.log(`  registry ${TARGET.registry}  ·  chain ${TARGET.chainId}`);
   console.log(`n = ${n} agents · ${requestsMade} network requests\n`);

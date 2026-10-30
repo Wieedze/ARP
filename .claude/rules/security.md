@@ -90,7 +90,7 @@ The `contract-reviewer` agent (in `.claude/agents/`) orchestrates these for you 
   session. That is the rule, and it stands on its own.
 
   **No ARP _registry_ is on mainnet and none is planned** — `moduleRegistry` and `identityRegistry`
-  are both `null` in `deployments/1155.json`, deliberately, by ADR `0025`. The panel's staking
+  are both `null` in `data/deployments/1155.json`, deliberately, by ADR `0025`. The panel's staking
   targets Intuition's own MultiVault, not an ARP contract.
 
   **Two ARP caveat enforcers _are_ on mainnet**, deployed 2026-09-16 under that same ADR:
@@ -103,7 +103,7 @@ The `contract-reviewer` agent (in `.claude/agents/`) orchestrates these for you 
   This bullet read **"No ARP contract is deployed to mainnet today, and none is planned"** until
   2026-10-27. That was false from 2026-09-16, in the file `CLAUDE.md` names as canonical, and the
   reader it misled most is an agent deciding what it may deploy. ADR `0065`.
-  `deployments/<chainId>.json` is the record; do not restate its contents here a second time.
+  `data/deployments/<chainId>.json` is the record; do not restate its contents here a second time.
 
 - **Mainnet transactions are not the same question as mainnet deployment.** ADR `0017` authorises one narrow class: deposits into existing `has trust provider` triple vaults and their counter-triples on chain 1155, signed by the operator in their own wallet. It does not authorise contract deployment, atom or triple creation at scale (see ADR `0021` for that cost), or any stake initiated by an agent. Read the ADR before widening it.
 - **Mainnet signing, in one sentence, and the only place it is stated.** `CLAUDE.md` and
@@ -154,5 +154,5 @@ The `contract-reviewer` agent (in `.claude/agents/`) orchestrates these for you 
   forbidden, and it needs its own ADR. The risk calculus there is different in kind, because the
   TRUST at stake is the agent operator's and the bound is a caveat they signed.
 
-- Every deployment writes its addresses to `deployments/<chainId>.json`. Idempotent — re-running on the same chain does not redeploy unless `--force` is passed.
+- Every deployment writes its addresses to `data/deployments/<chainId>.json`. Idempotent — re-running on the same chain does not redeploy unless `--force` is passed.
 - `.env.example` documents the Intuition Testnet RPC, explorer URL, and chain ID. Update it whenever a new env var is introduced.

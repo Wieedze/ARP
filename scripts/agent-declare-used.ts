@@ -74,7 +74,7 @@ if (!agentRef || !/^\d+\/\d+$/.test(agentRef) || tools.length === 0) {
 const [agentChainId, agentTokenId] = agentRef.split('/') as [string, string];
 
 const record = JSON.parse(
-  readFileSync(new URL(`../deployments/${chainId}.json`, import.meta.url), 'utf8'),
+  readFileSync(new URL(`../data/deployments/${chainId}.json`, import.meta.url), 'utf8'),
 ) as {
   chain?: { rpcUrl?: string; graphqlUrl?: string; name?: string };
   intuition?: { multiVault?: string };
@@ -86,7 +86,7 @@ const multiVault = (process.env.ARP_MULTI_VAULT ?? record.intuition?.multiVault)
   | Address
   | undefined;
 if (!rpcUrl || !graphqlUrl || !multiVault) {
-  console.error(`deployments/${chainId}.json is missing a rpcUrl, graphqlUrl or multiVault`);
+  console.error(`data/deployments/${chainId}.json is missing a rpcUrl, graphqlUrl or multiVault`);
   process.exit(1);
 }
 
@@ -121,7 +121,7 @@ function die(error: unknown): never {
  * Defaults to the canonical one (`caip.ts`'s `DEFAULT_IDENTITY_REGISTRY`), which is right on Base
  * 8453, BSC 56 and Ethereum 1. It is **wrong on Intuition testnet 13579**, where that address has
  * no code at all (`eth_getCode` → `0x`, checked 2026-10-20) and ARP's own agents live in the
- * registry ARP deployed, `deployments/13579.json` → `arp.identityRegistry`. Passing it explicitly
+ * registry ARP deployed, `data/deployments/13579.json` → `arp.identityRegistry`. Passing it explicitly
  * is how a chain whose agents are not in the canonical registry is addressed, and
  * `rules/portability.md` rule 4 is the reason this is a flag and not a second constant.
  */

@@ -30,7 +30,7 @@
 >
 > **Step 4 is the exception, and it already has data.** `scripts/measure/enforcer-events.ts` indexes
 > `StakeCapChecked` off `TrustStakeCapEnforcer`, reading both addresses from
-> `deployments/<chainId>.json`:
+> `data/deployments/<chainId>.json`:
 >
 > | chain |    logs | transactions | distinct delegations | senders                                                       |
 > | ----- | ------: | -----------: | -------------------: | ------------------------------------------------------------- |

@@ -19,7 +19,7 @@ Real in the reference: the skill, its url, atom id, domain, source repository, t
 | **market card** | behind the skill itself, positions, largest holder, top three, first and latest backer, a concentration bar, **your position in Saffron**, `Take a position` (primary) and `Exit` | `AtomMarket` and `getTermShape(atomId)`. `positionCount === 0` shows "Nobody is behind it yet." and no figure (dust, ADR 0042) |
 | **curves** | Signals per bucket (bars, last one in paper), Value moved (area with endpoint), grain day / week / month, Hint "money moving, not a price" | `getTermActivity(atomId, {grain})`. Empty: "Nothing has moved on this market yet." |
 | **Relations** | the claim field v2 (loupe, card, legend), every incoming claim | `ClaimField` as shipped, fed by `getAtomStanding(atomId).groups` |
-| **On the record** | atom id, the url it identifies, source, has tag with its triple id, the domain's parent, who wrote it | chain ids from the catalogue (`catalogue/skills-13579.json`: `atom`, `tagTriple`) |
+| **On the record** | atom id, the url it identifies, source, has tag with its triple id, the domain's parent, who wrote it | chain ids from the catalogue (`data/catalogue/skills-13579.json`: `atom`, `tagTriple`) |
 
 ## 2. Rules carried from the repo
 
@@ -33,7 +33,7 @@ Real in the reference: the skill, its url, atom id, domain, source repository, t
 ## 3. Missing data to add
 
 1. **SKILL.md sections and version**: fetch `raw.githubusercontent.com/<repo>/<branch>/skills/<name>/SKILL.md`, keep the frontmatter `version` and the `##` headings with the first fenced command of each. Cache it with the other external reads.
-2. **External signals per skill**: installs already exist in `measurements/skills-installs-*.json`, stars and push in `repo-liveness-*.json`. Serve them with their `measuredAt`.
+2. **External signals per skill**: installs already exist in `data/measurements/skills-installs-*.json`, stars and push in `repo-liveness-*.json`. Serve them with their `measuredAt`.
 
 ## 4. Done means
 

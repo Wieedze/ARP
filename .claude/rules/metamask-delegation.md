@@ -198,7 +198,7 @@ If x402 integration grows beyond following the docs (e.g., custom resource-prici
 
 - Smart Account addresses → app state (in-memory or localStorage, never in code).
 - Signed delegations → client-side storage. The hackathon does not require on-chain delegation publication. If a future task requires it, that's a new decision documented as an ADR.
-- Enforcer contract addresses → `deployments/<chainId>.json`, same convention as `ModuleRegistry`.
+- Enforcer contract addresses → `data/deployments/<chainId>.json`, same convention as `ModuleRegistry`.
 
 ## Testing
 

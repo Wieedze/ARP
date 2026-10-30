@@ -20,9 +20,9 @@
   fetch, which turns six candidates into one for `product-photography`.
 - `scripts/verify-content-route.ts` — walks it end to end: the digest a receipt carries is what
   `sha256sum` prints on the downloaded file.
-- `scripts/measure/skill-layouts.ts` + `measurements/skill-layouts-2026-10-29T2200.json` — 19
+- `scripts/measure/skill-layouts.ts` + `data/measurements/skill-layouts-2026-10-29T2200.json` — 19
   layouts over 31 repositories, 8 using more than one, **521 of 662 skills servable**.
-  `measurements/skill-layouts-2026-10-29.json` is kept as the record of a wrong first run
+  `data/measurements/skill-layouts-2026-10-29.json` is kept as the record of a wrong first run
   (ADR `0064`).
 - `scripts/measure/catalogue-atom-ids.ts`, `scripts/measure/node-outbound.ts` and their
   measurements.
@@ -115,7 +115,7 @@ than per repository, and not the owner's own word. Whether it goes on chain is n
   covers is a claim that is **right and unverifiable by the reader it was written for**. Proposal
   below; **no rule file was edited** — that needs an ADR and the user's decision.
 - `.claude/rules/portability.md` — sufficient, and rules 1 and 3 were both broken by one line
-  (`catalogue/skills-13579.json` imported at module scope in a process whose chain is configurable,
+  (`data/catalogue/skills-13579.json` imported at module scope in a process whose chain is configurable,
   on a chain where a create pair costs 0.22 TRUST against 0.004). The rule said exactly what was
   wrong; nobody read it at that line.
 - `.claude/rules/code.md` — sufficient. "A function shipped without tests is not done" is what
@@ -142,7 +142,7 @@ because the command's scope was a directory and the claim's scope was three file
 it concluded the document was wrong. The claim and its check must have the same scope, and the check
 is what gets read.
 
-It is satisfied by committing a script plus a `measurements/` file and citing them — the habit
+It is satisfied by committing a script plus a `data/measurements/` file and citing them — the habit
 `claims.md` already recommends as "commit the script, not the number". This would make it a
 **requirement** for the subclass where a stranger is being asked to trust us, which is exactly where
 this repo's own argument says an assertion is worth least.

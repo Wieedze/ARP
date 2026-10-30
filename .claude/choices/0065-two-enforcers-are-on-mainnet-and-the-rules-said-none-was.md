@@ -2,12 +2,12 @@
 
 **Status:** Accepted
 **Date:** 2026-10-27
-**Triggered by:** `tasks/22`'s step-4 measurement, which had to read `deployments/1155.json` to find the enforcer addresses
+**Triggered by:** `tasks/22`'s step-4 measurement, which had to read `data/deployments/1155.json` to find the enforcer addresses
 
 ## Context
 
 ADR `0025` records, in its own first line, that _"the two ARP caveat enforcers were deployed to
-Intuition mainnet (chain 1155) on 2026-09-16"_. `deployments/1155.json` records both with their
+Intuition mainnet (chain 1155) on 2026-09-16"_. `data/deployments/1155.json` records both with their
 transaction hashes, the deployer, the date and the gas cost. `eth_getCode` against
 `https://rpc.intuition.systems/http` on 2026-10-27 returns bytecode at both addresses:
 
@@ -45,7 +45,7 @@ The constraint the sentence was protecting is untouched and restated plainly: **
 requires explicit user confirmation per session.** That rule is what stops an unreviewed deploy. The
 false factual claim beside it was never load-bearing and was actively misleading.
 
-`deployments/1155.json` is the record of what is deployed; the rules cite it rather than restating
+`data/deployments/1155.json` is the record of what is deployed; the rules cite it rather than restating
 its contents, which is the pattern `security.md` already uses for mainnet signing ("exactly one
 canonical statement — read it there rather than from a restatement").
 
@@ -71,7 +71,7 @@ canonical statement — read it there rather than from a restatement").
 - The rule that matters — per-session confirmation before a mainnet deploy — is stated on its own
   rather than leaning on a factual claim that could rot again.
 - `scripts/measure/enforcer-events.ts` now reads enforcer addresses out of
-  `deployments/<chainId>.json`, so the next reader asks the record instead of a fourth copy.
+  `data/deployments/<chainId>.json`, so the next reader asks the record instead of a fourth copy.
 
 **Negative:**
 
@@ -99,4 +99,4 @@ canonical statement — read it there rather than from a restatement").
 - Related rule: `.claude/rules/claims.md` §5 — grep the old wording before committing a correction
 - Related task: `tasks/22-the-chain-as-witness.md` — the measurement that surfaced it
 - Measured by: `scripts/measure/enforcer-events.ts`
-- Record: `deployments/1155.json`
+- Record: `data/deployments/1155.json`

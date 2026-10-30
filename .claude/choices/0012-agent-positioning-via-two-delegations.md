@@ -12,7 +12,7 @@ The choices were:
 
 1. Use only the `TrustStakeCapEnforcer` for compose. `TrustStakeCapEnforcer` caps `value` (msg.value) per period and doesn't constrain the selector. The agent could redirect spend to arbitrary targets the operator never intended.
 2. Add a third Solidity enforcer (e.g. `MultiVaultActionEnforcer`) gating selector + target. New contract work, fresh review, audit prep — real time we don't have.
-3. Compose stock MetaMask `AllowedTargetsEnforcer` + `AllowedMethodsEnforcer` (already deployed at the framework v1.3.0 addresses recorded in `deployments/13579.json`) with our `TrustStakeCapEnforcer`. Zero new Solidity.
+3. Compose stock MetaMask `AllowedTargetsEnforcer` + `AllowedMethodsEnforcer` (already deployed at the framework v1.3.0 addresses recorded in `data/deployments/13579.json`) with our `TrustStakeCapEnforcer`. Zero new Solidity.
 
 Option 3 is the right one. The `AllowedTargets` + `AllowedMethods` builders are stock MetaMask, used widely, and their `terms` encoders are exported via `@metamask/delegation-core` (`createAllowedTargetsTerms`, `createAllowedMethodsTerms`).
 

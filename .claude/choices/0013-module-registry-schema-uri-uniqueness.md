@@ -56,7 +56,7 @@ function getModuleIdBySchemaURI(string calldata schemaURI) external view returns
 }
 ```
 
-Redeploy the registry (no users impacted), update `deployments/13579.json`, and update `scripts/agent-loop.ts` to call `getModuleIdBySchemaURI` *before* attempting `redeemRegisterModule`. The off-chain check saves the gas of a known-to-revert tx; the on-chain check guarantees the invariant even if a future caller skips the off-chain step.
+Redeploy the registry (no users impacted), update `data/deployments/13579.json`, and update `scripts/agent-loop.ts` to call `getModuleIdBySchemaURI` *before* attempting `redeemRegisterModule`. The off-chain check saves the gas of a known-to-revert tx; the on-chain check guarantees the invariant even if a future caller skips the off-chain step.
 
 ## Alternatives considered
 

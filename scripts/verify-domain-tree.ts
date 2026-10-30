@@ -17,7 +17,7 @@
  *  Testnet 13579 carries 42 `is a sub-domain of` edges that predate ARP, and 19 of them are junk:
  *  nine timestamped `rehearsal` nodes, one child with five different parents, a case split
  *  (`Design` beside `design`), a typo, an inverted edge, an empty label and one of 270 characters
- *  (`measurements/classification-vocabulary-2026-10-28.json`). Reading only ARP's own edges would
+ *  (`data/measurements/classification-vocabulary-2026-10-28.json`). Reading only ARP's own edges would
  *  be a test of nothing — the whole claim is that the stake rule makes a tree out of a graph like
  *  this one, so it runs over all of them.
  *

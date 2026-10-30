@@ -1,9 +1,9 @@
-import deploymentsJson from "../../../../deployments/13579.json";
+import deploymentsJson from "../../../../data/deployments/13579.json";
 
 import type {Address, Hex} from "viem";
 
 /**
- * Typed view of `deployments/13579.json`. The JSON is the canonical record
+ * Typed view of `data/deployments/13579.json`. The JSON is the canonical record
  * of chain state for Intuition Testnet (chain metadata, external addresses
  * for MetaMask Delegation Framework + Intuition MultiVault, deployed ARP
  * contracts, seeded modules, created atoms).

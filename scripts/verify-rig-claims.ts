@@ -53,7 +53,7 @@ type Report = {
   }[];
 };
 
-/** Which agent id carries which fixture. Mirrors `deployments/13579.json` `arp.rigAgents`. */
+/** Which agent id carries which fixture. Mirrors `data/deployments/13579.json` `arp.rigAgents`. */
 const AGENT_BY_SLUG: Record<string, string> = {
   'rig-confirmed': '3',
   'rig-dead': '4',
@@ -61,7 +61,7 @@ const AGENT_BY_SLUG: Record<string, string> = {
 };
 
 /**
- * The hashes `deployments/13579.json` records, read rather than copied.
+ * The hashes `data/deployments/13579.json` records, read rather than copied.
  *
  * **Only reproducible with `ARP_MCP_ENDPOINT` unset**: `OWN_ENDPOINT` reads the environment and the
  * fixture is hashed after substitution, so anyone with it exported sees a false DRIFT. Said here
@@ -70,7 +70,7 @@ const AGENT_BY_SLUG: Record<string, string> = {
 const RECORDED_HASHES: Record<string, string> = (() => {
   try {
     const d = JSON.parse(
-      readFileSync(new URL('../deployments/13579.json', import.meta.url), 'utf8'),
+      readFileSync(new URL('../data/deployments/13579.json', import.meta.url), 'utf8'),
     ) as {
       arp?: {
         rigAgents?: { agents?: Record<string, { slug?: string; documentSha256_16?: string }> };
@@ -153,8 +153,8 @@ for (const file of FILES) {
   }
 
   // The fixtures are the source of truth for permanent mints, so an edit to FILES that is not
-  // re-minted diverges silently. The hash is recorded in deployments/13579.json.
-  // sha256, first 16 hex — the same derivation deployments/13579.json records, so the two can
+  // re-minted diverges silently. The hash is recorded in data/deployments/13579.json.
+  // sha256, first 16 hex — the same derivation data/deployments/13579.json records, so the two can
   // actually be compared. An earlier draft used Bun.hash, which produced a different digest and
   // made this look like a drift detector while comparing nothing.
   const hash = createHash('sha256').update(dataUri(file.doc)).digest('hex').slice(0, 16);
@@ -184,7 +184,7 @@ if (drifts > 0) {
   // exactly wrong. Either re-mint, update the recorded hash, or unset ARP_MCP_ENDPOINT.
   console.log(
     'A drift means the repo fixture and the recorded hash disagree. Re-mint, update the hash in ' +
-      'deployments/13579.json, or check whether ARP_MCP_ENDPOINT is set.',
+      'data/deployments/13579.json, or check whether ARP_MCP_ENDPOINT is set.',
   );
 }
 if (failures > 0) process.exit(1);

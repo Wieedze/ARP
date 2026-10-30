@@ -6,7 +6,7 @@
 
 ## Context
 
-`catalogue/tools.json` held 53 rows: 22 MCP servers and 31 skill repositories. The 31 were rows
+`data/catalogue/tools.json` held 53 rows: 22 MCP servers and 31 skill repositories. The 31 were rows
 because that is the granularity the scrape returned, not because anyone decided a repository was
 the thing being catalogued.
 
@@ -75,5 +75,5 @@ edge at its domain.
 
 - Related ADR: `.claude/choices/0078-source-is-the-edge-from-a-skill-to-its-repository.md`
 - Related ADR: `.claude/choices/0054-*` — tool URLs as the atom's only input
-- Measurement: `measurements/skills-installs-2026-10-29.json`, `scripts/measure/skills-installs.ts`
+- Measurement: `data/measurements/skills-installs-2026-10-29.json`, `scripts/measure/skills-installs.ts`
 - Script: `scripts/seed-skills.ts`

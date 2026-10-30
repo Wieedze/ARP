@@ -72,7 +72,7 @@ const HAS_TAG = '0x7ec36d201c842dc787b45cb5bb753bea4cf849be3908fb1b0a7d067c3c3cc
 const ROOT = 'tool';
 
 /**
- * The tree and the tags, read from `catalogue/domains.proposal.json` rather than written here.
+ * The tree and the tags, read from `data/catalogue/domains.proposal.json` rather than written here.
  *
  * They used to be two literals in this file, which was fine for a three-triple smoke test and is
  * not fine for 116 calls: the assignment of 53 tools to 16 domains is reviewable data, and a
@@ -95,7 +95,7 @@ type Proposal = {
   };
 };
 
-const proposal = (await import('../catalogue/domains.proposal.json')) as {default: Proposal};
+const proposal = (await import('../data/catalogue/domains.proposal.json')) as {default: Proposal};
 const plan = proposal.default;
 
 const SECOND_LEVEL = new Map(plan.secondLevel.map((entry) => [entry.child, entry.parent]));
@@ -183,7 +183,7 @@ if (chainId === 1155) {
   process.exit(1);
 }
 
-const record = (await import(`../deployments/${chainId}.json`)) as {
+const record = (await import(`../data/deployments/${chainId}.json`)) as {
   default: { intuition: { multiVault: string }; chain: { rpcUrl: string } };
 };
 const multiVault = record.default.intuition.multiVault as Hex;

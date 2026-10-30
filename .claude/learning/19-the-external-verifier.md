@@ -11,9 +11,9 @@ code**: the gate itself passed on round 1 and every count in it reproduced from 
 Code and tests shipped 2026-10-16/17 and are unchanged except the defect below. The 2026-10-27 work
 is the gate run and its artefacts.
 
-- `measurements/cohort-base-uniform-100-2026-10-27.json`, `measurements/cohort-base-ids1-100-2026-10-27.json`
+- `data/measurements/cohort-base-uniform-100-2026-10-27.json`, `data/measurements/cohort-base-ids1-100-2026-10-27.json`
   — two walks of 100 agents on Base 8453, 276,805 bytes, the repo's first committed measurement
-  artefacts. `measurements/` is new, in the directory map and in `.prettierignore`.
+  artefacts. `data/measurements/` is new, in the directory map and in `.prettierignore`.
 - `scripts/measure/verifier-gate.ts` — reads a walk, prints the three groups in the spec's numbering,
   the host concentration, and one `curl` per confirmed row. Makes no network request.
 - `packages/protocol/src/verify/probe.ts` — `a2aCandidates` fixed (below). `verify-probe.test.ts`

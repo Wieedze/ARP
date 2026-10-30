@@ -164,7 +164,7 @@ console.log(
 
 const feeDenominator = generalConfig.feeDenominator;
 const fraction = tripleConfig.atomDepositFractionForTriple;
-console.log('\nwhat an act costs here, read from the chain and not from deployments/');
+console.log('\nwhat an act costs here, read from the chain and not from data/deployments/');
 console.log(
   `  create a triple             ${formatEther(tripleCost)} TRUST   — a FEE: gone, not redeemable`,
 );

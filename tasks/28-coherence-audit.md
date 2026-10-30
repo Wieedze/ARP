@@ -126,12 +126,12 @@ with the code. Read-only audit first, then fixes in small batches.
     it is a different query and not a stale figure — Intuition has no deletion. Correct all six to
     one measurement with its script; do **not** present 194 → 158 as a change.
 29. **The two deployment files record the same contracts in different shapes.**
-    `deployments/1155.json` nests the enforcers under `arp.enforcers` with a `status`;
-    `deployments/13579.json` puts them flat on `arp` as bare addresses. A reader of one shape finds
+    `data/deployments/1155.json` nests the enforcers under `arp.enforcers` with a `status`;
+    `data/deployments/13579.json` puts them flat on `arp` as bare addresses. A reader of one shape finds
     nothing in the other and reads it as absence. Pick one.
 30. **`bun run format:check` fails repo-wide, long-standing.** Two parts, and only the second is
     a code change: the root script passed `--ignore-path .gitignore` only, so `.prettierignore` was
-    never consulted and `deployments/*.json` was flagged — **fixed 2026-10-27**, both paths are now
+    never consulted and `data/deployments/*.json` was flagged — **fixed 2026-10-27**, both paths are now
     passed. The rest are ordinary unformatted files and a `--write` pass would bury any real change
     under whitespace, so it needs its own commit.
 
@@ -259,7 +259,7 @@ wait for it unless one misleads a reader before then.
     corrected that claim and `.claude/STATE.md`'s defect table lists **three** contradicting sites —
     `CLAUDE.md`'s hard constraints, `.claude/rules/security.md`'s deployment posture, and `STATE.md`'s
     own constraints list. This one is not among them. Two enforcers are on 1155
-    (`deployments/1155.json`, `eth_getCode` confirmed 2026-10-27). Found 2026-10-28 while building
+    (`data/deployments/1155.json`, `eth_getCode` confirmed 2026-10-27). Found 2026-10-28 while building
     `tasks/30`; `claims.md` §5 — a sentence written four times gets corrected three.
 
 38. **`AtomPanel`'s "Explorer →" link is dead, and so was every term-id link built from that
@@ -332,7 +332,7 @@ wait for it unless one misleads a reader before then.
     there — nothing resolves for `eip155:13579/erc721:0x8004A169FB4a3325136EB29fA0ceB6D2e539a432/4`.
     The sources answered cleanly; the agent is simply not registered under that token id."_ The page
     resolves every chain against the **canonical** registry address, and
-    `deployments/13579.json` records `identityRegistry: null`. So the rig agents that carry the only
+    `data/deployments/13579.json` records `identityRegistry: null`. So the rig agents that carry the only
     real `uses` edges this project has written are unreachable by their own route — found
     2026-10-28 while checking why their sigil did not render, which it does on a tool's page one
     screen away.

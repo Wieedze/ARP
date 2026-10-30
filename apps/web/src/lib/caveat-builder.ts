@@ -19,7 +19,7 @@ import {toFunctionSelector} from "viem";
 
 /**
  * Caveat builders for the two ARP custom enforcers deployed at the addresses
- * recorded in `deployments/13579.json`. Each builder returns a raw `Caveat`
+ * recorded in `data/deployments/13579.json`. Each builder returns a raw `Caveat`
  * (struct `{ enforcer, terms, args }`) ready to be placed in a delegation's
  * `caveats` array — the SDK does not auto-wrap our custom enforcers because
  * they are not part of the MetaMask standard enforcer catalogue.

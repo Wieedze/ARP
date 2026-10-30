@@ -10,7 +10,7 @@
 > Verified live against six real documents and five MCP endpoints.
 >
 > **Gate run 2026-10-27 — passed, and the result is not what the gate expected.** Two walks of 100
-> agents each on Base 8453, both committed under `measurements/`, both readable with
+> agents each on Base 8453, both committed under `data/measurements/`, both readable with
 > `bun run scripts/measure/verifier-gate.ts <file>`:
 >
 > | walk                          | n   | document read | endpoints | confirmed | not-checkable           | inconclusive        |

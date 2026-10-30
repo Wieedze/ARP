@@ -13,7 +13,7 @@
 - `packages/graphql` — transport, client, 25 query documents (23 constants + 2 builders);
   `protocol` depends on it through `workspace:*`.
 - `bun build --target=bun` bundles, one JS file per bin, viem external, nothing published.
-- `docs/22` split per program; `measurements/node-outbound-2026-10-30T0220.json` (6 literals,
+- `docs/22` split per program; `data/measurements/node-outbound-2026-10-30T0220.json` (6 literals,
   9 sites, 6 outbound, 0 ours). The earlier `-2026-10-30.json` was kept: same figures, old naming.
 - `docs/design/` holds the three handoffs.
 
@@ -25,7 +25,7 @@
 - A hook snippet written as a repo-relative `bun run apps/hook/src/hook.ts` works only inside this
   repo. Fixed to an absolute path to the bundle, run once from a foreign directory.
 - The task's own §4 grep filters on `^./`, but this environment's grep prints no `./` prefix, so
-  the filter excludes nothing. The hits were read by hand: all of them are in tasks/, measurements/,
+  the filter excludes nothing. The hits were read by hand: all of them are in tasks/, data/measurements/,
   choices/ and learning/.
 
 ## Decisions made
@@ -34,7 +34,7 @@
   scripts/ is not a workspace, and `@arp/mcp` has no `exports`. Only `verify-content-route.ts`
   imports an app. Recorded in `223b40f` and in tasks/32 §5.
 - **`apps/mcp/src/data.ts`**: deployments and catalogue are imported as a map keyed by chain id, so
-  the bundle carries them. Consequence: they are frozen at build time. Edit `deployments/*.json`,
+  the bundle carries them. Consequence: they are frozen at build time. Edit `data/deployments/*.json`,
   rebuild. Not an ADR. Recorded in `18d478b` and in tasks/32 §5.
 - ADR: `.claude/choices/0082-two-apps-the-mcp-and-the-node.md`.
 

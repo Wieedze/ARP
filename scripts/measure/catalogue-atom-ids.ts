@@ -1,16 +1,16 @@
-/** Whether the atom ids `catalogue/skills-<chainId>.json` records are the ids the chain computes.
+/** Whether the atom ids `data/catalogue/skills-<chainId>.json` records are the ids the chain computes.
  *
  *      bun run scripts/measure/catalogue-atom-ids.ts --chain 13579
- *      bun run scripts/measure/catalogue-atom-ids.ts --chain 13579 --json measurements/catalogue-atom-ids-<date>.json
+ *      bun run scripts/measure/catalogue-atom-ids.ts --chain 13579 --json data/measurements/catalogue-atom-ids-<date>.json
  *
  *  Read-only. Two `eth_call`s per row — `calculateAtomId` and `isTermCreated` — both `pure`/`view`,
  *  no key, no value, nothing signed.
  *
  *  **`--chain` is required and there is no default.** The address and the RPC come from
- *  `deployments/<chainId>.json` read at call time, and the catalogue from
- *  `catalogue/skills-<chainId>.json` the same way. `rules/portability.md` rule 1, and the reason it
+ *  `data/deployments/<chainId>.json` read at call time, and the catalogue from
+ *  `data/catalogue/skills-<chainId>.json` the same way. `rules/portability.md` rule 1, and the reason it
  *  is written this way rather than with an `ARP_TARGET` default is the defect this file was asked
- *  for alongside: a module-scope `catalogue/skills-13579.json` in a process whose chain was
+ *  for alongside: a module-scope `data/catalogue/skills-13579.json` in a process whose chain was
  *  configurable served testnet ids from a mainnet MCP server.
  *
  *  ## The question it exists to answer
@@ -69,12 +69,12 @@ type DeploymentRecord = { chain?: { rpcUrl?: string }; intuition?: { multiVault?
 /** Read per chain at call time, never imported: the address and the RPC both differ. */
 function deploymentFor(id: number): { rpcUrl: string; multiVault: Hex } {
   const record = JSON.parse(
-    readFileSync(new URL(`../../deployments/${id}.json`, import.meta.url), 'utf8'),
+    readFileSync(new URL(`../../data/deployments/${id}.json`, import.meta.url), 'utf8'),
   ) as DeploymentRecord;
   const rpcUrl = record.chain?.rpcUrl;
   const multiVault = record.intuition?.multiVault;
   if (rpcUrl === undefined || multiVault === undefined) {
-    console.error(`deployments/${id}.json is missing an rpcUrl or a multiVault`);
+    console.error(`data/deployments/${id}.json is missing an rpcUrl or a multiVault`);
     process.exit(1);
   }
   return { rpcUrl, multiVault: multiVault as Hex };
@@ -85,7 +85,7 @@ type CataloguedSkill = { repo: string; skill: string; url: string; atom: string 
 /** The catalogue recorded for one chain. An absent file is nothing recorded, not an error. */
 function catalogueFor(id: number): CataloguedSkill[] {
   try {
-    const raw = readFileSync(new URL(`../../catalogue/skills-${id}.json`, import.meta.url), 'utf8');
+    const raw = readFileSync(new URL(`../../data/catalogue/skills-${id}.json`, import.meta.url), 'utf8');
     return (JSON.parse(raw) as { skills?: CataloguedSkill[] }).skills ?? [];
   } catch {
     return [];
@@ -95,7 +95,7 @@ function catalogueFor(id: number): CataloguedSkill[] {
 const { rpcUrl, multiVault } = deploymentFor(chainId);
 const rows = catalogueFor(chainId);
 if (rows.length === 0) {
-  console.error(`catalogue/skills-${chainId}.json records no skills — nothing to re-derive.`);
+  console.error(`data/catalogue/skills-${chainId}.json records no skills — nothing to re-derive.`);
   process.exit(1);
 }
 
@@ -136,7 +136,7 @@ type Derived = {
 };
 
 console.log(`chain ${chainId}  multiVault ${multiVault}`);
-console.log(`re-deriving ${rows.length} rows from catalogue/skills-${chainId}.json …`);
+console.log(`re-deriving ${rows.length} rows from data/catalogue/skills-${chainId}.json …`);
 
 const derived = await pool(rows, 16, async (row): Promise<Derived> => {
   const data = stringToHex(toolAtomUri(row.url));
@@ -207,7 +207,7 @@ const out = {
   chainId,
   multiVault,
   rpcUrl,
-  source: `catalogue/skills-${chainId}.json`,
+  source: `data/catalogue/skills-${chainId}.json`,
   method:
     'calculateAtomId(stringToHex(toolAtomUri(url))) and isTermCreated(id), both read off the ' +
     'MultiVault. Read-only: two eth_calls per row, nothing signed.',

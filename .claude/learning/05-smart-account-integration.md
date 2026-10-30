@@ -8,7 +8,7 @@
 ## What shipped
 
 - `app/src/lib/clients.ts` — viem `publicClient` + `walletClientFromKey` factory bound to Intuition Testnet.
-- `app/src/lib/deployments.ts` — typed import of `deployments/13579.json` with `Deployments` shape.
+- `app/src/lib/deployments.ts` — typed import of `data/deployments/13579.json` with `Deployments` shape.
 - `app/src/lib/caveat-builder.ts` — `domainScopeCaveat([])` + `trustStakeCapCaveat(cap, period)` returning raw `Caveat` structs with ABI-encoded `terms` matching enforcer decode signatures.
 - `app/src/services/smart-account.ts` — `createUserSmartAccount` (Hybrid) + `deploySmartAccountIfNeeded` (SimpleFactory direct, bypasses Bundler).
 - `app/src/services/delegation.ts` — `buildDelegation`, `signDelegationAs` (SA path), `signDelegationViaEOA` (utility), `randomSalt`, `serialize/deserialize`. `ROOT_AUTHORITY` constant exported.

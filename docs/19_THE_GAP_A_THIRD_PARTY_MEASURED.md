@@ -127,7 +127,7 @@ Three properties follow, and the third is the one nobody else has:
 - **it is attributed**, so a farm is visible as one address or as a set of addresses with no history;
 - **it can be withdrawn**, so a signal can go *down*. A GitHub star never decays. A position
   redeemed leaves the index the same block, and 0.0009801 of a 0.002 stake came back the one time
-  ARP did it (`catalogue/ontology-13579.json`).
+  ARP did it (`data/catalogue/ontology-13579.json`).
 
 But the study's 90.6% is also a warning against ARP's own first instinct. **Counting positions is not
 enough**: 100 addresses holding `minDeposit` costs 1 TRUST on mainnet. The rule has to be the user's

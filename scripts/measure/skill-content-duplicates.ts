@@ -1,7 +1,7 @@
 /** Which catalogued skills are literally the same file, proven by content hash.
  *
  *      bun run scripts/measure/skill-content-duplicates.ts
- *      bun run scripts/measure/skill-content-duplicates.ts --json measurements/skill-duplicates-<date>.json
+ *      bun run scripts/measure/skill-content-duplicates.ts --json data/measurements/skill-duplicates-<date>.json
  *
  *  Read-only. One GitHub tree request per repository — 31 of them — so a token is wanted but the
  *  unauthenticated quota of 60 an hour also covers one run.
@@ -36,7 +36,7 @@
  */
 import {writeFileSync} from "node:fs";
 
-import catalogue from "../../catalogue/tools.json";
+import catalogue from "../../data/catalogue/tools.json";
 
 function arg(name: string): string | undefined {
     const index = process.argv.indexOf(`--${name}`);

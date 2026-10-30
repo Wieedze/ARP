@@ -52,7 +52,7 @@ Intuition vault:  0x2Ece8D4dEdcB9918A398528f3fa4688b1d2CAB91
 [3/3] Creating Intuition atom for the module…
   atom already exists (id 0xde8890fca8dde322ca57bce0e20dfeb23be67332f9101305ebe72facdee032dc); skipping createAtoms
 
-Deployments updated: /home/max/Project/ARP/deployments/13579.json
+Deployments updated: /home/max/Project/ARP/data/deployments/13579.json
 ```
 
 ### `MANIFEST_PATH=… bun scripts/agent-loop.ts` — exit 0, Intuition Testnet 13579

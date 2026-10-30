@@ -8,7 +8,7 @@
 
 `tasks/17`'s gate asked for liveness and endpoint classification over 100 agents, reproducible, with
 the three outcome groups visibly separated. Two walks ran on 2026-10-27 against Base 8453's
-`0x8004A169FB4a3325136EB29fA0ceB6D2e539a432`, both kept under `measurements/`:
+`0x8004A169FB4a3325136EB29fA0ceB6D2e539a432`, both kept under `data/measurements/`:
 
 | walk                          |   n | document read | endpoints | confirmed | not-checkable | inconclusive |
 | ----------------------------- | --: | ------------: | --------: | --------: | ------------: | -----------: |
@@ -41,7 +41,7 @@ registration-file hosts and the top probed-endpoint hosts under every rate, and 
 host exceeds half the sample it prints the sentence in full — _"N of M sampled agents are H. Every
 rate above is that operator's, not the cohort's. Do not quote one as the other."_
 
-A walk is kept as a file under `measurements/`, not re-run, because re-running it costs a hundred
+A walk is kept as a file under `data/measurements/`, not re-run, because re-running it costs a hundred
 third-party hosts a request each and the report must stay reproducible from a committed artefact.
 
 ## Alternatives considered
@@ -71,7 +71,7 @@ third-party hosts a request each and the report must stay reproducible from a co
 
 **Negative:**
 
-- `measurements/` is 280 KB of JSON in the repo, and it will grow with each recorded walk. The
+- `data/measurements/` is 280 KB of JSON in the repo, and it will grow with each recorded walk. The
   alternative — a number in prose with no artefact behind it — is the thing this repo is against.
 - Nothing yet tells a future walk to re-measure the concentration when it changes. It is read at
   report time, every time, which is the cheapest guard available but is not a trend.
@@ -102,14 +102,14 @@ third-party hosts a request each and the report must stay reproducible from a co
 - Artefacts, with the invocation that produced each — the invocation is what
   `rules/claims.md`'s "commit the script, not the number" is really asking for, and the two walks
   are indistinguishable without it:
-  - `measurements/cohort-base-uniform-100-2026-10-27.json` —
+  - `data/measurements/cohort-base-uniform-100-2026-10-27.json` —
     `bun run scripts/verify-cohort.ts --count 100 --out <path>`
-  - `measurements/cohort-base-ids1-100-2026-10-27.json` —
+  - `data/measurements/cohort-base-ids1-100-2026-10-27.json` —
     `bun run scripts/verify-cohort.ts --from 1 --to 100 --out <path>`
 
   **Retention**: one file per walk, named `<target>-<shape>-<n>-<date>.json`, added and never
   regenerated. Re-running a walk to reproduce a row costs a hundred third-party hosts a request
-  each, which is the thing the file exists to avoid. `measurements/` is in `.prettierignore` for
-  the same reason `deployments/` is: it is machine-written.
+  each, which is the thing the file exists to avoid. `data/measurements/` is in `.prettierignore` for
+  the same reason `data/deployments/` is: it is machine-written.
 
 - Reader: `scripts/measure/verifier-gate.ts`

@@ -2,7 +2,7 @@
  *
  *      bun run scripts/build-skill-catalogue.ts
  *
- *  Reads `catalogue/skills-13579.json`, writes one file. No network.
+ *  Reads `data/catalogue/skills-13579.json`, writes one file. No network.
  *
  *  The repository page lists every skill a repository publishes with its domain, and counts its
  *  skills per domain. Read from the chain, that is one standing read per skill — up to 71 for one
@@ -15,7 +15,7 @@
  */
 import {writeFileSync} from "node:fs";
 
-import catalogue from "../catalogue/skills-13579.json";
+import catalogue from "../data/catalogue/skills-13579.json";
 
 type Row = {repo: string; skill: string; atom: string | null; domain: string | null};
 
@@ -28,7 +28,7 @@ for (const row of data.skills) {
 const out = {
     _note:
         "Each skill's atom id and ARP's domain tag, built by scripts/build-skill-catalogue.ts from " +
-        "catalogue/skills-13579.json — do not edit by hand. Keyed by the skill atom's label. " +
+        "data/catalogue/skills-13579.json — do not edit by hand. Keyed by the skill atom's label. " +
         "Audited against the chain by scripts/audit-skill-tags.ts.",
     _recordedAt: data.recordedAt,
     skills,

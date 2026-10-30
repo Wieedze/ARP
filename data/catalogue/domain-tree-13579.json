@@ -37,7 +37,7 @@
    "termId": "0x486470d2bbb5b9b67077505c43f5dedc1c36c4d378d293f2e08dad0750457b1c",
    "created": true,
    "tx": "0xa656b7b9ec1b2aeb04966c4216f2ef40e1c4119c5ba739ed9e07c57bc1fff268",
-   "_ruleViolation": "BREAKS THE ONE-WORD RULE, stated by the user about an hour after this was signed: a domain is one word, never hyphenated. The atom and its two edges are permanent — Intuition has no deletion. The replacement is `card`, which already exists as a plain string. Retiring this one means depositing on each edge's counter-triple, not removing it. See catalogue/domains.proposal.json `_ruleViolationOnChain`."
+   "_ruleViolation": "BREAKS THE ONE-WORD RULE, stated by the user about an hour after this was signed: a domain is one word, never hyphenated. The atom and its two edges are permanent — Intuition has no deletion. The replacement is `card`, which already exists as a plain string. Retiring this one means depositing on each edge's counter-triple, not removing it. See data/catalogue/domains.proposal.json `_ruleViolationOnChain`."
   }
  },
  "edges": [

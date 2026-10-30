@@ -40,7 +40,7 @@ Consequences accepted deliberately:
   actually shows is needed, rather than by what was built for a hackathon.
 - **`DomainScopeEnforcer` at `0x4E20279EeE9f77673A4f1605E58607cD9A597d70` on 1155 is inert.** It was
   deployed minutes before this decision, and under it there is nothing for it to gate. It is recorded
-  in `deployments/1155.json` as deployed-and-unused rather than quietly left for someone to find and
+  in `data/deployments/1155.json` as deployed-and-unused rather than quietly left for someone to find and
   puzzle over. Cost: a fraction of the 0.0000228 TRUST the pair cost to deploy. Not worth a
   redeployment to tidy.
 - **No on-chain composability for the module list on mainnet.** Nothing consumes it today.
@@ -73,7 +73,7 @@ Consequences accepted deliberately:
 - An agent operating under a mainnet delegation can stake on a tool in any domain. The cap bounds how
   much; nothing bounds where. That is a real reduction in the guard rail and it is the price of this
   decision.
-- An inert contract sits on mainnet. Documented here and in `deployments/1155.json`.
+- An inert contract sits on mainnet. Documented here and in `data/deployments/1155.json`.
 
 **Neutral:**
 
@@ -84,4 +84,4 @@ Consequences accepted deliberately:
 
 - Related doc: `docs/12_THE_IDEA.md` — the mechanism, and the guard rail's place in it
 - Related ADR: `0008` (schemaURI as the canonical tool URI — why the registry's uniqueness is narrower than it looks), `0010` (two-layer model), `0017` (real TRUST on mainnet)
-- Deployment record: `deployments/1155.json`
+- Deployment record: `data/deployments/1155.json`

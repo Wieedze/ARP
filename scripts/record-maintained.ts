@@ -14,7 +14,7 @@
  *  sense — read from somebody else, reproducible by anyone with one request — and that is the only
  *  test a source has to pass to be recorded here. A proprietary score would fail it.
  *
- *  Every tool in `catalogue/tools.json` is a github.com URL, so `reachable` — a protocol handshake
+ *  Every tool in `data/catalogue/tools.json` is a github.com URL, so `reachable` — a protocol handshake
  *  — applies to none of them and `maintained` applies to all 53.
  *
  *  ## What the threshold is, and that it is a judgement
@@ -31,7 +31,7 @@ import {writeFileSync} from "node:fs";
 
 import {formatEther, stringToHex, type Hex} from "viem";
 
-import catalogue from "../catalogue/tools.json";
+import catalogue from "../data/catalogue/tools.json";
 import {
     atomDataForUri,
     multiVaultReads,
@@ -100,7 +100,7 @@ if (attestor === undefined || !/^0x[0-9a-fA-F]{40}$/.test(attestor)) {
     process.exit(1);
 }
 
-const record = (await import(`../deployments/${chainId}.json`)) as {
+const record = (await import(`../data/deployments/${chainId}.json`)) as {
     default: {intuition: {multiVault: string}; chain: {rpcUrl: string}};
 };
 const multiVault = record.default.intuition.multiVault as Hex;

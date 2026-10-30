@@ -185,7 +185,7 @@ that can sign a transaction and make an HTTP request
 | `DomainScopeEnforcer`                        | [`0x516B82E29e3Ca46Ca810FC2EEf348932b198f7f9`](https://testnet.explorer.intuition.systems/address/0x516B82E29e3Ca46Ca810FC2EEf348932b198f7f9) |
 | `TrustStakeCapEnforcer`                      | [`0x7BB56819E9a413B8B4668C5cAF5C494c41dC0F8E`](https://testnet.explorer.intuition.systems/address/0x7BB56819E9a413B8B4668C5cAF5C494c41dC0F8E) |
 
-Composes with the MetaMask Delegation Framework v1.3.0 (`DelegationManager` at `0xdb9B1e94B5b69Df7e401DDbedE43491141047dB3`) and Intuition's MultiVault (`0x2Ece8D4dEdcB9918A398528f3fa4688b1d2CAB91`). Full address set in [deployments/13579.json](deployments/13579.json).
+Composes with the MetaMask Delegation Framework v1.3.0 (`DelegationManager` at `0xdb9B1e94B5b69Df7e401DDbedE43491141047dB3`) and Intuition's MultiVault (`0x2Ece8D4dEdcB9918A398528f3fa4688b1d2CAB91`). Full address set in [data/deployments/13579.json](data/deployments/13579.json).
 
 ## Two networks, and which one spends money
 
@@ -295,7 +295,7 @@ ARP/
 │                                     `.claude/skills/arp-contributing/` is the other one —
 │                                     how to work ON this repo
 ├── schemas/                        ← JSON schemas for seed modules
-├── deployments/                    ← Deployed addresses per network (13579.json, 1155.json)
+├── data/deployments/                    ← Deployed addresses per network (13579.json, 1155.json)
 ├── FUTURE.md                       ← asked for, deliberately not built yet
 ├── docs/                           ← Strategic + architectural reference
 │   ├── 12_THE_IDEA.md              ← THE canonical mechanism. Read this first

@@ -32,7 +32,7 @@ Two further facts the verifier established and that bear on the shape of this:
 
 - `scripts/rig-registration-files.ts` asserts in its own header that it "signs nothing and sends
   nothing… the operator runs them with their own key". True of the script, and **not what happened**.
-- `deployments/13579.json` said the agents were "minted by the deployer", which a later reader takes
+- `data/deployments/13579.json` said the agents were "minted by the deployer", which a later reader takes
   as a human at a keyboard.
 
 ## Decision
@@ -81,5 +81,5 @@ the user asks for that specific action in the conversation.** Three conditions, 
 
 - ADR `0017`'s seven safeguards are about the panel's human-signed mainnet deposits and do not
   transfer. ADR `0036` is unchanged and still the authority on agent-initiated staking.
-- The mints are permanent. `deployments/13579.json` records the ids, the transactions, the document
+- The mints are permanent. `data/deployments/13579.json` records the ids, the transactions, the document
   hashes, and that agents 1 and 2 are deliberately left empty.

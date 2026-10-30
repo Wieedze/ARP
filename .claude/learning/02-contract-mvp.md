@@ -37,7 +37,7 @@ No rule needs revision.
 ## Suggestions for future tasks
 
 - Task 02b (caveat enforcers) needs to undo the delegation-framework trim surgically. Probably keep only `lib/account-abstraction` and `lib/erc7579-implementation` from the transitive set; bring back internal `test/` only if a borrowed harness is needed. Remove `skip = ["lib/delegation-framework/**"]` from `foundry.toml` once the imports resolve cleanly.
-- Task 03 (deployment) will deploy `ModuleRegistry` and populate `deployments/13579.json::arp.moduleRegistry`. Use `vm.broadcast`-style script, idempotent (skip-if-set unless `--force`). Constructor takes no args.
+- Task 03 (deployment) will deploy `ModuleRegistry` and populate `data/deployments/13579.json::arp.moduleRegistry`. Use `vm.broadcast`-style script, idempotent (skip-if-set unless `--force`). Constructor takes no args.
 - The gas-target ADR (if the user concurs the deviation should be formalized) belongs under `.claude/choices/0007-*.md`. Link to SECURITY_REVIEW.md §Gas, lines 156–166 and 240–249.
 - The `ModuleRegistered` event indexes `domain` as a string → topic hash. UI consumers in Task 04 must filter by `keccak256(toUtf8Bytes(domain))`, not by the raw string. Document this in the off-chain wrapper when it's written.
 - `contract-reviewer` agent's INFO-2 / INFO-3 are informational only; no follow-up needed beyond carrying them in `SECURITY_REVIEW.md` for the next reviewer.

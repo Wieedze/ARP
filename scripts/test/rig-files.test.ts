@@ -209,7 +209,7 @@ describe("`exercises` is checked against the classifier, not trusted as prose", 
      * The field that was wrong.
      *
      * `rig-dead.exercises` claimed `confirmed/dead` while the real outcome was
-     * `inconclusive/transport-error`, and `deployments/13579.json` copied the string verbatim. Every
+     * `inconclusive/transport-error`, and `data/deployments/13579.json` copied the string verbatim. Every
      * structural test passed, because they checked the shape and not the claim.
      *
      * **What these close, precisely**: the checkability axis — `probeable` against `not-checkable` —

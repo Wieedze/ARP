@@ -1,4 +1,4 @@
-import catalogue from "../../../../catalogue/tools.json";
+import catalogue from "../../../../data/catalogue/tools.json";
 
 /**
  * The catalogue's seed: 52 tool URLs, with the name and the sentence this app shows for each.
@@ -10,7 +10,7 @@ import catalogue from "../../../../catalogue/tools.json";
  * deliberate, and it is why `github.com` has one atom under this convention and **five** on
  * mainnet: a free-text name inside a hashed document is a duplicate generator.
  *
- * So the readable name lives in `catalogue/tools.json`, which is this repo, and changing one costs
+ * So the readable name lives in `data/catalogue/tools.json`, which is this repo, and changing one costs
  * nothing on chain (user, 2026-10-28: _« le nom peut etre dans le front »_). A title carries no
  * authority: a reader of the graph sees the URL, which is the identity.
  *

@@ -13,7 +13,7 @@ const file = (path: string, sha = path): RepositoryFile => ({path, sha});
 
 /**
  * Every listing below is a real repository's, from
- * `measurements/skill-layouts-2026-10-29T2200.json`. Invented ones would agree with whatever the
+ * `data/measurements/skill-layouts-2026-10-29T2200.json`. Invented ones would agree with whatever the
  * resolver does.
  */
 const MAGENTOSH = [

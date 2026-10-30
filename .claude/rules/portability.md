@@ -12,7 +12,7 @@ Measured 2026-10-19:
 | ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------- |
 | `packages/protocol/src` (not `arp/`) | **zero** chain bindings. Config takes `graphqlUrl` and `rpcUrls` keyed by `chainId`; a plan carries its `chainId`.     |
 | `packages/protocol/src/arp`          | **names both chains, on purpose** — `defineChain` for 13579 and 1155, plus `TESTNET_DEPLOYMENT` as a visible fallback  |
-| `apps/web/src/lib/deployments.ts:1`       | `import deploymentsJson from "../../../deployments/13579.json"` — ARP's **own** deployment, still bound at module load |
+| `apps/web/src/lib/deployments.ts:1`       | `import deploymentsJson from "../../../../data/deployments/13579.json"` — ARP's **own** deployment, still bound at module load |
 | `apps/web/src`                            | **11** sites hardcode `chain: intuitionTestnet`, all of them ARP's own contracts — re-measured 2026-10-27              |
 
 Re-measured 2026-10-19 after ADR `0041` folded `sdk/` in, because that fold made the old version of
@@ -76,9 +76,9 @@ Four things, each of which has already been got wrong once in this project:
 
 ## Read it from the chain, not from a copy
 
-`deployments/<chainId>.json` records addresses. It does **not** record governance-configurable
+`data/deployments/<chainId>.json` records addresses. It does **not** record governance-configurable
 values: `minDeposit`, `getTripleCost()`, `getAtomCost()` and `defaultCurveId` are read from the
-contract at call time. `deployments/1155.json` says this in its own note about `defaultCurveId` —
+contract at call time. `data/deployments/1155.json` says this in its own note about `defaultCurveId` —
 "read it, do not trust this copy" — and the same applies to every cost.
 
 ## The exception

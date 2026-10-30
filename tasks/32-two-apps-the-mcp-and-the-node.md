@@ -43,8 +43,8 @@ reason the MCP server and the node are two apps rather than one.
 9. **`node-outbound.ts` is repointed and re-run.** `docs/22` quotes the new measurement file. The
    old one is not touched (ADR `0064`).
 10. **Living references updated**: `README.md`, `docs/21`, `CLAUDE.md` directory map,
-    `.claude/STATE.md`, `rules/portability.md`, `rules/ui.md`, `deployments/13579.json:145`. Grep
-    each old path and read every hit (`claims.md` check 5); ADRs, post-mortems and `measurements/`
+    `.claude/STATE.md`, `rules/portability.md`, `rules/ui.md`, `data/deployments/13579.json:145`. Grep
+    each old path and read every hit (`claims.md` check 5); ADRs, post-mortems and `data/measurements/`
     are append-only and keep the old paths.
 11. **`packages/graphql/`.** The queries and the Intuition client move out of
     `packages/protocol/src/sources/intuition/` and the 8 other files of `protocol` that hold a query.
@@ -86,7 +86,7 @@ noted here.
   script imports an app at all (`verify-content-route.ts:35`); the other five name app paths in
   comments or strings.
 - **The MCP bundle freezes its data at build time.** `apps/mcp/src/data.ts` imports every chain's
-  `deployments/<chain>.json` and `catalogue/skills-<chain>.json`, so a rebuilt file is needed after
+  `data/deployments/<chain>.json` and `data/catalogue/skills-<chain>.json`, so a rebuilt file is needed after
   either changes. From source nothing changed in practice — the import reads the repo's files.
 - **Vercel.** The root `vercel.json` now builds `apps/web`. If the Vercel project's Root Directory
   setting is `app`, it points at a directory that no longer exists and has to be changed in the

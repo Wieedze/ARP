@@ -15,11 +15,11 @@ closing two verifier punch lists, all on `feat/agent-panel-tabs`
 - `scripts/verify-cohort.ts` — `--target` (Base or Intuition testnet) and `--tools`. First thing
   written under `rules/portability.md`.
 - `scripts/verify-rig-claims.ts` — asserts each fixture's `exercises` prose against what the probe
-  observed, plus document hashes against `deployments/13579.json`. Exits non-zero on a mismatch.
+  observed, plus document hashes against `data/deployments/13579.json`. Exits non-zero on a mismatch.
 - `scripts/measure/cohort-skills.ts` — committed so the "0 of ~110 documents declare a capability"
   figure can be re-run.
 - `erc8004/test/rig-files.test.ts`, `erc8004/test/arp-mcp-server.test.ts` — 21 then 24 tests.
-- `deployments/13579.json` — `arp.rigAgents`: ids 3, 4, 5, their transactions, document hashes, the
+- `data/deployments/13579.json` — `arp.rigAgents`: ids 3, 4, 5, their transactions, document hashes, the
   two-step gate command, and why agents 1 and 2 are deliberately empty.
 - `.claude/choices/0037-an-agent-session-may-sign-on-testnet.md`, `rules/security.md`,
   `CLAUDE.md`, `docs/15_ROADMAP.md`, `.claude/STATE.md`.

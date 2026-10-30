@@ -3,8 +3,8 @@
  *  The skills are the ones ARP wrote on testnet 13579 — the only chain with a skill catalogue. The
  *  facts themselves are GitHub's and skills.sh's and belong to no chain; only the list does.
  */
-import skills13579 from '../../../catalogue/skills-13579.json';
-import tools from '../../../catalogue/tools.json';
+import skills13579 from '../../../data/catalogue/skills-13579.json';
+import tools from '../../../data/catalogue/tools.json';
 
 export type Skill = { repo: string; skill: string };
 export type Repo = { slug: string; kind: string };
@@ -17,7 +17,7 @@ export const SKILLS: readonly Skill[] = (skills13579 as { skills: Skill[] }).ski
   }),
 );
 
-// `catalogue/tools.json` is hand-maintained with exactly these two fields per tool, among others.
+// `data/catalogue/tools.json` is hand-maintained with exactly these two fields per tool, among others.
 export const REPOS: readonly Repo[] = (
   tools as { tools: { url: string; kind: string }[] }
 ).tools.map((tool) => ({

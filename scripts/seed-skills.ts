@@ -63,7 +63,7 @@ import {writeFileSync} from "node:fs";
 
 import {formatEther, type Hex} from "viem";
 
-import installs from "../measurements/skills-installs-2026-10-29.json";
+import installs from "../data/measurements/skills-installs-2026-10-29.json";
 import {
     atomDataForUri,
     encodeCreateAtoms,
@@ -132,7 +132,7 @@ if (chainId === 1155) {
     process.exit(1);
 }
 
-const record = (await import(`../deployments/${chainId}.json`)) as {
+const record = (await import(`../data/deployments/${chainId}.json`)) as {
     default: {intuition: {multiVault: string}; chain: {rpcUrl: string}};
 };
 const multiVault = record.default.intuition.multiVault as Hex;

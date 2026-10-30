@@ -1,4 +1,4 @@
-/** Plan the atom for every tool in `catalogue/tools.json`, so the registry has something to read.
+/** Plan the atom for every tool in `data/catalogue/tools.json`, so the registry has something to read.
  *
  *      ARP_TARGET=testnet bun run scripts/seed-tool-catalogue.ts --json /tmp/seed.json
  *      bun run scripts/agent-send-plan.ts --chain 13579 --plan /tmp/seed.json --execute
@@ -31,7 +31,7 @@ import { writeFileSync } from 'node:fs';
 
 import { encodeFunctionData, formatEther, type Hex } from 'viem';
 
-import catalogue from '../catalogue/tools.json';
+import catalogue from '../data/catalogue/tools.json';
 import { atomDataForUri, multiVaultReads } from '../packages/protocol/src/declare/index.js';
 import { normaliseToolUrl, toolAtomUri } from '../packages/protocol/src/declare/tool-thing.js';
 
@@ -74,7 +74,7 @@ const limit = Number(arg('limit') ?? catalogue.tools.length);
 const batchSize = Number(arg('batch') ?? 10);
 const jsonPath = arg('json');
 
-const record = (await import(`../deployments/${chainId}.json`)) as {
+const record = (await import(`../data/deployments/${chainId}.json`)) as {
   default: { intuition: { multiVault: string }; chain: { rpcUrl: string } };
 };
 const multiVault = record.default.intuition.multiVault as Hex;

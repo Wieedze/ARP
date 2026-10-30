@@ -29,7 +29,7 @@ Three problems, and only the third is the one the question named:
 3. **The write path landed in `erc8004/`**, which is what prompted the question.
 
 The third is the one thing that was right, and it has a measured reason:
-`app/src/lib/deployments.ts:1` imports `deployments/13579.json` **at module load**, and ~12 sites in
+`app/src/lib/deployments.ts:1` imports `data/deployments/13579.json` **at module load**, and ~12 sites in
 `app/src` hardcode `chain: intuitionTestnet`. That binding is deliberate (`rules/portability.md`
 records why, and `intuition-mainnet.ts` is a separate module precisely so a mainnet read cannot be
 served from a testnet constant by accident). But it means anything built in `app/` inherits the

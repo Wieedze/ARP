@@ -77,7 +77,7 @@ const catalogues = new Map<number, CataloguedSkill[]>();
  * shape: no chain constant at module scope.
  *
  * `data.ts` holds every chain's record so a bundle carries them (ADR `0082`); the lookup is still
- * by the chain this server was started on. An absent chain is an empty catalogue and not an error. There is no `catalogue/skills-1155.json`
+ * by the chain this server was started on. An absent chain is an empty catalogue and not an error. There is no `data/catalogue/skills-1155.json`
  * because no skill was seeded on mainnet, and the honest consequence is that a mainnet server knows
  * no skills — which the refusal says in those words.
  */
