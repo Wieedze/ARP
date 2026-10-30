@@ -74,3 +74,20 @@ aussi les id agent », and « tout doit répondre au switch mainnet et testnet �
 ## Completion note
 
 2026-10-30, commit `353df6d`. `ui-reviewer` FAIL (8 findings, fixed); `task-verifier` FAIL (3, fixed), then PASS. Post-mortem `.claude/learning/25-the-activity-bar.md`, ADR `0091`. Amendment (every transaction, clickable; Activity in the nav): commit `63c1fbc`, `task-verifier` FAIL (4, fixed) then PASS.
+
+Further commits, gates and screenshots only, **no `task-verifier` run**:
+
+- `7300210`: the bar's tx links in one column at the right edge.
+- `f5d1c84`: /activity names who did what (`getTermLabels`), links off chain to on chain, and
+  follows the mainnet/testnet toggle.
+- `79ad7ea`: the Tools page, outside this task's scope but done in the same session. Sorts are
+  Most declared, plus Most installs (skills) or Most stars (repositories). Flat/By repo is removed.
+  The index sits beside the title. "Most declared", not "Most used", is the user's choice.
+
+## Open
+
+- `task-verifier` on `f5d1c84` and `79ad7ea`.
+- `/profile` into `/activity`, per task 35's split (`/activity` = what happened, positions
+  included). Not started; the user decides.
+- The commits from `353df6d` to `79ad7ea` are not pushed.
+
