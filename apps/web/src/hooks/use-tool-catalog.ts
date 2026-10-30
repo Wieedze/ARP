@@ -9,6 +9,7 @@ import {
 
 import {buildToolCatalogView, type ToolCatalogView} from "../services/tool-catalog";
 import {useChainChoice} from "../lib/chain-choice";
+import {sponsorAddressFor} from "../lib/sponsor";
 
 /**
  * The tool catalogue's read.
@@ -35,14 +36,15 @@ import {useChainChoice} from "../lib/chain-choice";
 export type ToolCatalogFetcher = (
     order: ToolListingOrder,
     curveId: number,
+    sponsor: string | null,
 ) => Promise<ToolListingPage>;
 
 export type RegisteredToolsFetcher = (curveId: number) => Promise<RegisteredToolsPage>;
 
 const fetchToolListing =
     (graphqlUrl: string): ToolCatalogFetcher =>
-    (order, curveId) =>
-        listTools({graphqlUrl, order, curveId});
+    (order, curveId, sponsor) =>
+        listTools({graphqlUrl, order, curveId, sponsor});
 
 const fetchRegisteredTools =
     (graphqlUrl: string): RegisteredToolsFetcher =>
@@ -63,24 +65,37 @@ const fetchRegisteredTools =
  * Without it, switching chains serves the other chain's rows from cache: testnet figures under a
  * mainnet heading, which is `rules/claims.md` §2 rendered as a page. The curve is in for the same
  * reason one paragraph down.
+ *
+ * **The sponsor is in the key** because it decides which deposits read as proven: a page read
+ * without one must not be served once one is configured.
  */
-export function toolCatalogQueryKey(chainId: number, order: ToolListingOrder, curveId: number) {
-    return ["intuition", chainId, "tool-catalog", order, curveId] as const;
+export function toolCatalogQueryKey(
+    chainId: number,
+    order: ToolListingOrder,
+    curveId: number,
+    sponsor: string | null = null,
+) {
+    return ["intuition", chainId, "tool-catalog", order, curveId, sponsor] as const;
 }
 
+/**
+ * `sponsor` rides with the chain because it belongs to one: ARP's sponsoring service is on testnet
+ * only, so the address is a property of where the read goes.
+ */
 export function toolCatalogQueryOptions(
-    chain: {chainId: number; graphqlUrl: string},
+    chain: {chainId: number; graphqlUrl: string; sponsor?: string | null},
     order: ToolListingOrder,
     curveId: number,
     fetchListing: ToolCatalogFetcher = fetchToolListing(chain.graphqlUrl),
     fetchRegistered: RegisteredToolsFetcher = fetchRegisteredTools(chain.graphqlUrl),
 ) {
+    const sponsor = chain.sponsor ?? null;
     return {
-        queryKey: toolCatalogQueryKey(chain.chainId, order, curveId),
+        queryKey: toolCatalogQueryKey(chain.chainId, order, curveId, sponsor),
         queryFn: async (): Promise<ToolCatalogView> => {
             // In parallel: two independent reads of the same endpoint, and neither needs the other.
             const [declared, registered] = await Promise.all([
-                fetchListing(order, curveId),
+                fetchListing(order, curveId, sponsor),
                 fetchRegistered(curveId),
             ]);
             return buildToolCatalogView(declared, registered);
@@ -96,5 +111,9 @@ export function toolCatalogQueryOptions(
 
 export function useToolCatalog(order: ToolListingOrder, curveId: number) {
     const chain = useChainChoice();
-    return useQuery(toolCatalogQueryOptions(chain, order, curveId));
+    // Vite types every `import.meta.env` key through an index signature, so the value arrives as
+    // `any`; annotating it here keeps that from crossing into a typed parameter.
+    const configured: string | undefined = import.meta.env.VITE_ARP_SPONSOR_ADDRESS;
+    const sponsor = sponsorAddressFor(chain.chainId, configured);
+    return useQuery(toolCatalogQueryOptions({...chain, sponsor}, order, curveId));
 }

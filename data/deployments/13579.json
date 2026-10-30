@@ -69,6 +69,12 @@
     }
   },
   "arp": {
+    "endpointBinding": {
+      "_note": "Task 39c, ADR 0094/0095. The two predicates the endpoint binding is written with: (agent identity atom) has endpoint (endpoint atom), and (pinned binding document) in context of (that triple). Both READ FROM THE GRAPH, neither minted by ARP: scripts/measure/endpoint-predicate.ts, run 2026-10-30, found `has endpoint` (Thing, 6 triples) and `in context of` (Thing, 29 triples) on testnet 13579, and none of `reachable at`, `is reachable at`, `served at`, `hosted at`. `in context of` differs from mainnet's 0x892054b0… (scripts/measure/nested-triples.ts), so never copy it across chains.",
+      "measuredAt": "2026-10-30",
+      "hasEndpoint": "0xa4488686eb3702e4e972a971ea008d6832a7f935b942366f1091566d1993a5f1",
+      "inContextOf": "0x61a88b9c372c0d164d2caf66947b67ed0fcb4c457178a271b6b3dc39fb1f8862"
+    },
     "_note": "Populated by scripts/deploy/deploy.sh. Addresses are EOA-nonce-derived (CREATE), so re-running with a new nonce will produce different addresses. To redeploy, increment the nonce assumption \u2014 there is no on-chain idempotency guard.",
     "deployer": "0xE596096F4176b682E300d73963e7B04B383C1AA1",
     "deployedAt": "2026-06-01T13:30:00Z",

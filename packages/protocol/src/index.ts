@@ -594,6 +594,62 @@ export {
 } from "./hire-receipt.js";
 
 /**
+ * The install handshake and the directory (task 39, ADR `0094` §1).
+ *
+ * The node is bound to its ERC-8004 token by a Sign-In with Ethereum message the token's owner
+ * signs, and the node key signs too (ADR `0095`). The binding is written to Intuition as a plan,
+ * and anyone re-checks it against the registry without ARP. A transfer of the token voids it. The
+ * directory returns the endpoint; the call then goes agent to agent and never through ARP.
+ */
+export {
+    asEndpointBinding,
+    bindingFromDocument,
+    bindingStatement,
+    createHandshakeVerifier,
+    DEFAULT_CHALLENGE_TTL_SECONDS,
+    DEFAULT_MAX_PENDING,
+    ENDPOINT_BINDING_VERSION,
+    endpointBindingDocument,
+    memoryChallengeStore,
+    nodeAddressOf,
+    normaliseEndpoint,
+    parseAgentRegistry,
+    validateHandshakeRequest,
+    verifyEndpointBinding,
+    type BindingVerdict,
+    type ChallengeStore,
+    type EndpointBinding,
+    type HandshakeAgent,
+    type HandshakeChain,
+    type HandshakeChallenge,
+    type HandshakeCompletion,
+    type HandshakeError,
+    type HandshakeRequest,
+    type HandshakeResult,
+    type HandshakeVerifier,
+    type HandshakeVerifierOptions,
+    type PendingChallenge,
+} from "./handshake.js";
+export {handshakeChain} from "./handshake-chain.js";
+export {handshakeFetchHandler, handshakeStatusOf} from "./handshake-http.js";
+export {
+    DEFAULT_MAX_PROOFS_PER_CLAIM,
+    getAgentEndpoints,
+    isSameAgent,
+    resolveAgentEndpoint,
+    type DirectoryConfig,
+    type DirectorySubject,
+    type EndpointProof,
+    type ListedEndpoint,
+} from "./directory.js";
+export {
+    AgentAtomMismatchError,
+    MissingAgentAtomError,
+    prepareEndpointBinding,
+    type EndpointBindingPlan,
+} from "./declare/endpoint-binding-plan.js";
+
+/**
  * ARP's sponsoring service, as plans and checks (ADR `0094` §2-§3, `docs/tasks/40`): the agent's
  * one-time `approve`, the request it signs, the proof that unlocks a sponsored deposit, the limits,
  * and the deposit with the agent as `receiver`. `apps/sponsor` holds the key and sends; nothing here

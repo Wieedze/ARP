@@ -2,7 +2,7 @@
 
 **Generated** 2026-10-30 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-32 entries, one per completed task. Written by `task-verifier` on a pass.
+34 entries, one per completed task. Written by `task-verifier` on a pass.
 
 | # | task | verdict | entry |
 | --- | --- | --- | --- |
@@ -35,6 +35,8 @@
 | [27](27-one-installer-33i-capture.md) | `docs/tasks/33-one-installer.md` §4 33i. Capture tooling only. Per-runtime adapters wait on real captures from the user. | PASS, on the second pass | One installer, 33i (first half): `arp hook --capture` and `arp init --capture` |
 | [28](28-one-installer-33d-claude-gemini.md) | `docs/tasks/33-one-installer.md` §33d (first part; Codex deferred) | PASS (third pass) | One installer, 33d first part: Claude Code plugin and Gemini extension |
 | [29](29-coherence-audit-28d.md) | `docs/tasks/28-coherence-audit.md` (entry 43) | PASS (second pass; the first draft's check did not print what the entry said) | Coherence audit, entry 43: `/agent` step 5 pointed at a deleted script |
+| [29](29-proven-and-declared.md) | `docs/tasks/42-proven-and-declared.md` | PASS (second pass) | Proven and declared: two figures, read from the sender of each deposit |
 | [30](30-the-activity-bar-verified.md) | `docs/tasks/36-the-activity-bar.md` (the "Review of `f5d1c84` and `79ad7ea`" section) | PASS | The activity bar, review of f5d1c84 and 79ad7ea (36v) |
 | [31](31-the-receipt-enforcer.md) | `docs/tasks/43-the-receipt-enforcer.md` | PASS | The receipt enforcer: "no signed receipt, no deposit", held by a contract |
+| [32](32-the-install-handshake.md) | `docs/tasks/39-the-install-handshake.md` | PASS (second pass; the first failed on ADR `0095` §7's griefing costs) | The install handshake: a rented tunnel, and the node bound to its ERC-8004 token |
 | [32](32-the-sponsoring-service.md) | `docs/tasks/40-the-sponsoring-service.md` (built with `docs/tasks/37` 37b, 37c) | PASS (second pass) | The sponsoring service: a proven deposit, paid by ARP, owned by the agent |

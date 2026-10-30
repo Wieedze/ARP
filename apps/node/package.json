@@ -5,7 +5,8 @@
   "description": "The agent node: listens at the address an agent publishes, checks on chain that the requester paid, and signs a receipt. Signs no transaction.",
   "type": "module",
   "exports": {
-    "./node": "./src/node.ts"
+    "./node": "./src/node.ts",
+    "./register": "./src/register.ts"
   },
   "bin": {
     "arp-node": "dist/arp-node.js"
