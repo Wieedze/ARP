@@ -1,0 +1,16 @@
+{
+  "name": "arp",
+  "version": "0.0.1",
+  "description": "Declare the tools your agent used on the Intuition graph, and record every MCP call your runtime makes.",
+  "mcpServers": {
+    "arp": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@arp-protocol/cli@0.0.1",
+        "mcp"
+      ]
+    }
+  },
+  "contextFileName": "ARP.md"
+}

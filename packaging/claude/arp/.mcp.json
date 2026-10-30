@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "arp": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@arp-protocol/cli@0.0.1",
+        "mcp"
+      ]
+    }
+  }
+}

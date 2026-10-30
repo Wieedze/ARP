@@ -1,0 +1,18 @@
+{
+  "name": "arp",
+  "version": "0.0.1",
+  "description": "Declare the tools your agent used on the Intuition graph, and record every MCP call your runtime makes.",
+  "homepage": "https://github.com/Wieedze/ARP",
+  "repository": "https://github.com/Wieedze/ARP",
+  "license": "MIT",
+  "author": {
+    "name": "ARP"
+  },
+  "keywords": [
+    "mcp",
+    "agent",
+    "reputation",
+    "erc-8004",
+    "intuition"
+  ]
+}

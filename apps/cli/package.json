@@ -17,7 +17,8 @@
     "build": "bun run --cwd ../../packages/protocol build && rm -rf dist && bun build src/cli.ts --outdir dist --target=node --format=esm --splitting --entry-naming '[name].js' --chunk-naming 'chunks/[name]-[hash].js' --external viem --external 'viem/*' --external ./hook.js --external @metamask/smart-accounts-kit --banner '#!/usr/bin/env node' && bun build ../hook/src/hook.ts --outfile dist/hook.js --target=node --format=esm --external viem --external 'viem/*'",
     "test": "bun run build && bun test",
     "lint": "bun run --cwd ../../packages/protocol build && tsc --noEmit -p tsconfig.json",
-    "check:node": "bun run build && bash scripts/check-node.sh"
+    "check:node": "bun run build && bash scripts/check-node.sh",
+    "packages": "bun scripts/packages.ts"
   },
   "dependencies": {
     "viem": "2.52.0"

@@ -1,0 +1,16 @@
+{
+  "name": "arp",
+  "owner": {
+    "name": "ARP"
+  },
+  "metadata": {
+    "description": "ARP: declare and record the tools your agent uses."
+  },
+  "plugins": [
+    {
+      "name": "arp",
+      "source": "./packaging/claude/arp",
+      "description": "Declare the tools your agent used on the Intuition graph, and record every MCP call your runtime makes."
+    }
+  ]
+}

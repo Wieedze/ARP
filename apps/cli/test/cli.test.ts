@@ -76,3 +76,13 @@ test('the bundle leaves the optional delegation kit out: it is a peer, not 1 MB 
     expect(text.includes('node_modules/.bun/@metamask+delegation-abis')).toBe(false);
   }
 });
+
+test('packaging/ is what `bun run packages` writes from this build: nothing stale is committed', () => {
+  const proc = Bun.spawnSync([
+    'bun',
+    join(import.meta.dir, '..', 'scripts', 'packages.ts'),
+    '--check',
+  ]);
+  expect(proc.stderr.toString()).toBe('');
+  expect(proc.exitCode).toBe(0);
+});
