@@ -27,7 +27,8 @@ import { UNSIGNED_CAVEAT, serialiseDeclarePlan } from '../serialise.js';
  *
  * Written by `apps/mcp/src/fetch-skill.ts`. Absent is the normal case and not an error: a
  * declaration with no receipt is exactly the declaration this project has always had, which is
- * ADR `0080`'s point — a receipt can only add.
+ * ADR `0080`'s point — a receipt can only add. This is the self-paid path; ADR `0094` makes a
+ * receipt the condition of a sponsored deposit, which is not built.
  *
  * The last receipt for an atom wins. Fetching the same tool twice is the same tool, and the later
  * fetch is the one whose digest matches what is on disk now.

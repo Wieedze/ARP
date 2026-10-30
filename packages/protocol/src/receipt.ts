@@ -25,6 +25,10 @@
  * make it. Distrust the signer and you ignore the receipt and have exactly what you had before.
  * That is why the key is uninteresting to attack and why nothing routes through it.
  *
+ * That holds for a declaration the agent pays for itself, which is this path. ADR `0094` makes a
+ * receipt the condition of an ARP-sponsored deposit and of the _proven_ label; that refusal belongs
+ * to the sponsoring service, which is not built.
+ *
  * ## Verification is the deliverable, and it has two halves
  *
  * A receipt nobody else can check is a log entry. So there are two checks, and both matter:

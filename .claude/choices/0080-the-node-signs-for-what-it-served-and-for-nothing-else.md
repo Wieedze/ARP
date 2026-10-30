@@ -1,6 +1,8 @@
 # 0080 — The node signs for what it served, and for nothing else
 
-**Status:** Accepted
+**Status:** Accepted. **Amended by ADR `0094`** (2026-10-30): constraint 2 holds for a declaration
+the agent pays for itself; a receipt becomes the condition of an ARP-sponsored deposit and of the
+_proven_ label.
 **Date:** 2026-10-29
 **Triggered by:** `docs/tasks/31` §6, which says this decision needs an ADR because it changes what ARP
 **is**. The user's correction that made it necessary, 2026-10-29: _« si tu passes par ARP pour avoir

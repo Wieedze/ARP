@@ -56,7 +56,9 @@ fact.
    correct rather than a gap to close. An agent that comes through ARP gets a corroborated
    declaration; one that does not has its own word. That is a difference in what a claim is worth,
    never a gate on who may make one.
-3. **It can only add.** A reader who distrusts the signer ignores the receipt and is back to the
+3. **It can only add** to a declaration the agent paid for itself. ADR `0094` (2026-10-30) makes a
+   receipt the condition of an ARP-sponsored deposit and of the _proven_ label, and a deposit
+   without one is indexed as _declared_. A reader who distrusts the signer ignores the receipt and is back to the
    declaration they already had. There is nothing to route through and no bottleneck to become.
 4. **Two parties only where the reader can tell the signer from the agent.** A node the operator
    installs generates its own key, so its address differs from that operator's agent key while one
