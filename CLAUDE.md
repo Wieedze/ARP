@@ -139,11 +139,10 @@ ARP/
 │   ├── 15_ROADMAP.md
 │   ├── 16_THE_AGENT_PAGE.md         (design brief — the agent page)
 │   ├── 17_THE_ATOM_PAGE.md          (design brief — the atom page's gravity field + curves)
-│   ├── 18_THE_MOTION_SPEC.md        **two files are numbered 18.** This one is answered — the
-│   │                                design came back as `docs/design/motion/MOTION-V2.md`,
-│   │                                which wins where they disagree (task 29, ADR `0070`)
-│   ├── 18_THE_DOMAIN_TREE.md        the other 18, added two days later onto a number already in
-│   │                                use. **Cite either by its full filename, never as `docs/18`**
+│   ├── 18_THE_MOTION_SPEC.md        answered — the design came back as
+│   │                                `docs/design/motion/MOTION-V2.md`, which wins where they
+│   │                                disagree (task 29, ADR `0070`). The domain tree shared this
+│   │                                number until 2026-10-30 and is now `25`
 │   ├── 19_THE_GAP_A_THIRD_PARTY_MEASURED.md
 │   ├── 20_WHAT_A_SKILL_LOOKS_LIKE_ON_CHAIN.md   (and the open classification question — whether a
 │   │                                skill matching no keyword gets a tag at all)
@@ -152,6 +151,7 @@ ARP/
 │   │                                every outbound connection, and what it does NOT protect)
 │   ├── 23_INSTALLING_ARP.md         (one installer per runtime, how ARP gets listed and used,
 │   │                                the practices it follows — research; the plan is docs/tasks/33)
+│   ├── 25_THE_DOMAIN_TREE.md        (was `18_THE_DOMAIN_TREE.md`; commits before 2026-10-30 cite it so)
 │   ├── tasks/                       atomic task files
 │   ├── design/                      design handoffs, one folder per thing designed — its
 │   │                                `README.md` says what each is and whether it is built:
