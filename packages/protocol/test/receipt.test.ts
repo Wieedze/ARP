@@ -223,6 +223,20 @@ describe("recoverContentRequester", () => {
 describe("corroborationOf", () => {
     const AGENT = CALLER;
 
+    it("compares against the receiver, so a sponsored deposit is not other-caller", async () => {
+        // ADR `0094` §3: the sponsoring service sends the deposit and the agent receives the shares.
+        // Compared against the sender, every sponsored declaration read as `other-caller`.
+        const SPONSOR = OTHER.address;
+        const verdict = await verifyContentReceipt(await sign(receipt()));
+        if (verdict.status !== "valid") throw new Error("fixture did not verify");
+        expect(corroborationOf(receipt(), verdict.signer, AGENT, [NODE.address]).status).toBe(
+            "second-party",
+        );
+        expect(corroborationOf(receipt(), verdict.signer, SPONSOR, [NODE.address]).status).toBe(
+            "other-caller",
+        );
+    });
+
     it("is unknown-signer by default, because addresses cannot tell a node's hand", async () => {
         // The finding that made this function wrong at first. In the shipped configuration the
         // node generates a fresh key, the caller signs with another, and the declaring address is

@@ -42,3 +42,46 @@ export async function resolveDeclarationSubject(params: {
     // graph. `asAgentIdentityAtom` is the guard that matters here, and it checks the CAIP-19.
     return asAgentIdentityAtom(identity.sourceHandle as Hex, caip19);
 }
+
+/** An identity atom when exactly one atom claims the identity, and why not otherwise. */
+export type StrictIdentityAtom =
+    | {status: "found"; atom: AgentIdentityAtom}
+    | {status: "none"}
+    | {status: "ambiguous"; reason: string};
+
+/**
+ * {@link resolveDeclarationSubject}, for a caller that spends on the answer.
+ *
+ * `same as` is permissionless: anyone can write `(X, same as, <caip19>)` for an atom X of their
+ * own, and the graph read is unordered, so with two claimants which one comes first is not a fact
+ * about the agent. The Intuition source records that case as `derived` provenance with the
+ * duplicates in its note. A declaration can still take the first atom and say so; a sponsored
+ * deposit cannot, because the edge it pays for would then be chosen by whoever wrote the second
+ * `same as`. So this answers `ambiguous` instead of picking.
+ */
+export async function resolveIdentityAtomStrict(params: {
+    agent: AgentRef;
+    source?: TrustSource;
+    graphqlUrl?: string;
+}): Promise<StrictIdentityAtom> {
+    const ref = resolveRef(params.agent);
+    const caip19 = toCaip19(ref);
+    const source =
+        params.source ??
+        intuitionSource(params.graphqlUrl === undefined ? {} : {graphqlUrl: params.graphqlUrl});
+    const identity = await source.resolveAgent(ref);
+    if (identity === null || identity.sourceHandle === null) return {status: "none"};
+    if (identity.provenance.kind !== "claim") {
+        return {
+            status: "ambiguous",
+            reason: identity.provenance.note ?? `${caip19} has no single identity atom`,
+        };
+    }
+    try {
+        // As above: `sourceHandle` is the graph's `term_id`; the guard checks the CAIP-19.
+        return {status: "found", atom: asAgentIdentityAtom(identity.sourceHandle as Hex, caip19)};
+    } catch (error) {
+        if (error instanceof NoAgentIdentityError) return {status: "none"};
+        throw error;
+    }
+}

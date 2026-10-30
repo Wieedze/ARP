@@ -57,7 +57,11 @@ export {
     type ToolAtomLookupConfig,
 } from "./tool-atom.js";
 
-export {resolveDeclarationSubject} from "./resolve-subject.js";
+export {
+    resolveDeclarationSubject,
+    resolveIdentityAtomStrict,
+    type StrictIdentityAtom,
+} from "./resolve-subject.js";
 
 export {
     SmartAccountsKitMissingError,

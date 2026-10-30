@@ -15,6 +15,7 @@
     "apps/cli",
     "apps/api",
     "apps/probe",
+    "apps/sponsor",
     "contracts",
     "packages/graphql",
     "packages/protocol"

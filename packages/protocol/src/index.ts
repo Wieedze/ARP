@@ -331,6 +331,8 @@ export {
     prepareIdentityAtom,
     prepareStakeOnUsed,
     resolveDeclarationSubject,
+    resolveIdentityAtomStrict,
+    type StrictIdentityAtom,
     SmartAccountsKitMissingError,
     toDelegatedCalls,
     toolAtomUri,
@@ -646,3 +648,82 @@ export {
     prepareEndpointBinding,
     type EndpointBindingPlan,
 } from "./declare/endpoint-binding-plan.js";
+
+/**
+ * ARP's sponsoring service, as plans and checks (ADR `0094` §2-§3, `docs/tasks/40`): the agent's
+ * one-time `approve`, the request it signs, the proof that unlocks a sponsored deposit, the limits,
+ * and the deposit with the agent as `receiver`. `apps/sponsor` holds the key and sends; nothing here
+ * does.
+ */
+export {
+    DEPOSIT_APPROVAL,
+    encodeApproveDeposit,
+    multiVaultApproveAbi,
+    planDepositApproval,
+} from "./sponsor/approval.js";
+export {
+    signSponsorRequest,
+    sponsorProofDigest,
+    sponsorRequestDomain,
+    sponsorRequestTypedData,
+    SPONSOR_REQUEST_TYPES,
+    SPONSOR_REQUEST_VERSION,
+    verifySponsorRequest,
+    type SignedSponsorRequest,
+    type SponsorRequest,
+    type SponsorRequestSigner,
+    type SponsorRequestVerdict,
+} from "./sponsor/request.js";
+export {
+    checkSponsorProof,
+    type AgentIdentityRef,
+    type AgentKeyReads,
+    type PaymentReads,
+    type ProofCheckContext,
+    type ProofVerdict,
+    type ProvenProof,
+    type SponsorProof,
+} from "./sponsor/proof.js";
+export {
+    ADR_0092_LIMITS,
+    checkDepositLimits,
+    checkGasLimits,
+    checkPublishLimits,
+    spentOnDay,
+    sponsoredPositions,
+    utcDay,
+    withdrawnBps,
+    type LimitDecision,
+    type SponsorLimits,
+    type SponsorRecord,
+} from "./sponsor/limits.js";
+export {
+    planSponsoredDeposit,
+    SPONSORED_MIN_SHARES_BPS,
+    SponsoredBelowMinDepositError,
+    SponsoredTermMissingError,
+    SponsoredZeroSharesError,
+    type SponsoredDepositPlan,
+} from "./sponsor/plan.js";
+
+/**
+ * The delegation register's write side (`docs/tasks/37` 37b): the pinned document, the signature
+ * check (EIP-1271 through an injected verifier), and the plan that indexes it the way Hourglass does.
+ */
+export {
+    caip10AccountUri,
+    DELEGATION_DOCUMENT_NAME,
+    DELEGATION_TYPES,
+    delegationDocument,
+    delegationHash,
+    delegationTypedData,
+    parseDelegation,
+    planPublishDelegation,
+    PredicateMissingError,
+    verifyDelegationSignature,
+    type DelegationDomain,
+    type DelegationJson,
+    type DelegationPredicates,
+    type PublishDelegationPlan,
+    type TypedDataVerifier,
+} from "./delegation/register.js";
