@@ -75,8 +75,11 @@ deposits that carry a valid proof. It never relays a request, and it never sees 
   permissionless, so an agent can always deposit its own TRUST with no proof. ARP indexes that as
   _declared_, never as _proven_. This is also what keeps ADR `0045`'s test passing.
 - **Now:** the sponsoring service checks the proof before it sends. **Later:** a caveat enforcer checks a signed
-  receipt passed in the redemption, so "no proof, no deposit" is held by a contract, the same pattern
-  as `DomainScopeEnforcer` and `TrustStakeCapEnforcer`.
+  receipt passed in the redemption, ~~so "no proof, no deposit" is held by a contract,~~ the same pattern
+  as `DomainScopeEnforcer` and `TrustStakeCapEnforcer`. **Corrected 2026-10-30** (ADR `0098`, user
+  decision _« ok option 2 »_): the enforcer holds "an accepted key signed the receipt", **not** "a
+  payment was made". It reads no transaction, so the sponsoring service, which reads the payment,
+  stays the real guard, and `TrustStakeCapEnforcer` bounds the abuse.
 - **MCP.** The hook's declaration stays weaker. How it combines with `apps/probe`'s reachability
   signal (used, unreachable, or a counter-triple) is left open, by the user's decision: _« ça reste
   à définir plus tard »_.
