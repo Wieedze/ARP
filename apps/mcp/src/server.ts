@@ -82,6 +82,7 @@ import { getAddress, type Address } from 'viem';
 import catalogue from '../../../catalogue/tools.json';
 import { TOOLS } from './tools.js';
 import { catalogueFor, receiptSigner, serveContentRequest } from './content.js';
+import { DEPLOYMENTS } from './data.js';
 
 const PORT = Number(process.env.PORT ?? 3002);
 
@@ -136,8 +137,8 @@ const PROTOCOL_VERSION = '2025-06-18';
  * Which chain this server plans against — config with a default, never a module constant.
  *
  * `rules/portability.md` rule 1, and rule 3 is why it matters here: a triple costs 0.1 TRUST on
- * 1155 and 0.001 on 13579. The addresses and URLs come from `deployments/<chainId>.json` at
- * startup, read rather than imported, so a mainnet server cannot be served a testnet constant.
+ * 1155 and 0.001 on 13579. The addresses and URLs come from `deployments/<chainId>.json`, looked
+ * up by this chain in `data.ts`, so a mainnet server cannot be served a testnet constant.
  */
 const TARGETS = { mainnet: 1155, testnet: 13579 } as const;
 const targetName = (process.env.ARP_TARGET ?? 'mainnet') as keyof typeof TARGETS;
@@ -152,9 +153,13 @@ type DeploymentRecord = {
   intuition?: { multiVault?: string };
 };
 
-const record = JSON.parse(
-  readFileSync(new URL(`../../../deployments/${chainId}.json`, import.meta.url), 'utf8'),
-) as DeploymentRecord;
+const recorded = DEPLOYMENTS[chainId];
+if (recorded === undefined) {
+  console.error(`no deployments/${chainId}.json`);
+  process.exit(1);
+}
+// The record is JSON this repo writes; `required` below checks each field before it is used.
+const record = recorded as DeploymentRecord;
 
 /**
  * The catalogue `arp_declare_session` resolves a runtime's names against, for THIS node's chain.

@@ -4,16 +4,26 @@
   "private": true,
   "description": "The ARP MCP server: reads the graph, prepares unsigned plans, serves a skill's file and signs a receipt for it. Signs no transaction.",
   "type": "module",
+  "bin": {
+    "arp-mcp": "dist/arp-server.js",
+    "arp-fetch-skill": "dist/arp-fetch-skill.js",
+    "arp-session-log": "dist/arp-session-log.js"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "scripts": {
     "start": "bun run --cwd ../../packages/protocol build && bun run src/server.ts",
+    "build": "bun run --cwd ../../packages/protocol build && bun build src/server.ts src/fetch-skill.ts src/session-log.ts --outdir dist --entry-naming 'arp-[name].js' --target=bun --external viem --external 'viem/*' --banner '#!/usr/bin/env bun'",
     "test": "bun run --cwd ../../packages/protocol build && vitest run",
     "lint": "bun run --cwd ../../packages/protocol build && tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
-    "@arp-protocol/core": "workspace:*",
     "viem": "2.52.0"
   },
   "devDependencies": {
+    "@arp-protocol/core": "workspace:*",
     "@types/bun": "^1.4.4",
     "typescript": "~6.0.2",
     "vitest": "^4.1.8"

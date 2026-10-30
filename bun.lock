@@ -18,10 +18,14 @@
     "apps/hook": {
       "name": "@arp/hook",
       "version": "0.0.1",
+      "bin": {
+        "arp-hook": "dist/arp-hook.js",
+      },
       "dependencies": {
-        "@arp-protocol/core": "workspace:*",
+        "viem": "2.52.0",
       },
       "devDependencies": {
+        "@arp-protocol/core": "workspace:*",
         "@types/bun": "^1.4.4",
         "typescript": "~6.0.2",
       },
@@ -29,11 +33,16 @@
     "apps/mcp": {
       "name": "@arp/mcp",
       "version": "0.0.1",
+      "bin": {
+        "arp-mcp": "dist/arp-server.js",
+        "arp-fetch-skill": "dist/arp-fetch-skill.js",
+        "arp-session-log": "dist/arp-session-log.js",
+      },
       "dependencies": {
-        "@arp-protocol/core": "workspace:*",
         "viem": "2.52.0",
       },
       "devDependencies": {
+        "@arp-protocol/core": "workspace:*",
         "@types/bun": "^1.4.4",
         "typescript": "~6.0.2",
         "vitest": "^4.1.8",

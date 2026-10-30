@@ -47,6 +47,8 @@ import { dirname } from 'node:path';
 import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts';
 import type { Address, Hex } from 'viem';
 
+import { SKILL_CATALOGUES } from './data.js';
+
 import {
   type ContentAnswer,
   contentIndexOf,
@@ -68,29 +70,21 @@ const catalogues = new Map<number, CataloguedSkill[]>();
 /**
  * The catalogue recorded for one chain, or an empty list.
  *
- * **Read at call time and keyed by chain, not imported.** It was `import skills from
- * '../../../catalogue/skills-13579.json'` at module scope in a process whose chain is configurable, so a
+ * **Keyed by chain, never a single chain's file.** It was `import skills from
+ * '../catalogue/skills-13579.json'` at module scope in a process whose chain is configurable, so a
  * node started on its default target — mainnet 1155 — served atom ids drawn from the testnet
  * record and stamped 1155 into every receipt's domain. `rules/portability.md` rule 1 names that
  * shape: no chain constant at module scope.
  *
- * An absent file is an empty catalogue and not an error. There is no `catalogue/skills-1155.json`
+ * `data.ts` holds every chain's record so a bundle carries them (ADR `0082`); the lookup is still
+ * by the chain this node was started on. An absent chain is an empty catalogue and not an error. There is no `catalogue/skills-1155.json`
  * because no skill was seeded on mainnet, and the honest consequence is that a mainnet node knows
  * no skills — which the refusal says in those words.
  */
 export function catalogueFor(chainId: number): CataloguedSkill[] {
   const held = catalogues.get(chainId);
   if (held !== undefined) return held;
-  let rows: CataloguedSkill[] = [];
-  try {
-    const raw = readFileSync(
-      new URL(`../../../catalogue/skills-${chainId}.json`, import.meta.url),
-      'utf8',
-    );
-    rows = (JSON.parse(raw) as { skills?: CataloguedSkill[] }).skills ?? [];
-  } catch {
-    rows = [];
-  }
+  const rows = SKILL_CATALOGUES[chainId]?.skills ?? [];
   catalogues.set(chainId, rows);
   return rows;
 }

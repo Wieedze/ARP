@@ -4,8 +4,16 @@
   "private": true,
   "description": "The agent node: listens at the address an agent publishes, checks on chain that the requester paid, and signs a receipt. Signs no transaction.",
   "type": "module",
+  "bin": {
+    "arp-node": "dist/arp-node.js"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "scripts": {
     "start": "bun run src/node.ts",
+    "build": "bun build src/node.ts --outdir dist --entry-naming 'arp-[name].js' --target=bun --external viem --external 'viem/*' --banner '#!/usr/bin/env bun'",
     "lint": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {

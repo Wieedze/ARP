@@ -46,6 +46,7 @@ coverage/
 
 # package build output (each package also ignores its own `dist/`)
 packages/*/dist/
+apps/*/dist/
 
 # Raw paste of the Intuition partner guide; docs/07 is the vendored copy that counts.
 integration8004.txt

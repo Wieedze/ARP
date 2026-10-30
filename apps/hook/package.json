@@ -4,15 +4,24 @@
   "private": true,
   "description": "A runtime PostToolUse hook: records what a session invoked, as the runtime sees it, to .arp/session.jsonl.",
   "type": "module",
+  "bin": {
+    "arp-hook": "dist/arp-hook.js"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "scripts": {
+    "build": "bun run --cwd ../../packages/protocol build && bun build src/hook.ts --outdir dist --entry-naming 'arp-[name].js' --target=bun --external viem --external 'viem/*' --banner '#!/usr/bin/env bun'",
     "lint": "bun run --cwd ../../packages/protocol build && tsc --noEmit -p tsconfig.json"
   },
+  "dependencies": {
+    "viem": "2.52.0"
+  },
   "devDependencies": {
+    "@arp-protocol/core": "workspace:*",
     "@types/bun": "^1.4.4",
     "typescript": "~6.0.2"
   },
-  "license": "MIT",
-  "dependencies": {
-    "@arp-protocol/core": "workspace:*"
-  }
+  "license": "MIT"
 }
