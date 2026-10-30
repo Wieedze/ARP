@@ -475,8 +475,9 @@ export function timelineRows(
         const name = context.names.get(id.toLowerCase());
         return invoked.get(id.toLowerCase()) ?? (name?.kind === "atom" ? name.label : shortId(id));
     };
+    // The invocation a transaction answers: the last call of the same atom at or before it.
     const lastInvocation = (ref: string, before: string) => {
-        let found: AgentEvent | undefined;
+        let found: Extract<AgentEvent, {source: "session"}> | undefined;
         for (const event of onThisChain) {
             if (
                 event.source !== "session" ||
@@ -486,9 +487,7 @@ export function timelineRows(
                 continue;
             found = event;
         }
-        return found === undefined || found.source !== "session"
-            ? null
-            : `invoked ${found.name} ${found.at.slice(11, 19)}`;
+        return found;
     };
 
     // Triple id → its object, so a deposit can name the tool it stands behind and its cause.
@@ -505,27 +504,36 @@ export function timelineRows(
         });
     }
 
-    const traced = traceInvocations(onThisChain, context.tripleIdOf);
+    // One join, read both ways: a transaction names the invocation it answers, and that invocation
+    // — not every earlier or later call of the same skill — lists the transaction. A reverted call
+    // declared and staked nothing, so it is not listed as a consequence.
+    const objectOfSent = (event: Extract<AgentEvent, {source: "sent"}>) =>
+        event.decoded.fn === "createTriples"
+            ? event.decoded.objects[0]
+            : event.decoded.fn === "deposit"
+              ? objectOfTriple.get(event.decoded.termId.toLowerCase())
+              : undefined;
+    const causeOf = new Map<string, Extract<AgentEvent, {source: "session"}>>();
+    const consequencesOf = new Map<string, TimelineRow["consequences"]>();
+    for (const event of onThisChain) {
+        if (event.source !== "sent") continue;
+        const object = objectOfSent(event);
+        const cause = object === undefined ? undefined : lastInvocation(object, event.at);
+        if (cause === undefined) continue;
+        causeOf.set(agentEventKey(event), cause);
+        if (event.status === "reverted") continue;
+        const label: "declared" | "staked" =
+            event.decoded.fn === "createTriples" ? "declared" : "staked";
+        const causeKey = agentEventKey(cause);
+        const list = consequencesOf.get(causeKey) ?? [];
+        list.push({label, chainId: event.chainId, hash: event.hash});
+        consequencesOf.set(causeKey, list);
+    }
+
     const rows: TimelineRow[] = onThisChain.map((event): TimelineRow => {
         const key = agentEventKey(event);
         switch (event.source) {
             case "session": {
-                const trace = traced.find(
-                    (row) =>
-                        row.kind === event.kind &&
-                        (row.ref ?? row.name) === (event.ref ?? event.name),
-                );
-                const consequences: TimelineRow["consequences"] = [];
-                if (trace?.declaration !== null && trace?.declaration !== undefined) {
-                    consequences.push({
-                        label: "declared",
-                        chainId: trace.declaration.chainId,
-                        hash: trace.declaration.hash,
-                    });
-                }
-                for (const stake of trace?.stakes ?? []) {
-                    consequences.push({label: "staked", chainId: stake.chainId, hash: stake.hash});
-                }
                 const outcome =
                     event.outcome !== null && event.outcome !== "ok" ? ` · ${event.outcome}` : "";
                 return {
@@ -535,7 +543,7 @@ export function timelineRows(
                     off: `invoked ${event.kind} ${event.name}${outcome}`,
                     on: null,
                     tx: null,
-                    consequences,
+                    consequences: consequencesOf.get(key) ?? [],
                     lane: "off",
                 };
             }
@@ -558,12 +566,10 @@ export function timelineRows(
                           ? "reverted · "
                           : "";
                 let on: string;
-                let cause: string | null = null;
                 if (event.decoded.fn === "createTriples") {
                     const object = event.decoded.objects[0];
                     on =
                         object === undefined ? "declares" : `declares uses → ${objectName(object)}`;
-                    if (object !== undefined) cause = lastInvocation(object, event.at);
                 } else if (event.decoded.fn === "deposit") {
                     const object = objectOfTriple.get(event.decoded.termId.toLowerCase());
                     const name = context.names.get(event.decoded.termId.toLowerCase());
@@ -574,15 +580,18 @@ export function timelineRows(
                               ? `${name.predicate} → ${name.object}`
                               : shortId(event.decoded.termId);
                     on = `stakes on ${claim}`;
-                    if (object !== undefined) cause = lastInvocation(object, event.at);
                 } else {
                     on = event.kind;
                 }
+                const cause = causeOf.get(key);
                 return {
                     key,
                     at: event.at,
                     who: who(event.signer),
-                    off: cause === null ? null : `← ${cause}`,
+                    off:
+                        cause === undefined
+                            ? null
+                            : `← invoked ${cause.name} ${cause.at.slice(11, 19)}`,
                     on: `${dry}${on}`,
                     tx: event.hash === null ? null : {chainId: event.chainId, hash: event.hash},
                     consequences: [],
