@@ -35,7 +35,9 @@
 ## Evidence ladder
 
 Serves the **staked** tier made legible: the page now lists under an invocation only declarations
-and deposits that happened on chain, so it no longer asserts a declaration a dry run never made.
+and deposits the signer reported landed, so it no longer asserts a declaration a dry run never made.
+The status is what the signer reported, not a read of the chain; the explorer link on each hash is
+how a reader checks it. (It said "that happened on chain" until 2026-10-30.)
 
 ## Suggestions for future tasks
 
