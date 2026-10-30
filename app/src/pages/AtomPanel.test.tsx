@@ -649,3 +649,66 @@ describe("the two writes", () => {
         }
     });
 });
+
+describe("a skill's page", () => {
+    it("opens the skill page for a skill atom, with the line that installs it", async () => {
+        // A repository the path table does not know, so no SKILL.md is fetched and the page says
+        // it found none rather than reading somebody else's file.
+        read.mockResolvedValue(
+            standing({
+                label: "github.com/example/pack?skill=render-video",
+                url: "https://github.com/example/pack?skill=render-video",
+            }),
+        );
+        renderAt();
+        expect(await screen.findByRole("heading", {name: "render-video", level: 1})).toBeTruthy();
+        expect(screen.getByText("npx skills add example/pack --skill render-video")).toBeTruthy();
+        expect(screen.getByRole("heading", {name: "Relations"})).toBeTruthy();
+        expect(screen.getByRole("heading", {name: "On the record"})).toBeTruthy();
+        expect(await screen.findByText(/No SKILL\.md found/)).toBeTruthy();
+    });
+
+    it("keeps the generic page for an atom that is not a skill", async () => {
+        read.mockResolvedValue(standing());
+        renderAt();
+        await screen.findByRole("heading", {name: "slither", level: 1});
+        expect(screen.queryByText(/npx skills add/)).toBeNull();
+    });
+});
+
+describe("a repository's page", () => {
+    it("opens the repository page, with its skills listed and not repeated under Relations", async () => {
+        read.mockResolvedValue(
+            standing({
+                label: "github.com/example/pack",
+                url: "https://github.com/example/pack",
+                groups: [
+                    {
+                        predicate: {atomId: "0xp-source", label: "source"},
+                        edges: [
+                            {
+                                tripleId: "0xs-edge",
+                                subject: {
+                                    atomId: "0xskill",
+                                    label: "github.com/example/pack?skill=render-video",
+                                    type: "Thing",
+                                },
+                                support: side(0n, 0),
+                                oppose: side(0n, null),
+                            },
+                        ],
+                        assets: 0n,
+                        positions: 0,
+                    },
+                ],
+                edgeCount: 1,
+            }),
+        );
+        renderAt();
+        expect(await screen.findByText("npx skills add example/pack")).toBeTruthy();
+        expect(screen.getByRole("heading", {name: "1 skill"})).toBeTruthy();
+        expect(screen.getByRole("link", {name: "render-video"})).toBeTruthy();
+        // The skills are the `source` claims, so Relations has nothing left to show.
+        expect(screen.getByText(/Nothing points at example\/pack yet/)).toBeTruthy();
+    });
+});

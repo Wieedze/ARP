@@ -197,13 +197,19 @@ export function chainAddressExplorerUrl(chainId: number, address: string): strin
 }
 
 /**
- * An Intuition term, on Intuition's own portal.
+ * An atom or a triple on Intuition's portal, **on the chain it lives on**.
  *
- * `portal.intuition.systems/explore/atom/{termId}`. Probed 2026-10-27 rather than assumed: that
- * path answers while `/app/atom/{termId}` 404s, so the server routes the one and not the other.
+ * It replaced a helper that always named mainnet, where a testnet term is a page about nothing.
+ * Probed 2026-10-27: `/explore/atom/{id}` answers while `/app/atom/{id}` 404s. The testnet portal is `testnet.portal.intuition.systems`, same routes. Probed 2026-10-29:
+ * `/explore/triple/{id}` answers 200 on both while an unknown route answers 404.
  */
-export function intuitionAtomUrl(termId: string): string {
-    return `https://portal.intuition.systems/explore/atom/${termId}`;
+export function intuitionPortalUrl(
+    kind: "atom" | "triple",
+    termId: string,
+    isMainnet: boolean,
+): string {
+    const host = isMainnet ? "portal.intuition.systems" : "testnet.portal.intuition.systems";
+    return `https://${host}/explore/${kind}/${termId}`;
 }
 
 /**

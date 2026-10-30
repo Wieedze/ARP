@@ -1,9 +1,10 @@
+import {useChainChoice} from "../../lib/chain-choice";
 import {sigilModulesOf} from "../../services/agent-sigil";
 import type {TrustPanelView} from "../../services/agent-trust";
 import {
     agentRegistryExplorerUrl,
     chainAddressExplorerUrl,
-    intuitionAtomUrl,
+    intuitionPortalUrl,
     truncateMiddle,
 } from "../../services/trust-format";
 import {Hint} from "../brand/Hint";
@@ -145,6 +146,8 @@ export function AgentSigil({
 }
 
 export function AgentIdentityPanel({view}: {view: TrustPanelView}) {
+    // The atom lives on the graph this page reads, so its portal link follows the chain toggle.
+    const chain = useChainChoice();
     const explorerUrl = agentRegistryExplorerUrl(view.chainId, view.registry, view.tokenId);
     const ownerUrl = view.owner === null ? null : chainAddressExplorerUrl(view.chainId, view.owner);
 
@@ -194,7 +197,7 @@ export function AgentIdentityPanel({view}: {view: TrustPanelView}) {
                         </span>
                     ) : (
                         <a
-                            href={intuitionAtomUrl(view.atomTermId)}
+                            href={intuitionPortalUrl("atom", view.atomTermId, chain.isMainnet)}
                             target="_blank"
                             rel="noreferrer"
                         >

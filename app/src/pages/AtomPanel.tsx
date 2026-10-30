@@ -18,6 +18,9 @@ import {useAtomStanding, isAtomId} from "../hooks/use-atom-standing";
 import {useChainChoice} from "../lib/chain-choice";
 import {type AtomView} from "../services/atom-standing-view";
 import {truncateMiddle} from "../services/trust-format";
+import {parseToolLabel} from "../lib/tool-label";
+import {RepoPage} from "./RepoPage";
+import {SkillPage} from "./SkillPage";
 
 /**
  * `/atom/:atomId` — one atom, its own market, and everything that points at it.
@@ -135,6 +138,22 @@ export function AtomPanel() {
 
     const view = query.data;
 
+    // A skill and a repository have their own pages (`arp-pages/`); every other atom keeps this one.
+    const kind = view.exists && view.label !== null ? parseToolLabel(view.label).kind : null;
+    if (kind === "repo") {
+        return <RepoPage view={view} atomId={atomId as Hex} modules={modules.data ?? {}} />;
+    }
+    if (kind === "skill") {
+        return (
+            <SkillPage
+                view={view}
+                atomId={atomId as Hex}
+                modules={modules.data ?? {}}
+                onDeclared={() => void query.refetch()}
+            />
+        );
+    }
+
     return (
         <section className="mt-10">
             {/* **The title spans the page; it is not metadata.**
@@ -158,14 +177,30 @@ export function AtomPanel() {
             {/* The repository, under the name rather than inside it. A skill's atom label is its
                 whole URL — at display size `github.com/leonxlnx/taste-skill?skill=gpt-taste` runs
                 across two lines and buries the six characters a reader came for. */}
-            {view.subtitle === null ? null : (
-                <p className="mt-2 font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
-                    {view.subtitle}
+            {view.subtitle === null && view.browseUrl === null ? null : (
+                <p className="mt-2 flex flex-wrap items-baseline gap-x-4 font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
+                    {view.subtitle === null ? null : <span>{view.subtitle}</span>}
+                    {/* Straight to the code, the user's ask (2026-10-29). The platform is named
+                        on the link and nowhere else: it is where the link goes, not part of the
+                        name. */}
+                    {view.browseUrl === null ? null : (
+                        <a
+                            href={view.browseUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className={linkClass}
+                        >
+                            {`${new URL(view.browseUrl).hostname} ↗`}
+                        </a>
+                    )}
                 </p>
             )}
 
             <div className="mt-10 grid gap-x-12 gap-y-10 md:grid-cols-[18rem_1fr] md:items-start">
-                <aside>
+                {/* `[&>:first-child]:mt-0`: every block here opens with `mt-6` and a rule, so the
+                    first one sat 24px below the main column's first rule. Whichever block comes
+                    first, its rule is level with the verdict's. */}
+                <aside className="[&>:first-child]:mt-0">
                     {/* The glyph sits where an agent's does on its own panel: at the top of the
                         identity column, above the facts. It is the sigil inverted — a dot per
                         agent that declared this — and it costs no query, because those agents are
@@ -201,15 +236,18 @@ export function AtomPanel() {
 
                             `atomId` is the route param this component already narrowed with
                             `isAtomId`, the 32-byte hex test. */}
-                            <div className="mb-10 border-b border-[color:var(--color-rule-strong)] pb-10">
-                                {/* Only for an agent or a tool — the user's scope for the market,
+                            {/* Only drawn when there is something in it: with neither control
+                                offered, the rule and its padding were an empty band on the page. */}
+                            {!view.offersMarket ? null : (
+                                <div className="mb-10 border-b border-[color:var(--color-rule-strong)] pb-10">
+                                    {/* Only for an agent or a tool — the user's scope for the market,
                                 _« une bourse d'agents et d'outils »_, not every node in a
                                 permissionless graph. ADR `0072`: two tests, because no single field
                                 carries the distinction and the first version used the url alone and
                                 hid the market on an actual tool. */}
-                                {!view.offersMarket ? null : (
-                                    <section>
-                                        {/* **No heading above the card.** It said "Take a
+                                    {!view.offersMarket ? null : (
+                                        <section>
+                                            {/* **No heading above the card.** It said "Take a
                                         position, or exit" while the card's own control says "Take
                                         a position" an inch below — the same instruction twice,
                                         which is what the user cut. The card's control heading is
@@ -220,19 +258,19 @@ export function AtomPanel() {
                                         One card. The value line, the figures, the support list and
                                         the two controls are one thing a reader acts on; carding
                                         each separately read as unrelated blocks. */}
-                                        <div className={actionCardClass}>
-                                            <AtomMarket
-                                                atomTermId={atomId as Hex}
-                                                name={view.title}
-                                                nameIsId={view.titleIsId}
-                                                backHeading="Take a position"
-                                                heading={null}
-                                            />
-                                        </div>
-                                    </section>
-                                )}
+                                            <div className={actionCardClass}>
+                                                <AtomMarket
+                                                    atomTermId={atomId as Hex}
+                                                    name={view.title}
+                                                    nameIsId={view.titleIsId}
+                                                    backHeading="Take a position"
+                                                    heading={null}
+                                                />
+                                            </div>
+                                        </section>
+                                    )}
 
-                                {/* **Only where using it means something.** `/atom/:id` serves
+                                    {/* **Only where using it means something.** `/atom/:id` serves
                                     every atom in a permissionless graph, so this form offered
                                     "declare that your agent used this" on a domain, a keyword and
                                     a person's name. The user, 2026-10-29: _« déclarer que notre
@@ -245,16 +283,17 @@ export function AtomPanel() {
                                     two tests either of which is enough, because no single field
                                     separates a thing from a word — `Sanctioned Address` and the
                                     skill `docx` are both `Thing` on mainnet. */}
-                                {!view.offersMarket ? null : (
-                                    <div className="mt-10 max-w-[48rem]">
-                                        <DeclareUse
-                                            object={atomId as Hex}
-                                            objectLabel={view.title}
-                                            onDeclared={() => void query.refetch()}
-                                        />
-                                    </div>
-                                )}
-                            </div>
+                                    {!view.offersMarket ? null : (
+                                        <div className="mt-10 max-w-[48rem]">
+                                            <DeclareUse
+                                                object={atomId as Hex}
+                                                objectLabel={view.title}
+                                                onDeclared={() => void query.refetch()}
+                                            />
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                             {view.groups.length === 0 ? (
                                 <Empty atomId={view.atomId} />
                             ) : (
@@ -304,13 +343,18 @@ export function AtomPanel() {
  * skill atom carries its URL and nothing else (ADR `0054`).
  */
 function Describes({view}: {view: AtomView}) {
-    const {factFor} = useSkillFacts();
-    const fact = factFor(view.label);
-    if (fact === null || fact.description.length === 0) return null;
+    const {factFor, repoFactFor} = useSkillFacts();
+    // A skill's sentence comes from skills.sh, a repository's from its owner on GitHub.
+    const description = factFor(view.label)?.description || repoFactFor(view.label)?.description;
+    if (description === undefined || description === null || description.length === 0) return null;
     return (
-        <p className="mb-10 max-w-[62ch] border-b border-[color:var(--color-rule)] pb-8 text-[length:18px] leading-[1.5] text-[color:var(--color-silver)]">
-            {fact.description}
-        </p>
+        // The rule spans the column like every other rule on the page; only the text is held to a
+        // reading measure. On the paragraph itself the rule stopped at 62ch, short of the rest.
+        <div className="mb-10 border-b border-[color:var(--color-rule)] pb-8">
+            <p className="max-w-[62ch] text-[length:18px] leading-[1.5] text-[color:var(--color-silver)]">
+                {description}
+            </p>
+        </div>
     );
 }
 
@@ -348,9 +392,12 @@ function Signals({view}: {view: AtomView}) {
                 </Term>
             )}
             {repo === null ? null : (
-                <Term label="Its repository">
+                // "GitHub stars", not "Its repository": the user found the old label meaningless
+                // (2026-10-29). On a skill's page they are its repository's, which the link under
+                // the title already names.
+                <Term label="GitHub stars">
                     <span className="block font-mono tabular-nums text-[color:var(--color-steel)]">
-                        {`${repo.stars.toLocaleString("en-US")} stars`}
+                        {repo.stars.toLocaleString("en-US")}
                     </span>
                 </Term>
             )}
@@ -404,9 +451,7 @@ function Verdict({view}: {view: AtomView}) {
             <span className="flex items-baseline gap-2.5">
                 <span
                     className={`h-[7px] w-[7px] rounded-full ${
-                        dead
-                            ? "bg-[color:var(--color-alarm)]"
-                            : "bg-[color:var(--color-accent)]"
+                        dead ? "bg-[color:var(--color-alarm)]" : "bg-[color:var(--color-accent)]"
                     }`}
                 />
                 <span className="font-mono text-[length:var(--text-label)] uppercase tracking-[0.08em]">

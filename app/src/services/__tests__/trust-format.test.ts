@@ -4,6 +4,7 @@ import {parseEther} from "viem";
 import {
     agentRegistryExplorerUrl,
     describeFetchError,
+    intuitionPortalUrl,
     describeFreshness,
     describeSignature,
     formatDuration,
@@ -193,5 +194,16 @@ describe("relativeDay", () => {
     it("says it does not know rather than printing NaN", () => {
         expect(relativeDay("not a date", now)).toBe("at an unknown time");
         expect(relativeDay("", now)).toBe("at an unknown time");
+    });
+});
+
+describe("intuitionPortalUrl", () => {
+    it("opens a term on the portal of the chain it lives on", () => {
+        expect(intuitionPortalUrl("atom", "0xab", false)).toBe(
+            "https://testnet.portal.intuition.systems/explore/atom/0xab",
+        );
+        expect(intuitionPortalUrl("triple", "0xcd", true)).toBe(
+            "https://portal.intuition.systems/explore/triple/0xcd",
+        );
     });
 });

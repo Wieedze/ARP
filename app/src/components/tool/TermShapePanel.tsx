@@ -1,5 +1,6 @@
 import {Sparkline} from "../Sparkline";
 import {useChainChoice} from "../../lib/chain-choice";
+import {formatDay} from "../../lib/atom-page";
 import {formatTrust} from "../../services/trust-format";
 import type {TermShapeView} from "../../services/term-shape-view";
 import type {TermActivityBucket} from "@arp-protocol/core";
@@ -72,27 +73,95 @@ export function TermShapePanel({
                 )}
             </dl>
 
-            {curve.length < 2 ? null : (
-                <div className="mt-6">
-                    {/* "Activity", not "deposits": a bucket counts **signals**, which are deposits
-                        and redemptions both, and a redemption's delta is positive — so this is
-                        TRUST moved in either direction. Probed on mainnet 2026-10-21; the package's
-                        own docstring had it as shares and this label had it as deposits, and both
-                        were wrong in different ways. */}
-                    <p className="text-[length:var(--text-label)] uppercase tracking-wider text-[color:var(--color-steel)]">
-                        Weekly activity · {curveLabel} · {symbol} moved, in or out
+            {/* **From one bucket, not two.** The volume line needs two points, so a market
+                whose every signal landed in one week showed a position and no chart at all (user,
+                2026-10-29: _« 1 support mais 0 curve affichée ? »_). The signal bars read at
+                one bucket; the line joins them from two. */}
+            <div className="mt-6">
+                <p className="text-[length:var(--text-label)] uppercase tracking-wider text-[color:var(--color-steel)]">
+                    {/* Said in words: "Weekly activity · Linear" over a bare `2026-10-26` read as a
+                        code and a date nobody chose (user, 2026-10-29). The curve stays named, since
+                        every figure here is read on one (`rules/claims.md` §2). */}
+                    Deposits and redemptions, per week · {curveLabel} curve
+                </p>
+                {curve.length === 0 ? (
+                    <p className="mt-2 font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
+                        Nothing has moved on this market yet.
                     </p>
-                    <div className="mt-2">
-                        <Sparkline
-                            points={curve.map((bucket) => ({
-                                label: bucket.bucket.slice(0, 10),
-                                value: bucket.volume,
-                            }))}
-                            describe={(value) => `${formatTrust(value)} ${symbol}`}
-                        />
-                    </div>
-                </div>
-            )}
+                ) : (
+                    <>
+                        <SignalBars curve={curve} />
+                        {curve.length < 2 ? null : (
+                            <div className="mt-4">
+                                {/* "Activity", not "deposits": a bucket counts **signals**, which
+                                    are deposits and redemptions both, and a redemption's delta is
+                                    positive — so this is TRUST moved in either direction. Probed
+                                    on mainnet 2026-10-21. */}
+                                <p className="text-[length:var(--text-label)] uppercase tracking-wider text-[color:var(--color-steel)]">
+                                    {symbol} moved, in or out
+                                </p>
+                                <div className="mt-2">
+                                    <Sparkline
+                                        points={curve.map((bucket) => ({
+                                            label: bucket.bucket.slice(0, 10),
+                                            value: bucket.volume,
+                                        }))}
+                                        describe={(value) => `${formatTrust(value)} ${symbol}`}
+                                    />
+                                </div>
+                            </div>
+                        )}
+                    </>
+                )}
+            </div>
+        </div>
+    );
+}
+
+/**
+ * Signals per bucket, as bars: deposits and redemptions counted, the newest bucket in paper.
+ *
+ * Divs, not SVG: a bar is a box with a height, and the summary for a screen reader is one
+ * sentence on the group. The tallest bucket fills the box; the rest scale to it.
+ */
+function SignalBars({curve}: {curve: readonly TermActivityBucket[]}) {
+    const max = curve.reduce((top, bucket) => Math.max(top, bucket.signals), 0);
+    const first = curve[0];
+    const last = curve[curve.length - 1];
+    const total = curve.reduce((sum, bucket) => sum + bucket.signals, 0);
+    return (
+        <div className="mt-2">
+            <div
+                role="img"
+                aria-label={`${total} ${total === 1 ? "move" : "moves"} over ${curve.length} ${curve.length === 1 ? "week" : "weeks"}`}
+                className="flex h-12 items-end gap-1"
+            >
+                {curve.map((bucket, index) => (
+                    <span
+                        key={bucket.bucket}
+                        title={`${bucket.bucket.slice(0, 10)} · ${bucket.signals}`}
+                        className={`block w-full max-w-6 ${
+                            index === curve.length - 1
+                                ? "bg-[color:var(--color-fg)]"
+                                : "bg-[color:var(--color-steel)]"
+                        }`}
+                        style={{
+                            height: `${max === 0 ? 0 : Math.max(4, (bucket.signals / max) * 100)}%`,
+                        }}
+                    />
+                ))}
+            </div>
+            <div className="mt-1 flex justify-between font-mono text-[length:var(--text-label)] text-[color:var(--color-steel)]">
+                <span>
+                    {first === undefined ? null : `week of ${formatDay(first.bucket.slice(0, 10))}`}
+                </span>
+                <span>
+                    {total} {total === 1 ? "move" : "moves"}
+                    {curve.length > 1 && last !== undefined
+                        ? ` · to week of ${formatDay(last.bucket.slice(0, 10))}`
+                        : ""}
+                </span>
+            </div>
         </div>
     );
 }
