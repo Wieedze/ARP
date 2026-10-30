@@ -39,7 +39,11 @@ faucet.
   the declarer. Change it to compare against the `receiver`, or every sponsored declaration reads
   as `other-caller`.
 
-### 40d — Limits and the withdrawal rule
+### 40d — Limits (and, for mainnet only, the withdrawal rule)
+
+**Testnet: everything is sponsored** (user decision, 2026-10-30, ADR `0094` status line). Build the
+limits below; the withdrawal rule is not built on testnet.
+
 
 - ADR `0092`'s limits: 2 per delegator per day, about 1 tTRUST a day overall, registered ERC-8004
   agents only. Configuration, printed in the service's info route.
