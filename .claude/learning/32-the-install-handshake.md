@@ -2,8 +2,8 @@
 
 **Task:** `docs/tasks/39-the-install-handshake.md`
 **Completed:** 2026-10-30
-**Commit:** `4111c28` on `feat/39-install-handshake` (not merged)
-**Verifier verdict:** PASS (second pass; the first failed on ADR `0095` §7's griefing costs)
+**Commit:** `3f96c13` on `feat/39-install-handshake` (not merged; `dev` merged in at `2035344`)
+**Verifier verdict:** PASS (second pass; the first failed on ADR `0095` §7's griefing costs). Re-verified PASS 2026-10-30 after the write-window fix, gates and `nested-triple-batch.ts` re-run.
 
 ## What shipped
 
@@ -20,13 +20,14 @@
 - The read path was hijackable before review: both triples are permissionless, so any token owner could hang a genuine binding for their own token under a victim's atom. Fixed by naming the agent on the read (ADR `0095` §7). Latent: no directory was hosted.
 - The first ADR draft priced the surviving griefs on atom fees and on a precondition that did not exist. The real floor is triple fees only, because the read checks neither the claim's object nor, before `limit`, a context's subject.
 - `docs/22`'s quoted `scripts/measure/node-outbound.ts` figures (9 call sites, 6 outbound) no longer match a run (11, 7). None of the measured modules changed on this branch, so the drift came from `dev`, not from this task.
+- Measured before batching: one `createTriples` call can create a triple and a second triple naming it, inner first; reversed or alone, it reverts. `eth_call` only, testnet 13579 (`scripts/measure/nested-triple-batch.ts`, 2026-10-30).
 
 ## Decisions made
 
 - **Node key signs the challenge too, and is the receipt key and payment address** — proof of possession; one key. ADR: `.claude/choices/0095-the-handshake-binds-a-node-key-both-keys-sign.md`.
 - **Predicates `has endpoint` / `in context of` reused from testnet** — `reachable at` does not exist there.
 - **Queries kept in `packages/protocol/src/directory.ts`** — task 42 edits `@arp-protocol/graphql` in the same wave.
-- **The two-transaction write window is left to the submitter** — a plan does not choose submission (ADR `0038`).
+- ~~**The two-transaction write window is left to the submitter** — a plan does not choose submission (ADR `0038`).~~ Reversed 2026-10-30: the plan emits both triples as one `createTriples` call, binding first, so no submitter can split them; ADR `0038` holds, since the plan still chooses no submitter (ADR `0095` §7).
 
 ## Rules touched
 
