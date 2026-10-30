@@ -5,7 +5,8 @@ ARP's agent-side programs in one binary. Node 22 or later.
 ```
 arp mcp            the MCP server, over stdio (how an MCP client launches it). --http for 127.0.0.1
 arp hook           the runtime hook: one payload on stdin, one line in .arp/session.jsonl
-arp node           the hire endpoint. Opt-in: it listens on every interface with your agent key
+arp node           the hire endpoint. Opt-in: 127.0.0.1, reached through a tunnel you rent
+arp init --node    bind the node to your ERC-8004 agent: the token's owner signs once
 ```
 
 All three run on your machine, and none of them signs a transaction.

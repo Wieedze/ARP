@@ -5,7 +5,7 @@
  * | --- | --- | --- |
  * | `arp mcp` | the MCP server, over stdio; `--http` to serve on 127.0.0.1 | `apps/mcp` |
  * | `arp hook` | reads one payload on stdin, appends one line | `apps/hook` |
- * | `arp node` | the hire endpoint, opt-in | `apps/node` |
+ * | `arp node` | the hire endpoint, opt-in, on 127.0.0.1 behind a rented tunnel | `apps/node` |
  *
  * **A shared binary, not a shared process.** Each program is imported only when its command runs,
  * so `arp hook` never loads the MCP server's configuration and `arp mcp` never reads the node's key
@@ -17,7 +17,8 @@
  * resolved at run time so the bundler leaves it out of this file.
  *
  * `init`, `uninstall` and `doctor` install, remove and check the MCP server and the hook in each
- * runtime found on the machine (`src/install/`, task 33c).
+ * runtime found on the machine (`src/install/`, task 33c). `init --node` is the other kind of
+ * install: the handshake that binds the node to the agent (`src/node-init.ts`, task 39).
  */
 import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -29,11 +30,15 @@ const USAGE = `arp ${version} — ARP's agent-side programs
 usage
   arp mcp [--http]   the MCP server. stdio by default, which is how an MCP client launches it
   arp hook           the runtime hook: one payload on stdin, one line in .arp/session.jsonl
-  arp node           the hire endpoint. Opt-in: it listens on every interface with your agent key
+  arp node           the hire endpoint. Opt-in: it listens on 127.0.0.1 and is reached through
+                     a tunnel you rent (cloudflared or ngrok, or ARP_NODE_PUBLIC_URL)
 
   arp init           add the MCP server and the hook to every runtime found here
   arp uninstall      remove them, and only them
   arp doctor         check what is installed and that the server answers
+  arp init --node    bind this node to your ERC-8004 agent: the token's owner signs once
+                     --agent-registry eip155:<chain>:<registry> --agent-id <id>
+                     --endpoint <https URL> --directory <handshake URL>
 
   options for init, uninstall, doctor
     --dry-run, -n        show the changes, write nothing
@@ -56,8 +61,36 @@ const EXIT = { ok: 0, usage: 2 } as const;
 /** This file once bundled: `dist/cli.js`. `init` writes its path into the MCP entry. */
 const CLI_PATH = fileURLToPath(import.meta.url);
 
+/** `arp init --node`: the handshake, not the runtime installer. Kept apart so neither loads the other. */
+async function runNodeInit(rest: readonly string[]): Promise<number> {
+  const { nodeInit, parseNodeInitFlags } = await import('./node-init.ts');
+  const flags = parseNodeInitFlags(rest);
+  if (flags instanceof Error) {
+    process.stderr.write(`arp init --node: ${flags.message}\n`);
+    return EXIT.usage;
+  }
+  const { homedir } = await import('node:os');
+  const { createInterface } = await import('node:readline/promises');
+  return nodeInit(flags, {
+    env: process.env,
+    home: homedir(),
+    interactive: process.stdin.isTTY === true,
+    readLine: async (prompt) => {
+      const rl = createInterface({ input: process.stdin, output: process.stderr });
+      try {
+        return await rl.question(prompt);
+      } finally {
+        rl.close();
+      }
+    },
+    out: (line) => process.stdout.write(`${line}\n`),
+    err: (line) => process.stderr.write(`${line}\n`),
+  });
+}
+
 async function run(argv: readonly string[]): Promise<number> {
   const [command, ...rest] = argv;
+  if (command === 'init' && rest.includes('--node')) return runNodeInit(rest);
   switch (command) {
     case 'mcp': {
       const { main } = await import('@arp/mcp/server');
