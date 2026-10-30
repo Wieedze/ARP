@@ -13,6 +13,8 @@ function tool(overrides: Partial<ToolListing> = {}): ToolListing {
         type: "Thing",
         edgeCount: 1,
         pricedEdges: 1,
+        provenDeposits: 0,
+        declaredDeposits: 1,
         supportAssetsSum: 10n ** 18n,
         opposeAssetsSum: 0n,
         ...overrides,
@@ -24,6 +26,7 @@ function page(tools: ToolListing[], overrides: Partial<ToolListingPage> = {}): T
         curveId: 1,
         edgesRead: tools.reduce((n, t) => n + t.edgeCount, 0),
         truncated: false,
+        sponsor: null,
         tools,
         ...overrides,
     };
@@ -63,12 +66,44 @@ describe("buildToolCatalogView", () => {
         ).not.toBeNull();
     });
 
-    it("carries paid declarations through, never a summed position count", () => {
-        // ADR 0023: positions are counted per vault, so a sum across an atom's edges counts
-        // nothing a reader recognises. `pricedEdges` is how many edges somebody paid for.
-        const view = buildToolCatalogView(page([tool({edgeCount: 3, pricedEdges: 2})]));
+    it("carries proven and declared deposits through as two figures, never one", () => {
+        // ADR 0094 §2: a deposit the sponsoring service sent passed the proof gate, every other one
+        // did not. Two figures side by side, and no sum or weighting of them (ADR 0046).
+        const view = buildToolCatalogView(
+            page([tool({edgeCount: 3, provenDeposits: 2, declaredDeposits: 5})]),
+        );
         expect(view.rows[0]?.declarations).toBe(3);
-        expect(view.rows[0]?.paidDeclarations).toBe(2);
+        expect(view.rows[0]?.provenDeposits).toBe(2);
+        expect(view.rows[0]?.declaredDeposits).toBe(5);
+    });
+
+    it("drops the paid-for figure, which equalled the claim count for every edge ARP writes", () => {
+        // A term is born with its creator's position (ADR 0053), so "edges carrying a position"
+        // was the edge count under another name.
+        const view = buildToolCatalogView(page([tool()]));
+        expect(view.rows[0]).not.toHaveProperty("paidDeclarations");
+    });
+
+    it("leaves a registered row's deposits unknown rather than zero", () => {
+        // Its deposits are on its edges, which is the declared read; a tool that read found would
+        // be a declared row instead.
+        const view = buildToolCatalogView(page([]), {
+            curveId: 1,
+            truncated: false,
+            tools: [
+                {
+                    atomId: "0xfeed",
+                    label: "github.com/crytic/slither",
+                    uri: null,
+                    url: null,
+                    positionCount: 1,
+                    assets: 1n,
+                    declarations: 0,
+                },
+            ],
+        });
+        expect(view.rows[0]?.provenDeposits).toBeNull();
+        expect(view.rows[0]?.declaredDeposits).toBeNull();
     });
 
     it("carries truncation through, so a prefix cannot read as the whole set", () => {
