@@ -324,49 +324,6 @@ export function buildToolCatalogView(
 }
 
 /**
- * Flat, or one row per repository that opens.
- *
- * **Not a filter.** A filter removes rows; this decides how the same rows are laid out, so the two
- * compose: a reader can narrow to `image` *and* group by repository. That is why it lives beside
- * `Order` and not in the rail.
- *
- * It exists because the catalogue went from 53 rows to 715 on 2026-10-29 (ADR `0077`): 662 of them
- * are skills and 53 are the repositories and servers they came from. 71 of the skills come from one
- * repository. A flat list of 715 buries the question
- * "who publishes this" under scrolling.
- */
-export type ToolGrouping = "flat" | "repo";
-
-export const TOOL_GROUPINGS: readonly {id: ToolGrouping; label: string}[] = [
-    {id: "flat", label: "Flat"},
-    {id: "repo", label: "By repo"},
-];
-
-export type ToolGroup = {
-    /** `owner/repo`, or the row's own name when it could not be parsed as one. */
-    repo: string;
-    rows: ToolRow[];
-};
-
-/**
- * Rows gathered under the repository they came from, keeping the order they arrived in.
- *
- * A repository's place in the list is its **best** row's place, not the sum of its rows: a
- * repository with 71 ordinary skills would otherwise outrank one with a single excellent one, which
- * is the aggregation question ADR `0077` settled by changing the unit rather than picking a rule.
- * Here the caller has already ordered the rows, so first-seen is best-seen.
- */
-export function groupByRepo(rows: readonly ToolRow[]): ToolGroup[] {
-    const groups = new Map<string, ToolRow[]>();
-    for (const row of rows) {
-        const parsed = parseToolLabel(row.name);
-        const key = parsed.kind === "other" ? row.name : `${parsed.owner}/${parsed.repo}`;
-        groups.set(key, [...(groups.get(key) ?? []), row]);
-    }
-    return [...groups].map(([repo, list]) => ({repo, rows: list}));
-}
-
-/**
  * Whether a tool answers, which is the one input nobody can be paid to change.
  *
  * `dead` is the owner's own word — a repository they archived, or one that is gone. `unknown` is
@@ -392,13 +349,30 @@ export function livenessOf(fact: {archived: boolean; gone: boolean} | null): Liv
  * axis belongs to the reader, and every axis's figure sits on the row beside the others, so it is
  * visible which one is doing the work.
  */
-export type ToolSortAxis = "staked" | "claims" | "installs";
+export type ToolSortAxis = "declared" | "installs" | "stars";
 
-export const TOOL_SORT_AXES: readonly {id: ToolSortAxis; label: string}[] = [
-    {id: "staked", label: "Most staked"},
-    {id: "claims", label: "Most claims"},
-    {id: "installs", label: "Most installs"},
-];
+/**
+ * Two axes per index, and only ones that mean something there (user, 2026-10-30).
+ *
+ * "Most staked" and "Most claims" were two orders of the same thing, and read as noise. **Declared**
+ * is the one ARP measures: how many agents declare a `uses` edge to the tool. Not "used": the user
+ * asked for that word and, reminded of 2026-10-27, chose "declared" — a declaration is a signed
+ * sentence, not an observed use (`docs/14`). Stake behind those edges
+ * is the tiebreak and stays on the row, not a separate order. The second axis is somebody else's
+ * figure: skills.sh's installs for a skill, GitHub's stars for a repository. A skill's stars would
+ * be its repository's, tied across every skill in it, so skills do not get that axis.
+ */
+export function toolSortAxesFor(index: ToolIndex): readonly {id: ToolSortAxis; label: string}[] {
+    return index === "skills"
+        ? [
+              {id: "declared", label: "Most declared"},
+              {id: "installs", label: "Most installs"},
+          ]
+        : [
+              {id: "declared", label: "Most declared"},
+              {id: "stars", label: "Most stars"},
+          ];
+}
 
 const LIVENESS_RANK: Record<Liveness, number> = {alive: 0, unknown: 1, dead: 2};
 
@@ -412,7 +386,7 @@ const LIVENESS_RANK: Record<Liveness, number> = {alive: 0, unknown: 1, dead: 2};
 export function rankTools(
     rows: readonly ToolRow[],
     axis: ToolSortAxis,
-    read: (row: ToolRow) => {liveness: Liveness; installs: number | null},
+    read: (row: ToolRow) => {liveness: Liveness; installs: number | null; stars: number | null},
 ): ToolRow[] {
     return [...rows].sort((left, right) => {
         const a = read(left);
@@ -420,10 +394,13 @@ export function rankTools(
         if (LIVENESS_RANK[a.liveness] !== LIVENESS_RANK[b.liveness]) {
             return LIVENESS_RANK[a.liveness] - LIVENESS_RANK[b.liveness];
         }
-        if (axis === "installs") return (b.installs ?? -1) - (a.installs ?? -1);
-        if (axis === "claims") return right.declarations - left.declarations;
-        // `staked` is the position COUNT before the amount: creating a term seeds its vault, so an
-        // amount alone ranks a tool nobody staked on above nothing at all (ADR `0042`).
+        if (axis === "installs" && a.installs !== b.installs)
+            return (b.installs ?? -1) - (a.installs ?? -1);
+        if (axis === "stars" && a.stars !== b.stars) return (b.stars ?? -1) - (a.stars ?? -1);
+        if (right.declarations !== left.declarations) return right.declarations - left.declarations;
+        // Then the stake, as the tiebreak: the position COUNT before the amount, because creating a
+        // term seeds its vault, so an amount alone ranks a tool nobody staked on above nothing at
+        // all (ADR `0042`).
         const leftStakers = left.stakers ?? 0;
         const rightStakers = right.stakers ?? 0;
         if (leftStakers !== rightStakers) return rightStakers - leftStakers;

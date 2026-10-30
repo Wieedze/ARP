@@ -2,12 +2,7 @@ import {Link} from "react-router-dom";
 import {useChainChoice} from "../../lib/chain-choice";
 import {useSkillFacts, type SkillFact} from "../../hooks/use-skill-facts";
 
-import {
-    groupByRepo,
-    type ToolGroup,
-    type ToolGrouping,
-    type ToolRow,
-} from "../../services/tool-catalog";
+import {type ToolRow} from "../../services/tool-catalog";
 
 /**
  * Tools as a list, not as N boxes.
@@ -54,7 +49,7 @@ function Figure({value, label}: {value: string; label: string}) {
     );
 }
 
-function Row({row, fact}: {row: ToolRow; fact: SkillFact | null}) {
+function Row({row, fact, stars}: {row: ToolRow; fact: SkillFact | null; stars: number | null}) {
     const {symbol} = useChainChoice();
     return (
         <li className="border-b border-[color:var(--color-rule)]">
@@ -93,6 +88,17 @@ function Row({row, fact}: {row: ToolRow; fact: SkillFact | null}) {
                                         </span>
                                     )}
                                     {`${Intl.NumberFormat("en-US", {notation: "compact"}).format(fact.installs)} installs`}
+                                </>
+                            )}
+                            {/* A repository's own figure, which its "Most stars" order sorts on. */}
+                            {stars === null ? null : (
+                                <>
+                                    {row.source === null && (fact === null || fact.installs === null) ? null : (
+                                        <span className="px-1.5 text-[color:var(--color-rule-strong)]">
+                                            ·
+                                        </span>
+                                    )}
+                                    {`${Intl.NumberFormat("en-US", {notation: "compact"}).format(stars)} stars`}
                                 </>
                             )}
                             {row.provenance === "declared" ? (
@@ -181,72 +187,28 @@ function Headers({curveId}: {curveId: number}) {
     );
 }
 
-/**
- * One repository, with its skills folded away until asked for.
- *
- * `<details>` rather than a button and a piece of state: it opens with the keyboard, it is in the
- * accessibility tree as a disclosure without an `aria-` attribute to get wrong, and the browser
- * keeps the open ones open on its own.
- *
- * The count is the whole summary — 71 skills from one repository is the fact that decides whether
- * a reader opens it, and it is why grouping exists at all.
- */
-function RepoGroup({
-    group,
-    curveId,
-    factFor,
-}: {
-    group: ToolGroup;
-    curveId: number;
-    factFor: (label: string | null) => SkillFact | null;
-}) {
-    return (
-        <details className="border-b border-[color:var(--color-rule)]">
-            <summary className="flex cursor-pointer items-baseline justify-between gap-4 py-3 marker:content-[''] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[color:var(--color-accent)]">
-                <span className="min-w-0 truncate font-medium">{group.repo}</span>
-                <span className="shrink-0 font-mono text-[length:var(--text-body-sm)] tabular-nums text-[color:var(--color-steel)]">
-                    {group.rows.length}
-                </span>
-            </summary>
-            {/* Indented and hairlined on the left so an open group reads as belonging to its
-                repository rather than as the list resuming. */}
-            <ul className="mb-2 ml-3 border-l border-[color:var(--color-rule)] pl-4">
-                {group.rows.map((row) => (
-                    <Row key={row.key} row={row} fact={factFor(row.label)} />
-                ))}
-            </ul>
-            <span className="sr-only">{`on bonding curve ${curveId}`}</span>
-        </details>
-    );
-}
-
 export function ToolCatalogList({
     rows,
     curveId,
-    grouping = "flat",
+    showStars = false,
 }: {
     rows: ToolRow[];
     curveId: number;
-    grouping?: ToolGrouping;
+    /** Repositories show their GitHub stars; a skill's would be its repository's, tied. */
+    showStars?: boolean;
 }) {
-    const {factFor} = useSkillFacts();
-    if (grouping === "repo") {
-        // No column headers: a group's own line carries a name and a count and nothing a header
-        // would describe. The headers return with the rows, inside each open group.
-        return (
-            <div>
-                {groupByRepo(rows).map((group) => (
-                    <RepoGroup key={group.repo} group={group} curveId={curveId} factFor={factFor} />
-                ))}
-            </div>
-        );
-    }
+    const {factFor, repoFactFor} = useSkillFacts();
     return (
         <div>
             <Headers curveId={curveId} />
             <ul>
                 {rows.map((row) => (
-                    <Row key={row.key} row={row} fact={factFor(row.label)} />
+                    <Row
+                        key={row.key}
+                        row={row}
+                        fact={factFor(row.label)}
+                        stars={showStars ? (repoFactFor(row.label)?.stars ?? null) : null}
+                    />
                 ))}
             </ul>
         </div>

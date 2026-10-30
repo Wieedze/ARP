@@ -15,11 +15,9 @@ import {
     livenessOf,
     rankTools,
     TOOL_CURVES,
-    TOOL_GROUPINGS,
     TOOL_INDEXES,
-    TOOL_SORT_AXES,
     toolIndexOf,
-    type ToolGrouping,
+    toolSortAxesFor,
     type ToolIndex,
     type ToolSortAxis,
 } from "../services/tool-catalog";
@@ -58,7 +56,7 @@ export function ToolCatalog() {
      * which nobody can pay to change, and above it the axis belongs to the reader with every
      * figure beside the others.
      */
-    const [axis, setAxis] = useState<ToolSortAxis>("staked");
+    const [chosenAxis, setAxis] = useState<ToolSortAxis>("declared");
     // Curve 1 is the default because it is the durable signal: linear, so a position's gain follows
     // the tool's growth rather than the holder's timing. Curve 2 is where the money sits today, and
     // that is a different question — `TOOL_CURVES` has the measurement.
@@ -70,6 +68,10 @@ export function ToolCatalog() {
     const curveId = TOOL_CURVES[0]?.id ?? 1;
     const [searchParams, setSearchParams] = useSearchParams();
     const index: ToolIndex = searchParams.get("index") === "repos" ? "repos" : "skills";
+    const axes = toolSortAxesFor(index);
+    // Installs are a skill's figure and stars a repository's: switching index keeps the reader's
+    // axis when the other index has it, and falls back to "declared" when it does not.
+    const axis: ToolSortAxis = axes.some((entry) => entry.id === chosenAxis) ? chosenAxis : "declared";
     const chooseIndex = (next: ToolIndex) =>
         setSearchParams(next === "skills" ? {} : {index: next}, {replace: true});
     /**
@@ -81,11 +83,6 @@ export function ToolCatalog() {
      * ranked — the same call `arp_find_tools { domain }` makes for an agent, from the same code.
      */
     const [picked, setPicked] = useState<ReadonlySet<string>>(() => new Set());
-    /**
-     * Flat or grouped by repository. **Not a filter** — it removes no row, it decides how the same
-     * rows are laid out, which is why it sits beside `Order` rather than in the rail.
-     */
-    const [grouping, setGrouping] = useState<ToolGrouping>("flat");
     const toggleDomain = (domain: string) =>
         setPicked((current) => {
             const next = new Set(current);
@@ -123,6 +120,9 @@ export function ToolCatalog() {
                 repoFactFor(row.source === null ? row.label : `github.com/${row.source}`),
             ),
             installs: factFor(row.label)?.installs ?? null,
+            stars:
+                repoFactFor(row.source === null ? row.label : `github.com/${row.source}`)?.stars ??
+                null,
         }),
     );
     const countIn = (which: ToolIndex) =>
@@ -131,12 +131,12 @@ export function ToolCatalog() {
     return (
         <section>
             <header className="grid items-end gap-x-8 gap-y-6 pt-14 pb-10 md:grid-cols-[minmax(0,1fr)_auto]">
-                <div>
+                <div className="flex flex-wrap items-end gap-x-10 gap-y-4">
                     <h1 className="type-display">Tools</h1>
                     {/* **Two indexes, one read.** Skills and repositories are filed in the same
-                        catalogue, and the user asked for them to read as two lists. So the switch
-                        is set in display type under the title, as a choice of what page you are on,
-                        not as one more toolbar control. */}
+                        catalogue, and the user asked for them to read as two lists. The switch
+                        sits beside the title and a little below its baseline (user, 2026-10-30),
+                        as a choice of what page you are on, not as one more toolbar control. */}
                     <IndexTabs
                         selected={index}
                         onChange={chooseIndex}
@@ -157,24 +157,7 @@ export function ToolCatalog() {
             {/* The toolbar on its own rule, like the index's. It was inline with the `h1`, which
                 at `--text-display` put four controls against a single word. */}
             <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border-y border-[color:var(--color-rule)] py-3.5">
-                <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
-                    <Segmented
-                        label="Order"
-                        selected={axis}
-                        onChange={setAxis}
-                        options={TOOL_SORT_AXES}
-                    />
-                    {/* Grouping by repository only means something for skills: a repository
-                        is its own group. */}
-                    {index === "skills" ? (
-                        <Segmented
-                            label="Group"
-                            selected={grouping}
-                            onChange={setGrouping}
-                            options={TOOL_GROUPINGS}
-                        />
-                    ) : null}
-                </div>
+                <Segmented label="Order" selected={axis} onChange={setAxis} options={axes} />
             </div>
 
             {/* The rail is a column, not a drawer: at 13rem it costs a fifth of the width and
@@ -237,7 +220,7 @@ export function ToolCatalog() {
                             <ToolCatalogList
                                 rows={visible}
                                 curveId={view.curveId}
-                                grouping={grouping}
+                                showStars={index === "repos"}
                             />
                             {/* Only when it happened: a prefix presented as the whole set is the one thing
                         this page could get wrong without anyone noticing. */}
@@ -275,7 +258,7 @@ function IndexTabs({
         <div
             role="group"
             aria-label="Index"
-            className="mt-6 flex flex-wrap items-baseline gap-x-8 gap-y-2"
+            className="translate-y-3 flex flex-wrap items-baseline gap-x-8 gap-y-2"
         >
             {TOOL_INDEXES.map((entry) => {
                 const isSelected = entry.id === selected;

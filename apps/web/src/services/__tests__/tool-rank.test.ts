@@ -1,6 +1,6 @@
 import {describe, expect, it} from "vitest";
 
-import {livenessOf, rankTools, type ToolRow} from "../tool-catalog";
+import {livenessOf, rankTools, toolSortAxesFor, type ToolRow} from "../tool-catalog";
 
 const row = (overrides: Partial<ToolRow> = {}): ToolRow => ({
     key: `0x${"ab".repeat(32)}`,
@@ -36,8 +36,16 @@ describe("livenessOf", () => {
 });
 
 describe("rankTools", () => {
-    const facts = new Map<string, {liveness: "alive" | "unknown" | "dead"; installs: number | null}>();
-    const read = (r: ToolRow) => facts.get(r.key) ?? {liveness: "unknown" as const, installs: null};
+    type Facts = {
+        liveness: "alive" | "unknown" | "dead";
+        installs: number | null;
+        stars?: number | null;
+    };
+    const facts = new Map<string, Facts>();
+    const read = (r: ToolRow) => {
+        const fact = facts.get(r.key) ?? {liveness: "unknown" as const, installs: null};
+        return {...fact, stars: fact.stars ?? null};
+    };
 
     it("sinks a tool that does not answer below one that does, whatever either staked", () => {
         // The gate, and the whole argument for having one: it is the only input nobody can be paid
@@ -48,13 +56,13 @@ describe("rankTools", () => {
         facts.set("0xdead", {liveness: "dead", installs: 5_000_000});
         facts.set("0xalive", {liveness: "alive", installs: 1});
 
-        expect(rankTools([dead, alive], "staked", read).map((r) => r.key)).toEqual([
+        expect(rankTools([dead, alive], "declared", read).map((r) => r.key)).toEqual([
             "0xalive",
             "0xdead",
         ]);
         // And on every other axis, because it is a gate rather than a term in a sum.
         expect(rankTools([dead, alive], "installs", read)[0]?.key).toBe("0xalive");
-        expect(rankTools([dead, alive], "claims", read)[0]?.key).toBe("0xalive");
+        expect(rankTools([dead, alive], "stars", read)[0]?.key).toBe("0xalive");
     });
 
     it("puts an unknown reading between alive and dead", () => {
@@ -65,7 +73,7 @@ describe("rankTools", () => {
         facts.set("0xdead", {liveness: "dead", installs: null});
         facts.delete("0xunknown");
 
-        expect(rankTools([dead, unknown, alive], "staked", read).map((r) => r.key)).toEqual([
+        expect(rankTools([dead, unknown, alive], "declared", read).map((r) => r.key)).toEqual([
             "0xalive",
             "0xunknown",
             "0xdead",
@@ -79,8 +87,26 @@ describe("rankTools", () => {
         facts.set("0xstaked", {liveness: "alive", installs: 2});
 
         expect(rankTools([staked, many], "installs", read)[0]?.key).toBe("0xmany");
-        expect(rankTools([many, staked], "staked", read)[0]?.key).toBe("0xstaked");
-        expect(rankTools([staked, many], "claims", read)[0]?.key).toBe("0xmany");
+        // "Declared" is how many agents declare it; the stake no longer has an order of its own.
+        expect(rankTools([staked, many], "declared", read)[0]?.key).toBe("0xmany");
+    });
+
+    it("breaks a tie in agents on the stake behind them, positions before amount", () => {
+        const backed = row({key: "0xbacked", declarations: 2, stakers: 3, supportTrust: "0.5"});
+        const bare = row({key: "0xbare", declarations: 2, stakers: 0, supportTrust: "9"});
+        facts.set("0xbacked", {liveness: "alive", installs: null});
+        facts.set("0xbare", {liveness: "alive", installs: null});
+        expect(rankTools([bare, backed], "declared", read)[0]?.key).toBe("0xbacked");
+    });
+
+    it("sorts repositories by stars, and offers each index only the axes that mean something there", () => {
+        const starred = row({key: "0xstarred", declarations: 0});
+        const used = row({key: "0xused", declarations: 5});
+        facts.set("0xstarred", {liveness: "alive", installs: null, stars: 40_000});
+        facts.set("0xused", {liveness: "alive", installs: null, stars: 10});
+        expect(rankTools([used, starred], "stars", read)[0]?.key).toBe("0xstarred");
+        expect(toolSortAxesFor("skills").map((axis) => axis.id)).toEqual(["declared", "installs"]);
+        expect(toolSortAxesFor("repos").map((axis) => axis.id)).toEqual(["declared", "stars"]);
     });
 
     it("ranks an unknown install count below a known zero", () => {
@@ -100,7 +126,7 @@ describe("rankTools", () => {
         facts.set("0xa", {liveness: "dead", installs: null});
         facts.set("0xb", {liveness: "alive", installs: null});
         const input = [first, second];
-        rankTools(input, "staked", read);
+        rankTools(input, "declared", read);
         expect(input.map((r) => r.key)).toEqual(["0xa", "0xb"]);
     });
 });
