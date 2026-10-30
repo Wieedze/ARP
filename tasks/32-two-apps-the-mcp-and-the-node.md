@@ -1,7 +1,8 @@
 # Task 32 — Three apps over two packages: mcp, node, hook
 
-**Status:** planned, 2026-10-30. ADR `0082`. On its own branch, cut from `feat/agent-panel-tabs`
-after that branch is committed and pushed.
+**Status:** **COMPLETE** 2026-10-30. `task-verifier` PASS on the second pass (the first failed on
+naming and on a hook command that worked only inside this repo). Commits `064e3df`..`10959f9` on
+`refactor/monorepo-apps`. ADR `0082`. Post-mortem: `.claude/learning/21-two-apps-the-mcp-and-the-node.md`.
 **Required skills:** none beyond the repo's own.
 **Rules:** `code.md`, `ui.md` (the gates move), `portability.md`, `claims.md`, `workflow.md`.
 **Reviewers:** `ui-reviewer` (the web app moved, nothing in it should change), then `task-verifier`.
@@ -69,7 +70,7 @@ bun install && bun run test && bun run lint && bun run check
 cd apps/web && bunx tsc -b && bun run check:tokens
 grep -rn "scripts/arp-mcp\|scripts/agent-node\|scripts/arp-content\|scripts/arp-session-hook\|cd app " \
   --include=*.md --include=*.ts --include=*.json . | grep -v node_modules \
-  | grep -v "^./.claude/choices/\|^./.claude/learning/\|^./measurements/"
+  | grep -v "^\(\./\)\?\(\.claude/choices\|\.claude/learning\|measurements\|tasks\)/"
 ```
 
 The last command returns nothing, or each hit is explained in the report.
