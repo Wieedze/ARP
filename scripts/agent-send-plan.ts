@@ -39,11 +39,29 @@ if (!rpcUrl) {
   process.exit(1);
 }
 
-const parsed = JSON.parse(readFileSync(planPath, 'utf8')) as SerialisedCall[];
-if (!Array.isArray(parsed) || parsed.length === 0) {
-  console.error(`${planPath} is not a non-empty array of calls`);
+/**
+ * Two spellings of one call. The repo's planning CLIs write `chainId` and `value`; the MCP server
+ * answers `chain_id` and `value_wei` (`apps/mcp/src/serialise.ts`), which is what an agent copies
+ * out of a tool response. Both are taken, so the plan an agent was handed signs as it was handed.
+ */
+type AnyCall = Partial<SerialisedCall> & { chain_id?: number; value_wei?: string };
+const raw: unknown = JSON.parse(readFileSync(planPath, 'utf8'));
+// A whole MCP plan object is accepted too: its `calls` are what gets signed.
+const list: unknown = Array.isArray(raw) ? raw : (raw as { calls?: unknown } | null)?.calls;
+if (!Array.isArray(list) || list.length === 0) {
+  console.error(`${planPath} is not a non-empty array of calls, nor a plan with one`);
   process.exit(1);
 }
+const parsed: SerialisedCall[] = (list as AnyCall[]).map((call) => ({
+  kind: call.kind ?? 'call',
+  chainId: call.chainId ?? call.chain_id ?? Number.NaN,
+  // Guarded by `sendPlan`, which refuses a call whose chain is not the plan's.
+  to: call.to as SerialisedCall['to'],
+  value: call.value ?? call.value_wei ?? '0',
+  // Same: a malformed `data` is refused by the RPC's estimate before anything is signed.
+  data: call.data as SerialisedCall['data'],
+  why: call.why ?? '',
+}));
 
 // `--from <n>`: skip the first n calls, for resuming a plan the RPC cut short. A plan's calls are
 // deterministic, so re-planning would produce the same list minus what landed — this saves the
