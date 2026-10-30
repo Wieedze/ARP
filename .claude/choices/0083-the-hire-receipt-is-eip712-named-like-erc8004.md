@@ -32,7 +32,9 @@ with one. The two hashes are keccak256 over RFC 8785 canonical JSON. The wire sh
 `{ format: "eip712", receipt, chainId, agent, signature }`, x402's `format` tag kept so a JWS
 variant can exist later without guessing.
 
-**No `verifyingContract`**, as in `receipt.ts` and `agent-import.ts`: no contract checks it. **The
+**No `verifyingContract`**, as in `receipt.ts` and `agent-import.ts`: ~~no contract checks it.~~
+**Corrected 2026-10-30** (ADR `0098`): `contracts/src/enforcers/ReceiptEnforcer.sol` checks it, on the
+v1 domain as signed, so the missing verifier is now an open deviation, not a cause. **The
 nonce is `payment`**: the node's ledger refuses a payment twice, so one transaction hash is one
 receipt, and two receipts naming one payment are evidence against the signer.
 

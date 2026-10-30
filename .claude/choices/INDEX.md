@@ -2,7 +2,7 @@
 
 **Generated** 2026-10-30 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-93 decisions. Newest last. `choices/README.md` says when to write one.
+94 decisions. Newest last. `choices/README.md` says when to write one.
 
 ## Not accepted
 
@@ -12,11 +12,13 @@ Read these before relying on them.
 - **0041** (Accepted. Amended by `0082` (2026-10-30): a `packages/graphql` read layer goes under it.) — One protocol package, not two, and it is called what it is
 - **0045** (Accepted. **Amended by ADR `0092`** (2026-10-30): ARP may host a service that pays or) — the invariant is the request path, not the runtime
 - **0057** (Accepted — 2026-10-27, on the user's instruction to close everything open.) — Brand identity v0.3: The Source, Saffron, Archivo + Geist Mono
+- **0080** (Accepted. **Amended by ADR `0094`** (2026-10-30): constraint 2 holds for a declaration) — The node signs for what it served, and for nothing else
 - **0082** (Accepted. Amends `0041` (a `packages/graphql` under the protocol package).) — Three apps: the MCP server, the agent node and the runtime hook are different programs
 - **0087** (Accepted, one point open (below)) — A tool is its package, and its repository is its source
 - **0088** (Accepted. Amends the one-word rule of 2026-10-28 (`scripts/seed/seed-domain-tree.ts`,) — A label is one word, unless a compound is necessary
 - **0090** (Accepted. Extended 2026-10-30 by task 33i — see "Extension: captures" at the end.) — What the hook records: outcome and identity, never content or credentials
 - **0093** (Accepted. **Renumbered from `0089` on 2026-10-30**: it shared that number with `0089-one-installer-one-package-thin-manifests.md`, which was written first. Commits before the rename cite it as `0089`.) — The probe is not the pulse
+- **0098** (Accepted for point 9 (user decision, 2026-10-30, _« ok option 2 »_); the rest Proposed, reviewed by `contract-reviewer` (PASS, 2026-10-30); one decision open) — The receipt enforcer verifies the v1 hire receipt as signed, and binds the term through its terms
 
 ## All
 
@@ -100,7 +102,7 @@ Read these before relying on them.
 | [0077](0077-the-unit-is-the-skill-not-the-repository.md) | 2026-10-29 | Accepted | The unit of the catalogue is the skill, not the repository |
 | [0078](0078-source-is-the-edge-from-a-skill-to-its-repository.md) | 2026-10-29 | Accepted | `source` is the edge from a skill back to the repository it came from |
 | [0079](0079-a-bulk-write-is-paced-by-bytes-not-by-gas.md) | 2026-10-29 | Accepted | A bulk write to Intuition is paced by bytes, not by gas |
-| [0080](0080-the-node-signs-for-what-it-served-and-for-nothing-else.md) | 2026-10-29 | Accepted | The node signs for what it served, and for nothing else |
+| [0080](0080-the-node-signs-for-what-it-served-and-for-nothing-else.md) | 2026-10-29 | Accepted. **Amended by ADR `0094`** (2026-10-30): constraint 2 holds for a declaration | The node signs for what it served, and for nothing else |
 | [0081](0081-a-claim-a-stranger-checks-ships-with-its-command.md) | 2026-10-30 | Accepted | A claim a stranger is asked to check ships with the command that checks it |
 | [0082](0082-two-apps-the-mcp-and-the-node.md) | 2026-10-30 | Accepted. Amends `0041` (a `packages/graphql` under the protocol package). | Three apps: the MCP server, the agent node and the runtime hook are different programs |
 | [0083](0083-the-hire-receipt-is-eip712-named-like-erc8004.md) | 2026-10-30 | Accepted | The hire receipt is EIP-712, names the agent like ERC-8004, and uses the payment as its nonce |
@@ -115,3 +117,4 @@ Read these before relying on them.
 | [0092](0092-arp-sponsors-delegation-publication-on-testnet.md) | 2026-10-30 | Accepted | ARP sponsors the publication of delegations, on testnet, from its treasury |
 | [0093](0093-the-probe-is-not-the-pulse.md) | 2026-10-30 | Accepted. **Renumbered from `0089` on 2026-10-30**: it shared that number with `0089-one-installer-one-package-thin-manifests.md`, which was written first. Commits before the rename cite it as `0089`. | The probe is not the pulse |
 | [0094](0094-arp-is-the-directory-and-the-verifier-never-the-relay.md) | 2026-10-30 | Accepted | ARP is the directory and the verifier, never the relay; a proof is the condition of a sponsored deposit |
+| [0098](0098-the-receipt-enforcer-verifies-the-v1-hire-receipt-as-signed.md) | 2026-10-30 | Accepted for point 9 (user decision, 2026-10-30, _« ok option 2 »_); the rest Proposed, reviewed by `contract-reviewer` (PASS, 2026-10-30); one decision open | The receipt enforcer verifies the v1 hire receipt as signed, and binds the term through its terms |
