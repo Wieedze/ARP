@@ -56,6 +56,21 @@ describe("parseSessionLog", () => {
     it("skips a shape it does not recognise instead of inventing fields", () => {
         expect(parseSessionLog(`{"kind":"skill"}\n{"name":"x","kind":"wat"}\n`)).toEqual([]);
     });
+
+    it("keeps one line per call id, so a hook installed twice counts a call once", () => {
+        // Grok Build runs Claude Code's hooks and its own; one call can be written twice.
+        const log = parseSessionLog(
+            [line({call: "t1"}), line({call: "t1"}), line({call: "t2"})].join("\n"),
+        );
+        expect(log).toHaveLength(2);
+    });
+
+    it("does not merge the same call id across two sessions, or lines without one", () => {
+        const log = parseSessionLog(
+            [line({call: "t1"}), line({call: "t1", session: "s2"}), line(), line()].join("\n"),
+        );
+        expect(log).toHaveLength(4);
+    });
 });
 
 describe("refForInvocation", () => {

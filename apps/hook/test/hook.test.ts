@@ -17,12 +17,17 @@ beforeEach(() => {
 afterEach(() => rmSync(dir, { recursive: true, force: true }));
 
 /** Runs the hook the way a runtime does: a payload on stdin, nothing expected back. */
-function run(payload: unknown): { exitCode: number; lines: Record<string, unknown>[] } {
+function run(
+  payload: unknown,
+  env: Record<string, string> = {},
+): { exitCode: number; lines: Record<string, unknown>[] } {
   const proc = Bun.spawnSync(['bun', HOOK], {
     stdin: new TextEncoder().encode(
       typeof payload === 'string' ? payload : JSON.stringify(payload),
     ),
-    env: { ...process.env, ARP_SESSION_LOG: log, ARP_RECEIPTS: receipts },
+    // HOME points at an empty directory unless a test sets it, so the machine's own MCP
+    // configuration never leaks into a result.
+    env: { ...process.env, HOME: dir, ARP_SESSION_LOG: log, ARP_RECEIPTS: receipts, ...env },
   });
   const lines = existsSync(log)
     ? readFileSync(log, 'utf8')
@@ -99,6 +104,104 @@ test('built-in tools are not recorded', () => {
   const { exitCode, lines } = run({ tool_name: 'Read', tool_input: { file_path: '/etc/passwd' } });
   expect(exitCode).toBe(0);
   expect(lines).toHaveLength(0);
+});
+
+test('a failed MCP call is recorded with its category, code and duration, never its text', () => {
+  const secret = 'sk-live-in-the-error';
+  const { lines } = run({
+    session_id: 's1',
+    hook_event_name: 'PostToolUseFailure',
+    tool_name: 'mcp__github__list',
+    tool_input: { token: 'arg-secret' },
+    tool_use_id: 'toolu_1',
+    error: `HTTP 401 Unauthorized ${secret}`,
+    is_interrupt: false,
+    duration_ms: 812,
+  });
+  expect(lines[0]).toMatchObject({
+    call: 'toolu_1',
+    format: 'claude',
+    kind: 'mcp',
+    name: 'github',
+    outcome: 'auth',
+    code: '401',
+    ms: 812,
+    response: null,
+  });
+  const text = readFileSync(log, 'utf8');
+  expect(text).not.toContain(secret);
+  expect(text).not.toContain('arg-secret');
+});
+
+test('an interrupted call writes nothing', () => {
+  const { lines } = run({
+    hook_event_name: 'PostToolUseFailure',
+    tool_name: 'mcp__x__y',
+    error: 'aborted',
+    is_interrupt: true,
+  });
+  expect(lines).toHaveLength(0);
+});
+
+test('a Grok Build payload is recorded like a Claude Code one', () => {
+  const { lines } = run({
+    hookEventName: 'PostToolUse',
+    sessionId: 'g1',
+    toolName: 'mcp__x__y',
+    toolUseId: 'call_9',
+    toolResult: 'ok',
+  });
+  expect(lines[0]).toMatchObject({
+    session: 'g1',
+    call: 'call_9',
+    format: 'grok',
+    kind: 'mcp',
+    name: 'x',
+    outcome: 'ok',
+  });
+});
+
+test("an MCP call's ref is its server's configured URL, not an argument", () => {
+  writeFileSync(
+    join(dir, '.claude.json'),
+    JSON.stringify({ mcpServers: { github: { url: 'https://www.api.githubcopilot.com/mcp/' } } }),
+  );
+  const { lines } = run(
+    { tool_name: 'mcp__github__get', tool_input: { url: 'https://a-page-the-agent-read.example' } },
+    { HOME: dir },
+  );
+  expect(lines[0]?.ref).toBe('https://api.githubcopilot.com/mcp');
+});
+
+test('a key in a configured server URL never reaches the log', () => {
+  writeFileSync(
+    join(dir, '.claude.json'),
+    JSON.stringify({
+      mcpServers: {
+        query: {
+          url: 'https://user:pass-SENTINEL@mcp.example.com/mcp?apiKey=SENTINEL_Q#SENTINEL_F',
+        },
+        path: { url: 'https://mcp.example.com/s/SENTINEL0path0token0abc123/mcp' },
+      },
+    }),
+  );
+  const first = run({ tool_name: 'mcp__query__x' }, { HOME: dir });
+  expect(first.lines[0]?.ref).toBe('https://mcp.example.com/mcp');
+  const second = run({ tool_name: 'mcp__path__x' }, { HOME: dir });
+  expect(second.lines[1]?.ref).toBe('https://mcp.example.com');
+  expect(readFileSync(log, 'utf8')).not.toContain('SENTINEL');
+});
+
+test('the log directory ignores itself, so an operator repository never commits it', () => {
+  // The default path, so no ARP_SESSION_LOG: only ARP's own directory gets the file.
+  const { ARP_SESSION_LOG: _unset, ...env } = process.env;
+  const proc = Bun.spawnSync(['bun', HOOK], {
+    stdin: new TextEncoder().encode(JSON.stringify({ tool_name: 'mcp__x__y', cwd: dir })),
+    env: { ...env, HOME: dir, ARP_RECEIPTS: receipts },
+  });
+  expect(proc.exitCode).toBe(0);
+  expect(readFileSync(join(dir, '.arp', '.gitignore'), 'utf8')).toBe('*\n');
+  expect(existsSync(join(dir, '.arp', 'session.jsonl'))).toBe(true);
 });
 
 test('a payload that is not JSON exits 0 and writes nothing — the session must not stop', () => {

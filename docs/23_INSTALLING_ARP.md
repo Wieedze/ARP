@@ -46,7 +46,7 @@ Facts from https://code.claude.com/docs/en/plugins-reference and
 https://code.claude.com/docs/en/plugin-marketplaces, read 2026-10-30:
 
 - `${CLAUDE_PLUGIN_ROOT}` is the installed version's path. Use it in the hook command, so there are
-  no absolute paths. Today the hook needs one (`apps/hook/src/hook.ts:12`).
+  no absolute paths. Today the hook needs one (the settings snippet in `apps/hook/src/hook.ts`'s header).
 - `${CLAUDE_PLUGIN_DATA}` (`~/.claude/plugins/data/<id>/`) survives updates. State goes there, not in
   the plugin root, because the root "changes when the plugin updates".
 - `userConfig` prompts for values when the plugin is enabled. With `"sensitive": true` a value goes to
@@ -64,11 +64,13 @@ for runtimes that have no plugin system (§4).
 ## 3. Two defects the docs reveal in the current hook
 
 The documentation is the source for both. Neither has been reproduced with a live payload yet.
+**Both are fixed by task 33a**, 2026-10-30: the hook's documented wiring covers both events and it
+records `duration_ms` (`apps/hook/src/payload.ts`). The text below describes the hook as it was.
 
 1. **Failed calls never reach it.** `PostToolUse` runs "after a tool call succeeds" and
    `PostToolUseFailure` "after a tool call fails: the tool threw an error, or an MCP tool returned an
-   error result". The hook is registered on `PostToolUse` only (`apps/hook/src/hook.ts:10`), so its
-   `failed` flag (`:183`) can never be true for an MCP error. The failure payload carries a top-level
+   error result". The hook was registered on `PostToolUse` only, so its `failed` flag could never be
+   true for an MCP error. The failure payload carries a top-level
    `error` string and `is_interrupt`, not `tool_response`.
 2. **`duration_ms` is already in the payload** of both events. Measuring a call does not need a
    `PreToolUse` and `PostToolUse` pair stored between processes, which is what `docs/design/cli-v0/` built
@@ -135,9 +137,12 @@ and Claude's, so a hook installed in both fires twice, and the log deduplicates 
 2. ~~Which clients~~. Settled by the table above. Muse Code and Cursor's hook wait for official docs.
 3. ~~The marketplace~~. Both: ARP's own repo serves as a marketplace, and the official ones are a
    submission (§7).
-4. `.arp/session.jsonl` is per working directory today (`apps/hook/src/hook.ts:52`). Under a plugin,
-   decide between that and `${CLAUDE_PLUGIN_DATA}`. The MCP server reads the log, so both must
-   agree. Open, task 33a.
+4. ~~Where the log lives under a plugin~~. **Per working directory, `<cwd>/.arp/session.jsonl`, as
+   today** — settled by task 33a, 2026-10-30. The hook takes `cwd` from the payload and the MCP
+   server reads the same project's file. `${CLAUDE_PLUGIN_DATA}` is one directory for every
+   project, so two projects' sessions would land in one log. And since `.arp/` sits in the
+   operator's repository, the hook writes `.arp/.gitignore` (`*`) the first time it creates the
+   directory ("Where it writes" in `apps/hook/src/hook.ts`'s header).
 
 ## 7. Discovered, installed, used
 

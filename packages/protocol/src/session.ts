@@ -128,19 +128,32 @@ function repoOf(url: string): string {
     return parts === null ? url : `${parts[1]}/${parts[2]}`;
 }
 
-/** Parse a JSONL log. A corrupt line loses itself, never the session's whole record. */
+/**
+ * Parse a JSONL log. A corrupt line loses itself, never the session's whole record.
+ *
+ * **One line per call.** A line carrying the runtime's call id is kept once per session: Grok Build
+ * runs the hooks in `~/.claude/settings.json` as well as its own, so a hook installed in both
+ * writes the same call twice. A line without an id predates 2026-10-30 and is kept as it is.
+ */
 export function parseSessionLog(text: string): Invocation[] {
     const out: Invocation[] = [];
+    const seen = new Set<string>();
     for (const line of text.split("\n")) {
         if (line.trim().length === 0) continue;
-        let parsed: Partial<Invocation>;
+        let parsed: Partial<Invocation> & {call?: unknown};
         try {
-            parsed = JSON.parse(line) as Partial<Invocation>;
+            // Every field is narrowed below before it is used; the cast only names the candidates.
+            parsed = JSON.parse(line) as Partial<Invocation> & {call?: unknown};
         } catch {
             continue;
         }
         if (typeof parsed.name !== "string") continue;
         if (parsed.kind !== "skill" && parsed.kind !== "mcp") continue;
+        if (typeof parsed.call === "string" && parsed.call.length > 0) {
+            const key = `${typeof parsed.session === "string" ? parsed.session : ""}\u0000${parsed.call}`;
+            if (seen.has(key)) continue;
+            seen.add(key);
+        }
         out.push({
             at: typeof parsed.at === "string" ? parsed.at : "",
             session: typeof parsed.session === "string" ? parsed.session : null,

@@ -11,12 +11,12 @@ claim below points at a file and a line so you can check it rather than believe 
 This document used to call the MCP server "the node". There are three programs, and they do not
 share a trust surface, so each is described on its own and you install only the one you need.
 
-| | the MCP server — `apps/mcp` | the node — `apps/node` | the hook — `apps/hook` |
-| --- | --- | --- | --- |
-| launched by | your MCP client, over stdio | you, as a server | your runtime, on every tool call |
-| reachable from | your machine (`127.0.0.1`) | **every interface** — it is the address you publish | nowhere; it reads stdin |
-| key | `.arp/receipt-key`, generated, signs content receipts | your agent's `AGENT_PRIVATE_KEY`, signs hire receipts | none |
-| network | the graph, the RPC, GitHub — counted below | the RPC only | none |
+|                | the MCP server — `apps/mcp`                           | the node — `apps/node`                                | the hook — `apps/hook`           |
+| -------------- | ----------------------------------------------------- | ----------------------------------------------------- | -------------------------------- |
+| launched by    | your MCP client, over stdio                           | you, as a server                                      | your runtime, on every tool call |
+| reachable from | your machine (`127.0.0.1`)                            | **every interface** — it is the address you publish   | nowhere; it reads stdin          |
+| key            | `.arp/receipt-key`, generated, signs content receipts | your agent's `AGENT_PRIVATE_KEY`, signs hire receipts | none                             |
+| network        | the graph, the RPC, GitHub — counted below            | the RPC only                                          | none                             |
 
 Sections up to "If you want to verify" are about the **MCP server**. The node and the hook have a
 section each after it.
@@ -440,19 +440,36 @@ The hashes are keccak256 over RFC 8785 canonical JSON, so step 3 needs no librar
 cd apps/hook && bun run build      # once: writes apps/hook/dist/arp-hook.js
 ```
 
+<!-- prettier-ignore -->
 ```jsonc
 // your runtime's .claude/settings.json — the path is absolute, because the hook runs in your
 // project and not in this one
-{"hooks": {"PostToolUse": [{"matcher": "*", "hooks": [
-  {"type": "command", "command": "bun /path/to/ARP/apps/hook/dist/arp-hook.js"}
-]}]}}
+{"hooks": {
+  "PostToolUse": [{"matcher": "*", "hooks": [
+    {"type": "command", "command": "bun /path/to/ARP/apps/hook/dist/arp-hook.js", "async": true}
+  ]}],
+  "PostToolUseFailure": [{"matcher": "*", "hooks": [
+    {"type": "command", "command": "bun /path/to/ARP/apps/hook/dist/arp-hook.js", "async": true}
+  ]}]
+}}
 ```
+
+Both events, because a failed call reaches only `PostToolUseFailure`. Grok Build reads this same
+file and sends camelCase keys, which the hook also reads (`apps/hook/src/payload.ts`).
 
 It fires on every tool call and appends one line to `.arp/session.jsonl` (or `ARP_SESSION_LOG`)
 for a skill or an MCP call, and nothing for anything else. It reads `.arp/receipts.jsonl` (or
-`ARP_RECEIPTS`) to name the atom of a skill you fetched through an MCP server. It writes **the
-size of a tool's response and whether it failed, never its content** — a response can hold a
-key or a file, and this log later feeds a declaration.
+`ARP_RECEIPTS`) to name the atom of a skill you fetched through an MCP server, and your MCP
+configuration (`~/.claude.json`, `.mcp.json`) to name an MCP server by its URL or its npm or PyPI
+page. A script, a local path or localhost names nothing. **A configured URL can hold a key**, so
+the hook drops its query, fragment and `user:pass@`, and keeps only the origin when a path segment
+looks like a token (long, letters and digits mixed). The first time it creates `.arp/` it writes
+`.arp/.gitignore` containing `*`, so your repository does not commit the log by accident.
+
+Per call it writes the call id, an outcome (`ok`, `tool_error`, `auth`, `timeout`, `unreachable`,
+`payment`), at most a status code such as `401`, the duration the runtime measured, and **the size
+of the response, never its content, its arguments or the error's text**. A response can hold a key
+or a file, and this log later feeds a declaration. A call you cancel is not written.
 
 It makes no network call. The bundle carries host literals from protocol constants it never calls;
 the call sites are what matter, and there are none:

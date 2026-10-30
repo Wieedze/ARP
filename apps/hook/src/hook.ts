@@ -1,7 +1,9 @@
 /** Record what a session actually invoked, as the runtime sees it.
  *
- * Wire it as a `PostToolUse` hook, so it fires on **every** tool call whether or not the agent
- * meant it to:
+ * Wire it on `PostToolUse` **and** `PostToolUseFailure`, so it fires on every tool call whether or
+ * not the agent meant it to. A failed call reaches only the second: `PostToolUse` runs "after a
+ * tool call succeeds" (code.claude.com/docs/en/hooks), and until 2026-10-30 this hook was wired on
+ * it alone, so it never saw a failure.
  *
  * ```jsonc
  * // .claude/settings.json
@@ -9,12 +11,20 @@
  *   "hooks": {
  *     "PostToolUse": [
  *       {"matcher": "*", "hooks": [
- *         {"type": "command", "command": "bun /path/to/ARP/apps/hook/dist/arp-hook.js"}
+ *         {"type": "command", "command": "bun /path/to/ARP/apps/hook/dist/arp-hook.js", "async": true}
+ *       ]}
+ *     ],
+ *     "PostToolUseFailure": [
+ *       {"matcher": "*", "hooks": [
+ *         {"type": "command", "command": "bun /path/to/ARP/apps/hook/dist/arp-hook.js", "async": true}
  *       ]}
  *     ]
  *   }
  * }
  * ```
+ *
+ * `async` keeps the runtime from waiting on the hook. Grok Build reads this same file and sends a
+ * camelCase payload; `payload.ts` reads both.
  *
  * The path is absolute because the hook runs in *your* project, not this one. Build the file once
  * with `cd apps/hook && bun run build`.
@@ -39,7 +49,7 @@
  *
  * ```
  * Skill            the skill's own name, and its source when the runtime gives one
- * mcp__<server>__  the MCP server, which is the thing ARP catalogues
+ * mcp__<server>__  the MCP server, and the URL its configuration names (`mcp-config.ts`)
  * everything else  ignored. `Read`, `Bash` and `Edit` are not tools anybody registered
  * ```
  *
@@ -54,33 +64,28 @@
  * `$ARP_SESSION_LOG`, or `.arp/session.jsonl` beside the working directory. One JSON object per
  * line, appended, never rewritten — a log a later step reads is a log nothing may edit.
  */
-import { appendFileSync, existsSync, mkdirSync, readFileSync } from 'node:fs';
+import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 
-import { type FetchedRef, refForInvocation } from '@arp-protocol/core';
+import { type FetchedRef, normaliseToolUrl, refForInvocation } from '@arp-protocol/core';
 
-type HookPayload = {
-  session_id?: string;
-  tool_name?: string;
-  tool_input?: Record<string, unknown>;
-  /**
-   * What the tool gave back. A `PostToolUse` hook fires after the call, so the runtime passes
-   * this — and it was ignored until 2026-10-30.
-   *
-   * **Its presence is the evidence the call went through**, which is what separates "the runtime
-   * recorded an invocation" from "the tool actually did something". For a skill that is the whole
-   * signal: a skill with a response was pulled into the context, not merely named. And it cannot
-   * be composed after the fact — the hook writes it at the moment of the call.
-   *
-   * The shape varies by runtime, so it is read defensively and never required.
-   */
-  tool_response?: unknown;
-  cwd?: string;
-};
+import { type Classified, classifyCall } from './classify.ts';
+import { readMcpServers, serverUrlOf } from './mcp-config.ts';
+import { type PayloadFormat, type ToolCall, toolCallOf } from './payload.ts';
 
 type Invocation = {
   at: string;
   session: string | null;
+  /** The runtime's id for the call. A reader keeps one line per id (`parseSessionLog`). */
+  call: string | null;
+  /** How the payload was written, not who wrote it — see `payload.ts`. */
+  format: PayloadFormat;
+  /** `classify.ts`. A line written before 2026-10-30 has none: failures were not seen then. */
+  outcome: Classified['outcome'];
+  /** An HTTP status, when the failure carried one. Never the message. */
+  code: string | null;
+  /** What the runtime measured, when it did. */
+  ms: number | null;
   kind: 'skill' | 'mcp';
   /** The skill's name, or the MCP server's. */
   name: string;
@@ -92,7 +97,7 @@ type Invocation = {
    * ```
    * answered  the response existed at all — the call went through
    * bytes     its size, which separates "answered" from "answered something"
-   * failed    whether the runtime marked it an error
+   * failed    whether `outcome` is anything but `ok`
    * ```
    *
    * **Never the content.** A tool's response can hold an API key, customer data or a file's
@@ -167,9 +172,9 @@ function fetchedRefs(cwd: string): FetchedRef[] {
  * array of blocks. Rather than knowing each one, this measures the serialised form — which is
  * enough for "it answered" and "roughly how much", and keeps none of it.
  */
-function responseOf(payload: HookPayload): Invocation['response'] {
-  if (!('tool_response' in payload) || payload.tool_response === undefined) return null;
-  const raw = payload.tool_response;
+function responseOf(call: ToolCall, outcome: Classified['outcome']): Invocation['response'] {
+  if (!call.hasResponse) return null;
+  const raw = call.response;
   let bytes = 0;
   try {
     bytes = typeof raw === 'string' ? raw.length : (JSON.stringify(raw)?.length ?? 0);
@@ -177,13 +182,7 @@ function responseOf(payload: HookPayload): Invocation['response'] {
     // A circular response is still a response. The size is unknown, the fact is not.
     bytes = 0;
   }
-  // The runtimes that mark an error do it with a boolean on the response object. Absent means
-  // "not marked", never "succeeded" — this records what was said, not what is inferred.
-  const failed =
-    typeof raw === 'object' && raw !== null && 'is_error' in raw
-      ? (raw as { is_error?: unknown }).is_error === true
-      : false;
-  return { answered: raw !== null, bytes, failed };
+  return { answered: raw !== null, bytes, failed: outcome !== 'ok' };
 }
 
 function readString(from: Record<string, unknown> | undefined, key: string): string | null {
@@ -191,46 +190,49 @@ function readString(from: Record<string, unknown> | undefined, key: string): str
   return typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
 }
 
-/** What this call invoked, or `null` for the calls nobody registers. */
-function invocationOf(
-  payload: HookPayload,
-  fetched: readonly FetchedRef[],
-): Omit<Invocation, 'at' | 'session'> | null {
-  const tool = payload.tool_name;
-  if (typeof tool !== 'string' || tool.length === 0) return null;
+/** The URL a server's configuration names, normalised, or `null` when it names none. */
+function serverRef(server: string, cwd: string): string | null {
+  const url = serverUrlOf(readMcpServers({ cwd }).get(server));
+  if (url === null) return null;
+  try {
+    return normaliseToolUrl(url);
+  } catch {
+    return null;
+  }
+}
 
-  if (tool === 'Skill') {
-    const name = readString(payload.tool_input, 'skill');
+type What = Pick<Invocation, 'kind' | 'name' | 'source' | 'ref'>;
+
+/** What this call invoked, or `null` for the calls nobody registers. */
+function whatOf(call: ToolCall, cwd: string, fetched: () => FetchedRef[]): What | null {
+  if (call.tool === 'Skill') {
+    const name = readString(call.input, 'skill');
     if (name === null) return null;
     // A plugin skill is `plugin:skill`; a directory-scoped one is `path:skill`. Both halves are
     // kept, because the half before the colon is the only thing that tells two skills with the
     // same name apart — and 104 names in the catalogue are carried by more than one repository.
-    const source = readString(payload.tool_input, 'source');
+    const source = readString(call.input, 'source');
     return {
       kind: 'skill',
       name,
       source,
-      response: responseOf(payload),
       // Whatever the payload offers, in the order of exactness, and then what the agent
       // actually fetched. A 0x id or a URL both resolve to one atom; a name does not.
       ref:
-        readString(payload.tool_input, 'atom_id') ??
-        readString(payload.tool_input, 'tool_atom_id') ??
-        readString(payload.tool_input, 'url') ??
-        refForInvocation(name, source, fetched),
+        readString(call.input, 'atom_id') ??
+        readString(call.input, 'tool_atom_id') ??
+        readString(call.input, 'url') ??
+        refForInvocation(name, source, fetched()),
     };
   }
 
   // `mcp__<server>__<tool>`. The server is what ARP catalogues; the tool within it is not.
-  const mcp = /^mcp__([^_]+(?:_[^_]+)*?)__/.exec(tool);
+  const mcp = /^mcp__([^_]+(?:_[^_]+)*?)__/.exec(call.tool);
   if (mcp?.[1] !== undefined) {
-    return {
-      kind: 'mcp',
-      name: mcp[1],
-      source: null,
-      response: responseOf(payload),
-      ref: readString(payload.tool_input, 'url'),
-    };
+    // The ref is the server's own URL, from configuration. It used to be `tool_input.url`, which
+    // is an **argument** — the page a fetch tool was asked to read — and so named the wrong
+    // thing and wrote down what the agent was doing.
+    return { kind: 'mcp', name: mcp[1], source: null, ref: serverRef(mcp[1], cwd) };
   }
 
   return null;
@@ -239,29 +241,48 @@ function invocationOf(
 let raw = '';
 for await (const chunk of process.stdin) raw += chunk;
 
-let payload: HookPayload;
+let parsed: unknown;
 try {
-  payload = JSON.parse(raw) as HookPayload;
+  parsed = JSON.parse(raw);
 } catch {
   // A hook that throws on a payload it did not expect blocks the tool call it was watching.
   // Silence is the right failure here: the log loses a line, the session does not stop.
   process.exit(0);
 }
 
-const cwd = payload.cwd ?? process.cwd();
-const invocation = invocationOf(payload, fetchedRefs(cwd));
-if (invocation === null) process.exit(0);
+const call = toolCallOf(parsed);
+if (call === null) process.exit(0);
 
-const path = process.env['ARP_SESSION_LOG'] ?? join(cwd, '.arp', 'session.jsonl');
+const cwd = call.cwd ?? process.cwd();
+const what = whatOf(call, cwd, () => fetchedRefs(cwd));
+if (what === null) process.exit(0);
+
+// Cancelled or interrupted: nothing was used, so nothing is recorded.
+const classified = classifyCall(call);
+if (classified === null) process.exit(0);
+
+const own = join(cwd, '.arp');
+const path = process.env['ARP_SESSION_LOG'] ?? join(own, 'session.jsonl');
 
 const line: Invocation = {
   at: new Date().toISOString(),
-  session: readString(payload as Record<string, unknown>, 'session_id'),
-  ...invocation,
+  session: call.session,
+  call: call.id,
+  format: call.format,
+  ...what,
+  outcome: classified.outcome,
+  code: classified.code,
+  ms: call.ms,
+  response: responseOf(call, classified.outcome),
 };
 
 try {
   mkdirSync(dirname(path), { recursive: true });
+  // `.arp/` lands in the operator's project, whose `.gitignore` may not know it. The log holds
+  // no content, but it is a record of what an agent did and is not the operator's to publish by
+  // accident. Only our own directory: a path chosen through ARP_SESSION_LOG is left alone.
+  const ignore = join(own, '.gitignore');
+  if (dirname(path) === own && !existsSync(ignore)) writeFileSync(ignore, '*\n');
   appendFileSync(path, `${JSON.stringify(line)}\n`);
 } catch {
   // Same reason as above. A session must not fail because a record could not be kept.

@@ -1,6 +1,6 @@
 # Task 33 — One installer: npx, and a native package per runtime
 
-**Status:** **PLAN**, 2026-10-30. Not started. It splits into the sub-tasks in §4. Each one is
+**Status:** **PLAN**, 2026-10-30. **33a COMPLETE** 2026-10-30, `task-verifier` PASS on the second pass, post-mortem `.claude/learning/23-one-installer-33a.md`. 33b–33h not started. It splits into the sub-tasks in §4. Each one is
 verified on its own, and the parts that publish are confirmed by the user every time (task 32 §2.12).
 **Required skills:** none beyond the repo's own.
 **Rules:** `code.md`, `security.md` (a key moves to a file), `portability.md`, `claims.md`, `workflow.md`.
@@ -17,7 +17,7 @@ professionnelle »_. Then: _« installable en cli en npx (npm) et en plugin clau
 autre »_.
 
 Today an operator clones the repo, installs Bun, builds three apps and writes the hook into
-`settings.json` with an absolute path (`apps/hook/src/hook.ts:12`). That is four steps where
+`settings.json` with an absolute path (the settings snippet in `apps/hook/src/hook.ts`'s header). That is four steps where
 there should be one.
 
 ## 2. The shape
@@ -108,13 +108,17 @@ The hook, before any packaging work, because every package ships it.
 - **One call, one line.** Grok reads both its own hook files and Claude Code's. A hook installed in
   both places would fire twice. The log keeps the call id (`tool_use_id` / `toolUseId`) and the
   reader skips a duplicate.
-- Each line records which runtime wrote it.
+- Each line records the payload's **format** (`claude` or `grok`), not the runtime: Codex also
+  writes snake_case, so a shape says how a line was written and not who wrote it.
 - Take from `docs/design/cli-v0/` (`docs/23`): `mcp-config.ts`, which maps a server name to its URL or its
   npm/PyPI page, normalised by `core` (ADR `0054`); `classify.ts`, the failure categories; and the
   sentinel test, which proves no argument or answer is stored. Leave out its SQLite database, its
   verdicts and its `tool-id.ts`.
-- The MCP server's `arp_declare_session` reads the same log. Its path is settled here (`docs/23`
-  §6.4).
+- The MCP server's `arp_declare_session` reads the same log. **Settled:** per working directory, as
+  today, and the hook writes `.arp/.gitignore` (`docs/23` §6.4).
+- **A configured URL can carry a key** (`?apiKey=`, `user:pass@`, a token in the path). The ref drops
+  the query, the fragment and the userinfo, and falls back to the origin when a path segment is
+  credential-shaped (`apps/hook/src/mcp-config.ts`). Found by the verifier's first pass.
 
 ### 33b — `@arp-protocol/cli`, built for Node
 
