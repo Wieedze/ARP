@@ -157,15 +157,28 @@ export type ToolRow = {
      */
     label: string | null;
     href: string;
+    /**
+     * How many `uses` edges point at the tool. No column shows it, so it sorts `/tools` only as a
+     * tiebreak, after the Declared and Usage figures the reader can see.
+     */
     declarations: number;
     /**
-     * How many of this tool's declarations carry at least one position, or `null` when this read
-     * cannot say.
+     * Deposits on the tool's edges that ARP's sponsoring service sent, so each one passed the proof
+     * gate (ADR `0094` §2). The "Usage" column, and the only figure on the page that word is true
+     * of. `null` when this read cannot say.
      *
-     * Never a summed position count: positions are counted per vault, and a sum across an atom's
-     * edges is a count of nothing a reader recognises (ADR `0023`).
+     * Read from the deposit events, not from positions: a position merges a sponsored deposit with
+     * the agent's own, and a withdrawal does not say which part it takes.
      */
-    paidDeclarations: number | null;
+    provenDeposits: number | null;
+    /**
+     * Every other deposit on the tool's edges, the creation deposit of each edge included. The
+     * "Declared" column. `null` when this read cannot say.
+     *
+     * It replaced "Paid for", which counted edges carrying a position and equalled the edge count
+     * for every edge ARP writes, because a term is born with its creator's position (ADR `0053`).
+     */
+    declaredDeposits: number | null;
     supportTrust: string;
     /**
      * TRUST deposited against the tool's declarations, or `null`.
@@ -180,9 +193,9 @@ export type ToolRow = {
     /**
      * How many positions stand on the tool's own atom. `null` for a `declared` row.
      *
-     * Not foldable into `paidDeclarations`: that counts **edges** carrying a position, this counts
-     * positions in **one** vault. Summing them would be the per-vault-versus-across-edges error
-     * ADR `0023` predicted in writing.
+     * Not foldable into the deposit counts: those count **events** across the tool's edges, this
+     * counts positions in **one** vault, the atom's. Summing them would be the
+     * per-vault-versus-across-edges error ADR `0023` predicted in writing.
      */
     stakers: number | null;
 };
@@ -254,7 +267,8 @@ function rowOf(tool: ToolListing): ToolRow {
         label: label ?? null,
         href: `/atom/${tool.atomId}`,
         declarations: tool.edgeCount,
-        paidDeclarations: tool.pricedEdges,
+        provenDeposits: tool.provenDeposits,
+        declaredDeposits: tool.declaredDeposits,
         supportTrust: formatTrust(tool.supportAssetsSum),
         opposeTrust: tool.opposeAssetsSum > 0n ? formatTrust(tool.opposeAssetsSum) : null,
         stakers: null,
@@ -273,11 +287,12 @@ function registeredRowOf(tool: RegisteredTool): ToolRow {
         label: label ?? null,
         href: `/atom/${tool.atomId}`,
         declarations: tool.declarations,
-        // `null`, not `0`: pricing a registered row's declarations needs the per-edge vaults, which
-        // is `listTools`'s read, so this is **unknown** here. A zero under "paid for" would read as
-        // "nobody paid", which is a claim this read cannot make — the same distinction the oppose
-        // column makes two cells over by staying empty.
-        paidDeclarations: null,
+        // `null`, not `0`: a registered row's deposits are on its edges, which is `listTools`'s
+        // read, so they are **unknown** here. A tool whose edges that read did find appears as a
+        // declared row instead and carries both figures. A zero would read as "nobody deposited",
+        // a claim this read cannot make — the oppose column stays empty for the same reason.
+        provenDeposits: null,
+        declaredDeposits: null,
         supportTrust: formatTrust(tool.assets),
         opposeTrust: null,
         stakers: tool.positionCount,
@@ -355,7 +370,8 @@ export type ToolSortAxis = "declared" | "installs" | "stars";
  * Two axes per index, and only ones that mean something there (user, 2026-10-30).
  *
  * "Most staked" and "Most claims" were two orders of the same thing, and read as noise. **Declared**
- * is the one ARP measures: how many agents declare a `uses` edge to the tool. Not "used": the user
+ * is the one ARP measures: the Declared column, deposits on the tool's `uses` edges that did not
+ * pass the proof gate (task 42), so the order reads down the figure it is named for. Not "used": the user
  * asked for that word and, reminded of 2026-10-27, chose "declared" — a declaration is a signed
  * sentence, not an observed use (`docs/14`). Stake behind those edges
  * is the tiebreak and stays on the row, not a separate order. The second axis is somebody else's
@@ -397,6 +413,17 @@ export function rankTools(
         if (axis === "installs" && a.installs !== b.installs)
             return (b.installs ?? -1) - (a.installs ?? -1);
         if (axis === "stars" && a.stars !== b.stars) return (b.stars ?? -1) - (a.stars ?? -1);
+        // **The order reads down the column it is named for.** "Most declared" sorts on the
+        // Declared figure, deposits that did not pass the proof gate, and not on the edge count:
+        // two edges with three deposits each print 6 and rank above three edges with one each,
+        // which print 3. It sorted on `declarations` until review found the Declared column not
+        // reading down in order under its own sort. `null` (unknown) ranks below a known zero.
+        const leftDeclared = left.declaredDeposits ?? -1;
+        const rightDeclared = right.declaredDeposits ?? -1;
+        if (leftDeclared !== rightDeclared) return rightDeclared - leftDeclared;
+        const leftProven = left.provenDeposits ?? -1;
+        const rightProven = right.provenDeposits ?? -1;
+        if (leftProven !== rightProven) return rightProven - leftProven;
         if (right.declarations !== left.declarations) return right.declarations - left.declarations;
         // Then the stake, as the tiebreak: the position COUNT before the amount, because creating a
         // term seeds its vault, so an amount alone ranks a tool nobody staked on above nothing at
