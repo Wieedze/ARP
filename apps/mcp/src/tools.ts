@@ -168,6 +168,12 @@ export const TOOLS = [
           type: 'string',
           description: 'Your ERC-8004 token id, as a decimal string.',
         },
+        registry: {
+          type: 'string',
+          description:
+            'Optional. The identity registry, when it is not the canonical one. Needed on any ' +
+            'chain where that address has no code — it has none on Intuition testnet 13579.',
+        },
         tools: {
           type: 'array',
           items: { type: 'string' },
@@ -200,6 +206,12 @@ export const TOOLS = [
         agent_token_id: {
           type: 'string',
           description: 'Your ERC-8004 token id, as a decimal string.',
+        },
+        registry: {
+          type: 'string',
+          description:
+            'Optional. The identity registry, when it is not the canonical one. Needed on any ' +
+            'chain where that address has no code — it has none on Intuition testnet 13579.',
         },
         log: {
           type: 'string',

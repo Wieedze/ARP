@@ -54,6 +54,15 @@ async function readLocalReceipts(): Promise<Map<string, SignedContentReceipt>> {
   return held;
 }
 
+/** The agent a declaration is about, with its registry when the caller named one. */
+function agentRefOf(chainId: number, tokenId: string, registry: unknown) {
+  return {
+    chainId,
+    tokenId,
+    ...(typeof registry === 'string' && isAddress(registry) ? { registry } : {}),
+  };
+}
+
 export async function declareUsed(id: JsonRpcId, args: Record<string, unknown>) {
   const agentChainId = args['agent_chain_id'];
   const agentTokenId = args['agent_token_id'];
@@ -67,9 +76,13 @@ export async function declareUsed(id: JsonRpcId, args: Record<string, unknown>) 
   if (!Array.isArray(tools) || tools.some((tool) => typeof tool !== 'string')) {
     return fail(id, -32602, 'tools must be an array of URI strings');
   }
+  const registryRaw = args['registry'];
+  if (registryRaw !== undefined && !isAddress(registryRaw)) {
+    return fail(id, -32602, 'registry, when given, must be a 20-byte hex address');
+  }
 
   const subject = await resolveDeclarationSubject({
-    agent: { chainId: agentChainId, tokenId: agentTokenId },
+    agent: agentRefOf(agentChainId, agentTokenId, registryRaw),
     graphqlUrl: GRAPHQL,
   });
   const plan = await prepareDeclareUsed({
@@ -105,6 +118,10 @@ export async function declareSession(id: JsonRpcId, args: Record<string, unknown
   const declarer = args['declarer'];
   if (declarer !== undefined && !isAddress(declarer)) {
     return fail(id, -32602, 'declarer must be a 20-byte hex address');
+  }
+  const registryRaw = args['registry'];
+  if (registryRaw !== undefined && !isAddress(registryRaw)) {
+    return fail(id, -32602, 'registry, when given, must be a 20-byte hex address');
   }
 
   const given = args['log'];
@@ -178,7 +195,7 @@ export async function declareSession(id: JsonRpcId, args: Record<string, unknown
       ? null
       : await prepareDeclareUsed({
           subject: await resolveDeclarationSubject({
-            agent: { chainId: agentChainId, tokenId: agentTokenId },
+            agent: agentRefOf(agentChainId, agentTokenId, registryRaw),
             graphqlUrl: GRAPHQL,
           }),
           tools: resolved.map((row) => (row.status === 'resolved' ? row.url : '')),

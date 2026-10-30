@@ -508,6 +508,18 @@ describe("arp_declare_session", () => {
             ...over,
         });
 
+    it("takes the registry the identity lives in, and refuses one that is not an address", async () => {
+        // On testnet 13579 the canonical registry has no code, so an agent minted there is only
+        // findable through ARP's own copy — without this argument no testnet agent could declare.
+        const bad = await call({
+            agent_chain_id: 13579,
+            agent_token_id: "8",
+            registry: "0x12",
+            log: line({name: "brainstorming"}),
+        });
+        expect(JSON.stringify(bad.body)).toContain("registry, when given, must be a 20-byte hex address");
+    });
+
     it("plans only for what it can name exactly, and reports the rest", async () => {
         // The whole point of taking the list from the runtime instead of from the agent. A name
         // several repositories carry gets NO call: picking one would write an edge about a
