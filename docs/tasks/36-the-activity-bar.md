@@ -57,4 +57,4 @@ below:
 
 ## Completion note
 
-2026-10-30, commit `353df6d`. `ui-reviewer` FAIL (8 findings, fixed); `task-verifier` FAIL (3, fixed), then PASS. Post-mortem `.claude/learning/25-the-activity-bar.md`, ADR `0091`.
+2026-10-30, commit `353df6d`. `ui-reviewer` FAIL (8 findings, fixed); `task-verifier` FAIL (3, fixed), then PASS. Post-mortem `.claude/learning/25-the-activity-bar.md`, ADR `0091`. Amendment (every transaction, clickable; Activity in the nav): commit `63c1fbc`, `task-verifier` FAIL (4, fixed) then PASS.
