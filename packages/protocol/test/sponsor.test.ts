@@ -181,8 +181,9 @@ describe("checkSponsorProof", () => {
         agentWalletOf: async (registry: Address, id: bigint) =>
             registry.toLowerCase() === REGISTRY_ADDRESS.toLowerCase() && id === 9n ? wallet : null,
     });
-    const context = (txs = paid, keys: AgentKeyReads = agents()) => ({
+    const context = (txs = paid, keys: AgentKeyReads = agents(), requesterId = "1") => ({
         receiver: AGENT.address,
+        requester: {agentRegistry: REGISTRY, agentId: requesterId},
         chainId: TESTNET,
         payments: payments(txs),
         acceptedContentSigners: [NODE.address],
@@ -304,6 +305,30 @@ describe("checkSponsorProof", () => {
             status: "refused",
             reason: "hire receipt is signed by the requester itself",
         });
+    });
+
+    it("refuses a hire of the requester's own agent, paid to its agentWallet", async () => {
+        // Agent 9 is the requester: held by AGENT, with CALLEE as its agentWallet. The payment goes
+        // from the holder to the wallet and the wallet signs, so `callee === receiver` does not fire.
+        const verdict = await checkSponsorProof(
+            {kind: "hire", receipt: await signHire(hire())},
+            context(paid, agents(AGENT.address, CALLEE.address), "9"),
+        );
+        expect(verdict).toEqual({
+            status: "refused",
+            reason: "hire receipt names agent 9, the requester itself",
+        });
+    });
+
+    it("compares the requester's registry without regard to case", async () => {
+        const verdict = await checkSponsorProof(
+            {
+                kind: "hire",
+                receipt: await signHire(hire({agentRegistry: REGISTRY.toLowerCase()})),
+            },
+            context(paid, agents(AGENT.address, CALLEE.address), "9"),
+        );
+        expect(verdict.status === "refused" && verdict.reason).toMatch(/requester itself/);
     });
 
     it("refuses a hire receipt from another chain, which cannot be priced against this one", async () => {

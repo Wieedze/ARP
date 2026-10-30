@@ -331,6 +331,8 @@ export {
     prepareIdentityAtom,
     prepareStakeOnUsed,
     resolveDeclarationSubject,
+    resolveIdentityAtomStrict,
+    type StrictIdentityAtom,
     SmartAccountsKitMissingError,
     toDelegatedCalls,
     toolAtomUri,

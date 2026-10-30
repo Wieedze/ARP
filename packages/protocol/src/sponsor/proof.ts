@@ -78,6 +78,11 @@ export type ProofVerdict = ProvenProof | {status: "refused"; reason: string};
 export type ProofCheckContext = {
     /** The agent asking: the deposit's `receiver`. */
     receiver: Address;
+    /**
+     * The ERC-8004 identity the request is signed as. A hire receipt naming this same identity is
+     * one agent paying its own `agentWallet`, not one agent hiring another, and is refused.
+     */
+    requester: AgentIdentityRef;
     /** The chain the deposit is made on. A proof from another chain cannot be priced against it. */
     chainId: number;
     payments: PaymentReads;
@@ -97,6 +102,13 @@ export type ProofCheckContext = {
 
 const REGISTRY = /^eip155:([1-9][0-9]*):(0x[0-9a-fA-F]{40})$/;
 const DECIMAL = /^(0|[1-9][0-9]*)$/;
+
+/** Whether two receipt-style identity references name the same ERC-8004 token. */
+function sameAgent(a: AgentIdentityRef, b: AgentIdentityRef): boolean {
+    if (a.agentRegistry.toLowerCase() !== b.agentRegistry.toLowerCase()) return false;
+    if (!DECIMAL.test(a.agentId) || !DECIMAL.test(b.agentId)) return a.agentId === b.agentId;
+    return BigInt(a.agentId) === BigInt(b.agentId);
+}
 
 /**
  * Whether `signer` may sign as agent `agentId` of `agentRegistry`: the registry is accepted, the
@@ -150,6 +162,12 @@ async function checkHire(
     }
     if (callee === receiver) return refused("hire receipt is signed by the requester itself");
     const hired = {agentRegistry: receipt.agentRegistry, agentId: String(receipt.agentId)};
+    // `callee === receiver` misses a holder paying its own agent's `agentWallet`: two keys, one
+    // agent, and the edge would be `(A, uses, A)`. ADR `0094` accepts two agents under one
+    // operator; it does not accept one agent hiring itself.
+    if (sameAgent(hired, context.requester)) {
+        return refused(`hire receipt names agent ${hired.agentId}, the requester itself`);
+    }
     const notTheAgent = await signsAsAgent(callee, hired, context);
     if (notTheAgent !== null) return refused(notTheAgent);
 
