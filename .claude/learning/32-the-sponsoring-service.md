@@ -1,4 +1,4 @@
-# 31 — The sponsoring service: a proven deposit, paid by ARP, owned by the agent
+# 32 — The sponsoring service: a proven deposit, paid by ARP, owned by the agent
 
 **Task:** `docs/tasks/40-the-sponsoring-service.md` (built with `docs/tasks/37` 37b, 37c)
 **Completed:** 2026-10-30

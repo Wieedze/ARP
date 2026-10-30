@@ -37,4 +37,4 @@
 | [29](29-coherence-audit-28d.md) | `docs/tasks/28-coherence-audit.md` (entry 43) | PASS (second pass; the first draft's check did not print what the entry said) | Coherence audit, entry 43: `/agent` step 5 pointed at a deleted script |
 | [30](30-the-activity-bar-verified.md) | `docs/tasks/36-the-activity-bar.md` (the "Review of `f5d1c84` and `79ad7ea`" section) | PASS | The activity bar, review of f5d1c84 and 79ad7ea (36v) |
 | [31](31-the-receipt-enforcer.md) | `docs/tasks/43-the-receipt-enforcer.md` | PASS | The receipt enforcer: "no signed receipt, no deposit", held by a contract |
-| [31](31-the-sponsoring-service.md) | `docs/tasks/40-the-sponsoring-service.md` (built with `docs/tasks/37` 37b, 37c) | PASS (second pass) | The sponsoring service: a proven deposit, paid by ARP, owned by the agent |
+| [32](32-the-sponsoring-service.md) | `docs/tasks/40-the-sponsoring-service.md` (built with `docs/tasks/37` 37b, 37c) | PASS (second pass) | The sponsoring service: a proven deposit, paid by ARP, owned by the agent |
