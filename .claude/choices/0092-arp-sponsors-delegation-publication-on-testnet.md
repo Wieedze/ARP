@@ -52,12 +52,20 @@ to IPFS and indexes it on Intuition, paid from ARP's treasury key, within daily 
    - Nothing is pinned or written before that check, so the relay cannot be used as free pinning.
    - The relay holds a gas key and nothing else, with no private database. A compromised relay can
      waste its own balance. It cannot forge a delegation or spend an operator's funds.
-3. **Two limits.**
-   - Per delegator: a number of publications per day.
-   - Overall: a daily budget for the relay.
+3. **Three limits.** Values set by the user on 2026-10-30, and the reasoning is theirs: _« qui va
+   déléguer plus de 5 fois par jour sachant qu'une fois suffit pour toujours »_. A delegation's cap
+   renews each period, so an operator signs one per agent and re-signs only to change the cap,
+   add an agent, or fix a mistake.
+   - **Per delegator: 2 publications per day.** One for normal use, one to fix a mistake. Past
+     that, the operator publishes from their own wallet.
+   - **Overall: about 1 tTRUST per day** for the relay.
+   - **Only for a delegate that is a registered ERC-8004 agent.** A smart account costs nothing to
+     create, so a per-delegator limit does not stop someone with a thousand of them. Spending on
+     agents that exist is what is worth ARP's money, and it filters disposable accounts.
 
-   Both are configuration, read at start, and printed in the relay's info route. The relay's own
-   balance is the hard limit behind both.
+   The global budget is what actually protects the treasury. The per-delegator limit keeps one
+   operator from using all of it. All three are configuration, read at start, and printed in the
+   relay's info route. The relay's own balance is the hard limit behind them.
 
 4. **Idempotent.** Intuition term ids are content-addressed, so publishing the same delegation twice
    writes nothing the second time.

@@ -110,10 +110,16 @@ New app, because it runs and holds a key (ADR `0082`).
 
 ## 4. Decisions for the user, before the step that needs them
 
-1. **The limit values.** The proposal is 5 publications per delegator per day, and a global
-   budget of 1 tTRUST per day. On 13579 one publication is about 5 term creations at about 0.001
-   each (`getAtomCost` and `getTripleCost`, read from the chain at the time, never from this
+1. ~~**The limit values.**~~ **Decided 2026-10-30** (ADR `0092` item 3):
+   - 2 publications per delegator per day;
+   - about 1 tTRUST per day overall;
+   - sponsoring only for a delegate that is a registered ERC-8004 agent.
+
+   The relay checks the last one by reading the registry before it pins anything, and refuses with
+   the self-publish plan otherwise. On 13579 one publication is about 5 term creations at about
+   0.001 each (`getAtomCost` and `getTripleCost`, read from the chain at the time, never from this
    file).
+
 2. **Where the relay runs.** Locally for development. For real use, a Cloudflare Worker would be
    consistent with `apps/api`, but a Worker holding a funded key is a different risk from
    `apps/api`, which holds none (ADR `0084`).
