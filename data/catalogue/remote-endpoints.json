@@ -85,7 +85,7 @@
       "repo": "zapier/zapier-mcp",
       "endpoint": "https://mcp.zapier.com/api/v1/connect",
       "from": "README, and it answers with the MCP OAuth header. Each user's own URL is a different thing; this one is public",
-      "pending": "shown to the user 2026-10-30, not yet validated"
+      "validated": "2026-10-30"
     }
   ],
   "_zapier": "Until 2026-10-30 this file said Zapier had no public identity because each user gets their own URL. That was wrong: the README also names a public OAuth endpoint, mcp.zapier.com/api/v1/connect."

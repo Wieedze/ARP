@@ -7,7 +7,7 @@
  "balanceBefore": "1.148844007627",
  "balanceAfter": "1.068626334347",
  "_balanceNote": "The difference, 0.08021767328, is the 0.09000000008 deposited, less what the 12 redemptions returned, plus gas.",
- "_after": "21 of the 22 catalogued MCP servers now carry their identity off the repository; zapier/zapier-mcp, found to have a public endpoint after this run, waits for the user.",
+ "_after": "Then zapier/zapier-mcp, validated by the user the same day (« ok go signe »): its public endpoint mcp.zapier.com/api/v1/connect, 4 calls below, balance 1.068626334347 → 1.060333669938. After it, 0 of the 22 catalogued MCP repositories carry ARP's `mcp` tag: every one's identity is off the repository.",
  "calls": [
   {
    "kind": "create-atom",
@@ -116,6 +116,32 @@
    "value": "0",
    "why": "retire \"SonarSource/sonarqube-mcp-server has tag quality\"",
    "tx": "0xb08e38c868c272b47f6a410d955723194523a707a1f18fbc0a92e0f2edb40325"
+  }
+ ],
+ "zapier": [
+  {
+   "kind": "create-atom",
+   "value": "2000000001000000",
+   "why": "https://mcp.zapier.com/api/v1/connect",
+   "tx": "0x76010543f00118a065caeaeb6fd987da24c318751920b5bc1e4118ed62ad544a"
+  },
+  {
+   "kind": "create-triple",
+   "value": "8000000008000000",
+   "why": "mcp.zapier.com/api/v1/connect source zapier/zapier-mcp; mcp.zapier.com/api/v1/connect has tag remote server; mcp.zapier.com/api/v1/connect has tag mcp; mcp.zapier.com/api/v1/connect has tag automation",
+   "tx": "0x6ef5ee3ee87b4adb5aa0ebb1600d08a9bedcfb6b6c035eadc68128a06439cf60"
+  },
+  {
+   "kind": "redeem",
+   "value": "0",
+   "why": "retire \"zapier/zapier-mcp has tag mcp\"",
+   "tx": "0x6d0f16e00cde6656f73572e3b4811c82a14011851991e8fae8fb83030f8de6a9"
+  },
+  {
+   "kind": "redeem",
+   "value": "0",
+   "why": "retire \"zapier/zapier-mcp has tag automation\"",
+   "tx": "0x34cc17f6c8b92d7906ceb303937faefe3e31247431d78d277aa3856e2818daa1"
   }
  ]
 }
