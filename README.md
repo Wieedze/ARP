@@ -260,9 +260,14 @@ that file wins.
 ARP/
 ├── CLAUDE.md                       ← Router for Claude Code (rules, skills, agents)
 ├── README.md                       ← This file
-├── app/                            ← Vite + React + TS + Tailwind v4 UI
-│   └── src/{services,hooks,components,pages,lib}
-├── packages/
+├── apps/                           ← what runs (ADR 0082)
+│   ├── web/                        ← Vite + React + TS + Tailwind v4 UI
+│   │   └── src/{services,hooks,components,pages,lib}
+│   ├── mcp/                        ← the MCP server, stdio or HTTP. Signs no transaction
+│   ├── node/                       ← the inbound endpoint. Signs receipts, never transactions
+│   └── hook/                       ← the runtime PostToolUse hook. No network
+├── packages/                       ← what is imported
+│   ├── graphql/                    ← @arp-protocol/graphql — transport + Intuition query documents
 │   └── protocol/                   ← @arp-protocol/core — the protocol layer (ADR 0041)
 │       ├── README.md               ← the surface a third party reads
 │       ├── src/                    ← identity, graph, verifier, tool usage,
@@ -276,8 +281,6 @@ ARP/
 ├── scripts/                        ← flat Bun scripts, typechecked by `tsconfig.scripts.json`
 │   ├── demo-adopt.ts               ← an agent from nothing to a readable position
 │   ├── demo-hire.ts                ← a second agent discovers, calls, verifies, rates
-│   ├── arp-mcp-server.ts           ← the MCP server, stdio
-│   ├── agent-node.ts               ← the inbound endpoint. Signs receipts, never transactions
 │   ├── send-plan.ts                ← the ONLY place that signs
 │   ├── pin-tool.ts                 ← make a derived tool atom readable
 │   ├── measure/*.ts                ← every number in this repo is re-runnable from one of these

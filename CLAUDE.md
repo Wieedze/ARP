@@ -140,15 +140,21 @@ ARP/
 │   └── 17_THE_ATOM_PAGE.md          (design brief — the atom page's gravity field + curves)
 ├── tasks/                             atomic task files
 ├── contracts/                         Solidity (Foundry)
-├── packages/
+├── apps/                              what RUNS (ADR 0082)
+│   ├── web/                           TypeScript UI. Bound to testnet at module load, deliberately
+│   ├── mcp/                           the MCP server — stdio or HTTP, signs no transaction
+│   ├── node/                          the agent node — listens, checks a payment, signs a receipt
+│   └── hook/                          the runtime PostToolUse hook — no network
+├── packages/                          what is IMPORTED
+│   ├── graphql/                       `@arp-protocol/graphql` — HTTP transport, GraphQL client, every
+│   │                                  Intuition query document. Knows the schema, nothing about ARP
 │   └── protocol/                      `@arp-protocol/core` — THE PROTOCOL LAYER (ADR 0041)
 │       ├── src/                       identity, graph, verifier, tool usage, declare/stake plans.
 │       │                              Never signs, never sends (ADR 0038); no chain constant
 │       └── src/arp/                   ARP's OWN contracts (the folded-in `sdk/`) — the one place
 │                                      here that names a chain: `TESTNET_DEPLOYMENT`
-├── app/                               TypeScript UI. Bound to testnet at module load, deliberately
-├── scripts/                           flat `.ts` — measure-*, agent-*, verify-*. Inside no
-│                                      typecheck and no lint (tasks/21)
+├── scripts/                           flat `.ts` — measure-*, agent-*, verify-*, demo-*. Typechecked
+│                                      by `check:scripts`, linted by nothing (tasks/21)
 ├── skills/arp/SKILL.md                **publishable** — how to USE ARP with nothing installed
 │                                      (ADR 0052). The one for working ON this repo is
 │                                      `.claude/skills/arp-contributing/` — renamed because one

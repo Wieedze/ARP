@@ -1,18 +1,33 @@
-# 22 — Running the node
+# 22 — Running the MCP server, the node and the hook
 
-**Date**: 2026-10-29
+**Date**: 2026-10-29. Split by program 2026-10-30 (ADR `0082`).
 **For**: somebody deciding whether to install this beside their agent. Not a contributor — every
 claim below points at a file and a line so you can check it rather than believe it.
 
 ---
 
-## What it is
+## Three programs, installed separately
+
+This document used to call the MCP server "the node". There are three programs, and they do not
+share a trust surface, so each is described on its own and you install only the one you need.
+
+| | the MCP server — `apps/mcp` | the node — `apps/node` | the hook — `apps/hook` |
+| --- | --- | --- | --- |
+| launched by | your MCP client, over stdio | you, as a server | your runtime, on every tool call |
+| reachable from | your machine (`127.0.0.1`) | **every interface** — it is the address you publish | nowhere; it reads stdin |
+| key | `.arp/receipt-key`, generated, signs content receipts | your agent's `AGENT_PRIVATE_KEY`, signs hire receipts | none |
+| network | the graph, the RPC, GitHub — counted below | the RPC only | none |
+
+Sections up to "If you want to verify" are about the **MCP server**. The node and the hook have a
+section each after it.
+
+## What the MCP server is
 
 One process. It answers questions about tools and agents from a public knowledge graph, it fetches
 a skill's file from the repository that publishes it, and it prepares transactions for you to sign
 with your own key.
 
-**It is not a service you depend on.** Unplug everything of ours and your agent still runs: the node
+**It is not a service you depend on.** Unplug everything of ours and your agent still runs: the server
 is code on your machine, the graph it reads is Intuition's, and the files it fetches come from
 GitHub. That property is the whole of ADR `0045` and it is the reason this is installed rather than
 hosted.
@@ -20,6 +35,7 @@ hosted.
 ```
 bun run apps/mcp/src/server.ts --stdio    # for an MCP client to launch
 ARP_TARGET=testnet bun run apps/mcp/src/server.ts
+apps/mcp/dist/arp-server.js --stdio       # the same, as one file: cd apps/mcp && bun run build
 ```
 
 ## The three things that matter before you install anything
@@ -27,14 +43,14 @@ ARP_TARGET=testnet bun run apps/mcp/src/server.ts
 **It never signs a transaction.** Not a transfer, not a stake, not a contract call. The two planning
 tools return unsigned calls and your runtime signs them with your key, in the order given. There is
 no wallet client, no signer parameter and no send path in the package that builds them — ADR `0038`,
-and `packages/protocol/src/declare/` is where to check it. The one key the node does hold is below
+and `packages/protocol/src/declare/` is where to check it. The one key the server does hold is below
 and it cannot move value.
 
 **It executes nothing it fetches.** A skill's file is Markdown. It is returned with
 `content-type: text/plain`, `x-content-type-options: nosniff` and
-`content-disposition: attachment`, never rendered, never parsed, never written to disk by the node
+`content-disposition: attachment`, never rendered, never parsed, never written to disk by the server
 (`apps/mcp/src/content.ts`, the response at the end of `serveContentRequest`). Your agent reads it;
-the node does not.
+the server does not.
 
 **It cannot be made to fetch somewhere else.** This is the one that would matter most if it were
 wrong, so it is worth stating precisely. The only input to the content route is an atom id. That is
@@ -48,7 +64,7 @@ reaches the outbound URL.** `packages/protocol/test/content-serve.test.ts` has a
 ```
 .arp/receipt-key       the signing key. Generated on first run, mode 0600
 .arp/session.jsonl     what the hook recorded, if you wired the hook
-.arp/receipts.jsonl    what you fetched through a node, and the receipts
+.arp/receipts.jsonl    what you fetched through a server, and the receipts
 .arp/skills/<name>/SKILL.md   files you fetched, if you used arp-fetch-skill.ts
 ```
 
@@ -87,14 +103,14 @@ fetch, and that the four were "the only literals in the code" — a sentence tha
 that disproves it. All three were wrong. The first version of this section is also what changed the
 code:
 
-> `Bun.serve` binds **every interface** when it is given no hostname. So an installed node listened
+> `Bun.serve` binds **every interface** when it is given no hostname. So an installed server listened
 > on the local network, and anything that could reach the port could ask it to fetch
 > `http://127.0.0.1:…/admin` or `http://169.254.169.254/latest/meta-data/` and read the answer. An
 > open proxy into the operator's own machine, by accident, in two unrelated correct decisions.
 
 Both halves are fixed, 2026-10-29:
 
-- **The node binds `127.0.0.1` by default.** `ARP_HOST=0.0.0.0` opens it, for somebody who meant
+- **The server binds `127.0.0.1` by default.** `ARP_HOST=0.0.0.0` opens it, for somebody who meant
   to. The startup line says which, every time.
 - **Both caller-steerable fetches refuse a private target.** Loopback, `10/8`, `172.16/12`,
   `192.168/16`, `169.254/16`, `0/8`, IPv6 loopback and unique-local, `localhost`, `.internal`,
@@ -159,10 +175,11 @@ twice above as a configurable fixed host and it will not appear in the script's 
 bun run scripts/measure/node-outbound.ts
 ```
 
-It reads the six modules a running node actually loads and prints every host literal with its line,
+It reads the six modules a running server actually loads and prints every host literal with its line,
 every `fetch` call site **labelled `outbound`, `inbound` or `definition`**, and whether any host is
-ours. On 2026-10-29, `measurements/node-outbound-2026-10-29.json`: **6 host literals, 9 call sites
-of which 6 are outbound, 0 of the hosts ours.** It exits non-zero if that last number is ever not
+ours. On 2026-10-30, after the move to `apps/mcp` and `packages/graphql`,
+`measurements/node-outbound-2026-10-30.json`: **6 host literals, 9 call sites of which 6 are
+outbound, 0 of the hosts ours** — the same figures as the 2026-10-29 run, at new paths. It exits non-zero if that last number is ever not
 zero.
 
 The six outbound ones are the whole of it: two on the registration route (the document and a
@@ -179,13 +196,13 @@ cannot check for itself, and it says so.
 Three things it shows that a count alone would hide:
 
 - Two of the six literals (`localhost:`, `stdio`) are in **log lines** and fetched by nobody, and
-  `github.com` is in the probe's **user-agent**, which identifies the node and sends nothing. Three
+  `github.com` is in the probe's **user-agent**, which identifies the server and sends nothing. Three
   of the six are destinations.
-- The Intuition graph and RPC are **absent from the literals and present in the node** — they come
+- The Intuition graph and RPC are **absent from the literals and present in the server** — they come
   from `deployments/<chainId>.json` at startup. Absence from a literal list is not absence from the
-  node, which is the trap a literal count sets.
+  server, which is the trap a literal count sets.
 - `fetchCallSites` is deliberately **over-inclusive and labelled**: a definition and the stdio
-  loop's call to the node's own inbound handler are in it, marked as such. A site it lists and
+  loop's call to the server's own inbound handler are in it, marked as such. A site it lists and
   should not is a reader's minute; a site it misses is the claim being false. The labels exist
   because an over-inclusive count with no labels cannot be compared against anything — and the
   first version of the classifier called that self-dispatch `outbound`, which is the over-count
@@ -202,11 +219,11 @@ ARP_TRANSPORT          stdio, for an MCP client
 INTUITION_GRAPHQL_URL  override the graph
 INTUITION_RPC_URL      override the RPC
 ARP_MULTI_VAULT        override the contract address
-ARP_DOMAIN_ATTESTOR    whose domain tags to read. A property of the node, never a request parameter
+ARP_DOMAIN_ATTESTOR    whose domain tags to read. A property of the server, never a request parameter
 GITHUB_TOKEN           optional. Raises GitHub's 60-requests-an-hour limit on file listings
 ARP_RECEIPT_KEY        a key you manage, instead of the generated one. Never a funded one
 ARP_NO_RECEIPTS        set to 1 to run with no key at all
-ARP_ACCEPTED_SIGNERS   comma-separated. Which receipt signers THIS node's reader accepts
+ARP_ACCEPTED_SIGNERS   comma-separated. Which receipt signers THIS server's reader accepts
 ARP_CHAIN_ID           which chain's catalogue apps/mcp/src/session-log.ts reads
 ARP_SESSION_LOG        where the hook writes. Default .arp/session.jsonl
 ARP_RECEIPTS           where fetches are recorded. Default .arp/receipts.jsonl
@@ -218,8 +235,8 @@ Give it none.
 
 ## The key, and what losing it would cost you
 
-The node generates `.arp/receipt-key` on first run so you have nothing to configure. It signs one
-thing: a **content receipt**, an EIP-712 statement that this node served these exact bytes to this
+The server generates `.arp/receipt-key` on first run so you have nothing to configure. It signs one
+thing: a **content receipt**, an EIP-712 statement that this server served these exact bytes to this
 caller at this time.
 
 ```
@@ -230,9 +247,9 @@ it cannot sign a transaction    it signs EIP-712 structs, and the only struct it
 it cannot move value            ADR 0080 constraint 3, and the plan path has no key at all
 ```
 
-**If somebody steals it**, they can forge receipts in this node's name. They cannot spend anything.
+**If somebody steals it**, they can forge receipts in this server's name. They cannot spend anything.
 A reader who stops accepting that signer is back to the declaration they already had — which is the
-property that makes a receipt able only to _add_. Delete the file and restart to rotate; the node
+property that makes a receipt able only to _add_. Delete the file and restart to rotate; the server
 publishes its current signer at `GET /` so anyone can see which key they are being offered.
 
 `ARP_NO_RECEIPTS=1` runs with no key. The content route still serves bytes; what you lose is the
@@ -246,16 +263,16 @@ document said it did.
 
 ## What a receipt proves, and what it does not
 
-**Access, not use.** It says the bytes left this node and reached that caller. Whether they changed
+**Access, not use.** It says the bytes left this server and reached that caller. Whether they changed
 what the agent did is not observable by anything, and no mechanism here pretends otherwise.
 `docs/14` is the long version.
 
-And the part worth knowing before you put weight on one: **a receipt signed by a node you run
+And the part worth knowing before you put weight on one: **a receipt signed by a server you run
 yourself is your own word in a second place.** One hand holds both keys. That is not a defect — it
 pins the bytes, so you can re-derive what your agent actually held — but it is not corroboration to
 a stranger.
 
-**And nothing in the receipt can tell the two apart.** Your node generates its own key, so its
+**And nothing in the receipt can tell the two apart.** Your server generates its own key, so its
 address differs from your agent's while you hold both. A reader therefore has to say which signers
 it accepts — `ARP_ACCEPTED_SIGNERS`, and **empty is the default**, which makes an unrecognised
 signer read as `unknown-signer`: not corroborated, not dismissed. `corroborationOf` in
@@ -278,7 +295,7 @@ The catalogue is a **per-chain record**: an atom id is a pure function of a tool
 tool has a different recorded id on each chain, and `catalogue/skills-<chainId>.json` is the record
 for one of them.
 
-Today only 13579 has one. `ARP_TARGET` still defaults to **mainnet**, so a default-run node holds
+Today only 13579 has one. `ARP_TARGET` still defaults to **mainnet**, so a default-run server holds
 **zero** catalogued skills and says so at `GET /` — `catalogued_skills: 0` — and refuses a testnet
 atom id with the reason rather than serving it. Point it at testnet to use the content path:
 
@@ -287,7 +304,7 @@ ARP_TARGET=testnet bun run apps/mcp/src/server.ts
 ```
 
 That mattered more than it looks. Before this was per-chain, the catalogue was imported at module
-scope from the 13579 file while the chain was configurable, so a default node served testnet atom
+scope from the 13579 file while the chain was configurable, so a default server served testnet atom
 ids and stamped **1155** into every receipt's domain — for atoms that do not exist there, and where
 a create pair costs 0.22 TRUST against 0.004. Measured 2026-10-29.
 
@@ -310,9 +327,9 @@ not failures:
 `absent` is worth a sentence: 139 of the 662 catalogued skills no longer have a file in the
 repository the catalogue points at. That is a measurement
 (`measurements/skill-layouts-2026-10-29T2200.json`), it is re-derivable with one listing request,
-and it is the node telling you the truth rather than failing.
+and it is the server telling you the truth rather than failing.
 
-**A listing it could not read is not an empty repository.** If GitHub rate-limits us the node
+**A listing it could not read is not an empty repository.** If GitHub rate-limits us the server
 throws rather than answering `absent`, because serving `absent` off our own quota would publish a
 claim about somebody's repository on the strength of our limits.
 
@@ -321,7 +338,7 @@ claim about somebody's repository on the strength of our limits.
 Stated because a security note that lists only its strengths is marketing.
 
 - **The skill's content.** A `SKILL.md` is instructions for a language model, written by a stranger.
-  The node proves which bytes you got; it says nothing about whether those bytes are safe to follow.
+  The server proves which bytes you got; it says nothing about whether those bytes are safe to follow.
   That is prompt injection and it is the real risk in this whole area. Read what you install.
 - **The catalogue's judgement.** 662 skills are listed because they crossed an install-count
   threshold on skills.sh (`measurements/catalogue-sources-2026-10-28.json`). That is a popularity
@@ -333,17 +350,76 @@ Stated because a security note that lists only its strengths is marketing.
   is **who** declared, how many distinct addresses, and whether the declarer and the tool share one.
 - **Your own key.** The planners hand you unsigned calls with a `why` on each one. Read them. A plan
   you cannot explain to yourself is a plan to refuse.
-- **A caller you let reach the port.** The node answers whoever can talk to it, and it has no
+- **A caller you let reach the port.** The server answers whoever can talk to it, and it has no
   authentication. On loopback that is the processes on your machine, which is the intended
   deployment. Open `ARP_HOST` and it is whoever can route to you.
 
 ## If you want to verify all of this rather than read it
 
 ```
-bun run scripts/verify-content-route.ts    # against a running node
+bun run scripts/verify-content-route.ts    # against a running server
 ```
 
 It fetches a real skill, recovers the receipt's signer, re-hashes the bytes that arrived, and prints
 whether each refusal is distinguishable. It exists because the unit tests inject every piece of IO
 and so cannot see the one property that matters most — that a third party can re-derive the digest
 with their own tools.
+
+## The node — `apps/node`
+
+```
+AGENT_PRIVATE_KEY=… AGENT_NODE_PORT=3100 bun run apps/node/src/node.ts
+curl -s localhost:3100/healthz
+```
+
+What makes an agent reachable: it listens at the address the agent publishes in its ERC-8004
+registration file, checks on chain that the requester paid it before doing any work, and returns a
+receipt signed with the agent's key (ADR `0045`). The work itself is yours — `ARP_NODE_HANDLER`
+names a module exporting `handle(payload, context)`; without one it echoes.
+
+**It signs receipts and never transactions.** The key is the agent's because a hire receipt must be
+signed by the agent, and a signature is not a spend. It writes no file. Its only outbound
+connection is the RPC it reads the payment from, and it loads one module you name:
+
+```
+grep -nE "fetch\(|createPublicClient\(|writeFile|appendFile|mkdir|import\(" apps/node/src/node.ts
+```
+
+prints three lines on 2026-10-30: the RPC client (`:46`), your handler's import (`:69`), and the
+server's own inbound `fetch(request)` handler (`:138`).
+
+**It binds every interface**, unlike the MCP server, because being reached is its job:
+`Bun.serve(handler)` at `apps/node/src/node.ts:197` passes no hostname.
+
+**Not fixed, and you should know it before you put weight on a hire.** The node checks that the
+payment exists, was sent to this agent, came from the declared requester and paid at least
+`AGENT_NODE_MIN_BUDGET` (`apps/node/src/node.ts:104-113`) — and it
+does **not** remember a payment it has already accepted. On 2026-10-30, testnet 13579, one 0.001
+payment (`0xf3649dbe…`) was presented twice and served twice. So one payment buys any number of
+jobs and receipts, and a rating anchored to "a payment the agent verified" says the payment
+happened, not that it paid for this job.
+
+## The hook — `apps/hook`
+
+```jsonc
+// your runtime's .claude/settings.json
+{"hooks": {"PostToolUse": [{"matcher": "*", "hooks": [
+  {"type": "command", "command": "bun run apps/hook/src/hook.ts"}
+]}]}}
+```
+
+It fires on every tool call and appends one line to `.arp/session.jsonl` (or `ARP_SESSION_LOG`)
+for a skill or an MCP call, and nothing for anything else. It reads `.arp/receipts.jsonl` (or
+`ARP_RECEIPTS`) to name the atom of a skill you fetched through an MCP server. It writes **the
+size of a tool's response and whether it failed, never its content** — a response can hold a
+key or a file, and this log later feeds a declaration.
+
+It makes no network call. The bundle carries host literals from protocol constants it never calls;
+the call sites are what matter, and there are none:
+
+```
+cd apps/hook && bun run build && grep -cE "fetch\(|createPublicClient\(" dist/arp-hook.js
+```
+
+prints `0` on 2026-10-30. A payload it cannot parse exits `0` and writes nothing, so a hook never
+blocks the tool call it is watching.
