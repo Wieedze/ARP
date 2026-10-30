@@ -105,10 +105,18 @@ if (signed === null) {
     console.log(`content matches ${matches}  (${signed.receipt.digest})`);
     if (!matches) failures.push('the digest does not match the bytes that arrived');
 
-    const read = corroborationOf(signed.receipt, verdict.signer, agent.address);
-    console.log(`corroboration   ${read.status}`);
-    if (read.status !== 'second-party') {
-      failures.push(`expected a second party, got ${read.status}`);
+    // Two readings of the same receipt, because that is the whole of ADR `0080`'s resolution: a
+    // receipt's worth is not a property of the receipt, it is whether the reader accepts the
+    // signer. This script stands for a reader who accepts the node it is talking to.
+    const unnamed = corroborationOf(signed.receipt, verdict.signer, agent.address);
+    const named = corroborationOf(signed.receipt, verdict.signer, agent.address, [verdict.signer]);
+    console.log(`reader who names nobody     ${unnamed.status}`);
+    console.log(`reader who accepts the node ${named.status}`);
+    if (unnamed.status !== 'unknown-signer') {
+      failures.push(`a reader naming nobody should get unknown-signer, got ${unnamed.status}`);
+    }
+    if (named.status !== 'second-party') {
+      failures.push(`a reader accepting this signer should get second-party, got ${named.status}`);
     }
 
     // The same receipt read as though the agent had served itself. ADR `0080`: a self-signed

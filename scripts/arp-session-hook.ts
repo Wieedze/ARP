@@ -60,6 +60,18 @@ type HookPayload = {
   session_id?: string;
   tool_name?: string;
   tool_input?: Record<string, unknown>;
+  /**
+   * What the tool gave back. A `PostToolUse` hook fires after the call, so the runtime passes
+   * this — and it was ignored until 2026-10-30.
+   *
+   * **Its presence is the evidence the call went through**, which is what separates "the runtime
+   * recorded an invocation" from "the tool actually did something". For a skill that is the whole
+   * signal: a skill with a response was pulled into the context, not merely named. And it cannot
+   * be composed after the fact — the hook writes it at the moment of the call.
+   *
+   * The shape varies by runtime, so it is read defensively and never required.
+   */
+  tool_response?: unknown;
   cwd?: string;
 };
 
@@ -71,6 +83,23 @@ type Invocation = {
   name: string;
   /** Where the runtime says it came from, when it says. Never inferred. */
   source: string | null;
+  /**
+   * What came back, reduced to what is informative and safe to keep.
+   *
+   * ```
+   * answered  the response existed at all — the call went through
+   * bytes     its size, which separates "answered" from "answered something"
+   * failed    whether the runtime marked it an error
+   * ```
+   *
+   * **Never the content.** A tool's response can hold an API key, customer data or a file's
+   * contents, and this log later feeds a declaration — writing it down is a leak waiting to
+   * happen. A hash of it would buy nothing either: it depends on the arguments, so nobody else
+   * can reproduce it, and it would prove only "something came back", which `bytes` already says.
+   *
+   * `null` when the runtime passed no response field, which is not the same as an empty one.
+   */
+  response: { answered: boolean; bytes: number; failed: boolean } | null;
   /**
    * The tool's URL or its atom id, when either is in the payload.
    *
@@ -128,6 +157,32 @@ function fetchedRefs(cwd: string): FetchedRef[] {
   return rows;
 }
 
+/**
+ * What came back, reduced to a boolean, a size and an error flag.
+ *
+ * Defensive about the shape because it varies by runtime: a string, an object with `content`, an
+ * array of blocks. Rather than knowing each one, this measures the serialised form — which is
+ * enough for "it answered" and "roughly how much", and keeps none of it.
+ */
+function responseOf(payload: HookPayload): Invocation['response'] {
+  if (!('tool_response' in payload) || payload.tool_response === undefined) return null;
+  const raw = payload.tool_response;
+  let bytes = 0;
+  try {
+    bytes = typeof raw === 'string' ? raw.length : (JSON.stringify(raw)?.length ?? 0);
+  } catch {
+    // A circular response is still a response. The size is unknown, the fact is not.
+    bytes = 0;
+  }
+  // The runtimes that mark an error do it with a boolean on the response object. Absent means
+  // "not marked", never "succeeded" — this records what was said, not what is inferred.
+  const failed =
+    typeof raw === 'object' && raw !== null && 'is_error' in raw
+      ? (raw as { is_error?: unknown }).is_error === true
+      : false;
+  return { answered: raw !== null, bytes, failed };
+}
+
 function readString(from: Record<string, unknown> | undefined, key: string): string | null {
   const value = from?.[key];
   return typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
@@ -152,6 +207,7 @@ function invocationOf(
       kind: 'skill',
       name,
       source,
+      response: responseOf(payload),
       // Whatever the payload offers, in the order of exactness, and then what the agent
       // actually fetched. A 0x id or a URL both resolve to one atom; a name does not.
       ref:
@@ -169,6 +225,7 @@ function invocationOf(
       kind: 'mcp',
       name: mcp[1],
       source: null,
+      response: responseOf(payload),
       ref: readString(payload.tool_input, 'url'),
     };
   }
