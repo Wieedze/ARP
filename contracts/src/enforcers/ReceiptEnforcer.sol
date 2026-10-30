@@ -52,6 +52,9 @@ import {ModeCode} from "delegation-framework/utils/Types.sol";
 ///           whose native `value` is at most `receipt.paid`. The target is not checked here: compose
 ///           with `AllowedTargetsEnforcer`. The cumulative amount is not bounded here: compose with
 ///           `TrustStakeCapEnforcer`.
+///         - `paid` is wei of the payment chain's native token, and `value` is wei of this chain's.
+///           `value <= paid` bounds anything only when `receiptChainId == block.chainid`; with any
+///           other `receiptChainId` it compares two currencies (CR-1 in `SECURITY_REVIEW.md`).
 ///         - Signers are EOAs (node keys). EIP-1271 is not supported.
 ///         - A revert in any check aborts the whole redemption; the used set is written only on
 ///           success and rolls back with it.
