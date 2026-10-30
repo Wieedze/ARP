@@ -2,7 +2,7 @@ import {describe, expect, it} from "vitest";
 
 import {getToolUsage} from "../src/tool-usage.js";
 import {USES} from "../src/sources/intuition/terms.js";
-import type {GraphqlTransport} from "../src/sources/intuition/graphql.js";
+import type {GraphqlTransport} from "@arp-protocol/graphql";
 
 /**
  * Shapes recorded from Intuition mainnet on 2026-10-16, trimmed. IPFS is the fixture because its

@@ -1,5 +1,5 @@
 import type {DeclaredEndpoint, ProbeOutcome, ProbeRequest} from "./types.js";
-import type {FetchLike} from "../http.js";
+import type {FetchLike} from "@arp-protocol/graphql";
 
 /**
  * Identify the client. A recipient seeing this in their logs can find out who is calling and ask us

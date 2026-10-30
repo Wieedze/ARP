@@ -1,4 +1,4 @@
-import {isRecord, readString} from "../json.js";
+import {isRecord, readString} from "@arp-protocol/graphql";
 import type {
     DeclaredEndpoint,
     DeclarationSpelling,

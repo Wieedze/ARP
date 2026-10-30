@@ -1,5 +1,5 @@
-import {DEFAULT_TIMEOUT_MS, fetchWithTimeout, HttpError, type FetchLike} from "../../http.js";
-import {isRecord, readArray, readString} from "../../json.js";
+import {DEFAULT_TIMEOUT_MS, fetchWithTimeout, HttpError, type FetchLike} from "./http.js";
+import {isRecord, readArray, readString} from "./json.js";
 
 /** A GraphQL read that did not produce a usable `data` object. */
 export class GraphqlError extends Error {

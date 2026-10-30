@@ -1,6 +1,19 @@
 import {toCaip19} from "../../caip.js";
-import {defaultFetch, type FetchLike} from "../../http.js";
-import {isRecord, readNumber, readRecord, readString} from "../../json.js";
+import {
+    CAPABILITIES_QUERY,
+    COHORT_ORDER_BY,
+    COHORT_QUERY,
+    createGraphqlTransport,
+    defaultFetch,
+    type FetchLike,
+    type GraphqlTransport,
+    isRecord,
+    readNumber,
+    readRecord,
+    readString,
+    RESOLVE_AGENT_QUERY,
+    TRUST_SURFACE_QUERY,
+} from "@arp-protocol/graphql";
 import type {
     AgentIdentity,
     AgentPage,
@@ -12,7 +25,6 @@ import type {
     ResolvedListAgentsOptions,
 } from "../../types.js";
 import type {TrustSource} from "../source.js";
-import {createGraphqlTransport, type GraphqlTransport} from "./graphql.js";
 import {
     claimProvenance,
     derivedProvenance,
@@ -23,13 +35,6 @@ import {
     mapMetadata,
     mapProviderClaim,
 } from "./map.js";
-import {
-    CAPABILITIES_QUERY,
-    COHORT_ORDER_BY,
-    COHORT_QUERY,
-    RESOLVE_AGENT_QUERY,
-    TRUST_SURFACE_QUERY,
-} from "./queries.js";
 import {
     CAPABILITY_PREDICATE_IDS,
     ERC8004,

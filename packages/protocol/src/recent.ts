@@ -1,6 +1,16 @@
-import {defaultFetch, DEFAULT_TIMEOUT_MS, type FetchLike} from "./http.js";
-import {isRecord, readBigInt, readNumber, readRecord, readString} from "./json.js";
-import {createGraphqlTransport, type GraphqlTransport} from "./sources/intuition/graphql.js";
+import {
+    createGraphqlTransport,
+    DEFAULT_TIMEOUT_MS,
+    defaultFetch,
+    type FetchLike,
+    type GraphqlTransport,
+    isRecord,
+    readBigInt,
+    readNumber,
+    readRecord,
+    readString,
+    RECENT_QUERY,
+} from "@arp-protocol/graphql";
 import {INTUITION_MAINNET_GRAPHQL} from "./sources/intuition/index.js";
 import {SAME_AS, USES} from "./sources/intuition/terms.js";
 
@@ -30,27 +40,6 @@ import {SAME_AS, USES} from "./sources/intuition/terms.js";
  * A caller renders an empty result as "nothing yet", never as a failure and never as a reason to
  * show something else.
  */
-
-const RECENT_QUERY = `
-query RecentDeclarations($uses: String!, $sameAs: String!, $limit: Int!) {
-  triples(
-    where: {
-      predicate_id: {_eq: $uses}
-      subject: {as_subject_triples: {predicate_id: {_eq: $sameAs}}}
-    }
-    order_by: {created_at: desc}
-    limit: $limit
-  ) {
-    term_id
-    created_at
-    subject { term_id label }
-    object { term_id label }
-    term {
-      total_assets
-      vaults(where: {curve_id: {_eq: $curveId}}, limit: 1) { position_count }
-    }
-  }
-}`;
 
 export type RecentDeclaration = {
     /** The triple's term id — the claim's own market. */

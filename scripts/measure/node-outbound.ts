@@ -57,10 +57,10 @@ function arg(name: string): string | undefined {
 /**
  * The files a running node loads. Hand-maintained, which is this measurement's own weak point.
  *
- * `arp-mcp-server.ts` is the entry point; `arp-content.ts` is the content route; `arp-mcp-tools.ts`
- * is the tool schemas. The three protocol modules are the ones those reach that fetch anything —
+ * `server.ts` is the entry point; `content.ts` is the content route; `tools.ts` is the tool
+ * schemas. The three package modules are the ones those reach that fetch anything —
  * `content-path.ts` builds the raw URL, `probe.ts` holds both guards and the probe itself, and
- * `http.ts` is the shared transport.
+ * `http.ts` is the shared transport, in `packages/graphql` since ADR `0082`.
  */
 const MODULES = [
   'apps/mcp/src/server.ts',
@@ -68,7 +68,7 @@ const MODULES = [
   'apps/mcp/src/tools.ts',
   'packages/protocol/src/content-path.ts',
   'packages/protocol/src/verify/probe.ts',
-  'packages/protocol/src/http.ts',
+  'packages/graphql/src/http.ts',
 ] as const;
 
 /**

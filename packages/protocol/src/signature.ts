@@ -1,7 +1,7 @@
 import {getAddress, isAddress, isHex, keccak256, recoverTypedDataAddress, type Hex} from "viem";
 
 import {canonicalBytesRfc8785, CanonicalizationError} from "./canonicalize.js";
-import {isRecord, omitPath, readArray, readPath, readString} from "./json.js";
+import {isRecord, omitPath, readArray, readPath, readString} from "@arp-protocol/graphql";
 import type {SignatureAttempt, SignatureVerdict} from "./types.js";
 
 /** The typed-data block as published, after narrowing. */

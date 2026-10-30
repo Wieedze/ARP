@@ -2,7 +2,7 @@ import {custom} from "viem";
 import {describe, expect, it} from "vitest";
 
 import {createErc8004Client, type Erc8004Client} from "../src/client.js";
-import {isRecord} from "../src/json.js";
+import {isRecord} from "@arp-protocol/graphql";
 import {
     AllSourcesFailedError,
     getAgentProfile,

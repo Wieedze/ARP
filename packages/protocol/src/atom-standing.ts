@@ -1,9 +1,19 @@
-import {defaultFetch, DEFAULT_TIMEOUT_MS, type FetchLike} from "./http.js";
+import {
+    AGENT_REF_FOR_ATOM_QUERY,
+    ATOM_STANDING_QUERY,
+    createGraphqlTransport,
+    DECLARED_MODULES_FOR_QUERY,
+    DEFAULT_TIMEOUT_MS,
+    defaultFetch,
+    type FetchLike,
+    type GraphqlTransport,
+    isRecord,
+    LISTED_CAPABILITIES_FOR_QUERY,
+    readRecord,
+    readString,
+} from "@arp-protocol/graphql";
 import {parseCaip19} from "./caip.js";
 import {CAPABILITY_PREDICATE_IDS, USES} from "./sources/intuition/terms.js";
-import {CAPABILITY_SAMPLE_LIMIT} from "./sources/intuition/queries.js";
-import {isRecord, readRecord, readString} from "./json.js";
-import {createGraphqlTransport, type GraphqlTransport} from "./sources/intuition/graphql.js";
 import {mapMarketSide} from "./sources/intuition/map.js";
 import {INTUITION_MAINNET_GRAPHQL} from "./sources/intuition/index.js";
 import {provenanceFor} from "./provenance.js";
@@ -40,66 +50,6 @@ import type {MarketSide, Provenance} from "./types.js";
 
 /** The curve the per-vault fields are scoped to. Same copy, and the same caveat, as `tool-usage`. */
 const DEFAULT_CURVE_ID = "1";
-
-const VAULT_SIDE = `
-    total_market_cap
-    total_assets
-    vaults(where: {curve_id: {_eq: $curveId}}, limit: 1) {
-      market_cap
-      total_assets
-      total_shares
-      current_share_price
-      position_count
-    }`;
-
-/**
- * Every triple whose **object** is this atom, with both sides of each edge's market.
- *
- * `$curveId` is `numeric`, never `String!` — declaring it `String!` is rejected at validation time
- * and takes the whole query down. That bug broke the trust surface on 2026-09-16 and no fixture
- * could catch it, because a mocked transport proves the variable was passed and not that the query
- * was valid.
- *
- * No `predicate_id` filter, which is the whole point. `order_by` puts the busiest predicates'
- * edges first so a truncated read loses the quiet tail rather than an arbitrary slice.
- */
-const ATOM_STANDING_QUERY = `
-query AtomStanding($atomId: String!, $curveId: numeric!, $limit: Int!, $attestor: String!) {
-  atom: atoms(where: {term_id: {_eq: $atomId}}, limit: 1) {
-    term_id
-    label
-    data
-    type
-    value { thing { url } }
-    term { ${VAULT_SIDE} }
-  }
-  triples(
-    where: {object_id: {_eq: $atomId}}
-    order_by: {term: {total_assets: desc}}
-    limit: $limit
-  ) {
-    term_id
-    predicate { term_id label }
-    subject { term_id label type }
-    term { ${VAULT_SIDE} }
-    counter_term { ${VAULT_SIDE} }
-  }
-  claims: triples(
-    where: {subject_id: {_eq: $atomId}}
-    order_by: {term: {total_assets: desc}}
-    limit: $limit
-  ) {
-    term_id
-    predicate { term_id label }
-    object { term_id label type }
-    term {
-      ${VAULT_SIDE}
-      vaults(where: {curve_id: {_eq: $curveId}}, limit: 1) {
-        positions(where: {account_id: {_eq: $attestor}, shares: {_gt: "0"}}, limit: 1) { shares }
-      }
-    }
-  }
-}`;
 
 /** One edge pointing at the atom, and the market on that one claim. */
 export type AtomEdge = {
@@ -400,16 +350,7 @@ export async function resolveAgentRefForAtom(
         });
 
     const data = await transport.request(
-        `query AgentRefForAtom($atomId: String!) {
-  out: triples(
-    where: {subject_id: {_eq: $atomId}, predicate: {label: {_eq: "same as"}}}
-    limit: 10
-  ) { object { label } }
-  back: triples(
-    where: {object_id: {_eq: $atomId}, predicate: {label: {_eq: "same as"}}}
-    limit: 10
-  ) { subject { label } }
-}`,
+        AGENT_REF_FOR_ATOM_QUERY,
         {atomId},
     );
 
@@ -467,12 +408,7 @@ export async function getDeclaredModulesFor(
         });
 
     const data = await transport.request(
-        `query DeclaredModulesFor($subjects: [String!], $predicate: String!, $limit: Int!) {
-  triples(
-    where: {subject_id: {_in: $subjects}, predicate_id: {_eq: $predicate}}
-    limit: $limit
-  ) { subject { term_id } object { term_id } }
-}`,
+        DECLARED_MODULES_FOR_QUERY,
         {
             subjects: [...new Set(subjectIds)],
             predicate: config.predicateId ?? USES,
@@ -521,14 +457,7 @@ export async function getListedCapabilitiesFor(
         });
 
     const data = await transport.request(
-        `query ListedCapabilitiesFor($subject: String!, $predicates: [String!]) {
-  atoms(where: {term_id: {_eq: $subject}}, limit: 1) {
-    capabilities: as_subject_triples(
-      where: {predicate_id: {_in: $predicates}}
-      limit: ${CAPABILITY_SAMPLE_LIMIT}
-    ) { object { term_id } }
-  }
-}`,
+        LISTED_CAPABILITIES_FOR_QUERY,
         {subject: subjectId, predicates: [...CAPABILITY_PREDICATE_IDS]},
     );
 

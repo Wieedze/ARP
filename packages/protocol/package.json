@@ -16,14 +16,15 @@
         "README.md"
     ],
     "scripts": {
-        "test": "vitest run",
-        "test:watch": "vitest",
-        "build": "tsc -p tsconfig.build.json",
-        "lint": "tsc --noEmit -p tsconfig.json",
+        "test": "bun run --cwd ../graphql build && vitest run",
+        "test:watch": "bun run --cwd ../graphql build && vitest",
+        "build": "bun run --cwd ../graphql build && tsc -p tsconfig.build.json",
+        "lint": "bun run --cwd ../graphql build && tsc --noEmit -p tsconfig.json",
         "format:check": "prettier --check .",
         "prepublishOnly": "bun run build"
     },
     "dependencies": {
+        "@arp-protocol/graphql": "workspace:*",
         "viem": "2.52.0"
     },
     "peerDependencies": {

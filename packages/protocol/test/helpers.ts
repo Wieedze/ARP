@@ -5,8 +5,7 @@ import {parseEther} from "viem";
 import type {Address, Hex} from "viem";
 
 import type {MultiVaultReads} from "../src/declare/index.js";
-import type {FetchLike} from "../src/http.js";
-import {isRecord} from "../src/json.js";
+import {type FetchLike, isRecord} from "@arp-protocol/graphql";
 import {asAgentIdentityAtom} from "../src/verify/subject.js";
 
 const FIXTURE_DIR = fileURLToPath(new URL("./fixtures/", import.meta.url));

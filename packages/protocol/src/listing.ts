@@ -1,5 +1,5 @@
 import type {Erc8004Client} from "./client.js";
-import {isTimeoutError} from "./http.js";
+import {isTimeoutError} from "@arp-protocol/graphql";
 import type {TrustSource} from "./sources/source.js";
 import type {
     AgentListOrder,

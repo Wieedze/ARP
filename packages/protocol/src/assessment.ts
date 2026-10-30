@@ -3,11 +3,16 @@ import {getAddress, isAddress, isHex, type Address, type Hex} from "viem";
 import {
     DEFAULT_TIMEOUT_MS,
     defaultFetch,
+    type FetchLike,
     fetchWithTimeout,
     HttpError,
-    type FetchLike,
-} from "./http.js";
-import {isRecord, readArray, readNumber, readPath, readRecord, readString} from "./json.js";
+    isRecord,
+    readArray,
+    readNumber,
+    readPath,
+    readRecord,
+    readString,
+} from "@arp-protocol/graphql";
 import type {
     AssessmentDocument,
     AssessmentEvidence,

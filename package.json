@@ -13,6 +13,7 @@
     "apps/node",
     "apps/hook",
     "contracts",
+    "packages/graphql",
     "packages/protocol"
   ],
   "scripts": {

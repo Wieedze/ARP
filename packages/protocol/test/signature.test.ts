@@ -1,6 +1,6 @@
 import {describe, expect, it} from "vitest";
 
-import {isRecord, readPath} from "../src/json.js";
+import {isRecord, readPath} from "@arp-protocol/graphql";
 import {
     DEFAULT_SIGNATURE_STRATEGIES,
     isConfirmedForProvider,

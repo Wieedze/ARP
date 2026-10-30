@@ -134,7 +134,7 @@ export {
 
 export type {TrustSource} from "./sources/source.js";
 
-export {DEFAULT_TIMEOUT_MS, HttpError, isTimeoutError, type FetchLike} from "./http.js";
+export {DEFAULT_TIMEOUT_MS, HttpError, isTimeoutError, type FetchLike} from "@arp-protocol/graphql";
 
 export type {
     AgentAtomMarket,

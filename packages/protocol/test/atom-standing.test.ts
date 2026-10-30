@@ -1,9 +1,8 @@
 import {describe, expect, it} from "vitest";
 
 import {getAtomStanding, getListedCapabilitiesFor} from "../src/atom-standing.js";
-import {CAPABILITY_SAMPLE_LIMIT} from "../src/sources/intuition/queries.js";
+import {CAPABILITY_SAMPLE_LIMIT, type GraphqlTransport} from "@arp-protocol/graphql";
 import {CAPABILITY_PREDICATE_IDS} from "../src/sources/intuition/terms.js";
-import type {GraphqlTransport} from "../src/sources/intuition/graphql.js";
 
 /**
  * Shapes recorded from Intuition mainnet on 2026-10-27 by probing a real tag atom, trimmed.

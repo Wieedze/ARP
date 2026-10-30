@@ -1,7 +1,7 @@
 import {describe, expect, it} from "vitest";
 
 import {fetchAssessment, narrowAssessmentDocument} from "../src/assessment.js";
-import type {FetchLike} from "../src/http.js";
+import type {FetchLike} from "@arp-protocol/graphql";
 import {fixture} from "./helpers.js";
 
 const URL_OK = "https://provider.example/assessment.json";

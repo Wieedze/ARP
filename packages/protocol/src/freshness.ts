@@ -1,4 +1,4 @@
-import {isRecord, readPath, readString} from "./json.js";
+import {isRecord, readPath, readString} from "@arp-protocol/graphql";
 import type {FreshnessVerdict} from "./types.js";
 
 function parseInstant(value: string | null): number | null {

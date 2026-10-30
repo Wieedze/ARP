@@ -1,5 +1,13 @@
 import {parseCaip19} from "../../caip.js";
-import {isRecord, readArray, readBigInt, readNumber, readRecord, readString} from "../../json.js";
+import {
+    IDENTITY_SAMPLE_LIMIT,
+    isRecord,
+    readArray,
+    readBigInt,
+    readNumber,
+    readRecord,
+    readString,
+} from "@arp-protocol/graphql";
 import {provenanceFor} from "../../provenance.js";
 import type {
     AgentAtomMarket,
@@ -15,7 +23,6 @@ import type {
     ProviderClaim,
     ResolvedAgentRef,
 } from "../../types.js";
-import {IDENTITY_SAMPLE_LIMIT} from "./queries.js";
 import {
     AVAILABLE_ON,
     COMPATIBLE_WITH,

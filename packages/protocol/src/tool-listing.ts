@@ -1,7 +1,14 @@
-import {createGraphqlTransport, type GraphqlTransport} from "./sources/intuition/graphql.js";
+import {
+    createGraphqlTransport,
+    defaultFetch,
+    type FetchLike,
+    type GraphqlTransport,
+    isRecord,
+    readNumber,
+    readString,
+    TOOL_LISTING_QUERY,
+} from "@arp-protocol/graphql";
 import {SAME_AS, USES} from "./sources/intuition/terms.js";
-import {defaultFetch, type FetchLike} from "./http.js";
-import {isRecord, readNumber, readString} from "./json.js";
 
 /**
  * The tools agents have declared using, with what stands behind each — the read `/tools` is built on.
@@ -44,34 +51,6 @@ const DEFAULT_TIMEOUT_MS = 10_000;
 export const INTUITION_MAX_PAGE = 250;
 
 const DEFAULT_EDGE_LIMIT = INTUITION_MAX_PAGE;
-
-const TOOL_LISTING_QUERY = `
-query ToolListing($uses: String!, $sameAs: String!, $curveId: numeric!, $limit: Int!) {
-  triples(
-    where: {
-      predicate_id: {_eq: $uses}
-      subject: {as_subject_triples: {predicate_id: {_eq: $sameAs}}}
-    }
-    limit: $limit
-  ) {
-    term_id
-    object {
-      term_id
-      label
-      data
-      type
-      value { thing { url } }
-    }
-    term {
-      total_assets
-      vaults(where: {curve_id: {_eq: $curveId}}, limit: 1) { position_count total_assets }
-    }
-    counter_term {
-      total_assets
-      vaults(where: {curve_id: {_eq: $curveId}}, limit: 1) { position_count total_assets }
-    }
-  }
-}`;
 
 export type ToolListing = {
     atomId: string;

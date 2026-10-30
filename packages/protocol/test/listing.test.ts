@@ -11,11 +11,7 @@ import {
 } from "../src/listing.js";
 import {erc8004RegistrySource} from "../src/sources/erc8004-registry/index.js";
 import {DEFAULT_LIST_TIMEOUT_MS, intuitionSource} from "../src/sources/intuition/index.js";
-import {
-    COHORT_ORDER_BY,
-    COHORT_QUERY,
-    IDENTITY_SAMPLE_LIMIT,
-} from "../src/sources/intuition/queries.js";
+import {COHORT_ORDER_BY, COHORT_QUERY, IDENTITY_SAMPLE_LIMIT} from "@arp-protocol/graphql";
 import {ERC8004, IMPLEMENT, SAME_AS} from "../src/sources/intuition/terms.js";
 import type {AgentPage} from "../src/types.js";
 import {fixtureFetch, INTUITION_URL} from "./helpers.js";

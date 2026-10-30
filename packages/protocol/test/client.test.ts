@@ -1,7 +1,7 @@
 import {describe, expect, it} from "vitest";
 
 import {createErc8004Client} from "../src/client.js";
-import {DEFAULT_TIMEOUT_MS, fetchWithTimeout, HttpError} from "../src/http.js";
+import {DEFAULT_TIMEOUT_MS, fetchWithTimeout, HttpError} from "@arp-protocol/graphql";
 import {marketCapableSources} from "../src/profile.js";
 import {ERC8004_REGISTRY_SOURCE_ID} from "../src/sources/erc8004-registry/index.js";
 import {

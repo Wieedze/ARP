@@ -1,0 +1,37 @@
+{
+    "name": "@arp-protocol/graphql",
+    "version": "0.0.1",
+    "description": "The read layer under @arp-protocol/core: an HTTP transport, a GraphQL client, and the query documents ARP sends to an Intuition indexer. Knows the Intuition schema and nothing about ARP.",
+    "type": "module",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "default": "./dist/index.js"
+        }
+    },
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "files": [
+        "dist",
+        "README.md"
+    ],
+    "scripts": {
+        "test": "vitest run",
+        "build": "tsc -p tsconfig.build.json",
+        "lint": "tsc --noEmit -p tsconfig.json",
+        "prepublishOnly": "bun run build"
+    },
+    "devDependencies": {
+        "@types/node": "^24.12.2",
+        "typescript": "~6.0.2",
+        "vitest": "^4.1.8"
+    },
+    "keywords": [
+        "intuition",
+        "graphql"
+    ],
+    "license": "MIT",
+    "publishConfig": {
+        "access": "public"
+    }
+}

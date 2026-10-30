@@ -4,7 +4,7 @@ import {TOOL_THING_DESCRIPTION} from "../src/declare/index.js";
 import {SAME_AS, USES} from "../src/sources/intuition/terms.js";
 import {listRegisteredTools} from "../src/registered-tools.js";
 import {INTUITION_MAX_PAGE} from "../src/tool-listing.js";
-import type {GraphqlTransport} from "../src/sources/intuition/graphql.js";
+import type {GraphqlTransport} from "@arp-protocol/graphql";
 
 /** An atom row shaped like the indexer's, so the reader is checked against the real response. */
 const atom = (

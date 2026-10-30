@@ -7,7 +7,7 @@ import {
     getTermActivity,
     getTermShape,
 } from "../src/term-shape.js";
-import type {GraphqlTransport} from "../src/sources/intuition/graphql.js";
+import type {GraphqlTransport} from "@arp-protocol/graphql";
 
 const TERM = `0x${"ab".repeat(32)}`;
 const ACCOUNT = "0x606B24eb3F814ea5D7117a9bBc1431252f32245A";

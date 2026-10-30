@@ -1,4 +1,4 @@
-import {DEFAULT_TIMEOUT_MS, defaultFetch, type FetchLike} from "./http.js";
+import {DEFAULT_TIMEOUT_MS, defaultFetch, type FetchLike} from "@arp-protocol/graphql";
 import {erc8004RegistrySource} from "./sources/erc8004-registry/index.js";
 import {intuitionSource} from "./sources/intuition/index.js";
 import type {TrustSource} from "./sources/source.js";

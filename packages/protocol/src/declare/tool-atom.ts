@@ -1,7 +1,13 @@
-import {createGraphqlTransport, type GraphqlTransport} from "../sources/intuition/graphql.js";
+import {
+    BY_URL_QUERY,
+    createGraphqlTransport,
+    defaultFetch,
+    type FetchLike,
+    type GraphqlTransport,
+    isRecord,
+    readString,
+} from "@arp-protocol/graphql";
 import {INTUITION_MAINNET_GRAPHQL} from "../sources/intuition/index.js";
-import {defaultFetch, type FetchLike} from "../http.js";
-import {isRecord, readString} from "../json.js";
 
 /** An atom that already represents a tool, found by the URL inside its pinned Thing. */
 export type ToolAtomCandidate = {
@@ -41,16 +47,6 @@ export type ToolAtomLookup = {
     /** Every atom whose pinned Thing carries this exact `url`. May be empty, one, or several. */
     findByUrl(url: string): Promise<ToolAtomCandidate[]>;
 };
-
-const BY_URL_QUERY = `
-query ToolAtomByUrl($url: String!) {
-  atoms(where: {value: {thing: {url: {_eq: $url}}}}, limit: 10) {
-    term_id
-    label
-    type
-    data
-  }
-}`;
 
 export type ToolAtomLookupConfig = {
     graphqlUrl?: string;

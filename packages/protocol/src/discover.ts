@@ -1,4 +1,12 @@
-import {createGraphqlTransport, type GraphqlTransport} from "./sources/intuition/graphql.js";
+import {
+    createGraphqlTransport,
+    defaultFetch,
+    type FetchLike,
+    FIND_AGENTS_QUERY,
+    type GraphqlTransport,
+    isRecord,
+    readString,
+} from "@arp-protocol/graphql";
 import {
     COMPATIBLE_WITH,
     HAS_CATEGORY,
@@ -8,8 +16,6 @@ import {
     SAME_AS,
     USE,
 } from "./sources/intuition/terms.js";
-import {defaultFetch, type FetchLike} from "./http.js";
-import {isRecord, readString} from "./json.js";
 
 /**
  * Who is out there, from what agents have declared about themselves.
@@ -115,26 +121,6 @@ export type FindAgentsConfig = {
      */
     predicates?: readonly string[];
 };
-
-const FIND_AGENTS_QUERY = `
-query FindAgents($domain: String!, $predicates: [String!], $sameAs: String!, $curveId: numeric!, $limit: Int!) {
-  triples(
-    where: {
-      predicate_id: {_in: $predicates}
-      object: {label: {_ilike: $domain}}
-      subject: {as_subject_triples: {predicate_id: {_eq: $sameAs}}}
-    }
-    limit: $limit
-  ) {
-    predicate_id
-    object { label }
-    subject {
-      term_id
-      label
-      term { vaults(where: {curve_id: {_eq: $curveId}}, limit: 1) { position_count total_assets } }
-    }
-  }
-}`;
 
 function bigintFrom(value: unknown): bigint {
     const text =

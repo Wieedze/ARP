@@ -1,6 +1,18 @@
-import {createGraphqlTransport, type GraphqlTransport} from "./sources/intuition/graphql.js";
-import {defaultFetch, type FetchLike} from "./http.js";
-import {isRecord, readString} from "./json.js";
+import {
+    ACCOUNT_ACTIVITY_QUERY,
+    backerBreadthQuery,
+    createGraphqlTransport,
+    defaultFetch,
+    type FetchLike,
+    type GraphqlTransport,
+    HOLDINGS_QUERY,
+    isRecord,
+    readString,
+    SHAPE_QUERY,
+    TERM_BACKERS_QUERY,
+    TERM_VALUE_QUERY,
+    termActivityQuery,
+} from "@arp-protocol/graphql";
 
 /**
  * What a claim's market looks like, in dimensions rather than in a score.
@@ -145,28 +157,6 @@ const DEFAULT_CURVE_ID = 1;
 const DEFAULT_TIMEOUT_MS = 10_000;
 const INTUITION_MAINNET_GRAPHQL = "https://mainnet.intuition.sh/v1/graphql";
 
-const SHAPE_QUERY = `
-query TermShape($termId: String!, $curveId: numeric!, $limit: Int!) {
-  agg: positions_aggregate(where: {term_id: {_eq: $termId}, curve_id: {_eq: $curveId}}) {
-    aggregate { count sum { shares } }
-  }
-  first: positions(
-    where: {term_id: {_eq: $termId}, curve_id: {_eq: $curveId}}
-    order_by: {created_at: asc}
-    limit: 1
-  ) { created_at }
-  last: positions(
-    where: {term_id: {_eq: $termId}, curve_id: {_eq: $curveId}}
-    order_by: {created_at: desc}
-    limit: 1
-  ) { created_at }
-  backers: positions(
-    where: {term_id: {_eq: $termId}, curve_id: {_eq: $curveId}}
-    order_by: {shares: desc}
-    limit: $limit
-  ) { account_id shares }
-}`;
-
 const ACTIVITY_QUERIES: Record<TermActivityGrain, string> = {
     hour: "signal_stats_hourly",
     day: "signal_stats_daily",
@@ -296,15 +286,8 @@ async function backerBreadth(
     const held: number[] = [];
     for (let start = 0; start < accountIds.length; start += CHUNK) {
         const chunk = accountIds.slice(start, start + CHUNK);
-        const fields = chunk
-            .map(
-                (_, index) =>
-                    `a${index}: positions_aggregate(where: {account_id: {_eq: $a${index}}}) { aggregate { count(columns: term_id, distinct: true) } }`,
-            )
-            .join("\n  ");
-        const params = chunk.map((_, index) => `$a${index}: String!`).join(", ");
         const variables = Object.fromEntries(chunk.map((id, index) => [`a${index}`, id]));
-        const data = await transport.request(`query BackerBreadth(${params}) {\n  ${fields}\n}`, variables);
+        const data = await transport.request(backerBreadthQuery(chunk.length), variables);
         for (let index = 0; index < chunk.length; index += 1) {
             const node = data[`a${index}`];
             const aggregate = isRecord(node) && isRecord(node["aggregate"]) ? node["aggregate"] : null;
@@ -332,13 +315,7 @@ export async function getTermActivity(
     const transport = buildTransport(config);
     const table = ACTIVITY_QUERIES[config.grain ?? "day"];
     const data = await transport.request(
-        `query TermActivity($termId: String!, $curveId: numeric!, $limit: Int!) {
-  rows: ${table}(
-    where: {term_id: {_eq: $termId}, curve_id: {_eq: $curveId}}
-    order_by: {bucket: desc}
-    limit: $limit
-  ) { bucket count volume }
-}`,
+        termActivityQuery(table),
         {
             termId,
             curveId: String(config.curveId ?? DEFAULT_CURVE_ID),
@@ -410,25 +387,6 @@ export type AccountActivityBucket = {
     cumulativeNet: bigint;
 };
 
-const HOLDINGS_QUERY = `
-query AccountHoldings($account: String!, $curveId: numeric!) {
-  held: positions_aggregate(where: {account_id: {_eq: $account}, curve_id: {_eq: $curveId}}) {
-    aggregate { count(columns: term_id, distinct: true) sum { shares } }
-  }
-  deposited: deposits_aggregate(where: {receiver_id: {_eq: $account}, curve_id: {_eq: $curveId}}) {
-    aggregate { sum { assets_after_fees } }
-  }
-  redeemed: redemptions_aggregate(where: {receiver_id: {_eq: $account}, curve_id: {_eq: $curveId}}) {
-    aggregate { sum { assets } }
-  }
-  onAtoms: deposits_aggregate(
-    where: {receiver_id: {_eq: $account}, curve_id: {_eq: $curveId}, vault_type: {_eq: "Atom"}}
-  ) { aggregate { count } }
-  onTriples: deposits_aggregate(
-    where: {receiver_id: {_eq: $account}, curve_id: {_eq: $curveId}, vault_type: {_eq: "Triple"}}
-  ) { aggregate { count } }
-}`;
-
 export async function getAccountHoldings(
     account: string,
     config: TermShapeConfig = {},
@@ -463,26 +421,6 @@ export async function getAccountHoldings(
         tripleDeposits: numberFrom(agg("onTriples")?.["count"]),
     };
 }
-
-const ACCOUNT_ACTIVITY_QUERY = `
-query AccountActivity($account: String!, $curveId: numeric!, $limit: Int!) {
-  deposits(
-    where: {receiver_id: {_eq: $account}, curve_id: {_eq: $curveId}}
-    order_by: {created_at: desc}
-    limit: $limit
-  ) { created_at assets_after_fees }
-  redemptions(
-    where: {receiver_id: {_eq: $account}, curve_id: {_eq: $curveId}}
-    order_by: {created_at: desc}
-    limit: $limit
-  ) { created_at assets }
-  allDeposited: deposits_aggregate(where: {receiver_id: {_eq: $account}, curve_id: {_eq: $curveId}}) {
-    aggregate { sum { assets_after_fees } }
-  }
-  allRedeemed: redemptions_aggregate(where: {receiver_id: {_eq: $account}, curve_id: {_eq: $curveId}}) {
-    aggregate { sum { assets } }
-  }
-}`;
 
 /**
  * An account's net position over time, bucketed by day and cumulative.
@@ -611,13 +549,7 @@ export async function getTermValueHistory(
 ): Promise<TermValuePoint[]> {
     const transport = buildTransport(config);
     const data = await transport.request(
-        `query TermValue($termId: String!, $curveId: numeric!, $limit: Int!) {
-  signals(
-    where: {term_id: {_eq: $termId}, curve_id: {_eq: $curveId}}
-    order_by: {created_at: asc}
-    limit: $limit
-  ) { created_at delta deposit_id redemption_id }
-}`,
+        TERM_VALUE_QUERY,
         {termId, curveId: String(curveId), limit: config.limit ?? 250},
     );
 
@@ -683,19 +615,7 @@ export async function getTermBackers(
 ): Promise<TermBacker[]> {
     const transport = buildTransport(config);
     const data = await transport.request(
-        `query TermBackers($termId: String!, $curveId: numeric!, $limit: Int!) {
-  positions(
-    where: {term_id: {_eq: $termId}, curve_id: {_eq: $curveId}}
-    order_by: {shares: desc}
-    limit: $limit
-  ) {
-    shares
-    created_at
-    total_deposit_assets_after_total_fees
-    total_redeem_assets_for_receiver
-    account { id label atom_id }
-  }
-}`,
+        TERM_BACKERS_QUERY,
         {termId, curveId: String(curveId), limit: config.limit ?? 100},
     );
 

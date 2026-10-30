@@ -3,7 +3,7 @@ import {describe, expect, it} from "vitest";
 
 import {resolveRef} from "../src/caip.js";
 import {createErc8004Client} from "../src/client.js";
-import {isRecord} from "../src/json.js";
+import {isRecord} from "@arp-protocol/graphql";
 import {getAgentProfile, marketCapableSources, resolveAgent} from "../src/profile.js";
 import {erc8004RegistrySource, SUPPORTED_CHAINS} from "../src/sources/erc8004-registry/index.js";
 import {fixture, recordedEthCall} from "./helpers.js";

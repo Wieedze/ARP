@@ -1,13 +1,13 @@
 import {describe, expect, it} from "vitest";
 
 import {resolveRef} from "../src/caip.js";
-import {isRecord} from "../src/json.js";
-import {intuitionSource} from "../src/sources/intuition/index.js";
 import {
     CAPABILITIES_QUERY,
+    isRecord,
     RESOLVE_AGENT_QUERY,
     TRUST_SURFACE_QUERY,
-} from "../src/sources/intuition/queries.js";
+} from "@arp-protocol/graphql";
+import {intuitionSource} from "../src/sources/intuition/index.js";
 import {
     CAPABILITY_PREDICATE_IDS,
     HAS_TRUST_ASSESSMENT,
