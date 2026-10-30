@@ -505,8 +505,9 @@ export function timelineRows(
     }
 
     // One join, read both ways: a transaction names the invocation it answers, and that invocation
-    // — not every earlier or later call of the same skill — lists the transaction. A reverted call
-    // declared and staked nothing, so it is not listed as a consequence.
+    // — not every earlier or later call of the same skill — lists the transaction. A dry run, like a
+    // reverted call, declared and staked nothing, so neither is listed as a consequence; both still
+    // name their cause.
     const objectOfSent = (event: Extract<AgentEvent, {source: "sent"}>) =>
         event.decoded.fn === "createTriples"
             ? event.decoded.objects[0]
@@ -521,7 +522,7 @@ export function timelineRows(
         const cause = object === undefined ? undefined : lastInvocation(object, event.at);
         if (cause === undefined) continue;
         causeOf.set(agentEventKey(event), cause);
-        if (event.status === "reverted") continue;
+        if (event.status === "dry" || event.status === "reverted") continue;
         const label: "declared" | "staked" =
             event.decoded.fn === "createTriples" ? "declared" : "staked";
         const causeKey = agentEventKey(cause);

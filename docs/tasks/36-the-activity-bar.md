@@ -89,8 +89,10 @@ after; four defects found by reading the diffs, fixed:
 
 - `timelineRows` listed every declaration and stake under **every** invocation of the same skill,
   including calls made after the transaction, while the transaction named only the last call before
-  it. The two directions of the link now come from one join, and a reverted call is no longer listed
-  as a consequence. Two tests pin it.
+  it. The two directions of the link now come from one join, and neither a dry run nor a reverted
+  call is listed as a consequence — both declared and staked nothing — while each still names its
+  cause. Three tests pin it; the dry-run one was added after a second review found the first fix
+  still listed `bin/arp-sign`'s default dry run as a phantom declaration.
 - `agentsByWallet` is exported and had no test of its own; it has one.
 - Two comments misdescribed the code: `ActivityPage`'s header still described two columns, and
   `ToolCatalog`'s `order` comment said the list opens on the amount, when it opens on Most declared.

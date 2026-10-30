@@ -299,6 +299,19 @@ describe("timelineRows", () => {
         expect(rows[0]).toMatchObject({off: "← invoked brainstorming 13:10:36"});
         expect(rows[1]?.consequences).toEqual([]);
     });
+
+    it("a dry run names its cause, and only the real send that follows it is a consequence", () => {
+        const rows = timelineRows(
+            [invoked("2026-10-30T13:10:36Z"), declared("dry", null), declared("success", HASH1)],
+            {chainId: 13579, names, tripleIdOf},
+        );
+        const invocation = rows.find((row) => row.lane === "off");
+        const dryRun = rows.find((row) => row.lane !== "off" && row.tx === null);
+        expect(invocation?.consequences).toEqual([
+            {label: "declared", chainId: 13579, hash: HASH1},
+        ]);
+        expect(dryRun).toMatchObject({off: "← invoked brainstorming 13:10:36"});
+    });
 });
 
 describe("agentsByWallet", () => {
