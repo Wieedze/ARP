@@ -36,15 +36,19 @@
  *   four facts of `proofOfPayment` (from = `requester`, to = the recovered signer, chain = the
  *   domain, tx = `payment`).
  * - **EAS off-chain attestations** sign EIP-712 under a domain that names the EAS contract as
- *   `verifyingContract`. Not taken, for the reason `receipt.ts` gives: no contract checks this
- *   signature, and naming one would imply an on-chain check that does not exist.
+ *   `verifyingContract`. Not taken when v1 was fixed, for the reason `receipt.ts` gives: no
+ *   contract checked this signature. **One does since 2026-10-30**,
+ *   `contracts/src/enforcers/ReceiptEnforcer.sol` (task 43, not deployed), and it verifies this v1
+ *   domain as is, with no verifier named. A receipt it consumed can be sponsored again at a second
+ *   verifier; accepting that or signing a v2 receipt that names its verifier is open (ADR `0098`).
  *
  * ## The nonce is the payment
  *
  * `.claude/rules/security.md` asks for nonce + chainId + verifying contract. The chain is in the
- * domain, the contract is absent with cause, and the nonce is `payment`: the node refuses a payment
- * it has already been paid with (`apps/node/src/task.ts`, `PaymentLedger`), so one transaction hash
- * is one receipt. Two receipts naming one payment are evidence against the node that signed both.
+ * domain, the contract is absent (see EAS above, and ADR `0098`), and the nonce is `payment`: the
+ * node refuses a payment it has already been paid with (`apps/node/src/task.ts`, `PaymentLedger`),
+ * so one transaction hash is one receipt. Two receipts naming one payment are evidence against the
+ * node that signed both.
  *
  * ## What a verifier still has to do
  *
@@ -52,6 +56,11 @@
  * module does not make: the registry's `agentWallet` for that id, or the address the registration
  * file publishes. And whether the payment happened is `getTransaction(payment)` on `chainId`. Both
  * are a stranger's to run without asking the node anything.
+ *
+ * `ReceiptEnforcer` settles the first from the delegator's own binding of key to agent in its
+ * terms. It does not settle the second: it holds "an accepted key signed this receipt", never "a
+ * payment was made" (user decision, 2026-10-30, ADR `0098`). The sponsoring service reads the
+ * payment transaction.
  */
 import {
     getAddress,
