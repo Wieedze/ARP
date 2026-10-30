@@ -64,8 +64,13 @@ deposits that carry a valid proof. It never relays a request, and it never sees 
 | skill fetched via ARP | ARP's signed content receipt                                                     | access   |
 | MCP called directly   | the runtime hook only                                                            | weak     |
 
-- No single party can forge the agent-to-agent proof: the payment is on chain, and the receipt is
-  signed by the other side. ARP verifies both without seeing the request.
+- ~~No single party can forge the agent-to-agent proof: the payment is on chain, and the receipt is
+  signed by the other side.~~ **Corrected 2026-10-30** (`docs/24`): **one operator running both
+  agents can.** A pays B, B's node signs the receipt, and nothing in `apps/node/src/task.ts:202-224`
+  tells two operators from one. _Proven_ means a second **key** signed, not a second **operator**.
+  ARP verifies the payment and the receipt without seeing the request.
+- **A sponsored amount stays below the cost of the proof that unlocks it** (user decision,
+  2026-10-30, `docs/24`). Self-dealing then costs more than the sponsorship it earns.
 - **The condition binds ARP's sponsorship and ARP's "proven" label, not the chain.** MultiVault is
   permissionless, so an agent can always deposit its own TRUST with no proof. ARP indexes that as
   _declared_, never as _proven_. This is also what keeps ADR `0045`'s test passing.
