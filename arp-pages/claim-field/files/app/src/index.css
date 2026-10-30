@@ -1,0 +1,1063 @@
+@import "tailwindcss";
+
+/* Fonts (Archivo + Geist Mono) are loaded via <link rel="stylesheet"> in
+   app/index.html — CSS @import would have to precede every other rule, which
+   conflicts with the tailwindcss expansion above. */
+
+/* -------------------------------------------------------------------------- */
+/* Design tokens — ADR 0057, "The Source". Graphite, one warm accent.         */
+/*                                                                            */
+/* Named for what they ARE, not for an alpha step: `steel` and `grey` replaced */
+/* `fg-60` and `fg-40` across 208 call sites in one pass rather than being     */
+/* aliased onto them. Two names for one value is the failure this repo spent a */
+/* day on (`rules/claims.md` §5), and `check:tokens` (ADR 0050) is what makes  */
+/* the rename safe: an unresolved `var()` fails the gate.                      */
+/*                                                                            */
+/* Contrast ratios are against --color-ground and are the reason each step     */
+/* exists. `grey` is 3.8:1 — dim DISPLAY text only, never body copy.           */
+/* -------------------------------------------------------------------------- */
+
+@theme {
+    /* Graphite neutrals. Four surfaces, four text levels. */
+    --color-ground: #0e0f10; /* the page */
+    --color-bg: #121314; /* panels, code blocks */
+    --color-raised: #1b1d1f; /* selected rows, drawers, tooltips */
+    --color-raised-2: #232629;
+
+    --color-rule: #2e3134; /* hairlines */
+    --color-rule-strong: #43474b; /* control borders, table head rule */
+
+    --color-grey: #6b7075; /* dim display text only — 3.8:1 */
+    --color-numeral: #2a2d30; /* big ghost numerals — a rank, a rung. Not text, so not AA */
+    --color-watermark: #17181a; /* the footer wordmark, one step off the ground */
+    --color-steel: #8a9096; /* labels, secondary text — 5.9:1 */
+    --color-silver: #a9aeb2; /* body secondary — 8.5:1 */
+    --color-fg: #e6e8e6; /* paper, primary text — 15.5:1 */
+
+    /* Row hover is a background change and nothing else (ADR 0057 §6: no
+       mouse-reactive effects). Its own token rather than `raised`, which means
+       "selected" — a hover that looked selected made the two indistinguishable. */
+    --color-surface-hover: #17191a;
+
+    /* One accent. Saffron, 10.4:1. Ink on top of it is --color-bg, never paper. */
+    --color-accent: #ffb020;
+    --color-accent-dim: rgba(255, 176, 32, 0.16);
+    --color-accent-ink: #121314;
+
+    /* The single semantic exception to the one-accent rule (ADR 0018, kept by
+       0057 §2). A signature `mismatch`, or a module used but never declared.
+       Nothing decorative may use it. 5.9:1, so it passes AA as body text. */
+    --color-alarm: #ff4d6d;
+    --color-alarm-dim: rgba(255, 77, 109, 0.12);
+
+    /* Archivo carries display at 800/125% width and prose at 400–700 normal.
+       Geist Mono carries every address, id, hash, amount, timestamp and label. */
+    --font-display: "Archivo", "Arial Narrow", system-ui, sans-serif;
+    --font-sans: "Archivo", system-ui, sans-serif;
+    --font-mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+    /* Type scale — three body sizes, and display type that is actually display type.
+       `--text-display` was a flat 32px, which is where "ce n'est pas agréable" came from
+       (user, 2026-10-27): every page title sat a hair above body copy, so nothing on any
+       screen was the loudest thing on it. The second design handoff
+       (`arp-design-handoff/arp-design-handoff 2/reference/`) sets a fluid clamp, and the
+       clamps below are its numbers, not ours.
+
+       Two sizes, because the references use two. A listing's title is a statement — one or
+       two short words — and goes to 88px. A detail page's title is *content*: an agent's
+       name, sometimes very long, so it tops out at 76px and wraps anywhere (`.type-title`). */
+    --text-display: clamp(44px, 6.4vw, 88px);
+    --text-title: clamp(40px, 5.6vw, 76px);
+    --text-section: clamp(28px, 4vw, 52px);
+    --text-body: 15px;
+    --text-body-sm: 13px;
+    --text-label: 11px;
+
+    /* The footer wordmark. Bleeds off the bottom at `.watermark`'s negative margin. */
+    --text-giant: clamp(150px, 30vw, 420px);
+
+    /* Score sizes — the trust panel's one hero, and its whole argument.
+       A score's type size is set by how much evidence it rests on, so a 64.36
+       backed by 1,445 reviewers cannot read like a 59.95 backed by 2.
+       Used only by the assessment rows (ADR 0018, unchanged by 0057). */
+    --text-score-1: 22px;
+    --text-score-2: 30px;
+    --text-score-3: 42px;
+    --text-score-4: 56px;
+    --text-score-5: 72px;
+
+    /* Corners: "between square and round" (ADR 0057 §4), tiered so nothing is
+       uniformly rounded — which is the template signal `rules/ui.md` warns of.
+       Full circles (999px) are reserved for dots and agent sigils, so a circle
+       always means "an agent". */
+    --radius-tag: 6px;
+    --radius-control: 8px;
+    --radius-button: 10px;
+    --radius-card: 12px;
+
+    /* Line heights. Display type is set tight — below 1 — because at 88px anything looser
+       reads as two unrelated lines rather than one headline. */
+    --leading-display: 0.92;
+    --leading-title: 0.94;
+    --leading-section: 0.95;
+    --leading-giant: 0.74;
+    --leading-body: 1.5;
+    --leading-tight: 1.2;
+
+    /* Single motion curve, single duration. */
+    --ease-out-quart: cubic-bezier(0.16, 1, 0.3, 1);
+    --duration-base: 200ms;
+
+    /* ---------------------------------------------------------------------- */
+    /* Motion — the landing's scene deck (ADRs 0066-0069)                     */
+    /*                                                                        */
+    /* `arp-motion-reference/MOTION-V2.md` §1 is where these numbers come     */
+    /* from, and `arp-motion-reference/index.html` is the page they were tuned */
+    /* on. Every one of them is HERE rather than in a class, because          */
+    /* `check:tokens` can see a token and cannot see a magic number.          */
+    /* ---------------------------------------------------------------------- */
+
+    /* A whole scene handing over to the next. Short, because the pacing comes
+       from the glide (ADR 0066), not from the fade. */
+    --scene-fade: 240ms;
+
+    /* An element arriving INSIDE a pinned scene. Slower and further apart than
+       the stacked reveal below: it plays while the Saffron cover is opening, so
+       it has a second to fill rather than a quarter of one. */
+    --scene-reveal: 700ms;
+    --scene-step: 150ms;
+    --scene-rise: 28px;
+
+    /* The same thing stacked — no cover to wait for, so it is the practitioner
+       range for a scroll reveal (150-250ms) rather than the pinned timing. */
+    --reveal-fade: 260ms;
+    --reveal-step: 80ms;
+
+    /* Word scale: one word of a display heading. `--line-step` is per RENDERED
+       line, measured at runtime, because `--text-display` is a clamp() and the
+       wrap moves with the viewport. */
+    --word-rise: 380ms;
+    --word-step: 34ms;
+    --line-step: 110ms;
+    /* Total stagger of one heading, never more. Past ~600ms the reader is
+       waiting instead of reading, so a long line compresses its own step. */
+    --stagger-ceiling: 560ms;
+
+    /* List rows, the first `LIST_CAP` of them only — see `Reveal`'s docstring.
+       Tuned on three rows, an uncapped stagger is a 16s wait on two hundred. */
+    --list-step: 30ms;
+
+    /* Route scale, the least visible of the three (docs/18 §5). Opacity only,
+       no movement, and the loader appears only if the chunk is slower than
+       `--loader-delay` — so a cached route never shows one at all.
+       The design also specifies `--route-out: 120ms`; it is NOT defined here,
+       because holding the old page on screen for it delays the new route's
+       first paint, which §5 rejects. `RouteTransition` carries the argument. */
+    --route-in: 200ms;
+    --loader-delay: 150ms;
+
+    /* ---------------------------------------------------------------------- */
+    /* Per-element motion locals, declared here with their resting values.    */
+    /*                                                                        */
+    /* These are overridden inline, per element, because each one is DATA      */
+    /* about that element: which sibling it is, which rendered line it sits    */
+    /* on, how far through the manifesto the scroll has got. They are declared */
+    /* as tokens because `check:tokens` resolves every `var()` against the     */
+    /* @theme block and nothing else (ADR 0050) — an undeclared local would    */
+    /* fail the gate, and a gate with an allowlist stops being a gate.         */
+    /* ---------------------------------------------------------------------- */
+    --reveal-index: 0; /* which sibling, for the stagger */
+    --reveal-after: 0ms; /* a group that waits for another group */
+    --word-delay: 0ms; /* computed per word from its rendered line */
+    --line-index: 0; /* which authored line of a heading */
+    --row-index: 0; /* which row of a list */
+    --orbit-for: 90s; /* how long one ring of the claim field takes to turn */
+    --claim-dot: 10px; /* one claim's mark in the field, set per dot by positions */
+    --orbit-to: 360deg; /* and which way — negative reverses it */
+    --lit: 1; /* how lit one manifesto line is, 0 to 1 */
+
+    /* The illustrative diagram in Fig. 02 draws itself: a dot appears, a line
+       traces left to right. Per element, because each one is a beat of a
+       sequence a reader follows with their eyes. */
+    --draw-at: 0ms; /* when this part of the diagram starts */
+    --draw-for: 1200ms; /* how long it takes to trace */
+    --draw-length: 1000; /* the path's own length, in user units */
+}
+
+/* -------------------------------------------------------------------------- */
+/* Reset + base                                                                */
+/* -------------------------------------------------------------------------- */
+
+* {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    margin: 0;
+    padding: 0;
+    /* **`clip`, not `hidden`.** A full-bleed element sized with `calc(50% + 50vw)` overruns the
+       page by **half** the scrollbar's width, because `vw` counts the scrollbar and `%` does not
+       and only one of the two terms is a `vw`. Measured by lifting this rule at runtime and
+       re-measuring (`scripts/measure/landing-fit.ts`): the hero's field ran **8px** past
+       `clientWidth` against a 15px scrollbar, at 1440 and at 1920, with nothing clipping it.
+
+       **Only in the stacked path, and only above 900px.** Zero at 390px, where the field is
+       `max-[900px]:w-full`; zero whenever the deck pins, where both canvases are `position: fixed`
+       and so contribute no scrollable overflow. The first version of this comment said "every
+       width that has a scrollbar", which is false of both of those.
+
+       No CSS unit excludes the scrollbar, so the bleed cannot be made exact — it has to be cut.
+       `clip` rather than `hidden` because `hidden` creates a scroll container, and a scroll
+       container on `html` breaks `position: sticky` inside it, which is the whole of `SceneDeck`'s
+       mechanism. `clip` paired with `overflow-y: visible` does not, per spec, and the measurement
+       script checks the deck still pins at all three viewports. */
+    overflow-x: clip;
+    /* The UI is dark-only. Without this the UA paints its own controls —
+       select popups, radio circles, scrollbars — in the light palette, which
+       lands as white chrome on a near-black page. */
+    color-scheme: dark;
+    background-color: var(--color-ground);
+    color: var(--color-fg);
+    font-family: var(--font-sans);
+    font-size: var(--text-body);
+    line-height: var(--leading-body);
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+    min-height: 100svh;
+    display: flex;
+    flex-direction: column;
+}
+
+button {
+    font-family: inherit;
+    background: transparent;
+    border: 1px solid var(--color-rule);
+    border-radius: var(--radius-button);
+    color: var(--color-fg);
+    cursor: pointer;
+    transition:
+        border-color var(--duration-base) var(--ease-out-quart),
+        color var(--duration-base) var(--ease-out-quart);
+}
+
+button:hover {
+    border-color: var(--color-rule-strong);
+}
+
+button:focus-visible {
+    border-color: var(--color-accent);
+}
+
+/* Links are silver and go paper on hover — the design handoffs' own `a` rule, and the one
+   `rules/ui.md` already implied: "one accent, and it is warm … spent on the primary action, the
+   selected state, and the viewer's own position — nothing else." A link in body copy is none of
+   those three, and the hover-to-accent below was the app spending the accent on all of them.
+
+   The user cut it (2026-10-27): "les liens en jaune, j'aime pas." He is right, and so was the
+   rule — this is the rule finally being obeyed rather than a new preference.
+
+   Still unlayered, so `color` here beats any `text-*` utility without a bang. `inherit` is gone
+   because it made a link invisible in every context whose own colour was already the text colour,
+   which is most of them; `linkClass` existed partly to paper over that. */
+a {
+    color: var(--color-silver);
+    text-decoration: none;
+    transition: color var(--duration-base) var(--ease-out-quart);
+}
+
+a:hover {
+    color: var(--color-fg);
+}
+
+::selection {
+    background: var(--color-accent-dim);
+    color: var(--color-fg);
+}
+
+/* -------------------------------------------------------------------------- */
+/* The ring loader's pulse — ADR 0057 §6                                       */
+/* -------------------------------------------------------------------------- */
+
+/* Here and not in the component: an `animation-delay` per ring cannot be a Tailwind arbitrary
+   value, and an inline `animation` would be out of reach of the media query below. The delay
+   itself IS set inline, per ring, because it is data about which ring this is. */
+.ring-loader g {
+    fill: var(--color-rule);
+    animation: ring-pulse 1.2s var(--ease-out-quart) infinite;
+}
+
+@keyframes ring-pulse {
+    0%,
+    100% {
+        fill: var(--color-rule);
+    }
+    40% {
+        fill: var(--color-accent);
+    }
+}
+
+/* Static, not slower. A loader that still moves is not reduced motion. */
+@media (prefers-reduced-motion: reduce) {
+    .ring-loader g {
+        animation: none;
+        fill: var(--color-rule-strong);
+    }
+}
+
+/* -------------------------------------------------------------------------- */
+/* Focus                                                                       */
+/* -------------------------------------------------------------------------- */
+
+/* Everything focusable gets a real ring.
+   Buttons also shift their border to accent (above), and that shift used to be
+   the whole indicator — with `outline: none` beside it. It fails on any button
+   whose resting border is already accent, which is what a selected toggle in a
+   group looks like: border accent before focus, border accent after, nothing to
+   see. Worse, the rule is unlayered, so it beat every `focus-visible:outline-*`
+   utility in `@layer utilities` and made them silently inert wherever they were
+   reached for. `ui.md` requires a visible focus state on every interactive
+   element; the ring is what actually delivers one.
+
+   The selector lists every focusable element type the app uses. `select` and
+   `textarea` are here for consistency rather than repair — both carry a border
+   swap to accent that is a real replacement, since neither one's resting border
+   is ever accent. Leaving them out would mean two controls focusing differently
+   from every other control on the same form. */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+summary:focus-visible,
+[tabindex]:focus-visible {
+    outline: 1px solid var(--color-accent);
+    outline-offset: 2px;
+    border-radius: 1px;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Display type                                                                */
+/* -------------------------------------------------------------------------- */
+
+/* Archivo 800 at width 125%, per ADR `0057` §1 and both design handoffs.
+   `font-stretch` has no Tailwind utility and an arbitrary property would be the
+   second failure class `rules/ui.md` names — a class that emits nothing — so it
+   lives here with the three properties that always travel with it.
+
+   One class instead of five utilities at nine call sites, which is also what the
+   user meant by "unifier les fonctions": the type is one decision, not five.
+
+   **Unlayered, so these win over `text-*`, `leading-*`, `font-*` and
+   `tracking-*` utilities on the same element.** That is correct — these classes
+   *are* the type — but it means overriding one needs `!`, and `rules/ui.md`'s
+   note about base-layer rules applies. */
+.type-display {
+    font-family: var(--font-display);
+    font-size: var(--text-display);
+    line-height: var(--leading-display);
+    font-weight: 800;
+    font-stretch: 125%;
+    letter-spacing: -0.03em;
+}
+
+/* A detail page's title is content, not a statement: an agent's name can be long,
+   a bare atom id longer still. Smaller ceiling, and it breaks mid-token rather
+   than pushing the layout sideways. */
+.type-title {
+    font-family: var(--font-display);
+    font-size: var(--text-title);
+    line-height: var(--leading-title);
+    font-weight: 800;
+    font-stretch: 125%;
+    letter-spacing: -0.03em;
+    overflow-wrap: anywhere;
+}
+
+.type-section {
+    font-family: var(--font-display);
+    font-size: var(--text-section);
+    line-height: var(--leading-section);
+    font-weight: 800;
+    font-stretch: 125%;
+    letter-spacing: -0.02em;
+}
+
+/**
+ * The display **face** without a size — for type that should look like the headings and be set at
+ * its own scale: a boxed figure, a card title, a rung's name.
+ *
+ * It exists because the three classes above set `font-size`, and they are unlayered, so they beat
+ * a `text-[26px]` utility in `@layer utilities`: the utility is inert and the element renders at
+ * `--text-section`, which is `clamp(28px, 4vw, 52px)` — 52px at desktop width. The exact failure
+ * class `rules/ui.md` names, and a screenshot caught it. Setting a size here would reintroduce it.
+ *
+ * **Two call sites had shipped with it** — `AgentDirectory.tsx` and `ToolCatalog.tsx`, both
+ * `type-section text-[26px]`, both fixed in `e8337d8`. That commit's message says nine and this
+ * comment said seven; the measured figure is **two**, and the other seven were written minutes
+ * later in `Landing.tsx` and never shipped. `rules/claims.md` §5 — one number, four copies, and
+ * two of them disagreed with each other as well as with the repo.
+ */
+.type-face {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-stretch: 125%;
+    letter-spacing: -0.02em;
+    line-height: 1;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Trust panel                                                                 */
+/* -------------------------------------------------------------------------- */
+
+/* The score numeral. Mono, because a score is data; tabular, so two scores at
+   the same weight align on the decimal; tight, because at 72px default
+   tracking reads as a price tag. */
+.score-numeral {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.045em;
+    line-height: 0.92;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Motion — the scene deck's arrival rules                                     */
+/*                                                                            */
+/* Here and not in Tailwind classes, for one reason: every rule below is a     */
+/* DESCENDANT selector driven by state on an ancestor — "elements inside a     */
+/* scene that is not on yet". A utility cannot express that, and `data-*`      */
+/* variants would put the state on every leaf instead of on the scene, which   */
+/* is the whole point: one attribute flips and the subtree arrives.            */
+/*                                                                            */
+/* These are unlayered, so they beat Tailwind utilities on the same property   */
+/* without `!important`. That is deliberate here and it is also the trap        */
+/* `rules/ui.md` names: if you reach for `opacity-*` or `translate-*` on        */
+/* anything inside a scene, it will lose to this and no checker will say so.   */
+/* -------------------------------------------------------------------------- */
+
+/* ---- block scale: a heading, then its body, then its rows ---------------- */
+
+.arp-rev {
+    transition:
+        opacity var(--reveal-fade) var(--ease-out-quart),
+        transform var(--reveal-fade) var(--ease-out-quart);
+}
+
+/* A label or an eyebrow fades without sliding. One that moves reads as
+   misaligned with the title it belongs to, which is visible at 11px. */
+.arp-rev-fade {
+    transform: none !important;
+}
+
+.arp-scene[data-on="false"] .arp-rev {
+    opacity: 0;
+    transform: translateY(12px);
+}
+
+.arp-scene[data-on="true"]:not(.arp-scene-played) .arp-rev {
+    opacity: 1;
+    transform: none;
+    transition-delay: calc(var(--reveal-index) * var(--reveal-step) + var(--reveal-after));
+}
+
+/* ---- the same, pinned: slower, further, and waiting for the cover -------- */
+
+.arp-deck-pinned .arp-rev {
+    transition:
+        opacity var(--scene-reveal) var(--ease-out-quart),
+        transform var(--scene-reveal) var(--ease-out-quart);
+}
+
+.arp-deck-pinned .arp-scene[data-on="false"]:not(.arp-scene-played) .arp-rev:not(.arp-rev-fade) {
+    transform: translateY(var(--scene-rise));
+}
+
+.arp-deck-pinned .arp-scene[data-on="true"]:not(.arp-scene-played) .arp-rev {
+    transition-delay: calc(var(--reveal-index) * var(--scene-step) + var(--reveal-after));
+}
+
+/* A played scene shows everything, instantly, in both modes. The rules above all carry
+   `:not(.arp-scene-played)` as well: `.arp-scene[data-on=…]` is one specificity step above
+   `.arp-scene-played`, so excluding it only here would lose the tie. */
+.arp-scene-played .arp-rev,
+.arp-scene-played .arp-line,
+.arp-scene-played .arp-word,
+.arp-scene-played .arp-row {
+    opacity: 1;
+    transform: none;
+    transition: none;
+}
+
+/* ---- word scale: the hero's h1, one word at a time ---------------------- */
+
+/* `inline-block` keeps the space OUTSIDE the word, so the line wraps exactly
+   where it would for plain text. The delay is computed from the word's rendered
+   line at runtime (`--word-delay`), never from its index: an index-based stagger
+   crosses a clamp() line break and reads as a glitch at some widths only. */
+.arp-word {
+    display: inline-block;
+}
+
+.arp-scene[data-on="false"]:not(.arp-scene-played) .arp-words .arp-word {
+    opacity: 0;
+    transform: translateY(0.32em);
+}
+
+.arp-scene[data-on="true"]:not(.arp-scene-played) .arp-words .arp-word {
+    opacity: 1;
+    transform: none;
+    transition:
+        opacity var(--word-rise) var(--ease-out-quart),
+        transform var(--word-rise) var(--ease-out-quart);
+    transition-delay: var(--word-delay);
+}
+
+/* ---- authored-line scale: an h2 whose two lines are written as two ------- */
+
+.arp-line {
+    display: block;
+}
+
+.arp-scene[data-on="false"]:not(.arp-scene-played) .arp-lines .arp-line {
+    opacity: 0;
+    transform: translateY(0.22em);
+}
+
+.arp-scene[data-on="true"]:not(.arp-scene-played) .arp-lines .arp-line {
+    opacity: 1;
+    transform: none;
+    transition:
+        opacity var(--word-rise) var(--ease-out-quart),
+        transform var(--word-rise) var(--ease-out-quart);
+    transition-delay: calc(var(--line-index) * var(--line-step));
+}
+
+.arp-deck-pinned .arp-scene[data-on="true"]:not(.arp-scene-played) .arp-line {
+    transition-duration: var(--scene-reveal);
+    transition-delay: calc(var(--line-index) * var(--scene-step));
+}
+
+/* ---- list rows: capped, because a stagger tuned on three waits on two hundred */
+
+.arp-scene[data-on="false"]:not(.arp-scene-played) .arp-row {
+    opacity: 0;
+    transform: translateY(8px);
+}
+
+.arp-scene[data-on="true"]:not(.arp-scene-played) .arp-row {
+    opacity: 1;
+    transform: none;
+    transition:
+        opacity var(--reveal-fade) var(--ease-out-quart),
+        transform var(--reveal-fade) var(--ease-out-quart);
+    transition-delay: calc(var(--row-index) * var(--list-step) + var(--reveal-after));
+}
+
+/* ---- the claim field: dots arriving, and the edge a hover draws ---------- */
+
+/* **Outside a scene**, unlike `.arp-row` above, whose rules are all scoped to
+   `.arp-scene[data-on]`. The atom page has no deck, so the arrival is driven by
+   a class the element has from its first paint and removed one frame later —
+   the same opacity-and-lift vocabulary at the same tokens, reusing
+   `--row-index`, `--list-step` and the `LIST_CAP` the stagger is capped at. */
+.arp-claim {
+    opacity: 1;
+    transform: none;
+    transition:
+        opacity var(--reveal-fade) var(--ease-out-quart),
+        transform var(--reveal-fade) var(--ease-out-quart);
+    transition-delay: calc(var(--row-index) * var(--list-step) + var(--reveal-after));
+}
+
+.arp-claim-enter .arp-claim {
+    opacity: 0;
+    transform: scale(0.4);
+}
+
+/* Each ring turns, the way the landing's field does. There it is a rAF loop
+   recomputing every point's angle per frame, because those points also breathe
+   and dive; here nothing moves but the angle, so one transform on a wrapper is
+   the whole of it and the compositor does the work.
+
+   `--orbit-for` is set per ring by the component: slower further out, and the
+   direction alternates, so it reads as a constellation rather than one wheel. */
+@keyframes arp-orbit {
+    to {
+        transform: rotate(var(--orbit-to, 360deg));
+    }
+}
+
+.arp-orbit {
+    animation: arp-orbit var(--orbit-for, 90s) linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .arp-claim,
+    .arp-claim-enter .arp-claim {
+        transition: none !important;
+        opacity: 1 !important;
+        transform: none !important;
+    }
+
+    .arp-orbit {
+        animation: none;
+    }
+}
+
+/* ---- the claim field v2: the loupe, the card, the legend ----------------- */
+
+/* Plain classes rather than utilities, on purpose: a Tailwind utility that does
+   not exist emits nothing, and the unlayered `:focus-visible` and `button`
+   rules above beat utilities anyway. Every value is a token. */
+.arp-cf {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 28px 4rem;
+}
+
+.arp-cf-field {
+    position: relative;
+    aspect-ratio: 1;
+    width: 100%;
+    max-width: 22rem;
+    flex: none;
+    /* The bar sits at 5.5% of the field, so this puts it about halfway down the
+       card's reserved 6.5rem. */
+    margin-top: 2rem;
+}
+
+.arp-cf-field.is-small {
+    max-width: 12rem;
+    margin-top: 0;
+}
+
+.arp-cf-ring {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+.arp-cf-track {
+    position: absolute;
+    border-radius: 999px;
+    border: 1px solid var(--color-rule);
+}
+
+.arp-cf-track.is-dashed {
+    border-style: dashed;
+}
+
+.arp-cf-grain {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    fill: var(--color-steel);
+    opacity: 0.75;
+}
+
+.arp-cf-core {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    z-index: 3;
+    width: 14px;
+    height: 14px;
+    border-radius: 999px;
+    background: var(--color-accent);
+    transform: translate(-50%, -50%);
+}
+
+/* The loupe and its line. Above the dots, below the card, which stops the line
+   at its border. */
+.arp-cf-link {
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    pointer-events: none;
+}
+
+.arp-cf-link polyline {
+    fill: none;
+    stroke: var(--color-rule-strong);
+    stroke-width: 1;
+    vector-effect: non-scaling-stroke;
+}
+
+.arp-cf-link circle {
+    fill: none;
+    stroke: var(--color-silver);
+    stroke-width: 1.25;
+    vector-effect: non-scaling-stroke;
+    transition: stroke var(--duration-base) var(--ease-out-quart);
+}
+
+.arp-cf-link.is-on polyline {
+    stroke: var(--color-steel);
+}
+
+.arp-cf-link.is-on circle {
+    stroke: var(--color-accent);
+}
+
+/* A dot: a real link, a 28px invisible target around the drawn mark. */
+.arp-cf-dot {
+    position: absolute;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    margin: -14px 0 0 -14px;
+    border-radius: 999px;
+    pointer-events: auto;
+}
+
+.arp-cf-mark {
+    display: block;
+    box-sizing: border-box;
+    width: var(--claim-dot);
+    height: var(--claim-dot);
+    border-radius: 999px;
+    border: 1.5px solid var(--color-steel);
+    transition:
+        transform 150ms var(--ease-out-quart),
+        background-color 150ms var(--ease-out-quart),
+        border-color 150ms var(--ease-out-quart);
+}
+
+.arp-cf-dot.is-filled .arp-cf-mark {
+    background: var(--color-fg);
+    border-color: var(--color-fg);
+}
+
+/* Somebody took the other side: the alarm, the one semantic exception to the
+   one accent, because a counter-position is a fact that contradicts the claim.
+   An outline, not a shadow: `ui.md` forbids box-shadow. */
+.arp-cf-dot.is-opposed .arp-cf-mark {
+    outline: 1.5px solid var(--color-alarm);
+    outline-offset: 2px;
+}
+
+/* Saffron is the light: the claim the loupe reads is a selected state. */
+.arp-cf-dot.is-lit .arp-cf-mark {
+    background: var(--color-accent);
+    border-color: var(--color-accent);
+    transform: scale(1.6);
+}
+
+/* The card: reserved height, never moves. */
+.arp-cf-card {
+    position: relative;
+    z-index: 5;
+    display: flex;
+    flex: 1 1 22rem;
+    flex-direction: column;
+    gap: 6px;
+    min-width: min(22rem, 100%);
+    max-width: 34rem;
+    min-height: 6.5rem;
+    padding: 12px 16px;
+    border: 1px solid var(--color-rule-strong);
+    border-radius: var(--radius-card);
+    background: var(--color-bg);
+}
+
+.arp-cf-card-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--color-rule);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-steel);
+}
+
+.arp-cf-card-head i {
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: var(--color-rule-strong);
+}
+
+.arp-cf-card.is-lit .arp-cf-card-head i {
+    background: var(--color-accent);
+}
+
+.arp-cf-subject {
+    overflow: hidden;
+    font-family: var(--font-display);
+    font-size: 20px;
+    font-weight: 800;
+    font-stretch: 125%;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.arp-cf-subject.is-id {
+    font-family: var(--font-mono);
+    font-size: 16px;
+    font-weight: 500;
+    font-stretch: normal;
+    letter-spacing: 0;
+}
+
+.arp-cf-figure {
+    font-family: var(--font-mono);
+    font-size: var(--text-body-sm);
+    color: var(--color-fg);
+}
+
+.arp-cf-figure span,
+.arp-cf-figure.is-none {
+    color: var(--color-steel);
+}
+
+.arp-cf-against {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--color-alarm);
+}
+
+/* The total and the key. */
+.arp-cf-total {
+    display: flex;
+    flex-basis: 100%;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 18px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--color-steel);
+}
+
+.arp-cf-total b {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--color-fg);
+}
+
+.arp-cf-key {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin-left: auto;
+}
+
+.arp-cf-key > span {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.arp-cf-key i {
+    box-sizing: border-box;
+    width: 9px;
+    height: 9px;
+    border-radius: 999px;
+    border: 1.5px solid var(--color-steel);
+}
+
+.arp-cf-key i.is-filled {
+    background: var(--color-fg);
+    border-color: var(--color-fg);
+}
+
+.arp-cf-key i.is-opposed {
+    outline: 1.5px solid var(--color-alarm);
+    outline-offset: 2px;
+}
+
+/* Each ring's name, on the field at six o'clock. Below the dots, which pass over it. */
+.arp-cf-names {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+}
+
+.arp-cf-name {
+    position: absolute;
+    left: 50%;
+    padding: 1px 7px;
+    border: 1px solid var(--color-rule);
+    border-radius: var(--radius-tag);
+    background: var(--color-ground);
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    white-space: nowrap;
+    color: var(--color-silver);
+    transform: translate(-50%, -50%);
+}
+
+.arp-cf-name b {
+    margin-left: 4px;
+    font-weight: 500;
+    color: var(--color-steel);
+}
+
+/* Zero claims. */
+.arp-cf-zero {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 28px;
+}
+
+.arp-cf-empty {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--color-steel);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .arp-cf-mark,
+    .arp-cf-link circle {
+        transition: none;
+    }
+}
+
+/* Below 640px the card goes under the field and the line would cross the page:
+   it is hidden, the loupe still moves. */
+@media (max-width: 640px) {
+    .arp-cf-field {
+        max-width: none;
+        margin-top: 0;
+    }
+
+    .arp-cf-card {
+        min-width: 0;
+    }
+
+    .arp-cf-link polyline {
+        display: none;
+    }
+}
+
+/* ---- one manifesto line lighting up, scrubbed by scroll ------------------ */
+
+.arp-lit {
+    color: color-mix(in oklab, var(--color-fg) calc(var(--lit) * 100%), var(--color-grey));
+}
+
+/* ---- route scale: opacity only, and the loader only if the chunk is slow -- */
+
+.arp-route-in {
+    animation: arp-route-in var(--route-in) var(--ease-out-quart) both;
+}
+
+@keyframes arp-route-in {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+/* The loader is present from the first frame and invisible until the delay has
+   passed, so a cached chunk never shows one and no JS timer decides it. */
+.arp-route-loader {
+    animation: arp-route-in var(--route-in) var(--ease-out-quart) var(--loader-delay) both;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Reduced motion means none, not less (docs/18 §3)                            */
+/*                                                                            */
+/* The same composition, at full opacity and final position. Not a faster       */
+/* version of the animation — none of it. The deck also refuses to pin at all   */
+/* under this setting, so the reader gets an ordinary stacked document.         */
+/* -------------------------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+    .arp-rev,
+    .arp-scene,
+    .arp-word,
+    .arp-line,
+    .arp-row,
+    .arp-route-in,
+    .arp-route-loader {
+        animation: none !important;
+        transition: none !important;
+        opacity: 1 !important;
+        transform: none !important;
+    }
+
+    .arp-lit {
+        color: var(--color-fg);
+    }
+}
+
+/* -------------------------------------------------------------------------- */
+/* Fig. 02's diagram draws itself                                              */
+/*                                                                            */
+/* An SVG path traced by animating `stroke-dashoffset` from its own length to  */
+/* zero, and labels and dots that appear at a named moment. It is illustrative */
+/* — a picture of the mechanism, not a chart of data — so it is the one place  */
+/* on this page where a sequence is authored rather than measured.             */
+/*                                                                            */
+/* `--draw-length` has to be the path's real length or the dash never clears:  */
+/* it is set per path, beside the `d` attribute it describes.                  */
+/* -------------------------------------------------------------------------- */
+
+.arp-draw {
+    stroke-dasharray: var(--draw-length);
+    stroke-dashoffset: var(--draw-length);
+}
+
+.arp-scene[data-on="true"]:not(.arp-scene-played) .arp-draw {
+    stroke-dashoffset: 0;
+    transition: stroke-dashoffset var(--draw-for) linear var(--draw-at);
+}
+
+.arp-pop {
+    opacity: 0;
+}
+
+.arp-scene[data-on="true"]:not(.arp-scene-played) .arp-pop {
+    opacity: 1;
+    transition: opacity var(--reveal-fade) var(--ease-out-quart) var(--draw-at);
+}
+
+/* A diagram redraws for nobody. The rules above carry `:not(.arp-scene-played)` as well, because
+   `.arp-scene[data-on="true"]` is one specificity step above `.arp-scene-played` and would win the
+   `transition` outright — the exclusion has to be on the losing side's selector, not only here. */
+.arp-scene-played .arp-draw {
+    stroke-dashoffset: 0;
+    transition: none;
+}
+
+.arp-scene-played .arp-pop {
+    opacity: 1;
+    transition: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .arp-draw {
+        stroke-dasharray: none;
+        stroke-dashoffset: 0;
+    }
+
+    .arp-draw,
+    .arp-pop {
+        animation: none !important;
+        transition: none !important;
+        opacity: 1 !important;
+    }
+}

@@ -1,0 +1,621 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>ARP Skill Page</title>
+
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=Geist+Mono:wght@400;500;600&display=swap">
+<!--
+  ARP · the skill page, design reference for /atom/:atomId when the atom is a skill.
+  Real: the skill, its url, atom id, domain, source repository, its SKILL.md description and sections,
+  and its GitHub and skills.sh figures (read 2026-10-29).
+  Sample: every agent, every position and every curve point. Marked "sample" on the page. Never ship them.
+-->
+<style>
+*,*::before,*::after{box-sizing:border-box}
+/* Layout: one column of evidence. Title band, then the two things a reader came for side by side
+   (who uses it, the market and its curves), then provenance, then the record. */
+:root{
+  --color-ground:#0e0f10;--color-bg:#121314;--color-raised:#1b1d1f;--color-raised-2:#232629;
+  --color-rule:#2e3134;--color-rule-strong:#43474b;
+  --color-grey:#6b7075;--color-steel:#8a9096;--color-silver:#a9aeb2;--color-fg:#e6e8e6;
+  --color-accent:#ffb020;--color-accent-dim:rgba(255,176,32,.16);--color-accent-ink:#121314;
+  --color-alarm:#ff4d6d;
+  --font-display:"Archivo","Arial Narrow",system-ui,sans-serif;--font-mono:"Geist Mono",ui-monospace,Menlo,monospace;
+  --ease-out-quart:cubic-bezier(0.16,1,0.3,1);--duration-base:200ms;--reveal-fade:260ms;--list-step:30ms;
+  --radius-tag:6px;--radius-control:8px;--radius-card:12px;
+  color-scheme:dark;
+}
+html,body{background:var(--color-ground);color:var(--color-fg)}
+body{margin:0;font-family:var(--font-display);font-size:15px;line-height:1.5;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:1160px;margin:0 auto;padding-block:28px 96px}
+.label{font-family:var(--font-mono);font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--color-steel)}
+.mono{font-family:var(--font-mono)}
+.num{font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+.face{font-weight:800;font-stretch:125%;letter-spacing:-.02em;line-height:.95}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--color-fg);outline-offset:3px;border-radius:4px}
+h2{margin:0;font-size:22px;font-weight:700;font-stretch:110%;letter-spacing:-.01em}
+.sample{display:inline-block;font-family:var(--font-mono);font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-grey);border:1px dashed var(--color-rule-strong);border-radius:var(--radius-tag);padding:1px 6px;vertical-align:middle}
+
+/* design-only bar */
+.bar{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:center;justify-content:space-between;padding-bottom:16px;margin-bottom:40px;border-bottom:1px solid var(--color-rule)}
+.seg{display:inline-flex;border:1px solid var(--color-rule);border-radius:var(--radius-control);overflow:hidden;flex-wrap:wrap}
+.seg button{height:30px;padding:0 12px;border:0;background:transparent;font-family:var(--font-mono);font-size:11px;color:var(--color-steel);cursor:pointer}
+.seg button+button{border-left:1px solid var(--color-rule)}
+.seg button[aria-pressed="true"]{background:var(--color-raised);color:var(--color-fg)}
+.grp{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+
+/* Hint: a 15px "?" that opens one sentence on hover and focus */
+.hint{position:relative;display:inline-flex;width:15px;height:15px;border-radius:999px;border:1px solid var(--color-rule-strong);color:var(--color-steel);font-family:var(--font-mono);font-size:10px;align-items:center;justify-content:center;cursor:help;vertical-align:middle;margin-left:6px;background:none;padding:0}
+.hint span{position:absolute;left:50%;bottom:calc(100% + 8px);transform:translateX(-50%);width:max-content;max-width:min(17rem,70vw);background:var(--color-raised);border:1px solid var(--color-rule-strong);border-radius:var(--radius-control);padding:8px 10px;font-family:var(--font-display);font-size:12.5px;line-height:1.4;color:var(--color-silver);text-transform:none;letter-spacing:0;display:none;pointer-events:none;z-index:20;white-space:normal;text-align:left}
+.hint:hover span,.hint:focus-visible span{display:block}
+
+/* ---- title band ---------------------------------------------------------- */
+.crumbs{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;font-family:var(--font-mono);font-size:12px;color:var(--color-steel)}
+.crumbs a{text-decoration:none;color:var(--color-silver)}
+.crumbs a:hover{color:var(--color-fg)}
+.crumbs .sep{color:var(--color-grey)}
+.kind{font-family:var(--font-mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--color-fg);border:1px solid var(--color-rule-strong);border-radius:var(--radius-tag);padding:2px 7px}
+h1{margin:18px 0 0;font-size:clamp(44px,8.2vw,112px);overflow-wrap:anywhere;text-wrap:balance}
+.from{margin-top:14px;display:flex;flex-wrap:wrap;gap:10px 22px;align-items:baseline}
+.from .repo{font-family:var(--font-mono);font-size:15px;color:var(--color-silver)}
+.from .repo a{text-decoration:none;border-bottom:1px solid var(--color-rule-strong)}
+.from .repo a:hover{border-color:var(--color-fg);color:var(--color-fg)}
+.desc{margin:16px 0 0;max-width:62ch;color:var(--color-silver);font-size:18px}
+.install{margin-top:22px;display:flex;max-width:38rem;border:1px solid var(--color-rule-strong);border-radius:var(--radius-control);background:var(--color-bg);overflow:hidden}
+.install code{flex:1;min-width:0;padding:11px 14px;font-family:var(--font-mono);font-size:13px;color:var(--color-fg);overflow-x:auto;white-space:nowrap}
+.install code b{color:var(--color-steel);font-weight:400}
+.install button{border:0;border-left:1px solid var(--color-rule-strong);background:transparent;color:var(--color-silver);font-family:var(--font-mono);font-size:11px;padding:0 14px;cursor:pointer}
+.install button:hover{color:var(--color-fg);background:var(--color-raised)}
+/* what is written about it, on chain: each chip is a triple with its own market */
+.facts{margin-top:22px;display:flex;flex-wrap:wrap;gap:8px}
+.fact{display:inline-flex;align-items:center;gap:8px;height:30px;padding:0 11px;border:1px solid var(--color-rule);border-radius:var(--radius-tag);font-size:13px;text-decoration:none;color:var(--color-fg)}
+.fact:hover{border-color:var(--color-rule-strong);background:#17191a}
+.fact .p{font-family:var(--font-mono);font-size:10.5px;color:var(--color-steel);text-transform:lowercase}
+.fact .o{font-family:var(--font-mono);font-size:12.5px}
+.fact i{width:7px;height:7px;border-radius:999px;background:var(--color-fg)}
+.fact i.free{background:none;border:1.25px solid var(--color-steel)}
+.fact i.down{background:var(--color-alarm)}
+.offline{margin-top:26px;display:flex;flex-wrap:wrap;gap:10px 28px;align-items:baseline;padding:10px 14px;border:1px dashed var(--color-rule-strong);border-radius:var(--radius-control);max-width:max-content}
+.offline .label{color:var(--color-grey)}
+.offline .v{font-family:var(--font-mono);font-size:13px;color:var(--color-silver)}
+.offline .v b{font-weight:500;color:var(--color-fg)}
+
+/* ---- the lead: market + curves ------------------------------------------ */
+.lead{margin-top:56px;display:grid;grid-template-columns:minmax(0,22rem) minmax(0,1fr);gap:0;border:1px solid var(--color-rule-strong);border-radius:var(--radius-card);background:var(--color-bg)}
+.market{padding:22px 22px 24px;border-right:1px solid var(--color-rule);display:flex;flex-direction:column;gap:18px}
+.value .big{font-family:var(--font-mono);font-size:40px;line-height:1;font-weight:500;letter-spacing:-.02em;margin-top:8px}
+.value .big small{font-size:15px;color:var(--color-steel);margin-left:6px;letter-spacing:0}
+.value .none{margin-top:10px;font-family:var(--font-mono);font-size:14px;color:var(--color-steel)}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:7px 16px;margin:0;font-size:13px}
+.kv dt{color:var(--color-steel)}
+.kv dd{margin:0;text-align:right;font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+.conc{height:6px;border-radius:999px;background:var(--color-raised-2);overflow:hidden;display:flex}
+.conc span{display:block;height:100%}
+.conc .a{background:var(--color-fg)}
+.conc .b{background:var(--color-steel)}
+.mine{display:flex;justify-content:space-between;align-items:baseline;padding:10px 12px;border:1px solid var(--color-accent-dim);border-radius:var(--radius-control);background:rgba(255,176,32,.05);font-size:13px}
+.mine .num{color:var(--color-accent)}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:auto}
+.btn{height:40px;padding:0 18px;border-radius:var(--radius-control);font-family:var(--font-display);font-weight:600;font-size:14px;cursor:pointer;border:1px solid var(--color-rule-strong);background:transparent;color:var(--color-fg)}
+.btn.primary{background:var(--color-accent);border-color:var(--color-accent);color:var(--color-accent-ink)}
+.btn:hover{filter:brightness(1.08)}
+.curves{padding:22px 22px 18px;min-width:0;display:flex;flex-direction:column;gap:16px}
+.curves-h{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.chart{min-width:0}
+.chart-h{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:6px}
+.chart-h .t{font-size:13px;color:var(--color-silver)}
+.chart-h .num{font-size:12px;color:var(--color-steel)}
+.chart svg{display:block;width:100%;height:auto;overflow:visible}
+.chart .axis{font-family:var(--font-mono);font-size:9.5px;fill:var(--color-grey)}
+.chart .grid{stroke:var(--color-rule);stroke-width:1}
+.curves .empty{padding:40px 0;text-align:center;font-family:var(--font-mono);font-size:12px;color:var(--color-steel);border:1px dashed var(--color-rule);border-radius:var(--radius-control)}
+
+/* ---- sections ------------------------------------------------------------ */
+section.blk{margin-top:72px}
+.blk-h{display:flex;align-items:baseline;justify-content:space-between;gap:12px 24px;flex-wrap:wrap;margin-bottom:22px;padding-bottom:12px;border-bottom:1px solid var(--color-rule-strong)}
+.blk-h .label{color:var(--color-grey)}
+
+/* copies */
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:620px;font-size:13.5px}
+th{font-family:var(--font-mono);font-size:10px;font-weight:400;letter-spacing:.08em;text-transform:uppercase;color:var(--color-steel);text-align:right;padding:0 12px 10px;border-bottom:1px solid var(--color-rule-strong);white-space:nowrap}
+th:first-child,td:first-child{text-align:left;padding-left:0}
+th.off{color:var(--color-grey)}
+th .src{display:block;font-size:9px;letter-spacing:.04em;text-transform:none;color:var(--color-grey);margin-top:2px}
+td{padding:12px;border-bottom:1px solid var(--color-rule);text-align:right;font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+td.off{color:var(--color-silver)}
+td.repo{font-family:var(--font-mono);font-size:13.5px}
+td.repo a{text-decoration:none}
+td.repo a:hover{text-decoration:underline}
+tr.here td{background:var(--color-raised)}
+tr.here td:first-child{box-shadow:inset 2px 0 0 var(--color-fg)}
+.here-tag{margin-left:10px;font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-steel)}
+.live{display:inline-flex;align-items:center;gap:6px;justify-content:flex-end}
+.live i{width:7px;height:7px;border-radius:999px;background:var(--color-fg)}
+.live i.none{background:none;border:1.25px solid var(--color-steel)}
+td .zero{color:var(--color-grey)}
+.offnote{margin-top:12px;font-family:var(--font-mono);font-size:11px;color:var(--color-grey)}
+
+/* record */
+.record{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,24rem),1fr));gap:0 40px}
+.record dl{margin:0}
+.record .row{display:grid;grid-template-columns:9rem minmax(0,1fr);gap:16px;padding:11px 0;border-bottom:1px solid var(--color-rule);font-size:13px}
+.record dt{color:var(--color-steel)}
+.record dd{margin:0;font-family:var(--font-mono);font-size:12.5px;overflow-wrap:anywhere;color:var(--color-silver)}
+.record dd a{color:var(--color-fg);text-decoration:none;border-bottom:1px solid var(--color-rule-strong)}
+
+
+/* the two panels under the install line: what is claimed, what is measured elsewhere */
+.about{margin-top:28px;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,22rem),1fr));gap:16px}
+.panel{border:1px solid var(--color-rule);border-radius:var(--radius-card);padding:14px 18px 16px;display:flex;flex-direction:column;gap:12px}
+.panel .label{display:flex;align-items:center;gap:8px}
+.panel .when{margin-left:auto;color:var(--color-grey);letter-spacing:.04em;text-transform:none}
+.cls{margin:0;display:grid;gap:0}
+.cls>div{display:grid;grid-template-columns:7rem minmax(0,1fr);gap:12px;padding:7px 0;border-top:1px solid var(--color-rule);font-size:13.5px}
+.cls>div:first-child{border-top:0}
+.cls dt{color:var(--color-steel)}
+.cls dd{margin:0;font-family:var(--font-mono);font-size:13px}
+.cls a{text-decoration:none;border-bottom:1px solid var(--color-rule-strong)}
+.cls a:hover{border-color:var(--color-fg)}
+.cls .sep{color:var(--color-grey);margin:0 6px}
+.state{display:inline-flex;align-items:center;gap:7px}
+.state i{width:7px;height:7px;border-radius:999px;background:var(--color-fg)}
+.sig{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.sig>div{display:flex;flex-direction:column;gap:2px;min-width:0}
+.sig b{font-size:26px;font-weight:500;letter-spacing:-.02em;line-height:1.1}
+.sig span{font-size:13px;color:var(--color-silver)}
+.sig em{font-style:normal;font-family:var(--font-mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--color-grey)}
+.variant{border-left:1px solid var(--color-rule-strong);padding-left:18px}
+.vdesc{margin:0 0 14px;max-width:70ch;color:var(--color-silver);font-size:14.5px}
+@media (max-width:520px){.sig{grid-template-columns:1fr 1fr}.sig b{font-size:22px}}
+
+
+.dscr{margin-top:26px;max-width:46rem;border-top:1px solid var(--color-rule-strong);padding-top:14px}
+.dscr-h{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.dscr-h .src{color:var(--color-grey);letter-spacing:.04em}
+.lede{margin:10px 0 0;font-size:clamp(20px,2.4vw,26px);line-height:1.3;color:var(--color-fg);text-wrap:balance}
+.covers{list-style:none;margin:14px 0 0;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,20rem),1fr));gap:0 28px}
+.covers li{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:8px 0;border-bottom:1px solid var(--color-rule);font-size:14px;color:var(--color-silver);min-width:0}
+.covers code{font-family:var(--font-mono);font-size:12px;color:var(--color-steel);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+
+/* claim field, from the v2 reference */
+/* ---- the component ------------------------------------------------------- */
+.cf{display:flex;flex-wrap:wrap;align-items:flex-start;gap:28px 4rem}
+.cf-field{position:relative;aspect-ratio:1;width:100%;max-width:22rem;flex:none;margin-top:2rem}
+.cf-ring{position:absolute;inset:0;pointer-events:none}
+.cf-orbit{animation:cf-orbit var(--orbit-for,120s) linear infinite}
+@keyframes cf-orbit{to{transform:rotate(var(--orbit-to,360deg))}}
+/* hover first: pointing at any claim holds every ring still, so the target does not slide
+   away from the pointer. It also holds still on keyboard focus: same state, same look. */
+
+.cf-track{position:absolute;border-radius:999px;border:1px solid var(--color-rule)}
+.cf-grain{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.cf-core{position:absolute;left:50%;top:50%;width:14px;height:14px;border-radius:999px;background:var(--color-accent);transform:translate(-50%,-50%);z-index:3}
+.cf-link{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none;z-index:4}
+.cf-link polyline{fill:none;stroke:var(--color-rule-strong);stroke-width:1;vector-effect:non-scaling-stroke}
+.cf-link circle{fill:none;stroke:var(--color-silver);stroke-width:1.25;vector-effect:non-scaling-stroke;transition:stroke var(--duration-base)}
+.cf-link.on polyline{stroke:var(--color-steel)}
+.cf-link.on circle{stroke:var(--color-accent)}
+
+/* a dot: a real link with a 28px invisible target, the drawn mark inside it */
+.cf-dot{position:absolute;width:28px;height:28px;margin:-14px 0 0 -14px;border-radius:999px;pointer-events:auto;display:flex;align-items:center;justify-content:center;z-index:2}
+.cf-dot i{display:block;width:var(--d,10px);height:var(--d,10px);border-radius:999px;box-sizing:border-box;border:1.5px solid var(--color-steel);transition:transform 150ms var(--ease-out-quart),background-color 150ms,border-color 150ms}
+.cf-dot.backed i{background:var(--color-fg);border-color:var(--color-fg)}
+.cf-dot.opposed i{box-shadow:0 0 0 2px var(--color-ground),0 0 0 3.5px var(--color-alarm)}
+.cf-dot.lit i{background:var(--color-accent);border-color:var(--color-accent);transform:scale(1.6)}
+.cf-dot:focus-visible{outline-offset:0}
+
+/* arrival: one class on the field, a stagger capped at 8 */
+.cf-dot{transition:opacity var(--reveal-fade) var(--ease-out-quart),transform var(--reveal-fade) var(--ease-out-quart);transition-delay:calc(var(--row-index,0) * var(--list-step))}
+.cf-enter .cf-dot{opacity:0;transform:scale(.4)}
+
+/* the card: reserved height, never moves */
+.cf-card{position:relative;z-index:5;flex:1 1 22rem;min-width:min(22rem,100%);max-width:34rem;min-height:6.5rem;border:1px solid var(--color-rule-strong);border-radius:var(--radius-card);background:var(--color-bg);padding:12px 16px;display:flex;flex-direction:column;gap:6px}
+.cf-card-h{display:flex;align-items:center;gap:10px;padding-bottom:10px;border-bottom:1px solid var(--color-rule);font-family:var(--font-mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--color-steel)}
+.cf-card-h i{width:8px;height:8px;border-radius:999px;background:var(--color-rule-strong)}
+.cf-card.is-pointing .cf-card-h i{background:var(--color-accent)}
+.cf-card-h .why{margin-left:auto;color:var(--color-grey)}
+.cf-subj{font-size:20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cf-subj.id{font-family:var(--font-mono);font-weight:500;font-size:16px;letter-spacing:0}
+.cf-fig{font-family:var(--font-mono);font-size:13px;color:var(--color-fg)}
+.cf-fig span{color:var(--color-steel)}
+.cf-fig.none{color:var(--color-steel)}
+.cf-opp{font-family:var(--font-mono);font-size:12px;color:var(--color-alarm)}
+.cf-opp:empty{display:none}
+.cf-empty{font-family:var(--font-mono);font-size:12px;color:var(--color-steel)}
+
+/* legend */
+.cf-legend{flex-basis:100%;margin:0;border-top:1px solid var(--color-rule);display:grid;grid-template-columns:repeat(auto-fill,minmax(19rem,1fr));gap:0 32px}
+.cf-legend>div{display:grid;grid-template-columns:18px minmax(0,1fr) auto;gap:10px;align-items:baseline;padding:10px 0;border-bottom:1px solid var(--color-rule)}
+.cf-legend dt{font-size:14px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cf-legend dt.id{font-family:var(--font-mono);font-size:12px}
+.cf-legend dd{margin:0;font-family:var(--font-mono);font-size:11px;color:var(--color-steel);text-align:right;white-space:nowrap}
+.cf-legend .ringno{font-family:var(--font-mono);font-size:10px;color:var(--color-grey)}
+.cf-total{flex-basis:100%;display:flex;gap:18px;align-items:baseline;flex-wrap:wrap;font-family:var(--font-mono);font-size:12px;color:var(--color-steel)}
+.cf-total b{font-weight:500;color:var(--color-fg);font-size:14px}
+.cf-key{display:inline-flex;gap:14px;flex-wrap:wrap;margin-left:auto}
+.cf-key span{display:inline-flex;align-items:center;gap:6px}
+.cf-key i{width:9px;height:9px;border-radius:999px;box-sizing:border-box;border:1.5px solid var(--color-steel)}
+.cf-key i.f{background:var(--color-fg);border-color:var(--color-fg)}
+.cf-key i.o{box-shadow:0 0 0 2px var(--color-ground),0 0 0 3.5px var(--color-alarm)}
+
+/* zero claims */
+.cf-zero{display:flex;align-items:center;gap:28px;flex-wrap:wrap}
+.cf-zero .cf-field{max-width:12rem}
+
+.still .cf-orbit{animation:none}
+.still .cf-dot{transition:none!important}
+.still .cf-enter .cf-dot{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){.cf-orbit{animation:none}.cf-dot{transition:none!important}.cf-enter .cf-dot{opacity:1;transform:none}}
+@media (max-width:640px){.cf-field{max-width:none;margin-top:0}.cf-card{min-width:0}.cf-link polyline{display:none}}
+
+
+@media (max-width:860px){
+  .lead{grid-template-columns:1fr}
+  .market{border-right:0;border-bottom:1px solid var(--color-rule)}
+}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <div class="bar">
+    <span class="label">Design reference · skill page · everything marked <span class="sample">sample</span> is invented</span>
+    <div class="grp">
+      <span class="label">Case</span>
+      <div class="seg" id="case" role="group" aria-label="Sample case">
+        <button type="button" data-v="many" aria-pressed="true">used by 13</button>
+        <button type="button" data-v="one" aria-pressed="false">used by one</button>
+        <button type="button" data-v="none" aria-pressed="false">nobody yet</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- title band -->
+  <header>
+    <div class="crumbs"><span class="kind">Skill</span><span>remotion-dev/skills</span></div>
+    <h1 class="face">remotion-render</h1>
+    <section class="dscr" aria-labelledby="d-h">
+      <div class="dscr-h"><span class="label" id="d-h">Description</span><span class="label src">SKILL.md · v4.0.539</span></div>
+      <p class="lede">Export a Remotion video.</p>
+      <ul class="covers">
+        <li><span>Render a video</span><code>npx remotion render</code></li>
+        <li><span>Render a still</span><code>npx remotion still</code></li>
+        <li><span>Several frames as images</span><code>render --frames=0,30,90</code></li>
+        <li><span>Transparent videos</span><code>transparent-videos.md</code></li>
+      </ul>
+    </section>
+    <div class="install">
+      <code id="cmd"><b>$</b> npx skills add remotion-dev/skills --skill remotion-render</code>
+      <button type="button" id="copy">Copy</button>
+    </div>
+
+    <div class="about">
+      <!-- what is written about it on chain: each line is a triple with its own market -->
+      <div class="panel">
+        <span class="label">Classification</span>
+        <dl class="cls">
+          <div><dt>Domain</dt><dd><a href="#">tool</a><span class="sep">/</span><a href="#">video</a></dd></div>
+          <div><dt>Source</dt><dd><a href="#">remotion-dev/skills</a></dd></div>
+          <div><dt>Repository</dt><dd><span class="state"><i></i>maintained</span></dd></div>
+        </dl>
+      </div>
+      <!-- somebody else's figures: they change, so they stay off the chain, but they are a signal -->
+      <div class="panel ext">
+        <span class="label">External signals <span class="when">29 Oct 2026</span>
+          <button class="hint" type="button" aria-label="About these figures">?<span>Read from skills.sh and GitHub. They change, so ARP does not write them on chain.</span></button></span>
+        <div class="sig">
+          <div><b class="num">233,904</b><span>installs</span><em>skills.sh</em></div>
+          <div><b class="num">5,859</b><span>stars</span><em>GitHub</em></div>
+          <div><b class="num">3 days</b><span>since last push</span><em>GitHub</em></div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- the lead: the skill's own market and its curves -->
+  <div class="lead" id="lead"></div>
+
+  <!-- who uses it -->
+  <section class="blk" aria-labelledby="used-h">
+    <div class="blk-h">
+      <h2 id="used-h">Relations</h2>
+      <span class="label">Every claim about this skill <span class="sample">sample</span></span>
+    </div>
+    <div id="used-mount"></div>
+  </section>
+
+  <!-- the record -->
+  <section class="blk" aria-labelledby="rec-h">
+    <div class="blk-h"><h2 id="rec-h">On the record</h2><span class="label">Intuition testnet 13579</span></div>
+    <div class="record">
+      <dl>
+        <div class="row"><dt>Atom</dt><dd>0x9988fb7d9d023065bb154bed0b1362b1cb7b8b5e460268bebef4db7ff724882f</dd></div>
+        <div class="row"><dt>Identifies</dt><dd><a href="#">https://github.com/remotion-dev/skills?skill=remotion-render</a></dd></div>
+        <div class="row"><dt>source</dt><dd>remotion-dev/skills</dd></div>
+      </dl>
+      <dl>
+        <div class="row"><dt>has tag</dt><dd>video · triple 0x0e362d1e3b3b…b885c3a1312382a2</dd></div>
+        <div class="row"><dt>video</dt><dd>is a sub domain of tool</dd></div>
+        <div class="row"><dt>Written by</dt><dd>ARP's attestor, which can withdraw it</dd></div>
+      </dl>
+    </div>
+  </section>
+</div>
+
+<script>
+/* SAMPLE: agents and positions, shaped like GroupView[] */
+const AGENTS=['clip-cutter','promo-renderer','Agent 13579:41','reel-composer','caption-forge','Agent 13579:7','storyboard-bot','0x3b9e…41a0','launch-video','Agent 13579:118','motion-intern','Agent 13579:63','demo-reel'];
+function rows(list,seed){return list.map((nm,k)=>{const backed=k%3!==2;const pos=backed?Math.max(1,Math.round(9/(k+1))):0;
+  return {tripleId:`t${seed}-${k}`,name:nm,nameIsId:/^(Agent |0x)/.test(nm),subjectAtomId:`a${k}`,backing:backed?(0.08*pos+0.0099).toFixed(4)+' tTRUST':null,positions:pos,opposition:k===4?'0.0400 tTRUST':null};});}
+function group(label,rs){const pos=rs.reduce((s,r)=>s+r.positions,0);return {predicateAtomId:label,label,labelIsId:false,rows:rs,backing:pos?rs.filter(r=>r.backing).reduce((s,r)=>s+parseFloat(r.backing),0).toFixed(4)+' tTRUST':null,positions:pos};}
+
+const CASES={
+  many:{subject:'remotion-render',groups:[group('uses',rows(AGENTS.slice(0,11),1)),group('recommends',rows(['reel-composer','storyboard-bot'],2))],truncated:false,
+    market:{assets:'4.2180',positions:23,largest:3100,top3:5800,first:'2026-09-14',last:'2026-10-27',mine:'0.2500'},activity:true},
+  one:{subject:'remotion-render',groups:[group('uses',rows(['clip-cutter'],3))],truncated:false,
+    market:{assets:'0.1099',positions:1,largest:10000,top3:10000,first:'2026-10-21',last:'2026-10-21',mine:null},activity:'one'},
+  none:{subject:'remotion-render',groups:[],truncated:false,market:{assets:'0.000001',positions:0},activity:false},
+};
+
+/* SAMPLE: weekly activity, 14 weeks */
+function weeks(kind){
+  const out=[];const start=new Date('2026-07-27');
+  for(let i=0;i<14;i++){const d=new Date(start);d.setDate(d.getDate()+7*i);
+    let s=0,v=0;
+    if(kind===true&&i>=7){const t=i-7;s=[2,1,4,3,6,5,9][t];v=[0.31,0.05,0.92,0.4,1.6,0.7,2.1][t];}
+    if(kind==='one'&&i===12){s=1;v=0.11;}
+    out.push({bucket:d,signals:s,volume:v});}
+  return out;
+}
+</script>
+<script>
+/* ---------------------------------------------------------------------------
+   GEOMETRY. Same as claim-field-geometry.ts, plus the fold and the grain.
+   --------------------------------------------------------------------------- */
+const INNER=0.17, OUTER=0.42, MAX_DOTS=36, MAX_RINGS=5;
+function layout(groups){
+  // fold everything past ring 5 into one last ring
+  let shown=groups, folded=null;
+  if(groups.length>MAX_RINGS){
+    shown=groups.slice(0,MAX_RINGS-1);
+    const rest=groups.slice(MAX_RINGS-1);
+    folded={label:`+${rest.length} other predicates`,rows:rest.flatMap(g=>g.rows.map(r=>({...r,_pred:g.label}))),labelIsId:false,members:rest};
+    shown=[...shown,folded];
+  }
+  const n=shown.length, rings=[], dots=[];
+  shown.forEach((g,i)=>{
+    const total=g.rows.length, drawn=Math.min(total,MAX_DOTS);
+    const r = n===1?OUTER:INNER+(i/(n-1))*(OUTER-INNER);
+    const step=drawn?2*Math.PI/drawn:0, offset=(i%2)*(step/2);
+    rings.push({i,r,drawn,total,g});
+    for(let k=0;k<drawn;k++){const a=-Math.PI/2+offset+k*step;dots.push({ring:i,k,row:g.rows[k],pred:g.rows[k]._pred||g.label,cx:.5+r*Math.cos(a),cy:.5+r*Math.sin(a)});}
+  });
+  return {rings,dots,folded};
+}
+// mass by position count, never by amount. free = base, hollow.
+const dotSize=(pos)=> pos>0 ? Math.min(10+3.2*Math.log2(pos),17) : 10;
+
+/* ---------------------------------------------------------------------------
+   RENDER
+   --------------------------------------------------------------------------- */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let still=matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+function render(key){
+  const C=key, mount=$('#used-mount');
+  const edgeCount=C.groups.reduce((s,g)=>s+g.rows.length,0);
+  if(!C.groups.length){
+    mount.innerHTML=`<div class="cf-zero"><div class="cf-field" aria-hidden="true"><span class="cf-track" style="left:${(.5-OUTER)*100}%;top:${(.5-OUTER)*100}%;width:${OUTER*200}%;height:${OUTER*200}%;border-style:dashed"></span><span class="cf-core"></span></div>
+      <p class="cf-empty">Nothing points at ${esc(C.subject)} yet. A claim made about it appears here as a dot.</p></div>`;
+    return;
+  }
+  const {rings,dots,folded}=layout(C.groups);
+  let h=`<div class="cf"><div class="cf-field cf-enter" id="field" role="group" aria-label="Claims about ${esc(C.subject)}">`;
+  // the loupe and its line to the card: always drawn, resting at -60° on the outer ring
+  h+=`<svg class="cf-link" id="link" viewBox="0 0 1 1" preserveAspectRatio="none" aria-hidden="true"><polyline id="bar" points=""/><circle id="head" cx="0" cy="0" r="0.032"/></svg>`;
+  h+=`<span class="cf-core" aria-hidden="true"></span>`;
+  rings.forEach(R=>{
+    const dur=110+R.i*40, to=R.i%2?'-360deg':'360deg';
+    h+=`<div class="cf-ring cf-orbit" data-ring="${R.i}" style="--orbit-for:${dur}s;--orbit-to:${to}">`;
+    h+=`<span class="cf-track" aria-hidden="true" style="left:${(.5-R.r)*100}%;top:${(.5-R.r)*100}%;width:${R.r*200}%;height:${R.r*200}%"></span>`;
+    // grain: every claim past the drawn ones, as stipple in the gaps. aria-hidden; the legend says the count.
+    if(R.total>R.drawn){
+      const extra=R.total-R.drawn, step=2*Math.PI/R.drawn, off=(R.i%2)*(step/2);
+      let g='';
+      for(let e=0;e<extra;e++){
+        // spread evenly between the drawn dots, never on top of one
+        const slot=e%R.drawn, layer=Math.floor(e/R.drawn), per=Math.ceil(extra/R.drawn);
+        const f=(layer+1)/(per+1);
+        const a=-Math.PI/2+off+(slot+f)*step;
+        // one row on the ring; a second row only when the ring is genuinely crowded
+        const jr=R.r+(per>6?((layer%2)?0.007:-0.007):0);
+        g+=`<circle cx="${(.5+jr*Math.cos(a)).toFixed(4)}" cy="${(.5+jr*Math.sin(a)).toFixed(4)}" r="0.0036"/>`;
+      }
+      h+=`<svg class="cf-grain" viewBox="0 0 1 1" aria-hidden="true"><g fill="var(--color-steel)" opacity=".75">${g}</g></svg>`;
+    }
+    dots.filter(d=>d.ring===R.i).forEach((d,idx)=>{
+      const r=d.row, backed=r.positions>0, global=dots.indexOf(d);
+      const name=`${r.name} ${d.pred} ${C.subject}, ${backed?r.backing+' behind it, '+r.positions+(r.positions===1?' position':' positions'):'nothing behind it'}${r.opposition?', '+r.opposition+' against':''}`;
+      h+=`<a class="cf-dot${backed?' backed':''}${r.opposition?' opposed':''}" href="#" data-i="${global}" style="left:${d.cx*100}%;top:${d.cy*100}%;--d:${dotSize(r.positions).toFixed(1)}px;--row-index:${Math.min(global,7)}" aria-label="${esc(name)}"><i></i></a>`;
+    });
+    h+=`</div>`;
+  });
+  h+=`</div>`;
+  // card
+  h+=`<div class="cf-card" id="card" aria-hidden="true"><div class="cf-card-h"><i></i><span id="c-pred"></span><span class="why" id="c-why"></span></div><div class="face cf-subj" id="c-subj"></div><div class="cf-fig" id="c-fig"></div><div class="cf-opp" id="c-opp"></div></div>`;
+  // totals + legend
+  h+=`<div class="cf-total"><span><b>${C.truncated?edgeCount+'+':edgeCount}</b> ${edgeCount===1&&!C.truncated?'claim':'claims'} about ${esc(C.subject)}</span>
+     <span class="cf-key"><span><i class="f"></i>a position behind it</span><span><i></i>nothing behind it</span>${C.groups.some(g=>g.rows.some(r=>r.opposition))?'<span><i class="o"></i>someone took the other side</span>':''}</span></div>`;
+  h+=`<dl class="cf-legend">`;
+  rings.forEach(R=>{
+    const g=R.g, isFold=g===folded;
+    const count=R.total>R.drawn?`${R.total}${C.truncated&&R.i===rings.length-1&&!isFold?'+':''} · ${R.drawn} drawn, the rest as grain`:`${R.total} ${R.total===1?'claim':'claims'}`;
+    h+=`<div><span class="ringno">${String(R.i+1).padStart(2,'0')}</span><dt class="${g.labelIsId?'id':''}">${esc(g.label)}</dt><dd>${count}${!isFold&&g.backing?' · '+esc(g.backing):''}</dd></div>`;
+    if(isFold) g.members.forEach(m=>{h+=`<div><span class="ringno"></span><dt class="${m.labelIsId?'id':''}" style="color:var(--color-silver)">${esc(m.label)}</dt><dd>${m.rows.length} ${m.rows.length===1?'claim':'claims'}${m.backing?' · '+esc(m.backing):''}</dd></div>`;});
+  });
+  h+=`</dl></div>`;
+  mount.innerHTML=h;
+  wire(C,dots);
+}
+
+/* ---------------------------------------------------------------------------
+   THE LOUPE. Rests at HEAD_DEGREES on the outer ring and reads whatever passes
+   under it. Point at a dot (mouse or Tab) and it glides there and rides it;
+   let go and it glides home. The line to the card is drawn the whole time.
+   --------------------------------------------------------------------------- */
+const HEAD_DEGREES=-60, RISE_DEGREES=35, BAR_Y=0.055, HEAD_R=0.032, DOT_R=0.0142;
+const GLIDE_MS=160;   // time constant of the glide: ~95% of the way in 480ms
+const TOUR_MS=4000;   // with nobody pointing, the loupe moves to the next claim every 4 s
+function wire(C,dots){
+  const field=$('#field'), card=$('#card'), link=$('#link'), head=$('#head'), bar=$('#bar');
+  requestAnimationFrame(()=>requestAnimationFrame(()=>field.classList.remove('cf-enter')));
+  const outerRing=Math.max(...dots.map(d=>d.ring));
+  const outerR=layout(C.groups).rings[outerRing].r;
+  const rest={x:.5+outerR*Math.cos(HEAD_DEGREES*Math.PI/180), y:.5+outerR*Math.sin(HEAD_DEGREES*Math.PI/180)};
+  const cur={...rest};
+  let pointing=null, shown=-1, last=performance.now(), alive=true;
+  // the tour: starts at the resting place, then visits each claim in the graph's order
+  let touring=null, nextTour=performance.now()+TOUR_MS;
+  const els=[...field.querySelectorAll('.cf-dot')];
+  function centre(el){const f=field.getBoundingClientRect(),b=el.getBoundingClientRect();return {x:(b.left+b.width/2-f.left)/f.width,y:(b.top+b.height/2-f.top)/f.height};}
+  function fill(i,isPointing,lit){
+    const d=dots[i]; if(!d) return;
+    if(i!==shown){
+      shown=i; const r=d.row, backed=r.positions>0;
+      $('#c-pred').textContent=d.pred;
+      const sj=$('#c-subj'); sj.textContent=r.name; sj.classList.toggle('id',r.nameIsId);
+      const f=$('#c-fig'); f.classList.toggle('none',!backed);
+      f.innerHTML=backed?`${esc(r.backing)} <span>· ${r.positions} ${r.positions===1?'position':'positions'}</span>`:'nothing behind it';
+      $('#c-opp').textContent=r.opposition?`${r.opposition} against`:'';
+    }
+    $('#c-why').textContent='';
+    card.classList.toggle('is-pointing',lit);
+    els.forEach((el,k)=>el.classList.toggle('lit',k===i&&lit));
+    link.classList.toggle('on',lit);
+  }
+  // at rest: the nearest outer-ring dot to the loupe is what the card reads;
+  // it lights only when the whole dot is inside the loupe
+  function underHead(){
+    let best=-1,bd=1e9;
+    els.forEach((el,k)=>{ if(dots[k].ring!==outerRing) return; const c=centre(el); const dd=Math.hypot(c.x-cur.x,c.y-cur.y); if(dd<bd){bd=dd;best=k;} });
+    return {i:best, inside: bd <= (HEAD_R-DOT_R)+0.002};
+  }
+  function drawLink(){
+    head.setAttribute('cx',cur.x.toFixed(4)); head.setAttribute('cy',cur.y.toFixed(4));
+    const cornerX=cur.x+Math.abs(cur.y-BAR_Y)/Math.tan(RISE_DEGREES*Math.PI/180);
+    // start the line on the loupe's rim, not its centre
+    const ang=Math.atan2(BAR_Y-cur.y, cornerX-cur.x);
+    const sx=cur.x+HEAD_R*Math.cos(ang), sy=cur.y+HEAD_R*Math.sin(ang);
+    bar.setAttribute('points',`${sx.toFixed(4)},${sy.toFixed(4)} ${cornerX.toFixed(4)},${BAR_Y} 1.6,${BAR_Y}`);
+  }
+  let pollAt=0, lockedOn=null;
+  const LOCK=0.006;   // about 2px on a 22rem field
+  function frame(now){
+    if(!alive||!document.body.contains(field)){alive=false;return;}
+    const dt=Math.min(64,now-last); last=now;
+    if(pointing===null && !still && els.length && now>=nextTour){
+      touring = touring===null ? 0 : (touring+1)%els.length;
+      nextTour = now+TOUR_MS;
+    }
+    const held = pointing!==null ? pointing : touring;
+    const target = held===null ? rest : centre(els[held]);
+    // once the loupe has arrived, it locks onto the dot: an ease alone always trails a moving
+    // target by a pixel or so, which reads as "not centred"
+    if(held!==lockedOn) lockedOn=null;
+    if(lockedOn===null && Math.hypot(target.x-cur.x,target.y-cur.y)<LOCK) lockedOn=held;
+    const k = still || (lockedOn!==null && held===lockedOn) ? 1 : 1-Math.exp(-dt/GLIDE_MS);
+    cur.x+=(target.x-cur.x)*k; cur.y+=(target.y-cur.y)*k;
+    drawLink();
+    if(held!==null){ fill(held,pointing!==null,true); }
+    else if(now>=pollAt){ pollAt=now+120; const u=underHead(); if(u.i>=0) fill(u.i,false,u.inside); }
+    requestAnimationFrame(frame);
+  }
+  els.forEach((el,i)=>{
+    const on=()=>{pointing=i;};
+    // letting go resumes the tour from the claim you were on, after a full beat
+    const off=()=>{if(pointing===i){ pointing=null; touring=i; nextTour=performance.now()+TOUR_MS; }};
+    el.addEventListener('mouseenter',on);el.addEventListener('focus',on);
+    el.addEventListener('mouseleave',off);el.addEventListener('blur',off);
+    el.addEventListener('click',e=>e.preventDefault());
+  });
+  drawLink(); const u=underHead(); if(u.i>=0) fill(u.i,false,u.inside);
+  requestAnimationFrame(frame);
+}
+
+
+</script>
+<script>
+const fmtDate=d=>d.toLocaleDateString('en-GB',{day:'numeric',month:'short'});
+const pct=b=>(b/100).toFixed(0)+'%';
+
+function facts(C){
+  const backed=C.market.positions>0;
+  $('#facts').innerHTML=[
+    {p:'has tag',o:'video',dot:'',n:'0.0099 tTRUST · 1 position'},
+    {p:'source',o:'remotion-dev/skills',dot:'',n:'0.0099 tTRUST · 1 position'},
+    {p:'repository',o:'maintained',dot:'',n:'pushed in the last 180 days'},
+  ].map(f=>`<a class="fact" href="#" title="${f.n}"><i class="${f.dot}"></i><span class="p">${f.p}</span><span class="o">${f.o}</span></a>`).join('');
+}
+
+function chart(data,key,{h=92,fmt}){
+  const W=560,H=h,PL=0,PB=18,PT=6;const max=Math.max(...data.map(d=>d[key]),0);
+  const top=max===0?1:niceMax(max);const bw=(W-PL)/data.length;
+  let s=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${key} per week">`;
+  [0,.5,1].forEach(f=>{const y=PT+(H-PT-PB)*(1-f);s+=`<line class="grid" x1="0" x2="${W}" y1="${y}" y2="${y}"/>`;if(f>0)s+=`<text class="axis" x="0" y="${y-3}" text-anchor="start">${fmt(top*f)}</text>`;});
+  if(key==='signals'){
+    data.forEach((d,i)=>{const hh=(H-PT-PB)*(d[key]/top);const x=PL+i*bw+bw*.22;const last=i===data.length-1;
+      if(d[key]>0)s+=`<rect x="${x.toFixed(1)}" y="${(H-PB-hh).toFixed(1)}" width="${(bw*.56).toFixed(1)}" height="${hh.toFixed(1)}" rx="1.5" fill="${last?'var(--color-fg)':'var(--color-steel)'}"/>`;
+      else s+=`<rect x="${x.toFixed(1)}" y="${H-PB-1}" width="${(bw*.56).toFixed(1)}" height="1" fill="var(--color-rule-strong)"/>`;});
+  }else{
+    const pts=data.map((d,i)=>[PL+i*bw+bw/2,H-PB-(H-PT-PB)*(d[key]/top)]);
+    const line=pts.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ');
+    s+=`<path d="${line} L${pts.at(-1)[0].toFixed(1)},${H-PB} L${pts[0][0].toFixed(1)},${H-PB} Z" fill="var(--color-fg)" opacity=".08"/>`;
+    s+=`<path d="${line}" fill="none" stroke="var(--color-fg)" stroke-width="1.5" vector-effect="non-scaling-stroke"/>`;
+    const e=pts.at(-1);s+=`<circle cx="${e[0].toFixed(1)}" cy="${e[1].toFixed(1)}" r="3" fill="var(--color-fg)"/>`;
+  }
+  [0,Math.floor(data.length/2),data.length-1].forEach(i=>{s+=`<text class="axis" x="${(PL+i*bw+bw/2).toFixed(1)}" y="${H-3}" text-anchor="${i===0?'start':i===data.length-1?'end':'middle'}">${fmtDate(data[i].bucket)}</text>`;});
+  return s+`</svg>`;
+}
+function niceMax(m){const p=Math.pow(10,Math.floor(Math.log10(m)));const n=m/p;return (n<=1?1:n<=2?2:n<=5?5:10)*p;}
+
+function lead(C){
+  const M=C.market, backed=M.positions>0;
+  let m=`<div class="market"><div class="value"><span class="label">Behind the skill itself <span class="sample">sample</span></span>`;
+  m+= backed ? `<div class="big">${M.assets}<small>tTRUST</small></div>` : `<div class="none">Nobody is behind it yet.</div>`;
+  m+=`</div>`;
+  if(backed){
+    m+=`<dl class="kv"><dt>Positions</dt><dd>${M.positions}</dd>
+      <dt>Largest holder <button class="hint" type="button" aria-label="About the largest holder">?<span>Share of all shares held by the single biggest account. High means this looks like one person.</span></button></dt><dd>${pct(M.largest)}</dd>
+      <dt>Top three</dt><dd>${pct(M.top3)}</dd>
+      <dt>First backer</dt><dd>${M.first}</dd><dt>Latest backer</dt><dd>${M.last}</dd></dl>
+      <div class="conc" aria-hidden="true"><span class="a" style="width:${M.largest/100}%"></span><span class="b" style="width:${(M.top3-M.largest)/100}%"></span></div>`;
+  }
+  if(M.mine) m+=`<div class="mine"><span>Your position</span><span class="num">${M.mine} tTRUST</span></div>`;
+  m+=`<div class="actions"><button class="btn primary" type="button">Take a position</button>${M.mine?'<button class="btn" type="button">Exit</button>':''}</div></div>`;
+  let c=`<div class="curves"><div class="curves-h"><span class="label">Activity on this skill's market, per week <span class="sample">sample</span>
+    <button class="hint" type="button" aria-label="About these curves">?<span>Money moving, not a price. A redemption counts here exactly like a deposit.</span></button></span>
+    <div class="seg" role="group" aria-label="Grain"><button type="button" aria-pressed="false">day</button><button type="button" aria-pressed="true">week</button><button type="button" aria-pressed="false">month</button></div></div>`;
+  if(!C.activity){c+=`<div class="empty">Nothing has moved on this market yet.</div>`;}
+  else{const W=weeks(C.activity);const tS=W.reduce((s,d)=>s+d.signals,0),tV=W.reduce((s,d)=>s+d.volume,0);
+    c+=`<div class="chart"><div class="chart-h"><span class="t">Signals</span><span class="num">${tS} deposits and redemptions</span></div>${chart(W,'signals',{fmt:v=>Math.round(v)})}</div>`;
+    c+=`<div class="chart"><div class="chart-h"><span class="t">Value moved</span><span class="num">${tV.toFixed(2)} tTRUST, either way</span></div>${chart(W,'volume',{h:110,fmt:v=>v.toFixed(v<1?2:1)})}</div>`;}
+  c+=`</div>`;
+  $('#lead').innerHTML=m+c;
+}
+
+
+$('#copy').addEventListener('click',async e=>{const t='npx skills add remotion-dev/skills --skill remotion-render';try{await navigator.clipboard.writeText(t);e.target.textContent='Copied';}catch{const r=document.createRange();r.selectNodeContents($('#cmd'));const s=getSelection();s.removeAllRanges();s.addRange(r);}setTimeout(()=>e.target.textContent='Copy',1600);});
+function show(k){const C=CASES[k];lead(C);render(C);}
+$('#case').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;[...$('#case').children].forEach(x=>x.setAttribute('aria-pressed',x===b));show(b.dataset.v);});
+document.addEventListener('click',e=>{const s=e.target.closest('.curves .seg button');if(!s)return;[...s.parentNode.children].forEach(x=>x.setAttribute('aria-pressed',x===s));});
+show('many');
+</script>
+
+</body>
+</html>

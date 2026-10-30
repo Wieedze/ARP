@@ -1,0 +1,1359 @@
+diff --git a/app/src/components/atom/ClaimField.tsx b/app/src/components/atom/ClaimField.tsx
+index ff5b2f1..0970ae6 100644
+--- a/app/src/components/atom/ClaimField.tsx
++++ b/app/src/components/atom/ClaimField.tsx
+@@ -1,50 +1,53 @@
+-import {useEffect, useState} from "react";
++import {useEffect, useMemo, useRef, useState} from "react";
+ import {Link} from "react-router-dom";
+ 
+ import {cssVars} from "../../lib/css-vars";
+ import {LIST_CAP} from "../brand/row-motion";
+ 
+-import type {GroupView} from "../../services/atom-standing-view";
+-import {claimField, MAX_DOTS_PER_RING} from "./claim-field-geometry";
++import type {EdgeRow, GroupView} from "../../services/atom-standing-view";
++import {
++    claimField,
++    claimGrain,
++    dotDiameter,
++    foldGroups,
++    GRAIN_R,
++    LOUPE,
++    loupeLine,
++    loupeRest,
++} from "./claim-field-geometry";
++import {useClaimLoupe} from "./use-claim-loupe";
+ 
+ /**
+- * Every claim about this atom, as a constellation around it.
++ * Every claim about this atom, as a constellation around it, read through a loupe.
+  *
+- * It replaces a sentence — _"250+ claims across one predicate"_ — which the user rejected as the
+- * whole of what the page said about its own subject. The ask: _« soit avec des blocks soit avec des
+- * cercles qui constellent comme le logo autour de l'atom du tool »_.
++ * v2, "hover first" (`CLAIM-FIELD-V2.md`). The reading head and its line to the card are the
++ * original's; what changed is how they move and what the field draws when the data is awkward.
+  *
+  * ## Why circles are allowed here, and what they mean
+  *
+  * `rules/ui.md` reserves `rounded-full` for dots and agent sigils, so that **a circle on this
+- * surface always means "an agent"**. Every dot here is the subject of a claim, and a subject is an
+- * agent or an account — so the rule is satisfied by what the data is, not worked around.
+- *
+- * Three states, each read straight off the data and none invented:
++ * surface always means "an agent"**. Every dot is the subject of a claim, and a subject is an agent
++ * or an account, so the rule is satisfied by what the data is.
+  *
+  * | | means |
+  * | --- | --- |
+- * | filled | a position stands behind the claim |
++ * | filled | a position stands behind the claim (`positions > 0`, never the amount: ADR `0042`) |
+  * | hollow | declared, with nothing behind it |
+- * | ringed | somebody took the other side |
+- *
+- * **Filled is `positionCount`, never the amount.** ADR `0042`: creating a term seeds its vaults
+- * with `minShare`, so `assets > 0` means "this term exists" and three "has stake?" checks in this
+- * repo were wrong for exactly that reason. There is deliberately **no size scale** — a dot sized by
+- * TRUST would invent a ladder the data does not carry, and `docs/14` is explicit that the thing an
+- * interface must never do is render rungs at a weight it chose.
++ * | alarm ring | somebody took the other side. The one semantic exception to the one accent |
++ * | larger | more **accounts** behind it, log scale, capped (`SIZE_BY_POSITIONS`) |
++ * | grain | claims past the 36 drawn on a ring, decoration of a count the legend states |
+  *
+- * ## It is real links, not an SVG
++ * ## The loupe
+  *
+- * Absolutely positioned `<Link>`s rather than `<circle>`s inside one `<svg>`: focus rings come from
+- * `index.css`'s unlayered `:focus-visible` and work for free, each dot has a real accessible name,
+- * and keyboard order follows the DOM. An SVG would have needed every one of those rebuilt.
++ * Rests at -60° on the outer ring, tied to the card by a line the whole time. Hover **and** focus
++ * make it glide to a dot and ride it (ADR `0073`); with nobody pointing it tours, one claim every
++ * 4 s. See `useClaimLoupe`.
+  *
+- * ## The cap is stated, not hidden
++ * ## It is real links, not an SVG
+  *
+- * One mainnet tag carries 250+ edges on a single predicate, and a ring of 250 dots is a solid line.
+- * `MAX_DOTS_PER_RING` draws 36 and the ring's label says how many it has — a field quietly showing
+- * 36 of 250 is the kind of claim `rules/claims.md` exists to stop.
++ * Absolutely positioned `<Link>`s: focus rings come from `index.css`'s unlayered `:focus-visible`,
++ * each dot has a real accessible name, and keyboard order follows the DOM. Only the loupe, the line
++ * and the grain are SVG, and all three are `aria-hidden`.
+  */
+ export function ClaimField({
+     groups,
+@@ -58,39 +61,42 @@ export function ClaimField({
+     edgeCount: number;
+     /**
+      * The read hit the indexer's cap, so {@link edgeCount} is a **floor** and the groups are a
+-     * prefix.
+-     *
+-     * Carried here because the sentence this field replaced carried it — `describePointers`
+-     * printed `250+`. Dropping it was a real regression and a test caught it: a count rendered as
+-     * a total when the reader knows it is a floor is `rules/claims.md`'s whole subject.
++     * prefix. Printed as `250+`: a floor rendered as a total is `rules/claims.md`'s whole subject.
+      */
+     truncated: boolean;
+ }) {
+-    // The rows flattened **with their predicate**, because a dot has to be able to say the whole
+-    // triple — subject, predicate, object — and the object is this page.
+-    const entries = groups.flatMap((group) =>
+-        group.rows.map((row) => ({row, predicate: group.label})),
+-    );
+-    const {rings, dots} = claimField(groups.map((group) => group.rows.length));
++    // Groups past `MAX_RINGS - 1` share the last ring. Each row keeps its own predicate, so a dot
++    // on the folded ring still names its whole triple.
++    const layout = useMemo(() => {
++        const shown = foldGroups(groups);
++        const entries = shown.flatMap((ring) =>
++            ring.members.flatMap((group) =>
++                group.rows.map((row) => ({row, predicate: group.label})),
++            ),
++        );
++        const {rings, dots} = claimField(
++            shown.map((ring) => ring.members.reduce((sum, group) => sum + group.rows.length, 0)),
++        );
++        return {shown, entries, rings, dots};
++    }, [groups]);
++    const {shown, entries, rings, dots} = layout;
+ 
+-    /**
+-     * Which claim the pointer or the keyboard is on.
+-     *
+-     * **Hover *and* focus**, which is the condition under which `rules/ui.md`'s "no mouse-reactive
+-     * effects" is not being broken but read correctly. That rule rejects parallax, repulsion, hover
+-     * tilt and cursor trails — the pointer *moving* things. This reveals a fact that is already on
+-     * the page, the way `Hint` does, and `Hint` is the precedent: it opens on hover **and keyboard
+-     * focus** for exactly this reason. A reveal that only a mouse can reach is the thing to avoid.
+-     * ADR `0073`.
+-     */
+-    const [active, setActive] = useState<number | null>(null);
++    const outer = rings[rings.length - 1];
++    const fieldRef = useRef<HTMLDivElement>(null);
++    const headRef = useRef<SVGCircleElement>(null);
++    const lineRef = useRef<SVGPolylineElement>(null);
++    const {reading, point, release, dotRef} = useClaimLoupe({
++        fieldRef,
++        headRef,
++        lineRef,
++        dots,
++        outerRadius: outer?.r ?? 0,
++        outerRing: outer?.ring ?? 0,
++    });
+ 
+     /**
+-     * One frame of the entering state, then the dots settle.
+-     *
+-     * The class is on the container, not on each dot, so one state change drives the whole field
+-     * and React does not re-render 36 links. Under `prefers-reduced-motion` the CSS neutralises
+-     * both halves and the dots are simply there.
++     * One frame of the entering state, then the dots settle. The class is on the container, so
++     * one state change drives the whole field. Under reduced motion the CSS neutralises it.
+      */
+     const [entering, setEntering] = useState(true);
+     useEffect(() => {
+@@ -98,173 +104,262 @@ export function ClaimField({
+         return () => cancelAnimationFrame(frame);
+     }, []);
+ 
+-    const current = active === null ? undefined : entries[active];
++    if (groups.length === 0 || outer === undefined) {
++        return <ZeroField subject={subject} />;
++    }
++
++    const current = reading.index === null ? undefined : entries[reading.index];
++    const rest = loupeRest(outer.r);
++    const anyOpposition = groups.some((group) => group.rows.some((row) => row.opposition !== null));
+ 
+     return (
+-        <div className="flex flex-wrap items-center gap-x-12 gap-y-8">
++        <div className="arp-cf">
+             <div
+-                className={`relative aspect-square w-full max-w-[22rem] shrink-0 ${entering ? "arp-claim-enter" : ""}`}
++                ref={fieldRef}
++                className={`arp-cf-field ${entering ? "arp-claim-enter" : ""}`}
+                 role="group"
+                 aria-label={`Claims about ${subject}`}
+             >
+-                {/* **One wrapper per ring, and it turns.** The dots live inside it rather than
+-                    beside it, so the ring and its claims rotate together — the alternative was
+-                    recomputing every angle per frame, which is what the landing's field does
+-                    because its points also breathe and dive. Nothing here moves but the angle.
+-
+-                    Slower further out and alternating direction, so it reads as a constellation
+-                    rather than one wheel. Neutralised under `prefers-reduced-motion` by the rule
+-                    that neutralises every other arrival in the app. */}
+-                {/* The atom itself, at the centre, and it does **not** turn: it is the thing
+-                    every ring is about. The one Saffron mark on the field — `ui.md` allows the
+-                    accent on the mark, and ADR `0067` on the mark's core specifically.
+-
+-                    It was lost once: a replacement that spanned from the rings to the dots took
+-                    everything between them, and the core sat in that gap. A screenshot caught it,
+-                    which is the only thing that could have. */}
+-                <span
++                {/* The loupe and its line to the card. Drawn from the first paint at the resting
++                    place, then the hook writes them every frame without re-rendering. */}
++                <svg
++                    className={`arp-cf-link ${reading.lit ? "is-on" : ""}`}
++                    viewBox="0 0 1 1"
++                    preserveAspectRatio="none"
+                     aria-hidden="true"
+-                    className="absolute left-1/2 top-1/2 h-[14px] w-[14px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[color:var(--color-accent)]"
+-                />
++                >
++                    <polyline ref={lineRef} points={loupeLine(rest)} />
++                    <circle ref={headRef} cx={rest.x} cy={rest.y} r={LOUPE.radius} />
++                </svg>
++
++                {/* The atom itself. It does not turn: it is the thing every ring is about. The
++                    one Saffron mark at rest (ADR `0067`). */}
++                <span aria-hidden="true" className="arp-cf-core" />
+ 
+-                {rings.map((ring) => (
+-                    <div
+-                        key={ring.ring}
+-                        className="arp-orbit pointer-events-none absolute inset-0"
+-                        style={cssVars({
+-                            "--orbit-for": `${110 + ring.ring * 40}s`,
+-                            "--orbit-to": ring.ring % 2 === 0 ? "360deg" : "-360deg",
+-                        })}
+-                    >
+-                        <span
+-                            aria-hidden="true"
+-                            className="absolute rounded-full border border-[color:var(--color-rule)]"
+-                            style={{
+-                                left: `${(0.5 - ring.r) * 100}%`,
+-                                top: `${(0.5 - ring.r) * 100}%`,
+-                                width: `${ring.r * 200}%`,
+-                                height: `${ring.r * 200}%`,
+-                            }}
+-                        />
+-                        {dots
+-                            .filter((dot) => dot.ring === ring.ring)
+-                            .map((dot) => {
++                {rings.map((ring) => {
++                    const grain = claimGrain(ring);
++                    return (
++                        <div
++                            key={ring.ring}
++                            className="arp-orbit arp-cf-ring"
++                            style={cssVars({
++                                "--orbit-for": `${110 + ring.ring * 40}s`,
++                                "--orbit-to": ring.ring % 2 === 0 ? "360deg" : "-360deg",
++                            })}
++                        >
++                            <span
++                                aria-hidden="true"
++                                className="arp-cf-track"
++                                style={{
++                                    left: `${(0.5 - ring.r) * 100}%`,
++                                    top: `${(0.5 - ring.r) * 100}%`,
++                                    width: `${ring.r * 200}%`,
++                                    height: `${ring.r * 200}%`,
++                                }}
++                            />
++                            {grain.length === 0 ? null : (
++                                <svg className="arp-cf-grain" viewBox="0 0 1 1" aria-hidden="true">
++                                    {grain.map((g, k) => (
++                                        <circle key={k} cx={g.cx} cy={g.cy} r={GRAIN_R} />
++                                    ))}
++                                </svg>
++                            )}
++                            {dots.map((dot, position) => {
++                                if (dot.ring !== ring.ring) return null;
+                                 const entry = entries[dot.index];
+                                 if (entry === undefined) return null;
+-                                const {row} = entry;
+-                                const backed = row.positions > 0;
++                                const {row, predicate} = entry;
++                                const lit = reading.lit && reading.index === dot.index;
+                                 return (
+                                     <Link
+                                         key={row.tripleId}
++                                        ref={dotRef(position)}
+                                         to={`/atom/${row.subjectAtomId}`}
+-                                        title={`${row.name} — ${backed ? `${row.backing} behind it` : "nothing behind it"}`}
+-                                        onMouseEnter={() => setActive(dot.index)}
+-                                        onMouseLeave={() => setActive(null)}
+-                                        onFocus={() => setActive(dot.index)}
+-                                        onBlur={() => setActive(null)}
+-                                        // **Saffron is the light.** `ui.md` forbids `box-shadow`,
+-                                        // glow and gradients outright, and reserves the accent for
+-                                        // the primary action, the selected state and the viewer's
+-                                        // own position. A dot under the pointer or the keyboard
+-                                        // **is** a selected state, so the brightest colour in the
+-                                        // palette arriving on it is the design system's own idea of
+-                                        // luminous — and it needs no shadow to say it.
+-                                        //
+-                                        // The scale is on `transform`, which the arrival already
+-                                        // animates, so the two compose instead of fighting.
+-                                        className={`arp-claim pointer-events-auto absolute h-[10px] w-[10px] rounded-full border transition-[transform,background-color,border-color] duration-150 ${
+-                                            active === dot.index
+-                                                ? "-translate-x-1/2 -translate-y-1/2 scale-[1.8] border-[color:var(--color-accent)] bg-[color:var(--color-accent)]"
+-                                                : backed
+-                                                  ? "-translate-x-1/2 -translate-y-1/2 border-[color:var(--color-fg)] bg-[color:var(--color-fg)]"
+-                                                  : "-translate-x-1/2 -translate-y-1/2 border-[color:var(--color-steel)]"
+-                                        } ${row.opposition === null ? "" : "ring-2 ring-[color:var(--color-steel)] ring-offset-2 ring-offset-[color:var(--color-ground)]"}`}
++                                        onMouseEnter={() => point(position)}
++                                        onMouseLeave={() => release(position)}
++                                        onFocus={() => point(position)}
++                                        onBlur={() => release(position)}
++                                        className={`arp-claim arp-cf-dot ${row.positions > 0 ? "is-filled" : ""} ${row.opposition === null ? "" : "is-opposed"} ${lit ? "is-lit" : ""}`}
+                                         style={{
+                                             left: `${dot.cx * 100}%`,
+                                             top: `${dot.cy * 100}%`,
+-                                            // The stagger `rowMotion` would give, inline because the dot also
+-                                            // carries its own position and a second style object would fight it.
+                                             ...cssVars({
++                                                "--claim-dot": `${dotDiameter(row.positions).toFixed(1)}px`,
+                                                 "--row-index": Math.min(dot.index, LIST_CAP - 1),
+                                             }),
+                                         }}
+                                     >
+-                                        {/* **The whole triple, on the link itself.** A visible sentence plus a
+-                                    live region would announce twice, and a live region firing on
+-                                    *hover* says nothing to a reader who navigates by focus. One name,
+-                                    complete, announced when the dot is reached.
+-
+-                                    **Not the word "backed".** `AtomPanel`'s dust-rule test watches for
+-                                    it anywhere on the page, because ADR `0042` is that a figure must
+-                                    never appear where no position stands behind it — and a row's
+-                                    legitimate figure tripping that guard is the guard working. "behind
+-                                    it" says the same thing and is the phrasing this field already uses
+-                                    elsewhere. */}
++                                        <span aria-hidden="true" className="arp-cf-mark" />
++                                        {/* The whole triple, on the link itself. Not the word
++                                            "backed": `AtomPanel`'s dust test watches for it. */}
+                                         <span className="sr-only">
+-                                            {row.name} {entry.predicate} {subject} —{" "}
+-                                            {backed
+-                                                ? `${row.backing} behind it`
+-                                                : "nothing behind it"}
++                                            {claimSentence(row, predicate, subject)}
+                                         </span>
+                                     </Link>
+                                 );
+                             })}
+-                    </div>
+-                ))}
++                        </div>
++                    );
++                })}
+             </div>
+ 
+-            {/* The claim the active dot composes, as the sentence a triple is. The slot is always
+-                in the DOM with a reserved height, so revealing it moves nothing — a field that
+-                reflowed on hover would be the mouse-reactive effect `ui.md` actually forbids. */}
+-            <p
++            {/* The card the loupe is tied to. Reserved height, so it never moves the layout, and
++                `aria-hidden`: the link already says the whole triple. */}
++            <div
+                 aria-hidden="true"
+                 data-claim-sentence={current === undefined ? "none" : "one"}
+-                className="mt-4 min-h-[1.5rem] basis-full text-[length:var(--text-body-sm)]"
++                className={`arp-cf-card ${reading.lit ? "is-lit" : ""}`}
+             >
+-                {current === undefined ? null : (
+-                    <span className="flex flex-wrap items-baseline gap-x-2">
+-                        <span className="font-medium">{current.row.name}</span>
+-                        <span className="text-[color:var(--color-steel)]">{current.predicate}</span>
+-                        <span className="min-w-0 truncate text-[color:var(--color-steel)]">
+-                            {subject}
+-                        </span>
+-                    </span>
+-                )}
+-            </p>
++                <div className="arp-cf-card-head">
++                    <i />
++                    <span>{current?.predicate ?? ""}</span>
++                </div>
++                {current === undefined ? null : <CardBody row={current.row} />}
++            </div>
+ 
+-            {/* The legend. It names each ring and says what the ring does not: the total, when the
+-                cap bit, and the group's own backing. */}
+-            <dl className="min-w-0 text-[length:var(--text-body-sm)]">
+-                <div className="mb-5 border-b border-[color:var(--color-rule)] pb-3">
+-                    <dt className="sr-only">Claims in total</dt>
+-                    <dd className="font-mono tabular-nums">
+-                        {truncated ? `${edgeCount}+` : edgeCount}{" "}
+-                        <span className="text-[color:var(--color-steel)]">
+-                            {edgeCount === 1 && !truncated ? "claim" : "claims"}
++            <div className="arp-cf-total">
++                <span>
++                    <b>{truncated ? `${edgeCount}+` : edgeCount}</b>{" "}
++                    {edgeCount === 1 && !truncated ? "claim" : "claims"} about {subject}
++                </span>
++                <span className="arp-cf-key" aria-hidden="true">
++                    <span>
++                        <i className="is-filled" />a position behind it
++                    </span>
++                    <span>
++                        <i />
++                        nothing behind it
++                    </span>
++                    {anyOpposition ? (
++                        <span>
++                            <i className="is-opposed" />
++                            someone took the other side
+                         </span>
+-                    </dd>
+-                </div>
+-                {groups.map((group, index) => (
+-                    <div key={group.predicateAtomId} className="mt-4 first:mt-0">
+-                        <dt
+-                            className={`font-medium ${group.labelIsId ? "font-mono text-[length:var(--text-body-sm)]" : ""}`}
+-                        >
+-                            <span
+-                                aria-hidden="true"
+-                                className="mr-3 inline-block h-[8px] w-[8px] rounded-full border border-[color:var(--color-rule-strong)] align-middle"
+-                                style={{opacity: 1 - index * 0.18}}
+-                            />
+-                            {group.label}
+-                        </dt>
+-                        <dd className="mt-1 ml-5 font-mono tabular-nums text-[color:var(--color-steel)]">
+-                            {group.rows.length > MAX_DOTS_PER_RING
+-                                ? `${group.rows.length} claims, ${MAX_DOTS_PER_RING} drawn`
+-                                : `${group.rows.length} ${group.rows.length === 1 ? "claim" : "claims"}`}
+-                            {group.backing === null ? null : ` · ${group.backing}`}
+-                        </dd>
+-                    </div>
+-                ))}
++                    ) : null}
++                </span>
++            </div>
++
++            <dl className="arp-cf-legend">
++                {shown.map((ring, index) => {
++                    const drawn = rings[index]!;
++                    const isLast = index === shown.length - 1;
++                    const plus = truncated && isLast ? "+" : "";
++                    const head = ring.folded
++                        ? {
++                              label: `+${ring.members.length} other predicates`,
++                              labelIsId: false,
++                              backing: null,
++                          }
++                        : ring.members[0]!;
++                    const count =
++                        drawn.total > drawn.drawn
++                            ? `${drawn.total}${plus} · ${drawn.drawn} drawn, the rest as grain`
++                            : `${drawn.total}${plus} ${drawn.total === 1 && plus === "" ? "claim" : "claims"}`;
++                    return (
++                        <div key={index} className="arp-cf-legend-group">
++                            <div className="arp-cf-legend-row">
++                                <span className="arp-cf-ringno">
++                                    {String(index + 1).padStart(2, "0")}
++                                </span>
++                                <dt className={head.labelIsId ? "is-id" : ""}>{head.label}</dt>
++                                <dd>
++                                    {count}
++                                    {head.backing === null ? null : ` · ${head.backing}`}
++                                </dd>
++                            </div>
++                            {/* Never sum across groups: the folded ring lists each of its members
++                                with its own count and its own backing. */}
++                            {ring.folded
++                                ? ring.members.map((member, k) => {
++                                      const memberPlus =
++                                          plus !== "" && k === ring.members.length - 1 ? "+" : "";
++                                      const n = member.rows.length;
++                                      return (
++                                          <div
++                                              key={member.predicateAtomId}
++                                              className="arp-cf-legend-row is-member"
++                                          >
++                                              <span className="arp-cf-ringno" />
++                                              <dt className={member.labelIsId ? "is-id" : ""}>
++                                                  {member.label}
++                                              </dt>
++                                              <dd>
++                                                  {n}
++                                                  {memberPlus}{" "}
++                                                  {n === 1 && memberPlus === ""
++                                                      ? "claim"
++                                                      : "claims"}
++                                                  {member.backing === null
++                                                      ? null
++                                                      : ` · ${member.backing}`}
++                                              </dd>
++                                          </div>
++                                      );
++                                  })
++                                : null}
++                        </div>
++                    );
++                })}
+             </dl>
+         </div>
+     );
+ }
++
++/** The accessible name of a dot: the triple, then what stands behind it. */
++function claimSentence(row: EdgeRow, predicate: string, subject: string): string {
++    const behind =
++        row.positions > 0 && row.backing !== null
++            ? `${row.backing} behind it, ${row.positions} ${row.positions === 1 ? "position" : "positions"}`
++            : "nothing behind it";
++    const against = row.opposition === null ? "" : `, ${row.opposition} against`;
++    return `${row.name} ${predicate} ${subject}, ${behind}${against}`;
++}
++
++/** The figure line of the card. Paper, not accent: it is somebody else's position. */
++function CardBody({row}: {row: EdgeRow}) {
++    const filled = row.positions > 0 && row.backing !== null;
++    return (
++        <>
++            <div className={`arp-cf-subject ${row.nameIsId ? "is-id" : ""}`}>{row.name}</div>
++            <div className={`arp-cf-figure ${filled ? "" : "is-none"}`} data-claim-figure>
++                {filled ? (
++                    <>
++                        {row.backing}{" "}
++                        <span>
++                            · {row.positions} {row.positions === 1 ? "position" : "positions"}
++                        </span>
++                    </>
++                ) : (
++                    "nothing behind it"
++                )}
++            </div>
++            {row.opposition === null ? null : (
++                <div className="arp-cf-against">{row.opposition} against</div>
++            )}
++        </>
++    );
++}
++
++/** Nothing points at the atom yet: a dashed ring around the core, and one line saying so. */
++function ZeroField({subject}: {subject: string}) {
++    const r = 0.42;
++    return (
++        <div className="arp-cf-zero">
++            <div className="arp-cf-field is-small" aria-hidden="true">
++                <span
++                    className="arp-cf-track is-dashed"
++                    style={{
++                        left: `${(0.5 - r) * 100}%`,
++                        top: `${(0.5 - r) * 100}%`,
++                        width: `${r * 200}%`,
++                        height: `${r * 200}%`,
++                    }}
++                />
++                <span className="arp-cf-core" />
++            </div>
++            <p className="arp-cf-empty">
++                Nothing points at {subject} yet. A claim made about it appears here as a dot.
++            </p>
++        </div>
++    );
++}
+diff --git a/app/src/components/atom/__tests__/claim-field-geometry.test.ts b/app/src/components/atom/__tests__/claim-field-geometry.test.ts
+index f44eac5..7e2d7c7 100644
+--- a/app/src/components/atom/__tests__/claim-field-geometry.test.ts
++++ b/app/src/components/atom/__tests__/claim-field-geometry.test.ts
+@@ -1,6 +1,17 @@
+ import {describe, expect, it} from "vitest";
+ 
+-import {claimField, MAX_DOTS_PER_RING} from "../claim-field-geometry";
++import {
++    claimField,
++    claimGrain,
++    DOT_BASE_PX,
++    dotDiameter,
++    foldGroups,
++    LOUPE,
++    loupeLine,
++    loupeRest,
++    MAX_DOTS_PER_RING,
++    MAX_RINGS,
++} from "../claim-field-geometry";
+ 
+ /**
+  * The field's placement, which is arithmetic and so is testable without a DOM.
+@@ -86,3 +97,59 @@ describe("claimField", () => {
+         expect(dots.every((dot) => dot.ring === 1)).toBe(true);
+     });
+ });
++
++describe("the v2 field", () => {
++    it("folds every group past the cap into one last ring, and drops none", () => {
++        const groups = ["a", "b", "c", "d", "e", "f", "g", "h", "i"];
++        const shown = foldGroups(groups);
++        expect(shown).toHaveLength(MAX_RINGS);
++        expect(shown.slice(0, -1).every((ring) => !ring.folded && ring.members.length === 1)).toBe(
++            true,
++        );
++        expect(shown.at(-1)!.folded).toBe(true);
++        expect(shown.flatMap((ring) => ring.members)).toEqual(groups);
++    });
++
++    it("does not fold at or under the cap", () => {
++        expect(foldGroups([1, 2, 3, 4, 5]).some((ring) => ring.folded)).toBe(false);
++    });
++
++    it("draws every undrawn claim as grain, exactly", () => {
++        // The legend says "36 drawn, the rest as grain": the grain has to be the rest, not a texture.
++        for (const total of [37, 100, 250, 1000]) {
++            const {rings} = claimField([total]);
++            expect(claimGrain(rings[0]!)).toHaveLength(total - MAX_DOTS_PER_RING);
++        }
++        expect(claimGrain(claimField([12]).rings[0]!)).toHaveLength(0);
++    });
++
++    it("keeps the grain inside the box", () => {
++        const {rings} = claimField([3, 3, 3, 3, 1000]);
++        for (const point of claimGrain(rings[4]!)) {
++            expect(point.cx).toBeGreaterThan(0);
++            expect(point.cx).toBeLessThan(1);
++            expect(point.cy).toBeGreaterThan(0);
++            expect(point.cy).toBeLessThan(1);
++        }
++    });
++
++    it("never grows a dot with nothing behind it", () => {
++        // ADR 0042: an amount says the term exists. Size reads positions, and zero is the base.
++        expect(dotDiameter(0)).toBe(DOT_BASE_PX);
++        expect(dotDiameter(-1)).toBe(DOT_BASE_PX);
++        expect(dotDiameter(2)).toBeGreaterThanOrEqual(DOT_BASE_PX);
++        expect(dotDiameter(1_000_000)).toBeLessThanOrEqual(17);
++    });
++
++    it("rests the loupe at -60° on the ring and draws the line from its rim to the bar", () => {
++        const rest = loupeRest(0.42);
++        expect(rest.x).toBeCloseTo(0.5 + 0.42 * Math.cos(-Math.PI / 3), 10);
++        expect(rest.y).toBeCloseTo(0.5 + 0.42 * Math.sin(-Math.PI / 3), 10);
++        const [start, corner, end] = loupeLine(rest)
++            .split(" ")
++            .map((pair) => pair.split(",").map(Number));
++        expect(Math.hypot(start![0]! - rest.x, start![1]! - rest.y)).toBeCloseTo(LOUPE.radius, 3);
++        expect(corner![1]).toBe(LOUPE.barY);
++        expect(end).toEqual([LOUPE.barEndX, LOUPE.barY]);
++    });
++});
+diff --git a/app/src/components/atom/claim-field-geometry.ts b/app/src/components/atom/claim-field-geometry.ts
+index ac8e2c3..31565c4 100644
+--- a/app/src/components/atom/claim-field-geometry.ts
++++ b/app/src/components/atom/claim-field-geometry.ts
+@@ -93,3 +93,142 @@ export function claimField(groups: readonly number[]): {rings: ClaimRing[]; dots
+ 
+     return {rings, dots};
+ }
++
++/* -------------------------------------------------------------------------- */
++/* v2: the fold, the grain, the dot's mass and the loupe.                      */
++/* -------------------------------------------------------------------------- */
++
++/**
++ * The most rings the field draws.
++ *
++ * Past it, the rings share the band so tightly that two predicates read as one line. Groups from
++ * the fifth onward **fold** into one last ring, and the legend still names each of them with its
++ * own count, so nothing is dropped, only drawn together.
++ */
++export const MAX_RINGS = 5;
++
++/** A ring of the field after the fold: either one group, or every group past the cap. */
++export type ShownRing<G> = {
++    /** The groups drawn on this ring. One, except on the folded ring. */
++    members: readonly G[];
++    folded: boolean;
++};
++
++/**
++ * Which groups get a ring of their own, and which share the last one.
++ *
++ * Generic so it can be tested on plain counts and used on `GroupView`s alike.
++ */
++export function foldGroups<G>(groups: readonly G[]): ShownRing<G>[] {
++    if (groups.length <= MAX_RINGS) {
++        return groups.map((group) => ({members: [group], folded: false}));
++    }
++    const own = groups.slice(0, MAX_RINGS - 1).map((group) => ({members: [group], folded: false}));
++    return [...own, {members: groups.slice(MAX_RINGS - 1), folded: true}];
++}
++
++/** One grain point, in `0..1` of the box, like a dot. */
++export type GrainPoint = {cx: number; cy: number};
++
++/** The grain's radius, as a fraction of the box. About 1.2px on a 22rem field. */
++export const GRAIN_R = 0.0036;
++
++/**
++ * Every claim past the drawn ones, as a fine stipple on the same ring.
++ *
++ * **Decoration of a count the legend states**, never a claim of its own: it is `aria-hidden` and
++ * has no target. Without it, 250 claims on one ring looked exactly like 36. The points sit evenly
++ * in the gaps between drawn dots, never on one, and only a crowded ring (more than six per gap)
++ * splits them into two rows either side of the line.
++ */
++export function claimGrain(ring: ClaimRing): GrainPoint[] {
++    const extra = ring.total - ring.drawn;
++    if (extra <= 0 || ring.drawn === 0) return [];
++    const step = (Math.PI * 2) / ring.drawn;
++    const offset = (ring.ring % 2) * (step / 2);
++    const perGap = Math.ceil(extra / ring.drawn);
++    const points: GrainPoint[] = [];
++    for (let e = 0; e < extra; e += 1) {
++        const slot = e % ring.drawn;
++        const layer = Math.floor(e / ring.drawn);
++        const angle = -Math.PI / 2 + offset + (slot + (layer + 1) / (perGap + 1)) * step;
++        const r = ring.r + (perGap > 6 ? (layer % 2 === 1 ? 0.007 : -0.007) : 0);
++        points.push({cx: 0.5 + r * Math.cos(angle), cy: 0.5 + r * Math.sin(angle)});
++    }
++    return points;
++}
++
++/**
++ * Whether a dot grows with the number of accounts behind it.
++ *
++ * `docs/17` §4 proposed it; it is the one open decision of the v2 field. Set to `false` and every
++ * dot is the base size, nothing else changes.
++ */
++export const SIZE_BY_POSITIONS = true;
++
++/** The drawn mark's diameter in px, for a claim with this many positions. */
++export const DOT_BASE_PX = 10;
++const DOT_MAX_PX = 17;
++
++/**
++ * A dot's diameter. **By position count, never by amount**: ADR `0042`, creating a term seeds its
++ * vaults, so an amount says "this exists", not "people stand behind it". A free claim is always the
++ * base size, and hollow, so it can never look heavy. Logarithmic and capped, so one crowded claim
++ * cannot dwarf the ring.
++ */
++export function dotDiameter(positions: number): number {
++    if (!SIZE_BY_POSITIONS || positions <= 0) return DOT_BASE_PX;
++    return Math.min(DOT_BASE_PX + 3.2 * Math.log2(positions), DOT_MAX_PX);
++}
++
++/**
++ * The loupe: the reading head tied to the card by a line.
++ *
++ * All in `0..1` of the field's box, like the dots.
++ */
++export const LOUPE = {
++    /** Where it rests on the outer ring, clockwise from three o'clock. */
++    restDegrees: -60,
++    /** The angle the line rises at from the loupe to the bar. */
++    riseDegrees: 35,
++    /** The bar's height. The card's top half sits level with it. */
++    barY: 0.055,
++    /** Where the bar ends: past the field's right edge, under the card, which stops it. */
++    barEndX: 1.6,
++    /** The loupe's radius. */
++    radius: 0.032,
++    /** A base dot's radius, for "is the whole dot inside the loupe". */
++    dotRadius: 0.0142,
++    /** Time constant of the glide, ms: about 95% of the way in 480ms. */
++    glideMs: 160,
++    /** Under this distance the loupe locks onto the dot instead of easing behind it. */
++    lock: 0.006,
++    /** With nobody pointing, the loupe moves to the next claim this often. */
++    tourMs: 4000,
++    /** How often, at rest, the card re-reads the dot nearest the loupe. */
++    pollMs: 120,
++} as const;
++
++export type Point = {x: number; y: number};
++
++/** The loupe's resting place on a ring of radius `r`. */
++export function loupeRest(r: number): Point {
++    const angle = (LOUPE.restDegrees * Math.PI) / 180;
++    return {x: 0.5 + r * Math.cos(angle), y: 0.5 + r * Math.sin(angle)};
++}
++
++/**
++ * The line from the loupe to the card, as an SVG `points` string.
++ *
++ * It leaves from the loupe's **rim**, not its centre, rises at `riseDegrees` to the bar and runs
++ * along it past the box, where the card (above it in z) stops it at its border.
++ */
++export function loupeLine(at: Point): string {
++    const cornerX =
++        at.x + Math.abs(at.y - LOUPE.barY) / Math.tan((LOUPE.riseDegrees * Math.PI) / 180);
++    const angle = Math.atan2(LOUPE.barY - at.y, cornerX - at.x);
++    const sx = at.x + LOUPE.radius * Math.cos(angle);
++    const sy = at.y + LOUPE.radius * Math.sin(angle);
++    const f = (n: number) => n.toFixed(4);
++    return `${f(sx)},${f(sy)} ${f(cornerX)},${LOUPE.barY} ${LOUPE.barEndX},${LOUPE.barY}`;
++}
+diff --git a/app/src/components/atom/use-claim-loupe.ts b/app/src/components/atom/use-claim-loupe.ts
+new file mode 100644
+index 0000000..ee48338
+--- /dev/null
++++ b/app/src/components/atom/use-claim-loupe.ts
+@@ -0,0 +1,190 @@
++import {useCallback, useEffect, useRef, useState, type RefObject} from "react";
++
++import {LOUPE, loupeLine, loupeRest, type ClaimDot, type Point} from "./claim-field-geometry";
++
++/** What the card shows: which claim, and whether it is lit (Saffron) or only the nearest one. */
++export type LoupeReading = {
++    /** Index into the field's flattened claim list, or `null` before the first read. */
++    index: number | null;
++    /** The whole dot is under the loupe: it is lit, and so is the card's header dot. */
++    lit: boolean;
++};
++
++/**
++ * The reading head of the claim field: where it is, what it reads, and how it moves.
++ *
++ * ## What moves it, in order of precedence
++ *
++ * 1. **Pointing.** Hover **and** keyboard focus on a dot (ADR `0073`: a reveal answers the
++ *    keyboard, or it is a mouse effect). The loupe glides there and rides the dot as its ring turns.
++ * 2. **The tour.** With nobody pointing, every `LOUPE.tourMs` it moves on to the next claim in
++ *    DOM order and wraps. Letting go of a dot resumes the tour **from that dot**, after a full beat,
++ *    so it never jumps away from under the reader.
++ * 3. **Rest.** Before the first beat, the loupe sits at `LOUPE.restDegrees` on the outer ring and
++ *    the card reads the nearest dot. It lights only when the whole dot is inside the loupe.
++ *
++ * ## Why one rAF loop and refs, not state
++ *
++ * The loupe moves every frame. Driving it through React would re-render the field sixty times a
++ * second, so the loop writes the SVG attributes itself and React only hears about it when the
++ * **reading** changes, which is a few times per lap.
++ *
++ * Positions come from `getBoundingClientRect`, so they are exactly where the turning ring has the
++ * dot right now, and stay right when a background tab pauses the animation.
++ *
++ * ## Reduced motion
++ *
++ * No tour, and the loupe jumps instead of gliding. Pointing still lights the dot and fills the card.
++ */
++export function useClaimLoupe({
++    fieldRef,
++    headRef,
++    lineRef,
++    dots,
++    outerRadius,
++    outerRing,
++}: {
++    fieldRef: RefObject<HTMLDivElement | null>;
++    headRef: RefObject<SVGCircleElement | null>;
++    lineRef: RefObject<SVGPolylineElement | null>;
++    /** The drawn dots, in DOM order. */
++    dots: readonly ClaimDot[];
++    outerRadius: number;
++    outerRing: number;
++}) {
++    /** The dot elements, by their position in `dots`. Filled by the component's `ref` callbacks. */
++    const dotEls = useRef<(HTMLElement | null)[]>([]);
++    const pointing = useRef<number | null>(null);
++    const touring = useRef<number | null>(null);
++    const nextTour = useRef(0);
++
++    const [reading, setReading] = useState<LoupeReading>({index: null, lit: false});
++    const shown = useRef<LoupeReading>(reading);
++
++    useEffect(() => {
++        const field = fieldRef.current;
++        const head = headRef.current;
++        const line = lineRef.current;
++        if (field === null || head === null || line === null || dots.length === 0) return;
++
++        // `matchMedia` is missing in jsdom; no answer means motion is allowed.
++        const motion = window.matchMedia?.("(prefers-reduced-motion: reduce)") ?? {matches: false};
++        const rest = loupeRest(outerRadius);
++        const cur: Point = {...rest};
++        let last = performance.now();
++        let pollAt = 0;
++        let lockedOn: number | null = null;
++        let frame = 0;
++        nextTour.current = last + LOUPE.tourMs;
++        touring.current = null;
++
++        const centre = (position: number): Point | null => {
++            const el = dotEls.current[position];
++            if (el === null || el === undefined) return null;
++            const f = field.getBoundingClientRect();
++            const b = el.getBoundingClientRect();
++            if (f.width === 0) return null;
++            return {
++                x: (b.left + b.width / 2 - f.left) / f.width,
++                y: (b.top + b.height / 2 - f.top) / f.height,
++            };
++        };
++
++        const report = (position: number, lit: boolean) => {
++            const index = dots[position]?.index ?? null;
++            if (shown.current.index === index && shown.current.lit === lit) return;
++            shown.current = {index, lit};
++            setReading(shown.current);
++        };
++
++        const nearestOnOuterRing = () => {
++            let best = -1;
++            let distance = Infinity;
++            dots.forEach((dot, position) => {
++                if (dot.ring !== outerRing) return;
++                const c = centre(position);
++                if (c === null) return;
++                const d = Math.hypot(c.x - cur.x, c.y - cur.y);
++                if (d < distance) {
++                    distance = d;
++                    best = position;
++                }
++            });
++            // A little slack over the strict test, so a dot exactly on the rim still lights.
++            return {best, inside: distance <= LOUPE.radius - LOUPE.dotRadius + 0.002};
++        };
++
++        const draw = () => {
++            head.setAttribute("cx", cur.x.toFixed(4));
++            head.setAttribute("cy", cur.y.toFixed(4));
++            line.setAttribute("points", loupeLine(cur));
++        };
++
++        const tick = (now: number) => {
++            const still = motion.matches;
++            const dt = Math.min(64, now - last);
++            last = now;
++
++            if (pointing.current === null && !still && now >= nextTour.current) {
++                touring.current =
++                    touring.current === null ? 0 : (touring.current + 1) % dots.length;
++                nextTour.current = now + LOUPE.tourMs;
++            }
++            const held = pointing.current ?? (still ? null : touring.current);
++            const target = (held === null ? null : centre(held)) ?? rest;
++
++            // Once arrived, lock onto the dot: an ease alone trails a moving target by about a
++            // pixel, which reads as "not centred".
++            if (held !== lockedOn) lockedOn = null;
++            if (
++                lockedOn === null &&
++                held !== null &&
++                Math.hypot(target.x - cur.x, target.y - cur.y) < LOUPE.lock
++            ) {
++                lockedOn = held;
++            }
++            const k =
++                still || (held !== null && held === lockedOn)
++                    ? 1
++                    : 1 - Math.exp(-dt / LOUPE.glideMs);
++            cur.x += (target.x - cur.x) * k;
++            cur.y += (target.y - cur.y) * k;
++            draw();
++
++            if (held !== null) {
++                report(held, true);
++            } else if (now >= pollAt) {
++                pollAt = now + LOUPE.pollMs;
++                const {best, inside} = nearestOnOuterRing();
++                if (best >= 0) report(best, inside);
++            }
++            frame = requestAnimationFrame(tick);
++        };
++
++        draw();
++        frame = requestAnimationFrame(tick);
++        return () => cancelAnimationFrame(frame);
++    }, [fieldRef, headRef, lineRef, dots, outerRadius, outerRing]);
++
++    /** Hover and focus both call this: same state, same look. */
++    const point = useCallback((position: number) => {
++        pointing.current = position;
++    }, []);
++
++    /** Letting go resumes the tour from the dot you were on, after a full beat. */
++    const release = useCallback((position: number) => {
++        if (pointing.current !== position) return;
++        pointing.current = null;
++        touring.current = position;
++        nextTour.current = performance.now() + LOUPE.tourMs;
++    }, []);
++
++    const dotRef = useCallback(
++        (position: number) => (el: HTMLElement | null) => {
++            dotEls.current[position] = el;
++        },
++        [],
++    );
++
++    return {reading, point, release, dotRef};
++}
+diff --git a/app/src/index.css b/app/src/index.css
+index 67bebd5..800cf01 100644
+--- a/app/src/index.css
++++ b/app/src/index.css
+@@ -172,6 +172,7 @@
+     --line-index: 0; /* which authored line of a heading */
+     --row-index: 0; /* which row of a list */
+     --orbit-for: 90s; /* how long one ring of the claim field takes to turn */
++    --claim-dot: 10px; /* one claim's mark in the field, set per dot by positions */
+     --orbit-to: 360deg; /* and which way — negative reverses it */
+     --lit: 1; /* how lit one manifesto line is, 0 to 1 */
+ 
+@@ -608,6 +609,370 @@ summary:focus-visible,
+     }
+ }
+ 
++/* ---- the claim field v2: the loupe, the card, the legend ----------------- */
++
++/* Plain classes rather than utilities, on purpose: a Tailwind utility that does
++   not exist emits nothing, and the unlayered `:focus-visible` and `button`
++   rules above beat utilities anyway. Every value is a token. */
++.arp-cf {
++    display: flex;
++    flex-wrap: wrap;
++    align-items: flex-start;
++    gap: 28px 4rem;
++}
++
++.arp-cf-field {
++    position: relative;
++    aspect-ratio: 1;
++    width: 100%;
++    max-width: 22rem;
++    flex: none;
++    /* The bar sits at 5.5% of the field, so this puts it about halfway down the
++       card's reserved 6.5rem. */
++    margin-top: 2rem;
++}
++
++.arp-cf-field.is-small {
++    max-width: 12rem;
++    margin-top: 0;
++}
++
++.arp-cf-ring {
++    position: absolute;
++    inset: 0;
++    pointer-events: none;
++}
++
++.arp-cf-track {
++    position: absolute;
++    border-radius: 999px;
++    border: 1px solid var(--color-rule);
++}
++
++.arp-cf-track.is-dashed {
++    border-style: dashed;
++}
++
++.arp-cf-grain {
++    position: absolute;
++    inset: 0;
++    width: 100%;
++    height: 100%;
++    overflow: visible;
++    fill: var(--color-steel);
++    opacity: 0.75;
++}
++
++.arp-cf-core {
++    position: absolute;
++    left: 50%;
++    top: 50%;
++    z-index: 3;
++    width: 14px;
++    height: 14px;
++    border-radius: 999px;
++    background: var(--color-accent);
++    transform: translate(-50%, -50%);
++}
++
++/* The loupe and its line. Above the dots, below the card, which stops the line
++   at its border. */
++.arp-cf-link {
++    position: absolute;
++    inset: 0;
++    z-index: 4;
++    width: 100%;
++    height: 100%;
++    overflow: visible;
++    pointer-events: none;
++}
++
++.arp-cf-link polyline {
++    fill: none;
++    stroke: var(--color-rule-strong);
++    stroke-width: 1;
++    vector-effect: non-scaling-stroke;
++}
++
++.arp-cf-link circle {
++    fill: none;
++    stroke: var(--color-silver);
++    stroke-width: 1.25;
++    vector-effect: non-scaling-stroke;
++    transition: stroke var(--duration-base) var(--ease-out-quart);
++}
++
++.arp-cf-link.is-on polyline {
++    stroke: var(--color-steel);
++}
++
++.arp-cf-link.is-on circle {
++    stroke: var(--color-accent);
++}
++
++/* A dot: a real link, a 28px invisible target around the drawn mark. */
++.arp-cf-dot {
++    position: absolute;
++    z-index: 2;
++    display: flex;
++    align-items: center;
++    justify-content: center;
++    width: 28px;
++    height: 28px;
++    margin: -14px 0 0 -14px;
++    border-radius: 999px;
++    pointer-events: auto;
++}
++
++.arp-cf-mark {
++    display: block;
++    box-sizing: border-box;
++    width: var(--claim-dot);
++    height: var(--claim-dot);
++    border-radius: 999px;
++    border: 1.5px solid var(--color-steel);
++    transition:
++        transform 150ms var(--ease-out-quart),
++        background-color 150ms var(--ease-out-quart),
++        border-color 150ms var(--ease-out-quart);
++}
++
++.arp-cf-dot.is-filled .arp-cf-mark {
++    background: var(--color-fg);
++    border-color: var(--color-fg);
++}
++
++/* Somebody took the other side: the alarm, the one semantic exception to the
++   one accent, because a counter-position is a fact that contradicts the claim.
++   An outline, not a shadow: `ui.md` forbids box-shadow. */
++.arp-cf-dot.is-opposed .arp-cf-mark {
++    outline: 1.5px solid var(--color-alarm);
++    outline-offset: 2px;
++}
++
++/* Saffron is the light: the claim the loupe reads is a selected state. */
++.arp-cf-dot.is-lit .arp-cf-mark {
++    background: var(--color-accent);
++    border-color: var(--color-accent);
++    transform: scale(1.6);
++}
++
++/* The card: reserved height, never moves. */
++.arp-cf-card {
++    position: relative;
++    z-index: 5;
++    display: flex;
++    flex: 1 1 22rem;
++    flex-direction: column;
++    gap: 6px;
++    min-width: min(22rem, 100%);
++    max-width: 34rem;
++    min-height: 6.5rem;
++    padding: 12px 16px;
++    border: 1px solid var(--color-rule-strong);
++    border-radius: var(--radius-card);
++    background: var(--color-bg);
++}
++
++.arp-cf-card-head {
++    display: flex;
++    align-items: center;
++    gap: 10px;
++    padding-bottom: 10px;
++    border-bottom: 1px solid var(--color-rule);
++    font-family: var(--font-mono);
++    font-size: 10px;
++    letter-spacing: 0.06em;
++    text-transform: uppercase;
++    color: var(--color-steel);
++}
++
++.arp-cf-card-head i {
++    width: 8px;
++    height: 8px;
++    border-radius: 999px;
++    background: var(--color-rule-strong);
++}
++
++.arp-cf-card.is-lit .arp-cf-card-head i {
++    background: var(--color-accent);
++}
++
++.arp-cf-subject {
++    overflow: hidden;
++    font-family: var(--font-display);
++    font-size: 20px;
++    font-weight: 800;
++    font-stretch: 125%;
++    letter-spacing: -0.02em;
++    line-height: 1.1;
++    white-space: nowrap;
++    text-overflow: ellipsis;
++}
++
++.arp-cf-subject.is-id {
++    font-family: var(--font-mono);
++    font-size: 16px;
++    font-weight: 500;
++    font-stretch: normal;
++    letter-spacing: 0;
++}
++
++.arp-cf-figure {
++    font-family: var(--font-mono);
++    font-size: var(--text-body-sm);
++    color: var(--color-fg);
++}
++
++.arp-cf-figure span,
++.arp-cf-figure.is-none {
++    color: var(--color-steel);
++}
++
++.arp-cf-against {
++    font-family: var(--font-mono);
++    font-size: 12px;
++    color: var(--color-alarm);
++}
++
++/* The total and the key. */
++.arp-cf-total {
++    display: flex;
++    flex-basis: 100%;
++    flex-wrap: wrap;
++    align-items: baseline;
++    gap: 18px;
++    font-family: var(--font-mono);
++    font-size: 12px;
++    color: var(--color-steel);
++}
++
++.arp-cf-total b {
++    font-size: 14px;
++    font-weight: 500;
++    color: var(--color-fg);
++}
++
++.arp-cf-key {
++    display: inline-flex;
++    flex-wrap: wrap;
++    gap: 14px;
++    margin-left: auto;
++}
++
++.arp-cf-key > span {
++    display: inline-flex;
++    align-items: center;
++    gap: 6px;
++}
++
++.arp-cf-key i {
++    box-sizing: border-box;
++    width: 9px;
++    height: 9px;
++    border-radius: 999px;
++    border: 1.5px solid var(--color-steel);
++}
++
++.arp-cf-key i.is-filled {
++    background: var(--color-fg);
++    border-color: var(--color-fg);
++}
++
++.arp-cf-key i.is-opposed {
++    outline: 1.5px solid var(--color-alarm);
++    outline-offset: 2px;
++}
++
++/* The legend: one row per ring, the folded ring's members under it. */
++.arp-cf-legend {
++    display: grid;
++    flex-basis: 100%;
++    grid-template-columns: repeat(auto-fill, minmax(min(19rem, 100%), 1fr));
++    gap: 0 32px;
++    margin: 0;
++    border-top: 1px solid var(--color-rule);
++}
++
++.arp-cf-legend-row {
++    display: grid;
++    grid-template-columns: 18px minmax(0, 1fr) auto;
++    align-items: baseline;
++    gap: 10px;
++    padding: 10px 0;
++    border-bottom: 1px solid var(--color-rule);
++}
++
++.arp-cf-legend dt {
++    overflow: hidden;
++    min-width: 0;
++    font-size: 14px;
++    white-space: nowrap;
++    text-overflow: ellipsis;
++}
++
++.arp-cf-legend dt.is-id {
++    font-family: var(--font-mono);
++    font-size: 12px;
++}
++
++.arp-cf-legend-row.is-member dt {
++    color: var(--color-silver);
++}
++
++.arp-cf-legend dd {
++    margin: 0;
++    font-family: var(--font-mono);
++    font-size: 11px;
++    text-align: right;
++    white-space: nowrap;
++    color: var(--color-steel);
++}
++
++.arp-cf-ringno {
++    font-family: var(--font-mono);
++    font-size: 10px;
++    color: var(--color-grey);
++}
++
++/* Zero claims. */
++.arp-cf-zero {
++    display: flex;
++    flex-wrap: wrap;
++    align-items: center;
++    gap: 28px;
++}
++
++.arp-cf-empty {
++    font-family: var(--font-mono);
++    font-size: 12px;
++    color: var(--color-steel);
++}
++
++@media (prefers-reduced-motion: reduce) {
++    .arp-cf-mark,
++    .arp-cf-link circle {
++        transition: none;
++    }
++}
++
++/* Below 640px the card goes under the field and the line would cross the page:
++   it is hidden, the loupe still moves. */
++@media (max-width: 640px) {
++    .arp-cf-field {
++        max-width: none;
++        margin-top: 0;
++    }
++
++    .arp-cf-card {
++        min-width: 0;
++    }
++
++    .arp-cf-link polyline {
++        display: none;
++    }
++}
++
+ /* ---- one manifesto line lighting up, scrubbed by scroll ------------------ */
+ 
+ .arp-lit {

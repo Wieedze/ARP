@@ -1,0 +1,393 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ARP Claim Field</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=Geist+Mono:wght@400;500;600&display=swap">
+<!--
+  ARP · Claim field v2, hover first. Design reference for app/src/components/atom/ClaimField.tsx.
+  Fed by the CASES blob below, shaped like GroupView[] from services/atom-standing-view.ts.
+  Every name and figure in CASES is a sample, never ship it.
+-->
+<title>ARP Claim Field</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=Geist+Mono:wght@400;500;600&display=swap">
+<!--
+  ARP · Claim field v2, hover first. Design reference for app/src/components/atom/ClaimField.tsx.
+  Fed by the CASES blob below, shaped like GroupView[] from services/atom-standing-view.ts.
+  Every name and figure in CASES is a sample, never ship it.
+-->
+<title>ARP Claim Field</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=Geist+Mono:wght@400;500;600&display=swap">
+<!--
+  ARP · Claim field v2, hover first. Design reference for app/src/components/atom/ClaimField.tsx.
+  Fed by the CASES blob below, shaped like GroupView[] from services/atom-standing-view.ts.
+  Every name and figure in CASES is a sample, never ship it.
+-->
+<style>
+:root{
+  --color-ground:#0e0f10;--color-bg:#121314;--color-raised:#1b1d1f;--color-rule:#2e3134;--color-rule-strong:#43474b;
+  --color-grey:#6b7075;--color-steel:#8a9096;--color-silver:#a9aeb2;--color-fg:#e6e8e6;--color-accent:#ffb020;--color-alarm:#ff4d6d;
+  --font-display:"Archivo","Arial Narrow",system-ui,sans-serif;--font-mono:"Geist Mono",ui-monospace,Menlo,monospace;
+  --ease-out-quart:cubic-bezier(0.16,1,0.3,1);--duration-base:200ms;--reveal-fade:260ms;--list-step:30ms;
+  --radius-tag:6px;--radius-control:8px;--radius-card:12px;
+  color-scheme:dark;
+}
+:root:not([data-theme="light"]),:root[data-theme="dark"]{color-scheme:dark}
+html,body{background:var(--color-ground);color:var(--color-fg)}
+body{margin:0;font-family:var(--font-display);font-size:15px;line-height:1.5;padding:0 max(16px,env(safe-area-inset-left,0px))}
+.wrap{max-width:1100px;margin:0 auto;padding:40px 0 80px}
+.label{font-family:var(--font-mono);font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--color-steel)}
+.mono{font-family:var(--font-mono)}
+.face{font-weight:800;font-stretch:125%;letter-spacing:-.02em;line-height:1}
+:focus-visible{outline:2px solid var(--color-fg);outline-offset:3px;border-radius:999px}
+
+/* design-only controls */
+.bar{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:center;justify-content:space-between;padding:0 0 20px;margin-bottom:36px;border-bottom:1px solid var(--color-rule)}
+.seg{display:inline-flex;border:1px solid var(--color-rule);border-radius:var(--radius-control);overflow:hidden;flex-wrap:wrap}
+.seg button{height:32px;padding:0 12px;border:0;background:transparent;font-family:var(--font-mono);font-size:11px;color:var(--color-steel);cursor:pointer}
+.seg button+button{border-left:1px solid var(--color-rule)}
+.seg button[aria-pressed="true"]{background:var(--color-raised);color:var(--color-fg)}
+.grp{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+h1{margin:0 0 6px;font-size:clamp(28px,4vw,44px)}
+
+/* ---- the component ------------------------------------------------------- */
+.cf{display:flex;flex-wrap:wrap;align-items:flex-start;gap:28px 4rem}
+.cf-field{position:relative;aspect-ratio:1;width:100%;max-width:22rem;flex:none;margin-top:2rem}
+.cf-ring{position:absolute;inset:0;pointer-events:none}
+.cf-orbit{animation:cf-orbit var(--orbit-for,120s) linear infinite}
+@keyframes cf-orbit{to{transform:rotate(var(--orbit-to,360deg))}}
+/* hover first: pointing at any claim holds every ring still, so the target does not slide
+   away from the pointer. It also holds still on keyboard focus: same state, same look. */
+
+.cf-track{position:absolute;border-radius:999px;border:1px solid var(--color-rule)}
+.cf-grain{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.cf-core{position:absolute;left:50%;top:50%;width:14px;height:14px;border-radius:999px;background:var(--color-accent);transform:translate(-50%,-50%);z-index:3}
+.cf-link{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none;z-index:4}
+.cf-link polyline{fill:none;stroke:var(--color-rule-strong);stroke-width:1;vector-effect:non-scaling-stroke}
+.cf-link circle{fill:none;stroke:var(--color-silver);stroke-width:1.25;vector-effect:non-scaling-stroke;transition:stroke var(--duration-base)}
+.cf-link.on polyline{stroke:var(--color-steel)}
+.cf-link.on circle{stroke:var(--color-accent)}
+
+/* a dot: a real link with a 28px invisible target, the drawn mark inside it */
+.cf-dot{position:absolute;width:28px;height:28px;margin:-14px 0 0 -14px;border-radius:999px;pointer-events:auto;display:flex;align-items:center;justify-content:center;z-index:2}
+.cf-dot i{display:block;width:var(--d,10px);height:var(--d,10px);border-radius:999px;box-sizing:border-box;border:1.5px solid var(--color-steel);transition:transform 150ms var(--ease-out-quart),background-color 150ms,border-color 150ms}
+.cf-dot.backed i{background:var(--color-fg);border-color:var(--color-fg)}
+.cf-dot.opposed i{box-shadow:0 0 0 2px var(--color-ground),0 0 0 3.5px var(--color-alarm)}
+.cf-dot.lit i{background:var(--color-accent);border-color:var(--color-accent);transform:scale(1.6)}
+.cf-dot:focus-visible{outline-offset:0}
+
+/* arrival: one class on the field, a stagger capped at 8 */
+.cf-dot{transition:opacity var(--reveal-fade) var(--ease-out-quart),transform var(--reveal-fade) var(--ease-out-quart);transition-delay:calc(var(--row-index,0) * var(--list-step))}
+.cf-enter .cf-dot{opacity:0;transform:scale(.4)}
+
+/* the card: reserved height, never moves */
+.cf-card{position:relative;z-index:5;flex:1 1 22rem;min-width:min(22rem,100%);max-width:34rem;min-height:6.5rem;border:1px solid var(--color-rule-strong);border-radius:var(--radius-card);background:var(--color-bg);padding:12px 16px;display:flex;flex-direction:column;gap:6px}
+.cf-card-h{display:flex;align-items:center;gap:10px;padding-bottom:10px;border-bottom:1px solid var(--color-rule);font-family:var(--font-mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--color-steel)}
+.cf-card-h i{width:8px;height:8px;border-radius:999px;background:var(--color-rule-strong)}
+.cf-card.is-pointing .cf-card-h i{background:var(--color-accent)}
+.cf-card-h .why{margin-left:auto;color:var(--color-grey)}
+.cf-subj{font-size:20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cf-subj.id{font-family:var(--font-mono);font-weight:500;font-size:16px;letter-spacing:0}
+.cf-fig{font-family:var(--font-mono);font-size:13px;color:var(--color-fg)}
+.cf-fig span{color:var(--color-steel)}
+.cf-fig.none{color:var(--color-steel)}
+.cf-opp{font-family:var(--font-mono);font-size:12px;color:var(--color-alarm)}
+.cf-opp:empty{display:none}
+.cf-empty{font-family:var(--font-mono);font-size:12px;color:var(--color-steel)}
+
+/* legend */
+.cf-legend{flex-basis:100%;margin:0;border-top:1px solid var(--color-rule);display:grid;grid-template-columns:repeat(auto-fill,minmax(19rem,1fr));gap:0 32px}
+.cf-legend>div{display:grid;grid-template-columns:18px minmax(0,1fr) auto;gap:10px;align-items:baseline;padding:10px 0;border-bottom:1px solid var(--color-rule)}
+.cf-legend dt{font-size:14px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cf-legend dt.id{font-family:var(--font-mono);font-size:12px}
+.cf-legend dd{margin:0;font-family:var(--font-mono);font-size:11px;color:var(--color-steel);text-align:right;white-space:nowrap}
+.cf-legend .ringno{font-family:var(--font-mono);font-size:10px;color:var(--color-grey)}
+.cf-total{flex-basis:100%;display:flex;gap:18px;align-items:baseline;flex-wrap:wrap;font-family:var(--font-mono);font-size:12px;color:var(--color-steel)}
+.cf-total b{font-weight:500;color:var(--color-fg);font-size:14px}
+.cf-key{display:inline-flex;gap:14px;flex-wrap:wrap;margin-left:auto}
+.cf-key span{display:inline-flex;align-items:center;gap:6px}
+.cf-key i{width:9px;height:9px;border-radius:999px;box-sizing:border-box;border:1.5px solid var(--color-steel)}
+.cf-key i.f{background:var(--color-fg);border-color:var(--color-fg)}
+.cf-key i.o{box-shadow:0 0 0 2px var(--color-ground),0 0 0 3.5px var(--color-alarm)}
+
+/* zero claims */
+.cf-zero{display:flex;align-items:center;gap:28px;flex-wrap:wrap}
+.cf-zero .cf-field{max-width:12rem}
+
+.notes{margin-top:72px;border-top:1px solid var(--color-rule-strong);display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,26rem),1fr));gap:0 40px}
+.notes h2{grid-column:1/-1;margin:28px 0 8px;font-size:24px}
+.notes ul{list-style:none;margin:0;padding:0}
+.notes li{padding:11px 0;border-bottom:1px solid var(--color-rule);font-size:14px;color:var(--color-silver)}
+.notes li b{color:var(--color-fg);font-weight:600}
+.notes h3{margin:18px 0 6px;font-size:13px;font-family:var(--font-mono);font-weight:500;text-transform:uppercase;letter-spacing:.08em;color:var(--color-steel)}
+
+.still .cf-orbit{animation:none}
+.still .cf-dot{transition:none!important}
+.still .cf-enter .cf-dot{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){.cf-orbit{animation:none}.cf-dot{transition:none!important}.cf-enter .cf-dot{opacity:1;transform:none}}
+@media (max-width:640px){.cf-field{max-width:none;margin-top:0}.cf-card{min-width:0}.cf-link polyline{display:none}}
+</style>
+
+<div class="wrap">
+  <div class="bar">
+    <div>
+      <p class="label" style="margin:0 0 8px">Design reference · /atom/:atomId</p>
+      <h1 class="face">Claim field, hover first</h1>
+    </div>
+    <div class="grp">
+      <span class="label">Case</span>
+      <div class="seg" id="case" role="group" aria-label="Sample case"></div>
+      <span class="label">Motion</span>
+      <div class="seg" id="motion" role="group" aria-label="Preview motion"><button type="button" data-v="on" aria-pressed="true">on</button><button type="button" data-v="off" aria-pressed="false">reduced</button></div>
+    </div>
+  </div>
+
+  <div id="mount"></div>
+
+  <section class="notes" aria-labelledby="n-h">
+    <h2 class="face" id="n-h">What changed, and why</h2>
+    <div>
+      <h3>Kept</h3>
+      <ul>
+        <li><b>A ring per predicate</b>, innermost first, in the graph's own order. Nothing re-sorts.</li>
+        <li><b>Filled, hollow, ringed</b> read straight off positionCount and the counter-triple.</li>
+        <li><b>Real links</b>, absolutely positioned, the whole triple as the accessible name.</li>
+        <li><b>The slot is reserved.</b> The card is in the DOM at full height before anything is pointed at.</li>
+        <li><b>Rings turn</b>, slower outward, alternating, and stop under reduced motion.</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Changed</h3>
+      <ul>
+        <li><b>The loupe stays, tied to the card.</b> It rests at five past on the outer ring and reads what passes under it. Point at any dot, or Tab to it, and it glides there and rides it; let go and it glides home.</li>
+        <li><b>The glide is eased,</b> about half a second, never a jump. Under reduced motion it moves at once.</li>
+        <li><b>It tours on its own.</b> With nobody pointing, every 4 s the loupe glides to the next claim in the graph's order. Pointing takes over; letting go resumes from there. No tour under reduced motion.</li>
+        <li><b>One claim</b> passes under the loupe once a lap; the card always names the nearest dot, so it is never blank.</li>
+        <li><b>Beyond 36, the rest is grain.</b> Every claim past the drawn ones is a fine stipple on the same ring, so 250 looks dense, not like 36.</li>
+        <li><b>More than 5 predicates fold</b> into a last ring, "+N other predicates", named one by one in the legend.</li>
+        <li><b>28px targets</b> around a 10px mark.</li>
+      </ul>
+    </div>
+    <div>
+      <h3>To decide</h3>
+      <ul>
+        <li><b>Size by position count.</b> A dot grows a little with how many accounts back it (log scale, capped). Never by amount, because of dust, and a free claim stays at the base size, hollow. Docs/17 proposed it; the current component refuses any size scale. Off switch: keep every dot 10px.</li>
+        
+      </ul>
+    </div>
+  </section>
+</div>
+
+<script>
+/* ---------------------------------------------------------------------------
+   CASES: GroupView[] samples. Shape from services/atom-standing-view.ts.
+   --------------------------------------------------------------------------- */
+const names=['crytic-runner','vault-auditor','maturity-bot','0x3b9e…41a0','erc20-checker','scsvs-agent','yield-router','onchain-lens','flow-reader','permit-scout','gas-reviewer','basis-keeper'];
+function rows(n,{backedEvery=3,oppEvery=0,seed=1}={}){
+  return Array.from({length:n},(_,k)=>{
+    const backed = backedEvery>0 && k%backedEvery===0;
+    const pos = backed ? Math.max(1, Math.round(12/(k/backedEvery+1))) : 0;
+    const nm = k<names.length? names[(k+seed)%names.length] : `Agent 8453:${6600+k*7+seed}`;
+    return {tripleId:`t${seed}-${k}`,name:nm,nameIsId:nm.startsWith('Agent 8453')||nm.startsWith('0x'),subjectAtomId:`a${k}`,
+      backing: backed ? (0.1*pos+0.0099).toFixed(4)+' tTRUST' : null, positions:pos,
+      opposition: oppEvery && k%oppEvery===1 ? '0.0400 tTRUST' : null};
+  });
+}
+function group(label,rs,isId=false){const pos=rs.reduce((s,r)=>s+r.positions,0);return {predicateAtomId:label,label,labelIsId:isId,rows:rs,backing:pos?(rs.filter(r=>r.backing).reduce((s,r)=>s+parseFloat(r.backing),0)).toFixed(4)+' tTRUST':null,positions:pos};}
+const CASES={
+  'zero':{subject:'minimalist-ui',groups:[],truncated:false},
+  'one':{subject:'github.com/crytic/slither',groups:[group('uses',rows(1,{backedEvery:1}))],truncated:false},
+  'three predicates':{subject:'github.com/crytic/slither',groups:[group('uses',rows(9,{backedEvery:2,oppEvery:4})),group('has tag',rows(5,{backedEvery:0,seed:3})),group('implements',rows(2,{backedEvery:1,seed:5}))],truncated:false},
+  '250 on one':{subject:'security',groups:[group('has tag',rows(250,{backedEvery:9,seed:2}))],truncated:true},
+  'nine predicates':{subject:'a book',groups:['prefers','Ethereum','Bitcoin','has tag','uses','source','is a sub domain of','0x7f3a…c21e','mentions'].map((l,i)=>group(l,rows(1+((i*5)%7),{backedEvery:i%3?0:2,seed:i}),l.startsWith('0x')))},
+};
+
+/* ---------------------------------------------------------------------------
+   GEOMETRY. Same as claim-field-geometry.ts, plus the fold and the grain.
+   --------------------------------------------------------------------------- */
+const INNER=0.17, OUTER=0.42, MAX_DOTS=36, MAX_RINGS=5;
+function layout(groups){
+  // fold everything past ring 5 into one last ring
+  let shown=groups, folded=null;
+  if(groups.length>MAX_RINGS){
+    shown=groups.slice(0,MAX_RINGS-1);
+    const rest=groups.slice(MAX_RINGS-1);
+    folded={label:`+${rest.length} other predicates`,rows:rest.flatMap(g=>g.rows.map(r=>({...r,_pred:g.label}))),labelIsId:false,members:rest};
+    shown=[...shown,folded];
+  }
+  const n=shown.length, rings=[], dots=[];
+  shown.forEach((g,i)=>{
+    const total=g.rows.length, drawn=Math.min(total,MAX_DOTS);
+    const r = n===1?OUTER:INNER+(i/(n-1))*(OUTER-INNER);
+    const step=drawn?2*Math.PI/drawn:0, offset=(i%2)*(step/2);
+    rings.push({i,r,drawn,total,g});
+    for(let k=0;k<drawn;k++){const a=-Math.PI/2+offset+k*step;dots.push({ring:i,k,row:g.rows[k],pred:g.rows[k]._pred||g.label,cx:.5+r*Math.cos(a),cy:.5+r*Math.sin(a)});}
+  });
+  return {rings,dots,folded};
+}
+// mass by position count, never by amount. free = base, hollow.
+const dotSize=(pos)=> pos>0 ? Math.min(10+3.2*Math.log2(pos),17) : 10;
+
+/* ---------------------------------------------------------------------------
+   RENDER
+   --------------------------------------------------------------------------- */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let still=matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+function render(key){
+  const C=CASES[key], mount=$('#mount');
+  const edgeCount=C.groups.reduce((s,g)=>s+g.rows.length,0);
+  if(!C.groups.length){
+    mount.innerHTML=`<div class="cf-zero"><div class="cf-field" aria-hidden="true"><span class="cf-track" style="left:${(.5-OUTER)*100}%;top:${(.5-OUTER)*100}%;width:${OUTER*200}%;height:${OUTER*200}%;border-style:dashed"></span><span class="cf-core"></span></div>
+      <p class="cf-empty">Nothing points at ${esc(C.subject)} yet. A claim made about it appears here as a dot.</p></div>`;
+    return;
+  }
+  const {rings,dots,folded}=layout(C.groups);
+  let h=`<div class="cf"><div class="cf-field cf-enter" id="field" role="group" aria-label="Claims about ${esc(C.subject)}">`;
+  // the loupe and its line to the card: always drawn, resting at -60° on the outer ring
+  h+=`<svg class="cf-link" id="link" viewBox="0 0 1 1" preserveAspectRatio="none" aria-hidden="true"><polyline id="bar" points=""/><circle id="head" cx="0" cy="0" r="0.032"/></svg>`;
+  h+=`<span class="cf-core" aria-hidden="true"></span>`;
+  rings.forEach(R=>{
+    const dur=110+R.i*40, to=R.i%2?'-360deg':'360deg';
+    h+=`<div class="cf-ring cf-orbit" data-ring="${R.i}" style="--orbit-for:${dur}s;--orbit-to:${to}">`;
+    h+=`<span class="cf-track" aria-hidden="true" style="left:${(.5-R.r)*100}%;top:${(.5-R.r)*100}%;width:${R.r*200}%;height:${R.r*200}%"></span>`;
+    // grain: every claim past the drawn ones, as stipple in the gaps. aria-hidden; the legend says the count.
+    if(R.total>R.drawn){
+      const extra=R.total-R.drawn, step=2*Math.PI/R.drawn, off=(R.i%2)*(step/2);
+      let g='';
+      for(let e=0;e<extra;e++){
+        // spread evenly between the drawn dots, never on top of one
+        const slot=e%R.drawn, layer=Math.floor(e/R.drawn), per=Math.ceil(extra/R.drawn);
+        const f=(layer+1)/(per+1);
+        const a=-Math.PI/2+off+(slot+f)*step;
+        // one row on the ring; a second row only when the ring is genuinely crowded
+        const jr=R.r+(per>6?((layer%2)?0.007:-0.007):0);
+        g+=`<circle cx="${(.5+jr*Math.cos(a)).toFixed(4)}" cy="${(.5+jr*Math.sin(a)).toFixed(4)}" r="0.0036"/>`;
+      }
+      h+=`<svg class="cf-grain" viewBox="0 0 1 1" aria-hidden="true"><g fill="var(--color-steel)" opacity=".75">${g}</g></svg>`;
+    }
+    dots.filter(d=>d.ring===R.i).forEach((d,idx)=>{
+      const r=d.row, backed=r.positions>0, global=dots.indexOf(d);
+      const name=`${r.name} ${d.pred} ${C.subject}, ${backed?r.backing+' behind it, '+r.positions+(r.positions===1?' position':' positions'):'nothing behind it'}${r.opposition?', '+r.opposition+' against':''}`;
+      h+=`<a class="cf-dot${backed?' backed':''}${r.opposition?' opposed':''}" href="#" data-i="${global}" style="left:${d.cx*100}%;top:${d.cy*100}%;--d:${dotSize(r.positions).toFixed(1)}px;--row-index:${Math.min(global,7)}" aria-label="${esc(name)}"><i></i></a>`;
+    });
+    h+=`</div>`;
+  });
+  h+=`</div>`;
+  // card
+  h+=`<div class="cf-card" id="card" aria-hidden="true"><div class="cf-card-h"><i></i><span id="c-pred"></span><span class="why" id="c-why"></span></div><div class="face cf-subj" id="c-subj"></div><div class="cf-fig" id="c-fig"></div><div class="cf-opp" id="c-opp"></div></div>`;
+  // totals + legend
+  h+=`<div class="cf-total"><span><b>${C.truncated?edgeCount+'+':edgeCount}</b> ${edgeCount===1&&!C.truncated?'claim':'claims'} about ${esc(C.subject)}</span>
+     <span class="cf-key"><span><i class="f"></i>a position behind it</span><span><i></i>nothing behind it</span>${C.groups.some(g=>g.rows.some(r=>r.opposition))?'<span><i class="o"></i>someone took the other side</span>':''}</span></div>`;
+  h+=`<dl class="cf-legend">`;
+  rings.forEach(R=>{
+    const g=R.g, isFold=g===folded;
+    const count=R.total>R.drawn?`${R.total}${C.truncated&&R.i===rings.length-1&&!isFold?'+':''} · ${R.drawn} drawn, the rest as grain`:`${R.total} ${R.total===1?'claim':'claims'}`;
+    h+=`<div><span class="ringno">${String(R.i+1).padStart(2,'0')}</span><dt class="${g.labelIsId?'id':''}">${esc(g.label)}</dt><dd>${count}${!isFold&&g.backing?' · '+esc(g.backing):''}</dd></div>`;
+    if(isFold) g.members.forEach(m=>{h+=`<div><span class="ringno"></span><dt class="${m.labelIsId?'id':''}" style="color:var(--color-silver)">${esc(m.label)}</dt><dd>${m.rows.length} ${m.rows.length===1?'claim':'claims'}${m.backing?' · '+esc(m.backing):''}</dd></div>`;});
+  });
+  h+=`</dl></div>`;
+  mount.innerHTML=h;
+  wire(C,dots);
+}
+
+/* ---------------------------------------------------------------------------
+   THE LOUPE. Rests at HEAD_DEGREES on the outer ring and reads whatever passes
+   under it. Point at a dot (mouse or Tab) and it glides there and rides it;
+   let go and it glides home. The line to the card is drawn the whole time.
+   --------------------------------------------------------------------------- */
+const HEAD_DEGREES=-60, RISE_DEGREES=35, BAR_Y=0.055, HEAD_R=0.032, DOT_R=0.0142;
+const GLIDE_MS=160;   // time constant of the glide: ~95% of the way in 480ms
+const TOUR_MS=4000;   // with nobody pointing, the loupe moves to the next claim every 4 s
+function wire(C,dots){
+  const field=$('#field'), card=$('#card'), link=$('#link'), head=$('#head'), bar=$('#bar');
+  requestAnimationFrame(()=>requestAnimationFrame(()=>field.classList.remove('cf-enter')));
+  const outerRing=Math.max(...dots.map(d=>d.ring));
+  const outerR=layout(C.groups).rings[outerRing].r;
+  const rest={x:.5+outerR*Math.cos(HEAD_DEGREES*Math.PI/180), y:.5+outerR*Math.sin(HEAD_DEGREES*Math.PI/180)};
+  const cur={...rest};
+  let pointing=null, shown=-1, last=performance.now(), alive=true;
+  // the tour: starts at the resting place, then visits each claim in the graph's order
+  let touring=null, nextTour=performance.now()+TOUR_MS;
+  const els=[...field.querySelectorAll('.cf-dot')];
+  function centre(el){const f=field.getBoundingClientRect(),b=el.getBoundingClientRect();return {x:(b.left+b.width/2-f.left)/f.width,y:(b.top+b.height/2-f.top)/f.height};}
+  function fill(i,isPointing,lit){
+    const d=dots[i]; if(!d) return;
+    if(i!==shown){
+      shown=i; const r=d.row, backed=r.positions>0;
+      $('#c-pred').textContent=d.pred;
+      const sj=$('#c-subj'); sj.textContent=r.name; sj.classList.toggle('id',r.nameIsId);
+      const f=$('#c-fig'); f.classList.toggle('none',!backed);
+      f.innerHTML=backed?`${esc(r.backing)} <span>· ${r.positions} ${r.positions===1?'position':'positions'}</span>`:'nothing behind it';
+      $('#c-opp').textContent=r.opposition?`${r.opposition} against`:'';
+    }
+    $('#c-why').textContent='';
+    card.classList.toggle('is-pointing',lit);
+    els.forEach((el,k)=>el.classList.toggle('lit',k===i&&lit));
+    link.classList.toggle('on',lit);
+  }
+  // at rest: the nearest outer-ring dot to the loupe is what the card reads;
+  // it lights only when the whole dot is inside the loupe
+  function underHead(){
+    let best=-1,bd=1e9;
+    els.forEach((el,k)=>{ if(dots[k].ring!==outerRing) return; const c=centre(el); const dd=Math.hypot(c.x-cur.x,c.y-cur.y); if(dd<bd){bd=dd;best=k;} });
+    return {i:best, inside: bd <= (HEAD_R-DOT_R)+0.002};
+  }
+  function drawLink(){
+    head.setAttribute('cx',cur.x.toFixed(4)); head.setAttribute('cy',cur.y.toFixed(4));
+    const cornerX=cur.x+Math.abs(cur.y-BAR_Y)/Math.tan(RISE_DEGREES*Math.PI/180);
+    // start the line on the loupe's rim, not its centre
+    const ang=Math.atan2(BAR_Y-cur.y, cornerX-cur.x);
+    const sx=cur.x+HEAD_R*Math.cos(ang), sy=cur.y+HEAD_R*Math.sin(ang);
+    bar.setAttribute('points',`${sx.toFixed(4)},${sy.toFixed(4)} ${cornerX.toFixed(4)},${BAR_Y} 1.6,${BAR_Y}`);
+  }
+  let pollAt=0, lockedOn=null;
+  const LOCK=0.006;   // about 2px on a 22rem field
+  function frame(now){
+    if(!alive||!document.body.contains(field)){alive=false;return;}
+    const dt=Math.min(64,now-last); last=now;
+    if(pointing===null && !still && els.length && now>=nextTour){
+      touring = touring===null ? 0 : (touring+1)%els.length;
+      nextTour = now+TOUR_MS;
+    }
+    const held = pointing!==null ? pointing : touring;
+    const target = held===null ? rest : centre(els[held]);
+    // once the loupe has arrived, it locks onto the dot: an ease alone always trails a moving
+    // target by a pixel or so, which reads as "not centred"
+    if(held!==lockedOn) lockedOn=null;
+    if(lockedOn===null && Math.hypot(target.x-cur.x,target.y-cur.y)<LOCK) lockedOn=held;
+    const k = still || (lockedOn!==null && held===lockedOn) ? 1 : 1-Math.exp(-dt/GLIDE_MS);
+    cur.x+=(target.x-cur.x)*k; cur.y+=(target.y-cur.y)*k;
+    drawLink();
+    if(held!==null){ fill(held,pointing!==null,true); }
+    else if(now>=pollAt){ pollAt=now+120; const u=underHead(); if(u.i>=0) fill(u.i,false,u.inside); }
+    requestAnimationFrame(frame);
+  }
+  els.forEach((el,i)=>{
+    const on=()=>{pointing=i;};
+    // letting go resumes the tour from the claim you were on, after a full beat
+    const off=()=>{if(pointing===i){ pointing=null; touring=i; nextTour=performance.now()+TOUR_MS; }};
+    el.addEventListener('mouseenter',on);el.addEventListener('focus',on);
+    el.addEventListener('mouseleave',off);el.addEventListener('blur',off);
+    el.addEventListener('click',e=>e.preventDefault());
+  });
+  drawLink(); const u=underHead(); if(u.i>=0) fill(u.i,false,u.inside);
+  requestAnimationFrame(frame);
+}
+
+/* controls */
+const caseSeg=$('#case');
+Object.keys(CASES).forEach((k,i)=>{const b=document.createElement('button');b.type='button';b.dataset.v=k;b.textContent=k;b.setAttribute('aria-pressed',i===2);caseSeg.appendChild(b);});
+function seg(el,fn){el.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;[...el.children].forEach(x=>x.setAttribute('aria-pressed',x===b));fn(b.dataset.v);});}
+let current='three predicates';
+seg(caseSeg,v=>{current=v;render(v);});
+seg($('#motion'),v=>{still=v==='off'||matchMedia('(prefers-reduced-motion: reduce)').matches;document.documentElement.classList.toggle('still',v==='off');render(current);});
+render(current);
+</script>
+
+</body>
+</html>
