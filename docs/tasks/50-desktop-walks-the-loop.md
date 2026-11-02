@@ -120,10 +120,14 @@ content receipt counts toward proven is part of D2.
   it.
 - The route shapes were sent to arp-7f.
 
-Two sponsor routes the path needs are **not built, and not decided**:
+Two sponsor routes the path needed. The user decided both on 2026-11-02 (ADR `0110`), and both are **built** the same day: `POST /mint-gas`, `POST /identity`, and `/deposit` creating a missing `uses` triple. 55 sponsor tests pass, and 825 protocol tests:
 
 1. **Gas for the mint.** `/gas` pays only an agent that is already registered. An unregistered
    address has no bound yet: any address can ask.
 2. **Creating the agent's identity atom and its first `uses` triple.** `/deposit` refuses a term
    that does not exist, and the service creates no `uses` triple (task 40 §3). Creating one opens
    its first position in the sponsor's name, the way `/publish` already does.
+
+The user's answers: (1) **once per address, under a global daily cap**; (2) **the sponsor creates
+them and then deposits the agent's position on them**, « peu importe le créateur, c'est le stake qui
+compte … l'agent garde encore une fois les positions ».

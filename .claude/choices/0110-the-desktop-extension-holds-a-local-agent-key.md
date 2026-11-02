@@ -72,9 +72,18 @@ The rules on the key:
   whatever runs as the user.
 - The MCP server's line "signs no transaction" (`CLAUDE.md`'s directory map) is true of the server
   and false of the extension build. Both have to say which.
-- Two sponsor routes this needs are not built: gas for an agent that is **not yet registered** (the
-  mint), and who pays for creating the agent's identity atom and a first `uses` triple. Both need a
-  bound before they spend (`docs/tasks/50`).
+- Two sponsor routes this needs, both decided by the user the same day and built the same day in
+  `apps/sponsor/src/service.ts` (`/mint-gas`, `/identity`, and the creation in `/deposit`):
+  - **Gas for the mint, once per address, under a global daily cap.** `/gas` today pays only an
+    agent that is already registered. For the mint it pays an address that is not, once ever, and a
+    cap on new agents per day bounds what anyone asking can drain. Testnet 13579 only.
+  - **The sponsor creates the identity atom and the first `uses` triple, then deposits the agent's
+    position on it.** « peu importe le créateur, c'est le stake qui compte » (the user). The
+    creation's first position is the sponsor's, as `/publish` already does (ADR `0053`). The
+    position that counts is the deposit with `receiver` = the agent. This amends task 40 §3, where
+    the service created no `uses` triple.
+  - Both widen ADR `0094` §3 ("the only value sent anywhere else is the approval gas"): the mint gas
+    is a second plain transfer, to an unregistered address.
 
 **Neutral (worth knowing):**
 
