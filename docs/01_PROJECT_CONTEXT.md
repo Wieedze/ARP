@@ -60,8 +60,9 @@ What the same run does not support, and so what this argument may not say:
 The unit is the **skill, not the repository** (ADR `0077`): ARP serves one skill's SKILL.md with a
 signed receipt, for 521 of the 662 skills on testnet 13579 (`docs/tasks/31`). **Only that file.** The
 best skills need sibling scripts the content server does not serve yet (`docs/tasks/54` §4b), so
-"ARP serves the skill" is true of its instructions, not of a skill that runs. In Claude Desktop the search ships; fetching and running a
-served skill is `docs/tasks/50`, not finished at the time of writing.
+"ARP serves the skill" is true of its instructions, not of a skill that runs. In Claude Desktop the whole path works, on testnet and on the user's
+machine: extension 0.2.1 found, fetched and declared, and the sponsor paid the deposit (2026-11-02,
+`docs/tasks/50`; `.arp/sponsor-ledger.jsonl` on that machine is the record, not committed).
 
 ### Three words this positioning may never use
 
