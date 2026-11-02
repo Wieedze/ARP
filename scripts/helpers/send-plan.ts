@@ -4,8 +4,11 @@
  *  `@arp-protocol/core` must never hold a key (ADR `0038`): the connector plans, the agent's own
  *  runtime signs. This module *is* that runtime, standing in for an operator's one.
  *
- *  Three guards, each for a failure this repo has either made or written down:
+ *  Four guards, each for a failure this repo has either made or written down:
  *
+ *    0. **The chain must be testnet 13579.** This module signs with a raw key from the environment,
+ *       and `.claude/rules/security.md` allows that on 13579 only (ADR `0037`). It refuses any other
+ *       chain before it reads the key, and an RPC that answers another chain id is refused too.
  *    1. **Every call's `chainId` must equal the expected chain, and that must equal the RPC's.** A
  *       plan built for one chain and signed against another sends the fee to an address nobody
  *       controls — each MultiVault is codeless on the other chain (`declare/types.ts`).
@@ -23,6 +26,9 @@
 import { createPublicClient, createWalletClient, formatEther, http } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
 import type { Address, Hex } from 'viem';
+
+/** The only chain a raw environment key may sign on (`.claude/rules/security.md`, ADR `0037`). */
+export const RAW_KEY_CHAIN_ID = 13579;
 
 /** A prepared call as it travels through JSON: `value` is a decimal string, since JSON has no bigint. */
 export type SerialisedCall = {
@@ -79,6 +85,12 @@ export type SendOptions = {
 export async function sendPlan(options: SendOptions): Promise<SendOutcome> {
   const { calls, chainId, rpcUrl } = options;
   if (calls.length === 0) return { status: 'refused', reason: 'the plan is empty' };
+  if (chainId !== RAW_KEY_CHAIN_ID) {
+    return {
+      status: 'refused',
+      reason: `chain ${chainId} is not testnet ${RAW_KEY_CHAIN_ID} — a raw key signs on ${RAW_KEY_CHAIN_ID} only (ADR 0037)`,
+    };
+  }
 
   const raw = process.env[options.keyName ?? 'AGENT_PRIVATE_KEY'];
   if (!raw) {
