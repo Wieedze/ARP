@@ -149,5 +149,17 @@ compte … l'agent garde encore une fois les positions ».
   `0x0B02795b004b8DFDeDDd5eccf58228aa321bda17`, and that address holds 990000000000000 shares on curve
   1 of the triple
   `0x2ef4f396f020f59478ba6def933b6d50956784e59b72c261f9ca0e5b08a784ca`.
-- **Not yet:** a run inside Claude Desktop itself, through the `.mcpb` package, and a content server
-  online. Both servers are local for now (user, 2026-11-02).
+- **Walked in Claude Desktop itself, by the user, 2026-11-02**, through the `arp-0.2.0.mcpb` package
+  on Windows (« tout a marché », as relayed by arp-30). The key was created in `C:\Users\Max\.arp\`.
+  Its `agent.json` reads agent #10. `receipts.jsonl` names `youtube-thumbnail-design`, served to
+  `0xf14b09ae2B528eFDf0b74d9E572D9842F0479338`. The sponsor's ledger
+  (`~/Project/ARP-50/.arp/sponsor-ledger.jsonl`, lines 19–36) records the same address: mint gas,
+  five identity sends, the creation of triple `0x48a8ed49…`, the approval gas, and the deposit, all
+  `success`.
+- **The key signs exact calls only** (task-verifier, first pass). `refusal` used to accept any
+  zero-value calldata to the registry or the MultiVault, and the approval's calldata came from the
+  sponsor's `/gas` answer. So a wrong sponsor endpoint could get a zero-value `redeem` or an `approve`
+  to another address signed. The issue was latent: localhost, testnet. Now the loop builds the two calls
+  itself, `register()` and the approval of the sponsor's address, and `refusal` accepts those exactly.
+  A test shows a `redeem` and an approval to a stranger refused.
+- **Not yet:** a content server online. Both servers are local for now (user, 2026-11-02).

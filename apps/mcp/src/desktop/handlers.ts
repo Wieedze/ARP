@@ -6,9 +6,9 @@
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 
-import { getAddress, type Address, type Hex } from 'viem';
+import { getAddress, type Hex } from 'viem';
 
-import { CONTENT_URL, MULTI_VAULT, RPC, SPONSOR_URL, record } from '../config.js';
+import { CONTENT_URL, RPC, SPONSOR_URL, record } from '../config.js';
 import { type JsonRpcId, fail, text } from '../rpc.js';
 import { agentKeyPath, agentSender, loadOrCreateAgentKey, type AgentSender } from './agent-key.js';
 import { declareUsed, getSkill, type LoopConfig } from './loop.js';
@@ -21,8 +21,8 @@ function config(): LoopConfig {
   return { contentUrl: CONTENT_URL, sponsorUrl: SPONSOR_URL, registry: getAddress(registry), stateDir: join(homedir(), '.arp') };
 }
 
-function agentFor(loop: LoopConfig): AgentSender {
-  agent ??= agentSender(loadOrCreateAgentKey(agentKeyPath()), RPC, [loop.registry, getAddress(MULTI_VAULT) as Address]);
+function agentFor(): AgentSender {
+  agent ??= agentSender(loadOrCreateAgentKey(agentKeyPath()), RPC);
   return agent;
 }
 
@@ -34,10 +34,10 @@ export async function desktopTool(id: JsonRpcId, name: string, args: Record<stri
   const loop = config();
   try {
     if (name === 'arp_get_skill') {
-      const skill = await getSkill(loop, agentFor(loop), atom as Hex); // checked to be 32 bytes of hex above
+      const skill = await getSkill(loop, agentFor(), atom as Hex); // checked to be 32 bytes of hex above
       return text(id, { name: skill.name, source: skill.url, skill_md: skill.text });
     }
-    const done = await declareUsed(loop, agentFor(loop), atom as Hex); // checked to be 32 bytes of hex above
+    const done = await declareUsed(loop, agentFor(), atom as Hex); // checked to be 32 bytes of hex above
     return text(id, {
       declared: done.skill,
       supported_by: 'ARP, in your name',

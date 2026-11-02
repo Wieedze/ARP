@@ -45,14 +45,20 @@ export function loadOrCreateAgentKey(path: string = agentKeyPath()): PrivateKeyA
 
 export type AllowedCall = { to: Address; data: Hex; value: bigint; chainId: number };
 
+/** One exact call the key may sign: this contract, this calldata. */
+export type PermittedCall = { to: Address; data: Hex };
+
 /**
- * Whether the extension may sign `call`: zero value, chain 13579, and a contract on `allowed`.
- * Returns the reason for a refusal, `null` when it may.
+ * Whether the extension may sign `call`: zero value, chain 13579, and exactly one of `permitted`,
+ * calldata included. The caller builds `permitted` itself (`register()`, and the approval of the
+ * sponsor's address), so a sponsor answer cannot widen it: a zero-value `redeem`, or an `approve`
+ * to another address, is refused. Returns the reason for a refusal, `null` when it may.
  */
-export function refusal(call: AllowedCall, allowed: readonly Address[]): string | null {
+export function refusal(call: AllowedCall, permitted: readonly PermittedCall[]): string | null {
   if (call.chainId !== DESKTOP_CHAIN_ID) return `chain ${call.chainId} is not testnet ${DESKTOP_CHAIN_ID}`;
   if (call.value !== 0n) return `a call that sends value (${call.value} wei) is never signed here`;
-  if (!allowed.some((address) => getAddress(address) === getAddress(call.to))) return `${call.to} is not a contract this key may call`;
+  const same = (p: PermittedCall) => getAddress(p.to) === getAddress(call.to) && p.data.toLowerCase() === call.data.toLowerCase();
+  if (!permitted.some(same)) return `this key signs only register() and the sponsor's approval, not this call to ${call.to}`;
   return null;
 }
 
@@ -60,19 +66,19 @@ export type AgentSender = {
   address: Address;
   account: PrivateKeyAccount;
   client: PublicClient;
-  /** Sends one allowed call and waits for its receipt. Throws on a refusal or a revert. */
-  send(call: AllowedCall): Promise<TransactionReceipt>;
+  /** Sends `call` if it is one of `permitted`, and waits for its receipt. Throws on a refusal or a revert. */
+  send(call: AllowedCall, permitted: readonly PermittedCall[]): Promise<TransactionReceipt>;
 };
 
-export function agentSender(account: PrivateKeyAccount, rpcUrl: string, allowed: readonly Address[]): AgentSender {
+export function agentSender(account: PrivateKeyAccount, rpcUrl: string): AgentSender {
   const client = createPublicClient({ chain: intuitionTestnet, transport: http(rpcUrl) });
   const wallet = createWalletClient({ account, chain: intuitionTestnet, transport: http(rpcUrl) });
   return {
     address: account.address,
     account,
     client,
-    async send(call) {
-      const why = refusal(call, allowed);
+    async send(call, permitted) {
+      const why = refusal(call, permitted);
       if (why !== null) throw new Error(`refused: ${why}`);
       const hash = await wallet.sendTransaction({ to: call.to, data: call.data, value: 0n });
       const receipt = await client.waitForTransactionReceipt({ hash });

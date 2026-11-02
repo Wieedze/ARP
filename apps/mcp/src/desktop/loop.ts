@@ -27,6 +27,7 @@ import {
 
 import {
   contentRequestTypedData,
+  encodeApproveDeposit,
   INTUITION_USES_TERM_ID,
   multiVaultDeclareAbi,
   receiptMatchesContent,
@@ -143,12 +144,8 @@ async function ensureAgent(config: LoopConfig, agent: AgentSender): Promise<Agen
   if (known !== null) return known;
   const gas = await post(config, '/mint-gas', { address: agent.address });
   if (gas.status !== 200) throw new Error(`no gas to register (${gas.status}): ${String(gas.body['error'] ?? '')}`);
-  const receipt = await agent.send({
-    to: config.registry,
-    data: encodeFunctionData({ abi: registryAbi, functionName: 'register' }),
-    value: 0n,
-    chainId: DESKTOP_CHAIN_ID,
-  });
+  const register = { to: config.registry, data: encodeFunctionData({ abi: registryAbi, functionName: 'register' }) };
+  const receipt = await agent.send({ ...register, value: 0n, chainId: DESKTOP_CHAIN_ID }, [register]);
   for (const log of receipt.logs) {
     if (log.address.toLowerCase() !== config.registry.toLowerCase()) continue;
     try {
@@ -188,7 +185,10 @@ export async function declareUsed(config: LoopConfig, agent: AgentSender, atom: 
     writeAgent(config, state);
   }
 
-  const multiVault = getAddress(String((await json(await (config.fetch ?? fetch)(config.sponsorUrl)))['multiVault']));
+  const info = await json(await (config.fetch ?? fetch)(config.sponsorUrl));
+  const multiVault = getAddress(String(info['multiVault']));
+  // The one approval this key signs, built here: the sponsor's answer to /gas does not choose it.
+  const approval = { to: multiVault, data: encodeApproveDeposit(getAddress(String(info['sponsor']))) };
   const termId = await agent.client.readContract({
     address: multiVault,
     abi: multiVaultDeclareAbi,
@@ -230,8 +230,8 @@ export async function declareUsed(config: LoopConfig, agent: AgentSender, atom: 
     if (answer.status === 409 && answer.body['approve'] !== undefined && !approved) {
       const gas = await post(config, '/gas', ref);
       if (gas.status !== 200) throw new Error(`no gas for the approval (${gas.status}): ${String(gas.body['error'] ?? '')}`);
-      const next = gas.body['next'] as { to: Address; data: Hex; value: string | number }; // the sponsor's PreparedCall
-      await agent.send({ to: next.to, data: next.data, value: BigInt(next.value), chainId: DESKTOP_CHAIN_ID });
+      const next = gas.body['next'] as { to: Address; data: Hex; value: string | number }; // the sponsor's PreparedCall, checked against `approval`
+      await agent.send({ to: next.to, data: next.data, value: BigInt(next.value), chainId: DESKTOP_CHAIN_ID }, [approval]);
       approved = true;
       continue;
     }
