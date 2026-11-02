@@ -185,8 +185,8 @@ with the code. Read-only audit first, then fixes in small batches.
     | `.claude/learning/10-agent-trust-panel.md`                                | 57, 64   |
     | `.claude/learning/11-agent-directory-full-cohort.md`                      | 114, 157 |
     | `.claude/choices/0029-the-page-states-facts-and-stops-explaining-them.md` | 140      |
-    | `.github/pull_request_drafts/04-agent-trust-panel.md`                     | 73       |
-    | `.github/pull_request_drafts/05-import-erc8004-agent.md`                  | 56       |
+    | `docs/reference/pr-drafts/04-agent-trust-panel.md`                     | 73       |
+    | `docs/reference/pr-drafts/05-import-erc8004-agent.md`                  | 56       |
     | `scripts/measure/contrast.ts`                                             | 4        |
 
     **Deliberately not counted**, so the next sweep does not re-litigate them: `docs/tasks/08:227` ("not

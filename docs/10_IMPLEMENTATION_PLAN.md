@@ -19,7 +19,7 @@ git push --dry-run origin main
 Read access to `github.com/Wieedze/ARP` works; write does not. **No PR can be opened from here.**
 
 What ships instead: local branches with atomic commits, plus a complete PR body per branch in
-`.github/pull_request_drafts/`. Opening them afterwards is one command each — see §5.
+`docs/reference/pr-drafts/`. Opening them afterwards is one command each — see §5.
 
 ---
 
@@ -151,7 +151,7 @@ gh auth login                      # once
 git push -u origin docs/strategy-and-positioning
 gh pr create --base main --head docs/strategy-and-positioning \
   --title "docs: measured ERC-8004 positioning, ADRs 0015-0016, verify:pin" \
-  --body-file .github/pull_request_drafts/01-strategy-and-positioning.md
+  --body-file docs/reference/pr-drafts/01-strategy-and-positioning.md
 ```
 
 …and the same shape for each remaining branch. Merge order follows the dependency column in §1.

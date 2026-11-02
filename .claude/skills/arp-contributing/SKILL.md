@@ -70,7 +70,7 @@ Maxime has three other skills installed that this project relies on. Here's how 
 Use for:
 
 - Foundry project setup (`forge init`, `foundry.toml` config)
-- Writing Solidity (0.8.24+)
+- Writing Solidity (0.8.23 — `.claude/rules/solidity.md` says why)
 - Writing Foundry tests (fuzz, invariant, fork)
 - Gas optimization patterns
 - Deployment scripts

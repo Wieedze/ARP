@@ -11,7 +11,10 @@ If you find yourself wanting to add a rule to this file, **don't.** Add it to th
    - `docs/08`, `docs/09`, `docs/11` are **analysis, not commitment**. The measurements in `08` hold. Their differentiation arguments drifted; `12` corrects them.
    - `docs/00_HACKATHON_PIVOT.md` is **historical record** — why the MetaMask/Intuition stack was chosen. Deadline passed 2026-06-15.
 2. `docs/02_ARCHITECTURE.md` — locked architectural decisions.
-3. `docs/03_MVP_SCOPE.md` — extended (not replaced) by the pivot.
+3. `docs/03_MVP_SCOPE.md` — extended (not replaced) by the pivot. **Historical where superseded**:
+   its Base Sepolia `ModuleRegistry` deliverable is gone (ADR `0002` moved the target to testnet
+   13579, `59ac83a` deleted the contract under ADR `0055`); its header says so. `docs/04_SEED_MODULES.md`
+   is historical for the same reason.
 
 If three layers conflict, the higher-numbered (= more recent) wins. The original docs remain authoritative for anything the pivot doesn't address.
 
@@ -36,15 +39,14 @@ If three layers conflict, the higher-numbered (= more recent) wins. The original
 
 | If the task touches…                                         | Rules                                                             | Global skills                                                                                                                                                                                                                                                                                                                                                                | Local skill                  | Agent                                                           |
 | ------------------------------------------------------------ | ----------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------- | --------------------------------------------------------------- |
-| Solidity (`contracts/`)                                      | `code.md`, `solidity.md`, `security.md`                           | `ethskills`, `secure-workflow-guide`, `guidelines-advisor` (and `token-integration-analyzer` if a token is involved)                                                                                                                                                                                                                                                         | `arp`                        | `contract-reviewer`                                             |
-| Caveat enforcers (Task 02b)                                  | `code.md`, `solidity.md`, `security.md`, `metamask-delegation.md` | **Canonical**: `mms-smart-accounts-kit` (read `references/delegations.md` first — authoritative on `ICaveatEnforcer` interface). Plus: `ethskills`, `secure-workflow-guide`, `guidelines-advisor`, `mms-gator-cli` (CLI-driven testing). **Supplementary**: `docs/06_BEAR_TRAP_REFERENCE.md` for patterns, test density, security checklist — MetaMask wins on any conflict. | `arp`                        | `contract-reviewer`                                             |
-| MetaMask Smart Accounts / delegation / x402 (Tasks 03b, 04b) | `code.md`, `ui.md`, `metamask-delegation.md`                      | **Canonical**: `mms-smart-accounts-kit` + https://docs.metamask.io/smart-accounts-kit/. Plus: `ethskills`, `mms-gator-cli`.                                                                                                                                                                                                                                                  | `arp`                        | `ui-reviewer` (UI side) + manual SDK-vs-docs check              |
-| TypeScript or UI (`apps/web/`)                                    | `code.md`, `ui.md`                                                | —                                                                                                                                                                                                                                                                                                                                                                            | `arp`                        | `ui-reviewer`                                                   |
-| Intuition atoms / triples / queries / staking                | `code.md`, `portability.md`                                       | `intuition` (vendored at `.claude/skills/intuition/` — includes `operations/` and `reference/` subdirs)                                                                                                                                                                                                                                                                      | `arp`                        | `intuition-integrator`                                          |
-| Deployment scripts                                           | `code.md`, `solidity.md`, `security.md`                           | `ethskills`                                                                                                                                                                                                                                                                                                                                                                  | `arp`                        | `contract-reviewer` (review the script, not just contracts)     |
-| Docs only                                                    | —                                                                 | —                                                                                                                                                                                                                                                                                                                                                                            | `arp` (for tone and framing) | —                                                               |
-| Any task — at the end                                        | `workflow.md`, `claims.md`                                        | —                                                                                                                                                                                                                                                                                                                                                                            | —                            | `task-verifier` (**mandatory**)                                 |
-| Any task — at the end                                        | `workflow.md`, `claims.md`                                        | —                                                                                                                                                                                                                                                                                                                                                                            | —                            | `task-verifier` requires the evidence-ladder answer (see below) |
+| Solidity (`contracts/`)                                      | `code.md`, `solidity.md`, `security.md`                           | `ethskills`, `secure-workflow-guide`, `guidelines-advisor` (and `token-integration-analyzer` if a token is involved)                                                                                                                                                                                                                                                         | `arp-contributing`           | `contract-reviewer`                                             |
+| Caveat enforcers (Task 02b)                                  | `code.md`, `solidity.md`, `security.md`, `metamask-delegation.md` | **Canonical**: `mms-smart-accounts-kit` (read `references/delegations.md` first — authoritative on `ICaveatEnforcer` interface). Plus: `ethskills`, `secure-workflow-guide`, `guidelines-advisor`, `mms-gator-cli` (CLI-driven testing). **Supplementary**: `docs/06_BEAR_TRAP_REFERENCE.md` for patterns, test density, security checklist — MetaMask wins on any conflict. | `arp-contributing`           | `contract-reviewer`                                             |
+| MetaMask Smart Accounts / delegation / x402 (Tasks 03b, 04b) | `code.md`, `ui.md`, `metamask-delegation.md`                      | **Canonical**: `mms-smart-accounts-kit` + https://docs.metamask.io/smart-accounts-kit/. Plus: `ethskills`, `mms-gator-cli`.                                                                                                                                                                                                                                                  | `arp-contributing`           | `ui-reviewer` (UI side) + manual SDK-vs-docs check              |
+| TypeScript or UI (`apps/web/`)                                    | `code.md`, `ui.md`                                                | —                                                                                                                                                                                                                                                                                                                                                                            | `arp-contributing`           | `ui-reviewer`                                                   |
+| Intuition atoms / triples / queries / staking                | `code.md`, `portability.md`                                       | `intuition` (vendored at `.claude/skills/intuition/` — includes `operations/` and `reference/` subdirs)                                                                                                                                                                                                                                                                      | `arp-contributing`           | `intuition-integrator`                                          |
+| Deployment scripts                                           | `code.md`, `solidity.md`, `security.md`                           | `ethskills`                                                                                                                                                                                                                                                                                                                                                                  | `arp-contributing`           | `contract-reviewer` (review the script, not just contracts)     |
+| Docs only                                                    | —                                                                 | —                                                                                                                                                                                                                                                                                                                                                                            | `arp-contributing` (tone)    | —                                                               |
+| Any task — at the end                                        | `workflow.md`, `claims.md`                                        | —                                                                                                                                                                                                                                                                                                                                                                            | —                            | `task-verifier` (**mandatory**) — requires the evidence-ladder answer (see below) |
 
 Load only rules that match. Loading the full rules folder for every task defeats the purpose of splitting them.
 
@@ -127,10 +129,10 @@ ARP/
 │   ├── 00_HACKATHON_PIVOT.md         (historical record — why the MetaMask/Intuition stack)
 │   ├── 01_PROJECT_CONTEXT.md         (positioning — still authoritative)
 │   ├── 02_ARCHITECTURE.md            (locked decisions)
-│   ├── 03_MVP_SCOPE.md
-│   ├── 04_SEED_MODULES.md
+│   ├── 03_MVP_SCOPE.md            (historical where superseded — see its header)
+│   ├── 04_SEED_MODULES.md         (historical — Base Sepolia ModuleRegistry seed, see its header)
 │   ├── 05_UI_DESIGN.md
-│   ├── 06_BEAR_TRAP_REFERENCE.md     (supplementary example for Task 02b — MetaMask is canonical)
+│   ├── 06_BEAR_TRAP_REFERENCE.md     (historical — supplementary example for Task 02b, closed)
 │   ├── 07_INTUITION_ERC8004_PARTNER_GUIDE.md  (vendored Intuition partner guide — ADR 0015)
 │   ├── 08–11                         (analysis, not commitment — see "Source of authority")
 │   ├── 12_THE_IDEA.md                (THE canonical mechanism — read first)
@@ -151,6 +153,7 @@ ARP/
 │   │                                every outbound connection, and what it does NOT protect)
 │   ├── 23_INSTALLING_ARP.md         (one installer per runtime, how ARP gets listed and used,
 │   │                                the practices it follows — research; the plan is docs/tasks/33)
+│   ├── 24_AN_OUTSIDE_READ_OF_0094.md (analysis, not commitment — questions ADR `0094`)
 │   ├── 25_THE_DOMAIN_TREE.md        (was `18_THE_DOMAIN_TREE.md`; commits before 2026-10-30 cite it so)
 │   ├── 26_DEMO_PLAN.md              (how to demo ARP in Claude Desktop and in Claude Code, what to say
 │   │                                and what not to — kept for when a demo is needed)
@@ -169,8 +172,17 @@ ARP/
 │   │                                  key that signs `register()` and one approval (ADR 0110)
 │   ├── node/                          the agent node — listens, checks a payment, signs a receipt
 │   ├── hook/                          the runtime PostToolUse hook — no network
+│   ├── cli/                           `@arp-protocol/cli` — the MCP server, the hook and the node in
+│   │                                  one binary; `bun run packages` writes `packaging/`
+│   ├── sponsor/                       the sponsoring service, testnet 13579 only — holds ARP's
+│   │                                  treasury key, calls the MultiVault and nothing else (ADR 0092, 0094)
+│   ├── probe/                         Cloudflare Worker — asks each catalogued MCP endpoint whether
+│   │                                  it answers, on a cron; a dated fact, never on chain (ADR 0093)
 │   └── api/                           Cloudflare Worker — GitHub's and skills.sh's figures, cached
 │                                      and dated, never chain data (ADR 0084). Local only for now
+├── packaging/                         generated by `apps/cli` (`claude/`, `gemini/`) — do not edit;
+│                                      `bun run --cwd apps/cli packages --check` guards it
+├── .claude-plugin/                    the Claude Code plugin marketplace entry, generated with `packaging/`
 ├── packages/                          what is IMPORTED
 │   ├── graphql/                       `@arp-protocol/graphql` — HTTP transport, GraphQL client, every
 │   │                                  Intuition query document. Knows the schema, nothing about ARP
@@ -211,11 +223,10 @@ ARP/
     │   ├── portability.md             (anything touching a chain — testnet is a rehearsal)
     │   └── metamask-delegation.md     (Tasks 02b, 03b, 04b)
     ├── skills/
-    │   ├── arp/SKILL.md
+    │   ├── arp-contributing/SKILL.md
     │   ├── intuition/                 (vendored — Intuition protocol procedural knowledge)
     │   ├── mms-smart-accounts-kit/    (vendored from github.com/MetaMask/skills — do not edit)
-    │   ├── mms-gator-cli/             (vendored from github.com/MetaMask/skills — do not edit)
-    │   └── mms-oh-my-opencode/        (vendored, scoped to OpenCode — not used here)
+    │   └── mms-gator-cli/             (vendored from github.com/MetaMask/skills — do not edit)
     ├── agents/
     │   ├── task-verifier.md          (mandatory end-of-task)
     │   ├── contract-reviewer.md

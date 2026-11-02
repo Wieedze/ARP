@@ -92,11 +92,15 @@ None of the four hooks are `view`. State mutations are permitted — required fo
 | `afterHook`     | Once per caveat, after the execution                         |
 | `afterAllHook`  | Once per redemption, after all caveat-specific `afterHook`s  |
 
-For ARP MVP, both enforcers do their validation in `beforeHook` and leave the other three as no-ops (still required to be present to satisfy the interface).
+For ARP MVP, the enforcers do their validation in `beforeHook` and leave the other three as no-ops (still required to be present to satisfy the interface).
 
 > **Bear Trap caveat**: the Bear Trap brief at `docs/06_BEAR_TRAP_REFERENCE.md` shows a simplified 2-hook signature with parameter order `(terms, execution, mode, args, delegationHash, delegator, delegate)`. That signature is **stale**. Follow the 4-hook signature above. Bear Trap's _patterns_ (custom errors, mode guards, `delegationHash`-keyed state, single-purpose enforcers) are still correct; only the signature changed.
 
-### `DomainScopeEnforcer` (Task 02b)
+### `DomainScopeEnforcer` (Task 02b) — historical
+
+**Not a deliverable.** The source was deleted with `ModuleRegistry` in `59ac83a` (ADR `0055`); the
+copy deployed on mainnet 1155 is inert, with nothing to gate (`.claude/rules/security.md`). The
+specification below is kept as the record of task 02b.
 
 - `_terms` encodes `bytes32[] allowedDomainHashes` — the keccak256 hashes of each domain the agent is authorized to stake on. Hashing avoids string comparisons on-chain.
 - `_executionCalldata` decodes to the staking action, including the target tool atom ID (or its domain directly, depending on the Intuition staking method signature — confirm at Task 02b time).
@@ -132,7 +136,7 @@ For ARP MVP, both enforcers do their validation in `beforeHook` and leave the ot
 - Document the `block.timestamp` miner-manipulation tolerance (~15 s) in NatSpec — non-issue at our period scale (days) but worth recording.
 - Tests: 15-20 minimum including window expiration, exact-cap, fuzz over caps/amounts/timings. See `docs/06_BEAR_TRAP_REFERENCE.md`.
 
-### Both enforcers
+### Every enforcer
 
 - Custom errors only. No require strings.
 - NatSpec on every external function and the contract itself.
@@ -162,7 +166,7 @@ A delegation is an EIP-712-signed message that grants a delegate (the agent runn
 The flow:
 
 1. User configures the caveat parameters in the UI (allowed domains list; stake cap + period).
-2. App constructs the delegation payload via the SDK, including a `caveats` array referencing the deployed `DomainScopeEnforcer` and `TrustStakeCapEnforcer` addresses and their `terms` encodings.
+2. App constructs the delegation payload via the SDK, including a `caveats` array referencing the deployed ARP enforcer addresses (`TrustStakeCapEnforcer`; `DomainScopeEnforcer` is historical, above) and their `terms` encodings.
 3. User signs the delegation via MetaMask (EIP-712 signature).
 4. Signed delegation is stored client-side. The signature is what the agent presents at execution time.
 
@@ -198,11 +202,11 @@ If x402 integration grows beyond following the docs (e.g., custom resource-prici
 
 - Smart Account addresses → app state (in-memory or localStorage, never in code).
 - Signed delegations → client-side storage, **and on testnet 13579 an index on Intuition** (IPFS document + `delegate to` / `in context of` triples), published by ARP's sponsor relay or by the operator — ADR `0092`, `docs/tasks/37`. Mainnet publication is a new ADR.
-- Enforcer contract addresses → `data/deployments/<chainId>.json`, same convention as `ModuleRegistry`.
+- Enforcer contract addresses → `data/deployments/<chainId>.json`, like every other ARP deployment.
 
 ## Testing
 
-- Enforcers: 100% Foundry coverage including revert paths. Fork tests against deployed `ModuleRegistry` on Intuition Testnet for `DomainScopeEnforcer` (since it resolves atom domains).
+- Enforcers: 100% Foundry coverage including revert paths.
 - Smart Account flow: integration test that walks the full create → sign → execute → revert sequence on Intuition Testnet.
 - The UI demo flow must work end-to-end without manual intervention beyond the user signing.
 
@@ -210,4 +214,4 @@ If x402 integration grows beyond following the docs (e.g., custom resource-prici
 
 - Solidity enforcers → `contract-reviewer` agent (extended Trail of Bits checklist for caveat-specific concerns).
 - TypeScript SDK usage → `ui-reviewer` agent (for the UI side) + a manual review of SDK usage against the official docs.
-- The `task-verifier` checks the narrative-preservation question on every hackathon task: "Does this preserve the hackathon submission narrative?" Required answer in the completion report.
+- The `task-verifier` checks the evidence-ladder sentence on every task (`workflow.md`). The hackathon narrative question it replaced, on tasks 02b–05b, is retired.

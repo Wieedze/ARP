@@ -17,7 +17,6 @@
  */
 import { pinThing } from '../helpers/intuition-pin.js';
 import { requirePinAuth } from '../helpers/pin-env.js';
-import { DEFAULT_HEADER_NAME } from '../../apps/web/src/services/intuition-pin.js';
 import {
   isToolUrl,
   normaliseToolUrl,
@@ -31,13 +30,8 @@ if (urls.length === 0) {
   process.exit(2);
 }
 
-// `requirePinAuth` is the only sanctioned constructor of the branded credential (ADR `0016`);
-// `pinThing` here takes the plain shape, so the optional header name is resolved once.
-const credential = requirePinAuth();
-const auth = {
-  apiKey: credential.apiKey,
-  headerName: credential.headerName ?? DEFAULT_HEADER_NAME,
-};
+// `requirePinAuth` reads the credential from the environment (ADR `0016`), header name resolved.
+const auth = requirePinAuth();
 let failed = 0;
 
 for (const raw of urls) {

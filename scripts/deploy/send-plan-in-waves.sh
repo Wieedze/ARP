@@ -17,7 +17,8 @@ plan="${2:?missing plan path}"
 pause="${3:-2000}"
 wait_for="${4:-900}"
 
-total=$(python3 -c "import json;print(len(json.load(open('$plan'))))")
+# The path goes in as argv, never into the program text: a quote in it would be code.
+total=$(python3 -c 'import json, sys; print(len(json.load(open(sys.argv[1]))))' "$plan")
 from=${FROM:-0}
 wave=0
 
@@ -25,8 +26,12 @@ wave=0
 # The first version wrote each wave to a mktemp file and deleted it, so the hashes of 500+ writes
 # were gone the moment the wave ended — the terms are re-derivable (ids are pure functions of the
 # URL), a hash is not. `data/catalogue/*-13579.json` exists to hold them.
+# A fresh run starts the file; a resume (FROM= set above 0) appends, so the first waves' hashes
+# survive the restart that this script exists to make.
 hashes="${plan%.json}.hashes.txt"
-: >"$hashes"
+if [ "$from" -eq 0 ]; then
+  : >"$hashes"
+fi
 
 while [ "$from" -lt "$total" ]; do
   wave=$((wave + 1))

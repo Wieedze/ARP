@@ -37,11 +37,12 @@ The caller will pass:
 
 6. **Verify task-specific skill invocation.** If the task lists Trail of Bits or other skills, confirm there is evidence they were used (e.g., a `SECURITY_REVIEW.md` for contract tasks).
 
-7. **Hackathon narrative check (Tasks 02b, 03b, 04b, 05b only).** If the task is one of the hackathon-tagged tasks, the completion report must include a fourth section answering "Does this preserve the hackathon submission narrative?" in one sentence. Verify:
-   - The section is present.
-   - The answer is substantive (not "yes" with no reasoning).
-   - The reasoning references the narrative in `docs/00_HACKATHON_PIVOT.md` (the agent registers, declares tools, stakes TRUST, posts attestations under scoped delegation bounded by ARP enforcers).
-   - If the answer is "no" or the report contradicts the narrative, fail the verification with that as the primary reason.
+7. **Evidence-ladder check (every task).** The completion report must answer, in one sentence, "Which tier of the evidence ladder does this serve, and does it move ARP up it?" The ladder is `docs/09_POSITIONING_AND_PLAN.md` §3 — asserted, rated, staked, proven — and ARP's position is the last two (ADR `0022`). Verify:
+   - The answer is present.
+   - It names a tier, and says whether the task moves ARP up the ladder, with the reason (not "tier 3" alone).
+   - It is consistent with what the task actually shipped. A task that cannot name a tier has drifted: fail the verification with that as the primary reason, so it is reviewed before merging.
+
+   The hackathon narrative check this replaced (tasks 02b–05b, `docs/00_HACKATHON_PIVOT.md`) is retired; those tasks are closed.
 
 8. **Return verdict.**
 

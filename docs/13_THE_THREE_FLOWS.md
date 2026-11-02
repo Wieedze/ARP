@@ -138,7 +138,7 @@ Full spec and the measured table: `docs/tasks/17-the-external-verifier.md`.
 
 ### Phase 2 — hire
 
-`scripts/agent-server.ts` already signs a leaf delegation chained off a root and validates fees.
+`scripts/agent-server.ts` (removed in `bf20de0`, 2026-10-21, with the other hackathon runtimes) signed a leaf delegation chained off a root and validated fees.
 What is missing is hiring an agent that never signed anything: read its endpoint from the registration
 file, cap your own spend, pay, call, then `(A, uses, B)` + stake.
 
