@@ -1,7 +1,8 @@
 # Task 50 — Claude Desktop walks the loop, and an outside user pays nothing
 
-**Status:** **PLAN**, 2026-11-02. Nothing built. D1, D2 and D3 are decided (§3b). The ADRs they
-call for are next, then the build once task 49 is merged.
+**Status:** **BUILT**, 2026-11-02. D1, D2 and D3 are decided (§3b) and recorded (ADRs `0109`,
+`0110`). The sponsor side is merged (PR #37). The extension is on `feat/50-extension`. The web mint
+follows the chain toggle. Walked end to end on 13579 twice (§6).
 **Depends on:** task 49 (`feat/49-lean-search`): the Desktop startup fixes are in `b850a45`.
 **Owners:** session arp-7f (the extension, `apps/cli` and `apps/mcp`), session arp-30 (the web app,
 and this file).
@@ -120,7 +121,7 @@ content receipt counts toward proven is part of D2.
   it.
 - The route shapes were sent to arp-7f.
 
-Two sponsor routes the path needed. The user decided both on 2026-11-02 (ADR `0110`), and both are **built** the same day: `POST /mint-gas`, `POST /identity`, and `/deposit` creating a missing `uses` triple. 55 sponsor tests pass, and 825 protocol tests:
+Two sponsor routes the path needed. The user decided both on 2026-11-02 (ADR `0110`), and both are **built** the same day: `POST /mint-gas`, `POST /identity`, and `/deposit` creating a missing `uses` triple. 57 sponsor tests pass, and 827 protocol tests (re-counted by `task-verifier`):
 
 1. **Gas for the mint.** `/gas` pays only an agent that is already registered. An unregistered
    address has no bound yet: any address can ask.
@@ -167,3 +168,9 @@ compte … l'agent garde encore une fois les positions ».
 - **Known limit:** waiting for the indexer depends on the sponsor's error text, "no identity atom on
   the graph". If that wording changes, the first declaration fails instead of waiting.
 - **Not yet:** a content server online. Both servers are local for now (user, 2026-11-02).
+
+**The web mint row (§4), 2026-11-02, arp-30.** `/register?what=agent` mints on the chain the toggle
+says: ARP's registry on 13579 on testnet, Base's canonical registry on mainnet
+(`apps/web/src/services/identity-mint.ts`, `mintTargetFor`). The quote carries its chain, so a
+toggle flip between the quote and the signature cannot redirect the mint. 743 web tests pass, and
+`tsc -b`, lint and `check:tokens` are clean over `apps/web/src`.

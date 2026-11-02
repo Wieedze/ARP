@@ -1,6 +1,7 @@
 # Task 40 — The sponsoring service: a proven deposit, paid by ARP, owned by the agent
 
 **Status:** **BUILT**, 2026-10-30, not running: no key file, no deployment, no transaction sent.
+Running locally from 2026-11-02, when its first sponsored walks landed (`docs/tasks/50` §6).
 Built with task 37 (37b, 37c) as one service, `apps/sponsor`: the same treasury key, the same
 limits. Completion note at the end.
 **ADR:** `0094` §2 and §3, `0092`.

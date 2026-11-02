@@ -161,7 +161,9 @@ ARP/
 ├── contracts/                         Solidity (Foundry)
 ├── apps/                              what RUNS (ADR 0082)
 │   ├── web/                           TypeScript UI. Bound to testnet at module load, deliberately
-│   ├── mcp/                           the MCP server — stdio or HTTP, signs no transaction
+│   ├── mcp/                           the MCP server — stdio or HTTP, signs no transaction. Its
+│   │                                  Desktop build (`ARP_TOOLS=desktop`) holds a local agent key
+│   │                                  that signs `register()` and one approval (ADR 0110)
 │   ├── node/                          the agent node — listens, checks a payment, signs a receipt
 │   ├── hook/                          the runtime PostToolUse hook — no network
 │   └── api/                           Cloudflare Worker — GitHub's and skills.sh's figures, cached
