@@ -1,4 +1,4 @@
-import {useId, useState} from "react";
+import {useEffect, useId, useRef, useState} from "react";
 import {getAddress, isAddress, type Hex} from "viem";
 
 import {controlClass, primaryControlClass} from "../../lib/control-class";
@@ -41,12 +41,22 @@ export function DelegationForm({
     pending: boolean;
     onSign: (request: DelegationRequest) => void;
 }) {
-    const ids = {delegate: useId(), cap: useId()};
+    const ids = {delegate: useId(), cap: useId(), summary: useId()};
     const [delegate, setDelegate] = useState(suggestedDelegate ?? "");
     const [capInput, setCapInput] = useState("1");
     const [periodSeconds, setPeriodSeconds] = useState<bigint>(86_400n);
     const [request, setRequest] = useState<DelegationRequest | null>(null);
     const [error, setError] = useState<string | null>(null);
+    // Each step unmounts the control that had focus, so focus is placed by hand: on the sign act
+    // when the confirmation opens, back on Review when Back closes it. Not on first mount — the
+    // form does not take focus from wherever the reader is.
+    const signRef = useRef<HTMLButtonElement>(null);
+    const reviewRef = useRef<HTMLButtonElement>(null);
+    const stepped = useRef(false);
+    useEffect(() => {
+        if (!stepped.current) return;
+        (request === null ? reviewRef.current : signRef.current)?.focus();
+    }, [request]);
 
     function review() {
         const trimmed = delegate.trim();
@@ -60,14 +70,15 @@ export function DelegationForm({
             return;
         }
         setError(null);
+        stepped.current = true;
         // Checksummed, so the signed struct carries one spelling whatever case was typed.
         setRequest({delegate: getAddress(trimmed), cap: cap.cap, periodSeconds});
     }
 
     if (request !== null) {
         return (
-            <div className="max-w-[40rem] space-y-3" aria-live="polite">
-                <p className="text-[length:var(--text-body-sm)]">
+            <div className="max-w-[40rem] space-y-3">
+                <p id={ids.summary} className="text-[length:var(--text-body-sm)]">
                     Sign on {chainName} ({chainId}):{" "}
                     <span className="font-mono">{capInput.trim()}</span> {symbol} per{" "}
                     {PERIODS.find((p) => p.seconds === request.periodSeconds)?.label ?? "period"} to{" "}
@@ -75,8 +86,10 @@ export function DelegationForm({
                 </p>
                 <div className="flex gap-3">
                     <button
+                        ref={signRef}
                         type="button"
                         className={primaryControlClass}
+                        aria-describedby={ids.summary}
                         disabled={pending}
                         onClick={() => onSign(request)}
                     >
@@ -161,7 +174,7 @@ export function DelegationForm({
                     {error}
                 </p>
             )}
-            <button type="submit" className={controlClass}>
+            <button ref={reviewRef} type="submit" className={controlClass}>
                 Review
             </button>
         </form>

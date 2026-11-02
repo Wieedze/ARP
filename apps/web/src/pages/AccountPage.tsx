@@ -1,4 +1,4 @@
-import {useEffect, useState} from "react";
+import {useEffect, useId, useRef, useState} from "react";
 import {type Delegation} from "@metamask/smart-accounts-kit";
 
 import {DelegationForm} from "../components/account/DelegationForm";
@@ -126,9 +126,9 @@ function WalletSection({account, canSign}: {account: AccountDelegations; canSign
         <div>
             <h2 className={`${LABEL} mb-3`}>Wallet and Smart Account</h2>
             <dl className="grid grid-cols-[10rem_1fr] gap-x-6 gap-y-3 text-[length:var(--text-body-sm)]">
-                <dt className="text-[color:var(--color-steel)]">Wallet</dt>
+                <dt className={LABEL}>Wallet</dt>
                 <dd className="font-mono break-all">{account.operator}</dd>
-                <dt className="text-[color:var(--color-steel)]">Smart Account</dt>
+                <dt className={LABEL}>Smart Account</dt>
                 <dd className="font-mono break-all">
                     {sa === null
                         ? account.smartAccountError === null
@@ -136,7 +136,7 @@ function WalletSection({account, canSign}: {account: AccountDelegations; canSign
                             : `could not derive: ${errorText(account.smartAccountError)}`
                         : sa.address}
                 </dd>
-                <dt className="text-[color:var(--color-steel)]">Deployed on 13579</dt>
+                <dt className={LABEL}>Deployed on 13579</dt>
                 <dd className="font-mono">
                     {sa === null ? "—" : sa.isDeployed ? "yes" : "no"}
                     {sa !== null && !sa.isDeployed && canSign ? (
@@ -157,7 +157,7 @@ function WalletSection({account, canSign}: {account: AccountDelegations; canSign
                         </span>
                     )}
                 </dd>
-                <dt className="text-[color:var(--color-steel)]">Chain</dt>
+                <dt className={LABEL}>Chain</dt>
                 <dd>
                     <ChainToggle />
                 </dd>
@@ -205,6 +205,18 @@ function DelegationLine({
     canSign: boolean;
 }) {
     const [confirming, setConfirming] = useState(false);
+    // Opening the confirmation unmounts the Revoke button that had focus, and closing it unmounts
+    // the confirmation's, so focus is placed by hand both ways or it falls to <body>. A settled
+    // revoke goes to Export rather than Revoke: once the state is re-read the row has no Revoke.
+    const returnFocus = useRef<"revoke" | "export" | null>(null);
+    const revokeRef = useRef<HTMLButtonElement>(null);
+    const exportRef = useRef<HTMLButtonElement>(null);
+    useEffect(() => {
+        if (confirming || returnFocus.current === null) return;
+        const target = returnFocus.current === "revoke" ? revokeRef.current : null;
+        (target ?? exportRef.current)?.focus();
+        returnFocus.current = null;
+    }, [confirming]);
     const [copy, setCopy] = useState<"idle" | "copied" | "failed">("idle");
     useEffect(() => {
         if (copy !== "copied") return;
@@ -244,6 +256,7 @@ function DelegationLine({
                 <td className={`${TD} whitespace-nowrap text-right`}>
                     {canSign && row.state === "enabled" && !confirming ? (
                         <button
+                            ref={revokeRef}
                             type="button"
                             className={`${controlClass} mr-2`}
                             onClick={() => setConfirming(true)}
@@ -252,6 +265,7 @@ function DelegationLine({
                         </button>
                     ) : null}
                     <button
+                        ref={exportRef}
                         type="button"
                         className={controlClass}
                         onClick={() => {
@@ -285,10 +299,16 @@ function DelegationLine({
                         <RevokeConfirm
                             delegation={row.stored.delegation}
                             pending={revoking}
-                            onCancel={() => setConfirming(false)}
+                            onCancel={() => {
+                                returnFocus.current = "revoke";
+                                setConfirming(false);
+                            }}
                             onConfirm={() =>
                                 account.revoke.mutate(row.stored.delegation, {
-                                    onSettled: () => setConfirming(false),
+                                    onSettled: () => {
+                                        returnFocus.current = "export";
+                                        setConfirming(false);
+                                    },
                                 })
                             }
                         />
@@ -310,9 +330,14 @@ function RevokeConfirm({
     onCancel: () => void;
     onConfirm: () => void;
 }) {
+    const summaryId = useId();
+    const confirmRef = useRef<HTMLButtonElement>(null);
+    // The Revoke click that opened this unmounted the focused button; focus lands on the act, and
+    // the sentence is its description, so a screen reader reads what is about to be signed.
+    useEffect(() => confirmRef.current?.focus(), []);
     return (
         <div role="group" aria-label="Confirm revocation" className="space-y-3">
-            <p>
+            <p id={summaryId}>
                 Revoke on {TESTNET}: your Smart Account signs a one-call delegation, then your
                 wallet sends <span className="font-mono">disableDelegation</span> to{" "}
                 <span className="font-mono">
@@ -323,8 +348,10 @@ function RevokeConfirm({
             </p>
             <div className="flex gap-3">
                 <button
+                    ref={confirmRef}
                     type="button"
                     className={primaryControlClass}
+                    aria-describedby={summaryId}
                     disabled={pending}
                     onClick={onConfirm}
                 >

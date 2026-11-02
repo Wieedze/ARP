@@ -221,6 +221,46 @@ describe("the account page", () => {
         expect(acct.sign.mutate).not.toHaveBeenCalled();
     });
 
+    it("keeps keyboard focus through the revoke confirmation and back", () => {
+        const acct = account();
+        renderWithProviders(<AccountPage account={acct} />);
+
+        fireEvent.click(screen.getByRole("button", {name: "Revoke"}));
+        const confirm = screen.getByRole("button", {name: "Revoke in wallet"});
+        expect(confirm).toHaveFocus();
+        expect(confirm).toHaveAccessibleDescription(/disableDelegation/);
+
+        fireEvent.click(screen.getByRole("button", {name: "Cancel"}));
+        expect(screen.getByRole("button", {name: "Revoke"})).toHaveFocus();
+    });
+
+    it("returns focus to Export once a revoke settles", () => {
+        const acct = account();
+        vi.mocked(acct.revoke.mutate).mockImplementation((_delegation, options) => {
+            options?.onSettled?.(undefined, null, _delegation, undefined, undefined as never);
+        });
+        renderWithProviders(<AccountPage account={acct} />);
+        fireEvent.click(screen.getByRole("button", {name: "Revoke"}));
+        fireEvent.click(screen.getByRole("button", {name: "Revoke in wallet"}));
+        expect(screen.queryByRole("group", {name: "Confirm revocation"})).toBeNull();
+        expect(screen.getByRole("button", {name: "Export"})).toHaveFocus();
+    });
+
+    it("keeps keyboard focus through the delegation review and back", () => {
+        renderWithProviders(<AccountPage account={account({rows: []})} />);
+        // The form does not take focus on its own first mount.
+        expect(screen.getByRole("button", {name: "Review"})).not.toHaveFocus();
+        fireEvent.change(screen.getByLabelText("Delegate"), {target: {value: RUNTIME}});
+        fireEvent.click(screen.getByRole("button", {name: "Review"}));
+
+        const sign = screen.getByRole("button", {name: "Sign in wallet"});
+        expect(sign).toHaveFocus();
+        expect(sign).toHaveAccessibleDescription(/Sign on .*\(13579\)/);
+
+        fireEvent.click(screen.getByRole("button", {name: "Back"}));
+        expect(screen.getByRole("button", {name: "Review"})).toHaveFocus();
+    });
+
     it("asks for a wallet when none is connected", () => {
         renderWithProviders(<AccountPage account={account({operator: undefined})} />);
         expect(screen.getByText(/Connect a wallet/)).toBeInTheDocument();

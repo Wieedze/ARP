@@ -15,6 +15,12 @@ import {useAccount, useConnect, useDisconnect} from "wagmi";
  * (typically just MetaMask `injected` and optionally WalletConnect), so a
  * dropdown is the right surface.
  */
+// The unlayered `button` rule in `index.css` sets border, radius and background, and beats every
+// Tailwind utility for them, so each one is forced with `!`. Hover is a background change only
+// (`rules/ui.md`), and with no border the focus ring is an outline.
+const MENU_ITEM =
+    "block w-full rounded-none! border-0! px-3 py-2 text-left hover:bg-[color:var(--color-raised)]! focus-visible:outline focus-visible:outline-1 focus-visible:-outline-offset-1 focus-visible:outline-[color:var(--color-accent)]";
+
 export function WalletConnect() {
     const {address, isConnected, status} = useAccount();
     const {connectors, connect, isPending: isConnectPending} = useConnect();
@@ -96,55 +102,58 @@ export function WalletConnect() {
                 {short}
             </button>
             {open ? (
-                <div
-                    role="menu"
-                    className="absolute right-0 top-full mt-1 w-44 border border-[color:var(--color-rule-strong)] bg-[color:var(--color-ground)] text-[length:var(--text-body-sm)]"
-                >
-                    <button
-                        type="button"
-                        role="menuitem"
-                        onClick={() => {
-                            setCopyFailed(false);
-                            // The menu closes only once the address is on the clipboard; a refused
-                            // write, or no clipboard at all (insecure context), keeps it open.
-                            Promise.resolve()
-                                .then(() => navigator.clipboard.writeText(address))
-                                .then(
-                                    () => setOpen(false),
-                                    () => setCopyFailed(true),
-                                );
-                        }}
-                        className="block w-full border-0 px-3 py-2 text-left hover:text-[color:var(--color-accent)]"
-                    >
-                        Copy address
-                    </button>
+                <div className="absolute right-0 top-full mt-1 w-44 border border-[color:var(--color-rule-strong)] bg-[color:var(--color-ground)] text-[length:var(--text-body-sm)]">
+                    <div role="menu">
+                        <button
+                            type="button"
+                            role="menuitem"
+                            onClick={() => {
+                                setCopyFailed(false);
+                                // The menu closes only once the address is on the clipboard; a refused
+                                // write, or no clipboard at all (insecure context), keeps it open.
+                                Promise.resolve()
+                                    .then(() => navigator.clipboard.writeText(address))
+                                    .then(
+                                        () => setOpen(false),
+                                        () => setCopyFailed(true),
+                                    );
+                            }}
+                            className={MENU_ITEM}
+                        >
+                            Copy address
+                        </button>
+                        <button
+                            type="button"
+                            role="menuitem"
+                            onClick={() => {
+                                setOpen(false);
+                                navigate("/account");
+                            }}
+                            className={MENU_ITEM}
+                        >
+                            Account
+                        </button>
+                        <button
+                            type="button"
+                            role="menuitem"
+                            onClick={() => {
+                                disconnect();
+                                setOpen(false);
+                            }}
+                            className={MENU_ITEM}
+                        >
+                            Disconnect
+                        </button>
+                    </div>
+                    {/* Outside `role="menu"`, whose owned children may only be menu items. */}
                     {copyFailed ? (
-                        <p role="alert" className="px-3 pb-2 text-[color:var(--color-steel)]">
+                        <p
+                            role="alert"
+                            className="border-t border-[color:var(--color-rule)] px-3 py-2 text-[color:var(--color-steel)]"
+                        >
                             Copy failed
                         </p>
                     ) : null}
-                    <button
-                        type="button"
-                        role="menuitem"
-                        onClick={() => {
-                            setOpen(false);
-                            navigate("/account");
-                        }}
-                        className="block w-full border-0 px-3 py-2 text-left hover:text-[color:var(--color-accent)]"
-                    >
-                        Account
-                    </button>
-                    <button
-                        type="button"
-                        role="menuitem"
-                        onClick={() => {
-                            disconnect();
-                            setOpen(false);
-                        }}
-                        className="block w-full border-0 px-3 py-2 text-left hover:text-[color:var(--color-accent)]"
-                    >
-                        Disconnect
-                    </button>
                 </div>
             ) : null}
         </div>

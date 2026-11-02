@@ -67,7 +67,11 @@ describe("the wallet menu", () => {
         Object.defineProperty(navigator, "clipboard", {value: {writeText}, configurable: true});
         renderMenu();
         fireEvent.click(screen.getByRole("menuitem", {name: "Copy address"}));
-        expect(await screen.findByRole("alert")).toHaveTextContent("Copy failed");
-        expect(screen.getByRole("menu")).toBeInTheDocument();
+        const alert = await screen.findByRole("alert");
+        expect(alert).toHaveTextContent("Copy failed");
+        const menu = screen.getByRole("menu");
+        // A menu owns menu items only; the alert sits beside it.
+        expect(menu).not.toContainElement(alert);
+        expect(menu.children).toHaveLength(3);
     });
 });
