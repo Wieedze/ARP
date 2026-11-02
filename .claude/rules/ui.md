@@ -114,7 +114,10 @@ Strip these reflexes. If you find yourself reaching for one, stop.
 
 - Max content width is intentional, not the viewport.
 - Lists are dense by default. A list of modules shows ~15+ rows above the fold on a 13" laptop.
-- Detail views use a two-column layout: metadata on the left, content on the right. Not stacked.
+- Detail views use a two-column layout: **content on the left, facts on the right**, in cards, in a
+  `minmax(20rem,26rem)` column. Not stacked above `lg`. The skill page is the reference. This read
+  "metadata on the left" until 2026-11-02. The skill and repo pages already did the opposite, and
+  the user chose them as the model (ADR `0104`).
 - Forms are single-column. Labels above inputs, never beside.
 
 ## Copy
