@@ -1,3 +1,4 @@
+import type {PublicClient} from "viem";
 import {describe, expect, it, vi} from "vitest";
 import {asAgentIdentityAtom, type AgentIdentityAtom} from "@arp-protocol/core";
 import {parseEther, type Address, type Hex} from "viem";
@@ -13,6 +14,10 @@ import {
 } from "../declare-use";
 import {MAX_STAKE_WEI} from "../trust-stake";
 import {DEFAULT_TEST_ACCOUNT, makeMockPublicClient, type MockPublicClient} from "./fixtures";
+
+/** A `StakeChain` carries its client for the hooks; the services take theirs as an argument. */
+// Never read by the service under test, so an empty object is a safe stand-in.
+const UNREAD_CLIENT = {} as PublicClient;
 
 /**
  * Tests for the write path on `/atom/:atomId` — the one that pays a non-recoverable fee.
@@ -56,6 +61,7 @@ const TESTNET = {
     symbol: "tTRUST",
     explorerUrl: "https://testnet.explorer.intuition.systems",
     isMainnet: false,
+    client: UNREAD_CLIENT,
 } as const;
 
 const MAINNET = {
@@ -65,6 +71,7 @@ const MAINNET = {
     symbol: "TRUST",
     explorerUrl: "https://explorer.intuition.systems",
     isMainnet: true,
+    client: UNREAD_CLIENT,
 } as const;
 
 const AGENT = {chainId: 8453, tokenId: "1380"};

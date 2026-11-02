@@ -1,7 +1,8 @@
 import {createContext, useContext} from "react";
-import {createPublicClient, http, type Address, type Chain, type PublicClient} from "viem";
+import type {Address, Chain, PublicClient} from "viem";
 
 import {intuitionTestnet} from "./chains";
+import {publicClientFor} from "./clients";
 import {deployments} from "./deployments";
 import {
     INTUITION_MAINNET_EXPLORER,
@@ -68,37 +69,40 @@ export type ChainChoice = {
     /** The native token's symbol — TRUST on 1155, tTRUST on 13579. Shown beside every amount. */
     symbol: string;
     isMainnet: boolean;
-    /** A read-only client for this chain, memoised so hooks do not build one per render. */
+    /** A read-only client for this chain, shared by every caller on it. */
     client: PublicClient;
 };
 
 const MAINNET_GRAPHQL = "https://mainnet.intuition.sh/v1/graphql";
 const TESTNET_GRAPHQL = "https://testnet.intuition.sh/v1/graphql";
 
+const MAINNET_CHOICE: ChainChoice = {
+    chain: intuitionMainnet,
+    chainId: intuitionMainnet.id,
+    graphqlUrl: MAINNET_GRAPHQL,
+    multiVault: INTUITION_MAINNET_MULTIVAULT,
+    explorerUrl: INTUITION_MAINNET_EXPLORER,
+    label: "Mainnet",
+    symbol: "TRUST",
+    isMainnet: true,
+    client: publicClientFor(intuitionMainnet),
+};
+
+const TESTNET_CHOICE: ChainChoice = {
+    chain: intuitionTestnet,
+    chainId: intuitionTestnet.id,
+    graphqlUrl: TESTNET_GRAPHQL,
+    multiVault: deployments.intuition.multiVault,
+    explorerUrl: deployments.chain.explorerUrl,
+    label: "Testnet",
+    symbol: "tTRUST",
+    isMainnet: false,
+    client: publicClientFor(intuitionTestnet),
+};
+
+/** One object per chain for the life of the page, so its client and its identity are stable. */
 export function choiceFor(isMainnet: boolean): ChainChoice {
-    return isMainnet
-        ? {
-              chain: intuitionMainnet,
-              chainId: intuitionMainnet.id,
-              graphqlUrl: MAINNET_GRAPHQL,
-              multiVault: INTUITION_MAINNET_MULTIVAULT,
-              explorerUrl: INTUITION_MAINNET_EXPLORER,
-              label: "Mainnet",
-              symbol: "TRUST",
-              isMainnet: true,
-              client: createPublicClient({chain: intuitionMainnet, transport: http()}),
-          }
-        : {
-              chain: intuitionTestnet,
-              chainId: intuitionTestnet.id,
-              graphqlUrl: TESTNET_GRAPHQL,
-              multiVault: deployments.intuition.multiVault,
-              explorerUrl: deployments.chain.explorerUrl,
-              label: "Testnet",
-              symbol: "tTRUST",
-              isMainnet: false,
-              client: createPublicClient({chain: intuitionTestnet, transport: http()}),
-          };
+    return isMainnet ? MAINNET_CHOICE : TESTNET_CHOICE;
 }
 
 export const CHAIN_STORAGE_KEY = "arp.chain.v1";

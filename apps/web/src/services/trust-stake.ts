@@ -78,6 +78,11 @@ export type StakeChain = {
      */
     explorerUrl: string;
     isMainnet: boolean;
+    /**
+     * A read client for this same chain. Every simulate, guard read and receipt wait on a write
+     * uses this one, so a toggle moved after pricing cannot point them at another chain.
+     */
+    client: PublicClient;
 };
 
 export type StakeSide = "support" | "oppose";

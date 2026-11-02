@@ -1,3 +1,4 @@
+import type {PublicClient} from "viem";
 import {readFileSync} from "node:fs";
 import {fileURLToPath} from "node:url";
 
@@ -48,6 +49,10 @@ import {
 import {caip10Uri} from "../delegation-redeem";
 import {StakeGuardError} from "../trust-stake";
 
+/** A `StakeChain` carries its client for the hooks; the services take theirs as an argument. */
+// Never read by the service under test, so an empty object is a safe stand-in.
+const UNREAD_CLIENT = {} as PublicClient;
+
 /**
  * Two real agents, with the owners the live Base registry actually returns.
  *
@@ -66,6 +71,7 @@ const MAINNET = {
     symbol: "TRUST",
     explorerUrl: "https://explorer.intuition.systems",
     isMainnet: true,
+    client: UNREAD_CLIENT,
 } as const;
 
 const OPERATOR_PK: Hex = `0x${"07".repeat(32)}`;

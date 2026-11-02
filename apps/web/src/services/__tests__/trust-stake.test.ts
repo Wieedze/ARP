@@ -1,3 +1,4 @@
+import type {PublicClient} from "viem";
 import {beforeEach, describe, expect, it, vi, type Mock} from "vitest";
 import {parseEther, zeroAddress, type Account, type Address, type Hex} from "viem";
 
@@ -29,6 +30,10 @@ import {
 
 import {DEFAULT_TEST_ACCOUNT, DEFAULT_TEST_ADDRESS, readContractDispatcher} from "./fixtures";
 
+/** A `StakeChain` carries its client for the hooks; the services take theirs as an argument. */
+// Never read by the service under test, so an empty object is a safe stand-in.
+const UNREAD_CLIENT = {} as PublicClient;
+
 const TRIPLE: Hex = `0x${"11".repeat(32)}`;
 const COUNTER: Hex = `0x${"99".repeat(32)}`;
 /** An agent's identity atom. No counter vault exists for it — ADR `0056`. */
@@ -48,6 +53,7 @@ const MAINNET = {
     symbol: "TRUST",
     explorerUrl: "https://explorer.intuition.systems",
     isMainnet: true,
+    client: UNREAD_CLIENT,
 } as const;
 
 const TESTNET = {
@@ -57,6 +63,7 @@ const TESTNET = {
     symbol: "tTRUST",
     explorerUrl: "https://testnet.explorer.intuition.systems",
     isMainnet: false,
+    client: UNREAD_CLIENT,
 } as const;
 
 type StakeMockPublicClient = {

@@ -257,7 +257,7 @@ export function StakeControl({
         try {
             broadcast = await submit(quote);
             setPhase({step: "sent", quote, hash: broadcast});
-            await awaitReceipt(broadcast);
+            await awaitReceipt(broadcast, quote.chain);
             setPhase({step: "done", quote, hash: broadcast});
             onInFlightChange?.(false);
             onSettled();

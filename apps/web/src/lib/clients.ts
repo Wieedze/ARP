@@ -1,15 +1,20 @@
-import {createPublicClient, http} from "viem";
+import {createPublicClient, http, type Chain, type PublicClient} from "viem";
 
 import {intuitionTestnet} from "./chains";
 
+const clients = new Map<number, PublicClient>();
+
 /**
- * Read-only public client bound to Intuition Testnet. Used for all view
- * calls (`readContract`, `simulateContract`, `getAtomCost`, etc.). Constructed
- * from the same `intuitionTestnet` chain definition consumed by the UI
- * (Wagmi later wraps this in Task 04+), so the chain ID and RPC URL are
- * the single source of truth declared in `chains.ts`.
+ * The one read client per chain id for the life of the page. Every caller shares it, so a page
+ * that renders a hundred rows opens one transport per chain rather than one per row.
  */
-export const publicClient = createPublicClient({
-    chain: intuitionTestnet,
-    transport: http(),
-});
+export function publicClientFor(chain: Chain): PublicClient {
+    const cached = clients.get(chain.id);
+    if (cached !== undefined) return cached;
+    const client = createPublicClient({chain, transport: http()});
+    clients.set(chain.id, client);
+    return client;
+}
+
+/** Intuition Testnet, where ARP's own contracts are. */
+export const publicClient = publicClientFor(intuitionTestnet);
