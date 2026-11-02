@@ -13,7 +13,7 @@
  *  Sampling is uniform over token ids 1..TOTAL, so results carry sampling error; print n with
  *  any number taken from it. Not every class it counts is a defect — see the three groups in
  *  the task spec. `templated` and non-HTTP identifiers are *unprobeable*, not broken. */
-import { highestTokenId } from './erc8004-population.js';
+import { highestTokenId } from '../helpers/erc8004-population.js';
 import type { JsonRpcReply } from '../helpers/shapes.js';
 const RPC = 'https://base-rpc.publicnode.com';
 const REGISTRY = '0x8004A169FB4a3325136EB29fA0ceB6D2e539a432';
@@ -41,7 +41,7 @@ async function tokenURI(id: number): Promise<string | null> {
   return new TextDecoder().decode(new Uint8Array(b.map((x) => parseInt(x, 16))));
 }
 
-// Read, never hardcoded — see `erc8004-population.ts`. A fixed 88243 sampled the oldest third.
+// Read, never hardcoded — see `scripts/helpers/erc8004-population.ts`. A fixed 88243 sampled the oldest third.
 const TOTAL = await highestTokenId(),
   N = Number(process.argv[2] ?? 120);
 const ids = Array.from({ length: N }, () => 1 + Math.floor(Math.random() * TOTAL));

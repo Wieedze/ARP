@@ -23,50 +23,8 @@
  *  Read-only. Signs nothing, needs no key.
  */
 const INTUITION_MAINNET = 'https://mainnet.intuition.sh/v1/graphql';
-const BASE_RPC = process.env.BASE_RPC_URL ?? 'https://base-rpc.publicnode.com';
-const REGISTRY = '0x8004A169FB4a3325136EB29fA0ceB6D2e539a432' as const;
-
 import { ERC8004, IMPLEMENT, SAME_AS } from '../../packages/protocol/src/sources/intuition/terms';
-import { createPublicClient, http, toFunctionSelector, type Hex } from 'viem';
-
-const OWNER_OF = toFunctionSelector('function ownerOf(uint256) view returns (address)');
-const client = createPublicClient({ transport: http(BASE_RPC) });
-
-/** True when the token is minted. `ownerOf` reverts on a missing id, so a revert is the answer. */
-async function exists(tokenId: number): Promise<boolean> {
-  const data = (OWNER_OF + tokenId.toString(16).padStart(64, '0')) as Hex;
-  try {
-    const res = await client.call({ to: REGISTRY, data });
-    return res.data !== undefined && res.data !== '0x';
-  } catch {
-    return false;
-  }
-}
-
-/**
- * The highest minted token id, by exponential probe then bisection — about 40 calls for a
- * half-million range, which is why this is a script and not something called per request.
- *
- * It assumes ids are **contiguous from 1**, which is how ADR `0027` read this registry. A burn or a
- * gap would make it an upper bound rather than a count, so it is printed as "highest minted id" and
- * the ratio below is the figure to quote.
- */
-async function highestTokenId(): Promise<number> {
-  if (!(await exists(1))) return 0;
-  let low = 1;
-  let high = 2;
-  while (await exists(high)) {
-    low = high;
-    high *= 2;
-    if (high > 1 << 26) break;
-  }
-  while (high - low > 1) {
-    const mid = Math.floor((low + high) / 2);
-    if (await exists(mid)) low = mid;
-    else high = mid;
-  }
-  return low;
-}
+import { CANONICAL_REGISTRY as REGISTRY, highestTokenId } from '../helpers/erc8004-population.js';
 
 const QUERY = `query CohortCoverage($implement: String!, $erc8004: String!, $sameAs: String!) {
   mirrored: triples_aggregate(
