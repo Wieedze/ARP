@@ -2,7 +2,7 @@
 
 **Generated** 2026-11-02 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-109 decisions. Newest last. `choices/README.md` says when to write one.
+110 decisions. Newest last. `choices/README.md` says when to write one.
 
 ## Not accepted
 
@@ -26,6 +26,7 @@ Read these before relying on them.
 - **0099** (Deferred (mainnet)) — Sponsorship is a match on the agent's own deposit, paid after it has been held
 - **0100** (Proposed) — `/account` revokes through a one-shot delegation, keeps a list, and holds no key
 - **0101** (Proposed; the v2 receipt itself is the user's decision (2026-10-30), the shape is this task's) — The hire receipt v2 names the one verifier it is for, and the hirer chooses it
+- **0113** (Deferred (mainnet port). The user's decision, 2026-11-02: « intéressant mais inutile en) — Who may speak for an agent's identity: trusted writers, the market, then ambiguity
 
 ## All
 
@@ -140,3 +141,4 @@ Read these before relying on them.
 | [0110](0110-the-desktop-extension-holds-a-local-agent-key.md) | 2026-11-02 | Accepted | The Desktop extension holds a local agent key, for identity and off-chain signatures |
 | [0111](0111-a-query-must-match-every-word.md) | 2026-11-02 | Accepted | A query must match every word, and an empty query answer suggests nothing |
 | [0112](0112-one-product-two-ways-to-pay-and-a-free-badge.md) | 2026-11-02 | Accepted | One product, two ways to pay, a data licence for aggregators, and a free badge |
+| [0113](0113-who-may-speak-for-an-agent-identity.md) | 2026-11-02 | Deferred (mainnet port). The user's decision, 2026-11-02: « intéressant mais inutile en | Who may speak for an agent's identity: trusted writers, the market, then ambiguity |

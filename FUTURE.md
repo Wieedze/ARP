@@ -352,3 +352,12 @@ action. A payment the chain records does: one agent hires another and pays its n
 agent signs a hire receipt that `apps/sponsor` and `ReceiptEnforcer` verify (tasks 43 and 44,
 ADRs `0083`, `0098`, `0101`). That path is built, but it is not wired into either demo. Check what
 the node needs running end to end on testnet before planning it.
+
+## Who may speak for an agent's identity
+
+**Asked 2026-11-02**, deferred to the mainnet port: « intéressant mais inutile en démo ». A `same as`
+cannot be deleted, so a stranger's mistaken or malicious edge must not block an agent for good. The
+design is in ADR `0113`:
+1. only `same as` edges written by the agent's owner or a trusted writer count;
+2. an edge the market opposes is ignored;
+3. the sponsor refuses only when two counted edges name two agents.
