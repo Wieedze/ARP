@@ -328,3 +328,27 @@ may be. Re-run `scripts/measure/discovery-eval.ts` before and after.
 
 The alternative left aside: a small local embedding model in the server (tens of MB in the
 extension, an estimate, not measured). There is no third party, but it adds weight, and it does not add skills.sh's coverage.
+
+## One install for Claude Desktop and Claude Code, with one agent
+
+**Asked 2026-11-02**, as important: _« ça c'est important aussi »_, about the list of later items.
+
+Today they are two packages: the `.mcpb` extension for Desktop Chat and the Claude Code plugin
+installed by `arp init`. Each creates its own key, so the same person shows up as two agents. On the
+user's machine, Desktop is agent #10, under `C:\Users\Max\.arp\`, and Claude Code would hold its own
+key in WSL's `~/.arp/`. Claude Code does not load `.mcpb` extensions. Whether `claude mcp
+add-from-claude-desktop` picks up an extension has not been checked.
+
+**What it would be.** One installer that sets up both and shares one key. It needs a decision on
+where that key lives when Desktop runs on Windows and Claude Code in WSL, because they do not share
+a home directory.
+
+## A demo where one agent pays another: evidence of an action
+
+**Asked 2026-11-02**, as important (same message). `docs/26_DEMO_PLAN.md` §5.
+
+The receipt proves a skill was served, and the hook proves it was invoked. Neither proves an
+action. A payment the chain records does: one agent hires another and pays its node, and the paid
+agent signs a hire receipt that `apps/sponsor` and `ReceiptEnforcer` verify (tasks 43 and 44,
+ADRs `0083`, `0098`, `0101`). That path is built, but it is not wired into either demo. Check what
+the node needs running end to end on testnet before planning it.
