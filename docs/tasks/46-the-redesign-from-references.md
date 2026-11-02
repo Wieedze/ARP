@@ -40,6 +40,8 @@ measured in a headless browser on 2026-11-02. `/agents` already paged by 25.
 put display type back at 88px (`index.css`, the comment on `--text-display`). A `—` in an empty
 cell reverses the decision written in `ToolCatalogList.tsx` that a zero is blanked.
 
+**Done** 2026-11-02, `21eb064`. ui-reviewer PASS, task-verifier PASS, post-mortem `.claude/learning/36-the-redesign-from-references.md`.
+
 **Tests.** `pageOfTools`, 4 in `services/__tests__/tool-rank.test.ts`. The page, 4 in
 `pages/ToolCatalog.test.tsx`: 25 rows and stepping, and the return to page 1 on order, index and
 domain. With the three resets removed, 3 of the 4 fail.
