@@ -87,12 +87,10 @@ function PositionsView({view}: {view: ProfileView}) {
     }
 
     return (
-        /* `rules/ui.md` says "metadata on the left, content on the right" and this is the other way
-           round, deliberately: the lead figure is the content, and it has to come first in reading
-           order *and* first in the DOM for a screen reader. Putting the metadata column first would
-           make a keyboard or screen-reader user traverse five secondary numbers before reaching the
-           one the page is about. `workflow.md` allows a rule to be broken with cause as long as the
-           break is recorded, so it is recorded here. */
+        /* Content left, facts right, which is `rules/ui.md`'s rule since ADR `0104`. This view did it
+           first, as a recorded break of the old "metadata on the left": the lead figure has to come
+           first in reading order *and* first in the DOM, or a keyboard or screen-reader user
+           traverses five secondary numbers before the one the page is about. */
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_20rem] gap-x-12 gap-y-10">
             <div className="min-w-0">
                 {/* The label changes rather than the number being hidden: redeeming an appreciated
