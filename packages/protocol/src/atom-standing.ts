@@ -42,7 +42,7 @@ import type {MarketSide, Provenance} from "./types.js";
  * tool is worth something, depositing on `(agent, uses, slither)` says that one claim is true. ADR
  * `0056`.
  *
- * It carries **no evidence tier**. `tool-usage-view.ts` grades `uses` edges on `docs/14`'s ladder,
+ * It carries **no evidence tier**. `docs/14`'s ladder grades the evidence behind a `uses` edge,
  * which is the right question on an agent's page and the wrong one here: a `has tag` edge is not
  * weak evidence of a tag, it is a declaration whose only cost is what the writer paid. Grading it
  * would invent a scale the data does not carry.

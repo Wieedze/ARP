@@ -6,7 +6,7 @@ import type {RecentDeclaration} from "@arp-protocol/core";
  * `getRecentDeclarations` returns edges; the page shows **who used what** and **who used this**,
  * which are the same edges grouped by their two ends. That grouping is pure data work with no React
  * in it, so it lives here with the repo's other `*-view.ts` modules (`atom-standing-view`,
- * `term-shape-view`, `tool-usage-view`) rather than inside the page — `rules/code.md`: a service
+ * `term-shape-view`) rather than inside the page — `rules/code.md`: a service
  * never imports from React, and a component never does business logic.
  *
  * It needs no route parameter, which is why the landing can make it at all: `findAgents` wants a

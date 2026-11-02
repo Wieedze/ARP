@@ -1,6 +1,5 @@
-import type {PublicClient} from "viem";
 import {beforeEach, describe, expect, it, vi} from "vitest";
-import {parseEther, type Address, type Hex} from "viem";
+import {parseEther, type Address, type Hex, type PublicClient} from "viem";
 
 import {INTUITION_MAINNET_CHAIN_ID, intuitionMainnet} from "../../lib/intuition-mainnet";
 import {MAX_STAKE_WEI} from "../trust-stake";

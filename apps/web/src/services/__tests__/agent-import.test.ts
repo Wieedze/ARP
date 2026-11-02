@@ -1,4 +1,3 @@
-import type {PublicClient} from "viem";
 import {readFileSync} from "node:fs";
 import {fileURLToPath} from "node:url";
 
@@ -20,6 +19,7 @@ import {
     type Account,
     type Address,
     type Hex,
+    type PublicClient,
 } from "viem";
 import {privateKeyToAccount} from "viem/accounts";
 import {beforeEach, describe, expect, it, vi, type Mock} from "vitest";
@@ -34,6 +34,7 @@ import {
     ARP_IMPORT_CONTEXT,
     buildImportConsent,
     caip10AccountUris,
+    caip10Uri,
     ImportGuardError,
     planOperatorLink,
     randomImportNonce,
@@ -46,7 +47,6 @@ import {
     type ImportedAgent,
     type ImportLinkPlan,
 } from "../agent-import";
-import {caip10Uri} from "../delegation-redeem";
 import {StakeGuardError} from "../trust-stake";
 
 /** A `StakeChain` carries its client for the hooks; the services take theirs as an argument. */

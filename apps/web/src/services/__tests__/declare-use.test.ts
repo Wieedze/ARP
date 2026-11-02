@@ -1,7 +1,6 @@
-import type {PublicClient} from "viem";
 import {describe, expect, it, vi} from "vitest";
 import {asAgentIdentityAtom, type AgentIdentityAtom} from "@arp-protocol/core";
-import {parseEther, type Address, type Hex} from "viem";
+import {parseEther, type Address, type Hex, type PublicClient} from "viem";
 
 import {intuitionTestnet} from "../../lib/chains";
 import {INTUITION_MAINNET_CHAIN_ID, intuitionMainnet} from "../../lib/intuition-mainnet";

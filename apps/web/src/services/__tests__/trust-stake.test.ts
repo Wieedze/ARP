@@ -1,6 +1,12 @@
-import type {PublicClient} from "viem";
 import {beforeEach, describe, expect, it, vi, type Mock} from "vitest";
-import {parseEther, zeroAddress, type Account, type Address, type Hex} from "viem";
+import {
+    parseEther,
+    zeroAddress,
+    type Account,
+    type Address,
+    type Hex,
+    type PublicClient,
+} from "viem";
 
 import {intuitionTestnet} from "../../lib/chains";
 import {
