@@ -57,9 +57,10 @@ What the same run does not support, and so what this argument may not say:
   today; ARP reuses its descriptions and install counts (`data/catalogue/skill-facts.json`). What ARP
   adds is evidence of use, not search.
 
-The unit is the **skill, not the repository** (ADR `0077`): one skill is served on its own, with
-a signed receipt, so the agent does not clone a repository of 71 skills to use one. 521 of the 662
-skills on testnet 13579 are servable (`docs/tasks/31`). In Claude Desktop the search ships; fetching and running a
+The unit is the **skill, not the repository** (ADR `0077`): ARP serves one skill's SKILL.md with a
+signed receipt, for 521 of the 662 skills on testnet 13579 (`docs/tasks/31`). **Only that file.** The
+best skills need sibling scripts the content server does not serve yet (`docs/tasks/54` §4b), so
+"ARP serves the skill" is true of its instructions, not of a skill that runs. In Claude Desktop the search ships; fetching and running a
 served skill is `docs/tasks/50`, not finished at the time of writing.
 
 ### Three words this positioning may never use
