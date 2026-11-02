@@ -59,7 +59,7 @@ A row is built only after the user has chosen its mockup (§2).
 | 46b | `/agent/:chainId/:tokenId` | open on the first non-empty tab; drop the "Graph read from" line and the mainnet declare sentence; the CAIP-19 shown once | none |
 | | | facts in cards on the right, like the skill page | two-column detail view, **amended** by ADR `0104` |
 | 46c | `/activity` | one table with chips instead of three stacked blocks | none |
-| 46d | `/register` | **built** (`Choice` in `YourAgent.tsx` now has no importer outside its file; drop its `export` once task 47 commits that file): two choice tiles, each with a mono line of what it needs (`ERC-8004 identity · wallet`, `URL · wallet`). No symbol: a Sigil comes from chain data. `pages/Register.test.tsx`, 2 tests | none |
+| 46d | `/register` | **built** `986896b`, post-mortem 37 (`Choice` in `YourAgent.tsx` now has no importer outside its file; drop its `export` once task 47 commits that file): two choice tiles, each with a mono line of what it needs (`ERC-8004 identity · wallet`, `URL · wallet`). No symbol: a Sigil comes from chain data. `pages/Register.test.tsx`, 2 tests | none |
 | 46e | `/agents` | the id lookup inside the search; `—` when nobody holds a position, which has to match what `/tools` does | none |
 | | | filter chips | new feature, scope |
 | 46f | the shell | the giant footer wordmark on `/` only | ADR `0057`'s handoff |
