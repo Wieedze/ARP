@@ -10,6 +10,7 @@ import {
   signSponsorRequest,
   sponsorProofDigest,
   sponsorRequestTypedData,
+  thingUri,
   type MultiVaultReads,
   type PreparedCall,
   type SponsorLimits,
@@ -64,6 +65,8 @@ const NOW = 20_000 * 86_400_000 + 3_600_000;
 const LIMITS: SponsorLimits = {
   depositAmount: MILLI,
   approvalGas: MILLI / 10n,
+  mintGas: MILLI / 10n,
+  newAgentsPerDay: 2,
   dailyBudget: 10n ** 18n,
   depositsPerAgentPerDay: 2,
   publicationsPerDelegatorPerDay: 2,
@@ -117,6 +120,8 @@ function fakeWallet(w: World): SponsorWallet {
         const { args } = decodeFunctionData({ abi: depositAbi, data: call.data });
         const key = `${args[0].toLowerCase()}:${args[1].toLowerCase()}`;
         w.shares.set(key, (w.shares.get(key) ?? 0n) + 1_000n);
+      } else if (call.kind === 'create-triple') {
+        w.terms.add(TERM.toLowerCase());
       } else {
         w.terms.add(`created:${w.sent.length}`);
       }
@@ -204,6 +209,7 @@ function sponsor(w: World, over: Partial<Parameters<typeof createSponsor>[0]> = 
     wallet: fakeWallet(w),
     reads: fakeReads(w),
     payments: payments(),
+    holdings: { agentsHeldBy: async (address: Address) => (address === AGENT.address ? 1n : 0n) },
     owners: owners(),
     identities: identities(),
     registries: [REGISTRY],
@@ -252,6 +258,7 @@ async function depositBody(
   signer = AGENT,
   over: Record<string, unknown> = {},
   agent: Address = AGENT.address,
+  chain = CHAIN,
 ) {
   const request = {
     version: 1,
@@ -263,7 +270,7 @@ async function depositBody(
     nonce: keccak256(stringToBytes(Math.random().toString())),
     expiresAt: Math.floor(NOW / 1000) + 600,
   };
-  const signed = await signSponsorRequest(request, CHAIN, {
+  const signed = await signSponsorRequest(request, chain, {
     signTypedData: (data: ReturnType<typeof sponsorRequestTypedData>) => signer.signTypedData(data),
   });
   return {
@@ -516,25 +523,76 @@ describe('POST /deposit', () => {
     expect(w.sent).toHaveLength(0);
   });
 
-  test('refuses a content receipt, which has no price yet', async () => {
-    const w = world();
+  async function contentProof(chain = CHAIN, signer = NODE, to: Address = AGENT.address) {
     const receipt = await signContentReceipt(
       {
         atom: OBJECT,
         url: 'https://github.com/a/b?skill=c',
         path: 'skills/c/SKILL.md',
         digest: `0x${'00'.repeat(32)}`,
-        to: AGENT.address,
+        to,
         servedAt: 1_793_000_000,
-        nonce: keccak256(stringToBytes('n')),
+        nonce: keccak256(stringToBytes(Math.random().toString())),
       },
-      CHAIN,
-      { address: NODE.address, signTypedData: (data) => NODE.signTypedData(data) },
+      chain,
+      { address: signer.address, signTypedData: (data) => signer.signTypedData(data) },
     );
-    const proof = { kind: 'content', receipt } as SponsorProof; // Built from the content receipt just signed.
-    const res = await call(sponsor(w), '/deposit', await depositBody(proof));
+    return { kind: 'content', receipt } as SponsorProof; // Built from the content receipt just signed.
+  }
+
+  test('on testnet sponsors a content receipt from an accepted signer, once', async () => {
+    const w = world();
+    const service = sponsor(w);
+    const proof = await contentProof();
+    const first = await call(service, '/deposit', await depositBody(proof));
+    expect(first.status).toBe(200);
+    expect(first.body.receiver).toBe(AGENT.address);
+    expect(w.sent).toHaveLength(1);
+    const again = await call(service, '/deposit', await depositBody(proof));
+    expect(again.status).toBe(409);
+    expect(w.sent).toHaveLength(1);
+  });
+
+  test('refuses a content receipt signed by a key it does not accept, or about another caller', async () => {
+    const w = world();
+    const unknown = await call(
+      sponsor(w),
+      '/deposit',
+      await depositBody(await contentProof(CHAIN, STRANGER)),
+    );
+    expect(unknown.status).toBe(403);
+    expect(String(unknown.body.error)).toMatch(/unknown-signer/);
+    const other = await call(
+      sponsor(w),
+      '/deposit',
+      await depositBody(await contentProof(CHAIN, NODE, CALLEE.address)),
+    );
+    expect(other.status).toBe(403);
+    expect(String(other.body.error)).toMatch(/other-caller/);
+    expect(w.sent).toHaveLength(0);
+  });
+
+  test('refuses a content receipt on any chain but 13579', async () => {
+    const w = world();
+    const res = await call(
+      sponsor(w, { chainId: 1155, reads: fakeReads(w, 1155) }),
+      '/deposit',
+      await depositBody(await contentProof(1155), AGENT, {}, AGENT.address, 1155),
+    );
     expect(res.status).toBe(403);
-    expect(String(res.body.error)).toMatch(/no price/);
+    expect(String(res.body.error)).toMatch(/no price yet/);
+    expect(w.sent).toHaveLength(0);
+  });
+
+  test('with the mainnet cost rule on, refuses a content receipt, which has no price', async () => {
+    const w = world();
+    const res = await call(
+      sponsor(w, { limits: { ...LIMITS, belowProofCost: true } }),
+      '/deposit',
+      await depositBody(await contentProof()),
+    );
+    expect(res.status).toBe(403);
+    expect(String(res.body.error)).toMatch(/has no price/);
     expect(w.sent).toHaveLength(0);
   });
 
@@ -1041,5 +1099,169 @@ describe('the key file and the chain', () => {
     expect(addressList(undefined)).toEqual([]);
     expect(addressList(` ${NODE.address.toLowerCase()} `)).toEqual([NODE.address]);
     expect(() => addressList(`${NODE.address},nope`)).toThrow(/nope/);
+  });
+});
+
+describe('a first declaration: the uses triple is created, then the deposit', () => {
+  function fresh(): World {
+    const w = world();
+    w.terms = new Set([SUBJECT.toLowerCase(), OBJECT.toLowerCase()]);
+    return w;
+  }
+
+  test("creates the missing triple, then deposits the agent's position on it", async () => {
+    const w = fresh();
+    const res = await call(sponsor(w), '/deposit', await depositBody(await hireProof()));
+    expect(res.status).toBe(200);
+    expect(w.sent.map((c) => c.kind)).toEqual(['create-triple', 'deposit']);
+    expect(w.sent[0]!.to).toBe(MULTIVAULT);
+    expect(w.sent[0]!.value).toBe(2n * MILLI);
+    expect(res.body.created).toBeDefined();
+    expect(res.body.receiver).toBe(AGENT.address);
+  });
+
+  test('creates no triple past depositsPerAgentPerDay creations for one agent, deposits or not', async () => {
+    const w = fresh();
+    const ledger = new SponsorLedger(null);
+    for (const n of ['1', '2']) {
+      ledger.append({
+        kind: 'create',
+        subject: AGENT.address,
+        value: MILLI,
+        at: NOW,
+        key: `create:${n}`,
+      });
+    }
+    const res = await call(
+      sponsor(w, { ledger }),
+      '/deposit',
+      await depositBody(await hireProof()),
+    );
+    expect(res.status).toBe(429);
+    expect(String(res.body.error)).toMatch(/triple creations a day/);
+    expect(w.sent).toHaveLength(0);
+  });
+
+  test('creates nothing when an atom of the triple is missing', async () => {
+    const w = world();
+    w.terms = new Set([SUBJECT.toLowerCase()]);
+    const res = await call(sponsor(w), '/deposit', await depositBody(await hireProof()));
+    expect(res.status).toBe(400);
+    expect(w.sent).toHaveLength(0);
+  });
+
+  test('creates nothing when the deposit itself would be refused by the budget', async () => {
+    const w = fresh();
+    const res = await call(
+      sponsor(w, { limits: { ...LIMITS, dailyBudget: 2n * MILLI } }),
+      '/deposit',
+      await depositBody(await hireProof()),
+    );
+    expect(res.status).toBe(429);
+    expect(w.sent).toHaveLength(0);
+  });
+});
+
+describe('POST /mint-gas', () => {
+  const ADDRESS = privateKeyToAccount(`0x${'66'.repeat(32)}`).address;
+
+  test('sends the mint gas to an unregistered address once, ever', async () => {
+    const w = world();
+    const service = sponsor(w);
+    const first = await call(service, '/mint-gas', { address: ADDRESS });
+    expect(first.status).toBe(200);
+    expect(w.gas).toEqual([{ to: ADDRESS, value: MILLI / 10n }]);
+    const second = await call(service, '/mint-gas', { address: ADDRESS });
+    expect(second.status).toBe(429);
+    expect(w.gas).toHaveLength(1);
+  });
+
+  test('stops at the daily cap of new agents, whoever asks', async () => {
+    const w = world();
+    const service = sponsor(w);
+    for (const n of ['67', '68']) {
+      const address = privateKeyToAccount(`0x${n.repeat(32)}`).address;
+      expect((await call(service, '/mint-gas', { address })).status).toBe(200);
+    }
+    const third = await call(service, '/mint-gas', { address: ADDRESS });
+    expect(third.status).toBe(429);
+    expect(String(third.body.error)).toMatch(/new agents a day/);
+    expect(w.gas).toHaveLength(2);
+  });
+
+  test('sends nothing to an address that already holds an agent, or cannot register one', async () => {
+    const w = world();
+    const held = await call(sponsor(w), '/mint-gas', { address: AGENT.address });
+    expect(held.status).toBe(403);
+    const zero = await call(sponsor(w), '/mint-gas', { address: `0x${'00'.repeat(20)}` });
+    expect(zero.status).toBe(400);
+    expect(w.gas).toHaveLength(0);
+  });
+
+  test('answers 503 when it is off, and sends nothing to itself', async () => {
+    const w = world();
+    const off = await call(sponsor(w, { limits: { ...LIMITS, mintGas: null } }), '/mint-gas', {
+      address: ADDRESS,
+    });
+    expect(off.status).toBe(503);
+    const self = await call(sponsor(w), '/mint-gas', { address: SPONSOR });
+    expect(self.status).toBe(403);
+    expect(w.gas).toHaveLength(0);
+  });
+});
+
+describe('POST /identity', () => {
+  const pinned = async (thing: Parameters<typeof thingUri>[0]) => thingUri(thing);
+
+  test('pins both documents, then creates the two atoms and three triples, all to the MultiVault', async () => {
+    const w = world();
+    const res = await call(sponsor(w, { pinThing: pinned }), '/identity', {
+      agentRegistry: REGISTRY,
+      agentId: '7',
+    });
+    expect(res.status).toBe(200);
+    expect(w.sent.map((c) => c.kind)).toEqual([
+      'create-atom',
+      'create-atom',
+      'create-triple',
+      'create-triple',
+      'create-triple',
+    ]);
+    expect(w.sent.every((c) => c.to === MULTIVAULT)).toBe(true);
+    expect(res.body.identityAtom).toBeDefined();
+  });
+
+  test('sends nothing when a pin does not return the uri the atom derives from', async () => {
+    const w = world();
+    const res = await call(sponsor(w, { pinThing: async () => 'ipfs://bafywrong' }), '/identity', {
+      agentRegistry: REGISTRY,
+      agentId: '7',
+    });
+    expect(res.status).toBe(502);
+    expect(w.sent).toHaveLength(0);
+  });
+
+  test('stops at the daily cap of new identities, and refuses an unregistered agent', async () => {
+    const w = world();
+    const service = sponsor(w, {
+      pinThing: pinned,
+      owners: owners({ '7': AGENT.address, '8': CALLEE.address, '9': STRANGER.address }),
+    });
+    for (const agentId of ['7', '8']) {
+      expect((await call(service, '/identity', { agentRegistry: REGISTRY, agentId })).status).toBe(
+        200,
+      );
+    }
+    const third = await call(service, '/identity', { agentRegistry: REGISTRY, agentId: '9' });
+    expect(third.status).toBe(429);
+    const unknown = await call(service, '/identity', { agentRegistry: REGISTRY, agentId: '10' });
+    expect(unknown.status).toBe(403);
+  });
+
+  test('answers 503 without a pinning key', async () => {
+    const w = world();
+    const res = await call(sponsor(w), '/identity', { agentRegistry: REGISTRY, agentId: '7' });
+    expect(res.status).toBe(503);
+    expect(w.sent).toHaveLength(0);
   });
 });

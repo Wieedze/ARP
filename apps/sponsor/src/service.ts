@@ -3,18 +3,22 @@
  *  `main.ts` reads the environment and listens; this file is the part a test can construct, with
  *  the wallet, the chain and the pinning service injected.
  *
- *  **Three routes that spend, and each checks before it spends** (ADR `0092` item 2, ADR `0094`):
+ *  **Five routes that spend, and each checks before it spends** (ADR `0092` item 2, ADR `0094`):
  *
  *  | route           | what it pays for                                     | what it checks first                 |
  *  | --------------- | ---------------------------------------------------- | ------------------------------------ |
  *  | `POST /gas`     | the gas for the agent's one `approve`, once ever     | a registered ERC-8004 agent          |
  *  | `POST /deposit` | a deposit with `receiver = agent`                    | the signed request, the proof, limits |
  *  | `POST /publish` | the atoms and triples that index a signed delegation | the delegator's signature, limits    |
+ *  | `POST /mint-gas`| the gas for an address's own `register()`, once ever | the address, a daily cap on new agents |
+ *  | `POST /identity`| the atoms and triples of an agent's identity        | a registered agent, the pins, the cap |
+ *
+ *  The last two, and the `uses` triple `/deposit` creates when it is missing, are ADR `0110`.
  *
  *  **The allow-list is enforced here, not trusted to the wallet.** Every call sent goes to the
- *  MultiVault on this chain, and the only value sent anywhere else is the approval gas, to the
- *  registered agent, for exactly `limits.approvalGas`. ADR `0094` §3: "The sponsoring service calls
- *  the MultiVault and nothing else."
+ *  MultiVault on this chain, and the only value sent anywhere else is gas: `limits.approvalGas` to
+ *  a registered agent, and `limits.mintGas` to an address that is about to register. ADR `0094`
+ *  §3: "The sponsoring service calls the MultiVault and nothing else."
  *
  *  **One spend at a time.** Every route that sends runs inside one queue, so two requests cannot
  *  both pass the day's count, or both spend one proof, before either is recorded.
@@ -33,24 +37,28 @@
  *  refused by `/gas` and `/deposit`: a deposit with the service as receiver would be ARP paying
  *  itself a position, and the approval gas would go back to the key that sent it.
  *
- *  **On testnet the agent pays nothing for the approval or the deposit** (ADR `0094` as amended):
- *  `/gas` pays for its `approve`, the service pays the deposit, and the cost-of-proof rule and the
- *  withdrawal threshold are mainnet rules, off here. It does pay two things itself: the hire, a
- *  mined payment of more than zero, and the `(requester, uses, hired agent)` triple's creation when
- *  that triple is not on chain yet, which on a first hire it usually is not. `/deposit` refuses a
- *  term that does not exist (`SponsoredTermMissingError`, a 400) and this service creates no `uses`
- *  triple: a create call it sent would open that term's first position in its own name (task 40
- *  §3). `/publish` is the exception, by design: its delegation-register atoms and triples are sent
- *  at `cost + minDeposit`, so each one it creates is born with a sponsor-held position (task 37c,
- *  ADR `0053`).
+ *  **On testnet the agent pays nothing** (ADR `0094` as amended, ADR `0110`): `/mint-gas` pays for
+ *  its `register()`, `/identity` for its identity atoms, `/gas` for its `approve`, and the service
+ *  pays the deposit. When the deposit's `uses` triple is not on chain yet, `/deposit` creates it
+ *  first at `cost + minDeposit`, so the term is born with a sponsor-held position and the agent's
+ *  position lands on top (« peu importe le créateur, c'est le stake qui compte », the user). Task
+ *  40 §3 had refused that creation; ADR `0110` reverses it. `/publish` creates its terms the same
+ *  way (task 37c, ADR `0053`). The cost-of-proof rule and the withdrawal threshold are mainnet
+ *  rules, off here. A hire's payment is still the agent's own.
  *
  *  **A refusal always leaves the agent a way.** A 409 for a missing approval carries the approve
  *  call; a 429 carries the call the agent can send itself. Unplugging this service costs an agent
  *  its sponsorship and the _proven_ label, never a capability (ADR `0094`, ADR `0092` item 6).
  */
 import {
+  checkCreateLimits,
   checkDepositLimits,
+  checkIdentityLimits,
+  checkMintGasLimits,
+  encodeCreateTriple,
+  prepareIdentityAtom,
   type AgentIdentityRef,
+  type AgentThing,
   type AgentKeyReads,
   checkGasLimits,
   checkPublishLimits,
@@ -79,6 +87,7 @@ import {
 } from '@arp-protocol/core';
 import { getAddress, isAddress, isHex, type Address, type Hex } from 'viem';
 
+import { SPONSOR_CHAIN_ID } from './key-file.ts';
 import type { SponsorLedger } from './ledger.ts';
 
 /** The one key ARP holds here, behind three methods. `main.ts` builds it from viem. */
@@ -120,6 +129,8 @@ export type SponsorOptions = {
   reads: MultiVaultReads;
   payments: PaymentReads;
   owners: AgentOwnerReads;
+  /** How many agents `address` holds, across the sponsored registries. `/mint-gas` refuses above 0. */
+  holdings: { agentsHeldBy(address: Address): Promise<bigint> };
   identities: AgentIdentityAtoms;
   /** The ERC-8004 registries whose agents are sponsored, as `eip155:<chainId>:<address>`. */
   registries: readonly string[];
@@ -130,6 +141,12 @@ export type SponsorOptions = {
   /** Content-receipt signers accepted as ARP's own nodes. */
   acceptedContentSigners: readonly Address[];
   publish: PublishConfig | null;
+  /**
+   * Pins an identity Thing through Intuition's pinning API and returns its `ipfs://` URI. Absent,
+   * `POST /identity` answers 503: an identity atom whose document is not pinned does not resolve
+   * (`RESOLVE_AGENT_QUERY` reads the Thing's name), so creating it would spend for nothing.
+   */
+  pinThing?: ((thing: AgentThing) => Promise<string>) | null;
   /** Milliseconds. Injected so a test can move the day. */
   now?: () => number;
 };
@@ -144,6 +161,8 @@ function json(value: unknown, status = 200): Response {
     headers: { 'content-type': 'application/json' },
   });
 }
+
+const ZERO_ADDRESS: Address = '0x0000000000000000000000000000000000000000';
 
 function isBytes32(value: unknown): value is Hex {
   return typeof value === 'string' && isHex(value) && value.length === 66;
@@ -247,6 +266,8 @@ export function createSponsor(options: SponsorOptions): {
         publicationsPerDelegatorPerDay: limits.publicationsPerDelegatorPerDay,
         dailyBudgetWei: limits.dailyBudget,
         approvalGasWei: limits.approvalGas,
+        mintGasWei: limits.mintGas ?? 'off',
+        newAgentsPerDay: limits.newAgentsPerDay,
         withdrawalThresholdBps: limits.withdrawalThresholdBps ?? 'unset',
         belowProofCost: limits.belowProofCost,
         spentTodayWei: spentOnDay(ledger.records, now()),
@@ -258,10 +279,13 @@ export function createSponsor(options: SponsorOptions): {
         content:
           options.acceptedContentSigners.length === 0
             ? 'no signer accepted'
-            : 'verified, but refused until a fetch is bound to its payment (docs/tasks/41)',
+            : chainId === SPONSOR_CHAIN_ID
+              ? 'accepted on testnet: a content receipt signed by an accepted signer, naming the agent as its caller. The edge must be (requester identity, uses, the receipt’s tool atom). It attests access, not use (ADR 0109)'
+              : 'verified, but refused until a fetch is bound to its payment (docs/tasks/41)',
       },
       approve: planDepositApproval({ multiVault, chainId, sponsor: wallet.address }),
       publish: options.publish === null ? 'disabled' : 'enabled',
+      identity: (options.pinThing ?? null) === null ? 'disabled' : 'enabled',
       note: 'Testnet 13579 only. Every deposit is made with the agent as receiver; the shares are the agent’s.',
     };
   }
@@ -366,9 +390,10 @@ export function createSponsor(options: SponsorOptions): {
       now: Math.floor(now() / 1000),
     });
     if (proven.status !== 'proven') return json({ error: proven.reason }, 403);
-    // An unpriced proof (a content receipt) is refused until `docs/tasks/41` binds a fetch to its
-    // payment, on every chain.
-    if (proven.cost === null) {
+    // An unpriced proof is refused, except a content receipt on testnet 13579 (ADR `0109`): there it
+    // unlocks a deposit within the same count and budget. Mainnet keeps ADR `0096` until
+    // `docs/tasks/41` binds a fetch to its payment.
+    if (proven.cost === null && !(proven.kind === 'content' && chainId === SPONSOR_CHAIN_ID)) {
       return json(
         {
           error: `a ${proven.kind} proof has no price yet, so it cannot unlock a sponsorship (docs/tasks/41)`,
@@ -379,11 +404,15 @@ export function createSponsor(options: SponsorOptions): {
     // ADR `0094` §2, a mainnet rule (off on testnet, where every proven hire is sponsored): a
     // sponsored amount stays below the cost of the proof that unlocks it. Between two operators
     // that makes a faked hire cost more than it earns; one operator holding both agents gets the
-    // payment back, so for that one the bound is the daily count and the budget, not this.
-    if (limits.belowProofCost && limits.depositAmount >= proven.cost) {
+    // payment back, so for that one the bound is the daily count and the budget, not this. Nothing
+    // is below an unknown price, so with the rule on an unpriced receipt is refused here too.
+    if (limits.belowProofCost && (proven.cost === null || limits.depositAmount >= proven.cost)) {
       return json(
         {
-          error: `the proof cost ${proven.cost} wei, not more than the ${limits.depositAmount} sponsored`,
+          error:
+            proven.cost === null
+              ? `a ${proven.kind} proof has no price, and this service sponsors only below a proof's price`
+              : `the proof cost ${proven.cost} wei, not more than the ${limits.depositAmount} sponsored`,
         },
         403,
       );
@@ -446,6 +475,65 @@ export function createSponsor(options: SponsorOptions): {
         positions.map((p, i) => ({ sponsoredShares: p.shares, heldShares: held[i] ?? 0n })),
       );
 
+      // A first declaration's `uses` triple does not exist yet. The service creates it, born with a
+      // position of its own, and then deposits the agent's on it (ADR `0110`: « peu importe le
+      // créateur, c'est le stake qui compte »). The deposit's limits are checked first, so a refused
+      // deposit creates nothing.
+      let created: Hex | null = null;
+      if (!(await reads.termExists(request.termId))) {
+        const early = checkDepositLimits(ledger.records, { agent, now: now(), limits, withdrawn });
+        if (!early.ok) return json({ error: early.reason }, 429);
+        const [subjectExists, objectExists, tripleCost, minDeposit] = await Promise.all([
+          reads.termExists(subject),
+          reads.termExists(object),
+          reads.tripleCost(),
+          reads.minDeposit(),
+        ]);
+        if (!subjectExists || !objectExists) {
+          return json({ error: "the triple's subject and object atoms must exist" }, 400);
+        }
+        const assets = tripleCost + minDeposit;
+        const fits = checkCreateLimits(ledger.records, {
+          agent,
+          value: assets + limits.depositAmount,
+          now: now(),
+          limits,
+        });
+        if (!fits.ok) return json({ error: fits.reason }, 429);
+        const create: PreparedCall = {
+          kind: 'create-triple',
+          chainId,
+          to: multiVault,
+          value: assets,
+          data: encodeCreateTriple(subject, options.usesPredicate, object, assets),
+          why: `the \`uses\` triple ${request.termId}, created for a sponsored deposit`,
+        };
+        assertMultiVault(create);
+        const key = `create:${request.termId.toLowerCase()}`;
+        // A creation whose outcome was lost holds the term until the operator reconciles it.
+        if (ledger.has('create', key)) {
+          return json(
+            { error: `a creation of ${request.termId} is pending; it is reconciled by hand` },
+            409,
+          );
+        }
+        ledger.reserve({
+          kind: 'create',
+          subject: agent,
+          value: assets,
+          at: now(),
+          key,
+          termId: request.termId,
+        });
+        const sent = await sendToMultiVault(create);
+        if (sent.status !== 'success') {
+          ledger.settle('create', key, { status: 'reverted', hash: sent.hash });
+          return json({ error: `creating ${request.termId}: ${sent.hash} reverted` }, 502);
+        }
+        ledger.settle('create', key, { status: 'success', hash: sent.hash });
+        created = sent.hash;
+      }
+
       let plan;
       try {
         plan = await planSponsoredDeposit({
@@ -506,7 +594,130 @@ export function createSponsor(options: SponsorOptions): {
         valueWei: plan.call.value,
         shares,
         proof: { kind: proven.kind, strength: proven.strength },
+        ...(created === null ? {} : { created }),
       });
+    });
+  }
+
+  /** Gas for an address's own `register()`, before it is an agent (ADR `0110`). */
+  async function mintGas(body: Body): Promise<Response> {
+    if (typeof body.address !== 'string' || !isAddress(body.address)) {
+      return json({ error: 'address is required' }, 400);
+    }
+    const address = getAddress(body.address);
+    if (address === getAddress(wallet.address)) {
+      return json({ error: 'the sponsoring service sends no gas to itself' }, 403);
+    }
+    if (address === ZERO_ADDRESS || address === multiVault) {
+      return json({ error: `${address} cannot register an agent` }, 400);
+    }
+    // Mint gas is for an address about to register. One that already holds an agent is not.
+    if ((await options.holdings.agentsHeldBy(address)) > 0n) {
+      return json({ error: `${address} already holds an agent; ask /gas instead` }, 403);
+    }
+    return exclusive(async () => {
+      const decision = checkMintGasLimits(ledger.records, { address, now: now(), limits });
+      if (!decision.ok) {
+        return json({ error: decision.reason }, limits.mintGas === null ? 503 : 429);
+      }
+      const value = limits.mintGas ?? 0n; // Not null: `checkMintGasLimits` refused that above.
+      const key = `mint-gas:${address.toLowerCase()}`;
+      ledger.reserve({ kind: 'mint-gas', subject: address, value, at: now(), key });
+      const sent = await wallet.sendGas(address, value);
+      if (sent.status !== 'success') {
+        ledger.settle('mint-gas', key, { status: 'reverted', hash: sent.hash });
+        return json({ error: `gas transfer ${sent.hash} reverted` }, 502);
+      }
+      ledger.settle('mint-gas', key, { status: 'success', hash: sent.hash });
+      return json({ sent: sent.hash, to: address, valueWei: value });
+    });
+  }
+
+  /**
+   * The atoms and triples that give a registered agent its identity on the graph, created and
+   * paid by the service (ADR `0110`). The documents are pinned first, and a pin that does not
+   * return the URI the atom id derives from stops it before anything is sent.
+   */
+  async function identity(body: Body): Promise<Response> {
+    const pinThing = options.pinThing ?? null;
+    if (pinThing === null) {
+      return json({ error: 'identity creation is not configured on this service' }, 503);
+    }
+    const registered = await ownerOfAgent(body.agentRegistry, body.agentId);
+    if ('error' in registered) return json({ error: registered.error }, registered.status);
+    const own = refuseOwnAgent(registered.owner, body.agentId);
+    if (own !== null) return own;
+    // Both checked by `ownerOfAgent` above.
+    const [, registryChain, registryAddress] = REGISTRY.exec(String(body.agentRegistry)) ?? [];
+    const agentId = String(body.agentId);
+    const registry = getAddress(registryAddress ?? '');
+    const agentKey = `eip155:${registryChain}:${registry.toLowerCase()}:${agentId}`;
+
+    const planIdentity = () =>
+      prepareIdentityAtom({
+        agent: { chainId: Number(registryChain), tokenId: agentId, registry },
+        reads,
+      });
+    // Pinned before the queue: a pin moves no value, and a slow pinning service must not hold up
+    // every other route. The documents are a pure function of the agent, so the plan made inside
+    // the queue pins the same two.
+    let pins;
+    try {
+      pins = await planIdentity();
+    } catch (error) {
+      return json({ error: String(error instanceof Error ? error.message : error) }, 400);
+    }
+    if (pins.calls.length === 0) {
+      return json({ identityAtom: pins.identityAtom, sent: [], valueWei: 0n });
+    }
+    for (const which of ['identity', 'caip'] as const) {
+      const uri = await pinThing(pins.things[which]).catch(() => null);
+      if (uri !== pins.uris[which]) {
+        return json(
+          {
+            error: `pinning the ${which} document returned ${String(uri)}, not ${pins.uris[which]}`,
+          },
+          502,
+        );
+      }
+    }
+
+    return exclusive(async () => {
+      const plan = await planIdentity();
+      if (plan.calls.length === 0) {
+        return json({ identityAtom: plan.identityAtom, sent: [], valueWei: 0n });
+      }
+      plan.calls.forEach(assertMultiVault);
+      const decision = checkIdentityLimits(ledger.records, {
+        agentKey,
+        value: plan.totalValue,
+        now: now(),
+        limits,
+      });
+      if (!decision.ok) return json({ error: decision.reason }, 429);
+
+      const sent: Hex[] = [];
+      const first = ledger.records.filter(
+        (r) => r.kind === 'identity' && (r.key ?? '').split('#')[0] === agentKey,
+      ).length;
+      for (const [index, call] of plan.calls.entries()) {
+        const key = `${agentKey}#${first + index}`;
+        ledger.reserve({
+          kind: 'identity',
+          subject: registered.owner,
+          value: call.value,
+          at: now(),
+          key,
+        });
+        const result = await sendToMultiVault(call);
+        if (result.status !== 'success') {
+          ledger.settle('identity', key, { status: 'reverted', hash: result.hash });
+          return json({ error: `${call.why}: ${result.hash} reverted`, sent }, 502);
+        }
+        ledger.settle('identity', key, { status: 'success', hash: result.hash });
+        sent.push(result.hash);
+      }
+      return json({ identityAtom: plan.identityAtom, sent, valueWei: plan.totalValue });
     });
   }
 
@@ -615,10 +826,22 @@ export function createSponsor(options: SponsorOptions): {
       const url = new URL(request.url);
       if (request.method === 'GET' && url.pathname === '/') return json(info());
       if (request.method !== 'POST')
-        return json({ error: 'GET /, or POST /gas, /deposit, /publish' }, 404);
-      const route = { '/gas': gas, '/deposit': deposit, '/publish': publish }[url.pathname];
+        return json(
+          { error: 'GET /, or POST /gas, /mint-gas, /identity, /deposit, /publish' },
+          404,
+        );
+      const route = {
+        '/gas': gas,
+        '/mint-gas': mintGas,
+        '/identity': identity,
+        '/deposit': deposit,
+        '/publish': publish,
+      }[url.pathname];
       if (route === undefined)
-        return json({ error: 'GET /, or POST /gas, /deposit, /publish' }, 404);
+        return json(
+          { error: 'GET /, or POST /gas, /mint-gas, /identity, /deposit, /publish' },
+          404,
+        );
       const body = await readBody(request);
       if (body instanceof Response) return body;
       try {

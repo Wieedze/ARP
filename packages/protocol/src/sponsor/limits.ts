@@ -33,6 +33,13 @@ export type SponsorLimits = {
     /** Sent once, ever, to each registered agent, for its own `approve` transaction. */
     approvalGas: bigint;
     /**
+     * Sent once, ever, to an address that is **not yet** an agent, for its own `register()` (ADR
+     * `0110`). `null` turns the route off. Anyone can ask, so {@link newAgentsPerDay} is the bound.
+     */
+    mintGas: bigint | null;
+    /** How many addresses a UTC day may receive {@link mintGas}, all requesters together. */
+    newAgentsPerDay: number;
+    /**
      * Past this share of its sponsored shares withdrawn, in basis points, an agent is no longer
      * sponsored. A **mainnet** rule: `null`, not enforced, on testnet, where everything proven is
      * sponsored (ADR `0094` as amended).
@@ -41,7 +48,8 @@ export type SponsorLimits = {
     /**
      * Refuse a proof whose cost is not strictly above the sponsored amount (ADR `0094` §2). A
      * **mainnet** rule: `false` on testnet, so any proven hire, whatever it paid, is sponsored. An
-     * unpriced proof (a content receipt, until `docs/tasks/41`) is refused either way.
+     * unpriced proof (a content receipt) is refused whenever this is on: nothing is below an unknown
+     * price. With it off, on testnet 13579, the service sponsors a content receipt (ADR `0109`).
      */
     belowProofCost: boolean;
 };
@@ -56,7 +64,12 @@ export const ADR_0092_LIMITS = {
 
 /** One thing the service paid for. `subject` is the agent for a deposit or gas, the delegator for a publication. */
 export type SponsorRecord = {
-    kind: "deposit" | "gas" | "publish";
+    /**
+     * `mint-gas` is the transfer for an unregistered address's `register()`; `identity` the atoms
+     * and triples that give an agent its identity; `create` a `uses` triple a deposit lands on
+     * (ADR `0110`).
+     */
+    kind: "deposit" | "gas" | "publish" | "mint-gas" | "identity" | "create";
     subject: Address;
     /** The `value` the service sent for it, in wei. A publication's term fees are in it; the gas of the transaction is not. */
     value: bigint;
@@ -200,6 +213,71 @@ export function checkPublishLimits(
             ok: false,
             reason: `${limits.publicationsPerDelegatorPerDay} sponsored publications a day per delegator, reached`,
         };
+    }
+    return budget(records, value, now, limits) ?? {ok: true};
+}
+
+/**
+ * Whether `address` may receive its one-time mint gas: once ever per address, and at most
+ * {@link SponsorLimits.newAgentsPerDay} addresses a UTC day, whoever asks.
+ */
+export function checkMintGasLimits(
+    records: readonly SponsorRecord[],
+    params: {address: Address; now: number; limits: SponsorLimits},
+): LimitDecision {
+    const {address, now, limits} = params;
+    if (limits.mintGas === null)
+        return {ok: false, reason: "mint gas is not offered by this service"};
+    if (records.some((r) => r.kind === "mint-gas" && same(r.subject, address))) {
+        return {ok: false, reason: "this address already received its mint gas"};
+    }
+    const day = utcDay(now);
+    const today = records.filter((r) => r.kind === "mint-gas" && utcDay(r.at) === day).length;
+    if (today >= limits.newAgentsPerDay) {
+        return {ok: false, reason: `${limits.newAgentsPerDay} new agents a day, reached`};
+    }
+    return budget(records, limits.mintGas, now, limits) ?? {ok: true};
+}
+
+/**
+ * Whether the service may create one more `uses` triple for `agent`, costing `value`: at most
+ * {@link SponsorLimits.depositsPerAgentPerDay} a UTC day, and the budget. Counted on its own,
+ * because a creation lands before the deposit it is for, and a deposit that then fails records no
+ * deposit: without this count one agent could have triples created until the budget is gone.
+ */
+export function checkCreateLimits(
+    records: readonly SponsorRecord[],
+    params: {agent: Address; value: bigint; now: number; limits: SponsorLimits},
+): LimitDecision {
+    const {agent, value, now, limits} = params;
+    if (countOnDay(records, "create", agent, now) >= limits.depositsPerAgentPerDay) {
+        return {
+            ok: false,
+            reason: `${limits.depositsPerAgentPerDay} sponsored triple creations a day per agent, reached`,
+        };
+    }
+    return budget(records, value, now, limits) ?? {ok: true};
+}
+
+/**
+ * Whether one more agent's identity, costing `value`, fits: at most
+ * {@link SponsorLimits.newAgentsPerDay} agents a UTC day, and the budget. `agentKey` is the agent's
+ * `<registry>:<id>`; an `identity` record's key is `agentKey#<n>`, one per term it created, so an
+ * agent finishing a half-created identity is not counted twice.
+ */
+export function checkIdentityLimits(
+    records: readonly SponsorRecord[],
+    params: {agentKey: string; value: bigint; now: number; limits: SponsorLimits},
+): LimitDecision {
+    const {agentKey, value, now, limits} = params;
+    const day = utcDay(now);
+    const agents = new Set(
+        records
+            .filter((r) => r.kind === "identity" && utcDay(r.at) === day && r.key !== undefined)
+            .map((r) => (r.key ?? "").split("#")[0]),
+    );
+    if (!agents.has(agentKey) && agents.size >= limits.newAgentsPerDay) {
+        return {ok: false, reason: `${limits.newAgentsPerDay} new identities a day, reached`};
     }
     return budget(records, value, now, limits) ?? {ok: true};
 }

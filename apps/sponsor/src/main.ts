@@ -5,6 +5,11 @@
  *      SPONSOR_REGISTRIES=eip155:13579:0x… \
  *      bun run apps/sponsor/src/main.ts
  *
+ *  Optional, for a Desktop agent that starts with nothing (ADR `0110`): `SPONSOR_MINT_GAS_WEI` and
+ *  `SPONSOR_NEW_AGENTS_PER_DAY` (default 20) turn on `POST /mint-gas`; `INTUITION_PIN_API_KEY`
+ *  turns on `POST /identity`; `SPONSOR_CONTENT_SIGNERS` lists the content servers whose receipts
+ *  unlock a deposit (ADR `0109`).
+ *
  *  **It holds ARP's treasury key and signs with ARP's own funds, automatically.** That is the row
  *  ADR `0092` added to `security.md`'s signing table — testnet 13579 only, within its limits — and
  *  ADR `0094` §3 extends it from publications to deposits. So this process refuses to start on any
@@ -37,6 +42,7 @@ import { serveFetch } from '@arp-protocol/core/node';
 import {
   createPublicClient,
   createWalletClient,
+  getAddress,
   http,
   parseAbi,
   type Address,
@@ -47,6 +53,7 @@ import { privateKeyToAccount } from 'viem/accounts';
 import deployments from '../../../data/deployments/13579.json';
 import { assertSponsorChain, readKeyFile } from './key-file.ts';
 import { SponsorLedger } from './ledger.ts';
+import { intuitionPinner } from './pin.ts';
 import { addressList, createSponsor, type SponsorWallet } from './service.ts';
 
 function fail(message: string): never {
@@ -79,6 +86,8 @@ function count(name: string, fallback: number): number {
 }
 
 const PORT = count('SPONSOR_PORT', 3200);
+// Optional: unset, `POST /identity` answers 503. Never printed.
+const PIN_KEY = (process.env.INTUITION_PIN_API_KEY ?? '').trim();
 const LEDGER = process.env.SPONSOR_LEDGER ?? join(process.cwd(), '.arp', 'sponsor-ledger.jsonl');
 const RPC = process.env.INTUITION_TESTNET_RPC_URL ?? deployments.chain.rpcUrl;
 
@@ -86,6 +95,10 @@ const threshold = process.env.SPONSOR_WITHDRAWAL_THRESHOLD_BPS;
 const limits: SponsorLimits = {
   depositAmount: wei('SPONSOR_DEPOSIT_WEI'),
   approvalGas: wei('SPONSOR_APPROVAL_GAS_WEI'),
+  // Optional: unset, `POST /mint-gas` answers 503 (ADR `0110`).
+  mintGas:
+    (process.env.SPONSOR_MINT_GAS_WEI ?? '').trim() === '' ? null : wei('SPONSOR_MINT_GAS_WEI'),
+  newAgentsPerDay: count('SPONSOR_NEW_AGENTS_PER_DAY', 20),
   dailyBudget: wei('SPONSOR_DAILY_BUDGET_WEI', ADR_0092_LIMITS.dailyBudget),
   depositsPerAgentPerDay: count(
     'SPONSOR_DEPOSITS_PER_AGENT_PER_DAY',
@@ -164,6 +177,7 @@ const wallet: SponsorWallet = {
 const registryAbi = parseAbi([
   'function ownerOf(uint256 tokenId) view returns (address)',
   'function getAgentWallet(uint256 agentId) view returns (address)',
+  'function balanceOf(address owner) view returns (uint256)',
 ]);
 const REGISTRY_REF = /^eip155:([1-9][0-9]*):(0x[0-9a-fA-F]{40})$/;
 const ZERO: Address = '0x0000000000000000000000000000000000000000';
@@ -178,6 +192,21 @@ const service = createSponsor({
     client: publicClient,
   }),
   payments: publicClient,
+  holdings: {
+    async agentsHeldBy(address) {
+      const held = await Promise.all(
+        registries.map((ref) =>
+          publicClient.readContract({
+            address: getAddress(REGISTRY_REF.exec(ref)?.[2] ?? ''),
+            abi: registryAbi,
+            functionName: 'balanceOf',
+            args: [address],
+          }),
+        ),
+      );
+      return held.reduce((sum, n) => sum + n, 0n);
+    },
+  },
   owners: {
     async ownerOf(registry, agentId) {
       // `ownerOf` reverts for a token that does not exist, which is the "not registered" answer.
@@ -225,6 +254,13 @@ const service = createSponsor({
   ledger: new SponsorLedger(LEDGER),
   acceptedContentSigners,
   publish: null,
+  pinThing:
+    PIN_KEY === ''
+      ? null
+      : intuitionPinner({
+          apiKey: PIN_KEY,
+          headerName: process.env.INTUITION_PIN_API_KEY_HEADER ?? 'apikey',
+        }),
 });
 
 /** Start the service. Bound to localhost: it runs locally first (`docs/tasks/37` §4.2). */
@@ -240,6 +276,15 @@ export async function main(): Promise<void> {
   );
   process.stderr.write(`  budget     ${limits.dailyBudget} wei/day\n`);
   process.stderr.write(`  withdrawal ${limits.withdrawalThresholdBps ?? 'unset'}\n`);
+  process.stderr.write(
+    `  mint gas   ${limits.mintGas === null ? 'off' : `${limits.mintGas} wei`}, ${limits.newAgentsPerDay} new agents/day\n`,
+  );
+  process.stderr.write(
+    `  identity   ${PIN_KEY === '' ? 'off (no INTUITION_PIN_API_KEY)' : 'on'}\n`,
+  );
+  process.stderr.write(
+    `  content    ${acceptedContentSigners.length === 0 ? 'no signer accepted' : acceptedContentSigners.join(', ')}\n`,
+  );
   process.stderr.write(`  ledger     ${LEDGER}\n`);
   process.stderr.write(`  publish    disabled (no pinning service, predicates not read)\n`);
 }

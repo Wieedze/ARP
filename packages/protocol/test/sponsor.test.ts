@@ -27,7 +27,10 @@ import {
 import {
     ADR_0092_LIMITS,
     checkDepositLimits,
+    checkCreateLimits,
     checkGasLimits,
+    checkIdentityLimits,
+    checkMintGasLimits,
     checkPublishLimits,
     spentOnDay,
     sponsoredPositions,
@@ -480,6 +483,8 @@ describe("limits", () => {
         ...ADR_0092_LIMITS,
         depositAmount: MILLI,
         approvalGas: MILLI / 10n,
+        mintGas: MILLI / 10n,
+        newAgentsPerDay: 2,
         withdrawalThresholdBps: null,
         belowProofCost: false,
     };
@@ -599,6 +604,51 @@ describe("limits", () => {
         expect(checkPublishLimits([pub], params).ok).toBe(true);
         expect(checkPublishLimits([pub, pub], params).ok).toBe(false);
         expect(checkPublishLimits([], {...params, value: 2n * 10n ** 18n}).ok).toBe(false);
+    });
+
+    it("sends mint gas once per address, and to at most newAgentsPerDay addresses a day", () => {
+        const mint = (subject: `0x${string}`): SponsorRecord => ({
+            kind: "mint-gas",
+            subject,
+            value: MILLI / 10n,
+            at,
+        });
+        const other = (n: string) => `0x${n.repeat(40)}` as const;
+        expect(checkMintGasLimits([], {address: AGENT.address, now: at, limits}).ok).toBe(true);
+        expect(
+            checkMintGasLimits([mint(AGENT.address)], {address: AGENT.address, now: at, limits}),
+        ).toEqual({ok: false, reason: "this address already received its mint gas"});
+        const full = [mint(other("1")), mint(other("2"))];
+        expect(checkMintGasLimits(full, {address: AGENT.address, now: at, limits}).ok).toBe(false);
+        expect(checkMintGasLimits(full, {address: AGENT.address, now: at + DAY, limits}).ok).toBe(
+            true,
+        );
+        expect(
+            checkMintGasLimits([], {
+                address: AGENT.address,
+                now: at,
+                limits: {...limits, mintGas: null},
+            }).ok,
+        ).toBe(false);
+    });
+
+    it("counts identities by agent, so finishing a half-created one is not a new agent", () => {
+        const id = (key: string): SponsorRecord => ({
+            kind: "identity",
+            subject: AGENT.address,
+            value: MILLI,
+            at,
+            key,
+        });
+        const records = [id("a#0"), id("a#1"), id("b#0")];
+        const params = {value: MILLI, now: at, limits};
+        expect(checkIdentityLimits(records, {...params, agentKey: "a"}).ok).toBe(true);
+        expect(checkIdentityLimits(records, {...params, agentKey: "c"}).ok).toBe(false);
+        const make = {agent: AGENT.address, value: MILLI, now: at, limits};
+        expect(checkCreateLimits([], {...make, value: 2n * 10n ** 18n}).ok).toBe(false);
+        expect(checkCreateLimits([], make).ok).toBe(true);
+        const created: SponsorRecord = {kind: "create", subject: AGENT.address, value: MILLI, at};
+        expect(checkCreateLimits([created, created], make).ok).toBe(false);
     });
 });
 

@@ -695,8 +695,11 @@ export {
 } from "./sponsor/proof.js";
 export {
     ADR_0092_LIMITS,
+    checkCreateLimits,
     checkDepositLimits,
     checkGasLimits,
+    checkIdentityLimits,
+    checkMintGasLimits,
     checkPublishLimits,
     spentOnDay,
     sponsoredPositions,
