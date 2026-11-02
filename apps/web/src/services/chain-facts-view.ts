@@ -22,6 +22,8 @@ export type ChainFact = {
     assets: string | null;
     /** Who signed the deposit or redemption. Not the agent: one operator signs for several. */
     account: string | null;
+    /** Whose position it is, which differs from `account` when a sponsor signed (ADR `0094`). */
+    receiver: string | null;
 };
 
 const HASH = /^0x[0-9a-fA-F]{64}$/;
@@ -88,6 +90,7 @@ export function chainFacts(
                 assets:
                     first === undefined || first.assets === null ? null : first.assets.toString(),
                 account: first?.account ?? null,
+                receiver: first?.receiver ?? null,
             };
         }),
         ...kept(stakes)
@@ -102,9 +105,36 @@ export function chainFacts(
                     tx: txOf(row.txHash),
                     assets: row.assets === null ? null : row.assets.toString(),
                     account: row.account,
+                    receiver: row.receiver,
                 }),
             ),
     ];
     // Compared as instants: the two reads need not format their offsets alike.
     return facts.sort((a, b) => Date.parse(b.at) - Date.parse(a.at));
+}
+
+/**
+ * Whether a public row is the connected wallet's own: it signed the transaction, or the position is
+ * in its name (a sponsor signs and the operator holds, ADR `0094`). Addresses compare without case.
+ * A declaration written with no deposit carries no address, so it is nobody's here.
+ */
+export function isOwnFact(fact: ChainFact, address: string | null | undefined): boolean {
+    if (address === null || address === undefined) return false;
+    const own = address.toLowerCase();
+    return fact.account?.toLowerCase() === own || fact.receiver?.toLowerCase() === own;
+}
+
+/** The kinds a reader can narrow the public table to, in the operator's words (ADR `0103`). */
+export const FACT_FILTERS: readonly {id: ChainFact["kind"] | "all"; label: string}[] = [
+    {id: "all", label: "All"},
+    {id: "declared", label: "Declared"},
+    {id: "deposit", label: "Supported"},
+    {id: "redeem", label: "Withdrawn"},
+];
+
+export function factsOfKind(
+    facts: readonly ChainFact[],
+    kind: ChainFact["kind"] | "all",
+): ChainFact[] {
+    return kind === "all" ? [...facts] : facts.filter((fact) => fact.kind === kind);
 }

@@ -48,6 +48,7 @@ query RecentStakes($uses: String!, $sameAs: String!, $limit: Int!) {
     transaction_hash
     assets_after_fees
     sender_id
+    receiver_id
     term { triple { term_id subject { term_id label } object { term_id label } } }
   }
   redemptions(
@@ -65,6 +66,7 @@ query RecentStakes($uses: String!, $sameAs: String!, $limit: Int!) {
     transaction_hash
     assets
     sender_id
+    receiver_id
     term { triple { term_id subject { term_id label } object { term_id label } } }
   }
 }`;

@@ -1,6 +1,7 @@
 import {useState} from "react";
 import {Link, useSearchParams} from "react-router-dom";
 
+import {DisplayTabs} from "../components/brand/DisplayTabs";
 import {DomainRail} from "../components/tool/DomainRail";
 import {Segmented} from "../components/tool/ToolCatalogControls";
 import {controlClass, linkClass} from "../lib/control-class";
@@ -152,10 +153,14 @@ export function ToolCatalog() {
                         catalogue, and the user asked for them to read as two lists. The switch
                         sits beside the title and a little below its baseline (user, 2026-10-30),
                         as a choice of what page you are on, not as one more toolbar control. */}
-                    <IndexTabs
+                    <DisplayTabs
+                        label="Index"
+                        options={TOOL_INDEXES.map((entry) => ({
+                            ...entry,
+                            count: view === undefined ? null : countIn(entry.id),
+                        }))}
                         selected={index}
                         onChange={chooseIndex}
-                        countIn={view === undefined ? null : countIn}
                     />
                 </div>
             </header>
@@ -274,56 +279,6 @@ export function ToolCatalog() {
                 </div>
             </div>
         </section>
-    );
-}
-
-/**
- * The two indexes as two words in display type, the current one in paper and the other dim.
- *
- * Buttons with `aria-pressed`, like `Segmented`: it switches what the list shows, it does not
- * navigate. The count rides beside each word so the reader sees both sizes before choosing.
- */
-function IndexTabs({
-    selected,
-    onChange,
-    countIn,
-}: {
-    selected: ToolIndex;
-    onChange: (next: ToolIndex) => void;
-    countIn: ((which: ToolIndex) => number) | null;
-}) {
-    return (
-        <div
-            role="group"
-            aria-label="Index"
-            className="translate-y-3 flex flex-wrap items-baseline gap-x-8 gap-y-2"
-        >
-            {TOOL_INDEXES.map((entry) => {
-                const isSelected = entry.id === selected;
-                return (
-                    <button
-                        key={entry.id}
-                        type="button"
-                        aria-pressed={isSelected}
-                        onClick={() => onChange(entry.id)}
-                        // Banged: `index.css`'s unlayered `button { border; color }` beats any
-                        // utility, as `lib/control-class` lists. Its 10px radius curves the
-                        // underline's ends; `px-2.5 -mx-2.5` puts the curves just outside the label,
-                        // as `SectionTabs` does.
-                        className={`-mx-2.5 flex items-baseline gap-2 border-0! border-b-2! bg-transparent px-2.5 pb-1 type-face text-[26px] leading-none ${
-                            isSelected
-                                ? "border-[color:var(--color-accent)]! text-[color:var(--color-fg)]!"
-                                : "border-transparent! text-[color:var(--color-grey)]! hover:text-[color:var(--color-silver)]!"
-                        }`}
-                    >
-                        {entry.label}
-                        <span className="font-mono text-[length:var(--text-body-sm)] tabular-nums text-[color:var(--color-steel)]">
-                            {countIn === null ? "—" : countIn(entry.id).toLocaleString("en-US")}
-                        </span>
-                    </button>
-                );
-            })}
-        </div>
     );
 }
 

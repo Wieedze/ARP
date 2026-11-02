@@ -116,6 +116,7 @@ function stake(params: {at: string; triple?: string | null; tx?: string; assets?
         assets_after_fees: params.assets ?? "990000000000000",
         assets: params.assets ?? "990000000000000",
         sender_id: "0xB86F5f4E338eCEEC5DD095f48acF764465587FCF",
+        receiver_id: "0xB86F5f4E338eCEEC5DD095f48acF764465587FCF",
         term: {
             triple:
                 params.triple === null
@@ -171,6 +172,40 @@ describe("getRecentStakes", () => {
             },
         });
         expect(rows[0]?.id).toBe("0xab-4");
+    });
+
+    it("reads whose position it is apart from who signed it", async () => {
+        // A sponsored deposit: the sponsor signs, the operator holds the position (ADR `0094`).
+        const rows = await getRecentStakes({
+            transport: {
+                async request() {
+                    return {
+                        deposits: [
+                            {
+                                ...stake({at: "2026-10-30T13:00:00+00:00"}),
+                                sender_id: "0x5905",
+                                receiver_id: "0xB86F",
+                            },
+                        ],
+                        redemptions: [],
+                    };
+                },
+            },
+        });
+        expect(rows[0]).toMatchObject({account: "0x5905", receiver: "0xB86F"});
+    });
+
+    it("asks the indexer for the receiver on both lists", async () => {
+        let asked = "";
+        await getRecentStakes({
+            transport: {
+                async request(query) {
+                    asked = query;
+                    return {deposits: [], redemptions: []};
+                },
+            },
+        });
+        expect(asked.match(/receiver_id/g)).toHaveLength(2);
     });
 
     it("merges deposits and redemptions newest first, each with its own amount field", async () => {
