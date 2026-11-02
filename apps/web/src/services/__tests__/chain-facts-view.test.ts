@@ -1,7 +1,7 @@
 import {describe, expect, it} from "vitest";
 import type {RecentDeclaration, RecentStake} from "@arp-protocol/core";
 
-import {chainFacts} from "../chain-facts-view";
+import {chainFacts, factsOfKind, isOwnFact, type ChainFact} from "../chain-facts-view";
 
 const end = (atomId: string, label: string | null) => ({atomId, label});
 const HASH = `0x${"e".repeat(64)}`;
@@ -24,6 +24,7 @@ const stake = (params: Partial<RecentStake> & {id: string; at: string}): RecentS
     subject: end("a", "Agent A"),
     object: end("t", null),
     account: null,
+    receiver: null,
     assets: 5n,
     ...params,
 });
@@ -75,5 +76,47 @@ describe("chainFacts", () => {
             2,
         );
         expect(facts.map((fact) => fact.key)).toEqual(["deposit:d1", "deposit:d2"]);
+    });
+});
+
+const fact = (params: Partial<ChainFact>): ChainFact => ({
+    key: "k",
+    kind: "deposit",
+    at: "2026-10-30T13:00:00+00:00",
+    agent: "Agent A",
+    tool: "t",
+    tx: null,
+    assets: null,
+    account: null,
+    receiver: null,
+    ...params,
+});
+
+describe("isOwnFact", () => {
+    const me = "0xB86F5f4E338eCEEC5DD095f48acF764465587FCF";
+
+    it("is yours when you signed it, whatever the case", () => {
+        expect(isOwnFact(fact({account: me.toLowerCase()}), me)).toBe(true);
+    });
+
+    it("is yours when a sponsor signed and the position is in your name", () => {
+        expect(isOwnFact(fact({account: "0x5905", receiver: me}), me)).toBe(true);
+    });
+
+    it("is nobody's without a wallet, and not yours when neither address is", () => {
+        expect(isOwnFact(fact({account: me}), null)).toBe(false);
+        expect(isOwnFact(fact({account: "0x1", receiver: "0x2"}), me)).toBe(false);
+        // A declaration with no deposit carries no address.
+        expect(isOwnFact(fact({kind: "declared"}), me)).toBe(false);
+    });
+});
+
+describe("factsOfKind", () => {
+    const facts = [fact({key: "a", kind: "declared"}), fact({key: "b", kind: "deposit"})];
+
+    it("keeps every row for all, and one kind otherwise", () => {
+        expect(factsOfKind(facts, "all").map((row) => row.key)).toEqual(["a", "b"]);
+        expect(factsOfKind(facts, "deposit").map((row) => row.key)).toEqual(["b"]);
+        expect(factsOfKind(facts, "redeem")).toEqual([]);
     });
 });
