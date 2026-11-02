@@ -420,6 +420,7 @@ directory is hosted yet: `--directory` names one.
 | `AGENT_NODE_MAX_BODY_BYTES`     | `65536`                    | larger bodies are a `413`                                                                                                              |
 | `AGENT_NODE_HANDLER_TIMEOUT_MS` | `60000`                    | a slower handler is a `504`, and the payment is released                                                                               |
 | `AGENT_NODE_RATE_LIMIT`         | `30`                       | `POST /task` per client per minute, paid or not; then `429`. Behind a tunnel the client is its `cf-connecting-ip` or `x-forwarded-for` |
+| `AGENT_NODE_RECEIPT_TTL`        | `86400`                    | seconds a hire receipt stays usable: its signed `expiresAt` is `issuedAt` plus this                                                    |
 
 What makes an agent reachable: it listens at the address the agent publishes in its ERC-8004
 registration file, checks on chain that the requester paid it before doing any work, and returns a
@@ -437,11 +438,11 @@ below:
 grep -nE "createPublicClient\(|writeFile|appendFile|mkdir|import\(|async fetch\(|spawnChild\(" apps/node/src/node.ts apps/node/src/task.ts apps/node/src/node-key.ts apps/node/src/tunnel.ts
 ```
 
-prints ten lines on 2026-10-30: the ledger's `node:fs` import, `mkdirSync` and `appendFileSync`
-(`task.ts:6`, `:85`, `:86`), the server's own inbound `fetch(request)` handler (`task.ts:246`), your
-handler's import (`node.ts:122`), the RPC client (`node.ts:130`), the node key's `node:fs` import,
-`mkdirSync` and `writeFileSync` (`node-key.ts:19`, `:64`, `:66`), and the tunnel's child process
-(`tunnel.ts:177`). `register.ts` is not in it: it runs only under `arp init --node`, never in the
+prints ten lines on 2026-11-02 (ten on 2026-10-30 too, at other line numbers): the ledger's
+`node:fs` import, `mkdirSync` and `appendFileSync` (`task.ts:6`, `:85`, `:86`), the server's own
+inbound `fetch(request)` handler (`task.ts:261`), your handler's import (`node.ts:126`), the RPC
+client (`node.ts:134`), the node key's `node:fs` import, `mkdirSync` and `writeFileSync`
+(`node-key.ts:19`, `:64`, `:66`), and the tunnel's child process (`tunnel.ts:186`). `register.ts` is not in it: it runs only under `arp init --node`, never in the
 node.
 
 **It binds `127.0.0.1`**, like the MCP server: `serveFetch` in `main()` in `apps/node/src/node.ts`
@@ -461,12 +462,18 @@ presented twice and served twice. After the fix the same payment against the bui
 node accepted before it existed is accepted once more; and deleting the file forgets every payment
 in it. Keep it where the node's state lives.
 
-**The receipt is EIP-712, and a stranger checks it in three steps** (ADR `0083`). The node answers
-`{ result, receipt: { format: "eip712", receipt, chainId, agent, signature } }`, where `receipt`
-names the agent's ERC-8004 identity, the requester, the payment, the amount, the hashes of the
-payload and of the result, and the time. The domain is `{ name: "ARP Hire Receipt", version: "1",
-chainId }`, with the payment's chain. The layout follows x402's signed receipt and ERC-8004's
-identity string.
+**The receipt is EIP-712, and a stranger checks it in three steps** (ADR `0083`; v2 since task 44,
+ADR `0101`). `POST /task` takes `verifier` and `termId` beside the payment and the requester: the
+one address the receipt is for (a `ReceiptEnforcer` deployment, or the sponsoring service's
+`receiptVerifier`) and the term the requester will deposit on. Without either it is a `400`. The
+node answers `{ result, receipt: { format: "eip712", receipt, chainId, verifyingContract, agent,
+signature } }`, where `receipt` names the agent's ERC-8004 identity, the requester, the payment, the
+amount, the hashes of the payload and of the result, the time, the term, and `expiresAt`
+(`AGENT_NODE_RECEIPT_TTL` after issuance). The domain is `{ name: "ARP Hire Receipt", version: "2",
+chainId, verifyingContract }`, with the payment's chain and the verifier asked for; a verifier
+accepts only a receipt naming it. A v1 receipt, signed before task 44 with no verifier, still
+verifies in step 1 and is accepted by no sponsoring path. The layout follows x402's signed receipt
+and ERC-8004's identity string.
 
 1. `verifyHireReceipt(receipt)` (`@arp-protocol/core`) recovers the signer.
 2. That signer should be the agent's: either `getAgentWallet(agentId)` on the registry
