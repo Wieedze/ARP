@@ -131,3 +131,23 @@ Two sponsor routes the path needed. The user decided both on 2026-11-02 (ADR `01
 The user's answers: (1) **once per address, under a global daily cap**; (2) **the sponsor creates
 them and then deposits the agent's position on them**, « peu importe le créateur, c'est le stake qui
 compte … l'agent garde encore une fois les positions ».
+
+**2026-11-02, arp-41 (the extension side, `feat/50-extension`).**
+
+- **Built.** `ARP_TOOLS=desktop` serves the three reads plus `arp_get_skill` and `arp_declare_used`
+  (`apps/mcp/src/desktop/`). The key is created on the first call to either tool, in
+  `~/.arp/agent-key`, mode 0600. It refuses any call with value, on a chain other than 13579, or to
+  a contract other than the registry and the MultiVault (`refusal` in `agent-key.ts`).
+  `arp_get_skill` keeps a skill only when its receipt verifies, matches the bytes and names this
+  agent as the caller. 5 tests cover the loop against a fake content server and sponsor; 63 pass in
+  `apps/mcp`.
+- **Walked once on testnet 13579, the user's approval, 2026-11-02**, with a fresh key in a scratch
+  home directory, against the local content server (3002) and sponsor (3200). `arp_get_skill`
+  served `youtube-thumbnail-design` (atom
+  `0x2fe6afa7d8f74680cf48c2052fa11ebf1c91f4f537baa23cb060eaea4de43d00`). `arp_declare_used` took
+  26 s. Read back from the chain the same day: agent #9 on the registry is owned by the key's address
+  `0x0B02795b004b8DFDeDDd5eccf58228aa321bda17`, and that address holds 990000000000000 shares on curve
+  1 of the triple
+  `0x2ef4f396f020f59478ba6def933b6d50956784e59b72c261f9ca0e5b08a784ca`.
+- **Not yet:** a run inside Claude Desktop itself, through the `.mcpb` package, and a content server
+  online. Both servers are local for now (user, 2026-11-02).
