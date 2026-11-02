@@ -1,14 +1,17 @@
 # Task 43 — The receipt enforcer: "no signed receipt, no deposit", held by a contract
 
 **Status:** **BUILT, `contract-reviewer` PASS, pending `task-verifier`**, 2026-10-30, on branch
-`feat/43-receipt-enforcer`. Not deployed, and not to be until the open decision below is taken:
-`contract-reviewer` left INFO-R1 (Medium) open on it, and recorded one Low, CR-1, documented
+`feat/43-receipt-enforcer`. Not deployed. ~~Not to be until the open decision below is taken:
+`contract-reviewer` left INFO-R1 (Medium) open on it,~~ The decision is taken and INFO-R1 is
+**closed** (2026-10-30, task 44, ADR `0101`); a deployment is still its own decision, and none is
+planned here. `contract-reviewer` also recorded one Low, CR-1, documented
 (`contracts/SECURITY_REVIEW.md`, "`contract-reviewer` pass"). Design choices are in ADR `0098`.
 **Revised 2026-10-30** after review: the deposit's `value` is capped at the receipt's `paid`, and
 what the contract rung holds is now the user's decision (_« ok option 2 »_, ADR `0098` point 9). The
 title said "no proof, no deposit" until then; the contract holds a signature, not the payment.
-**Open, the user's:** accept the v1 receipt's missing verifying contract, or sign a v2 receipt
-(ADR `0098`, "Open decision").
+~~**Open, the user's:** accept the v1 receipt's missing verifying contract, or sign a v2 receipt
+(ADR `0098`, "Open decision").~~ **Answered by the user, 2026-10-30: a v2 receipt**, carried out
+by task 44 (`docs/tasks/44-hire-receipt-v2.md`, ADR `0101`). The enforcer now verifies v2 only.
 Planned after task 40, which holds the rule in a service first.
 **ADR:** `0094` §2, `0098`.
 **Required skills:** `mms-smart-accounts-kit` (`references/delegations.md`), `ethskills`,
