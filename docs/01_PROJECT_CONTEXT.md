@@ -36,6 +36,32 @@ it**. ERC-8004's own Reputation Registry holds **569,148 feedback entries on Bas
 score of 95.09 / 100** (`scripts/measure/erc8004-feedback.ts`, 2026-10-20). Free ratings converge on
 excellent and stop distinguishing anything; a claim that cost something does not.
 
+### Search by need, measured: the agent names a skill that exists
+
+Added 2026-11-02, beside the three clauses above and replacing none of them. Asked "what can I
+install so that you can do this yourself?", Claude with ARP named a skill or an MCP server that
+exists in **40 of 42** answers (95% 84% to 99%); without ARP, in **6 of 42** (7% to 28%). Neither
+arm invented one. Without ARP it mostly named libraries or SaaS products, or offered to build the
+thing itself. `docs/tasks/52` §3; re-derive with
+`bun run scripts/measure/discovery-eval.ts --summarise data/measurements/discovery-eval-install-2026-11-02-recheck.jsonl`.
+
+What the same run does not support, and so what this argument may not say:
+
+- **Not cheaper.** It costs 5.19× the tokens (4.23 to 6.23): the agent reads what it found before
+  recommending it. Tasks 45c and 51 found no saving either.
+- **Not better.** A blind judge preferred the answer without ARP in 26 of 42 pairs; it cannot install
+  a skill or check that it works.
+- **Only where the catalogue covers the need.** The 14 needs were chosen because it does.
+- **Not better than skills.sh.** The run compares Claude with ARP to Claude alone, not to skills.sh.
+  A Claude plugged into skills.sh would likely find as many, and on search alone skills.sh is better
+  today; ARP reuses its descriptions and install counts (`data/catalogue/skill-facts.json`). What ARP
+  adds is evidence of use, not search.
+
+The unit is the **skill, not the repository** (ADR `0077`): one skill is served on its own, with
+a signed receipt, so the agent does not clone a repository of 71 skills to use one. 521 of the 662
+skills on testnet 13579 are servable (`docs/tasks/31`). In Claude Desktop the search ships; fetching and running a
+served skill is `docs/tasks/50`, not finished at the time of writing.
+
 ### Three words this positioning may never use
 
 `best`, `score`, and `verified` about a usage. ARP composes no ranking of quality (ADR `0046`), and

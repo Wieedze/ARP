@@ -2,7 +2,7 @@
 
 **Generated** 2026-11-02 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-108 decisions. Newest last. `choices/README.md` says when to write one.
+109 decisions. Newest last. `choices/README.md` says when to write one.
 
 ## Not accepted
 
@@ -139,3 +139,4 @@ Read these before relying on them.
 | [0109](0109-a-content-receipt-is-sponsored-on-testnet.md) | 2026-11-02 | Accepted | A content receipt is sponsored on testnet 13579 |
 | [0110](0110-the-desktop-extension-holds-a-local-agent-key.md) | 2026-11-02 | Accepted | The Desktop extension holds a local agent key, for identity and off-chain signatures |
 | [0111](0111-a-query-must-match-every-word.md) | 2026-11-02 | Accepted | A query must match every word, and an empty query answer suggests nothing |
+| [0112](0112-one-product-two-ways-to-pay-and-a-free-badge.md) | 2026-11-02 | Accepted | One product, two ways to pay, a data licence for aggregators, and a free badge |
