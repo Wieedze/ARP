@@ -1,0 +1,157 @@
+import { describe as group, expect, it } from 'vitest';
+
+import {
+  collapseCopies,
+  describe,
+  keyOf,
+  pageOf,
+  relevance,
+  shortPurpose,
+} from '../src/tool-search.js';
+
+const catalogue = new Map([
+  [
+    'github.com/stripe/stripe-node',
+    { title: 'Stripe Node', purpose: 'Accept card payments. And more.' },
+  ],
+]);
+const skills = new Map([
+  [
+    'github.com/remotion-dev/skills?skill=remotion-render',
+    { description: 'Render videos with Remotion, then export them as MP4.', installs: 1200 },
+  ],
+]);
+
+group('describe', () => {
+  it('names a skill by its skill name and gives one sentence of its description', () => {
+    const about = describe(
+      'github.com/remotion-dev/skills?skill=remotion-render',
+      catalogue,
+      skills,
+    );
+    expect(about).toMatchObject({
+      name: 'remotion-render',
+      purpose: 'Render videos with Remotion, then export them as MP4.',
+      installs: 1200,
+    });
+  });
+
+  it("names a catalogued tool by its title, whatever the label's scheme or case", () => {
+    const about = describe('https://GitHub.com/stripe/stripe-node/', catalogue, skills);
+    expect(about).toMatchObject({
+      name: 'Stripe Node',
+      purpose: 'Accept card payments.',
+      installs: null,
+    });
+  });
+
+  it('falls back to the address when nobody described the tool', () => {
+    expect(describe('github.com/someone/thing', catalogue, skills)).toMatchObject({
+      name: 'github.com/someone/thing',
+      purpose: null,
+    });
+  });
+});
+
+group('relevance', () => {
+  const render = describe(
+    'github.com/remotion-dev/skills?skill=remotion-render',
+    catalogue,
+    skills,
+  );
+
+  it('matches words of the description the name does not carry', () => {
+    expect(relevance('export mp4', render)).toBeGreaterThan(0);
+  });
+
+  it('counts a word in the name above a word in the description', () => {
+    expect(relevance('render', render)).toBeGreaterThan(relevance('export', render));
+  });
+
+  it('finds a word by its root', () => {
+    expect(relevance('renders', render)).toBeGreaterThan(0);
+  });
+
+  it('ranks a tool holding every word above one holding the loudest word twice', () => {
+    const both = describe(
+      'github.com/a/b?skill=clip',
+      catalogue,
+      new Map([
+        ['github.com/a/b?skill=clip', { description: 'Video editing for clips.', installs: null }],
+      ]),
+    );
+    const one = describe(
+      'github.com/a/b?skill=video-video',
+      catalogue,
+      new Map([
+        ['github.com/a/b?skill=video-video', { description: 'Video generation.', installs: null }],
+      ]),
+    );
+    expect(relevance('video editing', both)).toBeGreaterThan(relevance('video editing', one));
+  });
+
+  it('matches at the start of a word, not inside one', () => {
+    const terraform = describe(
+      'github.com/h/t',
+      new Map([['github.com/h/t', { title: 'Terraform', purpose: 'A platform for performance.' }]]),
+      skills,
+    );
+    expect(relevance('form', terraform)).toBe(0);
+  });
+
+  it('is zero when no word matches', () => {
+    expect(relevance('email', render)).toBe(0);
+  });
+});
+
+group('shortPurpose', () => {
+  it('cuts a long sentence at a word and marks the cut', () => {
+    const cut = shortPurpose(`${'word '.repeat(60)}end.`);
+    expect(cut?.endsWith('…')).toBe(true);
+    expect((cut ?? '').length).toBeLessThanOrEqual(141);
+  });
+
+  it('keys labels the same way both lookups do', () => {
+    expect(keyOf('https://Example.com/x/')).toBe('example.com/x');
+  });
+});
+
+group('collapseCopies', () => {
+  const about = (installs: number | null) => ({
+    name: 'product-photography',
+    purpose: 'Shoot products.',
+    text: '',
+    installs,
+  });
+
+  it('keeps the copy an agent declared over a more installed one, and counts the copies', () => {
+    const declared = { about: about(49_809), declarations: 1, id: 'declared' };
+    const popular = { about: about(57_291), declarations: 0, id: 'popular' };
+    const [kept, ...rest] = collapseCopies([popular, declared], (entry) => entry.declarations);
+    expect(rest).toEqual([]);
+    expect(kept).toMatchObject({ id: 'declared', copies: 2 });
+  });
+
+  it('breaks a tie on declarations by installs, and keeps a different purpose apart', () => {
+    const a = { about: about(10), declarations: 0, id: 'a' };
+    const b = { about: about(20), declarations: 0, id: 'b' };
+    const other = {
+      about: { ...about(5), purpose: 'Something else.' },
+      declarations: 0,
+      id: 'other',
+    };
+    const kept = collapseCopies([a, other, b], (entry) => entry.declarations);
+    expect(kept.map((entry) => [entry.id, entry.copies])).toEqual([
+      ['b', 2],
+      ['other', 1],
+    ]);
+  });
+});
+
+group('pageOf', () => {
+  it('gives a page, the total, and the next offset until the last page', () => {
+    expect(pageOf([1, 2, 3, 4, 5], 0, 2)).toEqual({ rows: [1, 2], total: 5, nextOffset: 2 });
+    expect(pageOf([1, 2, 3, 4, 5], 4, 2)).toEqual({ rows: [5], total: 5, nextOffset: null });
+    expect(pageOf([1, 2], 5, 2)).toEqual({ rows: [], total: 2, nextOffset: null });
+  });
+});

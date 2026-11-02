@@ -829,6 +829,33 @@ describe("read-only mode", () => {
         expect(answer.domains_available).toEqual(["marketing"]);
     });
 
+    const findTools = async (args: Record<string, unknown>) => {
+        const body = await call("tools/call", {name: "arp_find_tools", arguments: args});
+        return JSON.parse((body["result"] as {content: {text: string}[]}).content[0]!.text) as {
+            total: number;
+            offset: number;
+            next_offset: number | null;
+            domains_available?: string[];
+            tools: Record<string, unknown>[];
+        };
+    };
+
+    it("finds by free text, and answers a query that matches nothing with the words that exist", async () => {
+        const none = await findTools({query: "zzzz-nothing-matches"});
+        expect(none.total).toBe(0);
+        expect(none.tools).toEqual([]);
+        expect(none.domains_available).toEqual(["marketing"]);
+    });
+
+    // The row shape, the paging and the collapsing are tested on literals in tool-search.test.ts:
+    // this stub answers no tool rows, so assertions over them here would pass on an empty list.
+    it("refuses a negative offset and an unknown detail", async () => {
+        for (const args of [{offset: -1}, {detail: "everything"}]) {
+            const body = await call("tools/call", {name: "arp_find_tools", arguments: args});
+            expect(body["error"]).toBeDefined();
+        }
+    });
+
     it("keeps the chain's vocabulary out of the three descriptions it serves", async () => {
         const body = await call("tools/list");
         const tools = (body["result"] as {tools: {description: string}[]}).tools;

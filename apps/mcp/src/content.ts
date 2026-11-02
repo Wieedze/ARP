@@ -42,7 +42,7 @@
  *  obligations (`docs/tasks/31` §9).
  */
 import { chmodSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { dirname } from 'node:path';
+import { dirname, resolve } from 'node:path';
 
 import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts';
 import type { Address, Hex } from 'viem';
@@ -147,9 +147,20 @@ export function receiptSigner(): TypedDataSigner | null {
     key = readFileSync(KEY_PATH, 'utf8').trim() as Hex;
   } else {
     key = generatePrivateKey();
-    mkdirSync(dirname(KEY_PATH), { recursive: true });
-    writeFileSync(KEY_PATH, `${key}\n`, { mode: 0o600 });
-    chmodSync(KEY_PATH, 0o600);
+    try {
+      mkdirSync(dirname(KEY_PATH), { recursive: true });
+      writeFileSync(KEY_PATH, `${key}\n`, { mode: 0o600 });
+      chmodSync(KEY_PATH, 0o600);
+    } catch (error) {
+      // A client may start the server in a directory it cannot write: Claude Desktop on Windows
+      // starts it in C:\Windows\system32, and the server died there before it answered (found
+      // live, 2026-11-02). A key that cannot be kept is not used: no receipts, and a server that runs.
+      console.error(
+        `No receipt key: ${resolve(KEY_PATH)} cannot be written (${String(error)}). ` +
+          'Content receipts are off for this run.',
+      );
+      return null;
+    }
   }
 
   const account = privateKeyToAccount(key);

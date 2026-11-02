@@ -72,7 +72,7 @@ export function useSkillFacts() {
             // Both in one chunk: 5 KB of repository signals beside 45 KB of descriptions, wanted
             // by the same pages at the same moment.
             const [skills, repos] = await Promise.all([
-                import("../data/skill-facts.json"),
+                import("../../../../data/catalogue/skill-facts.json"),
                 import("../data/repo-facts.json"),
             ]);
             return {

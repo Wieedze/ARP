@@ -23,6 +23,8 @@
 import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { bufferedCopy } from '@arp-protocol/core/node';
+
 import { version } from '../package.json';
 
 const USAGE = `arp ${version} — ARP's agent-side programs
@@ -61,6 +63,16 @@ const EXIT = { ok: 0, usage: 2 } as const;
 /** This file once bundled: `dist/cli.js`. `init` writes its path into the MCP entry. */
 const CLI_PATH = fileURLToPath(import.meta.url);
 
+/**
+ * `arp mcp` on stdio takes stdin now, before the server is imported below. Claude Desktop's
+ * built-in Node emits stdin once and keeps nothing, so the dynamic import was long enough to lose
+ * the client's `initialize` (found live, 2026-11-02). Every other command leaves stdin alone:
+ * `init` prompts on it and the hook reads it itself.
+ */
+const ARGV = process.argv.slice(2);
+const STDIO_INPUT =
+  ARGV[0] === 'mcp' && !ARGV.includes('--http') ? bufferedCopy(process.stdin) : undefined;
+
 /** `arp init --node`: the handshake, not the runtime installer. Kept apart so neither loads the other. */
 async function runNodeInit(rest: readonly string[]): Promise<number> {
   const { nodeInit, parseNodeInitFlags } = await import('./node-init.ts');
@@ -94,7 +106,7 @@ async function run(argv: readonly string[]): Promise<number> {
   switch (command) {
     case 'mcp': {
       const { main } = await import('@arp/mcp/server');
-      await main(rest.includes('--http') ? rest : ['--stdio', ...rest]);
+      await main(rest.includes('--http') ? rest : ['--stdio', ...rest], STDIO_INPUT);
       return EXIT.ok;
     }
     case 'hook':
@@ -144,6 +156,9 @@ process.stdout.on('error', (error: NodeJS.ErrnoException) => {
   throw error;
 });
 
-const code = await run(process.argv.slice(2));
-// A server keeps the process alive on its own; only a finished command sets the exit code.
-if (code !== EXIT.ok) process.exit(code);
+// Not awaited at the top level: a host that imports this file (Claude Desktop does) waits for the
+// import to settle, and a server's promise never does. A server keeps the process alive on its own;
+// only a finished command sets the exit code.
+void run(ARGV).then((code) => {
+  if (code !== EXIT.ok) process.exit(code);
+});

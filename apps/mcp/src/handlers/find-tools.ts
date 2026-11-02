@@ -1,4 +1,5 @@
 import catalogue from '../../../../data/catalogue/tools.json';
+import skillFacts from '../../../../data/catalogue/skill-facts.json';
 import {
   INTUITION_HAS_TAG_MAINNET as HAS_TAG,
   INTUITION_IS_A_SUB_DOMAIN_OF as IS_A_SUB_DOMAIN_OF,
@@ -11,6 +12,30 @@ import {
 
 import { GRAPHQL, DOMAIN_ROOT, DOMAIN_ATTESTOR } from '../config.js';
 import { type JsonRpcId, fail, text } from '../rpc.js';
+import {
+  type CatalogueEntry,
+  type SkillFact,
+  collapseCopies,
+  describe,
+  keyOf,
+  pageOf,
+  relevance,
+} from '../tool-search.js';
+
+// Both casts name the shape of a committed JSON file this repo generates; a field that went
+// missing would surface as `undefined` in a row, not as a crash.
+const CATALOGUE: ReadonlyMap<string, CatalogueEntry> = new Map(
+  (catalogue.tools as { url: string; title: string; purpose: string | null }[]).map((tool) => [
+    keyOf(tool.url),
+    tool,
+  ]),
+);
+const SKILLS: ReadonlyMap<string, SkillFact> = new Map(
+  Object.entries(skillFacts.facts as Record<string, SkillFact>).map(([label, fact]) => [
+    keyOf(label),
+    fact,
+  ]),
+);
 
 /**
  * `data/catalogue/tools.json`'s entry for an atom label, as the two fields a caller gets.
@@ -21,22 +46,9 @@ import { type JsonRpcId, fail, text } from '../rpc.js';
  * is the identity and was always enough.
  */
 function seedFor(label: string | null): { title: string | null; purpose: string | null } {
-  if (label === null) return { title: null, purpose: null };
-  const key = label
-    .trim()
-    .toLowerCase()
-    .replace(/^https?:\/\//, '')
-    .replace(/\/+$/, '');
-  const hit = SEED_BY_KEY.get(key);
+  const hit = label === null ? undefined : CATALOGUE.get(keyOf(label));
   return { title: hit?.title ?? null, purpose: hit?.purpose ?? null };
 }
-
-const SEED_BY_KEY = new Map(
-  (catalogue.tools as { url: string; title: string; purpose: string | null }[]).map((tool) => [
-    tool.url.replace(/^https:\/\//, '').toLowerCase(),
-    tool,
-  ]),
-);
 
 /**
  * Tools agents declared using, with where each is hosted and what stands behind it.
@@ -84,6 +96,19 @@ export async function findTools(id: JsonRpcId, args: Record<string, unknown>) {
   const orderRaw = args['order'] ?? 'priced-edges';
   if (orderRaw !== 'priced-edges' && orderRaw !== 'conviction' && orderRaw !== 'declarations') {
     return fail(id, -32602, "order must be 'priced-edges', 'conviction' or 'declarations'");
+  }
+  const queryRaw = args['query'];
+  if (queryRaw !== undefined && (typeof queryRaw !== 'string' || queryRaw.length > 200)) {
+    return fail(id, -32602, 'query must be a string of at most 200 characters');
+  }
+  const query = typeof queryRaw === 'string' && queryRaw.trim() !== '' ? queryRaw.trim() : null;
+  const offsetRaw = args['offset'] ?? 0;
+  if (typeof offsetRaw !== 'number' || !Number.isInteger(offsetRaw) || offsetRaw < 0) {
+    return fail(id, -32602, 'offset must be an integer of 0 or more');
+  }
+  const detailRaw = args['detail'] ?? 'short';
+  if (detailRaw !== 'short' && detailRaw !== 'full') {
+    return fail(id, -32602, "detail must be 'short' or 'full'");
   }
   const limitRaw = args['limit'] ?? 25;
   if (
@@ -225,23 +250,76 @@ export async function findTools(id: JsonRpcId, args: Record<string, unknown>) {
     ...registeredRows,
   ];
 
-  // A domain search that returns no row carries the words the registry does use, taken from the
-  // tree the search already read, so the agent can ask again: "business" finds nothing,
-  // "marketing" finds 57 (testnet 13579, 2026-11-02). Decided on the rows returned, not on the tag
-  // filter, because tagged atoms the listings do not hold also end in an empty answer.
+  // A free-text query keeps the rows whose name, address or description holds its words, best
+  // match first; without one the listing's own order stands. Matching runs on the whole
+  // description, so "montage" or "subtitles" finds a skill whose name says neither.
+  const described = rows.map((row) => ({ row, about: describe(row.label, CATALOGUE, SKILLS) }));
+  const matched =
+    query === null
+      ? described
+      : described
+          .map((entry) => ({ ...entry, score: relevance(query, entry.about) }))
+          .filter((entry) => entry.score > 0)
+          .sort((a, b) => b.score - a.score);
+  // The same skill copied into several repositories reads as one result in the short answer: one
+  // copy stands for the others (`collapseCopies` says which), and `copies` says how many. Five rows of
+  // `youtube-thumbnail-design` were five times the tokens for one finding (testnet, 2026-11-02).
+  const listed =
+    detailRaw === 'full'
+      ? matched.map((entry) => ({ ...entry, copies: 1 }))
+      : collapseCopies(matched, (entry) => entry.row.declarations ?? 0);
+  const { rows: pageRows, total, nextOffset } = pageOf(listed, offsetRaw, limitRaw);
+
+  // A search that returns no row carries the words the registry does use, so the agent can ask
+  // again: "business" finds nothing, "marketing" finds 57 (testnet 13579, 2026-11-02). Decided on
+  // the rows returned, not on the tag filter, because tagged atoms the listings do not hold also
+  // end in an empty answer. A query that found nothing reads the tree for the same reason.
+  if (total === 0 && domainTree === null && query !== null && attestor !== undefined) {
+    domainTree = await readDomainTree(walk);
+  }
   const domainsAvailable =
-    domainTree !== null && rows.length === 0
+    domainTree !== null && total === 0
       ? domainTree
           .subtree(DOMAIN_ROOT)
           .filter((name) => name !== DOMAIN_ROOT)
           .sort()
       : null;
+  const truncated = page.truncated || registered.truncated;
+  const paging = {
+    total,
+    offset: offsetRaw,
+    next_offset: nextOffset,
+    ...(query === null ? {} : { query }),
+  };
+
+  if (detailRaw === 'short') {
+    return text(id, {
+      ...paging,
+      ...(domainScope === null
+        ? {}
+        : { domain: String(domainRaw).trim().toLowerCase(), domains_walked: domainScope.domains }),
+      ...(domainsAvailable === null ? {} : { domains_available: domainsAvailable }),
+      // Said only when it is true: a read the graph cut short is not the whole registry.
+      ...(truncated ? { truncated: true } : {}),
+      tools: pageRows.map(({ row, about, copies }) => ({
+        id: row.tool_atom_id,
+        name: about.name,
+        url: row.hosted_at,
+        purpose: about.purpose,
+        declarations: row.declarations,
+        ...(about.installs === null ? {} : { installs: about.installs }),
+        ...(copies > 1 ? { copies } : {}),
+      })),
+    });
+  }
 
   return text(id, {
+    ...paging,
     curve_id: page.curveId,
     edges_read: page.edgesRead,
-    truncated: page.truncated || registered.truncated,
+    truncated,
     purpose_read_at: catalogue.readAt,
+    installs_read_at: skillFacts._measuredOn,
     // Present only when a domain was asked for. `domains_walked` is the derivation made visible:
     // a tool tagged `card` comes back under `payment` because the hierarchy says so, and the
     // reader should be able to see which hop did it rather than take the filter on trust.
@@ -251,18 +329,20 @@ export async function findTools(id: JsonRpcId, args: Record<string, unknown>) {
           domain: String(domainRaw).trim().toLowerCase(),
           domains_walked: domainScope.domains,
           domain_tagged_tools: domainScope.atomIds.size,
-          // Whose tree was walked. Named in the response because "the domain tree" is a reading,
-          // not a fact about the chain, and a reader should never have to guess whose it was.
-          // Echoed verbatim although the caller cannot set it. "The domain tree" is a reading
-          // and not a fact about the chain, so a reader must never have to guess whose it was —
-          // and an address in the wrong case returns an empty tree, which this makes diagnosable
+          // Whose tree was walked: "the domain tree" is a reading, not a fact about the chain, and
+          // an address in the wrong case returns an empty tree, which this makes diagnosable
           // instead of looking like "this domain has nothing in it".
           domain_attestor: attestor,
           // How many filings under this domain this attestor does not back, and were left out.
           // Reported even when zero, so a reader never wonders whether the question was asked.
           tags_from_others_hidden: domainScope.othersHidden,
-          ...(domainsAvailable === null ? {} : { domains_available: domainsAvailable }),
         }),
-    tools: rows.slice(0, limitRaw),
+    ...(domainsAvailable === null ? {} : { domains_available: domainsAvailable }),
+    tools: pageRows.map(({ row, about }) => ({
+      ...row,
+      title: row.title ?? (about.name === keyOf(row.label ?? '') ? null : about.name),
+      purpose: row.purpose ?? about.purpose,
+      installs: about.installs,
+    })),
   });
 }

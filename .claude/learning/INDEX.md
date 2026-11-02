@@ -2,7 +2,7 @@
 
 **Generated** 2026-11-02 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-44 entries, one per completed task. Written by `task-verifier` on a pass.
+45 entries, one per completed task. Written by `task-verifier` on a pass.
 
 | # | task | verdict | entry |
 | --- | --- | --- | --- |
@@ -50,3 +50,4 @@
 | [40](40-the-redesign-from-references.md) | `docs/tasks/46-the-redesign-from-references.md` (row 46e in §4) | PASS (`ui-reviewer` PASS with 4 advisories, 2 acted on) | The redesign from references, 46e: the id lookup moves into the `/agents` search |
 | [41](41-the-redesign-from-references.md) | `docs/tasks/46-the-redesign-from-references.md` (row 46c in §4) | PASS on round 2 (round 1 FAIL: a retraction landed in one place of two) | The redesign from references, 46c: `/activity` splits Yours from Everyone |
 | [42](42-the-journeys.md) | `docs/tasks/48-the-journeys.md` | PASS on round 2 | The journeys: what a visitor meets, and the conventions they expect |
+| [43](43-lean-search.md) | `docs/tasks/49-lean-search.md` | PASS on round 2 (round 1 FAIL: one live defect, three claim errors, one uncommented cast, vacuous tests) | Lean search: more tools found, fewer tokens spent |
