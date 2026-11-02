@@ -265,3 +265,31 @@ What the task is: pick the verdict, write the ADR, apply the same manual-redirec
 `docs/22` that the hole is closed. The exposure meanwhile is bounded by the node binding loopback —
 unlike the registration route, whose caller is a local process by design, which is exactly why that
 one was fixed first.
+
+## Smart contracts as modules — the web3 branch
+
+**Asked 2026-11-02**, after reading pgmi's "Live Contract Risk Scoring with Intuition"
+(https://atlas.discourse.group/t/live-contract-risk-scoring-with-intuition/989, an idea post from
+2025-10-20, nothing built). _« ça pourrait être une branche d'ARP pour le web3 »_. The user's own
+ordering: _« pour le moment je suis full orienté web2 »_. So this comes after the web2 surface.
+
+**What the branch is.** The same mechanism as `docs/12`, with a different kind of module. A deployed
+contract is registered in `ModuleRegistry` as a tool. An agent deposits TRUST on the contracts it
+actually called. A contract's reputation is then how many distinct agents use it and put money on
+it. That measures adoption, not safety.
+
+**Why it is worth more than one more module type.** In web2, proving that a use happened is the hard
+problem (`docs/14`). Here the proof is already on the chain: a transaction from the agent's account
+to the contract can be checked with no oracle, which fits ADR `0094`'s proof-gated sponsored deposit
+directly.
+
+**What it is not, and the line this entry exists to hold.** The article's own mechanism is not it.
+There, experts stake on risk claims ("this contract has a reentrancy") and are rewarded when they
+turn out right. That needs a resolver, which is ground truth (ADR `0049`), and a published "94% Safe"
+is a score (ADR `0046`). Both are drift signals in `docs/12`. A risk-scoring product could read ARP's
+usage signal as an input. ARP does not become one.
+
+**Open before building.** Which chain's transactions count as proof: the agents' chain and the
+staking chain are not the same on mainnet (`rules/portability.md`, point 2). And whether one
+contract is one module or one per deployment/version, since an upgrade behind a proxy keeps the
+address but changes the code.
