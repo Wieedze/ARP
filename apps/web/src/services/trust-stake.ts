@@ -208,6 +208,16 @@ export function parseStakeAmount(input: string, limits: StakeLimits): AmountChec
     return {status: "ok", value};
 }
 
+/** The per-transaction ceiling, checked in the service so no caller can skip it. */
+function assertUnderCeiling(assets: bigint, symbol: string): void {
+    if (assets > MAX_STAKE_WEI) {
+        throw new StakeGuardError(
+            "above-ceiling",
+            `This app refuses more than ${formatTrust(MAX_STAKE_WEI)} ${symbol} per transaction (VITE_MAX_STAKE_TRUST). Nothing was sent.`,
+        );
+    }
+}
+
 export type StakeGuardCode =
     | "exceeds-holding"
     | "no-counter-vault"
@@ -215,7 +225,8 @@ export type StakeGuardCode =
     | "zero-receiver"
     | "receiver-mismatch"
     | "no-slippage-floor"
-    | "zero-amount";
+    | "zero-amount"
+    | "above-ceiling";
 
 /** A guard refused to build or send the transaction. Carries a code the UI branches on. */
 export class StakeGuardError extends Error {
@@ -384,6 +395,7 @@ export async function quoteStake(
     if (params.assets <= 0n) {
         throw new StakeGuardError("zero-amount", "Enter an amount greater than zero.");
     }
+    assertUnderCeiling(params.assets, params.chain.symbol);
     if (params.receiver === zeroAddress) {
         throw new StakeGuardError(
             "zero-receiver",
@@ -512,6 +524,7 @@ export async function submitStake(params: {
     if (quote.assets <= 0n) {
         throw new StakeGuardError("zero-amount", "Refusing to send zero support.");
     }
+    assertUnderCeiling(quote.assets, quote.chain.symbol);
 
     await simulateStake(publicClient, quote, sender);
 

@@ -17,6 +17,7 @@ import {
 import {
     assertWalletOnChain,
     deriveMinShares,
+    MAX_STAKE_WEI,
     parseStakeAmount,
     asStakeTermId,
     deriveMinAssets,
@@ -301,6 +302,23 @@ describe("quoteStake", () => {
         );
     }
 
+    it("refuses to price an amount above the per-transaction ceiling", async () => {
+        const client = makePublicClient();
+        wire(client);
+
+        await expect(
+            quoteStake(asPublic(client), {
+                target: {kind: "triple", tripleId: TRIPLE},
+                side: "support",
+                assets: MAX_STAKE_WEI + 1n,
+                receiver: DEFAULT_TEST_ADDRESS,
+                session,
+                chain: MAINNET,
+            }),
+        ).rejects.toMatchObject({code: "above-ceiling"});
+        expect(client.readContract).not.toHaveBeenCalled();
+    });
+
     it("previews against the vault the deposit would actually land in", async () => {
         const client = makePublicClient();
         wire(client);
@@ -504,6 +522,21 @@ describe("submitStake", () => {
                 quote,
             }),
         ).rejects.toMatchObject({code: "wrong-chain"});
+
+        expect(wallet.writeContract).not.toHaveBeenCalled();
+        expect(publicClient.simulateContract).not.toHaveBeenCalled();
+    });
+
+    it("refuses a quote above the per-transaction ceiling, whoever built it", async () => {
+        const wallet = makeWalletClient();
+
+        await expect(
+            submitStake({
+                walletClient: asWallet(wallet),
+                publicClient: asPublic(publicClient),
+                quote: {...quote, assets: MAX_STAKE_WEI + 1n},
+            }),
+        ).rejects.toMatchObject({code: "above-ceiling"});
 
         expect(wallet.writeContract).not.toHaveBeenCalled();
         expect(publicClient.simulateContract).not.toHaveBeenCalled();
