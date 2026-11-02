@@ -45,7 +45,7 @@ measured in a headless browser on 2026-11-02. `/agents` already paged by 25.
 put display type back at 88px (`index.css`, the comment on `--text-display`). A `—` in an empty
 cell reverses the decision written in `ToolCatalogList.tsx` that a zero is blanked.
 
-**Done** 2026-11-02, `a8718ef`. ui-reviewer PASS, task-verifier PASS, post-mortem `.claude/learning/36-the-redesign-from-references.md`.
+**Done** 2026-11-02, `96b26a1`. ui-reviewer PASS, task-verifier PASS, post-mortem `.claude/learning/36-the-redesign-from-references.md`.
 
 **Tests.** `pageOfTools`, 4 in `services/__tests__/tool-rank.test.ts`. The page, 4 in
 `pages/ToolCatalog.test.tsx`: 25 rows and stepping, and the return to page 1 on order, index and
@@ -57,10 +57,10 @@ A row is built only after the user has chosen its mockup (§2).
 
 | | Page | Proposal | Rules touched |
 | --- | --- | --- | --- |
-| 46b | `/agent/:chainId/:tokenId` | **built** `48d30fa`, post-mortem 39: the skill page's layout. Eyebrow, sigil and name; the description and the tabs on the left, an Identity card on the right; the market full width, the declaration card, then Relations with `ClaimField`. The Declarations tab became that Relations block. Opens on the first tab with rows (`initialSectionOf`, 4 tests). The "Graph read from" line is gone; the CAIP-19 shows once. **Deferred:** the mainnet declare sentence lives in `DeclareUse`, shared with the skill and atom pages and asserted in `AtomPanel.test.tsx`, so it changes on all three at once or not at all, which is the user's call | none |
+| 46b | `/agent/:chainId/:tokenId` | **built** `ac96625`, post-mortem 39: the skill page's layout. Eyebrow, sigil and name; the description and the tabs on the left, an Identity card on the right; the market full width, the declaration card, then Relations with `ClaimField`. The Declarations tab became that Relations block. Opens on the first tab with rows (`initialSectionOf`, 4 tests). The "Graph read from" line is gone; the CAIP-19 shows once. **Deferred:** the mainnet declare sentence lives in `DeclareUse`, shared with the skill and atom pages and asserted in `AtomPanel.test.tsx`, so it changes on all three at once or not at all, which is the user's call | none |
 | | | facts in cards on the right, like the skill page | two-column detail view, **amended** by ADR `0104` |
 | 46c | `/activity` | one table with chips instead of three stacked blocks | none |
-| 46d | `/register` | **built** `d817334`, post-mortem 37 (`Choice` in `YourAgent.tsx` lost its last outside importer; its `export` is dropped): two choice tiles, each with a mono line of what it needs (`ERC-8004 identity · wallet`, `URL · wallet`). No symbol: a Sigil comes from chain data. `pages/Register.test.tsx`, 2 tests | none |
+| 46d | `/register` | **built** `bd2b554`, post-mortem 37 (`Choice` in `YourAgent.tsx` lost its last outside importer; its `export` is dropped): two choice tiles, each with a mono line of what it needs (`ERC-8004 identity · wallet`, `URL · wallet`). No symbol: a Sigil comes from chain data. `pages/Register.test.tsx`, 2 tests | none |
 | 46e | `/agents` | the id lookup inside the search; `—` when nobody holds a position, which has to match what `/tools` does | none |
 | | | filter chips | new feature, scope |
 | 46f | the shell | the giant footer wordmark on `/` only | ADR `0057`'s handoff |
