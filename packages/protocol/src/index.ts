@@ -32,6 +32,7 @@ export {createErc8004Client, type Erc8004Client, type Erc8004ClientConfig} from 
 
 export {
     AllSourcesFailedError,
+    DOCUMENT_AGENT_MISMATCH_REASON,
     getAgentProfile,
     getAssessments,
     getCapabilities,

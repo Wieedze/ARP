@@ -1,3 +1,5 @@
+import {getAddress, isAddress} from "viem";
+
 import {fetchAssessment} from "./assessment.js";
 import {resolveRef, toCaip19} from "./caip.js";
 import type {Erc8004Client} from "./client.js";
@@ -8,11 +10,13 @@ import type {
     AgentIdentity,
     AgentProfile,
     AgentRef,
+    AssessmentDocument,
     Capabilities,
     ClaimMarket,
     ProfileConflict,
     ProviderAssessment,
     ProviderClaim,
+    ResolvedAgentRef,
     SourceError,
 } from "./types.js";
 
@@ -185,6 +189,35 @@ export type GetAgentProfileOptions = {
     skipResolverFetch?: boolean;
 };
 
+/** The prefix of the reason given when a document is about another agent. */
+export const DOCUMENT_AGENT_MISMATCH_REASON = "document is about a different agent";
+
+/**
+ * A provider's signature covers the document's own `agent` block, not the URL
+ * it was served from. A valid signed document about agent A served at agent
+ * B's resolver URL would otherwise verify as B's assessment. Returns the
+ * reason when the document names another agent, or names none, and null when
+ * it names exactly `ref`.
+ */
+function documentAgentMismatch(
+    agent: AssessmentDocument["agent"],
+    ref: ResolvedAgentRef,
+): string | null {
+    const expected = toCaip19(ref);
+    if (
+        agent === null ||
+        agent.chainId === null ||
+        agent.registry === null ||
+        agent.tokenId === null
+    ) {
+        return `${DOCUMENT_AGENT_MISMATCH_REASON}: it names no complete agent, expected ${expected}`;
+    }
+    const sameRegistry = isAddress(agent.registry) && getAddress(agent.registry) === ref.registry;
+    const sameToken = /^\d+$/.test(agent.tokenId) && BigInt(agent.tokenId) === BigInt(ref.tokenId);
+    if (agent.chainId === ref.chainId && sameRegistry && sameToken) return null;
+    return `${DOCUMENT_AGENT_MISMATCH_REASON}: it names eip155:${agent.chainId}/erc721:${agent.registry}/${agent.tokenId}, expected ${expected}`;
+}
+
 /**
  * The one-call path: an ERC-8004 identity in, one merged profile out.
  *
@@ -252,6 +285,8 @@ export async function getAgentProfile(
                   });
 
         const raw = fetch.status === "ok" ? fetch.document.raw : null;
+        const aboutOther =
+            fetch.status === "ok" ? documentAgentMismatch(fetch.document.agent, resolved) : null;
         assessments.push({
             claim,
             fetch,
@@ -263,7 +298,14 @@ export async function getAgentProfile(
                           declaredSigner: null,
                           attempts: [],
                       }
-                    : await verifyAssessmentSignature(raw),
+                    : aboutOther !== null
+                      ? {
+                            status: "unverified",
+                            reason: aboutOther,
+                            declaredSigner: null,
+                            attempts: [],
+                        }
+                      : await verifyAssessmentSignature(raw),
             freshness:
                 raw === null
                     ? {status: "unknown", reason: "no document to check"}
