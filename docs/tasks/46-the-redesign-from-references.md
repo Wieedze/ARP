@@ -2,7 +2,7 @@
 
 **Status:** 46a, 46b and 46d **built** 2026-11-02. The user approved the two shared layouts the same
 day (list pages follow `/tools`, detail pages follow the skill page) and ADR `0104`. This branch is
-rebased on task 47 (plain words, `e6f9e6f`). 46c and 46e are next. 46f waits on the user.
+rebased on `dev` with task 47 (plain words) in it. 46e built; 46c has its mockup chosen (variant A, Yours / Everyone tabs), not built; 46f dropped.
 **ADR:** `0104` (detail pages put the facts on the right). Each ui.md rule a page relaxes gets one.
 **Rules:** `ui.md`, `code.md`, `claims.md`, `workflow.md`.
 **Reviewers:** `ui-reviewer`, then `task-verifier`.
@@ -28,6 +28,10 @@ the Mobbin references behind each one, were published to the user that day.
 | The two shared layouts, and the agent page's facts on the right | **yes** ("oui"), on the mockup page "ARP — une grammaire, toutes les pages": list pages follow `/tools`, detail pages follow the skill page. ADR `0104` |
 | `/register` | the two-tile mockup on that same page. Built first because task 47 does not touch `Register.tsx`: _« ok fait la »_ |
 | The line under the tool URL field ("The scheme, `www.`, a trailing slash and a fragment are normalised away…") | **remove it**: _« on enlève »_. **Done** after task 47 was rebased under this branch |
+| `/agents` (46e) | **do it**: the id lookup inside the search, and an empty Support cell when nobody supports |
+| The giant `ARP` footer wordmark (46f) | **keep it**: _« le arp du pied de page je l'adore »_. 46f is dropped |
+| `/activity` (46c) | **not one table yet**. The user is unsure the page should show the connected wallet's profits, and wants a clear visual line between the activity of *our* agents and tools and the global activity. Mockups first |
+| `/activity` mockups | **variant A**, two tabs Yours / Everyone: _« le recommandé c'est le mieux »_ |
 
 ## 3. 46a — `/tools` pages its list (built)
 
@@ -59,11 +63,11 @@ A row is built only after the user has chosen its mockup (§2).
 | --- | --- | --- | --- |
 | 46b | `/agent/:chainId/:tokenId` | **built** `ac96625`, post-mortem 39: the skill page's layout. Eyebrow, sigil and name; the description and the tabs on the left, an Identity card on the right; the market full width, the declaration card, then Relations with `ClaimField`. The Declarations tab became that Relations block. Opens on the first tab with rows (`initialSectionOf`, 4 tests). The "Graph read from" line is gone; the CAIP-19 shows once. **Deferred:** the mainnet declare sentence lives in `DeclareUse`, shared with the skill and atom pages and asserted in `AtomPanel.test.tsx`, so it changes on all three at once or not at all, which is the user's call | none |
 | | | facts in cards on the right, like the skill page | two-column detail view, **amended** by ADR `0104` |
-| 46c | `/activity` | one table with chips instead of three stacked blocks | none |
+| 46c | `/activity` | ~~one table with chips instead of three stacked blocks~~ reopened by the user (§2): separate *ours* from *everyone's*, and decide whether the wallet's profits belong here. **Variant A chosen** (§2): two tabs Yours / Everyone, a fact line under Yours with no gain or loss, one table per tab. Not built | none |
 | 46d | `/register` | **built** `bd2b554`, post-mortem 37 (`Choice` in `YourAgent.tsx` lost its last outside importer; its `export` is dropped): two choice tiles, each with a mono line of what it needs (`ERC-8004 identity · wallet`, `URL · wallet`). No symbol: a Sigil comes from chain data. `pages/Register.test.tsx`, 2 tests | none |
-| 46e | `/agents` | the id lookup inside the search; `—` when nobody holds a position, which has to match what `/tools` does | none |
+| 46e | `/agents` | **built**: the search opens an agent when given `chain/token` or a bare token on Base (`agentRefOf`, 5 tests), and the "Or open one by id" section is gone. The Support cell is empty when nobody holds a position (`isUnsupported`, 1 test), like a zero on `/tools`; an unreported market still reads "—". `pages/AgentDirectory.test.tsx`, 4 tests: an id navigates, a word filters, the empty cell says "no support" to a screen reader | none |
 | | | filter chips | new feature, scope |
-| 46f | the shell | the giant footer wordmark on `/` only | ADR `0057`'s handoff |
+| 46f | the shell | ~~the giant footer wordmark on `/` only~~ **dropped**: the user keeps it everywhere | — |
 
 ## 5. Do not do in this task
 

@@ -57,6 +57,12 @@ export type CohortRow = {
     /** Already formatted; `null` when the graph reported no market cap at all. */
     marketCap: string | null;
     positions: string;
+    /**
+     * Nobody holds a position: the figure is the vault's creation deposit, not anyone's support,
+     * so the cell stays empty like a zero on `/tools` (task 46e). Distinct from an unreported
+     * market, which still reads "—".
+     */
+    isUnsupported: boolean;
 };
 
 export type CohortView = {
@@ -144,6 +150,7 @@ export function toCohortRow(listing: AgentListing, index: number, symbol: string
         statementCount: listing.statementCount,
         marketCap: cap === null ? null : `${formatTrust(cap)} ${symbol}`,
         positions: market === null ? "no market data" : describeAtomPositions(market),
+        isUnsupported: market?.positionCount === 0,
     };
 }
 
