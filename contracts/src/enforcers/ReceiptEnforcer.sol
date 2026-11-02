@@ -11,9 +11,10 @@ import {ModeCode} from "delegation-framework/utils/Types.sol";
 /// @author ARP — Agent Reputation Protocol
 /// @notice "No signed receipt, no deposit", held by a contract (ADR 0094 §2, task 43). A redemption
 ///         passes one signed hire receipt in `_args`; the deposit runs only if the receipt was
-///         signed by a node key the delegator accepted, names the redeeming agent as `requester`,
-///         is for the term the deposit targets, is fresh, the deposit's `value` is at most the
-///         receipt's `paid`, and the payment hash it names has never unlocked a deposit here.
+///         signed by a node key the delegator accepted, names this contract as its verifier, names
+///         the redeeming agent as `requester`, is for the term the deposit targets, is fresh and
+///         unexpired, the deposit's `value` is at most the receipt's `paid`, and the payment hash it
+///         names has never unlocked a deposit here.
 /// @dev    **What this rung holds, and what it does not** (user decision, 2026-10-30, "ok option 2";
 ///         ADR 0098 point 9). It holds **"an accepted key signed this receipt"**. It does **not**
 ///         hold **"a payment was made"**: `payment` and `paid` are values the signer asserts, and
@@ -22,11 +23,13 @@ import {ModeCode} from "delegation-framework/utils/Types.sol";
 ///         this one, bounds the abuse when an accepted key signs a receipt for a payment that never
 ///         happened.
 ///
-///         The receipt is verified exactly as `packages/protocol/src/hire-receipt.ts` signs it:
-///         EIP-712, domain `{name: "ARP Hire Receipt", version: "1", chainId}` with **no**
-///         `verifyingContract`, struct `HireReceipt` in that file's field order. Nothing in the
-///         signed format changes for this contract; the cross-implementation vector in
-///         `test/enforcers/ReceiptEnforcer.t.sol` is a viem signature checked here.
+///         The receipt is verified exactly as `packages/protocol/src/hire-receipt.ts` signs it, **v2
+///         only** (task 44, user decision 2026-10-30, ADR 0098): EIP-712, domain
+///         `{name: "ARP Hire Receipt", version: "2", chainId, verifyingContract: address(this)}`,
+///         struct `HireReceipt` in that file's field order, `termId` and `expiresAt` after v1's
+///         fields. A v1 receipt names no verifier and is refused (`UnknownReceiptVersion`). The
+///         cross-implementation vector in `test/enforcers/ReceiptEnforcer.t.sol` is a viem signature
+///         checked here, and `packages/protocol/test/hire-receipt.test.ts` holds the same one.
 ///
 ///         Replay (`security.md`, signature replay), ADR 0098:
 ///         - **nonce** — the receipt's `payment` transaction hash, as the signer states it. One
@@ -34,11 +37,10 @@ import {ModeCode} from "delegation-framework/utils/Types.sol";
 ///           receipt's digest, so a node that signs two receipts for one payment hash cannot unlock
 ///           two deposits here.
 ///         - **chain id** — in the domain. The accepted chain is the payment's, fixed in `_terms`.
-///         - **verifying contract** — absent from the signed domain: `hire-receipt.ts` signs for any
-///           verifier. The used set is per deployment, so a receipt consumed here can still be
-///           presented to a second verifier (another deployment, or the sponsoring service) and
-///           sponsored there too. Rated Medium (INFO-R1 in `SECURITY_REVIEW.md`). Accepting that
-///           deviation or moving to a v2 receipt is an open decision in ADR 0098.
+///         - **verifying contract** — in the domain, as `address(this)`. A receipt signed for another
+///           deployment or for the sponsoring service recovers to a different address here and is
+///           refused as `SignerNotAccepted`, so one receipt unlocks one sponsorship, at the one
+///           verifier it names. This closes INFO-R1 in `SECURITY_REVIEW.md` (task 44).
 ///
 ///         Threat model:
 ///         - Every hook is gated on `msg.sender == DELEGATION_MANAGER`. Unlike
@@ -63,7 +65,7 @@ contract ReceiptEnforcer is CaveatEnforcer {
                                   TYPES
     //////////////////////////////////////////////////////////////*/
 
-    /// @notice The hire receipt, field for field as `hire-receipt.ts` signs it.
+    /// @notice The v2 hire receipt, field for field as `hire-receipt.ts` signs it.
     struct HireReceipt {
         uint256 version;
         string agentRegistry;
@@ -74,6 +76,8 @@ contract ReceiptEnforcer is CaveatEnforcer {
         bytes32 requestHash;
         bytes32 resultHash;
         uint256 issuedAt;
+        bytes32 termId;
+        uint256 expiresAt;
     }
 
     /// @notice One accepted node key, the ERC-8004 agent it signs as, and the term its receipts
@@ -130,6 +134,12 @@ contract ReceiptEnforcer is CaveatEnforcer {
     /// @notice The receipt is older than `maxAge`.
     error ReceiptExpired(uint256 issuedAt, uint256 maxAge);
 
+    /// @notice The current block is after the receipt's own `expiresAt`.
+    error ReceiptPastExpiry(uint256 expiresAt);
+
+    /// @notice The receipt is for another term than the one the deposit targets.
+    error ReceiptTermMismatch(bytes32 receiptTermId, bytes32 depositTermId);
+
     /// @notice This payment hash already unlocked a deposit through this enforcer.
     error PaymentAlreadyUsed(bytes32 paymentKey);
 
@@ -158,23 +168,25 @@ contract ReceiptEnforcer is CaveatEnforcer {
                                   STATE
     //////////////////////////////////////////////////////////////*/
 
-    /// @notice The only payload version `hire-receipt.ts` signs (`HIRE_RECEIPT_VERSION`).
-    uint256 public constant RECEIPT_VERSION = 1;
+    /// @notice The only payload version accepted: v2, the one `hire-receipt.ts` signs
+    ///         (`HIRE_RECEIPT_VERSION`). v1 names no verifier.
+    uint256 public constant RECEIPT_VERSION = 2;
 
     /// @notice Upper bound on bindings per delegation, so the lookup loop is bounded.
     uint256 public constant MAX_BINDINGS = 32;
 
     /// @notice `typeHash` of the EIP-712 domain `hire-receipt.ts` signs under.
-    bytes32 public constant DOMAIN_TYPEHASH = keccak256("EIP712Domain(string name,string version,uint256 chainId)");
+    bytes32 public constant DOMAIN_TYPEHASH =
+        keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)");
 
     /// @notice `typeHash` of `HireReceipt`, in `HIRE_RECEIPT_TYPES` field order.
     bytes32 public constant RECEIPT_TYPEHASH = keccak256(
         "HireReceipt(uint256 version,string agentRegistry,uint256 agentId,address requester,bytes32 payment,"
-        "uint256 paid,bytes32 requestHash,bytes32 resultHash,uint256 issuedAt)"
+        "uint256 paid,bytes32 requestHash,bytes32 resultHash,uint256 issuedAt,bytes32 termId,uint256 expiresAt)"
     );
 
     bytes32 private constant _NAME_HASH = keccak256("ARP Hire Receipt");
-    bytes32 private constant _VERSION_HASH = keccak256("1");
+    bytes32 private constant _VERSION_HASH = keccak256("2");
 
     /// @dev `MultiVault.deposit(address receiver, bytes32 termId, uint256 curveId, uint256 minShares)`.
     bytes4 private constant _DEPOSIT_SELECTOR = bytes4(keccak256("deposit(address,bytes32,uint256,uint256)"));
@@ -226,8 +238,9 @@ contract ReceiptEnforcer is CaveatEnforcer {
         return abi.decode(_terms, (uint256, uint256, Binding[]));
     }
 
-    /// @notice Whether a payment hash has already unlocked a deposit through this enforcer. The
-    ///         sponsoring service is to read this before it pays (ADR 0098, INFO-R1).
+    /// @notice Whether a payment hash has already unlocked a deposit through this enforcer. Since
+    ///         v2 a receipt for this enforcer is refused by the sponsoring service, which no longer
+    ///         needs this read to avoid sponsoring one payment twice (task 44); it is for inspection.
     /// @param  chainId The chain the payment is on.
     /// @param  payment The payment's transaction hash, as a receipt names it.
     /// @return used    True once a receipt naming it has been consumed here.
@@ -250,8 +263,9 @@ contract ReceiptEnforcer is CaveatEnforcer {
     /// @param  _redeemer          The agent redeeming: must be the receipt's requester and the receiver.
     /// @dev    The sixth parameter, `_delegator`, is unnamed: this hook does not read it.
     ///         Freshness compares `issuedAt` with `block.timestamp` twice (not after it, and at most
-    ///         `maxAge` before it). The block's proposer sets `block.timestamp` within the usual
-    ///         ~15 s validator tolerance, so either edge can move by that much. Against a `maxAge`
+    ///         `maxAge` before it), and `expiresAt` once (not before it). The block's proposer sets
+    ///         `block.timestamp` within the usual ~15 s validator tolerance, so each edge can move by
+    ///         that much. Against a `maxAge`
     ///         of hours or days that is irrelevant; a `maxAge` of a few seconds would be dominated
     ///         by it, and a delegator should not choose one.
     function beforeHook(
@@ -273,16 +287,19 @@ contract ReceiptEnforcer is CaveatEnforcer {
 
         (bytes32 termId, uint256 value) = _depositTerm(_executionCallData, _redeemer);
         _requireBinding(bindings, signer, keccak256(bytes(receipt.agentRegistry)), receipt.agentId, termId);
+        if (receipt.termId != termId) revert ReceiptTermMismatch(receipt.termId, termId);
 
         if (receipt.requester != _redeemer) revert RequesterNotRedeemer(receipt.requester, _redeemer);
         // `paid` is what the signer states, not a read of the payment: this bounds the deposit by
         // the receipt, and the sponsoring service checks the receipt against the chain.
         if (value > receipt.paid) revert DepositExceedsPaid(value, receipt.paid);
 
-        // Validator-timestamp tolerance (~15 s, as in `TrustStakeCapEnforcer`) moves both edges
+        // Validator-timestamp tolerance (~15 s, as in `TrustStakeCapEnforcer`) moves the three edges
         // below by seconds; see the `@dev` above. Not exploitable against a `maxAge` of hours.
         if (receipt.issuedAt > block.timestamp) revert ReceiptFromFuture(receipt.issuedAt);
         if (block.timestamp - receipt.issuedAt > maxAge) revert ReceiptExpired(receipt.issuedAt, maxAge);
+        // The node's own bound, signed; `maxAge` is the delegator's. Both hold.
+        if (block.timestamp > receipt.expiresAt) revert ReceiptPastExpiry(receipt.expiresAt);
 
         bytes32 paymentKey = _paymentKey(receiptChainId, receipt.payment);
         if (_paymentUsed[paymentKey]) revert PaymentAlreadyUsed(paymentKey);
@@ -318,12 +335,14 @@ contract ReceiptEnforcer is CaveatEnforcer {
         onlyDelegationManager
     {}
 
-    /// @notice The EIP-712 digest `hire-receipt.ts` signs for `receipt` on `chainId`.
+    /// @notice The EIP-712 digest `hire-receipt.ts` signs for `receipt` on `chainId`, naming this
+    ///         contract as `verifyingContract`.
     /// @param  receipt The receipt.
     /// @param  chainId The chain in the domain: the payment's.
     /// @return digest  `keccak256("\x19\x01" ‖ domainSeparator ‖ structHash)`.
-    function hashReceipt(HireReceipt memory receipt, uint256 chainId) public pure returns (bytes32 digest) {
-        bytes32 domainSeparator = keccak256(abi.encode(DOMAIN_TYPEHASH, _NAME_HASH, _VERSION_HASH, chainId));
+    function hashReceipt(HireReceipt memory receipt, uint256 chainId) public view returns (bytes32 digest) {
+        bytes32 domainSeparator =
+            keccak256(abi.encode(DOMAIN_TYPEHASH, _NAME_HASH, _VERSION_HASH, chainId, address(this)));
         bytes32 structHash = keccak256(
             abi.encode(
                 RECEIPT_TYPEHASH,
@@ -335,7 +354,9 @@ contract ReceiptEnforcer is CaveatEnforcer {
                 receipt.paid,
                 receipt.requestHash,
                 receipt.resultHash,
-                receipt.issuedAt
+                receipt.issuedAt,
+                receipt.termId,
+                receipt.expiresAt
             )
         );
         return keccak256(abi.encodePacked("\x19\x01", domainSeparator, structHash));
@@ -347,7 +368,7 @@ contract ReceiptEnforcer is CaveatEnforcer {
 
     function _recoverSigner(bytes calldata args, uint256 chainId)
         private
-        pure
+        view
         returns (HireReceipt memory receipt, address signer)
     {
         bytes memory signature;

@@ -31,6 +31,8 @@ contract ReceiptEnforcerTest is Test {
     bytes32 internal constant TERM = bytes32(uint256(0x7e57));
     bytes32 internal constant PAYMENT = bytes32(0x1111111111111111111111111111111111111111111111111111111111111111);
     bytes32 internal constant DELEGATION_HASH = bytes32(uint256(0xbabecafe));
+    /// The `verifyingContract` the viem vector was signed for (`hire-receipt.test.ts`).
+    address internal constant VIEM_VERIFIER = 0x00000000000000000000000000000000005Ec044;
 
     // secp256k1 order, for the high-s malleability case.
     uint256 internal constant SECP256K1_N = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141;
@@ -58,21 +60,114 @@ contract ReceiptEnforcerTest is Test {
     //////////////////////////////////////////////////////////////*/
 
     /// Produced by `signHireReceipt` in `packages/protocol/src/hire-receipt.ts` with viem, using
-    /// anvil's publicly documented account #0 (a test key). If the struct, its order or the domain
-    /// drifts on either side, this is the test that fails.
+    /// anvil's publicly documented account #0 (a test key), for a v2 receipt naming
+    /// `VIEM_VERIFIER` as `verifyingContract`. The enforcer is deployed at that address so the
+    /// domain matches. `packages/protocol/test/hire-receipt.test.ts` holds the same digest and
+    /// signature, so drift in the struct, its order or the domain fails on both sides.
     function test_viemVector_digestAndSignatureVerify() public {
         address viemSigner = 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266;
         bytes memory viemSignature =
-            hex"342d5bb04c5db29deef638eef8ee3486bb6398d83af377d669a23913bdc3e88d556a671b16ce604f793e75032873d621b861b9ed90f07c50c93c1fc2cab6f7031b";
+            hex"9a7c21cedbb7b308fb4df76670bc25437d20da12993aa29345689b8779f3d9772c8f99fdc3233217a8337015e79211c37548c1d3a4faca819ea1755ae138cc021c";
+        deployCodeTo("ReceiptEnforcer.sol:ReceiptEnforcer", abi.encode(address(this)), VIEM_VERIFIER);
+        ReceiptEnforcer atVector = ReceiptEnforcer(VIEM_VERIFIER);
         ReceiptEnforcer.HireReceipt memory r = _receipt();
-        r.paid = 1_000_000_000_000_000;
+        assertEq(r.paid, 1_000_000_000_000_000);
+        assertEq(r.expiresAt, 1_700_086_400);
 
-        assertEq(enforcer.hashReceipt(r, CHAIN), 0x7a6e04dc344728a8cbc0c140683be24a30e7ac6e506c480d87f0c49cbdfc0b1c);
+        assertEq(atVector.hashReceipt(r, CHAIN), 0xa97f63e546c51ff2f0511bf52aa6c0ccebef42c44b27205cf82f8d569ece4bb7);
 
         ReceiptEnforcer.Binding[] memory bindings = new ReceiptEnforcer.Binding[](1);
         bindings[0] = ReceiptEnforcer.Binding(viemSigner, keccak256(bytes(REGISTRY)), AGENT_ID, TERM);
-        _hook(abi.encode(CHAIN, MAX_AGE, bindings), abi.encode(r, viemSignature), _deposit(REDEEMER, TERM));
-        assertTrue(enforcer.isPaymentUsed(CHAIN, PAYMENT));
+        atVector.beforeHook(
+            abi.encode(CHAIN, MAX_AGE, bindings),
+            abi.encode(r, viemSignature),
+            _singleDefault(),
+            _deposit(REDEEMER, TERM),
+            DELEGATION_HASH,
+            DELEGATOR,
+            REDEEMER
+        );
+        assertTrue(atVector.isPaymentUsed(CHAIN, PAYMENT));
+    }
+
+    /*//////////////////////////////////////////////////////////////
+                    ONE RECEIPT, ONE VERIFIER (v2, task 44)
+    //////////////////////////////////////////////////////////////*/
+
+    /// A receipt signed for another verifier (a second deployment, or the sponsoring service's
+    /// address) recovers to a different key here, so it unlocks nothing.
+    function test_beforeHook_revertsOnReceiptForAnotherVerifier() public {
+        ReceiptEnforcer other = new ReceiptEnforcer(address(this));
+        ReceiptEnforcer.HireReceipt memory r = _receipt();
+        (uint8 v, bytes32 rr, bytes32 s) = vm.sign(signerKey, other.hashReceipt(r, CHAIN));
+        address recovered = ecrecover(enforcer.hashReceipt(r, CHAIN), v, rr, s);
+        assertTrue(recovered != signer);
+        _hookReverts(
+            abi.encodeWithSelector(ReceiptEnforcer.SignerNotAccepted.selector, recovered),
+            _terms(),
+            abi.encode(r, abi.encodePacked(rr, s, v)),
+            _deposit(REDEEMER, TERM)
+        );
+    }
+
+    function test_hashReceipt_differsPerDeployment() public {
+        ReceiptEnforcer other = new ReceiptEnforcer(address(this));
+        assertTrue(other.hashReceipt(_receipt(), CHAIN) != enforcer.hashReceipt(_receipt(), CHAIN));
+    }
+
+    /// v1 names no verifier, so it is refused before any recovery.
+    function test_beforeHook_revertsOnV1Receipt() public {
+        ReceiptEnforcer.HireReceipt memory r = _receipt();
+        r.version = 1;
+        _hookReverts(
+            abi.encodeWithSelector(ReceiptEnforcer.UnknownReceiptVersion.selector, 1),
+            _terms(),
+            _args(r),
+            _deposit(REDEEMER, TERM)
+        );
+    }
+
+    function test_beforeHook_revertsWhenReceiptTermDiffersFromDeposit() public {
+        ReceiptEnforcer.HireReceipt memory r = _receipt();
+        bytes32 other = bytes32(uint256(0x0dd));
+        r.termId = other;
+        _hookReverts(
+            abi.encodeWithSelector(ReceiptEnforcer.ReceiptTermMismatch.selector, other, TERM),
+            _terms(),
+            _args(r),
+            _deposit(REDEEMER, TERM)
+        );
+    }
+
+    function test_beforeHook_acceptsAtExactlyExpiresAt() public {
+        ReceiptEnforcer.HireReceipt memory r = _receipt();
+        r.expiresAt = ISSUED_AT + 1 hours;
+        _hook(_terms(), _args(r), _deposit(REDEEMER, TERM));
+    }
+
+    /// The node's own expiry holds even inside the delegator's `maxAge`.
+    function test_beforeHook_revertsPastOwnExpiry() public {
+        ReceiptEnforcer.HireReceipt memory r = _receipt();
+        r.expiresAt = ISSUED_AT + 1 hours - 1;
+        _hookReverts(
+            abi.encodeWithSelector(ReceiptEnforcer.ReceiptPastExpiry.selector, r.expiresAt),
+            _terms(),
+            _args(r),
+            _deposit(REDEEMER, TERM)
+        );
+        assertFalse(enforcer.isPaymentUsed(CHAIN, PAYMENT));
+    }
+
+    function testFuzz_beforeHook_rejectsTamperedV2Fields(bytes32 termId, uint256 expiresAt) public {
+        ReceiptEnforcer.HireReceipt memory r = _receipt();
+        vm.assume(termId != r.termId || expiresAt != r.expiresAt);
+        bytes memory signature = _sign(r, CHAIN);
+        r.termId = termId;
+        r.expiresAt = expiresAt;
+        bytes memory terms = _terms();
+        bytes memory execution = _deposit(REDEEMER, TERM);
+        vm.expectPartialRevert(ReceiptEnforcer.SignerNotAccepted.selector);
+        _hook(terms, abi.encode(r, signature), execution);
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -237,9 +332,9 @@ contract ReceiptEnforcerTest is Test {
 
     function test_beforeHook_revertsOnUnknownVersion() public {
         ReceiptEnforcer.HireReceipt memory r = _receipt();
-        r.version = 2;
+        r.version = 3;
         _hookReverts(
-            abi.encodeWithSelector(ReceiptEnforcer.UnknownReceiptVersion.selector, 2),
+            abi.encodeWithSelector(ReceiptEnforcer.UnknownReceiptVersion.selector, 3),
             _terms(),
             _args(r),
             _deposit(REDEEMER, TERM)
@@ -473,7 +568,7 @@ contract ReceiptEnforcerTest is Test {
 
     function _receipt() internal pure returns (ReceiptEnforcer.HireReceipt memory) {
         return ReceiptEnforcer.HireReceipt({
-            version: 1,
+            version: 2,
             agentRegistry: REGISTRY,
             agentId: AGENT_ID,
             requester: REDEEMER,
@@ -481,7 +576,9 @@ contract ReceiptEnforcerTest is Test {
             paid: 0.001 ether,
             requestHash: bytes32(0x2222222222222222222222222222222222222222222222222222222222222222),
             resultHash: bytes32(0x3333333333333333333333333333333333333333333333333333333333333333),
-            issuedAt: ISSUED_AT
+            issuedAt: ISSUED_AT,
+            termId: TERM,
+            expiresAt: ISSUED_AT + MAX_AGE
         });
     }
 

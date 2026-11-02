@@ -584,6 +584,8 @@ This is covered by the access-control guard above. Inside a real redemption the 
   (`test_beforeHook_revertsOnSecondReceiptForOnePayment`).
 - **Chain id**: in the EIP-712 domain and pinned by `_terms` (`test_beforeHook_revertsOnOtherChainDomain`).
 - **Verifying contract**: **absent from the v1 receipt's domain**. Rated Medium as INFO-R1 below.
+  **Closed by task 44**: the enforcer verifies v2 only, whose domain names `address(this)`. See
+  "Task 44: v2 receipt" below.
 
 ### Oracles / external data
 None. The payment is not read (see "What this rung holds").
@@ -599,7 +601,8 @@ The single state write is paired with `ReceiptConsumed(delegationHash, paymentKe
 
 ## Findings
 
-- **INFO-R1 (Medium): cross-verifier replay.** Re-rated from Info on 2026-10-30. The signed domain
+- **INFO-R1 (Medium): cross-verifier replay. Closed by task 44** (v2 receipt, user decision; see
+  "Task 44: v2 receipt" below). As written at task 43: Re-rated from Info on 2026-10-30. The signed domain
   has no `verifyingContract`, so a receipt consumed here is not consumed at another verifier. One
   payment can be sponsored once by task 40's service and once by this enforcer, both from ARP's
   funds. **Service-side mitigation** (ADR `0098`): before it pays, the service calls
@@ -737,3 +740,64 @@ documented. Coverage 100% (58/58 lines, 15/15 branches). Gas 66,564 on the happy
 - Not deployed. No transaction on any chain.
 
 Ready for `task-verifier`.
+
+## Task 44: v2 receipt (2026-11-02)
+
+User decision on ADR `0098`'s open point: a v2 receipt that names its verifier (ADR `0101`).
+`contracts/src/enforcers/ReceiptEnforcer.sol` now verifies **v2 only**.
+
+### What changed
+
+- Domain: `EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)`,
+  version `"2"`, `verifyingContract = address(this)`. `hashReceipt` is `view` (it reads
+  `address(this)`), so is `_recoverSigner`.
+- Struct: v1's nine fields in v1's order, then `bytes32 termId, uint256 expiresAt`.
+- `RECEIPT_VERSION = 2`. A v1 receipt reverts `UnknownReceiptVersion(1)` before recovery.
+- Two new checks, two new errors: `receipt.termId == ` the deposit's term (`ReceiptTermMismatch`),
+  and `block.timestamp <= receipt.expiresAt` (`ReceiptPastExpiry`). `maxAge` from `_terms` still
+  holds; both bounds apply.
+
+### Signature replay, re-walked
+
+- **Nonce**: unchanged, the payment hash, used set keyed by `(chainId, payment)`.
+- **Chain id**: unchanged, in the domain and pinned by `_terms`.
+- **Verifying contract**: in the domain. A receipt signed for another deployment, or for the
+  sponsoring service's address, recovers to a different key here and reverts `SignerNotAccepted`
+  (`test_beforeHook_revertsOnReceiptForAnotherVerifier`, `test_hashReceipt_differsPerDeployment`).
+  The service refuses a receipt naming anything but its own account
+  (`packages/protocol/src/sponsor/proof.ts`, `hireReceiptIsFor`). **INFO-R1 is closed.** What
+  remains: a node that signs two receipts for one payment, naming two verifiers, gets both used. That
+  is a dishonest node, and the evidence against it is two signatures over one payment hash.
+- **Cross-implementation vector**: `test_viemVector_digestAndSignatureVerify` deploys the enforcer at
+  `0x…5Ec044` with `deployCodeTo` and checks digest `0xa97f63e5…4bb7` and a viem signature from
+  anvil's public account #0. `packages/protocol/test/hire-receipt.test.ts` ("the vector
+  ReceiptEnforcer.t.sol holds") asserts the same digest and the same signature bytes, so a drift
+  fails on both sides.
+
+### Timestamp
+
+`beforeHook` now compares `block.timestamp` three times (lines 299, 300, 302). The ~15 s proposer
+tolerance moves each edge by seconds; `expiresAt` is the node's own bound
+(`AGENT_NODE_RECEIPT_TTL`, default 86,400 s), so it is irrelevant at that scale.
+
+### Coverage, tests, gas
+
+`cd contracts && forge coverage --match-contract ReceiptEnforcer --no-match-coverage "test|lib"`,
+2026-11-02, uncommitted tree on `feat/44-hire-receipt-v2`:
+
+| File                                |           Lines |      Statements |        Branches |       Functions |
+| ----------------------------------- | --------------: | --------------: | --------------: | --------------: |
+| `src/enforcers/ReceiptEnforcer.sol` | 100.00% (61/61) | 100.00% (84/84) | 100.00% (17/17) | 100.00% (13/13) |
+
+47 `ReceiptEnforcer` tests, three of them fuzz (256 runs each). `cd contracts && forge test`: 64
+tests in 3 suites (47 + 15 `TrustStakeCapEnforcer` + 2 invariants), 0 failed.
+
+`forge test --match-contract ReceiptEnforcerTest --gas-report`: deployment **1,125,098 gas / 5,165
+bytes** (was 1,085,111 / 4,980). `hashReceipt` 2,463 (was 2,286). Happy path,
+`forge test --match-test test_beforeHook_acceptsAndConsumes -vvvv --isolate`: **67,190 gas** in the
+`beforeHook` frame (was 66,564).
+
+### Not done here
+
+Slither was not re-run (not installed in this environment), and the `contract-reviewer` pass on the
+v2 change is still owed before `task-verifier`. Not deployed. No transaction on any chain.
