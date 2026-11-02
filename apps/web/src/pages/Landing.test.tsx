@@ -91,21 +91,23 @@ describe("Landing", () => {
         });
     });
 
-    it("prices the declare card at fee plus deposit, not the fee alone", async () => {
-        const {container} = renderWithProviders(<Landing />);
-        await waitFor(() => expect(cost).toHaveBeenCalled());
+    it("offers three ways in, each opening its own path, and no wallet on any of them", async () => {
+        renderWithProviders(<Landing />);
 
-        // Scoped to the row, because the fee alone is correctly printed elsewhere — Fig. 02's
-        // first beat says what does not come back, and that is the fee. What must not happen is
-        // the *floor* row showing the fee: `getTripleCost()` alone seeds a term with `minShare`
-        // and zero positions (ADR `0053`), so calling it the floor understates by half on testnet.
-        await waitFor(() => {
-            const term = [...container.querySelectorAll("dt")].find(
-                (dt) => dt.textContent?.trim() === "Costs from",
-            );
-            expect(term, "no `Costs from` row on the page").toBeTruthy();
-            expect(term?.nextElementSibling?.textContent).toBe("0.002 tTRUST");
-        });
+        // Task 53: scene 4 asks who arrives. The four jobs it replaced said "Needs wallet" three
+        // times, which is what a Claude user must not meet first (task 45).
+        const ways = [
+            ["I use Claude", "/start/claude"],
+            ["I'm building an agent", "/start/agent"],
+            ["I published a tool or a skill", "/start/tool"],
+        ] as const;
+        for (const [title, href] of ways) {
+            // By text, not by role: the deck keeps the scenes off screen out of the accessibility
+            // tree, and this one is off screen at render.
+            const heading = await screen.findByText(title);
+            expect(heading.closest("a")?.getAttribute("href")).toBe(href);
+        }
+        expect(screen.queryByText(/wallet/i)).toBeNull();
     });
 
     it("gives every in-page anchor a target on the page", async () => {
@@ -235,9 +237,9 @@ describe("Landing", () => {
 
         // ADR `0060`: ARP records a use, it does not broker one. A delegation names its delegate by
         // address and an agent's runtime address is not on the graph, so "get paid" would be a
-        // promise with no mechanism. The card may say findable and callable, and no more.
+        // promise with no mechanism. The "be hired" card left with scene 4's jobs (task 53); the
+        // forbidden promises stay forbidden everywhere on the page.
         const text = (container.textContent ?? "").toLowerCase();
-        expect(text).toContain("let other agents find yours and call it");
         for (const forbidden of ["get paid", "earn fees", "marketplace", "hire an agent"]) {
             expect(text, `out-of-scope promise on the page: ${forbidden}`).not.toContain(forbidden);
         }
