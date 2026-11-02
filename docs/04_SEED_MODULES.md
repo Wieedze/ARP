@@ -1,5 +1,9 @@
 # 04 — Seed Modules
 
+> **Historical** (2026-11-02, ADR `0117`). These modules were to be registered in `ModuleRegistry`
+> on Base Sepolia; that contract was deleted in `59ac83a` (ADR `0055`). A
+> tool's domain is now `(tool, has category, domain)` on the graph (`docs/25_THE_DOMAIN_TREE.md`).
+
 Three modules are registered at deployment time. Each has a committed schema file, an IPFS-uploaded URI, and a corresponding Intuition atom.
 
 The purpose of seeding these three specifically is to demonstrate domain diversity: security (narrow technical), content (broad subjective), and information (epistemic). Each maps to a different flavor of what "reputation in a domain" can mean.
