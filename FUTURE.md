@@ -293,3 +293,32 @@ usage signal as an input. ARP does not become one.
 staking chain are not the same on mainnet (`rules/portability.md`, point 2). And whether one
 contract is one module or one per deployment/version, since an upgrade behind a proxy keeps the
 address but changes the code.
+
+## Search by meaning, through skills.sh, with a copy kept for when it is down
+
+**Asked 2026-11-02.** On the fallback: _« on peut faire des sauvegardes en cache ou bdd si le service
+skills.sh est down ? »_. On the timing: _« pour un POC je trouve ça vraiment trop, écris-le dans
+FUTURE »_.
+
+**Why.** Task 45c (`data/measurements/discovery-eval-2026-11-02.jsonl`) measured the cost of
+consulting ARP. Claude consulted it on the right prompts, but a run cost 3.14 times the tokens of
+answering from memory, and the answer was judged worse 37 times out of 42. The main cause is that
+the registry often has nothing that fits. ARP matches words: "card payments" finds nothing in the
+catalogue. skills.sh's search runs by meaning: its own answer to `GET
+https://skills.sh/api/search?q=card%20payments` says `"searchType":"semantic"`, and it returned
+`payment-pci-security` and `integrate-midtrans-payments`. Its rows are tiny: an id, a name and
+installs.
+
+**What it would be.** `arp_find_tools` asks skills.sh's search for skills and keeps answering from
+ARP's own catalogue and from the chain for everything else. Every answer skills.sh gives is kept in
+a dated cache or database, so that a search still answers when skills.sh is down. The answer then
+says the result is from the copy and gives its date.
+
+**What it needs first.** It reverses one alternative ADR `0108` rejected: "a search that lived only
+on a server", which ADR `0092`'s amendment forbids as a capability. The cache is what keeps it a
+convenience rather than a capability, so it is part of the design, not an option. Decide in a new
+ADR where the copy lives (`apps/api`, ADR `0084`, already caches skills.sh's figures) and how old it
+may be. Re-run `scripts/measure/discovery-eval.ts` before and after.
+
+The alternative left aside: a small local embedding model in the server (tens of MB in the
+extension, an estimate, not measured). There is no third party, but it adds weight, and it does not add skills.sh's coverage.

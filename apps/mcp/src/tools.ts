@@ -70,24 +70,25 @@ export const TOOLS = [
     name: 'arp_find_tools',
     description:
       'Search the ARP registry for a skill, a tool, an MCP server or an API that fits a need, ' +
-      'BEFORE you pick one yourself or search the web. Pass `query`, a few words for the need ' +
-      '("video editing", "sort emails"), or `domain`, one broad word (`marketing`, `payment`), ' +
-      'or both. Each result is short: `name`, `purpose` (one sentence), `url` (the source to read ' +
+      'BEFORE you pick one yourself or search the web. Pass `query`, one or two words for the ' +
+      'need ("video editing", "transcription"): a result must hold every word. Or pass `domain`, ' +
+      'one broad word (`marketing`, `payment`), or both. Each result is short: `name`, `purpose` (one sentence), `url` (the source to read ' +
       'before you use it, not something to call), `declarations` (how many agents said they used ' +
       'it) and, for a skill, `installs`. Results come best match first, 25 at a time: when ' +
-      '`next_offset` is not null, pass it as `offset` to see more. If nothing matches, ' +
-      '`domains_available` lists the words the registry uses: pick the closest and ask again. ' +
+      '`next_offset` is not null, pass it as `offset` to see more. If a `domain` matches ' +
+      'nothing, `domains_available` lists the words the registry uses. ' +
       '`detail: "full"` adds everything else the registry holds about each result. `id` is what ' +
       '`arp_tool_reputation` takes. An empty result means the registry has nothing for that need, ' +
-      'not that nothing exists.',
+      'not that nothing exists: answer from what you know rather than searching it again.',
     inputSchema: {
       type: 'object',
       properties: {
         query: {
           type: 'string',
           description:
-            'A few words for the need, in any language the descriptions use (mostly English): ' +
-            '"video editing", "pdf form", "send email". Matched against each name and description.',
+            'One or two words for the need, in any language the descriptions use (mostly ' +
+            'English): "video editing", "pdf form", "transcription". A result must hold every ' +
+            'word, in its name or its description.',
         },
         domain: {
           type: 'string',

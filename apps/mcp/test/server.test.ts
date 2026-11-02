@@ -840,11 +840,11 @@ describe("read-only mode", () => {
         };
     };
 
-    it("finds by free text, and answers a query that matches nothing with the words that exist", async () => {
+    it("answers a query that matches nothing with nothing to ask next (task 51)", async () => {
         const none = await findTools({query: "zzzz-nothing-matches"});
         expect(none.total).toBe(0);
         expect(none.tools).toEqual([]);
-        expect(none.domains_available).toEqual(["marketing"]);
+        expect(none.domains_available).toBeUndefined();
     });
 
     // The row shape, the paging and the collapsing are tested on literals in tool-search.test.ts:

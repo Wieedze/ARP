@@ -51,6 +51,8 @@ type RunRecord = {
   rep: number;
   consulted: boolean;
   toolCalls: string[];
+  /** What each call asked, cut at 200 characters: the query is what decides what comes back. */
+  toolInputs: string[];
   webSearches: number;
   tokens: { input: number; cacheCreation: number; cacheRead: number; output: number; total: number };
   costUsd: number;
@@ -149,7 +151,7 @@ function claude(args: string[], cwd: string): Promise<string> {
 /** The shapes this reads out of `--output-format stream-json`; everything else is ignored. */
 type StreamLine = {
   type?: string;
-  message?: { content?: { type?: string; name?: string }[] };
+  message?: { content?: { type?: string; name?: string; input?: unknown }[] };
   result?: string;
   is_error?: boolean;
   num_turns?: number;
@@ -178,6 +180,7 @@ async function runOne(prompt: Prompt, arm: Arm, rep: number, model: string, mcpC
   rmSync(cwd, { recursive: true, force: true });
 
   const toolCalls: string[] = [];
+  const toolInputs: string[] = [];
   let result: StreamLine | undefined;
   for (const line of out.split('\n')) {
     if (line.trim() === '') continue;
@@ -189,7 +192,10 @@ async function runOne(prompt: Prompt, arm: Arm, rep: number, model: string, mcpC
     }
     if (parsed.type === 'assistant')
       for (const block of parsed.message?.content ?? [])
-        if (block.type === 'tool_use' && block.name !== undefined) toolCalls.push(block.name);
+        if (block.type === 'tool_use' && block.name !== undefined) {
+          toolCalls.push(block.name);
+          toolInputs.push(JSON.stringify(block.input ?? null).slice(0, 200));
+        }
     if (parsed.type === 'result') result = parsed;
   }
 
@@ -209,6 +215,7 @@ async function runOne(prompt: Prompt, arm: Arm, rep: number, model: string, mcpC
     rep,
     consulted: toolCalls.includes('mcp__arp__arp_find_tools'),
     toolCalls,
+    toolInputs,
     webSearches: result?.usage?.server_tool_use?.web_search_requests ?? 0,
     tokens,
     costUsd: result?.total_cost_usd ?? 0,
