@@ -2,7 +2,7 @@
 
 **Generated** 2026-11-02 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-42 entries, one per completed task. Written by `task-verifier` on a pass.
+43 entries, one per completed task. Written by `task-verifier` on a pass.
 
 | # | task | verdict | entry |
 | --- | --- | --- | --- |
@@ -48,3 +48,4 @@
 | [38](38-plain-words.md) | `docs/tasks/47-plain-words.md` | PASS (first pass; ui-reviewer FAIL round 1, PASS round 2) | Plain words: the operator does not read the chain's vocabulary (47) |
 | [39](39-the-redesign-from-references.md) | `docs/tasks/46-the-redesign-from-references.md` (row 46b in §4) | PASS (first pass; `ui-reviewer` FAIL round 1 on 4 stale comments, PASS round 2) | The redesign from references, 46b: the agent page takes the skill page's layout |
 | [40](40-the-redesign-from-references.md) | `docs/tasks/46-the-redesign-from-references.md` (row 46e in §4) | PASS (`ui-reviewer` PASS with 4 advisories, 2 acted on) | The redesign from references, 46e: the id lookup moves into the `/agents` search |
+| [41](41-the-redesign-from-references.md) | `docs/tasks/46-the-redesign-from-references.md` (row 46c in §4) | PASS on round 2 (round 1 FAIL: a retraction landed in one place of two) | The redesign from references, 46c: `/activity` splits Yours from Everyone |

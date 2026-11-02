@@ -21,31 +21,6 @@ import {
 } from "../services/agent-feed";
 import {FACT_FILTERS, factsOfKind, isOwnFact, type ChainFact} from "../services/chain-facts-view";
 
-/**
- * What happens on ARP, live.
- *
- * **On chain** is every identified agent's declarations and the stakes on them, read from the
- * indexer and re-read every fifteen seconds. It is the same for every visitor and survives a
- * reload.
- *
- * **This machine** is the local feed, kept as the demo of what happens before a declaration: one
- * agent's runtime, relayed by `arp-session-log --serve`, in memory only. **Invocations** is one row per skill or MCP server the runtime called, joined on ids
- * to the declaration that names it and the stakes on that declaration (`traceInvocations`). Below
- * it, **the timeline** is every event once, as Time · Who · Off chain · On chain · Transaction
- * (`timelineRows`): each transaction names the invocation it answers, and that invocation lists it.
- *
- * Both are newest first: a demo watches the top of the page.
- *
- * **Two views, Yours and Everyone** (task 46c, the user's choice of variant A). Everyone is the
- * public table and nothing else. Yours is what belongs to the reader: the **positions** the
- * connected wallet holds (which was `/profile`, `docs/tasks/35` §0), the public rows it signed or
- * holds (`isOwnFact`), and the local runtime, which runs on this machine and so is theirs by
- * definition. A connected wallet opens on Yours.
- *
- * **This machine** is relayed from the local feed, so it is a local program's record; the explorer
- * link on each hash is how a reader takes the chain's word instead. **On chain** above it is read
- * from the indexer and needs no such step.
- */
 const FEED: Record<FeedStatus, string> = {
     off: "No feed configured",
     connecting: "Connecting",
@@ -256,6 +231,22 @@ type ActivityView = "yours" | "everyone";
 const VIEW_PARAM = "view";
 type FactFilter = (typeof FACT_FILTERS)[number]["id"];
 
+/**
+ * What happens on ARP, live, in two views (task 46c, the user's choice of variant A).
+ *
+ * **Everyone** is the public table: every identified agent's declarations and the support on them,
+ * read from the indexer and re-read every fifteen seconds, the same for every visitor.
+ *
+ * **Yours** is what belongs to the reader: the positions the connected wallet holds (which was
+ * `/profile`, `docs/tasks/35` §0), the public rows it signed or holds (`isOwnFact`), and **this
+ * machine**, the local runtime relayed by `arp-session-log --serve`, in memory only. Its
+ * invocations are one row per skill or MCP server called, joined to the declaration that names it
+ * (`traceInvocations`); its timeline is every event once (`timelineRows`). A connected wallet
+ * opens on Yours.
+ *
+ * The public read is the newest rows for everyone, not a query by wallet, so Yours finds the
+ * wallet's rows **among those** and says so when it finds none. All of it is newest first.
+ */
 export function ActivityPage({feed, reads}: {feed?: AgentFeed; reads?: ChainReads} = {}) {
     const chain = useChainChoice();
     const onChain = useChainFacts(reads);
@@ -325,9 +316,19 @@ export function ActivityPage({feed, reads}: {feed?: AgentFeed; reads?: ChainRead
                             {
                                 id: "yours",
                                 label: "Yours",
-                                count: isConnected ? ownFacts.length + trace.length : trace.length,
+                                // The rows the two Yours tables show at All: the wallet's public
+                                // rows and the local invocations. Unknown while the read is out.
+                                count: !isConnected
+                                    ? trace.length
+                                    : onChain.status === "pending"
+                                      ? null
+                                      : ownFacts.length + trace.length,
                             },
-                            {id: "everyone", label: "Everyone", count: onChain.facts.length},
+                            {
+                                id: "everyone",
+                                label: "Everyone",
+                                count: onChain.status === "pending" ? null : onChain.facts.length,
+                            },
                         ]}
                         selected={view}
                         onChange={chooseView}
@@ -375,10 +376,10 @@ export function ActivityPage({feed, reads}: {feed?: AgentFeed; reads?: ChainRead
                                 ? "Reading the indexer"
                                 : onChain.status === "error" && onChain.facts.length === 0
                                   ? "The indexer did not answer. It is asked again every 15 seconds."
-                                  : view === "yours"
-                                    ? `Nothing signed by or held for this wallet on ${chain.label} yet.`
-                                    : kind !== "all"
-                                      ? "None of this kind yet."
+                                  : kind !== "all"
+                                    ? "None of this kind among the latest public rows."
+                                    : view === "yours"
+                                      ? "Nothing signed by or held for this wallet among the latest public rows."
                                       : `Nothing declared on ${chain.label} yet. Each declaration an identified agent writes appears here.`}
                         </p>
                     ) : (
@@ -448,8 +449,8 @@ export function ActivityPage({feed, reads}: {feed?: AgentFeed; reads?: ChainRead
                         </table>
                     )}
 
-                    {/* Headers over no rows read as a failed read; the invocations above already say
-                when nothing has run. */}
+                    {/* Headers over no rows read as a failed read; the invocations above
+                        already say when nothing has run. */}
                     {timeline.length === 0 ? null : (
                         <>
                             <h3 className={`${LABEL} mt-10 mb-2`} id="activity-timeline">

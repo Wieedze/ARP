@@ -147,8 +147,9 @@ export type RecentStake = {
     /** Who signed it. */
     account: string | null;
     /**
-     * Whose position it is. Not always the signer: ARP's sponsoring service signs a deposit and the
-     * position is the agent operator's (ADR `0094`), so "is this mine" asks this field too.
+     * Whose position it is. Not always the signer: ARP's sponsoring service is built to sign a
+     * deposit whose position is the agent operator's (ADR `0094`), so "is this mine" asks this field
+     * too. The service has not run yet (`.claude/STATE.md`, task 40), so today the two are equal.
      */
     receiver: string | null;
     /** In wei: after fees for a deposit, what came back for a redemption. */

@@ -27,9 +27,11 @@ import type {PreparedCall} from "../declare/types.js";
  * & DEPOSIT`. `approvals` is `internal` and nothing exposes it, so whether an agent has approved is
  * learnt by simulating the deposit, not by a read.
  *
- * **DEPOSIT and never BOTH.** `BOTH` would also let the sponsor redeem the agent's shares to any
- * receiver it names (`_isApprovedToRedeem`). The agent owns the position because only the
- * agent can leave it.
+ * **DEPOSIT and never BOTH.** `BOTH` would also let the sponsor redeem the agent's shares
+ * (`_isApprovedToRedeem` checks `approvals[receiver][sender]`). The TRUST would still go back to
+ * the agent, since a redemption pays the share owner, but the sponsor could close the agent's
+ * position against its will. The agent owns the position because only the agent can leave it
+ * (ADR `0096` item 3, corrected 2026-11-02: it said "to any receiver", which is wrong).
  */
 export const DEPOSIT_APPROVAL = 1;
 

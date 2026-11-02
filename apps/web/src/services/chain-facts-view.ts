@@ -22,7 +22,7 @@ export type ChainFact = {
     assets: string | null;
     /** Who signed the deposit or redemption. Not the agent: one operator signs for several. */
     account: string | null;
-    /** Whose position it is, which differs from `account` when a sponsor signed (ADR `0094`). */
+    /** Whose position it is, which would differ from `account` on a sponsored deposit (ADR `0094`). */
     receiver: string | null;
 };
 
@@ -115,8 +115,9 @@ export function chainFacts(
 
 /**
  * Whether a public row is the connected wallet's own: it signed the transaction, or the position is
- * in its name (a sponsor signs and the operator holds, ADR `0094`). Addresses compare without case.
- * A declaration written with no deposit carries no address, so it is nobody's here.
+ * in its name (a sponsored deposit, ADR `0094`; the service has not run, `.claude/STATE.md` task
+ * 40). Addresses compare without case. A declaration written with no deposit carries no address,
+ * so it is nobody's here.
  */
 export function isOwnFact(fact: ChainFact, address: string | null | undefined): boolean {
     if (address === null || address === undefined) return false;

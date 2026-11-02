@@ -269,18 +269,22 @@ export function AgentTrustPanel() {
                         the grid puts Identity in the right column across both rows, so the desktop
                         layout is unchanged and the focus order still reads top to bottom. */}
                     <div className="mt-8 grid items-start gap-x-12 gap-y-10 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,26rem)] lg:grid-rows-[auto_1fr]">
-                        <div className="min-w-0 lg:col-start-1 lg:row-start-1">
-                            {view.isFallbackMetadata ? (
-                                <p className="inline-flex max-w-[64ch] self-start rounded-[var(--radius-tag)] border border-dashed border-[color:var(--color-rule-strong)] px-3 py-1.5 font-mono text-[length:var(--text-label)] text-[color:var(--color-silver)]">
-                                    Name and URL are the indexer&rsquo;s stand-in — no source
-                                    published a name for this agent
-                                </p>
-                            ) : view.description !== null ? (
-                                <p className="max-w-[62ch] text-[17px] text-[color:var(--color-silver)]">
-                                    {view.description}
-                                </p>
-                            ) : null}
-                        </div>
+                        {/* Only when there is something to say: an empty grid item still takes a
+                            row gap. */}
+                        {view.isFallbackMetadata || view.description !== null ? (
+                            <div className="min-w-0 lg:col-start-1 lg:row-start-1">
+                                {view.isFallbackMetadata ? (
+                                    <p className="inline-flex max-w-[64ch] rounded-[var(--radius-tag)] border border-dashed border-[color:var(--color-rule-strong)] px-3 py-1.5 font-mono text-[length:var(--text-label)] text-[color:var(--color-silver)]">
+                                        Name and URL are the indexer&rsquo;s stand-in — no source
+                                        published a name for this agent
+                                    </p>
+                                ) : view.description !== null ? (
+                                    <p className="max-w-[62ch] text-[17px] text-[color:var(--color-silver)]">
+                                        {view.description}
+                                    </p>
+                                ) : null}
+                            </div>
+                        ) : null}
 
                         <div className="lg:col-start-2 lg:row-span-2 lg:row-start-1">
                             <Panel label="Identity">

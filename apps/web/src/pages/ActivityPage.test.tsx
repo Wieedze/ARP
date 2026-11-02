@@ -297,7 +297,7 @@ describe("yours and everyone (task 46c)", () => {
         const narrowed = screen.getByRole("table", {name: /every agent/i});
         expect(within(narrowed).getAllByRole("row").slice(1)).toHaveLength(1);
         fireEvent.click(screen.getByRole("button", {name: "Withdrawn"}));
-        expect(screen.getByText("None of this kind yet.")).toBeTruthy();
+        expect(screen.getByText("None of this kind among the latest public rows.")).toBeTruthy();
     });
 });
 
