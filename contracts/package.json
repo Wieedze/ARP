@@ -8,6 +8,9 @@
     "build": "forge build",
     "test": "forge test",
     "format": "forge fmt",
-    "lint": "solhint 'src/**/*.sol'"
+    "lint": "solhint --disc 'src/**/*.sol' && forge fmt --check"
+  },
+  "devDependencies": {
+    "solhint": "5.0.5"
   }
 }

@@ -49,6 +49,8 @@ bracket_spacing = false
 int_types = "long"
 quote_style = "double"
 number_underscore = "thousands"
+# The ported ERC-8004 reference registry stays as upstream formatted it.
+ignore = ["src/erc8004/**/*.sol"]
 
 [rpc_endpoints]
 intuition_testnet = "${INTUITION_TESTNET_RPC_URL}"
