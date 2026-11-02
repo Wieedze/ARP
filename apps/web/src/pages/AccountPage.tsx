@@ -1,4 +1,4 @@
-import {useState} from "react";
+import {useEffect, useState} from "react";
 import {type Delegation} from "@metamask/smart-accounts-kit";
 
 import {DelegationForm} from "../components/account/DelegationForm";
@@ -205,7 +205,12 @@ function DelegationLine({
     canSign: boolean;
 }) {
     const [confirming, setConfirming] = useState(false);
-    const [copied, setCopied] = useState(false);
+    const [copy, setCopy] = useState<"idle" | "copied" | "failed">("idle");
+    useEffect(() => {
+        if (copy !== "copied") return;
+        const timer = setTimeout(() => setCopy("idle"), 2_000);
+        return () => clearTimeout(timer);
+    }, [copy]);
     const revoking = account.revoke.isPending && account.revoke.variables === row.stored.delegation;
     const signedAt = new Date(row.stored.signedAt * 1000)
         .toISOString()
@@ -250,14 +255,28 @@ function DelegationLine({
                         type="button"
                         className={controlClass}
                         onClick={() => {
-                            navigator.clipboard
-                                .writeText(exportDelegation(row.stored.delegation))
-                                .then(() => setCopied(true))
-                                .catch(() => setCopied(false));
+                            setCopy("idle");
+                            // Inside the promise chain, so no clipboard at all (insecure context)
+                            // rejects like a refused write instead of throwing out of the handler.
+                            Promise.resolve()
+                                .then(() =>
+                                    navigator.clipboard.writeText(
+                                        exportDelegation(row.stored.delegation),
+                                    ),
+                                )
+                                .then(
+                                    () => setCopy("copied"),
+                                    () => setCopy("failed"),
+                                );
                         }}
                     >
-                        {copied ? "Copied" : "Export"}
+                        {copy === "copied" ? "Copied" : "Export"}
                     </button>
+                    {copy === "failed" ? (
+                        <span role="alert" className="block text-[color:var(--color-steel)]">
+                            Copy failed
+                        </span>
+                    ) : null}
                 </td>
             </tr>
             {confirming ? (
@@ -380,6 +399,10 @@ function DelegationsSection({account, canSign}: {account: AccountDelegations; ca
 
 function NewDelegationSection({account, canSign}: {account: AccountDelegations; canSign: boolean}) {
     const deployed = account.smartAccount?.isDeployed === true;
+    // Bumped on a successful signature, which remounts the form at its first step: the confirmation
+    // must not survive with a live sign control, because each sign draws a fresh salt and a second
+    // click would sign a second, distinct delegation.
+    const [signedCount, setSignedCount] = useState(0);
     return (
         <div>
             <h2 className={`${LABEL} mb-3`}>New delegation</h2>
@@ -396,13 +419,17 @@ function NewDelegationSection({account, canSign}: {account: AccountDelegations; 
             ) : (
                 <>
                     <DelegationForm
-                        key={account.suggestedDelegate ?? "none"}
+                        key={`${account.suggestedDelegate ?? "none"}-${signedCount}`}
                         suggestedDelegate={account.suggestedDelegate}
                         chainName={intuitionTestnet.name}
                         chainId={intuitionTestnet.id}
                         symbol="tTRUST"
                         pending={account.sign.isPending}
-                        onSign={(request) => account.sign.mutate(request)}
+                        onSign={(request) =>
+                            account.sign.mutate(request, {
+                                onSuccess: () => setSignedCount((count) => count + 1),
+                            })
+                        }
                     />
                     {account.sign.error === null ? null : (
                         <p role="alert" className={`${CELL} mt-3`}>

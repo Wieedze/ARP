@@ -1,4 +1,4 @@
-import {fireEvent, screen, within} from "@testing-library/react";
+import {act, fireEvent, screen, waitFor, within} from "@testing-library/react";
 import {type Delegation} from "@metamask/smart-accounts-kit";
 import {describe, expect, it, vi} from "vitest";
 import {getAddress, parseEther, type Hex} from "viem";
@@ -144,11 +144,72 @@ describe("the account page", () => {
         expect(screen.getByText(/Sign on .*\(13579\)/)).toBeInTheDocument();
 
         fireEvent.click(screen.getByRole("button", {name: "Sign in wallet"}));
-        expect(acct.sign.mutate).toHaveBeenCalledWith({
-            delegate: RUNTIME,
-            cap: parseEther("3"),
-            periodSeconds: 86_400n,
+        expect(acct.sign.mutate).toHaveBeenCalledWith(
+            {delegate: RUNTIME, cap: parseEther("3"), periodSeconds: 86_400n},
+            expect.objectContaining({onSuccess: expect.any(Function)}),
+        );
+    });
+
+    it("leaves no sign control once a signature succeeds", () => {
+        const acct = account({rows: []});
+        // Stands in for a wallet that signed. The page reads none of onSuccess's arguments, so the
+        // signed delegation and the mutation context are cast placeholders.
+        vi.mocked(acct.sign.mutate).mockImplementation((_request, options) => {
+            options?.onSuccess?.(undefined as never, _request, undefined, undefined as never);
         });
+        renderWithProviders(<AccountPage account={acct} />);
+
+        fireEvent.change(screen.getByLabelText("Delegate"), {target: {value: RUNTIME}});
+        fireEvent.click(screen.getByRole("button", {name: "Review"}));
+        fireEvent.click(screen.getByRole("button", {name: "Sign in wallet"}));
+        expect(acct.sign.mutate).toHaveBeenCalledTimes(1);
+        expect(screen.queryByRole("button", {name: "Sign in wallet"})).toBeNull();
+        expect(screen.getByRole("button", {name: "Review"})).toBeInTheDocument();
+    });
+
+    it("keeps the confirmation while a signature has not succeeded", () => {
+        const acct = account({rows: []});
+        renderWithProviders(<AccountPage account={acct} />);
+        fireEvent.change(screen.getByLabelText("Delegate"), {target: {value: RUNTIME}});
+        fireEvent.click(screen.getByRole("button", {name: "Review"}));
+        fireEvent.click(screen.getByRole("button", {name: "Sign in wallet"}));
+        expect(screen.getByRole("button", {name: "Sign in wallet"})).toBeInTheDocument();
+    });
+
+    it("says so when the export copy is refused", async () => {
+        const writeText = vi.fn().mockRejectedValue(new Error("denied"));
+        Object.defineProperty(navigator, "clipboard", {value: {writeText}, configurable: true});
+        renderWithProviders(<AccountPage account={account()} />);
+        fireEvent.click(screen.getByRole("button", {name: "Export"}));
+        expect(await screen.findByRole("alert")).toHaveTextContent("Copy failed");
+        expect(screen.getByRole("button", {name: "Export"})).toBeInTheDocument();
+    });
+
+    it("says so when there is no clipboard at all", async () => {
+        Object.defineProperty(navigator, "clipboard", {value: undefined, configurable: true});
+        renderWithProviders(<AccountPage account={account()} />);
+        fireEvent.click(screen.getByRole("button", {name: "Export"}));
+        expect(await screen.findByRole("alert")).toHaveTextContent("Copy failed");
+    });
+
+    it("says Copied after a successful export, then returns to Export", async () => {
+        const writeText = vi.fn().mockResolvedValue(undefined);
+        Object.defineProperty(navigator, "clipboard", {value: {writeText}, configurable: true});
+        vi.useFakeTimers({shouldAdvanceTime: true});
+        try {
+            renderWithProviders(<AccountPage account={account()} />);
+            fireEvent.click(screen.getByRole("button", {name: "Export"}));
+            expect(await screen.findByRole("button", {name: "Copied"})).toBeInTheDocument();
+            expect(screen.queryByRole("alert")).toBeNull();
+            act(() => {
+                vi.advanceTimersByTime(2_000);
+            });
+            await waitFor(() =>
+                expect(screen.getByRole("button", {name: "Export"})).toBeInTheDocument(),
+            );
+        } finally {
+            vi.useRealTimers();
+        }
     });
 
     it("refuses a delegate that is not an address before anything is signed", () => {
