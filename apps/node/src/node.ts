@@ -32,7 +32,8 @@
  *  (default a day) after issuance. One payment, one receipt, one verifier (task 44).
  *
  *  **One payment, one job.** Every accepted payment is appended to `AGENT_NODE_LEDGER`
- *  (`.arp/node-payments.jsonl` by default) and refused the second time — `task.ts`.
+ *  (`~/.arp/node-payments.jsonl` by default, or under `ARP_HOME`) and refused the second time —
+ *  `task.ts`.
  *
  *  **It binds `127.0.0.1`, and a tunnel the operator rents is the one way in** (task 39a, ADR
  *  `0094`): `cloudflared` or `ngrok`, detected on `PATH` or named by `ARP_NODE_TUNNEL`, or one the
@@ -41,9 +42,7 @@
  *  **The key** is `AGENT_PRIVATE_KEY` when set, else the node key in `~/.arp/node.key`, generated on
  *  first start (`node-key.ts`). It is the key `arp init --node` binds to the agent.
  */
-import { join } from 'node:path';
-
-import { serveFetch } from '@arp-protocol/core/node';
+import { serveFetch, stateFile } from '@arp-protocol/core/node';
 
 import { createPublicClient, formatEther, http, parseEther } from 'viem';
 
@@ -64,7 +63,15 @@ export type { TaskContext, TaskHandler } from './task.ts';
 
 const PORT = Number(process.env.AGENT_NODE_PORT ?? 3100);
 const MIN_BUDGET = parseEther(process.env.AGENT_NODE_MIN_BUDGET ?? '0.001');
-const LEDGER = process.env.AGENT_NODE_LEDGER ?? join(process.cwd(), '.arp', 'node-payments.jsonl');
+// Under `~/.arp/`, never the working directory: a node restarted elsewhere would read an empty
+// ledger and sign a second receipt for every payment it had already used (ADR `0116`).
+let LEDGER: string;
+try {
+  LEDGER = stateFile(process.env.AGENT_NODE_LEDGER, 'node-payments.jsonl');
+} catch (error) {
+  console.error(error instanceof Error ? error.message : String(error));
+  process.exit(1);
+}
 
 function positive(name: string, fallback: number): number {
   const raw = process.env[name];

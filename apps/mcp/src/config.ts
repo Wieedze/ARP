@@ -19,9 +19,17 @@ export const PORT = Number(process.env.PORT ?? 3002);
  * ADR `0080`. It is not a wallet, it never holds TRUST, and it is not the key any plan is signed
  * with — the plan path still has none (ADR `0038`), which is what keeps "ARP cannot spend an
  * operator's funds" a structural property rather than a promise. Generated on first run into
- * `.arp/receipt-key`; `ARP_NO_RECEIPTS=1` runs with none and the content path still works.
+ * `~/.arp/receipt-key`; `ARP_NO_RECEIPTS=1` runs with none and the content path still works. A
+ * key left in `<cwd>/.arp/` by an older version stops the server with the `mv` to run (ADR `0116`).
  */
-export const RECEIPT_SIGNER = receiptSigner();
+export const RECEIPT_SIGNER = (() => {
+  try {
+    return receiptSigner();
+  } catch (error) {
+    console.error(error instanceof Error ? error.message : String(error));
+    process.exit(1);
+  }
+})();
 
 /**
  * `read` serves only the registry reads, with instructions that never mention a chain (task 45).

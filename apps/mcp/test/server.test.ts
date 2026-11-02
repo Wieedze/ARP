@@ -1,6 +1,6 @@
 import {spawn, type ChildProcess} from "node:child_process";
 import {createServer, type Server} from "node:http";
-import {rmSync, writeFileSync} from "node:fs";
+import {mkdtempSync, rmSync, writeFileSync} from "node:fs";
 import {tmpdir} from "node:os";
 import {join} from "node:path";
 
@@ -42,6 +42,9 @@ const DECLARER = privateKeyToAccount(`0x${"88".repeat(32)}`);
 const BRAINSTORMING_ATOM =
     "0xf205a19595893612b5b716e6e5742d036c70a2cc82cf6581c394cbe3b9310885" as const;
 const BASE = `http://127.0.0.1:${PORT}/mcp`;
+/** The server's own path, and a scratch directory it runs in and keeps its state under (`ARP_HOME`). */
+const SERVER = new URL("../src/server.ts", import.meta.url).pathname;
+const SCRATCH = mkdtempSync(join(tmpdir(), "arp-mcp-server-"));
 let server: ChildProcess | null = null;
 let stub: Server | null = null;
 
@@ -267,10 +270,11 @@ beforeAll(async () => {
         `${JSON.stringify({skill: "brainstorming", atom: BRAINSTORMING_ATOM, receipt: signed})}\n`,
     );
 
-    server = spawn("bun", ["run", "apps/mcp/src/server.ts"], {
-        cwd: new URL("../../..", import.meta.url).pathname,
+    server = spawn("bun", ["run", SERVER], {
+        cwd: SCRATCH,
         env: {
             ...process.env,
+            ARP_HOME: SCRATCH,
             PORT: String(PORT),
             ARP_TARGET: "testnet",
             INTUITION_GRAPHQL_URL: `http://127.0.0.1:${PORT + 1}/v1/graphql`,
@@ -303,6 +307,7 @@ beforeAll(async () => {
 
 afterAll(async () => {
     rmSync(RECEIPTS_PATH, {force: true});
+    rmSync(SCRATCH, {recursive: true, force: true});
     server?.kill();
     await new Promise<void>((resolve) => {
         if (stub === null) return resolve();
@@ -763,10 +768,11 @@ describe("read-only mode", () => {
     };
 
     beforeAll(async () => {
-        reader = spawn("bun", ["run", "apps/mcp/src/server.ts"], {
-            cwd: new URL("../../..", import.meta.url).pathname,
+        reader = spawn("bun", ["run", SERVER], {
+            cwd: SCRATCH,
             env: {
                 ...process.env,
+                ARP_HOME: SCRATCH,
                 PORT: String(READ_PORT),
                 ARP_TOOLS: "read",
                 ARP_TARGET: "testnet",

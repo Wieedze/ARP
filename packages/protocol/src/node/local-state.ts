@@ -68,6 +68,23 @@ export function refuseMovedState(legacy: string, current: string): void {
     if (existsSync(legacy) && !existsSync(current)) throw new MovedStateError(legacy, current);
 }
 
+/**
+ * Where a program keeps the state file `name`: `override` (the program's own environment variable)
+ * when set, else `<arpHome>/<name>`. With no override, a copy of `name` still in `<cwd>/.arp/` and
+ * none under the home is refused by {@link refuseMovedState} — that is where every version before
+ * ADR `0116` wrote it.
+ */
+export function stateFile(
+    override: string | undefined,
+    name: string,
+    options: {env?: Env; home?: string; cwd?: string} = {},
+): string {
+    if (override !== undefined && override.trim() !== "") return override.trim();
+    const current = join(arpHome(options.env ?? process.env, options.home ?? homedir()), name);
+    refuseMovedState(join(options.cwd ?? process.cwd(), ".arp", name), current);
+    return current;
+}
+
 export class KeyFileError extends Error {
     constructor(message: string) {
         super(message);

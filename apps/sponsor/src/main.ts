@@ -27,8 +27,6 @@
  *  predicates have not been read from the graph yet (ADR `0092` item 7), so `POST /publish` answers
  *  503 until both are wired here. The route itself is built and tested (`service.ts`).
  */
-import { join } from 'node:path';
-
 import {
   ADR_0092_LIMITS,
   INTUITION_USES_TERM_ID,
@@ -38,7 +36,7 @@ import {
   type PreparedCall,
   type SponsorLimits,
 } from '@arp-protocol/core';
-import { loopbackHosts, serveFetch } from '@arp-protocol/core/node';
+import { loopbackHosts, serveFetch, stateFile } from '@arp-protocol/core/node';
 import {
   createPublicClient,
   createWalletClient,
@@ -88,7 +86,14 @@ function count(name: string, fallback: number): number {
 const PORT = count('SPONSOR_PORT', 3200);
 // Optional: unset, `POST /identity` answers 503. Never printed.
 const PIN_KEY = (process.env.INTUITION_PIN_API_KEY ?? '').trim();
-const LEDGER = process.env.SPONSOR_LEDGER ?? join(process.cwd(), '.arp', 'sponsor-ledger.jsonl');
+// `~/.arp/` (or `ARP_HOME`), never the working directory: started anywhere else, a ledger resolved
+// against it is empty, and an empty ledger sponsors every proof a second time (ADR `0116`).
+let LEDGER: string;
+try {
+  LEDGER = stateFile(process.env.SPONSOR_LEDGER, 'sponsor-ledger.jsonl');
+} catch (error) {
+  fail(String(error instanceof Error ? error.message : error));
+}
 const RPC = process.env.INTUITION_TESTNET_RPC_URL ?? deployments.chain.rpcUrl;
 
 const threshold = process.env.SPONSOR_WITHDRAWAL_THRESHOLD_BPS;

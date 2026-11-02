@@ -14,5 +14,6 @@ export {
     readKeyFile,
     refuseForeignRequest,
     refuseMovedState,
+    stateFile,
     type LocalRequestPolicy,
 } from "./local-state.js";

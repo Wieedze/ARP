@@ -15,7 +15,7 @@ share a trust surface, so each is described on its own and you install only the 
 | -------------- | ----------------------------------------------------- | ---------------------------------------------------- | -------------------------------- |
 | launched by    | your MCP client, over stdio                           | you, as a server                                     | your runtime, on every tool call |
 | reachable from | your machine (`127.0.0.1`)                            | `127.0.0.1`, and a tunnel you rent is the way in     | nowhere; it reads stdin          |
-| key            | `.arp/receipt-key`, generated, signs content receipts | `~/.arp/node.key`, generated, or `AGENT_PRIVATE_KEY` | none                             |
+| key            | `~/.arp/receipt-key`, generated, signs content receipts | `~/.arp/node.key`, generated, or `AGENT_PRIVATE_KEY` | none                             |
 | network        | the graph, the RPC, GitHub — counted below            | the RPC; the tunnel binary, if it starts one         | none                             |
 
 Sections up to "If you want to verify" are about the **MCP server**. The node and the hook have a
@@ -81,14 +81,21 @@ reaches the outbound URL.** `packages/protocol/test/content-serve.test.ts` has a
 ## Every file it creates
 
 ```
-.arp/receipt-key       the signing key. Generated on first run, mode 0600
+~/.arp/receipt-key     the signing key. Generated on first run, mode 0600
 .arp/session.jsonl     what the hook recorded, if you wired the hook
 .arp/receipts.jsonl    what you fetched through a server, and the receipts
 .arp/skills/<name>/SKILL.md   files you fetched, if you used arp-fetch-skill.ts
 ```
 
-That is all of it, and `.arp/` is in `.gitignore`. Nothing is written outside the working directory.
-Nothing is written to your home directory, your shell profile, your git config or any system path.
+That is all of it. The key is in your home directory (`ARP_HOME` moves it), so it is one key
+whatever directory your client starts the server in; the logs are in the working directory's
+`.arp/`, which carries its own `.gitignore` of `*`. Nothing is written to your shell profile, your
+git config or any system path.
+
+**Until 2026-11-02 the key was `.arp/receipt-key` in the working directory** (ADR `0116`). A server
+that finds one there and none in `~/.arp/` refuses to start and prints the `mv` to run, rather than
+generating a new key: a new key is a new signer, and a sponsoring service that accepted the old one
+would stop accepting your receipts.
 
 **The sponsored mode writes more** (`ARP_TOOLS=desktop` or `sponsored`), and this is all of it:
 
@@ -254,6 +261,7 @@ INTUITION_RPC_URL      override the RPC
 ARP_MULTI_VAULT        override the contract address
 ARP_DOMAIN_ATTESTOR    whose domain tags to read. A property of the server, never a request parameter
 GITHUB_TOKEN           optional. Raises GitHub's 60-requests-an-hour limit on file listings
+ARP_HOME               where the receipt key and the sponsored mode's state live. Default ~/.arp
 ARP_RECEIPT_KEY        a key you manage, instead of the generated one. Never a funded one
 ARP_NO_RECEIPTS        set to 1 to run with no key at all
 ARP_ACCEPTED_SIGNERS   comma-separated. Which receipt signers THIS server's reader accepts
@@ -288,7 +296,7 @@ address. Run it only while you want a browser to see that.
 
 ## The key, and what losing it would cost you
 
-The server generates `.arp/receipt-key` on first run so you have nothing to configure. It signs one
+The server generates `~/.arp/receipt-key` on first run so you have nothing to configure. It signs one
 thing: a **content receipt**, an EIP-712 statement that this server served these exact bytes to this
 caller at this time.
 
@@ -445,12 +453,13 @@ directory is hosted yet: `--directory` names one.
 | ------------------------------- | -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
 | `AGENT_PRIVATE_KEY`             | unset                      | used instead of the node key file when set                                                                                             |
 | `ARP_NODE_KEY_FILE`             | `~/.arp/node.key`          | the node key, created 0600 on first start; refused if others can read                                                                  |
+| `ARP_HOME`                      | `~/.arp`                   | where the node key and the ledger live when their own variables are unset                                                              |
 | `ARP_NODE_TUNNEL`               | `auto`                     | `auto`, `cloudflared`, `ngrok`, `configured` or `none` (localhost)                                                                     |
 | `ARP_NODE_PUBLIC_URL`           | unset                      | the `https` URL of a tunnel you run; `auto` prefers it                                                                                 |
 | `INTUITION_RPC_URL`             | required                   | the chain payments are read on — also the receipt's `chainId`                                                                          |
 | `AGENT_REGISTRY` + `AGENT_ID`   | both unset                 | the agent as its ERC-8004 registration file names it; both or neither                                                                  |
 | `AGENT_NODE_MIN_BUDGET`         | `0.001`                    | the smallest payment accepted, in the chain's native unit                                                                              |
-| `AGENT_NODE_LEDGER`             | `.arp/node-payments.jsonl` | every payment already used, one line each                                                                                              |
+| `AGENT_NODE_LEDGER`             | `~/.arp/node-payments.jsonl` | every payment already used, one line each                                                                                            |
 | `AGENT_NODE_MAX_BODY_BYTES`     | `65536`                    | larger bodies are a `413`                                                                                                              |
 | `AGENT_NODE_HANDLER_TIMEOUT_MS` | `60000`                    | a slower handler is a `504`, and the payment is released                                                                               |
 | `AGENT_NODE_RATE_LIMIT`         | `30`                       | `POST /task` per client per minute, paid or not; then `429`. Behind a tunnel the client is its `cf-connecting-ip` or `x-forwarded-for` |
@@ -486,8 +495,11 @@ because it was the address the agent published; the tunnel is that address now.
 **One payment buys one job.** Before any work the node checks that the payment is mined and did
 not revert, was sent to this agent, came from the declared requester and paid at least
 `AGENT_NODE_MIN_BUDGET` — and that it has not been used before. Every accepted payment is appended
-to `AGENT_NODE_LEDGER` (`.arp/node-payments.jsonl` in the working directory by default), read back
-at start, and a second presentation is a `409`. A payment whose handler failed is released, so the
+to `AGENT_NODE_LEDGER` (`~/.arp/node-payments.jsonl` by default), read back at start, and a second
+presentation is a `409`. Until 2026-11-02 the default was `.arp/` in the working directory, so a
+node started from another directory read an empty ledger and accepted every payment again (ADR
+`0116`); a node that finds the old file there and none in `~/.arp/` refuses to start and prints the
+`mv` to run. A payment whose handler failed is released, so the
 requester can retry with it.
 
 Until 2026-10-30 there was no ledger: on testnet 13579 one 0.001 payment (`0xf3649dbe…`) was

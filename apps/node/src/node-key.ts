@@ -20,6 +20,8 @@ import { chmodSync, existsSync, mkdirSync, readFileSync, statSync, writeFileSync
 import { homedir } from 'node:os';
 import { dirname, join } from 'node:path';
 
+import { arpHome } from '@arp-protocol/core/node';
+
 import { isHex, type Hex } from 'viem';
 import { generatePrivateKey, privateKeyToAccount, type PrivateKeyAccount } from 'viem/accounts';
 
@@ -34,9 +36,9 @@ export type NodeKey = {
   created: boolean;
 };
 
-/** Where the key file lives: `ARP_NODE_KEY_FILE`, else `~/.arp/node.key`. */
+/** Where the key file lives: `ARP_NODE_KEY_FILE`, else `node.key` under `ARP_HOME` or `~/.arp`. */
 export function nodeKeyPath(env: Env, home = homedir()): string {
-  return env['ARP_NODE_KEY_FILE'] ?? join(home, '.arp', 'node.key');
+  return env['ARP_NODE_KEY_FILE'] ?? join(arpHome(env, home), 'node.key');
 }
 
 function asPrivateKey(raw: string, where: string): Hex {

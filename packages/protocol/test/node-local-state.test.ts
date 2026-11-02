@@ -17,6 +17,7 @@ import {
     readKeyFile,
     refuseForeignRequest,
     refuseMovedState,
+    stateFile,
 } from "../src/node/local-state.js";
 
 // A fixed test value, not a key anyone holds.
@@ -51,6 +52,26 @@ describe("refuseMovedState", () => {
         writeFileSync(current, "{}\n");
         expect(() => refuseMovedState(legacy, current)).not.toThrow();
         expect(() => refuseMovedState(legacy, legacy)).not.toThrow();
+    });
+});
+
+describe("stateFile", () => {
+    it("is the override when set, else under the home, and refuses a copy left in the working directory", () => {
+        const home = join(dir, "home");
+        const cwd = join(dir, "work");
+        const options = {env: {}, home, cwd};
+        expect(stateFile("/x/ledger.jsonl", "ledger.jsonl", options)).toBe("/x/ledger.jsonl");
+        expect(stateFile(undefined, "ledger.jsonl", options)).toBe(join(home, ".arp", "ledger.jsonl"));
+        expect(stateFile(undefined, "ledger.jsonl", {...options, env: {ARP_HOME: join(dir, "h")}})).toBe(
+            join(dir, "h", "ledger.jsonl"),
+        );
+        mkdirSync(join(cwd, ".arp"), {recursive: true});
+        writeFileSync(join(cwd, ".arp", "ledger.jsonl"), "{}\n");
+        expect(() => stateFile(undefined, "ledger.jsonl", options)).toThrow(MovedStateError);
+        // An explicit override is the operator's choice, and is not second-guessed.
+        expect(stateFile(join(cwd, ".arp", "ledger.jsonl"), "ledger.jsonl", options)).toBe(
+            join(cwd, ".arp", "ledger.jsonl"),
+        );
     });
 });
 
