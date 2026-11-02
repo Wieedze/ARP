@@ -1,6 +1,6 @@
 import {describe, expect, it} from "vitest";
 
-import {livenessOf, rankTools, toolSortAxesFor, type ToolRow} from "../tool-catalog";
+import {livenessOf, pageOfTools, rankTools, toolSortAxesFor, type ToolRow} from "../tool-catalog";
 
 const row = (overrides: Partial<ToolRow> = {}): ToolRow => ({
     key: `0x${"ab".repeat(32)}`,
@@ -155,5 +155,38 @@ describe("rankTools", () => {
         const input = [first, second];
         rankTools(input, "declared", read);
         expect(input.map((r) => r.key)).toEqual(["0xa", "0xb"]);
+    });
+});
+
+describe("pageOfTools", () => {
+    const rows = Array.from({length: 62}, (_, index) => row({key: `0x${index}`}));
+
+    it("slices without reordering and says where the page sits", () => {
+        const page = pageOfTools(rows, 25, 25);
+        expect(page.rows.map((r) => r.key)).toEqual(rows.slice(25, 50).map((r) => r.key));
+        expect(page.rangeLabel).toBe("26–50 of 62");
+        expect(page.hasPrevious).toBe(true);
+        expect(page.hasNext).toBe(true);
+    });
+
+    it("ends on a short last page", () => {
+        const page = pageOfTools(rows, 50, 25);
+        expect(page.rows).toHaveLength(12);
+        expect(page.rangeLabel).toBe("51–62 of 62");
+        expect(page.hasNext).toBe(false);
+    });
+
+    it("clamps an offset the list shrank under to its last page", () => {
+        const page = pageOfTools(rows.slice(0, 30), 200, 25);
+        expect(page.offset).toBe(25);
+        expect(page.rows).toHaveLength(5);
+    });
+
+    it("says there are no rows rather than a range of none", () => {
+        const page = pageOfTools([], 0, 25);
+        expect(page.rows).toEqual([]);
+        expect(page.rangeLabel).toBe("no rows");
+        expect(page.hasPrevious).toBe(false);
+        expect(page.hasNext).toBe(false);
     });
 });
