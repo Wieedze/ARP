@@ -273,8 +273,8 @@ export type {
  * The newest declarations an identified agent wrote, for a surface that claims the protocol is
  * alive. Empty is the honest answer on mainnet today and must render as "nothing yet".
  */
-export {getRecentDeclarations} from "./recent.js";
-export type {RecentConfig, RecentDeclaration} from "./recent.js";
+export {getRecentDeclarations, getRecentStakes} from "./recent.js";
+export type {RecentConfig, RecentDeclaration, RecentStake} from "./recent.js";
 
 export {getAtomStanding} from "./atom-standing.js";
 export {

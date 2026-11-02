@@ -2,12 +2,15 @@ import {screen, waitFor, within} from "@testing-library/react";
 import {describe, expect, it} from "vitest";
 
 import {ActivityPage} from "./ActivityPage";
+import type {ChainReads} from "../hooks/use-chain-facts";
 import {ActivityLog} from "../services/activity-log";
 import {AgentFeed, type EventSourceLike} from "../services/agent-feed";
 import {renderWithProviders} from "../test/render";
 
 const SKILL = `0x${"c".repeat(64)}`;
+const NOTHING: ChainReads = {fetchRecent: async () => [], fetchStakes: async () => []};
 const HASH = `0x${"e".repeat(64)}`;
+const LATER = `0x${"f".repeat(64)}`;
 
 function feedWith(events: unknown[]) {
     const source: EventSourceLike = {
@@ -80,7 +83,7 @@ describe("the activity page", () => {
                 },
             },
         ]);
-        renderWithProviders(<ActivityPage feed={feed} />);
+        renderWithProviders(<ActivityPage feed={feed} reads={NOTHING} />);
         deliver();
 
         const skill = (await screen.findAllByText("brainstorming"))[0]!.closest("tr")!;
@@ -105,8 +108,124 @@ describe("the activity page", () => {
             },
             readReceipt: async () => null,
         });
-        renderWithProviders(<ActivityPage feed={feed} />);
+        renderWithProviders(<ActivityPage feed={feed} reads={NOTHING} />);
         expect(screen.getByText(/arp-session-log --serve/)).toBeTruthy();
         expect(screen.getByText("No feed configured")).toBeTruthy();
     });
+
+    it("lists every agent's declarations and stakes from the indexer, newest first", async () => {
+        const feed = new AgentFeed(new ActivityLog(), {
+            url: undefined,
+            open: () => {
+                throw new Error("unused");
+            },
+            readReceipt: async () => null,
+        });
+        const end = (atomId: string, label: string) => ({atomId, label});
+        const reads: ChainReads = {
+            fetchRecent: async () => [
+                {
+                    tripleId: "claim-1",
+                    at: "2026-10-30T13:17:10+00:00",
+                    txHash: HASH,
+                    subject: end("a8", "Agent 13579:8"),
+                    object: end("t1", "writing-plans"),
+                    assets: null,
+                    positions: 1,
+                },
+            ],
+            fetchStakes: async () => [
+                {
+                    id: `${LATER}-2`,
+                    kind: "deposit",
+                    at: "2026-10-30T13:17:27+00:00",
+                    txHash: LATER,
+                    tripleId: "claim-1",
+                    subject: end("a8", "Agent 13579:8"),
+                    object: end("t1", "writing-plans"),
+                    account: "0xB86F5f4E338eCEEC5DD095f48acF764465587FCF",
+                    assets: 2000000000000000n,
+                },
+                {
+                    // In the transaction that wrote the claim: shown on the declaration's row.
+                    id: `${HASH}-4`,
+                    kind: "deposit",
+                    at: "2026-10-30T13:17:10+00:00",
+                    txHash: HASH,
+                    tripleId: "claim-1",
+                    subject: end("a8", "Agent 13579:8"),
+                    object: end("t1", "writing-plans"),
+                    account: "0xB86F5f4E338eCEEC5DD095f48acF764465587FCF",
+                    assets: 990000000000000n,
+                },
+            ],
+        };
+        renderWithProviders(<ActivityPage feed={feed} reads={reads} />);
+
+        const table = await screen.findByRole("table", {name: /on chain/i});
+        const rows = within(table).getAllByRole("row").slice(1);
+        expect(rows).toHaveLength(2);
+        expect(within(rows[0]!).getByText(/staked/)).toBeTruthy();
+        expect(within(rows[0]!).getByText("by 0xB86F…7FCF")).toBeTruthy();
+        expect(within(rows[1]!).getByText(/declared/)).toBeTruthy();
+        expect(within(rows[1]!).getByText(/0\.00099/)).toBeTruthy();
+        expect(within(rows[1]!).getByText("Agent 13579:8")).toBeTruthy();
+    });
+
+    it("marks the rows incomplete when one of the two reads fails", async () => {
+        const reads: ChainReads = {
+            fetchRecent: async () => [
+                {
+                    tripleId: "claim-1",
+                    at: "2026-10-30T13:17:10+00:00",
+                    txHash: HASH,
+                    subject: {atomId: "a8", label: "Agent 13579:8"},
+                    object: {atomId: "t1", label: "writing-plans"},
+                    assets: null,
+                    positions: 0,
+                },
+            ],
+            fetchStakes: async () => {
+                throw new Error("indexer down");
+            },
+        };
+        renderWithProviders(<ActivityPage feed={quietFeed()} reads={reads} />);
+        expect(
+            await screen.findByRole("heading", {name: /every agent · incomplete, one read failed/}),
+        ).toBeTruthy();
+        expect(screen.getByText("Agent 13579:8")).toBeTruthy();
+    });
+
+    it("says the indexer did not answer when both reads fail", async () => {
+        const down = async () => {
+            throw new Error("indexer down");
+        };
+        renderWithProviders(
+            <ActivityPage feed={quietFeed()} reads={{fetchRecent: down, fetchStakes: down}} />,
+        );
+        expect(await screen.findByText(/The indexer did not answer/)).toBeTruthy();
+        expect(screen.queryByRole("table", {name: /on chain/i})).toBeNull();
+    });
+
+    it("says nothing is declared yet when the indexer has nothing", async () => {
+        const feed = new AgentFeed(new ActivityLog(), {
+            url: undefined,
+            open: () => {
+                throw new Error("unused");
+            },
+            readReceipt: async () => null,
+        });
+        renderWithProviders(<ActivityPage feed={feed} reads={NOTHING} />);
+        expect(await screen.findByText(/Nothing declared on/)).toBeTruthy();
+    });
 });
+
+function quietFeed() {
+    return new AgentFeed(new ActivityLog(), {
+        url: undefined,
+        open: () => {
+            throw new Error("unused");
+        },
+        readReceipt: async () => null,
+    });
+}
