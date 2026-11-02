@@ -24,11 +24,11 @@ import {DeclareUse} from "../usage/DeclareUse";
  * would be wrong. So the declaration card belongs on an agent's page as much as on a tool's.
  */
 /**
- * The declaration card alone — an **action**, so it stays above the tab strip.
+ * The declaration card alone — an **action**, so it is never inside a tab.
  *
  * Split from the claim view it used to sit with: putting the page's only two writes behind a tab
  * would hide them behind a click. Both read `useAtomStanding` on the same key, so React Query
- * serves one request and a successful write refreshes the list in the tab.
+ * serves one request and a successful write refreshes the Relations list.
  */
 export function AgentDeclareCard({atomId, name}: {atomId: string; name: string}) {
     const query = useAtomStanding(atomId);

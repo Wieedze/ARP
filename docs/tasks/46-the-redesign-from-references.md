@@ -1,8 +1,8 @@
 # Task 46 — The redesign from references: one page at a time, our modules kept
 
-**Status:** 46a and 46d **built** 2026-11-02. The user approved the two shared layouts the same day
-(list pages follow `/tools`, detail pages follow the skill page) and ADR `0104`. 46b, 46c and 46e wait
-for task 47 (plain words) to commit, because it edits the same files. 46f waits on the user.
+**Status:** 46a, 46b and 46d **built** 2026-11-02. The user approved the two shared layouts the same
+day (list pages follow `/tools`, detail pages follow the skill page) and ADR `0104`. This branch is
+rebased on task 47 (plain words, `e6f9e6f`). 46c and 46e are next. 46f waits on the user.
 **ADR:** `0104` (detail pages put the facts on the right). Each ui.md rule a page relaxes gets one.
 **Rules:** `ui.md`, `code.md`, `claims.md`, `workflow.md`.
 **Reviewers:** `ui-reviewer`, then `task-verifier`.
@@ -57,7 +57,7 @@ A row is built only after the user has chosen its mockup (§2).
 
 | | Page | Proposal | Rules touched |
 | --- | --- | --- | --- |
-| 46b | `/agent/:chainId/:tokenId` | open on the first non-empty tab; drop the "Graph read from" line and the mainnet declare sentence; the CAIP-19 shown once | none |
+| 46b | `/agent/:chainId/:tokenId` | **built**: the skill page's layout. Eyebrow, sigil and name; the description and the tabs on the left, an Identity card on the right; the market full width, the declaration card, then Relations with `ClaimField`. The Declarations tab became that Relations block. Opens on the first tab with rows (`initialSectionOf`, 4 tests). The "Graph read from" line is gone; the CAIP-19 shows once. **Deferred:** the mainnet declare sentence lives in `DeclareUse`, shared with the skill and atom pages and asserted in `AtomPanel.test.tsx`, so it changes on all three at once or not at all, which is the user's call | none |
 | | | facts in cards on the right, like the skill page | two-column detail view, **amended** by ADR `0104` |
 | 46c | `/activity` | one table with chips instead of three stacked blocks | none |
 | 46d | `/register` | **built** `d817334`, post-mortem 37 (`Choice` in `YourAgent.tsx` lost its last outside importer; its `export` is dropped): two choice tiles, each with a mono line of what it needs (`ERC-8004 identity · wallet`, `URL · wallet`). No symbol: a Sigil comes from chain data. `pages/Register.test.tsx`, 2 tests | none |
