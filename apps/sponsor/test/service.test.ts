@@ -1296,8 +1296,12 @@ describe('POST /identity', () => {
 
   test('stops at the daily cap of new identities, and refuses an unregistered agent', async () => {
     const w = world();
+    let pins = 0;
     const service = sponsor(w, {
-      pinThing: pinned,
+      pinThing: async (thing) => {
+        pins += 1;
+        return pinned(thing);
+      },
       owners: owners({ '7': AGENT.address, '8': CALLEE.address, '9': STRANGER.address }),
     });
     for (const agentId of ['7', '8']) {
@@ -1305,8 +1309,11 @@ describe('POST /identity', () => {
         200,
       );
     }
+    expect(pins).toBe(4);
     const third = await call(service, '/identity', { agentRegistry: REGISTRY, agentId: '9' });
     expect(third.status).toBe(429);
+    // Refused before anything was pinned for it.
+    expect(pins).toBe(4);
     const unknown = await call(service, '/identity', { agentRegistry: REGISTRY, agentId: '10' });
     expect(unknown.status).toBe(403);
   });

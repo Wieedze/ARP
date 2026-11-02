@@ -705,8 +705,18 @@ export function createSponsor(options: SponsorOptions): {
     } catch (error) {
       return json({ error: String(error instanceof Error ? error.message : error) }, 400);
     }
+    // The limits before the pins (ADR `0116`): a pin moves no value but costs the pinning account,
+    // and a refused agent must not get two documents pinned for free on every request. Checked
+    // again inside the queue, where the count is final.
+    const early = checkIdentityLimits(ledger.records, {
+      agentKey,
+      value: pins.totalValue,
+      now: now(),
+      limits,
+    });
+    if (!early.ok) return json({ error: early.reason }, 429);
     // Pinned even when every term exists: an atom created unpinned stays unlabelled, and only a pin
-    // makes it resolvable. Pinning moves no value.
+    // makes it resolvable.
     for (const which of ['identity', 'caip'] as const) {
       const uri = await pinThing(pins.things[which]).catch(() => null);
       if (uri !== pins.uris[which]) {
