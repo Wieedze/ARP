@@ -53,10 +53,11 @@ and it cannot move value.
 
 **Except in the sponsored mode, which you opt into.** With `ARP_TOOLS=desktop`, set by the Claude
 Desktop extension, or `ARP_TOOLS=sponsored`, set by `arp init --sponsored`, the server holds a local
-agent key in `~/.arp/agent-key` (ADR `0110`). That key signs exactly two zero-value calls on testnet
-13579, `register()` and one MultiVault approval, and refuses every other call before signing
-(`apps/mcp/src/desktop/agent-key.ts`, `refusal`). ARP's sponsoring service pays everything that
-carries value. Without one of those two values, the paragraph above holds.
+agent key in `~/.arp/agent-key` (ADR `0110`). That key sends exactly two zero-value transactions on
+testnet 13579, `register()` and one MultiVault approval, and refuses every other call before signing
+(`apps/mcp/src/desktop/agent-key.ts`, `refusal`). It also signs two typed-data messages that move
+nothing: the request a content receipt is issued to, and the request for a sponsored deposit. ARP's
+sponsoring service pays everything that carries value. Without one of those two values, the paragraph above holds.
 
 **It executes nothing it fetches.** A skill's file is Markdown. It is returned with
 `content-type: text/plain`, `x-content-type-options: nosniff` and
@@ -89,9 +90,21 @@ reaches the outbound URL.** `packages/protocol/test/content-serve.test.ts` has a
 That is all of it, and `.arp/` is in `.gitignore`. Nothing is written outside the working directory.
 Nothing is written to your home directory, your shell profile, your git config or any system path.
 
+**The sponsored mode writes more** (`ARP_TOOLS=desktop` or `sponsored`), and this is all of it:
+
+```
+~/.arp/agent-key              the agent's key, mode 0600, created on the first fetch
+~/.arp/agent.json             the agent's id and identity atom, once it is registered
+~/.arp/receipts.jsonl         every skill served to the agent, with its receipt
+<ARP_SKILLS_DIR>/<name>/**    the skill's files, scripts included, when ARP_SKILLS_DIR is set
+.arp/receipts.jsonl           a copy of the receipt for the hook, when ARP_SKILLS_DIR is set
+```
+
 ## Every outbound connection
 
-Five fixed hosts, the first two configurable:
+Five fixed hosts, the first two configurable. The sponsored mode also reaches two more, both
+configurable: ARP's content server (`ARP_CONTENT`) and ARP's sponsoring service (`ARP_SPONSOR`),
+both local by default.
 
 ```
 the Intuition graph    reads. Set by ARP_TARGET, or INTUITION_GRAPHQL_URL

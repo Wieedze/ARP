@@ -1,4 +1,4 @@
-import {keccak256, stringToBytes} from "viem";
+import {keccak256, sha256, stringToBytes} from "viem";
 import {privateKeyToAccount} from "viem/accounts";
 import {describe, expect, it} from "vitest";
 
@@ -88,6 +88,42 @@ describe("serveSkillBundle", () => {
     });
 });
 
+describe("what a receipt cannot be stretched to cover", () => {
+    it("refuses a path with a newline, which could make two sets of files share one manifest", () => {
+        const x = stringToBytes("X");
+        const e = stringToBytes("E");
+        const twoFiles = [
+            {path: "a", bytes: x},
+            {path: "b", bytes: e},
+        ];
+        const forged = [{path: `a\n${bundleManifest([{path: "b", bytes: e}]).split("  ")[0]}  b`, bytes: x}];
+        const receipt = {
+            atom: PPTX,
+            url: "u",
+            path: "d",
+            digest: sha256(stringToBytes(bundleManifest(twoFiles))),
+            to: null,
+            servedAt: 0,
+            nonce: PPTX,
+        };
+        expect(bundleMatchesReceipt(receipt, twoFiles)).toBe(true);
+        expect(bundleMatchesReceipt(receipt, forged)).toBe(false);
+    });
+
+    it("refuses two paths that are one file on a case-insensitive disk", () => {
+        const files = [
+            {path: "SKILL.md", bytes: stringToBytes("a")},
+            {path: "skill.md", bytes: stringToBytes("b")},
+        ];
+        const receipt = {atom: PPTX, url: "u", path: "d", digest: sha256(stringToBytes(bundleManifest(files))), to: null, servedAt: 0, nonce: PPTX};
+        expect(bundleMatchesReceipt(receipt, files)).toBe(false);
+    });
+
+    it("refuses a single file over the per-file cap", async () => {
+        expect((await serveSkillBundle(PPTX, config({cap: 10}))).status).toBe("too-large");
+    });
+});
+
 describe("the manifest", () => {
     it("is sha256sum's format, sorted by path", () => {
         const manifest = bundleManifest([
@@ -100,7 +136,7 @@ describe("the manifest", () => {
 
     it("accepts only paths that stay inside the directory", () => {
         expect(isSafeRelativePath("scripts/a.py")).toBe(true);
-        for (const bad of ["", "/etc/passwd", "../x", "a/../../x", "a\\b", "a//b", "./a"]) {
+        for (const bad of ["", "/etc/passwd", "../x", "a/../../x", "a\\b", "a//b", "./a", "a\nb", "a\rb", "a\u0000b"]) {
             expect(isSafeRelativePath(bad)).toBe(false);
         }
     });

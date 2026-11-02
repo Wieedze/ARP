@@ -50,10 +50,15 @@ const DEFAULT_MAX_FILES = 300;
 const DEFAULT_MAX_TOTAL = 8 * 1_048_576;
 const DEFAULT_CAP = 1_048_576;
 
-/** A path relative to the skill's directory that stays inside it. */
+/**
+ * A path relative to the skill's directory that stays inside it and holds no control character. A
+ * newline in a path would let two different sets of files write the same manifest, so one
+ * signature would cover both. Git allows a newline in a file name.
+ */
 export function isSafeRelativePath(path: string): boolean {
     if (path.length === 0 || path.startsWith("/")) return false;
-    if (path.includes("\\") || path.includes("\0")) return false;
+    // eslint-disable-next-line no-control-regex -- the control characters are what is refused
+    if (path.includes("\\") || /[\x00-\x1f\x7f]/.test(path)) return false;
     return !path.split("/").some((part) => part === ".." || part === "." || part === "");
 }
 
@@ -68,7 +73,8 @@ export function bundleManifest(files: readonly BundleFile[]): string {
 /** Whether `files` are exactly the files `receipt` was signed over. */
 export function bundleMatchesReceipt(receipt: ContentReceipt, files: readonly BundleFile[]): boolean {
     if (!files.every((file) => isSafeRelativePath(file.path))) return false;
-    if (new Set(files.map((file) => file.path)).size !== files.length) return false;
+    // Case folded: `SKILL.md` and `skill.md` are one file on macOS and Windows.
+    if (new Set(files.map((file) => file.path.toLowerCase())).size !== files.length) return false;
     return sha256(new TextEncoder().encode(bundleManifest(files))) === receipt.digest.toLowerCase();
 }
 

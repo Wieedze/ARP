@@ -192,7 +192,8 @@ export function receiptSigner(): TypedDataSigner | null {
 const listings = new Map<string, { at: number; files: RepositoryFile[] }>();
 
 /**
- * A repository's SKILL.md paths and their blob shas, cached. One request per repository.
+ * A repository's every file path and its blob sha, cached. One request per repository. The bundle
+ * route (task 57) reads a skill's whole directory from it, not only its SKILL.md.
  *
  * The cache is ten minutes and the content is fetched live from `HEAD`, so the two can disagree:
  * after a push that makes two previously-identical paths differ, `resolveContentPath` can still
