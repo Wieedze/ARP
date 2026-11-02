@@ -3,7 +3,7 @@
 **Status:** **BUILT, `contract-reviewer` PASS, pending `task-verifier`**, 2026-10-30, on branch
 `feat/43-receipt-enforcer`. Not deployed. ~~Not to be until the open decision below is taken:
 `contract-reviewer` left INFO-R1 (Medium) open on it,~~ The decision is taken and INFO-R1 is
-**closed** (2026-10-30, task 44, ADR `0101`); a deployment is still its own decision, and none is
+**closed** (decided by the user 2026-10-30, closed 2026-11-02 by task 44, ADR `0101`); a deployment is still its own decision, and none is
 planned here. `contract-reviewer` also recorded one Low, CR-1, documented
 (`contracts/SECURITY_REVIEW.md`, "`contract-reviewer` pass"). Design choices are in ADR `0098`.
 **Revised 2026-10-30** after review: the deposit's `value` is capped at the receipt's `paid`, and

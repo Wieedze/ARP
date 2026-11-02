@@ -695,7 +695,9 @@ as the property it would check.
 - **Front-running:** gated hooks, plus `requester == receiver == _redeemer`. A copied receipt is
   useless to anyone but the agent it names, even under an open delegation or one the copier signs.
 - **Cryptography:** OZ `ECDSA.tryRecover`: 65-byte signatures only, low `s`, zero signer refused.
-  EIP-712 `string` field hashed per spec. The domain lacks `verifyingContract`: INFO-R1.
+  EIP-712 `string` field hashed per spec. ~~The domain lacks `verifyingContract`: INFO-R1.~~ The v1
+  domain lacked `verifyingContract` (INFO-R1). **Closed by task 44**: the enforcer verifies v2 only,
+  whose domain names `address(this)`. See "Task 44: v2 receipt" below.
 - **Cross-chain units:** see CR-1.
 
 ### `guidelines-advisor`
@@ -722,17 +724,22 @@ as the property it would check.
 
 ### `contract-reviewer` verdict
 
-**PASS. No Critical, no High.** One Medium, INFO-R1, is open: under this repo's severity table a
+**PASS. No Critical, no High.** ~~One Medium, INFO-R1, is open: under this repo's severity table a
 Medium is to be addressed or accepted in writing, and that is the user's decision between keeping v1
-and a v2 receipt (ADR `0098`, "Open decision"). **Do not deploy until it is taken.** One Low, CR-1,
+and a v2 receipt (ADR `0098`, "Open decision"). **Do not deploy until it is taken.**~~ INFO-R1 was
+open at task 43. The user decided for a v2 receipt on 2026-10-30, and task 44 closed it on
+2026-11-02 (ADR `0101`; see "Task 44: v2 receipt" below). A deployment is still its own decision
+and none is planned. One Low, CR-1,
 documented. Coverage 100% (58/58 lines, 15/15 branches). Gas 66,564 on the happy path.
 
 ## Verdict (the author's sweep, before `contract-reviewer`)
 
-**PASS, with one Medium open by decision**, from the author's sweep. Superseded by the
+**PASS, with one Medium open by decision**, from the author's sweep (INFO-R1, since closed by task
+44; see "Task 44: v2 receipt" below). Superseded by the
 `contract-reviewer` verdict above, which agrees.
 
-- Threat model: clean on nine items. Signature replay carries INFO-R1, Medium, open for the user.
+- Threat model: clean on nine items. Signature replay carries INFO-R1, Medium, ~~open for the user~~
+  closed by task 44 (see "Task 44: v2 receipt" below).
 - What the rung holds is stated, and matches the user's decision: a signature, not a payment.
 - Coverage: 100% on lines, statements, branches and functions of `ReceiptEnforcer.sol`.
 - Tests: 40, all green.

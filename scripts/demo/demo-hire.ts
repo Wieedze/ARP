@@ -110,6 +110,7 @@ if (!rawKey) {
 }
 const hirerAccount = privateKeyToAccount((rawKey.startsWith('0x') ? rawKey : `0x${rawKey}`) as Hex);
 const publicClient = createPublicClient({ transport: http(rpcUrl) });
+// Both casts are checked by the isAddress / regex guard below, which exits on failure.
 const verifier = (arg('verifier') ?? hirerAccount.address) as Address;
 const termId = (arg('term') ?? `0x${'0'.repeat(64)}`) as Hex;
 if (!isAddress(verifier) || !/^0x[0-9a-fA-F]{64}$/.test(termId)) {
