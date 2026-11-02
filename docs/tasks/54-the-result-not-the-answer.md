@@ -52,6 +52,35 @@ compte, c'est un facilitateur »_.
   per need, not only in aggregate.
 - **Needs the catalogue covers.** The 14 were chosen because it does; say so next to every figure.
 
+### 4b. Found by the pre-pilot reading, and the preconditions proposed (not decided)
+
+The user chose a free reading with no execution before any paid pilot. Session arp-7f read the
+SKILL.md of the top skills for the three needs that need no account (slides, PDF, landing page) on
+2026-11-02, through the GitHub contents API and `arp_find_tools` on testnet 13579.
+
+1. **ARP delivers SKILL.md only, and the best skills need their sibling files.** The content server
+   serves that one file. `anthropics/skills` pptx references five scripts (`add_slide.py`,
+   `clean.py`, `office/soffice.py`, `office/validate.py`, `thumbnail.py`) and `npm install
+   pptxgenjs`; `anthropics/skills` pdf sends form-filling to `FORMS.md` and
+   `scripts/fill_fillable_fields.py`. `npx skills add`, arm C's path, installs the whole directory.
+   Run today, arm B would measure this defect, not the value of discovery.
+2. **ARP's ranking can put a skill that needs an account first.** `query: "slide"` returns
+   `lark-slides` (a Lark or Feishu account, `lark-cli auth login`); `query: "landing page"` returns
+   `101-skills` landing-page-design (inference.sh's `belt` CLI, an account, paid image generation).
+   `"presentation"` or `"pptx"` return `anthropics/skills` pptx.
+3. **What skills.sh returns first:** "slide deck from notes" → `anthropics/skills` pptx; "fill pdf
+   form" → `claude-office-skills` pdf-form-filler, a self-contained SKILL.md; "landing page" →
+   `autonnel` landing-page-conversion-audit, then `pbakaus/impeccable`.
+4. **"Needs no account" holds** for Anthropic's pptx and pdf and for pdf-form-filler. It does not
+   hold for ARP's first landing-page result.
+
+Proposed as preconditions of any paid run, **not decided by the user yet**:
+
+- **(a)** the content server delivers the skill's whole directory, with one receipt over all of it;
+- **(b)** a skill that needs an account or an external CLI is flagged in `arp_find_tools`.
+
+Until (a) holds, a sentence that ARP "serves the skill" is true of its SKILL.md only.
+
 ## 5. Do not do in this task
 
 - Claim a token saving: none has been established (tasks 45c, 51, 52).
