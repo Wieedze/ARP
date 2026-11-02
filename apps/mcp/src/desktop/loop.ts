@@ -33,6 +33,7 @@ import {
   INTUITION_USES_TERM_ID,
   multiVaultDeclareAbi,
   receiptMatchesContent,
+  signMintGasRequest,
   signSponsorRequest,
   skillRefFromUrl,
   sponsorProofDigest,
@@ -180,7 +181,17 @@ export async function getSkill(config: LoopConfig, agent: AgentSender, atom: Hex
 async function ensureAgent(config: LoopConfig, agent: AgentSender): Promise<AgentState> {
   const known = readAgent(config);
   if (known !== null) return known;
-  const gas = await post(config, '/mint-gas', { address: agent.address });
+  // Signed by this key: the sponsor sends mint gas only to the address that asked for it (ADR `0116`).
+  const request = await signMintGasRequest(
+    {
+      address: agent.address,
+      nonce: keccak256(stringToBytes(`mint-gas-${agent.address}-${Date.now()}`)),
+      expiresAt: Math.floor(Date.now() / 1000) + 600,
+    },
+    DESKTOP_CHAIN_ID,
+    agent.account,
+  );
+  const gas = await post(config, '/mint-gas', { request });
   if (gas.status !== 200) throw new Error(`no gas to register (${gas.status}): ${String(gas.body['error'] ?? '')}`);
   const register = { to: config.registry, data: encodeFunctionData({ abi: registryAbi, functionName: 'register' }) };
   const receipt = await agent.send({ ...register, value: 0n, chainId: DESKTOP_CHAIN_ID }, [register]);

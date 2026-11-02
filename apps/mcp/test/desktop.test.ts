@@ -6,7 +6,7 @@ import { encodeAbiParameters, encodeEventTopics, encodeFunctionData, getAddress,
 import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts';
 import { afterEach, beforeEach, describe as group, expect, it } from 'vitest';
 
-import { bundleManifest, contentDigest, encodeApproveDeposit, signContentReceipt } from '@arp-protocol/core';
+import { bundleManifest, contentDigest, encodeApproveDeposit, signContentReceipt, verifyMintGasRequest } from '@arp-protocol/core';
 
 import { loadOrCreateAgentKey, refusal, type AgentSender, type AllowedCall } from '../src/desktop/agent-key.js';
 import { declareUsed, getSkill, type LoopConfig } from '../src/desktop/loop.js';
@@ -112,7 +112,12 @@ function services(agentAddress: Address, node = privateKeyToAccount(generatePriv
       return new Response(bytes, { headers: { 'x-arp-receipt': JSON.stringify(signed) } });
     }
     if (path === '/') return Response.json({ multiVault: MULTI_VAULT, sponsor: SPONSOR });
-    if (path === '/mint-gas') return Response.json({ sent: '0x01' });
+    if (path === '/mint-gas') {
+      // The sponsor sends mint gas only to the address that signed for it (ADR `0116`).
+      const verdict = await verifyMintGasRequest(JSON.parse(String(init?.body)).request, Math.floor(Date.now() / 1000));
+      if (verdict.status !== 'valid' || verdict.address !== agentAddress) return Response.json({ error: 'unsigned' }, { status: 401 });
+      return Response.json({ sent: '0x01' });
+    }
     if (path === '/identity') return Response.json({ identityAtom: IDENTITY, sent: [] });
     if (path === '/gas') return Response.json({ sent: '0x02', next: { to: MULTI_VAULT, data: approveData, value: '0' } });
     if (path === '/deposit') {

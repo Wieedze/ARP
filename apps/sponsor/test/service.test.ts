@@ -7,6 +7,7 @@ import {
   hireDigest,
   signContentReceipt,
   signHireReceipt,
+  signMintGasRequest,
   signSponsorRequest,
   sponsorProofDigest,
   sponsorRequestTypedData,
@@ -1170,48 +1171,93 @@ describe('a first declaration: the uses triple is created, then the deposit', ()
 });
 
 describe('POST /mint-gas', () => {
-  const ADDRESS = privateKeyToAccount(`0x${'66'.repeat(32)}`).address;
+  const HOLDER = privateKeyToAccount(`0x${'66'.repeat(32)}`);
+  const ADDRESS = HOLDER.address;
+  let n = 0;
+  /** A request signed by `signer`, as `apps/mcp`'s loop sends it. */
+  async function minted(
+    signer: { address: Address; signTypedData: typeof AGENT.signTypedData },
+    over: { address?: Address; chain?: number } = {},
+  ) {
+    const request = await signMintGasRequest(
+      {
+        address: over.address ?? signer.address,
+        nonce: keccak256(stringToBytes(`mint-${(n += 1)}`)),
+        expiresAt: Math.floor(NOW / 1000) + 600,
+      },
+      over.chain ?? CHAIN,
+      signer,
+    );
+    return { request };
+  }
 
   test('sends the mint gas to an unregistered address once, ever', async () => {
     const w = world();
     const service = sponsor(w);
-    const first = await call(service, '/mint-gas', { address: ADDRESS });
+    const first = await call(service, '/mint-gas', await minted(HOLDER));
     expect(first.status).toBe(200);
     expect(w.gas).toEqual([{ to: ADDRESS, value: MILLI / 10n }]);
-    const second = await call(service, '/mint-gas', { address: ADDRESS });
+    const second = await call(service, '/mint-gas', await minted(HOLDER));
     expect(second.status).toBe(429);
     expect(w.gas).toHaveLength(1);
+  });
+
+  test('refuses a bare address, and a request one address signs for another', async () => {
+    const w = world();
+    const bare = await call(sponsor(w), '/mint-gas', { address: ADDRESS });
+    expect(bare.status).toBe(400);
+    const forged = await call(
+      sponsor(w),
+      '/mint-gas',
+      await minted(STRANGER, { address: ADDRESS }),
+    );
+    expect(forged.status).toBe(401);
+    const otherChain = await call(sponsor(w), '/mint-gas', await minted(HOLDER, { chain: 1155 }));
+    expect(otherChain.status).toBe(400);
+    expect(w.gas).toHaveLength(0);
+  });
+
+  test('spends a signed request once; a reverted send gave its value back and may retry', async () => {
+    const w = world();
+    w.revert = true;
+    const service = sponsor(w);
+    const body = await minted(HOLDER);
+    expect((await call(service, '/mint-gas', body)).status).toBe(502);
+    w.revert = false;
+    expect((await call(service, '/mint-gas', body)).status).toBe(200);
+    expect((await call(service, '/mint-gas', body)).status).toBe(409);
+    expect(w.gas).toHaveLength(2);
   });
 
   test('stops at the daily cap of new agents, whoever asks', async () => {
     const w = world();
     const service = sponsor(w);
-    for (const n of ['67', '68']) {
-      const address = privateKeyToAccount(`0x${n.repeat(32)}`).address;
-      expect((await call(service, '/mint-gas', { address })).status).toBe(200);
+    for (const k of ['67', '68']) {
+      const signer = privateKeyToAccount(`0x${k.repeat(32)}`);
+      expect((await call(service, '/mint-gas', await minted(signer))).status).toBe(200);
     }
-    const third = await call(service, '/mint-gas', { address: ADDRESS });
+    const third = await call(service, '/mint-gas', await minted(HOLDER));
     expect(third.status).toBe(429);
     expect(String(third.body.error)).toMatch(/new agents a day/);
     expect(w.gas).toHaveLength(2);
   });
 
-  test('sends nothing to an address that already holds an agent, or cannot register one', async () => {
+  test('sends nothing to an address that already holds an agent', async () => {
     const w = world();
-    const held = await call(sponsor(w), '/mint-gas', { address: AGENT.address });
+    const held = await call(sponsor(w), '/mint-gas', await minted(AGENT));
     expect(held.status).toBe(403);
-    const zero = await call(sponsor(w), '/mint-gas', { address: `0x${'00'.repeat(20)}` });
-    expect(zero.status).toBe(400);
     expect(w.gas).toHaveLength(0);
   });
 
   test('answers 503 when it is off, and sends nothing to itself', async () => {
     const w = world();
-    const off = await call(sponsor(w, { limits: { ...LIMITS, mintGas: null } }), '/mint-gas', {
-      address: ADDRESS,
-    });
+    const off = await call(
+      sponsor(w, { limits: { ...LIMITS, mintGas: null } }),
+      '/mint-gas',
+      await minted(HOLDER),
+    );
     expect(off.status).toBe(503);
-    const self = await call(sponsor(w), '/mint-gas', { address: SPONSOR });
+    const self = await call(sponsor(w), '/mint-gas', await minted(SPONSOR_ACCOUNT));
     expect(self.status).toBe(403);
     expect(w.gas).toHaveLength(0);
   });

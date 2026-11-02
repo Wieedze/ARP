@@ -695,6 +695,14 @@ export {
     type SponsorRequestVerdict,
 } from "./sponsor/request.js";
 export {
+    MINT_GAS_MAX_TTL_SECONDS,
+    mintGasRequestTypedData,
+    signMintGasRequest,
+    verifyMintGasRequest,
+    type MintGasRequest,
+    type SignedMintGasRequest,
+} from "./sponsor/mint-gas.js";
+export {
     checkSponsorProof,
     type AgentIdentityRef,
     type AgentKeyReads,

@@ -10,7 +10,7 @@
  *  | `POST /gas`     | the gas for the agent's one `approve`, once ever     | a registered ERC-8004 agent          |
  *  | `POST /deposit` | a deposit with `receiver = agent`                    | the signed request, the proof, limits |
  *  | `POST /publish` | the atoms and triples that index a signed delegation | the delegator's signature, limits    |
- *  | `POST /mint-gas`| the gas for an address's own `register()`, once ever | the address, a daily cap on new agents |
+ *  | `POST /mint-gas`| the gas for an address's own `register()`, once ever | the address's signature, a daily cap |
  *  | `POST /identity`| the atoms and triples of an agent's identity        | a registered agent, the pins, the cap |
  *
  *  The last two, and the `uses` triple `/deposit` creates when it is missing, are ADR `0110`.
@@ -73,12 +73,14 @@ import {
   sponsorProofDigest,
   spentOnDay,
   verifyDelegationSignature,
+  verifyMintGasRequest,
   verifySponsorRequest,
   withdrawnBps,
   type DelegationPredicates,
   type MultiVaultReads,
   type PaymentReads,
   type PreparedCall,
+  type SignedMintGasRequest,
   type SignedSponsorRequest,
   type SponsorLimits,
   type SponsorProof,
@@ -614,12 +616,29 @@ export function createSponsor(options: SponsorOptions): {
     });
   }
 
-  /** Gas for an address's own `register()`, before it is an agent (ADR `0110`). */
+  /**
+   * Gas for an address's own `register()`, before it is an agent (ADR `0110`). The request is
+   * signed by the address that receives the gas (ADR `0116`): a bare address let anyone spend the
+   * day's cap of new agents on addresses nobody holds.
+   */
   async function mintGas(body: Body): Promise<Response> {
-    if (typeof body.address !== 'string' || !isAddress(body.address)) {
-      return json({ error: 'address is required' }, 400);
+    const signed = body.request;
+    if (typeof signed !== 'object' || signed === null) {
+      return json({ error: 'request (a signed MintGasRequest) is required' }, 400);
     }
-    const address = getAddress(body.address);
+    const verdict = await verifyMintGasRequest(signed, Math.floor(now() / 1000));
+    if (verdict.status !== 'valid')
+      return json({ error: `request is ${verdict.status}`, verdict }, 401);
+    // Checked by `verifyMintGasRequest`, which reads every field before it recovers the signer.
+    const { chainId: signedChain, request } = signed as SignedMintGasRequest;
+    if (signedChain !== chainId) {
+      return json(
+        { error: `request is for chain ${signedChain}, this service is on ${chainId}` },
+        400,
+      );
+    }
+    const address = verdict.address;
+    const nonceKey = `mint-gas-nonce:${request.nonce.toLowerCase()}`;
     if (address === getAddress(wallet.address)) {
       return json({ error: 'the sponsoring service sends no gas to itself' }, 403);
     }
@@ -631,12 +650,16 @@ export function createSponsor(options: SponsorOptions): {
       return json({ error: `${address} already holds an agent; ask /gas instead` }, 403);
     }
     return exclusive(async () => {
+      // Each signed request is spent once, whatever its outcome, so a request seen once cannot be
+      // sent again by whoever saw it.
+      if (ledger.has('mint-gas', nonceKey))
+        return json({ error: 'this request was already used' }, 409);
       const decision = checkMintGasLimits(ledger.records, { address, now: now(), limits });
       if (!decision.ok) {
         return json({ error: decision.reason }, limits.mintGas === null ? 503 : 429);
       }
       const value = limits.mintGas ?? 0n; // Not null: `checkMintGasLimits` refused that above.
-      const key = `mint-gas:${address.toLowerCase()}`;
+      const key = nonceKey;
       ledger.reserve({ kind: 'mint-gas', subject: address, value, at: now(), key });
       const sent = await wallet.sendGas(address, value);
       if (sent.status !== 'success') {
