@@ -214,8 +214,7 @@ ARP/
     │   ├── arp/SKILL.md
     │   ├── intuition/                 (vendored — Intuition protocol procedural knowledge)
     │   ├── mms-smart-accounts-kit/    (vendored from github.com/MetaMask/skills — do not edit)
-    │   ├── mms-gator-cli/             (vendored from github.com/MetaMask/skills — do not edit)
-    │   └── mms-oh-my-opencode/        (vendored, scoped to OpenCode — not used here)
+    │   └── mms-gator-cli/             (vendored from github.com/MetaMask/skills — do not edit)
     ├── agents/
     │   ├── task-verifier.md          (mandatory end-of-task)
     │   ├── contract-reviewer.md
