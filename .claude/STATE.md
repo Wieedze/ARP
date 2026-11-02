@@ -56,6 +56,7 @@ What is on chain, 2026-10-29:
 | 662 `source` edges        | `(skill, source, repository)` — ADR `0078`, the term was already on chain                                                                                                            |
 | `has tag` edges on skills | **601 held, 0 in disagreement** with the table that wrote them (`scripts/verify/audit-skill-tags.ts`, 2026-10-29). 203 were retired, not deleted. **61 match no keyword and carry nothing** |
 | 53 `maintained` tags      | 50 alive, 3 not — browserbase and prisma/mcp archived, paypal untouched 366 days                                                                                                     |
+| 54     | the result, not the answer                             | **plan** 2026-11-02 (`docs/tasks/54`), owner arp-7f. Three arms on task 52's 14 needs: Claude alone, Claude + ARP, a manual skills.sh search first. Measures the produced result judged blind, the user's effort, and cost per successful result. The user's point: the value is discovery without a prior search |
 | 21 domains under `tool`   | the **16** seeded (not 17 — `domains.proposal.json` dropped `security`), plus `method`, `writing`, `image`, `audio`, `document`                                                      |
 
 Three findings worth carrying forward:
