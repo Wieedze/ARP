@@ -11,7 +11,12 @@ import {signDelegationAs, stakeDelegation} from "../services/delegation";
 import {revokeDelegation} from "../services/delegation-revoke";
 import {type StoredDelegation} from "../services/delegation-store";
 import {describeDelegation, type DelegationView} from "../services/delegation-view";
-import {createUserSmartAccount, deploySmartAccountIfNeeded} from "../services/smart-account";
+import {readNativeBalance} from "../services/native-balance";
+import {
+    createUserSmartAccount,
+    deploySmartAccountIfNeeded,
+    isSmartAccountDeployed,
+} from "../services/smart-account";
 
 import {useAgentId, useAgentWallet} from "./use-agent";
 import {useStoredDelegations} from "./use-stored-delegations";
@@ -46,8 +51,7 @@ export function useAccountDelegations() {
                 owner: operator,
                 signer: {walletClient},
             });
-            const code = await publicClient.getCode({address: smartAccount.address});
-            return {smartAccount, isDeployed: code !== undefined && code !== "0x"};
+            return {smartAccount, isDeployed: await isSmartAccountDeployed(smartAccount.address)};
         },
         enabled: operator !== undefined && walletClient !== undefined,
         // The account object holds a signer; it is not data to compare structurally.
@@ -84,7 +88,7 @@ export function useAccountDelegations() {
     const balanceQueries = useQueries({
         queries: delegates.map((address) => ({
             queryKey: ["balance", intuitionTestnet.id, address],
-            queryFn: () => publicClient.getBalance({address}),
+            queryFn: () => readNativeBalance(address),
             staleTime: 15_000,
         })),
     });
@@ -101,6 +105,10 @@ export function useAccountDelegations() {
         typeof agentWallet.data === "string" && agentWallet.data !== zeroAddress
             ? (agentWallet.data as Address) // `getAgentWallet` returns an address; checked non-zero.
             : null;
+
+    const switchToTestnet = useMutation({
+        mutationFn: () => switchChainAsync({chainId: intuitionTestnet.id}),
+    });
 
     const deploy = useMutation({
         mutationFn: async () => {
@@ -146,7 +154,7 @@ export function useAccountDelegations() {
         operator,
         walletChainId,
         onTestnet: walletChainId === intuitionTestnet.id,
-        switchToTestnet: () => switchChainAsync({chainId: intuitionTestnet.id}),
+        switchToTestnet,
         smartAccount:
             smartAccountQuery.data === undefined || smartAccountQuery.data === null
                 ? null

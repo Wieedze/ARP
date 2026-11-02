@@ -100,15 +100,21 @@ function SigningGate({account}: {account: AccountDelegations}) {
     }
     if (!account.onTestnet) {
         return (
-            <button
-                type="button"
-                className={controlClass}
-                onClick={() => {
-                    account.switchToTestnet().catch(() => undefined);
-                }}
-            >
-                Switch wallet to {intuitionTestnet.name}
-            </button>
+            <div>
+                <button
+                    type="button"
+                    className={controlClass}
+                    disabled={account.switchToTestnet.isPending}
+                    onClick={() => account.switchToTestnet.mutate()}
+                >
+                    Switch wallet to {intuitionTestnet.name}
+                </button>
+                {account.switchToTestnet.error === null ? null : (
+                    <p role="alert" className={`${CELL} mt-3`}>
+                        {errorText(account.switchToTestnet.error)}
+                    </p>
+                )}
+            </div>
         );
     }
     return null;

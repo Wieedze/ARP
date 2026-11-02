@@ -45,7 +45,7 @@ function account(overrides: Partial<Record<string, unknown>> = {}): AccountDeleg
         operator: OPERATOR,
         walletChainId: 13579,
         onTestnet: true,
-        switchToTestnet: vi.fn().mockResolvedValue(undefined),
+        switchToTestnet: mutation(),
         smartAccount: {address: SA, isDeployed: true},
         smartAccountError: null,
         rows: [row()],
@@ -109,6 +109,26 @@ describe("the account page", () => {
         expect(screen.getByRole("button", {name: /Switch wallet to/})).toBeInTheDocument();
         expect(screen.queryByRole("button", {name: "Revoke"})).toBeNull();
         expect(screen.queryByRole("button", {name: "Review"})).toBeNull();
+    });
+
+    it("switches the wallet from the button, and says so when the switch fails", () => {
+        const acct = account({onTestnet: false, walletChainId: 1155});
+        const {unmount} = renderWithProviders(<AccountPage account={acct} />);
+        fireEvent.click(screen.getByRole("button", {name: /Switch wallet to/}));
+        expect(acct.switchToTestnet.mutate).toHaveBeenCalledTimes(1);
+        expect(screen.queryByRole("alert")).toBeNull();
+        unmount();
+
+        renderWithProviders(
+            <AccountPage
+                account={account({
+                    onTestnet: false,
+                    walletChainId: 1155,
+                    switchToTestnet: {...mutation(), error: new Error("User rejected the request")},
+                })}
+            />,
+        );
+        expect(screen.getByRole("alert")).toHaveTextContent("User rejected the request");
     });
 
     it("signs a new delegation only from the second click, which names the chain", () => {

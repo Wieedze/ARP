@@ -26,7 +26,11 @@ vi.mock("../../lib/clients", () => ({
 }));
 
 // Service must be imported AFTER vi.mock so the mocks are in place.
-import {createUserSmartAccount, deploySmartAccountIfNeeded} from "../smart-account";
+import {
+    createUserSmartAccount,
+    deploySmartAccountIfNeeded,
+    isSmartAccountDeployed,
+} from "../smart-account";
 
 const PK: Hex = `0x${"02".repeat(32)}`;
 const PK_ACCOUNT = privateKeyToAccount(PK);
@@ -76,6 +80,31 @@ describe("createUserSmartAccount", () => {
         });
         const args = mockToSmartAccount.mock.calls[0][0] as {deploySalt: Hex};
         expect(args.deploySalt).toBe(salt);
+    });
+});
+
+describe("isSmartAccountDeployed", () => {
+    const ADDRESS: Hex = "0x000000000000000000000000000000000000BEEF";
+    beforeEach(() => {
+        mockGetCode.mockReset();
+    });
+
+    it("is true when the address holds bytecode", async () => {
+        mockGetCode.mockResolvedValue("0xff");
+        await expect(isSmartAccountDeployed(ADDRESS)).resolves.toBe(true);
+        expect(mockGetCode).toHaveBeenCalledWith({address: ADDRESS});
+    });
+
+    it("is false for empty code and for no code at all", async () => {
+        mockGetCode.mockResolvedValueOnce("0x");
+        await expect(isSmartAccountDeployed(ADDRESS)).resolves.toBe(false);
+        mockGetCode.mockResolvedValueOnce(undefined);
+        await expect(isSmartAccountDeployed(ADDRESS)).resolves.toBe(false);
+    });
+
+    it("propagates a failed read rather than reporting undeployed", async () => {
+        mockGetCode.mockRejectedValue(new Error("rpc down"));
+        await expect(isSmartAccountDeployed(ADDRESS)).rejects.toThrow("rpc down");
     });
 });
 
