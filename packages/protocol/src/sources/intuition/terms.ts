@@ -81,31 +81,17 @@ export const COMPATIBLE_WITH =
     "0xaf3ca6cd6db1cc57c5ae68b1177ba1fd426488bd781494166ab8cb0ed28a6ea3" as const;
 
 /**
- * `has tag` — **mainnet writes**. Published.
+ * `has tag`. Published.
  *
- * The one per-network choice in the whole vocabulary. Both atoms exist on both networks, so a read
- * with either resolves; what differs is which one each network's ecosystem writes with.
- * `0x7ec36d20…` pins `https://schema.org/keywords`, `0x6de69cc0…` pins the string `has tag`
- * (`docs/07` Appendix B). Writing the mainnet one on testnet produces a real edge nothing on that
- * network reads.
+ * Both `has tag` atoms exist on both networks. `0x7ec36d20…` pins `https://schema.org/keywords`,
+ * `0x6de69cc0…` pins the string `has tag` (`docs/07` Appendix B), and the guide recommends the
+ * second for testnet writes. Measured 2026-10-28 on testnet 13579 (`scripts/seed/seed-domain-tree.ts`
+ * header): this one carries 52,781 edges there and `0x6de69cc0…` 311, so ARP writes this one on
+ * both chains. The testnet constant and `hasTagForWriting(chainId)`, which had no callers, were
+ * deleted in task 59 (ADR `0115`): a chain literal outside `src/arp/`.
  */
 export const HAS_TAG =
     "0x7ec36d201c842dc787b45cb5bb753bea4cf849be3908fb1b0a7d067c3c3cc1f5" as const;
-
-/** `has tag` — **testnet writes**. The counterpart to {@link HAS_TAG}; see its note. */
-export const HAS_TAG_TESTNET =
-    "0x6de69cc0ae3efe4000279b1bf365065096c8715d8180bc2a98046ee07d3356fd" as const;
-
-/**
- * The `has tag` predicate to **write** with on a given chain.
- *
- * A function rather than a constant because this is the only term in the vocabulary where the
- * answer depends on the chain, and a caller that forgets lands on a silent miss rather than an
- * error. Reads should use neither — query both, or filter on something else.
- */
-export function hasTagForWriting(chainId: number): string {
-    return chainId === 13579 ? HAS_TAG_TESTNET : HAS_TAG;
-}
 
 /** `has category`. Published. */
 export const HAS_CATEGORY =

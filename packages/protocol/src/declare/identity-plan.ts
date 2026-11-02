@@ -56,8 +56,7 @@ import type {PreparedCall} from "./types.js";
  * — "partners should reuse listed object atoms rather than minting duplicates".
  *
  * `has tag` and `has category` are *recommended enrichment*, not the minimum, and they are not
- * written here: a tag nobody chose is noise, and `has tag` is the one term whose id differs by
- * network (`hasTagForWriting`).
+ * written here: a tag nobody chose is noise.
  */
 export type IdentityAtomPlan = {
     caip19: string;
