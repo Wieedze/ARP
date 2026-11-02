@@ -72,9 +72,9 @@ const asWallet = (client: unknown) => client as any;
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
 describe("where it mints", () => {
-    it("targets Base and the canonical registry, not ARP's own copy", () => {
-        // The whole point of this module. `rules/portability.md` rule 4: an identity in a registry
-        // ARP controls is a rehearsal prop, invisible to every other ERC-8004 reader.
+    it("on mainnet targets Base and the canonical registry, not ARP's own copy", () => {
+        // `rules/portability.md` rule 4: an identity in a registry ARP controls is a rehearsal
+        // prop, invisible to every other ERC-8004 reader. That is what testnet is for.
         expect(MAINNET_MINT.chain.id).toBe(8453);
         expect(MAINNET_MINT.registry).toBe("0x8004A169FB4a3325136EB29fA0ceB6D2e539a432");
     });
@@ -88,6 +88,7 @@ describe("on testnet", () => {
         expect(mintTargetFor(true)).toBe(MAINNET_MINT);
         expect(mintTargetOf(13579)).toBe(TESTNET_MINT);
         expect(mintTargetOf(8453)).toBe(MAINNET_MINT);
+        expect(() => mintTargetOf(1155)).toThrow(/no identity is minted on chain 1155/);
     });
 
     it("refuses a wallet on Base when the target is testnet, and mints on 13579 otherwise", async () => {

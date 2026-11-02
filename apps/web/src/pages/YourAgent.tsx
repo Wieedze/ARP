@@ -184,7 +184,7 @@ type Phase =
  * claim should be checkable without trusting a server, so the default follows the argument. The
  * byte count is shown before signing, because it is the gas.
  */
-function MintIdentity() {
+export function MintIdentity() {
     const {address, isConnected, chainId} = useAccount();
     const {switchChainAsync, isPending: isSwitching} = useSwitchChain();
     const {target, quote, submit} = useIdentityMint();
@@ -195,7 +195,15 @@ function MintIdentity() {
     const headingId = useId();
     const fieldId = useId();
 
-    const onMintChain = chainId === target.chain.id;
+    // A quote or a result keeps the chain it was made on. Only a page with neither follows the
+    // toggle, so a flip cannot hide a minted id or relabel a pending signature.
+    const shown =
+        phase.step === "confirm" || phase.step === "signing"
+            ? mintTargetOf(phase.quote.chainId)
+            : phase.step === "done"
+              ? mintTargetOf(phase.result.chainId)
+              : target;
+    const onMintChain = chainId === shown.chain.id;
     const hasName = name.trim() !== "";
 
     async function handleQuote(owner: Address) {
@@ -233,9 +241,9 @@ function MintIdentity() {
             </h2>
             <dl className="mt-5 grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 text-[length:var(--text-body-sm)]">
                 <Field label="Chain">
-                    {target.chain.name} ({target.chain.id})
+                    {shown.chain.name} ({shown.chain.id})
                 </Field>
-                <Field label="Registry">{truncateMiddle(target.registry, 12, 8)}</Field>
+                <Field label="Registry">{truncateMiddle(shown.registry, 12, 8)}</Field>
                 <Field label="Owner">
                     {address === undefined ? "—" : truncateMiddle(address, 12, 8)}
                 </Field>
@@ -250,15 +258,15 @@ function MintIdentity() {
                     <p className="max-w-[60ch] text-[length:var(--text-body-sm)]">
                         Your wallet is on chain{" "}
                         <span className="font-mono">{chainId ?? "unknown"}</span>. The registry is
-                        on {target.chain.name} ({target.chain.id}).
+                        on {shown.chain.name} ({shown.chain.id}).
                     </p>
                     <button
                         type="button"
-                        onClick={() => void switchChainAsync({chainId: target.chain.id})}
+                        onClick={() => void switchChainAsync({chainId: shown.chain.id})}
                         disabled={isSwitching}
                         className={`mt-3 ${controlClass}`}
                     >
-                        {isSwitching ? "Switching…" : `Switch to ${target.chain.name}`}
+                        {isSwitching ? "Switching…" : `Switch to ${shown.chain.name}`}
                     </button>
                 </div>
             ) : phase.step === "done" ? (
@@ -414,7 +422,7 @@ function Minted({result}: {result: MintResult}) {
             </p>
             <p className="mt-3 font-mono text-[length:var(--text-body-sm)]">
                 <a
-                    href={`${mintTargetOf(result.chainId).chain.blockExplorers?.default.url ?? ""}/tx/${result.hash}`}
+                    href={`${mintTargetOf(result.chainId).explorerUrl}/tx/${result.hash}`}
                     target="_blank"
                     rel="noreferrer"
                     className={linkClass}

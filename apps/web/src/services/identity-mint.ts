@@ -92,10 +92,19 @@ export class MintGuardError extends Error {
 }
 
 /** Where an identity is minted: a chain and the registry on it. */
-export type MintTarget = {chain: typeof base | typeof intuitionTestnet; registry: Address};
+export type MintTarget = {
+    chain: typeof base | typeof intuitionTestnet;
+    registry: Address;
+    /** Where a mint transaction is shown. Carried, so a link never falls back to a relative URL. */
+    explorerUrl: string;
+};
 
 /** Mainnet: the canonical registry on Base, the one Intuition's mirror reads (header above). */
-export const MAINNET_MINT: MintTarget = {chain: base, registry: DEFAULT_IDENTITY_REGISTRY};
+export const MAINNET_MINT: MintTarget = {
+    chain: base,
+    registry: DEFAULT_IDENTITY_REGISTRY,
+    explorerUrl: base.blockExplorers.default.url,
+};
 
 /**
  * Testnet: ARP's own copy of the registry on 13579, the one the sponsoring service and the Desktop
@@ -105,6 +114,7 @@ export const MAINNET_MINT: MintTarget = {chain: base, registry: DEFAULT_IDENTITY
 export const TESTNET_MINT: MintTarget = {
     chain: intuitionTestnet,
     registry: deployments.arp.identityRegistry,
+    explorerUrl: deployments.chain.explorerUrl,
 };
 
 /** The target the chain toggle picks. */
@@ -114,7 +124,9 @@ export function mintTargetFor(isMainnet: boolean): MintTarget {
 
 /** The target a quote or a result was made on, from the chain id it carries. */
 export function mintTargetOf(chainId: number): MintTarget {
-    return chainId === MAINNET_MINT.chain.id ? MAINNET_MINT : TESTNET_MINT;
+    if (chainId === MAINNET_MINT.chain.id) return MAINNET_MINT;
+    if (chainId === TESTNET_MINT.chain.id) return TESTNET_MINT;
+    throw new Error(`no identity is minted on chain ${chainId}`);
 }
 
 function registryOf(target: MintTarget) {
