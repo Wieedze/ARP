@@ -1,6 +1,7 @@
 # Task 57 — The whole skill: its directory, under one receipt, for a runtime that can run it
 
-**Status:** **BUILT**, 2026-11-02, branch `feat/57-skill-bundle`.
+**Status:** **BUILT and verified**, 2026-11-02, branch `feat/57-skill-bundle`.
+`task-verifier` PASS on the second pass, post-mortem `learning/50`.
 **Depends on:** task 31 (the content path), task 55 (project mode).
 **Rules:** `code.md`, `security.md`, `claims.md`, `workflow.md`.
 **Reviewers:** `task-verifier`.
