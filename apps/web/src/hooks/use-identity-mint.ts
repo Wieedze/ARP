@@ -1,21 +1,20 @@
 import {useCallback} from "react";
 import {getWalletClient} from "@wagmi/core";
-import {createPublicClient, http, type Address, type Chain} from "viem";
+import type {Address, Chain} from "viem";
 import {
     buildRegistrationFile,
     toRegistrationDataUri,
     type RegistrationInput,
 } from "@arp-protocol/core";
 
+import {publicClientFor} from "../lib/clients";
 import {wagmiConfig} from "../lib/wagmi";
 import {useChainChoice} from "../lib/chain-choice";
 import {
-    MAINNET_MINT,
     mintTargetFor,
     mintTargetOf,
     quoteMint,
     submitMint,
-    TESTNET_MINT,
     type MintQuote,
     type MintResult,
     type MintTarget,
@@ -29,24 +28,11 @@ import {
  * permanent identity** the operator did not ask for.
  *
  * The target follows the chain toggle (`docs/tasks/50` §4): Base's canonical registry on mainnet,
- * ARP's registry on 13579 on testnet. Each target has its own read-only client, built once.
- *
- * `as Chain` because viem's chain objects are `const`-typed, so `createPublicClient({chain: base})`
- * infers a client specialised to that one literal chain, and TS then reports it as unrelated to the
- * bare `PublicClient` the service takes. The cast is safe and narrow: it drops the literal
- * narrowing on a value that is already a `Chain`, and changes nothing at runtime.
+ * ARP's registry on 13579 on testnet. Each target reads through the app's one client per chain.
  */
-const clients = new Map(
-    [MAINNET_MINT, TESTNET_MINT].map((target) => [
-        target,
-        createPublicClient({chain: target.chain as Chain, transport: http()}),
-    ]),
-);
-
 function clientFor(target: MintTarget) {
-    const client = clients.get(target);
-    if (client === undefined) throw new Error(`no client for chain ${target.chain.id}`);
-    return client;
+    // `as Chain` drops the `const` literal typing of viem's chain objects; nothing changes at runtime.
+    return publicClientFor(target.chain as Chain);
 }
 
 /** What the page collects. The chain and the registry are this module's to supply, not the form's. */
