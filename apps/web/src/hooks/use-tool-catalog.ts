@@ -115,8 +115,6 @@ export function useToolCatalog(order: ToolListingOrder, curveId: number) {
     // Vite types every `import.meta.env` key through an index signature, so the value arrives as
     // `any`; annotating it here keeps that from crossing into a typed parameter.
     const configured: string | undefined = import.meta.env.VITE_ARP_SPONSOR_ADDRESS;
-    // `.env.example` ships the key empty, and an empty value is not a choice of address.
-    const raw = configured === undefined || configured.trim() === "" ? deployments.arp.sponsor : configured;
-    const sponsor = sponsorAddressFor(chain.chainId, raw);
+    const sponsor = sponsorAddressFor(chain.chainId, configured, deployments.arp.sponsor);
     return useQuery(toolCatalogQueryOptions({...chain, sponsor}, order, curveId));
 }

@@ -136,4 +136,13 @@ describe("ToolCatalogList", () => {
         renderWithProviders(<ToolCatalogList rows={[repo]} curveId={1} showStars repoUsage={skillUsageByRepo([repo])} />);
         expect(screen.getByRole("link").textContent).not.toContain("skills declared");
     });
+
+    it("says one skill in the singular, and leaves usage out at zero", () => {
+        const repo = row({key: "0xrr", name: "acme/skills", label: "github.com/acme/skills", declarations: 0, provenDeposits: 0, declaredDeposits: 0});
+        const skill = row({key: "0x1", name: "one", source: "acme/skills", declarations: 1, provenDeposits: 0, declaredDeposits: 1});
+        renderWithProviders(<ToolCatalogList rows={[repo]} curveId={1} showStars repoUsage={skillUsageByRepo([repo, skill])} />);
+        const text = screen.getByRole("link").textContent ?? "";
+        expect(text).toContain("1 skill declared");
+        expect(text).not.toContain("0 usage");
+    });
 });
