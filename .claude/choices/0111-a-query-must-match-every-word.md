@@ -10,7 +10,7 @@
 ADR `0108` ranked results by the words they matched, so one word out of two was enough to be
 returned. When nothing matched, the answer listed the domain words so the agent could ask again.
 Task 45c measured the result: agents read lists of tools that only shared one word with the need,
-then answered from memory. A run with ARP cost 3.14 times the tokens of a run without.
+then answered from memory. A run with ARP used 3.14 times the tokens of a run without.
 
 ## Decision
 
@@ -28,7 +28,8 @@ agent to answer from what it knows. A `domain` search keeps its list.
 ## Consequences
 
 **Positive:**
-- An answer with nothing that fits is about a hundred bytes ("card payments": 4,071 → 97).
+- Probe, testnet 13579, 2026-11-02, one-off: `card payments` went from 4,071 bytes and 10 results
+  to 97 bytes and 0.
 
 **Negative:**
 - A need described with a word the description lacks is missed.

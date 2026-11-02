@@ -51,8 +51,8 @@ anything. A saving is still not claimable, and the answers are still judged wors
 **Why it barely moved.** Each turn re-sends the whole conversation, so the cost of a consultation
 is mostly turns, not the size of a result. The agent still makes 2.9 turns against 1 for answering
 from memory, because:
-- it retries with other words or with a `domain` (uptime: `uptime monitoring`, then the `monitoring`
-  and `observability` domains, 4 calls in each rep);
+- it retries with other words or with a `domain` (uptime: `uptime monitoring`, then the `monitoring`,
+  `observability` and `website` domains, 4 calls in each rep);
 - a `domain` search is unchanged and still answers with whatever is filed under it (Stripe: the
   agent asked `domain: payment` in all 3 reps).
 
