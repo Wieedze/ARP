@@ -124,6 +124,36 @@ arp s'il n'y a pas un skill qui pourrait être utile »_.
 - Pass criteria, for the user to confirm before the run: the agent consults on most of the
   tool-needing prompts and on few of the others.
 
+**Run 2026-11-02, done.** `scripts/measure/discovery-eval.ts` at `854549a`, output
+`data/measurements/discovery-eval-2026-11-02.jsonl`. Sonnet for the agent and Opus for the judge,
+20 prompts × 3 reps × 2 arms, 120 runs and 0 failed, $2.75. Re-derive any figure below with
+`bun run scripts/measure/discovery-eval.ts --summarise data/measurements/discovery-eval-2026-11-02.jsonl`.
+
+| | needs a tool (14 prompts, 42 pairs) | needs none (6 prompts, 18 pairs) |
+| --- | --- | --- |
+| consulted, by majority of reps | 13 of 14, **PASS** (≥ 10) | 0 of 6, **PASS** (≤ 1) |
+| consulted, runs | 39 of 42, 95% 81% to 98% | 0 of 18, 95% 0% to 18% |
+| tokens per run, arp / none | 20,130 / 6,402, ratio 3.14, 95% 2.62 to 3.80 | 7,644 / 5,771, ratio 1.32, 95% 1.31 to 1.33 |
+| cost per run, arp / none | $0.0349 / $0.0189, ratio 1.84, 95% 1.57 to 2.15 | $0.0145 / $0.0127, ratio 1.14 |
+| judged better | arp 5, none 37, tie 0 | arp 8, none 8, tie 2 |
+
+So the consultation criteria pass and **no saving can be claimed**. With ARP, a run costs more and
+the answer is judged worse. Three things explain the result:
+
+- **The baseline does not search.** Without ARP, Sonnet ran 0 web searches in 60 runs. It answered
+  from memory in one turn. The 31 KB web path that task 49 §3 compared against is not what a
+  default session does.
+- **ARP often had nothing that fit.** For Stripe, the registry returned marketing skills; for
+  Postgres, Prisma and Firebase skills. The agent said so and then answered from memory anyway, so
+  it paid twice. A rough text match on the answers puts this at about half of the consulted runs.
+  That figure is not a committed measurement.
+- **ARP's 5 wins all came from the same two prompts, product-photos and thumbnails.** On
+  product-photos the agent did not consult ARP at all.
+
+What this measures and what it does not: one model, English prompts, no real install. The judge
+reads the answers but cannot check that a named tool exists or works. Blinding is partial: an
+answer that cites a registry can still be told from one that does not.
+
 ### 45d — The words the operator sees
 
 - The three tools' descriptions and what they return are rewritten for an operator who has never
