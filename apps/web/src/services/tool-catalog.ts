@@ -392,6 +392,50 @@ export function toolSortAxesFor(index: ToolIndex): readonly {id: ToolSortAxis; l
 
 const LIVENESS_RANK: Record<Liveness, number> = {alive: 0, unknown: 1, dead: 2};
 
+/** Rows per page, the agent index's size, so the two lists page alike. */
+export const TOOL_PAGE_SIZE = 25;
+
+export type ToolPage = {
+    rows: ToolRow[];
+    /** The offset actually used: one past the end falls back to the last page. */
+    offset: number;
+    rangeLabel: string;
+    hasPrevious: boolean;
+    hasNext: boolean;
+};
+
+/**
+ * One page of the ranked list.
+ *
+ * The whole population, or the prefix the read reached, is ranked before this runs (`rankTools`),
+ * so paging is a slice and never changes the order. It was every row at once: 662 skills on testnet
+ * 13579, a page 54,915px tall at 1440px wide (2026-11-02).
+ *
+ * An offset past the end is clamped rather than answered with an empty page: a domain filter can
+ * shrink the list under a reader who was on page 9, and an empty page there would read as "nothing
+ * matches".
+ */
+export function pageOfTools(
+    rows: readonly ToolRow[],
+    offset: number,
+    size: number = TOOL_PAGE_SIZE,
+): ToolPage {
+    const lastStart = rows.length === 0 ? 0 : Math.floor((rows.length - 1) / size) * size;
+    const start = Math.min(Math.max(0, offset), lastStart);
+    const slice = rows.slice(start, start + size);
+    const rangeLabel =
+        slice.length === 0
+            ? "no rows"
+            : `${(start + 1).toLocaleString("en-US")}–${(start + slice.length).toLocaleString("en-US")} of ${rows.length.toLocaleString("en-US")}`;
+    return {
+        rows: slice,
+        offset: start,
+        rangeLabel,
+        hasPrevious: start > 0,
+        hasNext: start + size < rows.length,
+    };
+}
+
 /**
  * Gate, then sort. A tool that does not answer sorts below one that does, whatever either staked.
  *
