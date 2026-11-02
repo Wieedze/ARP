@@ -12,6 +12,7 @@
  * the other.
  */
 import {createServer, type IncomingMessage, type Server, type ServerResponse} from "node:http";
+import {PassThrough} from "node:stream";
 
 export type FetchHandler = (request: Request, ip: string) => Response | Promise<Response>;
 
@@ -101,6 +102,18 @@ export function serveFetch(options: ServeOptions, handle: FetchHandler): Promise
         server.once("error", reject);
         server.listen(options.port, options.hostname, () => resolve(server));
     });
+}
+
+/**
+ * A buffered copy of `stream`, listening from the moment it is called.
+ *
+ * Claude Desktop's built-in Node hands a server a stdin that emits each message once and keeps
+ * nothing, so a listener attached after an `await` misses the client's `initialize` and the client
+ * waits two minutes before giving up (found live on Windows, 2026-11-02). Taking the stream at load
+ * time and reading the copy later is the fix.
+ */
+export function bufferedCopy(stream: NodeJS.ReadableStream): PassThrough {
+    return stream.pipe(new PassThrough());
 }
 
 /**

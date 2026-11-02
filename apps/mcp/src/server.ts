@@ -279,11 +279,16 @@ export const handler = {
  * **Everything printed here goes to stderr.** stdout is the protocol channel: one stray line on it
  * desynchronises the client, and the failure looks like a malformed server rather than a log.
  */
-async function serveStdio(): Promise<void> {
+async function serveStdio(input: AsyncIterable<unknown>): Promise<void> {
+  // Waits for `drain` rather than the write callback, as the MCP SDK's own transport does: a host
+  // that stands in for stdout need not call it.
   const send = (line: string) =>
-    new Promise<void>((resolve) => process.stdout.write(`${line}\n`, () => resolve()));
+    new Promise<void>((resolve) => {
+      if (process.stdout.write(`${line}\n`)) resolve();
+      else process.stdout.once('drain', () => resolve());
+    });
 
-  for await (const line of linesOf(process.stdin)) {
+  for await (const line of linesOf(input)) {
     const response = await handler.fetch(
       new Request(`http://stdio/`, {
         method: 'POST',
@@ -300,7 +305,10 @@ async function serveStdio(): Promise<void> {
  * Start the server. `arp mcp` calls this (`apps/cli`); `bun src/server.ts` reaches it through
  * `import.meta.main`, which Node 22 does not set — so under Node only the CLI starts it.
  */
-export async function main(argv: readonly string[] = process.argv): Promise<void> {
+export async function main(
+  argv: readonly string[] = process.argv,
+  stdin: AsyncIterable<unknown> = process.stdin,
+): Promise<void> {
   const stdio = argv.includes('--stdio') || process.env.ARP_TRANSPORT === 'stdio';
   // stderr in both modes: the banner is a diagnostic, and on stdio stdout belongs to the protocol.
   const log = (line: string) => process.stderr.write(`${line}\n`);
@@ -312,7 +320,7 @@ export async function main(argv: readonly string[] = process.argv): Promise<void
   log(`  multivault: ${MULTI_VAULT}`);
 
   if (stdio) {
-    await serveStdio();
+    await serveStdio(stdin);
     process.exit(0);
   }
 
