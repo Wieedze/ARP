@@ -5,7 +5,7 @@ import {Install} from "../components/atom/AtomPageParts";
 import {BackLink} from "../components/brand/BackLink";
 import {Hint} from "../components/brand/Hint";
 import {useAgentActivity} from "../hooks/use-agent-activity";
-import {linkClass} from "../lib/control-class";
+import {controlClass, linkClass} from "../lib/control-class";
 import {START_PATHS, isStartProfile, rememberProfile} from "../lib/start-paths";
 import type {AgentFeed} from "../services/agent-feed";
 import {stepsFor, type StartStep} from "../services/start-steps";
@@ -93,7 +93,7 @@ function StepState({done}: {done: boolean | null}) {
     return (
         <span
             className={`font-mono text-[length:var(--text-label)] uppercase tracking-[0.08em] ${
-                done ? "text-[color:var(--color-fg)]" : "text-[color:var(--color-grey)]"
+                done ? "text-[color:var(--color-fg)]" : "text-[color:var(--color-steel)]"
             }`}
         >
             {done ? "done" : "to do"}
@@ -119,13 +119,18 @@ function FindTool() {
             >
                 Repository URL
             </label>
-            <input
-                id="start-tool-url"
-                value={url}
-                onChange={(event) => setUrl(event.target.value)}
-                placeholder="github.com/owner/repo"
-                className="rounded-[var(--radius-control)] border border-[color:var(--color-rule-strong)] bg-[color:var(--color-bg)] px-3.5 py-2.5 font-mono text-[13px]"
-            />
+            <div className="flex gap-2">
+                <input
+                    id="start-tool-url"
+                    value={url}
+                    onChange={(event) => setUrl(event.target.value)}
+                    placeholder="github.com/owner/repo"
+                    className="min-w-0 flex-1 rounded-[var(--radius-control)] border border-[color:var(--color-rule-strong)] bg-[color:var(--color-bg)] px-3.5 py-2.5 font-mono text-[13px]"
+                />
+                <button type="submit" className={controlClass}>
+                    Find
+                </button>
+            </div>
         </form>
     );
 }

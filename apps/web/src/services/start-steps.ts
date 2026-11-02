@@ -32,7 +32,8 @@ export type StartSignals = {
 /** An everyday need the catalogue covers, from the demo plan (`docs/26` §3). */
 export const EXAMPLE_PROMPT = "Make me a YouTube thumbnail for a video about sourdough bread.";
 
-const FREE: StartStep = {id: "free", title: "You're on testnet. Nothing to pay.", done: true};
+/** No chain word: the Claude path promises none on screen (task 45, `docs/tasks/53` §3). */
+const FREE: StartStep = {id: "free", title: "Free for now. Nothing to pay.", done: true};
 
 function declared(events: readonly ActivityEvent[]): boolean {
     return events.some(
@@ -57,7 +58,7 @@ export function stepsFor(profile: StartProfile, signals: StartSignals): StartSte
                     title: "Add ARP to Claude, and connect your agent",
                     done: live,
                     command: "arp init --project --sponsored --runtime claude",
-                    hint: "In Claude Desktop, install the ARP extension from Settings, Extensions.",
+                    hint: "Not published yet: ARP runs from a local build, in Claude Code or as a Desktop extension.",
                 },
                 {
                     id: "ask",

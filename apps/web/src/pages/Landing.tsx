@@ -639,10 +639,13 @@ function SceneWays() {
             <div className="grid gap-5 md:grid-cols-3">
                 {START_PATHS.map((path, index) => (
                     <Reveal key={path.profile} index={2 + index} className="flex">
+                        {/* The `!` on the focus radius: `index.css`'s unlayered `a:focus-visible`
+                            rule sets `border-radius: 1px` and beats any utility, which squared
+                            the tile's corners under keyboard focus. */}
                         <Link
                             to={startPathTo(path.profile)}
                             onClick={() => rememberProfile(path.profile)}
-                            className={`flex flex-1 flex-col gap-6 rounded-[var(--radius-card)] border p-5 hover:bg-[var(--color-raised)] ${
+                            className={`flex flex-1 flex-col gap-6 rounded-[var(--radius-card)] border p-5 hover:bg-[var(--color-raised)] focus-visible:rounded-[var(--radius-card)]! ${
                                 path.primary
                                     ? "border-[color:var(--color-accent)]"
                                     : "border-[color:var(--color-rule)]"

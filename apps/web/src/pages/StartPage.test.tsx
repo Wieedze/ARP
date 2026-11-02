@@ -36,7 +36,7 @@ describe("the start page", () => {
         renderWithProviders(<StartPage feed={feed} />, at("claude"));
 
         expect(await screen.findByRole("heading", {name: "I use Claude"})).toBeTruthy();
-        expect(screen.queryByText(/wallet/i)).toBeNull();
+        expect(screen.queryByText(/wallet|testnet|chain|trust/i)).toBeNull();
         expect(screen.getAllByText("to do")).toHaveLength(3);
 
         deliver();
@@ -53,7 +53,7 @@ describe("the start page", () => {
         renderWithProviders(<StartPage feed={feedWith([]).feed} />, at("tool"));
         const field = await screen.findByLabelText("Repository URL");
         fireEvent.change(field, {target: {value: "github.com/Wieedze/ARP"}});
-        fireEvent.submit(field.closest("form") as HTMLFormElement);
+        fireEvent.click(screen.getByRole("button", {name: "Find"}));
         await waitFor(() => expect(screen.queryByLabelText("Repository URL")).toBeNull());
     });
 

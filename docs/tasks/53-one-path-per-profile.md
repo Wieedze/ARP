@@ -36,7 +36,7 @@ onboarding skill ARP itself returned for "onboarding" (`coreyhaines31/marketings
 | | What | Exists today |
 | --- | --- | --- |
 | 53a | Scene 4 becomes one question, "What brings you here?", with three tiles: a title and what to have at hand, nothing else (`ui.md`, no sentence in a card). Saffron on the first tile only. The choice is kept in `localStorage`, wrapped in try/catch, so the nav can offer the path again | `SceneJobs` and `jobsFor`, to be replaced |
-| 53b | `/start/:profile`, one page per path: an ordered list whose steps tick themselves when ARP sees the result, the first one ticked from the start ("testnet, nothing to pay"). No account | the activity bar's "your agent: live / connecting / not connected" (task 36, task 48 item 8); `/activity`; `/search` |
+| 53b | `/start/:profile`, one page per path: an ordered list whose steps tick themselves when ARP sees the result, the first one ticked from the start ("Free for now. Nothing to pay.", no chain word, as path A promises). No account | the activity bar's "your agent: live / connecting / not connected" (task 36, task 48 item 8); `/activity`; `/search` |
 | 53c | Path C's "add it" step, sponsored: a sponsor route that creates a tool atom for a URL, within a per-address daily limit and the global budget | **no route**: `apps/sponsor/src/service.ts` serves `/gas`, `/mint-gas`, `/identity`, `/deposit`, `/publish`. Needs its own ADR, because `security.md`'s sponsor rows do not cover it |
 
 The three paths, as the proposal has them:
