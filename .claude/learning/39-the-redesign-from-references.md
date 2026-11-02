@@ -2,7 +2,7 @@
 
 **Task:** `docs/tasks/46-the-redesign-from-references.md` (row 46b in §4)
 **Completed:** 2026-11-02
-**Commit:** `ac96625` (branch `feat/46-tools-pagination`)
+**Commit:** `687d09b` (branch `feat/46-redesign-from-references`)
 **Verifier verdict:** PASS (first pass; `ui-reviewer` FAIL round 1 on 4 stale comments, PASS round 2)
 
 ## What shipped
