@@ -772,7 +772,7 @@ User decision on ADR `0098`'s open point: a v2 receipt that names its verifier (
   sponsoring service's address, recovers to a different key here and reverts `SignerNotAccepted`
   (`test_beforeHook_revertsOnReceiptForAnotherVerifier`, `test_hashReceipt_differsPerDeployment`).
   The service refuses a receipt naming anything but its own account
-  (`packages/protocol/src/sponsor/proof.ts`, `hireReceiptIsFor`). **INFO-R1 is closed.** What
+  (`packages/protocol/src/sponsor/proof.ts`, `hireReceiptIsFor`). **INFO-R1 is narrowed, not closed.** What
   remains: a node that signs two receipts for one payment, naming two verifiers, gets both used. That
   is a dishonest node, and the evidence against it is two signatures over one payment hash.
 - **Cross-implementation vector**: `test_viemVector_digestAndSignatureVerify` deploys the enforcer at
@@ -825,9 +825,10 @@ Threat model, the items the change touches:
   hold (`test_beforeHook_revertsPastOwnExpiry`, `test_beforeHook_acceptsAtExactlyExpiresAt`). A
   receipt with `expiresAt < issuedAt` is refused by the same check, which is the right answer.
 - **Signature replay**: `verifyingContract = address(this)` in the domain, and the digest is
-  recomputed per deployment (`test_hashReceipt_differsPerDeployment`). **INFO-R1 is closed** for the
-  case it described: this enforcer against the sponsoring service, and two deployments at distinct
-  addresses. One residual, CR-2 below.
+  recomputed per deployment (`test_hashReceipt_differsPerDeployment`). **INFO-R1 is narrowed** to a
+  dishonest node: an honest node's receipt unlocks one verifier only. One operator holding both
+  agents can still have their node sign two receipts for one payment, one per verifier (ADR `0094`
+  accepts one operator on both sides). One residual, CR-2 below.
 - **Version**: a v1 receipt is refused `UnknownReceiptVersion(1)` both in v2's shape
   (`test_beforeHook_revertsOnV1Receipt`) and, added by this pass, in its own nine-field shape
   (`test_beforeHook_revertsOnV1ReceiptInItsOwnShape`): the version word decodes first.
@@ -857,5 +858,5 @@ Findings:
 Coverage after the fixes: 100% on all four measures (61/61, 84/84, 17/17, 13/13), unchanged. Happy
 path 67,190 gas, unchanged.
 
-**Verdict: PASS.** No Critical, High or Medium. INFO-R1 (Medium) closed. CR-1 (Low) and CR-2
+**Verdict: PASS.** No Critical, High or Medium. INFO-R1 (Medium) narrowed to a dishonest node, latent while the enforcer is not deployed. CR-1 (Low) and CR-2
 (Informational) are latent and documented. Not deployed. No transaction on any chain.

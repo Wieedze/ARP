@@ -243,8 +243,9 @@ contract ReceiptEnforcer is CaveatEnforcer {
     }
 
     /// @notice Whether a payment hash has already unlocked a deposit through this enforcer. Since
-    ///         v2 a receipt for this enforcer is refused by the sponsoring service, which no longer
-    ///         needs this read to avoid sponsoring one payment twice (task 44); it is for inspection.
+    ///         v2 a receipt for this enforcer is refused by the sponsoring service. A node that signs
+    ///         a second receipt for one payment, naming the service, still gets both used; the
+    ///         service reading this before it pays closes that, and is not built (task 44, ADR 0101).
     /// @param  chainId The chain the payment is on.
     /// @param  payment The payment's transaction hash, as a receipt names it.
     /// @return used    True once a receipt naming it has been consumed here.

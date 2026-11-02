@@ -62,8 +62,10 @@ AGENT_NODE_RECEIPT_TTL` (default 86,400 s). The enforcer keeps the delegator's `
 
 **Positive:**
 
-- One receipt unlocks one sponsorship, at the verifier it names. INFO-R1 is closed, and the
-  service no longer needs to read every enforcer deployment before it pays.
+- One receipt unlocks one sponsorship, at the verifier it names. INFO-R1 is **narrowed, not
+  closed**: a node that signs two receipts for one payment, one per verifier, still gets both used.
+  Closing it means the service reads `isPaymentUsed` on known enforcer deployments before it pays;
+  not built, and latent while the enforcer is not deployed.
 - The receipt names the term the deposit will be on, so the service and the enforcer both check
   that the receipt was issued for this deposit.
 

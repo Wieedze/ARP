@@ -359,7 +359,8 @@ export function createSponsor(options: SponsorOptions): {
       agents: owners,
       // The service's own verifier is its sponsoring account: a hire receipt is accepted only when
       // it names that address, so a receipt the hirer had signed for `ReceiptEnforcer` is refused
-      // here and one payment is sponsored once (task 44).
+      // here. An honest node's payment is sponsored once; a node that signs a second receipt for the
+      // enforcer still gets both used, until this reads `isPaymentUsed` there (task 44, ADR 0101).
       receiptVerifier: wallet.address,
       termId: request.termId,
       now: Math.floor(now() / 1000),
