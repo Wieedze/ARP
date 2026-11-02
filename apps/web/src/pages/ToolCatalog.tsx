@@ -306,10 +306,11 @@ function IndexTabs({
                         type="button"
                         aria-pressed={isSelected}
                         onClick={() => onChange(entry.id)}
-                        // Banged: `index.css`'s unlayered `button { border; color; radius }` beats
-                        // any utility, as `lib/control-class` lists. Its 10px radius bent the
-                        // underline's ends up.
-                        className={`flex items-baseline gap-2 rounded-none! border-0! border-b-2! bg-transparent px-0 pb-1 type-face text-[26px] leading-none ${
+                        // Banged: `index.css`'s unlayered `button { border; color }` beats any
+                        // utility, as `lib/control-class` lists. Its 10px radius curves the
+                        // underline's ends; `px-2.5 -mx-2.5` puts the curves just outside the label,
+                        // as `SectionTabs` does.
+                        className={`-mx-2.5 flex items-baseline gap-2 border-0! border-b-2! bg-transparent px-2.5 pb-1 type-face text-[26px] leading-none ${
                             isSelected
                                 ? "border-[color:var(--color-accent)]! text-[color:var(--color-fg)]!"
                                 : "border-transparent! text-[color:var(--color-grey)]! hover:text-[color:var(--color-silver)]!"

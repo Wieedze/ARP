@@ -94,9 +94,12 @@ export function SectionTabs({
                         tabIndex={selected ? 0 : -1}
                         onClick={() => onSelect(tab.slug)}
                         onKeyDown={(event) => handleKeyDown(event, index)}
-                        // `rounded-none!`: the unlayered `button {}` rounds every corner to 10px,
-                        // which bent both ends of the underline up and set it off the label.
-                        className={`-mb-px rounded-none! border-0! border-b-2! px-0 py-3 text-[length:var(--text-body-sm)] ${
+                        // The unlayered `button {}` rounds the corners to `--radius-button` (10px),
+                        // so the underline curves up at both ends. The user likes the curve
+                        // (2026-11-02); `px-2.5 -mx-2.5` pads the button by that radius on each side
+                        // and gives it back, so the label does not move, the flat part of the line
+                        // spans the label exactly, and the curves sit just outside it.
+                        className={`-mx-2.5 -mb-px border-0! border-b-2! px-2.5 py-3 text-[length:var(--text-body-sm)] ${
                             selected
                                 ? "border-[color:var(--color-accent)]! text-[color:var(--color-fg)]!"
                                 : "border-transparent! text-[color:var(--color-steel)]! hover:text-[color:var(--color-fg)]!"
