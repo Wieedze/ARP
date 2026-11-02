@@ -48,6 +48,7 @@ export type Flags = {
   project: boolean;
   print: boolean;
   capture: boolean;
+  sponsored: boolean;
   runtimes: RuntimeId[] | null;
 };
 
@@ -59,6 +60,7 @@ export function parseFlags(args: readonly string[]): Flags | Error {
     project: false,
     print: false,
     capture: false,
+    sponsored: false,
     runtimes: null,
   };
   for (let i = 0; i < args.length; i += 1) {
@@ -69,6 +71,7 @@ export function parseFlags(args: readonly string[]): Flags | Error {
     else if (arg === '--project') flags.project = true;
     else if (arg === '--print') flags.print = true;
     else if (arg === '--capture') flags.capture = true;
+    else if (arg === '--sponsored') flags.sponsored = true;
     else if (arg === '--runtime') {
       const list = (args[i + 1] ?? '').split(',').filter((name) => name.length > 0);
       i += 1;
@@ -212,7 +215,7 @@ async function change(
 }
 
 export async function init(env: InstallEnv, flags: Flags, cliPath: string): Promise<number> {
-  const commands = commandsFor(env, cliPath, flags.capture);
+  const commands = commandsFor(env, cliPath, flags.capture, flags.sponsored);
   if (flags.print) {
     env.out(JSON.stringify({ mcpServers: { arp: commands.mcp } }, null, 2));
     return EXIT.ok;

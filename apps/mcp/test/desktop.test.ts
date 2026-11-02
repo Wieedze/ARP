@@ -217,6 +217,23 @@ group('the loop a new agent walks', () => {
     await expect(declareUsed(config, agent, ATOM)).rejects.toThrow(/arp_get_skill first/);
   });
 
+  it('installs the skill into the skills directory when one is set, under its own name', async () => {
+    const agent = fakeAgent([]);
+    const skillsDir = join(dir, 'project', '.claude', 'skills');
+    const config: LoopConfig = {
+      contentUrl: 'http://content.test',
+      sponsorUrl: 'http://sponsor.test',
+      registry: REGISTRY,
+      multiVault: MULTI_VAULT,
+      stateDir: join(dir, '.arp'),
+      skillsDir,
+      fetch: services(agent.address).fake,
+    };
+    const skill = await getSkill(config, agent, ATOM);
+    expect(skill.installedAt).toBe(join(skillsDir, 'thumbs', 'SKILL.md'));
+    expect(readFileSync(join(skillsDir, 'thumbs', 'SKILL.md'), 'utf8')).toBe('# A skill\n');
+  });
+
   it('refuses a receipt that names another caller', async () => {
     const agent = fakeAgent([]);
     const config: LoopConfig = {

@@ -32,7 +32,13 @@ export const RECEIPT_SIGNER = receiptSigner();
  * tools that walk the loop for a user who signs nothing. It holds a local agent key; no other mode
  * does.
  */
-export const DESKTOP = process.env['ARP_TOOLS'] === 'desktop';
+export const DESKTOP = process.env['ARP_TOOLS'] === 'desktop' || process.env['ARP_TOOLS'] === 'sponsored';
+/**
+ * Where `arp_get_skill` installs a fetched skill, relative to the working directory: set by
+ * `arp init --sponsored` for Claude Code (task 55), unset in the Desktop extension, whose working
+ * directory is not the user's.
+ */
+export const SKILLS_DIR = process.env['ARP_SKILLS_DIR'];
 export const READ_ONLY = process.env['ARP_TOOLS'] === 'read' || DESKTOP;
 export const CONTENT_URL = process.env['ARP_CONTENT'] ?? 'http://127.0.0.1:3002';
 export const SPONSOR_URL = process.env['ARP_SPONSOR'] ?? 'http://127.0.0.1:3200';

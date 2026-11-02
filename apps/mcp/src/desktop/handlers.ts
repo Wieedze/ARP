@@ -8,7 +8,7 @@ import { join } from 'node:path';
 
 import { getAddress, type Hex } from 'viem';
 
-import { CONTENT_URL, MULTI_VAULT, RPC, SPONSOR_URL, record } from '../config.js';
+import { CONTENT_URL, MULTI_VAULT, RPC, SKILLS_DIR, SPONSOR_URL, record } from '../config.js';
 import { type JsonRpcId, fail, text } from '../rpc.js';
 import { agentKeyPath, agentSender, loadOrCreateAgentKey, type AgentSender } from './agent-key.js';
 import { declareUsed, getSkill, type LoopConfig } from './loop.js';
@@ -18,7 +18,7 @@ let agent: AgentSender | undefined;
 function config(): LoopConfig {
   const registry = record.arp?.identityRegistry;
   if (typeof registry !== 'string') throw new Error('this chain has no ARP identity registry');
-  return { contentUrl: CONTENT_URL, sponsorUrl: SPONSOR_URL, registry: getAddress(registry), multiVault: getAddress(MULTI_VAULT), stateDir: join(homedir(), '.arp') };
+  return { contentUrl: CONTENT_URL, sponsorUrl: SPONSOR_URL, registry: getAddress(registry), multiVault: getAddress(MULTI_VAULT), stateDir: join(homedir(), '.arp'), skillsDir: SKILLS_DIR };
 }
 
 function agentFor(): AgentSender {
@@ -35,7 +35,14 @@ export async function desktopTool(id: JsonRpcId, name: string, args: Record<stri
   try {
     if (name === 'arp_get_skill') {
       const skill = await getSkill(loop, agentFor(), atom as Hex); // checked to be 32 bytes of hex above
-      return text(id, { name: skill.name, source: skill.url, skill_md: skill.text });
+      return text(id, {
+        name: skill.name,
+        source: skill.url,
+        skill_md: skill.text,
+        ...(skill.installedAt === undefined
+          ? {}
+          : { installed_at: skill.installedAt, note: 'Installed for this project: invoke it with the Skill tool from the next session.' }),
+      });
     }
     const done = await declareUsed(loop, agentFor(), atom as Hex); // checked to be 32 bytes of hex above
     return text(id, {
