@@ -59,12 +59,18 @@ const c = {
 };
 const live: string[] = [];
 
+/** A document's endpoint list, keeping only the entries that are objects. */
+const entries = (value: unknown): Record<string, unknown>[] =>
+  Array.isArray(value)
+    ? value.filter((e): e is Record<string, unknown> => e !== null && typeof e === 'object')
+    : [];
+
 await Promise.all(
   ids.map(async (id) => {
     const uri = await tokenURI(id).catch(() => null);
     if (!uri) return;
     const url = uri.startsWith('ipfs://') ? `https://ipfs.io/ipfs/${uri.slice(7)}` : uri;
-    let doc: any;
+    let doc: unknown;
     try {
       if (url.startsWith('data:')) {
         const p = url.slice(url.indexOf(',') + 1);
@@ -85,9 +91,9 @@ await Promise.all(
       return;
     }
     c.docs++;
-    const eps = [...(doc.endpoints ?? []), ...(doc.services ?? [])].filter(
-      (e) => e && typeof e === 'object',
-    );
+    const fields: Record<string, unknown> =
+      doc !== null && typeof doc === 'object' ? { ...doc } : {};
+    const eps = [...entries(fields.endpoints), ...entries(fields.services)];
     const proto = eps.filter((e) =>
       PROTOCOL_NAMES.has(
         String(e.name ?? '')
