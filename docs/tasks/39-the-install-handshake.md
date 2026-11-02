@@ -1,6 +1,6 @@
 # Task 39 — The install handshake: a rented tunnel, and the node bound to its ERC-8004 token
 
-**Status:** **PLAN**, 2026-10-30. Not started. Replaces task 33e (the node, opt-in), whose node
+**Status:** **BUILT and verified**, 2026-10-30 (`learning/32-the-install-handshake`, PASS), merged into `dev` (PR #16). Planned 2026-10-30. Replaces task 33e (the node, opt-in), whose node
 listened on every interface and ran in the foreground.
 **ADR:** `0094` §1.
 **Required skills:** `intuition`.

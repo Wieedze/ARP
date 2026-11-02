@@ -133,6 +133,9 @@ arp s'il n'y a pas un skill qui pourrait être utile »_.
 
 ### 45e — A free read path
 
+**Met by default on testnet since 2026-11-02**: ADR `0102` defers task 41 to mainnet, so nothing on
+13579 is paid. What follows applies when task 41 is built for mainnet.
+
 - Task 41 puts the index, the MCP tools and the content route behind HTTP 402 in USDC. **Four
   things stay free on testnet 13579**, through a free tier or an exemption:
   - the three read tools in 45a (`arp_find_tools`, `arp_tool_reputation`, `arp_find_agents`), plus
