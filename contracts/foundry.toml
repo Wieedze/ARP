@@ -8,9 +8,9 @@ script = "script"
 out = "out"
 libs = ["lib"]
 
-# Per-file solc selection: ModuleRegistry uses ^0.8.24, but the vendored
-# delegation-framework is pinned strict 0.8.23. auto_detect picks the right
-# compiler per compilation unit so both can coexist.
+# Per-file solc selection: the enforcers are pinned strict 0.8.23 to match the
+# vendored delegation-framework, and the ported IdentityRegistry is ^0.8.20.
+# auto_detect picks the right compiler per compilation unit.
 auto_detect_solc = true
 optimizer = true
 optimizer_runs = 200
