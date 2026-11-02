@@ -51,11 +51,24 @@ no wallet client, no signer parameter and no send path in the package that build
 and `packages/protocol/src/declare/` is where to check it. The one key the server does hold is below
 and it cannot move value.
 
+**Except in the sponsored mode, which you opt into.** With `ARP_TOOLS=desktop`, set by the Claude
+Desktop extension, or `ARP_TOOLS=sponsored`, set by `arp init --sponsored`, the server holds a local
+agent key in `~/.arp/agent-key` (ADR `0110`). That key signs exactly two zero-value calls on testnet
+13579, `register()` and one MultiVault approval, and refuses every other call before signing
+(`apps/mcp/src/desktop/agent-key.ts`, `refusal`). ARP's sponsoring service pays everything that
+carries value. Without one of those two values, the paragraph above holds.
+
 **It executes nothing it fetches.** A skill's file is Markdown. It is returned with
 `content-type: text/plain`, `x-content-type-options: nosniff` and
 `content-disposition: attachment`, never rendered, never parsed, never written to disk by the server
 (`apps/mcp/src/content.ts`, the response at the end of `serveContentRequest`). Your agent reads it;
-the server does not.
+the server does not. `GET /content/:atomId?bundle=1` returns the skill's whole directory, scripts included, as
+JSON, and the server writes none of it (task 57).
+
+**In the sponsored mode with `ARP_SKILLS_DIR`**, the server process that runs your MCP tools writes
+a fetched skill's files, scripts included, under `<ARP_SKILLS_DIR>/<name>/`, after checking every
+file against the receipt (task 57). It runs none of them. Your agent runtime may, as it would after
+`npx skills add`.
 
 **It cannot be made to fetch somewhere else.** This is the one that would matter most if it were
 wrong, so it is worth stating precisely. The only input to the content route is an atom id. That is

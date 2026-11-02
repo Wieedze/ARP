@@ -44,7 +44,11 @@ export async function desktopTool(id: JsonRpcId, name: string, args: Record<stri
         skill_md: skill.text,
         ...(skill.installedAt === undefined
           ? {}
-          : { installed_at: skill.installedAt, note: 'Installed for this project: invoke it with the Skill tool from the next session.' }),
+          : {
+              installed_at: skill.installedAt,
+              files: skill.files,
+              note: 'Installed for this project, with its scripts: invoke it with the Skill tool from the next session.',
+            }),
       });
     }
     const done = await declareUsed(loop, agentFor(), atom as Hex); // checked to be 32 bytes of hex above
