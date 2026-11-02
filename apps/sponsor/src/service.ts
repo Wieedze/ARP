@@ -85,6 +85,7 @@ import {
   type StrictIdentityAtom,
   type TypedDataVerifier,
 } from '@arp-protocol/core';
+import { refuseForeignRequest } from '@arp-protocol/core/node';
 import { getAddress, isAddress, isHex, type Address, type Hex } from 'viem';
 
 import { SPONSOR_CHAIN_ID } from './key-file.ts';
@@ -147,6 +148,15 @@ export type SponsorOptions = {
    * (`RESOLVE_AGENT_QUERY` reads the Thing's name), so creating it would spend for nothing.
    */
   pinThing?: ((thing: AgentThing) => Promise<string>) | null;
+  /**
+   * The `Host` values this service answers to: its own `127.0.0.1:<port>` and `localhost:<port>`.
+   * Anything else is refused before a body is read, and so is a browser `Origin` not in
+   * {@link origins} and a `POST` that is not `application/json` (ADR `0116`): `/mint-gas`, `/gas` and
+   * `/identity` spend the treasury key, and a page on any site can otherwise POST to a loopback port.
+   */
+  hosts: readonly string[];
+  /** Browser origins allowed to call. Empty by default: nothing in a browser needs this service. */
+  origins?: readonly string[];
   /** Milliseconds. Injected so a test can move the day. */
   now?: () => number;
 };
@@ -830,6 +840,11 @@ export function createSponsor(options: SponsorOptions): {
 
   return {
     async fetch(request: Request): Promise<Response> {
+      const foreign = refuseForeignRequest(request, {
+        hosts: options.hosts,
+        origins: options.origins ?? [],
+      });
+      if (foreign !== null) return foreign;
       const url = new URL(request.url);
       if (request.method === 'GET' && url.pathname === '/') return json(info());
       if (request.method !== 'POST')

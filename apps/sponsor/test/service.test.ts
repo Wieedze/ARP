@@ -218,6 +218,7 @@ function sponsor(w: World, over: Partial<Parameters<typeof createSponsor>[0]> = 
     ledger: new SponsorLedger(null),
     acceptedContentSigners: [NODE.address],
     publish: null,
+    hosts: ['sponsor'],
     now: () => NOW,
     ...over,
   });
@@ -281,8 +282,12 @@ async function depositBody(
   };
 }
 
-function post(path: string, body: unknown): Request {
-  return new Request(`http://sponsor${path}`, { method: 'POST', body: JSON.stringify(body) });
+function post(path: string, body: unknown, headers: Record<string, string> = {}): Request {
+  return new Request(`http://sponsor${path}`, {
+    method: 'POST',
+    headers: { host: 'sponsor', 'content-type': 'application/json', ...headers },
+    body: JSON.stringify(body),
+  });
 }
 
 async function call(service: ReturnType<typeof createSponsor>, path: string, body: unknown) {
@@ -292,7 +297,9 @@ async function call(service: ReturnType<typeof createSponsor>, path: string, bod
 
 describe('GET /', () => {
   test('prints the limits, an unset withdrawal threshold and the approve call', async () => {
-    const response = await sponsor(world()).fetch(new Request('http://sponsor/'));
+    const response = await sponsor(world()).fetch(
+      new Request('http://sponsor/', { headers: { host: 'sponsor' } }),
+    );
     // The info route's shape, as `service.ts` builds it.
     const info = (await response.json()) as {
       chainId: number;
@@ -1263,5 +1270,36 @@ describe('POST /identity', () => {
     const res = await call(sponsor(w), '/identity', { agentRegistry: REGISTRY, agentId: '7' });
     expect(res.status).toBe(503);
     expect(w.sent).toHaveLength(0);
+  });
+});
+
+describe('a request from somewhere other than this machine', () => {
+  const ADDRESS = privateKeyToAccount(`0x${'66'.repeat(32)}`).address;
+
+  test('a text/plain POST, which any web page can send, spends nothing', async () => {
+    const w = world();
+    const response = await sponsor(w).fetch(
+      post('/mint-gas', { address: ADDRESS }, { 'content-type': 'text/plain;charset=UTF-8' }),
+    );
+    expect(response.status).toBe(415);
+    expect(w.gas).toHaveLength(0);
+  });
+
+  test('a rebinding Host and a foreign Origin are refused before the route runs', async () => {
+    const w = world();
+    const service = sponsor(w);
+    const rebound = await service.fetch(
+      post('/gas', { agentRegistry: REGISTRY, agentId: '7' }, { host: 'attacker.example:3200' }),
+    );
+    expect(rebound.status).toBe(403);
+    const page = await service.fetch(
+      post(
+        '/gas',
+        { agentRegistry: REGISTRY, agentId: '7' },
+        { origin: 'https://attacker.example' },
+      ),
+    );
+    expect(page.status).toBe(403);
+    expect(w.gas).toHaveLength(0);
   });
 });

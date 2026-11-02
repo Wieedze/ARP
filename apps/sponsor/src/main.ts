@@ -38,7 +38,7 @@ import {
   type PreparedCall,
   type SponsorLimits,
 } from '@arp-protocol/core';
-import { serveFetch } from '@arp-protocol/core/node';
+import { loopbackHosts, serveFetch } from '@arp-protocol/core/node';
 import {
   createPublicClient,
   createWalletClient,
@@ -249,6 +249,7 @@ const service = createSponsor({
     },
   },
   registries,
+  hosts: loopbackHosts(PORT),
   usesPredicate,
   limits,
   ledger: new SponsorLedger(LEDGER),
