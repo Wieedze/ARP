@@ -121,12 +121,6 @@ export function contentIndexFor(chainId: number): ReadonlyMap<string, string> {
 }
 
 /**
- * The signing identity, or null.
- *
- * Generated on first run so an installer has nothing to configure. The file is 0600 and `.arp/`
- * carries its own `.gitignore`; a key that lands in a commit is a key that is gone.
- */
-/**
  * `.arp/` is the operator's working directory, and only this repository's own `.gitignore` used to
  * cover it — in anybody else's repo `git add .` took the key (found live, task 38 part A). The hook
  * writes the same file for the same reason; it is also written for a key that already exists.
@@ -141,6 +135,12 @@ function ignoreOwnDirectory(): void {
   }
 }
 
+/**
+ * The signing identity, or null.
+ *
+ * Generated on first run so an installer has nothing to configure. The file is 0600 and `.arp/`
+ * carries its own `.gitignore`; a key that lands in a commit is a key that is gone.
+ */
 export function receiptSigner(): TypedDataSigner | null {
   if (process.env['ARP_NO_RECEIPTS'] === '1') return null;
 

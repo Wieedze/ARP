@@ -1,8 +1,19 @@
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync } from 'node:fs';
+import {
+  chmodSync,
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  statSync,
+  writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { afterEach, beforeEach, expect, test } from 'vitest';
+import { afterEach, beforeEach, expect, test, vi } from 'vitest';
+
+import { generatePrivateKey } from 'viem/accounts';
 
 import { receiptSigner } from '../src/content.js';
 
@@ -16,6 +27,7 @@ beforeEach(() => {
 });
 afterEach(() => {
   process.chdir(home);
+  if (existsSync(join(dir, '.arp'))) chmodSync(join(dir, '.arp'), 0o700);
   rmSync(dir, { recursive: true, force: true });
 });
 
@@ -32,3 +44,21 @@ test('a key left by an older server gets its .gitignore on the next start', () =
   receiptSigner();
   expect(existsSync(join(dir, '.arp', '.gitignore'))).toBe(true);
 });
+
+// Root writes through a read-only directory, so the failure this test needs cannot happen there.
+test.skipIf(process.getuid?.() === 0)(
+  'a kept key still signs when its directory refuses the .gitignore',
+  () => {
+    mkdirSync(join(dir, '.arp'));
+    writeFileSync(join(dir, '.arp', 'receipt-key'), `${generatePrivateKey()}\n`, { mode: 0o600 });
+    chmodSync(join(dir, '.arp'), 0o500);
+    const stderr = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    try {
+      expect(receiptSigner()).not.toBeNull();
+      expect(existsSync(join(dir, '.arp', '.gitignore'))).toBe(false);
+      expect(stderr).toHaveBeenCalledWith(expect.stringContaining('cannot be written'));
+    } finally {
+      stderr.mockRestore();
+    }
+  },
+);
