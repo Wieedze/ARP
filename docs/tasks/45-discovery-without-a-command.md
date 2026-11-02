@@ -29,6 +29,7 @@ Two conditions come with that promise:
 | -------------------------- | -------------------------------------------------------------------------------- |
 | When the agent consults    | **When the task needs a tool**: a library, an MCP server, a skill, an API. A plain question gets a direct answer |
 | What the testers do        | **Read first.** Sponsored automatic declaration is a second phase, after discovery is proven |
+| What the testers pay       | **Nothing.** The user funds their activity in TRUST, on testnet 13579 like everything here: _« pour les testeurs ce sera gratuit et je finance en trust »_ |
 | Which registry             | **Testnet 13579**                                                                |
 | Measure first              | **Yes.** The trigger rate and the token savings are measured before anyone installs |
 
