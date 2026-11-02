@@ -289,6 +289,15 @@ describe("yours and everyone (task 46c)", () => {
         expect(screen.queryByRole("table", {name: /public/i})).toBeNull();
     });
 
+    it("links each row's agent and tool to their pages (task 48)", async () => {
+        renderWithProviders(<ActivityPage feed={quietFeed()} reads={reads} />);
+        const table = await screen.findByRole("table", {name: /every agent/i});
+        const [agent] = within(table).getAllByRole("link", {name: "Agent 13579:8"});
+        expect(agent).toHaveAttribute("href", "/atom/a8");
+        const [tool] = within(table).getAllByRole("link", {name: "writing-plans"});
+        expect(tool).toHaveAttribute("href", "/atom/t1");
+    });
+
     it("narrows the public table to one kind", async () => {
         renderWithProviders(<ActivityPage feed={quietFeed()} reads={reads} />);
         const table = await screen.findByRole("table", {name: /every agent/i});

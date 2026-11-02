@@ -132,7 +132,9 @@ export function AtomMarket({
                         Total support
                     </dt>
                     <dd className="mt-1 font-mono tabular-nums">
-                        {vault === undefined
+                        {/* Empty-handed when nobody supports: the figure is then the vault's
+                            creation deposit (ADR `0042`), which is nobody's (task 48). */}
+                        {vault === undefined || positionCount === 0
                             ? "—"
                             : `${formatTrust(vault.totalAssets)} ${chain.symbol}`}
                     </dd>

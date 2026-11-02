@@ -283,8 +283,7 @@ export function intuitionSource(config: IntuitionSourceConfig = {}): TrustSource
             const data = await transport.request(
                 COHORT_QUERY,
                 {
-                    predicateId: IMPLEMENT,
-                    objectId: ERC8004,
+                    where: cohortWhere(options.name),
                     sameAsPredicateId: SAME_AS,
                     // The same set `getCapabilities` reads, not a second list beside it: a row's
                     // glyph and the agent's own capability section must be drawn from one
@@ -330,4 +329,22 @@ function bucketFor(capabilities: Capabilities, capability: CapabilityRef): Capab
         case "has-category":
             return capabilities.categories;
     }
+}
+
+/**
+ * The cohort filter: membership by term id on both ends, always, and a name match only when one
+ * was asked for. The name is looked for in the atom's label **or** in the name its pinned Thing
+ * publishes, because the list shows the second when there is one (`mapMetadata`): a search on the
+ * label alone would find an agent by a name the reader never sees. The name's own `%`, `_` and backslash are escaped, so a search for `50%` matches those
+ * three characters and not everything starting with 50.
+ */
+export function cohortWhere(name: string | null): Record<string, unknown> {
+    const membership = {predicate_id: {_eq: IMPLEMENT}, object_id: {_eq: ERC8004}};
+    if (name === null) return membership;
+    const escaped = name.replace(/[\\%_]/g, (match) => `\\${match}`);
+    const pattern = `%${escaped}%`;
+    return {
+        ...membership,
+        subject: {_or: [{label: {_ilike: pattern}}, {value: {thing: {name: {_ilike: pattern}}}}]},
+    };
 }

@@ -92,7 +92,10 @@ function RowBody({row}: {row: CohortRow}) {
                 </span>
             ) : (
                 <span className="text-right min-w-0">
-                    <span className="block font-mono text-[length:var(--text-body-sm)] leading-tight tabular-nums">
+                    <span
+                        className="block font-mono text-[length:var(--text-body-sm)] leading-tight tabular-nums"
+                        {...(row.marketCapExact === null ? {} : {title: row.marketCapExact})}
+                    >
                         <span className="sr-only">support: </span>
                         {row.marketCap ?? "—"}
                     </span>

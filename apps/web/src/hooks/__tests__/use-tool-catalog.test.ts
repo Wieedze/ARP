@@ -92,8 +92,9 @@ describe("toolCatalogQueryOptions", () => {
         expect(view.rows).toHaveLength(1);
         expect(view.rows[0]?.name).toBe("Trail of Bits — guidelines-advisor");
         expect(view.rows[0]?.href).toBe("/atom/0xba5844b5");
-        // The counter vault's creation dust is above zero, so the cell is populated.
-        expect(view.rows[0]?.opposeTrust).not.toBeNull();
+        // The counter vault's creation dust is under the smallest printed figure, so the cell stays
+        // empty rather than showing "<0.00000001 against" that nobody put there (task 48).
+        expect(view.rows[0]?.opposeTrust).toBeNull();
     });
 
     it("passes the chain's sponsor to the read and keys on it", async () => {

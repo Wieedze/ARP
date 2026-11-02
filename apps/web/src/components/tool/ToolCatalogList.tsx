@@ -3,6 +3,7 @@ import {useChainChoice} from "../../lib/chain-choice";
 import {useSkillFacts, type SkillFact} from "../../hooks/use-skill-facts";
 
 import {type ToolRow} from "../../services/tool-catalog";
+import {shortTrust} from "../../services/trust-format";
 
 /**
  * Tools as a list, not as N boxes.
@@ -145,7 +146,8 @@ function Row({row, fact, stars}: {row: ToolRow; fact: SkillFact | null; stars: n
                         {row.provenance === "registered" && (row.stakers ?? 0) <= 1 ? null : (
                             <>
                                 <span className="sr-only">support behind it: </span>
-                                {row.supportTrust}
+                                {/* Four digits in the list, the full figure on hover (task 48). */}
+                                <span title={row.supportTrust}>{shortTrust(row.supportTrust)}</span>
                                 <span className="text-[color:var(--color-steel)]"> {symbol}</span>
                             </>
                         )}
@@ -153,7 +155,8 @@ function Row({row, fact, stars}: {row: ToolRow; fact: SkillFact | null; stars: n
                             rather than carrying a zero that reads as agreement. */}
                         {row.opposeTrust === null ? null : (
                             <span className="block text-[length:var(--text-label)] text-[color:var(--color-steel)] font-sans">
-                                {row.opposeTrust} against
+                                <span title={row.opposeTrust}>{shortTrust(row.opposeTrust)}</span>{" "}
+                                against
                             </span>
                         )}
                     </span>

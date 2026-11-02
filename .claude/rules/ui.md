@@ -42,7 +42,7 @@ Strip these reflexes. If you find yourself reaching for one, stop.
 - **Typography-driven.** Hierarchy comes from type weight and size, not from boxes and borders.
 - **Dark-first.** Light mode is a later concern. Design and test in dark.
 - **Mono for data, sans for prose.** Addresses, ids, hashes, amounts, timestamps and **labels** —
-  Geist Mono. Descriptions, names, copy — Archivo. Labels are mono 10–12px, uppercase, letter-spacing
+  Geist Mono. Descriptions, names, copy — Archivo. Labels are mono 11–12px (`--text-label` is 11; 10 was allowed until ADR `0106`), uppercase, letter-spacing
   `0.06em`–`0.12em`. Display type is Archivo 800 at `font-stretch: 125%`, letter-spacing `-0.02em` to
   `-0.03em`, line-height `0.92`–`1`.
 - **One accent, and it is warm.** Saffron `--color-accent`, 10.4:1, spent on the primary action, the

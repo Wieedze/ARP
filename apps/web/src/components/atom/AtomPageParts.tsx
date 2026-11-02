@@ -44,7 +44,7 @@ export function Signal({value, what, by}: {value: string; what: string; by: stri
                 {value}
             </b>
             <span className="text-[13px] text-[color:var(--color-silver)]">{what}</span>
-            <span className="font-mono text-[10px] uppercase tracking-[0.06em] text-[color:var(--color-steel)]">
+            <span className="font-mono text-[length:var(--text-label)] uppercase tracking-[0.06em] text-[color:var(--color-steel)]">
                 {by}
             </span>
         </div>

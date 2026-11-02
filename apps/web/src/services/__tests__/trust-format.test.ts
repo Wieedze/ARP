@@ -2,6 +2,7 @@ import {describe, expect, it} from "vitest";
 import {parseEther} from "viem";
 
 import {
+    shortTrust,
     agentRegistryExplorerUrl,
     describeFetchError,
     intuitionPortalUrl,
@@ -205,5 +206,19 @@ describe("intuitionPortalUrl", () => {
         expect(intuitionPortalUrl("triple", "0xcd", true)).toBe(
             "https://portal.intuition.systems/explore/triple/0xcd",
         );
+    });
+});
+
+describe("shortTrust", () => {
+    it("cuts a list figure to four significant digits", () => {
+        expect(shortTrust("6.3369302")).toBe("6.337");
+        expect(shortTrust("219.5402")).toBe("219.5");
+        expect(shortTrust("0.0009825")).toBe("0.0009825");
+        expect(shortTrust("3")).toBe("3");
+    });
+
+    it("passes the dust marker and anything unreadable through", () => {
+        expect(shortTrust("<0.00000001")).toBe("<0.00000001");
+        expect(shortTrust("n/a")).toBe("n/a");
     });
 });

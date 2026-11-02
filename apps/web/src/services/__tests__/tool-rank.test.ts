@@ -1,6 +1,13 @@
 import {describe, expect, it} from "vitest";
 
-import {livenessOf, pageOfTools, rankTools, toolSortAxesFor, type ToolRow} from "../tool-catalog";
+import {
+    livenessOf,
+    pageOfTools,
+    rankTools,
+    toolMatches,
+    toolSortAxesFor,
+    type ToolRow,
+} from "../tool-catalog";
 
 const row = (overrides: Partial<ToolRow> = {}): ToolRow => ({
     key: `0x${"ab".repeat(32)}`,
@@ -188,5 +195,24 @@ describe("pageOfTools", () => {
         expect(page.rangeLabel).toBe("no rows");
         expect(page.hasPrevious).toBe(false);
         expect(page.hasNext).toBe(false);
+    });
+});
+
+describe("toolMatches (task 48)", () => {
+    const tool = row({
+        name: "writing-plans",
+        label: "github.com/obra/superpowers?skill=writing-plans",
+        source: "obra/superpowers",
+    });
+
+    it("matches the name, the label, the repository or the description, without case", () => {
+        expect(toolMatches(tool, "Writing", null)).toBe(true);
+        expect(toolMatches(tool, "superpowers", null)).toBe(true);
+        expect(toolMatches(tool, "spec", "Use when you have a spec")).toBe(true);
+    });
+
+    it("matches nothing for a blank query or a miss", () => {
+        expect(toolMatches(tool, "  ", "anything")).toBe(false);
+        expect(toolMatches(tool, "kling", null)).toBe(false);
     });
 });

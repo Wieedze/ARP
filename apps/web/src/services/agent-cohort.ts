@@ -2,7 +2,7 @@ import type {SigilModule} from "../components/brand/sigil-geometry";
 import {ListAgentsFailedError, NoListingSourceError} from "@arp-protocol/core";
 import type {AgentListing, AgentListOrder, AgentPage} from "@arp-protocol/core";
 
-import {describeAtomPositions, formatTrust} from "./trust-format";
+import {describeAtomPositions, formatTrust, shortTrust} from "./trust-format";
 
 /**
  * Turns one `AgentPage` into the shape the directory renders.
@@ -56,6 +56,8 @@ export type CohortRow = {
     statementCount: number | null;
     /** Already formatted; `null` when the graph reported no market cap at all. */
     marketCap: string | null;
+    /** The same figure in full, for the cell's `title`. */
+    marketCapExact: string | null;
     positions: string;
     /**
      * Nobody holds a position: the figure is the vault's creation deposit, not anyone's support,
@@ -148,7 +150,8 @@ export function toCohortRow(listing: AgentListing, index: number, symbol: string
         href: ref === null ? null : `/agent/${ref.chainId}/${ref.tokenId}`,
         identityProblem: identityProblemOf(listing),
         statementCount: listing.statementCount,
-        marketCap: cap === null ? null : `${formatTrust(cap)} ${symbol}`,
+        marketCap: cap === null ? null : `${shortTrust(formatTrust(cap))} ${symbol}`,
+        marketCapExact: cap === null ? null : `${formatTrust(cap)} ${symbol}`,
         positions: market === null ? "no market data" : describeAtomPositions(market),
         isUnsupported: market?.positionCount === 0,
     };

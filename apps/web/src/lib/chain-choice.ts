@@ -104,19 +104,21 @@ export function choiceFor(isMainnet: boolean): ChainChoice {
 export const CHAIN_STORAGE_KEY = "arp.chain.v1";
 
 /**
- * Mainnet by default.
+ * **Testnet by default** (ADR `0105`, the user's call on 2026-11-02). Mainnet stays one click away
+ * and is remembered once chosen.
  *
- * The cohort is there — 30,913 identities against 768 on testnet, measured 2026-10-27 — so a first
- * visit should land on the populated chain. A reader who wants to watch ARP's own loop switches,
- * which is the deliberate act the module note is about.
+ * It was mainnet by default because the cohort is there — 30,913 identities against 768 on testnet,
+ * measured 2026-10-27. But a first visit then landed on an empty `/tools` and an empty `/activity`,
+ * since ARP's own loop runs on 13579 only, and every demo is on 13579 until Intuition validates ARP.
+ * The agent index is the page that pays for it: smaller on testnet, never empty.
  */
 export function readStored(): boolean {
-    if (typeof localStorage === "undefined") return true;
+    if (typeof localStorage === "undefined") return false;
     try {
-        return localStorage.getItem(CHAIN_STORAGE_KEY) !== "testnet";
+        return localStorage.getItem(CHAIN_STORAGE_KEY) === "mainnet";
     } catch {
         // Private windows and blocked site data throw on access. Default rather than crash.
-        return true;
+        return false;
     }
 }
 

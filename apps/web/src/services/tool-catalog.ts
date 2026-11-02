@@ -255,6 +255,11 @@ function sourceLineOf(label: string | undefined): string | null {
     return label === undefined ? null : sourceOf(parseToolLabel(label));
 }
 
+/** Zero, or under the smallest figure `formatTrust` prints. */
+function isDust(wei: bigint): boolean {
+    return wei <= 0n || formatTrust(wei).startsWith("<");
+}
+
 function rowOf(tool: ToolListing): ToolRow {
     const label = tool.label?.trim();
     const named = label !== undefined && label.length > 0;
@@ -270,7 +275,9 @@ function rowOf(tool: ToolListing): ToolRow {
         provenDeposits: tool.provenDeposits,
         declaredDeposits: tool.declaredDeposits,
         supportTrust: formatTrust(tool.supportAssetsSum),
-        opposeTrust: tool.opposeAssetsSum > 0n ? formatTrust(tool.opposeAssetsSum) : null,
+        // Not when it is below the smallest figure shown: that is the counter vault's creation
+        // deposit, "<0.00000001 against" that nobody put there (task 48).
+        opposeTrust: isDust(tool.opposeAssetsSum) ? null : formatTrust(tool.opposeAssetsSum),
         stakers: null,
     };
 }
@@ -391,6 +398,19 @@ export function toolSortAxesFor(index: ToolIndex): readonly {id: ToolSortAxis; l
 }
 
 const LIVENESS_RANK: Record<Liveness, number> = {alive: 0, unknown: 1, dead: 2};
+
+/**
+ * Whether a tool answers a search (task 48): its name, its label (the URL it was registered by),
+ * its repository, or the description beside it, case-insensitive. A blank query matches nothing,
+ * because a search page with no query is not a list of everything.
+ */
+export function toolMatches(row: ToolRow, query: string, description: string | null): boolean {
+    const needle = query.trim().toLowerCase();
+    if (needle.length === 0) return false;
+    return [row.name, row.label, row.source, description].some(
+        (field) => field !== null && field.toLowerCase().includes(needle),
+    );
+}
 
 /** Rows per page, the agent index's size, so the two lists page alike. */
 export const TOOL_PAGE_SIZE = 25;

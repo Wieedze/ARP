@@ -73,8 +73,8 @@ export function fixtureFetch(overrides: Record<string, () => Response> = {}): Fe
             if (!isRecord(variables))
                 throw new Error(`unroutable GraphQL body: ${String(init?.body)}`);
 
-            const objectId = variables["objectId"];
-            if (typeof objectId === "string") {
+            // The cohort read: its filter rides in `$where` since task 48.
+            if (isRecord(variables["where"])) {
                 const order = variables["orderBy"];
                 const offset = variables["offset"];
                 const byMarketCap = JSON.stringify(order).includes("total_market_cap");

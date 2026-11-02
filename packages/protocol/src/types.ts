@@ -294,6 +294,8 @@ export type ListAgentsOptions = {
     order?: AgentListOrder;
     limit?: number;
     offset?: number;
+    /** Narrow to agents whose name contains this, case-insensitive. Membership is unchanged. */
+    name?: string;
 };
 
 /** `ListAgentsOptions` with every field filled in. What sources actually receive. */
@@ -301,6 +303,8 @@ export type ResolvedListAgentsOptions = {
     order: AgentListOrder;
     limit: number;
     offset: number;
+    /** Trimmed; `null` when absent or blank. */
+    name: string | null;
 };
 
 export type AssessmentEvidence = {

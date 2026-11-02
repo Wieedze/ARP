@@ -35,6 +35,21 @@ export function formatTrust(wei: bigint): string {
     return negative ? `-${value}` : value;
 }
 
+/**
+ * A `formatTrust` figure cut to four significant digits, for a list (task 48): `6.3369302` reads
+ * `6.337`, `219.5402` reads `219.5`. A column of eight-decimal figures is read digit by digit. The
+ * exact figure stays one hover away (`title`), and every form and confirmation keeps
+ * `formatTrust` itself, where the exact amount is the point. The dust marker passes through.
+ * Above 9,999 the integer part rounds too (`12345.67` reads `12,350`), with grouping commas the
+ * exact figure does not carry; the `title` beside it has the whole number.
+ */
+export function shortTrust(exact: string): string {
+    if (exact.startsWith("<") || exact.startsWith(">")) return exact;
+    const value = Number(exact);
+    if (!Number.isFinite(value)) return exact;
+    return new Intl.NumberFormat("en-US", {maximumSignificantDigits: 4}).format(value);
+}
+
 /** `0x1234abcd…9f0e` — for term ids, hashes and addresses in dense rows. */
 export function truncateMiddle(value: string, head = 10, tail = 6): string {
     if (value.length <= head + tail + 1) return value;

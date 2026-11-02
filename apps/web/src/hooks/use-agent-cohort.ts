@@ -61,3 +61,42 @@ export function useAgentCohort(order: AgentListOrder, offset: number) {
     const chain = useChainChoice();
     return useQuery(agentCohortQueryOptions(chain, order, offset));
 }
+
+/** How many agents a name search shows: a page of answers, not the index. */
+export const AGENT_SEARCH_LIMIT = 10;
+
+/**
+ * Agents whose name contains `name`, in the evidence order (task 48). The name is in the key, and
+ * so is the chain. Off when the name is blank: an empty search is not a read.
+ */
+export function agentSearchQueryOptions(
+    chain: {chainId: number; graphqlUrl: string; symbol: string},
+    name: string,
+    fetchCohort: AgentCohortFetcher = fetchAgentCohort,
+) {
+    const trimmed = name.trim();
+    return {
+        queryKey: ["erc8004", chain.chainId, "agent-search", trimmed, AGENT_SEARCH_LIMIT] as const,
+        queryFn: async (): Promise<CohortView> =>
+            buildCohortView(
+                await fetchCohort(
+                    {
+                        order: "evidence-quantity",
+                        limit: AGENT_SEARCH_LIMIT,
+                        offset: 0,
+                        name: trimmed,
+                    },
+                    chain.graphqlUrl,
+                ),
+                chain.symbol,
+            ),
+        enabled: trimmed.length > 0,
+        staleTime: 60_000,
+        retry: 1,
+    };
+}
+
+export function useAgentSearch(name: string) {
+    const chain = useChainChoice();
+    return useQuery(agentSearchQueryOptions(chain, name));
+}

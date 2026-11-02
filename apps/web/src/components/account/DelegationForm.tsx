@@ -24,7 +24,7 @@ export type DelegationRequest = {delegate: Hex; cap: bigint; periodSeconds: bigi
 const FIELD =
     "block w-full max-w-[34rem] rounded-[var(--radius-control)] border border-[color:var(--color-rule-strong)] bg-transparent px-3 py-1.5 font-mono text-[length:var(--text-body-sm)] focus-visible:outline focus-visible:outline-1 focus-visible:outline-[color:var(--color-accent)]";
 const LABEL =
-    "mb-1 block font-mono text-[10px] uppercase tracking-[0.08em] text-[color:var(--color-steel)]";
+    "mb-1 block font-mono text-[length:var(--text-label)] uppercase tracking-[0.08em] text-[color:var(--color-steel)]";
 
 export function DelegationForm({
     suggestedDelegate,
