@@ -42,6 +42,7 @@ import { serveFetch } from '@arp-protocol/core/node';
 import {
   createPublicClient,
   createWalletClient,
+  getAddress,
   http,
   parseAbi,
   type Address,
@@ -176,6 +177,7 @@ const wallet: SponsorWallet = {
 const registryAbi = parseAbi([
   'function ownerOf(uint256 tokenId) view returns (address)',
   'function getAgentWallet(uint256 agentId) view returns (address)',
+  'function balanceOf(address owner) view returns (uint256)',
 ]);
 const REGISTRY_REF = /^eip155:([1-9][0-9]*):(0x[0-9a-fA-F]{40})$/;
 const ZERO: Address = '0x0000000000000000000000000000000000000000';
@@ -190,6 +192,21 @@ const service = createSponsor({
     client: publicClient,
   }),
   payments: publicClient,
+  holdings: {
+    async agentsHeldBy(address) {
+      const held = await Promise.all(
+        registries.map((ref) =>
+          publicClient.readContract({
+            address: getAddress(REGISTRY_REF.exec(ref)?.[2] ?? ''),
+            abi: registryAbi,
+            functionName: 'balanceOf',
+            args: [address],
+          }),
+        ),
+      );
+      return held.reduce((sum, n) => sum + n, 0n);
+    },
+  },
   owners: {
     async ownerOf(registry, agentId) {
       // `ownerOf` reverts for a token that does not exist, which is the "not registered" answer.

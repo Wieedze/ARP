@@ -85,6 +85,14 @@ The rules on the key:
   - Both widen ADR `0094` §3 ("the only value sent anywhere else is the approval gas"): the mint gas
     is a second plain transfer, to an unregistered address.
 
+- **The two new routes take no signature, so anyone can use up a day's new-agent slots.** Spend
+  stays within the caps: the damage is that honest agents get a 429 until 00:00 UTC. `/mint-gas`
+  refuses an address that already holds an agent. A signature on `/identity` would not help, because
+  an attacker signs for agents of their own. A creation is counted per agent
+  (`checkCreateLimits`), so a deposit that keeps failing does not keep creating triples. That bound
+  was added on review (2026-11-02). Before it, one agent that never approved could spend the whole
+  budget on creations.
+
 **Neutral (worth knowing):**
 
 - Mainnet needs a new ADR, together with the money-entry decision (`docs/tasks/50` §3b).

@@ -239,12 +239,24 @@ export function checkMintGasLimits(
     return budget(records, limits.mintGas, now, limits) ?? {ok: true};
 }
 
-/** Whether `value` more, for an identity or a term creation, fits in the day's budget. */
+/**
+ * Whether the service may create one more `uses` triple for `agent`, costing `value`: at most
+ * {@link SponsorLimits.depositsPerAgentPerDay} a UTC day, and the budget. Counted on its own,
+ * because a creation lands before the deposit it is for, and a deposit that then fails records no
+ * deposit: without this count one agent could have triples created until the budget is gone.
+ */
 export function checkCreateLimits(
     records: readonly SponsorRecord[],
-    params: {value: bigint; now: number; limits: SponsorLimits},
+    params: {agent: Address; value: bigint; now: number; limits: SponsorLimits},
 ): LimitDecision {
-    return budget(records, params.value, params.now, params.limits) ?? {ok: true};
+    const {agent, value, now, limits} = params;
+    if (countOnDay(records, "create", agent, now) >= limits.depositsPerAgentPerDay) {
+        return {
+            ok: false,
+            reason: `${limits.depositsPerAgentPerDay} sponsored triple creations a day per agent, reached`,
+        };
+    }
+    return budget(records, value, now, limits) ?? {ok: true};
 }
 
 /**

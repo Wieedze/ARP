@@ -644,8 +644,11 @@ describe("limits", () => {
         const params = {value: MILLI, now: at, limits};
         expect(checkIdentityLimits(records, {...params, agentKey: "a"}).ok).toBe(true);
         expect(checkIdentityLimits(records, {...params, agentKey: "c"}).ok).toBe(false);
-        expect(checkCreateLimits([], {value: 2n * 10n ** 18n, now: at, limits}).ok).toBe(false);
-        expect(checkCreateLimits([], {value: MILLI, now: at, limits}).ok).toBe(true);
+        const make = {agent: AGENT.address, value: MILLI, now: at, limits};
+        expect(checkCreateLimits([], {...make, value: 2n * 10n ** 18n}).ok).toBe(false);
+        expect(checkCreateLimits([], make).ok).toBe(true);
+        const created: SponsorRecord = {kind: "create", subject: AGENT.address, value: MILLI, at};
+        expect(checkCreateLimits([created, created], make).ok).toBe(false);
     });
 });
 

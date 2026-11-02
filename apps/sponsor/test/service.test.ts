@@ -209,6 +209,7 @@ function sponsor(w: World, over: Partial<Parameters<typeof createSponsor>[0]> = 
     wallet: fakeWallet(w),
     reads: fakeReads(w),
     payments: payments(),
+    holdings: { agentsHeldBy: async (address: Address) => (address === AGENT.address ? 1n : 0n) },
     owners: owners(),
     identities: identities(),
     registries: [REGISTRY],
@@ -1119,6 +1120,28 @@ describe('a first declaration: the uses triple is created, then the deposit', ()
     expect(res.body.receiver).toBe(AGENT.address);
   });
 
+  test('creates no triple past depositsPerAgentPerDay creations for one agent, deposits or not', async () => {
+    const w = fresh();
+    const ledger = new SponsorLedger(null);
+    for (const n of ['1', '2']) {
+      ledger.append({
+        kind: 'create',
+        subject: AGENT.address,
+        value: MILLI,
+        at: NOW,
+        key: `create:${n}`,
+      });
+    }
+    const res = await call(
+      sponsor(w, { ledger }),
+      '/deposit',
+      await depositBody(await hireProof()),
+    );
+    expect(res.status).toBe(429);
+    expect(String(res.body.error)).toMatch(/triple creations a day/);
+    expect(w.sent).toHaveLength(0);
+  });
+
   test('creates nothing when an atom of the triple is missing', async () => {
     const w = world();
     w.terms = new Set([SUBJECT.toLowerCase()]);
@@ -1164,6 +1187,15 @@ describe('POST /mint-gas', () => {
     expect(third.status).toBe(429);
     expect(String(third.body.error)).toMatch(/new agents a day/);
     expect(w.gas).toHaveLength(2);
+  });
+
+  test('sends nothing to an address that already holds an agent, or cannot register one', async () => {
+    const w = world();
+    const held = await call(sponsor(w), '/mint-gas', { address: AGENT.address });
+    expect(held.status).toBe(403);
+    const zero = await call(sponsor(w), '/mint-gas', { address: `0x${'00'.repeat(20)}` });
+    expect(zero.status).toBe(400);
+    expect(w.gas).toHaveLength(0);
   });
 
   test('answers 503 when it is off, and sends nothing to itself', async () => {

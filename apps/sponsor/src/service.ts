@@ -129,6 +129,8 @@ export type SponsorOptions = {
   reads: MultiVaultReads;
   payments: PaymentReads;
   owners: AgentOwnerReads;
+  /** How many agents `address` holds, across the sponsored registries. `/mint-gas` refuses above 0. */
+  holdings: { agentsHeldBy(address: Address): Promise<bigint> };
   identities: AgentIdentityAtoms;
   /** The ERC-8004 registries whose agents are sponsored, as `eip155:<chainId>:<address>`. */
   registries: readonly string[];
@@ -159,6 +161,8 @@ function json(value: unknown, status = 200): Response {
     headers: { 'content-type': 'application/json' },
   });
 }
+
+const ZERO_ADDRESS: Address = '0x0000000000000000000000000000000000000000';
 
 function isBytes32(value: unknown): value is Hex {
   return typeof value === 'string' && isHex(value) && value.length === 66;
@@ -490,6 +494,7 @@ export function createSponsor(options: SponsorOptions): {
         }
         const assets = tripleCost + minDeposit;
         const fits = checkCreateLimits(ledger.records, {
+          agent,
           value: assets + limits.depositAmount,
           now: now(),
           limits,
@@ -505,6 +510,13 @@ export function createSponsor(options: SponsorOptions): {
         };
         assertMultiVault(create);
         const key = `create:${request.termId.toLowerCase()}`;
+        // A creation whose outcome was lost holds the term until the operator reconciles it.
+        if (ledger.has('create', key)) {
+          return json(
+            { error: `a creation of ${request.termId} is pending; it is reconciled by hand` },
+            409,
+          );
+        }
         ledger.reserve({
           kind: 'create',
           subject: agent,
@@ -596,6 +608,13 @@ export function createSponsor(options: SponsorOptions): {
     if (address === getAddress(wallet.address)) {
       return json({ error: 'the sponsoring service sends no gas to itself' }, 403);
     }
+    if (address === ZERO_ADDRESS || address === multiVault) {
+      return json({ error: `${address} cannot register an agent` }, 400);
+    }
+    // Mint gas is for an address about to register. One that already holds an agent is not.
+    if ((await options.holdings.agentsHeldBy(address)) > 0n) {
+      return json({ error: `${address} already holds an agent; ask /gas instead` }, 403);
+    }
     return exclusive(async () => {
       const decision = checkMintGasLimits(ledger.records, { address, now: now(), limits });
       if (!decision.ok) {
@@ -634,16 +653,37 @@ export function createSponsor(options: SponsorOptions): {
     const registry = getAddress(registryAddress ?? '');
     const agentKey = `eip155:${registryChain}:${registry.toLowerCase()}:${agentId}`;
 
-    return exclusive(async () => {
-      let plan;
-      try {
-        plan = await prepareIdentityAtom({
-          agent: { chainId: Number(registryChain), tokenId: agentId, registry },
-          reads,
-        });
-      } catch (error) {
-        return json({ error: String(error instanceof Error ? error.message : error) }, 400);
+    const planIdentity = () =>
+      prepareIdentityAtom({
+        agent: { chainId: Number(registryChain), tokenId: agentId, registry },
+        reads,
+      });
+    // Pinned before the queue: a pin moves no value, and a slow pinning service must not hold up
+    // every other route. The documents are a pure function of the agent, so the plan made inside
+    // the queue pins the same two.
+    let pins;
+    try {
+      pins = await planIdentity();
+    } catch (error) {
+      return json({ error: String(error instanceof Error ? error.message : error) }, 400);
+    }
+    if (pins.calls.length === 0) {
+      return json({ identityAtom: pins.identityAtom, sent: [], valueWei: 0n });
+    }
+    for (const which of ['identity', 'caip'] as const) {
+      const uri = await pinThing(pins.things[which]).catch(() => null);
+      if (uri !== pins.uris[which]) {
+        return json(
+          {
+            error: `pinning the ${which} document returned ${String(uri)}, not ${pins.uris[which]}`,
+          },
+          502,
+        );
       }
+    }
+
+    return exclusive(async () => {
+      const plan = await planIdentity();
       if (plan.calls.length === 0) {
         return json({ identityAtom: plan.identityAtom, sent: [], valueWei: 0n });
       }
@@ -655,18 +695,6 @@ export function createSponsor(options: SponsorOptions): {
         limits,
       });
       if (!decision.ok) return json({ error: decision.reason }, 429);
-
-      for (const which of ['identity', 'caip'] as const) {
-        const uri = await pinThing(plan.things[which]).catch(() => null);
-        if (uri !== plan.uris[which]) {
-          return json(
-            {
-              error: `pinning the ${which} document returned ${String(uri)}, not ${plan.uris[which]}`,
-            },
-            502,
-          );
-        }
-      }
 
       const sent: Hex[] = [];
       const first = ledger.records.filter(

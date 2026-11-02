@@ -24,6 +24,8 @@ export function intuitionPinner(auth: {
             }`,
         variables: thing,
       }),
+      // `/identity` waits on this before it spends; a hung pin must fail rather than wait forever.
+      signal: AbortSignal.timeout(15_000),
     });
     if (!res.ok) throw new Error(`pinning failed: http ${res.status}`);
     const uri = ((await res.json()) as PinResponse).data?.pinThing?.uri; // The API's own shape.
