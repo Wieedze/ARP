@@ -156,7 +156,7 @@ is created in `~/.arp/` on the first fetch.
    - **the receipt**, `.arp/receipts.jsonl`: "ARP's server served this file to this key at T1",
      signed by the server;
    - **the hook's line**, `.arp/session.jsonl`: `"kind":"skill","name":"youtube-thumbnail-design",
-     "ref":"0x2fe6…"`, written by Claude Code at T2, which the model never touches.
+     "ref":"0x2fe6…"`, written by Claude Code at T2, which the model does not write.
 
    They agree on the skill: the hook filled `ref` from the receipt's atom. T2 comes after T1. In
    the walked run, T1 was 21:35:10 UTC and T2 21:35:29. The hook's line does not name the agent's

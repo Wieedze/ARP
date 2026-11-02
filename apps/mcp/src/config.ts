@@ -29,8 +29,9 @@ export const RECEIPT_SIGNER = receiptSigner();
  */
 /**
  * `desktop` is the Claude Desktop extension's build (task 50, ADR `0110`): the reads, plus the two
- * tools that walk the loop for a user who signs nothing. It holds a local agent key; no other mode
- * does.
+ * tools that walk the loop for a user who signs nothing. `sponsored` is the same mode under the name
+ * `arp init --sponsored` writes for Claude Code (task 55). Both hold a local agent key; no other
+ * mode does.
  */
 export const DESKTOP = process.env['ARP_TOOLS'] === 'desktop' || process.env['ARP_TOOLS'] === 'sponsored';
 /**

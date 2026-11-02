@@ -9,7 +9,7 @@
 
 ## 1. Why
 
-`docs/26_DEMO_PLAN.md` §4.1 lists the two pieces the Claude Code demo lacked. The user chose to
+`docs/26_DEMO_PLAN.md` §4 listed, before this task, the two pieces the Claude Code demo lacked. The user chose to
 build them first, on 2026-11-02, because the Claude Code demo and task 54's arm B both need them.
 The user's answer on the hook's record was option A: it stays on the machine and is shown on screen
 next to the receipt. Nothing here publishes it.
@@ -51,6 +51,10 @@ user's own `~/.arp` was untouched. `arp init --project --sponsored --yes --runti
 - **Read back from the chain the same day:** agent #11 is owned by
   `0x5c2bC643C69D3f7E226722ca5ae60B2679C72f75`, which holds 990000000000000 shares on curve 1 of
   `0x85b1cb1c8403a229a5a69d20cf34d4910f7d42f897f8fe9507bc46e4b1ea300b`.
+- **Session 2 fetched the skill again** before declaring: there is a second receipt at 21:35:45 UTC,
+  and the declaration's proof was probably that one, not the 21:35:10 receipt.
+- Costs and turns are from `claude -p --output-format stream-json`'s result line, which was not
+  kept.
 - **The hook's line named no atom** in that run (`ref: null`). The receipt was only in `~/.arp/`,
   and the hook reads the project's `.arp/receipts.jsonl`. In project mode, `arp_get_skill` now
   writes the receipt there too. In a later fetch and invocation in the same project, which involved
@@ -58,6 +62,8 @@ user's own `~/.arp` was untouched. `arp init --project --sponsored --yes --runti
 
 ## 4. Known limits
 
+- Installing overwrites a skill of the same name in `.claude/skills/`, and follows a symlink placed
+  at that path.
 - Only `SKILL.md` is installed, because it is what the content server serves. A skill that ships
   scripts next to it arrives without them.
 - The hook's line stays in `.arp/session.jsonl` (option A). The sponsor's proof is the receipt

@@ -1,5 +1,6 @@
 /**
- * `arp_get_skill` and `arp_declare_used` in the Claude Desktop extension's build (`ARP_TOOLS=desktop`).
+ * `arp_get_skill` and `arp_declare_used` when `ARP_TOOLS` is `desktop` (the Claude Desktop extension)
+ * or `sponsored` (Claude Code, `arp init --sponsored`).
  * The key is created the first time one of them is called, not when the server starts, so a user
  * who only searches never gets one.
  */

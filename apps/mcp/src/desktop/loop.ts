@@ -1,6 +1,7 @@
 /**
  * The loop an outside user walks in Claude Desktop, with nothing to sign and nothing to pay
- * (`docs/tasks/50`). Only the extension build loads this file (`ARP_TOOLS=desktop`).
+ * (`docs/tasks/50`), and in Claude Code (`docs/tasks/55`). Only `ARP_TOOLS=desktop` or `sponsored`
+ * loads this file.
  *
  *   arp_get_skill     the skill's files through ARP's content server, with a receipt naming this
  *                     agent as the caller

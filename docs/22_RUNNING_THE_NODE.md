@@ -234,6 +234,14 @@ ARP_ACCEPTED_SIGNERS   comma-separated. Which receipt signers THIS server's read
 ARP_CHAIN_ID           which chain's catalogue apps/mcp/src/session-log.ts reads
 ARP_SESSION_LOG        where the hook writes. Default .arp/session.jsonl
 ARP_RECEIPTS           where fetches are recorded. Default .arp/receipts.jsonl
+ARP_TOOLS              read: the three reads only. desktop or sponsored: the reads plus arp_get_skill
+                       and arp_declare_used, with a local agent key in ~/.arp/agent-key (ADR 0110).
+                       Unset: every tool
+ARP_SKILLS_DIR         desktop/sponsored only, set by `arp init --sponsored`: arp_get_skill writes
+                       <dir>/<name>/SKILL.md, relative to the working directory, overwriting a
+                       file of that name, and appends the receipt to ARP_RECEIPTS
+ARP_CONTENT            desktop/sponsored only: the content server. Default http://127.0.0.1:3002
+ARP_SPONSOR            desktop/sponsored only: the sponsoring service. Default http://127.0.0.1:3200
 ARP_ACTIVITY_DIR       session-log.ts --serve only: the directory it tails. Default .arp
 ARP_ACTIVITY_PORT      session-log.ts --serve only: its port. Default 3003, on 127.0.0.1
 ARP_ACTIVITY_ORIGINS   session-log.ts --serve only: comma-separated origins added to the CORS list
