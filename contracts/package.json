@@ -4,6 +4,7 @@
   "version": "0.0.0",
   "description": "ARP Module Registry — Solidity contracts (Foundry).",
   "scripts": {
+    "deps": "git submodule update --init lib/forge-std lib/delegation-framework && git -C lib/delegation-framework submodule update --init lib/account-abstraction lib/erc7579-implementation lib/forge-std lib/openzeppelin-contracts lib/solidity-bytes-utils lib/solidity-stringutils",
     "build": "forge build",
     "test": "forge test",
     "format": "forge fmt",

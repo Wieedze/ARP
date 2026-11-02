@@ -324,6 +324,9 @@ Prerequisites: [Bun](https://bun.sh) 1.2+, [Foundry](https://book.getfoundry.sh)
 # Install all workspace dependencies
 bun install
 
+# Fetch the Solidity dependencies — git submodules, pinned. forge build fails without them
+bun run --cwd contracts deps
+
 # Run the app dev server (http://localhost:5173)
 bun run dev
 

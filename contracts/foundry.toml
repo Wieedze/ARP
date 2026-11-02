@@ -20,17 +20,19 @@ ffi = false
 # Read-only access to ../data/deployments so scripts can resolve external addresses.
 fs_permissions = [{ access = "read", path = "../data/deployments" }]
 
-# Remappings for the delegation-framework consumption chain. The framework
-# itself depends on @account-abstraction, @erc7579, @openzeppelin/contracts,
-# @bytes-utils, @solidity-stringutils — all of which it bundles under
-# lib/delegation-framework/lib/. Our enforcers import from
-# delegation-framework/src/* via these remappings.
+# Both libs are git submodules, pinned in ../.gitmodules and the index:
+# delegation-framework at main 1bdb8a3be3027f80c09d984ee403053d534fce48
+# (2026-05-29 — after the v1.3.0 tag the on-chain DelegationManager was deployed
+# from), forge-std at b3bc8b154382a75d0b0ef22d7fd4a0a5f0feee0e. `bun run deps`
+# fetches them; a clean clone does not build without it.
 #
-# The framework's crypto sub-libs (FCL/FreshCryptoLib/SCL) and its own test/
-# directory are NOT vendored — they ship broken transitive node_modules
-# (Truffle/Hardhat fixtures) that don't compile under our solc. They are
-# not needed for DomainScopeEnforcer or TrustStakeCapEnforcer (we don't use
-# advanced signature schemes or run delegation-framework's own tests).
+# The framework depends on @account-abstraction, @erc7579,
+# @openzeppelin/contracts, @bytes-utils, @solidity-stringutils — its own nested
+# submodules under lib/delegation-framework/lib/. `bun run deps` initialises
+# those five plus its forge-std, and leaves out its crypto sub-libs (FCL,
+# FreshCryptoLib, SCL): nothing here imports them and they pull ~500 MB. forge
+# compiles only what src/, test/ and script/ reach, so the framework's own
+# test/ directory, which does not compile under our remappings, is never built.
 remappings = [
     "@account-abstraction/=lib/delegation-framework/lib/account-abstraction/contracts/",
     "@erc7579/=lib/delegation-framework/lib/erc7579-implementation/src/",
