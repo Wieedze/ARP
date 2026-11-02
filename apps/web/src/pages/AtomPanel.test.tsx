@@ -616,9 +616,9 @@ describe("the two writes", () => {
     });
 
     it("states the mainnet refusal as one line and never as the column's headline", async () => {
-        // Mainnet is the **default** chain, and `security.md` authorises a human in the panel under
-        // ADR `0017` — which covers a deposit into a `has trust provider` vault, not creating a
-        // `uses` edge. So the refusal is the ordinary case. The regression this guards is the first
+        // Mainnet was the default chain until ADR `0105`, and `security.md` authorises a human in the
+        // panel under ADR `0017` — which covers a deposit into a `has trust provider` vault, not
+        // creating a `uses` edge. So the refusal is what every mainnet reader meets. The regression this guards is the first
         // version of that branch: an `h2` in display type at the top of the column, which made the
         // loudest element on every atom page a feature announcing that it does not work.
         read.mockResolvedValue(standing());

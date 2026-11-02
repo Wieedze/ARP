@@ -2,7 +2,7 @@
 
 **Generated** 2026-11-02 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-103 decisions. Newest last. `choices/README.md` says when to write one.
+105 decisions. Newest last. `choices/README.md` says when to write one.
 
 ## Not accepted
 
@@ -133,4 +133,6 @@ Read these before relying on them.
 | [0102](0102-x402-is-for-mainnet-testnet-is-free.md) | 2026-11-02 | Accepted | x402 is for mainnet; on testnet consulting ARP is free |
 | [0103](0103-the-operator-reads-plain-words.md) | 2026-11-02 | Accepted | The operator reads plain words, not the chain's vocabulary |
 | [0104](0104-detail-pages-put-the-facts-on-the-right.md) | 2026-11-02 | Accepted | Detail pages put the facts on the right |
+| [0105](0105-the-app-opens-on-testnet.md) | 2026-11-02 | Accepted | The app opens on testnet |
+| [0106](0106-labels-are-at-least-11px.md) | 2026-11-02 | Accepted | Labels are at least 11px |
 | [0108](0108-find-tools-answers-a-short-row.md) | 2026-11-02 | Accepted | `arp_find_tools` answers a short row, by text, a page at a time |

@@ -1,5 +1,5 @@
 import {useMemo, useState} from "react";
-import {useSearchParams} from "react-router-dom";
+import {Link, useSearchParams} from "react-router-dom";
 import {useAccount} from "wagmi";
 import type {Hex} from "viem";
 
@@ -12,6 +12,7 @@ import {useChainFacts, type ChainReads} from "../hooks/use-chain-facts";
 import {useTermLabels} from "../hooks/use-term-labels";
 import {useChainChoice} from "../lib/chain-choice";
 import {amountOf, explorerTxUrl} from "../lib/chain-amounts";
+import {parseToolLabel, primaryNameOf, sourceOf} from "../lib/tool-label";
 import {
     timelineRows,
     type AgentFeed,
@@ -47,7 +48,7 @@ function stamp(at: string): string {
 function Fact({label, children}: {label: string; children: React.ReactNode}) {
     return (
         <div className="flex min-w-[7.5rem] flex-col gap-1.5 px-5 py-3.5 [&+&]:border-l [&+&]:border-l-[color:var(--color-rule)]">
-            <dt className="font-mono text-[10px] uppercase tracking-[0.06em] text-[color:var(--color-steel)]">
+            <dt className="font-mono text-[length:var(--text-label)] uppercase tracking-[0.06em] text-[color:var(--color-steel)]">
                 {label}
             </dt>
             <dd className="type-face text-[26px] leading-none tabular-nums">{children}</dd>
@@ -70,7 +71,8 @@ function TxLink({chainId, hash}: {chainId: number; hash: Hex | null}) {
     );
 }
 
-const LABEL = "font-mono text-[10px] uppercase tracking-[0.06em] text-[color:var(--color-steel)]";
+const LABEL =
+    "font-mono text-[length:var(--text-label)] uppercase tracking-[0.06em] text-[color:var(--color-steel)]";
 const CELL = "font-mono text-[length:var(--text-body-sm)] leading-[1.6]";
 const TH = `${LABEL} pb-2 pr-4 text-left font-normal`;
 const TD = `${CELL} border-t border-[color:var(--color-rule)] py-2 pr-4 align-top`;
@@ -126,13 +128,46 @@ const CONSEQUENCE: Record<TimelineRow["consequences"][number]["label"], string> 
     staked: "supported",
 };
 
+/**
+ * A tool as the rest of the app names it: the skill or `owner/repo`, with the repository under a
+ * skill, and a link to its page. It printed the whole URL, `github.com/obra/superpowers?skill=…`,
+ * and was not a link (task 48).
+ */
+function ToolName({label, atomId}: {label: string; atomId: string}) {
+    const parsed = parseToolLabel(label);
+    const source = sourceOf(parsed);
+    // Banged: the unlayered `a { color; text-decoration }` in `index.css` beats an unbanged colour
+    // or underline utility, which rendered these names silver with no hover mark.
+    return (
+        <Link
+            to={`/atom/${atomId}`}
+            className="block text-[color:var(--color-fg)]! hover:underline! underline-offset-4"
+        >
+            <span className="break-all">{primaryNameOf(parsed)}</span>
+            {source === null ? null : (
+                <span className="block text-[length:var(--text-label)] text-[color:var(--color-steel)]">
+                    {source}
+                </span>
+            )}
+        </Link>
+    );
+}
+
 function ChainLine({fact, chainId}: {fact: ChainFact; chainId: number}) {
     return (
         <tr>
             <td className={`${TD} whitespace-nowrap text-[color:var(--color-steel)] tabular-nums`}>
                 {stamp(fact.at)}
             </td>
-            <td className={`${TD} text-[color:var(--color-fg)]`}>{fact.agent}</td>
+            <td className={TD}>
+                {/* Banged for the same reason as `ToolName`'s link. */}
+                <Link
+                    to={`/atom/${fact.agentAtomId}`}
+                    className="text-[color:var(--color-fg)]! hover:underline! underline-offset-4"
+                >
+                    {fact.agent}
+                </Link>
+            </td>
             <td className={`${TD} text-[color:var(--color-silver)]`}>
                 {VERB[fact.kind]}
                 {fact.assets === null ? null : (
@@ -144,7 +179,9 @@ function ChainLine({fact, chainId}: {fact: ChainFact; chainId: number}) {
                     </span>
                 )}
             </td>
-            <td className={`${TD} break-all text-[color:var(--color-fg)]`}>{fact.tool}</td>
+            <td className={TD}>
+                <ToolName label={fact.tool} atomId={fact.toolAtomId} />
+            </td>
             <td className={`${TD} text-right`}>
                 {fact.tx === null ? null : <TxLink chainId={chainId} hash={fact.tx} />}
             </td>

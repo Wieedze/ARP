@@ -37,6 +37,10 @@ const Register = lazy(() =>
 const AtomPanel = lazy(() =>
     import("./pages/AtomPanel").then((module) => ({default: module.AtomPanel})),
 );
+/** Reads both indexes, so it is lazy like the pages it searches (task 48). */
+const SearchPage = lazy(() =>
+    import("./pages/SearchPage").then((module) => ({default: module.SearchPage})),
+);
 /** Same reason: it reads the Intuition graph, which nothing in the eager bundle needs. */
 const ToolCatalog = lazy(() =>
     import("./pages/ToolCatalog").then((module) => ({default: module.ToolCatalog})),
@@ -144,6 +148,15 @@ function App() {
                     ADRs and in whatever anybody bookmarked. `AtomRedirect` because `Navigate` cannot
                     carry a param through. */}
                     <Route path="/tool/atom/:atomId" element={<AtomRedirect />} />
+                    {/* One field for both indexes (task 48). */}
+                    <Route
+                        path="/search"
+                        element={
+                            <Suspense fallback={<RouteFallback label="search" />}>
+                                <SearchPage />
+                            </Suspense>
+                        }
+                    />
                     {/* What the operator's agent triggered and declared, from the local feed. */}
                     <Route
                         path="/activity"

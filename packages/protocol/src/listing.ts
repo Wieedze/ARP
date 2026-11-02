@@ -102,7 +102,15 @@ export function resolveListOptions(options: ListAgentsOptions = {}): ResolvedLis
         : DEFAULT_PAGE_SIZE;
     const requestedOffset = options.offset ?? 0;
     const offset = Number.isFinite(requestedOffset) ? Math.max(0, Math.trunc(requestedOffset)) : 0;
-    return {order: options.order ?? DEFAULT_LIST_ORDER, limit, offset};
+    // Checked, not assumed: an untyped caller (an MCP argument passed through) is ignored rather than
+    // crashing the read on `.trim()`.
+    const name = typeof options.name === "string" ? options.name.trim() : "";
+    return {
+        order: options.order ?? DEFAULT_LIST_ORDER,
+        limit,
+        offset,
+        name: name.length === 0 ? null : name,
+    };
 }
 
 /**

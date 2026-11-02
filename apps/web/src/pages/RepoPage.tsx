@@ -1,4 +1,6 @@
 import {Link} from "react-router-dom";
+
+import {BackLink} from "../components/brand/BackLink";
 import type {Hex} from "viem";
 
 import {Block, ClsRow, Install, Panel, RecordRow, Signal} from "../components/atom/AtomPageParts";
@@ -54,9 +56,10 @@ export function RepoPage({
 
     return (
         <article className="mt-8">
-            <header>
+            <BackLink to="/tools" label="tools" />
+            <header className="mt-4">
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 font-mono text-[12px] text-[color:var(--color-steel)]">
-                    <span className="rounded-[var(--radius-tag)] border border-[color:var(--color-rule-strong)] px-[7px] py-[2px] text-[10px] uppercase tracking-[0.1em] text-[color:var(--color-fg)]">
+                    <span className="rounded-[var(--radius-tag)] border border-[color:var(--color-rule-strong)] px-[7px] py-[2px] text-[length:var(--text-label)] uppercase tracking-[0.1em] text-[color:var(--color-fg)]">
                         Repository
                     </span>
                     {view.browseUrl === null || host === null ? null : (
@@ -342,7 +345,7 @@ function ExternalSignals({fact, skills}: {fact: RepoFact | null; skills: readonl
 // No alignment in the base: `text-left` added to a class carrying `text-right` loses to whichever
 // Tailwind emits later, which put the first column on the right. Each cell says its own.
 const TH =
-    "whitespace-nowrap border-b border-[color:var(--color-rule-strong)] px-3 pb-2.5 font-mono text-[10px] font-normal uppercase tracking-[0.08em] text-[color:var(--color-steel)] first:pl-0";
+    "whitespace-nowrap border-b border-[color:var(--color-rule-strong)] px-3 pb-2.5 font-mono text-[length:var(--text-label)] font-normal uppercase tracking-[0.08em] text-[color:var(--color-steel)] first:pl-0";
 const TD =
     "whitespace-nowrap border-b border-[color:var(--color-rule)] p-3 font-mono tabular-nums first:pl-0";
 
@@ -366,7 +369,7 @@ function Skills({rows}: {rows: readonly SkillRow[]}) {
                             <th className={`${TH} text-right`}>Behind it</th>
                             <th className={`${TH} text-right`}>
                                 Installs
-                                <span className="block text-[9px] normal-case tracking-[0.04em]">
+                                <span className="block text-[length:var(--text-label)] normal-case tracking-[0.04em]">
                                     skills.sh
                                 </span>
                             </th>

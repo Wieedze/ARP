@@ -29,7 +29,7 @@ import {formatTrust} from "../services/trust-format";
  * Every signature here is a click on a confirmation that names the chain. Nothing is signed on
  * load, and no key is held: a signed delegation is not redeemable without its delegate's key.
  */
-const LABEL = "font-mono text-[10px] uppercase tracking-[0.06em] text-[color:var(--color-steel)]";
+const LABEL = "font-mono text-[length:var(--text-label)] uppercase tracking-[0.06em] text-[color:var(--color-steel)]";
 const CELL = "font-mono text-[length:var(--text-body-sm)] leading-[1.6]";
 const TH = `${LABEL} pb-2 pr-4 text-left font-normal`;
 const TD = `${CELL} border-t border-[color:var(--color-rule)] py-2 pr-4 align-top`;

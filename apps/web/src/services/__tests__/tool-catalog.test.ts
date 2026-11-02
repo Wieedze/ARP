@@ -64,6 +64,10 @@ describe("buildToolCatalogView", () => {
         expect(
             buildToolCatalogView(page([tool({opposeAssetsSum: 10n ** 18n})])).rows[0]?.opposeTrust,
         ).not.toBeNull();
+        // The counter vault's creation deposit, under the smallest printed figure (task 48).
+        expect(
+            buildToolCatalogView(page([tool({opposeAssetsSum: 1_000n})])).rows[0]?.opposeTrust,
+        ).toBeNull();
     });
 
     it("carries proven and declared deposits through as two figures, never one", () => {

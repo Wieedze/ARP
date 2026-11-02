@@ -224,7 +224,7 @@ function Beat({read}: {read: Read<RecentDeclaration[]>}) {
             onBlur={() => setHeld(false)}
             className="flex min-w-[min(20rem,70vw)] max-w-[26rem] flex-col gap-1 rounded-[var(--radius-button)] border border-[color:var(--color-rule-strong)] bg-[color:var(--color-bg)]/90 px-3.5 py-3"
         >
-            <span className="flex items-center gap-2 border-b border-[color:var(--color-rule)] pb-2 font-mono text-[10px] uppercase tracking-[0.06em] text-[color:var(--color-steel)]">
+            <span className="flex items-center gap-2 border-b border-[color:var(--color-rule)] pb-2 font-mono text-[length:var(--text-label)] uppercase tracking-[0.06em] text-[color:var(--color-steel)]">
                 <Dot on={rows.length > 0} />
                 {/* `8+` at the cap, because the query asks for a page and the label says "on this
                     chain": printing a full page as the chain's total is a wrong number dressed as
@@ -238,7 +238,7 @@ function Beat({read}: {read: Read<RecentDeclaration[]>}) {
                 on {chain.label.toLowerCase()}
             </span>
             {read.status === "pending" ? (
-                <span className="font-mono text-[10px] text-[color:var(--color-steel)]">
+                <span className="font-mono text-[length:var(--text-label)] text-[color:var(--color-steel)]">
                     reading…
                 </span>
             ) : read.status === "failed" ? (
@@ -246,7 +246,7 @@ function Beat({read}: {read: Read<RecentDeclaration[]>}) {
                     <span className="text-[13px] text-[color:var(--color-fg)]">
                         The graph did not answer.
                     </span>
-                    <span className="font-mono text-[10px] text-[color:var(--color-steel)]">
+                    <span className="font-mono text-[length:var(--text-label)] text-[color:var(--color-steel)]">
                         This is a read that failed, not an empty chain.
                     </span>
                 </>
@@ -255,13 +255,13 @@ function Beat({read}: {read: Read<RecentDeclaration[]>}) {
                     <span className="text-[13px] text-[color:var(--color-fg)]">
                         No declaration on this chain yet.
                     </span>
-                    <span className="font-mono text-[10px] text-[color:var(--color-steel)]">
+                    <span className="font-mono text-[length:var(--text-label)] text-[color:var(--color-steel)]">
                         Nobody has run the loop here, including us.
                     </span>
                 </>
             ) : (
                 <>
-                    <span className="font-mono text-[10px] text-[color:var(--color-steel)]">
+                    <span className="font-mono text-[length:var(--text-label)] text-[color:var(--color-steel)]">
                         Declared use · {relativeDay(newest.at)}
                     </span>
                     {/* **Paper, not accent.** This is the newest declaration's deposit — somebody
