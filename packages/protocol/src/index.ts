@@ -553,6 +553,17 @@ export {
     type ContentServeConfig,
 } from "./content-serve.js";
 
+/** A skill's whole directory with one receipt over a manifest of its files (task 57). */
+export {
+    bundleManifest,
+    bundleMatchesReceipt,
+    isSafeRelativePath,
+    serveSkillBundle,
+    type BundleAnswer,
+    type BundleFile,
+    type BundleServeConfig,
+} from "./content-bundle.js";
+
 export {
     contentDigest,
     contentReceiptDomain,

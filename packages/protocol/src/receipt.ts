@@ -37,7 +37,9 @@
  * - `receiptMatchesContent` — whether the bytes in hand are the bytes it names, by sha256.
  *
  * The second is what makes the receipt re-derivable by a stranger: fetch `url`'s repository at
- * `path`, run `sha256sum`, compare. **sha256 and not keccak256 for exactly that reason** — a third
+ * `path`, run `sha256sum`, compare. When `path` is a directory, the receipt is a skill's whole
+ * directory (task 57) and `digest` is over its manifest: `sha256sum` over every file of the
+ * directory, paths relative to it, sorted by path, hashed again (`bundleMatchesReceipt`). **sha256 and not keccak256 for exactly that reason** — a third
  * party has `sha256sum` on their machine and does not have to trust a library of ours.
  * `measure/skill-content-duplicates.ts` made the same argument for git's blob sha.
  *
@@ -176,9 +178,15 @@ export type ContentReceipt = {
     atom: Hex;
     /** The normalised tool URL, so a verifier needs no catalogue of ours to find the origin. */
     url: string;
-    /** The path inside the repository whose bytes were served. */
+    /**
+     * The path inside the repository that was served: a file, or a skill's directory when the
+     * whole directory was served (task 57).
+     */
     path: string;
-    /** sha256 of those exact bytes. */
+    /**
+     * sha256 of the file's exact bytes, or of the directory's manifest (`bundleManifest`): one
+     * `<sha256 hex>  <path>` line per file, sorted by path. `bundleMatchesReceipt` checks it.
+     */
     digest: Hex;
     /** The caller as it authenticated, or null when it did not. */
     to: Address | null;
@@ -402,7 +410,8 @@ export function corroborationOf(
 }
 
 /**
- * Whether the bytes in hand are the bytes the receipt names.
+ * Whether the bytes in hand are the bytes the receipt names, for a receipt over one file. A receipt
+ * over a skill's directory is checked with `bundleMatchesReceipt`.
  *
  * The half of the verification that needs no signature and no library of ours: fetch the origin,
  * hash it, compare. A stranger can run this against `url` and `path` without asking us anything,

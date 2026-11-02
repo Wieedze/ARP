@@ -81,6 +81,11 @@ Proposed as preconditions of any paid run, **not decided by the user yet**:
 
 Until (a) holds, a sentence that ARP "serves the skill" is true of its SKILL.md only.
 
+**(a) was decided by the user and built on 2026-11-02, in task 57**, for Claude Code only.
+`arp_get_skill` in project mode receives the whole directory under one receipt over its manifest.
+The Claude Desktop extension still receives SKILL.md alone, because Chat runs no script. (b) is task
+56.
+
 ## 5. Do not do in this task
 
 - Claim a token saving: none has been established (tasks 45c, 51, 52).

@@ -6,7 +6,7 @@ import { encodeAbiParameters, encodeEventTopics, encodeFunctionData, getAddress,
 import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts';
 import { afterEach, beforeEach, describe as group, expect, it } from 'vitest';
 
-import { contentDigest, encodeApproveDeposit, signContentReceipt } from '@arp-protocol/core';
+import { bundleManifest, contentDigest, encodeApproveDeposit, signContentReceipt } from '@arp-protocol/core';
 
 import { loadOrCreateAgentKey, refusal, type AgentSender, type AllowedCall } from '../src/desktop/agent-key.js';
 import { declareUsed, getSkill, type LoopConfig } from '../src/desktop/loop.js';
@@ -64,6 +64,29 @@ function services(agentAddress: Address, node = privateKeyToAccount(generatePriv
     const url = String(input);
     const path = new URL(url).pathname;
     calls.push(`${init?.method ?? 'GET'} ${path}`);
+    if (path.startsWith('/content/') && url.includes('bundle=1')) {
+      const files = [
+        { path: 'SKILL.md', bytes },
+        { path: 'scripts/thumb.py', bytes: new TextEncoder().encode("print('thumb')\n") },
+      ];
+      const signed = await signContentReceipt(
+        {
+          atom: ATOM,
+          url: 'github.com/acme/skills?skill=thumbs',
+          path: 'skills/thumbs',
+          digest: contentDigest(new TextEncoder().encode(bundleManifest(files))),
+          to: agentAddress,
+          servedAt: 1,
+          nonce: `0x${'00'.repeat(32)}`,
+        },
+        13579,
+        node,
+      );
+      return Response.json(
+        { path: 'skills/thumbs', files: files.map((f) => ({ path: f.path, base64: Buffer.from(f.bytes).toString('base64') })) },
+        { headers: { 'x-arp-receipt': JSON.stringify(signed) } },
+      );
+    }
     if (path.startsWith('/content/')) {
       const signed = await signContentReceipt(
         {
@@ -233,6 +256,9 @@ group('the loop a new agent walks', () => {
     const skill = await getSkill(config, agent, ATOM);
     expect(skill.installedAt).toBe(join(skillsDir, 'thumbs', 'SKILL.md'));
     expect(readFileSync(join(skillsDir, 'thumbs', 'SKILL.md'), 'utf8')).toBe('# A skill\n');
+    // The whole directory, scripts included (task 57).
+    expect(readFileSync(join(skillsDir, 'thumbs', 'scripts', 'thumb.py'), 'utf8')).toBe("print('thumb')\n");
+    expect(skill.files).toBe(2);
     // The line the hook reads to name the atom of `thumbs` when it sees it invoked.
     const line = JSON.parse(readFileSync(join(dir, 'project', '.arp', 'receipts.jsonl'), 'utf8'));
     expect(line).toMatchObject({ skill: 'thumbs', atom: ATOM, url: 'github.com/acme/skills?skill=thumbs' });

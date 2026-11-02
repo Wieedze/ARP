@@ -14,7 +14,7 @@
  * `receipts.jsonl` (one line per skill served).
  */
 import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 
 import {
   decodeEventLog,
@@ -27,6 +27,7 @@ import {
 } from 'viem';
 
 import {
+  bundleMatchesReceipt,
   contentRequestTypedData,
   encodeApproveDeposit,
   INTUITION_USES_TERM_ID,
@@ -36,6 +37,7 @@ import {
   skillRefFromUrl,
   sponsorProofDigest,
   verifyContentReceipt,
+  type BundleFile,
   type SignedContentReceipt,
 } from '@arp-protocol/core';
 
@@ -81,7 +83,7 @@ export type LoopConfig = {
 
 type AgentState = { agentId: string; identityAtom?: Hex };
 
-export type ServedSkill = { atom: Hex; url: string; name: string; text: string; installedAt?: string };
+export type ServedSkill = { atom: Hex; url: string; name: string; text: string; installedAt?: string; files?: number };
 
 type ReceiptLine = { atom: Hex; url: string; skill: string | null; receipt: SignedContentReceipt };
 
@@ -125,38 +127,53 @@ function receiptFor(config: LoopConfig, atom: Hex): ReceiptLine | null {
 export async function getSkill(config: LoopConfig, agent: AgentSender, atom: Hex): Promise<ServedSkill> {
   const nonce = keccak256(stringToBytes(`${atom}-${Date.now()}`));
   const signature = await agent.account.signTypedData(contentRequestTypedData(atom, nonce, DESKTOP_CHAIN_ID));
+  // Where the skill is installed, the runtime can run its scripts, so it gets the whole directory
+  // (task 57). Claude Desktop's Chat runs nothing, and gets SKILL.md alone.
+  const bundle = config.skillsDir !== undefined;
   const response = await (config.fetch ?? fetch)(
-    `${config.contentUrl}/content/${atom}?nonce=${nonce}&by=${agent.address}&sig=${signature}`,
+    `${config.contentUrl}/content/${atom}?nonce=${nonce}&by=${agent.address}&sig=${signature}${bundle ? '&bundle=1' : ''}`,
   );
   if (!response.ok) {
     const body = await json(response);
     throw new Error(`the content server answered ${response.status}: ${String(body['error'] ?? '')} ${String(body['reason'] ?? '')}`.trim());
   }
-  const bytes = new Uint8Array(await response.arrayBuffer());
   const header = response.headers.get('x-arp-receipt');
+  const raw = bundle ? null : new Uint8Array(await response.arrayBuffer());
+  const files: BundleFile[] = bundle
+    ? (((await response.json()) as { files?: { path: string; base64: string }[] }).files ?? []).map((file) => ({
+        path: file.path,
+        bytes: new Uint8Array(Buffer.from(file.base64, 'base64')),
+      })) // the content server's bundle body; every file is checked against the receipt below
+    : [{ path: 'SKILL.md', bytes: raw ?? new Uint8Array() }];
   if (header === null) throw new Error('the content server sent no receipt');
-  const signed = JSON.parse(header) as SignedContentReceipt; // checked by the two verifications below
+  const signed = JSON.parse(header) as SignedContentReceipt; // checked by the verifications below
   const verdict = await verifyContentReceipt(signed);
   if (verdict.status !== 'valid') throw new Error(`the receipt does not verify (${verdict.status})`);
-  if (!receiptMatchesContent(signed.receipt, bytes)) throw new Error('the files do not match the receipt');
+  const matches = bundle ? bundleMatchesReceipt(signed.receipt, files) : receiptMatchesContent(signed.receipt, raw ?? new Uint8Array());
+  if (!matches) throw new Error('the files do not match the receipt');
   if (signed.receipt.to?.toLowerCase() !== agent.address.toLowerCase()) throw new Error('the receipt names another caller');
+  const skillMd = files.find((file) => file.path === 'SKILL.md');
+  if (skillMd === undefined) throw new Error('the skill came without its SKILL.md');
 
   const ref = skillRefFromUrl(signed.receipt.url);
   mkdirSync(config.stateDir, { recursive: true, mode: 0o700 });
   const line: ReceiptLine = { atom: signed.receipt.atom, url: signed.receipt.url, skill: ref?.skill ?? null, receipt: signed };
   appendFileSync(join(config.stateDir, 'receipts.jsonl'), `${JSON.stringify(line)}\n`);
-  const served = { atom: signed.receipt.atom, url: signed.receipt.url, name: ref?.skill ?? signed.receipt.url, text: new TextDecoder().decode(bytes) };
+  const served = { atom: signed.receipt.atom, url: signed.receipt.url, name: ref?.skill ?? signed.receipt.url, text: new TextDecoder().decode(skillMd.bytes) };
   // Installed under its own name only when that name is a plain directory name: it comes from a URL.
   if (config.skillsDir === undefined || ref === null || !/^[a-z0-9][a-z0-9._-]*$/i.test(ref.skill)) return served;
   const dir = join(config.skillsDir, ref.skill);
-  mkdirSync(dir, { recursive: true });
-  writeFileSync(join(dir, 'SKILL.md'), bytes);
+  // Every path was checked to stay inside the directory by `bundleMatchesReceipt`.
+  for (const file of files) {
+    mkdirSync(dirname(join(dir, file.path)), { recursive: true });
+    writeFileSync(join(dir, file.path), file.bytes);
+  }
   if (config.projectReceipts !== undefined) {
     mkdirSync(join(config.projectReceipts, '..'), { recursive: true });
     const at = new Date(signed.receipt.servedAt * 1000).toISOString();
     appendFileSync(config.projectReceipts, `${JSON.stringify({ skill: ref.skill, atom: signed.receipt.atom, url: signed.receipt.url, at, receipt: signed })}\n`);
   }
-  return { ...served, installedAt: join(dir, 'SKILL.md') };
+  return { ...served, installedAt: join(dir, 'SKILL.md'), files: files.length };
 }
 
 /** This key's agent id: read from `~/.arp`, or minted with gas the sponsor sends once. */

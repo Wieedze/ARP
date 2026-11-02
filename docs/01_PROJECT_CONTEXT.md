@@ -57,11 +57,13 @@ What the same run does not support, and so what this argument may not say:
   today; ARP reuses its descriptions and install counts (`data/catalogue/skill-facts.json`). What ARP
   adds is evidence of use, not search.
 
-The unit is the **skill, not the repository** (ADR `0077`): ARP serves one skill's SKILL.md with a
-signed receipt, for 521 of the 662 skills on testnet 13579 (`docs/tasks/31`). **Only that file.** The
-best skills need sibling scripts the content server does not serve yet (`docs/tasks/54` §4b), so
-"ARP serves the skill" is true of its instructions, not of a skill that runs. In Claude Desktop the search ships; fetching and running a
-served skill is `docs/tasks/50`, not finished at the time of writing.
+The unit is the **skill, not the repository** (ADR `0077`): ARP serves one skill with a signed
+receipt, for 521 of the 662 skills on testnet 13579 (`docs/tasks/31`). **What is served depends on
+where.** In Claude Code project mode (`arp init --sponsored`), it is the skill's whole directory,
+scripts included, under one receipt over a manifest of every file (`docs/tasks/57`). In Claude
+Desktop's Chat, which runs no script, it is the SKILL.md alone, so there a skill that needs its
+scripts works only in part. Desktop walks the loop since `docs/tasks/50`: search, fetch, and a
+sponsored declaration.
 
 ### Three words this positioning may never use
 
