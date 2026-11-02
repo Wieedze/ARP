@@ -58,7 +58,8 @@ The user's own session, same request, before and after (Claude Desktop, one run 
 for 82.7 KB, then one call, `{query: "video editing"}`, for 9.9 KB.
 
 **Not measured:** the cost against a search without ARP. The 31 KB above was one web search path,
-taken once. Task 45c's eval is what answers it, with n and an interval.
+taken once. Task 45c's eval answered it on 2026-11-02. Without ARP, a default session does not
+search at all, and with ARP a run costs 3.14 times the tokens (95% 2.62 to 3.80). See task 45 §45c.
 
 ## 4. Known limits
 
