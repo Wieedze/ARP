@@ -2,7 +2,7 @@
 
 **Generated** 2026-11-02 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-110 decisions. Newest last. `choices/README.md` says when to write one.
+111 decisions. Newest last. `choices/README.md` says when to write one.
 
 ## Not accepted
 
@@ -142,3 +142,4 @@ Read these before relying on them.
 | [0111](0111-a-query-must-match-every-word.md) | 2026-11-02 | Accepted | A query must match every word, and an empty query answer suggests nothing |
 | [0112](0112-one-product-two-ways-to-pay-and-a-free-badge.md) | 2026-11-02 | Accepted | One product, two ways to pay, a data licence for aggregators, and a free badge |
 | [0113](0113-who-may-speak-for-an-agent-identity.md) | 2026-11-02 | Deferred (mainnet port). The user's decision, 2026-11-02: « intéressant mais inutile en | Who may speak for an agent's identity: trusted writers, the market, then ambiguity |
+| [0114](0114-one-path-per-profile-the-action-is-gated-not-the-read.md) | 2026-11-02 | Accepted | One path per profile; onboarding gates the action, not the read; you connect your agent |

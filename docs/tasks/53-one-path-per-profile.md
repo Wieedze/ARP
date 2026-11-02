@@ -1,6 +1,6 @@
 # Task 53 — One path per profile, from the landing
 
-**Status:** **PLAN**, 2026-11-02. Nothing built. The user's decisions are in §2.
+**Status:** **IN PROGRESS**, 2026-11-02, branch `feat/53-paths`. 53a built (scene 4 is the three-way chooser, `lib/start-paths.ts`); 53b, 53c and the action gate are next. The user's decisions are in §2.
 **ADR:** `0112` (the badge is free). A new ADR is needed for 53c (§3).
 **Depends on:** task 50 for path A's last step; `@arp-protocol/cli` on npm for path B's first.
 **Rules:** `ui.md`, `code.md`, `security.md` (53c), `claims.md`, `workflow.md`.
@@ -28,6 +28,8 @@ onboarding skill ARP itself returned for "onboarding" (`coreyhaines31/marketings
 | Scene 4 | **Replaced**, not added to. The deck keeps six scenes, and the four "Needs wallet" cards leave `/` |
 | Listing a tool from path C | **Sponsored on testnet 13579, with a limit**, consistent with "free for testers" (task 45) |
 | The badge | **Not decided.** Left out of this task |
+| Onboarding, like Privy's | **The action is gated, not the read** (2026-11-02, « ok ça me paraît bien »). Index pages stay open; declaring, supporting, adding a tool and the personal pages open the onboarding first |
+| How a visitor connects | **Their agent**, not an account: the extension's local key (ADR `0110`), seen by the activity bar on the web. MetaMask for whoever signs. No Privy for now. ADR `0114` |
 
 ## 3. The pieces
 
