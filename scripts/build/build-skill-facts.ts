@@ -36,7 +36,7 @@
  *  (`measure/skill-content-duplicates.ts`) and the counter reports six separate successes. That is
  *  why it ranks and never tags (`docs/20`).
  */
-import {writeFileSync} from "node:fs";
+import {readFileSync, writeFileSync} from "node:fs";
 
 import installs from "../../data/measurements/skills-installs-2026-10-29.json";
 import domains from "../../data/measurements/skill-domains-2026-10-29.json";
@@ -84,10 +84,27 @@ for (const row of (domains as {rows: DomainRow[]}).rows) {
     };
 }
 
+/**
+ * ARP's own skills, which skills.sh does not list. Read from the SKILL.md in this repository, so
+ * the description is the author's own and a rewrite of the file is a rebuild away. No install
+ * count: that number is skills.sh's, and there is none.
+ */
+const FIRST_PARTY = [{repo: "Wieedze/ARP", skill: "arp", file: "skills/arp/SKILL.md"}];
+for (const own of FIRST_PARTY) {
+    const line = readFileSync(own.file, "utf8")
+        .split("\n")
+        .find((text) => text.startsWith("description: "));
+    if (line === undefined) throw new Error(`${own.file} has no description: line`);
+    facts[`github.com/${own.repo}?skill=${encodeURIComponent(own.skill)}`] = {
+        description: shorten(line.slice("description: ".length).trim()),
+        installs: null,
+    };
+}
+
 const out = {
     _note:
         "What a skill atom cannot carry: a description and an install count. Built by " +
-        "scripts/build/build-skill-facts.ts from two committed measurements — do not edit by hand. " +
+        "scripts/build/build-skill-facts.ts from two committed measurements and ARP's own SKILL.md — do not edit by hand. " +
         "Keyed by the atom's label, which is its normalised URL without the scheme.",
     _measuredOn: MEASURED_ON,
     _source: "skills.sh, read from the JSON-LD its own pages publish for machines",

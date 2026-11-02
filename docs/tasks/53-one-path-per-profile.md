@@ -47,6 +47,18 @@ The three paths, as the proposal has them:
 - **C · J'ai publié un outil.** Paste the repository URL in one field; land on the skill or repo page;
   not listed: add it, sponsored (53c).
 
+### 53d — ARP's own skill in ARP's registry, done 2026-11-02
+
+The user asked for it the same day (« ARP skill sur ARP ? bonne idée », « le skill pour agent »,
+« dans son dépôt avec sa description refaite au propre »). On testnet 13579: the skill atom
+`github.com/Wieedze/ARP?skill=arp`, the repository atom `github.com/Wieedze/ARP`, `source` between
+them and `has tag development`, 0.008163237806 tTRUST, both documents pinned. The record is
+`data/catalogue/own-skill-13579.json`; the plan is `scripts/seed/seed-own-skill.ts`, which prints
+0 calls when re-run. `skills/arp/SKILL.md`'s description now leads with finding a tool for a need;
+`build-skill-facts.ts` reads it as a first-party source, so a rewrite is a rebuild away.
+`arp_find_tools` with `query: "arp"` returned both atoms the same evening, with `purpose: null`
+until the rebuilt `skill-facts.json` is merged. The README badge is the next step and is not built.
+
 ## 4. Facts checked on 2026-11-02
 
 - `curl -s -o /dev/null -w "%{http_code}" https://registry.npmjs.org/@arp-protocol%2fcli` → `404`.

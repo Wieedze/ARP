@@ -1,0 +1,30 @@
+{
+  "_note": "ARP's own skill, put in ARP's registry on Intuition testnet 13579. A record, not a source of truth: every id is a pure function of its URL or label (ADR 0054, 0077). Permanent: Intuition has no deletion.",
+  "_authorisation": "Signed by the agent session using AGENT_PRIVATE_KEY on the user's explicit instruction on 2026-11-02 (« ARP skill sur ARP ? bonne idée », « le skill pour agent », « fait tout ça »). ADR 0037's three conditions: the key was never read into the agent's context, the signer address printed by the dry run was checked against AGENT_ADDRESS before --execute, and this file is the record.",
+  "_plan": "scripts/seed/seed-own-skill.ts, sent with scripts/agent/agent-send-plan.ts. Re-running the plan after the send printed 0 calls.",
+  "chainId": 13579,
+  "signer": "0x906f3A52ec089f8D4E9127F91C6bE5Ae0d18f91f",
+  "recordedAt": "2026-11-02",
+  "skill": {
+    "url": "https://github.com/Wieedze/ARP?skill=arp",
+    "file": "skills/arp/SKILL.md",
+    "atom": "0xd0f63f89e6e464b3ff4b5f707080c47c92c477cba63a59d11524981e90b7ed61",
+    "pinned": "ipfs://bafkreia5alvmo43t6cbyw4amzpkg7ee7if5ygsi7iosf2zdnbnng7s4j5a"
+  },
+  "repository": {
+    "url": "https://github.com/Wieedze/ARP",
+    "atom": "0xffb6d08109eaab346bab86804174288d7a1dde32f4ff7e7dd0804bb5446327d5",
+    "pinned": "ipfs://bafkreigsndqcsvdnl5phpxszqxox73x4ckx7nderghlr54zy3wjzagwgti"
+  },
+  "triples": {
+    "source": "0x282b7bb5cb9b0df10ac05bce3385c3a7a2c202d1861007f2c1c38d1bdc31d951",
+    "hasTag": {"domain": "development", "triple": "0xebe941f49c2ce8f66a26df884d544224ca335d195d2f8a4f5b6be7b4ae7783dc"}
+  },
+  "transactions": [
+    {"kind": "create-atom", "count": 2, "hash": "0x6b73dadbc5476872c76a1ac557229b1fef5effec0b963c69df0d587492657994"},
+    {"kind": "create-triple", "count": 2, "hash": "0x03a924a5df41c5b395c8ad207663b18685a3570bc0f6ecac48535903b180f9ae"}
+  ],
+  "spent": "0.008163237806",
+  "balanceBefore": "1.060333669938",
+  "balanceAfter": "1.052170432132"
+}
