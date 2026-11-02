@@ -719,3 +719,91 @@ describe("the plain GET", () => {
         expect((body["mcp"] as {tools: string[]}).tools).toContain("arp_tool_reputation");
     });
 });
+
+/**
+ * `ARP_TOOLS=read`, the server task 45's first testers get: the registry reads and nothing else.
+ *
+ * Its own process, because the mode is read once at start. What it guards is what the operators were
+ * promised: no planner offered, no planner callable, and instructions that send the agent to the
+ * registry first without a word about chains, tokens or wallets.
+ */
+describe("read-only mode", () => {
+    const READ_PORT = PORT + 2;
+    const READ_BASE = `http://127.0.0.1:${READ_PORT}/mcp`;
+    let reader: ChildProcess | null = null;
+
+    const call = async (method: string, params?: unknown) => {
+        const response = await fetch(READ_BASE, {
+            method: "POST",
+            headers: {"content-type": "application/json", accept: "application/json"},
+            body: JSON.stringify({jsonrpc: "2.0", id: 1, method, ...(params ? {params} : {})}),
+        });
+        return (await response.json()) as Record<string, unknown>;
+    };
+
+    beforeAll(async () => {
+        reader = spawn("bun", ["run", "apps/mcp/src/server.ts"], {
+            cwd: new URL("../../..", import.meta.url).pathname,
+            env: {
+                ...process.env,
+                PORT: String(READ_PORT),
+                ARP_TOOLS: "read",
+                ARP_TARGET: "testnet",
+                ARP_NO_RECEIPTS: "1",
+                INTUITION_GRAPHQL_URL: `http://127.0.0.1:${PORT + 1}/v1/graphql`,
+                INTUITION_RPC_URL: `http://127.0.0.1:${PORT + 1}/rpc`,
+                ARP_MULTI_VAULT: MULTI_VAULT,
+            },
+            stdio: "ignore",
+        });
+        for (let i = 0; i < 60; i += 1) {
+            try {
+                if ((await fetch(READ_BASE, {method: "POST", body: '{"jsonrpc":"2.0","id":0,"method":"ping"}'})).ok) return;
+            } catch {
+                /* not up yet */
+            }
+            await new Promise((r) => setTimeout(r, 100));
+        }
+        throw new Error("the read-only MCP server did not come up");
+    }, 20_000);
+
+    afterAll(() => {
+        reader?.kill();
+    });
+
+    it("lists the three registry reads and nothing else", async () => {
+        const body = await call("tools/list");
+        const names = (body["result"] as {tools: {name: string}[]}).tools.map((t) => t.name);
+        expect(names).toEqual(["arp_find_agents", "arp_find_tools", "arp_tool_reputation"]);
+    });
+
+    it("refuses a planner called by name", async () => {
+        const body = await call("tools/call", {name: "arp_declare_used", arguments: {}});
+        expect((body["error"] as {message: string}).message).toBe("unknown tool: arp_declare_used");
+    });
+
+    it("sends the agent to the registry first, in words an operator can read", async () => {
+        const body = await call("initialize", {
+            protocolVersion: "2025-06-18",
+            capabilities: {},
+            clientInfo: {name: "test", version: "0"},
+        });
+        const instructions = String((body["result"] as Record<string, unknown>)["instructions"]);
+        expect(instructions).toContain("LOOK HERE FIRST");
+        expect(instructions).toContain("arp_find_tools");
+        expect(instructions).toContain("BEFORE you pick one yourself");
+        for (const word of ["TRUST", "chain", "wallet", "stake", "vault", "atom", "ERC-8004"]) {
+            expect(instructions).not.toContain(word);
+        }
+    });
+
+    it("keeps the chain's vocabulary out of the three descriptions it serves", async () => {
+        const body = await call("tools/list");
+        const tools = (body["result"] as {tools: {description: string}[]}).tools;
+        for (const tool of tools) {
+            for (const word of ["TRUST", "vault", "bonding", "minShare", "ERC-8004", "Intuition"]) {
+                expect(tool.description).not.toContain(word);
+            }
+        }
+    });
+});
