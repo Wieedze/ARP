@@ -1,6 +1,7 @@
 # Task 55 — The Claude Code demo: a fetched skill the runtime can invoke, paid by the sponsor
 
-**Status:** **BUILT and walked live**, 2026-11-02, branch `feat/55-claude-code-demo`.
+**Status:** **BUILT, walked live and verified**, 2026-11-02, branch `feat/55-claude-code-demo`.
+`task-verifier` PASS on the second pass, post-mortem `learning/49`.
 **Depends on:** task 50 (the sponsored loop, `apps/mcp/src/desktop/`).
 **Rules:** `code.md`, `security.md`, `claims.md`, `workflow.md`.
 **Reviewers:** `task-verifier`.
