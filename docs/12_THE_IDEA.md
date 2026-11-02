@@ -79,7 +79,7 @@ Written down because this document exists to stop a specific failure, which has 
 | **Adoption of an existing ERC-8004 agent**                      | **missing — the whole gap**                                                    |
 | **The guard rail on the chain where the agents are**            | **missing — enforcers are on testnet, agents are not**                         |
 | Install handshake, the endpoint bound to the ERC-8004 token     | built, task 39 (ADR `0095`)                                                    |
-| A proof as the condition of a sponsored deposit                 | built for hire proofs, and for content receipts on testnet 13579 (ADR `0109`); running locally, nothing sent yet |
+| A proof as the condition of a sponsored deposit                 | built for hire proofs, and for content receipts on testnet 13579 (ADR `0109`); running locally; first sponsored walks 2026-11-02, agents 9 and 10 (`docs/tasks/50` §6) |
 | Revenue: x402 in USDC                                           | mainnet only, ADR `0102` — testnet is free                                     |
 
 The mechanism works today for agents ARP mints. It does not work for the agents that already exist — **28,720** reachable out of a registry whose next id is **444,562**, measured 2026-10-21 — and those are the population, so that gap is what stands between this and a live system. Worse than it reads: the mirror has not moved since 2026-09-16 while the registry kept going, so for roughly **fourteen agents in fifteen** the identity atom does **not exist** and has to be written (`scripts/agent/agent-identity-atom.ts`, ADR `0047`). `/agent/import` writes it now rather than waiting.

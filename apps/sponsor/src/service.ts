@@ -493,6 +493,11 @@ export function createSponsor(options: SponsorOptions): {
           return json({ error: "the triple's subject and object atoms must exist" }, 400);
         }
         const assets = tripleCost + minDeposit;
+        // ADR `0053`, as `identity-plan.ts` enforces it: a term is born with a position or not at all.
+        const born = await reads.previewTripleCreate(request.termId, assets);
+        if (born.shares === 0n) {
+          return json({ error: `creating ${request.termId} would buy 0 shares` }, 400);
+        }
         const fits = checkCreateLimits(ledger.records, {
           agent,
           value: assets + limits.depositAmount,
@@ -667,9 +672,8 @@ export function createSponsor(options: SponsorOptions): {
     } catch (error) {
       return json({ error: String(error instanceof Error ? error.message : error) }, 400);
     }
-    if (pins.calls.length === 0) {
-      return json({ identityAtom: pins.identityAtom, sent: [], valueWei: 0n });
-    }
+    // Pinned even when every term exists: an atom created unpinned stays unlabelled, and only a pin
+    // makes it resolvable. Pinning moves no value.
     for (const which of ['identity', 'caip'] as const) {
       const uri = await pinThing(pins.things[which]).catch(() => null);
       if (uri !== pins.uris[which]) {
@@ -680,6 +684,9 @@ export function createSponsor(options: SponsorOptions): {
           502,
         );
       }
+    }
+    if (pins.calls.length === 0) {
+      return json({ identityAtom: pins.identityAtom, sent: [], valueWei: 0n });
     }
 
     return exclusive(async () => {

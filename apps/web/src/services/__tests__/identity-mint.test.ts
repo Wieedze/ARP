@@ -3,8 +3,10 @@ import {encodeAbiParameters, keccak256, toHex, type Address, type Hex} from "vie
 
 import {identityRegistryAbi} from "../../lib/abi/identity-registry";
 import {
-    MINT_CHAIN,
-    MINT_REGISTRY,
+    MAINNET_MINT,
+    mintTargetFor,
+    mintTargetOf,
+    TESTNET_MINT,
     MintGuardError,
     quoteMint,
     submitMint,
@@ -33,7 +35,7 @@ const REGISTERED_TOPIC = keccak256(toHex("Registered(uint256,string,address)"));
 
 function registeredLog(params: {agentId: bigint; to: Address; address?: string}) {
     return {
-        address: params.address ?? MINT_REGISTRY,
+        address: params.address ?? MAINNET_MINT.registry,
         topics: [
             REGISTERED_TOPIC,
             encodeAbiParameters([{type: "uint256"}], [params.agentId]),
@@ -55,7 +57,7 @@ function makePublic(overrides: Partial<Record<string, unknown>> = {}) {
     };
 }
 
-function makeWallet(chainId: number = MINT_CHAIN.id, liveChainId: number = chainId) {
+function makeWallet(chainId: number = MAINNET_MINT.chain.id, liveChainId: number = chainId) {
     return {
         account: DEFAULT_TEST_ACCOUNT,
         chain: {id: chainId},
@@ -70,11 +72,64 @@ const asWallet = (client: unknown) => client as any;
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
 describe("where it mints", () => {
-    it("targets Base and the canonical registry, not ARP's own copy", () => {
-        // The whole point of this module. `rules/portability.md` rule 4: an identity in a registry
-        // ARP controls is a rehearsal prop, invisible to every other ERC-8004 reader.
-        expect(MINT_CHAIN.id).toBe(8453);
-        expect(MINT_REGISTRY).toBe("0x8004A169FB4a3325136EB29fA0ceB6D2e539a432");
+    it("on mainnet targets Base and the canonical registry, not ARP's own copy", () => {
+        // `rules/portability.md` rule 4: an identity in a registry ARP controls is a rehearsal
+        // prop, invisible to every other ERC-8004 reader. That is what testnet is for.
+        expect(MAINNET_MINT.chain.id).toBe(8453);
+        expect(MAINNET_MINT.registry).toBe("0x8004A169FB4a3325136EB29fA0ceB6D2e539a432");
+    });
+});
+
+describe("on testnet", () => {
+    it("the toggle picks ARP's registry on 13579, and mainnet keeps Base", () => {
+        expect(mintTargetFor(false)).toBe(TESTNET_MINT);
+        expect(TESTNET_MINT.chain.id).toBe(13579);
+        expect(TESTNET_MINT.registry).toBe("0xC165A2AD2E540A4069E02834009161E2b4490d5A");
+        expect(mintTargetFor(true)).toBe(MAINNET_MINT);
+        expect(mintTargetOf(13579)).toBe(TESTNET_MINT);
+        expect(mintTargetOf(8453)).toBe(MAINNET_MINT);
+        expect(() => mintTargetOf(1155)).toThrow(/no identity is minted on chain 1155/);
+    });
+
+    it("refuses a wallet on Base when the target is testnet, and mints on 13579 otherwise", async () => {
+        const onBase = makeWallet(MAINNET_MINT.chain.id);
+        await expect(
+            submitMint({
+                walletClient: asWallet(onBase),
+                publicClient: asPublic(makePublic()),
+                target: TESTNET_MINT,
+                agentUri: AGENT_URI,
+            }),
+        ).rejects.toMatchObject({code: "wrong-chain"});
+        expect(onBase.writeContract).not.toHaveBeenCalled();
+
+        const wallet = makeWallet(13579);
+        const client = makePublic({
+            waitForTransactionReceipt: vi.fn().mockResolvedValue({
+                logs: [
+                    registeredLog({
+                        agentId: 11n,
+                        to: DEFAULT_TEST_ADDRESS,
+                        address: TESTNET_MINT.registry,
+                    }),
+                ],
+            }),
+        });
+        const result = await submitMint({
+            walletClient: asWallet(wallet),
+            publicClient: asPublic(client),
+            target: TESTNET_MINT,
+            agentUri: AGENT_URI,
+        });
+        const sent = wallet.writeContract.mock.calls[0]?.[0];
+        expect(sent.address).toBe(TESTNET_MINT.registry);
+        expect(sent.chain.id).toBe(13579);
+        expect(result).toMatchObject({tokenId: "11", chainId: 13579});
+    });
+
+    it("reads the id only from the target's registry", () => {
+        const logs = [registeredLog({agentId: 7n, to: DEFAULT_TEST_ADDRESS})];
+        expect(tokenIdFromReceipt(logs, DEFAULT_TEST_ADDRESS, TESTNET_MINT.registry)).toBeNull();
     });
 });
 
@@ -83,6 +138,7 @@ describe("quoteMint", () => {
         const client = makePublic();
         const quote = await quoteMint({
             publicClient: asPublic(client),
+            target: MAINNET_MINT,
             owner: DEFAULT_TEST_ADDRESS,
             agentUri: AGENT_URI,
         });
@@ -104,6 +160,7 @@ describe("quoteMint", () => {
         await expect(
             quoteMint({
                 publicClient: asPublic(client),
+                target: MAINNET_MINT,
                 owner: DEFAULT_TEST_ADDRESS,
                 agentUri: AGENT_URI,
             }),
@@ -118,6 +175,7 @@ describe("quoteMint", () => {
         });
         const quote = await quoteMint({
             publicClient: asPublic(client),
+            target: MAINNET_MINT,
             owner: DEFAULT_TEST_ADDRESS,
             agentUri: AGENT_URI,
         });
@@ -134,6 +192,7 @@ describe("submitMint", () => {
             submitMint({
                 walletClient: asWallet(wallet),
                 publicClient: asPublic(client),
+                target: MAINNET_MINT,
                 agentUri: AGENT_URI,
             }),
         ).rejects.toMatchObject({code: "wrong-chain"});
@@ -145,12 +204,13 @@ describe("submitMint", () => {
         // The case the second check exists for: a client built for Base reports Base whatever the
         // wallet is doing, so `getChainId()` is the only answer that catches a user who switched
         // networks after the quote.
-        const wallet = makeWallet(MINT_CHAIN.id, 1155);
+        const wallet = makeWallet(MAINNET_MINT.chain.id, 1155);
         const client = makePublic();
         await expect(
             submitMint({
                 walletClient: asWallet(wallet),
                 publicClient: asPublic(client),
+                target: MAINNET_MINT,
                 agentUri: AGENT_URI,
             }),
         ).rejects.toMatchObject({code: "wrong-chain"});
@@ -165,13 +225,14 @@ describe("submitMint", () => {
         await submitMint({
             walletClient: asWallet(wallet),
             publicClient: asPublic(client),
+            target: MAINNET_MINT,
             agentUri: AGENT_URI,
         });
         expect(client.simulateContract).toHaveBeenCalledTimes(1);
         expect(wallet.writeContract).toHaveBeenCalledTimes(1);
         expect(wallet.writeContract.mock.calls[0]?.[0]).toMatchObject({
             functionName: "register",
-            address: MINT_REGISTRY,
+            address: MAINNET_MINT.registry,
         });
     });
 
@@ -180,10 +241,11 @@ describe("submitMint", () => {
         await submitMint({
             walletClient: asWallet(wallet),
             publicClient: asPublic(makePublic()),
+            target: MAINNET_MINT,
             agentUri: AGENT_URI,
         });
         const sent = wallet.writeContract.mock.calls[0]?.[0] as {chain: {id: number}};
-        expect(sent.chain.id).toBe(MINT_CHAIN.id);
+        expect(sent.chain.id).toBe(MAINNET_MINT.chain.id);
     });
 
     it("reports the id from the receipt, not the one the simulation predicted", async () => {
@@ -192,10 +254,11 @@ describe("submitMint", () => {
         const result = await submitMint({
             walletClient: asWallet(makeWallet()),
             publicClient: asPublic(makePublic()),
+            target: MAINNET_MINT,
             agentUri: AGENT_URI,
         });
         expect(result.tokenId).toBe("1137886");
-        expect(result.chainId).toBe(MINT_CHAIN.id);
+        expect(result.chainId).toBe(MAINNET_MINT.chain.id);
     });
 
     it("says the mint landed but the id is unknown, rather than guessing one", async () => {
@@ -208,6 +271,7 @@ describe("submitMint", () => {
             submitMint({
                 walletClient: asWallet(makeWallet()),
                 publicClient: asPublic(client),
+                target: MAINNET_MINT,
                 agentUri: AGENT_URI,
             }),
         ).rejects.toMatchObject({code: "no-id-in-receipt"});
@@ -220,7 +284,7 @@ describe("tokenIdFromReceipt", () => {
             registeredLog({agentId: 99n, to: DEFAULT_TEST_ADDRESS, address: OTHER}),
             registeredLog({agentId: 7n, to: DEFAULT_TEST_ADDRESS}),
         ];
-        expect(tokenIdFromReceipt(logs, DEFAULT_TEST_ADDRESS)).toBe("7");
+        expect(tokenIdFromReceipt(logs, DEFAULT_TEST_ADDRESS, MAINNET_MINT.registry)).toBe("7");
     });
 
     it("ignores a mint in the same transaction that belongs to somebody else", () => {
@@ -230,23 +294,33 @@ describe("tokenIdFromReceipt", () => {
             registeredLog({agentId: 99n, to: OTHER}),
             registeredLog({agentId: 7n, to: DEFAULT_TEST_ADDRESS}),
         ];
-        expect(tokenIdFromReceipt(logs, DEFAULT_TEST_ADDRESS)).toBe("7");
+        expect(tokenIdFromReceipt(logs, DEFAULT_TEST_ADDRESS, MAINNET_MINT.registry)).toBe("7");
     });
 
     it("matches the owner case-insensitively", () => {
         const logs = [registeredLog({agentId: 7n, to: DEFAULT_TEST_ADDRESS})];
-        expect(tokenIdFromReceipt(logs, DEFAULT_TEST_ADDRESS.toLowerCase() as Address)).toBe("7");
+        expect(
+            tokenIdFromReceipt(
+                logs,
+                DEFAULT_TEST_ADDRESS.toLowerCase() as Address,
+                MAINNET_MINT.registry,
+            ),
+        ).toBe("7");
     });
 
     it("returns null rather than throwing on a log this ABI cannot decode", () => {
         // The registry also emits ERC-721 `Transfer`, which this fragment does not carry. An
         // undecodable log is data about something else, not a failure.
-        const logs = [{address: MINT_REGISTRY, topics: [keccak256(toHex("Nope()"))], data: "0x"}];
-        expect(tokenIdFromReceipt(logs as never, DEFAULT_TEST_ADDRESS)).toBeNull();
+        const logs = [
+            {address: MAINNET_MINT.registry, topics: [keccak256(toHex("Nope()"))], data: "0x"},
+        ];
+        expect(
+            tokenIdFromReceipt(logs as never, DEFAULT_TEST_ADDRESS, MAINNET_MINT.registry),
+        ).toBeNull();
     });
 
     it("returns null for an empty receipt", () => {
-        expect(tokenIdFromReceipt([], DEFAULT_TEST_ADDRESS)).toBeNull();
+        expect(tokenIdFromReceipt([], DEFAULT_TEST_ADDRESS, MAINNET_MINT.registry)).toBeNull();
     });
 });
 
