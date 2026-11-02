@@ -5,7 +5,7 @@ import {useAccount, useSwitchChain} from "wagmi";
 
 import {Hint} from "../brand/Hint";
 import {useDeclareUse} from "../../hooks/use-declare-use";
-import {useChainChoice, type ChainChoice} from "../../lib/chain-choice";
+import {useChainChoice, useSetChain, type ChainChoice} from "../../lib/chain-choice";
 import {controlClass, linkClass, primaryControlClass} from "../../lib/control-class";
 import {actionHeadingClass, cardClass, primaryActionCardClass} from "../../lib/surface-class";
 import {
@@ -132,14 +132,13 @@ export function DeclareUse({
         // screenshotted, by the reviewer.
         //
         // Said before the form rather than after a click, because a reader who fills a field and
-        // connects a wallet to learn it was pointless has been wasted. But one quiet sentence is
-        // the whole of what that is worth.
-        return (
-            <p className="mb-10 border-b border-[color:var(--color-rule)] pb-6 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
-                Declaring a use is not open on {chain.label} yet. Switch the chain to the testnet to
-                write it there.
-            </p>
-        );
+        // connects a wallet to learn it was pointless has been wasted.
+        //
+        // **A label and the switch, not a sentence** (task 46, the user's call on 2026-11-02 for the
+        // skill, atom and agent pages at once). It was "Declaring a use is not open on Mainnet yet.
+        // Switch the chain to the testnet to write it there." — an instruction the button now
+        // carries out.
+        return <TestnetOnly label={chain.label} />;
     }
 
     return (
@@ -518,6 +517,21 @@ function Field({
                     {value}
                 </a>
             )}
+        </div>
+    );
+}
+
+/** The mainnet branch: what is not open here, and the one control that opens it. */
+function TestnetOnly({label}: {label: string}) {
+    const setMainnet = useSetChain();
+    return (
+        <div className="mb-10 flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-[color:var(--color-rule)] pb-6">
+            <span className="font-mono text-[length:var(--text-label)] uppercase tracking-wider text-[color:var(--color-steel)]">
+                {`Declaring a use · not on ${label}`}
+            </span>
+            <button type="button" onClick={() => setMainnet(false)} className={controlClass}>
+                Switch to testnet
+            </button>
         </div>
     );
 }

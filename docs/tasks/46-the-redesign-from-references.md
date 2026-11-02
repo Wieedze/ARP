@@ -32,6 +32,9 @@ the Mobbin references behind each one, were published to the user that day.
 | The giant `ARP` footer wordmark (46f) | **keep it**: _« le arp du pied de page je l'adore »_. 46f is dropped |
 | `/activity` (46c) | **not one table yet**. The user is unsure the page should show the connected wallet's profits, and wants a clear visual line between the activity of *our* agents and tools and the global activity. Mockups first |
 | `/activity` mockups | **variant A**, two tabs Yours / Everyone: _« le recommandé c'est le mieux »_ |
+| The agent page on a phone | **Identity before the tabs** (_« avant »_). Desktop unchanged |
+| The mainnet "Declaring a use is not open…" sentence | **treat it on all three pages** (_« oui »_): a label and a "Switch to testnet" button in `DeclareUse` |
+| Publishing | **a PR** to `dev` (_« ouvre une PR »_) |
 
 ## 3. 46a — `/tools` pages its list (built)
 
