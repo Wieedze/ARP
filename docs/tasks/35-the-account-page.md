@@ -1,12 +1,29 @@
 # Task 35 — The account page: delegations and settings
 
-**Status:** **PLAN**, 2026-10-30. Not started.
+**Status:** **BUILT, NOT VERIFIED**, 2026-11-02, on `feat/35-account-page`. Completion note at the
+end; `ui-reviewer` and `task-verifier` have not run.
 **Required skills:** `mms-smart-accounts-kit` (read `references/delegations.md` first, on revocation).
 **Rules:** `code.md`, `ui.md`, `metamask-delegation.md`, `security.md`, `portability.md`, `claims.md`,
 `workflow.md`.
 **Reviewers:** `ui-reviewer`, then `task-verifier`.
 
 ---
+
+## 0. Amendment, 2026-10-30 — the user's decisions, which this task now carries
+
+The user, on `/profile`, `/rig` and the wallet menu (session arp-63, 2026-10-30):
+
+- **A wallet menu.** The wallet button opens a menu: copy the address, **Account** (opens
+  `/account`), disconnect. _« un bouton account dans le menu wallet (copy wallet, disconnect et
+  setting) pour permettre la gestion des délégations »_.
+- **`/profile` goes.** What it shows (positions on atoms and on triples, net of withdrawals) moves
+  into `/activity`, per this task's own split. Then `/profile` and the `/me` redirect are removed.
+  _« profile j'ai l'impression que ça sert à rien »_.
+- **`/rig` goes.** Its steps 1-2 are superseded by `/agent`. Steps 3-4 (signing a delegation with
+  ARP's caveats) are the only UI that signs one, and they move into `/account`. Then `/rig` and its
+  page (`apps/web/src/pages/AgentRegister.tsx`) are removed. _« /rig sert plus à rien ? »_.
+- Delegations are listed through task 37a's discovery read (merged with task 40). On testnet,
+  publication is sponsored (ADR `0092`).
 
 ## 1. Why
 
@@ -103,3 +120,30 @@ calls the hook.
 `docs/12` point 5 makes the signed delegation "the guard rail". An operator who cannot see or revoke
 one has a guard rail they cannot inspect. This page makes the **staked** rung's bound visible and
 revocable. It does not move a claim up a rung.
+
+## 8. Completion note, 2026-11-02 (not yet verified)
+
+On `feat/35-account-page`. ADR `0100`. §0 supersedes three sentences above: §1's "this task does not
+touch `/profile` or `/activity`", §3.3's "`/rig` keeps its first-run flow", and §5's first bullet.
+
+- **Wallet menu**: copy address, Account, Disconnect (`apps/web/src/components/WalletConnect.tsx`).
+- **`/account`** (`apps/web/src/pages/AccountPage.tsx`): wallet and Smart Account with the chain
+  toggle; one row per stored delegation with delegate, decoded caveats, signing time and on-chain
+  state (`readDelegationState`, three values); Revoke behind a confirmation naming 13579; Export;
+  the caveat form (`components/account/DelegationForm.tsx`); each delegate's balance.
+- **Revocation** is a one-shot `ExactExecution` + `LimitedCalls(1)` delegation redeemed by the
+  operator's wallet (`services/delegation-revoke.ts`), because `disableDelegation` must come from
+  the Smart Account and no bundler is wired (ADR `0100`).
+- **Storage** is a list per Smart Account (`services/delegation-store.ts`, `arp.delegations.v3`); a
+  `v2` entry migrates once.
+- **Removed**: `/profile`, `/me`, `/rig`, `pages/Profile.tsx`, `pages/AgentRegister.tsx`,
+  `useTotalAgents`, `serializeDelegation`/`deserializeDelegation`, the "Invest" nav link. The
+  positions are `components/activity/Positions.tsx` on `/activity`.
+
+**Not done:**
+
+- **Listing through 37a's discovery read.** `discoverDelegations` is not built (`docs/tasks/37` §7),
+  and `apps/sponsor`'s `/publish` answers 503, so every row says "local only" and nothing is
+  published. Only 37a's `isDisabled` half exists, as `readDelegationState`.
+- **Funding the runtime** from this page: `fundAndApproveRuntime` needs the runtime's key (§5).
+- `ui-reviewer`, `task-verifier`, a post-mortem, and a walk on 13579.

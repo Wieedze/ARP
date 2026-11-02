@@ -1,58 +1,49 @@
 import {useState} from "react";
-import {useChainChoice} from "../lib/chain-choice";
 import {Link} from "react-router-dom";
 import {useAccount} from "wagmi";
 
-import {Sparkline} from "../components/Sparkline";
-import {CurveControl} from "../components/tool/ToolCatalogControls";
-import {useProfile} from "../hooks/use-profile";
-import {linkClass} from "../lib/control-class";
-import type {ProfileView} from "../services/account-profile";
-import {formatTrust, truncateMiddle} from "../services/trust-format";
+import {useProfile} from "../../hooks/use-profile";
+import {useChainChoice} from "../../lib/chain-choice";
+import {linkClass} from "../../lib/control-class";
+import type {ProfileView} from "../../services/account-profile";
+import {formatTrust} from "../../services/trust-format";
+import {Sparkline} from "../Sparkline";
+import {CurveControl} from "../tool/ToolCatalogControls";
 
 /**
- * Your own page (`/me`).
+ * The connected wallet's positions, on `/activity`. They were `/profile` ("Your positions"), which
+ * the user removed (2026-10-30, `docs/tasks/35` §0): what an operator holds is something that
+ * happened, so it sits with the rest of what happened, and `/account` keeps only what was
+ * authorised.
  *
- * What the chain says you did, and **no score**. ARP composes none (ADR `0046`), and an account page
- * is the most tempting place to invent one — "your reputation: 72" would be a number ARP made up
- * about a person, which is the whole thing this protocol exists not to do.
+ * What the chain says you did, and **no score**. ARP composes none (ADR `0046`).
  *
  * Two readings kept apart, because they are two different acts (ADR `0039`): a deposit on an **atom**
- * prices the tool, a deposit on a **triple** backs somebody's claim about it. "Your positions" as one
- * number would cover two unrelated statements.
+ * prices the tool, a deposit on a **triple** backs somebody's claim about it.
  *
- * The figure that leads is **net** — deposited minus redeemed — because that is what you are still
- * standing behind. A page leading with "deposited" would flatter anyone who has since withdrawn.
+ * The figure that leads is **net**, deposited minus redeemed, because that is what you are still
+ * standing behind. Leading with "deposited" would flatter anyone who has since withdrawn.
  */
-export function Profile() {
+const LABEL = "font-mono text-[10px] uppercase tracking-[0.06em] text-[color:var(--color-steel)]";
+
+export function Positions() {
     const {address, isConnected} = useAccount();
     const [curveId, setCurveId] = useState(1);
     const query = useProfile(address, curveId);
 
     return (
-        <section>
-            <header className="mt-8 mb-10 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-3">
-                <div>
-                    {/* Not `--text-display`: the net figure below uses it, and two elements at the
-                        page's largest size means neither leads. `docs/05` reserves the display size
-                        for one hero moment, and on this page that is the money. */}
-                    <h1 className="text-[length:var(--text-body)] font-semibold tracking-tight">
-                        Your positions
-                    </h1>
-                    <p className="mt-2 max-w-[64ch] text-[color:var(--color-steel)]">
-                        {isConnected ? (
-                            <>
-                                <span className="font-mono">{truncateMiddle(address ?? "")}</span>
-                            </>
-                        ) : (
-                            "Connect a wallet to see what you hold."
-                        )}
-                    </p>
-                </div>
+        <div className="mb-14">
+            <div className="mb-4 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-3">
+                <h2 className={LABEL} id="activity-positions">
+                    Positions
+                </h2>
                 {isConnected ? <CurveControl curveId={curveId} onChange={setCurveId} /> : null}
-            </header>
-
-            {!isConnected ? null : query.isPending ? (
+            </div>
+            {!isConnected ? (
+                <p className="border-t border-[color:var(--color-rule)] py-3 font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
+                    Connect a wallet to see what it holds.
+                </p>
+            ) : query.isPending ? (
                 <p aria-live="polite" aria-busy className="text-[color:var(--color-steel)]">
                     Reading your positions…
                 </p>
@@ -64,13 +55,13 @@ export function Profile() {
                     </p>
                 </div>
             ) : (
-                <Positions view={query.data} />
+                <PositionsView view={query.data} />
             )}
-        </section>
+        </div>
     );
 }
 
-function Positions({view}: {view: ProfileView}) {
+function PositionsView({view}: {view: ProfileView}) {
     const chain = useChainChoice();
     if (view.termsHeld === 0 && view.curve.length === 0) {
         return (

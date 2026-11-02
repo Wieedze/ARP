@@ -348,6 +348,8 @@ wait for it unless one misleads a reader before then.
     (two naming the script, two pointing at it as "the setup script" and "the equivalent script").
     The check, run from the repo root:
     `grep -rn "approve-sa" --exclude-dir=node_modules --exclude-dir=worktrees --exclude=28-coherence-audit.md .`
-    prints one line, `.claude/choices/0033-the-hackathon-surface-is-set-aside.md:44` — ADR `0033`'s
-    list of what was set aside, append-only and historically true, so left. This file is excluded
-    because this entry names the script three times itself.
+    prints two lines, both append-only and historically true, so left:
+    `.claude/choices/0033-the-hackathon-surface-is-set-aside.md:44` — ADR `0033`'s list of what was
+    set aside — and `.claude/learning/29-coherence-audit-28d.md:10` — this fix's own post-mortem,
+    recording the copy it removed. This file is excluded because this entry names the script three
+    times itself. (It said "prints one line" until 2026-10-30; the post-mortem's line was missed.)

@@ -109,4 +109,17 @@ describe("the activity page", () => {
         expect(screen.getByText(/arp-session-log --serve/)).toBeTruthy();
         expect(screen.getByText("No feed configured")).toBeTruthy();
     });
+
+    it("carries the positions /profile used to show, and asks for a wallet without one", () => {
+        const feed = new AgentFeed(new ActivityLog(), {
+            url: undefined,
+            open: () => {
+                throw new Error("unused");
+            },
+            readReceipt: async () => null,
+        });
+        renderWithProviders(<ActivityPage feed={feed} />);
+        expect(screen.getByRole("heading", {name: "Positions"})).toBeTruthy();
+        expect(screen.getByText("Connect a wallet to see what it holds.")).toBeTruthy();
+    });
 });
