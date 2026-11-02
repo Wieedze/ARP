@@ -67,6 +67,11 @@ export type LoopConfig = {
   stateDir: string;
   /** Where to install a fetched skill so the runtime can invoke it, or nothing. */
   skillsDir?: string;
+  /**
+   * The project's receipts file, which the hook reads to name the atom of a skill it sees invoked
+   * (`apps/hook/src/hook.ts`, `fetchedRefs`). Written with `skillsDir`, never without.
+   */
+  projectReceipts?: string;
   /** How long to wait for the indexer to see a new identity, in ms. */
   indexerWaitMs?: number;
   sleep?: (ms: number) => Promise<void>;
@@ -145,6 +150,11 @@ export async function getSkill(config: LoopConfig, agent: AgentSender, atom: Hex
   const dir = join(config.skillsDir, ref.skill);
   mkdirSync(dir, { recursive: true });
   writeFileSync(join(dir, 'SKILL.md'), bytes);
+  if (config.projectReceipts !== undefined) {
+    mkdirSync(join(config.projectReceipts, '..'), { recursive: true });
+    const at = new Date(signed.receipt.servedAt * 1000).toISOString();
+    appendFileSync(config.projectReceipts, `${JSON.stringify({ skill: ref.skill, atom: signed.receipt.atom, url: signed.receipt.url, at, receipt: signed })}\n`);
+  }
   return { ...served, installedAt: join(dir, 'SKILL.md') };
 }
 
