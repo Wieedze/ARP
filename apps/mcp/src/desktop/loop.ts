@@ -61,6 +61,8 @@ export type LoopConfig = {
   sponsorUrl: string;
   /** ARP's ERC-8004 registry on 13579. */
   registry: Address;
+  /** Intuition's MultiVault on 13579, from this repo's deployment record, never from the sponsor. */
+  multiVault: Address;
   /** `~/.arp`. */
   stateDir: string;
   /** How long to wait for the indexer to see a new identity, in ms. */
@@ -186,7 +188,11 @@ export async function declareUsed(config: LoopConfig, agent: AgentSender, atom: 
   }
 
   const info = await json(await (config.fetch ?? fetch)(config.sponsorUrl));
-  const multiVault = getAddress(String(info['multiVault']));
+  // The record's address, not the sponsor's: a wrong sponsor endpoint must not redirect the approval.
+  const multiVault = getAddress(config.multiVault);
+  if (String(info['multiVault']).toLowerCase() !== multiVault.toLowerCase()) {
+    throw new Error(`the sponsor names MultiVault ${String(info['multiVault'])}, not ${multiVault}`);
+  }
   // The one approval this key signs, built here: the sponsor's answer to /gas does not choose it.
   const approval = { to: multiVault, data: encodeApproveDeposit(getAddress(String(info['sponsor']))) };
   const termId = await agent.client.readContract({

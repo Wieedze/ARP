@@ -8,7 +8,7 @@ import { join } from 'node:path';
 
 import { getAddress, type Hex } from 'viem';
 
-import { CONTENT_URL, RPC, SPONSOR_URL, record } from '../config.js';
+import { CONTENT_URL, MULTI_VAULT, RPC, SPONSOR_URL, record } from '../config.js';
 import { type JsonRpcId, fail, text } from '../rpc.js';
 import { agentKeyPath, agentSender, loadOrCreateAgentKey, type AgentSender } from './agent-key.js';
 import { declareUsed, getSkill, type LoopConfig } from './loop.js';
@@ -18,7 +18,7 @@ let agent: AgentSender | undefined;
 function config(): LoopConfig {
   const registry = record.arp?.identityRegistry;
   if (typeof registry !== 'string') throw new Error('this chain has no ARP identity registry');
-  return { contentUrl: CONTENT_URL, sponsorUrl: SPONSOR_URL, registry: getAddress(registry), stateDir: join(homedir(), '.arp') };
+  return { contentUrl: CONTENT_URL, sponsorUrl: SPONSOR_URL, registry: getAddress(registry), multiVault: getAddress(MULTI_VAULT), stateDir: join(homedir(), '.arp') };
 }
 
 function agentFor(): AgentSender {

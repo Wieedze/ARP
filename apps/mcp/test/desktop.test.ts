@@ -141,6 +141,7 @@ group('the loop a new agent walks', () => {
       contentUrl: 'http://content.test',
       sponsorUrl: 'http://sponsor.test',
       registry: REGISTRY,
+      multiVault: MULTI_VAULT,
       stateDir: join(dir, '.arp'),
       sleep: async () => {},
       fetch: fake,
@@ -178,6 +179,7 @@ group('the loop a new agent walks', () => {
       contentUrl: 'http://content.test',
       sponsorUrl: 'http://sponsor.test',
       registry: REGISTRY,
+      multiVault: MULTI_VAULT,
       stateDir: join(dir, '.arp'),
       sleep: async () => {},
       fetch: services(agent.address, undefined, encodeApproveDeposit(stranger)).fake,
@@ -187,12 +189,28 @@ group('the loop a new agent walks', () => {
     expect(sent.map((call) => call.to)).toEqual([REGISTRY]);
   });
 
+  it('refuses a sponsor that names another MultiVault', async () => {
+    const agent = fakeAgent([]);
+    const config: LoopConfig = {
+      contentUrl: 'http://content.test',
+      sponsorUrl: 'http://sponsor.test',
+      registry: REGISTRY,
+      multiVault: getAddress('0x000000000000000000000000000000000000bEEF'),
+      stateDir: join(dir, '.arp'),
+      sleep: async () => {},
+      fetch: services(agent.address).fake,
+    };
+    await getSkill(config, agent, ATOM);
+    await expect(declareUsed(config, agent, ATOM)).rejects.toThrow(/names MultiVault/);
+  });
+
   it('refuses to declare a skill that was not served through ARP', async () => {
     const agent = fakeAgent([]);
     const config: LoopConfig = {
       contentUrl: 'http://content.test',
       sponsorUrl: 'http://sponsor.test',
       registry: REGISTRY,
+      multiVault: MULTI_VAULT,
       stateDir: join(dir, '.arp'),
       fetch: services(agent.address).fake,
     };
@@ -205,6 +223,7 @@ group('the loop a new agent walks', () => {
       contentUrl: 'http://content.test',
       sponsorUrl: 'http://sponsor.test',
       registry: REGISTRY,
+      multiVault: MULTI_VAULT,
       stateDir: join(dir, '.arp'),
       fetch: services(privateKeyToAccount(generatePrivateKey()).address).fake,
     };

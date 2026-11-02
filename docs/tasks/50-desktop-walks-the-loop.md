@@ -162,4 +162,8 @@ compte … l'agent garde encore une fois les positions ».
   to another address signed. The issue was latent: localhost, testnet. Now the loop builds the two calls
   itself, `register()` and the approval of the sponsor's address, and `refusal` accepts those exactly.
   A test shows a `redeem` and an approval to a stranger refused.
+- **The MultiVault comes from the deployment record**, `data/deployments/13579.json`, and the loop
+  refuses a sponsor whose `GET /` names another (task-verifier, second pass, non-blocking).
+- **Known limit:** waiting for the indexer depends on the sponsor's error text, "no identity atom on
+  the graph". If that wording changes, the first declaration fails instead of waiting.
 - **Not yet:** a content server online. Both servers are local for now (user, 2026-11-02).
