@@ -20,6 +20,7 @@ import {
 import { signDelegation } from '@metamask/smart-accounts-kit';
 import {
   decodeFunctionData,
+  getAddress,
   keccak256,
   parseAbi,
   stringToBytes,
@@ -216,10 +217,18 @@ function sponsor(w: World, over: Partial<Parameters<typeof createSponsor>[0]> = 
   });
 }
 
-async function hireProof(paid = 5n * MILLI, by = CALLEE, agentId = '8'): Promise<SponsorProof> {
+/** A `ReceiptEnforcer` deployment: a receipt signed for it is not one signed for the service. */
+const ENFORCER: Address = getAddress('0x00000000000000000000000000000000000e4f04');
+
+async function hireProof(
+  paid = 5n * MILLI,
+  by = CALLEE,
+  agentId = '8',
+  verifier: Address = SPONSOR,
+): Promise<SponsorProof> {
   const receipt = await signHireReceipt(
     {
-      version: 1,
+      version: 2,
       agentRegistry: REGISTRY,
       agentId,
       requester: AGENT.address,
@@ -227,9 +236,11 @@ async function hireProof(paid = 5n * MILLI, by = CALLEE, agentId = '8'): Promise
       paid: paid.toString(),
       requestHash: hireDigest({ q: 1 }),
       resultHash: hireDigest({ a: 1 }),
-      issuedAt: 1_793_000_000,
+      issuedAt: Math.floor(NOW / 1000) - 60,
+      termId: TERM,
+      expiresAt: Math.floor(NOW / 1000) + 3_600,
     },
-    CHAIN,
+    { chainId: CHAIN, verifyingContract: verifier },
     { address: by.address, signTypedData: (data) => by.signTypedData(data) },
   );
   // Through JSON, as the service receives it: bigints become strings and nothing else changes.
@@ -279,12 +290,14 @@ describe('GET /', () => {
     const info = (await response.json()) as {
       chainId: number;
       sponsor: string;
+      receiptVerifier: string;
       limits: Record<string, unknown>;
       approve: { kind: string };
       publish: string;
     };
     expect(info.chainId).toBe(CHAIN);
     expect(info.sponsor).toBe(SPONSOR);
+    expect(info.receiptVerifier).toBe(SPONSOR);
     expect(info.limits.withdrawalThresholdBps).toBe('unset');
     expect(info.limits.belowProofCost).toBe(false);
     expect(info.limits.pendingSends).toBe(0);
@@ -301,6 +314,18 @@ describe('POST /deposit', () => {
     ...fakeReads(w),
     tripleId: async (s: Hex, p: Hex, o: Hex) =>
       s === SUBJECT && p === USES && o === SUBJECT ? TERM : keccak256(`0x${s.slice(2)}`),
+  });
+
+  test('refuses, and sends nothing, a hire receipt signed for the enforcer rather than this service', async () => {
+    const w = world();
+    const res = await call(
+      sponsor(w),
+      '/deposit',
+      await depositBody(await hireProof(5n * MILLI, CALLEE, '8', ENFORCER)),
+    );
+    expect(res.status).toBe(403);
+    expect(res.body.error).toMatch(/is for verifier/);
+    expect(w.sent).toHaveLength(0);
   });
 
   test("refuses a hire of the requester's own agent through its agentWallet", async () => {

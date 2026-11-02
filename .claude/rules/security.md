@@ -46,17 +46,22 @@ Walk through each item for every contract change. Document the result (clean pas
   (`packages/protocol/src/hire-receipt.ts`, ADR `0083`); the agent's sponsor request
   (`packages/protocol/src/sponsor/request.ts`, ADR `0096`); and `ReceiptEnforcer`
   (`contracts/src/enforcers/ReceiptEnforcer.sol`, task 43, not deployed), which verifies that hire
-  receipt on chain. Both receipts and the sponsor request carry no verifying contract. For the
+  receipt on chain. The content receipt and the sponsor request carry no verifying contract. For the
   content receipt the cause still holds: no contract checks it. The sponsor request's nonce is the
-  proof it is bound to, which the service spends once. **For the hire receipt the cause stopped
-  holding on 2026-10-30**: `ReceiptEnforcer` checks it, against the v1 domain as signed, so the
-  signature names no verifier and a receipt consumed there can be sponsored again at a second
-  verifier. That is a deviation from the bullet above, rated Medium, and whether to accept it or move
-  to a v2 receipt that names its verifier is an open decision in ADR `0098`. A new signature site
+  proof it is bound to, which the service spends once. **The hire receipt names its verifier since
+  v2** (task 44, user decision 2026-10-30, ADR `0098`, ADR `0101`): its domain carries
+  `verifyingContract`, and each verifier accepts only a receipt that names it — `ReceiptEnforcer`
+  its own address, `apps/sponsor` its sponsoring account — so one receipt unlocks one sponsorship,
+  at the verifier it names. One payment gets one receipt only as far as the signing node's ledger
+  holds: a node that signs two receipts for one payment, naming two verifiers, gets both used.
+  The v1 receipt, which named no verifier, still verifies in `hire-receipt.ts` and is accepted by
+  neither. From 2026-10-30 until task 44 the enforcer checked v1, which was a deviation from the
+  bullet above rated Medium (`SECURITY_REVIEW.md` INFO-R1, now closed). A new signature site
   gets checked against the bullet above before it ships. The list said three until 2026-10-30, and
   the two receipts were missing from it; it said five until the sponsor request was added the same
   day (ADR `0096`), and six, with "no contract checks them" of both receipts, until the enforcer was
-  added the same day (ADR `0098`).
+  added the same day (ADR `0098`). It said the hire receipt carried no verifying contract until
+  task 44.
 
 ### Oracles / external data
 

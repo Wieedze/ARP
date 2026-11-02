@@ -1,6 +1,6 @@
 import {getAddress, type Address, type Hex} from "viem";
 
-import {verifyHireReceipt, type SignedHireReceipt} from "../hire-receipt.js";
+import {hireReceiptIsFor, verifyHireReceipt, type AnySignedHireReceipt} from "../hire-receipt.js";
 import {corroborationOf, verifyContentReceipt, type SignedContentReceipt} from "../receipt.js";
 
 /**
@@ -9,7 +9,7 @@ import {corroborationOf, verifyContentReceipt, type SignedContentReceipt} from "
  * | kind      | what it is                                                      | strength |
  * | --------- | --------------------------------------------------------------- | -------- |
  * | `hire`    | the agent paid another agent on chain, and that agent's node    | strong   |
- * |           | signed the hire receipt (`hire-receipt.ts`)                     |          |
+ * |           | signed a v2 hire receipt naming this service (`hire-receipt.ts`)  |          |
  * | `content` | ARP's node served the agent a tool's bytes and signed for it    | access   |
  * |           | (`receipt.ts`)                                                  |          |
  *
@@ -28,7 +28,7 @@ import {corroborationOf, verifyContentReceipt, type SignedContentReceipt} from "
  * the per-agent daily count and the daily budget (`limits.ts`).
  */
 export type SponsorProof =
-    | {kind: "hire"; receipt: SignedHireReceipt}
+    | {kind: "hire"; receipt: AnySignedHireReceipt}
     | {kind: "content"; receipt: SignedContentReceipt};
 
 /** Who may sign as an ERC-8004 agent: the token's holder, or the `agentWallet` it set. */
@@ -99,6 +99,16 @@ export type ProofCheckContext = {
     acceptedRegistries: readonly string[];
     /** Reads the hired agent's keys, so the receipt's signer is checked to be that agent. */
     agents: AgentKeyReads;
+    /**
+     * This service's own verifier address. A hire receipt is accepted only when it is v2 and names
+     * this address as `verifyingContract`, so a receipt signed for `ReceiptEnforcer` (or for another
+     * service) unlocks nothing here and one payment is sponsored at one verifier (task 44).
+     */
+    receiptVerifier: Address;
+    /** The term the deposit is on. A hire receipt is accepted only for that term. */
+    termId: Hex;
+    /** Unix seconds, the clock a receipt's `expiresAt` is read against. */
+    now: number;
 };
 
 const REGISTRY = /^eip155:([1-9][0-9]*):(0x[0-9a-fA-F]{40})$/;
@@ -144,13 +154,18 @@ function refused(reason: string): ProofVerdict {
 }
 
 async function checkHire(
-    signed: SignedHireReceipt,
+    signed: AnySignedHireReceipt,
     context: ProofCheckContext,
 ): Promise<ProofVerdict> {
     const verdict = await verifyHireReceipt(signed);
     if (verdict.status === "malformed") return refused(`hire receipt: ${verdict.reason}`);
     if (verdict.status === "mismatch") return refused("hire receipt: signature does not match");
+    const forUs = hireReceiptIsFor(signed, context.receiptVerifier, context.now);
+    if (!forUs.ok) return refused(`hire receipt: ${forUs.reason}`);
     const {receipt} = signed;
+    if (receipt.version !== 2 || receipt.termId.toLowerCase() !== context.termId.toLowerCase()) {
+        return refused(`hire receipt is not for term ${context.termId}`);
+    }
     const receiver = getAddress(context.receiver);
     const callee = verdict.signer;
     if (signed.chainId !== context.chainId) {

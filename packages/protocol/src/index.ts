@@ -576,21 +576,30 @@ export {
 
 /**
  * The receipt an agent's node signs when it is hired — EIP-712, the agent named the way ERC-8004
- * names it, the payment as the nonce. `apps/node` signs it, `scripts/demo/demo-hire.ts` verifies it.
+ * names it, the payment as the nonce, and (v2, task 44) the one verifier it is for. `apps/node`
+ * signs it; `ReceiptEnforcer`, `apps/sponsor` and `scripts/demo/demo-hire.ts` verify it.
  */
 export {
     HIRE_RECEIPT_TYPES,
+    HIRE_RECEIPT_V1_TYPES,
     HIRE_RECEIPT_VERSION,
     hireDigest,
     hireReceiptDomain,
+    hireReceiptIsFor,
     hireReceiptMatches,
     hireReceiptTypedData,
+    hireReceiptV1Domain,
+    hireReceiptV1TypedData,
     signHireReceipt,
     verifyHireReceipt,
+    type AnySignedHireReceipt,
     type HireReceipt,
+    type HireReceiptFields,
     type HireReceiptSigner,
+    type HireReceiptV1,
     type HireReceiptVerdict,
     type SignedHireReceipt,
+    type SignedHireReceiptV1,
 } from "./hire-receipt.js";
 
 /**

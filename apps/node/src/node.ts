@@ -25,8 +25,11 @@
  *  `handle(payload, context)`. Without one the node echoes, which is enough to prove the protocol
  *  and proves nothing about an agent.
  *
- *  **The receipt is EIP-712** (`@arp-protocol/core`, `hire-receipt.ts`): the payment's chain in the
- *  domain, the agent as ERC-8004 names it (`AGENT_REGISTRY` + `AGENT_ID`), the payment as the nonce.
+ *  **The receipt is EIP-712, v2** (`@arp-protocol/core`, `hire-receipt.ts`): the payment's chain
+ *  and the one verifier the requester names (`verifier` in `POST /task`) in the domain, the agent as
+ *  ERC-8004 names it (`AGENT_REGISTRY` + `AGENT_ID`), the term the requester will deposit on
+ *  (`termId`), the payment as the nonce, and an `expiresAt` of `AGENT_NODE_RECEIPT_TTL` seconds
+ *  (default a day) after issuance. One payment, one receipt, one verifier (task 44).
  *
  *  **One payment, one job.** Every accepted payment is appended to `AGENT_NODE_LEDGER`
  *  (`.arp/node-payments.jsonl` by default) and refused the second time — `task.ts`.
@@ -77,6 +80,7 @@ const LIMITS: NodeLimits = {
   maxBodyBytes: positive('AGENT_NODE_MAX_BODY_BYTES', DEFAULT_LIMITS.maxBodyBytes),
   handlerTimeoutMs: positive('AGENT_NODE_HANDLER_TIMEOUT_MS', DEFAULT_LIMITS.handlerTimeoutMs),
   requestsPerMinute: positive('AGENT_NODE_RATE_LIMIT', DEFAULT_LIMITS.requestsPerMinute),
+  receiptTtlSeconds: positive('AGENT_NODE_RECEIPT_TTL', DEFAULT_LIMITS.receiptTtlSeconds),
 };
 
 const rpcUrl = process.env.INTUITION_RPC_URL ?? process.env.INTUITION_TESTNET_RPC_URL;

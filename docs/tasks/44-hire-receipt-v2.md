@@ -1,8 +1,11 @@
 # Task 44 — Hire receipt v2: the receipt names the contract that verifies it
 
-**Status:** **PLAN**, 2026-10-30. Not started. After task 39 is merged into `dev` (both touch
-`apps/node`). Task 43's `ReceiptEnforcer` is then aligned on v2.
-**ADR:** `0094`, `0083` (the v1 receipt), and task 43's ADR.
+**Status:** **IMPLEMENTED, not yet verified**, 2026-11-02, branch `feat/44-hire-receipt-v2`. ADR
+`0101` records the shape; ADR `0098`'s open decision is answered (v2). `contract-reviewer`
+on the enforcer change: **PASS**, 2026-11-02 (`contracts/SECURITY_REVIEW.md`, "Task 44: v2 receipt").
+Next: `task-verifier`. (Was: **PLAN**, 2026-10-30,
+after task 39; task 43's `ReceiptEnforcer` then aligned on v2.)
+**ADR:** `0094`, `0083` (the v1 receipt), task 43's ADR `0098`, and this task's `0101`.
 **Rules:** `code.md`, `security.md` (signature replay), `claims.md`, `workflow.md`.
 **Reviewers:** `contract-reviewer` (for the enforcer side), then `task-verifier`.
 

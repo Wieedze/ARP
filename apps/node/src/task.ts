@@ -110,12 +110,15 @@ export type NodeLimits = {
   handlerTimeoutMs: number;
   /** `POST /task` requests per client per minute, paid or not. */
   requestsPerMinute: number;
+  /** Seconds a receipt stays usable after it is issued: its signed `expiresAt` is `issuedAt` plus this. */
+  receiptTtlSeconds: number;
 };
 
 export const DEFAULT_LIMITS: NodeLimits = {
   maxBodyBytes: 64 * 1024,
   handlerTimeoutMs: 60_000,
   requestsPerMinute: 30,
+  receiptTtlSeconds: 86_400,
 };
 
 export type NodeOptions = {
@@ -133,7 +136,19 @@ export type NodeOptions = {
   now?: () => number;
 };
 
-type TaskBody = { paymentTxHash?: unknown; requesterAddress?: unknown; payload?: unknown };
+/**
+ * `verifier` and `termId` are what the v2 receipt names (task 44): the one verifier the requester
+ * will present it to — `ReceiptEnforcer`'s address, or the sponsoring service's `receiptVerifier` —
+ * and the term it will deposit on. The node signs what it is asked; it is the verifier that refuses
+ * a receipt naming someone else.
+ */
+type TaskBody = {
+  paymentTxHash?: unknown;
+  requesterAddress?: unknown;
+  verifier?: unknown;
+  termId?: unknown;
+  payload?: unknown;
+};
 
 const TX_HASH = /^0x[0-9a-fA-F]{64}$/;
 const RATE_WINDOW_MS = 60_000;
@@ -280,6 +295,19 @@ export function createNode(options: NodeOptions): {
       if (typeof requester !== 'string' || !isAddress(requester)) {
         return json({ error: 'requesterAddress must be an address' }, 400);
       }
+      const { verifier, termId } = body;
+      if (typeof verifier !== 'string' || !isAddress(verifier)) {
+        return json(
+          { error: 'verifier must be the address the receipt is for (an enforcer or a service)' },
+          400,
+        );
+      }
+      if (typeof termId !== 'string' || !TX_HASH.test(termId)) {
+        return json(
+          { error: 'termId must be the 32-byte term the requester will deposit on' },
+          400,
+        );
+      }
       const payment = hash as Hex; // The regex above is the 0x + 64 hex check `Hex` stands for.
 
       const spentError = () =>
@@ -312,6 +340,7 @@ export function createNode(options: NodeOptions): {
         return json({ error: `handler failed: ${String(error).slice(0, 300)}` }, 500);
       }
 
+      const issuedAt = Math.floor(now() / 1000);
       const receipt: HireReceipt = {
         version: HIRE_RECEIPT_VERSION,
         agentRegistry: identity?.agentRegistry ?? '',
@@ -321,7 +350,9 @@ export function createNode(options: NodeOptions): {
         paid: verified.paid.toString(),
         requestHash,
         resultHash,
-        issuedAt: Math.floor(now() / 1000),
+        issuedAt,
+        termId: termId as Hex, // The same 0x + 64 hex check as `paymentTxHash`, above.
+        expiresAt: issuedAt + limits.receiptTtlSeconds,
       };
 
       try {
@@ -337,10 +368,14 @@ export function createNode(options: NodeOptions): {
         return json({ error: `could not record the payment: ${String(error).slice(0, 300)}` }, 500);
       }
 
-      const signed = await signHireReceipt(receipt, chainId, {
-        address: account.address,
-        signTypedData: (data) => account.signTypedData(data),
-      });
+      const signed = await signHireReceipt(
+        receipt,
+        { chainId, verifyingContract: verifier },
+        {
+          address: account.address,
+          signTypedData: (data) => account.signTypedData(data),
+        },
+      );
       return json({ result, receipt: signed });
     },
   };

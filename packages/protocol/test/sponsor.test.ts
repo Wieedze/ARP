@@ -1,9 +1,22 @@
-import {decodeFunctionData, keccak256, stringToBytes, type Address, type Hex} from "viem";
+import {
+    decodeFunctionData,
+    getAddress,
+    keccak256,
+    stringToBytes,
+    type Address,
+    type Hex,
+} from "viem";
 import {privateKeyToAccount} from "viem/accounts";
 import {describe, expect, it} from "vitest";
 
 import {multiVaultDeclareAbi, type MultiVaultReads} from "../src/declare/multivault.js";
-import {hireDigest, signHireReceipt, type HireReceipt} from "../src/hire-receipt.js";
+import {
+    hireDigest,
+    hireReceiptV1TypedData,
+    signHireReceipt,
+    type HireReceipt,
+    type HireReceiptV1,
+} from "../src/hire-receipt.js";
 import {contentDigest, signContentReceipt, type ContentReceipt} from "../src/receipt.js";
 import {
     DEPOSIT_APPROVAL,
@@ -47,6 +60,8 @@ const TESTNET = 13579;
 const TERM: Hex = `0x${"cd".repeat(32)}`;
 const PAYMENT: Hex = `0x${"ab".repeat(32)}`;
 const MILLI = 10n ** 15n;
+/** A `ReceiptEnforcer` deployment's address: a receipt for it is not a receipt for the service. */
+const ENFORCER: Address = getAddress("0x00000000000000000000000000000000000e4f04");
 
 describe("approval", () => {
     it("encodes approve(sponsor, DEPOSIT) and never BOTH", () => {
@@ -153,7 +168,7 @@ describe("checkSponsorProof", () => {
         },
     });
     const hire = (over: Partial<HireReceipt> = {}): HireReceipt => ({
-        version: 1,
+        version: 2,
         agentRegistry: "eip155:13579:0xC165A2ADc0000000000000000000000000000001",
         agentId: "9",
         requester: AGENT.address,
@@ -162,13 +177,19 @@ describe("checkSponsorProof", () => {
         requestHash: hireDigest({q: 1}),
         resultHash: hireDigest({a: 1}),
         issuedAt: 1_793_000_000,
+        termId: TERM,
+        expiresAt: 1_793_086_400,
         ...over,
     });
-    const signHire = (body: HireReceipt, by = CALLEE, chainId = TESTNET) =>
-        signHireReceipt(body, chainId, {
-            address: by.address,
-            signTypedData: (data) => by.signTypedData(data),
-        });
+    const signHire = (body: HireReceipt, by = CALLEE, chainId = TESTNET, verifier = SPONSOR) =>
+        signHireReceipt(
+            body,
+            {chainId, verifyingContract: verifier},
+            {
+                address: by.address,
+                signTypedData: (data) => by.signTypedData(data),
+            },
+        );
     const paid: Record<Hex, Tx> = {
         [PAYMENT]: {from: AGENT.address, to: CALLEE.address, value: 5n * MILLI},
     };
@@ -189,6 +210,9 @@ describe("checkSponsorProof", () => {
         acceptedContentSigners: [NODE.address],
         acceptedRegistries: [REGISTRY],
         agents: keys,
+        receiptVerifier: SPONSOR,
+        termId: TERM,
+        now: 1_793_000_060,
     });
 
     it("proves a hire whose payment is on chain, priced at what was paid", async () => {
@@ -337,6 +361,50 @@ describe("checkSponsorProof", () => {
             context(),
         );
         expect(verdict.status === "refused" && verdict.reason).toMatch(/chain 1155/);
+    });
+
+    it("refuses a hire receipt signed for the enforcer: one payment, one verifier", async () => {
+        const verdict = await checkSponsorProof(
+            {kind: "hire", receipt: await signHire(hire(), CALLEE, TESTNET, ENFORCER)},
+            context(),
+        );
+        expect(verdict.status === "refused" && verdict.reason).toMatch(/is for verifier/);
+    });
+
+    it("refuses a v1 hire receipt, which names no verifier", async () => {
+        const {termId: _termId, expiresAt: _expiresAt, ...fields} = hire();
+        const v1: HireReceiptV1 = {...fields, version: 1};
+        const verdict = await checkSponsorProof(
+            {
+                kind: "hire",
+                receipt: {
+                    format: "eip712",
+                    receipt: v1,
+                    chainId: TESTNET,
+                    agent: CALLEE.address,
+                    signature: await CALLEE.signTypedData(hireReceiptV1TypedData(v1, TESTNET)),
+                },
+            },
+            context(),
+        );
+        expect(verdict.status === "refused" && verdict.reason).toMatch(/v1/);
+    });
+
+    it("refuses a hire receipt for another term than the deposit's", async () => {
+        const other: Hex = `0x${"0d".repeat(32)}`;
+        const verdict = await checkSponsorProof(
+            {kind: "hire", receipt: await signHire(hire({termId: other}))},
+            context(),
+        );
+        expect(verdict.status === "refused" && verdict.reason).toMatch(/not for term/);
+    });
+
+    it("refuses a hire receipt past its expiresAt", async () => {
+        const verdict = await checkSponsorProof(
+            {kind: "hire", receipt: await signHire(hire({expiresAt: 1_793_000_059}))},
+            context(),
+        );
+        expect(verdict.status === "refused" && verdict.reason).toMatch(/expired/);
     });
 
     it("refuses a tampered hire receipt", async () => {
