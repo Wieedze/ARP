@@ -151,7 +151,7 @@ export function AgentDirectory() {
 function Fact({label, children}: {label: string; children: React.ReactNode}) {
     return (
         <div className="flex min-w-[7.5rem] flex-col gap-1.5 px-5 py-3.5 [&+&]:border-l [&+&]:border-l-[color:var(--color-rule)]">
-            <dt className="font-mono text-[10px] uppercase tracking-[0.06em] text-[color:var(--color-steel)]">
+            <dt className="font-mono text-[length:var(--text-label)] uppercase tracking-[0.06em] text-[color:var(--color-steel)]">
                 {label}
             </dt>
             <dd className="type-face text-[26px] leading-none tabular-nums">{children}</dd>

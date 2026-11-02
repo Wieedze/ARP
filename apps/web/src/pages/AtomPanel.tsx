@@ -1,4 +1,6 @@
 import {Link, Navigate, useParams} from "react-router-dom";
+
+import {BackLink} from "../components/brand/BackLink";
 import type {Hex} from "viem";
 
 import {PageLoading} from "../components/brand/PageLoading";
@@ -156,6 +158,7 @@ export function AtomPanel() {
 
     return (
         <section className="mt-10">
+            <BackLink to="/tools" label="tools" />
             {/* **The title spans the page; it is not metadata.**
                 It lived in the 18rem aside, where `--text-title` clamps to 76px against 288px of
                 column — so `Trail of Bits — secure-workflow-guide` rendered as nine lines of

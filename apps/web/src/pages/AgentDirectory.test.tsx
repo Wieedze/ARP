@@ -21,7 +21,8 @@ const row = (overrides: Partial<CohortRow>): CohortRow => ({
     href: "/agent/8453/1",
     identityProblem: null,
     statementCount: 3,
-    marketCap: "6.3369302 TRUST",
+    marketCap: "6.337 TRUST",
+    marketCapExact: "6.3369302 TRUST",
     positions: "1 support",
     isUnsupported: false,
     ...overrides,
@@ -99,7 +100,7 @@ describe("the agent index", () => {
         expect(within(jeed).queryByText(/TRUST/)).toBeNull();
         expect(within(jeed).getByText("no support")).toBeInTheDocument();
         const dackie = closest(screen.getByText("Captain Dackie"), "li");
-        expect(within(dackie).getByText(/6\.3369302 TRUST/)).toBeInTheDocument();
+        expect(within(dackie).getByText(/6\.337 TRUST/)).toBeInTheDocument();
     });
 
     it("has no separate lookup form any more", () => {

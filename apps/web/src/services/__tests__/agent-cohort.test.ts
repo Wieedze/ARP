@@ -144,7 +144,9 @@ describe("toCohortRow", () => {
 
     it("shows the market cap with its position count beside it, always", () => {
         const row = toCohortRow(listing(), 0, "TRUST");
-        expect(row.marketCap).toBe("6.3369302 TRUST");
+        // Four digits in the list, the exact figure kept for the cell's title (task 48).
+        expect(row.marketCap).toBe("6.337 TRUST");
+        expect(row.marketCapExact).toBe("6.3369302 TRUST");
         expect(row.positions).toBe("1 support");
     });
 

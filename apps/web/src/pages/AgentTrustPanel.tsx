@@ -4,6 +4,7 @@ import {useAccount} from "wagmi";
 
 import {linkClass} from "../lib/control-class";
 import {Block, Panel} from "../components/atom/AtomPageParts";
+import {BackLink} from "../components/brand/BackLink";
 import {AtomMarket} from "../components/market/AtomMarket";
 import {AgentIdentityPanel, AgentSigil} from "../components/agent/AgentIdentityPanel";
 import {RatingRow} from "../components/agent/RatingRow";
@@ -193,12 +194,7 @@ export function AgentTrustPanel() {
 
     return (
         <article>
-            <Link
-                to="/agents"
-                className="font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]"
-            >
-                ← agents
-            </Link>
+            <BackLink to="/agents" label="agents" />
 
             <div className="mt-4"></div>
 
@@ -242,7 +238,7 @@ export function AgentTrustPanel() {
                         It followed the atom page's 18rem identity rail until 2026-11-02. */}
                     <header className="pt-6">
                         <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 font-mono text-[12px] text-[color:var(--color-steel)]">
-                            <span className="rounded-[var(--radius-tag)] border border-[color:var(--color-rule-strong)] px-[7px] py-[2px] text-[10px] uppercase tracking-[0.1em] text-[color:var(--color-fg)]">
+                            <span className="rounded-[var(--radius-tag)] border border-[color:var(--color-rule-strong)] px-[7px] py-[2px] text-[length:var(--text-label)] uppercase tracking-[0.1em] text-[color:var(--color-fg)]">
                                 Agent
                             </span>
                             <span>#{view.tokenId}</span>

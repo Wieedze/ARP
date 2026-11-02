@@ -10,7 +10,11 @@ import {
     resolveListOptions,
 } from "../src/listing.js";
 import {erc8004RegistrySource} from "../src/sources/erc8004-registry/index.js";
-import {DEFAULT_LIST_TIMEOUT_MS, intuitionSource} from "../src/sources/intuition/index.js";
+import {
+    cohortWhere,
+    DEFAULT_LIST_TIMEOUT_MS,
+    intuitionSource,
+} from "../src/sources/intuition/index.js";
 import {COHORT_ORDER_BY, COHORT_QUERY, IDENTITY_SAMPLE_LIMIT} from "@arp-protocol/graphql";
 import {ERC8004, IMPLEMENT, SAME_AS} from "../src/sources/intuition/terms.js";
 import type {AgentPage} from "../src/types.js";
@@ -25,7 +29,12 @@ async function page(overrides: Parameters<typeof listAgents>[1] = {}): Promise<A
 
 describe("resolveListOptions", () => {
     it("defaults to the evidence order and a 25-row page", () => {
-        expect(resolveListOptions()).toEqual({order: "evidence-quantity", limit: 25, offset: 0});
+        expect(resolveListOptions()).toEqual({
+            order: "evidence-quantity",
+            limit: 25,
+            offset: 0,
+            name: null,
+        });
     });
 
     it("clamps rather than throws, because these come from a control, not a programmer", () => {
@@ -35,6 +44,13 @@ describe("resolveListOptions", () => {
         expect(resolveListOptions({limit: 25.9}).limit).toBe(25);
         expect(resolveListOptions({limit: Number.NaN}).limit).toBe(25);
         expect(resolveListOptions({offset: Number.POSITIVE_INFINITY}).offset).toBe(0);
+    });
+
+    it("keeps a name only when there is one", () => {
+        expect(resolveListOptions({name: "  Dackie "}).name).toBe("Dackie");
+        expect(resolveListOptions({name: "   "}).name).toBeNull();
+        // An untyped caller's non-string is ignored, not a crash.
+        expect(resolveListOptions({name: 42 as unknown as string}).name).toBeNull();
     });
 });
 
@@ -123,14 +139,14 @@ describe("listAgents — the cohort gets its own deadline", () => {
 
         const seen: {timeoutMs: number | undefined}[] = [];
         const source = intuitionSource({transport: timeoutRecorder(seen)});
-        await source.listAgents?.({order: "evidence-quantity", limit: 25, offset: 0});
+        await source.listAgents?.({order: "evidence-quantity", limit: 25, offset: 0, name: null});
         expect(seen).toEqual([{timeoutMs: DEFAULT_LIST_TIMEOUT_MS}]);
     });
 
     it("takes the budget it is given", async () => {
         const seen: {timeoutMs: number | undefined}[] = [];
         const source = intuitionSource({transport: timeoutRecorder(seen), listTimeoutMs: 4_000});
-        await source.listAgents?.({order: "evidence-quantity", limit: 25, offset: 0});
+        await source.listAgents?.({order: "evidence-quantity", limit: 25, offset: 0, name: null});
         expect(seen).toEqual([{timeoutMs: 4_000}]);
     });
 
@@ -261,9 +277,32 @@ describe("listAgents — identity comes from the same-as edge", () => {
 
 describe("COHORT_QUERY — what it is allowed to contain", () => {
     it("filters the cohort by term id on both ends, never by label", () => {
+        // The filter is a variable now; the query text carries no filter of its own at all.
         expect(COHORT_QUERY).not.toMatch(/label\s*:\s*\{/);
-        expect(COHORT_QUERY).toContain("$predicateId");
-        expect(COHORT_QUERY).toContain("$objectId");
+        expect(COHORT_QUERY).toContain("$where: triples_bool_exp!");
+        expect(cohortWhere(null)).toEqual({
+            predicate_id: {_eq: IMPLEMENT},
+            object_id: {_eq: ERC8004},
+        });
+    });
+
+    it("narrows by name inside the cohort, never instead of it (task 48)", () => {
+        expect(cohortWhere("dackie")).toEqual({
+            predicate_id: {_eq: IMPLEMENT},
+            object_id: {_eq: ERC8004},
+            subject: {
+                _or: [
+                    {label: {_ilike: "%dackie%"}},
+                    {value: {thing: {name: {_ilike: "%dackie%"}}}},
+                ],
+            },
+        });
+    });
+
+    it("escapes the name's own wildcards", () => {
+        expect(cohortWhere("50%_a\\b")).toMatchObject({
+            subject: {_or: [{label: {_ilike: "%50\\%\\_a\\\\b%"}}, expect.anything()]},
+        });
     });
 
     it("sends the frozen implement and ERC-8004 term ids", async () => {
@@ -275,7 +314,12 @@ describe("COHORT_QUERY — what it is allowed to contain", () => {
                 return fixtureFetch()(input, init);
             },
         });
-        await recording.listAgents?.({order: "evidence-quantity", limit: 25, offset: 0});
+        await recording.listAgents?.({
+            order: "evidence-quantity",
+            limit: 25,
+            offset: 0,
+            name: null,
+        });
         expect(bodies[0]).toContain(IMPLEMENT);
         expect(bodies[0]).toContain(ERC8004);
         expect(bodies[0]).toContain(SAME_AS);

@@ -24,7 +24,7 @@ import {CurveControl} from "../tool/ToolCatalogControls";
  * The figure that leads is **net**, deposited minus redeemed, because that is what you are still
  * standing behind. Leading with "deposited" would flatter anyone who has since withdrawn.
  */
-const LABEL = "font-mono text-[10px] uppercase tracking-[0.06em] text-[color:var(--color-steel)]";
+const LABEL = "font-mono text-[length:var(--text-label)] uppercase tracking-[0.06em] text-[color:var(--color-steel)]";
 
 export function Positions() {
     const {address, isConnected} = useAccount();

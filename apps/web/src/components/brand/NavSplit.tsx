@@ -1,6 +1,7 @@
-import {type ReactNode} from "react";
+import {useEffect, useRef, useState, type ReactNode} from "react";
 import {Link, useLocation} from "react-router-dom";
 
+import {controlClass} from "../../lib/control-class";
 import {SourceMark} from "./SourceMark";
 import {NAV_HEIGHT} from "./nav-height";
 
@@ -105,6 +106,29 @@ function NavLink({to, children}: {to: string; children: ReactNode}) {
  * contract that breaks the first time somebody adds a link.
  */
 export function NavSplit({left, right}: {left: ReactNode; right: ReactNode}) {
+    // **One row on a phone** (task 48): below `md` the split grid stacked into three rows, about
+    // 200px of nav before any content at 390px. The mark and a Menu button now share one row, and
+    // the items open below it. From `md` up nothing changed.
+    const {pathname} = useLocation();
+    // The page the menu was opened on: following one of its links changes the page, and the menu
+    // is then closed by construction rather than by an effect resetting it.
+    const [openOn, setOpenOn] = useState<string | null>(null);
+    const menuOpen = openOn === pathname;
+    const setMenuOpen = (open: boolean) => setOpenOn(open ? pathname : null);
+    const menuButton = useRef<HTMLButtonElement>(null);
+    useEffect(() => {
+        if (!menuOpen) return;
+        const onKey = (event: KeyboardEvent) => {
+            if (event.key !== "Escape") return;
+            setOpenOn(null);
+            // The disclosure pattern: focus goes back to the control that opened it, not to the
+            // page body the closed menu leaves it on.
+            menuButton.current?.focus();
+        };
+        window.addEventListener("keydown", onKey);
+        return () => window.removeEventListener("keydown", onKey);
+    }, [menuOpen]);
+
     return (
         // **Sticky, at `z-20`, with an opaque background** — added 2026-10-28 with the landing's
         // scene deck, which assumed it (ADR `0066`).
@@ -121,7 +145,43 @@ export function NavSplit({left, right}: {left: ReactNode; right: ReactNode}) {
         // canvas (`z-0`) and its Saffron veil (`z-[15]`) both pass behind the nav's text.
         <header className="sticky top-0 z-20 border-b border-[color:var(--color-rule)] bg-[color:var(--color-ground)] px-6">
             <div
-                className="mx-auto flex w-full max-w-[1320px] flex-col items-center gap-y-3 py-3 md:grid md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] md:items-center"
+                className="mx-auto flex w-full items-center justify-between md:hidden"
+                style={{minHeight: NAV_HEIGHT}}
+            >
+                <Link to="/" aria-label="ARP, home" className="flex items-center">
+                    <SourceMark size={32} />
+                </Link>
+                {/* One name, "Menu"; `aria-expanded` carries open or closed. */}
+                <button
+                    ref={menuButton}
+                    type="button"
+                    aria-expanded={menuOpen}
+                    {...(menuOpen ? {"aria-controls": "arp-nav-menu"} : {})}
+                    onClick={() => setMenuOpen(!menuOpen)}
+                    className={`${controlClass} font-mono text-[12px] uppercase tracking-[0.12em]`}
+                >
+                    Menu
+                </button>
+            </div>
+            {menuOpen ? (
+                <nav
+                    id="arp-nav-menu"
+                    aria-label="Main"
+                    // A link in it closes it, including one to the page already open, which the
+                    // per-page state above would otherwise leave open.
+                    onClick={(event) => {
+                        if (event.target instanceof Element && event.target.closest("a") !== null)
+                            setOpenOn(null);
+                    }}
+                    className="flex flex-col items-start gap-1 border-t border-[color:var(--color-rule)] pt-2 pb-4 md:hidden"
+                >
+                    {left}
+                    {right}
+                </nav>
+            ) : null}
+
+            <div
+                className="mx-auto hidden w-full max-w-[1320px] md:grid md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] md:items-center"
                 style={{minHeight: NAV_HEIGHT}}
             >
                 <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 md:justify-end md:pr-[clamp(14px,4vw,48px)]">

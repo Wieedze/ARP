@@ -1,5 +1,6 @@
 import {type ReactNode} from "react";
 
+import {useSearchShortcut} from "../hooks/use-search-shortcut";
 import {useChainChoice} from "../lib/chain-choice";
 
 import {ActivityLog} from "./brand/ActivityLog";
@@ -29,6 +30,7 @@ import {WalletConnect} from "./WalletConnect";
 
 export function Layout({children}: {children: ReactNode}) {
     const chain = useChainChoice();
+    useSearchShortcut();
 
     return (
         /* `min-h-screen flex flex-col` is what makes `flex-1` on `<main>` mean anything. This was
@@ -79,6 +81,8 @@ export function Layout({children}: {children: ReactNode}) {
                         {/* What happened: the agent's calls, declarations and stakes, and every
                             transaction this browser sent (user, 2026-10-30). */}
                         <NavLink to="/activity">Activity</NavLink>
+                        {/* Both indexes from one field; `/` opens it from anywhere (task 48). */}
+                        <NavLink to="/search">Search</NavLink>
                     </>
                 }
                 right={

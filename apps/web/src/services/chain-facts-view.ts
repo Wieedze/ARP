@@ -14,6 +14,9 @@ export type ChainFact = {
     at: string;
     agent: string;
     tool: string;
+    /** The two atoms the row names, so each can open its page (task 48). */
+    agentAtomId: string;
+    toolAtomId: string;
     tx: Hex | null;
     /**
      * Wei, as a decimal string. On a declaration it is the deposit made in the same transaction, the
@@ -86,6 +89,8 @@ export function chainFacts(
                 at: row.at,
                 agent: name(row.subject),
                 tool: name(row.object),
+                agentAtomId: row.subject.atomId,
+                toolAtomId: row.object.atomId,
                 tx: txOf(row.txHash),
                 assets:
                     first === undefined || first.assets === null ? null : first.assets.toString(),
@@ -102,6 +107,8 @@ export function chainFacts(
                     at: row.at,
                     agent: name(row.subject),
                     tool: name(row.object),
+                    agentAtomId: row.subject.atomId,
+                    toolAtomId: row.object.atomId,
                     tx: txOf(row.txHash),
                     assets: row.assets === null ? null : row.assets.toString(),
                     account: row.account,

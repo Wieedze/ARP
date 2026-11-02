@@ -1,7 +1,13 @@
 import {describe, expect, it, vi} from "vitest";
 import type {AgentListing, AgentPage, ListAgentsOptions} from "@arp-protocol/core";
 
-import {agentCohortQueryKey, agentCohortQueryOptions, COHORT_PAGE_SIZE} from "../use-agent-cohort";
+import {
+    AGENT_SEARCH_LIMIT,
+    agentCohortQueryKey,
+    agentCohortQueryOptions,
+    agentSearchQueryOptions,
+    COHORT_PAGE_SIZE,
+} from "../use-agent-cohort";
 
 const REGISTRY = "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432" as const;
 
@@ -119,5 +125,23 @@ describe("agentCohortQueryOptions", () => {
     it("keeps the previous page on screen while the next one loads", () => {
         const options = agentCohortQueryOptions(MAINNET, "evidence-quantity", 25, vi.fn(pageOver));
         expect(options.placeholderData).toBeTypeOf("function");
+    });
+});
+
+describe("agentSearchQueryOptions (task 48)", () => {
+    it("asks for agents by name, one short page, in the evidence order", async () => {
+        const fetchCohort = vi.fn(pageOver);
+        await agentSearchQueryOptions(MAINNET, "  dackie ", fetchCohort).queryFn();
+        expect(fetchCohort).toHaveBeenCalledWith(
+            {order: "evidence-quantity", limit: AGENT_SEARCH_LIMIT, offset: 0, name: "dackie"},
+            "https://mainnet.intuition.sh/v1/graphql",
+        );
+    });
+
+    it("does not read for a blank name, and keys on the name and the chain", () => {
+        expect(agentSearchQueryOptions(MAINNET, "   ").enabled).toBe(false);
+        const key = agentSearchQueryOptions(MAINNET, "dackie").queryKey;
+        expect(key).toContain("dackie");
+        expect(key).toContain(MAINNET.chainId);
     });
 });

@@ -317,7 +317,7 @@ describe("planUseDeclaration", () => {
     });
 
     it("refuses mainnet outright, before it reads anything", async () => {
-        // The default chain is mainnet (`lib/chain-choice.ts`), where this write costs 0.11 TRUST
+        // On mainnet (the default until ADR `0105` made it testnet), this write costs 0.11 TRUST
         // of which 0.1 never comes back. `security.md` authorises a human in the panel under ADR
         // `0017`, and that ADR covers a deposit into a `has trust provider` vault — not creating a
         // `uses` edge. Not yet authorised is not forbidden, and widening it is the user's decision.

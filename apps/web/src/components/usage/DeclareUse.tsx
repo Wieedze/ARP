@@ -127,7 +127,7 @@ export function DeclareUse({
     if (chain.isMainnet) {
         // **A status line, not a headline, and that is the second version of this branch.** The
         // first gave the refusal an `h2` at `type-face text-[20px]` at the top of the column — so
-        // on the default chain the loudest thing on every atom page was a feature announcing that
+        // on mainnet, then the default chain, the loudest thing on every atom page was a feature announcing that
         // it does not work, 218px above the evidence the page exists to show. Measured, and
         // screenshotted, by the reviewer.
         //

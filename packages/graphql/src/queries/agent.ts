@@ -109,6 +109,10 @@ export const CAPABILITY_SAMPLE_LIMIT = 8;
  * comes from an aggregate over the same filter, so the number the UI shows is
  * the graph's own count rather than a figure typed into a component.
  *
+ * The filter is a variable, `$where`, built by the caller (`intuitionSource`):
+ * the membership ids always, and a name match on the subject's label only when
+ * a reader searched for one. A label never decides membership.
+ *
  * `order_by` is a variable so this file holds one query text instead of one per
  * sort order, but the orders themselves are frozen in {@link COHORT_ORDER_BY} —
  * nothing here builds an order clause out of caller input. Both orders end in
@@ -124,14 +128,14 @@ export const CAPABILITY_SAMPLE_LIMIT = 8;
  * and simply sits on curve 2.
  */
 export const COHORT_QUERY = `
-query AgentCohort($predicateId: String!, $objectId: String!, $sameAsPredicateId: String!, $capabilityPredicateIds: [String!], $orderBy: [triples_order_by!]!, $limit: Int!, $offset: Int!) {
+query AgentCohort($where: triples_bool_exp!, $sameAsPredicateId: String!, $capabilityPredicateIds: [String!], $orderBy: [triples_order_by!]!, $limit: Int!, $offset: Int!) {
   total: triples_aggregate(
-    where: {predicate_id: {_eq: $predicateId}, object_id: {_eq: $objectId}}
+    where: $where
   ) {
     aggregate { count }
   }
   triples(
-    where: {predicate_id: {_eq: $predicateId}, object_id: {_eq: $objectId}}
+    where: $where
     order_by: $orderBy
     limit: $limit
     offset: $offset

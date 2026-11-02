@@ -1,4 +1,6 @@
 import {Link} from "react-router-dom";
+
+import {BackLink} from "../components/brand/BackLink";
 import type {Hex} from "viem";
 
 import {ClaimField} from "../components/atom/ClaimField";
@@ -58,9 +60,10 @@ export function SkillPage({
 
     return (
         <article className="mt-8">
-            <header>
+            <BackLink to="/tools" label="tools" />
+            <header className="mt-4">
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 font-mono text-[12px] text-[color:var(--color-steel)]">
-                    <span className="rounded-[var(--radius-tag)] border border-[color:var(--color-rule-strong)] px-[7px] py-[2px] text-[10px] uppercase tracking-[0.1em] text-[color:var(--color-fg)]">
+                    <span className="rounded-[var(--radius-tag)] border border-[color:var(--color-rule-strong)] px-[7px] py-[2px] text-[length:var(--text-label)] uppercase tracking-[0.1em] text-[color:var(--color-fg)]">
                         Skill
                     </span>
                     {source === null ? (
