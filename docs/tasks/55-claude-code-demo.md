@@ -65,8 +65,9 @@ user's own `~/.arp` was untouched. `arp init --project --sponsored --yes --runti
 
 - Installing overwrites a skill of the same name in `.claude/skills/`, and follows a symlink placed
   at that path.
-- Only `SKILL.md` is installed, because it is what the content server serves. A skill that ships
-  scripts next to it arrives without them.
+- Only `SKILL.md` was installed, because it was what the content server served. A skill that ships
+  scripts next to it arrived without them. Task 57 closes this: in project mode the whole directory
+  is installed.
 - The hook's line stays in `.arp/session.jsonl` (option A). The sponsor's proof is the receipt
   alone (ADR `0109`).
 

@@ -73,7 +73,9 @@ online, steps 1 and 2 disappear for Desktop.
    ```
 
    It listens on 3002 and signs receipts with `~/Project/ARP/.arp/receipt-key`, the address the
-   sponsor accepts above. Check: `curl -s http://127.0.0.1:3002/`.
+   sponsor accepts above. Check: `curl -s http://127.0.0.1:3002/`. Run it from an up-to-date `dev`: the
+   Claude Code demo asks it for the skill's whole directory (`bundle=1`, task 57), which an older
+   build does not serve.
 3. **The treasury has funds.** It held 5.008 tTRUST on 2026-11-02. A new agent's first declaration
    costs it the mint gas, five identity sends, one triple creation, the approval gas and one
    deposit.

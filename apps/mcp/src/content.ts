@@ -50,11 +50,13 @@ import type { Address, Hex } from 'viem';
 import { SKILL_CATALOGUES } from './data.js';
 
 import {
+  type BundleAnswer,
   type ContentAnswer,
   contentIndexOf,
   recoverContentRequester,
   type RepositoryFile,
   serveContent,
+  serveSkillBundle,
   type TypedDataSigner,
 } from '@arp-protocol/core';
 
@@ -190,7 +192,8 @@ export function receiptSigner(): TypedDataSigner | null {
 const listings = new Map<string, { at: number; files: RepositoryFile[] }>();
 
 /**
- * A repository's SKILL.md paths and their blob shas, cached. One request per repository.
+ * A repository's every file path and its blob sha, cached. One request per repository. The bundle
+ * route (task 57) reads a skill's whole directory from it, not only its SKILL.md.
  *
  * The cache is ten minutes and the content is fetched live from `HEAD`, so the two can disagree:
  * after a push that makes two previously-identical paths differ, `resolveContentPath` can still
@@ -268,8 +271,13 @@ async function requester(
 }
 
 /** What each refusal is, as a status and a sentence. A caller that cannot tell them apart retries wrong. */
-function refusal(answer: ContentAnswer, chainId: number): { code: number; reason: string } {
+function refusal(
+  answer: Exclude<ContentAnswer | BundleAnswer, { status: 'served' }>,
+  chainId: number,
+): { code: number; reason: string } {
   switch (answer.status) {
+    case 'too-many-files':
+      return { code: 413, reason: `${answer.path} holds ${answer.files} files, over the ${answer.cap} file cap` };
     case 'bad-atom-id':
       return { code: 400, reason: 'an atom id is 0x followed by 64 hex characters' };
     case 'unknown-atom':
@@ -318,6 +326,7 @@ export async function serveContentRequest(
   signer: TypedDataSigner | null,
 ): Promise<Response> {
   const { to, nonce } = await requester(atomId, params, chainId);
+  if (params.get('bundle') === '1') return serveBundleRequest(atomId, chainId, signer, to, nonce);
 
   let answer: ContentAnswer;
   try {
@@ -359,6 +368,49 @@ export async function serveContentRequest(
   // The bytes, unchanged, so the body is exactly what the digest is over. `Uint8Array` is a valid
   // body; the named `BodyInit` type is not in this tsconfig's lib, which `check:scripts` caught.
   return new Response(answer.bytes, { headers });
+}
+
+/**
+ * `GET /content/:atomId?bundle=1` — the skill's whole directory as JSON, each file in base64, with a
+ * receipt over the manifest in `x-arp-receipt` (task 57). The body is not what the digest is over:
+ * the manifest is, and a caller rebuilds it from the files (`bundleMatchesReceipt`).
+ */
+async function serveBundleRequest(
+  atomId: string,
+  chainId: number,
+  signer: TypedDataSigner | null,
+  to: Address | null,
+  nonce: Hex,
+): Promise<Response> {
+  let answer: BundleAnswer;
+  try {
+    answer = await serveSkillBundle(atomId, {
+      chainId,
+      index: contentIndexFor(chainId),
+      listing,
+      raw,
+      signer,
+      to,
+      nonce,
+      now: () => Math.floor(Date.now() / 1000),
+    });
+  } catch (error) {
+    return Response.json({ error: 'upstream', reason: String(error).slice(0, 200) }, { status: 502 });
+  }
+  if (answer.status !== 'served') {
+    const { code, reason } = refusal(answer, chainId);
+    return Response.json({ error: answer.status, reason }, { status: code });
+  }
+  const headers: Record<string, string> = { 'x-arp-atom': atomId.toLowerCase(), 'x-arp-path': answer.path };
+  if (answer.receipt !== null) headers['x-arp-receipt'] = JSON.stringify(answer.receipt);
+  return Response.json(
+    {
+      path: answer.path,
+      manifest: answer.manifest,
+      files: answer.files.map((file) => ({ path: file.path, base64: Buffer.from(file.bytes).toString('base64') })),
+    },
+    { headers },
+  );
 }
 
 // A module, not a global script — see the note in scripts/measure/predicate-objects.ts.
