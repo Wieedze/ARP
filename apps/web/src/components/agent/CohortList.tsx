@@ -85,15 +85,22 @@ function RowBody({row}: {row: CohortRow}) {
                 <span className="sm:sr-only text-[color:var(--color-steel)]"> declarations</span>
             </span>
 
-            <span className="text-right min-w-0">
-                <span className="block font-mono text-[length:var(--text-body-sm)] leading-tight tabular-nums">
-                    <span className="sr-only">support: </span>
-                    {row.marketCap ?? "—"}
+            {row.isUnsupported ? (
+                // Empty, not "0": the vault holds only its creation deposit (task 46e).
+                <span className="text-right min-w-0">
+                    <span className="sr-only">no support</span>
                 </span>
-                <span className="block font-mono text-[length:var(--text-label)] leading-tight text-[color:var(--color-steel)] break-words">
-                    {row.positions}
+            ) : (
+                <span className="text-right min-w-0">
+                    <span className="block font-mono text-[length:var(--text-body-sm)] leading-tight tabular-nums">
+                        <span className="sr-only">support: </span>
+                        {row.marketCap ?? "—"}
+                    </span>
+                    <span className="block font-mono text-[length:var(--text-label)] leading-tight text-[color:var(--color-steel)] break-words">
+                        {row.positions}
+                    </span>
                 </span>
-            </span>
+            )}
         </>
     );
 }

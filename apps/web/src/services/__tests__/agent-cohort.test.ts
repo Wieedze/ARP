@@ -160,6 +160,27 @@ describe("toCohortRow", () => {
         expect(row.positions).toBe("support count not reported");
     });
 
+    it("marks a vault nobody holds a position in as unsupported, and only that", () => {
+        const dust = toCohortRow(
+            listing({market: {totalMarketCap: 1_000_000n, positionCount: 0, vaultCount: 1}}),
+            0,
+            "TRUST",
+        );
+        expect(dust.isUnsupported).toBe(true);
+        expect(toCohortRow(listing(), 0, "TRUST").isUnsupported).toBe(false);
+        // Unreported is not zero: the cell keeps saying so.
+        expect(toCohortRow(listing({market: null}), 0, "TRUST").isUnsupported).toBe(false);
+        expect(
+            toCohortRow(
+                listing({
+                    market: {totalMarketCap: 1_000_000n, positionCount: null, vaultCount: 1},
+                }),
+                0,
+                "TRUST",
+            ).isUnsupported,
+        ).toBe(false);
+    });
+
     it("distinguishes no market data from a market of zero", () => {
         expect(toCohortRow(listing({market: null}), 0, "TRUST")).toMatchObject({
             marketCap: null,
