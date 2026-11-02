@@ -6,7 +6,11 @@
         "-y",
         "@arp-protocol/cli@0.0.1",
         "mcp"
-      ]
+      ],
+      "env": {
+        "ARP_TARGET": "testnet",
+        "ARP_TOOLS": "read"
+      }
     }
   }
 }

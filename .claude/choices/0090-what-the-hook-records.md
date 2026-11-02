@@ -118,3 +118,7 @@ That residue (top-level numbers, deep booleans, field names) is accepted explici
 adapter needs the payload's structure. It is not the same rule as the session log, which keeps
 only the duration. The first version listed content fields instead, and the verifier got a password, a
 token, a card number and nested names through it.
+
+**2026-11-02, task 38 part A.** The Claude Code fixtures are now real captures
+(`apps/hook/test/fixtures/claude/`), not documented examples. The residue held up in practice: the
+two files carry the tool name, the ids, the event and the duration, and nothing else readable.

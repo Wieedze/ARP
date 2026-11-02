@@ -105,9 +105,11 @@ describe('edits', () => {
 
   test('codex: our block between markers, a foreign [mcp_servers.arp] is refused', () => {
     const theirs = 'model = "o4"\n';
-    const added = withCodexServer(theirs, { command: 'node', args: ['cli.js', 'mcp'] });
+    const entry = { command: 'node', args: ['cli.js', 'mcp'], env: { ARP_TARGET: 'testnet' } };
+    const added = withCodexServer(theirs, entry);
     if (typeof added !== 'string') throw added;
-    expect(withCodexServer(added, { command: 'node', args: ['cli.js', 'mcp'] })).toBe(added);
+    expect(added).toContain('env = { ARP_TARGET = "testnet" }');
+    expect(withCodexServer(added, entry)).toBe(added);
     expect(withCodexServer(added, null)).toBe(theirs);
     expect(withCodexServer('[mcp_servers.arp]\ncommand = "x"\n', null)).toBeInstanceOf(Error);
   });
@@ -138,6 +140,7 @@ describe('init', () => {
     expect(at(json(join(home, '.claude.json')), 'mcpServers', 'arp')).toEqual({
       command: '/usr/bin/node',
       args: [CLI, 'mcp'],
+      env: { ARP_TARGET: 'testnet' },
     });
     const hooks = at(json(join(home, '.claude', 'settings.json')), 'hooks');
     expect(at(hooks, 'PostToolUse', 0, 'hooks', 0)).toMatchObject({ async: true });
@@ -186,7 +189,7 @@ describe('init', () => {
         if (verb === 'get')
           return declared === null
             ? { code: 1, stdout: '', stderr: 'not found' }
-            : { code: 0, stdout: declared, stderr: '' };
+            : { code: 0, stdout: shown(declared), stderr: '' };
         if (verb === 'add-json') {
           if (declared !== null) return { code: 1, stdout: '', stderr: 'already exists' };
           declared = json ?? '';
@@ -200,6 +203,18 @@ describe('init', () => {
         return { code: 0, stdout: '{"name":"ARP"}', stderr: '' };
       },
     });
+  }
+
+  /** `claude mcp get`'s own layout, read from Claude Code 2.1.316: env as `KEY=value` lines. */
+  function shown(json: string): string {
+    // `as`: the entry this file's own init wrote, one line above.
+    const entry = JSON.parse(json) as { command: string; args: string[]; env?: object };
+    return [
+      `Command: ${entry.command}`,
+      `Args: ${entry.args.join(' ')}`,
+      'Environment:',
+      ...Object.entries(entry.env ?? {}).map(([key, value]) => `    ${key}=${String(value)}`),
+    ].join('\n');
   }
 
   test('with `claude` on PATH: add-json once, nothing the second time, remove once, nothing after', async () => {
@@ -262,6 +277,7 @@ describe('init', () => {
     expect(at(json(join(home, '.gemini', 'settings.json')), 'mcpServers', 'arp')).toEqual({
       command: 'npx',
       args: ['-y', '@arp-protocol/cli@0.0.1', 'mcp'],
+      env: { ARP_TARGET: 'testnet' },
     });
   });
 
@@ -369,6 +385,26 @@ describe('uninstall and doctor', () => {
     lines = [];
     expect(doctor(env({ node: process.execPath }), flags(), CLI)).toBe(EXIT.ok);
     expect(lines.join('\n')).not.toContain('FAIL');
+  });
+
+  test('doctor fails on a Claude Code older than the one seen running the hooks', async () => {
+    mkdirSync(join(home, '.claude'));
+    await init(env(), flags(['--yes']), CLI);
+    const withClaude = (version: string) =>
+      env({
+        node: process.execPath,
+        which: (name) => (name === 'claude' ? '/usr/bin/claude' : null),
+        run: (argv): RunResult =>
+          argv[1] === '--version'
+            ? { code: 0, stdout: `${version} (Claude Code)\n`, stderr: '' }
+            : { code: 0, stdout: '{"result":{"serverInfo":{"name":"ARP"}}}', stderr: '' },
+      });
+    lines = [];
+    expect(doctor(withClaude('2.0.25'), flags(), CLI)).toBe(EXIT.problems);
+    expect(lines.find((line) => line.includes('claude 2.0.25'))).toContain('FAIL');
+    lines = [];
+    expect(doctor(withClaude('2.1.316'), flags(), CLI)).toBe(EXIT.ok);
+    expect(lines.join('\n')).toContain('claude 2.1.316 runs hooks');
   });
 
   test('doctor fails when the MCP server does not answer', async () => {

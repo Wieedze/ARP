@@ -78,6 +78,12 @@ function read(path: string): string | null {
   }
 }
 
+/**
+ * Everything runs on testnet 13579 for now, declarations included (the user's decision,
+ * 2026-11-02, task 38): the server's own default stays mainnet, so the install says so.
+ */
+export const SERVER_ENV: Record<string, string> = { ARP_TARGET: 'testnet' };
+
 /** The commands `init` installs, from where this `arp` is running. */
 export function commandsFor(env: InstallEnv, cliPath: string, capture = false): Commands {
   const hookFile = join(env.home, '.arp', 'bin', 'hook.js');
@@ -85,9 +91,12 @@ export function commandsFor(env: InstallEnv, cliPath: string, capture = false): 
   // server starts once per session, so launching it through `npx` is affordable; the hook runs on
   // every call and is copied out instead (ADR `0089` §2).
   const fromNpx = /[\\/]_npx[\\/]/.test(cliPath);
-  const mcp: McpServer = fromNpx
-    ? { command: 'npx', args: ['-y', `@arp-protocol/cli@${env.version}`, 'mcp'] }
-    : { command: env.node, args: [cliPath, 'mcp'] };
+  const mcp: McpServer = {
+    ...(fromNpx
+      ? { command: 'npx', args: ['-y', `@arp-protocol/cli@${env.version}`, 'mcp'] }
+      : { command: env.node, args: [cliPath, 'mcp'] }),
+    env: SERVER_ENV,
+  };
   const hook = `"${env.node}" "${hookFile}"${capture ? ' --capture' : ''}`;
   return { mcp, hook, hookFile, capture };
 }
@@ -143,8 +152,8 @@ function claudeFiles(env: InstallEnv, project: boolean) {
 
 function mcpEntry(server: McpServer, typed: boolean): Record<string, unknown> {
   return typed
-    ? { type: 'stdio', command: server.command, args: server.args }
-    : { command: server.command, args: server.args };
+    ? { type: 'stdio', command: server.command, args: server.args, env: server.env }
+    : { command: server.command, args: server.args, env: server.env };
 }
 
 export type Runtime = {
@@ -174,7 +183,11 @@ function claudeMcpSteps(
     const present = got.code === 0;
     const same =
       present &&
-      [commands.mcp.command, ...commands.mcp.args].every((part) => got.stdout.includes(part));
+      [
+        commands.mcp.command,
+        ...commands.mcp.args,
+        ...Object.entries(commands.mcp.env).map(([key, value]) => `${key}=${value}`),
+      ].every((part) => got.stdout.includes(part));
     const removeStep: Step = {
       kind: 'command',
       argv: ['claude', 'mcp', 'remove', SERVER_NAME, '--scope', 'user'],
@@ -230,6 +243,32 @@ function claudeHookStep(
   );
 }
 
+/**
+ * The oldest Claude Code seen running these hooks: 2.1.316, 2026-11-02 (task 38 part A). 2.0.25
+ * loaded none of them ("Found 0 hook matchers" in its debug log) while its `/mcp` worked, so an old
+ * runtime records nothing and says nothing. Versions between the two were never tried; below this
+ * one the check fails rather than guess.
+ */
+const CLAUDE_HOOKS_SEEN_FROM = [2, 1, 316] as const;
+
+/** `[label, holds]` for the `claude` on PATH, or nothing when there is none to ask. */
+function claudeVersionCheck(env: InstallEnv): [string, boolean][] {
+  if (env.which('claude') === null) return [];
+  const found = /(\d+)\.(\d+)\.(\d+)/.exec(env.run(['claude', '--version']).stdout);
+  const seen = CLAUDE_HOOKS_SEEN_FROM.join('.');
+  if (found === null)
+    return [[`claude --version answers (hooks seen working from ${seen})`, false]];
+  const version = found.slice(1, 4).map(Number);
+  const newer = (() => {
+    for (const [i, floor] of CLAUDE_HOOKS_SEEN_FROM.entries()) {
+      const part = version[i] ?? 0;
+      if (part !== floor) return part > floor;
+    }
+    return true;
+  })();
+  return [[`claude ${found[0]} runs hooks (seen working from ${seen}; claude update)`, newer]];
+}
+
 function claudeChecks(env: InstallEnv, commands: Commands, project: boolean): [string, boolean][] {
   const files = claudeFiles(env, project);
   const mcp = parseJsonConfig(read(files.mcp));
@@ -248,6 +287,7 @@ function claudeChecks(env: InstallEnv, commands: Commands, project: boolean): [s
       `hook on PostToolUse and PostToolUseFailure (${files.settings})`,
       !(settings instanceof Error) && hasHooks(settings, CLAUDE_HOOKS, commands.hookFile),
     ],
+    ...claudeVersionCheck(env),
   ];
 }
 

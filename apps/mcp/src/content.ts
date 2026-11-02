@@ -15,7 +15,7 @@
  *
  *  ```
  *  ARP_RECEIPT_KEY=0x…   a key the operator manages. For a hosted server
- *  .arp/receipt-key      generated on first run, mode 0600, gitignored
+ *  .arp/receipt-key      generated on first run, mode 0600, beside a .gitignore of `*`
  *  ARP_NO_RECEIPTS=1     no key at all. The content path still works
  *  ```
  *
@@ -42,7 +42,7 @@
  *  obligations (`docs/tasks/31` §9).
  */
 import { chmodSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { dirname, resolve } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 
 import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts';
 import type { Address, Hex } from 'viem';
@@ -121,10 +121,25 @@ export function contentIndexFor(chainId: number): ReadonlyMap<string, string> {
 }
 
 /**
+ * `.arp/` is the operator's working directory, and only this repository's own `.gitignore` used to
+ * cover it — in anybody else's repo `git add .` took the key (found live, task 38 part A). The hook
+ * writes the same file for the same reason; it is also written for a key that already exists.
+ */
+function ignoreOwnDirectory(): void {
+  const ignore = join(dirname(KEY_PATH), '.gitignore');
+  try {
+    if (!existsSync(ignore)) writeFileSync(ignore, '*\n');
+  } catch (error) {
+    // A directory the server cannot write must not stop it (see the key below); say so instead.
+    console.error(`${ignore} cannot be written (${String(error)}): keep .arp/ out of any commit.`);
+  }
+}
+
+/**
  * The signing identity, or null.
  *
- * Generated on first run so an installer has nothing to configure. The file is 0600 and `.arp/` is
- * gitignored; a key that lands in a commit is a key that is gone.
+ * Generated on first run so an installer has nothing to configure. The file is 0600 and `.arp/`
+ * carries its own `.gitignore`; a key that lands in a commit is a key that is gone.
  */
 export function receiptSigner(): TypedDataSigner | null {
   if (process.env['ARP_NO_RECEIPTS'] === '1') return null;
@@ -145,10 +160,12 @@ export function receiptSigner(): TypedDataSigner | null {
     );
   } else if (existsSync(KEY_PATH)) {
     key = readFileSync(KEY_PATH, 'utf8').trim() as Hex;
+    ignoreOwnDirectory();
   } else {
     key = generatePrivateKey();
     try {
       mkdirSync(dirname(KEY_PATH), { recursive: true });
+      ignoreOwnDirectory();
       writeFileSync(KEY_PATH, `${key}\n`, { mode: 0o600 });
       chmodSync(KEY_PATH, 0o600);
     } catch (error) {
