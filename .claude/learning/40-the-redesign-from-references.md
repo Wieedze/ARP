@@ -2,7 +2,7 @@
 
 **Task:** `docs/tasks/46-the-redesign-from-references.md` (row 46e in §4)
 **Completed:** 2026-11-02
-**Commit:** `uncommitted` (branch `dev`)
+**Commit:** `b02517f` (branch `dev`)
 **Verifier verdict:** PASS (`ui-reviewer` PASS with 4 advisories, 2 acted on)
 
 ## What shipped
