@@ -27,7 +27,15 @@ export const RECEIPT_SIGNER = receiptSigner();
  * `read` serves only the registry reads, with instructions that never mention a chain (task 45).
  * Anything else, including unset, serves every tool. The plugin for first testers sets it.
  */
-export const READ_ONLY = process.env['ARP_TOOLS'] === 'read';
+/**
+ * `desktop` is the Claude Desktop extension's build (task 50, ADR `0110`): the reads, plus the two
+ * tools that walk the loop for a user who signs nothing. It holds a local agent key; no other mode
+ * does.
+ */
+export const DESKTOP = process.env['ARP_TOOLS'] === 'desktop';
+export const READ_ONLY = process.env['ARP_TOOLS'] === 'read' || DESKTOP;
+export const CONTENT_URL = process.env['ARP_CONTENT'] ?? 'http://127.0.0.1:3002';
+export const SPONSOR_URL = process.env['ARP_SPONSOR'] ?? 'http://127.0.0.1:3200';
 
 /** Where the hook writes, and where the fetch records what it fetched. Both overridable. */
 export const SESSION_LOG = process.env['ARP_SESSION_LOG'] ?? '.arp/session.jsonl';
@@ -51,6 +59,7 @@ if (chainId === undefined) {
 type DeploymentRecord = {
   chain?: { rpcUrl?: string; graphqlUrl?: string; name?: string };
   intuition?: { multiVault?: string };
+  arp?: { identityRegistry?: string | null };
 };
 
 const recorded = DEPLOYMENTS[chainId];
