@@ -264,8 +264,12 @@ export function AgentTrustPanel() {
                         </div>
                     </header>
 
-                    <div className="mt-8 grid items-start gap-x-12 gap-y-10 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,26rem)]">
-                        <div className="flex min-w-0 flex-col gap-10">
+                    {/* **Description, Identity, tabs, in that DOM order** (user, 2026-11-02): stacked
+                        on a phone, the identity comes before a tab that can hold 35 rows. From `lg`
+                        the grid puts Identity in the right column across both rows, so the desktop
+                        layout is unchanged and the focus order still reads top to bottom. */}
+                    <div className="mt-8 grid items-start gap-x-12 gap-y-10 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,26rem)] lg:grid-rows-[auto_1fr]">
+                        <div className="min-w-0 lg:col-start-1 lg:row-start-1">
                             {view.isFallbackMetadata ? (
                                 <p className="inline-flex max-w-[64ch] self-start rounded-[var(--radius-tag)] border border-dashed border-[color:var(--color-rule-strong)] px-3 py-1.5 font-mono text-[length:var(--text-label)] text-[color:var(--color-silver)]">
                                     Name and URL are the indexer&rsquo;s stand-in — no source
@@ -276,9 +280,17 @@ export function AgentTrustPanel() {
                                     {view.description}
                                 </p>
                             ) : null}
+                        </div>
 
-                            {/* **What a reader reads, as tabs.** Stacked, each answer meant
-                                scrolling past the others to reach it (user, 2026-10-28). */}
+                        <div className="lg:col-start-2 lg:row-span-2 lg:row-start-1">
+                            <Panel label="Identity">
+                                <AgentIdentityPanel view={view} />
+                            </Panel>
+                        </div>
+
+                        {/* **What a reader reads, as tabs.** Stacked, each answer meant scrolling
+                            past the others to reach it (user, 2026-10-28). */}
+                        <div className="min-w-0 lg:col-start-1 lg:row-start-2">
                             <div>
                                 <SectionTabs
                                     tabs={sectionTabs}
@@ -324,10 +336,6 @@ export function AgentTrustPanel() {
                                 </div>
                             </div>
                         </div>
-
-                        <Panel label="Identity">
-                            <AgentIdentityPanel view={view} />
-                        </Panel>
                     </div>
 
                     {/* The market on **this agent**, full width, in an action card like the skill
