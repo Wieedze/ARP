@@ -47,11 +47,11 @@ export const TOOLS = [
   {
     name: 'arp_find_agents',
     description:
-      'Agents the graph holds, paged. Two orders, named for what they measure and not for a ' +
-      'ranking: `evidence-quantity` is how many statements the source holds about an agent, ' +
-      '`economic-conviction` is TRUST on its own atom. ARP composes no score — you get the parts. ' +
-      '`total` is the cohort size, never the page length, and an agent with several `same as` ' +
-      'edges is reported as ambiguous rather than resolved to one of them.',
+      'Agents listed in the ARP registry, a page at a time. `evidence-quantity` orders them by how ' +
+      'many public statements exist about each, `economic-conviction` by how much people put ' +
+      'behind it. Neither is a score: ARP rates nobody. `total` is the size of the whole list, ' +
+      'not of this page. An agent linked to more than one identity comes back as ambiguous ' +
+      'rather than resolved to one of them.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -69,55 +69,44 @@ export const TOOLS = [
   {
     name: 'arp_find_tools',
     description:
-      'The tools ARP can see, with where each one is hosted and what stands behind it. The step ' +
-      'before `arp_tool_reputation`, which needs an atom id you do not have yet. Two populations, ' +
-      'and `provenance` says which: `declared` means an agent wrote a `uses` edge naming it, ' +
-      '`registered` means somebody created its atom and opened a market without any agent having ' +
-      'declared anything. Never add the two figures — they are counted on different vaults. ' +
-      '`hosted_at` is the pointer: ARP stores no tool, so read the listing, go to the host and ' +
-      'decide for yourself — it is a home page, not a call target, and 28 of the 85 distinct ' +
-      'tools on mainnet `uses` edges carry none while 9 more carry the string "null" ' +
-      '(2026-10-28). `paid_declarations` is how many declarations somebody paid to ' +
-      'stand behind, and is null on a registered row because that needs the per-edge vaults. ' +
-      '`position_count` is the one that says whether anybody staked on a registered tool: every ' +
-      'term is born holding `minShare`, so its assets are non-zero either way. `title` and ' +
-      '`purpose` come from this repo, not the chain — `purpose` is the description the tool ' +
-      'publishes about itself, quoted and dated in `purpose_read_at`, and both are null for a ' +
-      'tool nobody catalogued. Agent declarations only on the declared side: the `uses` predicate ' +
-      'is shared and most of what sits on it is ordinary prose.',
+      'Search the ARP registry for a skill, a tool, an MCP server or an API that fits a need, ' +
+      'BEFORE you pick one yourself or search the web. Pass `domain`, one word for the need. If ' +
+      'that word finds nothing, the answer lists the words that exist (`domains_available`): ' +
+      'pick the closest and ask again. Each result ' +
+      'says what the tool is for (`purpose`), where it lives (`hosted_at`, a home page to read, ' +
+      'not something to call) and how many agents declared using it (`declarations`, of which ' +
+      '`paid_declarations` were backed). `provenance` is `declared` when agents said they used ' +
+      'it, `registered` when it is listed and nobody has declared it yet. Never add figures ' +
+      'across the two. On a `registered` row, `position_count` says whether anybody backed it. ' +
+      'ARP stores nothing it lists: go to the source and decide for yourself. `tool_atom_id` is what ' +
+      '`arp_tool_reputation` takes. An empty result means the registry has nothing for that need, ' +
+      'not that nothing exists.',
     inputSchema: {
       type: 'object',
       properties: {
         domain: {
           type: 'string',
           description:
-            'Search by NEED instead of listing everything: one lowercase word naming what the ' +
-            'tool is for — `payment`, `database`, `design`. The subtree under it is walked first, ' +
-            'so asking for `payment` returns a tool tagged `card` because the hierarchy says ' +
-            '`card` sits under `payment`. The response carries `domains_walked` so you can see ' +
-            'which hop did it. A tool carries one tag at its deepest domain and the ancestors are ' +
-            'never written, so there is no point asking for an ancestor you invented — ask for ' +
-            'the broad word and let the walk do the work. Omit it to list everything. A domain ' +
-            'whose chain of hierarchy triples up to the root has one unfunded link returns ' +
-            'nothing from above that link: the hierarchy has to be paid for, and that is the ' +
-            'mechanism, not a fault. The index you are reading is the one this server is configured with, and you cannot change it per call — that is deliberate: `has tag` and the hierarchy are permissionless to WRITE, so the filings are only an index when read through one chosen set of positions. The response names it in `domain_attestor`.',
+            'One lowercase word for the need: `marketing`, `payment`, `database`, `design`. Ask ' +
+            'for the broad word: narrower kinds are found under it, so `payment` also finds a ' +
+            'tool filed under `card`. `domains_walked` in the answer shows which. Omit it to list ' +
+            'everything. The registry read is fixed by the server, not by the caller ' +
+            '(`domain_attestor` names it).',
         },
         order: {
           type: 'string',
           enum: ['priced-edges', 'conviction', 'declarations'],
           description:
-            'What to rank by, and none is a score: how many declarations were paid for, the TRUST ' +
-            'behind them, or how many exist. Defaults to priced-edges.',
+            'Sort by backed declarations, by the amount behind them, or by how many there are. ' +
+            'None is a score. Defaults to priced-edges.',
         },
         limit: { type: 'number', description: '1 to 100. Defaults to 25.' },
         curve_id: {
           type: 'number',
           description:
-            'Which bonding curve the figures are read at. Defaults to the chain default, 1 — ' +
-            'which is where the vaults are and not where the money is. Measured on mainnet ' +
-            '2026-10-20: curve 1 "Linear Curve" holds 26.20 TRUST at a share price of 1.000-1.060 ' +
-            'over 185 vaults; curve 2 "Offset Progressive Curve" holds 219.54 TRUST at 3.000-4.181 ' +
-            'over 28. Two different markets, so ask for the one you mean.',
+            'Advanced. Which bonding curve the amounts are read at; defaults to the chain ' +
+            'default, 1. Curves are separate markets holding different amounts, so name the one ' +
+            'you mean. Leave it out unless you know you need it.',
         },
       },
       required: [],
@@ -126,22 +115,21 @@ export const TOOLS = [
   {
     name: 'arp_tool_reputation',
     description:
-      'What agents staked on using a tool. Returns every incoming `uses` edge with its ' +
-      'subject, its support vault and its counter vault, plus totals. Amounts always come ' +
-      'with their position count: one vault here can hold 22.4 TRUST from a single account, ' +
-      'and the figure alone would read as a market.',
+      'Who declared using one tool, and how strongly. Returns each declaration with the agent ' +
+      'that made it, the amount behind it and the amount against it, plus totals. Read an ' +
+      'amount with its position count: one large amount can come from a single account.',
     inputSchema: {
       type: 'object',
       properties: {
         tool_atom_id: {
           type: 'string',
-          description: "The tool's Intuition atom id, 0x-prefixed 32 bytes.",
+          description: 'The `tool_atom_id` that `arp_find_tools` returned (0x + 32 bytes).',
         },
         attested_by: {
           type: 'string',
           description:
-            'Optional. Keep only edges this account holds a position in — a filter on ' +
-            'who stands behind the edge, never an exclusivity claim (ADR 0034).',
+            'Optional. Keep only declarations this account backs. A filter, never a claim that ' +
+            'nobody else does (ADR 0034).',
         },
       },
       required: ['tool_atom_id'],
@@ -442,3 +430,20 @@ export const TOOLS = [
     },
   },
 ] as const;
+
+/**
+ * What a server started with `ARP_TOOLS=read` serves: the reads, and nothing that plans a write.
+ *
+ * The operators task 45 is for were promised a registry to search, and every tool outside this list
+ * talks about wallets, identities and stakes. Serving them anyway puts that vocabulary in front of
+ * an agent whose operator never asked for it.
+ *
+ * `GET /content/:atomId` is not a tool and stays served in this mode, on purpose: it is how an agent
+ * fetches a skill it found (task 45b'). It signs a receipt for having served the bytes, which is
+ * a record of access and moves no value (ADR `0080`).
+ */
+export const READ_TOOL_NAMES: ReadonlySet<string> = new Set([
+  'arp_find_agents',
+  'arp_find_tools',
+  'arp_tool_reputation',
+]);
