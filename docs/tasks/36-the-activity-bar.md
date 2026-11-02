@@ -91,6 +91,8 @@ from the indexer every 15 s (`getRecentStakes`, query `RECENT_STAKES_QUERY`; mer
     them in a declaring transaction, so 18 rows. The same call on mainnet 1155 gave 0.
   - `deposits(where: {term_id: {_in: [the 9 declarations' counter_term_id]}})` returned none, so no
     against-position was being hidden.
+- **Verified** 2026-11-02: `ui-reviewer` PASS on the third round, `task-verifier` PASS on the
+  second, commit `b8b650f` on `feat/36-chain-facts`, post-mortem `learning/35`.
 
 ## Do not do in this task
 
