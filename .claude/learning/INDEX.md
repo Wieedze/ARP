@@ -2,7 +2,7 @@
 
 **Generated** 2026-11-02 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-36 entries, one per completed task. Written by `task-verifier` on a pass.
+37 entries, one per completed task. Written by `task-verifier` on a pass.
 
 | # | task | verdict | entry |
 | --- | --- | --- | --- |
@@ -42,3 +42,4 @@
 | [32](32-the-sponsoring-service.md) | `docs/tasks/40-the-sponsoring-service.md` (built with `docs/tasks/37` 37b, 37c) | PASS (second pass) | The sponsoring service: a proven deposit, paid by ARP, owned by the agent |
 | [33](33-the-account-page.md) | `docs/tasks/35-the-account-page.md` | PASS (second run; the first returned a five-item punch list) | The account page: delegations and settings |
 | [34](34-hire-receipt-v2.md) | `docs/tasks/44-hire-receipt-v2.md` | PASS (second pass; the first returned a four-item punch list) | Hire receipt v2: the receipt names the contract that verifies it |
+| [35](35-the-activity-bar-chain-facts.md) | `docs/tasks/36-the-activity-bar.md` (section "Amended 2026-11-02 — every agent, from the indexer") | PASS (second pass; first FAIL on 3 items) | The activity bar, amended: every agent, from the indexer (36, 2026-11-02) |
