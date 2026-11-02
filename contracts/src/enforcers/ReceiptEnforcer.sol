@@ -40,7 +40,11 @@ import {ModeCode} from "delegation-framework/utils/Types.sol";
 ///         - **verifying contract** — in the domain, as `address(this)`. A receipt signed for another
 ///           deployment or for the sponsoring service recovers to a different address here and is
 ///           refused as `SignerNotAccepted`, so one receipt unlocks one sponsorship, at the one
-///           verifier it names. This closes INFO-R1 in `SECURITY_REVIEW.md` (task 44).
+///           verifier it names. This closes INFO-R1 in `SECURITY_REVIEW.md` (task 44). The domain
+///           pairs `receiptChainId` with this address, so two deployments share it only at one
+///           address on two chains (same deployer, same nonce) whose `_terms` name one
+///           `receiptChainId`, which is then not its own chain for at least one of them: the
+///           `receiptChainId != block.chainid` case of CR-1 (CR-2).
 ///
 ///         Threat model:
 ///         - Every hook is gated on `msg.sender == DELEGATION_MANAGER`. Unlike
@@ -265,9 +269,8 @@ contract ReceiptEnforcer is CaveatEnforcer {
     ///         Freshness compares `issuedAt` with `block.timestamp` twice (not after it, and at most
     ///         `maxAge` before it), and `expiresAt` once (not before it). The block's proposer sets
     ///         `block.timestamp` within the usual ~15 s validator tolerance, so each edge can move by
-    ///         that much. Against a `maxAge`
-    ///         of hours or days that is irrelevant; a `maxAge` of a few seconds would be dominated
-    ///         by it, and a delegator should not choose one.
+    ///         that much. Against a `maxAge` of hours or days that is irrelevant; a `maxAge` of a
+    ///         few seconds would be dominated by it, and a delegator should not choose one.
     function beforeHook(
         bytes calldata _terms,
         bytes calldata _args,

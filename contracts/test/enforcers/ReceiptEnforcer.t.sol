@@ -40,6 +40,19 @@ contract ReceiptEnforcerTest is Test {
     uint256 internal signerKey;
     address internal signer;
 
+    /// The v1 struct `hire-receipt.ts` still signs for nobody that sponsors.
+    struct V1Receipt {
+        uint256 version;
+        string agentRegistry;
+        uint256 agentId;
+        address requester;
+        bytes32 payment;
+        uint256 paid;
+        bytes32 requestHash;
+        bytes32 resultHash;
+        uint256 issuedAt;
+    }
+
     event ReceiptConsumed(
         bytes32 indexed delegationHash,
         bytes32 indexed paymentKey,
@@ -123,6 +136,28 @@ contract ReceiptEnforcerTest is Test {
             abi.encodeWithSelector(ReceiptEnforcer.UnknownReceiptVersion.selector, 1),
             _terms(),
             _args(r),
+            _deposit(REDEEMER, TERM)
+        );
+    }
+
+    /// A v1 receipt as a v1 signer encodes it, nine fields and no `termId`/`expiresAt`, reaches the
+    /// same refusal: the version word decodes first, so the shape difference never matters.
+    function test_beforeHook_revertsOnV1ReceiptInItsOwnShape() public {
+        V1Receipt memory v1 = V1Receipt({
+            version: 1,
+            agentRegistry: REGISTRY,
+            agentId: AGENT_ID,
+            requester: REDEEMER,
+            payment: PAYMENT,
+            paid: 0.001 ether,
+            requestHash: bytes32(0),
+            resultHash: bytes32(0),
+            issuedAt: ISSUED_AT
+        });
+        _hookReverts(
+            abi.encodeWithSelector(ReceiptEnforcer.UnknownReceiptVersion.selector, 1),
+            _terms(),
+            abi.encode(v1, new bytes(65)),
             _deposit(REDEEMER, TERM)
         );
     }

@@ -80,7 +80,7 @@ AGENT_NODE_RECEIPT_TTL` (default 86,400 s). The enforcer keeps the delegator's `
 
 - `ReceiptEnforcer.hashReceipt` is `view` now (it reads `address(this)`), not `pure`.
 - Gas, `cd contracts && forge test --match-contract ReceiptEnforcerTest --gas-report`, 2026-11-02:
-  deployment 1,125,098 gas (was 1,085,111). Happy path `beforeHook` 67,190 gas in its frame
+  deployment 1,125,110 gas (was 1,085,111; 1,125,098 before the review's NatSpec-only edit). Happy path `beforeHook` 67,190 gas in its frame
   (was 66,564), by `forge test --match-test test_beforeHook_acceptsAndConsumes -vvvv --isolate`.
 - Not deployed. No transaction on any chain.
 
@@ -91,4 +91,6 @@ AGENT_NODE_RECEIPT_TTL` (default 86,400 s). The enforcer keeps the delegator's `
   `apps/node/src/task.ts`, `apps/sponsor/src/service.ts`, `contracts/src/enforcers/ReceiptEnforcer.sol`
 - Related ADR: `0098` (the open decision this answers), `0083` (the v1 receipt), `0094`, `0096`
 - Related rule: `.claude/rules/security.md` (signature replay)
-- Review: `contracts/SECURITY_REVIEW.md`, "Task 44: v2 receipt"
+- Review: `contracts/SECURITY_REVIEW.md`, "Task 44: v2 receipt"; its `contract-reviewer` pass on the
+  v2 change (2026-11-02) is **PASS**: INFO-R1 closed, CR-2 (Informational, latent) recorded, no
+  Critical, High or Medium
