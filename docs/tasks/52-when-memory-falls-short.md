@@ -1,6 +1,7 @@
 # Task 52 — When memory falls short: does ARP find a skill Claude does not know?
 
-**Status:** **BUILT**, 2026-11-02, branch `feat/52-memory-falls-short`.
+**Status:** **BUILT and verified**, 2026-11-02, branch `feat/52-memory-falls-short`.
+`task-verifier` PASS on the second pass, post-mortem `learning/47`.
 **Rules:** `code.md`, `claims.md`, `workflow.md`.
 **Reviewers:** `task-verifier`.
 
