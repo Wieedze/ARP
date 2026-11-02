@@ -107,7 +107,7 @@ export function YourAgent({heading = true}: {heading?: boolean} = {}) {
     );
 }
 
-export function Choice({
+function Choice({
     selected,
     onClick,
     children,
