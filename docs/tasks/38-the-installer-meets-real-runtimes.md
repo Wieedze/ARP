@@ -1,6 +1,9 @@
 # Task 38 — The installer meets real runtimes
 
-**Status:** **PLAN**, 2026-10-30. Not started. **Narrowed 2026-11-02 by the user: Claude Code
+**Status:** **Part A done for Claude Code, 2026-11-02** (branch `feat/38-claude-code-demo`, built on top of task 49, PR #32). Captures from 2.1.316 are fixtures; `arp init` pins testnet; `.arp/` ignores itself; doctor
+requires claude ≥ 2.1.316; `packages --tarball` for testers. Post-mortem
+`.claude/learning/NN-the-installer-meets-real-runtimes.md`. Open: archive hosting, part D's
+decisions, parts B, C, E. Planned 2026-10-30. **Narrowed 2026-11-02 by the user: Claude Code
 first, for the demo; every other runtime waits for the port.** So part A runs for Claude Code only,
 parts B, C and E wait, and part D is needed only before something is published.
 **Decided 2026-11-02 by the user: everything on testnet 13579 for now, declarations included.**
@@ -29,19 +32,19 @@ This task replaces documentation with one real run per runtime.
 
 ## 2. Before starting (the user)
 
-| step               | command         | done when                                                                        |
-| ------------------ | --------------- | -------------------------------------------------------------------------------- |
-| update Claude Code | `claude update` | `claude --version` is newer than 2.0.25, which may not know `PostToolUseFailure` |
-
-For the demo, only the first row is needed. The other four wait for the port.
-| install Codex | `npm i -g @openai/codex`, then run `codex` once | `~/.codex/` exists |
-| install Gemini CLI | `npm i -g @google/gemini-cli`, then run `gemini` once | `~/.gemini/` exists |
-| install Copilot CLI | `npm i -g @github/copilot`, then run `copilot` once | `~/.copilot/` exists |
-| install Grok Build | `curl -fsSL https://x.ai/cli/install.sh \| bash` (docs.x.ai) | `grok --version` answers |
+| step                | command                                                      | done when                                                                 |
+| ------------------- | ------------------------------------------------------------ | ------------------------------------------------------------------------- |
+| update Claude Code  | `claude update`                                              | `claude --version` is 2.1.316 or newer: 2.0.25 loaded zero hooks (part A) |
+| install Codex       | `npm i -g @openai/codex`, then run `codex` once              | `~/.codex/` exists                                                        |
+| install Gemini CLI  | `npm i -g @google/gemini-cli`, then run `gemini` once        | `~/.gemini/` exists                                                       |
+| install Copilot CLI | `npm i -g @github/copilot`, then run `copilot` once          | `~/.copilot/` exists                                                      |
+| install Grok Build  | `curl -fsSL https://x.ai/cli/install.sh \| bash` (docs.x.ai) | `grok --version` answers                                                  |
 
 The npm package names for Codex, Gemini and Copilot come from memory, not from a check. If one
 fails, its official page decides. All of these run inside WSL. Cursor and VS Code run on Windows
 and wait for part E.
+
+For the demo, only the first row is needed. The other four wait for the port.
 
 ## 3. Parts, in order
 
@@ -73,12 +76,15 @@ and the runtime adds `mcp_server: {name, source}`. Three things the run found:
 
 - **Claude Code 2.0.25 loaded zero hooks** from `settings.json` ("Found 0 hook matchers" in its
   debug log) while `/mcp` worked, so an old runtime records nothing without any error.
-  `arp doctor` should say so.
+  ~~`arp doctor` should say so.~~ **Fixed in `229b4b8`**: `arp doctor` fails a `claude` older than
+  2.1.316.
 - **The MCP entry read mainnet** (`edges_read: 0` next to a web app on testnet); fixed by
   `SERVER_ENV` above.
 - **`.arp/receipt-key` is not gitignored outside this repo.** The MCP server writes it in the
   working directory and only this repository's root `.gitignore` covers it. Latent here
-  (`~/arp-demo` is not a git repo); must be fixed before any tester round.
+  (`~/arp-demo` is not a git repo); ~~must be fixed before any tester round.~~ **Fixed in
+  `1645acc` and `333d375`**: the server writes `.arp/.gitignore` (`*`) beside the key, also for a
+  key that already exists, and a directory that refuses it no longer stops the server.
 
 ### B — The plugin under Grok, the extension under Gemini (33d)
 
@@ -102,16 +108,21 @@ and the runtime adds `mcp_server: {name, source}`. Three things the run found:
 
 ### For testers before an npm release (2026-11-02)
 
-The user chose an `npm pack` archive at a private URL. `bun run packages --tarball <https url>
-
-<dir>` (in `apps/cli`) writes the plugin into `<dir>` with its MCP entry running
+The user chose an `npm pack` archive at a private URL. `bun run packages --tarball <https url> <dir>`
+(in `apps/cli`) writes the plugin into `<dir>` with its MCP entry running
 `npx -y --package <url> arp mcp`, and the archive beside it. `npx -y <url>.tgz mcp`, the first form
-tried, executes the archive itself and fails. Tried from a local HTTP server: the archive starts
-and answers `initialize` on 13579. Hosting is not decided.
+tried, executes the archive itself and fails. Tried from a local HTTP server, with `npx` pointed
+at the archive by hand (`--tarball` accepts only an `https://` URL, so it cannot write that entry):
+the archive starts and answers `initialize` on 13579. Hosting is not decided.
 
 Every generated plugin entry carries `ARP_TARGET=testnet` and `ARP_TOOLS=read` (task 45: the
 plugin is for people who search). `arp doctor` fails a `claude` older than 2.1.316, the oldest one
 seen running the hooks.
+
+The committed plugin's `.mcp.json` (`packaging/claude/arp/`) runs `npx -y @arp-protocol/cli@0.0.1`,
+which is not on npm, so until a publish or a hosted archive only `arp init` (local `dist`) or a
+`--tarball` copy starts. The plugin entry's `ARP_TOOLS=read` also hides `arp_declare_session`, so
+the demo's declare step goes through `arp init`'s entry.
 
 ### D — Decisions before publishing (33f)
 
@@ -143,5 +154,7 @@ The user chooses.
 
 ## 5. Evidence ladder
 
-Distribution and proof that it works. Each runtime that passes part A adds a runtime whose calls
-reach the **recorded** rung. It moves no claim up a rung.
+Distribution and proof that it works. It serves tier 3, **staked**, and indirectly: the runtime's
+own record of what it used is the input to a paid `uses` declaration, which can carry a deposit.
+It moves no claim up a rung itself, and it holds only on the `arp init` path — the plugin entry
+hides the declare tool.
