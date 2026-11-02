@@ -1,6 +1,7 @@
 # Task 35 — The account page: delegations and settings
 
-**Status:** **PLAN**, 2026-10-30. Not started.
+**Status:** **BUILT, NOT VERIFIED**, 2026-11-02, on `feat/35-account-page`. Completion note at the
+end; `ui-reviewer` and `task-verifier` have not run.
 **Required skills:** `mms-smart-accounts-kit` (read `references/delegations.md` first, on revocation).
 **Rules:** `code.md`, `ui.md`, `metamask-delegation.md`, `security.md`, `portability.md`, `claims.md`,
 `workflow.md`.
@@ -119,3 +120,30 @@ calls the hook.
 `docs/12` point 5 makes the signed delegation "the guard rail". An operator who cannot see or revoke
 one has a guard rail they cannot inspect. This page makes the **staked** rung's bound visible and
 revocable. It does not move a claim up a rung.
+
+## 8. Completion note, 2026-11-02 (not yet verified)
+
+On `feat/35-account-page`. ADR `0100`. §0 supersedes three sentences above: §1's "this task does not
+touch `/profile` or `/activity`", §3.3's "`/rig` keeps its first-run flow", and §5's first bullet.
+
+- **Wallet menu**: copy address, Account, Disconnect (`apps/web/src/components/WalletConnect.tsx`).
+- **`/account`** (`apps/web/src/pages/AccountPage.tsx`): wallet and Smart Account with the chain
+  toggle; one row per stored delegation with delegate, decoded caveats, signing time and on-chain
+  state (`readDelegationState`, three values); Revoke behind a confirmation naming 13579; Export;
+  the caveat form (`components/account/DelegationForm.tsx`); each delegate's balance.
+- **Revocation** is a one-shot `ExactExecution` + `LimitedCalls(1)` delegation redeemed by the
+  operator's wallet (`services/delegation-revoke.ts`), because `disableDelegation` must come from
+  the Smart Account and no bundler is wired (ADR `0100`).
+- **Storage** is a list per Smart Account (`services/delegation-store.ts`, `arp.delegations.v3`); a
+  `v2` entry migrates once.
+- **Removed**: `/profile`, `/me`, `/rig`, `pages/Profile.tsx`, `pages/AgentRegister.tsx`,
+  `useTotalAgents`, `serializeDelegation`/`deserializeDelegation`, the "Invest" nav link. The
+  positions are `components/activity/Positions.tsx` on `/activity`.
+
+**Not done:**
+
+- **Listing through 37a's discovery read.** `discoverDelegations` is not built (`docs/tasks/37` §7),
+  and `apps/sponsor`'s `/publish` answers 503, so every row says "local only" and nothing is
+  published. Only 37a's `isDisabled` half exists, as `readDelegationState`.
+- **Funding the runtime** from this page: `fundAndApproveRuntime` needs the runtime's key (§5).
+- `ui-reviewer`, `task-verifier`, a post-mortem, and a walk on 13579.
