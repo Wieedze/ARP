@@ -54,10 +54,10 @@ import {ModeCode} from "delegation-framework/utils/Types.sol";
 ///           `receiptChainId != block.chainid` case of CR-1 (CR-2).
 ///
 ///         Threat model:
-///         - Every hook is gated on `msg.sender == DELEGATION_MANAGER`. Unlike
-///           `TrustStakeCapEnforcer`, this one keys state by a value anyone can read from a pending
-///           redemption, so an ungated `beforeHook` would let a stranger burn a receipt by calling
-///           it first.
+///         - Every hook is gated on `msg.sender == DELEGATION_MANAGER`. This one keys state by a
+///           value anyone can read from a pending redemption, so an ungated `beforeHook` would let a
+///           stranger burn a receipt by calling it first. (`TrustStakeCapEnforcer` had the same
+///           exposure and was said not to; it keys its state by caller since ADR 0118.)
 ///         - `_delegator` is whoever funds the deposit (ARP's sponsoring account). `_redeemer` is the
 ///           hiring agent: it must be the receipt's `requester` and the deposit's `receiver`, so the
 ///           position is the agent's and the agent is the one the receipt names.
