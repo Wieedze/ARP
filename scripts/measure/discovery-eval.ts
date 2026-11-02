@@ -128,7 +128,7 @@ function rng(seed: number): () => number {
 function shuffle<T>(items: T[], random: () => number): T[] {
   for (let i = items.length - 1; i > 0; i--) {
     const j = Math.floor(random() * (i + 1));
-    [items[i], items[j]] = [items[j] as T, items[i] as T];
+    [items[i], items[j]] = [items[j] as T, items[i] as T]; // i and j are both below items.length
   }
   return items;
 }
@@ -295,6 +295,7 @@ function ratio(runs: RunRecord[], value: (run: RunRecord) => number): { point: n
   };
   const random = rng(45);
   const draws = Array.from({ length: 2000 }, () =>
+    // the index is below groups.length, so the element exists
     of(Array.from({ length: groups.length }, () => groups[Math.floor(random() * groups.length)] as { arp: number; none: number })),
   ).sort((x, y) => x - y);
   return { point: of(groups), low: draws[50] ?? NaN, high: draws[1949] ?? NaN };
