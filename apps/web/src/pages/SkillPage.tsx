@@ -142,7 +142,7 @@ export function SkillPage({
     );
 }
 
-/** The SKILL.md's own description, and its `##` sections with the first command of each. */
+/** The SKILL.md's own description. */
 function Description({
     label,
     md,
@@ -156,7 +156,6 @@ function Description({
     // skills.sh's copy stands in while the file is read, and where there is no file to read.
     const fallback = factFor(label)?.description ?? null;
     const description = md.status === "ok" ? (md.md.description ?? fallback) : fallback;
-    const sections = md.status === "ok" ? md.md.sections : [];
 
     return (
         <section
@@ -175,21 +174,6 @@ function Description({
                 </p>
             ) : (
                 <Lede text={description} />
-            )}
-            {sections.length === 0 ? null : (
-                <ul className="mt-3.5 grid gap-x-7 [grid-template-columns:repeat(auto-fit,minmax(min(100%,20rem),1fr))]">
-                    {sections.map((section, index) => (
-                        <li
-                            key={`${index}-${section.heading}`}
-                            className="flex min-w-0 items-baseline justify-between gap-3 border-b border-[color:var(--color-rule)] py-2 text-[14px] text-[color:var(--color-silver)]"
-                        >
-                            <span className="min-w-0 truncate">{section.heading}</span>
-                            <code className="min-w-0 truncate font-mono text-[12px] text-[color:var(--color-steel)]">
-                                {section.command}
-                            </code>
-                        </li>
-                    ))}
-                </ul>
             )}
         </section>
     );

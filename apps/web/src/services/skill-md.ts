@@ -1,6 +1,5 @@
 /**
- * What a skill page reads out of a SKILL.md: its frontmatter description and version, and its `##`
- * sections with the first command each one gives.
+ * What a skill page reads out of a SKILL.md: its frontmatter description and version.
  *
  * Pure. The text is fetched elsewhere (`use-skill-md`); this only reads it, so it is testable on a
  * string and never needs the network.
@@ -11,33 +10,17 @@
  * came out of a misparse would be printed as the author's own sentence.
  */
 
-type SkillSection = {
-    heading: string;
-    /** The first line of the first fenced block under the heading. */
-    command: string;
-};
-
 export type SkillMd = {
     description: string | null;
     version: string | null;
-    sections: SkillSection[];
 };
-
-/** The page shows a skill's headings, not its manual: past this many, the SKILL.md link has them. */
-const MAX_SECTIONS = 8;
 
 export function parseSkillMd(text: string): SkillMd {
     const normalised = text.replace(/\r\n?/g, "\n");
-    const {front, body} = splitFrontmatter(normalised);
+    const {front} = splitFrontmatter(normalised);
     return {
         description: front.get("description") ?? null,
         version: front.get("version") ?? front.get("metadata.version") ?? null,
-        // **Only sections that give a command.** The rest are `References`, `Related Skills` and
-        // numbered prose, and a link standing in for a command printed bare URLs down the list
-        // (user, 2026-10-29). A section with a command says what the skill does in one line.
-        sections: sectionsOf(body)
-            .filter((section): section is SkillSection => section.command !== null)
-            .slice(0, MAX_SECTIONS),
     };
 }
 
@@ -94,46 +77,6 @@ function unquote(value: string): string {
         if ((first === '"' || first === "'") && first === last) return value.slice(1, -1);
     }
     return value;
-}
-
-type Draft = {heading: string; command: string | null};
-
-function sectionsOf(body: string): Draft[] {
-    const sections: Draft[] = [];
-    let current: Draft | null = null;
-    let inFence = false;
-    let fenceFirst: string | null = null;
-
-    for (const line of body.split("\n")) {
-        if (/^\s*(```|~~~)/.test(line)) {
-            if (inFence) {
-                inFence = false;
-                if (current !== null && current.command === null && fenceFirst !== null) {
-                    current.command = fenceFirst;
-                }
-                fenceFirst = null;
-            } else {
-                inFence = true;
-            }
-            continue;
-        }
-        if (inFence) {
-            if (fenceFirst === null && line.trim() !== "") fenceFirst = line.trim();
-            continue;
-        }
-        const heading = /^##\s+(.+?)\s*#*\s*$/.exec(line);
-        if (heading !== null) {
-            current = {heading: stripInline(heading[1] ?? ""), command: null};
-            sections.push(current);
-            continue;
-        }
-    }
-    return sections;
-}
-
-/** `**Bold**` and `` `code` `` in a heading are markup, not words. */
-function stripInline(text: string): string {
-    return text.replace(/[*_`]/g, "").trim();
 }
 
 /**

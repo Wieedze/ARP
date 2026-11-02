@@ -23,15 +23,9 @@ See [Transparent videos](./transparent-videos.md) for rendering out a video with
 `;
 
 describe("parseSkillMd", () => {
-    it("reads the description, the version and each section's first command", () => {
+    it("reads the description and the version", () => {
         const parsed = parseSkillMd(REMOTION);
-        expect(parsed.description).toBe("Export a Remotion video");
-        expect(parsed.version).toBe("4.0.539");
-        // `Transparent videos` gives a link and no command, so it is not listed: a link in that
-        // slot printed bare URLs down the list.
-        expect(parsed.sections).toEqual([
-            {heading: "General rendering strategy", command: "npx remotion render"},
-        ]);
+        expect(parsed).toEqual({description: "Export a Remotion video", version: "4.0.539"});
     });
 
     it("reads a folded description and a version nested under metadata", () => {
@@ -46,13 +40,6 @@ metadata:
 body`);
         expect(parsed.description).toBe("A relentless interview to sharpen a plan.");
         expect(parsed.version).toBe("1.2");
-        expect(parsed.sections).toEqual([]);
-    });
-
-    it("ignores a heading inside a code block", () => {
-        const parsed = parseSkillMd("## Real\n\n```md\n## Not a heading\n```\n");
-        expect(parsed.sections.map((section) => section.heading)).toEqual(["Real"]);
-        expect(parsed.sections[0]?.command).toBe("## Not a heading");
     });
 
     it("says nothing rather than guessing when there is no frontmatter", () => {
