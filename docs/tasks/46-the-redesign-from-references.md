@@ -27,7 +27,7 @@ the Mobbin references behind each one, were published to the user that day.
 | `/tools` | variant A of five, without its two parts that reversed earlier decisions (below) |
 | The two shared layouts, and the agent page's facts on the right | **yes** ("oui"), on the mockup page "ARP — une grammaire, toutes les pages": list pages follow `/tools`, detail pages follow the skill page. ADR `0104` |
 | `/register` | the two-tile mockup on that same page. Built first because task 47 does not touch `Register.tsx`: _« ok fait la »_ |
-| The line under the tool URL field ("The scheme, `www.`, a trailing slash and a fragment are normalised away…") | **remove it**: _« on enlève »_. Done after task 47 is merged into this branch, because task 47 edits `ToolRegister.tsx` |
+| The line under the tool URL field ("The scheme, `www.`, a trailing slash and a fragment are normalised away…") | **remove it**: _« on enlève »_. **Done** after task 47 was rebased under this branch |
 
 ## 3. 46a — `/tools` pages its list (built)
 
@@ -60,7 +60,7 @@ A row is built only after the user has chosen its mockup (§2).
 | 46b | `/agent/:chainId/:tokenId` | open on the first non-empty tab; drop the "Graph read from" line and the mainnet declare sentence; the CAIP-19 shown once | none |
 | | | facts in cards on the right, like the skill page | two-column detail view, **amended** by ADR `0104` |
 | 46c | `/activity` | one table with chips instead of three stacked blocks | none |
-| 46d | `/register` | **built** `d817334`, post-mortem 37 (`Choice` in `YourAgent.tsx` now has no importer outside its file; drop its `export` once task 47 commits that file): two choice tiles, each with a mono line of what it needs (`ERC-8004 identity · wallet`, `URL · wallet`). No symbol: a Sigil comes from chain data. `pages/Register.test.tsx`, 2 tests | none |
+| 46d | `/register` | **built** `d817334`, post-mortem 37 (`Choice` in `YourAgent.tsx` lost its last outside importer; its `export` is dropped): two choice tiles, each with a mono line of what it needs (`ERC-8004 identity · wallet`, `URL · wallet`). No symbol: a Sigil comes from chain data. `pages/Register.test.tsx`, 2 tests | none |
 | 46e | `/agents` | the id lookup inside the search; `—` when nobody holds a position, which has to match what `/tools` does | none |
 | | | filter chips | new feature, scope |
 | 46f | the shell | the giant footer wordmark on `/` only | ADR `0057`'s handoff |
