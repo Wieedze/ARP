@@ -2,7 +2,7 @@
 
 **Generated** 2026-11-02 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-48 entries, one per completed task. Written by `task-verifier` on a pass.
+49 entries, one per completed task. Written by `task-verifier` on a pass.
 
 | # | task | verdict | entry |
 | --- | --- | --- | --- |
@@ -54,3 +54,4 @@
 | [44](44-the-installer-meets-real-runtimes.md) | `docs/tasks/38-the-installer-meets-real-runtimes.md` | PASS (second pass; first pass FAIL on the task file and two code nits) | The installer meets real runtimes (part A, Claude Code) |
 | [45](45-discovery-without-a-command-45c.md) | `docs/tasks/45-discovery-without-a-command.md` §45c | PASS (second pass; first pass FAIL on three written claims and two uncommented casts) | Discovery without a command (45c, measure before promising) |
 | [46](46-quiet-search.md) | `docs/tasks/51-quiet-search.md` | PASS on the second pass | A quieter search: every word must match |
+| [47](47-when-memory-falls-short.md) | `docs/tasks/52-when-memory-falls-short.md` | PASS on round 2 | When memory falls short: does ARP find a skill Claude does not know? |

@@ -4,6 +4,18 @@
  *      bun run scripts/measure/discovery-eval.ts                       run, judge, summarise
  *      bun run scripts/measure/discovery-eval.ts --summarise <file>    summarise a past run only
  *
+ *  Two suites (`--suite`):
+ *  - `tools` (default, task 45c): does the agent consult ARP when it needs a tool, and at what cost.
+ *  - `install` (task 52): needs the catalogue covers, asked by someone who wants Claude to do the
+ *    job itself. Does the answer name an agent skill or an MCP server that exists? Every GitHub
+ *    repository, npm package and pip package an answer names is looked up (`gh api`, the npm
+ *    registry, PyPI), so a name that does not exist counts as invented. One that exists is a skill
+ *    or an MCP server when ARP's catalogue holds it, when skills.sh lists skills from that
+ *    repository, or when its name says `mcp`. Pass criteria, set by the user on 2026-11-02: the
+ *    95% intervals of "names a skill or MCP server that exists" do not overlap, with ARP above,
+ *    and ARP invents no more. Any installable that exists (a library such as Pillow) is printed
+ *    beside it, so an answer that solves the need with libraries is visible rather than lost.
+ *
  *  Flags: `--reps 3`, `--model sonnet`, `--judge-model opus`, `--jobs 4`, `--out <file.jsonl>`, and
  *  `--only id,id` to run a few prompts as a smoke test.
  *  An interrupted run resumes: records already in `--out` are not run again.
@@ -59,7 +71,14 @@ type RunRecord = {
   turns: number;
   isError: boolean;
   answer: string;
+  /** Install suite only: every repository or package the answer names, and whether it exists. */
+  refs?: Ref[];
 };
+
+/** `exists` is `null` when the lookup itself failed, which counts neither way. */
+type Ref = { kind: 'github' | 'npm' | 'pip'; name: string; exists: boolean | null; agent?: boolean | null };
+
+type Suite = 'tools' | 'install';
 
 type JudgeRecord = {
   kind: 'judge';
@@ -78,6 +97,8 @@ type MetaRecord = {
   model: string;
   judgeModel: string;
   reps: number;
+  /** Absent in files written before task 52, which are all `tools`. */
+  suite?: Suite;
 };
 
 type EvalRecord = RunRecord | JudgeRecord | MetaRecord;
@@ -105,6 +126,34 @@ const PROMPTS: readonly Prompt[] = [
   { id: 'ww1', needsTool: false, text: 'Summarise the causes of the First World War in three sentences.' },
   { id: 'tcp-udp', needsTool: false, text: 'What is the difference between TCP and UDP, briefly?' },
 ];
+
+const INSTALL_ASK = ' I use Claude. What can I install so that you can do it yourself?';
+
+/**
+ * Needs the catalogue has a skill for, checked with `arp_find_tools` on testnet 13579 on 2026-11-02
+ * before the run. That is the scope of the claim: where ARP has something, does it find what
+ * memory does not. It says nothing about needs ARP does not cover.
+ */
+const INSTALL_PROMPTS: readonly Prompt[] = [
+  ['thumbnails', 'I need eye-catching thumbnails for my YouTube videos.'],
+  ['product-photos', 'My product photos for my online shop look amateur and I want them to look professional.'],
+  ['slides', 'I have notes for a talk and need them turned into a slide deck.'],
+  ['video-editing', 'I want my raw video footage edited into a short, polished clip.'],
+  ['captions', 'I want animated captions burned into my short videos.'],
+  ['seo', 'I want my blog posts to rank better on Google.'],
+  ['social-posts', 'I need a week of social media posts written for my small business.'],
+  ['image-generation', 'I need original illustrations for my newsletter.'],
+  ['pdf', 'I have to fill in and merge a bunch of PDF forms.'],
+  ['logo', 'I need a logo for my new bakery.'],
+  ['music', 'I need background music for my videos that I am allowed to use.'],
+  ['voiceover', 'I want a voiceover for my explainer video without recording my own voice.'],
+  ['landing-page', 'I need a landing page for my online course.'],
+  ['website-video', 'I want a short promo video that shows off my website.'],
+].map(([id, text]) => ({ id: id as string, needsTool: true, text: `${text as string}${INSTALL_ASK}` })); // pairs written above
+
+function promptsOf(suite: Suite): readonly Prompt[] {
+  return suite === 'install' ? INSTALL_PROMPTS : PROMPTS;
+}
 
 const ROOT = resolve(import.meta.dir, '..', '..');
 const CLI = join(ROOT, 'apps', 'cli', 'dist', 'cli.js');
@@ -225,13 +274,28 @@ async function runOne(prompt: Prompt, arm: Arm, rep: number, model: string, mcpC
   };
 }
 
-async function judgeOne(prompt: Prompt, arp: RunRecord, none: RunRecord, model: string, random: () => number): Promise<JudgeRecord> {
+async function judgeOne(
+  prompt: Prompt,
+  arp: RunRecord,
+  none: RunRecord,
+  model: string,
+  random: () => number,
+  suite: Suite,
+): Promise<JudgeRecord> {
   const arpWas = random() < 0.5 ? 'A' : 'B';
   const blind = (text: string) => text.replace(/\bARP\b(\s+registry)?/gi, 'a registry');
   const [a, b] = arpWas === 'A' ? [arp.answer, none.answer] : [none.answer, arp.answer];
   const question = [
-    'Two assistants answered the same question. Judge which answer helps the person more: tools that fit',
-    'what they asked, enough to get started, no padding. Do not favour either for where it looked things up.',
+    ...(suite === 'install'
+      ? [
+          'Two assistants answered the same question. Judge which answer better tells the person what to install',
+          'so the assistant can do the job itself: things that exist, fit the need and can be installed now, no',
+          'padding. Do not favour either for where it looked things up.',
+        ]
+      : [
+          'Two assistants answered the same question. Judge which answer helps the person more: tools that fit',
+          'what they asked, enough to get started, no padding. Do not favour either for where it looked things up.',
+        ]),
     '',
     `QUESTION:\n${prompt.text}`,
     '',
@@ -261,6 +325,114 @@ async function judgeOne(prompt: Prompt, arp: RunRecord, none: RunRecord, model: 
         ? arpWas === 'B' ? 'arp' : 'none'
         : 'invalid';
   return { kind: 'judge', prompt: prompt.id, needsTool: prompt.needsTool, rep: arp.rep, arpWas, verdict };
+}
+
+/** First segments that name a folder inside a repository, not an owner. */
+const FOLDERS = new Set(['skills', 'src', 'docs', 'scripts', 'lib', 'bin', 'test', 'tests', 'examples', 'packages', 'apps', 'plugins', 'agents', 'commands']);
+
+/**
+ * Every GitHub repository, npm package and pip package an answer names, as written. It reads the
+ * forms either arm uses: an answer built on ARP cites full GitHub URLs because ARP returns them,
+ * and an answer from memory writes a bare `owner/repo`, `/plugin marketplace add` or `uvx`. Reading
+ * only the first form undercounted the arm without ARP (task 52 §3).
+ */
+export function references(answer: string): { kind: Ref['kind']; name: string }[] {
+  const found = new Map<string, { kind: Ref['kind']; name: string }>();
+  const add = (kind: Ref['kind'], name: string) => {
+    const clean = name.replace(/\.git$/, '').replace(/[.,;:)\]'"`]+$/, '');
+    if (clean.split('/').every((part) => part !== '')) found.set(`${kind}:${clean.toLowerCase()}`, { kind, name: clean });
+  };
+  for (const m of answer.matchAll(/github\.com\/([\w.-]+)\/([\w.-]+)/g)) add('github', `${m[1]}/${m[2]}`);
+  for (const m of answer.matchAll(/skills\.sh\/([\w.-]+)\/([\w.-]+)/g)) add('github', `${m[1]}/${m[2]}`);
+  for (const m of answer.matchAll(/npx\s+(?:-y\s+)?skills(?:@[\w.-]+)?\s+add\s+([\w.-]+)\/([\w.-]+)/g)) add('github', `${m[1]}/${m[2]}`);
+  for (const m of answer.matchAll(/\/plugin\s+marketplace\s+add\s+([\w.-]+)\/([\w.-]+)/g)) add('github', `${m[1]}/${m[2]}`);
+  // A bare `owner/repo` in backticks, but not a file path: no extension, no leading `.`, `~` or `@`,
+  // and not a folder inside a repository ("copy `skills/pptx` from anthropics/skills", task 52 §3).
+  for (const m of answer.matchAll(/`([A-Za-z0-9][\w-]*)\/([A-Za-z0-9][\w-]*(?:\.js)?)`/g))
+    if (!FOLDERS.has((m[1] ?? '').toLowerCase())) add('github', `${m[1]}/${m[2]}`);
+  for (const m of answer.matchAll(/(?:uvx|uv\s+tool\s+install|pipx\s+run)\s+(?:--from\s+)?([A-Za-z][\w.-]*)/g)) add('pip', m[1] ?? '');
+  for (const m of answer.matchAll(/(?:npx\s+(?:-y\s+)?|npm\s+(?:install|i)\s+(?:-g\s+)?)(@[\w.-]+\/[\w.-]+|[a-z][\w.-]*)/g))
+    if (m[1] !== 'skills' && !m[1]?.startsWith('skills@')) add('npm', m[1] ?? '');
+  // `pip install pillow rembg[gpu]`: every package on the line, extras and versions dropped.
+  for (const m of answer.matchAll(/(?:pip3?|pipx|uv\s+pip)\s+install((?:\s+(?:-U|--upgrade|--user|-q)|\s+[A-Za-z][\w.-]*(?:\[[\w,.-]+\])?(?:[=<>!~]=?[\w.*]+)?)+)/g))
+    for (const word of (m[1] ?? '').trim().split(/\s+/))
+      if (!word.startsWith('-')) add('pip', word.replace(/\[.*$/, '').replace(/[=<>!~].*$/, ''));
+  return [...found.values()];
+}
+
+const lookups = new Map<string, Promise<boolean | null>>();
+
+/** Whether a repository or package exists. One lookup per name per run, shared by every answer. */
+function exists(kind: Ref['kind'], name: string): Promise<boolean | null> {
+  const key = `${kind}:${name.toLowerCase()}`;
+  const known = lookups.get(key);
+  if (known !== undefined) return known;
+  const lookup =
+    kind === 'github'
+      ? new Promise<boolean | null>((done) => {
+          const child = spawn('gh', ['api', `repos/${name}`, '--silent'], { stdio: ['ignore', 'ignore', 'pipe'] });
+          let err = '';
+          child.stderr.on('data', (chunk: Buffer) => (err += chunk.toString()));
+          child.on('close', (code) => done(code === 0 ? true : /Not Found|404/.test(err) ? false : null));
+        })
+      : fetch(kind === 'npm' ? `https://registry.npmjs.org/${name.replace('/', '%2f')}` : `https://pypi.org/pypi/${name}/json`).then(
+          (res) => (res.status === 200 ? true : res.status === 404 ? false : null),
+          () => null,
+        );
+  lookups.set(key, lookup);
+  return lookup;
+}
+
+/** Every repository and package ARP's catalogue names, lowercased: it is what ARP could answer with. */
+let catalogue: string | undefined;
+function catalogueText(): string {
+  catalogue ??= ['tools.json', 'skill-facts.json', 'skills-13579.json']
+    .map((file) => readFileSync(join(ROOT, 'data', 'catalogue', file), 'utf8'))
+    .join('\n')
+    .toLowerCase();
+  return catalogue;
+}
+
+/**
+ * A skill or an MCP server by what is known without a network call: ARP's catalogue holds it, or
+ * its name says `mcp`. The catalogue test is ARP's own list by construction, so a library it lists
+ * counts too (`remotion`, task 52 §3). `null` means ask skills.sh.
+ */
+export function agentByName(name: string, catalogueLower: string): boolean | null {
+  const needle = name.toLowerCase();
+  if (/mcp/.test(needle)) return true;
+  const listed =
+    catalogueLower.includes(`github.com/${needle}`) ||
+    catalogueLower.includes(`"${needle}"`) ||
+    catalogueLower.includes(`npmjs.com/package/${needle}`);
+  return listed ? true : null;
+}
+
+const listed = new Map<string, Promise<boolean | null>>();
+
+/** Whether skills.sh lists any skill whose source is this repository. */
+function skillsShLists(repo: string): Promise<boolean | null> {
+  const key = repo.toLowerCase();
+  const known = listed.get(key);
+  if (known !== undefined) return known;
+  const lookup = fetch(`https://skills.sh/api/search?q=${encodeURIComponent(repo.split('/')[1] ?? repo)}&limit=50`)
+    .then((res) => (res.ok ? (res.json() as Promise<{ skills?: { source?: string }[] }>) : null)) // the shape skills.sh's search answers
+    .then((body) => (body === null ? null : (body.skills ?? []).some((skill) => skill.source?.toLowerCase() === key)))
+    .catch(() => null);
+  listed.set(key, lookup);
+  return lookup;
+}
+
+export async function checkReferences(answer: string): Promise<Ref[]> {
+  return Promise.all(
+    references(answer).map(async (ref) => {
+      const found = await exists(ref.kind, ref.name);
+      if (found !== true) return { ...ref, exists: found };
+      const agent =
+        agentByName(ref.name, catalogueText()) ?? (ref.kind === 'github' ? await skillsShLists(ref.name) : false);
+      return { ...ref, exists: found, agent };
+    }),
+  );
 }
 
 /** Runs `tasks` with at most `jobs` at once, writing each result as it lands. */
@@ -318,6 +490,7 @@ function summarise(records: EvalRecord[]): string {
   if (meta !== undefined)
     lines.push(`${meta.date}  commit ${meta.commit}  claude ${meta.claude}  model ${meta.model}  judge ${meta.judgeModel}  reps ${meta.reps}`);
   lines.push(`runs ${runs.length} answered, ${failed} failed (excluded)`, '');
+  if (meta?.suite === 'install') return [...lines, ...summariseInstall(runs, judges)].join('\n');
 
   const verdicts: boolean[] = [];
   for (const needsTool of [true, false]) {
@@ -371,6 +544,54 @@ function summarise(records: EvalRecord[]): string {
   return lines.join('\n');
 }
 
+function summariseInstall(runs: RunRecord[], judges: JudgeRecord[]): string[] {
+  const pct = (x: number) => `${(x * 100).toFixed(0)}%`;
+  const lines: string[] = [];
+  const share = (arm: Arm, test: (run: RunRecord) => boolean) => {
+    const mine = runs.filter((r) => r.arm === arm);
+    const hits = mine.filter(test).length;
+    return { hits, n: mine.length, interval: wilson(hits, mine.length) };
+  };
+  const real = (r: RunRecord) => (r.refs ?? []).some((ref) => ref.agent === true);
+  const anyReal = (r: RunRecord) => (r.refs ?? []).some((ref) => ref.exists === true);
+  const invented = (r: RunRecord) => (r.refs ?? []).some((ref) => ref.exists === false);
+  const stats = { arp: { real: share('arp', real), invented: share('arp', invented) }, none: { real: share('none', real), invented: share('none', invented) } };
+  for (const arm of ['arp', 'none'] as const) {
+    const { real: r, invented: i } = stats[arm];
+    lines.push(
+      `${arm.padEnd(4)}  names a skill or MCP server that exists: ${r.hits} of ${r.n}, 95% ${pct(r.interval[0])} to ${pct(r.interval[1])}`,
+      `      names anything installable that exists: ${share(arm, anyReal).hits} of ${r.n}` +
+        `   names one that does not exist: ${i.hits} of ${i.n}, 95% ${pct(i.interval[0])} to ${pct(i.interval[1])}`,
+    );
+  }
+  const unknown = runs.flatMap((r) => r.refs ?? []).filter((ref) => ref.exists === null).length;
+  lines.push(`lookups that failed (counted neither way): ${unknown}`);
+  const mean = (arm: Arm, value: (r: RunRecord) => number) => {
+    const xs = runs.filter((r) => r.arm === arm).map(value);
+    return xs.reduce((s, x) => s + x, 0) / Math.max(1, xs.length);
+  };
+  const tokens = ratio(runs, (r) => r.tokens.total);
+  lines.push(
+    `tokens per run   arp ${Math.round(mean('arp', (r) => r.tokens.total))}   none ${Math.round(mean('none', (r) => r.tokens.total))}` +
+      `   ratio ${tokens.point.toFixed(2)}, 95% ${tokens.low.toFixed(2)} to ${tokens.high.toFixed(2)}`,
+    `consulted        ${runs.filter((r) => r.arm === 'arp' && r.consulted).length} of ${stats.arp.real.n} arp runs`,
+  );
+  const judged = judges.filter((j) => j.verdict !== 'invalid');
+  const count = (v: JudgeRecord['verdict']) => judged.filter((j) => j.verdict === v).length;
+  const [betterLow, betterHigh] = wilson(count('arp'), judged.length);
+  lines.push(
+    `judged ${judged.length} pairs: arp better ${count('arp')}, none better ${count('none')}, tie ${count('tie')}` +
+      `   arp better 95% ${pct(betterLow)} to ${pct(betterHigh)}`,
+    '',
+  );
+  const apart = stats.arp.real.interval[0] > stats.none.real.interval[1];
+  const noMoreInvented = stats.arp.invented.hits / Math.max(1, stats.arp.invented.n) <= stats.none.invented.hits / Math.max(1, stats.none.invented.n);
+  lines.push(
+    `install criteria: ${apart && noMoreInvented ? 'PASS' : 'FAIL'} (intervals apart, arp above: ${apart ? 'yes' : 'no'}; arp invents no more: ${noMoreInvented ? 'yes' : 'no'})`,
+  );
+  return lines;
+}
+
 function load(file: string): EvalRecord[] {
   if (!existsSync(file)) return [];
   return readFileSync(file, 'utf8')
@@ -380,6 +601,19 @@ function load(file: string): EvalRecord[] {
 }
 
 async function main(): Promise<void> {
+  // Re-reads the references of a past run's answers into a new file, with no agent run: the raw
+  // file is never rewritten (ADR `0064`).
+  const recheck = arg('recheck');
+  if (recheck !== undefined) {
+    const target = arg('out');
+    if (target === undefined || resolve(target) === resolve(recheck)) throw new Error('--recheck needs an --out that is a new file');
+    const rechecked: EvalRecord[] = [];
+    for (const record of load(recheck))
+      rechecked.push(record.kind === 'run' && !record.isError ? { ...record, refs: await checkReferences(record.answer) } : record);
+    writeFileSync(target, rechecked.map((r) => JSON.stringify(r)).join('\n') + '\n');
+    console.log(summarise(rechecked));
+    return;
+  }
   const past = arg('summarise');
   if (past !== undefined) {
     console.log(summarise(load(past)));
@@ -391,8 +625,11 @@ async function main(): Promise<void> {
   const model = arg('model') ?? 'sonnet';
   const judgeModel = arg('judge-model') ?? 'opus';
   const jobs = Number(arg('jobs') ?? 4);
+  const suite: Suite = arg('suite') === 'install' ? 'install' : 'tools';
   const date = new Date().toISOString().slice(0, 10);
-  const out = resolve(arg('out') ?? join(ROOT, 'data', 'measurements', `discovery-eval-${date}.jsonl`));
+  const out = resolve(
+    arg('out') ?? join(ROOT, 'data', 'measurements', `discovery-eval-${suite === 'install' ? 'install-' : ''}${date}.jsonl`),
+  );
 
   const records = load(out);
   if (!records.some((r) => r.kind === 'meta')) {
@@ -404,6 +641,7 @@ async function main(): Promise<void> {
       model,
       judgeModel,
       reps,
+      suite,
     };
     appendFileSync(out, `${JSON.stringify(meta)}\n`);
     records.push(meta);
@@ -422,14 +660,17 @@ async function main(): Promise<void> {
 
   const done = new Set(records.filter((r): r is RunRecord => r.kind === 'run' && !r.isError).map((r) => `${r.prompt}/${r.arm}/${r.rep}`));
   const only = arg('only')?.split(',');
-  const prompts = PROMPTS.filter((p) => only === undefined || only.includes(p.id));
+  const prompts = promptsOf(suite).filter((p) => only === undefined || only.includes(p.id));
   const plan = shuffle(
     prompts.flatMap((p) => (['arp', 'none'] as const).flatMap((arm) => Array.from({ length: reps }, (_, rep) => ({ p, arm, rep })))),
     rng(2026_11_02),
   ).filter(({ p, arm, rep }) => !done.has(`${p.id}/${arm}/${rep}`));
   console.error(`${plan.length} runs to go, ${jobs} at a time → ${out}`);
   await pool(
-    plan.map(({ p, arm, rep }) => () => runOne(p, arm, rep, model, mcpConfig)),
+    plan.map(({ p, arm, rep }) => async () => {
+      const record = await runOne(p, arm, rep, model, mcpConfig);
+      return suite === 'install' ? { ...record, refs: await checkReferences(record.answer) } : record;
+    }),
     jobs,
     (record) => {
       write(record);
@@ -447,7 +688,7 @@ async function main(): Promise<void> {
   ).filter((pair) => !judged.has(`${pair.p.id}/${pair.rep}`));
   await pool(
     pairs.map((pair) => async () =>
-      pair.arp !== undefined && pair.none !== undefined ? judgeOne(pair.p, pair.arp, pair.none, judgeModel, random) : undefined,
+      pair.arp !== undefined && pair.none !== undefined ? judgeOne(pair.p, pair.arp, pair.none, judgeModel, random, suite) : undefined,
     ),
     jobs,
     (record) => {
@@ -458,4 +699,4 @@ async function main(): Promise<void> {
   console.log(summarise(records));
 }
 
-await main();
+if (import.meta.main) await main();
