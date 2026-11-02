@@ -29,15 +29,15 @@ This task replaces documentation with one real run per runtime.
 
 ## 2. Before starting (the user)
 
-| step                | command                                                      | done when                                                                        |
-| ------------------- | ------------------------------------------------------------ | -------------------------------------------------------------------------------- |
-| update Claude Code  | `claude update`                                              | `claude --version` is newer than 2.0.25, which may not know `PostToolUseFailure` |
+| step               | command         | done when                                                                        |
+| ------------------ | --------------- | -------------------------------------------------------------------------------- |
+| update Claude Code | `claude update` | `claude --version` is newer than 2.0.25, which may not know `PostToolUseFailure` |
 
 For the demo, only the first row is needed. The other four wait for the port.
-| install Codex       | `npm i -g @openai/codex`, then run `codex` once              | `~/.codex/` exists                                                               |
-| install Gemini CLI  | `npm i -g @google/gemini-cli`, then run `gemini` once        | `~/.gemini/` exists                                                              |
-| install Copilot CLI | `npm i -g @github/copilot`, then run `copilot` once          | `~/.copilot/` exists                                                             |
-| install Grok Build  | `curl -fsSL https://x.ai/cli/install.sh \| bash` (docs.x.ai) | `grok --version` answers                                                         |
+| install Codex | `npm i -g @openai/codex`, then run `codex` once | `~/.codex/` exists |
+| install Gemini CLI | `npm i -g @google/gemini-cli`, then run `gemini` once | `~/.gemini/` exists |
+| install Copilot CLI | `npm i -g @github/copilot`, then run `copilot` once | `~/.copilot/` exists |
+| install Grok Build | `curl -fsSL https://x.ai/cli/install.sh \| bash` (docs.x.ai) | `grok --version` answers |
 
 The npm package names for Codex, Gemini and Copilot come from memory, not from a check. If one
 fails, its official page decides. All of these run inside WSL. Cursor and VS Code run on Windows
@@ -64,6 +64,21 @@ and wait for part E.
 5. `node dist/cli.js init` returns the machine to plain mode.
 
 **Done when** each installed runtime has a fixture, an adapter test, and a hook in plain `init`.
+
+**Claude Code, done 2026-11-02** (2.1.316, user scope, `~/arp-demo`). Six `arp` calls gave six
+`ok` lines and one failing call gave one `tool_error` line; the hook needed no change. The two
+captures are `apps/hook/test/fixtures/claude/`, fed end to end in `apps/hook/test/hook.test.ts`.
+What the capture showed that the docs did not: an MCP `tool_response` is the bare content array,
+and the runtime adds `mcp_server: {name, source}`. Three things the run found:
+
+- **Claude Code 2.0.25 loaded zero hooks** from `settings.json` ("Found 0 hook matchers" in its
+  debug log) while `/mcp` worked, so an old runtime records nothing without any error.
+  `arp doctor` should say so.
+- **The MCP entry read mainnet** (`edges_read: 0` next to a web app on testnet); fixed by
+  `SERVER_ENV` above.
+- **`.arp/receipt-key` is not gitignored outside this repo.** The MCP server writes it in the
+  working directory and only this repository's root `.gitignore` covers it. Latent here
+  (`~/arp-demo` is not a git repo); must be fixed before any tester round.
 
 ### B — The plugin under Grok, the extension under Gemini (33d)
 

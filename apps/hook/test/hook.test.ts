@@ -241,3 +241,42 @@ test('--capture keeps the shape and the names, and redacts every argument, respo
   // The normal record is still written: capture is in addition, not instead.
   expect(readFileSync(log, 'utf8')).toContain('"call":"t9"');
 });
+
+/**
+ * Payloads Claude Code 2.1.316 really sent, captured with `arp hook --capture` on 2026-11-02
+ * (task 38 part A) and kept as redacted. Unlike the documented examples above, an MCP response
+ * arrives as the bare content array, and the runtime adds `mcp_server`.
+ */
+function fixture(name: string): unknown {
+  return JSON.parse(readFileSync(join(import.meta.dir, 'fixtures', 'claude', name), 'utf8'));
+}
+
+test('captured: a Claude Code MCP success is one ok line', () => {
+  const { exitCode, lines } = run(fixture('mcp-post-tool-use.json'));
+  expect(exitCode).toBe(0);
+  expect(lines).toHaveLength(1);
+  expect(lines[0]).toMatchObject({
+    call: 'toolu_01KZ5Cn93n3Sh4wg8Ps9tPgM',
+    format: 'claude',
+    kind: 'mcp',
+    name: 'arp',
+    outcome: 'ok',
+    ms: 1978,
+    response: { answered: true, failed: false },
+  });
+});
+
+test('captured: a Claude Code MCP failure is one tool_error line with no text', () => {
+  const { exitCode, lines } = run(fixture('mcp-post-tool-use-failure.json'));
+  expect(exitCode).toBe(0);
+  expect(lines).toHaveLength(1);
+  expect(lines[0]).toMatchObject({
+    call: 'toolu_01MWzaNmU4E3taX52knZ9ouH',
+    kind: 'mcp',
+    name: 'arp',
+    outcome: 'tool_error',
+    ms: 15,
+    response: null,
+  });
+  expect(JSON.stringify(lines[0])).not.toContain('<string:53>');
+});

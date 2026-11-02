@@ -1,0 +1,28 @@
+{
+  "session_id": "9767ca96-6cb5-482b-9264-2264056b0cc9",
+  "transcript_path": "<string:88>",
+  "cwd": "<string:18>",
+  "scratchpad_dir": "<string:83>",
+  "prompt_id": "<string:36>",
+  "permission_mode": "auto",
+  "effort": {
+    "level": "<string:6>"
+  },
+  "hook_event_name": "PostToolUse",
+  "tool_name": "mcp__arp__arp_find_tools",
+  "tool_input": {
+    "domain": "<string:5>"
+  },
+  "tool_response": [
+    {
+      "type": "<string:4>",
+      "text": "<string:297>"
+    }
+  ],
+  "tool_use_id": "toolu_01KZ5Cn93n3Sh4wg8Ps9tPgM",
+  "duration_ms": 1978,
+  "mcp_server": {
+    "name": "<string:3>",
+    "source": "<string:4>"
+  }
+}
