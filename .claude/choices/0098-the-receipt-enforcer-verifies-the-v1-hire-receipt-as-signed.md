@@ -1,12 +1,13 @@
 # 0098 — The receipt enforcer verifies the v1 hire receipt as signed, and binds the term through its terms
 
-**Status:** Accepted for point 9 (user decision, 2026-10-30, _« ok option 2 »_); the rest Proposed, reviewed by `contract-reviewer` (PASS, 2026-10-30); one decision open
+**Status:** Accepted for point 9 (user decision, 2026-10-30, _« ok option 2 »_); the rest Proposed, reviewed by `contract-reviewer` (PASS, 2026-10-30); ~~one decision open~~ the open decision is **answered: a v2 receipt** (user decision, 2026-10-30, carried out by task 44, ADR `0101`)
 **Status, in full:** point 9, what the contract rung holds, is Accepted on the user's words,
 verbatim _« ok option 2 »_: the rung holds "an accepted key signed the receipt", not "a payment was
 made". Points 1 to 8, 10 and 11 are Proposed and passed `contract-reviewer` on 2026-10-30: no
-Critical or High, INFO-R1 (Medium) open on the decision below, one new Low, CR-1, documented
-(`contracts/SECURITY_REVIEW.md`, "`contract-reviewer` pass"). One decision is open and is the
-user's: see "Open decision". Do not deploy until it is taken.
+Critical or High, INFO-R1 (Medium) open on the decision below (closed by task 44), one new Low,
+CR-1, documented (`contracts/SECURITY_REVIEW.md`, "`contract-reviewer` pass"). ~~One decision is
+open and is the user's:~~ The decision was the user's: see "Open decision". ~~Do not deploy until it is taken.~~ **Taken: a v2 receipt** — see
+"Open decision", answered. The enforcer now verifies v2 only, and INFO-R1 is closed.
 **Date:** 2026-10-30
 **Triggered by:** `docs/tasks/43-the-receipt-enforcer.md`, under ADR `0094` §2 ("Later: a caveat
 enforcer checks a signed receipt passed in the redemption").
@@ -35,7 +36,8 @@ Those requirements do not all fit the receipt that exists. The v1 receipt
 
 **Verify the v1 receipt byte for byte as it is signed today. Bind everything the receipt does not
 carry through `_terms`, which the delegator signs. Accept the missing verifying contract as a known
-gap, and close it with a v2 receipt later.**
+gap, and close it with a v2 receipt later.** _(Done: task 44 closed it. The enforcer verifies v2
+only; points 1, 4 and 11 below describe the v1 contract as task 43 shipped it — ADR `0101` has v2.)_
 
 1. **Format.** `hashReceipt` rebuilds the EIP-712 digest from the same domain and the same struct in
    the same field order. `test_viemVector_digestAndSignatureVerify` checks a signature that
@@ -99,7 +101,8 @@ gap, and close it with a v2 receipt later.**
 - **A v2 receipt with `verifyingContract`, `termId` and `expiresAt` in the signed message.** This
   matches the task's replay wording exactly. It was not taken because it changes
   `hire-receipt.ts`, the node, and every receipt already issued, and the task was scoped to
-  Solidity and to the receipt as it is signed today. It is one side of the open decision below.
+  Solidity and to the receipt as it is signed today. It is one side of the open decision below. **Taken
+  later, by the user's answer to that decision (task 44, ADR `0101`).**
 - **The rung holds the payment.** Not possible without reading the payment, which a
   contract on the deposit's chain cannot do by hash; it would need an oracle or a cross-chain proof.
   Not taken: user decision, point 9.
@@ -118,11 +121,13 @@ gap, and close it with a v2 receipt later.**
   deposit under this caveat cannot happen without a receipt from a node key the delegator accepted,
   naming the agent that redeems, for no more than the receipt says was paid. Whether the payment
   happened is still the service's check (point 9).
-- The node does not change. Every v1 receipt signed today can be used.
+- ~~The node does not change. Every v1 receipt signed today can be used.~~ True of task 43 only.
+  Since task 44 the node signs v2 and a v1 receipt unlocks nothing, at the enforcer or the service.
 
 **Negative:**
 
-- **No verifying contract in the signed message. Rated Medium** (`SECURITY_REVIEW.md` INFO-R1,
+- **No verifying contract in the signed message. Rated Medium. Closed by task 44** (v2 receipt;
+  the service-side `isPaymentUsed` mitigation below is no longer needed). As written at task 43: (`SECURITY_REVIEW.md` INFO-R1,
   re-rated from Info on 2026-10-30). The used set exists per deployment. One payment can be
   sponsored once by task 40's service and once by this enforcer, or once by each of two
   deployments, because the signature names neither. Both sponsorships are ARP's funds.
@@ -156,7 +161,15 @@ gap, and close it with a v2 receipt later.**
 - Signers must be EOAs. EIP-1271 is not supported, because node keys are EOAs.
 - Not deployed. No transaction was sent on any chain.
 
-## Open decision (the user's, not taken here)
+## Open decision — answered: a v2 receipt
+
+**Answered by the user, 2026-10-30: a v2 receipt** (`docs/tasks/44-hire-receipt-v2.md` §1, "User
+decision, 2026-10-30: a v2 receipt that names its verifier, rather than accepting the risk").
+Carried out by task 44, recorded in ADR `0101`: `hire-receipt.ts` signs v2 with `verifyingContract`,
+`termId` and `expiresAt`; `ReceiptEnforcer` accepts only v2 naming `address(this)`; `apps/sponsor`
+accepts only v2 naming its sponsoring account. The text below is the question as it stood.
+
+### The question, as it stood (task 43)
 
 **The v1 receipt names no verifying contract. Accept the deviation, or sign a v2 receipt?**
 
@@ -169,7 +182,7 @@ gap, and close it with a v2 receipt later.**
   own. One receipt then unlocks one sponsorship anywhere. Costs a node change and a version bump,
   and v1 receipts already issued stay usable only where v1 is still accepted.
 
-Until the user decides, the enforcer verifies v1 and the gap is rated Medium.
+~~Until the user decides, the enforcer verifies v1 and the gap is rated Medium.~~ Decided; see above.
 
 ## References
 

@@ -584,6 +584,8 @@ This is covered by the access-control guard above. Inside a real redemption the 
   (`test_beforeHook_revertsOnSecondReceiptForOnePayment`).
 - **Chain id**: in the EIP-712 domain and pinned by `_terms` (`test_beforeHook_revertsOnOtherChainDomain`).
 - **Verifying contract**: **absent from the v1 receipt's domain**. Rated Medium as INFO-R1 below.
+  **Closed by task 44**: the enforcer verifies v2 only, whose domain names `address(this)`. See
+  "Task 44: v2 receipt" below.
 
 ### Oracles / external data
 None. The payment is not read (see "What this rung holds").
@@ -599,7 +601,8 @@ The single state write is paired with `ReceiptConsumed(delegationHash, paymentKe
 
 ## Findings
 
-- **INFO-R1 (Medium): cross-verifier replay.** Re-rated from Info on 2026-10-30. The signed domain
+- **INFO-R1 (Medium): cross-verifier replay. Closed by task 44** (v2 receipt, user decision; see
+  "Task 44: v2 receipt" below). As written at task 43: Re-rated from Info on 2026-10-30. The signed domain
   has no `verifyingContract`, so a receipt consumed here is not consumed at another verifier. One
   payment can be sponsored once by task 40's service and once by this enforcer, both from ARP's
   funds. **Service-side mitigation** (ADR `0098`): before it pays, the service calls
@@ -692,7 +695,9 @@ as the property it would check.
 - **Front-running:** gated hooks, plus `requester == receiver == _redeemer`. A copied receipt is
   useless to anyone but the agent it names, even under an open delegation or one the copier signs.
 - **Cryptography:** OZ `ECDSA.tryRecover`: 65-byte signatures only, low `s`, zero signer refused.
-  EIP-712 `string` field hashed per spec. The domain lacks `verifyingContract`: INFO-R1.
+  EIP-712 `string` field hashed per spec. ~~The domain lacks `verifyingContract`: INFO-R1.~~ The v1
+  domain lacked `verifyingContract` (INFO-R1). **Closed by task 44**: the enforcer verifies v2 only,
+  whose domain names `address(this)`. See "Task 44: v2 receipt" below.
 - **Cross-chain units:** see CR-1.
 
 ### `guidelines-advisor`
@@ -719,17 +724,22 @@ as the property it would check.
 
 ### `contract-reviewer` verdict
 
-**PASS. No Critical, no High.** One Medium, INFO-R1, is open: under this repo's severity table a
+**PASS. No Critical, no High.** ~~One Medium, INFO-R1, is open: under this repo's severity table a
 Medium is to be addressed or accepted in writing, and that is the user's decision between keeping v1
-and a v2 receipt (ADR `0098`, "Open decision"). **Do not deploy until it is taken.** One Low, CR-1,
+and a v2 receipt (ADR `0098`, "Open decision"). **Do not deploy until it is taken.**~~ INFO-R1 was
+open at task 43. The user decided for a v2 receipt on 2026-10-30, and task 44 closed it on
+2026-11-02 (ADR `0101`; see "Task 44: v2 receipt" below). A deployment is still its own decision
+and none is planned. One Low, CR-1,
 documented. Coverage 100% (58/58 lines, 15/15 branches). Gas 66,564 on the happy path.
 
 ## Verdict (the author's sweep, before `contract-reviewer`)
 
-**PASS, with one Medium open by decision**, from the author's sweep. Superseded by the
+**PASS, with one Medium open by decision**, from the author's sweep (INFO-R1, since closed by task
+44; see "Task 44: v2 receipt" below). Superseded by the
 `contract-reviewer` verdict above, which agrees.
 
-- Threat model: clean on nine items. Signature replay carries INFO-R1, Medium, open for the user.
+- Threat model: clean on nine items. Signature replay carries INFO-R1, Medium, ~~open for the user~~
+  closed by task 44 (see "Task 44: v2 receipt" below).
 - What the rung holds is stated, and matches the user's decision: a signature, not a payment.
 - Coverage: 100% on lines, statements, branches and functions of `ReceiptEnforcer.sol`.
 - Tests: 40, all green.
@@ -737,3 +747,116 @@ documented. Coverage 100% (58/58 lines, 15/15 branches). Gas 66,564 on the happy
 - Not deployed. No transaction on any chain.
 
 Ready for `task-verifier`.
+
+## Task 44: v2 receipt (2026-11-02)
+
+User decision on ADR `0098`'s open point: a v2 receipt that names its verifier (ADR `0101`).
+`contracts/src/enforcers/ReceiptEnforcer.sol` now verifies **v2 only**.
+
+### What changed
+
+- Domain: `EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)`,
+  version `"2"`, `verifyingContract = address(this)`. `hashReceipt` is `view` (it reads
+  `address(this)`), so is `_recoverSigner`.
+- Struct: v1's nine fields in v1's order, then `bytes32 termId, uint256 expiresAt`.
+- `RECEIPT_VERSION = 2`. A v1 receipt reverts `UnknownReceiptVersion(1)` before recovery.
+- Two new checks, two new errors: `receipt.termId == ` the deposit's term (`ReceiptTermMismatch`),
+  and `block.timestamp <= receipt.expiresAt` (`ReceiptPastExpiry`). `maxAge` from `_terms` still
+  holds; both bounds apply.
+
+### Signature replay, re-walked
+
+- **Nonce**: unchanged, the payment hash, used set keyed by `(chainId, payment)`.
+- **Chain id**: unchanged, in the domain and pinned by `_terms`.
+- **Verifying contract**: in the domain. A receipt signed for another deployment, or for the
+  sponsoring service's address, recovers to a different key here and reverts `SignerNotAccepted`
+  (`test_beforeHook_revertsOnReceiptForAnotherVerifier`, `test_hashReceipt_differsPerDeployment`).
+  The service refuses a receipt naming anything but its own account
+  (`packages/protocol/src/sponsor/proof.ts`, `hireReceiptIsFor`). **INFO-R1 is narrowed, not closed.** What
+  remains: a node that signs two receipts for one payment, naming two verifiers, gets both used. That
+  is a dishonest node, and the evidence against it is two signatures over one payment hash.
+- **Cross-implementation vector**: `test_viemVector_digestAndSignatureVerify` deploys the enforcer at
+  `0x…5Ec044` with `deployCodeTo` and checks digest `0xa97f63e5…4bb7` and a viem signature from
+  anvil's public account #0. `packages/protocol/test/hire-receipt.test.ts` ("the vector
+  ReceiptEnforcer.t.sol holds") asserts the same digest and the same signature bytes, so a drift
+  fails on both sides.
+
+### Timestamp
+
+`beforeHook` now compares `block.timestamp` three times (lines 302, 303, 305). The ~15 s proposer
+tolerance moves each edge by seconds; `expiresAt` is the node's own bound
+(`AGENT_NODE_RECEIPT_TTL`, default 86,400 s), so it is irrelevant at that scale.
+
+### Coverage, tests, gas
+
+`cd contracts && forge coverage --match-contract ReceiptEnforcer --no-match-coverage "test|lib"`,
+2026-11-02, uncommitted tree on `feat/44-hire-receipt-v2`:
+
+| File                                |           Lines |      Statements |        Branches |       Functions |
+| ----------------------------------- | --------------: | --------------: | --------------: | --------------: |
+| `src/enforcers/ReceiptEnforcer.sol` | 100.00% (61/61) | 100.00% (84/84) | 100.00% (17/17) | 100.00% (13/13) |
+
+48 `ReceiptEnforcer` tests, three of them fuzz (256 runs each). `cd contracts && forge test`: 65
+tests in 3 suites (48 + 15 `TrustStakeCapEnforcer` + 2 invariants), 0 failed. Re-run 2026-11-02
+after the `contract-reviewer` pass below, which added one test and changed NatSpec only.
+
+`forge test --match-contract ReceiptEnforcerTest --gas-report`: deployment **1,125,110 gas / 5,165
+bytes** (was 1,085,111 / 4,980; 1,125,098 before the review's NatSpec edit moved the metadata hash). `hashReceipt` 2,463 (was 2,286). Happy path,
+`forge test --match-test test_beforeHook_acceptsAndConsumes -vvvv --isolate`: **67,190 gas** in the
+`beforeHook` frame (was 66,564).
+
+### `contract-reviewer` pass on the v2 change (2026-11-02)
+
+Run by the session that owns task 44, following `.claude/agents/contract-reviewer.md` step by step;
+no separate reviewer agent could be spawned from it. Scope: `src/enforcers/ReceiptEnforcer.sol` and
+`test/enforcers/ReceiptEnforcer.t.sol`, `git diff origin/dev...HEAD`.
+
+Threat model, the items the change touches:
+
+- **Reentrancy**: no external call added. `hashReceipt` reads `address(this)` and nothing else;
+  `ECDSA.tryRecover` is the `ecrecover` precompile. Clean.
+- **Access control**: unchanged; all four hooks still gated on `DELEGATION_MANAGER`. `hashReceipt`
+  going `pure` to `view` widens nothing: it writes no state and is callable by anyone, as before.
+- **Arithmetic**: one new comparison, `block.timestamp > receipt.expiresAt`, no subtraction. Clean.
+- **Input validation**: `ReceiptTermMismatch` runs after `_requireBinding`, so the term is checked
+  twice, against the binding (the delegator's) and against the receipt (the node's). Both are needed:
+  with the binding alone, a key bound to several terms had no say which one its receipt was spent
+  on; with the receipt alone, a node would pick a term the delegator never accepted. `ReceiptPastExpiry` composes with `maxAge`; both
+  hold (`test_beforeHook_revertsPastOwnExpiry`, `test_beforeHook_acceptsAtExactlyExpiresAt`). A
+  receipt with `expiresAt < issuedAt` is refused by the same check, which is the right answer.
+- **Signature replay**: `verifyingContract = address(this)` in the domain, and the digest is
+  recomputed per deployment (`test_hashReceipt_differsPerDeployment`). **INFO-R1 is narrowed** to a
+  dishonest node: an honest node's receipt unlocks one verifier only. One operator holding both
+  agents can still have their node sign two receipts for one payment, one per verifier (ADR `0094`
+  accepts one operator on both sides). One residual, CR-2 below.
+- **Version**: a v1 receipt is refused `UnknownReceiptVersion(1)` both in v2's shape
+  (`test_beforeHook_revertsOnV1Receipt`) and, added by this pass, in its own nine-field shape
+  (`test_beforeHook_revertsOnV1ReceiptInItsOwnShape`): the version word decodes first.
+- **Loops, upgradeability, events**: unchanged. One state write, one `ReceiptConsumed`.
+
+Rules (`solidity.md`): layout order holds; NatSpec on both new errors; custom errors only; no dead
+code. `forge fmt --check` clean on both files. `forge lint src/enforcers/ReceiptEnforcer.sol`: 3
+`block-timestamp` warnings, lines 302, 303, 305, accepted as above. Slither was not re-run: it is not
+installed in this environment. Its 2026-10-30 triage above covers the same detectors; the only new
+site a detector would flag is line 305, the same `timestamp` class.
+
+Findings:
+
+- **CR-2 (Informational): one address on two chains shares a domain.** The domain is
+  `(receiptChainId, address(this))`, and a `CREATE` address depends only on deployer and nonce, so
+  the same deployer at the same nonce yields the same address on two chains. If both deployments'
+  `_terms` name one `receiptChainId`, one receipt verifies at both and each used set is separate.
+  That needs `receiptChainId != block.chainid` for at least one of them, which is CR-1's
+  configuration. **Latent**: `ReceiptEnforcer` is deployed nowhere (no entry in
+  `data/deployments/*.json`), and every plan has payment and deposit on one chain. Documented in the
+  contract header; closed with CR-1 if `receiptChainId == block.chainid` is ever required.
+- **CR-3 (Informational, fixed): the v1 refusal was tested only in v2's shape.** Added
+  `test_beforeHook_revertsOnV1ReceiptInItsOwnShape`.
+- **CR-4 (Low, fixed): a NatSpec paragraph on `beforeHook` broke mid-sentence** after the v2 edit.
+  Reflowed.
+
+Coverage after the fixes: 100% on all four measures (61/61, 84/84, 17/17, 13/13), unchanged. Happy
+path 67,190 gas, unchanged.
+
+**Verdict: PASS.** No Critical, High or Medium. INFO-R1 (Medium) narrowed to a dishonest node, latent while the enforcer is not deployed. CR-1 (Low) and CR-2
+(Informational) are latent and documented. Not deployed. No transaction on any chain.

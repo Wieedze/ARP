@@ -238,6 +238,7 @@ export function createSponsor(options: SponsorOptions): {
       service: 'ARP sponsoring service',
       chainId,
       sponsor: wallet.address,
+      receiptVerifier: wallet.address,
       multiVault,
       registries: [...options.registries],
       limits: {
@@ -253,7 +254,7 @@ export function createSponsor(options: SponsorOptions): {
         pendingSends: ledger.pending().length,
       },
       proofs: {
-        hire: 'accepted: the payment on chain, and a hire receipt signed by the hired agent’s holder or agentWallet. The edge must be (requester identity, uses, hired agent identity). The payment is a transfer: one operator holding both agents gets it back, so for that operator the bound is the daily count and budget, not the price.',
+        hire: 'accepted: the payment on chain, and a v2 hire receipt signed by the hired agent’s holder or agentWallet, naming receiptVerifier as its verifyingContract and the deposit’s termId, unexpired. A v1 receipt, or one for another verifier, is refused. The edge must be (requester identity, uses, hired agent identity). The payment is a transfer: one operator holding both agents gets it back, so for that operator the bound is the daily count and budget, not the price.',
         content:
           options.acceptedContentSigners.length === 0
             ? 'no signer accepted'
@@ -356,6 +357,13 @@ export function createSponsor(options: SponsorOptions): {
       acceptedContentSigners: options.acceptedContentSigners,
       acceptedRegistries: options.registries,
       agents: owners,
+      // The service's own verifier is its sponsoring account: a hire receipt is accepted only when
+      // it names that address, so a receipt the hirer had signed for `ReceiptEnforcer` is refused
+      // here. An honest node's payment is sponsored once; a node that signs a second receipt for the
+      // enforcer still gets both used, until this reads `isPaymentUsed` there (task 44, ADR 0101).
+      receiptVerifier: wallet.address,
+      termId: request.termId,
+      now: Math.floor(now() / 1000),
     });
     if (proven.status !== 'proven') return json({ error: proven.reason }, 403);
     // An unpriced proof (a content receipt) is refused until `docs/tasks/41` binds a fetch to its

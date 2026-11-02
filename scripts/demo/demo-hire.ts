@@ -6,7 +6,7 @@
  *      # terminal 2 — the hirer
  *      ARP_TARGET=testnet bun run scripts/demo/demo-hire.ts \
  *        --hirer 13579/3 --hired 13579/2 --registry 0xC165A2AD… --node http://localhost:3100 \
- *        --pay 0.001 --stake 0.001 [--execute]
+ *        --pay 0.001 --stake 0.001 [--verifier 0x… --term 0x…] [--execute]
  *
  *  **Why the rating needs no new mechanism.** In ERC-8004 plus MCP a tool *is* an agent
  *  (`docs/14`), so "I used this agent" is the same claim as "I used this tool": the canonical `uses`
@@ -27,12 +27,25 @@
  *  A star has none of the four. `docs/14:159`'s top rung is "payment, on-chain call, or delegation
  *  redemption"; this walk produces the first, and then prices a claim anchored to it.
  *
+ *  **The receipt is v2** (task 44): it names one verifier and one term. This walk deposits the
+ *  hirer's own TRUST, so it presents the receipt to no verifier, and by default asks for one naming
+ *  the hirer's own runtime address and a zero term — a receipt that unlocks no sponsorship
+ *  anywhere. Pass `--verifier` (a `ReceiptEnforcer` address, or the sponsoring service's
+ *  `receiptVerifier`) and `--term` to get one that does.
+ *
  *  Dry by default. `--execute` signs with `PRIVATE_KEY` — the hirer's runtime wallet — read from the
  *  environment and never printed (ADR `0037`).
  */
 import { readFileSync } from 'node:fs';
 
-import { createPublicClient, createWalletClient, formatEther, http, parseEther } from 'viem';
+import {
+  createPublicClient,
+  createWalletClient,
+  formatEther,
+  http,
+  isAddress,
+  parseEther,
+} from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
 import type { Address, Hex } from 'viem';
 
@@ -97,6 +110,13 @@ if (!rawKey) {
 }
 const hirerAccount = privateKeyToAccount((rawKey.startsWith('0x') ? rawKey : `0x${rawKey}`) as Hex);
 const publicClient = createPublicClient({ transport: http(rpcUrl) });
+// Both casts are checked by the isAddress / regex guard below, which exits on failure.
+const verifier = (arg('verifier') ?? hirerAccount.address) as Address;
+const termId = (arg('term') ?? `0x${'0'.repeat(64)}`) as Hex;
+if (!isAddress(verifier) || !/^0x[0-9a-fA-F]{64}$/.test(termId)) {
+  console.error('--verifier must be an address and --term a 32-byte hex term id');
+  process.exit(1);
+}
 
 const step = (n: number, title: string) => console.log(`\n${'─'.repeat(72)}\n${n}. ${title}\n`);
 
@@ -151,7 +171,13 @@ if (paymentTxHash === undefined) {
   const response = await fetch(`${nodeUrl}/task`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ paymentTxHash, requesterAddress: hirerAccount.address, payload }),
+    body: JSON.stringify({
+      paymentTxHash,
+      requesterAddress: hirerAccount.address,
+      verifier,
+      termId,
+      payload,
+    }),
     signal: AbortSignal.timeout(60_000),
   });
   const body = (await response.json()) as {
@@ -170,6 +196,9 @@ if (paymentTxHash === undefined) {
     verdict.status !== 'valid' && `signature ${verdict.status}`,
     signed.agent.toLowerCase() !== health.agent.toLowerCase() && 'signed by another agent',
     signed.chainId !== chainId && `receipt is for chain ${signed.chainId}`,
+    signed.verifyingContract.toLowerCase() !== verifier.toLowerCase() &&
+      `receipt is for verifier ${signed.verifyingContract}`,
+    signed.receipt.termId.toLowerCase() !== termId.toLowerCase() && 'names another term',
     signed.receipt.payment.toLowerCase() !== paymentTxHash.toLowerCase() && 'names another payment',
     signed.receipt.requester.toLowerCase() !== hirerAccount.address.toLowerCase() &&
       'names another requester',
