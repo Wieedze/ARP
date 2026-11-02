@@ -253,6 +253,8 @@ Three things it shows that a count alone would hide:
 ```
 PORT                   which port to listen on. Default 3002
 ARP_HOST               which interface. Default 127.0.0.1 — loopback only
+ARP_ALLOWED_HOSTS      comma-separated host:port values the HTTP transport also answers to, besides
+                       its loopback forms and ARP_HOST. Needed only with ARP_HOST=0.0.0.0
 ARP_ALLOW_PRIVATE_PROBE  set to 1 to let the probe reach a private address
 ARP_TARGET             testnet | mainnet. Picks the chain, the graph and the RPC
 ARP_TRANSPORT          stdio, for an MCP client
@@ -269,7 +271,8 @@ ARP_CHAIN_ID           which chain's catalogue apps/mcp/src/session-log.ts reads
 ARP_SESSION_LOG        where the hook writes. Default .arp/session.jsonl
 ARP_RECEIPTS           where fetches are recorded. Default .arp/receipts.jsonl
 ARP_TOOLS              read: the three reads only. desktop or sponsored: the reads plus arp_get_skill
-                       and arp_declare_used, with a local agent key in ~/.arp/agent-key (ADR 0110).
+                       and arp_declare_used, with a local agent key in ~/.arp/agent-key (ADR 0110),
+                       over stdio only: the server refuses to start them over HTTP (ADR 0116).
                        Unset: every tool
 ARP_SKILLS_DIR         desktop/sponsored only, set by `arp init --sponsored`: arp_get_skill writes
                        <dir>/<name>/SKILL.md, relative to the working directory, overwriting a
@@ -420,7 +423,12 @@ Stated because a security note that lists only its strengths is marketing.
   you cannot explain to yourself is a plan to refuse.
 - **A caller you let reach the port.** The server answers whoever can talk to it, and it has no
   authentication. On loopback that is the processes on your machine, which is the intended
-  deployment. Open `ARP_HOST` and it is whoever can route to you.
+  deployment. Open `ARP_HOST` and it is whoever can route to you. What it does refuse, since ADR
+  `0116`, is a **web page**: a request whose `Host` is not this server's (`127.0.0.1:<port>`,
+  `localhost:<port>`, `ARP_HOST`, `ARP_ALLOWED_HOSTS`) or whose browser `Origin` is another site's
+  gets a `403`, and a `POST` that is not `application/json` gets a `415` — the content type a page
+  can send cross-origin without the browser asking first. `apps/mcp/test/server.test.ts`, "a
+  request from a web page", sends all three.
 
 ## If you want to verify all of this rather than read it
 

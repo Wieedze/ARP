@@ -34,7 +34,7 @@
  *      single number is a decision nobody has made (`docs/01` rejects being one more score).
  */
 
-import { linesOf, serveFetch } from '@arp-protocol/core/node';
+import { linesOf, loopbackHosts, refuseForeignRequest, serveFetch } from '@arp-protocol/core/node';
 import { DESKTOP_TOOL_NAMES, DESKTOP_TOOLS, READ_TOOL_NAMES, TOOLS } from './tools.js';
 import { desktopTool } from './desktop/handlers.js';
 import { serveContentRequest } from './content.js';
@@ -285,6 +285,33 @@ export const handler = {
   },
 };
 
+const WILDCARD = new Set(['0.0.0.0', '::', '[::]']);
+
+/**
+ * Who the HTTP transport answers (ADR `0116`). It has no authentication, so the bind address alone
+ * was the boundary, and a bind address does not stop a browser: any page can POST to
+ * `http://127.0.0.1:3002`, and a page whose own name is re-pointed at 127.0.0.1 is same-origin with
+ * it. So a request must name this server in `Host` (its loopback forms, `ARP_HOST` when that is one
+ * address, and `ARP_ALLOWED_HOSTS`), a browser `Origin` must be this server's own, and a `POST` must
+ * be `application/json`. The stdio transport is a pipe from the client that launched it and is not
+ * checked.
+ */
+export function httpPolicy(env: Readonly<Record<string, string | undefined>> = process.env) {
+  const hosts = loopbackHosts(PORT);
+  const bound = (env['ARP_HOST'] ?? '').trim();
+  if (bound !== '' && !WILDCARD.has(bound)) hosts.push(`${bound.includes(':') ? `[${bound}]` : bound}:${PORT}`);
+  for (const entry of (env['ARP_ALLOWED_HOSTS'] ?? '').split(',')) {
+    if (entry.trim() !== '') hosts.push(entry.trim());
+  }
+  const origins = hosts.map((host) => `http://${host}`);
+  return { hosts, origins };
+}
+
+/** The HTTP transport's entry: the checks above, then the one dispatch. */
+export async function httpFetch(request: Request): Promise<Response> {
+  return refuseForeignRequest(request, httpPolicy()) ?? handler.fetch(request);
+}
+
 /**
  * The stdio transport — newline-delimited JSON-RPC over stdin/stdout, which is how an MCP client
  * launches a local server.
@@ -341,11 +368,19 @@ export async function main(
     process.exit(0);
   }
 
+  // The sponsored mode holds an agent key that signs `register()`, an approval and the requests a
+  // sponsor pays for. Over HTTP, with no authentication, anything that can reach the port could make
+  // it spend that identity; stdio is a pipe from the one client that launched it (ADR `0116`).
+  if (DESKTOP) {
+    log(`ARP_TOOLS=${process.env['ARP_TOOLS']} holds a local agent key and runs over stdio only: pass --stdio.`);
+    process.exit(1);
+  }
+
   // 1 MiB. `Bun.serve` refused bodies over 128 MiB by default and `serveFetch` refuses none unless
   // told; a JSON-RPC call to this server is a few kilobytes.
   await serveFetch(
     { port: PORT, hostname: handler.hostname, maxBodyBytes: 1024 * 1024 },
-    (request) => handler.fetch(request),
+    httpFetch,
   );
   log(
     `  listening:  ${handler.hostname}:${PORT}${handler.hostname === '127.0.0.1' ? ' (loopback only — ARP_HOST=0.0.0.0 to open it)' : ' — OPEN TO THE NETWORK'}`,

@@ -1,5 +1,5 @@
-import {spawn, type ChildProcess} from "node:child_process";
-import {createServer, type Server} from "node:http";
+import {spawn, spawnSync, type ChildProcess} from "node:child_process";
+import {createServer, request as httpRequest, type Server} from "node:http";
 import {mkdtempSync, rmSync, writeFileSync} from "node:fs";
 import {tmpdir} from "node:os";
 import {join} from "node:path";
@@ -747,6 +747,53 @@ describe("the plain GET", () => {
 });
 
 /**
+ * The HTTP transport has no authentication, so what keeps a web page out is the three checks in
+ * `httpFetch` (ADR `0116`). Sent with `node:http` because `fetch` will not set `Host` or `Origin`
+ * to what a hostile page would.
+ */
+describe("a request from a web page", () => {
+    const raw = (headers: Record<string, string>, body = '{"jsonrpc":"2.0","id":1,"method":"tools/list"}') =>
+        new Promise<number>((resolve, reject) => {
+            const req = httpRequest(
+                {host: "127.0.0.1", port: PORT, path: "/mcp", method: "POST", headers},
+                (res) => {
+                    res.resume();
+                    resolve(res.statusCode ?? 0);
+                },
+            );
+            req.on("error", reject);
+            req.end(body);
+        });
+
+    it("answers a JSON POST that names this server", async () => {
+        expect(await raw({host: `127.0.0.1:${PORT}`, "content-type": "application/json"})).toBe(200);
+    });
+
+    it("refuses a text/plain POST, a rebinding Host and a foreign Origin", async () => {
+        expect(await raw({host: `127.0.0.1:${PORT}`, "content-type": "text/plain"})).toBe(415);
+        expect(await raw({host: `attacker.example:${PORT}`, "content-type": "application/json"})).toBe(403);
+        expect(
+            await raw({
+                host: `127.0.0.1:${PORT}`,
+                origin: "https://attacker.example",
+                "content-type": "application/json",
+            }),
+        ).toBe(403);
+    });
+
+    it("will not start the sponsored mode over HTTP", () => {
+        const run = spawnSync("bun", ["run", SERVER], {
+            cwd: SCRATCH,
+            env: {...process.env, ARP_HOME: SCRATCH, ARP_TOOLS: "sponsored", ARP_TARGET: "testnet", PORT: String(PORT + 3)},
+            encoding: "utf8",
+            timeout: 15_000,
+        });
+        expect(run.status).toBe(1);
+        expect(run.stderr).toContain("stdio only");
+    });
+});
+
+/**
  * `ARP_TOOLS=read`, the server task 45's first testers get: the registry reads and nothing else.
  *
  * Its own process, because the mode is read once at start. What it guards is what the operators were
@@ -785,7 +832,12 @@ describe("read-only mode", () => {
         });
         for (let i = 0; i < 60; i += 1) {
             try {
-                if ((await fetch(READ_BASE, {method: "POST", body: '{"jsonrpc":"2.0","id":0,"method":"ping"}'})).ok) return;
+                const ping = await fetch(READ_BASE, {
+                    method: "POST",
+                    headers: {"content-type": "application/json"},
+                    body: '{"jsonrpc":"2.0","id":0,"method":"ping"}',
+                });
+                if (ping.ok) return;
             } catch {
                 /* not up yet */
             }
