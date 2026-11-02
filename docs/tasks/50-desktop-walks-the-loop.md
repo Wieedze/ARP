@@ -69,6 +69,15 @@ account funded by card, delegating a capped allowance to the agent key; ARP hold
 there are more pieces). A delegation the user signs themselves is ruled out for this audience,
 since it is web3 in sight.
 
+**The user leans to the first** (« me paraît pas mal », 2026-11-02): ARP sells credits by card and its
+sponsor spends its own TRUST. Not decided until the port. Two things go with it:
+
+- **A lost key loses the positions.** On mainnet they have value, so the agent key needs an
+  invisible recovery, for example an encrypted backup tied to the user's email or passkey.
+- **It supersedes ADR `0099`**, where the sponsor only matches the agent's own deposit. Under credits
+  the sponsor pays all of it. That fits `docs/12` (« ARP buys the TRUST it spends »), but `0099` needs
+  a superseding ADR at the port.
+
 And two already settled the same day:
 
 - The signing page (`/sign`) is **not** needed for this public, because nothing is signed by the
