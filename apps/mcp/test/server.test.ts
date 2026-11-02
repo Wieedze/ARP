@@ -8,7 +8,11 @@ import {encodeAbiParameters, keccak256, parseEther, stringToBytes, toFunctionSel
 import type {Hex} from "viem";
 import {privateKeyToAccount} from "viem/accounts";
 
-import {INTUITION_USES_TERM_ID as USES, signContentReceipt} from "@arp-protocol/core";
+import {
+    INTUITION_IS_A_SUB_DOMAIN_OF as SUB_DOMAIN,
+    INTUITION_USES_TERM_ID as USES,
+    signContentReceipt,
+} from "@arp-protocol/core";
 import {afterAll, beforeAll, describe, expect, it} from "vitest";
 
 
@@ -49,6 +53,17 @@ const STUBBED = {
             subject: {term_id: "0xs1", label: "An Agent", type: "Thing"},
             term: {total_assets: "5000", vaults: [{position_count: 2}]},
             counter_term: {total_assets: "0", vaults: [{position_count: 0}]},
+        },
+    ],
+};
+
+const STUBBED_TREE = {
+    positions: [
+        {
+            shares: "1",
+            term: {
+                triple: {term_id: "0xd1", subject: {label: "marketing"}, object: {label: "tool"}},
+            },
         },
     ],
 };
@@ -202,6 +217,12 @@ beforeAll(async () => {
         void (async () => {
             const body = await readBody(request);
             response.writeHead(200, {"content-type": "application/json"});
+            // The domain tree, one edge: `marketing` under `tool`, read through the attestor's
+            // positions. Answered by predicate so the tag query still gets the default payload.
+            if (body.includes(SUB_DOMAIN)) {
+                response.end(JSON.stringify({data: STUBBED_TREE}));
+                return;
+            }
             if (body.includes("sameAsPredicateId")) {
                 response.end(JSON.stringify({data: STUBBED_SUBJECT}));
                 return;
@@ -717,5 +738,104 @@ describe("the plain GET", () => {
         const body = (await response.json()) as Record<string, unknown>;
         expect(body["name"]).toBe("ARP");
         expect((body["mcp"] as {tools: string[]}).tools).toContain("arp_tool_reputation");
+    });
+});
+
+/**
+ * `ARP_TOOLS=read`, the server task 45's first testers get: the registry reads and nothing else.
+ *
+ * Its own process, because the mode is read once at start. What it guards is what the operators were
+ * promised: no planner offered, no planner callable, and instructions that send the agent to the
+ * registry first without a word about chains, tokens or wallets.
+ */
+describe("read-only mode", () => {
+    const READ_PORT = PORT + 2;
+    const READ_BASE = `http://127.0.0.1:${READ_PORT}/mcp`;
+    let reader: ChildProcess | null = null;
+
+    const call = async (method: string, params?: unknown) => {
+        const response = await fetch(READ_BASE, {
+            method: "POST",
+            headers: {"content-type": "application/json", accept: "application/json"},
+            body: JSON.stringify({jsonrpc: "2.0", id: 1, method, ...(params ? {params} : {})}),
+        });
+        return (await response.json()) as Record<string, unknown>;
+    };
+
+    beforeAll(async () => {
+        reader = spawn("bun", ["run", "apps/mcp/src/server.ts"], {
+            cwd: new URL("../../..", import.meta.url).pathname,
+            env: {
+                ...process.env,
+                PORT: String(READ_PORT),
+                ARP_TOOLS: "read",
+                ARP_TARGET: "testnet",
+                ARP_NO_RECEIPTS: "1",
+                INTUITION_GRAPHQL_URL: `http://127.0.0.1:${PORT + 1}/v1/graphql`,
+                INTUITION_RPC_URL: `http://127.0.0.1:${PORT + 1}/rpc`,
+                ARP_MULTI_VAULT: MULTI_VAULT,
+            },
+            stdio: "ignore",
+        });
+        for (let i = 0; i < 60; i += 1) {
+            try {
+                if ((await fetch(READ_BASE, {method: "POST", body: '{"jsonrpc":"2.0","id":0,"method":"ping"}'})).ok) return;
+            } catch {
+                /* not up yet */
+            }
+            await new Promise((r) => setTimeout(r, 100));
+        }
+        throw new Error("the read-only MCP server did not come up");
+    }, 20_000);
+
+    afterAll(() => {
+        reader?.kill();
+    });
+
+    it("lists the three registry reads and nothing else", async () => {
+        const body = await call("tools/list");
+        const names = (body["result"] as {tools: {name: string}[]}).tools.map((t) => t.name);
+        expect(names).toEqual(["arp_find_agents", "arp_find_tools", "arp_tool_reputation"]);
+    });
+
+    it("refuses a planner called by name", async () => {
+        const body = await call("tools/call", {name: "arp_declare_used", arguments: {}});
+        expect((body["error"] as {message: string}).message).toBe("unknown tool: arp_declare_used");
+    });
+
+    it("sends the agent to the registry first, in words an operator can read", async () => {
+        const body = await call("initialize", {
+            protocolVersion: "2025-06-18",
+            capabilities: {},
+            clientInfo: {name: "test", version: "0"},
+        });
+        const instructions = String((body["result"] as Record<string, unknown>)["instructions"]);
+        expect(instructions).toContain("LOOK HERE FIRST");
+        expect(instructions).toContain("arp_find_tools");
+        expect(instructions).toContain("BEFORE you pick one yourself");
+        for (const word of ["TRUST", "chain", "wallet", "stake", "vault", "atom", "ERC-8004"]) {
+            expect(instructions).not.toContain(word);
+        }
+    });
+
+    it("answers a word the registry does not use with the words it does", async () => {
+        // "business" was the word a live run used on 2026-11-02, and it found nothing. The answer
+        // has to carry somewhere to go next, or the agent stops looking.
+        const body = await call("tools/call", {name: "arp_find_tools", arguments: {domain: "business"}});
+        const answer = JSON.parse(
+            (body["result"] as {content: {text: string}[]}).content[0]!.text,
+        ) as {tools: unknown[]; domains_available?: string[]};
+        expect(answer.tools).toEqual([]);
+        expect(answer.domains_available).toEqual(["marketing"]);
+    });
+
+    it("keeps the chain's vocabulary out of the three descriptions it serves", async () => {
+        const body = await call("tools/list");
+        const tools = (body["result"] as {tools: {description: string}[]}).tools;
+        for (const tool of tools) {
+            for (const word of ["TRUST", "vault", "bonding", "minShare", "ERC-8004", "Intuition"]) {
+                expect(tool.description).not.toContain(word);
+            }
+        }
     });
 });
