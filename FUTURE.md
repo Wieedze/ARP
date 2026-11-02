@@ -309,6 +309,12 @@ https://skills.sh/api/search?q=card%20payments` says `"searchType":"semantic"`, 
 `payment-pci-security` and `integrate-midtrans-payments`. Its rows are tiny: an id, a name and
 installs.
 
+**Chosen 2026-11-02, for later.** The user first said _« on va fork tout skills.sh »_, then picked
+this shape over the two alternatives. The first was a full copy of skills.sh's index, which depends
+on its terms. The second was ARP's own crawl of GitHub, which has no install counts. The timing stays
+"later". The argument behind it was sent to the business-plan session the same day: skills.sh
+counts installs, and ARP adds evidence of use.
+
 **What it would be.** `arp_find_tools` asks skills.sh's search for skills and keeps answering from
 ARP's own catalogue and from the chain for everything else. Every answer skills.sh gives is kept in
 a dated cache or database, so that a search still answers when skills.sh is down. The answer then

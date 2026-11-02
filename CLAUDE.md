@@ -152,6 +152,8 @@ ARP/
 │   ├── 23_INSTALLING_ARP.md         (one installer per runtime, how ARP gets listed and used,
 │   │                                the practices it follows — research; the plan is docs/tasks/33)
 │   ├── 25_THE_DOMAIN_TREE.md        (was `18_THE_DOMAIN_TREE.md`; commits before 2026-10-30 cite it so)
+│   ├── 26_DEMO_PLAN.md              (how to demo ARP in Claude Desktop and in Claude Code, what to say
+│   │                                and what not to — kept for when a demo is needed)
 │   ├── tasks/                       atomic task files
 │   ├── design/                      design handoffs, one folder per thing designed — its
 │   │                                `README.md` says what each is and whether it is built:
