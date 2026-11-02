@@ -29,10 +29,17 @@ export const RECEIPT_SIGNER = receiptSigner();
  */
 /**
  * `desktop` is the Claude Desktop extension's build (task 50, ADR `0110`): the reads, plus the two
- * tools that walk the loop for a user who signs nothing. It holds a local agent key; no other mode
- * does.
+ * tools that walk the loop for a user who signs nothing. `sponsored` is the same mode under the name
+ * `arp init --sponsored` writes for Claude Code (task 55). Both hold a local agent key; no other
+ * mode does.
  */
-export const DESKTOP = process.env['ARP_TOOLS'] === 'desktop';
+export const DESKTOP = process.env['ARP_TOOLS'] === 'desktop' || process.env['ARP_TOOLS'] === 'sponsored';
+/**
+ * Where `arp_get_skill` installs a fetched skill, relative to the working directory: set by
+ * `arp init --sponsored` for Claude Code (task 55), unset in the Desktop extension, whose working
+ * directory is not the user's.
+ */
+export const SKILLS_DIR = process.env['ARP_SKILLS_DIR'];
 export const READ_ONLY = process.env['ARP_TOOLS'] === 'read' || DESKTOP;
 export const CONTENT_URL = process.env['ARP_CONTENT'] ?? 'http://127.0.0.1:3002';
 export const SPONSOR_URL = process.env['ARP_SPONSOR'] ?? 'http://127.0.0.1:3200';

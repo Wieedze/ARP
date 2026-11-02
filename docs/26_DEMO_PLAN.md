@@ -10,10 +10,10 @@ showing both:
 | | Claude Desktop (Chat) | Claude Code |
 | --- | --- | --- |
 | who it is for | someone who has never touched a terminal | a developer |
-| what they install | one file, `arp-0.2.1.mcpb` | the CLI and its plugin, `arp init` |
+| what they install | one file, `arp-0.2.1.mcpb` | the CLI, `arp init --project --sponsored` |
 | what is proven | the skill was **served** to this agent (a signed receipt) | the same, **plus** the runtime's own record that the skill was **invoked** (the hook) |
 | what the person signs or pays | nothing | nothing, in the sponsored path |
-| ready today | **yes**, walked by the user on 2026-11-02 (agent #10) | **no**: two pieces are missing, §4.1 |
+| ready today | **yes**, walked by the user on 2026-11-02 (agent #10) | **yes**, walked 2026-11-02 (agent #11, task 55) |
 
 The strongest evidence of an *action* is neither of these. It is a payment the chain records, for
 example one agent hiring another (tasks 43 and 44). Neither demo shows that, and neither should
@@ -117,39 +117,51 @@ rename `C:\Users\Max\.arp` to something else beforehand. Otherwise the demo reus
 
 ---
 
-## 4. Demo B — Claude Code (not ready yet)
+## 4. Demo B — Claude Code (ready since task 55)
 
-### 4.1 Two pieces to build first
+Built and walked on 2026-11-02 (task 55): agent #11, a fresh key, in a scratch project.
 
-1. **Install the fetched skill into the project.** Claude Code invokes a skill only when it is in
-   `.claude/skills/`. Measured 2026-11-02 with Claude Code 2.1.316: a skill written there during a
-   session answers `Unknown skill` in that same session, and is invoked normally in the next one.
-   So `arp_get_skill`, when it runs in a project rather than in Desktop, has to write
-   `.claude/skills/<name>/SKILL.md`, and the demo runs in two sessions.
-2. **Install the sponsored tools in Claude Code.** `arp init` writes `ARP_TARGET=testnet` and serves
-   the full tool set, whose declarations are unsigned plans. The sponsored path needs
-   `ARP_TOOLS=desktop` in the MCP entry, under a name that says what it does in Claude Code too.
+**Why two sessions.** Claude Code invokes a skill only when it is in `.claude/skills/`. Measured
+2026-11-02 with Claude Code 2.1.316: a skill written there during a session answers `Unknown skill`
+in that same session, and is invoked normally in the next one.
 
-What the hook adds is already built. On `PostToolUse` it writes `.arp/session.jsonl`, the runtime's
-own line "this skill was invoked at T", which the model never touches (`apps/hook/src/hook.ts`).
-What is not decided is where that line goes. The sponsor's proof is the content receipt alone
-(ADR `0109`), so the hook's record stays on the machine. Publishing it next to the declaration
-needs a decision of its own.
+**The hook's record stays on the machine** (the user's choice, option A, 2026-11-02). It is shown
+on screen, and the sponsor's proof is the content receipt alone (ADR `0109`).
 
-### 4.2 The script, once those exist (10 minutes)
+### 4.1 Setup, once (2 minutes)
 
-1. In an empty folder: `git init`, then `arp init --project --yes`, then open Claude Code.
-2. **Session 1.** Ask: _"I need YouTube thumbnails for my channel. Find a skill with ARP and set it
-   up here."_ Claude calls `arp_find_tools`, then `arp_get_skill`, and the skill lands in
-   `.claude/skills/`.
-3. **Session 2** (quit, then reopen Claude Code). Ask: _"Make a thumbnail for a video about
-   sourdough."_ Claude invokes the skill with its `Skill` tool, and the hook writes the line.
-4. Ask Claude to declare what it used. Then show the two records side by side:
-   - the receipt in `~/.arp/receipts.jsonl`: "ARP's server served this file to this key at T1";
-   - the hook's line in `.arp/session.jsonl`: "the runtime invoked this skill at T2".
+In an empty folder:
 
-   These are two parties that do not share interests, agreeing on the skill and the agent
-   (`docs/14`, the table "What we have / What we know").
+```
+git init
+arp init --project --sponsored --yes --runtime claude
+```
+
+`--sponsored` writes `ARP_TOOLS=sponsored` and `ARP_SKILLS_DIR=.claude/skills` into the project's
+`.mcp.json`, and puts the hook on `PostToolUse`. Both servers of §2 must be running. The agent's key
+is created in `~/.arp/` on the first fetch.
+
+### 4.2 The script (10 minutes)
+
+1. **Session 1.** Ask: _"I need eye-catching YouTube thumbnails for my channel. Find a skill with
+   ARP and set it up in this project."_ Claude calls `arp_find_tools`, then `arp_get_skill`. The
+   skill lands in `.claude/skills/youtube-thumbnail-design/SKILL.md`, and its receipt in the
+   project's `.arp/receipts.jsonl`.
+2. **Session 2** (quit, then reopen Claude Code). Ask: _"Use the youtube-thumbnail-design skill to
+   write a one-page design brief for a video about sourdough bread, then record that you used it
+   with ARP."_ Claude invokes the skill with its `Skill` tool, writes the brief, and calls
+   `arp_declare_used`. The first time, that takes about 25 seconds: gas, registration, identity,
+   approval and deposit.
+3. **Show the two records side by side:**
+   - **the receipt**, `.arp/receipts.jsonl`: "ARP's server served this file to this key at T1",
+     signed by the server;
+   - **the hook's line**, `.arp/session.jsonl`: `"kind":"skill","name":"youtube-thumbnail-design",
+     "ref":"0x2fe6…"`, written by Claude Code at T2, which the model does not write.
+
+   They agree on the skill: the hook filled `ref` from the receipt's atom. T2 comes after T1. In
+   the walked run, T1 was 21:35:10 UTC and T2 21:35:29. The hook's line does not name the agent's
+   key; what ties it to the agent is the machine and the project. `docs/14` rates this pair "the
+   access is a two-party fact", not proof that the skill did the job.
 
 ---
 

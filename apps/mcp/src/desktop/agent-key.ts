@@ -1,6 +1,7 @@
 /**
- * The Claude Desktop extension's agent key (ADR `0110`). Only the extension build loads this file
- * (`ARP_TOOLS=desktop`); the protocol package still holds no signer (ADR `0038`).
+ * The agent key of the sponsored loop (ADR `0110`), in the Claude Desktop extension and in Claude
+ * Code. Only `ARP_TOOLS=desktop` or `sponsored` loads this file; the protocol package still holds
+ * no signer (ADR `0038`).
  *
  * The key is created on first use in `~/.arp/agent-key`, mode 0600, and never printed, logged or
  * returned. It signs two zero-value transactions on testnet 13579, `register()` and the MultiVault

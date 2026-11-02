@@ -127,6 +127,16 @@ describe('init', () => {
     expect(existsSync(join(home, '.claude.json'))).toBe(false);
   });
 
+  test('--sponsored --project writes the sponsored tools and the skills directory into .mcp.json', async () => {
+    mkdirSync(join(home, '.claude'));
+    expect(await init({ ...env(), cwd: home }, flags(['--yes', '--project', '--sponsored', '--runtime', 'claude']), CLI)).toBe(EXIT.ok);
+    expect(at(json(join(home, '.mcp.json')), 'mcpServers', 'arp', 'env')).toEqual({
+      ARP_TARGET: 'testnet',
+      ARP_TOOLS: 'sponsored',
+      ARP_SKILLS_DIR: '.claude/skills',
+    });
+  });
+
   test('--dry-run shows every change and writes nothing', async () => {
     mkdirSync(join(home, '.claude'));
     expect(await init(env(), flags(['--dry-run']), CLI)).toBe(EXIT.ok);

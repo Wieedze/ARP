@@ -217,6 +217,27 @@ group('the loop a new agent walks', () => {
     await expect(declareUsed(config, agent, ATOM)).rejects.toThrow(/arp_get_skill first/);
   });
 
+  it('installs the skill into the skills directory when one is set, under its own name', async () => {
+    const agent = fakeAgent([]);
+    const skillsDir = join(dir, 'project', '.claude', 'skills');
+    const config: LoopConfig = {
+      contentUrl: 'http://content.test',
+      sponsorUrl: 'http://sponsor.test',
+      registry: REGISTRY,
+      multiVault: MULTI_VAULT,
+      stateDir: join(dir, '.arp'),
+      skillsDir,
+      projectReceipts: join(dir, 'project', '.arp', 'receipts.jsonl'),
+      fetch: services(agent.address).fake,
+    };
+    const skill = await getSkill(config, agent, ATOM);
+    expect(skill.installedAt).toBe(join(skillsDir, 'thumbs', 'SKILL.md'));
+    expect(readFileSync(join(skillsDir, 'thumbs', 'SKILL.md'), 'utf8')).toBe('# A skill\n');
+    // The line the hook reads to name the atom of `thumbs` when it sees it invoked.
+    const line = JSON.parse(readFileSync(join(dir, 'project', '.arp', 'receipts.jsonl'), 'utf8'));
+    expect(line).toMatchObject({ skill: 'thumbs', atom: ATOM, url: 'github.com/acme/skills?skill=thumbs' });
+  });
+
   it('refuses a receipt that names another caller', async () => {
     const agent = fakeAgent([]);
     const config: LoopConfig = {

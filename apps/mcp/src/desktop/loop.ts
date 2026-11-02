@@ -1,6 +1,7 @@
 /**
  * The loop an outside user walks in Claude Desktop, with nothing to sign and nothing to pay
- * (`docs/tasks/50`). Only the extension build loads this file (`ARP_TOOLS=desktop`).
+ * (`docs/tasks/50`), and in Claude Code (`docs/tasks/55`). Only `ARP_TOOLS=desktop` or `sponsored`
+ * loads this file.
  *
  *   arp_get_skill     the skill's files through ARP's content server, with a receipt naming this
  *                     agent as the caller
@@ -65,6 +66,13 @@ export type LoopConfig = {
   multiVault: Address;
   /** `~/.arp`. */
   stateDir: string;
+  /** Where to install a fetched skill so the runtime can invoke it, or nothing. */
+  skillsDir?: string;
+  /**
+   * The project's receipts file, which the hook reads to name the atom of a skill it sees invoked
+   * (`apps/hook/src/hook.ts`, `fetchedRefs`). Written with `skillsDir`, never without.
+   */
+  projectReceipts?: string;
   /** How long to wait for the indexer to see a new identity, in ms. */
   indexerWaitMs?: number;
   sleep?: (ms: number) => Promise<void>;
@@ -73,7 +81,7 @@ export type LoopConfig = {
 
 type AgentState = { agentId: string; identityAtom?: Hex };
 
-export type ServedSkill = { atom: Hex; url: string; name: string; text: string };
+export type ServedSkill = { atom: Hex; url: string; name: string; text: string; installedAt?: string };
 
 type ReceiptLine = { atom: Hex; url: string; skill: string | null; receipt: SignedContentReceipt };
 
@@ -137,7 +145,18 @@ export async function getSkill(config: LoopConfig, agent: AgentSender, atom: Hex
   mkdirSync(config.stateDir, { recursive: true, mode: 0o700 });
   const line: ReceiptLine = { atom: signed.receipt.atom, url: signed.receipt.url, skill: ref?.skill ?? null, receipt: signed };
   appendFileSync(join(config.stateDir, 'receipts.jsonl'), `${JSON.stringify(line)}\n`);
-  return { atom: signed.receipt.atom, url: signed.receipt.url, name: ref?.skill ?? signed.receipt.url, text: new TextDecoder().decode(bytes) };
+  const served = { atom: signed.receipt.atom, url: signed.receipt.url, name: ref?.skill ?? signed.receipt.url, text: new TextDecoder().decode(bytes) };
+  // Installed under its own name only when that name is a plain directory name: it comes from a URL.
+  if (config.skillsDir === undefined || ref === null || !/^[a-z0-9][a-z0-9._-]*$/i.test(ref.skill)) return served;
+  const dir = join(config.skillsDir, ref.skill);
+  mkdirSync(dir, { recursive: true });
+  writeFileSync(join(dir, 'SKILL.md'), bytes);
+  if (config.projectReceipts !== undefined) {
+    mkdirSync(join(config.projectReceipts, '..'), { recursive: true });
+    const at = new Date(signed.receipt.servedAt * 1000).toISOString();
+    appendFileSync(config.projectReceipts, `${JSON.stringify({ skill: ref.skill, atom: signed.receipt.atom, url: signed.receipt.url, at, receipt: signed })}\n`);
+  }
+  return { ...served, installedAt: join(dir, 'SKILL.md') };
 }
 
 /** This key's agent id: read from `~/.arp`, or minted with gas the sponsor sends once. */

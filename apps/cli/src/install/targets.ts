@@ -84,8 +84,19 @@ function read(path: string): string | null {
  */
 export const SERVER_ENV: Record<string, string> = { ARP_TARGET: 'testnet' };
 
+/**
+ * `init --sponsored` (task 55): the tools that walk the loop with nothing to sign, as in the Claude
+ * Desktop extension, and a fetched skill installed into the project so Claude Code can invoke it
+ * with its `Skill` tool, from the next session on.
+ */
+export const SPONSORED_ENV: Record<string, string> = {
+  ...SERVER_ENV,
+  ARP_TOOLS: 'sponsored',
+  ARP_SKILLS_DIR: '.claude/skills',
+};
+
 /** The commands `init` installs, from where this `arp` is running. */
-export function commandsFor(env: InstallEnv, cliPath: string, capture = false): Commands {
+export function commandsFor(env: InstallEnv, cliPath: string, capture = false, sponsored = false): Commands {
   const hookFile = join(env.home, '.arp', 'bin', 'hook.js');
   // Run from `npx`'s cache, a path written into a config would vanish with the cache. The MCP
   // server starts once per session, so launching it through `npx` is affordable; the hook runs on
@@ -95,7 +106,7 @@ export function commandsFor(env: InstallEnv, cliPath: string, capture = false): 
     ...(fromNpx
       ? { command: 'npx', args: ['-y', `@arp-protocol/cli@${env.version}`, 'mcp'] }
       : { command: env.node, args: [cliPath, 'mcp'] }),
-    env: SERVER_ENV,
+    env: sponsored ? SPONSORED_ENV : SERVER_ENV,
   };
   const hook = `"${env.node}" "${hookFile}"${capture ? ' --capture' : ''}`;
   return { mcp, hook, hookFile, capture };
