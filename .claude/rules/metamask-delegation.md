@@ -210,4 +210,4 @@ If x402 integration grows beyond following the docs (e.g., custom resource-prici
 
 - Solidity enforcers → `contract-reviewer` agent (extended Trail of Bits checklist for caveat-specific concerns).
 - TypeScript SDK usage → `ui-reviewer` agent (for the UI side) + a manual review of SDK usage against the official docs.
-- The `task-verifier` checks the narrative-preservation question on every hackathon task: "Does this preserve the hackathon submission narrative?" Required answer in the completion report.
+- The `task-verifier` checks the evidence-ladder sentence on every task (`workflow.md`). The hackathon narrative question it replaced, on tasks 02b–05b, is retired.
