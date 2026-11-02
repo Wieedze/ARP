@@ -198,14 +198,23 @@ export {
     // The scheme check `privateProbeTarget` assigns to its caller, in one place so both callers
     // get it: one of them did not, and `file:///etc/passwd` reached `fetch`.
     fetchableDocumentUrl,
+    // Every hop checked, redirects followed by hand, one deadline, a capped body.
+    guardedFetchText,
     IPFS_GATEWAY,
     MAX_DOCUMENT_HOPS,
     nextDocumentHop,
+    privateAddress,
     privateProbeTarget,
+    PROBE_MAX_BODY_BYTES,
     probeEndpoint,
 } from "./verify/probe.js";
-export type {FetchableUrl} from "./verify/probe.js";
-export type {ProbeOptions} from "./verify/probe.js";
+export type {
+    FetchableUrl,
+    GuardedFetch,
+    GuardedFetchOptions,
+    ProbeOptions,
+    ResolveHost,
+} from "./verify/probe.js";
 
 export {HostLimiter, hostOf} from "./verify/host-limiter.js";
 
