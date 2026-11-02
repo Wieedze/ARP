@@ -261,6 +261,7 @@ export {
     serialiseRegistrationFile,
     toRegistrationDataUri,
     toRegistrationUrl,
+    x402SupportOf,
 } from "./registration-file.js";
 export type {
     RegistrationEntry,

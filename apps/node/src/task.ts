@@ -11,16 +11,25 @@ import {
   hireDigest,
   signHireReceipt,
   type HireReceipt,
+  type SignedHireReceipt,
 } from '@arp-protocol/core';
-import { formatEther, isAddress } from 'viem';
+import { type X402Gate, x402PaymentKey } from '@arp-protocol/core/x402';
+import { formatEther, getAddress, isAddress } from 'viem';
 import type { Address, Hex, LocalAccount, PublicClient } from 'viem';
 
-/** What the operator's handler receives. Everything the node verified, nothing it assumed. */
+/**
+ * What the operator's handler receives. Everything the node verified, nothing it assumed.
+ *
+ * Two rails since task 41b, and `rail` says which. **`native`**: `paid` is wei the requester moved
+ * in `paymentTxHash`, mined before the handler runs. **`x402`**: `paid` is USDC atomic units (6
+ * decimals) the requester signed an authorisation for, verified by the facilitator but **settled
+ * only after the handler answers**, so `paymentTxHash` is `null` while the handler runs.
+ */
 export type TaskContext = {
+  rail: 'native' | 'x402';
   requester: Address;
-  /** Native value the requester actually moved, verified on chain. */
   paid: bigint;
-  paymentTxHash: Hex;
+  paymentTxHash: Hex | null;
   agent: Address;
 };
 export type TaskHandler = (payload: unknown, context: TaskContext) => Promise<unknown>;
@@ -30,7 +39,9 @@ export const echo: TaskHandler = async (payload, context) => ({
   note:
     'No handler configured, so this node proves the protocol and nothing about the agent. Set ' +
     'ARP_NODE_HANDLER to a module exporting `handle(payload, context)`.',
-  paidWei: context.paid.toString(),
+  rail: context.rail,
+  // In the rail's own unit: wei on `native`, USDC atomic units on `x402`.
+  paid: context.paid.toString(),
 });
 
 /**
@@ -131,10 +142,18 @@ export type NodeOptions = {
   handle: TaskHandler;
   handlerPath: string | null;
   ledger: PaymentLedger;
+  /**
+   * The x402 rail, beside the native one and not in place of it (task 41b). `null` or absent: the
+   * node takes native payments only, as before. Built by `createX402Gate` with `POST /task` priced.
+   */
+  x402?: X402Gate | null;
   limits?: Partial<NodeLimits>;
   /** Milliseconds. Injected so a test can move the rate-limit window. */
   now?: () => number;
 };
+
+/** The route label the x402 rail counts paid hires under. */
+export const X402_TASK_ROUTE = 'POST /task';
 
 /**
  * `verifier` and `termId` are what the v2 receipt names (task 44): the one verifier the requester
@@ -168,6 +187,8 @@ function json(value: unknown, status = 200): Response {
 
 class Timeout extends Error {}
 
+type SignedHireReceiptOrError = { signed: SignedHireReceipt } | { error: Response };
+
 function withTimeout<T>(work: Promise<T>, ms: number): Promise<T> {
   let timer: ReturnType<typeof setTimeout> | undefined;
   const expiry = new Promise<never>((_resolve, reject) => {
@@ -183,6 +204,7 @@ export function createNode(options: NodeOptions): {
     options;
   const limits: NodeLimits = { ...DEFAULT_LIMITS, ...options.limits };
   const now = options.now ?? Date.now;
+  const x402 = options.x402 ?? null;
   const windows = new Map<string, { start: number; count: number }>();
 
   /** A fixed one-minute window per client. Crude, and enough to make a flood cost its sender. */
@@ -234,7 +256,164 @@ export function createNode(options: NodeOptions): {
     if (tx.from.toLowerCase() !== requester.toLowerCase()) {
       return { error: `payment came from ${tx.from}, not from the declared requester` };
     }
-    return { requester, paid: tx.value, paymentTxHash: hash, agent: account.address };
+    return { rail: 'native', requester, paid: tx.value, paymentTxHash: hash, agent: account.address };
+  }
+
+  type Job =
+    | { ok: true; result: unknown; requestHash: Hex; resultHash: Hex }
+    | { ok: false; response: Response };
+
+  /** The operator's handler, bounded by the timeout, with what goes into the receipt. Releases the claim on failure. */
+  async function runJob(payload: unknown, context: TaskContext, claim: Hex): Promise<Job> {
+    try {
+      const answer = await withTimeout(handle(payload, context), limits.handlerTimeoutMs);
+      // The result as it will cross the wire, so the requester hashes exactly what it receives.
+      const result = JSON.parse(JSON.stringify(answer ?? null, bigintSafe)) as unknown;
+      return { ok: true, result, requestHash: hireDigest(payload ?? null), resultHash: hireDigest(result) };
+    } catch (error) {
+      ledger.release(claim);
+      if (error instanceof Timeout) {
+        return {
+          ok: false,
+          response: json({ error: `handler did not answer within ${limits.handlerTimeoutMs} ms` }, 504),
+        };
+      }
+      // The message, not a stack: enough for the caller to retry or report, nothing about the host.
+      return { ok: false, response: json({ error: `handler failed: ${String(error).slice(0, 300)}` }, 500) };
+    }
+  }
+
+  /**
+   * Record the payment, then sign. No receipt without a record: a receipt the ledger forgot is a
+   * payment the next restart would accept again.
+   */
+  async function receiptFor(input: {
+    claim: Hex;
+    record: Record<string, string>;
+    requester: Address;
+    payment: Hex;
+    paid: bigint;
+    paymentChainId: number;
+    job: { requestHash: Hex; resultHash: Hex };
+    verifier: Address;
+    termId: Hex;
+  }): Promise<SignedHireReceiptOrError> {
+    const issuedAt = Math.floor(now() / 1000);
+    const receipt: HireReceipt = {
+      version: HIRE_RECEIPT_VERSION,
+      agentRegistry: identity?.agentRegistry ?? '',
+      agentId: (identity?.agentId ?? 0n).toString(),
+      requester: input.requester,
+      payment: input.payment,
+      paid: input.paid.toString(),
+      requestHash: input.job.requestHash,
+      resultHash: input.job.resultHash,
+      issuedAt,
+      termId: input.termId,
+      expiresAt: issuedAt + limits.receiptTtlSeconds,
+    };
+    try {
+      ledger.commit(input.claim, {
+        ...input.record,
+        requester: input.requester,
+        requestHash: input.job.requestHash,
+        at: new Date(now()).toISOString(),
+      });
+    } catch (error) {
+      ledger.release(input.claim);
+      return { error: json({ error: `could not record the payment: ${String(error).slice(0, 300)}` }, 500) };
+    }
+    return {
+      signed: await signHireReceipt(
+        receipt,
+        { chainId: input.paymentChainId, verifyingContract: input.verifier },
+        { address: account.address, signTypedData: (data) => account.signTypedData(data) },
+      ),
+    };
+  }
+
+  /**
+   * The x402 rail (task 41b). The requester sends `PAYMENT-SIGNATURE`, a USDC authorisation it
+   * signed; the facilitator verifies it, the handler runs, and only then is it settled. The
+   * settlement's transaction is the receipt's `payment`, and its chain — Base Sepolia, 84532 — is
+   * the receipt's domain chain, so the receipt says truthfully where the payment is. A verifier
+   * that prices a proof on the deposit chain only (ADR `0096` item 1) refuses it, and that refusal
+   * is correct rather than a gap: a USDC payment on 84532 is not in the unit of a deposit on 13579.
+   *
+   * **The ledger keys on the signed authorisation**, hashed, rather than on a transaction that does
+   * not exist yet. One authorisation buys one job, and a replay is refused before the facilitator is
+   * asked anything. The settlement transaction is written in the same row.
+   */
+  async function x402Task(
+    gate: X402Gate,
+    request: Request,
+    body: TaskBody,
+    verifier: Address,
+    termId: Hex,
+  ): Promise<Response> {
+    // A replay is refused before the facilitator is asked anything, as the native rail refuses one
+    // before its RPC reads.
+    const early = x402PaymentKey(request);
+    const spent = () => json({ error: 'this payment authorisation was already used for a job' }, 409);
+    if (early !== null && ledger.isSpent(early)) return spent();
+
+    const verdict = await gate.check(request, X402_TASK_ROUTE);
+    if (verdict.kind === 'refused') return verdict.response;
+    if (verdict.kind === 'free') {
+      // `POST /task` is the gate's priced route, so this is a gate built for other routes.
+      return json({ error: 'this node prices no POST /task on x402' }, 500);
+    }
+    if (verdict.payer === null || !isAddress(verdict.payer)) {
+      return json({ error: 'this node accepts an EIP-3009 authorisation, which names its payer' }, 402);
+    }
+    const payer = getAddress(verdict.payer);
+    const declared = body.requesterAddress;
+    if (declared !== undefined && (typeof declared !== 'string' || declared.toLowerCase() !== payer.toLowerCase())) {
+      return json({ error: `the authorisation is signed by ${payer}, not by the declared requester` }, 402);
+    }
+
+    if (!ledger.claim(verdict.key)) return spent();
+
+    const job = await runJob(
+      body.payload,
+      { rail: 'x402', requester: payer, paid: BigInt(verdict.amount), paymentTxHash: null, agent: account.address },
+      verdict.key,
+    );
+    if (!job.ok) return job.response;
+
+    // A facilitator that times out on settle may still have settled (`@x402/core`'s own warning). The
+    // claim is released all the same: the authorisation's on-chain nonce refuses a second settle.
+    const settlement = await verdict.settle().catch((error: unknown) => ({
+      ok: false as const,
+      response: json({ error: `settlement failed: ${String(error).slice(0, 300)}` }, 502),
+    }));
+    if (!settlement.ok) {
+      ledger.release(verdict.key);
+      return settlement.response;
+    }
+    const { transaction, network, amount } = settlement.call;
+    const paymentChainId = Number(/^eip155:([1-9][0-9]*)$/.exec(network)?.[1] ?? Number.NaN);
+    if (!TX_HASH.test(transaction) || !Number.isSafeInteger(paymentChainId)) {
+      // Settled, so the requester paid: the row is kept, and the answer says what is missing.
+      ledger.commit(verdict.key, { rail: 'x402', transaction, network });
+      return json({ error: `settled as ${transaction} on ${network}, which a hire receipt cannot name` }, 502);
+    }
+
+    const answer = await receiptFor({
+      claim: verdict.key,
+      record: { rail: 'x402', transaction, network },
+      requester: payer,
+      payment: transaction as Hex, // TX_HASH above is the 0x + 64 hex check `Hex` stands for.
+      paid: BigInt(amount),
+      paymentChainId,
+      job,
+      verifier,
+      termId,
+    });
+    if ('error' in answer) return answer.error;
+    const response = json({ result: job.result, receipt: answer.signed });
+    for (const [name, value] of Object.entries(settlement.headers)) response.headers.set(name, value);
+    return response;
   }
 
   async function readBody(request: Request): Promise<TaskBody | Response> {
@@ -257,12 +436,17 @@ export function createNode(options: NodeOptions): {
     }
   }
 
+  /** What a caller reads before paying: the native floor and, when the rail is on, the x402 terms. */
+  function prices() {
+    return { minBudgetWei: minBudget.toString(), x402: x402?.terms ?? null };
+  }
+
   return {
     async fetch(request: Request, client = 'unknown'): Promise<Response> {
       const url = new URL(request.url);
 
       if (request.method === 'GET' && url.pathname === '/healthz') {
-        return json({ ok: true, agent: account.address, minBudgetWei: minBudget.toString() });
+        return json({ ok: true, agent: account.address, ...prices() });
       }
 
       if (request.method === 'GET' && url.pathname === '/') {
@@ -271,7 +455,7 @@ export function createNode(options: NodeOptions): {
         return json({
           agent: account.address,
           endpoints: [{ path: '/task', method: 'POST', description: 'hire this agent' }],
-          minBudgetWei: minBudget.toString(),
+          ...prices(),
           handler: handlerPath,
         });
       }
@@ -288,13 +472,6 @@ export function createNode(options: NodeOptions): {
       if (body instanceof Response) return body;
 
       // Shape before the chain: a malformed hash or address would cost two RPC reads to refuse.
-      const { paymentTxHash: hash, requesterAddress: requester } = body;
-      if (typeof hash !== 'string' || !TX_HASH.test(hash)) {
-        return json({ error: 'paymentTxHash must be a 32-byte 0x-prefixed hex hash' }, 400);
-      }
-      if (typeof requester !== 'string' || !isAddress(requester)) {
-        return json({ error: 'requesterAddress must be an address' }, 400);
-      }
       const { verifier, termId } = body;
       if (typeof verifier !== 'string' || !isAddress(verifier)) {
         return json(
@@ -308,6 +485,21 @@ export function createNode(options: NodeOptions): {
           400,
         );
       }
+      const term = termId as Hex; // The 0x + 64 hex check above is what `Hex` stands for.
+
+      // No native payment named, and the x402 rail is on: that rail answers, with a 402 carrying
+      // the requirements when nothing is paid yet. A body that names a payment keeps the native rail.
+      if (x402 !== null && body.paymentTxHash === undefined) {
+        return x402Task(x402, request, body, verifier, term);
+      }
+
+      const { paymentTxHash: hash, requesterAddress: requester } = body;
+      if (typeof hash !== 'string' || !TX_HASH.test(hash)) {
+        return json({ error: 'paymentTxHash must be a 32-byte 0x-prefixed hex hash' }, 400);
+      }
+      if (typeof requester !== 'string' || !isAddress(requester)) {
+        return json({ error: 'requesterAddress must be an address' }, 400);
+      }
       const payment = hash as Hex; // The regex above is the 0x + 64 hex check `Hex` stands for.
 
       const spentError = () =>
@@ -319,64 +511,22 @@ export function createNode(options: NodeOptions): {
       if ('error' in verified) return json(verified, 402);
       if (!ledger.claim(payment)) return spentError();
 
-      let result: unknown;
-      let requestHash: Hex;
-      let resultHash: Hex;
-      try {
-        const answer = await withTimeout(handle(body.payload, verified), limits.handlerTimeoutMs);
-        // The result as it will cross the wire, so the requester hashes exactly what it receives.
-        result = JSON.parse(JSON.stringify(answer ?? null, bigintSafe)) as unknown;
-        requestHash = hireDigest(body.payload ?? null);
-        resultHash = hireDigest(result);
-      } catch (error) {
-        ledger.release(payment);
-        if (error instanceof Timeout) {
-          return json(
-            { error: `handler did not answer within ${limits.handlerTimeoutMs} ms` },
-            504,
-          );
-        }
-        // The message, not a stack: enough for the caller to retry or report, nothing about the host.
-        return json({ error: `handler failed: ${String(error).slice(0, 300)}` }, 500);
-      }
+      const job = await runJob(body.payload, verified, payment);
+      if (!job.ok) return job.response;
 
-      const issuedAt = Math.floor(now() / 1000);
-      const receipt: HireReceipt = {
-        version: HIRE_RECEIPT_VERSION,
-        agentRegistry: identity?.agentRegistry ?? '',
-        agentId: (identity?.agentId ?? 0n).toString(),
+      const answer = await receiptFor({
+        claim: payment,
+        record: {},
         requester: verified.requester,
         payment,
-        paid: verified.paid.toString(),
-        requestHash,
-        resultHash,
-        issuedAt,
-        termId: termId as Hex, // The same 0x + 64 hex check as `paymentTxHash`, above.
-        expiresAt: issuedAt + limits.receiptTtlSeconds,
-      };
-
-      try {
-        ledger.commit(payment, {
-          requester: verified.requester,
-          requestHash,
-          at: new Date(now()).toISOString(),
-        });
-      } catch (error) {
-        // No receipt without a record: a receipt the ledger forgot is a payment the next restart
-        // would accept again.
-        ledger.release(payment);
-        return json({ error: `could not record the payment: ${String(error).slice(0, 300)}` }, 500);
-      }
-
-      const signed = await signHireReceipt(
-        receipt,
-        { chainId, verifyingContract: verifier },
-        {
-          address: account.address,
-          signTypedData: (data) => account.signTypedData(data),
-        },
-      );
-      return json({ result, receipt: signed });
+        paid: verified.paid,
+        paymentChainId: chainId,
+        job,
+        verifier,
+        termId: term,
+      });
+      if ('error' in answer) return answer.error;
+      return json({ result: job.result, receipt: answer.signed });
     },
   };
 }

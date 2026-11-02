@@ -85,7 +85,31 @@ export type RegistrationInput = {
     registry: string;
     /** Known only when the file is written *after* the mint. Null on a fresh one. */
     agentId?: number | null;
+    /** Whether the agent's endpoint answers x402. Compute it with `x402SupportOf`; absent is `false`. */
+    x402Support?: boolean;
 };
+
+/**
+ * Whether an agent node's info document (`GET /` on `apps/node`) advertises x402 terms: an `x402`
+ * object naming the `exact` scheme, a CAIP-2 network, a `payTo` address and a price. Anything else,
+ * `x402: null` included, is `false` — the registration file claims a payment surface only when the
+ * node it points at states one.
+ */
+export function x402SupportOf(nodeInfo: unknown): boolean {
+    if (typeof nodeInfo !== "object" || nodeInfo === null) return false;
+    const terms = (nodeInfo as Record<string, unknown>)["x402"];
+    if (typeof terms !== "object" || terms === null) return false;
+    const {scheme, network, payTo, price} = terms as Record<string, unknown>;
+    return (
+        scheme === "exact" &&
+        typeof network === "string" &&
+        /^[-a-z0-9]{3,8}:[-_a-zA-Z0-9]{1,32}$/.test(network) &&
+        typeof payTo === "string" &&
+        /^0x[0-9a-fA-F]{40}$/.test(payTo) &&
+        typeof price === "string" &&
+        price.length > 0
+    );
+}
 
 /** Trimmed, or `null` when there is nothing left. Keeps `""` out of a published document. */
 function clean(value: string | undefined): string | null {
@@ -131,10 +155,11 @@ export function buildRegistrationFile(input: RegistrationInput): RegistrationFil
             },
         ],
         active: true,
-        // Both false/minimal on purpose. `x402Support` is a claim about a payment surface this
-        // agent may not have, and `supportedTrust` says which trust models it accepts —
-        // `reputation` is what every probed agent carries and what ARP itself reads.
-        x402Support: false,
+        // `x402Support` is a claim about a payment surface, so it is false unless the caller read
+        // one: `x402SupportOf` over the agent's node (task 41b). It was the constant `false` until
+        // the node could answer x402. `supportedTrust` stays minimal — `reputation` is what every
+        // probed agent carries and what ARP itself reads.
+        x402Support: input.x402Support ?? false,
         supportedTrust: ["reputation"],
     };
 }

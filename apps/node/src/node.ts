@@ -21,6 +21,12 @@
  *  the caller's later `(requester, uses, agent)` declaration from an opinion into something anchored
  *  to a fact — `docs/14:159`'s top rung is "payment, on-chain call, or delegation redemption".
  *
+ *  **Two rails, and the native one stays** (task 41b, ADR `0105`). Set `AGENT_NODE_X402_PAY_TO`
+ *  and `AGENT_NODE_X402_PRICE` and a `POST /task` that names no `paymentTxHash` is answered on x402:
+ *  402 with USDC requirements on Base Sepolia, then a signed authorisation the facilitator verifies,
+ *  the work, and the settlement. The node still signs no transaction; the facilitator submits the
+ *  payer's authorisation.
+ *
  *  **The work is the operator's.** `ARP_NODE_HANDLER` points at a module exporting
  *  `handle(payload, context)`. Without one the node echoes, which is enough to prove the protocol
  *  and proves nothing about an agent.
@@ -46,6 +52,13 @@ import { join } from 'node:path';
 import { serveFetch } from '@arp-protocol/core/node';
 
 import { createPublicClient, formatEther, http, parseEther } from 'viem';
+
+import {
+  createX402Gate,
+  PaidCallCounter,
+  x402ConfigFrom,
+  type X402Gate,
+} from '@arp-protocol/core/x402';
 
 import { resolveNodeKey } from './node-key.ts';
 
@@ -134,6 +147,34 @@ if (handlerPath !== undefined) {
 const publicClient = createPublicClient({ transport: http(rpcUrl) });
 const chainId = await publicClient.getChainId();
 
+/**
+ * The x402 rail (task 41b), off unless `AGENT_NODE_X402_PAY_TO` and `AGENT_NODE_X402_PRICE` are set.
+ * The payment goes to the operator's address, never to ARP. Initialising asks the facilitator what
+ * it supports, so a facilitator that does not answer stops the node here rather than on a caller.
+ */
+const x402Config = x402ConfigFrom(process.env, 'AGENT_NODE_X402');
+if (x402Config instanceof Error) {
+  console.error(x402Config.message);
+  process.exit(1);
+}
+const X402_CALLS =
+  process.env.AGENT_NODE_X402_CALLS ?? join(process.cwd(), '.arp', 'node-x402-calls.jsonl');
+let x402: X402Gate | null = null;
+if (x402Config !== null) {
+  try {
+    x402 = await createX402Gate({
+      config: x402Config,
+      routes: [{ pattern: 'POST /task', description: 'a hire of this agent', mimeType: 'application/json' }],
+      counter: new PaidCallCounter(X402_CALLS),
+    });
+  } catch (error) {
+    console.error(
+      `x402: the facilitator at ${x402Config.facilitatorUrl} did not confirm exact on ${x402Config.network}: ${error instanceof Error ? error.message : String(error)}`,
+    );
+    process.exit(1);
+  }
+}
+
 const node = createNode({
   account,
   publicClient,
@@ -143,6 +184,7 @@ const node = createNode({
   handle,
   handlerPath: handlerPath ?? null,
   ledger: new PaymentLedger(LEDGER),
+  x402,
   limits: LIMITS,
 });
 
@@ -193,6 +235,9 @@ export async function main(): Promise<void> {
     `  key        ${nodeKey.source === 'env' ? 'AGENT_PRIVATE_KEY' : `${nodeKey.path}${nodeKey.created ? ' (created)' : ''}`}\n`,
   );
   process.stderr.write(`  min budget ${formatEther(MIN_BUDGET)}\n`);
+  process.stderr.write(
+    `  x402       ${x402 === null ? 'off (AGENT_NODE_X402_PAY_TO unset)' : `${x402.terms.price} USDC on ${x402.terms.network} to ${x402.terms.payTo}, via ${x402.terms.facilitator}; paid calls in ${X402_CALLS}`}\n`,
+  );
   process.stderr.write(`  handler    ${handlerPath ?? 'echo (no handler configured)'}\n`);
   process.stderr.write(`  chain      ${chainId}\n`);
   process.stderr.write(

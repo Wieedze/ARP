@@ -76,6 +76,12 @@ const MODULES = [
   'apps/mcp/src/handlers/reputation.ts',
   'apps/mcp/src/content.ts',
   'apps/mcp/src/tools.ts',
+  // Task 41a: the x402 gate. Loaded on HTTP when `ARP_X402_PAY_TO` is set; the facilitator's
+  // default URL is the literal in `arp/x402.ts`, and the fetch to it is `@x402/core`'s own.
+  'apps/mcp/src/x402.ts',
+  'packages/protocol/src/x402/config.ts',
+  'packages/protocol/src/x402/gate.ts',
+  'packages/protocol/src/arp/x402.ts',
   'packages/protocol/src/content-path.ts',
   'packages/protocol/src/verify/probe.ts',
   'packages/graphql/src/http.ts',
@@ -126,8 +132,12 @@ for (const file of MODULES) {
     // `async fetch(request)` is the handler's definition and `handler.fetch(` is the stdio loop
     // dispatching to it — both inbound. The second was labelled `outbound` by the first version of
     // this classifier, which is the same over-count the labels exist to make visible.
+    // `serveFetch(` is the listener (task 33b) — it accepts connections and opens none. From 33b to
+    // 2026-11-02 this classifier labelled it `outbound`, so the count read one more than there were.
     const isInbound =
-      /\b(async\s+)?fetch\s*\(\s*(request|req)\b/.test(line) || /\bhandler\.fetch\s*\(/.test(line);
+      /\b(async\s+)?fetch\s*\(\s*(request|req)\b/.test(line) ||
+      /\bhandler\.fetch\s*\(/.test(line) ||
+      /\bserveFetch\s*\(/.test(line);
     const isDefinition = /\b(function|const|let)\s+\w*[Ff]etch\b/.test(line);
     const isCall = /(?<![A-Za-z_$.])fetch\s*\(/.test(line) || /\b\w*[Ff]etch\s*\(/.test(line);
     if (isCall) {
@@ -171,7 +181,10 @@ const out = {
     'reachable and are not literals either, by design: the url a caller passes to ' +
     'arp_probe_endpoint, and the registrationFile out of an ERC-8004 tokenURI read through a ' +
     'registry whose address the caller supplies. Both go through `fetchableDocumentUrl` or ' +
-    '`privateProbeTarget` first.',
+    '`privateProbeTarget` first. And one call site is outside every module listed: with x402 on ' +
+    '(`ARP_X402_PAY_TO` set), `@x402/core`\'s `HTTPFacilitatorClient` fetches the facilitator — ' +
+    '`/supported` at start, `/verify` and `/settle` per paid call. Its default URL is the literal ' +
+    'in `packages/protocol/src/arp/x402.ts`; `ARP_X402_FACILITATOR_URL` replaces it.',
   modules: MODULES,
   unread,
   counts: {

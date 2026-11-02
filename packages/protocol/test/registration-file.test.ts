@@ -2,6 +2,7 @@ import {describe, expect, it} from "vitest";
 
 import {
     buildRegistrationFile,
+    x402SupportOf,
     registrationUriBytes,
     REGISTRATION_V1_TYPE,
     serialiseRegistrationFile,
@@ -92,6 +93,39 @@ describe("buildRegistrationFile", () => {
         expect(file.x402Support).toBe(false);
         expect(file.supportedTrust).toEqual(["reputation"]);
         expect(file.active).toBe(true);
+    });
+
+    it("claims x402 when the caller computed it from the agent's node", () => {
+        expect(buildRegistrationFile({...base, x402Support: true}).x402Support).toBe(true);
+        expect(buildRegistrationFile({...base, x402Support: false}).x402Support).toBe(false);
+    });
+});
+
+describe("x402SupportOf", () => {
+    const terms = {
+        scheme: "exact",
+        network: "eip155:84532",
+        payTo: "0x00000000000000000000000000000000000000aa",
+        price: "$0.01",
+        facilitator: "https://x402.org/facilitator",
+        routes: ["POST /task"],
+    };
+
+    it("is true for a node info document that states x402 terms", () => {
+        expect(x402SupportOf({agent: "0x1", x402: terms})).toBe(true);
+    });
+
+    it.each([
+        ["no document", null],
+        ["a string", "x402"],
+        ["x402 null, the node's answer with the rail off", {x402: null}],
+        ["no x402 field", {minBudgetWei: "1"}],
+        ["another scheme", {x402: {...terms, scheme: "upto"}}],
+        ["a network that is not CAIP-2", {x402: {...terms, network: "base-sepolia"}}],
+        ["a payTo that is not an address", {x402: {...terms, payTo: "0x12"}}],
+        ["no price", {x402: {...terms, price: ""}}],
+    ])("is false for %s", (_label, info) => {
+        expect(x402SupportOf(info)).toBe(false);
     });
 });
 

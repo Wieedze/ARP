@@ -56,8 +56,15 @@ import { stakeOnUsed, takePosition, exitPosition } from './handlers/positions.js
 import { agentEndpoints, identity, findAgents } from './handlers/agents.js';
 import { probe, recordReachable } from './handlers/reachability.js';
 import { findTools } from './handlers/find-tools.js';
+import { type McpX402, withX402, x402FromEnv } from './x402.js';
 
 const PROTOCOL_VERSION = '2025-06-18';
+
+/**
+ * The x402 gate over HTTP (task 41a), or `null`: off unless `ARP_X402_PAY_TO` and `ARP_X402_PRICE`
+ * are set, and never built for stdio. Set once by `main`, read by the info document.
+ */
+let x402: McpX402 | null = null;
 
 /**
  * What a client is told at `initialize`, and the only context an agent gets if it never reads
@@ -192,6 +199,16 @@ export const handler = {
           accepted_signers: acceptedSigners(),
           catalogued_skills: sessionCatalogue.length,
         },
+        // What a call costs, before anyone is asked to pay, and how many calls were paid: settled
+        // calls per UTC day and route, the figure ADR `0094` §4 names. `null` when nothing is priced.
+        x402:
+          x402 === null
+            ? null
+            : {
+                ...x402.gate.terms,
+                free: ['GET /', 'initialize', 'tools/list', 'ping', 'notifications/*'],
+                paid_calls: x402.counter.counts(),
+              },
       });
     }
     if (request.method !== 'POST') return new Response('method not allowed', { status: 405 });
@@ -275,17 +292,28 @@ export async function main(argv: readonly string[] = process.argv): Promise<void
     process.exit(0);
   }
 
+  try {
+    x402 = await x402FromEnv();
+  } catch (error) {
+    log(`x402: ${error instanceof Error ? error.message : String(error)}`);
+    process.exit(1);
+  }
+  const fetch = withX402(x402?.gate ?? null, (request) => handler.fetch(request));
+
   // 1 MiB. `Bun.serve` refused bodies over 128 MiB by default and `serveFetch` refuses none unless
   // told; a JSON-RPC call to this server is a few kilobytes.
   await serveFetch(
     { port: PORT, hostname: handler.hostname, maxBodyBytes: 1024 * 1024 },
-    (request) => handler.fetch(request),
+    (request) => fetch(request),
   );
   log(
     `  listening:  ${handler.hostname}:${PORT}${handler.hostname === '127.0.0.1' ? ' (loopback only — ARP_HOST=0.0.0.0 to open it)' : ' — OPEN TO THE NETWORK'}`,
   );
   log(`  tools:      ${TOOLS.map((t) => t.name).join(', ')}`);
   log(`  content:    GET /content/:atomId`);
+  log(
+    `  x402:       ${x402 === null ? 'off — every route free (ARP_X402_PAY_TO unset)' : `${x402.gate.terms.price} USDC per tool call and per content fetch, on ${x402.gate.terms.network} to ${x402.gate.terms.payTo}, via ${x402.gate.terms.facilitator}`}`,
+  );
   log(
     `  receipts:   ${
       RECEIPT_SIGNER === null ? 'none — ARP_NO_RECEIPTS=1' : `signed by ${RECEIPT_SIGNER.address}`

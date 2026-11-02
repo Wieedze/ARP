@@ -16,7 +16,7 @@ share a trust surface, so each is described on its own and you install only the 
 | launched by    | your MCP client, over stdio                           | you, as a server                                     | your runtime, on every tool call |
 | reachable from | your machine (`127.0.0.1`)                            | `127.0.0.1`, and a tunnel you rent is the way in     | nowhere; it reads stdin          |
 | key            | `.arp/receipt-key`, generated, signs content receipts | `~/.arp/node.key`, generated, or `AGENT_PRIVATE_KEY` | none                             |
-| network        | the graph, the RPC, GitHub — counted below            | the RPC; the tunnel binary, if it starts one         | none                             |
+| network        | the graph, the RPC, GitHub; an x402 facilitator if on | the RPC; the tunnel binary; an x402 facilitator if on | none                             |
 
 Sections up to "If you want to verify" are about the **MCP server**. The node and the hook have a
 section each after it.
@@ -71,6 +71,7 @@ reaches the outbound URL.** `packages/protocol/test/content-serve.test.ts` has a
 .arp/session.jsonl     what the hook recorded, if you wired the hook
 .arp/receipts.jsonl    what you fetched through a server, and the receipts
 .arp/skills/<name>/SKILL.md   files you fetched, if you used arp-fetch-skill.ts
+.arp/x402-calls.jsonl  one row per paid call, only when you turned x402 on (below). ARP_X402_CALLS moves it
 ```
 
 That is all of it, and `.arp/` is in `.gitignore`. Nothing is written outside the working directory.
@@ -102,6 +103,20 @@ arp_agent_endpoints    fetches the `registrationFile` out of an ERC-8004 `tokenU
 Both now refuse a private target. The second one did not until this document was written: naming
 every outbound connection is what found it, which is the argument for writing such a section at
 all.
+
+**And one more, only if you turn x402 on** (task 41a). With `ARP_X402_PAY_TO` and `ARP_X402_PRICE`
+unset, which is the default, it does not exist. Set them and, over HTTP only, the server charges for
+a tool call and a content fetch in USDC on Base Sepolia, and it talks to a facilitator:
+
+```
+x402.org/facilitator   GET /supported at start; POST /verify and /settle per paid call.
+                       ARP_X402_FACILITATOR_URL replaces it. The call is @x402/core's
+                       HTTPFacilitatorClient, so it is outside the modules the script below reads
+```
+
+What it sends is the payer's signed USDC authorisation and the price. The facilitator submits that
+authorisation on Base Sepolia; the server signs no transaction for it. The payment goes to the
+address you set, never to ARP unless that address is ARP's.
 
 An earlier draft of this document said there were four hosts, that the probe was the only unfixed
 fetch, and that the four were "the only literals in the code" — a sentence that invited the grep
@@ -180,18 +195,24 @@ twice above as a configurable fixed host and it will not appear in the script's 
 bun run scripts/measure/node-outbound.ts
 ```
 
-It reads the six modules a running server actually loads and prints every host literal with its line,
-every `fetch` call site **labelled `outbound`, `inbound` or `definition`**, and whether any host is
-ours. On 2026-10-30, after the move to `apps/mcp` and `packages/graphql`,
-`data/measurements/node-outbound-2026-10-30T0220.json`: **6 host literals, 9 call sites of which 6 are
-outbound, 0 of the hosts ours** — the same figures as the 2026-10-29 run, at new paths. (The
-script keeps its old name. `node-outbound-2026-10-30.json`, from the same day, has the same
-figures, and its prose still calls the MCP server "the node".) It exits non-zero if that last number is ever not
-zero.
+It reads the modules a running server actually loads — **19** in its list on 2026-11-02 — and prints
+every host literal with its line, every `fetch` call site **labelled `outbound`, `inbound` or
+`definition`**, and whether any host is ours. On 2026-11-02, after the x402 gate (task 41a),
+`data/measurements/node-outbound-2026-11-02.json`: **19 modules, 7 host literals, 12 call sites of
+which 6 are outbound, 0 of the hosts ours.** It exits non-zero if that last number is ever not zero.
+
+The earlier run this paragraph quoted, `node-outbound-2026-10-30T0220.json`, read **6 modules, 6
+literals, 9 sites, 6 outbound**. It was stale before task 41 began: the split into `handlers/` had
+taken the list to 15 modules, and the listener `serveFetch(` was being labelled `outbound`, so a
+re-run on 2026-11-02 of the code before task 41 printed 15 modules, 6 literals, 11 sites, **7**
+outbound. The classifier now labels the listener `inbound`. Task 41 added four modules, one literal
+(`x402.org`, the facilitator's default URL) and one inbound site; no outbound one, because the
+facilitator call is `@x402/core`'s, named above.
 
 The six outbound ones are the whole of it: two on the registration route (the document and a
 redirect hop), two on the content route (a repository listing and the skill's bytes), the probe's,
-and the shared transport every graph read funnels through.
+and the shared transport every graph read funnels through. The facilitator, with x402 on, is the
+seventh connection and is not among them, for the reason above.
 
 This is a script rather than a sentence because the sentence was **wrong twice**. One draft said
 four hosts and "the only literals in the code"; the next said six literals and offered a grep over
@@ -202,9 +223,9 @@ cannot check for itself, and it says so.
 
 Three things it shows that a count alone would hide:
 
-- Two of the six literals (`localhost:`, `stdio`) are in **log lines** and fetched by nobody, and
-  `github.com` is in the probe's **user-agent**, which identifies the server and sends nothing. Three
-  of the six are destinations.
+- Two of the seven literals (`localhost:`, `stdio`) are in **log lines** and fetched by nobody, and
+  `github.com` is in the probe's **user-agent**, which identifies the server and sends nothing. Four
+  of the seven are destinations, and `x402.org` is one only when x402 is on.
 - The Intuition graph and RPC are **absent from the literals and present in the server** — they come
   from `data/deployments/<chainId>.json` at startup. Absence from a literal list is not absence from the
   server, which is the trap a literal count sets.
@@ -237,7 +258,20 @@ ARP_RECEIPTS           where fetches are recorded. Default .arp/receipts.jsonl
 ARP_ACTIVITY_DIR       session-log.ts --serve only: the directory it tails. Default .arp
 ARP_ACTIVITY_PORT      session-log.ts --serve only: its port. Default 3003, on 127.0.0.1
 ARP_ACTIVITY_ORIGINS   session-log.ts --serve only: comma-separated origins added to the CORS list
+ARP_X402_PAY_TO        the address USDC is paid to. Setting it is what turns x402 on, over HTTP only
+ARP_X402_PRICE         required with it: "$0.001" — per tool call and per content fetch
+ARP_X402_NETWORK       eip155:84532, Base Sepolia, and nothing else is accepted yet
+ARP_X402_FACILITATOR_URL  default https://x402.org/facilitator, which needs no API key
+ARP_X402_TIMEOUT_SECONDS  how long a signed authorisation stays valid. Default 300
+ARP_X402_CALLS         where paid calls are counted. Default .arp/x402-calls.jsonl
 ```
+
+**With x402 on, what is free and what is not.** Free: the plain `GET` info document, which states
+the price and the paid-call counts (`x402.paid_calls`, per UTC day and route), and the JSON-RPC
+handshake (`initialize`, `tools/list`, `ping`, notifications). Priced: every `tools/call` and every
+`GET /content/:atomId`. A call that fails — an HTTP error, or a JSON-RPC error inside a 200 — is not
+settled, so it costs nothing. The code is `apps/mcp/src/x402.ts`; the gate, on the official
+`@x402/core` and `@x402/evm` 2.28.0, is `packages/protocol/src/x402/gate.ts` (ADR `0105`).
 
 `GITHUB_TOKEN` is the only one that is a credential, it is read server-side only, and it is sent to
 `api.github.com` and nowhere else. It needs **no scopes** — public repository listings are public.
@@ -421,6 +455,12 @@ directory is hosted yet: `--directory` names one.
 | `AGENT_NODE_HANDLER_TIMEOUT_MS` | `60000`                    | a slower handler is a `504`, and the payment is released                                                                               |
 | `AGENT_NODE_RATE_LIMIT`         | `30`                       | `POST /task` per client per minute, paid or not; then `429`. Behind a tunnel the client is its `cf-connecting-ip` or `x-forwarded-for` |
 | `AGENT_NODE_RECEIPT_TTL`        | `86400`                    | seconds a hire receipt stays usable: its signed `expiresAt` is `issuedAt` plus this                                                    |
+| `AGENT_NODE_X402_PAY_TO`        | unset                      | your address for USDC. Setting it turns the x402 rail on, beside the native one                                                        |
+| `AGENT_NODE_X402_PRICE`         | required with it           | a hire's price, `"$0.01"`                                                                                                              |
+| `AGENT_NODE_X402_NETWORK`       | `eip155:84532`             | Base Sepolia; nothing else is accepted yet                                                                                             |
+| `AGENT_NODE_X402_FACILITATOR_URL` | `https://x402.org/facilitator` | the facilitator; this one needs no API key                                                                                       |
+| `AGENT_NODE_X402_TIMEOUT_SECONDS` | `300`                    | how long a signed authorisation stays valid                                                                                            |
+| `AGENT_NODE_X402_CALLS`         | `.arp/node-x402-calls.jsonl` | one row per settled x402 hire                                                                                                        |
 
 What makes an agent reachable: it listens at the address the agent publishes in its ERC-8004
 registration file, checks on chain that the requester paid it before doing any work, and returns a
@@ -432,18 +472,21 @@ and a signature is not a spend. It is also the address a hirer pays, since the p
 requires the payment be sent to it. Its own outbound connection is the RPC it reads the payment
 from; it starts at most one child, the tunnel binary, whose connection is to Cloudflare or ngrok; it
 loads one module you name; and it writes two files — the node key on first start, and the ledger
-below:
+below. **With x402 on** (`AGENT_NODE_X402_PAY_TO` set, below) it makes one more connection, to the
+facilitator, and writes a third file, the paid-call count:
 
 ```
-grep -nE "createPublicClient\(|writeFile|appendFile|mkdir|import\(|async fetch\(|spawnChild\(" apps/node/src/node.ts apps/node/src/task.ts apps/node/src/node-key.ts apps/node/src/tunnel.ts
+grep -nE "createPublicClient\(|writeFile|appendFile|mkdir|import\(|async fetch\(|spawnChild\(|FacilitatorClient\(" apps/node/src/node.ts apps/node/src/task.ts apps/node/src/node-key.ts apps/node/src/tunnel.ts packages/protocol/src/x402/counter.ts packages/protocol/src/x402/gate.ts
 ```
 
-prints ten lines on 2026-11-02 (ten on 2026-10-30 too, at other line numbers): the ledger's
-`node:fs` import, `mkdirSync` and `appendFileSync` (`task.ts:6`, `:85`, `:86`), the server's own
-inbound `fetch(request)` handler (`task.ts:261`), your handler's import (`node.ts:126`), the RPC
-client (`node.ts:134`), the node key's `node:fs` import, `mkdirSync` and `writeFileSync`
-(`node-key.ts:19`, `:64`, `:66`), and the tunnel's child process (`tunnel.ts:186`). `register.ts` is not in it: it runs only under `arp init --node`, never in the
-node.
+prints fourteen lines on 2026-11-02, after task 41b: the ledger's `node:fs` import, `mkdirSync` and
+`appendFileSync` (`task.ts:6`, `:96`, `:97`), the server's own inbound `fetch(request)` handler
+(`task.ts:440`), your handler's import (`node.ts:139`), the RPC client (`node.ts:147`), the node
+key's `node:fs` import, `mkdirSync` and `writeFileSync` (`node-key.ts:19`, `:64`, `:66`), the
+tunnel's child process (`tunnel.ts:186`), the paid-call counter's `node:fs` import, `mkdirSync` and
+`appendFileSync` (`counter.ts:13`, `:55`, `:56`), and the facilitator client (`gate.ts:134`). The
+first ten are the ten this paragraph counted before task 41, over the first four files.
+`register.ts` is not in it: it runs only under `arp init --node`, never in the node.
 
 **It binds `127.0.0.1`**, like the MCP server: `serveFetch` in `main()` in `apps/node/src/node.ts`
 passes `hostname: '127.0.0.1'`. Until 2026-10-30 it passed none and listened on every interface,
@@ -461,6 +504,22 @@ presented twice and served twice. After the fix the same payment against the bui
 `200`, then `409`, then `409` again after a restart. **The ledger starts empty**, so a payment a
 node accepted before it existed is accepted once more; and deleting the file forgets every payment
 in it. Keep it where the node's state lives.
+
+**x402, beside the native payment and not in place of it** (task 41b, ADR `0105`). With
+`AGENT_NODE_X402_PAY_TO` and `AGENT_NODE_X402_PRICE` set, a `POST /task` that names no
+`paymentTxHash` is answered on x402: a `402` whose `PAYMENT-REQUIRED` header carries USDC
+requirements on Base Sepolia, then — with a `PAYMENT-SIGNATURE` header — the facilitator verifies the
+authorisation, your handler runs, and only then is it settled. A handler that fails is not settled
+and the same authorisation can be retried; a settlement that fails withholds the result. The
+authorisation, hashed, is the ledger key, so one buys one job. The receipt's `payment` is the
+settlement transaction and its `chainId` is **84532**, where that transaction is. The handler's
+`context.rail` is `x402`, `paid` is in USDC atomic units and `paymentTxHash` is `null` while it runs.
+`GET /` and `/healthz` carry the terms under `x402` (`null` with the rail off), which is what
+`x402SupportOf` reads to compute a registration file's `x402Support`.
+
+**A sponsoring service refuses such a receipt today, and that is correct.** ADR `0096` item 1 prices
+a proof only on the chain the deposit is made on, and a USDC payment on 84532 is not in the unit of
+a deposit on 13579.
 
 **The receipt is EIP-712, and a stranger checks it in three steps** (ADR `0083`; v2 since task 44,
 ADR `0101`). `POST /task` takes `verifier` and `termId` beside the payment and the requester: the

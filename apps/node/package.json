@@ -22,6 +22,8 @@
     "lint": "bun run --cwd ../../packages/protocol build && tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
+    "@x402/core": "2.28.0",
+    "@x402/evm": "2.28.0",
     "viem": "2.52.0"
   },
   "devDependencies": {
