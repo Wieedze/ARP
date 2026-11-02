@@ -156,6 +156,10 @@ export function AgentImport() {
         setConsentError(null);
         setLinkStatus("idle");
         setLinkError(null);
+        setIdentityPlan(null);
+        setIdentityStatus("idle");
+        setIdentityError(null);
+        setIdentityTxs(null);
     }
 
     async function handleCheckOwnership() {
