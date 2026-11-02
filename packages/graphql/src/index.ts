@@ -7,12 +7,16 @@
  * runs against any network the caller points the transport at.
  */
 export {
+    DEFAULT_MAX_BODY_BYTES,
     DEFAULT_TIMEOUT_MS,
     defaultFetch,
+    fetchTextWithTimeout,
     fetchWithTimeout,
     HttpError,
     isTimeoutError,
+    readBodyText,
     type FetchLike,
+    type ReadBodyOptions,
 } from "./http.js";
 export {
     isRecord,
