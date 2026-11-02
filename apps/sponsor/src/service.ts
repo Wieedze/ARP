@@ -79,6 +79,7 @@ import {
 } from '@arp-protocol/core';
 import { getAddress, isAddress, isHex, type Address, type Hex } from 'viem';
 
+import { SPONSOR_CHAIN_ID } from './key-file.ts';
 import type { SponsorLedger } from './ledger.ts';
 
 /** The one key ARP holds here, behind three methods. `main.ts` builds it from viem. */
@@ -258,7 +259,9 @@ export function createSponsor(options: SponsorOptions): {
         content:
           options.acceptedContentSigners.length === 0
             ? 'no signer accepted'
-            : 'verified, but refused until a fetch is bound to its payment (docs/tasks/41)',
+            : chainId === SPONSOR_CHAIN_ID
+              ? 'accepted on testnet: a content receipt signed by an accepted signer, naming the agent as its caller. The edge must be (requester identity, uses, the receipt’s tool atom). It attests access, not use (ADR 0109)'
+              : 'verified, but refused until a fetch is bound to its payment (docs/tasks/41)',
       },
       approve: planDepositApproval({ multiVault, chainId, sponsor: wallet.address }),
       publish: options.publish === null ? 'disabled' : 'enabled',
@@ -366,9 +369,10 @@ export function createSponsor(options: SponsorOptions): {
       now: Math.floor(now() / 1000),
     });
     if (proven.status !== 'proven') return json({ error: proven.reason }, 403);
-    // An unpriced proof (a content receipt) is refused until `docs/tasks/41` binds a fetch to its
-    // payment, on every chain.
-    if (proven.cost === null) {
+    // An unpriced proof is refused, except a content receipt on testnet 13579 (ADR `0109`): there it
+    // unlocks a deposit within the same count and budget. Mainnet keeps ADR `0096` until
+    // `docs/tasks/41` binds a fetch to its payment.
+    if (proven.cost === null && !(proven.kind === 'content' && chainId === SPONSOR_CHAIN_ID)) {
       return json(
         {
           error: `a ${proven.kind} proof has no price yet, so it cannot unlock a sponsorship (docs/tasks/41)`,
@@ -379,11 +383,18 @@ export function createSponsor(options: SponsorOptions): {
     // ADR `0094` §2, a mainnet rule (off on testnet, where every proven hire is sponsored): a
     // sponsored amount stays below the cost of the proof that unlocks it. Between two operators
     // that makes a faked hire cost more than it earns; one operator holding both agents gets the
-    // payment back, so for that one the bound is the daily count and the budget, not this.
-    if (limits.belowProofCost && limits.depositAmount >= proven.cost) {
+    // payment back, so for that one the bound is the daily count and the budget, not this. Nothing
+    // is below an unknown price, so with the rule on an unpriced receipt is refused here too.
+    if (
+      limits.belowProofCost &&
+      (proven.cost === null || limits.depositAmount >= proven.cost)
+    ) {
       return json(
         {
-          error: `the proof cost ${proven.cost} wei, not more than the ${limits.depositAmount} sponsored`,
+          error:
+            proven.cost === null
+              ? `a ${proven.kind} proof has no price, and this service sponsors only below a proof's price`
+              : `the proof cost ${proven.cost} wei, not more than the ${limits.depositAmount} sponsored`,
         },
         403,
       );

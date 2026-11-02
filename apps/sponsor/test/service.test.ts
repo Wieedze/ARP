@@ -252,6 +252,7 @@ async function depositBody(
   signer = AGENT,
   over: Record<string, unknown> = {},
   agent: Address = AGENT.address,
+  chain = CHAIN,
 ) {
   const request = {
     version: 1,
@@ -263,7 +264,7 @@ async function depositBody(
     nonce: keccak256(stringToBytes(Math.random().toString())),
     expiresAt: Math.floor(NOW / 1000) + 600,
   };
-  const signed = await signSponsorRequest(request, CHAIN, {
+  const signed = await signSponsorRequest(request, chain, {
     signTypedData: (data: ReturnType<typeof sponsorRequestTypedData>) => signer.signTypedData(data),
   });
   return {
@@ -516,25 +517,76 @@ describe('POST /deposit', () => {
     expect(w.sent).toHaveLength(0);
   });
 
-  test('refuses a content receipt, which has no price yet', async () => {
-    const w = world();
+  async function contentProof(chain = CHAIN, signer = NODE, to: Address = AGENT.address) {
     const receipt = await signContentReceipt(
       {
         atom: OBJECT,
         url: 'https://github.com/a/b?skill=c',
         path: 'skills/c/SKILL.md',
         digest: `0x${'00'.repeat(32)}`,
-        to: AGENT.address,
+        to,
         servedAt: 1_793_000_000,
-        nonce: keccak256(stringToBytes('n')),
+        nonce: keccak256(stringToBytes(Math.random().toString())),
       },
-      CHAIN,
-      { address: NODE.address, signTypedData: (data) => NODE.signTypedData(data) },
+      chain,
+      { address: signer.address, signTypedData: (data) => signer.signTypedData(data) },
     );
-    const proof = { kind: 'content', receipt } as SponsorProof; // Built from the content receipt just signed.
-    const res = await call(sponsor(w), '/deposit', await depositBody(proof));
+    return { kind: 'content', receipt } as SponsorProof; // Built from the content receipt just signed.
+  }
+
+  test('on testnet sponsors a content receipt from an accepted signer, once', async () => {
+    const w = world();
+    const service = sponsor(w);
+    const proof = await contentProof();
+    const first = await call(service, '/deposit', await depositBody(proof));
+    expect(first.status).toBe(200);
+    expect(first.body.receiver).toBe(AGENT.address);
+    expect(w.sent).toHaveLength(1);
+    const again = await call(service, '/deposit', await depositBody(proof));
+    expect(again.status).toBe(409);
+    expect(w.sent).toHaveLength(1);
+  });
+
+  test('refuses a content receipt signed by a key it does not accept, or about another caller', async () => {
+    const w = world();
+    const unknown = await call(
+      sponsor(w),
+      '/deposit',
+      await depositBody(await contentProof(CHAIN, STRANGER)),
+    );
+    expect(unknown.status).toBe(403);
+    expect(String(unknown.body.error)).toMatch(/unknown-signer/);
+    const other = await call(
+      sponsor(w),
+      '/deposit',
+      await depositBody(await contentProof(CHAIN, NODE, CALLEE.address)),
+    );
+    expect(other.status).toBe(403);
+    expect(String(other.body.error)).toMatch(/other-caller/);
+    expect(w.sent).toHaveLength(0);
+  });
+
+  test('refuses a content receipt on any chain but 13579', async () => {
+    const w = world();
+    const res = await call(
+      sponsor(w, { chainId: 1155, reads: fakeReads(w, 1155) }),
+      '/deposit',
+      await depositBody(await contentProof(1155), AGENT, {}, AGENT.address, 1155),
+    );
     expect(res.status).toBe(403);
-    expect(String(res.body.error)).toMatch(/no price/);
+    expect(String(res.body.error)).toMatch(/no price yet/);
+    expect(w.sent).toHaveLength(0);
+  });
+
+  test('with the mainnet cost rule on, refuses a content receipt, which has no price', async () => {
+    const w = world();
+    const res = await call(
+      sponsor(w, { limits: { ...LIMITS, belowProofCost: true } }),
+      '/deposit',
+      await depositBody(await contentProof()),
+    );
+    expect(res.status).toBe(403);
+    expect(String(res.body.error)).toMatch(/has no price/);
     expect(w.sent).toHaveLength(0);
   });
 

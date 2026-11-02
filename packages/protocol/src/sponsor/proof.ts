@@ -58,7 +58,7 @@ export type ProvenProof = {
      *
      * A content receipt is `null` today: a fetch through ARP is free until x402 puts a price on it
      * (`docs/tasks/41`). The service refuses an unpriced proof until that task binds a fetch to its
-     * payment. On mainnet ADR `0094` §2 also requires a sponsored amount to stay **below** the cost
+     * payment, except a content receipt on testnet 13579 (ADR `0109`). On mainnet ADR `0094` §2 also requires a sponsored amount to stay **below** the cost
      * of the proof that unlocks it, and nothing is below an unknown.
      */
     cost: bigint | null;

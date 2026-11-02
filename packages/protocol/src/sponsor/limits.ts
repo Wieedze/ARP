@@ -41,7 +41,8 @@ export type SponsorLimits = {
     /**
      * Refuse a proof whose cost is not strictly above the sponsored amount (ADR `0094` §2). A
      * **mainnet** rule: `false` on testnet, so any proven hire, whatever it paid, is sponsored. An
-     * unpriced proof (a content receipt, until `docs/tasks/41`) is refused either way.
+     * unpriced proof (a content receipt) is refused whenever this is on: nothing is below an unknown
+     * price. With it off, on testnet 13579, the service sponsors a content receipt (ADR `0109`).
      */
     belowProofCost: boolean;
 };
