@@ -2,7 +2,7 @@
 
 **Generated** 2026-11-02 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-40 entries, one per completed task. Written by `task-verifier` on a pass.
+41 entries, one per completed task. Written by `task-verifier` on a pass.
 
 | # | task | verdict | entry |
 | --- | --- | --- | --- |
@@ -46,3 +46,4 @@
 | [36](36-the-redesign-from-references.md) | `docs/tasks/46-the-redesign-from-references.md` (§3 only; 46b–46f proposed, not started) | PASS | The redesign from references, 46a: `/tools` pages its list |
 | [37](37-the-redesign-from-references.md) | `docs/tasks/46-the-redesign-from-references.md` (row 46d in §4) | PASS (second pass; first FAIL on an unrecorded user choice) | The redesign from references, 46d: `/register` offers two tiles |
 | [38](38-plain-words.md) | `docs/tasks/47-plain-words.md` | PASS (first pass; ui-reviewer FAIL round 1, PASS round 2) | Plain words: the operator does not read the chain's vocabulary (47) |
+| [39](39-the-redesign-from-references.md) | `docs/tasks/46-the-redesign-from-references.md` (row 46b in §4) | PASS (first pass; `ui-reviewer` FAIL round 1 on 4 stale comments, PASS round 2) | The redesign from references, 46b: the agent page takes the skill page's layout |
