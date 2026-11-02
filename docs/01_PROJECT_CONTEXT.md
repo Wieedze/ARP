@@ -52,6 +52,10 @@ What the same run does not support, and so what this argument may not say:
 - **Not better.** A blind judge preferred the answer without ARP in 26 of 42 pairs; it cannot install
   a skill or check that it works.
 - **Only where the catalogue covers the need.** The 14 needs were chosen because it does.
+- **Not better than skills.sh.** The run compares Claude with ARP to Claude alone, not to skills.sh.
+  A Claude plugged into skills.sh would likely find as many, and on search alone skills.sh is better
+  today; ARP reuses its descriptions and install counts (`data/catalogue/skill-facts.json`). What ARP
+  adds is evidence of use, not search.
 
 The unit is the **skill, not the repository** (ADR `0077`): one skill is served on its own, with
 a signed receipt, so the agent does not clone a repository of 71 skills to use one. 521 of the 662
