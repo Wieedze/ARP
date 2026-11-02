@@ -3,6 +3,10 @@
 **Status:** **PLAN**, 2026-10-30. Not started. **Narrowed 2026-11-02 by the user: Claude Code
 first, for the demo; every other runtime waits for the port.** So part A runs for Claude Code only,
 parts B, C and E wait, and part D is needed only before something is published.
+**Decided 2026-11-02 by the user: everything on testnet 13579 for now, declarations included.**
+`arp init` writes `ARP_TARGET=testnet` into every MCP entry (`SERVER_ENV` in
+`apps/cli/src/install/targets.ts`); the server's own default, mainnet, is unchanged. Found live:
+the entry without it read mainnet and returned `edges_read: 0` next to a web app on testnet.
 **Done together with the user**: every step that needs a runtime runs on their machine, and every
 step that publishes needs their word.
 **Finishes:** task 33's 33i (second half) and 33d (Grok, Gemini, Codex), and clears what 33f needs

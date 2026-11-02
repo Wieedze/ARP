@@ -78,6 +78,12 @@ function read(path: string): string | null {
   }
 }
 
+/**
+ * Everything runs on testnet 13579 for now, declarations included (the user's decision,
+ * 2026-11-02, task 38): the server's own default stays mainnet, so the install says so.
+ */
+export const SERVER_ENV: Record<string, string> = { ARP_TARGET: 'testnet' };
+
 /** The commands `init` installs, from where this `arp` is running. */
 export function commandsFor(env: InstallEnv, cliPath: string, capture = false): Commands {
   const hookFile = join(env.home, '.arp', 'bin', 'hook.js');
@@ -85,9 +91,12 @@ export function commandsFor(env: InstallEnv, cliPath: string, capture = false): 
   // server starts once per session, so launching it through `npx` is affordable; the hook runs on
   // every call and is copied out instead (ADR `0089` §2).
   const fromNpx = /[\\/]_npx[\\/]/.test(cliPath);
-  const mcp: McpServer = fromNpx
-    ? { command: 'npx', args: ['-y', `@arp-protocol/cli@${env.version}`, 'mcp'] }
-    : { command: env.node, args: [cliPath, 'mcp'] };
+  const mcp: McpServer = {
+    ...(fromNpx
+      ? { command: 'npx', args: ['-y', `@arp-protocol/cli@${env.version}`, 'mcp'] }
+      : { command: env.node, args: [cliPath, 'mcp'] }),
+    env: SERVER_ENV,
+  };
   const hook = `"${env.node}" "${hookFile}"${capture ? ' --capture' : ''}`;
   return { mcp, hook, hookFile, capture };
 }
@@ -143,8 +152,8 @@ function claudeFiles(env: InstallEnv, project: boolean) {
 
 function mcpEntry(server: McpServer, typed: boolean): Record<string, unknown> {
   return typed
-    ? { type: 'stdio', command: server.command, args: server.args }
-    : { command: server.command, args: server.args };
+    ? { type: 'stdio', command: server.command, args: server.args, env: server.env }
+    : { command: server.command, args: server.args, env: server.env };
 }
 
 export type Runtime = {
@@ -174,7 +183,11 @@ function claudeMcpSteps(
     const present = got.code === 0;
     const same =
       present &&
-      [commands.mcp.command, ...commands.mcp.args].every((part) => got.stdout.includes(part));
+      [
+        commands.mcp.command,
+        ...commands.mcp.args,
+        ...Object.entries(commands.mcp.env).map(([key, value]) => `${key}=${value}`),
+      ].every((part) => got.stdout.includes(part));
     const removeStep: Step = {
       kind: 'command',
       argv: ['claude', 'mcp', 'remove', SERVER_NAME, '--scope', 'user'],
