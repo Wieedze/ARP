@@ -84,6 +84,8 @@
     "domainScopeEnforcer": "0x516B82E29e3Ca46Ca810FC2EEf348932b198f7f9",
     "trustStakeCapEnforcer": "0x19e07280F1483Aa9aCDb1a7F8C61bfd20c7879Bc",
     "identityRegistry": "0xC165A2AD2E540A4069E02834009161E2b4490d5A",
+    "sponsor": "0xE596096F4176b682E300d73963e7B04B383C1AA1",
+    "_sponsorNote": "The address ARP's sponsoring service sends from on 13579 (apps/sponsor, ADR 0092, 0094): its GET / answered this on 2026-11-02. A deposit it sent passed the proof gate, and /tools counts it in Usage. Not a contract: an EOA whose key is in a 0600 file the agent never reads.",
     "deployedTxs": {
       "moduleRegistry": "0x6ee4f4d76dd55c69ea434f8c3c204cb6149df1c588910b1792db1650681fbc2e",
       "moduleRegistryV1": "0x02abe9a0c598df131995bc40927a4e0be0b86e7bdbfe747cfdf37fb19b069634",

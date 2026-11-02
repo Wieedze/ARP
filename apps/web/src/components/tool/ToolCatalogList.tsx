@@ -2,7 +2,7 @@ import {Link} from "react-router-dom";
 import {useChainChoice} from "../../lib/chain-choice";
 import {useSkillFacts, type SkillFact} from "../../hooks/use-skill-facts";
 
-import {type ToolRow} from "../../services/tool-catalog";
+import {repoKeyOf, type RepoSkillUsage, type ToolRow} from "../../services/tool-catalog";
 import {shortTrust} from "../../services/trust-format";
 
 /**
@@ -56,7 +56,17 @@ function countText(count: number | null): string {
     return count === null || count === 0 ? "" : String(count);
 }
 
-function Row({row, fact, stars}: {row: ToolRow; fact: SkillFact | null; stars: number | null}) {
+function Row({
+    row,
+    fact,
+    stars,
+    skills,
+}: {
+    row: ToolRow;
+    fact: SkillFact | null;
+    stars: number | null;
+    skills: RepoSkillUsage | null;
+}) {
     const {symbol} = useChainChoice();
     return (
         <li className="border-b border-[color:var(--color-rule)]">
@@ -110,6 +120,27 @@ function Row({row, fact, stars}: {row: ToolRow; fact: SkillFact | null; stars: n
                                         </span>
                                     )}
                                     {`${Intl.NumberFormat("en-US", {notation: "compact"}).format(stars)} stars`}
+                                </>
+                            )}
+                            {/* Its skills' use, on the qualifier line and not in the columns: a
+                                declaration names a skill, so the repository's own Usage and Declared
+                                stay its own (task 58). */}
+                            {skills === null ? null : (
+                                <>
+                                    {stars === null ? null : (
+                                        <span className="px-1.5 text-[color:var(--color-rule-strong)]">
+                                            ·
+                                        </span>
+                                    )}
+                                    {`${skills.skillsDeclared} ${skills.skillsDeclared === 1 ? "skill" : "skills"} declared`}
+                                    {skills.usage === 0 ? null : (
+                                        <>
+                                            <span className="px-1.5 text-[color:var(--color-rule-strong)]">
+                                                ·
+                                            </span>
+                                            {`${skills.usage} usage`}
+                                        </>
+                                    )}
                                 </>
                             )}
                             {row.provenance === "declared" ? (
@@ -195,11 +226,14 @@ export function ToolCatalogList({
     rows,
     curveId,
     showStars = false,
+    repoUsage,
 }: {
     rows: ToolRow[];
     curveId: number;
     /** Repositories show their GitHub stars; a skill's would be its repository's, tied. */
     showStars?: boolean;
+    /** Each repository's skills' figures, by `owner/repo` (`skillUsageByRepo`). */
+    repoUsage?: ReadonlyMap<string, RepoSkillUsage>;
 }) {
     const {factFor, repoFactFor} = useSkillFacts();
     return (
@@ -212,6 +246,7 @@ export function ToolCatalogList({
                         row={row}
                         fact={factFor(row.label)}
                         stars={showStars ? (repoFactFor(row.label)?.stars ?? null) : null}
+                        skills={repoUsage?.get(repoKeyOf(row) ?? "") ?? null}
                     />
                 ))}
             </ul>

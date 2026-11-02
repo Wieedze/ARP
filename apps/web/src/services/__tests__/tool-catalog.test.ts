@@ -2,7 +2,7 @@ import {describe, expect, it} from "vitest";
 import type {ToolListing, ToolListingPage} from "@arp-protocol/core";
 
 import {SEED_TOOLS} from "../../lib/tool-catalogue-seed";
-import {buildToolCatalogView, TOOL_ORDERS} from "../tool-catalog";
+import {buildToolCatalogView, repoKeyOf, skillUsageByRepo, TOOL_ORDERS} from "../tool-catalog";
 
 function tool(overrides: Partial<ToolListing> = {}): ToolListing {
     return {
@@ -196,5 +196,47 @@ describe("the seed title", () => {
             expect(seed.title.length).toBeGreaterThan(0);
         }
         expect(new Set(SEED_TOOLS.map((seed) => seed.url)).size).toBe(SEED_TOOLS.length);
+    });
+});
+
+describe("a repository's skills (task 58)", () => {
+    const base = {
+        provenance: "declared" as const,
+        isUnnamed: false,
+        href: "/atom/x",
+        supportTrust: "0",
+        opposeTrust: null,
+        stakers: null,
+    };
+
+    it("keys a GitHub repository row by owner/repo, and nothing else", () => {
+        const of = (label: string | null, source: string | null = null) =>
+            repoKeyOf({...base, key: "k", name: "n", label, source, declarations: 0, provenDeposits: 0, declaredDeposits: 0});
+        expect(of("github.com/Anthropics/skills")).toBe("anthropics/skills");
+        expect(of("https://github.com/anthropics/skills/")).toBe("anthropics/skills");
+        expect(of("https://mcp.stripe.com")).toBeNull();
+        expect(of("github.com/anthropics/skills?skill=pptx", "anthropics/skills")).toBeNull();
+        expect(of(null)).toBeNull();
+    });
+
+    it("counts each repository's declared skills and adds their Usage, skipping undeclared skills", () => {
+        const skill = (key: string, source: string, declarations: number, provenDeposits: number | null) => ({
+            ...base,
+            key,
+            name: key,
+            label: null,
+            source,
+            declarations,
+            provenDeposits,
+            declaredDeposits: 0,
+        });
+        const usage = skillUsageByRepo([
+            skill("a", "Acme/skills", 2, 2),
+            skill("b", "acme/skills", 1, null),
+            skill("c", "acme/skills", 0, 0),
+            skill("d", "other/repo", 1, 1),
+        ]);
+        expect(usage.get("acme/skills")).toEqual({skillsDeclared: 2, usage: 2});
+        expect(usage.get("other/repo")).toEqual({skillsDeclared: 1, usage: 1});
     });
 });

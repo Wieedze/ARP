@@ -20,6 +20,7 @@ import {
     TOOL_INDEXES,
     TOOL_PAGE_SIZE,
     toolIndexOf,
+    skillUsageByRepo,
     toolSortAxesFor,
     type ToolIndex,
     type ToolSortAxis,
@@ -232,6 +233,9 @@ export function ToolCatalog() {
                                 rows={page.rows}
                                 curveId={view.curveId}
                                 showStars={index === "repos"}
+                                // From every row read, not the page: a repository's skills are in
+                                // the other index.
+                                repoUsage={index === "repos" ? skillUsageByRepo(view.rows) : undefined}
                             />
                             <nav
                                 aria-label="Tool pages"

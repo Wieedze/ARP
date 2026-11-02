@@ -3,7 +3,7 @@ import {screen} from "@testing-library/react";
 
 import {renderWithProviders} from "../../test/render";
 import type {ToolRow} from "../../services/tool-catalog";
-import {rankTools} from "../../services/tool-catalog";
+import {rankTools, skillUsageByRepo} from "../../services/tool-catalog";
 import {ToolCatalogList} from "./ToolCatalogList";
 
 /**
@@ -112,5 +112,28 @@ describe("ToolCatalogList", () => {
         renderWithProviders(<ToolCatalogList rows={[row()]} curveId={1} />);
         expect(screen.getByText(/named by agents/i)).toBeTruthy();
         expect(screen.queryByText(/declared by agents/i)).toBeNull();
+    });
+
+    it("shows a repository's skills' use on its row, beside its own empty columns (task 58)", () => {
+        const repo = row({key: "0xrr", name: "anthropics/skills", label: "github.com/anthropics/skills", declarations: 0, provenDeposits: 0, declaredDeposits: 0});
+        const skills = [
+            row({key: "0x1", name: "pptx", source: "anthropics/skills", declarations: 2, provenDeposits: 2, declaredDeposits: 1}),
+            row({key: "0x2", name: "pdf", source: "anthropics/skills", declarations: 1, provenDeposits: 1, declaredDeposits: 1}),
+            row({key: "0x3", name: "docx", source: "anthropics/skills", declarations: 0, provenDeposits: 0, declaredDeposits: 0}),
+        ];
+        renderWithProviders(
+            <ToolCatalogList rows={[repo]} curveId={1} showStars repoUsage={skillUsageByRepo([repo, ...skills])} />,
+        );
+        const link = screen.getByRole("link");
+        expect(link.textContent).toContain("2 skills declared");
+        expect(link.textContent).toContain("3 usage");
+        // Its own columns stay its own: nothing was declared about the repository itself.
+        expect(link.textContent).not.toContain("3usage");
+    });
+
+    it("says nothing about a repository none of whose skills was declared", () => {
+        const repo = row({key: "0xrr", name: "acme/skills", label: "github.com/acme/skills", declarations: 0, provenDeposits: 0, declaredDeposits: 0});
+        renderWithProviders(<ToolCatalogList rows={[repo]} curveId={1} showStars repoUsage={skillUsageByRepo([repo])} />);
+        expect(screen.getByRole("link").textContent).not.toContain("skills declared");
     });
 });

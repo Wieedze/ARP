@@ -222,6 +222,43 @@ export function toolIndexOf(row: ToolRow): ToolIndex {
     return row.source === null ? "repos" : "skills";
 }
 
+/** What a repository's skills carry, for its row (task 58). */
+export type RepoSkillUsage = {
+    /** How many of its skills have at least one declaration. */
+    skillsDeclared: number;
+    /** Sponsored deposits on its skills' edges, the Usage column's figure, added over its skills. */
+    usage: number;
+};
+
+/**
+ * Each repository's skills' figures, keyed by `owner/repo`, from the rows already read.
+ *
+ * A declaration names a skill, never its repository (ADR `0077`), so a repository row's own Usage
+ * and Declared stay empty while its skills are used. This is that use, kept apart from the row's
+ * own columns: the repository's vault and its skills' are two markets, never summed (`RepoPage`).
+ * Added over one repository's skills, in one unit, from one read.
+ */
+export function skillUsageByRepo(rows: readonly ToolRow[]): Map<string, RepoSkillUsage> {
+    const byRepo = new Map<string, RepoSkillUsage>();
+    for (const row of rows) {
+        if (row.source === null || row.declarations === 0) continue;
+        const key = row.source.toLowerCase();
+        const kept = byRepo.get(key) ?? {skillsDeclared: 0, usage: 0};
+        byRepo.set(key, {
+            skillsDeclared: kept.skillsDeclared + 1,
+            usage: kept.usage + (row.provenDeposits ?? 0),
+        });
+    }
+    return byRepo;
+}
+
+/** A repository row's `owner/repo`, the key {@link skillUsageByRepo} uses, or `null`. */
+export function repoKeyOf(row: ToolRow): string | null {
+    if (row.source !== null || row.label === null) return null;
+    const match = /^(?:https?:\/\/)?github\.com\/([^/?#]+\/[^/?#]+?)\/?$/i.exec(row.label.trim());
+    return match?.[1]?.toLowerCase() ?? null;
+}
+
 export type ToolCatalogView = {
     rows: ToolRow[];
     /** True when the read hit its limit, so these rows are a prefix rather than the whole set. */

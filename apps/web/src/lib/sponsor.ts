@@ -10,8 +10,10 @@ import {intuitionTestnet} from "./chains";
  * environment says: a mainnet figure labelled proven by a testnet key would be two chains in one
  * number.
  *
- * Config, from `VITE_ARP_SPONSOR_ADDRESS`, because no sponsoring service exists yet (task 40).
- * Unset or malformed, it is `null` and every deposit reads as declared — never a guess.
+ * `raw` is `VITE_ARP_SPONSOR_ADDRESS` when set, else the address recorded in
+ * `data/deployments/13579.json` (task 58). The service runs since task 50, and with the environment
+ * as the only source nobody had set it, so the Usage column was empty and every sponsored deposit
+ * read as declared. Malformed, it is `null` and every deposit reads as declared — never a guess.
  */
 export function sponsorAddressFor(chainId: number, raw: string | undefined): Address | null {
     if (chainId !== intuitionTestnet.id || raw === undefined) return null;
