@@ -1,0 +1,42 @@
+# Task 59 — A category anyone can add, by the same rules as the rest
+
+**Status:** **PLAN**, 2026-11-02. Nothing built. Decided with the user the same day.
+**ADR:** `0115`. The rules are written out in `docs/25_THE_DOMAIN_TREE.md` §8.
+**Rules:** `code.md`, `portability.md`, `security.md` (the sponsor writes), `claims.md`, `workflow.md`.
+**Reviewers:** `intuition-integrator`, `ui-reviewer` if the web proposes, then `task-verifier`.
+
+---
+
+## 1. Why
+
+61 of 662 skills on testnet 13579 carry no category, and nothing outside a terminal session can add
+one. The user wants the graph traversable, so a new category must meet the same conditions and take
+the same links as the 21 already under `tool`.
+
+## 2. What to build
+
+1. **`packages/protocol`: one plan for a category.** It takes a label, a parent and a skill; it
+   normalises the label, checks the conditions of `docs/25` §8, and returns the unsigned calls: the
+   atom if new, `(category, is a sub-domain of, parent)`, `(skill, has tag, category)`, each with
+   cost plus `minDeposit` read off the chain. The checks now in `seed-domain-tree.ts`
+   (`normaliseLabel`, `assertLabel`) move here, and the script calls them.
+2. **The MCP server: propose a category.** The agent gets the existing categories first and must
+   give a reason none fits. A refused proposal says which rule refused it.
+3. **The sponsor: write an accepted proposal as the attestor**, testnet only, within a daily limit,
+   and log label, parent, skill, reason and transaction. Coordinate with session arp-30, whose
+   service this is.
+4. **A weekly review list** of new categories with their reasons, and the existing retirement path
+   for one that duplicates another.
+5. **First run:** the 61 uncategorised skills.
+6. **A check** that every category reaches `tool` (`scripts/verify/verify-domain-tree.ts`).
+
+## 3. Do not do in this task
+
+- Mainnet: the sponsor writing as attestor is a testnet licence (ADR `0092`).
+- Rename or move an existing category: Intuition deletes nothing, and that is its own decision.
+- Rank or score categories.
+
+## 4. Evidence ladder
+
+It serves the **staked** tier: a category is a claim with a position behind it, written by the
+attestor whose filings the index reads.

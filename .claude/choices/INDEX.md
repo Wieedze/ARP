@@ -1,8 +1,8 @@
 # ADR index
 
-**Generated** 2026-11-02 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
+**Generated** 2026-11-03 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-111 decisions. Newest last. `choices/README.md` says when to write one.
+112 decisions. Newest last. `choices/README.md` says when to write one.
 
 ## Not accepted
 
@@ -143,3 +143,4 @@ Read these before relying on them.
 | [0112](0112-one-product-two-ways-to-pay-and-a-free-badge.md) | 2026-11-02 | Accepted | One product, two ways to pay, a data licence for aggregators, and a free badge |
 | [0113](0113-who-may-speak-for-an-agent-identity.md) | 2026-11-02 | Deferred (mainnet port). The user's decision, 2026-11-02: « intéressant mais inutile en | Who may speak for an agent's identity: trusted writers, the market, then ambiguity |
 | [0114](0114-one-path-per-profile-the-action-is-gated-not-the-read.md) | 2026-11-02 | Accepted | One path per profile; onboarding gates the action, not the read; you connect your agent |
+| [0115](0115-anyone-may-add-a-category-by-the-same-rules.md) | 2026-11-02 | Accepted | Agents and people may add a category, by the same rules, reviewed after the fact |

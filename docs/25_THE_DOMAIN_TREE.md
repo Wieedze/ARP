@@ -244,6 +244,42 @@ Three, and the first is the only one that blocks everything else.
    governance`. A deeper tree scopes a delegation more precisely and makes every path longer, and
    the path is what the agent has to present on every redemption.
 
+## 8. Adding a category
+
+Decided by the user on 2026-11-02, ADR `0115`, task 59. When no existing category fits a skill, an
+agent or a person may add one. It meets the same conditions and takes the same links as every
+category already in the tree.
+
+**The conditions, checked by code before anything is written:**
+
+| condition | why |
+| --- | --- |
+| a plain-string atom, never a pinned Thing | one label gives one node (§5, `seed-domain-tree.ts` header) |
+| normalised: lowercase, accents stripped, inner spaces collapsed | `Design` and `design` would be two nodes for ever |
+| one word; a compound only with a stated reason; never a hyphen or an underscore | ADR `0088` |
+| a parent that is already a category reachable from `tool` | no orphan: every category climbs to the root |
+| a label that is not already a category | no second node for one word |
+| the proposer has seen the existing categories and says why none fits | the rules cannot see meaning: `slides` and `presentation` would both pass |
+
+**The links, the same three for every category:**
+
+1. the atom, if it is new;
+2. `(category, is a sub-domain of, parent)`;
+3. `(skill, has tag, category)`, at the deepest category only (ADR `0074`).
+
+Each carries a position, cost plus `minDeposit` (ADR `0053`), or the index does not read it.
+
+**Who writes, and who looks after:**
+
+- **Agents and people may propose.** An agent meets the missing category at the moment it needs
+  one; a person rarely comes back to fill a gap.
+- **On testnet 13579 the sponsor writes it as the index's attestor** (`ARP_DOMAIN_ATTESTOR`), within
+  a daily limit, so the category appears in the index at once. A category written by anyone else
+  stays on the chain and out of the index.
+- **The user reviews after the fact, not before.** A weekly list of new categories and their
+  reasons. One that duplicates another leaves the index when the attestor withdraws its position;
+  it stays on the chain, because Intuition deletes nothing.
+
 ## Evidence ladder
 
 This document serves the **staked** tier and is the first thing in the repo that could move the
