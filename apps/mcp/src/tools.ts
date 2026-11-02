@@ -70,20 +70,25 @@ export const TOOLS = [
     name: 'arp_find_tools',
     description:
       'Search the ARP registry for a skill, a tool, an MCP server or an API that fits a need, ' +
-      'BEFORE you pick one yourself or search the web. Pass `domain`, one word for the need. If ' +
-      'that word finds nothing, the answer lists the words that exist (`domains_available`): ' +
-      'pick the closest and ask again. Each result ' +
-      'says what the tool is for (`purpose`), where it lives (`hosted_at`, a home page to read, ' +
-      'not something to call) and how many agents declared using it (`declarations`, of which ' +
-      '`paid_declarations` were backed). `provenance` is `declared` when agents said they used ' +
-      'it, `registered` when it is listed and nobody has declared it yet. Never add figures ' +
-      'across the two. On a `registered` row, `position_count` says whether anybody backed it. ' +
-      'ARP stores nothing it lists: go to the source and decide for yourself. `tool_atom_id` is what ' +
+      'BEFORE you pick one yourself or search the web. Pass `query`, a few words for the need ' +
+      '("video editing", "sort emails"), or `domain`, one broad word (`marketing`, `payment`), ' +
+      'or both. Each result is short: `name`, `purpose` (one sentence), `url` (the source to read ' +
+      'before you use it, not something to call), `declarations` (how many agents said they used ' +
+      'it) and, for a skill, `installs`. Results come best match first, 25 at a time: when ' +
+      '`next_offset` is not null, pass it as `offset` to see more. If nothing matches, ' +
+      '`domains_available` lists the words the registry uses: pick the closest and ask again. ' +
+      '`detail: "full"` adds everything else the registry holds about each result. `id` is what ' +
       '`arp_tool_reputation` takes. An empty result means the registry has nothing for that need, ' +
       'not that nothing exists.',
     inputSchema: {
       type: 'object',
       properties: {
+        query: {
+          type: 'string',
+          description:
+            'A few words for the need, in any language the descriptions use (mostly English): ' +
+            '"video editing", "pdf form", "send email". Matched against each name and description.',
+        },
         domain: {
           type: 'string',
           description:
@@ -98,9 +103,20 @@ export const TOOLS = [
           enum: ['priced-edges', 'conviction', 'declarations'],
           description:
             'Sort by backed declarations, by the amount behind them, or by how many there are. ' +
-            'None is a score. Defaults to priced-edges.',
+            'None is a score. Defaults to priced-edges. With a `query`, best match comes first.',
         },
         limit: { type: 'number', description: '1 to 100. Defaults to 25.' },
+        offset: {
+          type: 'number',
+          description: 'Where the page starts. Pass the `next_offset` of the previous answer.',
+        },
+        detail: {
+          type: 'string',
+          enum: ['short', 'full'],
+          description:
+            'Defaults to short. `full` adds the backing behind each result, its pricing curve and ' +
+            'where each figure was read, at about twice the length.',
+        },
         curve_id: {
           type: 'number',
           description:
