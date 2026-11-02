@@ -138,18 +138,17 @@ export async function findTools(id: JsonRpcId, args: Record<string, unknown>) {
     backed: Set<string>;
     othersHidden: number;
   } | null = null;
+  let domainsAvailable: string[] | null = null;
   if (domainRaw !== undefined) {
     const normalised = domainRaw.trim().toLowerCase();
-    const { domains, tools } = await toolsInDomain(
-      {
-        graphqlUrl: GRAPHQL,
-        hierarchyPredicate: IS_A_SUB_DOMAIN_OF,
-        tagPredicate: HAS_TAG,
-        root: DOMAIN_ROOT,
-        attestor,
-      },
-      normalised,
-    );
+    const walk = {
+      graphqlUrl: GRAPHQL,
+      hierarchyPredicate: IS_A_SUB_DOMAIN_OF,
+      tagPredicate: HAS_TAG,
+      root: DOMAIN_ROOT,
+      attestor,
+    };
+    const { domains, tools } = await toolsInDomain(walk, normalised);
     // `has tag` is permissionless to write: anybody can publish `(anything, has tag, payment)` for
     // the price of one triple. An index is therefore a *reading* of those filings, and `attestor`
     // picks whose — ARP's by default, the caller's own, somebody else's, or none at all.
@@ -162,6 +161,14 @@ export async function findTools(id: JsonRpcId, args: Record<string, unknown>) {
       ),
       othersHidden: tools.length - kept.length,
     };
+    // A word the registry does not use returns nothing, and an agent that gets nothing stops
+    // looking. So a miss carries the words that exist, read from the same tree, and the agent can
+    // ask again: "business" finds nothing, "marketing" finds 57 (testnet 13579, 2026-11-02). One
+    // more read, and only on a miss.
+    if (kept.length === 0) {
+      const everything = await toolsInDomain(walk, DOMAIN_ROOT);
+      domainsAvailable = everything.domains.filter((name) => name !== DOMAIN_ROOT).sort();
+    }
   }
 
   const [page, registered] = await Promise.all([
@@ -226,6 +233,7 @@ export async function findTools(id: JsonRpcId, args: Record<string, unknown>) {
           // How many filings under this domain this attestor does not back, and were left out.
           // Reported even when zero, so a reader never wonders whether the question was asked.
           tags_from_others_hidden: domainScope.othersHidden,
+          ...(domainsAvailable === null ? {} : { domains_available: domainsAvailable }),
         }),
     tools: [
       ...page.tools

@@ -23,6 +23,12 @@ export const PORT = Number(process.env.PORT ?? 3002);
  */
 export const RECEIPT_SIGNER = receiptSigner();
 
+/**
+ * `read` serves only the registry reads, with instructions that never mention a chain (task 45).
+ * Anything else, including unset, serves every tool. The plugin for first testers sets it.
+ */
+export const READ_ONLY = process.env['ARP_TOOLS'] === 'read';
+
 /** Where the hook writes, and where the fetch records what it fetched. Both overridable. */
 export const SESSION_LOG = process.env['ARP_SESSION_LOG'] ?? '.arp/session.jsonl';
 export const RECEIPTS_LOG = process.env['ARP_RECEIPTS'] ?? '.arp/receipts.jsonl';
