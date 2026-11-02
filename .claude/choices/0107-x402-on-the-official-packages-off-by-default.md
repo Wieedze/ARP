@@ -1,10 +1,10 @@
-# 0105 — x402 on the official packages, off by default, settled after the work
+# 0107 — x402 on the official packages, off by default, settled after the work
 
 **Status:** Proposed. x402 in USDC, everything sponsored on testnet and no subscription are the
 user's decisions (ADR `0094` §4 and its testnet amendment); the shape below is task 41's.
 **Parked for the mainnet port.** Written as `0102` in a session before the user deferred task 41
 (ADR `0102` on `dev`, "x402 waits for mainnet, consulting ARP is free on testnet", 2026-11-02), and
-renumbered so the two never share a number. Nothing here is merged; the branch keeps the work for the
+renumbered (0102, then 0105, then 0107 — arp-30 took 0105) so it never shares a number. Nothing here is merged; the branch keeps the work for the
 port.
 **Date:** 2026-11-02
 **Triggered by:** `docs/tasks/41-x402-in-usdc.md`.

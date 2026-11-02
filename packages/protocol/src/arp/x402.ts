@@ -1,6 +1,6 @@
 /**
  * Where ARP takes x402 payments while it is on testnet: USDC on Base Sepolia, settled by the public
- * x402.org facilitator (ADR `0094` §4, ADR `0105`).
+ * x402.org facilitator (ADR `0094` §4, ADR `0107`).
  *
  * In `src/arp/` because it names a chain, and this is the one namespace allowed to
  * (`rules/portability.md`). The rest of `src/x402/` takes these as config.

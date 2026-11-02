@@ -21,7 +21,7 @@
  *  the caller's later `(requester, uses, agent)` declaration from an opinion into something anchored
  *  to a fact — `docs/14:159`'s top rung is "payment, on-chain call, or delegation redemption".
  *
- *  **Two rails, and the native one stays** (task 41b, ADR `0105`). Set `AGENT_NODE_X402_PAY_TO`
+ *  **Two rails, and the native one stays** (task 41b, ADR `0107`). Set `AGENT_NODE_X402_PAY_TO`
  *  and `AGENT_NODE_X402_PRICE` and a `POST /task` that names no `paymentTxHash` is answered on x402:
  *  402 with USDC requirements on Base Sepolia, then a signed authorisation the facilitator verifies,
  *  the work, and the settlement. The node still signs no transaction; the facilitator submits the

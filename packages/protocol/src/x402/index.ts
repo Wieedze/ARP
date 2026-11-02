@@ -1,5 +1,5 @@
 /**
- * `@arp-protocol/core/x402` — the 402 answer both of ARP's servers give (task 41, ADR `0105`).
+ * `@arp-protocol/core/x402` — the 402 answer both of ARP's servers give (task 41, ADR `0107`).
  *
  * A subpath, so a consumer that never charges never loads `@x402/core` or `@x402/evm`: both are
  * optional peer dependencies of this package, like `@metamask/smart-accounts-kit`.

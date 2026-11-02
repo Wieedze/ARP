@@ -271,7 +271,7 @@ the price and the paid-call counts (`x402.paid_calls`, per UTC day and route), a
 handshake (`initialize`, `tools/list`, `ping`, notifications). Priced: every `tools/call` and every
 `GET /content/:atomId`. A call that fails — an HTTP error, or a JSON-RPC error inside a 200 — is not
 settled, so it costs nothing. The code is `apps/mcp/src/x402.ts`; the gate, on the official
-`@x402/core` and `@x402/evm` 2.28.0, is `packages/protocol/src/x402/gate.ts` (ADR `0105`).
+`@x402/core` and `@x402/evm` 2.28.0, is `packages/protocol/src/x402/gate.ts` (ADR `0107`).
 
 `GITHUB_TOKEN` is the only one that is a credential, it is read server-side only, and it is sent to
 `api.github.com` and nowhere else. It needs **no scopes** — public repository listings are public.
@@ -505,7 +505,7 @@ presented twice and served twice. After the fix the same payment against the bui
 node accepted before it existed is accepted once more; and deleting the file forgets every payment
 in it. Keep it where the node's state lives.
 
-**x402, beside the native payment and not in place of it** (task 41b, ADR `0105`). With
+**x402, beside the native payment and not in place of it** (task 41b, ADR `0107`). With
 `AGENT_NODE_X402_PAY_TO` and `AGENT_NODE_X402_PRICE` set, a `POST /task` that names no
 `paymentTxHash` is answered on x402: a `402` whose `PAYMENT-REQUIRED` header carries USDC
 requirements on Base Sepolia, then — with a `PAYMENT-SIGNATURE` header — the facilitator verifies the

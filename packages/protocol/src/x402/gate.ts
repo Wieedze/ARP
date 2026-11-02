@@ -1,5 +1,5 @@
 /**
- * The 402 answer, on the official x402 packages (task 41a, ADR `0105`).
+ * The 402 answer, on the official x402 packages (task 41a, ADR `0107`).
  *
  * `@x402/core`'s `x402HTTPResourceServer` decides: no payment → 402 with `PAYMENT-REQUIRED`; a
  * `PAYMENT-SIGNATURE` → verified by the facilitator; after the work → settled by it, and the
