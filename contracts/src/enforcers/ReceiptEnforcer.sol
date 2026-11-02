@@ -14,7 +14,7 @@ import {ModeCode} from "delegation-framework/utils/Types.sol";
 ///         signed by a node key the delegator accepted, names this contract as its verifier, names
 ///         the redeeming agent as `requester`, is for the term the deposit targets, is fresh and
 ///         unexpired, the deposit's `value` is at most the receipt's `paid`, and the payment hash it
-///         names has never unlocked a deposit here.
+///         names has never unlocked a deposit here under a receipt from the same signer.
 /// @dev    **What this rung holds, and what it does not** (user decision, 2026-10-30, "ok option 2";
 ///         ADR 0098 point 9). It holds **"an accepted key signed this receipt"**. It does **not**
 ///         hold **"a payment was made"**: `payment` and `paid` are values the signer asserts, and
@@ -33,9 +33,16 @@ import {ModeCode} from "delegation-framework/utils/Types.sol";
 ///
 ///         Replay (`security.md`, signature replay), ADR 0098:
 ///         - **nonce** — the receipt's `payment` transaction hash, as the signer states it. One
-///           payment hash unlocks one deposit, keyed by `(chainId, payment)` rather than by the
-///           receipt's digest, so a node that signs two receipts for one payment hash cannot unlock
-///           two deposits here.
+///           payment hash unlocks one deposit per signer, keyed by `(chainId, signer, payment)`
+///           rather than by the receipt's digest, so a node that signs two receipts for one payment
+///           hash cannot unlock two deposits here — under one delegation or across several.
+///           The signer is in the key since ADR 0118. Keyed by `(chainId, payment)` alone, the set
+///           was global: anyone running a node key could bind it in a delegation of their own, sign
+///           a receipt naming a victim's (public) payment hash, redeem first, and so make the
+///           victim's genuine receipt revert `PaymentAlreadyUsed`. Keying by delegation hash would
+///           also stop that, but would let one receipt unlock a deposit in every delegation that
+///           accepts its signer. Keying by `msg.sender` adds nothing here: every hook is gated on
+///           `DELEGATION_MANAGER`.
 ///         - **chain id** — in the domain. The accepted chain is the payment's, fixed in `_terms`.
 ///         - **verifying contract** — in the domain, as `address(this)`. A receipt signed for another
 ///           deployment or for the sponsoring service recovers to a different address here and is
@@ -156,7 +163,7 @@ contract ReceiptEnforcer is CaveatEnforcer {
 
     /// @notice Emitted when a receipt unlocks a deposit.
     /// @param  delegationHash The delegation being redeemed.
-    /// @param  paymentKey     `keccak256(abi.encode(chainId, payment))`, the replay key.
+    /// @param  paymentKey     `keccak256(abi.encode(chainId, signer, payment))`, the replay key.
     /// @param  signer         The node key that signed the receipt.
     /// @param  requester      The agent the receipt names as payer, which now deposits.
     /// @param  termId         The term deposited on.
@@ -201,7 +208,8 @@ contract ReceiptEnforcer is CaveatEnforcer {
     /// @notice The DelegationManager allowed to call the hooks.
     address public immutable DELEGATION_MANAGER;
 
-    /// @dev Payments that already unlocked a deposit, keyed by `keccak256(abi.encode(chainId, payment))`.
+    /// @dev Payments that already unlocked a deposit, keyed by
+    ///      `keccak256(abi.encode(chainId, signer, payment))`.
     mapping(bytes32 paymentKey => bool used) private _paymentUsed;
 
     /*//////////////////////////////////////////////////////////////
@@ -242,15 +250,17 @@ contract ReceiptEnforcer is CaveatEnforcer {
         return abi.decode(_terms, (uint256, uint256, Binding[]));
     }
 
-    /// @notice Whether a payment hash has already unlocked a deposit through this enforcer. Since
+    /// @notice Whether a payment hash has already unlocked a deposit through this enforcer, under a
+    ///         receipt from `signer`. Since
     ///         v2 a receipt for this enforcer is refused by the sponsoring service. A node that signs
     ///         a second receipt for one payment, naming the service, still gets both used; the
     ///         service reading this before it pays closes that, and is not built (task 44, ADR 0101).
     /// @param  chainId The chain the payment is on.
+    /// @param  signer  The node key that signed the receipt.
     /// @param  payment The payment's transaction hash, as a receipt names it.
-    /// @return used    True once a receipt naming it has been consumed here.
-    function isPaymentUsed(uint256 chainId, bytes32 payment) external view returns (bool used) {
-        return _paymentUsed[_paymentKey(chainId, payment)];
+    /// @return used    True once a receipt from `signer` naming it has been consumed here.
+    function isPaymentUsed(uint256 chainId, address signer, bytes32 payment) external view returns (bool used) {
+        return _paymentUsed[_paymentKey(chainId, signer, payment)];
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -305,7 +315,7 @@ contract ReceiptEnforcer is CaveatEnforcer {
         // The node's own bound, signed; `maxAge` is the delegator's. Both hold.
         if (block.timestamp > receipt.expiresAt) revert ReceiptPastExpiry(receipt.expiresAt);
 
-        bytes32 paymentKey = _paymentKey(receiptChainId, receipt.payment);
+        bytes32 paymentKey = _paymentKey(receiptChainId, signer, receipt.payment);
         if (_paymentUsed[paymentKey]) revert PaymentAlreadyUsed(paymentKey);
         _paymentUsed[paymentKey] = true;
 
@@ -417,7 +427,7 @@ contract ReceiptEnforcer is CaveatEnforcer {
         revert BindingMismatch(signer, agentRegistryHash, agentId, termId);
     }
 
-    function _paymentKey(uint256 chainId, bytes32 payment) private pure returns (bytes32) {
-        return keccak256(abi.encode(chainId, payment));
+    function _paymentKey(uint256 chainId, address signer, bytes32 payment) private pure returns (bytes32) {
+        return keccak256(abi.encode(chainId, signer, payment));
     }
 }
