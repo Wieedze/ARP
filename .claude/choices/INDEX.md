@@ -1,8 +1,8 @@
 # ADR index
 
-**Generated** 2026-10-30 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
+**Generated** 2026-11-02 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-96 decisions. Newest last. `choices/README.md` says when to write one.
+97 decisions. Newest last. `choices/README.md` says when to write one.
 
 ## Not accepted
 
@@ -14,6 +14,7 @@ Read these before relying on them.
 - **0057** (Accepted — 2026-10-27, on the user's instruction to close everything open.) — Brand identity v0.3: The Source, Saffron, Archivo + Geist Mono
 - **0080** (Accepted. **Amended by ADR `0094`** (2026-10-30): constraint 2 holds for a declaration) — The node signs for what it served, and for nothing else
 - **0082** (Accepted. Amends `0041` (a `packages/graphql` under the protocol package).) — Three apps: the MCP server, the agent node and the runtime hook are different programs
+- **0083** (Accepted; the v1 format is superseded for new receipts by v2 (ADR `0101`, task 44)) — The hire receipt is EIP-712, names the agent like ERC-8004, and uses the payment as its nonce
 - **0087** (Accepted, one point open (below)) — A tool is its package, and its repository is its source
 - **0088** (Accepted. Amends the one-word rule of 2026-10-28 (`scripts/seed/seed-domain-tree.ts`,) — A label is one word, unless a compound is necessary
 - **0090** (Accepted. Extended 2026-10-30 by task 33i — see "Extension: captures" at the end.) — What the hook records: outcome and identity, never content or credentials
@@ -21,7 +22,8 @@ Read these before relying on them.
 - **0094** (Accepted. **Amended 2026-10-30 for testnet**: everything is sponsored. User decision,) — ARP is the directory and the verifier, never the relay; a proof is the condition of a sponsored deposit
 - **0095** (Proposed) — The install handshake binds a node key that both the owner and the node sign for
 - **0096** (Proposed. **Amended 2026-10-30 for testnet**, after ADR `0094`'s status line recorded) — The sponsoring service sponsors only a proof with a price, and keeps its record on disk
-- **0098** (Accepted for point 9 (user decision, 2026-10-30, _« ok option 2 »_); the rest Proposed, reviewed by `contract-reviewer` (PASS, 2026-10-30); one decision open) — The receipt enforcer verifies the v1 hire receipt as signed, and binds the term through its terms
+- **0098** (Accepted for point 9 (user decision, 2026-10-30, _« ok option 2 »_); the rest Proposed, reviewed by `contract-reviewer` (PASS, 2026-10-30); ~~one decision open~~ the open decision is **answered: a v2 receipt** (user decision, 2026-10-30, carried out by task 44, ADR `0101`)) — The receipt enforcer verifies the v1 hire receipt as signed, and binds the term through its terms
+- **0101** (Proposed; the v2 receipt itself is the user's decision (2026-10-30), the shape is this task's) — The hire receipt v2 names the one verifier it is for, and the hirer chooses it
 
 ## All
 
@@ -108,7 +110,7 @@ Read these before relying on them.
 | [0080](0080-the-node-signs-for-what-it-served-and-for-nothing-else.md) | 2026-10-29 | Accepted. **Amended by ADR `0094`** (2026-10-30): constraint 2 holds for a declaration | The node signs for what it served, and for nothing else |
 | [0081](0081-a-claim-a-stranger-checks-ships-with-its-command.md) | 2026-10-30 | Accepted | A claim a stranger is asked to check ships with the command that checks it |
 | [0082](0082-two-apps-the-mcp-and-the-node.md) | 2026-10-30 | Accepted. Amends `0041` (a `packages/graphql` under the protocol package). | Three apps: the MCP server, the agent node and the runtime hook are different programs |
-| [0083](0083-the-hire-receipt-is-eip712-named-like-erc8004.md) | 2026-10-30 | Accepted | The hire receipt is EIP-712, names the agent like ERC-8004, and uses the payment as its nonce |
+| [0083](0083-the-hire-receipt-is-eip712-named-like-erc8004.md) | 2026-10-30 | Accepted; the v1 format is superseded for new receipts by v2 (ADR `0101`, task 44) | The hire receipt is EIP-712, names the agent like ERC-8004, and uses the payment as its nonce |
 | [0084](0084-a-worker-in-front-of-github-and-skills-sh.md) | 2026-10-30 | Accepted | A Worker in front of GitHub and skills.sh, as a cache and never a source |
 | [0085](0085-an-agent-with-no-wallet-generates-its-own-key.md) | 2026-10-30 | Accepted | An agent with no wallet generates its own key, and a funder covers the gas for now |
 | [0086](0086-the-repo-is-sorted-by-kind.md) | 2026-10-30 | Accepted | The repo is sorted by kind: code, data, docs, scripts |
@@ -122,4 +124,5 @@ Read these before relying on them.
 | [0094](0094-arp-is-the-directory-and-the-verifier-never-the-relay.md) | 2026-10-30 | Accepted. **Amended 2026-10-30 for testnet**: everything is sponsored. User decision, | ARP is the directory and the verifier, never the relay; a proof is the condition of a sponsored deposit |
 | [0095](0095-the-handshake-binds-a-node-key-both-keys-sign.md) | 2026-10-30 | Proposed | The install handshake binds a node key that both the owner and the node sign for |
 | [0096](0096-the-sponsoring-service-sponsors-only-a-priced-proof.md) | 2026-10-30 | Proposed. **Amended 2026-10-30 for testnet**, after ADR `0094`'s status line recorded | The sponsoring service sponsors only a proof with a price, and keeps its record on disk |
-| [0098](0098-the-receipt-enforcer-verifies-the-v1-hire-receipt-as-signed.md) | 2026-10-30 | Accepted for point 9 (user decision, 2026-10-30, _« ok option 2 »_); the rest Proposed, reviewed by `contract-reviewer` (PASS, 2026-10-30); one decision open | The receipt enforcer verifies the v1 hire receipt as signed, and binds the term through its terms |
+| [0098](0098-the-receipt-enforcer-verifies-the-v1-hire-receipt-as-signed.md) | 2026-10-30 | Accepted for point 9 (user decision, 2026-10-30, _« ok option 2 »_); the rest Proposed, reviewed by `contract-reviewer` (PASS, 2026-10-30); ~~one decision open~~ the open decision is **answered: a v2 receipt** (user decision, 2026-10-30, carried out by task 44, ADR `0101`) | The receipt enforcer verifies the v1 hire receipt as signed, and binds the term through its terms |
+| [0101](0101-the-hire-receipt-v2-names-the-one-verifier-it-is-for.md) | 2026-11-02 | Proposed; the v2 receipt itself is the user's decision (2026-10-30), the shape is this task's | The hire receipt v2 names the one verifier it is for, and the hirer chooses it |
