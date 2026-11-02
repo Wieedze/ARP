@@ -1,6 +1,8 @@
 # Task 38 — The installer meets real runtimes
 
-**Status:** **PLAN**, 2026-10-30. Not started.
+**Status:** **PLAN**, 2026-10-30. Not started. **Narrowed 2026-11-02 by the user: Claude Code
+first, for the demo; every other runtime waits for the port.** So part A runs for Claude Code only,
+parts B, C and E wait, and part D is needed only before something is published.
 **Done together with the user**: every step that needs a runtime runs on their machine, and every
 step that publishes needs their word.
 **Finishes:** task 33's 33i (second half) and 33d (Grok, Gemini, Codex), and clears what 33f needs
@@ -26,6 +28,8 @@ This task replaces documentation with one real run per runtime.
 | step                | command                                                      | done when                                                                        |
 | ------------------- | ------------------------------------------------------------ | -------------------------------------------------------------------------------- |
 | update Claude Code  | `claude update`                                              | `claude --version` is newer than 2.0.25, which may not know `PostToolUseFailure` |
+
+For the demo, only the first row is needed. The other four wait for the port.
 | install Codex       | `npm i -g @openai/codex`, then run `codex` once              | `~/.codex/` exists                                                               |
 | install Gemini CLI  | `npm i -g @google/gemini-cli`, then run `gemini` once        | `~/.gemini/` exists                                                              |
 | install Copilot CLI | `npm i -g @github/copilot`, then run `copilot` once          | `~/.copilot/` exists                                                             |
