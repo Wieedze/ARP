@@ -320,5 +320,5 @@ convenience rather than a capability, so it is part of the design, not an option
 ADR where the copy lives (`apps/api`, ADR `0084`, already caches skills.sh's figures) and how old it
 may be. Re-run `scripts/measure/discovery-eval.ts` before and after.
 
-The alternative left aside: a small local embedding model in the server (25 to 90 MB in the
-extension). There is no third party, but it adds weight, and it does not add skills.sh's coverage.
+The alternative left aside: a small local embedding model in the server (tens of MB in the
+extension, an estimate, not measured). There is no third party, but it adds weight, and it does not add skills.sh's coverage.
