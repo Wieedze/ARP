@@ -50,8 +50,8 @@ export const TOOLS = [
       'Agents listed in the ARP registry, a page at a time. `evidence-quantity` orders them by how ' +
       'many public statements exist about each, `economic-conviction` by how much people put ' +
       'behind it. Neither is a score: ARP rates nobody. `total` is the size of the whole list, ' +
-      'not of this page. An agent the registry cannot tell apart from another comes back as ' +
-      'ambiguous.',
+      'not of this page. An agent linked to more than one identity comes back as ambiguous ' +
+      'rather than resolved to one of them.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -103,7 +103,10 @@ export const TOOLS = [
         limit: { type: 'number', description: '1 to 100. Defaults to 25.' },
         curve_id: {
           type: 'number',
-          description: 'Advanced. Which market the amounts are read from. Leave it out.',
+          description:
+            'Advanced. Which bonding curve the amounts are read at; defaults to the chain ' +
+            'default, 1. Curves are separate markets holding different amounts, so name the one ' +
+            'you mean. Leave it out unless you know you need it.',
         },
       },
       required: [],
@@ -434,6 +437,10 @@ export const TOOLS = [
  * The operators task 45 is for were promised a registry to search, and every tool outside this list
  * talks about wallets, identities and stakes. Serving them anyway puts that vocabulary in front of
  * an agent whose operator never asked for it.
+ *
+ * `GET /content/:atomId` is not a tool and stays served in this mode, on purpose: it is how an agent
+ * fetches a skill it found (task 45b'). It signs a receipt for having served the bytes, which is
+ * a record of access and moves no value (ADR `0080`).
  */
 export const READ_TOOL_NAMES: ReadonlySet<string> = new Set([
   'arp_find_agents',

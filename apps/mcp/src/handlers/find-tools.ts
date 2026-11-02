@@ -4,6 +4,7 @@ import {
   INTUITION_IS_A_SUB_DOMAIN_OF as IS_A_SUB_DOMAIN_OF,
   listRegisteredTools,
   listTools,
+  readDomainTree,
   type ToolListingOrder,
   toolsInDomain,
 } from '@arp-protocol/core';
@@ -138,17 +139,18 @@ export async function findTools(id: JsonRpcId, args: Record<string, unknown>) {
     backed: Set<string>;
     othersHidden: number;
   } | null = null;
-  let domainsAvailable: string[] | null = null;
+  const walk = {
+    graphqlUrl: GRAPHQL,
+    hierarchyPredicate: IS_A_SUB_DOMAIN_OF,
+    tagPredicate: HAS_TAG,
+    root: DOMAIN_ROOT,
+    attestor,
+  };
+  let domainTree: Awaited<ReturnType<typeof readDomainTree>> | null = null;
   if (domainRaw !== undefined) {
     const normalised = domainRaw.trim().toLowerCase();
-    const walk = {
-      graphqlUrl: GRAPHQL,
-      hierarchyPredicate: IS_A_SUB_DOMAIN_OF,
-      tagPredicate: HAS_TAG,
-      root: DOMAIN_ROOT,
-      attestor,
-    };
-    const { domains, tools } = await toolsInDomain(walk, normalised);
+    domainTree = await readDomainTree(walk);
+    const { domains, tools } = await toolsInDomain(walk, normalised, { tree: domainTree });
     // `has tag` is permissionless to write: anybody can publish `(anything, has tag, payment)` for
     // the price of one triple. An index is therefore a *reading* of those filings, and `attestor`
     // picks whose — ARP's by default, the caller's own, somebody else's, or none at all.
@@ -161,14 +163,6 @@ export async function findTools(id: JsonRpcId, args: Record<string, unknown>) {
       ),
       othersHidden: tools.length - kept.length,
     };
-    // A word the registry does not use returns nothing, and an agent that gets nothing stops
-    // looking. So a miss carries the words that exist, read from the same tree, and the agent can
-    // ask again: "business" finds nothing, "marketing" finds 57 (testnet 13579, 2026-11-02). One
-    // more read, and only on a miss.
-    if (kept.length === 0) {
-      const everything = await toolsInDomain(walk, DOMAIN_ROOT);
-      domainsAvailable = everything.domains.filter((name) => name !== DOMAIN_ROOT).sort();
-    }
   }
 
   const [page, registered] = await Promise.all([
@@ -209,6 +203,40 @@ export async function findTools(id: JsonRpcId, args: Record<string, unknown>) {
   const inScope = (atomId: string): boolean =>
     domainScope === null || domainScope.atomIds.has(atomId.toLowerCase());
 
+  const rows = [
+    ...page.tools
+      .filter((tool) => inScope(tool.atomId))
+      .map((tool) => ({
+        tool_atom_id: tool.atomId,
+        label: tool.label,
+        provenance: 'declared' as const,
+        ...seedFor(tool.label),
+        // Where to go and look. ARP hosts nothing; this is the pointer and the point.
+        hosted_at: tool.hostedAt,
+        atom_uri: tool.uri,
+        declarations: tool.edgeCount,
+        // How many of those declarations somebody paid to stand behind. Never a summed position
+        // count: positions are counted per vault and a sum across edges counts nothing (ADR `0023`).
+        paid_declarations: tool.pricedEdges,
+        support_assets_wei: tool.supportAssetsSum.toString(),
+        oppose_assets_wei: tool.opposeAssetsSum.toString(),
+        position_count: null,
+      })),
+    ...registeredRows,
+  ];
+
+  // A domain search that returns no row carries the words the registry does use, taken from the
+  // tree the search already read, so the agent can ask again: "business" finds nothing,
+  // "marketing" finds 57 (testnet 13579, 2026-11-02). Decided on the rows returned, not on the tag
+  // filter, because tagged atoms the listings do not hold also end in an empty answer.
+  const domainsAvailable =
+    domainTree !== null && rows.length === 0
+      ? domainTree
+          .subtree(DOMAIN_ROOT)
+          .filter((name) => name !== DOMAIN_ROOT)
+          .sort()
+      : null;
+
   return text(id, {
     curve_id: page.curveId,
     edges_read: page.edgesRead,
@@ -235,26 +263,6 @@ export async function findTools(id: JsonRpcId, args: Record<string, unknown>) {
           tags_from_others_hidden: domainScope.othersHidden,
           ...(domainsAvailable === null ? {} : { domains_available: domainsAvailable }),
         }),
-    tools: [
-      ...page.tools
-        .filter((tool) => inScope(tool.atomId))
-        .map((tool) => ({
-          tool_atom_id: tool.atomId,
-          label: tool.label,
-          provenance: 'declared' as const,
-          ...seedFor(tool.label),
-          // Where to go and look. ARP hosts nothing; this is the pointer and the point.
-          hosted_at: tool.hostedAt,
-          atom_uri: tool.uri,
-          declarations: tool.edgeCount,
-          // How many of those declarations somebody paid to stand behind. Never a summed position
-          // count: positions are counted per vault and a sum across edges counts nothing (ADR `0023`).
-          paid_declarations: tool.pricedEdges,
-          support_assets_wei: tool.supportAssetsSum.toString(),
-          oppose_assets_wei: tool.opposeAssetsSum.toString(),
-          position_count: null,
-        })),
-      ...registeredRows,
-    ].slice(0, limitRaw),
+    tools: rows.slice(0, limitRaw),
   });
 }
