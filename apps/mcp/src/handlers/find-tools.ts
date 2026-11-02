@@ -270,15 +270,14 @@ export async function findTools(id: JsonRpcId, args: Record<string, unknown>) {
       : collapseCopies(matched, (entry) => entry.row.declarations ?? 0);
   const { rows: pageRows, total, nextOffset } = pageOf(listed, offsetRaw, limitRaw);
 
-  // A search that returns no row carries the words the registry does use, so the agent can ask
-  // again: "business" finds nothing, "marketing" finds 57 (testnet 13579, 2026-11-02). Decided on
-  // the rows returned, not on the tag filter, because tagged atoms the listings do not hold also
-  // end in an empty answer. A query that found nothing reads the tree for the same reason.
-  if (total === 0 && domainTree === null && query !== null && attestor !== undefined) {
-    domainTree = await readDomainTree(walk);
-  }
+  // A domain search that returns no row carries the words the registry does use, so the agent can
+  // ask again: "business" finds nothing, "marketing" finds 57 (testnet 13579, 2026-11-02). Decided
+  // on the rows returned, not on the tag filter, because tagged atoms the listings do not hold also
+  // end in an empty answer. A free-text query that found nothing does not: the list invited a
+  // second call, and with nothing in the registry for the need, that call was paid for nothing
+  // (task 51, ADR `0111`).
   const domainsAvailable =
-    domainTree !== null && total === 0
+    domainTree !== null && total === 0 && domainRaw !== undefined
       ? domainTree
           .subtree(DOMAIN_ROOT)
           .filter((name) => name !== DOMAIN_ROOT)

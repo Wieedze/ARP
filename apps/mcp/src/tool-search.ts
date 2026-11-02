@@ -70,28 +70,32 @@ function rootOf(word: string): string {
   return word.length > 5 ? word.replace(/(ing|ed|es|s)$/, '') : word;
 }
 
+/** Words that say nothing about a need: "tools for my emails" asks about emails. */
+const FILLER = new Set(
+  'a an and any app apps are can do for from help how i in is it me my of on or the to tool tools use what with you your'.split(' '),
+);
+
 /**
- * How well a tool's text answers `query`. A word found counts one, two when it is in the name, and
- * a tool holding every word of the query gets one more per word, so "video editing" ranks an editor
- * above every tool that only says "video". Zero means no match. It orders search results and is
- * never returned: it measures words matched, not the tool.
+ * How well a tool's text answers `query`. Every word of the query must be found, or the answer is
+ * zero: "card payments" used to return ten tools that only said "card" (orbit cards, marketplace
+ * cards), and an agent read all ten before answering from memory (task 51). A word found counts
+ * one, two when it is in the name. It orders search results and is never returned: it measures
+ * words matched, not the tool.
  */
 export function relevance(query: string, described: Described): number {
   // At the start of a word: "form" is not in "platform", "performance" or "Terraform".
   const words = query
     .toLowerCase()
     .split(/[^a-z0-9+#.-]+/)
-    .filter((word) => word.length >= 2)
+    .filter((word) => word.length >= 2 && !FILLER.has(word))
     .map((word) => new RegExp(`(^|[^a-z0-9])${rootOf(word).replace(/[.+#-]/g, '\\$&')}`));
   const name = described.name.toLowerCase();
   let score = 0;
-  let found = 0;
   for (const word of words) {
-    if (!word.test(described.text)) continue;
-    found += 1;
+    if (!word.test(described.text)) return 0;
     score += word.test(name) ? 2 : 1;
   }
-  return words.length > 1 && found === words.length ? score + words.length : score;
+  return score;
 }
 
 /**

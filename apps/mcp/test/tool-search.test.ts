@@ -90,6 +90,20 @@ group('relevance', () => {
     expect(relevance('video editing', both)).toBeGreaterThan(relevance('video editing', one));
   });
 
+  it('is zero when one word of the query is missing', () => {
+    const cards = describe(
+      'github.com/a/b?skill=orbit-card',
+      catalogue,
+      new Map([['github.com/a/b?skill=orbit-card', { description: 'A feature card orbits a sphere.', installs: null }]]),
+    );
+    expect(relevance('card payments', cards)).toBe(0);
+    expect(relevance('card', cards)).toBeGreaterThan(0);
+  });
+
+  it('ignores the words that say nothing about the need', () => {
+    expect(relevance('a tool to export my mp4', render)).toBe(relevance('export mp4', render));
+  });
+
   it('matches at the start of a word, not inside one', () => {
     const terraform = describe(
       'github.com/h/t',
