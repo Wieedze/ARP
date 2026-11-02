@@ -1,6 +1,7 @@
 # Task 51 — A quieter search: every word must match, and nothing invites a second call
 
-**Status:** **BUILT**, 2026-11-02, branch `feat/51-quiet-search`. ADR `0111`.
+**Status:** **BUILT and verified**, 2026-11-02, branch `feat/51-quiet-search`. ADR `0111`.
+`task-verifier` PASS on the second pass, post-mortem `learning/46`.
 **Rules:** `code.md`, `claims.md`, `workflow.md`.
 **Reviewers:** `task-verifier`.
 
