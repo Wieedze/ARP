@@ -226,7 +226,7 @@ and task 20 commits and does not describe them.**
 | 43     | the receipt enforcer                                   | **built and verified** 2026-10-30 (`learning/31`, PASS; ADR `0098`), merged into `dev` (PR #14). Not deployed. The v2 receipt is task 44 |
 | 44     | hire receipt v2                                        | **built and verified** 2026-11-02 (`learning/34`, PASS; ADR `0101`) on `feat/44-hire-receipt-v2`. **PR #24 open**, mergeable, waiting on the user |
 | 45     | discovery without a command                            | **plan** 2026-11-02. 45a, 45b' and 45d merged into `dev` (PRs #23, #25). 45e met by default on testnet (ADR `0102`). The rest open |
-| 46     | the redesign from references                           | **46a built** 2026-11-02 on `feat/46-tools-pagination`: `/tools` pages by 25 (was 662 rows, 54,915px on 13579). 46b–46f proposed, waiting on the user per page. Our custom modules stay, user decision |
+| 46     | the redesign from references                           | **46a and 46d built** 2026-11-02 on `feat/46-tools-pagination`: `/tools` pages by 25 (was 662 rows, 54,915px on 13579), `/register` offers two tiles. Detail pages put facts on the right (ADR `0104`). 46b/46c/46e wait for task 47's commit (same files), 46f on the user. Our custom modules stay, user decision |
 
 **Recommended order** — `docs/15_ROADMAP.md` is the full version with what testnet can and cannot
 prove. The old short form here read **"next is 17 → 25"** and both halves are now wrong: 17's gate
