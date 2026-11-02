@@ -7,12 +7,7 @@ import {AgentImport} from "./AgentImport";
 import {controlClass, linkClass, primaryControlClass} from "../lib/control-class";
 import {draftToAgentUri, useIdentityMint} from "../hooks/use-identity-mint";
 import {truncateMiddle} from "../services/trust-format";
-import {
-    MINT_CHAIN,
-    MINT_REGISTRY,
-    type MintQuote,
-    type MintResult,
-} from "../services/identity-mint";
+import {mintTargetOf, type MintQuote, type MintResult} from "../services/identity-mint";
 
 /**
  * `/agent` — one door for "get my agent into ARP", with one question at the top.
@@ -192,7 +187,7 @@ type Phase =
 function MintIdentity() {
     const {address, isConnected, chainId} = useAccount();
     const {switchChainAsync, isPending: isSwitching} = useSwitchChain();
-    const {quote, submit} = useIdentityMint();
+    const {target, quote, submit} = useIdentityMint();
     const [phase, setPhase] = useState<Phase>({step: "idle"});
     const [name, setName] = useState("");
     const [description, setDescription] = useState("");
@@ -200,17 +195,20 @@ function MintIdentity() {
     const headingId = useId();
     const fieldId = useId();
 
-    const onMintChain = chainId === MINT_CHAIN.id;
+    const onMintChain = chainId === target.chain.id;
     const hasName = name.trim() !== "";
 
     async function handleQuote(owner: Address) {
         setPhase({step: "quoting"});
         try {
-            const agentUri = draftToAgentUri({
-                name,
-                description: description.trim() === "" ? undefined : description,
-                webEndpoint: endpoint.trim() === "" ? undefined : endpoint,
-            });
+            const agentUri = draftToAgentUri(
+                {
+                    name,
+                    description: description.trim() === "" ? undefined : description,
+                    webEndpoint: endpoint.trim() === "" ? undefined : endpoint,
+                },
+                target,
+            );
             setPhase({step: "confirm", quote: await quote(owner, agentUri)});
         } catch (error) {
             setPhase({step: "error", message: messageOf(error), hash: null});
@@ -222,7 +220,7 @@ function MintIdentity() {
         try {
             // The quote's own bytes, not a re-derivation: editing the form between the quote and
             // the signature must not change what is signed for.
-            setPhase({step: "done", result: await submit(current.agentUri)});
+            setPhase({step: "done", result: await submit(current)});
         } catch (error) {
             setPhase({step: "error", message: messageOf(error), hash: null});
         }
@@ -235,9 +233,9 @@ function MintIdentity() {
             </h2>
             <dl className="mt-5 grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 text-[length:var(--text-body-sm)]">
                 <Field label="Chain">
-                    {MINT_CHAIN.name} ({MINT_CHAIN.id})
+                    {target.chain.name} ({target.chain.id})
                 </Field>
-                <Field label="Registry">{truncateMiddle(MINT_REGISTRY, 12, 8)}</Field>
+                <Field label="Registry">{truncateMiddle(target.registry, 12, 8)}</Field>
                 <Field label="Owner">
                     {address === undefined ? "—" : truncateMiddle(address, 12, 8)}
                 </Field>
@@ -252,15 +250,15 @@ function MintIdentity() {
                     <p className="max-w-[60ch] text-[length:var(--text-body-sm)]">
                         Your wallet is on chain{" "}
                         <span className="font-mono">{chainId ?? "unknown"}</span>. The registry is
-                        on {MINT_CHAIN.name} ({MINT_CHAIN.id}).
+                        on {target.chain.name} ({target.chain.id}).
                     </p>
                     <button
                         type="button"
-                        onClick={() => void switchChainAsync({chainId: MINT_CHAIN.id})}
+                        onClick={() => void switchChainAsync({chainId: target.chain.id})}
                         disabled={isSwitching}
                         className={`mt-3 ${controlClass}`}
                     >
-                        {isSwitching ? "Switching…" : `Switch to ${MINT_CHAIN.name}`}
+                        {isSwitching ? "Switching…" : `Switch to ${target.chain.name}`}
                     </button>
                 </div>
             ) : phase.step === "done" ? (
@@ -346,10 +344,11 @@ function Confirm({
     onSign: () => void;
     onCancel: () => void;
 }) {
+    const chain = mintTargetOf(quote.chainId).chain;
     const cost =
         quote.maxFeePerGas === null
             ? null
-            : `${formatEth(quote.gas * quote.maxFeePerGas)} ETH at current fees`;
+            : `${formatEth(quote.gas * quote.maxFeePerGas)} ${chain.nativeCurrency.symbol} at current fees`;
 
     return (
         <div className="mt-6 max-w-[36rem] border border-[color:var(--color-rule-strong)] p-4">
@@ -357,7 +356,7 @@ function Confirm({
                 Confirm before your wallet opens
             </p>
             <p className="mt-3 max-w-[52ch] text-[length:var(--text-body-sm)]">
-                You are about to mint one ERC-8004 identity on {MINT_CHAIN.name}, owned by{" "}
+                You are about to mint one ERC-8004 identity on {chain.name}, owned by{" "}
                 <span className="font-mono">{truncateMiddle(quote.owner, 10, 8)}</span>. It is
                 permanent and it cannot be un-minted.
             </p>
@@ -415,7 +414,7 @@ function Minted({result}: {result: MintResult}) {
             </p>
             <p className="mt-3 font-mono text-[length:var(--text-body-sm)]">
                 <a
-                    href={`${MINT_CHAIN.blockExplorers.default.url}/tx/${result.hash}`}
+                    href={`${mintTargetOf(result.chainId).chain.blockExplorers?.default.url ?? ""}/tx/${result.hash}`}
                     target="_blank"
                     rel="noreferrer"
                     className={linkClass}
