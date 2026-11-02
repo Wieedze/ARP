@@ -1,4 +1,4 @@
-import {fireEvent, render, screen} from "@testing-library/react";
+import {act, fireEvent, render, screen} from "@testing-library/react";
 import type {IdentityAtomPlan} from "@arp-protocol/core";
 import type {ReactNode} from "react";
 import {MemoryRouter} from "react-router-dom";
@@ -34,6 +34,18 @@ function planFor(tokenId: string): IdentityAtomPlan {
     } as unknown as IdentityAtomPlan;
 }
 
+/** When set, `planIdentity` waits for the test to resolve it, so a reply can land late. */
+type Held = {promise: Promise<IdentityAtomPlan>; resolve: (plan: IdentityAtomPlan) => void};
+let held: Held | null = null;
+
+function hold(): Held {
+    let resolve: (plan: IdentityAtomPlan) => void = () => {};
+    const promise = new Promise<IdentityAtomPlan>((done) => {
+        resolve = done;
+    });
+    return {promise, resolve};
+}
+
 vi.mock("../hooks/use-agent-import", () => ({
     useAgentImport: () => ({
         verifyOwnership: async (params: {chainId: number; tokenId: string}) => ({
@@ -47,7 +59,8 @@ vi.mock("../hooks/use-agent-import", () => ({
         signConsent: vi.fn(),
         planLink: vi.fn(),
         publishLink: vi.fn(),
-        planIdentity: async (agent: {tokenId: string}) => planFor(agent.tokenId),
+        planIdentity: (agent: {tokenId: string}) =>
+            held === null ? Promise.resolve(planFor(agent.tokenId)) : held.promise,
         publishIdentity,
     }),
 }));
@@ -86,5 +99,22 @@ describe("AgentImport after checking a second token", () => {
 
         expect(publishIdentity).toHaveBeenCalledTimes(1);
         expect(publishIdentity.mock.calls[0]?.[0]).toMatchObject({tripleId: "0x2"});
+    });
+
+    it("drops a pricing reply that lands after another token was checked", async () => {
+        render(<AgentImport />, {wrapper: Provider});
+
+        await checkToken("1");
+        held = hold();
+        fireEvent.click(screen.getByRole("button", {name: "Price the public record"}));
+        await screen.findByRole("button", {name: "Pricing…"});
+
+        const late = held;
+        held = null;
+        await checkToken("2");
+        await act(async () => late.resolve(planFor("1")));
+
+        expect(screen.queryByRole("button", {name: /Write the public record/})).toBeNull();
+        expect(screen.getByRole("button", {name: "Price the public record"})).toBeEnabled();
     });
 });
