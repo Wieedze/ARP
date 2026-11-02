@@ -25,6 +25,12 @@ export {
 
 export const PIN_ENDPOINT = 'https://pin.intuition.systems/v1/graphql';
 
+/** Intuition's documented header for the partner key; the same literal `apps/web` applies. */
+export const DEFAULT_HEADER_NAME = 'apikey';
+
+/** The partner pinning credential, header name resolved. Built by `requirePinAuth()` in `pin-env.ts`. */
+export type PinAuth = { apiKey: string; headerName: string };
+
 type PinResponse = { data?: { pinThing?: { uri?: string } }; errors?: unknown };
 
 /**
@@ -36,7 +42,7 @@ type PinResponse = { data?: { pinThing?: { uri?: string } }; errors?: unknown };
  */
 export async function pinThing(
   thing: AgentThing,
-  auth: { apiKey: string; headerName: string },
+  auth: PinAuth,
 ): Promise<{ status: number; uri?: string; body: string }> {
   const res = await fetch(PIN_ENDPOINT, {
     method: 'POST',
