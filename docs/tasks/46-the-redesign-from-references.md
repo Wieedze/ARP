@@ -27,6 +27,7 @@ the Mobbin references behind each one, were published to the user that day.
 | `/tools` | variant A of five, without its two parts that reversed earlier decisions (below) |
 | The two shared layouts, and the agent page's facts on the right | **yes** ("oui"), on the mockup page "ARP — une grammaire, toutes les pages": list pages follow `/tools`, detail pages follow the skill page. ADR `0104` |
 | `/register` | the two-tile mockup on that same page. Built first because task 47 does not touch `Register.tsx`: _« ok fait la »_ |
+| The line under the tool URL field ("The scheme, `www.`, a trailing slash and a fragment are normalised away…") | **remove it**: _« on enlève »_. Done after task 47 is merged into this branch, because task 47 edits `ToolRegister.tsx` |
 
 ## 3. 46a — `/tools` pages its list (built)
 
