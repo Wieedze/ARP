@@ -243,6 +243,32 @@ function claudeHookStep(
   );
 }
 
+/**
+ * The oldest Claude Code seen running these hooks: 2.1.316, 2026-11-02 (task 38 part A). 2.0.25
+ * loaded none of them ("Found 0 hook matchers" in its debug log) while its `/mcp` worked, so an old
+ * runtime records nothing and says nothing. Versions between the two were never tried; below this
+ * one the check fails rather than guess.
+ */
+const CLAUDE_HOOKS_SEEN_FROM = [2, 1, 316] as const;
+
+/** `[label, holds]` for the `claude` on PATH, or nothing when there is none to ask. */
+function claudeVersionCheck(env: InstallEnv): [string, boolean][] {
+  if (env.which('claude') === null) return [];
+  const found = /(\d+)\.(\d+)\.(\d+)/.exec(env.run(['claude', '--version']).stdout);
+  const seen = CLAUDE_HOOKS_SEEN_FROM.join('.');
+  if (found === null)
+    return [[`claude --version answers (hooks seen working from ${seen})`, false]];
+  const version = found.slice(1, 4).map(Number);
+  const newer = (() => {
+    for (const [i, floor] of CLAUDE_HOOKS_SEEN_FROM.entries()) {
+      const part = version[i] ?? 0;
+      if (part !== floor) return part > floor;
+    }
+    return true;
+  })();
+  return [[`claude ${found[0]} runs hooks (seen working from ${seen}; claude update)`, newer]];
+}
+
 function claudeChecks(env: InstallEnv, commands: Commands, project: boolean): [string, boolean][] {
   const files = claudeFiles(env, project);
   const mcp = parseJsonConfig(read(files.mcp));
@@ -261,6 +287,7 @@ function claudeChecks(env: InstallEnv, commands: Commands, project: boolean): [s
       `hook on PostToolUse and PostToolUseFailure (${files.settings})`,
       !(settings instanceof Error) && hasHooks(settings, CLAUDE_HOOKS, commands.hookFile),
     ],
+    ...claudeVersionCheck(env),
   ];
 }
 

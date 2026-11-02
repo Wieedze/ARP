@@ -387,6 +387,26 @@ describe('uninstall and doctor', () => {
     expect(lines.join('\n')).not.toContain('FAIL');
   });
 
+  test('doctor fails on a Claude Code older than the one seen running the hooks', async () => {
+    mkdirSync(join(home, '.claude'));
+    await init(env(), flags(['--yes']), CLI);
+    const withClaude = (version: string) =>
+      env({
+        node: process.execPath,
+        which: (name) => (name === 'claude' ? '/usr/bin/claude' : null),
+        run: (argv): RunResult =>
+          argv[1] === '--version'
+            ? { code: 0, stdout: `${version} (Claude Code)\n`, stderr: '' }
+            : { code: 0, stdout: '{"result":{"serverInfo":{"name":"ARP"}}}', stderr: '' },
+      });
+    lines = [];
+    expect(doctor(withClaude('2.0.25'), flags(), CLI)).toBe(EXIT.problems);
+    expect(lines.find((line) => line.includes('claude 2.0.25'))).toContain('FAIL');
+    lines = [];
+    expect(doctor(withClaude('2.1.316'), flags(), CLI)).toBe(EXIT.ok);
+    expect(lines.join('\n')).toContain('claude 2.1.316 runs hooks');
+  });
+
   test('doctor fails when the MCP server does not answer', async () => {
     mkdirSync(join(home, '.claude'));
     await init(env(), flags(['--yes']), CLI);

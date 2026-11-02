@@ -100,6 +100,19 @@ and the runtime adds `mcp_server: {name, source}`. Three things the run found:
 4. Install it in Codex. Its docs say plugin hooks run only in Codex desktop, so the CLI's hook stays
    `arp init`'s.
 
+### For testers before an npm release (2026-11-02)
+
+The user chose an `npm pack` archive at a private URL. `bun run packages --tarball <https url>
+
+<dir>` (in `apps/cli`) writes the plugin into `<dir>` with its MCP entry running
+`npx -y --package <url> arp mcp`, and the archive beside it. `npx -y <url>.tgz mcp`, the first form
+tried, executes the archive itself and fails. Tried from a local HTTP server: the archive starts
+and answers `initialize` on 13579. Hosting is not decided.
+
+Every generated plugin entry carries `ARP_TARGET=testnet` and `ARP_TOOLS=read` (task 45: the
+plugin is for people who search). `arp doctor` fails a `claude` older than 2.1.316, the oldest one
+seen running the hooks.
+
 ### D — Decisions before publishing (33f)
 
 | question               | why it blocks                                                                                                                                 |
