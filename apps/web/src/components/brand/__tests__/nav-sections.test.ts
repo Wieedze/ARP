@@ -34,9 +34,9 @@ describe("nav sections", () => {
             "/agent/import",
             "/tools",
             "/register",
-            "/profile",
+            "/account",
+            "/activity",
             "/atom/0xabc",
-            "/rig",
             "/",
         ]) {
             expect(agents(path), `Agents must not claim ${path}`).toBe(false);

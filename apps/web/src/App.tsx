@@ -6,7 +6,6 @@ import {RouteTransition} from "./components/brand/RouteTransition";
 import {ScrollToTop} from "./components/brand/ScrollToTop";
 
 import {Layout} from "./components/Layout";
-import {AgentRegister} from "./pages/AgentRegister";
 
 /**
  * The trust panel and its entry point are split out of the main bundle. They
@@ -16,7 +15,9 @@ import {AgentRegister} from "./pages/AgentRegister";
 const ActivityPage = lazy(() =>
     import("./pages/ActivityPage").then((module) => ({default: module.ActivityPage})),
 );
-const Profile = lazy(() => import("./pages/Profile").then((module) => ({default: module.Profile})));
+const AccountPage = lazy(() =>
+    import("./pages/AccountPage").then((module) => ({default: module.AccountPage})),
+);
 const AgentDirectory = lazy(() =>
     import("./pages/AgentDirectory").then((module) => ({default: module.AgentDirectory})),
 );
@@ -80,12 +81,6 @@ function App() {
                         path="/agent/import"
                         element={<Navigate to="/register?what=agent&have=yes" replace />}
                     />
-                    {/* The five-step testnet bring-up, named for what it is. It mints into ARP's **own**
-                    copy of the registry on 13579, designates a runtime wallet, deploys a Smart
-                    Account, signs two delegations and funds the runtime — a rehearsal of
-                    `docs/12` point 5, consumed by `scripts/`, not a path a visitor takes. Out of
-                    the nav on purpose. */}
-                    <Route path="/rig" element={<AgentRegister />} />
                     <Route
                         path="/agents"
                         element={
@@ -102,19 +97,19 @@ function App() {
                             </Suspense>
                         }
                     />
+                    {/* What the operator authorised and configured: the Smart Account, its
+                    delegations and the runtime they name. Reached from the wallet menu (user,
+                    2026-10-30). It replaced `/rig`'s steps 3 and 4, and `/profile`'s positions
+                    moved to `/activity`; `/rig`, `/profile` and `/me` are gone (`docs/tasks/35`
+                    §0), so an old link lands on no route rather than on a redirect. */}
                     <Route
-                        path="/profile"
+                        path="/account"
                         element={
-                            <Suspense fallback={<RouteFallback label="your positions" />}>
-                                <Profile />
+                            <Suspense fallback={<RouteFallback label="account" />}>
+                                <AccountPage />
                             </Suspense>
                         }
                     />
-                    {/* `/me` was the route and the tab was called "You". The user rejected both as
-                    wrong syntax; `HANDOFF.md` §8 names the route `/profile`. The redirect stays
-                    because a bookmark, a shared link or a `git log` reference to `/me` should not
-                    land on a blank page — and it is three lines against a dead end. */}
-                    <Route path="/me" element={<Navigate to="/profile" replace />} />
                     <Route
                         path="/register"
                         element={

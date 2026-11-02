@@ -1,6 +1,7 @@
 import {useMemo} from "react";
 import type {Hex} from "viem";
 
+import {Positions} from "../components/activity/Positions";
 import {useActivityTrace} from "../hooks/use-activity-trace";
 import {useAgentActivity} from "../hooks/use-agent-activity";
 import {useTermLabels} from "../hooks/use-term-labels";
@@ -22,7 +23,8 @@ import {
  * it, **the timeline** is every event once, as Time · Who · Off chain · On chain · Transaction
  * (`timelineRows`): each transaction names the invocation it answers, and that invocation lists it.
  *
- * Both are newest first: a demo watches the top of the page.
+ * Both are newest first: a demo watches the top of the page. Above them, **positions**: what the
+ * connected wallet holds, which was `/profile` until the user removed it (`docs/tasks/35` §0).
  *
  * Everything here is relayed from the local feed, so it is a local program's record. The
  * explorer link on each hash is how a reader takes the chain's word instead.
@@ -200,6 +202,9 @@ export function ActivityPage({feed}: {feed?: AgentFeed} = {}) {
                     </Fact>
                 </dl>
             </header>
+
+            {/* What the connected wallet holds, moved from `/profile` (`docs/tasks/35` §0). */}
+            <Positions />
 
             <h2 className={`${LABEL} mb-2`} id="activity-invocations">
                 Invocations

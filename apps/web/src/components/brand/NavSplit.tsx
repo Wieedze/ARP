@@ -54,7 +54,7 @@ import {NAV_HEIGHT} from "./nav-height";
  * | `/agents` | Agents |
  *
  * So the two items that collide say which paths are theirs, and everything else keeps the prefix
- * rule, which is right for `/tools`, `/register` and `/profile`.
+ * rule, which is right for `/tools`, `/register` and `/activity`.
  */
 const SECTION_PATHS: Record<string, (pathname: string) => boolean> = {
     // An agent detail is `/agent/<numeric chain>/<token>`; `/agent/import` is not.

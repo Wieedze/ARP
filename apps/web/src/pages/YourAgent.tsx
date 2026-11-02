@@ -44,7 +44,8 @@ import {
  * on both Base and BSC. Base is the one offered, because Intuition's mirror covers Base and an
  * identity anywhere else is real and still unreadable by everything this app does next.
  *
- * The five-step testnet rig did not disappear — it moved to `/rig`, named for what it is.
+ * The five-step testnet rig moved to `/rig` and is now gone (`docs/tasks/35` §0): minting and the
+ * runtime wallet are this page, and signing a delegation is `/account`.
  */
 
 const BRANCH_PARAM = "have";

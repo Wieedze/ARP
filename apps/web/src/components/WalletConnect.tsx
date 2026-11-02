@@ -1,4 +1,5 @@
 import {useEffect, useRef, useState} from "react";
+import {useNavigate} from "react-router-dom";
 import {useAccount, useConnect, useDisconnect} from "wagmi";
 
 /**
@@ -6,8 +7,9 @@ import {useAccount, useConnect, useDisconnect} from "wagmi";
  *
  *   - Disconnected: single "Connect wallet" button.
  *   - Connecting: button shows "Connecting…".
- *   - Connected: address truncated in mono, click reveals a small dropdown
- *     with "Copy address" + "Disconnect".
+ *   - Connected: address truncated in mono, click reveals a small menu:
+ *     "Copy address", "Account" (opens `/account`, the delegations and settings), "Disconnect"
+ *     (user, 2026-10-30, `docs/tasks/35` §0).
  *
  * No modal, no drawer. The connector list is short on Intuition Testnet
  * (typically just MetaMask `injected` and optionally WalletConnect), so a
@@ -17,6 +19,7 @@ export function WalletConnect() {
     const {address, isConnected, status} = useAccount();
     const {connectors, connect, isPending: isConnectPending} = useConnect();
     const {disconnect} = useDisconnect();
+    const navigate = useNavigate();
 
     const [open, setOpen] = useState(false);
     const wrapperRef = useRef<HTMLDivElement>(null);
@@ -97,12 +100,23 @@ export function WalletConnect() {
                         type="button"
                         role="menuitem"
                         onClick={() => {
-                            navigator.clipboard.writeText(address);
+                            navigator.clipboard.writeText(address).catch(() => undefined);
                             setOpen(false);
                         }}
                         className="block w-full border-0 px-3 py-2 text-left hover:text-[color:var(--color-accent)]"
                     >
                         Copy address
+                    </button>
+                    <button
+                        type="button"
+                        role="menuitem"
+                        onClick={() => {
+                            setOpen(false);
+                            navigate("/account");
+                        }}
+                        className="block w-full border-0 px-3 py-2 text-left hover:text-[color:var(--color-accent)]"
+                    >
+                        Account
                     </button>
                     <button
                         type="button"

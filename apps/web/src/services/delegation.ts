@@ -4,7 +4,9 @@ import {
     type Implementation,
     type MetaMaskSmartAccount,
 } from "@metamask/smart-accounts-kit";
-import {bytesToHex, type Hex} from "viem";
+import {bytesToHex, parseEther, type Hex} from "viem";
+
+import {composeAndStakeCaveats} from "../lib/caveat-builder";
 
 /**
  * Build + sign ARP delegations.
@@ -24,8 +26,7 @@ import {bytesToHex, type Hex} from "viem";
  */
 
 /** `ROOT_AUTHORITY` per the Delegation Framework — top-level (no parent). */
-const ROOT_AUTHORITY: Hex =
-    "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff";
+const ROOT_AUTHORITY: Hex = "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff";
 
 const ZERO_SALT: Hex = `0x${"00".repeat(32)}`;
 
@@ -81,16 +82,32 @@ export async function signDelegationAs<TImpl extends Implementation>(params: {
 }
 
 /**
- * Serialize a `Delegation` to a JSON-safe string. Useful for localStorage,
- * postMessage, or off-chain transport. `bigint` is not handled because
- * the canonical `Delegation` struct uses `Hex` for `salt` (no bigints).
+ * The cap typed into `/account`'s form, in tTRUST, as wei — or why it is not one. Zero is refused:
+ * a zero cap signs a delegation that can never spend, which reads as a guard rail and is none.
  */
-export function serializeDelegation(delegation: Delegation): string {
-    return JSON.stringify(delegation);
+export function parseCapInput(text: string): {cap: bigint} | {error: string} {
+    const trimmed = text.trim();
+    if (!/^\d+(\.\d{1,18})?$/.test(trimmed)) return {error: "Cap must be a tTRUST amount"};
+    const cap = parseEther(trimmed);
+    return cap === 0n ? {error: "Cap must be above 0"} : {cap};
 }
 
-export function deserializeDelegation(serialized: string): Delegation {
-    // Trusted: writers are app-controlled; runtime validation would be
-    // theatre — if a corrupted blob reaches us, downstream redeem will revert.
-    return JSON.parse(serialized) as Delegation;
+/**
+ * The unsigned delegation `/account` signs: the operator's Smart Account lets `delegate` call the
+ * MultiVault's three composing methods, under a cumulative cap per rolling period
+ * (`composeAndStakeCaveats`). It was `/rig` step 4, and it is the only UI that builds one.
+ */
+export function stakeDelegation(params: {
+    delegator: Hex;
+    delegate: Hex;
+    cap: bigint;
+    periodSeconds: bigint;
+    salt?: Hex;
+}): Omit<Delegation, "signature"> {
+    return buildDelegation({
+        delegator: params.delegator,
+        delegate: params.delegate,
+        caveats: composeAndStakeCaveats({cap: params.cap, periodSeconds: params.periodSeconds}),
+        salt: params.salt ?? randomSalt(),
+    });
 }
