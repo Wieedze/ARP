@@ -54,9 +54,19 @@ testnet amendment):
    is the replay this item exists to stop. The cost the other way is a proof refused that did not
    in fact spend; the info route prints the pending count for the operator to reconcile. A
    reverted row is not spent, because the chain returned the value.
-3. **The agent's approval is `DEPOSIT` only, never `BOTH`.** `BOTH` would also let the sponsor redeem
-   the agent's shares to any receiver (`_isApprovedToRedeem`). The agent owns the position because
+3. **The agent's approval is `DEPOSIT` only, never `BOTH`.** ~~`BOTH` would also let the sponsor redeem
+   the agent's shares to any receiver (`_isApprovedToRedeem`).~~ The agent owns the position because
    only the agent can leave it.
+
+   **Corrected 2026-11-02** (task 46c's `intuition-integrator` review, against
+   `0xIntuition/intuition-contracts-v2` `src/protocol/MultiVault.sol` on main at `94bddae`): the
+   struck reason is wrong. A redemption burns the **receiver's** shares and sends the assets to that
+   same receiver (`_processRedeem` → `_updateVaultOnRedeem(receiver, …)` → `_burn`, then
+   `sendValue(payable(receiver), …)`), and `_isApprovedToRedeem` checks `approvals[receiver][sender]`.
+   So a sponsor holding `REDEMPTION` approval could not send the agent's TRUST anywhere else. What it
+   could do is **close the agent's position against the agent's will**, the TRUST going back to the
+   agent. The decision stands for that reason: only the agent can leave its position. This was read
+   from the GitHub source, not checked against the deployed bytecode.
 4. **A hire receipt counts only when its signer is the agent it names.** `hire-receipt.ts` leaves
    that read to the verifier. The service reads the registry: the receipt's `agentRegistry` must be
    one the service accepts, `agentId` must exist in it, and the signer must be its holder or its

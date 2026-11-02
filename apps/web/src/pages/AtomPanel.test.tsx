@@ -627,11 +627,13 @@ describe("the two writes", () => {
             route: {path: "/atom/:atomId", at: `/atom/${ATOM}`},
         });
         await waitFor(() =>
-            expect(screen.getByText(/declaring a use is not open on/i)).toBeInTheDocument(),
+            expect(screen.getByText(/declaring a use · not on/i)).toBeInTheDocument(),
         );
+        // The instruction is a control now, not a sentence (task 46).
+        expect(screen.getByRole("button", {name: "Switch to testnet"})).toBeInTheDocument();
         expect(screen.queryByLabelText(/your agent/i)).not.toBeInTheDocument();
         for (const node of container.querySelectorAll("h1, h2, h3")) {
-            expect(node.textContent ?? "").not.toMatch(/not open/i);
+            expect(node.textContent ?? "").not.toMatch(/not on/i);
         }
     });
 

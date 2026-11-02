@@ -1,0 +1,84 @@
+# Task 46 — The redesign from references: one page at a time, our modules kept
+
+**Status:** 46a, 46b and 46d **built** 2026-11-02. The user approved the two shared layouts the same
+day (list pages follow `/tools`, detail pages follow the skill page) and ADR `0104`. This branch is
+rebased on `dev` with task 47 (plain words) in it. 46e built; 46c built and verified (variant A, Yours / Everyone tabs, post-mortem 41); 46f dropped.
+**ADR:** `0104` (detail pages put the facts on the right). Each ui.md rule a page relaxes gets one.
+**Rules:** `ui.md`, `code.md`, `claims.md`, `workflow.md`.
+**Reviewers:** `ui-reviewer`, then `task-verifier`.
+**Required skills:** none beyond the rules.
+
+---
+
+## 1. Why
+
+The user took a Mobbin subscription on 2026-11-02 to clean the site up from proven layouts, page by
+page, without losing what makes it ARP. The proposals, with a capture of each page as it stood and
+the Mobbin references behind each one, were published to the user that day.
+
+## 2. The user's decisions (2026-11-02)
+
+| Question | Decision |
+| --- | --- |
+| Firm, whatever a reference does | no explanatory sentence in the UI; no mouse-reactive effect; the Sigil with no container; ADR `0057`'s fonts and colours; one accent |
+| Also firm, said this session | **our custom modules stay**: `ClaimField` with its circles and loupe, `Sigil` / `AtomSigil`, `SourceField`, `RingLoader`. A reference changes the layout around them, never them: _« je veux quand même garder mes trucs custom, mes couleurs et tout »_ |
+| Negotiable, one ADR each | dense 15+ row lists, the two-column detail view, borders-not-shadows, the anti-template list |
+| Order | `/tools` first |
+| `/tools` | variant A of five, without its two parts that reversed earlier decisions (below) |
+| The two shared layouts, and the agent page's facts on the right | **yes** ("oui"), on the mockup page "ARP — une grammaire, toutes les pages": list pages follow `/tools`, detail pages follow the skill page. ADR `0104` |
+| `/register` | the two-tile mockup on that same page. Built first because task 47 does not touch `Register.tsx`: _« ok fait la »_ |
+| The line under the tool URL field ("The scheme, `www.`, a trailing slash and a fragment are normalised away…") | **remove it**: _« on enlève »_. **Done** after task 47 was rebased under this branch |
+| `/agents` (46e) | **do it**: the id lookup inside the search, and an empty Support cell when nobody supports |
+| The giant `ARP` footer wordmark (46f) | **keep it**: _« le arp du pied de page je l'adore »_. 46f is dropped |
+| `/activity` (46c) | **not one table yet**. The user is unsure the page should show the connected wallet's profits, and wants a clear visual line between the activity of *our* agents and tools and the global activity. Mockups first |
+| `/activity` mockups | **variant A**, two tabs Yours / Everyone: _« le recommandé c'est le mieux »_ |
+| The agent page on a phone | **Identity before the tabs** (_« avant »_). Desktop unchanged |
+| The mainnet "Declaring a use is not open…" sentence | **treat it on all three pages** (_« oui »_): a label and a "Switch to testnet" button in `DeclareUse` |
+| Publishing | **a PR** to `dev` (_« ouvre une PR »_) |
+
+## 3. 46a — `/tools` pages its list (built)
+
+It rendered every row at once: 662 skills on testnet 13579, a page 54,915px tall at 1440px wide,
+measured in a headless browser on 2026-11-02. `/agents` already paged by 25.
+
+- `pageOfTools` and `TOOL_PAGE_SIZE = 25` in `apps/web/src/services/tool-catalog.ts`. Pure, clamps
+  an offset the list shrank under to its last page.
+- `apps/web/src/pages/ToolCatalog.tsx` pages the ranked list. Changing the order, the index or the
+  domain filter returns to the first page.
+- The header's "In the list" box is gone. The pager's `1–25 of N` is the same count: what is shown
+  after the index and the domain filter.
+
+**Left out of variant A, on purpose.** A smaller page title reverses the user's 2026-10-27 call that
+put display type back at 88px (`index.css`, the comment on `--text-display`). A `—` in an empty
+cell reverses the decision written in `ToolCatalogList.tsx` that a zero is blanked.
+
+**Done** 2026-11-02, `8f20ce0`. ui-reviewer PASS, task-verifier PASS, post-mortem `.claude/learning/36-the-redesign-from-references.md`.
+
+**Tests.** `pageOfTools`, 4 in `services/__tests__/tool-rank.test.ts`. The page, 4 in
+`pages/ToolCatalog.test.tsx`: 25 rows and stepping, and the return to page 1 on order, index and
+domain. With the three resets removed, 3 of the 4 fail.
+
+## 4. Proposed, and built where marked
+
+A row is built only after the user has chosen its mockup (§2).
+
+| | Page | Proposal | Rules touched |
+| --- | --- | --- | --- |
+| 46b | `/agent/:chainId/:tokenId` | **built** `687d09b`, post-mortem 39: the skill page's layout. Eyebrow, sigil and name; the description and the tabs on the left, an Identity card on the right; the market full width, the declaration card, then Relations with `ClaimField`. The Declarations tab became that Relations block. Opens on the first tab with rows (`initialSectionOf`, 4 tests). The "Graph read from" line is gone; the CAIP-19 shows once. **Deferred:** the mainnet declare sentence lives in `DeclareUse`, shared with the skill and atom pages and asserted in `AtomPanel.test.tsx`, so it changes on all three at once or not at all, which is the user's call | none |
+| | | facts in cards on the right, like the skill page | two-column detail view, **amended** by ADR `0104` |
+| 46c | `/activity` | ~~one table with chips instead of three stacked blocks~~ reopened by the user (§2): separate *ours* from *everyone's*, and decide whether the wallet's profits belong here. **Variant A chosen** (§2) and **built** 2026-11-02: `DisplayTabs` Yours / Everyone (shared with `/tools`), Everyone is the public table with All / Declared / Supported / Withdrawn, Yours is the positions, the public rows the wallet signed or holds (`isOwnFact`, which reads `receiver_id` too, ADR `0094`), and the local runtime. The timeline hides when empty. The user approved it in the browser (« ok c'est bon »). Commit `2f4c63c` plus round-2 fixes (uncommitted at verification): counts unknown while the read is out, empty states say "among the latest public rows". `ui-reviewer` FAIL then PASS on round 2, `intuition-integrator` PASS on `receiver_id`. Its review corrected ADR `0096` item 3 and `sponsor/approval.ts`. task-verifier PASS on round 2, post-mortem 41 | none |
+| 46d | `/register` | **built** `80e7467`, post-mortem 37 (`Choice` in `YourAgent.tsx` lost its last outside importer; its `export` is dropped): two choice tiles, each with a mono line of what it needs (`ERC-8004 identity · wallet`, `URL · wallet`). No symbol: a Sigil comes from chain data. `pages/Register.test.tsx`, 2 tests | none |
+| 46e | `/agents` | **built** `4fdb279`, post-mortem 40: the search opens an agent when given `chain/token` or a bare token on Base (`agentRefOf`, 5 tests), and the "Or open one by id" section is gone. The Support cell is empty when nobody holds a position (`isUnsupported`, 1 test), like a zero on `/tools`; an unreported market still reads "—". `pages/AgentDirectory.test.tsx`, 4 tests: an id navigates, a word filters, the empty cell says "no support" to a screen reader | none |
+| | | filter chips | new feature, scope |
+| 46f | the shell | ~~the giant footer wordmark on `/` only~~ **dropped**: the user keeps it everywhere | — |
+
+## 5. Do not do in this task
+
+- Touch `ClaimField`, the Sigils, `SourceField` or `RingLoader`.
+- Start a page the user has not chosen a mockup for.
+- Relax a ui.md rule without its ADR and its amendment.
+
+## 6. Evidence ladder
+
+UI work serves no tier directly: it makes the **staked** tier easier to read and reach. A paged
+`/tools` lets a reader get to the tools with stake behind them. It does not move ARP up the ladder.

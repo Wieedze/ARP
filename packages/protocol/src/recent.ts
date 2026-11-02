@@ -146,6 +146,12 @@ export type RecentStake = {
     object: {atomId: string; label: string | null};
     /** Who signed it. */
     account: string | null;
+    /**
+     * Whose position it is. Not always the signer: ARP's sponsoring service is built to sign a
+     * deposit whose position is the agent operator's (ADR `0094`), so "is this mine" asks this field
+     * too. The service has not run yet (`.claude/STATE.md`, task 40), so today the two are equal.
+     */
+    receiver: string | null;
     /** In wei: after fees for a deposit, what came back for a redemption. */
     assets: bigint | null;
 };
@@ -211,6 +217,7 @@ function readStakes(rows: unknown, kind: RecentStake["kind"], assetsField: strin
             subject: {atomId: subjectId, label: readString(subject, "label")},
             object: {atomId: objectId, label: readString(object, "label")},
             account: readString(row, "sender_id"),
+            receiver: readString(row, "receiver_id"),
             assets: readBigInt(row, assetsField),
         });
     }

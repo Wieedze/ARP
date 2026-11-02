@@ -1,4 +1,4 @@
-import {screen, waitFor, within} from "@testing-library/react";
+import {fireEvent, screen, waitFor, within} from "@testing-library/react";
 import {describe, expect, it} from "vitest";
 
 import {ActivityPage} from "./ActivityPage";
@@ -10,6 +10,8 @@ import {renderWithProviders} from "../test/render";
 const SKILL = `0x${"c".repeat(64)}`;
 const NOTHING: ChainReads = {fetchRecent: async () => [], fetchStakes: async () => []};
 const HASH = `0x${"e".repeat(64)}`;
+// The local runtime and the positions are the reader's own, so they live under Yours (task 46c).
+const YOURS = {path: "/activity", at: "/activity?view=yours"};
 const LATER = `0x${"f".repeat(64)}`;
 
 function feedWith(events: unknown[]) {
@@ -83,7 +85,7 @@ describe("the activity page", () => {
                 },
             },
         ]);
-        renderWithProviders(<ActivityPage feed={feed} reads={NOTHING} />);
+        renderWithProviders(<ActivityPage feed={feed} reads={NOTHING} />, {route: YOURS});
         deliver();
 
         const skill = (await screen.findAllByText("brainstorming"))[0]!.closest("tr")!;
@@ -108,7 +110,7 @@ describe("the activity page", () => {
             },
             readReceipt: async () => null,
         });
-        renderWithProviders(<ActivityPage feed={feed} reads={NOTHING} />);
+        renderWithProviders(<ActivityPage feed={feed} reads={NOTHING} />, {route: YOURS});
         expect(screen.getByText(/arp-session-log --serve/)).toBeTruthy();
         expect(screen.getByText("No feed configured")).toBeTruthy();
     });
@@ -121,7 +123,7 @@ describe("the activity page", () => {
             },
             readReceipt: async () => null,
         });
-        renderWithProviders(<ActivityPage feed={feed} reads={NOTHING} />);
+        renderWithProviders(<ActivityPage feed={feed} reads={NOTHING} />, {route: YOURS});
         expect(screen.getByRole("heading", {name: "Your support"})).toBeTruthy();
         expect(screen.getByText("Connect a wallet to see what it holds.")).toBeTruthy();
     });
@@ -157,6 +159,7 @@ describe("the activity page", () => {
                     subject: end("a8", "Agent 13579:8"),
                     object: end("t1", "writing-plans"),
                     account: "0xB86F5f4E338eCEEC5DD095f48acF764465587FCF",
+                    receiver: "0xB86F5f4E338eCEEC5DD095f48acF764465587FCF",
                     assets: 2000000000000000n,
                 },
                 {
@@ -169,6 +172,7 @@ describe("the activity page", () => {
                     subject: end("a8", "Agent 13579:8"),
                     object: end("t1", "writing-plans"),
                     account: "0xB86F5f4E338eCEEC5DD095f48acF764465587FCF",
+                    receiver: "0xB86F5f4E338eCEEC5DD095f48acF764465587FCF",
                     assets: 990000000000000n,
                 },
             ],
@@ -230,6 +234,70 @@ describe("the activity page", () => {
         });
         renderWithProviders(<ActivityPage feed={feed} reads={NOTHING} />);
         expect(await screen.findByText(/Nothing declared on/)).toBeTruthy();
+    });
+});
+
+describe("yours and everyone (task 46c)", () => {
+    const end = (atomId: string, label: string) => ({atomId, label});
+    const reads: ChainReads = {
+        fetchRecent: async () => [
+            {
+                tripleId: "claim-1",
+                at: "2026-10-30T13:17:10+00:00",
+                txHash: HASH,
+                subject: end("a8", "Agent 13579:8"),
+                object: end("t1", "writing-plans"),
+                assets: null,
+                positions: 1,
+            },
+        ],
+        fetchStakes: async () => [
+            {
+                id: `${LATER}-2`,
+                kind: "deposit",
+                at: "2026-10-30T13:17:27+00:00",
+                txHash: LATER,
+                tripleId: "claim-1",
+                subject: end("a8", "Agent 13579:8"),
+                object: end("t1", "writing-plans"),
+                account: "0xB86F5f4E338eCEEC5DD095f48acF764465587FCF",
+                receiver: "0xB86F5f4E338eCEEC5DD095f48acF764465587FCF",
+                assets: 2000000000000000n,
+            },
+        ],
+    };
+    const view = (name: string) => screen.getByRole("button", {name: new RegExp(`^${name}`)});
+
+    it("opens on everyone without a wallet, with nothing of the reader's own on it", async () => {
+        renderWithProviders(<ActivityPage feed={quietFeed()} reads={reads} />);
+        await screen.findByRole("table", {name: /every agent/i});
+        expect(view("Everyone")).toHaveAttribute("aria-pressed", "true");
+        expect(view("Yours")).toHaveAttribute("aria-pressed", "false");
+        expect(screen.queryByRole("heading", {name: "Your support"})).toBeNull();
+        expect(screen.queryByText(/This machine/)).toBeNull();
+    });
+
+    it("asks for a wallet once under yours, beside the positions and the local runtime", async () => {
+        renderWithProviders(<ActivityPage feed={quietFeed()} reads={reads} />);
+        await screen.findByRole("table", {name: /every agent/i});
+        fireEvent.click(view("Yours"));
+        expect(view("Yours")).toHaveAttribute("aria-pressed", "true");
+        // Asked once, by the positions: the public part waits for a wallet rather than repeat it.
+        expect(screen.getAllByText(/Connect a wallet/)).toHaveLength(1);
+        expect(screen.getByRole("heading", {name: "Your support"})).toBeTruthy();
+        expect(screen.getByText(/This machine/)).toBeTruthy();
+        expect(screen.queryByRole("table", {name: /public/i})).toBeNull();
+    });
+
+    it("narrows the public table to one kind", async () => {
+        renderWithProviders(<ActivityPage feed={quietFeed()} reads={reads} />);
+        const table = await screen.findByRole("table", {name: /every agent/i});
+        expect(within(table).getAllByRole("row").slice(1)).toHaveLength(2);
+        fireEvent.click(screen.getByRole("button", {name: "Supported"}));
+        const narrowed = screen.getByRole("table", {name: /every agent/i});
+        expect(within(narrowed).getAllByRole("row").slice(1)).toHaveLength(1);
+        fireEvent.click(screen.getByRole("button", {name: "Withdrawn"}));
+        expect(screen.getByText("None of this kind among the latest public rows.")).toBeTruthy();
     });
 });
 

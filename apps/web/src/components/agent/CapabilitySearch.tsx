@@ -68,9 +68,9 @@ export function CapabilityFilter({
                     type="search"
                     value={value}
                     onChange={(event) => onChange(event.target.value)}
-                    placeholder="What it says it can do"
-                    aria-label="Filter agents by declared capability"
-                    className="h-9 w-[min(16rem,100%)] rounded-[var(--radius-control)] border border-[color:var(--color-rule)] bg-[color:var(--color-bg)] px-3 font-mono text-[length:var(--text-body-sm)]"
+                    placeholder="What it can do, or 8453/2340"
+                    aria-label="Filter agents by declared capability, or open one by chain/token id"
+                    className="h-9 w-[min(19rem,100%)] rounded-[var(--radius-control)] border border-[color:var(--color-rule)] bg-[color:var(--color-bg)] px-3 font-mono text-[length:var(--text-body-sm)]"
                 />
                 <button
                     type="submit"

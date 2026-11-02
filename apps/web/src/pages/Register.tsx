@@ -2,7 +2,6 @@ import {lazy, Suspense} from "react";
 import {useSearchParams} from "react-router-dom";
 
 import {PageLoading} from "../components/brand/PageLoading";
-import {Choice} from "./YourAgent";
 
 const YourAgent = lazy(() => import("./YourAgent").then((module) => ({default: module.YourAgent})));
 const ToolRegister = lazy(() =>
@@ -40,13 +39,19 @@ export function Register() {
                 <legend className="text-[length:var(--text-body)] font-medium">
                     What are you registering?
                 </legend>
-                <div className="mt-4 flex flex-wrap gap-3">
-                    <Choice selected={what === "agent"} onClick={() => choose("agent")}>
-                        An agent
-                    </Choice>
-                    <Choice selected={what === "tool"} onClick={() => choose("tool")}>
-                        A tool
-                    </Choice>
+                <div className="mt-4 grid max-w-[40rem] gap-4 sm:grid-cols-2">
+                    <Tile
+                        name="An agent"
+                        needs="ERC-8004 identity · wallet"
+                        selected={what === "agent"}
+                        onClick={() => choose("agent")}
+                    />
+                    <Tile
+                        name="A tool"
+                        needs="URL · wallet"
+                        selected={what === "tool"}
+                        onClick={() => choose("tool")}
+                    />
                 </div>
             </fieldset>
 
@@ -62,5 +67,49 @@ export function Register() {
                 </div>
             ) : null}
         </section>
+    );
+}
+
+/**
+ * One of the two choices, as a tile rather than a small button (task 46d, from the Mobbin references
+ * for a "what are you creating" step). The mono line is what the branch asks for, a fact and not a
+ * sentence (`rules/ui.md`). "ERC-8004 identity" and not "id": the agent branch mints one for an agent
+ * that has none, so having it is not a prerequisite.
+ *
+ * No symbol on the tile. A Sigil is generated from chain data and never drawn by hand, and there is
+ * no agent here yet to generate one from.
+ */
+function Tile({
+    name,
+    needs,
+    selected,
+    onClick,
+}: {
+    name: string;
+    needs: string;
+    selected: boolean;
+    onClick: () => void;
+}) {
+    return (
+        <button
+            type="button"
+            aria-pressed={selected}
+            onClick={onClick}
+            // Banged: `index.css`'s unlayered `button {}` sets border, background and radius, and
+            // `button:focus-visible` sets the radius again, and both beat any `@layer utilities`
+            // rule. Colour is not banged because it sits on the spans, which neither rule touches.
+            className={`flex min-h-36 flex-col items-start gap-6 rounded-[var(--radius-card)]! p-5 text-left ${
+                selected
+                    ? "border-[color:var(--color-accent)]! bg-[color:var(--color-raised)]!"
+                    : "border-[color:var(--color-rule-strong)]! bg-transparent! hover:bg-[color:var(--color-surface-hover)]!"
+            }`}
+        >
+            <span className="type-face text-[28px] leading-none text-[color:var(--color-fg)]">
+                {name}
+            </span>
+            <span className="mt-auto font-mono text-[length:var(--text-label)] uppercase tracking-[0.08em] text-[color:var(--color-steel)]">
+                {needs}
+            </span>
+        </button>
     );
 }

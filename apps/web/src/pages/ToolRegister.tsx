@@ -129,7 +129,6 @@ export function ToolRegister({heading = true}: {heading?: boolean} = {}) {
                         autoCapitalize="off"
                         autoCorrect="off"
                         inputMode="url"
-                        aria-describedby={`${fieldId}-hint`}
                         className="min-w-0 flex-1 bg-transparent border border-[color:var(--color-rule-strong)] px-3 py-2 font-mono text-[length:var(--text-body-sm)]"
                     />
                     <button
@@ -141,16 +140,6 @@ export function ToolRegister({heading = true}: {heading?: boolean} = {}) {
                         {status === "reading" ? "Reading the chain…" : "Look it up"}
                     </button>
                 </div>
-                <p
-                    id={`${fieldId}-hint`}
-                    className="mt-2 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]"
-                >
-                    The scheme, <span className="font-mono">www.</span>, a trailing slash and a
-                    fragment are normalised away.{" "}
-                    <strong className="font-medium">The path&rsquo;s case is not</strong> —{" "}
-                    <span className="font-mono">/Crytic</span> and{" "}
-                    <span className="font-mono">/crytic</span> are two different markets.
-                </p>
 
                 {error !== null ? (
                     <p
