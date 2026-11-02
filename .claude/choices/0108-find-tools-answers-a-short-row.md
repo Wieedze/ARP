@@ -57,4 +57,4 @@ not the tool, which keeps it clear of ADR `0046` (no score).
 ## References
 
 - Related task: `docs/tasks/49-lean-search.md`, `docs/tasks/45-discovery-without-a-command.md` (45c)
-- Related ADR: `0046`, `0045`, `0102`
+- Related ADR: `0046`, `0045` (as amended by `0092`), `0102`

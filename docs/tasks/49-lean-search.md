@@ -1,6 +1,7 @@
 # Task 49 — Lean search: more tools found, fewer tokens spent
 
-**Status:** **BUILT**, 2026-11-02, branch `feat/49-lean-search`. ADR `0108`.
+**Status:** **BUILT and verified**, 2026-11-02, branch `feat/49-lean-search` (`b850a45`, `f4ac9d4`). ADR `0108`.
+`task-verifier` PASS on the second pass, post-mortem `learning/43`.
 **Rules:** `code.md`, `security.md`, `claims.md`, `workflow.md`.
 **Reviewers:** `task-verifier`.
 
