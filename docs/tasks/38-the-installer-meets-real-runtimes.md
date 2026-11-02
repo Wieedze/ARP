@@ -2,7 +2,7 @@
 
 **Status:** **Part A done for Claude Code, 2026-11-02** (branch `feat/38-claude-code-demo`, built on top of task 49, PR #32). Captures from 2.1.316 are fixtures; `arp init` pins testnet; `.arp/` ignores itself; doctor
 requires claude ≥ 2.1.316; `packages --tarball` for testers. Post-mortem
-`.claude/learning/NN-the-installer-meets-real-runtimes.md`. Open: archive hosting, part D's
+`.claude/learning/44-the-installer-meets-real-runtimes.md`. Open: archive hosting, part D's
 decisions, parts B, C, E. Planned 2026-10-30. **Narrowed 2026-11-02 by the user: Claude Code
 first, for the demo; every other runtime waits for the port.** So part A runs for Claude Code only,
 parts B, C and E wait, and part D is needed only before something is published.
