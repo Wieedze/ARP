@@ -132,9 +132,14 @@ arp s'il n'y a pas un skill qui pourrait être utile »_.
 
 ### 45e — A free read path
 
-- Task 41 puts the index and the MCP tools behind HTTP 402 in USDC. **The three read tools in 45a
-  stay free on testnet 13579**, through a free tier or an exemption. Task 41 decides how. This task
-  only states the need.
+- Task 41 puts the index, the MCP tools and the content route behind HTTP 402 in USDC. **Four
+  things stay free on testnet 13579**, through a free tier or an exemption:
+  - the three read tools in 45a (`arp_find_tools`, `arp_tool_reputation`, `arp_find_agents`), plus
+    the skill search if 45b' adds one;
+  - `GET /content/:atomId` (`apps/mcp/src/server.ts:160`). 45b' fetches a skill through it, so if it
+    is paid, a tester's skill path hits a paywall.
+- Task 41 decides how. This task only states the need. Task 41's review checks all four before it
+  merges.
 
 ### 45f — Installing for the testers
 
