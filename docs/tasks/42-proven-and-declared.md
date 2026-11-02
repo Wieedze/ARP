@@ -1,6 +1,6 @@
 # Task 42 — Proven and declared: two figures, read from the sender of each deposit
 
-**Status:** **PLAN**, 2026-10-30. Not started. The read can ship before task 40; it shows zero
+**Status:** **BUILT and verified**, 2026-10-30 (`learning/29-proven-and-declared`, PASS), merged into `dev` (PR #15). Planned 2026-10-30. The read can ship before task 40; it shows zero
 _proven_ until the sponsoring service exists.
 **ADR:** `0094` §2.
 **Rules:** `code.md`, `ui.md`, `portability.md`, `claims.md`, `workflow.md`.

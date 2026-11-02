@@ -2,7 +2,7 @@
 
 **Generated** 2026-11-02 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-97 decisions. Newest last. `choices/README.md` says when to write one.
+98 decisions. Newest last. `choices/README.md` says when to write one.
 
 ## Not accepted
 
@@ -125,3 +125,4 @@ Read these before relying on them.
 | [0096](0096-the-sponsoring-service-sponsors-only-a-priced-proof.md) | 2026-10-30 | Proposed. **Amended 2026-10-30 for testnet**, after ADR `0094`'s status line recorded | The sponsoring service sponsors only a proof with a price, and keeps its record on disk |
 | [0098](0098-the-receipt-enforcer-verifies-the-v1-hire-receipt-as-signed.md) | 2026-10-30 | Accepted for point 9 (user decision, 2026-10-30, _« ok option 2 »_); the rest Proposed, reviewed by `contract-reviewer` (PASS, 2026-10-30); one decision open | The receipt enforcer verifies the v1 hire receipt as signed, and binds the term through its terms |
 | [0099](0099-sponsorship-is-a-match-paid-after-holding.md) | 2026-10-30 | Deferred (mainnet) | Sponsorship is a match on the agent's own deposit, paid after it has been held |
+| [0102](0102-x402-is-for-mainnet-testnet-is-free.md) | 2026-11-02 | Accepted | x402 is for mainnet; on testnet consulting ARP is free |

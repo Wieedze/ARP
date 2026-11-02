@@ -1,6 +1,8 @@
 # Task 41 — x402 in USDC: agents pay to consult ARP
 
-**Status:** **PLAN**, 2026-10-30. Not started.
+**Status:** **DEFERRED to the mainnet port**, 2026-11-02 (ADR `0102`, user decision). Not started.
+On testnet 13579 consulting ARP is free, so "Base Sepolia while on testnet" below no longer
+applies. Planned 2026-10-30.
 **ADR:** `0094` §4.
 **Rules:** `code.md`, `security.md`, `portability.md`, `claims.md`, `workflow.md`.
 **Reviewers:** `task-verifier`.
