@@ -320,6 +320,32 @@ ARP's own catalogue and from the chain for everything else. Every answer skills.
 a dated cache or database, so that a search still answers when skills.sh is down. The answer then
 says the result is from the copy and gives its date.
 
+**Write on first use, not up front** (the user, 2026-11-02, thinking about mainnet, where ARP has no
+skill on chain). A skill's atom id is a pure function of its URL (ADR `0054`), so a skills.sh result
+can carry its ARP id before anything is written. The first agent that declares using it causes the
+write: the skill's atom, the `uses` triple, and the deposit. Only skills somebody used get paid for,
+and each arrives with its first evidence of use.
+
+Writing everything up front would cost at least 2,000 TRUST in mainnet fees, which do not come
+back. That figure is the per-atom cost multiplied by a floor on the skill count:
+- **The per-atom cost** is `getAtomCost()` on 1155: 0.100000000001 TRUST, read 2026-10-19
+  (`rules/portability.md`). Re-read it before deciding.
+- **The skill count is at least 20,000.** The skills.sh sitemap's two skill files each hold exactly
+  10,000 entries, the size limit of a sitemap file, read 2026-11-02 (`curl -sL
+  https://www.skills.sh/sitemap-skills-1.xml | grep -o '<loc>' | wc -l`, and the same for
+  `-2`). `data/measurements/skills-installs-2026-10-29.json` reads 20,000 for the same reason. The
+  search API gives no total, so the true count is unknown.
+
+Three pieces are missing:
+1. **The sponsor does not create a skill's atom.** `/deposit` creates a missing `uses` triple but
+   answers 400 when the object atom does not exist.
+2. **The content server resolves an atom only through ARP's catalogue** (`contentIndexFor`). For a
+   skill found on skills.sh, it would have to take the URL.
+3. The search with a cache, above.
+
+On mainnet, who pays for the creation needs an ADR, together with the credits decision
+(`docs/tasks/50` §3b).
+
 **What it needs first.** It reverses one alternative ADR `0108` rejected: "a search that lived only
 on a server", which ADR `0092`'s amendment forbids as a capability. The cache is what keeps it a
 convenience rather than a capability, so it is part of the design, not an option. Decide in a new
