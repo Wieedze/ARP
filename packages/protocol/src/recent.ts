@@ -10,6 +10,7 @@ import {
     readRecord,
     readString,
     RECENT_QUERY,
+    RECENT_STAKES_QUERY,
 } from "@arp-protocol/graphql";
 import {INTUITION_MAINNET_GRAPHQL} from "./sources/intuition/index.js";
 import {SAME_AS, USES} from "./sources/intuition/terms.js";
@@ -126,6 +127,91 @@ export async function getRecentDeclarations(
             object: {atomId: objectId, label: readString(object, "label")},
             assets: positions > 0 ? readBigInt(term, "total_assets") : null,
             positions,
+        });
+    }
+    return out;
+}
+
+/** A deposit or a redemption on an identified agent's declaration. */
+export type RecentStake = {
+    /** The indexer's event id, `<tx>-<log index>`: stable across reads, unlike a position in the list. */
+    id: string;
+    kind: "deposit" | "redeem";
+    /** When it landed, ISO 8601 as the indexer reports it. */
+    at: string;
+    txHash: string | null;
+    /** The declaration it was made on. */
+    tripleId: string;
+    subject: {atomId: string; label: string | null};
+    object: {atomId: string; label: string | null};
+    /** Who signed it. */
+    account: string | null;
+    /** In wei: after fees for a deposit, what came back for a redemption. */
+    assets: bigint | null;
+};
+
+/**
+ * The most recent deposits and redemptions on agent declarations, merged newest first.
+ *
+ * `limit` bounds each of the two lists, so up to twice that many come back. Empty is an answer,
+ * as for `getRecentDeclarations`.
+ */
+export async function getRecentStakes(
+    config: Omit<RecentConfig, "curveId"> = {},
+): Promise<RecentStake[]> {
+    const transport =
+        config.transport ??
+        createGraphqlTransport({
+            url: config.graphqlUrl ?? INTUITION_MAINNET_GRAPHQL,
+            fetch: config.fetch ?? defaultFetch(),
+            timeoutMs: config.timeoutMs ?? DEFAULT_TIMEOUT_MS,
+        });
+
+    const data = await transport.request(RECENT_STAKES_QUERY, {
+        uses: USES,
+        sameAs: SAME_AS,
+        limit: config.limit ?? 20,
+    });
+
+    const out: RecentStake[] = [
+        ...readStakes(data["deposits"], "deposit", "assets_after_fees"),
+        ...readStakes(data["redemptions"], "redeem", "assets"),
+    ];
+    // ISO 8601 with one offset throughout, so the strings sort as the instants do.
+    return out.sort((a, b) => (a.at < b.at ? 1 : a.at > b.at ? -1 : 0));
+}
+
+function readStakes(rows: unknown, kind: RecentStake["kind"], assetsField: string): RecentStake[] {
+    if (!Array.isArray(rows)) return [];
+    const out: RecentStake[] = [];
+    for (const row of rows) {
+        if (!isRecord(row)) continue;
+        const id = readString(row, "id");
+        const at = readString(row, "created_at");
+        const triple = readRecord(readRecord(row, "term"), "triple");
+        const tripleId = triple === null ? null : readString(triple, "term_id");
+        const subject = readRecord(triple, "subject");
+        const object = readRecord(triple, "object");
+        const subjectId = subject === null ? null : readString(subject, "term_id");
+        const objectId = object === null ? null : readString(object, "term_id");
+        if (
+            id === null ||
+            at === null ||
+            tripleId === null ||
+            subjectId === null ||
+            objectId === null
+        )
+            continue;
+        out.push({
+            id,
+            kind,
+            at,
+            txHash: readString(row, "transaction_hash"),
+            tripleId,
+            subject: {atomId: subjectId, label: readString(subject, "label")},
+            object: {atomId: objectId, label: readString(object, "label")},
+            account: readString(row, "sender_id"),
+            assets: readBigInt(row, assetsField),
         });
     }
     return out;

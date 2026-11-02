@@ -4,6 +4,7 @@ import type {Hex} from "viem";
 import {Positions} from "../components/activity/Positions";
 import {useActivityTrace} from "../hooks/use-activity-trace";
 import {useAgentActivity} from "../hooks/use-agent-activity";
+import {useChainFacts, type ChainReads} from "../hooks/use-chain-facts";
 import {useTermLabels} from "../hooks/use-term-labels";
 import {useChainChoice} from "../lib/chain-choice";
 import {amountOf, explorerTxUrl} from "../lib/chain-amounts";
@@ -14,11 +15,17 @@ import {
     type TimelineRow,
     type TracedInvocation,
 } from "../services/agent-feed";
+import type {ChainFact} from "../services/chain-facts-view";
 
 /**
- * What the operator's agent triggered, and what it said about it on chain.
+ * What happens on ARP, live.
  *
- * Two parts. **Invocations** is one row per skill or MCP server the runtime called, joined on ids
+ * **On chain** is every identified agent's declarations and the stakes on them, read from the
+ * indexer and re-read every fifteen seconds. It is the same for every visitor and survives a
+ * reload.
+ *
+ * **This machine** is the local feed, kept as the demo of what happens before a declaration: one
+ * agent's runtime, relayed by `arp-session-log --serve`, in memory only. **Invocations** is one row per skill or MCP server the runtime called, joined on ids
  * to the declaration that names it and the stakes on that declaration (`traceInvocations`). Below
  * it, **the timeline** is every event once, as Time · Who · Off chain · On chain · Transaction
  * (`timelineRows`): each transaction names the invocation it answers, and that invocation lists it.
@@ -26,8 +33,9 @@ import {
  * Both are newest first: a demo watches the top of the page. Above them, **positions**: what the
  * connected wallet holds, which was `/profile` until the user removed it (`docs/tasks/35` §0).
  *
- * Everything here is relayed from the local feed, so it is a local program's record. The
- * explorer link on each hash is how a reader takes the chain's word instead.
+ * **This machine** is relayed from the local feed, so it is a local program's record; the explorer
+ * link on each hash is how a reader takes the chain's word instead. **On chain** above it is read
+ * from the indexer and needs no such step.
  */
 const FEED: Record<FeedStatus, string> = {
     off: "No feed configured",
@@ -43,6 +51,13 @@ function clock(at: string): string {
     if (Number.isNaN(d.getTime())) return "—";
     const pad = (n: number) => String(n).padStart(2, "0");
     return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+}
+
+/** `30 Oct 13:17:27`, local: the chain list spans days, so the clock alone is not enough. */
+function stamp(at: string): string {
+    const d = new Date(at);
+    if (Number.isNaN(d.getTime())) return "—";
+    return `${d.toLocaleDateString("en-GB", {day: "2-digit", month: "short"})} ${clock(at)}`;
 }
 
 function Fact({label, children}: {label: string; children: React.ReactNode}) {
@@ -115,6 +130,38 @@ function InvocationRow({row}: {row: TracedInvocation}) {
     );
 }
 
+const VERB: Record<ChainFact["kind"], string> = {
+    declared: "declared",
+    deposit: "staked",
+    redeem: "redeemed",
+};
+
+function ChainLine({fact, chainId}: {fact: ChainFact; chainId: number}) {
+    return (
+        <tr>
+            <td className={`${TD} whitespace-nowrap text-[color:var(--color-steel)] tabular-nums`}>
+                {stamp(fact.at)}
+            </td>
+            <td className={`${TD} text-[color:var(--color-fg)]`}>{fact.agent}</td>
+            <td className={`${TD} text-[color:var(--color-silver)]`}>
+                {VERB[fact.kind]}
+                {fact.assets === null ? null : (
+                    <span className="tabular-nums">{` ${amountOf(fact.assets, chainId)}`}</span>
+                )}
+                {fact.account === null ? null : (
+                    <span className="block text-[color:var(--color-steel)]" title={fact.account}>
+                        {`by ${fact.account.slice(0, 6)}…${fact.account.slice(-4)}`}
+                    </span>
+                )}
+            </td>
+            <td className={`${TD} break-all text-[color:var(--color-fg)]`}>{fact.tool}</td>
+            <td className={`${TD} text-right`}>
+                {fact.tx === null ? null : <TxLink chainId={chainId} hash={fact.tx} />}
+            </td>
+        </tr>
+    );
+}
+
 function TimelineLine({row}: {row: TimelineRow}) {
     return (
         <tr>
@@ -150,8 +197,9 @@ function TimelineLine({row}: {row: TimelineRow}) {
     );
 }
 
-export function ActivityPage({feed}: {feed?: AgentFeed} = {}) {
+export function ActivityPage({feed, reads}: {feed?: AgentFeed; reads?: ChainReads} = {}) {
     const chain = useChainChoice();
+    const onChain = useChainFacts(reads);
     const {events: all, status} = useAgentActivity(feed);
     // The toggle decides which chain's transactions are shown. Off-chain events belong to no chain
     // and stay on both.
@@ -188,15 +236,9 @@ export function ActivityPage({feed}: {feed?: AgentFeed} = {}) {
             <header className="grid items-end gap-x-8 gap-y-6 pt-14 pb-10 md:grid-cols-[minmax(0,1fr)_auto]">
                 <h1 className="type-display">Activity</h1>
                 <dl className="flex overflow-hidden rounded-[var(--radius-card)] border border-[color:var(--color-rule)]">
-                    <Fact label="Agent">
-                        <span className="text-[18px]">{agent}</span>
-                    </Fact>
                     <Fact label="Chain">
                         <span className="text-[18px]">{chain.label}</span>
                     </Fact>
-                    <Fact label="Invoked">{trace.length}</Fact>
-                    <Fact label="Declared">{declared}</Fact>
-                    <Fact label="Staked">{staked}</Fact>
                     <Fact label="Feed">
                         <span className="text-[18px]">{FEED[status]}</span>
                     </Fact>
@@ -206,9 +248,57 @@ export function ActivityPage({feed}: {feed?: AgentFeed} = {}) {
             {/* What the connected wallet holds, moved from `/profile` (`docs/tasks/35` §0). */}
             <Positions />
 
-            <h2 className={`${LABEL} mb-2`} id="activity-invocations">
-                Invocations
+            <h2 className={`${LABEL} mb-2`} id="activity-chain">
+                {onChain.status === "error" && onChain.facts.length > 0
+                    ? "On chain · every agent · incomplete, one read failed"
+                    : "On chain · every agent"}
             </h2>
+            {onChain.facts.length === 0 ? (
+                <p
+                    className={`${CELL} border-t border-[color:var(--color-rule)] py-3 text-[color:var(--color-steel)]`}
+                >
+                    {onChain.status === "pending"
+                        ? "Reading the indexer"
+                        : onChain.status === "error"
+                          ? "The indexer did not answer. It is asked again every 15 seconds."
+                          : `Nothing declared on ${chain.label} yet. Each declaration an identified agent writes appears here.`}
+                </p>
+            ) : (
+                <table aria-labelledby="activity-chain" className="w-full border-collapse">
+                    <thead>
+                        <tr>
+                            <th scope="col" className={`${TH} w-[9.5rem]`}>
+                                Time
+                            </th>
+                            <th scope="col" className={`${TH} w-[12rem]`}>
+                                Agent
+                            </th>
+                            <th scope="col" className={`${TH} w-[14rem]`}>
+                                Did
+                            </th>
+                            <th scope="col" className={TH}>
+                                On
+                            </th>
+                            <th scope="col" className={`${TH} w-[8rem] text-right`}>
+                                Transaction
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {onChain.facts.map((fact) => (
+                            <ChainLine key={fact.key} fact={fact} chainId={chain.chainId} />
+                        ))}
+                    </tbody>
+                </table>
+            )}
+
+            <h2 className={`${LABEL} mt-14 mb-2`}>
+                {`This machine · ${agent} · ${trace.length} invoked · ${declared} declared · ${staked} staked`}
+            </h2>
+
+            <h3 className={`${LABEL} mt-6 mb-2`} id="activity-invocations">
+                Invocations
+            </h3>
             {trace.length === 0 ? (
                 <p
                     className={`${CELL} border-t border-[color:var(--color-rule)] py-3 text-[color:var(--color-steel)]`}
@@ -249,9 +339,9 @@ export function ActivityPage({feed}: {feed?: AgentFeed} = {}) {
                 </table>
             )}
 
-            <h2 className={`${LABEL} mt-14 mb-2`} id="activity-timeline">
+            <h3 className={`${LABEL} mt-10 mb-2`} id="activity-timeline">
                 Timeline
-            </h2>
+            </h3>
             <table aria-labelledby="activity-timeline" className="w-full border-collapse">
                 <thead>
                     <tr>

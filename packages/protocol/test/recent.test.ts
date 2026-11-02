@@ -1,6 +1,6 @@
 import {describe, expect, it} from "vitest";
 
-import {getRecentDeclarations} from "../src/recent.js";
+import {getRecentDeclarations, getRecentStakes} from "../src/recent.js";
 import {SAME_AS, USES} from "../src/sources/intuition/terms.js";
 
 /** One `uses` edge, shaped the way the indexer returns it. */
@@ -105,5 +105,107 @@ describe("getRecentDeclarations", () => {
         // as "nothing yet" and never falls back to a sample.
         const {transport} = transportOf([]);
         await expect(getRecentDeclarations({transport})).resolves.toEqual([]);
+    });
+});
+
+function stake(params: {at: string; triple?: string | null; tx?: string; assets?: string}) {
+    return {
+        id: `${params.tx ?? `0x${"cd".repeat(32)}`}-${params.at}`,
+        created_at: params.at,
+        transaction_hash: params.tx ?? `0x${"cd".repeat(32)}`,
+        assets_after_fees: params.assets ?? "990000000000000",
+        assets: params.assets ?? "990000000000000",
+        sender_id: "0xB86F5f4E338eCEEC5DD095f48acF764465587FCF",
+        term: {
+            triple:
+                params.triple === null
+                    ? null
+                    : {
+                          term_id: params.triple ?? "claim-1",
+                          subject: {term_id: "agent-1", label: "Agent 13579:8"},
+                          object: {term_id: "tool-1", label: "writing-plans"},
+                      },
+        },
+    };
+}
+
+describe("getRecentStakes", () => {
+    it("asks with the same agent filter as the declarations", async () => {
+        const seen: Record<string, unknown>[] = [];
+        await getRecentStakes({
+            transport: {
+                async request(_query, variables) {
+                    seen.push(variables);
+                    return {deposits: [], redemptions: []};
+                },
+            },
+            limit: 7,
+        });
+        expect(seen[0]).toMatchObject({uses: USES, sameAs: SAME_AS, limit: 7});
+    });
+
+    it("asks the indexer to leave out deposits of zero, so the limit counts real ones", async () => {
+        let asked = "";
+        await getRecentStakes({
+            transport: {
+                async request(query) {
+                    asked = query;
+                    return {deposits: [], redemptions: []};
+                },
+            },
+        });
+        expect(asked).toContain('assets_after_fees: {_gt: "0"}');
+        // A counter term's `triple` is the claim it opposes: without this, against reads as for.
+        expect(asked.match(/type: \{_eq: "Triple"\}/g)).toHaveLength(2);
+    });
+
+    it("keys each row on the indexer's event id", async () => {
+        const rows = await getRecentStakes({
+            transport: {
+                async request() {
+                    return {
+                        deposits: [{...stake({at: "2026-10-30T13:00:00+00:00"}), id: "0xab-4"}],
+                        redemptions: [],
+                    };
+                },
+            },
+        });
+        expect(rows[0]?.id).toBe("0xab-4");
+    });
+
+    it("merges deposits and redemptions newest first, each with its own amount field", async () => {
+        const rows = await getRecentStakes({
+            transport: {
+                async request() {
+                    return {
+                        deposits: [stake({at: "2026-10-30T13:17:27+00:00", assets: "5"})],
+                        redemptions: [stake({at: "2026-10-30T14:00:00+00:00", assets: "3"})],
+                    };
+                },
+            },
+        });
+        expect(rows.map((row) => [row.kind, row.assets])).toEqual([
+            ["redeem", 3n],
+            ["deposit", 5n],
+        ]);
+        expect(rows[1]).toMatchObject({
+            tripleId: "claim-1",
+            subject: {label: "Agent 13579:8"},
+            object: {label: "writing-plans"},
+        });
+    });
+
+    it("drops a row whose term is not a triple", async () => {
+        const rows = await getRecentStakes({
+            transport: {
+                async request() {
+                    return {
+                        deposits: [stake({at: "2026-10-30T13:00:00+00:00", triple: null})],
+                        redemptions: [],
+                    };
+                },
+            },
+        });
+        expect(rows).toEqual([]);
     });
 });
