@@ -132,7 +132,7 @@ after; four defects found by reading the diffs, fixed:
 
 - ~~`task-verifier` on `f5d1c84`, `79ad7ea` and the fix above.~~ PASS, `learning/30`.
 - `/profile` into `/activity`, per task 35's split (`/activity` = what happened, positions
-  included). Done on `feat/35-account-page` (`components/activity/Positions.tsx`), PR #22 open, not
-  on `dev` yet.
+  included). ~~Not started.~~ Done in task 35 (`components/activity/Positions.tsx`), merged into
+  `dev` with PR #22 on 2026-11-02, above the chain section.
 - ~~The commits from `353df6d` to `79ad7ea` are not pushed.~~ On `origin/dev` since.
 
