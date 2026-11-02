@@ -22,6 +22,7 @@ export function WalletConnect() {
     const navigate = useNavigate();
 
     const [open, setOpen] = useState(false);
+    const [copyFailed, setCopyFailed] = useState(false);
     const wrapperRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -80,7 +81,10 @@ export function WalletConnect() {
         <div ref={wrapperRef} className="relative">
             <button
                 type="button"
-                onClick={() => setOpen((v) => !v)}
+                onClick={() => {
+                    setCopyFailed(false);
+                    setOpen((v) => !v);
+                }}
                 aria-haspopup="menu"
                 aria-expanded={open}
                 className="flex h-7 items-center gap-2 rounded-[var(--radius-control)] px-2.5 font-mono text-[11px]"
@@ -100,13 +104,25 @@ export function WalletConnect() {
                         type="button"
                         role="menuitem"
                         onClick={() => {
-                            navigator.clipboard.writeText(address).catch(() => undefined);
-                            setOpen(false);
+                            setCopyFailed(false);
+                            // The menu closes only once the address is on the clipboard; a refused
+                            // write, or no clipboard at all (insecure context), keeps it open.
+                            Promise.resolve()
+                                .then(() => navigator.clipboard.writeText(address))
+                                .then(
+                                    () => setOpen(false),
+                                    () => setCopyFailed(true),
+                                );
                         }}
                         className="block w-full border-0 px-3 py-2 text-left hover:text-[color:var(--color-accent)]"
                     >
                         Copy address
                     </button>
+                    {copyFailed ? (
+                        <p role="alert" className="px-3 pb-2 text-[color:var(--color-steel)]">
+                            Copy failed
+                        </p>
+                    ) : null}
                     <button
                         type="button"
                         role="menuitem"

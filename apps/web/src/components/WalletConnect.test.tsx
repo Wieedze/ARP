@@ -1,4 +1,4 @@
-import {fireEvent, render, screen} from "@testing-library/react";
+import {fireEvent, render, screen, waitFor} from "@testing-library/react";
 import {MemoryRouter, Route, Routes} from "react-router-dom";
 import {describe, expect, it, vi} from "vitest";
 
@@ -51,5 +51,23 @@ describe("the wallet menu", () => {
         renderMenu();
         fireEvent.click(screen.getByRole("menuitem", {name: "Disconnect"}));
         expect(disconnect).toHaveBeenCalledTimes(1);
+    });
+
+    it("closes the menu once the address is copied", async () => {
+        const writeText = vi.fn().mockResolvedValue(undefined);
+        Object.defineProperty(navigator, "clipboard", {value: {writeText}, configurable: true});
+        renderMenu();
+        fireEvent.click(screen.getByRole("menuitem", {name: "Copy address"}));
+        await waitFor(() => expect(screen.queryByRole("menu")).toBeNull());
+        expect(writeText).toHaveBeenCalledWith("0x000000000000000000000000000000000000c0DE");
+    });
+
+    it("keeps the menu open and says so when the copy is refused", async () => {
+        const writeText = vi.fn().mockRejectedValue(new Error("denied"));
+        Object.defineProperty(navigator, "clipboard", {value: {writeText}, configurable: true});
+        renderMenu();
+        fireEvent.click(screen.getByRole("menuitem", {name: "Copy address"}));
+        expect(await screen.findByRole("alert")).toHaveTextContent("Copy failed");
+        expect(screen.getByRole("menu")).toBeInTheDocument();
     });
 });
