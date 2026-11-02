@@ -2,7 +2,9 @@
 
 **Status:** **BUILT**, 2026-11-02. D1, D2 and D3 are decided (§3b) and recorded (ADRs `0109`,
 `0110`). The sponsor side is merged (PR #37). The extension is on `feat/50-extension`. The web mint
-follows the chain toggle. Walked end to end on 13579 twice (§6).
+follows the chain toggle. Walked end to end on 13579 twice (§6). **Verified** 2026-11-02:
+`task-verifier` PASS on the second pass, post-mortem `.claude/learning/48-desktop-walks-the-loop.md`.
+Still to merge: `feat/50-extension` (arp-7f) and `fix/50-verifier-punch` (arp-30).
 **Depends on:** task 49 (`feat/49-lean-search`): the Desktop startup fixes are in `b850a45`.
 **Owners:** session arp-7f (the extension, `apps/cli` and `apps/mcp`), session arp-30 (the web app,
 and this file).
@@ -172,5 +174,5 @@ compte … l'agent garde encore une fois les positions ».
 **The web mint row (§4), 2026-11-02, arp-30.** `/register?what=agent` mints on the chain the toggle
 says: ARP's registry on 13579 on testnet, Base's canonical registry on mainnet
 (`apps/web/src/services/identity-mint.ts`, `mintTargetFor`). The quote carries its chain, so a
-toggle flip between the quote and the signature cannot redirect the mint. 743 web tests pass, and
+toggle flip between the quote and the signature cannot redirect the mint. 744 web tests pass, and
 `tsc -b`, lint and `check:tokens` are clean over `apps/web/src`.
