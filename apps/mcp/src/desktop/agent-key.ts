@@ -7,9 +7,10 @@
  * returned. It signs two zero-value transactions on testnet 13579, `register()` and the MultiVault
  * approval, and two off-chain requests. Anything else is refused here, before a signature exists.
  */
-import { chmodSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
+
+import { arpHome, loadOrCreateKeyFile } from '@arp-protocol/core/node';
 
 import {
   createPublicClient,
@@ -21,27 +22,26 @@ import {
   type PublicClient,
   type TransactionReceipt,
 } from 'viem';
-import { generatePrivateKey, privateKeyToAccount, type PrivateKeyAccount } from 'viem/accounts';
+import { privateKeyToAccount, type PrivateKeyAccount } from 'viem/accounts';
 
 import { intuitionTestnet } from '@arp-protocol/core';
 
 export const DESKTOP_CHAIN_ID = 13579;
 
-/** Where the key lives: the home directory, never the working directory (Claude Desktop's cwd is system32). */
+/** Where the key lives: `ARP_HOME` or `~/.arp`, never the working directory (Claude Desktop's cwd is system32). */
 export function agentKeyPath(home: string = homedir()): string {
-  return join(home, '.arp', 'agent-key');
+  return join(arpHome(process.env, home), 'agent-key');
 }
 
-/** The agent's account, created silently the first time. */
-export function loadOrCreateAgentKey(path: string = agentKeyPath()): PrivateKeyAccount {
-  if (!existsSync(path)) {
-    mkdirSync(join(path, '..'), { recursive: true, mode: 0o700 });
-    writeFileSync(path, `${generatePrivateKey()}\n`, { mode: 0o600 });
-  }
-  chmodSync(path, 0o600);
-  const raw = readFileSync(path, 'utf8').trim();
-  if (!/^0x[0-9a-fA-F]{64}$/.test(raw)) throw new Error(`${path} does not hold a private key`);
-  return privateKeyToAccount(raw as Hex); // checked to be 32 bytes of hex on the line above
+/**
+ * The agent's account, created silently the first time. An existing key another user can read is
+ * refused, not chmodded: by then it may have been copied, and a quiet fix hides that (ADR `0116`).
+ */
+export function loadOrCreateAgentKey(
+  path: string = agentKeyPath(),
+  options: { platform?: NodeJS.Platform } = {},
+): PrivateKeyAccount {
+  return privateKeyToAccount(loadOrCreateKeyFile(path, options).key);
 }
 
 export type AllowedCall = { to: Address; data: Hex; value: bigint; chainId: number };

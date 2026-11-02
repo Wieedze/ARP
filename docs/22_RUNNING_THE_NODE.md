@@ -316,6 +316,13 @@ publishes its current signer at `GET /` so anyone can see which key they are bei
 `ARP_NO_RECEIPTS=1` runs with no key. The content route still serves bytes; what you lose is the
 corroboration.
 
+**Every key file follows one rule** (ADR `0116`): the receipt key, the sponsored mode's agent key,
+the node key and the sponsoring service's key are each refused, and the program stops, when anyone
+but their owner can read them — `chmod 600` and start again. A generated one is created 0600 in a
+0700 directory. Windows has no POSIX mode, so the check does not run there. The node's
+`AGENT_PRIVATE_KEY` and this server's `ARP_RECEIPT_KEY` are the two keys that may come from the
+environment instead; both are documented here and both are your choice.
+
 **`ARP_RECEIPT_KEY` is your own risk and the code cannot check it.** Nothing here can tell a funded
 key from an empty one — that would need a balance read on every chain it might hold value on — so
 it warns on stderr and carries on. Do not hand this process a key that holds funds. ADR `0080`

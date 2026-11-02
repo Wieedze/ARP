@@ -41,12 +41,12 @@
  *  through, because a cache of bytes is a mirror and a mirror is a different product with different
  *  obligations (`docs/tasks/31` §9).
  */
-import { chmodSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 
-import { stateFile } from '@arp-protocol/core/node';
+import { loadOrCreateKeyFile, stateFile } from '@arp-protocol/core/node';
 
-import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts';
+import { privateKeyToAccount } from 'viem/accounts';
 import type { Address, Hex } from 'viem';
 
 import { SKILL_CATALOGUES } from './data.js';
@@ -171,15 +171,14 @@ export function receiptSigner(): TypedDataSigner | null {
         'generated instead.',
     );
   } else if (existsSync(path)) {
-    key = readFileSync(path, 'utf8').trim() as Hex;
+    // Refused, not chmodded, when anyone but its owner can read it: the policy of every ARP key
+    // file (`readKeyFile`, ADR `0116`). It used to be read with no check at all.
+    key = loadOrCreateKeyFile(path).key;
     ignoreOwnDirectory(path);
   } else {
-    key = generatePrivateKey();
     try {
-      mkdirSync(dirname(path), { recursive: true });
+      key = loadOrCreateKeyFile(path).key;
       ignoreOwnDirectory(path);
-      writeFileSync(path, `${key}\n`, { mode: 0o600 });
-      chmodSync(path, 0o600);
     } catch (error) {
       // A client may start the server in a directory it cannot write: Claude Desktop on Windows
       // starts it in C:\Windows\system32, and the server died there before it answered (found

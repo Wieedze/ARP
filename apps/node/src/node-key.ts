@@ -10,20 +10,22 @@
  *  file is worth what that address holds. A hirer learns the address from the binding
  *  (`nodeAddress`), where before task 39 it was the registry's `agentWallet`.
  *
- *  `AGENT_PRIVATE_KEY`, when set, is used instead, which is what the node did before task 39. One
- *  key either way, so the key the handshake binds is the key that signs every receipt.
+ *  `AGENT_PRIVATE_KEY`, when set, is used instead, which is what the node did before task 39. It is
+ *  kept because `docs/22` documents it as supported; it is the one key in ARP's programs that may
+ *  come from the environment, and the file is the default. One key either way, so the key the
+ *  handshake binds is the key that signs every receipt.
  *
  *  **The file is refused if anyone but its owner can read it**, the rule `ssh` applies to a private
- *  key: a key another local user could copy is a key that can sign as this agent.
+ *  key: a key another local user could copy is a key that can sign as this agent. The policy is
+ *  `loadOrCreateKeyFile` in `@arp-protocol/core/node`, the same for every ARP key file (ADR `0116`).
  */
-import { chmodSync, existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
-import { dirname, join } from 'node:path';
+import { join } from 'node:path';
 
-import { arpHome } from '@arp-protocol/core/node';
+import { arpHome, loadOrCreateKeyFile } from '@arp-protocol/core/node';
 
 import { isHex, type Hex } from 'viem';
-import { generatePrivateKey, privateKeyToAccount, type PrivateKeyAccount } from 'viem/accounts';
+import { privateKeyToAccount, type PrivateKeyAccount } from 'viem/accounts';
 
 /** Reads `AGENT_PRIVATE_KEY` and `ARP_NODE_KEY_FILE`. `process.env` is one. */
 type Env = Readonly<Record<string, string | undefined>>;
@@ -54,20 +56,8 @@ export function loadOrCreateNodeKey(
   path: string,
   options: { generate?: () => Hex; platform?: NodeJS.Platform } = {},
 ): NodeKey {
-  const posix = (options.platform ?? process.platform) !== 'win32';
-  if (existsSync(path)) {
-    if (posix && (statSync(path).mode & 0o077) !== 0) {
-      throw new Error(`${path} is readable by other users; run \`chmod 600 ${path}\``);
-    }
-    const key = asPrivateKey(readFileSync(path, 'utf8'), path);
-    return { account: privateKeyToAccount(key), source: 'file', path, created: false };
-  }
-  const key = (options.generate ?? generatePrivateKey)();
-  mkdirSync(dirname(path), { recursive: true, mode: 0o700 });
-  // `flag: 'wx'` refuses to overwrite a file that appeared since the check above.
-  writeFileSync(path, `${key}\n`, { mode: 0o600, flag: 'wx' });
-  if (posix) chmodSync(path, 0o600);
-  return { account: privateKeyToAccount(key), source: 'file', path, created: true };
+  const { key, created } = loadOrCreateKeyFile(path, options);
+  return { account: privateKeyToAccount(key), source: 'file', path, created };
 }
 
 /** `AGENT_PRIVATE_KEY` if set, else the node key file. */

@@ -63,6 +63,13 @@ test('a key left in <cwd>/.arp by an older server stops it, and is not replaced'
   expect(receiptSigner()?.address).toBe(privateKeyToAccount(old).address);
 });
 
+test.skipIf(process.platform === 'win32')('a receipt key other users can read is refused', () => {
+  mkdirSync(state);
+  writeFileSync(join(state, 'receipt-key'), `${generatePrivateKey()}\n`);
+  chmodSync(join(state, 'receipt-key'), 0o644);
+  expect(() => receiptSigner()).toThrow(/must be 600/);
+});
+
 test('a key left by an older server gets its .gitignore on the next start', () => {
   receiptSigner();
   rmSync(join(state, '.gitignore'));

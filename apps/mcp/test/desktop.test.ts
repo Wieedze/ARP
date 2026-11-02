@@ -1,4 +1,4 @@
-import { mkdtempSync, readFileSync, rmSync, statSync } from 'node:fs';
+import { chmodSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -31,6 +31,14 @@ group('the agent key', () => {
     const first = loadOrCreateAgentKey(path);
     expect(statSync(path).mode & 0o777).toBe(0o600);
     expect(loadOrCreateAgentKey(path).address).toBe(first.address);
+  });
+
+  it('refuses a key file other users can read, and leaves its mode as it found it', () => {
+    const path = join(dir, 'agent-key');
+    writeFileSync(path, `0x${'12'.repeat(32)}\n`);
+    chmodSync(path, 0o644);
+    expect(() => loadOrCreateAgentKey(path, { platform: 'linux' })).toThrow(/must be 600/);
+    expect(statSync(path).mode & 0o777).toBe(0o644);
   });
 
   it('signs only register() and the approval of the sponsor, exactly, at zero value on 13579', () => {
