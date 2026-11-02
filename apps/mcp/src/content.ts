@@ -133,7 +133,12 @@ export function contentIndexFor(chainId: number): ReadonlyMap<string, string> {
  */
 function ignoreOwnDirectory(): void {
   const ignore = join(dirname(KEY_PATH), '.gitignore');
-  if (!existsSync(ignore)) writeFileSync(ignore, '*\n');
+  try {
+    if (!existsSync(ignore)) writeFileSync(ignore, '*\n');
+  } catch (error) {
+    // A directory the server cannot write must not stop it (see the key below); say so instead.
+    console.error(`${ignore} cannot be written (${String(error)}): keep .arp/ out of any commit.`);
+  }
 }
 
 export function receiptSigner(): TypedDataSigner | null {
