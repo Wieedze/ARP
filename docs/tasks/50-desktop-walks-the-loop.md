@@ -1,7 +1,7 @@
 # Task 50 — Claude Desktop walks the loop, and an outside user pays nothing
 
-**Status:** **PLAN**, 2026-11-02. Nothing built. Three decisions below are the user's, and each
-reopens a recorded one.
+**Status:** **PLAN**, 2026-11-02. Nothing built. D1, D2 and D3 are decided (§3b). The ADRs they
+call for are next, then the build once task 49 is merged.
 **Depends on:** task 49 (`feat/49-lean-search`): the Desktop startup fixes are in `b850a45`.
 **Owners:** session arp-7f (the extension, `apps/cli` and `apps/mcp`), session arp-30 (the web app,
 and this file).
@@ -52,6 +52,22 @@ through ARP, so it is not proposed here.
 | D1 | **The extension holds a local agent key.** It is used for the identity mint and for the off-chain signature of a receipt request. Every TRUST-bearing write is paid by the sponsor. | ADR `0038`: "no wallet client, no signer parameter, no private key and no send path anywhere in the package". An ADR would draw the line, for example a key for the agent's own identity and off-chain signatures, and never for value. |
 | D2 | **A content receipt is sponsored on testnet.** | ADR `0102`, consequences: "A content receipt is still never sponsored on testnet". ADR `0096` refuses it until a fetch has a price, and the price is task 41, deferred to mainnet. |
 | D3 | **The sponsoring service runs.** It needs a key file, a deployment and a budget. | `.claude/STATE.md` task 40: built and verified, "**Not running**: no key file, no deployment, no transaction sent". ADR `0092` gives the per-delegator and global daily limits. |
+
+## 3b. The user's answers (2026-11-02)
+
+| # | Answer |
+| --- | --- |
+| **The rule above all three** | **Abstract all of it**: « je veux que cette application soit pour des utilisateurs non web3 », then « je veux abstraire tout ça ». An outside user sees no wallet, no key, no TRUST and no signature, on testnet and later on mainnet. This extends task 45's « rien de web3 n'est visible pour l'opérateur » |
+| D1 | **Yes, abstracted.** The extension creates the agent's key silently. It signs the identity mint (with gas the sponsor sends once) and off-chain receipt requests, never a value-bearing write. The sponsor's deposits are positions held in the agent's name (`receiver`), which on testnet is tTRUST with no value |
+| D2 | **Yes, on testnet 13579 only**, within the sponsor's daily limits. Mainnet keeps ADR `0102` |
+| D3 | **Yes, locally first.** The treasury key comes from a file the agent never reads. It goes online later |
+
+**Open for the mainnet port, not decided:** how money enters without web3 showing. Either prepaid
+credits paid by card, with ARP's sponsor spending its own TRUST (simplest for the user; ARP holds
+prepaid euros, and the positions sit on the local key), or an invisible wallet (a passkey smart
+account funded by card, delegating a capped allowance to the agent key; ARP holds nothing, but
+there are more pieces). A delegation the user signs themselves is ruled out for this audience,
+since it is web3 in sight.
 
 And two already settled the same day:
 
