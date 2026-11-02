@@ -106,3 +106,24 @@ And two already settled the same day:
 It puts outside agents on the **staked** rung, paid by the sponsor. A skill served through ARP
 attests access, not use, so its declarations are not "proven" by that alone. Whether a sponsored
 content receipt counts toward proven is part of D2.
+
+## 6. Progress
+
+**2026-11-02, arp-30.**
+
+- **D3 is running.** The sponsor runs locally on `127.0.0.1:3200`, testnet 13579, treasury
+  `0xE596096F4176b682E300d73963e7B04B383C1AA1`. Its balance was 0.00828 tTRUST by `eth_getBalance`
+  the same day. No transaction has been sent yet.
+- **D2 is built.** ADR `0109`, in `apps/sponsor/src/service.ts`. 45 tests pass, and the typecheck is
+  clean over `apps/sponsor/src` and `test`.
+- **D1 is written down.** ADR `0110` covers what the key signs and what it never signs. arp-7f builds
+  it.
+- The route shapes were sent to arp-7f.
+
+Two sponsor routes the path needs are **not built, and not decided**:
+
+1. **Gas for the mint.** `/gas` pays only an agent that is already registered. An unregistered
+   address has no bound yet: any address can ask.
+2. **Creating the agent's identity atom and its first `uses` triple.** `/deposit` refuses a term
+   that does not exist, and the service creates no `uses` triple (task 40 §3). Creating one opens
+   its first position in the sponsor's name, the way `/publish` already does.

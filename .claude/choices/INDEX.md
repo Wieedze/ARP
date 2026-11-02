@@ -2,7 +2,7 @@
 
 **Generated** 2026-11-02 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-106 decisions. Newest last. `choices/README.md` says when to write one.
+108 decisions. Newest last. `choices/README.md` says when to write one.
 
 ## Not accepted
 
@@ -136,4 +136,6 @@ Read these before relying on them.
 | [0105](0105-the-app-opens-on-testnet.md) | 2026-11-02 | Accepted | The app opens on testnet |
 | [0106](0106-labels-are-at-least-11px.md) | 2026-11-02 | Accepted | Labels are at least 11px |
 | [0108](0108-find-tools-answers-a-short-row.md) | 2026-11-02 | Accepted | `arp_find_tools` answers a short row, by text, a page at a time |
+| [0109](0109-a-content-receipt-is-sponsored-on-testnet.md) | 2026-11-02 | Accepted | A content receipt is sponsored on testnet 13579 |
+| [0110](0110-the-desktop-extension-holds-a-local-agent-key.md) | 2026-11-02 | Accepted | The Desktop extension holds a local agent key, for identity and off-chain signatures |
 | [0111](0111-a-query-must-match-every-word.md) | 2026-11-02 | Accepted | A query must match every word, and an empty query answer suggests nothing |
