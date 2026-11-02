@@ -106,7 +106,7 @@ function InvocationRow({row}: {row: TracedInvocation}) {
             <td className={`${TD} text-[color:var(--color-silver)]`}>
                 {row.declaration === null ? (
                     <span className="text-[color:var(--color-steel)]">
-                        {row.ref === null ? "no atom" : "—"}
+                        {row.ref === null ? "not listed" : "—"}
                     </span>
                 ) : (
                     <TxLink chainId={row.declaration.chainId} hash={row.declaration.hash} />
@@ -132,8 +132,14 @@ function InvocationRow({row}: {row: TracedInvocation}) {
 
 const VERB: Record<ChainFact["kind"], string> = {
     declared: "declared",
-    deposit: "staked",
-    redeem: "redeemed",
+    deposit: "supported",
+    redeem: "withdrew",
+};
+
+/** A timeline consequence, in the operator's words; the row's `label` stays the feed's own value. */
+const CONSEQUENCE: Record<TimelineRow["consequences"][number]["label"], string> = {
+    declared: "declared",
+    staked: "supported",
 };
 
 function ChainLine({fact, chainId}: {fact: ChainFact; chainId: number}) {
@@ -184,7 +190,7 @@ function TimelineLine({row}: {row: TimelineRow}) {
                 ) : (
                     row.consequences.map((consequence, index) => (
                         <span key={`${consequence.label}-${index}`} className="mr-3 inline-block">
-                            {`${consequence.label} `}
+                            {`${CONSEQUENCE[consequence.label]} `}
                             <TxLink chainId={consequence.chainId} hash={consequence.hash} />
                         </span>
                     ))
@@ -250,8 +256,8 @@ export function ActivityPage({feed, reads}: {feed?: AgentFeed; reads?: ChainRead
 
             <h2 className={`${LABEL} mb-2`} id="activity-chain">
                 {onChain.status === "error" && onChain.facts.length > 0
-                    ? "On chain · every agent · incomplete, one read failed"
-                    : "On chain · every agent"}
+                    ? "Public · every agent · incomplete, one read failed"
+                    : "Public · every agent"}
             </h2>
             {onChain.facts.length === 0 ? (
                 <p
@@ -293,7 +299,7 @@ export function ActivityPage({feed, reads}: {feed?: AgentFeed; reads?: ChainRead
             )}
 
             <h2 className={`${LABEL} mt-14 mb-2`}>
-                {`This machine · ${agent} · ${trace.length} invoked · ${declared} declared · ${staked} staked`}
+                {`This machine · ${agent} · ${trace.length} invoked · ${declared} declared · ${staked} supported`}
             </h2>
 
             <h3 className={`${LABEL} mt-6 mb-2`} id="activity-invocations">
@@ -327,7 +333,7 @@ export function ActivityPage({feed, reads}: {feed?: AgentFeed; reads?: ChainRead
                                 Declared
                             </th>
                             <th scope="col" className={`${TH} w-[16rem]`}>
-                                Staked
+                                Supported
                             </th>
                         </tr>
                     </thead>
@@ -352,10 +358,10 @@ export function ActivityPage({feed, reads}: {feed?: AgentFeed; reads?: ChainRead
                             Who
                         </th>
                         <th scope="col" className={TH}>
-                            Off chain
+                            Local
                         </th>
                         <th scope="col" className={TH}>
-                            On chain
+                            Public
                         </th>
                         <th scope="col" className={`${TH} w-[8rem] text-right`}>
                             Transaction

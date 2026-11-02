@@ -35,7 +35,7 @@ export function Positions() {
         <div className="mb-14">
             <div className="mb-4 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-3">
                 <h2 className={LABEL} id="activity-positions">
-                    Positions
+                    Your support
                 </h2>
                 {isConnected ? <CurveControl curveId={curveId} onChange={setCurveId} /> : null}
             </div>
@@ -45,7 +45,7 @@ export function Positions() {
                 </p>
             ) : query.isPending ? (
                 <p aria-live="polite" aria-busy className="text-[color:var(--color-steel)]">
-                    Reading your positions…
+                    Reading your support…
                 </p>
             ) : query.isError ? (
                 <div aria-live="polite">
@@ -67,19 +67,19 @@ function PositionsView({view}: {view: ProfileView}) {
         return (
             <div className="max-w-[60ch]">
                 <p className="font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
-                    nothing held on this curve
+                    no support on this pricing
                 </p>
                 {/* Says what would fill it, per `rules/ui.md`. The two links below are the two
                     ways in, so the sentence does not need to name them a second time. */}
                 <p className="mt-3 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
-                    A position appears when you back a tool or an agent.
+                    It appears when you support a tool or an agent.
                 </p>
                 <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2">
                     <Link to="/register?what=tool" className={linkClass}>
                         Register a tool →
                     </Link>
                     <Link to="/tools" className={linkClass}>
-                        Find a claim to back →
+                        Find a declaration to support →
                     </Link>
                 </div>
             </div>
@@ -99,7 +99,7 @@ function PositionsView({view}: {view: ProfileView}) {
                     position returns more than went in, so a negative net is a real state and
                     "Still committed: -0.5 TRUST" is not a sentence. */}
                 <p className="text-[length:var(--text-label)] uppercase tracking-wider text-[color:var(--color-steel)]">
-                    {view.isNetNegative ? "Taken out, net of deposits" : "Still committed"}
+                    {view.isNetNegative ? "Withdrawn, net of support" : "Still committed"}
                 </p>
                 <p className="mt-1 font-mono text-[length:var(--text-title)] leading-[var(--leading-title)] tabular-nums">
                     {view.netTrust}
@@ -125,7 +125,7 @@ function PositionsView({view}: {view: ProfileView}) {
                     // is only visible if it is said: the alternative was a line that looked like
                     // the account began at its hundredth-last deposit.
                     <p className="mt-3 max-w-[60ch] text-[length:var(--text-label)] text-[color:var(--color-steel)]">
-                        Recent deposits only, starting from{" "}
+                        Recent support only, starting from{" "}
                         <span className="font-mono">
                             {view.openingTrust} {chain.symbol}
                         </span>{" "}
@@ -135,22 +135,22 @@ function PositionsView({view}: {view: ProfileView}) {
             </div>
 
             <dl className="grid grid-cols-[1fr_auto] gap-y-3 gap-x-6 self-start text-[length:var(--text-body-sm)] lg:border-l lg:border-[color:var(--color-rule)] lg:pl-8">
-                <Row label="Terms you hold" value={view.termsHeld.toLocaleString("en-US")} />
-                <Row label="Deposited" value={`${view.depositedTrust} ${chain.symbol}`} />
+                <Row label="Things you support" value={view.termsHeld.toLocaleString("en-US")} />
+                <Row label="Supported" value={`${view.depositedTrust} ${chain.symbol}`} />
                 {/* Absent rather than zero: "redeemed 0" reads as a fact about your behaviour that
                     a first deposit has not had time to be. */}
                 {view.hasRedeemed ? (
-                    <Row label="Redeemed" value={`${view.redeemedTrust} ${chain.symbol}`} />
+                    <Row label="Withdrawn" value={`${view.redeemedTrust} ${chain.symbol}`} />
                 ) : null}
                 <Row
                     label="Tools you priced"
                     value={view.toolsPriced.toLocaleString("en-US")}
-                    note="deposits on a tool's own vault"
+                    note="support on the tool itself"
                 />
                 <Row
-                    label="Claims you backed"
+                    label="Declarations you supported"
                     value={view.claimsBacked.toLocaleString("en-US")}
-                    note="deposits on an agent's declaration"
+                    note="support on an agent's declaration"
                 />
             </dl>
         </div>

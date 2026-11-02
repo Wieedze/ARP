@@ -77,12 +77,12 @@ export class PredicateNotOnChainError extends Error {
  * the correction missed, which is `rules/claims.md` failure 5 in code.
  */
 export class PositionlessTermError extends Error {
-    constructor(what: string, termId: Hex, assets: bigint) {
+    constructor(what: "atom" | "triple", termId: Hex, assets: bigint) {
+        // ADR `0103`: the same operator wording as the other "would buy no support" refusals; the
+        // id stays at the end so the refusal is still checkable.
         super(
-            `creating the ${what} ${termId} with ${assets} wei would buy 0 shares, so it would be ` +
-                `born with no position — it would exist on the chain and not exist as a market ` +
-                `(ADR 0053). The creation fee comes out of \`assets\`; raise it above the fee by at ` +
-                `least this chain's \`minDeposit\`.`,
+            `Making this ${what === "atom" ? "entry" : "link"} public with ${assets} wei would ` +
+                `buy no support: it would be public with no market. Nothing was sent. (${termId})`,
         );
         this.name = "PositionlessTermError";
     }
@@ -172,7 +172,7 @@ export async function ensureAtomForThing(params: {
         value: assets,
         chain: intuitionTestnet,
     });
-    await waitAndRecord(params.publicClient, tx, {label: "create atom"});
+    await waitAndRecord(params.publicClient, tx, {label: "make public"});
     return {atomId, uri, created: true, tx};
 }
 
@@ -224,7 +224,7 @@ export async function ensureAtomForURI(params: {
         value: assets,
         chain: intuitionTestnet,
     });
-    await waitAndRecord(params.publicClient, tx, {label: "create atom"});
+    await waitAndRecord(params.publicClient, tx, {label: "make public"});
     return {atomId, created: true, tx};
 }
 
@@ -314,6 +314,6 @@ export async function declareUsesTriple(params: {
         value: assets,
         chain: intuitionTestnet,
     });
-    await waitAndRecord(params.publicClient, tx, {label: "create triple"});
+    await waitAndRecord(params.publicClient, tx, {label: "link"});
     return {tripleId, created: true, tx};
 }

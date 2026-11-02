@@ -55,7 +55,7 @@ for (const row of resolved) {
     // chain — 61 of 662 rows on 13579, measured — so what it needs is a recording run, not a
     // reference, and the two wants are different fixes.
     console.log(`  UNRECORDED ${row.name.padEnd(30)} x${row.calls}  ${row.repo}`);
-    console.log(`               no atom id in the catalogue. Derivable from ${row.url}`);
+    console.log(`               no id in the catalogue. Derivable from ${row.url}`);
   } else {
     console.log(`  UNKNOWN    ${row.name.padEnd(30)} x${row.calls}  (${row.kind})`);
   }
@@ -64,7 +64,7 @@ for (const row of resolved) {
 const count = (status: string) => resolved.filter((row) => row.status === status).length;
 console.log(
   `\n${count('resolved')} ready to declare · ${count('ambiguous')} need a reference · ` +
-    `${count('unrecorded')} need an atom id recorded · ${count('unknown')} not catalogued`,
+    `${count('unrecorded')} need an id recorded · ${count('unknown')} not catalogued`,
 );
 
 // A module, not a global script — see the note in scripts/measure/predicate-objects.ts.

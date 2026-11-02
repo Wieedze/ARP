@@ -42,8 +42,8 @@ import {COHORT_ORDERS, describeCohortFailure, orderLabel} from "../services/agen
 
 const LOOKUP_CHAINS: {id: number; label: string; note: string}[] = [
     {id: 8453, label: "Base (8453)", note: "mirrored into the Intuition graph"},
-    {id: 56, label: "BSC (56)", note: "registry only — no trust edges in the graph"},
-    {id: 1, label: "Ethereum (1)", note: "registry only — no trust edges in the graph"},
+    {id: 56, label: "BSC (56)", note: "registry only — no ratings in the graph"},
+    {id: 1, label: "Ethereum (1)", note: "registry only — no ratings in the graph"},
 ];
 
 export function AgentDirectory() {

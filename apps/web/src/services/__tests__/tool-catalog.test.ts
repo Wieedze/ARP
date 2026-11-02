@@ -131,7 +131,10 @@ describe("buildToolCatalogView", () => {
         //
         // Two things happen to a tool: an agent says it used it, and somebody puts money on it.
         // Count and amount. That is the whole space.
-        expect(TOOL_ORDERS.map((order) => order.label)).toEqual(["Most claims", "Most staked"]);
+        expect(TOOL_ORDERS.map((order) => order.label)).toEqual([
+            "Most declarations",
+            "Most supported",
+        ]);
     });
 
     it("never says a tool was used, only that somebody claimed it", () => {

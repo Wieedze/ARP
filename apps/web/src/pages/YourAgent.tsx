@@ -362,9 +362,7 @@ function Confirm({
                 permanent and it cannot be un-minted.
             </p>
             <dl className="mt-4 grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 text-[length:var(--text-body-sm)]">
-                <Field label="Stored">
-                    {quote.uriBytes.toLocaleString("en-US")} bytes on chain
-                </Field>
+                <Field label="Stored">{quote.uriBytes.toLocaleString("en-US")} bytes, public</Field>
                 <Field label="Gas">{quote.gas.toLocaleString("en-US")}</Field>
                 <Field label="Cost">
                     {cost ?? "fees unavailable — your wallet will show them"}
@@ -429,7 +427,7 @@ function Minted({result}: {result: MintResult}) {
                 to={`/register?what=agent&have=yes`}
                 className={`mt-4 inline-block text-[length:var(--text-body-sm)] ${linkClass}`}
             >
-                Now link your staking account →
+                Now link your agent wallet →
             </Link>
         </div>
     );

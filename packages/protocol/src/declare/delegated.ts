@@ -112,7 +112,7 @@ export async function toDelegatedCalls(params: {
             to: params.delegationManager,
             value: 0n,
             data,
-            why: `${call.why} — redeemed under the operator's delegation`,
+            why: `${call.why} — under the operator's permission`,
         };
     });
 

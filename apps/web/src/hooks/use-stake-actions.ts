@@ -68,7 +68,7 @@ export function useStakeActions() {
                 quote: stake,
             });
             recordSent(hash, {
-                label: "deposit",
+                label: "support",
                 chainId: stake.chain.chainId,
                 valueWei: stake.assets,
             });
@@ -105,7 +105,7 @@ export function useStakeActions() {
                 publicClient: chain.client,
                 quote: exit,
             });
-            recordSent(hash, {label: "redeem", chainId: exit.chain.chainId});
+            recordSent(hash, {label: "withdraw", chainId: exit.chain.chainId});
             return hash;
         },
         [chain],

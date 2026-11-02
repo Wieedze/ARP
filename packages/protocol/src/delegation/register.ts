@@ -283,7 +283,7 @@ export async function planPublishDelegation(params: {
             to: reads.address,
             value: assets,
             data: encodeAtom(data, assets),
-            why: `create the ${label} atom ${uri}`,
+            why: `make ${label} public: ${uri}`,
             preview: {shares: preview.shares, assetsAfterFees: preview.assetsAfterFees},
         });
         return id;
@@ -303,7 +303,7 @@ export async function planPublishDelegation(params: {
             to: reads.address,
             value: assets,
             data: encodeTriple(s, p, o, assets),
-            why: `create the ${label} triple`,
+            why: `make the ${label} link public`,
             preview: {shares: preview.shares, assetsAfterFees: preview.assetsAfterFees},
         });
         return id;

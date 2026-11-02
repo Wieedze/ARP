@@ -612,7 +612,7 @@ describe("deriveMinAssets", () => {
 
     it("refuses a preview of nothing rather than returning an unprotected floor", () => {
         expect(() => deriveMinAssets(0n)).toThrow(StakeGuardError);
-        expect(() => deriveMinAssets(0n)).toThrowError(/no assets/);
+        expect(() => deriveMinAssets(0n)).toThrowError(/return nothing/);
     });
 
     it("honours an explicit tolerance", () => {

@@ -345,7 +345,7 @@ describe("which atom a tool resolves to", () => {
         // resolve a pinned Thing; the only two raw-URL atoms are schema.org vocabulary, not tools.
         expect(plan.tools[0]?.atomSource).toBe("derived-from-uri");
         expect(plan.tools[0]?.bareUrlWarning).toContain("no pinned metadata");
-        expect(plan.calls.find((c) => c.kind === "create-atom")?.why).toContain("BARE URI");
+        expect(plan.calls.find((c) => c.kind === "create-atom")?.why).toContain("bare URI");
     });
 
     it("plans one atom for two spellings of one URL", async () => {

@@ -122,13 +122,13 @@ export async function submitIdentityAtom(params: {
     if (plan.calls.length === 0) {
         throw new IdentityAtomGuardError(
             "nothing-to-do",
-            "The identity atom and its edge are already on the graph. Nothing to send.",
+            "The public identity and its link are already public. Nothing to send.",
         );
     }
     if (plan.totalValue > MAX_STAKE_WEI) {
         throw new IdentityAtomGuardError(
             "cost-above-ceiling",
-            "Writing the identity atom would cost more than this app's per-transaction ceiling " +
+            "Making the identity public would cost more than this app's per-transaction ceiling " +
                 "(VITE_MAX_STAKE_TRUST). Nothing was sent.",
         );
     }
@@ -145,7 +145,7 @@ export async function submitIdentityAtom(params: {
             value: call.value,
             chain: chain.chain,
         });
-        await waitAndRecord(publicClient, hash, {label: "identity atom"});
+        await waitAndRecord(publicClient, hash, {label: "public identity"});
         txs.push(hash);
     }
     return {txs, plan};

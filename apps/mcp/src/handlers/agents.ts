@@ -181,7 +181,7 @@ export async function agentEndpoints(id: JsonRpcId, args: Record<string, unknown
         endpoint.classification.status === 'probeable' ? null : endpoint.classification.declared,
       why: endpoint.classification.status === 'probeable' ? null : endpoint.classification.code,
     })),
-    note: "The agent's own claim about itself. `arp_probe_endpoint` asks whether one answers.",
+    note: "The agent's own word about itself. `arp_probe_endpoint` asks whether one answers.",
   });
 }
 
@@ -223,7 +223,7 @@ export async function identity(id: JsonRpcId, args: Record<string, unknown>) {
       caip19: toCaip19(agent),
       identity_atom: subject,
       declarable: true,
-      note: 'This agent can declare. Its identity atom is the subject every `uses` edge carries.',
+      note: 'This agent can declare. Every declaration it makes is attached to this identity.',
     });
   } catch (error) {
     if (error instanceof Error && error.name === 'NoAgentIdentityError') {
@@ -232,11 +232,11 @@ export async function identity(id: JsonRpcId, args: Record<string, unknown>) {
         identity_atom: null,
         declarable: false,
         note:
-          'No identity atom on the graph, so this agent cannot declare yet. The atom is written ' +
+          'This identity is not public yet, so this agent cannot declare. The record is written ' +
           "by Intuition's mirror; measured 2026-10-20 the mirror holds 28,648 of a registry whose " +
           'highest minted id is 309,925, so this is the common case and not a fault of yours. ' +
-          'Writing it needs two atoms and a `same as` triple — `scripts/agent/agent-identity-atom.ts`, ' +
-          'ADR 0047. The atom ids are computable locally from your identity alone, with no API key.',
+          'Writing it yourself is three public entries — `scripts/agent/agent-identity-atom.ts`, ' +
+          'ADR 0047. Their ids are computable locally from your identity alone, with no API key.',
       });
     }
     throw error;

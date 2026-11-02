@@ -190,7 +190,7 @@ export function parseStakeAmount(input: string, limits: StakeLimits): AmountChec
         return {
             status: "below-min",
             value,
-            message: `The MultiVault rejects deposits below its minDeposit of ${formatTrust(limits.minDeposit)} ${limits.symbol}.`,
+            message: `The minimum support is ${formatTrust(limits.minDeposit)} ${limits.symbol}.`,
         };
     }
     if (value > limits.maxStake) {
@@ -237,7 +237,7 @@ export function deriveMinShares(
     if (expectedShares <= 0n) {
         throw new StakeGuardError(
             "no-slippage-floor",
-            "previewDeposit returned no shares, so there is no floor to protect. Nothing was sent.",
+            "This support would buy nothing at today's price, so there is no protection against the price moving. Nothing was sent.",
         );
     }
     const floor = (expectedShares * (10_000n - toleranceBps)) / 10_000n;
@@ -282,7 +282,7 @@ export async function resolveStakeTermId(
     if (params.target.kind === "atom") {
         throw new StakeGuardError(
             "no-counter-vault",
-            "An atom has no counter vault, so there is no side to oppose it from. Nothing was sent.",
+            "Only a declaration has a side to oppose. Nothing was sent.",
         );
     }
     return publicClient.readContract({
@@ -382,7 +382,7 @@ export async function quoteStake(
     if (params.receiver === zeroAddress) {
         throw new StakeGuardError(
             "zero-receiver",
-            "No connected account to receive the shares. Connect a wallet first.",
+            "No connected account to hold the support. Connect a wallet first.",
         );
     }
 
@@ -440,7 +440,7 @@ export function assertWalletOnChain(expected: StakeChain, chainId: number | unde
     if (chainId !== expected.chainId) {
         throw new StakeGuardError(
             "wrong-chain",
-            `Your wallet is on chain ${chainId ?? "unknown"}. This deposit was priced on ${expected.chain.name} (${expected.chainId}) and must be signed there.`,
+            `Your wallet is on chain ${chainId ?? "unknown"}. This support was priced on ${expected.chain.name} (${expected.chainId}) and must be signed there.`,
         );
     }
 }
@@ -495,17 +495,17 @@ export async function submitStake(params: {
     if (quote.receiver.toLowerCase() !== sender.toLowerCase()) {
         throw new StakeGuardError(
             "receiver-mismatch",
-            "The shares receiver must be the connected account. Depositing for someone else needs their prior approval on the MultiVault.",
+            "The support must go to the connected account. Supporting for someone else needs their prior approval.",
         );
     }
     if (quote.minShares <= 0n) {
         throw new StakeGuardError(
             "no-slippage-floor",
-            "Refusing to send a deposit with no slippage floor.",
+            "Refusing to send support with no protection against the price moving.",
         );
     }
     if (quote.assets <= 0n) {
-        throw new StakeGuardError("zero-amount", "Refusing to send a zero-value deposit.");
+        throw new StakeGuardError("zero-amount", "Refusing to send zero support.");
     }
 
     await simulateStake(publicClient, quote, sender);
@@ -623,7 +623,7 @@ export function deriveMinAssets(
     if (expectedAssets <= 0n) {
         throw new StakeGuardError(
             "no-slippage-floor",
-            "previewRedeem returned no assets, so there is no floor to protect. Nothing was sent.",
+            "This withdrawal would return nothing at today's price, so there is no protection against the price moving. Nothing was sent.",
         );
     }
     const floor = (expectedAssets * (10_000n - toleranceBps)) / 10_000n;
@@ -685,7 +685,7 @@ export async function quoteRedeem(
     },
 ): Promise<RedeemQuote> {
     if (params.shares <= 0n) {
-        throw new StakeGuardError("zero-amount", "Enter a number of shares greater than zero.");
+        throw new StakeGuardError("zero-amount", "Enter an amount greater than zero.");
     }
     if (params.receiver === zeroAddress) {
         throw new StakeGuardError(
@@ -711,7 +711,7 @@ export async function quoteRedeem(
     if (params.shares > maxShares) {
         throw new StakeGuardError(
             "exceeds-holding",
-            `You hold ${formatTrust(maxShares)} shares in this vault and asked to redeem ${formatTrust(params.shares)}. Nothing was sent.`,
+            `You hold ${formatTrust(maxShares)} shares here and asked to withdraw ${formatTrust(params.shares)}. Nothing was sent.`,
         );
     }
 
@@ -769,22 +769,22 @@ export async function submitRedeem(params: {
     if (quote.receiver.toLowerCase() !== sender.toLowerCase()) {
         throw new StakeGuardError(
             "receiver-mismatch",
-            `The ${quote.chain.symbol} must go to the connected account. Redeeming to another address is not offered here.`,
+            `The ${quote.chain.symbol} must go to the connected account. Withdrawing to another address is not offered here.`,
         );
     }
     if (quote.shares <= 0n) {
-        throw new StakeGuardError("zero-amount", "Refusing to send a zero-share redemption.");
+        throw new StakeGuardError("zero-amount", "Refusing to withdraw nothing.");
     }
     if (quote.shares > quote.maxShares) {
         throw new StakeGuardError(
             "exceeds-holding",
-            "The quote asks for more shares than the account holds. Nothing sent.",
+            "The quote asks to withdraw more than the account holds. Nothing sent.",
         );
     }
     if (quote.minAssets <= 0n) {
         throw new StakeGuardError(
             "no-slippage-floor",
-            "Refusing to send a redemption with no slippage floor.",
+            "Refusing to withdraw with no protection against the price moving.",
         );
     }
 

@@ -145,7 +145,7 @@ describe("toCohortRow", () => {
     it("shows the market cap with its position count beside it, always", () => {
         const row = toCohortRow(listing(), 0, "TRUST");
         expect(row.marketCap).toBe("6.3369302 TRUST");
-        expect(row.positions).toBe("1 position · 2 curves");
+        expect(row.positions).toBe("1 support");
     });
 
     it("says the position count is missing rather than printing a bare cap", () => {
@@ -157,7 +157,7 @@ describe("toCohortRow", () => {
             "TRUST",
         );
         expect(row.marketCap).toBe("<0.00000001 TRUST");
-        expect(row.positions).toBe("position count not reported");
+        expect(row.positions).toBe("support count not reported");
     });
 
     it("distinguishes no market data from a market of zero", () => {
@@ -173,7 +173,7 @@ describe("toCohortRow", () => {
                 0,
                 "TRUST",
             ),
-        ).toMatchObject({marketCap: "0 TRUST", positions: "0 positions · 1 curve"});
+        ).toMatchObject({marketCap: "0 TRUST", positions: "0 supports"});
     });
 
     it("marks the indexer's stand-in metadata as a fallback", () => {
@@ -220,7 +220,7 @@ describe("toCohortRow", () => {
             "TRUST",
         );
         expect(row.href).toBeNull();
-        expect(row.identityProblem).toBe("claims 16 identities — no single agent to open");
+        expect(row.identityProblem).toBe("declares 16 identities — no single agent to open");
     });
 
     it("says when an agent has no ERC-8004 identity edge at all", () => {
@@ -230,7 +230,7 @@ describe("toCohortRow", () => {
             "TRUST",
         );
         expect(row.href).toBeNull();
-        expect(row.identityProblem).toBe("no ERC-8004 identity edge in the graph");
+        expect(row.identityProblem).toBe("no ERC-8004 identity link in the graph");
     });
 
     it("never derives a token id from the display name", () => {
@@ -371,7 +371,7 @@ describe("describeCohortFailure", () => {
     });
 
     it("names an order the way the control names it", () => {
-        expect(orderLabel("evidence-quantity")).toBe("Most claims");
-        expect(orderLabel("economic-conviction")).toBe("Most staked");
+        expect(orderLabel("evidence-quantity")).toBe("Most declarations");
+        expect(orderLabel("economic-conviction")).toBe("Most supported");
     });
 });

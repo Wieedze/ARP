@@ -83,24 +83,24 @@ const SERVER_INSTRUCTIONS = [
   'is free, so it is worth what it cost. Other agents read that when choosing whom to hire. If you',
   'never declare anything, you are not in that set.',
   '',
-  'A deposit is a different act from a declaration, and it goes both ways: you buy a position on an',
-  'agent or a tool, and you can redeem it. So a figure you read is what people hold NOW, not what was',
-  'ever put in. Anyone can deposit against a claim at the same price, but almost nobody does — 1 of',
-  '185 `uses` edges on mainnet 1155 as of 2026-10-21 — so read an empty counter vault as "nobody',
-  'bothered", never as agreement.',
+  'Support is a different act from a declaration, and it goes both ways: you put TRUST behind an',
+  'agent or a tool, and you can withdraw it. So a figure you read is what people hold NOW, not what',
+  'was ever put in. Anyone can support the opposite of a declaration at the same price, but almost',
+  'nobody does — 1 of 185 `uses` declarations on mainnet 1155 as of 2026-10-21 — so read an empty',
+  'opposing side as "nobody bothered", never as agreement.',
   '',
   'FOUR JOBS, and they need different things:',
   '  check a tool or an agent   needs NOTHING — public reads, no wallet, no identity. Start here.',
   '  declare what you used      needs a funded wallet and an ERC-8004 identity',
-  '  list a tool nobody has     needs a funded wallet. An atom has no subject, so no identity',
+  '  list a tool nobody has     needs a funded wallet. A listing is about no agent, so no identity',
   '  be hired                   needs an endpoint YOU run. Nothing here provides it',
   '',
   'THIS SERVER PREPARES CALLS AND NOTHING ELSE. It holds no key and has no send path: every planner',
   'returns UNSIGNED calls that you sign and send yourself. Reading is free and needs none of that.',
   '',
-  'TWO THINGS TO KNOW BEFORE ACTING ON A NUMBER. Assets above zero mean the term exists, not that',
-  'somebody staked — creating a term seeds its vaults; position_count is the discriminator. And ARP',
-  'composes no score: every figure is a deposit somebody else made.',
+  'TWO THINGS TO KNOW BEFORE ACTING ON A NUMBER. Assets above zero mean the entry exists, not that',
+  'somebody supported it — creating an entry seeds it with a small amount; position_count tells the',
+  'two apart. And ARP composes no score: every figure is support somebody else put in.',
 ].join('\n');
 
 const SERVED_TOOLS = READ_ONLY ? TOOLS.filter((t) => READ_TOOL_NAMES.has(t.name)) : TOOLS;
@@ -325,7 +325,9 @@ export async function main(argv: readonly string[] = process.argv): Promise<void
   log(
     `  listening:  ${handler.hostname}:${PORT}${handler.hostname === '127.0.0.1' ? ' (loopback only — ARP_HOST=0.0.0.0 to open it)' : ' — OPEN TO THE NETWORK'}`,
   );
-  log(`  tools:      ${SERVED_TOOLS.map((t) => t.name).join(', ')}${READ_ONLY ? ' (ARP_TOOLS=read)' : ''}`);
+  log(
+    `  tools:      ${SERVED_TOOLS.map((t) => t.name).join(', ')}${READ_ONLY ? ' (ARP_TOOLS=read)' : ''}`,
+  );
   log(`  content:    GET /content/:atomId`);
   log(
     `  receipts:   ${

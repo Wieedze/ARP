@@ -135,7 +135,7 @@ function App() {
                     <Route
                         path="/atom/:atomId"
                         element={
-                            <Suspense fallback={<RouteFallback label="atom" />}>
+                            <Suspense fallback={<RouteFallback label="page" />}>
                                 <AtomPanel />
                             </Suspense>
                         }

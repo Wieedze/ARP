@@ -152,16 +152,14 @@ export function describeSignature(verdict: SignatureVerdict): SignatureCopy {
  * Deliberately *not* phrased as distinct stakers, unlike `StakerCount` on the
  * panel. `AgentAtomMarket` sums across every bonding curve so that its position count
  * and its market cap describe the same thing, and that sum counts an account
- * staked on two curves twice. The curve count is stated so the reader can see
- * where the number came from.
+ * staked on two curves twice — so it reads "N supports", never "N supporters", which would claim
+ * distinct accounts. The curve count was stated beside it until ADR `0103`, which keeps
+ * bonding curves off the screen by default; `market.vaultCount` still carries it.
  */
 export function describeAtomPositions(market: AgentAtomMarket): string {
     const count = market.positionCount;
-    if (count === null) return "position count not reported";
-    const curves = market.vaultCount;
-    const positions = `${count} position${count === 1 ? "" : "s"}`;
-    if (curves === null) return positions;
-    return `${positions} · ${curves} curve${curves === 1 ? "" : "s"}`;
+    if (count === null) return "support count not reported";
+    return `${count} support${count === 1 ? "" : "s"}`;
 }
 
 /**
@@ -224,7 +222,7 @@ export function intuitionPortalUrl(
 export function describeFetchError(error: AssessmentFetchError): string {
     switch (error.kind) {
         case "no-resolver-url":
-            return "The graph edge carries no resolver URL, so there is no document to read.";
+            return "This rating links to no document, so there is nothing to read.";
         case "skipped":
             return "The resolver was not fetched.";
         case "network":
@@ -261,7 +259,7 @@ export function formatStakerCount(count: number): string {
  * assertion is not available.
  */
 export function stakerLabel(count: number): string {
-    return `${formatStakerCount(count)} distinct staker${count === 1 ? "" : "s"}`;
+    return `${formatStakerCount(count)} distinct supporter${count === 1 ? "" : "s"}`;
 }
 
 /**

@@ -25,8 +25,8 @@ export const COHORT_ORDERS: readonly {
     id: AgentListOrder;
     label: string;
 }[] = [
-    {id: "evidence-quantity", label: "Most claims"},
-    {id: "economic-conviction", label: "Most staked"},
+    {id: "evidence-quantity", label: "Most declarations"},
+    {id: "economic-conviction", label: "Most supported"},
 ];
 
 export type CohortRow = {
@@ -116,10 +116,10 @@ function identityProblemOf(listing: AgentListing): string | null {
     if (listing.isIdentityAmbiguous) {
         const count = listing.identityEdgeCount;
         return count === null
-            ? "claims more than one ERC-8004 identity"
-            : `claims ${count.toLocaleString("en-US")} identities — no single agent to open`;
+            ? "declares more than one ERC-8004 identity"
+            : `declares ${count.toLocaleString("en-US")} identities — no single agent to open`;
     }
-    return "no ERC-8004 identity edge in the graph";
+    return "no ERC-8004 identity link in the graph";
 }
 
 /**
@@ -135,7 +135,7 @@ export function toCohortRow(listing: AgentListing, index: number, symbol: string
     return {
         key: `${listing.sourceHandle}-${index}`,
         sigilId: listing.sourceHandle,
-        name: listing.metadata.name ?? "Unnamed atom",
+        name: listing.metadata.name ?? "Unnamed agent",
         isFallbackMetadata: listing.metadata.isFallback,
         imageUrl: imageUrlOf(listing),
         modules: modulesOf(listing),

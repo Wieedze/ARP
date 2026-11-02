@@ -108,7 +108,7 @@ export function RepoPage({
                     atomTermId={atomId}
                     name={repo}
                     nameIsId={false}
-                    backHeading="Take a position"
+                    backHeading="Support this repository"
                     heading={null}
                 />
             </div>
@@ -117,7 +117,7 @@ export function RepoPage({
 
             {owner === null ? null : <SamePack repo={repo} />}
 
-            <Block title="Relations" label="Claims about this repository, besides its skills">
+            <Block title="Relations" label="Declarations about this repository, besides its skills">
                 <ClaimField
                     groups={others}
                     subject={repo}
@@ -222,7 +222,7 @@ function Classification({
                 <ClsRow term="Skills">
                     <span className="tabular-nums">{skills.length}</span>{" "}
                     <span className="text-[color:var(--color-steel)]">
-                        on chain, each pointing here by source
+                        public, each pointing here by source
                     </span>
                 </ClsRow>
                 {skills.length === 0 ? null : (
@@ -537,41 +537,48 @@ function Record({view, skills}: {view: AtomView; skills: readonly SkillRow[]}) {
     const tagged = skills.filter((skill) => skill.domain !== null).length;
     return (
         <Block title="On the record" label={chain.chain.name}>
-            <div className="grid gap-x-10 [grid-template-columns:repeat(auto-fit,minmax(min(100%,24rem),1fr))]">
-                <dl className="m-0">
-                    <RecordRow term="Atom">
-                        <a
-                            href={intuitionPortalUrl("atom", view.atomId, chain.isMainnet)}
-                            target="_blank"
-                            rel="noreferrer"
-                            className={linkClass}
-                        >
-                            {view.atomId}
-                        </a>
-                    </RecordRow>
-                    {view.url === null ? null : (
-                        <RecordRow term="Identifies">
+            {/* Ids are for checking, not for reading — collapsed, still one click away (ADR
+                `0103`). */}
+            <details>
+                <summary className="cursor-pointer text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
+                    Verify
+                </summary>
+                <div className="mt-4 grid gap-x-10 [grid-template-columns:repeat(auto-fit,minmax(min(100%,24rem),1fr))]">
+                    <dl className="m-0">
+                        <RecordRow term="Atom">
                             <a
-                                href={view.url}
+                                href={intuitionPortalUrl("atom", view.atomId, chain.isMainnet)}
                                 target="_blank"
                                 rel="noreferrer"
                                 className={linkClass}
                             >
-                                {view.url}
+                                {view.atomId}
                             </a>
                         </RecordRow>
-                    )}
-                </dl>
-                <dl className="m-0">
-                    <RecordRow term="source">{`${skills.length} skills point here`}</RecordRow>
-                    {skills.length === 0 ? null : (
-                        <RecordRow term="Domain tags">{`${tagged} of ${skills.length} skills`}</RecordRow>
-                    )}
-                    {view.claims.length === 0 ? null : (
-                        <RecordRow term="Written by">ARP&apos;s attestor</RecordRow>
-                    )}
-                </dl>
-            </div>
+                        {view.url === null ? null : (
+                            <RecordRow term="Identifies">
+                                <a
+                                    href={view.url}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className={linkClass}
+                                >
+                                    {view.url}
+                                </a>
+                            </RecordRow>
+                        )}
+                    </dl>
+                    <dl className="m-0">
+                        <RecordRow term="source">{`${skills.length} skills point here`}</RecordRow>
+                        {skills.length === 0 ? null : (
+                            <RecordRow term="Domain tags">{`${tagged} of ${skills.length} skills`}</RecordRow>
+                        )}
+                        {view.claims.length === 0 ? null : (
+                            <RecordRow term="Written by">ARP&apos;s attestor</RecordRow>
+                        )}
+                    </dl>
+                </div>
+            </details>
         </Block>
     );
 }

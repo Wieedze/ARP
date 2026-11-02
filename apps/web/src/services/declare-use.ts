@@ -204,8 +204,8 @@ export async function planUseDeclaration(params: {
         throw new DeclareUseGuardError(
             "mainnet-not-authorised",
             `Declaring a use on ${params.chain.chain.name} is not authorised yet — ADR 0017 ` +
-                `covers a human depositing into a trust-provider vault, not creating a \`uses\` ` +
-                `edge. Switch the chain to the testnet to write it there. Nothing was read.`,
+                `covers a person supporting a trust provider, not making a declaration public. ` +
+                `Switch to the testnet to declare it there. Nothing was read.`,
         );
     }
 
@@ -248,8 +248,8 @@ export async function planUseDeclaration(params: {
         // remedy is: `/agent/import` writes the missing atom.
         throw new DeclareUseGuardError(
             "no-identity-atom",
-            `This agent has no identity atom on ${params.chain.chain.name}, so there is no subject ` +
-                `to write the claim under. Write it first on the agent page, then come back. ` +
+            `This agent has no public identity on ${params.chain.chain.name}, so there is nothing ` +
+                `to attach the declaration to. Create it first on the agent page, then come back. ` +
                 `(${caught instanceof Error ? caught.message : String(caught)})`,
         );
     }
@@ -278,8 +278,8 @@ export async function planUseDeclaration(params: {
         if (caught instanceof ZeroPositionError) {
             throw new DeclareUseGuardError(
                 "no-position",
-                `This claim would be born with no position — it would exist on the chain and not ` +
-                    `exist as a market (ADR 0053). Nothing was sent. (${caught.message})`,
+                `This declaration would carry no support: it would be public with no market ` +
+                    `(ADR 0053). Nothing was sent. (${caught.message})`,
             );
         }
         if (caught instanceof EmptyPlanError) {
@@ -288,7 +288,7 @@ export async function planUseDeclaration(params: {
             // indexes puts the two one block apart, and the atom page is the one that is wrong.
             throw new DeclareUseGuardError(
                 "object-not-on-chain",
-                `${params.chain.chain.name} does not hold this atom yet, though the graph lists ` +
+                `${params.chain.chain.name} does not have this entry yet, though the listing shows ` +
                     `it. Nothing was sent. (${caught.message})`,
             );
         }
@@ -304,7 +304,7 @@ export async function planUseDeclaration(params: {
     if (tool === undefined) {
         throw new DeclareUseGuardError(
             "planner-returned-nothing",
-            "The planner returned no target for this atom. Nothing was sent.",
+            "The planner returned no target for this tool. Nothing was sent.",
         );
     }
 
@@ -368,7 +368,7 @@ export async function submitUseDeclaration(params: {
     if (declaration.exists) {
         throw new DeclareUseGuardError(
             "already-declared",
-            "This agent has already declared using this atom. The claim is a receipt, not a " +
+            "This agent has already declared using this. The declaration is a receipt, not a " +
                 "market — writing it twice pays the fee twice and says nothing new (ADR 0056).",
         );
     }
@@ -418,7 +418,7 @@ function assertChain(expected: StakeChain, chainId: number | undefined): void {
     if (chainId !== expected.chainId) {
         throw new DeclareUseGuardError(
             "wrong-chain",
-            `This claim was priced on ${expected.chain.name} (${expected.chainId}). Your wallet ` +
+            `This declaration was priced on ${expected.chain.name} (${expected.chainId}). Your wallet ` +
                 `reports ${chainId ?? "no chain"}. Nothing was sent.`,
         );
     }

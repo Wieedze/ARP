@@ -144,7 +144,7 @@ function Row({row, fact, stars}: {row: ToolRow; fact: SkillFact | null; stars: n
                             creator's own, and the figure appears when somebody else arrives. */}
                         {row.provenance === "registered" && (row.stakers ?? 0) <= 1 ? null : (
                             <>
-                                <span className="sr-only">staked behind it: </span>
+                                <span className="sr-only">support behind it: </span>
                                 {row.supportTrust}
                                 <span className="text-[color:var(--color-steel)]"> {symbol}</span>
                             </>
@@ -181,8 +181,8 @@ function Headers({curveId}: {curveId: number}) {
             <span className="text-right">Declared</span>
             {/* The curve is part of a TRUST sum's population (`rules/claims.md` §2). It belongs on
                 the figure rather than in a footer line nobody needs twice. */}
-            <span className="text-right" title={`Read on bonding curve ${curveId}`}>
-                Staked
+            <span className="text-right" title={`Read on pricing ${curveId}`}>
+                Support
             </span>
         </div>
     );

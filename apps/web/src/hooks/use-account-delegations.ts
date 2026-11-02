@@ -112,7 +112,7 @@ export function useAccountDelegations() {
 
     const deploy = useMutation({
         mutationFn: async () => {
-            if (smartAccount === null) throw new Error("Smart Account not ready");
+            if (smartAccount === null) throw new Error("Agent wallet not ready");
             const wc = await connectedWalletClient();
             const tx = await deploySmartAccountIfNeeded({
                 smartAccount,
@@ -125,7 +125,7 @@ export function useAccountDelegations() {
 
     const sign = useMutation({
         mutationFn: async (params: {delegate: Hex; cap: bigint; periodSeconds: bigint}) => {
-            if (smartAccount === null) throw new Error("Smart Account not ready");
+            if (smartAccount === null) throw new Error("Agent wallet not ready");
             const signed = await signDelegationAs({
                 delegation: stakeDelegation({delegator: smartAccount.address, ...params}),
                 smartAccount,
@@ -137,7 +137,7 @@ export function useAccountDelegations() {
 
     const revoke = useMutation({
         mutationFn: async (target: Delegation) => {
-            if (smartAccount === null) throw new Error("Smart Account not ready");
+            if (smartAccount === null) throw new Error("Agent wallet not ready");
             const wc = await connectedWalletClient();
             const hash = await revokeDelegation({
                 target,

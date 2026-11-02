@@ -40,7 +40,7 @@ describe("an amount never appears without its position count", () => {
         renderWithProviders(<UsageEdgeRow edge={edge()} isFirstOfTier />);
 
         expect(screen.getByText(/0\.08/)).toBeInTheDocument();
-        expect(screen.getByLabelText("8 distinct stakers")).toBeInTheDocument();
+        expect(screen.getByLabelText("8 distinct supporters")).toBeInTheDocument();
     });
 
     it("prints no amount at all when nothing is staked on the claim", () => {
@@ -59,7 +59,7 @@ describe("an amount never appears without its position count", () => {
         );
 
         expect(screen.queryByText(/TRUST/i)).not.toBeInTheDocument();
-        expect(screen.getByText(/nothing staked on this claim/i)).toBeInTheDocument();
+        expect(screen.getByText(/nothing supports this declaration/i)).toBeInTheDocument();
     });
 
     it("shows the opposition only when somebody actually took that side", () => {
@@ -82,7 +82,7 @@ describe("an amount never appears without its position count", () => {
                 isFirstOfTier
             />,
         );
-        expect(screen.getByLabelText("3 distinct stakers")).toBeInTheDocument();
+        expect(screen.getByLabelText("3 distinct supporters")).toBeInTheDocument();
     });
 });
 
@@ -105,12 +105,12 @@ describe("off-curve is its own state, not a free assertion", () => {
         // run the caption and the "For" cell both say it. That is redundancy and not a defect
         // (rows 2..n have no caption), but a test that cannot tell them apart would also pass if
         // one of them disappeared.
-        expect(screen.getByText(/staked off-curve/i)).toBeInTheDocument();
+        expect(screen.getByText(/supported outside this pricing/i)).toBeInTheDocument();
         expect(
-            screen.getByText(/^Staked on a curve this page does not read\.$/),
+            screen.getByText(/^Supported on a pricing this page does not read\.$/),
         ).toBeInTheDocument();
-        expect(screen.getByText(/^A stake is behind this claim/)).toBeInTheDocument();
-        expect(screen.queryByText(/nothing staked on this claim/i)).not.toBeInTheDocument();
+        expect(screen.getByText(/^Support is behind this declaration/)).toBeInTheDocument();
+        expect(screen.queryByText(/nothing supports this declaration/i)).not.toBeInTheDocument();
     });
 });
 

@@ -73,6 +73,6 @@ export function planDepositApproval(params: {
         to: getAddress(params.multiVault),
         value: 0n,
         data: encodeApproveDeposit(sponsor),
-        why: `let ${sponsor} deposit with you as receiver; it cannot redeem your shares`,
+        why: `let ${sponsor} add support that you hold; it cannot withdraw your support`,
     };
 }

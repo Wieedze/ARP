@@ -124,8 +124,8 @@ export async function findTools(id: JsonRpcId, args: Record<string, unknown>) {
       -32603,
       'this server has no domain attestor configured, so it cannot answer a domain search. ' +
         'Set ARP_DOMAIN_ATTESTOR (or AGENT_ADDRESS) to the address whose filings are the index. ' +
-        'Reading the hierarchy unfiltered would return every triple anybody has ever published ' +
-        'under the predicate, which is not an index.',
+        'Reading the hierarchy unfiltered would return every filing anybody has ever published ' +
+        'under it, which is not an index.',
     );
   }
 

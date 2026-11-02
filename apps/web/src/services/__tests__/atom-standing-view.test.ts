@@ -143,9 +143,9 @@ describe("names", () => {
 });
 
 describe("describePointers", () => {
-    it("counts claims and predicates, and says so in the singular", () => {
+    it("counts declarations and kinds, and says so in the singular", () => {
         expect(describePointers(buildAtomView(standing(), "TRUST"))).toBe(
-            "1 claim across one predicate",
+            "1 declaration across one kind",
         );
     });
 

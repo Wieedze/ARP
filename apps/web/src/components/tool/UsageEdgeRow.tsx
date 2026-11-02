@@ -98,8 +98,8 @@ export function UsageEdgeRow({
                             page has not read. */}
                         <dd className="font-sans text-[color:var(--color-steel)]">
                             {edge.isOffCurve
-                                ? "Staked on a curve this page does not read."
-                                : "Nothing staked on this claim."}
+                                ? "Supported on a pricing this page does not read."
+                                : "Nothing supports this declaration."}
                         </dd>
                     </div>
                 )}

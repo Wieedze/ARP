@@ -82,10 +82,10 @@ export function curveLabelOf(curveId: number): string {
  * **put money on it**. Count and amount. That is the whole space, and it is what the user asked
  * for — _« ce qu'on veut voir c'est les plus populaires et les plus investis »_.
  *
- * | label        | reads          | the question                      |
- * | ------------ | -------------- | --------------------------------- |
- * | Most claims  | `declarations` | how many agents said they used it |
- * | Most staked  | `conviction`   | how much money is behind it       |
+ * | label             | reads          | the question                      |
+ * | ----------------- | -------------- | --------------------------------- |
+ * | Most declarations | `declarations` | how many agents said they used it |
+ * | Most supported    | `conviction`   | how much money is behind it       |
  *
  * ## It says "claims", not "used", and the difference is the project
  *
@@ -115,8 +115,8 @@ export function curveLabelOf(curveId: number): string {
  * list by the rung the ladder exists to demote.
  */
 export const TOOL_ORDERS: readonly {id: ToolListingOrder; label: string}[] = [
-    {id: "declarations", label: "Most claims"},
-    {id: "conviction", label: "Most staked"},
+    {id: "declarations", label: "Most declarations"},
+    {id: "conviction", label: "Most supported"},
 ];
 
 /**

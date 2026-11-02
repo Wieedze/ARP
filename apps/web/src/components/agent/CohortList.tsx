@@ -82,12 +82,12 @@ function RowBody({row}: {row: CohortRow}) {
 
             <span className="font-mono text-[length:var(--text-body-sm)] leading-tight text-right tabular-nums">
                 {row.statementCount === null ? "—" : row.statementCount.toLocaleString("en-US")}
-                <span className="sm:sr-only text-[color:var(--color-steel)]"> claims</span>
+                <span className="sm:sr-only text-[color:var(--color-steel)]"> declarations</span>
             </span>
 
             <span className="text-right min-w-0">
                 <span className="block font-mono text-[length:var(--text-body-sm)] leading-tight tabular-nums">
-                    <span className="sr-only">staked on its atom: </span>
+                    <span className="sr-only">support: </span>
                     {row.marketCap ?? "—"}
                 </span>
                 <span className="block font-mono text-[length:var(--text-label)] leading-tight text-[color:var(--color-steel)] break-words">
@@ -115,15 +115,16 @@ export function CohortList({view}: {view: CohortView}) {
             >
                 <span />
                 <span>Agent</span>
-                {/* "Claims" and "Staked", not "Statements" and "Staked on its atom" (user,
-                    2026-10-27, asking for fewer words and nothing implied). `statementCount` is
+                {/* Read "Declared" and "Support" since ADR `0103`. Before that: "Claims" and
+                    "Staked", not "Statements" and "Staked on its atom" (user, 2026-10-27, asking
+                    for fewer words and nothing implied). `statementCount` is
                     the count of triples with this agent as **subject**, and a triple is a claim —
                     so "claims" is the literal reading, not a softening. "Staked" is the design
                     reference's own column name; "on its atom" was there to keep it apart from the
                     edge vaults, and no edge figure appears on this page for it to be confused
                     with. */}
-                <span className="text-right">Claims</span>
-                <span className="text-right">Staked</span>
+                <span className="text-right">Declared</span>
+                <span className="text-right">Support</span>
             </div>
 
             <ul className="border-t border-[color:var(--color-rule-strong)] sm:border-t-0">

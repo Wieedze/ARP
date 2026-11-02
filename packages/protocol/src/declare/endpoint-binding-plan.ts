@@ -191,7 +191,7 @@ export async function prepareEndpointBinding(params: {
             kind: "create-atom",
             value: atomAssets,
             data: encodeCreateAtom(endpointData, atomAssets),
-            why: `the endpoint's atom, ${endpoint}`,
+            why: `the endpoint, made public: ${endpoint}`,
             preview: await preview("atom", endpointAtom, atomAssets),
         });
     }
@@ -242,7 +242,7 @@ export async function prepareEndpointBinding(params: {
                 assets: tripleAssets,
             },
             termId: contextTriple,
-            why: "the owner's signed handshake, attached to that claim",
+            why: "the owner's signed handshake, attached to that declaration",
         });
     }
     if (triples.length > 0) {

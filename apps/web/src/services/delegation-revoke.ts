@@ -109,7 +109,7 @@ export async function revokeDelegation(params: {
     const walletChainId = await params.operatorWalletClient.getChainId();
     if (walletChainId !== intuitionTestnet.id) throw new RevokeChainError(walletChainId);
     if (params.smartAccount.address.toLowerCase() !== params.target.delegator.toLowerCase()) {
-        throw new Error("This delegation was not signed by your Smart Account.");
+        throw new Error("This permission was not signed by your agent wallet.");
     }
     const oneShot = await signDelegationAs({
         delegation: revocationDelegation({
@@ -124,7 +124,7 @@ export async function revokeDelegation(params: {
         agentWalletClient: params.operatorWalletClient,
     });
     const receipt = await waitAndRecord(params.publicClient, hash, {
-        label: "revoke delegation",
+        label: "revoke permission",
         chainId: intuitionTestnet.id,
     });
     // A reverted revocation leaves the delegation redeemable; saying "revoked" would be the worst

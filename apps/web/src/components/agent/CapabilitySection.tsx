@@ -28,7 +28,7 @@ export function CapabilitySection({groups, count}: {groups: CapabilityGroup[]; c
     if (count === 0) {
         return (
             <p className="text-[length:var(--text-body-sm)] text-[color:var(--color-steel)] max-w-[60ch]">
-                No capability triples.
+                Nothing declared.
             </p>
         );
     }
