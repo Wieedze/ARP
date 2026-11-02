@@ -1,7 +1,9 @@
 # Task 46 — The redesign from references: one page at a time, our modules kept
 
-**Status:** 46a **built** 2026-11-02. 46b–46f **proposed**, waiting on the user's choice per page.
-**ADR:** none yet. Each ui.md rule a page relaxes gets one, like `0067` and `0073`.
+**Status:** 46a and 46d **built** 2026-11-02. The user approved the two shared layouts the same day
+(list pages follow `/tools`, detail pages follow the skill page) and ADR `0104`. 46b, 46c and 46e wait
+for task 47 (plain words) to commit, because it edits the same files. 46f waits on the user.
+**ADR:** `0104` (detail pages put the facts on the right). Each ui.md rule a page relaxes gets one.
 **Rules:** `ui.md`, `code.md`, `claims.md`, `workflow.md`.
 **Reviewers:** `ui-reviewer`, then `task-verifier`.
 **Required skills:** none beyond the rules.
@@ -23,6 +25,8 @@ the Mobbin references behind each one, were published to the user that day.
 | Negotiable, one ADR each | dense 15+ row lists, the two-column detail view, borders-not-shadows, the anti-template list |
 | Order | `/tools` first |
 | `/tools` | variant A of five, without its two parts that reversed earlier decisions (below) |
+| The two shared layouts, and the agent page's facts on the right | **yes** ("oui"), on the mockup page "ARP — une grammaire, toutes les pages": list pages follow `/tools`, detail pages follow the skill page. ADR `0104` |
+| `/register` | the two-tile mockup on that same page. Built first because task 47 does not touch `Register.tsx`: _« ok fait la »_ |
 
 ## 3. 46a — `/tools` pages its list (built)
 
@@ -46,16 +50,16 @@ cell reverses the decision written in `ToolCatalogList.tsx` that a zero is blank
 `pages/ToolCatalog.test.tsx`: 25 rows and stepping, and the return to page 1 on order, index and
 domain. With the three resets removed, 3 of the 4 fail.
 
-## 4. Proposed, not started
+## 4. Proposed, and built where marked
 
-Each waits on the user's choice of mockup.
+A row is built only after the user has chosen its mockup (§2).
 
 | | Page | Proposal | Rules touched |
 | --- | --- | --- | --- |
 | 46b | `/agent/:chainId/:tokenId` | open on the first non-empty tab; drop the "Graph read from" line and the mainnet declare sentence; the CAIP-19 shown once | none |
-| | | Support panel sticky on the right | two-column detail view |
+| | | facts in cards on the right, like the skill page | two-column detail view, **amended** by ADR `0104` |
 | 46c | `/activity` | one table with chips instead of three stacked blocks | none |
-| 46d | `/register` | two choice tiles, each with a mono line of what it needs | none |
+| 46d | `/register` | **built** (`Choice` in `YourAgent.tsx` now has no importer outside its file; drop its `export` once task 47 commits that file): two choice tiles, each with a mono line of what it needs (`ERC-8004 identity · wallet`, `URL · wallet`). No symbol: a Sigil comes from chain data. `pages/Register.test.tsx`, 2 tests | none |
 | 46e | `/agents` | the id lookup inside the search; `—` when nobody holds a position, which has to match what `/tools` does | none |
 | | | filter chips | new feature, scope |
 | 46f | the shell | the giant footer wordmark on `/` only | ADR `0057`'s handoff |
