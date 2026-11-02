@@ -8,7 +8,11 @@ import {encodeAbiParameters, keccak256, parseEther, stringToBytes, toFunctionSel
 import type {Hex} from "viem";
 import {privateKeyToAccount} from "viem/accounts";
 
-import {INTUITION_USES_TERM_ID as USES, signContentReceipt} from "@arp-protocol/core";
+import {
+    INTUITION_IS_A_SUB_DOMAIN_OF as SUB_DOMAIN,
+    INTUITION_USES_TERM_ID as USES,
+    signContentReceipt,
+} from "@arp-protocol/core";
 import {afterAll, beforeAll, describe, expect, it} from "vitest";
 
 
@@ -49,6 +53,17 @@ const STUBBED = {
             subject: {term_id: "0xs1", label: "An Agent", type: "Thing"},
             term: {total_assets: "5000", vaults: [{position_count: 2}]},
             counter_term: {total_assets: "0", vaults: [{position_count: 0}]},
+        },
+    ],
+};
+
+const STUBBED_TREE = {
+    positions: [
+        {
+            shares: "1",
+            term: {
+                triple: {term_id: "0xd1", subject: {label: "marketing"}, object: {label: "tool"}},
+            },
         },
     ],
 };
@@ -202,6 +217,12 @@ beforeAll(async () => {
         void (async () => {
             const body = await readBody(request);
             response.writeHead(200, {"content-type": "application/json"});
+            // The domain tree, one edge: `marketing` under `tool`, read through the attestor's
+            // positions. Answered by predicate so the tag query still gets the default payload.
+            if (body.includes(SUB_DOMAIN)) {
+                response.end(JSON.stringify({data: STUBBED_TREE}));
+                return;
+            }
             if (body.includes("sameAsPredicateId")) {
                 response.end(JSON.stringify({data: STUBBED_SUBJECT}));
                 return;
@@ -795,6 +816,17 @@ describe("read-only mode", () => {
         for (const word of ["TRUST", "chain", "wallet", "stake", "vault", "atom", "ERC-8004"]) {
             expect(instructions).not.toContain(word);
         }
+    });
+
+    it("answers a word the registry does not use with the words it does", async () => {
+        // "business" was the word a live run used on 2026-11-02, and it found nothing. The answer
+        // has to carry somewhere to go next, or the agent stops looking.
+        const body = await call("tools/call", {name: "arp_find_tools", arguments: {domain: "business"}});
+        const answer = JSON.parse(
+            (body["result"] as {content: {text: string}[]}).content[0]!.text,
+        ) as {tools: unknown[]; domains_available?: string[]};
+        expect(answer.tools).toEqual([]);
+        expect(answer.domains_available).toEqual(["marketing"]);
     });
 
     it("keeps the chain's vocabulary out of the three descriptions it serves", async () => {
