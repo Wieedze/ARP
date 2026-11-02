@@ -180,19 +180,26 @@ export function AgentIdentityPanel({view}: {view: TrustPanelView}) {
                     )}
                 </Field>
                 <Field label="Token id">{view.tokenId}</Field>
-                <Field label="Intuition atom">
+                {/* ADR `0103`: the atom id is not shown by default; the link opens it and the hint
+                    carries it, so it stays checkable. */}
+                <Field label="Intuition">
                     {view.atomTermId === null ? (
                         <span className="text-[color:var(--color-steel)]">
                             not in the Intuition graph
                         </span>
                     ) : (
-                        <a
-                            href={intuitionPortalUrl("atom", view.atomTermId, chain.isMainnet)}
-                            target="_blank"
-                            rel="noreferrer"
-                        >
-                            {truncateMiddle(view.atomTermId, 12, 8)} ↗
-                        </a>
+                        <span className="inline-flex items-center gap-2">
+                            <a
+                                href={intuitionPortalUrl("atom", view.atomTermId, chain.isMainnet)}
+                                target="_blank"
+                                rel="noreferrer"
+                            >
+                                open ↗
+                            </a>
+                            <Hint label="Atom id">
+                                <span className="font-mono break-all">{view.atomTermId}</span>
+                            </Hint>
+                        </span>
                     )}
                 </Field>
                 {view.url !== null ? (

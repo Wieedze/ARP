@@ -190,7 +190,7 @@ export async function prepareIdentityAtom(params: {
             to: params.reads.address,
             value: atomAssets,
             data: encodeCreateAtom(atomDataForUri(uris.identity), atomAssets),
-            why: `the agent's identity atom, from the canonical recipe (${things.identity.name})`,
+            why: `the agent's public identity, from the canonical recipe (${things.identity.name})`,
             preview: await preview("atom", identityAtom, atomAssets),
         });
     }
@@ -201,7 +201,7 @@ export async function prepareIdentityAtom(params: {
             to: params.reads.address,
             value: atomAssets,
             data: encodeCreateAtom(atomDataForUri(uris.caip), atomAssets),
-            why: `the CAIP-19 identifier atom (${caip19})`,
+            why: `the agent's CAIP-19 identifier, made public (${caip19})`,
             preview: await preview("atom", caipAtom, atomAssets),
         });
     }
@@ -212,7 +212,7 @@ export async function prepareIdentityAtom(params: {
             to: params.reads.address,
             value: tripleAssets,
             data: encodeCreateTriple(identityAtom, SAME_AS as Hex, caipAtom, tripleAssets),
-            why: "identity atom --same as--> caip19 atom, the edge resolution reads",
+            why: "identity --same as--> CAIP-19 identifier, the link resolution reads",
             preview: await preview("triple", tripleId, tripleAssets),
         });
     }
@@ -225,7 +225,7 @@ export async function prepareIdentityAtom(params: {
             to: params.reads.address,
             value: tripleAssets,
             data: encodeCreateTriple(identityAtom, HAS_TYPE as Hex, AI_AGENT as Hex, tripleAssets),
-            why: "identity atom --has type--> AIAgent, Intuition's stated minimum",
+            why: "identity --has type--> AIAgent, Intuition's stated minimum",
             preview: await preview("triple", typeTripleId, tripleAssets),
         });
     }
@@ -236,7 +236,7 @@ export async function prepareIdentityAtom(params: {
             to: params.reads.address,
             value: tripleAssets,
             data: encodeCreateTriple(identityAtom, IMPLEMENT as Hex, ERC8004 as Hex, tripleAssets),
-            why: "identity atom --implement--> ERC-8004, which is what COHORT_QUERY filters on",
+            why: "identity --implement--> ERC-8004, which is what COHORT_QUERY filters on",
             preview: await preview("triple", implementTripleId, tripleAssets),
         });
     }

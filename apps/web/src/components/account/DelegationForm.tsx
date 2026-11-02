@@ -61,7 +61,7 @@ export function DelegationForm({
     function review() {
         const trimmed = delegate.trim();
         if (!isAddress(trimmed, {strict: false})) {
-            setError("Delegate must be an address");
+            setError("Enter a 0x address");
             return;
         }
         const cap = parseCapInput(capInput);
@@ -118,7 +118,7 @@ export function DelegationForm({
         >
             <div>
                 <label htmlFor={ids.delegate} className={LABEL}>
-                    Delegate
+                    Agent address
                 </label>
                 <input
                     id={ids.delegate}

@@ -235,7 +235,7 @@ export function DeclareUse({
                             : plan === null
                               ? ""
                               : plan.exists
-                                ? "This agent has already declared using this atom"
+                                ? "This agent has already declared using this"
                                 : "Ready to declare"}
                 </p>
 
@@ -279,12 +279,12 @@ function Refusal({error}: {error: unknown}) {
                   "bad-agent-ref": "That is not an agent reference",
                   "agent-not-found": "No such agent in the registry",
                   "not-the-owner": "Not your agent",
-                  "no-identity-atom": "This agent has no identity atom here",
-                  "object-not-on-chain": "This chain does not hold this atom yet",
+                  "no-identity-atom": "This agent has no public identity here",
+                  "object-not-on-chain": "This chain does not hold it yet",
                   "already-declared": "Already declared",
                   "cost-above-ceiling": "Over this app's per-transaction ceiling",
                   "mainnet-not-authorised": "Not open on this chain",
-                  "no-position": "This claim would carry no position",
+                  "no-position": "This declaration would carry no support",
                   "planner-returned-nothing": "Nothing to plan",
                   "wrong-chain": "Your wallet is on another chain",
               }[guard.code];
@@ -358,15 +358,22 @@ function Resolved(props: {
                 2026-10-29. It is a link now, on the user's decision of 2026-10-30, and it goes to
                 the portal rather than in-app because ARP has no page for a triple — the claim is
                 rendered here and nowhere else. */}
-            <Field label="Subject atom" value={plan.subject} to={`/atom/${plan.subject}`} />
-            <Field
-                label="Edge"
-                value={plan.tripleId}
-                href={intuitionPortalUrl("triple", plan.tripleId, props.chain.isMainnet)}
-            />
+            {/* Ids are for checking, not for reading — collapsed, still one click away (ADR
+                `0103`). */}
+            <details className="mt-4">
+                <summary className="cursor-pointer text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
+                    Verify
+                </summary>
+                <Field label="Subject atom" value={plan.subject} to={`/atom/${plan.subject}`} />
+                <Field
+                    label="Edge"
+                    value={plan.tripleId}
+                    href={intuitionPortalUrl("triple", plan.tripleId, props.chain.isMainnet)}
+                />
+            </details>
 
             {plan.exists ? (
-                <p className="mt-8 font-medium">This agent has already declared using this atom.</p>
+                <p className="mt-8 font-medium">This agent has already declared using this.</p>
             ) : tx !== null ? (
                 <div className="mt-8">
                     <p className="font-medium">Declared.</p>
@@ -402,17 +409,20 @@ function Resolved(props: {
                             value={`${formatTrust(plan.feeAssets)} ${chain.symbol}`}
                         />
                         <Term
-                            label="Reaches the vault"
+                            label="Your support"
                             value={`${formatTrust(plan.assetsAfterFees)} ${chain.symbol}`}
+                            hint={{
+                                label: "What the support buys",
+                                sentence: `${formatTrust(plan.shares)} shares in the declaration's vault.`,
+                            }}
                         />
-                        <Term label="Shares minted" value={formatTrust(plan.shares)} />
                     </dl>
 
                     {!props.onTargetChain ? (
                         <div className="mt-6">
                             <p className="text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
                                 Your wallet is on chain {props.walletChainId ?? "unknown"}. This
-                                claim goes to {chain.chain.name} ({chain.chainId}).
+                                declaration goes to {chain.chain.name} ({chain.chainId}).
                             </p>
                             <button
                                 type="button"

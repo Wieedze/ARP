@@ -172,7 +172,7 @@ describe("deploySmartAccountIfNeeded", () => {
                 smartAccount: smartAccount as never,
                 funderWalletClient: funder,
             }),
-        ).rejects.toThrow(/no factory args/);
+        ).rejects.toThrow(/cannot be set up/);
         expect(funder.sendTransaction).not.toHaveBeenCalled();
     });
 });

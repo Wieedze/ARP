@@ -61,14 +61,11 @@ function callSummary(
             };
         }
         case "deposit":
-            return {
-                label: "position",
-                detail: `on ${short(decoded.termId)} · curve ${decoded.curveId}`,
-            };
+            return {label: "support", detail: `on ${short(decoded.termId)}`};
         case "createAtoms":
-            return {label: "atoms", detail: `${decoded.count}`};
+            return {label: "listed", detail: `${decoded.count}`};
         case "redeem":
-            return {label: "redeem", detail: short(decoded.termId)};
+            return {label: "withdraw", detail: short(decoded.termId)};
         default:
             return {
                 label: "call",
@@ -121,7 +118,7 @@ export function entryFor(event: AgentEvent, names: ReadonlyMap<string, string>):
                 label: event.name,
                 detail: [
                     ...(event.signer !== null ? [`signed ${short(event.signer)}`] : []),
-                    ...(event.atom !== null ? [`atom ${short(event.atom)}`] : []),
+                    ...(event.atom !== null ? [`id ${short(event.atom)}`] : []),
                 ].join(" · "),
             };
         case "sent": {
@@ -580,7 +577,7 @@ export function timelineRows(
                             : name?.kind === "triple"
                               ? `${name.predicate} → ${name.object}`
                               : shortId(event.decoded.termId);
-                    on = `stakes on ${claim}`;
+                    on = `supports ${claim}`;
                 } else {
                     on = event.kind;
                 }

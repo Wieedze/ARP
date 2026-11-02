@@ -201,8 +201,8 @@ export async function planToolRegistration(params: {
         if (preview.shares === 0n) {
             throw new ToolRegisterGuardError(
                 "no-position",
-                `Creating this atom with ${assets} wei would buy 0 shares, so it would be born ` +
-                    `with no position — on the chain, and not a market. Nothing was sent.`,
+                `Registering this tool with ${assets} wei would buy no support: it would be public ` +
+                    `with no market. Nothing was sent.`,
             );
         }
         shares = preview.shares;
@@ -251,7 +251,7 @@ export async function submitToolRegistration(params: {
     if (registration.exists) {
         throw new ToolRegisterGuardError(
             "already-exists",
-            "This tool already has its atom. Take a position on it instead of creating a second one.",
+            "This tool is already registered. Support it instead of registering it a second time.",
         );
     }
     if (registration.assets > MAX_STAKE_WEI) {

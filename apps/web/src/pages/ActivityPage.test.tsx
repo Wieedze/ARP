@@ -95,7 +95,7 @@ describe("the activity page", () => {
 
         // An MCP server has no atom, so nothing can name it — said in two words, not guessed at.
         const mcp = screen.getAllByText("arp")[0]!.closest("tr")!;
-        expect(within(mcp).getByText("no atom")).toBeTruthy();
+        expect(within(mcp).getByText("not listed")).toBeTruthy();
 
         await waitFor(() => expect(screen.getByText("Live")).toBeTruthy());
     });
@@ -122,7 +122,7 @@ describe("the activity page", () => {
             readReceipt: async () => null,
         });
         renderWithProviders(<ActivityPage feed={feed} reads={NOTHING} />);
-        expect(screen.getByRole("heading", {name: "Positions"})).toBeTruthy();
+        expect(screen.getByRole("heading", {name: "Your support"})).toBeTruthy();
         expect(screen.getByText("Connect a wallet to see what it holds.")).toBeTruthy();
     });
 
@@ -175,10 +175,10 @@ describe("the activity page", () => {
         };
         renderWithProviders(<ActivityPage feed={feed} reads={reads} />);
 
-        const table = await screen.findByRole("table", {name: /on chain/i});
+        const table = await screen.findByRole("table", {name: /public/i});
         const rows = within(table).getAllByRole("row").slice(1);
         expect(rows).toHaveLength(2);
-        expect(within(rows[0]!).getByText(/staked/)).toBeTruthy();
+        expect(within(rows[0]!).getByText(/supported/)).toBeTruthy();
         expect(within(rows[0]!).getByText("by 0xB86F…7FCF")).toBeTruthy();
         expect(within(rows[1]!).getByText(/declared/)).toBeTruthy();
         expect(within(rows[1]!).getByText(/0\.00099/)).toBeTruthy();
@@ -217,7 +217,7 @@ describe("the activity page", () => {
             <ActivityPage feed={quietFeed()} reads={{fetchRecent: down, fetchStakes: down}} />,
         );
         expect(await screen.findByText(/The indexer did not answer/)).toBeTruthy();
-        expect(screen.queryByRole("table", {name: /on chain/i})).toBeNull();
+        expect(screen.queryByRole("table", {name: /public/i})).toBeNull();
     });
 
     it("says nothing is declared yet when the indexer has nothing", async () => {

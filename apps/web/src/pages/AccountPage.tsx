@@ -11,7 +11,7 @@ import {
 } from "../hooks/use-account-delegations";
 import {useChainChoice} from "../lib/chain-choice";
 import {intuitionTestnet} from "../lib/chains";
-import {controlClass, primaryControlClass} from "../lib/control-class";
+import {controlClass, linkClass, primaryControlClass} from "../lib/control-class";
 import {deployments} from "../lib/deployments";
 import {exportDelegation} from "../services/delegation-store";
 import {formatPeriod, type CaveatView} from "../services/delegation-view";
@@ -71,7 +71,7 @@ function AccountView({account}: {account: AccountDelegations}) {
 
             {account.operator === undefined ? (
                 <p className="text-[color:var(--color-steel)]">
-                    Connect a wallet to see its Smart Account and delegations.
+                    Connect a wallet to see its agent wallet and permissions.
                 </p>
             ) : (
                 <div className="max-w-[60rem] space-y-14">
@@ -92,7 +92,7 @@ function SigningGate({account}: {account: AccountDelegations}) {
             <p className={`${CELL} flex items-center gap-2 text-[color:var(--color-steel)]`}>
                 Signing: testnet only
                 <Hint label="Why signing is testnet only">
-                    Delegated staking on mainnet waits until the path is proven on testnet end to
+                    Support under a permission waits on mainnet until it is proven on testnet end to
                     end (ADR 0036).
                 </Hint>
             </p>
@@ -124,11 +124,11 @@ function WalletSection({account, canSign}: {account: AccountDelegations; canSign
     const sa = account.smartAccount;
     return (
         <div>
-            <h2 className={`${LABEL} mb-3`}>Wallet and Smart Account</h2>
+            <h2 className={`${LABEL} mb-3`}>Wallet and agent wallet</h2>
             <dl className="grid grid-cols-[10rem_1fr] gap-x-6 gap-y-3 text-[length:var(--text-body-sm)]">
                 <dt className={LABEL}>Wallet</dt>
                 <dd className="font-mono break-all">{account.operator}</dd>
-                <dt className={LABEL}>Smart Account</dt>
+                <dt className={LABEL}>Agent wallet</dt>
                 <dd className="font-mono break-all">
                     {sa === null
                         ? account.smartAccountError === null
@@ -169,21 +169,41 @@ function WalletSection({account, canSign}: {account: AccountDelegations; canSign
     );
 }
 
+/**
+ * The contract that checks a limit, kept reachable as an explorer link rather than in the row.
+ * A link, not a `Hint`: an address inside a hint cannot be selected or copied (ADR `0103`).
+ * Permissions exist on testnet only, so the explorer is the testnet deployment's.
+ */
+function CheckedBy({name, address}: {name: string; address: string}) {
+    return (
+        <a
+            href={`${deployments.chain.explorerUrl}/address/${address}`}
+            target="_blank"
+            rel="noreferrer"
+            aria-label={`Contract that checks this limit: ${name} ${address}`}
+            className={`text-[length:var(--text-body-sm)] ${linkClass}`}
+        >
+            contract ↗
+        </a>
+    );
+}
+
 function Caveat({caveat}: {caveat: CaveatView}) {
     if (caveat.kind === "stake-cap") {
         return (
-            <span className="block">
+            <span className="flex items-center gap-2">
                 {formatTrust(caveat.cap)} tTRUST / {formatPeriod(caveat.periodSeconds)}
-                <span className="text-[color:var(--color-steel)]">
-                    {" "}
-                    TrustStakeCap {short(caveat.enforcer)}
-                </span>
+                <CheckedBy name="TrustStakeCap" address={caveat.enforcer} />
             </span>
         );
     }
     return (
-        <span className="block text-[color:var(--color-steel)]">
-            {caveat.kind === "named" ? caveat.name : "unknown enforcer"} {short(caveat.enforcer)}
+        <span className="flex items-center gap-2 text-[color:var(--color-steel)]">
+            {caveat.kind === "named" ? caveat.name : "unknown limit"}
+            <CheckedBy
+                name={caveat.kind === "named" ? caveat.name : "unknown"}
+                address={caveat.enforcer}
+            />
         </span>
     );
 }
@@ -338,13 +358,13 @@ function RevokeConfirm({
     return (
         <div role="group" aria-label="Confirm revocation" className="space-y-3">
             <p id={summaryId}>
-                Revoke on {TESTNET}: your Smart Account signs a one-call delegation, then your
-                wallet sends <span className="font-mono">disableDelegation</span> to{" "}
+                Revoke on {TESTNET}: your agent wallet signs a one-call permission, then your wallet
+                sends <span className="font-mono">disableDelegation</span> to{" "}
                 <span className="font-mono">
                     {short(deployments.metamaskDelegationFramework.delegationManager)}
                 </span>
-                . Delegate <span className="font-mono">{short(delegation.delegate)}</span> can no
-                longer redeem it.
+                . Agent address <span className="font-mono">{short(delegation.delegate)}</span> can
+                no longer use it.
             </p>
             <div className="flex gap-3">
                 <button
@@ -374,23 +394,23 @@ function DelegationsSection({account, canSign}: {account: AccountDelegations; ca
     return (
         <div>
             <h2 className={`${LABEL} mb-2`} id="account-delegations">
-                Delegations
+                Permissions
             </h2>
             {account.rows.length === 0 ? (
                 <p
                     className={`${CELL} border-t border-[color:var(--color-rule)] py-3 text-[color:var(--color-steel)]`}
                 >
-                    None in this browser. A delegation you sign below appears here.
+                    None in this browser. A permission you sign below appears here.
                 </p>
             ) : (
                 <table aria-labelledby="account-delegations" className="w-full border-collapse">
                     <thead>
                         <tr>
                             <th scope="col" className={TH}>
-                                Delegate
+                                Agent address
                             </th>
                             <th scope="col" className={TH}>
-                                Caveats
+                                Limits
                             </th>
                             <th scope="col" className={`${TH} w-[9.5rem]`}>
                                 Signed (UTC)
@@ -432,16 +452,16 @@ function NewDelegationSection({account, canSign}: {account: AccountDelegations; 
     const [signedCount, setSignedCount] = useState(0);
     return (
         <div>
-            <h2 className={`${LABEL} mb-3`}>New delegation</h2>
+            <h2 className={`${LABEL} mb-3`}>New permission</h2>
             {!canSign ? (
                 <p className={`${CELL} text-[color:var(--color-steel)]`}>
                     {account.smartAccount === null
-                        ? "Smart Account not derived yet"
+                        ? "Agent wallet not derived yet"
                         : "Not on 13579"}
                 </p>
             ) : !deployed ? (
                 <p className={`${CELL} text-[color:var(--color-steel)]`}>
-                    Deploy the Smart Account first.
+                    Deploy the agent wallet first.
                 </p>
             ) : (
                 <>
@@ -475,7 +495,8 @@ function RuntimeSection({account}: {account: AccountDelegations}) {
             <h2 className={`${LABEL} mb-3`}>Agent runtime</h2>
             {account.runtimes.length === 0 ? (
                 <p className={`${CELL} text-[color:var(--color-steel)]`}>
-                    No delegate yet. The address a delegation names appears here with its balance.
+                    No agent address yet. The address a permission names appears here with its
+                    balance.
                 </p>
             ) : (
                 <dl className="grid grid-cols-[1fr_auto] gap-x-6 gap-y-2 text-[length:var(--text-body-sm)]">

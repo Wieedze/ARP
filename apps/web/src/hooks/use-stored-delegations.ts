@@ -40,7 +40,7 @@ export function useStoredDelegations(smartAccount: Address | undefined) {
         (delegation: Delegation) => {
             const storage = browserStorage();
             if (smartAccount === undefined || storage === null) {
-                throw new Error("This browser cannot store the delegation, so it was not kept.");
+                throw new Error("This browser cannot store the permission, so it was not kept.");
             }
             appendStoredDelegation(storage, smartAccount, {
                 delegation,

@@ -35,11 +35,11 @@ export const TIER_TONE_CLASS: Record<ProvenanceTier, string> = {
  * mistaken for data" and a softer phrasing is how it gets mistaken.
  */
 export const TIER_CAPTION: Record<ProvenanceTier, string> = {
-    fact: "A payment, an on-chain call or a redeemed delegation. The chain recorded it.",
+    fact: "A payment, a call or a used permission, recorded by the chain.",
     "confirmed-by-both": "The tool and the agent both declared it, and their interests oppose.",
     "tool-declared": "The tool's word that this agent used it. A third party, and strong.",
-    "priced-assertion": "The agent's own claim, with a stake behind it. Priced, not proven.",
-    "free-assertion": "The agent's own claim, with nothing on this curve behind it.",
+    "priced-assertion": "The agent's own declaration, with support behind it. Priced, not proven.",
+    "free-assertion": "The agent's own declaration, with no support behind it.",
 };
 
 /**
@@ -50,9 +50,9 @@ export const TIER_CAPTION: Record<ProvenanceTier, string> = {
  * apart in meaning — "real capital is behind this" against "nothing is" — and one weight step was
  * the smallest distinction on the page between them.
  */
-export const OFF_CURVE_LABEL = "Staked off-curve";
+export const OFF_CURVE_LABEL = "Supported outside this pricing";
 
 export const OFF_CURVE_TONE_CLASS = "text-[color:var(--color-fg)] font-normal";
 
 export const OFF_CURVE_CAPTION =
-    "A stake is behind this claim, on a bonding curve this page does not read.";
+    "Support is behind this declaration, on a pricing this page does not read.";

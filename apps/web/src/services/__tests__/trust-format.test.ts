@@ -135,7 +135,7 @@ describe("describeFetchError", () => {
             "an unknown content type",
         );
         expect(describeFetchError({kind: "timeout", timeoutMs: 8000})).toContain("8000 ms");
-        expect(describeFetchError({kind: "no-resolver-url"})).toContain("no resolver URL");
+        expect(describeFetchError({kind: "no-resolver-url"})).toContain("links to no document");
         expect(describeFetchError({kind: "network", message: "fetch failed"})).toContain(
             "fetch failed",
         );
@@ -148,15 +148,15 @@ describe("describeFetchError", () => {
 
 describe("stakerLabel", () => {
     it("is singular at one and plural everywhere else", () => {
-        expect(stakerLabel(0)).toBe("0 distinct stakers");
-        expect(stakerLabel(1)).toBe("1 distinct staker");
-        expect(stakerLabel(2)).toBe("2 distinct stakers");
+        expect(stakerLabel(0)).toBe("0 distinct supporters");
+        expect(stakerLabel(1)).toBe("1 distinct supporter");
+        expect(stakerLabel(2)).toBe("2 distinct supporters");
     });
 
     it("groups digits the same way the visible figure does", () => {
         // `role="img"` hides the digits from assistive tech, so the label is the
         // only announced copy. These two drifted apart once already.
-        expect(stakerLabel(1445)).toBe("1,445 distinct stakers");
+        expect(stakerLabel(1445)).toBe("1,445 distinct supporters");
         expect(stakerLabel(1445)).toContain(formatStakerCount(1445));
     });
 });

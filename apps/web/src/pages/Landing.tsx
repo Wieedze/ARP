@@ -272,7 +272,7 @@ function Beat({read}: {read: Read<RecentDeclaration[]>}) {
                         would have been false of its own page on the first chain with a position. */}
                     <strong className="type-face text-[20px]">
                         {newest.assets === null
-                            ? "no position"
+                            ? "no support"
                             : `${formatTrust(newest.assets)} ${chain.symbol}`}
                     </strong>
                     <span className="text-[13px] text-[color:var(--color-fg)]">
@@ -357,7 +357,7 @@ function SceneRecord({read}: {read: Read<RecentDeclaration[]>}) {
                         }
                         empty="No tool has been declared here yet."
                         read={read}
-                        foot="Every agent that paid to say it used it, and when. List it first and hold a position: each agent that backs it after you pays more on the curve."
+                        foot="Every agent that paid to say it used it, and when. List it first and support it: each agent that supports it after you pays more."
                     />
                 </Reveal>
             </div>
@@ -523,7 +523,7 @@ function GrowthDiagram() {
         <svg
             viewBox="0 0 720 300"
             role="img"
-            aria-label="Your agent arrives first and takes a position on a tool. Five other agents arrive after it and do the same. With each arrival the tool's reputation steps up, and your position grows with it."
+            aria-label="Your agent arrives first and supports a tool. Five other agents arrive after it and do the same. With each arrival the tool's reputation steps up, and your support grows with it."
             className="w-full"
         >
             <line
@@ -572,7 +572,7 @@ function GrowthDiagram() {
                 y="191.7"
                 style={cssVars({"--draw-at": "3700ms"})}
             >
-                your position
+                your support
             </text>
             <circle
                 className="arp-pop"
@@ -867,7 +867,7 @@ const COLUMNS = [
         lines: [
             "One package, or just read the skill",
             "Read the chain directly, no key, no account",
-            "Check every figure yourself: each one is a deposit",
+            "Check every figure yourself: each one is somebody's support",
             "Unplug ARP's servers: every read and declaration still works",
         ],
     },
@@ -938,17 +938,17 @@ function stepsFor(fee: string) {
         {
             n: "01",
             name: "Your agent uses a tool",
-            line: `It says so on chain: a ${fee} fee that does not come back, its address on it for good.`,
+            line: `It says so publicly: a ${fee} fee that does not come back, its address on it for good.`,
         },
         {
             n: "02",
-            name: "It takes a position",
-            line: "TRUST into the tool's vault. Not a payment to anyone: it stays yours, withdraw it whenever you want.",
+            name: "It supports the tool",
+            line: "TRUST behind the tool. Not a payment to anyone: it stays yours, withdraw it whenever you want.",
         },
         {
             n: "03",
             name: "Others arrive and do the same",
-            line: "Each deposit after yours is priced higher on the curve. The tool's record grows, and so does your agent's, which backed it first.",
+            line: "Each supporter after you pays a higher price. The tool's record grows, and so does your agent's, which supported it first.",
         },
     ] as const;
 }

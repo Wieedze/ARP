@@ -2,7 +2,7 @@
 
 **Generated** 2026-11-02 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-37 entries, one per completed task. Written by `task-verifier` on a pass.
+38 entries, one per completed task. Written by `task-verifier` on a pass.
 
 | # | task | verdict | entry |
 | --- | --- | --- | --- |
@@ -43,3 +43,4 @@
 | [33](33-the-account-page.md) | `docs/tasks/35-the-account-page.md` | PASS (second run; the first returned a five-item punch list) | The account page: delegations and settings |
 | [34](34-hire-receipt-v2.md) | `docs/tasks/44-hire-receipt-v2.md` | PASS (second pass; the first returned a four-item punch list) | Hire receipt v2: the receipt names the contract that verifies it |
 | [35](35-the-activity-bar-chain-facts.md) | `docs/tasks/36-the-activity-bar.md` (section "Amended 2026-11-02 — every agent, from the indexer") | PASS (second pass; first FAIL on 3 items) | The activity bar, amended: every agent, from the indexer (36, 2026-11-02) |
+| [38](38-plain-words.md) | `docs/tasks/47-plain-words.md` | PASS (first pass; ui-reviewer FAIL round 1, PASS round 2) | Plain words: the operator does not read the chain's vocabulary (47) |

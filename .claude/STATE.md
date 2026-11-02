@@ -226,6 +226,7 @@ and task 20 commits and does not describe them.**
 | 43     | the receipt enforcer                                   | **built and verified** 2026-10-30 (`learning/31`, PASS; ADR `0098`), merged into `dev` (PR #14). Not deployed. The v2 receipt is task 44 |
 | 44     | hire receipt v2                                        | **built and verified** 2026-11-02 (`learning/34`, PASS; ADR `0101`) merged into `dev` (PR #24, 2026-11-02) |
 | 45     | discovery without a command                            | **plan** 2026-11-02. 45a, 45b' and 45d merged into `dev` (PRs #23, #25). 45e met by default on testnet (ADR `0102`). The rest open |
+| 47     | plain words for the operator                           | **built and verified** 2026-11-02 (ADR `0103`, `learning/38`; `ui-reviewer` PASS on round 2, `task-verifier` PASS) on `feat/47-plain-words`. Web, MCP descriptions and output, and the protocol's `why:` strings follow the user's glossary: support, withdraw, declaration, public, permission, limit, agent wallet; ids and shares behind a "Verify" detail. CLI and node needed no change. 46 is arp-30's redesign |
 
 **Recommended order** — `docs/15_ROADMAP.md` is the full version with what testnet can and cannot
 prove. The old short form here read **"next is 17 → 25"** and both halves are now wrong: 17's gate

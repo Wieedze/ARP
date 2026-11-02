@@ -4,7 +4,6 @@ import {useSkillFacts} from "../../hooks/use-skill-facts";
 import {linkClass} from "../../lib/control-class";
 
 import type {GroupView} from "../../services/atom-standing-view";
-import {truncateMiddle} from "../../services/trust-format";
 import {StakerCount} from "../agent/StakerCount";
 import {Sigil} from "../brand/Sigil";
 
@@ -187,10 +186,18 @@ export function Empty({atomId}: {atomId: string}) {
         <div>
             <h2 className="text-[length:var(--text-body)] font-medium">Nothing points at it</h2>
             <p className="mt-3 max-w-[70ch] text-[color:var(--color-steel)]">
-                No claim on this chain has{" "}
-                <span className="font-mono">{truncateMiddle(atomId)}</span> as its object. A row
-                appears when somebody writes one — a declared use, a tag, a category.
+                No public declaration points at it on this chain yet. A row appears when somebody
+                writes one — a declared use, a tag, a category.
             </p>
+            {/* ADR `0103`: the full id stays checkable and selectable, collapsed. */}
+            <details className="mt-3">
+                <summary className="cursor-pointer text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
+                    Verify
+                </summary>
+                <p className="mt-2 font-mono text-[length:var(--text-body-sm)] break-all">
+                    {atomId}
+                </p>
+            </details>
         </div>
     );
 }

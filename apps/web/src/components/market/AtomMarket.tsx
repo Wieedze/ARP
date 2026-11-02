@@ -129,7 +129,7 @@ export function AtomMarket({
             <dl className="flex flex-wrap gap-x-10 gap-y-3 text-[length:var(--text-body-sm)]">
                 <div>
                     <dt className="font-mono uppercase tracking-wider text-[length:var(--text-label)] text-[color:var(--color-steel)]">
-                        Deposited
+                        Total support
                     </dt>
                     <dd className="mt-1 font-mono tabular-nums">
                         {vault === undefined
@@ -139,7 +139,7 @@ export function AtomMarket({
                 </div>
                 <div>
                     <dt className="font-mono uppercase tracking-wider text-[length:var(--text-label)] text-[color:var(--color-steel)]">
-                        Support
+                        Supporters
                     </dt>
                     <dd className="mt-1 font-mono tabular-nums">
                         {positionCount === null ? "—" : positionCount}
@@ -150,25 +150,31 @@ export function AtomMarket({
                         Yours
                     </dt>
                     <dd className="mt-1 font-mono tabular-nums">
-                        {vault === undefined || vault.shares === null ? (
-                            "—"
-                        ) : (
-                            <>
-                                {formatTrust(vault.shares)}{" "}
-                                <span className="font-sans text-[color:var(--color-steel)]">
-                                    shares
-                                </span>
-                            </>
-                        )}
+                        {vault === undefined || vault.shares === null
+                            ? "—"
+                            : vault.shares > 0n
+                              ? "supporting"
+                              : "none"}
                     </dd>
                 </div>
-                <div>
-                    <dt className="font-mono uppercase tracking-wider text-[length:var(--text-label)] text-[color:var(--color-steel)]">
-                        Vault
-                    </dt>
-                    <dd className="mt-1 font-mono">{truncateMiddle(atomTermId, 10, 6)}</dd>
-                </div>
             </dl>
+            {/* ADR `0103`: the vault id and the held share count stay checkable and selectable,
+                collapsed. A `Hint` would hide them where they cannot be copied. */}
+            <details className="mt-3">
+                <summary className="cursor-pointer text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
+                    Verify
+                </summary>
+                <dl className="mt-2 font-mono text-[length:var(--text-body-sm)]">
+                    <dt className="text-[color:var(--color-steel)]">Vault id</dt>
+                    <dd className="break-all">{atomTermId}</dd>
+                    {vault === undefined || vault.shares === null ? null : (
+                        <>
+                            <dt className="mt-2 text-[color:var(--color-steel)]">Your shares</dt>
+                            <dd>{formatTrust(vault.shares)}</dd>
+                        </>
+                    )}
+                </dl>
+            </details>
 
             {/* The value line, and the number it ends at.
                 Reconstructed from the vault's signals — `deposit_id` set means TRUST entered,
@@ -206,7 +212,7 @@ export function AtomMarket({
             {(backersQuery.data?.length ?? 0) === 0 ? null : (
                 <div className="mt-8">
                     <h3 className="text-[length:var(--text-label)] uppercase tracking-wider text-[color:var(--color-steel)]">
-                        Support
+                        Supporters
                     </h3>
                     <ul className="mt-3">
                         {(backersQuery.data ?? []).map((backer) => (

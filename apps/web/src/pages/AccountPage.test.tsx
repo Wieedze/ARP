@@ -61,7 +61,7 @@ function account(overrides: Partial<Record<string, unknown>> = {}): AccountDeleg
 describe("the account page", () => {
     it("lists a stored delegation with its delegate, its cap and its state", () => {
         renderWithProviders(<AccountPage account={account()} />);
-        const table = screen.getByRole("table", {name: "Delegations"});
+        const table = screen.getByRole("table", {name: "Permissions"});
         expect(within(table).getByText(RUNTIME)).toBeInTheDocument();
         expect(within(table).getByText(/2 tTRUST \/ 1d/)).toBeInTheDocument();
         expect(within(table).getByText("active")).toBeInTheDocument();
@@ -135,7 +135,7 @@ describe("the account page", () => {
         const acct = account({rows: []});
         renderWithProviders(<AccountPage account={acct} />);
 
-        fireEvent.change(screen.getByLabelText("Delegate"), {
+        fireEvent.change(screen.getByLabelText("Agent address"), {
             target: {value: RUNTIME.toLowerCase()},
         });
         fireEvent.change(screen.getByLabelText(/Cap per period/), {target: {value: "3"}});
@@ -159,7 +159,7 @@ describe("the account page", () => {
         });
         renderWithProviders(<AccountPage account={acct} />);
 
-        fireEvent.change(screen.getByLabelText("Delegate"), {target: {value: RUNTIME}});
+        fireEvent.change(screen.getByLabelText("Agent address"), {target: {value: RUNTIME}});
         fireEvent.click(screen.getByRole("button", {name: "Review"}));
         fireEvent.click(screen.getByRole("button", {name: "Sign in wallet"}));
         expect(acct.sign.mutate).toHaveBeenCalledTimes(1);
@@ -170,7 +170,7 @@ describe("the account page", () => {
     it("keeps the confirmation while a signature has not succeeded", () => {
         const acct = account({rows: []});
         renderWithProviders(<AccountPage account={acct} />);
-        fireEvent.change(screen.getByLabelText("Delegate"), {target: {value: RUNTIME}});
+        fireEvent.change(screen.getByLabelText("Agent address"), {target: {value: RUNTIME}});
         fireEvent.click(screen.getByRole("button", {name: "Review"}));
         fireEvent.click(screen.getByRole("button", {name: "Sign in wallet"}));
         expect(screen.getByRole("button", {name: "Sign in wallet"})).toBeInTheDocument();
@@ -215,9 +215,9 @@ describe("the account page", () => {
     it("refuses a delegate that is not an address before anything is signed", () => {
         const acct = account({rows: []});
         renderWithProviders(<AccountPage account={acct} />);
-        fireEvent.change(screen.getByLabelText("Delegate"), {target: {value: "nobody"}});
+        fireEvent.change(screen.getByLabelText("Agent address"), {target: {value: "nobody"}});
         fireEvent.click(screen.getByRole("button", {name: "Review"}));
-        expect(screen.getByRole("alert")).toHaveTextContent("Delegate must be an address");
+        expect(screen.getByRole("alert")).toHaveTextContent("Enter a 0x address");
         expect(acct.sign.mutate).not.toHaveBeenCalled();
     });
 
@@ -250,7 +250,7 @@ describe("the account page", () => {
         renderWithProviders(<AccountPage account={account({rows: []})} />);
         // The form does not take focus on its own first mount.
         expect(screen.getByRole("button", {name: "Review"})).not.toHaveFocus();
-        fireEvent.change(screen.getByLabelText("Delegate"), {target: {value: RUNTIME}});
+        fireEvent.change(screen.getByLabelText("Agent address"), {target: {value: RUNTIME}});
         fireEvent.click(screen.getByRole("button", {name: "Review"}));
 
         const sign = screen.getByRole("button", {name: "Sign in wallet"});

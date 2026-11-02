@@ -142,9 +142,10 @@ const CAPABILITY_GROUP_ORDER: {relation: CapabilityRelation; label: string}[] = 
     // `uses-tool` first: what an agent depends on is the part a reader is
     // choosing between. `supports-protocol` sits with the other interface
     // claims — what you can call the agent with is a different question from
-    // what it runs on. "Supports" rather than "Speaks" because the published
-    // object set is ERC-8004, x402, MCP, A2A and OASF: you do not *speak* a
-    // schema or a payment scheme, and OASF alone is 16 of 153 edges. ADR 0030.
+    // what it runs on. Labelled "Protocols" (user, 2026-11-02, ADR 0103): "Supports" collided
+    // with support as money behind a thing, and "Speaks" fails the published object set —
+    // ERC-8004, x402, MCP, A2A and OASF; you do not *speak* a schema or a payment scheme
+    // (ADR 0030). "Protocols" is loose for OASF and ERC-8004, and the user accepted that.
     //
     // This group leads nothing today: zero `uses` edges have a subject the connector can reach.
     // That is ARP's own non-activity rather than a fact about the graph (user, 2026-10-27), so the
@@ -152,7 +153,7 @@ const CAPABILITY_GROUP_ORDER: {relation: CapabilityRelation; label: string}[] = 
     {relation: "uses-tool", label: "Uses"},
     {relation: "has-type", label: "Type"},
     {relation: "implements", label: "Implements"},
-    {relation: "supports-protocol", label: "Supports"},
+    {relation: "supports-protocol", label: "Protocols"},
     {relation: "has-category", label: "Category"},
     {relation: "has-tag", label: "Tags"},
     {relation: "compatible-with", label: "Compatible with"},

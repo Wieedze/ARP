@@ -324,8 +324,8 @@ export function buildAtomView(standing: AtomStanding, symbol: string): AtomView 
 export function describePointers(view: AtomView): string {
     const count = view.edgeCount;
     if (count === 0) return "nothing points at it";
-    const noun = count === 1 ? "claim" : "claims";
+    const noun = count === 1 ? "declaration" : "declarations";
     const groups = view.groups.length;
-    const kinds = groups === 1 ? "one predicate" : `${groups} predicates`;
+    const kinds = groups === 1 ? "one kind" : `${groups} kinds`;
     return `${view.truncated ? `${count}+` : count} ${noun} across ${kinds}`;
 }

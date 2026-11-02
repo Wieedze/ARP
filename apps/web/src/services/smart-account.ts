@@ -101,7 +101,9 @@ export async function deploySmartAccountIfNeeded(params: {
 
     const {factory, factoryData} = await params.smartAccount.getFactoryArgs();
     if (!factory || !factoryData) {
-        throw new Error("Smart Account has no factory args — already deployed or misconfigured");
+        throw new Error(
+            "The agent wallet cannot be set up — it is already set up or misconfigured",
+        );
     }
 
     const hash = await params.funderWalletClient.sendTransaction({
@@ -109,6 +111,6 @@ export async function deploySmartAccountIfNeeded(params: {
         data: factoryData,
         chain: intuitionTestnet,
     });
-    await waitAndRecord(publicClient, hash, {label: "fund smart account"});
+    await waitAndRecord(publicClient, hash, {label: "fund agent wallet"});
     return hash;
 }

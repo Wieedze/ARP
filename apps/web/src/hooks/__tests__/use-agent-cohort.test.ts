@@ -69,26 +69,33 @@ describe("agentCohortQueryOptions", () => {
     it("asks the source for one page, not for the cohort", async () => {
         const fetchCohort = vi.fn(pageOver);
         await agentCohortQueryOptions(MAINNET, "evidence-quantity", 0, fetchCohort).queryFn();
-        expect(fetchCohort).toHaveBeenCalledWith({
-            order: "evidence-quantity",
-            limit: COHORT_PAGE_SIZE,
-            offset: 0,
-        }, "https://mainnet.intuition.sh/v1/graphql");
+        expect(fetchCohort).toHaveBeenCalledWith(
+            {
+                order: "evidence-quantity",
+                limit: COHORT_PAGE_SIZE,
+                offset: 0,
+            },
+            "https://mainnet.intuition.sh/v1/graphql",
+        );
         expect(COHORT_PAGE_SIZE).toBeLessThanOrEqual(50);
     });
 
     it("passes the order and the offset straight through", async () => {
         const fetchCohort = vi.fn(pageOver);
         await agentCohortQueryOptions(MAINNET, "economic-conviction", 75, fetchCohort).queryFn();
-        expect(fetchCohort).toHaveBeenCalledWith({
-            order: "economic-conviction",
-            limit: COHORT_PAGE_SIZE,
-            offset: 75,
-        }, "https://mainnet.intuition.sh/v1/graphql");
+        expect(fetchCohort).toHaveBeenCalledWith(
+            {
+                order: "economic-conviction",
+                limit: COHORT_PAGE_SIZE,
+                offset: 75,
+            },
+            "https://mainnet.intuition.sh/v1/graphql",
+        );
     });
 
     it("maps the page into the directory view", async () => {
-        const view = await agentCohortQueryOptions(MAINNET, 
+        const view = await agentCohortQueryOptions(
+            MAINNET,
             "evidence-quantity",
             0,
             vi.fn(pageOver),
@@ -97,7 +104,7 @@ describe("agentCohortQueryOptions", () => {
         expect(view.rows).toHaveLength(1);
         expect(view.rows[0].href).toBe("/agent/8453/6649");
         expect(view.rows[0].isFallbackMetadata).toBe(true);
-        expect(view.rows[0].positions).toBe("1 position · 1 curve");
+        expect(view.rows[0].positions).toBe("1 support");
     });
 
     it("lets a failed read reach the caller instead of returning an empty cohort", async () => {

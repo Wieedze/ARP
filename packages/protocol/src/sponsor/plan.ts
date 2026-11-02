@@ -80,7 +80,7 @@ export async function planSponsoredDeposit(params: {
             to: reads.address,
             value: amount,
             data: encodeDeposit(receiver, termId, curveId, minShares),
-            why: `sponsored deposit of ${amount} wei on ${termId}, shares to ${receiver}`,
+            why: `sponsored support of ${amount} wei on ${termId}, held by ${receiver}`,
             preview,
         },
     };

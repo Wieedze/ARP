@@ -5,6 +5,7 @@ import {useAccount, useSwitchChain} from "wagmi";
 
 import {DEFAULT_IDENTITY_REGISTRY, type IdentityAtomPlan} from "@arp-protocol/core";
 
+import {Hint} from "../components/brand/Hint";
 import {controlClass, linkClass} from "../lib/control-class";
 import {useAgentImport} from "../hooks/use-agent-import";
 import {useChainChoice, type ChainChoice} from "../lib/chain-choice";
@@ -284,8 +285,8 @@ export function AgentImport() {
             <header className="mt-8 mb-12">
                 <h1 className="type-display">Import an agent you already have</h1>
                 <p className="mt-3 max-w-[64ch] text-[color:var(--color-steel)]">
-                    Nothing is minted. One edge gets published: your agent&rsquo;s atom, linked to
-                    the account that will stake for it.
+                    Nothing is minted. One link gets published: your agent, tied to the agent wallet
+                    that will give support on its behalf.
                 </p>
                 <p className="mt-3 max-w-[64ch] text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
                     Minting a new one instead is on{" "}
@@ -448,11 +449,13 @@ export function AgentImport() {
                 ) : (
                     <>
                         <p className="mb-6 max-w-[64ch] text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
-                            One triple on {chain.chain.name}, paid in {chain.symbol}:{" "}
-                            <span className="font-mono">
-                                (agent atom, same as, CAIP-10 of your Smart Account)
-                            </span>
-                            .
+                            One public link on {chain.chain.name}, paid in {chain.symbol}: your
+                            agent and your agent wallet are the same.{" "}
+                            <Hint label="What gets written">
+                                <span className="font-mono">
+                                    (agent atom, same as, CAIP-10 of your Smart Account)
+                                </span>
+                            </Hint>
                         </p>
 
                         {plan === null ? (
@@ -462,7 +465,7 @@ export function AgentImport() {
                                 disabled={imported === null || linkStatus === "pending"}
                                 className={controlClass}
                             >
-                                {linkStatus === "pending" ? "Reading the vault…" : "Price the link"}
+                                {linkStatus === "pending" ? "Pricing…" : "Price the link"}
                             </button>
                         ) : (
                             <LinkPlan plan={plan} />
@@ -488,7 +491,7 @@ export function AgentImport() {
                                 </div>
                             ) : plan.totalCost === 0n ? (
                                 <p className="mt-6 max-w-[64ch] text-[length:var(--text-body-sm)]">
-                                    This link is already on the graph. There is nothing to send.
+                                    This link is already public. There is nothing to send.
                                 </p>
                             ) : (
                                 <button
@@ -513,7 +516,7 @@ export function AgentImport() {
                 walk into is on screen. */}
             <section className="mt-16 pl-5 border-l border-l-[color:var(--color-rule-strong)]">
                 <p className="max-w-[64ch] text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
-                    Delegation and staking are not wired for an imported agent yet.
+                    Permissions and support are not wired for an imported agent yet.
                 </p>
             </section>
         </section>
@@ -655,13 +658,22 @@ function Proof({proven}: {proven: ProvenAgent}) {
             </p>
             <Field label="Identity" value={proven.caip19} />
             <Field label="Owner, per the registry" value={proven.owner} />
-            {proven.atom === null ? (
-                <Field label="Canonical Intuition atom" value="not mirrored — see step 3" />
-            ) : (
-                // A term id is not an address, and nothing in the explorer resolves one.
-                <Field label="Canonical Intuition atom" value={proven.atom.atomId} />
-            )}
-            <Field label="Your Smart Account, which will stake" value={proven.operatingAccount} />
+            <Field
+                label="Your agent wallet, which will give support"
+                value={proven.operatingAccount}
+            />
+            {/* ADR `0103`: the atom id stays checkable, collapsed. */}
+            <details className="mt-4">
+                <summary className="cursor-pointer text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
+                    Verify
+                </summary>
+                {proven.atom === null ? (
+                    <Field label="Canonical Intuition atom" value="not mirrored — see step 3" />
+                ) : (
+                    // A term id is not an address, and nothing in the explorer resolves one.
+                    <Field label="Canonical Intuition atom" value={proven.atom.atomId} />
+                )}
+            </details>
         </div>
     );
 }
@@ -723,7 +735,8 @@ function MissingIdentityAtom(props: {
     return (
         <div className="max-w-[64ch]">
             <p className="font-medium">
-                The Intuition graph does not mirror this agent yet, so its atom has to be written.
+                The Intuition graph does not list this agent yet, so its public record has to be
+                written.
             </p>
             <p className="mt-3 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
                 Not a duplicate — this is the same id the mirror would write, sooner.
@@ -736,11 +749,18 @@ function MissingIdentityAtom(props: {
                     disabled={props.status === "pending"}
                     className={`mt-6 ${controlClass}`}
                 >
-                    {props.status === "pending" ? "Reading the vault…" : "Price the identity atom"}
+                    {props.status === "pending" ? "Pricing…" : "Price the public record"}
                 </button>
             ) : (
                 <>
-                    <div className="mt-6">
+                    <p className="mt-6 font-mono text-[length:var(--text-body-sm)] tabular-nums">
+                        total — {formatTrust(plan.totalValue)} {props.chain.symbol}
+                    </p>
+                    {/* ADR `0103`: atoms, the edge and the shares stay checkable, collapsed. */}
+                    <details className="mt-4">
+                        <summary className="cursor-pointer text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
+                            Verify
+                        </summary>
                         <Field
                             label={`Identity atom${plan.existing.identityAtom ? ", already on the graph" : ", to be created"}`}
                             value={plan.uris.identity}
@@ -753,28 +773,25 @@ function MissingIdentityAtom(props: {
                             label={`same as edge${plan.existing.triple ? ", already on the graph" : ", to be created"}`}
                             value={plan.tripleId}
                         />
-                    </div>
-                    <div className="mt-6 border-t border-[color:var(--color-rule)] pt-4">
-                        {plan.calls.map((call) => (
-                            <p
-                                key={call.data}
-                                className="font-mono text-[length:var(--text-body-sm)] tabular-nums"
-                            >
-                                {call.kind} — {formatTrust(call.value)} {props.chain.symbol},{" "}
-                                {call.preview === undefined
-                                    ? "no preview"
-                                    : `${formatTrust(call.preview.shares)} shares`}
-                            </p>
-                        ))}
-                        <p className="mt-2 font-mono text-[length:var(--text-body-sm)] tabular-nums">
-                            total — {formatTrust(plan.totalValue)} {props.chain.symbol}
-                        </p>
-                    </div>
+                        <div className="mt-4 border-t border-[color:var(--color-rule)] pt-4">
+                            {plan.calls.map((call) => (
+                                <p
+                                    key={call.data}
+                                    className="font-mono text-[length:var(--text-body-sm)] tabular-nums"
+                                >
+                                    {call.kind} — {formatTrust(call.value)} {props.chain.symbol},{" "}
+                                    {call.preview === undefined
+                                        ? "no preview"
+                                        : `${formatTrust(call.preview.shares)} shares`}
+                                </p>
+                            ))}
+                        </div>
+                    </details>
                     {/* Said because the atom works without it and a reader will wonder why the name
                         is a hash. Pinning the same bytes later yields the same id, so it is
                         retroactive rather than a missed window. */}
                     <p className="mt-4 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
-                        The atom is created unpinned, so readers see its id rather than its name
+                        The record is created unpinned, so readers see its id rather than its name
                         until someone pins the document. Anyone can, at any time, and the id does
                         not change — the same bytes always hash to the same CID.
                     </p>
@@ -803,7 +820,7 @@ function MissingIdentityAtom(props: {
                     </div>
                 ) : plan.calls.length === 0 ? (
                     <p className="mt-6 text-[length:var(--text-body-sm)]">
-                        The atom and its edge are already on the graph. There is nothing to send.
+                        The record and its link are already public. There is nothing to send.
                     </p>
                 ) : (
                     <button
@@ -814,16 +831,16 @@ function MissingIdentityAtom(props: {
                     >
                         {props.status === "pending"
                             ? "Waiting for your wallet…"
-                            : `Write the identity atom — ${formatTrust(plan.totalValue)} ${props.chain.symbol}`}
+                            : `Write the public record — ${formatTrust(plan.totalValue)} ${props.chain.symbol}`}
                     </button>
                 )
             ) : null}
 
             {txs !== null ? (
                 <div className="mt-6">
-                    <p className="font-medium">The agent has an identity atom.</p>
+                    <p className="font-medium">The agent has a public record.</p>
                     <p className="mt-2 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
-                        Price the link above to publish the edge to your staking account.
+                        Price the link above to tie it to your agent wallet.
                     </p>
                     {txs.map((hash, index) => (
                         <Field
@@ -842,27 +859,33 @@ function MissingIdentityAtom(props: {
 function LinkPlan({plan}: {plan: ImportLinkPlan}) {
     return (
         <div className="max-w-[64ch]">
-            <Field label="Subject — the agent's canonical atom" value={plan.agentAtomId} />
-            <Field label="Predicate — Intuition's same as" value={plan.predicateId} />
-            <Field
-                label={`Object — your account${plan.accountAtomExists ? ", already on the graph" : ", to be created"}`}
-                value={plan.accountAtomUri}
-            />
-            <div className="mt-6 border-t border-[color:var(--color-rule)] pt-4">
-                <p className="font-mono text-[length:var(--text-body-sm)] tabular-nums">
-                    {plan.accountAtomExists
-                        ? `account atom — already published, 0 ${plan.chain.symbol}`
-                        : `account atom — ${formatTrust(plan.atomAssets)} ${plan.chain.symbol}`}
-                </p>
-                <p className="mt-1 font-mono text-[length:var(--text-body-sm)] tabular-nums">
-                    {plan.tripleExists
-                        ? `same-as edge — already published, 0 ${plan.chain.symbol}`
-                        : `same-as edge — ${formatTrust(plan.tripleAssets)} ${plan.chain.symbol}`}
-                </p>
-                <p className="mt-2 font-mono text-[length:var(--text-body-sm)] tabular-nums">
-                    total — {formatTrust(plan.totalCost)} {plan.chain.symbol}
-                </p>
-            </div>
+            <p className="font-mono text-[length:var(--text-body-sm)] tabular-nums">
+                total — {formatTrust(plan.totalCost)} {plan.chain.symbol}
+            </p>
+            {/* ADR `0103`: the atoms, the edge and their costs stay checkable, collapsed. */}
+            <details className="mt-4">
+                <summary className="cursor-pointer text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
+                    Verify
+                </summary>
+                <Field label="Subject — the agent's canonical atom" value={plan.agentAtomId} />
+                <Field label="Predicate — Intuition's same as" value={plan.predicateId} />
+                <Field
+                    label={`Object — your account${plan.accountAtomExists ? ", already on the graph" : ", to be created"}`}
+                    value={plan.accountAtomUri}
+                />
+                <div className="mt-6 border-t border-[color:var(--color-rule)] pt-4">
+                    <p className="font-mono text-[length:var(--text-body-sm)] tabular-nums">
+                        {plan.accountAtomExists
+                            ? `account atom — already published, 0 ${plan.chain.symbol}`
+                            : `account atom — ${formatTrust(plan.atomAssets)} ${plan.chain.symbol}`}
+                    </p>
+                    <p className="mt-1 font-mono text-[length:var(--text-body-sm)] tabular-nums">
+                        {plan.tripleExists
+                            ? `same-as edge — already published, 0 ${plan.chain.symbol}`
+                            : `same-as edge — ${formatTrust(plan.tripleAssets)} ${plan.chain.symbol}`}
+                    </p>
+                </div>
+            </details>
         </div>
     );
 }
@@ -870,21 +893,21 @@ function LinkPlan({plan}: {plan: ImportLinkPlan}) {
 function Published({txs, explorerUrl}: {txs: {atomTx?: Hex; tripleTx?: Hex}; explorerUrl: string}) {
     return (
         <div className="mt-6 max-w-[64ch]">
-            <p className="font-medium">The link is on the graph.</p>
+            <p className="font-medium">The link is public.</p>
             <p className="mt-2 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
-                Stakes sent from that account are now attributable to this agent, which is what
-                agent reputation is read from.
+                Support sent from that wallet now counts for this agent, which is what agent
+                reputation is read from.
             </p>
             {txs.atomTx !== undefined ? (
                 <Field
-                    label="Account atom"
+                    label="Wallet record"
                     value={truncateMiddle(txs.atomTx, 14, 10)}
                     href={`${explorerUrl}/tx/${txs.atomTx}`}
                 />
             ) : null}
             {txs.tripleTx !== undefined ? (
                 <Field
-                    label="Same-as edge"
+                    label="Link"
                     value={truncateMiddle(txs.tripleTx, 14, 10)}
                     href={`${explorerUrl}/tx/${txs.tripleTx}`}
                 />

@@ -37,7 +37,7 @@ describe("ToolCatalogList", () => {
     it("heads the figures Usage then Declared, and no longer Paid for or Claims", () => {
         const {container} = renderWithProviders(<ToolCatalogList rows={[row()]} curveId={1} />);
         const header = container.querySelector("[aria-hidden]");
-        expect(header?.textContent).toBe("ToolUsageDeclaredStaked");
+        expect(header?.textContent).toBe("ToolUsageDeclaredSupport");
         expect(screen.queryByText(/paid for/i)).toBeNull();
     });
 

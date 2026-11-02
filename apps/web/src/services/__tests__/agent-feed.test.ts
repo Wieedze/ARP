@@ -88,7 +88,7 @@ describe("entryFor", () => {
     it("a deposit is a stake", () => {
         expect(entryFor(staked(TRIPLE, HASH2), new Map())).toMatchObject({
             step: "stake",
-            label: "position",
+            label: "support",
         });
     });
 });
@@ -252,7 +252,7 @@ describe("timelineRows", () => {
         const rows = timelineRows(events, {chainId: 13579, names, tripleIdOf});
         const [stake, declaration, invocation] = rows;
         expect(stake).toMatchObject({
-            on: "stakes on uses → brainstorming",
+            on: "supports uses → brainstorming",
             off: "← invoked brainstorming 13:10:36",
             tx: {hash: HASH2},
         });

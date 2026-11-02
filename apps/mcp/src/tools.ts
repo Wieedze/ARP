@@ -16,12 +16,12 @@ export const TOOLS = [
   {
     name: 'arp_identity',
     description:
-      'Whether an agent has the identity atom a `uses` edge must carry as its subject. Ask this ' +
-      "first: the atom is written by Intuition's mirror, and measured 2026-10-20 the mirror holds " +
-      '28,648 against a Base registry whose highest minted id is 309,925 — so for about nine ' +
-      'agents in ten the answer is no, and every other tool here fails for them until it is yes. A ' +
-      'read; it reports the gap rather than closing it, because closing it is a write. The atom ids ' +
-      'are computable from your identity alone, with no API key.',
+      "Whether an agent's identity is public yet — the record every declaration it makes is " +
+      "attached to. Ask this first: the record is written by Intuition's mirror, and measured " +
+      '2026-10-20 the mirror holds 28,648 against a Base registry whose highest minted id is ' +
+      '309,925 — so for about nine agents in ten the answer is no, and every other tool here fails ' +
+      'for them until it is yes. A read; it reports the gap rather than closing it, because closing ' +
+      'it is a write. The ids it returns are computable from your identity alone, with no API key.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -104,7 +104,7 @@ export const TOOLS = [
         curve_id: {
           type: 'number',
           description:
-            'Advanced. Which bonding curve the amounts are read at; defaults to the chain ' +
+            'Advanced. Which pricing curve the amounts are read at; defaults to the chain ' +
             'default, 1. Curves are separate markets holding different amounts, so name the one ' +
             'you mean. Leave it out unless you know you need it.',
         },
@@ -117,7 +117,7 @@ export const TOOLS = [
     description:
       'Who declared using one tool, and how strongly. Returns each declaration with the agent ' +
       'that made it, the amount behind it and the amount against it, plus totals. Read an ' +
-      'amount with its position count: one large amount can come from a single account.',
+      'amount with how many supports make it up: one large amount can come from a single account.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -138,12 +138,12 @@ export const TOOLS = [
   {
     name: 'arp_declare_used',
     description:
-      'Plan the on-chain declaration that an agent used a set of tools. Returns unsigned ' +
+      'Plan the public declaration that an agent used a set of tools. Returns unsigned ' +
       'calls — ARP holds no key and sends nothing; you sign them with yours, in the order ' +
-      'given. The subject is your canonical ERC-8004 identity atom, and the predicate is the ' +
-      "shared `uses` term, so the edges are readable by anyone following Intuition's partner " +
-      'guide. Needs no API key. Declaring costs a per-triple fee that is NOT recoverable: ' +
-      'check `total_value_wei` before signing.',
+      'given. Each declaration is attached to your ERC-8004 identity and worded with the shared ' +
+      "`uses` term, so anyone following Intuition's partner guide can read it. Needs no API key. " +
+      'Each declaration costs a fee in TRUST that does NOT come back: check `total_value_wei` ' +
+      'before signing.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -166,8 +166,8 @@ export const TOOLS = [
           type: 'array',
           items: { type: 'string' },
           description:
-            'Canonical tool URIs — a schema URI, an MCP endpoint, an `ipfs://` document. The ' +
-            'atom id derives from the URI, so nothing is pinned and no credential is needed.',
+            "Canonical tool URIs — a schema URI, an MCP endpoint, an `ipfs://` document. The tool's " +
+            'id derives from the URI, so nothing is pinned and no credential is needed.',
         },
       },
       required: ['agent_chain_id', 'agent_token_id', 'tools'],
@@ -220,38 +220,44 @@ export const TOOLS = [
   {
     name: 'arp_stake_on_used',
     description:
-      'Plan deposits that put TRUST behind declarations already on chain. Returns unsigned ' +
-      'calls; you sign and send them. The deposit lands on the `uses` EDGE, not on the ' +
-      "tool's atom: the edge is the claim YOU made, so a reader can attribute the position " +
-      'back to you, and it is the vault tool-reputation reads price. The atom carries the ' +
-      'market on the thing itself, open to anyone. A triple that is not on chain yet is ' +
-      'reported with `exists: false` and gets no call.',
+      'Plan support in TRUST for declarations that are already public. Returns unsigned calls; ' +
+      'you sign and send them. An entry fee comes off; the rest buys shares of the market at ' +
+      "today's price, held by the receiver. Withdrawing returns what they are worth then, less " +
+      'an exit fee, so the TRUST is at risk. The support lands on the DECLARATION, not on the tool itself: the ' +
+      'declaration is the one YOU made, so a reader can attribute the support back to you, and ' +
+      'it is what tool reputation reads. Supporting the tool itself is `arp_take_position`, open ' +
+      'to anyone. A declaration that is not public yet is reported with `exists: false` and gets ' +
+      'no call.',
     inputSchema: {
       type: 'object',
       properties: {
         receiver: {
           type: 'string',
           description:
-            'Who receives the shares. In direct mode your own account; in delegated mode the ' +
-            'delegator whose TRUST is spent. Not defaulted — guessing sends the position to ' +
-            'the wrong party.',
+            'Who will hold the support. Your own account when you spend your own TRUST; under a ' +
+            'permission, the account that granted it and whose TRUST is spent. Not defaulted — ' +
+            'guessing gives the support to the wrong party.',
         },
         curve_id: {
           type: 'number',
           description:
-            'Which bonding curve to take the position on. Defaults to the chain default, 1, and ' +
-            'the default is not the interesting curve. Measured on mainnet 2026-10-20: curve 1 ' +
-            '"Linear Curve" is 26.20 TRUST at a share price of 1.000-1.060; curve 2 "Offset ' +
-            'Progressive Curve" is 219.54 TRUST at 3.000-4.181. A position that appreciates has ' +
-            'to ask for curve 2. The two are different markets, not two views of one.',
+            'Advanced. Which pricing curve the support goes on. Defaults to the chain default, 1, ' +
+            'and the default is not the interesting curve. Measured on mainnet 2026-10-20: curve 1 ' +
+            '"Linear Curve" holds 26.20 TRUST at a price of 1.000-1.060; curve 2 "Offset ' +
+            'Progressive Curve" holds 219.54 TRUST at 3.000-4.181. Support that can grow in value ' +
+            'has to ask for curve 2. The two are different markets, not two views of one.',
         },
         targets: {
           type: 'array',
-          description: 'The edges to back, each with the amount in wei as a string.',
+          description: 'The declarations to support, each with the amount in wei as a string.',
           items: {
             type: 'object',
             properties: {
-              triple_id: { type: 'string', description: 'The `uses` triple id, 0x + 32 bytes.' },
+              triple_id: {
+                type: 'string',
+                description:
+                  "The declaration's id, 0x + 32 bytes — `triple_id` in `arp_declare_used`'s answer.",
+              },
               amount_wei: { type: 'string', description: 'TRUST in wei. Must be above zero.' },
             },
             required: ['triple_id', 'amount_wei'],
@@ -264,45 +270,51 @@ export const TOOLS = [
   {
     name: 'arp_take_position',
     description:
-      "Plan a deposit on an ATOM's vault — the market on the thing itself, not a claim about " +
-      'it. Returns unsigned calls; you sign and send them. This is a different act from ' +
-      '`arp_stake_on_used`: that one backs the `uses` EDGE you wrote, which is attributable to ' +
-      'you; this one buys into the market on the tool or agent itself, which anyone may do for ' +
-      'any reason. The two are never summed. A position can be left again with ' +
-      '`arp_exit_position` — a deposit nobody can withdraw is a donation.',
+      'Plan support in TRUST for a tool or an agent itself — not for a declaration about it. ' +
+      'Returns unsigned calls; you sign and send them. An entry fee comes off; the rest buys ' +
+      "shares of the market at today's price, held by the receiver. Withdrawing returns what " +
+      'they are worth then, less an exit fee, so the TRUST is at risk. This is a different act ' +
+      'from `arp_stake_on_used`: that one supports the declaration you made, which is ' +
+      'attributable to you; this one supports the tool or agent itself, which anyone may do for ' +
+      'any reason. The two are never summed. Support can be withdrawn with `arp_exit_position` ' +
+      '— support nobody can withdraw is a donation.',
     inputSchema: {
       type: 'object',
       properties: {
         term_id: {
           type: 'string',
-          description: "The atom's term id, 0x + 32 bytes. `arp_find_tools` returns these.",
+          description:
+            'The id of the tool or agent, 0x + 32 bytes — `tool_atom_id` from `arp_find_tools`, ' +
+            'or `identity_atom` from `arp_identity`.',
         },
         amount_wei: {
           type: 'string',
           description:
-            "TRUST in wei. Must be at least the chain's minDeposit, which is READ per plan and " +
+            'TRUST in wei. Must be at least the smallest amount the chain accepts (minDeposit), ' +
+            'which is READ per plan and ' +
             'is 10x apart between chains: 0.01 TRUST on mainnet 1155 against 0.001 on testnet ' +
             '13579. An amount tuned on testnet is a tenth of the mainnet floor.',
         },
         receiver: {
           type: 'string',
           description:
-            'Who receives the shares. In direct mode your own account; in delegated mode the ' +
-            'delegator whose TRUST is spent. Not defaulted — guessing sends the position to the ' +
-            'wrong party.',
+            'Who will hold the support. Your own account when you spend your own TRUST; under a ' +
+            'permission, the account that granted it and whose TRUST is spent. Not defaulted — ' +
+            'guessing gives the support to the wrong party.',
         },
         curve_id: {
           type: 'number',
           description:
-            'Which bonding curve. Defaults to the chain default, 1, and the default is not the ' +
-            'interesting curve. Measured on mainnet 2026-10-20: curve 1 is a share price of ' +
-            '1.000-1.060, curve 2 is 3.000-4.181. Two different markets, not two views of one.',
+            'Advanced. Which pricing curve. Defaults to the chain default, 1, and the default is ' +
+            'not the interesting curve. Measured on mainnet 2026-10-20: curve 1 is priced at ' +
+            '1.000-1.060, curve 2 at 3.000-4.181. Two different markets, not two views of one.',
         },
         min_shares: {
           type: 'string',
           description:
-            'Slippage floor in shares. Zero accepts any price, which on a bonding curve between ' +
-            'planning and signing is how a deposit buys less than it was quoted.',
+            'Protection against the price moving: the fewest shares you accept for the amount. ' +
+            'Zero accepts any price, which between planning and signing is how support buys less ' +
+            'than it was quoted.',
         },
       },
       required: ['term_id', 'amount_wei', 'receiver'],
@@ -311,18 +323,18 @@ export const TOOLS = [
   {
     name: 'arp_exit_position',
     description:
-      'Plan a redemption of shares on an atom back into TRUST. Returns unsigned calls; you ' +
-      'sign and send them. This call sends NO value — it is the only one on this server that ' +
-      'does not. Omit `shares` to leave the whole position. What it fetches is READ from ' +
-      '`previewRedeem`, never computed: the exit fee is a governance parameter and the curve ' +
-      'is not linear in shares on curve 2.',
+      'Plan withdrawing support from a tool or an agent, back into TRUST. Returns unsigned ' +
+      'calls; you sign and send them. This call sends NO value — it is the only one on this ' +
+      'server that does not. Omit `shares` to withdraw all of it. What you get back is READ ' +
+      'from the chain before you sign, never computed: the exit fee is a governance parameter ' +
+      'and the price does not move in a straight line on curve 2.',
     inputSchema: {
       type: 'object',
       properties: {
-        term_id: { type: 'string', description: "The atom's term id, 0x + 32 bytes." },
+        term_id: { type: 'string', description: 'The id of the tool or agent, 0x + 32 bytes.' },
         account: {
           type: 'string',
-          description: 'Whose position this is — the account whose shares are read.',
+          description: 'Whose support this is — the account it is read from.',
         },
         receiver: {
           type: 'string',
@@ -330,15 +342,18 @@ export const TOOLS = [
         },
         shares: {
           type: 'string',
-          description: 'How many shares to redeem. Omit for the whole position.',
+          description:
+            'How much to withdraw, in shares as `arp_take_position` reported them. Omit for all.',
         },
         curve_id: {
           type: 'number',
-          description: 'Which curve the position is on. Defaults to the chain default.',
+          description: 'Which pricing curve the support is on. Defaults to the chain default.',
         },
         min_assets: {
           type: 'string',
-          description: 'Slippage floor in TRUST wei. Zero accepts any price.',
+          description:
+            'Protection against the price moving: the least TRUST, in wei, you accept back. Zero ' +
+            'accepts any price.',
         },
       },
       required: ['term_id', 'account', 'receiver'],
@@ -350,7 +365,7 @@ export const TOOLS = [
       'Where another agent said it can be reached. Reads its ERC-8004 registration document and ' +
       'returns every endpoint it declared, split into CALLABLE (an http address you could send a ' +
       'request to) and NOT CALLABLE (a did:, a wallet, an email — an identifier with nowhere to ' +
-      "send). It is the agent's own claim about itself: declared, not verified. Use " +
+      "send). It is the agent's own word about itself: declared, not verified. Use " +
       '`arp_probe_endpoint` if you want to know whether one answers before you call it. ARP is ' +
       'not in the path of whatever you do next — you call it directly.',
     inputSchema: {
@@ -369,10 +384,10 @@ export const TOOLS = [
   {
     name: 'arp_record_reachable',
     description:
-      'Probe a tool and plan the position that records what you found. Returns unsigned calls you ' +
+      'Probe a tool and plan the support that records what you found. Returns unsigned calls you ' +
       "sign with YOUR key, so what lands is YOUR verdict — not ARP's. ARP's index reads one " +
-      "attestor's positions; everybody else's sit beside them, and a disagreement between them is " +
-      'the signal to re-probe. That is what replaces an oracle here: the claim is reproducible, so ' +
+      "publisher's support; everybody else's sits beside it, and a disagreement between them is " +
+      'the signal to re-probe. That is what replaces an oracle here: the finding is reproducible, so ' +
       'a second observer costs one HTTP request and can contradict the first. ' +
       'One observation is enough, deliberately. The scheduled prober needs three consecutive ' +
       "failures before it condemns, because it judges somebody else's service from the outside " +
@@ -389,11 +404,11 @@ export const TOOLS = [
         url: { type: 'string', description: 'The http(s) endpoint you called.' },
         tool_atom_id: {
           type: 'string',
-          description: "The tool's atom id, 0x + 32 bytes. `arp_find_tools` returns them.",
+          description: "The tool's id, 0x + 32 bytes — `tool_atom_id` in `arp_find_tools`.",
         },
         receiver: {
           type: 'string',
-          description: 'Your 0x address — the one that will hold the position and sign the calls.',
+          description: 'Your 0x address — the one that will hold the support and sign the calls.',
         },
         protocol: {
           type: 'string',

@@ -125,7 +125,7 @@ export function AgentTrustPanel() {
      * information — and "Claims" needs an atom to have claims about.
      */
     const sectionTabs = [
-        ...(backingAtomId === null ? [] : [{slug: "claims", label: "Claims"}]),
+        ...(backingAtomId === null ? [] : [{slug: "claims", label: "Declarations"}]),
         {slug: "endpoints", label: "Endpoints"},
         {slug: "ratings", label: "Ratings", count: view?.rows.length ?? null},
         {slug: "capabilities", label: "Capabilities", count: view?.capabilityCount ?? null},
@@ -469,7 +469,7 @@ function StackedClaims({view, session}: ClaimsProps) {
         <>
             {view.rows.length === 0 ? (
                 <p className="max-w-[60ch] text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
-                    No trust provider has written an edge about this agent.
+                    No trust provider has rated this agent.
                 </p>
             ) : (
                 <div className="flex flex-col gap-14">

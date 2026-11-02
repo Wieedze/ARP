@@ -458,8 +458,8 @@ export async function planOperatorLink(
         if (shares === 0n) {
             throw new ImportGuardError(
                 "positionless-term",
-                `Creating the account atom with ${atomAssets} wei would buy 0 shares, so it would ` +
-                    `be born with no position — on the chain, and not a market. Nothing was sent.`,
+                `Making the agent wallet public with ${atomAssets} wei would buy no support: it would ` +
+                    `be public with no market. Nothing was sent.`,
             );
         }
         atomShares = shares;
@@ -481,8 +481,8 @@ export async function planOperatorLink(
         if (shares === 0n) {
             throw new ImportGuardError(
                 "positionless-term",
-                `Creating the same-as edge with ${tripleAssets} wei would buy 0 shares, so it ` +
-                    `would be born with no position — on the chain, and not a market. Nothing was sent.`,
+                `Linking the identity with ${tripleAssets} wei would buy no support: it would be ` +
+                    `public with no market. Nothing was sent.`,
             );
         }
         tripleShares = shares;
@@ -597,7 +597,7 @@ export async function submitOperatorLink(params: {
             value: plan.atomAssets,
             chain: plan.chain.chain,
         });
-        await waitAndRecord(publicClient, atomTx, {label: "create atom"});
+        await waitAndRecord(publicClient, atomTx, {label: "make public"});
         result.atomTx = atomTx;
     }
 
@@ -615,7 +615,7 @@ export async function submitOperatorLink(params: {
             value: plan.tripleAssets,
             chain: plan.chain.chain,
         });
-        await waitAndRecord(publicClient, tripleTx, {label: "create triple"});
+        await waitAndRecord(publicClient, tripleTx, {label: "link"});
         result.tripleTx = tripleTx;
     }
 

@@ -97,8 +97,7 @@ export function RatingRow({
                 <div className="flex flex-col gap-5">
                     {row.rating === null ? (
                         <p className="text-[length:var(--text-body-sm)] text-[color:var(--color-steel)] max-w-[60ch]">
-                            No <span className="font-mono">has trust assessment</span> edge, so
-                            there is no document to check.
+                            No trust assessment published, so there is no document to check.
                         </p>
                     ) : (
                         <>

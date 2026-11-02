@@ -183,7 +183,7 @@ describe("toDelegatedCalls", () => {
             delegationManager: DELEGATION_MANAGER,
         });
         expect(plan.calls[0]?.why).toContain("stake behind the claim");
-        expect(plan.calls[0]?.why).toContain("delegation");
+        expect(plan.calls[0]?.why).toContain("permission");
     });
 
     it("produces calldata a direct-mode plan does not — the two modes are not interchangeable", async () => {

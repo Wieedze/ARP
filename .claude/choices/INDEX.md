@@ -2,7 +2,7 @@
 
 **Generated** 2026-11-02 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-100 decisions. Newest last. `choices/README.md` says when to write one.
+101 decisions. Newest last. `choices/README.md` says when to write one.
 
 ## Not accepted
 
@@ -131,3 +131,4 @@ Read these before relying on them.
 | [0100](0100-account-page-revokes-through-a-one-shot-delegation.md) | 2026-11-02 | Proposed | `/account` revokes through a one-shot delegation, keeps a list, and holds no key |
 | [0101](0101-the-hire-receipt-v2-names-the-one-verifier-it-is-for.md) | 2026-11-02 | Proposed; the v2 receipt itself is the user's decision (2026-10-30), the shape is this task's | The hire receipt v2 names the one verifier it is for, and the hirer chooses it |
 | [0102](0102-x402-is-for-mainnet-testnet-is-free.md) | 2026-11-02 | Accepted | x402 is for mainnet; on testnet consulting ARP is free |
+| [0103](0103-the-operator-reads-plain-words.md) | 2026-11-02 | Accepted | The operator reads plain words, not the chain's vocabulary |

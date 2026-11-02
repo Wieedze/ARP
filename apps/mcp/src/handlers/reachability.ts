@@ -138,7 +138,7 @@ export async function recordReachable(id: JsonRpcId, args: Record<string, unknow
     you_currently_assert: state.recorded,
     // Nothing in this server creates it, but a caller that deposited by hand could, and resolving it
     // silently would hide a contradiction the reader is entitled to see.
-    ...(state.bothSides ? { warning: 'this address holds a position on BOTH sides' } : {}),
+    ...(state.bothSides ? { warning: 'this address supports BOTH sides' } : {}),
     would_become: plan.to,
     why: plan.why,
     calls: plan.calls.map(serialiseCall),

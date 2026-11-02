@@ -159,7 +159,7 @@ describe("revokeDelegation", () => {
                 operatorWalletClient: wallet,
                 publicClient: makeMockPublicClient(),
             }),
-        ).rejects.toThrow("not signed by your Smart Account");
+        ).rejects.toThrow("not signed by your agent wallet");
         expect(signDelegation).not.toHaveBeenCalled();
     });
 

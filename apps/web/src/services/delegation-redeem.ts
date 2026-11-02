@@ -336,7 +336,7 @@ export async function redeemEnsureAtomForURI(
         atomData,
         atomCost,
     });
-    await waitAndRecord(params.publicClient, tx, {label: "redeem · create atom"});
+    await waitAndRecord(params.publicClient, tx, {label: "permission · make public"});
     return {atomId, created: true, tx};
 }
 
@@ -409,7 +409,7 @@ export async function redeemEnsureAtomForThing(
         atomData,
         atomCost,
     });
-    await waitAndRecord(params.publicClient, tx, {label: "redeem · create atom"});
+    await waitAndRecord(params.publicClient, tx, {label: "permission · make public"});
     return {atomId, uri, created: true, tx};
 }
 
@@ -474,6 +474,6 @@ export async function redeemDeclareTriple(
         execution,
         agentWalletClient: params.agentWalletClient,
     });
-    await waitAndRecord(params.publicClient, tx, {label: "redeem delegation"});
+    await waitAndRecord(params.publicClient, tx, {label: "use permission"});
     return {tripleId, created: true, tx};
 }

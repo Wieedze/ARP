@@ -369,8 +369,8 @@ export async function prepareDeclareUsed(params: {
             throw new EmptyPlanError(
                 target.kind === "atom"
                     ? `atom ${atomId} does not exist on chain ${chainId}, and a plan will not ` +
-                      `create one for an object it was handed — deriving a second identity is ` +
-                      `the fragmentation ADR 0054 exists to prevent`
+                          `create one for an object it was handed — deriving a second identity is ` +
+                          `the fragmentation ADR 0054 exists to prevent`
                     : `the graph reports an atom for ${uri} that \`isTermCreated\` denies: ${atomId}`,
             );
         } else {
@@ -387,8 +387,8 @@ export async function prepareDeclareUsed(params: {
                 data: encodeCreateAtom(atomData, assets),
                 why:
                     bareUrlWarning === undefined
-                        ? `create the atom for ${uri} (${atomUri})`
-                        : `create a BARE URI atom for ${uri} — no pinned metadata`,
+                        ? `make ${uri} public (${atomUri})`
+                        : `make ${uri} public as a bare URI — no pinned description`,
                 preview: {shares: preview.shares, assetsAfterFees: preview.assetsAfterFees},
             });
         }
@@ -409,7 +409,7 @@ export async function prepareDeclareUsed(params: {
                 data: encodeCreateTriple(params.subject, predicate, atomId, assets),
                 // The deposit is in this call, so a declared edge carries a position from its first
                 // transaction. `prepareStakeOnUsed` is for adding to it, not for starting it.
-                why: `declare that this agent uses ${uri}, with a position behind it`,
+                why: `declare that this agent uses ${uri}, with support behind it`,
                 preview: {shares: preview.shares, assetsAfterFees: preview.assetsAfterFees},
             });
         }
@@ -509,7 +509,7 @@ export async function prepareStakeOnUsed(params: {
             to: params.reads.address,
             value: target.amount,
             data: encodeDeposit(params.receiver, target.tripleId, curveId, minShares),
-            why: `stake behind the claim ${target.tripleId} on curve ${curveId}`,
+            why: `support the declaration ${target.tripleId} (curve ${curveId})`,
             preview: {shares: preview.shares, assetsAfterFees: preview.assetsAfterFees},
         });
     }

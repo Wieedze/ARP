@@ -39,8 +39,9 @@ export function serialise(usage: ToolUsage) {
     })),
     provenance: usage.provenance,
     caveat:
-      'Each edge is an assertion somebody wrote; the market prices it. An edge with ' +
-      'staked=false carries no weight at all. ARP composes no score.',
+      "Each declaration is somebody's word; the market prices it. A declaration with " +
+      "staked=false has nobody's TRUST behind it and carries no weight at all. ARP composes no " +
+      'score.',
   };
 }
 
@@ -69,8 +70,8 @@ export const serialiseCall = (call: PreparedCall) => ({
 export const UNSIGNED_CAVEAT =
   'These calls are UNSIGNED and nothing has been sent. ARP holds no key and has no send ' +
   'path: sign them with your own wallet, in the order given, and send them yourself. ' +
-  'Creating a term costs a non-recoverable fee — compare total_value_wei against your budget ' +
-  'first.';
+  'Making something public for the first time costs a fee that does not come back — compare ' +
+  'total_value_wei against your budget first.';
 
 export function serialiseDeclarePlan(plan: DeclarePlan) {
   return {

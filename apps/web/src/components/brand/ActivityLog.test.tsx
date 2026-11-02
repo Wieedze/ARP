@@ -115,7 +115,7 @@ describe("the activity panel", () => {
         await userEvent.click(screen.getByRole("button", {name: /^activity/i}));
 
         expect(screen.getByText("access")).toBeTruthy();
-        expect(screen.getByText("on chain")).toBeTruthy();
+        expect(screen.getByText("public")).toBeTruthy();
         expect(screen.getByText(/Agent 13579:4 → oasf/)).toBeTruthy();
     });
 

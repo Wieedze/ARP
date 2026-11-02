@@ -57,7 +57,7 @@ export function AgentClaims({atomId, name}: {atomId: string; name: string}) {
                 </p>
             ) : view === undefined || !view.exists ? (
                 <p className="max-w-[64ch] text-[color:var(--color-steel)]">
-                    This agent has no atom on the graph, so nothing can point at it yet.
+                    This agent is not on the graph yet, so nothing can point at it.
                 </p>
             ) : view.groups.length === 0 ? (
                 <Empty atomId={view.atomId} />
