@@ -464,6 +464,46 @@ export const TOOLS = [
 ] as const;
 
 /**
+ * The Claude Desktop extension's own two tools (`ARP_TOOLS=desktop`, task 50). Worded for a user
+ * who is not to see a wallet, a key or a fee (`docs/tasks/50` §3b): ARP pays, and nothing is asked
+ * of them.
+ */
+export const DESKTOP_TOOLS = [
+  {
+    name: 'arp_get_skill',
+    description:
+      'Get a skill found with `arp_find_tools`: returns its SKILL.md, the instructions to follow to ' +
+      'use it. Pass the `id` from the search result. Read it and follow it; it may ask you to run ' +
+      'commands, so tell the person what it will do first. ARP keeps a note that this skill was ' +
+      'served to you, which `arp_declare_used` needs.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        id: { type: 'string', description: 'The skill\'s `id` from `arp_find_tools`, 0x + 32 bytes.' },
+      },
+      required: ['id'],
+    },
+  },
+  {
+    name: 'arp_declare_used',
+    description:
+      'After a skill from `arp_get_skill` actually helped with the task, record publicly that you ' +
+      'used it, so others can see which skills get used. ARP pays for it and supports the record in ' +
+      'your name; nothing is asked of the person. Only for a skill you used, never for one you only ' +
+      'read. The first time takes about a minute.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        id: { type: 'string', description: 'The `id` you passed to `arp_get_skill`.' },
+      },
+      required: ['id'],
+    },
+  },
+] as const;
+
+export const DESKTOP_TOOL_NAMES: ReadonlySet<string> = new Set(DESKTOP_TOOLS.map((tool) => tool.name));
+
+/**
  * What a server started with `ARP_TOOLS=read` serves: the reads, and nothing that plans a write.
  *
  * The operators task 45 is for were promised a registry to search, and every tool outside this list
