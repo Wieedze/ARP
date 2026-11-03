@@ -72,7 +72,7 @@ function files(source: Source): Files {
   const skill = readFileSync(join(ROOT, 'skills', 'arp', 'SKILL.md'), 'utf8');
   const meta = {
     description:
-      'Declare the tools your agent used on the Intuition graph, and record every MCP call your runtime makes.',
+      'Find the skill or MCP server that fits a task, and see which ones other agents actually used. The hook records each MCP call on your machine; declaring a use is optional.',
     homepage: 'https://github.com/Wieedze/ARP',
     repository: 'https://github.com/Wieedze/ARP',
     license: pkg.license,
@@ -111,7 +111,7 @@ function files(source: Source): Files {
     json({
       name: 'arp',
       owner: { name: 'ARP' },
-      metadata: { description: 'ARP: declare and record the tools your agent uses.' },
+      metadata: { description: 'ARP: find the tool that exists for the job, and see who used it.' },
       plugins: [{ name: 'arp', source: `./${claude}`, description: meta.description }],
     }),
   );
