@@ -5,6 +5,7 @@ import {
   describe,
   keyOf,
   pageOf,
+  rankOf,
   relevance,
   shortPurpose,
 } from '../src/tool-search.js';
@@ -167,5 +168,17 @@ group('pageOf', () => {
     expect(pageOf([1, 2, 3, 4, 5], 0, 2)).toEqual({ rows: [1, 2], total: 5, nextOffset: 2 });
     expect(pageOf([1, 2, 3, 4, 5], 4, 2)).toEqual({ rows: [5], total: 5, nextOffset: null });
     expect(pageOf([1, 2], 5, 2)).toEqual({ rows: [], total: 2, nextOffset: null });
+  });
+});
+
+group('rankOf', () => {
+  it('lets usage lift a match past a better-worded one', () => {
+    expect(rankOf(2, 12)).toBeGreaterThan(rankOf(4, 0));
+    expect(rankOf(2, 1)).toBeLessThan(rankOf(4, 0));
+  });
+
+  it('keeps the words when nobody declared anything', () => {
+    expect(rankOf(3, 0)).toBe(3);
+    expect(rankOf(0, 50)).toBe(0);
   });
 });

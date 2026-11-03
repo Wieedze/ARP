@@ -21,6 +21,7 @@ import {
   describe,
   keyOf,
   pageOf,
+  rankOf,
   relevance,
 } from '../tool-search.js';
 
@@ -279,9 +280,10 @@ export async function findTools(id: JsonRpcId, args: Record<string, unknown>) {
     ...registeredRows,
   ];
 
-  // A free-text query keeps the rows whose name, address or description holds its words, best
-  // match first; without one the listing's own order stands. Matching runs on the whole
-  // description, so "montage" or "subtitles" finds a skill whose name says neither.
+  // A free-text query keeps the rows whose name, address or description holds its words, ranked
+  // by match and by how many agents declared using each (`rankOf`); without one the listing's own
+  // order stands. Matching runs on the whole description, so "montage" or "subtitles" finds a
+  // skill whose name says neither.
   const described = rows
     .filter((row) => !isGone(row.label))
     .map((row) => ({ row, about: describe(row.label, CATALOGUE, SKILLS) }));
@@ -291,7 +293,8 @@ export async function findTools(id: JsonRpcId, args: Record<string, unknown>) {
       : described
           .map((entry) => ({ ...entry, score: relevance(query, entry.about) }))
           .filter((entry) => entry.score > 0)
-          .sort((a, b) => b.score - a.score);
+          .map((entry) => ({ ...entry, rank: rankOf(entry.score, entry.row.declarations ?? 0) }))
+          .sort((a, b) => b.rank - a.rank);
   // The same skill copied into several repositories reads as one result in the short answer: one
   // copy stands for the others (`collapseCopies` says which), and `copies` says how many. Five rows of
   // `youtube-thumbnail-design` were five times the tokens for one finding (testnet, 2026-11-02).

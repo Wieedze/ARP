@@ -99,6 +99,16 @@ export function relevance(query: string, described: Described): number {
 }
 
 /**
+ * Where a matched tool ranks: its {@link relevance}, scaled by how many agents declared using it
+ * (the user, 2026-11-03: usage and relevance mixed, ADR `0131`). Logarithmic, so usage lifts a
+ * tool past a better-worded one without burying the words: 12 declarations multiply by about 3.6,
+ * one by 1.7. A declaration is one agent's edge, so one agent counts once per tool.
+ */
+export function rankOf(relevanceScore: number, declarations: number): number {
+  return relevanceScore * (1 + Math.log(1 + Math.max(0, declarations)));
+}
+
+/**
  * One entry per name and purpose. The copy kept is the one with the most declarations, then the
  * most installs: a copy an agent declared must never be hidden behind an undeclared one
  * (`product-photography` was, testnet 13579, 2026-11-02). Declarations are not summed across

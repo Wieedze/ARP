@@ -2,7 +2,7 @@
 
 **Generated** 2026-11-03 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-125 decisions. Newest last. `choices/README.md` says when to write one.
+127 decisions. Newest last. `choices/README.md` says when to write one.
 
 ## Not accepted
 
@@ -157,3 +157,5 @@ Read these before relying on them.
 | [0126](0126-the-one-liner-is-discovery-not-money.md) | 2026-11-03 | Accepted | The one-liner is discovery, not money |
 | [0128](0128-a-wallet-is-asked-for-by-the-action-that-signs.md) | 2026-11-03 | Accepted | A wallet is asked for by the action that signs, and nowhere else |
 | [0129](0129-no-per-agent-deposit-cap-on-testnet.md) | 2026-11-03 | Accepted | No per-agent deposit cap on testnet; the daily budget is the bound |
+| [0130](0130-no-daily-cap-on-new-agents-on-testnet.md) | 2026-11-03 | Accepted | No daily cap on new agents on testnet |
+| [0131](0131-search-ranks-by-words-and-usage.md) | 2026-11-03 | Accepted | A search ranks by the words it matched and by how many agents used each tool |
