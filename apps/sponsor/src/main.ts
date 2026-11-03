@@ -27,8 +27,11 @@
  *  predicates have not been read from the graph yet (ADR `0092` item 7), so `POST /publish` answers
  *  503 until both are wired here. The route itself is built and tested (`service.ts`).
  */
+import { fileURLToPath } from 'node:url';
+
 import {
   ADR_0092_LIMITS,
+  ARP_DOMAIN_ATTESTORS,
   INTUITION_USES_TERM_ID,
   intuitionTestnet,
   multiVaultReads,
@@ -58,6 +61,7 @@ import deployments from '../../../data/deployments/13579.json';
 import { assertSponsorChain, readKeyFile } from './key-file.ts';
 import { nullOnRevert } from './routes/context.ts';
 import { SponsorLedger } from './ledger.ts';
+import { categoryLog, categoryTree, compoundsFrom, toolCheck } from './categories.ts';
 import { resolveOnGitHubCached } from './github.ts';
 import { repoSpellingsOnGraph } from './indexer.ts';
 import { intuitionPinner } from './pin.ts';
@@ -105,9 +109,11 @@ const PIN_KEY = (process.env.INTUITION_PIN_API_KEY ?? '').trim();
 // against it is empty, and an empty ledger sponsors every proof a second time (ADR `0116`).
 // Opened here, before the key is read: a second service on the same ledger is refused (ADR `0116`).
 let LEDGER: string;
+let CATEGORY_LOG: string;
 let ledger: SponsorLedger;
 try {
   LEDGER = stateFile(process.env.SPONSOR_LEDGER, 'sponsor-ledger.jsonl');
+  CATEGORY_LOG = stateFile(process.env.SPONSOR_CATEGORY_LOG, 'category-log.jsonl');
   ledger = new SponsorLedger(LEDGER);
 } catch (error) {
   fail(String(error instanceof Error ? error.message : error));
@@ -149,6 +155,9 @@ const limits: SponsorLimits = {
   listingsPerAddressPerDay: count('SPONSOR_LISTINGS_PER_ADDRESS_PER_DAY', 5),
   anonymousListingsPerDay: count('SPONSOR_ANONYMOUS_LISTINGS_PER_DAY', 20),
   listingsPerDay: count('SPONSOR_LISTINGS_PER_DAY', 50),
+  // Task 59, ADR `0124`: new categories the service writes as an attestor, all proposers together.
+  categoriesPerDay: count('SPONSOR_CATEGORIES_PER_DAY', 10),
+  categoryTagsPerDay: count('SPONSOR_CATEGORY_TAGS_PER_DAY', 50),
   dailyBudget: wei('SPONSOR_DAILY_BUDGET_WEI', ADR_0092_LIMITS.dailyBudget),
   depositsPerAgentPerDay: count(
     'SPONSOR_DEPOSITS_PER_AGENT_PER_DAY',
@@ -249,6 +258,8 @@ const registryAbi = parseAbi([
 ]);
 const ZERO: Address = '0x0000000000000000000000000000000000000000';
 
+const CATEGORY_TREE = categoryTree(deployments.chain.graphqlUrl);
+
 const service = createSponsor({
   chainId: intuitionTestnet.id,
   wallet,
@@ -326,6 +337,15 @@ const service = createSponsor({
   ],
   resolveTool: (url) => resolveOnGitHubCached(url),
   repoSpellings: (repo) => repoSpellingsOnGraph(deployments.chain.graphqlUrl, repo),
+  categories: {
+    ...CATEGORY_TREE,
+    isTool: toolCheck(deployments.chain.graphqlUrl),
+    compounds: compoundsFrom(
+      fileURLToPath(new URL('../../../data/catalogue/domains.proposal.json', import.meta.url)),
+    ),
+    attestors: ARP_DOMAIN_ATTESTORS,
+    log: categoryLog(CATEGORY_LOG),
+  },
   usesPredicate,
   limits,
   ledger,
@@ -364,6 +384,9 @@ export async function main(): Promise<void> {
   );
   process.stderr.write(
     `  listing    ${PIN_KEY === '' ? 'off (no INTUITION_PIN_API_KEY)' : `${limits.listingsPerAddressPerDay}/address/day, ${limits.anonymousListingsPerDay} unsigned/day, ${limits.listingsPerDay}/day in all`}\n`,
+  );
+  process.stderr.write(
+    `  categories ${limits.categoriesPerDay} new/day, ${limits.categoryTagsPerDay} tags/day, log ${CATEGORY_LOG}\n`,
   );
   process.stderr.write(`  ledger     ${LEDGER}\n`);
   process.stderr.write(`  publish    disabled (no pinning service, predicates not read)\n`);

@@ -11,6 +11,7 @@ import {
   signSponsorRequest,
   sponsorProofDigest,
   sponsorRequestTypedData,
+  planCategory,
   planToolListing,
   signListToolRequest,
   thingUri,
@@ -74,6 +75,8 @@ const LIMITS: SponsorLimits = {
   newAgentsPerDay: 2,
   listingsPerAddressPerDay: 2,
   anonymousListingsPerDay: 2,
+  categoriesPerDay: 2,
+  categoryTagsPerDay: 2,
   listingsPerDay: 4,
   dailyBudget: 10n ** 18n,
   depositsPerAgentPerDay: 2,
@@ -1819,5 +1822,183 @@ describe('POST /list-tool', () => {
     );
     expect(gas.status).toBe(403);
     expect(w.gas).toHaveLength(0);
+  });
+});
+
+describe('POST /propose-category', () => {
+  const logged: unknown[] = [];
+  const known = new Set(['tool', 'design']);
+  const nodes = new Set(['branding']);
+  const categories = {
+    isCategory: async (label: string) => known.has(label),
+    isKnown: async (label: string) => known.has(label) || nodes.has(label),
+    isTool: async (id: Hex) => id === OBJECT,
+    invalidate: () => {},
+    attestors: [SPONSOR],
+    compounds: new Map<string, string>(),
+    log: (entry: unknown) => {
+      logged.push(entry);
+    },
+  };
+  const proposal = (over: Record<string, unknown> = {}) => ({
+    label: 'Typography',
+    parent: 'design',
+    subjectId: OBJECT,
+    reason: 'none of the design children is about type',
+    ...over,
+  });
+  const fresh = () => {
+    const w = world();
+    w.terms = new Set([OBJECT.toLowerCase()]);
+    return w;
+  };
+
+  afterEach(() => {
+    logged.length = 0;
+  });
+
+  test('writes the atom, the parent edge and the tag on the MultiVault, and logs the reason', async () => {
+    const w = fresh();
+    const res = await call(sponsor(w, { categories }), '/propose-category', proposal());
+    expect(res.status).toBe(200);
+    expect(res.body.label).toBe('typography');
+    expect(w.sent.map((c) => c.kind)).toEqual(['create-atom', 'create-triple', 'create-triple']);
+    expect(w.sent.every((c) => c.to === MULTIVAULT)).toBe(true);
+    expect(w.sent.every((c) => c.value === 2n * MILLI)).toBe(true);
+    expect(logged).toEqual([
+      expect.objectContaining({
+        label: 'typography',
+        parent: 'design',
+        reason: 'none of the design children is about type',
+        transactions: expect.arrayContaining([expect.any(String)]),
+      }),
+    ]);
+  });
+
+  test('tags with an existing category: one tag, no parent, no reason, its own cap', async () => {
+    const w = fresh();
+    const service = sponsor(w, { categories });
+    const res = await call(service, '/propose-category', { label: 'Design', subjectId: OBJECT });
+    expect(res.status).toBe(200);
+    expect(res.body.newCategory).toBe(false);
+    expect(res.body.parent).toBeNull();
+    expect(w.sent.map((c) => c.kind)).toEqual(['create-triple']);
+    expect(logged).toEqual([expect.objectContaining({ newCategory: false, parent: null })]);
+  });
+
+  test('refuses to tag with the root', async () => {
+    const res = await call(sponsor(fresh(), { categories }), '/propose-category', {
+      label: 'tool',
+      subjectId: OBJECT,
+    });
+    expect(res.status).toBe(422);
+    expect(res.body.rule).toBe('root');
+  });
+
+  test('answers the web app from its origin, with a preflight', async () => {
+    const service = sponsor(fresh(), { categories, listToolOrigins: ['http://localhost:5173'] });
+    const preflight = await service.fetch(
+      new Request('http://sponsor/propose-category', {
+        method: 'OPTIONS',
+        headers: { host: 'sponsor', origin: 'http://localhost:5173' },
+      }),
+    );
+    expect(preflight.status).toBe(204);
+    expect(preflight.headers.get('access-control-allow-origin')).toBe('http://localhost:5173');
+    const elsewhere = await service.fetch(
+      post('/propose-category', proposal(), { origin: 'https://evil.example' }),
+    );
+    expect(elsewhere.status).toBe(403);
+  });
+
+  test('refuses by the rule that refused: a hyphen, a tied node, a parent off the tree, no reason', async () => {
+    const service = sponsor(fresh(), { categories });
+    const cases: [Record<string, unknown>, string][] = [
+      [{ label: 'web-design' }, 'hyphen'],
+      [{ label: 'branding' }, 'exists'],
+      [{ parent: 'nowhere' }, 'parent'],
+      [{ reason: '  ' }, 'reason'],
+      [{ subjectId: `0x${'cd'.repeat(32)}` }, 'skill'],
+    ];
+    for (const [over, rule] of cases) {
+      const res = await call(service, '/propose-category', proposal(over));
+      expect(res.status).toBe(422);
+      expect(res.body.rule).toBe(rule);
+    }
+    expect(logged).toHaveLength(0);
+  });
+
+  test('refuses a label with a # or : and look-alikes, so the cap cannot be split', async () => {
+    const w = fresh();
+    const service = sponsor(w, { categories });
+    for (const label of ['x#1', 'x:0x1', 'de\u200bsign', 'd\u0435sign', 'a\u001bb']) {
+      const res = await call(service, '/propose-category', proposal({ label }));
+      expect(res.status).toBe(422);
+      expect(res.body.rule).toBe('charset');
+    }
+    expect(w.sent).toHaveLength(0);
+  });
+
+  test('refuses a label already in the tree in any state, and a subject that is not a tool', async () => {
+    const service = sponsor(fresh(), { categories });
+    const tied = await call(service, '/propose-category', proposal({ label: 'branding' }));
+    expect(tied.status).toBe(422);
+    expect(tied.body.rule).toBe('exists');
+    const notTool = await call(
+      sponsor(fresh(), { categories: { ...categories, isTool: async () => false } }),
+      '/propose-category',
+      proposal(),
+    );
+    expect(notTool.status).toBe(422);
+    expect(notTool.body.rule).toBe('skill');
+  });
+
+  test('counts the same label under another parent as another proposal', async () => {
+    const w = fresh();
+    const service = sponsor(w, { categories });
+    expect((await call(service, '/propose-category', proposal())).status).toBe(200);
+    expect((await call(service, '/propose-category', proposal({ parent: 'tool' }))).status).toBe(
+      200,
+    );
+    const third = await call(
+      service,
+      '/propose-category',
+      proposal({ parent: 'tool', label: 'icons' }),
+    );
+    expect(third.status).toBe(429);
+  });
+
+  test('backs an edge that exists with no attestor position instead of skipping it', async () => {
+    const w = fresh();
+    const planned = await planCategory(
+      { label: 'typography', parent: 'design', subjectId: OBJECT, reason: 'r' },
+      { reads: fakeReads(w), isCategory: categories.isCategory, compounds: categories.compounds },
+    );
+    if (planned.status !== 'planned') throw new Error('expected a plan');
+    w.terms.add(planned.subDomainTripleId!.toLowerCase());
+    const res = await call(sponsor(w, { categories }), '/propose-category', proposal());
+    expect(res.status).toBe(200);
+    expect(w.sent.map((c) => c.kind)).toEqual(['create-atom', 'create-triple', 'deposit']);
+    const { args } = decodeFunctionData({ abi: depositAbi, data: w.sent[2]!.data });
+    expect(args[0]).toBe(SPONSOR);
+    expect(args[1]).toBe(planned.subDomainTripleId!);
+  });
+
+  test('stops at the daily cap of new categories', async () => {
+    const w = fresh();
+    const service = sponsor(w, { categories });
+    for (const label of ['typography', 'icons']) {
+      expect((await call(service, '/propose-category', proposal({ label }))).status).toBe(200);
+    }
+    const third = await call(service, '/propose-category', proposal({ label: 'colour' }));
+    expect(third.status).toBe(429);
+    expect(third.body.rule).toBe('limit');
+    expect(w.sent).toHaveLength(6);
+  });
+
+  test('answers 503 when not configured', async () => {
+    const w = fresh();
+    expect((await call(sponsor(w), '/propose-category', proposal())).status).toBe(503);
+    expect(w.sent).toHaveLength(0);
   });
 });

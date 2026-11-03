@@ -738,6 +738,7 @@ export {
     checkDepositLimits,
     checkGasLimits,
     checkIdentityLimits,
+    checkCategoryLimits,
     checkListToolLimits,
     checkMintGasLimits,
     checkPublishLimits,
