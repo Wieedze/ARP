@@ -45,6 +45,7 @@ describe("listing a tool through the sponsor", () => {
                 {error: "e", rule: "resolves", retry: true},
                 "Not answered right now. Try again.",
             ],
+            [409, {error: "e", rule: "pending"}, "Already being added. Try again in a minute."],
             [502, {error: "e", rule: "pin"}, "It could not be added."],
         ] as const;
         for (const [status, body, message] of cases) {

@@ -67,6 +67,8 @@ export function listToolMessage(result: ListToolResult): string {
             if (result.rule === "resolves" && !result.retry)
                 return "Nothing found at that URL on GitHub.";
             if (result.rule === "limit") return "Today's limit is reached. Try again tomorrow.";
+            // 409 `pending`: a send of this same listing is not confirmed yet (ADR `0120`).
+            if (result.rule === "pending") return "Already being added. Try again in a minute.";
             if (result.retry) return "Not answered right now. Try again.";
             return "It could not be added.";
     }

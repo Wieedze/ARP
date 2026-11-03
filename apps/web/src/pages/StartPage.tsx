@@ -148,7 +148,7 @@ function AddTool() {
     const offerWallet =
         !listing.available ||
         result?.status === "unavailable" ||
-        (result?.status === "refused" && !result.retry);
+        (result?.status === "refused" && !result.retry && result.rule !== "pending");
     const wallet = (
         <Link to="/register?what=tool" className={linkClass}>
             Add it with a wallet →
