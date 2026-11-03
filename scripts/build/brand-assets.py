@@ -30,6 +30,10 @@ STYLE = (
     f"<style>.a{{fill:{PAPER}}}.b{{fill:{STEEL}}}"
     f"@media (prefers-color-scheme: light){{.a{{fill:{INK}}}.b{{fill:{GREY}}}}}</style>"
 )
+# A README image follows the reader's system theme, not GitHub's, so the README gets one file per
+# theme and a <picture> chooses between them.
+DARK = f"<style>.a{{fill:{PAPER}}}.b{{fill:{STEEL}}}</style>"
+LIGHT = f"<style>.a{{fill:{INK}}}.b{{fill:{GREY}}}</style>"
 
 
 def mark(ring_count: int, scale: float = 1, dx: float = 0, dy: float = 0) -> str:
@@ -78,12 +82,13 @@ def main() -> None:
     height, gap = 96, 28
     text, text_width = wordmark(sys.argv[1], cap_height=44, x=height + gap, baseline=height / 2 + 22)
     width = math.ceil(height + gap + text_width)
-    lockup = (
-        f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" '
-        f'viewBox="0 0 {width} {height}" role="img" aria-label="ARP">'
-        f"{STYLE}{mark(3, height / 108)}{text}</svg>\n"
-    )
-    (ROOT / "docs/design/brand/arp-lockup.svg").write_text(lockup)
+    for theme, style in (("dark", DARK), ("light", LIGHT)):
+        lockup = (
+            f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" '
+            f'viewBox="0 0 {width} {height}" role="img" aria-label="ARP">'
+            f"{style}{mark(3, height / 108)}{text}</svg>\n"
+        )
+        (ROOT / f"docs/design/brand/arp-lockup-{theme}.svg").write_text(lockup)
 
 
 if __name__ == "__main__":

@@ -1,5 +1,8 @@
 <h1 align="center">
-  <img src="docs/design/brand/arp-lockup.svg" height="72" alt="ARP" />
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/design/brand/arp-lockup-dark.svg" />
+    <img src="docs/design/brand/arp-lockup-light.svg" height="72" alt="ARP" />
+  </picture>
 </h1>
 
 <p align="center"><b>Your agent finds the right skill, tool or agent for you, and shows which ones other agents actually use.</b></p>
