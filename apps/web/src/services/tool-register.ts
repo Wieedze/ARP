@@ -212,7 +212,7 @@ export async function planToolRegistration(params: {
             throw new ToolRegisterGuardError(
                 "cost-above-ceiling",
                 `Registering this tool would cost ${assets} wei, above this app's ` +
-                    `per-transaction ceiling of ${MAX_STAKE_WEI} wei (VITE_MAX_STAKE_TRUST). ` +
+                    `per-transaction ceiling of ${MAX_STAKE_WEI} wei. ` +
                     `Nothing was sent.`,
             );
         }
@@ -255,8 +255,8 @@ export async function submitToolRegistration(params: {
     if (registration.assets > MAX_STAKE_WEI) {
         throw new ToolRegisterGuardError(
             "cost-above-ceiling",
-            "Registering would cost more than this app's per-transaction ceiling " +
-                "(VITE_MAX_STAKE_TRUST). Nothing was sent.",
+            "Registering would cost more than this app's per-transaction ceiling. " +
+                "Nothing was sent.",
         );
     }
 

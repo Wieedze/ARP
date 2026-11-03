@@ -320,7 +320,7 @@ export async function planUseDeclaration(params: {
             throw new DeclareUseGuardError(
                 "cost-above-ceiling",
                 `Declaring this use would cost ${plan.totalValue} wei, above this app's ` +
-                    `per-transaction ceiling of ${MAX_STAKE_WEI} wei (VITE_MAX_STAKE_TRUST). ` +
+                    `per-transaction ceiling of ${MAX_STAKE_WEI} wei. ` +
                     `Nothing was sent.`,
             );
         }
@@ -371,8 +371,8 @@ export async function submitUseDeclaration(params: {
     if (declaration.totalValue > MAX_STAKE_WEI) {
         throw new DeclareUseGuardError(
             "cost-above-ceiling",
-            "Declaring would cost more than this app's per-transaction ceiling " +
-                "(VITE_MAX_STAKE_TRUST). Nothing was sent.",
+            "Declaring would cost more than this app's per-transaction ceiling. " +
+                "Nothing was sent.",
         );
     }
 

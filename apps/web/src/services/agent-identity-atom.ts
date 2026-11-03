@@ -128,8 +128,8 @@ export async function submitIdentityAtom(params: {
     if (plan.totalValue > MAX_STAKE_WEI) {
         throw new IdentityAtomGuardError(
             "cost-above-ceiling",
-            "Making the identity public would cost more than this app's per-transaction ceiling " +
-                "(VITE_MAX_STAKE_TRUST). Nothing was sent.",
+            "Making the identity public would cost more than this app's per-transaction ceiling. " +
+                "Nothing was sent.",
         );
     }
 

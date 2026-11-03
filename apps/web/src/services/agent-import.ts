@@ -584,7 +584,7 @@ export async function submitOperatorLink(params: {
     if (plan.totalCost > MAX_STAKE_WEI) {
         throw new ImportGuardError(
             "cost-above-ceiling",
-            `Publishing the link would cost more than this app's per-transaction ceiling (VITE_MAX_STAKE_TRUST). Nothing was sent.`,
+            `Publishing the link would cost more than this app's per-transaction ceiling. Nothing was sent.`,
         );
     }
 
