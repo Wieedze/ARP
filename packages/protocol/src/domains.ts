@@ -208,6 +208,11 @@ export class DomainTree {
         return out;
     }
 
+    /** Whether the tree holds this label at all: the root, a child, or only a parent. */
+    knows(domain: string): boolean {
+        return domain === this.root || this.parents.has(domain) || this.children.has(domain);
+    }
+
     /** The witness: this domain up to the root, or why there is none. */
     pathToRoot(domain: string): PathResult {
         if (domain === this.root) return {found: true, path: [domain]};

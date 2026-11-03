@@ -5,7 +5,7 @@
  *  over the queue, the allow-list and the agent checks they share (`routes/context.ts`); this file
  *  holds the types, the guard every request passes first, and the dispatch.
  *
- *  **Six routes that spend, and each checks before it spends** (ADR `0092` item 2, ADR `0094`):
+ *  **Seven routes that spend, and each checks before it spends** (ADR `0092` item 2, ADR `0094`):
  *
  *  | route           | what it pays for                                     | what it checks first                 |
  *  | --------------- | ---------------------------------------------------- | ------------------------------------ |
@@ -15,9 +15,12 @@
  *  | `POST /mint-gas`| the gas for an address's own `register()`, once ever | the address's signature, a daily cap |
  *  | `POST /identity`| the atoms and triples of an agent's identity        | a registered agent, the pins, the cap |
  *  | `POST /list-tool`| a tool's atom, and a skill's repository and `source` | the URL exists, the pins, a daily cap |
+ *  | `POST /propose-category`| a new category, its parent edge and one skill's tag | `planCategory`'s rules, a daily cap |
  *
  *  `/mint-gas`, `/identity`, and the `uses` triple `/deposit` creates when it is missing, are ADR
- *  `0110`. `/list-tool` is ADR `0123`, and it is the only route a browser may call.
+ *  `0110`. `/list-tool` is ADR `0123`; it and `/propose-category` are the only routes a browser may
+ *  call.
+ *  `/propose-category` is task 59 and ADR `0124`: the service writes as an attestor the index reads.
  *
  *  **The allow-list is enforced here, not trusted to the wallet.** Every call sent goes to the
  *  MultiVault on this chain, and the only value sent anywhere else is gas: `limits.approvalGas` to
@@ -79,6 +82,7 @@ import { identity } from './routes/identity.ts';
 import { info } from './routes/info.ts';
 import { mintGas } from './routes/mint-gas.ts';
 import { listTool } from './routes/list-tool.ts';
+import { proposeCategory, type CategoryLogEntry } from './routes/propose-category.ts';
 import { publish } from './routes/publish.ts';
 
 /**
@@ -167,6 +171,24 @@ export type SponsorOptions = {
   resolveTool?: ((url: string) => Promise<ToolResolution>) | null;
   /** The spellings of a GitHub `owner/repo` already on the graph, matched case-insensitively. */
   repoSpellings?: ((repo: string) => Promise<RepoSpelling[]>) | null;
+  /**
+   * What `POST /propose-category` needs (task 59, ADR `0124`). Absent, it answers 503.
+   * `isCategory` reads the tree with the index's attestors, the sponsor among them; `compounds` is
+   * `data/catalogue/domains.proposal.json`'s list; `log` keeps each written proposal for review.
+   */
+  categories?: {
+    isCategory(label: string): Promise<boolean>;
+    /** Whether a label is any node of the tree, reachable or not (`planCategory`'s `isKnown`). */
+    isKnown(label: string): Promise<boolean>;
+    /** Whether a subject atom is a skill or tool (`planCategory`'s `isTool`). */
+    isTool(subjectId: Hex): Promise<boolean>;
+    /** Forget the cached tree, after a write. */
+    invalidate(): void;
+    compounds: ReadonlyMap<string, string>;
+    /** The accounts the index reads (`ARP_DOMAIN_ATTESTORS`); an existing term none of them backs is backed. */
+    attestors: readonly Address[];
+    log(entry: CategoryLogEntry): void;
+  } | null;
   /** Milliseconds. Injected so a test can move the day. */
   now?: () => number;
   /** Where a failed request's detail goes, redacted. `console.error` by default. */
@@ -180,8 +202,10 @@ export function createSponsor(options: SponsorOptions): {
   return {
     async fetch(request: Request): Promise<Response> {
       const url = new URL(request.url);
-      // `/list-tool` alone answers a browser, and only the origins listed for it (ADR `0123`).
-      const listing = url.pathname === '/list-tool';
+      // `/list-tool` and `/propose-category` alone answer a browser, and only the origins listed for
+      // them (ADRs `0123`, `0124`).
+      // And `/propose-category`, the step path C takes right after a listing (ADR `0124`).
+      const listing = url.pathname === '/list-tool' || url.pathname === '/propose-category';
       const corsOrigins = listing ? (options.listToolOrigins ?? []) : [];
       const foreign = refuseForeignRequest(request, {
         hosts: options.hosts,
@@ -214,7 +238,10 @@ export function createSponsor(options: SponsorOptions): {
     if (request.method === 'GET' && url.pathname === '/') return json(info(ctx));
     if (request.method !== 'POST')
       return json(
-        { error: 'GET /, or POST /gas, /mint-gas, /identity, /deposit, /publish, /list-tool' },
+        {
+          error:
+            'GET /, or POST /gas, /mint-gas, /identity, /deposit, /publish, /list-tool, /propose-category',
+        },
         404,
       );
     const route = {
@@ -224,10 +251,14 @@ export function createSponsor(options: SponsorOptions): {
       '/deposit': deposit,
       '/publish': publish,
       '/list-tool': listTool,
+      '/propose-category': proposeCategory,
     }[url.pathname];
     if (route === undefined)
       return json(
-        { error: 'GET /, or POST /gas, /mint-gas, /identity, /deposit, /publish, /list-tool' },
+        {
+          error:
+            'GET /, or POST /gas, /mint-gas, /identity, /deposit, /publish, /list-tool, /propose-category',
+        },
         404,
       );
     const body = await readBody(request);

@@ -137,6 +137,7 @@ The `contract-reviewer` agent (in `.claude/agents/`) orchestrates these for you 
   | ARP's own                                               | the sponsoring service, for a deposit that carries a verified proof, within the same limits | **testnet 13579 only** — ADR `0094`                      |
   | ARP's own                                               | the sponsoring service, for a new agent's mint gas, its identity atoms and its first `uses` triple, within the same budget | **testnet 13579 only** — ADR `0110`                      |
   | ARP's own                                               | the sponsoring service, for a tool listing (the tool's atom, a skill's repository and `source`), within its own daily caps and the same budget | **testnet 13579 only** — ADR `0123`                      |
+  | ARP's own                                               | the sponsoring service, for an accepted category (its atom, its parent edge, one skill's tag) or a tag with an existing category, as an attestor the index reads, within their own daily caps and the same budget | **testnet 13579 only** — ADR `0124`                      |
 
   Row 3 is the product (`docs/12` points 3 and 5), so a flat "no agent may ever sign a mainnet
   transaction" forbids the thing being built. Row 1 is the development hazard the rule exists for.

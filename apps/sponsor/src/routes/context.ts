@@ -126,7 +126,9 @@ export function createContext(options: SponsorOptions) {
       // `null` is the registry's answer, "no such token". A throw is the chain unreachable.
       owner = await owners.ownerOf(getAddress(match[2] ?? ''), BigInt(agentId));
     } catch (error) {
-      return { unreadable: chainUnreadable(String(error instanceof Error ? error.message : error)) };
+      return {
+        unreadable: chainUnreadable(String(error instanceof Error ? error.message : error)),
+      };
     }
     if (owner === null) {
       return { error: `agent ${agentId} is not registered in ${agentRegistry}`, status: 403 };
