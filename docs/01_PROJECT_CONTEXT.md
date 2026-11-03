@@ -8,9 +8,8 @@ actually use.**
 > Stars show who looked. ARP shows who used it.
 
 The one-liner read "ARP makes money flow to the tools agents actually use" until 2026-11-03, when
-the user replaced it (ADR `0126`): a deposit stays its depositor's position and a tool's author
-receives nothing, so money does not flow to the tool; and the one measured result is discovery,
-below. The kit still carries the old line.
+the user replaced it (ADR `0126`). That line is the kit's long-term goal, and it stays the goal
+there: today no money reaches a tool, and the one measured result is discovery, below.
 
 |                  |                                                                        |
 | ---------------- | ---------------------------------------------------------------------- |
@@ -20,8 +19,8 @@ below. The kit still carries the old line.
 
 The category is **a reputation layer** and, said to someone outside crypto, **a public usage
 record**. The table above comes from the presentation kit (`Wieedze/ARP-business-dev`,
-`pitch/kit-de-presentation.md`); where a text about ARP contradicts it, the text is corrected. The
-one-liner is the exception, and the kit is the text to correct there.
+`pitch/kit-de-presentation.md`, which carries the new one-liner since `f2f425a`); where a text
+about ARP contradicts it, the text is corrected.
 
 Identity is ERC-8004, the graph is Intuition, and the priced claim is ARP. It stores nothing: if a
 thing is listed here it is because it already exists somewhere else, and what ARP adds is the market
