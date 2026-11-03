@@ -7,7 +7,7 @@
  * toujours être posée »). The question is an MCP elicitation: the server asks the client, which
  * shows it to the person, and the model never sees it or answers it.
  *
- * Measured 2026-11-03 with a stub server (ADR `0124`): Claude Code 2.1.316 and 2.1.317 in a terminal
+ * Measured 2026-11-03 with a stub server (ADR `0127`): Claude Code 2.1.316 and 2.1.317 in a terminal
  * show the dialog and wait for the person, also under `--dangerously-skip-permissions`; `claude -p`
  * answers `cancel`; Claude Code in VS Code (2.1.317) declares elicitation and answers `decline`
  * without showing anything (anthropics/claude-code#98256, open). Any answer but an explicit accept

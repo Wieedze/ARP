@@ -60,6 +60,11 @@ function config(over: Partial<BundleServeConfig> = {}): BundleServeConfig {
 }
 
 describe("serveSkillBundle", () => {
+    it("refuses a repository with no pinned commit rather than reading HEAD", async () => {
+        const answer = await serveSkillBundle(PPTX, config({pin: () => null}));
+        expect(answer).toEqual({status: "unpinned", ref: {repo: "anthropics/skills", skill: "pptx"}});
+    });
+
     it("serves every file of the skill's directory and none of its neighbours, under one receipt", async () => {
         const answer = await serveSkillBundle(PPTX, config());
         if (answer.status !== "served" || answer.receipt === null) throw new Error(answer.status);

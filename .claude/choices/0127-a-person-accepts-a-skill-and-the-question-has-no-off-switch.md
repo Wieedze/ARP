@@ -15,7 +15,10 @@ but a sentence in the tool description. Task 61 asked for a pinned version, a pa
 person who accepts, and for the surface to be tested before it was relied on.
 
 What was measured on 2026-11-03, with a stub MCP server that logs `initialize` and sends one
-`elicitation/create` (the user at the keyboard for the interactive runs):
+`elicitation/create` (`scripts/measure/elicitation-probe.mjs`; logs
+`data/measurements/elicitation-2026-11-03-claude-p.log` and `…-interactive.log`). The logs show what
+each client declared and answered; whether a dialog was shown, and who answered, is the user's
+report from the keyboard:
 
 | client | declares elicitation | what happened |
 | --- | --- | --- |
@@ -44,8 +47,9 @@ but `echo y | script -qec "<command>" /dev/null` gives it one and answers the qu
    with a `commit` is signed under domain version 2, and a version 1 receipt still verifies.
 2. **The only path that writes a skill is an explicit accept to an MCP elicitation**: `action:
    accept` with the box ticked. A decline, a cancel, an unticked box, a client that does not declare
-   elicitation, the HTTP transport, and a configuration with no way to ask all write nothing and
-   keep nothing. There is no flag, variable or mode that skips the question.
+   elicitation, the HTTP transport, a configuration with no way to ask, and no answer within fifteen
+   minutes all write nothing and keep nothing. There is no ARP flag, variable or mode that skips the
+   question.
 3. **No terminal fallback.** The agent is told that the client did not accept and, if the person
    saw no question, to ask again from Claude Code in a terminal, where the dialog shows.
 4. **The question shows facts, never a verdict.** The skill and repository; a link to read every
@@ -96,5 +100,8 @@ but `echo y | script -qec "<command>" /dev/null` gives it one and answers the qu
 - Task: `docs/tasks/61-review-before-install.md`
 - Code: `packages/protocol/src/skill-review.ts`, `packages/protocol/src/receipt.ts`,
   `apps/mcp/src/client-session.ts`, `apps/mcp/src/desktop/skill-gate.ts`
+- Measurements: `scripts/measure/elicitation-probe.mjs`, `scripts/measure/skill-paths-at-pin.ts`
+  (521 of 662 resolve at the pins, 139 absent, 2 ambiguous —
+  `data/measurements/skill-paths-at-pin-2026-11-03.json`)
 - Related ADR: `0046` (ARP scores nobody), `0080` (content receipts), `0116` (refuse to overwrite)
 - Third party: https://github.com/anthropics/claude-code/issues/98256

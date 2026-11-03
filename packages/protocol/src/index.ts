@@ -569,7 +569,6 @@ export {
 export {
     REVIEW_PATTERNS,
     renderSkillPrompt,
-    renderSkillReview,
     reviewSkill,
     type MatchedLine,
     type ReviewFile,

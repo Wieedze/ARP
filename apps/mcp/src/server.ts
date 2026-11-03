@@ -38,7 +38,7 @@ import { linesOf, loopbackHosts, redactUrls, refuseForeignRequest, serveFetch } 
 import { DESKTOP_TOOL_NAMES, DESKTOP_TOOLS, READ_TOOL_NAMES, TOOLS } from './tools.js';
 import { desktopTool } from './desktop/handlers.js';
 import { serveContentRequest } from './content.js';
-import { recordClientCapabilities, setRequester } from './client-session.js';
+import { recordClientCapabilities, stdioRouter } from './client-session.js';
 import {
   PORT,
   RECEIPT_SIGNER,
@@ -352,17 +352,6 @@ async function serveStdio(input: AsyncIterable<unknown>): Promise<void> {
   // Requests are still handled one at a time, in order, as before. What changed with task 61 is
   // that the reading goes on while one is open: a tool call that asks the person (elicitation)
   // waits for the client's answer, and that answer arrives on this same input.
-  const waiting = new Map<string, { resolve: (value: unknown) => void; reject: (error: Error) => void }>();
-  let sent = 0;
-  setRequester(
-    (method, params) =>
-      new Promise((resolve, reject) => {
-        const id = `arp-${++sent}`;
-        waiting.set(id, { resolve, reject });
-        void send(JSON.stringify({ jsonrpc: '2.0', id, method, params }));
-      }),
-  );
-
   const handle = async (line: string): Promise<void> => {
     let response: Response;
     try {
@@ -382,39 +371,9 @@ async function serveStdio(input: AsyncIterable<unknown>): Promise<void> {
     await send(await response.text());
   };
 
-  let queue = Promise.resolve();
-  for await (const line of linesOf(input)) {
-    const reply = replyTo(line, waiting);
-    if (reply !== null) {
-      waiting.delete(reply.id);
-      if (reply.error === undefined) reply.pending.resolve(reply.result);
-      else reply.pending.reject(new Error(String(reply.error)));
-      continue;
-    }
-    queue = queue.then(() => handle(line));
-  }
-  for (const pending of waiting.values()) pending.reject(new Error('the client closed the connection'));
-  await queue;
-  setRequester(null);
-}
-
-/** A line that answers a request this server sent, or null for anything else. */
-function replyTo(
-  line: string,
-  waiting: ReadonlyMap<string, { resolve: (value: unknown) => void; reject: (error: Error) => void }>,
-): { id: string; result: unknown; error: unknown; pending: { resolve: (value: unknown) => void; reject: (error: Error) => void } } | null {
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(line);
-  } catch {
-    return null;
-  }
-  if (typeof parsed !== 'object' || parsed === null || 'method' in parsed) return null;
-  const message = parsed as { id?: unknown; result?: unknown; error?: unknown }; // an object with no method
-  if (typeof message.id !== 'string') return null;
-  const pending = waiting.get(message.id);
-  if (pending === undefined) return null;
-  return { id: message.id, result: message.result, error: message.error === undefined ? undefined : JSON.stringify(message.error), pending };
+  const router = stdioRouter(handle, send);
+  for await (const line of linesOf(input)) router.receive(line);
+  await router.close();
 }
 
 /**

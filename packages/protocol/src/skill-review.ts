@@ -6,7 +6,7 @@
  * of a fixed list of patterns, **printed with the pattern and the lines themselves**. Nothing here
  * says whether a skill is safe, suspicious, maintained or popular — that would be a score (ADR
  * `0046`), and a skill this did not flag would become ARP's miss. Where a fact ends and a verdict
- * begins is ADR `0124`.
+ * begins is ADR `0127`.
  *
  * Pure: the caller supplies the files, already checked against their receipt.
  */
@@ -127,48 +127,6 @@ export function reviewSkill(input: SkillReviewInput): SkillReview {
         })),
         thirdParty: input.thirdParty ?? [],
     };
-}
-
-/**
- * The page as plain text, for a terminal or an MCP elicitation. At most `maxLines` matching lines
- * per pattern are printed; the count is always the full count.
- */
-export function renderSkillReview(review: SkillReview, maxLines = 5): string {
-    const out: string[] = [];
-    out.push(`Install ${review.skill} from ${review.repo}?`);
-    out.push("");
-    out.push(`repository  github.com/${review.repo}`);
-    out.push(
-        `commit      ${review.commit}${review.committedAt === null ? "" : `  (${review.committedAt})`}`,
-    );
-    out.push(`directory   ${review.path}`);
-    // Where the person reads every file before answering: the same commit the bytes come from.
-    if (/^[0-9a-f]{40}$/.test(review.commit)) {
-        out.push(
-            `read it     https://github.com/${review.repo}/tree/${review.commit}/${review.path}`,
-        );
-    }
-    out.push(`files       ${review.files.length}, ${review.totalBytes} bytes`);
-    for (const file of review.files) {
-        out.push(`  ${file.path}  ${file.bytes} bytes${file.binary ? ", binary" : ""}`);
-    }
-    out.push(`shebang     ${review.shebang.length === 0 ? "none" : review.shebang.join(", ")}`);
-    out.push("");
-    for (const p of review.patterns) {
-        out.push(`${p.matches.length} ${p.name}  /${p.pattern}/`);
-        for (const m of p.matches.slice(0, maxLines)) out.push(`  ${m.file}:${m.line}  ${m.text}`);
-        if (p.matches.length > maxLines) out.push(`  … ${p.matches.length - maxLines} more`);
-    }
-    if (review.thirdParty.length > 0) {
-        out.push("");
-        for (const f of review.thirdParty)
-            out.push(`${f.label}  ${f.value}  (${f.source}, read ${f.readOn})`);
-    }
-    out.push("");
-    out.push(
-        "These are counts and lines, not a judgement. Nothing is installed unless you accept.",
-    );
-    return out.join("\n");
 }
 
 /** What a person sees in the install question: short, because a terminal dialog has few lines. */

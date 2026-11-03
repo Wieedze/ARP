@@ -1,12 +1,7 @@
 import {stringToBytes} from "viem";
 import {describe, expect, it} from "vitest";
 
-import {
-    renderSkillPrompt,
-    renderSkillReview,
-    reviewSkill,
-    type ReviewFile,
-} from "../src/skill-review.js";
+import {renderSkillPrompt, reviewSkill, type ReviewFile} from "../src/skill-review.js";
 
 const COMMIT = "ca45fc496a3436251f191354091d557da31c15b5";
 
@@ -44,7 +39,9 @@ describe("reviewSkill", () => {
     it("reports zero matches as zero, never as a clean bill", () => {
         const review = reviewSkill(input([file("SKILL.md", "# A quiet skill\n")]));
         expect(review.patterns.every((p) => p.matches.length === 0)).toBe(true);
-        expect(renderSkillReview(review)).not.toMatch(/safe|clean|trusted|suspicious|verified/i);
+        expect(renderSkillPrompt(review, ".claude/skills/pptx").message).not.toMatch(
+            /safe|clean|trusted|suspicious|verified/i,
+        );
     });
 
     it("lists a binary file and does not scan it", () => {
@@ -59,34 +56,6 @@ describe("reviewSkill", () => {
         const a = file("a.md", "curl x\n");
         const b = file("b.md", "sudo y\n");
         expect(reviewSkill(input([a, b]))).toEqual(reviewSkill(input([b, a])));
-    });
-});
-
-describe("renderSkillReview", () => {
-    it("names the repository, the commit and every file, and prints the pattern beside its count", () => {
-        const text = renderSkillReview(
-            reviewSkill({
-                ...input([file("SKILL.md", "sudo rm -rf /tmp/x\n")]),
-                thirdParty: [
-                    {label: "installs", value: "4,800", source: "skills.sh", readOn: "2026-10-29"},
-                ],
-            }),
-        );
-        expect(text).toContain(`commit      ${COMMIT}  (2026-10-28T19:20:38Z)`);
-        expect(text).toContain(
-            `read it     https://github.com/anthropics/skills/tree/${COMMIT}/skills/pptx`,
-        );
-        expect(text).toContain("  SKILL.md  19 bytes");
-        expect(text).toContain("1 lines that run sudo  /\\bsudo\\b/");
-        expect(text).toContain("  SKILL.md:1  sudo rm -rf /tmp/x");
-        expect(text).toContain("installs  4,800  (skills.sh, read 2026-10-29)");
-    });
-
-    it("caps the lines printed per pattern and keeps the full count", () => {
-        const many = Array.from({length: 8}, (_, i) => `curl ${i}`).join("\n");
-        const text = renderSkillReview(reviewSkill(input([file("SKILL.md", many)])), 3);
-        expect(text).toContain("8 lines that call the network");
-        expect(text).toContain("  … 5 more");
     });
 });
 
@@ -111,5 +80,21 @@ describe("renderSkillPrompt", () => {
         ]);
         expect(prompt.confirm).toBe("Install pptx into .claude/skills/pptx");
         expect(prompt.confirmHelp).not.toMatch(/safe|clean|trusted|suspicious|verified/i);
+    });
+
+    it("caps the lines shown, says how many more are at the link, and dates a third-party figure", () => {
+        const many = Array.from({length: 5}, (_, i) => `curl ${i}`).join("\n");
+        const prompt = renderSkillPrompt(
+            reviewSkill({
+                ...input([file("SKILL.md", many)]),
+                thirdParty: [
+                    {label: "installs", value: "4,800", source: "skills.sh", readOn: "2026-10-29"},
+                ],
+            }),
+            ".claude/skills/pptx",
+        );
+        expect(prompt.message).toContain("Lines found: network 5");
+        expect(prompt.message).toContain("  … 2 more at the link");
+        expect(prompt.message).toContain("skills.sh: 4,800 installs (read 2026-10-29)");
     });
 });
