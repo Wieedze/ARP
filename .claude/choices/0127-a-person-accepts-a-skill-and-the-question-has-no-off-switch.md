@@ -16,7 +16,7 @@ person who accepts, and for the surface to be tested before it was relied on.
 
 What was measured on 2026-11-03, with a stub MCP server that logs `initialize` and sends one
 `elicitation/create` (`scripts/measure/elicitation-probe.mjs`; logs
-`data/measurements/elicitation-2026-11-03-claude-p.log` and `…-interactive.log`). The logs show what
+`data/measurements/elicitation-2026-11-03-claude-p.txt` and `…-interactive.txt`). The logs show what
 each client declared and answered; whether a dialog was shown, and who answered, is the user's
 report from the keyboard:
 
