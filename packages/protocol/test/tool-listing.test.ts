@@ -207,8 +207,8 @@ const SPONSOR = "0x906f3A52ec089f8D4E9127F91C6bE5Ae0d18f91f";
 
 describe("listTools — proven and declared (ADR 0094 §2)", () => {
     it("counts every deposit as declared when no sponsor is configured", async () => {
-        // Until the sponsoring service exists there is no proof gate, so nothing can have passed
-        // one. Zero proven is true, not unknown.
+        // With no sponsoring address there is no sender to count as proven. Zero proven is true,
+        // not unknown.
         const {transport, queries, seen} = transportOf([
             edge({atomId: "0xaa", deposits: 2}),
             edge({atomId: "0xaa", supportAssets: "1", deposits: 1}),
