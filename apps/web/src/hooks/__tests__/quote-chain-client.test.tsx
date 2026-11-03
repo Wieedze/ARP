@@ -117,12 +117,14 @@ describe("a submit after the toggle moved", () => {
 
     it("declares with the declaration's client", async () => {
         const actions = mountThenFlip(useDeclareUse);
+        // The hook reads only `chain` off the declaration; the service that reads the rest is mocked.
         await actions.submit({chain: TESTNET} as unknown as DeclaredUse);
         expect(submitUseDeclaration.mock.calls[0]?.[0].publicClient).toBe(TESTNET.client);
     });
 
     it("lists a tool with the registration's client", async () => {
         const actions = mountThenFlip(useToolRegister);
+        // The hook reads only `chain` off the registration; the service that reads the rest is mocked.
         await actions.submit({chain: TESTNET} as unknown as ToolRegistration);
         expect(submitToolRegistration.mock.calls[0]?.[0].publicClient).toBe(TESTNET.client);
     });
@@ -130,9 +132,12 @@ describe("a submit after the toggle moved", () => {
     it("publishes an import link and an identity record on the plan's chain", async () => {
         const actions = mountThenFlip(useAgentImport);
         await actions.publishLink({
+            // Passed through untouched to the mocked service, so no field of it is read.
             imported: {} as ImportedAgent,
+            // The hook reads only `chain` off the plan; the service that reads the rest is mocked.
             plan: {chain: TESTNET} as unknown as ImportLinkPlan,
         });
+        // The hook reads only `chainId` off the plan; the service that reads the rest is mocked.
         await actions.publishIdentity({chainId: TESTNET.chainId} as IdentityAtomPlan);
         expect(submitOperatorLink.mock.calls[0]?.[0].publicClient).toBe(TESTNET.client);
         expect(submitIdentityAtom.mock.calls[0]?.[0].publicClient).toBe(TESTNET.client);
