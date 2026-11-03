@@ -1,3 +1,5 @@
+<img src="../../docs/design/brand/arp-lockup.svg" height="40" alt="ARP" />
+
 # ARP probe
 
 A Cloudflare Worker that answers "is it me, or is it down for everyone?". Every five minutes it

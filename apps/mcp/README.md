@@ -1,3 +1,5 @@
+<img src="../../docs/design/brand/arp-lockup.svg" height="40" alt="ARP" />
+
 # ARP MCP server
 
 Gives any MCP client (Claude, Cursor, Gemini, Codex…) access to ARP: it finds the right tool for a

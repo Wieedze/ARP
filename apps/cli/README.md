@@ -1,3 +1,5 @@
+<img src="https://raw.githubusercontent.com/Wieedze/ARP/main/docs/design/brand/arp-lockup.svg" height="40" alt="ARP" />
+
 # @arp-protocol/cli
 
 ARP's agent-side programs in one binary. Node 22 or later.

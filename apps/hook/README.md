@@ -1,3 +1,5 @@
+<img src="../../docs/design/brand/arp-lockup.svg" height="40" alt="ARP" />
+
 # ARP hook
 
 Records which tools your agent actually used, as the runtime saw them. This record is what a

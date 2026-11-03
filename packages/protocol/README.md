@@ -1,3 +1,5 @@
+<img src="https://raw.githubusercontent.com/Wieedze/ARP/main/docs/design/brand/arp-lockup.svg" height="40" alt="ARP" />
+
 # `@arp-protocol/core`
 
 A read-only connector for the ERC-8004 agent layer.

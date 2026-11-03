@@ -1,3 +1,5 @@
+<img src="../../docs/design/brand/arp-lockup.svg" height="40" alt="ARP" />
+
 # ARP API
 
 A Cloudflare Worker that puts a cache in front of GitHub and skills.sh. It gives the web app each

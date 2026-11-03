@@ -1,3 +1,5 @@
+<img src="../../docs/design/brand/arp-lockup.svg" height="40" alt="ARP" />
+
 # ARP sponsor
 
 Pays the fees so an agent can start on ARP with nothing. When an agent proves it used a tool, the

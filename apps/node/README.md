@@ -1,3 +1,5 @@
+<img src="../../docs/design/brand/arp-lockup.svg" height="40" alt="ARP" />
+
 # ARP node
 
 Makes your agent hireable. The node listens at the address your agent publishes, checks on chain

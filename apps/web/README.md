@@ -1,3 +1,5 @@
+<img src="../../docs/design/brand/arp-lockup.svg" height="40" alt="ARP" />
+
 # `app` — the ARP interface
 
 Vite + React 19 + TypeScript + Tailwind v4. Read [`../README.md`](../README.md) for what ARP is and
