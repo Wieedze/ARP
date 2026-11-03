@@ -15,6 +15,8 @@ export type CategoryLogEntry = {
   subjectId: Hex;
   reason: string;
   transactions: Hex[];
+  /** `partial` when a send after the first reverted or was not confirmed: what landed is indexed. */
+  status: 'complete' | 'partial';
 };
 
 /**
@@ -61,7 +63,10 @@ export async function proposeCategory(ctx: SponsorContext, body: Body): Promise<
     planCategory(proposal, {
       reads,
       isCategory: categories.isCategory,
+      isKnown: categories.isKnown,
+      isTool: categories.isTool,
       compounds: categories.compounds,
+      backing: { attestors: categories.attestors, depositor: ctx.wallet.address },
     });
   let first;
   try {
@@ -82,7 +87,9 @@ export async function proposeCategory(ctx: SponsorContext, body: Body): Promise<
     });
   if (first.calls.length === 0) return answer(first, []);
 
-  const key = `category:${first.label}:${subjectId.toLowerCase()}`;
+  // The parent is in the key: one cap slot per label, parent and subject, so a second parent for
+  // the same label is a second proposal and not a free edge (security review, task 59).
+  const key = `category:${first.label}:${first.parent}:${subjectId.toLowerCase()}`;
   const limitOf = (value: bigint) =>
     checkCategoryLimits(ledger.relevant(now()), { proposal: key, value, now: now(), limits });
   const early = limitOf(first.totalValue);
@@ -114,6 +121,21 @@ export async function proposeCategory(ctx: SponsorContext, body: Body): Promise<
     if (!decision.ok) return json({ error: decision.reason, rule: 'limit' }, 429);
 
     const sent: Hex[] = [];
+    // Every write that lands is logged, finished or not: the review list must see what the index
+    // now reads, and a partial category is one.
+    const record = (status: CategoryLogEntry['status']) => {
+      if (sent.length === 0) return;
+      categories.invalidate();
+      categories.log({
+        at: now(),
+        label: current.label,
+        parent: current.parent,
+        subjectId,
+        reason: reason.trim(),
+        transactions: sent,
+        status,
+      });
+    };
     // After this proposal's spent records. A reverted key is not spent, so a retry reuses it.
     const offset = ledger.keyedWith('category', prefix).length;
     for (const [index, call] of current.calls.entries()) {
@@ -126,23 +148,19 @@ export async function proposeCategory(ctx: SponsorContext, body: Body): Promise<
         key: recordKey,
       });
       const result = await sendToMultiVault(call);
-      if (result.status === 'unconfirmed')
+      if (result.status === 'unconfirmed') {
+        record('partial');
         return unconfirmed('category', recordKey, result.hash, { transactions: sent });
+      }
       if (result.status !== 'success') {
         ledger.settle('category', recordKey, { status: 'reverted', hash: result.hash });
+        record('partial');
         return json({ error: `${call.why}: ${result.hash} reverted`, transactions: sent }, 502);
       }
       ledger.settle('category', recordKey, { status: 'success', hash: result.hash });
       sent.push(result.hash);
     }
-    categories.log({
-      at: now(),
-      label: current.label,
-      parent: current.parent,
-      subjectId,
-      reason: reason.trim(),
-      transactions: sent,
-    });
+    record('complete');
     return answer(current, sent);
   });
 }

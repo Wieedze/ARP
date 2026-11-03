@@ -373,7 +373,12 @@ export function checkCategoryLimits(
     const proposals = new Set(
         records
             .filter((r) => r.kind === "category" && utcDay(r.at) === day && r.key !== undefined)
-            .map((r) => (r.key ?? "").split("#")[0]),
+            // The `#<n>` suffix is the last `#`; a label cannot hold one (`checkCategoryLabel`), but the
+            // count does not rely on that.
+            .map((r) => {
+                const key = r.key ?? "";
+                return key.slice(0, key.lastIndexOf("#"));
+            }),
     );
     if (!proposals.has(proposal) && proposals.size >= limits.categoriesPerDay) {
         return {ok: false, reason: `${limits.categoriesPerDay} new categories a day, reached`};

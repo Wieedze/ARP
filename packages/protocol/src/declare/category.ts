@@ -1,7 +1,8 @@
-import {stringToHex, type Hex} from "viem";
+import {stringToHex, type Address, type Hex} from "viem";
 
 import type {DomainTree} from "../domains.js";
 import {HAS_TAG, IS_A_SUB_DOMAIN_OF} from "../sources/intuition/terms.js";
+import {planSponsoredDeposit} from "../sponsor/plan.js";
 import {encodeCreateAtom, encodeCreateTriple, type MultiVaultReads} from "./multivault.js";
 import type {PreparedCall} from "./types.js";
 
@@ -22,6 +23,7 @@ import type {PreparedCall} from "./types.js";
 export type CategoryRule =
     | "empty"
     | "hyphen"
+    | "charset"
     | "compound"
     | "reason"
     | "exists"
@@ -58,8 +60,25 @@ export type CategoryDeps = {
     reads: MultiVaultReads;
     /** Whether a label is already a category reachable from `tool`, read from the index. */
     isCategory(label: string): Promise<boolean>;
+    /**
+     * Whether a label is already a node of the index's tree in any state: a category, or one that
+     * is tied, unparented or in a cycle. Such a label is refused as `exists`: a new parent edge
+     * on it would be an edge the proposer chose for a node already there (security review, task
+     * 59). Absent, only {@link isCategory} is asked.
+     */
+    isKnown?(label: string): Promise<boolean>;
+    /** Whether the subject is a skill or tool, not just any term on chain. Absent, any term passes. */
+    isTool?(subjectId: Hex): Promise<boolean>;
     /** Compounds allowed with their reason (`domains.proposal.json`); a space passes only here. */
     compounds: ReadonlyMap<string, string>;
+    /**
+     * For a writer that is itself an attestor (the sponsor, ADR `0124`). The index reads positions,
+     * not creators, so a term that exists with no attestor's position is invisible: 44 of the 66
+     * `is a sub-domain of` triples on testnet 13579 were, measured 2026-11-03 by
+     * `intuition-integrator`. With this, such a term gets a `minDeposit` deposit from `depositor`
+     * instead of nothing. Without it, the plan only creates what is missing, as before.
+     */
+    backing?: {attestors: readonly Address[]; depositor: Address};
 };
 
 /**
@@ -78,7 +97,14 @@ export function isCategoryIn(
  * hashed: `Design` and `design` would be two nodes for ever on a graph that deletes nothing.
  */
 export function normaliseCategoryLabel(raw: string): string {
-    return raw.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim().replace(/\s+/g, " ");
+    // NFKC first, so compatibility forms (full-width letters, ligatures) fold before accents go.
+    return raw
+        .normalize("NFKC")
+        .normalize("NFD")
+        .replace(/[̀-ͯ]/g, "")
+        .toLowerCase()
+        .trim()
+        .replace(/\s+/g, " ");
 }
 
 /**
@@ -95,6 +121,15 @@ export function checkCategoryLabel(
             status: "refused",
             rule: "hyphen",
             detail: `"${label}": never a hyphen or an underscore; write a compound with a space`,
+        };
+    }
+    // Lowercase ASCII letters and digits, and single spaces between words: nothing invisible, no
+    // look-alike from another script, and no `#` or `:`, which the sponsor's ledger keys use.
+    if (!/^[a-z0-9]+(?: [a-z0-9]+)*$/.test(label)) {
+        return {
+            status: "refused",
+            rule: "charset",
+            detail: `"${label}": letters a to z, digits and single spaces only`,
         };
     }
     if (label.includes(" ") && !compounds.get(label)?.trim()) {
@@ -121,7 +156,10 @@ export async function planCategory(
     }
     // The rules cannot see meaning, so they refuse what they can see: a second node for a label
     // that is already a category, and an orphan that would not climb to `tool`.
-    if (await deps.isCategory(label)) {
+    if (
+        (await deps.isCategory(label)) ||
+        (deps.isKnown !== undefined && (await deps.isKnown(label)))
+    ) {
         return {
             status: "refused",
             rule: "exists",
@@ -137,6 +175,9 @@ export async function planCategory(
     }
     if (!(await deps.reads.termExists(proposal.subjectId))) {
         return {status: "refused", rule: "skill", detail: "the skill to tag is not on chain"};
+    }
+    if (deps.isTool !== undefined && !(await deps.isTool(proposal.subjectId))) {
+        return {status: "refused", rule: "skill", detail: "the subject is not a skill or a tool"};
     }
 
     const {reads} = deps;
@@ -191,6 +232,30 @@ export async function planCategory(
             data: encodeCreateTriple(proposal.subjectId, HAS_TAG, categoryId, tripleAssets),
             why: `the skill has tag "${label}"`,
         });
+    }
+
+    // A term that exists but that no attestor backs is not in the index: back it.
+    const backing = deps.backing;
+    if (backing !== undefined) {
+        const curveId = await reads.defaultCurveId();
+        for (const [on, termId] of [
+            [edgeOn, subDomainTripleId],
+            [tagOn, tagTripleId],
+        ] as const) {
+            if (!on) continue;
+            const held = await Promise.all(
+                backing.attestors.map((who) => reads.sharesOf(who, termId, curveId)),
+            );
+            if (held.some((shares) => shares > 0n)) continue;
+            const deposit = await planSponsoredDeposit({
+                receiver: backing.depositor,
+                termId,
+                amount: stake,
+                reads,
+                curveId,
+            });
+            calls.push(deposit.call);
+        }
     }
 
     return {

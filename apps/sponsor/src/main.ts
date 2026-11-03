@@ -31,6 +31,7 @@ import { fileURLToPath } from 'node:url';
 
 import {
   ADR_0092_LIMITS,
+  ARP_DOMAIN_ATTESTORS,
   INTUITION_USES_TERM_ID,
   intuitionTestnet,
   multiVaultReads,
@@ -60,7 +61,7 @@ import deployments from '../../../data/deployments/13579.json';
 import { assertSponsorChain, readKeyFile } from './key-file.ts';
 import { nullOnRevert } from './routes/context.ts';
 import { SponsorLedger } from './ledger.ts';
-import { categoryLog, categoryTree, compoundsFrom } from './categories.ts';
+import { categoryLog, categoryTree, compoundsFrom, toolCheck } from './categories.ts';
 import { resolveOnGitHubCached } from './github.ts';
 import { repoSpellingsOnGraph } from './indexer.ts';
 import { intuitionPinner } from './pin.ts';
@@ -256,6 +257,8 @@ const registryAbi = parseAbi([
 ]);
 const ZERO: Address = '0x0000000000000000000000000000000000000000';
 
+const CATEGORY_TREE = categoryTree(deployments.chain.graphqlUrl);
+
 const service = createSponsor({
   chainId: intuitionTestnet.id,
   wallet,
@@ -334,10 +337,12 @@ const service = createSponsor({
   resolveTool: (url) => resolveOnGitHubCached(url),
   repoSpellings: (repo) => repoSpellingsOnGraph(deployments.chain.graphqlUrl, repo),
   categories: {
-    isCategory: categoryTree(deployments.chain.graphqlUrl),
+    ...CATEGORY_TREE,
+    isTool: toolCheck(deployments.chain.graphqlUrl),
     compounds: compoundsFrom(
       fileURLToPath(new URL('../../../data/catalogue/domains.proposal.json', import.meta.url)),
     ),
+    attestors: ARP_DOMAIN_ATTESTORS,
     log: categoryLog(CATEGORY_LOG),
   },
   usesPredicate,

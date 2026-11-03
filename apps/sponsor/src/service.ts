@@ -177,7 +177,15 @@ export type SponsorOptions = {
    */
   categories?: {
     isCategory(label: string): Promise<boolean>;
+    /** Whether a label is any node of the tree, reachable or not (`planCategory`'s `isKnown`). */
+    isKnown(label: string): Promise<boolean>;
+    /** Whether a subject atom is a skill or tool (`planCategory`'s `isTool`). */
+    isTool(subjectId: Hex): Promise<boolean>;
+    /** Forget the cached tree, after a write. */
+    invalidate(): void;
     compounds: ReadonlyMap<string, string>;
+    /** The accounts the index reads (`ARP_DOMAIN_ATTESTORS`); an existing term none of them backs is backed. */
+    attestors: readonly Address[];
     log(entry: CategoryLogEntry): void;
   } | null;
   /** Milliseconds. Injected so a test can move the day. */

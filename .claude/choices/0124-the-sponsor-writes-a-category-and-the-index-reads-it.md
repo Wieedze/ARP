@@ -42,6 +42,26 @@ at `cost + minDeposit` (ADR `0053`) under a daily cap, `SPONSOR_CATEGORIES_PER_D
 inside ADR `0092`'s budget. Each written proposal is logged for the weekly review list (task 59 §2
 item 4): label, parent, skill, reason and transactions.
 
+**A term that exists but that no attestor backs is backed, not skipped.** The index reads positions,
+so an existing `is a sub-domain of` or `has tag` triple with no position from the attestor set is
+invisible: 44 of the 66 hierarchy triples on testnet 13579 were, `branding → design` among them
+(measured 2026-11-03 by `intuition-integrator`). The plan (`planCategory`'s `backing`) gives such a
+term a `minDeposit` deposit from the sponsor, held by the sponsor. Without it the route would answer
+`created: true` and the category would stay hidden.
+
+**Hardened on review, before it shipped** (security review, 2026-11-03):
+- A label is NFKC-normalised, then must be lowercase letters a to z, digits and single spaces
+  (`charset`). That refuses invisible characters, look-alikes from other scripts, and the `#` and
+  `:` the ledger keys use: a `#` in a label had let every proposal count as one against the cap.
+- The cap counts one slot per label, parent and subject. A second parent for the same label is a
+  second proposal, not a free edge.
+- A label already in the tree in any state is refused as `exists`, not only one that reaches
+  `tool`. A tied, unparented or cyclic node does not get an extra parent chosen by the proposer. A
+  truncated tree read refuses rather than guesses, and the cached tree is dropped after a write.
+- The subject must be a skill or tool (a `Thing` whose `url` is a tool URL), not any term on chain.
+- Every write that lands is logged, finished or not (`status: partial`), so the review list sees
+  what the index now reads.
+
 **Closed to browsers.** The MCP server proposes and no page does (arp-5e, task 59), so this route
 keeps ADR `0116`'s refusal of any `Origin`.
 
@@ -66,6 +86,12 @@ keeps ADR `0116`'s refusal of any `Origin`.
 - **The index now trusts the sponsor's positions.** A future route that makes the sponsor deposit on
   a `has tag` or hierarchy triple would put that triple in the index. Any such route has to say so
   in its own ADR.
+- **The sponsor deposits on existing index triples, through this route only.** That is what makes a
+  category it accepts visible, and it is bounded by the same cap and rules as a creation. No other
+  route deposits on a `has tag` or `is a sub-domain of` triple, and the sponsor grants no deposit
+  approval to anyone. Both are what the narrowness above rests on.
+- **The log stores the label and reason as given.** They are JSON-escaped, so a line cannot break,
+  but whatever renders the weekly list must escape them for a terminal or a page.
 - **The rules cannot see meaning** (ADR `0115`). A well-formed but pointless category passes, so it
   is retired through the existing path after the weekly review. The daily cap bounds how many.
 - `security.md`'s signing table gains a row.
