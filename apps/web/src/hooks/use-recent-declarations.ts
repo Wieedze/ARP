@@ -19,7 +19,7 @@ export type RecentFetcher = (config: {
     limit?: number;
 }) => Promise<RecentDeclaration[]>;
 
-export function recentQueryKey(chainId: number, limit: number) {
+function recentQueryKey(chainId: number, limit: number) {
     return ["intuition", chainId, "recent-declarations", limit] as const;
 }
 

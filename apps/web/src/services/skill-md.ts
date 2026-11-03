@@ -1,8 +1,8 @@
 /**
  * What a skill page reads out of a SKILL.md: its frontmatter description and version.
  *
- * Pure. The text is fetched elsewhere (`use-skill-md`); this only reads it, so it is testable on a
- * string and never needs the network.
+ * `parseSkillMd` is pure and testable on a string; `fetchSkillMd` is the one network read, bounded
+ * in time and in bytes because the file is whatever the repository's author committed.
  *
  * **Not a YAML parser.** A SKILL.md's frontmatter is a handful of `key: value` lines, sometimes a
  * folded or literal block (`description: >`), sometimes `version` nested under `metadata:`. Those
@@ -22,6 +22,47 @@ export function parseSkillMd(text: string): SkillMd {
         description: front.get("description") ?? null,
         version: front.get("version") ?? front.get("metadata.version") ?? null,
     };
+}
+
+/** A SKILL.md is a few kilobytes; anything past this is not one worth reading in a browser. */
+export const SKILL_MD_MAX_BYTES = 256 * 1024;
+export const SKILL_MD_TIMEOUT_MS = 10_000;
+
+/** Fetch and parse one SKILL.md. Throws on a non-2xx answer, a timeout or an oversized body. */
+export async function fetchSkillMd(
+    url: string,
+    options: {fetchImpl?: typeof fetch; timeoutMs?: number; maxBytes?: number} = {},
+): Promise<SkillMd> {
+    const fetchImpl = options.fetchImpl ?? fetch;
+    const maxBytes = options.maxBytes ?? SKILL_MD_MAX_BYTES;
+    const response = await fetchImpl(url, {
+        signal: AbortSignal.timeout(options.timeoutMs ?? SKILL_MD_TIMEOUT_MS),
+    });
+    if (!response.ok) throw new Error(`${response.status} from ${url}`);
+    return parseSkillMd(await readCapped(response, maxBytes, url));
+}
+
+async function readCapped(response: Response, maxBytes: number, url: string): Promise<string> {
+    const declared = Number(response.headers.get("content-length"));
+    if (Number.isFinite(declared) && declared > maxBytes) {
+        throw new Error(`${url} is ${declared} bytes, over the ${maxBytes}-byte limit`);
+    }
+    if (response.body === null) return "";
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let text = "";
+    let total = 0;
+    let chunk = await reader.read();
+    while (!chunk.done) {
+        total += chunk.value.byteLength;
+        if (total > maxBytes) {
+            await reader.cancel();
+            throw new Error(`${url} is over the ${maxBytes}-byte limit`);
+        }
+        text += decoder.decode(chunk.value, {stream: true});
+        chunk = await reader.read();
+    }
+    return text + decoder.decode();
 }
 
 /** `raw.githubusercontent.com` answers CORS and resolves `HEAD` to the default branch. */

@@ -1,4 +1,5 @@
 import {useQuery} from "@tanstack/react-query";
+import type {Hex} from "viem";
 import {getAtomStanding, type AtomStanding} from "@arp-protocol/core";
 
 import {useChainChoice} from "../lib/chain-choice";
@@ -19,7 +20,7 @@ export type AtomStandingFetcher = (
 ) => Promise<AtomStanding>;
 
 /** `0x` + 32 bytes. Anything else is a bad route param, not an atom nobody points at. */
-export function isAtomId(value: string | undefined): value is string {
+export function isAtomId(value: string | undefined): value is Hex {
     return typeof value === "string" && /^0x[0-9a-fA-F]{64}$/.test(value);
 }
 

@@ -30,11 +30,11 @@ import {DeclareUse} from "../usage/DeclareUse";
  * would hide them behind a click. Both read `useAtomStanding` on the same key, so React Query
  * serves one request and a successful write refreshes the Relations list.
  */
-export function AgentDeclareCard({atomId, name}: {atomId: string; name: string}) {
+export function AgentDeclareCard({atomId, name}: {atomId: Hex; name: string}) {
     const query = useAtomStanding(atomId);
     return (
         <DeclareUse
-            object={atomId as Hex}
+            object={atomId}
             objectLabel={name}
             onDeclared={() => void query.refetch()}
         />

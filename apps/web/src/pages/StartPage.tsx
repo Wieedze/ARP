@@ -93,7 +93,7 @@ function StepState({done}: {done: boolean | null}) {
     return (
         <span
             className={`font-mono text-[length:var(--text-label)] uppercase tracking-[0.08em] ${
-                done ? "text-[color:var(--color-fg)]" : "text-[color:var(--color-grey)]"
+                done ? "text-[color:var(--color-fg)]" : "text-[color:var(--color-steel)]"
             }`}
         >
             {done ? "done" : "to do"}

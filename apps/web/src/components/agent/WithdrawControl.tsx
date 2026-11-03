@@ -138,7 +138,7 @@ export function WithdrawControl({
             const hash = await submitExit(quote);
             broadcast = hash;
             setPhase({step: "sent", quote, hash});
-            await awaitReceipt(hash);
+            await awaitReceipt(hash, quote.chain);
             setPhase({step: "done", quote, hash});
             onSettled();
         } catch (error) {

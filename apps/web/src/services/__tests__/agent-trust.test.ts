@@ -464,6 +464,53 @@ describe("buildTrustPanel", () => {
     });
 });
 
+describe("links from attacker-writable metadata", () => {
+    const hostile = "javascript:alert(document.domain)";
+
+    it("drops an agent url that is not http(s)", () => {
+        const agent = identity({
+            metadata: {name: "x", description: null, image: null, url: hostile, isFallback: false},
+        });
+        expect(buildTrustPanel(profile({identity: agent, identities: [agent]})).url).toBeNull();
+    });
+
+    it("drops a provider url that is not http(s)", () => {
+        const edge = providerEdge({handle: "0xp", providerName: "Evil"});
+        const hostileEdge = {
+            ...edge,
+            claim: {...edge.claim, provider: {...edge.claim.provider, url: hostile}},
+        };
+        const [row] = joinProviderRows([hostileEdge], []);
+        expect(row?.providerUrl).toBeNull();
+    });
+
+    it("drops a capability url that is not http(s) and keeps one that is", () => {
+        const ref = (url: string, handle: string) => ({
+            relation: "uses-tool" as const,
+            label: handle,
+            name: handle,
+            url,
+            sourceHandle: handle,
+        });
+        const [group] = groupCapabilities(
+            profile({
+                capabilities: [
+                    {
+                        types: [],
+                        protocols: [],
+                        tools: [ref(hostile, "0xbad"), ref("https://example.org", "0xgood")],
+                        chains: [],
+                        tags: [],
+                        categories: [],
+                        provenance: {sourceId: "intuition", kind: "claim", origin: null},
+                    },
+                ],
+            }),
+        );
+        expect(group?.entries.map((entry) => entry.url)).toEqual([null, "https://example.org"]);
+    });
+});
+
 describe("shouldUseTabs", () => {
     it("takes two providers before a strip earns its place", () => {
         const rows = joinProviderRows(richProfile().assessments, richProfile().markets);

@@ -13,11 +13,11 @@ import {useChainChoice} from "../lib/chain-choice";
  * The list is capped at 100 by the indexer, so its length is not a count: `TermShape.positionCount`
  * comes from an aggregate and is the exact one.
  */
-export function termBackersQueryKey(chainId: number, termId: string | null, curveId: string) {
+function termBackersQueryKey(chainId: number, termId: string | null, curveId: string) {
     return ["intuition", chainId, "term-backers", termId ?? "none", curveId] as const;
 }
 
-export function termBackersQueryOptions(
+function termBackersQueryOptions(
     chain: {chainId: number; graphqlUrl: string},
     termId: string | null,
     curveId: bigint | undefined,

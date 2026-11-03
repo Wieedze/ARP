@@ -2,7 +2,8 @@ import type {IdentityAtomPlan} from "@arp-protocol/core";
 import {useCallback} from "react";
 import type {Address, Hex} from "viem";
 
-import {useChainChoice} from "../lib/chain-choice";
+import {choiceFor, useChainChoice} from "../lib/chain-choice";
+import {intuitionMainnet} from "../lib/intuition-mainnet";
 import {
     planOperatorLink,
     resolveCanonicalAgentAtom,
@@ -27,8 +28,8 @@ import {connectedWalletClient} from "./wallet-client";
  * The chain and wallet actions the import page performs, kept out of the page.
  *
  * Callbacks only. Nothing here runs on mount or on navigation: the two reads
- * are free but they are still the operator's to trigger, and the one write
- * moves real TRUST on Intuition mainnet. Following the stake control's shape
+ * are free but they are still the operator's to trigger, and the writes
+ * move value on the chain they were priced on. Following the stake control's shape
  * (ADR 0017, safeguard 5), none of this is a mutation — a mutation carries
  * retry semantics, and a retry that resubmits is the thing to avoid here.
  */
@@ -103,12 +104,12 @@ export function useAgentImport() {
             // guard should report a mismatch.
             return submitOperatorLink({
                 walletClient,
-                publicClient: chain.client,
+                publicClient: params.plan.chain.client,
                 imported: params.imported,
                 plan: params.plan,
             });
         },
-        [chain],
+        [],
     );
 
     /**
@@ -121,18 +122,23 @@ export function useAgentImport() {
         [chain],
     );
 
-    /** The second write. One click handler, like `publishLink`, and never a mutation. */
+    /**
+     * The second write. One click handler, like `publishLink`, and never a mutation.
+     *
+     * Against the chain the plan was priced on, which `plan.chainId` names, not the live toggle.
+     */
     const publishIdentity = useCallback(
         async (plan: IdentityAtomPlan): Promise<IdentityAtomSubmission> => {
             const walletClient = await connectedWalletClient();
+            const planChain = choiceFor(plan.chainId === intuitionMainnet.id);
             return submitIdentityAtom({
                 walletClient,
-                publicClient: chain.client,
-                chain,
+                publicClient: planChain.client,
+                chain: planChain,
                 plan,
             });
         },
-        [chain],
+        [],
     );
 
     return {

@@ -1,7 +1,6 @@
 import {Link, Navigate, useParams} from "react-router-dom";
 
 import {BackLink} from "../components/brand/BackLink";
-import type {Hex} from "viem";
 
 import {PageLoading} from "../components/brand/PageLoading";
 import {AtomSigil} from "../components/atom/AtomSigil";
@@ -143,13 +142,13 @@ export function AtomPanel() {
     // A skill and a repository have their own pages (`docs/design/pages/`); every other atom keeps this one.
     const kind = view.exists && view.label !== null ? parseToolLabel(view.label).kind : null;
     if (kind === "repo") {
-        return <RepoPage view={view} atomId={atomId as Hex} modules={modules.data ?? {}} />;
+        return <RepoPage view={view} atomId={atomId} modules={modules.data ?? {}} />;
     }
     if (kind === "skill") {
         return (
             <SkillPage
                 view={view}
-                atomId={atomId as Hex}
+                atomId={atomId}
                 modules={modules.data ?? {}}
                 onDeclared={() => void query.refetch()}
             />
@@ -159,19 +158,10 @@ export function AtomPanel() {
     return (
         <section className="mt-10">
             <BackLink to="/tools" label="tools" />
-            {/* **The title spans the page; it is not metadata.**
-                It lived in the 18rem aside, where `--text-title` clamps to 76px against 288px of
-                column — so `Trail of Bits — secure-workflow-guide` rendered as nine lines of
-                broken words (`Trail / of / Bits / — / secur / e- / workf / low- / guide`), while
-                the right column sat nearly empty. The grid template is fixed, so the aside never
-                borrowed that space however little the evidence needed.
-
-                `overflow-wrap: anywhere` stays on `.type-title` and is still right: a bare
-                66-character atom id has no break opportunity at all and must be allowed to wrap
-                mid-token. Across the full width it only bites for an id, which is what it is for.
-
-                `docs/tasks/28` item 39, found while building this control, filed, and then fixed when
-                the user saw it — filing a defect is not the same as leaving it. */}
+            {/* **The title spans the page; it is not metadata.** In the 18rem aside, `--text-title`
+                breaks a name like `Trail of Bits — secure-workflow-guide` into nine lines.
+                `overflow-wrap: anywhere` on `.type-title` is for a bare 66-character atom id,
+                which has no break opportunity at all. */}
             <h1
                 className={`type-title ${view.titleIsId ? "font-mono" : ""} max-w-[24ch] md:max-w-[32ch]`}
             >
@@ -263,7 +253,7 @@ export function AtomPanel() {
                                         each separately read as unrelated blocks. */}
                                             <div className={actionCardClass}>
                                                 <AtomMarket
-                                                    atomTermId={atomId as Hex}
+                                                    atomTermId={atomId}
                                                     name={view.title}
                                                     nameIsId={view.titleIsId}
                                                     backHeading="Support this"
@@ -289,7 +279,7 @@ export function AtomPanel() {
                                     {!view.offersMarket ? null : (
                                         <div className="mt-10 max-w-[48rem]">
                                             <DeclareUse
-                                                object={atomId as Hex}
+                                                object={atomId}
                                                 objectLabel={view.title}
                                                 onDeclared={() => void query.refetch()}
                                             />

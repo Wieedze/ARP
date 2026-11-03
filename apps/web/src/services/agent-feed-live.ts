@@ -6,40 +6,26 @@
  * feed's default address — a demo run from a laptop needs no configuration, and a deployed build
  * never opens a socket to its visitor's localhost unless someone asked it to.
  */
-import {
-    createPublicClient,
-    http,
-    TransactionReceiptNotFoundError,
-    type Hex,
-    type PublicClient,
-} from "viem";
+import {TransactionReceiptNotFoundError, type Hex, type PublicClient} from "viem";
 
 import {intuitionMainnet} from "../lib/intuition-mainnet";
 import {intuitionTestnet} from "../lib/chains";
+import {publicClientFor} from "../lib/clients";
 import {activityLog} from "./activity-log";
 import {AgentFeed, type ReceiptRead} from "./agent-feed";
 
 const configured: string | undefined = import.meta.env.VITE_ARP_ACTIVITY_URL;
-export const AGENT_FEED_URL: string | undefined =
+const AGENT_FEED_URL: string | undefined =
     configured !== undefined && configured.length > 0
         ? configured
         : import.meta.env.DEV
           ? "http://127.0.0.1:3003/events"
           : undefined;
 
-const clients = new Map<number, PublicClient>();
 function clientFor(chainId: number): PublicClient | null {
-    if (chainId !== intuitionTestnet.id && chainId !== intuitionMainnet.id) return null;
-    const cached = clients.get(chainId);
-    if (cached !== undefined) return cached;
-    // Built here rather than taken from `chain-choice`, which is a React module: a service never
-    // imports React, not even through a neighbour.
-    const client: PublicClient = createPublicClient({
-        chain: chainId === intuitionMainnet.id ? intuitionMainnet : intuitionTestnet,
-        transport: http(),
-    });
-    clients.set(chainId, client);
-    return client;
+    if (chainId === intuitionMainnet.id) return publicClientFor(intuitionMainnet);
+    if (chainId === intuitionTestnet.id) return publicClientFor(intuitionTestnet);
+    return null;
 }
 
 async function readReceipt(chainId: number, hash: Hex): Promise<ReceiptRead> {

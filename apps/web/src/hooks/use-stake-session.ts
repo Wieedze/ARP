@@ -16,7 +16,7 @@ import {readStakeSession, type StakeSession} from "../services/trust-stake";
  * against 0.01 on mainnet 1155 (`rules/portability.md`), so the chain id is in the key. Serving one
  * chain's `minDeposit` under the other's label would put a wrong floor in the amount validator.
  */
-export function stakeSessionQueryOptions(
+function stakeSessionQueryOptions(
     chainId: number,
     client: PublicClient,
     multiVault: Address,

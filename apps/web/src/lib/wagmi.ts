@@ -19,12 +19,12 @@ const projectId = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID as string | unde
  *
  * Two chains, and both are first-class. Intuition **testnet** (13579) is where every ARP contract
  * lives — the `IdentityRegistry`, and the agent and delegation flows that depend on it. Intuition
- * **mainnet** (1155) is where the ERC-8004 cohort and its vaults are. No ARP contract is deployed
- * on 1155 and none is addressed from it.
+ * **mainnet** (1155) is where the ERC-8004 cohort and its vaults are. No ARP registry is on 1155;
+ * two ARP caveat enforcers are (ADR `0065`, `data/deployments/1155.json`), and this app addresses
+ * neither.
  *
- * Mainnet used to be here "only so the trust panel can request a network switch". That is no longer
- * the shape: the chain toggle (`lib/chain-choice.ts`) picks either one for both reads and writes, so
- * either chain may be the one a wallet is asked to switch to. Testnet stays first in the array
+ * The chain toggle (`lib/chain-choice.ts`) picks either one for both reads and writes, so either
+ * chain may be the one a wallet is asked to switch to. Testnet stays first in the array
  * because it is the safe default for a connector that ignores the explicit `chain` argument.
  *
  * **Base 8453 is the third, and it is not an Intuition chain.** It is where the canonical ERC-8004

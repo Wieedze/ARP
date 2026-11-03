@@ -19,11 +19,10 @@ import {
 /**
  * The stake control. Real value on mainnet, test value on testnet, authorised by ADR 0017.
  *
- * **The chain is the toggle's, not a constant.** It was pinned to 1155, so on testnet the figures
- * read `tTRUST` while this control deposited mainnet `TRUST`. Everything chain-shaped here — the
- * switch prompt, the explorer link, the token in the amount label and in the confirmation — now
- * comes from `quote.chain` where a quote exists and from `useChainChoice` where one does not. The
- * quote is preferred, because it is what the deposit was priced against.
+ * **The chain is the toggle's, not a constant.** Everything chain-shaped here — the switch prompt,
+ * the explorer link, the token in the amount label and in the confirmation — comes from
+ * `quote.chain` where a quote exists and from `useChainChoice` where one does not. The quote is
+ * preferred, because it is what the deposit was priced against.
  *
  * The flow is deliberately three explicit steps — choose, review, sign — and
  * nothing advances on its own. There is no effect in this component, no retry
@@ -257,7 +256,7 @@ export function StakeControl({
         try {
             broadcast = await submit(quote);
             setPhase({step: "sent", quote, hash: broadcast});
-            await awaitReceipt(broadcast);
+            await awaitReceipt(broadcast, quote.chain);
             setPhase({step: "done", quote, hash: broadcast});
             onInFlightChange?.(false);
             onSettled();

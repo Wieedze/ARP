@@ -14,11 +14,11 @@ import {useChainChoice} from "../lib/chain-choice";
  * `same as` edge at all (`docs/tasks/19` step 1b), so on 13579 this answers `null` for agents that
  * plainly are agents. The page degrades to the atom view there, which is a complete view.
  */
-export function agentRefForAtomQueryKey(chainId: number, atomId: string | null) {
+function agentRefForAtomQueryKey(chainId: number, atomId: string | null) {
     return ["intuition", chainId, "agent-ref-for-atom", atomId ?? "none"] as const;
 }
 
-export function agentRefForAtomQueryOptions(
+function agentRefForAtomQueryOptions(
     chain: {chainId: number; graphqlUrl: string},
     atomId: string | null,
     read: typeof resolveAgentRefForAtom = resolveAgentRefForAtom,

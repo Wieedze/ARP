@@ -1,5 +1,5 @@
 import {beforeEach, describe, expect, it, vi} from "vitest";
-import {parseEther, type Address, type Hex} from "viem";
+import {parseEther, type Address, type Hex, type PublicClient} from "viem";
 
 import {INTUITION_MAINNET_CHAIN_ID, intuitionMainnet} from "../../lib/intuition-mainnet";
 import {MAX_STAKE_WEI} from "../trust-stake";
@@ -10,6 +10,10 @@ import {
     type ToolRegistration,
 } from "../tool-register";
 import {DEFAULT_TEST_ACCOUNT, makeMockPublicClient, type MockPublicClient} from "./fixtures";
+
+/** A `StakeChain` carries its client for the hooks; the services take theirs as an argument. */
+// Never read by the service under test, so an empty object is a safe stand-in.
+const UNREAD_CLIENT = {} as PublicClient;
 
 /**
  * Tests for the only write path on `/register`, which sends a real mainnet transaction.
@@ -46,6 +50,7 @@ const MAINNET = {
     symbol: "TRUST",
     explorerUrl: "https://explorer.intuition.systems",
     isMainnet: true,
+    client: UNREAD_CLIENT,
 } as const;
 const ATOM_COST = parseEther("0.1");
 const MIN_DEPOSIT = parseEther("0.01");

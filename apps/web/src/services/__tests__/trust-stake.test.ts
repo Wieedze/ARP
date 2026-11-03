@@ -1,5 +1,12 @@
 import {beforeEach, describe, expect, it, vi, type Mock} from "vitest";
-import {parseEther, zeroAddress, type Account, type Address, type Hex} from "viem";
+import {
+    parseEther,
+    zeroAddress,
+    type Account,
+    type Address,
+    type Hex,
+    type PublicClient,
+} from "viem";
 
 import {intuitionTestnet} from "../../lib/chains";
 import {
@@ -10,6 +17,7 @@ import {
 import {
     assertWalletOnChain,
     deriveMinShares,
+    MAX_STAKE_WEI,
     parseStakeAmount,
     asStakeTermId,
     deriveMinAssets,
@@ -28,6 +36,10 @@ import {
 } from "../trust-stake";
 
 import {DEFAULT_TEST_ACCOUNT, DEFAULT_TEST_ADDRESS, readContractDispatcher} from "./fixtures";
+
+/** A `StakeChain` carries its client for the hooks; the services take theirs as an argument. */
+// Never read by the service under test, so an empty object is a safe stand-in.
+const UNREAD_CLIENT = {} as PublicClient;
 
 const TRIPLE: Hex = `0x${"11".repeat(32)}`;
 const COUNTER: Hex = `0x${"99".repeat(32)}`;
@@ -48,6 +60,7 @@ const MAINNET = {
     symbol: "TRUST",
     explorerUrl: "https://explorer.intuition.systems",
     isMainnet: true,
+    client: UNREAD_CLIENT,
 } as const;
 
 const TESTNET = {
@@ -57,6 +70,7 @@ const TESTNET = {
     symbol: "tTRUST",
     explorerUrl: "https://testnet.explorer.intuition.systems",
     isMainnet: false,
+    client: UNREAD_CLIENT,
 } as const;
 
 type StakeMockPublicClient = {
@@ -288,6 +302,23 @@ describe("quoteStake", () => {
         );
     }
 
+    it("refuses to price an amount above the per-transaction ceiling", async () => {
+        const client = makePublicClient();
+        wire(client);
+
+        await expect(
+            quoteStake(asPublic(client), {
+                target: {kind: "triple", tripleId: TRIPLE},
+                side: "support",
+                assets: MAX_STAKE_WEI + 1n,
+                receiver: DEFAULT_TEST_ADDRESS,
+                session,
+                chain: MAINNET,
+            }),
+        ).rejects.toMatchObject({code: "above-ceiling"});
+        expect(client.readContract).not.toHaveBeenCalled();
+    });
+
     it("previews against the vault the deposit would actually land in", async () => {
         const client = makePublicClient();
         wire(client);
@@ -491,6 +522,21 @@ describe("submitStake", () => {
                 quote,
             }),
         ).rejects.toMatchObject({code: "wrong-chain"});
+
+        expect(wallet.writeContract).not.toHaveBeenCalled();
+        expect(publicClient.simulateContract).not.toHaveBeenCalled();
+    });
+
+    it("refuses a quote above the per-transaction ceiling, whoever built it", async () => {
+        const wallet = makeWalletClient();
+
+        await expect(
+            submitStake({
+                walletClient: asWallet(wallet),
+                publicClient: asPublic(publicClient),
+                quote: {...quote, assets: MAX_STAKE_WEI + 1n},
+            }),
+        ).rejects.toMatchObject({code: "above-ceiling"});
 
         expect(wallet.writeContract).not.toHaveBeenCalled();
         expect(publicClient.simulateContract).not.toHaveBeenCalled();
