@@ -708,6 +708,9 @@ export {
     type ProvenProof,
     type SponsorProof,
 } from "./sponsor/proof.js";
+// A revert is an answer; an unreachable chain is not. Callers that read the registry themselves
+// (`apps/sponsor`'s `AgentKeyReads`) need the same line.
+export {ChainUnreadableError, isContractRevert, isTransactionAbsent} from "./chain-errors.js";
 export {
     ADR_0092_LIMITS,
     checkCreateLimits,

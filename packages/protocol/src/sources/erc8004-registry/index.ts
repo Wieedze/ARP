@@ -6,6 +6,7 @@ import {provenanceFor} from "../../provenance.js";
 import type {AgentIdentity, Capabilities, ProviderClaim, ResolvedAgentRef} from "../../types.js";
 import type {TrustSource} from "../source.js";
 import {identityRegistryAbi} from "./abi.js";
+import {isContractRevert} from "../../chain-errors.js";
 
 export const ERC8004_REGISTRY_SOURCE_ID = "erc8004-registry";
 
@@ -174,15 +175,21 @@ export function erc8004RegistrySource(config: Erc8004RegistrySourceConfig = {}):
             } as const;
 
             // An unminted token id reverts on `ownerOf`. That is "this agent does
-            // not exist", which is an answer, not a failure.
+            // not exist", which is an answer, not a failure. Anything else — a
+            // timeout, a refused connection — is thrown, so the profile records a
+            // source error instead of reporting the agent as absent.
+            const revertIsNull = (error: unknown): null => {
+                if (isContractRevert(error)) return null;
+                throw error;
+            };
             const owner = await client
                 .readContract({...contract, functionName: "ownerOf"})
-                .catch(() => null);
+                .catch(revertIsNull);
             if (owner === null) return null;
 
             const registrationFile = await client
                 .readContract({...contract, functionName: "tokenURI"})
-                .catch(() => null);
+                .catch(revertIsNull);
 
             return {
                 chainId: ref.chainId,
