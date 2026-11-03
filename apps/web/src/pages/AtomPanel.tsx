@@ -1,7 +1,6 @@
 import {Link, Navigate, useParams} from "react-router-dom";
 
 import {BackLink} from "../components/brand/BackLink";
-import type {Hex} from "viem";
 
 import {PageLoading} from "../components/brand/PageLoading";
 import {AtomSigil} from "../components/atom/AtomSigil";
@@ -143,13 +142,13 @@ export function AtomPanel() {
     // A skill and a repository have their own pages (`docs/design/pages/`); every other atom keeps this one.
     const kind = view.exists && view.label !== null ? parseToolLabel(view.label).kind : null;
     if (kind === "repo") {
-        return <RepoPage view={view} atomId={atomId as Hex} modules={modules.data ?? {}} />;
+        return <RepoPage view={view} atomId={atomId} modules={modules.data ?? {}} />;
     }
     if (kind === "skill") {
         return (
             <SkillPage
                 view={view}
-                atomId={atomId as Hex}
+                atomId={atomId}
                 modules={modules.data ?? {}}
                 onDeclared={() => void query.refetch()}
             />
@@ -263,7 +262,7 @@ export function AtomPanel() {
                                         each separately read as unrelated blocks. */}
                                             <div className={actionCardClass}>
                                                 <AtomMarket
-                                                    atomTermId={atomId as Hex}
+                                                    atomTermId={atomId}
                                                     name={view.title}
                                                     nameIsId={view.titleIsId}
                                                     backHeading="Support this"
@@ -289,7 +288,7 @@ export function AtomPanel() {
                                     {!view.offersMarket ? null : (
                                         <div className="mt-10 max-w-[48rem]">
                                             <DeclareUse
-                                                object={atomId as Hex}
+                                                object={atomId}
                                                 objectLabel={view.title}
                                                 onDeclared={() => void query.refetch()}
                                             />
