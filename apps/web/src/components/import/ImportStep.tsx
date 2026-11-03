@@ -10,11 +10,13 @@ export const labelClass =
  * One step, with its result in a live region mounted from the first render and
  * refilled in place.
  *
- * An inactive step dims its rule and its ordinal and nothing else. The prose
- * inside says what the step is about to do — what will be signed, what the
- * write costs — and is written to be read *before* the step unlocks, so fading
- * it below AA would hide it exactly when it is wanted. The disabled buttons
- * carry the state for assistive tech; the wrapper does not pretend to.
+ * An inactive step dims its rule and nothing else. The prose inside says what
+ * the step is about to do — what will be signed, what the write costs — and is
+ * written to be read *before* the step unlocks, so fading it below AA would
+ * hide it exactly when it is wanted. The ordinal is 11px label text, and the
+ * one tier dimmer than steel is `--color-grey`, which is display-only
+ * (`check:contrast`), so it stays steel. The disabled buttons carry the state
+ * for assistive tech; the wrapper does not pretend to.
  */
 export function Step({
     index,
@@ -41,13 +43,7 @@ export function Step({
             }`}
         >
             <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
-                <span
-                    className={`font-mono uppercase tracking-wider text-[length:var(--text-label)] ${
-                        disabled
-                            ? "text-[color:var(--color-steel)]"
-                            : "text-[color:var(--color-steel)]"
-                    }`}
-                >
+                <span className="font-mono uppercase tracking-wider text-[length:var(--text-label)] text-[color:var(--color-steel)]">
                     Step {index}
                 </span>
                 <h2 id={`import-step-${index}`} className="font-medium">
