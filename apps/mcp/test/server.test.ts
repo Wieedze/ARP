@@ -781,6 +781,21 @@ describe("a request from a web page", () => {
         ).toBe(403);
     });
 
+    it("answers a null line on stdio with an error and keeps serving", () => {
+        const run = spawnSync("bun", ["run", SERVER, "--stdio"], {
+            cwd: SCRATCH,
+            env: {...process.env, ARP_HOME: SCRATCH, ARP_NO_RECEIPTS: "1", ARP_TARGET: "testnet"},
+            input: 'null\n[1]\n{"jsonrpc":"2.0","id":7,"method":"ping"}\n',
+            encoding: "utf8",
+            timeout: 15_000,
+        });
+        const lines = run.stdout.trim().split("\n").map((line) => JSON.parse(line) as Record<string, unknown>);
+        expect(lines).toHaveLength(3);
+        expect((lines[0]?.["error"] as {code: number}).code).toBe(-32600);
+        expect((lines[1]?.["error"] as {code: number}).code).toBe(-32600);
+        expect(lines[2]).toMatchObject({id: 7, result: {}});
+    });
+
     it("will not start the sponsored mode over HTTP", () => {
         const run = spawnSync("bun", ["run", SERVER], {
             cwd: SCRATCH,

@@ -254,13 +254,20 @@ export const handler = {
     }
     if (request.method !== 'POST') return new Response('method not allowed', { status: 405 });
 
-    let body: Rpc;
+    let parsed: unknown;
     try {
-      body = (await request.json()) as Rpc;
+      parsed = await request.json();
     } catch {
       return fail(null, -32700, 'parse error');
     }
-    const id = body.id ?? null;
+    // `null`, an array or a number is JSON and not a request: reading `.id` off `null` threw, and on
+    // stdio that ended the server (ADR `0116`). Batches are not supported, so an array is refused too.
+    if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+      return fail(null, -32600, 'invalid request: a JSON-RPC request is an object');
+    }
+    // An object, checked above; each field is narrowed where it is read.
+    const body = parsed as Rpc;
+    const id = typeof body.id === 'string' || typeof body.id === 'number' ? body.id : null;
 
     switch (body.method) {
       case 'initialize':
@@ -333,13 +340,20 @@ async function serveStdio(input: AsyncIterable<unknown>): Promise<void> {
     });
 
   for await (const line of linesOf(input)) {
-    const response = await handler.fetch(
-      new Request(`http://stdio/`, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: line,
-      }),
-    );
+    let response: Response;
+    try {
+      response = await handler.fetch(
+        new Request(`http://stdio/`, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: line,
+        }),
+      );
+    } catch (error) {
+      // One bad line must not end the session: the client gets an error and the loop goes on.
+      process.stderr.write(`request failed: ${error instanceof Error ? error.name : 'error'}\n`);
+      response = fail(null, -32603, 'internal error');
+    }
     if (response.status === 202) continue;
     await send(await response.text());
   }
