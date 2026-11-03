@@ -8,6 +8,7 @@ import {
 } from '@arp-protocol/core';
 
 import { chainId, MULTI_VAULT, reads, REACHABLE_ATOM } from '../config.js';
+import { hostGuard } from '../host-guard.js';
 import { type JsonRpcId, fail, text, isTermId, isAddress } from '../rpc.js';
 import { serialiseCall, UNSIGNED_CAVEAT } from '../serialise.js';
 
@@ -55,7 +56,7 @@ export async function probe(id: JsonRpcId, args: Record<string, unknown>) {
       capabilities: [],
       classification: { status: 'probeable', url, declared: url },
     },
-    { allowPrivate: process.env['ARP_ALLOW_PRIVATE_PROBE'] === '1' },
+    hostGuard(),
   );
   return text(id, { url, outcome });
 }
@@ -101,7 +102,7 @@ export async function recordReachable(id: JsonRpcId, args: Record<string, unknow
       capabilities: [],
       classification: { status: 'probeable', url, declared: url },
     },
-    { allowPrivate: process.env['ARP_ALLOW_PRIVATE_PROBE'] === '1' },
+    hostGuard(),
   );
 
   const verdict = verdictOf(outcome);
