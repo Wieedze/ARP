@@ -38,9 +38,11 @@ import {DEFAULT_CURVE_ID} from "./sources/intuition/index.js";
  * **Proven and declared are read from events, not positions** (ADR `0094` §2, task 42). A deposit
  * made through ARP's sponsoring service and one made from Intuition's explorer land in the same
  * vault, and a position merges both: a withdrawal does not say which part it takes. The `Deposited`
- * event keeps its `sender`, so a deposit whose sender is the sponsoring address went through the
- * proof gate and every other one did not. The address is config: until a sponsoring service exists
- * there is none, and every deposit is declared.
+ * event keeps its `sender`, so a deposit is counted proven when its sender is the sponsoring
+ * address. That is not the same as passing the proof gate: the edge creations the service pays for
+ * count too, and so does anything else the same key sent (on 13579 it is also ARP's deployer;
+ * `scripts/measure/sponsor-deposit-provenance.ts`). The address is config: with none given, every
+ * deposit is declared.
  */
 
 
@@ -82,6 +84,11 @@ export type ToolListing = {
     /** How many `uses` edges point at this tool. One per declaring agent, per declaration. */
     edgeCount: number;
     /**
+     * The identity atoms of the agents that declared this tool, each once. A caller grouping
+     * several tools counts people by this, not by `edgeCount`, which counts one agent per tool.
+     */
+    declarers: string[];
+    /**
      * How many of those edges carry at least one position on the read curve.
      *
      * The honest discriminator, and not a staker count. A term's vaults are seeded with `minShare`
@@ -90,9 +97,10 @@ export type ToolListing = {
      */
     pricedEdges: number;
     /**
-     * Deposits on this tool's edges sent by the sponsoring address — each one passed ARP's proof
-     * gate. `0` when no sponsoring address is configured, which is true rather than unknown: nothing
-     * can have passed a gate that does not exist.
+     * Deposits on this tool's edges sent by the sponsoring address, whatever they were: a
+     * proof-gated deposit, an edge creation the service paid for, or another write from the same
+     * key (the module header). `0` when no sponsoring address is configured, which is true rather
+     * than unknown.
      */
     provenDeposits: number;
     /**
@@ -221,6 +229,7 @@ export async function listTools(config: ToolListingConfig): Promise<ToolListingP
         if (!isRecord(object)) continue;
         const atomId = readString(object, "term_id");
         if (atomId === null) continue;
+        const declarer = readString(row, "subject_id");
 
         const support = sideOf(row["term"]);
         const oppose = sideOf(row["counter_term"]);
@@ -235,6 +244,7 @@ export async function listTools(config: ToolListingConfig): Promise<ToolListingP
                 hostedAt: hostedAtFrom(object),
                 type: readString(object, "type"),
                 edgeCount: 1,
+                declarers: declarer === null ? [] : [declarer],
                 pricedEdges: support.positions > 0 ? 1 : 0,
                 provenDeposits: deposits.proven,
                 declaredDeposits: deposits.declared,
@@ -244,6 +254,9 @@ export async function listTools(config: ToolListingConfig): Promise<ToolListingP
             continue;
         }
         existing.edgeCount += 1;
+        if (declarer !== null && !existing.declarers.includes(declarer)) {
+            existing.declarers.push(declarer);
+        }
         if (support.positions > 0) existing.pricedEdges += 1;
         existing.provenDeposits += deposits.proven;
         existing.declaredDeposits += deposits.declared;

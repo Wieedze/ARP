@@ -17,9 +17,12 @@ function edge(params: {
     /** Every deposit on the support term, and how many of them the sponsor sent. */
     deposits?: number;
     proven?: number;
+    /** The declaring agent's identity atom, the edge's subject. */
+    subject?: string;
 }) {
     return {
         term_id: `edge-${params.atomId}-${params.supportAssets ?? "0"}`,
+        ...(params.subject === undefined ? {} : {subject_id: params.subject}),
         object: {
             term_id: params.atomId,
             label: params.label ?? null,
@@ -75,6 +78,19 @@ describe("listTools", () => {
         ]);
         expect(page.edgesRead).toBe(3);
         expect(page.truncated).toBe(false);
+    });
+
+    it("names each declaring agent once per tool, from the edge's subject", async () => {
+        const {transport} = transportOf([
+            edge({atomId: "0xaa", subject: "0xagent1"}),
+            edge({atomId: "0xaa", subject: "0xagent2"}),
+            edge({atomId: "0xaa", subject: "0xagent1"}),
+            edge({atomId: "0xbb"}),
+        ]);
+        const page = await listTools({graphqlUrl: INTUITION_URL, transport});
+        const byId = new Map(page.tools.map((t) => [t.atomId, t.declarers]));
+        expect(byId.get("0xaa")).toEqual(["0xagent1", "0xagent2"]);
+        expect(byId.get("0xbb")).toEqual([]);
     });
 
     it("counts priced edges, not summed positions — ADR 0023's trap", async () => {
@@ -191,8 +207,8 @@ const SPONSOR = "0x906f3A52ec089f8D4E9127F91C6bE5Ae0d18f91f";
 
 describe("listTools — proven and declared (ADR 0094 §2)", () => {
     it("counts every deposit as declared when no sponsor is configured", async () => {
-        // Until the sponsoring service exists there is no proof gate, so nothing can have passed
-        // one. Zero proven is true, not unknown.
+        // With no sponsoring address there is no sender to count as proven. Zero proven is true,
+        // not unknown.
         const {transport, queries, seen} = transportOf([
             edge({atomId: "0xaa", deposits: 2}),
             edge({atomId: "0xaa", supportAssets: "1", deposits: 1}),

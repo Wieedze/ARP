@@ -24,21 +24,28 @@ export function StakerCount({count}: {count: number}) {
             aria-label={stakerLabel(count)}
             className="inline-flex items-baseline gap-1.5 font-mono tabular-nums"
         >
-            <svg
-                viewBox="0 0 16 16"
-                width="1em"
-                height="1em"
-                aria-hidden="true"
-                focusable="false"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.25"
-                className="shrink-0 self-center"
-            >
-                <circle cx="8" cy="5" r="2.6" />
-                <path d="M2.75 14.25a5.25 5.25 0 0 1 10.5 0" />
-            </svg>
+            <PersonMark />
             {formatStakerCount(count)}
         </span>
+    );
+}
+
+/** The person glyph alone, for a count of people announced by its container (task 58). */
+export function PersonMark() {
+    return (
+        <svg
+            viewBox="0 0 16 16"
+            width="1em"
+            height="1em"
+            aria-hidden="true"
+            focusable="false"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.25"
+            className="shrink-0 self-center"
+        >
+            <circle cx="8" cy="5" r="2.6" />
+            <path d="M2.75 14.25a5.25 5.25 0 0 1 10.5 0" />
+        </svg>
     );
 }

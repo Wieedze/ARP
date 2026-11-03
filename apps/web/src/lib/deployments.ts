@@ -49,6 +49,8 @@ export type Deployments = {
         domainScopeEnforcer: Address;
         trustStakeCapEnforcer: Address;
         identityRegistry: Address;
+        /** ARP's sponsoring service's sending address on this chain (task 58). */
+        sponsor: Address;
         deployedTxs: {
             moduleRegistry: Hex;
             domainScopeEnforcer: Hex;
