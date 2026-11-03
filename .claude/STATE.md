@@ -48,11 +48,11 @@ The user's decisions, 2026-11-03:
    | ---- | ------ | --------------- | ------------ |
    | 59 | `feat/59-category-step` (pushed) | WIP, `ui-reviewer` PASS | file the last 10 of 61 skills on or after 2026-11-04 UTC, `bun run scripts/seed/file-categories.ts --send` (sponsor cap 50/day; the sponsor must be running); then `task-verifier`, post-mortem, PR to `dev` |
    | 54 | `feat/54-result-eval` (pushed) | WIP, harness and ADR `0129` built | the other session's |
-   | 58 | `feat/58-usage-columns` | 2 commits, no task file | kept (user): rebase on `dev`, a short task file, `ui-reviewer`, `task-verifier`, PR |
    | 04, 05, 16, 19, 33, 38, 45 | — | done, superseded, or waiting for the mainnet port | closed on paper with one ADR listing what waits for the port |
    | 28 | — | the punch list | the `194` sweep, the deployment-file shapes, the mint ADR (item 2) |
 
-   61 and 62 are merged (PRs #70, #69); 37 is closed.
+   61 and 62 are merged (PRs #70, #69); 37 is closed (PR #72); 58 is complete and merged (PR #73,
+   `docs/tasks/58`, `.claude/learning/58-usage-columns.md`).
 
 ## Where the work is right now
 
