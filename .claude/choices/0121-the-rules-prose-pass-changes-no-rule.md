@@ -49,4 +49,4 @@ left: their long passages carry decisions or amendment records.
 
 - Related rule: `.claude/rules/claims.md`, `.claude/rules/code.md`, `.claude/rules/workflow.md`
 - Triggered by: `docs/tasks/27-strip-the-ai-slop.md`
-- Post-mortem: `.claude/learning/51-the-prose-pass-against-the-positioning.md`
+- Post-mortem: `.claude/learning/53-the-prose-pass-against-the-positioning.md`

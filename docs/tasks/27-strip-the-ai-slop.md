@@ -86,7 +86,7 @@ Desktop extension (ADR `0110`) postdates it and that `@arp-protocol/cli` is not 
 
 Then `docs/02`: a header table — the storage principle holds; the components, the SDK shape and
 the integration sections describe the deleted `ModuleRegistry` and a feedback path ADR `0048`
-rejected. Post-mortem so far: `.claude/learning/51-the-prose-pass-against-the-positioning.md`.
+rejected. Post-mortem so far: `.claude/learning/53-the-prose-pass-against-the-positioning.md`.
 
 Then the rest of `docs/`: `03`, `04`, `05`, `08`, `11` already carried a status header; `06` and
 `10` now say historical; `07` is vendored, `16`–`20` dated briefs and records, left as they are.

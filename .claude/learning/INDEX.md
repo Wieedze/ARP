@@ -58,6 +58,6 @@
 | [48](48-desktop-walks-the-loop.md) | `docs/tasks/50-desktop-walks-the-loop.md` | PASS on round 2 | Claude Desktop walks the loop, and an outside user pays nothing |
 | [49](49-claude-code-demo.md) | `docs/tasks/55-claude-code-demo.md` | PASS (second pass; the first failed on four stale sites) | The Claude Code demo: a fetched skill the runtime can invoke, paid by the sponsor |
 | [50](50-the-whole-skill.md) | `docs/tasks/57-the-whole-skill.md` | PASS (second pass | The whole skill: its directory, under one receipt, for a runtime that can run it |
-| [51](51-the-prose-pass-against-the-positioning.md) | `docs/tasks/27-strip-the-ai-slop.md` — step 1 re-run, steps 4 and 5; step 6 dropped | PASS on the second run | The prose pass, judged against the positioning |
 | [51](51-what-a-skill-needs.md) | `docs/tasks/56-what-a-skill-needs.md` | PASS (second pass; first pass FAIL on claims) | What a skill needs, shown to the agent before it picks one |
 | [52](52-audit-cleanup.md) | `docs/tasks/60-audit-cleanup.md` | PASS | the audit cleanup |
+| [53](53-the-prose-pass-against-the-positioning.md) | `docs/tasks/27-strip-the-ai-slop.md` — step 1 re-run, steps 4 and 5; step 6 dropped | PASS on the second run | The prose pass, judged against the positioning |

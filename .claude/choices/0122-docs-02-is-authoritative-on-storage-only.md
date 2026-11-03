@@ -2,7 +2,7 @@
 
 **Status:** Accepted
 **Date:** 2026-11-03
-**Triggered by:** `docs/tasks/27` post-mortem (`.claude/learning/51-*`); the user's go-ahead
+**Triggered by:** `docs/tasks/27` post-mortem (`.claude/learning/53-*`); the user's go-ahead
 2026-11-03 on the open point "what `CLAUDE.md` does with `docs/02`".
 
 ## Context
@@ -40,4 +40,4 @@ the storage principle — one canonical source per datum, no dual-write — stil
 
 - Related doc: `docs/02_ARCHITECTURE.md`, `CLAUDE.md`
 - Related ADR: `0022`, `0046`, `0048`, `0055`
-- Post-mortem: `.claude/learning/51-the-prose-pass-against-the-positioning.md`
+- Post-mortem: `.claude/learning/53-the-prose-pass-against-the-positioning.md`

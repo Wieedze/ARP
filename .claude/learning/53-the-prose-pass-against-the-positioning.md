@@ -1,4 +1,4 @@
-# 51 — The prose pass, judged against the positioning
+# 53 — The prose pass, judged against the positioning
 
 **Task:** `docs/tasks/27-strip-the-ai-slop.md` — step 1 re-run, steps 4 and 5; step 6 dropped
 **Completed:** 2026-11-03. Written mid-task at the user's request, updated at closure
