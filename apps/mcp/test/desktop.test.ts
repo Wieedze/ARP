@@ -1,4 +1,4 @@
-import { mkdtempSync, readFileSync, rmSync, statSync } from 'node:fs';
+import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -6,7 +6,7 @@ import { encodeAbiParameters, encodeEventTopics, encodeFunctionData, getAddress,
 import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts';
 import { afterEach, beforeEach, describe as group, expect, it } from 'vitest';
 
-import { bundleManifest, contentDigest, encodeApproveDeposit, signContentReceipt } from '@arp-protocol/core';
+import { bundleManifest, contentDigest, encodeApproveDeposit, signContentReceipt, verifyMintGasRequest } from '@arp-protocol/core';
 
 import { loadOrCreateAgentKey, refusal, type AgentSender, type AllowedCall } from '../src/desktop/agent-key.js';
 import { declareUsed, getSkill, type LoopConfig } from '../src/desktop/loop.js';
@@ -31,6 +31,14 @@ group('the agent key', () => {
     const first = loadOrCreateAgentKey(path);
     expect(statSync(path).mode & 0o777).toBe(0o600);
     expect(loadOrCreateAgentKey(path).address).toBe(first.address);
+  });
+
+  it('refuses a key file other users can read, and leaves its mode as it found it', () => {
+    const path = join(dir, 'agent-key');
+    writeFileSync(path, `0x${'12'.repeat(32)}\n`);
+    chmodSync(path, 0o644);
+    expect(() => loadOrCreateAgentKey(path, { platform: 'linux' })).toThrow(/must be 600/);
+    expect(statSync(path).mode & 0o777).toBe(0o644);
   });
 
   it('signs only register() and the approval of the sponsor, exactly, at zero value on 13579', () => {
@@ -104,7 +112,12 @@ function services(agentAddress: Address, node = privateKeyToAccount(generatePriv
       return new Response(bytes, { headers: { 'x-arp-receipt': JSON.stringify(signed) } });
     }
     if (path === '/') return Response.json({ multiVault: MULTI_VAULT, sponsor: SPONSOR });
-    if (path === '/mint-gas') return Response.json({ sent: '0x01' });
+    if (path === '/mint-gas') {
+      // The sponsor sends mint gas only to the address that signed for it (ADR `0116`).
+      const verdict = await verifyMintGasRequest(JSON.parse(String(init?.body)).request, Math.floor(Date.now() / 1000));
+      if (verdict.status !== 'valid' || verdict.address !== agentAddress) return Response.json({ error: 'unsigned' }, { status: 401 });
+      return Response.json({ sent: '0x01' });
+    }
     if (path === '/identity') return Response.json({ identityAtom: IDENTITY, sent: [] });
     if (path === '/gas') return Response.json({ sent: '0x02', next: { to: MULTI_VAULT, data: approveData, value: '0' } });
     if (path === '/deposit') {
@@ -262,6 +275,29 @@ group('the loop a new agent walks', () => {
     // The line the hook reads to name the atom of `thumbs` when it sees it invoked.
     const line = JSON.parse(readFileSync(join(dir, 'project', '.arp', 'receipts.jsonl'), 'utf8'));
     expect(line).toMatchObject({ skill: 'thumbs', atom: ATOM, url: 'github.com/acme/skills?skill=thumbs' });
+  });
+
+  it('refuses to overwrite a different SKILL.md of the same name, and writes nothing', async () => {
+    const agent = fakeAgent([]);
+    const skillsDir = join(dir, 'project', '.claude', 'skills');
+    mkdirSync(join(skillsDir, 'thumbs'), { recursive: true });
+    writeFileSync(join(skillsDir, 'thumbs', 'SKILL.md'), "# Somebody else's skill\n");
+    const config: LoopConfig = {
+      contentUrl: 'http://content.test',
+      sponsorUrl: 'http://sponsor.test',
+      registry: REGISTRY,
+      multiVault: MULTI_VAULT,
+      stateDir: join(dir, '.arp'),
+      skillsDir,
+      fetch: services(agent.address).fake,
+    };
+    await expect(getSkill(config, agent, ATOM)).rejects.toThrow(/already exists with different contents/);
+    expect(readFileSync(join(skillsDir, 'thumbs', 'SKILL.md'), 'utf8')).toBe("# Somebody else's skill\n");
+    expect(existsSync(join(skillsDir, 'thumbs', 'scripts', 'thumb.py'))).toBe(false);
+    // The same skill fetched again is not a clash.
+    rmSync(join(skillsDir, 'thumbs'), { recursive: true });
+    await getSkill(config, agent, ATOM);
+    expect((await getSkill(config, agent, ATOM)).files).toBe(2);
   });
 
   it('refuses a receipt that names another caller', async () => {

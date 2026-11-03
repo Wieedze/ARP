@@ -257,15 +257,26 @@ describe('what an unpaid stranger can make it do', () => {
     expect(response.status).toBe(413);
   });
 
-  test('a handler that does not answer in time is a 504, and the payment can be used again', async () => {
+  test('a handler past its time is a 504 and is aborted; its payment is free again only once it settles', async () => {
     let calls = 0;
-    const hangs: TaskHandler = async (payload) => {
+    let finish!: () => void;
+    let signal: AbortSignal | undefined;
+    const slow: TaskHandler = async (payload, context) => {
       calls += 1;
-      if (calls === 1) await new Promise(() => {});
+      if (calls === 1) {
+        signal = context.signal;
+        await new Promise<void>((resolve) => (finish = resolve));
+      }
       return payload;
     };
-    const n = node({ [PAID]: paid }, { handle: hangs, limits: { handlerTimeoutMs: 20 } });
+    const n = node({ [PAID]: paid }, { handle: slow, limits: { handlerTimeoutMs: 20 } });
     expect((await n.fetch(task(hire))).status).toBe(504);
+    expect(signal?.aborted).toBe(true);
+    // Still running: the same payment cannot start a second job beside it.
+    expect((await n.fetch(task(hire))).status).toBe(409);
+    expect(calls).toBe(1);
+    finish();
+    await new Promise((resolve) => setTimeout(resolve, 0));
     expect((await n.fetch(task(hire))).status).toBe(200);
   });
 

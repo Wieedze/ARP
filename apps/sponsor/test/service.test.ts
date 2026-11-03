@@ -7,6 +7,7 @@ import {
   hireDigest,
   signContentReceipt,
   signHireReceipt,
+  signMintGasRequest,
   signSponsorRequest,
   sponsorProofDigest,
   sponsorRequestTypedData,
@@ -36,6 +37,7 @@ import { SponsorLedger } from '../src/ledger.ts';
 import {
   addressList,
   createSponsor,
+  registryList,
   type PublishConfig,
   type SponsorWallet,
 } from '../src/service.ts';
@@ -91,6 +93,8 @@ type World = {
   sharesThrowAfterSend: boolean;
   /** Sends that come back reverted. */
   revert: boolean;
+  /** Sends broadcast whose receipt did not come within the wait. */
+  unconfirmed: boolean;
 };
 
 function world(): World {
@@ -104,6 +108,7 @@ function world(): World {
     sendThrows: false,
     sharesThrowAfterSend: false,
     revert: false,
+    unconfirmed: false,
   };
 }
 
@@ -126,12 +131,18 @@ function fakeWallet(w: World): SponsorWallet {
         w.terms.add(`created:${w.sent.length}`);
       }
       if (w.sendThrows) throw new Error('timed out waiting for the receipt');
-      return { hash: hash(), status: w.revert ? 'reverted' : 'success' };
+      return {
+        hash: hash(),
+        status: w.unconfirmed ? 'unconfirmed' : w.revert ? 'reverted' : 'success',
+      };
     },
     sendGas: async (to, value) => {
       w.gas.push({ to, value });
       if (w.sendThrows) throw new Error('timed out waiting for the receipt');
-      return { hash: hash(), status: w.revert ? 'reverted' : 'success' };
+      return {
+        hash: hash(),
+        status: w.unconfirmed ? 'unconfirmed' : w.revert ? 'reverted' : 'success',
+      };
     },
   };
 }
@@ -218,6 +229,7 @@ function sponsor(w: World, over: Partial<Parameters<typeof createSponsor>[0]> = 
     ledger: new SponsorLedger(null),
     acceptedContentSigners: [NODE.address],
     publish: null,
+    hosts: ['sponsor'],
     now: () => NOW,
     ...over,
   });
@@ -281,8 +293,12 @@ async function depositBody(
   };
 }
 
-function post(path: string, body: unknown): Request {
-  return new Request(`http://sponsor${path}`, { method: 'POST', body: JSON.stringify(body) });
+function post(path: string, body: unknown, headers: Record<string, string> = {}): Request {
+  return new Request(`http://sponsor${path}`, {
+    method: 'POST',
+    headers: { host: 'sponsor', 'content-type': 'application/json', ...headers },
+    body: JSON.stringify(body),
+  });
 }
 
 async function call(service: ReturnType<typeof createSponsor>, path: string, body: unknown) {
@@ -292,7 +308,9 @@ async function call(service: ReturnType<typeof createSponsor>, path: string, bod
 
 describe('GET /', () => {
   test('prints the limits, an unset withdrawal threshold and the approve call', async () => {
-    const response = await sponsor(world()).fetch(new Request('http://sponsor/'));
+    const response = await sponsor(world()).fetch(
+      new Request('http://sponsor/', { headers: { host: 'sponsor' } }),
+    );
     // The info route's shape, as `service.ts` builds it.
     const info = (await response.json()) as {
       chainId: number;
@@ -1022,6 +1040,7 @@ describe('the ledger', () => {
       shares: 7n,
     });
     writeFileSync(path, '{"kind":"dep', { flag: 'a' });
+    first.close();
     const second = new SponsorLedger(path);
     expect(second.records).toEqual([
       {
@@ -1039,6 +1058,25 @@ describe('the ledger', () => {
     expect(second.has('gas', 'k')).toBe(false);
   });
 
+  test('refuses a second service on the same ledger file until the first closes it', () => {
+    dir = mkdtempSync(join(tmpdir(), 'sponsor-ledger-'));
+    const path = join(dir, 'ledger.jsonl');
+    const first = new SponsorLedger(path);
+    expect(() => new SponsorLedger(path)).toThrow(/held by process/);
+    first.close();
+    new SponsorLedger(path).close();
+  });
+
+  test("decides the day's limits from today's slice and the subject's own history alone", () => {
+    const ledger = new SponsorLedger(null);
+    const row = { kind: 'gas' as const, value: 1n };
+    ledger.append({ ...row, subject: AGENT.address, at: NOW - 3 * 86_400_000, key: 'old' });
+    ledger.append({ ...row, subject: CALLEE.address, at: NOW - 3 * 86_400_000, key: 'other' });
+    ledger.append({ ...row, subject: CALLEE.address, at: NOW, key: 'today' });
+    expect(ledger.relevant(NOW, [AGENT.address]).map((r) => r.key)).toEqual(['today', 'old']);
+    expect(ledger.relevant(NOW).map((r) => r.key)).toEqual(['today']);
+  });
+
   test('reloads a pending reservation as spent, and a settlement onto its row', () => {
     dir = mkdtempSync(join(tmpdir(), 'sponsor-ledger-'));
     const path = join(dir, 'ledger.jsonl');
@@ -1054,6 +1092,7 @@ describe('the ledger', () => {
       /no pending/,
     );
 
+    first.close();
     const second = new SponsorLedger(path);
     expect(second.has('deposit', 'lost')).toBe(true);
     expect(second.has('deposit', 'landed')).toBe(true);
@@ -1093,6 +1132,13 @@ describe('the key file and the chain', () => {
   test('refuses any chain but 13579', () => {
     expect(() => assertSponsorChain(13579)).not.toThrow();
     expect(() => assertSponsorChain(1155)).toThrow(/testnet 13579 only/);
+  });
+
+  test('parses the registry list and refuses it whole on one bad or foreign entry', () => {
+    expect(registryList(` ${REGISTRY} `, CHAIN)).toEqual([REGISTRY]);
+    expect(() => registryList(`${REGISTRY},0xabc`, CHAIN)).toThrow(/0xabc/);
+    expect(() => registryList(`eip155:1155:${REGISTRY_ADDRESS}`, CHAIN)).toThrow(/not on chain/);
+    expect(() => registryList(' , ', CHAIN)).toThrow(/no registry/);
   });
 
   test('parses an address list and refuses it whole on one bad entry', () => {
@@ -1163,48 +1209,93 @@ describe('a first declaration: the uses triple is created, then the deposit', ()
 });
 
 describe('POST /mint-gas', () => {
-  const ADDRESS = privateKeyToAccount(`0x${'66'.repeat(32)}`).address;
+  const HOLDER = privateKeyToAccount(`0x${'66'.repeat(32)}`);
+  const ADDRESS = HOLDER.address;
+  let n = 0;
+  /** A request signed by `signer`, as `apps/mcp`'s loop sends it. */
+  async function minted(
+    signer: { address: Address; signTypedData: typeof AGENT.signTypedData },
+    over: { address?: Address; chain?: number } = {},
+  ) {
+    const request = await signMintGasRequest(
+      {
+        address: over.address ?? signer.address,
+        nonce: keccak256(stringToBytes(`mint-${(n += 1)}`)),
+        expiresAt: Math.floor(NOW / 1000) + 600,
+      },
+      over.chain ?? CHAIN,
+      signer,
+    );
+    return { request };
+  }
 
   test('sends the mint gas to an unregistered address once, ever', async () => {
     const w = world();
     const service = sponsor(w);
-    const first = await call(service, '/mint-gas', { address: ADDRESS });
+    const first = await call(service, '/mint-gas', await minted(HOLDER));
     expect(first.status).toBe(200);
     expect(w.gas).toEqual([{ to: ADDRESS, value: MILLI / 10n }]);
-    const second = await call(service, '/mint-gas', { address: ADDRESS });
+    const second = await call(service, '/mint-gas', await minted(HOLDER));
     expect(second.status).toBe(429);
     expect(w.gas).toHaveLength(1);
+  });
+
+  test('refuses a bare address, and a request one address signs for another', async () => {
+    const w = world();
+    const bare = await call(sponsor(w), '/mint-gas', { address: ADDRESS });
+    expect(bare.status).toBe(400);
+    const forged = await call(
+      sponsor(w),
+      '/mint-gas',
+      await minted(STRANGER, { address: ADDRESS }),
+    );
+    expect(forged.status).toBe(401);
+    const otherChain = await call(sponsor(w), '/mint-gas', await minted(HOLDER, { chain: 1155 }));
+    expect(otherChain.status).toBe(400);
+    expect(w.gas).toHaveLength(0);
+  });
+
+  test('spends a signed request once; a reverted send gave its value back and may retry', async () => {
+    const w = world();
+    w.revert = true;
+    const service = sponsor(w);
+    const body = await minted(HOLDER);
+    expect((await call(service, '/mint-gas', body)).status).toBe(502);
+    w.revert = false;
+    expect((await call(service, '/mint-gas', body)).status).toBe(200);
+    expect((await call(service, '/mint-gas', body)).status).toBe(409);
+    expect(w.gas).toHaveLength(2);
   });
 
   test('stops at the daily cap of new agents, whoever asks', async () => {
     const w = world();
     const service = sponsor(w);
-    for (const n of ['67', '68']) {
-      const address = privateKeyToAccount(`0x${n.repeat(32)}`).address;
-      expect((await call(service, '/mint-gas', { address })).status).toBe(200);
+    for (const k of ['67', '68']) {
+      const signer = privateKeyToAccount(`0x${k.repeat(32)}`);
+      expect((await call(service, '/mint-gas', await minted(signer))).status).toBe(200);
     }
-    const third = await call(service, '/mint-gas', { address: ADDRESS });
+    const third = await call(service, '/mint-gas', await minted(HOLDER));
     expect(third.status).toBe(429);
     expect(String(third.body.error)).toMatch(/new agents a day/);
     expect(w.gas).toHaveLength(2);
   });
 
-  test('sends nothing to an address that already holds an agent, or cannot register one', async () => {
+  test('sends nothing to an address that already holds an agent', async () => {
     const w = world();
-    const held = await call(sponsor(w), '/mint-gas', { address: AGENT.address });
+    const held = await call(sponsor(w), '/mint-gas', await minted(AGENT));
     expect(held.status).toBe(403);
-    const zero = await call(sponsor(w), '/mint-gas', { address: `0x${'00'.repeat(20)}` });
-    expect(zero.status).toBe(400);
     expect(w.gas).toHaveLength(0);
   });
 
   test('answers 503 when it is off, and sends nothing to itself', async () => {
     const w = world();
-    const off = await call(sponsor(w, { limits: { ...LIMITS, mintGas: null } }), '/mint-gas', {
-      address: ADDRESS,
-    });
+    const off = await call(
+      sponsor(w, { limits: { ...LIMITS, mintGas: null } }),
+      '/mint-gas',
+      await minted(HOLDER),
+    );
     expect(off.status).toBe(503);
-    const self = await call(sponsor(w), '/mint-gas', { address: SPONSOR });
+    const self = await call(sponsor(w), '/mint-gas', await minted(SPONSOR_ACCOUNT));
     expect(self.status).toBe(403);
     expect(w.gas).toHaveLength(0);
   });
@@ -1243,8 +1334,12 @@ describe('POST /identity', () => {
 
   test('stops at the daily cap of new identities, and refuses an unregistered agent', async () => {
     const w = world();
+    let pins = 0;
     const service = sponsor(w, {
-      pinThing: pinned,
+      pinThing: async (thing) => {
+        pins += 1;
+        return pinned(thing);
+      },
       owners: owners({ '7': AGENT.address, '8': CALLEE.address, '9': STRANGER.address }),
     });
     for (const agentId of ['7', '8']) {
@@ -1252,8 +1347,11 @@ describe('POST /identity', () => {
         200,
       );
     }
+    expect(pins).toBe(4);
     const third = await call(service, '/identity', { agentRegistry: REGISTRY, agentId: '9' });
     expect(third.status).toBe(429);
+    // Refused before anything was pinned for it.
+    expect(pins).toBe(4);
     const unknown = await call(service, '/identity', { agentRegistry: REGISTRY, agentId: '10' });
     expect(unknown.status).toBe(403);
   });
@@ -1263,5 +1361,110 @@ describe('POST /identity', () => {
     const res = await call(sponsor(w), '/identity', { agentRegistry: REGISTRY, agentId: '7' });
     expect(res.status).toBe(503);
     expect(w.sent).toHaveLength(0);
+  });
+});
+
+describe('a request from somewhere other than this machine', () => {
+  const ADDRESS = privateKeyToAccount(`0x${'66'.repeat(32)}`).address;
+
+  test('a text/plain POST, which any web page can send, spends nothing', async () => {
+    const w = world();
+    const response = await sponsor(w).fetch(
+      post('/mint-gas', { address: ADDRESS }, { 'content-type': 'text/plain;charset=UTF-8' }),
+    );
+    expect(response.status).toBe(415);
+    expect(w.gas).toHaveLength(0);
+  });
+
+  test('a rebinding Host and a foreign Origin are refused before the route runs', async () => {
+    const w = world();
+    const service = sponsor(w);
+    const rebound = await service.fetch(
+      post('/gas', { agentRegistry: REGISTRY, agentId: '7' }, { host: 'attacker.example:3200' }),
+    );
+    expect(rebound.status).toBe(403);
+    const page = await service.fetch(
+      post(
+        '/gas',
+        { agentRegistry: REGISTRY, agentId: '7' },
+        { origin: 'https://attacker.example' },
+      ),
+    );
+    expect(page.status).toBe(403);
+    expect(w.gas).toHaveLength(0);
+  });
+});
+
+describe('a send whose receipt does not come in time', () => {
+  test('answers 504, keeps the spend pending with its hash, and frees the queue', async () => {
+    const w = world();
+    w.unconfirmed = true;
+    const ledger = new SponsorLedger(null);
+    const service = sponsor(w, { ledger });
+    const res = await call(service, '/gas', { agentRegistry: REGISTRY, agentId: '7' });
+    expect(res.status).toBe(504);
+    const key = `gas:${AGENT.address.toLowerCase()}`;
+    expect(ledger.pending().map((r) => r.key)).toEqual([key]);
+    expect(ledger.hashOf('gas', key)).toBe(res.body.pending as Hex);
+    // Still spent: the agent does not get its gas a second time while the first may land.
+    w.unconfirmed = false;
+    expect((await call(service, '/gas', { agentRegistry: REGISTRY, agentId: '7' })).status).toBe(
+      429,
+    );
+    // And the queue moved on: another agent's request is served.
+    expect((await call(service, '/gas', { agentRegistry: REGISTRY, agentId: '8' })).status).toBe(
+      200,
+    );
+  });
+
+  test('the hash of a pending send survives a restart', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'sponsor-ledger-'));
+    try {
+      const path = join(dir, 'ledger.jsonl');
+      const first = new SponsorLedger(path);
+      first.reserve({ kind: 'gas', subject: AGENT.address, value: 1n, at: NOW, key: 'g' });
+      first.noteSent('gas', 'g', PAYMENT);
+      first.close();
+      const second = new SponsorLedger(path);
+      expect(second.pending().map((r) => r.key)).toEqual(['g']);
+      expect(second.hashOf('gas', 'g')).toBe(PAYMENT);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+});
+
+describe('a request that fails inside a route', () => {
+  test('answers a generic 500 and logs the detail with the RPC URL cut to its host', async () => {
+    const w = world();
+    const lines: string[] = [];
+    const service = sponsor(w, {
+      log: (line) => lines.push(line),
+      owners: {
+        ownerOf: async () => AGENT.address,
+        agentWalletOf: async () => null,
+      },
+      holdings: {
+        agentsHeldBy: async () => {
+          throw new Error('HTTP request failed. URL: https://rpc.example/v2/SECRETKEY');
+        },
+      },
+    });
+    const body = await signMintGasRequest(
+      {
+        address: STRANGER.address,
+        nonce: keccak256(stringToBytes('fail')),
+        expiresAt: Math.floor(NOW / 1000) + 60,
+      },
+      CHAIN,
+      STRANGER,
+    );
+    const response = await service.fetch(post('/mint-gas', { request: body }));
+    expect(response.status).toBe(500);
+    const text = await response.text();
+    expect(text).not.toContain('SECRETKEY');
+    expect(text).not.toContain('rpc.example');
+    expect(lines.join('\n')).toContain('https://rpc.example/…');
+    expect(lines.join('\n')).not.toContain('SECRETKEY');
   });
 });

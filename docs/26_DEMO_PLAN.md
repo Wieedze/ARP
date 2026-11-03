@@ -72,7 +72,8 @@ online, steps 1 and 2 disappear for Desktop.
    ARP_TARGET=testnet bun run apps/cli/src/cli.ts mcp --http
    ```
 
-   It listens on 3002 and signs receipts with `~/Project/ARP/.arp/receipt-key`, the address the
+   It listens on 3002 and signs receipts with `~/.arp/receipt-key` (moved there from
+   `~/Project/ARP/.arp/` by ADR `0116`; the server refuses to start until it is), the address the
    sponsor accepts above. Check: `curl -s http://127.0.0.1:3002/`. Run it from an up-to-date `dev`: the
    Claude Code demo asks it for the skill's whole directory (`bundle=1`, task 57), which an older
    build does not serve.
@@ -103,7 +104,7 @@ rename `C:\Users\Max\.arp` to something else beforehand. Otherwise the demo reus
 3. Show that nothing was asked of the person: no wallet, no signature, no payment.
 4. Show the record, for those who want to see it:
    - `C:\Users\Max\.arp\agent.json`: the agent's number and its identity;
-   - the sponsor's ledger, `.arp/sponsor-ledger.jsonl` in the sponsor's checkout: one line per step,
+   - the sponsor's ledger, `~/.arp/sponsor-ledger.jsonl` on the sponsor's machine: one line per step,
      all `success`;
    - the web app, run locally: the agent and its declaration.
 

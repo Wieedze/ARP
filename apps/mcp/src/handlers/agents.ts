@@ -11,8 +11,18 @@ import {
   toCaip19,
 } from '@arp-protocol/core';
 
+import { cappedText } from '../capped.js';
 import { GRAPHQL, directory } from '../config.js';
 import { type JsonRpcId, fail, text, isAddress } from '../rpc.js';
+
+/**
+ * A registration file is a few kilobytes. The `tokenURI` is a string somebody else controls, so the
+ * host it names can answer slowly or without end: both are bounded (ADR `0116`), and a document past
+ * either bound is an answer about the agent, like a refused one.
+ */
+const DOCUMENT_TIMEOUT_MS = 10_000;
+const MAX_DOCUMENT_BYTES = 256 * 1024;
+
 
 /**
  * Where another agent said it can be reached.
@@ -97,6 +107,7 @@ export async function agentEndpoints(id: JsonRpcId, args: Record<string, unknown
       let response = await fetch(url, {
         headers: { accept: 'application/json' },
         redirect: 'manual',
+        signal: AbortSignal.timeout(DOCUMENT_TIMEOUT_MS),
       });
       for (
         let hop = 0;
@@ -133,6 +144,7 @@ export async function agentEndpoints(id: JsonRpcId, args: Record<string, unknown
         response = await fetch(url, {
           headers: { accept: 'application/json' },
           redirect: 'manual',
+          signal: AbortSignal.timeout(DOCUMENT_TIMEOUT_MS),
         });
       }
       if (response.status >= 300 && response.status < 400) {
@@ -151,7 +163,7 @@ export async function agentEndpoints(id: JsonRpcId, args: Record<string, unknown
           note: 'Published something we could not read, which is a different answer from publishing nothing.',
         });
       }
-      document = await response.json();
+      document = JSON.parse(await cappedText(response, MAX_DOCUMENT_BYTES));
     }
   } catch (error) {
     return text(id, {

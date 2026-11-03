@@ -68,7 +68,7 @@ export type Commands = {
   capture: boolean;
 };
 
-export const SERVER_NAME = 'arp';
+const SERVER_NAME = 'arp';
 
 function read(path: string): string | null {
   try {
@@ -89,7 +89,7 @@ export const SERVER_ENV: Record<string, string> = { ARP_TARGET: 'testnet' };
  * Desktop extension, and a fetched skill installed into the project so Claude Code can invoke it
  * with its `Skill` tool, from the next session on.
  */
-export const SPONSORED_ENV: Record<string, string> = {
+const SPONSORED_ENV: Record<string, string> = {
   ...SERVER_ENV,
   ARP_TOOLS: 'sponsored',
   ARP_SKILLS_DIR: '.claude/skills',
@@ -113,7 +113,7 @@ export function commandsFor(env: InstallEnv, cliPath: string, capture = false, s
 }
 
 /** `- ` lines for what was there, `+ ` lines for what will be. Nothing for an absent side. */
-export function diffLines(before: unknown, after: unknown): string[] {
+function diffLines(before: unknown, after: unknown): string[] {
   const lines = (value: unknown, sign: string) =>
     value === undefined ||
     (typeof value === 'object' && value !== null && Object.keys(value).length === 0)

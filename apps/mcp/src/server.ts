@@ -34,7 +34,7 @@
  *      single number is a decision nobody has made (`docs/01` rejects being one more score).
  */
 
-import { linesOf, serveFetch } from '@arp-protocol/core/node';
+import { linesOf, loopbackHosts, redactUrls, refuseForeignRequest, serveFetch } from '@arp-protocol/core/node';
 import { DESKTOP_TOOL_NAMES, DESKTOP_TOOLS, READ_TOOL_NAMES, TOOLS } from './tools.js';
 import { desktopTool } from './desktop/handlers.js';
 import { serveContentRequest } from './content.js';
@@ -156,7 +156,12 @@ const DESKTOP_INSTRUCTIONS = [
 
 async function callTool(id: JsonRpcId, params: Record<string, unknown> | undefined) {
   const name = typeof params?.['name'] === 'string' ? params['name'] : null;
-  const args = (params?.['arguments'] ?? {}) as Record<string, unknown>;
+  const raw = params?.['arguments'];
+  // A JSON object, checked here; each tool narrows the fields it reads.
+  const args =
+    typeof raw === 'object' && raw !== null && !Array.isArray(raw)
+      ? (raw as Record<string, unknown>)
+      : {};
   // Refused by name, not left to fall through: `tools/list` hides the planners in read mode, and a
   // client that calls one anyway must not get a plan the operator never agreed to be offered.
   if (DESKTOP && name !== null && DESKTOP_TOOL_NAMES.has(name)) return desktopTool(id, name, args);
@@ -193,8 +198,11 @@ async function callTool(id: JsonRpcId, params: Record<string, unknown> | undefin
         return fail(id, -32602, `unknown tool: ${String(name)}`);
     }
   } catch (error) {
-    // The message, not a stack: a caller gets enough to retry or report, nothing about our host.
-    return fail(id, -32603, `${String(name)} failed: ${String(error).slice(0, 300)}`);
+    // Redacted, not a stack: a caller gets enough to retry or report, and a viem error's RPC URL,
+    // which can carry an API key, is cut to its host (ADR `0116`). stderr keeps the same line.
+    const message = redactUrls(String(error)).slice(0, 300);
+    process.stderr.write(`${String(name)} failed: ${message}\n`);
+    return fail(id, -32603, `${String(name)} failed: ${message}`);
   }
 }
 
@@ -254,13 +262,20 @@ export const handler = {
     }
     if (request.method !== 'POST') return new Response('method not allowed', { status: 405 });
 
-    let body: Rpc;
+    let parsed: unknown;
     try {
-      body = (await request.json()) as Rpc;
+      parsed = await request.json();
     } catch {
       return fail(null, -32700, 'parse error');
     }
-    const id = body.id ?? null;
+    // `null`, an array or a number is JSON and not a request: reading `.id` off `null` threw, and on
+    // stdio that ended the server (ADR `0116`). Batches are not supported, so an array is refused too.
+    if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+      return fail(null, -32600, 'invalid request: a JSON-RPC request is an object');
+    }
+    // An object, checked above; each field is narrowed where it is read.
+    const body = parsed as Rpc;
+    const id = typeof body.id === 'string' || typeof body.id === 'number' ? body.id : null;
 
     switch (body.method) {
       case 'initialize':
@@ -285,6 +300,33 @@ export const handler = {
   },
 };
 
+const WILDCARD = new Set(['0.0.0.0', '::', '[::]']);
+
+/**
+ * Who the HTTP transport answers (ADR `0116`). It has no authentication, so the bind address alone
+ * was the boundary, and a bind address does not stop a browser: any page can POST to
+ * `http://127.0.0.1:3002`, and a page whose own name is re-pointed at 127.0.0.1 is same-origin with
+ * it. So a request must name this server in `Host` (its loopback forms, `ARP_HOST` when that is one
+ * address, and `ARP_ALLOWED_HOSTS`), a browser `Origin` must be this server's own, and a `POST` must
+ * be `application/json`. The stdio transport is a pipe from the client that launched it and is not
+ * checked.
+ */
+export function httpPolicy(env: Readonly<Record<string, string | undefined>> = process.env) {
+  const hosts = loopbackHosts(PORT);
+  const bound = (env['ARP_HOST'] ?? '').trim();
+  if (bound !== '' && !WILDCARD.has(bound)) hosts.push(`${bound.includes(':') ? `[${bound}]` : bound}:${PORT}`);
+  for (const entry of (env['ARP_ALLOWED_HOSTS'] ?? '').split(',')) {
+    if (entry.trim() !== '') hosts.push(entry.trim());
+  }
+  const origins = hosts.map((host) => `http://${host}`);
+  return { hosts, origins };
+}
+
+/** The HTTP transport's entry: the checks above, then the one dispatch. */
+export async function httpFetch(request: Request): Promise<Response> {
+  return refuseForeignRequest(request, httpPolicy()) ?? handler.fetch(request);
+}
+
 /**
  * The stdio transport — newline-delimited JSON-RPC over stdin/stdout, which is how an MCP client
  * launches a local server.
@@ -306,13 +348,20 @@ async function serveStdio(input: AsyncIterable<unknown>): Promise<void> {
     });
 
   for await (const line of linesOf(input)) {
-    const response = await handler.fetch(
-      new Request(`http://stdio/`, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: line,
-      }),
-    );
+    let response: Response;
+    try {
+      response = await handler.fetch(
+        new Request(`http://stdio/`, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: line,
+        }),
+      );
+    } catch (error) {
+      // One bad line must not end the session: the client gets an error and the loop goes on.
+      process.stderr.write(`request failed: ${error instanceof Error ? error.name : 'error'}\n`);
+      response = fail(null, -32603, 'internal error');
+    }
     if (response.status === 202) continue;
     await send(await response.text());
   }
@@ -341,11 +390,19 @@ export async function main(
     process.exit(0);
   }
 
+  // The sponsored mode holds an agent key that signs `register()`, an approval and the requests a
+  // sponsor pays for. Over HTTP, with no authentication, anything that can reach the port could make
+  // it spend that identity; stdio is a pipe from the one client that launched it (ADR `0116`).
+  if (DESKTOP) {
+    log(`ARP_TOOLS=${process.env['ARP_TOOLS']} holds a local agent key and runs over stdio only: pass --stdio.`);
+    process.exit(1);
+  }
+
   // 1 MiB. `Bun.serve` refused bodies over 128 MiB by default and `serveFetch` refuses none unless
   // told; a JSON-RPC call to this server is a few kilobytes.
   await serveFetch(
     { port: PORT, hostname: handler.hostname, maxBodyBytes: 1024 * 1024 },
-    (request) => handler.fetch(request),
+    httpFetch,
   );
   log(
     `  listening:  ${handler.hostname}:${PORT}${handler.hostname === '127.0.0.1' ? ' (loopback only — ARP_HOST=0.0.0.0 to open it)' : ' — OPEN TO THE NETWORK'}`,

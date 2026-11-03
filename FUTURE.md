@@ -171,7 +171,8 @@ signer (Privy or equivalent) and probably a relayer".** The user rejected that p
 terms — _« pourquoi un agent arrivera sans wallet ? s'il n'en a pas peut-être faut-il lui en créer
 un ? »_ — and chose the variant where **the agent generates its own key locally and ARP never holds
 it**, with a funder covering the gas _« pour le moment »_. The local-key pattern already runs: the
-node generates `.arp/receipt-key` at mode 0600 on first use (ADR `0080`).
+node generates `~/.arp/receipt-key` at mode 0600 on first use (ADR `0080`; in the working
+directory's `.arp/` until ADR `0116`).
 
 **What is still owed before this is buildable is the funder's bound**, not the key design. Nothing
 says how much, how often or to whom, and an unbounded funder reachable by a stranger is a faucet —

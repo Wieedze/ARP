@@ -41,7 +41,7 @@ Nothing else. No account with us, no key from us, no allowlist.
 ## 3. The four commands
 
 ```bash
-# the MCP server answers questions. It signs no transaction; its one key, .arp/receipt-key,
+# the MCP server answers questions. It signs no transaction; its one key, ~/.arp/receipt-key,
 # signs content receipts and nothing else (ADR 0080).
 ARP_TARGET=testnet bun run apps/mcp/src/server.ts
 

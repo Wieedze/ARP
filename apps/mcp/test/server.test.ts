@@ -1,6 +1,6 @@
-import {spawn, type ChildProcess} from "node:child_process";
-import {createServer, type Server} from "node:http";
-import {rmSync, writeFileSync} from "node:fs";
+import {spawn, spawnSync, type ChildProcess} from "node:child_process";
+import {createServer, request as httpRequest, type Server} from "node:http";
+import {mkdtempSync, rmSync, writeFileSync} from "node:fs";
 import {tmpdir} from "node:os";
 import {join} from "node:path";
 
@@ -42,6 +42,9 @@ const DECLARER = privateKeyToAccount(`0x${"88".repeat(32)}`);
 const BRAINSTORMING_ATOM =
     "0xf205a19595893612b5b716e6e5742d036c70a2cc82cf6581c394cbe3b9310885" as const;
 const BASE = `http://127.0.0.1:${PORT}/mcp`;
+/** The server's own path, and a scratch directory it runs in and keeps its state under (`ARP_HOME`). */
+const SERVER = new URL("../src/server.ts", import.meta.url).pathname;
+const SCRATCH = mkdtempSync(join(tmpdir(), "arp-mcp-server-"));
 let server: ChildProcess | null = null;
 let stub: Server | null = null;
 
@@ -267,10 +270,11 @@ beforeAll(async () => {
         `${JSON.stringify({skill: "brainstorming", atom: BRAINSTORMING_ATOM, receipt: signed})}\n`,
     );
 
-    server = spawn("bun", ["run", "apps/mcp/src/server.ts"], {
-        cwd: new URL("../../..", import.meta.url).pathname,
+    server = spawn("bun", ["run", SERVER], {
+        cwd: SCRATCH,
         env: {
             ...process.env,
+            ARP_HOME: SCRATCH,
             PORT: String(PORT),
             ARP_TARGET: "testnet",
             INTUITION_GRAPHQL_URL: `http://127.0.0.1:${PORT + 1}/v1/graphql`,
@@ -303,6 +307,7 @@ beforeAll(async () => {
 
 afterAll(async () => {
     rmSync(RECEIPTS_PATH, {force: true});
+    rmSync(SCRATCH, {recursive: true, force: true});
     server?.kill();
     await new Promise<void>((resolve) => {
         if (stub === null) return resolve();
@@ -742,6 +747,68 @@ describe("the plain GET", () => {
 });
 
 /**
+ * The HTTP transport has no authentication, so what keeps a web page out is the three checks in
+ * `httpFetch` (ADR `0116`). Sent with `node:http` because `fetch` will not set `Host` or `Origin`
+ * to what a hostile page would.
+ */
+describe("a request from a web page", () => {
+    const raw = (headers: Record<string, string>, body = '{"jsonrpc":"2.0","id":1,"method":"tools/list"}') =>
+        new Promise<number>((resolve, reject) => {
+            const req = httpRequest(
+                {host: "127.0.0.1", port: PORT, path: "/mcp", method: "POST", headers},
+                (res) => {
+                    res.resume();
+                    resolve(res.statusCode ?? 0);
+                },
+            );
+            req.on("error", reject);
+            req.end(body);
+        });
+
+    it("answers a JSON POST that names this server", async () => {
+        expect(await raw({host: `127.0.0.1:${PORT}`, "content-type": "application/json"})).toBe(200);
+    });
+
+    it("refuses a text/plain POST, a rebinding Host and a foreign Origin", async () => {
+        expect(await raw({host: `127.0.0.1:${PORT}`, "content-type": "text/plain"})).toBe(415);
+        expect(await raw({host: `attacker.example:${PORT}`, "content-type": "application/json"})).toBe(403);
+        expect(
+            await raw({
+                host: `127.0.0.1:${PORT}`,
+                origin: "https://attacker.example",
+                "content-type": "application/json",
+            }),
+        ).toBe(403);
+    });
+
+    it("answers a null line on stdio with an error and keeps serving", () => {
+        const run = spawnSync("bun", ["run", SERVER, "--stdio"], {
+            cwd: SCRATCH,
+            env: {...process.env, ARP_HOME: SCRATCH, ARP_NO_RECEIPTS: "1", ARP_TARGET: "testnet"},
+            input: 'null\n[1]\n{"jsonrpc":"2.0","id":7,"method":"ping"}\n',
+            encoding: "utf8",
+            timeout: 15_000,
+        });
+        const lines = run.stdout.trim().split("\n").map((line) => JSON.parse(line) as Record<string, unknown>);
+        expect(lines).toHaveLength(3);
+        expect((lines[0]?.["error"] as {code: number}).code).toBe(-32600);
+        expect((lines[1]?.["error"] as {code: number}).code).toBe(-32600);
+        expect(lines[2]).toMatchObject({id: 7, result: {}});
+    });
+
+    it("will not start the sponsored mode over HTTP", () => {
+        const run = spawnSync("bun", ["run", SERVER], {
+            cwd: SCRATCH,
+            env: {...process.env, ARP_HOME: SCRATCH, ARP_TOOLS: "sponsored", ARP_TARGET: "testnet", PORT: String(PORT + 3)},
+            encoding: "utf8",
+            timeout: 15_000,
+        });
+        expect(run.status).toBe(1);
+        expect(run.stderr).toContain("stdio only");
+    });
+});
+
+/**
  * `ARP_TOOLS=read`, the server task 45's first testers get: the registry reads and nothing else.
  *
  * Its own process, because the mode is read once at start. What it guards is what the operators were
@@ -763,10 +830,11 @@ describe("read-only mode", () => {
     };
 
     beforeAll(async () => {
-        reader = spawn("bun", ["run", "apps/mcp/src/server.ts"], {
-            cwd: new URL("../../..", import.meta.url).pathname,
+        reader = spawn("bun", ["run", SERVER], {
+            cwd: SCRATCH,
             env: {
                 ...process.env,
+                ARP_HOME: SCRATCH,
                 PORT: String(READ_PORT),
                 ARP_TOOLS: "read",
                 ARP_TARGET: "testnet",
@@ -779,7 +847,12 @@ describe("read-only mode", () => {
         });
         for (let i = 0; i < 60; i += 1) {
             try {
-                if ((await fetch(READ_BASE, {method: "POST", body: '{"jsonrpc":"2.0","id":0,"method":"ping"}'})).ok) return;
+                const ping = await fetch(READ_BASE, {
+                    method: "POST",
+                    headers: {"content-type": "application/json"},
+                    body: '{"jsonrpc":"2.0","id":0,"method":"ping"}',
+                });
+                if (ping.ok) return;
             } catch {
                 /* not up yet */
             }
