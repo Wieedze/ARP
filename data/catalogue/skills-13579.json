@@ -8,9 +8,9 @@
   "attestor": "0x906f3A52ec089f8D4E9127F91C6bE5Ae0d18f91f",
   "recordedAt": "2026-10-29T12:30:21.574Z",
   "counts": {
-    "skills": 662,
+    "skills": 665,
     "tagged": 601,
-    "untagged": 61,
+    "untagged": 64,
     "notTaggedButClassifiable": 0
   },
   "skills": [
@@ -5971,6 +5971,36 @@
       "domain": "infrastructure",
       "tagTriple": "0xd73af3faef79fa06b28d7ab7f09ac3922b1600e879e0fc1dfb3d62bc8384d0be",
       "untagged": false
+    },
+    {
+      "repo": "easyzoom/aix-skills",
+      "skill": "webpage-to-markdown",
+      "url": "https://github.com/easyzoom/aix-skills?skill=webpage-to-markdown",
+      "atom": "0xd006d48b6be455713a076af5fc34046233e51ce1f85a544b8eb9fe762b9ff975",
+      "domain": null,
+      "tagTriple": null,
+      "untagged": true,
+      "listedBy": "sponsoring service /list-tool, 2026-11-03 (ADR 0123)"
+    },
+    {
+      "repo": "JimLiu/baoyu-skills",
+      "skill": "baoyu-url-to-markdown",
+      "url": "https://github.com/JimLiu/baoyu-skills?skill=baoyu-url-to-markdown",
+      "atom": "0xe497306ebf56419255d9bb252be53b809a22d685f2caa5e2df07d5cca5b821da",
+      "domain": null,
+      "tagTriple": null,
+      "untagged": true,
+      "listedBy": "sponsoring service /list-tool, 2026-11-03 (ADR 0123)"
+    },
+    {
+      "repo": "softaworks/agent-toolkit",
+      "skill": "web-to-markdown",
+      "url": "https://github.com/softaworks/agent-toolkit?skill=web-to-markdown",
+      "atom": "0x4c301beda47a7e16085bda1e86fb4e14bf5de40fa413cbdbc45d445d08ce519d",
+      "domain": null,
+      "tagTriple": null,
+      "untagged": true,
+      "listedBy": "sponsoring service /list-tool, 2026-11-03 (ADR 0123)"
     }
   ]
 }
