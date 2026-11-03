@@ -100,7 +100,7 @@ if (text === undefined) {
 const answer = JSON.parse(text) as {
     domain?: string;
     domains_walked?: string[];
-    domain_attestor?: string;
+    domain_attestors?: string[];
     tools?: Found[];
 };
 const found = answer.tools ?? [];
@@ -108,7 +108,7 @@ const found = answer.tools ?? [];
 console.log(line);
 console.log("2. The answer, which anybody asking the same question would get\n");
 console.log(`   domains walked   ${(answer.domains_walked ?? []).join(" → ") || "—"}`);
-console.log(`   read through     ${answer.domain_attestor ?? "—"}`);
+console.log(`   read through     ${answer.domain_attestors?.join(", ") ?? "—"}`);
 console.log(`   ${found.length} tool(s)\n`);
 found.forEach((tool, at) => {
     const mark = at + 1 === pick ? "→" : " ";

@@ -84,7 +84,7 @@ export type DomainsConfig = {
      * Omit it to read every hierarchy triple on the chain, whoever published it. That view is for
      * showing a reader what else exists; it is not the tree.
      */
-    attestor?: string;
+    attestor?: string | readonly string[];
     /** `is a sub-domain of`. Required: it is not the same atom on every chain, and on mainnet 1155
      *  no atom carries the phrase at all. */
     hierarchyPredicate: string;
@@ -123,7 +123,12 @@ export type TaggedTool = {
 
 export type PathResult =
     | {found: true; path: string[]}
-    | {found: false; reason: "unknown" | "unparented" | "tied" | "cycle"; at: string; detail: string};
+    | {
+          found: false;
+          reason: "unknown" | "unparented" | "tied" | "cycle";
+          at: string;
+          detail: string;
+      };
 
 /**
  * Does this triple carry a path?
@@ -154,12 +159,17 @@ export class DomainTree {
         for (const triple of triples) {
             if (!authorises(triple)) continue;
             this.parents.set(triple.child, [...(this.parents.get(triple.child) ?? []), triple]);
-            this.children.set(triple.parent, [...(this.children.get(triple.parent) ?? []), triple.child]);
+            this.children.set(triple.parent, [
+                ...(this.children.get(triple.parent) ?? []),
+                triple.child,
+            ]);
         }
         // Best-funded parent first. The ranking input is shares, not position count: two triples
         // can both hold one position and differ by an order of magnitude in what backs them.
         for (const list of this.parents.values()) {
-            list.sort((left, right) => (right.shares > left.shares ? 1 : right.shares < left.shares ? -1 : 0));
+            list.sort((left, right) =>
+                right.shares > left.shares ? 1 : right.shares < left.shares ? -1 : 0,
+            );
         }
     }
 
@@ -224,7 +234,12 @@ export class DomainTree {
                 };
             }
             if (seen.has(best.parent)) {
-                return {found: false, reason: "cycle", at: best.parent, detail: "cycle in the hierarchy"};
+                return {
+                    found: false,
+                    reason: "cycle",
+                    at: best.parent,
+                    detail: "cycle in the hierarchy",
+                };
             }
             seen.add(best.parent);
             path.push(best.parent);
@@ -293,6 +308,15 @@ function pageSize(requested: number | undefined, cap: number): number {
  * test of nothing: the whole claim is that a reading rule makes a tree out of a permissionless
  * graph, and testnet 13579 carries 19 junk triples on this predicate to prove the point.
  */
+/**
+ * The attestors as a list. One address or several: the index is ARP's own addresses, and since
+ * task 59 those are two (ADR `0115`, decision A of 2026-11-03).
+ */
+function attestorsOf(attestor: string | readonly string[] | undefined): string[] | undefined {
+    if (attestor === undefined) return undefined;
+    return typeof attestor === "string" ? [attestor] : [...attestor];
+}
+
 export async function readHierarchy(
     config: DomainsConfig,
     options: {
@@ -301,7 +325,7 @@ export async function readHierarchy(
     } = {},
 ): Promise<{triples: HierarchyTriple[]; truncated: boolean}> {
     const transport = transportFor(config);
-    const attestor = config.attestor;
+    const attestor = attestorsOf(config.attestor);
     const curveId = curveOf(config);
     const page = attestor === undefined ? MAX_PAGE : POSITIONS_PAGE;
     const maxRows = Math.max(0, options.maxRows ?? DEFAULT_MAX_HIERARCHY);
@@ -341,7 +365,11 @@ export async function readHierarchy(
                 attestor === undefined
                     ? sharesOf(row["term"], curveId)
                     : {positions: 1, shares: readBigInt(row, "shares") ?? 0n};
-            out.push({tripleId, child, parent, positions, shares});
+            // Two of ARP's addresses can back one edge (ADR `0115`): one row per triple, its
+            // shares summed, so the tree's best-funded parent is not decided by a duplicate.
+            const seen = out.find((triple) => triple.tripleId === tripleId);
+            if (seen === undefined) out.push({tripleId, child, parent, positions, shares});
+            else seen.shares += shares;
         }
         if (list.length < page) return {triples: out, truncated: false};
     }
@@ -403,7 +431,7 @@ export async function toolsInDomain(
             offset,
             // An address that cannot hold a position, when no attestor is configured: every row then
             // comes back `attestorBacked: false`, which is the truth rather than a silent pass.
-            who: config.attestor ?? "0x0000000000000000000000000000000000000000",
+            who: attestorsOf(config.attestor) ?? ["0x0000000000000000000000000000000000000000"],
         });
         const page = Array.isArray(data["triples"]) ? data["triples"] : [];
         rows.push(...page);

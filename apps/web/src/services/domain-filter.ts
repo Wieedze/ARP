@@ -1,4 +1,5 @@
 import {
+    ARP_DOMAIN_ATTESTORS,
     DomainTree,
     INTUITION_HAS_TAG_MAINNET,
     INTUITION_IS_A_SUB_DOMAIN_OF,
@@ -21,17 +22,15 @@ import {
  */
 
 /**
- * The address whose positions define the index this app reads.
+ * The addresses whose positions define the index this app reads.
  *
  * **Not a user-facing choice**, and that is the safety net (the user, 2026-10-28): `has tag` and the
  * hierarchy are permissionless to write, so the filings are only an index when read through one
  * chosen set of positions. A reader who could swap the attestor could make the index say anything.
- * The MCP node holds the same value under `ARP_DOMAIN_ATTESTOR`, and the two must not drift.
- *
- * Checksummed, because the indexer's `positions.account_id` is and a lowercase filter returns zero
- * rows — which reads as "ARP has filed nothing" rather than as a bad query.
+ * The list lives in `@arp-protocol/core` (`ARP_DOMAIN_ATTESTORS`) and the MCP node reads the same
+ * one, so the two cannot drift. Two addresses since task 59, both ARP's (ADR `0124`).
  */
-export const DOMAIN_ATTESTOR = "0x906f3A52ec089f8D4E9127F91C6bE5Ae0d18f91f";
+export const DOMAIN_ATTESTORS: readonly string[] = ARP_DOMAIN_ATTESTORS;
 
 /** The label every domain path climbs to. A convention, and the one arbitrary choice here. */
 export const DOMAIN_ROOT = "tool";
@@ -44,7 +43,7 @@ export function domainsConfigFor(graphqlUrl: string): DomainsConfig {
         // mainnet and 52,781 on testnet, against 1,285 and 311 for the other atom with that label.
         tagPredicate: INTUITION_HAS_TAG_MAINNET,
         root: DOMAIN_ROOT,
-        attestor: DOMAIN_ATTESTOR,
+        attestor: DOMAIN_ATTESTORS,
     };
 }
 

@@ -1,6 +1,6 @@
 # Task 59 — A category anyone can add, by the same rules as the rest
 
-**Status:** **PLAN**, 2026-11-02. Nothing built. Decided with the user the same day.
+**Status:** **IN PROGRESS**, 2026-11-03. Built: `planCategory` and its rules in `packages/protocol` (PR #56); the index reads both of ARP's addresses (decision A, 2026-11-03, ADR `0124`), on `feat/59-attestors`. The sponsor's `POST /propose-category` is the sponsor owner's, on `feat/59-sponsor-category`. Next: the MCP tool, the weekly review list, the first run on the 61 skills, the verify check.
 **ADR:** `0115`. The rules are written out in `docs/25_THE_DOMAIN_TREE.md` §8.
 **Rules:** `code.md`, `portability.md`, `security.md` (the sponsor writes), `claims.md`, `workflow.md`.
 **Reviewers:** `intuition-integrator`, `ui-reviewer` if the web proposes, then `task-verifier`.
