@@ -20,6 +20,7 @@ beforeEach(() => {
 });
 
 import {StartPage} from "./StartPage";
+import {RouteTransition} from "../components/brand/RouteTransition";
 import {ActivityLog} from "../services/activity-log";
 import {AgentFeed, type EventSourceLike} from "../services/agent-feed";
 import {renderWithProviders} from "../test/render";
@@ -96,7 +97,66 @@ describe("the start page", () => {
         expect(await screen.findByText("Adding is not available right now.")).toBeTruthy();
         expect(
             screen.getByRole("link", {name: "Add it with a wallet →"}).getAttribute("href"),
-        ).toBe("/register?what=tool");
+        ).toBe("/start/tool?with=wallet");
+    });
+
+    it("opens the wallet form on the same page", async () => {
+        renderWithProviders(<StartPage feed={feedWith([]).feed} />, at("tool?with=wallet"));
+        expect(await screen.findByLabelText("Tool URL")).toBeTruthy();
+        expect(screen.getByRole("heading", {name: "Add it with a wallet"})).toBeTruthy();
+        expect(screen.getByLabelText("Repository URL")).toBeTruthy();
+    });
+
+    it("asks whether the agent has an id, and shows the steps until told yes", async () => {
+        renderWithProviders(<StartPage feed={feedWith([]).feed} />, at("agent"));
+        expect(await screen.findByText("Install ARP in your project")).toBeTruthy();
+        expect(screen.getByRole("button", {name: "No"})).toHaveAttribute("aria-pressed", "true");
+        fireEvent.click(screen.getByRole("button", {name: "Yes, it has one"}));
+        // The steps would mint a second identity, so the import replaces them.
+        expect(
+            // The form is a lazy chunk, slow to arrive while the whole suite runs in parallel.
+            await screen.findByRole(
+                "heading",
+                {name: "Import an agent you already have"},
+                {timeout: 5000},
+            ),
+        ).toBeTruthy();
+        expect(screen.queryByText("Install ARP in your project")).toBeNull();
+    });
+
+    it("offers the wallet mint under the agent steps", async () => {
+        // Inside `RouteTransition`, which remounts the page on the push, as the app does.
+        renderWithProviders(
+            <RouteTransition>
+                <StartPage feed={feedWith([]).feed} />
+            </RouteTransition>,
+            at("agent"),
+        );
+        const link = await screen.findByRole("link", {name: "Mint with a wallet instead →"});
+        expect(link.getAttribute("href")).toBe("/start/agent?with=wallet");
+        fireEvent.click(link);
+        expect(
+            await screen.findByRole(
+                "heading",
+                {name: "Mint an ERC-8004 identity"},
+                {timeout: 5000},
+            ),
+        ).toBeTruthy();
+        expect(screen.queryByRole("link", {name: "Mint with a wallet instead →"})).toBeNull();
+        // The link that held the focus is gone, so the form it opened takes it.
+        await waitFor(() => expect(document.activeElement?.tagName).toBe("SECTION"));
+    });
+
+    it("leaves the focus alone when the URL opens the wallet form on arrival", async () => {
+        renderWithProviders(<StartPage feed={feedWith([]).feed} />, at("agent?with=wallet"));
+        await screen.findByRole("heading", {name: "Mint an ERC-8004 identity"}, {timeout: 5000});
+        expect(document.activeElement?.tagName).not.toBe("SECTION");
+    });
+
+    it("gives the Claude path no wallet form", async () => {
+        renderWithProviders(<StartPage feed={feedWith([]).feed} />, at("claude?with=wallet"));
+        await screen.findByRole("heading", {name: "I use Claude"});
+        expect(screen.queryByText(/wallet/i)).toBeNull();
     });
 
     it("offers only the wallet path when no sponsor is configured", async () => {

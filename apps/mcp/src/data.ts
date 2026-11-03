@@ -9,6 +9,7 @@ import type { CataloguedSkill } from './content.js';
 import deployment1155 from '../../../data/deployments/1155.json';
 import deployment13579 from '../../../data/deployments/13579.json';
 import skills13579 from '../../../data/catalogue/skills-13579.json';
+import pins13579 from '../../../data/catalogue/skill-pins-13579.json';
 
 export const DEPLOYMENTS: Readonly<Record<number, unknown>> = {
   1155: deployment1155,
@@ -18,4 +19,9 @@ export const DEPLOYMENTS: Readonly<Record<number, unknown>> = {
 // No `skills-1155.json`: no skill was seeded on mainnet, so a mainnet server knows none.
 export const SKILL_CATALOGUES: Readonly<Record<number, { skills?: CataloguedSkill[] }>> = {
   13579: skills13579,
+};
+
+/** The commit each repository is served at (task 61), by chain. A repository absent here is refused. */
+export const SKILL_PINS: Readonly<Record<number, { repos: Record<string, { commit: string; committedAt: string }> }>> = {
+  13579: pins13579,
 };

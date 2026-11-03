@@ -38,6 +38,7 @@
  * | `border-color` | yes | **yes** |
  * | `color` | yes, `--color-fg` — this is the one the table used to omit | **yes** |
  * | `cursor` | yes | **yes** |
+ * | `font-family` | yes, `inherit` | **yes** for a mono button |
  * | `border-radius` | yes, 10px since ADR `0057` — so do not set it at all | n/a |
  * | `opacity` | no | no |
  * | padding, font size | `@layer base` preflight only | no |

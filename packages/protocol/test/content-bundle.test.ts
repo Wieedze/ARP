@@ -37,13 +37,17 @@ const BODY: Record<string, string> = {
     "skills/pptx/scripts/office/validate.py": "print('ok')\n",
 };
 
+const PIN = "fedcba9876543210fedcba9876543210fedcba98";
+
 function config(over: Partial<BundleServeConfig> = {}): BundleServeConfig {
     return {
         chainId: 13579,
         index: INDEX,
+        pin: () => PIN,
         listing: async (repo) => LISTINGS[repo] ?? [],
         raw: async (url) => {
-            const path = decodeURIComponent(url.split("/HEAD/")[1] ?? "");
+            // Only the pinned commit answers: a fetch at HEAD would be a 404 here.
+            const path = decodeURIComponent(url.split(`/${PIN}/`)[1] ?? "");
             const body = BODY[path];
             return body === undefined ? {code: 404, bytes: new Uint8Array()} : {code: 200, bytes: stringToBytes(body)};
         },
@@ -56,6 +60,11 @@ function config(over: Partial<BundleServeConfig> = {}): BundleServeConfig {
 }
 
 describe("serveSkillBundle", () => {
+    it("refuses a repository with no pinned commit rather than reading HEAD", async () => {
+        const answer = await serveSkillBundle(PPTX, config({pin: () => null}));
+        expect(answer).toEqual({status: "unpinned", ref: {repo: "anthropics/skills", skill: "pptx"}});
+    });
+
     it("serves every file of the skill's directory and none of its neighbours, under one receipt", async () => {
         const answer = await serveSkillBundle(PPTX, config());
         if (answer.status !== "served" || answer.receipt === null) throw new Error(answer.status);

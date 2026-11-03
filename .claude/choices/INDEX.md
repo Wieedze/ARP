@@ -2,7 +2,7 @@
 
 **Generated** 2026-11-03 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-122 decisions. Newest last. `choices/README.md` says when to write one.
+124 decisions. Newest last. `choices/README.md` says when to write one.
 
 ## Not accepted
 
@@ -153,4 +153,6 @@ Read these before relying on them.
 | [0122](0122-docs-02-is-authoritative-on-storage-only.md) | 2026-11-03 | Accepted | `docs/02` is authoritative on the storage principle only |
 | [0123](0123-the-sponsor-lists-a-tool-for-the-web-app.md) | 2026-11-03 | Accepted | The sponsor lists a tool, and the web app may ask it to |
 | [0124](0124-the-sponsor-writes-a-category-and-the-index-reads-it.md) | 2026-11-03 | Accepted | The sponsor writes an accepted category, and the index reads the sponsor too |
+| [0125](0125-one-door-register-folds-into-get-started.md) | 2026-11-03 | Accepted | One door: Register folds into Get started |
 | [0126](0126-the-one-liner-is-discovery-not-money.md) | 2026-11-03 | Accepted | The one-liner is discovery, not money |
+| [0128](0128-a-wallet-is-asked-for-by-the-action-that-signs.md) | 2026-11-03 | Accepted | A wallet is asked for by the action that signs, and nowhere else |

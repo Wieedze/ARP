@@ -476,8 +476,9 @@ export const DESKTOP_TOOLS = [
     description:
       'Get a skill found with `arp_find_tools`: returns its SKILL.md, the instructions to follow to ' +
       'use it. Pass the `id` from the search result. Read it and follow it; it may ask you to run ' +
-      'commands, so tell the person what it will do first. ARP keeps a note that this skill was ' +
-      'served to you, which `arp_declare_used` needs.',
+      'commands, so tell the person what it will do first. Where the skill would be installed in the ' +
+      'project, the person is asked first in a dialog you do not see, and nothing is written unless ' +
+      'they accept. ARP keeps a note that this skill was served to you, which `arp_declare_used` needs.',
     inputSchema: {
       type: 'object',
       properties: {

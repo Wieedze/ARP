@@ -50,27 +50,49 @@ import {NAV_HEIGHT} from "./nav-height";
  *
  * | path | section |
  * | --- | --- |
- * | `/agent`, `/agent/import` | redirects to `/register?what=agent` since 2026-10-29 |
+ * | `/agent`, `/agent/import` | redirects to `/start/agent` since task 62 |
  * | `/agent/8453/6649` | Agents — somebody else's, reached from the directory |
  * | `/agents` | Agents |
  *
  * So the two items that collide say which paths are theirs, and everything else keeps the prefix
- * rule, which is right for `/tools`, `/register` and `/activity`.
+ * rule, which is right for `/tools`, `/start` and `/activity`.
  */
 const SECTION_PATHS: Record<string, (pathname: string) => boolean> = {
     // An agent detail is `/agent/<numeric chain>/<token>`; `/agent/import` is not.
     "/agents": (pathname) => pathname === "/agents" || /^\/agent\/\d+\//.test(pathname),
 };
 
+function isCurrent(to: string, pathname: string): boolean {
+    const section = SECTION_PATHS[to];
+    if (section !== undefined) return section(pathname);
+    return to === "/" ? pathname === "/" : pathname === to || pathname.startsWith(`${to}/`);
+}
+
+function itemClass(current: boolean): string {
+    return `inline-flex h-11 items-center gap-2.5 font-mono text-[12px] uppercase tracking-[0.12em] whitespace-nowrap ${
+        current
+            ? "text-[color:var(--color-fg)]!"
+            : "text-[color:var(--color-steel)]! hover:text-[color:var(--color-fg)]!"
+    }`;
+}
+
+/**
+ * Only on the current item. An absent dot is not a hidden one: there is no reserved slot, so the
+ * labels sit flush and nothing shifts when a route changes — the gap belongs to the dot and
+ * disappears with it.
+ */
+function CurrentDot({current}: {current: boolean}) {
+    return current ? (
+        <span
+            aria-hidden="true"
+            className="h-[6px] w-[6px] shrink-0 rounded-full bg-[color:var(--color-accent)]"
+        />
+    ) : null;
+}
+
 function NavLink({to, children}: {to: string; children: ReactNode}) {
     const {pathname} = useLocation();
-    const section = SECTION_PATHS[to];
-    const current =
-        section !== undefined
-            ? section(pathname)
-            : to === "/"
-              ? pathname === "/"
-              : pathname === to || pathname.startsWith(`${to}/`);
+    const current = isCurrent(to, pathname);
 
     return (
         <Link
@@ -78,23 +100,44 @@ function NavLink({to, children}: {to: string; children: ReactNode}) {
             {...(current ? {"aria-current": "page" as const} : {})}
             // `text-…!` because `a { color: inherit }` is unlayered in `index.css` and beats an
             // unbanged utility — the table in `lib/control-class.ts` has the full list.
-            className={`inline-flex h-11 items-center gap-2.5 font-mono text-[12px] uppercase tracking-[0.12em] whitespace-nowrap ${
-                current
-                    ? "text-[color:var(--color-fg)]!"
-                    : "text-[color:var(--color-steel)]! hover:text-[color:var(--color-fg)]!"
-            }`}
+            className={itemClass(current)}
         >
-            {/* Only on the current item. An absent dot is not a hidden one: there is no reserved
-                slot, so the labels sit flush and nothing shifts when a route changes — the gap
-                belongs to the dot and disappears with it. */}
-            {current ? (
-                <span
-                    aria-hidden="true"
-                    className="h-[6px] w-[6px] shrink-0 rounded-full bg-[color:var(--color-accent)]"
-                />
-            ) : null}
+            <CurrentDot current={current} />
             {children}
         </Link>
+    );
+}
+
+/**
+ * A nav item that opens something instead of going somewhere — Get started opens the onboarding
+ * panel (task 62). `section` is the path it is lit on, so it carries the dot like a link would.
+ */
+function NavAction({
+    section,
+    onClick,
+    children,
+}: {
+    section: string;
+    onClick: () => void;
+    children: ReactNode;
+}) {
+    const {pathname} = useLocation();
+    const current = isCurrent(section, pathname);
+
+    return (
+        <button
+            type="button"
+            data-nav-action=""
+            onClick={onClick}
+            {...(current ? {"aria-current": "page" as const} : {})}
+            // Banged: `index.css`'s unlayered `button {}` sets a border and `font-family: inherit`,
+            // and both beat a utility, so unbanged the label is Archivo beside mono siblings. The
+            // colour is banged in `itemClass`; the background the base rule leaves transparent.
+            className={`border-0! font-mono! ${itemClass(current)}`}
+        >
+            <CurrentDot current={current} />
+            {children}
+        </button>
     );
 }
 
@@ -170,7 +213,10 @@ export function NavSplit({left, right}: {left: ReactNode; right: ReactNode}) {
                     // A link in it closes it, including one to the page already open, which the
                     // per-page state above would otherwise leave open.
                     onClick={(event) => {
-                        if (event.target instanceof Element && event.target.closest("a") !== null)
+                        if (
+                            event.target instanceof Element &&
+                            event.target.closest("a, [data-nav-action]") !== null
+                        )
                             setOpenOn(null);
                     }}
                     className="flex flex-col items-start gap-1 border-t border-[color:var(--color-rule)] pt-2 pb-4 md:hidden"
@@ -200,4 +246,4 @@ export function NavSplit({left, right}: {left: ReactNode; right: ReactNode}) {
     );
 }
 
-export {NavLink, SECTION_PATHS};
+export {NavAction, NavLink, SECTION_PATHS};

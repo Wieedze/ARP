@@ -44,9 +44,8 @@ const done = (steps: ReturnType<typeof stepsFor>) =>
     Object.fromEntries(steps.map((step) => [step.id, step.done]));
 
 describe("start steps", () => {
-    it("ticks nothing but the free step before the agent is connected", () => {
+    it("ticks nothing before the agent is connected", () => {
         expect(done(stepsFor("claude", {feed: "off", events: []}))).toEqual({
-            free: true,
             connect: false,
             ask: false,
             declare: false,
@@ -58,7 +57,7 @@ describe("start steps", () => {
             feed: "live",
             events: [receipt, declaration("success")],
         });
-        expect(done(steps)).toEqual({free: true, connect: true, ask: true, declare: true});
+        expect(done(steps)).toEqual({connect: true, ask: true, declare: true});
     });
 
     it("does not count a dry run or a reverted call as a declaration", () => {
@@ -70,12 +69,11 @@ describe("start steps", () => {
 
     it("ticks the builder's run from the hook, and never claims `arp status` was run", () => {
         const steps = stepsFor("agent", {feed: "live", events: [invoked]});
-        expect(done(steps)).toEqual({free: true, init: true, run: true, status: null});
+        expect(done(steps)).toEqual({init: true, run: true, status: null});
     });
 
     it("shows the tool path's steps without a tick it cannot observe", () => {
         expect(done(stepsFor("tool", {feed: "off", events: []}))).toEqual({
-            free: true,
             find: null,
             add: null,
         });

@@ -82,6 +82,7 @@ import {
     sha256,
     type Address,
     type Hex,
+    type TypedDataDefinition,
 } from "viem";
 
 /** What the node signs. Field order is the struct's order and changing it changes every hash. */
@@ -95,6 +96,14 @@ export const CONTENT_RECEIPT_TYPES = {
         {name: "servedAt", type: "uint256"},
         {name: "nonce", type: "bytes32"},
     ],
+} as const;
+
+/**
+ * Version 2 adds the commit the bytes were read at (task 61, deliverable A). A receipt without a
+ * commit is version 1 and still verifies, so every receipt already written keeps its meaning.
+ */
+export const CONTENT_RECEIPT_TYPES_V2 = {
+    ContentReceipt: [...CONTENT_RECEIPT_TYPES.ContentReceipt, {name: "commit", type: "string"}],
 } as const;
 
 /**
@@ -130,8 +139,8 @@ export const UNAUTHENTICATED = "0x0000000000000000000000000000000000000000" as c
  * Not the node's chain and not the caller's: the atom id is the subject of the receipt, and it is
  * the thing that would otherwise be ambiguous across chains.
  */
-export function contentReceiptDomain(chainId: number) {
-    return {name: "ARP Content Receipt", version: "1", chainId} as const;
+export function contentReceiptDomain(chainId: number, version: "1" | "2" = "1") {
+    return {name: "ARP Content Receipt", version, chainId} as const;
 }
 
 /** The domain a caller's request is signed under. Same separation, same reasons. */
@@ -194,6 +203,11 @@ export type ContentReceipt = {
     /** Unix seconds. */
     servedAt: number;
     nonce: Hex;
+    /**
+     * The git commit the bytes were read at, 40 hex characters. Present from version 2 on; a
+     * version 1 receipt was read at whatever `HEAD` was.
+     */
+    commit?: string;
 };
 
 /** A receipt as it travels: the claim, who claims to have signed it, and the signature. */
@@ -222,20 +236,32 @@ export function contentDigest(bytes: Uint8Array): Hex {
 }
 
 /** The typed-data block, for signing or for recovery. Exported so a verifier can rebuild it. */
-export function contentReceiptTypedData(receipt: ContentReceipt, chainId: number) {
+export function contentReceiptTypedData(
+    receipt: ContentReceipt,
+    chainId: number,
+): TypedDataDefinition {
+    const message = {
+        atom: receipt.atom,
+        url: receipt.url,
+        path: receipt.path,
+        digest: receipt.digest,
+        to: receipt.to ?? UNAUTHENTICATED,
+        servedAt: BigInt(receipt.servedAt),
+        nonce: receipt.nonce,
+    };
+    if (receipt.commit === undefined) {
+        return {
+            domain: contentReceiptDomain(chainId, "1"),
+            types: CONTENT_RECEIPT_TYPES,
+            primaryType: "ContentReceipt" as const,
+            message,
+        };
+    }
     return {
-        domain: contentReceiptDomain(chainId),
-        types: CONTENT_RECEIPT_TYPES,
+        domain: contentReceiptDomain(chainId, "2"),
+        types: CONTENT_RECEIPT_TYPES_V2,
         primaryType: "ContentReceipt" as const,
-        message: {
-            atom: receipt.atom,
-            url: receipt.url,
-            path: receipt.path,
-            digest: receipt.digest,
-            to: receipt.to ?? UNAUTHENTICATED,
-            servedAt: BigInt(receipt.servedAt),
-            nonce: receipt.nonce,
-        },
+        message: {...message, commit: receipt.commit},
     };
 }
 
@@ -292,6 +318,9 @@ export async function verifyContentReceipt(signed: SignedContentReceipt): Promis
         return malformed("servedAt is not a unix timestamp");
     }
     if (!Number.isInteger(chainId) || chainId <= 0) return malformed("chainId is not a chain id");
+    if (receipt.commit !== undefined && !/^[0-9a-f]{40}$/.test(receipt.commit)) {
+        return malformed("commit is not a 40-character git sha");
+    }
 
     const declared = getAddress(node);
     let recovered: Address;

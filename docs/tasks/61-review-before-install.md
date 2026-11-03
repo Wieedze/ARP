@@ -1,6 +1,22 @@
 # Task 61 — Review before install: a pinned version, a page of facts, and a human who accepts
 
-**Status:** **plan**, 2026-11-03. Not started.
+**Status:** **A, C, D, E built and verified 2026-11-03** on `feat/61-review-before-install` (ADR `0127`; `task-verifier` PASS on round 2, `.claude/learning/56-review-before-install.md`). **B
+deferred** by the user (« pas encore »), and §5 point 4 (what a version is beyond the pin) still
+open.
+
+- **A** — `data/catalogue/skill-pins-13579.json`, 31 repositories pinned at the catalogue's
+  `recordedAt` (`scripts/build/build-skill-pins.ts`). The content server reads the listing and the
+  bytes at the pin, refuses an unpinned repository, and the receipt names the commit (domain
+  version 2; version 1 still verifies).
+- **C** — `packages/protocol/src/skill-review.ts`: counts and lines for a fixed pattern list, no
+  label. The dialog version is short, with a link to read every file at the pinned commit. **Not on
+  it yet**: the per-version figures and the opposing side, which wait on B.
+- **D** — MCP elicitation only. The three tests in §3 D were run (ADR `0127`, table): the terminal
+  shows the dialog, also with permissions bypassed; VS Code answers `decline` without showing it
+  (`anthropics/claude-code#98256`); Claude Desktop installs nothing and was not re-tested. The
+  pending folder and `arp skills accept` were built and removed: a model answers a terminal prompt
+  through `script` (tested), and a refusal keeps nothing (user).
+- **E** — ADR `0127`.
 **Depends on:** task 31 (the content path), task 55 (project mode), task 57 (the whole skill).
 **Rules:** `code.md`, `security.md`, `portability.md`, `claims.md`, `workflow.md`.
 **Reviewers:** `intuition-integrator` (deliverable B), `task-verifier`.
@@ -84,10 +100,12 @@ open, the model makes a second tool call or runs a CLI command itself, so neithe
    Accept or Decline. The model cannot answer it. Claude Code's CLI shows it as a terminal dialog
    (code.claude.com/docs/en/mcp.md). The one documented way to answer it without a person is an
    `Elicitation` hook the user installs themselves (code.claude.com/docs/en/hooks.md).
-2. **The client does not declare it** → nothing is installed. The skill goes to `.arp/pending/<name>/`
+2. ~~**The client does not declare it** → nothing is installed. The skill goes to `.arp/pending/<name>/`
    and the agent tells the person. The person runs `arp skills accept <name>`, which prints the
    facts page and reads `y/N` from the controlling terminal, not from stdin, so a model's
-   non-interactive shell cannot answer it. **Untested idea**; prove it before relying on it.
+   non-interactive shell cannot answer it. **Untested idea**; prove it before relying on it.~~
+   **Superseded by ADR `0127`**: tested, and a model answers it through `script` (a pseudo-terminal).
+   Built, then removed. Any answer but an accept writes and keeps nothing (user decision).
 
 Three things to test before building, read on 2026-11-03 and not confirmed:
 
@@ -112,8 +130,8 @@ client a request, so the round trip has to be added, at least over stdio.
 ## 5. Open questions, for the user
 
 1. B1 or B2.
-2. Settled for D: elicitation where declared, the pending folder otherwise. Open: the three tests
-   listed under D.
+2. ~~Settled for D: elicitation where declared, the pending folder otherwise. Open: the three tests
+   listed under D.~~ **Settled by ADR `0127`**: elicitation only; the three tests were run.
 3. Whether the pattern list in C ships at all, or the page shows only provenance and figures.
 4. **Versioning, not started, user decision 2026-11-03.** Whether a version is only ARP's digest
    pin (A), also an atom on Intuition (B1), or also a publisher's name pointing at it — TNS
@@ -127,3 +145,7 @@ client a request, so the round trip has to be added, at least over stdio.
 Tier 3 (staked), and it is what makes that tier honest for skills: today a position on a skill
 backs whatever the repository holds at HEAD. With a pinned version it backs the bytes that were
 used, and the person installing sees how much stands behind exactly those bytes before accepting.
+
+**Shipped 2026-11-03: the first half only.** A position on a skill now backs one commit's bytes
+until it is listed again. The second half — the person seeing how much stands behind those bytes —
+waits on B: the question shows no staked figure and no opposing side yet.
