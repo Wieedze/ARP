@@ -103,7 +103,7 @@ function count(name: string, fallback: number): number {
 }
 
 const PORT = count('SPONSOR_PORT', 3200);
-// Optional: unset, `POST /identity` answers 503. Never printed.
+// Optional: unset, the routes that pin (`/identity`, `/publish`, the listing) answer 503. Never printed.
 const PIN_KEY = (process.env.INTUITION_PIN_API_KEY ?? '').trim();
 // `~/.arp/` (or `ARP_HOME`), never the working directory: started anywhere else, a ledger resolved
 // against it is empty, and an empty ledger sponsors every proof a second time (ADR `0116`).

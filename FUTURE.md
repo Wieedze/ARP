@@ -410,3 +410,17 @@ two ways:
 
 Decide before the mainnet port. If (1), `/account` has no purpose and goes. If (2), the MCP server
 has to redeem through `delegated.ts`.
+
+## The delegation register, read side
+
+**Left 2026-11-03**, when task 37 closed at 37b and 37c (`docs/tasks/37`). Publishing works on
+testnet 13579: one delegation was published by the sponsor, triple `0xbfd4b091…`. Nothing reads it
+back yet:
+1. **37a**: find a delegation by its agent's address, in `packages/protocol`;
+2. **37d**: `/account` lists the published delegations from the graph;
+3. **37e**: the agent finds its own delegation;
+4. the rest of the walk in `docs/tasks/37` §3: find it from a second browser and from `arp`,
+   revoke it, see it marked disabled.
+
+It depends on "Who pays on mainnet" above: if the operator funds the agent's wallet, nothing redeems
+a delegation and this read has no user.

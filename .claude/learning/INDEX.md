@@ -64,4 +64,4 @@
 | [54](54-one-path-per-profile.md) | `docs/tasks/53-one-path-per-profile.md` | PASS on the second pass | One path per profile, from the landing |
 | [55](55-one-door.md) | `docs/tasks/62-one-door.md` | PASS (second pass; first FAIL on a misplaced docstring and an ADR sentence the redirect contradicted) | One door: Register folds into Get started |
 | [56](56-review-before-install.md) | `docs/tasks/61-review-before-install.md` (A, C, D, E; B deferred by the user) | PASS (second round; round 1 FAIL) | Review before install: a pinned version, a page of facts, and a human who accepts |
-| [58](58-usage-columns.md) | `docs/tasks/58-usage-columns.md` | PASS (second round; round 1 FAIL | /tools' Usage column filled, and a repository's skills shown on its row |
+| [57](57-the-delegation-register.md) | `docs/tasks/37-the-delegation-register.md` (sub-task 37c only) | PASS | The delegation register, 37c turned on |
