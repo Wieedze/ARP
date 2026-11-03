@@ -1,6 +1,6 @@
 # Task 56 — What a skill needs, shown to the agent before it picks one
 
-**Status:** **BUILT**, 2026-11-03, branch `feat/56-requires`. Decided with the user on 2026-11-02. Measured and built in §5.
+**Status:** **BUILT and verified**, 2026-11-03, branch `feat/56-requires` (`afbc0a3`, `8b1174a`), `task-verifier` PASS on the second pass, post-mortem `.claude/learning/51-what-a-skill-needs.md`. Decided with the user on 2026-11-02. Measured and built in §5.
 **Depends on:** task 31's content path (the SKILL.md files are already fetched for serving).
 **Rules:** `code.md`, `claims.md`, `workflow.md`.
 **Reviewers:** `task-verifier`.
