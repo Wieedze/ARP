@@ -138,4 +138,23 @@ describe("a submit after the toggle moved", () => {
         expect(submitIdentityAtom.mock.calls[0]?.[0].publicClient).toBe(TESTNET.client);
         expect(submitIdentityAtom.mock.calls[0]?.[0].chain).toMatchObject({chainId: 13579});
     });
+
+    it("publishes a mainnet-priced identity record on mainnet after a flip to testnet", async () => {
+        toggle = MAINNET;
+        const view = renderHook(useAgentImport, {wrapper: Toggle});
+        toggle = TESTNET;
+        view.rerender();
+        // The hook reads only `chainId` off the plan; the service that reads the rest is mocked.
+        await view.result.current.publishIdentity({chainId: MAINNET.chainId} as IdentityAtomPlan);
+        expect(submitIdentityAtom.mock.calls[0]?.[0].publicClient).toBe(MAINNET.client);
+        expect(submitIdentityAtom.mock.calls[0]?.[0].chain).toMatchObject({chainId: 1155});
+    });
+
+    it("refuses an identity record priced on a chain ARP does not write to", async () => {
+        const actions = mountThenFlip(useAgentImport);
+        // Only `chainId` is read before the refusal, so nothing else of the plan is needed.
+        const plan = {chainId: 8453} as IdentityAtomPlan;
+        await expect(actions.publishIdentity(plan)).rejects.toThrow("chain 8453");
+        expect(submitIdentityAtom).not.toHaveBeenCalled();
+    });
 });
