@@ -127,7 +127,7 @@ export function ratingDocument(params: {
 }
 
 export const VERIFIED: SignatureVerdict = {
-    status: "verified",
+    status: "self-signed",
     declaredSigner: DEEP3_SIGNER,
     recovered: DEEP3_SIGNER,
     strategyId: "providerIdCaip19",

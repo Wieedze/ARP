@@ -2,13 +2,38 @@
  *  allow-list, and the checks on who an agent is (ADR `0116` split `service.ts` into one file per
  *  route; the behaviour is the closure it was, unchanged).
  */
-import type { PreparedCall, SponsorRecord } from '@arp-protocol/core';
-import { ERC8004_REGISTRY_REF, jsonResponse } from '@arp-protocol/core/node';
+import { isContractRevert, type PreparedCall, type SponsorRecord } from '@arp-protocol/core';
+import { ERC8004_REGISTRY_REF, jsonResponse, redactUrls } from '@arp-protocol/core/node';
 import { getAddress, isHex, type Address, type Hex } from 'viem';
 
 import type { SponsorOptions } from '../service.ts';
 
 export const json = jsonResponse;
+
+/**
+ * A registry read's `.catch`: a contract revert is the registry's "none" and reads as `null`;
+ * anything else is the chain unreachable and is rethrown, so it is never taken for "none".
+ */
+export function nullOnRevert(error: unknown): null {
+  if (isContractRevert(error)) return null;
+  throw error;
+}
+
+/** Seconds a caller is told to wait when the chain could not be read. */
+export const CHAIN_RETRY_AFTER_SECONDS = 5;
+
+/**
+ * A 503 with a retry hint: the chain could not be read, so nothing is known about the request
+ * either way. Never a 403, which would report an outage as a verdict on the agent.
+ */
+export function chainUnreadable(reason: string): Response {
+  const response = json(
+    { error: `the chain could not be read: ${redactUrls(reason).slice(0, 300)}`, retry: true },
+    503,
+  );
+  response.headers.set('retry-after', String(CHAIN_RETRY_AFTER_SECONDS));
+  return response;
+}
 
 export const ZERO_ADDRESS: Address = '0x0000000000000000000000000000000000000000';
 
@@ -81,7 +106,7 @@ export function createContext(options: SponsorOptions) {
   async function ownerOfAgent(
     agentRegistry: unknown,
     agentId: unknown,
-  ): Promise<{ owner: Address } | { error: string; status: number }> {
+  ): Promise<{ owner: Address } | { error: string; status: number } | { unreadable: Response }> {
     if (
       typeof agentRegistry !== 'string' ||
       typeof agentId !== 'string' ||
@@ -96,9 +121,13 @@ export function createContext(options: SponsorOptions) {
     if (match === null || !registries.has(agentRegistry.toLowerCase())) {
       return { error: `${agentRegistry} is not a registry this service sponsors`, status: 403 };
     }
-    const owner = await owners
-      .ownerOf(getAddress(match[2] ?? ''), BigInt(agentId))
-      .catch(() => null);
+    let owner: Address | null;
+    try {
+      // `null` is the registry's answer, "no such token". A throw is the chain unreachable.
+      owner = await owners.ownerOf(getAddress(match[2] ?? ''), BigInt(agentId));
+    } catch (error) {
+      return { unreadable: chainUnreadable(String(error instanceof Error ? error.message : error)) };
+    }
     if (owner === null) {
       return { error: `agent ${agentId} is not registered in ${agentRegistry}`, status: 403 };
     }

@@ -26,6 +26,7 @@ export async function identity(ctx: SponsorContext, body: Body): Promise<Respons
     return json({ error: 'identity creation is not configured on this service' }, 503);
   }
   const registered = await ownerOfAgent(body.agentRegistry, body.agentId);
+  if ('unreadable' in registered) return registered.unreadable;
   if ('error' in registered) return json({ error: registered.error }, registered.status);
   const own = refuseOwnAgent(registered.owner, body.agentId);
   if (own !== null) return own;

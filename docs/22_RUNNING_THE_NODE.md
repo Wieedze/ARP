@@ -158,9 +158,14 @@ Both halves are fixed, 2026-10-29:
   real host that an earlier version of the guard refused.
 
 **What that guard does not cover, said plainly.** A hostname that _resolves_ to a private address —
-`example.com` pointing at `127.0.0.1`, or DNS rebinding between the check and the connection — gets
-through. Closing it needs resolving the name and connecting to the resolved address, which `fetch`
-does not let you do. So it is a guard against the easy case and not a boundary.
+`example.com` pointing at `127.0.0.1` — got through until 2026-11-03. The MCP server now resolves
+every hop's name first, through the system resolver, and refuses it when any address it resolves to
+is private (`apps/mcp/src/host-guard.ts`, tested with a stub resolver in
+`apps/mcp/test/host-guard.test.ts`); `ARP_ALLOW_PRIVATE_PROBE=1` turns that off with the rest.
+**DNS rebinding still gets through**: `fetch` resolves the name again when it connects, and an
+answer that changes between the two lookups is not seen. Closing it needs connecting to the
+resolved address, which `fetch` does not let you do. So it is a guard against the common case and
+not a boundary.
 
 **A redirect was the other way through, and it needed no DNS at all.** `fetch` follows redirects by
 itself, so a caller-controlled **public** host answering
@@ -171,14 +176,15 @@ have stopped it. **A guard on hop one is not a guard.**
 ```
 arp_agent_endpoints    fixed. Redirects are followed by hand, every hop through the same
                        check, at most three hops
-arp_probe_endpoint     NOT fixed, and this is the one thing in this document that is a
-                       known open hole rather than a stated limit
+arp_probe_endpoint     fixed the same way since task 60 (both go through `guardedFetchText`
+                       in packages/protocol/src/verify/probe.ts). A refused hop is
+                       `inconclusive` with code `refused`: never a verdict about the agent
 ```
 
-The probe is left for a reason rather than an oversight: a refused redirect has to **mean**
-something in its `live` / `dead` / `inconclusive` vocabulary, and that vocabulary is deliberate —
-"a timeout is an answer about the agent, a TLS or DNS failure is not, because it could equally be
-us". Deciding what a refused redirect is needs its own decision record, and it is in `FUTURE.md`.
+The probe was the open hole in this document until task 60. Its vocabulary is deliberate — "a
+timeout is an answer about the agent, a TLS or DNS failure is not, because it could equally be us"
+— and a refusal is this server's decision, not the agent's answer, so it lands in `inconclusive`
+(`refusedOutcome` in `probe.ts`).
 
 **And "do not open `ARP_HOST`" does not cover the registration route.** That advice bounds a caller
 who has to reach you over the network; `arp_agent_endpoints` is called by a process on your own

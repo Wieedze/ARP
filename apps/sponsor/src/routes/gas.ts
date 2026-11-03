@@ -15,6 +15,7 @@ export async function gas(ctx: SponsorContext, body: Body): Promise<Response> {
     unconfirmed,
   } = ctx;
   const agent = await ownerOfAgent(body.agentRegistry, body.agentId);
+  if ('unreadable' in agent) return agent.unreadable;
   if ('error' in agent) return json({ error: agent.error }, agent.status);
   const own = refuseOwnAgent(agent.owner, body.agentId);
   if (own !== null) return own;

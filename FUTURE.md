@@ -238,6 +238,11 @@ answer rather than preceding it.
 
 ## Decide what a refused redirect means to the probe
 
+**Done in task 60** (2026-11-03): the probe follows redirects by hand through `guardedFetchText`,
+and a refused hop is `inconclusive` with code `refused` (`refusedOutcome`,
+`packages/protocol/src/verify/probe.ts`). `docs/22` says so. Kept below as the record of the
+question.
+
 Noted 2026-10-29, from `task-verifier`'s fourth round on `docs/tasks/31`. **A known open hole, disclosed
 in `docs/22` rather than fixed**, which is the one thing in that document that is a hole and not a
 stated limit.

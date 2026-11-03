@@ -2,7 +2,7 @@
  * `@arp-protocol/core` — a connector for the ERC-8004 agent layer. Holds no key, sends nothing.
  *
  * Give it an ERC-8004 identity and it returns one merged profile: every trust
- * provider's assessment with its EIP-712 signature actually verified and its
+ * provider's assessment with its EIP-712 signature checked against the signer it names and its
  * declared freshness window actually enforced, the agent's capability
  * declarations, and the live market on each provider claim.
  *
@@ -101,7 +101,7 @@ export {
  * Two frozen copies of a constant whose whole purpose is to be frozen is the
  * worse failure, so the writer takes this one rather than keeping its own.
  *
- * Exporting it adds no send path. This package still never signs and never sends a transaction;
+ * Exporting it adds no send path. This package still holds no key and sends no transaction;
  * `declare/` prepares calls for the agent's own key (ADR `0038`).
  */
 export {

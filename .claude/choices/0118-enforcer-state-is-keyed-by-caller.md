@@ -90,3 +90,14 @@ receipt revert `PaymentAlreadyUsed`.
 - Related doc: `contracts/SECURITY_REVIEW.md`, "Task 60"
 - Related ADR: `0040`, `0055`, `0092`, `0098`
 - Triggered by: `docs/tasks/60-audit-cleanup.md`
+
+## Follow-up, 2026-11-03 (task 60, stream F)
+
+- Rule changed: `.claude/rules/metamask-delegation.md`, `TrustStakeCapEnforcer` section, now
+  specifies the shipped v2 — state keyed `(caller, delegationHash)`, the event naming its caller,
+  `getState(address, bytes32)`, a fixed window and the ~2 × `cap` across a boundary. It still
+  showed the v1 mapping, "rolling" and the v1 event.
+- "Rolling" was also fixed in `apps/web/src/lib/caveat-builder.ts`,
+  `apps/web/src/services/delegation.ts` and `docs/15_ROADMAP.md`. ADRs `0036`, `0040`, `0055`,
+  post-mortem `03` and the historical task and pivot files (`docs/00`, `docs/06`, `docs/tasks/02b`,
+  `docs/tasks/04c`) keep the word as written: they are append-only or record.

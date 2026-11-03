@@ -56,6 +56,7 @@ import { privateKeyToAccount } from 'viem/accounts';
 
 import deployments from '../../../data/deployments/13579.json';
 import { assertSponsorChain, readKeyFile } from './key-file.ts';
+import { nullOnRevert } from './routes/context.ts';
 import { SponsorLedger } from './ledger.ts';
 import { intuitionPinner } from './pin.ts';
 import {
@@ -247,6 +248,7 @@ const service = createSponsor({
   owners: {
     async ownerOf(registry, agentId) {
       // `ownerOf` reverts for a token that does not exist, which is the "not registered" answer.
+      // Anything else is the chain unreachable, and is thrown: `null` means "does not exist".
       return publicClient
         .readContract({
           address: registry,
@@ -254,10 +256,11 @@ const service = createSponsor({
           functionName: 'ownerOf',
           args: [agentId],
         })
-        .catch(() => null);
+        .catch(nullOnRevert);
     },
     async agentWalletOf(registry, agentId) {
       // Unset reads as the zero address; a registry without the getter reverts. Both mean none.
+      // An unreachable chain is neither, and is thrown.
       const wallet = await publicClient
         .readContract({
           address: registry,
@@ -265,7 +268,7 @@ const service = createSponsor({
           functionName: 'getAgentWallet',
           args: [agentId],
         })
-        .catch(() => null);
+        .catch(nullOnRevert);
       return wallet === null || wallet === ZERO ? null : wallet;
     },
   },

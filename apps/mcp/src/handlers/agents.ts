@@ -1,9 +1,6 @@
 import {
   type AgentListOrder,
-  fetchableDocumentUrl,
   listAgents,
-  MAX_DOCUMENT_HOPS,
-  nextDocumentHop,
   partitionByCheckability,
   readDeclaredEndpoints,
   resolveAgent,
@@ -11,18 +8,9 @@ import {
   toCaip19,
 } from '@arp-protocol/core';
 
-import { cappedText } from '../capped.js';
 import { GRAPHQL, directory } from '../config.js';
+import { readRegistrationDocument, type RegistrationDocument } from '../registration-document.js';
 import { type JsonRpcId, fail, text, isAddress } from '../rpc.js';
-
-/**
- * A registration file is a few kilobytes. The `tokenURI` is a string somebody else controls, so the
- * host it names can answer slowly or without end: both are bounded (ADR `0116`), and a document past
- * either bound is an answer about the agent, like a refused one.
- */
-const DOCUMENT_TIMEOUT_MS = 10_000;
-const MAX_DOCUMENT_BYTES = 256 * 1024;
-
 
 /**
  * Where another agent said it can be reached.
@@ -66,105 +54,9 @@ export async function agentEndpoints(id: JsonRpcId, args: Record<string, unknown
     });
   }
 
-  let document: unknown;
+  let read: RegistrationDocument;
   try {
-    if (file.startsWith('data:')) {
-      // Inline in the tokenURI — the shape an agent picks when it wants no hosting dependency.
-      const comma = file.indexOf(',');
-      const payload = file.slice(comma + 1);
-      document = JSON.parse(
-        file.slice(0, comma).includes(';base64')
-          ? Buffer.from(payload, 'base64').toString('utf8')
-          : decodeURIComponent(payload),
-      );
-    } else {
-      // Both halves of the guard, in the package where `privateProbeTarget` assigns the scheme
-      // check to its caller — `fetchableDocumentUrl` is that check, and it has the tests. It
-      // refuses with `text` here where `probe()` refuses with `fail`, deliberately: there the URL
-      // *is* the parameter so a bad one is an invalid param, and here the caller's params were
-      // well-formed and the refusal is an answer *about the agent*, like the two outcomes below.
-      const fetchable = fetchableDocumentUrl(file, {
-        allowPrivate: process.env['ARP_ALLOW_PRIVATE_PROBE'] === '1',
-      });
-      if (fetchable.status === 'refuse') {
-        return text(id, {
-          caip19: toCaip19(agent),
-          registration_file: file,
-          error: `refused: ${fetchable.reason}`,
-          note:
-            'Published something this server will not fetch. A `tokenURI` is a string somebody ' +
-            'else controls, and a scheme or an address like that reads the machine the server ' +
-            'runs on rather than a document anybody published.',
-        });
-      }
-      // **Redirects are followed by hand**, because `fetch` follows them itself and a guard on hop
-      // one is not a guard: measured 2026-10-29, a caller-controlled PUBLIC host answering
-      // `302 Location: http://169.254.169.254/…` returned the private body. Every hop goes through
-      // the same check. `probeEndpoint` has the same exposure and is NOT fixed here — a refused
-      // redirect has to mean something in its live/dead/inconclusive vocabulary, and that is a
-      // decision with its own ADR (`docs/22` discloses it).
-      let url = fetchable.url;
-      let response = await fetch(url, {
-        headers: { accept: 'application/json' },
-        redirect: 'manual',
-        signal: AbortSignal.timeout(DOCUMENT_TIMEOUT_MS),
-      });
-      for (
-        let hop = 0;
-        hop < MAX_DOCUMENT_HOPS && response.status >= 300 && response.status < 400;
-        hop += 1
-      ) {
-        const location = response.headers.get('location');
-        if (location === null) {
-          // A 3xx with no `Location` is a broken origin, not a redirect chain. Breaking here fell
-          // through to the hop-budget branch below, which told a reader debugging that origin
-          // "more than 3 redirects" after zero of them — the outcome was right and the sentence
-          // was not.
-          return text(id, {
-            caip19: toCaip19(agent),
-            registration_file: file,
-            error: `the host answered ${response.status} with no Location header`,
-            note: 'A redirect that does not say where. Nothing was followed and nothing was read.',
-          });
-        }
-        const next = nextDocumentHop(url, location, {
-          allowPrivate: process.env['ARP_ALLOW_PRIVATE_PROBE'] === '1',
-        });
-        if (next.status === 'refuse') {
-          return text(id, {
-            caip19: toCaip19(agent),
-            registration_file: file,
-            error: `refused: ${next.reason}`,
-            note:
-              'The document redirected somewhere this server will not follow. A guard on the first ' +
-              'hop is not a guard, so every hop is checked the same way.',
-          });
-        }
-        url = next.url;
-        response = await fetch(url, {
-          headers: { accept: 'application/json' },
-          redirect: 'manual',
-          signal: AbortSignal.timeout(DOCUMENT_TIMEOUT_MS),
-        });
-      }
-      if (response.status >= 300 && response.status < 400) {
-        return text(id, {
-          caip19: toCaip19(agent),
-          registration_file: file,
-          error: `refused: more than ${MAX_DOCUMENT_HOPS} redirects`,
-          note: 'A document that needs more hops than that is not one anybody wants read.',
-        });
-      }
-      if (!response.ok) {
-        return text(id, {
-          caip19: toCaip19(agent),
-          registration_file: file,
-          error: `the host answered ${response.status}`,
-          note: 'Published something we could not read, which is a different answer from publishing nothing.',
-        });
-      }
-      document = JSON.parse(await cappedText(response, MAX_DOCUMENT_BYTES));
-    }
+    read = await readRegistrationDocument(file);
   } catch (error) {
     return text(id, {
       caip19: toCaip19(agent),
@@ -173,6 +65,28 @@ export async function agentEndpoints(id: JsonRpcId, args: Record<string, unknown
       note: 'Published something we could not read, which is a different answer from publishing nothing.',
     });
   }
+  // A refusal is an answer *about the agent* and is returned with `text`, where `probe()` refuses
+  // with `fail`: there the URL is the parameter, here the caller's params were well-formed.
+  if (read.status === 'refused') {
+    return text(id, {
+      caip19: toCaip19(agent),
+      registration_file: file,
+      error: `refused: ${read.reason}`,
+      note:
+        'Published something this server will not fetch. A `tokenURI` is a string somebody ' +
+        'else controls; a scheme, an address, a name resolving to one, or a redirect to one ' +
+        'reads the machine the server runs on rather than a document anybody published.',
+    });
+  }
+  if (read.status === 'unreadable') {
+    return text(id, {
+      caip19: toCaip19(agent),
+      registration_file: file,
+      error: read.reason,
+      note: 'Published something we could not read, which is a different answer from publishing nothing.',
+    });
+  }
+  const document = read.document;
 
   // Split, never merged: showing them as one list implies the second group failed a check it was
   // never given.

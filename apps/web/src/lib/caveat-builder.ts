@@ -31,7 +31,9 @@ import {toFunctionSelector} from "viem";
 
 /**
  * `TrustStakeCapEnforcer` caveat. `terms` is `abi.encode(uint256, uint256)`
- * with the per-window cap and the rolling-window length in seconds.
+ * with the per-window cap and the window length in seconds. The window is
+ * fixed, not rolling: it opens at the first spend after the last one expired,
+ * so about 2 × cap can pass across a boundary (ADR 0118).
  *
  * @param cap            Maximum cumulative native-token spend per window
  *                       (in wei — tTRUST has 18 decimals on Intuition).
@@ -89,7 +91,7 @@ export const MULTI_VAULT_COMPOSE_SELECTORS: readonly string[] = [
  *   - `AllowedMethodsEnforcer([deposit, createAtoms, createTriples])`
  *     (stock) — restricts to the three composing/staking selectors.
  *   - `TrustStakeCapEnforcer(cap, periodSeconds)` (ours) — caps cumulative
- *     `value` (msg.value, i.e. tTRUST stake amount) per rolling window.
+ *     `value` (msg.value, i.e. tTRUST stake amount) per fixed window.
  *
  * The three compose like AND. An agent calling
  * `MultiVault.deposit(...) { value: amount }` passes only if `amount` plus

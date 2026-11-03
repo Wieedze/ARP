@@ -35,7 +35,7 @@ DelegationManager.
 
 - the full loop: create the triple, deposit, caveats enforcing, every revert path
 - `DomainScopeEnforcer` **actually gating** — it works there, because `ModuleRegistry` is deployed
-- `TrustStakeCapEnforcer` bounding a rolling period
+- `TrustStakeCapEnforcer` bounding a fixed window (ADR `0118`: not rolling)
 - the connector surface; a protocol does not care which chain
 - discovery, once the agents have registration files
 - reading a tool's reputation
@@ -106,7 +106,8 @@ rather than a reader's assumption that Phase 0 handled it.
 - **The connector** — **built** 2026-10-19 (`docs/tasks/16` half 1, ADR `0038`). It prepares the calls
   and the agent signs and sends them. Build and send were fused in `delegation-redeem.ts`;
   `packages/protocol/src/declare/` separates them, which is what keeps ARP out of the loop — no key, no gas,
-  no signature — and preserves the package's own invariant: _never signs, never sends_. This bullet
+  no signature — and preserves the package's own invariant: _holds no key, sends nothing_ (it signs
+  only through a signer the caller injects). This bullet
   predicted the design before the task ran, which is the reason to trust it is not drift.
 - MCP first, not a package — **done**: `arp_declare_used` and `arp_stake_on_used` return the plan,
   with a caveat on every response that nothing was signed or sent. Universal, and the agent chooses

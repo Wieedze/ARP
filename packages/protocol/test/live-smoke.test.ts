@@ -102,6 +102,6 @@ live("live smoke (ERC8004_LIVE=1)", () => {
         const deep3 = profile.assessments.find(
             (entry) => entry.fetch.status === "ok" && entry.claim.resolverUrl?.includes("deep3.ai"),
         );
-        expect(deep3?.signature.status).toBe("verified");
+        expect(deep3?.signature.status).toBe("self-signed");
     }, 60_000);
 });

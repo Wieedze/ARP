@@ -27,12 +27,12 @@ function clone(name: string): Record<string, unknown> {
     return structuredClone(document);
 }
 
-describe("verifyAssessmentSignature — verified", () => {
+describe("verifyAssessmentSignature — self-signed", () => {
     for (const name of SIGNED_DOCUMENTS) {
         it(`recovers the declared signer from the live ${name}`, async () => {
             const verdict = await verifyAssessmentSignature(fixture(name));
-            expect(verdict.status).toBe("verified");
-            if (verdict.status !== "verified") return;
+            expect(verdict.status).toBe("self-signed");
+            if (verdict.status !== "self-signed") return;
             expect(verdict.recovered).toBe(DEEP3_SIGNER);
             expect(verdict.declaredSigner).toBe(DEEP3_SIGNER);
             expect(verdict.strategyId).toBe(providerIdCaip19Strategy.id);
@@ -51,13 +51,13 @@ describe("verifyAssessmentSignature — verified", () => {
     });
 
     it("is available to a provider we have confirmed nothing about, when the signature is simply correct", async () => {
-        // Vouching for a correct signature costs nobody anything, so `verified`
+        // Vouching for a correct signature costs nobody anything, so `self-signed`
         // is not gated on confirmation the way `mismatch` is.
         const document = clone("deep3-2340.assessment.json");
         const verdict = await verifyAssessmentSignature(document, {
             strategies: [{...providerIdCaip19Strategy, confirmedProviderIds: []}],
         });
-        expect(verdict.status).toBe("verified");
+        expect(verdict.status).toBe("self-signed");
     });
 });
 

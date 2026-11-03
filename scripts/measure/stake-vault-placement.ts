@@ -94,8 +94,8 @@ const rows = payload.data?.triples ?? [];
  * TRUST per bonding curve, so the split is produced rather than asserted.
  *
  * It was cited for a figure it did not compute: the split lived in this file's own docstring, and
- * `tool-usage-view.ts` quoted "91.6%" where the real number is 89.33% and where this repo already
- * held "89%" elsewhere. `rules/claims.md` — commit the script, not the number.
+ * a web view (since deleted) quoted "91.6%" where the real number is 89.33% and where this repo
+ * already held "89%" elsewhere. `rules/claims.md` — commit the script, not the number.
  */
 const assetsByCurve = new Map<string, bigint>();
 const addByCurve = (s: Side | null | undefined) => {

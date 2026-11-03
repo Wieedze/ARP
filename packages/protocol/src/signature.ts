@@ -42,7 +42,7 @@ export type SignatureValueStrategy = {
      * The `provider.id` values this strategy has been confirmed against, by
      * recovering that provider's own declared signer from their live documents.
      * Empty means confirmed against nobody — the strategy can still produce a
-     * `verified` verdict on an exact match, but it can never produce a
+     * `self-signed` verdict on an exact match, but it can never produce a
      * `mismatch`.
      */
     readonly confirmedProviderIds: readonly string[];
@@ -253,7 +253,7 @@ function unverified(
  * provider served and it answers. This is the smallest useful unit of the
  * package and it is exported on its own for exactly that reason.
  *
- * The verdict is deliberately conservative. `verified` is returned only when
+ * The verdict is deliberately conservative. `self-signed` is returned only when
  * recovery produced the declared signer; a reconstruction this package cannot
  * perform yields `unverified` with the attempts recorded, never a guess.
  *
@@ -362,7 +362,7 @@ export async function verifyAssessmentSignature(
         attempts.push({strategyId: strategy.id, confirmedForProvider, recovered});
         if (recovered === declaredSigner) {
             return {
-                status: "verified",
+                status: "self-signed",
                 declaredSigner,
                 recovered,
                 strategyId: strategy.id,

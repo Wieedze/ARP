@@ -105,3 +105,23 @@ no chain is trusted as given. Either mismatch throws `RpcChainMismatchError`.
 - Related ADR: `.claude/choices/0019-*.md` (the `confirmedProviderIds` gate on `mismatch`),
   `.claude/choices/0038-*.md` (the package holds no key)
 - Task: `docs/tasks/60-audit-cleanup.md`, stream B
+
+## Addendum, 2026-11-02 — `verified` is renamed `self-signed`
+
+**Decision (user, 2026-11-02):** rename the status so it says only what is checked. Of the three
+options left open above (rename, anchor, keep), the user chose rename. Anchoring the signer to the
+provider stays a separate, unmade decision.
+
+- **Code value:** `SignatureVerdict["status"]` is `"self-signed" | "mismatch" | "unverified"`. The
+  document names its own signer and the signature recovers to it; nothing more is claimed.
+- **Screen label** (`apps/web/src/services/trust-format.ts`, `describeSignature`): **"Signed, author
+  not checked"**, in place of "Signature verified". The tab strip's short form
+  (`apps/web/src/services/agent-trust.ts`, `SIGNATURE_TAB_LABEL`) is **"self-signed"**. Both follow
+  ADR `0103`: plain words, and the detail line underneath is unchanged.
+- **Unchanged:** `mismatch` and `unverified` keep their names, and the guarantee list in the
+  Decision section above still holds word for word under the new name.
+- **Breaking:** `@arp-protocol/core` is at `0.0.1`; a caller comparing against `"verified"` no
+  longer matches. No MCP tool returned this status, so the MCP surface does not change.
+- **Not rewritten:** append-only records that name the old value (ADRs `0018`, `0019`, `0028`,
+  `0029`, post-mortem `09`, task files `07` and `08`, `docs/10`, `docs/reference/pr-drafts/`) keep
+  it as written. They describe the status as it was named then.
