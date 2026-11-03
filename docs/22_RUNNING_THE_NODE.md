@@ -68,8 +68,14 @@ JSON, and the server writes none of it (task 57).
 
 **In the sponsored mode with `ARP_SKILLS_DIR`**, the server process that runs your MCP tools writes
 a fetched skill's files, scripts included, under `<ARP_SKILLS_DIR>/<name>/`, after checking every
-file against the receipt (task 57). It runs none of them. Your agent runtime may, as it would after
-`npx skills add`.
+file against the receipt (task 57) **and only after you accept** (task 61, ADR `0127`). It asks you
+through MCP elicitation: a dialog with the skill, a link to read every file on GitHub at the pinned
+commit, and the counts. The model does not see the question and cannot answer it. Any answer but
+an accept writes nothing and keeps nothing, and there is no setting that skips the question. It
+runs none of the files. Your agent runtime may, as it would after `npx skills add`.
+
+The bytes come from the commit each repository was pinned at when it was listed
+(`data/catalogue/skill-pins-13579.json`), never from `HEAD`, and the receipt names that commit.
 
 **It cannot be made to fetch somewhere else.** This is the one that would matter most if it were
 wrong, so it is worth stating precisely. The only input to the content route is an atom id. That is
@@ -103,8 +109,8 @@ would stop accepting your receipts.
 ~/.arp/agent-key              the agent's key, mode 0600, created on the first fetch
 ~/.arp/agent.json             the agent's id and identity atom, once it is registered
 ~/.arp/receipts.jsonl         every skill served to the agent, with its receipt
-<ARP_SKILLS_DIR>/<name>/**    the skill's files, scripts included, when ARP_SKILLS_DIR is set
-.arp/receipts.jsonl           a copy of the receipt for the hook, when ARP_SKILLS_DIR is set
+<ARP_SKILLS_DIR>/<name>/**    the skill's files, scripts included, when ARP_SKILLS_DIR is set and you accepted
+.arp/receipts.jsonl           a copy of the receipt for the hook, for each skill you accepted
 ```
 
 ## Every outbound connection
@@ -280,10 +286,10 @@ ARP_TOOLS              read: the three reads only. desktop or sponsored: the rea
                        and arp_declare_used, with a local agent key in ~/.arp/agent-key (ADR 0110),
                        over stdio only: the server refuses to start them over HTTP (ADR 0116).
                        Unset: every tool
-ARP_SKILLS_DIR         desktop/sponsored only, set by `arp init --sponsored`: arp_get_skill writes
-                       <dir>/<name>/**, relative to the working directory, refusing (and writing
-                       nothing) when a different file is already at one of those paths, and
-                       appends the receipt to ARP_RECEIPTS
+ARP_SKILLS_DIR         desktop/sponsored only, set by `arp init --sponsored`: once you accept the
+                       install question, arp_get_skill writes <dir>/<name>/**, relative to the
+                       working directory, refusing (and writing nothing) when a different file is
+                       already at one of those paths, and appends the receipt to ARP_RECEIPTS
 ARP_CONTENT            desktop/sponsored only: the content server. Default http://127.0.0.1:3002
 ARP_SPONSOR            desktop/sponsored only: the sponsoring service. Default http://127.0.0.1:3200
 ARP_ACTIVITY_DIR       session-log.ts --serve only: the directory it tails. Default .arp

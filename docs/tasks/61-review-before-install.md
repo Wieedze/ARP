@@ -1,6 +1,21 @@
 # Task 61 — Review before install: a pinned version, a page of facts, and a human who accepts
 
-**Status:** **plan**, 2026-11-03. Not started.
+**Status:** **A, C, D, E built 2026-11-03** on `feat/61-review-before-install` (ADR `0127`). **B
+deferred** by the user (« pas encore »), and §5 point 4 (what a version is beyond the pin) still
+open.
+
+- **A** — `data/catalogue/skill-pins-13579.json`, 31 repositories pinned at the catalogue's
+  `recordedAt` (`scripts/build/build-skill-pins.ts`). The content server reads the listing and the
+  bytes at the pin, refuses an unpinned repository, and the receipt names the commit (domain
+  version 2; version 1 still verifies).
+- **C** — `packages/protocol/src/skill-review.ts`: counts and lines for a fixed pattern list, no
+  label. The dialog version is short, with a link to read every file at the pinned commit.
+- **D** — MCP elicitation only. The three tests in §3 D were run (ADR `0127`, table): the terminal
+  shows the dialog, also with permissions bypassed; VS Code answers `decline` without showing it
+  (`anthropics/claude-code#98256`); Claude Desktop installs nothing and was not re-tested. The
+  pending folder and `arp skills accept` were built and removed: a model answers a terminal prompt
+  through `script` (tested), and a refusal keeps nothing (user).
+- **E** — ADR `0127`.
 **Depends on:** task 31 (the content path), task 55 (project mode), task 57 (the whole skill).
 **Rules:** `code.md`, `security.md`, `portability.md`, `claims.md`, `workflow.md`.
 **Reviewers:** `intuition-integrator` (deliverable B), `task-verifier`.

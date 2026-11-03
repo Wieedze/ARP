@@ -147,9 +147,12 @@ is created in `~/.arp/` on the first fetch.
 ### 4.2 The script (10 minutes)
 
 1. **Session 1.** Ask: _"I need eye-catching YouTube thumbnails for my channel. Find a skill with
-   ARP and set it up in this project."_ Claude calls `arp_find_tools`, then `arp_get_skill`. The
-   skill lands in `.claude/skills/youtube-thumbnail-design/SKILL.md`, and its receipt in the
-   project's `.arp/receipts.jsonl`.
+   ARP and set it up in this project."_ Claude calls `arp_find_tools`, then `arp_get_skill`. A
+   dialog asks the person to install it, with a link to read the files at the pinned commit (task
+   61): tick the box and press Accept. Run this in a terminal — Claude Code in VS Code answers no
+   without showing the dialog (anthropics/claude-code#98256). The skill lands in
+   `.claude/skills/youtube-thumbnail-design/SKILL.md`, and its receipt in the project's
+   `.arp/receipts.jsonl`.
 2. **Session 2** (quit, then reopen Claude Code). Ask: _"Use the youtube-thumbnail-design skill to
    write a one-page design brief for a video about sourdough bread, then record that you used it
    with ARP."_ Claude invokes the skill with its `Skill` tool, writes the brief, and calls
