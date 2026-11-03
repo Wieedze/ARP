@@ -113,7 +113,7 @@ export type SignatureCopy = {
     /**
      * The one fact the label does not already carry.
      *
-     * For `verified` and `mismatch`, the addresses involved. For `unverified`,
+     * For `self-signed` and `mismatch`, the addresses involved. For `unverified`,
      * the connector's own reason — except the absent-signature one, which is
      * the only reason that merely restates the label in the document's field
      * names and is therefore the only one that can be dropped without losing a
@@ -123,7 +123,7 @@ export type SignatureCopy = {
      * exists to show.
      */
     detail: string | null;
-    tone: "verified" | "mismatch" | "unverified";
+    tone: "self-signed" | "mismatch" | "unverified";
 };
 
 /**
@@ -139,11 +139,11 @@ export type SignatureCopy = {
  * encoding this package has never confirmed.
  */
 export function describeSignature(verdict: SignatureVerdict): SignatureCopy {
-    if (verdict.status === "verified") {
+    if (verdict.status === "self-signed") {
         return {
-            label: "Signature verified",
+            label: "Signed, author not checked",
             detail: `EIP-712 recovers to the signer the document names, ${truncateMiddle(verdict.declaredSigner, 8, 6)}`,
-            tone: "verified",
+            tone: "self-signed",
         };
     }
     if (verdict.status === "mismatch") {

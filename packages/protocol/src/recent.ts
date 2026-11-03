@@ -12,8 +12,8 @@ import {
     RECENT_QUERY,
     RECENT_STAKES_QUERY,
 } from "@arp-protocol/graphql";
-import {INTUITION_MAINNET_GRAPHQL} from "./sources/intuition/index.js";
 import {SAME_AS, USES} from "./sources/intuition/terms.js";
+import {DEFAULT_CURVE_ID} from "./sources/intuition/index.js";
 
 /**
  * The most recent declarations, newest first.
@@ -63,7 +63,7 @@ export type RecentDeclaration = {
 };
 
 export type RecentConfig = {
-    graphqlUrl?: string;
+    graphqlUrl: string;
     fetch?: FetchLike;
     timeoutMs?: number;
     transport?: GraphqlTransport;
@@ -73,13 +73,11 @@ export type RecentConfig = {
     curveId?: number;
 };
 
-export async function getRecentDeclarations(
-    config: RecentConfig = {},
-): Promise<RecentDeclaration[]> {
+export async function getRecentDeclarations(config: RecentConfig): Promise<RecentDeclaration[]> {
     const transport =
         config.transport ??
         createGraphqlTransport({
-            url: config.graphqlUrl ?? INTUITION_MAINNET_GRAPHQL,
+            url: config.graphqlUrl,
             fetch: config.fetch ?? defaultFetch(),
             timeoutMs: config.timeoutMs ?? DEFAULT_TIMEOUT_MS,
         });
@@ -97,7 +95,7 @@ export async function getRecentDeclarations(
         uses: USES,
         sameAs: SAME_AS,
         limit: config.limit ?? 8,
-        curveId: String(config.curveId ?? 1),
+        curveId: config.curveId === undefined ? DEFAULT_CURVE_ID : String(config.curveId),
     });
 
     const rows = Array.isArray(data["triples"]) ? data["triples"] : [];
@@ -163,12 +161,12 @@ export type RecentStake = {
  * as for `getRecentDeclarations`.
  */
 export async function getRecentStakes(
-    config: Omit<RecentConfig, "curveId"> = {},
+    config: Omit<RecentConfig, "curveId">,
 ): Promise<RecentStake[]> {
     const transport =
         config.transport ??
         createGraphqlTransport({
-            url: config.graphqlUrl ?? INTUITION_MAINNET_GRAPHQL,
+            url: config.graphqlUrl,
             fetch: config.fetch ?? defaultFetch(),
             timeoutMs: config.timeoutMs ?? DEFAULT_TIMEOUT_MS,
         });

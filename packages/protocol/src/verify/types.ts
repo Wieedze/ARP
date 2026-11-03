@@ -116,7 +116,8 @@ export type ProbeOutcome =
       }
     | {
           status: "inconclusive";
-          code: "unrecognised-response" | "transport-error" | "rate-limited";
+          /** `refused`: the URL, or a redirect from it, is a private address or a bad scheme. */
+          code: "unrecognised-response" | "transport-error" | "rate-limited" | "refused";
           httpStatus: number | null;
           request: ProbeRequest;
           /** Truncated response body, so a reader can see what confused us. */

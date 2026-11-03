@@ -17,13 +17,8 @@ import {connectedWalletClient} from "./wallet-client";
  * and a retry that resubmits is the thing to avoid on a surface like this (ADR `0017`
  * safeguard 5).
  *
- * **It follows the chain toggle now**, and the comment here used to say the opposite: _"not
- * chain-switchable, deliberately … it moves with the write path or not at all"_. It moves with the
- * write path, and the write path moved (user, 2026-10-27). The incoherence that comment was
- * guarding against — planning on one chain and submitting to another — is prevented by the
- * mechanism rather than by refusing the feature: the chain travels **on the registration**, and
- * `submitToolRegistration` guards the wallet against `registration.chain` rather than against
- * whatever the toggle says at signing time.
+ * The toggle picks the chain at planning time only. The chain travels **on the registration**, and
+ * the submit guards, simulates and waits against `registration.chain`, never the live toggle.
  */
 export function useToolRegister() {
     const chain = useChainChoice();
@@ -44,11 +39,11 @@ export function useToolRegister() {
             const walletClient = await connectedWalletClient();
             return submitToolRegistration({
                 walletClient,
-                publicClient: chain.client,
+                publicClient: registration.chain.client,
                 registration,
             });
         },
-        [chain],
+        [],
     );
 
     return {plan, submit};

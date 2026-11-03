@@ -100,7 +100,7 @@ contract ReceiptEnforcerTest is Test {
             DELEGATOR,
             REDEEMER
         );
-        assertTrue(atVector.isPaymentUsed(CHAIN, PAYMENT));
+        assertTrue(atVector.isPaymentUsed(CHAIN, viemSigner, PAYMENT));
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -190,7 +190,7 @@ contract ReceiptEnforcerTest is Test {
             _args(r),
             _deposit(REDEEMER, TERM)
         );
-        assertFalse(enforcer.isPaymentUsed(CHAIN, PAYMENT));
+        assertFalse(enforcer.isPaymentUsed(CHAIN, signer, PAYMENT));
     }
 
     function testFuzz_beforeHook_rejectsTamperedV2Fields(bytes32 termId, uint256 expiresAt) public {
@@ -210,12 +210,12 @@ contract ReceiptEnforcerTest is Test {
     //////////////////////////////////////////////////////////////*/
 
     function test_beforeHook_acceptsAndConsumes() public {
-        assertFalse(enforcer.isPaymentUsed(CHAIN, PAYMENT));
+        assertFalse(enforcer.isPaymentUsed(CHAIN, signer, PAYMENT));
         vm.expectEmit(address(enforcer));
-        emit ReceiptConsumed(DELEGATION_HASH, keccak256(abi.encode(CHAIN, PAYMENT)), signer, REDEEMER, TERM);
+        emit ReceiptConsumed(DELEGATION_HASH, keccak256(abi.encode(CHAIN, signer, PAYMENT)), signer, REDEEMER, TERM);
         _hook(_terms(), _args(_receipt()), _deposit(REDEEMER, TERM));
-        assertTrue(enforcer.isPaymentUsed(CHAIN, PAYMENT));
-        assertFalse(enforcer.isPaymentUsed(1, PAYMENT));
+        assertTrue(enforcer.isPaymentUsed(CHAIN, signer, PAYMENT));
+        assertFalse(enforcer.isPaymentUsed(1, signer, PAYMENT));
     }
 
     function test_beforeHook_findsBindingAfterOthers() public {
@@ -244,7 +244,9 @@ contract ReceiptEnforcerTest is Test {
         bytes memory args = _args(_receipt());
         _hook(_terms(), args, _deposit(REDEEMER, TERM));
         _hookReverts(
-            abi.encodeWithSelector(ReceiptEnforcer.PaymentAlreadyUsed.selector, keccak256(abi.encode(CHAIN, PAYMENT))),
+            abi.encodeWithSelector(
+                ReceiptEnforcer.PaymentAlreadyUsed.selector, keccak256(abi.encode(CHAIN, signer, PAYMENT))
+            ),
             _terms(),
             args,
             _deposit(REDEEMER, TERM)
@@ -258,11 +260,51 @@ contract ReceiptEnforcerTest is Test {
         again.issuedAt = ISSUED_AT + 1;
         again.resultHash = bytes32(uint256(0xdead));
         _hookReverts(
-            abi.encodeWithSelector(ReceiptEnforcer.PaymentAlreadyUsed.selector, keccak256(abi.encode(CHAIN, PAYMENT))),
+            abi.encodeWithSelector(
+                ReceiptEnforcer.PaymentAlreadyUsed.selector, keccak256(abi.encode(CHAIN, signer, PAYMENT))
+            ),
             _terms(),
             _args(again),
             _deposit(REDEEMER, TERM)
         );
+    }
+
+    /// ADR 0118. The griefing the global `(chainId, payment)` key allowed: a stranger binds their
+    /// own node key in their own delegation, signs a receipt naming the victim's payment hash, and
+    /// redeems first. It consumes only the stranger's slot; the victim's genuine receipt passes.
+    function test_beforeHook_strangerCannotBurnAnotherSignersPayment() public {
+        (address attacker, uint256 attackerKey) = makeAddrAndKey("attacker");
+        ReceiptEnforcer.Binding[] memory theirs = new ReceiptEnforcer.Binding[](1);
+        theirs[0] = ReceiptEnforcer.Binding(attacker, keccak256(bytes(REGISTRY)), AGENT_ID, TERM);
+        ReceiptEnforcer.HireReceipt memory forged = _receipt();
+        (uint8 v, bytes32 rr, bytes32 ss) = vm.sign(attackerKey, enforcer.hashReceipt(forged, CHAIN));
+        enforcer.beforeHook(
+            abi.encode(CHAIN, MAX_AGE, theirs),
+            abi.encode(forged, abi.encodePacked(rr, ss, v)),
+            _singleDefault(),
+            _deposit(REDEEMER, TERM),
+            bytes32(uint256(0xa77ac4)),
+            address(0xA77AC4),
+            REDEEMER
+        );
+        assertTrue(enforcer.isPaymentUsed(CHAIN, attacker, PAYMENT));
+        assertFalse(enforcer.isPaymentUsed(CHAIN, signer, PAYMENT));
+
+        _hook(_terms(), _args(_receipt()), _deposit(REDEEMER, TERM));
+        assertTrue(enforcer.isPaymentUsed(CHAIN, signer, PAYMENT));
+    }
+
+    /// One receipt does not unlock a deposit in a second delegation that accepts the same signer.
+    function test_beforeHook_revertsOnSameReceiptUnderAnotherDelegation() public {
+        bytes memory args = _args(_receipt());
+        _hook(_terms(), args, _deposit(REDEEMER, TERM));
+        bytes memory execution = _deposit(REDEEMER, TERM);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                ReceiptEnforcer.PaymentAlreadyUsed.selector, keccak256(abi.encode(CHAIN, signer, PAYMENT))
+            )
+        );
+        enforcer.beforeHook(_terms(), args, _singleDefault(), execution, bytes32(uint256(2)), address(0xD2), REDEEMER);
     }
 
     /// A receipt signed for another chain's domain recovers to a different address.
@@ -451,7 +493,7 @@ contract ReceiptEnforcerTest is Test {
     function test_beforeHook_acceptsValueEqualToPaid() public {
         ReceiptEnforcer.HireReceipt memory r = _receipt();
         _hook(_terms(), _args(r), _depositWithValue(REDEEMER, TERM, r.paid));
-        assertTrue(enforcer.isPaymentUsed(CHAIN, PAYMENT));
+        assertTrue(enforcer.isPaymentUsed(CHAIN, signer, PAYMENT));
     }
 
     function test_beforeHook_acceptsValueBelowPaid() public {
@@ -467,7 +509,7 @@ contract ReceiptEnforcerTest is Test {
             _args(r),
             _depositWithValue(REDEEMER, TERM, r.paid + 1)
         );
-        assertFalse(enforcer.isPaymentUsed(CHAIN, PAYMENT));
+        assertFalse(enforcer.isPaymentUsed(CHAIN, signer, PAYMENT));
     }
 
     function testFuzz_beforeHook_valueOverPaidReverts(uint256 value) public {
@@ -569,7 +611,7 @@ contract ReceiptEnforcerTest is Test {
             _args(_receipt()),
             _deposit(REDEEMER, TERM)
         );
-        assertFalse(enforcer.isPaymentUsed(CHAIN, PAYMENT));
+        assertFalse(enforcer.isPaymentUsed(CHAIN, signer, PAYMENT));
     }
 
     function test_noOpHooks_passForManager() public view {

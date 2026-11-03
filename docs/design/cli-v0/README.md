@@ -1,5 +1,9 @@
 # ARP CLI v0, week 1: the hook, the local database, arp status
 
+**Reference only, not built.** No tsconfig, test glob or workspace includes `docs/`, so nothing here
+is typechecked or tested by the repo's gates, and `apps/cli` is not built from it. The patch targets
+`b5682d9` and does not apply to the current tree (`docs/design/README.md`).
+
 Built on `feat/agent-panel-tabs` at `b5682d9`, as one commit on a new branch `feat/arp-cli-v0`.
 
 Apply from the repo root:

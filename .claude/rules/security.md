@@ -37,14 +37,18 @@ Walk through each item for every contract change. Document the result (clean pas
 ### Signature replay
 
 - If signatures are used (EIP-712, EIP-1271), they include a nonce + chainId + verifying contract.
-- Signatures are in use, so this section applies. Seven sites: `contracts/src/erc8004/IdentityRegistry.sol`
+- Signatures are in use, so this section applies. Nine sites: `contracts/src/erc8004/IdentityRegistry.sol`
   (ARP's testnet deployment of the reference registry, which verifies signatures); MetaMask
   Delegation Framework delegations (EIP-712, signed in the app, verified by `apps/sponsor` before
   it publishes one); the operator's EIP-712 statement on import
   (`apps/web/src/services/agent-import.ts`); the MCP server's content receipt
   (`packages/protocol/src/receipt.ts`); the node's hire receipt
   (`packages/protocol/src/hire-receipt.ts`, ADR `0083`); the agent's sponsor request
-  (`packages/protocol/src/sponsor/request.ts`, ADR `0096`); and `ReceiptEnforcer`
+  (`packages/protocol/src/sponsor/request.ts`, ADR `0096`); the address's mint-gas request
+  (`packages/protocol/src/sponsor/mint-gas.ts`, ADR `0116`), which carries no verifying contract
+  because no contract checks it, and whose nonce the sponsoring service spends once; the address's
+  list-tool request (`packages/protocol/src/sponsor/list-tool.ts`, ADR `0123`), the same shape
+  with the URL in the signed message; and `ReceiptEnforcer`
   (`contracts/src/enforcers/ReceiptEnforcer.sol`, task 43, not deployed), which verifies that hire
   receipt on chain. The content receipt and the sponsor request carry no verifying contract. For the
   content receipt the cause still holds: no contract checks it. The sponsor request's nonce is the
@@ -55,13 +59,8 @@ Walk through each item for every contract change. Document the result (clean pas
   at the verifier it names. One payment gets one receipt only as far as the signing node's ledger
   holds: a node that signs two receipts for one payment, naming two verifiers, gets both used.
   The v1 receipt, which named no verifier, still verifies in `hire-receipt.ts` and is accepted by
-  neither. From 2026-10-30 until task 44 the enforcer checked v1, which was a deviation from the
-  bullet above rated Medium (`SECURITY_REVIEW.md` INFO-R1, now closed). A new signature site
-  gets checked against the bullet above before it ships. The list said three until 2026-10-30, and
-  the two receipts were missing from it; it said five until the sponsor request was added the same
-  day (ADR `0096`), and six, with "no contract checks them" of both receipts, until the enforcer was
-  added the same day (ADR `0098`). It said the hire receipt carried no verifying contract until
-  task 44.
+  neither (`SECURITY_REVIEW.md` INFO-R1 holds the history). A new signature site gets checked
+  against the bullet above, and added to this list, before it ships (ADRs `0096`, `0098`, `0117`).
 
 ### Oracles / external data
 
@@ -117,10 +116,8 @@ The `contract-reviewer` agent (in `.claude/agents/`) orchestrates these for you 
   nothing to gate). Neither has ever fired — 0 `StakeCapChecked` logs over 10,014,303 blocks,
   measured 2026-10-27 by `scripts/measure/enforcer-events.ts`.
 
-  This bullet read **"No ARP contract is deployed to mainnet today, and none is planned"** until
-  2026-10-27. That was false from 2026-09-16, in the file `CLAUDE.md` names as canonical, and the
-  reader it misled most is an agent deciding what it may deploy. ADR `0065`.
-  `data/deployments/<chainId>.json` is the record; do not restate its contents here a second time.
+  `data/deployments/<chainId>.json` is the record; do not restate its contents here a second time
+  (ADR `0065`).
 
 - **Mainnet transactions are not the same question as mainnet deployment.** ADR `0017` authorises one narrow class: deposits into existing `has trust provider` triple vaults and their counter-triples on chain 1155, signed by the operator in their own wallet. It does not authorise contract deployment, atom or triple creation at scale (see ADR `0021` for that cost), or any stake initiated by an agent. Read the ADR before widening it.
 - **Mainnet signing, in one sentence, and the only place it is stated.** `CLAUDE.md` and
@@ -128,8 +125,7 @@ The `contract-reviewer` agent (in `.claude/agents/`) orchestrates these for you 
 
   **No ARP agent, script or automated process may sign a mainnet transaction with ARP's own funds.**
 
-  The qualifier is deliberate and was added with ADR `0035`. Four cases, which earlier wordings
-  collapsed:
+  The qualifier is deliberate (ADR `0035`). Whose funds and who signs are separate questions:
 
   | Whose funds                                             | Who signs                            | Mainnet?                                                 |
   | ------------------------------------------------------- | ------------------------------------ | -------------------------------------------------------- |
@@ -140,13 +136,14 @@ The `contract-reviewer` agent (in `.claude/agents/`) orchestrates these for you 
   | ARP's own                                               | the sponsor relay, within its limits | **testnet 13579 only** — ADR `0092`                      |
   | ARP's own                                               | the sponsoring service, for a deposit that carries a verified proof, within the same limits | **testnet 13579 only** — ADR `0094`                      |
   | ARP's own                                               | the sponsoring service, for a new agent's mint gas, its identity atoms and its first `uses` triple, within the same budget | **testnet 13579 only** — ADR `0110`                      |
+  | ARP's own                                               | the sponsoring service, for a tool listing (the tool's atom, a skill's repository and `source`), within its own daily caps and the same budget | **testnet 13579 only** — ADR `0123`                      |
 
   Row 3 is the product (`docs/12` points 3 and 5), so a flat "no agent may ever sign a mainnet
   transaction" forbids the thing being built. Row 1 is the development hazard the rule exists for.
   Verification of staking code is unit tests over a mocked wallet client, `previewDeposit` reads, and
   `eth_call` simulation. A passing test suite is not a reason to spend real TRUST.
 
-  **Read the scope of that sentence carefully — it was misread once, badly.** It governs _this
+  **Read the scope of that sentence carefully.** It governs _this
   repo's_ development: do not let a script spend the operator's TRUST while you are testing it. It
   does **not** govern the protocol's design, and it cannot: `docs/12` point 3 is _"the agent runs, it
   deposits TRUST on the modules it actually used"_, and point 5 is _"the agent operates under a signed
@@ -161,13 +158,11 @@ The `contract-reviewer` agent (in `.claude/agents/`) orchestrates these for you 
   | A human in ARP's panel           | a deposit on a `has trust provider` claim | ADR `0017`. The UI never auto-stakes; a human clicks.                                                             |
   | An **external agent's operator** | one delegation, once                      | `docs/12` point 5. ARP does not sign the delegation. On testnet its relay may pay to **publish** it (ADR `0092`). |
 
-  **Testnet 13579 is permitted, and that is now written rather than inferred** (ADR `0037`). An agent
+  **Testnet 13579 is permitted** (ADR `0037`). An agent
   session may sign there with the operator's key when the user asks for that specific action, on
   three conditions: the key is never read into the agent's context, its address is verified against
   the expected account first, and the effect is recorded where a later reader looks. It covers the
-  action asked for and not a standing licence — approval of one mint is not approval of a loop. This
-  paragraph exists because the rule's silence about testnet got filled by inference from an ADR that
-  did not cover it.
+  action asked for and not a standing licence — approval of one mint is not approval of a loop.
 
   **One standing licence exists, and it is narrow** (ADR `0092`, the user's decision 2026-10-30):
   the sponsor relay may publish an operator's **signed, verified** delegation to IPFS and index it

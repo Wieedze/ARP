@@ -1,32 +1,48 @@
-import {useId, useState} from "react";
+import {useId, useRef, useState} from "react";
 import {Link} from "react-router-dom";
-import type {Address, Hex} from "viem";
 import {useAccount, useSwitchChain} from "wagmi";
 
-import {DEFAULT_IDENTITY_REGISTRY, type IdentityAtomPlan} from "@arp-protocol/core";
+import {DEFAULT_IDENTITY_REGISTRY} from "@arp-protocol/core";
 
 import {Hint} from "../components/brand/Hint";
+import {
+    consentStatus,
+    proofStatus,
+    provenPhase,
+    signedConsent,
+    withError,
+    writeError,
+    writePlan,
+    writeResult,
+    writeStatus,
+    type Phase,
+    type ProvenAgent,
+    type ProvenPhase,
+} from "../components/import/import-phase";
+import {
+    ConsentPreview,
+    LinkPlan,
+    Proof,
+    Published,
+    Refusal,
+} from "../components/import/ImportResults";
+import {Failure, Field, labelClass, Step} from "../components/import/ImportStep";
+import {MissingIdentityAtom} from "../components/import/MissingIdentityAtom";
 import {controlClass, linkClass} from "../lib/control-class";
 import {useAgentImport} from "../hooks/use-agent-import";
-import {useChainChoice, type ChainChoice} from "../lib/chain-choice";
+import {useChainChoice} from "../lib/chain-choice";
 import {
-    ARP_IMPORT_CONTEXT,
     buildImportConsent,
-    type CanonicalAgentAtom,
     type ImportConsent,
     type ImportedAgent,
-    type ImportLinkPlan,
-    type OwnershipVerdict,
 } from "../services/agent-import";
 import {formatTrust, truncateMiddle} from "../services/trust-format";
 
 /**
- * The "yes" branch of `/agent` — rendered inside `YourAgent`, not routed to. It had its own
- * route at `/agent/import`, which now redirects here.
+ * The "yes" branch of `/agent` — rendered inside `YourAgent`, not routed to.
  *
- * `/agent` mints a new ERC-8004 identity. This page takes one that already
- * exists. 28,648 do, and none of them needs another, so nothing is minted here
- * and the page says so where an operator would reasonably expect otherwise.
+ * `/agent` mints a new ERC-8004 identity. This page takes one that already exists, so nothing is
+ * minted here and the page says so where an operator would reasonably expect otherwise.
  *
  * Three steps, each requiring a click, nothing advancing on its own:
  *
@@ -50,27 +66,9 @@ const inputClass =
     "mt-2 block w-full bg-transparent border border-[color:var(--color-rule-strong)] px-3 py-1.5 " +
     "font-mono focus:border-[color:var(--color-accent)]";
 
-const labelClass =
-    "block font-mono uppercase tracking-wider text-[length:var(--text-label)] text-[color:var(--color-steel)]";
-
-type StepStatus = "idle" | "pending" | "done" | "error";
-
 function errorMessage(error: unknown): string {
     return error instanceof Error ? error.message : String(error);
 }
-
-/** What the operator signed in step 2, kept apart from what step 1 proved. */
-type SignedConsent = {consent: ImportConsent; signature: Hex; signedOnChainId: number};
-
-/** What step 1 established, once it succeeded. */
-type ProvenAgent = {
-    chainId: number;
-    tokenId: string;
-    caip19: string;
-    owner: Address;
-    atom: CanonicalAgentAtom | null;
-    operatingAccount: Address;
-};
 
 export function AgentImport() {
     const {address: connected, isConnected, chainId: walletChainId} = useAccount();
@@ -80,29 +78,42 @@ export function AgentImport() {
 
     const [chainId, setChainId] = useState(8453);
     const [tokenId, setTokenId] = useState("");
+    const [phase, setPhase] = useState<Phase>({step: "idle"});
+    /**
+     * Bumped by every check and every edit to the chain or token, so a registry reply that lands
+     * after either is dropped instead of proving a token no longer on screen.
+     */
+    const checkRef = useRef(0);
 
-    const [proofStatus, setProofStatus] = useState<StepStatus>("idle");
-    const [proofError, setProofError] = useState<string | null>(null);
-    const [refusal, setRefusal] = useState<OwnershipVerdict | null>(null);
-    const [proven, setProven] = useState<ProvenAgent | null>(null);
-
-    const [consentStatus, setConsentStatus] = useState<StepStatus>("idle");
-    const [consentError, setConsentError] = useState<string | null>(null);
-    const [signed, setSigned] = useState<SignedConsent | null>(null);
-
-    const [linkStatus, setLinkStatus] = useState<StepStatus>("idle");
-    const [linkError, setLinkError] = useState<string | null>(null);
-    const [plan, setPlan] = useState<ImportLinkPlan | null>(null);
-    const [txs, setTxs] = useState<{atomTx?: Hex; tripleTx?: Hex} | null>(null);
-    const [identityPlan, setIdentityPlan] = useState<IdentityAtomPlan | null>(null);
-    const [identityStatus, setIdentityStatus] = useState<StepStatus>("idle");
-    const [identityError, setIdentityError] = useState<string | null>(null);
-    const [identityTxs, setIdentityTxs] = useState<Hex[] | null>(null);
+    function resetCheck() {
+        checkRef.current += 1;
+        setPhase({step: "idle"});
+    }
 
     const trimmedToken = tokenId.trim();
     const isTokenValid = /^\d+$/.test(trimmedToken);
     const chain = useChainChoice();
     const onTargetChain = walletChainId === chain.chainId;
+
+    const proven: ProvenAgent | null = phase.step === "proven" ? phase.proven : null;
+    const consent = phase.step === "proven" ? phase.consent : null;
+    const signed = consent === null ? null : signedConsent(consent);
+    const link = phase.step === "proven" ? phase.link : null;
+    const plan = link === null ? null : writePlan(link);
+    const txs = link === null ? null : writeResult(link);
+    const linkStatus = link === null ? "idle" : writeStatus(link);
+    const linkError = link === null ? null : writeError(link);
+    const consentError = consent?.stage === "unsigned" ? consent.error : null;
+
+    /**
+     * Applies `update` to the proven phase only while it is still the one `proven` came from. A
+     * reply that lands after the operator checked another token is dropped, not grafted onto it.
+     */
+    function updateProven(from: ProvenAgent, update: (current: ProvenPhase) => ProvenPhase) {
+        setPhase((current) =>
+            current.step === "proven" && current.proven === from ? update(current) : current,
+        );
+    }
 
     /**
      * The import, complete enough to write from.
@@ -146,23 +157,14 @@ export function AgentImport() {
                   issuedAt: 0n,
               });
 
-    function resetFromStep1() {
-        setRefusal(null);
-        setProven(null);
-        setSigned(null);
-        setPlan(null);
-        setTxs(null);
-        setConsentStatus("idle");
-        setConsentError(null);
-        setLinkStatus("idle");
-        setLinkError(null);
-    }
-
     async function handleCheckOwnership() {
         if (!connected || !isTokenValid) return;
-        setProofStatus("pending");
-        setProofError(null);
-        resetFromStep1();
+        checkRef.current += 1;
+        const check = checkRef.current;
+        const settle = (next: Phase) => {
+            if (checkRef.current === check) setPhase(next);
+        };
+        setPhase({step: "checking"});
         try {
             const verdict = await actions.verifyOwnership({
                 chainId,
@@ -170,113 +172,147 @@ export function AgentImport() {
                 connected,
             });
             if (verdict.status !== "owned") {
-                setRefusal(verdict);
-                setProofStatus("done");
+                settle({step: "refused", verdict});
                 return;
             }
             const [atom, operatingAccount] = await Promise.all([
                 actions.resolveAtom({chainId, tokenId: trimmedToken}),
                 actions.deriveOperatingAccount(verdict.owner),
             ]);
-            setProven({
-                chainId,
-                tokenId: trimmedToken,
-                caip19: verdict.caip19,
-                owner: verdict.owner,
-                atom,
-                operatingAccount,
-            });
-            setProofStatus("done");
+            settle(
+                provenPhase({
+                    chainId,
+                    tokenId: trimmedToken,
+                    caip19: verdict.caip19,
+                    owner: verdict.owner,
+                    atom,
+                    operatingAccount,
+                }),
+            );
         } catch (error) {
-            setProofStatus("error");
-            setProofError(errorMessage(error));
+            settle({step: "check-failed", message: errorMessage(error)});
         }
     }
 
     async function handleSignConsent() {
         if (proven === null) return;
-        setConsentStatus("pending");
-        setConsentError(null);
+        updateProven(proven, (current) => ({
+            ...current,
+            consent: {stage: "signing", previous: signedConsent(current.consent)},
+        }));
         try {
-            const consent = buildImportConsent({
+            const next = buildImportConsent({
                 caip19: proven.caip19,
                 operator: proven.owner,
                 operatingAccount: proven.operatingAccount,
             });
-            const {signature, chainId: signedOnChainId} = await actions.signConsent(consent);
-            setSigned({consent, signature, signedOnChainId});
-            setConsentStatus("done");
+            const {signature, chainId: signedOnChainId} = await actions.signConsent(next);
+            updateProven(proven, (current) => ({
+                ...current,
+                consent: {stage: "signed", signed: {consent: next, signature, signedOnChainId}},
+            }));
         } catch (error) {
-            setConsentStatus("error");
-            setConsentError(errorMessage(error));
+            updateProven(proven, (current) => ({
+                ...current,
+                consent: {
+                    stage: "unsigned",
+                    error: errorMessage(error),
+                    previous: signedConsent(current.consent),
+                },
+            }));
         }
     }
 
     async function handlePlanLink() {
-        if (imported === null) return;
-        setLinkStatus("pending");
-        setLinkError(null);
+        if (proven === null || imported === null) return;
+        updateProven(proven, (current) => ({...current, link: {stage: "pricing"}}));
         try {
-            setPlan(await actions.planLink(imported));
-            setLinkStatus("idle");
+            const priced = await actions.planLink(imported);
+            updateProven(proven, (current) => ({
+                ...current,
+                link: {stage: "priced", plan: priced, error: null},
+            }));
         } catch (error) {
-            setLinkStatus("error");
-            setLinkError(errorMessage(error));
+            updateProven(proven, (current) => ({
+                ...current,
+                link: {stage: "unpriced", error: errorMessage(error)},
+            }));
         }
     }
 
     async function handlePublishLink() {
-        if (imported === null || plan === null) return;
-        setLinkStatus("pending");
-        setLinkError(null);
+        if (proven === null || imported === null || plan === null) return;
+        updateProven(proven, (current) => ({...current, link: {stage: "sending", plan}}));
         try {
-            setTxs(await actions.publishLink({imported, plan}));
-            setLinkStatus("done");
+            const result = await actions.publishLink({imported, plan});
+            updateProven(proven, (current) => ({
+                ...current,
+                link: {stage: "sent", plan, result},
+            }));
         } catch (error) {
-            setLinkStatus("error");
-            setLinkError(errorMessage(error));
+            updateProven(proven, (current) => ({
+                ...current,
+                link: {stage: "priced", plan, error: errorMessage(error)},
+            }));
         }
     }
 
     async function handlePlanIdentity() {
         if (proven === null) return;
-        setIdentityStatus("pending");
-        setIdentityError(null);
+        updateProven(proven, (current) => ({...current, identity: {stage: "pricing"}}));
         try {
-            setIdentityPlan(
-                await actions.planIdentity({
-                    chainId: proven.chainId,
-                    tokenId: proven.tokenId,
-                    registry: DEFAULT_IDENTITY_REGISTRY,
-                }),
-            );
-            setIdentityStatus("idle");
+            const priced = await actions.planIdentity({
+                chainId: proven.chainId,
+                tokenId: proven.tokenId,
+                registry: DEFAULT_IDENTITY_REGISTRY,
+            });
+            updateProven(proven, (current) => ({
+                ...current,
+                identity: {stage: "priced", plan: priced, error: null},
+            }));
         } catch (error) {
-            setIdentityStatus("error");
-            setIdentityError(errorMessage(error));
+            updateProven(proven, (current) => ({
+                ...current,
+                identity: {stage: "unpriced", error: errorMessage(error)},
+            }));
         }
     }
 
     async function handlePublishIdentity() {
+        if (phase.step !== "proven") return;
+        const identityPlan = writePlan(phase.identity);
         if (identityPlan === null) return;
-        setIdentityStatus("pending");
-        setIdentityError(null);
+        const from = phase.proven;
+        updateProven(from, (current) => ({
+            ...current,
+            identity: {stage: "sending", plan: identityPlan},
+        }));
         try {
             const result = await actions.publishIdentity(identityPlan);
-            setIdentityTxs(result.txs);
-            setIdentityStatus("done");
+            updateProven(from, (current) => ({
+                ...current,
+                identity: {stage: "sent", plan: identityPlan, result: result.txs},
+            }));
         } catch (error) {
-            setIdentityStatus("error");
-            setIdentityError(errorMessage(error));
+            updateProven(from, (current) => ({
+                ...current,
+                identity: {stage: "priced", plan: identityPlan, error: errorMessage(error)},
+            }));
         }
     }
 
     async function handleSwitchChain() {
-        setLinkError(null);
+        if (proven !== null) {
+            updateProven(proven, (current) => ({...current, link: withError(current.link, null)}));
+        }
         try {
             await switchChainAsync({chainId: chain.chainId});
         } catch (error) {
-            setLinkError(errorMessage(error));
+            if (proven === null) return;
+            updateProven(proven, (current) => ({
+                ...current,
+                link: withError(current.link, errorMessage(error)),
+            }));
         }
     }
 
@@ -301,12 +337,12 @@ export function AgentImport() {
             <Step
                 index={1}
                 title="Prove the agent is yours"
-                status={proofStatus}
+                status={proofStatus(phase)}
                 result={
-                    proofError !== null ? (
-                        <Failure message={proofError} />
-                    ) : refusal !== null ? (
-                        <Refusal verdict={refusal} />
+                    phase.step === "check-failed" ? (
+                        <Failure message={phase.message} />
+                    ) : phase.step === "refused" ? (
+                        <Refusal verdict={phase.verdict} />
                     ) : proven !== null ? (
                         <Proof proven={proven} />
                     ) : null
@@ -328,8 +364,7 @@ export function AgentImport() {
                             value={chainId}
                             onChange={(event) => {
                                 setChainId(Number(event.target.value));
-                                resetFromStep1();
-                                setProofStatus("idle");
+                                resetCheck();
                             }}
                             aria-describedby={`${fieldId}-chain-note`}
                             className={`${inputClass} text-[length:var(--text-body-sm)]`}
@@ -360,8 +395,7 @@ export function AgentImport() {
                             value={tokenId}
                             onChange={(event) => {
                                 setTokenId(event.target.value);
-                                resetFromStep1();
-                                setProofStatus("idle");
+                                resetCheck();
                             }}
                             aria-invalid={trimmedToken !== "" && !isTokenValid}
                             aria-describedby={`${fieldId}-token-help`}
@@ -379,10 +413,10 @@ export function AgentImport() {
 
                     <button
                         type="submit"
-                        disabled={!isConnected || !isTokenValid || proofStatus === "pending"}
+                        disabled={!isConnected || !isTokenValid || phase.step === "checking"}
                         className={`mt-3 ${controlClass}`}
                     >
-                        {proofStatus === "pending" ? "Reading the registry…" : "Check ownership"}
+                        {phase.step === "checking" ? "Reading the registry…" : "Check ownership"}
                     </button>
                     {!isConnected ? (
                         <p className="mt-3 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
@@ -395,7 +429,7 @@ export function AgentImport() {
             <Step
                 index={2}
                 title="Sign the statement"
-                status={consentStatus}
+                status={consent === null ? "idle" : consentStatus(consent)}
                 disabled={proven === null}
                 result={
                     consentError !== null ? (
@@ -410,10 +444,10 @@ export function AgentImport() {
                 <button
                     type="button"
                     onClick={() => void handleSignConsent()}
-                    disabled={proven === null || consentStatus === "pending"}
+                    disabled={proven === null || consent?.stage === "signing"}
                     className={`mt-6 ${controlClass}`}
                 >
-                    {consentStatus === "pending"
+                    {consent?.stage === "signing"
                         ? "Waiting for your wallet…"
                         : "Sign the statement"}
                 </button>
@@ -432,12 +466,9 @@ export function AgentImport() {
                     ) : null
                 }
             >
-                {hasNoCanonicalAtom && proven !== null ? (
+                {phase.step === "proven" && phase.proven.atom === null ? (
                     <MissingIdentityAtom
-                        plan={identityPlan}
-                        status={identityStatus}
-                        error={identityError}
-                        txs={identityTxs}
+                        write={phase.identity}
                         onTargetChain={onTargetChain}
                         chain={chain}
                         walletChainId={walletChainId}
@@ -497,7 +528,7 @@ export function AgentImport() {
                                 <button
                                     type="button"
                                     onClick={() => void handlePublishLink()}
-                                    disabled={linkStatus === "pending"}
+                                    disabled={linkStatus === "pending" || imported === null}
                                     className={`mt-6 ${controlClass}`}
                                 >
                                     {linkStatus === "pending"
@@ -520,398 +551,5 @@ export function AgentImport() {
                 </p>
             </section>
         </section>
-    );
-}
-
-/**
- * One step, with its result in a live region mounted from the first render and
- * refilled in place.
- *
- * An inactive step dims its rule and its ordinal and nothing else. The prose
- * inside says what the step is about to do — what will be signed, what the
- * write costs — and is written to be read *before* the step unlocks, so fading
- * it below AA would hide it exactly when it is wanted. The disabled buttons
- * carry the state for assistive tech; the wrapper does not pretend to.
- */
-function Step({
-    index,
-    title,
-    status,
-    disabled = false,
-    children,
-    result,
-}: {
-    index: number;
-    title: string;
-    status: StepStatus;
-    disabled?: boolean;
-    children: React.ReactNode;
-    result?: React.ReactNode;
-}) {
-    return (
-        <section
-            aria-labelledby={`import-step-${index}`}
-            className={`mb-14 pl-5 border-l ${
-                disabled
-                    ? "border-l-[color:var(--color-rule)]"
-                    : "border-l-[color:var(--color-rule-strong)]"
-            }`}
-        >
-            <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
-                <span
-                    className={`font-mono uppercase tracking-wider text-[length:var(--text-label)] ${
-                        disabled
-                            ? "text-[color:var(--color-steel)]"
-                            : "text-[color:var(--color-steel)]"
-                    }`}
-                >
-                    Step {index}
-                </span>
-                <h2 id={`import-step-${index}`} className="font-medium">
-                    {title}
-                </h2>
-                {status === "done" ? (
-                    <span className="font-mono text-[length:var(--text-label)] text-[color:var(--color-steel)]">
-                        done
-                    </span>
-                ) : null}
-            </div>
-            <div className="mt-5">{children}</div>
-            <div aria-live="polite">{result}</div>
-        </section>
-    );
-}
-
-function Field({label, value, href}: {label: string; value: string; href?: string}) {
-    return (
-        <div className="mt-4">
-            <span className={labelClass}>{label}</span>
-            {href === undefined ? (
-                <p className="mt-1 font-mono text-[length:var(--text-body-sm)] break-all">
-                    {value}
-                </p>
-            ) : (
-                <a
-                    href={href}
-                    target="_blank"
-                    rel="noreferrer"
-                    className={`mt-1 block font-mono text-[length:var(--text-body-sm)] break-all ${linkClass}`}
-                >
-                    {value}
-                </a>
-            )}
-        </div>
-    );
-}
-
-/**
- * A caught error, set apart by a rule rather than by a colour.
- *
- * Not `--color-alarm`: ADR 0018 scopes that hue to a signature `mismatch` and
- * its row, and nothing else. A rejected wallet prompt or a slow RPC is a
- * recoverable operation failing, not a provider caught misrepresenting a
- * signature, and painting both the same colour is what makes the rare one stop
- * meaning anything.
- */
-function Failure({message}: {message: string}) {
-    return (
-        <p className="mt-5 max-w-[64ch] text-[length:var(--text-body-sm)] border-l border-l-[color:var(--color-rule-strong)] pl-4">
-            {message}
-        </p>
-    );
-}
-
-/** The registry's answer when it is not yours, or not there. Named, not softened. */
-function Refusal({verdict}: {verdict: OwnershipVerdict}) {
-    if (verdict.status === "not-found") {
-        return (
-            <div className="mt-6 max-w-[64ch]">
-                <p className="font-medium">No such agent in that registry.</p>
-                <p className="mt-2 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
-                    Token {verdict.ref.tokenId} on chain {verdict.ref.chainId} has never been
-                    minted. Check the chain as well as the id — the same number is a different agent
-                    on each one.
-                </p>
-            </div>
-        );
-    }
-    if (verdict.status === "owner-mismatch") {
-        return (
-            <div className="mt-6 max-w-[64ch]">
-                <p className="font-medium">That agent belongs to another address.</p>
-                <p className="mt-2 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
-                    The registry names the owner below. Connect that wallet to import it.
-                </p>
-                <Field label="Owner" value={verdict.owner} />
-                <Field label="Connected" value={verdict.connected} />
-            </div>
-        );
-    }
-    return null;
-}
-
-function Proof({proven}: {proven: ProvenAgent}) {
-    return (
-        <div className="mt-8 max-w-[64ch]">
-            <p className="font-medium">
-                {proven.atom?.label ?? `Agent ${proven.chainId}:${proven.tokenId}`} is yours.
-            </p>
-            <Field label="Identity" value={proven.caip19} />
-            <Field label="Owner, per the registry" value={proven.owner} />
-            <Field
-                label="Your agent wallet, which will give support"
-                value={proven.operatingAccount}
-            />
-            {/* ADR `0103`: the atom id stays checkable, collapsed. */}
-            <details className="mt-4">
-                <summary className="cursor-pointer text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
-                    Verify
-                </summary>
-                {proven.atom === null ? (
-                    <Field label="Canonical Intuition atom" value="not mirrored — see step 3" />
-                ) : (
-                    // A term id is not an address, and nothing in the explorer resolves one.
-                    <Field label="Canonical Intuition atom" value={proven.atom.atomId} />
-                )}
-            </details>
-        </div>
-    );
-}
-
-function ConsentPreview({consent}: {consent: ImportConsent}) {
-    return (
-        <dl className="max-w-[64ch] border-t border-[color:var(--color-rule)] pt-4">
-            {[
-                ["agent", consent.agent],
-                ["operator", consent.operator],
-                ["operatingAccount", consent.operatingAccount],
-                ["context", ARP_IMPORT_CONTEXT],
-            ].map(([term, value]) => (
-                <div key={term} className="flex flex-wrap gap-x-4 py-1">
-                    <dt className="w-40 shrink-0 font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
-                        {term}
-                    </dt>
-                    <dd className="font-mono text-[length:var(--text-body-sm)] break-all">
-                        {value}
-                    </dd>
-                </div>
-            ))}
-            <div className="flex flex-wrap gap-x-4 py-1">
-                <dt className="w-40 shrink-0 font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
-                    nonce
-                </dt>
-                <dd className="font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
-                    drawn when you sign
-                </dd>
-            </div>
-        </dl>
-    );
-}
-
-/**
- * The mirror has not written this agent's atom, so ARP writes it.
- *
- * This replaced a dead end. The page used to say "nothing is written … the link waits for the
- * mirror", on the grounds that deriving an atom would produce "a differently-pinned duplicate". That
- * reason stopped being true: the recipe in `@arp-protocol/core` reproduces the mirror's bytes
- * exactly — verified against agent 8453:6649, whose atom Intuition's own ingestion minted — so the
- * derived atom **is** the one the mirror would write, not a second one. Waiting was costing nine
- * agents in ten their identity (ADR `0047`, `docs/12`).
- */
-function MissingIdentityAtom(props: {
-    plan: IdentityAtomPlan | null;
-    status: StepStatus;
-    error: string | null;
-    txs: Hex[] | null;
-    onTargetChain: boolean;
-    chain: ChainChoice;
-    walletChainId: number | undefined;
-    isSwitching: boolean;
-    onSwitchChain: () => void;
-    onPlan: () => void;
-    onPublish: () => void;
-}) {
-    const {plan, txs} = props;
-    return (
-        <div className="max-w-[64ch]">
-            <p className="font-medium">
-                The Intuition graph does not list this agent yet, so its public record has to be
-                written.
-            </p>
-            <p className="mt-3 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
-                Not a duplicate — this is the same id the mirror would write, sooner.
-            </p>
-
-            {plan === null ? (
-                <button
-                    type="button"
-                    onClick={props.onPlan}
-                    disabled={props.status === "pending"}
-                    className={`mt-6 ${controlClass}`}
-                >
-                    {props.status === "pending" ? "Pricing…" : "Price the public record"}
-                </button>
-            ) : (
-                <>
-                    <p className="mt-6 font-mono text-[length:var(--text-body-sm)] tabular-nums">
-                        total — {formatTrust(plan.totalValue)} {props.chain.symbol}
-                    </p>
-                    {/* ADR `0103`: atoms, the edge and the shares stay checkable, collapsed. */}
-                    <details className="mt-4">
-                        <summary className="cursor-pointer text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
-                            Verify
-                        </summary>
-                        <Field
-                            label={`Identity atom${plan.existing.identityAtom ? ", already on the graph" : ", to be created"}`}
-                            value={plan.uris.identity}
-                        />
-                        <Field
-                            label={`CAIP-19 atom${plan.existing.caipAtom ? ", already on the graph" : ", to be created"}`}
-                            value={plan.uris.caip}
-                        />
-                        <Field
-                            label={`same as edge${plan.existing.triple ? ", already on the graph" : ", to be created"}`}
-                            value={plan.tripleId}
-                        />
-                        <div className="mt-4 border-t border-[color:var(--color-rule)] pt-4">
-                            {plan.calls.map((call) => (
-                                <p
-                                    key={call.data}
-                                    className="font-mono text-[length:var(--text-body-sm)] tabular-nums"
-                                >
-                                    {call.kind} — {formatTrust(call.value)} {props.chain.symbol},{" "}
-                                    {call.preview === undefined
-                                        ? "no preview"
-                                        : `${formatTrust(call.preview.shares)} shares`}
-                                </p>
-                            ))}
-                        </div>
-                    </details>
-                    {/* Said because the atom works without it and a reader will wonder why the name
-                        is a hash. Pinning the same bytes later yields the same id, so it is
-                        retroactive rather than a missed window. */}
-                    <p className="mt-4 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
-                        The record is created unpinned, so readers see its id rather than its name
-                        until someone pins the document. Anyone can, at any time, and the id does
-                        not change — the same bytes always hash to the same CID.
-                    </p>
-                </>
-            )}
-
-            {props.error !== null ? <Failure message={props.error} /> : null}
-
-            {plan !== null && txs === null ? (
-                !props.onTargetChain ? (
-                    <div className="mt-6">
-                        <p className="text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
-                            Your wallet is on chain {props.walletChainId ?? "unknown"}. The write
-                            lands on {props.chain.chain.name} ({props.chain.chainId}).
-                        </p>
-                        <button
-                            type="button"
-                            onClick={props.onSwitchChain}
-                            disabled={props.isSwitching}
-                            className={`mt-3 ${controlClass}`}
-                        >
-                            {props.isSwitching
-                                ? "Switching…"
-                                : `Switch to ${props.chain.chain.name}`}
-                        </button>
-                    </div>
-                ) : plan.calls.length === 0 ? (
-                    <p className="mt-6 text-[length:var(--text-body-sm)]">
-                        The record and its link are already public. There is nothing to send.
-                    </p>
-                ) : (
-                    <button
-                        type="button"
-                        onClick={props.onPublish}
-                        disabled={props.status === "pending"}
-                        className={`mt-6 ${controlClass}`}
-                    >
-                        {props.status === "pending"
-                            ? "Waiting for your wallet…"
-                            : `Write the public record — ${formatTrust(plan.totalValue)} ${props.chain.symbol}`}
-                    </button>
-                )
-            ) : null}
-
-            {txs !== null ? (
-                <div className="mt-6">
-                    <p className="font-medium">The agent has a public record.</p>
-                    <p className="mt-2 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
-                        Price the link above to tie it to your agent wallet.
-                    </p>
-                    {txs.map((hash, index) => (
-                        <Field
-                            key={hash}
-                            label={`Transaction ${index + 1}`}
-                            value={truncateMiddle(hash, 14, 10)}
-                            href={`${props.chain.explorerUrl}/tx/${hash}`}
-                        />
-                    ))}
-                </div>
-            ) : null}
-        </div>
-    );
-}
-
-function LinkPlan({plan}: {plan: ImportLinkPlan}) {
-    return (
-        <div className="max-w-[64ch]">
-            <p className="font-mono text-[length:var(--text-body-sm)] tabular-nums">
-                total — {formatTrust(plan.totalCost)} {plan.chain.symbol}
-            </p>
-            {/* ADR `0103`: the atoms, the edge and their costs stay checkable, collapsed. */}
-            <details className="mt-4">
-                <summary className="cursor-pointer text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
-                    Verify
-                </summary>
-                <Field label="Subject — the agent's canonical atom" value={plan.agentAtomId} />
-                <Field label="Predicate — Intuition's same as" value={plan.predicateId} />
-                <Field
-                    label={`Object — your account${plan.accountAtomExists ? ", already on the graph" : ", to be created"}`}
-                    value={plan.accountAtomUri}
-                />
-                <div className="mt-6 border-t border-[color:var(--color-rule)] pt-4">
-                    <p className="font-mono text-[length:var(--text-body-sm)] tabular-nums">
-                        {plan.accountAtomExists
-                            ? `account atom — already published, 0 ${plan.chain.symbol}`
-                            : `account atom — ${formatTrust(plan.atomAssets)} ${plan.chain.symbol}`}
-                    </p>
-                    <p className="mt-1 font-mono text-[length:var(--text-body-sm)] tabular-nums">
-                        {plan.tripleExists
-                            ? `same-as edge — already published, 0 ${plan.chain.symbol}`
-                            : `same-as edge — ${formatTrust(plan.tripleAssets)} ${plan.chain.symbol}`}
-                    </p>
-                </div>
-            </details>
-        </div>
-    );
-}
-
-function Published({txs, explorerUrl}: {txs: {atomTx?: Hex; tripleTx?: Hex}; explorerUrl: string}) {
-    return (
-        <div className="mt-6 max-w-[64ch]">
-            <p className="font-medium">The link is public.</p>
-            <p className="mt-2 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
-                Support sent from that wallet now counts for this agent, which is what agent
-                reputation is read from.
-            </p>
-            {txs.atomTx !== undefined ? (
-                <Field
-                    label="Wallet record"
-                    value={truncateMiddle(txs.atomTx, 14, 10)}
-                    href={`${explorerUrl}/tx/${txs.atomTx}`}
-                />
-            ) : null}
-            {txs.tripleTx !== undefined ? (
-                <Field
-                    label="Link"
-                    value={truncateMiddle(txs.tripleTx, 14, 10)}
-                    href={`${explorerUrl}/tx/${txs.tripleTx}`}
-                />
-            ) : null}
-        </div>
     );
 }

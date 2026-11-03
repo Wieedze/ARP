@@ -16,39 +16,85 @@ import {PassThrough} from "node:stream";
 
 export type FetchHandler = (request: Request, ip: string) => Response | Promise<Response>;
 
+/** A body cap that holds a JSON-RPC call or a sponsor request with room to spare. */
+export const DEFAULT_SERVE_MAX_BODY_BYTES = 1024 * 1024;
+/** How long a client gets to send its whole request, headers and body. */
+export const DEFAULT_REQUEST_TIMEOUT_MS = 30_000;
+
+/** How long a refused body's socket may stay open for the 413 to flush before it is dropped. */
+const TOO_LARGE_GRACE_MS = 1_000;
+
 export type ServeOptions = {
     port: number;
-    /** Omitted, every interface. The MCP server defaults to `127.0.0.1`; the node always passes it, because a tunnel is its way in (task 39). */
+    /**
+     * The interface to bind. Defaults to `127.0.0.1`: every caller in this repo binds loopback (the
+     * node because a tunnel is its way in, task 39), and listening on every interface is a choice
+     * a caller states, never a default it inherits.
+     */
     hostname?: string;
-    /** A body over this many bytes is refused with 413 before it is read whole. */
+    /** A body over this many bytes is refused with 413; reading stops at the cap. */
     maxBodyBytes?: number;
+    /** A request not fully received within this many ms is dropped. */
+    requestTimeoutMs?: number;
 };
 
 class BodyTooLarge extends Error {}
 
-async function bodyOf(
-    message: IncomingMessage,
-    limit: number | undefined,
-): Promise<Uint8Array<ArrayBuffer>> {
-    const chunks: Uint8Array[] = [];
-    let size = 0;
-    for await (const chunk of message) {
-        // Node yields Buffers (Uint8Arrays); Bun's `node:http` has been seen to yield strings.
-        const bytes =
-            typeof chunk === "string" ? new TextEncoder().encode(chunk) : (chunk as Uint8Array);
-        size += bytes.byteLength;
-        // Past the limit, keep draining and stop storing. Leaving the loop early destroys the
-        // request, and under Bun the 413 written afterwards then reaches the client as a bare 200.
-        if (limit === undefined || size <= limit) chunks.push(bytes);
-    }
-    if (limit !== undefined && size > limit) throw new BodyTooLarge();
-    const out = new Uint8Array(size);
-    let at = 0;
-    for (const chunk of chunks) {
-        out.set(chunk, at);
-        at += chunk.byteLength;
-    }
-    return out;
+/**
+ * The request body, read up to `limit` bytes.
+ *
+ * Past the limit it **stops reading**: the stream is paused and left, and the 413 goes out with
+ * `connection: close`, so the server closes the socket instead of waiting for the rest. The first
+ * version drained the whole body to keep Bun from turning the 413 into a bare 200 — which let a
+ * client stream for as long as it liked; a paused stream does not destroy the request, so the
+ * 413 still arrives.
+ */
+function bodyOf(message: IncomingMessage, limit: number): Promise<Uint8Array<ArrayBuffer>> {
+    return new Promise((resolve, reject) => {
+        const chunks: Uint8Array[] = [];
+        let size = 0;
+        const done = () => {
+            message.off("data", onData);
+            message.off("end", onEnd);
+            message.off("error", onError);
+        };
+        const onData = (chunk: unknown) => {
+            // Node yields Buffers (Uint8Arrays); Bun's `node:http` has been seen to yield strings.
+            const bytes =
+                typeof chunk === "string"
+                    ? new TextEncoder().encode(chunk)
+                    : chunk instanceof Uint8Array
+                      ? chunk
+                      : new Uint8Array(0);
+            size += bytes.byteLength;
+            if (size > limit) {
+                done();
+                message.pause();
+                // The socket closes under a paused request; its error has nowhere else to go.
+                message.on("error", () => undefined);
+                reject(new BodyTooLarge());
+                return;
+            }
+            chunks.push(bytes);
+        };
+        const onEnd = () => {
+            done();
+            const out = new Uint8Array(size);
+            let at = 0;
+            for (const chunk of chunks) {
+                out.set(chunk, at);
+                at += chunk.byteLength;
+            }
+            resolve(out);
+        };
+        const onError = (error: unknown) => {
+            done();
+            reject(error);
+        };
+        message.on("data", onData);
+        message.on("end", onEnd);
+        message.on("error", onError);
+    });
 }
 
 function requestOf(
@@ -79,12 +125,14 @@ async function send(response: Response, out: ServerResponse): Promise<void> {
 
 /** Start serving. Resolves once the port is bound, with the server so a caller can close it. */
 export function serveFetch(options: ServeOptions, handle: FetchHandler): Promise<Server> {
-    const base = `http://${options.hostname ?? "localhost"}:${options.port}`;
+    const hostname = options.hostname ?? "127.0.0.1";
+    const maxBodyBytes = options.maxBodyBytes ?? DEFAULT_SERVE_MAX_BODY_BYTES;
+    const base = `http://${hostname}:${options.port}`;
     const server = createServer((message, out) => {
         void (async () => {
             try {
                 const hasBody = message.method !== "GET" && message.method !== "HEAD";
-                const body = hasBody ? await bodyOf(message, options.maxBodyBytes) : null;
+                const body = hasBody ? await bodyOf(message, maxBodyBytes) : null;
                 const ip = message.socket.remoteAddress ?? "unknown";
                 await send(await handle(requestOf(message, body, base), ip), out);
             } catch (error) {
@@ -93,14 +141,30 @@ export function serveFetch(options: ServeOptions, handle: FetchHandler): Promise
                     return;
                 }
                 const tooLarge = error instanceof BodyTooLarge;
-                out.writeHead(tooLarge ? 413 : 500, {"content-type": "application/json"});
+                out.writeHead(tooLarge ? 413 : 500, {
+                    "content-type": "application/json",
+                    ...(tooLarge ? {connection: "close"} : {}),
+                });
+                // Once the 413 is out, the rest of the body is nobody's business: drop the socket
+                // rather than leave a paused request holding it open. `finish` does not always fire
+                // while the client is still writing into a paused socket, so a timer drops it too.
+                if (tooLarge) {
+                    const drop = () => message.socket.destroy();
+                    out.once("finish", drop);
+                    setTimeout(drop, TOO_LARGE_GRACE_MS).unref();
+                }
                 out.end(JSON.stringify({error: tooLarge ? "body too large" : "internal error"}));
             }
         })();
     });
+    // `requestTimeout` bounds receiving the request, headers and body; `headersTimeout` must not
+    // exceed it. Node enforces both; a runtime that ignores them is no worse than before.
+    const requestTimeoutMs = options.requestTimeoutMs ?? DEFAULT_REQUEST_TIMEOUT_MS;
+    server.requestTimeout = requestTimeoutMs;
+    server.headersTimeout = Math.min(server.headersTimeout, requestTimeoutMs);
     return new Promise((resolve, reject) => {
         server.once("error", reject);
-        server.listen(options.port, options.hostname, () => resolve(server));
+        server.listen(options.port, hostname, () => resolve(server));
     });
 }
 

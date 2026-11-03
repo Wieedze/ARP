@@ -27,8 +27,6 @@
  *  predicates have not been read from the graph yet (ADR `0092` item 7), so `POST /publish` answers
  *  503 until both are wired here. The route itself is built and tested (`service.ts`).
  */
-import { join } from 'node:path';
-
 import {
   ADR_0092_LIMITS,
   INTUITION_USES_TERM_ID,
@@ -38,7 +36,13 @@ import {
   type PreparedCall,
   type SponsorLimits,
 } from '@arp-protocol/core';
-import { serveFetch } from '@arp-protocol/core/node';
+import {
+  ERC8004_REGISTRY_REF,
+  loopbackHosts,
+  redactUrls,
+  serveFetch,
+  stateFile,
+} from '@arp-protocol/core/node';
 import {
   createPublicClient,
   createWalletClient,
@@ -52,9 +56,18 @@ import { privateKeyToAccount } from 'viem/accounts';
 
 import deployments from '../../../data/deployments/13579.json';
 import { assertSponsorChain, readKeyFile } from './key-file.ts';
+import { nullOnRevert } from './routes/context.ts';
 import { SponsorLedger } from './ledger.ts';
+import { resolveOnGitHubCached } from './github.ts';
+import { repoSpellingsOnGraph } from './indexer.ts';
 import { intuitionPinner } from './pin.ts';
-import { addressList, createSponsor, type SponsorWallet } from './service.ts';
+import {
+  addressList,
+  createSponsor,
+  registryList,
+  type SendOutcome,
+  type SponsorWallet,
+} from './service.ts';
 
 function fail(message: string): never {
   console.error(message);
@@ -88,8 +101,41 @@ function count(name: string, fallback: number): number {
 const PORT = count('SPONSOR_PORT', 3200);
 // Optional: unset, `POST /identity` answers 503. Never printed.
 const PIN_KEY = (process.env.INTUITION_PIN_API_KEY ?? '').trim();
-const LEDGER = process.env.SPONSOR_LEDGER ?? join(process.cwd(), '.arp', 'sponsor-ledger.jsonl');
+// `~/.arp/` (or `ARP_HOME`), never the working directory: started anywhere else, a ledger resolved
+// against it is empty, and an empty ledger sponsors every proof a second time (ADR `0116`).
+// Opened here, before the key is read: a second service on the same ledger is refused (ADR `0116`).
+let LEDGER: string;
+let ledger: SponsorLedger;
+try {
+  LEDGER = stateFile(process.env.SPONSOR_LEDGER, 'sponsor-ledger.jsonl');
+  ledger = new SponsorLedger(LEDGER);
+} catch (error) {
+  fail(String(error instanceof Error ? error.message : error));
+}
 const RPC = process.env.INTUITION_TESTNET_RPC_URL ?? deployments.chain.rpcUrl;
+
+/** Vite's dev and preview servers, where the web app runs locally (the activity feed's list, ADR `0091`). */
+const DEFAULT_LIST_TOOL_ORIGINS = [
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+  'http://localhost:4173',
+  'http://127.0.0.1:4173',
+];
+
+function originList(raw: string | undefined): string[] {
+  if (raw === undefined || raw.trim() === '') return [];
+  return raw.split(',').map((entry) => {
+    const value = entry.trim();
+    let parsed: URL;
+    try {
+      parsed = new URL(value);
+    } catch {
+      fail(`SPONSOR_ALLOWED_ORIGINS: ${value} is not an origin`);
+    }
+    if (parsed.origin !== value) fail(`SPONSOR_ALLOWED_ORIGINS: ${value} is not an origin`);
+    return value;
+  });
+}
 
 const threshold = process.env.SPONSOR_WITHDRAWAL_THRESHOLD_BPS;
 const limits: SponsorLimits = {
@@ -99,6 +145,10 @@ const limits: SponsorLimits = {
   mintGas:
     (process.env.SPONSOR_MINT_GAS_WEI ?? '').trim() === '' ? null : wei('SPONSOR_MINT_GAS_WEI'),
   newAgentsPerDay: count('SPONSOR_NEW_AGENTS_PER_DAY', 20),
+  // ADR `0123`: a signing address's own limit, and the shared cap for unsigned listings.
+  listingsPerAddressPerDay: count('SPONSOR_LISTINGS_PER_ADDRESS_PER_DAY', 5),
+  anonymousListingsPerDay: count('SPONSOR_ANONYMOUS_LISTINGS_PER_DAY', 20),
+  listingsPerDay: count('SPONSOR_LISTINGS_PER_DAY', 50),
   dailyBudget: wei('SPONSOR_DAILY_BUDGET_WEI', ADR_0092_LIMITS.dailyBudget),
   depositsPerAgentPerDay: count(
     'SPONSOR_DEPOSITS_PER_AGENT_PER_DAY',
@@ -120,9 +170,12 @@ const limits: SponsorLimits = {
 // The predicate the declare path writes (`declare/plan.ts`) and every reader filters on. Not
 // configurable: a sponsored deposit on any other `uses` atom would be invisible to all of them.
 const usesPredicate: Hex = INTUITION_USES_TERM_ID;
-const registries = required('SPONSOR_REGISTRIES')
-  .split(',')
-  .map((entry) => entry.trim());
+let registries: string[];
+try {
+  registries = registryList(required('SPONSOR_REGISTRIES'), intuitionTestnet.id);
+} catch (error) {
+  fail(`SPONSOR_REGISTRIES: ${error instanceof Error ? error.message : String(error)}`);
+}
 let acceptedContentSigners: Address[];
 try {
   acceptedContentSigners = addressList(process.env.SPONSOR_CONTENT_SIGNERS);
@@ -141,9 +194,23 @@ try {
 const account = privateKeyToAccount(readKeyFile(required('SPONSOR_KEY_FILE')));
 const walletClient = createWalletClient({ account, chain: intuitionTestnet, transport: http(RPC) });
 
-async function mined(hash: Hex) {
-  const receipt = await publicClient.waitForTransactionReceipt({ hash });
-  return { hash, status: receipt.status };
+/**
+ * Waits for a sent transaction, bounded. Every send runs inside the service's one queue, so an
+ * unbounded wait on a transaction that never lands stopped every route (ADR `0116`). Past the
+ * bound, or when the RPC fails while it waits, the outcome is `unconfirmed`: the hash is kept, the
+ * spend stays pending in the ledger, and the queue moves on.
+ */
+const RECEIPT_TIMEOUT_MS = 120_000;
+async function mined(hash: Hex): Promise<SendOutcome> {
+  try {
+    const receipt = await publicClient.waitForTransactionReceipt({
+      hash,
+      timeout: RECEIPT_TIMEOUT_MS,
+    });
+    return { hash, status: receipt.status };
+  } catch {
+    return { hash, status: 'unconfirmed' };
+  }
 }
 
 const wallet: SponsorWallet = {
@@ -160,7 +227,8 @@ const wallet: SponsorWallet = {
     } catch (error) {
       return {
         ok: false,
-        reason: String(error instanceof Error ? error.message : error).slice(0, 300),
+        // Redacted: the RPC URL in a viem message can carry its key, and this reason is answered.
+        reason: redactUrls(String(error instanceof Error ? error.message : error)).slice(0, 300),
       };
     }
   },
@@ -179,7 +247,6 @@ const registryAbi = parseAbi([
   'function getAgentWallet(uint256 agentId) view returns (address)',
   'function balanceOf(address owner) view returns (uint256)',
 ]);
-const REGISTRY_REF = /^eip155:([1-9][0-9]*):(0x[0-9a-fA-F]{40})$/;
 const ZERO: Address = '0x0000000000000000000000000000000000000000';
 
 const service = createSponsor({
@@ -197,7 +264,7 @@ const service = createSponsor({
       const held = await Promise.all(
         registries.map((ref) =>
           publicClient.readContract({
-            address: getAddress(REGISTRY_REF.exec(ref)?.[2] ?? ''),
+            address: getAddress(ERC8004_REGISTRY_REF.exec(ref)?.[2] ?? ''),
             abi: registryAbi,
             functionName: 'balanceOf',
             args: [address],
@@ -210,6 +277,7 @@ const service = createSponsor({
   owners: {
     async ownerOf(registry, agentId) {
       // `ownerOf` reverts for a token that does not exist, which is the "not registered" answer.
+      // Anything else is the chain unreachable, and is thrown: `null` means "does not exist".
       return publicClient
         .readContract({
           address: registry,
@@ -217,10 +285,11 @@ const service = createSponsor({
           functionName: 'ownerOf',
           args: [agentId],
         })
-        .catch(() => null);
+        .catch(nullOnRevert);
     },
     async agentWalletOf(registry, agentId) {
       // Unset reads as the zero address; a registry without the getter reverts. Both mean none.
+      // An unreachable chain is neither, and is thrown.
       const wallet = await publicClient
         .readContract({
           address: registry,
@@ -228,13 +297,13 @@ const service = createSponsor({
           functionName: 'getAgentWallet',
           args: [agentId],
         })
-        .catch(() => null);
+        .catch(nullOnRevert);
       return wallet === null || wallet === ZERO ? null : wallet;
     },
   },
   identities: {
     async identityAtom({ agentRegistry, agentId }) {
-      const match = REGISTRY_REF.exec(agentRegistry);
+      const match = ERC8004_REGISTRY_REF.exec(agentRegistry);
       if (match === null) return { status: 'none' };
       // A graph failure throws, and is a 500: only an answer about the agent is a refusal.
       return resolveIdentityAtomStrict({
@@ -249,9 +318,17 @@ const service = createSponsor({
     },
   },
   registries,
+  hosts: loopbackHosts(PORT),
+  // The web app's own origins, for `/list-tool` only (ADR `0123`), plus any the operator lists.
+  listToolOrigins: [
+    ...DEFAULT_LIST_TOOL_ORIGINS,
+    ...originList(process.env.SPONSOR_ALLOWED_ORIGINS),
+  ],
+  resolveTool: (url) => resolveOnGitHubCached(url),
+  repoSpellings: (repo) => repoSpellingsOnGraph(deployments.chain.graphqlUrl, repo),
   usesPredicate,
   limits,
-  ledger: new SponsorLedger(LEDGER),
+  ledger,
   acceptedContentSigners,
   publish: null,
   pinThing:
@@ -284,6 +361,9 @@ export async function main(): Promise<void> {
   );
   process.stderr.write(
     `  content    ${acceptedContentSigners.length === 0 ? 'no signer accepted' : acceptedContentSigners.join(', ')}\n`,
+  );
+  process.stderr.write(
+    `  listing    ${PIN_KEY === '' ? 'off (no INTUITION_PIN_API_KEY)' : `${limits.listingsPerAddressPerDay}/address/day, ${limits.anonymousListingsPerDay} unsigned/day, ${limits.listingsPerDay}/day in all`}\n`,
   );
   process.stderr.write(`  ledger     ${LEDGER}\n`);
   process.stderr.write(`  publish    disabled (no pinning service, predicates not read)\n`);

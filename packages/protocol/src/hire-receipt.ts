@@ -95,6 +95,7 @@ import {
 } from "viem";
 
 import {canonicalBytesRfc8785} from "./canonicalize.js";
+import {DECIMAL, ERC8004_REGISTRY} from "./identifiers.js";
 
 /** The payload version new receipts carry, signed. Bump with the struct, together with the domain's. */
 export const HIRE_RECEIPT_VERSION = 2;
@@ -276,8 +277,6 @@ export async function signHireReceipt(
     };
 }
 
-const DECIMAL = /^(0|[1-9][0-9]*)$/;
-const ERC8004_REGISTRY = /^eip155:[1-9][0-9]*:0x[0-9a-fA-F]{40}$/;
 
 function malformed(reason: string): HireReceiptVerdict {
     return {status: "malformed", reason};

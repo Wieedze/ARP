@@ -50,13 +50,9 @@ import {useOnboarding} from "../components/onboarding/onboarding-context";
  * do not ship** — `Landing.test.tsx` greps for them. Scene 2's two cards are built from the one
  * query the page already makes, grouped two ways, and say there is nothing when there is nothing.
  *
- * **`0.1 TRUST` and `0.11 TRUST` are NOT samples**, and this comment said they were. Both are live
- * reads off chain 1155, which is the default (`lib/chain-choice.ts` — mainnet unless `localStorage`
- * says testnet): `getTripleCost()` is 0.1 and `getGeneralConfig().minDeposit` is 0.01, so the fee
- * is 0.1 and the floor is 0.11. The reference hardcodes the same two numbers, which is why they
- * were on its sample list and why they look invented. Measured on the running page, 2026-10-28:
- * the DOM contains exactly those two amounts and zero sample names. Since task 53 only the fee is
- * printed: the floor sat in scene 4's declare card, which is gone.
+ * **The fee is not a sample.** It is a live `getTripleCost()` read off the selected chain
+ * (`lib/chain-choice.ts`, testnet by default since ADR `0105`), so it reads 0.1 TRUST on 1155 and
+ * 100× less on 13579. The reference hardcodes the mainnet figure, which is why it looks invented.
  */
 /**
  * How many declarations the page asks for.

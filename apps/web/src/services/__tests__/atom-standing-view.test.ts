@@ -273,3 +273,12 @@ describe("the way out to the code", () => {
         expect(buildAtomView(standing({label: "AI"}), "TRUST").browseUrl).toBeNull();
     });
 });
+
+describe("buildAtomView url", () => {
+    it("keeps an http(s) url and drops any other scheme, which anyone who pays can write", () => {
+        expect(buildAtomView(standing({url: "https://example.org"}), "TRUST").url).toBe(
+            "https://example.org",
+        );
+        expect(buildAtomView(standing({url: "javascript:alert(1)"}), "TRUST").url).toBeNull();
+    });
+});

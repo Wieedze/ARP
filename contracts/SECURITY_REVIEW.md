@@ -1,4 +1,298 @@
-# Security review — ModuleRegistry
+# Security review — ARP contracts
+
+One file for every contract ARP has written. The two "Task 60" sections come first because they
+correct the ones after them; the rest run oldest first, and each is the record of its own review:
+corrections are struck through in place, never rewritten (`.claude/rules/claims.md` §5).
+
+## What is in `src/` today
+
+| Contract                | File                                       | Deployed                                                                                                                                               | Sections                                                    |
+| ----------------------- | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------- |
+| `TrustStakeCapEnforcer` | `src/enforcers/TrustStakeCapEnforcer.sol` | ~~testnet 13579 and mainnet 1155, **both the v1 code from before ADR `0118`**~~ **Corrected 2026-11-03:** testnet 13579 runs **v2** at `0x19e07280F1483Aa9aCDb1a7F8C61bfd20c7879Bc` (bytecode checked, reviewer pass below); mainnet 1155 and the superseded testnet `trustStakeCapEnforcerV1` run v1 — `data/deployments/<chainId>.json` | "Task 60" below; Task 02b for v1                            |
+| `ReceiptEnforcer`       | `src/enforcers/ReceiptEnforcer.sol`        | **not deployed**                                                                                                                                       | Task 43, Task 44, "Task 60"                                 |
+| `IdentityRegistry`      | `src/erc8004/IdentityRegistry.sol`         | testnet 13579 only (`data/deployments/13579.json`)                                                                                                     | "Task 60: `IdentityRegistry`" below — it had no review here |
+
+**Removed from `src/` in `59ac83a`** ("one contract, not five", ADR `0055`): `ModuleRegistry` and
+`DomainScopeEnforcer`. Their addresses stay in `data/deployments/`, and their reviews stay below
+under **Historical** headings. `DomainScopeEnforcer`'s mainnet copy is still deployed and inert: it
+gates `ModuleRegistry.registerModule`, and no `ModuleRegistry` is on 1155.
+
+---
+
+# Task 60: contract-reviewer pass
+
+**Reviewed:** 2026-11-03
+**Commit:** `7654e4f` (branch `chore/59-audit-cleanup`, diff against `dev` over `contracts/`,
+`scripts/deploy/`, `data/deployments/`)
+**Reviewer:** contract-reviewer agent
+
+## Threat model
+
+The per-contract walks are in the two "Task 60" sections below; this pass re-derived each and
+concurs, with the additions here.
+
+- **Reentrancy**: no external call in either enforcer's hook. **Clean.**
+- **Access control**: `TrustStakeCapEnforcer` is permissionless with a slot per caller.
+  **Another DelegationManager** calling writes only its own slot. It cannot reach the real one, and
+  it cannot spend from a delegator either: a DeleGator accepts `executeFromExecutor` from the one
+  DelegationManager it is bound to, and the delegation's signature is over that manager's EIP-712
+  domain. The only consequence is that one delegation redeemable through two managers would get two
+  budgets. No account here is built that way. `ReceiptEnforcer`: all four hooks gated on
+  `DELEGATION_MANAGER`. **Clean.**
+- **Integer arithmetic**: overflow only in the caller's own slot, and it reverts. **Clean.**
+- **Input validation**: unchanged. **Clean.**
+- **Front-running / MEV**: the v1 grief is closed. An attacker's direct call with
+  `cap = value = 2**255` leaves the manager's slot at zero
+  (`test_directCall_cannotFillTheManagersSlot`), and a real redemption through `DelegationManager`
+  then succeeds (`test_redemption_succeedsAfterAttackerFillsTheHashDirectly`). `ReceiptEnforcer`: a
+  stranger's node key consumes only its own `(chainId, signer, payment)` slot. **Clean.**
+- **Signature replay**: `ReceiptEnforcer` still gives one receipt one deposit. The key carries the
+  signer and no delegation hash, so the same receipt under a second delegation reverts
+  (`test_beforeHook_revertsOnSameReceiptUnderAnotherDelegation`), and a second receipt from the same
+  signer for the same payment reverts (`test_beforeHook_revertsOnSecondReceiptForOnePayment`). What
+  changed: one payment hash can now unlock one deposit **per accepted signer**. This weakens nothing
+  that held before. `payment` is asserted by the signer, so any one accepted key could already mint
+  unlimited fresh payment hashes. What the rung holds, "an accepted key signed this receipt", is
+  unchanged. (INFO-T60-2.)
+- **Oracles**: `block.timestamp`, ~15 s, documented. **Clean.**
+- **DoS via unbounded loops**: `MAX_BINDINGS = 32`; no loop in the cap enforcer. **Clean.**
+- **Upgradeability**: none. **Clean.**
+- **Events**: `StakeCapChecked(delegationManager indexed, delegationHash indexed, …)` on every
+  write. `scripts/measure/enforcer-events.ts` counts v2 logs whose topic 1 is the DelegationManager
+  apart from the rest. **Clean.**
+
+## Deployment check
+
+- Testnet 13579 `trustStakeCapEnforcer` `0x19e07280F1483Aa9aCDb1a7F8C61bfd20c7879Bc`: `cast code`
+  output is **byte-identical** to `forge inspect TrustStakeCapEnforcer deployedBytecode`, including
+  the CBOR metadata trailer, so it was built from these exact sources. Tx `0x8dd54ea3…3159`,
+  block 9375217, status 1, from the recorded deployer `0xE596…1AA1`.
+- `lib/delegation-framework/src/` and its nested `erc7579-implementation/src/` are identical to the
+  pinned commits `1bdb8a3` and `16138d1`. Checked by fresh fetch and `diff -rq`, because in the
+  reviewed checkout `lib/` is a plain directory, not an initialised submodule.
+- `scripts/deploy/deploy.sh` refuses 1155 without `--mainnet-i-confirmed` and refuses
+  `--identity-registry` on 1155. It refuses chain 11155111 even with the flag, all exit 1, and
+  nothing is sent. The forge scripts refuse 1155 on their own: `DeployEnforcers` without
+  `ARP_MAINNET_CONFIRMED`, and `DeployIdentityRegistry` even with it (`WrongChain(1155)`). A testnet
+  dry run reports "already runs the current source" and skips.
+
+## Test coverage
+
+`forge test`: 113 passed, 0 failed (5 suites). `forge coverage`, `src/` only:
+
+| File                        | Lines   | Statements | Branches | Funcs  |
+| --------------------------- | ------- | ---------- | -------- | ------ |
+| `TrustStakeCapEnforcer.sol` | 18/18   | 22/22      | 3/3      | 3/3    |
+| `ReceiptEnforcer.sol`       | 61/61   | 84/84      | 17/17    | 13/13  |
+| `IdentityRegistry.sol`      | 75/75   | 78/78      | 33/33    | 17/17  |
+
+Coverage is complete, but **two invariant tests are vacuous** (M-T60-1).
+
+## Gas
+
+`TrustStakeCapEnforcer.beforeHook` min 26 540 / avg 36 640 / median 35 230 / max 72 910; deployment
+393 207 gas, 1 601 bytes. `ReceiptEnforcer.beforeHook` max 138 090. `IdentityRegistry.register()`
+max 100 683. No gas target is set for task 60.
+
+## Lint
+
+`solhint --disc 'src/**/*.sol'` 0 problems (`src/erc8004/` ignored by `.solhintignore`, recorded).
+`forge fmt --check` clean. `forge build` prints 5 `block-timestamp` forge-lint notes, all on
+documented, intended comparisons. Slither 0.11.5: 22 results, none High or Medium, none new in kind.
+
+## Findings
+
+- **M-T60-1 (Medium)**: `test/enforcers/TrustStakeCapEnforcer.t.sol`, `TrustStakeCapHandler.stake`.
+  The handler calls `beforeHook` without `vm.prank(DM)`, so every call writes the **handler's** slot.
+  Both invariants read slot `DM = 0xD3`, which is always zero, so they cannot fail. A mutant with the
+  `CapExceeded` check deleted passes both. With `vm.prank(DM);` added before the `try`, the mutant
+  fails `invariant_cumulativeNeverExceedsCap` and the real source passes both (verified in a scratch
+  copy). The caller keying in ADR `0118` introduced this. **Fix:** add `vm.prank(DM);` immediately
+  before the `try enforcer.beforeHook(...)` in the handler.
+- **L-T60-1 (Low)**: `scripts/deploy/deploy.sh`. `--private-key "$PRIVATE_KEY"` puts the key in
+  forge's argv, readable by any local user through `ps` or `/proc/<pid>/cmdline` while the script
+  runs. `set -a; source .env` also exports every `.env` value to `cast` and `jq`. **Recommendation:**
+  read the key from the environment inside the script, which `run()` already does with
+  `vm.envUint("PRIVATE_KEY")`. Pass the signer through an interactive or keystore option, or export
+  only the variables needed.
+- **INFO-T60-1**: delegations already signed against the v1 testnet copy
+  `0x7BB5…0F8E` keep running v1 code and stay griefable until their operators re-sign naming
+  `0x19e0…79Bc`. The redeploy does not migrate them.
+- **INFO-T60-2**: `ReceiptEnforcer` lets one payment hash unlock one deposit per accepted signer,
+  where before it allowed one in total. Not a weakening; see Signature replay above. A sponsoring
+  service that cross-checks must pass the signer to `isPaymentUsed`.
+
+## Verdict
+
+**FAIL**, on M-T60-1 alone. The contract changes themselves are sound: the grief is closed, no new
+grief is opened, one receipt still unlocks one deposit, and the testnet bytecode matches `src/`.
+Re-review after the one-line handler fix.
+
+## Re-review, 2026-11-03
+
+**Commits:** `d46c30b` (M-T60-1), `d755b9c` (L-T60-1).
+
+- **M-T60-1, closed.** The handler calls `vm.prank(DM)` before the `try`. Mutation check against
+  the committed test, in a scratch copy, with the `CapExceeded` check deleted from `src/`:
+  `invariant_cumulativeNeverExceedsCap` **fails** (1 024.57e18 > 1 000e18). On the real source both
+  invariants pass at 256 runs × 500 calls. The full suite is 113 passed, 0 failed.
+  `invariant_windowStartMonotonic` was not mutation-tested on its own.
+- **L-T60-1, closed.** `deploy.sh` sources `.env` without `set -a` and exports only `PRIVATE_KEY`.
+  `forge script` gets no `--private-key`, and both scripts sign through
+  `vm.startBroadcast(vm.envUint("PRIVATE_KEY"))`. In a testnet dry run with `--force`, I sampled
+  every `forge` process's `/proc/<pid>/cmdline` while the script ran: the `forge script` process was
+  observed, and `--private-key` never appeared. The simulation deployed from the recorded deployer
+  `0xE596…1AA1` and exited 0, and nothing was sent or written. The mainnet refusal is unchanged:
+  chain 1155 without the flag still exits 1.
+- **INFO-T60-3 (new).** The `@dev` NatSpec of `script/DeployEnforcers.s.sol:13` and
+  `script/DeployIdentityRegistry.s.sol:13` still documents a direct run with
+  `--private-key $PRIVATE_KEY`, the argv exposure L-T60-1 removed from `deploy.sh`. Documentation
+  only; not blocking.
+- Lint: `solhint` 0 problems, `forge fmt --check` clean.
+
+**Verdict: PASS.**
+
+---
+
+# Task 60 (2026-11-02): `TrustStakeCapEnforcer` could be griefed
+
+**Found by:** the task 60 read-only audit, 2026-11-02. **Fixed in:** ADR `0118`, this branch.
+**Scope:** `src/enforcers/TrustStakeCapEnforcer.sol`, `test/enforcers/TrustStakeCapEnforcer.t.sol`,
+`test/enforcers/TrustStakeCapEnforcerRedemption.t.sol`.
+
+## What was wrong
+
+`beforeHook` is `public`, `_terms` is the caller's to choose, and state was keyed by
+`_delegationHash` alone. A delegation hash is not a secret: it is derived from the signed
+delegation, which ARP publishes on testnet (ADR `0092`) and which any redemption reveals. So anyone
+could call `beforeHook` directly with `cap = value = 2**255` and the victim's hash, filling the
+counter: every real redemption under that delegation then reverted `CapExceeded` for the
+delegation's own period counted from the attacker's call, and one more call per period kept it
+blocked indefinitely.
+
+Four sentences in this file said this could not happen (Task 02b sections, struck through below).
+The reasoning they shared — _"`_delegationHash` is bound by signature upstream"_ — is true of the
+hash the **DelegationManager** passes during `redeemDelegations`. The enforcer never checked that it
+was the DelegationManager calling, and that is the whole gap: the binding upstream protects the
+redemption path, not the storage slot.
+
+**Reachability** (`claims.md` §1). ~~Both deployed copies run the v1 code.~~ **Corrected
+2026-11-03:** both copies deployed before task 60 run the v1 code; testnet 13579 now points at a v2
+redeploy (Task 60 reviewer pass, above), and the v1 testnet copy stays live for any delegation that
+names it. On mainnet 1155
+(`0x9992…5f34`) the hook has never fired — 0 `StakeCapChecked` logs, measured 2026-10-27 by
+`scripts/measure/enforcer-events.ts` — so no known delegation uses it and the defect is latent
+there. On testnet 13579 delegations do use it (the same script found 9 distinct delegation hashes
+on 2026-10-27), so it was reachable. Whether anyone ever exploited it was **not measured**: a v1 log
+does not say who called.
+
+## The fix
+
+State is `mapping(address delegationManager => mapping(bytes32 delegationHash => …))`, keyed by
+`msg.sender` — the pattern MetaMask's own stateful enforcers use (`LimitedCallsEnforcer.sol:16`,
+`NativeTokenPeriodTransferEnforcer.sol:34` in `lib/delegation-framework/src/enforcers/`). A direct
+caller writes only its own slot. `getState(delegationManager, delegationHash)` reads one slot, and
+`StakeCapChecked` carries the caller as its first indexed topic, so a log is evidence of a
+redemption only when that topic is the DelegationManager. The event's signature changed:
+v1 `0x0ccea75b…dc1f1`, v2 `0x16a2d870…90989` (`cast keccak`).
+
+A `msg.sender == DELEGATION_MANAGER` immutable, as in `ReceiptEnforcer`, would also close it. The
+caller-keyed map was preferred because it is upstream's pattern and leaves one bytecode usable with
+any DelegationManager deployment.
+
+`test_redemption_succeedsAfterAttackerFillsTheHashDirectly` drives the attack through the real
+`DelegationManager`. Run against the v1 contract it fails with `CapExceeded(2**255 + 1e18, 1e18)`;
+against v2 it passes.
+
+## The window is fixed, not rolling
+
+The contract said "rolling window". It is a fixed window that opens at the first spend after the
+previous one expired. So spend can reach about 2 × `cap` within any `periodSeconds` interval that
+straddles a boundary (`test_fixedWindow_allowsTwoCapsAcrossABoundary`). The NatSpec says so now.
+
+## Threat model, v2
+
+- **Reentrancy**: no external call. **Clean.**
+- **Access control**: permissionless by design; every caller has its own slot. The slot that governs
+  redemptions is written only by the DelegationManager. **Clean.**
+- **Integer arithmetic**: `currentCumulative + value` can overflow only in a slot whose caller chose
+  a huge `value`, and then reverts that caller's own call. **Clean.**
+- **Input validation**: unchanged (`InvalidPeriod`, mode guards, `decodeSingle`). **Clean.**
+- **Front-running / MEV**: a third party cannot touch the DelegationManager's slot. **Clean.**
+- **Signature replay**: none here. **N/A.**
+- **Oracles / external data**: `block.timestamp`, ~15 s tolerance, irrelevant at day scale. **Clean.**
+- **DoS via unbounded loops**: no loops. **Clean.**
+- **Upgradeability**: none. **Clean.**
+- **Events**: every successful pass emits `StakeCapChecked(delegationManager, delegationHash, …)`. **Clean.**
+
+**The mainnet copy keeps the v1 code.** It has never fired. Redeploying it is a mainnet deployment and
+needs the user's per-session confirmation (`CLAUDE.md`, ADR `0118`).
+
+## `ReceiptEnforcer`: replay key now includes the signer
+
+The used set was keyed by `keccak256(abi.encode(chainId, payment))`: one set for every delegation.
+Anyone running a node key could bind it in a delegation of their own, sign a receipt naming a
+victim's payment hash, redeem first, and make the victim's genuine receipt revert
+`PaymentAlreadyUsed`. The key is now `keccak256(abi.encode(chainId, signer, payment))`, and
+`isPaymentUsed` takes the signer. A key by delegation hash would also have closed the grief but would
+let one receipt unlock a deposit in every delegation that accepts its signer; the signer key keeps
+one payment, one deposit, per node, across delegations. `msg.sender` is not added: the hooks are
+gated on `DELEGATION_MANAGER`. Tests: `test_beforeHook_strangerCannotBurnAnotherSignersPayment`
+(fails on the old key), `test_beforeHook_revertsOnSameReceiptUnderAnotherDelegation`. Not deployed,
+so no on-chain copy carries the old key.
+
+---
+
+# Task 60: `IdentityRegistry`
+
+**Scope:** `src/erc8004/IdentityRegistry.sol`, ARP's testnet deployment of the ERC-8004 reference
+registry (ChaosChain `trustless-agents-erc-ri`, ported to OpenZeppelin v5 as its header says). It had
+no tests and no section in this file until task 60. The contract is **not** changed: it is the
+reference, and the deployed copy is the record. `test/erc8004/IdentityRegistry.t.sol`, 40 tests.
+
+## Threat model
+
+- **Reentrancy**: `_safeMint` calls `onERC721Received` on a contract recipient. All three `register`
+  overloads are `nonReentrant` (`test_register_reentryFromReceiverReverts`). `setAgentWallet` makes
+  one `staticcall` to an ERC-1271 wallet via `SignatureChecker`, after which it writes one slot.
+  **Clean.**
+- **Access control**: every write is owner-or-approved (`_isAuthorized`), checked first. No admin, no
+  owner of the contract. **Clean.**
+- **Integer arithmetic**: the id counter increments in `unchecked`, from 1; it cannot reach
+  `2**256`. **Clean.**
+- **Input validation**: empty metadata keys and the reserved `agentWallet` key are refused; an empty
+  URI is refused by `setAgentURI` but allowed at `register()` (by design: set later). **Clean.**
+- **Front-running / MEV**: ids are first come, first served; the owner is `msg.sender`. **Clean.**
+- **Signature replay** (`security.md`): EIP-712, domain `{name, version "1.1", chainId,
+  verifyingContract}`, struct `(agentId, newWallet, deadline)`. **No nonce** — see the deviations.
+- **Oracles**: `block.timestamp` against `deadline`. **Clean.**
+- **DoS via unbounded loops**: `_setMetadataBatch` loops over a caller-supplied array, paid by that
+  caller, writing only to the token it just minted. **Clean with the bound documented.**
+- **Upgradeability**: none. **Clean.**
+- **Events**: `Registered`, `MetadataSet`, `URIUpdated`, `AgentWalletSet` on every write; ERC-721
+  `Transfer` on mint and transfer. The wallet reset on transfer emits no `AgentWalletSet`.
+
+## Accepted deviations from the rules, recorded
+
+1. **`setAgentWallet` has no nonce.** A signature stays valid until its `deadline`, so the owner can
+   replay it, e.g. to restore a wallet after `unsetAgentWallet`
+   (`test_setAgentWallet_signatureReplaysUntilDeadline`). It cannot be replayed to another agent id or
+   another wallet: both are in the struct. This is the reference implementation's behaviour, kept
+   because the deployed copy is the reference.
+2. **The domain separator is immutable**, fixed at deployment. After a chain split both chains
+   accept the same signature (`test_domainSeparator_isFixedAtDeployment`). Same reason.
+3. **`require` strings, not custom errors**, and `pragma ^0.8.20`, not `^0.8.24`
+   (`solidity.md`). Upstream code; the tests assert the strings.
+4. **The wallet reset on transfer emits no event.** An indexer that follows `AgentWalletSet` alone
+   keeps showing the old wallet after a transfer.
+
+---
+
+# Historical — `ModuleRegistry` (Task 02)
+
+**Removed from `src/` in `59ac83a`.** Addresses kept in `data/deployments/13579.json`. The review
+below is the record of that contract and is not maintained.
+
 
 **Reviewed:** 2026-06-01
 **Commit:** uncommitted (Task 02 in progress)
@@ -265,7 +559,14 @@ Ready for Task 02 sign-off and Task 03 (deployment + Intuition integration).
 
 ---
 
-# Security review — Caveat enforcers (Task 02b)
+# Caveat enforcers as first deployed (Task 02b)
+
+**Two kinds of record in this section.** `DomainScopeEnforcer` is **historical**: removed from `src/`
+in `59ac83a`, its mainnet copy inert. `TrustStakeCapEnforcer` here is the **v1 code**, which ~~both
+deployed copies still run~~ the mainnet 1155 copy and the superseded testnet copy
+`trustStakeCapEnforcerV1` still run (**Corrected 2026-11-03:** testnet 13579 runs v2 since task 60);
+v2 is the "Task 60" section at the top of this file. The griefing claims
+below were wrong and are struck through in place.
 
 **Reviewed:** 2026-06-01
 **Commit:** uncommitted (Task 02b in progress)
@@ -279,7 +580,7 @@ Ready for Task 02 sign-off and Task 03 (deployment + Intuition integration).
 - No `msg.sender == DELEGATION_MANAGER` access control on the hooks (deferred to a future ADR per `metamask-delegation.md` and Bear Trap's audit recommendation).
 - `pragma solidity 0.8.23` strict to match the vendored framework — deviation from the project default `^0.8.24`, justified by import-graph constraints.
 
-## Threat model — `DomainScopeEnforcer`
+## Historical — threat model, `DomainScopeEnforcer` (removed in `59ac83a`)
 
 ### Reentrancy
 `beforeHook` makes no external calls. State is read-only (`_terms` and `_executionCallData` are calldata). Inherited modifiers `onlySingleCallTypeMode` + `onlyDefaultExecutionMode` only read mode. **Clean.**
@@ -324,7 +625,11 @@ Not upgradeable. No proxy, no `delegatecall`. **Clean.**
 `beforeHook` mutates `_cumulativeSpend` and `_windowStart` mappings but makes no external calls. Mutations happen AFTER the cap check (checks-effects pattern, even though there's no external call to "interact" with). **Clean.**
 
 ### Access control
-Same posture as `DomainScopeEnforcer`. No restriction on caller. A malicious direct caller could pollute the state for a `_delegationHash` they know — but they cannot grief another delegation, and a polluted state for their own hash only blocks future redemptions they could already not perform. Documented in the contract header. **Clean (with documented risk acceptance).**
+~~Same posture as `DomainScopeEnforcer`. No restriction on caller. A malicious direct caller could pollute the state for a `_delegationHash` they know — but they cannot grief another delegation, and a polluted state for their own hash only blocks future redemptions they could already not perform. Documented in the contract header. **Clean (with documented risk acceptance).**~~
+
+**Corrected 2026-11-02 (task 60, ADR `0118`):** a delegation hash is public, so "a `_delegationHash` they know" is every
+delegation, and filling its counter blocks the **victim's** redemptions, not the caller's. **High**,
+fixed in v2 by keying state by `msg.sender` — "Task 60" at the top of this file.
 
 ### Integer arithmetic
 - `currentCumulative + value` could overflow if `value` is near `uint256.max`. In practice `value` is the native-token amount sent in a single user op — bounded by the user's balance. The check `proposed > cap` happens AFTER the addition, so an overflow would wrap and falsely report a tiny `proposed`. Mitigation: Solidity 0.8+ reverts on overflow by default, so the contract would revert before the check fires. **Clean.**
@@ -339,13 +644,13 @@ Same posture as `DomainScopeEnforcer`. No restriction on caller. A malicious dir
 **Clean.**
 
 ### Front-running / MEV
-The enforcer is per-`delegationHash`. No cross-delegation interaction. No MEV surface beyond the natural ordering of the agent's own actions. **Clean.**
+~~The enforcer is per-`delegationHash`. No cross-delegation interaction. No MEV surface beyond the natural ordering of the agent's own actions. **Clean.**~~ **Corrected 2026-11-02 (task 60, ADR `0118`):** a stranger could front-run a redemption by filling its counter directly. See Access control above.
 
 ### Signature replay
 No signatures. **Clean (N/A).**
 
 ### Oracles / external data
-Reads `block.timestamp` as the rolling-window clock. Miner manipulation tolerance ~15 s. At day-scale periods, irrelevant. Documented in NatSpec. **Clean.**
+Reads `block.timestamp` as the ~~rolling-window~~ window clock (**Corrected 2026-11-02 (task 60, ADR `0118`):** the window is fixed, not rolling). Miner manipulation tolerance ~15 s. At day-scale periods, irrelevant. Documented in NatSpec. **Clean.**
 
 ### DoS via unbounded loops
 No loops. Constant-time. **Clean.**
@@ -405,7 +710,7 @@ Well under the 500k envelope. **Concur with ADR 0007 — both enforcers are gas-
 
 ## Findings
 
-- **INFO-4**: No `msg.sender == DELEGATION_MANAGER` check. Documented in both contract headers + `.claude/rules/metamask-delegation.md`. Bear Trap's audit recommends adding it; we defer to a future ADR. Risk: a direct caller can pollute `TrustStakeCapEnforcer` state for a `_delegationHash` they know, but cannot grief other delegations. Acceptable for MVP.
+- **INFO-4**: No `msg.sender == DELEGATION_MANAGER` check. Documented in both contract headers + `.claude/rules/metamask-delegation.md`. Bear Trap's audit recommends adding it; we defer to a future ADR. ~~Risk: a direct caller can pollute `TrustStakeCapEnforcer` state for a `_delegationHash` they know, but cannot grief other delegations. Acceptable for MVP.~~ **Corrected 2026-11-02 (task 60, ADR `0118`):** it can grief any delegation, and this was High, not Info. Fixed in v2 (ADR `0118`).
 - **INFO-5**: `pragma solidity 0.8.23` strict on both enforcers. Required because vendored `delegation-framework` is pinned 0.8.23. `auto_detect_solc = true` in `foundry.toml` handles the multi-version graph. Deviation from `.claude/rules/solidity.md`'s default `^0.8.24` — documented in this file + the Task 02b post-mortem.
 - **INFO-6**: `bytes calldata` slice + `abi.decode` pattern used for selector + 4-string decode in `DomainScopeEnforcer`. Refactored into `_extractDomainHash` helper to break stack-too-deep. Pattern is sound; documented for future readers.
 
@@ -450,12 +755,12 @@ Numbers match the pre-merge sweep within fuzz variance (avg drifts a few hundred
 | Item | `DomainScopeEnforcer` | `TrustStakeCapEnforcer` |
 |---|---|---|
 | Reentrancy | Clean. No external calls; calldata-only reads. Emit is not external. | Clean. State writes are local; no external calls. The write-after-check ordering is fine — there's no reentrant call surface to revisit. |
-| Access control | Clean for MVP. `beforeHook` is `public` and unguarded. A direct caller bypassing the DelegationManager observes no state change and only the harmless event emit; cannot grief other delegations or other enforcers. | Clean *with documented risk acceptance*. A direct caller can pollute `_cumulativeSpend[h]` and `_windowStart[h]` for any `h` they know — but the framework derives `_delegationHash` from the signed delegation payload, so a non-redeemer can at worst write to their own delegations' state. No cross-delegation impact. INFO-4 covers the deferred `DELEGATION_MANAGER` guard. |
+| Access control | Clean for MVP. `beforeHook` is `public` and unguarded. A direct caller bypassing the DelegationManager observes no state change and only the harmless event emit; cannot grief other delegations or other enforcers. | ~~Clean *with documented risk acceptance*. A direct caller can pollute `_cumulativeSpend[h]` and `_windowStart[h]` for any `h` they know — but the framework derives `_delegationHash` from the signed delegation payload, so a non-redeemer can at worst write to their own delegations' state. No cross-delegation impact. INFO-4 covers the deferred `DELEGATION_MANAGER` guard.~~ **Corrected 2026-11-02 (task 60, ADR `0118`):** the framework derives the hash it passes, but a direct caller passes any hash it likes; anyone can fill any delegation's counter. Fixed in v2. |
 | Integer arithmetic | Clean. Single `for` loop counter is bounded by `allowed.length`. No `unchecked`. | Clean. `currentCumulative + value`: in the realistic redemption path `value` ≤ user balance, so practical overflow is impossible; if a malformed direct call passed `value` near `uint256.max`, Solidity 0.8+ would revert on the add itself before the cap check — fail-safe. `block.timestamp - currentStart` cannot underflow (`currentStart` is 0 or a past timestamp). No division. |
 | Input validation | Clean. `ExecutionLib.decodeSingle` validates execution shape; `callData.length < 4` rejected with `UnsupportedSelector(bytes4(0))`; selector compared byte-exact; `abi.decode` reverts on malformed 4-string encoding; `_terms` decode reverts on malformed `bytes32[]`; empty list rejected. | Clean. `abi.decode((uint256,uint256))` reverts on malformed; `period == 0` rejected; `ExecutionLib.decodeSingle` validates the execution payload. |
-| Front-running / MEV | N/A — guard logic, no auction surface. | N/A — per-delegation state, no cross-redemption interaction. |
+| Front-running / MEV | N/A — guard logic, no auction surface. | ~~N/A — per-delegation state, no cross-redemption interaction.~~ **Corrected 2026-11-02 (task 60, ADR `0118`):** front-runnable, see Access control. |
 | Signature replay | N/A — `DelegationManager` owns signatures; enforcer only sees `_delegationHash`. | N/A — same. |
-| Oracles / external data | N/A — no external read. | `block.timestamp` is the rolling-window clock. ~15 s miner tolerance is irrelevant at day-scale periods. Documented in NatSpec. **Clean.** |
+| Oracles / external data | N/A — no external read. | `block.timestamp` is the ~~rolling-window~~ fixed-window clock. ~15 s miner tolerance is irrelevant at day-scale periods. Documented in NatSpec. **Clean.** |
 | DoS via unbounded loops | Linear scan over `allowed` (decoded from `_terms`). Bounded by calldata size limit and by user intent at signing time. Worst observed: 95 380 gas at 50-entry list — well within budget. **Clean with documented worst-case.** | No loops. **Clean.** |
 | Upgradeability | Not upgradeable. No proxy, no `delegatecall`. **Clean.** | Same. **Clean.** |
 | Events | `DomainScopeChecked(delegationHash, domainHash)` emitted on every successful path; `delegationHash` indexed. Only path that returns success. **Clean.** | `StakeCapChecked(delegationHash, newCumulative, cap)` emitted on every successful path; mutations (`_cumulativeSpend[h]`, `_windowStart[h]`) covered by the same emit at the end of the hook. **Clean.** |
@@ -480,7 +785,7 @@ Independent walkthrough matches the pre-merge sweep. No new findings.
 |---|---|---|
 | 1 | `DomainScopeEnforcer` is purpose-built for `ModuleRegistry.registerModule` (selector pinned, 4-string `abi.decode`, compose with `AllowedTargetsEnforcer` for target). | **Concur.** Single-purpose enforcers are the framework's idiom (per `references/delegations.md`). Hardcoding the selector + ABI shape is the correct discipline — a "generic" enforcer would need to dispatch on selectors anyway and become a footgun. Composition with `AllowedTargetsEnforcer` is the documented MetaMask pattern. |
 | 2 | `TrustStakeCapEnforcer` is target-agnostic; reads only `value`. | **Concur.** Native-token (`tTRUST` on Intuition Testnet) spend is the dimension being capped; target restriction belongs in a separate enforcer. This is the correct axis decomposition. |
-| 3 | No `msg.sender == DELEGATION_MANAGER` check. | **Concur with deferral.** Risk model: a direct caller can only pollute *their own* delegations' state for a hash they signed; cross-delegation grief is impossible because `_delegationHash` is the only state key and is bound by signature upstream. The risk acceptance in INFO-4 is sound for MVP. An ADR is warranted before the production deploy for `TrustStakeCapEnforcer` specifically (the stateless `DomainScopeEnforcer` is structurally immune). Recommendation: open the ADR before any mainnet deploy, not blocking for hackathon. |
+| 3 | No `msg.sender == DELEGATION_MANAGER` check. | **Concur with deferral.** ~~Risk model: a direct caller can only pollute *their own* delegations' state for a hash they signed; cross-delegation grief is impossible because `_delegationHash` is the only state key and is bound by signature upstream. The risk acceptance in INFO-4 is sound for MVP.~~ **Corrected 2026-11-02 (task 60, ADR `0118`):** the hash being the only key is what made the grief possible; "bound by signature upstream" holds only on the DelegationManager's path, which the enforcer did not require. An ADR is warranted before the production deploy for `TrustStakeCapEnforcer` specifically (the stateless `DomainScopeEnforcer` is structurally immune). Recommendation: open the ADR before any mainnet deploy, not blocking for hackathon. |
 | 4 | `pragma solidity 0.8.23` strict on both enforcers; `auto_detect_solc = true`. | **Concur.** The framework is pinned 0.8.23 and we cannot change it. Mixing pragmas via auto-detect is the standard Foundry idiom for this scenario. The same selector computation is invariant across the version boundary (verified above). INFO-5 captures the documentation. |
 | 5 | Stack-too-deep refactor: extracted `_extractDomainHash` + `_enforceAllowed`. | **Concur.** Inlining the body hit Solidity's 16-local-variable stack limit because `(target, value, callData)` + selector + `(name, domain, schemaURI, description)` + `allowed` + `len` + `i` overflow the slots. The extraction is semantics-preserving and slightly improves readability. No performance penalty for `private` helpers — they inline at the optimizer level. |
 | 6 | No `unchecked` arithmetic in our code; inherited `require` strings in base modifiers. | **Concur.** Both enforcers' loops/arithmetic are short and bounded; the gas saved by `unchecked` would be in the single-digit-percent range and not worth the auditor confusion. The inherited `require` strings are out of our control and acceptable. |
@@ -499,7 +804,7 @@ None at critical/high/medium/low. The three INFO items already documented (4, 5,
 
 ### Hackathon narrative-preservation check
 
-**Concur — the narrative is preserved.** Together the two enforcers demonstrate the on-chain leg of the ARP story: a user (delegator) grants an agent (redeemer) scoped authority to act on the `ModuleRegistry`, with two ARP-specific axes of restriction — what they can register (domain hash list) and how much they can stake per window (rolling cap). That is exactly the "delegate with bounded authority via composable caveat enforcers" frame in `docs/00_HACKATHON_PIVOT.md`. No drift.
+**Concur — the narrative is preserved.** Together the two enforcers demonstrate the on-chain leg of the ARP story: a user (delegator) grants an agent (redeemer) scoped authority to act on the `ModuleRegistry`, with two ARP-specific axes of restriction — what they can register (domain hash list) and how much they can stake per window (~~rolling~~ fixed-window cap). That is exactly the "delegate with bounded authority via composable caveat enforcers" frame in `docs/00_HACKATHON_PIVOT.md`. No drift.
 
 ### Verdict
 
@@ -547,7 +852,8 @@ staticcall. One storage write (`_paymentUsed[key] = true`), then an event. **Cle
 ### Access control
 All four hooks revert with `OnlyDelegationManager(caller)` unless `msg.sender` is the immutable
 `DELEGATION_MANAGER`, which is set in the constructor and cannot be zero. The guard is required here,
-unlike in `TrustStakeCapEnforcer`: the replay key is readable from a pending redemption, so an
+~~unlike in `TrustStakeCapEnforcer`~~ (**Corrected 2026-11-02 (task 60, ADR `0118`):** `TrustStakeCapEnforcer` needed one too, and has a
+caller-keyed map since v2): the replay key is readable from a pending redemption, so an
 ungated hook would let anyone burn a receipt by front-running it
 (`test_beforeHook_revertsForStrangerCaller`). There is no owner and no admin. **Clean.**
 
@@ -579,8 +885,10 @@ This is covered by the access-control guard above. Inside a real redemption the 
 `requester == _redeemer` and `receiver == _redeemer`.
 
 ### Signature replay
-- **Nonce**: the receipt's `payment`. The used set is keyed by `keccak256(abi.encode(chainId, payment))`,
-  so one payment hash unlocks one deposit here, even when the node signs two receipts for it
+- **Nonce**: the receipt's `payment`. The used set is keyed by ~~`keccak256(abi.encode(chainId, payment))`~~
+  `keccak256(abi.encode(chainId, signer, payment))` (**Corrected 2026-11-02 (task 60, ADR `0118`):** the global key let a stranger's
+  own node key burn a victim's payment hash; "Task 60" at the top),
+  so one payment hash unlocks one deposit here per signer, even when the node signs two receipts for it
   (`test_beforeHook_revertsOnSecondReceiptForOnePayment`).
 - **Chain id**: in the EIP-712 domain and pinned by `_terms` (`test_beforeHook_revertsOnOtherChainDomain`).
 - **Verifying contract**: **absent from the v1 receipt's domain**. Rated Medium as INFO-R1 below.
@@ -606,7 +914,7 @@ The single state write is paired with `ReceiptConsumed(delegationHash, paymentKe
   has no `verifyingContract`, so a receipt consumed here is not consumed at another verifier. One
   payment can be sponsored once by task 40's service and once by this enforcer, both from ARP's
   funds. **Service-side mitigation** (ADR `0098`): before it pays, the service calls
-  `isPaymentUsed(chainId, payment)` on every deployment it knows and refuses on true. That closes
+  `isPaymentUsed(chainId, payment)` (`isPaymentUsed(chainId, signer, payment)` since task 60) on every deployment it knows and refuses on true. That closes
   _enforcer first, service second_. It does not close _service first, enforcer second_: the
   enforcer cannot read the service's ledger, and only the DelegationManager can call its hooks. That
   order is bounded by `TrustStakeCapEnforcer`'s cap and by `paid`. **Open, the user's decision**:
@@ -679,7 +987,7 @@ Slither 0.11.5, 101 detectors: **12 results, none High or Medium.** Triage:
 
 ### Step 4: properties
 
-1. One `(chainId, payment)` unlocks at most one deposit through a deployment
+1. One `(chainId, payment)` (`(chainId, signer, payment)` since task 60) unlocks at most one deposit through a deployment
    (`test_beforeHook_revertsOnSameReceiptTwice`, `test_beforeHook_revertsOnSecondReceiptForOnePayment`).
 2. Only `DELEGATION_MANAGER` changes state (`test_beforeHook_revertsForStrangerCaller` and the three no-op hooks' tests).
 3. A deposit passes only if an accepted binding names the recovered signer, the agent and the term (fuzzed by `testFuzz_beforeHook_rejectsTamperedPaid`).
@@ -766,7 +1074,7 @@ User decision on ADR `0098`'s open point: a v2 receipt that names its verifier (
 
 ### Signature replay, re-walked
 
-- **Nonce**: unchanged, the payment hash, used set keyed by `(chainId, payment)`.
+- **Nonce**: unchanged, the payment hash, used set keyed by `(chainId, payment)` — `(chainId, signer, payment)` since task 60.
 - **Chain id**: unchanged, in the domain and pinned by `_terms`.
 - **Verifying contract**: in the domain. A receipt signed for another deployment, or for the
   sponsoring service's address, recovers to a different key here and reverts `SignerNotAccepted`

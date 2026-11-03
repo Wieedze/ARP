@@ -156,7 +156,8 @@ describe("readHierarchy, reading from the attestor's positions", () => {
                 },
             },
         ]);
-        const triples = await readHierarchy({...CONFIG, attestor: ATTESTOR, transport});
+        const {triples, truncated} = await readHierarchy({...CONFIG, attestor: ATTESTOR, transport});
+        expect(truncated).toBe(false);
         expect(triples).toEqual([
             {
                 tripleId: "0x1",
@@ -167,12 +168,33 @@ describe("readHierarchy, reading from the attestor's positions", () => {
             },
         ]);
         expect(seen[0]?.["who"]).toBe(ATTESTOR);
+        expect(seen[0]?.["curveId"]).toBe("1");
     });
 
     it("skips a position that is on an atom rather than a triple", async () => {
         // Creating a tool atom with a deposit leaves a position too, and it has no triple.
         const {transport} = positionsOf([{shares: "1", term: {triple: null}}, {shares: "1"}]);
-        expect(await readHierarchy({...CONFIG, attestor: ATTESTOR, transport})).toEqual([]);
+        expect((await readHierarchy({...CONFIG, attestor: ATTESTOR, transport})).triples).toEqual(
+            [],
+        );
+    });
+
+    it("pages positions at 100, the indexer's cap on that table, not at 250", async () => {
+        const row = {
+            shares: "1",
+            term: {triple: {term_id: "0x1", subject: {data: "a"}, object: {data: "tool"}}},
+        };
+        const seen: Record<string, unknown>[] = [];
+        let call = 0;
+        const transport = {
+            async request(_query: string, variables: Record<string, unknown>) {
+                seen.push(variables);
+                return {positions: call++ === 0 ? Array.from({length: 100}, () => row) : []};
+            },
+        };
+        const {triples} = await readHierarchy({...CONFIG, attestor: ATTESTOR, transport});
+        expect(seen.map((entry) => entry["limit"])).toEqual([100, 100]);
+        expect(triples).toHaveLength(100);
     });
 });
 
@@ -186,14 +208,48 @@ describe("readHierarchy", () => {
                     term_id: "0x1",
                     subject: {data: "payment", label: "Payment (display)"},
                     object: {data: "tool", label: "Tool"},
-                    term: {vaults: [{position_count: 1, total_shares: "980"}]},
+                    term: {vaults: [{curve_id: "1", position_count: 1, total_shares: "980"}]},
                 },
             ],
         ]);
-        const triples = await readHierarchy({...CONFIG, transport});
+        const {triples} = await readHierarchy({...CONFIG, transport});
         expect(triples).toEqual([
             {tripleId: "0x1", child: "payment", parent: "tool", positions: 1, shares: 980n},
         ]);
+    });
+
+    it("ranks on one curve's shares, never a sum across curves", async () => {
+        const {transport} = transportOf([
+            [
+                {
+                    term_id: "0x1",
+                    subject: {data: "payment"},
+                    object: {data: "tool"},
+                    term: {
+                        vaults: [
+                            {curve_id: "1", position_count: 1, total_shares: "980"},
+                            {curve_id: "2", position_count: 5, total_shares: "1000000"},
+                        ],
+                    },
+                },
+            ],
+        ]);
+        const {triples} = await readHierarchy({...CONFIG, transport});
+        expect(triples[0]).toMatchObject({positions: 1, shares: 980n});
+    });
+
+    it("stops at its row ceiling and says so", async () => {
+        const row = {
+            term_id: "0x1",
+            subject: {data: "a"},
+            object: {data: "tool"},
+            term: {vaults: [{curve_id: "1", position_count: 1, total_shares: "1"}]},
+        };
+        const full = Array.from({length: 250}, () => row);
+        const {transport, seen} = transportOf([full, full, full]);
+        const {truncated} = await readHierarchy({...CONFIG, transport}, {maxRows: 500});
+        expect(truncated).toBe(true);
+        expect(seen).toHaveLength(2);
     });
 
     it("stops paging on a short page", async () => {
@@ -253,13 +309,20 @@ describe("toolsInDomain", () => {
                     term_id: "0xours",
                     subject: {term_id: "0xaa", value: {thing: {url: "https://x/ours"}}},
                     object: {data: "payment"},
-                    term: {vaults: [{position_count: 1, total_shares: "1", positions: [{shares: "9"}]}]},
+                    term: {vaults: [{curve_id: "1", position_count: 1, total_shares: "1", positions: [{shares: "9"}]}]},
                 },
                 {
                     term_id: "0xtheirs",
                     subject: {term_id: "0xbb", value: {thing: {url: "https://x/theirs"}}},
                     object: {data: "payment"},
-                    term: {vaults: [{position_count: 1, total_shares: "1", positions: []}]},
+                    term: {vaults: [{curve_id: "1", position_count: 1, total_shares: "1", positions: []}]},
+                },
+                {
+                    // Backed only on another curve: a different market, so not ours on curve 1.
+                    term_id: "0xothercurve",
+                    subject: {term_id: "0xcc", value: {thing: {url: "https://x/other"}}},
+                    object: {data: "payment"},
+                    term: {vaults: [{curve_id: "2", position_count: 1, total_shares: "1", positions: [{shares: "9"}]}]},
                 },
             ],
         ]);
@@ -268,7 +331,7 @@ describe("toolsInDomain", () => {
             "payment",
             {tree},
         );
-        expect(tools.map((tool) => tool.attestorBacked)).toEqual([true, false]);
+        expect(tools.map((tool) => tool.attestorBacked)).toEqual([true, false, false]);
         expect(seen[0]?.["who"]).toBe("0xATTESTOR");
     });
 
@@ -329,5 +392,35 @@ describe("toolsInDomain, paging", () => {
             maxRows: 300,
         });
         expect(tools.length).toBeLessThan(700);
+    });
+
+    it("says the walk was cut when it stops at maxRows, and not when it read everything", async () => {
+        const tree = DomainTree.from("tool", [edge("payment", "tool")]);
+        const cut = await toolsInDomain(
+            {...CONFIG, transport: pagingTransportOf(tagged).transport},
+            "payment",
+            {tree, maxRows: 300},
+        );
+        expect(cut.truncated).toBe(true);
+        const whole = await toolsInDomain(
+            {...CONFIG, transport: pagingTransportOf(tagged).transport},
+            "payment",
+            {tree},
+        );
+        expect(whole.truncated).toBe(false);
+    });
+
+    it("terminates on a limit of zero or less instead of looping for ever", async () => {
+        const tree = DomainTree.from("tool", [edge("payment", "tool")]);
+        for (const limit of [0, -5]) {
+            const paging = pagingTransportOf(tagged.slice(0, 3));
+            const {tools} = await toolsInDomain(
+                {...CONFIG, transport: paging.transport},
+                "payment",
+                {tree, limit},
+            );
+            expect(tools).toHaveLength(3);
+            expect(paging.requests).toBeLessThan(10);
+        }
     });
 });

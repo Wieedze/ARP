@@ -3,7 +3,7 @@
 A read-only connector for the ERC-8004 agent layer.
 
 Give it an ERC-8004 identity — `(chainId, tokenId)` — and it returns one merged profile: every trust
-provider's assessment with its **EIP-712 signature actually verified** and its **declared freshness
+provider's assessment with its **EIP-712 signature checked against the signer it names** and its **declared freshness
 window actually enforced**, the agent's capability declarations, and the live market on each provider
 claim.
 
@@ -23,15 +23,15 @@ delegated signing (see below) and is imported lazily, so a direct-mode consumer 
 ## The one call
 
 ```ts
-import {createErc8004Client, getAgentProfile} from "@arp-protocol/core";
+import {createErc8004Client, getAgentProfile, INTUITION_MAINNET_GRAPHQL} from "@arp-protocol/core";
 
-const client = createErc8004Client();
+const client = createErc8004Client({graphqlUrl: INTUITION_MAINNET_GRAPHQL});
 const profile = await getAgentProfile(client, {chainId: 8453, tokenId: "2340"});
 
 for (const entry of profile.assessments) {
     console.log(
         entry.claim.provider.name,
-        entry.signature.status, // "verified" | "mismatch" | "unverified"
+        entry.signature.status, // "self-signed" | "mismatch" | "unverified"
         entry.freshness.status, // "fresh" | "stale" | "unknown"
         entry.market?.support.positionCount, // distinct stakers — see the warning below
     );
@@ -56,9 +56,9 @@ Ethereum.
 Everything above is keyed by an identity. `listAgents` is the read for when you do not have one yet.
 
 ```ts
-import {createErc8004Client, listAgents} from "@arp-protocol/core";
+import {createErc8004Client, INTUITION_MAINNET_GRAPHQL, listAgents} from "@arp-protocol/core";
 
-const client = createErc8004Client();
+const client = createErc8004Client({graphqlUrl: INTUITION_MAINNET_GRAPHQL});
 const page = await listAgents(client, {order: "evidence-quantity", limit: 25, offset: 0});
 
 console.log(page.total); // ~28,700 on mainnet — the graph's count, not page.agents.length
@@ -117,7 +117,6 @@ getCapabilities(client, ref); // Capabilities[] — one per source that answered
 getMarkets(client, ref); // ClaimMarket[]
 marketCapableSources(client); // which sources can price a claim at all
 listAgents(client, options); // AgentPage — one window onto the cohort
-listingCapableSources(client); // which sources can enumerate agents at all
 ```
 
 Four functions are pure — no client, no network, no configuration. **A consumer who wants nothing
@@ -163,11 +162,11 @@ picked for you.
 ## What it cannot verify
 
 - **Most documents are not signed at all.** Of the providers live on mainnet today, Deep3 Labs signs
-  and AsterPay KYA does not. An unsigned document gets `unverified`, never `verified`.
+  and AsterPay KYA does not. An unsigned document gets `unverified`, never `self-signed`.
 - **Provider identity is unproven.** Anyone can publish an assessment under any provider name. The
   only real gate today is control of the resolver URL. Nothing here proves the address writing a
   provider's graph edges is one that provider controls.
-- **`verified` means one thing only**: the EIP-712 signature recovers to the address the document
+- **`self-signed` means one thing only**: the EIP-712 signature recovers to the address the document
   itself names as the signer. It says nothing about whether the score is honest, the method sound, or
   the signer trustworthy.
 - **The signed-value mapping is empirical, not specified.** The signed struct's field _names_ are
@@ -190,7 +189,7 @@ picked for you.
     about one. Confirming a provider means recovering their own declared signer from their own live
     documents and adding their `provider.id` to that list; nothing less.
 
-    `verified` is _not_ gated this way. Vouching for a signature that demonstrably checks out costs
+    `self-signed` is _not_ gated this way. Vouching for a signature that demonstrably checks out costs
     nobody anything, so any provider can reach it on an exact match.
 
 - **Capabilities are relayed, never inferred.** Nothing is read out of the registration file yet; the
@@ -255,7 +254,7 @@ reputation, and so does the agent.
 relationship with ARP. A tool's atom is derived from its URI and your identity atom already exists
 if your agent is in the Base mirror, so nothing has to be pinned.
 
-**This package prepares the calls. It never signs them and never sends them.** You get a list of
+**This package prepares the calls. It holds no key and never sends them.** You get a list of
 `{to, value, data, why}` and sign it with your own key. ARP holds no key and has no send path, so it
 cannot spend your TRUST even by mistake.
 
@@ -448,10 +447,11 @@ enforcers reject batch execution modes, which is the whole reason they can bound
 The guard rail is not the price of entry: you can start direct and add the delegation later without
 changing anything else.
 
-## Never signs, never sends
+## Holds no key, sends nothing
 
 No wallet client, no private key, no send path anywhere in this package. Every read is
-unauthenticated, and the write half returns unsigned calls for your own key.
+unauthenticated, and the write half returns unsigned calls for your own key. The receipt and
+sponsor-request helpers sign, but only through a signer you pass in; the package never holds one.
 
 This used to read "read-only throughout, no write path of any kind", which stopped being true when
 the planners landed. The invariant that matters is narrower and unchanged: nothing here can move

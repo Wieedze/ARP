@@ -1,13 +1,10 @@
 /**
  * Read the Intuition partner pinning credential from the environment.
  *
- * This is the **only** place in the repo that reads `INTUITION_PIN_API_KEY`
- * outside of `scripts/verify/verify-pin-key.ts`, and the only sanctioned constructor of
- * a `PinAuth`. `apps/web/src/services/` never touches the environment and exports no
- * way to build a credential: `PinAuth` is a branded type, so `{apiKey: "…"}` is
- * a type error everywhere, and browser code importing only from the services
- * layer cannot produce one (ADR 0016). Node entry points close that gap here and
- * thread the result down explicitly.
+ * This is the **only** place in `scripts/` that reads `INTUITION_PIN_API_KEY`
+ * outside of `scripts/verify/verify-pin-key.ts` (ADR 0016). It builds the plain
+ * `PinAuth` of `scripts/helpers/intuition-pin.ts`; scripts import nothing from
+ * `apps/web/src`, whose own branded `PinAuth` stays browser-side.
  *
  * Fails loudly on a missing key — no silent fallback, matching the
  * deployer-script rule in `.claude/rules/security.md`. A pin against an
@@ -19,7 +16,7 @@
  *   INTUITION_PIN_API_KEY_HEADER   optional — defaults to "apikey"
  */
 
-import { DEFAULT_HEADER_NAME, type PinAuth } from '../../apps/web/src/services/intuition-pin';
+import { DEFAULT_HEADER_NAME, type PinAuth } from './intuition-pin.js';
 
 /**
  * Return the partner pinning credential, or throw with the remediation.
@@ -37,12 +34,8 @@ export function requirePinAuth(): PinAuth {
         'visitor). Then confirm it with: bun run verify:pin',
     );
   }
-  const resolved: { apiKey: string; headerName?: string } = {
+  return {
     apiKey,
     headerName: process.env.INTUITION_PIN_API_KEY_HEADER ?? DEFAULT_HEADER_NAME,
   };
-  // The one place allowed to mint the brand. Safe because this module is
-  // Node-only and the value it vouches for is a real key read from the
-  // environment — which is exactly the fact the brand encodes.
-  return resolved as PinAuth;
 }

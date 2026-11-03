@@ -8,6 +8,7 @@ import {
 } from '@arp-protocol/core';
 
 import { chainId, MULTI_VAULT, reads, REACHABLE_ATOM } from '../config.js';
+import { hostGuard } from '../host-guard.js';
 import { type JsonRpcId, fail, text, isTermId, isAddress } from '../rpc.js';
 import { serialiseCall, UNSIGNED_CAVEAT } from '../serialise.js';
 
@@ -46,14 +47,17 @@ export async function probe(id: JsonRpcId, args: Record<string, unknown>) {
     return fail(id, -32602, "protocol, when given, must be 'mcp' or 'a2a'");
   }
 
-  const outcome = await probeEndpoint({
-    declaredUnder: 'endpoints',
-    name: protocolRaw ?? null,
-    protocol: (protocolRaw as 'mcp' | 'a2a' | undefined) ?? null,
-    version: null,
-    capabilities: [],
-    classification: { status: 'probeable', url, declared: url },
-  });
+  const outcome = await probeEndpoint(
+    {
+      declaredUnder: 'endpoints',
+      name: protocolRaw ?? null,
+      protocol: (protocolRaw as 'mcp' | 'a2a' | undefined) ?? null,
+      version: null,
+      capabilities: [],
+      classification: { status: 'probeable', url, declared: url },
+    },
+    hostGuard(),
+  );
   return text(id, { url, outcome });
 }
 
@@ -89,14 +93,17 @@ export async function recordReachable(id: JsonRpcId, args: Record<string, unknow
     return fail(id, -32602, "protocol, when given, must be 'mcp' or 'a2a'");
   }
 
-  const outcome = await probeEndpoint({
-    declaredUnder: 'endpoints',
-    name: protocolRaw ?? null,
-    protocol: (protocolRaw as 'mcp' | 'a2a' | undefined) ?? null,
-    version: null,
-    capabilities: [],
-    classification: { status: 'probeable', url, declared: url },
-  });
+  const outcome = await probeEndpoint(
+    {
+      declaredUnder: 'endpoints',
+      name: protocolRaw ?? null,
+      protocol: (protocolRaw as 'mcp' | 'a2a' | undefined) ?? null,
+      version: null,
+      capabilities: [],
+      classification: { status: 'probeable', url, declared: url },
+    },
+    hostGuard(),
+  );
 
   const verdict = verdictOf(outcome);
   const curveId = await reads.defaultCurveId();

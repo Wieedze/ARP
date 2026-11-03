@@ -94,7 +94,7 @@ export function parseCapInput(text: string): {cap: bigint} | {error: string} {
 
 /**
  * The unsigned delegation `/account` signs: the operator's Smart Account lets `delegate` call the
- * MultiVault's three composing methods, under a cumulative cap per rolling period
+ * MultiVault's three composing methods, under a cumulative cap per fixed window
  * (`composeAndStakeCaveats`). It was `/rig` step 4, and it is the only UI that builds one.
  */
 export function stakeDelegation(params: {

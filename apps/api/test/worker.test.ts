@@ -1,8 +1,8 @@
 import { describe, expect, test } from 'bun:test';
 
 import { runSlice, unitsOf, type Store } from '../src/refresh.ts';
-import { readRepo, readSkillPage, readTree, shorten } from '../src/sources.ts';
-import { handle, type Env } from '../src/worker.ts';
+import { readRepo, readSkillPage, readTree, shorten, type Fetch } from '../src/sources.ts';
+import { handle, sameSecret, type Env } from '../src/worker.ts';
 
 function memoryStore(): Store & { data: Map<string, string>; writes: number } {
   const data = new Map<string, string>();
@@ -291,6 +291,29 @@ describe('the HTTP surface', () => {
     };
     expect(body.repos['github.com/o/r']?.days).toBe(2);
     expect(body.read.repos.oldest).toBe('2026-10-30T00:00:00.000Z');
+  });
+
+  test('the secret is compared whole, whatever its length', async () => {
+    expect(await sameSecret('Bearer yes', 'Bearer yes')).toBe(true);
+    expect(await sameSecret('Bearer ye', 'Bearer yes')).toBe(false);
+    expect(await sameSecret('', 'Bearer yes')).toBe(false);
+  });
+
+  test('a read that hangs or never connects is a failure of that unit, not of the slice', async () => {
+    const refused = (async () => {
+      throw new TypeError('fetch failed');
+    }) as Fetch;
+    expect(await readRepo('o/r', refused)).toEqual({
+      error: 'repo o/r: TypeError',
+      limited: false,
+    });
+    const seen: (AbortSignal | null | undefined)[] = [];
+    const records = (async (_url: string, init?: RequestInit) => {
+      seen.push(init?.signal);
+      return new Response('{}');
+    }) as Fetch;
+    await readRepo('o/r', records);
+    expect(seen[0]).toBeInstanceOf(AbortSignal);
   });
 
   test('POST /refresh is off without a secret, and refused with the wrong one', async () => {

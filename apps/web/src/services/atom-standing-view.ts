@@ -2,6 +2,7 @@ import {INTUITION_USES_TERM_ID} from "@arp-protocol/core";
 import type {AtomClaim, AtomEdge, AtomEdgeGroup, AtomStanding} from "@arp-protocol/core";
 
 import {formatTrust, truncateMiddle} from "./trust-format";
+import {safeHttpUrl} from "../lib/safe-url";
 import {browseUrlOf, parseToolLabel, primaryNameOf, sourceOf} from "../lib/tool-label";
 
 /**
@@ -20,7 +21,7 @@ import {browseUrlOf, parseToolLabel, primaryNameOf, sourceOf} from "../lib/tool-
  *
  * ## No tier, and no ranking
  *
- * `tool-usage-view.ts` grades `uses` edges on `docs/14`'s ladder. That is the right question on an
+ * `docs/14`'s ladder grades the evidence behind a `uses` edge. That is the right question on an
  * agent's page — how good is this evidence — and the wrong one here. A `has tag` edge is not weak
  * evidence of a tag; it is a declaration whose only cost is what the writer paid. Grading it would
  * invent a scale the data does not carry, and ARP composes no score (ADR `0046`).
@@ -276,7 +277,7 @@ export function buildAtomView(standing: AtomStanding, symbol: string): AtomView 
         label,
         subtitle: label === null ? null : sourceOf(parseToolLabel(label)),
         browseUrl: label === null ? null : browseUrlOf(parseToolLabel(label)),
-        url: standing.url,
+        url: safeHttpUrl(standing.url),
         atomId: standing.atomId,
         title: hasTitle
             ? primaryNameOf(parseToolLabel(label))

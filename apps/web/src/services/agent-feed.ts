@@ -75,7 +75,7 @@ function callSummary(
 }
 
 /** The key that makes two deliveries of one event the same entry. */
-export function agentEventKey(event: AgentEvent): string {
+function agentEventKey(event: AgentEvent): string {
     switch (event.source) {
         case "session":
             return `agent:session:${event.session ?? ""}:${event.call ?? `${event.at}:${event.name}`}`;

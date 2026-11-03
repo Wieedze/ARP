@@ -3,7 +3,7 @@ import {describe, expect, it} from "vitest";
 import {createErc8004Client} from "../src/client.js";
 import {listAgents} from "../src/listing.js";
 import {getAgentProfile} from "../src/profile.js";
-import {intuitionSource} from "../src/sources/intuition/index.js";
+import {INTUITION_MAINNET_GRAPHQL, intuitionSource} from "../src/sources/intuition/index.js";
 
 /**
  * One opt-in test against real mainnet.
@@ -16,7 +16,7 @@ import {intuitionSource} from "../src/sources/intuition/index.js";
 const live = process.env["ERC8004_LIVE"] === "1" ? describe : describe.skip;
 
 live("live smoke (ERC8004_LIVE=1)", () => {
-    const client = () => createErc8004Client({sources: [intuitionSource()], timeoutMs: 30_000});
+    const client = () => createErc8004Client({sources: [intuitionSource({graphqlUrl: INTUITION_MAINNET_GRAPHQL})], timeoutMs: 30_000});
 
     /**
      * A client with deadlines far past anything observed, so the cohort tests
@@ -24,7 +24,13 @@ live("live smoke (ERC8004_LIVE=1)", () => {
      */
     const patient = () =>
         createErc8004Client({
-            sources: [intuitionSource({timeoutMs: 120_000, listTimeoutMs: 120_000})],
+            sources: [
+                intuitionSource({
+                    graphqlUrl: INTUITION_MAINNET_GRAPHQL,
+                    timeoutMs: 120_000,
+                    listTimeoutMs: 120_000,
+                }),
+            ],
             timeoutMs: 120_000,
         });
 
@@ -96,6 +102,6 @@ live("live smoke (ERC8004_LIVE=1)", () => {
         const deep3 = profile.assessments.find(
             (entry) => entry.fetch.status === "ok" && entry.claim.resolverUrl?.includes("deep3.ai"),
         );
-        expect(deep3?.signature.status).toBe("verified");
+        expect(deep3?.signature.status).toBe("self-signed");
     }, 60_000);
 });

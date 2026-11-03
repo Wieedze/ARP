@@ -119,3 +119,36 @@ describe("portability — a client with Intuition removed entirely", () => {
         expect(marketCapableSources(client)).toEqual([]);
     });
 });
+
+describe("erc8004RegistrySource — an unreachable chain is not an absent agent", () => {
+    function failing(message: string) {
+        return erc8004RegistrySource({
+            transports: {
+                8453: custom(
+                    {
+                        async request({method}: {method: string}) {
+                            if (method === "eth_chainId") return "0x2105";
+                            throw new Error(message);
+                        },
+                    },
+                    {retryCount: 0},
+                ),
+            },
+        });
+    }
+
+    it("answers null for a token whose ownerOf reverts", async () => {
+        expect(await failing("execution reverted").resolveAgent(CLAWNCH)).toBeNull();
+    });
+
+    it("throws for a network failure, so the profile records a source error", async () => {
+        await expect(failing("fetch failed").resolveAgent(CLAWNCH)).rejects.toThrow(/fetch failed/);
+        const profile = await getAgentProfile(
+            createErc8004Client({sources: [failing("fetch failed")]}),
+            CLAWNCH,
+            {skipResolverFetch: true},
+        );
+        expect(profile.identity).toBeNull();
+        expect(profile.sourceErrors.map((error) => error.step)).toContain("resolveAgent");
+    });
+});

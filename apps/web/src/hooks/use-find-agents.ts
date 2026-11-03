@@ -16,11 +16,11 @@ export type FindAgentsFetcher = (domain: string, graphqlUrl: string) => Promise<
 const fetchCandidates: FindAgentsFetcher = (domain, graphqlUrl) =>
     findAgents(domain, {graphqlUrl, limit: 50});
 
-export function findAgentsQueryKey(chainId: number, domain: string) {
+function findAgentsQueryKey(chainId: number, domain: string) {
     return ["intuition", chainId, "find-agents", domain] as const;
 }
 
-export function findAgentsQueryOptions(
+function findAgentsQueryOptions(
     chain: {chainId: number; graphqlUrl: string},
     domain: string,
     fetch: FindAgentsFetcher = fetchCandidates,

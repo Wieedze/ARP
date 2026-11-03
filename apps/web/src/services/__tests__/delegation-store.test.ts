@@ -111,6 +111,45 @@ describe("the delegation store", () => {
         ).toThrow("QuotaExceededError");
     });
 
+    it("reads a v2 blob from storage that refuses writes without throwing", () => {
+        const v2Key = `arp.delegations.v2.${SA.toLowerCase()}`;
+        const v2 = JSON.stringify({compose: JSON.stringify(delegation("0xaa")), signedAt: 5});
+        const readOnly: StorageLike = {
+            getItem: (key) => (key === v2Key ? v2 : null),
+            setItem: () => {
+                throw new Error("QuotaExceededError");
+            },
+            removeItem: () => undefined,
+        };
+        const list = readStoredDelegations(readOnly, SA);
+        expect(list.map((e) => e.delegation.signature)).toEqual(["0xaa"]);
+    });
+
+    it("drops an entry whose caveats are not enforcer, terms and args", () => {
+        const good = {
+            ...delegation("0xaa"),
+            caveats: [
+                {enforcer: "0x00000000000000000000000000000000000000e1", terms: "0x01", args: "0x"},
+            ],
+        };
+        const bad = [
+            {...delegation("0xbb"), caveats: [{enforcer: "nope", terms: "0x", args: "0x"}]},
+            {
+                ...delegation("0xcc"),
+                caveats: [{enforcer: good.caveats[0]!.enforcer, terms: 7, args: "0x"}],
+            },
+            {...delegation("0xdd"), caveats: [null]},
+        ];
+        const storage = memoryStorage({
+            [delegationStorageKey(SA)]: JSON.stringify(
+                [good, ...bad].map((d, i) => ({delegation: d, signedAt: i})),
+            ),
+        });
+        expect(readStoredDelegations(storage, SA).map((e) => e.delegation.signature)).toEqual([
+            "0xaa",
+        ]);
+    });
+
     it("exports the signed struct as JSON a runtime can parse back", () => {
         const d = delegation("0xaa");
         expect(JSON.parse(exportDelegation(d))).toEqual(d);

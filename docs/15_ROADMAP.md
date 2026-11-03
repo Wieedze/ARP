@@ -2,19 +2,27 @@
 
 **Date**: 2026-10-19
 **Serves**: `docs/12_THE_IDEA.md`. Supersedes the ordering notes in `docs/13` where they conflict.
+**Status**: dated 2026-10-19. The six testnet gaps below still hold and are the reason this file is
+kept. The phases are the record; the live plan is `Wieedze/ARP-business-dev`, `plan/next-steps.md`
+(gates of 10, then 100, agents ARP does not control), and `.claude/STATE.md` holds the state of each
+piece.
 
 ---
 
 ## What ARP is
 
-> A connector between the Intuition protocol and agents, to create a network of agent and tool
-> reputation.
+> ARP makes money flow to the tools agents actually use.
+
+`docs/01` holds the positioning. This line read "a connector between the Intuition protocol and
+agents" until 2026-11-03.
 
 An agent's operator signs one delegation. The agent runs, declares the tools it used, and deposits
 its own TRUST on them under that cap. The tool gains reputation and so does the agent. **ARP is not a
 party**: it holds no funds, signs nothing, and is in nobody's runtime (ADR `0035`, `0036`).
 
 ## Where things actually live
+
+Figures dated 2026-10-19; re-run `scripts/measure/registry-mintability.ts` rather than quote them.
 
 ```
 identity of 309,925 agents     →  Base 8453   (28,648 mirrored — 9.2%)
@@ -29,13 +37,13 @@ identity atom.
 
 ## What testnet can prove
 
-Everything mechanical. The rig is already deployed on 13579 — ARP's own ERC-8004 registry
-(`0xC165A2AD…`, live, 2 agents), `ModuleRegistry`, both enforcers, the MultiVault and the
-DelegationManager.
+Everything mechanical. The rig is deployed on 13579 — ARP's own ERC-8004 registry
+(`0xC165A2AD…`), `TrustStakeCapEnforcer`, the MultiVault and the DelegationManager
+(`data/deployments/13579.json`). `ModuleRegistry` and `DomainScopeEnforcer` were in this list; both
+were removed from `src/` in `59ac83a` (ADR `0055`), so nothing gates by domain on either chain.
 
-- the full loop: create the triple, deposit, caveats enforcing, every revert path
-- `DomainScopeEnforcer` **actually gating** — it works there, because `ModuleRegistry` is deployed
-- `TrustStakeCapEnforcer` bounding a rolling period
+- the full loop: create the triple, deposit, the cap enforcing, every revert path
+- `TrustStakeCapEnforcer` bounding a fixed window (ADR `0118`: not rolling)
 - the connector surface; a protocol does not care which chain
 - discovery, once the agents have registration files
 - reading a tool's reputation
@@ -106,7 +114,8 @@ rather than a reader's assumption that Phase 0 handled it.
 - **The connector** — **built** 2026-10-19 (`docs/tasks/16` half 1, ADR `0038`). It prepares the calls
   and the agent signs and sends them. Build and send were fused in `delegation-redeem.ts`;
   `packages/protocol/src/declare/` separates them, which is what keeps ARP out of the loop — no key, no gas,
-  no signature — and preserves the package's own invariant: _never signs, never sends_. This bullet
+  no signature — and preserves the package's own invariant: _holds no key, sends nothing_ (it signs
+  only through a signer the caller injects). This bullet
   predicted the design before the task ran, which is the reason to trust it is not drift.
 - MCP first, not a package — **done**: `arp_declare_used` and `arp_stake_on_used` return the plan,
   with a caveat on every response that nothing was signed or sent. Universal, and the agent chooses

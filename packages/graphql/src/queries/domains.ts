@@ -22,10 +22,11 @@
  * tree editable would have silently done nothing. Liquid-Demo's `attestorShares > 0n` is the same
  * check, one layer down.
  */
-export const OUR_HIERARCHY_QUERY = `query($pid: String!, $who: String!, $limit: Int!, $offset: Int!) {
+export const OUR_HIERARCHY_QUERY = `query($pid: String!, $who: String!, $curveId: numeric!, $limit: Int!, $offset: Int!) {
   positions(
     where: {
       account_id: {_eq: $who}
+      curve_id: {_eq: $curveId}
       shares: {_gt: "0"}
       term: {triple: {predicate_id: {_eq: $pid}}}
     }
@@ -51,7 +52,7 @@ export const ALL_HIERARCHY_QUERY = `query($pid: String!, $limit: Int!, $offset: 
     term_id
     subject { term_id data label }
     object { term_id data label }
-    term { vaults { position_count total_shares } }
+    term { vaults { curve_id position_count total_shares } }
   }
 }`;
 
@@ -78,6 +79,7 @@ export const TAGGED_QUERY = `query($pid: String!, $domains: [String!], $limit: I
     object { data }
     term {
       vaults {
+        curve_id
         position_count
         total_shares
         positions(where: {account_id: {_eq: $who}, shares: {_gt: "0"}}) { shares }

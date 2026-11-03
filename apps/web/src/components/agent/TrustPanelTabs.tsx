@@ -33,7 +33,7 @@ const STATIC_LINES: Record<"arp", string> = {
  * Monochrome, with one exception.
  *
  * The accent is spent on the selected state here, so it cannot also mean
- * "signed" — `verified` is separated from `not verified` by foreground weight
+ * "signed" — `self-signed` is separated from `not verified` by foreground weight
  * instead, the same device `FreshnessLine` uses for stale against fresh.
  * `mismatch` keeps the alarm colour: a document that does not recover to the
  * signer it names has to be unmissable from the tab that hides it, not only
@@ -46,7 +46,7 @@ const STATIC_LINES: Record<"arp", string> = {
  * carries the whole verdict.
  */
 const SIGNATURE_TONE_CLASS: Record<TabSummary["signature"]["status"], string> = {
-    verified: "text-[color:var(--color-fg)]",
+    "self-signed": "text-[color:var(--color-fg)]",
     mismatch: "text-[color:var(--color-alarm)]",
     unverified: "text-[color:var(--color-steel)]",
     absent: "text-[color:var(--color-steel)]",

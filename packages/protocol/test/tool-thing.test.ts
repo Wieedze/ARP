@@ -23,6 +23,10 @@ describe("normaliseToolUrl", () => {
         ["HTTPS://GitHub.COM/crytic/slither", "https://github.com/crytic/slither"],
         ["https://github.com:443/crytic/slither", "https://github.com/crytic/slither"],
         ["http://github.com:80/crytic/slither", "https://github.com/crytic/slither"],
+        ["http://github.com:443/crytic/slither", "https://github.com/crytic/slither"],
+        ["https://github.com./crytic/slither", "https://github.com/crytic/slither"],
+        ["https://github.com/crytic/slither.git", "https://github.com/crytic/slither"],
+        ["github.com/crytic/slither.git/", "https://github.com/crytic/slither"],
     ];
 
     it.each(SPELLINGS)("%s -> %s", (input, expected) => {
@@ -32,6 +36,22 @@ describe("normaliseToolUrl", () => {
     it("collapses every spelling to the same atom id", () => {
         const ids = new Set(SPELLINGS.map(([input]) => toolAtomUri(input)));
         expect(ids.size).toBe(1);
+    });
+
+    it("is idempotent, so a stored URL derives the same atom again", () => {
+        const inputs = [
+            ...SPELLINGS.map(([input]) => input),
+            "https://h.com/x/.git",
+            "https://h.com/.git",
+            "https://h.com/x/y.git.git",
+            "https://h.com/x//.git",
+            "https://www.www.h.com/x",
+            "https://h.com/a?b=2&a=1",
+        ];
+        for (const input of inputs) {
+            const once = normaliseToolUrl(input);
+            expect(normaliseToolUrl(once)).toBe(once);
+        }
     });
 
     it("sorts query keys, because order is not identity", () => {

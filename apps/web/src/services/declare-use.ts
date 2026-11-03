@@ -183,7 +183,7 @@ export async function planUseDeclaration(params: {
     object: Hex;
     publicClient: PublicClient;
     chain: StakeChain;
-    graphqlUrl?: string;
+    graphqlUrl: string;
     /** Injected in tests. Defaults to the ERC-8004 registry client inside `agent-import`. */
     ownership?: typeof verifyAgentOwnership;
     /** Injected in tests. Defaults to the package's Intuition-backed resolver. */
@@ -197,9 +197,8 @@ export async function planUseDeclaration(params: {
     // authorised** — which that rule is explicit is not the same as forbidden, and it says to read
     // the ADR before widening it. Widening it is the user's decision, not this module's.
     //
-    // It matters because `lib/chain-choice.ts` defaults to **mainnet**, where this write costs
-    // 0.11 TRUST of which 0.1 never comes back. Shipping it open by default would spend real money
-    // under an authorisation nobody wrote. Deleting this guard plus one ADR turns it on.
+    // On mainnet this write costs 0.11 TRUST of which 0.1 never comes back, and the toggle is one
+    // click away from the testnet default (ADR `0105`). Deleting this guard plus one ADR turns it on.
     if (params.chain.isMainnet) {
         throw new DeclareUseGuardError(
             "mainnet-not-authorised",
@@ -237,10 +236,7 @@ export async function planUseDeclaration(params: {
     const resolve = params.subject ?? resolveDeclarationSubject;
     let subject: AgentIdentityAtom;
     try {
-        subject = await resolve({
-            agent: params.agent,
-            ...(params.graphqlUrl === undefined ? {} : {graphqlUrl: params.graphqlUrl}),
-        });
+        subject = await resolve({agent: params.agent, graphqlUrl: params.graphqlUrl});
     } catch (caught) {
         // `NoAgentIdentityError` is the package's deliberate refusal to fall back onto the
         // operating wallet's `caip10:` atom — 21 such triples exist on testnet and Intuition has no
@@ -324,7 +320,7 @@ export async function planUseDeclaration(params: {
             throw new DeclareUseGuardError(
                 "cost-above-ceiling",
                 `Declaring this use would cost ${plan.totalValue} wei, above this app's ` +
-                    `per-transaction ceiling of ${MAX_STAKE_WEI} wei (VITE_MAX_STAKE_TRUST). ` +
+                    `per-transaction ceiling of ${MAX_STAKE_WEI} wei. ` +
                     `Nothing was sent.`,
             );
         }
@@ -375,8 +371,8 @@ export async function submitUseDeclaration(params: {
     if (declaration.totalValue > MAX_STAKE_WEI) {
         throw new DeclareUseGuardError(
             "cost-above-ceiling",
-            "Declaring would cost more than this app's per-transaction ceiling " +
-                "(VITE_MAX_STAKE_TRUST). Nothing was sent.",
+            "Declaring would cost more than this app's per-transaction ceiling. " +
+                "Nothing was sent.",
         );
     }
 

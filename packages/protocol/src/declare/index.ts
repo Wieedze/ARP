@@ -25,6 +25,7 @@ export {
     encodeRedeem,
     multiVaultDeclareAbi,
     multiVaultReads,
+    RpcChainMismatchError,
     type MultiVaultReads,
     type MultiVaultReadsConfig,
 } from "./multivault.js";

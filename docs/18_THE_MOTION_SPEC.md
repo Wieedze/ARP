@@ -65,7 +65,7 @@ because §3 was derived from them.
 Measured in a browser, 1440×980: **11 elements hidden at load, 0 still hidden after a full scroll**,
 and **0 ever hidden** under `prefers-reduced-motion: reduce`.
 
-`apps/web/src/components/brand/PulseField.tsx` — the hero's particle field. Canvas 2D, ~80 lines, no
+`apps/web/src/components/brand/PulseField.tsx` (removed in `26450c6`, 2026-10-28) — the hero's particle field. Canvas 2D, ~80 lines, no
 dependency. It is driven by real chain data (`beats`, `backed`) and draws the mark alone when those
 are zero. Do not replace it with a library without reading §6.
 

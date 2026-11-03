@@ -1,15 +1,18 @@
 import {
     createGraphqlTransport,
+    DEFAULT_TIMEOUT_MS,
     defaultFetch,
     type FetchLike,
     type GraphqlTransport,
     isRecord,
+    readBigInt,
     readNumber,
     readString,
     TOOL_LISTING_QUERY,
     TOOL_LISTING_SPONSORED_QUERY,
 } from "@arp-protocol/graphql";
 import {SAME_AS, USES} from "./sources/intuition/terms.js";
+import {DEFAULT_CURVE_ID} from "./sources/intuition/index.js";
 
 /**
  * The tools agents have declared using, with what stands behind each — the read `/tools` is built on.
@@ -40,8 +43,6 @@ import {SAME_AS, USES} from "./sources/intuition/terms.js";
  * there is none, and every deposit is declared.
  */
 
-const DEFAULT_CURVE_ID = "1";
-const DEFAULT_TIMEOUT_MS = 10_000;
 
 /**
  * The most rows Intuition's indexer will return for one query, whatever `limit` asks for.
@@ -119,7 +120,7 @@ export type ToolListingPage = {
 export type ToolListingOrder = "declarations" | "priced-edges" | "conviction";
 
 export type ToolListingConfig = {
-    graphqlUrl?: string;
+    graphqlUrl: string;
     fetch?: FetchLike;
     timeoutMs?: number;
     transport?: GraphqlTransport;
@@ -136,15 +137,6 @@ export type ToolListingConfig = {
      */
     sponsor?: string | null;
 };
-
-const INTUITION_MAINNET_GRAPHQL = "https://mainnet.intuition.sh/v1/graphql";
-
-function bigintFrom(value: unknown): bigint {
-    const text =
-        typeof value === "string" ? value : typeof value === "number" ? String(value) : null;
-    if (text === null || !/^\d+$/.test(text)) return 0n;
-    return BigInt(text);
-}
 
 /** The Thing's `url`, with the literal string `"null"` treated as absent — three tools carry it. */
 function hostedAtFrom(object: Record<string, unknown>): string | null {
@@ -163,7 +155,7 @@ function sideOf(term: unknown): {assets: bigint; positions: number} {
     return {
         // Per-vault assets when the curve was found, the term-level total otherwise. The two are
         // different populations and the fallback is stated rather than silent.
-        assets: bigintFrom(vault?.["total_assets"] ?? term["total_assets"]),
+        assets: readBigInt(vault, "total_assets") ?? readBigInt(term, "total_assets") ?? 0n,
         positions: vault === null ? 0 : (readNumber(vault, "position_count") ?? 0),
     };
 }
@@ -199,11 +191,11 @@ function depositsOf(term: unknown): {proven: number; declared: number} {
 }
 
 /** Tools, grouped from the `uses` edges and ordered by a measure the caller picks. */
-export async function listTools(config: ToolListingConfig = {}): Promise<ToolListingPage> {
+export async function listTools(config: ToolListingConfig): Promise<ToolListingPage> {
     const transport =
         config.transport ??
         createGraphqlTransport({
-            url: config.graphqlUrl ?? INTUITION_MAINNET_GRAPHQL,
+            url: config.graphqlUrl,
             fetch: config.fetch ?? defaultFetch(),
             timeoutMs: config.timeoutMs ?? DEFAULT_TIMEOUT_MS,
         });

@@ -164,19 +164,31 @@ describe('publicUrlFrom', () => {
 describe('clientAddress', () => {
   const request = (headers: Record<string, string>) =>
     new Request('http://127.0.0.1/task', { headers });
-  test("reads the tunnel's header on a loopback socket", () => {
-    expect(clientAddress(request({ 'cf-connecting-ip': '203.0.113.7' }), '127.0.0.1')).toBe(
-      '203.0.113.7',
-    );
-    expect(clientAddress(request({ 'x-forwarded-for': '198.51.100.2, 10.0.0.1' }), '::1')).toBe(
-      '198.51.100.2',
-    );
-    expect(clientAddress(request({}), '::ffff:127.0.0.1')).toBe('::ffff:127.0.0.1');
+  test("reads the running tunnel's own header on a loopback socket", () => {
+    expect(
+      clientAddress(request({ 'cf-connecting-ip': '203.0.113.7' }), '127.0.0.1', 'cloudflared'),
+    ).toBe('203.0.113.7');
+    // ngrok appends the address it saw: the right-most hop. The left ones are the caller's.
+    expect(
+      clientAddress(request({ 'x-forwarded-for': '198.51.100.2, 10.0.0.1' }), '::1', 'ngrok'),
+    ).toBe('10.0.0.1');
+    expect(clientAddress(request({}), '::ffff:127.0.0.1', 'ngrok')).toBe('::ffff:127.0.0.1');
+  });
+  test('ignores a header the running tunnel does not write, so a caller cannot rotate its name', () => {
+    expect(
+      clientAddress(request({ 'cf-connecting-ip': '203.0.113.7' }), '127.0.0.1', 'ngrok'),
+    ).toBe('127.0.0.1');
+    expect(
+      clientAddress(request({ 'x-forwarded-for': '198.51.100.2' }), '127.0.0.1', 'cloudflared'),
+    ).toBe('127.0.0.1');
+    expect(
+      clientAddress(request({ 'cf-connecting-ip': '203.0.113.7' }), '127.0.0.1', 'configured'),
+    ).toBe('127.0.0.1');
   });
   test('ignores the header on any other socket', () => {
-    expect(clientAddress(request({ 'cf-connecting-ip': '203.0.113.7' }), '192.0.2.4')).toBe(
-      '192.0.2.4',
-    );
+    expect(
+      clientAddress(request({ 'cf-connecting-ip': '203.0.113.7' }), '192.0.2.4', 'cloudflared'),
+    ).toBe('192.0.2.4');
   });
 });
 

@@ -34,7 +34,7 @@ A sponsored deposit costs the agent nothing, so there the cost sits in the **pro
 
 - **Not a registry.** ARP mints into ERC-8004's registry and reads from it; it never keeps an identity namespace of its own. Being an on-ramp to the standard is being its client, not its competitor.
 - **Not a marketplace.** `/hire` was a demo that the index works; it was never finished and is now removed. Hiring is `docs/tasks/25`, and the delegation there caps the **buyer's** own spend so the seller needs no relationship with ARP.
-- **Not consumer-facing.** B2B infrastructure — agents, dApps and protocols consume it (`docs/01`).
+- **Not B2B first.** Its first users are people who use an agent — Claude users, agent builders, tool authors — and the agent itself, which reads ARP mid-task. Aggregators and publishers may become business customers later (ADR `0120`).
 - **Not a scorer.** ARP publishes no score, rating or assessment of any agent. It makes staking
   possible and reads the result; every figure it surfaces is a deposit somebody else made. ARP cannot
   be wrong about an agent — the market can (ADR `0046`).

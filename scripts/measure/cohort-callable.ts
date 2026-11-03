@@ -13,7 +13,7 @@
  *  estimate — at n=3 the extrapolation spans 741 to 6,160 agents. A declared endpoint that cannot be
  *  probed (templated `{placeholder}`, CAIP or ENS identifier) is skipped, never counted as dead:
  *  see the three groups in `docs/tasks/17-the-external-verifier.md`. */
-import { highestTokenId } from './erc8004-population.js';
+import { highestTokenId } from '../helpers/erc8004-population.js';
 import type { JsonRpcReply } from '../helpers/shapes.js';
 const RPC = 'https://base-rpc.publicnode.com';
 const REGISTRY = '0x8004A169FB4a3325136EB29fA0ceB6D2e539a432';
@@ -42,7 +42,7 @@ async function tokenURI(id: number): Promise<string | null> {
   return new TextDecoder().decode(new Uint8Array(b.map((x) => parseInt(x, 16))));
 }
 
-// Read, never hardcoded — see `erc8004-population.ts`. A fixed 88243 sampled the oldest third.
+// Read, never hardcoded — see `scripts/helpers/erc8004-population.ts`. A fixed 88243 sampled the oldest third.
 const TOTAL = await highestTokenId(),
   N = Number(process.argv[2] ?? 250);
 const ids = Array.from({ length: N }, () => 1 + Math.floor(Math.random() * TOTAL));
@@ -59,12 +59,18 @@ const c = {
 };
 const live: string[] = [];
 
+/** A document's endpoint list, keeping only the entries that are objects. */
+const entries = (value: unknown): Record<string, unknown>[] =>
+  Array.isArray(value)
+    ? value.filter((e): e is Record<string, unknown> => e !== null && typeof e === 'object')
+    : [];
+
 await Promise.all(
   ids.map(async (id) => {
     const uri = await tokenURI(id).catch(() => null);
     if (!uri) return;
     const url = uri.startsWith('ipfs://') ? `https://ipfs.io/ipfs/${uri.slice(7)}` : uri;
-    let doc: any;
+    let doc: unknown;
     try {
       if (url.startsWith('data:')) {
         const p = url.slice(url.indexOf(',') + 1);
@@ -85,9 +91,9 @@ await Promise.all(
       return;
     }
     c.docs++;
-    const eps = [...(doc.endpoints ?? []), ...(doc.services ?? [])].filter(
-      (e) => e && typeof e === 'object',
-    );
+    const fields: Record<string, unknown> =
+      doc !== null && typeof doc === 'object' ? { ...doc } : {};
+    const eps = [...entries(fields.endpoints), ...entries(fields.services)];
     const proto = eps.filter((e) =>
       PROTOCOL_NAMES.has(
         String(e.name ?? '')

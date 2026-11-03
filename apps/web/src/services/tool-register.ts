@@ -140,7 +140,7 @@ export async function planToolRegistration(params: {
     url: string;
     publicClient: PublicClient;
     chain: StakeChain;
-    graphqlUrl?: string;
+    graphqlUrl: string;
     /**
      * The graph read, injectable so the planning can be tested without a network.
      *
@@ -176,9 +176,7 @@ export async function planToolRegistration(params: {
     // even when ours exists: a second atom for the same tool is worth knowing about either way.
     const lookup =
         params.lookup ??
-        intuitionToolAtomLookup(
-            params.graphqlUrl === undefined ? {} : {graphqlUrl: params.graphqlUrl},
-        );
+        intuitionToolAtomLookup({graphqlUrl: params.graphqlUrl});
     const spellings = input === normalisedUrl ? [normalisedUrl] : [input, normalisedUrl];
     const byTermId = new Map<string, ToolAtomCandidate>();
     for (const spelling of spellings) {
@@ -214,7 +212,7 @@ export async function planToolRegistration(params: {
             throw new ToolRegisterGuardError(
                 "cost-above-ceiling",
                 `Registering this tool would cost ${assets} wei, above this app's ` +
-                    `per-transaction ceiling of ${MAX_STAKE_WEI} wei (VITE_MAX_STAKE_TRUST). ` +
+                    `per-transaction ceiling of ${MAX_STAKE_WEI} wei. ` +
                     `Nothing was sent.`,
             );
         }
@@ -257,8 +255,8 @@ export async function submitToolRegistration(params: {
     if (registration.assets > MAX_STAKE_WEI) {
         throw new ToolRegisterGuardError(
             "cost-above-ceiling",
-            "Registering would cost more than this app's per-transaction ceiling " +
-                "(VITE_MAX_STAKE_TRUST). Nothing was sent.",
+            "Registering would cost more than this app's per-transaction ceiling. " +
+                "Nothing was sent.",
         );
     }
 

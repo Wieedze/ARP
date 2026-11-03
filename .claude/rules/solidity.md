@@ -4,7 +4,11 @@ Load with every task that touches `contracts/`. Compose with the global `ethskil
 
 ## Version + toolchain
 
-- Pragma: `^0.8.24` exactly. Newer compiler versions need an ADR before bumping.
+- Pragma: **`0.8.23` exactly** for anything that imports the MetaMask Delegation Framework (every
+  enforcer in `contracts/src/enforcers/`), because the vendored framework pins strict `0.8.23` and
+  shares their compilation unit. **Vendored reference code keeps its upstream pragma**:
+  `contracts/src/erc8004/` is `^0.8.20`. A new standalone contract uses `0.8.23`, so the repo
+  compiles on one version. Any other version needs an ADR (ADR `0117`).
 - Foundry only. No Hardhat, no Truffle.
 - `foundry.toml` must enable: `optimizer = true`, `optimizer_runs = 200` (default), `via_ir = false` (unless gas requires it — record the decision as an ADR).
 
@@ -63,7 +67,7 @@ Every mutation of storage emits an event. No silent writes. Index the fields off
 
 ## External calls
 
-- No external calls in MVP `ModuleRegistry`. If a future module needs one, follow checks-effects-interactions strictly.
+- Prefer contracts with no external calls. Where one is needed, follow checks-effects-interactions strictly.
 - Any external call to a non-trusted address must be reviewed via the Trail of Bits skill chain (`secure-workflow-guide` → `guidelines-advisor`).
 - Reentrancy guards (`nonReentrant`) only when there is an actual external call. Adding them defensively to functions with no external call is noise.
 
@@ -71,7 +75,7 @@ Every mutation of storage emits an event. No silent writes. Index the fields off
 
 - Loops over user-provided arrays are forbidden unless bounded by a constant.
 - View functions returning dynamic arrays must document the unbounded-growth risk in NatSpec.
-- Target: `registerModule` < 200k gas (see task spec). Measure with `forge test --gas-report` and record in `SECURITY_REVIEW.md`.
+- A task that sets a gas target states it in the task file; measure it with `forge test --gas-report` and record it in `SECURITY_REVIEW.md`.
 
 ## Testing
 

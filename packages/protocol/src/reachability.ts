@@ -162,6 +162,3 @@ export type FlipCost = {
     deposit: bigint;
 };
 
-export function flipCost(from: RecordedState, stake: bigint): FlipCost {
-    return {redeem: from === "none" ? 0n : stake, deposit: stake};
-}

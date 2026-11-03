@@ -7,18 +7,23 @@
  * runs against any network the caller points the transport at.
  */
 export {
+    DEFAULT_MAX_BODY_BYTES,
     DEFAULT_TIMEOUT_MS,
     defaultFetch,
+    fetchTextWithTimeout,
     fetchWithTimeout,
     HttpError,
     isTimeoutError,
+    readBodyText,
     type FetchLike,
+    type ReadBodyOptions,
 } from "./http.js";
 export {
     isRecord,
     omitPath,
     readArray,
     readBigInt,
+    readCount,
     readNumber,
     readPath,
     readRecord,
@@ -32,6 +37,7 @@ export {
 } from "./client.js";
 
 export {
+    AGENT_EDGE_LIMIT,
     CAPABILITIES_QUERY,
     CAPABILITY_SAMPLE_LIMIT,
     COHORT_ORDER_BY,

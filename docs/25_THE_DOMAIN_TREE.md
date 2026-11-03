@@ -14,7 +14,7 @@ ARP has three questions and no vocabulary to answer any of them.
 | Question                                | Asked by                   | Today                                                  |
 | --------------------------------------- | -------------------------- | ------------------------------------------------------ |
 | What is this tool **about**?             | the registry               | nothing. 53 tool atoms carry a URL, 46 a quoted description |
-| What may this agent **spend on**?        | `DomainScopeEnforcer`      | a flat `bytes32[]`, and it gates `registerModule` only |
+| What may this agent **spend on**?        | `DomainScopeEnforcer`      | a flat `bytes32[]`, gating `registerModule` only; source deleted (§6) |
 | What is this agent **looking for**?      | `arp_find_tools`           | nothing. It returns all 53 rows                        |
 
 One list would serve all three. That is the whole reason to care about a domain tree: not

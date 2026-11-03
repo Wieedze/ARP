@@ -27,10 +27,16 @@ contract TrustStakeCapEnforcerTest is Test {
     bytes32 internal constant DELEGATION_HASH = bytes32(uint256(0xbabecafe));
     bytes32 internal constant OTHER_HASH = bytes32(uint256(0xfeed1234));
 
-    uint256 internal constant CAP = 1_000 ether;
+    uint256 internal constant CAP = 1000 ether;
     uint256 internal constant PERIOD = 7 days;
 
-    event StakeCapChecked(bytes32 indexed delegationHash, uint256 newCumulative, uint256 cap);
+    /// @dev Stands in for the DelegationManager in the unit tests: every call is pranked from it.
+    address internal constant DM = address(0xD3);
+    address internal constant ATTACKER = address(0xBAD);
+
+    event StakeCapChecked(
+        address indexed delegationManager, bytes32 indexed delegationHash, uint256 newCumulative, uint256 cap
+    );
 
     function setUp() public {
         enforcer = new TrustStakeCapEnforcer();
@@ -43,14 +49,14 @@ contract TrustStakeCapEnforcerTest is Test {
 
     function test_beforeHook_allowsStakeUnderCap() public {
         _callBeforeHook(_terms(CAP, PERIOD), _execution(100 ether), DELEGATION_HASH);
-        (uint256 cumulative, uint256 windowStart) = enforcer.getState(DELEGATION_HASH);
+        (uint256 cumulative, uint256 windowStart) = enforcer.getState(DM, DELEGATION_HASH);
         assertEq(cumulative, 100 ether);
         assertEq(windowStart, block.timestamp);
     }
 
     function test_beforeHook_allowsExactCap() public {
         _callBeforeHook(_terms(CAP, PERIOD), _execution(CAP), DELEGATION_HASH);
-        (uint256 cumulative,) = enforcer.getState(DELEGATION_HASH);
+        (uint256 cumulative,) = enforcer.getState(DM, DELEGATION_HASH);
         assertEq(cumulative, CAP);
     }
 
@@ -59,21 +65,21 @@ contract TrustStakeCapEnforcerTest is Test {
         _callBeforeHook(terms, _execution(300 ether), DELEGATION_HASH);
         _callBeforeHook(terms, _execution(400 ether), DELEGATION_HASH);
         _callBeforeHook(terms, _execution(300 ether), DELEGATION_HASH);
-        (uint256 cumulative,) = enforcer.getState(DELEGATION_HASH);
+        (uint256 cumulative,) = enforcer.getState(DM, DELEGATION_HASH);
         assertEq(cumulative, CAP);
     }
 
     function test_beforeHook_resetsAfterWindowExpires() public {
         bytes memory terms = _terms(CAP, PERIOD);
         _callBeforeHook(terms, _execution(CAP), DELEGATION_HASH);
-        (uint256 cumulativeBefore,) = enforcer.getState(DELEGATION_HASH);
+        (uint256 cumulativeBefore,) = enforcer.getState(DM, DELEGATION_HASH);
         assertEq(cumulativeBefore, CAP);
 
         // Advance past the window.
         vm.warp(block.timestamp + PERIOD + 1);
         _callBeforeHook(terms, _execution(50 ether), DELEGATION_HASH);
 
-        (uint256 cumulativeAfter, uint256 windowStart) = enforcer.getState(DELEGATION_HASH);
+        (uint256 cumulativeAfter, uint256 windowStart) = enforcer.getState(DM, DELEGATION_HASH);
         assertEq(cumulativeAfter, 50 ether);
         assertEq(windowStart, block.timestamp);
     }
@@ -83,8 +89,8 @@ contract TrustStakeCapEnforcerTest is Test {
         _callBeforeHook(terms, _execution(700 ether), DELEGATION_HASH);
         _callBeforeHook(terms, _execution(700 ether), OTHER_HASH);
 
-        (uint256 cumA,) = enforcer.getState(DELEGATION_HASH);
-        (uint256 cumB,) = enforcer.getState(OTHER_HASH);
+        (uint256 cumA,) = enforcer.getState(DM, DELEGATION_HASH);
+        (uint256 cumB,) = enforcer.getState(DM, OTHER_HASH);
         assertEq(cumA, 700 ether);
         assertEq(cumB, 700 ether);
     }
@@ -94,7 +100,7 @@ contract TrustStakeCapEnforcerTest is Test {
         bytes memory execution = _execution(250 ether);
 
         vm.expectEmit(true, false, false, true, address(enforcer));
-        emit StakeCapChecked(DELEGATION_HASH, 250 ether, CAP);
+        emit StakeCapChecked(DM, DELEGATION_HASH, 250 ether, CAP);
         _callBeforeHook(terms, execution, DELEGATION_HASH);
     }
 
@@ -105,9 +111,59 @@ contract TrustStakeCapEnforcerTest is Test {
     }
 
     function test_getState_initialZero() public view {
-        (uint256 cumulative, uint256 windowStart) = enforcer.getState(DELEGATION_HASH);
+        (uint256 cumulative, uint256 windowStart) = enforcer.getState(DM, DELEGATION_HASH);
         assertEq(cumulative, 0);
         assertEq(windowStart, 0);
+    }
+
+    /*//////////////////////////////////////////////////////////////
+                    GRIEFING (ADR 0118) AND THE FIXED WINDOW
+    //////////////////////////////////////////////////////////////*/
+
+    /// @dev The attack the old `_delegationHash`-only key allowed: a stranger calls `beforeHook`
+    ///      directly with terms of its choosing and fills the counter. It now lands in the
+    ///      stranger's own slot, and the DelegationManager's slot is untouched.
+    function test_directCall_cannotFillTheManagersSlot() public {
+        uint256 huge = 2 ** 255;
+        _callBeforeHookAs(ATTACKER, _terms(huge, 1), _execution(huge), DELEGATION_HASH);
+
+        (uint256 attackerSlot,) = enforcer.getState(ATTACKER, DELEGATION_HASH);
+        (uint256 managerSlot, uint256 managerStart) = enforcer.getState(DM, DELEGATION_HASH);
+        assertEq(attackerSlot, huge);
+        assertEq(managerSlot, 0);
+        assertEq(managerStart, 0);
+
+        _callBeforeHook(_terms(CAP, PERIOD), _execution(CAP), DELEGATION_HASH);
+        (managerSlot,) = enforcer.getState(DM, DELEGATION_HASH);
+        assertEq(managerSlot, CAP);
+    }
+
+    function test_event_namesTheCaller() public {
+        vm.expectEmit(true, true, false, true, address(enforcer));
+        emit StakeCapChecked(ATTACKER, DELEGATION_HASH, 1 ether, CAP);
+        _callBeforeHookAs(ATTACKER, _terms(CAP, PERIOD), _execution(1 ether), DELEGATION_HASH);
+    }
+
+    /// @dev Documents the 2x-cap edge in the NatSpec: the window is fixed, so a full cap at the
+    ///      end of one window and a full cap at the start of the next both pass, one second apart.
+    function test_fixedWindow_allowsTwoCapsAcrossABoundary() public {
+        bytes memory terms = _terms(CAP, PERIOD);
+        _callBeforeHook(terms, _execution(1 ether), DELEGATION_HASH);
+        vm.warp(block.timestamp + PERIOD - 1);
+        _callBeforeHook(terms, _execution(CAP - 1 ether), DELEGATION_HASH);
+        vm.warp(block.timestamp + 1);
+        _callBeforeHook(terms, _execution(CAP), DELEGATION_HASH);
+        (uint256 cumulative, uint256 windowStart) = enforcer.getState(DM, DELEGATION_HASH);
+        assertEq(cumulative, CAP);
+        assertEq(windowStart, block.timestamp);
+    }
+
+    function test_window_doesNotResetOneSecondEarly() public {
+        bytes memory terms = _terms(CAP, PERIOD);
+        _callBeforeHook(terms, _execution(CAP), DELEGATION_HASH);
+        vm.warp(block.timestamp + PERIOD - 1);
+        vm.expectRevert(abi.encodeWithSelector(TrustStakeCapEnforcer.CapExceeded.selector, CAP + 1, CAP));
+        _callBeforeHook(terms, _execution(1), DELEGATION_HASH);
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -124,7 +180,7 @@ contract TrustStakeCapEnforcerTest is Test {
         _callBeforeHook(terms, _execution(600 ether), DELEGATION_HASH);
         _callBeforeHook(terms, _execution(300 ether), DELEGATION_HASH);
 
-        vm.expectRevert(abi.encodeWithSelector(TrustStakeCapEnforcer.CapExceeded.selector, 1_001 ether, CAP));
+        vm.expectRevert(abi.encodeWithSelector(TrustStakeCapEnforcer.CapExceeded.selector, 1001 ether, CAP));
         _callBeforeHook(terms, _execution(101 ether), DELEGATION_HASH);
     }
 
@@ -136,12 +192,16 @@ contract TrustStakeCapEnforcerTest is Test {
     function test_beforeHook_revertsOnBatchMode() public {
         ModeCode batchMode = ModeLib.encode(CALLTYPE_BATCH, EXECTYPE_DEFAULT, MODE_DEFAULT, ModePayload.wrap(0x00));
         vm.expectRevert(bytes("CaveatEnforcer:invalid-call-type"));
-        enforcer.beforeHook(_terms(CAP, PERIOD), "", batchMode, _execution(1 ether), DELEGATION_HASH, DELEGATOR, REDEEMER);
+        vm.prank(DM);
+        enforcer.beforeHook(
+            _terms(CAP, PERIOD), "", batchMode, _execution(1 ether), DELEGATION_HASH, DELEGATOR, REDEEMER
+        );
     }
 
     function test_beforeHook_revertsOnTryMode() public {
         ModeCode tryMode = ModeLib.encode(CALLTYPE_SINGLE, EXECTYPE_TRY, MODE_DEFAULT, ModePayload.wrap(0x00));
         vm.expectRevert(bytes("CaveatEnforcer:invalid-execution-type"));
+        vm.prank(DM);
         enforcer.beforeHook(_terms(CAP, PERIOD), "", tryMode, _execution(1 ether), DELEGATION_HASH, DELEGATOR, REDEEMER);
     }
 
@@ -153,7 +213,7 @@ contract TrustStakeCapEnforcerTest is Test {
         vm.assume(cap > 0);
         vm.assume(value <= cap);
         _callBeforeHook(_terms(cap, PERIOD), _execution(value), DELEGATION_HASH);
-        (uint256 cumulative,) = enforcer.getState(DELEGATION_HASH);
+        (uint256 cumulative,) = enforcer.getState(DM, DELEGATION_HASH);
         assertEq(cumulative, value);
     }
 
@@ -176,7 +236,14 @@ contract TrustStakeCapEnforcerTest is Test {
     }
 
     function _callBeforeHook(bytes memory terms, bytes memory execution, bytes32 delegationHash) internal {
+        _callBeforeHookAs(DM, terms, execution, delegationHash);
+    }
+
+    function _callBeforeHookAs(address caller, bytes memory terms, bytes memory execution, bytes32 delegationHash)
+        internal
+    {
         ModeCode mode = ModeLib.encodeSimpleSingle();
+        vm.prank(caller);
         enforcer.beforeHook(terms, "", mode, execution, delegationHash, DELEGATOR, REDEEMER);
     }
 }
@@ -191,8 +258,9 @@ contract TrustStakeCapEnforcerTest is Test {
 contract TrustStakeCapHandler is Test {
     TrustStakeCapEnforcer public enforcer;
     bytes32 public constant DELEGATION_HASH = bytes32(uint256(0xa5519));
-    uint256 public constant CAP = 1_000 ether;
+    uint256 public constant CAP = 1000 ether;
     uint256 public constant PERIOD = 7 days;
+    address public constant DM = address(0xD3);
 
     uint256 public lastWindowStart;
 
@@ -209,8 +277,11 @@ contract TrustStakeCapHandler is Test {
         bytes memory execution = ExecutionLib.encodeSingle(address(0x7E54), amount, hex"");
         ModeCode mode = ModeLib.encodeSimpleSingle();
 
+        // The invariants read the DelegationManager's slot (ADR 0118); without the prank every call
+        // would land in the handler's own slot and the invariants could not fail.
+        vm.prank(DM);
         try enforcer.beforeHook(terms, "", mode, execution, DELEGATION_HASH, address(0), address(0)) {
-            (, uint256 windowStart) = enforcer.getState(DELEGATION_HASH);
+            (, uint256 windowStart) = enforcer.getState(DM, DELEGATION_HASH);
             if (windowStart > lastWindowStart) lastWindowStart = windowStart;
         } catch {}
     }
@@ -228,12 +299,12 @@ contract TrustStakeCapEnforcerInvariantTest is StdInvariant, Test {
     }
 
     function invariant_cumulativeNeverExceedsCap() public view {
-        (uint256 cumulative,) = enforcer.getState(handler.DELEGATION_HASH());
+        (uint256 cumulative,) = enforcer.getState(handler.DM(), handler.DELEGATION_HASH());
         assertLe(cumulative, handler.CAP());
     }
 
     function invariant_windowStartMonotonic() public view {
-        (, uint256 windowStart) = enforcer.getState(handler.DELEGATION_HASH());
+        (, uint256 windowStart) = enforcer.getState(handler.DM(), handler.DELEGATION_HASH());
         assertGe(windowStart, handler.lastWindowStart());
     }
 }

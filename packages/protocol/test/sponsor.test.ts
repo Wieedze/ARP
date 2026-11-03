@@ -3,6 +3,8 @@ import {
     getAddress,
     keccak256,
     stringToBytes,
+    TransactionNotFoundError,
+    TransactionReceiptNotFoundError,
     type Address,
     type Hex,
 } from "viem";
@@ -161,12 +163,13 @@ describe("checkSponsorProof", () => {
     const payments = (txs: Record<Hex, Tx>): PaymentReads => ({
         getTransaction: async ({hash}) => {
             const tx = txs[hash];
-            if (tx === undefined) throw new Error("not found");
+            // What viem throws for a hash the chain has never seen.
+            if (tx === undefined) throw new TransactionNotFoundError({hash});
             return tx;
         },
         getTransactionReceipt: async ({hash}) => {
             const tx = txs[hash];
-            if (tx === undefined) throw new Error("not mined");
+            if (tx === undefined) throw new TransactionReceiptNotFoundError({hash});
             return {status: tx.status ?? "success"};
         },
     });
@@ -248,22 +251,43 @@ describe("checkSponsorProof", () => {
             /neither the holder nor the agentWallet/,
         ],
         ["an agent that is not registered", agents(null), /not registered/],
-        [
-            "a registry whose read fails",
-            {
-                ownerOf: async () => {
-                    throw new Error("rpc down");
-                },
-                agentWalletOf: async () => null,
-            },
-            /not registered/,
-        ],
     ])("refuses a hire receipt from %s", async (_label, keys, reason) => {
         const verdict = await checkSponsorProof(
             {kind: "hire", receipt: await signHire(hire())},
             context(paid, keys),
         );
         expect(verdict.status === "refused" && verdict.reason).toMatch(reason);
+    });
+
+    it("says the chain is unreadable, not that the agent is unregistered, when the registry read fails", async () => {
+        const down = {
+            ownerOf: async () => {
+                throw new Error("rpc down");
+            },
+            agentWalletOf: async () => null,
+        };
+        const verdict = await checkSponsorProof(
+            {kind: "hire", receipt: await signHire(hire())},
+            context(paid, down),
+        );
+        expect(verdict.status).toBe("unreadable");
+        expect(verdict.status === "unreadable" && verdict.reason).toMatch(/rpc down/);
+    });
+
+    it("says the chain is unreadable, not that the payment is missing, when the payment read fails", async () => {
+        const verdict = await checkSponsorProof(
+            {kind: "hire", receipt: await signHire(hire())},
+            {
+                ...context(paid),
+                payments: {
+                    getTransaction: async () => {
+                        throw new Error("fetch failed");
+                    },
+                    getTransactionReceipt: async () => ({status: "success"}),
+                },
+            },
+        );
+        expect(verdict.status).toBe("unreadable");
     });
 
     it("refuses a hire receipt naming a registry that is not accepted", async () => {
@@ -485,6 +509,9 @@ describe("limits", () => {
         approvalGas: MILLI / 10n,
         mintGas: MILLI / 10n,
         newAgentsPerDay: 2,
+        listingsPerAddressPerDay: 2,
+        anonymousListingsPerDay: 2,
+        listingsPerDay: 4,
         withdrawalThresholdBps: null,
         belowProofCost: false,
     };

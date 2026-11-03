@@ -15,7 +15,9 @@ import {
  */
 
 const SIGNATURE_TONE: Record<SignatureCopy["tone"], string> = {
-    verified: "text-[color:var(--color-accent)] border-[color:var(--color-accent)]",
+    // Not the accent: Saffron is the primary action, the selection and the viewer's own position
+    // (ui.md), and a signature nothing anchors to its author is none of those (ADR 0119).
+    "self-signed": "text-[color:var(--color-silver)] border-[color:var(--color-rule-strong)]",
     mismatch:
         "text-[color:var(--color-alarm)] border-[color:var(--color-alarm)] bg-[color:var(--color-alarm-dim)]",
     unverified: "text-[color:var(--color-steel)] border-[color:var(--color-rule-strong)]",

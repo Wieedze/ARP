@@ -11,7 +11,7 @@
  * 3. the owner signs that message, **and so does the node key** (ADR `0095`). The verifier checks
  *    the owner still owns the token and both signatures recover, then returns the binding.
  *
- * **Never signs and never sends**, like the rest of the package (ADR `0038`): the owner signs in
+ * **Signs nothing and sends nothing** (ADR `0038`): the owner signs in
  * their own wallet and the node signs with its own key, and both signatures arrive here as hex.
  *
  * **The node signs too, which ADR `0094` does not ask for.** Without it, an owner could bind a
@@ -30,6 +30,7 @@ import {publicKeyToAddress} from "viem/accounts";
 import {createSiweMessage, generateSiweNonce, parseSiweMessage} from "viem/siwe";
 
 import {canonicalizeRfc8785} from "./canonicalize.js";
+import {DECIMAL, ERC8004_REGISTRY} from "./identifiers.js";
 
 /** The binding's own format version. Bump it with the statement or the document's shape. */
 export const ENDPOINT_BINDING_VERSION = 1;
@@ -106,12 +107,10 @@ export type HandshakeError =
 
 export type HandshakeResult<T> = {ok: true; value: T} | {ok: false; error: HandshakeError};
 
-const DECIMAL = /^(0|[1-9][0-9]*)$/;
-const REGISTRY = /^eip155:([1-9][0-9]*):(0x[0-9a-fA-F]{40})$/;
 
 /** `eip155:<chainId>:<address>` split, or `null` when it is not one. */
 export function parseAgentRegistry(value: string): {chainId: number; registry: Address} | null {
-    const match = REGISTRY.exec(value);
+    const match = ERC8004_REGISTRY.exec(value);
     if (match === null) return null;
     const [, chainId, registry] = match as unknown as [string, string, string];
     const id = Number(chainId);

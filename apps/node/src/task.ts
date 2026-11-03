@@ -3,15 +3,13 @@
  *  `node.ts` reads the environment and listens; this file is the part a test can construct — the
  *  limits, the payment check, the ledger of payments already spent, and the receipt.
  */
-import { existsSync, appendFileSync, mkdirSync, readFileSync } from 'node:fs';
-import { dirname } from 'node:path';
-
 import {
   HIRE_RECEIPT_VERSION,
   hireDigest,
   signHireReceipt,
   type HireReceipt,
 } from '@arp-protocol/core';
+import { appendJsonLine, bigintSafe, jsonResponse, readJsonLines } from '@arp-protocol/core/node';
 import { formatEther, isAddress } from 'viem';
 import type { Address, Hex, LocalAccount, PublicClient } from 'viem';
 
@@ -22,6 +20,12 @@ export type TaskContext = {
   paid: bigint;
   paymentTxHash: Hex;
   agent: Address;
+  /**
+   * Aborted when the node stops waiting (`handlerTimeoutMs`). A handler that does long work should
+   * stop on it: the payment stays claimed, and so refused to anyone else, until the handler settles
+   * (ADR `0116`).
+   */
+  signal: AbortSignal;
 };
 export type TaskHandler = (payload: unknown, context: TaskContext) => Promise<unknown>;
 
@@ -51,16 +55,11 @@ export class PaymentLedger {
   private readonly pending = new Set<string>();
 
   constructor(private readonly path: string | null) {
-    if (path === null || !existsSync(path)) return;
-    for (const line of readFileSync(path, 'utf8').split('\n')) {
-      if (line.trim().length === 0) continue;
-      try {
-        const row = JSON.parse(line) as { paymentTxHash?: unknown };
-        if (typeof row.paymentTxHash === 'string') this.spent.add(row.paymentTxHash.toLowerCase());
-      } catch {
-        // A half-written last line from a crash. The job it recorded never returned a receipt.
-        continue;
-      }
+    if (path === null) return;
+    // A half-written last line from a crash is skipped: the job it recorded returned no receipt.
+    for (const row of readJsonLines(path)) {
+      const hash = (row as { paymentTxHash?: unknown } | null)?.paymentTxHash; // This node's own format.
+      if (typeof hash === 'string') this.spent.add(hash.toLowerCase());
     }
   }
 
@@ -81,10 +80,7 @@ export class PaymentLedger {
 
   commit(hash: Hex, record: Record<string, string>): void {
     const key = hash.toLowerCase();
-    if (this.path !== null) {
-      mkdirSync(dirname(this.path), { recursive: true });
-      appendFileSync(this.path, `${JSON.stringify({ paymentTxHash: key, ...record })}\n`);
-    }
+    if (this.path !== null) appendJsonLine(this.path, { paymentTxHash: key, ...record });
     this.pending.delete(key);
     this.spent.add(key);
   }
@@ -106,7 +102,10 @@ export type AgentIdentity = { agentRegistry: string; agentId: bigint };
 export type NodeLimits = {
   /** Largest body accepted, in bytes. `serveFetch` enforces it as well, before the body is read whole; this is the same number. */
   maxBodyBytes: number;
-  /** A handler that has not answered by then is a 504, and the payment is released. */
+  /**
+   * A handler that has not answered by then is a 504 and is aborted; its payment is released once
+   * the handler settles, so a retry cannot run a second job beside one still running.
+   */
   handlerTimeoutMs: number;
   /** `POST /task` requests per client per minute, paid or not. */
   requestsPerMinute: number;
@@ -155,16 +154,7 @@ const RATE_WINDOW_MS = 60_000;
 /** Past this many distinct clients the expired windows are swept, so the map cannot grow forever. */
 const RATE_SWEEP_AT = 10_000;
 
-function bigintSafe(_key: string, inner: unknown): unknown {
-  return typeof inner === 'bigint' ? inner.toString() : inner;
-}
-
-function json(value: unknown, status = 200): Response {
-  return new Response(JSON.stringify(value, bigintSafe, 2), {
-    status,
-    headers: { 'content-type': 'application/json' },
-  });
-}
+const json = jsonResponse;
 
 class Timeout extends Error {}
 
@@ -217,7 +207,7 @@ export function createNode(options: NodeOptions): {
   async function verifyPayment(
     hash: Hex,
     requester: Address,
-  ): Promise<TaskContext | { error: string }> {
+  ): Promise<Omit<TaskContext, 'signal'> | { error: string }> {
     const tx = await publicClient.getTransaction({ hash }).catch(() => null);
     if (tx === null) return { error: `payment tx ${hash} not found` };
     const receipt = await publicClient.getTransactionReceipt({ hash }).catch(() => null);
@@ -322,20 +312,32 @@ export function createNode(options: NodeOptions): {
       let result: unknown;
       let requestHash: Hex;
       let resultHash: Hex;
+      const abort = new AbortController();
+      // Started once, here, so a timeout can wait for the same promise to settle.
+      const work = Promise.resolve().then(() =>
+        handle(body.payload, { ...verified, signal: abort.signal }),
+      );
       try {
-        const answer = await withTimeout(handle(body.payload, verified), limits.handlerTimeoutMs);
+        const answer = await withTimeout(work, limits.handlerTimeoutMs);
         // The result as it will cross the wire, so the requester hashes exactly what it receives.
         result = JSON.parse(JSON.stringify(answer ?? null, bigintSafe)) as unknown;
         requestHash = hireDigest(body.payload ?? null);
         resultHash = hireDigest(result);
       } catch (error) {
-        ledger.release(payment);
         if (error instanceof Timeout) {
+          // The handler may still be working. Its payment stays claimed until it settles, so the
+          // same payment cannot start a second job beside it (ADR `0116`).
+          abort.abort();
+          void work.then(
+            () => ledger.release(payment),
+            () => ledger.release(payment),
+          );
           return json(
             { error: `handler did not answer within ${limits.handlerTimeoutMs} ms` },
             504,
           );
         }
+        ledger.release(payment);
         // The message, not a stack: enough for the caller to retry or report, nothing about the host.
         return json({ error: `handler failed: ${String(error).slice(0, 300)}` }, 500);
       }

@@ -10,7 +10,7 @@
  *  Read-only: one `eth_call` of `tokenURI` per sampled id and one GET of the registration file.
  *  Signs nothing. Uniform sampling over token ids, so quote n with any figure taken from it —
  *  consecutive runs at n=200 have returned 108, 112 and 113 parsed documents. */
-import { highestTokenId } from './erc8004-population.js';
+import { highestTokenId } from '../helpers/erc8004-population.js';
 import { arr, prop, type JsonRpcReply, type RegistrationDoc } from '../helpers/shapes.js';
 /**
  * Config, not constants. `portability.md` rule 1: no chain constant at module scope — take it as

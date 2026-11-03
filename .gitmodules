@@ -1,0 +1,6 @@
+[submodule "contracts/lib/delegation-framework"]
+	path = contracts/lib/delegation-framework
+	url = https://github.com/MetaMask/delegation-framework
+[submodule "contracts/lib/forge-std"]
+	path = contracts/lib/forge-std
+	url = https://github.com/foundry-rs/forge-std

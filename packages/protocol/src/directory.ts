@@ -266,12 +266,3 @@ async function checkProof(
     }
     return {...(await verifyEndpointBinding(binding, chain)), document: uri, binding};
 }
-
-/** The endpoint to call: the newest one the token's current owner signed for, or `null`. */
-export async function resolveAgentEndpoint(
-    subject: DirectorySubject,
-    config: DirectoryConfig,
-): Promise<string | null> {
-    const listed = await getAgentEndpoints(subject, config);
-    return listed.find((entry) => entry.status === "bound")?.endpoint ?? null;
-}

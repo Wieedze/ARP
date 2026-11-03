@@ -4,6 +4,8 @@ import {
     type DeclaredEndpoint,
 } from "@arp-protocol/core";
 
+import {safeHttpUrl} from "../lib/safe-url";
+
 /**
  * What an agent published as its own way in — read, never probed.
  *
@@ -30,7 +32,13 @@ import {
  */
 export type EndpointRead =
     | {status: "none"; reason: "no-registration-file" | "no-endpoints-declared"}
-    | {status: "unreadable"; url: string; detail: string}
+    | {
+          status: "unreadable";
+          url: string;
+          /** Where a reader can open it, or `null` when it is not an http(s) URL. */
+          href: string | null;
+          detail: string;
+      }
     | {
           status: "read";
           url: string;
@@ -73,6 +81,7 @@ export async function readAgentEndpoints(
             return {
                 status: "unreadable",
                 url,
+                href: safeHttpUrl(gatewayUrl(url)),
                 detail: `the inline document did not parse: ${caught instanceof Error ? caught.message : String(caught)}`,
             };
         }
@@ -82,7 +91,12 @@ export async function readAgentEndpoints(
                 headers: {accept: "application/json"},
             });
             if (!response.ok) {
-                return {status: "unreadable", url, detail: `the host answered ${response.status}`};
+                return {
+                    status: "unreadable",
+                    url,
+                    href: safeHttpUrl(gatewayUrl(url)),
+                    detail: `the host answered ${response.status}`,
+                };
             }
             document = await response.json();
         } catch (caught) {
@@ -91,6 +105,7 @@ export async function readAgentEndpoints(
             return {
                 status: "unreadable",
                 url,
+                href: safeHttpUrl(gatewayUrl(url)),
                 detail: `could not be read from a browser: ${caught instanceof Error ? caught.message : String(caught)}`,
             };
         }

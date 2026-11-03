@@ -5,6 +5,7 @@ import {createErc8004Client, type Erc8004Client} from "../src/client.js";
 import {isRecord} from "@arp-protocol/graphql";
 import {
     AllSourcesFailedError,
+    DOCUMENT_AGENT_MISMATCH_REASON,
     getAgentProfile,
     getAssessments,
     getCapabilities,
@@ -96,8 +97,8 @@ describe("getAgentProfile — the rich fixture (Clawnch, Base #2340)", () => {
         const deep3 = profile.assessments.find(
             (entry) => entry.claim.provider.name === "Deep3 Labs — 🦞 Clawnch 🦞 assessment",
         );
-        expect(deep3?.signature.status).toBe("verified");
-        if (deep3?.signature.status === "verified") {
+        expect(deep3?.signature.status).toBe("self-signed");
+        if (deep3?.signature.status === "self-signed") {
             expect(deep3.signature.recovered).toBe("0x27A6265e6daf8d9935A3031f2E7cDC4bDFbe2Ebe");
         }
 
@@ -170,7 +171,40 @@ describe("getAgentProfile — the bare fixture (Agent 8453:6649)", () => {
         expect(profile.capabilities[0]?.tags).toEqual([]);
 
         const signed = profile.assessments.find((entry) => entry.fetch.status === "ok");
-        expect(signed?.signature.status).toBe("verified");
+        expect(signed?.signature.status).toBe("self-signed");
+    });
+});
+
+describe("getAgentProfile — a document about another agent", () => {
+    it("does not verify agent A's signed document served at agent B's resolver URL", async () => {
+        const deep3For6649 =
+            "https://api.deep3.ai/.well-known/intuition/erc8004/agents/8453/6649/erc8004-feedback-trust-assessment.json";
+        const fetchImpl = fixtureFetch({
+            [deep3For6649]: () =>
+                new Response(JSON.stringify(fixture("deep3-2340.assessment.json")), {
+                    status: 200,
+                    headers: {"content-type": "application/json"},
+                }),
+        });
+        const swapped = createErc8004Client({
+            fetch: fetchImpl,
+            sources: [
+                intuitionSource({fetch: fetchImpl, graphqlUrl: INTUITION_URL}),
+                registrySource(),
+            ],
+        });
+
+        const profile = await getAgentProfile(
+            swapped,
+            {chainId: 8453, tokenId: "6649"},
+            {now: NOW},
+        );
+        const served = profile.assessments.find((entry) => entry.fetch.status === "ok");
+        expect(served).toBeDefined();
+        expect(served?.signature.status).toBe("unverified");
+        if (served?.signature.status !== "unverified") return;
+        expect(served.signature.reason).toContain(DOCUMENT_AGENT_MISMATCH_REASON);
+        expect(served.signature.reason).toContain("/2340");
     });
 });
 
@@ -190,7 +224,7 @@ describe("getAgentProfile — the multi-provider fixture (Captain Dackie, Base #
         const deep3 = assessmentEdges.find((entry) =>
             entry.claim.resolverUrl?.includes("deep3.ai"),
         );
-        expect(deep3?.signature.status).toBe("verified");
+        expect(deep3?.signature.status).toBe("self-signed");
 
         // AsterPay advertises a resolver URL for this agent that 404s. The claim
         // stays in the profile; what cannot be checked is reported, not hidden.

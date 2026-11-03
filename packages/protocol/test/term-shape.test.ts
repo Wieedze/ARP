@@ -1,4 +1,5 @@
 import {describe, expect, it} from "vitest";
+import {INTUITION_URL} from "./helpers.js";
 
 import {
     INTUITION_MAX_POSITIONS_PAGE,
@@ -44,7 +45,11 @@ describe("getTermShape", () => {
             backers,
         },
         // Each backer holds this term plus N others; the reader subtracts the one.
-        BackerBreadth: {a0: {aggregate: {count: 25}}, a1: {aggregate: {count: 3}}, a2: {aggregate: {count: 1}}},
+        BackerBreadth: {
+            a0: {aggregate: {count: 25}},
+            a1: {aggregate: {count: 3}},
+            a2: {aggregate: {count: 1}},
+        },
     });
 
     it("computes the largest share exactly, despite the page cap", async () => {
@@ -57,9 +62,12 @@ describe("getTermShape", () => {
          * denominator from an aggregate, so the 100-row page cap does not touch either.
          */
         const {transport} = transportOf(
-            shapeData([position("0xa", "500"), position("0xb", "300"), position("0xc", "200")], "1000"),
+            shapeData(
+                [position("0xa", "500"), position("0xb", "300"), position("0xc", "200")],
+                "1000",
+            ),
         );
-        const shape = await getTermShape(TERM, {transport});
+        const shape = await getTermShape(TERM, {graphqlUrl: INTUITION_URL, transport});
         expect(shape.largestShareBps).toBe(5000);
         expect(shape.topThreeShareBps).toBe(10_000);
         expect(shape.positionCount).toBe(3);
@@ -71,7 +79,7 @@ describe("getTermShape", () => {
         // the largest" would read as "no concentration", which is a claim about a market that has
         // no participants.
         const {transport} = transportOf(shapeData([], "0"));
-        const shape = await getTermShape(TERM, {transport});
+        const shape = await getTermShape(TERM, {graphqlUrl: INTUITION_URL, transport});
         expect(shape.largestShareBps).toBeNull();
         expect(shape.topThreeShareBps).toBeNull();
     });
@@ -82,7 +90,7 @@ describe("getTermShape", () => {
         const {transport} = transportOf(
             shapeData([position("0xa", "3"), position("0xb", "2"), position("0xc", "1")], "6"),
         );
-        const shape = await getTermShape(TERM, {transport});
+        const shape = await getTermShape(TERM, {graphqlUrl: INTUITION_URL, transport});
         // 25, 3 and 1 held → 24, 2 and 0 others → median 2.
         expect(shape.medianBackerBreadth).toBe(2);
     });
@@ -92,15 +100,23 @@ describe("getTermShape", () => {
         // over the hundred largest skews high, so the caller is told rather than left to assume.
         const many = Array.from({length: 3}, (_, index) => position(`0x${index}`, "1"));
         const {transport} = transportOf(shapeData(many, "3"));
-        const sampled = await getTermShape(TERM, {transport, backerLimit: 3});
+        const sampled = await getTermShape(TERM, {
+            graphqlUrl: INTUITION_URL,
+            transport,
+            backerLimit: 3,
+        });
         expect(sampled.backersSampled).toBe(true);
-        const whole = await getTermShape(TERM, {transport, backerLimit: 10});
+        const whole = await getTermShape(TERM, {
+            graphqlUrl: INTUITION_URL,
+            transport,
+            backerLimit: 10,
+        });
         expect(whole.backersSampled).toBe(false);
     });
 
     it("clamps the backer limit at the positions cap, which is not the atoms cap", async () => {
         const {transport, seen} = transportOf(shapeData([], "0"));
-        await getTermShape(TERM, {transport, backerLimit: 10_000});
+        await getTermShape(TERM, {graphqlUrl: INTUITION_URL, transport, backerLimit: 10_000});
         expect(seen[0]?.variables["limit"]).toBe(INTUITION_MAX_POSITIONS_PAGE);
         expect(INTUITION_MAX_POSITIONS_PAGE).toBe(100);
     });
@@ -119,12 +135,24 @@ describe("getTermActivity", () => {
         const {transport} = transportOf({
             TermActivity: {
                 rows: [
-                    {bucket: "2026-10-19T00:00:00+00:00", count: "27", volume: "2483320164514511588177"},
-                    {bucket: "2026-10-12T00:00:00+00:00", count: "34", volume: "41811101000000000000000"},
+                    {
+                        bucket: "2026-10-19T00:00:00+00:00",
+                        count: "27",
+                        volume: "2483320164514511588177",
+                    },
+                    {
+                        bucket: "2026-10-12T00:00:00+00:00",
+                        count: "34",
+                        volume: "41811101000000000000000",
+                    },
                 ],
             },
         });
-        const buckets = await getTermActivity(TERM, {transport, grain: "week"});
+        const buckets = await getTermActivity(TERM, {
+            graphqlUrl: INTUITION_URL,
+            transport,
+            grain: "week",
+        });
         expect(buckets.map((bucket) => bucket.signals)).toEqual([34, 27]);
     });
 
@@ -139,7 +167,7 @@ describe("getTermActivity", () => {
                 ],
             },
         });
-        const buckets = await getTermActivity(TERM, {transport});
+        const buckets = await getTermActivity(TERM, {graphqlUrl: INTUITION_URL, transport});
         expect(buckets.map((bucket) => bucket.bucket.slice(0, 10))).toEqual([
             "2026-10-12",
             "2026-10-19",
@@ -163,7 +191,7 @@ describe("getAccountHoldings", () => {
                 onTriples: {aggregate: {count: 150}},
             },
         });
-        const holdings = await getAccountHoldings(ACCOUNT, {transport});
+        const holdings = await getAccountHoldings(ACCOUNT, {graphqlUrl: INTUITION_URL, transport});
         expect(holdings.netAssets).toBe(750n);
         expect(holdings.atomDeposits).toBe(235);
         expect(holdings.tripleDeposits).toBe(150);
@@ -171,7 +199,12 @@ describe("getAccountHoldings", () => {
 });
 
 describe("getAccountActivity", () => {
-    const activity = (rows: {deposits: unknown[]; redemptions: unknown[]; all: string; back: string}) => ({
+    const activity = (rows: {
+        deposits: unknown[];
+        redemptions: unknown[];
+        all: string;
+        back: string;
+    }) => ({
         AccountActivity: {
             deposits: rows.deposits,
             redemptions: rows.redemptions,
@@ -197,7 +230,7 @@ describe("getAccountActivity", () => {
                 back: "0",
             }),
         );
-        const curve = await getAccountActivity(ACCOUNT, {transport});
+        const curve = await getAccountActivity(ACCOUNT, {graphqlUrl: INTUITION_URL, transport});
         expect(curve.openingNet).toBe(900n);
         expect(curve.buckets.at(-1)?.cumulativeNet).toBe(1000n);
     });
@@ -214,9 +247,13 @@ describe("getAccountActivity", () => {
                 back: "30",
             }),
         );
-        const curve = await getAccountActivity(ACCOUNT, {transport});
+        const curve = await getAccountActivity(ACCOUNT, {graphqlUrl: INTUITION_URL, transport});
         expect(curve.buckets).toHaveLength(1);
-        expect(curve.buckets[0]).toMatchObject({deposited: 150n, redeemed: 30n, cumulativeNet: 120n});
+        expect(curve.buckets[0]).toMatchObject({
+            deposited: 150n,
+            redeemed: 30n,
+            cumulativeNet: 120n,
+        });
         expect(curve.openingNet).toBe(0n);
     });
 
@@ -229,7 +266,13 @@ describe("getAccountActivity", () => {
                 back: "0",
             }),
         );
-        expect((await getAccountActivity(ACCOUNT, {transport, limit: 1})).truncated).toBe(true);
-        expect((await getAccountActivity(ACCOUNT, {transport, limit: 5})).truncated).toBe(false);
+        expect(
+            (await getAccountActivity(ACCOUNT, {graphqlUrl: INTUITION_URL, transport, limit: 1}))
+                .truncated,
+        ).toBe(true);
+        expect(
+            (await getAccountActivity(ACCOUNT, {graphqlUrl: INTUITION_URL, transport, limit: 5}))
+                .truncated,
+        ).toBe(false);
     });
 });

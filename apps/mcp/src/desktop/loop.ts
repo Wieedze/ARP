@@ -33,6 +33,7 @@ import {
   INTUITION_USES_TERM_ID,
   multiVaultDeclareAbi,
   receiptMatchesContent,
+  signMintGasRequest,
   signSponsorRequest,
   skillRefFromUrl,
   sponsorProofDigest,
@@ -94,9 +95,17 @@ async function json(response: Response): Promise<Record<string, unknown>> {
   return (await response.json().catch(() => ({}))) as Record<string, unknown>;
 }
 
+/**
+ * Every call to the content server and the sponsor is bounded (ADR `0116`): a tool call that waits
+ * forever on a service that never answers is a hung session. The sponsor's routes wait for a
+ * transaction to be mined, up to two minutes, so the bound is above that.
+ */
+const SERVICE_TIMEOUT_MS = 150_000;
+
 async function post(config: LoopConfig, path: string, body: unknown): Promise<{ status: number; body: Record<string, unknown> }> {
   const response = await (config.fetch ?? fetch)(`${config.sponsorUrl}${path}`, {
     method: 'POST',
+    signal: AbortSignal.timeout(SERVICE_TIMEOUT_MS),
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify(body, (_, value: unknown) => (typeof value === 'bigint' ? value.toString() : value)),
   });
@@ -132,6 +141,7 @@ export async function getSkill(config: LoopConfig, agent: AgentSender, atom: Hex
   const bundle = config.skillsDir !== undefined;
   const response = await (config.fetch ?? fetch)(
     `${config.contentUrl}/content/${atom}?nonce=${nonce}&by=${agent.address}&sig=${signature}${bundle ? '&bundle=1' : ''}`,
+    { signal: AbortSignal.timeout(SERVICE_TIMEOUT_MS) },
   );
   if (!response.ok) {
     const body = await json(response);
@@ -163,6 +173,18 @@ export async function getSkill(config: LoopConfig, agent: AgentSender, atom: Hex
   // Installed under its own name only when that name is a plain directory name: it comes from a URL.
   if (config.skillsDir === undefined || ref === null || !/^[a-z0-9][a-z0-9._-]*$/i.test(ref.skill)) return served;
   const dir = join(config.skillsDir, ref.skill);
+  // A different file already at one of these paths is somebody's: another skill of the same name, or
+  // one edited by hand. Refused before anything is written, never overwritten (ADR `0116`).
+  const clash = files.find((file) => {
+    const path = join(dir, file.path);
+    return existsSync(path) && !Buffer.from(readFileSync(path)).equals(Buffer.from(file.bytes));
+  });
+  if (clash !== undefined) {
+    throw new Error(
+      `${join(dir, clash.path)} already exists with different contents; nothing was installed. ` +
+        `Remove ${dir} to install this skill there.`,
+    );
+  }
   // Every path was checked to stay inside the directory by `bundleMatchesReceipt`.
   for (const file of files) {
     mkdirSync(dirname(join(dir, file.path)), { recursive: true });
@@ -180,7 +202,17 @@ export async function getSkill(config: LoopConfig, agent: AgentSender, atom: Hex
 async function ensureAgent(config: LoopConfig, agent: AgentSender): Promise<AgentState> {
   const known = readAgent(config);
   if (known !== null) return known;
-  const gas = await post(config, '/mint-gas', { address: agent.address });
+  // Signed by this key: the sponsor sends mint gas only to the address that asked for it (ADR `0116`).
+  const request = await signMintGasRequest(
+    {
+      address: agent.address,
+      nonce: keccak256(stringToBytes(`mint-gas-${agent.address}-${Date.now()}`)),
+      expiresAt: Math.floor(Date.now() / 1000) + 600,
+    },
+    DESKTOP_CHAIN_ID,
+    agent.account,
+  );
+  const gas = await post(config, '/mint-gas', { request });
   if (gas.status !== 200) throw new Error(`no gas to register (${gas.status}): ${String(gas.body['error'] ?? '')}`);
   const register = { to: config.registry, data: encodeFunctionData({ abi: registryAbi, functionName: 'register' }) };
   const receipt = await agent.send({ ...register, value: 0n, chainId: DESKTOP_CHAIN_ID }, [register]);
@@ -223,7 +255,7 @@ export async function declareUsed(config: LoopConfig, agent: AgentSender, atom: 
     writeAgent(config, state);
   }
 
-  const info = await json(await (config.fetch ?? fetch)(config.sponsorUrl));
+  const info = await json(await (config.fetch ?? fetch)(config.sponsorUrl, { signal: AbortSignal.timeout(SERVICE_TIMEOUT_MS) }));
   // The record's address, not the sponsor's: a wrong sponsor endpoint must not redirect the approval.
   const multiVault = getAddress(config.multiVault);
   if (String(info['multiVault']).toLowerCase() !== multiVault.toLowerCase()) {

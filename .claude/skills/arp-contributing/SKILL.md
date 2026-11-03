@@ -15,7 +15,7 @@ Read these, in order, every time you start a new task:
 
 1. `CLAUDE.md` — operating principles
 2. `docs/01_PROJECT_CONTEXT.md` — what ARP is
-3. `docs/02_ARCHITECTURE.md` — locked decisions
+3. `docs/02_ARCHITECTURE.md` — the storage principle only; the rest is stale (ADR `0122`)
 4. `docs/03_MVP_SCOPE.md` — what's in, what's out
 5. The task file you're executing
 
@@ -70,7 +70,7 @@ Maxime has three other skills installed that this project relies on. Here's how 
 Use for:
 
 - Foundry project setup (`forge init`, `foundry.toml` config)
-- Writing Solidity (0.8.24+)
+- Writing Solidity (0.8.23 — `.claude/rules/solidity.md` says why)
 - Writing Foundry tests (fuzz, invariant, fork)
 - Gas optimization patterns
 - Deployment scripts

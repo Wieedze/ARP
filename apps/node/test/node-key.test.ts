@@ -17,6 +17,7 @@ describe('nodeKeyPath', () => {
   test('defaults under ~/.arp and honours ARP_NODE_KEY_FILE', () => {
     expect(nodeKeyPath({}, '/home/op')).toBe('/home/op/.arp/node.key');
     expect(nodeKeyPath({ ARP_NODE_KEY_FILE: '/k' }, '/home/op')).toBe('/k');
+    expect(nodeKeyPath({ ARP_HOME: '/srv/arp' }, '/home/op')).toBe('/srv/arp/node.key');
   });
 });
 
@@ -38,15 +39,13 @@ describe('loadOrCreateNodeKey', () => {
     const path = join(dir, 'node.key');
     writeFileSync(path, generatePrivateKey());
     chmodSync(path, 0o644);
-    expect(() => loadOrCreateNodeKey(path, { platform: 'linux' })).toThrow(
-      'readable by other users',
-    );
+    expect(() => loadOrCreateNodeKey(path, { platform: 'linux' })).toThrow('it must be 600');
   });
 
   test('refuses a file that is not a private key', () => {
     const path = join(dir, 'node.key');
     writeFileSync(path, 'hello', { mode: 0o600 });
-    expect(() => loadOrCreateNodeKey(path)).toThrow('not a 32-byte hex private key');
+    expect(() => loadOrCreateNodeKey(path)).toThrow('32-byte hex private key');
   });
 
   test('accepts a key written without 0x', () => {

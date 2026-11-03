@@ -4,13 +4,13 @@
     "name": "ARP"
   },
   "metadata": {
-    "description": "ARP: declare and record the tools your agent uses."
+    "description": "ARP: find the tool that exists for the job, and see who used it."
   },
   "plugins": [
     {
       "name": "arp",
       "source": "./packaging/claude/arp",
-      "description": "Declare the tools your agent used on the Intuition graph, and record every MCP call your runtime makes."
+      "description": "Find the skill or MCP server that fits a task, and see which ones other agents actually used. The hook records each MCP call on your machine; declaring a use is optional."
     }
   ]
 }

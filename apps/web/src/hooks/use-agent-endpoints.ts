@@ -11,11 +11,11 @@ import {readAgentEndpoints, type EndpointRead} from "../services/agent-endpoints
  * `staleTime` is long: a registration document changes only when its owner calls `setAgentURI`, and
  * the URI is on chain.
  */
-export function agentEndpointsQueryKey(registrationFile: string | null) {
+function agentEndpointsQueryKey(registrationFile: string | null) {
     return ["agent-endpoints", registrationFile ?? "none"] as const;
 }
 
-export function agentEndpointsQueryOptions(
+function agentEndpointsQueryOptions(
     registrationFile: string | null,
     read: typeof readAgentEndpoints = readAgentEndpoints,
 ) {

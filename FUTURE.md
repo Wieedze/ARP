@@ -171,7 +171,8 @@ signer (Privy or equivalent) and probably a relayer".** The user rejected that p
 terms — _« pourquoi un agent arrivera sans wallet ? s'il n'en a pas peut-être faut-il lui en créer
 un ? »_ — and chose the variant where **the agent generates its own key locally and ARP never holds
 it**, with a funder covering the gas _« pour le moment »_. The local-key pattern already runs: the
-node generates `.arp/receipt-key` at mode 0600 on first use (ADR `0080`).
+node generates `~/.arp/receipt-key` at mode 0600 on first use (ADR `0080`; in the working
+directory's `.arp/` until ADR `0116`).
 
 **What is still owed before this is buildable is the funder's bound**, not the key design. Nothing
 says how much, how often or to whom, and an unbounded funder reachable by a stranger is a faucet —
@@ -236,6 +237,11 @@ whether a skill with no keyword match gets a tag at all — and the recording ru
 answer rather than preceding it.
 
 ## Decide what a refused redirect means to the probe
+
+**Done in task 60** (2026-11-03): the probe follows redirects by hand through `guardedFetchText`,
+and a refused hop is `inconclusive` with code `refused` (`refusedOutcome`,
+`packages/protocol/src/verify/probe.ts`). `docs/22` says so. Kept below as the record of the
+question.
 
 Noted 2026-10-29, from `task-verifier`'s fourth round on `docs/tasks/31`. **A known open hole, disclosed
 in `docs/22` rather than fixed**, which is the one thing in that document that is a hole and not a
@@ -387,3 +393,20 @@ design is in ADR `0113`:
 1. only `same as` edges written by the agent's owner or a trusted writer count;
 2. an edge the market opposes is ignored;
 3. the sponsor refuses only when two counted edges name two agents.
+
+## Who pays on mainnet: a delegation, or the agent's own wallet
+
+**Asked 2026-11-02**, left open: « on vera ». `/account` signs and revokes delegations, but no
+runtime redeems one. `grep -rli delegation apps/mcp/src apps/node/src` finds only two comments, and
+`packages/protocol/src/declare/delegated.ts` has no caller in either app. In sponsored mode
+(ADR `0110`) the agent pays from its own wallet, so the operator's delegation is never used.
+
+Sponsoring is testnet 13579 only (`rules/security.md`), so on mainnet the operator pays, in one of
+two ways:
+1. **The operator funds the agent's wallet.** It needs no page, and the loss is bounded by the
+   balance.
+2. **A delegation.** The funds stay on the operator's account, with a cap per period, allowed
+   targets and methods, and a one-click revoke. `docs/12` point 5 names this as the guard rail.
+
+Decide before the mainnet port. If (1), `/account` has no purpose and goes. If (2), the MCP server
+has to redeem through `delegated.ts`.

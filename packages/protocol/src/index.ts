@@ -1,14 +1,14 @@
 /**
- * `@arp-protocol/core` — a connector for the ERC-8004 agent layer. Never signs, never sends.
+ * `@arp-protocol/core` — a connector for the ERC-8004 agent layer. Holds no key, sends nothing.
  *
  * Give it an ERC-8004 identity and it returns one merged profile: every trust
- * provider's assessment with its EIP-712 signature actually verified and its
+ * provider's assessment with its EIP-712 signature checked against the signer it names and its
  * declared freshness window actually enforced, the agent's capability
  * declarations, and the live market on each provider claim.
  *
- *     import {createErc8004Client, getAgentProfile, listAgents} from "@arp-protocol/core";
+ *     import {createErc8004Client, getAgentProfile, INTUITION_MAINNET_GRAPHQL} from "@arp-protocol/core";
  *
- *     const client = createErc8004Client();
+ *     const client = createErc8004Client({graphqlUrl: INTUITION_MAINNET_GRAPHQL});
  *     const profile = await getAgentProfile(client, {chainId: 8453, tokenId: "2340"});
  *     for (const entry of profile.assessments) {
  *         console.log(entry.claim.provider.name, entry.signature.status, entry.freshness.status);
@@ -21,17 +21,20 @@
  * read the number and trust it. This package checks both, and reports what it
  * cannot check rather than rounding up to a pass.
  *
- * **Never signs and never sends.** That was once "read-only throughout, no write path of any
- * kind", and the honest version is narrower: `declare/` prepares the calls an agent needs to
- * declare what it used and deposit on it, and hands them back unsigned. The package still holds no
- * key, builds no wallet client and has no send path — which is what makes "ARP is not a party"
- * (ADR `0035`) an enforceable property rather than a promise. See ADR `0038`.
+ * **Holds no key and sends no transaction.** That was once "never signs", and before that
+ * "read-only throughout"; both were too broad. `declare/` prepares the calls an agent needs to
+ * declare what it used and deposit on it, and hands them back unsigned. The receipt and sponsor
+ * request modules do sign, but only through a signer the caller injects (`receipt.ts`,
+ * `hire-receipt.ts`, `sponsor/request.ts`). The package holds no key, builds no wallet client and
+ * has no send path — which is what makes "ARP is not a party" (ADR `0035`) an enforceable property
+ * rather than a promise. See ADR `0038`.
  */
 
 export {createErc8004Client, type Erc8004Client, type Erc8004ClientConfig} from "./client.js";
 
 export {
     AllSourcesFailedError,
+    DOCUMENT_AGENT_MISMATCH_REASON,
     getAgentProfile,
     getAssessments,
     getCapabilities,
@@ -46,7 +49,6 @@ export {
     DEFAULT_PAGE_SIZE,
     listAgents,
     ListAgentsFailedError,
-    listingCapableSources,
     MAX_PAGE_SIZE,
     NoListingSourceError,
     resolveListOptions,
@@ -99,25 +101,14 @@ export {
  * Two frozen copies of a constant whose whole purpose is to be frozen is the
  * worse failure, so the writer takes this one rather than keeping its own.
  *
- * Exporting it adds no send path. This package still never signs and never sends a transaction;
+ * Exporting it adds no send path. This package still holds no key and sends no transaction;
  * `declare/` prepares calls for the agent's own key (ADR `0038`).
  */
 export {
     CAPABILITY_PREDICATE_IDS as INTUITION_CAPABILITY_PREDICATE_IDS,
     SAME_AS as INTUITION_SAME_AS_TERM_ID,
-    USE as INTUITION_USE_TERM_ID,
     USES as INTUITION_USES_TERM_ID,
-    /**
-     * The one per-network choice in Intuition's vocabulary: both `has tag` atoms exist on both
-     * chains, and each network's ecosystem **writes** with a different one. Use the function, not
-     * the constants, on any write path.
-     */
-    hasTagForWriting as intuitionHasTagForWriting,
     HAS_TAG as INTUITION_HAS_TAG_MAINNET,
-    HAS_TAG_TESTNET as INTUITION_HAS_TAG_TESTNET,
-    /** The trust pattern's other two edges. Read-only here; exported so a shell can be checked. */
-    PROVIDED_BY as INTUITION_PROVIDED_BY_TERM_ID,
-    TRUST_ASSESSMENT_SOURCE as INTUITION_TRUST_ASSESSMENT_SOURCE,
     /**
      * The hierarchy predicate. **Not published by Intuition** — unlike every other term here, it
      * is absent from `docs/07`'s tables, and it carries zero edges on mainnet 1155.
@@ -197,14 +188,23 @@ export {
     // The scheme check `privateProbeTarget` assigns to its caller, in one place so both callers
     // get it: one of them did not, and `file:///etc/passwd` reached `fetch`.
     fetchableDocumentUrl,
+    // Every hop checked, redirects followed by hand, one deadline, a capped body.
+    guardedFetchText,
     IPFS_GATEWAY,
     MAX_DOCUMENT_HOPS,
     nextDocumentHop,
+    privateAddress,
     privateProbeTarget,
+    PROBE_MAX_BODY_BYTES,
     probeEndpoint,
 } from "./verify/probe.js";
-export type {FetchableUrl} from "./verify/probe.js";
-export type {ProbeOptions} from "./verify/probe.js";
+export type {
+    FetchableUrl,
+    GuardedFetch,
+    GuardedFetchOptions,
+    ProbeOptions,
+    ResolveHost,
+} from "./verify/probe.js";
 
 export {HostLimiter, hostOf} from "./verify/host-limiter.js";
 
@@ -321,6 +321,7 @@ export {
     isToolUrl,
     multiVaultDeclareAbi,
     multiVaultReads,
+    RpcChainMismatchError,
     canonicalAgentThing,
     canonicalCaipThing,
     NonPositiveAmountError,
@@ -449,7 +450,6 @@ export {
 export {
     decideTransition,
     DOWN_VERDICTS_TO_CONDEMN,
-    flipCost,
     verdictOf,
     type FlipCost,
     type RecordedState,
@@ -483,14 +483,6 @@ export {
     type FindAgentsConfig,
     type FindAgentsPage,
 } from "./discover.js";
-
-/**
- * **Rate** — declaring that you used an agent, with a position behind it.
- *
- * `prepareDeclareUsed` pointed at an agent's existing atom instead of a tool's derived one. The
- * predicate is `uses`, unchanged: ARP does not mint an agent-rating predicate (ADR `0030`).
- */
-export {prepareRate, prepareRateStake, type RatePlan} from "./declare/rate.js";
 
 /**
  * **Corroborate** — what a runtime actually invoked, and what a node signs for having served it.
@@ -659,13 +651,11 @@ export {
     type HandshakeVerifierOptions,
     type PendingChallenge,
 } from "./handshake.js";
-export {handshakeChain} from "./handshake-chain.js";
 export {handshakeFetchHandler, handshakeStatusOf} from "./handshake-http.js";
 export {
     DEFAULT_MAX_PROOFS_PER_CLAIM,
     getAgentEndpoints,
     isSameAgent,
-    resolveAgentEndpoint,
     type DirectoryConfig,
     type DirectorySubject,
     type EndpointProof,
@@ -704,6 +694,31 @@ export {
     type SponsorRequestVerdict,
 } from "./sponsor/request.js";
 export {
+    MINT_GAS_MAX_TTL_SECONDS,
+    mintGasRequestTypedData,
+    signMintGasRequest,
+    verifyMintGasRequest,
+    type MintGasRequest,
+    type SignedMintGasRequest,
+} from "./sponsor/mint-gas.js";
+export {
+    LIST_TOOL_MAX_TTL_SECONDS,
+    LIST_TOOL_REQUEST_TYPES,
+    listToolRequestTypedData,
+    canonicalToolUrl,
+    chooseRepoSpelling,
+    githubRepoOf,
+    planToolListing,
+    signListToolRequest,
+    SOURCE_PREDICATE,
+    verifyListToolRequest,
+    type ListToolRequest,
+    type ListToolRequestSigner,
+    type ListToolRequestVerdict,
+    type SignedListToolRequest,
+    type ToolListingPlan,
+} from "./sponsor/list-tool.js";
+export {
     checkSponsorProof,
     type AgentIdentityRef,
     type AgentKeyReads,
@@ -713,12 +728,17 @@ export {
     type ProvenProof,
     type SponsorProof,
 } from "./sponsor/proof.js";
+// A revert is an answer; an unreachable chain is not. Callers that read the registry themselves
+// (`apps/sponsor`'s `AgentKeyReads`) need the same line.
+export {ChainUnreadableError, isContractRevert, isTransactionAbsent} from "./chain-errors.js";
 export {
     ADR_0092_LIMITS,
+    ANONYMOUS_LISTER,
     checkCreateLimits,
     checkDepositLimits,
     checkGasLimits,
     checkIdentityLimits,
+    checkListToolLimits,
     checkMintGasLimits,
     checkPublishLimits,
     spentOnDay,

@@ -1,0 +1,67 @@
+# The repo's gates, run on every push and pull request to main and dev (task 60, ADR 0117).
+#
+# Every action is pinned to a version tag. Bun is pinned to the version the lockfile was written
+# with; it satisfies package.json's `engines.bun` (>=1.2).
+name: ci
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main, dev]
+
+permissions:
+  contents: read
+
+jobs:
+  workspaces:
+    name: check, lint, test
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7.0.1
+
+      - uses: oven-sh/setup-bun@v2.2.0
+        with:
+          bun-version: 1.3.14
+
+      # `bun run test` and `bun run lint` include the `contracts` workspace, which runs `forge test`
+      # and `solhint`, so this job needs the contract toolchain too. See the `contracts` job.
+      - uses: foundry-rs/foundry-toolchain@v1.9.2
+        with:
+          version: v1.7.1
+
+      - name: contract dependencies
+        # The submodules forge needs and no others: `--recursive` would also pull the framework's
+        # ~500 MB FCL/SCL trees, which nothing here compiles (ADR 0118).
+        run: bun run --cwd contracts deps
+
+      - run: bun install --frozen-lockfile
+      - run: bun run check
+      - run: bun run lint
+      - run: bun run test
+      # After `test`: the CLI's test script builds `dist/`, which the packaging check reads.
+      - name: packaging in sync
+        run: bun run --cwd apps/cli packages --check
+
+  contracts:
+    name: forge build and test
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7.0.1
+
+      - uses: oven-sh/setup-bun@v2.2.0
+        with:
+          bun-version: 1.3.14
+
+      - uses: foundry-rs/foundry-toolchain@v1.9.2
+        with:
+          version: v1.7.1
+
+      - name: contract dependencies
+        # The submodules forge needs and no others: `--recursive` would also pull the framework's
+        # ~500 MB FCL/SCL trees, which nothing here compiles (ADR 0118).
+        run: bun run --cwd contracts deps
+
+      - name: forge build and test
+        working-directory: contracts
+        run: forge build && forge test

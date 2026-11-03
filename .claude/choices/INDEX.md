@@ -2,7 +2,7 @@
 
 **Generated** 2026-11-03 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-112 decisions. Newest last. `choices/README.md` says when to write one.
+120 decisions. Newest last. `choices/README.md` says when to write one.
 
 ## Not accepted
 
@@ -144,3 +144,11 @@ Read these before relying on them.
 | [0113](0113-who-may-speak-for-an-agent-identity.md) | 2026-11-02 | Deferred (mainnet port). The user's decision, 2026-11-02: « intéressant mais inutile en | Who may speak for an agent's identity: trusted writers, the market, then ambiguity |
 | [0114](0114-one-path-per-profile-the-action-is-gated-not-the-read.md) | 2026-11-02 | Accepted | One path per profile; onboarding gates the action, not the read; you connect your agent |
 | [0115](0115-anyone-may-add-a-category-by-the-same-rules.md) | 2026-11-02 | Accepted | Agents and people may add a category, by the same rules, reviewed after the fact |
+| [0116](0116-local-state-under-arp-home-one-key-policy-local-services-refuse-the-browser.md) | 2026-11-03 | Accepted | Local state lives under ~/.arp, one key-file policy, /mint-gas is signed, local services refuse the browser |
+| [0117](0117-scripts-ci-and-the-process-files-match-the-repo.md) | 2026-11-02 | Accepted | Scripts sign on testnet only, CI runs the gates, and the process files describe the repo as it is |
+| [0118](0118-enforcer-state-is-keyed-by-caller.md) | 2026-11-02 | Accepted | Enforcer state is keyed by its caller; a receipt's replay key names its signer |
+| [0119](0119-what-the-connector-checks-and-what-it-no-longer-defaults.md) | 2026-11-03 | Accepted | What the connector checks, and what it no longer defaults |
+| [0120](0120-arp-is-not-b2b-first.md) | 2026-11-03 | Accepted | ARP is not B2B first |
+| [0121](0121-the-rules-prose-pass-changes-no-rule.md) | 2026-11-03 | Accepted | The rules' prose pass changes no rule |
+| [0122](0122-docs-02-is-authoritative-on-storage-only.md) | 2026-11-03 | Accepted | `docs/02` is authoritative on the storage principle only |
+| [0123](0123-the-sponsor-lists-a-tool-for-the-web-app.md) | 2026-11-03 | Accepted | The sponsor lists a tool, and the web app may ask it to |

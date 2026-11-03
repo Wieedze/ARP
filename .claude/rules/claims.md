@@ -81,9 +81,8 @@ grep -rn "trust panel shares" --include=*.md --include=*.ts .
 grep -rn "six defects" --include=*.md .
 ```
 
-Each of those takes seconds and each would have caught one of the three above. The failure is not
-finding the right answer — all three were found. It is that a sentence written twice gets corrected
-once, and the copy that survives is usually the one other files point at.
+A sentence written twice gets corrected once, and the copy that survives is usually the one other
+files point at.
 
 Two things make it worse. An **append-only** record cannot be rewritten, so a retraction there is
 struck through in place and the grep is the only way to find it. And a **count** has more copies
@@ -128,10 +127,8 @@ rounds running** for this one reason — a security claim offered with a check w
 match it. ADR `0081`, post-mortem `.claude/learning/20-*`. The sentence that closed it was not a
 better sentence: it was `scripts/measure/node-outbound.ts`, whose output the document now quotes.
 
-**And the evidence that this is the right lever rather than more care.** Across those rounds, every
-figure re-derived from a committed measurement was exact on the first try — both times. Every
-hand-maintained figure was wrong — both times. Four rounds of care were applied by an author trying
-hard. The variable was never the care. It was whether a number had a script behind it.
+Across those rounds every figure re-derived from a committed script was exact, and every
+hand-maintained one was wrong. More care did not change that; a script did.
 
 ## Three habits, and the first two prevent failures 1 to 4
 
@@ -153,10 +150,3 @@ was not done: the `grep` was composed from what it ought to match rather than fr
 It governs what is written in: completion reports, commit messages, ADRs, task files, post-mortems,
 `docs/`, PR descriptions, and answers to the user. Code comments too — a comment asserting a number
 is subject to the same rule, and `code.md` already forbids comments that misdescribe state.
-
-It does not slow ordinary work. Four of the six checks are a single query or a single `grep`, and a
-fifth is running a command you were about to write down anyway. Only check 6's other half — writing
-a script where none exists — costs real time, and it is required of one narrow class: a claim a
-stranger is being asked to verify.
-
-The cost of skipping any of them is paid by whoever reads the claim next and believes it.

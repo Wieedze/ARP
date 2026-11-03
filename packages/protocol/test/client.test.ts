@@ -11,7 +11,7 @@ import {
 
 describe("createErc8004Client defaults", () => {
     it("composes Intuition first, then the raw registry", () => {
-        const client = createErc8004Client();
+        const client = createErc8004Client({graphqlUrl: INTUITION_MAINNET_GRAPHQL});
         expect(client.sources.map((source) => source.id)).toEqual([
             "intuition",
             ERC8004_REGISTRY_SOURCE_ID,
@@ -26,6 +26,14 @@ describe("createErc8004Client defaults", () => {
         expect(client.sources).toEqual([]);
         expect(client.timeoutMs).toBe(42);
         expect(client.fetch).toBe(fetchImpl);
+    });
+
+    it("has no default network: an indexer or a source list must be named", () => {
+        // @ts-expect-error neither `graphqlUrl` nor `sources` — the mainnet fallback is gone.
+        const unnamed = () => createErc8004Client({});
+        expect(typeof unnamed).toBe("function");
+        const testnet = createErc8004Client({graphqlUrl: INTUITION_TESTNET_GRAPHQL});
+        expect(testnet.sources.map((source) => source.id)).toContain("intuition");
     });
 
     it("publishes both graph endpoints so testnet is a configuration, not a fork", () => {
