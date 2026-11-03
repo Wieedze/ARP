@@ -1,6 +1,6 @@
 # Task 60 — the audit cleanup
 
-**Status:** **BUILT 2026-11-03, awaiting task-verifier.** Branch `chore/59-audit-cleanup` (the branch
+**Status:** **VERIFIED 2026-11-03** — task-verifier PASS at `c9cdbc9`, post-mortem `.claude/learning/52-audit-cleanup.md`, closed at `32b3c91`. Branch `chore/59-audit-cleanup` (the branch
 keeps 59; the task is 60 because 59 belonged to another session).
 
 **Origin.** A read-only audit of the whole repo, 2026-11-02, four reviewers in parallel (web,
