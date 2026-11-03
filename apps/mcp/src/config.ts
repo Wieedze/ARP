@@ -4,6 +4,7 @@ import {
   intuitionSource,
   intuitionToolAtomLookup,
   multiVaultReads,
+  ARP_DOMAIN_ATTESTORS,
 } from '@arp-protocol/core';
 import { getAddress, type Address } from 'viem';
 import { catalogueFor, receiptSigner } from './content.js';
@@ -19,9 +20,39 @@ export const PORT = Number(process.env.PORT ?? 3002);
  * ADR `0080`. It is not a wallet, it never holds TRUST, and it is not the key any plan is signed
  * with — the plan path still has none (ADR `0038`), which is what keeps "ARP cannot spend an
  * operator's funds" a structural property rather than a promise. Generated on first run into
- * `.arp/receipt-key`; `ARP_NO_RECEIPTS=1` runs with none and the content path still works.
+ * `~/.arp/receipt-key`; `ARP_NO_RECEIPTS=1` runs with none and the content path still works. A
+ * key left in `<cwd>/.arp/` by an older version stops the server with the `mv` to run (ADR `0116`).
  */
-export const RECEIPT_SIGNER = receiptSigner();
+export const RECEIPT_SIGNER = (() => {
+  try {
+    return receiptSigner();
+  } catch (error) {
+    console.error(error instanceof Error ? error.message : String(error));
+    process.exit(1);
+  }
+})();
+
+/**
+ * `read` serves only the registry reads, with instructions that never mention a chain (task 45).
+ * Anything else, including unset, serves every tool. The plugin for first testers sets it.
+ */
+/**
+ * `desktop` is the Claude Desktop extension's build (task 50, ADR `0110`): the reads, plus the two
+ * tools that walk the loop for a user who signs nothing. `sponsored` is the same mode under the name
+ * `arp init --sponsored` writes for Claude Code (task 55). Both hold a local agent key; no other
+ * mode does.
+ */
+export const DESKTOP =
+  process.env['ARP_TOOLS'] === 'desktop' || process.env['ARP_TOOLS'] === 'sponsored';
+/**
+ * Where `arp_get_skill` installs a fetched skill, relative to the working directory: set by
+ * `arp init --sponsored` for Claude Code (task 55), unset in the Desktop extension, whose working
+ * directory is not the user's.
+ */
+export const SKILLS_DIR = process.env['ARP_SKILLS_DIR'];
+export const READ_ONLY = process.env['ARP_TOOLS'] === 'read' || DESKTOP;
+export const CONTENT_URL = process.env['ARP_CONTENT'] ?? 'http://127.0.0.1:3002';
+export const SPONSOR_URL = process.env['ARP_SPONSOR'] ?? 'http://127.0.0.1:3200';
 
 /** Where the hook writes, and where the fetch records what it fetched. Both overridable. */
 export const SESSION_LOG = process.env['ARP_SESSION_LOG'] ?? '.arp/session.jsonl';
@@ -35,6 +66,7 @@ export const RECEIPTS_LOG = process.env['ARP_RECEIPTS'] ?? '.arp/receipts.jsonl'
  * up by this chain in `data.ts`, so a mainnet server cannot be served a testnet constant.
  */
 const TARGETS = { mainnet: 1155, testnet: 13579 } as const;
+// Asserted, then checked: an unknown name indexes to `undefined`, which the guard below refuses.
 export const targetName = (process.env.ARP_TARGET ?? 'mainnet') as keyof typeof TARGETS;
 export const chainId = TARGETS[targetName];
 if (chainId === undefined) {
@@ -45,6 +77,7 @@ if (chainId === undefined) {
 type DeploymentRecord = {
   chain?: { rpcUrl?: string; graphqlUrl?: string; name?: string };
   intuition?: { multiVault?: string };
+  arp?: { identityRegistry?: string | null };
 };
 
 const recorded = DEPLOYMENTS[chainId];
@@ -151,7 +184,8 @@ export const REACHABLE_ATOM =
  * rows — which reads as "nobody staked" rather than as a bad query.
  */
 /**
- * ARP's published domain attestor — the address whose positions are ARP's index.
+ * ARP's published domain attestors — the addresses whose positions are ARP's index. Two since
+ * task 59, both ARP's (`ARP_DOMAIN_ATTESTORS` in `@arp-protocol/core`, ADR `0124`).
  *
  * A **default**, not a fallback to the operator's own address. ADR `0045` has every operator run
  * this server on their own machine, so the attestor has to travel with the code: an operator who
@@ -162,19 +196,12 @@ export const REACHABLE_ATOM =
  * position on any ARP domain, so every operator's server would have read an **empty index** and
  * reported that ARP has filed nothing. Silent, and indistinguishable from an empty registry.
  *
- * Override it with `ARP_DOMAIN_ATTESTOR` to read somebody else's index, or your own once you have
+ * Override it with `ARP_DOMAIN_ATTESTOR` (comma-separated for several) to read somebody else's index, or your own once you have
  * filed domains yourself. Blank it to disable domain search altogether — the search then refuses
  * rather than falling back to the unfiltered graph.
  */
-const ARP_DOMAIN_ATTESTOR = '0x906f3A52ec089f8D4E9127F91C6bE5Ae0d18f91f';
-
-function configuredAttestor(): string | undefined {
-  const raw = process.env['ARP_DOMAIN_ATTESTOR'] ?? ARP_DOMAIN_ATTESTOR;
-  // `??` alone let an EMPTY string through, because an empty string is not nullish: the guard below
-  // saw a value, the query ran with `account_id: ""`, and every domain came back with nothing in
-  // it. A search that silently returns zero rows reads as "this domain is empty", not as "this server
-  // is misconfigured" — the same trap as the lowercase address, one level up.
-  if (raw === undefined || raw.trim().length === 0) return undefined;
+/** One address from the environment, checksummed, or why it was refused. */
+function checkedAttestor(raw: string): string | undefined {
   const address = raw.trim();
   if (/^0x[0-9a-f]{40}$/.test(address) || /^0x[0-9A-F]{40}$/.test(address)) {
     // Normalised rather than refused. The indexer's `positions.account_id` is checksummed and a
@@ -207,11 +234,29 @@ function configuredAttestor(): string | undefined {
 }
 
 /**
- * The address whose positions define this server's domain index. Set once, at load.
+ * The attestors, from `ARP_DOMAIN_ATTESTOR` (one address or several, comma-separated) or ARP's
+ * published list. `undefined` when blank or when any address is invalid: a partly valid list
+ * would read a partial index and look complete.
+ */
+function configuredAttestors(): readonly string[] | undefined {
+  const raw = process.env['ARP_DOMAIN_ATTESTOR'];
+  // `??` alone let an EMPTY string through, because an empty string is not nullish: the guard below
+  // saw a value, the query ran with `account_id: ""`, and every domain came back with nothing in
+  // it. A search that silently returns zero rows reads as "this domain is empty", not as "this server
+  // is misconfigured" — the same trap as the lowercase address, one level up.
+  if (raw === undefined) return ARP_DOMAIN_ATTESTORS;
+  const parts = raw.split(',').filter((part) => part.trim().length > 0);
+  if (parts.length === 0) return undefined;
+  const checked = parts.map(checkedAttestor);
+  return checked.every((address): address is string => address !== undefined) ? checked : undefined;
+}
+
+/**
+ * The addresses whose positions define this server's domain index. Set once, at load.
  *
  * Not a request parameter, deliberately — see the note in `findTools`.
  */
-export const DOMAIN_ATTESTOR = configuredAttestor();
+export const DOMAIN_ATTESTORS = configuredAttestors();
 
 /**
  * The directory read, pointed at the same graph as everything else here.

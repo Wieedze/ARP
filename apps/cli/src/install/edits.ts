@@ -6,7 +6,7 @@
  * therefore changes nothing the second time (clig.dev, "Robustness": idempotent).
  */
 
-export type McpServer = { command: string; args: string[] };
+export type McpServer = { command: string; args: string[]; env: Record<string, string> };
 
 type Json = Record<string, unknown>;
 
@@ -176,6 +176,9 @@ export function withCodexServer(text: string | null, entry: McpServer | null): s
     '[mcp_servers.arp]',
     `command = ${tomlString(entry.command)}`,
     `args = [${entry.args.map(tomlString).join(', ')}]`,
+    `env = { ${Object.entries(entry.env)
+      .map(([key, value]) => `${key} = ${tomlString(value)}`)
+      .join(', ')} }`,
     TOML_END,
   ].join('\n');
   base = base.length === 0 ? '' : `${base}\n\n`;

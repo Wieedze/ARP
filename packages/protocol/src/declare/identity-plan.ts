@@ -10,8 +10,14 @@ import {
     thingUri,
     type AgentThing,
 } from "./agent-atom.js";
-import {atomDataForUri, encodeCreateAtom, encodeCreateTriple, type MultiVaultReads} from "./multivault.js";
+import {
+    atomDataForUri,
+    encodeCreateAtom,
+    encodeCreateTriple,
+    type MultiVaultReads,
+} from "./multivault.js";
 import type {PreparedCall} from "./types.js";
+import {CAIP19_ERC721} from "../identifiers.js";
 
 /**
  * Plan the two atoms and the edge that give an agent an Intuition identity, **without pinning**.
@@ -56,8 +62,7 @@ import type {PreparedCall} from "./types.js";
  * — "partners should reuse listed object atoms rather than minting duplicates".
  *
  * `has tag` and `has category` are *recommended enrichment*, not the minimum, and they are not
- * written here: a tag nobody chose is noise, and `has tag` is the one term whose id differs by
- * network (`hasTagForWriting`).
+ * written here: a tag nobody chose is noise.
  */
 export type IdentityAtomPlan = {
     caip19: string;
@@ -121,9 +126,12 @@ export async function prepareIdentityAtom(params: {
     birthDeposit?: bigint;
 }): Promise<IdentityAtomPlan> {
     const caip19 = toCaip19(params.agent);
-    const ref = /^eip155:(\d+)\/erc721:0x[0-9a-fA-F]{40}\/(\d+)$/.exec(caip19);
-    if (ref === null) throw new Error(`toCaip19 produced an unparseable id: ${caip19}`);
-    const [, chainId, tokenId] = ref as unknown as [string, string, string];
+    const ref = CAIP19_ERC721.exec(caip19);
+    const chainId = ref?.[1];
+    const tokenId = ref?.[3];
+    if (chainId === undefined || tokenId === undefined) {
+        throw new Error(`toCaip19 produced an unparseable id: ${caip19}`);
+    }
 
     const things = {
         identity: canonicalAgentThing(Number(chainId), tokenId, params.registration),
@@ -141,9 +149,9 @@ export async function prepareIdentityAtom(params: {
     // The three edges Intuition's minimum names, in the order they are written. `same as` first,
     // because it is the one resolution reads and the one whose absence makes the rest unreachable.
     const [tripleId, typeTripleId, implementTripleId] = await Promise.all([
-        params.reads.tripleId(identityAtom, SAME_AS as Hex, caipAtom),
-        params.reads.tripleId(identityAtom, HAS_TYPE as Hex, AI_AGENT as Hex),
-        params.reads.tripleId(identityAtom, IMPLEMENT as Hex, ERC8004 as Hex),
+        params.reads.tripleId(identityAtom, SAME_AS, caipAtom),
+        params.reads.tripleId(identityAtom, HAS_TYPE, AI_AGENT),
+        params.reads.tripleId(identityAtom, IMPLEMENT, ERC8004),
     ]);
 
     const [
@@ -190,7 +198,7 @@ export async function prepareIdentityAtom(params: {
             to: params.reads.address,
             value: atomAssets,
             data: encodeCreateAtom(atomDataForUri(uris.identity), atomAssets),
-            why: `the agent's identity atom, from the canonical recipe (${things.identity.name})`,
+            why: `the agent's public identity, from the canonical recipe (${things.identity.name})`,
             preview: await preview("atom", identityAtom, atomAssets),
         });
     }
@@ -201,7 +209,7 @@ export async function prepareIdentityAtom(params: {
             to: params.reads.address,
             value: atomAssets,
             data: encodeCreateAtom(atomDataForUri(uris.caip), atomAssets),
-            why: `the CAIP-19 identifier atom (${caip19})`,
+            why: `the agent's CAIP-19 identifier, made public (${caip19})`,
             preview: await preview("atom", caipAtom, atomAssets),
         });
     }
@@ -211,8 +219,8 @@ export async function prepareIdentityAtom(params: {
             chainId: chainId_,
             to: params.reads.address,
             value: tripleAssets,
-            data: encodeCreateTriple(identityAtom, SAME_AS as Hex, caipAtom, tripleAssets),
-            why: "identity atom --same as--> caip19 atom, the edge resolution reads",
+            data: encodeCreateTriple(identityAtom, SAME_AS, caipAtom, tripleAssets),
+            why: "identity --same as--> CAIP-19 identifier, the link resolution reads",
             preview: await preview("triple", tripleId, tripleAssets),
         });
     }
@@ -224,8 +232,8 @@ export async function prepareIdentityAtom(params: {
             chainId: chainId_,
             to: params.reads.address,
             value: tripleAssets,
-            data: encodeCreateTriple(identityAtom, HAS_TYPE as Hex, AI_AGENT as Hex, tripleAssets),
-            why: "identity atom --has type--> AIAgent, Intuition's stated minimum",
+            data: encodeCreateTriple(identityAtom, HAS_TYPE, AI_AGENT, tripleAssets),
+            why: "identity --has type--> AIAgent, Intuition's stated minimum",
             preview: await preview("triple", typeTripleId, tripleAssets),
         });
     }
@@ -235,8 +243,8 @@ export async function prepareIdentityAtom(params: {
             chainId: chainId_,
             to: params.reads.address,
             value: tripleAssets,
-            data: encodeCreateTriple(identityAtom, IMPLEMENT as Hex, ERC8004 as Hex, tripleAssets),
-            why: "identity atom --implement--> ERC-8004, which is what COHORT_QUERY filters on",
+            data: encodeCreateTriple(identityAtom, IMPLEMENT, ERC8004, tripleAssets),
+            why: "identity --implement--> ERC-8004, which is what COHORT_QUERY filters on",
             preview: await preview("triple", implementTripleId, tripleAssets),
         });
     }

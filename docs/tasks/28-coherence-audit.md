@@ -98,8 +98,8 @@ with the code. Read-only audit first, then fixes in small batches.
     - still calls the registry question "open" (ADR `0027`).
       `docs/12` is canonical: the table is the user's to update.
 21. The doc status headers disagree on what is in charge:
-    - `docs/00:3` says "ACTIVE PIVOT".
-    - `docs/09:3` says "Active strategic commitment".
+    - ~~`docs/00:3` says "ACTIVE PIVOT".~~ Fixed 2026-11-03 (task 27).
+    - ~~`docs/09:3` says "Active strategic commitment".~~ Fixed 2026-11-03 (task 27): "Analysis, not commitment", §3 in force.
     - `CLAUDE.md:16`'s "higher-numbered wins" would put `docs/15` over `docs/12`.
     - Both READMEs name `docs/09` or `docs/00`, not `docs/12`.
 22. `README.md` describes the hackathon demo as "today". `app/README.md` is the Vite template.
@@ -185,8 +185,8 @@ with the code. Read-only audit first, then fixes in small batches.
     | `.claude/learning/10-agent-trust-panel.md`                                | 57, 64   |
     | `.claude/learning/11-agent-directory-full-cohort.md`                      | 114, 157 |
     | `.claude/choices/0029-the-page-states-facts-and-stops-explaining-them.md` | 140      |
-    | `.github/pull_request_drafts/04-agent-trust-panel.md`                     | 73       |
-    | `.github/pull_request_drafts/05-import-erc8004-agent.md`                  | 56       |
+    | `docs/reference/pr-drafts/04-agent-trust-panel.md`                     | 73       |
+    | `docs/reference/pr-drafts/05-import-erc8004-agent.md`                  | 56       |
     | `scripts/measure/contrast.ts`                                             | 4        |
 
     **Deliberately not counted**, so the next sweep does not re-litigate them: `docs/tasks/08:227` ("not
@@ -336,3 +336,20 @@ wait for it unless one misleads a reader before then.
     real `uses` edges this project has written are unreachable by their own route — found
     2026-10-28 while checking why their sigil did not render, which it does on a tool's page one
     screen away.
+
+43. ~~**`/agent` step 5 told an operator to run a script that does not exist.**~~ **FIXED
+    2026-10-30** on `fix/28-dead-script-reference`. `scripts/agent-approve-sa.ts` was deleted in
+    `bf20de0`, and the copy shown when the runtime key is not in memory still said "or run
+    `bun scripts/agent-approve-sa.ts` instead" (`apps/web/src/pages/AgentRegister.tsx`). Nothing under
+    `scripts/agent/` replaced it — `grep -rln "grantSmartAccountDepositApproval\|fundAndApproveRuntime" scripts`
+    finds no file — so the instruction was removed rather than repointed: pasting the saved key
+    back in is the one path, and the copy now says only that. Five comment sites went with it: one
+    in `AgentRegister.tsx`'s step-5 docstring and four in `apps/web/src/services/delegation-redeem.ts`
+    (two naming the script, two pointing at it as "the setup script" and "the equivalent script").
+    The check, run from the repo root:
+    `grep -rn "approve-sa" --exclude-dir=node_modules --exclude-dir=worktrees --exclude=28-coherence-audit.md .`
+    prints two lines, both append-only and historically true, so left:
+    `.claude/choices/0033-the-hackathon-surface-is-set-aside.md:44` — ADR `0033`'s list of what was
+    set aside — and `.claude/learning/29-coherence-audit-28d.md:10` — this fix's own post-mortem,
+    recording the copy it removed. This file is excluded because this entry names the script three
+    times itself. (It said "prints one line" until 2026-10-30; the post-mortem's line was missed.)

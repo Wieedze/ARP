@@ -1,4 +1,5 @@
 import {describe, expect, it} from "vitest";
+import {INTUITION_URL} from "./helpers.js";
 
 import {CAPABILITY_PREDICATES, findAgents} from "../src/discover.js";
 import {HAS_CATEGORY, HAS_TYPE, SAME_AS} from "../src/sources/intuition/terms.js";
@@ -50,7 +51,7 @@ function stub(rows: Row[], capture?: {variables?: Record<string, unknown>}) {
 describe("findAgents", () => {
     it("asks only for agents the graph can prove are agents", async () => {
         const capture: {variables?: Record<string, unknown>} = {};
-        await findAgents("defi", {transport: stub([], capture)});
+        await findAgents("defi", {graphqlUrl: INTUITION_URL, transport: stub([], capture)});
         expect(capture.variables?.["sameAs"]).toBe(SAME_AS);
         expect(capture.variables?.["predicates"]).toEqual(CAPABILITY_PREDICATES);
         expect(capture.variables?.["domain"]).toBe("defi");
@@ -63,7 +64,11 @@ describe("findAgents", () => {
      */
     it("narrows to one predicate when asked", async () => {
         const capture: {variables?: Record<string, unknown>} = {};
-        await findAgents("defi", {transport: stub([], capture), predicates: [HAS_CATEGORY]});
+        await findAgents("defi", {
+            graphqlUrl: INTUITION_URL,
+            transport: stub([], capture),
+            predicates: [HAS_CATEGORY],
+        });
         expect(capture.variables?.["predicates"]).toEqual([HAS_CATEGORY]);
     });
 
@@ -74,6 +79,7 @@ describe("findAgents", () => {
      */
     it("reports dust as no backing, and a real position as an amount", async () => {
         const page = await findAgents("MCP Server", {
+            graphqlUrl: INTUITION_URL,
             transport: stub([
                 agent("0xa1", "Unbacked"),
                 agent("0xa2", "Backed", {positions: 1, assets: "5783166937505507778"}),
@@ -92,6 +98,7 @@ describe("findAgents", () => {
      */
     it("returns one row per agent, however many of its edges matched", async () => {
         const page = await findAgents("defi", {
+            graphqlUrl: INTUITION_URL,
             transport: stub([
                 agent("0xa1", "Chatty", {matched: "defi"}),
                 agent("0xa1", "Chatty", {matched: "defi tools", predicate: HAS_CATEGORY}),
@@ -104,6 +111,7 @@ describe("findAgents", () => {
 
     it("says why each candidate is in the list", async () => {
         const page = await findAgents("defi", {
+            graphqlUrl: INTUITION_URL,
             transport: stub([agent("0xa1", "One", {predicate: HAS_CATEGORY, matched: "defi"})]),
         });
         expect(page.agents[0]?.matched).toEqual({predicateId: HAS_CATEGORY, label: "defi"});
@@ -111,16 +119,25 @@ describe("findAgents", () => {
 
     it("says when the answer is a prefix rather than the whole of it", async () => {
         const rows = Array.from({length: 5}, (_, i) => agent(`0xa${i}`, `A${i}`));
-        expect((await findAgents("x", {transport: stub(rows), limit: 5})).truncated).toBe(true);
-        expect((await findAgents("x", {transport: stub(rows), limit: 6})).truncated).toBe(false);
+        expect(
+            (await findAgents("x", {graphqlUrl: INTUITION_URL, transport: stub(rows), limit: 5}))
+                .truncated,
+        ).toBe(true);
+        expect(
+            (await findAgents("x", {graphqlUrl: INTUITION_URL, transport: stub(rows), limit: 6}))
+                .truncated,
+        ).toBe(false);
     });
 
     it("refuses an empty search rather than returning the whole graph", async () => {
-        await expect(findAgents("   ", {transport: stub([])})).rejects.toThrow(/must not be empty/);
+        await expect(
+            findAgents("   ", {graphqlUrl: INTUITION_URL, transport: stub([])}),
+        ).rejects.toThrow(/must not be empty/);
     });
 
     it("survives a row the indexer returned without a subject", async () => {
         const page = await findAgents("defi", {
+            graphqlUrl: INTUITION_URL,
             transport: stub([{predicate_id: HAS_TYPE, object: {label: "defi"}} as unknown as Row]),
         });
         expect(page.agents).toEqual([]);

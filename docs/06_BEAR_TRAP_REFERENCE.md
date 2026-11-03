@@ -1,5 +1,7 @@
 # Bear Trap supplementary brief — for ARP Caveat Enforcers (Task 02b)
 
+> **Historical** (2026-11-03): task 02b is closed. Its `DomainScopeEnforcer` was deleted in `59ac83a` (ADR `0055`); `TrustStakeCapEnforcer` shipped as v2 (ADR `0118`), and `.claude/rules/metamask-delegation.md` is its spec.
+
 > **Role of this document (added 2026-05-19, post-clarification)**: this is a **supplementary** real-world example, not the canonical reference. The canonical reference for ARP enforcers is **MetaMask**, via the vendored skill at `.claude/skills/mms-smart-accounts-kit/references/delegations.md` and the official docs at https://docs.metamask.io/smart-accounts-kit/. Bear Trap is one production deployment that happens to ship a custom `ICaveatEnforcer`, an audit, and 40+ tests — useful as a worked example for patterns and test density. Where Bear Trap and MetaMask disagree, MetaMask wins. See ADR `0004-bear-trap-as-enforcer-reference.md` for the role assignment.
 
 **Bear Trap repo**: https://github.com/osobot-ai/bear-trap

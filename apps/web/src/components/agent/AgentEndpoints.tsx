@@ -52,14 +52,20 @@ export function AgentEndpoints({registrationFile}: {registrationFile: string | n
                 <p className="text-[color:var(--color-steel)]">
                     Its document could not be read from this page — {read.detail}
                 </p>
-                <a
-                    href={read.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className={`mt-3 inline-block break-all font-mono text-[length:var(--text-body-sm)] ${linkClass}`}
-                >
-                    {read.url} ↗
-                </a>
+                {read.href === null ? (
+                    <p className="mt-3 break-all font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
+                        {read.url}
+                    </p>
+                ) : (
+                    <a
+                        href={read.href}
+                        target="_blank"
+                        rel="noreferrer"
+                        className={`mt-3 inline-block break-all font-mono text-[length:var(--text-body-sm)] ${linkClass}`}
+                    >
+                        {read.url} ↗
+                    </a>
+                )}
             </div>
         );
     }

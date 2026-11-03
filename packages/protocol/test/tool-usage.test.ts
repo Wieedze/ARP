@@ -1,4 +1,5 @@
 import {describe, expect, it} from "vitest";
+import {INTUITION_URL} from "./helpers.js";
 
 import {getToolUsage} from "../src/tool-usage.js";
 import {USES} from "../src/sources/intuition/terms.js";
@@ -63,7 +64,10 @@ function transport(data: Record<string, unknown>, seen?: {query: string; variabl
 
 describe("getToolUsage", () => {
     it("reads every incoming edge with both sides of its market", async () => {
-        const usage = await getToolUsage(IPFS_ATOM, {transport: transport(RECORDED)});
+        const usage = await getToolUsage(IPFS_ATOM, {
+            graphqlUrl: INTUITION_URL,
+            transport: transport(RECORDED),
+        });
         expect(usage.label).toBe("IPFS");
         expect(usage.pinnedUri).toContain("ipfs://Qm");
         expect(usage.edges).toHaveLength(3);
@@ -77,7 +81,10 @@ describe("getToolUsage", () => {
     });
 
     it("sums both sides, and the positions alongside them", async () => {
-        const usage = await getToolUsage(IPFS_ATOM, {transport: transport(RECORDED)});
+        const usage = await getToolUsage(IPFS_ATOM, {
+            graphqlUrl: INTUITION_URL,
+            transport: transport(RECORDED),
+        });
         expect(usage.totals.supportAssets).toBe(100_000_000_000_000_000n);
         expect(usage.totals.opposeAssets).toBe(30_000_000_000_000_000n);
         // Positions are returned beside the amounts, never left to the caller to find. Live example:
@@ -91,7 +98,10 @@ describe("getToolUsage", () => {
         // `docs/14`'s bottom rung: an edge with no stake is not weak evidence, it is none. A caller
         // must be able to tell it apart without arithmetic, so the zero survives as a zero rather
         // than being folded into the total and lost.
-        const usage = await getToolUsage(IPFS_ATOM, {transport: transport(RECORDED)});
+        const usage = await getToolUsage(IPFS_ATOM, {
+            graphqlUrl: INTUITION_URL,
+            transport: transport(RECORDED),
+        });
         const free = usage.edges.filter((e) => (e.support.totalAssets ?? 0n) === 0n);
         expect(free.map((e) => e.agent.label)).toEqual(["Infura"]);
         expect(free[0].support.positionCount).toBe(0);
@@ -102,7 +112,10 @@ describe("getToolUsage", () => {
         // whole query down. That bug shipped on 2026-09-16 and a mocked transport could not catch
         // it, so this asserts the declaration text itself rather than only the variable.
         const seen: {query: string; variables: unknown}[] = [];
-        await getToolUsage(IPFS_ATOM, {transport: transport(RECORDED, seen)});
+        await getToolUsage(IPFS_ATOM, {
+            graphqlUrl: INTUITION_URL,
+            transport: transport(RECORDED, seen),
+        });
         expect(seen[0].query).toContain("$curveId: numeric!");
         expect(seen[0].query).not.toContain("$curveId: String!");
         expect(seen[0].variables).toMatchObject({toolId: IPFS_ATOM, uses: USES, curveId: "1"});
@@ -110,7 +123,11 @@ describe("getToolUsage", () => {
 
     it("accepts a bigint curveId without the caller converting it", async () => {
         const seen: {query: string; variables: unknown}[] = [];
-        await getToolUsage(IPFS_ATOM, {transport: transport(RECORDED, seen), curveId: 4n});
+        await getToolUsage(IPFS_ATOM, {
+            graphqlUrl: INTUITION_URL,
+            transport: transport(RECORDED, seen),
+            curveId: 4n,
+        });
         expect(seen[0].variables).toMatchObject({curveId: "4"});
     });
 
@@ -118,6 +135,7 @@ describe("getToolUsage", () => {
         // 84 atoms are the object of a `uses` edge and 64 carry a position, so almost everything is
         // simply not yet used. That is an empty state, not a failure.
         const usage = await getToolUsage(IPFS_ATOM, {
+            graphqlUrl: INTUITION_URL,
             transport: transport({tool: RECORDED.tool, triples: []}),
         });
         expect(usage.edges).toEqual([]);
@@ -128,6 +146,7 @@ describe("getToolUsage", () => {
 
     it("survives an atom that is not in the graph at all", async () => {
         const usage = await getToolUsage(IPFS_ATOM, {
+            graphqlUrl: INTUITION_URL,
             transport: transport({tool: [], triples: []}),
         });
         expect(usage.label).toBeNull();
@@ -137,6 +156,7 @@ describe("getToolUsage", () => {
 
     it("drops a row with no subject rather than inventing an agent for it", async () => {
         const usage = await getToolUsage(IPFS_ATOM, {
+            graphqlUrl: INTUITION_URL,
             transport: transport({
                 tool: RECORDED.tool,
                 triples: [
@@ -160,6 +180,7 @@ describe("getToolUsage", () => {
         // so filtering by account is filtering by who stands behind the edge.
         const seen: {query: string; variables: unknown}[] = [];
         const usage = await getToolUsage(IPFS_ATOM, {
+            graphqlUrl: INTUITION_URL,
             attestedBy: "0x077B59A3751Cd6682534C8203aAb29113876aF01",
             transport: transport(RECORDED, seen),
         });
@@ -176,7 +197,10 @@ describe("getToolUsage", () => {
         // The unfiltered read must stay unfiltered: an empty `attestor` variable would match no
         // position and silently return zero edges, which reads identically to an unused tool.
         const seen: {query: string; variables: unknown}[] = [];
-        await getToolUsage(IPFS_ATOM, {transport: transport(RECORDED, seen)});
+        await getToolUsage(IPFS_ATOM, {
+            graphqlUrl: INTUITION_URL,
+            transport: transport(RECORDED, seen),
+        });
         expect(seen[0].query).not.toContain("AttestedToolUsage");
         expect(seen[0].variables).not.toHaveProperty("attestor");
     });
@@ -184,7 +208,10 @@ describe("getToolUsage", () => {
     it("marks the provenance a claim, not something ARP derived", async () => {
         // Each edge is an assertion somebody wrote; the market only prices it. Calling the totals
         // `derived` would suggest ARP computed the standing rather than read it.
-        const usage = await getToolUsage(IPFS_ATOM, {transport: transport(RECORDED)});
+        const usage = await getToolUsage(IPFS_ATOM, {
+            graphqlUrl: INTUITION_URL,
+            transport: transport(RECORDED),
+        });
         expect(usage.provenance.kind).toBe("claim");
         expect(usage.provenance.origin).toBe(IPFS_ATOM);
         expect(usage.provenance.note).toContain("3 incoming");

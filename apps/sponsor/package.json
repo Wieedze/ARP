@@ -1,0 +1,22 @@
+{
+  "name": "@arp/sponsor",
+  "version": "0.0.1",
+  "private": true,
+  "description": "ARP's sponsoring service, testnet 13579 only: a deposit paid by ARP and owned by the agent when the use is proven, the one-time gas for the agent's approve, and the publication of signed delegations. Holds ARP's treasury key; calls the MultiVault and nothing else (ADR 0092, 0094).",
+  "type": "module",
+  "scripts": {
+    "start": "bun run --cwd ../../packages/protocol build && bun run src/main.ts",
+    "test": "bun run --cwd ../../packages/protocol build && bun test",
+    "lint": "bun run --cwd ../../packages/protocol build && tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "viem": "2.52.0"
+  },
+  "devDependencies": {
+    "@arp-protocol/core": "workspace:*",
+    "@metamask/smart-accounts-kit": "^1.6.0",
+    "@types/bun": "^1.4.4",
+    "typescript": "~6.0.2"
+  },
+  "license": "MIT"
+}

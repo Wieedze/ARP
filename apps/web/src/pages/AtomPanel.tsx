@@ -1,5 +1,6 @@
 import {Link, Navigate, useParams} from "react-router-dom";
-import type {Hex} from "viem";
+
+import {BackLink} from "../components/brand/BackLink";
 
 import {PageLoading} from "../components/brand/PageLoading";
 import {AtomSigil} from "../components/atom/AtomSigil";
@@ -99,9 +100,9 @@ export function AtomPanel() {
     if (!valid) {
         return (
             <section className="mt-10">
-                <h1 className="type-title">Not an atom id</h1>
+                <h1 className="type-title">Not a valid id</h1>
                 <p className="mt-4 max-w-[60ch] text-[color:var(--color-steel)]">
-                    An atom is addressed by its Intuition id — 0x followed by 32 bytes. Got{" "}
+                    A page here is addressed by an Intuition id — 0x followed by 32 bytes. Got{" "}
                     <span className="font-mono">{atomId ?? "nothing"}</span>.
                 </p>
             </section>
@@ -118,7 +119,7 @@ export function AtomPanel() {
     // heavier standing read, so waiting for it costs nothing in practice.
     if (query.isPending || agentRef.isPending) {
         return (
-            <PageLoading label="Reading the atom">
+            <PageLoading label="Reading the page">
                 reading {truncateMiddle(atomId)} and everything pointing at it on{" "}
                 {chain.label.toLowerCase()}
             </PageLoading>
@@ -141,13 +142,13 @@ export function AtomPanel() {
     // A skill and a repository have their own pages (`docs/design/pages/`); every other atom keeps this one.
     const kind = view.exists && view.label !== null ? parseToolLabel(view.label).kind : null;
     if (kind === "repo") {
-        return <RepoPage view={view} atomId={atomId as Hex} modules={modules.data ?? {}} />;
+        return <RepoPage view={view} atomId={atomId} modules={modules.data ?? {}} />;
     }
     if (kind === "skill") {
         return (
             <SkillPage
                 view={view}
-                atomId={atomId as Hex}
+                atomId={atomId}
                 modules={modules.data ?? {}}
                 onDeclared={() => void query.refetch()}
             />
@@ -156,19 +157,11 @@ export function AtomPanel() {
 
     return (
         <section className="mt-10">
-            {/* **The title spans the page; it is not metadata.**
-                It lived in the 18rem aside, where `--text-title` clamps to 76px against 288px of
-                column — so `Trail of Bits — secure-workflow-guide` rendered as nine lines of
-                broken words (`Trail / of / Bits / — / secur / e- / workf / low- / guide`), while
-                the right column sat nearly empty. The grid template is fixed, so the aside never
-                borrowed that space however little the evidence needed.
-
-                `overflow-wrap: anywhere` stays on `.type-title` and is still right: a bare
-                66-character atom id has no break opportunity at all and must be allowed to wrap
-                mid-token. Across the full width it only bites for an id, which is what it is for.
-
-                `docs/tasks/28` item 39, found while building this control, filed, and then fixed when
-                the user saw it — filing a defect is not the same as leaving it. */}
+            <BackLink to="/tools" label="tools" />
+            {/* **The title spans the page; it is not metadata.** In the 18rem aside, `--text-title`
+                breaks a name like `Trail of Bits — secure-workflow-guide` into nine lines.
+                `overflow-wrap: anywhere` on `.type-title` is for a bare 66-character atom id,
+                which has no break opportunity at all. */}
             <h1
                 className={`type-title ${view.titleIsId ? "font-mono" : ""} max-w-[24ch] md:max-w-[32ch]`}
             >
@@ -260,10 +253,10 @@ export function AtomPanel() {
                                         each separately read as unrelated blocks. */}
                                             <div className={actionCardClass}>
                                                 <AtomMarket
-                                                    atomTermId={atomId as Hex}
+                                                    atomTermId={atomId}
                                                     name={view.title}
                                                     nameIsId={view.titleIsId}
-                                                    backHeading="Take a position"
+                                                    backHeading="Support this"
                                                     heading={null}
                                                 />
                                             </div>
@@ -286,7 +279,7 @@ export function AtomPanel() {
                                     {!view.offersMarket ? null : (
                                         <div className="mt-10 max-w-[48rem]">
                                             <DeclareUse
-                                                object={atomId as Hex}
+                                                object={atomId}
                                                 objectLabel={view.title}
                                                 onDeclared={() => void query.refetch()}
                                             />
@@ -526,44 +519,53 @@ function Identity({view}: {view: AtomView}) {
 
     return (
         <>
-            <dl className="mt-6 border-t border-[color:var(--color-rule)] pt-4 text-[length:var(--text-body-sm)]">
-                {/* The id opens on Intuition's portal, on the chain this page reads — the user's
-                    decision, 2026-10-30: _« le lien terms id doit emmener vers le portal, vers
-                    l'atom ou triple Intuition »_. `intuitionPortalUrl` is the one builder, probed
-                    on both hosts; a hand-written URL here would be the fourth copy. */}
-                <Term label="Atom">
-                    <a
-                        href={intuitionPortalUrl("atom", view.atomId, chain.isMainnet)}
-                        target="_blank"
-                        rel="noreferrer"
-                        className={`font-mono break-all ${linkClass}`}
-                    >
-                        {view.atomId}
-                    </a>
-                </Term>
-                {view.type === null ? null : (
-                    <Term label="Type">
-                        <span className="font-mono">{view.type}</span>
-                    </Term>
-                )}
-                {view.pinnedUri === null ? null : (
-                    <Term label="Pinned at">
-                        <span className="font-mono break-all">{view.pinnedUri}</span>
-                    </Term>
-                )}
-                {/* The atom's own market — a different one from the edges below, and never summed
-                    with them (ADR `0056`). It was "Backing the atom · 6.03586585 TRUST · 1 distinct
-                    staker": a label, a figure and four words of prose for two numbers. The user
-                    asked for the mark and the numbers and nothing else (2026-10-27).
+            {view.ownBacking === null ? null : (
+                <dl className="mt-6 border-t border-[color:var(--color-rule)] pt-4 text-[length:var(--text-body-sm)]">
+                    {/* The atom's own market — a different one from the edges below, and never summed
+                        with them (ADR `0056`). It was "Backing the atom · 6.03586585 TRUST · 1 distinct
+                        staker": a label, a figure and four words of prose for two numbers. The user
+                        asked for the mark and the numbers and nothing else (2026-10-27).
 
-                    Absent when nobody has backed it. It read "no backing", which is a sentence
-                    about an absence — an empty cell says the same thing and says it faster. */}
-                {view.ownBacking === null ? null : (
+                        Absent when nobody has backed it. It read "no backing", which is a sentence
+                        about an absence — an empty cell says the same thing and says it faster. */}
                     <Term label="Support">
                         <Backing amount={view.ownBacking} positions={view.ownPositions} />
                     </Term>
-                )}
-            </dl>
+                </dl>
+            )}
+            {/* The ids, the type and the pin are for checking, not for reading — ADR `0103`: the
+                technical figures stay reachable, collapsed. */}
+            <details className="mt-6 border-t border-[color:var(--color-rule)] pt-4 text-[length:var(--text-body-sm)]">
+                <summary className="cursor-pointer text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
+                    Verify
+                </summary>
+                <dl className="mt-4">
+                    {/* The id opens on Intuition's portal, on the chain this page reads — the user's
+                        decision, 2026-10-30: _« le lien terms id doit emmener vers le portal, vers
+                        l'atom ou triple Intuition »_. `intuitionPortalUrl` is the one builder, probed
+                        on both hosts; a hand-written URL here would be the fourth copy. */}
+                    <Term label="Atom">
+                        <a
+                            href={intuitionPortalUrl("atom", view.atomId, chain.isMainnet)}
+                            target="_blank"
+                            rel="noreferrer"
+                            className={`font-mono break-all ${linkClass}`}
+                        >
+                            {view.atomId}
+                        </a>
+                    </Term>
+                    {view.type === null ? null : (
+                        <Term label="Type">
+                            <span className="font-mono">{view.type}</span>
+                        </Term>
+                    )}
+                    {view.pinnedUri === null ? null : (
+                        <Term label="Pinned at">
+                            <span className="font-mono break-all">{view.pinnedUri}</span>
+                        </Term>
+                    )}
+                </dl>
+            </details>
 
             {/* **The id above is the link, and it was not for three days.**
 
@@ -604,7 +606,7 @@ function Term({label, children}: {label: string; children: React.ReactNode}) {
 function Missing({atomId}: {atomId: string}) {
     return (
         <div>
-            <h2 className="text-[length:var(--text-body)] font-medium">No such atom</h2>
+            <h2 className="text-[length:var(--text-body)] font-medium">Nothing at this id</h2>
             <p className="mt-3 max-w-[70ch] text-[color:var(--color-steel)]">
                 <span className="font-mono">{truncateMiddle(atomId)}</span> is a well-formed id that
                 this chain&rsquo;s graph does not hold. It may exist on the other chain, or not yet

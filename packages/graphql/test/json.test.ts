@@ -5,6 +5,7 @@ import {
     omitPath,
     readArray,
     readBigInt,
+    readCount,
     readNumber,
     readPath,
     readRecord,
@@ -67,5 +68,19 @@ describe("omitPath", () => {
         expect(omitPath({}, "a")).toBeNull();
         expect(omitPath("not an object", "a")).toBeNull();
         expect(omitPath({a: 1}, "")).toBeNull();
+    });
+});
+
+describe("readCount", () => {
+    it("reads a count sent as a number or as a decimal string", () => {
+        expect(readCount({c: 5}, "c")).toBe(5);
+        expect(readCount({c: "5"}, "c")).toBe(5);
+    });
+
+    it("answers null, never zero, for what is not a count", () => {
+        for (const value of [-1, 1.5, "x", "-3", null, undefined, Number.NaN, 2 ** 60]) {
+            expect(readCount({c: value}, "c")).toBeNull();
+        }
+        expect(readCount(null, "c")).toBeNull();
     });
 });

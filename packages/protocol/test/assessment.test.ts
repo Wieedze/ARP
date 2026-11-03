@@ -161,3 +161,38 @@ describe("narrowAssessmentDocument", () => {
         expect(narrowed.dimensions).toEqual({trust: 59.28});
     });
 });
+
+describe("fetchAssessment — a resolver URL is somebody else's string", () => {
+    const never: FetchLike = async () => {
+        throw new Error("fetch must not be called");
+    };
+
+    it("does not fetch a private resolver address", async () => {
+        const result = await fetchAssessment(
+            {resolverUrl: "http://169.254.169.254/latest/meta-data/"},
+            {fetch: never},
+        );
+        expect(result.status).toBe("error");
+        if (result.status !== "error" || result.error.kind !== "network") return;
+        expect(result.error.message).toContain("not fetched");
+    });
+
+    it("does not follow a redirect to a private address", async () => {
+        let calls = 0;
+        const redirecting: FetchLike = async () => {
+            calls += 1;
+            return new Response(null, {status: 302, headers: {location: "http://127.0.0.1/"}});
+        };
+        const result = await fetchAssessment({resolverUrl: URL_OK}, {fetch: redirecting});
+        expect(result.status).toBe("error");
+        expect(calls).toBe(1);
+    });
+
+    it("refuses a body past its cap", async () => {
+        const result = await fetchAssessment(
+            {resolverUrl: URL_OK},
+            {fetch: serving("x".repeat(2048)), maxBodyBytes: 1024},
+        );
+        expect(result).toMatchObject({status: "error", error: {kind: "malformed"}});
+    });
+});

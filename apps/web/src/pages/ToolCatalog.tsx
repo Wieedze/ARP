@@ -1,9 +1,10 @@
 import {useState} from "react";
 import {Link, useSearchParams} from "react-router-dom";
 
+import {DisplayTabs} from "../components/brand/DisplayTabs";
 import {DomainRail} from "../components/tool/DomainRail";
 import {Segmented} from "../components/tool/ToolCatalogControls";
-import {linkClass} from "../lib/control-class";
+import {controlClass, linkClass} from "../lib/control-class";
 import type {ToolListingOrder} from "@arp-protocol/core";
 
 import {PageLoading} from "../components/brand/PageLoading";
@@ -13,9 +14,11 @@ import {useTagIndex} from "../hooks/use-tag-index";
 import {useToolCatalog} from "../hooks/use-tool-catalog";
 import {
     livenessOf,
+    pageOfTools,
     rankTools,
     TOOL_CURVES,
     TOOL_INDEXES,
+    TOOL_PAGE_SIZE,
     toolIndexOf,
     toolSortAxesFor,
     type ToolIndex,
@@ -40,12 +43,9 @@ import {useSkillFacts} from "../hooks/use-skill-facts";
  */
 
 export function ToolCatalog() {
-    // `conviction`, not `priced-edges`. The old default ranked by how many claims carry a position
-    // and is gone from the control (`TOOL_ORDERS`); money behind a claim is what separates it from
-    // an assertion, so the list opens on the amount rather than on a free count.
-    // The chain read's own order, which no longer decides what the reader sees: the list is
-    // gated and sorted here, over the whole population rather than a page of it. Kept because the
-    // query takes one, and `conviction` makes the cache warm on the figure most readers open with.
+    // The chain read's own order, which does not decide what the reader sees: the list is gated
+    // and sorted here on `axis`, over the whole population rather than a page of it. Kept because
+    // the query takes one; `conviction` is only what keeps the cache key stable.
     const order: ToolListingOrder = "conviction";
     /**
      * Which axis the list is sorted on, above the liveness gate.
@@ -56,7 +56,14 @@ export function ToolCatalog() {
      * which nobody can pay to change, and above it the axis belongs to the reader with every
      * figure beside the others.
      */
-    const [chosenAxis, setAxis] = useState<ToolSortAxis>("declared");
+    const [chosenAxis, setChosenAxis] = useState<ToolSortAxis>("declared");
+    // Where the reader is in the ranked list. Every control that changes what is ranked sends it
+    // back to the first page: page 9 of one order is not a place in another.
+    const [offset, setOffset] = useState(0);
+    const setAxis = (next: ToolSortAxis) => {
+        setChosenAxis(next);
+        setOffset(0);
+    };
     // Curve 1 is the default because it is the durable signal: linear, so a position's gain follows
     // the tool's growth rather than the holder's timing. Curve 2 is where the money sits today, and
     // that is a different question — `TOOL_CURVES` has the measurement.
@@ -71,9 +78,13 @@ export function ToolCatalog() {
     const axes = toolSortAxesFor(index);
     // Installs are a skill's figure and stars a repository's: switching index keeps the reader's
     // axis when the other index has it, and falls back to "declared" when it does not.
-    const axis: ToolSortAxis = axes.some((entry) => entry.id === chosenAxis) ? chosenAxis : "declared";
-    const chooseIndex = (next: ToolIndex) =>
+    const axis: ToolSortAxis = axes.some((entry) => entry.id === chosenAxis)
+        ? chosenAxis
+        : "declared";
+    const chooseIndex = (next: ToolIndex) => {
         setSearchParams(next === "skills" ? {} : {index: next}, {replace: true});
+        setOffset(0);
+    };
     /**
      * What the tool is **for**, and `null` by default.
      *
@@ -83,7 +94,8 @@ export function ToolCatalog() {
      * ranked — the same call `arp_find_tools { domain }` makes for an agent, from the same code.
      */
     const [picked, setPicked] = useState<ReadonlySet<string>>(() => new Set());
-    const toggleDomain = (domain: string) =>
+    const toggleDomain = (domain: string) => {
+        setOffset(0);
         setPicked((current) => {
             const next = new Set(current);
             // A second click on a picked domain removes it. Nothing here is radio-like: narrowing
@@ -91,6 +103,7 @@ export function ToolCatalog() {
             if (!next.delete(domain)) next.add(domain);
             return next;
         });
+    };
     const domains = useDomainTree();
     const tags = useTagIndex(domains.tree);
     const inDomain = tags.index.idsUnder([...picked], domains.tree);
@@ -125,33 +138,31 @@ export function ToolCatalog() {
                 null,
         }),
     );
+    const page = pageOfTools(visible, offset, TOOL_PAGE_SIZE);
     const countIn = (which: ToolIndex) =>
         (view?.rows ?? []).filter((row) => toolIndexOf(row) === which).length;
 
     return (
         <section>
-            <header className="grid items-end gap-x-8 gap-y-6 pt-14 pb-10 md:grid-cols-[minmax(0,1fr)_auto]">
+            {/* The count of what is shown, after the index and the domain filter, is the pager's
+                "1–25 of N" under the list, not a figure up here. */}
+            <header className="pt-14 pb-10">
                 <div className="flex flex-wrap items-end gap-x-10 gap-y-4">
                     <h1 className="type-display">Tools</h1>
                     {/* **Two indexes, one read.** Skills and repositories are filed in the same
                         catalogue, and the user asked for them to read as two lists. The switch
                         sits beside the title and a little below its baseline (user, 2026-10-30),
                         as a choice of what page you are on, not as one more toolbar control. */}
-                    <IndexTabs
+                    <DisplayTabs
+                        label="Index"
+                        options={TOOL_INDEXES.map((entry) => ({
+                            ...entry,
+                            count: view === undefined ? null : countIn(entry.id),
+                        }))}
                         selected={index}
                         onChange={chooseIndex}
-                        countIn={view === undefined ? null : countIn}
                     />
                 </div>
-                <dl className="flex overflow-hidden rounded-[var(--radius-card)] border border-[color:var(--color-rule)]">
-                    {/* The count of what is SHOWN, not of what was read. It was `view.rows.length`,
-                        which the index and the domain filter
-                        contradicts constantly — "57" over two rows is a false claim about the list
-                        the reader is looking at (`rules/claims.md`). */}
-                    <Fact label="In the list">
-                        {view === undefined ? "—" : visible.length.toLocaleString("en-US")}
-                    </Fact>
-                </dl>
             </header>
 
             {/* The toolbar on its own rule, like the index's. It was inline with the `h1`, which
@@ -169,7 +180,10 @@ export function ToolCatalog() {
                     selected={picked}
                     counts={(domain) => tags.index.countFor(domain, domains.tree)}
                     onToggle={toggleDomain}
-                    onClear={() => setPicked(new Set())}
+                    onClear={() => {
+                        setPicked(new Set());
+                        setOffset(0);
+                    }}
                 />
 
                 <div className="min-w-0">
@@ -218,10 +232,39 @@ export function ToolCatalog() {
                     ) : (
                         <>
                             <ToolCatalogList
-                                rows={visible}
+                                rows={page.rows}
                                 curveId={view.curveId}
                                 showStars={index === "repos"}
                             />
+                            <nav
+                                aria-label="Tool pages"
+                                className="mt-5 flex flex-wrap items-center justify-between gap-x-6 gap-y-3"
+                            >
+                                <p
+                                    aria-live="polite"
+                                    className="font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-steel)] tabular-nums"
+                                >
+                                    {page.rangeLabel}
+                                </p>
+                                <div className="flex gap-3">
+                                    <button
+                                        type="button"
+                                        disabled={!page.hasPrevious}
+                                        onClick={() => setOffset(page.offset - TOOL_PAGE_SIZE)}
+                                        className={controlClass}
+                                    >
+                                        ← Previous
+                                    </button>
+                                    <button
+                                        type="button"
+                                        disabled={!page.hasNext}
+                                        onClick={() => setOffset(page.offset + TOOL_PAGE_SIZE)}
+                                        className={controlClass}
+                                    >
+                                        Next →
+                                    </button>
+                                </div>
+                            </nav>
                             {/* Only when it happened: a prefix presented as the whole set is the one thing
                         this page could get wrong without anyone noticing. */}
                             {view.truncated ? (
@@ -236,66 +279,6 @@ export function ToolCatalog() {
                 </div>
             </div>
         </section>
-    );
-}
-
-/**
- * The two indexes as two words in display type, the current one in paper and the other dim.
- *
- * Buttons with `aria-pressed`, like `Segmented`: it switches what the list shows, it does not
- * navigate. The count rides beside each word so the reader sees both sizes before choosing.
- */
-function IndexTabs({
-    selected,
-    onChange,
-    countIn,
-}: {
-    selected: ToolIndex;
-    onChange: (next: ToolIndex) => void;
-    countIn: ((which: ToolIndex) => number) | null;
-}) {
-    return (
-        <div
-            role="group"
-            aria-label="Index"
-            className="translate-y-3 flex flex-wrap items-baseline gap-x-8 gap-y-2"
-        >
-            {TOOL_INDEXES.map((entry) => {
-                const isSelected = entry.id === selected;
-                return (
-                    <button
-                        key={entry.id}
-                        type="button"
-                        aria-pressed={isSelected}
-                        onClick={() => onChange(entry.id)}
-                        // Banged: `index.css`'s unlayered `button { border; color }` beats any
-                        // utility, as `lib/control-class` lists.
-                        className={`flex items-baseline gap-2 border-0! border-b-2! bg-transparent px-0 pb-1 type-face text-[26px] leading-none ${
-                            isSelected
-                                ? "border-[color:var(--color-accent)]! text-[color:var(--color-fg)]!"
-                                : "border-transparent! text-[color:var(--color-grey)]! hover:text-[color:var(--color-silver)]!"
-                        }`}
-                    >
-                        {entry.label}
-                        <span className="font-mono text-[length:var(--text-body-sm)] tabular-nums text-[color:var(--color-steel)]">
-                            {countIn === null ? "—" : countIn(entry.id).toLocaleString("en-US")}
-                        </span>
-                    </button>
-                );
-            })}
-        </div>
-    );
-}
-
-/** One boxed figure in the header, matching the index's. */
-function Fact({label, children}: {label: string; children: React.ReactNode}) {
-    return (
-        <div className="flex min-w-[7.5rem] flex-col gap-1.5 px-5 py-3.5 [&+&]:border-l [&+&]:border-l-[color:var(--color-rule)]">
-            <dt className="font-mono text-[10px] uppercase tracking-[0.06em] text-[color:var(--color-steel)]">
-                {label}
-            </dt>
-            <dd className="type-face text-[26px] leading-none tabular-nums">{children}</dd>
-        </div>
     );
 }
 

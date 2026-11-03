@@ -3,7 +3,7 @@ import {useQuery, useQueryClient} from "@tanstack/react-query";
 import {liveFacts} from "./use-live-facts";
 
 import {parseToolLabel} from "../lib/tool-label";
-import {parseSkillMd, rawSkillUrl, type SkillMd} from "../services/skill-md";
+import {fetchSkillMd, rawSkillUrl, type SkillMd} from "../services/skill-md";
 
 /**
  * One skill's SKILL.md, read from its repository when its page opens.
@@ -42,12 +42,10 @@ export function useSkillMd(label: string | null): SkillMdRead {
     const file = useQuery({
         queryKey: ["skill-md", url],
         enabled: url !== null,
-        queryFn: async () => {
+        queryFn: () => {
             // `url` is non-null whenever the query is enabled; the guard is for the type.
             if (url === null) throw new Error("no SKILL.md path");
-            const response = await fetch(url);
-            if (!response.ok) throw new Error(`${response.status} from ${url}`);
-            return parseSkillMd(await response.text());
+            return fetchSkillMd(url);
         },
         staleTime: 60 * 60 * 1000,
         retry: 1,

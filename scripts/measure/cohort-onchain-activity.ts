@@ -1,4 +1,4 @@
-import { highestTokenId } from './erc8004-population.js';
+import { highestTokenId } from '../helpers/erc8004-population.js';
 import type { JsonRpcReply } from '../helpers/shapes.js';
 /** Do cohort agents actually transact on-chain? Read-only, keyless.
  *

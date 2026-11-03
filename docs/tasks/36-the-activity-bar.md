@@ -66,6 +66,34 @@ aussi les id agent », and « tout doit répondre au switch mainnet et testnet �
 - **The toggle.** The bar and the page show only the chosen chain's transactions; off-chain events
   show on both. Chain-stream entries now always carry their chain.
 
+## Amended 2026-11-02 — every agent, from the indexer
+
+The user, 2026-10-30: the page emptied on reload. `/activity` now leads with **On chain · every
+agent**: every identified agent's declarations, deposits and redemptions on the chosen chain, read
+from the indexer every 15 s (`getRecentStakes`, query `RECENT_STAKES_QUERY`; merged by
+`services/chain-facts-view.ts`). The local feed stays below as **This machine**, the demo.
+
+- **A deposit in the transaction that wrote the declaration is shown on the declaration's row**
+  ("declared 0.00099 tTRUST"), not as a second row with the same hash. A later stake is its own
+  row. A deposit of zero, which a triple's creation can log, is left out by the query.
+- **The signer is shown on each stake** ("by 0x906f…"), because it is not the agent: one operator
+  signs for several.
+- Each read is capped at 50. Once one list is full, older rows of the other kinds are dropped, so a
+  cut-off list never reads as "none". A failed read with rows on screen marks the heading
+  "incomplete".
+- Only the claim's own vault is read (`type: "Triple"`). A position against a declaration sits on
+  its counter term, whose `triple` resolves to the claim itself, so without that filter it would be
+  listed as support. Against-positions are not shown.
+- One-off reads on testnet 13579 (`https://testnet.intuition.sh/v1/graphql`), 2026-11-02,
+  read-only, no script committed:
+  - `chainFacts(declarations, stakes, 50)` over `getRecentDeclarations({graphqlUrl, limit: 50})`
+    and `getRecentStakes({graphqlUrl, limit: 50})` gave 9 declarations and 15 non-zero stakes, 6 of
+    them in a declaring transaction, so 18 rows. The same call on mainnet 1155 gave 0.
+  - `deposits(where: {term_id: {_in: [the 9 declarations' counter_term_id]}})` returned none, so no
+    against-position was being hidden.
+- **Verified** 2026-11-02: `ui-reviewer` PASS on the third round, `task-verifier` PASS on the
+  second, commit `b8b650f` on `feat/36-chain-facts`, post-mortem `learning/35`.
+
 ## Do not do in this task
 
 - ~~Instrument the web app's own write sites.~~ Withdrawn the same day, see the amendment above.
@@ -84,10 +112,27 @@ Further commits, gates and screenshots only, **no `task-verifier` run**:
   Most declared, plus Most installs (skills) or Most stars (repositories). Flat/By repo is removed.
   The index sits beside the title. "Most declared", not "Most used", is the user's choice.
 
+Review of `f5d1c84` and `79ad7ea`, 2026-10-30 (branch `fix/36-verified`). Gates green before and
+after; four defects found by reading the diffs, fixed:
+
+- `timelineRows` listed every declaration and stake under **every** invocation of the same skill,
+  including calls made after the transaction, while the transaction named only the last call before
+  it. The two directions of the link now come from one join, and neither a dry run nor a reverted
+  call is listed as a consequence — both declared and staked nothing — while each still names its
+  cause. Three tests pin it; the dry-run one was added after a second review found the first fix
+  still listed `bin/arp-sign`'s default dry run as a phantom declaration.
+- `agentsByWallet` is exported and had no test of its own; it has one.
+- Two comments misdescribed the code: `ActivityPage`'s header still described two columns, and
+  `ToolCatalog`'s `order` comment said the list opens on the amount, when it opens on Most declared.
+- `ToolCatalog.tsx` and `ToolCatalogList.tsx` were not prettier-formatted.
+
+`task-verifier` could not be run from that session (no agent tool in a workflow subagent).
+
 ## Open
 
-- `task-verifier` on `f5d1c84` and `79ad7ea`.
+- ~~`task-verifier` on `f5d1c84`, `79ad7ea` and the fix above.~~ PASS, `learning/30`.
 - `/profile` into `/activity`, per task 35's split (`/activity` = what happened, positions
-  included). Not started; the user decides.
-- The commits from `353df6d` to `79ad7ea` are not pushed.
+  included). ~~Not started.~~ Done in task 35 (`components/activity/Positions.tsx`), merged into
+  `dev` with PR #22 on 2026-11-02, above the chain section.
+- ~~The commits from `353df6d` to `79ad7ea` are not pushed.~~ On `origin/dev` since.
 

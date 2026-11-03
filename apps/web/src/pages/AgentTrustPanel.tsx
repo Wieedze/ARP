@@ -3,14 +3,15 @@ import {Link, useParams, useSearchParams} from "react-router-dom";
 import {useAccount} from "wagmi";
 
 import {linkClass} from "../lib/control-class";
+import {Block, Panel} from "../components/atom/AtomPageParts";
+import {BackLink} from "../components/brand/BackLink";
 import {AtomMarket} from "../components/market/AtomMarket";
 import {AgentIdentityPanel, AgentSigil} from "../components/agent/AgentIdentityPanel";
 import {RatingRow} from "../components/agent/RatingRow";
 import {CapabilitySection} from "../components/agent/CapabilitySection";
-import {panelDomId, tabDomId} from "../components/agent/tab-ids";
+import {initialSectionOf, panelDomId, tabDomId} from "../components/agent/tab-ids";
 import {TrustPanelTabs} from "../components/agent/TrustPanelTabs";
 import {UnreadSources} from "../components/agent/UnreadSources";
-import {useChainChoice} from "../lib/chain-choice";
 import {identityRegistryFor} from "../lib/deployments";
 import {AgentClaims, AgentDeclareCard} from "../components/agent/AgentClaims";
 import {SectionTabs} from "../components/agent/SectionTabs";
@@ -37,10 +38,10 @@ import {asStakeTermId, type StakeSession} from "../services/trust-stake";
  * which providers could not be reached at all, and how thin the market on each
  * claim really is.
  *
- * The left rail is the agent and stays put — identity belongs to no provider,
- * so it must not vanish when a reader opens one. The right column is where the
- * claims live, and where the tabs are: the agent's own data first, then one per
- * provider, then ARP's own position.
+ * Laid out like the skill page (ADR `0104`): the agent's own words and the tabs on
+ * the left, its identity in a card on the right, then the market, the declaration
+ * card, and the relations. Identity belongs to no provider, so it sits outside the
+ * tabs and does not vanish when a reader opens one.
  *
  * Every read follows the chain toggle (`lib/chain-choice.ts`). It used to be mainnet whatever
  * the toggle said, which hid ARP's own testnet edges behind an empty panel.
@@ -101,7 +102,6 @@ export function AgentTrustPanel() {
               }
             : null;
 
-    const chain = useChainChoice();
     const [searchParams, setSearchParams] = useSearchParams();
     const baseId = useId();
 
@@ -122,22 +122,18 @@ export function AgentTrustPanel() {
      *
      * Built from the view rather than fixed: "Not read" is offered only when something actually
      * failed — an always-present "nothing failed" tab is a row of reassurance, which is not
-     * information — and "Claims" needs an atom to have claims about.
+     * information. Declarations are not a tab: they are the Relations block below the market.
      */
     const sectionTabs = [
-        ...(backingAtomId === null ? [] : [{slug: "claims", label: "Claims"}]),
-        {slug: "endpoints", label: "Endpoints"},
-        {slug: "ratings", label: "Ratings", count: view?.rows.length ?? null},
         {slug: "capabilities", label: "Capabilities", count: view?.capabilityCount ?? null},
+        {slug: "ratings", label: "Ratings", count: view?.rows.length ?? null},
+        {slug: "endpoints", label: "Endpoints"},
         ...((view?.sourceErrors.length ?? 0) > 0 || (view?.conflicts.length ?? 0) > 0
             ? [{slug: "unread", label: "Not read"}]
             : []),
     ];
     const requestedSection = searchParams.get(SECTION_PARAM);
-    const selectedSection =
-        sectionTabs.find((tab) => tab.slug === requestedSection)?.slug ??
-        sectionTabs[0]?.slug ??
-        "endpoints";
+    const selectedSection = initialSectionOf(sectionTabs, requestedSection) ?? "capabilities";
     /**
      * Whether the connected wallet holds a position here, for the sigil's core.
      *
@@ -198,12 +194,7 @@ export function AgentTrustPanel() {
 
     return (
         <article>
-            <Link
-                to="/agents"
-                className="font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]"
-            >
-                ← agents
-            </Link>
+            <BackLink to="/agents" label="agents" />
 
             <div className="mt-4"></div>
 
@@ -240,104 +231,66 @@ export function AgentTrustPanel() {
                 </section>
             ) : (
                 <>
-                    {/* The header: the mark, the name, what it says about itself. The sigil is
-                        beside the name rather than at the top of a metadata column, because it is
-                        the agent's identity and that is where an identity mark goes. The avatar
-                        only shows when the agent chose one — the sigil is generated and always
-                        true, the avatar is whatever was uploaded. */}
-                    <header className="flex flex-wrap items-start gap-x-8 gap-y-6 pt-10 pb-12">
-                        <AgentSigil view={view} viewerStaked={viewerStaked} />
-                        <div className="min-w-0 flex-1">
+                    {/* **The skill page's layout** (ADR `0104`, task 46b): an eyebrow, the sigil
+                        and the name, then what the agent says about itself on the left and the
+                        facts about it in a card on the right. The market runs full width below, the
+                        declaration card under it, and the relations close the page as the field.
+                        It followed the atom page's 18rem identity rail until 2026-11-02. */}
+                    <header className="pt-6">
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 font-mono text-[12px] text-[color:var(--color-steel)]">
+                            <span className="rounded-[var(--radius-tag)] border border-[color:var(--color-rule-strong)] px-[7px] py-[2px] text-[length:var(--text-label)] uppercase tracking-[0.1em] text-[color:var(--color-fg)]">
+                                Agent
+                            </span>
+                            <span>#{view.tokenId}</span>
+                        </div>
+                        {/* The sigil beside the name: it is the agent's identity, and that is
+                            where an identity mark goes. The avatar only when the agent chose one. */}
+                        <div className="mt-[18px] flex flex-wrap items-center gap-x-8 gap-y-6">
+                            <AgentSigil view={view} viewerStaked={viewerStaked} />
                             <h1
-                                className={`type-title ${
+                                className={`type-title min-w-0 flex-1 [overflow-wrap:anywhere] ${
                                     view.name === null ? "text-[color:var(--color-grey)]" : ""
                                 }`}
                             >
                                 {view.name ?? `Token ${view.tokenId}`}
                             </h1>
-                            <p className="mt-4 break-all font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
-                                {view.caip19}
-                            </p>
-                            {view.isFallbackMetadata ? (
-                                <p className="mt-5 inline-flex max-w-[64ch] rounded-[var(--radius-tag)] border border-dashed border-[color:var(--color-rule-strong)] px-3 py-1.5 font-mono text-[length:var(--text-label)] text-[color:var(--color-silver)]">
-                                    Name and URL are the indexer&rsquo;s stand-in — no source
-                                    published a name for this agent
-                                </p>
-                            ) : view.description !== null ? (
-                                <p className="mt-5 max-w-[62ch] text-[color:var(--color-silver)]">
-                                    {view.description}
-                                </p>
+                            {view.image !== null ? (
+                                <AgentAvatar src={view.image} name={view.name ?? view.tokenId} />
                             ) : null}
                         </div>
-                        {view.image !== null ? (
-                            <AgentAvatar src={view.image} name={view.name ?? view.tokenId} />
-                        ) : null}
                     </header>
 
-                    {/* **The atom page's shell**, which the user asked for after using both:
-                        _« la page tools est vraiment mieux, je voudrais la même chose pour la page
-                        detailed agent »_. Identity in an 18rem column, everything else beside it.
+                    {/* **Description, Identity, tabs, in that DOM order** (user, 2026-11-02): stacked
+                        on a phone, the identity comes before a tab that can hold 35 rows. From `lg`
+                        the grid puts Identity in the right column across both rows, so the desktop
+                        layout is unchanged and the focus order still reads top to bottom. */}
+                    <div className="mt-8 grid items-start gap-x-12 gap-y-10 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,26rem)] lg:grid-rows-[auto_1fr]">
+                        {/* Only when there is something to say: an empty grid item still takes a
+                            row gap. */}
+                        {view.isFallbackMetadata || view.description !== null ? (
+                            <div className="min-w-0 lg:col-start-1 lg:row-start-1">
+                                {view.isFallbackMetadata ? (
+                                    <p className="inline-flex max-w-[64ch] rounded-[var(--radius-tag)] border border-dashed border-[color:var(--color-rule-strong)] px-3 py-1.5 font-mono text-[length:var(--text-label)] text-[color:var(--color-silver)]">
+                                        Name and URL are the indexer&rsquo;s stand-in — no source
+                                        published a name for this agent
+                                    </p>
+                                ) : view.description !== null ? (
+                                    <p className="max-w-[62ch] text-[17px] text-[color:var(--color-silver)]">
+                                        {view.description}
+                                    </p>
+                                ) : null}
+                            </div>
+                        ) : null}
 
-                        The numbered rail is gone with it. It existed to make the page's **order**
-                        visible — identity, the market, who used it, what others say — and each rung
-                        does cost more to produce than the one above. That argument survives in the
-                        ordering itself; what it does not need is a 200px column repeating it in
-                        mono beside every section. `PanelSection` is deleted rather than left
-                        unused (`rules/code.md`). */}
-                    <div className="grid gap-x-12 gap-y-10 md:grid-cols-[18rem_1fr] md:items-start">
-                        <aside>
-                            <AgentIdentityPanel view={view} />
-                        </aside>
+                        <div className="lg:col-start-2 lg:row-span-2 lg:row-start-1">
+                            <Panel label="Identity">
+                                <AgentIdentityPanel view={view} />
+                            </Panel>
+                        </div>
 
-                        <div className="flex min-w-0 flex-col gap-12">
-                            {/* The market on **this agent**, which is what the page is about. The ratings
-                        below are one provider's opinion, which runs beside this rather than feeding
-                        it (ADR `0056`).
-
-                        Absent when the graph has no atom: no vault to deposit into, so the section
-                        would be a form with nowhere to send. Measured on mainnet 1155 — most of the
-                        mirrored cohort does resolve to one, and the ones that do not are the honest
-                        gap. */}
-                            {backingAtomId === null ? null : (
-                                <section>
-                                    <h2 className="font-medium">Support</h2>
-                                    <div className="mt-5">
-                                        {/* The same string the `h1` above uses. `view.tokenId` alone made the
-                                confirmation read "deposit onto 2340" while the heading said
-                                "Token 2340" — the one screen where the subject has to be
-                                unmistakable (ADR `0017` safeguard 4). */}
-                                        {/* **An action card**, the same shape the atom page gives the same
-                                component — the design reference's `.act`: a stronger border, the
-                                panel background, 20px of padding. A thing you can act on separates
-                                harder than a thing you read, and this section was neither: a figure
-                                row and a form on the page background, at the weight of everything
-                                around them. The user's verdict on that: « tout est pareil ». */}
-                                        <div className={actionCardClass}>
-                                            <AtomMarket
-                                                atomTermId={backingAtomId}
-                                                name={view.name ?? `Token ${view.tokenId}`}
-                                                nameIsId={view.name === null}
-                                                heading={null}
-                                            />
-                                        </div>
-                                    </div>
-                                </section>
-                            )}
-
-                            {/* **The declaration card stays above the strip.** It is one of the
-                                page's two writes, and putting a write behind a tab hides it behind
-                                a click. `(my agent) uses (this agent)` is a real claim — ADR `0056`
-                                §2: a client writes it with its own identity atom as the subject. */}
-                            {backingAtomId === null ? null : (
-                                <AgentDeclareCard
-                                    atomId={backingAtomId}
-                                    name={view.name ?? `Token ${view.tokenId}`}
-                                />
-                            )}
-
-                            {/* **Everything a reader reads, as tabs.** Five answers stacked meant
-                                scrolling past four to reach the fifth (user, 2026-10-28). The strip
-                                carries them; the actions above it do not move. */}
+                        {/* **What a reader reads, as tabs.** Stacked, each answer meant scrolling
+                            past the others to reach it (user, 2026-10-28). */}
+                        <div className="min-w-0 lg:col-start-1 lg:row-start-2">
                             <div>
                                 <SectionTabs
                                     tabs={sectionTabs}
@@ -352,12 +305,6 @@ export function AgentTrustPanel() {
                                     tabIndex={0}
                                     className="mt-8"
                                 >
-                                    {selectedSection === "claims" && backingAtomId !== null ? (
-                                        <AgentClaims
-                                            atomId={backingAtomId}
-                                            name={view.name ?? `Token ${view.tokenId}`}
-                                        />
-                                    ) : null}
                                     {selectedSection === "endpoints" ? (
                                         <AgentEndpoints registrationFile={view.registrationFile} />
                                     ) : null}
@@ -388,12 +335,41 @@ export function AgentTrustPanel() {
                                     ) : null}
                                 </div>
                             </div>
-
-                            <p className="border-t border-[color:var(--color-rule)] pt-5 font-mono text-[length:var(--text-label)] text-[color:var(--color-steel)]">
-                                Graph read from {chain.graphqlUrl}
-                            </p>
                         </div>
                     </div>
+
+                    {/* The market on **this agent**, full width, in an action card like the skill
+                        page's. The ratings are one provider's opinion, which runs beside this
+                        rather than feeding it (ADR `0056`). Absent when the graph has no atom:
+                        there is nothing to support. */}
+                    {backingAtomId === null ? null : (
+                        <>
+                            {/* The same string the `h1` uses, so the confirmation names the same
+                                subject the heading does (ADR `0017` safeguard 4). */}
+                            <div className={`mt-14 ${actionCardClass}`}>
+                                <AtomMarket
+                                    atomTermId={backingAtomId}
+                                    name={view.name ?? `Token ${view.tokenId}`}
+                                    nameIsId={view.name === null}
+                                    heading={null}
+                                />
+                            </div>
+                            {/* One of the page's two writes, so not behind a tab. `(my agent) uses
+                                (this agent)` is a real declaration — ADR `0056` §2. */}
+                            <div className="mt-10 max-w-[48rem]">
+                                <AgentDeclareCard
+                                    atomId={backingAtomId}
+                                    name={view.name ?? `Token ${view.tokenId}`}
+                                />
+                            </div>
+                            <Block title="Relations" label="Every declaration about this agent">
+                                <AgentClaims
+                                    atomId={backingAtomId}
+                                    name={view.name ?? `Token ${view.tokenId}`}
+                                />
+                            </Block>
+                        </>
+                    )}
                 </>
             )}
         </article>
@@ -469,7 +445,7 @@ function StackedClaims({view, session}: ClaimsProps) {
         <>
             {view.rows.length === 0 ? (
                 <p className="max-w-[60ch] text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
-                    No trust provider has written an edge about this agent.
+                    No trust provider has rated this agent.
                 </p>
             ) : (
                 <div className="flex flex-col gap-14">

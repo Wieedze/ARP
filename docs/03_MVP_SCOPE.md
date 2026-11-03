@@ -1,5 +1,10 @@
 # 03 — MVP Scope
 
+> **Historical where superseded** (2026-11-02, ADR `0117`). The deliverable below — a
+> `ModuleRegistry` on Base Sepolia with seeded modules — no longer exists: ADR `0002` moved the
+> target to Intuition testnet 13579, and `59ac83a` deleted `ModuleRegistry` (ADR `0055`). What is
+> built is in `docs/12_THE_IDEA.md` and `.claude/STATE.md`. The body is kept as the original scope.
+
 ## One-sentence scope
 
 A deployed `ModuleRegistry` contract on Base Sepolia with three seeded modules, each mirrored as an Intuition atom, viewable in a polished web UI.

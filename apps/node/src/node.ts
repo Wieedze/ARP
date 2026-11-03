@@ -25,19 +25,30 @@
  *  `handle(payload, context)`. Without one the node echoes, which is enough to prove the protocol
  *  and proves nothing about an agent.
  *
- *  **The receipt is EIP-712** (`@arp-protocol/core`, `hire-receipt.ts`): the payment's chain in the
- *  domain, the agent as ERC-8004 names it (`AGENT_REGISTRY` + `AGENT_ID`), the payment as the nonce.
+ *  **The receipt is EIP-712, v2** (`@arp-protocol/core`, `hire-receipt.ts`): the payment's chain
+ *  and the one verifier the requester names (`verifier` in `POST /task`) in the domain, the agent as
+ *  ERC-8004 names it (`AGENT_REGISTRY` + `AGENT_ID`), the term the requester will deposit on
+ *  (`termId`), the payment as the nonce, and an `expiresAt` of `AGENT_NODE_RECEIPT_TTL` seconds
+ *  (default a day) after issuance. One payment, one receipt, one verifier (task 44).
  *
  *  **One payment, one job.** Every accepted payment is appended to `AGENT_NODE_LEDGER`
- *  (`.arp/node-payments.jsonl` by default) and refused the second time — `task.ts`.
+ *  (`~/.arp/node-payments.jsonl` by default, or under `ARP_HOME`) and refused the second time —
+ *  `task.ts`.
+ *
+ *  **It binds `127.0.0.1`, and a tunnel the operator rents is the one way in** (task 39a, ADR
+ *  `0094`): `cloudflared` or `ngrok`, detected on `PATH` or named by `ARP_NODE_TUNNEL`, or one the
+ *  operator runs and names with `ARP_NODE_PUBLIC_URL`. `tunnel.ts` says which. ARP builds no relay.
+ *
+ *  **The key** is `AGENT_PRIVATE_KEY` when set, else the node key in `~/.arp/node.key`, generated on
+ *  first start (`node-key.ts`). It is the key `arp init --node` binds to the agent.
  */
-import { join } from 'node:path';
+import { ERC8004_REGISTRY_REF, serveFetch, stateFile } from '@arp-protocol/core/node';
 
-import { serveFetch } from '@arp-protocol/core/node';
+import { createPublicClient, formatEther, http } from 'viem';
 
-import { createPublicClient, formatEther, http, parseEther } from 'viem';
-import { privateKeyToAccount } from 'viem/accounts';
-import type { Hex } from 'viem';
+import { minBudgetFrom, portFrom } from './env.ts';
+
+import { resolveNodeKey } from './node-key.ts';
 
 import {
   type AgentIdentity,
@@ -48,12 +59,28 @@ import {
   PaymentLedger,
   type TaskHandler,
 } from './task.ts';
+import { chooseTunnel, clientAddress, startTunnel } from './tunnel.ts';
 
 export type { TaskContext, TaskHandler } from './task.ts';
 
-const PORT = Number(process.env.AGENT_NODE_PORT ?? 3100);
-const MIN_BUDGET = parseEther(process.env.AGENT_NODE_MIN_BUDGET ?? '0.001');
-const LEDGER = process.env.AGENT_NODE_LEDGER ?? join(process.cwd(), '.arp', 'node-payments.jsonl');
+let PORT: number;
+let MIN_BUDGET: bigint;
+try {
+  PORT = portFrom(process.env.AGENT_NODE_PORT, 3100);
+  MIN_BUDGET = minBudgetFrom(process.env.AGENT_NODE_MIN_BUDGET, '0.001');
+} catch (error) {
+  console.error(error instanceof Error ? error.message : String(error));
+  process.exit(1);
+}
+// Under `~/.arp/`, never the working directory: a node restarted elsewhere would read an empty
+// ledger and sign a second receipt for every payment it had already used (ADR `0116`).
+let LEDGER: string;
+try {
+  LEDGER = stateFile(process.env.AGENT_NODE_LEDGER, 'node-payments.jsonl');
+} catch (error) {
+  console.error(error instanceof Error ? error.message : String(error));
+  process.exit(1);
+}
 
 function positive(name: string, fallback: number): number {
   const raw = process.env[name];
@@ -69,6 +96,7 @@ const LIMITS: NodeLimits = {
   maxBodyBytes: positive('AGENT_NODE_MAX_BODY_BYTES', DEFAULT_LIMITS.maxBodyBytes),
   handlerTimeoutMs: positive('AGENT_NODE_HANDLER_TIMEOUT_MS', DEFAULT_LIMITS.handlerTimeoutMs),
   requestsPerMinute: positive('AGENT_NODE_RATE_LIMIT', DEFAULT_LIMITS.requestsPerMinute),
+  receiptTtlSeconds: positive('AGENT_NODE_RECEIPT_TTL', DEFAULT_LIMITS.receiptTtlSeconds),
 };
 
 const rpcUrl = process.env.INTUITION_RPC_URL ?? process.env.INTUITION_TESTNET_RPC_URL;
@@ -76,12 +104,14 @@ if (!rpcUrl) {
   console.error('no RPC: set INTUITION_RPC_URL or INTUITION_TESTNET_RPC_URL');
   process.exit(1);
 }
-const rawKey = process.env.AGENT_PRIVATE_KEY;
-if (!rawKey) {
-  console.error('AGENT_PRIVATE_KEY is not set — the node signs receipts with the agent identity.');
+let nodeKey: ReturnType<typeof resolveNodeKey>;
+try {
+  nodeKey = resolveNodeKey(process.env);
+} catch (error) {
+  console.error(error instanceof Error ? error.message : String(error));
   process.exit(1);
 }
-const account = privateKeyToAccount((rawKey.startsWith('0x') ? rawKey : `0x${rawKey}`) as Hex);
+const account = nodeKey.account;
 
 /**
  * Who the receipt says signed. Both or neither: `AGENT_REGISTRY` is the string the agent's
@@ -96,7 +126,7 @@ function identityFromEnv(): AgentIdentity | null {
     console.error('set AGENT_REGISTRY and AGENT_ID together, or neither');
     process.exit(1);
   }
-  if (!/^eip155:[1-9][0-9]*:0x[0-9a-fA-F]{40}$/.test(registry) || !/^(0|[1-9][0-9]*)$/.test(id)) {
+  if (!ERC8004_REGISTRY_REF.test(registry) || !/^(0|[1-9][0-9]*)$/.test(id)) {
     console.error(
       'AGENT_REGISTRY must be eip155:<chainId>:<address> and AGENT_ID a decimal token id',
     );
@@ -136,14 +166,48 @@ const node = createNode({
  * Start the node. `arp node` calls this (`apps/cli`); `bun src/node.ts` reaches it through
  * `import.meta.main`, which Node 22 does not set.
  *
- * No hostname: the node binds every interface, because it is the address the agent publishes.
+ * Loopback only. Until 2026-10-30 it passed no hostname and listened on every interface, because it
+ * was the address the agent published; the tunnel is that address now, and nothing else should
+ * reach the port.
  */
 export async function main(): Promise<void> {
-  await serveFetch({ port: PORT, maxBodyBytes: LIMITS.maxBodyBytes }, (request, ip) =>
-    node.fetch(request, ip),
+  const tunnel = chooseTunnel(process.env);
+  if (tunnel instanceof Error) {
+    process.stderr.write(`${tunnel.message}\n`);
+    process.exit(1);
+  }
+  await serveFetch(
+    { port: PORT, hostname: '127.0.0.1', maxBodyBytes: LIMITS.maxBodyBytes },
+    (request, ip) => node.fetch(request, clientAddress(request, ip, tunnel.kind)),
   );
-  process.stderr.write(`agent node on http://localhost:${PORT}\n`);
+  const local = `http://127.0.0.1:${PORT}`;
+  let running: Awaited<ReturnType<typeof startTunnel>>;
+  try {
+    running = await startTunnel(tunnel, local, {
+      onDown: (code) =>
+        process.stderr.write(`tunnel exited (${code ?? 'signal'}); the node is unreachable\n`),
+    });
+  } catch (error) {
+    process.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`);
+    process.exit(1);
+  }
+  for (const signal of ['SIGINT', 'SIGTERM'] as const) {
+    process.on(signal, () => {
+      running.stop();
+      process.exit(0);
+    });
+  }
+  process.on('exit', () => running.stop());
+
+  process.stderr.write(`agent node on ${local}\n`);
+  process.stderr.write(
+    `  public     ${running.publicUrl ?? 'none (ARP_NODE_TUNNEL=none): localhost only'}${running.publicUrl !== null && !running.stable ? ' — a new address on every start: run arp init --node again after a restart' : ''}\n`,
+  );
+  process.stderr.write(`  tunnel     ${tunnel.kind}\n`);
   process.stderr.write(`  agent      ${account.address}\n`);
+  process.stderr.write(
+    `  key        ${nodeKey.source === 'env' ? 'AGENT_PRIVATE_KEY' : `${nodeKey.path}${nodeKey.created ? ' (created)' : ''}`}\n`,
+  );
   process.stderr.write(`  min budget ${formatEther(MIN_BUDGET)}\n`);
   process.stderr.write(`  handler    ${handlerPath ?? 'echo (no handler configured)'}\n`);
   process.stderr.write(`  chain      ${chainId}\n`);

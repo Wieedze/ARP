@@ -82,10 +82,10 @@ export function curveLabelOf(curveId: number): string {
  * **put money on it**. Count and amount. That is the whole space, and it is what the user asked
  * for — _« ce qu'on veut voir c'est les plus populaires et les plus investis »_.
  *
- * | label        | reads          | the question                      |
- * | ------------ | -------------- | --------------------------------- |
- * | Most claims  | `declarations` | how many agents said they used it |
- * | Most staked  | `conviction`   | how much money is behind it       |
+ * | label             | reads          | the question                      |
+ * | ----------------- | -------------- | --------------------------------- |
+ * | Most declarations | `declarations` | how many agents said they used it |
+ * | Most supported    | `conviction`   | how much money is behind it       |
  *
  * ## It says "claims", not "used", and the difference is the project
  *
@@ -115,8 +115,8 @@ export function curveLabelOf(curveId: number): string {
  * list by the rung the ladder exists to demote.
  */
 export const TOOL_ORDERS: readonly {id: ToolListingOrder; label: string}[] = [
-    {id: "declarations", label: "Most claims"},
-    {id: "conviction", label: "Most staked"},
+    {id: "declarations", label: "Most declarations"},
+    {id: "conviction", label: "Most supported"},
 ];
 
 /**
@@ -157,15 +157,28 @@ export type ToolRow = {
      */
     label: string | null;
     href: string;
+    /**
+     * How many `uses` edges point at the tool. No column shows it, so it sorts `/tools` only as a
+     * tiebreak, after the Declared and Usage figures the reader can see.
+     */
     declarations: number;
     /**
-     * How many of this tool's declarations carry at least one position, or `null` when this read
-     * cannot say.
+     * Deposits on the tool's edges that ARP's sponsoring service sent, so each one passed the proof
+     * gate (ADR `0094` §2). The "Usage" column, and the only figure on the page that word is true
+     * of. `null` when this read cannot say.
      *
-     * Never a summed position count: positions are counted per vault, and a sum across an atom's
-     * edges is a count of nothing a reader recognises (ADR `0023`).
+     * Read from the deposit events, not from positions: a position merges a sponsored deposit with
+     * the agent's own, and a withdrawal does not say which part it takes.
      */
-    paidDeclarations: number | null;
+    provenDeposits: number | null;
+    /**
+     * Every other deposit on the tool's edges, the creation deposit of each edge included. The
+     * "Declared" column. `null` when this read cannot say.
+     *
+     * It replaced "Paid for", which counted edges carrying a position and equalled the edge count
+     * for every edge ARP writes, because a term is born with its creator's position (ADR `0053`).
+     */
+    declaredDeposits: number | null;
     supportTrust: string;
     /**
      * TRUST deposited against the tool's declarations, or `null`.
@@ -180,9 +193,9 @@ export type ToolRow = {
     /**
      * How many positions stand on the tool's own atom. `null` for a `declared` row.
      *
-     * Not foldable into `paidDeclarations`: that counts **edges** carrying a position, this counts
-     * positions in **one** vault. Summing them would be the per-vault-versus-across-edges error
-     * ADR `0023` predicted in writing.
+     * Not foldable into the deposit counts: those count **events** across the tool's edges, this
+     * counts positions in **one** vault, the atom's. Summing them would be the
+     * per-vault-versus-across-edges error ADR `0023` predicted in writing.
      */
     stakers: number | null;
 };
@@ -242,6 +255,11 @@ function sourceLineOf(label: string | undefined): string | null {
     return label === undefined ? null : sourceOf(parseToolLabel(label));
 }
 
+/** Zero, or under the smallest figure `formatTrust` prints. */
+function isDust(wei: bigint): boolean {
+    return wei <= 0n || formatTrust(wei).startsWith("<");
+}
+
 function rowOf(tool: ToolListing): ToolRow {
     const label = tool.label?.trim();
     const named = label !== undefined && label.length > 0;
@@ -254,9 +272,12 @@ function rowOf(tool: ToolListing): ToolRow {
         label: label ?? null,
         href: `/atom/${tool.atomId}`,
         declarations: tool.edgeCount,
-        paidDeclarations: tool.pricedEdges,
+        provenDeposits: tool.provenDeposits,
+        declaredDeposits: tool.declaredDeposits,
         supportTrust: formatTrust(tool.supportAssetsSum),
-        opposeTrust: tool.opposeAssetsSum > 0n ? formatTrust(tool.opposeAssetsSum) : null,
+        // Not when it is below the smallest figure shown: that is the counter vault's creation
+        // deposit, "<0.00000001 against" that nobody put there (task 48).
+        opposeTrust: isDust(tool.opposeAssetsSum) ? null : formatTrust(tool.opposeAssetsSum),
         stakers: null,
     };
 }
@@ -273,11 +294,12 @@ function registeredRowOf(tool: RegisteredTool): ToolRow {
         label: label ?? null,
         href: `/atom/${tool.atomId}`,
         declarations: tool.declarations,
-        // `null`, not `0`: pricing a registered row's declarations needs the per-edge vaults, which
-        // is `listTools`'s read, so this is **unknown** here. A zero under "paid for" would read as
-        // "nobody paid", which is a claim this read cannot make — the same distinction the oppose
-        // column makes two cells over by staying empty.
-        paidDeclarations: null,
+        // `null`, not `0`: a registered row's deposits are on its edges, which is `listTools`'s
+        // read, so they are **unknown** here. A tool whose edges that read did find appears as a
+        // declared row instead and carries both figures. A zero would read as "nobody deposited",
+        // a claim this read cannot make — the oppose column stays empty for the same reason.
+        provenDeposits: null,
+        declaredDeposits: null,
         supportTrust: formatTrust(tool.assets),
         opposeTrust: null,
         stakers: tool.positionCount,
@@ -355,7 +377,8 @@ export type ToolSortAxis = "declared" | "installs" | "stars";
  * Two axes per index, and only ones that mean something there (user, 2026-10-30).
  *
  * "Most staked" and "Most claims" were two orders of the same thing, and read as noise. **Declared**
- * is the one ARP measures: how many agents declare a `uses` edge to the tool. Not "used": the user
+ * is the one ARP measures: the Declared column, deposits on the tool's `uses` edges that did not
+ * pass the proof gate (task 42), so the order reads down the figure it is named for. Not "used": the user
  * asked for that word and, reminded of 2026-10-27, chose "declared" — a declaration is a signed
  * sentence, not an observed use (`docs/14`). Stake behind those edges
  * is the tiebreak and stays on the row, not a separate order. The second axis is somebody else's
@@ -375,6 +398,63 @@ export function toolSortAxesFor(index: ToolIndex): readonly {id: ToolSortAxis; l
 }
 
 const LIVENESS_RANK: Record<Liveness, number> = {alive: 0, unknown: 1, dead: 2};
+
+/**
+ * Whether a tool answers a search (task 48): its name, its label (the URL it was registered by),
+ * its repository, or the description beside it, case-insensitive. A blank query matches nothing,
+ * because a search page with no query is not a list of everything.
+ */
+export function toolMatches(row: ToolRow, query: string, description: string | null): boolean {
+    const needle = query.trim().toLowerCase();
+    if (needle.length === 0) return false;
+    return [row.name, row.label, row.source, description].some(
+        (field) => field !== null && field.toLowerCase().includes(needle),
+    );
+}
+
+/** Rows per page, the agent index's size, so the two lists page alike. */
+export const TOOL_PAGE_SIZE = 25;
+
+export type ToolPage = {
+    rows: ToolRow[];
+    /** The offset actually used: one past the end falls back to the last page. */
+    offset: number;
+    rangeLabel: string;
+    hasPrevious: boolean;
+    hasNext: boolean;
+};
+
+/**
+ * One page of the ranked list.
+ *
+ * The whole population, or the prefix the read reached, is ranked before this runs (`rankTools`),
+ * so paging is a slice and never changes the order. It was every row at once: 662 skills on testnet
+ * 13579, a page 54,915px tall at 1440px wide (2026-11-02).
+ *
+ * An offset past the end is clamped rather than answered with an empty page: a domain filter can
+ * shrink the list under a reader who was on page 9, and an empty page there would read as "nothing
+ * matches".
+ */
+export function pageOfTools(
+    rows: readonly ToolRow[],
+    offset: number,
+    size: number = TOOL_PAGE_SIZE,
+): ToolPage {
+    const lastStart = rows.length === 0 ? 0 : Math.floor((rows.length - 1) / size) * size;
+    const start = Math.min(Math.max(0, offset), lastStart);
+    const slice = rows.slice(start, start + size);
+    const rangeLabel =
+        slice.length === 0
+            ? "no rows"
+            : `${(start + 1).toLocaleString("en-US")}–${(start + slice.length).toLocaleString("en-US")} of ${rows.length.toLocaleString("en-US")}`;
+    return {
+        rows: slice,
+        offset: start,
+        rangeLabel,
+        hasPrevious: start > 0,
+        hasNext: start + size < rows.length,
+    };
+}
 
 /**
  * Gate, then sort. A tool that does not answer sorts below one that does, whatever either staked.
@@ -397,6 +477,17 @@ export function rankTools(
         if (axis === "installs" && a.installs !== b.installs)
             return (b.installs ?? -1) - (a.installs ?? -1);
         if (axis === "stars" && a.stars !== b.stars) return (b.stars ?? -1) - (a.stars ?? -1);
+        // **The order reads down the column it is named for.** "Most declared" sorts on the
+        // Declared figure, deposits that did not pass the proof gate, and not on the edge count:
+        // two edges with three deposits each print 6 and rank above three edges with one each,
+        // which print 3. It sorted on `declarations` until review found the Declared column not
+        // reading down in order under its own sort. `null` (unknown) ranks below a known zero.
+        const leftDeclared = left.declaredDeposits ?? -1;
+        const rightDeclared = right.declaredDeposits ?? -1;
+        if (leftDeclared !== rightDeclared) return rightDeclared - leftDeclared;
+        const leftProven = left.provenDeposits ?? -1;
+        const rightProven = right.provenDeposits ?? -1;
+        if (leftProven !== rightProven) return rightProven - leftProven;
         if (right.declarations !== left.declarations) return right.declarations - left.declarations;
         // Then the stake, as the tiebreak: the position COUNT before the amount, because creating a
         // term seeds its vault, so an amount alone ranks a tool nobody staked on above nothing at

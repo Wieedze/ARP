@@ -9,7 +9,7 @@
  *  ## What it is for
  *
  *  One tree has to serve two readings, or the guard rail does not guard the search
- *  (`docs/18_THE_DOMAIN_TREE.md`):
+ *  (`docs/25_THE_DOMAIN_TREE.md`):
  *
  *    - **down**, from a domain to the tools under it — what `arp_find_tools` needs and has never had;
  *    - **up**, from a tool's domain to the domain a delegation was scoped on — the path an agent
@@ -40,8 +40,8 @@
  *  ("use `0x6de69cc0…` for testnet writes to match each network's in-use vocabulary"). Measured on
  *  testnet 13579, 2026-10-28: `0x7ec36d20…` carries **52,781** edges there and `0x6de69cc0…`
  *  carries **311**. The guide's testnet recommendation holds 0.6% of that chain's `has tag` edges,
- *  so following it would write where almost nothing reads. `hasTagForWriting` is exported and has
- *  no callers, so nothing has been written the wrong way yet.
+ *  so following it would write where almost nothing reads. `hasTagForWriting` had no callers, so
+ *  nothing was written the wrong way; it was deleted in task 60 (ADR `0119`).
  *
  *  ## `assets` is `cost + minDeposit`
  *
@@ -58,6 +58,7 @@ import { formatEther, stringToHex, type Hex } from 'viem';
 import { encodeCreateAtom, encodeCreateTriple, multiVaultReads } from '../../packages/protocol/src/declare/index.js';
 import { atomDataForUri } from '../../packages/protocol/src/declare/multivault.js';
 import { normaliseToolUrl, toolAtomUri } from '../../packages/protocol/src/declare/tool-thing.js';
+import { checkCategoryLabel, normaliseCategoryLabel } from '../../packages/protocol/src/declare/category.js';
 
 const TARGETS = { mainnet: 1155, testnet: 13579 } as const;
 
@@ -127,12 +128,8 @@ const TAGS: readonly [string, string][] = [
  * with the typo `motion-desing` attached to one of them.
  */
 function normaliseLabel(raw: string): string {
-  return raw
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .toLowerCase()
-    .trim()
-    .replace(/\s+/g, ' ');
+  // One implementation since task 59: the MCP server, the web and the sponsor use the same rule.
+  return normaliseCategoryLabel(raw);
 }
 
 /**
@@ -157,14 +154,10 @@ function normaliseLabel(raw: string): string {
  * phrases, not vocabulary ARP chooses.
  */
 function assertLabel(label: string, compounds: ReadonlyMap<string, string>): void {
-  if (/[-_]/.test(label)) {
-    console.error(`refusing "${label}": never a hyphen or an underscore. Write a compound with a space.`);
-    process.exit(1);
-  }
-  if (label.includes(' ') && !compounds.get(label)?.trim()) {
-    console.error(
-      `refusing "${label}": one word unless necessary. List it under \`compounds\` in domains.proposal.json with why no single word fits.`,
-    );
+  // The rule itself lives in `packages/protocol/src/declare/category.ts` since task 59.
+  const refused = checkCategoryLabel(label, compounds);
+  if (refused !== null) {
+    console.error(`refusing ${refused.detail}`);
     process.exit(1);
   }
 }

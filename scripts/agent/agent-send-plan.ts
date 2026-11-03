@@ -16,7 +16,7 @@ import { appendFileSync, readFileSync } from 'node:fs';
 
 import { formatEther } from 'viem';
 
-import { sendPlan, type SerialisedCall } from '../helpers/send-plan.js';
+import { RAW_KEY_CHAIN_ID, sendPlan, type SerialisedCall } from '../helpers/send-plan.js';
 
 function arg(name: string): string | undefined {
   const index = process.argv.indexOf(`--${name}`);
@@ -31,6 +31,14 @@ if (!chainArg || !planPath) {
       '  The plan is a JSON array of prepared calls with `value` as a decimal string.',
   );
   process.exit(1);
+}
+
+// `sendPlan` refuses this too; refusing here keeps a mainnet plan from being read at all.
+if (Number(chainArg) !== RAW_KEY_CHAIN_ID) {
+  console.error(
+    `REFUSED — chain ${chainArg}: this CLI signs with a raw key, which is testnet ${RAW_KEY_CHAIN_ID} only (ADR 0037).`,
+  );
+  process.exit(3);
 }
 
 const rpcUrl = process.env.INTUITION_RPC_URL ?? process.env.INTUITION_TESTNET_RPC_URL;

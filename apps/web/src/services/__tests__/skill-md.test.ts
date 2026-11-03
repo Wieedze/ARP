@@ -1,6 +1,6 @@
 import {describe, expect, it} from "vitest";
 
-import {parseSkillMd, rawSkillUrl, splitFirstSentence} from "../skill-md";
+import {fetchSkillMd, parseSkillMd, rawSkillUrl, splitFirstSentence} from "../skill-md";
 
 /** `remotion-dev/skills`' `remotion-render`, as read on 2026-10-29, cut to its shape. */
 const REMOTION = `---
@@ -23,15 +23,9 @@ See [Transparent videos](./transparent-videos.md) for rendering out a video with
 `;
 
 describe("parseSkillMd", () => {
-    it("reads the description, the version and each section's first command", () => {
+    it("reads the description and the version", () => {
         const parsed = parseSkillMd(REMOTION);
-        expect(parsed.description).toBe("Export a Remotion video");
-        expect(parsed.version).toBe("4.0.539");
-        // `Transparent videos` gives a link and no command, so it is not listed: a link in that
-        // slot printed bare URLs down the list.
-        expect(parsed.sections).toEqual([
-            {heading: "General rendering strategy", command: "npx remotion render"},
-        ]);
+        expect(parsed).toEqual({description: "Export a Remotion video", version: "4.0.539"});
     });
 
     it("reads a folded description and a version nested under metadata", () => {
@@ -46,13 +40,6 @@ metadata:
 body`);
         expect(parsed.description).toBe("A relentless interview to sharpen a plan.");
         expect(parsed.version).toBe("1.2");
-        expect(parsed.sections).toEqual([]);
-    });
-
-    it("ignores a heading inside a code block", () => {
-        const parsed = parseSkillMd("## Real\n\n```md\n## Not a heading\n```\n");
-        expect(parsed.sections.map((section) => section.heading)).toEqual(["Real"]);
-        expect(parsed.sections[0]?.command).toBe("## Not a heading");
     });
 
     it("says nothing rather than guessing when there is no frontmatter", () => {
@@ -88,5 +75,35 @@ describe("splitFirstSentence", () => {
             rest: null,
         });
         expect(splitFirstSentence("Works offline (e.g. on a plane) too.").rest).toBeNull();
+    });
+});
+
+describe("fetchSkillMd", () => {
+    const URL = "https://raw.githubusercontent.com/o/r/HEAD/SKILL.md";
+    const respond = (body: string, init?: ResponseInit) => async () => new Response(body, init);
+
+    it("parses a file under the limit", async () => {
+        const md = await fetchSkillMd(URL, {fetchImpl: respond("---\ndescription: Hi.\n---\n")});
+        expect(md.description).toBe("Hi.");
+    });
+
+    it("refuses a body over the byte limit instead of reading it whole", async () => {
+        await expect(
+            fetchSkillMd(URL, {fetchImpl: respond("x".repeat(2_000)), maxBytes: 1_000}),
+        ).rejects.toThrow(/limit/);
+    });
+
+    it("refuses a non-2xx answer", async () => {
+        await expect(fetchSkillMd(URL, {fetchImpl: respond("", {status: 404})})).rejects.toThrow(
+            /404/,
+        );
+    });
+
+    it("gives up when the host does not answer in time", async () => {
+        const hang: typeof fetch = (_input, init) =>
+            new Promise((_resolve, reject) => {
+                init?.signal?.addEventListener("abort", () => reject(init.signal?.reason));
+            });
+        await expect(fetchSkillMd(URL, {fetchImpl: hang, timeoutMs: 10})).rejects.toThrow();
     });
 });

@@ -2,6 +2,17 @@
 
 These are **locked decisions**. If you believe one is wrong, flag it explicitly before implementing something different.
 
+> **Stale where it describes a contract or an SDK** (2026-11-03, task 27). What still holds is the
+> storage principle: one canonical source per datum, no dual-write. What does not:
+>
+> | here                                                               | now                                                                                                                                                                         |
+> | ------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+> | the four components, Module Registry, Admission Contract           | one contract family, the caveat enforcers; `ModuleRegistry` deleted in `59ac83a` (ADR `0055`)                                                                               |
+> | raw attestations in ERC-8004's Reputation Registry, `postFeedback` | declarations are Intuition triples; ARP does not mirror ERC-8004 feedback (ADR `0048`)                                                                                      |
+> | the SDK shape, `getScore`, `getMerkleProof`, `stakeAndAttest`      | `@arp-protocol/core`: reads, and writes returned as plans (ADRs `0038`, `0041`); no score (ADR `0046`); no Merkle checkpoint exists in `contracts/`, `packages/` or `apps/` |
+> | a module mirrored as an `ARP_MODULE` atom                          | a tool's atom derives from its URL (ADR `0054`)                                                                                                                             |
+> | UI components not unit-tested                                      | they are, behaviourally (`code.md`, ADR `0063`)                                                                                                                             |
+
 ## Storage pattern: single source of truth + derived projections
 
 ARP does not dual-write. Each piece of data has exactly one canonical source. Derived outputs are computed deterministically by indexers, not stored redundantly.

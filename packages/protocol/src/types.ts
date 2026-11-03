@@ -34,6 +34,11 @@ export type Provenance = {
     /** Where the value physically came from — a graph handle, a URL, a contract read. */
     origin: string | null;
     note?: string;
+    /**
+     * The read this came from hit its row limit, so there may be more the source did not return.
+     * Absent when the read was complete.
+     */
+    truncated?: true;
 };
 
 /**
@@ -294,6 +299,8 @@ export type ListAgentsOptions = {
     order?: AgentListOrder;
     limit?: number;
     offset?: number;
+    /** Narrow to agents whose name contains this, case-insensitive. Membership is unchanged. */
+    name?: string;
 };
 
 /** `ListAgentsOptions` with every field filled in. What sources actually receive. */
@@ -301,6 +308,8 @@ export type ResolvedListAgentsOptions = {
     order: AgentListOrder;
     limit: number;
     offset: number;
+    /** Trimmed; `null` when absent or blank. */
+    name: string | null;
 };
 
 export type AssessmentEvidence = {
@@ -384,7 +393,10 @@ export type SignatureAttempt = {
  * The honest answer to "does this signature recover to the address the
  * document claims signed it?".
  *
- *   - `verified`   — it does. Recovery matched the declared signer exactly.
+ *   - `self-signed` — it does. Recovery matched the declared signer exactly.
+ *                    The name says only that: the document names its own
+ *                    signer, and nothing binds that key to the provider
+ *                    (ADR 0119, addendum 2026-11-02).
  *                    Available to any provider, confirmed or not: vouching for
  *                    a correct signature costs nobody anything.
  *   - `mismatch`   — a reconstruction confirmed against *this provider's own*
@@ -398,7 +410,7 @@ export type SignatureAttempt = {
  */
 export type SignatureVerdict =
     | {
-          status: "verified";
+          status: "self-signed";
           declaredSigner: Address;
           recovered: Address;
           strategyId: string;

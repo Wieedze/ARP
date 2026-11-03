@@ -28,10 +28,9 @@ import {Sigil} from "../brand/Sigil";
  *
  * **They are back in one column, and the reason is different from the one that moved them out.**
  * They ran in two because they were the body of a full-width numbered section, where a single
- * stack of seven was a thin ribbon. They now sit in the page's 18rem identity column — the shape
- * the user asked for after seeing the atom page: _« la page tools est vraiment mieux, je voudrais
- * la même chose pour la page detailed agent »_ — where two columns would be two strips of four
- * characters each.
+ * stack of seven was a thin ribbon. They now sit in the Identity card on the right, a
+ * `minmax(20rem,26rem)` column like the skill page's (ADR `0104`), where two columns would be two
+ * strips of a few characters each.
  */
 
 /**
@@ -180,19 +179,26 @@ export function AgentIdentityPanel({view}: {view: TrustPanelView}) {
                     )}
                 </Field>
                 <Field label="Token id">{view.tokenId}</Field>
-                <Field label="Intuition atom">
+                {/* ADR `0103`: the atom id is not shown by default; the link opens it and the hint
+                    carries it, so it stays checkable. */}
+                <Field label="Intuition">
                     {view.atomTermId === null ? (
                         <span className="text-[color:var(--color-steel)]">
                             not in the Intuition graph
                         </span>
                     ) : (
-                        <a
-                            href={intuitionPortalUrl("atom", view.atomTermId, chain.isMainnet)}
-                            target="_blank"
-                            rel="noreferrer"
-                        >
-                            {truncateMiddle(view.atomTermId, 12, 8)} ↗
-                        </a>
+                        <span className="inline-flex items-center gap-2">
+                            <a
+                                href={intuitionPortalUrl("atom", view.atomTermId, chain.isMainnet)}
+                                target="_blank"
+                                rel="noreferrer"
+                            >
+                                open ↗
+                            </a>
+                            <Hint label="Atom id">
+                                <span className="font-mono break-all">{view.atomTermId}</span>
+                            </Hint>
+                        </span>
                     )}
                 </Field>
                 {view.url !== null ? (

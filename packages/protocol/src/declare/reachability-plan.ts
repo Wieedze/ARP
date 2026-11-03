@@ -174,7 +174,7 @@ export function planReachability(
                 state.terms.object,
                 options.tripleCost,
             ),
-            why: `write the claim about ${options.toolLabel} — it did not exist yet`,
+            why: `make the declaration about ${options.toolLabel} public — it did not exist yet`,
         });
     }
 

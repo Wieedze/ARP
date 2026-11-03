@@ -12,6 +12,8 @@ import {base} from "viem/chains";
 import {DEFAULT_IDENTITY_REGISTRY, registrationUriBytes} from "@arp-protocol/core";
 
 import {identityRegistryAbi} from "../lib/abi/identity-registry";
+import {intuitionTestnet} from "../lib/chains";
+import {deployments} from "../lib/deployments";
 import {waitAndRecord} from "./tx-record";
 
 /**
@@ -38,6 +40,10 @@ import {waitAndRecord} from "./tx-record";
  * identity minted anywhere else is real and still unreadable by everything this app does next.
  * BSC and Ethereum hold registry entries with no trust edges in the graph, which `/agents` already
  * says in its lookup form.
+ *
+ * **On testnet it mints into ARP's registry on 13579 instead** (`docs/tasks/50` §4, 2026-11-02).
+ * The toggle reads "nothing here is real", and an identity minted on Base is real. Mainnet keeps
+ * Base, for every reason above.
  *
  * ## It mints **with** a registration file, and that is not optional
  *
@@ -85,12 +91,47 @@ export class MintGuardError extends Error {
     }
 }
 
-/** Where a real identity is minted. Exported so the UI can name it without a second constant. */
-export const MINT_CHAIN = base;
+/** Where an identity is minted: a chain and the registry on it. */
+export type MintTarget = {
+    chain: typeof base | typeof intuitionTestnet;
+    registry: Address;
+    /** Where a mint transaction is shown. Carried, so a link never falls back to a relative URL. */
+    explorerUrl: string;
+};
 
-export const MINT_REGISTRY: Address = DEFAULT_IDENTITY_REGISTRY;
+/** Mainnet: the canonical registry on Base, the one Intuition's mirror reads (header above). */
+export const MAINNET_MINT: MintTarget = {
+    chain: base,
+    registry: DEFAULT_IDENTITY_REGISTRY,
+    explorerUrl: base.blockExplorers.default.url,
+};
 
-const registry = {address: MINT_REGISTRY, abi: identityRegistryAbi} as const;
+/**
+ * Testnet: ARP's own copy of the registry on 13579, the one the sponsoring service and the Desktop
+ * extension mint into (`docs/tasks/50` §4). A rehearsal, as portability rule 4 says, and the
+ * toggle's whole meaning: on testnet nothing here is real.
+ */
+export const TESTNET_MINT: MintTarget = {
+    chain: intuitionTestnet,
+    registry: deployments.arp.identityRegistry,
+    explorerUrl: deployments.chain.explorerUrl,
+};
+
+/** The target the chain toggle picks. */
+export function mintTargetFor(isMainnet: boolean): MintTarget {
+    return isMainnet ? MAINNET_MINT : TESTNET_MINT;
+}
+
+/** The target a quote or a result was made on, from the chain id it carries. */
+export function mintTargetOf(chainId: number): MintTarget {
+    if (chainId === MAINNET_MINT.chain.id) return MAINNET_MINT;
+    if (chainId === TESTNET_MINT.chain.id) return TESTNET_MINT;
+    throw new Error(`no identity is minted on chain ${chainId}`);
+}
+
+function registryOf(target: MintTarget) {
+    return {address: target.registry, abi: identityRegistryAbi} as const;
+}
 
 export type MintQuote = {
     /** The id the mint would take if it landed next. A prediction, not the outcome. */
@@ -109,11 +150,11 @@ export type MintQuote = {
     maxFeePerGas: bigint | null;
 };
 
-function assertOnMintChain(chainId: number | undefined): void {
-    if (chainId !== MINT_CHAIN.id) {
+function assertOnMintChain(target: MintTarget, chainId: number | undefined): void {
+    if (chainId !== target.chain.id) {
         throw new MintGuardError(
             "wrong-chain",
-            `An ERC-8004 identity is minted on ${MINT_CHAIN.name} (${MINT_CHAIN.id}). Your wallet ` +
+            `This identity is minted on ${target.chain.name} (${target.chain.id}). Your wallet ` +
                 `reports ${chainId ?? "no chain"}. Nothing was sent.`,
         );
     }
@@ -127,11 +168,13 @@ function assertOnMintChain(chainId: number | undefined): void {
  */
 export async function quoteMint(params: {
     publicClient: PublicClient;
+    target: MintTarget;
     owner: Address;
     /** The document, already built. Required — see the header on why an empty one is not offered. */
     agentUri: string;
 }): Promise<MintQuote> {
-    const {publicClient, owner, agentUri} = params;
+    const {publicClient, target, owner, agentUri} = params;
+    const registry = registryOf(target);
 
     let predicted: bigint;
     try {
@@ -168,8 +211,8 @@ export async function quoteMint(params: {
         agentUri,
         uriBytes: registrationUriBytes(agentUri),
         owner,
-        chainId: MINT_CHAIN.id,
-        registry: MINT_REGISTRY,
+        chainId: target.chain.id,
+        registry: target.registry,
         gas,
         maxFeePerGas: fees?.maxFeePerGas ?? null,
     };
@@ -195,28 +238,30 @@ export type MintResult = {
 export async function submitMint(params: {
     walletClient: WalletClient<Transport, Chain, Account>;
     publicClient: PublicClient;
+    /** The target the quote was priced against. Carried, so a toggle flip cannot redirect it. */
+    target: MintTarget;
     /** The same string the quote was priced against. Carried, not re-derived. */
     agentUri: string;
 }): Promise<MintResult> {
-    const {walletClient, publicClient, agentUri} = params;
+    const {walletClient, publicClient, target, agentUri} = params;
 
-    assertOnMintChain(walletClient.chain?.id);
-    assertOnMintChain(await walletClient.getChainId());
+    assertOnMintChain(target, walletClient.chain?.id);
+    assertOnMintChain(target, await walletClient.getChainId());
 
     const owner = walletClient.account.address;
     // Simulated again, immediately before signing: the quote may have been held while somebody
     // else changed the registry's state.
-    await quoteMint({publicClient, owner, agentUri});
+    await quoteMint({publicClient, target, owner, agentUri});
 
     const hash = await walletClient.writeContract({
-        ...registry,
+        ...registryOf(target),
         functionName: "register",
         args: [agentUri],
-        chain: MINT_CHAIN,
+        chain: target.chain,
     });
     const receipt = await waitAndRecord(publicClient, hash, {label: "mint identity"});
 
-    const tokenId = tokenIdFromReceipt(receipt.logs, owner);
+    const tokenId = tokenIdFromReceipt(receipt.logs, owner, target.registry);
     if (tokenId === null) {
         throw new MintGuardError(
             "no-id-in-receipt",
@@ -225,7 +270,7 @@ export async function submitMint(params: {
         );
     }
 
-    return {tokenId, agentUri, hash, owner, chainId: MINT_CHAIN.id};
+    return {tokenId, agentUri, hash, owner, chainId: target.chain.id};
 }
 
 /**
@@ -239,8 +284,9 @@ export async function submitMint(params: {
 export function tokenIdFromReceipt(
     logs: readonly {address: string; topics: readonly Hex[]; data: Hex}[],
     owner: Address,
+    registry: Address,
 ): string | null {
-    const target = MINT_REGISTRY.toLowerCase();
+    const target = registry.toLowerCase();
     for (const log of logs) {
         if (log.address.toLowerCase() !== target) continue;
         try {

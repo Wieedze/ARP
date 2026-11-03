@@ -1,4 +1,6 @@
 import {Link} from "react-router-dom";
+
+import {BackLink} from "../components/brand/BackLink";
 import type {Hex} from "viem";
 
 import {ClaimField} from "../components/atom/ClaimField";
@@ -58,9 +60,10 @@ export function SkillPage({
 
     return (
         <article className="mt-8">
-            <header>
+            <BackLink to="/tools" label="tools" />
+            <header className="mt-4">
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 font-mono text-[12px] text-[color:var(--color-steel)]">
-                    <span className="rounded-[var(--radius-tag)] border border-[color:var(--color-rule-strong)] px-[7px] py-[2px] text-[10px] uppercase tracking-[0.1em] text-[color:var(--color-fg)]">
+                    <span className="rounded-[var(--radius-tag)] border border-[color:var(--color-rule-strong)] px-[7px] py-[2px] text-[length:var(--text-label)] uppercase tracking-[0.1em] text-[color:var(--color-fg)]">
                         Skill
                     </span>
                     {source === null ? (
@@ -108,7 +111,7 @@ export function SkillPage({
                     atomTermId={atomId}
                     name={skill}
                     nameIsId={false}
-                    backHeading="Take a position"
+                    backHeading="Support this skill"
                     heading={null}
                 />
             </div>
@@ -116,7 +119,7 @@ export function SkillPage({
                 <DeclareUse object={atomId} objectLabel={skill} onDeclared={onDeclared} />
             </div>
 
-            <Block title="Relations" label="Every claim about this skill">
+            <Block title="Relations" label="Every declaration about this skill">
                 <ClaimField
                     groups={view.groups}
                     subject={skill}
@@ -142,7 +145,7 @@ export function SkillPage({
     );
 }
 
-/** The SKILL.md's own description, and its `##` sections with the first command of each. */
+/** The SKILL.md's own description. */
 function Description({
     label,
     md,
@@ -156,7 +159,6 @@ function Description({
     // skills.sh's copy stands in while the file is read, and where there is no file to read.
     const fallback = factFor(label)?.description ?? null;
     const description = md.status === "ok" ? (md.md.description ?? fallback) : fallback;
-    const sections = md.status === "ok" ? md.md.sections : [];
 
     return (
         <section
@@ -175,21 +177,6 @@ function Description({
                 </p>
             ) : (
                 <Lede text={description} />
-            )}
-            {sections.length === 0 ? null : (
-                <ul className="mt-3.5 grid gap-x-7 [grid-template-columns:repeat(auto-fit,minmax(min(100%,20rem),1fr))]">
-                    {sections.map((section, index) => (
-                        <li
-                            key={`${index}-${section.heading}`}
-                            className="flex min-w-0 items-baseline justify-between gap-3 border-b border-[color:var(--color-rule)] py-2 text-[14px] text-[color:var(--color-silver)]"
-                        >
-                            <span className="min-w-0 truncate">{section.heading}</span>
-                            <code className="min-w-0 truncate font-mono text-[12px] text-[color:var(--color-steel)]">
-                                {section.command}
-                            </code>
-                        </li>
-                    ))}
-                </ul>
             )}
         </section>
     );
@@ -397,56 +384,63 @@ function Record({view, source}: {view: AtomView; source: ClaimView | null}) {
 
     return (
         <Block title="On the record" label={chain.chain.name}>
-            <div className="grid gap-x-10 [grid-template-columns:repeat(auto-fit,minmax(min(100%,24rem),1fr))]">
-                <dl className="m-0">
-                    {/* Ids open on Intuition's own explorer, on the chain the page reads, so a
-                        reader can see the term outside ARP's rendering of it. */}
-                    <RecordRow term="Atom">
-                        <a
-                            href={intuitionPortalUrl("atom", view.atomId, chain.isMainnet)}
-                            target="_blank"
-                            rel="noreferrer"
-                            className={linkClass}
-                        >
-                            {view.atomId}
-                        </a>
-                    </RecordRow>
-                    {view.url === null ? null : (
-                        <RecordRow term="Identifies">
+            {/* Ids are for checking, not for reading — collapsed, still one click away (ADR
+                `0103`). */}
+            <details>
+                <summary className="cursor-pointer text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
+                    Verify
+                </summary>
+                <div className="mt-4 grid gap-x-10 [grid-template-columns:repeat(auto-fit,minmax(min(100%,24rem),1fr))]">
+                    <dl className="m-0">
+                        {/* Ids open on Intuition's own explorer, on the chain the page reads, so a
+                            reader can see the term outside ARP's rendering of it. */}
+                        <RecordRow term="Atom">
                             <a
-                                href={view.url}
+                                href={intuitionPortalUrl("atom", view.atomId, chain.isMainnet)}
                                 target="_blank"
                                 rel="noreferrer"
                                 className={linkClass}
                             >
-                                {view.url}
+                                {view.atomId}
                             </a>
                         </RecordRow>
-                    )}
-                    {source === null ? null : (
-                        <RecordRow term="source">
-                            {source.object} · triple{" "}
-                            <a
-                                href={intuitionPortalUrl(
-                                    "triple",
-                                    source.tripleId,
-                                    chain.isMainnet,
-                                )}
-                                target="_blank"
-                                rel="noreferrer"
-                                className={linkClass}
-                            >
-                                {truncateMiddle(source.tripleId, 14, 16)}
-                            </a>
-                        </RecordRow>
-                    )}
-                </dl>
-                <dl className="m-0">
-                    {view.claims.length === 0 ? null : (
-                        <RecordRow term="Written by">ARP&apos;s attestor</RecordRow>
-                    )}
-                </dl>
-            </div>
+                        {view.url === null ? null : (
+                            <RecordRow term="Identifies">
+                                <a
+                                    href={view.url}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className={linkClass}
+                                >
+                                    {view.url}
+                                </a>
+                            </RecordRow>
+                        )}
+                        {source === null ? null : (
+                            <RecordRow term="source">
+                                {source.object} · triple{" "}
+                                <a
+                                    href={intuitionPortalUrl(
+                                        "triple",
+                                        source.tripleId,
+                                        chain.isMainnet,
+                                    )}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className={linkClass}
+                                >
+                                    {truncateMiddle(source.tripleId, 14, 16)}
+                                </a>
+                            </RecordRow>
+                        )}
+                    </dl>
+                    <dl className="m-0">
+                        {view.claims.length === 0 ? null : (
+                            <RecordRow term="Written by">ARP&apos;s attestor</RecordRow>
+                        )}
+                    </dl>
+                </div>
+            </details>
         </Block>
     );
 }

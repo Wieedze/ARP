@@ -11,6 +11,7 @@ import {
     submitRedeem,
     submitStake,
     type RedeemQuote,
+    type StakeChain,
     type StakeQuote,
     type StakeSession,
     type StakeSide,
@@ -26,11 +27,9 @@ import {
  * retry semantics, and a retry that resubmits is precisely what must not exist
  * on this surface.
  *
- * **The chain comes from the toggle**, and it travels on the quote rather than being read again at
- * submit time. It was pinned to mainnet here, which is what made a testnet reader's `tTRUST` label
- * sit over a mainnet deposit. `submitStake` re-derives its guard from `quote.chain`, so switching
- * the toggle between pricing and signing is caught by the chain check rather than silently
- * honoured.
+ * **The chain comes from the toggle at pricing time only.** It travels on the quote, and every
+ * later step — the guard, the simulation, the receipt wait — reads `quote.chain`, so switching the
+ * toggle between pricing and signing is caught by the chain check rather than silently honoured.
  */
 export function useStakeActions() {
     const chain = useChainChoice();
@@ -59,22 +58,17 @@ export function useStakeActions() {
             if (walletClient === null || walletClient.account === undefined) {
                 throw new Error("No wallet client — reconnect your wallet and try again.");
             }
-            // The quote's own client, not the hook's: if the toggle moved after the quote was
-            // priced, the simulation has to run against the chain the quote was priced on so the
-            // guard reports a mismatch instead of a revert.
-            const hash = await submitStake({
-                walletClient,
-                publicClient: chain.client,
-                quote: stake,
-            });
+            // `submitStake` simulates on `stake.chain.client`, never the hook's: if the toggle
+            // moved after pricing, the guard then reports a mismatch instead of a revert.
+            const hash = await submitStake({walletClient, quote: stake});
             recordSent(hash, {
-                label: "deposit",
+                label: "support",
                 chainId: stake.chain.chainId,
                 valueWei: stake.assets,
             });
             return hash;
         },
-        [chain],
+        [],
     );
 
     /**
@@ -100,29 +94,26 @@ export function useStakeActions() {
             if (walletClient === null || walletClient.account === undefined) {
                 throw new Error("No wallet client — reconnect your wallet and try again.");
             }
-            const hash = await submitRedeem({
-                walletClient,
-                publicClient: chain.client,
-                quote: exit,
-            });
-            recordSent(hash, {label: "redeem", chainId: exit.chain.chainId});
+            const hash = await submitRedeem({walletClient, quote: exit});
+            recordSent(hash, {label: "withdraw", chainId: exit.chain.chainId});
             return hash;
         },
-        [chain],
+        [],
     );
 
+    /** Waits on the chain the transaction was priced on, which is `on`, never the live toggle. */
     const awaitReceipt = useCallback(
-        async (hash: Hex): Promise<void> => {
+        async (hash: Hex, on: StakeChain): Promise<void> => {
             let receipt;
             try {
-                receipt = await chain.client.waitForTransactionReceipt({hash});
+                receipt = await on.client.waitForTransactionReceipt({hash});
             } catch (cause) {
                 recordUnsettled(hash, cause);
                 throw cause;
             }
             recordSettled(hash, receipt);
         },
-        [chain],
+        [],
     );
 
     return {quote, submit, quoteExit, submitExit, awaitReceipt};

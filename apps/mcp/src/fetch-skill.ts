@@ -93,7 +93,7 @@ if (typeof chainId !== 'number') {
 
 const atom = atomIdOf(target, chainId);
 if (atom === null) {
-  console.error(`${target} is neither an atom id nor a tool URL catalogued on chain ${chainId}.`);
+  console.error(`${target} is neither an id nor a tool URL listed publicly on chain ${chainId}.`);
   process.exit(1);
 }
 
@@ -176,7 +176,7 @@ appendFileSync(
     receipt: signed,
   })}\n`,
 );
-console.log(`\nrecorded in ${RECEIPTS} — the hook can now name this atom for \`${ref.skill}\`.`);
+console.log(`\nrecorded in ${RECEIPTS} — the hook can now name this tool for \`${ref.skill}\`.`);
 
 // A module, not a global script — see the note in scripts/measure/predicate-objects.ts.
 export {};

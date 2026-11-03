@@ -2,6 +2,7 @@
 
 **Date**: 2026-09-16
 **Commitment**: `docs/09_POSITIONING_AND_PLAN.md`
+**Status**: **historical** — the plan for one session on 2026-09-16, executed. `docs/09` is no longer a commitment (its own header), and `.claude/STATE.md` holds where things are.
 **Goal for this session**: ship Phase 0 complete and Phase 1 reviewable, on isolated branches, with
 every change traceable to a decision.
 
@@ -19,7 +20,7 @@ git push --dry-run origin main
 Read access to `github.com/Wieedze/ARP` works; write does not. **No PR can be opened from here.**
 
 What ships instead: local branches with atomic commits, plus a complete PR body per branch in
-`.github/pull_request_drafts/`. Opening them afterwards is one command each — see §5.
+`docs/reference/pr-drafts/`. Opening them afterwards is one command each — see §5.
 
 ---
 
@@ -151,7 +152,7 @@ gh auth login                      # once
 git push -u origin docs/strategy-and-positioning
 gh pr create --base main --head docs/strategy-and-positioning \
   --title "docs: measured ERC-8004 positioning, ADRs 0015-0016, verify:pin" \
-  --body-file .github/pull_request_drafts/01-strategy-and-positioning.md
+  --body-file docs/reference/pr-drafts/01-strategy-and-positioning.md
 ```
 
 …and the same shape for each remaining branch. Merge order follows the dependency column in §1.

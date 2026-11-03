@@ -7,13 +7,15 @@ export type SectionTab = {slug: string; label: string; count?: number | null};
 /**
  * The page's sections as a tab strip.
  *
- * An agent page carries five answers — what it published, what is claimed about it, what providers
- * rate it, what it can do, what could not be read — and stacking them made a reader scroll past
- * four to reach the fifth. The user's instruction: _« tout ça peut aller dans un onglet […] tous
+ * An agent page carries several answers — what it can do, what providers rate it, what it
+ * published, what could not be read — and stacking them made a reader scroll past each to reach
+ * the next. The user's instruction: _« tout ça peut aller dans un onglet […] tous
  * les ratings peuvent aussi être dans un onglet rating et toutes les capabilities aussi »_.
  *
- * **The actions stay above the strip.** Taking a position and declaring a use are things a reader
- * came to *do*; putting them behind a tab would hide the page's only two writes behind a click.
+ * **The actions stay out of the strip.** Supporting the agent and declaring a use are things a
+ * reader came to *do*; putting them behind a tab would hide the page's only two writes behind a
+ * click. They run full width below it, and the declarations close the page as Relations (ADR
+ * `0104`).
  *
  * ## The duplication, stated rather than hidden
  *
@@ -92,7 +94,12 @@ export function SectionTabs({
                         tabIndex={selected ? 0 : -1}
                         onClick={() => onSelect(tab.slug)}
                         onKeyDown={(event) => handleKeyDown(event, index)}
-                        className={`-mb-px border-0! border-b-2! px-0 py-3 text-[length:var(--text-body-sm)] ${
+                        // The unlayered `button {}` rounds the corners to `--radius-button` (10px),
+                        // so the underline curves up at both ends. The user likes the curve
+                        // (2026-11-02); `px-2.5 -mx-2.5` pads the button by that radius on each side
+                        // and gives it back, so the label does not move, the flat part of the line
+                        // spans the label exactly, and the curves sit just outside it.
+                        className={`-mx-2.5 -mb-px border-0! border-b-2! px-2.5 py-3 text-[length:var(--text-body-sm)] ${
                             selected
                                 ? "border-[color:var(--color-accent)]! text-[color:var(--color-fg)]!"
                                 : "border-transparent! text-[color:var(--color-steel)]! hover:text-[color:var(--color-fg)]!"

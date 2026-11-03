@@ -16,17 +16,12 @@ import {formatTrust} from "./trust-format";
 /**
  * Staking on a term's vault — whichever Intuition chain the caller names.
  *
- * ## It was mainnet-only, and the chain is now a parameter
+ * ## The chain is a parameter
  *
- * Every function here took the mainnet MultiVault from a module constant. The user's instruction
- * (2026-10-27) was that the toggle has to reach the writes: _« si c'est du trust on paye en trust,
- * si c'est sur testnet il n'y a que du tTRUST, car on lit **et agit** sur testnet obligatoirement,
- * sinon aucun intérêt d'avoir un toggle »_. A reader on testnet seeing `tTRUST` beside a button
- * that deposits mainnet `TRUST` is the clearest possible way to lose money on this surface.
- *
- * So the chain travels **on the quote** rather than beside it. A quote is the thing built against
- * one chain's vault at one moment, and `submitStake` re-derives the MultiVault address, the viem
- * chain and the guard's expected id from `quote.chain`. There is no second argument that could
+ * The toggle reaches the writes (the user, 2026-10-27), and the chain travels **on the quote**
+ * rather than beside it. A quote is the thing built against one chain's vault at one moment, and
+ * `submitStake` and `submitRedeem` re-derive the MultiVault address, the viem chain, the read
+ * client and the guard's expected id from `quote.chain`. There is no second argument that could
  * disagree with it, and a quote built on testnet cannot be signed on mainnet.
  *
  * `security.md` is unchanged by this and worth re-reading: ARP's own funds are never signed for
@@ -78,6 +73,11 @@ export type StakeChain = {
      */
     explorerUrl: string;
     isMainnet: boolean;
+    /**
+     * A read client for this same chain. Every simulate, guard read and receipt wait on a write
+     * uses this one, so a toggle moved after pricing cannot point them at another chain.
+     */
+    client: PublicClient;
 };
 
 export type StakeSide = "support" | "oppose";
@@ -190,17 +190,27 @@ export function parseStakeAmount(input: string, limits: StakeLimits): AmountChec
         return {
             status: "below-min",
             value,
-            message: `The MultiVault rejects deposits below its minDeposit of ${formatTrust(limits.minDeposit)} ${limits.symbol}.`,
+            message: `The minimum support is ${formatTrust(limits.minDeposit)} ${limits.symbol}.`,
         };
     }
     if (value > limits.maxStake) {
         return {
             status: "above-max",
             value,
-            message: `This panel refuses more than ${formatTrust(limits.maxStake)} ${limits.symbol} per transaction (VITE_MAX_STAKE_TRUST).`,
+            message: `This app refuses more than ${formatTrust(limits.maxStake)} ${limits.symbol} per transaction.`,
         };
     }
     return {status: "ok", value};
+}
+
+/** The per-transaction ceiling, checked in the service so no caller can skip it. */
+function assertUnderCeiling(assets: bigint, symbol: string): void {
+    if (assets > MAX_STAKE_WEI) {
+        throw new StakeGuardError(
+            "above-ceiling",
+            `This app refuses more than ${formatTrust(MAX_STAKE_WEI)} ${symbol} per transaction. Nothing was sent.`,
+        );
+    }
 }
 
 export type StakeGuardCode =
@@ -210,7 +220,8 @@ export type StakeGuardCode =
     | "zero-receiver"
     | "receiver-mismatch"
     | "no-slippage-floor"
-    | "zero-amount";
+    | "zero-amount"
+    | "above-ceiling";
 
 /** A guard refused to build or send the transaction. Carries a code the UI branches on. */
 export class StakeGuardError extends Error {
@@ -237,7 +248,7 @@ export function deriveMinShares(
     if (expectedShares <= 0n) {
         throw new StakeGuardError(
             "no-slippage-floor",
-            "previewDeposit returned no shares, so there is no floor to protect. Nothing was sent.",
+            "This support would buy nothing at today's price, so there is no protection against the price moving. Nothing was sent.",
         );
     }
     const floor = (expectedShares * (10_000n - toleranceBps)) / 10_000n;
@@ -282,7 +293,7 @@ export async function resolveStakeTermId(
     if (params.target.kind === "atom") {
         throw new StakeGuardError(
             "no-counter-vault",
-            "An atom has no counter vault, so there is no side to oppose it from. Nothing was sent.",
+            "Only a declaration has a side to oppose. Nothing was sent.",
         );
     }
     return publicClient.readContract({
@@ -379,10 +390,11 @@ export async function quoteStake(
     if (params.assets <= 0n) {
         throw new StakeGuardError("zero-amount", "Enter an amount greater than zero.");
     }
+    assertUnderCeiling(params.assets, params.chain.symbol);
     if (params.receiver === zeroAddress) {
         throw new StakeGuardError(
             "zero-receiver",
-            "No connected account to receive the shares. Connect a wallet first.",
+            "No connected account to hold the support. Connect a wallet first.",
         );
     }
 
@@ -434,13 +446,13 @@ export async function quoteStake(
  * `getChainId()` asks the wallet.
  *
  * `expected` comes off the **quote**, so the guard cannot be pointed at a different chain from the
- * one the deposit was priced against. It was `assertMainnetWallet` with the id hardcoded.
+ * one the deposit was priced against.
  */
 export function assertWalletOnChain(expected: StakeChain, chainId: number | undefined): void {
     if (chainId !== expected.chainId) {
         throw new StakeGuardError(
             "wrong-chain",
-            `Your wallet is on chain ${chainId ?? "unknown"}. This deposit was priced on ${expected.chain.name} (${expected.chainId}) and must be signed there.`,
+            `Your wallet is on chain ${chainId ?? "unknown"}. This support was priced on ${expected.chain.name} (${expected.chainId}) and must be signed there.`,
         );
     }
 }
@@ -477,10 +489,9 @@ function simulateStake(
  */
 export async function submitStake(params: {
     walletClient: WalletClient<Transport, Chain, Account>;
-    publicClient: PublicClient;
     quote: StakeQuote;
 }): Promise<Hex> {
-    const {walletClient, publicClient, quote} = params;
+    const {walletClient, quote} = params;
 
     // What the client was built with…
     assertWalletOnChain(quote.chain, walletClient.chain?.id);
@@ -495,20 +506,21 @@ export async function submitStake(params: {
     if (quote.receiver.toLowerCase() !== sender.toLowerCase()) {
         throw new StakeGuardError(
             "receiver-mismatch",
-            "The shares receiver must be the connected account. Depositing for someone else needs their prior approval on the MultiVault.",
+            "The support must go to the connected account. Supporting for someone else needs their prior approval.",
         );
     }
     if (quote.minShares <= 0n) {
         throw new StakeGuardError(
             "no-slippage-floor",
-            "Refusing to send a deposit with no slippage floor.",
+            "Refusing to send support with no protection against the price moving.",
         );
     }
     if (quote.assets <= 0n) {
-        throw new StakeGuardError("zero-amount", "Refusing to send a zero-value deposit.");
+        throw new StakeGuardError("zero-amount", "Refusing to send zero support.");
     }
+    assertUnderCeiling(quote.assets, quote.chain.symbol);
 
-    await simulateStake(publicClient, quote, sender);
+    await simulateStake(quote.chain.client, quote, sender);
 
     return walletClient.writeContract({
         ...vaultAt(quote.chain.multiVault),
@@ -623,7 +635,7 @@ export function deriveMinAssets(
     if (expectedAssets <= 0n) {
         throw new StakeGuardError(
             "no-slippage-floor",
-            "previewRedeem returned no assets, so there is no floor to protect. Nothing was sent.",
+            "This withdrawal would return nothing at today's price, so there is no protection against the price moving. Nothing was sent.",
         );
     }
     const floor = (expectedAssets * (10_000n - toleranceBps)) / 10_000n;
@@ -685,7 +697,7 @@ export async function quoteRedeem(
     },
 ): Promise<RedeemQuote> {
     if (params.shares <= 0n) {
-        throw new StakeGuardError("zero-amount", "Enter a number of shares greater than zero.");
+        throw new StakeGuardError("zero-amount", "Enter an amount greater than zero.");
     }
     if (params.receiver === zeroAddress) {
         throw new StakeGuardError(
@@ -711,7 +723,7 @@ export async function quoteRedeem(
     if (params.shares > maxShares) {
         throw new StakeGuardError(
             "exceeds-holding",
-            `You hold ${formatTrust(maxShares)} shares in this vault and asked to redeem ${formatTrust(params.shares)}. Nothing was sent.`,
+            `You hold ${formatTrust(maxShares)} shares here and asked to withdraw ${formatTrust(params.shares)}. Nothing was sent.`,
         );
     }
 
@@ -754,10 +766,9 @@ function simulateRedeem(
  */
 export async function submitRedeem(params: {
     walletClient: WalletClient<Transport, Chain, Account>;
-    publicClient: PublicClient;
     quote: RedeemQuote;
 }): Promise<Hex> {
-    const {walletClient, publicClient, quote} = params;
+    const {walletClient, quote} = params;
 
     assertWalletOnChain(quote.chain, walletClient.chain?.id);
     assertWalletOnChain(quote.chain, await walletClient.getChainId());
@@ -769,26 +780,26 @@ export async function submitRedeem(params: {
     if (quote.receiver.toLowerCase() !== sender.toLowerCase()) {
         throw new StakeGuardError(
             "receiver-mismatch",
-            `The ${quote.chain.symbol} must go to the connected account. Redeeming to another address is not offered here.`,
+            `The ${quote.chain.symbol} must go to the connected account. Withdrawing to another address is not offered here.`,
         );
     }
     if (quote.shares <= 0n) {
-        throw new StakeGuardError("zero-amount", "Refusing to send a zero-share redemption.");
+        throw new StakeGuardError("zero-amount", "Refusing to withdraw nothing.");
     }
     if (quote.shares > quote.maxShares) {
         throw new StakeGuardError(
             "exceeds-holding",
-            "The quote asks for more shares than the account holds. Nothing sent.",
+            "The quote asks to withdraw more than the account holds. Nothing sent.",
         );
     }
     if (quote.minAssets <= 0n) {
         throw new StakeGuardError(
             "no-slippage-floor",
-            "Refusing to send a redemption with no slippage floor.",
+            "Refusing to withdraw with no protection against the price moving.",
         );
     }
 
-    await simulateRedeem(publicClient, quote, sender);
+    await simulateRedeem(quote.chain.client, quote, sender);
 
     return walletClient.writeContract({
         ...vaultAt(quote.chain.multiVault),

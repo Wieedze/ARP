@@ -9,6 +9,7 @@ import {useChainChoice} from "../lib/chain-choice";
 import {controlClass} from "../lib/control-class";
 import {COHORT_PAGE_SIZE, useAgentCohort} from "../hooks/use-agent-cohort";
 import {COHORT_ORDERS, describeCohortFailure, orderLabel} from "../services/agent-cohort";
+import {agentRefOf} from "../services/agent-lookup";
 
 /**
  * `/agents` — the index.
@@ -40,14 +41,9 @@ import {COHORT_ORDERS, describeCohortFailure, orderLabel} from "../services/agen
  * and never will be (ADR `0046`).
  */
 
-const LOOKUP_CHAINS: {id: number; label: string; note: string}[] = [
-    {id: 8453, label: "Base (8453)", note: "mirrored into the Intuition graph"},
-    {id: 56, label: "BSC (56)", note: "registry only — no trust edges in the graph"},
-    {id: 1, label: "Ethereum (1)", note: "registry only — no trust edges in the graph"},
-];
-
 export function AgentDirectory() {
     const chain = useChainChoice();
+    const navigate = useNavigate();
     const [order, setOrder] = useState<AgentListOrder>("evidence-quantity");
     const [offset, setOffset] = useState(0);
     const [draft, setDraft] = useState("");
@@ -55,6 +51,12 @@ export function AgentDirectory() {
     const cohortQuery = useAgentCohort(order, offset);
     const view = cohortQuery.data;
     const isFiltered = filter.trim().length > 0;
+
+    function search(value: string) {
+        const ref = agentRefOf(value);
+        if (ref === null) setFilter(value);
+        else navigate(`/agent/${ref.chainId}/${ref.tokenId}`);
+    }
 
     function changeOrder(next: AgentListOrder) {
         // A page number means nothing across two different orders, so paging restarts rather than
@@ -92,7 +94,10 @@ export function AgentDirectory() {
             </header>
 
             <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-4 border-y border-[color:var(--color-rule)] py-3.5">
-                <CapabilityFilter value={draft} onChange={setDraft} onSubmit={setFilter} />
+                {/* One field for both questions: an id opens the agent, anything else filters by
+                    capability. It replaced the "Or open one by id" form at the foot of the page
+                    (task 46e). */}
+                <CapabilityFilter value={draft} onChange={setDraft} onSubmit={search} />
                 {isFiltered ? null : <OrderControl order={order} onChange={changeOrder} />}
             </div>
 
@@ -138,16 +143,6 @@ export function AgentDirectory() {
                     </nav>
                 </>
             )}
-
-            <section className="mt-24 border-t border-[color:var(--color-rule)] pt-10">
-                <h2 className="type-section">
-                    Or open one<span className="text-[color:var(--color-grey)]"> by id.</span>
-                </h2>
-                <p className="mt-4 mb-7 max-w-[64ch] text-[color:var(--color-silver)]">
-                    The index is Base only. Agents on BSC and Ethereum open by token id.
-                </p>
-                <LookupForm />
-            </section>
         </section>
     );
 }
@@ -156,7 +151,7 @@ export function AgentDirectory() {
 function Fact({label, children}: {label: string; children: React.ReactNode}) {
     return (
         <div className="flex min-w-[7.5rem] flex-col gap-1.5 px-5 py-3.5 [&+&]:border-l [&+&]:border-l-[color:var(--color-rule)]">
-            <dt className="font-mono text-[10px] uppercase tracking-[0.06em] text-[color:var(--color-steel)]">
+            <dt className="font-mono text-[length:var(--text-label)] uppercase tracking-[0.06em] text-[color:var(--color-steel)]">
                 {label}
             </dt>
             <dd className="type-face text-[26px] leading-none tabular-nums">{children}</dd>
@@ -276,74 +271,5 @@ function CohortError({
                 </div>
             ) : null}
         </div>
-    );
-}
-
-function LookupForm() {
-    const navigate = useNavigate();
-    const fieldId = useId();
-    const [chainId, setChainId] = useState(8453);
-    const [tokenId, setTokenId] = useState("");
-
-    const trimmed = tokenId.trim();
-    const isValid = /^\d+$/.test(trimmed);
-
-    function handleSubmit(event: React.FormEvent) {
-        event.preventDefault();
-        if (!isValid) return;
-        navigate(`/agent/${chainId}/${trimmed}`);
-    }
-
-    return (
-        <form onSubmit={handleSubmit} className="flex flex-wrap items-end gap-3">
-            <div>
-                <label
-                    htmlFor={`${fieldId}-chain`}
-                    className="block font-mono text-[length:var(--text-label)] uppercase tracking-wider text-[color:var(--color-steel)]"
-                >
-                    Chain
-                </label>
-                <select
-                    id={`${fieldId}-chain`}
-                    value={chainId}
-                    onChange={(event) => setChainId(Number(event.target.value))}
-                    className="mt-2 h-9 rounded-[var(--radius-control)] border border-[color:var(--color-rule-strong)] bg-[color:var(--color-ground)] px-3 font-mono text-[length:var(--text-body-sm)] focus:border-[color:var(--color-accent)]"
-                >
-                    {LOOKUP_CHAINS.map((entry) => (
-                        <option key={entry.id} value={entry.id}>
-                            {entry.label}
-                        </option>
-                    ))}
-                </select>
-            </div>
-
-            <div>
-                <label
-                    htmlFor={`${fieldId}-token`}
-                    className="block font-mono text-[length:var(--text-label)] uppercase tracking-wider text-[color:var(--color-steel)]"
-                >
-                    Token id
-                </label>
-                <input
-                    id={`${fieldId}-token`}
-                    type="text"
-                    inputMode="numeric"
-                    autoComplete="off"
-                    value={tokenId}
-                    placeholder="2340"
-                    onChange={(event) => setTokenId(event.target.value)}
-                    className="mt-2 h-9 w-40 rounded-[var(--radius-control)] border border-[color:var(--color-rule-strong)] bg-transparent px-3 font-mono focus:border-[color:var(--color-accent)]"
-                />
-            </div>
-
-            <button type="submit" disabled={!isValid} className={`h-9 ${controlClass}`}>
-                Open
-            </button>
-
-            <p className="w-full font-mono text-[length:var(--text-label)] text-[color:var(--color-steel)]">
-                {LOOKUP_CHAINS.find((entry) => entry.id === chainId)?.note}
-                {trimmed !== "" && !isValid ? " · token ids are decimal" : ""}
-            </p>
-        </form>
     );
 }

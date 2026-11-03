@@ -115,7 +115,7 @@ describe("the activity panel", () => {
         await userEvent.click(screen.getByRole("button", {name: /^activity/i}));
 
         expect(screen.getByText("access")).toBeTruthy();
-        expect(screen.getByText("on chain")).toBeTruthy();
+        expect(screen.getByText("public")).toBeTruthy();
         expect(screen.getByText(/Agent 13579:4 → oasf/)).toBeTruthy();
     });
 
@@ -140,7 +140,7 @@ describe("the activity panel", () => {
             });
         });
         expect(screen.getByRole("button", {name: /^activity/i}).textContent).toMatch(
-            /3 · 1 yours · 0 agent/,
+            /3 · 1 yours · 0 from your agent/,
         );
     });
 
@@ -183,9 +183,9 @@ describe("the activity panel", () => {
             readReceipt: async () => null,
         });
         renderWithProviders(<Panel store={store} feed={feed} />);
-        await waitFor(() => expect(screen.getByText("agent …")).toBeTruthy());
+        await waitFor(() => expect(screen.getByText("your agent: connecting")).toBeTruthy());
         source.open();
-        await waitFor(() => expect(screen.getByText("agent live")).toBeTruthy());
+        await waitFor(() => expect(screen.getByText("your agent: live")).toBeTruthy());
 
         const atom = `0x${"c".repeat(64)}`;
         source.fire({
@@ -216,7 +216,9 @@ describe("the activity panel", () => {
         expect(screen.getByText("declared")).toBeTruthy();
         // The declaration names the skill it is about, by the name the agent invoked it with.
         expect(screen.getByText(/→ brainstorming/)).toBeTruthy();
-        expect(screen.getByRole("button", {name: /^activity/i}).textContent).toMatch(/2 agent/);
+        expect(screen.getByRole("button", {name: /^activity/i}).textContent).toMatch(
+            /2 from your agent/,
+        );
     });
 
     it("shows the toggle's chain only, each hash linked to that chain's explorer", async () => {

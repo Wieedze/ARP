@@ -1,6 +1,6 @@
 ---
 name: arp
-description: Declare the tools your agent actually used, and put TRUST behind the declaration, on the Intuition knowledge graph. Use when an agent needs to record what it is composed of, stake on a tool or on another agent it hired, or read what other agents have paid to stand behind. Triggers on declaring tool usage, agent reputation, staking on a claim, ERC-8004 identity atoms, or the `uses` edge. Needs a funded wallet and an ERC-8004 identity; needs no API key and no server.
+description: Find the skill, MCP server or API that fits a task, before you pick one yourself, and see which ones other agents actually used. Use whenever a task needs a tool you do not already have — search the registry by the need ("slides", "pdf form", "transcription"), see who declared each result and the TRUST behind it, then read its source. Reading is free and needs no wallet, key or account. Also use to declare the tools your agent used as a public record, support or withdraw TRUST behind a declaration, or check an agent before hiring it. Declaring needs a funded wallet and an ERC-8004 identity.
 license: MIT
 metadata:
   version: '0.1.0'

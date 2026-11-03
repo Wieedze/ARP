@@ -300,6 +300,11 @@ export type ImportedAgent = {
     signedOnChainId: number;
 };
 
+/** The lowercase CAIP-10 account URI, the one spelling ARP writes. Ids are content-derived. */
+export function caip10Uri(address: Address, chainId: number): string {
+    return `caip10:eip155:${chainId}:${address.toLowerCase()}`;
+}
+
 /**
  * The two spellings of a CAIP-10 account id for one address, most-likely first.
  *
@@ -313,8 +318,8 @@ export type ImportedAgent = {
  * on 2026-09-16, 34 are entirely lowercase. (Across every `eip155` chain the
  * split runs the other way — 170 lowercase out of 5,003 — which is why the
  * order is stated against chain 1155 rather than against "mainnet".) It is also
- * the spelling `caip10Uri` in `delegation-redeem.ts` already produces, so ARP
- * writes one convention on both networks.
+ * the spelling {@link caip10Uri} produces, so ARP writes one convention on both
+ * networks.
  *
  * Order is only a tiebreak. The plan below reads the chain first and uses
  * whichever atom already exists; the fallback applies only when neither does.
@@ -458,8 +463,8 @@ export async function planOperatorLink(
         if (shares === 0n) {
             throw new ImportGuardError(
                 "positionless-term",
-                `Creating the account atom with ${atomAssets} wei would buy 0 shares, so it would ` +
-                    `be born with no position — on the chain, and not a market. Nothing was sent.`,
+                `Making the agent wallet public with ${atomAssets} wei would buy no support: it would ` +
+                    `be public with no market. Nothing was sent.`,
             );
         }
         atomShares = shares;
@@ -481,8 +486,8 @@ export async function planOperatorLink(
         if (shares === 0n) {
             throw new ImportGuardError(
                 "positionless-term",
-                `Creating the same-as edge with ${tripleAssets} wei would buy 0 shares, so it ` +
-                    `would be born with no position — on the chain, and not a market. Nothing was sent.`,
+                `Linking the identity with ${tripleAssets} wei would buy no support: it would be ` +
+                    `public with no market. Nothing was sent.`,
             );
         }
         tripleShares = shares;
@@ -579,7 +584,7 @@ export async function submitOperatorLink(params: {
     if (plan.totalCost > MAX_STAKE_WEI) {
         throw new ImportGuardError(
             "cost-above-ceiling",
-            `Publishing the link would cost more than this app's per-transaction ceiling (VITE_MAX_STAKE_TRUST). Nothing was sent.`,
+            `Publishing the link would cost more than this app's per-transaction ceiling. Nothing was sent.`,
         );
     }
 
@@ -597,7 +602,7 @@ export async function submitOperatorLink(params: {
             value: plan.atomAssets,
             chain: plan.chain.chain,
         });
-        await waitAndRecord(publicClient, atomTx, {label: "create atom"});
+        await waitAndRecord(publicClient, atomTx, {label: "make public"});
         result.atomTx = atomTx;
     }
 
@@ -615,7 +620,7 @@ export async function submitOperatorLink(params: {
             value: plan.tripleAssets,
             chain: plan.chain.chain,
         });
-        await waitAndRecord(publicClient, tripleTx, {label: "create triple"});
+        await waitAndRecord(publicClient, tripleTx, {label: "link"});
         result.tripleTx = tripleTx;
     }
 

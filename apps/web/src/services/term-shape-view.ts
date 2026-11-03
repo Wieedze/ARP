@@ -105,7 +105,7 @@ export function buildTermShapeView(shape: TermShape): TermShapeView {
                 ? null
                 : shape.medianBackerBreadth === 0
                   ? "half its supporters hold nothing else"
-                  : `half its supporters hold ${shape.medianBackerBreadth}+ other positions`,
+                  : `half its supporters also support ${shape.medianBackerBreadth}+ others`,
         breadthSampled: shape.backersSampled,
         positionCount: shape.positionCount,
     };

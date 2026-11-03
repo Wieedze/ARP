@@ -57,11 +57,19 @@ query ResolveAgentByCaip($sameAsPredicateId: String!, $caipId: String!) {
   }
 }`;
 
+/**
+ * Rows one agent's trust surface or capability read asks for. The indexer caps a page at 250
+ * whatever is asked, so asking for exactly that and comparing the count is the only way to know
+ * the answer was cut: a read that returns this many rows reports itself `truncated`.
+ */
+export const AGENT_EDGE_LIMIT = 250;
+
 export const TRUST_SURFACE_QUERY = `
-query AgentTrustSurface($subjectId: String!, $predicateIds: [String!], $curveId: numeric!) {
+query AgentTrustSurface($subjectId: String!, $predicateIds: [String!], $curveId: numeric!, $limit: Int!) {
   triples(
     where: {subject_id: {_eq: $subjectId}, predicate_id: {_in: $predicateIds}}
     order_by: {term: {total_market_cap: desc}}
+    limit: $limit
   ) {
     term_id
     predicate { term_id label }
@@ -74,8 +82,12 @@ query AgentTrustSurface($subjectId: String!, $predicateIds: [String!], $curveId:
 }`;
 
 export const CAPABILITIES_QUERY = `
-query AgentCapabilities($subjectId: String!, $predicateIds: [String!]) {
-  triples(where: {subject_id: {_eq: $subjectId}, predicate_id: {_in: $predicateIds}}) {
+query AgentCapabilities($subjectId: String!, $predicateIds: [String!], $limit: Int!) {
+  triples(
+    where: {subject_id: {_eq: $subjectId}, predicate_id: {_in: $predicateIds}}
+    order_by: {term_id: asc}
+    limit: $limit
+  ) {
     term_id
     predicate { term_id label }
     object { term_id label ${THING} }
@@ -109,6 +121,10 @@ export const CAPABILITY_SAMPLE_LIMIT = 8;
  * comes from an aggregate over the same filter, so the number the UI shows is
  * the graph's own count rather than a figure typed into a component.
  *
+ * The filter is a variable, `$where`, built by the caller (`intuitionSource`):
+ * the membership ids always, and a name match on the subject's label only when
+ * a reader searched for one. A label never decides membership.
+ *
  * `order_by` is a variable so this file holds one query text instead of one per
  * sort order, but the orders themselves are frozen in {@link COHORT_ORDER_BY} —
  * nothing here builds an order clause out of caller input. Both orders end in
@@ -124,14 +140,14 @@ export const CAPABILITY_SAMPLE_LIMIT = 8;
  * and simply sits on curve 2.
  */
 export const COHORT_QUERY = `
-query AgentCohort($predicateId: String!, $objectId: String!, $sameAsPredicateId: String!, $capabilityPredicateIds: [String!], $orderBy: [triples_order_by!]!, $limit: Int!, $offset: Int!) {
+query AgentCohort($where: triples_bool_exp!, $sameAsPredicateId: String!, $capabilityPredicateIds: [String!], $orderBy: [triples_order_by!]!, $limit: Int!, $offset: Int!) {
   total: triples_aggregate(
-    where: {predicate_id: {_eq: $predicateId}, object_id: {_eq: $objectId}}
+    where: $where
   ) {
     aggregate { count }
   }
   triples(
-    where: {predicate_id: {_eq: $predicateId}, object_id: {_eq: $objectId}}
+    where: $where
     order_by: $orderBy
     limit: $limit
     offset: $offset

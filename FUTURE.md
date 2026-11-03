@@ -171,7 +171,8 @@ signer (Privy or equivalent) and probably a relayer".** The user rejected that p
 terms — _« pourquoi un agent arrivera sans wallet ? s'il n'en a pas peut-être faut-il lui en créer
 un ? »_ — and chose the variant where **the agent generates its own key locally and ARP never holds
 it**, with a funder covering the gas _« pour le moment »_. The local-key pattern already runs: the
-node generates `.arp/receipt-key` at mode 0600 on first use (ADR `0080`).
+node generates `~/.arp/receipt-key` at mode 0600 on first use (ADR `0080`; in the working
+directory's `.arp/` until ADR `0116`).
 
 **What is still owed before this is buildable is the funder's bound**, not the key design. Nothing
 says how much, how often or to whom, and an unbounded funder reachable by a stranger is a faucet —
@@ -237,6 +238,11 @@ answer rather than preceding it.
 
 ## Decide what a refused redirect means to the probe
 
+**Done in task 60** (2026-11-03): the probe follows redirects by hand through `guardedFetchText`,
+and a refused hop is `inconclusive` with code `refused` (`refusedOutcome`,
+`packages/protocol/src/verify/probe.ts`). `docs/22` says so. Kept below as the record of the
+question.
+
 Noted 2026-10-29, from `task-verifier`'s fourth round on `docs/tasks/31`. **A known open hole, disclosed
 in `docs/22` rather than fixed**, which is the one thing in that document that is a hole and not a
 stated limit.
@@ -265,3 +271,142 @@ What the task is: pick the verdict, write the ADR, apply the same manual-redirec
 `docs/22` that the hole is closed. The exposure meanwhile is bounded by the node binding loopback —
 unlike the registration route, whose caller is a local process by design, which is exactly why that
 one was fixed first.
+
+## Smart contracts as modules — the web3 branch
+
+**Asked 2026-11-02**, after reading pgmi's "Live Contract Risk Scoring with Intuition"
+(https://atlas.discourse.group/t/live-contract-risk-scoring-with-intuition/989, an idea post from
+2025-10-20, nothing built). _« ça pourrait être une branche d'ARP pour le web3 »_. The user's own
+ordering: _« pour le moment je suis full orienté web2 »_. So this comes after the web2 surface.
+
+**What the branch is.** The same mechanism as `docs/12`, with a different kind of module. A deployed
+contract is registered in `ModuleRegistry` as a tool. An agent deposits TRUST on the contracts it
+actually called. A contract's reputation is then how many distinct agents use it and put money on
+it. That measures adoption, not safety.
+
+**Why it is worth more than one more module type.** In web2, proving that a use happened is the hard
+problem (`docs/14`). Here the proof is already on the chain: a transaction from the agent's account
+to the contract can be checked with no oracle, which fits ADR `0094`'s proof-gated sponsored deposit
+directly.
+
+**What it is not, and the line this entry exists to hold.** The article's own mechanism is not it.
+There, experts stake on risk claims ("this contract has a reentrancy") and are rewarded when they
+turn out right. That needs a resolver, which is ground truth (ADR `0049`), and a published "94% Safe"
+is a score (ADR `0046`). Both are drift signals in `docs/12`. A risk-scoring product could read ARP's
+usage signal as an input. ARP does not become one.
+
+**Open before building.** Which chain's transactions count as proof: the agents' chain and the
+staking chain are not the same on mainnet (`rules/portability.md`, point 2). And whether one
+contract is one module or one per deployment/version, since an upgrade behind a proxy keeps the
+address but changes the code.
+
+## Search by meaning, through skills.sh, with a copy kept for when it is down
+
+**Asked 2026-11-02.** On the fallback: _« on peut faire des sauvegardes en cache ou bdd si le service
+skills.sh est down ? »_. On the timing: _« pour un POC je trouve ça vraiment trop, écris-le dans
+FUTURE »_.
+
+**Why.** Task 45c (`data/measurements/discovery-eval-2026-11-02.jsonl`) measured the cost of
+consulting ARP. Claude consulted it on the right prompts, but a run cost 3.14 times the tokens of
+answering from memory, and the answer was judged worse 37 times out of 42. The main cause is that
+the registry often has nothing that fits. ARP matches words: "card payments" finds nothing in the
+catalogue. skills.sh's search runs by meaning: its own answer to `GET
+https://skills.sh/api/search?q=card%20payments` says `"searchType":"semantic"`, and it returned
+`payment-pci-security` and `integrate-midtrans-payments`. Its rows are tiny: an id, a name and
+installs.
+
+**Chosen 2026-11-02, for later.** The user first said _« on va fork tout skills.sh »_, then picked
+this shape over the two alternatives. The first was a full copy of skills.sh's index, which depends
+on its terms. The second was ARP's own crawl of GitHub, which has no install counts. The timing stays
+"later". The argument behind it was sent to the business-plan session the same day: skills.sh
+counts installs, and ARP adds evidence of use.
+
+**What it would be.** `arp_find_tools` asks skills.sh's search for skills and keeps answering from
+ARP's own catalogue and from the chain for everything else. Every answer skills.sh gives is kept in
+a dated cache or database, so that a search still answers when skills.sh is down. The answer then
+says the result is from the copy and gives its date.
+
+**Write on first use, not up front** (the user, 2026-11-02, thinking about mainnet, where ARP has no
+skill on chain). A skill's atom id is a pure function of its URL (ADR `0054`), so a skills.sh result
+can carry its ARP id before anything is written. The first agent that declares using it causes the
+write: the skill's atom, the `uses` triple, and the deposit. Only skills somebody used get paid for,
+and each arrives with its first evidence of use.
+
+Writing everything up front would cost at least 2,000 TRUST in mainnet fees, which do not come
+back. That figure is the per-atom cost multiplied by a floor on the skill count:
+- **The per-atom cost** is `getAtomCost()` on 1155: 0.100000000001 TRUST, read 2026-10-19
+  (`rules/portability.md`). Re-read it before deciding.
+- **The skill count is at least 20,000.** The skills.sh sitemap's two skill files each hold exactly
+  10,000 entries, the size limit of a sitemap file, read 2026-11-02 (`curl -sL
+  https://www.skills.sh/sitemap-skills-1.xml | grep -o '<loc>' | wc -l`, and the same for
+  `-2`). `data/measurements/skills-installs-2026-10-29.json` reads 20,000 for the same reason. The
+  search API gives no total, so the true count is unknown.
+
+Three pieces are missing:
+1. **The sponsor does not create a skill's atom.** `/deposit` creates a missing `uses` triple but
+   answers 400 when the object atom does not exist.
+2. **The content server resolves an atom only through ARP's catalogue** (`contentIndexFor`). For a
+   skill found on skills.sh, it would have to take the URL.
+3. The search with a cache, above.
+
+On mainnet, who pays for the creation needs an ADR, together with the credits decision
+(`docs/tasks/50` §3b).
+
+**What it needs first.** It reverses one alternative ADR `0108` rejected: "a search that lived only
+on a server", which ADR `0092`'s amendment forbids as a capability. The cache is what keeps it a
+convenience rather than a capability, so it is part of the design, not an option. Decide in a new
+ADR where the copy lives (`apps/api`, ADR `0084`, already caches skills.sh's figures) and how old it
+may be. Re-run `scripts/measure/discovery-eval.ts` before and after.
+
+The alternative left aside: a small local embedding model in the server (tens of MB in the
+extension, an estimate, not measured). There is no third party, but it adds weight, and it does not add skills.sh's coverage.
+
+## One install for Claude Desktop and Claude Code, with one agent
+
+**Asked 2026-11-02**, as important: _« ça c'est important aussi »_, about the list of later items.
+
+Today they are two packages: the `.mcpb` extension for Desktop Chat and the Claude Code plugin
+installed by `arp init`. Each creates its own key, so the same person shows up as two agents. On the
+user's machine, Desktop is agent #10, under `C:\Users\Max\.arp\`, and Claude Code would hold its own
+key in WSL's `~/.arp/`. Claude Code does not load `.mcpb` extensions. Whether `claude mcp
+add-from-claude-desktop` picks up an extension has not been checked.
+
+**What it would be.** One installer that sets up both and shares one key. It needs a decision on
+where that key lives when Desktop runs on Windows and Claude Code in WSL, because they do not share
+a home directory.
+
+## A demo where one agent pays another: evidence of an action
+
+**Asked 2026-11-02**, as important (same message). `docs/26_DEMO_PLAN.md` §5.
+
+The receipt proves a skill was served, and the hook proves it was invoked. Neither proves an
+action. A payment the chain records does: one agent hires another and pays its node, and the paid
+agent signs a hire receipt that `apps/sponsor` and `ReceiptEnforcer` verify (tasks 43 and 44,
+ADRs `0083`, `0098`, `0101`). That path is built, but it is not wired into either demo. Check what
+the node needs running end to end on testnet before planning it.
+
+## Who may speak for an agent's identity
+
+**Asked 2026-11-02**, deferred to the mainnet port: « intéressant mais inutile en démo ». A `same as`
+cannot be deleted, so a stranger's mistaken or malicious edge must not block an agent for good. The
+design is in ADR `0113`:
+1. only `same as` edges written by the agent's owner or a trusted writer count;
+2. an edge the market opposes is ignored;
+3. the sponsor refuses only when two counted edges name two agents.
+
+## Who pays on mainnet: a delegation, or the agent's own wallet
+
+**Asked 2026-11-02**, left open: « on vera ». `/account` signs and revokes delegations, but no
+runtime redeems one. `grep -rli delegation apps/mcp/src apps/node/src` finds only two comments, and
+`packages/protocol/src/declare/delegated.ts` has no caller in either app. In sponsored mode
+(ADR `0110`) the agent pays from its own wallet, so the operator's delegation is never used.
+
+Sponsoring is testnet 13579 only (`rules/security.md`), so on mainnet the operator pays, in one of
+two ways:
+1. **The operator funds the agent's wallet.** It needs no page, and the loss is bounded by the
+   balance.
+2. **A delegation.** The funds stay on the operator's account, with a cap per period, allowed
+   targets and methods, and a one-click revoke. `docs/12` point 5 names this as the guard rail.
+
+Decide before the mainnet port. If (1), `/account` has no purpose and goes. If (2), the MCP server
+has to redeem through `delegated.ts`.

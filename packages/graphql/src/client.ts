@@ -1,4 +1,4 @@
-import {DEFAULT_TIMEOUT_MS, fetchWithTimeout, HttpError, type FetchLike} from "./http.js";
+import {DEFAULT_TIMEOUT_MS, fetchTextWithTimeout, HttpError, type FetchLike} from "./http.js";
 import {isRecord, readArray, readString} from "./json.js";
 
 /** A GraphQL read that did not produce a usable `data` object. */
@@ -48,14 +48,17 @@ export function createGraphqlTransport(config: {
     url: string;
     fetch: FetchLike;
     timeoutMs?: number;
+    /** Response body cap; `DEFAULT_MAX_BODY_BYTES` when absent. */
+    maxBodyBytes?: number;
 }): GraphqlTransport {
     const timeoutMs = config.timeoutMs ?? DEFAULT_TIMEOUT_MS;
 
     return {
         async request(query, variables, options) {
             let response: Response;
+            let text: string;
             try {
-                response = await fetchWithTimeout(
+                ({response, text} = await fetchTextWithTimeout(
                     config.fetch,
                     config.url,
                     {
@@ -66,8 +69,13 @@ export function createGraphqlTransport(config: {
                         },
                         body: JSON.stringify({query, variables}),
                     },
-                    options?.timeoutMs ?? timeoutMs,
-                );
+                    {
+                        timeoutMs: options?.timeoutMs ?? timeoutMs,
+                        ...(config.maxBodyBytes === undefined
+                            ? {}
+                            : {maxBytes: config.maxBodyBytes}),
+                    },
+                ));
             } catch (error) {
                 const message = error instanceof HttpError ? error.message : String(error);
                 throw new GraphqlError(message, config.url, null, error);
@@ -81,7 +89,12 @@ export function createGraphqlTransport(config: {
                 );
             }
 
-            const body: unknown = await response.json().catch(() => null);
+            let body: unknown = null;
+            try {
+                body = JSON.parse(text);
+            } catch {
+                body = null;
+            }
             if (!isRecord(body)) {
                 throw new GraphqlError("response body is not a JSON object", config.url, 200);
             }

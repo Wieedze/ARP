@@ -1,6 +1,6 @@
 import {describe, expect, it, vi} from "vitest";
 import {asAgentIdentityAtom, type AgentIdentityAtom} from "@arp-protocol/core";
-import {parseEther, type Address, type Hex} from "viem";
+import {parseEther, type Address, type Hex, type PublicClient} from "viem";
 
 import {intuitionTestnet} from "../../lib/chains";
 import {INTUITION_MAINNET_CHAIN_ID, intuitionMainnet} from "../../lib/intuition-mainnet";
@@ -13,6 +13,10 @@ import {
 } from "../declare-use";
 import {MAX_STAKE_WEI} from "../trust-stake";
 import {DEFAULT_TEST_ACCOUNT, makeMockPublicClient, type MockPublicClient} from "./fixtures";
+
+/** A `StakeChain` carries its client for the hooks; the services take theirs as an argument. */
+// Never read by the service under test, so an empty object is a safe stand-in.
+const UNREAD_CLIENT = {} as PublicClient;
 
 /**
  * Tests for the write path on `/atom/:atomId` — the one that pays a non-recoverable fee.
@@ -56,6 +60,7 @@ const TESTNET = {
     symbol: "tTRUST",
     explorerUrl: "https://testnet.explorer.intuition.systems",
     isMainnet: false,
+    client: UNREAD_CLIENT,
 } as const;
 
 const MAINNET = {
@@ -65,6 +70,7 @@ const MAINNET = {
     symbol: "TRUST",
     explorerUrl: "https://explorer.intuition.systems",
     isMainnet: true,
+    client: UNREAD_CLIENT,
 } as const;
 
 const AGENT = {chainId: 8453, tokenId: "1380"};
@@ -161,6 +167,7 @@ function planWith(reads: Reads = {}, overrides: Record<string, unknown> = {}) {
         object: OBJECT,
         publicClient: publicClientWith(reads),
         chain: TESTNET,
+        graphqlUrl: "https://indexer.test/graphql",
         ownership: ownedBy(OWNER) as never,
         subject: resolvesSubject as never,
         ...overrides,
@@ -317,7 +324,7 @@ describe("planUseDeclaration", () => {
     });
 
     it("refuses mainnet outright, before it reads anything", async () => {
-        // The default chain is mainnet (`lib/chain-choice.ts`), where this write costs 0.11 TRUST
+        // On mainnet (the default until ADR `0105` made it testnet), this write costs 0.11 TRUST
         // of which 0.1 never comes back. `security.md` authorises a human in the panel under ADR
         // `0017`, and that ADR covers a deposit into a `has trust provider` vault — not creating a
         // `uses` edge. Not yet authorised is not forbidden, and widening it is the user's decision.

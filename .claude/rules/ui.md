@@ -27,7 +27,7 @@ The UI must not look like a generic shadcn/ui starter, a v0.dev export, or a Ver
   surface always means "an agent".
 - Emoji in body copy or icons
 - "How it works" scrollytelling sections. **Amended 2026-10-28** (ADRs `0066`, `0069`): `/` is now
-  a six-scene pinned sequence, which is scrollytelling, so this bullet has to say what it still
+  a pinned scene sequence (six scenes, five since task 53, ADR `0114`), which is scrollytelling, so this bullet has to say what it still
   rejects. It rejects a scroll-triggered **section** bolted onto an ordinary page to illustrate the
   product's mechanics — the template signal is the decoration, not the scroll. What makes the deck
   not that: each scene **states** a mechanism or **reads a figure off the chain**, and the figures
@@ -42,7 +42,7 @@ Strip these reflexes. If you find yourself reaching for one, stop.
 - **Typography-driven.** Hierarchy comes from type weight and size, not from boxes and borders.
 - **Dark-first.** Light mode is a later concern. Design and test in dark.
 - **Mono for data, sans for prose.** Addresses, ids, hashes, amounts, timestamps and **labels** —
-  Geist Mono. Descriptions, names, copy — Archivo. Labels are mono 10–12px, uppercase, letter-spacing
+  Geist Mono. Descriptions, names, copy — Archivo. Labels are mono 11–12px (`--text-label` is 11; 10 was allowed until ADR `0106`), uppercase, letter-spacing
   `0.06em`–`0.12em`. Display type is Archivo 800 at `font-stretch: 125%`, letter-spacing `-0.02em` to
   `-0.03em`, line-height `0.92`–`1`.
 - **One accent, and it is warm.** Saffron `--color-accent`, 10.4:1, spent on the primary action, the
@@ -114,7 +114,10 @@ Strip these reflexes. If you find yourself reaching for one, stop.
 
 - Max content width is intentional, not the viewport.
 - Lists are dense by default. A list of modules shows ~15+ rows above the fold on a 13" laptop.
-- Detail views use a two-column layout: metadata on the left, content on the right. Not stacked.
+- Detail views use a two-column layout: **content on the left, facts on the right**, in cards, in a
+  `minmax(20rem,26rem)` column. Not stacked above `lg`. The skill page is the reference. This read
+  "metadata on the left" until 2026-11-02. The skill and repo pages already did the opposite, and
+  the user chose them as the model (ADR `0104`).
 - Forms are single-column. Labels above inputs, never beside.
 
 ## Copy

@@ -1,15 +1,19 @@
 import {
     createGraphqlTransport,
+    DEFAULT_TIMEOUT_MS,
     defaultFetch,
     type FetchLike,
     type GraphqlTransport,
     isRecord,
+    readBigInt,
+    readCount,
     readString,
     REGISTERED_TOOLS_QUERY,
 } from "@arp-protocol/graphql";
 import {TOOL_THING_DESCRIPTION} from "./declare/tool-thing.js";
 import {SAME_AS, USES} from "./sources/intuition/terms.js";
 import {INTUITION_MAX_PAGE} from "./tool-listing.js";
+import {DEFAULT_CURVE_ID} from "./sources/intuition/index.js";
 
 /**
  * Tools somebody registered through ARP, and what the market on each says.
@@ -107,7 +111,7 @@ export type RegisteredToolsPage = {
 export type RegisteredToolsOrder = "conviction" | "stakers" | "declarations";
 
 export type RegisteredToolsConfig = {
-    graphqlUrl?: string;
+    graphqlUrl: string;
     fetch?: FetchLike;
     timeoutMs?: number;
     transport?: GraphqlTransport;
@@ -122,22 +126,8 @@ export type RegisteredToolsConfig = {
     order?: RegisteredToolsOrder;
 };
 
-const DEFAULT_CURVE_ID = 1;
-const DEFAULT_TIMEOUT_MS = 10_000;
 /** Eight pages at the indexer's cap. Enough for the whole set today, with room to grow. */
 const DEFAULT_MAX_ROWS = 2_000;
-const INTUITION_MAINNET_GRAPHQL = "https://mainnet.intuition.sh/v1/graphql";
-
-function bigintFrom(value: unknown): bigint {
-    const text =
-        typeof value === "string" ? value : typeof value === "number" ? String(value) : null;
-    if (text === null || !/^\d+$/.test(text)) return 0n;
-    return BigInt(text);
-}
-
-function numberFrom(value: unknown): number {
-    return typeof value === "number" && Number.isFinite(value) ? value : 0;
-}
 
 /** `"null"` reaches the indexer as a literal string for some pinned Things. Not a url. */
 function urlFrom(value: unknown): string | null {
@@ -146,17 +136,17 @@ function urlFrom(value: unknown): string | null {
 }
 
 export async function listRegisteredTools(
-    config: RegisteredToolsConfig = {},
+    config: RegisteredToolsConfig,
 ): Promise<RegisteredToolsPage> {
     const transport =
         config.transport ??
         createGraphqlTransport({
-            url: config.graphqlUrl ?? INTUITION_MAINNET_GRAPHQL,
+            url: config.graphqlUrl,
             fetch: config.fetch ?? defaultFetch(),
             timeoutMs: config.timeoutMs ?? DEFAULT_TIMEOUT_MS,
         });
 
-    const curveId = config.curveId ?? DEFAULT_CURVE_ID;
+    const curveId = config.curveId ?? Number(DEFAULT_CURVE_ID);
     const limit = Math.min(config.limit ?? INTUITION_MAX_PAGE, INTUITION_MAX_PAGE);
     const maxRows = config.maxRows ?? DEFAULT_MAX_ROWS;
 
@@ -198,16 +188,22 @@ export async function listRegisteredTools(
         const edges = isRecord(row["as_object_triples_aggregate"])
             ? row["as_object_triples_aggregate"]
             : null;
-        const aggregate = edges !== null && isRecord(edges["aggregate"]) ? edges["aggregate"] : null;
+        const aggregate =
+            edges !== null && isRecord(edges["aggregate"]) ? edges["aggregate"] : null;
 
+        // No vault on the curve is zero; a vault whose figures cannot be read is skipped rather
+        // than listed at zero, which would rank it as a tool nobody backs.
+        const positionCount = vault === null ? 0 : readCount(vault, "position_count");
+        const assets = vault === null ? 0n : readBigInt(vault, "total_assets");
+        if (positionCount === null || assets === null) continue;
         tools.push({
             atomId: termId,
             label: readString(row, "label"),
             uri: readString(row, "data"),
             url: urlFrom(thing?.["url"]),
-            positionCount: vault === null ? 0 : numberFrom(vault["position_count"]),
-            assets: vault === null ? 0n : bigintFrom(vault["total_assets"]),
-            declarations: aggregate === null ? 0 : numberFrom(aggregate["count"]),
+            positionCount,
+            assets,
+            declarations: readCount(aggregate, "count") ?? 0,
         });
     }
 

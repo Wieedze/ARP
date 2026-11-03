@@ -2,6 +2,7 @@ import {describe, expect, it} from "vitest";
 import {parseEther} from "viem";
 
 import {
+    shortTrust,
     agentRegistryExplorerUrl,
     describeFetchError,
     intuitionPortalUrl,
@@ -104,9 +105,10 @@ describe("describeSignature", () => {
         expect(copy.detail).toContain("00dEaD");
     });
 
-    it("says exactly what verified means and nothing more", () => {
+    it("says the signature recovers and that the author is not checked", () => {
         const copy = describeSignature(VERIFIED);
-        expect(copy.tone).toBe("verified");
+        expect(copy.tone).toBe("self-signed");
+        expect(copy.label).toBe("Signed, author not checked");
         expect(copy.detail).toContain("recovers to the signer the document names");
     });
 });
@@ -135,7 +137,7 @@ describe("describeFetchError", () => {
             "an unknown content type",
         );
         expect(describeFetchError({kind: "timeout", timeoutMs: 8000})).toContain("8000 ms");
-        expect(describeFetchError({kind: "no-resolver-url"})).toContain("no resolver URL");
+        expect(describeFetchError({kind: "no-resolver-url"})).toContain("links to no document");
         expect(describeFetchError({kind: "network", message: "fetch failed"})).toContain(
             "fetch failed",
         );
@@ -148,15 +150,15 @@ describe("describeFetchError", () => {
 
 describe("stakerLabel", () => {
     it("is singular at one and plural everywhere else", () => {
-        expect(stakerLabel(0)).toBe("0 distinct stakers");
-        expect(stakerLabel(1)).toBe("1 distinct staker");
-        expect(stakerLabel(2)).toBe("2 distinct stakers");
+        expect(stakerLabel(0)).toBe("0 distinct supporters");
+        expect(stakerLabel(1)).toBe("1 distinct supporter");
+        expect(stakerLabel(2)).toBe("2 distinct supporters");
     });
 
     it("groups digits the same way the visible figure does", () => {
         // `role="img"` hides the digits from assistive tech, so the label is the
         // only announced copy. These two drifted apart once already.
-        expect(stakerLabel(1445)).toBe("1,445 distinct stakers");
+        expect(stakerLabel(1445)).toBe("1,445 distinct supporters");
         expect(stakerLabel(1445)).toContain(formatStakerCount(1445));
     });
 });
@@ -205,5 +207,19 @@ describe("intuitionPortalUrl", () => {
         expect(intuitionPortalUrl("triple", "0xcd", true)).toBe(
             "https://portal.intuition.systems/explore/triple/0xcd",
         );
+    });
+});
+
+describe("shortTrust", () => {
+    it("cuts a list figure to four significant digits", () => {
+        expect(shortTrust("6.3369302")).toBe("6.337");
+        expect(shortTrust("219.5402")).toBe("219.5");
+        expect(shortTrust("0.0009825")).toBe("0.0009825");
+        expect(shortTrust("3")).toBe("3");
+    });
+
+    it("passes the dust marker and anything unreadable through", () => {
+        expect(shortTrust("<0.00000001")).toBe("<0.00000001");
+        expect(shortTrust("n/a")).toBe("n/a");
     });
 });

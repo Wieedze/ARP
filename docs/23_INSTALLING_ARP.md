@@ -6,6 +6,12 @@ The decisions taken from it are ADR `0089` (one installer) and ADR `0090` (what 
 Everything about a third party below cites the page it came from; everything about this repo cites a
 file and a line.
 
+**Two things changed since it was written** (2026-11-03). The **Claude Desktop extension** — one
+`.mcpb` file, installed from Settings → Extensions, holding a local agent key (ADR `0110`,
+`docs/tasks/50`) — is the install for ARP's first audience, people who use Claude and never open a
+terminal (ADR `0120`); this document predates it and does not cover it. And `@arp-protocol/cli` is
+**not on npm yet**, so every `npx @arp-protocol/cli` line below is the target, not today's path.
+
 ---
 
 ## 1. Where each program lives
@@ -20,8 +26,9 @@ the agent's side**. `docs/22_RUNNING_THE_NODE.md` §"Three programs" describes e
 | `apps/node` | a public address where the agent is **hired**: it checks the payment and signs a receipt           | only an agent that sells work          |
 
 So the natural bundle is **hook + MCP server**: one writes the log and the other reads it. The node
-is a different kind of thing. It is a long-running server bound to every interface that holds the
-agent's key, and ADR `0082` keeps it apart for that reason.
+is a different kind of thing. It is a long-running server that holds the agent's key, reached
+through a tunnel the operator rents (task 39; it bound every interface until 2026-10-30), and ADR
+`0082` keeps it apart for that reason.
 
 ## 2. The professional answer for Claude Code is a plugin
 
@@ -84,24 +91,25 @@ Hooks can also be registered `"async": true`, so Claude Code does not wait for t
 
 From https://clig.dev unless stated. Each line names the clig.dev section it comes from.
 
-| practice                                        | source                                                                                                                                                                     | what it means for ARP                                                                                                                                     |
-| ----------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| one command, idempotent                         | Robustness: "operations should be idempotent where possible"                                                                                                               | `arp init` twice leaves one copy of everything                                                                                                            |
-| never require a prompt                          | Interactivity: "Only use prompts … if `stdin` is … a TTY", support `--no-input`                                                                                            | an agent installs ARP with no human present; every answer is a flag too                                                                                   |
-| dry-run                                         | Arguments and flags: "`-n`, `--dry-run` … describe the changes"                                                                                                            | `arp init --dry-run` prints the files it would write                                                                                                      |
-| consent before editing another program's config | Configuration: "ask the user for consent and tell them exactly what you're doing"                                                                                          | print the path and the diff of `~/.claude.json`, `.cursor/mcp.json` … before writing                                                                      |
-| uninstall is a command                          | Distribution: "Make it easy to uninstall"                                                                                                                                  | `arp uninstall` removes only our entries. Sentry has `--uninstall` (https://github.com/getsentry/sentry-wizard)                                           |
-| no secrets in env vars                          | Environment variables: "Do not read secrets from environment variables"                                                                                                    | `AGENT_PRIVATE_KEY` today (`docs/22_RUNNING_THE_NODE.md:373`). Prefer a 0600 file, as `.arp/receipt-key` already is (`:65`), or the plugin's secure store |
-| no telemetry without consent                    | Analytics: "Do not phone home … without consent", ideally opt-in                                                                                                           | already ARP's posture (`docs/22`, outbound counted). Sentry's wizard is opt-out, which is the pattern to avoid                                            |
-| a single file to run                            | Distribution: "distribute as a single binary"                                                                                                                              | ~~all three builds target Bun, so installing requires Bun. **Open**~~ **Settled**: `@arp-protocol/cli` targets Node ≥ 22 (task 33b, ADR `0089`)           |
-| supply chain                                    | npm docs: trusted publishing via OIDC, provenance "automatically generated", checked with `npm audit signatures` (https://docs.npmjs.com/generating-provenance-statements) | publish `@arp-protocol/*` from CI with trusted publishing, never from a laptop token                                                                      |
-| clean exit, brief output                        | The Basics, Output                                                                                                                                                         | zero on success, a short "what changed" summary, nothing animated when not a TTY                                                                          |
+| practice                                        | source                                                                                                                                                                     | what it means for ARP                                                                                                                           |
+| ----------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| one command, idempotent                         | Robustness: "operations should be idempotent where possible"                                                                                                               | `arp init` twice leaves one copy of everything                                                                                                  |
+| never require a prompt                          | Interactivity: "Only use prompts … if `stdin` is … a TTY", support `--no-input`                                                                                            | an agent installs ARP with no human present; every answer is a flag too                                                                         |
+| dry-run                                         | Arguments and flags: "`-n`, `--dry-run` … describe the changes"                                                                                                            | `arp init --dry-run` prints the files it would write                                                                                            |
+| consent before editing another program's config | Configuration: "ask the user for consent and tell them exactly what you're doing"                                                                                          | print the path and the diff of `~/.claude.json`, `.cursor/mcp.json` … before writing                                                            |
+| uninstall is a command                          | Distribution: "Make it easy to uninstall"                                                                                                                                  | `arp uninstall` removes only our entries. Sentry has `--uninstall` (https://github.com/getsentry/sentry-wizard)                                 |
+| no secrets in env vars                          | Environment variables: "Do not read secrets from environment variables"                                                                                                    | the node key is a 0600 file since task 39, `~/.arp/node.key`, as `~/.arp/receipt-key` is now; `AGENT_PRIVATE_KEY` still overrides it              |
+| no telemetry without consent                    | Analytics: "Do not phone home … without consent", ideally opt-in                                                                                                           | already ARP's posture (`docs/22`, outbound counted). Sentry's wizard is opt-out, which is the pattern to avoid                                  |
+| a single file to run                            | Distribution: "distribute as a single binary"                                                                                                                              | ~~all three builds target Bun, so installing requires Bun. **Open**~~ **Settled**: `@arp-protocol/cli` targets Node ≥ 22 (task 33b, ADR `0089`) |
+| supply chain                                    | npm docs: trusted publishing via OIDC, provenance "automatically generated", checked with `npm audit signatures` (https://docs.npmjs.com/generating-provenance-statements) | publish `@arp-protocol/*` from CI with trusted publishing, never from a laptop token                                                            |
+| clean exit, brief output                        | The Basics, Output                                                                                                                                                         | zero on success, a short "what changed" summary, nothing animated when not a TTY                                                                |
 
 ## 5. The shape this points to
 
 The plan that builds it is `docs/tasks/33-one-installer.md`. Its summary:
 
 ```
+arp-<version>.mcpb                        Claude Desktop: one file, Settings → Extensions (ADR 0110)
 npx @arp-protocol/cli init                any runtime: detects them, writes the MCP entry and the hook
 claude plugin install arp@arp             Claude Code: hook + MCP server + skill
 grok plugin install arp --trust           Grok Build: the same Claude Code plugin, unchanged

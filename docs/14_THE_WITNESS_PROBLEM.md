@@ -32,7 +32,7 @@ Everything above holds, and it is **too absolute by one case**. The user's corre
 > alors tu peux avoir la preuve de l'accès à cette info. Ça, couplé avec un call hook, est alors une
 > preuve suffisante d'utilisation ? via ARP en tout cas »_
 
-He is right, and the reason is that the argument above is about a **place**, not an impossibility.
+The correction is right, and the reason is that the argument above is about a **place**, not an impossibility.
 Its force is "a connector inside the agent's process is under the agent's control" — true, and it
 says nothing about a party on the **other end of a fetch**. An agent cannot put words in the mouth
 of something it had to ask.
@@ -66,12 +66,6 @@ fact.
    reader names the signers it accepts (ADR `0080` constraint 4); to a reader who names none, this
    is the agent's word in a second place.
 
-   Added 2026-10-29 with the rest of this section, and it arrived as a paragraph above the list
-   saying "that is the fourth limit below" while the list said three — a count corrected in one of
-   two places, committed inside the fix for a count corrected in one of two places. `claims.md`
-   §5's last line is the one that covers it: re-check a retraction the way you would check the
-   claim.
-
 The hook is the other half and it is worth being precise about why it counts. A runtime hook is
 **configuration, not code the model runs**: it fires on the call, writes a line, and the model never
 touches the line. What it produces is not something the agent composed — it is something the agent
@@ -91,7 +85,7 @@ Only what touched a **third party**. An agent cannot fabricate an event whose so
 | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | A payment to the tool        | The payee is a third party. You cannot have paid someone who received nothing.                                                                                                                          |
 | An on-chain call to the tool | The chain recorded it, not the agent.                                                                                                                                                                   |
-| A delegation redemption      | `TrustStakeCapEnforcer` (`0x99921C234d4Ca518DC58ba63ff9bfD2Cc9435f34`, chain 1155) emits `StakeCapChecked(delegationHash, newCumulative, cap)` on every pass. Unreachable without an actual redemption. |
+| A delegation redemption      | `TrustStakeCapEnforcer` (`0x99921C234d4Ca518DC58ba63ff9bfD2Cc9435f34`, chain 1155) emits `StakeCapChecked(delegationHash, newCumulative, cap)` on every pass. ~~Unreachable without an actual redemption.~~ **Corrected 2026-11-02 (task 60, ADR `0118`):** the hook is public and anyone can call it, so a log of this v1 event is not proof of a redemption. The v2 event names its caller; a log whose caller is the DelegationManager is. |
 | **The agent's own calldata** | A transaction is a fact the chain recorded, not the agent. Needs no hook and no adoption, and works **retroactively** on history that already exists. `docs/tasks/22`.                                       |
 
 The last row was a user proposal, and it came with a correction worth keeping: the instinct is to
@@ -279,6 +273,10 @@ protocol fee, per declaration. ADR `0056` acts on this — the edge is created, 
 market lives on the atoms, in both directions.
 
 ## What this means for the build
+
+Dated 2026-10-16. Items 1 and 3 were overtaken: ARP writes `uses`, because `use` turned out to mean
+"supports this protocol" (ADR `0030`); and ARP records a use, it does not hire (ADR `0060`). Items
+2 and 4 hold.
 
 1. **Use the published predicate.** `use` (`0x9ddda4ac…`, Appendix B, "unambiguous") carries 158 edges;
    `uses` (`0x5c0bde1c…`, never published, derived empirically) carries 185. Twenty-seven edges is

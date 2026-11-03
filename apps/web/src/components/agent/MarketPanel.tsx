@@ -2,7 +2,7 @@ import type {MarketSide} from "@arp-protocol/core";
 
 import type {TrustRow} from "../../services/agent-trust";
 import type {ClaimVaults, VaultPosition} from "../../services/trust-stake";
-import {formatTrust, truncateMiddle} from "../../services/trust-format";
+import {formatTrust} from "../../services/trust-format";
 
 import {useChainChoice} from "../../lib/chain-choice";
 import {StakerCount} from "./StakerCount";
@@ -51,7 +51,7 @@ function SideColumn({
                 {onChainAssets !== null
                     ? `${formatTrust(onChainAssets)} ${chain.symbol}`
                     : isLoading
-                      ? "reading vault…"
+                      ? "reading…"
                       : indexerAssets !== null
                         ? `${formatTrust(indexerAssets)} ${chain.symbol}`
                         : "—"}
@@ -60,20 +60,36 @@ function SideColumn({
                 {side === null ? (
                     "no market data"
                 ) : side.positionCount === null ? (
-                    "position count not reported by the indexer"
+                    "supporter count not reported by the indexer"
                 ) : (
                     <StakerCount count={side.positionCount} />
                 )}
             </p>
             {vault !== undefined && vault.shares !== null && vault.shares > 0n ? (
                 <p className="mt-2 font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-accent)]">
-                    your position: {formatTrust(vault.shares)} shares
+                    you: supporting
                 </p>
             ) : null}
+            {/* ADR `0103`: the vault's term id and the held share count stay checkable and
+                selectable, collapsed. A `Hint` would hide them where they cannot be copied. */}
             {vault !== undefined ? (
-                <p className="mt-2 font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-steel)] break-all">
-                    {truncateMiddle(vault.termId, 10, 8)}
-                </p>
+                <details className="mt-2">
+                    <summary className="cursor-pointer text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
+                        Verify
+                    </summary>
+                    <dl className="mt-2 font-mono text-[length:var(--text-body-sm)]">
+                        <dt className="text-[color:var(--color-steel)]">Vault id</dt>
+                        <dd className="break-all">{vault.termId}</dd>
+                        {vault.shares !== null && vault.shares > 0n ? (
+                            <>
+                                <dt className="mt-2 text-[color:var(--color-steel)]">
+                                    Your shares
+                                </dt>
+                                <dd>{formatTrust(vault.shares)}</dd>
+                            </>
+                        ) : null}
+                    </dl>
+                </details>
             ) : null}
         </div>
     );
@@ -121,8 +137,8 @@ export function MarketPanel({
             </div>
             {error !== null ? (
                 <p className="mt-3 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
-                    Vault balances could not be read: {error.message}. The indexer figures above are
-                    what is left.
+                    Balances could not be read: {error.message}. The indexer figures above are what
+                    is left.
                 </p>
             ) : null}
         </div>

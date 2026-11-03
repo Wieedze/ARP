@@ -140,7 +140,7 @@ export async function planToolRegistration(params: {
     url: string;
     publicClient: PublicClient;
     chain: StakeChain;
-    graphqlUrl?: string;
+    graphqlUrl: string;
     /**
      * The graph read, injectable so the planning can be tested without a network.
      *
@@ -176,9 +176,7 @@ export async function planToolRegistration(params: {
     // even when ours exists: a second atom for the same tool is worth knowing about either way.
     const lookup =
         params.lookup ??
-        intuitionToolAtomLookup(
-            params.graphqlUrl === undefined ? {} : {graphqlUrl: params.graphqlUrl},
-        );
+        intuitionToolAtomLookup({graphqlUrl: params.graphqlUrl});
     const spellings = input === normalisedUrl ? [normalisedUrl] : [input, normalisedUrl];
     const byTermId = new Map<string, ToolAtomCandidate>();
     for (const spelling of spellings) {
@@ -201,8 +199,8 @@ export async function planToolRegistration(params: {
         if (preview.shares === 0n) {
             throw new ToolRegisterGuardError(
                 "no-position",
-                `Creating this atom with ${assets} wei would buy 0 shares, so it would be born ` +
-                    `with no position — on the chain, and not a market. Nothing was sent.`,
+                `Registering this tool with ${assets} wei would buy no support: it would be public ` +
+                    `with no market. Nothing was sent.`,
             );
         }
         shares = preview.shares;
@@ -214,7 +212,7 @@ export async function planToolRegistration(params: {
             throw new ToolRegisterGuardError(
                 "cost-above-ceiling",
                 `Registering this tool would cost ${assets} wei, above this app's ` +
-                    `per-transaction ceiling of ${MAX_STAKE_WEI} wei (VITE_MAX_STAKE_TRUST). ` +
+                    `per-transaction ceiling of ${MAX_STAKE_WEI} wei. ` +
                     `Nothing was sent.`,
             );
         }
@@ -251,14 +249,14 @@ export async function submitToolRegistration(params: {
     if (registration.exists) {
         throw new ToolRegisterGuardError(
             "already-exists",
-            "This tool already has its atom. Take a position on it instead of creating a second one.",
+            "This tool is already registered. Support it instead of registering it a second time.",
         );
     }
     if (registration.assets > MAX_STAKE_WEI) {
         throw new ToolRegisterGuardError(
             "cost-above-ceiling",
-            "Registering would cost more than this app's per-transaction ceiling " +
-                "(VITE_MAX_STAKE_TRUST). Nothing was sent.",
+            "Registering would cost more than this app's per-transaction ceiling. " +
+                "Nothing was sent.",
         );
     }
 

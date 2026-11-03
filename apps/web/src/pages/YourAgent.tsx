@@ -7,12 +7,8 @@ import {AgentImport} from "./AgentImport";
 import {controlClass, linkClass, primaryControlClass} from "../lib/control-class";
 import {draftToAgentUri, useIdentityMint} from "../hooks/use-identity-mint";
 import {truncateMiddle} from "../services/trust-format";
-import {
-    MINT_CHAIN,
-    MINT_REGISTRY,
-    type MintQuote,
-    type MintResult,
-} from "../services/identity-mint";
+import {mintTargetOf, type MintQuote, type MintResult} from "../services/identity-mint";
+import {ConnectPrompt} from "../components/onboarding/ConnectPrompt";
 
 /**
  * `/agent` — one door for "get my agent into ARP", with one question at the top.
@@ -44,7 +40,8 @@ import {
  * on both Base and BSC. Base is the one offered, because Intuition's mirror covers Base and an
  * identity anywhere else is real and still unreadable by everything this app does next.
  *
- * The five-step testnet rig did not disappear — it moved to `/rig`, named for what it is.
+ * The five-step testnet rig moved to `/rig` and is now gone (`docs/tasks/35` §0): minting and the
+ * runtime wallet are this page, and signing a delegation is `/account`.
  */
 
 const BRANCH_PARAM = "have";
@@ -106,7 +103,7 @@ export function YourAgent({heading = true}: {heading?: boolean} = {}) {
     );
 }
 
-export function Choice({
+function Choice({
     selected,
     onClick,
     children,
@@ -188,10 +185,10 @@ type Phase =
  * claim should be checkable without trusting a server, so the default follows the argument. The
  * byte count is shown before signing, because it is the gas.
  */
-function MintIdentity() {
+export function MintIdentity() {
     const {address, isConnected, chainId} = useAccount();
     const {switchChainAsync, isPending: isSwitching} = useSwitchChain();
-    const {quote, submit} = useIdentityMint();
+    const {target, quote, submit} = useIdentityMint();
     const [phase, setPhase] = useState<Phase>({step: "idle"});
     const [name, setName] = useState("");
     const [description, setDescription] = useState("");
@@ -199,17 +196,28 @@ function MintIdentity() {
     const headingId = useId();
     const fieldId = useId();
 
-    const onMintChain = chainId === MINT_CHAIN.id;
+    // A quote or a result keeps the chain it was made on. Only a page with neither follows the
+    // toggle, so a flip cannot hide a minted id or relabel a pending signature.
+    const shown =
+        phase.step === "confirm" || phase.step === "signing"
+            ? mintTargetOf(phase.quote.chainId)
+            : phase.step === "done"
+              ? mintTargetOf(phase.result.chainId)
+              : target;
+    const onMintChain = chainId === shown.chain.id;
     const hasName = name.trim() !== "";
 
     async function handleQuote(owner: Address) {
         setPhase({step: "quoting"});
         try {
-            const agentUri = draftToAgentUri({
-                name,
-                description: description.trim() === "" ? undefined : description,
-                webEndpoint: endpoint.trim() === "" ? undefined : endpoint,
-            });
+            const agentUri = draftToAgentUri(
+                {
+                    name,
+                    description: description.trim() === "" ? undefined : description,
+                    webEndpoint: endpoint.trim() === "" ? undefined : endpoint,
+                },
+                target,
+            );
             setPhase({step: "confirm", quote: await quote(owner, agentUri)});
         } catch (error) {
             setPhase({step: "error", message: messageOf(error), hash: null});
@@ -221,7 +229,7 @@ function MintIdentity() {
         try {
             // The quote's own bytes, not a re-derivation: editing the form between the quote and
             // the signature must not change what is signed for.
-            setPhase({step: "done", result: await submit(current.agentUri)});
+            setPhase({step: "done", result: await submit(current)});
         } catch (error) {
             setPhase({step: "error", message: messageOf(error), hash: null});
         }
@@ -234,32 +242,30 @@ function MintIdentity() {
             </h2>
             <dl className="mt-5 grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 text-[length:var(--text-body-sm)]">
                 <Field label="Chain">
-                    {MINT_CHAIN.name} ({MINT_CHAIN.id})
+                    {shown.chain.name} ({shown.chain.id})
                 </Field>
-                <Field label="Registry">{truncateMiddle(MINT_REGISTRY, 12, 8)}</Field>
+                <Field label="Registry">{truncateMiddle(shown.registry, 12, 8)}</Field>
                 <Field label="Owner">
                     {address === undefined ? "—" : truncateMiddle(address, 12, 8)}
                 </Field>
             </dl>
 
             {!isConnected || address === undefined ? (
-                <p className="mt-6 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
-                    Connect a wallet to mint.
-                </p>
+                <ConnectPrompt label="Connect a wallet to mint" className="mt-6" />
             ) : !onMintChain ? (
                 <div className="mt-6">
                     <p className="max-w-[60ch] text-[length:var(--text-body-sm)]">
                         Your wallet is on chain{" "}
                         <span className="font-mono">{chainId ?? "unknown"}</span>. The registry is
-                        on {MINT_CHAIN.name} ({MINT_CHAIN.id}).
+                        on {shown.chain.name} ({shown.chain.id}).
                     </p>
                     <button
                         type="button"
-                        onClick={() => void switchChainAsync({chainId: MINT_CHAIN.id})}
+                        onClick={() => void switchChainAsync({chainId: shown.chain.id})}
                         disabled={isSwitching}
                         className={`mt-3 ${controlClass}`}
                     >
-                        {isSwitching ? "Switching…" : `Switch to ${MINT_CHAIN.name}`}
+                        {isSwitching ? "Switching…" : `Switch to ${shown.chain.name}`}
                     </button>
                 </div>
             ) : phase.step === "done" ? (
@@ -345,10 +351,11 @@ function Confirm({
     onSign: () => void;
     onCancel: () => void;
 }) {
+    const chain = mintTargetOf(quote.chainId).chain;
     const cost =
         quote.maxFeePerGas === null
             ? null
-            : `${formatEth(quote.gas * quote.maxFeePerGas)} ETH at current fees`;
+            : `${formatEth(quote.gas * quote.maxFeePerGas)} ${chain.nativeCurrency.symbol} at current fees`;
 
     return (
         <div className="mt-6 max-w-[36rem] border border-[color:var(--color-rule-strong)] p-4">
@@ -356,14 +363,12 @@ function Confirm({
                 Confirm before your wallet opens
             </p>
             <p className="mt-3 max-w-[52ch] text-[length:var(--text-body-sm)]">
-                You are about to mint one ERC-8004 identity on {MINT_CHAIN.name}, owned by{" "}
+                You are about to mint one ERC-8004 identity on {chain.name}, owned by{" "}
                 <span className="font-mono">{truncateMiddle(quote.owner, 10, 8)}</span>. It is
                 permanent and it cannot be un-minted.
             </p>
             <dl className="mt-4 grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 text-[length:var(--text-body-sm)]">
-                <Field label="Stored">
-                    {quote.uriBytes.toLocaleString("en-US")} bytes on chain
-                </Field>
+                <Field label="Stored">{quote.uriBytes.toLocaleString("en-US")} bytes, public</Field>
                 <Field label="Gas">{quote.gas.toLocaleString("en-US")}</Field>
                 <Field label="Cost">
                     {cost ?? "fees unavailable — your wallet will show them"}
@@ -416,7 +421,7 @@ function Minted({result}: {result: MintResult}) {
             </p>
             <p className="mt-3 font-mono text-[length:var(--text-body-sm)]">
                 <a
-                    href={`${MINT_CHAIN.blockExplorers.default.url}/tx/${result.hash}`}
+                    href={`${mintTargetOf(result.chainId).explorerUrl}/tx/${result.hash}`}
                     target="_blank"
                     rel="noreferrer"
                     className={linkClass}
@@ -428,7 +433,7 @@ function Minted({result}: {result: MintResult}) {
                 to={`/register?what=agent&have=yes`}
                 className={`mt-4 inline-block text-[length:var(--text-body-sm)] ${linkClass}`}
             >
-                Now link your staking account →
+                Now link your agent wallet →
             </Link>
         </div>
     );

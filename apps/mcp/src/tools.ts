@@ -16,12 +16,12 @@ export const TOOLS = [
   {
     name: 'arp_identity',
     description:
-      'Whether an agent has the identity atom a `uses` edge must carry as its subject. Ask this ' +
-      "first: the atom is written by Intuition's mirror, and measured 2026-10-20 the mirror holds " +
-      '28,648 against a Base registry whose highest minted id is 309,925 — so for about nine ' +
-      'agents in ten the answer is no, and every other tool here fails for them until it is yes. A ' +
-      'read; it reports the gap rather than closing it, because closing it is a write. The atom ids ' +
-      'are computable from your identity alone, with no API key.',
+      "Whether an agent's identity is public yet — the record every declaration it makes is " +
+      "attached to. Ask this first: the record is written by Intuition's mirror, and measured " +
+      '2026-10-20 the mirror holds 28,648 against a Base registry whose highest minted id is ' +
+      '309,925 — so for about nine agents in ten the answer is no, and every other tool here fails ' +
+      'for them until it is yes. A read; it reports the gap rather than closing it, because closing ' +
+      'it is a write. The ids it returns are computable from your identity alone, with no API key.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -47,11 +47,11 @@ export const TOOLS = [
   {
     name: 'arp_find_agents',
     description:
-      'Agents the graph holds, paged. Two orders, named for what they measure and not for a ' +
-      'ranking: `evidence-quantity` is how many statements the source holds about an agent, ' +
-      '`economic-conviction` is TRUST on its own atom. ARP composes no score — you get the parts. ' +
-      '`total` is the cohort size, never the page length, and an agent with several `same as` ' +
-      'edges is reported as ambiguous rather than resolved to one of them.',
+      'Agents listed in the ARP registry, a page at a time. `evidence-quantity` orders them by how ' +
+      'many public statements exist about each, `economic-conviction` by how much people put ' +
+      'behind it. Neither is a score: ARP rates nobody. `total` is the size of the whole list, ' +
+      'not of this page. An agent linked to more than one identity comes back as ambiguous ' +
+      'rather than resolved to one of them.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -69,55 +69,63 @@ export const TOOLS = [
   {
     name: 'arp_find_tools',
     description:
-      'The tools ARP can see, with where each one is hosted and what stands behind it. The step ' +
-      'before `arp_tool_reputation`, which needs an atom id you do not have yet. Two populations, ' +
-      'and `provenance` says which: `declared` means an agent wrote a `uses` edge naming it, ' +
-      '`registered` means somebody created its atom and opened a market without any agent having ' +
-      'declared anything. Never add the two figures — they are counted on different vaults. ' +
-      '`hosted_at` is the pointer: ARP stores no tool, so read the listing, go to the host and ' +
-      'decide for yourself — it is a home page, not a call target, and 28 of the 85 distinct ' +
-      'tools on mainnet `uses` edges carry none while 9 more carry the string "null" ' +
-      '(2026-10-28). `paid_declarations` is how many declarations somebody paid to ' +
-      'stand behind, and is null on a registered row because that needs the per-edge vaults. ' +
-      '`position_count` is the one that says whether anybody staked on a registered tool: every ' +
-      'term is born holding `minShare`, so its assets are non-zero either way. `title` and ' +
-      '`purpose` come from this repo, not the chain — `purpose` is the description the tool ' +
-      'publishes about itself, quoted and dated in `purpose_read_at`, and both are null for a ' +
-      'tool nobody catalogued. Agent declarations only on the declared side: the `uses` predicate ' +
-      'is shared and most of what sits on it is ordinary prose.',
+      'Search the ARP registry for a skill, a tool, an MCP server or an API that fits a need, ' +
+      'BEFORE you pick one yourself or search the web. Pass `query`, one or two words for the ' +
+      'need ("video editing", "transcription"): a result must hold every word. Or pass `domain`, ' +
+      'one broad word (`marketing`, `payment`), or both. Each result is short: `name`, `purpose` (one sentence), `url` (the source to read ' +
+      'before you use it, not something to call), `declarations` (how many agents said they used ' +
+      'it) and, for a skill, `installs` and, when its file shows one, `requires`: the CLI it ' +
+      'declares and a login line it mentions. Read `requires` before you pick: a skill that needs ' +
+      'an account the person does not have is not the right one. Results come best match first, 25 at a time: when ' +
+      '`next_offset` is not null, pass it as `offset` to see more. If a `domain` matches ' +
+      'nothing, `domains_available` lists the words the registry uses. ' +
+      '`detail: "full"` adds everything else the registry holds about each result. `id` is what ' +
+      '`arp_tool_reputation` takes. An empty result means the registry has nothing for that need, ' +
+      'not that nothing exists: answer from what you know rather than searching it again.',
     inputSchema: {
       type: 'object',
       properties: {
+        query: {
+          type: 'string',
+          description:
+            'One or two words for the need, in any language the descriptions use (mostly ' +
+            'English): "video editing", "pdf form", "transcription". A result must hold every ' +
+            'word, in its name or its description.',
+        },
         domain: {
           type: 'string',
           description:
-            'Search by NEED instead of listing everything: one lowercase word naming what the ' +
-            'tool is for — `payment`, `database`, `design`. The subtree under it is walked first, ' +
-            'so asking for `payment` returns a tool tagged `card` because the hierarchy says ' +
-            '`card` sits under `payment`. The response carries `domains_walked` so you can see ' +
-            'which hop did it. A tool carries one tag at its deepest domain and the ancestors are ' +
-            'never written, so there is no point asking for an ancestor you invented — ask for ' +
-            'the broad word and let the walk do the work. Omit it to list everything. A domain ' +
-            'whose chain of hierarchy triples up to the root has one unfunded link returns ' +
-            'nothing from above that link: the hierarchy has to be paid for, and that is the ' +
-            'mechanism, not a fault. The index you are reading is the one this server is configured with, and you cannot change it per call — that is deliberate: `has tag` and the hierarchy are permissionless to WRITE, so the filings are only an index when read through one chosen set of positions. The response names it in `domain_attestor`.',
+            'One lowercase word for the need: `marketing`, `payment`, `database`, `design`. Ask ' +
+            'for the broad word: narrower kinds are found under it, so `payment` also finds a ' +
+            'tool filed under `card`. `domains_walked` in the answer shows which. Omit it to list ' +
+            'everything. The registry read is fixed by the server, not by the caller ' +
+            '(`domain_attestors` names them).',
         },
         order: {
           type: 'string',
           enum: ['priced-edges', 'conviction', 'declarations'],
           description:
-            'What to rank by, and none is a score: how many declarations were paid for, the TRUST ' +
-            'behind them, or how many exist. Defaults to priced-edges.',
+            'Sort by backed declarations, by the amount behind them, or by how many there are. ' +
+            'None is a score. Defaults to priced-edges. With a `query`, best match comes first.',
         },
         limit: { type: 'number', description: '1 to 100. Defaults to 25.' },
+        offset: {
+          type: 'number',
+          description: 'Where the page starts. Pass the `next_offset` of the previous answer.',
+        },
+        detail: {
+          type: 'string',
+          enum: ['short', 'full'],
+          description:
+            'Defaults to short. `full` adds the backing behind each result, its pricing curve and ' +
+            'where each figure was read, at about twice the length.',
+        },
         curve_id: {
           type: 'number',
           description:
-            'Which bonding curve the figures are read at. Defaults to the chain default, 1 — ' +
-            'which is where the vaults are and not where the money is. Measured on mainnet ' +
-            '2026-10-20: curve 1 "Linear Curve" holds 26.20 TRUST at a share price of 1.000-1.060 ' +
-            'over 185 vaults; curve 2 "Offset Progressive Curve" holds 219.54 TRUST at 3.000-4.181 ' +
-            'over 28. Two different markets, so ask for the one you mean.',
+            'Advanced. Which pricing curve the amounts are read at; defaults to the chain ' +
+            'default, 1. Curves are separate markets holding different amounts, so name the one ' +
+            'you mean. Leave it out unless you know you need it.',
         },
       },
       required: [],
@@ -126,22 +134,21 @@ export const TOOLS = [
   {
     name: 'arp_tool_reputation',
     description:
-      'What agents staked on using a tool. Returns every incoming `uses` edge with its ' +
-      'subject, its support vault and its counter vault, plus totals. Amounts always come ' +
-      'with their position count: one vault here can hold 22.4 TRUST from a single account, ' +
-      'and the figure alone would read as a market.',
+      'Who declared using one tool, and how strongly. Returns each declaration with the agent ' +
+      'that made it, the amount behind it and the amount against it, plus totals. Read an ' +
+      'amount with how many supports make it up: one large amount can come from a single account.',
     inputSchema: {
       type: 'object',
       properties: {
         tool_atom_id: {
           type: 'string',
-          description: "The tool's Intuition atom id, 0x-prefixed 32 bytes.",
+          description: 'The `tool_atom_id` that `arp_find_tools` returned (0x + 32 bytes).',
         },
         attested_by: {
           type: 'string',
           description:
-            'Optional. Keep only edges this account holds a position in — a filter on ' +
-            'who stands behind the edge, never an exclusivity claim (ADR 0034).',
+            'Optional. Keep only declarations this account backs. A filter, never a claim that ' +
+            'nobody else does (ADR 0034).',
         },
       },
       required: ['tool_atom_id'],
@@ -150,12 +157,12 @@ export const TOOLS = [
   {
     name: 'arp_declare_used',
     description:
-      'Plan the on-chain declaration that an agent used a set of tools. Returns unsigned ' +
+      'Plan the public declaration that an agent used a set of tools. Returns unsigned ' +
       'calls — ARP holds no key and sends nothing; you sign them with yours, in the order ' +
-      'given. The subject is your canonical ERC-8004 identity atom, and the predicate is the ' +
-      "shared `uses` term, so the edges are readable by anyone following Intuition's partner " +
-      'guide. Needs no API key. Declaring costs a per-triple fee that is NOT recoverable: ' +
-      'check `total_value_wei` before signing.',
+      'given. Each declaration is attached to your ERC-8004 identity and worded with the shared ' +
+      "`uses` term, so anyone following Intuition's partner guide can read it. Needs no API key. " +
+      'Each declaration costs a fee in TRUST that does NOT come back: check `total_value_wei` ' +
+      'before signing.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -178,8 +185,8 @@ export const TOOLS = [
           type: 'array',
           items: { type: 'string' },
           description:
-            'Canonical tool URIs — a schema URI, an MCP endpoint, an `ipfs://` document. The ' +
-            'atom id derives from the URI, so nothing is pinned and no credential is needed.',
+            "Canonical tool URIs — a schema URI, an MCP endpoint, an `ipfs://` document. The tool's " +
+            'id derives from the URI, so nothing is pinned and no credential is needed.',
         },
       },
       required: ['agent_chain_id', 'agent_token_id', 'tools'],
@@ -232,38 +239,44 @@ export const TOOLS = [
   {
     name: 'arp_stake_on_used',
     description:
-      'Plan deposits that put TRUST behind declarations already on chain. Returns unsigned ' +
-      'calls; you sign and send them. The deposit lands on the `uses` EDGE, not on the ' +
-      "tool's atom: the edge is the claim YOU made, so a reader can attribute the position " +
-      'back to you, and it is the vault tool-reputation reads price. The atom carries the ' +
-      'market on the thing itself, open to anyone. A triple that is not on chain yet is ' +
-      'reported with `exists: false` and gets no call.',
+      'Plan support in TRUST for declarations that are already public. Returns unsigned calls; ' +
+      'you sign and send them. An entry fee comes off; the rest buys shares of the market at ' +
+      "today's price, held by the receiver. Withdrawing returns what they are worth then, less " +
+      'an exit fee, so the TRUST is at risk. The support lands on the DECLARATION, not on the tool itself: the ' +
+      'declaration is the one YOU made, so a reader can attribute the support back to you, and ' +
+      'it is what tool reputation reads. Supporting the tool itself is `arp_take_position`, open ' +
+      'to anyone. A declaration that is not public yet is reported with `exists: false` and gets ' +
+      'no call.',
     inputSchema: {
       type: 'object',
       properties: {
         receiver: {
           type: 'string',
           description:
-            'Who receives the shares. In direct mode your own account; in delegated mode the ' +
-            'delegator whose TRUST is spent. Not defaulted — guessing sends the position to ' +
-            'the wrong party.',
+            'Who will hold the support. Your own account when you spend your own TRUST; under a ' +
+            'permission, the account that granted it and whose TRUST is spent. Not defaulted — ' +
+            'guessing gives the support to the wrong party.',
         },
         curve_id: {
           type: 'number',
           description:
-            'Which bonding curve to take the position on. Defaults to the chain default, 1, and ' +
-            'the default is not the interesting curve. Measured on mainnet 2026-10-20: curve 1 ' +
-            '"Linear Curve" is 26.20 TRUST at a share price of 1.000-1.060; curve 2 "Offset ' +
-            'Progressive Curve" is 219.54 TRUST at 3.000-4.181. A position that appreciates has ' +
-            'to ask for curve 2. The two are different markets, not two views of one.',
+            'Advanced. Which pricing curve the support goes on. Defaults to the chain default, 1, ' +
+            'and the default is not the interesting curve. Measured on mainnet 2026-10-20: curve 1 ' +
+            '"Linear Curve" holds 26.20 TRUST at a price of 1.000-1.060; curve 2 "Offset ' +
+            'Progressive Curve" holds 219.54 TRUST at 3.000-4.181. Support that can grow in value ' +
+            'has to ask for curve 2. The two are different markets, not two views of one.',
         },
         targets: {
           type: 'array',
-          description: 'The edges to back, each with the amount in wei as a string.',
+          description: 'The declarations to support, each with the amount in wei as a string.',
           items: {
             type: 'object',
             properties: {
-              triple_id: { type: 'string', description: 'The `uses` triple id, 0x + 32 bytes.' },
+              triple_id: {
+                type: 'string',
+                description:
+                  "The declaration's id, 0x + 32 bytes — `triple_id` in `arp_declare_used`'s answer.",
+              },
               amount_wei: { type: 'string', description: 'TRUST in wei. Must be above zero.' },
             },
             required: ['triple_id', 'amount_wei'],
@@ -276,45 +289,51 @@ export const TOOLS = [
   {
     name: 'arp_take_position',
     description:
-      "Plan a deposit on an ATOM's vault — the market on the thing itself, not a claim about " +
-      'it. Returns unsigned calls; you sign and send them. This is a different act from ' +
-      '`arp_stake_on_used`: that one backs the `uses` EDGE you wrote, which is attributable to ' +
-      'you; this one buys into the market on the tool or agent itself, which anyone may do for ' +
-      'any reason. The two are never summed. A position can be left again with ' +
-      '`arp_exit_position` — a deposit nobody can withdraw is a donation.',
+      'Plan support in TRUST for a tool or an agent itself — not for a declaration about it. ' +
+      'Returns unsigned calls; you sign and send them. An entry fee comes off; the rest buys ' +
+      "shares of the market at today's price, held by the receiver. Withdrawing returns what " +
+      'they are worth then, less an exit fee, so the TRUST is at risk. This is a different act ' +
+      'from `arp_stake_on_used`: that one supports the declaration you made, which is ' +
+      'attributable to you; this one supports the tool or agent itself, which anyone may do for ' +
+      'any reason. The two are never summed. Support can be withdrawn with `arp_exit_position` ' +
+      '— support nobody can withdraw is a donation.',
     inputSchema: {
       type: 'object',
       properties: {
         term_id: {
           type: 'string',
-          description: "The atom's term id, 0x + 32 bytes. `arp_find_tools` returns these.",
+          description:
+            'The id of the tool or agent, 0x + 32 bytes — `tool_atom_id` from `arp_find_tools`, ' +
+            'or `identity_atom` from `arp_identity`.',
         },
         amount_wei: {
           type: 'string',
           description:
-            "TRUST in wei. Must be at least the chain's minDeposit, which is READ per plan and " +
+            'TRUST in wei. Must be at least the smallest amount the chain accepts (minDeposit), ' +
+            'which is READ per plan and ' +
             'is 10x apart between chains: 0.01 TRUST on mainnet 1155 against 0.001 on testnet ' +
             '13579. An amount tuned on testnet is a tenth of the mainnet floor.',
         },
         receiver: {
           type: 'string',
           description:
-            'Who receives the shares. In direct mode your own account; in delegated mode the ' +
-            'delegator whose TRUST is spent. Not defaulted — guessing sends the position to the ' +
-            'wrong party.',
+            'Who will hold the support. Your own account when you spend your own TRUST; under a ' +
+            'permission, the account that granted it and whose TRUST is spent. Not defaulted — ' +
+            'guessing gives the support to the wrong party.',
         },
         curve_id: {
           type: 'number',
           description:
-            'Which bonding curve. Defaults to the chain default, 1, and the default is not the ' +
-            'interesting curve. Measured on mainnet 2026-10-20: curve 1 is a share price of ' +
-            '1.000-1.060, curve 2 is 3.000-4.181. Two different markets, not two views of one.',
+            'Advanced. Which pricing curve. Defaults to the chain default, 1, and the default is ' +
+            'not the interesting curve. Measured on mainnet 2026-10-20: curve 1 is priced at ' +
+            '1.000-1.060, curve 2 at 3.000-4.181. Two different markets, not two views of one.',
         },
         min_shares: {
           type: 'string',
           description:
-            'Slippage floor in shares. Zero accepts any price, which on a bonding curve between ' +
-            'planning and signing is how a deposit buys less than it was quoted.',
+            'Protection against the price moving: the fewest shares you accept for the amount. ' +
+            'Zero accepts any price, which between planning and signing is how support buys less ' +
+            'than it was quoted.',
         },
       },
       required: ['term_id', 'amount_wei', 'receiver'],
@@ -323,18 +342,18 @@ export const TOOLS = [
   {
     name: 'arp_exit_position',
     description:
-      'Plan a redemption of shares on an atom back into TRUST. Returns unsigned calls; you ' +
-      'sign and send them. This call sends NO value — it is the only one on this server that ' +
-      'does not. Omit `shares` to leave the whole position. What it fetches is READ from ' +
-      '`previewRedeem`, never computed: the exit fee is a governance parameter and the curve ' +
-      'is not linear in shares on curve 2.',
+      'Plan withdrawing support from a tool or an agent, back into TRUST. Returns unsigned ' +
+      'calls; you sign and send them. This call sends NO value — it is the only one on this ' +
+      'server that does not. Omit `shares` to withdraw all of it. What you get back is READ ' +
+      'from the chain before you sign, never computed: the exit fee is a governance parameter ' +
+      'and the price does not move in a straight line on curve 2.',
     inputSchema: {
       type: 'object',
       properties: {
-        term_id: { type: 'string', description: "The atom's term id, 0x + 32 bytes." },
+        term_id: { type: 'string', description: 'The id of the tool or agent, 0x + 32 bytes.' },
         account: {
           type: 'string',
-          description: 'Whose position this is — the account whose shares are read.',
+          description: 'Whose support this is — the account it is read from.',
         },
         receiver: {
           type: 'string',
@@ -342,15 +361,18 @@ export const TOOLS = [
         },
         shares: {
           type: 'string',
-          description: 'How many shares to redeem. Omit for the whole position.',
+          description:
+            'How much to withdraw, in shares as `arp_take_position` reported them. Omit for all.',
         },
         curve_id: {
           type: 'number',
-          description: 'Which curve the position is on. Defaults to the chain default.',
+          description: 'Which pricing curve the support is on. Defaults to the chain default.',
         },
         min_assets: {
           type: 'string',
-          description: 'Slippage floor in TRUST wei. Zero accepts any price.',
+          description:
+            'Protection against the price moving: the least TRUST, in wei, you accept back. Zero ' +
+            'accepts any price.',
         },
       },
       required: ['term_id', 'account', 'receiver'],
@@ -362,7 +384,7 @@ export const TOOLS = [
       'Where another agent said it can be reached. Reads its ERC-8004 registration document and ' +
       'returns every endpoint it declared, split into CALLABLE (an http address you could send a ' +
       'request to) and NOT CALLABLE (a did:, a wallet, an email — an identifier with nowhere to ' +
-      "send). It is the agent's own claim about itself: declared, not verified. Use " +
+      "send). It is the agent's own word about itself: declared, not verified. Use " +
       '`arp_probe_endpoint` if you want to know whether one answers before you call it. ARP is ' +
       'not in the path of whatever you do next — you call it directly.',
     inputSchema: {
@@ -381,10 +403,10 @@ export const TOOLS = [
   {
     name: 'arp_record_reachable',
     description:
-      'Probe a tool and plan the position that records what you found. Returns unsigned calls you ' +
+      'Probe a tool and plan the support that records what you found. Returns unsigned calls you ' +
       "sign with YOUR key, so what lands is YOUR verdict — not ARP's. ARP's index reads one " +
-      "attestor's positions; everybody else's sit beside them, and a disagreement between them is " +
-      'the signal to re-probe. That is what replaces an oracle here: the claim is reproducible, so ' +
+      "publisher's support; everybody else's sits beside it, and a disagreement between them is " +
+      'the signal to re-probe. That is what replaces an oracle here: the finding is reproducible, so ' +
       'a second observer costs one HTTP request and can contradict the first. ' +
       'One observation is enough, deliberately. The scheduled prober needs three consecutive ' +
       "failures before it condemns, because it judges somebody else's service from the outside " +
@@ -401,11 +423,11 @@ export const TOOLS = [
         url: { type: 'string', description: 'The http(s) endpoint you called.' },
         tool_atom_id: {
           type: 'string',
-          description: "The tool's atom id, 0x + 32 bytes. `arp_find_tools` returns them.",
+          description: "The tool's id, 0x + 32 bytes — `tool_atom_id` in `arp_find_tools`.",
         },
         receiver: {
           type: 'string',
-          description: 'Your 0x address — the one that will hold the position and sign the calls.',
+          description: 'Your 0x address — the one that will hold the support and sign the calls.',
         },
         protocol: {
           type: 'string',
@@ -442,3 +464,65 @@ export const TOOLS = [
     },
   },
 ] as const;
+
+/**
+ * The Claude Desktop extension's own two tools (`ARP_TOOLS=desktop`, task 50). Worded for a user
+ * who is not to see a wallet, a key or a fee (`docs/tasks/50` §3b): ARP pays, and nothing is asked
+ * of them.
+ */
+export const DESKTOP_TOOLS = [
+  {
+    name: 'arp_get_skill',
+    description:
+      'Get a skill found with `arp_find_tools`: returns its SKILL.md, the instructions to follow to ' +
+      'use it. Pass the `id` from the search result. Read it and follow it; it may ask you to run ' +
+      'commands, so tell the person what it will do first. ARP keeps a note that this skill was ' +
+      'served to you, which `arp_declare_used` needs.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        id: {
+          type: 'string',
+          description: "The skill's `id` from `arp_find_tools`, 0x + 32 bytes.",
+        },
+      },
+      required: ['id'],
+    },
+  },
+  {
+    name: 'arp_declare_used',
+    description:
+      'After a skill from `arp_get_skill` actually helped with the task, record publicly that you ' +
+      'used it, so others can see which skills get used. ARP pays for it and supports the record in ' +
+      'your name; nothing is asked of the person. Only for a skill you used, never for one you only ' +
+      'read. The first time takes about a minute.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        id: { type: 'string', description: 'The `id` you passed to `arp_get_skill`.' },
+      },
+      required: ['id'],
+    },
+  },
+] as const;
+
+export const DESKTOP_TOOL_NAMES: ReadonlySet<string> = new Set(
+  DESKTOP_TOOLS.map((tool) => tool.name),
+);
+
+/**
+ * What a server started with `ARP_TOOLS=read` serves: the reads, and nothing that plans a write.
+ *
+ * The operators task 45 is for were promised a registry to search, and every tool outside this list
+ * talks about wallets, identities and stakes. Serving them anyway puts that vocabulary in front of
+ * an agent whose operator never asked for it.
+ *
+ * `GET /content/:atomId` is not a tool and stays served in this mode, on purpose: it is how an agent
+ * fetches a skill it found (task 45b'). It signs a receipt for having served the bytes, which is
+ * a record of access and moves no value (ADR `0080`).
+ */
+export const READ_TOOL_NAMES: ReadonlySet<string> = new Set([
+  'arp_find_agents',
+  'arp_find_tools',
+  'arp_tool_reputation',
+]);

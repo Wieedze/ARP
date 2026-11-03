@@ -86,13 +86,12 @@ A function shipped without tests is not done. Coverage targets:
 - Hooks and components: tested behaviourally, not by checking implementation details. React Testing
   Library or equivalent, not enzyme-style snapshots.
 
-  **This line was unsatisfiable from 2026-09-17 to 2026-10-27** — `docs/tasks/13` recorded that the repo
-  had no DOM environment, so the rule demanded a tool nobody could run. It is satisfiable now
-  (`apps/web/vitest.config.ts`, two projects, `@testing-library/react` on `happy-dom`), and the bill for
-  the gap is itemised in `docs/tasks/26`: eight defects on one page across three review rounds.
+  Satisfiable since 2026-10-27 (`apps/web/vitest.config.ts`, `@testing-library/react` on
+  `happy-dom`, ADR `0063`); before that the repo had no DOM environment, and `docs/tasks/26` itemises
+  what the gap cost.
 
-  **Behaviourally** is load-bearing and is the reason snapshots are named: a snapshot of that page
-  would have passed with all eight in it. Assert what a reader gets — a figure that is absent, a
+  **Behaviourally** is load-bearing and is the reason snapshots are named: a snapshot of the page in `docs/tasks/26`
+  would have passed with all eight of its defects in it. Assert what a reader gets — a figure that is absent, a
   live region that announces, a sentence that reads as one — never which class carried it.
 
 A test that is hard to write usually points at a design that mixed layers. Refactor, don't bury.

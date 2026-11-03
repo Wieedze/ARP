@@ -54,22 +54,3 @@ export function useAgentWallet(agentId: bigint | null | undefined) {
         staleTime: 30_000,
     });
 }
-
-/**
- * Read `totalAgents()` from the IdentityRegistry. Useful for the metrics
- * surface ("N agents registered").
- */
-export function useTotalAgents() {
-    return useQuery({
-        queryKey: ["totalAgents"],
-        queryFn: async () => {
-            const result = await publicClient.readContract({
-                address: ADDRESS,
-                abi: identityRegistryAbi,
-                functionName: "totalAgents",
-            });
-            return result;
-        },
-        staleTime: 30_000,
-    });
-}

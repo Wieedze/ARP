@@ -11,12 +11,12 @@ claim below points at a file and a line so you can check it rather than believe 
 This document used to call the MCP server "the node". There are three programs, and they do not
 share a trust surface, so each is described on its own and you install only the one you need.
 
-|                | the MCP server — `apps/mcp`                           | the node — `apps/node`                                | the hook — `apps/hook`           |
-| -------------- | ----------------------------------------------------- | ----------------------------------------------------- | -------------------------------- |
-| launched by    | your MCP client, over stdio                           | you, as a server                                      | your runtime, on every tool call |
-| reachable from | your machine (`127.0.0.1`)                            | **every interface** — it is the address you publish   | nowhere; it reads stdin          |
-| key            | `.arp/receipt-key`, generated, signs content receipts | your agent's `AGENT_PRIVATE_KEY`, signs hire receipts | none                             |
-| network        | the graph, the RPC, GitHub — counted below            | the RPC only                                          | none                             |
+|                | the MCP server — `apps/mcp`                           | the node — `apps/node`                               | the hook — `apps/hook`           |
+| -------------- | ----------------------------------------------------- | ---------------------------------------------------- | -------------------------------- |
+| launched by    | your MCP client, over stdio                           | you, as a server                                     | your runtime, on every tool call |
+| reachable from | your machine (`127.0.0.1`)                            | `127.0.0.1`, and a tunnel you rent is the way in     | nowhere; it reads stdin          |
+| key            | `~/.arp/receipt-key`, generated, signs content receipts | `~/.arp/node.key`, generated, or `AGENT_PRIVATE_KEY` | none                             |
+| network        | the graph, the RPC, GitHub — counted below            | the RPC; the tunnel binary, if it starts one         | none                             |
 
 Sections up to "If you want to verify" are about the **MCP server**. The node and the hook have a
 section each after it.
@@ -51,11 +51,25 @@ no wallet client, no signer parameter and no send path in the package that build
 and `packages/protocol/src/declare/` is where to check it. The one key the server does hold is below
 and it cannot move value.
 
+**Except in the sponsored mode, which you opt into.** With `ARP_TOOLS=desktop`, set by the Claude
+Desktop extension, or `ARP_TOOLS=sponsored`, set by `arp init --sponsored`, the server holds a local
+agent key in `~/.arp/agent-key` (ADR `0110`). That key sends exactly two zero-value transactions on
+testnet 13579, `register()` and one MultiVault approval, and refuses every other call before signing
+(`apps/mcp/src/desktop/agent-key.ts`, `refusal`). It also signs two typed-data messages that move
+nothing: the request a content receipt is issued to, and the request for a sponsored deposit. ARP's
+sponsoring service pays everything that carries value. Without one of those two values, the paragraph above holds.
+
 **It executes nothing it fetches.** A skill's file is Markdown. It is returned with
 `content-type: text/plain`, `x-content-type-options: nosniff` and
 `content-disposition: attachment`, never rendered, never parsed, never written to disk by the server
 (`apps/mcp/src/content.ts`, the response at the end of `serveContentRequest`). Your agent reads it;
-the server does not.
+the server does not. `GET /content/:atomId?bundle=1` returns the skill's whole directory, scripts included, as
+JSON, and the server writes none of it (task 57).
+
+**In the sponsored mode with `ARP_SKILLS_DIR`**, the server process that runs your MCP tools writes
+a fetched skill's files, scripts included, under `<ARP_SKILLS_DIR>/<name>/`, after checking every
+file against the receipt (task 57). It runs none of them. Your agent runtime may, as it would after
+`npx skills add`.
 
 **It cannot be made to fetch somewhere else.** This is the one that would matter most if it were
 wrong, so it is worth stating precisely. The only input to the content route is an atom id. That is
@@ -67,18 +81,37 @@ reaches the outbound URL.** `packages/protocol/test/content-serve.test.ts` has a
 ## Every file it creates
 
 ```
-.arp/receipt-key       the signing key. Generated on first run, mode 0600
+~/.arp/receipt-key     the signing key. Generated on first run, mode 0600
 .arp/session.jsonl     what the hook recorded, if you wired the hook
 .arp/receipts.jsonl    what you fetched through a server, and the receipts
 .arp/skills/<name>/SKILL.md   files you fetched, if you used arp-fetch-skill.ts
 ```
 
-That is all of it, and `.arp/` is in `.gitignore`. Nothing is written outside the working directory.
-Nothing is written to your home directory, your shell profile, your git config or any system path.
+That is all of it. The key is in your home directory (`ARP_HOME` moves it), so it is one key
+whatever directory your client starts the server in; the logs are in the working directory's
+`.arp/`, which carries its own `.gitignore` of `*`. Nothing is written to your shell profile, your
+git config or any system path.
+
+**Until 2026-11-02 the key was `.arp/receipt-key` in the working directory** (ADR `0116`). A server
+that finds one there and none in `~/.arp/` refuses to start and prints the `mv` to run, rather than
+generating a new key: a new key is a new signer, and a sponsoring service that accepted the old one
+would stop accepting your receipts.
+
+**The sponsored mode writes more** (`ARP_TOOLS=desktop` or `sponsored`), and this is all of it:
+
+```
+~/.arp/agent-key              the agent's key, mode 0600, created on the first fetch
+~/.arp/agent.json             the agent's id and identity atom, once it is registered
+~/.arp/receipts.jsonl         every skill served to the agent, with its receipt
+<ARP_SKILLS_DIR>/<name>/**    the skill's files, scripts included, when ARP_SKILLS_DIR is set
+.arp/receipts.jsonl           a copy of the receipt for the hook, when ARP_SKILLS_DIR is set
+```
 
 ## Every outbound connection
 
-Five fixed hosts, the first two configurable:
+Five fixed hosts, the first two configurable. The sponsored mode also reaches two more, both
+configurable: ARP's content server (`ARP_CONTENT`) and ARP's sponsoring service (`ARP_SPONSOR`),
+both local by default.
 
 ```
 the Intuition graph    reads. Set by ARP_TARGET, or INTUITION_GRAPHQL_URL
@@ -125,9 +158,14 @@ Both halves are fixed, 2026-10-29:
   real host that an earlier version of the guard refused.
 
 **What that guard does not cover, said plainly.** A hostname that _resolves_ to a private address —
-`example.com` pointing at `127.0.0.1`, or DNS rebinding between the check and the connection — gets
-through. Closing it needs resolving the name and connecting to the resolved address, which `fetch`
-does not let you do. So it is a guard against the easy case and not a boundary.
+`example.com` pointing at `127.0.0.1` — got through until 2026-11-03. The MCP server now resolves
+every hop's name first, through the system resolver, and refuses it when any address it resolves to
+is private (`apps/mcp/src/host-guard.ts`, tested with a stub resolver in
+`apps/mcp/test/host-guard.test.ts`); `ARP_ALLOW_PRIVATE_PROBE=1` turns that off with the rest.
+**DNS rebinding still gets through**: `fetch` resolves the name again when it connects, and an
+answer that changes between the two lookups is not seen. Closing it needs connecting to the
+resolved address, which `fetch` does not let you do. So it is a guard against the common case and
+not a boundary.
 
 **A redirect was the other way through, and it needed no DNS at all.** `fetch` follows redirects by
 itself, so a caller-controlled **public** host answering
@@ -138,14 +176,15 @@ have stopped it. **A guard on hop one is not a guard.**
 ```
 arp_agent_endpoints    fixed. Redirects are followed by hand, every hop through the same
                        check, at most three hops
-arp_probe_endpoint     NOT fixed, and this is the one thing in this document that is a
-                       known open hole rather than a stated limit
+arp_probe_endpoint     fixed the same way since task 60 (both go through `guardedFetchText`
+                       in packages/protocol/src/verify/probe.ts). A refused hop is
+                       `inconclusive` with code `refused`: never a verdict about the agent
 ```
 
-The probe is left for a reason rather than an oversight: a refused redirect has to **mean**
-something in its `live` / `dead` / `inconclusive` vocabulary, and that vocabulary is deliberate —
-"a timeout is an answer about the agent, a TLS or DNS failure is not, because it could equally be
-us". Deciding what a refused redirect is needs its own decision record, and it is in `FUTURE.md`.
+The probe was the open hole in this document until task 60. Its vocabulary is deliberate — "a
+timeout is an answer about the agent, a TLS or DNS failure is not, because it could equally be us"
+— and a refusal is this server's decision, not the agent's answer, so it lands in `inconclusive`
+(`refusedOutcome` in `probe.ts`).
 
 **And "do not open `ARP_HOST`" does not cover the registration route.** That advice bounds a caller
 who has to reach you over the network; `arp_agent_endpoints` is called by a process on your own
@@ -220,20 +259,33 @@ Three things it shows that a count alone would hide:
 ```
 PORT                   which port to listen on. Default 3002
 ARP_HOST               which interface. Default 127.0.0.1 — loopback only
+ARP_ALLOWED_HOSTS      comma-separated host:port values the HTTP transport also answers to, besides
+                       its loopback forms and ARP_HOST. Needed only with ARP_HOST=0.0.0.0
 ARP_ALLOW_PRIVATE_PROBE  set to 1 to let the probe reach a private address
 ARP_TARGET             testnet | mainnet. Picks the chain, the graph and the RPC
 ARP_TRANSPORT          stdio, for an MCP client
 INTUITION_GRAPHQL_URL  override the graph
 INTUITION_RPC_URL      override the RPC
 ARP_MULTI_VAULT        override the contract address
-ARP_DOMAIN_ATTESTOR    whose domain tags to read. A property of the server, never a request parameter
+ARP_DOMAIN_ATTESTOR    whose domain tags to read, one address or several comma-separated (default: ARP's two). A property of the server, never a request parameter
 GITHUB_TOKEN           optional. Raises GitHub's 60-requests-an-hour limit on file listings
+ARP_HOME               where the receipt key and the sponsored mode's state live. Default ~/.arp
 ARP_RECEIPT_KEY        a key you manage, instead of the generated one. Never a funded one
 ARP_NO_RECEIPTS        set to 1 to run with no key at all
 ARP_ACCEPTED_SIGNERS   comma-separated. Which receipt signers THIS server's reader accepts
 ARP_CHAIN_ID           which chain's catalogue apps/mcp/src/session-log.ts reads
 ARP_SESSION_LOG        where the hook writes. Default .arp/session.jsonl
 ARP_RECEIPTS           where fetches are recorded. Default .arp/receipts.jsonl
+ARP_TOOLS              read: the three reads only. desktop or sponsored: the reads plus arp_get_skill
+                       and arp_declare_used, with a local agent key in ~/.arp/agent-key (ADR 0110),
+                       over stdio only: the server refuses to start them over HTTP (ADR 0116).
+                       Unset: every tool
+ARP_SKILLS_DIR         desktop/sponsored only, set by `arp init --sponsored`: arp_get_skill writes
+                       <dir>/<name>/**, relative to the working directory, refusing (and writing
+                       nothing) when a different file is already at one of those paths, and
+                       appends the receipt to ARP_RECEIPTS
+ARP_CONTENT            desktop/sponsored only: the content server. Default http://127.0.0.1:3002
+ARP_SPONSOR            desktop/sponsored only: the sponsoring service. Default http://127.0.0.1:3200
 ARP_ACTIVITY_DIR       session-log.ts --serve only: the directory it tails. Default .arp
 ARP_ACTIVITY_PORT      session-log.ts --serve only: its port. Default 3003, on 127.0.0.1
 ARP_ACTIVITY_ORIGINS   session-log.ts --serve only: comma-separated origins added to the CORS list
@@ -254,7 +306,7 @@ address. Run it only while you want a browser to see that.
 
 ## The key, and what losing it would cost you
 
-The server generates `.arp/receipt-key` on first run so you have nothing to configure. It signs one
+The server generates `~/.arp/receipt-key` on first run so you have nothing to configure. It signs one
 thing: a **content receipt**, an EIP-712 statement that this server served these exact bytes to this
 caller at this time.
 
@@ -273,6 +325,13 @@ publishes its current signer at `GET /` so anyone can see which key they are bei
 
 `ARP_NO_RECEIPTS=1` runs with no key. The content route still serves bytes; what you lose is the
 corroboration.
+
+**Every key file follows one rule** (ADR `0116`): the receipt key, the sponsored mode's agent key,
+the node key and the sponsoring service's key are each refused, and the program stops, when anyone
+but their owner can read them — `chmod 600` and start again. A generated one is created 0600 in a
+0700 directory. Windows has no POSIX mode, so the check does not run there. The node's
+`AGENT_PRIVATE_KEY` and this server's `ARP_RECEIPT_KEY` are the two keys that may come from the
+environment instead; both are documented here and both are your choice.
 
 **`ARP_RECEIPT_KEY` is your own risk and the code cannot check it.** Nothing here can tell a funded
 key from an empty one — that would need a balance read on every chain it might hold value on — so
@@ -371,7 +430,12 @@ Stated because a security note that lists only its strengths is marketing.
   you cannot explain to yourself is a plan to refuse.
 - **A caller you let reach the port.** The server answers whoever can talk to it, and it has no
   authentication. On loopback that is the processes on your machine, which is the intended
-  deployment. Open `ARP_HOST` and it is whoever can route to you.
+  deployment. Open `ARP_HOST` and it is whoever can route to you. What it does refuse, since ADR
+  `0116`, is a **web page**: a request whose `Host` is not this server's (`127.0.0.1:<port>`,
+  `localhost:<port>`, `ARP_HOST`, `ARP_ALLOWED_HOSTS`) or whose browser `Origin` is another site's
+  gets a `403`, and a `POST` that is not `application/json` gets a `415` — the content type a page
+  can send cross-origin without the browser asking first. `apps/mcp/test/server.test.ts`, "a
+  request from a web page", sends all three.
 
 ## If you want to verify all of this rather than read it
 
@@ -387,49 +451,84 @@ with their own tools.
 ## The node — `apps/node`
 
 ```
-AGENT_PRIVATE_KEY=… AGENT_REGISTRY=eip155:13579:0xC165… AGENT_ID=2 \
+AGENT_REGISTRY=eip155:13579:0xC165… AGENT_ID=2 \
   AGENT_NODE_PORT=3100 bun run apps/node/src/node.ts
 curl -s localhost:3100/healthz
 ```
 
-| variable                        | default                    | what it is                                                            |
-| ------------------------------- | -------------------------- | --------------------------------------------------------------------- |
-| `AGENT_PRIVATE_KEY`             | required                   | the agent's key; signs hire receipts, never a transaction             |
-| `INTUITION_RPC_URL`             | required                   | the chain payments are read on — also the receipt's `chainId`         |
-| `AGENT_REGISTRY` + `AGENT_ID`   | both unset                 | the agent as its ERC-8004 registration file names it; both or neither |
-| `AGENT_NODE_MIN_BUDGET`         | `0.001`                    | the smallest payment accepted, in the chain's native unit             |
-| `AGENT_NODE_LEDGER`             | `.arp/node-payments.jsonl` | every payment already used, one line each                             |
-| `AGENT_NODE_MAX_BODY_BYTES`     | `65536`                    | larger bodies are a `413`                                             |
-| `AGENT_NODE_HANDLER_TIMEOUT_MS` | `60000`                    | a slower handler is a `504`, and the payment is released              |
-| `AGENT_NODE_RATE_LIMIT`         | `30`                       | `POST /task` per client IP per minute, paid or not; then `429`        |
+**Reached through a tunnel you rent** (task 39, ADR `0094`). The node listens on `127.0.0.1` only.
+`cloudflared` or `ngrok`, found on `PATH`, is started as a child of the node and prints a public
+`https://` URL, which the node prints in turn. With `cloudflared` that is a quick tunnel
+(`cloudflared tunnel --url http://127.0.0.1:<port>`): no account, a `trycloudflare.com` address, and a
+new address on every start, so a binding made over it holds until the node restarts and
+`arp init --node` runs again after. A stable address — a named tunnel on your own Cloudflare account,
+given as `ARP_NODE_PUBLIC_URL` — is a follow-up. ARP builds no relay and carries none of the traffic.
+
+**Bound to your agent once, by its owner** — `arp init --node`. The node sends the directory your
+agent's id, its public key and its endpoint; the directory reads the token's owner and returns a
+Sign-In with Ethereum message; the owner signs it in their own wallet and pastes the signature, and
+the node key signs it too. `verifyEndpointBinding` (`@arp-protocol/core`) re-checks the result
+against the registry with nothing from ARP, and a transfer of the token voids it (ADR `0095`). No
+directory is hosted yet: `--directory` names one.
+
+| variable                        | default                    | what it is                                                                                                                             |
+| ------------------------------- | -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `AGENT_PRIVATE_KEY`             | unset                      | used instead of the node key file when set                                                                                             |
+| `ARP_NODE_KEY_FILE`             | `~/.arp/node.key`          | the node key, created 0600 on first start; refused if others can read                                                                  |
+| `ARP_HOME`                      | `~/.arp`                   | where the node key and the ledger live when their own variables are unset                                                              |
+| `ARP_NODE_TUNNEL`               | `auto`                     | `auto`, `cloudflared`, `ngrok`, `configured` or `none` (localhost)                                                                     |
+| `ARP_NODE_PUBLIC_URL`           | unset                      | the `https` URL of a tunnel you run; `auto` prefers it                                                                                 |
+| `INTUITION_RPC_URL`             | required                   | the chain payments are read on — also the receipt's `chainId`                                                                          |
+| `AGENT_REGISTRY` + `AGENT_ID`   | both unset                 | the agent as its ERC-8004 registration file names it; both or neither                                                                  |
+| `AGENT_NODE_MIN_BUDGET`         | `0.001`                    | the smallest payment accepted, in the chain's native unit                                                                              |
+| `AGENT_NODE_LEDGER`             | `~/.arp/node-payments.jsonl` | every payment already used, one line each                                                                                            |
+| `AGENT_NODE_MAX_BODY_BYTES`     | `65536`                    | larger bodies are a `413`                                                                                                              |
+| `AGENT_NODE_HANDLER_TIMEOUT_MS` | `60000`                    | a slower handler is a `504` and its `context.signal` is aborted; the payment is released once the handler settles |
+| `AGENT_NODE_RATE_LIMIT`         | `30`                       | `POST /task` per client per minute, paid or not; then `429`. The client is `cf-connecting-ip` behind `cloudflared`, the right-most `x-forwarded-for` hop behind ngrok, the socket address otherwise |
+| `AGENT_NODE_RECEIPT_TTL`        | `86400`                    | seconds a hire receipt stays usable: its signed `expiresAt` is `issuedAt` plus this                                                    |
 
 What makes an agent reachable: it listens at the address the agent publishes in its ERC-8004
 registration file, checks on chain that the requester paid it before doing any work, and returns a
 receipt signed with the agent's key (ADR `0045`, format ADR `0083`). The work itself is yours — `ARP_NODE_HANDLER`
 names a module exporting `handle(payload, context)`; without one it echoes.
 
-**It signs receipts and never transactions.** The key is the agent's because a hire receipt must be
-signed by the agent, and a signature is not a spend. Its only outbound connection is the RPC it
-reads the payment from, it loads one module you name, and it writes one file — the ledger below:
+**It signs receipts and never transactions.** The key signs because a hire receipt must be signed,
+and a signature is not a spend. It is also the address a hirer pays, since the payment check below
+requires the payment be sent to it. Its own outbound connection is the RPC it reads the payment
+from; it starts at most one child, the tunnel binary, whose connection is to Cloudflare or ngrok; it
+loads one module you name; and it writes two files — the node key on first start, and the ledger
+below:
 
 ```
-grep -nE "createPublicClient\(|writeFile|appendFile|mkdir|import\(|async fetch\(" apps/node/src/node.ts apps/node/src/task.ts
+grep -nE "createPublicClient\(|writeFile|appendFile|mkdir|import\(|async fetch\(|spawnChild\(" apps/node/src/node.ts apps/node/src/task.ts apps/node/src/node-key.ts apps/node/src/tunnel.ts packages/protocol/src/node/local-state.ts
 ```
 
-prints six lines on 2026-10-30: the `node:fs` import, the ledger's `mkdirSync` and `appendFileSync`
-(`task.ts:6`, `:85`, `:86`), the server's own inbound `fetch(request)` handler (`task.ts:246`), your
-handler's import (`node.ts:112`) and the RPC client (`node.ts:120`).
+prints twelve lines on 2026-11-03. Since ADR `0116` the node's two writes go through
+`@arp-protocol/core/node` (`packages/protocol/src/node/local-state.ts`), so that file is in the
+command: its `node:fs` imports of `appendFileSync`, `mkdirSync` and `writeFileSync` (`:12`, `:16`,
+`:21`), the key file's `mkdirSync` and `writeFileSync` (`:129`, `:130`), the ledger line's
+`mkdirSync` and `appendFileSync` (`:138`, `:139`), and a lock file's `mkdirSync` (`:177`), which the
+sponsoring service uses and the node does not. In the node itself: the server's own inbound
+`fetch(request)` handler (`task.ts:251`), your handler's import (`node.ts:142`), the RPC client
+(`node.ts:150`), and the tunnel's child process (`tunnel.ts:196`). `register.ts` is not in it: it
+runs only under `arp init --node`, never in the node. It printed ten lines on 2026-11-02, before
+the writes moved.
 
-**It binds every interface**, unlike the MCP server, because being reached is its job:
-`serveFetch({ port, maxBodyBytes })` in `main()` at `apps/node/src/node.ts:142` passes no hostname,
-and `node:http` then listens on every interface.
+**It binds `127.0.0.1`**, like the MCP server: `serveFetch` in `main()` in `apps/node/src/node.ts`
+passes `hostname: '127.0.0.1'`. Until 2026-10-30 it passed none and listened on every interface,
+because it was the address the agent published; the tunnel is that address now.
 
 **One payment buys one job.** Before any work the node checks that the payment is mined and did
 not revert, was sent to this agent, came from the declared requester and paid at least
 `AGENT_NODE_MIN_BUDGET` — and that it has not been used before. Every accepted payment is appended
-to `AGENT_NODE_LEDGER` (`.arp/node-payments.jsonl` in the working directory by default), read back
-at start, and a second presentation is a `409`. A payment whose handler failed is released, so the
-requester can retry with it.
+to `AGENT_NODE_LEDGER` (`~/.arp/node-payments.jsonl` by default), read back at start, and a second
+presentation is a `409`. Until 2026-11-02 the default was `.arp/` in the working directory, so a
+node started from another directory read an empty ledger and accepted every payment again (ADR
+`0116`); a node that finds the old file there and none in `~/.arp/` refuses to start and prints the
+`mv` to run. A payment whose handler failed is released, so the
+requester can retry with it. One whose handler ran past `AGENT_NODE_HANDLER_TIMEOUT_MS` is a `504`,
+the handler's `context.signal` is aborted, and the payment stays claimed until the handler settles,
+so a retry cannot start a second job beside one still running (ADR `0116`).
 
 Until 2026-10-30 there was no ledger: on testnet 13579 one 0.001 payment (`0xf3649dbe…`) was
 presented twice and served twice. After the fix the same payment against the built node answered
@@ -437,16 +536,24 @@ presented twice and served twice. After the fix the same payment against the bui
 node accepted before it existed is accepted once more; and deleting the file forgets every payment
 in it. Keep it where the node's state lives.
 
-**The receipt is EIP-712, and a stranger checks it in three steps** (ADR `0083`). The node answers
-`{ result, receipt: { format: "eip712", receipt, chainId, agent, signature } }`, where `receipt`
-names the agent's ERC-8004 identity, the requester, the payment, the amount, the hashes of the
-payload and of the result, and the time. The domain is `{ name: "ARP Hire Receipt", version: "1",
-chainId }`, with the payment's chain. The layout follows x402's signed receipt and ERC-8004's
-identity string.
+**The receipt is EIP-712, and a stranger checks it in three steps** (ADR `0083`; v2 since task 44,
+ADR `0101`). `POST /task` takes `verifier` and `termId` beside the payment and the requester: the
+one address the receipt is for (a `ReceiptEnforcer` deployment, or the sponsoring service's
+`receiptVerifier`) and the term the requester will deposit on. Without either it is a `400`. The
+node answers `{ result, receipt: { format: "eip712", receipt, chainId, verifyingContract, agent,
+signature } }`, where `receipt` names the agent's ERC-8004 identity, the requester, the payment, the
+amount, the hashes of the payload and of the result, the time, the term, and `expiresAt`
+(`AGENT_NODE_RECEIPT_TTL` after issuance). The domain is `{ name: "ARP Hire Receipt", version: "2",
+chainId, verifyingContract }`, with the payment's chain and the verifier asked for; a verifier
+accepts only a receipt naming it. A v1 receipt, signed before task 44 with no verifier, still
+verifies in step 1 and is accepted by no sponsoring path. The layout follows x402's signed receipt
+and ERC-8004's identity string.
 
 1. `verifyHireReceipt(receipt)` (`@arp-protocol/core`) recovers the signer.
-2. `getAgentWallet(agentId)` on the registry `agentRegistry` names should be that signer — on
-   2026-10-30, testnet 13579, agent 2's wallet was `0x9C985BEF…` and so was the recovered key.
+2. That signer should be the agent's: either `getAgentWallet(agentId)` on the registry
+   `agentRegistry` names, for a node run with `AGENT_PRIVATE_KEY` — on 2026-10-30, testnet 13579,
+   agent 2's wallet was `0x9C985BEF…` and so was the recovered key — or the `nodeAddress` of an
+   endpoint binding `verifyEndpointBinding` reads as `bound`, for a node with a generated key.
 3. `getTransaction(payment)` on `chainId` should show `requester` paying the agent `paid`, and
    `hireReceiptMatches(receipt, payload, result)` should hold for the JSON you sent and received.
 

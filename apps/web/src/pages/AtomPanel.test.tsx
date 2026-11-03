@@ -170,7 +170,7 @@ describe("while the read is in flight", () => {
         const live = container.querySelector('[aria-live="polite"]');
         expect(live).not.toBeNull();
         expect(live).toHaveAttribute("aria-busy");
-        expect(screen.getByRole("img", {name: /reading the atom/i})).toBeInTheDocument();
+        expect(screen.getByRole("img", {name: /reading the page/i})).toBeInTheDocument();
     });
 
     it("names which read is running, not just that one is", async () => {
@@ -185,7 +185,7 @@ describe("while the read is in flight", () => {
 describe("a malformed id", () => {
     it("says so instead of reading, because it is a broken link and not a quiet atom", async () => {
         renderAt("not-an-atom");
-        expect(screen.getByRole("heading", {name: /not an atom id/i})).toBeInTheDocument();
+        expect(screen.getByRole("heading", {name: /not a valid id/i})).toBeInTheDocument();
         expect(read).not.toHaveBeenCalled();
     });
 });
@@ -209,7 +209,7 @@ describe("an atom nobody points at", () => {
         read.mockResolvedValue(standing({exists: false, market: null, groups: [], edgeCount: 0}));
         renderAt();
         await waitFor(() =>
-            expect(screen.getByRole("heading", {name: /no such atom/i})).toBeInTheDocument(),
+            expect(screen.getByRole("heading", {name: /nothing at this id/i})).toBeInTheDocument(),
         );
     });
 });
@@ -296,9 +296,9 @@ describe("the figures", () => {
             expect(screen.getByRole("heading", {name: "slither"})).toBeInTheDocument(),
         );
 
-        expect(screen.getAllByLabelText("1 distinct staker").length).toBeGreaterThan(0);
+        expect(screen.getAllByLabelText("1 distinct supporter").length).toBeGreaterThan(0);
         expect(screen.getByText(/6\.03586585 tTRUST/)).toBeInTheDocument();
-        expect(screen.queryByText(/distinct staker/)).not.toBeInTheDocument();
+        expect(screen.queryByText(/distinct supporter/)).not.toBeInTheDocument();
     });
 
     it("marks a truncated read as a floor rather than a total", async () => {
@@ -362,7 +362,7 @@ describe("one page per agent", () => {
         // The atom view must not appear at all — not even for a frame. Rendering it while the
         // identity is in flight would flash the page the reader is being moved away from, which is
         // why `AtomPanel` waits for both reads before it draws anything.
-        await waitFor(() => expect(screen.queryByText(/reading the atom/i)).toBeNull());
+        await waitFor(() => expect(screen.queryByText(/reading the page/i)).toBeNull());
         expect(screen.queryByRole("heading", {name: "slither"})).toBeNull();
     });
 
@@ -427,7 +427,7 @@ describe("the claim field", () => {
         // This read `/position|nothing behind it/`, a disjunction that passed on either branch and
         // so tested neither. The fixture's claim has one position, so it is the first branch; the
         // zero-position branch is the test below.
-        expect(slot?.textContent ?? "").toMatch(/position/);
+        expect(slot?.textContent ?? "").toMatch(/support/);
     });
 
     it("moves the reading head to the claim that takes focus", async () => {
@@ -522,7 +522,7 @@ describe("the two writes", () => {
      */
     const declareLabel = /declare that your agent used this/i;
     /** The card's own control heading, now that the section above it is gone. */
-    const marketLabel = /^take a position$/i;
+    const marketLabel = /^support this$/i;
 
     it("shows both writes open on an atom the chain holds", async () => {
         read.mockResolvedValue(standing());
@@ -592,7 +592,7 @@ describe("the two writes", () => {
         // non-recoverable fee to assert a use of nothing, or to back nothing.
         read.mockResolvedValue(standing({exists: false, groups: [], edgeCount: 0}));
         renderAt();
-        await waitFor(() => expect(screen.getByText(/no such atom/i)).toBeInTheDocument());
+        await waitFor(() => expect(screen.getByText(/nothing at this id/i)).toBeInTheDocument());
         expect(screen.queryByRole("heading", {name: declareLabel})).not.toBeInTheDocument();
         expect(screen.queryByRole("heading", {name: marketLabel})).not.toBeInTheDocument();
     });
@@ -616,9 +616,9 @@ describe("the two writes", () => {
     });
 
     it("states the mainnet refusal as one line and never as the column's headline", async () => {
-        // Mainnet is the **default** chain, and `security.md` authorises a human in the panel under
-        // ADR `0017` — which covers a deposit into a `has trust provider` vault, not creating a
-        // `uses` edge. So the refusal is the ordinary case. The regression this guards is the first
+        // Mainnet was the default chain until ADR `0105`, and `security.md` authorises a human in the
+        // panel under ADR `0017` — which covers a deposit into a `has trust provider` vault, not
+        // creating a `uses` edge. So the refusal is what every mainnet reader meets. The regression this guards is the first
         // version of that branch: an `h2` in display type at the top of the column, which made the
         // loudest element on every atom page a feature announcing that it does not work.
         read.mockResolvedValue(standing());
@@ -627,11 +627,13 @@ describe("the two writes", () => {
             route: {path: "/atom/:atomId", at: `/atom/${ATOM}`},
         });
         await waitFor(() =>
-            expect(screen.getByText(/declaring a use is not open on/i)).toBeInTheDocument(),
+            expect(screen.getByText(/declaring a use · not on/i)).toBeInTheDocument(),
         );
+        // The instruction is a control now, not a sentence (task 46).
+        expect(screen.getByRole("button", {name: "Switch to testnet"})).toBeInTheDocument();
         expect(screen.queryByLabelText(/your agent/i)).not.toBeInTheDocument();
         for (const node of container.querySelectorAll("h1, h2, h3")) {
-            expect(node.textContent ?? "").not.toMatch(/not open/i);
+            expect(node.textContent ?? "").not.toMatch(/not on/i);
         }
     });
 

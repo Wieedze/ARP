@@ -27,7 +27,7 @@
  *
  * That holds for a declaration the agent pays for itself, which is this path. ADR `0094` makes a
  * receipt the condition of an ARP-sponsored deposit and of the _proven_ label; that refusal belongs
- * to the sponsoring service, which is not built.
+ * to the sponsoring service (`sponsor/proof.ts`, `apps/sponsor`), not to this module.
  *
  * ## Verification is the deliverable, and it has two halves
  *
@@ -37,7 +37,9 @@
  * - `receiptMatchesContent` — whether the bytes in hand are the bytes it names, by sha256.
  *
  * The second is what makes the receipt re-derivable by a stranger: fetch `url`'s repository at
- * `path`, run `sha256sum`, compare. **sha256 and not keccak256 for exactly that reason** — a third
+ * `path`, run `sha256sum`, compare. When `path` is a directory, the receipt is a skill's whole
+ * directory (task 57) and `digest` is over its manifest: `sha256sum` over every file of the
+ * directory, paths relative to it, sorted by path, hashed again (`bundleMatchesReceipt`). **sha256 and not keccak256 for exactly that reason** — a third
  * party has `sha256sum` on their machine and does not have to trust a library of ours.
  * `measure/skill-content-duplicates.ts` made the same argument for git's blob sha.
  *
@@ -99,10 +101,11 @@ export const CONTENT_RECEIPT_TYPES = {
  * What a caller signs to be named in a receipt.
  *
  * **The caller supplies the nonce and the node signs over it**, which is what makes this stateless
- * without being replayable into a second record. Replaying a request signature produces a
- * **byte-identical receipt** — same atom, same caller, same nonce — so it is the same receipt rather
- * than a new one, and a reader counting receipts counts one. A server-issued challenge would need
- * state for no gain; a bare timestamp would leave a window.
+ * without being replayable into a second record. Replaying a request signature produces a receipt
+ * with the **same atom, caller and nonce** — but not the same bytes: the node stamps a fresh
+ * `servedAt`, so the signature differs. A reader that counts receipts must therefore count distinct
+ * `(atom, to, nonce)`, not distinct signatures; counted that way a replay is one receipt, not two.
+ * A server-issued challenge would need state for no gain; a bare timestamp would leave a window.
  *
  * It is also why **a third party whose signer the reader does not accept** cannot manufacture
  * receipts in somebody else's name: the only thing a stolen request signature buys is a copy of a
@@ -176,9 +179,15 @@ export type ContentReceipt = {
     atom: Hex;
     /** The normalised tool URL, so a verifier needs no catalogue of ours to find the origin. */
     url: string;
-    /** The path inside the repository whose bytes were served. */
+    /**
+     * The path inside the repository that was served: a file, or a skill's directory when the
+     * whole directory was served (task 57).
+     */
     path: string;
-    /** sha256 of those exact bytes. */
+    /**
+     * sha256 of the file's exact bytes, or of the directory's manifest (`bundleManifest`): one
+     * `<sha256 hex>  <path>` line per file, sorted by path. `bundleMatchesReceipt` checks it.
+     */
     digest: Hex;
     /** The caller as it authenticated, or null when it did not. */
     to: Address | null;
@@ -307,10 +316,10 @@ export async function verifyContentReceipt(signed: SignedContentReceipt): Promis
 
 /** What a receipt adds to a declaration made by a given address. */
 export type Corroboration =
-    /** The signer differs from the declarer AND the reader named it as one it accepts. */
+    /** The signer differs from the receiver AND the reader named it as one it accepts. */
     | {status: "second-party"; signer: Address}
     /**
-     * The signer differs from the declarer and the reader does not know it.
+     * The signer differs from the receiver and the reader does not know it.
      *
      * **This is not "two parties".** A node an operator installs generates its own key
      * (`apps/mcp/src/content.ts`), so its address differs from that operator's agent key while the
@@ -318,16 +327,16 @@ export type Corroboration =
      * saying "second-party" here was reporting the strongest verdict for the weakest case.
      */
     | {status: "unknown-signer"; signer: Address}
-    /** The signer IS the declaring address. One key, and the only same-hand case that is visible. */
+    /** The signer IS the receiver. One key, and the only same-hand case that is visible. */
     | {status: "self-signed"; signer: Address}
-    /** The receipt is about a different caller than the one who declared. */
+    /** The receipt is about a different caller than the one whose position it is. */
     | {status: "other-caller"; servedTo: Address}
     /** The fetch was unauthenticated, so the receipt names no caller at all. */
     | {status: "names-nobody"};
 
 /**
- * What a receipt is worth **to a reader**, given who made the declaration and which signers the
- * reader accepts.
+ * What a receipt is worth **to a reader**, given whose position the declaration is and which
+ * signers the reader accepts.
  *
  * ADR `0080`: both the node an operator installs and a node somebody else runs hold a key and
  * sign, so a receipt's value is not a property of the receipt.
@@ -335,9 +344,17 @@ export type Corroboration =
  * ```
  * receipt.to     the caller the node served
  * signer         who signed, recovered by `verifyContentReceipt`
- * declaredBy     the address that wrote the edge on chain
+ * receiver       the address that holds the position: the deposit's `receiver`
  * accepted       the signers THIS reader recognises. Empty is the honest default
  * ```
+ *
+ * ## Why `receiver` and not the sender
+ *
+ * Until 2026-10-30 the third argument was `declaredBy`, the address that wrote the edge. When an
+ * agent pays for its own deposit the two are one address. When ARP's sponsoring service pays, the
+ * sender is the sponsor and the shares go to the agent (`deposit(receiver = agent, …)`, ADR `0094`
+ * §3), so comparing the receipt's `to` against the sender read **every sponsored declaration as
+ * `other-caller`**. The receipt is about the agent, and the agent is the receiver.
  *
  * ## Why `accepted` exists, and why the first version of this was wrong
  *
@@ -371,19 +388,19 @@ export type Corroboration =
 export function corroborationOf(
     receipt: ContentReceipt,
     signer: Address,
-    declaredBy: Address,
+    receiver: Address,
     accepted: readonly Address[] = [],
 ): Corroboration {
     const served = receipt.to === null ? UNAUTHENTICATED : getAddress(receipt.to);
     if (served === UNAUTHENTICATED) return {status: "names-nobody"};
 
-    const declarer = getAddress(declaredBy);
+    const holder = getAddress(receiver);
     // A genuine receipt about somebody else's fetch. Without this the easiest forgery in the
     // system is to present a stranger's valid receipt.
-    if (served !== declarer) return {status: "other-caller", servedTo: served};
+    if (served !== holder) return {status: "other-caller", servedTo: served};
 
     const who = getAddress(signer);
-    if (who === declarer) return {status: "self-signed", signer: declarer};
+    if (who === holder) return {status: "self-signed", signer: holder};
     // `isAddress` before `getAddress`, because `getAddress` throws and every other input to this
     // function is REPORTED rather than thrown. A caller handing it a user-supplied list would get
     // an exception where the module's whole contract is a verdict.
@@ -394,7 +411,8 @@ export function corroborationOf(
 }
 
 /**
- * Whether the bytes in hand are the bytes the receipt names.
+ * Whether the bytes in hand are the bytes the receipt names, for a receipt over one file. A receipt
+ * over a skill's directory is checked with `bundleMatchesReceipt`.
  *
  * The half of the verification that needs no signature and no library of ours: fetch the origin,
  * hash it, compare. A stranger can run this against `url` and `path` without asking us anything,

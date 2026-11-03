@@ -1,6 +1,6 @@
 # 0083 — The hire receipt is EIP-712, names the agent like ERC-8004, and uses the payment as its nonce
 
-**Status:** Accepted
+**Status:** Accepted; the v1 format is superseded for new receipts by v2 (ADR `0101`, task 44)
 **Date:** 2026-10-30
 **Triggered by:** the user, 2026-10-30, after reading the node's weak points: _« renseigne-toi sur
 les normes sur internet, comment les autres protocoles font ça »_ about the receipt having no domain
@@ -32,7 +32,11 @@ with one. The two hashes are keccak256 over RFC 8785 canonical JSON. The wire sh
 `{ format: "eip712", receipt, chainId, agent, signature }`, x402's `format` tag kept so a JWS
 variant can exist later without guessing.
 
-**No `verifyingContract`**, as in `receipt.ts` and `agent-import.ts`: no contract checks it. **The
+**No `verifyingContract`**, as in `receipt.ts` and `agent-import.ts`: ~~no contract checks it.~~
+**Corrected 2026-10-30** (ADR `0098`): `contracts/src/enforcers/ReceiptEnforcer.sol` checks it, on the
+v1 domain as signed, so the missing verifier is now an open deviation, not a cause. **Superseded
+for new receipts by v2** (task 44, ADR `0101`): the domain now names `verifyingContract`, and the
+wire shape adds it; this paragraph describes v1, which still verifies but unlocks nothing. **The
 nonce is `payment`**: the node's ledger refuses a payment twice, so one transaction hash is one
 receipt, and two receipts naming one payment are evidence against the signer.
 

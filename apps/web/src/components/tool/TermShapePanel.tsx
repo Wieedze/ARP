@@ -1,3 +1,4 @@
+import {Hint} from "../brand/Hint";
 import {Sparkline} from "../Sparkline";
 import {useChainChoice} from "../../lib/chain-choice";
 import {formatDay} from "../../lib/atom-page";
@@ -39,7 +40,7 @@ export function TermShapePanel({
     return (
         <div>
             <dl className="grid grid-cols-1 sm:grid-cols-[11rem_1fr] gap-y-2 gap-x-6 text-[length:var(--text-body-sm)]">
-                <Reading label="Positions" value={shape.positionCount.toLocaleString("en-US")} />
+                <Reading label="Supporters" value={shape.positionCount.toLocaleString("en-US")} />
                 {shape.concentration === null ? null : (
                     <Reading
                         label="Concentration"
@@ -82,7 +83,12 @@ export function TermShapePanel({
                     {/* Said in words: "Weekly activity · Linear" over a bare `2026-10-26` read as a
                         code and a date nobody chose (user, 2026-10-29). The curve stays named, since
                         every figure here is read on one (`rules/claims.md` §2). */}
-                    Deposits and redemptions, per week · {curveLabel} curve
+                    Support and withdrawals, per week{" "}
+                    <span className="normal-case tracking-normal">
+                        <Hint label="Which curve">
+                            Every figure here is read on the {curveLabel} bonding curve.
+                        </Hint>
+                    </span>
                 </p>
                 {curve.length === 0 ? (
                     <p className="mt-2 font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">

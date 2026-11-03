@@ -1,6 +1,13 @@
 import {describe, expect, it} from "vitest";
 
-import {livenessOf, rankTools, toolSortAxesFor, type ToolRow} from "../tool-catalog";
+import {
+    livenessOf,
+    pageOfTools,
+    rankTools,
+    toolMatches,
+    toolSortAxesFor,
+    type ToolRow,
+} from "../tool-catalog";
 
 const row = (overrides: Partial<ToolRow> = {}): ToolRow => ({
     key: `0x${"ab".repeat(32)}`,
@@ -11,7 +18,8 @@ const row = (overrides: Partial<ToolRow> = {}): ToolRow => ({
     label: null,
     href: "/atom/0x",
     declarations: 0,
-    paidDeclarations: null,
+    provenDeposits: null,
+    declaredDeposits: null,
     supportTrust: "0.001",
     opposeTrust: null,
     stakers: 0,
@@ -81,22 +89,48 @@ describe("rankTools", () => {
     });
 
     it("sorts by the axis the reader picked, inside the gate", () => {
-        const many = row({key: "0xmany", stakers: 1, declarations: 1});
-        const staked = row({key: "0xstaked", stakers: 9, declarations: 0});
+        const many = row({key: "0xmany", stakers: 1, declaredDeposits: 1});
+        const staked = row({key: "0xstaked", stakers: 9, declaredDeposits: 0});
         facts.set("0xmany", {liveness: "alive", installs: 9_000});
         facts.set("0xstaked", {liveness: "alive", installs: 2});
 
         expect(rankTools([staked, many], "installs", read)[0]?.key).toBe("0xmany");
-        // "Declared" is how many agents declare it; the stake no longer has an order of its own.
+        // "Declared" is the Declared figure; the stake no longer has an order of its own.
         expect(rankTools([staked, many], "declared", read)[0]?.key).toBe("0xmany");
     });
 
     it("breaks a tie in agents on the stake behind them, positions before amount", () => {
-        const backed = row({key: "0xbacked", declarations: 2, stakers: 3, supportTrust: "0.5"});
-        const bare = row({key: "0xbare", declarations: 2, stakers: 0, supportTrust: "9"});
+        const backed = row({key: "0xbacked", declaredDeposits: 2, stakers: 3, supportTrust: "0.5"});
+        const bare = row({key: "0xbare", declaredDeposits: 2, stakers: 0, supportTrust: "9"});
         facts.set("0xbacked", {liveness: "alive", installs: null});
         facts.set("0xbare", {liveness: "alive", installs: null});
         expect(rankTools([bare, backed], "declared", read)[0]?.key).toBe("0xbacked");
+    });
+
+    it("orders Most declared by the Declared figure, not by the edge count no column shows", () => {
+        // Two edges with three deposits each print 6; three edges with one each print 3. Sorting on
+        // the edge count put the 3 above the 6 and the column did not read down in order.
+        const deep = row({key: "0xdeep", declarations: 2, declaredDeposits: 6});
+        const wide = row({key: "0xwide", declarations: 3, declaredDeposits: 3});
+        facts.set("0xdeep", {liveness: "alive", installs: null});
+        facts.set("0xwide", {liveness: "alive", installs: null});
+        expect(rankTools([wide, deep], "declared", read).map((r) => r.key)).toEqual([
+            "0xdeep",
+            "0xwide",
+        ]);
+    });
+
+    it("breaks a tie in Declared on Usage, and ranks an unknown below a known zero", () => {
+        const proven = row({key: "0xproven", declaredDeposits: 2, provenDeposits: 1});
+        const plain = row({key: "0xplain", declaredDeposits: 2, provenDeposits: 0});
+        const unknown = row({key: "0xunknown2", declaredDeposits: null, declarations: 9});
+        const zero = row({key: "0xzero2", declaredDeposits: 0});
+        for (const key of ["0xproven", "0xplain", "0xunknown2", "0xzero2"]) {
+            facts.set(key, {liveness: "alive", installs: null});
+        }
+        expect(
+            rankTools([unknown, plain, zero, proven], "declared", read).map((r) => r.key),
+        ).toEqual(["0xproven", "0xplain", "0xzero2", "0xunknown2"]);
     });
 
     it("sorts repositories by stars, and offers each index only the axes that mean something there", () => {
@@ -128,5 +162,57 @@ describe("rankTools", () => {
         const input = [first, second];
         rankTools(input, "declared", read);
         expect(input.map((r) => r.key)).toEqual(["0xa", "0xb"]);
+    });
+});
+
+describe("pageOfTools", () => {
+    const rows = Array.from({length: 62}, (_, index) => row({key: `0x${index}`}));
+
+    it("slices without reordering and says where the page sits", () => {
+        const page = pageOfTools(rows, 25, 25);
+        expect(page.rows.map((r) => r.key)).toEqual(rows.slice(25, 50).map((r) => r.key));
+        expect(page.rangeLabel).toBe("26–50 of 62");
+        expect(page.hasPrevious).toBe(true);
+        expect(page.hasNext).toBe(true);
+    });
+
+    it("ends on a short last page", () => {
+        const page = pageOfTools(rows, 50, 25);
+        expect(page.rows).toHaveLength(12);
+        expect(page.rangeLabel).toBe("51–62 of 62");
+        expect(page.hasNext).toBe(false);
+    });
+
+    it("clamps an offset the list shrank under to its last page", () => {
+        const page = pageOfTools(rows.slice(0, 30), 200, 25);
+        expect(page.offset).toBe(25);
+        expect(page.rows).toHaveLength(5);
+    });
+
+    it("says there are no rows rather than a range of none", () => {
+        const page = pageOfTools([], 0, 25);
+        expect(page.rows).toEqual([]);
+        expect(page.rangeLabel).toBe("no rows");
+        expect(page.hasPrevious).toBe(false);
+        expect(page.hasNext).toBe(false);
+    });
+});
+
+describe("toolMatches (task 48)", () => {
+    const tool = row({
+        name: "writing-plans",
+        label: "github.com/obra/superpowers?skill=writing-plans",
+        source: "obra/superpowers",
+    });
+
+    it("matches the name, the label, the repository or the description, without case", () => {
+        expect(toolMatches(tool, "Writing", null)).toBe(true);
+        expect(toolMatches(tool, "superpowers", null)).toBe(true);
+        expect(toolMatches(tool, "spec", "Use when you have a spec")).toBe(true);
+    });
+
+    it("matches nothing for a blank query or a miss", () => {
+        expect(toolMatches(tool, "  ", "anything")).toBe(false);
+        expect(toolMatches(tool, "kling", null)).toBe(false);
     });
 });

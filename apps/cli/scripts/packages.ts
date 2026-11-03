@@ -5,6 +5,10 @@
  *     bun run packages --check    exit 1 if what is committed differs from what would be written
  *     bun run packages --local D  write a copy into D whose MCP entry runs this checkout's dist/,
  *                                 to install and try before anything is published
+ *     bun run packages --tarball URL D
+ *                                 write a copy into D whose MCP entry runs the archive at URL, and the
+ *                                 `npm pack` archive beside it, for testers before an npm release.
+ *                                 Where the archive is hosted is the URL's business, not this file's
  *
  * One npm package holds the code; each package here is a thin manifest that calls it, pinned to
  * the same version, so a manifest and the package can never disagree. Nothing in `packaging/` is
@@ -20,10 +24,12 @@
  * call and `npx` there would resolve the package each time (ADR `0089` §2). It has no import but
  * Node's own, so it runs from the plugin directory with nothing installed.
  */
+import { execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
 
 import { CLAUDE_HOOKS } from '../src/install/edits.ts';
+import { SERVER_ENV } from '../src/install/targets.ts';
 
 const CLI = resolve(import.meta.dir, '..');
 const ROOT = resolve(CLI, '..', '..');
@@ -39,19 +45,36 @@ type Files = Map<string, string>;
 
 const json = (value: unknown) => `${JSON.stringify(value, null, 2)}\n`;
 
-function mcpServer(local: string | null) {
-  return local === null
-    ? { command: 'npx', args: ['-y', `${pkg.name}@${pkg.version}`, 'mcp'] }
-    : { command: 'node', args: [join(local, 'cli.js'), 'mcp'] };
+/** Where the MCP server comes from: the npm release, an archive at a URL, or this checkout. */
+type Source = { kind: 'npm' } | { kind: 'tarball'; url: string } | { kind: 'local'; dist: string };
+
+/**
+ * The plugin is for people who search, so it serves the read tools only (task 45). Testnet for the
+ * same reason `arp init` pins it: the user's decision of 2026-11-02, everything on 13579 for now.
+ */
+const PLUGIN_ENV = { ...SERVER_ENV, ARP_TOOLS: 'read' };
+
+function mcpServer(source: Source) {
+  const run =
+    source.kind === 'local'
+      ? { command: 'node', args: [join(source.dist, 'cli.js'), 'mcp'] }
+      : source.kind === 'npm'
+        ? { command: 'npx', args: ['-y', `${pkg.name}@${pkg.version}`, 'mcp'] }
+        : // `npx -y <file>.tgz` tries to execute the archive itself ("Permission denied", tried
+          // 2026-11-02); naming it as the package and `arp` as the command is what runs.
+          { command: 'npx', args: ['-y', '--package', source.url, 'arp', 'mcp'] };
+  return { ...run, env: PLUGIN_ENV };
 }
 
-function files(local: string | null): Files {
+const FIND =
+  'Find the skill or MCP server that fits a task, and see which ones other agents actually used.';
+
+function files(source: Source): Files {
   const out: Files = new Map();
   const hook = readFileSync(join(CLI, 'dist', 'hook.js'), 'utf8');
   const skill = readFileSync(join(ROOT, 'skills', 'arp', 'SKILL.md'), 'utf8');
   const meta = {
-    description:
-      'Declare the tools your agent used on the Intuition graph, and record every MCP call your runtime makes.',
+    description: `${FIND} The hook records each MCP call on your machine; declaring a use is optional.`,
     homepage: 'https://github.com/Wieedze/ARP',
     repository: 'https://github.com/Wieedze/ARP',
     license: pkg.license,
@@ -68,7 +91,7 @@ function files(local: string | null): Files {
       keywords: ['mcp', 'agent', 'reputation', 'erc-8004', 'intuition'],
     }),
   );
-  out.set(`${claude}/.mcp.json`, json({ mcpServers: { arp: mcpServer(local) } }));
+  out.set(`${claude}/.mcp.json`, json({ mcpServers: { arp: mcpServer(source) } }));
   // The same entry `arp init` writes, from the same spec, so the two can never disagree. Only the
   // command differs: a plugin finds the hook in its own directory, not in ~/.arp/bin.
   const command = 'node "${CLAUDE_PLUGIN_ROOT}/bin/hook.js"';
@@ -90,7 +113,7 @@ function files(local: string | null): Files {
     json({
       name: 'arp',
       owner: { name: 'ARP' },
-      metadata: { description: 'ARP: declare and record the tools your agent uses.' },
+      metadata: { description: 'ARP: find the tool that exists for the job, and see who used it.' },
       plugins: [{ name: 'arp', source: `./${claude}`, description: meta.description }],
     }),
   );
@@ -102,8 +125,8 @@ function files(local: string | null): Files {
     json({
       name: 'arp',
       version: pkg.version,
-      description: meta.description,
-      mcpServers: { arp: mcpServer(local) },
+      description: `${FIND} Declaring a use is optional.`,
+      mcpServers: { arp: mcpServer(source) },
       contextFileName: 'ARP.md',
     }),
   );
@@ -120,9 +143,25 @@ function write(root: string, out: Files): void {
 }
 
 const args = process.argv.slice(2);
-if (args.length > 0 && args[0] !== '--check' && args[0] !== '--local') {
-  console.error(`unknown option ${args[0]}: use --check, --local <dir>, or nothing`);
+if (args.length > 0 && !['--check', '--local', '--tarball'].includes(args[0] ?? '')) {
+  console.error(
+    `unknown option ${args[0]}: use --check, --local <dir>, --tarball <url> <dir>, or nothing`,
+  );
   process.exit(2);
+}
+
+/** A copy goes outside the repo: the committed packages must stay the published ones. */
+function outside(dir: string | undefined, usage: string): string {
+  if (dir === undefined) {
+    console.error(`usage: bun run packages ${usage}`);
+    process.exit(2);
+  }
+  const target = resolve(dir);
+  if (target === ROOT || target.startsWith(`${ROOT}/`)) {
+    console.error('a copy is written outside the repo: give it a directory outside it');
+    process.exit(2);
+  }
+  return target;
 }
 
 /** Every file under `dir`, relative to ROOT. */
@@ -138,21 +177,31 @@ if (!existsSync(join(CLI, 'dist', 'hook.js'))) {
 }
 
 if (args[0] === '--local') {
-  const target = resolve(args[1] ?? '');
-  if (args[1] === undefined) {
-    console.error('usage: bun run packages --local <dir>');
-    process.exit(2);
-  }
-  // The committed packages must stay the published ones; a local copy points at this checkout.
-  if (target === ROOT || target.startsWith(`${ROOT}/`)) {
-    console.error("--local writes this checkout's paths: give it a directory outside the repo");
-    process.exit(2);
-  }
+  const target = outside(args[1], '--local <dir>');
   rmSync(join(target, 'packaging'), { recursive: true, force: true });
-  write(target, files(join(CLI, 'dist')));
+  write(target, files({ kind: 'local', dist: join(CLI, 'dist') }));
   console.log(`local packages in ${target} (MCP runs ${join(CLI, 'dist', 'cli.js')})`);
+} else if (args[0] === '--tarball') {
+  const url = args[1] ?? '';
+  // `npx` takes a path or a URL here; anything else would be read as a package name on npm.
+  if (!/^https:\/\/\S+\.tgz$/.test(url)) {
+    console.error('--tarball takes the https URL the .tgz will be served at, then a directory');
+    process.exit(2);
+  }
+  const target = outside(args[2], '--tarball <url> <dir>');
+  rmSync(join(target, 'packaging'), { recursive: true, force: true });
+  write(target, files({ kind: 'tarball', url }));
+  const packed = execFileSync('npm', ['pack', '--pack-destination', target], {
+    cwd: CLI,
+    encoding: 'utf8',
+  })
+    .trim()
+    .split('\n')
+    .pop();
+  console.log(`packages in ${target}, MCP runs npx -y --package ${url} arp mcp`);
+  console.log(`archive ${join(target, packed ?? '')}: serve it at that URL`);
 } else if (args[0] === '--check') {
-  const expected = files(null);
+  const expected = files({ kind: 'npm' });
   const stale = [...expected].filter(
     ([path, text]) =>
       !existsSync(join(ROOT, path)) || readFileSync(join(ROOT, path), 'utf8') !== text,
@@ -168,7 +217,7 @@ if (args[0] === '--local') {
   console.log('packaging/ matches this build');
 } else {
   rmSync(join(ROOT, 'packaging'), { recursive: true, force: true });
-  const out = files(null);
+  const out = files({ kind: 'npm' });
   write(ROOT, out);
   for (const path of out.keys()) console.log(`wrote ${relative(process.cwd(), join(ROOT, path))}`);
 }

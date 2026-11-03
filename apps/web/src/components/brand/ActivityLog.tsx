@@ -66,19 +66,20 @@ const STEP_LABEL: Record<ActivityEvent["step"], string> = {
     receipt: "receipt",
     invocation: "invoked",
     declaration: "declared",
-    stake: "staked",
+    stake: "supported",
     simulated: "dry run",
     sent: "sent",
     confirmed: "confirmed",
-    landed: "on chain",
+    landed: "public",
     refused: "refused",
 };
 
+/** Your agent's local feed, in a reader's words (task 48): "agent offline" read as a fault. */
 const FEED_LABEL: Record<FeedStatus, string> = {
     off: "",
-    connecting: "agent …",
-    live: "agent live",
-    offline: "agent offline",
+    connecting: "your agent: connecting",
+    live: "your agent: live",
+    offline: "your agent: not connected",
 };
 
 function Row({entry}: {entry: ActivityEvent}) {
@@ -91,11 +92,11 @@ function Row({entry}: {entry: ActivityEvent}) {
                 entry.stream === "chain" ? "opacity-70" : ""
             }`}
         >
-            <span className="font-mono text-[10px] leading-[1.7] text-[color:var(--color-steel)] tabular-nums">
+            <span className="font-mono text-[length:var(--text-label)] leading-[1.7] text-[color:var(--color-steel)] tabular-nums">
                 {clockOf(entry.at)}
             </span>
             <span
-                className={`font-mono text-[10px] leading-[1.7] tracking-[0.06em] uppercase ${
+                className={`font-mono text-[length:var(--text-label)] leading-[1.7] tracking-[0.06em] uppercase ${
                     mine ? "text-[color:var(--color-accent)]" : "text-[color:var(--color-steel)]"
                 }`}
             >
@@ -167,28 +168,28 @@ export function ActivityLog({store, feed}: {store?: Store; feed?: AgentFeed} = {
                     }}
                     className="flex min-w-0 flex-1 items-baseline gap-3 rounded-none! border-0! bg-transparent py-2 text-left"
                 >
-                    <span className="font-mono text-[10px] tracking-[0.12em] uppercase text-[color:var(--color-steel)]">
+                    <span className="font-mono text-[length:var(--text-label)] tracking-[0.12em] uppercase text-[color:var(--color-steel)]">
                         activity
                     </span>
-                    <span className="font-mono text-[10px] text-[color:var(--color-steel)] tabular-nums">
+                    <span className="font-mono text-[length:var(--text-label)] text-[color:var(--color-steel)] tabular-nums">
                         {entries.length === 0
                             ? "—"
-                            : `${entries.length} · ${mine} yours · ${fromAgent} agent`}
+                            : `${entries.length} · ${mine} yours · ${fromAgent} from your agent`}
                     </span>
                     {/* Closed, the bar still says what just happened, which is most of what a
                         demo's audience needs from it. */}
                     {!open && latest !== undefined ? (
-                        <span className="min-w-0 truncate font-mono text-[10px] text-[color:var(--color-silver)]">
+                        <span className="min-w-0 truncate font-mono text-[length:var(--text-label)] text-[color:var(--color-silver)]">
                             {`${STEP_LABEL[latest.step]}  ${latest.label}`}
                         </span>
                     ) : null}
-                    <span className="ml-auto font-mono text-[10px] text-[color:var(--color-steel)]">
-                        {open ? "close" : "open"}
+                    <span className="ml-auto font-mono text-[length:var(--text-label)] text-[color:var(--color-steel)]">
+                        {open ? "hide" : "show"}
                     </span>
                 </button>
                 {agent.status === "off" ? null : (
                     <span
-                        className={`font-mono text-[10px] ${
+                        className={`font-mono text-[length:var(--text-label)] ${
                             agent.status === "live"
                                 ? "text-[color:var(--color-fg)]"
                                 : "text-[color:var(--color-steel)]"
@@ -199,9 +200,9 @@ export function ActivityLog({store, feed}: {store?: Store; feed?: AgentFeed} = {
                 )}
                 <Link
                     to="/activity"
-                    className="font-mono text-[10px] tracking-[0.06em] uppercase text-[color:var(--color-steel)]"
+                    className="font-mono text-[length:var(--text-label)] tracking-[0.06em] uppercase text-[color:var(--color-steel)]"
                 >
-                    trace
+                    all activity →
                 </Link>
             </div>
 
@@ -212,7 +213,7 @@ export function ActivityLog({store, feed}: {store?: Store; feed?: AgentFeed} = {
                 >
                     {entries.length === 0 ? (
                         <p className="px-4 py-3 font-mono text-[11px] leading-[1.7] text-[color:var(--color-steel)]">
-                            Nothing yet. Declaring a use or taking a position writes here step by
+                            Nothing yet. Declaring a use or supporting a tool writes here step by
                             step, and so does your agent once its feed runs; other agents&rsquo;
                             writes appear as they land.
                         </p>

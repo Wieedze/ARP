@@ -2,6 +2,7 @@ import {describe, expect, it} from "vitest";
 
 import {resolveRef} from "../src/caip.js";
 import {
+    AGENT_EDGE_LIMIT,
     CAPABILITIES_QUERY,
     isRecord,
     RESOLVE_AGENT_QUERY,
@@ -353,7 +354,10 @@ describe("intuitionSource — the bonding curve is a parameter, not an assumptio
 
     it("filters market reads to curve 1 by default", async () => {
         const seen: Record<string, unknown>[] = [];
-        const source = intuitionSource({transport: recordingTransport(seen)});
+        const source = intuitionSource({
+            graphqlUrl: INTUITION_URL,
+            transport: recordingTransport(seen),
+        });
         await source.getAssessments(ref);
 
         const surface = seen.find((entry) => String(entry["query"]).includes("AgentTrustSurface"));
@@ -363,7 +367,11 @@ describe("intuitionSource — the bonding curve is a parameter, not an assumptio
     it("sends the curve it was given, so the market shown matches the vault deposited into", async () => {
         const seen: Record<string, unknown>[] = [];
         // A bigint, as getBondingCurveConfig() returns it — no conversion at the call site.
-        const source = intuitionSource({transport: recordingTransport(seen), curveId: 7n});
+        const source = intuitionSource({
+            graphqlUrl: INTUITION_URL,
+            transport: recordingTransport(seen),
+            curveId: 7n,
+        });
         await source.getAssessments(ref);
 
         const surface = seen.find((entry) => String(entry["query"]).includes("AgentTrustSurface"));
@@ -402,5 +410,71 @@ describe("INTUITION_SAME_AS_TERM_ID", () => {
         expect(INTUITION_SAME_AS_TERM_ID).toBe(
             "0xbeebfb7d177cbd96ffc239d2196c72ec346efe81f39dc595773f13d83506f5f0",
         );
+    });
+});
+
+describe("intuitionSource — a capped read says it was capped", () => {
+    const ref = resolveRef({chainId: 8453, tokenId: "6649"});
+
+    /** Answers the preflight, then `edges` rows for every surface or capability read. */
+    function transportWith(edges: number) {
+        const limits: unknown[] = [];
+        return {
+            limits,
+            transport: {
+                async request(query: string, variables: Record<string, unknown>) {
+                    if (query.includes("sameAsPredicateId") || "caipId" in variables) {
+                        return {
+                            triples: [{subject: {term_id: "0xsubject", label: "x", value: null}}],
+                        };
+                    }
+                    limits.push(variables["limit"]);
+                    const predicate = query.includes("AgentCapabilities")
+                        ? USES
+                        : HAS_TRUST_PROVIDER;
+                    return {
+                        triples: Array.from({length: edges}, (_, index) => ({
+                            term_id: `0x${index.toString(16).padStart(64, "0")}`,
+                            predicate: {term_id: predicate, label: "p"},
+                            object: {term_id: `0x${"ab".repeat(32)}`, label: "o", data: null},
+                        })),
+                    };
+                },
+            },
+        };
+    }
+
+    it("asks for an explicit limit on both agent reads", async () => {
+        const {transport, limits} = transportWith(0);
+        const source = intuitionSource({graphqlUrl: INTUITION_URL, transport});
+        await source.getAssessments(ref);
+        await source.getCapabilities(ref);
+        expect(limits).toEqual([AGENT_EDGE_LIMIT, AGENT_EDGE_LIMIT]);
+        expect(CAPABILITIES_QUERY).toContain("limit: $limit");
+        expect(TRUST_SURFACE_QUERY).toContain("limit: $limit");
+    });
+
+    it("marks capabilities read at the limit as truncated, and leaves a short read unmarked", async () => {
+        const full = intuitionSource({
+            graphqlUrl: INTUITION_URL,
+            transport: transportWith(AGENT_EDGE_LIMIT).transport,
+        });
+        expect((await full.getCapabilities(ref)).provenance.truncated).toBe(true);
+
+        const short = intuitionSource({
+            graphqlUrl: INTUITION_URL,
+            transport: transportWith(3).transport,
+        });
+        expect((await short.getCapabilities(ref)).provenance.truncated).toBeUndefined();
+    });
+
+    it("marks every claim from a capped trust surface as truncated", async () => {
+        const full = intuitionSource({
+            graphqlUrl: INTUITION_URL,
+            transport: transportWith(AGENT_EDGE_LIMIT).transport,
+        });
+        const claims = await full.getAssessments(ref);
+        expect(claims.length).toBeGreaterThan(0);
+        expect(claims.every((claim) => claim.provenance.truncated === true)).toBe(true);
     });
 });

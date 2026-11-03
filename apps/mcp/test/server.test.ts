@@ -1,6 +1,6 @@
-import {spawn, type ChildProcess} from "node:child_process";
-import {createServer, type Server} from "node:http";
-import {rmSync, writeFileSync} from "node:fs";
+import {spawn, spawnSync, type ChildProcess} from "node:child_process";
+import {createServer, request as httpRequest, type Server} from "node:http";
+import {mkdtempSync, rmSync, writeFileSync} from "node:fs";
 import {tmpdir} from "node:os";
 import {join} from "node:path";
 
@@ -8,7 +8,11 @@ import {encodeAbiParameters, keccak256, parseEther, stringToBytes, toFunctionSel
 import type {Hex} from "viem";
 import {privateKeyToAccount} from "viem/accounts";
 
-import {INTUITION_USES_TERM_ID as USES, signContentReceipt} from "@arp-protocol/core";
+import {
+    INTUITION_IS_A_SUB_DOMAIN_OF as SUB_DOMAIN,
+    INTUITION_USES_TERM_ID as USES,
+    signContentReceipt,
+} from "@arp-protocol/core";
 import {afterAll, beforeAll, describe, expect, it} from "vitest";
 
 
@@ -38,6 +42,9 @@ const DECLARER = privateKeyToAccount(`0x${"88".repeat(32)}`);
 const BRAINSTORMING_ATOM =
     "0xf205a19595893612b5b716e6e5742d036c70a2cc82cf6581c394cbe3b9310885" as const;
 const BASE = `http://127.0.0.1:${PORT}/mcp`;
+/** The server's own path, and a scratch directory it runs in and keeps its state under (`ARP_HOME`). */
+const SERVER = new URL("../src/server.ts", import.meta.url).pathname;
+const SCRATCH = mkdtempSync(join(tmpdir(), "arp-mcp-server-"));
 let server: ChildProcess | null = null;
 let stub: Server | null = null;
 
@@ -49,6 +56,17 @@ const STUBBED = {
             subject: {term_id: "0xs1", label: "An Agent", type: "Thing"},
             term: {total_assets: "5000", vaults: [{position_count: 2}]},
             counter_term: {total_assets: "0", vaults: [{position_count: 0}]},
+        },
+    ],
+};
+
+const STUBBED_TREE = {
+    positions: [
+        {
+            shares: "1",
+            term: {
+                triple: {term_id: "0xd1", subject: {label: "marketing"}, object: {label: "tool"}},
+            },
         },
     ],
 };
@@ -202,8 +220,20 @@ beforeAll(async () => {
         void (async () => {
             const body = await readBody(request);
             response.writeHead(200, {"content-type": "application/json"});
+            // The domain tree, one edge: `marketing` under `tool`, read through the attestor's
+            // positions. Answered by predicate so the tag query still gets the default payload.
+            if (body.includes(SUB_DOMAIN)) {
+                response.end(JSON.stringify({data: STUBBED_TREE}));
+                return;
+            }
             if (body.includes("sameAsPredicateId")) {
                 response.end(JSON.stringify({data: STUBBED_SUBJECT}));
+                return;
+            }
+            // `multiVaultReads` asks the RPC which chain it serves before its first read.
+            if (body.includes("eth_chainId")) {
+                const id = (JSON.parse(body) as {id?: number}).id ?? 1;
+                response.end(JSON.stringify({jsonrpc: "2.0", id, result: "0x350b"}));
                 return;
             }
             if (body.includes("eth_call")) {
@@ -246,10 +276,11 @@ beforeAll(async () => {
         `${JSON.stringify({skill: "brainstorming", atom: BRAINSTORMING_ATOM, receipt: signed})}\n`,
     );
 
-    server = spawn("bun", ["run", "apps/mcp/src/server.ts"], {
-        cwd: new URL("../../..", import.meta.url).pathname,
+    server = spawn("bun", ["run", SERVER], {
+        cwd: SCRATCH,
         env: {
             ...process.env,
+            ARP_HOME: SCRATCH,
             PORT: String(PORT),
             ARP_TARGET: "testnet",
             INTUITION_GRAPHQL_URL: `http://127.0.0.1:${PORT + 1}/v1/graphql`,
@@ -282,6 +313,7 @@ beforeAll(async () => {
 
 afterAll(async () => {
     rmSync(RECEIPTS_PATH, {force: true});
+    rmSync(SCRATCH, {recursive: true, force: true});
     server?.kill();
     await new Promise<void>((resolve) => {
         if (stub === null) return resolve();
@@ -316,7 +348,7 @@ describe("the handshake", () => {
         // expect a mechanism nothing reaches. What the fee buys is attribution and permanence.
         expect(instructions).toContain("attributed to you");
         // And the exit, because a figure read without it is mistaken for a cumulative.
-        expect(instructions).toContain("redeem it");
+        expect(instructions).toContain("withdraw it");
         // That reading is free, which is the job most agents want and the cheapest one.
         expect(instructions).toMatch(/needs NOTHING/);
         // And the precautions, still there, at the end where a precaution belongs.
@@ -717,5 +749,199 @@ describe("the plain GET", () => {
         const body = (await response.json()) as Record<string, unknown>;
         expect(body["name"]).toBe("ARP");
         expect((body["mcp"] as {tools: string[]}).tools).toContain("arp_tool_reputation");
+    });
+});
+
+/**
+ * The HTTP transport has no authentication, so what keeps a web page out is the three checks in
+ * `httpFetch` (ADR `0116`). Sent with `node:http` because `fetch` will not set `Host` or `Origin`
+ * to what a hostile page would.
+ */
+describe("a request from a web page", () => {
+    const raw = (headers: Record<string, string>, body = '{"jsonrpc":"2.0","id":1,"method":"tools/list"}') =>
+        new Promise<number>((resolve, reject) => {
+            const req = httpRequest(
+                {host: "127.0.0.1", port: PORT, path: "/mcp", method: "POST", headers},
+                (res) => {
+                    res.resume();
+                    resolve(res.statusCode ?? 0);
+                },
+            );
+            req.on("error", reject);
+            req.end(body);
+        });
+
+    it("answers a JSON POST that names this server", async () => {
+        expect(await raw({host: `127.0.0.1:${PORT}`, "content-type": "application/json"})).toBe(200);
+    });
+
+    it("refuses a text/plain POST, a rebinding Host and a foreign Origin", async () => {
+        expect(await raw({host: `127.0.0.1:${PORT}`, "content-type": "text/plain"})).toBe(415);
+        expect(await raw({host: `attacker.example:${PORT}`, "content-type": "application/json"})).toBe(403);
+        expect(
+            await raw({
+                host: `127.0.0.1:${PORT}`,
+                origin: "https://attacker.example",
+                "content-type": "application/json",
+            }),
+        ).toBe(403);
+    });
+
+    it("answers a null line on stdio with an error and keeps serving", () => {
+        const run = spawnSync("bun", ["run", SERVER, "--stdio"], {
+            cwd: SCRATCH,
+            env: {...process.env, ARP_HOME: SCRATCH, ARP_NO_RECEIPTS: "1", ARP_TARGET: "testnet"},
+            input: 'null\n[1]\n{"jsonrpc":"2.0","id":7,"method":"ping"}\n',
+            encoding: "utf8",
+            timeout: 15_000,
+        });
+        const lines = run.stdout.trim().split("\n").map((line) => JSON.parse(line) as Record<string, unknown>);
+        expect(lines).toHaveLength(3);
+        expect((lines[0]?.["error"] as {code: number}).code).toBe(-32600);
+        expect((lines[1]?.["error"] as {code: number}).code).toBe(-32600);
+        expect(lines[2]).toMatchObject({id: 7, result: {}});
+    });
+
+    it("will not start the sponsored mode over HTTP", () => {
+        const run = spawnSync("bun", ["run", SERVER], {
+            cwd: SCRATCH,
+            env: {...process.env, ARP_HOME: SCRATCH, ARP_TOOLS: "sponsored", ARP_TARGET: "testnet", PORT: String(PORT + 3)},
+            encoding: "utf8",
+            timeout: 15_000,
+        });
+        expect(run.status).toBe(1);
+        expect(run.stderr).toContain("stdio only");
+    });
+});
+
+/**
+ * `ARP_TOOLS=read`, the server task 45's first testers get: the registry reads and nothing else.
+ *
+ * Its own process, because the mode is read once at start. What it guards is what the operators were
+ * promised: no planner offered, no planner callable, and instructions that send the agent to the
+ * registry first without a word about chains, tokens or wallets.
+ */
+describe("read-only mode", () => {
+    const READ_PORT = PORT + 2;
+    const READ_BASE = `http://127.0.0.1:${READ_PORT}/mcp`;
+    let reader: ChildProcess | null = null;
+
+    const call = async (method: string, params?: unknown) => {
+        const response = await fetch(READ_BASE, {
+            method: "POST",
+            headers: {"content-type": "application/json", accept: "application/json"},
+            body: JSON.stringify({jsonrpc: "2.0", id: 1, method, ...(params ? {params} : {})}),
+        });
+        return (await response.json()) as Record<string, unknown>;
+    };
+
+    beforeAll(async () => {
+        reader = spawn("bun", ["run", SERVER], {
+            cwd: SCRATCH,
+            env: {
+                ...process.env,
+                ARP_HOME: SCRATCH,
+                PORT: String(READ_PORT),
+                ARP_TOOLS: "read",
+                ARP_TARGET: "testnet",
+                ARP_NO_RECEIPTS: "1",
+                INTUITION_GRAPHQL_URL: `http://127.0.0.1:${PORT + 1}/v1/graphql`,
+                INTUITION_RPC_URL: `http://127.0.0.1:${PORT + 1}/rpc`,
+                ARP_MULTI_VAULT: MULTI_VAULT,
+            },
+            stdio: "ignore",
+        });
+        for (let i = 0; i < 60; i += 1) {
+            try {
+                const ping = await fetch(READ_BASE, {
+                    method: "POST",
+                    headers: {"content-type": "application/json"},
+                    body: '{"jsonrpc":"2.0","id":0,"method":"ping"}',
+                });
+                if (ping.ok) return;
+            } catch {
+                /* not up yet */
+            }
+            await new Promise((r) => setTimeout(r, 100));
+        }
+        throw new Error("the read-only MCP server did not come up");
+    }, 20_000);
+
+    afterAll(() => {
+        reader?.kill();
+    });
+
+    it("lists the three registry reads and nothing else", async () => {
+        const body = await call("tools/list");
+        const names = (body["result"] as {tools: {name: string}[]}).tools.map((t) => t.name);
+        expect(names).toEqual(["arp_find_agents", "arp_find_tools", "arp_tool_reputation"]);
+    });
+
+    it("refuses a planner called by name", async () => {
+        const body = await call("tools/call", {name: "arp_declare_used", arguments: {}});
+        expect((body["error"] as {message: string}).message).toBe("unknown tool: arp_declare_used");
+    });
+
+    it("sends the agent to the registry first, in words an operator can read", async () => {
+        const body = await call("initialize", {
+            protocolVersion: "2025-06-18",
+            capabilities: {},
+            clientInfo: {name: "test", version: "0"},
+        });
+        const instructions = String((body["result"] as Record<string, unknown>)["instructions"]);
+        expect(instructions).toContain("LOOK HERE FIRST");
+        expect(instructions).toContain("arp_find_tools");
+        expect(instructions).toContain("BEFORE you pick one yourself");
+        for (const word of ["TRUST", "chain", "wallet", "stake", "vault", "atom", "ERC-8004"]) {
+            expect(instructions).not.toContain(word);
+        }
+    });
+
+    it("answers a word the registry does not use with the words it does", async () => {
+        // "business" was the word a live run used on 2026-11-02, and it found nothing. The answer
+        // has to carry somewhere to go next, or the agent stops looking.
+        const body = await call("tools/call", {name: "arp_find_tools", arguments: {domain: "business"}});
+        const answer = JSON.parse(
+            (body["result"] as {content: {text: string}[]}).content[0]!.text,
+        ) as {tools: unknown[]; domains_available?: string[]};
+        expect(answer.tools).toEqual([]);
+        expect(answer.domains_available).toEqual(["marketing"]);
+    });
+
+    const findTools = async (args: Record<string, unknown>) => {
+        const body = await call("tools/call", {name: "arp_find_tools", arguments: args});
+        return JSON.parse((body["result"] as {content: {text: string}[]}).content[0]!.text) as {
+            total: number;
+            offset: number;
+            next_offset: number | null;
+            domains_available?: string[];
+            tools: Record<string, unknown>[];
+        };
+    };
+
+    it("answers a query that matches nothing with nothing to ask next (task 51)", async () => {
+        const none = await findTools({query: "zzzz-nothing-matches"});
+        expect(none.total).toBe(0);
+        expect(none.tools).toEqual([]);
+        expect(none.domains_available).toBeUndefined();
+    });
+
+    // The row shape, the paging and the collapsing are tested on literals in tool-search.test.ts:
+    // this stub answers no tool rows, so assertions over them here would pass on an empty list.
+    it("refuses a negative offset and an unknown detail", async () => {
+        for (const args of [{offset: -1}, {detail: "everything"}]) {
+            const body = await call("tools/call", {name: "arp_find_tools", arguments: args});
+            expect(body["error"]).toBeDefined();
+        }
+    });
+
+    it("keeps the chain's vocabulary out of the three descriptions it serves", async () => {
+        const body = await call("tools/list");
+        const tools = (body["result"] as {tools: {description: string}[]}).tools;
+        for (const tool of tools) {
+            for (const word of ["TRUST", "vault", "bonding", "minShare", "ERC-8004", "Intuition"]) {
+                expect(tool.description).not.toContain(word);
+            }
+        }
     });
 });

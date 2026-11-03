@@ -1,9 +1,8 @@
 /**
- * What a skill page reads out of a SKILL.md: its frontmatter description and version, and its `##`
- * sections with the first command each one gives.
+ * What a skill page reads out of a SKILL.md: its frontmatter description and version.
  *
- * Pure. The text is fetched elsewhere (`use-skill-md`); this only reads it, so it is testable on a
- * string and never needs the network.
+ * `parseSkillMd` is pure and testable on a string; `fetchSkillMd` is the one network read, bounded
+ * in time and in bytes because the file is whatever the repository's author committed.
  *
  * **Not a YAML parser.** A SKILL.md's frontmatter is a handful of `key: value` lines, sometimes a
  * folded or literal block (`description: >`), sometimes `version` nested under `metadata:`. Those
@@ -11,34 +10,59 @@
  * came out of a misparse would be printed as the author's own sentence.
  */
 
-type SkillSection = {
-    heading: string;
-    /** The first line of the first fenced block under the heading. */
-    command: string;
-};
-
 export type SkillMd = {
     description: string | null;
     version: string | null;
-    sections: SkillSection[];
 };
-
-/** The page shows a skill's headings, not its manual: past this many, the SKILL.md link has them. */
-const MAX_SECTIONS = 8;
 
 export function parseSkillMd(text: string): SkillMd {
     const normalised = text.replace(/\r\n?/g, "\n");
-    const {front, body} = splitFrontmatter(normalised);
+    const {front} = splitFrontmatter(normalised);
     return {
         description: front.get("description") ?? null,
         version: front.get("version") ?? front.get("metadata.version") ?? null,
-        // **Only sections that give a command.** The rest are `References`, `Related Skills` and
-        // numbered prose, and a link standing in for a command printed bare URLs down the list
-        // (user, 2026-10-29). A section with a command says what the skill does in one line.
-        sections: sectionsOf(body)
-            .filter((section): section is SkillSection => section.command !== null)
-            .slice(0, MAX_SECTIONS),
     };
+}
+
+/** A SKILL.md is a few kilobytes; anything past this is not one worth reading in a browser. */
+export const SKILL_MD_MAX_BYTES = 256 * 1024;
+export const SKILL_MD_TIMEOUT_MS = 10_000;
+
+/** Fetch and parse one SKILL.md. Throws on a non-2xx answer, a timeout or an oversized body. */
+export async function fetchSkillMd(
+    url: string,
+    options: {fetchImpl?: typeof fetch; timeoutMs?: number; maxBytes?: number} = {},
+): Promise<SkillMd> {
+    const fetchImpl = options.fetchImpl ?? fetch;
+    const maxBytes = options.maxBytes ?? SKILL_MD_MAX_BYTES;
+    const response = await fetchImpl(url, {
+        signal: AbortSignal.timeout(options.timeoutMs ?? SKILL_MD_TIMEOUT_MS),
+    });
+    if (!response.ok) throw new Error(`${response.status} from ${url}`);
+    return parseSkillMd(await readCapped(response, maxBytes, url));
+}
+
+async function readCapped(response: Response, maxBytes: number, url: string): Promise<string> {
+    const declared = Number(response.headers.get("content-length"));
+    if (Number.isFinite(declared) && declared > maxBytes) {
+        throw new Error(`${url} is ${declared} bytes, over the ${maxBytes}-byte limit`);
+    }
+    if (response.body === null) return "";
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let text = "";
+    let total = 0;
+    let chunk = await reader.read();
+    while (!chunk.done) {
+        total += chunk.value.byteLength;
+        if (total > maxBytes) {
+            await reader.cancel();
+            throw new Error(`${url} is over the ${maxBytes}-byte limit`);
+        }
+        text += decoder.decode(chunk.value, {stream: true});
+        chunk = await reader.read();
+    }
+    return text + decoder.decode();
 }
 
 /** `raw.githubusercontent.com` answers CORS and resolves `HEAD` to the default branch. */
@@ -94,46 +118,6 @@ function unquote(value: string): string {
         if ((first === '"' || first === "'") && first === last) return value.slice(1, -1);
     }
     return value;
-}
-
-type Draft = {heading: string; command: string | null};
-
-function sectionsOf(body: string): Draft[] {
-    const sections: Draft[] = [];
-    let current: Draft | null = null;
-    let inFence = false;
-    let fenceFirst: string | null = null;
-
-    for (const line of body.split("\n")) {
-        if (/^\s*(```|~~~)/.test(line)) {
-            if (inFence) {
-                inFence = false;
-                if (current !== null && current.command === null && fenceFirst !== null) {
-                    current.command = fenceFirst;
-                }
-                fenceFirst = null;
-            } else {
-                inFence = true;
-            }
-            continue;
-        }
-        if (inFence) {
-            if (fenceFirst === null && line.trim() !== "") fenceFirst = line.trim();
-            continue;
-        }
-        const heading = /^##\s+(.+?)\s*#*\s*$/.exec(line);
-        if (heading !== null) {
-            current = {heading: stripInline(heading[1] ?? ""), command: null};
-            sections.push(current);
-            continue;
-        }
-    }
-    return sections;
-}
-
-/** `**Bold**` and `` `code` `` in a heading are markup, not words. */
-function stripInline(text: string): string {
-    return text.replace(/[*_`]/g, "").trim();
 }
 
 /**

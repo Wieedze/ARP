@@ -1,15 +1,61 @@
 import catalogue from '../../../../data/catalogue/tools.json';
+import skillFacts from '../../../../data/catalogue/skill-facts.json';
+import skillRequires from '../../../../data/catalogue/skill-requires.json';
 import {
   INTUITION_HAS_TAG_MAINNET as HAS_TAG,
   INTUITION_IS_A_SUB_DOMAIN_OF as IS_A_SUB_DOMAIN_OF,
   listRegisteredTools,
   listTools,
+  readDomainTree,
   type ToolListingOrder,
   toolsInDomain,
 } from '@arp-protocol/core';
 
-import { GRAPHQL, DOMAIN_ROOT, DOMAIN_ATTESTOR } from '../config.js';
+import { GRAPHQL, DOMAIN_ROOT, DOMAIN_ATTESTORS } from '../config.js';
 import { type JsonRpcId, fail, text } from '../rpc.js';
+import {
+  type CatalogueEntry,
+  type SkillFact,
+  collapseCopies,
+  describe,
+  keyOf,
+  pageOf,
+  relevance,
+} from '../tool-search.js';
+
+// Both casts name the shape of a committed JSON file this repo generates; a field that went
+// missing would surface as `undefined` in a row, not as a crash.
+const CATALOGUE: ReadonlyMap<string, CatalogueEntry> = new Map(
+  (catalogue.tools as { url: string; title: string; purpose: string | null }[]).map((tool) => [
+    keyOf(tool.url),
+    tool,
+  ]),
+);
+const SKILLS: ReadonlyMap<string, SkillFact> = new Map(
+  Object.entries(skillFacts.facts as Record<string, SkillFact>).map(([label, fact]) => [
+    keyOf(label),
+    fact,
+  ]),
+);
+
+type SkillRequires = { cli?: string[]; mentions_login?: string };
+
+// The shape of a committed file `scripts/build/build-skill-requires.ts` generates (task 56).
+const REQUIRES: ReadonlyMap<string, SkillRequires> = new Map(
+  Object.entries(skillRequires.requires as Record<string, SkillRequires>).map(([label, fact]) => [
+    keyOf(label),
+    fact,
+  ]),
+);
+
+/**
+ * What a skill's own file says it needs, shown before the agent picks it (task 56). Absent when
+ * the file declared and mentioned nothing, or was not read; never a claim that it needs nothing.
+ */
+export function requiresFor(label: string | null): { requires?: SkillRequires } {
+  const hit = label === null ? undefined : REQUIRES.get(keyOf(label));
+  return hit === undefined ? {} : { requires: hit };
+}
 
 /**
  * `data/catalogue/tools.json`'s entry for an atom label, as the two fields a caller gets.
@@ -20,22 +66,9 @@ import { type JsonRpcId, fail, text } from '../rpc.js';
  * is the identity and was always enough.
  */
 function seedFor(label: string | null): { title: string | null; purpose: string | null } {
-  if (label === null) return { title: null, purpose: null };
-  const key = label
-    .trim()
-    .toLowerCase()
-    .replace(/^https?:\/\//, '')
-    .replace(/\/+$/, '');
-  const hit = SEED_BY_KEY.get(key);
+  const hit = label === null ? undefined : CATALOGUE.get(keyOf(label));
   return { title: hit?.title ?? null, purpose: hit?.purpose ?? null };
 }
-
-const SEED_BY_KEY = new Map(
-  (catalogue.tools as { url: string; title: string; purpose: string | null }[]).map((tool) => [
-    tool.url.replace(/^https:\/\//, '').toLowerCase(),
-    tool,
-  ]),
-);
 
 /**
  * Tools agents declared using, with where each is hosted and what stands behind it.
@@ -84,6 +117,19 @@ export async function findTools(id: JsonRpcId, args: Record<string, unknown>) {
   if (orderRaw !== 'priced-edges' && orderRaw !== 'conviction' && orderRaw !== 'declarations') {
     return fail(id, -32602, "order must be 'priced-edges', 'conviction' or 'declarations'");
   }
+  const queryRaw = args['query'];
+  if (queryRaw !== undefined && (typeof queryRaw !== 'string' || queryRaw.length > 200)) {
+    return fail(id, -32602, 'query must be a string of at most 200 characters');
+  }
+  const query = typeof queryRaw === 'string' && queryRaw.trim() !== '' ? queryRaw.trim() : null;
+  const offsetRaw = args['offset'] ?? 0;
+  if (typeof offsetRaw !== 'number' || !Number.isInteger(offsetRaw) || offsetRaw < 0) {
+    return fail(id, -32602, 'offset must be an integer of 0 or more');
+  }
+  const detailRaw = args['detail'] ?? 'short';
+  if (detailRaw !== 'short' && detailRaw !== 'full') {
+    return fail(id, -32602, "detail must be 'short' or 'full'");
+  }
   const limitRaw = args['limit'] ?? 25;
   if (
     typeof limitRaw !== 'number' ||
@@ -113,7 +159,7 @@ export async function findTools(id: JsonRpcId, args: Record<string, unknown>) {
   //
   // The attestor is a property of the SERVER, not of the request. Anybody who wants a different
   // index runs a server with a different `ARP_DOMAIN_ATTESTOR`. Nobody changes it per call.
-  const attestor = DOMAIN_ATTESTOR;
+  const attestor = DOMAIN_ATTESTORS;
   if (domainRaw !== undefined && attestor === undefined) {
     // Refuses rather than falling back to the unfiltered graph. The fallback is the failure this
     // whole design exists to prevent, and it would have been silent: a search returning more rows
@@ -122,9 +168,9 @@ export async function findTools(id: JsonRpcId, args: Record<string, unknown>) {
       id,
       -32603,
       'this server has no domain attestor configured, so it cannot answer a domain search. ' +
-        'Set ARP_DOMAIN_ATTESTOR (or AGENT_ADDRESS) to the address whose filings are the index. ' +
-        'Reading the hierarchy unfiltered would return every triple anybody has ever published ' +
-        'under the predicate, which is not an index.',
+        'Set ARP_DOMAIN_ATTESTOR to the address or addresses (comma-separated) whose filings are the index. ' +
+        'Reading the hierarchy unfiltered would return every filing anybody has ever published ' +
+        'under it, which is not an index.',
     );
   }
 
@@ -138,18 +184,18 @@ export async function findTools(id: JsonRpcId, args: Record<string, unknown>) {
     backed: Set<string>;
     othersHidden: number;
   } | null = null;
+  const walk = {
+    graphqlUrl: GRAPHQL,
+    hierarchyPredicate: IS_A_SUB_DOMAIN_OF,
+    tagPredicate: HAS_TAG,
+    root: DOMAIN_ROOT,
+    attestor,
+  };
+  let domainTree: Awaited<ReturnType<typeof readDomainTree>> | null = null;
   if (domainRaw !== undefined) {
     const normalised = domainRaw.trim().toLowerCase();
-    const { domains, tools } = await toolsInDomain(
-      {
-        graphqlUrl: GRAPHQL,
-        hierarchyPredicate: IS_A_SUB_DOMAIN_OF,
-        tagPredicate: HAS_TAG,
-        root: DOMAIN_ROOT,
-        attestor,
-      },
-      normalised,
-    );
+    domainTree = await readDomainTree(walk);
+    const { domains, tools } = await toolsInDomain(walk, normalised, { tree: domainTree });
     // `has tag` is permissionless to write: anybody can publish `(anything, has tag, payment)` for
     // the price of one triple. An index is therefore a *reading* of those filings, and `attestor`
     // picks whose — ARP's by default, the caller's own, somebody else's, or none at all.
@@ -202,11 +248,98 @@ export async function findTools(id: JsonRpcId, args: Record<string, unknown>) {
   const inScope = (atomId: string): boolean =>
     domainScope === null || domainScope.atomIds.has(atomId.toLowerCase());
 
+  const rows = [
+    ...page.tools
+      .filter((tool) => inScope(tool.atomId))
+      .map((tool) => ({
+        tool_atom_id: tool.atomId,
+        label: tool.label,
+        provenance: 'declared' as const,
+        ...seedFor(tool.label),
+        // Where to go and look. ARP hosts nothing; this is the pointer and the point.
+        hosted_at: tool.hostedAt,
+        atom_uri: tool.uri,
+        declarations: tool.edgeCount,
+        // How many of those declarations somebody paid to stand behind. Never a summed position
+        // count: positions are counted per vault and a sum across edges counts nothing (ADR `0023`).
+        paid_declarations: tool.pricedEdges,
+        support_assets_wei: tool.supportAssetsSum.toString(),
+        oppose_assets_wei: tool.opposeAssetsSum.toString(),
+        position_count: null,
+      })),
+    ...registeredRows,
+  ];
+
+  // A free-text query keeps the rows whose name, address or description holds its words, best
+  // match first; without one the listing's own order stands. Matching runs on the whole
+  // description, so "montage" or "subtitles" finds a skill whose name says neither.
+  const described = rows.map((row) => ({ row, about: describe(row.label, CATALOGUE, SKILLS) }));
+  const matched =
+    query === null
+      ? described
+      : described
+          .map((entry) => ({ ...entry, score: relevance(query, entry.about) }))
+          .filter((entry) => entry.score > 0)
+          .sort((a, b) => b.score - a.score);
+  // The same skill copied into several repositories reads as one result in the short answer: one
+  // copy stands for the others (`collapseCopies` says which), and `copies` says how many. Five rows of
+  // `youtube-thumbnail-design` were five times the tokens for one finding (testnet, 2026-11-02).
+  const listed =
+    detailRaw === 'full'
+      ? matched.map((entry) => ({ ...entry, copies: 1 }))
+      : collapseCopies(matched, (entry) => entry.row.declarations ?? 0);
+  const { rows: pageRows, total, nextOffset } = pageOf(listed, offsetRaw, limitRaw);
+
+  // A domain search that returns no row carries the words the registry does use, so the agent can
+  // ask again: "business" finds nothing, "marketing" finds 57 (testnet 13579, 2026-11-02). Decided
+  // on the rows returned, not on the tag filter, because tagged atoms the listings do not hold also
+  // end in an empty answer. A free-text query that found nothing does not: the list invited a
+  // second call, and with nothing in the registry for the need, that call was paid for nothing
+  // (task 51, ADR `0111`).
+  const domainsAvailable =
+    domainTree !== null && total === 0 && domainRaw !== undefined
+      ? domainTree
+          .subtree(DOMAIN_ROOT)
+          .filter((name) => name !== DOMAIN_ROOT)
+          .sort()
+      : null;
+  const truncated = page.truncated || registered.truncated;
+  const paging = {
+    total,
+    offset: offsetRaw,
+    next_offset: nextOffset,
+    ...(query === null ? {} : { query }),
+  };
+
+  if (detailRaw === 'short') {
+    return text(id, {
+      ...paging,
+      ...(domainScope === null
+        ? {}
+        : { domain: String(domainRaw).trim().toLowerCase(), domains_walked: domainScope.domains }),
+      ...(domainsAvailable === null ? {} : { domains_available: domainsAvailable }),
+      // Said only when it is true: a read the graph cut short is not the whole registry.
+      ...(truncated ? { truncated: true } : {}),
+      tools: pageRows.map(({ row, about, copies }) => ({
+        id: row.tool_atom_id,
+        name: about.name,
+        url: row.hosted_at,
+        purpose: about.purpose,
+        declarations: row.declarations,
+        ...(about.installs === null ? {} : { installs: about.installs }),
+        ...requiresFor(row.label),
+        ...(copies > 1 ? { copies } : {}),
+      })),
+    });
+  }
+
   return text(id, {
+    ...paging,
     curve_id: page.curveId,
     edges_read: page.edgesRead,
-    truncated: page.truncated || registered.truncated,
+    truncated,
     purpose_read_at: catalogue.readAt,
+    installs_read_at: skillFacts._measuredOn,
     // Present only when a domain was asked for. `domains_walked` is the derivation made visible:
     // a tool tagged `card` comes back under `payment` because the hierarchy says so, and the
     // reader should be able to see which hop did it rather than take the filter on trust.
@@ -216,37 +349,21 @@ export async function findTools(id: JsonRpcId, args: Record<string, unknown>) {
           domain: String(domainRaw).trim().toLowerCase(),
           domains_walked: domainScope.domains,
           domain_tagged_tools: domainScope.atomIds.size,
-          // Whose tree was walked. Named in the response because "the domain tree" is a reading,
-          // not a fact about the chain, and a reader should never have to guess whose it was.
-          // Echoed verbatim although the caller cannot set it. "The domain tree" is a reading
-          // and not a fact about the chain, so a reader must never have to guess whose it was —
-          // and an address in the wrong case returns an empty tree, which this makes diagnosable
+          // Whose tree was walked: "the domain tree" is a reading, not a fact about the chain, and
+          // an address in the wrong case returns an empty tree, which this makes diagnosable
           // instead of looking like "this domain has nothing in it".
-          domain_attestor: attestor,
+          domain_attestors: attestor,
           // How many filings under this domain this attestor does not back, and were left out.
           // Reported even when zero, so a reader never wonders whether the question was asked.
           tags_from_others_hidden: domainScope.othersHidden,
         }),
-    tools: [
-      ...page.tools
-        .filter((tool) => inScope(tool.atomId))
-        .map((tool) => ({
-          tool_atom_id: tool.atomId,
-          label: tool.label,
-          provenance: 'declared' as const,
-          ...seedFor(tool.label),
-          // Where to go and look. ARP hosts nothing; this is the pointer and the point.
-          hosted_at: tool.hostedAt,
-          atom_uri: tool.uri,
-          declarations: tool.edgeCount,
-          // How many of those declarations somebody paid to stand behind. Never a summed position
-          // count: positions are counted per vault and a sum across edges counts nothing (ADR `0023`).
-          paid_declarations: tool.pricedEdges,
-          support_assets_wei: tool.supportAssetsSum.toString(),
-          oppose_assets_wei: tool.opposeAssetsSum.toString(),
-          position_count: null,
-        })),
-      ...registeredRows,
-    ].slice(0, limitRaw),
+    ...(domainsAvailable === null ? {} : { domains_available: domainsAvailable }),
+    tools: pageRows.map(({ row, about }) => ({
+      ...row,
+      title: row.title ?? (about.name === keyOf(row.label ?? '') ? null : about.name),
+      purpose: row.purpose ?? about.purpose,
+      installs: about.installs,
+      ...requiresFor(row.label),
+    })),
   });
 }

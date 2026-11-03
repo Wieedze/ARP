@@ -81,7 +81,7 @@ describe("buildTermShapeView", () => {
 
     it("says 'other' positions, because a supporter holds this one by definition", () => {
         expect(buildTermShapeView(shape({medianBackerBreadth: 12})).breadth).toBe(
-            "half its supporters hold 12+ other positions",
+            "half its supporters also support 12+ others",
         );
         expect(buildTermShapeView(shape({medianBackerBreadth: 0})).breadth).toBe(
             "half its supporters hold nothing else",

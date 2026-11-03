@@ -1,7 +1,13 @@
 import {describe, expect, it, vi} from "vitest";
 import type {AgentListing, AgentPage, ListAgentsOptions} from "@arp-protocol/core";
 
-import {agentCohortQueryKey, agentCohortQueryOptions, COHORT_PAGE_SIZE} from "../use-agent-cohort";
+import {
+    AGENT_SEARCH_LIMIT,
+    agentCohortQueryKey,
+    agentCohortQueryOptions,
+    agentSearchQueryOptions,
+    COHORT_PAGE_SIZE,
+} from "../use-agent-cohort";
 
 const REGISTRY = "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432" as const;
 
@@ -69,26 +75,33 @@ describe("agentCohortQueryOptions", () => {
     it("asks the source for one page, not for the cohort", async () => {
         const fetchCohort = vi.fn(pageOver);
         await agentCohortQueryOptions(MAINNET, "evidence-quantity", 0, fetchCohort).queryFn();
-        expect(fetchCohort).toHaveBeenCalledWith({
-            order: "evidence-quantity",
-            limit: COHORT_PAGE_SIZE,
-            offset: 0,
-        }, "https://mainnet.intuition.sh/v1/graphql");
+        expect(fetchCohort).toHaveBeenCalledWith(
+            {
+                order: "evidence-quantity",
+                limit: COHORT_PAGE_SIZE,
+                offset: 0,
+            },
+            "https://mainnet.intuition.sh/v1/graphql",
+        );
         expect(COHORT_PAGE_SIZE).toBeLessThanOrEqual(50);
     });
 
     it("passes the order and the offset straight through", async () => {
         const fetchCohort = vi.fn(pageOver);
         await agentCohortQueryOptions(MAINNET, "economic-conviction", 75, fetchCohort).queryFn();
-        expect(fetchCohort).toHaveBeenCalledWith({
-            order: "economic-conviction",
-            limit: COHORT_PAGE_SIZE,
-            offset: 75,
-        }, "https://mainnet.intuition.sh/v1/graphql");
+        expect(fetchCohort).toHaveBeenCalledWith(
+            {
+                order: "economic-conviction",
+                limit: COHORT_PAGE_SIZE,
+                offset: 75,
+            },
+            "https://mainnet.intuition.sh/v1/graphql",
+        );
     });
 
     it("maps the page into the directory view", async () => {
-        const view = await agentCohortQueryOptions(MAINNET, 
+        const view = await agentCohortQueryOptions(
+            MAINNET,
             "evidence-quantity",
             0,
             vi.fn(pageOver),
@@ -97,7 +110,7 @@ describe("agentCohortQueryOptions", () => {
         expect(view.rows).toHaveLength(1);
         expect(view.rows[0].href).toBe("/agent/8453/6649");
         expect(view.rows[0].isFallbackMetadata).toBe(true);
-        expect(view.rows[0].positions).toBe("1 position · 1 curve");
+        expect(view.rows[0].positions).toBe("1 support");
     });
 
     it("lets a failed read reach the caller instead of returning an empty cohort", async () => {
@@ -112,5 +125,23 @@ describe("agentCohortQueryOptions", () => {
     it("keeps the previous page on screen while the next one loads", () => {
         const options = agentCohortQueryOptions(MAINNET, "evidence-quantity", 25, vi.fn(pageOver));
         expect(options.placeholderData).toBeTypeOf("function");
+    });
+});
+
+describe("agentSearchQueryOptions (task 48)", () => {
+    it("asks for agents by name, one short page, in the evidence order", async () => {
+        const fetchCohort = vi.fn(pageOver);
+        await agentSearchQueryOptions(MAINNET, "  dackie ", fetchCohort).queryFn();
+        expect(fetchCohort).toHaveBeenCalledWith(
+            {order: "evidence-quantity", limit: AGENT_SEARCH_LIMIT, offset: 0, name: "dackie"},
+            "https://mainnet.intuition.sh/v1/graphql",
+        );
+    });
+
+    it("does not read for a blank name, and keys on the name and the chain", () => {
+        expect(agentSearchQueryOptions(MAINNET, "   ").enabled).toBe(false);
+        const key = agentSearchQueryOptions(MAINNET, "dackie").queryKey;
+        expect(key).toContain("dackie");
+        expect(key).toContain(MAINNET.chainId);
     });
 });

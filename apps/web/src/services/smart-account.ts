@@ -3,7 +3,14 @@ import {
     toMetaMaskSmartAccount,
     type MetaMaskSmartAccount,
 } from "@metamask/smart-accounts-kit";
-import {type Account, type Chain, type Hex, type Transport, type WalletClient} from "viem";
+import {
+    type Account,
+    type Address,
+    type Chain,
+    type Hex,
+    type Transport,
+    type WalletClient,
+} from "viem";
 import {type PrivateKeyAccount} from "viem/accounts";
 
 import {intuitionTestnet} from "../lib/chains";
@@ -61,6 +68,15 @@ export async function createUserSmartAccount(params: {
 }
 
 /**
+ * Whether a Smart Account has bytecode on 13579 yet. A counterfactual account has none until it is
+ * deployed, and the `DelegationManager` cannot call into it before then.
+ */
+export async function isSmartAccountDeployed(address: Address): Promise<boolean> {
+    const code = await publicClient.getCode({address});
+    return code !== undefined && code !== "0x";
+}
+
+/**
  * Deploy the Smart Account on-chain if it is not already deployed.
  *
  * MetaMask Smart Accounts are counterfactual by default — the address is
@@ -81,12 +97,13 @@ export async function deploySmartAccountIfNeeded(params: {
     smartAccount: MetaMaskSmartAccount<Implementation.Hybrid>;
     funderWalletClient: WalletClient<Transport, Chain, Account>;
 }): Promise<Hex | null> {
-    const code = await publicClient.getCode({address: params.smartAccount.address});
-    if (code && code !== "0x") return null;
+    if (await isSmartAccountDeployed(params.smartAccount.address)) return null;
 
     const {factory, factoryData} = await params.smartAccount.getFactoryArgs();
     if (!factory || !factoryData) {
-        throw new Error("Smart Account has no factory args — already deployed or misconfigured");
+        throw new Error(
+            "The agent wallet cannot be set up — it is already set up or misconfigured",
+        );
     }
 
     const hash = await params.funderWalletClient.sendTransaction({
@@ -94,6 +111,6 @@ export async function deploySmartAccountIfNeeded(params: {
         data: factoryData,
         chain: intuitionTestnet,
     });
-    await waitAndRecord(publicClient, hash, {label: "fund smart account"});
+    await waitAndRecord(publicClient, hash, {label: "fund agent wallet"});
     return hash;
 }

@@ -4,7 +4,6 @@ import {
     DEFAULT_TIMEOUT_MS,
     defaultFetch,
     type FetchLike,
-    fetchWithTimeout,
     HttpError,
     isRecord,
     readArray,
@@ -13,6 +12,7 @@ import {
     readRecord,
     readString,
 } from "@arp-protocol/graphql";
+import {guardedFetchText, type ResolveHost} from "./verify/probe.js";
 import type {
     AssessmentDocument,
     AssessmentEvidence,
@@ -24,6 +24,11 @@ import type {
 export type FetchAssessmentOptions = {
     fetch?: FetchLike;
     timeoutMs?: number;
+    /** Body cap, `DEFAULT_MAX_BODY_BYTES` when absent. */
+    maxBodyBytes?: number;
+    /** Fetch a resolver on a private address. Off by default; a resolver URL is not ours. */
+    allowPrivate?: boolean;
+    resolveHost?: ResolveHost;
 };
 
 const EXCERPT_LENGTH = 200;
@@ -165,17 +170,36 @@ export async function fetchAssessment(
     const fetchImpl = options.fetch ?? defaultFetch();
     const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
 
+    // A resolver URL is a string somebody else published, so it goes through the same guard as a
+    // probe: http(s) or ipfs only, no private address, every redirect checked, body capped.
     let response: Response;
+    let body: string;
     try {
-        response = await fetchWithTimeout(
+        const answer = await guardedFetchText(
             fetchImpl,
             url,
             {method: "GET", headers: {accept: "application/json"}},
-            timeoutMs,
+            {
+                timeoutMs,
+                ...(options.maxBodyBytes === undefined ? {} : {maxBytes: options.maxBodyBytes}),
+                ...(options.allowPrivate === true ? {allowPrivate: true} : {}),
+                ...(options.resolveHost === undefined ? {} : {resolveHost: options.resolveHost}),
+            },
         );
+        if (answer.status === "refused") {
+            return {
+                status: "error",
+                url,
+                error: {kind: "network", message: `not fetched: ${answer.reason}`},
+            };
+        }
+        ({response, text: body} = answer);
     } catch (error) {
         if (error instanceof HttpError && error.kind === "timeout") {
             return {status: "error", url, error: {kind: "timeout", timeoutMs}};
+        }
+        if (error instanceof HttpError && error.kind === "too-large") {
+            return {status: "error", url, error: {kind: "malformed", message: error.message}};
         }
         return {
             status: "error",
@@ -192,20 +216,6 @@ export async function fetchAssessment(
             status: "error",
             url,
             error: {kind: "http", status: response.status, statusText: response.statusText},
-        };
-    }
-
-    let body: string;
-    try {
-        body = await response.text();
-    } catch (error) {
-        return {
-            status: "error",
-            url,
-            error: {
-                kind: "network",
-                message: error instanceof Error ? error.message : String(error),
-            },
         };
     }
 

@@ -35,6 +35,21 @@ export function formatTrust(wei: bigint): string {
     return negative ? `-${value}` : value;
 }
 
+/**
+ * A `formatTrust` figure cut to four significant digits, for a list (task 48): `6.3369302` reads
+ * `6.337`, `219.5402` reads `219.5`. A column of eight-decimal figures is read digit by digit. The
+ * exact figure stays one hover away (`title`), and every form and confirmation keeps
+ * `formatTrust` itself, where the exact amount is the point. The dust marker passes through.
+ * Above 9,999 the integer part rounds too (`12345.67` reads `12,350`), with grouping commas the
+ * exact figure does not carry; the `title` beside it has the whole number.
+ */
+export function shortTrust(exact: string): string {
+    if (exact.startsWith("<") || exact.startsWith(">")) return exact;
+    const value = Number(exact);
+    if (!Number.isFinite(value)) return exact;
+    return new Intl.NumberFormat("en-US", {maximumSignificantDigits: 4}).format(value);
+}
+
 /** `0x1234abcd…9f0e` — for term ids, hashes and addresses in dense rows. */
 export function truncateMiddle(value: string, head = 10, tail = 6): string {
     if (value.length <= head + tail + 1) return value;
@@ -98,7 +113,7 @@ export type SignatureCopy = {
     /**
      * The one fact the label does not already carry.
      *
-     * For `verified` and `mismatch`, the addresses involved. For `unverified`,
+     * For `self-signed` and `mismatch`, the addresses involved. For `unverified`,
      * the connector's own reason — except the absent-signature one, which is
      * the only reason that merely restates the label in the document's field
      * names and is therefore the only one that can be dropped without losing a
@@ -108,7 +123,7 @@ export type SignatureCopy = {
      * exists to show.
      */
     detail: string | null;
-    tone: "verified" | "mismatch" | "unverified";
+    tone: "self-signed" | "mismatch" | "unverified";
 };
 
 /**
@@ -124,11 +139,11 @@ export type SignatureCopy = {
  * encoding this package has never confirmed.
  */
 export function describeSignature(verdict: SignatureVerdict): SignatureCopy {
-    if (verdict.status === "verified") {
+    if (verdict.status === "self-signed") {
         return {
-            label: "Signature verified",
+            label: "Signed, author not checked",
             detail: `EIP-712 recovers to the signer the document names, ${truncateMiddle(verdict.declaredSigner, 8, 6)}`,
-            tone: "verified",
+            tone: "self-signed",
         };
     }
     if (verdict.status === "mismatch") {
@@ -152,16 +167,14 @@ export function describeSignature(verdict: SignatureVerdict): SignatureCopy {
  * Deliberately *not* phrased as distinct stakers, unlike `StakerCount` on the
  * panel. `AgentAtomMarket` sums across every bonding curve so that its position count
  * and its market cap describe the same thing, and that sum counts an account
- * staked on two curves twice. The curve count is stated so the reader can see
- * where the number came from.
+ * staked on two curves twice — so it reads "N supports", never "N supporters", which would claim
+ * distinct accounts. The curve count was stated beside it until ADR `0103`, which keeps
+ * bonding curves off the screen by default; `market.vaultCount` still carries it.
  */
 export function describeAtomPositions(market: AgentAtomMarket): string {
     const count = market.positionCount;
-    if (count === null) return "position count not reported";
-    const curves = market.vaultCount;
-    const positions = `${count} position${count === 1 ? "" : "s"}`;
-    if (curves === null) return positions;
-    return `${positions} · ${curves} curve${curves === 1 ? "" : "s"}`;
+    if (count === null) return "support count not reported";
+    return `${count} support${count === 1 ? "" : "s"}`;
 }
 
 /**
@@ -224,7 +237,7 @@ export function intuitionPortalUrl(
 export function describeFetchError(error: AssessmentFetchError): string {
     switch (error.kind) {
         case "no-resolver-url":
-            return "The graph edge carries no resolver URL, so there is no document to read.";
+            return "This rating links to no document, so there is nothing to read.";
         case "skipped":
             return "The resolver was not fetched.";
         case "network":
@@ -261,7 +274,7 @@ export function formatStakerCount(count: number): string {
  * assertion is not available.
  */
 export function stakerLabel(count: number): string {
-    return `${formatStakerCount(count)} distinct staker${count === 1 ? "" : "s"}`;
+    return `${formatStakerCount(count)} distinct supporter${count === 1 ? "" : "s"}`;
 }
 
 /**

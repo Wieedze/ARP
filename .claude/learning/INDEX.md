@@ -1,8 +1,8 @@
 # Post-mortem index
 
-**Generated** 2026-10-30 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
+**Generated** 2026-11-03 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-28 entries, one per completed task. Written by `task-verifier` on a pass.
+56 entries, one per completed task. Written by `task-verifier` on a pass.
 
 | # | task | verdict | entry |
 | --- | --- | --- | --- |
@@ -34,3 +34,31 @@
 | [26](26-one-installer-33c.md) | `docs/tasks/33-one-installer.md` §4 33c | PASS, on the second pass | One installer, 33c: `arp init`, `arp uninstall`, `arp doctor` |
 | [27](27-one-installer-33i-capture.md) | `docs/tasks/33-one-installer.md` §4 33i. Capture tooling only. Per-runtime adapters wait on real captures from the user. | PASS, on the second pass | One installer, 33i (first half): `arp hook --capture` and `arp init --capture` |
 | [28](28-one-installer-33d-claude-gemini.md) | `docs/tasks/33-one-installer.md` §33d (first part; Codex deferred) | PASS (third pass) | One installer, 33d first part: Claude Code plugin and Gemini extension |
+| [29](29-coherence-audit-28d.md) | `docs/tasks/28-coherence-audit.md` (entry 43) | PASS (second pass; the first draft's check did not print what the entry said) | Coherence audit, entry 43: `/agent` step 5 pointed at a deleted script |
+| [29](29-proven-and-declared.md) | `docs/tasks/42-proven-and-declared.md` | PASS (second pass) | Proven and declared: two figures, read from the sender of each deposit |
+| [30](30-the-activity-bar-verified.md) | `docs/tasks/36-the-activity-bar.md` (the "Review of `f5d1c84` and `79ad7ea`" section) | PASS | The activity bar, review of f5d1c84 and 79ad7ea (36v) |
+| [31](31-the-receipt-enforcer.md) | `docs/tasks/43-the-receipt-enforcer.md` | PASS | The receipt enforcer: "no signed receipt, no deposit", held by a contract |
+| [32](32-the-install-handshake.md) | `docs/tasks/39-the-install-handshake.md` | PASS (second pass; the first failed on ADR `0095` §7's griefing costs) | The install handshake: a rented tunnel, and the node bound to its ERC-8004 token |
+| [32](32-the-sponsoring-service.md) | `docs/tasks/40-the-sponsoring-service.md` (built with `docs/tasks/37` 37b, 37c) | PASS (second pass) | The sponsoring service: a proven deposit, paid by ARP, owned by the agent |
+| [33](33-the-account-page.md) | `docs/tasks/35-the-account-page.md` | PASS (second run; the first returned a five-item punch list) | The account page: delegations and settings |
+| [34](34-hire-receipt-v2.md) | `docs/tasks/44-hire-receipt-v2.md` | PASS (second pass; the first returned a four-item punch list) | Hire receipt v2: the receipt names the contract that verifies it |
+| [35](35-the-activity-bar-chain-facts.md) | `docs/tasks/36-the-activity-bar.md` (section "Amended 2026-11-02 — every agent, from the indexer") | PASS (second pass; first FAIL on 3 items) | The activity bar, amended: every agent, from the indexer (36, 2026-11-02) |
+| [36](36-the-redesign-from-references.md) | `docs/tasks/46-the-redesign-from-references.md` (§3 only; 46b–46f proposed, not started) | PASS | The redesign from references, 46a: `/tools` pages its list |
+| [37](37-the-redesign-from-references.md) | `docs/tasks/46-the-redesign-from-references.md` (row 46d in §4) | PASS (second pass; first FAIL on an unrecorded user choice) | The redesign from references, 46d: `/register` offers two tiles |
+| [38](38-plain-words.md) | `docs/tasks/47-plain-words.md` | PASS (first pass; ui-reviewer FAIL round 1, PASS round 2) | Plain words: the operator does not read the chain's vocabulary (47) |
+| [39](39-the-redesign-from-references.md) | `docs/tasks/46-the-redesign-from-references.md` (row 46b in §4) | PASS (first pass; `ui-reviewer` FAIL round 1 on 4 stale comments, PASS round 2) | The redesign from references, 46b: the agent page takes the skill page's layout |
+| [40](40-the-redesign-from-references.md) | `docs/tasks/46-the-redesign-from-references.md` (row 46e in §4) | PASS (`ui-reviewer` PASS with 4 advisories, 2 acted on) | The redesign from references, 46e: the id lookup moves into the `/agents` search |
+| [41](41-the-redesign-from-references.md) | `docs/tasks/46-the-redesign-from-references.md` (row 46c in §4) | PASS on round 2 (round 1 FAIL: a retraction landed in one place of two) | The redesign from references, 46c: `/activity` splits Yours from Everyone |
+| [42](42-the-journeys.md) | `docs/tasks/48-the-journeys.md` | PASS on round 2 | The journeys: what a visitor meets, and the conventions they expect |
+| [43](43-lean-search.md) | `docs/tasks/49-lean-search.md` | PASS on round 2 (round 1 FAIL: one live defect, three claim errors, one uncommented cast, vacuous tests) | Lean search: more tools found, fewer tokens spent |
+| [44](44-the-installer-meets-real-runtimes.md) | `docs/tasks/38-the-installer-meets-real-runtimes.md` | PASS (second pass; first pass FAIL on the task file and two code nits) | The installer meets real runtimes (part A, Claude Code) |
+| [45](45-discovery-without-a-command-45c.md) | `docs/tasks/45-discovery-without-a-command.md` §45c | PASS (second pass; first pass FAIL on three written claims and two uncommented casts) | Discovery without a command (45c, measure before promising) |
+| [46](46-quiet-search.md) | `docs/tasks/51-quiet-search.md` | PASS on the second pass | A quieter search: every word must match |
+| [47](47-when-memory-falls-short.md) | `docs/tasks/52-when-memory-falls-short.md` | PASS on round 2 | When memory falls short: does ARP find a skill Claude does not know? |
+| [48](48-desktop-walks-the-loop.md) | `docs/tasks/50-desktop-walks-the-loop.md` | PASS on round 2 | Claude Desktop walks the loop, and an outside user pays nothing |
+| [49](49-claude-code-demo.md) | `docs/tasks/55-claude-code-demo.md` | PASS (second pass; the first failed on four stale sites) | The Claude Code demo: a fetched skill the runtime can invoke, paid by the sponsor |
+| [50](50-the-whole-skill.md) | `docs/tasks/57-the-whole-skill.md` | PASS (second pass | The whole skill: its directory, under one receipt, for a runtime that can run it |
+| [51](51-what-a-skill-needs.md) | `docs/tasks/56-what-a-skill-needs.md` | PASS (second pass; first pass FAIL on claims) | What a skill needs, shown to the agent before it picks one |
+| [52](52-audit-cleanup.md) | `docs/tasks/60-audit-cleanup.md` | PASS | the audit cleanup |
+| [53](53-the-prose-pass-against-the-positioning.md) | `docs/tasks/27-strip-the-ai-slop.md` — step 1 re-run, steps 4 and 5; step 6 dropped | PASS on the second run | The prose pass, judged against the positioning |
+| [54](54-one-path-per-profile.md) | `docs/tasks/53-one-path-per-profile.md` | PASS on the second pass | One path per profile, from the landing |

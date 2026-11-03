@@ -6,7 +6,6 @@ import {RouteTransition} from "./components/brand/RouteTransition";
 import {ScrollToTop} from "./components/brand/ScrollToTop";
 
 import {Layout} from "./components/Layout";
-import {AgentRegister} from "./pages/AgentRegister";
 
 /**
  * The trust panel and its entry point are split out of the main bundle. They
@@ -16,7 +15,9 @@ import {AgentRegister} from "./pages/AgentRegister";
 const ActivityPage = lazy(() =>
     import("./pages/ActivityPage").then((module) => ({default: module.ActivityPage})),
 );
-const Profile = lazy(() => import("./pages/Profile").then((module) => ({default: module.Profile})));
+const AccountPage = lazy(() =>
+    import("./pages/AccountPage").then((module) => ({default: module.AccountPage})),
+);
 const AgentDirectory = lazy(() =>
     import("./pages/AgentDirectory").then((module) => ({default: module.AgentDirectory})),
 );
@@ -36,9 +37,17 @@ const Register = lazy(() =>
 const AtomPanel = lazy(() =>
     import("./pages/AtomPanel").then((module) => ({default: module.AtomPanel})),
 );
+/** Reads both indexes, so it is lazy like the pages it searches (task 48). */
+const SearchPage = lazy(() =>
+    import("./pages/SearchPage").then((module) => ({default: module.SearchPage})),
+);
 /** Same reason: it reads the Intuition graph, which nothing in the eager bundle needs. */
 const ToolCatalog = lazy(() =>
     import("./pages/ToolCatalog").then((module) => ({default: module.ToolCatalog})),
+);
+/** The three paths opened from scene 4 of `/` (task 53). */
+const StartPage = lazy(() =>
+    import("./pages/StartPage").then((module) => ({default: module.StartPage})),
 );
 
 function App() {
@@ -80,12 +89,6 @@ function App() {
                         path="/agent/import"
                         element={<Navigate to="/register?what=agent&have=yes" replace />}
                     />
-                    {/* The five-step testnet bring-up, named for what it is. It mints into ARP's **own**
-                    copy of the registry on 13579, designates a runtime wallet, deploys a Smart
-                    Account, signs two delegations and funds the runtime — a rehearsal of
-                    `docs/12` point 5, consumed by `scripts/`, not a path a visitor takes. Out of
-                    the nav on purpose. */}
-                    <Route path="/rig" element={<AgentRegister />} />
                     <Route
                         path="/agents"
                         element={
@@ -102,19 +105,19 @@ function App() {
                             </Suspense>
                         }
                     />
+                    {/* What the operator authorised and configured: the Smart Account, its
+                    delegations and the runtime they name. Reached from the wallet menu (user,
+                    2026-10-30). It replaced `/rig`'s steps 3 and 4, and `/profile`'s positions
+                    moved to `/activity`; `/rig`, `/profile` and `/me` are gone (`docs/tasks/35`
+                    §0), so an old link lands on no route rather than on a redirect. */}
                     <Route
-                        path="/profile"
+                        path="/account"
                         element={
-                            <Suspense fallback={<RouteFallback label="your positions" />}>
-                                <Profile />
+                            <Suspense fallback={<RouteFallback label="account" />}>
+                                <AccountPage />
                             </Suspense>
                         }
                     />
-                    {/* `/me` was the route and the tab was called "You". The user rejected both as
-                    wrong syntax; `HANDOFF.md` §8 names the route `/profile`. The redirect stays
-                    because a bookmark, a shared link or a `git log` reference to `/me` should not
-                    land on a blank page — and it is three lines against a dead end. */}
-                    <Route path="/me" element={<Navigate to="/profile" replace />} />
                     <Route
                         path="/register"
                         element={
@@ -140,7 +143,7 @@ function App() {
                     <Route
                         path="/atom/:atomId"
                         element={
-                            <Suspense fallback={<RouteFallback label="atom" />}>
+                            <Suspense fallback={<RouteFallback label="page" />}>
                                 <AtomPanel />
                             </Suspense>
                         }
@@ -149,6 +152,23 @@ function App() {
                     ADRs and in whatever anybody bookmarked. `AtomRedirect` because `Navigate` cannot
                     carry a param through. */}
                     <Route path="/tool/atom/:atomId" element={<AtomRedirect />} />
+                    <Route
+                        path="/start/:profile"
+                        element={
+                            <Suspense fallback={<RouteFallback label="your path" />}>
+                                <StartPage />
+                            </Suspense>
+                        }
+                    />
+                    {/* One field for both indexes (task 48). */}
+                    <Route
+                        path="/search"
+                        element={
+                            <Suspense fallback={<RouteFallback label="search" />}>
+                                <SearchPage />
+                            </Suspense>
+                        }
+                    />
                     {/* What the operator's agent triggered and declared, from the local feed. */}
                     <Route
                         path="/activity"

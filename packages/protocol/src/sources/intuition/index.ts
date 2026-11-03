@@ -1,5 +1,6 @@
 import {toCaip19} from "../../caip.js";
 import {
+    AGENT_EDGE_LIMIT,
     CAPABILITIES_QUERY,
     COHORT_ORDER_BY,
     COHORT_QUERY,
@@ -20,6 +21,7 @@ import type {
     Capabilities,
     CapabilityRef,
     ClaimMarket,
+    Provenance,
     ProviderClaim,
     ResolvedAgentRef,
     ResolvedListAgentsOptions,
@@ -52,7 +54,9 @@ export const INTUITION_TESTNET_GRAPHQL = "https://testnet.intuition.sh/v1/graphq
  * `1` is the MultiVault default on mainnet today and that is not a guarantee —
  * it comes from `getBondingCurveConfig()`, which governance can change. A caller
  * that also writes should pass the value it read from chain, so the market it
- * renders and the vault it deposits into are the same one.
+ * renders and the vault it deposits into are the same one. This is the only
+ * copy in the package: every read defaults to it, every write reads the chain
+ * (ADR `0119`).
  */
 export const DEFAULT_CURVE_ID = "1";
 
@@ -85,7 +89,7 @@ export const DEFAULT_CURVE_ID = "1";
 export const DEFAULT_LIST_TIMEOUT_MS = 30_000;
 
 export type IntuitionSourceConfig = {
-    graphqlUrl?: string;
+    graphqlUrl: string;
     fetch?: FetchLike;
     timeoutMs?: number;
     /**
@@ -165,7 +169,7 @@ async function resolveSubject(
  * deliberate: the methods are independently callable, and this package ships no
  * cache (see the README).
  */
-export function intuitionSource(config: IntuitionSourceConfig = {}): TrustSource {
+export function intuitionSource(config: IntuitionSourceConfig): TrustSource {
     // `curve_id` is a Hasura `numeric`, which accepts a JSON string for the
     // variable's value. Stringifying here means a bigint read straight from
     // getBondingCurveConfig() needs no conversion at the call site.
@@ -176,20 +180,28 @@ export function intuitionSource(config: IntuitionSourceConfig = {}): TrustSource
     const transport =
         config.transport ??
         createGraphqlTransport({
-            url: config.graphqlUrl ?? INTUITION_MAINNET_GRAPHQL,
+            url: config.graphqlUrl,
             fetch: config.fetch ?? defaultFetch(),
             ...(config.timeoutMs === undefined ? {} : {timeoutMs: config.timeoutMs}),
         });
 
-    async function surfaceRows(ref: ResolvedAgentRef): Promise<unknown[]> {
+    async function surfaceRows(
+        ref: ResolvedAgentRef,
+    ): Promise<{rows: unknown[]; truncated: boolean}> {
         const subject = await resolveSubject(transport, ref);
-        if (subject === null) return [];
+        if (subject === null) return {rows: [], truncated: false};
         const data = await transport.request(TRUST_SURFACE_QUERY, {
             subjectId: subject.handle,
             predicateIds: TRUST_PREDICATE_IDS,
             curveId,
+            limit: AGENT_EDGE_LIMIT,
         });
-        return Array.isArray(data["triples"]) ? data["triples"] : [];
+        const rows = Array.isArray(data["triples"]) ? data["triples"] : [];
+        return {rows, truncated: rows.length >= AGENT_EDGE_LIMIT};
+    }
+
+    function marked<T extends {provenance: Provenance}>(value: T, truncated: boolean): T {
+        return truncated ? {...value, provenance: {...value.provenance, truncated: true}} : value;
     }
 
     return {
@@ -220,10 +232,10 @@ export function intuitionSource(config: IntuitionSourceConfig = {}): TrustSource
         },
 
         async getAssessments(ref: ResolvedAgentRef): Promise<ProviderClaim[]> {
-            const rows = await surfaceRows(ref);
+            const {rows, truncated} = await surfaceRows(ref);
             return rows.flatMap((row) => {
                 const claim = mapProviderClaim(row);
-                return claim === null ? [] : [claim];
+                return claim === null ? [] : [marked(claim, truncated)];
             });
         },
 
@@ -243,12 +255,16 @@ export function intuitionSource(config: IntuitionSourceConfig = {}): TrustSource
             const data = await transport.request(CAPABILITIES_QUERY, {
                 subjectId: subject.handle,
                 predicateIds: CAPABILITY_PREDICATE_IDS,
+                limit: AGENT_EDGE_LIMIT,
             });
             const rows = Array.isArray(data["triples"]) ? data["triples"] : [];
 
             const capabilities: Capabilities = {
                 ...empty,
-                provenance: claimProvenance(subject.handle),
+                provenance: marked(
+                    {provenance: claimProvenance(subject.handle)},
+                    rows.length >= AGENT_EDGE_LIMIT,
+                ).provenance,
             };
             for (const row of rows) {
                 const capability = mapCapabilityRef(row);
@@ -259,10 +275,10 @@ export function intuitionSource(config: IntuitionSourceConfig = {}): TrustSource
         },
 
         async getMarkets(ref: ResolvedAgentRef): Promise<ClaimMarket[]> {
-            const rows = await surfaceRows(ref);
+            const {rows, truncated} = await surfaceRows(ref);
             return rows.flatMap((row) => {
                 const market = mapClaimMarket(row);
-                return market === null ? [] : [market];
+                return market === null ? [] : [marked(market, truncated)];
             });
         },
 
@@ -283,8 +299,7 @@ export function intuitionSource(config: IntuitionSourceConfig = {}): TrustSource
             const data = await transport.request(
                 COHORT_QUERY,
                 {
-                    predicateId: IMPLEMENT,
-                    objectId: ERC8004,
+                    where: cohortWhere(options.name),
                     sameAsPredicateId: SAME_AS,
                     // The same set `getCapabilities` reads, not a second list beside it: a row's
                     // glyph and the agent's own capability section must be drawn from one
@@ -330,4 +345,22 @@ function bucketFor(capabilities: Capabilities, capability: CapabilityRef): Capab
         case "has-category":
             return capabilities.categories;
     }
+}
+
+/**
+ * The cohort filter: membership by term id on both ends, always, and a name match only when one
+ * was asked for. The name is looked for in the atom's label **or** in the name its pinned Thing
+ * publishes, because the list shows the second when there is one (`mapMetadata`): a search on the
+ * label alone would find an agent by a name the reader never sees. The name's own `%`, `_` and backslash are escaped, so a search for `50%` matches those
+ * three characters and not everything starting with 50.
+ */
+export function cohortWhere(name: string | null): Record<string, unknown> {
+    const membership = {predicate_id: {_eq: IMPLEMENT}, object_id: {_eq: ERC8004}};
+    if (name === null) return membership;
+    const escaped = name.replace(/[\\%_]/g, (match) => `\\${match}`);
+    const pattern = `%${escaped}%`;
+    return {
+        ...membership,
+        subject: {_or: [{label: {_ilike: pattern}}, {value: {thing: {name: {_ilike: pattern}}}}]},
+    };
 }

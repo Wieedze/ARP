@@ -144,8 +144,10 @@ describe("toCohortRow", () => {
 
     it("shows the market cap with its position count beside it, always", () => {
         const row = toCohortRow(listing(), 0, "TRUST");
-        expect(row.marketCap).toBe("6.3369302 TRUST");
-        expect(row.positions).toBe("1 position · 2 curves");
+        // Four digits in the list, the exact figure kept for the cell's title (task 48).
+        expect(row.marketCap).toBe("6.337 TRUST");
+        expect(row.marketCapExact).toBe("6.3369302 TRUST");
+        expect(row.positions).toBe("1 support");
     });
 
     it("says the position count is missing rather than printing a bare cap", () => {
@@ -157,7 +159,28 @@ describe("toCohortRow", () => {
             "TRUST",
         );
         expect(row.marketCap).toBe("<0.00000001 TRUST");
-        expect(row.positions).toBe("position count not reported");
+        expect(row.positions).toBe("support count not reported");
+    });
+
+    it("marks a vault nobody holds a position in as unsupported, and only that", () => {
+        const dust = toCohortRow(
+            listing({market: {totalMarketCap: 1_000_000n, positionCount: 0, vaultCount: 1}}),
+            0,
+            "TRUST",
+        );
+        expect(dust.isUnsupported).toBe(true);
+        expect(toCohortRow(listing(), 0, "TRUST").isUnsupported).toBe(false);
+        // Unreported is not zero: the cell keeps saying so.
+        expect(toCohortRow(listing({market: null}), 0, "TRUST").isUnsupported).toBe(false);
+        expect(
+            toCohortRow(
+                listing({
+                    market: {totalMarketCap: 1_000_000n, positionCount: null, vaultCount: 1},
+                }),
+                0,
+                "TRUST",
+            ).isUnsupported,
+        ).toBe(false);
     });
 
     it("distinguishes no market data from a market of zero", () => {
@@ -173,7 +196,7 @@ describe("toCohortRow", () => {
                 0,
                 "TRUST",
             ),
-        ).toMatchObject({marketCap: "0 TRUST", positions: "0 positions · 1 curve"});
+        ).toMatchObject({marketCap: "0 TRUST", positions: "0 supports"});
     });
 
     it("marks the indexer's stand-in metadata as a fallback", () => {
@@ -220,7 +243,7 @@ describe("toCohortRow", () => {
             "TRUST",
         );
         expect(row.href).toBeNull();
-        expect(row.identityProblem).toBe("claims 16 identities — no single agent to open");
+        expect(row.identityProblem).toBe("declares 16 identities — no single agent to open");
     });
 
     it("says when an agent has no ERC-8004 identity edge at all", () => {
@@ -230,7 +253,7 @@ describe("toCohortRow", () => {
             "TRUST",
         );
         expect(row.href).toBeNull();
-        expect(row.identityProblem).toBe("no ERC-8004 identity edge in the graph");
+        expect(row.identityProblem).toBe("no ERC-8004 identity link in the graph");
     });
 
     it("never derives a token id from the display name", () => {
@@ -371,7 +394,7 @@ describe("describeCohortFailure", () => {
     });
 
     it("names an order the way the control names it", () => {
-        expect(orderLabel("evidence-quantity")).toBe("Most claims");
-        expect(orderLabel("economic-conviction")).toBe("Most staked");
+        expect(orderLabel("evidence-quantity")).toBe("Most declarations");
+        expect(orderLabel("economic-conviction")).toBe("Most supported");
     });
 });

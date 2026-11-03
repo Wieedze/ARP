@@ -41,11 +41,11 @@ export function useDeclareUse() {
             const walletClient = await connectedWalletClient();
             return submitUseDeclaration({
                 walletClient,
-                publicClient: chain.client,
+                publicClient: declaration.chain.client,
                 declaration,
             });
         },
-        [chain],
+        [],
     );
 
     return {plan, submit};

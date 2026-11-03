@@ -7,7 +7,12 @@ import { parseEther } from 'viem';
 import type { Address, Hex } from 'viem';
 import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts';
 
-import { hireReceiptMatches, verifyHireReceipt, type SignedHireReceipt } from '@arp-protocol/core';
+import {
+  hireReceiptIsFor,
+  hireReceiptMatches,
+  verifyHireReceipt,
+  type SignedHireReceipt,
+} from '@arp-protocol/core';
 
 import { createNode, echo, type NodeLimits, PaymentLedger, type TaskHandler } from '../src/task.ts';
 
@@ -75,7 +80,15 @@ function task(body: unknown): Request {
   return new Request('http://node/task', { method: 'POST', body: JSON.stringify(body) });
 }
 
-const hire = { paymentTxHash: PAID, requesterAddress: requester, payload: { q: 1 } };
+const VERIFIER: Address = '0x00000000000000000000000000000000000e4f04';
+const TERM: Hex = `0x${'7e'.repeat(32)}`;
+const hire = {
+  paymentTxHash: PAID,
+  requesterAddress: requester,
+  verifier: VERIFIER,
+  termId: TERM,
+  payload: { q: 1 },
+};
 
 describe('the payment check', () => {
   test('a valid payment gets a result and an EIP-712 receipt about this hire', async () => {
@@ -87,7 +100,10 @@ describe('the payment check', () => {
     };
     expect(await verifyHireReceipt(receipt)).toEqual({ status: 'valid', signer: agent.address });
     expect(receipt.chainId).toBe(13579);
+    expect(receipt.verifyingContract.toLowerCase()).toBe(VERIFIER);
     expect(receipt.receipt).toMatchObject({
+      version: 2,
+      termId: TERM,
       agentRegistry: REGISTRY,
       agentId: '2',
       requester,
@@ -96,6 +112,20 @@ describe('the payment check', () => {
     });
     // What the requester can re-derive from the JSON it sent and the JSON it got back.
     expect(hireReceiptMatches(receipt.receipt, hire.payload, result)).toBe(true);
+  });
+
+  test('the receipt is for the verifier asked for, and only that one, until its TTL', async () => {
+    const at = 1_793_000_000_000;
+    const response = await node(
+      { [PAID]: paid },
+      { now: () => at, limits: { receiptTtlSeconds: 600 } },
+    ).fetch(task(hire));
+    const { receipt } = (await response.json()) as { receipt: SignedHireReceipt };
+    expect(receipt.receipt.issuedAt).toBe(at / 1000);
+    expect(receipt.receipt.expiresAt).toBe(at / 1000 + 600);
+    expect(hireReceiptIsFor(receipt, VERIFIER, at / 1000 + 600)).toEqual({ ok: true });
+    expect(hireReceiptIsFor(receipt, agent.address, at / 1000).ok).toBe(false);
+    expect(hireReceiptIsFor(receipt, VERIFIER, at / 1000 + 601).ok).toBe(false);
   });
 
   test('a result with a bigint is hashed as it crosses the wire', async () => {
@@ -212,6 +242,12 @@ describe('what an unpaid stranger can make it do', () => {
     expect((await n.fetch(task({ ...hire, paymentTxHash: '0x1234' }))).status).toBe(400);
     expect((await n.fetch(task({ ...hire, requesterAddress: 'alice' }))).status).toBe(400);
     expect((await n.fetch(task('a string'))).status).toBe(400);
+    const { verifier: _verifier, ...noVerifier } = hire;
+    expect((await n.fetch(task(noVerifier))).status).toBe(400);
+    expect((await n.fetch(task({ ...hire, verifier: 'the service' }))).status).toBe(400);
+    const { termId: _termId, ...noTerm } = hire;
+    expect((await n.fetch(task(noTerm))).status).toBe(400);
+    expect((await n.fetch(task({ ...hire, termId: '0x7e' }))).status).toBe(400);
     expect(reads).toBe(0);
   });
 
@@ -221,15 +257,26 @@ describe('what an unpaid stranger can make it do', () => {
     expect(response.status).toBe(413);
   });
 
-  test('a handler that does not answer in time is a 504, and the payment can be used again', async () => {
+  test('a handler past its time is a 504 and is aborted; its payment is free again only once it settles', async () => {
     let calls = 0;
-    const hangs: TaskHandler = async (payload) => {
+    let finish!: () => void;
+    let signal: AbortSignal | undefined;
+    const slow: TaskHandler = async (payload, context) => {
       calls += 1;
-      if (calls === 1) await new Promise(() => {});
+      if (calls === 1) {
+        signal = context.signal;
+        await new Promise<void>((resolve) => (finish = resolve));
+      }
       return payload;
     };
-    const n = node({ [PAID]: paid }, { handle: hangs, limits: { handlerTimeoutMs: 20 } });
+    const n = node({ [PAID]: paid }, { handle: slow, limits: { handlerTimeoutMs: 20 } });
     expect((await n.fetch(task(hire))).status).toBe(504);
+    expect(signal?.aborted).toBe(true);
+    // Still running: the same payment cannot start a second job beside it.
+    expect((await n.fetch(task(hire))).status).toBe(409);
+    expect(calls).toBe(1);
+    finish();
+    await new Promise((resolve) => setTimeout(resolve, 0));
     expect((await n.fetch(task(hire))).status).toBe(200);
   });
 

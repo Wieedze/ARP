@@ -129,7 +129,7 @@ export function ClaimField({
                 ref={fieldRef}
                 className={`arp-cf-field ${entering ? "arp-claim-enter" : ""}`}
                 role="group"
-                aria-label={`Claims about ${subject}`}
+                aria-label={`Declarations about ${subject}`}
             >
                 {/* The loupe and its line to the card. Drawn from the first paint at the resting
                     place, then the hook writes them every frame without re-rendering. */}
@@ -276,7 +276,7 @@ export function ClaimField({
             <div className="arp-cf-total">
                 <span>
                     <b>{truncated ? `${edgeCount}+` : edgeCount}</b>{" "}
-                    {edgeCount === 1 && !truncated ? "claim" : "claims"} about {subject}
+                    {edgeCount === 1 && !truncated ? "declaration" : "declarations"} about {subject}
                 </span>
                 {/* The key explains fill and the alarm ring and said nothing about SIZE, while a
                     dot grows from 10px to 17px with its position count. A reader seeing a bigger
@@ -287,13 +287,14 @@ export function ClaimField({
                     would be off the keyboard path and so not a `Hint` at all. */}
                 {SIZE_BY_POSITIONS ? (
                     <Hint label="What a dot's size means">
-                        A dot&rsquo;s size is how many accounts hold a position, never how much they
-                        put in.
+                        A dot&rsquo;s size is how many accounts support it, never how much they put
+                        in.
                     </Hint>
                 ) : null}
                 <span className="arp-cf-key" aria-hidden="true">
                     <span>
-                        <i className="is-filled" />a position behind it
+                        <i className="is-filled" />
+                        support behind it
                     </span>
                     <span>
                         <i />
@@ -330,19 +331,19 @@ export function ClaimField({
  */
 function ringLabel(ring: ShownRing<GroupView>): string {
     const first = ring.members[0];
-    if (ring.folded || first === undefined) return `+${ring.members.length} other predicates`;
+    if (ring.folded || first === undefined) return `+${ring.members.length} other kinds`;
     return first.inverse ?? first.label;
 }
 
 function ringCount(total: number, floor: boolean): string {
-    return `${total}${floor ? "+" : ""} ${total === 1 && !floor ? "claim" : "claims"}`;
+    return `${total}${floor ? "+" : ""} ${total === 1 && !floor ? "declaration" : "declarations"}`;
 }
 
 /** The accessible name of a dot: the triple, then what stands behind it. */
 function claimSentence(row: EdgeRow, predicate: string, subject: string): string {
     const behind =
         row.positions > 0 && row.backing !== null
-            ? `${row.backing} behind it, ${row.positions} ${row.positions === 1 ? "position" : "positions"}`
+            ? `${row.backing} behind it, ${row.positions} ${row.positions === 1 ? "support" : "supports"}`
             : "nothing behind it";
     const against = row.opposition === null ? "" : `, ${row.opposition} against`;
     return `${row.name} ${predicate} ${subject}, ${behind}${against}`;
@@ -359,7 +360,7 @@ function CardBody({row}: {row: EdgeRow}) {
                     <>
                         {row.backing}{" "}
                         <span>
-                            · {row.positions} {row.positions === 1 ? "position" : "positions"}
+                            · {row.positions} {row.positions === 1 ? "support" : "supports"}
                         </span>
                     </>
                 ) : (
@@ -391,7 +392,7 @@ function ZeroField({subject}: {subject: string}) {
                 <span className="arp-cf-core" />
             </div>
             <p className="arp-cf-empty">
-                Nothing points at {subject} yet. A claim made about it appears here as a dot.
+                Nothing points at {subject} yet. A declaration about it appears here as a dot.
             </p>
         </div>
     );

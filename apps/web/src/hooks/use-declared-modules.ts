@@ -12,11 +12,11 @@ import {useChainChoice} from "../lib/chain-choice";
  * The key is the sorted subject list, so two pages showing the same agents in a different order
  * share one cache entry rather than refetching.
  */
-export function declaredModulesQueryKey(chainId: number, subjectIds: readonly string[]) {
+function declaredModulesQueryKey(chainId: number, subjectIds: readonly string[]) {
     return ["intuition", chainId, "declared-modules", [...subjectIds].sort().join(",")] as const;
 }
 
-export function declaredModulesQueryOptions(
+function declaredModulesQueryOptions(
     chain: {chainId: number; graphqlUrl: string},
     subjectIds: readonly string[],
     read: typeof getDeclaredModulesFor = getDeclaredModulesFor,

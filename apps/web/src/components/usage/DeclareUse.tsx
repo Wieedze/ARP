@@ -5,7 +5,7 @@ import {useAccount, useSwitchChain} from "wagmi";
 
 import {Hint} from "../brand/Hint";
 import {useDeclareUse} from "../../hooks/use-declare-use";
-import {useChainChoice, type ChainChoice} from "../../lib/chain-choice";
+import {useChainChoice, useSetChain, type ChainChoice} from "../../lib/chain-choice";
 import {controlClass, linkClass, primaryControlClass} from "../../lib/control-class";
 import {actionHeadingClass, cardClass, primaryActionCardClass} from "../../lib/surface-class";
 import {
@@ -125,30 +125,21 @@ export function DeclareUse({
     }
 
     if (chain.isMainnet) {
-        // **A status line, not a headline, and that is the second version of this branch.** The
-        // first gave the refusal an `h2` at `type-face text-[20px]` at the top of the column — so
-        // on the default chain the loudest thing on every atom page was a feature announcing that
-        // it does not work, 218px above the evidence the page exists to show. Measured, and
-        // screenshotted, by the reviewer.
+        // A status line, not a headline: the refusal must not be the loudest thing on the page,
+        // above the evidence the page exists to show.
         //
         // Said before the form rather than after a click, because a reader who fills a field and
-        // connects a wallet to learn it was pointless has been wasted. But one quiet sentence is
-        // the whole of what that is worth.
-        return (
-            <p className="mb-10 border-b border-[color:var(--color-rule)] pb-6 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
-                Declaring a use is not open on {chain.label} yet. Switch the chain to the testnet to
-                write it there.
-            </p>
-        );
+        // connects a wallet to learn it was pointless has been wasted.
+        //
+        // **A label and the switch, not a sentence** (task 46, the user's call on 2026-11-02): the
+        // button carries out the instruction a sentence would give.
+        return <TestnetOnly label={chain.label} />;
     }
 
     return (
-        // **Open, with its heading, and no disclosure.** It was a `<details>` collapsed by
-        // default, which solved a real measurement — expanded at the head of the column it pushed
-        // the first evidence row from y~230 to y~501 — and solved it the wrong way: the user wants
-        // the two things he can do on an atom legible the moment the page loads, not behind a
-        // click. The vertical cost is paid by the **layout** instead, in `AtomPanel`: the two
-        // writes sit side by side, so together they are one block tall rather than two.
+        // **Open, with its heading, and no disclosure**: the two things a reader can do on an atom
+        // are legible the moment the page loads. The vertical cost is paid by the layout in
+        // `AtomPanel`, where the two writes sit side by side.
         <section>
             {/* **Display type, not body weight.** The reference sets an action card's heading at
                 22px/800/125%, and this page's two actions had been at the same weight as every
@@ -235,7 +226,7 @@ export function DeclareUse({
                             : plan === null
                               ? ""
                               : plan.exists
-                                ? "This agent has already declared using this atom"
+                                ? "This agent has already declared using this"
                                 : "Ready to declare"}
                 </p>
 
@@ -279,12 +270,12 @@ function Refusal({error}: {error: unknown}) {
                   "bad-agent-ref": "That is not an agent reference",
                   "agent-not-found": "No such agent in the registry",
                   "not-the-owner": "Not your agent",
-                  "no-identity-atom": "This agent has no identity atom here",
-                  "object-not-on-chain": "This chain does not hold this atom yet",
+                  "no-identity-atom": "This agent has no public identity here",
+                  "object-not-on-chain": "This chain does not hold it yet",
                   "already-declared": "Already declared",
                   "cost-above-ceiling": "Over this app's per-transaction ceiling",
                   "mainnet-not-authorised": "Not open on this chain",
-                  "no-position": "This claim would carry no position",
+                  "no-position": "This declaration would carry no support",
                   "planner-returned-nothing": "Nothing to plan",
                   "wrong-chain": "Your wallet is on another chain",
               }[guard.code];
@@ -352,21 +343,24 @@ function Resolved(props: {
                 other atom on this page already points — `AtomPanel`'s "the graph is walkable in
                 both directions".
 
-                **The edge used to be plain text on the ground that "nothing resolves a triple id on
-                that explorer".** True of the block explorer and never asked of the portal:
-                `portal.intuition.systems/explore/triple/{id}` answers 200 on both hosts, probed
-                2026-10-29. It is a link now, on the user's decision of 2026-10-30, and it goes to
-                the portal rather than in-app because ARP has no page for a triple — the claim is
-                rendered here and nowhere else. */}
-            <Field label="Subject atom" value={plan.subject} to={`/atom/${plan.subject}`} />
-            <Field
-                label="Edge"
-                value={plan.tripleId}
-                href={intuitionPortalUrl("triple", plan.tripleId, props.chain.isMainnet)}
-            />
+                The edge links to the portal, which resolves a triple id on both hosts, because ARP
+                has no page for a triple (the user's decision, 2026-10-30). */}
+            {/* Ids are for checking, not for reading — collapsed, still one click away (ADR
+                `0103`). */}
+            <details className="mt-4">
+                <summary className="cursor-pointer text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
+                    Verify
+                </summary>
+                <Field label="Subject atom" value={plan.subject} to={`/atom/${plan.subject}`} />
+                <Field
+                    label="Edge"
+                    value={plan.tripleId}
+                    href={intuitionPortalUrl("triple", plan.tripleId, props.chain.isMainnet)}
+                />
+            </details>
 
             {plan.exists ? (
-                <p className="mt-8 font-medium">This agent has already declared using this atom.</p>
+                <p className="mt-8 font-medium">This agent has already declared using this.</p>
             ) : tx !== null ? (
                 <div className="mt-8">
                     <p className="font-medium">Declared.</p>
@@ -402,17 +396,20 @@ function Resolved(props: {
                             value={`${formatTrust(plan.feeAssets)} ${chain.symbol}`}
                         />
                         <Term
-                            label="Reaches the vault"
+                            label="Your support"
                             value={`${formatTrust(plan.assetsAfterFees)} ${chain.symbol}`}
+                            hint={{
+                                label: "What the support buys",
+                                sentence: `${formatTrust(plan.shares)} shares in the declaration's vault.`,
+                            }}
                         />
-                        <Term label="Shares minted" value={formatTrust(plan.shares)} />
                     </dl>
 
                     {!props.onTargetChain ? (
                         <div className="mt-6">
                             <p className="text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
                                 Your wallet is on chain {props.walletChainId ?? "unknown"}. This
-                                claim goes to {chain.chain.name} ({chain.chainId}).
+                                declaration goes to {chain.chain.name} ({chain.chainId}).
                             </p>
                             <button
                                 type="button"
@@ -508,6 +505,21 @@ function Field({
                     {value}
                 </a>
             )}
+        </div>
+    );
+}
+
+/** The mainnet branch: what is not open here, and the one control that opens it. */
+function TestnetOnly({label}: {label: string}) {
+    const setMainnet = useSetChain();
+    return (
+        <div className="mb-10 flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-[color:var(--color-rule)] pb-6">
+            <span className="font-mono text-[length:var(--text-label)] uppercase tracking-wider text-[color:var(--color-steel)]">
+                {`Declaring a use · not on ${label}`}
+            </span>
+            <button type="button" onClick={() => setMainnet(false)} className={controlClass}>
+                Switch to testnet
+            </button>
         </div>
     );
 }

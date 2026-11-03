@@ -7,18 +7,23 @@
  * runs against any network the caller points the transport at.
  */
 export {
+    DEFAULT_MAX_BODY_BYTES,
     DEFAULT_TIMEOUT_MS,
     defaultFetch,
+    fetchTextWithTimeout,
     fetchWithTimeout,
     HttpError,
     isTimeoutError,
+    readBodyText,
     type FetchLike,
+    type ReadBodyOptions,
 } from "./http.js";
 export {
     isRecord,
     omitPath,
     readArray,
     readBigInt,
+    readCount,
     readNumber,
     readPath,
     readRecord,
@@ -32,6 +37,7 @@ export {
 } from "./client.js";
 
 export {
+    AGENT_EDGE_LIMIT,
     CAPABILITIES_QUERY,
     CAPABILITY_SAMPLE_LIMIT,
     COHORT_ORDER_BY,
@@ -49,7 +55,7 @@ export {
 export {FIND_AGENTS_QUERY} from "./queries/discover.js";
 export {ALL_HIERARCHY_QUERY, OUR_HIERARCHY_QUERY, TAGGED_QUERY} from "./queries/domains.js";
 export {ATOM_LABELS_QUERY} from "./queries/atom-labels.js";
-export {RECENT_QUERY} from "./queries/recent.js";
+export {RECENT_QUERY, RECENT_STAKES_QUERY} from "./queries/recent.js";
 export {REGISTERED_TOOLS_QUERY} from "./queries/registered-tools.js";
 export {
     ACCOUNT_ACTIVITY_QUERY,
@@ -61,5 +67,5 @@ export {
     termActivityQuery,
 } from "./queries/term-shape.js";
 export {BY_URL_QUERY} from "./queries/tool-atom.js";
-export {TOOL_LISTING_QUERY} from "./queries/tool-listing.js";
+export {TOOL_LISTING_QUERY, TOOL_LISTING_SPONSORED_QUERY} from "./queries/tool-listing.js";
 export {ATTESTED_TOOL_USAGE_QUERY, TOOL_USAGE_QUERY} from "./queries/tool-usage.js";

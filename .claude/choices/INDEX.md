@@ -1,8 +1,8 @@
 # ADR index
 
-**Generated** 2026-10-30 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
+**Generated** 2026-11-03 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-93 decisions. Newest last. `choices/README.md` says when to write one.
+121 decisions. Newest last. `choices/README.md` says when to write one.
 
 ## Not accepted
 
@@ -12,11 +12,21 @@ Read these before relying on them.
 - **0041** (Accepted. Amended by `0082` (2026-10-30): a `packages/graphql` read layer goes under it.) — One protocol package, not two, and it is called what it is
 - **0045** (Accepted. **Amended by ADR `0092`** (2026-10-30): ARP may host a service that pays or) — the invariant is the request path, not the runtime
 - **0057** (Accepted — 2026-10-27, on the user's instruction to close everything open.) — Brand identity v0.3: The Source, Saffron, Archivo + Geist Mono
+- **0080** (Accepted. **Amended by ADR `0094`** (2026-10-30): constraint 2 holds for a declaration) — The node signs for what it served, and for nothing else
 - **0082** (Accepted. Amends `0041` (a `packages/graphql` under the protocol package).) — Three apps: the MCP server, the agent node and the runtime hook are different programs
+- **0083** (Accepted; the v1 format is superseded for new receipts by v2 (ADR `0101`, task 44)) — The hire receipt is EIP-712, names the agent like ERC-8004, and uses the payment as its nonce
 - **0087** (Accepted, one point open (below)) — A tool is its package, and its repository is its source
 - **0088** (Accepted. Amends the one-word rule of 2026-10-28 (`scripts/seed/seed-domain-tree.ts`,) — A label is one word, unless a compound is necessary
 - **0090** (Accepted. Extended 2026-10-30 by task 33i — see "Extension: captures" at the end.) — What the hook records: outcome and identity, never content or credentials
 - **0093** (Accepted. **Renumbered from `0089` on 2026-10-30**: it shared that number with `0089-one-installer-one-package-thin-manifests.md`, which was written first. Commits before the rename cite it as `0089`.) — The probe is not the pulse
+- **0094** (Accepted. **Amended 2026-10-30 for testnet**: everything is sponsored. User decision,) — ARP is the directory and the verifier, never the relay; a proof is the condition of a sponsored deposit
+- **0095** (Proposed) — The install handshake binds a node key that both the owner and the node sign for
+- **0096** (Proposed. **Amended 2026-10-30 for testnet**, after ADR `0094`'s status line recorded) — The sponsoring service sponsors only a proof with a price, and keeps its record on disk
+- **0098** (Accepted for point 9 (user decision, 2026-10-30, _« ok option 2 »_); the rest Proposed, reviewed by `contract-reviewer` (PASS, 2026-10-30); ~~one decision open~~ the open decision is **answered: a v2 receipt** (user decision, 2026-10-30, carried out by task 44, ADR `0101`)) — The receipt enforcer verifies the v1 hire receipt as signed, and binds the term through its terms
+- **0099** (Deferred (mainnet)) — Sponsorship is a match on the agent's own deposit, paid after it has been held
+- **0100** (Proposed) — `/account` revokes through a one-shot delegation, keeps a list, and holds no key
+- **0101** (Proposed; the v2 receipt itself is the user's decision (2026-10-30), the shape is this task's) — The hire receipt v2 names the one verifier it is for, and the hirer chooses it
+- **0113** (Deferred (mainnet port). The user's decision, 2026-11-02: « intéressant mais inutile en) — Who may speak for an agent's identity: trusted writers, the market, then ambiguity
 
 ## All
 
@@ -100,10 +110,10 @@ Read these before relying on them.
 | [0077](0077-the-unit-is-the-skill-not-the-repository.md) | 2026-10-29 | Accepted | The unit of the catalogue is the skill, not the repository |
 | [0078](0078-source-is-the-edge-from-a-skill-to-its-repository.md) | 2026-10-29 | Accepted | `source` is the edge from a skill back to the repository it came from |
 | [0079](0079-a-bulk-write-is-paced-by-bytes-not-by-gas.md) | 2026-10-29 | Accepted | A bulk write to Intuition is paced by bytes, not by gas |
-| [0080](0080-the-node-signs-for-what-it-served-and-for-nothing-else.md) | 2026-10-29 | Accepted | The node signs for what it served, and for nothing else |
+| [0080](0080-the-node-signs-for-what-it-served-and-for-nothing-else.md) | 2026-10-29 | Accepted. **Amended by ADR `0094`** (2026-10-30): constraint 2 holds for a declaration | The node signs for what it served, and for nothing else |
 | [0081](0081-a-claim-a-stranger-checks-ships-with-its-command.md) | 2026-10-30 | Accepted | A claim a stranger is asked to check ships with the command that checks it |
 | [0082](0082-two-apps-the-mcp-and-the-node.md) | 2026-10-30 | Accepted. Amends `0041` (a `packages/graphql` under the protocol package). | Three apps: the MCP server, the agent node and the runtime hook are different programs |
-| [0083](0083-the-hire-receipt-is-eip712-named-like-erc8004.md) | 2026-10-30 | Accepted | The hire receipt is EIP-712, names the agent like ERC-8004, and uses the payment as its nonce |
+| [0083](0083-the-hire-receipt-is-eip712-named-like-erc8004.md) | 2026-10-30 | Accepted; the v1 format is superseded for new receipts by v2 (ADR `0101`, task 44) | The hire receipt is EIP-712, names the agent like ERC-8004, and uses the payment as its nonce |
 | [0084](0084-a-worker-in-front-of-github-and-skills-sh.md) | 2026-10-30 | Accepted | A Worker in front of GitHub and skills.sh, as a cache and never a source |
 | [0085](0085-an-agent-with-no-wallet-generates-its-own-key.md) | 2026-10-30 | Accepted | An agent with no wallet generates its own key, and a funder covers the gas for now |
 | [0086](0086-the-repo-is-sorted-by-kind.md) | 2026-10-30 | Accepted | The repo is sorted by kind: code, data, docs, scripts |
@@ -114,4 +124,32 @@ Read these before relying on them.
 | [0091](0091-the-agent-s-activity-reaches-the-browser-through-a-local-feed.md) | 2026-10-30 | Accepted | The agent's activity reaches the browser through a local, read-only feed |
 | [0092](0092-arp-sponsors-delegation-publication-on-testnet.md) | 2026-10-30 | Accepted | ARP sponsors the publication of delegations, on testnet, from its treasury |
 | [0093](0093-the-probe-is-not-the-pulse.md) | 2026-10-30 | Accepted. **Renumbered from `0089` on 2026-10-30**: it shared that number with `0089-one-installer-one-package-thin-manifests.md`, which was written first. Commits before the rename cite it as `0089`. | The probe is not the pulse |
-| [0094](0094-arp-is-the-directory-and-the-verifier-never-the-relay.md) | 2026-10-30 | Accepted | ARP is the directory and the verifier, never the relay; a proof is the condition of a sponsored deposit |
+| [0094](0094-arp-is-the-directory-and-the-verifier-never-the-relay.md) | 2026-10-30 | Accepted. **Amended 2026-10-30 for testnet**: everything is sponsored. User decision, | ARP is the directory and the verifier, never the relay; a proof is the condition of a sponsored deposit |
+| [0095](0095-the-handshake-binds-a-node-key-both-keys-sign.md) | 2026-10-30 | Proposed | The install handshake binds a node key that both the owner and the node sign for |
+| [0096](0096-the-sponsoring-service-sponsors-only-a-priced-proof.md) | 2026-10-30 | Proposed. **Amended 2026-10-30 for testnet**, after ADR `0094`'s status line recorded | The sponsoring service sponsors only a proof with a price, and keeps its record on disk |
+| [0098](0098-the-receipt-enforcer-verifies-the-v1-hire-receipt-as-signed.md) | 2026-10-30 | Accepted for point 9 (user decision, 2026-10-30, _« ok option 2 »_); the rest Proposed, reviewed by `contract-reviewer` (PASS, 2026-10-30); ~~one decision open~~ the open decision is **answered: a v2 receipt** (user decision, 2026-10-30, carried out by task 44, ADR `0101`) | The receipt enforcer verifies the v1 hire receipt as signed, and binds the term through its terms |
+| [0099](0099-sponsorship-is-a-match-paid-after-holding.md) | 2026-10-30 | Deferred (mainnet) | Sponsorship is a match on the agent's own deposit, paid after it has been held |
+| [0100](0100-account-page-revokes-through-a-one-shot-delegation.md) | 2026-11-02 | Proposed | `/account` revokes through a one-shot delegation, keeps a list, and holds no key |
+| [0101](0101-the-hire-receipt-v2-names-the-one-verifier-it-is-for.md) | 2026-11-02 | Proposed; the v2 receipt itself is the user's decision (2026-10-30), the shape is this task's | The hire receipt v2 names the one verifier it is for, and the hirer chooses it |
+| [0102](0102-x402-is-for-mainnet-testnet-is-free.md) | 2026-11-02 | Accepted | x402 is for mainnet; on testnet consulting ARP is free |
+| [0103](0103-the-operator-reads-plain-words.md) | 2026-11-02 | Accepted | The operator reads plain words, not the chain's vocabulary |
+| [0104](0104-detail-pages-put-the-facts-on-the-right.md) | 2026-11-02 | Accepted | Detail pages put the facts on the right |
+| [0105](0105-the-app-opens-on-testnet.md) | 2026-11-02 | Accepted | The app opens on testnet |
+| [0106](0106-labels-are-at-least-11px.md) | 2026-11-02 | Accepted | Labels are at least 11px |
+| [0108](0108-find-tools-answers-a-short-row.md) | 2026-11-02 | Accepted | `arp_find_tools` answers a short row, by text, a page at a time |
+| [0109](0109-a-content-receipt-is-sponsored-on-testnet.md) | 2026-11-02 | Accepted | A content receipt is sponsored on testnet 13579 |
+| [0110](0110-the-desktop-extension-holds-a-local-agent-key.md) | 2026-11-02 | Accepted | The Desktop extension holds a local agent key, for identity and off-chain signatures |
+| [0111](0111-a-query-must-match-every-word.md) | 2026-11-02 | Accepted | A query must match every word, and an empty query answer suggests nothing |
+| [0112](0112-one-product-two-ways-to-pay-and-a-free-badge.md) | 2026-11-02 | Accepted | One product, two ways to pay, a data licence for aggregators, and a free badge |
+| [0113](0113-who-may-speak-for-an-agent-identity.md) | 2026-11-02 | Deferred (mainnet port). The user's decision, 2026-11-02: « intéressant mais inutile en | Who may speak for an agent's identity: trusted writers, the market, then ambiguity |
+| [0114](0114-one-path-per-profile-the-action-is-gated-not-the-read.md) | 2026-11-02 | Accepted | One path per profile; onboarding gates the action, not the read; you connect your agent |
+| [0115](0115-anyone-may-add-a-category-by-the-same-rules.md) | 2026-11-02 | Accepted | Agents and people may add a category, by the same rules, reviewed after the fact |
+| [0116](0116-local-state-under-arp-home-one-key-policy-local-services-refuse-the-browser.md) | 2026-11-03 | Accepted | Local state lives under ~/.arp, one key-file policy, /mint-gas is signed, local services refuse the browser |
+| [0117](0117-scripts-ci-and-the-process-files-match-the-repo.md) | 2026-11-02 | Accepted | Scripts sign on testnet only, CI runs the gates, and the process files describe the repo as it is |
+| [0118](0118-enforcer-state-is-keyed-by-caller.md) | 2026-11-02 | Accepted | Enforcer state is keyed by its caller; a receipt's replay key names its signer |
+| [0119](0119-what-the-connector-checks-and-what-it-no-longer-defaults.md) | 2026-11-03 | Accepted | What the connector checks, and what it no longer defaults |
+| [0120](0120-arp-is-not-b2b-first.md) | 2026-11-03 | Accepted | ARP is not B2B first |
+| [0121](0121-the-rules-prose-pass-changes-no-rule.md) | 2026-11-03 | Accepted | The rules' prose pass changes no rule |
+| [0122](0122-docs-02-is-authoritative-on-storage-only.md) | 2026-11-03 | Accepted | `docs/02` is authoritative on the storage principle only |
+| [0123](0123-the-sponsor-lists-a-tool-for-the-web-app.md) | 2026-11-03 | Accepted | The sponsor lists a tool, and the web app may ask it to |
+| [0124](0124-the-sponsor-writes-a-category-and-the-index-reads-it.md) | 2026-11-03 | Accepted | The sponsor writes an accepted category, and the index reads the sponsor too |

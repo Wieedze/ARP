@@ -1,0 +1,433 @@
+// SPDX-License-Identifier: MIT
+pragma solidity 0.8.23;
+
+import {ExecutionLib} from "@erc7579/lib/ExecutionLib.sol";
+import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+
+import {CaveatEnforcer} from "delegation-framework/enforcers/CaveatEnforcer.sol";
+import {ModeCode} from "delegation-framework/utils/Types.sol";
+
+/// @title  ReceiptEnforcer
+/// @author ARP — Agent Reputation Protocol
+/// @notice "No signed receipt, no deposit", held by a contract (ADR 0094 §2, task 43). A redemption
+///         passes one signed hire receipt in `_args`; the deposit runs only if the receipt was
+///         signed by a node key the delegator accepted, names this contract as its verifier, names
+///         the redeeming agent as `requester`, is for the term the deposit targets, is fresh and
+///         unexpired, the deposit's `value` is at most the receipt's `paid`, and the payment hash it
+///         names has never unlocked a deposit here under a receipt from the same signer.
+/// @dev    **What this rung holds, and what it does not** (user decision, 2026-10-30, "ok option 2";
+///         ADR 0098 point 9). It holds **"an accepted key signed this receipt"**. It does **not**
+///         hold **"a payment was made"**: `payment` and `paid` are values the signer asserts, and
+///         nothing here reads the payment transaction. The sponsoring service of task 40 reads that
+///         transaction and stays the real guard on payment. `TrustStakeCapEnforcer`, composed with
+///         this one, bounds the abuse when an accepted key signs a receipt for a payment that never
+///         happened.
+///
+///         The receipt is verified exactly as `packages/protocol/src/hire-receipt.ts` signs it, **v2
+///         only** (task 44, user decision 2026-10-30, ADR 0098): EIP-712, domain
+///         `{name: "ARP Hire Receipt", version: "2", chainId, verifyingContract: address(this)}`,
+///         struct `HireReceipt` in that file's field order, `termId` and `expiresAt` after v1's
+///         fields. A v1 receipt names no verifier and is refused (`UnknownReceiptVersion`). The
+///         cross-implementation vector in `test/enforcers/ReceiptEnforcer.t.sol` is a viem signature
+///         checked here, and `packages/protocol/test/hire-receipt.test.ts` holds the same one.
+///
+///         Replay (`security.md`, signature replay), ADR 0098:
+///         - **nonce** — the receipt's `payment` transaction hash, as the signer states it. One
+///           payment hash unlocks one deposit per signer, keyed by `(chainId, signer, payment)`
+///           rather than by the receipt's digest, so a node that signs two receipts for one payment
+///           hash cannot unlock two deposits here — under one delegation or across several.
+///           The signer is in the key since ADR 0118. Keyed by `(chainId, payment)` alone, the set
+///           was global: anyone running a node key could bind it in a delegation of their own, sign
+///           a receipt naming a victim's (public) payment hash, redeem first, and so make the
+///           victim's genuine receipt revert `PaymentAlreadyUsed`. Keying by delegation hash would
+///           also stop that, but would let one receipt unlock a deposit in every delegation that
+///           accepts its signer. Keying by `msg.sender` adds nothing here: every hook is gated on
+///           `DELEGATION_MANAGER`.
+///         - **chain id** — in the domain. The accepted chain is the payment's, fixed in `_terms`.
+///         - **verifying contract** — in the domain, as `address(this)`. A receipt signed for another
+///           deployment or for the sponsoring service recovers to a different address here and is
+///           refused as `SignerNotAccepted`, so one receipt unlocks one sponsorship, at the one
+///           verifier it names. This closes INFO-R1 in `SECURITY_REVIEW.md` (task 44). The domain
+///           pairs `receiptChainId` with this address, so two deployments share it only at one
+///           address on two chains (same deployer, same nonce) whose `_terms` name one
+///           `receiptChainId`, which is then not its own chain for at least one of them: the
+///           `receiptChainId != block.chainid` case of CR-1 (CR-2).
+///
+///         Threat model:
+///         - Every hook is gated on `msg.sender == DELEGATION_MANAGER`. This one keys state by a
+///           value anyone can read from a pending redemption, so an ungated `beforeHook` would let a
+///           stranger burn a receipt by calling it first. (`TrustStakeCapEnforcer` had the same
+///           exposure and was said not to; it keys its state by caller since ADR 0118.)
+///         - `_delegator` is whoever funds the deposit (ARP's sponsoring account). `_redeemer` is the
+///           hiring agent: it must be the receipt's `requester` and the deposit's `receiver`, so the
+///           position is the agent's and the agent is the one the receipt names.
+///         - The execution must be one `MultiVault.deposit(receiver, termId, curveId, minShares)`
+///           whose native `value` is at most `receipt.paid`. The target is not checked here: compose
+///           with `AllowedTargetsEnforcer`. The cumulative amount is not bounded here: compose with
+///           `TrustStakeCapEnforcer`.
+///         - `paid` is wei of the payment chain's native token, and `value` is wei of this chain's.
+///           `value <= paid` bounds anything only when `receiptChainId == block.chainid`; with any
+///           other `receiptChainId` it compares two currencies (CR-1 in `SECURITY_REVIEW.md`).
+///         - Signers are EOAs (node keys). EIP-1271 is not supported.
+///         - A revert in any check aborts the whole redemption; the used set is written only on
+///           success and rolls back with it.
+contract ReceiptEnforcer is CaveatEnforcer {
+    /*//////////////////////////////////////////////////////////////
+                                  TYPES
+    //////////////////////////////////////////////////////////////*/
+
+    /// @notice The v2 hire receipt, field for field as `hire-receipt.ts` signs it.
+    struct HireReceipt {
+        uint256 version;
+        string agentRegistry;
+        uint256 agentId;
+        address requester;
+        bytes32 payment;
+        uint256 paid;
+        bytes32 requestHash;
+        bytes32 resultHash;
+        uint256 issuedAt;
+        bytes32 termId;
+        uint256 expiresAt;
+    }
+
+    /// @notice One accepted node key, the ERC-8004 agent it signs as, and the term its receipts
+    ///         unlock. The binding the install handshake establishes (ADR 0094 §1), fixed by the
+    ///         delegator at signing time.
+    /// @param  signer            The node key that signs hire receipts.
+    /// @param  agentRegistryHash `keccak256(bytes(agentRegistry))`, e.g. of `eip155:13579:0x…`.
+    /// @param  agentId           The agent's ERC-721 token id in that registry.
+    /// @param  termId            The MultiVault term a receipt from this signer may be deposited on.
+    struct Binding {
+        address signer;
+        bytes32 agentRegistryHash;
+        uint256 agentId;
+        bytes32 termId;
+    }
+
+    /*//////////////////////////////////////////////////////////////
+                              CUSTOM ERRORS
+    //////////////////////////////////////////////////////////////*/
+
+    /// @notice A hook was called by something other than the DelegationManager.
+    error OnlyDelegationManager(address caller);
+
+    /// @notice The constructor was given the zero address.
+    error ZeroDelegationManager();
+
+    /// @notice `_terms` has a zero chain id, a zero max age, no binding, or too many.
+    error InvalidTerms();
+
+    /// @notice The receipt's payload version is not one this contract knows.
+    error UnknownReceiptVersion(uint256 version);
+
+    /// @notice The signature is not a valid ECDSA signature.
+    error InvalidSignature();
+
+    /// @notice No binding in `_terms` names the recovered signer.
+    error SignerNotAccepted(address signer);
+
+    /// @notice The signer is accepted, but not as this agent for this term.
+    error BindingMismatch(address signer, bytes32 agentRegistryHash, uint256 agentId, bytes32 termId);
+
+    /// @notice The receipt's payer is not the agent redeeming.
+    error RequesterNotRedeemer(address requester, address redeemer);
+
+    /// @notice The execution is not a single `deposit(address,bytes32,uint256,uint256)` call.
+    error NotADeposit();
+
+    /// @notice The deposit's receiver is not the agent redeeming.
+    error ReceiverNotRedeemer(address receiver, address redeemer);
+
+    /// @notice The receipt is dated after the current block.
+    error ReceiptFromFuture(uint256 issuedAt);
+
+    /// @notice The receipt is older than `maxAge`.
+    error ReceiptExpired(uint256 issuedAt, uint256 maxAge);
+
+    /// @notice The current block is after the receipt's own `expiresAt`.
+    error ReceiptPastExpiry(uint256 expiresAt);
+
+    /// @notice The receipt is for another term than the one the deposit targets.
+    error ReceiptTermMismatch(bytes32 receiptTermId, bytes32 depositTermId);
+
+    /// @notice This payment hash already unlocked a deposit through this enforcer.
+    error PaymentAlreadyUsed(bytes32 paymentKey);
+
+    /// @notice The deposit's native `value` is more than the receipt's `paid`.
+    error DepositExceedsPaid(uint256 value, uint256 paid);
+
+    /*//////////////////////////////////////////////////////////////
+                                  EVENTS
+    //////////////////////////////////////////////////////////////*/
+
+    /// @notice Emitted when a receipt unlocks a deposit.
+    /// @param  delegationHash The delegation being redeemed.
+    /// @param  paymentKey     `keccak256(abi.encode(chainId, signer, payment))`, the replay key.
+    /// @param  signer         The node key that signed the receipt.
+    /// @param  requester      The agent the receipt names as payer, which now deposits.
+    /// @param  termId         The term deposited on.
+    event ReceiptConsumed(
+        bytes32 indexed delegationHash,
+        bytes32 indexed paymentKey,
+        address indexed signer,
+        address requester,
+        bytes32 termId
+    );
+
+    /*//////////////////////////////////////////////////////////////
+                                  STATE
+    //////////////////////////////////////////////////////////////*/
+
+    /// @notice The only payload version accepted: v2, the one `hire-receipt.ts` signs
+    ///         (`HIRE_RECEIPT_VERSION`). v1 names no verifier.
+    uint256 public constant RECEIPT_VERSION = 2;
+
+    /// @notice Upper bound on bindings per delegation, so the lookup loop is bounded.
+    uint256 public constant MAX_BINDINGS = 32;
+
+    /// @notice `typeHash` of the EIP-712 domain `hire-receipt.ts` signs under.
+    bytes32 public constant DOMAIN_TYPEHASH =
+        keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)");
+
+    /// @notice `typeHash` of `HireReceipt`, in `HIRE_RECEIPT_TYPES` field order.
+    bytes32 public constant RECEIPT_TYPEHASH = keccak256(
+        "HireReceipt(uint256 version,string agentRegistry,uint256 agentId,address requester,bytes32 payment,"
+        "uint256 paid,bytes32 requestHash,bytes32 resultHash,uint256 issuedAt,bytes32 termId,uint256 expiresAt)"
+    );
+
+    bytes32 private constant _NAME_HASH = keccak256("ARP Hire Receipt");
+    bytes32 private constant _VERSION_HASH = keccak256("2");
+
+    /// @dev `MultiVault.deposit(address receiver, bytes32 termId, uint256 curveId, uint256 minShares)`.
+    bytes4 private constant _DEPOSIT_SELECTOR = bytes4(keccak256("deposit(address,bytes32,uint256,uint256)"));
+
+    /// @dev The selector plus four 32-byte words.
+    uint256 private constant _DEPOSIT_CALLDATA_LENGTH = 132;
+
+    /// @notice The DelegationManager allowed to call the hooks.
+    address public immutable DELEGATION_MANAGER;
+
+    /// @dev Payments that already unlocked a deposit, keyed by
+    ///      `keccak256(abi.encode(chainId, signer, payment))`.
+    mapping(bytes32 paymentKey => bool used) private _paymentUsed;
+
+    /*//////////////////////////////////////////////////////////////
+                                MODIFIERS
+    //////////////////////////////////////////////////////////////*/
+
+    /// @dev Reverts unless the caller is `DELEGATION_MANAGER`.
+    modifier onlyDelegationManager() {
+        if (msg.sender != DELEGATION_MANAGER) revert OnlyDelegationManager(msg.sender);
+        _;
+    }
+
+    /*//////////////////////////////////////////////////////////////
+                               CONSTRUCTOR
+    //////////////////////////////////////////////////////////////*/
+
+    /// @notice Bind the enforcer to the one DelegationManager allowed to call its hooks.
+    /// @param  delegationManager The MetaMask DelegationManager on this chain. Must not be zero.
+    constructor(address delegationManager) {
+        if (delegationManager == address(0)) revert ZeroDelegationManager();
+        DELEGATION_MANAGER = delegationManager;
+    }
+
+    /*//////////////////////////////////////////////////////////////
+                            EXTERNAL FUNCTIONS
+    //////////////////////////////////////////////////////////////*/
+
+    /// @notice Decode `_terms` for off-chain inspection.
+    /// @param  _terms ABI-encoded `(uint256 receiptChainId, uint256 maxAge, Binding[] bindings)`.
+    /// @return receiptChainId The chain the payment, and so the receipt's domain, is on.
+    /// @return maxAge         Seconds a receipt stays usable after `issuedAt`.
+    /// @return bindings       The accepted signers, each bound to one agent and one term.
+    function getTermsInfo(bytes calldata _terms)
+        external
+        pure
+        returns (uint256 receiptChainId, uint256 maxAge, Binding[] memory bindings)
+    {
+        return abi.decode(_terms, (uint256, uint256, Binding[]));
+    }
+
+    /// @notice Whether a payment hash has already unlocked a deposit through this enforcer, under a
+    ///         receipt from `signer`. Since
+    ///         v2 a receipt for this enforcer is refused by the sponsoring service. A node that signs
+    ///         a second receipt for one payment, naming the service, still gets both used; the
+    ///         service reading this before it pays closes that, and is not built (task 44, ADR 0101).
+    /// @param  chainId The chain the payment is on.
+    /// @param  signer  The node key that signed the receipt.
+    /// @param  payment The payment's transaction hash, as a receipt names it.
+    /// @return used    True once a receipt from `signer` naming it has been consumed here.
+    function isPaymentUsed(uint256 chainId, address signer, bytes32 payment) external view returns (bool used) {
+        return _paymentUsed[_paymentKey(chainId, signer, payment)];
+    }
+
+    /*//////////////////////////////////////////////////////////////
+                             PUBLIC FUNCTIONS
+    //////////////////////////////////////////////////////////////*/
+
+    /// @notice Check the receipt in `_args` against `_terms` and the deposit in the execution, and
+    ///         mark its payment used. Called by the DelegationManager during redemption; a revert
+    ///         aborts the redemption.
+    /// @param  _terms             ABI-encoded `(uint256 receiptChainId, uint256 maxAge, Binding[] bindings)`.
+    /// @param  _args              ABI-encoded `(HireReceipt receipt, bytes signature)`.
+    /// @param  _mode              Execution mode (must be single call, default).
+    /// @param  _executionCallData The single-call execution (target ++ value ++ callData).
+    /// @param  _delegationHash    The delegation being redeemed, for the event.
+    /// @param  _redeemer          The agent redeeming: must be the receipt's requester and the receiver.
+    /// @dev    The sixth parameter, `_delegator`, is unnamed: this hook does not read it.
+    ///         Freshness compares `issuedAt` with `block.timestamp` twice (not after it, and at most
+    ///         `maxAge` before it), and `expiresAt` once (not before it). The block's proposer sets
+    ///         `block.timestamp` within the usual ~15 s validator tolerance, so each edge can move by
+    ///         that much. Against a `maxAge` of hours or days that is irrelevant; a `maxAge` of a
+    ///         few seconds would be dominated by it, and a delegator should not choose one.
+    function beforeHook(
+        bytes calldata _terms,
+        bytes calldata _args,
+        ModeCode _mode,
+        bytes calldata _executionCallData,
+        bytes32 _delegationHash,
+        address, /* _delegator */
+        address _redeemer
+    ) public override onlyDelegationManager onlySingleCallTypeMode(_mode) onlyDefaultExecutionMode(_mode) {
+        (uint256 receiptChainId, uint256 maxAge, Binding[] memory bindings) =
+            abi.decode(_terms, (uint256, uint256, Binding[]));
+        if (receiptChainId == 0 || maxAge == 0 || bindings.length == 0 || bindings.length > MAX_BINDINGS) {
+            revert InvalidTerms();
+        }
+
+        (HireReceipt memory receipt, address signer) = _recoverSigner(_args, receiptChainId);
+
+        (bytes32 termId, uint256 value) = _depositTerm(_executionCallData, _redeemer);
+        _requireBinding(bindings, signer, keccak256(bytes(receipt.agentRegistry)), receipt.agentId, termId);
+        if (receipt.termId != termId) revert ReceiptTermMismatch(receipt.termId, termId);
+
+        if (receipt.requester != _redeemer) revert RequesterNotRedeemer(receipt.requester, _redeemer);
+        // `paid` is what the signer states, not a read of the payment: this bounds the deposit by
+        // the receipt, and the sponsoring service checks the receipt against the chain.
+        if (value > receipt.paid) revert DepositExceedsPaid(value, receipt.paid);
+
+        // Validator-timestamp tolerance (~15 s, as in `TrustStakeCapEnforcer`) moves the three edges
+        // below by seconds; see the `@dev` above. Not exploitable against a `maxAge` of hours.
+        if (receipt.issuedAt > block.timestamp) revert ReceiptFromFuture(receipt.issuedAt);
+        if (block.timestamp - receipt.issuedAt > maxAge) revert ReceiptExpired(receipt.issuedAt, maxAge);
+        // The node's own bound, signed; `maxAge` is the delegator's. Both hold.
+        if (block.timestamp > receipt.expiresAt) revert ReceiptPastExpiry(receipt.expiresAt);
+
+        bytes32 paymentKey = _paymentKey(receiptChainId, signer, receipt.payment);
+        if (_paymentUsed[paymentKey]) revert PaymentAlreadyUsed(paymentKey);
+        _paymentUsed[paymentKey] = true;
+
+        emit ReceiptConsumed(_delegationHash, paymentKey, signer, receipt.requester, termId);
+    }
+
+    /// @notice No-op, gated so the hook surface has one caller.
+    /// @dev    Parameters are unnamed: the hook reads none of them.
+    function beforeAllHook(bytes calldata, bytes calldata, ModeCode, bytes calldata, bytes32, address, address)
+        public
+        view
+        override
+        onlyDelegationManager
+    {}
+
+    /// @notice No-op, gated so the hook surface has one caller.
+    /// @dev    Parameters are unnamed: the hook reads none of them.
+    function afterHook(bytes calldata, bytes calldata, ModeCode, bytes calldata, bytes32, address, address)
+        public
+        view
+        override
+        onlyDelegationManager
+    {}
+
+    /// @notice No-op, gated so the hook surface has one caller.
+    /// @dev    Parameters are unnamed: the hook reads none of them.
+    function afterAllHook(bytes calldata, bytes calldata, ModeCode, bytes calldata, bytes32, address, address)
+        public
+        view
+        override
+        onlyDelegationManager
+    {}
+
+    /// @notice The EIP-712 digest `hire-receipt.ts` signs for `receipt` on `chainId`, naming this
+    ///         contract as `verifyingContract`.
+    /// @param  receipt The receipt.
+    /// @param  chainId The chain in the domain: the payment's.
+    /// @return digest  `keccak256("\x19\x01" ‖ domainSeparator ‖ structHash)`.
+    function hashReceipt(HireReceipt memory receipt, uint256 chainId) public view returns (bytes32 digest) {
+        bytes32 domainSeparator =
+            keccak256(abi.encode(DOMAIN_TYPEHASH, _NAME_HASH, _VERSION_HASH, chainId, address(this)));
+        bytes32 structHash = keccak256(
+            abi.encode(
+                RECEIPT_TYPEHASH,
+                receipt.version,
+                keccak256(bytes(receipt.agentRegistry)),
+                receipt.agentId,
+                receipt.requester,
+                receipt.payment,
+                receipt.paid,
+                receipt.requestHash,
+                receipt.resultHash,
+                receipt.issuedAt,
+                receipt.termId,
+                receipt.expiresAt
+            )
+        );
+        return keccak256(abi.encodePacked("\x19\x01", domainSeparator, structHash));
+    }
+
+    /*//////////////////////////////////////////////////////////////
+                            PRIVATE FUNCTIONS
+    //////////////////////////////////////////////////////////////*/
+
+    function _recoverSigner(bytes calldata args, uint256 chainId)
+        private
+        view
+        returns (HireReceipt memory receipt, address signer)
+    {
+        bytes memory signature;
+        (receipt, signature) = abi.decode(args, (HireReceipt, bytes));
+        if (receipt.version != RECEIPT_VERSION) revert UnknownReceiptVersion(receipt.version);
+
+        ECDSA.RecoverError err;
+        (signer, err,) = ECDSA.tryRecover(hashReceipt(receipt, chainId), signature);
+        if (err != ECDSA.RecoverError.NoError) revert InvalidSignature();
+    }
+
+    function _depositTerm(bytes calldata executionCallData, address redeemer)
+        private
+        pure
+        returns (bytes32 termId, uint256 value)
+    {
+        bytes calldata callData;
+        (, value, callData) = ExecutionLib.decodeSingle(executionCallData);
+        if (callData.length != _DEPOSIT_CALLDATA_LENGTH || bytes4(callData[:4]) != _DEPOSIT_SELECTOR) {
+            revert NotADeposit();
+        }
+        address receiver;
+        (receiver, termId,,) = abi.decode(callData[4:], (address, bytes32, uint256, uint256));
+        if (receiver != redeemer) revert ReceiverNotRedeemer(receiver, redeemer);
+    }
+
+    function _requireBinding(
+        Binding[] memory bindings,
+        address signer,
+        bytes32 agentRegistryHash,
+        uint256 agentId,
+        bytes32 termId
+    ) private pure {
+        bool signerKnown;
+        for (uint256 i; i < bindings.length; ++i) {
+            Binding memory b = bindings[i];
+            if (b.signer != signer) continue;
+            if (b.agentRegistryHash == agentRegistryHash && b.agentId == agentId && b.termId == termId) return;
+            signerKnown = true;
+        }
+        if (!signerKnown) revert SignerNotAccepted(signer);
+        revert BindingMismatch(signer, agentRegistryHash, agentId, termId);
+    }
+
+    function _paymentKey(uint256 chainId, address signer, bytes32 payment) private pure returns (bytes32) {
+        return keccak256(abi.encode(chainId, signer, payment));
+    }
+}

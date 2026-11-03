@@ -7,7 +7,9 @@ import {useStakeActions} from "../../hooks/use-stake-actions";
 import {useChainChoice} from "../../lib/chain-choice";
 import {formatTrust} from "../../services/trust-format";
 import {parseShareAmount, type RedeemQuote} from "../../services/trust-stake";
+import {Hint} from "../brand/Hint";
 import {type HeadingTag} from "./StakeControl";
+import {ConnectPrompt} from "../onboarding/ConnectPrompt";
 
 /**
  * The exit: take a position back off an agent or a tool.
@@ -137,7 +139,7 @@ export function WithdrawControl({
             const hash = await submitExit(quote);
             broadcast = hash;
             setPhase({step: "sent", quote, hash});
-            await awaitReceipt(hash);
+            await awaitReceipt(hash, quote.chain);
             setPhase({step: "done", quote, hash});
             onSettled();
         } catch (error) {
@@ -156,9 +158,22 @@ export function WithdrawControl({
                 Withdraw
             </Heading>
             <p className="mt-1 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)] max-w-[60ch]">
-                You hold <span className="font-mono">{formatTrust(held)}</span> shares here. Burning
-                them returns {chain.symbol} at the curve&rsquo;s current price, less the exit fee.
+                Your support here: {held > 0n ? "supporting" : "none"}{" "}
+                <Hint label="What you get back">
+                    What you get back in {chain.symbol} is priced before you sign, less the exit
+                    fee.
+                </Hint>
             </p>
+            {/* ADR `0103`: the held share count stays checkable and selectable, collapsed. It is
+                the unit the amount below is entered in. */}
+            <details className="mt-2">
+                <summary className="cursor-pointer text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
+                    Verify
+                </summary>
+                <p className="mt-2 font-mono text-[length:var(--text-body-sm)]">
+                    Shares held: {formatTrust(held)}
+                </p>
+            </details>
 
             {phase.step === "confirm" || phase.step === "signing" ? (
                 <div className="mt-4 border border-[color:var(--color-rule-strong)] p-4 max-w-[36rem]">
@@ -166,9 +181,7 @@ export function WithdrawControl({
                         Confirm before your wallet opens
                     </p>
                     <p className="mt-3 text-[length:var(--text-body-sm)] max-w-[52ch]">
-                        You are about to burn{" "}
-                        <span className="font-mono">{formatTrust(phase.quote.shares)}</span> shares
-                        and receive{" "}
+                        You are about to withdraw and receive{" "}
                         <span className="font-mono">
                             {formatTrust(phase.quote.assetsAfterFees)} {phase.quote.chain.symbol}
                         </span>
@@ -182,6 +195,15 @@ export function WithdrawControl({
                             ? `Real ${phase.quote.chain.symbol}, ${phase.quote.chain.chain.name}.`
                             : `Test ${phase.quote.chain.symbol} on ${phase.quote.chain.chain.name}.`}
                     </p>
+                    {/* ADR `0103`: the share count stays checkable, collapsed. */}
+                    <details className="mt-3">
+                        <summary className="cursor-pointer text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
+                            Verify
+                        </summary>
+                        <p className="mt-2 font-mono text-[length:var(--text-body-sm)]">
+                            Shares burned: {formatTrust(phase.quote.shares)}
+                        </p>
+                    </details>
                     <div className="mt-5 flex flex-wrap gap-3">
                         <button
                             type="button"
@@ -274,7 +296,7 @@ export function WithdrawControl({
                         htmlFor={`${fieldId}-shares`}
                         className="block font-mono uppercase tracking-wider text-[length:var(--text-label)] text-[color:var(--color-steel)]"
                     >
-                        Shares
+                        Shares to withdraw
                     </label>
                     <div className="mt-2 flex flex-wrap items-center gap-3">
                         <input
@@ -318,9 +340,7 @@ export function WithdrawControl({
                     )}
 
                     {!isConnected ? (
-                        <p className="mt-4 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
-                            Connect a wallet to withdraw.
-                        </p>
+                        <ConnectPrompt label="Connect a wallet to withdraw" className="mt-4" />
                     ) : !onTargetChain ? (
                         <div className="mt-4">
                             <p className="text-[length:var(--text-body-sm)] max-w-[60ch]">

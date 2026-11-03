@@ -207,8 +207,9 @@ describe("recoverContentRequester", () => {
 
     it("makes a replayed request produce the same receipt, not a second one", async () => {
         // The reason the CALLER supplies the nonce. Signing the same request twice yields the same
-        // `to` and the same nonce, so the node's receipt is byte-identical and a reader counting
-        // receipts counts one. A stolen signature buys a copy of a receipt that already exists.
+        // `to` and the same nonce, so the node's receipt names the same (atom, to, nonce). It is
+        // byte-identical only here, where `servedAt` is pinned; a live node stamps a new one, so a
+        // reader counting receipts keys on (atom, to, nonce), not on the signature.
         const signature = await ask(OTHER);
         const first = await recoverContentRequester(ATOM, NONCE, TESTNET, signature);
         const second = await recoverContentRequester(ATOM, NONCE, TESTNET, signature);
@@ -222,6 +223,20 @@ describe("recoverContentRequester", () => {
 
 describe("corroborationOf", () => {
     const AGENT = CALLER;
+
+    it("compares against the receiver, so a sponsored deposit is not other-caller", async () => {
+        // ADR `0094` §3: the sponsoring service sends the deposit and the agent receives the shares.
+        // Compared against the sender, every sponsored declaration read as `other-caller`.
+        const SPONSOR = OTHER.address;
+        const verdict = await verifyContentReceipt(await sign(receipt()));
+        if (verdict.status !== "valid") throw new Error("fixture did not verify");
+        expect(corroborationOf(receipt(), verdict.signer, AGENT, [NODE.address]).status).toBe(
+            "second-party",
+        );
+        expect(corroborationOf(receipt(), verdict.signer, SPONSOR, [NODE.address]).status).toBe(
+            "other-caller",
+        );
+    });
 
     it("is unknown-signer by default, because addresses cannot tell a node's hand", async () => {
         // The finding that made this function wrong at first. In the shipped configuration the

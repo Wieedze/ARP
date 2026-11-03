@@ -91,7 +91,7 @@ export function CurveControl({
 }) {
     return (
         <Segmented
-            label="Curve"
+            label="Pricing"
             selected={curveId}
             onChange={onChange}
             options={TOOL_CURVES.map((entry) => ({

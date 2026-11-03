@@ -13,11 +13,11 @@ import {useChainChoice} from "../lib/chain-choice";
  *
  * The chain is in the key: the same term id names a different vault on each (`chain-choice`).
  */
-export function termValueQueryKey(chainId: number, termId: string | null, curveId: string) {
+function termValueQueryKey(chainId: number, termId: string | null, curveId: string) {
     return ["intuition", chainId, "term-value", termId ?? "none", curveId] as const;
 }
 
-export function termValueQueryOptions(
+function termValueQueryOptions(
     chain: {chainId: number; graphqlUrl: string},
     termId: string | null,
     curveId: bigint | undefined,

@@ -34,7 +34,7 @@ A sponsored deposit costs the agent nothing, so there the cost sits in the **pro
 
 - **Not a registry.** ARP mints into ERC-8004's registry and reads from it; it never keeps an identity namespace of its own. Being an on-ramp to the standard is being its client, not its competitor.
 - **Not a marketplace.** `/hire` was a demo that the index works; it was never finished and is now removed. Hiring is `docs/tasks/25`, and the delegation there caps the **buyer's** own spend so the seller needs no relationship with ARP.
-- **Not consumer-facing.** B2B infrastructure — agents, dApps and protocols consume it (`docs/01`).
+- **Not B2B first.** Its first users are people who use an agent — Claude users, agent builders, tool authors — and the agent itself, which reads ARP mid-task. Aggregators and publishers may become business customers later (ADR `0120`).
 - **Not a scorer.** ARP publishes no score, rating or assessment of any agent. It makes staking
   possible and reads the result; every figure it surfaces is a deposit somebody else made. ARP cannot
   be wrong about an agent — the market can (ADR `0046`).
@@ -69,18 +69,18 @@ Written down because this document exists to stop a specific failure, which has 
 
 ## The state of it
 
-| Piece                                                           | Status                                                 |
-| --------------------------------------------------------------- | ------------------------------------------------------ |
-| `ModuleRegistry` — modules with domain + schema                 | built, deployed                                        |
-| `declareUsesTriple` — `(agent, uses, tool)`                     | built                                                  |
-| `stakeOnUsedMethodologies` — stake on what was actually used    | built                                                  |
-| `DomainScopeEnforcer`, `TrustStakeCapEnforcer` — the guard rail | built, deployed on testnet 13579                       |
-| Tool and agent reputation surfaced in the UI                    | built                                                  |
-| **Adoption of an existing ERC-8004 agent**                      | **missing — the whole gap**                            |
-| **The guard rail on the chain where the agents are**            | **missing — enforcers are on testnet, agents are not** |
-| Install handshake, the endpoint bound to the ERC-8004 token     | designed, ADR `0094` — not built                       |
-| A proof as the condition of a sponsored deposit                 | designed, ADR `0094` — not built                       |
-| Revenue: x402 in USDC                                           | designed, ADR `0094` — not built                       |
+| Piece                                                           | Status                                                                         |
+| --------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| `ModuleRegistry` — modules with domain + schema                 | built, deployed                                                                |
+| `declareUsesTriple` — `(agent, uses, tool)`                     | built                                                                          |
+| `stakeOnUsedMethodologies` — stake on what was actually used    | built                                                                          |
+| `DomainScopeEnforcer`, `TrustStakeCapEnforcer` — the guard rail | built, deployed on testnet 13579                                               |
+| Tool and agent reputation surfaced in the UI                    | built                                                                          |
+| **Adoption of an existing ERC-8004 agent**                      | **missing — the whole gap**                                                    |
+| **The guard rail on the chain where the agents are**            | **missing — enforcers are on testnet, agents are not**                         |
+| Install handshake, the endpoint bound to the ERC-8004 token     | built, task 39 (ADR `0095`)                                                    |
+| A proof as the condition of a sponsored deposit                 | built for hire proofs, and for content receipts on testnet 13579 (ADR `0109`); running locally; first sponsored walks 2026-11-02, agents 9 and 10 (`docs/tasks/50` §6) |
+| Revenue: x402 in USDC                                           | mainnet only, ADR `0102` — testnet is free                                     |
 
 The mechanism works today for agents ARP mints. It does not work for the agents that already exist — **28,720** reachable out of a registry whose next id is **444,562**, measured 2026-10-21 — and those are the population, so that gap is what stands between this and a live system. Worse than it reads: the mirror has not moved since 2026-09-16 while the registry kept going, so for roughly **fourteen agents in fifteen** the identity atom does **not exist** and has to be written (`scripts/agent/agent-identity-atom.ts`, ADR `0047`). `/agent/import` writes it now rather than waiting.
 

@@ -9,6 +9,7 @@ import type {
 } from "@arp-protocol/core";
 import type {Hex} from "viem";
 
+import {safeHttpUrl} from "../lib/safe-url";
 import {asStakeTermId} from "./trust-stake";
 
 /**
@@ -142,9 +143,10 @@ const CAPABILITY_GROUP_ORDER: {relation: CapabilityRelation; label: string}[] = 
     // `uses-tool` first: what an agent depends on is the part a reader is
     // choosing between. `supports-protocol` sits with the other interface
     // claims — what you can call the agent with is a different question from
-    // what it runs on. "Supports" rather than "Speaks" because the published
-    // object set is ERC-8004, x402, MCP, A2A and OASF: you do not *speak* a
-    // schema or a payment scheme, and OASF alone is 16 of 153 edges. ADR 0030.
+    // what it runs on. Labelled "Protocols" (user, 2026-11-02, ADR 0103): "Supports" collided
+    // with support as money behind a thing, and "Speaks" fails the published object set —
+    // ERC-8004, x402, MCP, A2A and OASF; you do not *speak* a schema or a payment scheme
+    // (ADR 0030). "Protocols" is loose for OASF and ERC-8004, and the user accepted that.
     //
     // This group leads nothing today: zero `uses` edges have a subject the connector can reach.
     // That is ARP's own non-activity rather than a fact about the graph (user, 2026-10-27), so the
@@ -152,7 +154,7 @@ const CAPABILITY_GROUP_ORDER: {relation: CapabilityRelation; label: string}[] = 
     {relation: "uses-tool", label: "Uses"},
     {relation: "has-type", label: "Type"},
     {relation: "implements", label: "Implements"},
-    {relation: "supports-protocol", label: "Supports"},
+    {relation: "supports-protocol", label: "Protocols"},
     {relation: "has-category", label: "Category"},
     {relation: "has-tag", label: "Tags"},
     {relation: "compatible-with", label: "Compatible with"},
@@ -265,7 +267,7 @@ function rowFrom(
             "Unnamed provider",
         // A `has trust provider` object atom's url is the provider's own site;
         // the rating atom's url is the document. Never interchange them.
-        providerUrl: providerEdge?.claim.provider.url ?? document?.provider?.url ?? null,
+        providerUrl: safeHttpUrl(providerEdge?.claim.provider.url ?? document?.provider?.url),
         providerMatch,
         providerClaim: providerEdge,
         rating: ratingEdge,
@@ -277,7 +279,7 @@ function rowFrom(
         dimensions: dimensionsOf(ratingEdge),
         reviewers,
         weight: evidenceWeight(reviewers),
-        documentUrl: ratingEdge?.claim.resolverUrl ?? null,
+        documentUrl: safeHttpUrl(ratingEdge?.claim.resolverUrl),
         documentError: documentErrorOf(ratingEdge),
     };
 }
@@ -380,7 +382,10 @@ export function groupCapabilities(profile: AgentProfile): CapabilityGroup[] {
             seen.add(key);
             return true;
         });
-        return entries.length === 0 ? [] : [{relation, label, entries}];
+        if (entries.length === 0) return [];
+        return [
+            {relation, label, entries: entries.map((ref) => ({...ref, url: safeHttpUrl(ref.url)}))},
+        ];
     });
 }
 
@@ -419,7 +424,7 @@ export function buildTrustPanel(profile: AgentProfile): TrustPanelView {
         // True of the metadata actually rendered, not of some other source's. A page that shows a
         // real name must not also say the name is a stand-in.
         isFallbackMetadata: metadata?.isFallback ?? false,
-        url: metadata?.url ?? null,
+        url: safeHttpUrl(metadata?.url),
         owner: withOwner?.owner ?? null,
         registrationFile: withRegistrationFile?.registrationFile ?? null,
         atomTermId: identity?.sourceHandle ?? null,
@@ -474,14 +479,8 @@ export type TabSummary = {
 };
 
 /**
- * ## The `agent` tab is gone
- *
- * There used to be a third kind, holding the agent's capabilities and the reads that failed. It
- * existed because the layout was one column and the agent's own data had nowhere else to go. The
- * page is numbered sections now (`PanelSection`), so that data is sections 05 and 06 at the page
- * level — visible whether or not a strip is drawn, which it is not for 99.99% of this cohort.
- *
- * Leaving the tab in would have rendered capabilities twice on any agent that has two providers.
+ * Providers and ARP, nothing else: the agent's own capabilities and failed reads are page sections
+ * (`PanelSection`), visible whether or not a strip is drawn.
  */
 export type PanelTab =
     | {kind: "provider"; slug: string; label: string; row: TrustRow; summary: TabSummary}
@@ -490,19 +489,15 @@ export type PanelTab =
 export type PanelTabs = {
     tabs: PanelTab[];
     /**
-     * The tab a bare URL opens: the first provider.
-     *
-     * It used to be the agent's own data, on the argument that what an agent is for comes before
-     * anyone's opinion of it. That argument is now served better by the layout than by a tab — the
-     * agent's own data is sections 01 and 05, above this strip and always visible. The strip is
-     * providers only, so its default is simply the first of them.
+     * The tab a bare URL opens: the first provider. The agent's own data is sections 01 and 05,
+     * above this strip and always visible.
      */
     defaultSlug: string;
 };
 
 /** The connector's own words, compressed to fit a tab. Nothing is upgraded. */
 const SIGNATURE_TAB_LABEL: Record<SignatureVerdict["status"], string> = {
-    verified: "verified",
+    "self-signed": "self-signed",
     mismatch: "mismatch",
     unverified: "not verified",
 };

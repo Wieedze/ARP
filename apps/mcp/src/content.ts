@@ -15,7 +15,7 @@
  *
  *  ```
  *  ARP_RECEIPT_KEY=0x…   a key the operator manages. For a hosted server
- *  .arp/receipt-key      generated on first run, mode 0600, gitignored
+ *  ~/.arp/receipt-key    generated on first run, mode 0600 (or under ARP_HOME)
  *  ARP_NO_RECEIPTS=1     no key at all. The content path still works
  *  ```
  *
@@ -41,27 +41,33 @@
  *  through, because a cache of bytes is a mirror and a mirror is a different product with different
  *  obligations (`docs/tasks/31` §9).
  */
-import { chmodSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { dirname } from 'node:path';
+import { existsSync, writeFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
 
-import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts';
-import type { Address, Hex } from 'viem';
+import { loadOrCreateKeyFile, stateFile } from '@arp-protocol/core/node';
+
+import { privateKeyToAccount } from 'viem/accounts';
+import { isHex, type Address, type Hex } from 'viem';
+
+const isHex32 = (value: string | null): value is Hex =>
+  value !== null && /^0x[0-9a-fA-F]{64}$/.test(value);
 
 import { SKILL_CATALOGUES } from './data.js';
 
 import {
+  type BundleAnswer,
   type ContentAnswer,
   contentIndexOf,
   recoverContentRequester,
   type RepositoryFile,
   serveContent,
+  serveSkillBundle,
   type TypedDataSigner,
 } from '@arp-protocol/core';
 
 /** A listing changes when somebody pushes. Ten minutes is a compromise nobody has measured. */
 const LISTING_TTL_MS = 10 * 60 * 1000;
 const FETCH_TIMEOUT_MS = 15_000;
-const KEY_PATH = '.arp/receipt-key';
 
 export type CataloguedSkill = { repo: string; skill: string; url: string; atom: string | null };
 
@@ -121,20 +127,44 @@ export function contentIndexFor(chainId: number): ReadonlyMap<string, string> {
 }
 
 /**
+ * `.arp/` was the operator's working directory until ADR `0116`, and only this repository's own
+ * `.gitignore` covered it — in anybody else's repo `git add .` took the key (found live, task 38
+ * part A). The key is under the home now; the `.gitignore` stays for an `ARP_HOME` that is inside a
+ * repository, and is also written for a key that already exists.
+ */
+function ignoreOwnDirectory(keyPath: string): void {
+  const ignore = join(dirname(keyPath), '.gitignore');
+  try {
+    if (!existsSync(ignore)) writeFileSync(ignore, '*\n');
+  } catch (error) {
+    // A directory the server cannot write must not stop it (see the key below); say so instead.
+    console.error(`${ignore} cannot be written (${String(error)}): keep ${dirname(keyPath)} out of any commit.`);
+  }
+}
+
+/**
  * The signing identity, or null.
  *
- * Generated on first run so an installer has nothing to configure. The file is 0600 and `.arp/` is
- * gitignored; a key that lands in a commit is a key that is gone.
+ * Generated on first run so an installer has nothing to configure, in `~/.arp/receipt-key` (or
+ * under `ARP_HOME`): the working directory is wherever the client started the server, and a key
+ * that depends on it is a different signer in every directory (ADR `0116`). The file is 0600 and its
+ * directory carries its own `.gitignore`; a key that lands in a commit is a key that is gone.
+ *
+ * Throws `MovedStateError` when a key is still in `<cwd>/.arp/receipt-key` and none is in the home:
+ * starting with a new key would silently change the signer a sponsoring service accepts.
  */
 export function receiptSigner(): TypedDataSigner | null {
   if (process.env['ARP_NO_RECEIPTS'] === '1') return null;
 
   const fromEnv = process.env['ARP_RECEIPT_KEY']?.trim();
   let key: Hex;
-  if (fromEnv !== undefined && fromEnv.length > 0) {
+  // Resolved only without `ARP_RECEIPT_KEY`: a key the operator manages leaves no file to move.
+  const path = fromEnv !== undefined && fromEnv.length > 0 ? '' : stateFile(undefined, 'receipt-key');
+  if (path === '') {
+    const given = fromEnv ?? '';
     // The cast adds the prefix viem's type wants. `privateKeyToAccount` below throws on anything
     // that is not a key, so the validation is there rather than asserted here.
-    key = (fromEnv.startsWith('0x') ? fromEnv : `0x${fromEnv}`) as Hex;
+    key = (given.startsWith('0x') ? given : `0x${given}`) as Hex;
     // Nothing here can tell a funded key from an empty one, and reading a balance would need every
     // chain it might hold value on. So it says so once, loudly, on stderr — which is where a stdio
     // server's diagnostics go, because stdout is the protocol channel.
@@ -143,13 +173,25 @@ export function receiptSigner(): TypedDataSigner | null {
         '(ADR 0080): do not give this process a key that holds funds. Unset it to have one ' +
         'generated instead.',
     );
-  } else if (existsSync(KEY_PATH)) {
-    key = readFileSync(KEY_PATH, 'utf8').trim() as Hex;
+  } else if (existsSync(path)) {
+    // Refused, not chmodded, when anyone but its owner can read it: the policy of every ARP key
+    // file (`readKeyFile`, ADR `0116`). It used to be read with no check at all.
+    key = loadOrCreateKeyFile(path).key;
+    ignoreOwnDirectory(path);
   } else {
-    key = generatePrivateKey();
-    mkdirSync(dirname(KEY_PATH), { recursive: true });
-    writeFileSync(KEY_PATH, `${key}\n`, { mode: 0o600 });
-    chmodSync(KEY_PATH, 0o600);
+    try {
+      key = loadOrCreateKeyFile(path).key;
+      ignoreOwnDirectory(path);
+    } catch (error) {
+      // A client may start the server in a directory it cannot write: Claude Desktop on Windows
+      // starts it in C:\Windows\system32, and the server died there before it answered (found
+      // live, 2026-11-02). A key that cannot be kept is not used: no receipts, and a server that runs.
+      console.error(
+        `No receipt key: ${path} cannot be written (${String(error)}). ` +
+          'Content receipts are off for this run.',
+      );
+      return null;
+    }
   }
 
   const account = privateKeyToAccount(key);
@@ -162,7 +204,8 @@ export function receiptSigner(): TypedDataSigner | null {
 const listings = new Map<string, { at: number; files: RepositoryFile[] }>();
 
 /**
- * A repository's SKILL.md paths and their blob shas, cached. One request per repository.
+ * A repository's every file path and its blob sha, cached. One request per repository. The bundle
+ * route (task 57) reads a skill's whole directory from it, not only its SKILL.md.
  *
  * The cache is ten minutes and the content is fetched live from `HEAD`, so the two can disagree:
  * after a push that makes two previously-identical paths differ, `resolveContentPath` can still
@@ -219,18 +262,19 @@ async function requester(
   chainId: number,
 ): Promise<{ to: Address | null; nonce: Hex }> {
   const nonceRaw = params.get('nonce');
-  const nonce = /^0x[0-9a-fA-F]{64}$/.test(nonceRaw ?? '')
-    ? (nonceRaw as Hex)
-    : (`0x${'00'.repeat(32)}` as Hex);
+  const nonce: Hex = isHex32(nonceRaw) ? nonceRaw : `0x${'00'.repeat(32)}`;
 
   const signature = params.get('sig');
-  if (signature === null || !/^0x[0-9a-fA-F]+$/.test(signature)) return { to: null, nonce };
+  // A malformed atom id is served as `bad-atom-id` by `serveContent`; here it authenticates nobody.
+  if (signature === null || !isHex(signature, { strict: true }) || !isHex32(atomId)) {
+    return { to: null, nonce };
+  }
 
   const recovered = await recoverContentRequester(
-    atomId.toLowerCase() as Hex,
+    atomId.toLowerCase() as Hex, // Lower case of a value `isHex32` just accepted.
     nonce,
     chainId,
-    signature as Hex,
+    signature,
   );
   const claimed = params.get('by');
   if (claimed !== null && recovered !== null && claimed.toLowerCase() !== recovered.toLowerCase()) {
@@ -240,8 +284,13 @@ async function requester(
 }
 
 /** What each refusal is, as a status and a sentence. A caller that cannot tell them apart retries wrong. */
-function refusal(answer: ContentAnswer, chainId: number): { code: number; reason: string } {
+function refusal(
+  answer: Exclude<ContentAnswer | BundleAnswer, { status: 'served' }>,
+  chainId: number,
+): { code: number; reason: string } {
   switch (answer.status) {
+    case 'too-many-files':
+      return { code: 413, reason: `${answer.path} holds ${answer.files} files, over the ${answer.cap} file cap` };
     case 'bad-atom-id':
       return { code: 400, reason: 'an atom id is 0x followed by 64 hex characters' };
     case 'unknown-atom':
@@ -290,6 +339,7 @@ export async function serveContentRequest(
   signer: TypedDataSigner | null,
 ): Promise<Response> {
   const { to, nonce } = await requester(atomId, params, chainId);
+  if (params.get('bundle') === '1') return serveBundleRequest(atomId, chainId, signer, to, nonce);
 
   let answer: ContentAnswer;
   try {
@@ -331,6 +381,49 @@ export async function serveContentRequest(
   // The bytes, unchanged, so the body is exactly what the digest is over. `Uint8Array` is a valid
   // body; the named `BodyInit` type is not in this tsconfig's lib, which `check:scripts` caught.
   return new Response(answer.bytes, { headers });
+}
+
+/**
+ * `GET /content/:atomId?bundle=1` — the skill's whole directory as JSON, each file in base64, with a
+ * receipt over the manifest in `x-arp-receipt` (task 57). The body is not what the digest is over:
+ * the manifest is, and a caller rebuilds it from the files (`bundleMatchesReceipt`).
+ */
+async function serveBundleRequest(
+  atomId: string,
+  chainId: number,
+  signer: TypedDataSigner | null,
+  to: Address | null,
+  nonce: Hex,
+): Promise<Response> {
+  let answer: BundleAnswer;
+  try {
+    answer = await serveSkillBundle(atomId, {
+      chainId,
+      index: contentIndexFor(chainId),
+      listing,
+      raw,
+      signer,
+      to,
+      nonce,
+      now: () => Math.floor(Date.now() / 1000),
+    });
+  } catch (error) {
+    return Response.json({ error: 'upstream', reason: String(error).slice(0, 200) }, { status: 502 });
+  }
+  if (answer.status !== 'served') {
+    const { code, reason } = refusal(answer, chainId);
+    return Response.json({ error: answer.status, reason }, { status: code });
+  }
+  const headers: Record<string, string> = { 'x-arp-atom': atomId.toLowerCase(), 'x-arp-path': answer.path };
+  if (answer.receipt !== null) headers['x-arp-receipt'] = JSON.stringify(answer.receipt);
+  return Response.json(
+    {
+      path: answer.path,
+      manifest: answer.manifest,
+      files: answer.files.map((file) => ({ path: file.path, base64: Buffer.from(file.bytes).toString('base64') })),
+    },
+    { headers },
+  );
 }
 
 // A module, not a global script — see the note in scripts/measure/predicate-objects.ts.

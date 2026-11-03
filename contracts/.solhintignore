@@ -1,0 +1,2 @@
+# The ported ERC-8004 reference registry: kept as upstream wrote it (SECURITY_REVIEW.md, Task 60).
+src/erc8004/

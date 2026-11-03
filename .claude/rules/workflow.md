@@ -26,7 +26,7 @@ Every signal triggers a stop. Either the user authorizes the scope expansion exp
 
 ## Communication style (when reporting to the user)
 
-End-of-task report has three parts and no more (four for hackathon tasks — see below):
+End-of-task report has three parts and no more, plus the evidence-ladder sentence below:
 
 ```
 **What shipped**
@@ -39,16 +39,20 @@ End-of-task report has three parts and no more (four for hackathon tasks — see
 <the next logical task, or what the user needs to unblock>
 ```
 
-### Hackathon-task addendum (Tasks 02b, 03b, 04b, 05b only)
+### Evidence-ladder sentence (every task)
 
-For tasks tied to the MetaMask Dev Cook-Off submission, add a fourth bullet:
+Every completion report answers one more question, in one sentence:
 
 ```
-**Does this preserve the hackathon submission narrative?**
-<one sentence: yes/no, with reasoning. Reference the narrative in docs/00_HACKATHON_PIVOT.md.>
+**Which tier of the evidence ladder does this serve, and does it move ARP up it?**
+<one sentence: the tier from docs/09_POSITIONING_AND_PLAN.md §3, and why it moves ARP up or not.>
 ```
 
-If the answer is "no", the implementation has drifted and must be reviewed before merging. The `task-verifier` agent checks this answer is present and substantive on hackathon-tagged tasks.
+A task that cannot name a tier has drifted and must be reviewed before merging. The `task-verifier`
+agent checks the answer is present and substantive (ADR `0022`, ADR `0117`).
+
+**Historical:** tasks 02b, 03b, 04b and 05b (the MetaMask Dev Cook-Off submission, closed) carried a
+hackathon-narrative question in this place. It is retired; their task files keep it as record.
 
 Do not:
 
@@ -108,5 +112,3 @@ Stop and ask, do not guess, when:
 - An Intuition atom schema or integration detail is ambiguous.
 - The deployment target is ambiguous (default Intuition Testnet 13579, but confirm if mainnet is implied).
 - A rule and a task spec disagree.
-
-Ten minutes of clarification saves a day of rework. The cost of asking is near zero. The cost of guessing wrong is the cost of the rework plus the trust damage.

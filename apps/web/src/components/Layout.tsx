@@ -1,6 +1,6 @@
 import {type ReactNode} from "react";
-import {useAccount} from "wagmi";
 
+import {useSearchShortcut} from "../hooks/use-search-shortcut";
 import {useChainChoice} from "../lib/chain-choice";
 
 import {ActivityLog} from "./brand/ActivityLog";
@@ -29,8 +29,8 @@ import {WalletConnect} from "./WalletConnect";
  */
 
 export function Layout({children}: {children: ReactNode}) {
-    const {isConnected} = useAccount();
     const chain = useChainChoice();
+    useSearchShortcut();
 
     return (
         /* `min-h-screen flex flex-col` is what makes `flex-1` on `<main>` mean anything. This was
@@ -40,7 +40,7 @@ export function Layout({children}: {children: ReactNode}) {
         /* `pb-9` is the collapsed activity bar's height, so the fixed bar never sits on the footer. */
         <div className="flex min-h-screen flex-col pb-9">
             {/*
-             * Agents · Tools on the left, Register · My profile on the right (user, 2026-10-20,
+             * Agents · Tools · Activity on the left, Register on the right (user, 2026-10-20,
              * one row since 2026-10-27). The handoff's left pair is "AGENTS, MODULES"; there is
              * no module surface — `ModuleRegistry` and its three pages went with ADR `0051`/`0055`
              * — so Tools takes the slot, which is the live equivalent. Discover replaced Hire
@@ -51,9 +51,8 @@ export function Layout({children}: {children: ReactNode}) {
              *
              * `/` is the tool catalogue, so "Tools" and the mark lead to the same place.
              *
-             * "My profile", not "You", and `/profile`, not `/me` — the user rejected both. Last in
-             * the group and only once a wallet is connected: a page of your positions with nothing
-             * to read is a worse answer than no tab.
+             * `/profile` ("Invest") is gone: its positions are on `/activity`, and the account page
+             * is reached from the wallet menu, not the nav (user, 2026-10-30, `docs/tasks/35` §0).
              *
              * A "How it works" tab is part of the same structure and is not built: its content is a
              * decision, not a layout.
@@ -69,8 +68,8 @@ export function Layout({children}: {children: ReactNode}) {
                 two on the left. It overflowed, wrapped the address onto a second line and shoved
                 the mark off centre (user, with a screenshot, 2026-10-27).
 
-                Three and three now. **What you read** goes left — the two indexes and your own
-                positions, which is a page of figures like the others. **What you do** goes right,
+                **What you read** goes left: the two indexes and `/activity`, which now carries
+                your own positions too. **What you do** goes right,
                 with the chain and the wallet after it: both are state rather than destinations, so
                 they sit at the end rather than among the links. The toggle is one button now, not
                 two (`ChainToggle`). */}
@@ -82,7 +81,8 @@ export function Layout({children}: {children: ReactNode}) {
                         {/* What happened: the agent's calls, declarations and stakes, and every
                             transaction this browser sent (user, 2026-10-30). */}
                         <NavLink to="/activity">Activity</NavLink>
-                        {isConnected ? <NavLink to="/profile">Invest</NavLink> : null}
+                        {/* Both indexes from one field; `/` opens it from anywhere (task 48). */}
+                        <NavLink to="/search">Search</NavLink>
                     </>
                 }
                 right={

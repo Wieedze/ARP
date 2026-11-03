@@ -1,6 +1,5 @@
 import {Link} from "react-router-dom";
 
-import {linkClass} from "../../lib/control-class";
 import type {CapabilityGroup} from "../../services/agent-trust";
 import {parseToolLabel, primaryNameOf} from "../../lib/tool-label";
 
@@ -28,7 +27,7 @@ export function CapabilitySection({groups, count}: {groups: CapabilityGroup[]; c
     if (count === 0) {
         return (
             <p className="text-[length:var(--text-body-sm)] text-[color:var(--color-steel)] max-w-[60ch]">
-                No capability triples.
+                Nothing declared.
             </p>
         );
     }
@@ -57,7 +56,10 @@ export function CapabilitySection({groups, count}: {groups: CapabilityGroup[]; c
                                     <Link
                                         key={`${label}-${index}`}
                                         to={`/atom/${entry.sourceHandle}`}
-                                        className={`font-mono ${linkClass}`}
+                                        // No underline (user, 2026-11-02): a block of
+                                        // underlined tags read oddly. The base `a` rule still
+                                        // turns it paper on hover and draws the focus ring.
+                                        className="font-mono"
                                     >
                                         {label}
                                     </Link>

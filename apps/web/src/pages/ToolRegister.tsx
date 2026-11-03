@@ -3,11 +3,13 @@ import {Link} from "react-router-dom";
 import type {Hex} from "viem";
 import {useAccount, useSwitchChain} from "wagmi";
 
+import {Hint} from "../components/brand/Hint";
 import {controlClass, linkClass} from "../lib/control-class";
 import {useToolRegister} from "../hooks/use-tool-register";
 import {useChainChoice, type ChainChoice} from "../lib/chain-choice";
 import type {ToolRegistration} from "../services/tool-register";
 import {formatTrust, truncateMiddle} from "../services/trust-format";
+import {ConnectPrompt} from "../components/onboarding/ConnectPrompt";
 
 /**
  * Register a tool (`/register`).
@@ -128,7 +130,6 @@ export function ToolRegister({heading = true}: {heading?: boolean} = {}) {
                         autoCapitalize="off"
                         autoCorrect="off"
                         inputMode="url"
-                        aria-describedby={`${fieldId}-hint`}
                         className="min-w-0 flex-1 bg-transparent border border-[color:var(--color-rule-strong)] px-3 py-2 font-mono text-[length:var(--text-body-sm)]"
                     />
                     <button
@@ -140,16 +141,6 @@ export function ToolRegister({heading = true}: {heading?: boolean} = {}) {
                         {status === "reading" ? "Reading the chain…" : "Look it up"}
                     </button>
                 </div>
-                <p
-                    id={`${fieldId}-hint`}
-                    className="mt-2 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]"
-                >
-                    The scheme, <span className="font-mono">www.</span>, a trailing slash and a
-                    fragment are normalised away.{" "}
-                    <strong className="font-medium">The path&rsquo;s case is not</strong> —{" "}
-                    <span className="font-mono">/Crytic</span> and{" "}
-                    <span className="font-mono">/crytic</span> are two different markets.
-                </p>
 
                 {error !== null ? (
                     <p
@@ -176,7 +167,7 @@ export function ToolRegister({heading = true}: {heading?: boolean} = {}) {
                             : plan === null
                               ? ""
                               : plan.exists
-                                ? "This tool already has its atom"
+                                ? "This tool is already registered"
                                 : "Ready to register"}
                 </p>
                 <div>
@@ -221,20 +212,27 @@ function Resolved(props: {
     return (
         <div className="mt-10 pl-5 border-l border-[color:var(--color-rule-strong)]">
             <Field label="Normalised URL" value={plan.normalisedUrl} />
-            <Field label="Atom data" value={plan.atomUri} />
-            <Field label="Atom id" value={plan.atomId} />
+            {/* Ids are for checking, not for reading — collapsed, still one click away (ADR
+                `0103`). */}
+            <details className="mt-4">
+                <summary className="cursor-pointer text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
+                    Verify
+                </summary>
+                <Field label="Atom data" value={plan.atomUri} />
+                <Field label="Atom id" value={plan.atomId} />
+            </details>
 
             {plan.existingCandidates.length > 0 ? (
                 <div className="mt-6 max-w-[64ch]">
                     <h2 id={headingId} className="font-medium">
                         {plan.existingCandidates.length === 1
-                            ? "Another atom already carries this URL."
-                            : `${plan.existingCandidates.length} other atoms already carry this URL.`}
+                            ? "Another registration already carries this URL."
+                            : `${plan.existingCandidates.length} other registrations already carry this URL.`}
                     </h2>
                     {/* Reported, never chosen between. Picking one would put a permanent deposit on
                         an arbitrary id, and `https://github.com` has five of them on mainnet. */}
                     <p className="mt-2 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
-                        A deposit on the wrong one is permanent — Intuition has no deletion.
+                        Support on the wrong one is permanent — Intuition has no deletion.
                     </p>
                     <ul aria-labelledby={headingId} className="mt-3">
                         {plan.existingCandidates.map((candidate) => (
@@ -245,7 +243,7 @@ function Resolved(props: {
                                 <Link to={`/atom/${candidate.termId}`} className={linkClass}>
                                     {candidate.label ?? (
                                         <>
-                                            <span className="sr-only">atom </span>
+                                            <span className="sr-only">id </span>
                                             {truncateMiddle(candidate.termId)}
                                         </>
                                     )}
@@ -258,7 +256,7 @@ function Resolved(props: {
 
             {plan.exists ? (
                 <div className="mt-8 max-w-[64ch]">
-                    <p className="font-medium">This tool already has its atom.</p>
+                    <p className="font-medium">This tool is already registered.</p>
                     <Link to={`/atom/${plan.atomId}`} className={`mt-4 inline-block ${linkClass}`}>
                         See its declarations →
                     </Link>
@@ -313,21 +311,22 @@ function Resolved(props: {
                             value={`${formatTrust(plan.feeAssets)} ${plan.chain.symbol}`}
                         />
                         <Term
-                            label="Reaches the vault"
+                            label="Your support"
                             value={`${formatTrust(plan.assetsAfterFees)} ${plan.chain.symbol}`}
+                            hint={{
+                                label: "What the support buys",
+                                sentence: `${formatTrust(plan.shares)} shares in the tool's vault.`,
+                            }}
                         />
-                        <Term label="Shares minted" value={formatTrust(plan.shares)} />
                     </dl>
                     <p className="mt-4 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
-                        The shares are a position you hold and can redeem. The fees are not. An atom
-                        created with the fee alone would exist on the chain and not exist as a
-                        market, which is why the minimum deposit is included rather than optional.
+                        Your support stays yours and you can withdraw it. The fees do not come back.
+                        A tool registered with the fee alone would be public and have no market,
+                        which is why the minimum support is included rather than optional.
                     </p>
 
                     {!props.isConnected ? (
-                        <p className="mt-6 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
-                            Connect a wallet to register it.
-                        </p>
+                        <ConnectPrompt label="Connect a wallet to register it" className="mt-6" />
                     ) : !props.onTargetChain ? (
                         <div className="mt-6">
                             <p className="text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
@@ -372,10 +371,21 @@ function Resolved(props: {
     );
 }
 
-function Term({label, value}: {label: string; value: string}) {
+function Term({
+    label,
+    value,
+    hint,
+}: {
+    label: string;
+    value: string;
+    hint?: {label: string; sentence: string};
+}) {
     return (
         <>
-            <dt className="font-sans text-[color:var(--color-steel)]">{label}</dt>
+            <dt className="font-sans text-[color:var(--color-steel)]">
+                {label}
+                {hint === undefined ? null : <Hint label={hint.label}>{hint.sentence}</Hint>}
+            </dt>
             <dd>{value}</dd>
         </>
     );

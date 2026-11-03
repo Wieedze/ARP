@@ -11,7 +11,6 @@ node_modules/
 contracts/out/
 contracts/cache/
 contracts/broadcast/
-contracts/lib/
 
 # vite / app build
 apps/web/dist/
@@ -61,3 +60,6 @@ docs/reference/integration8004.txt
 # Cloudflare Worker local state and secrets
 .dev.vars
 .wrangler/
+
+# Claude Code agent worktrees: full checkouts of this repo, never source.
+.claude/worktrees/

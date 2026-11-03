@@ -6,7 +6,7 @@
 
 ## Context
 
-The domain tree (`docs/18_THE_DOMAIN_TREE.md`) has two triple shapes: the hierarchy,
+The domain tree (`docs/25_THE_DOMAIN_TREE.md`) has two triple shapes: the hierarchy,
 `(child, is a sub-domain of, parent)`, and the classification, `(tool, has tag, domain)`.
 
 `stripe/agent-toolkit` sits under `card`, which sits under `payment`, which sits under `tool`. So
@@ -78,7 +78,7 @@ not. That Stripe is about payment is **recomputed on every read** by walking
 
 ## References
 
-- Related doc: `docs/18_THE_DOMAIN_TREE.md`
+- Related doc: `docs/25_THE_DOMAIN_TREE.md`
 - Related ADR: `.claude/choices/0042-*` (a vault's assets are not evidence of a stake; `positionCount` is)
 - Related ADR: `.claude/choices/0053-*` (a term created with the fee alone has no position)
 - Related ADR: `.claude/choices/0054-*` (a tool atom derives every field from its normalised URL —

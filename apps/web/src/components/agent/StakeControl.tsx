@@ -15,15 +15,15 @@ import {
     type StakeSession,
     type StakeSide,
 } from "../../services/trust-stake";
+import {ConnectPrompt} from "../onboarding/ConnectPrompt";
 
 /**
  * The stake control. Real value on mainnet, test value on testnet, authorised by ADR 0017.
  *
- * **The chain is the toggle's, not a constant.** It was pinned to 1155, so on testnet the figures
- * read `tTRUST` while this control deposited mainnet `TRUST`. Everything chain-shaped here — the
- * switch prompt, the explorer link, the token in the amount label and in the confirmation — now
- * comes from `quote.chain` where a quote exists and from `useChainChoice` where one does not. The
- * quote is preferred, because it is what the deposit was priced against.
+ * **The chain is the toggle's, not a constant.** Everything chain-shaped here — the switch prompt,
+ * the explorer link, the token in the amount label and in the confirmation — comes from
+ * `quote.chain` where a quote exists and from `useChainChoice` where one does not. The quote is
+ * preferred, because it is what the deposit was priced against.
  *
  * The flow is deliberately three explicit steps — choose, review, sign — and
  * nothing advances on its own. There is no effect in this component, no retry
@@ -73,11 +73,11 @@ const SIDES: StakeSide[] = ["support", "oppose"];
 const SIDE_COPY: Record<StakeSide, {label: string; sentence: string}> = {
     support: {
         label: "Support",
-        sentence: "the claim is worth trusting — deposit into the triple's own vault",
+        sentence: "the declaration is worth trusting",
     },
     oppose: {
         label: "Oppose",
-        sentence: "the claim is not worth trusting — deposit into its counter-triple",
+        sentence: "the declaration is not worth trusting",
     },
 };
 
@@ -257,7 +257,7 @@ export function StakeControl({
         try {
             broadcast = await submit(quote);
             setPhase({step: "sent", quote, hash: broadcast});
-            await awaitReceipt(broadcast);
+            await awaitReceipt(broadcast, quote.chain);
             setPhase({step: "done", quote, hash: broadcast});
             onInFlightChange?.(false);
             onSettled();
@@ -303,23 +303,21 @@ export function StakeControl({
             )}
 
             {!isConnected ? (
-                <p className="mt-4 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
-                    Connect a wallet to take a position.
-                </p>
+                <ConnectPrompt label="Connect a wallet to add support" className="mt-4" />
             ) : sessionError !== null ? (
                 <p className="mt-4 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
-                    The MultiVault's deposit minimum could not be read ({sessionError.message}).
-                    Staking stays closed until it can be.
+                    The minimum amount could not be read ({sessionError.message}). Support stays
+                    closed until it can be.
                 </p>
             ) : session === undefined ? (
                 <p className="mt-4 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
-                    Reading the MultiVault's curve and deposit minimum…
+                    Reading the minimum amount…
                 </p>
             ) : !onTargetChain ? (
                 <div className="mt-4">
                     <p className="text-[length:var(--text-body-sm)] max-w-[60ch]">
                         Your wallet is on chain{" "}
-                        <span className="font-mono">{chainId ?? "unknown"}</span>. This deposit goes
+                        <span className="font-mono">{chainId ?? "unknown"}</span>. This support goes
                         to {chain.chain.name} ({chain.chainId}).
                     </p>
                     <button
@@ -364,8 +362,8 @@ export function StakeControl({
                 <div className="mt-4" role="alert">
                     <p className="text-[length:var(--text-body-sm)] max-w-[60ch] break-words">
                         {phase.hash === null
-                            ? `Nothing was staked. ${phase.message}`
-                            : `The deposit was broadcast and then this panel lost track of it — it may still land. Do not sign it again without checking. ${phase.message}`}
+                            ? `Nothing was sent. ${phase.message}`
+                            : `The transaction was broadcast and then this panel lost track of it — it may still land. Do not sign it again without checking. ${phase.message}`}
                     </p>
                     {phase.hash !== null ? (
                         <p className="mt-2 font-mono text-[length:var(--text-body-sm)]">
@@ -461,7 +459,7 @@ export function StakeControl({
                         disabled={!canReview}
                         className={`mt-4 ${controlClass}`}
                     >
-                        {phase.step === "quoting" ? "Reading the vault…" : "Review this stake"}
+                        {phase.step === "quoting" ? "Pricing…" : "Review this support"}
                     </button>
                 </div>
             )}
@@ -499,17 +497,16 @@ function ConfirmStep({
                 Confirm before your wallet opens
             </p>
             <p className="mt-3 text-[length:var(--text-body-sm)] max-w-[52ch]">
-                You are about to deposit{" "}
+                You are about to put{" "}
                 <span className="font-mono">
                     {formatTrust(quote.assets)} {quote.chain.symbol}
                 </span>{" "}
                 {claim.target.kind === "triple" ? (
                     <>
-                        to{" "}
                         <span className="font-medium">
-                            {SIDE_COPY[quote.side].label.toLowerCase()}
+                            {quote.side === "support" ? "behind" : "against"}
                         </span>{" "}
-                        the claim that{" "}
+                        the declaration that{" "}
                         <span className={claim.subjectIsId ? "font-mono" : "font-medium"}>
                             {claim.subject}
                         </span>{" "}
@@ -517,12 +514,12 @@ function ConfirmStep({
                     </>
                 ) : (
                     <>
-                        onto{" "}
+                        behind{" "}
                         <span className={claim.subjectIsId ? "font-mono" : "font-medium"}>
                             {claim.subject}
                         </span>
-                        . Nothing here can contradict it, and the deposit stays yours — it is a
-                        position you can redeem, not a payment.
+                        . Nothing here can contradict it, and it stays yours — it is support you can
+                        withdraw, not a payment.
                     </>
                 )}
             </p>
@@ -540,9 +537,8 @@ function ConfirmStep({
             </p>
 
             <dl className="mt-4 grid grid-cols-1 sm:grid-cols-[10rem_1fr] gap-y-2 gap-x-4 text-[length:var(--text-body-sm)]">
-                <Term label="Vault" value={truncateMiddle(quote.termId, 12, 8)} />
                 <Term
-                    label="Positions there"
+                    label="Supporters there"
                     value={
                         positions === null
                             ? "not reported"
@@ -551,7 +547,6 @@ function ConfirmStep({
                               : positions.toLocaleString("en-US")
                     }
                 />
-                <Term label="Shares minted" value={formatTrust(quote.expectedShares)} />
                 <Term
                     label="After fees"
                     value={`${formatTrust(quote.assetsAfterFees)} ${quote.chain.symbol} of ${formatTrust(quote.assets)}`}
@@ -560,12 +555,22 @@ function ConfirmStep({
                     label="Fees"
                     value={`${formatTrust(quote.feeAssets)} ${quote.chain.symbol}`}
                 />
-                <Term
-                    label="Minimum shares"
-                    value={`${formatTrust(quote.minShares)} (${Number(MIN_SHARES_TOLERANCE_BPS) / 100}% slippage floor)`}
-                />
                 <Term label="Receiver" value={truncateMiddle(quote.receiver, 8, 6)} />
             </dl>
+            {/* ADR `0103`: the vault, the shares and the slippage floor stay checkable, collapsed. */}
+            <details className="mt-3">
+                <summary className="cursor-pointer text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
+                    Verify
+                </summary>
+                <dl className="mt-2 grid grid-cols-1 sm:grid-cols-[10rem_1fr] gap-y-2 gap-x-4 text-[length:var(--text-body-sm)]">
+                    <Term label="Vault" value={truncateMiddle(quote.termId, 12, 8)} />
+                    <Term label="Shares minted" value={formatTrust(quote.expectedShares)} />
+                    <Term
+                        label="Minimum shares"
+                        value={`${formatTrust(quote.minShares)} (${Number(MIN_SHARES_TOLERANCE_BPS) / 100}% slippage floor)`}
+                    />
+                </dl>
+            </details>
 
             <div className="mt-4 flex flex-wrap gap-3">
                 <button
@@ -614,13 +619,15 @@ function Receipt({
             role="status"
         >
             <p className="font-mono uppercase tracking-wider text-[length:var(--text-label)] text-[color:var(--color-accent)]">
-                {settled ? "Position taken" : "Submitted — waiting for the receipt"}
+                {settled ? "Supported" : "Submitted — waiting for the receipt"}
             </p>
             <p className="mt-3 text-[length:var(--text-body-sm)] max-w-[52ch]">
-                {formatTrust(quote.assets)} {quote.chain.symbol} deposited{" "}
+                {formatTrust(quote.assets)} {quote.chain.symbol}{" "}
                 {quote.target.kind === "atom"
-                    ? "onto this agent"
-                    : `to ${quote.side === "support" ? "support" : "oppose"} this claim`}
+                    ? "in support of this agent"
+                    : quote.side === "support"
+                      ? "in support of this declaration"
+                      : "against this declaration"}
                 .
                 {settled
                     ? null
@@ -638,7 +645,7 @@ function Receipt({
             </p>
             {settled ? (
                 <button type="button" onClick={onReset} className={`mt-4 ${controlClass}`}>
-                    Take another position
+                    Support again
                 </button>
             ) : null}
         </div>

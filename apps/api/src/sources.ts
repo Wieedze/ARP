@@ -25,6 +25,26 @@ export type SkillFact = { description: string; installs: number | null };
 
 const USER_AGENT = 'arp-api (+https://github.com/Wieedze/ARP)';
 
+/** One upstream read, at most this long (ADR `0116`): a hung host must not eat the whole slice. */
+const READ_TIMEOUT_MS = 15_000;
+
+/** `fetch` with the timeout, or the failure a read reports when it timed out or never connected. */
+async function timed(
+  fetch: Fetch,
+  url: string,
+  init: RequestInit,
+  what: string,
+): Promise<Response | Failure> {
+  try {
+    return await fetch(url, { ...init, signal: AbortSignal.timeout(READ_TIMEOUT_MS) });
+  } catch (error) {
+    return {
+      error: `${what}: ${error instanceof Error ? error.name : 'fetch failed'}`,
+      limited: false,
+    };
+  }
+}
+
 function githubHeaders(token: string | undefined): Record<string, string> {
   const headers: Record<string, string> = {
     accept: 'application/vnd.github+json',
@@ -48,9 +68,13 @@ export async function readRepo(
   fetch: Fetch,
   token?: string,
 ): Promise<RepoFact | Failure> {
-  const response = await fetch(`https://api.github.com/repos/${slug}`, {
-    headers: githubHeaders(token),
-  });
+  const response = await timed(
+    fetch,
+    `https://api.github.com/repos/${slug}`,
+    { headers: githubHeaders(token) },
+    `repo ${slug}`,
+  );
+  if (!(response instanceof Response)) return response;
   // A 404 is an answer about the repository, not a failed read: it is gone, and that is the fact.
   if (response.status === 404) {
     return { stars: 0, pushedAt: null, archived: false, gone: true, description: null };
@@ -78,9 +102,13 @@ export async function readTree(
   fetch: Fetch,
   token?: string,
 ): Promise<RepositoryFile[] | Failure> {
-  const response = await fetch(`https://api.github.com/repos/${repo}/git/trees/HEAD?recursive=1`, {
-    headers: githubHeaders(token),
-  });
+  const response = await timed(
+    fetch,
+    `https://api.github.com/repos/${repo}/git/trees/HEAD?recursive=1`,
+    { headers: githubHeaders(token) },
+    `tree ${repo}`,
+  );
+  if (!(response instanceof Response)) return response;
   if (!response.ok) return githubFailure(response, `tree ${repo}`);
   // GitHub's documented git-trees shape; a missing `tree` reads as an empty listing.
   const tree = (await response.json()) as { tree?: { path: string; type: string; sha: string }[] };
@@ -112,9 +140,13 @@ export async function readSkillPage(
   skill: string,
   fetch: Fetch,
 ): Promise<SkillFact | Failure> {
-  const response = await fetch(`https://www.skills.sh/${repo}/${skill}`, {
-    headers: { 'user-agent': USER_AGENT },
-  });
+  const response = await timed(
+    fetch,
+    `https://www.skills.sh/${repo}/${skill}`,
+    { headers: { 'user-agent': USER_AGENT } },
+    `skills.sh ${repo}/${skill}`,
+  );
+  if (!(response instanceof Response)) return response;
   if (response.status === 429)
     return { error: `skills.sh ${repo}/${skill}: HTTP 429`, limited: true };
   if (!response.ok)

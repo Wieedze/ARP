@@ -7,3 +7,4 @@
  * this the one file allowed to name a chain.
  */
 export {intuitionMainnet, intuitionTestnet} from "./chains.js";
+export {ARP_DOMAIN_ATTESTORS} from "./attestors.js";

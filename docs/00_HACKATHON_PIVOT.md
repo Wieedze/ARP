@@ -1,7 +1,7 @@
 # HACKATHON PIVOT — Briefing for Claude Code
 
 **Date**: May 19, 2026
-**Status**: ACTIVE PIVOT — read this entirely before resuming any work on the repo.
+**Status**: **Historical record** — the deadline passed 2026-06-15. It is why the MetaMask and Intuition stack was chosen; it is not a source of authority (`CLAUDE.md`).
 
 This document supersedes parts of the existing project scope. It does not replace `docs/02_ARCHITECTURE.md` or `docs/03_MVP_SCOPE.md` but **extends them** to reflect a new strategic commitment: ARP is now being built as a submission to the MetaMask Dev Cook-Off hackathon, with a deadline of June 15, 2026.
 

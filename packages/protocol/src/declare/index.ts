@@ -25,6 +25,7 @@ export {
     encodeRedeem,
     multiVaultDeclareAbi,
     multiVaultReads,
+    RpcChainMismatchError,
     type MultiVaultReads,
     type MultiVaultReadsConfig,
 } from "./multivault.js";
@@ -57,7 +58,11 @@ export {
     type ToolAtomLookupConfig,
 } from "./tool-atom.js";
 
-export {resolveDeclarationSubject} from "./resolve-subject.js";
+export {
+    resolveDeclarationSubject,
+    resolveIdentityAtomStrict,
+    type StrictIdentityAtom,
+} from "./resolve-subject.js";
 
 export {
     SmartAccountsKitMissingError,
@@ -103,3 +108,24 @@ export {
     type ReachabilityState,
     type ReachabilityTerms,
 } from "./reachability-plan.js";
+
+/** A category anyone can add, by the same rules as the rest (task 59, ADR `0115`). */
+export {
+    checkCategoryLabel,
+    isCategoryIn,
+    normaliseCategoryLabel,
+    planCategory,
+    type CategoryDeps,
+    type CategoryPlan,
+    type CategoryProposal,
+    type CategoryRefusal,
+    type CategoryRule,
+} from "./category.js";
+
+/** The endpoint binding on Intuition (task 39c): the claim and the signed handshake attached to it. */
+export {
+    AgentAtomMismatchError,
+    MissingAgentAtomError,
+    prepareEndpointBinding,
+    type EndpointBindingPlan,
+} from "./endpoint-binding-plan.js";

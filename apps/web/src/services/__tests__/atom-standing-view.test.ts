@@ -143,9 +143,9 @@ describe("names", () => {
 });
 
 describe("describePointers", () => {
-    it("counts claims and predicates, and says so in the singular", () => {
+    it("counts declarations and kinds, and says so in the singular", () => {
         expect(describePointers(buildAtomView(standing(), "TRUST"))).toBe(
-            "1 claim across one predicate",
+            "1 declaration across one kind",
         );
     });
 
@@ -271,5 +271,14 @@ describe("the way out to the code", () => {
 
     it("has no link for an atom that is not a repository", () => {
         expect(buildAtomView(standing({label: "AI"}), "TRUST").browseUrl).toBeNull();
+    });
+});
+
+describe("buildAtomView url", () => {
+    it("keeps an http(s) url and drops any other scheme, which anyone who pays can write", () => {
+        expect(buildAtomView(standing({url: "https://example.org"}), "TRUST").url).toBe(
+            "https://example.org",
+        );
+        expect(buildAtomView(standing({url: "javascript:alert(1)"}), "TRUST").url).toBeNull();
     });
 });

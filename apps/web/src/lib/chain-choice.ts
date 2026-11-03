@@ -1,7 +1,8 @@
 import {createContext, useContext} from "react";
-import {createPublicClient, http, type Address, type Chain, type PublicClient} from "viem";
+import type {Address, Chain, PublicClient} from "viem";
 
 import {intuitionTestnet} from "./chains";
+import {publicClientFor} from "./clients";
 import {deployments} from "./deployments";
 import {
     INTUITION_MAINNET_EXPLORER,
@@ -21,10 +22,9 @@ import {
  *
  * ## What it does and does not switch
  *
- * **Reads and writes, for anything on Intuition's MultiVault** — ADR `0061`. This said "reads only"
- * for one day, and that was untenable: a page showing `tTRUST` above a button depositing `TRUST` is
- * worse than the bug it replaced, and a toggle that moves half the loop cannot rehearse the loop,
- * which is the only reason it exists.
+ * **Reads and writes, for anything on Intuition's MultiVault** — ADR `0061`. A toggle that moved
+ * only the reads would show `tTRUST` above a button depositing `TRUST`, and could not rehearse the
+ * loop, which is the only reason it exists.
  *
  * The chain does **not** reach this app through the toggle at signing time. It travels **on the
  * quote or the plan** — `StakeQuote`, `RedeemQuote`, `ImportLinkPlan`, `ToolRegistration` each carry
@@ -68,55 +68,60 @@ export type ChainChoice = {
     /** The native token's symbol — TRUST on 1155, tTRUST on 13579. Shown beside every amount. */
     symbol: string;
     isMainnet: boolean;
-    /** A read-only client for this chain, memoised so hooks do not build one per render. */
+    /** A read-only client for this chain, shared by every caller on it. */
     client: PublicClient;
 };
 
 const MAINNET_GRAPHQL = "https://mainnet.intuition.sh/v1/graphql";
 const TESTNET_GRAPHQL = "https://testnet.intuition.sh/v1/graphql";
 
+const MAINNET_CHOICE: ChainChoice = {
+    chain: intuitionMainnet,
+    chainId: intuitionMainnet.id,
+    graphqlUrl: MAINNET_GRAPHQL,
+    multiVault: INTUITION_MAINNET_MULTIVAULT,
+    explorerUrl: INTUITION_MAINNET_EXPLORER,
+    label: "Mainnet",
+    symbol: "TRUST",
+    isMainnet: true,
+    client: publicClientFor(intuitionMainnet),
+};
+
+const TESTNET_CHOICE: ChainChoice = {
+    chain: intuitionTestnet,
+    chainId: intuitionTestnet.id,
+    graphqlUrl: TESTNET_GRAPHQL,
+    multiVault: deployments.intuition.multiVault,
+    explorerUrl: deployments.chain.explorerUrl,
+    label: "Testnet",
+    symbol: "tTRUST",
+    isMainnet: false,
+    client: publicClientFor(intuitionTestnet),
+};
+
+/** One object per chain for the life of the page, so its client and its identity are stable. */
 export function choiceFor(isMainnet: boolean): ChainChoice {
-    return isMainnet
-        ? {
-              chain: intuitionMainnet,
-              chainId: intuitionMainnet.id,
-              graphqlUrl: MAINNET_GRAPHQL,
-              multiVault: INTUITION_MAINNET_MULTIVAULT,
-              explorerUrl: INTUITION_MAINNET_EXPLORER,
-              label: "Mainnet",
-              symbol: "TRUST",
-              isMainnet: true,
-              client: createPublicClient({chain: intuitionMainnet, transport: http()}),
-          }
-        : {
-              chain: intuitionTestnet,
-              chainId: intuitionTestnet.id,
-              graphqlUrl: TESTNET_GRAPHQL,
-              multiVault: deployments.intuition.multiVault,
-              explorerUrl: deployments.chain.explorerUrl,
-              label: "Testnet",
-              symbol: "tTRUST",
-              isMainnet: false,
-              client: createPublicClient({chain: intuitionTestnet, transport: http()}),
-          };
+    return isMainnet ? MAINNET_CHOICE : TESTNET_CHOICE;
 }
 
 export const CHAIN_STORAGE_KEY = "arp.chain.v1";
 
 /**
- * Mainnet by default.
+ * **Testnet by default** (ADR `0105`, the user's call on 2026-11-02). Mainnet stays one click away
+ * and is remembered once chosen.
  *
- * The cohort is there — 30,913 identities against 768 on testnet, measured 2026-10-27 — so a first
- * visit should land on the populated chain. A reader who wants to watch ARP's own loop switches,
- * which is the deliberate act the module note is about.
+ * It was mainnet by default because the cohort is there — 30,913 identities against 768 on testnet,
+ * measured 2026-10-27. But a first visit then landed on an empty `/tools` and an empty `/activity`,
+ * since ARP's own loop runs on 13579 only, and every demo is on 13579 until Intuition validates ARP.
+ * The agent index is the page that pays for it: smaller on testnet, never empty.
  */
 export function readStored(): boolean {
-    if (typeof localStorage === "undefined") return true;
+    if (typeof localStorage === "undefined") return false;
     try {
-        return localStorage.getItem(CHAIN_STORAGE_KEY) !== "testnet";
+        return localStorage.getItem(CHAIN_STORAGE_KEY) === "mainnet";
     } catch {
         // Private windows and blocked site data throw on access. Default rather than crash.
-        return true;
+        return false;
     }
 }
 

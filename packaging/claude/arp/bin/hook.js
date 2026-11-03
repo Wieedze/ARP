@@ -27,11 +27,11 @@ function normaliseToolUrl(input) {
   }
   if (url.hostname.length === 0)
     throw new InvalidToolUrlError(input, "no host");
-  const host = url.hostname.replace(/^www\./, "");
-  const path = url.pathname === "/" ? "" : url.pathname.replace(/\/+$/, "");
+  const host = url.hostname.replace(/\.+$/, "").replace(/^(?:www\.)+/, "");
+  const path = url.pathname.replace(/(?:\.git|\/)+$/, "");
   const params = [...new URLSearchParams(url.search).entries()].sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0);
   const query = params.length === 0 ? "" : `?${new URLSearchParams(params).toString()}`;
-  const port = url.port === "" || url.port === "80" ? "" : `:${url.port}`;
+  const port = url.port === "" || url.port === "80" || url.port === "443" ? "" : `:${url.port}`;
   return `https://${host}${port}${path}${query}`;
 }
 // ../../packages/protocol/dist/session.js

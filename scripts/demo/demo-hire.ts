@@ -6,7 +6,7 @@
  *      # terminal 2 — the hirer
  *      ARP_TARGET=testnet bun run scripts/demo/demo-hire.ts \
  *        --hirer 13579/3 --hired 13579/2 --registry 0xC165A2AD… --node http://localhost:3100 \
- *        --pay 0.001 --stake 0.001 [--execute]
+ *        --pay 0.001 --stake 0.001 [--max-pay <wei>] [--verifier 0x… --term 0x…] [--execute]
  *
  *  **Why the rating needs no new mechanism.** In ERC-8004 plus MCP a tool *is* an agent
  *  (`docs/14`), so "I used this agent" is the same claim as "I used this tool": the canonical `uses`
@@ -27,12 +27,27 @@
  *  A star has none of the four. `docs/14:159`'s top rung is "payment, on-chain call, or delegation
  *  redemption"; this walk produces the first, and then prices a claim anchored to it.
  *
+ *  **The receipt is v2** (task 44): it names one verifier and one term. This walk deposits the
+ *  hirer's own TRUST, so it presents the receipt to no verifier, and by default asks for one naming
+ *  the hirer's own runtime address and a zero term — a receipt that unlocks no sponsorship
+ *  anywhere. Pass `--verifier` (a `ReceiptEnforcer` address, or the sponsoring service's
+ *  `receiptVerifier`) and `--term` to get one that does.
+ *
  *  Dry by default. `--execute` signs with `PRIVATE_KEY` — the hirer's runtime wallet — read from the
- *  environment and never printed (ADR `0037`).
+ *  environment and never printed (ADR `0037`). Testnet 13579 only, checked against the RPC's own
+ *  chain id. The node names its price and its payee, so the payment is capped by `--max-pay <wei>`
+ *  (default `DEFAULT_MAX_PAY_WEI`, 0.01 TRUST) and refused if the node asks more.
  */
 import { readFileSync } from 'node:fs';
 
-import { createPublicClient, createWalletClient, formatEther, http, parseEther } from 'viem';
+import {
+  createPublicClient,
+  createWalletClient,
+  formatEther,
+  http,
+  isAddress,
+  parseEther,
+} from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
 import type { Address, Hex } from 'viem';
 
@@ -50,10 +65,12 @@ import {
   type SignedHireReceipt,
 } from '../../packages/protocol/src/hire-receipt.js';
 import { getToolUsage } from '../../packages/protocol/src/tool-usage.js';
+import { checkHirePayment, DEFAULT_MAX_PAY_WEI } from '../helpers/hire-payment.js';
 import { canonicalAgentThing, thingUri } from '../helpers/intuition-pin.js';
 import { sendPlan, type SerialisedCall } from '../helpers/send-plan.js';
 
-const TARGETS = { mainnet: 1155, testnet: 13579 } as const;
+// A raw key signs on testnet only (ADR `0037`), so `ARP_TARGET=mainnet` is not a target here.
+const TARGETS = { testnet: 13579 } as const;
 const arg = (name: string) => {
   const i = process.argv.indexOf(`--${name}`);
   return i === -1 ? undefined : process.argv[i + 1];
@@ -67,7 +84,8 @@ const nodeUrl = arg('node');
 if (chainId === undefined || !hirerRef || !hiredRef || !nodeUrl) {
   console.error(
     'usage: --hirer <chainId>/<tokenId> --hired <chainId>/<tokenId> --node <url>\n' +
-      '       [--registry <0x…>] [--pay <TRUST>] [--stake <TRUST>] [--execute]',
+      '       [--registry <0x…>] [--pay <TRUST>] [--max-pay <wei>] [--stake <TRUST>] [--execute]\n' +
+      '  ARP_TARGET is testnet (the only target: a raw key signs on 13579 only).',
   );
   process.exit(1);
 }
@@ -97,6 +115,20 @@ if (!rawKey) {
 }
 const hirerAccount = privateKeyToAccount((rawKey.startsWith('0x') ? rawKey : `0x${rawKey}`) as Hex);
 const publicClient = createPublicClient({ transport: http(rpcUrl) });
+// Both casts are checked by the isAddress / regex guard below, which exits on failure.
+const verifier = (arg('verifier') ?? hirerAccount.address) as Address;
+const termId = (arg('term') ?? `0x${'0'.repeat(64)}`) as Hex;
+if (!isAddress(verifier) || !/^0x[0-9a-fA-F]{64}$/.test(termId)) {
+  console.error('--verifier must be an address and --term a 32-byte hex term id');
+  process.exit(1);
+}
+const maxPayArg = arg('max-pay');
+if (maxPayArg !== undefined && !/^\d+$/.test(maxPayArg)) {
+  console.error('--max-pay is a whole number of wei');
+  process.exit(1);
+}
+const maxPay = maxPayArg === undefined ? DEFAULT_MAX_PAY_WEI : BigInt(maxPayArg);
+const rpcChainId = await publicClient.getChainId();
 
 const step = (n: number, title: string) => console.log(`\n${'─'.repeat(72)}\n${n}. ${title}\n`);
 
@@ -104,6 +136,7 @@ console.log(`chain   ${chainId}`);
 console.log(`hirer   agent ${hirerToken}, runtime ${hirerAccount.address}`);
 console.log(`hired   agent ${hiredToken}, node ${nodeUrl}`);
 console.log(`mode    ${execute ? 'EXECUTE — this spends' : 'dry run'}`);
+console.log(`max pay ${formatEther(maxPay)}`);
 
 // ── 1 ────────────────────────────────────────────────────────────────────────
 step(1, 'Who is listening, and what do they charge?');
@@ -114,7 +147,7 @@ const health = (await (
   agent?: Address;
   minBudgetWei?: string;
 };
-if (health.ok !== true || !health.agent) {
+if (health.ok !== true || !health.agent || !isAddress(health.agent)) {
   console.error('  the node did not answer /healthz with an agent address.');
   process.exit(3);
 }
@@ -125,10 +158,9 @@ console.log(`  minimum       ${formatEther(minBudget)}`);
 // ── 2 ────────────────────────────────────────────────────────────────────────
 step(2, 'Pay it — because an unpaid request is worth what a star is worth');
 const payAmount = parseEther(arg('pay') ?? formatEther(minBudget));
-if (payAmount < minBudget) {
-  console.error(
-    `  ${formatEther(payAmount)} is below the agent's minimum ${formatEther(minBudget)}.`,
-  );
+const payment = checkHirePayment({ chainId, rpcChainId, minBudget, payAmount, maxPay });
+if (!payment.ok) {
+  console.error(`  REFUSED — ${payment.reason}.`);
   process.exit(3);
 }
 let paymentTxHash: Hex | undefined;
@@ -151,7 +183,13 @@ if (paymentTxHash === undefined) {
   const response = await fetch(`${nodeUrl}/task`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ paymentTxHash, requesterAddress: hirerAccount.address, payload }),
+    body: JSON.stringify({
+      paymentTxHash,
+      requesterAddress: hirerAccount.address,
+      verifier,
+      termId,
+      payload,
+    }),
     signal: AbortSignal.timeout(60_000),
   });
   const body = (await response.json()) as {
@@ -170,6 +208,9 @@ if (paymentTxHash === undefined) {
     verdict.status !== 'valid' && `signature ${verdict.status}`,
     signed.agent.toLowerCase() !== health.agent.toLowerCase() && 'signed by another agent',
     signed.chainId !== chainId && `receipt is for chain ${signed.chainId}`,
+    signed.verifyingContract.toLowerCase() !== verifier.toLowerCase() &&
+      `receipt is for verifier ${signed.verifyingContract}`,
+    signed.receipt.termId.toLowerCase() !== termId.toLowerCase() && 'names another term',
     signed.receipt.payment.toLowerCase() !== paymentTxHash.toLowerCase() && 'names another payment',
     signed.receipt.requester.toLowerCase() !== hirerAccount.address.toLowerCase() &&
       'names another requester',
