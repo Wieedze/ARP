@@ -494,15 +494,19 @@ loads one module you name; and it writes two files — the node key on first sta
 below:
 
 ```
-grep -nE "createPublicClient\(|writeFile|appendFile|mkdir|import\(|async fetch\(|spawnChild\(" apps/node/src/node.ts apps/node/src/task.ts apps/node/src/node-key.ts apps/node/src/tunnel.ts
+grep -nE "createPublicClient\(|writeFile|appendFile|mkdir|import\(|async fetch\(|spawnChild\(" apps/node/src/node.ts apps/node/src/task.ts apps/node/src/node-key.ts apps/node/src/tunnel.ts packages/protocol/src/node/local-state.ts
 ```
 
-prints ten lines on 2026-11-02 (ten on 2026-10-30 too, at other line numbers): the ledger's
-`node:fs` import, `mkdirSync` and `appendFileSync` (`task.ts:6`, `:85`, `:86`), the server's own
-inbound `fetch(request)` handler (`task.ts:261`), your handler's import (`node.ts:126`), the RPC
-client (`node.ts:134`), the node key's `node:fs` import, `mkdirSync` and `writeFileSync`
-(`node-key.ts:19`, `:64`, `:66`), and the tunnel's child process (`tunnel.ts:186`). `register.ts` is not in it: it runs only under `arp init --node`, never in the
-node.
+prints twelve lines on 2026-11-03. Since ADR `0116` the node's two writes go through
+`@arp-protocol/core/node` (`packages/protocol/src/node/local-state.ts`), so that file is in the
+command: its `node:fs` imports of `appendFileSync`, `mkdirSync` and `writeFileSync` (`:12`, `:16`,
+`:21`), the key file's `mkdirSync` and `writeFileSync` (`:129`, `:130`), the ledger line's
+`mkdirSync` and `appendFileSync` (`:138`, `:139`), and a lock file's `mkdirSync` (`:177`), which the
+sponsoring service uses and the node does not. In the node itself: the server's own inbound
+`fetch(request)` handler (`task.ts:251`), your handler's import (`node.ts:142`), the RPC client
+(`node.ts:150`), and the tunnel's child process (`tunnel.ts:196`). `register.ts` is not in it: it
+runs only under `arp init --node`, never in the node. It printed ten lines on 2026-11-02, before
+the writes moved.
 
 **It binds `127.0.0.1`**, like the MCP server: `serveFetch` in `main()` in `apps/node/src/node.ts`
 passes `hostname: '127.0.0.1'`. Until 2026-10-30 it passed none and listened on every interface,
