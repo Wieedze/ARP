@@ -9,6 +9,7 @@ import {
     consentStatus,
     proofStatus,
     provenPhase,
+    signedConsent,
     withError,
     writeError,
     writePlan,
@@ -86,7 +87,7 @@ export function AgentImport() {
 
     const proven: ProvenAgent | null = phase.step === "proven" ? phase.proven : null;
     const consent = phase.step === "proven" ? phase.consent : null;
-    const signed = consent?.stage === "signed" ? consent.signed : null;
+    const signed = consent === null ? null : signedConsent(consent);
     const link = phase.step === "proven" ? phase.link : null;
     const plan = link === null ? null : writePlan(link);
     const txs = link === null ? null : writeResult(link);
@@ -180,7 +181,10 @@ export function AgentImport() {
 
     async function handleSignConsent() {
         if (proven === null) return;
-        updateProven(proven, (current) => ({...current, consent: {stage: "signing"}}));
+        updateProven(proven, (current) => ({
+            ...current,
+            consent: {stage: "signing", previous: signedConsent(current.consent)},
+        }));
         try {
             const next = buildImportConsent({
                 caip19: proven.caip19,
@@ -195,7 +199,11 @@ export function AgentImport() {
         } catch (error) {
             updateProven(proven, (current) => ({
                 ...current,
-                consent: {stage: "unsigned", error: errorMessage(error)},
+                consent: {
+                    stage: "unsigned",
+                    error: errorMessage(error),
+                    previous: signedConsent(current.consent),
+                },
             }));
         }
     }
@@ -506,7 +514,7 @@ export function AgentImport() {
                                 <button
                                     type="button"
                                     onClick={() => void handlePublishLink()}
-                                    disabled={linkStatus === "pending"}
+                                    disabled={linkStatus === "pending" || imported === null}
                                     className={`mt-6 ${controlClass}`}
                                 >
                                     {linkStatus === "pending"
