@@ -1,7 +1,7 @@
 {
   "name": "arp",
   "version": "0.0.1",
-  "description": "Find the skill or MCP server that fits a task, and see which ones other agents actually used. The hook records each MCP call on your machine; declaring a use is optional.",
+  "description": "Find the skill or MCP server that fits a task, and see which ones other agents actually used. Declaring a use is optional.",
   "mcpServers": {
     "arp": {
       "command": "npx",
