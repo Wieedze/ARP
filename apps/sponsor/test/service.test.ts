@@ -11,6 +11,8 @@ import {
   signSponsorRequest,
   sponsorProofDigest,
   sponsorRequestTypedData,
+  planToolListing,
+  signListToolRequest,
   thingUri,
   type MultiVaultReads,
   type PreparedCall,
@@ -70,6 +72,8 @@ const LIMITS: SponsorLimits = {
   approvalGas: MILLI / 10n,
   mintGas: MILLI / 10n,
   newAgentsPerDay: 2,
+  listingsPerAddressPerDay: 2,
+  anonymousListingsPerDay: 2,
   dailyBudget: 10n ** 18n,
   depositsPerAgentPerDay: 2,
   publicationsPerDelegatorPerDay: 2,
@@ -1527,5 +1531,172 @@ describe('a request that fails inside a route', () => {
     expect(text).not.toContain('rpc.example');
     expect(lines.join('\n')).toContain('https://rpc.example/…');
     expect(lines.join('\n')).not.toContain('SECRETKEY');
+  });
+});
+
+describe('POST /list-tool', () => {
+  const TOOL = 'https://example.com/mcp';
+  const SKILL = 'https://github.com/a/b?skill=c';
+  const pinned: string[] = [];
+  const listing = (w: World, over: Partial<Parameters<typeof createSponsor>[0]> = {}) =>
+    sponsor(w, {
+      pinThing: async (thing) => {
+        pinned.push(thing.url);
+        return thingUri(thing);
+      },
+      resolveTool: async () => ({ ok: true }),
+      listToolOrigins: ['http://localhost:5173'],
+      ...over,
+    });
+  const signedFor = async (url: string, signer = AGENT) =>
+    signListToolRequest(
+      {
+        address: signer.address,
+        url,
+        nonce: keccak256(stringToBytes(Math.random().toString())),
+        expiresAt: Math.floor(NOW / 1000) + 600,
+      },
+      CHAIN,
+      { signTypedData: (data) => signer.signTypedData(data) },
+    );
+
+  afterEach(() => {
+    pinned.length = 0;
+  });
+
+  test('lists a tool URL unsigned: pins its Thing, creates its atom on the MultiVault', async () => {
+    const w = world();
+    const res = await call(listing(w), '/list-tool', { url: TOOL });
+    expect(res.status).toBe(200);
+    expect(res.body.created).toBe(true);
+    expect(w.sent.map((c) => c.kind)).toEqual(['create-atom']);
+    expect(w.sent[0]!.to).toBe(MULTIVAULT);
+    expect(w.sent[0]!.value).toBe(2n * MILLI);
+    expect(pinned).toEqual([TOOL]);
+    expect(res.body.repositoryAtomId).toBeUndefined();
+  });
+
+  test('lists a skill with its repository and the source triple', async () => {
+    const w = world();
+    const res = await call(listing(w), '/list-tool', { url: SKILL });
+    expect(res.status).toBe(200);
+    expect(w.sent.map((c) => c.kind)).toEqual(['create-atom', 'create-triple']);
+    expect(w.sent[0]!.value).toBe(4n * MILLI);
+    expect(pinned).toEqual([SKILL, 'https://github.com/a/b']);
+    expect(res.body.repositoryAtomId).toBeDefined();
+    expect(res.body.sourceTriple).toBeDefined();
+  });
+
+  test('answers created: false, and checks nothing, when the tool is already listed', async () => {
+    const w = world();
+    const plan = await planToolListing({ url: TOOL, reads: fakeReads(w) });
+    w.terms.add(plan.atomId.toLowerCase());
+    let checked = false;
+    const res = await call(
+      listing(w, {
+        resolveTool: async () => {
+          checked = true;
+          return { ok: true };
+        },
+      }),
+      '/list-tool',
+      { url: TOOL },
+    );
+    expect(res.status).toBe(200);
+    expect(res.body.created).toBe(false);
+    expect(res.body.transactions).toEqual([]);
+    expect(checked).toBe(false);
+    expect(w.sent).toHaveLength(0);
+  });
+
+  test('stops unsigned listings at the anonymous cap; a signed one uses its own limit', async () => {
+    const w = world();
+    const service = listing(w);
+    for (const n of ['1', '2']) {
+      expect((await call(service, '/list-tool', { url: `${TOOL}${n}` })).status).toBe(200);
+    }
+    const third = await call(service, '/list-tool', { url: `${TOOL}3` });
+    expect(third.status).toBe(429);
+    expect(third.body.rule).toBe('limit');
+    const signed = await call(service, '/list-tool', {
+      url: `${TOOL}3`,
+      request: await signedFor(`${TOOL}3`),
+    });
+    expect(signed.status).toBe(200);
+    expect(w.sent).toHaveLength(3);
+  });
+
+  test('refuses a signature over another URL, and a signed request used twice', async () => {
+    const w = world();
+    const service = listing(w);
+    const other = await call(service, '/list-tool', { url: TOOL, request: await signedFor(SKILL) });
+    expect(other.status).toBe(400);
+    expect(other.body.rule).toBe('signature');
+    const request = await signedFor(TOOL);
+    expect((await call(service, '/list-tool', { url: TOOL, request })).status).toBe(200);
+    const again = await call(service, '/list-tool', { url: TOOL, request });
+    expect(again.status).toBe(409);
+    expect(w.sent).toHaveLength(1);
+  });
+
+  test('refuses a URL that does not exist, or is not a tool, before pinning or sending', async () => {
+    const w = world();
+    const missing = await call(
+      listing(w, { resolveTool: async () => ({ ok: false, reason: 'no such repository' }) }),
+      '/list-tool',
+      { url: SKILL },
+    );
+    expect(missing.status).toBe(422);
+    expect(missing.body.rule).toBe('resolves');
+    const notTool = await call(listing(w), '/list-tool', { url: 'not a url' });
+    expect(notTool.status).toBe(400);
+    expect(notTool.body.rule).toBe('url');
+    expect(pinned).toHaveLength(0);
+    expect(w.sent).toHaveLength(0);
+  });
+
+  test('answers 503 when the URL cannot be checked, and when listing is not configured', async () => {
+    const w = world();
+    const down = await call(
+      listing(w, {
+        resolveTool: async () => {
+          throw new Error('GitHub answered HTTP 403');
+        },
+      }),
+      '/list-tool',
+      { url: SKILL },
+    );
+    expect(down.status).toBe(503);
+    expect(down.body.retry).toBe(true);
+    const off = await call(sponsor(w), '/list-tool', { url: TOOL });
+    expect(off.status).toBe(503);
+    expect(w.sent).toHaveLength(0);
+  });
+
+  test('answers the web app from its origin on this route alone', async () => {
+    const w = world();
+    const service = listing(w);
+    const preflight = await service.fetch(
+      new Request('http://sponsor/list-tool', {
+        method: 'OPTIONS',
+        headers: { host: 'sponsor', origin: 'http://localhost:5173' },
+      }),
+    );
+    expect(preflight.status).toBe(204);
+    expect(preflight.headers.get('access-control-allow-origin')).toBe('http://localhost:5173');
+    const posted = await service.fetch(
+      post('/list-tool', { url: TOOL }, { origin: 'http://localhost:5173' }),
+    );
+    expect(posted.status).toBe(200);
+    expect(posted.headers.get('access-control-allow-origin')).toBe('http://localhost:5173');
+    const elsewhere = await service.fetch(
+      post('/list-tool', { url: TOOL }, { origin: 'https://evil.example' }),
+    );
+    expect(elsewhere.status).toBe(403);
+    const gas = await service.fetch(
+      post('/gas', { agentRegistry: REGISTRY, agentId: '7' }, { origin: 'http://localhost:5173' }),
+    );
+    expect(gas.status).toBe(403);
+    expect(w.gas).toHaveLength(0);
   });
 });

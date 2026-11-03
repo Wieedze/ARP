@@ -19,6 +19,8 @@ export function info(ctx: SponsorContext): Record<string, unknown> {
       approvalGasWei: limits.approvalGas,
       mintGasWei: limits.mintGas ?? 'off',
       newAgentsPerDay: limits.newAgentsPerDay,
+      listingsPerAddressPerDay: limits.listingsPerAddressPerDay,
+      anonymousListingsPerDay: limits.anonymousListingsPerDay,
       withdrawalThresholdBps: limits.withdrawalThresholdBps ?? 'unset',
       belowProofCost: limits.belowProofCost,
       spentTodayWei: spentOnDay(ledger.relevant(now()), now()),
@@ -37,6 +39,10 @@ export function info(ctx: SponsorContext): Record<string, unknown> {
     approve: planDepositApproval({ multiVault, chainId, sponsor: wallet.address }),
     publish: options.publish === null ? 'disabled' : 'enabled',
     identity: (options.pinThing ?? null) === null ? 'disabled' : 'enabled',
+    listTool:
+      (options.pinThing ?? null) === null || (options.resolveTool ?? null) === null
+        ? 'disabled'
+        : 'enabled',
     note: 'Testnet 13579 only. Every deposit is made with the agent as receiver; the shares are the agent’s.',
   };
 }
