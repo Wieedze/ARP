@@ -1,6 +1,6 @@
 import {describe, expect, it} from "vitest";
 
-import {parseSkillMd, rawSkillUrl, splitFirstSentence} from "../skill-md";
+import {fetchSkillMd, parseSkillMd, rawSkillUrl, splitFirstSentence} from "../skill-md";
 
 /** `remotion-dev/skills`' `remotion-render`, as read on 2026-10-29, cut to its shape. */
 const REMOTION = `---
@@ -75,5 +75,35 @@ describe("splitFirstSentence", () => {
             rest: null,
         });
         expect(splitFirstSentence("Works offline (e.g. on a plane) too.").rest).toBeNull();
+    });
+});
+
+describe("fetchSkillMd", () => {
+    const URL = "https://raw.githubusercontent.com/o/r/HEAD/SKILL.md";
+    const respond = (body: string, init?: ResponseInit) => async () => new Response(body, init);
+
+    it("parses a file under the limit", async () => {
+        const md = await fetchSkillMd(URL, {fetchImpl: respond("---\ndescription: Hi.\n---\n")});
+        expect(md.description).toBe("Hi.");
+    });
+
+    it("refuses a body over the byte limit instead of reading it whole", async () => {
+        await expect(
+            fetchSkillMd(URL, {fetchImpl: respond("x".repeat(2_000)), maxBytes: 1_000}),
+        ).rejects.toThrow(/limit/);
+    });
+
+    it("refuses a non-2xx answer", async () => {
+        await expect(fetchSkillMd(URL, {fetchImpl: respond("", {status: 404})})).rejects.toThrow(
+            /404/,
+        );
+    });
+
+    it("gives up when the host does not answer in time", async () => {
+        const hang: typeof fetch = (_input, init) =>
+            new Promise((_resolve, reject) => {
+                init?.signal?.addEventListener("abort", () => reject(init.signal?.reason));
+            });
+        await expect(fetchSkillMd(URL, {fetchImpl: hang, timeoutMs: 10})).rejects.toThrow();
     });
 });
