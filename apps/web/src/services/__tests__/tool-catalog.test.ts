@@ -72,8 +72,9 @@ describe("buildToolCatalogView", () => {
     });
 
     it("carries proven and declared deposits through as two figures, never one", () => {
-        // ADR 0094 §2: a deposit the sponsoring service sent passed the proof gate, every other one
-        // did not. Two figures side by side, and no sum or weighting of them (ADR 0046).
+        // ADR 0094 §2: a deposit sent from the sponsoring address counts as proven, every other one
+        // as declared (`provenDeposits` holds what proven covers). Two figures side by side, and no
+        // sum or weighting of them (ADR 0046).
         const view = buildToolCatalogView(
             page([tool({edgeCount: 3, provenDeposits: 2, declaredDeposits: 5})]),
         );

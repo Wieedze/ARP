@@ -207,12 +207,12 @@ function Headers({curveId}: {curveId: number}) {
             aria-hidden
             className={`${ROW_GRID} hidden sm:grid pb-2 border-b border-[color:var(--color-rule-strong)] font-mono uppercase tracking-wider text-[length:var(--text-label)] text-[color:var(--color-steel)]`}
         >
-            {/* **"Usage" only for what passed the proof gate.** The user rejected "Most used" for
-                unproven edges (2026-10-27): whether a use happened is unknowable from outside
-                (`docs/14`). A sponsored deposit carries a proof that it did — a payment another
-                party made, or a fetch through ARP (ADR `0094` §2) — so the word is true of that
-                column and of nothing else here. Not of every deposit in it: the sponsor's address
-                is also the deployer's, and its edge creations count too
+            {/* **"Usage" is the sponsor's deposits.** The user rejected "Most used" for unproven
+                edges (2026-10-27): whether a use happened is unknowable from outside (`docs/14`).
+                A proof-gated deposit carries a proof that it did — a payment another party made,
+                or a fetch through ARP (ADR `0094` §2) — which is why the word was allowed on this
+                column. Not every deposit in it passed the gate: the sponsor's address is also the
+                deployer's, and its edge creations count too
                 (`scripts/measure/sponsor-deposit-provenance.ts`). */}
             <span>Tool</span>
             <span className="text-right">Usage</span>

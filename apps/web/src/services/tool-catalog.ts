@@ -420,10 +420,10 @@ export type ToolSortAxis = "declared" | "installs" | "stars";
  * Two axes per index, and only ones that mean something there (user, 2026-10-30).
  *
  * "Most staked" and "Most claims" were two orders of the same thing, and read as noise. **Declared**
- * is the one ARP measures: the Declared column, deposits on the tool's `uses` edges that did not
- * pass the proof gate (task 42), so the order reads down the figure it is named for. Not "used": the user
- * asked for that word and, reminded of 2026-10-27, chose "declared" — a declaration is a signed
- * sentence, not an observed use (`docs/14`). Stake behind those edges
+ * is the one ARP measures: the Declared column, deposits on the tool's `uses` edges not sent from
+ * the sponsoring address (task 42), so the order reads down the figure it is named for. Not "used":
+ * the user asked for that word and, reminded of 2026-10-27, chose "declared" — a declaration is a
+ * signed sentence, not an observed use (`docs/14`). Stake behind those edges
  * is the tiebreak and stays on the row, not a separate order. The second axis is somebody else's
  * figure: skills.sh's installs for a skill, GitHub's stars for a repository. A skill's stars would
  * be its repository's, tied across every skill in it, so skills do not get that axis.
@@ -521,9 +521,9 @@ export function rankTools(
             return (b.installs ?? -1) - (a.installs ?? -1);
         if (axis === "stars" && a.stars !== b.stars) return (b.stars ?? -1) - (a.stars ?? -1);
         // **The order reads down the column it is named for.** "Most declared" sorts on the
-        // Declared figure, deposits that did not pass the proof gate, and not on the edge count:
-        // two edges with three deposits each print 6 and rank above three edges with one each,
-        // which print 3. It sorted on `declarations` until review found the Declared column not
+        // Declared figure, deposits not sent from the sponsoring address, and not on the edge
+        // count: two edges with three deposits each print 6 and rank above three edges with one
+        // each, which print 3. It sorted on `declarations` until review found the Declared column not
         // reading down in order under its own sort. `null` (unknown) ranks below a known zero.
         const leftDeclared = left.declaredDeposits ?? -1;
         const rightDeclared = right.declaredDeposits ?? -1;
