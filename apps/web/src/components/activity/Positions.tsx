@@ -9,6 +9,7 @@ import type {ProfileView} from "../../services/account-profile";
 import {formatTrust} from "../../services/trust-format";
 import {Sparkline} from "../Sparkline";
 import {CurveControl} from "../tool/ToolCatalogControls";
+import {ConnectPrompt} from "../onboarding/ConnectPrompt";
 
 /**
  * The connected wallet's positions, on `/activity`. They were `/profile` ("Your positions"), which
@@ -24,7 +25,8 @@ import {CurveControl} from "../tool/ToolCatalogControls";
  * The figure that leads is **net**, deposited minus redeemed, because that is what you are still
  * standing behind. Leading with "deposited" would flatter anyone who has since withdrawn.
  */
-const LABEL = "font-mono text-[length:var(--text-label)] uppercase tracking-[0.06em] text-[color:var(--color-steel)]";
+const LABEL =
+    "font-mono text-[length:var(--text-label)] uppercase tracking-[0.06em] text-[color:var(--color-steel)]";
 
 export function Positions() {
     const {address, isConnected} = useAccount();
@@ -40,9 +42,10 @@ export function Positions() {
                 {isConnected ? <CurveControl curveId={curveId} onChange={setCurveId} /> : null}
             </div>
             {!isConnected ? (
-                <p className="border-t border-[color:var(--color-rule)] py-3 font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
-                    Connect a wallet to see what it holds.
-                </p>
+                <ConnectPrompt
+                    label="Connect a wallet to see what it holds"
+                    className="border-t border-[color:var(--color-rule)] py-3"
+                />
             ) : query.isPending ? (
                 <p aria-live="polite" aria-busy className="text-[color:var(--color-steel)]">
                     Reading your support…

@@ -1,7 +1,8 @@
 import {describe, expect, it, vi, beforeEach} from "vitest";
-import {act, screen, waitFor} from "@testing-library/react";
+import {act, fireEvent, screen, waitFor} from "@testing-library/react";
 import type {RecentDeclaration} from "@arp-protocol/core";
 
+import {OnboardingContext} from "../components/onboarding/onboarding-context";
 import {renderWithProviders} from "../test/render";
 import {Landing} from "./Landing";
 
@@ -91,23 +92,19 @@ describe("Landing", () => {
         });
     });
 
-    it("offers three ways in, each opening its own path, and no wallet on any of them", async () => {
-        renderWithProviders(<Landing />);
+    it("opens the onboarding from the first screen, and keeps the index one link away", async () => {
+        const open = vi.fn();
+        renderWithProviders(
+            <OnboardingContext.Provider value={{open}}>
+                <Landing />
+            </OnboardingContext.Provider>,
+        );
 
-        // Task 53: scene 4 asks who arrives. The four jobs it replaced said "Needs wallet" three
-        // times, which is what a Claude user must not meet first (task 45).
-        const ways = [
-            ["I use Claude", "/start/claude"],
-            ["I'm building an agent", "/start/agent"],
-            ["I published a tool or a skill", "/start/tool"],
-        ] as const;
-        for (const [title, href] of ways) {
-            // By text, not by role: the deck keeps the scenes off screen out of the accessibility
-            // tree, and this one is off screen at render.
-            const heading = await screen.findByText(title);
-            expect(heading.closest("a")?.getAttribute("href")).toBe(href);
-        }
-        expect(screen.queryByText(/wallet/i)).toBeNull();
+        // Task 53: the onboarding is behind Get started on the hero, which is scene 0 and in the
+        // accessibility tree, so it is found by role.
+        fireEvent.click(await screen.findByRole("button", {name: "Get started"}));
+        expect(open).toHaveBeenCalledTimes(1);
+        expect(screen.getByRole("link", {name: /Open the agent index/})).toBeTruthy();
     });
 
     it("gives every in-page anchor a target on the page", async () => {
@@ -245,15 +242,16 @@ describe("Landing", () => {
         }
     });
 
-    it("puts one scene on screen and takes the other five out of the tree", async () => {
+    it("puts one scene on screen and takes the other four out of the tree", async () => {
         const {container} = renderWithProviders(<Landing />);
         await waitFor(() => expect(cost).toHaveBeenCalled());
 
-        // Pinned, all six scenes are mounted and inside the viewport the whole time, just
-        // transparent. Without `inert` + `aria-hidden` on the five that are not current, six
+        // Pinned, all five scenes are mounted and inside the viewport the whole time, just
+        // transparent. Without `inert` + `aria-hidden` on the four that are not current, five
         // screens of links are in the tab order at once and a reader has no idea where they are.
+        // Five since task 53: the onboarding left scene 4 for the first screen.
         const scenes = [...container.querySelectorAll("[data-scene]")];
-        expect(scenes).toHaveLength(6);
+        expect(scenes).toHaveLength(5);
         const visible = scenes.filter((scene) => scene.getAttribute("aria-hidden") === null);
         expect(visible, "exactly one scene should be in the accessibility tree").toHaveLength(1);
         expect(visible[0]?.getAttribute("data-scene")).toBe("0");

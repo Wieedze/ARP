@@ -125,7 +125,7 @@ describe("the activity page", () => {
         });
         renderWithProviders(<ActivityPage feed={feed} reads={NOTHING} />, {route: YOURS});
         expect(screen.getByRole("heading", {name: "Your support"})).toBeTruthy();
-        expect(screen.getByText("Connect a wallet to see what it holds.")).toBeTruthy();
+        expect(screen.getByRole("button", {name: "Connect a wallet to see what it holds"})).toBeTruthy();
     });
 
     it("lists every agent's declarations and stakes from the indexer, newest first", async () => {

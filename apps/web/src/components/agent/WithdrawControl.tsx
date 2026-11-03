@@ -9,6 +9,7 @@ import {formatTrust} from "../../services/trust-format";
 import {parseShareAmount, type RedeemQuote} from "../../services/trust-stake";
 import {Hint} from "../brand/Hint";
 import {type HeadingTag} from "./StakeControl";
+import {ConnectPrompt} from "../onboarding/ConnectPrompt";
 
 /**
  * The exit: take a position back off an agent or a tool.
@@ -339,9 +340,7 @@ export function WithdrawControl({
                     )}
 
                     {!isConnected ? (
-                        <p className="mt-4 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
-                            Connect a wallet to withdraw.
-                        </p>
+                        <ConnectPrompt label="Connect a wallet to withdraw" className="mt-4" />
                     ) : !onTargetChain ? (
                         <div className="mt-4">
                             <p className="text-[length:var(--text-body-sm)] max-w-[60ch]">

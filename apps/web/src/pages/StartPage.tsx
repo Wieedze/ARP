@@ -5,9 +5,11 @@ import {Install} from "../components/atom/AtomPageParts";
 import {BackLink} from "../components/brand/BackLink";
 import {Hint} from "../components/brand/Hint";
 import {useAgentActivity} from "../hooks/use-agent-activity";
-import {linkClass} from "../lib/control-class";
+import {controlClass, linkClass} from "../lib/control-class";
 import {START_PATHS, isStartProfile, rememberProfile} from "../lib/start-paths";
 import type {AgentFeed} from "../services/agent-feed";
+import {useListTool} from "../hooks/use-list-tool";
+import {listToolMessage} from "../services/list-tool";
 import {stepsFor, type StartStep} from "../services/start-steps";
 
 /**
@@ -73,6 +75,7 @@ function StepRow({step, n}: {step: StartStep; n: number}) {
                     </p>
                 )}
                 {step.id === "find" && <FindTool />}
+                {step.id === "add" && <AddTool />}
                 {step.link !== undefined && (
                     <Link
                         to={step.link.to}
@@ -119,13 +122,84 @@ function FindTool() {
             >
                 Repository URL
             </label>
-            <input
-                id="start-tool-url"
-                value={url}
-                onChange={(event) => setUrl(event.target.value)}
-                placeholder="github.com/owner/repo"
-                className="rounded-[var(--radius-control)] border border-[color:var(--color-rule-strong)] bg-[color:var(--color-bg)] px-3.5 py-2.5 font-mono text-[13px]"
-            />
+            <div className="flex gap-2">
+                <input
+                    id="start-tool-url"
+                    value={url}
+                    onChange={(event) => setUrl(event.target.value)}
+                    placeholder="github.com/owner/repo"
+                    className="min-w-0 flex-1 rounded-[var(--radius-control)] border border-[color:var(--color-rule-strong)] bg-[color:var(--color-bg)] px-3.5 py-2.5 font-mono text-[13px]"
+                />
+                <button type="submit" className={controlClass}>
+                    Find
+                </button>
+            </div>
+        </form>
+    );
+}
+
+/** Path C's last step: ask the sponsor to list the URL, and say what it answered (task 53c). */
+function AddTool() {
+    const [url, setUrl] = useState("");
+    const listing = useListTool();
+    const result = listing.result;
+    // The wallet path stays where the sponsor cannot help: none configured, not running, or a
+    // refusal a retry will not change.
+    const offerWallet =
+        !listing.available ||
+        result?.status === "unavailable" ||
+        (result?.status === "refused" && !result.retry && result.rule !== "pending");
+    const wallet = (
+        <Link to="/register?what=tool" className={linkClass}>
+            Add it with a wallet →
+        </Link>
+    );
+
+    if (!listing.available)
+        return <div className="mt-3 text-[length:var(--text-body-sm)]">{wallet}</div>;
+
+    return (
+        <form
+            className="mt-4 flex flex-col gap-2"
+            onSubmit={(event) => {
+                event.preventDefault();
+                if (url.trim() === "" || listing.pending) return;
+                listing.submit(url.trim());
+            }}
+        >
+            <label
+                htmlFor="start-add-url"
+                className="font-mono text-[length:var(--text-label)] uppercase tracking-[0.08em] text-[color:var(--color-steel)]"
+            >
+                Tool or skill URL
+            </label>
+            <div className="flex gap-2">
+                <input
+                    id="start-add-url"
+                    value={url}
+                    onChange={(event) => setUrl(event.target.value)}
+                    placeholder="github.com/owner/repo?skill=name"
+                    className="min-w-0 flex-1 rounded-[var(--radius-control)] border border-[color:var(--color-rule-strong)] bg-[color:var(--color-bg)] px-3.5 py-2.5 font-mono text-[13px]"
+                />
+                <button type="submit" disabled={listing.pending} className={controlClass}>
+                    Add it
+                </button>
+            </div>
+            <p
+                aria-live="polite"
+                className="min-h-5 text-[length:var(--text-body-sm)] text-[color:var(--color-silver)]"
+            >
+                {listing.pending ? "Adding…" : result !== null && listToolMessage(result)}
+                {!listing.pending && result?.status === "listed" && (
+                    <>
+                        {" "}
+                        <Link to={`/atom/${result.atomId}`} className={linkClass}>
+                            Open its page →
+                        </Link>
+                    </>
+                )}
+                {!listing.pending && result !== null && offerWallet && <> {wallet}</>}
+            </p>
         </form>
     );
 }

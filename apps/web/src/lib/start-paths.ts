@@ -16,7 +16,7 @@ export type StartPath = {
 
 export const START_PATHS: readonly StartPath[] = [
     {profile: "claude", title: "I use Claude", atHand: "Claude Desktop or Code", primary: true},
-    {profile: "agent", title: "I'm building an agent", atHand: "one command", primary: false},
+    {profile: "agent", title: "I'm building an agent", atHand: "a terminal", primary: false},
     {profile: "tool", title: "I published a tool or a skill", atHand: "its URL", primary: false},
 ];
 

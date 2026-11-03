@@ -18,10 +18,10 @@ import {groupRecent} from "../services/recent-declarations-view";
 import {formatTrust, relativeDay, truncateMiddle} from "../services/trust-format";
 import {cssVars} from "../lib/css-vars";
 import {parseToolLabel, primaryNameOf} from "../lib/tool-label";
-import {START_PATHS, rememberProfile, startPathTo} from "../lib/start-paths";
+import {useOnboarding} from "../components/onboarding/onboarding-context";
 
 /**
- * `/` — the front page, as six scenes that hand over through Saffron.
+ * `/` — the front page, as five scenes that hand over through Saffron (six until task 53).
  *
  * ## Where it comes from
  *
@@ -31,7 +31,8 @@ import {START_PATHS, rememberProfile, startPathTo} from "../lib/start-paths";
  * été fait dans le design »_. So **the copy here is the reference's copy**, to the word, and the
  * four ADRs `0066`–`0069` record the seven decisions it carries that were his rather than ours.
  *
- * The scenes, in order: Pulse · What you see · Why · Ways in · No score · Build.
+ * The scenes, in order: Pulse · What you see · Why · No score · Build. Scene 4 left on
+ * 2026-11-02 (task 53): the onboarding moved to the first screen, behind Get started.
  * `Fig. 02 · the evidence ladder` is gone (ADR `0069`), and so are eleven sentences listed there.
  *
  * ## Real data or nothing
@@ -98,7 +99,6 @@ export function Landing() {
             <ScenePulse read={read} />
             <SceneRecord read={read} />
             <SceneWhy fee={fee} />
-            <SceneWays />
             <SceneManifesto />
             <SceneBuild />
         </SceneDeck>
@@ -123,6 +123,7 @@ export function Landing() {
  */
 function ScenePulse({read}: {read: Read<RecentDeclaration[]>}) {
     const {pinned} = useScene();
+    const onboarding = useOnboarding();
 
     return (
         <section className="relative">
@@ -150,8 +151,13 @@ function ScenePulse({read}: {read: Read<RecentDeclaration[]>}) {
                     the user, 2026-10-29: the call to action follows the title directly. */}
                 <Reveal index={1} afterMs={AFTER_TITLE}>
                     <div className="flex flex-wrap items-center gap-5">
-                        <Link to="/agents" className={heroControlClass}>
-                            Open the agent index
+                        {/* The onboarding, on the first screen (task 53, ADR `0114`). It was scene
+                            4 for one evening; the user wanted it where a visitor lands. */}
+                        <button type="button" onClick={onboarding.open} className={heroControlClass}>
+                            Get started
+                        </button>
+                        <Link to="/agents" className={`font-mono text-[12px] ${linkClass}`}>
+                            Open the agent index →
                         </Link>
                     </div>
                 </Reveal>
@@ -610,53 +616,6 @@ function GrowthDiagram() {
 }
 
 /* -------------------------------------------------------------------------- */
-/* Scene 4 — Ways in                                                          */
-/* -------------------------------------------------------------------------- */
-
-/**
- * Scene 4 asks who arrives, and each answer opens a short path at `/start/<profile>` (task 53).
- *
- * It replaced "Start by reading. It costs nothing." and its four jobs, three of which said "Needs
- * wallet" — the user's decision, 2026-11-02, because the person discovery serves best, a Claude user
- * (`docs/tasks/52` §3), was offered no way in, and task 45 promises them nothing web3 on screen.
- * Reading stays free and needs no answer here: every index page is one click away in the nav. ADR
- * `0114`.
- *
- * A tile is a link with a title and what to have at hand, no sentence (`rules/ui.md`). Saffron goes
- * on the primary tile's border only.
- */
-function SceneWays() {
-    return (
-        <section>
-            <SceneHead
-                lines={[{text: "What brings you here?"}, {text: "Pick one. Nothing to pay.", dim: true}]}
-                figure="Fig. 03 · three ways in"
-            />
-            <div className="grid gap-5 md:grid-cols-3">
-                {START_PATHS.map((path, index) => (
-                    <Reveal key={path.profile} index={2 + index} className="flex">
-                        <Link
-                            to={startPathTo(path.profile)}
-                            onClick={() => rememberProfile(path.profile)}
-                            className={`flex flex-1 flex-col gap-6 rounded-[var(--radius-card)] border p-5 hover:bg-[var(--color-raised)] ${
-                                path.primary
-                                    ? "border-[color:var(--color-accent)]"
-                                    : "border-[color:var(--color-rule)]"
-                            }`}
-                        >
-                            <h3 className="type-face text-[20px]">{path.title}</h3>
-                            <span className="mt-auto font-mono text-[length:var(--text-label)] uppercase tracking-[0.08em] text-[color:var(--color-steel)]">
-                                {path.atHand}
-                            </span>
-                        </Link>
-                    </Reveal>
-                ))}
-            </div>
-        </section>
-    );
-}
-
-/* -------------------------------------------------------------------------- */
 /* Scene 5 — No score                                                         */
 /* -------------------------------------------------------------------------- */
 
@@ -761,7 +720,7 @@ function SceneBuild() {
                     {text: "Plug in without asking anyone."},
                     {text: "It lives on a public chain, not on our servers.", dim: true},
                 ]}
-                figure="Fig. 04 · build against it"
+                figure="Fig. 03 · build against it"
             />
             <div className="grid gap-5 lg:grid-cols-2">
                 {COLUMNS.map((column, columnIndex) => (

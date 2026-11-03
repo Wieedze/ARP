@@ -1,6 +1,6 @@
 # Task 53 — One path per profile, from the landing
 
-**Status:** **IN PROGRESS**, 2026-11-02, branch `feat/53-paths`. 53a built (scene 4 is the three-way chooser, `lib/start-paths.ts`). 53b built (`/start/:profile`, steps ticked from the local feed by `services/start-steps.ts`). 53c and the action gate are next. The user's decisions are in §2.
+**Status:** **IN PROGRESS**, 2026-11-02, branch `feat/53-paths`. 53a built, then moved the same evening: the chooser is a panel opened by the nav's Connect and the landing's Get started (`components/onboarding/`), scene 4 is gone, and `/account` opens on Your agent with the delegations behind a "Delegation · later" tab. 53b built (`/start/:profile`, steps ticked from the local feed by `services/start-steps.ts`). The action gate is built: every place that asked for a wallet in a sentence (support, withdraw, mint, register a tool, positions, the delegation tab) is a button that opens the onboarding panel (`components/onboarding/ConnectPrompt.tsx`). 53c web side built: path C's last step posts the URL to the sponsor's `POST /list-tool` (`services/list-tool.ts`, `VITE_ARP_SPONSOR_URL`, dev default 127.0.0.1:3200) and says what it answered. The route itself is the sponsor owner's, on `feat/53c-list-tool` (ADR `0120`); until it reaches `dev` the form answers "It could not be added." and offers "Add it with a wallet →" (`/register?what=tool`), which is also all a build without a sponsor shows. Unsigned only for now: signing waits for `signListToolRequest` on `dev`. The user's decisions are in §2.
 **ADR:** `0112` (the badge is free). A new ADR is needed for 53c (§3).
 **Depends on:** task 50 for path A's last step; `@arp-protocol/cli` on npm for path B's first.
 **Rules:** `ui.md`, `code.md`, `security.md` (53c), `claims.md`, `workflow.md`.
@@ -25,8 +25,10 @@ onboarding skill ARP itself returned for "onboarding" (`coreyhaines31/marketings
 | Question | Decision |
 | --- | --- |
 | How many profiles | **Three at launch**: "J'utilise Claude", "Je construis un agent", "J'ai publié un outil". Agent operators and teams or registries come when they have something to offer |
-| Scene 4 | **Replaced**, not added to. The deck keeps six scenes, and the four "Needs wallet" cards leave `/` |
+| Scene 4 | **Replaced**, not added to, and then **removed** the same evening: the onboarding belongs on the first screen and behind Connect (user, « ou alors après le bouton connexion »). The deck has five scenes, and the four "Needs wallet" cards are gone |
+| `/account` | **Two tabs**: Your agent first; the delegations under "Delegation · later" (user, 2026-11-02) |
 | Listing a tool from path C | **Sponsored on testnet 13579, with a limit**, consistent with "free for testers" (task 45) |
+| The limit on sponsored listings | **Signed when a key is available, anonymous otherwise** (2026-11-03, « B quand une clé est disponible, A sinon »): a request signed by the agent key or a wallet gets a per-address daily limit inside the global budget; an unsigned one falls under a small global daily cap. The number is config, stated in the route's ADR. Route `POST /list-tool`, built by the sponsor's owner session (ADR `0120`) |
 | The badge | **Not decided.** Left out of this task |
 | Onboarding, like Privy's | **The action is gated, not the read** (2026-11-02, « ok ça me paraît bien »). Index pages stay open; declaring, supporting, adding a tool and the personal pages open the onboarding first |
 | How a visitor connects | **Their agent**, not an account: the extension's local key (ADR `0110`), seen by the activity bar on the web. MetaMask for whoever signs. No Privy for now. ADR `0114` |
@@ -36,7 +38,7 @@ onboarding skill ARP itself returned for "onboarding" (`coreyhaines31/marketings
 | | What | Exists today |
 | --- | --- | --- |
 | 53a | Scene 4 becomes one question, "What brings you here?", with three tiles: a title and what to have at hand, nothing else (`ui.md`, no sentence in a card). Saffron on the first tile only. The choice is kept in `localStorage`, wrapped in try/catch, so the nav can offer the path again | `SceneJobs` and `jobsFor`, to be replaced |
-| 53b | `/start/:profile`, one page per path: an ordered list whose steps tick themselves when ARP sees the result, the first one ticked from the start ("testnet, nothing to pay"). No account | the activity bar's "your agent: live / connecting / not connected" (task 36, task 48 item 8); `/activity`; `/search` |
+| 53b | `/start/:profile`, one page per path: an ordered list whose steps tick themselves when ARP sees the result, the first one ticked from the start ("Free for now. Nothing to pay.", no chain word, as path A promises). No account | the activity bar's "your agent: live / connecting / not connected" (task 36, task 48 item 8); `/activity`; `/search` |
 | 53c | Path C's "add it" step, sponsored: a sponsor route that creates a tool atom for a URL, within a per-address daily limit and the global budget | **no route**: `apps/sponsor/src/service.ts` serves `/gas`, `/mint-gas`, `/identity`, `/deposit`, `/publish`. Needs its own ADR, because `security.md`'s sponsor rows do not cover it |
 
 The three paths, as the proposal has them:
@@ -65,8 +67,9 @@ until the rebuilt `skill-facts.json` is merged. The README badge is the next ste
 
 - `curl -s -o /dev/null -w "%{http_code}" https://registry.npmjs.org/@arp-protocol%2fcli` → `404`.
   Path B's first step cannot be published on a public page until the package is.
-- Path A's last step is task 50, which arp-7f reported working once on testnet; not merged as a
-  finished task at the time of writing.
+- Path A's last step is task 50, merged on 2026-11-02: extension 0.2.1 ran end to end in Claude
+  Desktop on the user's machine, with the sponsor paying the deposit. Nothing is hosted; the
+  sponsor and the content server run locally.
 
 ## 5. Do not do in this task
 

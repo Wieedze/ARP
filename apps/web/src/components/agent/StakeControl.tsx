@@ -15,6 +15,7 @@ import {
     type StakeSession,
     type StakeSide,
 } from "../../services/trust-stake";
+import {ConnectPrompt} from "../onboarding/ConnectPrompt";
 
 /**
  * The stake control. Real value on mainnet, test value on testnet, authorised by ADR 0017.
@@ -302,9 +303,7 @@ export function StakeControl({
             )}
 
             {!isConnected ? (
-                <p className="mt-4 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
-                    Connect a wallet to add support.
-                </p>
+                <ConnectPrompt label="Connect a wallet to add support" className="mt-4" />
             ) : sessionError !== null ? (
                 <p className="mt-4 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
                     The minimum amount could not be read ({sessionError.message}). Support stays

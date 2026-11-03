@@ -60,7 +60,7 @@ function account(overrides: Partial<Record<string, unknown>> = {}): AccountDeleg
 
 describe("the account page", () => {
     it("lists a stored delegation with its delegate, its cap and its state", () => {
-        renderWithProviders(<AccountPage account={account()} />);
+        renderWithProviders(<AccountPage tab="delegation" account={account()} />);
         const table = screen.getByRole("table", {name: "Permissions"});
         expect(within(table).getByText(RUNTIME)).toBeInTheDocument();
         expect(within(table).getByText(/2 tTRUST \/ 1d/)).toBeInTheDocument();
@@ -70,7 +70,7 @@ describe("the account page", () => {
 
     it("asks for confirmation before revoking, and the confirmation names the chain", () => {
         const acct = account();
-        renderWithProviders(<AccountPage account={acct} />);
+        renderWithProviders(<AccountPage tab="delegation" account={acct} />);
 
         fireEvent.click(screen.getByRole("button", {name: "Revoke"}));
         const confirm = screen.getByRole("group", {name: "Confirm revocation"});
@@ -84,7 +84,10 @@ describe("the account page", () => {
 
     it("offers no revoke on a delegation already revoked or whose state is unknown", () => {
         renderWithProviders(
-            <AccountPage account={account({rows: [row("disabled"), row("unknown")]})} />,
+            <AccountPage
+                tab="delegation"
+                account={account({rows: [row("disabled"), row("unknown")]})}
+            />,
         );
         expect(screen.getByText("revoked")).toBeInTheDocument();
         expect(screen.getByText("unknown")).toBeInTheDocument();
@@ -92,7 +95,7 @@ describe("the account page", () => {
     });
 
     it("renders no signing control on mainnet 1155", () => {
-        renderWithProviders(<AccountPage account={account()} />, {mainnet: true});
+        renderWithProviders(<AccountPage tab="delegation" account={account()} />, {mainnet: true});
         expect(screen.getByText("Signing: testnet only")).toBeInTheDocument();
         expect(screen.queryByRole("button", {name: "Revoke"})).toBeNull();
         expect(screen.queryByRole("button", {name: "Review"})).toBeNull();
@@ -104,7 +107,10 @@ describe("the account page", () => {
 
     it("asks to switch the wallet when it is not on 13579, and offers nothing that signs", () => {
         renderWithProviders(
-            <AccountPage account={account({onTestnet: false, walletChainId: 1155})} />,
+            <AccountPage
+                tab="delegation"
+                account={account({onTestnet: false, walletChainId: 1155})}
+            />,
         );
         expect(screen.getByRole("button", {name: /Switch wallet to/})).toBeInTheDocument();
         expect(screen.queryByRole("button", {name: "Revoke"})).toBeNull();
@@ -113,7 +119,7 @@ describe("the account page", () => {
 
     it("switches the wallet from the button, and says so when the switch fails", () => {
         const acct = account({onTestnet: false, walletChainId: 1155});
-        const {unmount} = renderWithProviders(<AccountPage account={acct} />);
+        const {unmount} = renderWithProviders(<AccountPage tab="delegation" account={acct} />);
         fireEvent.click(screen.getByRole("button", {name: /Switch wallet to/}));
         expect(acct.switchToTestnet.mutate).toHaveBeenCalledTimes(1);
         expect(screen.queryByRole("alert")).toBeNull();
@@ -121,6 +127,7 @@ describe("the account page", () => {
 
         renderWithProviders(
             <AccountPage
+                tab="delegation"
                 account={account({
                     onTestnet: false,
                     walletChainId: 1155,
@@ -133,7 +140,7 @@ describe("the account page", () => {
 
     it("signs a new delegation only from the second click, which names the chain", () => {
         const acct = account({rows: []});
-        renderWithProviders(<AccountPage account={acct} />);
+        renderWithProviders(<AccountPage tab="delegation" account={acct} />);
 
         fireEvent.change(screen.getByLabelText("Agent address"), {
             target: {value: RUNTIME.toLowerCase()},
@@ -157,7 +164,7 @@ describe("the account page", () => {
         vi.mocked(acct.sign.mutate).mockImplementation((_request, options) => {
             options?.onSuccess?.(undefined as never, _request, undefined, undefined as never);
         });
-        renderWithProviders(<AccountPage account={acct} />);
+        renderWithProviders(<AccountPage tab="delegation" account={acct} />);
 
         fireEvent.change(screen.getByLabelText("Agent address"), {target: {value: RUNTIME}});
         fireEvent.click(screen.getByRole("button", {name: "Review"}));
@@ -169,7 +176,7 @@ describe("the account page", () => {
 
     it("keeps the confirmation while a signature has not succeeded", () => {
         const acct = account({rows: []});
-        renderWithProviders(<AccountPage account={acct} />);
+        renderWithProviders(<AccountPage tab="delegation" account={acct} />);
         fireEvent.change(screen.getByLabelText("Agent address"), {target: {value: RUNTIME}});
         fireEvent.click(screen.getByRole("button", {name: "Review"}));
         fireEvent.click(screen.getByRole("button", {name: "Sign in wallet"}));
@@ -179,7 +186,7 @@ describe("the account page", () => {
     it("says so when the export copy is refused", async () => {
         const writeText = vi.fn().mockRejectedValue(new Error("denied"));
         Object.defineProperty(navigator, "clipboard", {value: {writeText}, configurable: true});
-        renderWithProviders(<AccountPage account={account()} />);
+        renderWithProviders(<AccountPage tab="delegation" account={account()} />);
         fireEvent.click(screen.getByRole("button", {name: "Export"}));
         expect(await screen.findByRole("alert")).toHaveTextContent("Copy failed");
         expect(screen.getByRole("button", {name: "Export"})).toBeInTheDocument();
@@ -187,7 +194,7 @@ describe("the account page", () => {
 
     it("says so when there is no clipboard at all", async () => {
         Object.defineProperty(navigator, "clipboard", {value: undefined, configurable: true});
-        renderWithProviders(<AccountPage account={account()} />);
+        renderWithProviders(<AccountPage tab="delegation" account={account()} />);
         fireEvent.click(screen.getByRole("button", {name: "Export"}));
         expect(await screen.findByRole("alert")).toHaveTextContent("Copy failed");
     });
@@ -197,7 +204,7 @@ describe("the account page", () => {
         Object.defineProperty(navigator, "clipboard", {value: {writeText}, configurable: true});
         vi.useFakeTimers({shouldAdvanceTime: true});
         try {
-            renderWithProviders(<AccountPage account={account()} />);
+            renderWithProviders(<AccountPage tab="delegation" account={account()} />);
             fireEvent.click(screen.getByRole("button", {name: "Export"}));
             expect(await screen.findByRole("button", {name: "Copied"})).toBeInTheDocument();
             expect(screen.queryByRole("alert")).toBeNull();
@@ -214,7 +221,7 @@ describe("the account page", () => {
 
     it("refuses a delegate that is not an address before anything is signed", () => {
         const acct = account({rows: []});
-        renderWithProviders(<AccountPage account={acct} />);
+        renderWithProviders(<AccountPage tab="delegation" account={acct} />);
         fireEvent.change(screen.getByLabelText("Agent address"), {target: {value: "nobody"}});
         fireEvent.click(screen.getByRole("button", {name: "Review"}));
         expect(screen.getByRole("alert")).toHaveTextContent("Enter a 0x address");
@@ -223,7 +230,7 @@ describe("the account page", () => {
 
     it("keeps keyboard focus through the revoke confirmation and back", () => {
         const acct = account();
-        renderWithProviders(<AccountPage account={acct} />);
+        renderWithProviders(<AccountPage tab="delegation" account={acct} />);
 
         fireEvent.click(screen.getByRole("button", {name: "Revoke"}));
         const confirm = screen.getByRole("button", {name: "Revoke in wallet"});
@@ -239,7 +246,7 @@ describe("the account page", () => {
         vi.mocked(acct.revoke.mutate).mockImplementation((_delegation, options) => {
             options?.onSettled?.(undefined, null, _delegation, undefined, undefined as never);
         });
-        renderWithProviders(<AccountPage account={acct} />);
+        renderWithProviders(<AccountPage tab="delegation" account={acct} />);
         fireEvent.click(screen.getByRole("button", {name: "Revoke"}));
         fireEvent.click(screen.getByRole("button", {name: "Revoke in wallet"}));
         expect(screen.queryByRole("group", {name: "Confirm revocation"})).toBeNull();
@@ -247,7 +254,7 @@ describe("the account page", () => {
     });
 
     it("keeps keyboard focus through the delegation review and back", () => {
-        renderWithProviders(<AccountPage account={account({rows: []})} />);
+        renderWithProviders(<AccountPage tab="delegation" account={account({rows: []})} />);
         // The form does not take focus on its own first mount.
         expect(screen.getByRole("button", {name: "Review"})).not.toHaveFocus();
         fireEvent.change(screen.getByLabelText("Agent address"), {target: {value: RUNTIME}});
@@ -261,8 +268,19 @@ describe("the account page", () => {
         expect(screen.getByRole("button", {name: "Review"})).toHaveFocus();
     });
 
-    it("asks for a wallet when none is connected", () => {
+    it("opens on Your agent, which needs no wallet, with the delegations behind their own tab", () => {
         renderWithProviders(<AccountPage account={account({operator: undefined})} />);
+        // Task 53: a tester meets their agent first; delegations are for later.
+        expect(screen.getByText("not connected")).toBeInTheDocument();
+        expect(screen.queryByText(/Connect a wallet/)).toBeNull();
+        fireEvent.click(screen.getByRole("button", {name: "Delegation · later"}));
+        expect(screen.getByText(/Connect a wallet/)).toBeInTheDocument();
+    });
+
+    it("asks for a wallet when none is connected", () => {
+        renderWithProviders(
+            <AccountPage tab="delegation" account={account({operator: undefined})} />,
+        );
         expect(screen.getByText(/Connect a wallet/)).toBeInTheDocument();
         expect(screen.queryByRole("table")).toBeNull();
     });
