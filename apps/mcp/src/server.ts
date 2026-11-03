@@ -156,7 +156,12 @@ const DESKTOP_INSTRUCTIONS = [
 
 async function callTool(id: JsonRpcId, params: Record<string, unknown> | undefined) {
   const name = typeof params?.['name'] === 'string' ? params['name'] : null;
-  const args = (params?.['arguments'] ?? {}) as Record<string, unknown>;
+  const raw = params?.['arguments'];
+  // A JSON object, checked here; each tool narrows the fields it reads.
+  const args =
+    typeof raw === 'object' && raw !== null && !Array.isArray(raw)
+      ? (raw as Record<string, unknown>)
+      : {};
   // Refused by name, not left to fall through: `tools/list` hides the planners in read mode, and a
   // client that calls one anyway must not get a plan the operator never agreed to be offered.
   if (DESKTOP && name !== null && DESKTOP_TOOL_NAMES.has(name)) return desktopTool(id, name, args);

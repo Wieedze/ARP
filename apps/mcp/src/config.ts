@@ -64,6 +64,7 @@ export const RECEIPTS_LOG = process.env['ARP_RECEIPTS'] ?? '.arp/receipts.jsonl'
  * up by this chain in `data.ts`, so a mainnet server cannot be served a testnet constant.
  */
 const TARGETS = { mainnet: 1155, testnet: 13579 } as const;
+// Asserted, then checked: an unknown name indexes to `undefined`, which the guard below refuses.
 export const targetName = (process.env.ARP_TARGET ?? 'mainnet') as keyof typeof TARGETS;
 export const chainId = TARGETS[targetName];
 if (chainId === undefined) {

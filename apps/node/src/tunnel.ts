@@ -57,7 +57,7 @@ export type RunningTunnel = {
   stop(): void;
 };
 
-export const DEFAULT_TUNNEL_TIMEOUT_MS = 30_000;
+const DEFAULT_TUNNEL_TIMEOUT_MS = 30_000;
 
 /** Whether `path` is a file this user may execute. */
 export function isExecutable(path: string): boolean {

@@ -47,7 +47,10 @@ import { dirname, join } from 'node:path';
 import { loadOrCreateKeyFile, stateFile } from '@arp-protocol/core/node';
 
 import { privateKeyToAccount } from 'viem/accounts';
-import type { Address, Hex } from 'viem';
+import { isHex, type Address, type Hex } from 'viem';
+
+const isHex32 = (value: string | null): value is Hex =>
+  value !== null && /^0x[0-9a-fA-F]{64}$/.test(value);
 
 import { SKILL_CATALOGUES } from './data.js';
 
@@ -259,18 +262,19 @@ async function requester(
   chainId: number,
 ): Promise<{ to: Address | null; nonce: Hex }> {
   const nonceRaw = params.get('nonce');
-  const nonce = /^0x[0-9a-fA-F]{64}$/.test(nonceRaw ?? '')
-    ? (nonceRaw as Hex)
-    : (`0x${'00'.repeat(32)}` as Hex);
+  const nonce: Hex = isHex32(nonceRaw) ? nonceRaw : `0x${'00'.repeat(32)}`;
 
   const signature = params.get('sig');
-  if (signature === null || !/^0x[0-9a-fA-F]+$/.test(signature)) return { to: null, nonce };
+  // A malformed atom id is served as `bad-atom-id` by `serveContent`; here it authenticates nobody.
+  if (signature === null || !isHex(signature, { strict: true }) || !isHex32(atomId)) {
+    return { to: null, nonce };
+  }
 
   const recovered = await recoverContentRequester(
-    atomId.toLowerCase() as Hex,
+    atomId.toLowerCase() as Hex, // Lower case of a value `isHex32` just accepted.
     nonce,
     chainId,
-    signature as Hex,
+    signature,
   );
   const claimed = params.get('by');
   if (claimed !== null && recovered !== null && claimed.toLowerCase() !== recovered.toLowerCase()) {

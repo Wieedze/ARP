@@ -63,7 +63,7 @@ function span(entries: Record<string, { fetchedAt: string }>): {
  * The answer, in the shapes the front already reads from its bundled copy, plus the dates.
  * `days` is computed now from `pushedAt` — stored, it would be wrong by tomorrow.
  */
-export function factsAnswer(docs: Documents, now: number) {
+function factsAnswer(docs: Documents, now: number) {
   const repos = Object.fromEntries(
     Object.entries(docs.repos).map(([label, fact]) => [
       label,
