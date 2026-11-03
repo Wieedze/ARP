@@ -1,6 +1,6 @@
 # Task 61 — Review before install: a pinned version, a page of facts, and a human who accepts
 
-**Status:** **A, C, D, E built 2026-11-03** on `feat/61-review-before-install` (ADR `0127`). **B
+**Status:** **A, C, D, E built and verified 2026-11-03** on `feat/61-review-before-install` (ADR `0127`; `task-verifier` PASS on round 2, `.claude/learning/56-review-before-install.md`). **B
 deferred** by the user (« pas encore »), and §5 point 4 (what a version is beyond the pin) still
 open.
 
