@@ -58,6 +58,21 @@ Found and **not** fixed, because they are outside this file's reach:
 - `ARP-business-dev` `pitch/deck/slides/cover.html` reads "A public registry of the tools agents
   actually use", against the kit's own rule on `registry` as a lead.
 
+**Step 4 started 2026-11-03**, positioning docs first:
+
+- `docs/01` 156 → 147 lines. It leads with the kit's goal, signature, vision and mission. Out: the
+  Lisbon hackathon sections and the strategic-meeting list (both past), "modular registry,
+  permissionless module creation" (`ModuleRegistry` was deleted, ADR `0055`), and four "this used to
+  read" paragraphs, each cut to its ADR. In: "not a directory competing on search", and 8004scan as
+  a possible buyer of usage data rather than the primary competitor.
+- `docs/09` keeps its body as the dated record. Its header now says "analysis, not commitment, §3 in
+  force", and a table maps each drifted claim to its correction.
+- `docs/00`'s header says historical. These close two lines of `docs/tasks/28` item 21.
+
+**Open, and the user's to decide:** `docs/01` and `docs/12` both say ARP is "not consumer-facing,
+B2B infrastructure", while the kit's first audience is "Claude users with no technical background"
+and the Desktop extension is built for them. `docs/12` is canonical, so this pass does not touch it.
+
 ## Why this is a task and not a tidy-up
 
 The repo has **43 ADRs, 18 post-mortems, 31 task files and 16 docs**, almost all written by me in a

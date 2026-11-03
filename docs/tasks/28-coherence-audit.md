@@ -98,8 +98,8 @@ with the code. Read-only audit first, then fixes in small batches.
     - still calls the registry question "open" (ADR `0027`).
       `docs/12` is canonical: the table is the user's to update.
 21. The doc status headers disagree on what is in charge:
-    - `docs/00:3` says "ACTIVE PIVOT".
-    - `docs/09:3` says "Active strategic commitment".
+    - ~~`docs/00:3` says "ACTIVE PIVOT".~~ Fixed 2026-11-03 (task 27).
+    - ~~`docs/09:3` says "Active strategic commitment".~~ Fixed 2026-11-03 (task 27): "Analysis, not commitment", §3 in force.
     - `CLAUDE.md:16`'s "higher-numbered wins" would put `docs/15` over `docs/12`.
     - Both READMEs name `docs/09` or `docs/00`, not `docs/12`.
 22. `README.md` describes the hackathon demo as "today". `app/README.md` is the Vite template.

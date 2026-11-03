@@ -1,10 +1,25 @@
 # 09 — ARP: positioning and plan
 
 **Date**: 2026-09-16
-**Status**: **Active strategic commitment.** Supersedes `docs/00_HACKATHON_PIVOT.md`, which expired
-with the Cook-Off deadline on 2026-06-15 and is now historical record.
-**Evidence base**: `docs/08_ERC8004_AGENT_LAYER_OPPORTUNITY.md` — every claim about the market below
-is a measurement, reproducible with the queries in its Appendix A.
+**Status**: **Analysis, dated 2026-09-16 — not commitment** (`CLAUDE.md`). **§3, the evidence
+ladder, is still in force**: every task's completion report names its tier. The rest is the
+positioning as it stood that day, and it drifted. The current statement is `docs/12` (the mechanism)
+and `docs/01` (the positioning); the plan is `Wieedze/ARP-business-dev`, `plan/next-steps.md`.
+**Evidence base**: `docs/08_ERC8004_AGENT_LAYER_OPPORTUNITY.md`, Appendix A.
+
+### What drifted, and where it is corrected
+
+| here                                                                                                                  | now                                                                                                                                                                  |
+| --------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| §1 "produces on-chain proof that an agent did the work"                                                               | ARP labels a declaration _proven_ when it carries a payment or a signed receipt, which shows access or payment, never that the work was done (ADR `0094`, `docs/14`) |
+| §1, §4 "a bounded delegation so you can pay one", "bounded-hiring surface"                                            | ARP records a use; it does not broker one (ADR `0060`, `docs/12` drift signals)                                                                                      |
+| §4 "a read API that merges every other provider's assessment"; Phase 3 "trust provider with stake-derived dimensions" | ARP scores nobody and does not mirror ERC-8004 feedback (ADRs `0046`, `0048`, `0049`)                                                                                |
+| §5 three audiences                                                                                                    | one message per audience, Claude users first: `pitch/kit-de-presentation.md` in `ARP-business-dev`                                                                   |
+| §7, §8 phases 0–4 and their gates                                                                                     | gates of 10, then 100, agents ARP does not control, to EthCC April 2027 (`plan/next-steps.md`)                                                                       |
+| §2 "194 `use` triples"                                                                                                | does not reproduce: 158 by `scripts/measure/predicate-edges.ts`, a different query, not a shrunk graph (`.claude/STATE.md`, known defects)                           |
+| §3 tier 4 "executed under enforced caveats"                                                                           | since ADR `0094` the tier-4 evidence is a payment or a signed receipt; no enforcer has fired on mainnet 1155 (`scripts/measure/enforcer-events.ts`)                  |
+
+§9's falsifiers are still the right questions, and both "nobody stakes" and "nobody hires" are open.
 
 ---
 

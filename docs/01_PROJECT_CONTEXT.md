@@ -2,9 +2,19 @@
 
 ## One-liner
 
-**A reputation layer for autonomous agents.**
+**ARP makes money flow to the tools agents actually use.**
 
-> Search by need. See what answers, and who paid to stand behind it.
+> Stars show who looked. ARP shows who used it.
+
+|                  |                                                                        |
+| ---------------- | ---------------------------------------------------------------------- |
+| Vision           | Money follows usage.                                                   |
+| Mission          | Keep an open record of what agents actually use, and whether it works. |
+| What a user does | Search by need. See what answers, and who paid to stand behind it.     |
+
+The category is **a reputation layer** and, said to someone outside crypto, **a public usage
+record**. The four lines above come from the presentation kit (`Wieedze/ARP-business-dev`,
+`pitch/kit-de-presentation.md`); where a text about ARP contradicts them, the text is corrected.
 
 Identity is ERC-8004, the graph is Intuition, and the priced claim is ARP. It stores nothing: if a
 thing is listed here it is because it already exists somewhere else, and what ARP adds is the market
@@ -12,9 +22,8 @@ thing is listed here it is because it already exists somewhere else, and what AR
 
 ### Why **layer** and not **registry**, since 2026-10-29
 
-This line read **"ARP is a registry that points at AI things — agents, tools, MCP servers — and
-opens a priced market of opinion on them"**. Every clause of that is still true and it is no longer
-the lead, for one measured reason.
+The lead was **"a registry that points at AI things"** until then. Every clause of it is still
+true; it stopped leading for one measured reason.
 
 A census dated 2026-10-02 counts **84,819 agent tools — 62,347 skills, 9,676 MCP servers, and
 10,411 marketplaces** carrying 172M installs between them. There are more storefronts than there are
@@ -25,7 +34,7 @@ What none of those 10,411 has — checked against their own pages — is a **rec
 work and who stands behind them**. That gap is the lead now, and the two additions to the old line
 say it:
 
-- **"search by need"** — the index is keyed by what a tool is *for*, not by its name. npm returns
+- **"search by need"** — the index is keyed by what a tool is _for_, not by its name. npm returns
   25,501 rows for "payment", ranked on the string, `@types/payment` among the first.
 - **"what answers"** — the one claim here a third party can reproduce for the price of one HTTP
   request, and therefore the only one ARP records as a fact rather than as a declaration
@@ -73,60 +82,52 @@ to say "this is not proof" if the word "proof" is never used.**
 
 ADR `0075` carries the decision and what it trades away.
 
-> This line used to end "Domain-dimensional calibration is ARP". **Calibration is out** — not
-> deferred, out (ADR `0049`). It is a score, and a score that needs ground truth, which is `docs/12`'s
-> first drift signal; ADR `0046` had already settled that ARP scores nobody.
+Calibration is out, not deferred (ADR `0049`): it is a score that needs ground truth.
 
 ## What ARP is
 
 ARP (Agent Reputation Protocol) is a permissionless, modular reputation protocol for autonomous AI agents. It sits on top of ERC-8004 (the Ethereum agent identity standard) and uses Intuition's semantic graph as its ontology layer.
 
-The core innovation is that **the input costs money**. An agent declares the tools it used and deposits TRUST on that declaration, under a cap its operator signed. Nothing here measures whether the agent was _right_ — reputation is what emerges when real value sits on a claim about composition, and writing that claim costs money that does not come back (ADR `0056`; this sentence used to end "and the claim is one a third party can contradict", which is true of the mechanism and all but unused in practice — 1 of 185 mainnet `uses` edges).
+The core innovation is that **the input costs money**. An agent declares the tools it used and deposits TRUST on that declaration, under a cap its operator signed. Nothing here measures whether the agent was _right_ — reputation is what emerges when real value sits on a claim about composition, and writing that claim costs money that does not come back (ADR `0056`). A third party can contradict the claim at the same price, and almost nobody does: 1 of 185 `uses` edges on mainnet 1155, 2026-10-21 (`scripts/measure/counter-side-usage.ts`).
 
 The case against free ratings is measured, not asserted: ERC-8004's Reputation Registry holds **569,148** feedback entries on Base 8453 with a **mean score of 95.09 / 100** (`scripts/measure/erc8004-feedback.ts`, 2026-10-20). Free ratings converge on excellent and stop distinguishing anything.
 
 **An agent and a tool are the same shape** (ADR `0051`): both exist elsewhere, both get an atom pointing at them, and both carry a market on claims about them. One write path, not two.
 
-This used to read "calibration over volume: an agent's reputation weight determined by the accuracy of their past attestations". That is a score needing ground truth, and it is out (ADR `0049`).
-
 ## What ARP is not
 
 - ARP is **not an identity namespace**. ERC-8004's Identity Registry handles that, and ARP mints into it rather than beside it (ADR `0027`). It _is_ a registry in the sense of pointing at things that exist elsewhere — and it registers nothing, stores nothing and delivers nothing (ADR `0051`).
-- ARP is **not an explorer**. 8004scan, Agentscan, Agent Arena handle discovery.
+- ARP is **not a directory competing on search**. skills.sh, Glama, Smithery and the official MCP
+  registry list tools; ARP reuses their descriptions and install counts and adds what none of them
+  has, a record of use. On search alone skills.sh is better today (above).
 - ARP is **not a scoring platform at all** — not merely a non-proprietary one. ARP publishes no
   score, rating or assessment of any agent; it makes staking possible and reads the result. Every
   figure it surfaces is a deposit somebody else made, so ARP cannot be wrong about an agent — the
-  market can. ADR `0046`. This bullet used to read "not a _proprietary_ scoring platform", which
-  permitted a non-proprietary one.
+  market can. ADR `0046`.
 - ARP is **not consumer-facing**. It is B2B infrastructure — agents, dApps, and other protocols consume it.
 - ARP is **not where a reputation lives**. The reputation is **portable**: atoms, triples and
   positions on a public graph, plus an ERC-8004 identity. Nothing is in an ARP database, so an
   operator adopting ARP is not betting on ARP surviving — unplug it and the reputation is still there
   and still readable by anyone. ADR `0045` is the same property applied to requests rather than data.
 
-## Why this MVP exists
+## Where it stands
 
-This repository is the **first on-chain deliverable of ARP**, shipped as a demonstrable artifact for a single strategic meeting: the conversation with the Intuition core team to align on:
-
-1. ARP being positioned publicly as "the Intuition reputation layer for ERC-8004"
-2. Deployment chain (Base vs Intuition L3)
-3. Access to Intuition's forkable indexer
-4. Possible co-marketing at ETHGlobal Lisbon (July 2026)
-5. TRUST token integration path
-
-The MVP proves execution capacity and architectural coherence. It is not a complete product.
+Everything runs on Intuition testnet 13579, and stays there until Intuition validates ARP. The
+only declarations so far come from ARP's own agents. The plan to EthCC (April 2027) is gated on
+agents ARP does not control: 10, then 100 (`ARP-business-dev`, `plan/next-steps.md`).
+`.claude/STATE.md` holds the state of each piece.
 
 ## Strategic positioning
 
 ARP executes a thesis that Intuition has already published (November 2025 Medium post): that the agent economy needs agent registries + agent reputation + agent coordination. Intuition wants to be the trust and coordination layer. ARP implements the reputation slot of that thesis concretely.
 
-This positioning means ARP should never feel like a competing vision. It is an implementation of Intuition's stated direction, differentiated by specific design choices (modular registry, permissionless module creation, and a signal that is a priced deposit rather than an opinion — calibration-weighted scoring was the third item here and is out, ADR `0049`).
+This positioning means ARP should never feel like a competing vision. It is an implementation of Intuition's stated direction, differentiated by one design choice: what sits on a claim is a priced deposit, not an opinion.
 
 ## Competitive landscape
 
 The reputation layer for ERC-8004 agents is not empty. Known competitors:
 
-- **8004scan** (AltLayer) — launched October 2025. Has a proprietary 7-dimension scoring system. Publishes offchain data format best practices. Primary competitor.
+- **8004scan** (AltLayer) — launched October 2025. Composes a 7-dimension score from free inputs. ARP scores nothing, so it can supply 8004scan the usage data rather than compete with its score.
 - **Agentscan** (Alias) — agent economy search engine.
 - **Agent Arena** — indexes 22,000+ agents across 16 chains, composite scoring, buyer reputation protocol.
 - **Theagora** — per-function reputation, 4-tier cryptographic verification.
@@ -137,16 +138,6 @@ ARP's defensible differentiation:
 2. **Written in the capability vocabulary, not the trust vocabulary** — `uses`, `has tag`, `implement`. So ARP makes claims about **composition**, and reputation emerges when money sits on one. Trust providers write elsewhere in the graph, which is why they are not competitors on this surface (ADR `0048`).
 3. **ARP holds nothing** — no key (ADR `0038`), no request path (ADR `0045`), no data. The reputation is positions on a public graph, so adopting ARP is not a bet on ARP surviving.
 4. **The position is the measure, so what you read is live** — withdrawable, so it is what people hold now rather than what was ever put in (ADR `0046` §3, and ADR `0056`, which built the exit).
-
-Item 4 used to read "so the **signal** is live — withdrawable, and contradictable through the counter-claim (ADR `0046`)". Three things wrong with it, all fixed by ADR `0056`: the counter-claim is almost never used, so contradictability was not a differentiator; `0046`'s §2 heading is now struck, so the citation walked a reader into retracted text; and ARP does not call this a signal — it is a market, and a price is not a verdict.
-
-Item 2 of this list used to be calibration-weighted scoring. It is out (ADR `0049`).
-
-## Target hackathon deliverable
-
-ETHGlobal Lisbon, late July 2026. Full scope at Lisbon (separate from this MVP): Module Registry + demo agent staking TRUST + attestation loop + forked indexer. Bounties targeted: The Graph ($15k primary), ENS ($5k bonus).
-
-This MVP is the **seed** of that Lisbon deliverable. The Module Registry built here is the same contract that ships to Lisbon, expanded.
 
 ## Ecosystem references
 
