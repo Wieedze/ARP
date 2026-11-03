@@ -233,7 +233,7 @@ export function redactUrls(text: string): string {
 }
 
 /** An ERC-8004 registry as an agent's registration file names it: `eip155:<chainId>:<address>`. */
-export const ERC8004_REGISTRY_REF = /^eip155:([1-9][0-9]*):(0x[0-9a-fA-F]{40})$/;
+export {ERC8004_REGISTRY as ERC8004_REGISTRY_REF} from "../identifiers.js";
 
 /** The `Host` values a listener on loopback `port` answers to. */
 export function loopbackHosts(port: number): string[] {
