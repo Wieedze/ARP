@@ -197,7 +197,7 @@ export function parseStakeAmount(input: string, limits: StakeLimits): AmountChec
         return {
             status: "above-max",
             value,
-            message: `This panel refuses more than ${formatTrust(limits.maxStake)} ${limits.symbol} per transaction (VITE_MAX_STAKE_TRUST).`,
+            message: `This app refuses more than ${formatTrust(limits.maxStake)} ${limits.symbol} per transaction.`,
         };
     }
     return {status: "ok", value};
@@ -208,7 +208,7 @@ function assertUnderCeiling(assets: bigint, symbol: string): void {
     if (assets > MAX_STAKE_WEI) {
         throw new StakeGuardError(
             "above-ceiling",
-            `This app refuses more than ${formatTrust(MAX_STAKE_WEI)} ${symbol} per transaction (VITE_MAX_STAKE_TRUST). Nothing was sent.`,
+            `This app refuses more than ${formatTrust(MAX_STAKE_WEI)} ${symbol} per transaction. Nothing was sent.`,
         );
     }
 }

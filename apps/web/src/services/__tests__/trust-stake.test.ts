@@ -163,7 +163,8 @@ describe("parseStakeAmount", () => {
         const result = parseStakeAmount("1.5", LIMITS);
         expect(result.status).toBe("above-max");
         if (result.status !== "above-max") throw new Error("unreachable");
-        expect(result.message).toContain("VITE_MAX_STAKE_TRUST");
+        // The reader gets the ceiling in their own unit; the env var that sets it is ours.
+        expect(result.message).toBe("This app refuses more than 1 TRUST per transaction.");
     });
 
     it("accepts the boundaries themselves", () => {
@@ -541,7 +542,12 @@ describe("submitStake", () => {
                 walletClient: asWallet(wallet),
                 quote: withClient({...quote, assets: MAX_STAKE_WEI + 1n}, publicClient),
             }),
-        ).rejects.toMatchObject({code: "above-ceiling"});
+        ).rejects.toMatchObject({
+            code: "above-ceiling",
+            message: expect.stringMatching(
+                /^This app refuses more than [\d.]+ TRUST per transaction\. Nothing was sent\.$/,
+            ),
+        });
 
         expect(wallet.writeContract).not.toHaveBeenCalled();
         expect(publicClient.simulateContract).not.toHaveBeenCalled();
