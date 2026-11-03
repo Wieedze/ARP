@@ -1,5 +1,6 @@
 import {toCaip19} from "../../caip.js";
 import {
+    AGENT_EDGE_LIMIT,
     CAPABILITIES_QUERY,
     COHORT_ORDER_BY,
     COHORT_QUERY,
@@ -20,6 +21,7 @@ import type {
     Capabilities,
     CapabilityRef,
     ClaimMarket,
+    Provenance,
     ProviderClaim,
     ResolvedAgentRef,
     ResolvedListAgentsOptions,
@@ -183,15 +185,23 @@ export function intuitionSource(config: IntuitionSourceConfig): TrustSource {
             ...(config.timeoutMs === undefined ? {} : {timeoutMs: config.timeoutMs}),
         });
 
-    async function surfaceRows(ref: ResolvedAgentRef): Promise<unknown[]> {
+    async function surfaceRows(
+        ref: ResolvedAgentRef,
+    ): Promise<{rows: unknown[]; truncated: boolean}> {
         const subject = await resolveSubject(transport, ref);
-        if (subject === null) return [];
+        if (subject === null) return {rows: [], truncated: false};
         const data = await transport.request(TRUST_SURFACE_QUERY, {
             subjectId: subject.handle,
             predicateIds: TRUST_PREDICATE_IDS,
             curveId,
+            limit: AGENT_EDGE_LIMIT,
         });
-        return Array.isArray(data["triples"]) ? data["triples"] : [];
+        const rows = Array.isArray(data["triples"]) ? data["triples"] : [];
+        return {rows, truncated: rows.length >= AGENT_EDGE_LIMIT};
+    }
+
+    function marked<T extends {provenance: Provenance}>(value: T, truncated: boolean): T {
+        return truncated ? {...value, provenance: {...value.provenance, truncated: true}} : value;
     }
 
     return {
@@ -222,10 +232,10 @@ export function intuitionSource(config: IntuitionSourceConfig): TrustSource {
         },
 
         async getAssessments(ref: ResolvedAgentRef): Promise<ProviderClaim[]> {
-            const rows = await surfaceRows(ref);
+            const {rows, truncated} = await surfaceRows(ref);
             return rows.flatMap((row) => {
                 const claim = mapProviderClaim(row);
-                return claim === null ? [] : [claim];
+                return claim === null ? [] : [marked(claim, truncated)];
             });
         },
 
@@ -245,12 +255,16 @@ export function intuitionSource(config: IntuitionSourceConfig): TrustSource {
             const data = await transport.request(CAPABILITIES_QUERY, {
                 subjectId: subject.handle,
                 predicateIds: CAPABILITY_PREDICATE_IDS,
+                limit: AGENT_EDGE_LIMIT,
             });
             const rows = Array.isArray(data["triples"]) ? data["triples"] : [];
 
             const capabilities: Capabilities = {
                 ...empty,
-                provenance: claimProvenance(subject.handle),
+                provenance: marked(
+                    {provenance: claimProvenance(subject.handle)},
+                    rows.length >= AGENT_EDGE_LIMIT,
+                ).provenance,
             };
             for (const row of rows) {
                 const capability = mapCapabilityRef(row);
@@ -261,10 +275,10 @@ export function intuitionSource(config: IntuitionSourceConfig): TrustSource {
         },
 
         async getMarkets(ref: ResolvedAgentRef): Promise<ClaimMarket[]> {
-            const rows = await surfaceRows(ref);
+            const {rows, truncated} = await surfaceRows(ref);
             return rows.flatMap((row) => {
                 const market = mapClaimMarket(row);
-                return market === null ? [] : [market];
+                return market === null ? [] : [marked(market, truncated)];
             });
         },
 

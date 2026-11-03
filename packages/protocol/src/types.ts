@@ -34,6 +34,11 @@ export type Provenance = {
     /** Where the value physically came from — a graph handle, a URL, a contract read. */
     origin: string | null;
     note?: string;
+    /**
+     * The read this came from hit its row limit, so there may be more the source did not return.
+     * Absent when the read was complete.
+     */
+    truncated?: true;
 };
 
 /**

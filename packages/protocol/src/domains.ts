@@ -1,15 +1,20 @@
 import {
     ALL_HIERARCHY_QUERY,
     createGraphqlTransport,
+    DEFAULT_TIMEOUT_MS,
     defaultFetch,
     type FetchLike,
     type GraphqlTransport,
     isRecord,
     OUR_HIERARCHY_QUERY,
+    readBigInt,
     readNumber,
     readString,
     TAGGED_QUERY,
 } from "@arp-protocol/graphql";
+
+import {DEFAULT_CURVE_ID} from "./sources/intuition/index.js";
+import {INTUITION_MAX_PAGE} from "./tool-listing.js";
 
 /**
  * The domain tree, read off the chain and traversed both ways.
@@ -29,13 +34,18 @@ import {
  * hierarchy predicate exists on testnet 13579 and nowhere on mainnet 1155 as of 2026-10-28.
  */
 
-const DEFAULT_TIMEOUT_MS = 10_000;
-
-/** The indexer's hard page cap, re-stated here rather than imported to keep this module free of a
- *  dependency on the tool listing. See `tool-listing.ts` for how it was probed. */
-const MAX_PAGE = 250;
+/** The indexer's cap on `triples`, probed in `tool-listing.ts`. */
+const MAX_PAGE = INTUITION_MAX_PAGE;
+/**
+ * The same indexer caps `positions` at 100 (`TAGGED_QUERY`'s note), so the attestor's hierarchy,
+ * read from its positions, is paged at that. Paged at 250 it stopped after one page of 100 and
+ * called it the whole tree: latent, since ARP held 18 hierarchy positions on 13579 on 2026-10-28.
+ */
+const POSITIONS_PAGE = 100;
 /** Eight pages at the cap. ARP holds ~700 tag positions on 13579 today and the set grows. */
 const DEFAULT_MAX_TAGGED = 2_000;
+/** Ceiling on a hierarchy read. The tree held 18 of ARP's triples and 60 in all on 2026-10-28. */
+const DEFAULT_MAX_HIERARCHY = 2_000;
 
 /**
  * The `has tag` triples pointing at a set of domains, with whether the attestor backs each one.
@@ -82,6 +92,8 @@ export type DomainsConfig = {
     tagPredicate: string;
     /** The label every path climbs to. */
     root: string;
+    /** The curve whose shares rank parents. Defaults to `DEFAULT_CURVE_ID`; other curves are ignored. */
+    curveId?: string | number | bigint;
     fetch?: FetchLike;
     timeoutMs?: number;
     transport?: GraphqlTransport;
@@ -136,6 +148,8 @@ export class DomainTree {
     private constructor(
         private readonly root: string,
         readonly triples: readonly HierarchyTriple[],
+        /** The hierarchy read stopped at its row ceiling, so the tree may be missing branches. */
+        readonly truncated: boolean,
     ) {
         for (const triple of triples) {
             if (!authorises(triple)) continue;
@@ -149,8 +163,8 @@ export class DomainTree {
         }
     }
 
-    static from(root: string, triples: readonly HierarchyTriple[]): DomainTree {
-        return new DomainTree(root, triples);
+    static from(root: string, triples: readonly HierarchyTriple[], truncated = false): DomainTree {
+        return new DomainTree(root, triples, truncated);
     }
 
     /** Every domain whose parent triples disagree, best-funded first. */
@@ -220,18 +234,27 @@ export class DomainTree {
     }
 }
 
-function sharesOf(term: unknown): {positions: number; shares: bigint} {
+/**
+ * Positions and shares on one curve. Shares on two curves are priced on two curves, so summing
+ * them ranked parents by a number that means nothing; a vault on another curve is skipped.
+ */
+function sharesOf(term: unknown, curveId: string): {positions: number; shares: bigint} {
     if (!isRecord(term)) return {positions: 0, shares: 0n};
     const vaults = Array.isArray(term["vaults"]) ? term["vaults"] : [];
     let positions = 0;
     let shares = 0n;
     for (const vault of vaults) {
         if (!isRecord(vault)) continue;
+        const curve = readBigInt(vault, "curve_id");
+        if (curve === null || curve.toString() !== curveId) continue;
         positions = Math.max(positions, readNumber(vault, "position_count") ?? 0);
-        const raw = readString(vault, "total_shares");
-        if (raw !== null && /^\d+$/.test(raw)) shares += BigInt(raw);
+        shares += readBigInt(vault, "total_shares") ?? 0n;
     }
     return {positions, shares};
+}
+
+function curveOf(config: DomainsConfig): string {
+    return config.curveId === undefined ? DEFAULT_CURVE_ID : String(config.curveId);
 }
 
 /**
@@ -257,6 +280,12 @@ function transportFor(config: DomainsConfig): GraphqlTransport {
     );
 }
 
+/** A page size the indexer honours: at least one row, at most `cap`. */
+function pageSize(requested: number | undefined, cap: number): number {
+    if (requested === undefined || !Number.isFinite(requested)) return cap;
+    return Math.min(Math.max(1, Math.floor(requested)), cap);
+}
+
 /**
  * Every hierarchy triple on the chain, paged.
  *
@@ -264,17 +293,28 @@ function transportFor(config: DomainsConfig): GraphqlTransport {
  * test of nothing: the whole claim is that a reading rule makes a tree out of a permissionless
  * graph, and testnet 13579 carries 19 junk triples on this predicate to prove the point.
  */
-export async function readHierarchy(config: DomainsConfig): Promise<HierarchyTriple[]> {
+export async function readHierarchy(
+    config: DomainsConfig,
+    options: {
+        /** Ceiling on the whole walk. Reaching it sets `truncated`. */
+        maxRows?: number;
+    } = {},
+): Promise<{triples: HierarchyTriple[]; truncated: boolean}> {
     const transport = transportFor(config);
     const attestor = config.attestor;
+    const curveId = curveOf(config);
+    const page = attestor === undefined ? MAX_PAGE : POSITIONS_PAGE;
+    const maxRows = Math.max(0, options.maxRows ?? DEFAULT_MAX_HIERARCHY);
     const out: HierarchyTriple[] = [];
+    let read = 0;
 
-    for (let offset = 0; ; offset += MAX_PAGE) {
+    for (let offset = 0; ; offset += page) {
+        if (read >= maxRows) return {triples: out, truncated: true};
         const data = await transport.request(
             attestor === undefined ? ALL_HIERARCHY_QUERY : OUR_HIERARCHY_QUERY,
             {
                 pid: config.hierarchyPredicate,
-                limit: MAX_PAGE,
+                limit: page,
                 offset,
                 ...(attestor === undefined ? {} : {who: attestor}),
             },
@@ -285,6 +325,7 @@ export async function readHierarchy(config: DomainsConfig): Promise<HierarchyTri
         // never knows which path produced it.
         const rows = attestor === undefined ? data["triples"] : data["positions"];
         const list = Array.isArray(rows) ? rows : [];
+        read += list.length;
 
         for (const row of list) {
             if (!isRecord(row)) continue;
@@ -298,11 +339,11 @@ export async function readHierarchy(config: DomainsConfig): Promise<HierarchyTri
             // to re-check, and `shares` comes off the position rather than off the vault total.
             const {positions, shares} =
                 attestor === undefined
-                    ? sharesOf(row["term"])
-                    : {positions: 1, shares: bigintOf(readString(row, "shares"))};
+                    ? sharesOf(row["term"], curveId)
+                    : {positions: 1, shares: readBigInt(row, "shares") ?? 0n};
             out.push({tripleId, child, parent, positions, shares});
         }
-        if (list.length < MAX_PAGE) return out;
+        if (list.length < page) return {triples: out, truncated: false};
     }
 }
 
@@ -314,13 +355,10 @@ function tripleOf(position: Record<string, unknown>): Record<string, unknown> | 
     return isRecord(triple) ? triple : null;
 }
 
-function bigintOf(raw: string | null): bigint {
-    return raw !== null && /^\d+$/.test(raw) ? BigInt(raw) : 0n;
-}
-
 /** The tree, built from the chain in one call. */
 export async function readDomainTree(config: DomainsConfig): Promise<DomainTree> {
-    return DomainTree.from(config.root, await readHierarchy(config));
+    const {triples, truncated} = await readHierarchy(config);
+    return DomainTree.from(config.root, triples, truncated);
 }
 
 /**
@@ -341,16 +379,23 @@ export async function toolsInDomain(
         /** Ceiling on the whole walk, not a page size. */
         maxRows?: number;
     } = {},
-): Promise<{domains: string[]; tools: TaggedTool[]}> {
+): Promise<{domains: string[]; tools: TaggedTool[]; truncated: boolean}> {
     const tree = options.tree ?? (await readDomainTree(config));
     const domains = tree.subtree(domain);
-    if (domains.length === 0) return {domains: [], tools: []};
+    if (domains.length === 0) return {domains: [], tools: [], truncated: tree.truncated};
 
     const transport = transportFor(config);
-    const limit = Math.min(options.limit ?? MAX_PAGE, MAX_PAGE);
-    const maxRows = options.maxRows ?? DEFAULT_MAX_TAGGED;
+    // A limit of zero or less used to loop forever: every page was "short" of nothing and the
+    // offset never moved. Clamped to at least one row.
+    const limit = pageSize(options.limit, MAX_PAGE);
+    const maxRows = Math.max(0, options.maxRows ?? DEFAULT_MAX_TAGGED);
     const rows: unknown[] = [];
+    let truncated = tree.truncated;
     for (let offset = 0; ; offset += limit) {
+        if (rows.length >= maxRows) {
+            truncated = true;
+            break;
+        }
         const data = await transport.request(TAGGED_QUERY, {
             pid: config.tagPredicate,
             domains,
@@ -362,7 +407,7 @@ export async function toolsInDomain(
         });
         const page = Array.isArray(data["triples"]) ? data["triples"] : [];
         rows.push(...page);
-        if (page.length < limit || rows.length >= maxRows) break;
+        if (page.length < limit) break;
     }
     const tools: TaggedTool[] = [];
     for (const row of rows) {
@@ -392,9 +437,9 @@ export async function toolsInDomain(
             hostedAt,
             label: readString(subject, "label"),
             tripleId,
-            positions: sharesOf(term).positions,
+            positions: sharesOf(term, curveOf(config)).positions,
             attestorBacked,
         });
     }
-    return {domains, tools};
+    return {domains, tools, truncated};
 }

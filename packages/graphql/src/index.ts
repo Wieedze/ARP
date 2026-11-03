@@ -36,6 +36,7 @@ export {
 } from "./client.js";
 
 export {
+    AGENT_EDGE_LIMIT,
     CAPABILITIES_QUERY,
     CAPABILITY_SAMPLE_LIMIT,
     COHORT_ORDER_BY,
