@@ -10,7 +10,7 @@ import {TrustStakeCapEnforcer} from "../src/enforcers/TrustStakeCapEnforcer.sol"
 /// @dev    Run it through `scripts/deploy/deploy.sh`, which checks the chain, skips a deploy whose
 ///         recorded address already has code, and writes the result to
 ///         `data/deployments/<chainId>.json`. Directly:
-///         forge script script/DeployEnforcers.s.sol --rpc-url <rpc> --private-key $PRIVATE_KEY
+///         PRIVATE_KEY=… forge script script/DeployEnforcers.s.sol --rpc-url <rpc>  (the key from the environment, never argv)
 ///         and add `--broadcast` to send.
 ///
 ///         Testnet 13579 only, unless `ARP_MAINNET_CONFIRMED=true` is set — which `deploy.sh` does

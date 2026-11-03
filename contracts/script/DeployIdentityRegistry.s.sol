@@ -10,7 +10,7 @@ import {IdentityRegistry} from "../src/erc8004/IdentityRegistry.sol";
 ///         ChaosChain/trustless-agents-erc-ri to OpenZeppelin v5 — see ADR `0010` for the rationale
 ///         (no canonical deployment exists on Intuition Testnet).
 /// @dev    Run it through `scripts/deploy/deploy.sh --identity-registry`. Directly:
-///         forge script script/DeployIdentityRegistry.s.sol --rpc-url <rpc> --private-key $PRIVATE_KEY
+///         PRIVATE_KEY=… forge script script/DeployIdentityRegistry.s.sol --rpc-url <rpc>  (the key from the environment, never argv)
 ///         and add `--broadcast` to send.
 ///
 ///         **Testnet 13579 only, with no override.** No ARP registry is on mainnet and none is
