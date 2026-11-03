@@ -1,9 +1,8 @@
 import {useId, useState} from "react";
-import {Link, useSearchParams} from "react-router-dom";
+import {Link} from "react-router-dom";
 import {useAccount, useSwitchChain} from "wagmi";
 import type {Address} from "viem";
 
-import {AgentImport} from "./AgentImport";
 import {controlClass, linkClass, primaryControlClass} from "../lib/control-class";
 import {draftToAgentUri, useIdentityMint} from "../hooks/use-identity-mint";
 import {truncateMiddle} from "../services/trust-format";
@@ -11,146 +10,16 @@ import {mintTargetOf, type MintQuote, type MintResult} from "../services/identit
 import {ConnectPrompt} from "../components/onboarding/ConnectPrompt";
 
 /**
- * `/agent` — one door for "get my agent into ARP", with one question at the top.
+ * Minting an ERC-8004 identity with the operator's own wallet: the wallet way in on
+ * `/start/agent` (task 62, ADR `0125`), beside the sponsored `arp init --sponsored`.
  *
- * ## It was two pages that only linked to each other
+ * ## The mint goes where the chain toggle says
  *
- * `/agent` minted into ARP's own testnet registry over five steps; `/agent/import` adopted an agent
- * that already existed. Neither was in the nav and neither was linked from anywhere else, so the
- * only way to reach either was to already know the URL — the user had never seen them (2026-10-27)
- * and asked whether they were not in fact the same page.
- *
- * They are not the same page, they are the two branches of one question, and the axis is **not the
- * chain**:
- *
- * > Does your agent already have an ERC-8004 id?
- *
- * **Yes** → prove you own it and link your staking account. **No** → mint one. The branch lives in
- * the URL (`?have=yes`), so the choice is shareable and Back works, and both branches render on
- * this page rather than navigating — the reader never has to learn that two flows exist.
- *
- * ## The "no" branch mints on Base, not on our testnet
- *
- * This is the substantive change. The old flow wrote into **ARP's own copy** of the reference
- * registry on 13579, which `rules/portability.md` rule 4 calls what it is: a rehearsal prop. An
- * identity there is invisible to every other ERC-8004 reader and to Intuition's mirror.
- *
- * The canonical registry is open to anyone — measured, not assumed:
- * `scripts/measure/canonical-registry.ts` found `register()` simulating from a zero-balance address
- * on both Base and BSC. Base is the one offered, because Intuition's mirror covers Base and an
- * identity anywhere else is real and still unreadable by everything this app does next.
- *
- * The five-step testnet rig moved to `/rig` and is now gone (`docs/tasks/35` §0): minting and the
- * runtime wallet are this page, and signing a delegation is `/account`.
+ * On mainnet it mints on Base, the canonical registry Intuition's mirror reads. The registry is open
+ * to anyone — measured, not assumed: `scripts/measure/canonical-registry.ts` found `register()`
+ * simulating from a zero-balance address on both Base and BSC. On testnet it mints into ARP's own
+ * copy on 13579, the registry the sponsored path mints into as well (`services/identity-mint.ts`).
  */
-
-const BRANCH_PARAM = "have";
-
-export function YourAgent({heading = true}: {heading?: boolean} = {}) {
-    const [searchParams, setSearchParams] = useSearchParams();
-    const branch = searchParams.get(BRANCH_PARAM);
-
-    function choose(next: "yes" | "no" | null) {
-        setSearchParams(
-            (current) => {
-                const params = new URLSearchParams(current);
-                if (next === null) params.delete(BRANCH_PARAM);
-                else params.set(BRANCH_PARAM, next);
-                return params;
-            },
-            // `push`, not `replace`: picking a branch is going somewhere, and Back should return to
-            // the question. The tabs on the agent panel use `replace` for the opposite reason —
-            // a tab is a way of looking at one page, not a place.
-            {replace: false},
-        );
-    }
-
-    return (
-        <section>
-            {/* No title inside `/register`, which carries its own. */}
-            {heading ? (
-                <header className="mt-8 mb-10">
-                    <h1 className="type-display">Your agent</h1>
-                </header>
-            ) : null}
-
-            <fieldset className="border-0 p-0 m-0">
-                <legend className="text-[length:var(--text-body)] font-medium">
-                    Does your agent already have an ERC-8004 id?
-                </legend>
-                <div className="mt-4 flex flex-wrap gap-3">
-                    <Choice selected={branch === "yes"} onClick={() => choose("yes")}>
-                        Yes, it has one
-                    </Choice>
-                    <Choice selected={branch === "no"} onClick={() => choose("no")}>
-                        No, mint one
-                    </Choice>
-                </div>
-            </fieldset>
-
-            {branch === "yes" ? (
-                <div className="mt-12 border-t border-[color:var(--color-rule)] pt-2">
-                    <AgentImport />
-                </div>
-            ) : branch === "no" ? (
-                <div className="mt-12 border-t border-[color:var(--color-rule)] pt-10">
-                    <MintIdentity />
-                </div>
-            ) : (
-                <Unsure />
-            )}
-        </section>
-    );
-}
-
-function Choice({
-    selected,
-    onClick,
-    children,
-}: {
-    selected: boolean;
-    onClick: () => void;
-    children: React.ReactNode;
-}) {
-    return (
-        <button
-            type="button"
-            aria-pressed={selected}
-            onClick={onClick}
-            // Banged: `index.css`'s unlayered `button { border; color }` beats any `@layer
-            // utilities` rule, so an unbanged selected state renders identically to an unselected
-            // one. The full list of base-layer rules this collides with is in `lib/control-class`.
-            className={`px-4 py-2 text-[length:var(--text-body-sm)] ${
-                selected
-                    ? "border-[color:var(--color-accent)]! text-[color:var(--color-accent)]!"
-                    : "border-[color:var(--color-rule-strong)]! text-[color:var(--color-fg)]!"
-            }`}
-        >
-            {children}
-        </button>
-    );
-}
-
-/**
- * For a reader who does not know which branch they are in — which is most of them the first time.
- *
- * Not a pitch and not a tutorial: it says how to find out, which is a free read on a page that
- * already exists.
- */
-function Unsure() {
-    return (
-        <div className="mt-10 max-w-[64ch]">
-            <p className="text-[color:var(--color-steel)]">
-                An ERC-8004 id is a chain id and a token number —{" "}
-                <span className="font-mono">8453:2340</span>. If you have one, you minted it or
-                somebody minted it for you.
-            </p>
-            <Link to="/agents" className={`mt-4 inline-block ${linkClass}`}>
-                Look an id up →
-            </Link>
-        </div>
-    );
-}
 
 type Phase =
     | {step: "idle"}
@@ -402,7 +271,7 @@ function Confirm({
     );
 }
 
-/** The identity exists. The next step is the other branch of this page, so it links there. */
+/** The identity exists. The next step is the import branch of `/start/agent`, so it links there. */
 function Minted({result}: {result: MintResult}) {
     return (
         <div
@@ -430,7 +299,7 @@ function Minted({result}: {result: MintResult}) {
                 </a>
             </p>
             <Link
-                to={`/register?what=agent&have=yes`}
+                to="/start/agent?have=yes"
                 className={`mt-4 inline-block text-[length:var(--text-body-sm)] ${linkClass}`}
             >
                 Now link your agent wallet →

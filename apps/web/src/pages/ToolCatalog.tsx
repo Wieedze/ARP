@@ -222,10 +222,7 @@ export function ToolCatalog() {
                                 A row appears when somebody registers a tool, or an agent declares
                                 using one.
                             </p>
-                            <Link
-                                to="/register?what=tool"
-                                className={`mt-4 inline-block ${linkClass}`}
-                            >
+                            <Link to="/start/tool" className={`mt-4 inline-block ${linkClass}`}>
                                 Register the first one →
                             </Link>
                         </div>

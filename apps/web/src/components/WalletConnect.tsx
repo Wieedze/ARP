@@ -2,12 +2,11 @@ import {useEffect, useRef, useState} from "react";
 import {useNavigate} from "react-router-dom";
 import {useAccount, useConnect, useDisconnect} from "wagmi";
 
-import {useOnboarding} from "./onboarding/onboarding-context";
-
 /**
  * Wallet connection UI.
  *
- *   - Disconnected: a "Connect" button that opens the onboarding panel (ADR `0114`).
+ *   - Disconnected: nothing. A wallet is asked for by the action that signs (`ConnectPrompt`,
+ *     ADR `0128`); Get started beside this is the way in.
  *   - Connecting: button shows "Connecting…".
  *   - Connected: address truncated in mono, click reveals a small menu:
  *     "Copy address", "Account" (opens `/account`, the delegations and settings), "Disconnect"
@@ -26,7 +25,6 @@ const MENU_ITEM =
 export function WalletConnect() {
     const {address, isConnected, status} = useAccount();
     const {isPending: isConnectPending} = useConnect();
-    const onboarding = useOnboarding();
     const {disconnect} = useDisconnect();
     const navigate = useNavigate();
 
@@ -62,19 +60,7 @@ export function WalletConnect() {
         );
     }
 
-    if (!isConnected || !address) {
-        // Connect opens the onboarding, not the wallet (ADR `0114`): connecting means choosing a
-        // path and connecting one's agent, and the wallet is the panel's last line.
-        return (
-            <button
-                type="button"
-                onClick={onboarding.open}
-                className="h-7 px-2.5 font-mono text-[11px] uppercase tracking-[0.1em]"
-            >
-                Connect
-            </button>
-        );
-    }
+    if (!isConnected || !address) return null;
 
     const short = `${address.slice(0, 6)}…${address.slice(-4)}`;
 

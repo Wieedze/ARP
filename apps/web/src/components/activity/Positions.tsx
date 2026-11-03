@@ -78,7 +78,7 @@ function PositionsView({view}: {view: ProfileView}) {
                     It appears when you support a tool or an agent.
                 </p>
                 <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2">
-                    <Link to="/register?what=tool" className={linkClass}>
+                    <Link to="/start/tool" className={linkClass}>
                         Register a tool →
                     </Link>
                     <Link to="/tools" className={linkClass}>

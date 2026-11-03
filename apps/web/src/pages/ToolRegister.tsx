@@ -12,7 +12,8 @@ import {formatTrust, truncateMiddle} from "../services/trust-format";
 import {ConnectPrompt} from "../components/onboarding/ConnectPrompt";
 
 /**
- * Register a tool (`/register`).
+ * Add a tool with a wallet: the wallet way in on `/start/tool` (task 62, ADR `0125`), beside the
+ * sponsored listing.
  *
  * **One screen, two outcomes, and the operator does not choose between them** — the URL does. Paste
  * one; the atom id is a pure function of it (ADR `0054`), so the screen can say whether that atom
@@ -32,7 +33,7 @@ import {ConnectPrompt} from "../components/onboarding/ConnectPrompt";
  * question — a market on the tool itself, open to anyone for any reason". This screen is that
  * question.
  */
-export function ToolRegister({heading = true}: {heading?: boolean} = {}) {
+export function ToolRegister() {
     const actions = useToolRegister();
     const {isConnected, chainId} = useAccount();
     const {switchChainAsync, isPending: isSwitching} = useSwitchChain();
@@ -88,16 +89,6 @@ export function ToolRegister({heading = true}: {heading?: boolean} = {}) {
 
     return (
         <section>
-            {/* No title inside `/register`, which carries its own. */}
-            {heading ? (
-                <header className="mt-8 mb-12">
-                    <h1 className="type-display">Register a tool</h1>
-                    <p className="mt-3 max-w-[64ch] text-[color:var(--color-steel)]">
-                        The same URL always lands on the same market, whoever registers it.
-                    </p>
-                </header>
-            ) : null}
-
             <div className="max-w-[48rem]">
                 <label
                     htmlFor={fieldId}

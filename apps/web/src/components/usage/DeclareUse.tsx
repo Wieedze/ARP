@@ -4,6 +4,7 @@ import type {Hex} from "viem";
 import {useAccount, useSwitchChain} from "wagmi";
 
 import {Hint} from "../brand/Hint";
+import {ConnectPrompt} from "../onboarding/ConnectPrompt";
 import {useDeclareUse} from "../../hooks/use-declare-use";
 import {useChainChoice, useSetChain, type ChainChoice} from "../../lib/chain-choice";
 import {controlClass, linkClass, primaryControlClass} from "../../lib/control-class";
@@ -188,7 +189,6 @@ export function DeclareUse({
                         disabled={input.trim().length === 0 || status === "reading" || !isConnected}
                         // A disabled button is out of the tab order, so without this the only
                         // announcement of why is whatever a reader happens to pass over.
-                        aria-describedby={isConnected ? undefined : `${fieldId}-connect`}
                         className={controlClass}
                     >
                         {status === "reading" ? "Reading the chain…" : "Check it"}
@@ -203,12 +203,10 @@ export function DeclareUse({
                 </p>
 
                 {!isConnected ? (
-                    <p
-                        id={`${fieldId}-connect`}
-                        className="mt-6 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]"
-                    >
-                        Connect the wallet that owns the agent.
-                    </p>
+                    <ConnectPrompt
+                        label="Connect the wallet that owns the agent"
+                        className="mt-6"
+                    />
                 ) : null}
 
                 {error === null ? null : <Refusal error={error} />}

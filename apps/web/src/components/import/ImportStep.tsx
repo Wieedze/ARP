@@ -46,9 +46,10 @@ export function Step({
                 <span className="font-mono uppercase tracking-wider text-[length:var(--text-label)] text-[color:var(--color-steel)]">
                     Step {index}
                 </span>
-                <h2 id={`import-step-${index}`} className="font-medium">
+                {/* h3: the steps sit under the import's h2 on `/start/agent` (task 62). */}
+                <h3 id={`import-step-${index}`} className="font-medium">
                     {title}
-                </h2>
+                </h3>
                 {status === "done" ? (
                     <span className="font-mono text-[length:var(--text-label)] text-[color:var(--color-steel)]">
                         done

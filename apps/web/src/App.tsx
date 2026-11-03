@@ -25,9 +25,6 @@ const AgentTrustPanel = lazy(() =>
     import("./pages/AgentTrustPanel").then((module) => ({default: module.AgentTrustPanel})),
 );
 const Landing = lazy(() => import("./pages/Landing").then((module) => ({default: module.Landing})));
-const Register = lazy(() =>
-    import("./pages/Register").then((module) => ({default: module.Register})),
-);
 /**
  * The tool surface is split for the same reason and measured: importing it statically grew the
  * entry chunk by 16,230 bytes and dissolved the separate `erc8004-connector` chunk into it, which
@@ -75,19 +72,15 @@ function App() {
                             </Suspense>
                         }
                     />
-                    {/* One door, one question — "does your agent already have an ERC-8004 id?" — with
-                    both branches on this page. It was two routes that linked only to each other and
-                    appeared in no nav, so the only way to reach either was to know the URL (user,
-                    2026-10-27). `?have=yes|no` carries the branch, so it is shareable and Back
-                    returns to the question. */}
-                    {/* Now a branch of `/register` (user, 2026-10-29). Redirected with its query, so a
-                    link carrying `?have=` still lands on the branch it named. */}
-                    <Route path="/agent" element={<AgentRedirectToRegister />} />
+                    {/* Now a branch of `/start/agent` (task 62, ADR `0125`), by way of `/register`
+                    (2026-10-29). Redirected with its query, so a link carrying `?have=` still lands
+                    on the branch it named. */}
+                    <Route path="/agent" element={<RegisterRedirect what="agent" />} />
                     {/* The old spelling of the "yes" branch. Redirected, not removed: it is linked from
                     commits, ADRs and task files. */}
                     <Route
                         path="/agent/import"
-                        element={<Navigate to="/register?what=agent&have=yes" replace />}
+                        element={<Navigate to="/start/agent?have=yes" replace />}
                     />
                     <Route
                         path="/agents"
@@ -118,14 +111,9 @@ function App() {
                             </Suspense>
                         }
                     />
-                    <Route
-                        path="/register"
-                        element={
-                            <Suspense fallback={<RouteFallback label="register" />}>
-                                <Register />
-                            </Suspense>
-                        }
-                    />
+                    {/* Folded into `/start/<profile>` (task 62, ADR `0125`): it wrote what Get started
+                    writes, with a wallet. Redirected, not removed, for the links in commits and ADRs. */}
+                    <Route path="/register" element={<RegisterRedirect />} />
                     <Route
                         path="/tools"
                         element={
@@ -208,10 +196,19 @@ function RouteFallback({label}: {label: string}) {
 
 export default App;
 
-/** `/agent?have=yes` → `/register?what=agent&have=yes`: the branch moved, the query did not. */
-function AgentRedirectToRegister() {
+/**
+ * `/register?what=…&have=…` and `/agent?have=…` → the branch of `/start/<profile>` they named.
+ * `/register`'s forms were the wallet forms, so they land on `?with=wallet`; `have=yes` is the
+ * import, which needs no wallet choice. With no `what`, there was no branch, and `/` has the door.
+ */
+export function RegisterRedirect({what}: {what?: "agent" | "tool"}) {
     const {search} = useLocation();
     const params = new URLSearchParams(search);
-    params.set("what", "agent");
-    return <Navigate to={`/register?${params.toString()}`} replace />;
+    const profile = what ?? params.get("what");
+    if (profile === "tool") return <Navigate to="/start/tool?with=wallet" replace />;
+    if (profile !== "agent") return <Navigate to="/" replace />;
+    const have = params.get("have");
+    if (have === "yes") return <Navigate to="/start/agent?have=yes" replace />;
+    if (have === "no") return <Navigate to="/start/agent?with=wallet" replace />;
+    return <Navigate to="/start/agent" replace />;
 }
