@@ -61,13 +61,13 @@ export function listToolMessage(result: ListToolResult): string {
         case "listed":
             return result.created ? "Listed." : "Already listed.";
         case "unavailable":
-            return "The sponsor is not running.";
+            return "Adding is not available right now.";
         case "refused":
             if (result.rule === "url") return "That is not a tool or skill URL.";
             if (result.rule === "resolves" && !result.retry)
                 return "Nothing found at that URL on GitHub.";
             if (result.rule === "limit") return "Today's limit is reached. Try again tomorrow.";
             if (result.retry) return "Not answered right now. Try again.";
-            return "The sponsor could not list it.";
+            return "It could not be added.";
     }
 }

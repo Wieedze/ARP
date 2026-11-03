@@ -45,7 +45,7 @@ describe("listing a tool through the sponsor", () => {
                 {error: "e", rule: "resolves", retry: true},
                 "Not answered right now. Try again.",
             ],
-            [502, {error: "e", rule: "pin"}, "The sponsor could not list it."],
+            [502, {error: "e", rule: "pin"}, "It could not be added."],
         ] as const;
         for (const [status, body, message] of cases) {
             const result = await listTool(URL_, {
@@ -66,6 +66,6 @@ describe("listing a tool through the sponsor", () => {
             throw new TypeError("Failed to fetch");
         });
         const result = await listTool(URL_, {endpoint: "http://sponsor", fetch: down});
-        expect(listToolMessage(result)).toBe("The sponsor is not running.");
+        expect(listToolMessage(result)).toBe("Adding is not available right now.");
     });
 });
