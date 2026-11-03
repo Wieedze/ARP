@@ -51,7 +51,7 @@ export const ALL_HIERARCHY_QUERY = `query($pid: String!, $limit: Int!, $offset: 
     term_id
     subject { term_id data label }
     object { term_id data label }
-    term { vaults { position_count total_shares } }
+    term { vaults { curve_id position_count total_shares } }
   }
 }`;
 
@@ -78,6 +78,7 @@ export const TAGGED_QUERY = `query($pid: String!, $domains: [String!], $limit: I
     object { data }
     term {
       vaults {
+        curve_id
         position_count
         total_shares
         positions(where: {account_id: {_eq: $who}, shares: {_gt: "0"}}) { shares }

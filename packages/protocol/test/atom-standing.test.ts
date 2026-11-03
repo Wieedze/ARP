@@ -1,4 +1,5 @@
 import {describe, expect, it} from "vitest";
+import {INTUITION_URL} from "./helpers.js";
 
 import {getAtomStanding, getListedCapabilitiesFor} from "../src/atom-standing.js";
 import {CAPABILITY_SAMPLE_LIMIT, type GraphqlTransport} from "@arp-protocol/graphql";
@@ -88,7 +89,10 @@ function transport(data: Record<string, unknown>, seen?: {query: string; variabl
 
 describe("getAtomStanding", () => {
     it("reads the atom's own market, which is never an edge's", async () => {
-        const standing = await getAtomStanding(TAG_ATOM, {transport: transport(RECORDED)});
+        const standing = await getAtomStanding(TAG_ATOM, {
+            graphqlUrl: INTUITION_URL,
+            transport: transport(RECORDED),
+        });
         expect(standing.exists).toBe(true);
         expect(standing.label).toBe("AI");
         expect(standing.type).toBe("Thing");
@@ -98,7 +102,10 @@ describe("getAtomStanding", () => {
     });
 
     it("groups by predicate and keeps the graph's own order", async () => {
-        const standing = await getAtomStanding(TAG_ATOM, {transport: transport(RECORDED)});
+        const standing = await getAtomStanding(TAG_ATOM, {
+            graphqlUrl: INTUITION_URL,
+            transport: transport(RECORDED),
+        });
         // The query orders rows by `total_assets desc`, so the first predicate seen leads. Nothing
         // in the mapper re-sorts: the busiest predicate first is the useful order and the graph has
         // just computed it.
@@ -111,7 +118,10 @@ describe("getAtomStanding", () => {
     });
 
     it("sums within a group and not across them", async () => {
-        const standing = await getAtomStanding(TAG_ATOM, {transport: transport(RECORDED)});
+        const standing = await getAtomStanding(TAG_ATOM, {
+            graphqlUrl: INTUITION_URL,
+            transport: transport(RECORDED),
+        });
         const prefers = standing.groups.find((group) => group.predicate.label === "prefers");
         expect(prefers?.edges).toHaveLength(2);
         expect(prefers?.assets).toBe(44_902_590_221_278_750_712n + 1_000_000_000n);
@@ -125,20 +135,29 @@ describe("getAtomStanding", () => {
         // decide — it reports `1000000` with `0` positions, and the view layer is where the figure
         // is suppressed. Keeping the judgement out of here is the point: a different caller may
         // legitimately want to see the dust.
-        const standing = await getAtomStanding(TAG_ATOM, {transport: transport(RECORDED)});
+        const standing = await getAtomStanding(TAG_ATOM, {
+            graphqlUrl: INTUITION_URL,
+            transport: transport(RECORDED),
+        });
         const tag = standing.groups.find((group) => group.predicate.label === "has tag");
         expect(tag?.assets).toBe(1_000_000n);
         expect(tag?.positions).toBe(0);
     });
 
     it("keeps a subject with no label, because its id still identifies it", async () => {
-        const standing = await getAtomStanding(TAG_ATOM, {transport: transport(RECORDED)});
+        const standing = await getAtomStanding(TAG_ATOM, {
+            graphqlUrl: INTUITION_URL,
+            transport: transport(RECORDED),
+        });
         const tag = standing.groups.find((group) => group.predicate.label === "has tag");
         expect(tag?.edges[0]?.subject).toEqual({atomId: "0xs4", label: null, type: "Thing"});
     });
 
     it("reads the counter side, which is almost always empty and sometimes not", async () => {
-        const standing = await getAtomStanding(TAG_ATOM, {transport: transport(RECORDED)});
+        const standing = await getAtomStanding(TAG_ATOM, {
+            graphqlUrl: INTUITION_URL,
+            transport: transport(RECORDED),
+        });
         const better = standing.groups.find((group) => group.predicate.label === "is better than");
         expect(better?.edges[0]?.oppose.positionCount).toBe(2);
         const prefers = standing.groups.find((group) => group.predicate.label === "prefers");
@@ -150,6 +169,7 @@ describe("getAtomStanding", () => {
         // The subject is who makes the claim and the predicate is what it says. Neither has a
         // default, so a malformed row is dropped — the alternative is inventing an author.
         const standing = await getAtomStanding(TAG_ATOM, {
+            graphqlUrl: INTUITION_URL,
             transport: transport({
                 atom: RECORDED.atom,
                 triples: [
@@ -168,6 +188,7 @@ describe("getAtomStanding", () => {
         // `exists: false` is a different claim from "nobody points at it", and a caller needs both:
         // one is a typo, the other is the ordinary state of most atoms.
         const standing = await getAtomStanding(TAG_ATOM, {
+            graphqlUrl: INTUITION_URL,
             transport: transport({atom: [], triples: []}),
         });
         expect(standing.exists).toBe(false);
@@ -178,13 +199,18 @@ describe("getAtomStanding", () => {
     it("reports truncation rather than letting a prefix read as a total", async () => {
         const seen: {query: string; variables: unknown}[] = [];
         const full = await getAtomStanding(TAG_ATOM, {
+            graphqlUrl: INTUITION_URL,
             transport: transport(RECORDED, seen),
             limit: 4,
         });
         expect(full.truncated).toBe(true);
         expect(seen[0]?.variables).toMatchObject({limit: 4});
 
-        const room = await getAtomStanding(TAG_ATOM, {transport: transport(RECORDED), limit: 50});
+        const room = await getAtomStanding(TAG_ATOM, {
+            graphqlUrl: INTUITION_URL,
+            transport: transport(RECORDED),
+            limit: 50,
+        });
         expect(room.truncated).toBe(false);
     });
 
@@ -193,7 +219,11 @@ describe("getAtomStanding", () => {
         // and reporting `truncated: false` off a 250-row answer is how a short read reports itself
         // complete — the latent bug `tool-listing.ts` carried with `DEFAULT_EDGE_LIMIT = 500`.
         const seen: {query: string; variables: unknown}[] = [];
-        await getAtomStanding(TAG_ATOM, {transport: transport(RECORDED, seen), limit: 1000});
+        await getAtomStanding(TAG_ATOM, {
+            graphqlUrl: INTUITION_URL,
+            transport: transport(RECORDED, seen),
+            limit: 1000,
+        });
         expect(seen[0]?.variables).toMatchObject({limit: 250});
     });
 
@@ -202,14 +232,21 @@ describe("getAtomStanding", () => {
         // bug that broke the trust surface on 2026-09-16. A mocked transport cannot catch it, so
         // the declaration itself is asserted.
         const seen: {query: string; variables: unknown}[] = [];
-        await getAtomStanding(TAG_ATOM, {transport: transport(RECORDED, seen), curveId: 2});
+        await getAtomStanding(TAG_ATOM, {
+            graphqlUrl: INTUITION_URL,
+            transport: transport(RECORDED, seen),
+            curveId: 2,
+        });
         expect(seen[0]?.query).toContain("$curveId: numeric!");
         expect(seen[0]?.variables).toMatchObject({curveId: "2"});
     });
 
     it("filters on the object, so the edges point AT the atom", async () => {
         const seen: {query: string; variables: unknown}[] = [];
-        await getAtomStanding(TAG_ATOM, {transport: transport(RECORDED, seen)});
+        await getAtomStanding(TAG_ATOM, {
+            graphqlUrl: INTUITION_URL,
+            transport: transport(RECORDED, seen),
+        });
         expect(seen[0]?.query).toContain("object_id: {_eq: $atomId}");
         // And on no predicate, which is the whole reason this reader exists beside `getToolUsage`.
         expect(seen[0]?.query).not.toContain("predicate_id");
@@ -233,6 +270,7 @@ describe("getAtomStanding", () => {
             triples: [],
         };
         const standing = await getAtomStanding(TAG_ATOM, {
+            graphqlUrl: INTUITION_URL,
             transport: {request: async () => withEmpty},
         });
         expect(standing.url).toBeNull();
@@ -253,6 +291,7 @@ describe("getAtomStanding", () => {
             triples: [],
         };
         const standing = await getAtomStanding(TAG_ATOM, {
+            graphqlUrl: INTUITION_URL,
             transport: {request: async () => withUrl},
         });
         expect(standing.url).toBe("https://github.com/anthropics/skills");
@@ -265,6 +304,7 @@ describe("getAtomStanding", () => {
         // that; only the query text can.
         let sent = "";
         await getAtomStanding(TAG_ATOM, {
+            graphqlUrl: INTUITION_URL,
             transport: {
                 request: async (query: string) => {
                     sent = query;
@@ -284,7 +324,10 @@ describe("getListedCapabilitiesFor", () => {
      */
     it("asks for the cohort's own capability sample", async () => {
         const seen: {query: string; variables: unknown}[] = [];
-        await getListedCapabilitiesFor("0xagent", {transport: transport({atoms: []}, seen)});
+        await getListedCapabilitiesFor("0xagent", {
+            graphqlUrl: INTUITION_URL,
+            transport: transport({atoms: []}, seen),
+        });
         expect(seen[0]?.query).toContain(`limit: ${CAPABILITY_SAMPLE_LIMIT}`);
         expect(seen[0]?.variables).toEqual({
             subject: "0xagent",
@@ -294,6 +337,7 @@ describe("getListedCapabilitiesFor", () => {
 
     it("keeps the indexer's order and drops a repeated object, as the directory does", async () => {
         const ids = await getListedCapabilitiesFor("0xagent", {
+            graphqlUrl: INTUITION_URL,
             transport: transport({
                 atoms: [
                     {
@@ -311,8 +355,11 @@ describe("getListedCapabilitiesFor", () => {
     });
 
     it("is empty for an atom the graph does not hold", async () => {
-        expect(await getListedCapabilitiesFor("0xnone", {transport: transport({atoms: []})})).toEqual(
-            [],
-        );
+        expect(
+            await getListedCapabilitiesFor("0xnone", {
+                graphqlUrl: INTUITION_URL,
+                transport: transport({atoms: []}),
+            }),
+        ).toEqual([]);
     });
 });

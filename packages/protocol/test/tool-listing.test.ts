@@ -1,4 +1,5 @@
 import {describe, expect, it} from "vitest";
+import {INTUITION_URL} from "./helpers.js";
 
 import {TOOL_LISTING_QUERY, TOOL_LISTING_SPONSORED_QUERY} from "@arp-protocol/graphql";
 
@@ -67,7 +68,7 @@ describe("listTools", () => {
             edge({atomId: "0xaa", supportAssets: "5"}),
             edge({atomId: "0xbb", label: "foundry"}),
         ]);
-        const page = await listTools({transport});
+        const page = await listTools({graphqlUrl: INTUITION_URL, transport});
         expect(page.tools.map((t) => [t.atomId, t.edgeCount])).toEqual([
             ["0xaa", 2],
             ["0xbb", 1],
@@ -84,7 +85,7 @@ describe("listTools", () => {
             edge({atomId: "0xaa", supportAssets: "20", supportPositions: 3}),
             edge({atomId: "0xaa", supportAssets: "0", supportPositions: 0}),
         ]);
-        const page = await listTools({transport});
+        const page = await listTools({graphqlUrl: INTUITION_URL, transport});
         expect(page.tools[0]?.edgeCount).toBe(3);
         expect(page.tools[0]?.pricedEdges).toBe(2);
         // Assets are additive, so their sum is reported — and named as a sum.
@@ -97,7 +98,7 @@ describe("listTools", () => {
         const {transport} = transportOf([
             edge({atomId: "0xaa", supportAssets: "1000000", supportPositions: 0}),
         ]);
-        const page = await listTools({transport});
+        const page = await listTools({graphqlUrl: INTUITION_URL, transport});
         expect(page.tools[0]?.pricedEdges).toBe(0);
         expect(page.tools[0]?.supportAssetsSum).toBe(1_000_000n);
     });
@@ -108,7 +109,7 @@ describe("listTools", () => {
             edge({atomId: "0xhigh", supportAssets: "1", supportPositions: 1}),
             edge({atomId: "0xhigh", supportAssets: "1", supportPositions: 1}),
         ]);
-        const page = await listTools({transport});
+        const page = await listTools({graphqlUrl: INTUITION_URL, transport});
         expect(page.tools.map((t) => t.atomId)).toEqual(["0xhigh", "0xlow"]);
     });
 
@@ -118,7 +119,7 @@ describe("listTools", () => {
             edge({atomId: "0xhigh", supportAssets: "1", supportPositions: 1}),
             edge({atomId: "0xhigh", supportAssets: "1", supportPositions: 1}),
         ]);
-        const page = await listTools({transport, order: "conviction"});
+        const page = await listTools({graphqlUrl: INTUITION_URL, transport, order: "conviction"});
         expect(page.tools.map((t) => t.atomId)).toEqual(["0xlow", "0xhigh"]);
     });
 
@@ -129,7 +130,7 @@ describe("listTools", () => {
             edge({atomId: "0xa", supportAssets: "2"}),
             edge({atomId: "0xb", supportAssets: "999", supportPositions: 9}),
         ]);
-        const page = await listTools({transport, order: "declarations"});
+        const page = await listTools({graphqlUrl: INTUITION_URL, transport, order: "declarations"});
         expect(page.tools.map((t) => t.atomId)).toEqual(["0xa", "0xb"]);
     });
 
@@ -137,13 +138,13 @@ describe("listTools", () => {
         const {transport} = transportOf(
             Array.from({length: 4}, (_, i) => edge({atomId: `0x${i}`})),
         );
-        const page = await listTools({transport, edgeLimit: 4});
+        const page = await listTools({graphqlUrl: INTUITION_URL, transport, edgeLimit: 4});
         expect(page.truncated).toBe(true);
     });
 
     it("carries where the tool is hosted — the pointer an agent goes and visits", async () => {
         const {transport} = transportOf([edge({atomId: "0xaa", hostedAt: "https://colony.io"})]);
-        const page = await listTools({transport});
+        const page = await listTools({graphqlUrl: INTUITION_URL, transport});
         expect(page.tools[0]?.hostedAt).toBe("https://colony.io");
     });
 
@@ -155,7 +156,7 @@ describe("listTools", () => {
             edge({atomId: "0xaa", hostedAt: "null"}),
             edge({atomId: "0xbb", hostedAt: "   "}),
         ]);
-        const page = await listTools({transport});
+        const page = await listTools({graphqlUrl: INTUITION_URL, transport});
         expect(page.tools.map((t) => t.hostedAt)).toEqual([null, null]);
     });
 
@@ -165,13 +166,13 @@ describe("listTools", () => {
         // this protocol's data, so the subject constraint travels in the query rather than leaving
         // the caller to separate two populations.
         const {transport, seen} = transportOf([]);
-        await listTools({transport});
+        await listTools({graphqlUrl: INTUITION_URL, transport});
         expect(seen[0]?.["sameAs"]).toBe(SAME_AS);
     });
 
     it("sends the frozen `uses` term id and a numeric curve id", async () => {
         const {transport, seen} = transportOf([]);
-        await listTools({transport, curveId: 2});
+        await listTools({graphqlUrl: INTUITION_URL, transport, curveId: 2});
         expect(seen[0]).toMatchObject({uses: USES, curveId: "2", limit: INTUITION_MAX_PAGE});
         // `curveId` is a Hasura `numeric` and travels as a string; declaring it String! in the
         // query took the whole trust surface down once.
@@ -180,7 +181,7 @@ describe("listTools", () => {
 
     it("survives a row with no object, instead of dropping the page", async () => {
         const {transport} = transportOf([{term_id: "x", object: null}, edge({atomId: "0xaa"})]);
-        const page = await listTools({transport});
+        const page = await listTools({graphqlUrl: INTUITION_URL, transport});
         expect(page.tools).toHaveLength(1);
         expect(page.edgesRead).toBe(2);
     });
@@ -196,7 +197,7 @@ describe("listTools — proven and declared (ADR 0094 §2)", () => {
             edge({atomId: "0xaa", deposits: 2}),
             edge({atomId: "0xaa", supportAssets: "1", deposits: 1}),
         ]);
-        const page = await listTools({transport});
+        const page = await listTools({graphqlUrl: INTUITION_URL, transport});
         expect(queries[0]).toBe(TOOL_LISTING_QUERY);
         expect(seen[0]).not.toHaveProperty("sponsor");
         expect(page.sponsor).toBeNull();
@@ -210,7 +211,7 @@ describe("listTools — proven and declared (ADR 0094 §2)", () => {
             edge({atomId: "0xaa", supportAssets: "1", deposits: 2, proven: 2}),
             edge({atomId: "0xbb", deposits: 1, proven: 0}),
         ]);
-        const page = await listTools({transport, sponsor: SPONSOR});
+        const page = await listTools({graphqlUrl: INTUITION_URL, transport, sponsor: SPONSOR});
         expect(queries[0]).toBe(TOOL_LISTING_SPONSORED_QUERY);
         expect(seen[0]?.["sponsor"]).toBe(SPONSOR);
         expect(page.sponsor).toBe(SPONSOR);
@@ -224,7 +225,7 @@ describe("listTools — proven and declared (ADR 0094 §2)", () => {
         // Two aggregates are two reads of a table that can move between them. More proven than
         // total would make `declared` negative; it is clamped instead.
         const {transport} = transportOf([edge({atomId: "0xaa", deposits: 1, proven: 4})]);
-        const page = await listTools({transport, sponsor: SPONSOR});
+        const page = await listTools({graphqlUrl: INTUITION_URL, transport, sponsor: SPONSOR});
         expect(page.tools[0]?.provenDeposits).toBe(1);
         expect(page.tools[0]?.declaredDeposits).toBe(0);
     });
@@ -233,7 +234,7 @@ describe("listTools — proven and declared (ADR 0094 §2)", () => {
         const {transport} = transportOf([
             {...edge({atomId: "0xaa"}), term: {total_assets: "0", vaults: []}},
         ]);
-        const page = await listTools({transport, sponsor: SPONSOR});
+        const page = await listTools({graphqlUrl: INTUITION_URL, transport, sponsor: SPONSOR});
         expect(page.tools[0]?.edgeCount).toBe(1);
         expect(page.tools[0]?.provenDeposits).toBe(0);
         expect(page.tools[0]?.declaredDeposits).toBe(0);
@@ -243,14 +244,18 @@ describe("listTools — proven and declared (ADR 0094 §2)", () => {
         // It is matched with `_ilike`, where `%` and `_` are wildcards: a malformed value could
         // count somebody else's deposits as proven.
         const {transport, seen} = transportOf([]);
-        await expect(listTools({transport, sponsor: "0x%"})).rejects.toThrow(/not an address/);
-        await expect(listTools({transport, sponsor: `${SPONSOR}00`})).rejects.toThrow();
+        await expect(
+            listTools({graphqlUrl: INTUITION_URL, transport, sponsor: "0x%"}),
+        ).rejects.toThrow(/not an address/);
+        await expect(
+            listTools({graphqlUrl: INTUITION_URL, transport, sponsor: `${SPONSOR}00`}),
+        ).rejects.toThrow();
         expect(seen).toHaveLength(0);
     });
 
     it("treats a null sponsor as none", async () => {
         const {transport, queries} = transportOf([]);
-        await listTools({transport, sponsor: null});
+        await listTools({graphqlUrl: INTUITION_URL, transport, sponsor: null});
         expect(queries[0]).toBe(TOOL_LISTING_QUERY);
     });
 });
@@ -271,7 +276,7 @@ describe("INTUITION_MAX_PAGE", () => {
             counter_term: null,
         }));
         const {transport, seen} = transportOf(rows);
-        const page = await listTools({transport, edgeLimit: 10_000});
+        const page = await listTools({graphqlUrl: INTUITION_URL, transport, edgeLimit: 10_000});
         expect(seen[0]?.["limit"]).toBe(INTUITION_MAX_PAGE);
         expect(page.edgesRead).toBe(INTUITION_MAX_PAGE);
         expect(page.truncated).toBe(true);

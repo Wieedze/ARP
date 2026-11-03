@@ -156,7 +156,6 @@
       "name": "@arp-protocol/graphql",
       "version": "0.0.1",
       "devDependencies": {
-        "@types/node": "^24.12.2",
         "typescript": "~6.0.2",
         "vitest": "^4.1.8",
       },

@@ -1,4 +1,5 @@
 import {describe, expect, it} from "vitest";
+import {INTUITION_URL} from "./helpers.js";
 
 import {TOOL_THING_DESCRIPTION} from "../src/declare/index.js";
 import {SAME_AS, USES} from "../src/sources/intuition/terms.js";
@@ -45,7 +46,7 @@ describe("listRegisteredTools", () => {
         // them (ADR `0054`). So membership is computable and verifiable by anyone, and there is
         // nothing to store — which is ADR `0051`.
         const {transport, seen} = transportOf([]);
-        await listRegisteredTools({transport, curveId: 2});
+        await listRegisteredTools({graphqlUrl: INTUITION_URL, transport, curveId: 2});
         expect(seen[0]).toMatchObject({
             description: TOOL_THING_DESCRIPTION,
             curveId: "2",
@@ -61,7 +62,7 @@ describe("listRegisteredTools", () => {
          * in the component whose existence rests on the opposite filter being necessary.
          */
         const {transport, seen} = transportOf([]);
-        await listRegisteredTools({transport});
+        await listRegisteredTools({graphqlUrl: INTUITION_URL, transport});
         expect(seen[0]?.["uses"]).toBe(USES);
         // And the subject must carry a `same as` edge, which is the only proof on the graph that it
         // is a real agent. This clause was missing for a round, and the catalogue prints this count
@@ -71,14 +72,17 @@ describe("listRegisteredTools", () => {
 
     it("clamps an over-large limit at the indexer's silent cap", async () => {
         const {transport, seen} = transportOf([]);
-        await listRegisteredTools({transport, limit: 10_000});
+        await listRegisteredTools({graphqlUrl: INTUITION_URL, transport, limit: 10_000});
         expect(seen[0]?.["limit"]).toBe(INTUITION_MAX_PAGE);
     });
 
     it("reads an empty set as empty rather than as a failure", async () => {
         // The live state on both chains, 2026-10-21: nothing is registered yet. A catalogue that
         // cannot say "nothing here" without erroring is a catalogue nobody can launch with.
-        const page = await listRegisteredTools({transport: transportOf([]).transport});
+        const page = await listRegisteredTools({
+            graphqlUrl: INTUITION_URL,
+            transport: transportOf([]).transport,
+        });
         expect(page.tools).toEqual([]);
         expect(page.truncated).toBe(false);
     });
@@ -88,6 +92,7 @@ describe("listRegisteredTools", () => {
         // nobody staked on still reports assets. Sorting on assets alone ranks dust against
         // conviction.
         const page = await listRegisteredTools({
+            graphqlUrl: INTUITION_URL,
             transport: transportOf([
                 atom("0xaa", "dusty.example", 0, "1000000"),
                 atom("0xbb", "backed.example", 2, "500000000000000"),
@@ -101,12 +106,17 @@ describe("listRegisteredTools", () => {
         ]);
     });
 
-    it("carries the url as a pointer and normalises the literal string \"null\"", async () => {
+    it('carries the url as a pointer and normalises the literal string "null"', async () => {
         const rows = [atom("0xaa", "a.example", 1, "1"), atom("0xbb", "b.example", 1, "1")];
         (rows[1] as {value: {thing: {url: string}}}).value.thing.url = "null";
-        const page = await listRegisteredTools({transport: transportOf(rows).transport});
+        const page = await listRegisteredTools({
+            graphqlUrl: INTUITION_URL,
+            transport: transportOf(rows).transport,
+        });
         expect(page.tools[0]?.url).toBe("https://a.example");
-        expect(page.tools.find((tool: {label: string | null}) => tool.label === "b.example")?.url).toBeNull();
+        expect(
+            page.tools.find((tool: {label: string | null}) => tool.label === "b.example")?.url,
+        ).toBeNull();
     });
 
     it("reports a missing vault as zero rather than throwing", async () => {
@@ -114,6 +124,7 @@ describe("listRegisteredTools", () => {
         // same reason: 89% of mainnet `uses`-edge TRUST is on curve 2, so a curve-1 read legitimately
         // finds nothing.
         const page = await listRegisteredTools({
+            graphqlUrl: INTUITION_URL,
             transport: transportOf([atom("0xaa", "offcurve.example", null, null)]).transport,
         });
         expect(page.tools[0]?.positionCount).toBe(0);
@@ -124,6 +135,7 @@ describe("listRegisteredTools", () => {
         // Registered and declared are different facts: a person registers the atom, an agent writes
         // `(agent, uses, tool)` onto it. A tool can have either, both or neither.
         const page = await listRegisteredTools({
+            graphqlUrl: INTUITION_URL,
             transport: transportOf([atom("0xaa", "used.example", 1, "1", 4)]).transport,
             order: "declarations",
         });
@@ -159,7 +171,10 @@ describe("listRegisteredTools, paging", () => {
 
     it("reads every page, not the first one", async () => {
         const paging = pagingTransportOf(many);
-        const page = await listRegisteredTools({transport: paging.transport});
+        const page = await listRegisteredTools({
+            graphqlUrl: INTUITION_URL,
+            transport: paging.transport,
+        });
         expect(page.tools).toHaveLength(716);
         expect(page.truncated).toBe(false);
         // 716 at the 250 cap: three full pages and a short one that ends the walk.
@@ -167,13 +182,17 @@ describe("listRegisteredTools, paging", () => {
     });
 
     it("ranks over the whole set rather than over the first page", async () => {
-        const page = await listRegisteredTools({transport: pagingTransportOf(many).transport});
+        const page = await listRegisteredTools({
+            graphqlUrl: INTUITION_URL,
+            transport: pagingTransportOf(many).transport,
+        });
         // The highest position count is in the last page, so a single-page read could not find it.
         expect(page.tools[0]?.positionCount).toBe(715);
     });
 
     it("stops at maxRows and says so", async () => {
         const page = await listRegisteredTools({
+            graphqlUrl: INTUITION_URL,
             transport: pagingTransportOf(many).transport,
             maxRows: 300,
         });
@@ -183,7 +202,26 @@ describe("listRegisteredTools, paging", () => {
 
     it("asks for an offset on every request", async () => {
         const paging = pagingTransportOf(many);
-        await listRegisteredTools({transport: paging.transport, limit: 100});
+        await listRegisteredTools({
+            graphqlUrl: INTUITION_URL,
+            transport: paging.transport,
+            limit: 100,
+        });
         expect(paging.requests).toBe(8);
+    });
+});
+
+describe("listRegisteredTools — an unreadable figure is not a zero", () => {
+    it("skips a tool whose vault figures cannot be read, instead of listing it at zero", async () => {
+        const {transport} = transportOf([
+            atom("0xaa", "a.example", 1, "500"),
+            atom("0xbb", "b.example", 1, "not a number"),
+            atom("0xcc", "c.example", null, null),
+        ]);
+        const page = await listRegisteredTools({graphqlUrl: INTUITION_URL, transport});
+        expect(page.tools.map((tool: {label: string | null}) => tool.label).sort()).toEqual([
+            "a.example",
+            "c.example",
+        ]);
     });
 });

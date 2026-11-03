@@ -1,10 +1,13 @@
 import {
     createGraphqlTransport,
+    DEFAULT_TIMEOUT_MS,
     defaultFetch,
     type FetchLike,
     FIND_AGENTS_QUERY,
     type GraphqlTransport,
     isRecord,
+    readBigInt,
+    readCount,
     readString,
 } from "@arp-protocol/graphql";
 import {
@@ -16,6 +19,7 @@ import {
     SAME_AS,
     USE,
 } from "./sources/intuition/terms.js";
+import {DEFAULT_CURVE_ID} from "./sources/intuition/index.js";
 
 /**
  * Who is out there, from what agents have declared about themselves.
@@ -61,10 +65,7 @@ import {
  * matched and decides.
  */
 
-const DEFAULT_CURVE_ID = 1;
-const DEFAULT_TIMEOUT_MS = 10_000;
 const DEFAULT_LIMIT = 25;
-const INTUITION_MAINNET_GRAPHQL = "https://mainnet.intuition.sh/v1/graphql";
 
 /** The predicates an agent describes itself with. Frozen ids, never resolved by label (ADR `0015`). */
 export const CAPABILITY_PREDICATES: readonly string[] = [
@@ -107,7 +108,7 @@ export type FindAgentsPage = {
 };
 
 export type FindAgentsConfig = {
-    graphqlUrl?: string;
+    graphqlUrl: string;
     fetch?: FetchLike;
     timeoutMs?: number;
     transport?: GraphqlTransport;
@@ -122,17 +123,6 @@ export type FindAgentsConfig = {
     predicates?: readonly string[];
 };
 
-function bigintFrom(value: unknown): bigint {
-    const text =
-        typeof value === "string" ? value : typeof value === "number" ? String(value) : null;
-    if (text === null || !/^\d+$/.test(text)) return 0n;
-    return BigInt(text);
-}
-
-function numberFrom(value: unknown): number {
-    return typeof value === "number" && Number.isFinite(value) ? value : 0;
-}
-
 /**
  * @param domain What to match an agent's declared capability against, case-insensitively. `%` is
  *               the graph's wildcard, so `"defi%"` is a prefix search and `"defi"` is exact-ish.
@@ -141,7 +131,7 @@ function numberFrom(value: unknown): number {
  */
 export async function findAgents(
     domain: string,
-    config: FindAgentsConfig = {},
+    config: FindAgentsConfig,
 ): Promise<FindAgentsPage> {
     const term = domain.trim();
     if (term.length === 0) throw new Error("findAgents: domain must not be empty");
@@ -149,12 +139,12 @@ export async function findAgents(
     const transport =
         config.transport ??
         createGraphqlTransport({
-            url: config.graphqlUrl ?? INTUITION_MAINNET_GRAPHQL,
+            url: config.graphqlUrl,
             fetch: config.fetch ?? defaultFetch(),
             timeoutMs: config.timeoutMs ?? DEFAULT_TIMEOUT_MS,
         });
 
-    const curveId = config.curveId ?? DEFAULT_CURVE_ID;
+    const curveId = config.curveId ?? Number(DEFAULT_CURVE_ID);
     const limit = config.limit ?? DEFAULT_LIMIT;
 
     const data = await transport.request(FIND_AGENTS_QUERY, {
@@ -182,13 +172,15 @@ export async function findAgents(
         if (byAgent.has(atomId.toLowerCase())) continue;
 
         const vaults =
-            subject !== null && isRecord(subject["term"]) && Array.isArray(subject["term"]["vaults"])
+            subject !== null &&
+            isRecord(subject["term"]) &&
+            Array.isArray(subject["term"]["vaults"])
                 ? subject["term"]["vaults"]
                 : [];
         const vault = isRecord(vaults[0]) ? vaults[0] : null;
         const object = isRecord(row["object"]) ? row["object"] : null;
 
-        const backers = vault === null ? 0 : numberFrom(vault["position_count"]);
+        const backers = readCount(vault, "position_count") ?? 0;
         byAgent.set(atomId.toLowerCase(), {
             atomId,
             label: readString(subject, "label"),
@@ -196,7 +188,7 @@ export async function findAgents(
                 predicateId: readString(row, "predicate_id") ?? "",
                 label: readString(object, "label"),
             },
-            backingAssets: backers === 0 || vault === null ? null : bigintFrom(vault["total_assets"]),
+            backingAssets: backers === 0 ? null : readBigInt(vault, "total_assets"),
             backers,
         });
     }

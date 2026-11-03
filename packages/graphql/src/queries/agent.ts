@@ -57,11 +57,19 @@ query ResolveAgentByCaip($sameAsPredicateId: String!, $caipId: String!) {
   }
 }`;
 
+/**
+ * Rows one agent's trust surface or capability read asks for. The indexer caps a page at 250
+ * whatever is asked, so asking for exactly that and comparing the count is the only way to know
+ * the answer was cut: a read that returns this many rows reports itself `truncated`.
+ */
+export const AGENT_EDGE_LIMIT = 250;
+
 export const TRUST_SURFACE_QUERY = `
-query AgentTrustSurface($subjectId: String!, $predicateIds: [String!], $curveId: numeric!) {
+query AgentTrustSurface($subjectId: String!, $predicateIds: [String!], $curveId: numeric!, $limit: Int!) {
   triples(
     where: {subject_id: {_eq: $subjectId}, predicate_id: {_in: $predicateIds}}
     order_by: {term: {total_market_cap: desc}}
+    limit: $limit
   ) {
     term_id
     predicate { term_id label }
@@ -74,8 +82,12 @@ query AgentTrustSurface($subjectId: String!, $predicateIds: [String!], $curveId:
 }`;
 
 export const CAPABILITIES_QUERY = `
-query AgentCapabilities($subjectId: String!, $predicateIds: [String!]) {
-  triples(where: {subject_id: {_eq: $subjectId}, predicate_id: {_in: $predicateIds}}) {
+query AgentCapabilities($subjectId: String!, $predicateIds: [String!], $limit: Int!) {
+  triples(
+    where: {subject_id: {_eq: $subjectId}, predicate_id: {_in: $predicateIds}}
+    order_by: {term_id: asc}
+    limit: $limit
+  ) {
     term_id
     predicate { term_id label }
     object { term_id label ${THING} }

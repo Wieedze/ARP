@@ -22,7 +22,6 @@
         "prepublishOnly": "bun run build"
     },
     "devDependencies": {
-        "@types/node": "^24.12.2",
         "typescript": "~6.0.2",
         "vitest": "^4.1.8"
     },

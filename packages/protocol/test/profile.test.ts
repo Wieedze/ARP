@@ -5,6 +5,7 @@ import {createErc8004Client, type Erc8004Client} from "../src/client.js";
 import {isRecord} from "@arp-protocol/graphql";
 import {
     AllSourcesFailedError,
+    DOCUMENT_AGENT_MISMATCH_REASON,
     getAgentProfile,
     getAssessments,
     getCapabilities,
@@ -171,6 +172,39 @@ describe("getAgentProfile — the bare fixture (Agent 8453:6649)", () => {
 
         const signed = profile.assessments.find((entry) => entry.fetch.status === "ok");
         expect(signed?.signature.status).toBe("verified");
+    });
+});
+
+describe("getAgentProfile — a document about another agent", () => {
+    it("does not verify agent A's signed document served at agent B's resolver URL", async () => {
+        const deep3For6649 =
+            "https://api.deep3.ai/.well-known/intuition/erc8004/agents/8453/6649/erc8004-feedback-trust-assessment.json";
+        const fetchImpl = fixtureFetch({
+            [deep3For6649]: () =>
+                new Response(JSON.stringify(fixture("deep3-2340.assessment.json")), {
+                    status: 200,
+                    headers: {"content-type": "application/json"},
+                }),
+        });
+        const swapped = createErc8004Client({
+            fetch: fetchImpl,
+            sources: [
+                intuitionSource({fetch: fetchImpl, graphqlUrl: INTUITION_URL}),
+                registrySource(),
+            ],
+        });
+
+        const profile = await getAgentProfile(
+            swapped,
+            {chainId: 8453, tokenId: "6649"},
+            {now: NOW},
+        );
+        const served = profile.assessments.find((entry) => entry.fetch.status === "ok");
+        expect(served).toBeDefined();
+        expect(served?.signature.status).toBe("unverified");
+        if (served?.signature.status !== "unverified") return;
+        expect(served.signature.reason).toContain(DOCUMENT_AGENT_MISMATCH_REASON);
+        expect(served.signature.reason).toContain("/2340");
     });
 });
 

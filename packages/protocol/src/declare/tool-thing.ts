@@ -56,10 +56,16 @@ export const TOOL_THING_DESCRIPTION =
  * | a bare host gets `https://` | `github.com/x` with `https://github.com/x` | none — a schemeless paste means the web |
  * | the scheme becomes `https` | `http://…` with `https://…` | an http-only host's `url` field stops resolving |
  * | `www.` is dropped | `www.github.com` with `github.com` | a host where the two genuinely differ |
- * | a default port is dropped | `:443` with none | none — `URL` already does it |
+ * | `:443` and `:80` are dropped | `https://x:443`, `http://x:443`, `http://x:80` with `https://x` | a host serving something else on the other port |
+ * | a trailing `.` on the host is dropped | `github.com.` with `github.com` | none — it is the same DNS name |
+ * | a trailing `.git` on the path is dropped | `github.com/x/y.git` with `github.com/x/y` | a non-repository path that really ends in `.git` |
  * | the fragment is dropped | `#readme` with none | none — a fragment is a scroll position |
  * | a trailing `/` is dropped | `/x/` with `/x` | a server that distinguishes them |
  * | query keys are sorted | `?b=2&a=1` with `?a=1&b=2` | a server where order is meaningful |
+ *
+ * The last three rules were added in task 60, after checking that no URL in `data/catalogue/`
+ * (including `registered-13579.json`) has a `.git` path, a trailing-dot host or an explicit
+ * `:443`/`:80`, so no atom ARP has derived changes id.
  *
  * The path's **case is kept**. Most servers are case-sensitive there, and `github.com/Crytic` vs
  * `github.com/crytic` are the same page only because GitHub chooses to be lenient — not a rule to
@@ -83,18 +89,18 @@ export function normaliseToolUrl(input: string): string {
     }
     if (url.hostname.length === 0) throw new InvalidToolUrlError(input, "no host");
 
-    const host = url.hostname.replace(/^www\./, "");
-    const path = url.pathname === "/" ? "" : url.pathname.replace(/\/+$/, "");
+    const host = url.hostname.replace(/\.+$/, "").replace(/^www\./, "");
+    const path = url.pathname === "/" ? "" : url.pathname.replace(/\/+$/, "").replace(/\.git$/, "");
 
     const params = [...new URLSearchParams(url.search).entries()].sort(([a], [b]) =>
         a < b ? -1 : a > b ? 1 : 0,
     );
     const query = params.length === 0 ? "" : `?${new URLSearchParams(params).toString()}`;
 
-    // The port survives only when it is not the scheme's default, which `URL` has already decided:
-    // `url.port` is `""` for 443 on https. The scheme is forced to https above, so a surviving
-    // `:80` from an `http://host:80` input would be wrong — drop it with the scheme it belonged to.
-    const port = url.port === "" || url.port === "80" ? "" : `:${url.port}`;
+    // `URL` already drops the scheme's own default (`""` for 443 on https). The scheme is forced to
+    // https, so either web default is the default of the URL this returns: `http://host:443` and
+    // `http://host:80` both name `https://host`.
+    const port = url.port === "" || url.port === "80" || url.port === "443" ? "" : `:${url.port}`;
 
     return `https://${host}${port}${path}${query}`;
 }

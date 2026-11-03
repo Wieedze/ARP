@@ -140,7 +140,7 @@ export async function planToolRegistration(params: {
     url: string;
     publicClient: PublicClient;
     chain: StakeChain;
-    graphqlUrl?: string;
+    graphqlUrl: string;
     /**
      * The graph read, injectable so the planning can be tested without a network.
      *
@@ -176,9 +176,7 @@ export async function planToolRegistration(params: {
     // even when ours exists: a second atom for the same tool is worth knowing about either way.
     const lookup =
         params.lookup ??
-        intuitionToolAtomLookup(
-            params.graphqlUrl === undefined ? {} : {graphqlUrl: params.graphqlUrl},
-        );
+        intuitionToolAtomLookup({graphqlUrl: params.graphqlUrl});
     const spellings = input === normalisedUrl ? [normalisedUrl] : [input, normalisedUrl];
     const byTermId = new Map<string, ToolAtomCandidate>();
     for (const spelling of spellings) {

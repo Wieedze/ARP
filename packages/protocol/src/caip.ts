@@ -1,6 +1,7 @@
 import {getAddress, isAddress, type Address} from "viem";
 
 import type {AgentRef, ResolvedAgentRef} from "./types.js";
+import {CAIP19_ERC721} from "./identifiers.js";
 
 /**
  * The ERC-8004 Identity Registry. Deployed at the same address on Base (8453),
@@ -25,7 +26,12 @@ export function resolveRef(ref: AgentRef): ResolvedAgentRef {
     if (!Number.isInteger(ref.chainId) || ref.chainId <= 0) {
         throw new TypeError(`chainId must be a positive integer: ${String(ref.chainId)}`);
     }
-    return {chainId: ref.chainId, tokenId: ref.tokenId, registry: getAddress(registry)};
+    // Canonical decimal, so `007` and `7` are one CAIP-19 string — one atom name, not two.
+    return {
+        chainId: ref.chainId,
+        tokenId: BigInt(ref.tokenId).toString(),
+        registry: getAddress(registry),
+    };
 }
 
 /** `eip155:{chainId}/erc721:{registry}/{tokenId}` — the cross-source join key. */
@@ -36,7 +42,7 @@ export function toCaip19(ref: AgentRef | ResolvedAgentRef): string {
 
 /** Inverse of `toCaip19`. Returns null for anything that is not an ERC-721 CAIP-19 asset id. */
 export function parseCaip19(caip19: string): ResolvedAgentRef | null {
-    const match = /^eip155:(\d+)\/erc721:(0x[0-9a-fA-F]{40})\/(\d+)$/.exec(caip19);
+    const match = CAIP19_ERC721.exec(caip19);
     if (match === null) return null;
     const [, chainId, registry, tokenId] = match;
     if (chainId === undefined || registry === undefined || tokenId === undefined) return null;

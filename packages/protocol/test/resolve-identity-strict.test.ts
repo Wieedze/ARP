@@ -1,5 +1,6 @@
 import type {GraphqlTransport} from "@arp-protocol/graphql";
 import {describe, expect, it} from "vitest";
+import {INTUITION_URL} from "./helpers.js";
 
 import {resolveIdentityAtomStrict} from "../src/declare/resolve-subject.js";
 import {intuitionSource} from "../src/sources/intuition/index.js";
@@ -16,7 +17,7 @@ function source(subjects: string[]) {
             triples: subjects.map((term_id) => ({subject: {term_id, label: "agent", data: null}})),
         }),
     };
-    return intuitionSource({transport});
+    return intuitionSource({graphqlUrl: INTUITION_URL, transport});
 }
 
 describe("resolveIdentityAtomStrict", () => {

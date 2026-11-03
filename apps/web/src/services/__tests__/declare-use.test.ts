@@ -167,6 +167,7 @@ function planWith(reads: Reads = {}, overrides: Record<string, unknown> = {}) {
         object: OBJECT,
         publicClient: publicClientWith(reads),
         chain: TESTNET,
+        graphqlUrl: "https://indexer.test/graphql",
         ownership: ownedBy(OWNER) as never,
         subject: resolvesSubject as never,
         ...overrides,

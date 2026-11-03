@@ -23,9 +23,9 @@ delegated signing (see below) and is imported lazily, so a direct-mode consumer 
 ## The one call
 
 ```ts
-import {createErc8004Client, getAgentProfile} from "@arp-protocol/core";
+import {createErc8004Client, getAgentProfile, INTUITION_MAINNET_GRAPHQL} from "@arp-protocol/core";
 
-const client = createErc8004Client();
+const client = createErc8004Client({graphqlUrl: INTUITION_MAINNET_GRAPHQL});
 const profile = await getAgentProfile(client, {chainId: 8453, tokenId: "2340"});
 
 for (const entry of profile.assessments) {
@@ -56,9 +56,9 @@ Ethereum.
 Everything above is keyed by an identity. `listAgents` is the read for when you do not have one yet.
 
 ```ts
-import {createErc8004Client, listAgents} from "@arp-protocol/core";
+import {createErc8004Client, INTUITION_MAINNET_GRAPHQL, listAgents} from "@arp-protocol/core";
 
-const client = createErc8004Client();
+const client = createErc8004Client({graphqlUrl: INTUITION_MAINNET_GRAPHQL});
 const page = await listAgents(client, {order: "evidence-quantity", limit: 25, offset: 0});
 
 console.log(page.total); // ~28,700 on mainnet — the graph's count, not page.agents.length
@@ -117,7 +117,6 @@ getCapabilities(client, ref); // Capabilities[] — one per source that answered
 getMarkets(client, ref); // ClaimMarket[]
 marketCapableSources(client); // which sources can price a claim at all
 listAgents(client, options); // AgentPage — one window onto the cohort
-listingCapableSources(client); // which sources can enumerate agents at all
 ```
 
 Four functions are pure — no client, no network, no configuration. **A consumer who wants nothing
@@ -448,10 +447,11 @@ enforcers reject batch execution modes, which is the whole reason they can bound
 The guard rail is not the price of entry: you can start direct and add the delegation later without
 changing anything else.
 
-## Never signs, never sends
+## Holds no key, sends nothing
 
 No wallet client, no private key, no send path anywhere in this package. Every read is
-unauthenticated, and the write half returns unsigned calls for your own key.
+unauthenticated, and the write half returns unsigned calls for your own key. The receipt and
+sponsor-request helpers sign, but only through a signer you pass in; the package never holds one.
 
 This used to read "read-only throughout, no write path of any kind", which stopped being true when
 the planners landed. The invariant that matters is narrower and unchanged: nothing here can move

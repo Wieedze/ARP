@@ -2,6 +2,8 @@ import {getAddress, type Address, type Hex} from "viem";
 
 import {hireReceiptIsFor, verifyHireReceipt, type AnySignedHireReceipt} from "../hire-receipt.js";
 import {corroborationOf, verifyContentReceipt, type SignedContentReceipt} from "../receipt.js";
+import {ChainUnreadableError, isTransactionAbsent} from "../chain-errors.js";
+import {DECIMAL, ERC8004_REGISTRY} from "../identifiers.js";
 
 /**
  * The proofs that make a deposit eligible for ARP's sponsorship (ADR `0094` §2), and the check.
@@ -33,9 +35,12 @@ export type SponsorProof =
 
 /** Who may sign as an ERC-8004 agent: the token's holder, or the `agentWallet` it set. */
 export type AgentKeyReads = {
-    /** The holder of `agentId` in `registry`, or `null` when the token does not exist. */
+    /**
+     * The holder of `agentId` in `registry`, or `null` when the token does not exist. **Throws**
+     * when the chain cannot be read: `null` is an answer, and an outage is not one.
+     */
     ownerOf(registry: Address, agentId: bigint): Promise<Address | null>;
-    /** The agent's `agentWallet`, or `null` when none is set or the registry has none. */
+    /** The agent's `agentWallet`, or `null` when none is set or the registry has none. Throws as above. */
     agentWalletOf(registry: Address, agentId: bigint): Promise<Address | null>;
 };
 
@@ -74,7 +79,14 @@ export type ProvenProof = {
     object: {kind: "atom"; atom: Hex} | ({kind: "agent"} & AgentIdentityRef);
 };
 
-export type ProofVerdict = ProvenProof | {status: "refused"; reason: string};
+/**
+ * `refused`: the proof does not hold. `unreadable`: the chain could not be read, so nothing is
+ * known about the proof either way — a caller should answer "try again", never "rejected".
+ */
+export type ProofVerdict =
+    | ProvenProof
+    | {status: "refused"; reason: string}
+    | {status: "unreadable"; reason: string};
 
 export type ProofCheckContext = {
     /** The agent asking: the deposit's `receiver`. */
@@ -111,8 +123,6 @@ export type ProofCheckContext = {
     now: number;
 };
 
-const REGISTRY = /^eip155:([1-9][0-9]*):(0x[0-9a-fA-F]{40})$/;
-const DECIMAL = /^(0|[1-9][0-9]*)$/;
 
 /** Whether two receipt-style identity references name the same ERC-8004 token. */
 function sameAgent(a: AgentIdentityRef, b: AgentIdentityRef): boolean {
@@ -131,7 +141,7 @@ async function signsAsAgent(
     agent: AgentIdentityRef,
     context: ProofCheckContext,
 ): Promise<string | null> {
-    const match = REGISTRY.exec(agent.agentRegistry);
+    const match = ERC8004_REGISTRY.exec(agent.agentRegistry);
     const accepted = new Set(context.acceptedRegistries.map((r) => r.toLowerCase()));
     if (match === null || !accepted.has(agent.agentRegistry.toLowerCase())) {
         return `hire receipt names registry ${agent.agentRegistry}, which is not accepted`;
@@ -139,18 +149,43 @@ async function signsAsAgent(
     if (!DECIMAL.test(agent.agentId)) return `hire receipt names agent id ${agent.agentId}`;
     const registry = getAddress(match[2] ?? "");
     const id = BigInt(agent.agentId);
-    const owner = await context.agents.ownerOf(registry, id).catch(() => null);
+    const owner = await unreadableOnThrow(
+        context.agents.ownerOf(registry, id),
+        "the agent's owner",
+    );
     if (owner === null) {
         return `hire receipt names agent ${agent.agentId}, not registered in ${agent.agentRegistry}`;
     }
     if (getAddress(owner) === signer) return null;
-    const wallet = await context.agents.agentWalletOf(registry, id).catch(() => null);
+    const wallet = await unreadableOnThrow(
+        context.agents.agentWalletOf(registry, id),
+        "the agent's wallet",
+    );
     if (wallet !== null && getAddress(wallet) === signer) return null;
     return `hire receipt is signed by ${signer}, which is neither the holder nor the agentWallet of agent ${agent.agentId}`;
 }
 
 function refused(reason: string): ProofVerdict {
     return {status: "refused", reason};
+}
+
+/** A read whose every failure is the chain being unreachable: its contract returns null for "none". */
+async function unreadableOnThrow<T>(read: Promise<T>, what: string): Promise<T> {
+    try {
+        return await read;
+    } catch (error) {
+        throw new ChainUnreadableError(what, error);
+    }
+}
+
+/** A transaction read: "no such transaction" is null, anything else is the chain unreachable. */
+async function absentOrUnreadable<T>(read: Promise<T>, what: string): Promise<T | null> {
+    try {
+        return await read;
+    } catch (error) {
+        if (isTransactionAbsent(error)) return null;
+        throw new ChainUnreadableError(what, error);
+    }
 }
 
 async function checkHire(
@@ -187,11 +222,15 @@ async function checkHire(
     const notTheAgent = await signsAsAgent(callee, hired, context);
     if (notTheAgent !== null) return refused(notTheAgent);
 
-    const tx = await context.payments.getTransaction({hash: receipt.payment}).catch(() => null);
+    const tx = await absentOrUnreadable(
+        context.payments.getTransaction({hash: receipt.payment}),
+        `payment ${receipt.payment}`,
+    );
     if (tx === null) return refused(`payment ${receipt.payment} not found`);
-    const mined = await context.payments
-        .getTransactionReceipt({hash: receipt.payment})
-        .catch(() => null);
+    const mined = await absentOrUnreadable(
+        context.payments.getTransactionReceipt({hash: receipt.payment}),
+        `the receipt of payment ${receipt.payment}`,
+    );
     if (mined === null) return refused(`payment ${receipt.payment} is not mined`);
     if (mined.status !== "success") return refused(`payment ${receipt.payment} reverted`);
     if (getAddress(tx.from) !== receiver) {
@@ -263,6 +302,8 @@ export async function checkSponsorProof(
         if (proof.kind === "hire") return await checkHire(proof.receipt, context);
         if (proof.kind === "content") return await checkContent(proof.receipt, context);
     } catch (error) {
+        if (error instanceof ChainUnreadableError)
+            return {status: "unreadable", reason: error.message};
         // A proof is JSON from a stranger: a missing field throws inside a verifier, and that is a
         // refusal with a reason, never a 500.
         return refused(`proof is malformed: ${String(error).slice(0, 200)}`);

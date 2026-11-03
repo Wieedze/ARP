@@ -193,6 +193,20 @@ function narrowEip712(signature: unknown): Eip712Block | null {
     return {domain, types: narrowedTypes, primaryType, fields};
 }
 
+/**
+ * The only `payload.excludes` a verdict can rest on: the signature block
+ * itself. All three Deep3 documents (`test/fixtures/deep3-*.assessment.json`)
+ * declare exactly this.
+ */
+export const SIGNED_EXCLUSIONS: readonly string[] = ["assessment.signature"];
+
+function isSignedExclusionSet(excludes: readonly unknown[]): boolean {
+    return (
+        excludes.length === SIGNED_EXCLUSIONS.length &&
+        excludes.every((entry, index) => entry === SIGNED_EXCLUSIONS[index])
+    );
+}
+
 function computeContentHash(document: unknown, excludes: readonly string[]): Hex | null {
     let payload: unknown = document;
     for (const path of excludes) {
@@ -291,10 +305,19 @@ export async function verifyAssessmentSignature(
         return unverified(`unsupported payload hash: ${hashAlgorithm}`, declaredSigner);
     }
 
-    const excludes = readArray(payload, "excludes").filter(
-        (entry): entry is string => typeof entry === "string",
-    );
-    const contentHash = computeContentHash(document, excludes);
+    // The exclusion list is read from inside the block it excludes, so whoever
+    // serves the document can write any list there and the hash will not
+    // notice. A list that also excludes `assessment.injected` would let a
+    // mirror add that field under a provider's genuine signature. Only the one
+    // exclusion every observed provider declares is accepted.
+    const excludesRaw = readArray(payload, "excludes");
+    if (!isSignedExclusionSet(excludesRaw)) {
+        return unverified(
+            `unsupported payload excludes: only ${JSON.stringify(SIGNED_EXCLUSIONS)} is accepted`,
+            declaredSigner,
+        );
+    }
+    const contentHash = computeContentHash(document, SIGNED_EXCLUSIONS);
     if (contentHash === null) {
         return unverified(
             "could not reconstruct the signed payload: a declared exclusion path is absent or the document is not canonicalisable",

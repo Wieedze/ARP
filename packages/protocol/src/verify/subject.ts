@@ -1,4 +1,5 @@
 import type {Hex} from "viem";
+import {CAIP19_ERC721} from "../identifiers.js";
 
 /**
  * The subject of a `uses` edge, and the guard that stops the wrong atom being used.
@@ -50,7 +51,7 @@ export function asAgentIdentityAtom(
     atomId: Hex,
     resolvedFromCaip19: string,
 ): AgentIdentityAtom {
-    if (!/^eip155:\d+\/erc721:0x[0-9a-fA-F]{40}\/\d+$/.test(resolvedFromCaip19)) {
+    if (!CAIP19_ERC721.test(resolvedFromCaip19)) {
         throw new NoAgentIdentityError(resolvedFromCaip19);
     }
     return atomId as AgentIdentityAtom;

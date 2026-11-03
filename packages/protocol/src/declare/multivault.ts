@@ -421,6 +421,27 @@ export type DepositPreview = {
     assetsAfterFees: bigint;
 };
 
+/**
+ * The RPC answered for a different chain than the reader was configured for.
+ *
+ * Every cost and every term id is read from the RPC, so an RPC URL for the wrong network would
+ * price a mainnet plan at testnet costs (100x apart) or the reverse, and nothing downstream could
+ * tell.
+ */
+export class RpcChainMismatchError extends Error {
+    readonly expected: number;
+    readonly actual: number;
+
+    constructor(expected: number, actual: number) {
+        super(
+            `the RPC serves chain ${actual}, and this reader was configured for chain ${expected}`,
+        );
+        this.name = "RpcChainMismatchError";
+        this.expected = expected;
+        this.actual = actual;
+    }
+}
+
 export type MultiVaultReadsConfig = {
     /**
      * The MultiVault on the chain being written to. **Required, and deliberately not defaulted**:
@@ -437,6 +458,10 @@ export type MultiVaultReadsConfig = {
 
 /**
  * A reader backed by viem.
+ *
+ * It refuses to read from the wrong chain: a client it builds from `rpcUrl` or `transport` asks
+ * `eth_chainId` before its first read, an injected client's `chain.id` is compared at
+ * construction, and either mismatch throws `RpcChainMismatchError`.
  *
  * No `chain` is passed to `createPublicClient`: these are plain `eth_call` reads, viem does not
  * need a chain definition for them, and requiring one would mean this package carrying a
@@ -458,10 +483,35 @@ export function multiVaultReads(config: MultiVaultReadsConfig): MultiVaultReads 
 
     const contract = {address: config.address, abi: multiVaultDeclareAbi} as const;
 
+    // Built here from a bare URL or transport, the client is asked `eth_chainId` once, before the
+    // first read: a failed lookup is forgotten so the next read retries, a mismatch is remembered.
+    // An injected client is the caller's, built for a chain: its `chain.id` is compared without a
+    // round trip, and one injected with no chain is trusted as given.
+    const injected = config.client;
+    if (injected?.chain !== undefined && injected.chain.id !== config.chainId) {
+        throw new RpcChainMismatchError(config.chainId, injected.chain.id);
+    }
+    let chainChecked: Promise<void> | null = injected === undefined ? null : Promise.resolve();
+    const ensureChain = (): Promise<void> => {
+        chainChecked ??= client.getChainId().then(
+            (actual) => {
+                if (actual !== config.chainId) {
+                    throw new RpcChainMismatchError(config.chainId, actual);
+                }
+            },
+            (error: unknown) => {
+                chainChecked = null;
+                throw error;
+            },
+        );
+        return chainChecked;
+    };
+
     return {
         address: config.address,
         chainId: config.chainId,
         async atomId(atomData: Hex): Promise<Hex> {
+            await ensureChain();
             return client.readContract({
                 ...contract,
                 functionName: "calculateAtomId",
@@ -469,6 +519,7 @@ export function multiVaultReads(config: MultiVaultReadsConfig): MultiVaultReads 
             });
         },
         async tripleId(subjectId: Hex, predicateId: Hex, objectId: Hex): Promise<Hex> {
+            await ensureChain();
             return client.readContract({
                 ...contract,
                 functionName: "calculateTripleId",
@@ -476,6 +527,7 @@ export function multiVaultReads(config: MultiVaultReadsConfig): MultiVaultReads 
             });
         },
         async counterTripleId(tripleId: Hex): Promise<Hex> {
+            await ensureChain();
             return client.readContract({
                 ...contract,
                 functionName: "getCounterIdFromTripleId",
@@ -483,6 +535,7 @@ export function multiVaultReads(config: MultiVaultReadsConfig): MultiVaultReads 
             });
         },
         async termExists(termId: Hex): Promise<boolean> {
+            await ensureChain();
             return client.readContract({
                 ...contract,
                 functionName: "isTermCreated",
@@ -490,12 +543,15 @@ export function multiVaultReads(config: MultiVaultReadsConfig): MultiVaultReads 
             });
         },
         async atomCost(): Promise<bigint> {
+            await ensureChain();
             return client.readContract({...contract, functionName: "getAtomCost"});
         },
         async tripleCost(): Promise<bigint> {
+            await ensureChain();
             return client.readContract({...contract, functionName: "getTripleCost"});
         },
         async defaultCurveId(): Promise<bigint> {
+            await ensureChain();
             const curve = await client.readContract({
                 ...contract,
                 functionName: "getBondingCurveConfig",
@@ -503,6 +559,7 @@ export function multiVaultReads(config: MultiVaultReadsConfig): MultiVaultReads 
             return curve.defaultCurveId;
         },
         async minDeposit(): Promise<bigint> {
+            await ensureChain();
             const general = await client.readContract({
                 ...contract,
                 functionName: "getGeneralConfig",
@@ -510,6 +567,7 @@ export function multiVaultReads(config: MultiVaultReadsConfig): MultiVaultReads 
             return general.minDeposit;
         },
         async sharesOf(account: Address, termId: Hex, curveId: bigint): Promise<bigint> {
+            await ensureChain();
             return client.readContract({
                 ...contract,
                 functionName: "getShares",
@@ -521,6 +579,7 @@ export function multiVaultReads(config: MultiVaultReadsConfig): MultiVaultReads 
             curveId: bigint,
             shares: bigint,
         ): Promise<{assetsAfterFees: bigint; sharesUsed: bigint}> {
+            await ensureChain();
             const [assetsAfterFees, sharesUsed] = await client.readContract({
                 ...contract,
                 functionName: "previewRedeem",
@@ -529,6 +588,7 @@ export function multiVaultReads(config: MultiVaultReadsConfig): MultiVaultReads 
             return {assetsAfterFees, sharesUsed};
         },
         async previewAtomCreate(termId: Hex, assets: bigint): Promise<TermPreview> {
+            await ensureChain();
             const [shares, assetsAfterFixedFees, assetsAfterFees] = await client.readContract({
                 ...contract,
                 functionName: "previewAtomCreate",
@@ -537,6 +597,7 @@ export function multiVaultReads(config: MultiVaultReadsConfig): MultiVaultReads 
             return {shares, assetsAfterFixedFees, assetsAfterFees};
         },
         async previewTripleCreate(termId: Hex, assets: bigint): Promise<TermPreview> {
+            await ensureChain();
             const [shares, assetsAfterFixedFees, assetsAfterFees] = await client.readContract({
                 ...contract,
                 functionName: "previewTripleCreate",
@@ -549,6 +610,7 @@ export function multiVaultReads(config: MultiVaultReadsConfig): MultiVaultReads 
             curveId: bigint,
             assets: bigint,
         ): Promise<DepositPreview> {
+            await ensureChain();
             const [shares, assetsAfterFees] = await client.readContract({
                 ...contract,
                 functionName: "previewDeposit",

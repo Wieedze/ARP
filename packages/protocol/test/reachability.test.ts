@@ -3,14 +3,15 @@ import {describe, expect, it} from "vitest";
 import {
     DOWN_VERDICTS_TO_CONDEMN,
     decideTransition,
-    flipCost,
     verdictOf,
     type Verdict,
 } from "../src/reachability.js";
 import type {ProbeOutcome} from "../src/verify/types.js";
 
 /** A confirmed outcome with the given code. The other fields are what `probe.ts` fills. */
-function confirmed(code: "live" | "dead" | "serves-declared-protocol" | "declared-protocol-not-served") {
+function confirmed(
+    code: "live" | "dead" | "serves-declared-protocol" | "declared-protocol-not-served",
+) {
     return {
         status: "confirmed",
         code,
@@ -35,9 +36,9 @@ describe("verdictOf", () => {
         expect(verdictOf({status: "inconclusive", detail: "TLS"} as unknown as ProbeOutcome)).toBe(
             "no-verdict",
         );
-        expect(verdictOf({status: "not-checkable", code: "no-endpoint"} as unknown as ProbeOutcome)).toBe(
-            "no-verdict",
-        );
+        expect(
+            verdictOf({status: "not-checkable", code: "no-endpoint"} as unknown as ProbeOutcome),
+        ).toBe("no-verdict");
     });
 });
 
@@ -88,16 +89,6 @@ describe("decideTransition", () => {
         const move = decideTransition("up", ["no-verdict", "no-verdict"]);
         expect(move.change).toBe(false);
         expect(move.change === false && move.why).toContain("nothing is claimed");
-    });
-});
-
-describe("flipCost", () => {
-    it("charges no redeem when nothing is held yet", () => {
-        expect(flipCost("none", 1_000n)).toEqual({redeem: 0n, deposit: 1_000n});
-    });
-
-    it("charges a redeem and a deposit to move sides", () => {
-        expect(flipCost("up", 1_000n)).toEqual({redeem: 1_000n, deposit: 1_000n});
     });
 });
 

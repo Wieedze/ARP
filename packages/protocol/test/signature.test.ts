@@ -174,7 +174,31 @@ describe("verifyAssessmentSignature — unverified", () => {
         const verdict = await verifyAssessmentSignature(document);
         expect(verdict.status).toBe("unverified");
         if (verdict.status !== "unverified") return;
-        expect(verdict.reason).toContain("could not reconstruct");
+        expect(verdict.reason).toContain("unsupported payload excludes");
+    });
+
+    it("does not verify a field injected under a genuine signature and excluded by the document itself", async () => {
+        const document = clone("deep3-2340.assessment.json");
+        const assessment = readPath(document, ["assessment"]);
+        const payload = readPath(document, ["assessment", "signature", "payload"]);
+        if (!isRecord(assessment) || !isRecord(payload)) throw new Error("no payload block");
+        assessment["injected"] = {verdict: "trusted"};
+        payload["excludes"] = ["assessment.signature", "assessment.injected"];
+
+        const verdict = await verifyAssessmentSignature(document);
+        expect(verdict.status).toBe("unverified");
+        if (verdict.status !== "unverified") return;
+        expect(verdict.reason).toContain("unsupported payload excludes");
+    });
+
+    it("does not verify a document whose excludes list is absent", async () => {
+        const document = clone("deep3-2340.assessment.json");
+        const payload = readPath(document, ["assessment", "signature", "payload"]);
+        if (!isRecord(payload)) throw new Error("no payload block");
+        delete payload["excludes"];
+
+        const verdict = await verifyAssessmentSignature(document);
+        expect(verdict.status).toBe("unverified");
     });
 
     it("says unverified — not mismatch — when no strategy fits the struct shape", async () => {

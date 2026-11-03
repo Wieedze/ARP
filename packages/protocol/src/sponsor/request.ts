@@ -1,6 +1,7 @@
 import {getAddress, isAddress, isHex, recoverTypedDataAddress, type Address, type Hex} from "viem";
 
 import {hireDigest} from "../hire-receipt.js";
+import {DECIMAL, ERC8004_REGISTRY} from "../identifiers.js";
 
 /**
  * What an agent signs to ask ARP's sponsoring service for one deposit (ADR `0094` §3).
@@ -111,8 +112,6 @@ export async function signSponsorRequest(
     };
 }
 
-const DECIMAL = /^(0|[1-9][0-9]*)$/;
-const ERC8004_REGISTRY = /^eip155:[1-9][0-9]*:0x[0-9a-fA-F]{40}$/;
 
 function malformed(reason: string): SponsorRequestVerdict {
     return {status: "malformed", reason};

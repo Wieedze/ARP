@@ -48,3 +48,20 @@ describe("toCaip19 / parseCaip19", () => {
         expect(parseCaip19("")).toBeNull();
     });
 });
+
+describe("one spelling per token id", () => {
+    const REGISTRY = "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432";
+
+    it("canonicalises a leading-zero token id, so 007 and 7 are one CAIP-19 string", () => {
+        expect(resolveRef({chainId: 8453, tokenId: "007"}).tokenId).toBe("7");
+        expect(toCaip19({chainId: 8453, tokenId: "007"})).toBe(
+            toCaip19({chainId: 8453, tokenId: "7"}),
+        );
+    });
+
+    it("rejects a leading zero in a CAIP-19 string, in the chain id or the token id", () => {
+        expect(parseCaip19(`eip155:8453/erc721:${REGISTRY}/007`)).toBeNull();
+        expect(parseCaip19(`eip155:08453/erc721:${REGISTRY}/7`)).toBeNull();
+        expect(parseCaip19(`eip155:8453/erc721:${REGISTRY}/0`)).not.toBeNull();
+    });
+});
