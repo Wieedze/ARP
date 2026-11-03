@@ -13,7 +13,7 @@ import {readClaimVaults, type ClaimVaults} from "../services/trust-stake";
  * until there is a triple and a curve id — nothing here fires on mount without
  * both.
  */
-export function claimVaultsQueryOptions(
+function claimVaultsQueryOptions(
     chain: {chainId: number; client: PublicClient; multiVault: Address},
     params: {tripleId: Hex | null; curveId: bigint | null; account: Address | null},
 ) {

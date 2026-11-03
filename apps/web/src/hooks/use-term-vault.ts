@@ -13,7 +13,7 @@ import {readVaultPosition, type VaultPosition} from "../services/trust-stake";
  *
  * Disabled until there is a term and a curve id — nothing here fires on mount without both.
  */
-export function termVaultQueryOptions(
+function termVaultQueryOptions(
     chain: {chainId: number; client: PublicClient; multiVault: Address},
     params: {termId: Hex | null; curveId: bigint | null; account: Address | null},
 ) {

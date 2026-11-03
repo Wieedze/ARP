@@ -22,8 +22,8 @@ import type {Address} from "viem";
  * provider-specific `method` block rather than anywhere standardised.
  */
 
-export const REGISTRY: Address = "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432";
-export const DEEP3_SIGNER: Address = "0x27A6265e6daf8d9935A3031f2E7cDC4bDFbe2Ebe";
+const REGISTRY: Address = "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432";
+const DEEP3_SIGNER: Address = "0x27A6265e6daf8d9935A3031f2E7cDC4bDFbe2Ebe";
 
 export const DEEP3_TRIPLE = `0x${"11".repeat(32)}`;
 export const ASTERPAY_TRIPLE = `0x${"22".repeat(32)}`;
@@ -65,7 +65,7 @@ export function claimMarket(
     };
 }
 
-export function providerClaim(params: {
+function providerClaim(params: {
     relation: ClaimRelation;
     handle: string;
     providerName: string;

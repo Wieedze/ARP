@@ -15,7 +15,7 @@ import {activityLog} from "./activity-log";
 import {AgentFeed, type ReceiptRead} from "./agent-feed";
 
 const configured: string | undefined = import.meta.env.VITE_ARP_ACTIVITY_URL;
-export const AGENT_FEED_URL: string | undefined =
+const AGENT_FEED_URL: string | undefined =
     configured !== undefined && configured.length > 0
         ? configured
         : import.meta.env.DEV

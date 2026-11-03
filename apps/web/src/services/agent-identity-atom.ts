@@ -52,7 +52,7 @@ import {waitAndRecord} from "./tx-record";
 export type IdentityAtomSubmission = {txs: Hex[]; plan: IdentityAtomPlan};
 
 /** A guard refused. The UI branches on `code` rather than parsing a message. */
-export class IdentityAtomGuardError extends Error {
+class IdentityAtomGuardError extends Error {
     readonly code: "wrong-chain" | "cost-above-ceiling" | "nothing-to-do";
 
     constructor(code: IdentityAtomGuardError["code"], message: string) {
