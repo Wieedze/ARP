@@ -70,6 +70,7 @@ import { redactUrls, refuseForeignRequest } from '@arp-protocol/core/node';
 import { getAddress, isAddress, type Address, type Hex } from 'viem';
 
 import type { ToolResolution } from './github.ts';
+import type { RepoSpelling } from './indexer.ts';
 import type { SponsorLedger } from './ledger.ts';
 import { createContext, json, readBody, REGISTRY } from './routes/context.ts';
 import { deposit } from './routes/deposit.ts';
@@ -165,7 +166,7 @@ export type SponsorOptions = {
    */
   resolveTool?: ((url: string) => Promise<ToolResolution>) | null;
   /** The spellings of a GitHub `owner/repo` already on the graph, matched case-insensitively. */
-  repoSpellings?: ((repo: string) => Promise<string[]>) | null;
+  repoSpellings?: ((repo: string) => Promise<RepoSpelling[]>) | null;
   /** Milliseconds. Injected so a test can move the day. */
   now?: () => number;
   /** Where a failed request's detail goes, redacted. `console.error` by default. */

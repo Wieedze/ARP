@@ -1639,7 +1639,10 @@ describe('POST /list-tool', () => {
       w.terms.add(id.toLowerCase());
     const service = listing(w, {
       resolveTool: async () => ({ ok: true, fullName: 'Leonxlnx/taste-skill' }),
-      repoSpellings: async () => ['leonxlnx/taste-skill'],
+      repoSpellings: async () => [
+        { spelling: 'LEONXLNX/taste-skill', termId: `0x${'99'.repeat(32)}` },
+        { spelling: 'leonxlnx/taste-skill', termId: seeded.repository!.atomId },
+      ],
     });
     for (const url of [
       'https://github.com/leonxlnx/taste-skill?skill=design-taste-frontend',

@@ -1,5 +1,6 @@
 import {
   ANONYMOUS_LISTER,
+  atomDataForUri,
   canonicalToolUrl,
   checkListToolLimits,
   chooseRepoSpelling,
@@ -7,6 +8,7 @@ import {
   isToolUrl,
   planToolListing,
   thingUri,
+  toolAtomUri,
   verifyListToolRequest,
   type SignedListToolRequest,
 } from '@arp-protocol/core';
@@ -88,7 +90,17 @@ export async function listTool(ctx: SponsorContext, body: Body): Promise<Respons
   if (asked !== null) {
     let existing: string[];
     try {
-      existing = (await options.repoSpellings?.(found.fullName ?? asked)) ?? [];
+      const candidates = (await options.repoSpellings?.(found.fullName ?? asked)) ?? [];
+      // Kept only when the indexer's atom is the repository atom this spelling computes to.
+      const checked = await Promise.all(
+        candidates.map(async ({ spelling, termId }) => {
+          const id = await reads.atomId(
+            atomDataForUri(toolAtomUri(`https://github.com/${spelling}`)),
+          );
+          return id.toLowerCase() === termId.toLowerCase() ? spelling : null;
+        }),
+      );
+      existing = checked.filter((spelling): spelling is string => spelling !== null);
     } catch (error) {
       return chainUnreadable(String(error instanceof Error ? error.message : error));
     }
