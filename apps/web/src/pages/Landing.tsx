@@ -21,7 +21,7 @@ import {parseToolLabel, primaryNameOf} from "../lib/tool-label";
 import {useOnboarding} from "../components/onboarding/onboarding-context";
 
 /**
- * `/` — the front page, as six scenes that hand over through Saffron.
+ * `/` — the front page, as five scenes that hand over through Saffron (six until task 53).
  *
  * ## Where it comes from
  *
@@ -724,7 +724,7 @@ function SceneBuild() {
                     {text: "Plug in without asking anyone."},
                     {text: "It lives on a public chain, not on our servers.", dim: true},
                 ]}
-                figure="Fig. 04 · build against it"
+                figure="Fig. 03 · build against it"
             />
             <div className="grid gap-5 lg:grid-cols-2">
                 {COLUMNS.map((column, columnIndex) => (

@@ -198,6 +198,9 @@ export function SceneDeck({children}: {children: ReactNode}) {
          *  non-null narrowing of `deck` into a closure created after the guard, but not into a
          *  hoisted function declaration, which it has to assume could run first. */
         const owns = (): boolean => {
+            // A modal sheet over the page (the onboarding, ADR `0114`) owns the gesture: these
+            // listeners are on `window`, so `inert` on the page does not stop them.
+            if (document.body.dataset.modal === "open") return false;
             const box = deck.getBoundingClientRect();
             return box.top <= NAV + 1 && box.bottom >= window.innerHeight - 1;
         };

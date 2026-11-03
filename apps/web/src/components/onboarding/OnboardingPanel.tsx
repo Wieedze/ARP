@@ -1,4 +1,5 @@
-import {useEffect, useRef, useState, type ReactNode} from "react";
+import {useCallback, useEffect, useMemo, useRef, useState, type ReactNode} from "react";
+import {createPortal} from "react-dom";
 import {Link} from "react-router-dom";
 import {useConnect} from "wagmi";
 
@@ -12,13 +13,46 @@ import {OnboardingContext} from "./onboarding-context";
  *
  * A full-page sheet on the page's own ground, not a translucent overlay: `rules/ui.md` allows no
  * shadow and no glow, and a sheet needs neither.
+ *
+ * **It is modal for real**, not only by `aria-modal`. It renders outside `#root` through a portal,
+ * and while it is open `#root` is `inert`, so Tab and a screen reader's browse mode cannot reach
+ * the page hidden under it. The page does not scroll, `body[data-modal="open"]` tells the landing's
+ * `SceneDeck` to leave the wheel alone (its listeners are on `window`, which `inert` does not
+ * stop), and on close the focus goes back to whatever opened the sheet.
  */
 export function OnboardingProvider({children}: {children: ReactNode}) {
     const [isOpen, setIsOpen] = useState(false);
+    const opener = useRef<HTMLElement | null>(null);
+
+    const open = useCallback(() => {
+        opener.current =
+            document.activeElement instanceof HTMLElement ? document.activeElement : null;
+        setIsOpen(true);
+    }, []);
+    const close = useCallback(() => setIsOpen(false), []);
+    const value = useMemo(() => ({open}), [open]);
+
+    useEffect(() => {
+        if (!isOpen) return;
+        const root = document.getElementById("root");
+        root?.setAttribute("inert", "");
+        root?.setAttribute("aria-hidden", "true");
+        document.body.dataset.modal = "open";
+        const overflow = document.body.style.overflow;
+        document.body.style.overflow = "hidden";
+        return () => {
+            root?.removeAttribute("inert");
+            root?.removeAttribute("aria-hidden");
+            delete document.body.dataset.modal;
+            document.body.style.overflow = overflow;
+            opener.current?.focus();
+        };
+    }, [isOpen]);
+
     return (
-        <OnboardingContext.Provider value={{open: () => setIsOpen(true)}}>
+        <OnboardingContext.Provider value={value}>
             {children}
-            {isOpen && <OnboardingPanel onClose={() => setIsOpen(false)} />}
+            {isOpen && createPortal(<OnboardingPanel onClose={close} />, document.body)}
         </OnboardingContext.Provider>
     );
 }
@@ -29,8 +63,12 @@ function OnboardingPanel({onClose}: {onClose: () => void}) {
     const wallet =
         connectors.find((c) => c.id === "metaMask" || c.id === "injected") ?? connectors[0];
 
+    // Once, on mount: a re-render must not pull the focus back to the first path.
     useEffect(() => {
         first.current?.focus();
+    }, []);
+
+    useEffect(() => {
         function onKey(event: KeyboardEvent) {
             if (event.key === "Escape") onClose();
         }

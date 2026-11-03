@@ -35,4 +35,23 @@ describe("the onboarding panel", () => {
         fireEvent.keyDown(window, {key: "Escape"});
         expect(screen.queryByRole("dialog")).toBeNull();
     });
+
+    it("holds the page still while open, and gives the focus back to Connect on close", async () => {
+        renderWithProviders(
+            <OnboardingProvider>
+                <WalletConnect />
+            </OnboardingProvider>,
+        );
+        const connect = await screen.findByRole("button", {name: "Connect"});
+        connect.focus();
+        fireEvent.click(connect);
+        await screen.findByRole("dialog");
+        // `SceneDeck` reads this flag and leaves the wheel alone while the sheet is up.
+        expect(document.body.dataset.modal).toBe("open");
+        expect(document.body.style.overflow).toBe("hidden");
+
+        fireEvent.click(screen.getByRole("button", {name: "Close"}));
+        expect(document.body.dataset.modal).toBeUndefined();
+        expect(document.activeElement).toBe(screen.getByRole("button", {name: "Connect"}));
+    });
 });

@@ -24,6 +24,9 @@ asks for a commitment before showing anything loses its reader.
    convenience. **Amended the same evening (user, 2026-11-02):** the panel opens from the nav's
    Connect button and from Get started on the landing's first screen, rather than sitting as scene
    4, which is gone. The wallet is the panel's last line, "I have a wallet".
+   The hero's button reads "Get started": my wording, not the user's, chosen over the copy rule's
+   "Get started today!" example because it names the act and makes no promise. `rules/ui.md`'s
+   scroll bullet now says the deck has five scenes.
 2. **The action is gated, not the read.** Every index page stays open. Declaring, supporting,
    adding a tool and the personal pages open the onboarding first, until the visitor has done it
    once.

@@ -27,7 +27,7 @@ The UI must not look like a generic shadcn/ui starter, a v0.dev export, or a Ver
   surface always means "an agent".
 - Emoji in body copy or icons
 - "How it works" scrollytelling sections. **Amended 2026-10-28** (ADRs `0066`, `0069`): `/` is now
-  a six-scene pinned sequence, which is scrollytelling, so this bullet has to say what it still
+  a pinned scene sequence (six scenes, five since task 53, ADR `0114`), which is scrollytelling, so this bullet has to say what it still
   rejects. It rejects a scroll-triggered **section** bolted onto an ordinary page to illustrate the
   product's mechanics — the template signal is the decoration, not the scroll. What makes the deck
   not that: each scene **states** a mechanism or **reads a figure off the chain**, and the figures
