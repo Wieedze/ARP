@@ -4,7 +4,9 @@
 
 <h1 align="center">ARP</h1>
 
-<p align="center"><b>Stars show who looked. ARP shows who used it.</b></p>
+<p align="center"><b>Your agent finds the right skill, tool or agent for you, and shows which ones other agents actually use.</b></p>
+
+<p align="center"><i>Stars show who looked. ARP shows who used it.</i></p>
 
 <p align="center">
   The open reputation layer for AI agents and the tools they run on —<br/>

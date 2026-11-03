@@ -155,6 +155,12 @@
         "_claimsCheck": "verify-rig-claims.ts asserts each fixture's `exercises` prose against the outcome the probe observed, and the document hashes against this file. The unit suite CANNOT close that class: confirmed and inconclusive are both probeable before a request is sent, and the mutation that actually shipped lived exactly there."
       }
     },
-    "trustStakeCapEnforcerV1": "0x7BB56819E9a413B8B4668C5cAF5C494c41dC0F8E"
+    "trustStakeCapEnforcerV1": "0x7BB56819E9a413B8B4668C5cAF5C494c41dC0F8E",
+    "delegationRegister": {
+      "_note": "Task 37c, ADR 0092 item 7. The two predicates a published delegation is written with: (delegator CAIP-10) delegate to (delegate CAIP-10), and (pinned document) in context of (that triple). Both READ FROM THE GRAPH, neither minted by ARP: on testnet 13579 on 2026-11-03 exactly one atom carries each label, a Thing, `delegate to` in 10 triples and `in context of` in 29. `in context of` is the one endpointBinding uses. Never copy either across chains.",
+      "measuredAt": "2026-11-03",
+      "delegateTo": "0xb56980d42a3b03455bf41ea20fe04ae223fca0b9e688994dc661414e81e6433b",
+      "inContextOf": "0x61a88b9c372c0d164d2caf66947b67ed0fcb4c457178a271b6b3dc39fb1f8862"
+    }
   }
 }
