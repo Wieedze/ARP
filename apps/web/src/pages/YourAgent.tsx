@@ -8,6 +8,7 @@ import {controlClass, linkClass, primaryControlClass} from "../lib/control-class
 import {draftToAgentUri, useIdentityMint} from "../hooks/use-identity-mint";
 import {truncateMiddle} from "../services/trust-format";
 import {mintTargetOf, type MintQuote, type MintResult} from "../services/identity-mint";
+import {ConnectPrompt} from "../components/onboarding/ConnectPrompt";
 
 /**
  * `/agent` — one door for "get my agent into ARP", with one question at the top.
@@ -250,9 +251,7 @@ export function MintIdentity() {
             </dl>
 
             {!isConnected || address === undefined ? (
-                <p className="mt-6 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
-                    Connect a wallet to mint.
-                </p>
+                <ConnectPrompt label="Connect a wallet to mint" className="mt-6" />
             ) : !onMintChain ? (
                 <div className="mt-6">
                     <p className="max-w-[60ch] text-[length:var(--text-body-sm)]">

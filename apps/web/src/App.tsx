@@ -45,6 +45,10 @@ const SearchPage = lazy(() =>
 const ToolCatalog = lazy(() =>
     import("./pages/ToolCatalog").then((module) => ({default: module.ToolCatalog})),
 );
+/** The three paths opened from scene 4 of `/` (task 53). */
+const StartPage = lazy(() =>
+    import("./pages/StartPage").then((module) => ({default: module.StartPage})),
+);
 
 function App() {
     return (
@@ -148,6 +152,14 @@ function App() {
                     ADRs and in whatever anybody bookmarked. `AtomRedirect` because `Navigate` cannot
                     carry a param through. */}
                     <Route path="/tool/atom/:atomId" element={<AtomRedirect />} />
+                    <Route
+                        path="/start/:profile"
+                        element={
+                            <Suspense fallback={<RouteFallback label="your path" />}>
+                                <StartPage />
+                            </Suspense>
+                        }
+                    />
                     {/* One field for both indexes (task 48). */}
                     <Route
                         path="/search"

@@ -18,9 +18,10 @@ import {groupRecent} from "../services/recent-declarations-view";
 import {formatTrust, relativeDay, truncateMiddle} from "../services/trust-format";
 import {cssVars} from "../lib/css-vars";
 import {parseToolLabel, primaryNameOf} from "../lib/tool-label";
+import {useOnboarding} from "../components/onboarding/onboarding-context";
 
 /**
- * `/` — the front page, as six scenes that hand over through Saffron.
+ * `/` — the front page, as five scenes that hand over through Saffron (six until task 53).
  *
  * ## Where it comes from
  *
@@ -30,7 +31,8 @@ import {parseToolLabel, primaryNameOf} from "../lib/tool-label";
  * été fait dans le design »_. So **the copy here is the reference's copy**, to the word, and the
  * four ADRs `0066`–`0069` record the seven decisions it carries that were his rather than ours.
  *
- * The scenes, in order: Pulse · What you see · Why · For you · No score · Build.
+ * The scenes, in order: Pulse · What you see · Why · No score · Build. Scene 4 left on
+ * 2026-11-02 (task 53): the onboarding moved to the first screen, behind Get started.
  * `Fig. 02 · the evidence ladder` is gone (ADR `0069`), and so are eleven sentences listed there.
  *
  * ## Real data or nothing
@@ -53,7 +55,8 @@ import {parseToolLabel, primaryNameOf} from "../lib/tool-label";
  * says testnet): `getTripleCost()` is 0.1 and `getGeneralConfig().minDeposit` is 0.01, so the fee
  * is 0.1 and the floor is 0.11. The reference hardcodes the same two numbers, which is why they
  * were on its sample list and why they look invented. Measured on the running page, 2026-10-28:
- * the DOM contains exactly those two amounts and zero sample names.
+ * the DOM contains exactly those two amounts and zero sample names. Since task 53 only the fee is
+ * printed: the floor sat in scene 4's declare card, which is gone.
  */
 /**
  * How many declarations the page asks for.
@@ -89,11 +92,7 @@ export function Landing() {
 
     const read = readOf(recent);
     // An em dash until the chain answers. A placeholder figure here would be the copy this read
-    // exists to remove — and **one figure, used at both sites**, because the page carried this
-    // number twice and only one copy was corrected: the act card said `0.1 TRUST` with the chain's
-    // symbol interpolated beside it, which looked chain-aware while staying fixed. On testnet the
-    // two sites were 100× apart, eleven inches apart on screen (`rules/claims.md` §5).
-    const floor = cost.data === undefined ? "—" : `${formatTrust(cost.data.floor)} ${chain.symbol}`;
+    // exists to remove. The floor (fee + deposit) left the page with scene 4's four jobs (task 53).
     // The **fee**, not the floor, for the first beat of Fig. 02. That beat says the money does not
     // come back, and only the fee half is: the floor is fee + deposit and the deposit is
     // redeemable. Printing the floor there called a redeemable deposit non-recoverable.
@@ -104,7 +103,6 @@ export function Landing() {
             <ScenePulse read={read} />
             <SceneRecord read={read} />
             <SceneWhy fee={fee} />
-            <SceneJobs floor={floor} />
             <SceneManifesto />
             <SceneBuild />
         </SceneDeck>
@@ -129,6 +127,7 @@ export function Landing() {
  */
 function ScenePulse({read}: {read: Read<RecentDeclaration[]>}) {
     const {pinned} = useScene();
+    const onboarding = useOnboarding();
 
     return (
         <section className="relative">
@@ -156,8 +155,13 @@ function ScenePulse({read}: {read: Read<RecentDeclaration[]>}) {
                     the user, 2026-10-29: the call to action follows the title directly. */}
                 <Reveal index={1} afterMs={AFTER_TITLE}>
                     <div className="flex flex-wrap items-center gap-5">
-                        <Link to="/agents" className={heroControlClass}>
-                            Open the agent index
+                        {/* The onboarding, on the first screen (task 53, ADR `0114`). It was scene
+                            4 for one evening; the user wanted it where a visitor lands. */}
+                        <button type="button" onClick={onboarding.open} className={heroControlClass}>
+                            Get started
+                        </button>
+                        <Link to="/agents" className={`font-mono text-[12px] ${linkClass}`}>
+                            Open the agent index →
                         </Link>
                     </div>
                 </Reveal>
@@ -616,76 +620,6 @@ function GrowthDiagram() {
 }
 
 /* -------------------------------------------------------------------------- */
-/* Scene 4 — For you                                                          */
-/* -------------------------------------------------------------------------- */
-
-/**
- * The four jobs, reading first because reading is free.
- *
- * It replaces "Three ways to add a beat", whose three acts all required a wallet under the heading
- * "Each one costs you something" — a page whose first offer costs money has asked for a commitment
- * before it has shown anything (ADR `0069`).
- *
- * **`be hired` promises nothing.** ADR `0060` took hire and pay out of scope: ARP records a use, it
- * does not broker one. The card says other agents can find yours and call it, and that ARP hosts
- * nothing. It may not say more than that.
- */
-function SceneJobs({floor}: {floor: string}) {
-    return (
-        <section>
-            <SceneHead
-                lines={[{text: "Start by reading."}, {text: "It costs nothing.", dim: true}]}
-                figure="Fig. 03 · four things you can do"
-            />
-            <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-                {jobsFor(floor).map((job, index) => (
-                    <Reveal key={job.n} index={2 + index} className="flex">
-                        <article
-                            className={`flex flex-1 flex-col gap-4 rounded-[var(--radius-card)] border p-5 ${
-                                job.primary
-                                    ? "border-[color:var(--color-accent)]"
-                                    : "border-[color:var(--color-rule)]"
-                            }`}
-                        >
-                            <span className="font-mono text-[length:var(--text-label)] uppercase tracking-[0.08em] text-[color:var(--color-steel)]">
-                                {job.n}
-                            </span>
-                            <h3 className="type-face text-[20px]">{job.title}</h3>
-                            <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 font-mono text-[length:var(--text-body-sm)]">
-                                {job.terms.map(([term, value]) => (
-                                    <div key={term} className="contents">
-                                        <dt className="text-[color:var(--color-steel)]">{term}</dt>
-                                        {/* The one figure on this page that wears the accent. It
-                                            is the primary action's own cost, inside the primary
-                                            action's own card, which is what `rules/ui.md` spends
-                                            the accent on — and the reference puts it here too. */}
-                                        <dd
-                                            className={`text-right ${
-                                                job.primary && term === "Costs from"
-                                                    ? "text-[color:var(--color-accent)]"
-                                                    : ""
-                                            }`}
-                                        >
-                                            {value}
-                                        </dd>
-                                    </div>
-                                ))}
-                            </dl>
-                            <Link
-                                to={job.to}
-                                className={`mt-auto text-[length:var(--text-body-sm)] ${linkClass}`}
-                            >
-                                {job.cta} →
-                            </Link>
-                        </article>
-                    </Reveal>
-                ))}
-            </div>
-        </section>
-    );
-}
-
-/* -------------------------------------------------------------------------- */
 /* Scene 5 — No score                                                         */
 /* -------------------------------------------------------------------------- */
 
@@ -790,7 +724,7 @@ function SceneBuild() {
                     {text: "Plug in without asking anyone."},
                     {text: "It lives on a public chain, not on our servers.", dim: true},
                 ]}
-                figure="Fig. 04 · build against it"
+                figure="Fig. 03 · build against it"
             />
             <div className="grid gap-5 lg:grid-cols-2">
                 {COLUMNS.map((column, columnIndex) => (
@@ -951,69 +885,4 @@ function stepsFor(fee: string) {
             line: "Each supporter after you pays a higher price. The tool's record grows, and so does your agent's, which supported it first.",
         },
     ] as const;
-}
-
-/**
- * The four jobs of Fig. 03. Each one is a page that exists — a card for a job nobody can do would
- * be a brochure.
- *
- * `declare` takes the cost because **the cost is a chain fact, not a copy**. It says **from**,
- * because a declaration also pays `getAtomCost()` for any of the three atoms that does not exist
- * yet, and it is the fee **plus** `minDeposit`: the fee alone seeds a term with `minShare` and zero
- * positions (ADR `0053`), so calling the fee the floor understates it by half on testnet.
- */
-function jobsFor(floor: string) {
-    return [
-        {
-            n: "01 · check",
-            title: "See who paid to stand behind an agent or a tool",
-            primary: false,
-            to: "/agents",
-            cta: "Open the index",
-            terms: [
-                ["Needs", "nothing"],
-                ["Wallet", "no"],
-            ],
-        },
-        {
-            n: "02 · declare",
-            title: "Say what your agent used",
-            primary: true,
-            to: "/tools",
-            cta: "Find a tool",
-            terms: [
-                ["Costs from", floor],
-                ["Needs", "wallet + ERC-8004 id"],
-            ],
-        },
-        {
-            n: "03 · list",
-            title: "Add a tool that is not listed yet",
-            primary: false,
-            to: "/register",
-            cta: "Add a tool",
-            terms: [
-                ["You give", "its URL"],
-                ["Needs", "a wallet with TRUST"],
-            ],
-        },
-        {
-            n: "04 · be hired",
-            title: "Let other agents find yours and call it",
-            primary: false,
-            to: "/agent",
-            cta: "Your agent",
-            terms: [
-                ["Needs", "an endpoint you run"],
-                ["ARP hosts", "nothing"],
-            ],
-        },
-    ] as const satisfies readonly {
-        n: string;
-        title: string;
-        primary: boolean;
-        to: string;
-        cta: string;
-        terms: readonly (readonly [string, string])[];
-    }[];
 }

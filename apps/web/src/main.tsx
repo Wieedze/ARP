@@ -3,6 +3,7 @@ import {createRoot} from "react-dom/client";
 import {QueryClient, QueryClientProvider} from "@tanstack/react-query";
 
 import {ChainChoiceProvider} from "./lib/ChainChoiceProvider";
+import {OnboardingProvider} from "./components/onboarding/OnboardingPanel";
 import {BrowserRouter} from "react-router-dom";
 import {WagmiProvider} from "wagmi";
 
@@ -27,7 +28,10 @@ createRoot(document.getElementById("root")!).render(
                 {/* Inside the query client, because every read keyed by chain lives under it. */}
                 <ChainChoiceProvider>
                     <BrowserRouter>
-                        <App />
+                        {/* Inside the router: the panel's paths are links. */}
+                        <OnboardingProvider>
+                            <App />
+                        </OnboardingProvider>
                     </BrowserRouter>
                 </ChainChoiceProvider>
             </QueryClientProvider>

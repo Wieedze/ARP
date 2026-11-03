@@ -1,7 +1,8 @@
 import {describe, expect, it, vi, beforeEach} from "vitest";
-import {act, screen, waitFor} from "@testing-library/react";
+import {act, fireEvent, screen, waitFor} from "@testing-library/react";
 import type {RecentDeclaration} from "@arp-protocol/core";
 
+import {OnboardingContext} from "../components/onboarding/onboarding-context";
 import {renderWithProviders} from "../test/render";
 import {Landing} from "./Landing";
 
@@ -91,21 +92,19 @@ describe("Landing", () => {
         });
     });
 
-    it("prices the declare card at fee plus deposit, not the fee alone", async () => {
-        const {container} = renderWithProviders(<Landing />);
-        await waitFor(() => expect(cost).toHaveBeenCalled());
+    it("opens the onboarding from the first screen, and keeps the index one link away", async () => {
+        const open = vi.fn();
+        renderWithProviders(
+            <OnboardingContext.Provider value={{open}}>
+                <Landing />
+            </OnboardingContext.Provider>,
+        );
 
-        // Scoped to the row, because the fee alone is correctly printed elsewhere — Fig. 02's
-        // first beat says what does not come back, and that is the fee. What must not happen is
-        // the *floor* row showing the fee: `getTripleCost()` alone seeds a term with `minShare`
-        // and zero positions (ADR `0053`), so calling it the floor understates by half on testnet.
-        await waitFor(() => {
-            const term = [...container.querySelectorAll("dt")].find(
-                (dt) => dt.textContent?.trim() === "Costs from",
-            );
-            expect(term, "no `Costs from` row on the page").toBeTruthy();
-            expect(term?.nextElementSibling?.textContent).toBe("0.002 tTRUST");
-        });
+        // Task 53: the onboarding is behind Get started on the hero, which is scene 0 and in the
+        // accessibility tree, so it is found by role.
+        fireEvent.click(await screen.findByRole("button", {name: "Get started"}));
+        expect(open).toHaveBeenCalledTimes(1);
+        expect(screen.getByRole("link", {name: /Open the agent index/})).toBeTruthy();
     });
 
     it("gives every in-page anchor a target on the page", async () => {
@@ -235,23 +234,24 @@ describe("Landing", () => {
 
         // ADR `0060`: ARP records a use, it does not broker one. A delegation names its delegate by
         // address and an agent's runtime address is not on the graph, so "get paid" would be a
-        // promise with no mechanism. The card may say findable and callable, and no more.
+        // promise with no mechanism. The "be hired" card left with scene 4's jobs (task 53); the
+        // forbidden promises stay forbidden everywhere on the page.
         const text = (container.textContent ?? "").toLowerCase();
-        expect(text).toContain("let other agents find yours and call it");
         for (const forbidden of ["get paid", "earn fees", "marketplace", "hire an agent"]) {
             expect(text, `out-of-scope promise on the page: ${forbidden}`).not.toContain(forbidden);
         }
     });
 
-    it("puts one scene on screen and takes the other five out of the tree", async () => {
+    it("puts one scene on screen and takes the other four out of the tree", async () => {
         const {container} = renderWithProviders(<Landing />);
         await waitFor(() => expect(cost).toHaveBeenCalled());
 
-        // Pinned, all six scenes are mounted and inside the viewport the whole time, just
-        // transparent. Without `inert` + `aria-hidden` on the five that are not current, six
+        // Pinned, all five scenes are mounted and inside the viewport the whole time, just
+        // transparent. Without `inert` + `aria-hidden` on the four that are not current, five
         // screens of links are in the tab order at once and a reader has no idea where they are.
+        // Five since task 53: the onboarding left scene 4 for the first screen.
         const scenes = [...container.querySelectorAll("[data-scene]")];
-        expect(scenes).toHaveLength(6);
+        expect(scenes).toHaveLength(5);
         const visible = scenes.filter((scene) => scene.getAttribute("aria-hidden") === null);
         expect(visible, "exactly one scene should be in the accessibility tree").toHaveLength(1);
         expect(visible[0]?.getAttribute("data-scene")).toBe("0");
