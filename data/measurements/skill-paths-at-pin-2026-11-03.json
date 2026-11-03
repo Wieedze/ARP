@@ -1,0 +1,3843 @@
+{
+  "measuredAt": "2026-11-03T13:32:30.991Z",
+  "source": "api.github.com/repos/{repo}/git/trees/{pinned commit}?recursive=1, resolved with resolveContentPath",
+  "pins": "data/catalogue/skill-pins-13579.json",
+  "counts": {
+    "resolved": 521,
+    "absent": 139,
+    "ambiguous": 2
+  },
+  "rows": [
+    {
+      "repo": "vercel-labs/skills",
+      "skill": "find-skills",
+      "status": "resolved",
+      "path": "skills/find-skills/SKILL.md"
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "grill-me",
+      "status": "resolved",
+      "path": "skills/productivity/grill-me/SKILL.md"
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "grill-with-docs",
+      "status": "resolved",
+      "path": "skills/engineering/grill-with-docs/SKILL.md"
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "improve-codebase-architecture",
+      "status": "resolved",
+      "path": "skills/engineering/improve-codebase-architecture/SKILL.md"
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "tdd",
+      "status": "resolved",
+      "path": "skills/engineering/tdd/SKILL.md"
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "setup-matt-pocock-skills",
+      "status": "resolved",
+      "path": "skills/engineering/setup-matt-pocock-skills/SKILL.md"
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "handoff",
+      "status": "resolved",
+      "path": "skills/productivity/handoff/SKILL.md"
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "triage",
+      "status": "resolved",
+      "path": "skills/engineering/triage/SKILL.md"
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "grilling",
+      "status": "resolved",
+      "path": "skills/productivity/grilling/SKILL.md"
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "prototype",
+      "status": "resolved",
+      "path": "skills/engineering/prototype/SKILL.md"
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "domain-modeling",
+      "status": "resolved",
+      "path": "skills/engineering/domain-modeling/SKILL.md"
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "teach",
+      "status": "resolved",
+      "path": "skills/productivity/teach/SKILL.md"
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "codebase-design",
+      "status": "resolved",
+      "path": "skills/engineering/codebase-design/SKILL.md"
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "diagnosing-bugs",
+      "status": "resolved",
+      "path": "skills/engineering/diagnosing-bugs/SKILL.md"
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "code-review",
+      "status": "resolved",
+      "path": "skills/engineering/code-review/SKILL.md"
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "implement",
+      "status": "resolved",
+      "path": "skills/engineering/implement/SKILL.md"
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "ask-matt",
+      "status": "resolved",
+      "path": "skills/engineering/ask-matt/SKILL.md"
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "wayfinder",
+      "status": "resolved",
+      "path": "skills/engineering/wayfinder/SKILL.md"
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "to-spec",
+      "status": "resolved",
+      "path": "skills/engineering/to-spec/SKILL.md"
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "to-tickets",
+      "status": "resolved",
+      "path": "skills/engineering/to-tickets/SKILL.md"
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "research",
+      "status": "resolved",
+      "path": "skills/engineering/research/SKILL.md"
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "wizard",
+      "status": "resolved",
+      "path": "skills/engineering/wizard/SKILL.md"
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "resolving-merge-conflicts",
+      "status": "absent"
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "to-questionnaire",
+      "status": "resolved",
+      "path": "skills/productivity/to-questionnaire/SKILL.md"
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "git-guardrails-claude-code",
+      "status": "resolved",
+      "path": "skills/misc/git-guardrails-claude-code/SKILL.md"
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "setup-pre-commit",
+      "status": "resolved",
+      "path": "skills/misc/setup-pre-commit/SKILL.md"
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "writing-beats",
+      "status": "resolved",
+      "path": "skills/in-progress/writing-beats/SKILL.md"
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "writing-shape",
+      "status": "resolved",
+      "path": "skills/in-progress/writing-shape/SKILL.md"
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "writing-fragments",
+      "status": "resolved",
+      "path": "skills/in-progress/writing-fragments/SKILL.md"
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "scaffold-exercises",
+      "status": "resolved",
+      "path": "skills/misc/scaffold-exercises/SKILL.md"
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "migrate-to-shoehorn",
+      "status": "resolved",
+      "path": "skills/misc/migrate-to-shoehorn/SKILL.md"
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "writing-for-agents",
+      "status": "resolved",
+      "path": "skills/productivity/writing-for-agents/SKILL.md"
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "wait-what",
+      "status": "resolved",
+      "path": "skills/productivity/wait-what/SKILL.md"
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "loop-me",
+      "status": "resolved",
+      "path": "skills/in-progress/loop-me/SKILL.md"
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "claude-handoff",
+      "status": "resolved",
+      "path": "skills/in-progress/claude-handoff/SKILL.md"
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "setup-ts-deep-modules",
+      "status": "resolved",
+      "path": "skills/in-progress/setup-ts-deep-modules/SKILL.md"
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "to-prd",
+      "status": "absent"
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "to-issues",
+      "status": "absent"
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "writing-great-skills",
+      "status": "absent"
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "implement-spec",
+      "status": "resolved",
+      "path": "skills/engineering/implement-spec/SKILL.md"
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "retro",
+      "status": "resolved",
+      "path": "skills/engineering/retro/SKILL.md"
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "diagnose",
+      "status": "absent"
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "write-a-skill",
+      "status": "absent"
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "zoom-out",
+      "status": "absent"
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "caveman",
+      "status": "absent"
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "design-an-interface",
+      "status": "absent"
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "request-refactor-plan",
+      "status": "absent"
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "qa",
+      "status": "absent"
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "ubiquitous-language",
+      "status": "absent"
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "obsidian-vault",
+      "status": "absent"
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "edit-article",
+      "status": "absent"
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "pr",
+      "status": "resolved",
+      "path": "skills/engineering/pr/SKILL.md"
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "review",
+      "status": "absent"
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "chief-of-staff",
+      "status": "resolved",
+      "path": "skills/in-progress/chief-of-staff/SKILL.md"
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "batch-grill-me",
+      "status": "absent"
+    },
+    {
+      "repo": "mattpocock/skills",
+      "skill": "decision-mapping",
+      "status": "absent"
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skill": "hyperframes-cli",
+      "status": "resolved",
+      "path": "skills/hyperframes-cli/SKILL.md"
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skill": "hyperframes",
+      "status": "resolved",
+      "path": "skills/hyperframes/SKILL.md"
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skill": "media-use",
+      "status": "resolved",
+      "path": "skills/media-use/SKILL.md"
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skill": "hyperframes-registry",
+      "status": "resolved",
+      "path": "skills/hyperframes-registry/SKILL.md"
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skill": "hyperframes-animation",
+      "status": "absent"
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skill": "hyperframes-core",
+      "status": "absent"
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skill": "hyperframes-creative",
+      "status": "absent"
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skill": "hyperframes-keyframes",
+      "status": "absent"
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skill": "hyperframes-audio",
+      "status": "absent"
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skill": "general-video",
+      "status": "absent"
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skill": "product-launch-video",
+      "status": "absent"
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skill": "remotion-to-hyperframes",
+      "status": "resolved",
+      "path": "skills/remotion-to-hyperframes/SKILL.md"
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skill": "faceless-explainer",
+      "status": "absent"
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skill": "motion-graphics",
+      "status": "absent"
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skill": "embedded-captions",
+      "status": "absent"
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skill": "hyperframes-studio",
+      "status": "absent"
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skill": "pr-to-video",
+      "status": "absent"
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skill": "slideshow",
+      "status": "resolved",
+      "path": "skills/slideshow/SKILL.md"
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skill": "music-to-video",
+      "status": "absent"
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skill": "talking-head-recut",
+      "status": "absent"
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skill": "figma",
+      "status": "resolved",
+      "path": "skills/figma/SKILL.md"
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skill": "hyperframes-media",
+      "status": "absent"
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skill": "website-to-video",
+      "status": "absent"
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skill": "gsap",
+      "status": "absent"
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skill": "website-to-hyperframes",
+      "status": "absent"
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skill": "css-animations",
+      "status": "absent"
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skill": "tailwind",
+      "status": "absent"
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skill": "animejs",
+      "status": "absent"
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skill": "three",
+      "status": "absent"
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skill": "lottie",
+      "status": "absent"
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skill": "waapi",
+      "status": "absent"
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skill": "motion-doctrine",
+      "status": "resolved",
+      "path": ".agents/skills/motion-doctrine/SKILL.md"
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skill": "captions-overlay",
+      "status": "resolved",
+      "path": ".agents/skills/captions-overlay/SKILL.md"
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skill": "cut-the-curve",
+      "status": "resolved",
+      "path": ".agents/skills/cut-the-curve/SKILL.md"
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skill": "seam-craft",
+      "status": "resolved",
+      "path": ".agents/skills/seam-craft/SKILL.md"
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skill": "oversized-cursor",
+      "status": "resolved",
+      "path": ".agents/skills/oversized-cursor/SKILL.md"
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skill": "changelog-video",
+      "status": "resolved",
+      "path": ".agents/skills/changelog-video/SKILL.md"
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skill": "contribute-catalog",
+      "status": "absent"
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skill": "typegpu",
+      "status": "absent"
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skill": "graphic-overlays",
+      "status": "absent"
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skill": "frost-sequence-camera-orbit",
+      "status": "resolved",
+      "path": "registry/blocks/frost-sequence-camera-orbit/SKILL.md"
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skill": "cuboid-carousel",
+      "status": "resolved",
+      "path": "registry/blocks/cuboid-carousel/SKILL.md"
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skill": "glass-shard-title",
+      "status": "resolved",
+      "path": "registry/blocks/glass-shard-title/SKILL.md"
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skill": "code-slice-hero",
+      "status": "resolved",
+      "path": "registry/blocks/code-slice-hero/SKILL.md"
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skill": "canopy-part-title",
+      "status": "resolved",
+      "path": "registry/blocks/canopy-part-title/SKILL.md"
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skill": "wireframe-portal-title",
+      "status": "resolved",
+      "path": "registry/blocks/wireframe-portal-title/SKILL.md"
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skill": "orbit-card",
+      "status": "resolved",
+      "path": "registry/blocks/orbit-card/SKILL.md"
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skill": "hyperframes-read-first",
+      "status": "absent"
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "skill": "claude-design-hyperframes",
+      "status": "absent"
+    },
+    {
+      "repo": "vercel-labs/agent-browser",
+      "skill": "agent-browser",
+      "status": "resolved",
+      "path": "skills/agent-browser/SKILL.md"
+    },
+    {
+      "repo": "flowkit-labs/skills",
+      "skill": "reddit-automation",
+      "status": "resolved",
+      "path": "reddit-automation/SKILL.md"
+    },
+    {
+      "repo": "designed-by-ai/skills",
+      "skill": "design-mobile-apps",
+      "status": "resolved",
+      "path": "skills/design-mobile-apps/SKILL.md"
+    },
+    {
+      "repo": "anthropics/skills",
+      "skill": "frontend-design",
+      "status": "resolved",
+      "path": "skills/frontend-design/SKILL.md"
+    },
+    {
+      "repo": "anthropics/skills",
+      "skill": "skill-creator",
+      "status": "resolved",
+      "path": "skills/skill-creator/SKILL.md"
+    },
+    {
+      "repo": "anthropics/skills",
+      "skill": "pptx",
+      "status": "resolved",
+      "path": "skills/pptx/SKILL.md"
+    },
+    {
+      "repo": "anthropics/skills",
+      "skill": "pdf",
+      "status": "resolved",
+      "path": "skills/pdf/SKILL.md"
+    },
+    {
+      "repo": "anthropics/skills",
+      "skill": "docx",
+      "status": "resolved",
+      "path": "skills/docx/SKILL.md"
+    },
+    {
+      "repo": "anthropics/skills",
+      "skill": "webapp-testing",
+      "status": "resolved",
+      "path": "skills/webapp-testing/SKILL.md"
+    },
+    {
+      "repo": "anthropics/skills",
+      "skill": "xlsx",
+      "status": "resolved",
+      "path": "skills/xlsx/SKILL.md"
+    },
+    {
+      "repo": "anthropics/skills",
+      "skill": "mcp-builder",
+      "status": "resolved",
+      "path": "skills/mcp-builder/SKILL.md"
+    },
+    {
+      "repo": "anthropics/skills",
+      "skill": "canvas-design",
+      "status": "resolved",
+      "path": "skills/canvas-design/SKILL.md"
+    },
+    {
+      "repo": "anthropics/skills",
+      "skill": "web-artifacts-builder",
+      "status": "resolved",
+      "path": "skills/web-artifacts-builder/SKILL.md"
+    },
+    {
+      "repo": "anthropics/skills",
+      "skill": "brand-guidelines",
+      "status": "resolved",
+      "path": "skills/brand-guidelines/SKILL.md"
+    },
+    {
+      "repo": "anthropics/skills",
+      "skill": "theme-factory",
+      "status": "resolved",
+      "path": "skills/theme-factory/SKILL.md"
+    },
+    {
+      "repo": "anthropics/skills",
+      "skill": "doc-coauthoring",
+      "status": "resolved",
+      "path": "skills/doc-coauthoring/SKILL.md"
+    },
+    {
+      "repo": "anthropics/skills",
+      "skill": "algorithmic-art",
+      "status": "resolved",
+      "path": "skills/algorithmic-art/SKILL.md"
+    },
+    {
+      "repo": "anthropics/skills",
+      "skill": "internal-comms",
+      "status": "resolved",
+      "path": "skills/internal-comms/SKILL.md"
+    },
+    {
+      "repo": "anthropics/skills",
+      "skill": "slack-gif-creator",
+      "status": "resolved",
+      "path": "skills/slack-gif-creator/SKILL.md"
+    },
+    {
+      "repo": "anthropics/skills",
+      "skill": "claude-api",
+      "status": "resolved",
+      "path": "skills/claude-api/SKILL.md"
+    },
+    {
+      "repo": "anthropics/skills",
+      "skill": "template-skill",
+      "status": "absent"
+    },
+    {
+      "repo": "anthropics/skills",
+      "skill": "discernment-nudge",
+      "status": "resolved",
+      "path": "skills/discernment-nudge/SKILL.md"
+    },
+    {
+      "repo": "anthropics/skills",
+      "skill": "academy-guide",
+      "status": "resolved",
+      "path": "skills/academy-guide/SKILL.md"
+    },
+    {
+      "repo": "101-skills/superpowers",
+      "skill": "ai-video-generation",
+      "status": "resolved",
+      "path": "tools/video/ai-video-generation/SKILL.md"
+    },
+    {
+      "repo": "101-skills/superpowers",
+      "skill": "ai-image-generation",
+      "status": "resolved",
+      "path": "tools/image/ai-image-generation/SKILL.md"
+    },
+    {
+      "repo": "101-skills/superpowers",
+      "skill": "twitter-automation",
+      "status": "resolved",
+      "path": "tools/social/twitter-automation/SKILL.md"
+    },
+    {
+      "repo": "101-skills/superpowers",
+      "skill": "ai-avatar-video",
+      "status": "resolved",
+      "path": "tools/video/ai-avatar-video/SKILL.md"
+    },
+    {
+      "repo": "101-skills/superpowers",
+      "skill": "agent-browser",
+      "status": "resolved",
+      "path": "tools/utilities/agent-browser/SKILL.md"
+    },
+    {
+      "repo": "101-skills/superpowers",
+      "skill": "web-search",
+      "status": "resolved",
+      "path": "tools/llm/web-search/SKILL.md"
+    },
+    {
+      "repo": "101-skills/superpowers",
+      "skill": "remotion-render",
+      "status": "resolved",
+      "path": "tools/video/remotion-render/SKILL.md"
+    },
+    {
+      "repo": "101-skills/superpowers",
+      "skill": "infsh-cli",
+      "status": "resolved",
+      "path": "tools/infsh-cli/SKILL.md"
+    },
+    {
+      "repo": "101-skills/superpowers",
+      "skill": "agent-tools",
+      "status": "resolved",
+      "path": "tools/agent-tools/SKILL.md"
+    },
+    {
+      "repo": "101-skills/superpowers",
+      "skill": "python-executor",
+      "status": "resolved",
+      "path": "tools/utilities/python-executor/SKILL.md"
+    },
+    {
+      "repo": "101-skills/superpowers",
+      "skill": "landing-page-design",
+      "status": "resolved",
+      "path": "guides/design/landing-page-design/SKILL.md"
+    },
+    {
+      "repo": "101-skills/superpowers",
+      "skill": "product-photography",
+      "status": "resolved",
+      "path": "guides/photo/product-photography/SKILL.md"
+    },
+    {
+      "repo": "101-skills/superpowers",
+      "skill": "app-store-screenshots",
+      "status": "resolved",
+      "path": "guides/design/app-store-screenshots/SKILL.md"
+    },
+    {
+      "repo": "101-skills/superpowers",
+      "skill": "character-design-sheet",
+      "status": "resolved",
+      "path": "guides/design/character-design-sheet/SKILL.md"
+    },
+    {
+      "repo": "101-skills/superpowers",
+      "skill": "storyboard-creation",
+      "status": "resolved",
+      "path": "guides/video/storyboard-creation/SKILL.md"
+    },
+    {
+      "repo": "101-skills/superpowers",
+      "skill": "video-ad-specs",
+      "status": "resolved",
+      "path": "guides/video/video-ad-specs/SKILL.md"
+    },
+    {
+      "repo": "101-skills/superpowers",
+      "skill": "competitor-teardown",
+      "status": "resolved",
+      "path": "guides/product/competitor-teardown/SKILL.md"
+    },
+    {
+      "repo": "101-skills/superpowers",
+      "skill": "youtube-thumbnail-design",
+      "status": "resolved",
+      "path": "guides/design/youtube-thumbnail-design/SKILL.md"
+    },
+    {
+      "repo": "101-skills/superpowers",
+      "skill": "product-hunt-launch",
+      "status": "resolved",
+      "path": "guides/product/product-hunt-launch/SKILL.md"
+    },
+    {
+      "repo": "101-skills/superpowers",
+      "skill": "image-to-video",
+      "status": "resolved",
+      "path": "tools/video/image-to-video/SKILL.md"
+    },
+    {
+      "repo": "101-skills/superpowers",
+      "skill": "happyhorse",
+      "status": "resolved",
+      "path": "tools/video/happyhorse/SKILL.md"
+    },
+    {
+      "repo": "101-skills/superpowers",
+      "skill": "gpt-image",
+      "status": "resolved",
+      "path": "tools/image/gpt-image/SKILL.md"
+    },
+    {
+      "repo": "101-skills/superpowers",
+      "skill": "p-image",
+      "status": "resolved",
+      "path": "tools/image/p-image/SKILL.md"
+    },
+    {
+      "repo": "101-skills/superpowers",
+      "skill": "p-video",
+      "status": "resolved",
+      "path": "tools/video/p-video/SKILL.md"
+    },
+    {
+      "repo": "101-skills/superpowers",
+      "skill": "p-video-avatar",
+      "status": "resolved",
+      "path": "tools/video/p-video-avatar/SKILL.md"
+    },
+    {
+      "repo": "101-skills/superpowers",
+      "skill": "seedance",
+      "status": "resolved",
+      "path": "tools/video/seedance/SKILL.md"
+    },
+    {
+      "repo": "vercel-labs/agent-skills",
+      "skill": "vercel-react-best-practices",
+      "status": "absent"
+    },
+    {
+      "repo": "vercel-labs/agent-skills",
+      "skill": "web-design-guidelines",
+      "status": "resolved",
+      "path": "skills/web-design-guidelines/SKILL.md"
+    },
+    {
+      "repo": "vercel-labs/agent-skills",
+      "skill": "vercel-composition-patterns",
+      "status": "absent"
+    },
+    {
+      "repo": "vercel-labs/agent-skills",
+      "skill": "vercel-react-native-skills",
+      "status": "absent"
+    },
+    {
+      "repo": "vercel-labs/agent-skills",
+      "skill": "deploy-to-vercel",
+      "status": "resolved",
+      "path": "skills/deploy-to-vercel/SKILL.md"
+    },
+    {
+      "repo": "vercel-labs/agent-skills",
+      "skill": "vercel-react-view-transitions",
+      "status": "absent"
+    },
+    {
+      "repo": "vercel-labs/agent-skills",
+      "skill": "vercel-cli-with-tokens",
+      "status": "resolved",
+      "path": "skills/vercel-cli-with-tokens/SKILL.md"
+    },
+    {
+      "repo": "vercel-labs/agent-skills",
+      "skill": "vercel-optimize",
+      "status": "resolved",
+      "path": "skills/vercel-optimize/SKILL.md"
+    },
+    {
+      "repo": "vercel-labs/agent-skills",
+      "skill": "writing-guidelines",
+      "status": "resolved",
+      "path": "skills/writing-guidelines/SKILL.md"
+    },
+    {
+      "repo": "vercel-labs/agent-skills",
+      "skill": "vercel-deploy",
+      "status": "absent"
+    },
+    {
+      "repo": "magentosh/superpowers",
+      "skill": "ai-image-generation",
+      "status": "resolved",
+      "path": "tools/image/ai-image-generation/SKILL.md"
+    },
+    {
+      "repo": "magentosh/superpowers",
+      "skill": "ai-video-generation",
+      "status": "resolved",
+      "path": "tools/video/ai-video-generation/SKILL.md"
+    },
+    {
+      "repo": "magentosh/superpowers",
+      "skill": "ai-avatar-video",
+      "status": "resolved",
+      "path": "tools/video/ai-avatar-video/SKILL.md"
+    },
+    {
+      "repo": "magentosh/superpowers",
+      "skill": "twitter-automation",
+      "status": "resolved",
+      "path": "tools/social/twitter-automation/SKILL.md"
+    },
+    {
+      "repo": "magentosh/superpowers",
+      "skill": "agent-browser",
+      "status": "resolved",
+      "path": "tools/utilities/agent-browser/SKILL.md"
+    },
+    {
+      "repo": "magentosh/superpowers",
+      "skill": "web-search",
+      "status": "resolved",
+      "path": "tools/llm/web-search/SKILL.md"
+    },
+    {
+      "repo": "magentosh/superpowers",
+      "skill": "agent-tools",
+      "status": "resolved",
+      "path": "tools/agent-tools/SKILL.md"
+    },
+    {
+      "repo": "magentosh/superpowers",
+      "skill": "remotion-render",
+      "status": "resolved",
+      "path": "tools/video/remotion-render/SKILL.md"
+    },
+    {
+      "repo": "magentosh/superpowers",
+      "skill": "python-executor",
+      "status": "resolved",
+      "path": "tools/utilities/python-executor/SKILL.md"
+    },
+    {
+      "repo": "magentosh/superpowers",
+      "skill": "infsh-cli",
+      "status": "resolved",
+      "path": "tools/infsh-cli/SKILL.md"
+    },
+    {
+      "repo": "magentosh/superpowers",
+      "skill": "youtube-thumbnail-design",
+      "status": "resolved",
+      "path": "guides/design/youtube-thumbnail-design/SKILL.md"
+    },
+    {
+      "repo": "magentosh/superpowers",
+      "skill": "landing-page-design",
+      "status": "resolved",
+      "path": "guides/design/landing-page-design/SKILL.md"
+    },
+    {
+      "repo": "magentosh/superpowers",
+      "skill": "image-to-video",
+      "status": "resolved",
+      "path": "tools/video/image-to-video/SKILL.md"
+    },
+    {
+      "repo": "magentosh/superpowers",
+      "skill": "product-photography",
+      "status": "resolved",
+      "path": "guides/photo/product-photography/SKILL.md"
+    },
+    {
+      "repo": "magentosh/superpowers",
+      "skill": "app-store-screenshots",
+      "status": "resolved",
+      "path": "guides/design/app-store-screenshots/SKILL.md"
+    },
+    {
+      "repo": "magentosh/superpowers",
+      "skill": "competitor-teardown",
+      "status": "resolved",
+      "path": "guides/product/competitor-teardown/SKILL.md"
+    },
+    {
+      "repo": "magentosh/superpowers",
+      "skill": "product-hunt-launch",
+      "status": "resolved",
+      "path": "guides/product/product-hunt-launch/SKILL.md"
+    },
+    {
+      "repo": "magentosh/superpowers",
+      "skill": "video-ad-specs",
+      "status": "resolved",
+      "path": "guides/video/video-ad-specs/SKILL.md"
+    },
+    {
+      "repo": "magentosh/superpowers",
+      "skill": "character-design-sheet",
+      "status": "resolved",
+      "path": "guides/design/character-design-sheet/SKILL.md"
+    },
+    {
+      "repo": "magentosh/superpowers",
+      "skill": "storyboard-creation",
+      "status": "resolved",
+      "path": "guides/video/storyboard-creation/SKILL.md"
+    },
+    {
+      "repo": "magentosh/superpowers",
+      "skill": "p-video-avatar",
+      "status": "resolved",
+      "path": "tools/video/p-video-avatar/SKILL.md"
+    },
+    {
+      "repo": "magentosh/superpowers",
+      "skill": "gpt-image",
+      "status": "resolved",
+      "path": "tools/image/gpt-image/SKILL.md"
+    },
+    {
+      "repo": "magentosh/superpowers",
+      "skill": "seedance",
+      "status": "resolved",
+      "path": "tools/video/seedance/SKILL.md"
+    },
+    {
+      "repo": "magentosh/superpowers",
+      "skill": "p-image",
+      "status": "resolved",
+      "path": "tools/image/p-image/SKILL.md"
+    },
+    {
+      "repo": "magentosh/superpowers",
+      "skill": "happyhorse",
+      "status": "resolved",
+      "path": "tools/video/happyhorse/SKILL.md"
+    },
+    {
+      "repo": "magentosh/superpowers",
+      "skill": "p-video",
+      "status": "resolved",
+      "path": "tools/video/p-video/SKILL.md"
+    },
+    {
+      "repo": "remotion-dev/skills",
+      "skill": "remotion-best-practices",
+      "status": "resolved",
+      "path": "skills/remotion-best-practices/SKILL.md"
+    },
+    {
+      "repo": "remotion-dev/skills",
+      "skill": "remotion-render",
+      "status": "resolved",
+      "path": "skills/remotion-render/SKILL.md"
+    },
+    {
+      "repo": "remotion-dev/skills",
+      "skill": "remotion-create",
+      "status": "resolved",
+      "path": "skills/remotion-create/SKILL.md"
+    },
+    {
+      "repo": "remotion-dev/skills",
+      "skill": "remotion-captions",
+      "status": "resolved",
+      "path": "skills/remotion-captions/SKILL.md"
+    },
+    {
+      "repo": "remotion-dev/skills",
+      "skill": "remotion-markup",
+      "status": "resolved",
+      "path": "skills/remotion-markup/SKILL.md"
+    },
+    {
+      "repo": "remotion-dev/skills",
+      "skill": "remotion-interactivity",
+      "status": "resolved",
+      "path": "skills/remotion-interactivity/SKILL.md"
+    },
+    {
+      "repo": "remotion-dev/skills",
+      "skill": "remotion-saas",
+      "status": "resolved",
+      "path": "skills/remotion-saas/SKILL.md"
+    },
+    {
+      "repo": "remotion-dev/skills",
+      "skill": "remotion-docs",
+      "status": "resolved",
+      "path": "skills/remotion-docs/SKILL.md"
+    },
+    {
+      "repo": "remotion-dev/skills",
+      "skill": "remotion-upgrade",
+      "status": "resolved",
+      "path": "skills/remotion-upgrade/SKILL.md"
+    },
+    {
+      "repo": "remotion-dev/skills",
+      "skill": "remotion-multimedia",
+      "status": "resolved",
+      "path": "skills/remotion-multimedia/SKILL.md"
+    },
+    {
+      "repo": "remotion-dev/skills",
+      "skill": "remotion-maps",
+      "status": "resolved",
+      "path": "skills/remotion-maps/SKILL.md"
+    },
+    {
+      "repo": "remotion-dev/skills",
+      "skill": "remotion-studio",
+      "status": "resolved",
+      "path": "skills/remotion-studio/SKILL.md"
+    },
+    {
+      "repo": "remotion-dev/skills",
+      "skill": "mediabunny",
+      "status": "absent"
+    },
+    {
+      "repo": "leonxlnx/taste-skill",
+      "skill": "design-taste-frontend",
+      "status": "absent"
+    },
+    {
+      "repo": "leonxlnx/taste-skill",
+      "skill": "high-end-visual-design",
+      "status": "absent"
+    },
+    {
+      "repo": "leonxlnx/taste-skill",
+      "skill": "redesign-existing-projects",
+      "status": "absent"
+    },
+    {
+      "repo": "leonxlnx/taste-skill",
+      "skill": "minimalist-ui",
+      "status": "absent"
+    },
+    {
+      "repo": "leonxlnx/taste-skill",
+      "skill": "full-output-enforcement",
+      "status": "absent"
+    },
+    {
+      "repo": "leonxlnx/taste-skill",
+      "skill": "gpt-taste",
+      "status": "absent"
+    },
+    {
+      "repo": "leonxlnx/taste-skill",
+      "skill": "industrial-brutalist-ui",
+      "status": "absent"
+    },
+    {
+      "repo": "leonxlnx/taste-skill",
+      "skill": "stitch-design-taste",
+      "status": "absent"
+    },
+    {
+      "repo": "leonxlnx/taste-skill",
+      "skill": "brandkit",
+      "status": "absent"
+    },
+    {
+      "repo": "leonxlnx/taste-skill",
+      "skill": "image-to-code",
+      "status": "absent"
+    },
+    {
+      "repo": "leonxlnx/taste-skill",
+      "skill": "imagegen-frontend-web",
+      "status": "absent"
+    },
+    {
+      "repo": "leonxlnx/taste-skill",
+      "skill": "imagegen-frontend-mobile",
+      "status": "absent"
+    },
+    {
+      "repo": "leonxlnx/taste-skill",
+      "skill": "design-taste-frontend-v1",
+      "status": "absent"
+    },
+    {
+      "repo": "leonxlnx/taste-skill",
+      "skill": "design-taste-frontend-v2-experimental",
+      "status": "absent"
+    },
+    {
+      "repo": "leonxlnx/taste-skill",
+      "skill": "image-taste-frontend",
+      "status": "absent"
+    },
+    {
+      "repo": "juliusbrussee/caveman",
+      "skill": "caveman",
+      "status": "resolved",
+      "path": "plugins/caveman/skills/caveman/SKILL.md"
+    },
+    {
+      "repo": "juliusbrussee/caveman",
+      "skill": "caveman-commit",
+      "status": "resolved",
+      "path": "skills/caveman-commit/SKILL.md"
+    },
+    {
+      "repo": "juliusbrussee/caveman",
+      "skill": "caveman-compress",
+      "status": "resolved",
+      "path": "plugins/caveman/skills/caveman-compress/SKILL.md"
+    },
+    {
+      "repo": "juliusbrussee/caveman",
+      "skill": "caveman-review",
+      "status": "resolved",
+      "path": "skills/caveman-review/SKILL.md"
+    },
+    {
+      "repo": "juliusbrussee/caveman",
+      "skill": "caveman-help",
+      "status": "resolved",
+      "path": "skills/caveman-help/SKILL.md"
+    },
+    {
+      "repo": "juliusbrussee/caveman",
+      "skill": "cavecrew",
+      "status": "resolved",
+      "path": "plugins/caveman/skills/cavecrew/SKILL.md"
+    },
+    {
+      "repo": "juliusbrussee/caveman",
+      "skill": "caveman-stats",
+      "status": "ambiguous"
+    },
+    {
+      "repo": "juliusbrussee/caveman",
+      "skill": "caveman-explore",
+      "status": "resolved",
+      "path": "skills/caveman-explore/SKILL.md"
+    },
+    {
+      "repo": "juliusbrussee/caveman",
+      "skill": "caveman-learn",
+      "status": "resolved",
+      "path": "skills/caveman-learn/SKILL.md"
+    },
+    {
+      "repo": "juliusbrussee/caveman",
+      "skill": "safe-refactor",
+      "status": "resolved",
+      "path": "skills/safe-refactor/SKILL.md"
+    },
+    {
+      "repo": "juliusbrussee/caveman",
+      "skill": "caveman-optimize",
+      "status": "resolved",
+      "path": "skills/caveman-optimize/SKILL.md"
+    },
+    {
+      "repo": "juliusbrussee/caveman",
+      "skill": "investigate-first",
+      "status": "resolved",
+      "path": "skills/investigate-first/SKILL.md"
+    },
+    {
+      "repo": "juliusbrussee/caveman",
+      "skill": "verify-and-stop",
+      "status": "resolved",
+      "path": "skills/verify-and-stop/SKILL.md"
+    },
+    {
+      "repo": "juliusbrussee/caveman",
+      "skill": "surgical-patch",
+      "status": "resolved",
+      "path": "skills/surgical-patch/SKILL.md"
+    },
+    {
+      "repo": "juliusbrussee/caveman",
+      "skill": "lean-build",
+      "status": "resolved",
+      "path": "skills/lean-build/SKILL.md"
+    },
+    {
+      "repo": "juliusbrussee/caveman",
+      "skill": "caveman-evidence-review",
+      "status": "resolved",
+      "path": "skills/caveman-evidence-review/SKILL.md"
+    },
+    {
+      "repo": "juliusbrussee/caveman",
+      "skill": "caveman-discover",
+      "status": "resolved",
+      "path": "skills/caveman-discover/SKILL.md"
+    },
+    {
+      "repo": "juliusbrussee/caveman",
+      "skill": "caveman-manage",
+      "status": "resolved",
+      "path": "skills/caveman-manage/SKILL.md"
+    },
+    {
+      "repo": "juliusbrussee/caveman",
+      "skill": "migration",
+      "status": "resolved",
+      "path": "skills/migration/SKILL.md"
+    },
+    {
+      "repo": "juliusbrussee/caveman",
+      "skill": "caveman-setup",
+      "status": "resolved",
+      "path": "skills/caveman-setup/SKILL.md"
+    },
+    {
+      "repo": "juliusbrussee/caveman",
+      "skill": "compress",
+      "status": "absent"
+    },
+    {
+      "repo": "juliusbrussee/caveman",
+      "skill": "ultracave",
+      "status": "resolved",
+      "path": "plugins/caveman/skills/ultracave/SKILL.md"
+    },
+    {
+      "repo": "juliusbrussee/caveman",
+      "skill": "megacave",
+      "status": "resolved",
+      "path": "plugins/caveman/skills/megacave/SKILL.md"
+    },
+    {
+      "repo": "juliusbrussee/caveman",
+      "skill": "caveman-es",
+      "status": "absent"
+    },
+    {
+      "repo": "microsoft/azure-skills",
+      "skill": "microsoft-foundry",
+      "status": "resolved",
+      "path": ".github/plugins/azure-skills/skills/microsoft-foundry/SKILL.md"
+    },
+    {
+      "repo": "microsoft/azure-skills",
+      "skill": "azure-diagnostics",
+      "status": "resolved",
+      "path": ".github/plugins/azure-skills/skills/azure-diagnostics/SKILL.md"
+    },
+    {
+      "repo": "microsoft/azure-skills",
+      "skill": "azure-prepare",
+      "status": "resolved",
+      "path": ".github/plugins/azure-skills/skills/azure-prepare/SKILL.md"
+    },
+    {
+      "repo": "microsoft/azure-skills",
+      "skill": "azure-ai",
+      "status": "resolved",
+      "path": ".github/plugins/azure-skills/skills/azure-ai/SKILL.md"
+    },
+    {
+      "repo": "microsoft/azure-skills",
+      "skill": "azure-deploy",
+      "status": "resolved",
+      "path": ".github/plugins/azure-skills/skills/azure-deploy/SKILL.md"
+    },
+    {
+      "repo": "microsoft/azure-skills",
+      "skill": "azure-validate",
+      "status": "resolved",
+      "path": ".github/plugins/azure-skills/skills/azure-validate/SKILL.md"
+    },
+    {
+      "repo": "microsoft/azure-skills",
+      "skill": "azure-storage",
+      "status": "resolved",
+      "path": ".github/plugins/azure-skills/skills/azure-storage/SKILL.md"
+    },
+    {
+      "repo": "microsoft/azure-skills",
+      "skill": "azure-compliance",
+      "status": "resolved",
+      "path": ".github/plugins/azure-skills/skills/azure-compliance/SKILL.md"
+    },
+    {
+      "repo": "microsoft/azure-skills",
+      "skill": "appinsights-instrumentation",
+      "status": "resolved",
+      "path": ".github/plugins/azure-skills/skills/appinsights-instrumentation/SKILL.md"
+    },
+    {
+      "repo": "microsoft/azure-skills",
+      "skill": "azure-resource-lookup",
+      "status": "resolved",
+      "path": ".github/plugins/azure-skills/skills/azure-resource-lookup/SKILL.md"
+    },
+    {
+      "repo": "microsoft/azure-skills",
+      "skill": "azure-resource-visualizer",
+      "status": "resolved",
+      "path": ".github/plugins/azure-skills/skills/azure-resource-visualizer/SKILL.md"
+    },
+    {
+      "repo": "microsoft/azure-skills",
+      "skill": "entra-app-registration",
+      "status": "resolved",
+      "path": ".github/plugins/azure-skills/skills/entra-app-registration/SKILL.md"
+    },
+    {
+      "repo": "microsoft/azure-skills",
+      "skill": "azure-kusto",
+      "status": "resolved",
+      "path": ".github/plugins/azure-skills/skills/azure-kusto/SKILL.md"
+    },
+    {
+      "repo": "microsoft/azure-skills",
+      "skill": "azure-aigateway",
+      "status": "resolved",
+      "path": ".github/plugins/azure-skills/skills/azure-aigateway/SKILL.md"
+    },
+    {
+      "repo": "microsoft/azure-skills",
+      "skill": "azure-messaging",
+      "status": "resolved",
+      "path": ".github/plugins/azure-skills/skills/azure-messaging/SKILL.md"
+    },
+    {
+      "repo": "microsoft/azure-skills",
+      "skill": "azure-compute",
+      "status": "resolved",
+      "path": ".github/plugins/azure-skills/skills/azure-compute/SKILL.md"
+    },
+    {
+      "repo": "microsoft/azure-skills",
+      "skill": "azure-cloud-migrate",
+      "status": "resolved",
+      "path": ".github/plugins/azure-skills/skills/azure-cloud-migrate/SKILL.md"
+    },
+    {
+      "repo": "microsoft/azure-skills",
+      "skill": "azure-quotas",
+      "status": "resolved",
+      "path": ".github/plugins/azure-skills/skills/azure-quotas/SKILL.md"
+    },
+    {
+      "repo": "microsoft/azure-skills",
+      "skill": "azure-upgrade",
+      "status": "resolved",
+      "path": ".github/plugins/azure-skills/skills/azure-upgrade/SKILL.md"
+    },
+    {
+      "repo": "microsoft/azure-skills",
+      "skill": "azure-enterprise-infra-planner",
+      "status": "resolved",
+      "path": ".github/plugins/azure-skills/skills/azure-enterprise-infra-planner/SKILL.md"
+    },
+    {
+      "repo": "microsoft/azure-skills",
+      "skill": "azure-kubernetes",
+      "status": "resolved",
+      "path": ".github/plugins/azure-skills/skills/azure-kubernetes/SKILL.md"
+    },
+    {
+      "repo": "microsoft/azure-skills",
+      "skill": "azure-rbac",
+      "status": "absent"
+    },
+    {
+      "repo": "microsoft/azure-skills",
+      "skill": "airunway-aks-setup",
+      "status": "resolved",
+      "path": ".github/plugins/azure-skills/skills/airunway-aks-setup/SKILL.md"
+    },
+    {
+      "repo": "microsoft/azure-skills",
+      "skill": "azure-cost",
+      "status": "absent"
+    },
+    {
+      "repo": "microsoft/azure-skills",
+      "skill": "azure-hosted-copilot-sdk",
+      "status": "absent"
+    },
+    {
+      "repo": "microsoft/azure-skills",
+      "skill": "entra-agent-id",
+      "status": "resolved",
+      "path": ".github/plugins/azure-skills/skills/entra-agent-id/SKILL.md"
+    },
+    {
+      "repo": "microsoft/azure-skills",
+      "skill": "azure-reliability",
+      "status": "resolved",
+      "path": ".github/plugins/azure-skills/skills/azure-reliability/SKILL.md"
+    },
+    {
+      "repo": "microsoft/azure-skills",
+      "skill": "python-appservice-deploy",
+      "status": "resolved",
+      "path": ".github/plugins/azure-skills/skills/python-appservice-deploy/SKILL.md"
+    },
+    {
+      "repo": "microsoft/azure-skills",
+      "skill": "azure-app-onboard",
+      "status": "resolved",
+      "path": ".github/plugins/azure-skills/skills/azure-app-onboard/SKILL.md"
+    },
+    {
+      "repo": "microsoft/azure-skills",
+      "skill": "azure-app-onboard-prereq",
+      "status": "resolved",
+      "path": ".github/plugins/azure-skills/skills/azure-app-onboard-prereq/SKILL.md"
+    },
+    {
+      "repo": "microsoft/azure-skills",
+      "skill": "azure-cost-optimization",
+      "status": "absent"
+    },
+    {
+      "repo": "microsoft/azure-skills",
+      "skill": "azure-observability",
+      "status": "absent"
+    },
+    {
+      "repo": "microsoft/azure-skills",
+      "skill": "discover-azure-skills",
+      "status": "resolved",
+      "path": ".github/plugins/azure-skills/skills/discover-azure-skills/SKILL.md"
+    },
+    {
+      "repo": "microsoft/azure-skills",
+      "skill": "azure-postgres",
+      "status": "absent"
+    },
+    {
+      "repo": "microsoft/azure-skills",
+      "skill": "markdown-token-optimizer",
+      "status": "absent"
+    },
+    {
+      "repo": "microsoft/azure-skills",
+      "skill": "sensei",
+      "status": "absent"
+    },
+    {
+      "repo": "microsoft/azure-skills",
+      "skill": "skill-authoring",
+      "status": "absent"
+    },
+    {
+      "repo": "microsoft/azure-skills",
+      "skill": "file-test-bug",
+      "status": "absent"
+    },
+    {
+      "repo": "microsoft/azure-skills",
+      "skill": "analyze-test-run",
+      "status": "absent"
+    },
+    {
+      "repo": "microsoft/azure-skills",
+      "skill": "azure-kusto-irql",
+      "status": "resolved",
+      "path": ".github/plugins/azure-kusto-graph-skills/skills/azure-kusto-irql/SKILL.md"
+    },
+    {
+      "repo": "microsoft/azure-skills",
+      "skill": "azure-kusto-graph",
+      "status": "resolved",
+      "path": ".github/plugins/azure-kusto-graph-skills/skills/azure-kusto-graph/SKILL.md"
+    },
+    {
+      "repo": "microsoft/azure-skills",
+      "skill": "azure-kusto-irql-graph",
+      "status": "resolved",
+      "path": ".github/plugins/azure-kusto-graph-skills/skills/azure-kusto-irql-graph/SKILL.md"
+    },
+    {
+      "repo": "qu-skills/superpowers",
+      "skill": "ai-avatar-video",
+      "status": "resolved",
+      "path": "tools/video/ai-avatar-video/SKILL.md"
+    },
+    {
+      "repo": "qu-skills/superpowers",
+      "skill": "twitter-automation",
+      "status": "resolved",
+      "path": "tools/social/twitter-automation/SKILL.md"
+    },
+    {
+      "repo": "qu-skills/superpowers",
+      "skill": "ai-video-generation",
+      "status": "resolved",
+      "path": "tools/video/ai-video-generation/SKILL.md"
+    },
+    {
+      "repo": "qu-skills/superpowers",
+      "skill": "ai-image-generation",
+      "status": "resolved",
+      "path": "tools/image/ai-image-generation/SKILL.md"
+    },
+    {
+      "repo": "qu-skills/superpowers",
+      "skill": "agent-browser",
+      "status": "resolved",
+      "path": "tools/utilities/agent-browser/SKILL.md"
+    },
+    {
+      "repo": "qu-skills/superpowers",
+      "skill": "infsh-cli",
+      "status": "resolved",
+      "path": "tools/infsh-cli/SKILL.md"
+    },
+    {
+      "repo": "qu-skills/superpowers",
+      "skill": "agent-tools",
+      "status": "resolved",
+      "path": "tools/agent-tools/SKILL.md"
+    },
+    {
+      "repo": "qu-skills/superpowers",
+      "skill": "remotion-render",
+      "status": "resolved",
+      "path": "tools/video/remotion-render/SKILL.md"
+    },
+    {
+      "repo": "qu-skills/superpowers",
+      "skill": "web-search",
+      "status": "resolved",
+      "path": "tools/llm/web-search/SKILL.md"
+    },
+    {
+      "repo": "qu-skills/superpowers",
+      "skill": "python-executor",
+      "status": "resolved",
+      "path": "tools/utilities/python-executor/SKILL.md"
+    },
+    {
+      "repo": "qu-skills/superpowers",
+      "skill": "product-photography",
+      "status": "resolved",
+      "path": "guides/photo/product-photography/SKILL.md"
+    },
+    {
+      "repo": "qu-skills/superpowers",
+      "skill": "character-design-sheet",
+      "status": "resolved",
+      "path": "guides/design/character-design-sheet/SKILL.md"
+    },
+    {
+      "repo": "qu-skills/superpowers",
+      "skill": "storyboard-creation",
+      "status": "resolved",
+      "path": "guides/video/storyboard-creation/SKILL.md"
+    },
+    {
+      "repo": "qu-skills/superpowers",
+      "skill": "competitor-teardown",
+      "status": "resolved",
+      "path": "guides/product/competitor-teardown/SKILL.md"
+    },
+    {
+      "repo": "qu-skills/superpowers",
+      "skill": "youtube-thumbnail-design",
+      "status": "resolved",
+      "path": "guides/design/youtube-thumbnail-design/SKILL.md"
+    },
+    {
+      "repo": "qu-skills/superpowers",
+      "skill": "product-hunt-launch",
+      "status": "resolved",
+      "path": "guides/product/product-hunt-launch/SKILL.md"
+    },
+    {
+      "repo": "qu-skills/superpowers",
+      "skill": "app-store-screenshots",
+      "status": "resolved",
+      "path": "guides/design/app-store-screenshots/SKILL.md"
+    },
+    {
+      "repo": "qu-skills/superpowers",
+      "skill": "landing-page-design",
+      "status": "resolved",
+      "path": "guides/design/landing-page-design/SKILL.md"
+    },
+    {
+      "repo": "qu-skills/superpowers",
+      "skill": "image-to-video",
+      "status": "resolved",
+      "path": "tools/video/image-to-video/SKILL.md"
+    },
+    {
+      "repo": "qu-skills/superpowers",
+      "skill": "video-ad-specs",
+      "status": "resolved",
+      "path": "guides/video/video-ad-specs/SKILL.md"
+    },
+    {
+      "repo": "qu-skills/superpowers",
+      "skill": "seedance",
+      "status": "resolved",
+      "path": "tools/video/seedance/SKILL.md"
+    },
+    {
+      "repo": "qu-skills/superpowers",
+      "skill": "p-video-avatar",
+      "status": "resolved",
+      "path": "tools/video/p-video-avatar/SKILL.md"
+    },
+    {
+      "repo": "qu-skills/superpowers",
+      "skill": "gpt-image",
+      "status": "resolved",
+      "path": "tools/image/gpt-image/SKILL.md"
+    },
+    {
+      "repo": "qu-skills/superpowers",
+      "skill": "happyhorse",
+      "status": "resolved",
+      "path": "tools/video/happyhorse/SKILL.md"
+    },
+    {
+      "repo": "qu-skills/superpowers",
+      "skill": "p-video",
+      "status": "resolved",
+      "path": "tools/video/p-video/SKILL.md"
+    },
+    {
+      "repo": "qu-skills/superpowers",
+      "skill": "p-image",
+      "status": "resolved",
+      "path": "tools/image/p-image/SKILL.md"
+    },
+    {
+      "repo": "google/agents-cli",
+      "skill": "google-agents-cli-adk-code",
+      "status": "resolved",
+      "path": "skills/google-agents-cli-adk-code/SKILL.md"
+    },
+    {
+      "repo": "google/agents-cli",
+      "skill": "google-agents-cli-deploy",
+      "status": "resolved",
+      "path": "skills/google-agents-cli-deploy/SKILL.md"
+    },
+    {
+      "repo": "google/agents-cli",
+      "skill": "google-agents-cli-publish",
+      "status": "resolved",
+      "path": "skills/google-agents-cli-publish/SKILL.md"
+    },
+    {
+      "repo": "google/agents-cli",
+      "skill": "google-agents-cli-workflow",
+      "status": "resolved",
+      "path": "skills/google-agents-cli-workflow/SKILL.md"
+    },
+    {
+      "repo": "google/agents-cli",
+      "skill": "google-agents-cli-eval",
+      "status": "resolved",
+      "path": "skills/google-agents-cli-eval/SKILL.md"
+    },
+    {
+      "repo": "google/agents-cli",
+      "skill": "google-agents-cli-scaffold",
+      "status": "resolved",
+      "path": "skills/google-agents-cli-scaffold/SKILL.md"
+    },
+    {
+      "repo": "google/agents-cli",
+      "skill": "google-agents-cli-observability",
+      "status": "resolved",
+      "path": "skills/google-agents-cli-observability/SKILL.md"
+    },
+    {
+      "repo": "skills-shell/superpowers",
+      "skill": "ai-video-generation",
+      "status": "resolved",
+      "path": "tools/video/ai-video-generation/SKILL.md"
+    },
+    {
+      "repo": "skills-shell/superpowers",
+      "skill": "ai-image-generation",
+      "status": "resolved",
+      "path": "tools/image/ai-image-generation/SKILL.md"
+    },
+    {
+      "repo": "skills-shell/superpowers",
+      "skill": "twitter-automation",
+      "status": "resolved",
+      "path": "tools/social/twitter-automation/SKILL.md"
+    },
+    {
+      "repo": "skills-shell/superpowers",
+      "skill": "ai-avatar-video",
+      "status": "resolved",
+      "path": "tools/video/ai-avatar-video/SKILL.md"
+    },
+    {
+      "repo": "skills-shell/superpowers",
+      "skill": "agent-browser",
+      "status": "resolved",
+      "path": "tools/utilities/agent-browser/SKILL.md"
+    },
+    {
+      "repo": "skills-shell/superpowers",
+      "skill": "python-executor",
+      "status": "resolved",
+      "path": "tools/utilities/python-executor/SKILL.md"
+    },
+    {
+      "repo": "skills-shell/superpowers",
+      "skill": "remotion-render",
+      "status": "resolved",
+      "path": "tools/video/remotion-render/SKILL.md"
+    },
+    {
+      "repo": "skills-shell/superpowers",
+      "skill": "infsh-cli",
+      "status": "resolved",
+      "path": "tools/infsh-cli/SKILL.md"
+    },
+    {
+      "repo": "skills-shell/superpowers",
+      "skill": "agent-tools",
+      "status": "resolved",
+      "path": "tools/agent-tools/SKILL.md"
+    },
+    {
+      "repo": "skills-shell/superpowers",
+      "skill": "web-search",
+      "status": "resolved",
+      "path": "tools/llm/web-search/SKILL.md"
+    },
+    {
+      "repo": "skills-shell/superpowers",
+      "skill": "storyboard-creation",
+      "status": "resolved",
+      "path": "guides/video/storyboard-creation/SKILL.md"
+    },
+    {
+      "repo": "skills-shell/superpowers",
+      "skill": "video-ad-specs",
+      "status": "resolved",
+      "path": "guides/video/video-ad-specs/SKILL.md"
+    },
+    {
+      "repo": "skills-shell/superpowers",
+      "skill": "landing-page-design",
+      "status": "resolved",
+      "path": "guides/design/landing-page-design/SKILL.md"
+    },
+    {
+      "repo": "skills-shell/superpowers",
+      "skill": "youtube-thumbnail-design",
+      "status": "resolved",
+      "path": "guides/design/youtube-thumbnail-design/SKILL.md"
+    },
+    {
+      "repo": "skills-shell/superpowers",
+      "skill": "image-to-video",
+      "status": "resolved",
+      "path": "tools/video/image-to-video/SKILL.md"
+    },
+    {
+      "repo": "skills-shell/superpowers",
+      "skill": "competitor-teardown",
+      "status": "resolved",
+      "path": "guides/product/competitor-teardown/SKILL.md"
+    },
+    {
+      "repo": "skills-shell/superpowers",
+      "skill": "product-photography",
+      "status": "resolved",
+      "path": "guides/photo/product-photography/SKILL.md"
+    },
+    {
+      "repo": "skills-shell/superpowers",
+      "skill": "product-hunt-launch",
+      "status": "resolved",
+      "path": "guides/product/product-hunt-launch/SKILL.md"
+    },
+    {
+      "repo": "skills-shell/superpowers",
+      "skill": "character-design-sheet",
+      "status": "resolved",
+      "path": "guides/design/character-design-sheet/SKILL.md"
+    },
+    {
+      "repo": "skills-shell/superpowers",
+      "skill": "app-store-screenshots",
+      "status": "resolved",
+      "path": "guides/design/app-store-screenshots/SKILL.md"
+    },
+    {
+      "repo": "skills-shell/superpowers",
+      "skill": "p-video",
+      "status": "resolved",
+      "path": "tools/video/p-video/SKILL.md"
+    },
+    {
+      "repo": "skills-shell/superpowers",
+      "skill": "p-video-avatar",
+      "status": "resolved",
+      "path": "tools/video/p-video-avatar/SKILL.md"
+    },
+    {
+      "repo": "skills-shell/superpowers",
+      "skill": "gpt-image",
+      "status": "resolved",
+      "path": "tools/image/gpt-image/SKILL.md"
+    },
+    {
+      "repo": "skills-shell/superpowers",
+      "skill": "p-image",
+      "status": "resolved",
+      "path": "tools/image/p-image/SKILL.md"
+    },
+    {
+      "repo": "skills-shell/superpowers",
+      "skill": "happyhorse",
+      "status": "resolved",
+      "path": "tools/video/happyhorse/SKILL.md"
+    },
+    {
+      "repo": "skills-shell/superpowers",
+      "skill": "seedance",
+      "status": "resolved",
+      "path": "tools/video/seedance/SKILL.md"
+    },
+    {
+      "repo": "larksuite/cli",
+      "skill": "lark-doc",
+      "status": "resolved",
+      "path": "skills/lark-doc/SKILL.md"
+    },
+    {
+      "repo": "larksuite/cli",
+      "skill": "lark-base",
+      "status": "resolved",
+      "path": "skills/lark-base/SKILL.md"
+    },
+    {
+      "repo": "larksuite/cli",
+      "skill": "lark-shared",
+      "status": "resolved",
+      "path": "skills/lark-shared/SKILL.md"
+    },
+    {
+      "repo": "larksuite/cli",
+      "skill": "lark-im",
+      "status": "resolved",
+      "path": "skills/lark-im/SKILL.md"
+    },
+    {
+      "repo": "larksuite/cli",
+      "skill": "lark-drive",
+      "status": "resolved",
+      "path": "skills/lark-drive/SKILL.md"
+    },
+    {
+      "repo": "larksuite/cli",
+      "skill": "lark-sheets",
+      "status": "resolved",
+      "path": "skills/lark-sheets/SKILL.md"
+    },
+    {
+      "repo": "larksuite/cli",
+      "skill": "lark-wiki",
+      "status": "resolved",
+      "path": "skills/lark-wiki/SKILL.md"
+    },
+    {
+      "repo": "larksuite/cli",
+      "skill": "lark-whiteboard",
+      "status": "resolved",
+      "path": "skills/lark-whiteboard/SKILL.md"
+    },
+    {
+      "repo": "larksuite/cli",
+      "skill": "lark-task",
+      "status": "resolved",
+      "path": "skills/lark-task/SKILL.md"
+    },
+    {
+      "repo": "larksuite/cli",
+      "skill": "lark-calendar",
+      "status": "resolved",
+      "path": "skills/lark-calendar/SKILL.md"
+    },
+    {
+      "repo": "larksuite/cli",
+      "skill": "lark-mail",
+      "status": "resolved",
+      "path": "skills/lark-mail/SKILL.md"
+    },
+    {
+      "repo": "larksuite/cli",
+      "skill": "lark-minutes",
+      "status": "resolved",
+      "path": "skills/lark-minutes/SKILL.md"
+    },
+    {
+      "repo": "larksuite/cli",
+      "skill": "lark-vc",
+      "status": "resolved",
+      "path": "skills/lark-vc/SKILL.md"
+    },
+    {
+      "repo": "larksuite/cli",
+      "skill": "lark-event",
+      "status": "resolved",
+      "path": "skills/lark-event/SKILL.md"
+    },
+    {
+      "repo": "larksuite/cli",
+      "skill": "lark-contact",
+      "status": "resolved",
+      "path": "skills/lark-contact/SKILL.md"
+    },
+    {
+      "repo": "larksuite/cli",
+      "skill": "lark-workflow-meeting-summary",
+      "status": "resolved",
+      "path": "skills/lark-workflow-meeting-summary/SKILL.md"
+    },
+    {
+      "repo": "larksuite/cli",
+      "skill": "lark-workflow-standup-report",
+      "status": "resolved",
+      "path": "skills/lark-workflow-standup-report/SKILL.md"
+    },
+    {
+      "repo": "larksuite/cli",
+      "skill": "lark-openapi-explorer",
+      "status": "resolved",
+      "path": "skills/lark-openapi-explorer/SKILL.md"
+    },
+    {
+      "repo": "larksuite/cli",
+      "skill": "lark-skill-maker",
+      "status": "resolved",
+      "path": "skills/lark-skill-maker/SKILL.md"
+    },
+    {
+      "repo": "larksuite/cli",
+      "skill": "lark-approval",
+      "status": "resolved",
+      "path": "skills/lark-approval/SKILL.md"
+    },
+    {
+      "repo": "larksuite/cli",
+      "skill": "lark-slides",
+      "status": "resolved",
+      "path": "skills/lark-slides/SKILL.md"
+    },
+    {
+      "repo": "larksuite/cli",
+      "skill": "lark-attendance",
+      "status": "resolved",
+      "path": "skills/lark-attendance/SKILL.md"
+    },
+    {
+      "repo": "larksuite/cli",
+      "skill": "lark-okr",
+      "status": "resolved",
+      "path": "skills/lark-okr/SKILL.md"
+    },
+    {
+      "repo": "larksuite/cli",
+      "skill": "lark-markdown",
+      "status": "resolved",
+      "path": "skills/lark-markdown/SKILL.md"
+    },
+    {
+      "repo": "larksuite/cli",
+      "skill": "lark-vc-agent",
+      "status": "resolved",
+      "path": "skills/lark-vc-agent/SKILL.md"
+    },
+    {
+      "repo": "larksuite/cli",
+      "skill": "lark-apps",
+      "status": "resolved",
+      "path": "skills/lark-apps/SKILL.md"
+    },
+    {
+      "repo": "larksuite/cli",
+      "skill": "lark-note",
+      "status": "resolved",
+      "path": "skills/lark-note/SKILL.md"
+    },
+    {
+      "repo": "larksuite/cli",
+      "skill": "lark-meeting",
+      "status": "resolved",
+      "path": "skills/lark-meeting/SKILL.md"
+    },
+    {
+      "repo": "larksuite/cli",
+      "skill": "lark-whiteboard-cli",
+      "status": "absent"
+    },
+    {
+      "repo": "lllllllama/rigorpilot-skills",
+      "skill": "paper-context-resolver",
+      "status": "resolved",
+      "path": "skills/paper-context-resolver/SKILL.md"
+    },
+    {
+      "repo": "lllllllama/rigorpilot-skills",
+      "skill": "repo-intake-and-plan",
+      "status": "resolved",
+      "path": "skills/repo-intake-and-plan/SKILL.md"
+    },
+    {
+      "repo": "lllllllama/rigorpilot-skills",
+      "skill": "minimal-run-and-audit",
+      "status": "resolved",
+      "path": "skills/minimal-run-and-audit/SKILL.md"
+    },
+    {
+      "repo": "lllllllama/rigorpilot-skills",
+      "skill": "env-and-assets-bootstrap",
+      "status": "resolved",
+      "path": "skills/env-and-assets-bootstrap/SKILL.md"
+    },
+    {
+      "repo": "lllllllama/rigorpilot-skills",
+      "skill": "ai-research-explore",
+      "status": "resolved",
+      "path": "skills/ai-research-explore/SKILL.md"
+    },
+    {
+      "repo": "lllllllama/rigorpilot-skills",
+      "skill": "analyze-project",
+      "status": "resolved",
+      "path": "skills/analyze-project/SKILL.md"
+    },
+    {
+      "repo": "lllllllama/rigorpilot-skills",
+      "skill": "ai-research-reproduction",
+      "status": "resolved",
+      "path": "skills/ai-research-reproduction/SKILL.md"
+    },
+    {
+      "repo": "lllllllama/rigorpilot-skills",
+      "skill": "safe-debug",
+      "status": "resolved",
+      "path": "skills/safe-debug/SKILL.md"
+    },
+    {
+      "repo": "lllllllama/rigorpilot-skills",
+      "skill": "explore-code",
+      "status": "resolved",
+      "path": "skills/explore-code/SKILL.md"
+    },
+    {
+      "repo": "lllllllama/rigorpilot-skills",
+      "skill": "run-train",
+      "status": "resolved",
+      "path": "skills/run-train/SKILL.md"
+    },
+    {
+      "repo": "lllllllama/rigorpilot-skills",
+      "skill": "explore-run",
+      "status": "resolved",
+      "path": "skills/explore-run/SKILL.md"
+    },
+    {
+      "repo": "lllllllama/rigorpilot-skills",
+      "skill": "ai-paper-reproduction",
+      "status": "absent"
+    },
+    {
+      "repo": "prime-skills/runcomfy-agent-skills",
+      "skill": "video-edit",
+      "status": "resolved",
+      "path": "video-edit/SKILL.md"
+    },
+    {
+      "repo": "prime-skills/runcomfy-agent-skills",
+      "skill": "image-to-video",
+      "status": "resolved",
+      "path": "image-to-video/SKILL.md"
+    },
+    {
+      "repo": "prime-skills/runcomfy-agent-skills",
+      "skill": "nano-banana-2",
+      "status": "resolved",
+      "path": "nano-banana-2/SKILL.md"
+    },
+    {
+      "repo": "prime-skills/runcomfy-agent-skills",
+      "skill": "image-edit",
+      "status": "resolved",
+      "path": "image-edit/SKILL.md"
+    },
+    {
+      "repo": "prime-skills/runcomfy-agent-skills",
+      "skill": "nano-banana-edit",
+      "status": "resolved",
+      "path": "nano-banana-edit/SKILL.md"
+    },
+    {
+      "repo": "prime-skills/runcomfy-agent-skills",
+      "skill": "flux-kontext",
+      "status": "resolved",
+      "path": "flux-kontext/SKILL.md"
+    },
+    {
+      "repo": "prime-skills/runcomfy-agent-skills",
+      "skill": "wan-2-7",
+      "status": "resolved",
+      "path": "wan-2-7/SKILL.md"
+    },
+    {
+      "repo": "prime-skills/runcomfy-agent-skills",
+      "skill": "seedance-v2",
+      "status": "resolved",
+      "path": "seedance-v2/SKILL.md"
+    },
+    {
+      "repo": "prime-skills/runcomfy-agent-skills",
+      "skill": "gpt-image-edit",
+      "status": "resolved",
+      "path": "gpt-image-edit/SKILL.md"
+    },
+    {
+      "repo": "prime-skills/runcomfy-agent-skills",
+      "skill": "happyhorse-1-0",
+      "status": "resolved",
+      "path": "happyhorse-1-0/SKILL.md"
+    },
+    {
+      "repo": "prime-skills/runcomfy-agent-skills",
+      "skill": "flux-2-klein",
+      "status": "resolved",
+      "path": "flux-2-klein/SKILL.md"
+    },
+    {
+      "repo": "prime-skills/runcomfy-agent-skills",
+      "skill": "kling-3-0",
+      "status": "resolved",
+      "path": "kling-3-0/SKILL.md"
+    },
+    {
+      "repo": "prime-skills/runcomfy-agent-skills",
+      "skill": "codex-pet",
+      "status": "resolved",
+      "path": "codex-pet/SKILL.md"
+    },
+    {
+      "repo": "prime-skills/runcomfy-agent-skills",
+      "skill": "ai-image-generation",
+      "status": "resolved",
+      "path": "ai-image-generation/SKILL.md"
+    },
+    {
+      "repo": "prime-skills/runcomfy-agent-skills",
+      "skill": "ai-video-generation",
+      "status": "resolved",
+      "path": "ai-video-generation/SKILL.md"
+    },
+    {
+      "repo": "prime-skills/runcomfy-agent-skills",
+      "skill": "runcomfy-cli",
+      "status": "resolved",
+      "path": "runcomfy-cli/SKILL.md"
+    },
+    {
+      "repo": "prime-skills/runcomfy-agent-skills",
+      "skill": "ai-avatar-video",
+      "status": "resolved",
+      "path": "ai-avatar-video/SKILL.md"
+    },
+    {
+      "repo": "prime-skills/runcomfy-agent-skills",
+      "skill": "face-swap",
+      "status": "resolved",
+      "path": "face-swap/SKILL.md"
+    },
+    {
+      "repo": "prime-skills/runcomfy-agent-skills",
+      "skill": "video-inpainting",
+      "status": "resolved",
+      "path": "video-inpainting/SKILL.md"
+    },
+    {
+      "repo": "prime-skills/runcomfy-agent-skills",
+      "skill": "image-inpainting",
+      "status": "resolved",
+      "path": "image-inpainting/SKILL.md"
+    },
+    {
+      "repo": "prime-skills/runcomfy-agent-skills",
+      "skill": "controlnet-pose",
+      "status": "resolved",
+      "path": "controlnet-pose/SKILL.md"
+    },
+    {
+      "repo": "prime-skills/runcomfy-agent-skills",
+      "skill": "lipsync",
+      "status": "resolved",
+      "path": "lipsync/SKILL.md"
+    },
+    {
+      "repo": "prime-skills/runcomfy-agent-skills",
+      "skill": "video-extend",
+      "status": "resolved",
+      "path": "video-extend/SKILL.md"
+    },
+    {
+      "repo": "prime-skills/runcomfy-agent-skills",
+      "skill": "elevenlabs-music-generation",
+      "status": "resolved",
+      "path": "elevenlabs-music-generation/SKILL.md"
+    },
+    {
+      "repo": "prime-skills/runcomfy-agent-skills",
+      "skill": "image-outpainting",
+      "status": "resolved",
+      "path": "image-outpainting/SKILL.md"
+    },
+    {
+      "repo": "prime-skills/runcomfy-agent-skills",
+      "skill": "relight",
+      "status": "resolved",
+      "path": "relight/SKILL.md"
+    },
+    {
+      "repo": "prime-skills/runcomfy-agent-skills",
+      "skill": "video-outpainting",
+      "status": "resolved",
+      "path": "video-outpainting/SKILL.md"
+    },
+    {
+      "repo": "prime-skills/runcomfy-agent-skills",
+      "skill": "ai-music",
+      "status": "resolved",
+      "path": "ai-music/SKILL.md"
+    },
+    {
+      "repo": "prime-skills/runcomfy-agent-skills",
+      "skill": "ace-step",
+      "status": "resolved",
+      "path": "ace-step/SKILL.md"
+    },
+    {
+      "repo": "prime-skills/runcomfy-agent-skills",
+      "skill": "gpt-image-2",
+      "status": "resolved",
+      "path": "gpt-image-2/SKILL.md"
+    },
+    {
+      "repo": "its-a-skill-issue/superpowers",
+      "skill": "ai-image-generation",
+      "status": "resolved",
+      "path": "tools/image/ai-image-generation/SKILL.md"
+    },
+    {
+      "repo": "its-a-skill-issue/superpowers",
+      "skill": "twitter-automation",
+      "status": "resolved",
+      "path": "tools/social/twitter-automation/SKILL.md"
+    },
+    {
+      "repo": "its-a-skill-issue/superpowers",
+      "skill": "ai-avatar-video",
+      "status": "resolved",
+      "path": "tools/video/ai-avatar-video/SKILL.md"
+    },
+    {
+      "repo": "its-a-skill-issue/superpowers",
+      "skill": "ai-video-generation",
+      "status": "resolved",
+      "path": "tools/video/ai-video-generation/SKILL.md"
+    },
+    {
+      "repo": "its-a-skill-issue/superpowers",
+      "skill": "agent-browser",
+      "status": "resolved",
+      "path": "tools/utilities/agent-browser/SKILL.md"
+    },
+    {
+      "repo": "its-a-skill-issue/superpowers",
+      "skill": "remotion-render",
+      "status": "resolved",
+      "path": "tools/video/remotion-render/SKILL.md"
+    },
+    {
+      "repo": "its-a-skill-issue/superpowers",
+      "skill": "web-search",
+      "status": "resolved",
+      "path": "tools/llm/web-search/SKILL.md"
+    },
+    {
+      "repo": "its-a-skill-issue/superpowers",
+      "skill": "agent-tools",
+      "status": "resolved",
+      "path": "tools/agent-tools/SKILL.md"
+    },
+    {
+      "repo": "its-a-skill-issue/superpowers",
+      "skill": "python-executor",
+      "status": "resolved",
+      "path": "tools/utilities/python-executor/SKILL.md"
+    },
+    {
+      "repo": "its-a-skill-issue/superpowers",
+      "skill": "infsh-cli",
+      "status": "resolved",
+      "path": "tools/infsh-cli/SKILL.md"
+    },
+    {
+      "repo": "its-a-skill-issue/superpowers",
+      "skill": "product-photography",
+      "status": "resolved",
+      "path": "guides/photo/product-photography/SKILL.md"
+    },
+    {
+      "repo": "its-a-skill-issue/superpowers",
+      "skill": "competitor-teardown",
+      "status": "resolved",
+      "path": "guides/product/competitor-teardown/SKILL.md"
+    },
+    {
+      "repo": "its-a-skill-issue/superpowers",
+      "skill": "landing-page-design",
+      "status": "resolved",
+      "path": "guides/design/landing-page-design/SKILL.md"
+    },
+    {
+      "repo": "its-a-skill-issue/superpowers",
+      "skill": "youtube-thumbnail-design",
+      "status": "resolved",
+      "path": "guides/design/youtube-thumbnail-design/SKILL.md"
+    },
+    {
+      "repo": "its-a-skill-issue/superpowers",
+      "skill": "storyboard-creation",
+      "status": "resolved",
+      "path": "guides/video/storyboard-creation/SKILL.md"
+    },
+    {
+      "repo": "its-a-skill-issue/superpowers",
+      "skill": "character-design-sheet",
+      "status": "resolved",
+      "path": "guides/design/character-design-sheet/SKILL.md"
+    },
+    {
+      "repo": "its-a-skill-issue/superpowers",
+      "skill": "video-ad-specs",
+      "status": "resolved",
+      "path": "guides/video/video-ad-specs/SKILL.md"
+    },
+    {
+      "repo": "its-a-skill-issue/superpowers",
+      "skill": "image-to-video",
+      "status": "resolved",
+      "path": "tools/video/image-to-video/SKILL.md"
+    },
+    {
+      "repo": "its-a-skill-issue/superpowers",
+      "skill": "product-hunt-launch",
+      "status": "resolved",
+      "path": "guides/product/product-hunt-launch/SKILL.md"
+    },
+    {
+      "repo": "its-a-skill-issue/superpowers",
+      "skill": "app-store-screenshots",
+      "status": "resolved",
+      "path": "guides/design/app-store-screenshots/SKILL.md"
+    },
+    {
+      "repo": "its-a-skill-issue/superpowers",
+      "skill": "happyhorse",
+      "status": "resolved",
+      "path": "tools/video/happyhorse/SKILL.md"
+    },
+    {
+      "repo": "its-a-skill-issue/superpowers",
+      "skill": "p-image",
+      "status": "resolved",
+      "path": "tools/image/p-image/SKILL.md"
+    },
+    {
+      "repo": "its-a-skill-issue/superpowers",
+      "skill": "p-video-avatar",
+      "status": "resolved",
+      "path": "tools/video/p-video-avatar/SKILL.md"
+    },
+    {
+      "repo": "its-a-skill-issue/superpowers",
+      "skill": "seedance",
+      "status": "resolved",
+      "path": "tools/video/seedance/SKILL.md"
+    },
+    {
+      "repo": "its-a-skill-issue/superpowers",
+      "skill": "p-video",
+      "status": "resolved",
+      "path": "tools/video/p-video/SKILL.md"
+    },
+    {
+      "repo": "its-a-skill-issue/superpowers",
+      "skill": "gpt-image",
+      "status": "resolved",
+      "path": "tools/image/gpt-image/SKILL.md"
+    },
+    {
+      "repo": "bankai-skills/superpowers",
+      "skill": "ai-image-generation",
+      "status": "resolved",
+      "path": "tools/image/ai-image-generation/SKILL.md"
+    },
+    {
+      "repo": "bankai-skills/superpowers",
+      "skill": "ai-avatar-video",
+      "status": "resolved",
+      "path": "tools/video/ai-avatar-video/SKILL.md"
+    },
+    {
+      "repo": "bankai-skills/superpowers",
+      "skill": "ai-video-generation",
+      "status": "resolved",
+      "path": "tools/video/ai-video-generation/SKILL.md"
+    },
+    {
+      "repo": "bankai-skills/superpowers",
+      "skill": "twitter-automation",
+      "status": "resolved",
+      "path": "tools/social/twitter-automation/SKILL.md"
+    },
+    {
+      "repo": "bankai-skills/superpowers",
+      "skill": "agent-browser",
+      "status": "resolved",
+      "path": "tools/utilities/agent-browser/SKILL.md"
+    },
+    {
+      "repo": "bankai-skills/superpowers",
+      "skill": "python-executor",
+      "status": "resolved",
+      "path": "tools/utilities/python-executor/SKILL.md"
+    },
+    {
+      "repo": "bankai-skills/superpowers",
+      "skill": "web-search",
+      "status": "resolved",
+      "path": "tools/llm/web-search/SKILL.md"
+    },
+    {
+      "repo": "bankai-skills/superpowers",
+      "skill": "infsh-cli",
+      "status": "resolved",
+      "path": "tools/infsh-cli/SKILL.md"
+    },
+    {
+      "repo": "bankai-skills/superpowers",
+      "skill": "agent-tools",
+      "status": "resolved",
+      "path": "tools/agent-tools/SKILL.md"
+    },
+    {
+      "repo": "bankai-skills/superpowers",
+      "skill": "remotion-render",
+      "status": "resolved",
+      "path": "tools/video/remotion-render/SKILL.md"
+    },
+    {
+      "repo": "bankai-skills/superpowers",
+      "skill": "app-store-screenshots",
+      "status": "resolved",
+      "path": "guides/design/app-store-screenshots/SKILL.md"
+    },
+    {
+      "repo": "bankai-skills/superpowers",
+      "skill": "video-ad-specs",
+      "status": "resolved",
+      "path": "guides/video/video-ad-specs/SKILL.md"
+    },
+    {
+      "repo": "bankai-skills/superpowers",
+      "skill": "product-hunt-launch",
+      "status": "resolved",
+      "path": "guides/product/product-hunt-launch/SKILL.md"
+    },
+    {
+      "repo": "bankai-skills/superpowers",
+      "skill": "product-photography",
+      "status": "resolved",
+      "path": "guides/photo/product-photography/SKILL.md"
+    },
+    {
+      "repo": "bankai-skills/superpowers",
+      "skill": "competitor-teardown",
+      "status": "resolved",
+      "path": "guides/product/competitor-teardown/SKILL.md"
+    },
+    {
+      "repo": "bankai-skills/superpowers",
+      "skill": "character-design-sheet",
+      "status": "resolved",
+      "path": "guides/design/character-design-sheet/SKILL.md"
+    },
+    {
+      "repo": "bankai-skills/superpowers",
+      "skill": "landing-page-design",
+      "status": "resolved",
+      "path": "guides/design/landing-page-design/SKILL.md"
+    },
+    {
+      "repo": "bankai-skills/superpowers",
+      "skill": "storyboard-creation",
+      "status": "resolved",
+      "path": "guides/video/storyboard-creation/SKILL.md"
+    },
+    {
+      "repo": "bankai-skills/superpowers",
+      "skill": "youtube-thumbnail-design",
+      "status": "resolved",
+      "path": "guides/design/youtube-thumbnail-design/SKILL.md"
+    },
+    {
+      "repo": "bankai-skills/superpowers",
+      "skill": "image-to-video",
+      "status": "resolved",
+      "path": "tools/video/image-to-video/SKILL.md"
+    },
+    {
+      "repo": "bankai-skills/superpowers",
+      "skill": "happyhorse",
+      "status": "resolved",
+      "path": "tools/video/happyhorse/SKILL.md"
+    },
+    {
+      "repo": "bankai-skills/superpowers",
+      "skill": "p-video-avatar",
+      "status": "resolved",
+      "path": "tools/video/p-video-avatar/SKILL.md"
+    },
+    {
+      "repo": "bankai-skills/superpowers",
+      "skill": "gpt-image",
+      "status": "resolved",
+      "path": "tools/image/gpt-image/SKILL.md"
+    },
+    {
+      "repo": "bankai-skills/superpowers",
+      "skill": "p-image",
+      "status": "resolved",
+      "path": "tools/image/p-image/SKILL.md"
+    },
+    {
+      "repo": "bankai-skills/superpowers",
+      "skill": "p-video",
+      "status": "resolved",
+      "path": "tools/video/p-video/SKILL.md"
+    },
+    {
+      "repo": "bankai-skills/superpowers",
+      "skill": "seedance",
+      "status": "resolved",
+      "path": "tools/video/seedance/SKILL.md"
+    },
+    {
+      "repo": "obra/superpowers",
+      "skill": "brainstorming",
+      "status": "resolved",
+      "path": "skills/brainstorming/SKILL.md"
+    },
+    {
+      "repo": "obra/superpowers",
+      "skill": "systematic-debugging",
+      "status": "resolved",
+      "path": "skills/systematic-debugging/SKILL.md"
+    },
+    {
+      "repo": "obra/superpowers",
+      "skill": "writing-plans",
+      "status": "resolved",
+      "path": "skills/writing-plans/SKILL.md"
+    },
+    {
+      "repo": "obra/superpowers",
+      "skill": "using-superpowers",
+      "status": "resolved",
+      "path": "skills/using-superpowers/SKILL.md"
+    },
+    {
+      "repo": "obra/superpowers",
+      "skill": "requesting-code-review",
+      "status": "resolved",
+      "path": "skills/requesting-code-review/SKILL.md"
+    },
+    {
+      "repo": "obra/superpowers",
+      "skill": "test-driven-development",
+      "status": "resolved",
+      "path": "skills/test-driven-development/SKILL.md"
+    },
+    {
+      "repo": "obra/superpowers",
+      "skill": "verification-before-completion",
+      "status": "resolved",
+      "path": "skills/verification-before-completion/SKILL.md"
+    },
+    {
+      "repo": "obra/superpowers",
+      "skill": "executing-plans",
+      "status": "resolved",
+      "path": "skills/executing-plans/SKILL.md"
+    },
+    {
+      "repo": "obra/superpowers",
+      "skill": "subagent-driven-development",
+      "status": "resolved",
+      "path": "skills/subagent-driven-development/SKILL.md"
+    },
+    {
+      "repo": "obra/superpowers",
+      "skill": "receiving-code-review",
+      "status": "resolved",
+      "path": "skills/receiving-code-review/SKILL.md"
+    },
+    {
+      "repo": "obra/superpowers",
+      "skill": "dispatching-parallel-agents",
+      "status": "resolved",
+      "path": "skills/dispatching-parallel-agents/SKILL.md"
+    },
+    {
+      "repo": "obra/superpowers",
+      "skill": "writing-skills",
+      "status": "resolved",
+      "path": "skills/writing-skills/SKILL.md"
+    },
+    {
+      "repo": "obra/superpowers",
+      "skill": "using-git-worktrees",
+      "status": "resolved",
+      "path": "skills/using-git-worktrees/SKILL.md"
+    },
+    {
+      "repo": "obra/superpowers",
+      "skill": "finishing-a-development-branch",
+      "status": "resolved",
+      "path": "skills/finishing-a-development-branch/SKILL.md"
+    },
+    {
+      "repo": "obra/superpowers",
+      "skill": "diagnosing-superpowers",
+      "status": "resolved",
+      "path": "skills/diagnosing-superpowers/SKILL.md"
+    },
+    {
+      "repo": "prisma/skills",
+      "skill": "prisma-client-api",
+      "status": "resolved",
+      "path": "prisma-client-api/SKILL.md"
+    },
+    {
+      "repo": "prisma/skills",
+      "skill": "prisma-database-setup",
+      "status": "resolved",
+      "path": "prisma-database-setup/SKILL.md"
+    },
+    {
+      "repo": "prisma/skills",
+      "skill": "prisma-cli",
+      "status": "resolved",
+      "path": "prisma-cli/SKILL.md"
+    },
+    {
+      "repo": "prisma/skills",
+      "skill": "prisma-postgres",
+      "status": "resolved",
+      "path": "prisma-postgres/SKILL.md"
+    },
+    {
+      "repo": "prisma/skills",
+      "skill": "prisma-driver-adapter-implementation",
+      "status": "resolved",
+      "path": "prisma-driver-adapter-implementation/SKILL.md"
+    },
+    {
+      "repo": "prisma/skills",
+      "skill": "prisma-postgres-setup",
+      "status": "resolved",
+      "path": "prisma-postgres-setup/SKILL.md"
+    },
+    {
+      "repo": "prisma/skills",
+      "skill": "prisma-upgrade-v7",
+      "status": "resolved",
+      "path": "prisma-upgrade-v7/SKILL.md"
+    },
+    {
+      "repo": "prisma/skills",
+      "skill": "prisma-compute",
+      "status": "resolved",
+      "path": "prisma-compute/SKILL.md"
+    },
+    {
+      "repo": "prisma/skills",
+      "skill": "prisma-mongodb-upgrade",
+      "status": "resolved",
+      "path": "prisma-mongodb-upgrade/SKILL.md"
+    },
+    {
+      "repo": "prisma/skills",
+      "skill": "prisma-orm-setup",
+      "status": "resolved",
+      "path": "prisma-orm-setup/SKILL.md"
+    },
+    {
+      "repo": "emilkowalski/skills",
+      "skill": "emil-design-eng",
+      "status": "resolved",
+      "path": "skills/emil-design-eng/SKILL.md"
+    },
+    {
+      "repo": "emilkowalski/skills",
+      "skill": "review-animations",
+      "status": "resolved",
+      "path": "skills/review-animations/SKILL.md"
+    },
+    {
+      "repo": "emilkowalski/skills",
+      "skill": "apple-design",
+      "status": "resolved",
+      "path": "skills/apple-design/SKILL.md"
+    },
+    {
+      "repo": "emilkowalski/skills",
+      "skill": "animation-vocabulary",
+      "status": "resolved",
+      "path": "skills/animation-vocabulary/SKILL.md"
+    },
+    {
+      "repo": "emilkowalski/skills",
+      "skill": "improve-animations",
+      "status": "resolved",
+      "path": "skills/improve-animations/SKILL.md"
+    },
+    {
+      "repo": "emilkowalski/skills",
+      "skill": "find-animation-opportunities",
+      "status": "resolved",
+      "path": "skills/find-animation-opportunities/SKILL.md"
+    },
+    {
+      "repo": "emilkowalski/skills",
+      "skill": "pick-ui-library",
+      "status": "resolved",
+      "path": "skills/pick-ui-library/SKILL.md"
+    },
+    {
+      "repo": "emilkowalski/skills",
+      "skill": "prototype",
+      "status": "resolved",
+      "path": "skills/prototype/SKILL.md"
+    },
+    {
+      "repo": "emilkowalski/skills",
+      "skill": "animate",
+      "status": "resolved",
+      "path": "skills/animate/SKILL.md"
+    },
+    {
+      "repo": "emilkowalski/skills",
+      "skill": "ask-sonner",
+      "status": "resolved",
+      "path": "skills/ask-sonner/SKILL.md"
+    },
+    {
+      "repo": "emilkowalski/skills",
+      "skill": "animate-expo",
+      "status": "resolved",
+      "path": "skills/animate-expo/SKILL.md"
+    },
+    {
+      "repo": "emilkowalski/skills",
+      "skill": "write-swift",
+      "status": "resolved",
+      "path": "skills/write-swift/SKILL.md"
+    },
+    {
+      "repo": "emilkowalski/skills",
+      "skill": "mobile-native",
+      "status": "resolved",
+      "path": "skills/mobile-native/SKILL.md"
+    },
+    {
+      "repo": "emilkowalski/skills",
+      "skill": "break-ui",
+      "status": "resolved",
+      "path": "skills/break-ui/SKILL.md"
+    },
+    {
+      "repo": "emilkowalski/skills",
+      "skill": "animation-performance",
+      "status": "resolved",
+      "path": "skills/animation-performance/SKILL.md"
+    },
+    {
+      "repo": "emilkowalski/skills",
+      "skill": "remove-animations",
+      "status": "resolved",
+      "path": "skills/remove-animations/SKILL.md"
+    },
+    {
+      "repo": "pbakaus/impeccable",
+      "skill": "impeccable",
+      "status": "ambiguous"
+    },
+    {
+      "repo": "pbakaus/impeccable",
+      "skill": "polish",
+      "status": "absent"
+    },
+    {
+      "repo": "pbakaus/impeccable",
+      "skill": "critique",
+      "status": "absent"
+    },
+    {
+      "repo": "pbakaus/impeccable",
+      "skill": "audit",
+      "status": "resolved",
+      "path": "tests/oracle/workspaces/ctx-pin/.claude/skills/audit/SKILL.md"
+    },
+    {
+      "repo": "pbakaus/impeccable",
+      "skill": "animate",
+      "status": "absent"
+    },
+    {
+      "repo": "pbakaus/impeccable",
+      "skill": "adapt",
+      "status": "absent"
+    },
+    {
+      "repo": "pbakaus/impeccable",
+      "skill": "clarify",
+      "status": "absent"
+    },
+    {
+      "repo": "pbakaus/impeccable",
+      "skill": "optimize",
+      "status": "absent"
+    },
+    {
+      "repo": "pbakaus/impeccable",
+      "skill": "colorize",
+      "status": "absent"
+    },
+    {
+      "repo": "pbakaus/impeccable",
+      "skill": "bolder",
+      "status": "absent"
+    },
+    {
+      "repo": "pbakaus/impeccable",
+      "skill": "delight",
+      "status": "absent"
+    },
+    {
+      "repo": "pbakaus/impeccable",
+      "skill": "distill",
+      "status": "absent"
+    },
+    {
+      "repo": "pbakaus/impeccable",
+      "skill": "quieter",
+      "status": "absent"
+    },
+    {
+      "repo": "pbakaus/impeccable",
+      "skill": "typeset",
+      "status": "absent"
+    },
+    {
+      "repo": "pbakaus/impeccable",
+      "skill": "overdrive",
+      "status": "absent"
+    },
+    {
+      "repo": "pbakaus/impeccable",
+      "skill": "normalize",
+      "status": "absent"
+    },
+    {
+      "repo": "pbakaus/impeccable",
+      "skill": "extract",
+      "status": "absent"
+    },
+    {
+      "repo": "pbakaus/impeccable",
+      "skill": "frontend-design",
+      "status": "absent"
+    },
+    {
+      "repo": "pbakaus/impeccable",
+      "skill": "onboard",
+      "status": "absent"
+    },
+    {
+      "repo": "pbakaus/impeccable",
+      "skill": "harden",
+      "status": "absent"
+    },
+    {
+      "repo": "pbakaus/impeccable",
+      "skill": "teach-impeccable",
+      "status": "absent"
+    },
+    {
+      "repo": "pbakaus/impeccable",
+      "skill": "arrange",
+      "status": "absent"
+    },
+    {
+      "repo": "pbakaus/impeccable",
+      "skill": "shape",
+      "status": "absent"
+    },
+    {
+      "repo": "pbakaus/impeccable",
+      "skill": "layout",
+      "status": "absent"
+    },
+    {
+      "repo": "gencraft-labs/skills",
+      "skill": "ai-music",
+      "status": "resolved",
+      "path": "ai-music/SKILL.md"
+    },
+    {
+      "repo": "gencraft-labs/skills",
+      "skill": "video-edit",
+      "status": "resolved",
+      "path": "video-edit/SKILL.md"
+    },
+    {
+      "repo": "gencraft-labs/skills",
+      "skill": "ai-video-generation",
+      "status": "resolved",
+      "path": "ai-video-generation/SKILL.md"
+    },
+    {
+      "repo": "gencraft-labs/skills",
+      "skill": "ai-image-generation",
+      "status": "resolved",
+      "path": "ai-image-generation/SKILL.md"
+    },
+    {
+      "repo": "gencraft-labs/skills",
+      "skill": "image-to-video",
+      "status": "resolved",
+      "path": "image-to-video/SKILL.md"
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "seo-audit",
+      "status": "resolved",
+      "path": "skills/seo-audit/SKILL.md"
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "copywriting",
+      "status": "resolved",
+      "path": "skills/copywriting/SKILL.md"
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "marketing-psychology",
+      "status": "resolved",
+      "path": "skills/marketing-psychology/SKILL.md"
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "content-strategy",
+      "status": "resolved",
+      "path": "skills/content-strategy/SKILL.md"
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "ai-seo",
+      "status": "resolved",
+      "path": "skills/ai-seo/SKILL.md"
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "programmatic-seo",
+      "status": "resolved",
+      "path": "skills/programmatic-seo/SKILL.md"
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "copy-editing",
+      "status": "resolved",
+      "path": "skills/copy-editing/SKILL.md"
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "marketing-ideas",
+      "status": "resolved",
+      "path": "skills/marketing-ideas/SKILL.md"
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "ad-creative",
+      "status": "resolved",
+      "path": "skills/ad-creative/SKILL.md"
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "cold-email",
+      "status": "resolved",
+      "path": "skills/cold-email/SKILL.md"
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "site-architecture",
+      "status": "resolved",
+      "path": "skills/site-architecture/SKILL.md"
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "churn-prevention",
+      "status": "resolved",
+      "path": "skills/churn-prevention/SKILL.md"
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "sales-enablement",
+      "status": "resolved",
+      "path": "skills/sales-enablement/SKILL.md"
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "customer-research",
+      "status": "resolved",
+      "path": "skills/customer-research/SKILL.md"
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "revops",
+      "status": "resolved",
+      "path": "skills/revops/SKILL.md"
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "lead-magnets",
+      "status": "resolved",
+      "path": "skills/lead-magnets/SKILL.md"
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "competitor-profiling",
+      "status": "resolved",
+      "path": "skills/competitor-profiling/SKILL.md"
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "cro",
+      "status": "resolved",
+      "path": "skills/cro/SKILL.md"
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "community-marketing",
+      "status": "resolved",
+      "path": "skills/community-marketing/SKILL.md"
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "image",
+      "status": "resolved",
+      "path": "skills/image/SKILL.md"
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "video",
+      "status": "resolved",
+      "path": "skills/video/SKILL.md"
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "directory-submissions",
+      "status": "resolved",
+      "path": "skills/directory-submissions/SKILL.md"
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "social",
+      "status": "resolved",
+      "path": "skills/social/SKILL.md"
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "product-marketing",
+      "status": "resolved",
+      "path": "skills/product-marketing/SKILL.md"
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "analytics",
+      "status": "resolved",
+      "path": "skills/analytics/SKILL.md"
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "ads",
+      "status": "resolved",
+      "path": "skills/ads/SKILL.md"
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "co-marketing",
+      "status": "resolved",
+      "path": "skills/co-marketing/SKILL.md"
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "pricing",
+      "status": "resolved",
+      "path": "skills/pricing/SKILL.md"
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "competitors",
+      "status": "resolved",
+      "path": "skills/competitors/SKILL.md"
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "schema",
+      "status": "resolved",
+      "path": "skills/schema/SKILL.md"
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "emails",
+      "status": "resolved",
+      "path": "skills/emails/SKILL.md"
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "launch",
+      "status": "resolved",
+      "path": "skills/launch/SKILL.md"
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "ab-testing",
+      "status": "resolved",
+      "path": "skills/ab-testing/SKILL.md"
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "aso",
+      "status": "resolved",
+      "path": "skills/aso/SKILL.md"
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "free-tools",
+      "status": "resolved",
+      "path": "skills/free-tools/SKILL.md"
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "onboarding",
+      "status": "resolved",
+      "path": "skills/onboarding/SKILL.md"
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "referrals",
+      "status": "resolved",
+      "path": "skills/referrals/SKILL.md"
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "signup",
+      "status": "resolved",
+      "path": "skills/signup/SKILL.md"
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "paywalls",
+      "status": "resolved",
+      "path": "skills/paywalls/SKILL.md"
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "popups",
+      "status": "resolved",
+      "path": "skills/popups/SKILL.md"
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "marketing-plan",
+      "status": "resolved",
+      "path": "skills/marketing-plan/SKILL.md"
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "prospecting",
+      "status": "resolved",
+      "path": "skills/prospecting/SKILL.md"
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "social-content",
+      "status": "absent"
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "sms",
+      "status": "resolved",
+      "path": "skills/sms/SKILL.md"
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "product-marketing-context",
+      "status": "absent"
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "pricing-strategy",
+      "status": "absent"
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "offers",
+      "status": "resolved",
+      "path": "skills/offers/SKILL.md"
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "analytics-tracking",
+      "status": "absent"
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "page-cro",
+      "status": "absent"
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "public-relations",
+      "status": "resolved",
+      "path": "skills/public-relations/SKILL.md"
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "launch-strategy",
+      "status": "absent"
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "schema-markup",
+      "status": "absent"
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "email-sequence",
+      "status": "absent"
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "paid-ads",
+      "status": "absent"
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "competitor-alternatives",
+      "status": "absent"
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "onboarding-cro",
+      "status": "absent"
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "form-cro",
+      "status": "absent"
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "free-tool-strategy",
+      "status": "absent"
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "referral-program",
+      "status": "absent"
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "ab-test-setup",
+      "status": "absent"
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "signup-flow-cro",
+      "status": "absent"
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "paywall-upgrade-cro",
+      "status": "absent"
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "popup-cro",
+      "status": "absent"
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "marketing-loops",
+      "status": "resolved",
+      "path": "skills/marketing-loops/SKILL.md"
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "marketing-council",
+      "status": "resolved",
+      "path": "skills/marketing-council/SKILL.md"
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "attribution",
+      "status": "resolved",
+      "path": "skills/attribution/SKILL.md"
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "influencer-marketing",
+      "status": "resolved",
+      "path": "skills/influencer-marketing/SKILL.md"
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "events",
+      "status": "resolved",
+      "path": "skills/events/SKILL.md"
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "aso-audit",
+      "status": "absent"
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "conversion-tracking",
+      "status": "resolved",
+      "path": "skills/conversion-tracking/SKILL.md"
+    },
+    {
+      "repo": "coreyhaines31/marketingskills",
+      "skill": "link-building",
+      "status": "resolved",
+      "path": "skills/link-building/SKILL.md"
+    },
+    {
+      "repo": "higgsfield-ai/skills",
+      "skill": "higgsfield-generate",
+      "status": "resolved",
+      "path": "higgsfield-generate/SKILL.md"
+    },
+    {
+      "repo": "higgsfield-ai/skills",
+      "skill": "higgsfield-product-photoshoot",
+      "status": "resolved",
+      "path": "higgsfield-product-photoshoot/SKILL.md"
+    },
+    {
+      "repo": "higgsfield-ai/skills",
+      "skill": "higgsfield-soul-id",
+      "status": "resolved",
+      "path": "higgsfield-soul-id/SKILL.md"
+    },
+    {
+      "repo": "higgsfield-ai/skills",
+      "skill": "higgsfield-marketplace-cards",
+      "status": "resolved",
+      "path": "higgsfield-marketplace-cards/SKILL.md"
+    },
+    {
+      "repo": "higgsfield-ai/skills",
+      "skill": "higgsfield-websites",
+      "status": "resolved",
+      "path": "higgsfield-websites/SKILL.md"
+    },
+    {
+      "repo": "higgsfield-ai/skills",
+      "skill": "higgsfield-video-explainer",
+      "status": "resolved",
+      "path": "higgsfield-video-explainer/SKILL.md"
+    },
+    {
+      "repo": "higgsfield-ai/skills",
+      "skill": "higgsfield-youtube-thumbnail",
+      "status": "resolved",
+      "path": "higgsfield-youtube-thumbnail/SKILL.md"
+    },
+    {
+      "repo": "higgsfield-ai/skills",
+      "skill": "higgsfield-brandkit",
+      "status": "resolved",
+      "path": "higgsfield-brandkit/SKILL.md"
+    },
+    {
+      "repo": "higgsfield-ai/skills",
+      "skill": "higgsfield-game-generation",
+      "status": "absent"
+    },
+    {
+      "repo": "higgsfield-ai/skills",
+      "skill": "higgsfield-faceless-video",
+      "status": "resolved",
+      "path": "higgsfield-faceless-video/SKILL.md"
+    },
+    {
+      "repo": "firebase/agent-skills",
+      "skill": "firebase-basics",
+      "status": "resolved",
+      "path": "skills/firebase-basics/SKILL.md"
+    },
+    {
+      "repo": "firebase/agent-skills",
+      "skill": "firebase-auth-basics",
+      "status": "resolved",
+      "path": "skills/firebase-auth-basics/SKILL.md"
+    },
+    {
+      "repo": "firebase/agent-skills",
+      "skill": "firebase-hosting-basics",
+      "status": "resolved",
+      "path": "skills/firebase-hosting-basics/SKILL.md"
+    },
+    {
+      "repo": "firebase/agent-skills",
+      "skill": "firebase-app-hosting-basics",
+      "status": "resolved",
+      "path": "skills/firebase-app-hosting-basics/SKILL.md"
+    },
+    {
+      "repo": "firebase/agent-skills",
+      "skill": "firebase-data-connect",
+      "status": "absent"
+    },
+    {
+      "repo": "firebase/agent-skills",
+      "skill": "firebase-security-rules-auditor",
+      "status": "resolved",
+      "path": "skills/firebase-security-rules-auditor/SKILL.md"
+    },
+    {
+      "repo": "firebase/agent-skills",
+      "skill": "firebase-ai-logic-basics",
+      "status": "resolved",
+      "path": "skills/firebase-ai-logic-basics/SKILL.md"
+    },
+    {
+      "repo": "firebase/agent-skills",
+      "skill": "firebase-firestore",
+      "status": "resolved",
+      "path": "skills/firebase-firestore/SKILL.md"
+    },
+    {
+      "repo": "firebase/agent-skills",
+      "skill": "firebase-crashlytics",
+      "status": "resolved",
+      "path": "skills/firebase-crashlytics/SKILL.md"
+    },
+    {
+      "repo": "firebase/agent-skills",
+      "skill": "xcode-project-setup",
+      "status": "resolved",
+      "path": "skills/xcode-project-setup/SKILL.md"
+    },
+    {
+      "repo": "firebase/agent-skills",
+      "skill": "firebase-remote-config-basics",
+      "status": "resolved",
+      "path": "skills/firebase-remote-config-basics/SKILL.md"
+    },
+    {
+      "repo": "firebase/agent-skills",
+      "skill": "developing-genkit-js",
+      "status": "absent"
+    },
+    {
+      "repo": "firebase/agent-skills",
+      "skill": "developing-genkit-dart",
+      "status": "absent"
+    },
+    {
+      "repo": "firebase/agent-skills",
+      "skill": "extension-to-functions-codebase",
+      "status": "resolved",
+      "path": "skills/extension-to-functions-codebase/SKILL.md"
+    },
+    {
+      "repo": "firebase/agent-skills",
+      "skill": "developing-genkit-go",
+      "status": "absent"
+    },
+    {
+      "repo": "firebase/agent-skills",
+      "skill": "firebase-firestore-standard",
+      "status": "absent"
+    },
+    {
+      "repo": "firebase/agent-skills",
+      "skill": "firebase-firestore-enterprise-native-mode",
+      "status": "absent"
+    },
+    {
+      "repo": "firebase/agent-skills",
+      "skill": "firebase-ai-logic",
+      "status": "absent"
+    },
+    {
+      "repo": "firebase/agent-skills",
+      "skill": "developing-genkit-python",
+      "status": "absent"
+    },
+    {
+      "repo": "firebase/agent-skills",
+      "skill": "firestore-rules-creation",
+      "status": "resolved",
+      "path": "skills/firestore-rules-creation/SKILL.md"
+    },
+    {
+      "repo": "firebase/agent-skills",
+      "skill": "firestore-security-rules-auditor",
+      "status": "absent"
+    },
+    {
+      "repo": "firebase/agent-skills",
+      "skill": "firebase-local-env-setup",
+      "status": "absent"
+    },
+    {
+      "repo": "firebase/agent-skills",
+      "skill": "firebase-firestore-basics",
+      "status": "absent"
+    },
+    {
+      "repo": "cloudflare/skills",
+      "skill": "cloudflare",
+      "status": "resolved",
+      "path": "skills/cloudflare/SKILL.md"
+    },
+    {
+      "repo": "cloudflare/skills",
+      "skill": "wrangler",
+      "status": "resolved",
+      "path": "skills/wrangler/SKILL.md"
+    },
+    {
+      "repo": "cloudflare/skills",
+      "skill": "workers-best-practices",
+      "status": "resolved",
+      "path": "skills/workers-best-practices/SKILL.md"
+    },
+    {
+      "repo": "cloudflare/skills",
+      "skill": "durable-objects",
+      "status": "resolved",
+      "path": "skills/durable-objects/SKILL.md"
+    },
+    {
+      "repo": "cloudflare/skills",
+      "skill": "web-perf",
+      "status": "resolved",
+      "path": "skills/web-perf/SKILL.md"
+    },
+    {
+      "repo": "cloudflare/skills",
+      "skill": "agents-sdk",
+      "status": "resolved",
+      "path": "skills/agents-sdk/SKILL.md"
+    },
+    {
+      "repo": "cloudflare/skills",
+      "skill": "cloudflare-email-service",
+      "status": "resolved",
+      "path": "skills/cloudflare-email-service/SKILL.md"
+    },
+    {
+      "repo": "cloudflare/skills",
+      "skill": "cloudflare-one",
+      "status": "resolved",
+      "path": "skills/cloudflare-one/SKILL.md"
+    },
+    {
+      "repo": "cloudflare/skills",
+      "skill": "turnstile-spin",
+      "status": "resolved",
+      "path": "skills/turnstile-spin/SKILL.md"
+    },
+    {
+      "repo": "cloudflare/skills",
+      "skill": "cloudflare-one-migrations",
+      "status": "resolved",
+      "path": "skills/cloudflare-one-migrations/SKILL.md"
+    },
+    {
+      "repo": "cloudflare/skills",
+      "skill": "sandbox-stable",
+      "status": "resolved",
+      "path": "skills/sandbox-stable/SKILL.md"
+    },
+    {
+      "repo": "cloudflare/skills",
+      "skill": "sandbox-next",
+      "status": "resolved",
+      "path": "skills/sandbox-next/SKILL.md"
+    },
+    {
+      "repo": "cloudflare/skills",
+      "skill": "sandbox-migrate-to-next",
+      "status": "resolved",
+      "path": "skills/sandbox-migrate-to-next/SKILL.md"
+    },
+    {
+      "repo": "cloudflare/skills",
+      "skill": "nextjs-on-cloudflare",
+      "status": "resolved",
+      "path": "skills/nextjs-on-cloudflare/SKILL.md"
+    },
+    {
+      "repo": "cloudflare/skills",
+      "skill": "sandbox-sdk",
+      "status": "absent"
+    },
+    {
+      "repo": "cloudflare/skills",
+      "skill": "k2",
+      "status": "resolved",
+      "path": "skills/k2/SKILL.md"
+    },
+    {
+      "repo": "cloudflare/skills",
+      "skill": "basin",
+      "status": "resolved",
+      "path": "skills/basin/SKILL.md"
+    },
+    {
+      "repo": "cloudflare/skills",
+      "skill": "workers-profiling",
+      "status": "resolved",
+      "path": "skills/workers-profiling/SKILL.md"
+    },
+    {
+      "repo": "cloudflare/skills",
+      "skill": "cf-cli",
+      "status": "resolved",
+      "path": "skills/cf-cli/SKILL.md"
+    },
+    {
+      "repo": "cloudflare/skills",
+      "skill": "gateway-workers",
+      "status": "resolved",
+      "path": "skills/gateway-workers/SKILL.md"
+    },
+    {
+      "repo": "cloudflare/skills",
+      "skill": "building-ai-agent-on-cloudflare",
+      "status": "absent"
+    },
+    {
+      "repo": "cloudflare/skills",
+      "skill": "building-mcp-server-on-cloudflare",
+      "status": "absent"
+    }
+  ]
+}

@@ -68,8 +68,14 @@ JSON, and the server writes none of it (task 57).
 
 **In the sponsored mode with `ARP_SKILLS_DIR`**, the server process that runs your MCP tools writes
 a fetched skill's files, scripts included, under `<ARP_SKILLS_DIR>/<name>/`, after checking every
-file against the receipt (task 57). It runs none of them. Your agent runtime may, as it would after
-`npx skills add`.
+file against the receipt (task 57) **and only after you accept** (task 61, ADR `0127`). It asks you
+through MCP elicitation: a dialog with the skill, a link to read every file on GitHub at the pinned
+commit, and the counts. The model does not see the question and cannot answer it. Any answer but
+an accept writes nothing and keeps nothing, and no ARP setting skips the question. It
+runs none of the files. Your agent runtime may, as it would after `npx skills add`.
+
+The bytes come from the commit each repository was pinned at when it was listed
+(`data/catalogue/skill-pins-13579.json`), never from `HEAD`, and the receipt names that commit.
 
 **It cannot be made to fetch somewhere else.** This is the one that would matter most if it were
 wrong, so it is worth stating precisely. The only input to the content route is an atom id. That is
@@ -103,8 +109,8 @@ would stop accepting your receipts.
 ~/.arp/agent-key              the agent's key, mode 0600, created on the first fetch
 ~/.arp/agent.json             the agent's id and identity atom, once it is registered
 ~/.arp/receipts.jsonl         every skill served to the agent, with its receipt
-<ARP_SKILLS_DIR>/<name>/**    the skill's files, scripts included, when ARP_SKILLS_DIR is set
-.arp/receipts.jsonl           a copy of the receipt for the hook, when ARP_SKILLS_DIR is set
+<ARP_SKILLS_DIR>/<name>/**    the skill's files, scripts included, when ARP_SKILLS_DIR is set and you accepted
+.arp/receipts.jsonl           a copy of the receipt for the hook, for each skill you accepted
 ```
 
 ## Every outbound connection
@@ -280,10 +286,10 @@ ARP_TOOLS              read: the three reads only. desktop or sponsored: the rea
                        and arp_declare_used, with a local agent key in ~/.arp/agent-key (ADR 0110),
                        over stdio only: the server refuses to start them over HTTP (ADR 0116).
                        Unset: every tool
-ARP_SKILLS_DIR         desktop/sponsored only, set by `arp init --sponsored`: arp_get_skill writes
-                       <dir>/<name>/**, relative to the working directory, refusing (and writing
-                       nothing) when a different file is already at one of those paths, and
-                       appends the receipt to ARP_RECEIPTS
+ARP_SKILLS_DIR         desktop/sponsored only, set by `arp init --sponsored`: once you accept the
+                       install question, arp_get_skill writes <dir>/<name>/**, relative to the
+                       working directory, refusing (and writing nothing) when a different file is
+                       already at one of those paths, and appends the receipt to ARP_RECEIPTS
 ARP_CONTENT            desktop/sponsored only: the content server. Default http://127.0.0.1:3002
 ARP_SPONSOR            desktop/sponsored only: the sponsoring service. Default http://127.0.0.1:3200
 ARP_ACTIVITY_DIR       session-log.ts --serve only: the directory it tails. Default .arp
@@ -388,13 +394,14 @@ a create pair costs 0.22 TRUST against 0.004. Measured 2026-10-29.
 
 ## What it refuses, so you can tell a bug from an answer
 
-Eight refusals, each with its own status and sentence. Three of them are facts about the world and
+Nine refusals, each with its own status and sentence. Three of them are facts about the world and
 not failures:
 
 ```
 404 unknown-atom    not a catalogued tool
 404 not-a-file      catalogued, but there is no file — every MCP server is this
-404 absent          the repository has no such skill at HEAD. 139 of 662 are here
+404 unpinned        the repository has no pinned commit, so there is no listed version to serve
+404 absent          the repository has no such skill at its pinned commit. 139 of 662 are here
 409 ambiguous       several paths, contents differ. 2 of 662. It refuses rather than pick
 400 bad-atom-id     not 0x + 64 hex
 413 too-large       over the 1 MiB cap
@@ -402,10 +409,12 @@ not failures:
 500 unsafe-path     the listing named a path outside the repository
 ```
 
-`absent` is worth a sentence: 139 of the 662 catalogued skills no longer have a file in the
-repository the catalogue points at. That is a measurement
-(`data/measurements/skill-layouts-2026-10-29T2200.json`), it is re-derivable with one listing request,
-and it is the server telling you the truth rather than failing.
+`absent` is worth a sentence: 139 of the 662 catalogued skills have no file the resolver can find in
+the repository the catalogue points at, at the commit it was pinned at. That is a measurement
+(`scripts/measure/skill-paths-at-pin.ts`, `data/measurements/skill-paths-at-pin-2026-11-03.json`:
+521 resolved, 139 absent, 2 ambiguous), the same counts as at `HEAD` on 2026-10-29
+(`data/measurements/skill-layouts-2026-10-29T2200.json`), re-derivable with one listing request per
+repository, and it is the server telling you the truth rather than failing.
 
 **A listing it could not read is not an empty repository.** If GitHub rate-limits us the server
 throws rather than answering `absent`, because serving `absent` off our own quota would publish a
@@ -418,6 +427,13 @@ Stated because a security note that lists only its strengths is marketing.
 - **The skill's content.** A `SKILL.md` is instructions for a language model, written by a stranger.
   The server proves which bytes you got; it says nothing about whether those bytes are safe to follow.
   That is prompt injection and it is the real risk in this whole area. Read what you install.
+- **Your model installing something itself.** The install question governs what ARP writes. A model
+  with a shell can copy any file into `.claude/skills/` on its own, and no server can stop that.
+- **An editor that does not show the question.** Claude Code in VS Code (2.1.317) declares MCP
+  elicitation and answers no without showing it (`anthropics/claude-code#98256`, tested 2026-11-03).
+  Nothing is installed there; ask again from a terminal, where the dialog shows.
+- **A hook you install yourself.** Claude Code lets a user's `Elicitation` hook answer the dialog.
+  ARP has no setting that skips the question; a hook of yours can.
 - **The catalogue's judgement.** 662 skills are listed because they crossed an install-count
   threshold on skills.sh (`data/measurements/catalogue-sources-2026-10-28.json`). That is a popularity
   figure, it is somebody else's number, and ARP publishes no score (ADR `0046`). A listing is not a

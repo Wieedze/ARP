@@ -52,7 +52,7 @@ import { isHex, type Address, type Hex } from 'viem';
 const isHex32 = (value: string | null): value is Hex =>
   value !== null && /^0x[0-9a-fA-F]{64}$/.test(value);
 
-import { SKILL_CATALOGUES } from './data.js';
+import { SKILL_CATALOGUES, SKILL_PINS } from './data.js';
 
 import {
   type BundleAnswer,
@@ -124,6 +124,12 @@ export function contentIndexFor(chainId: number): ReadonlyMap<string, string> {
   );
   indexes.set(chainId, index);
   return index;
+}
+
+/** The commit a repository is served at on one chain, or null when it was never pinned (task 61). */
+export function pinFor(chainId: number): (repo: string) => string | null {
+  const repos = SKILL_PINS[chainId]?.repos ?? {};
+  return (repo) => repos[repo]?.commit ?? null;
 }
 
 /**
@@ -204,18 +210,17 @@ export function receiptSigner(): TypedDataSigner | null {
 const listings = new Map<string, { at: number; files: RepositoryFile[] }>();
 
 /**
- * A repository's every file path and its blob sha, cached. One request per repository. The bundle
- * route (task 57) reads a skill's whole directory from it, not only its SKILL.md.
+ * A repository's every file path and its blob sha at one commit, cached. One request per repository
+ * and commit. The bundle route (task 57) reads a skill's whole directory from it, not only its
+ * SKILL.md.
  *
- * The cache is ten minutes and the content is fetched live from `HEAD`, so the two can disagree:
- * after a push that makes two previously-identical paths differ, `resolveContentPath` can still
- * take its "identical sha, serve one and name the others" decision on the stale listing. The
- * **digest is always over the bytes actually served**, so the receipt stays honest about what was
- * served — it is `alsoAt` that can be wrong, and `alsoAt` is the field whose whole claim is that
- * choosing between those paths asserts nothing.
+ * Both the listing and the bytes are read at the pinned commit (task 61), so the two cannot
+ * disagree the way a listing of `HEAD` and a later fetch of `HEAD` could. The ten-minute expiry
+ * stays only to bound the memory a long-running server holds.
  */
-async function listing(repo: string): Promise<readonly RepositoryFile[]> {
-  const cached = listings.get(repo);
+async function listing(repo: string, commit: string): Promise<readonly RepositoryFile[]> {
+  const key = `${repo}@${commit}`;
+  const cached = listings.get(key);
   if (cached !== undefined && Date.now() - cached.at < LISTING_TTL_MS) return cached.files;
 
   const headers: Record<string, string> = {
@@ -225,7 +230,7 @@ async function listing(repo: string): Promise<readonly RepositoryFile[]> {
   const token = process.env['GITHUB_TOKEN']?.trim();
   if (token !== undefined && token.length > 0) headers['authorization'] = `Bearer ${token}`;
 
-  const response = await fetch(`https://api.github.com/repos/${repo}/git/trees/HEAD?recursive=1`, {
+  const response = await fetch(`https://api.github.com/repos/${repo}/git/trees/${commit}?recursive=1`, {
     headers,
     signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
   });
@@ -239,7 +244,7 @@ async function listing(repo: string): Promise<readonly RepositoryFile[]> {
     if (entry.type !== 'blob') continue;
     files.push({ path: entry.path, sha: entry.sha });
   }
-  listings.set(repo, { at: Date.now(), files });
+  listings.set(key, { at: Date.now(), files });
   return files;
 }
 
@@ -303,10 +308,15 @@ function refusal(
       };
     case 'not-a-file':
       return { code: 404, reason: `${answer.url} is catalogued but has no file to serve` };
+    case 'unpinned':
+      return {
+        code: 404,
+        reason: `${answer.ref.repo} has no pinned commit on chain ${chainId}, so there is no listed version to serve`,
+      };
     case 'absent':
       return {
         code: 404,
-        reason: `${answer.ref.repo} carries no ${answer.ref.skill}/SKILL.md at HEAD`,
+        reason: `${answer.ref.repo} carries no ${answer.ref.skill}/SKILL.md at its pinned commit`,
       };
     case 'ambiguous':
       return {
@@ -346,6 +356,7 @@ export async function serveContentRequest(
     answer = await serveContent(atomId, {
       chainId,
       index: contentIndexFor(chainId),
+      pin: pinFor(chainId),
       listing,
       raw,
       signer,
@@ -371,6 +382,7 @@ export async function serveContentRequest(
     'x-arp-atom': atomId.toLowerCase(),
     'x-arp-path': answer.path,
     'x-arp-digest': answer.digest,
+    'x-arp-commit': answer.commit,
     // Never `inline`: these bytes are Markdown from a third party and nothing here renders them.
     'content-disposition': 'attachment',
     'x-content-type-options': 'nosniff',
@@ -400,6 +412,7 @@ async function serveBundleRequest(
     answer = await serveSkillBundle(atomId, {
       chainId,
       index: contentIndexFor(chainId),
+      pin: pinFor(chainId),
       listing,
       raw,
       signer,
@@ -414,7 +427,11 @@ async function serveBundleRequest(
     const { code, reason } = refusal(answer, chainId);
     return Response.json({ error: answer.status, reason }, { status: code });
   }
-  const headers: Record<string, string> = { 'x-arp-atom': atomId.toLowerCase(), 'x-arp-path': answer.path };
+  const headers: Record<string, string> = {
+    'x-arp-atom': atomId.toLowerCase(),
+    'x-arp-path': answer.path,
+    'x-arp-commit': answer.commit,
+  };
   if (answer.receipt !== null) headers['x-arp-receipt'] = JSON.stringify(answer.receipt);
   return Response.json(
     {

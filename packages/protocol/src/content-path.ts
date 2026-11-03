@@ -174,9 +174,9 @@ export function resolveContentPath(
 /**
  * The raw URL for a path, pinned to a commit when one is given.
  *
- * `HEAD` is what the endpoint uses by default, because the question an agent asks is "give me this
- * skill" and not "give me this skill as it was". The cost is that a receipt's digest stops matching
- * when the repository changes under the path, which `receipt.ts` states rather than hides.
+ * The content path always passes the commit the repository was pinned at (task 61): the bytes
+ * installed are the bytes that were listed, and a newer upstream commit is a new version. `HEAD` is
+ * only the default for a caller that asks for the current file on purpose.
  */
 export function rawContentUrl(ref: SkillRef, path: string, commit = "HEAD"): string {
     const encoded = path
