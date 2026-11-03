@@ -34,7 +34,7 @@
  *      single number is a decision nobody has made (`docs/01` rejects being one more score).
  */
 
-import { linesOf, loopbackHosts, refuseForeignRequest, serveFetch } from '@arp-protocol/core/node';
+import { linesOf, loopbackHosts, redactUrls, refuseForeignRequest, serveFetch } from '@arp-protocol/core/node';
 import { DESKTOP_TOOL_NAMES, DESKTOP_TOOLS, READ_TOOL_NAMES, TOOLS } from './tools.js';
 import { desktopTool } from './desktop/handlers.js';
 import { serveContentRequest } from './content.js';
@@ -193,8 +193,11 @@ async function callTool(id: JsonRpcId, params: Record<string, unknown> | undefin
         return fail(id, -32602, `unknown tool: ${String(name)}`);
     }
   } catch (error) {
-    // The message, not a stack: a caller gets enough to retry or report, nothing about our host.
-    return fail(id, -32603, `${String(name)} failed: ${String(error).slice(0, 300)}`);
+    // Redacted, not a stack: a caller gets enough to retry or report, and a viem error's RPC URL,
+    // which can carry an API key, is cut to its host (ADR `0116`). stderr keeps the same line.
+    const message = redactUrls(String(error)).slice(0, 300);
+    process.stderr.write(`${String(name)} failed: ${message}\n`);
+    return fail(id, -32603, `${String(name)} failed: ${message}`);
   }
 }
 

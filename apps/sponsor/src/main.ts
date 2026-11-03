@@ -36,7 +36,7 @@ import {
   type PreparedCall,
   type SponsorLimits,
 } from '@arp-protocol/core';
-import { loopbackHosts, serveFetch, stateFile } from '@arp-protocol/core/node';
+import { loopbackHosts, redactUrls, serveFetch, stateFile } from '@arp-protocol/core/node';
 import {
   createPublicClient,
   createWalletClient,
@@ -191,7 +191,8 @@ const wallet: SponsorWallet = {
     } catch (error) {
       return {
         ok: false,
-        reason: String(error instanceof Error ? error.message : error).slice(0, 300),
+        // Redacted: the RPC URL in a viem message can carry its key, and this reason is answered.
+        reason: redactUrls(String(error instanceof Error ? error.message : error)).slice(0, 300),
       };
     }
   },

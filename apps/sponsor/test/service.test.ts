@@ -1433,3 +1433,38 @@ describe('a send whose receipt does not come in time', () => {
     }
   });
 });
+
+describe('a request that fails inside a route', () => {
+  test('answers a generic 500 and logs the detail with the RPC URL cut to its host', async () => {
+    const w = world();
+    const lines: string[] = [];
+    const service = sponsor(w, {
+      log: (line) => lines.push(line),
+      owners: {
+        ownerOf: async () => AGENT.address,
+        agentWalletOf: async () => null,
+      },
+      holdings: {
+        agentsHeldBy: async () => {
+          throw new Error('HTTP request failed. URL: https://rpc.example/v2/SECRETKEY');
+        },
+      },
+    });
+    const body = await signMintGasRequest(
+      {
+        address: STRANGER.address,
+        nonce: keccak256(stringToBytes('fail')),
+        expiresAt: Math.floor(NOW / 1000) + 60,
+      },
+      CHAIN,
+      STRANGER,
+    );
+    const response = await service.fetch(post('/mint-gas', { request: body }));
+    expect(response.status).toBe(500);
+    const text = await response.text();
+    expect(text).not.toContain('SECRETKEY');
+    expect(text).not.toContain('rpc.example');
+    expect(lines.join('\n')).toContain('https://rpc.example/…');
+    expect(lines.join('\n')).not.toContain('SECRETKEY');
+  });
+});

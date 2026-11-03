@@ -15,6 +15,7 @@ import {
     MovedStateError,
     readJsonLines,
     readKeyFile,
+    redactUrls,
     refuseForeignRequest,
     refuseMovedState,
     stateFile,
@@ -143,6 +144,19 @@ describe("lockFile", () => {
         const gone = spawnSync(process.execPath, ["-e", "process.exit(0)"]).pid;
         writeFileSync(`${path}.lock`, `${gone}\n`);
         lockFile(path).release();
+    });
+});
+
+describe("redactUrls", () => {
+    it("keeps the scheme and host of every URL and drops the path, query and credentials", () => {
+        const message =
+            'HTTP request failed. URL: https://rpc.example.com/v2/SECRETKEY?apikey=K2 Details: x; ' +
+            "also wss://user:pass@ws.example.org/k";
+        const redacted = redactUrls(message);
+        expect(redacted).toContain("https://rpc.example.com/…");
+        expect(redacted).toContain("wss://ws.example.org/…");
+        for (const secret of ["SECRETKEY", "K2", "pass"]) expect(redacted).not.toContain(secret);
+        expect(redacted).toContain("Details: x");
     });
 });
 

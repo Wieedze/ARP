@@ -12,6 +12,7 @@ export {
     MovedStateError,
     readJsonLines,
     readKeyFile,
+    redactUrls,
     refuseForeignRequest,
     refuseMovedState,
     stateFile,

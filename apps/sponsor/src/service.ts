@@ -88,7 +88,7 @@ import {
   type StrictIdentityAtom,
   type TypedDataVerifier,
 } from '@arp-protocol/core';
-import { refuseForeignRequest } from '@arp-protocol/core/node';
+import { redactUrls, refuseForeignRequest } from '@arp-protocol/core/node';
 import { getAddress, isAddress, isHex, type Address, type Hex } from 'viem';
 
 import { SPONSOR_CHAIN_ID } from './key-file.ts';
@@ -169,6 +169,8 @@ export type SponsorOptions = {
   origins?: readonly string[];
   /** Milliseconds. Injected so a test can move the day. */
   now?: () => number;
+  /** Where a failed request's detail goes, redacted. `console.error` by default. */
+  log?: (line: string) => void;
 };
 
 function bigintSafe(_key: string, inner: unknown): unknown {
@@ -966,13 +968,12 @@ export function createSponsor(options: SponsorOptions): {
       try {
         return await route(body);
       } catch (error) {
-        // The message, not a stack: enough to retry or report, nothing about the host or the key.
-        return json(
-          {
-            error: `failed: ${String(error instanceof Error ? error.message : error).slice(0, 300)}`,
-          },
-          500,
-        );
+        // Logged here, answered generically: a viem error carries the RPC URL, and the URL can
+        // carry its API key (ADR `0116`). The id ties the answer to the log line.
+        const id = Math.random().toString(36).slice(2, 10);
+        const detail = error instanceof Error ? error.message : String(error);
+        (options.log ?? console.error)(`[${id}] ${url.pathname} failed: ${redactUrls(detail)}`);
+        return json({ error: `internal error (${id})` }, 500);
       }
     },
   };

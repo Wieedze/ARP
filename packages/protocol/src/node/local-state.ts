@@ -219,6 +219,19 @@ export function jsonResponse(value: unknown, status = 200): Response {
     });
 }
 
+/**
+ * `text` with every URL cut to its scheme and host. viem puts the RPC URL in its error messages,
+ * and an RPC URL often carries an API key in its path or query; an error answered to a caller, or
+ * written to a log, keeps neither.
+ */
+export function redactUrls(text: string): string {
+    return text.replace(/\b(https?|wss?):\/\/([^/\s?#"']+)[^\s"']*/gi, (_match, scheme: string, host: string) => {
+        // Credentials in the authority (`user:key@host`) are cut too.
+        const bare = host.includes("@") ? host.slice(host.lastIndexOf("@") + 1) : host;
+        return `${scheme}://${bare}/…`;
+    });
+}
+
 /** An ERC-8004 registry as an agent's registration file names it: `eip155:<chainId>:<address>`. */
 export const ERC8004_REGISTRY_REF = /^eip155:([1-9][0-9]*):(0x[0-9a-fA-F]{40})$/;
 
