@@ -2,6 +2,7 @@ import {INTUITION_USES_TERM_ID} from "@arp-protocol/core";
 import type {AtomClaim, AtomEdge, AtomEdgeGroup, AtomStanding} from "@arp-protocol/core";
 
 import {formatTrust, truncateMiddle} from "./trust-format";
+import {safeHttpUrl} from "../lib/safe-url";
 import {browseUrlOf, parseToolLabel, primaryNameOf, sourceOf} from "../lib/tool-label";
 
 /**
@@ -276,7 +277,7 @@ export function buildAtomView(standing: AtomStanding, symbol: string): AtomView 
         label,
         subtitle: label === null ? null : sourceOf(parseToolLabel(label)),
         browseUrl: label === null ? null : browseUrlOf(parseToolLabel(label)),
-        url: standing.url,
+        url: safeHttpUrl(standing.url),
         atomId: standing.atomId,
         title: hasTitle
             ? primaryNameOf(parseToolLabel(label))

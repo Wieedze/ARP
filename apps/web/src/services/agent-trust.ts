@@ -9,6 +9,7 @@ import type {
 } from "@arp-protocol/core";
 import type {Hex} from "viem";
 
+import {safeHttpUrl} from "../lib/safe-url";
 import {asStakeTermId} from "./trust-stake";
 
 /**
@@ -266,7 +267,7 @@ function rowFrom(
             "Unnamed provider",
         // A `has trust provider` object atom's url is the provider's own site;
         // the rating atom's url is the document. Never interchange them.
-        providerUrl: providerEdge?.claim.provider.url ?? document?.provider?.url ?? null,
+        providerUrl: safeHttpUrl(providerEdge?.claim.provider.url ?? document?.provider?.url),
         providerMatch,
         providerClaim: providerEdge,
         rating: ratingEdge,
@@ -278,7 +279,7 @@ function rowFrom(
         dimensions: dimensionsOf(ratingEdge),
         reviewers,
         weight: evidenceWeight(reviewers),
-        documentUrl: ratingEdge?.claim.resolverUrl ?? null,
+        documentUrl: safeHttpUrl(ratingEdge?.claim.resolverUrl),
         documentError: documentErrorOf(ratingEdge),
     };
 }
@@ -381,7 +382,10 @@ export function groupCapabilities(profile: AgentProfile): CapabilityGroup[] {
             seen.add(key);
             return true;
         });
-        return entries.length === 0 ? [] : [{relation, label, entries}];
+        if (entries.length === 0) return [];
+        return [
+            {relation, label, entries: entries.map((ref) => ({...ref, url: safeHttpUrl(ref.url)}))},
+        ];
     });
 }
 
@@ -420,7 +424,7 @@ export function buildTrustPanel(profile: AgentProfile): TrustPanelView {
         // True of the metadata actually rendered, not of some other source's. A page that shows a
         // real name must not also say the name is a stand-in.
         isFallbackMetadata: metadata?.isFallback ?? false,
-        url: metadata?.url ?? null,
+        url: safeHttpUrl(metadata?.url),
         owner: withOwner?.owner ?? null,
         registrationFile: withRegistrationFile?.registrationFile ?? null,
         atomTermId: identity?.sourceHandle ?? null,
