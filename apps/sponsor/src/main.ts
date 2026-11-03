@@ -23,9 +23,9 @@
  *  `SPONSOR_WITHDRAWAL_THRESHOLD_BPS` is given, which a testnet run leaves unset, and the cost rule
  *  is off with no setting to turn it on here. ADR `0092`'s count and budget stay.
  *
- *  **Publication is off.** Its pinning service is undecided (`docs/tasks/37` §4.3) and its two
- *  predicates have not been read from the graph yet (ADR `0092` item 7), so `POST /publish` answers
- *  503 until both are wired here. The route itself is built and tested (`service.ts`).
+ *  **Publication is on when `INTUITION_PIN_API_KEY` is set** (task 37c). The document is pinned with
+ *  Intuition's `uploadJsonToIpfs` (`docs/tasks/37` §4.3), and the two predicates are the ones read
+ *  from the graph on 2026-11-03 (`data/deployments/13579.json`, ADR `0092` item 7).
  */
 import { fileURLToPath } from 'node:url';
 
@@ -64,7 +64,7 @@ import { SponsorLedger } from './ledger.ts';
 import { categoryLog, categoryTree, compoundsFrom, toolCheck } from './categories.ts';
 import { resolveOnGitHubCached } from './github.ts';
 import { repoSpellingsOnGraph } from './indexer.ts';
-import { intuitionPinner } from './pin.ts';
+import { intuitionJsonPinner, intuitionPinner } from './pin.ts';
 import {
   addressList,
   createSponsor,
@@ -350,7 +350,24 @@ const service = createSponsor({
   limits,
   ledger,
   acceptedContentSigners,
-  publish: null,
+  // Task 37c: on when the pinning key is set. The predicates are the ones the graph already
+  // carries (`data/deployments/13579.json`, `arp.delegationRegister`), read before this was wired.
+  publish:
+    PIN_KEY === ''
+      ? null
+      : {
+          delegationManager: getAddress(deployments.metamaskDelegationFramework.delegationManager),
+          predicates: {
+            delegateTo: deployments.arp.delegationRegister.delegateTo as Hex, // 32-byte ids, recorded.
+            inContextOf: deployments.arp.delegationRegister.inContextOf as Hex,
+          },
+          // EIP-1271 and EIP-6492 included: a delegator is a smart account.
+          verify: (args) => publicClient.verifyTypedData(args),
+          pin: intuitionJsonPinner({
+            apiKey: PIN_KEY,
+            headerName: process.env.INTUITION_PIN_API_KEY_HEADER ?? 'apikey',
+          }),
+        },
   pinThing:
     PIN_KEY === ''
       ? null
@@ -389,7 +406,9 @@ export async function main(): Promise<void> {
     `  categories ${limits.categoriesPerDay} new/day, ${limits.categoryTagsPerDay} tags/day, log ${CATEGORY_LOG}\n`,
   );
   process.stderr.write(`  ledger     ${LEDGER}\n`);
-  process.stderr.write(`  publish    disabled (no pinning service, predicates not read)\n`);
+  process.stderr.write(
+    `  publish    ${PIN_KEY === '' ? 'off (no INTUITION_PIN_API_KEY)' : 'on (delegation register, task 37c)'}\n`,
+  );
 }
 
 if (import.meta.main) await main();

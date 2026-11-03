@@ -37,6 +37,7 @@ import { privateKeyToAccount } from 'viem/accounts';
 
 import { assertSponsorChain, KeyFileError, readKeyFile } from '../src/key-file.ts';
 import { SponsorLedger } from '../src/ledger.ts';
+import { intuitionJsonPinner } from '../src/pin.ts';
 import { nullOnRevert } from '../src/routes/context.ts';
 import {
   addressList,
@@ -2000,5 +2001,24 @@ describe('POST /propose-category', () => {
     const w = fresh();
     expect((await call(sponsor(w), '/propose-category', proposal())).status).toBe(503);
     expect(w.sent).toHaveLength(0);
+  });
+});
+
+describe('intuitionJsonPinner', () => {
+  test('uploads the document as JSON and answers its ipfs URI', async () => {
+    const original = globalThis.fetch;
+    let sent: { query: string; variables: { json: unknown } } | null = null;
+    globalThis.fetch = (async (_url: string, init: RequestInit) => {
+      sent = JSON.parse(String(init.body)) as typeof sent;
+      return new Response(JSON.stringify({ data: { uploadJsonToIpfs: { hash: 'bafyabc' } } }));
+    }) as unknown as typeof fetch; // Only the call shape this pinner makes.
+    try {
+      const pin = intuitionJsonPinner({ apiKey: 'k', headerName: 'apikey' });
+      expect(await pin('{"b":1,"a":2}')).toBe('ipfs://bafyabc');
+      expect(sent!.query).toContain('uploadJsonToIpfs');
+      expect(sent!.variables.json).toEqual({ a: 2, b: 1 });
+    } finally {
+      globalThis.fetch = original;
+    }
   });
 });
