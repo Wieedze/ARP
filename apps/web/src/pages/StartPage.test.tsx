@@ -1,4 +1,4 @@
-import {fireEvent, screen, waitFor} from "@testing-library/react";
+import {fireEvent, screen, waitFor, within} from "@testing-library/react";
 import {beforeEach, describe, expect, it, vi} from "vitest";
 
 import type {ListToolResult} from "../services/list-tool";
@@ -37,6 +37,7 @@ beforeEach(() => {
     listing.submit = vi.fn();
     listing.pending = false;
     listing.result = null;
+    proposal.available = true;
     proposal.submit = vi.fn();
     proposal.pending = false;
     proposal.result = null;
@@ -151,6 +152,37 @@ describe("the start page", () => {
             reason: "no deck category",
             subjectId: "0xabc",
         });
+    });
+
+    it("tells the reader while it files, then what was filed", async () => {
+        listing.result = {status: "listed", atomId: "0xabc", created: true, transactions: []};
+        proposal.pending = true;
+        const view = renderWithProviders(<StartPage feed={feedWith([]).feed} />, at("tool"));
+        expect(await screen.findByText("Filing…")).toBeTruthy();
+        expect(screen.getByRole("button", {name: "File it"})).toHaveProperty("disabled", true);
+
+        proposal.pending = false;
+        proposal.result = {status: "done", label: "design", newCategory: false, created: true};
+        view.rerender(<StartPage feed={feedWith([]).feed} />);
+        expect(await screen.findByText("Filed under “design”.")).toBeTruthy();
+    });
+
+    it("offers the root as a parent for a new category", async () => {
+        listing.result = {status: "listed", atomId: "0xabc", created: true, transactions: []};
+        renderWithProviders(<StartPage feed={feedWith([]).feed} />, at("tool"));
+        fireEvent.change(await screen.findByLabelText("Category"), {
+            target: {value: "__none-fits"},
+        });
+        const under = screen.getByLabelText("Under");
+        expect(within(under).getByRole("option", {name: "tool"})).toBeTruthy();
+    });
+
+    it("shows no category step without a sponsor, even once listed", async () => {
+        listing.result = {status: "listed", atomId: "0xabc", created: true, transactions: []};
+        proposal.available = false;
+        renderWithProviders(<StartPage feed={feedWith([]).feed} />, at("tool"));
+        await screen.findByLabelText("Tool or skill URL");
+        expect(screen.queryByLabelText("Category")).toBeNull();
     });
 
     it("shows no category step before a tool is listed", async () => {

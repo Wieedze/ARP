@@ -86,7 +86,7 @@ export function proposeCategoryMessage(result: ProposeCategoryResult): string {
                 case "parent":
                     return "Pick the category it sits under.";
                 case "exists":
-                    return "That name is already in the tree. Pick it from the list.";
+                    return "That name is taken outside the tree. Choose another.";
                 case "root":
                     return "Pick a category under tool, not tool itself.";
                 case "limit":

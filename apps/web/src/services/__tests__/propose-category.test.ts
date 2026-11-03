@@ -53,7 +53,7 @@ describe("proposing a category through the sponsor", () => {
         const cases = [
             [422, {rule: "charset"}, "One word, letters and digits only."],
             [422, {rule: "reason"}, "Say why no category fits."],
-            [422, {rule: "exists"}, "That name is already in the tree. Pick it from the list."],
+            [422, {rule: "exists"}, "That name is taken outside the tree. Choose another."],
             [422, {rule: "root"}, "Pick a category under tool, not tool itself."],
             [429, {rule: "limit"}, "Today's limit is reached. Try again tomorrow."],
             [422, {rule: "skill"}, "That tool is not on the index yet. Try again in a minute."],
