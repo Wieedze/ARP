@@ -11,7 +11,7 @@
  * 3. the owner signs that message, **and so does the node key** (ADR `0095`). The verifier checks
  *    the owner still owns the token and both signatures recover, then returns the binding.
  *
- * **Never signs and never sends**, like the rest of the package (ADR `0038`): the owner signs in
+ * **Signs nothing and sends nothing** (ADR `0038`): the owner signs in
  * their own wallet and the node signs with its own key, and both signatures arrive here as hex.
  *
  * **The node signs too, which ADR `0094` does not ask for.** Without it, an owner could bind a
