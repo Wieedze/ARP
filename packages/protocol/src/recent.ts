@@ -13,6 +13,7 @@ import {
     RECENT_STAKES_QUERY,
 } from "@arp-protocol/graphql";
 import {SAME_AS, USES} from "./sources/intuition/terms.js";
+import {DEFAULT_CURVE_ID} from "./sources/intuition/index.js";
 
 /**
  * The most recent declarations, newest first.
@@ -94,7 +95,7 @@ export async function getRecentDeclarations(config: RecentConfig): Promise<Recen
         uses: USES,
         sameAs: SAME_AS,
         limit: config.limit ?? 8,
-        curveId: String(config.curveId ?? 1),
+        curveId: config.curveId === undefined ? DEFAULT_CURVE_ID : String(config.curveId),
     });
 
     const rows = Array.isArray(data["triples"]) ? data["triples"] : [];

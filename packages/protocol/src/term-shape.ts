@@ -13,6 +13,7 @@ import {
     TERM_VALUE_QUERY,
     termActivityQuery,
 } from "@arp-protocol/graphql";
+import {DEFAULT_CURVE_ID} from "./sources/intuition/index.js";
 
 /**
  * What a claim's market looks like, in dimensions rather than in a score.
@@ -153,7 +154,6 @@ export type TermShapeConfig = {
  */
 export const INTUITION_MAX_POSITIONS_PAGE = 100;
 
-const DEFAULT_CURVE_ID = 1;
 const DEFAULT_TIMEOUT_MS = 10_000;
 
 const ACTIVITY_QUERIES: Record<TermActivityGrain, string> = {
@@ -212,7 +212,7 @@ function buildTransport(config: TermShapeConfig): GraphqlTransport {
 
 export async function getTermShape(termId: string, config: TermShapeConfig): Promise<TermShape> {
     const transport = buildTransport(config);
-    const curveId = config.curveId ?? DEFAULT_CURVE_ID;
+    const curveId = config.curveId ?? Number(DEFAULT_CURVE_ID);
     const limit = Math.min(
         config.backerLimit ?? INTUITION_MAX_POSITIONS_PAGE,
         INTUITION_MAX_POSITIONS_PAGE,
@@ -316,7 +316,7 @@ export async function getTermActivity(
     const table = ACTIVITY_QUERIES[config.grain ?? "day"];
     const data = await transport.request(termActivityQuery(table), {
         termId,
-        curveId: String(config.curveId ?? DEFAULT_CURVE_ID),
+        curveId: String(config.curveId ?? Number(DEFAULT_CURVE_ID)),
         limit: config.buckets ?? 90,
     });
 
@@ -389,7 +389,7 @@ export async function getAccountHoldings(
     config: TermShapeConfig,
 ): Promise<AccountHoldings> {
     const transport = buildTransport(config);
-    const curveId = config.curveId ?? DEFAULT_CURVE_ID;
+    const curveId = config.curveId ?? Number(DEFAULT_CURVE_ID);
     const data = await transport.request(HOLDINGS_QUERY, {account, curveId: String(curveId)});
 
     const agg = (key: string): Record<string, unknown> | null => {
@@ -454,7 +454,7 @@ export async function getAccountActivity(
     );
     const data = await transport.request(ACCOUNT_ACTIVITY_QUERY, {
         account,
-        curveId: String(config.curveId ?? DEFAULT_CURVE_ID),
+        curveId: String(config.curveId ?? Number(DEFAULT_CURVE_ID)),
         limit,
     });
 

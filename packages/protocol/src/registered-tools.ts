@@ -10,6 +10,7 @@ import {
 import {TOOL_THING_DESCRIPTION} from "./declare/tool-thing.js";
 import {SAME_AS, USES} from "./sources/intuition/terms.js";
 import {INTUITION_MAX_PAGE} from "./tool-listing.js";
+import {DEFAULT_CURVE_ID} from "./sources/intuition/index.js";
 
 /**
  * Tools somebody registered through ARP, and what the market on each says.
@@ -122,7 +123,6 @@ export type RegisteredToolsConfig = {
     order?: RegisteredToolsOrder;
 };
 
-const DEFAULT_CURVE_ID = 1;
 const DEFAULT_TIMEOUT_MS = 10_000;
 /** Eight pages at the indexer's cap. Enough for the whole set today, with room to grow. */
 const DEFAULT_MAX_ROWS = 2_000;
@@ -155,7 +155,7 @@ export async function listRegisteredTools(
             timeoutMs: config.timeoutMs ?? DEFAULT_TIMEOUT_MS,
         });
 
-    const curveId = config.curveId ?? DEFAULT_CURVE_ID;
+    const curveId = config.curveId ?? Number(DEFAULT_CURVE_ID);
     const limit = Math.min(config.limit ?? INTUITION_MAX_PAGE, INTUITION_MAX_PAGE);
     const maxRows = config.maxRows ?? DEFAULT_MAX_ROWS;
 

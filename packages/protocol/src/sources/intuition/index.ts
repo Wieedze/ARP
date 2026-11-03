@@ -52,7 +52,9 @@ export const INTUITION_TESTNET_GRAPHQL = "https://testnet.intuition.sh/v1/graphq
  * `1` is the MultiVault default on mainnet today and that is not a guarantee —
  * it comes from `getBondingCurveConfig()`, which governance can change. A caller
  * that also writes should pass the value it read from chain, so the market it
- * renders and the vault it deposits into are the same one.
+ * renders and the vault it deposits into are the same one. This is the only
+ * copy in the package: every read defaults to it, every write reads the chain
+ * (ADR `0115`).
  */
 export const DEFAULT_CURVE_ID = "1";
 

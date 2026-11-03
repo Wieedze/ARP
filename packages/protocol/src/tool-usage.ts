@@ -13,6 +13,7 @@ import {
 import {mapMarketSide} from "./sources/intuition/map.js";
 import {USES} from "./sources/intuition/terms.js";
 import type {MarketSide, Provenance} from "./types.js";
+import {DEFAULT_CURVE_ID} from "./sources/intuition/index.js";
 
 /**
  * The curve this reader's per-vault fields are scoped to. **A copy, and the comment above it used
@@ -34,7 +35,6 @@ import type {MarketSide, Provenance} from "./types.js";
  * Reading it from the chain is the fix and belongs with `docs/tasks/23`, because it changes what the
  * tool surface displays.
  */
-const DEFAULT_CURVE_ID = "1";
 
 /** One agent's declared use of a tool, and what the market says about it. */
 export type ToolUsageEdge = {

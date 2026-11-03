@@ -17,6 +17,7 @@ import {CAPABILITY_PREDICATE_IDS, USES} from "./sources/intuition/terms.js";
 import {mapMarketSide} from "./sources/intuition/map.js";
 import {provenanceFor} from "./provenance.js";
 import type {MarketSide, Provenance} from "./types.js";
+import {DEFAULT_CURVE_ID} from "./sources/intuition/index.js";
 
 /**
  * Everything pointing **at** one atom, whatever the predicate.
@@ -48,7 +49,6 @@ import type {MarketSide, Provenance} from "./types.js";
  */
 
 /** The curve the per-vault fields are scoped to. Same copy, and the same caveat, as `tool-usage`. */
-const DEFAULT_CURVE_ID = "1";
 
 /** One edge pointing at the atom, and the market on that one claim. */
 export type AtomEdge = {

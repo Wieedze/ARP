@@ -16,6 +16,7 @@ import {
     SAME_AS,
     USE,
 } from "./sources/intuition/terms.js";
+import {DEFAULT_CURVE_ID} from "./sources/intuition/index.js";
 
 /**
  * Who is out there, from what agents have declared about themselves.
@@ -61,7 +62,6 @@ import {
  * matched and decides.
  */
 
-const DEFAULT_CURVE_ID = 1;
 const DEFAULT_TIMEOUT_MS = 10_000;
 const DEFAULT_LIMIT = 25;
 
@@ -153,7 +153,7 @@ export async function findAgents(
             timeoutMs: config.timeoutMs ?? DEFAULT_TIMEOUT_MS,
         });
 
-    const curveId = config.curveId ?? DEFAULT_CURVE_ID;
+    const curveId = config.curveId ?? Number(DEFAULT_CURVE_ID);
     const limit = config.limit ?? DEFAULT_LIMIT;
 
     const data = await transport.request(FIND_AGENTS_QUERY, {

@@ -10,6 +10,7 @@ import {
     TOOL_LISTING_SPONSORED_QUERY,
 } from "@arp-protocol/graphql";
 import {SAME_AS, USES} from "./sources/intuition/terms.js";
+import {DEFAULT_CURVE_ID} from "./sources/intuition/index.js";
 
 /**
  * The tools agents have declared using, with what stands behind each — the read `/tools` is built on.
@@ -40,7 +41,6 @@ import {SAME_AS, USES} from "./sources/intuition/terms.js";
  * there is none, and every deposit is declared.
  */
 
-const DEFAULT_CURVE_ID = "1";
 const DEFAULT_TIMEOUT_MS = 10_000;
 
 /**
