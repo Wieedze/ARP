@@ -1,5 +1,5 @@
 /**
- * `@arp-protocol/core` — a connector for the ERC-8004 agent layer. Never signs, never sends.
+ * `@arp-protocol/core` — a connector for the ERC-8004 agent layer. Holds no key, sends nothing.
  *
  * Give it an ERC-8004 identity and it returns one merged profile: every trust
  * provider's assessment with its EIP-712 signature actually verified and its
@@ -21,11 +21,13 @@
  * read the number and trust it. This package checks both, and reports what it
  * cannot check rather than rounding up to a pass.
  *
- * **Never signs and never sends.** That was once "read-only throughout, no write path of any
- * kind", and the honest version is narrower: `declare/` prepares the calls an agent needs to
- * declare what it used and deposit on it, and hands them back unsigned. The package still holds no
- * key, builds no wallet client and has no send path — which is what makes "ARP is not a party"
- * (ADR `0035`) an enforceable property rather than a promise. See ADR `0038`.
+ * **Holds no key and sends no transaction.** That was once "never signs", and before that
+ * "read-only throughout"; both were too broad. `declare/` prepares the calls an agent needs to
+ * declare what it used and deposit on it, and hands them back unsigned. The receipt and sponsor
+ * request modules do sign, but only through a signer the caller injects (`receipt.ts`,
+ * `hire-receipt.ts`, `sponsor/request.ts`). The package holds no key, builds no wallet client and
+ * has no send path — which is what makes "ARP is not a party" (ADR `0035`) an enforceable property
+ * rather than a promise. See ADR `0038`.
  */
 
 export {createErc8004Client, type Erc8004Client, type Erc8004ClientConfig} from "./client.js";

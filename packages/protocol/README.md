@@ -447,10 +447,11 @@ enforcers reject batch execution modes, which is the whole reason they can bound
 The guard rail is not the price of entry: you can start direct and add the delegation later without
 changing anything else.
 
-## Never signs, never sends
+## Holds no key, sends nothing
 
 No wallet client, no private key, no send path anywhere in this package. Every read is
-unauthenticated, and the write half returns unsigned calls for your own key.
+unauthenticated, and the write half returns unsigned calls for your own key. The receipt and
+sponsor-request helpers sign, but only through a signer you pass in; the package never holds one.
 
 This used to read "read-only throughout, no write path of any kind", which stopped being true when
 the planners landed. The invariant that matters is narrower and unchanged: nothing here can move
