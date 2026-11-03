@@ -2,6 +2,7 @@
 
 **Date**: 2026-09-16
 **Commitment**: `docs/09_POSITIONING_AND_PLAN.md`
+**Status**: **historical** — the plan for one session on 2026-09-16, executed. `docs/09` is no longer a commitment (its own header), and `.claude/STATE.md` holds where things are.
 **Goal for this session**: ship Phase 0 complete and Phase 1 reviewable, on isolated branches, with
 every change traceable to a decision.
 

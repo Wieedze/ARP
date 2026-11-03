@@ -93,6 +93,11 @@ Then `docs/02`: a header table — the storage principle holds; the components, 
 the integration sections describe the deleted `ModuleRegistry` and a feedback path ADR `0048`
 rejected. Post-mortem so far: `.claude/learning/51-the-prose-pass-against-the-positioning.md`.
 
+Then the rest of `docs/`: `03`, `04`, `05`, `08`, `11` already carried a status header; `06` and
+`10` now say historical; `07` is vendored, `16`–`20` dated briefs and records, left as they are.
+**Step 4 is done as far as drift goes**: each file says whether it is current. The line-by-line
+slop cut inside long historical files was not attempted, deliberately — they are records.
+
 ## Why this is a task and not a tidy-up
 
 The repo has **43 ADRs, 18 post-mortems, 31 task files and 16 docs**, almost all written by me in a
