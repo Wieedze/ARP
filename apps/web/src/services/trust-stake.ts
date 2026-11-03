@@ -16,15 +16,10 @@ import {formatTrust} from "./trust-format";
 /**
  * Staking on a term's vault — whichever Intuition chain the caller names.
  *
- * ## It was mainnet-only, and the chain is now a parameter
+ * ## The chain is a parameter
  *
- * Every function here took the mainnet MultiVault from a module constant. The user's instruction
- * (2026-10-27) was that the toggle has to reach the writes: _« si c'est du trust on paye en trust,
- * si c'est sur testnet il n'y a que du tTRUST, car on lit **et agit** sur testnet obligatoirement,
- * sinon aucun intérêt d'avoir un toggle »_. A reader on testnet seeing `tTRUST` beside a button
- * that deposits mainnet `TRUST` is the clearest possible way to lose money on this surface.
- *
- * So the chain travels **on the quote** rather than beside it. A quote is the thing built against
+ * The toggle reaches the writes (the user, 2026-10-27), and the chain travels **on the quote**
+ * rather than beside it. A quote is the thing built against
  * one chain's vault at one moment, and `submitStake` re-derives the MultiVault address, the viem
  * chain and the guard's expected id from `quote.chain`. There is no second argument that could
  * disagree with it, and a quote built on testnet cannot be signed on mainnet.
@@ -451,7 +446,7 @@ export async function quoteStake(
  * `getChainId()` asks the wallet.
  *
  * `expected` comes off the **quote**, so the guard cannot be pointed at a different chain from the
- * one the deposit was priced against. It was `assertMainnetWallet` with the id hardcoded.
+ * one the deposit was priced against.
  */
 export function assertWalletOnChain(expected: StakeChain, chainId: number | undefined): void {
     if (chainId !== expected.chainId) {

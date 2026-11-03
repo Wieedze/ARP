@@ -43,7 +43,7 @@ import {waitAndRecord} from "./tx-record";
  * Whichever chain the caller names — the same chain and the same human signature as the operator
  * link beside it. It is not a new write surface.
  *
- * It was pinned to mainnet 1155. The costs are **100x apart** (`atomCost` 0.1 TRUST on 1155
+ * The costs are **100x apart** (`atomCost` 0.1 TRUST on 1155
  * against 0.001 on 13579, measured by `scripts/measure/predicate-parity.ts`), so the plan is
  * priced per chain and `submitIdentityAtom` checks every call's own `chainId` against the chain it
  * was told to send on — each MultiVault is codeless on the other chain, where a value-bearing call

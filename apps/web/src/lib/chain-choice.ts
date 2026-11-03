@@ -22,10 +22,9 @@ import {
  *
  * ## What it does and does not switch
  *
- * **Reads and writes, for anything on Intuition's MultiVault** — ADR `0061`. This said "reads only"
- * for one day, and that was untenable: a page showing `tTRUST` above a button depositing `TRUST` is
- * worse than the bug it replaced, and a toggle that moves half the loop cannot rehearse the loop,
- * which is the only reason it exists.
+ * **Reads and writes, for anything on Intuition's MultiVault** — ADR `0061`. A toggle that moved
+ * only the reads would show `tTRUST` above a button depositing `TRUST`, and could not rehearse the
+ * loop, which is the only reason it exists.
  *
  * The chain does **not** reach this app through the toggle at signing time. It travels **on the
  * quote or the plan** — `StakeQuote`, `RedeemQuote`, `ImportLinkPlan`, `ToolRegistration` each carry

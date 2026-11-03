@@ -158,19 +158,10 @@ export function AtomPanel() {
     return (
         <section className="mt-10">
             <BackLink to="/tools" label="tools" />
-            {/* **The title spans the page; it is not metadata.**
-                It lived in the 18rem aside, where `--text-title` clamps to 76px against 288px of
-                column — so `Trail of Bits — secure-workflow-guide` rendered as nine lines of
-                broken words (`Trail / of / Bits / — / secur / e- / workf / low- / guide`), while
-                the right column sat nearly empty. The grid template is fixed, so the aside never
-                borrowed that space however little the evidence needed.
-
-                `overflow-wrap: anywhere` stays on `.type-title` and is still right: a bare
-                66-character atom id has no break opportunity at all and must be allowed to wrap
-                mid-token. Across the full width it only bites for an id, which is what it is for.
-
-                `docs/tasks/28` item 39, found while building this control, filed, and then fixed when
-                the user saw it — filing a defect is not the same as leaving it. */}
+            {/* **The title spans the page; it is not metadata.** In the 18rem aside, `--text-title`
+                breaks a name like `Trail of Bits — secure-workflow-guide` into nine lines.
+                `overflow-wrap: anywhere` on `.type-title` is for a bare 66-character atom id,
+                which has no break opportunity at all. */}
             <h1
                 className={`type-title ${view.titleIsId ? "font-mono" : ""} max-w-[24ch] md:max-w-[32ch]`}
             >

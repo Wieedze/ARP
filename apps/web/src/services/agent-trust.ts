@@ -479,14 +479,8 @@ export type TabSummary = {
 };
 
 /**
- * ## The `agent` tab is gone
- *
- * There used to be a third kind, holding the agent's capabilities and the reads that failed. It
- * existed because the layout was one column and the agent's own data had nowhere else to go. The
- * page is numbered sections now (`PanelSection`), so that data is sections 05 and 06 at the page
- * level — visible whether or not a strip is drawn, which it is not for 99.99% of this cohort.
- *
- * Leaving the tab in would have rendered capabilities twice on any agent that has two providers.
+ * Providers and ARP, nothing else: the agent's own capabilities and failed reads are page sections
+ * (`PanelSection`), visible whether or not a strip is drawn.
  */
 export type PanelTab =
     | {kind: "provider"; slug: string; label: string; row: TrustRow; summary: TabSummary}
@@ -495,12 +489,8 @@ export type PanelTab =
 export type PanelTabs = {
     tabs: PanelTab[];
     /**
-     * The tab a bare URL opens: the first provider.
-     *
-     * It used to be the agent's own data, on the argument that what an agent is for comes before
-     * anyone's opinion of it. That argument is now served better by the layout than by a tab — the
-     * agent's own data is sections 01 and 05, above this strip and always visible. The strip is
-     * providers only, so its default is simply the first of them.
+     * The tab a bare URL opens: the first provider. The agent's own data is sections 01 and 05,
+     * above this strip and always visible.
      */
     defaultSlug: string;
 };

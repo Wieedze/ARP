@@ -131,20 +131,15 @@ export function DeclareUse({
         // Said before the form rather than after a click, because a reader who fills a field and
         // connects a wallet to learn it was pointless has been wasted.
         //
-        // **A label and the switch, not a sentence** (task 46, the user's call on 2026-11-02 for the
-        // skill, atom and agent pages at once). It was "Declaring a use is not open on Mainnet yet.
-        // Switch the chain to the testnet to write it there." — an instruction the button now
-        // carries out.
+        // **A label and the switch, not a sentence** (task 46, the user's call on 2026-11-02): the
+        // button carries out the instruction a sentence would give.
         return <TestnetOnly label={chain.label} />;
     }
 
     return (
-        // **Open, with its heading, and no disclosure.** It was a `<details>` collapsed by
-        // default, which solved a real measurement — expanded at the head of the column it pushed
-        // the first evidence row from y~230 to y~501 — and solved it the wrong way: the user wants
-        // the two things he can do on an atom legible the moment the page loads, not behind a
-        // click. The vertical cost is paid by the **layout** instead, in `AtomPanel`: the two
-        // writes sit side by side, so together they are one block tall rather than two.
+        // **Open, with its heading, and no disclosure**: the two things a reader can do on an atom
+        // are legible the moment the page loads. The vertical cost is paid by the layout in
+        // `AtomPanel`, where the two writes sit side by side.
         <section>
             {/* **Display type, not body weight.** The reference sets an action card's heading at
                 22px/800/125%, and this page's two actions had been at the same weight as every
@@ -348,12 +343,8 @@ function Resolved(props: {
                 other atom on this page already points — `AtomPanel`'s "the graph is walkable in
                 both directions".
 
-                **The edge used to be plain text on the ground that "nothing resolves a triple id on
-                that explorer".** True of the block explorer and never asked of the portal:
-                `portal.intuition.systems/explore/triple/{id}` answers 200 on both hosts, probed
-                2026-10-29. It is a link now, on the user's decision of 2026-10-30, and it goes to
-                the portal rather than in-app because ARP has no page for a triple — the claim is
-                rendered here and nowhere else. */}
+                The edge links to the portal, which resolves a triple id on both hosts, because ARP
+                has no page for a triple (the user's decision, 2026-10-30). */}
             {/* Ids are for checking, not for reading — collapsed, still one click away (ADR
                 `0103`). */}
             <details className="mt-4">
