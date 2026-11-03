@@ -9,6 +9,7 @@ import {useToolRegister} from "../hooks/use-tool-register";
 import {useChainChoice, type ChainChoice} from "../lib/chain-choice";
 import type {ToolRegistration} from "../services/tool-register";
 import {formatTrust, truncateMiddle} from "../services/trust-format";
+import {ConnectPrompt} from "../components/onboarding/ConnectPrompt";
 
 /**
  * Register a tool (`/register`).
@@ -325,9 +326,7 @@ function Resolved(props: {
                     </p>
 
                     {!props.isConnected ? (
-                        <p className="mt-6 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
-                            Connect a wallet to register it.
-                        </p>
+                        <ConnectPrompt label="Connect a wallet to register it" className="mt-6" />
                     ) : !props.onTargetChain ? (
                         <div className="mt-6">
                             <p className="text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">

@@ -1,6 +1,6 @@
 # Task 53 — One path per profile, from the landing
 
-**Status:** **IN PROGRESS**, 2026-11-02, branch `feat/53-paths`. 53a built, then moved the same evening: the chooser is a panel opened by the nav's Connect and the landing's Get started (`components/onboarding/`), scene 4 is gone, and `/account` opens on Your agent with the delegations behind a "Delegation · later" tab. 53b built (`/start/:profile`, steps ticked from the local feed by `services/start-steps.ts`). 53c and the action gate are next. The user's decisions are in §2.
+**Status:** **IN PROGRESS**, 2026-11-02, branch `feat/53-paths`. 53a built, then moved the same evening: the chooser is a panel opened by the nav's Connect and the landing's Get started (`components/onboarding/`), scene 4 is gone, and `/account` opens on Your agent with the delegations behind a "Delegation · later" tab. 53b built (`/start/:profile`, steps ticked from the local feed by `services/start-steps.ts`). The action gate is built: every place that asked for a wallet in a sentence (support, withdraw, mint, register a tool, positions, the delegation tab) is a button that opens the onboarding panel (`components/onboarding/ConnectPrompt.tsx`). 53c is next. The user's decisions are in §2.
 **ADR:** `0112` (the badge is free). A new ADR is needed for 53c (§3).
 **Depends on:** task 50 for path A's last step; `@arp-protocol/cli` on npm for path B's first.
 **Rules:** `ui.md`, `code.md`, `security.md` (53c), `claims.md`, `workflow.md`.

@@ -7,7 +7,7 @@ import {useOnboarding} from "./onboarding/onboarding-context";
 /**
  * Wallet connection UI.
  *
- *   - Disconnected: single "Connect wallet" button.
+ *   - Disconnected: a "Connect" button that opens the onboarding panel (ADR `0114`).
  *   - Connecting: button shows "Connecting…".
  *   - Connected: address truncated in mono, click reveals a small menu:
  *     "Copy address", "Account" (opens `/account`, the delegations and settings), "Disconnect"

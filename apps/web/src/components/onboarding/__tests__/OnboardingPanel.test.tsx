@@ -2,6 +2,7 @@ import {fireEvent, screen} from "@testing-library/react";
 import {describe, expect, it} from "vitest";
 
 import {WalletConnect} from "../../WalletConnect";
+import {ConnectPrompt} from "../ConnectPrompt";
 import {OnboardingProvider} from "../OnboardingPanel";
 import {renderWithProviders} from "../../../test/render";
 
@@ -56,5 +57,19 @@ describe("the onboarding panel", () => {
         expect(document.body.dataset.modal).toBeUndefined();
         expect(document.documentElement.style.overflow).toBe("");
         expect(document.activeElement).toBe(screen.getByRole("button", {name: "Connect"}));
+    });
+});
+
+describe("the connect prompt", () => {
+    it("opens the same onboarding panel where an action needs a connection", async () => {
+        renderWithProviders(
+            <OnboardingProvider>
+                <ConnectPrompt label="Connect a wallet to add support" />
+            </OnboardingProvider>,
+        );
+        fireEvent.click(
+            await screen.findByRole("button", {name: "Connect a wallet to add support"}),
+        );
+        expect(await screen.findByRole("dialog", {name: "What brings you here?"})).toBeTruthy();
     });
 });

@@ -22,6 +22,7 @@ import type {AgentFeed} from "../services/agent-feed";
 import {exportDelegation} from "../services/delegation-store";
 import {formatPeriod, type CaveatView} from "../services/delegation-view";
 import {formatTrust} from "../services/trust-format";
+import {ConnectPrompt} from "../components/onboarding/ConnectPrompt";
 
 /**
  * `/account`: what the operator **has authorised and configured** — the wallet, the Smart Account
@@ -112,9 +113,7 @@ function AccountView({
             {tab === "agent" ? (
                 <YourAgent feed={feed} />
             ) : account.operator === undefined ? (
-                <p className="text-[color:var(--color-steel)]">
-                    Connect a wallet to see its agent wallet and permissions.
-                </p>
+                <ConnectPrompt label="Connect a wallet to see its agent wallet and permissions" />
             ) : (
                 <div className="max-w-[60rem] space-y-14">
                     <WalletSection account={account} canSign={canSign} />
