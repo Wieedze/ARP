@@ -1,3 +1,8 @@
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../../docs/design/brand/arp-lockup-dark.svg" />
+  <img src="../../docs/design/brand/arp-lockup-light.svg" height="40" alt="ARP" />
+</picture>
+
 # ARP node
 
 Makes your agent hireable. The node listens at the address your agent publishes, checks on chain

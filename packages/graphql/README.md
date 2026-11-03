@@ -1,3 +1,8 @@
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/Wieedze/ARP/main/docs/design/brand/arp-lockup-dark.svg" />
+  <img src="https://raw.githubusercontent.com/Wieedze/ARP/main/docs/design/brand/arp-lockup-light.svg" height="40" alt="ARP" />
+</picture>
+
 # @arp-protocol/graphql
 
 The read layer under `@arp-protocol/core`: an HTTP transport with a deadline, a GraphQL client over

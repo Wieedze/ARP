@@ -1,3 +1,8 @@
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../../docs/design/brand/arp-lockup-dark.svg" />
+  <img src="../../docs/design/brand/arp-lockup-light.svg" height="40" alt="ARP" />
+</picture>
+
 # ARP hook
 
 Records which tools your agent actually used, as the runtime saw them. This record is what a

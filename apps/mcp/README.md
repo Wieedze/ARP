@@ -1,3 +1,8 @@
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../../docs/design/brand/arp-lockup-dark.svg" />
+  <img src="../../docs/design/brand/arp-lockup-light.svg" height="40" alt="ARP" />
+</picture>
+
 # ARP MCP server
 
 Gives any MCP client (Claude, Cursor, Gemini, Codex…) access to ARP: it finds the right tool for a

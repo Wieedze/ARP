@@ -505,6 +505,7 @@ describe("checkSponsorProof", () => {
 describe("limits", () => {
     const limits: SponsorLimits = {
         ...ADR_0092_LIMITS,
+        depositsPerAgentPerDay: 2,
         depositAmount: MILLI,
         approvalGas: MILLI / 10n,
         mintGas: MILLI / 10n,
@@ -530,9 +531,8 @@ describe("limits", () => {
         ...over,
     });
 
-    it("keeps ADR 0092's values", () => {
+    it("keeps ADR 0092's values, less the per-agent count ADR 0129 turned off", () => {
         expect(ADR_0092_LIMITS).toEqual({
-            depositsPerAgentPerDay: 2,
             publicationsPerDelegatorPerDay: 2,
             dailyBudget: 10n ** 18n,
         });
@@ -541,6 +541,15 @@ describe("limits", () => {
     it("counts a UTC day", () => {
         expect(utcDay(at)).toBe(20_000);
         expect(spentOnDay([deposit(), deposit({at: at - DAY})], at)).toBe(MILLI);
+    });
+
+    it("counts no deposit per agent when the cap is off", () => {
+        const off = {...limits, depositsPerAgentPerDay: null};
+        const many = [deposit(), deposit(), deposit()];
+        expect(
+            checkDepositLimits(many, {agent: AGENT.address, now: at + 1, limits: off, withdrawn: 0})
+                .ok,
+        ).toBe(true);
     });
 
     it("allows two deposits a day per agent and refuses the third", () => {
