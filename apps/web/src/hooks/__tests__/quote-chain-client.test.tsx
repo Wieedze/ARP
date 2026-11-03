@@ -18,8 +18,10 @@ const HASH: Hex = `0x${"ab".repeat(32)}`;
 const walletClient = {account: {address: "0x000000000000000000000000000000000000c0DE"}};
 
 type Submitted = {publicClient: unknown; chain?: unknown};
-const submitStake = vi.fn<(params: Submitted) => Promise<Hex>>(async () => HASH);
-const submitRedeem = vi.fn<(params: Submitted) => Promise<Hex>>(async () => HASH);
+// The stake submits take no client; they read the one on `quote.chain`.
+type SubmittedQuote = {quote: {chain: {client: unknown}}};
+const submitStake = vi.fn<(params: SubmittedQuote) => Promise<Hex>>(async () => HASH);
+const submitRedeem = vi.fn<(params: SubmittedQuote) => Promise<Hex>>(async () => HASH);
 const submitUseDeclaration = vi.fn<(params: Submitted) => Promise<Hex>>(async () => HASH);
 const submitToolRegistration = vi.fn<(params: Submitted) => Promise<Hex>>(async () => HASH);
 const submitOperatorLink = vi.fn<(params: Submitted) => Promise<object>>(async () => ({}));
@@ -39,8 +41,8 @@ vi.mock("../../services/tx-record", () => ({
 }));
 vi.mock("../../services/trust-stake", async (importOriginal) => ({
     ...(await importOriginal<typeof import("../../services/trust-stake")>()),
-    submitStake: (params: {publicClient: unknown}) => submitStake(params),
-    submitRedeem: (params: {publicClient: unknown}) => submitRedeem(params),
+    submitStake: (params: SubmittedQuote) => submitStake(params),
+    submitRedeem: (params: SubmittedQuote) => submitRedeem(params),
 }));
 vi.mock("../../services/declare-use", async (importOriginal) => ({
     ...(await importOriginal<typeof import("../../services/declare-use")>()),
@@ -99,8 +101,8 @@ describe("a submit after the toggle moved", () => {
         const actions = mountThenFlip(useStakeActions);
         await actions.submit(stakeQuote);
         await actions.submitExit(redeemQuote);
-        expect(submitStake.mock.calls[0]?.[0].publicClient).toBe(TESTNET.client);
-        expect(submitRedeem.mock.calls[0]?.[0].publicClient).toBe(TESTNET.client);
+        expect(submitStake.mock.calls[0]?.[0].quote.chain.client).toBe(TESTNET.client);
+        expect(submitRedeem.mock.calls[0]?.[0].quote.chain.client).toBe(TESTNET.client);
     });
 
     it("waits for the receipt on the quote's chain", async () => {
@@ -115,12 +117,14 @@ describe("a submit after the toggle moved", () => {
 
     it("declares with the declaration's client", async () => {
         const actions = mountThenFlip(useDeclareUse);
+        // The hook reads only `chain` off the declaration; the service that reads the rest is mocked.
         await actions.submit({chain: TESTNET} as unknown as DeclaredUse);
         expect(submitUseDeclaration.mock.calls[0]?.[0].publicClient).toBe(TESTNET.client);
     });
 
     it("lists a tool with the registration's client", async () => {
         const actions = mountThenFlip(useToolRegister);
+        // The hook reads only `chain` off the registration; the service that reads the rest is mocked.
         await actions.submit({chain: TESTNET} as unknown as ToolRegistration);
         expect(submitToolRegistration.mock.calls[0]?.[0].publicClient).toBe(TESTNET.client);
     });
@@ -128,12 +132,34 @@ describe("a submit after the toggle moved", () => {
     it("publishes an import link and an identity record on the plan's chain", async () => {
         const actions = mountThenFlip(useAgentImport);
         await actions.publishLink({
+            // Passed through untouched to the mocked service, so no field of it is read.
             imported: {} as ImportedAgent,
+            // The hook reads only `chain` off the plan; the service that reads the rest is mocked.
             plan: {chain: TESTNET} as unknown as ImportLinkPlan,
         });
+        // The hook reads only `chainId` off the plan; the service that reads the rest is mocked.
         await actions.publishIdentity({chainId: TESTNET.chainId} as IdentityAtomPlan);
         expect(submitOperatorLink.mock.calls[0]?.[0].publicClient).toBe(TESTNET.client);
         expect(submitIdentityAtom.mock.calls[0]?.[0].publicClient).toBe(TESTNET.client);
         expect(submitIdentityAtom.mock.calls[0]?.[0].chain).toMatchObject({chainId: 13579});
+    });
+
+    it("publishes a mainnet-priced identity record on mainnet after a flip to testnet", async () => {
+        toggle = MAINNET;
+        const view = renderHook(useAgentImport, {wrapper: Toggle});
+        toggle = TESTNET;
+        view.rerender();
+        // The hook reads only `chainId` off the plan; the service that reads the rest is mocked.
+        await view.result.current.publishIdentity({chainId: MAINNET.chainId} as IdentityAtomPlan);
+        expect(submitIdentityAtom.mock.calls[0]?.[0].publicClient).toBe(MAINNET.client);
+        expect(submitIdentityAtom.mock.calls[0]?.[0].chain).toMatchObject({chainId: 1155});
+    });
+
+    it("refuses an identity record priced on a chain ARP does not write to", async () => {
+        const actions = mountThenFlip(useAgentImport);
+        // Only `chainId` is read before the refusal, so nothing else of the plan is needed.
+        const plan = {chainId: 8453} as IdentityAtomPlan;
+        await expect(actions.publishIdentity(plan)).rejects.toThrow("chain 8453");
+        expect(submitIdentityAtom).not.toHaveBeenCalled();
     });
 });

@@ -19,9 +19,9 @@ import {formatTrust} from "./trust-format";
  * ## The chain is a parameter
  *
  * The toggle reaches the writes (the user, 2026-10-27), and the chain travels **on the quote**
- * rather than beside it. A quote is the thing built against
- * one chain's vault at one moment, and `submitStake` re-derives the MultiVault address, the viem
- * chain and the guard's expected id from `quote.chain`. There is no second argument that could
+ * rather than beside it. A quote is the thing built against one chain's vault at one moment, and
+ * `submitStake` and `submitRedeem` re-derive the MultiVault address, the viem chain, the read
+ * client and the guard's expected id from `quote.chain`. There is no second argument that could
  * disagree with it, and a quote built on testnet cannot be signed on mainnet.
  *
  * `security.md` is unchanged by this and worth re-reading: ARP's own funds are never signed for
@@ -197,7 +197,7 @@ export function parseStakeAmount(input: string, limits: StakeLimits): AmountChec
         return {
             status: "above-max",
             value,
-            message: `This panel refuses more than ${formatTrust(limits.maxStake)} ${limits.symbol} per transaction (VITE_MAX_STAKE_TRUST).`,
+            message: `This app refuses more than ${formatTrust(limits.maxStake)} ${limits.symbol} per transaction.`,
         };
     }
     return {status: "ok", value};
@@ -208,7 +208,7 @@ function assertUnderCeiling(assets: bigint, symbol: string): void {
     if (assets > MAX_STAKE_WEI) {
         throw new StakeGuardError(
             "above-ceiling",
-            `This app refuses more than ${formatTrust(MAX_STAKE_WEI)} ${symbol} per transaction (VITE_MAX_STAKE_TRUST). Nothing was sent.`,
+            `This app refuses more than ${formatTrust(MAX_STAKE_WEI)} ${symbol} per transaction. Nothing was sent.`,
         );
     }
 }
@@ -489,10 +489,9 @@ function simulateStake(
  */
 export async function submitStake(params: {
     walletClient: WalletClient<Transport, Chain, Account>;
-    publicClient: PublicClient;
     quote: StakeQuote;
 }): Promise<Hex> {
-    const {walletClient, publicClient, quote} = params;
+    const {walletClient, quote} = params;
 
     // What the client was built with…
     assertWalletOnChain(quote.chain, walletClient.chain?.id);
@@ -521,7 +520,7 @@ export async function submitStake(params: {
     }
     assertUnderCeiling(quote.assets, quote.chain.symbol);
 
-    await simulateStake(publicClient, quote, sender);
+    await simulateStake(quote.chain.client, quote, sender);
 
     return walletClient.writeContract({
         ...vaultAt(quote.chain.multiVault),
@@ -767,10 +766,9 @@ function simulateRedeem(
  */
 export async function submitRedeem(params: {
     walletClient: WalletClient<Transport, Chain, Account>;
-    publicClient: PublicClient;
     quote: RedeemQuote;
 }): Promise<Hex> {
-    const {walletClient, publicClient, quote} = params;
+    const {walletClient, quote} = params;
 
     assertWalletOnChain(quote.chain, walletClient.chain?.id);
     assertWalletOnChain(quote.chain, await walletClient.getChainId());
@@ -801,7 +799,7 @@ export async function submitRedeem(params: {
         );
     }
 
-    await simulateRedeem(publicClient, quote, sender);
+    await simulateRedeem(quote.chain.client, quote, sender);
 
     return walletClient.writeContract({
         ...vaultAt(quote.chain.multiVault),

@@ -3,6 +3,7 @@ import {useCallback} from "react";
 import type {Address, Hex} from "viem";
 
 import {choiceFor, useChainChoice} from "../lib/chain-choice";
+import {intuitionTestnet} from "../lib/chains";
 import {intuitionMainnet} from "../lib/intuition-mainnet";
 import {
     planOperatorLink,
@@ -23,6 +24,13 @@ import {
 } from "../services/agent-identity-atom";
 import {createUserSmartAccount} from "../services/smart-account";
 import {connectedWalletClient} from "./wallet-client";
+
+/** The chain a plan names, refused when it is neither Intuition chain rather than sent to testnet. */
+function choiceForPlan(chainId: number) {
+    if (chainId === intuitionMainnet.id) return choiceFor(true);
+    if (chainId === intuitionTestnet.id) return choiceFor(false);
+    throw new Error(`This record was priced on chain ${chainId}, which ARP does not write to.`);
+}
 
 /**
  * The chain and wallet actions the import page performs, kept out of the page.
@@ -130,7 +138,7 @@ export function useAgentImport() {
     const publishIdentity = useCallback(
         async (plan: IdentityAtomPlan): Promise<IdentityAtomSubmission> => {
             const walletClient = await connectedWalletClient();
-            const planChain = choiceFor(plan.chainId === intuitionMainnet.id);
+            const planChain = choiceForPlan(plan.chainId);
             return submitIdentityAtom({
                 walletClient,
                 publicClient: planChain.client,
