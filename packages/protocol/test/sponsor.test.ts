@@ -509,6 +509,8 @@ describe("limits", () => {
         approvalGas: MILLI / 10n,
         mintGas: MILLI / 10n,
         newAgentsPerDay: 2,
+        listingsPerAddressPerDay: 2,
+        anonymousListingsPerDay: 2,
         withdrawalThresholdBps: null,
         belowProofCost: false,
     };

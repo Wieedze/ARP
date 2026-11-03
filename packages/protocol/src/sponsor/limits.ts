@@ -39,6 +39,10 @@ export type SponsorLimits = {
     mintGas: bigint | null;
     /** How many addresses a UTC day may receive {@link mintGas}, all requesters together. */
     newAgentsPerDay: number;
+    /** Sponsored tool listings a UTC day for one signing address (ADR `0120`). */
+    listingsPerAddressPerDay: number;
+    /** Sponsored tool listings a UTC day from unsigned requests, all of them together (ADR `0120`). */
+    anonymousListingsPerDay: number;
     /**
      * Past this share of its sponsored shares withdrawn, in basis points, an agent is no longer
      * sponsored. A **mainnet** rule: `null`, not enforced, on testnet, where everything proven is
@@ -67,9 +71,10 @@ export type SponsorRecord = {
     /**
      * `mint-gas` is the transfer for an unregistered address's `register()`; `identity` the atoms
      * and triples that give an agent its identity; `create` a `uses` triple a deposit lands on
-     * (ADR `0110`).
+     * (ADR `0110`); `list-tool` the terms of a sponsored tool listing (ADR `0120`), whose subject
+     * is the signing address, or {@link ANONYMOUS_LISTER} for an unsigned request.
      */
-    kind: "deposit" | "gas" | "publish" | "mint-gas" | "identity" | "create";
+    kind: "deposit" | "gas" | "publish" | "mint-gas" | "identity" | "create" | "list-tool";
     subject: Address;
     /** The `value` the service sent for it, in wei. A publication's term fees are in it; the gas of the transaction is not. */
     value: bigint;
@@ -278,6 +283,51 @@ export function checkIdentityLimits(
     );
     if (!agents.has(agentKey) && agents.size >= limits.newAgentsPerDay) {
         return {ok: false, reason: `${limits.newAgentsPerDay} new identities a day, reached`};
+    }
+    return budget(records, value, now, limits) ?? {ok: true};
+}
+
+/** The subject of an unsigned listing's record. No key can sign for it. */
+export const ANONYMOUS_LISTER: Address = "0x0000000000000000000000000000000000000000";
+
+/**
+ * Whether one more tool listing, costing `value`, fits. `lister` is the signing address, or `null`
+ * for an unsigned request. A listing is counted once however many terms it creates: its records'
+ * keys are `<listing>#<n>`, as an identity's are.
+ */
+export function checkListToolLimits(
+    records: readonly SponsorRecord[],
+    params: {
+        lister: Address | null;
+        listing: string;
+        value: bigint;
+        now: number;
+        limits: SponsorLimits;
+    },
+): LimitDecision {
+    const {lister, listing, value, now, limits} = params;
+    const subject = lister ?? ANONYMOUS_LISTER;
+    const day = utcDay(now);
+    const listings = new Set(
+        records
+            .filter(
+                (r) =>
+                    r.kind === "list-tool" &&
+                    utcDay(r.at) === day &&
+                    same(r.subject, subject) &&
+                    r.key !== undefined,
+            )
+            .map((r) => (r.key ?? "").split("#")[0]),
+    );
+    const cap = lister === null ? limits.anonymousListingsPerDay : limits.listingsPerAddressPerDay;
+    if (!listings.has(listing) && listings.size >= cap) {
+        return {
+            ok: false,
+            reason:
+                lister === null
+                    ? `${cap} unsigned listings a day, reached; sign the request to use your own limit`
+                    : `${cap} listings a day for ${lister}, reached`,
+        };
     }
     return budget(records, value, now, limits) ?? {ok: true};
 }
