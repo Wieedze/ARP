@@ -285,7 +285,8 @@ ARP/
 │   └── protocol/                   ← @arp-protocol/core — the protocol layer (ADR 0041)
 │       ├── README.md               ← the surface a third party reads
 │       ├── src/                    ← identity, graph, verifier, tool usage,
-│       │                             declare/stake plans. Never signs, never sends
+│       │                             declare/stake plans. Holds no key, sends nothing;
+│       │                             signs only through a signer the caller injects
 │       └── src/arp/                ← ARP's own contracts (the folded-in `sdk/`)
 ├── contracts/                      ← Foundry workspace (Solidity)
 │   └── src/

@@ -73,8 +73,9 @@ contract at call time. `data/deployments/1155.json` says this in its own note ab
 ## The exception
 
 The trust panel's staking path stays in `apps/web/`. It is UI, it is human-signed, and ADR `0017`'s
-safeguards are UI behaviour. Do not move it into the connector: the connector never signs and never
-sends, and that invariant is worth more than the symmetry.
+safeguards are UI behaviour. Do not move it into the connector: the connector holds no key and
+sends nothing (it signs only through a signer the caller injects), and that invariant is worth more
+than the symmetry.
 
 The exception is about **where the code lives**, not which chain it targets: the path serves either
 chain (ADR `0061`).

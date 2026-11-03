@@ -188,7 +188,8 @@ ARP/
 │   │                                  Intuition query document. Knows the schema, nothing about ARP
 │   └── protocol/                      `@arp-protocol/core` — THE PROTOCOL LAYER (ADR 0041)
 │       ├── src/                       identity, graph, verifier, tool usage, declare/stake plans.
-│       │                              Never signs, never sends (ADR 0038); no chain constant
+│       │                              Holds no key, sends nothing; signs only through a signer
+│       │                              the caller injects (ADR 0038); no chain constant
 │       └── src/arp/                   ARP's OWN contracts (the folded-in `sdk/`) — the one place
 │                                      here that names a chain: `TESTNET_DEPLOYMENT`
 ├── data/                              committed data, no code

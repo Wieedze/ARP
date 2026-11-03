@@ -101,7 +101,7 @@ export {
  * Two frozen copies of a constant whose whole purpose is to be frozen is the
  * worse failure, so the writer takes this one rather than keeping its own.
  *
- * Exporting it adds no send path. This package still never signs and never sends a transaction;
+ * Exporting it adds no send path. This package still holds no key and sends no transaction;
  * `declare/` prepares calls for the agent's own key (ADR `0038`).
  */
 export {

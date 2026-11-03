@@ -254,7 +254,7 @@ reputation, and so does the agent.
 relationship with ARP. A tool's atom is derived from its URI and your identity atom already exists
 if your agent is in the Base mirror, so nothing has to be pinned.
 
-**This package prepares the calls. It never signs them and never sends them.** You get a list of
+**This package prepares the calls. It holds no key and never sends them.** You get a list of
 `{to, value, data, why}` and sign it with your own key. ARP holds no key and has no send path, so it
 cannot spend your TRUST even by mistake.
 
