@@ -1,4 +1,4 @@
-import {fireEvent, render, screen} from "@testing-library/react";
+import {act, fireEvent, render, screen} from "@testing-library/react";
 import type {ReactNode} from "react";
 import {MemoryRouter} from "react-router-dom";
 import type {Hex} from "viem";
@@ -107,5 +107,25 @@ describe("AgentImport after a rejected re-sign", () => {
         expect(publishLink.mock.calls[0]).toMatchObject([
             {imported: {signature: SIGNATURE, agentAtomId: ATOM}, plan: PLAN},
         ]);
+    });
+});
+
+describe("AgentImport when the token is edited during the ownership check", () => {
+    it("drops the reply for the token no longer on screen", async () => {
+        render(<AgentImport />, {wrapper: Provider});
+
+        let resolve: (verdict: OwnershipVerdict) => void = () => {};
+        verifyOwnership.mockImplementationOnce(
+            () => new Promise<OwnershipVerdict>((done) => (resolve = done)),
+        );
+        fireEvent.change(screen.getByLabelText("Token id"), {target: {value: "1"}});
+        fireEvent.click(screen.getByRole("button", {name: "Check ownership"}));
+        await screen.findByRole("button", {name: "Reading the registry…"});
+
+        fireEvent.change(screen.getByLabelText("Token id"), {target: {value: "2"}});
+        await act(async () => resolve(owned({chainId: 8453, tokenId: "1"})));
+
+        expect(screen.queryByText(/is yours\./)).toBeNull();
+        expect(screen.getByRole("button", {name: "Sign the statement"})).toBeDisabled();
     });
 });

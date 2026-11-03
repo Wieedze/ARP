@@ -1,4 +1,4 @@
-import {useId, useState} from "react";
+import {useId, useRef, useState} from "react";
 import {Link} from "react-router-dom";
 import {useAccount, useSwitchChain} from "wagmi";
 
@@ -79,6 +79,16 @@ export function AgentImport() {
     const [chainId, setChainId] = useState(8453);
     const [tokenId, setTokenId] = useState("");
     const [phase, setPhase] = useState<Phase>({step: "idle"});
+    /**
+     * Bumped by every check and every edit to the chain or token, so a registry reply that lands
+     * after either is dropped instead of proving a token no longer on screen.
+     */
+    const checkRef = useRef(0);
+
+    function resetCheck() {
+        checkRef.current += 1;
+        setPhase({step: "idle"});
+    }
 
     const trimmedToken = tokenId.trim();
     const isTokenValid = /^\d+$/.test(trimmedToken);
@@ -149,6 +159,11 @@ export function AgentImport() {
 
     async function handleCheckOwnership() {
         if (!connected || !isTokenValid) return;
+        checkRef.current += 1;
+        const check = checkRef.current;
+        const settle = (next: Phase) => {
+            if (checkRef.current === check) setPhase(next);
+        };
         setPhase({step: "checking"});
         try {
             const verdict = await actions.verifyOwnership({
@@ -157,14 +172,14 @@ export function AgentImport() {
                 connected,
             });
             if (verdict.status !== "owned") {
-                setPhase({step: "refused", verdict});
+                settle({step: "refused", verdict});
                 return;
             }
             const [atom, operatingAccount] = await Promise.all([
                 actions.resolveAtom({chainId, tokenId: trimmedToken}),
                 actions.deriveOperatingAccount(verdict.owner),
             ]);
-            setPhase(
+            settle(
                 provenPhase({
                     chainId,
                     tokenId: trimmedToken,
@@ -175,7 +190,7 @@ export function AgentImport() {
                 }),
             );
         } catch (error) {
-            setPhase({step: "check-failed", message: errorMessage(error)});
+            settle({step: "check-failed", message: errorMessage(error)});
         }
     }
 
@@ -350,7 +365,7 @@ export function AgentImport() {
                             value={chainId}
                             onChange={(event) => {
                                 setChainId(Number(event.target.value));
-                                setPhase({step: "idle"});
+                                resetCheck();
                             }}
                             aria-describedby={`${fieldId}-chain-note`}
                             className={`${inputClass} text-[length:var(--text-body-sm)]`}
@@ -381,7 +396,7 @@ export function AgentImport() {
                             value={tokenId}
                             onChange={(event) => {
                                 setTokenId(event.target.value);
-                                setPhase({step: "idle"});
+                                resetCheck();
                             }}
                             aria-invalid={trimmedToken !== "" && !isTokenValid}
                             aria-describedby={`${fieldId}-token-help`}
