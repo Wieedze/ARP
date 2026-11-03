@@ -306,7 +306,7 @@ export function createSponsor(options: SponsorOptions): {
         newAgentsPerDay: limits.newAgentsPerDay,
         withdrawalThresholdBps: limits.withdrawalThresholdBps ?? 'unset',
         belowProofCost: limits.belowProofCost,
-        spentTodayWei: spentOnDay(ledger.records, now()),
+        spentTodayWei: spentOnDay(ledger.relevant(now()), now()),
         spentCounts: 'value sent only; the gas of the service’s own transactions is not counted',
         pendingSends: ledger.pending().length,
       },
@@ -332,7 +332,11 @@ export function createSponsor(options: SponsorOptions): {
     const own = refuseOwnAgent(agent.owner, body.agentId);
     if (own !== null) return own;
     return exclusive(async () => {
-      const decision = checkGasLimits(ledger.records, { agent: agent.owner, now: now(), limits });
+      const decision = checkGasLimits(ledger.relevant(now(), [agent.owner]), {
+        agent: agent.owner,
+        now: now(),
+        limits,
+      });
       if (!decision.ok) return json({ error: decision.reason }, 429);
       const key = `gas:${agent.owner.toLowerCase()}`;
       ledger.reserve({
@@ -504,7 +508,7 @@ export function createSponsor(options: SponsorOptions): {
       if (ledger.has('deposit', proven.id))
         return json({ error: 'this proof already sponsored a deposit' }, 409);
 
-      const positions = sponsoredPositions(ledger.records, agent);
+      const positions = sponsoredPositions(ledger.relevant(now(), [agent]), agent);
       const held = await Promise.all(
         positions.map((p) => reads.sharesOf(agent, p.termId, p.curveId)),
       );
@@ -518,7 +522,12 @@ export function createSponsor(options: SponsorOptions): {
       // deposit creates nothing.
       let created: Hex | null = null;
       if (!(await reads.termExists(request.termId))) {
-        const early = checkDepositLimits(ledger.records, { agent, now: now(), limits, withdrawn });
+        const early = checkDepositLimits(ledger.relevant(now(), [agent]), {
+          agent,
+          now: now(),
+          limits,
+          withdrawn,
+        });
         if (!early.ok) return json({ error: early.reason }, 429);
         const [subjectExists, objectExists, tripleCost, minDeposit] = await Promise.all([
           reads.termExists(subject),
@@ -535,7 +544,7 @@ export function createSponsor(options: SponsorOptions): {
         if (born.shares === 0n) {
           return json({ error: `creating ${request.termId} would buy 0 shares` }, 400);
         }
-        const fits = checkCreateLimits(ledger.records, {
+        const fits = checkCreateLimits(ledger.relevant(now(), [agent]), {
           agent,
           value: assets + limits.depositAmount,
           now: now(),
@@ -589,7 +598,12 @@ export function createSponsor(options: SponsorOptions): {
         return json({ error: String(error instanceof Error ? error.message : error) }, 400);
       }
 
-      const decision = checkDepositLimits(ledger.records, { agent, now: now(), limits, withdrawn });
+      const decision = checkDepositLimits(ledger.relevant(now(), [agent]), {
+        agent,
+        now: now(),
+        limits,
+        withdrawn,
+      });
       // The same call the agent can send itself: `sender == receiver` needs no approval.
       if (!decision.ok) return json({ error: decision.reason, selfDeposit: plan.call }, 429);
 
@@ -681,7 +695,11 @@ export function createSponsor(options: SponsorOptions): {
       // sent again by whoever saw it.
       if (ledger.has('mint-gas', nonceKey))
         return json({ error: 'this request was already used' }, 409);
-      const decision = checkMintGasLimits(ledger.records, { address, now: now(), limits });
+      const decision = checkMintGasLimits(ledger.relevant(now(), [address]), {
+        address,
+        now: now(),
+        limits,
+      });
       if (!decision.ok) {
         return json({ error: decision.reason }, limits.mintGas === null ? 503 : 429);
       }
@@ -736,7 +754,7 @@ export function createSponsor(options: SponsorOptions): {
     // The limits before the pins (ADR `0116`): a pin moves no value but costs the pinning account,
     // and a refused agent must not get two documents pinned for free on every request. Checked
     // again inside the queue, where the count is final.
-    const early = checkIdentityLimits(ledger.records, {
+    const early = checkIdentityLimits(ledger.relevant(now()), {
       agentKey,
       value: pins.totalValue,
       now: now(),
@@ -766,7 +784,7 @@ export function createSponsor(options: SponsorOptions): {
         return json({ identityAtom: plan.identityAtom, sent: [], valueWei: 0n });
       }
       plan.calls.forEach(assertMultiVault);
-      const decision = checkIdentityLimits(ledger.records, {
+      const decision = checkIdentityLimits(ledger.relevant(now()), {
         agentKey,
         value: plan.totalValue,
         now: now(),
@@ -775,9 +793,7 @@ export function createSponsor(options: SponsorOptions): {
       if (!decision.ok) return json({ error: decision.reason }, 429);
 
       const sent: Hex[] = [];
-      const first = ledger.records.filter(
-        (r) => r.kind === 'identity' && (r.key ?? '').split('#')[0] === agentKey,
-      ).length;
+      const first = ledger.keyedWith('identity', `${agentKey}#`).length;
       for (const [index, call] of plan.calls.entries()) {
         const key = `${agentKey}#${first + index}`;
         ledger.reserve({
@@ -829,7 +845,7 @@ export function createSponsor(options: SponsorOptions): {
     }
 
     return exclusive(async () => {
-      const count = checkPublishLimits(ledger.records, {
+      const count = checkPublishLimits(ledger.relevant(now(), [parsed.delegator]), {
         delegator: parsed.delegator,
         value: 0n,
         now: now(),
@@ -851,7 +867,7 @@ export function createSponsor(options: SponsorOptions): {
           terms: plan.terms,
         });
       }
-      const decision = checkPublishLimits(ledger.records, {
+      const decision = checkPublishLimits(ledger.relevant(now(), [parsed.delegator]), {
         delegator: parsed.delegator,
         value: plan.totalValue,
         now: now(),

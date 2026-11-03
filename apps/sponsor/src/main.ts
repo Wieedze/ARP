@@ -88,9 +88,12 @@ const PORT = count('SPONSOR_PORT', 3200);
 const PIN_KEY = (process.env.INTUITION_PIN_API_KEY ?? '').trim();
 // `~/.arp/` (or `ARP_HOME`), never the working directory: started anywhere else, a ledger resolved
 // against it is empty, and an empty ledger sponsors every proof a second time (ADR `0116`).
+// Opened here, before the key is read: a second service on the same ledger is refused (ADR `0116`).
 let LEDGER: string;
+let ledger: SponsorLedger;
 try {
   LEDGER = stateFile(process.env.SPONSOR_LEDGER, 'sponsor-ledger.jsonl');
+  ledger = new SponsorLedger(LEDGER);
 } catch (error) {
   fail(String(error instanceof Error ? error.message : error));
 }
@@ -271,7 +274,7 @@ const service = createSponsor({
   hosts: loopbackHosts(PORT),
   usesPredicate,
   limits,
-  ledger: new SponsorLedger(LEDGER),
+  ledger,
   acceptedContentSigners,
   publish: null,
   pinThing:

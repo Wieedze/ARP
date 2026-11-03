@@ -1039,6 +1039,7 @@ describe('the ledger', () => {
       shares: 7n,
     });
     writeFileSync(path, '{"kind":"dep', { flag: 'a' });
+    first.close();
     const second = new SponsorLedger(path);
     expect(second.records).toEqual([
       {
@@ -1056,6 +1057,25 @@ describe('the ledger', () => {
     expect(second.has('gas', 'k')).toBe(false);
   });
 
+  test('refuses a second service on the same ledger file until the first closes it', () => {
+    dir = mkdtempSync(join(tmpdir(), 'sponsor-ledger-'));
+    const path = join(dir, 'ledger.jsonl');
+    const first = new SponsorLedger(path);
+    expect(() => new SponsorLedger(path)).toThrow(/held by process/);
+    first.close();
+    new SponsorLedger(path).close();
+  });
+
+  test("decides the day's limits from today's slice and the subject's own history alone", () => {
+    const ledger = new SponsorLedger(null);
+    const row = { kind: 'gas' as const, value: 1n };
+    ledger.append({ ...row, subject: AGENT.address, at: NOW - 3 * 86_400_000, key: 'old' });
+    ledger.append({ ...row, subject: CALLEE.address, at: NOW - 3 * 86_400_000, key: 'other' });
+    ledger.append({ ...row, subject: CALLEE.address, at: NOW, key: 'today' });
+    expect(ledger.relevant(NOW, [AGENT.address]).map((r) => r.key)).toEqual(['today', 'old']);
+    expect(ledger.relevant(NOW).map((r) => r.key)).toEqual(['today']);
+  });
+
   test('reloads a pending reservation as spent, and a settlement onto its row', () => {
     dir = mkdtempSync(join(tmpdir(), 'sponsor-ledger-'));
     const path = join(dir, 'ledger.jsonl');
@@ -1071,6 +1091,7 @@ describe('the ledger', () => {
       /no pending/,
     );
 
+    first.close();
     const second = new SponsorLedger(path);
     expect(second.has('deposit', 'lost')).toBe(true);
     expect(second.has('deposit', 'landed')).toBe(true);
@@ -1395,6 +1416,7 @@ describe('a send whose receipt does not come in time', () => {
       const first = new SponsorLedger(path);
       first.reserve({ kind: 'gas', subject: AGENT.address, value: 1n, at: NOW, key: 'g' });
       first.noteSent('gas', 'g', PAYMENT);
+      first.close();
       const second = new SponsorLedger(path);
       expect(second.pending().map((r) => r.key)).toEqual(['g']);
       expect(second.hashOf('gas', 'g')).toBe(PAYMENT);
