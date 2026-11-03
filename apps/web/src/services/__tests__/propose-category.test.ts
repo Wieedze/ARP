@@ -56,6 +56,8 @@ describe("proposing a category through the sponsor", () => {
             [422, {rule: "exists"}, "That name is already in the tree. Pick it from the list."],
             [422, {rule: "root"}, "Pick a category under tool, not tool itself."],
             [429, {rule: "limit"}, "Today's limit is reached. Try again tomorrow."],
+            [422, {rule: "skill"}, "That tool is not on the index yet. Try again in a minute."],
+            [409, {rule: "changed"}, "The tree changed meanwhile. Try again."],
             [503, {retry: true}, "Not answered right now. Try again."],
         ] as const;
         for (const [status, body, message] of cases) {

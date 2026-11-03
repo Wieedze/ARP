@@ -93,6 +93,12 @@ export function proposeCategoryMessage(result: ProposeCategoryResult): string {
                     return "Today's limit is reached. Try again tomorrow.";
                 case "pending":
                     return "Already being filed. Try again in a minute.";
+                case "changed":
+                    return "The tree changed meanwhile. Try again.";
+                case "skill":
+                    return "That tool is not on the index yet. Try again in a minute.";
+                case "config":
+                    return "Categories are not available right now.";
                 default:
                     return result.retry
                         ? "Not answered right now. Try again."
