@@ -1,5 +1,6 @@
 import catalogue from '../../../../data/catalogue/tools.json';
 import skillFacts from '../../../../data/catalogue/skill-facts.json';
+import skillGone from '../../../../data/catalogue/skill-gone.json';
 import skillRequires from '../../../../data/catalogue/skill-requires.json';
 import {
   INTUITION_HAS_TAG_MAINNET as HAS_TAG,
@@ -37,6 +38,14 @@ const SKILLS: ReadonlyMap<string, SkillFact> = new Map(
     fact,
   ]),
 );
+
+// Skills the content server refused when last measured (`scripts/build/build-skill-gone.ts`): an
+// agent handed one gets a 404, so the search does not offer it.
+const GONE: ReadonlySet<string> = new Set(Object.keys(skillGone.gone).map(keyOf));
+
+export function isGone(label: string | null): boolean {
+  return label !== null && GONE.has(keyOf(label));
+}
 
 type SkillRequires = { cli?: string[]; mentions_login?: string };
 
@@ -273,7 +282,9 @@ export async function findTools(id: JsonRpcId, args: Record<string, unknown>) {
   // A free-text query keeps the rows whose name, address or description holds its words, best
   // match first; without one the listing's own order stands. Matching runs on the whole
   // description, so "montage" or "subtitles" finds a skill whose name says neither.
-  const described = rows.map((row) => ({ row, about: describe(row.label, CATALOGUE, SKILLS) }));
+  const described = rows
+    .filter((row) => !isGone(row.label))
+    .map((row) => ({ row, about: describe(row.label, CATALOGUE, SKILLS) }));
   const matched =
     query === null
       ? described
