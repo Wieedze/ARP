@@ -28,6 +28,7 @@ onboarding skill ARP itself returned for "onboarding" (`coreyhaines31/marketings
 | Scene 4 | **Replaced**, not added to, and then **removed** the same evening: the onboarding belongs on the first screen and behind Connect (user, « ou alors après le bouton connexion »). The deck has five scenes, and the four "Needs wallet" cards are gone |
 | `/account` | **Two tabs**: Your agent first; the delegations under "Delegation · later" (user, 2026-11-02) |
 | Listing a tool from path C | **Sponsored on testnet 13579, with a limit**, consistent with "free for testers" (task 45) |
+| The limit on sponsored listings | **Signed when a key is available, anonymous otherwise** (2026-11-03, « B quand une clé est disponible, A sinon »): a request signed by the agent key or a wallet gets a per-address daily limit inside the global budget; an unsigned one falls under a small global daily cap. The number is config, stated in the route's ADR. Route `POST /list-tool`, built by the sponsor's owner session (ADR `0120`) |
 | The badge | **Not decided.** Left out of this task |
 | Onboarding, like Privy's | **The action is gated, not the read** (2026-11-02, « ok ça me paraît bien »). Index pages stay open; declaring, supporting, adding a tool and the personal pages open the onboarding first |
 | How a visitor connects | **Their agent**, not an account: the extension's local key (ADR `0110`), seen by the activity bar on the web. MetaMask for whoever signs. No Privy for now. ADR `0114` |
