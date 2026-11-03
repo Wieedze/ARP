@@ -21,6 +21,9 @@ export const DEFAULT_SERVE_MAX_BODY_BYTES = 1024 * 1024;
 /** How long a client gets to send its whole request, headers and body. */
 export const DEFAULT_REQUEST_TIMEOUT_MS = 30_000;
 
+/** How long a refused body's socket may stay open for the 413 to flush before it is dropped. */
+const TOO_LARGE_GRACE_MS = 1_000;
+
 export type ServeOptions = {
     port: number;
     /**
@@ -143,8 +146,13 @@ export function serveFetch(options: ServeOptions, handle: FetchHandler): Promise
                     ...(tooLarge ? {connection: "close"} : {}),
                 });
                 // Once the 413 is out, the rest of the body is nobody's business: drop the socket
-                // rather than leave a paused request holding it open.
-                if (tooLarge) out.once("finish", () => message.socket.destroy());
+                // rather than leave a paused request holding it open. `finish` does not always fire
+                // while the client is still writing into a paused socket, so a timer drops it too.
+                if (tooLarge) {
+                    const drop = () => message.socket.destroy();
+                    out.once("finish", drop);
+                    setTimeout(drop, TOO_LARGE_GRACE_MS).unref();
+                }
                 out.end(JSON.stringify({error: tooLarge ? "body too large" : "internal error"}));
             }
         })();
