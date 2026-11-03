@@ -324,6 +324,7 @@ export {
     isToolUrl,
     multiVaultDeclareAbi,
     multiVaultReads,
+    RpcChainMismatchError,
     canonicalAgentThing,
     canonicalCaipThing,
     NonPositiveAmountError,

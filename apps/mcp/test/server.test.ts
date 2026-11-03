@@ -227,6 +227,12 @@ beforeAll(async () => {
                 response.end(JSON.stringify({data: STUBBED_SUBJECT}));
                 return;
             }
+            // `multiVaultReads` asks the RPC which chain it serves before its first read.
+            if (body.includes("eth_chainId")) {
+                const id = (JSON.parse(body) as {id?: number}).id ?? 1;
+                response.end(JSON.stringify({jsonrpc: "2.0", id, result: "0x350b"}));
+                return;
+            }
             if (body.includes("eth_call")) {
                 const data = (JSON.parse(body) as {params?: [{data?: string}]}).params?.[0]?.data;
                 const hit = ethCallReturns[(data ?? "").slice(0, 10)];
