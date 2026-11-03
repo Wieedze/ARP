@@ -1,6 +1,6 @@
 # Task 59 — A category anyone can add, by the same rules as the rest
 
-**Status:** **IN PROGRESS**, 2026-11-03. Built: `planCategory` and its rules in `packages/protocol` (PR #56); the index reads both of ARP's addresses (decision A, 2026-11-03, ADR `0124`), on `feat/59-attestors`. The sponsor's `POST /propose-category` is the sponsor owner's, on `feat/59-sponsor-category`. Next: the MCP tool, the weekly review list, the first run on the 61 skills, the verify check.
+**Status:** **IN PROGRESS**, 2026-11-03. Built: `planCategory` and its rules in `packages/protocol` (PR #56); the index reads both of ARP's addresses (decision A, ADR `0124`, PR #58); the sponsor's `POST /propose-category`, the sponsor owner's (PR #60). On `feat/59-category-step`: the web step after path C (item 5), `arp_file_category` in the MCP server (item 2), `scripts/verify/category-review.ts` (item 4) and the every-category check in `scripts/verify/verify-domain-tree.ts` (item 7; testnet 13579, 2026-11-03: 22 categories, all reach `tool`). Both clients were checked against the live sponsor with a request it refuses, so nothing was written. Next: the first run on the 61 skills (item 6), which spends ARP's testnet treasury and waits on the user.
 **ADR:** `0115`. The rules are written out in `docs/25_THE_DOMAIN_TREE.md` §8.
 **Rules:** `code.md`, `portability.md`, `security.md` (the sponsor writes), `claims.md`, `workflow.md`.
 **Reviewers:** `intuition-integrator`, `ui-reviewer` if the web proposes, then `task-verifier`.
