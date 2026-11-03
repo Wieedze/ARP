@@ -9,7 +9,7 @@ agent »_, then the wording below, chosen from three.
 ## Context
 
 The one-liner in `README.md`, `docs/01` and `docs/15` was the presentation kit's goal: _ARP makes
-money flow to the tools agents actually use._ Two things made it inaccurate. A deposit stays the
+money flow to the tools agents actually use._ ~~Two things made it inaccurate.~~ (see the addendum) A deposit stays the
 depositor's position, and a tool's author receives nothing from it or from ARP (ADR `0075`), so no
 money flows to a tool. And the one result measured is discovery: Claude with ARP named a skill or
 an MCP server that exists in 40 of 42 answers, without it in 6 of 42 (`docs/tasks/52` §3).
@@ -41,6 +41,15 @@ change.
 
 **Negative:**
 
-- `docs/01` said the kit wins over a text that contradicts it. For the one-liner that is reversed
+- ~~`docs/01` said the kit wins over a text that contradicts it. For the one-liner that is reversed
   until the kit (`Wieedze/ARP-business-dev`, `pitch/kit-de-presentation.md`) is updated, which is
-  outside this repo.
+  outside this repo.~~ The kit was updated the same day (`f2f425a`).
+
+## Addendum, 2026-11-03
+
+The context above calls the old line inaccurate. That overstates it. In the kit the line is the
+**goal** (_but final_), not a statement of the present, and ADR `0076` plans the payments that would
+carry it out. What holds is narrower: today no money reaches a tool, so as the lead it promised
+something that does not happen yet. The user kept it as the goal (choice "accroche only", same
+day): the kit now carries the new line as its one-sentence pitch, and the goal row and the longer
+pitches, which end on it, are unchanged.
