@@ -98,6 +98,9 @@ Then the rest of `docs/`: `03`, `04`, `05`, `08`, `11` already carried a status 
 **Step 4 is done as far as drift goes**: each file says whether it is current. The line-by-line
 slop cut inside long historical files was not attempted, deliberately — they are records.
 
+**Step 5 done 2026-11-03**, style only, the user's choice: `claims.md`, `code.md`, `workflow.md`
+cut, no rule changed (ADR `0121`). The other rule files were read and left.
+
 ## Why this is a task and not a tidy-up
 
 The repo has **43 ADRs, 18 post-mortems, 31 task files and 16 docs**, almost all written by me in a

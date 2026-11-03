@@ -2,7 +2,7 @@
 
 **Generated** 2026-11-03 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-116 decisions. Newest last. `choices/README.md` says when to write one.
+117 decisions. Newest last. `choices/README.md` says when to write one.
 
 ## Not accepted
 
@@ -148,3 +148,4 @@ Read these before relying on them.
 | [0118](0118-enforcer-state-is-keyed-by-caller.md) | 2026-11-02 | Accepted | Enforcer state is keyed by its caller; a receipt's replay key names its signer |
 | [0119](0119-what-the-connector-checks-and-what-it-no-longer-defaults.md) | 2026-11-03 | Accepted | What the connector checks, and what it no longer defaults |
 | [0120](0120-arp-is-not-b2b-first.md) | 2026-11-03 | Accepted | ARP is not B2B first |
+| [0121](0121-the-rules-prose-pass-changes-no-rule.md) | 2026-11-03 | Accepted | The rules' prose pass changes no rule |
