@@ -1,8 +1,8 @@
 # ADR index
 
-**Generated** 2026-11-02 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
+**Generated** 2026-11-03 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-111 decisions. Newest last. `choices/README.md` says when to write one.
+116 decisions. Newest last. `choices/README.md` says when to write one.
 
 ## Not accepted
 
@@ -143,3 +143,8 @@ Read these before relying on them.
 | [0112](0112-one-product-two-ways-to-pay-and-a-free-badge.md) | 2026-11-02 | Accepted | One product, two ways to pay, a data licence for aggregators, and a free badge |
 | [0113](0113-who-may-speak-for-an-agent-identity.md) | 2026-11-02 | Deferred (mainnet port). The user's decision, 2026-11-02: « intéressant mais inutile en | Who may speak for an agent's identity: trusted writers, the market, then ambiguity |
 | [0114](0114-one-path-per-profile-the-action-is-gated-not-the-read.md) | 2026-11-02 | Accepted | One path per profile; onboarding gates the action, not the read; you connect your agent |
+| [0116](0116-local-state-under-arp-home-one-key-policy-local-services-refuse-the-browser.md) | 2026-11-03 | Accepted | Local state lives under ~/.arp, one key-file policy, /mint-gas is signed, local services refuse the browser |
+| [0117](0117-scripts-ci-and-the-process-files-match-the-repo.md) | 2026-11-02 | Accepted | Scripts sign on testnet only, CI runs the gates, and the process files describe the repo as it is |
+| [0118](0118-enforcer-state-is-keyed-by-caller.md) | 2026-11-02 | Accepted | Enforcer state is keyed by its caller; a receipt's replay key names its signer |
+| [0119](0119-what-the-connector-checks-and-what-it-no-longer-defaults.md) | 2026-11-03 | Accepted | What the connector checks, and what it no longer defaults |
+| [0120](0120-arp-is-not-b2b-first.md) | 2026-11-03 | Accepted | ARP is not B2B first |

@@ -104,7 +104,7 @@ The case against free ratings is measured, not asserted: ERC-8004's Reputation R
   score, rating or assessment of any agent; it makes staking possible and reads the result. Every
   figure it surfaces is a deposit somebody else made, so ARP cannot be wrong about an agent — the
   market can. ADR `0046`.
-- ARP is **not consumer-facing**. It is B2B infrastructure — agents, dApps, and other protocols consume it.
+- ARP is **not B2B first**. Its first users are people who use an agent — Claude users, agent builders, tool authors — and the agent itself, which reads ARP mid-task. Aggregators and publishers may become business customers later, through the data licence (ADRs `0112`, `0120`).
 - ARP is **not where a reputation lives**. The reputation is **portable**: atoms, triples and
   positions on a public graph, plus an ERC-8004 identity. Nothing is in an ARP database, so an
   operator adopting ARP is not betting on ARP surviving — unplug it and the reputation is still there

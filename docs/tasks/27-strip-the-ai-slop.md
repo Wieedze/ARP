@@ -69,9 +69,9 @@ Found and **not** fixed, because they are outside this file's reach:
   force", and a table maps each drifted claim to its correction.
 - `docs/00`'s header says historical. These close two lines of `docs/tasks/28` item 21.
 
-**Open, and the user's to decide:** `docs/01` and `docs/12` both say ARP is "not consumer-facing,
-B2B infrastructure", while the kit's first audience is "Claude users with no technical background"
-and the Desktop extension is built for them. `docs/12` is canonical, so this pass does not touch it.
+**Decided by the user the same day:** `docs/01` and `docs/12` said ARP is "not consumer-facing,
+B2B infrastructure". It is not B2B first; aggregators and publishers may be later. Both now say so
+(ADR `0120`).
 
 ## Why this is a task and not a tidy-up
 
