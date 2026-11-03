@@ -1,0 +1,320 @@
+{
+  "_note": "Task 59 item 6: the first run over the skills untagged in data/measurements/untagged-skills-2026-11-03T1231.json. A draft classification by reading each description; existing categories wherever one fits, one new category (research) where none does. Sent by scripts/seed/file-categories.ts through the sponsor, which applies the same rules as any proposal.",
+  "chainId": 13579,
+  "source": "data/measurements/untagged-skills-2026-11-03T1231.json",
+  "filings": [
+    {
+      "url": "https://github.com/vercel-labs/skills?skill=find-skills",
+      "atom": "0x9eb077a3fc7044aecb53555d9a1b075b392fdc54c501b0904bd856d1867202f7",
+      "category": "development"
+    },
+    {
+      "url": "https://github.com/mattpocock/skills?skill=tdd",
+      "atom": "0x8475dba2e7821bd4fdf20e03c4fb40cac7916de2ab31bc0bca28cd6c991ed53b",
+      "category": "quality"
+    },
+    {
+      "url": "https://github.com/mattpocock/skills?skill=setup-matt-pocock-skills",
+      "atom": "0x130539c807eab400e5e251050c6017a311ff94ecf2c1a879d65cf0199d78b009",
+      "category": "development"
+    },
+    {
+      "url": "https://github.com/mattpocock/skills?skill=prototype",
+      "atom": "0x8c006f22f2b15f3ab91fdf2c24af04fb80a09664b853b1a113f425ccaa72d1e4",
+      "category": "development"
+    },
+    {
+      "url": "https://github.com/mattpocock/skills?skill=domain-modeling",
+      "atom": "0x3764db0fc8f0c701d619abac3288645908bf2c26f8e2c3d4e12c5a92fcc074ef",
+      "category": "method"
+    },
+    {
+      "url": "https://github.com/mattpocock/skills?skill=diagnosing-bugs",
+      "atom": "0xafce43c6d4f756d5b80d972a09d0c809f7abc8d2e7301ad7f2efbc83ab1c3709",
+      "category": "quality"
+    },
+    {
+      "url": "https://github.com/mattpocock/skills?skill=wizard",
+      "atom": "0xac0805bb1ca2a52a9090fe7c40224f36e656eff918061a9d5cc83ba56140269f",
+      "category": "automation"
+    },
+    {
+      "url": "https://github.com/mattpocock/skills?skill=resolving-merge-conflicts",
+      "atom": "0xdc4bfd8784ab8ed2ae3615bea83f519d151d38f0285379e15d290e4d8b3df51a",
+      "category": "development"
+    },
+    {
+      "url": "https://github.com/mattpocock/skills?skill=setup-pre-commit",
+      "atom": "0xce31c0544b401230c2fd1fc8b0ed7ce6bb63e67e0b0396196aa29c51aab3b92f",
+      "category": "quality"
+    },
+    {
+      "url": "https://github.com/mattpocock/skills?skill=loop-me",
+      "atom": "0x157580ac32cdcd5206ed7524a11f0f1667fc4916272945f1d14d8d5cd587bb0a",
+      "category": "method"
+    },
+    {
+      "url": "https://github.com/mattpocock/skills?skill=diagnose",
+      "atom": "0xdec9759c7c715f32a64c7333add4362ec82ed0905841e8717a7de85e4a8b4cea",
+      "category": "quality"
+    },
+    {
+      "url": "https://github.com/mattpocock/skills?skill=qa",
+      "atom": "0x31757382a80a7558133d9f27ee72ae9a5ccdb67ac1e337fb4c0d6d6a5cc5809b",
+      "category": "quality"
+    },
+    {
+      "url": "https://github.com/mattpocock/skills?skill=ubiquitous-language",
+      "atom": "0xbb18c2bf6ba3197ce2ed10dd59a05eaeb7843fc161fa365e231783d9723b3e2c",
+      "category": "method"
+    },
+    {
+      "url": "https://github.com/heygen-com/hyperframes?skill=cut-the-curve",
+      "atom": "0xbce64d5e5b359b5ace95f8aa32eb5dab8612e6f3b5f0275223f7e1d1d61baa12",
+      "category": "video"
+    },
+    {
+      "url": "https://github.com/heygen-com/hyperframes?skill=seam-craft",
+      "atom": "0x91c4527bd214fc3d96660295064764b4596d6ea1678771e8ff3b5201fd06ba0e",
+      "category": "video"
+    },
+    {
+      "url": "https://github.com/anthropics/skills?skill=skill-creator",
+      "atom": "0x4d0cc47a393079ecfc778f44d280fdcf16b57d6582dff858d723c1c60dc0d599",
+      "category": "development"
+    },
+    {
+      "url": "https://github.com/anthropics/skills?skill=doc-coauthoring",
+      "atom": "0xda1eb101dad4bbdc4dc5e849957b1299f9a03776a1f8ca594629c78498fc7009",
+      "category": "document"
+    },
+    {
+      "url": "https://github.com/anthropics/skills?skill=algorithmic-art",
+      "atom": "0xad5e81bab3de3aea835fb338b978a56ab2d2b982734358a30ad8cdefd416b84b",
+      "category": "image"
+    },
+    {
+      "url": "https://github.com/anthropics/skills?skill=discernment-nudge",
+      "atom": "0x190f2cc7adbfe9b16f37d2df24a7db42ed53c3783027811305a61254c6286647",
+      "category": "method"
+    },
+    {
+      "url": "https://github.com/101-skills/superpowers?skill=competitor-teardown",
+      "atom": "0x163348ae273c4eb79bdd728b1c195157c1243ab9f38559332701a0b0011527eb",
+      "category": "marketing"
+    },
+    {
+      "url": "https://github.com/magentosh/superpowers?skill=competitor-teardown",
+      "atom": "0x13beb72979cd6e4743da9ff7505510e14730480d7e6deacb21997881bfa3b887",
+      "category": "marketing"
+    },
+    {
+      "url": "https://github.com/remotion-dev/skills?skill=mediabunny",
+      "atom": "0x9708069150831f0d1e8e545b4b6d71550cc61c9096cce885b17b82b172d09b80",
+      "category": "video"
+    },
+    {
+      "url": "https://github.com/leonxlnx/taste-skill?skill=redesign-existing-projects",
+      "atom": "0x371db4746b6a1e06446657b56c2a6df61c7f2d8e22fbc3f9cff2a1ec88aa8dfd",
+      "category": "design"
+    },
+    {
+      "url": "https://github.com/leonxlnx/taste-skill?skill=full-output-enforcement",
+      "atom": "0xd1c08a3ac523eec2c199ca74755e996f600b1a5d243d0a2ccc85b87b0678e206",
+      "category": "development"
+    },
+    {
+      "url": "https://github.com/leonxlnx/taste-skill?skill=gpt-taste",
+      "atom": "0x026a4092552ff36620170b2f470718f3944b2f64efc7c355ff436c8931ea899b",
+      "category": "design"
+    },
+    {
+      "url": "https://github.com/leonxlnx/taste-skill?skill=industrial-brutalist-ui",
+      "atom": "0x6f6878d132df31e6b47cefd0e69be68fc78dabc77f4c9511693fb3d40128a677",
+      "category": "design"
+    },
+    {
+      "url": "https://github.com/juliusbrussee/caveman?skill=surgical-patch",
+      "atom": "0xd4cc60f4baa548b6f73490381ff44ecce8688302d2aee78abf158f7b938e0dce",
+      "category": "development"
+    },
+    {
+      "url": "https://github.com/juliusbrussee/caveman?skill=compress",
+      "atom": "0xeabc75dc0c7c32dbf57a063fb5f651ebe720b137d47a767a5e284973d4ce35a5",
+      "category": "writing"
+    },
+    {
+      "url": "https://github.com/juliusbrussee/caveman?skill=ultracave",
+      "atom": "0x370392ae7dcdd4cdf32c998629c3e9b423463322fe80206a29ed58c46059757f",
+      "category": "writing"
+    },
+    {
+      "url": "https://github.com/juliusbrussee/caveman?skill=megacave",
+      "atom": "0x6180c35889f86b499fe018151290949b9c48bba7d8cfbc1c01acc28003c4207c",
+      "category": "writing"
+    },
+    {
+      "url": "https://github.com/qu-skills/superpowers?skill=competitor-teardown",
+      "atom": "0xeb5b0010ffc124032cb8b3b2b447cdef557800ebaccf0d7abb110c6b5dc3c514",
+      "category": "marketing"
+    },
+    {
+      "url": "https://github.com/skills-shell/superpowers?skill=competitor-teardown",
+      "atom": "0x39b08ff4a2623880cd5c6009e58c06b3d4af2b66297abd8798d0d294849c4823",
+      "category": "marketing"
+    },
+    {
+      "url": "https://github.com/lllllllama/rigorpilot-skills?skill=paper-context-resolver",
+      "atom": "0x7648f212af016f1575ce5da76219342c302d6712aa42c81064488e49288e1c55",
+      "category": "research",
+      "parent": "tool",
+      "reason": "Reproducing and exploring deep learning research repositories: not development, not method, and no category holds research."
+    },
+    {
+      "url": "https://github.com/lllllllama/rigorpilot-skills?skill=ai-research-explore",
+      "atom": "0x78bd964e33fbe991f9154c4230dcdeaa34f1cfaf9769e6aa6536a8b3c31d5189",
+      "category": "research",
+      "parent": "tool",
+      "reason": "Reproducing and exploring deep learning research repositories: not development, not method, and no category holds research."
+    },
+    {
+      "url": "https://github.com/lllllllama/rigorpilot-skills?skill=analyze-project",
+      "atom": "0x55e0b0a76d0dc12281a42eef63e0b8d6587d63604edea8ab43321476f7276e57",
+      "category": "research",
+      "parent": "tool",
+      "reason": "Reproducing and exploring deep learning research repositories: not development, not method, and no category holds research."
+    },
+    {
+      "url": "https://github.com/lllllllama/rigorpilot-skills?skill=ai-research-reproduction",
+      "atom": "0x5e01d6504d063b61e6fd8d5ed2cd17a27bce24a533547b28cde3d29b863484f8",
+      "category": "research",
+      "parent": "tool",
+      "reason": "Reproducing and exploring deep learning research repositories: not development, not method, and no category holds research."
+    },
+    {
+      "url": "https://github.com/its-a-skill-issue/superpowers?skill=competitor-teardown",
+      "atom": "0x0b390928469b1962439a808acf4875afa4612e08000f50573371ab63aca98a7f",
+      "category": "marketing"
+    },
+    {
+      "url": "https://github.com/bankai-skills/superpowers?skill=competitor-teardown",
+      "atom": "0x40f60be092d52b56a7783c2665d5267c622c7b45449299ad84d11585acb8cbe1",
+      "category": "marketing"
+    },
+    {
+      "url": "https://github.com/obra/superpowers?skill=finishing-a-development-branch",
+      "atom": "0x9a7f6e3b78ccb764b02a9ad6866b57109554941eb9e6c56cceee70153b4c48b0",
+      "category": "development"
+    },
+    {
+      "url": "https://github.com/emilkowalski/skills?skill=prototype",
+      "atom": "0xd66480d63f4dc8a0999b3e0fa9e2478876cde50647097fdeb1e0a27097c7668d",
+      "category": "design"
+    },
+    {
+      "url": "https://github.com/emilkowalski/skills?skill=animate",
+      "atom": "0x223165bb978cd825ca56802339281c8c8f8918520a734083dd62c06d4347b68a",
+      "category": "design"
+    },
+    {
+      "url": "https://github.com/emilkowalski/skills?skill=animate-expo",
+      "atom": "0x0ff57fb95c5f9c6b9c6cc143e17af591729b80de6db6e4de85a7b330be99c4fa",
+      "category": "design"
+    },
+    {
+      "url": "https://github.com/emilkowalski/skills?skill=mobile-native",
+      "atom": "0xb1f5b258e48a4d1e3c13fb35a418e12f53585fa9d6dbe671246b43f7bfbd7d45",
+      "category": "website"
+    },
+    {
+      "url": "https://github.com/emilkowalski/skills?skill=break-ui",
+      "atom": "0xc1c3b65c36be8e44f588236cb9fd9f50894c7a3f5fb1529465af408a326d9ecf",
+      "category": "quality"
+    },
+    {
+      "url": "https://github.com/pbakaus/impeccable?skill=polish",
+      "atom": "0xcc99adae7f7bbc7bd44bb6d537d59b5ed6ac204d1203383c50b366f78d836070",
+      "category": "design"
+    },
+    {
+      "url": "https://github.com/pbakaus/impeccable?skill=critique",
+      "atom": "0xf3121a2a16cb1c40006d121f45fd193a35ac79e911d0f3e95826696fc77a55a8",
+      "category": "design"
+    },
+    {
+      "url": "https://github.com/pbakaus/impeccable?skill=animate",
+      "atom": "0x5efec33faa53f9ade484c80cbfa55dafecffb8a5692413c2907b0d87cab986fd",
+      "category": "design"
+    },
+    {
+      "url": "https://github.com/pbakaus/impeccable?skill=adapt",
+      "atom": "0x61f20f4cbbb92921ff3f7f71092851aa0313f90e79b67a32f6b48e25cea39fb5",
+      "category": "design"
+    },
+    {
+      "url": "https://github.com/pbakaus/impeccable?skill=clarify",
+      "atom": "0xb4d2fe84442c61463a1011d63ae5fc75d2e754819bb00065b8879be95c8e29ac",
+      "category": "writing"
+    },
+    {
+      "url": "https://github.com/pbakaus/impeccable?skill=bolder",
+      "atom": "0x37e8cc1eb8e47d1e0522aece007dbcdc46bba93b633a30f403ed646aadafe8f7",
+      "category": "design"
+    },
+    {
+      "url": "https://github.com/pbakaus/impeccable?skill=delight",
+      "atom": "0xace503b67fd8938d5a00a52085459283b3daac8b28a295b1ff6e4c2cdc7c2dfc",
+      "category": "design"
+    },
+    {
+      "url": "https://github.com/pbakaus/impeccable?skill=distill",
+      "atom": "0x8f614ae28196b7c32c1d84774f46c24d4f9a81ab38487b4b3ac5f2057b4caea7",
+      "category": "design"
+    },
+    {
+      "url": "https://github.com/pbakaus/impeccable?skill=quieter",
+      "atom": "0x5c25da48194d99fd9042517f17065294a803e907830c468aabaa0f7ba56c1eb0",
+      "category": "design"
+    },
+    {
+      "url": "https://github.com/pbakaus/impeccable?skill=overdrive",
+      "atom": "0x2618706d575d71fea678fa12aa16d86224a2b450d0e25550ad956fcb32029fc5",
+      "category": "design"
+    },
+    {
+      "url": "https://github.com/pbakaus/impeccable?skill=arrange",
+      "atom": "0x61c934100d9ae4e46957974372623854d9966c8438e65fa9998d258550604d65",
+      "category": "design"
+    },
+    {
+      "url": "https://github.com/pbakaus/impeccable?skill=shape",
+      "atom": "0xc4c9d20e9ebc3cb9d532cdef5d7e6da62b6d4e97b6d2b9086dca09300ebf6e54",
+      "category": "design"
+    },
+    {
+      "url": "https://github.com/coreyhaines31/marketingskills?skill=competitor-profiling",
+      "atom": "0x75d40f2996c533edc73c80ff5bf8c8088bbbd79d19b54f50385aeeec461f0873",
+      "category": "marketing"
+    },
+    {
+      "url": "https://github.com/coreyhaines31/marketingskills?skill=aso",
+      "atom": "0x6f9507e79692e1cadc59f0cf3f44a41a360514a4a8eb983b46ab6276c6e71048",
+      "category": "marketing"
+    },
+    {
+      "url": "https://github.com/coreyhaines31/marketingskills?skill=public-relations",
+      "atom": "0xd40f384394374eb4ed8268ff269ad3a83d6641b7b3b152fd16fa03c91951071e",
+      "category": "marketing"
+    },
+    {
+      "url": "https://github.com/firebase/agent-skills?skill=developing-genkit-go",
+      "atom": "0x70a690261b6c9bdd6c6400bb8cdd39effb3dd8b542a5a44907fce98da788c94d",
+      "category": "development"
+    },
+    {
+      "url": "https://github.com/cloudflare/skills?skill=web-perf",
+      "atom": "0xb6664f3b6ff64c4f828222b2e84fdbb454876a017c81daa1373e2dc24bdbb33a",
+      "category": "website"
+    }
+  ]
+}
