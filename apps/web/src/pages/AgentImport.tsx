@@ -1,5 +1,4 @@
 import {useId, useRef, useState} from "react";
-import {Link} from "react-router-dom";
 import {useAccount, useSwitchChain} from "wagmi";
 
 import {DEFAULT_IDENTITY_REGISTRY} from "@arp-protocol/core";
@@ -28,21 +27,19 @@ import {
 } from "../components/import/ImportResults";
 import {Failure, Field, labelClass, Step} from "../components/import/ImportStep";
 import {MissingIdentityAtom} from "../components/import/MissingIdentityAtom";
-import {controlClass, linkClass} from "../lib/control-class";
+import {ConnectPrompt} from "../components/onboarding/ConnectPrompt";
+import {controlClass} from "../lib/control-class";
 import {useAgentImport} from "../hooks/use-agent-import";
 import {useChainChoice} from "../lib/chain-choice";
-import {
-    buildImportConsent,
-    type ImportConsent,
-    type ImportedAgent,
-} from "../services/agent-import";
+import {buildImportConsent, type ImportConsent, type ImportedAgent} from "../services/agent-import";
 import {formatTrust, truncateMiddle} from "../services/trust-format";
 
 /**
- * The "yes" branch of `/agent` — rendered inside `YourAgent`, not routed to.
+ * The "yes" branch of `/start/agent` — rendered inside `StartPage`, not routed to.
  *
- * `/agent` mints a new ERC-8004 identity. This page takes one that already exists, so nothing is
- * minted here and the page says so where an operator would reasonably expect otherwise.
+ * The rest of `/start/agent` mints a new ERC-8004 identity. This page takes one that already
+ * exists, so nothing is minted here and the page says so where an operator would reasonably expect
+ * otherwise.
  *
  * Three steps, each requiring a click, nothing advancing on its own:
  *
@@ -318,19 +315,14 @@ export function AgentImport() {
 
     return (
         <section>
-            <header className="mt-8 mb-12">
-                <h1 className="type-display">Import an agent you already have</h1>
+            {/* An h2: `/start/agent` carries the page's h1 (task 62). */}
+            <header className="mb-12">
+                <h2 className="type-face text-[28px] leading-none">
+                    Import an agent you already have
+                </h2>
                 <p className="mt-3 max-w-[64ch] text-[color:var(--color-steel)]">
                     Nothing is minted. One link gets published: your agent, tied to the agent wallet
                     that will give support on its behalf.
-                </p>
-                <p className="mt-3 max-w-[64ch] text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
-                    Minting a new one instead is on{" "}
-                    <Link className={linkClass} to="/agent">
-                        the agent setup page
-                    </Link>
-                    , which mints into ARP's registry on Intuition testnet — a different registry
-                    from the one read here.
                 </p>
             </header>
 
@@ -419,9 +411,10 @@ export function AgentImport() {
                         {phase.step === "checking" ? "Reading the registry…" : "Check ownership"}
                     </button>
                     {!isConnected ? (
-                        <p className="mt-3 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
-                            Connect the wallet that owns the agent.
-                        </p>
+                        <ConnectPrompt
+                            label="Connect the wallet that owns the agent"
+                            className="mt-3"
+                        />
                     ) : null}
                 </form>
             </Step>

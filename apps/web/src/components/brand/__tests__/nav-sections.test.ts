@@ -6,9 +6,10 @@ import {SECTION_PATHS} from "../NavSplit";
  * Which nav item a path belongs to.
  *
  * The rule it replaced was `pathname.startsWith(`${to}/`)` with a comment claiming
- * `/agent/8453/2340` "still lights Agents" — it lit **Your agent** (now `/register`), because that path starts with
- * `/agent/`. The comment described the intent and the code did the opposite, so nothing caught it
- * until a reader noticed the marker jumping to his own agent whenever he opened someone else's.
+ * `/agent/8453/2340` "still lights Agents" — it lit **Your agent** (now `/start/agent`), because
+ * that path starts with `/agent/`. The comment described the intent and the code did the opposite,
+ * so nothing caught it until a reader noticed the marker jumping to his own agent whenever he
+ * opened someone else's.
  *
  * It is pure string matching, so it is testable without a DOM or a router, and this is the test the
  * old rule never had.
@@ -28,12 +29,13 @@ describe("nav sections", () => {
 
     it("claims nothing that belongs elsewhere", () => {
         // `/agent` is a prefix of the directory's detail pages and of the old "Your agent" route,
-        // which now redirects to `/register` (2026-10-29). Agents may reach neither.
+        // which now redirects to `/start/agent` (task 62). Agents may reach neither.
         for (const path of [
             "/agent",
             "/agent/import",
             "/tools",
             "/register",
+            "/start/agent",
             "/account",
             "/activity",
             "/atom/0xabc",

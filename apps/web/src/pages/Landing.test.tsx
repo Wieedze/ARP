@@ -95,7 +95,7 @@ describe("Landing", () => {
     it("opens the onboarding from the first screen, and keeps the index one link away", async () => {
         const open = vi.fn();
         renderWithProviders(
-            <OnboardingContext.Provider value={{open}}>
+            <OnboardingContext.Provider value={{open, landed: () => undefined}}>
                 <Landing />
             </OnboardingContext.Provider>,
         );

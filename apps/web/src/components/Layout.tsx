@@ -5,8 +5,9 @@ import {useChainChoice} from "../lib/chain-choice";
 
 import {ActivityLog} from "./brand/ActivityLog";
 import {ChainToggle} from "./brand/ChainToggle";
-import {NavLink, NavSplit} from "./brand/NavSplit";
+import {NavAction, NavLink, NavSplit} from "./brand/NavSplit";
 import {Watermark} from "./brand/Watermark";
+import {useOnboarding} from "./onboarding/onboarding-context";
 import {WalletConnect} from "./WalletConnect";
 
 /**
@@ -30,6 +31,7 @@ import {WalletConnect} from "./WalletConnect";
 
 export function Layout({children}: {children: ReactNode}) {
     const chain = useChainChoice();
+    const onboarding = useOnboarding();
     useSearchShortcut();
 
     return (
@@ -40,14 +42,15 @@ export function Layout({children}: {children: ReactNode}) {
         /* `pb-9` is the collapsed activity bar's height, so the fixed bar never sits on the footer. */
         <div className="flex min-h-screen flex-col pb-9">
             {/*
-             * Agents · Tools · Activity on the left, Register on the right (user, 2026-10-20,
+             * Agents · Tools · Activity on the left, Get started on the right (user, 2026-10-20,
              * one row since 2026-10-27). The handoff's left pair is "AGENTS, MODULES"; there is
              * no module surface — `ModuleRegistry` and its three pages went with ADR `0051`/`0055`
              * — so Tools takes the slot, which is the live equivalent. Discover replaced Hire
              * (ADR `0060`).
              *
-             * Register points at `/register`, which creates a tool's **atom**, derived from its URL
-             * so the same URL always lands on the same market (ADR `0054`). ARP stores nothing.
+             * Get started opens the onboarding panel, the one door for putting an agent or a tool
+             * into ARP; it replaced Register, which was a second door to the same writes (task 62,
+             * ADR `0125`).
              *
              * `/` is the tool catalogue, so "Tools" and the mark lead to the same place.
              *
@@ -58,11 +61,7 @@ export function Layout({children}: {children: ReactNode}) {
              * decision, not a layout.
              */}
             {/* Split around the centred mark: what you read on the left, what you *do* on the
-                right. `/agent` and `/agent/import` linked only to each other and appeared in no
-                nav, so the only route to either was already knowing the URL — 1,828 lines of UI
-                with no door (user, 2026-10-27). "Your agent", not "Register", because
-                `/register` beside it registers a *tool* and two items reading "Register" would be
-                the ambiguity that question was about. */}
+                right. */}
             {/* Balanced around the centred mark, and the balance is the whole point: the right
                 column had five text items plus a two-button chain toggle plus an address, against
                 two on the left. It overflowed, wrapped the address onto a second line and shoved
@@ -87,9 +86,11 @@ export function Layout({children}: {children: ReactNode}) {
                 }
                 right={
                     <>
-                        {/* One item for one act: registering an agent or a tool is a choice made
-                            on the page (user, 2026-10-29), not two doors in the nav. */}
-                        <NavLink to="/register">Register</NavLink>
+                        {/* The landing's Get started, from every page: the same panel, so one
+                            door (task 62). Lit on the `/start/<profile>` pages it leads to. */}
+                        <NavAction section="/start" onClick={onboarding.open}>
+                            Get started
+                        </NavAction>
                         <ChainToggle />
                         <WalletConnect />
                     </>
