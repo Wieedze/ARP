@@ -1,0 +1,38 @@
+import {fireEvent, screen} from "@testing-library/react";
+import {describe, expect, it} from "vitest";
+
+import {WalletConnect} from "../../WalletConnect";
+import {OnboardingProvider} from "../OnboardingPanel";
+import {renderWithProviders} from "../../../test/render";
+
+describe("the onboarding panel", () => {
+    it("opens from Connect with the three paths first and the wallet last", async () => {
+        renderWithProviders(
+            <OnboardingProvider>
+                <WalletConnect />
+            </OnboardingProvider>,
+        );
+
+        // ADR 0114: Connect opens the onboarding, not the wallet.
+        fireEvent.click(await screen.findByRole("button", {name: "Connect"}));
+        const dialog = await screen.findByRole("dialog", {name: "What brings you here?"});
+        const links = [...dialog.querySelectorAll("a")].map((a) => a.getAttribute("href"));
+        expect(links).toEqual(["/start/claude", "/start/agent", "/start/tool"]);
+        // The wallet comes last, after the three paths.
+        expect(screen.getByRole("button", {name: "I have a wallet"})).toBeTruthy();
+        // The first path has the focus, so the keyboard starts where the eye does.
+        expect(document.activeElement?.getAttribute("href")).toBe("/start/claude");
+    });
+
+    it("closes on Escape", async () => {
+        renderWithProviders(
+            <OnboardingProvider>
+                <WalletConnect />
+            </OnboardingProvider>,
+        );
+        fireEvent.click(await screen.findByRole("button", {name: "Connect"}));
+        await screen.findByRole("dialog");
+        fireEvent.keyDown(window, {key: "Escape"});
+        expect(screen.queryByRole("dialog")).toBeNull();
+    });
+});

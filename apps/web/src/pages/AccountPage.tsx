@@ -1,8 +1,12 @@
 import {useEffect, useId, useRef, useState} from "react";
 import {type Delegation} from "@metamask/smart-accounts-kit";
+import {Link} from "react-router-dom";
 
 import {DelegationForm} from "../components/account/DelegationForm";
 import {ChainToggle} from "../components/brand/ChainToggle";
+import {DisplayTabs} from "../components/brand/DisplayTabs";
+import {useOnboarding} from "../components/onboarding/onboarding-context";
+import {useAgentActivity} from "../hooks/use-agent-activity";
 import {Hint} from "../components/brand/Hint";
 import {
     useAccountDelegations,
@@ -13,6 +17,8 @@ import {useChainChoice} from "../lib/chain-choice";
 import {intuitionTestnet} from "../lib/chains";
 import {controlClass, linkClass, primaryControlClass} from "../lib/control-class";
 import {deployments} from "../lib/deployments";
+import {START_PATHS, recallProfile, startPathTo} from "../lib/start-paths";
+import type {AgentFeed} from "../services/agent-feed";
 import {exportDelegation} from "../services/delegation-store";
 import {formatPeriod, type CaveatView} from "../services/delegation-view";
 import {formatTrust} from "../services/trust-format";
@@ -29,7 +35,8 @@ import {formatTrust} from "../services/trust-format";
  * Every signature here is a click on a confirmation that names the chain. Nothing is signed on
  * load, and no key is held: a signed delegation is not redeemable without its delegate's key.
  */
-const LABEL = "font-mono text-[length:var(--text-label)] uppercase tracking-[0.06em] text-[color:var(--color-steel)]";
+const LABEL =
+    "font-mono text-[length:var(--text-label)] uppercase tracking-[0.06em] text-[color:var(--color-steel)]";
 const CELL = "font-mono text-[length:var(--text-body-sm)] leading-[1.6]";
 const TH = `${LABEL} pb-2 pr-4 text-left font-normal`;
 const TD = `${CELL} border-t border-[color:var(--color-rule)] py-2 pr-4 align-top`;
@@ -43,33 +50,68 @@ function errorText(error: unknown): string {
     return error instanceof Error ? error.message : String(error);
 }
 
+type AccountTab = "agent" | "delegation";
+
 export function AccountPage({
     account: injected,
+    tab = "agent",
+    feed,
 }: {
     /** The page's data and acts, injected by a test; the hook otherwise. */
     account?: AccountDelegations;
+    /** Which tab opens first. Your agent, unless a test asks for the delegations. */
+    tab?: AccountTab;
+    feed?: AgentFeed;
 } = {}) {
     // A test passes `account`; the app never does, so the hook's order of calls is stable per mount.
-    return injected === undefined ? <LiveAccountPage /> : <AccountView account={injected} />;
+    return injected === undefined ? (
+        <LiveAccountPage tab={tab} feed={feed} />
+    ) : (
+        <AccountView account={injected} initialTab={tab} feed={feed} />
+    );
 }
 
-function LiveAccountPage() {
+function LiveAccountPage({tab, feed}: {tab: AccountTab; feed?: AgentFeed}) {
     const account = useAccountDelegations();
-    return <AccountView account={account} />;
+    return <AccountView account={account} initialTab={tab} feed={feed} />;
 }
 
-function AccountView({account}: {account: AccountDelegations}) {
+/**
+ * Two tabs since task 53 (user, 2026-11-02): Your agent first, and the delegations behind their
+ * own tab, marked for later — they are the operator's guard rail, not the first thing a tester does.
+ */
+function AccountView({
+    account,
+    initialTab,
+    feed,
+}: {
+    account: AccountDelegations;
+    initialTab: AccountTab;
+    feed?: AgentFeed;
+}) {
     const chain = useChainChoice();
+    const [tab, setTab] = useState<AccountTab>(initialTab);
     // The page's toggle is on testnet and the wallet is too: the only state in which it signs.
     const canSign = !chain.isMainnet && account.onTestnet && account.smartAccount !== null;
 
     return (
         <section>
-            <header className="pt-14 pb-10">
+            <header className="flex flex-col gap-8 pt-14 pb-10">
                 <h1 className="type-display">Account</h1>
+                <DisplayTabs
+                    label="Account views"
+                    options={[
+                        {id: "agent", label: "Your agent"},
+                        {id: "delegation", label: "Delegation · later"},
+                    ]}
+                    selected={tab}
+                    onChange={setTab}
+                />
             </header>
 
-            {account.operator === undefined ? (
+            {tab === "agent" ? (
+                <YourAgent feed={feed} />
+            ) : account.operator === undefined ? (
                 <p className="text-[color:var(--color-steel)]">
                     Connect a wallet to see its agent wallet and permissions.
                 </p>
@@ -512,6 +554,39 @@ function RuntimeSection({account}: {account: AccountDelegations}) {
                     ))}
                 </dl>
             )}
+        </div>
+    );
+}
+
+/** The agent this browser can see, and the visitor's path. Needs no wallet. */
+function YourAgent({feed}: {feed?: AgentFeed}) {
+    const {status} = useAgentActivity(feed);
+    const onboarding = useOnboarding();
+    const profile = recallProfile();
+    const path = START_PATHS.find((candidate) => candidate.profile === profile);
+
+    return (
+        <div className="max-w-[60rem] space-y-8">
+            <div>
+                <h2 className={`${LABEL} mb-3`}>Your agent</h2>
+                <p className="font-mono text-[length:var(--text-body-sm)]">
+                    {status === "live" ? "connected" : "not connected"}
+                </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-5">
+                {path === undefined ? (
+                    <button type="button" onClick={onboarding.open} className={controlClass}>
+                        Choose a path
+                    </button>
+                ) : (
+                    <Link to={startPathTo(path.profile)} className={linkClass}>
+                        Your path: {path.title} →
+                    </Link>
+                )}
+                <Link to="/activity?view=yours" className={linkClass}>
+                    Your activity →
+                </Link>
+            </div>
         </div>
     );
 }

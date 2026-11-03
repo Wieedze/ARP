@@ -18,9 +18,12 @@ asks for a commitment before showing anything loses its reader.
 
 ## Decision
 
-1. **Scene 4 asks "What brings you here?"** and offers three paths: I use Claude, I'm building an
-   agent, I published a tool or a skill. Each opens `/start/<profile>`, a short list of steps that
-   tick themselves when ARP sees the result. The choice is kept in `localStorage`, as a convenience.
+1. **One panel asks "What brings you here?"** and offers three paths: I use Claude, I'm building
+   an agent, I published a tool or a skill. Each opens `/start/<profile>`, a short list of steps
+   that tick themselves when ARP sees the result. The choice is kept in `localStorage`, as a
+   convenience. **Amended the same evening (user, 2026-11-02):** the panel opens from the nav's
+   Connect button and from Get started on the landing's first screen, rather than sitting as scene
+   4, which is gone. The wallet is the panel's last line, "I have a wallet".
 2. **The action is gated, not the read.** Every index page stays open. Declaring, supporting,
    adding a tool and the personal pages open the onboarding first, until the visitor has done it
    once.
@@ -45,7 +48,9 @@ asks for a commitment before showing anything loses its reader.
 - The index stays checkable by anyone, which is the product's argument.
 
 **Negative:**
-- Scene 4 no longer prints the declaration's floor. The fee is still on the page, in scene 3.
+- The landing no longer prints the declaration's floor. The fee is still on the page, in scene 3.
+- `/account` opens on Your agent, which needs no wallet; the delegations sit behind a "Delegation ·
+  later" tab (user, 2026-11-02).
 - The gate on actions is not built yet; until it is, the actions behave as before.
 
 **Neutral (worth knowing):**

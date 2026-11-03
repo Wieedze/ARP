@@ -1,6 +1,6 @@
 # Task 53 — One path per profile, from the landing
 
-**Status:** **IN PROGRESS**, 2026-11-02, branch `feat/53-paths`. 53a built (scene 4 is the three-way chooser, `lib/start-paths.ts`). 53b built (`/start/:profile`, steps ticked from the local feed by `services/start-steps.ts`). 53c and the action gate are next. The user's decisions are in §2.
+**Status:** **IN PROGRESS**, 2026-11-02, branch `feat/53-paths`. 53a built, then moved the same evening: the chooser is a panel opened by the nav's Connect and the landing's Get started (`components/onboarding/`), scene 4 is gone, and `/account` opens on Your agent with the delegations behind a "Delegation · later" tab. 53b built (`/start/:profile`, steps ticked from the local feed by `services/start-steps.ts`). 53c and the action gate are next. The user's decisions are in §2.
 **ADR:** `0112` (the badge is free). A new ADR is needed for 53c (§3).
 **Depends on:** task 50 for path A's last step; `@arp-protocol/cli` on npm for path B's first.
 **Rules:** `ui.md`, `code.md`, `security.md` (53c), `claims.md`, `workflow.md`.
@@ -25,7 +25,8 @@ onboarding skill ARP itself returned for "onboarding" (`coreyhaines31/marketings
 | Question | Decision |
 | --- | --- |
 | How many profiles | **Three at launch**: "J'utilise Claude", "Je construis un agent", "J'ai publié un outil". Agent operators and teams or registries come when they have something to offer |
-| Scene 4 | **Replaced**, not added to. The deck keeps six scenes, and the four "Needs wallet" cards leave `/` |
+| Scene 4 | **Replaced**, not added to, and then **removed** the same evening: the onboarding belongs on the first screen and behind Connect (user, « ou alors après le bouton connexion »). The deck has five scenes, and the four "Needs wallet" cards are gone |
+| `/account` | **Two tabs**: Your agent first; the delegations under "Delegation · later" (user, 2026-11-02) |
 | Listing a tool from path C | **Sponsored on testnet 13579, with a limit**, consistent with "free for testers" (task 45) |
 | The badge | **Not decided.** Left out of this task |
 | Onboarding, like Privy's | **The action is gated, not the read** (2026-11-02, « ok ça me paraît bien »). Index pages stay open; declaring, supporting, adding a tool and the personal pages open the onboarding first |

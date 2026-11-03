@@ -14,8 +14,9 @@ export function DisplayTabs<Id extends string>({
 }: {
     /** The group's accessible name. */
     label: string;
-    /** `count` is `null` while it is unknown, shown as "—"; it is never a zero standing in. */
-    options: readonly {id: Id; label: string; count: number | null}[];
+    /** `count` is `null` while it is unknown, shown as "—"; it is never a zero standing in.
+     *  Left out, the tab shows no count at all, for a view that is not a list. */
+    options: readonly {id: Id; label: string; count?: number | null}[];
     selected: Id;
     onChange: (next: Id) => void;
 }) {
@@ -44,9 +45,11 @@ export function DisplayTabs<Id extends string>({
                         }`}
                     >
                         {entry.label}
-                        <span className="font-mono text-[length:var(--text-body-sm)] tabular-nums text-[color:var(--color-steel)]">
-                            {entry.count === null ? "—" : entry.count.toLocaleString("en-US")}
-                        </span>
+                        {entry.count !== undefined && (
+                            <span className="font-mono text-[length:var(--text-body-sm)] tabular-nums text-[color:var(--color-steel)]">
+                                {entry.count === null ? "—" : entry.count.toLocaleString("en-US")}
+                            </span>
+                        )}
                     </button>
                 );
             })}

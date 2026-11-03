@@ -2,6 +2,8 @@ import {useEffect, useRef, useState} from "react";
 import {useNavigate} from "react-router-dom";
 import {useAccount, useConnect, useDisconnect} from "wagmi";
 
+import {useOnboarding} from "./onboarding/onboarding-context";
+
 /**
  * Wallet connection UI.
  *
@@ -23,7 +25,8 @@ const MENU_ITEM =
 
 export function WalletConnect() {
     const {address, isConnected, status} = useAccount();
-    const {connectors, connect, isPending: isConnectPending} = useConnect();
+    const {isPending: isConnectPending} = useConnect();
+    const onboarding = useOnboarding();
     const {disconnect} = useDisconnect();
     const navigate = useNavigate();
 
@@ -60,23 +63,15 @@ export function WalletConnect() {
     }
 
     if (!isConnected || !address) {
-        // Prefer MetaMask if available, otherwise use the first available connector.
-        const primary =
-            connectors.find((c) => c.id === "metaMask" || c.id === "injected") ?? connectors[0];
-        if (!primary) {
-            return (
-                <span className="text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
-                    No wallet detected
-                </span>
-            );
-        }
+        // Connect opens the onboarding, not the wallet (ADR `0114`): connecting means choosing a
+        // path and connecting one's agent, and the wallet is the panel's last line.
         return (
             <button
                 type="button"
-                onClick={() => connect({connector: primary})}
+                onClick={onboarding.open}
                 className="h-7 px-2.5 font-mono text-[11px] uppercase tracking-[0.1em]"
             >
-                Connect wallet
+                Connect
             </button>
         );
     }
