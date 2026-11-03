@@ -61,7 +61,10 @@ const counts = {
 };
 
 const measuredAt = new Date().toISOString();
-const path = `data/measurements/skill-requires-${measuredAt.slice(0, 10)}.json`;
+// Date and time, so a second run the same day writes a second file rather than overwriting the
+// first: one file per run, never regenerated (ADR `0064`).
+const stamp = `${measuredAt.slice(0, 10)}T${measuredAt.slice(11, 13)}${measuredAt.slice(14, 16)}`;
+const path = `data/measurements/skill-requires-${stamp}.json`;
 writeFileSync(
     path,
     `${JSON.stringify(

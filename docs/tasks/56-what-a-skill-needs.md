@@ -59,7 +59,7 @@ measurement, which would otherwise count a skill nobody can use without an accou
   `scripts/test/skill-requires.test.ts`, on the two files task 54's reading found.
 - `scripts/measure/skill-requires.ts` reads every located SKILL.md from
   `raw.githubusercontent.com`, at the paths of `skill-layouts-2026-10-29T2200.json`, and ARP's own
-  from this repository. Output: `data/measurements/skill-requires-2026-11-03.json`.
+  from this repository. Output: `data/measurements/skill-requires-2026-11-03.json` (first run), then `skill-requires-2026-11-03T0839.json` (second run, same counts, now counting `ambiguousDiffering` itself; the catalogue is built from it).
 - `scripts/build/build-skill-requires.ts` writes `data/catalogue/skill-requires.json`, and
   `arp_find_tools` adds `requires: {cli?, mentions_login?}` to a result, short and full. The tool's
   description tells the agent to read it before it picks. Test: `apps/mcp/test/requires.test.ts`.
@@ -70,7 +70,7 @@ Measured 2026-11-03 over 663 catalogued skills (re-run `bun run scripts/measure/
 | --- | --- |
 | read | 522 |
 | not located on 2026-10-29, so not read | 139 |
-| found at several paths with different content, so not read | 2 (the layout file's `ambiguous` rows with `sameContent: false`; the script counts them as `ambiguousDiffering` from its next run) |
+| found at several paths with different content, so not read | 2 (`ambiguousDiffering` in the second run) |
 | failed to read | 0 |
 | declare a CLI | 211 |
 | mention a login, a key or a sign-up | 263 |

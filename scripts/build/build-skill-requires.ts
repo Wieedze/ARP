@@ -2,7 +2,7 @@
  *
  *      bun run scripts/build/build-skill-requires.ts
  *
- *  Task 56. Reads `data/measurements/skill-requires-2026-11-03.json`, writes
+ *  Task 56. Reads `data/measurements/skill-requires-2026-11-03T0839.json`, writes
  *  `data/catalogue/skill-requires.json`, keyed by the skill atom's label like `skill-facts.json`.
  *  Only skills that declare a CLI or mention a login get an entry: absence means "nothing found in
  *  its file", or "not read" for the 141 the layout left unread (139 not located, 2 found at
@@ -10,7 +10,7 @@
  */
 import {writeFileSync} from "node:fs";
 
-import measured from "../../data/measurements/skill-requires-2026-11-03.json";
+import measured from "../../data/measurements/skill-requires-2026-11-03T0839.json";
 
 type Row = {
     repo: string;
