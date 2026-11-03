@@ -36,7 +36,13 @@ import {
   type PreparedCall,
   type SponsorLimits,
 } from '@arp-protocol/core';
-import { loopbackHosts, redactUrls, serveFetch, stateFile } from '@arp-protocol/core/node';
+import {
+  ERC8004_REGISTRY_REF,
+  loopbackHosts,
+  redactUrls,
+  serveFetch,
+  stateFile,
+} from '@arp-protocol/core/node';
 import {
   createPublicClient,
   createWalletClient,
@@ -211,7 +217,6 @@ const registryAbi = parseAbi([
   'function getAgentWallet(uint256 agentId) view returns (address)',
   'function balanceOf(address owner) view returns (uint256)',
 ]);
-const REGISTRY_REF = /^eip155:([1-9][0-9]*):(0x[0-9a-fA-F]{40})$/;
 const ZERO: Address = '0x0000000000000000000000000000000000000000';
 
 const service = createSponsor({
@@ -229,7 +234,7 @@ const service = createSponsor({
       const held = await Promise.all(
         registries.map((ref) =>
           publicClient.readContract({
-            address: getAddress(REGISTRY_REF.exec(ref)?.[2] ?? ''),
+            address: getAddress(ERC8004_REGISTRY_REF.exec(ref)?.[2] ?? ''),
             abi: registryAbi,
             functionName: 'balanceOf',
             args: [address],
@@ -266,7 +271,7 @@ const service = createSponsor({
   },
   identities: {
     async identityAtom({ agentRegistry, agentId }) {
-      const match = REGISTRY_REF.exec(agentRegistry);
+      const match = ERC8004_REGISTRY_REF.exec(agentRegistry);
       if (match === null) return { status: 'none' };
       // A graph failure throws, and is a 500: only an answer about the agent is a refusal.
       return resolveIdentityAtomStrict({

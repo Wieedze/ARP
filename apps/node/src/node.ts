@@ -42,7 +42,7 @@
  *  **The key** is `AGENT_PRIVATE_KEY` when set, else the node key in `~/.arp/node.key`, generated on
  *  first start (`node-key.ts`). It is the key `arp init --node` binds to the agent.
  */
-import { serveFetch, stateFile } from '@arp-protocol/core/node';
+import { ERC8004_REGISTRY_REF, serveFetch, stateFile } from '@arp-protocol/core/node';
 
 import { createPublicClient, formatEther, http } from 'viem';
 
@@ -126,7 +126,7 @@ function identityFromEnv(): AgentIdentity | null {
     console.error('set AGENT_REGISTRY and AGENT_ID together, or neither');
     process.exit(1);
   }
-  if (!/^eip155:[1-9][0-9]*:0x[0-9a-fA-F]{40}$/.test(registry) || !/^(0|[1-9][0-9]*)$/.test(id)) {
+  if (!ERC8004_REGISTRY_REF.test(registry) || !/^(0|[1-9][0-9]*)$/.test(id)) {
     console.error(
       'AGENT_REGISTRY must be eip155:<chainId>:<address> and AGENT_ID a decimal token id',
     );

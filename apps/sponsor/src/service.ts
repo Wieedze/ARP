@@ -88,7 +88,12 @@ import {
   type StrictIdentityAtom,
   type TypedDataVerifier,
 } from '@arp-protocol/core';
-import { redactUrls, refuseForeignRequest } from '@arp-protocol/core/node';
+import {
+  ERC8004_REGISTRY_REF,
+  jsonResponse,
+  redactUrls,
+  refuseForeignRequest,
+} from '@arp-protocol/core/node';
 import { getAddress, isAddress, isHex, type Address, type Hex } from 'viem';
 
 import { SPONSOR_CHAIN_ID } from './key-file.ts';
@@ -173,16 +178,7 @@ export type SponsorOptions = {
   log?: (line: string) => void;
 };
 
-function bigintSafe(_key: string, inner: unknown): unknown {
-  return typeof inner === 'bigint' ? inner.toString() : inner;
-}
-
-function json(value: unknown, status = 200): Response {
-  return new Response(JSON.stringify(value, bigintSafe, 2), {
-    status,
-    headers: { 'content-type': 'application/json' },
-  });
-}
+const json = jsonResponse;
 
 const ZERO_ADDRESS: Address = '0x0000000000000000000000000000000000000000';
 
@@ -190,7 +186,7 @@ function isBytes32(value: unknown): value is Hex {
   return typeof value === 'string' && isHex(value) && value.length === 66;
 }
 
-const REGISTRY = /^eip155:([1-9][0-9]*):(0x[0-9a-fA-F]{40})$/;
+const REGISTRY = ERC8004_REGISTRY_REF;
 const DECIMAL = /^(0|[1-9][0-9]*)$/;
 
 type Body = Record<string, unknown>;

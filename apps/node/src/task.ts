@@ -3,15 +3,13 @@
  *  `node.ts` reads the environment and listens; this file is the part a test can construct — the
  *  limits, the payment check, the ledger of payments already spent, and the receipt.
  */
-import { existsSync, appendFileSync, mkdirSync, readFileSync } from 'node:fs';
-import { dirname } from 'node:path';
-
 import {
   HIRE_RECEIPT_VERSION,
   hireDigest,
   signHireReceipt,
   type HireReceipt,
 } from '@arp-protocol/core';
+import { appendJsonLine, bigintSafe, jsonResponse, readJsonLines } from '@arp-protocol/core/node';
 import { formatEther, isAddress } from 'viem';
 import type { Address, Hex, LocalAccount, PublicClient } from 'viem';
 
@@ -57,16 +55,11 @@ export class PaymentLedger {
   private readonly pending = new Set<string>();
 
   constructor(private readonly path: string | null) {
-    if (path === null || !existsSync(path)) return;
-    for (const line of readFileSync(path, 'utf8').split('\n')) {
-      if (line.trim().length === 0) continue;
-      try {
-        const row = JSON.parse(line) as { paymentTxHash?: unknown };
-        if (typeof row.paymentTxHash === 'string') this.spent.add(row.paymentTxHash.toLowerCase());
-      } catch {
-        // A half-written last line from a crash. The job it recorded never returned a receipt.
-        continue;
-      }
+    if (path === null) return;
+    // A half-written last line from a crash is skipped: the job it recorded returned no receipt.
+    for (const row of readJsonLines(path)) {
+      const hash = (row as { paymentTxHash?: unknown } | null)?.paymentTxHash; // This node's own format.
+      if (typeof hash === 'string') this.spent.add(hash.toLowerCase());
     }
   }
 
@@ -87,10 +80,7 @@ export class PaymentLedger {
 
   commit(hash: Hex, record: Record<string, string>): void {
     const key = hash.toLowerCase();
-    if (this.path !== null) {
-      mkdirSync(dirname(this.path), { recursive: true });
-      appendFileSync(this.path, `${JSON.stringify({ paymentTxHash: key, ...record })}\n`);
-    }
+    if (this.path !== null) appendJsonLine(this.path, { paymentTxHash: key, ...record });
     this.pending.delete(key);
     this.spent.add(key);
   }
@@ -164,16 +154,7 @@ const RATE_WINDOW_MS = 60_000;
 /** Past this many distinct clients the expired windows are swept, so the map cannot grow forever. */
 const RATE_SWEEP_AT = 10_000;
 
-function bigintSafe(_key: string, inner: unknown): unknown {
-  return typeof inner === 'bigint' ? inner.toString() : inner;
-}
-
-function json(value: unknown, status = 200): Response {
-  return new Response(JSON.stringify(value, bigintSafe, 2), {
-    status,
-    headers: { 'content-type': 'application/json' },
-  });
-}
+const json = jsonResponse;
 
 class Timeout extends Error {}
 
