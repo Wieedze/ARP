@@ -504,6 +504,32 @@ export const DESKTOP_TOOLS = [
       required: ['id'],
     },
   },
+  {
+    name: 'arp_file_category',
+    description:
+      'File a skill under a category, so others can find it by what it is for. Use it when a skill ' +
+      'you found or used has no category, or a wrong one. Pass `id` (from `arp_find_tools`) and ' +
+      '`category`: pick an existing one first, from `domains_available` (ask `arp_find_tools` with ' +
+      'any `domain`). If none fits, pass a new one-word `category` with `parent`, the existing ' +
+      'category it sits under, and `reason`, why none fits. ARP checks it and files it; nothing is ' +
+      'asked of the person.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        id: {
+          type: 'string',
+          description: "The skill's `id` from `arp_find_tools`, 0x + 32 bytes.",
+        },
+        category: { type: 'string', description: 'An existing category, or a new one-word one.' },
+        parent: {
+          type: 'string',
+          description: 'For a new category: the existing one it sits under.',
+        },
+        reason: { type: 'string', description: 'For a new category: why no existing one fits.' },
+      },
+      required: ['id', 'category'],
+    },
+  },
 ] as const;
 
 export const DESKTOP_TOOL_NAMES: ReadonlySet<string> = new Set(
