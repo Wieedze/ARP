@@ -27,6 +27,26 @@ describe("listing a tool through the sponsor", () => {
         expect(listToolMessage(result)).toBe("Listed.");
     });
 
+    it("sends the signed request beside the URL when there is one", async () => {
+        const fetch = answering(200, {atomId: "0xabc", created: true, transactions: []});
+        const signed = {
+            request: {
+                address: "0x906f3A52ec089f8D4E9127F91C6bE5Ae0d18f91f",
+                url: URL_,
+                nonce: `0x${"1".repeat(64)}`,
+                expiresAt: 1_800_000_000,
+            },
+            chainId: 13579,
+            signature: "0xdead",
+        } as const;
+        await listTool(URL_, {endpoint: "http://sponsor", fetch}, signed);
+        expect(fetch).toHaveBeenCalledWith("http://sponsor/list-tool", {
+            method: "POST",
+            headers: {"content-type": "application/json"},
+            body: JSON.stringify({url: URL_, request: signed}),
+        });
+    });
+
     it("says already listed when nothing was spent", async () => {
         const result = await listTool(URL_, {
             endpoint: "http://sponsor",
