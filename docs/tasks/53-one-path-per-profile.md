@@ -39,7 +39,7 @@ onboarding skill ARP itself returned for "onboarding" (`coreyhaines31/marketings
 | --- | --- | --- |
 | 53a | Scene 4 becomes one question, "What brings you here?", with three tiles: a title and what to have at hand, nothing else (`ui.md`, no sentence in a card). Saffron on the first tile only. The choice is kept in `localStorage`, wrapped in try/catch, so the nav can offer the path again | `SceneJobs` and `jobsFor`, to be replaced |
 | 53b | `/start/:profile`, one page per path: an ordered list whose steps tick themselves when ARP sees the result, the first one ticked from the start ("Free for now. Nothing to pay.", no chain word, as path A promises). No account | the activity bar's "your agent: live / connecting / not connected" (task 36, task 48 item 8); `/activity`; `/search` |
-| 53c | Path C's "add it" step, sponsored: a sponsor route that creates a tool atom for a URL, within a per-address daily limit and the global budget | `POST /list-tool` on `dev` since PR #54 (`apps/sponsor/src/routes/list-tool.ts`, ADR `0123`); before it, the sponsor had no such route |
+| 53c | Path C's "add it" step, sponsored: a sponsor route that creates a tool atom for a URL, within a per-address daily limit and the global budget | `POST /list-tool` on `dev` since PR #54 (`apps/sponsor/src/routes/list-tool.ts`, ADR `0123`); before it, the sponsor had no such route. The web signs the request when a wallet is connected (`services/list-tool-sign.ts`), asking it to switch to 13579 first; if it will not switch or declines to sign, the request goes unsigned under the anonymous cap |
 
 The three paths, as the proposal has them:
 
