@@ -162,13 +162,13 @@ export type ToolRow = {
      * tiebreak, after the Declared and Usage figures the reader can see.
      */
     declarations: number;
-    /** The agents that declared the tool, by identity atom, each once. Empty when this read cannot say. */
+    /** The agents that declared the tool, by identity atom, each once. Empty when unknown here. */
     declarers: readonly string[];
     /**
-     * Deposits on the tool's edges sent from ARP's sponsoring address (ADR `0094` §2). Most passed
-     * the proof gate; the edge creations it paid for and the deployer's earlier writes from the same
-     * key did not (`scripts/measure/sponsor-deposit-provenance.ts`). The "Usage" column, and the only figure on the page that word is true
-     * of. `null` when this read cannot say.
+     * Deposits on the tool's edges sent from ARP's sponsoring address (ADR `0094` §2), the "Usage"
+     * column. Not every one passed the proof gate: on 13579, 2026-11-03, 6 of 13 did, 4 were edge
+     * creations the service paid for, and 3 the deployer wrote from the same key before the service
+     * existed (`scripts/measure/sponsor-deposit-provenance.ts`). `null` when this read cannot say.
      *
      * Read from the deposit events, not from positions: a position merges a sponsored deposit with
      * the agent's own, and a withdrawal does not say which part it takes.

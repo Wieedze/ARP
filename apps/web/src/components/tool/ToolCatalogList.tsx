@@ -124,8 +124,8 @@ function Row({
                                 </>
                             )}
                             {/* Its skills' use, on the qualifier line and not in the columns: a
-                                declaration names a skill, so the repository's own Usage and Declared
-                                stay its own (task 58). */}
+                                declaration names a skill, so the repository's own Usage and
+                                Declared stay its own (task 58). */}
                             {skills === null ? null : (
                                 <>
                                     {stars === null ? null : (
@@ -211,8 +211,8 @@ function Headers({curveId}: {curveId: number}) {
                 unproven edges (2026-10-27): whether a use happened is unknowable from outside
                 (`docs/14`). A sponsored deposit carries a proof that it did — a payment another
                 party made, or a fetch through ARP (ADR `0094` §2) — so the word is true of that
-                column and of nothing else here. Not of every deposit in it: the sponsor's address is
-                also the deployer's, and its edge creations count too
+                column and of nothing else here. Not of every deposit in it: the sponsor's address
+                is also the deployer's, and its edge creations count too
                 (`scripts/measure/sponsor-deposit-provenance.ts`). */}
             <span>Tool</span>
             <span className="text-right">Usage</span>

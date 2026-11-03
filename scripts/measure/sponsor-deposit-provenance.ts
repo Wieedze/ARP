@@ -72,7 +72,9 @@ const deposits = reply.data.deposits;
 
 const ledgerPaths = process.argv.slice(2);
 if (ledgerPaths.length === 0) {
-  ledgerPaths.push(join(process.env['ARP_HOME'] ?? join(homedir(), '.arp'), 'sponsor-ledger.jsonl'));
+  ledgerPaths.push(
+    join(process.env['ARP_HOME'] ?? join(homedir(), '.arp'), 'sponsor-ledger.jsonl'),
+  );
 }
 const ledgerHashes = new Map<string, string>();
 for (const ledgerPath of ledgerPaths) {
@@ -88,14 +90,17 @@ for (const ledgerPath of ledgerPaths) {
 
 console.log(`testnet 13579, ${new Date().toISOString()}, sender ${sponsor}`);
 console.log(`ledgers: ${ledgerPaths.join(', ')}\n`);
-let inLedger = 0;
+const byKind = new Map<string, number>();
 for (const deposit of deposits) {
   const kind = ledgerHashes.get(deposit.transaction_hash.toLowerCase());
-  if (kind !== undefined) inLedger += 1;
+  const bucket = kind ?? 'not in a ledger';
+  byKind.set(bucket, (byKind.get(bucket) ?? 0) + 1);
   const edge = deposit.term.triple;
   const label = edge === null ? '?' : `${edge.subject.label} uses ${edge.object.label}`;
   console.log(
     `${deposit.created_at.slice(0, 19)}  ${kind ?? 'NOT IN LEDGER'}  ${deposit.assets_after_fees}  ${label}  ${deposit.transaction_hash}`,
   );
 }
-console.log(`\n${deposits.length} deposits counted as Usage; ${inLedger} sent by the service per its ledger, ${deposits.length - inLedger} not.`);
+// `deposit` is the proof-gated kind; `create` is an edge creation the service paid for.
+const split = [...byKind].map(([kind, count]) => `${count} ${kind}`).join(', ');
+console.log(`\n${deposits.length} deposits counted as Usage: ${split}.`);

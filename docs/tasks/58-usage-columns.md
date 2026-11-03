@@ -48,8 +48,10 @@ two tools with a non-zero Usage:
 
 Re-measured 2026-11-03 by `scripts/measure/sponsor-deposit-provenance.ts`, with both ledgers the
 service ran against (`~/.arp` and the repo's `.arp/`): 13 deposits from the sponsor's address on
-`uses` edges, 10 in a ledger and 3 not. The 3 are the whole of `Agent 13579:2`'s figure, written on
-2026-10-20 and 2026-10-30, before the service existed.
+`uses` edges. 6 are proof-gated deposits (ledger kind `deposit`), 4 are edge creations the service
+paid for (`create`), and 3 are in no ledger. The 3 are the whole of `Agent 13579:2`'s figure,
+written on 2026-10-20 and 2026-10-30, before the service existed. A third tool appeared that day,
+`heygen-com/hyperframes?skill=hyperframes`, with 1 creation and 2 deposits.
 
 ## 4. Known limits
 
@@ -72,5 +74,5 @@ service ran against (`~/.arp` and the repo's `.arp/`): 13 deposits from the spon
 
 ## 6. Evidence ladder
 
-Tier 3 (staked): it makes the staked deposits that passed the proof gate visible where they were
-being read as plain declarations. It does not move ARP up the ladder.
+Tier 3 (staked): it makes the sponsor's deposits visible where they were being read as plain
+declarations. Not all of them passed the proof gate (§3, §4). It does not move ARP up the ladder.

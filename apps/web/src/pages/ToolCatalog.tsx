@@ -235,7 +235,9 @@ export function ToolCatalog() {
                                 showStars={index === "repos"}
                                 // From every row read, not the page: a repository's skills are in
                                 // the other index.
-                                repoUsage={index === "repos" ? skillUsageByRepo(view.rows) : undefined}
+                                repoUsage={
+                                    index === "repos" ? skillUsageByRepo(view.rows) : undefined
+                                }
                             />
                             <nav
                                 aria-label="Tool pages"
