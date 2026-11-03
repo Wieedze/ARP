@@ -157,3 +157,28 @@ On `feat/40-sponsoring-service`, with task 40. ADR `0096`, post-mortem
   (37a) are not decided or read yet. The route is tested with both injected.
 - **Not done:** the end-to-end walk on 13579 in §3, so there are no transaction hashes to record;
   37a, 37d and 37e.
+
+**2026-11-03, arp-c4: 37c is on, and the publish half of §3's walk ran on 13579.**
+
+- **Pinning (§4.3), decided by measurement.** Intuition's pin API has `uploadJsonToIpfs(json: jsonb)`
+  besides `pinThing` (schema introspection, 2026-11-03), and the existing `INTUITION_PIN_API_KEY`
+  reaches it. Pinata is not needed. `intuitionJsonPinner`, `apps/sponsor/src/pin.ts`.
+- **The two predicates, read from the graph (37a's first step).** On 13579, 2026-11-03, exactly one
+  atom carries each label, a Thing: `delegate to` `0xb56980d4…` in 10 triples, `in context of`
+  `0x61a88b9c…` in 29. Recorded in `data/deployments/13579.json`, `arp.delegationRegister`.
+- **`main.ts` turns `/publish` on** when the pinning key is set. The signature is checked with
+  viem's `verifyTypedData`, which covers EIP-1271 and EIP-6492, before anything is pinned.
+- **One publication, the user's go, 2026-11-03.**
+  - The delegator was a throwaway key generated in memory, never printed (`0x6673…F939`). The
+    delegate was agent 11's holder, `0x5c2b…2f75`. The caveat was `TrustStakeCapEnforcer`, 0.001
+    tTRUST a day.
+  - The sponsor answered `published: now`: delegation hash `0xfac09d84…`, document
+    `ipfs://QmdjNZV568RAHQzP8bMnnxMEbtQDmf7Cstq9BwwadrwdHZ`, and 5 transactions
+    (`0x443fd90d…`, `0x1131bd38…`, `0xe53855a6…`, `0x2c2acbef…`, `0x14c0fd40…`).
+  - Read back on the testnet indexer: `(caip10:…0x6673…F939, delegate to, caip10:…0x5c2b…2f75)`
+    is triple `0xbfd4b091…`. The pinned document resolves as a Thing labelled "ARP delegation", in
+    context of it.
+- **Still not done:** 37a's discovery, 37d and 37e, and the rest of §3's walk (find it from a
+  second browser and from `arp`, revoke it, see it disabled). The user chose to stop after this
+  publication.
+
