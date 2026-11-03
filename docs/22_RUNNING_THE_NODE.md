@@ -275,8 +275,9 @@ ARP_TOOLS              read: the three reads only. desktop or sponsored: the rea
                        over stdio only: the server refuses to start them over HTTP (ADR 0116).
                        Unset: every tool
 ARP_SKILLS_DIR         desktop/sponsored only, set by `arp init --sponsored`: arp_get_skill writes
-                       <dir>/<name>/SKILL.md, relative to the working directory, overwriting a
-                       file of that name, and appends the receipt to ARP_RECEIPTS
+                       <dir>/<name>/**, relative to the working directory, refusing (and writing
+                       nothing) when a different file is already at one of those paths, and
+                       appends the receipt to ARP_RECEIPTS
 ARP_CONTENT            desktop/sponsored only: the content server. Default http://127.0.0.1:3002
 ARP_SPONSOR            desktop/sponsored only: the sponsoring service. Default http://127.0.0.1:3200
 ARP_ACTIVITY_DIR       session-log.ts --serve only: the directory it tails. Default .arp

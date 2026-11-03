@@ -1,4 +1,4 @@
-import { chmodSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -275,6 +275,29 @@ group('the loop a new agent walks', () => {
     // The line the hook reads to name the atom of `thumbs` when it sees it invoked.
     const line = JSON.parse(readFileSync(join(dir, 'project', '.arp', 'receipts.jsonl'), 'utf8'));
     expect(line).toMatchObject({ skill: 'thumbs', atom: ATOM, url: 'github.com/acme/skills?skill=thumbs' });
+  });
+
+  it('refuses to overwrite a different SKILL.md of the same name, and writes nothing', async () => {
+    const agent = fakeAgent([]);
+    const skillsDir = join(dir, 'project', '.claude', 'skills');
+    mkdirSync(join(skillsDir, 'thumbs'), { recursive: true });
+    writeFileSync(join(skillsDir, 'thumbs', 'SKILL.md'), "# Somebody else's skill\n");
+    const config: LoopConfig = {
+      contentUrl: 'http://content.test',
+      sponsorUrl: 'http://sponsor.test',
+      registry: REGISTRY,
+      multiVault: MULTI_VAULT,
+      stateDir: join(dir, '.arp'),
+      skillsDir,
+      fetch: services(agent.address).fake,
+    };
+    await expect(getSkill(config, agent, ATOM)).rejects.toThrow(/already exists with different contents/);
+    expect(readFileSync(join(skillsDir, 'thumbs', 'SKILL.md'), 'utf8')).toBe("# Somebody else's skill\n");
+    expect(existsSync(join(skillsDir, 'thumbs', 'scripts', 'thumb.py'))).toBe(false);
+    // The same skill fetched again is not a clash.
+    rmSync(join(skillsDir, 'thumbs'), { recursive: true });
+    await getSkill(config, agent, ATOM);
+    expect((await getSkill(config, agent, ATOM)).files).toBe(2);
   });
 
   it('refuses a receipt that names another caller', async () => {
