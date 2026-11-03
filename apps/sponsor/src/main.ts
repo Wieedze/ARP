@@ -58,6 +58,8 @@ import deployments from '../../../data/deployments/13579.json';
 import { assertSponsorChain, readKeyFile } from './key-file.ts';
 import { nullOnRevert } from './routes/context.ts';
 import { SponsorLedger } from './ledger.ts';
+import { resolveOnGitHubCached } from './github.ts';
+import { repoSpellingsOnGraph } from './indexer.ts';
 import { intuitionPinner } from './pin.ts';
 import {
   addressList,
@@ -112,6 +114,29 @@ try {
 }
 const RPC = process.env.INTUITION_TESTNET_RPC_URL ?? deployments.chain.rpcUrl;
 
+/** Vite's dev and preview servers, where the web app runs locally (the activity feed's list, ADR `0091`). */
+const DEFAULT_LIST_TOOL_ORIGINS = [
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+  'http://localhost:4173',
+  'http://127.0.0.1:4173',
+];
+
+function originList(raw: string | undefined): string[] {
+  if (raw === undefined || raw.trim() === '') return [];
+  return raw.split(',').map((entry) => {
+    const value = entry.trim();
+    let parsed: URL;
+    try {
+      parsed = new URL(value);
+    } catch {
+      fail(`SPONSOR_ALLOWED_ORIGINS: ${value} is not an origin`);
+    }
+    if (parsed.origin !== value) fail(`SPONSOR_ALLOWED_ORIGINS: ${value} is not an origin`);
+    return value;
+  });
+}
+
 const threshold = process.env.SPONSOR_WITHDRAWAL_THRESHOLD_BPS;
 const limits: SponsorLimits = {
   depositAmount: wei('SPONSOR_DEPOSIT_WEI'),
@@ -120,6 +145,10 @@ const limits: SponsorLimits = {
   mintGas:
     (process.env.SPONSOR_MINT_GAS_WEI ?? '').trim() === '' ? null : wei('SPONSOR_MINT_GAS_WEI'),
   newAgentsPerDay: count('SPONSOR_NEW_AGENTS_PER_DAY', 20),
+  // ADR `0123`: a signing address's own limit, and the shared cap for unsigned listings.
+  listingsPerAddressPerDay: count('SPONSOR_LISTINGS_PER_ADDRESS_PER_DAY', 5),
+  anonymousListingsPerDay: count('SPONSOR_ANONYMOUS_LISTINGS_PER_DAY', 20),
+  listingsPerDay: count('SPONSOR_LISTINGS_PER_DAY', 50),
   dailyBudget: wei('SPONSOR_DAILY_BUDGET_WEI', ADR_0092_LIMITS.dailyBudget),
   depositsPerAgentPerDay: count(
     'SPONSOR_DEPOSITS_PER_AGENT_PER_DAY',
@@ -290,6 +319,13 @@ const service = createSponsor({
   },
   registries,
   hosts: loopbackHosts(PORT),
+  // The web app's own origins, for `/list-tool` only (ADR `0123`), plus any the operator lists.
+  listToolOrigins: [
+    ...DEFAULT_LIST_TOOL_ORIGINS,
+    ...originList(process.env.SPONSOR_ALLOWED_ORIGINS),
+  ],
+  resolveTool: (url) => resolveOnGitHubCached(url),
+  repoSpellings: (repo) => repoSpellingsOnGraph(deployments.chain.graphqlUrl, repo),
   usesPredicate,
   limits,
   ledger,
@@ -325,6 +361,9 @@ export async function main(): Promise<void> {
   );
   process.stderr.write(
     `  content    ${acceptedContentSigners.length === 0 ? 'no signer accepted' : acceptedContentSigners.join(', ')}\n`,
+  );
+  process.stderr.write(
+    `  listing    ${PIN_KEY === '' ? 'off (no INTUITION_PIN_API_KEY)' : `${limits.listingsPerAddressPerDay}/address/day, ${limits.anonymousListingsPerDay} unsigned/day, ${limits.listingsPerDay}/day in all`}\n`,
   );
   process.stderr.write(`  ledger     ${LEDGER}\n`);
   process.stderr.write(`  publish    disabled (no pinning service, predicates not read)\n`);

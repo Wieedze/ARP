@@ -5,7 +5,7 @@
  *  over the queue, the allow-list and the agent checks they share (`routes/context.ts`); this file
  *  holds the types, the guard every request passes first, and the dispatch.
  *
- *  **Five routes that spend, and each checks before it spends** (ADR `0092` item 2, ADR `0094`):
+ *  **Six routes that spend, and each checks before it spends** (ADR `0092` item 2, ADR `0094`):
  *
  *  | route           | what it pays for                                     | what it checks first                 |
  *  | --------------- | ---------------------------------------------------- | ------------------------------------ |
@@ -14,8 +14,10 @@
  *  | `POST /publish` | the atoms and triples that index a signed delegation | the delegator's signature, limits    |
  *  | `POST /mint-gas`| the gas for an address's own `register()`, once ever | the address's signature, a daily cap |
  *  | `POST /identity`| the atoms and triples of an agent's identity        | a registered agent, the pins, the cap |
+ *  | `POST /list-tool`| a tool's atom, and a skill's repository and `source` | the URL exists, the pins, a daily cap |
  *
- *  The last two, and the `uses` triple `/deposit` creates when it is missing, are ADR `0110`.
+ *  `/mint-gas`, `/identity`, and the `uses` triple `/deposit` creates when it is missing, are ADR
+ *  `0110`. `/list-tool` is ADR `0123`, and it is the only route a browser may call.
  *
  *  **The allow-list is enforced here, not trusted to the wallet.** Every call sent goes to the
  *  MultiVault on this chain, and the only value sent anywhere else is gas: `limits.approvalGas` to
@@ -67,6 +69,8 @@ import type {
 import { redactUrls, refuseForeignRequest } from '@arp-protocol/core/node';
 import { getAddress, isAddress, type Address, type Hex } from 'viem';
 
+import type { ToolResolution } from './github.ts';
+import type { RepoSpelling } from './indexer.ts';
 import type { SponsorLedger } from './ledger.ts';
 import { createContext, json, readBody, REGISTRY } from './routes/context.ts';
 import { deposit } from './routes/deposit.ts';
@@ -74,6 +78,7 @@ import { gas } from './routes/gas.ts';
 import { identity } from './routes/identity.ts';
 import { info } from './routes/info.ts';
 import { mintGas } from './routes/mint-gas.ts';
+import { listTool } from './routes/list-tool.ts';
 import { publish } from './routes/publish.ts';
 
 /**
@@ -149,6 +154,19 @@ export type SponsorOptions = {
   hosts: readonly string[];
   /** Browser origins allowed to call. Empty by default: nothing in a browser needs this service. */
   origins?: readonly string[];
+  /**
+   * Browser origins allowed to call `POST /list-tool`, and only that route (ADR `0123`): the web
+   * app's own path C. They get a CORS answer; every other route still refuses them.
+   */
+  listToolOrigins?: readonly string[];
+  /**
+   * Whether a tool URL exists where it says: for GitHub, the repository, and for a skill its
+   * SKILL.md, and GitHub's own spelling of the repository. Absent, `POST /list-tool` answers 503.
+   * `main.ts` asks GitHub's API.
+   */
+  resolveTool?: ((url: string) => Promise<ToolResolution>) | null;
+  /** The spellings of a GitHub `owner/repo` already on the graph, matched case-insensitively. */
+  repoSpellings?: ((repo: string) => Promise<RepoSpelling[]>) | null;
   /** Milliseconds. Injected so a test can move the day. */
   now?: () => number;
   /** Where a failed request's detail goes, redacted. `console.error` by default. */
@@ -161,44 +179,70 @@ export function createSponsor(options: SponsorOptions): {
   const ctx = createContext(options);
   return {
     async fetch(request: Request): Promise<Response> {
+      const url = new URL(request.url);
+      // `/list-tool` alone answers a browser, and only the origins listed for it (ADR `0123`).
+      const listing = url.pathname === '/list-tool';
+      const corsOrigins = listing ? (options.listToolOrigins ?? []) : [];
       const foreign = refuseForeignRequest(request, {
         hosts: options.hosts,
-        origins: options.origins ?? [],
+        origins: [...(options.origins ?? []), ...corsOrigins],
       });
       if (foreign !== null) return foreign;
-      const url = new URL(request.url);
-      if (request.method === 'GET' && url.pathname === '/') return json(info(ctx));
-      if (request.method !== 'POST')
-        return json(
-          { error: 'GET /, or POST /gas, /mint-gas, /identity, /deposit, /publish' },
-          404,
-        );
-      const route = {
-        '/gas': gas,
-        '/mint-gas': mintGas,
-        '/identity': identity,
-        '/deposit': deposit,
-        '/publish': publish,
-      }[url.pathname];
-      if (route === undefined)
-        return json(
-          { error: 'GET /, or POST /gas, /mint-gas, /identity, /deposit, /publish' },
-          404,
-        );
-      const body = await readBody(request);
-      if (body instanceof Response) return body;
-      try {
-        return await route(ctx, body);
-      } catch (error) {
-        // Logged here, answered generically: a viem error carries the RPC URL, and the URL can
-        // carry its API key (ADR `0116`). The id ties the answer to the log line.
-        const id = Math.random().toString(36).slice(2, 10);
-        const detail = error instanceof Error ? error.message : String(error);
-        (options.log ?? console.error)(`[${id}] ${url.pathname} failed: ${redactUrls(detail)}`);
-        return json({ error: `internal error (${id})` }, 500);
+      const origin = request.headers.get('origin');
+      const cors =
+        origin !== null && corsOrigins.includes(origin)
+          ? { 'access-control-allow-origin': origin, vary: 'Origin' }
+          : null;
+      if (listing && request.method === 'OPTIONS') {
+        return new Response(null, {
+          status: 204,
+          headers: {
+            ...(cors ?? {}),
+            'access-control-allow-methods': 'POST',
+            'access-control-allow-headers': 'content-type',
+          },
+        });
       }
+      const response = await answer(request, url);
+      if (cors !== null)
+        for (const [name, value] of Object.entries(cors)) response.headers.set(name, value);
+      return response;
     },
   };
+
+  async function answer(request: Request, url: URL): Promise<Response> {
+    if (request.method === 'GET' && url.pathname === '/') return json(info(ctx));
+    if (request.method !== 'POST')
+      return json(
+        { error: 'GET /, or POST /gas, /mint-gas, /identity, /deposit, /publish, /list-tool' },
+        404,
+      );
+    const route = {
+      '/gas': gas,
+      '/mint-gas': mintGas,
+      '/identity': identity,
+      '/deposit': deposit,
+      '/publish': publish,
+      '/list-tool': listTool,
+    }[url.pathname];
+    if (route === undefined)
+      return json(
+        { error: 'GET /, or POST /gas, /mint-gas, /identity, /deposit, /publish, /list-tool' },
+        404,
+      );
+    const body = await readBody(request);
+    if (body instanceof Response) return body;
+    try {
+      return await route(ctx, body);
+    } catch (error) {
+      // Logged here, answered generically: a viem error carries the RPC URL, and the URL can
+      // carry its API key (ADR `0116`). The id ties the answer to the log line.
+      const id = Math.random().toString(36).slice(2, 10);
+      const detail = error instanceof Error ? error.message : String(error);
+      (options.log ?? console.error)(`[${id}] ${url.pathname} failed: ${redactUrls(detail)}`);
+      return json({ error: `internal error (${id})` }, 500);
+    }
+  }
 }
 
 /**

@@ -475,7 +475,6 @@ export {
     type FindAgentsPage,
 } from "./discover.js";
 
-
 /**
  * **Corroborate** — what a runtime actually invoked, and what a node signs for having served it.
  *
@@ -694,6 +693,23 @@ export {
     type SignedMintGasRequest,
 } from "./sponsor/mint-gas.js";
 export {
+    LIST_TOOL_MAX_TTL_SECONDS,
+    LIST_TOOL_REQUEST_TYPES,
+    listToolRequestTypedData,
+    canonicalToolUrl,
+    chooseRepoSpelling,
+    githubRepoOf,
+    planToolListing,
+    signListToolRequest,
+    SOURCE_PREDICATE,
+    verifyListToolRequest,
+    type ListToolRequest,
+    type ListToolRequestSigner,
+    type ListToolRequestVerdict,
+    type SignedListToolRequest,
+    type ToolListingPlan,
+} from "./sponsor/list-tool.js";
+export {
     checkSponsorProof,
     type AgentIdentityRef,
     type AgentKeyReads,
@@ -708,10 +724,12 @@ export {
 export {ChainUnreadableError, isContractRevert, isTransactionAbsent} from "./chain-errors.js";
 export {
     ADR_0092_LIMITS,
+    ANONYMOUS_LISTER,
     checkCreateLimits,
     checkDepositLimits,
     checkGasLimits,
     checkIdentityLimits,
+    checkListToolLimits,
     checkMintGasLimits,
     checkPublishLimits,
     spentOnDay,

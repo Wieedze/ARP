@@ -123,7 +123,6 @@ export type ProofCheckContext = {
     now: number;
 };
 
-
 /** Whether two receipt-style identity references name the same ERC-8004 token. */
 function sameAgent(a: AgentIdentityRef, b: AgentIdentityRef): boolean {
     if (a.agentRegistry.toLowerCase() !== b.agentRegistry.toLowerCase()) return false;
