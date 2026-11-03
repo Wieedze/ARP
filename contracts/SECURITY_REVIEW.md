@@ -8,7 +8,7 @@ corrections are struck through in place, never rewritten (`.claude/rules/claims.
 
 | Contract                | File                                       | Deployed                                                                                                                                               | Sections                                                    |
 | ----------------------- | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------- |
-| `TrustStakeCapEnforcer` | `src/enforcers/TrustStakeCapEnforcer.sol` | testnet 13579 and mainnet 1155, **both the v1 code from before ADR `0118`** — `data/deployments/<chainId>.json`. A v2 testnet redeploy is task 60's | "Task 60" below; Task 02b for v1                            |
+| `TrustStakeCapEnforcer` | `src/enforcers/TrustStakeCapEnforcer.sol` | ~~testnet 13579 and mainnet 1155, **both the v1 code from before ADR `0118`**~~ **Corrected 2026-11-03:** testnet 13579 runs **v2** at `0x19e07280F1483Aa9aCDb1a7F8C61bfd20c7879Bc` (bytecode checked, reviewer pass below); mainnet 1155 and the superseded testnet `trustStakeCapEnforcerV1` run v1 — `data/deployments/<chainId>.json` | "Task 60" below; Task 02b for v1                            |
 | `ReceiptEnforcer`       | `src/enforcers/ReceiptEnforcer.sol`        | **not deployed**                                                                                                                                       | Task 43, Task 44, "Task 60"                                 |
 | `IdentityRegistry`      | `src/erc8004/IdentityRegistry.sol`         | testnet 13579 only (`data/deployments/13579.json`)                                                                                                     | "Task 60: `IdentityRegistry`" below — it had no review here |
 
@@ -16,6 +16,117 @@ corrections are struck through in place, never rewritten (`.claude/rules/claims.
 `DomainScopeEnforcer`. Their addresses stay in `data/deployments/`, and their reviews stay below
 under **Historical** headings. `DomainScopeEnforcer`'s mainnet copy is still deployed and inert: it
 gates `ModuleRegistry.registerModule`, and no `ModuleRegistry` is on 1155.
+
+---
+
+# Task 60: contract-reviewer pass
+
+**Reviewed:** 2026-11-03
+**Commit:** `7654e4f` (branch `chore/59-audit-cleanup`, diff against `dev` over `contracts/`,
+`scripts/deploy/`, `data/deployments/`)
+**Reviewer:** contract-reviewer agent
+
+## Threat model
+
+The per-contract walks are in the two "Task 60" sections below; this pass re-derived each and
+concurs, with the additions here.
+
+- **Reentrancy**: no external call in either enforcer's hook. **Clean.**
+- **Access control**: `TrustStakeCapEnforcer` is permissionless with a slot per caller.
+  **Another DelegationManager** calling writes only its own slot. It cannot reach the real one, and
+  it cannot spend from a delegator either: a DeleGator accepts `executeFromExecutor` from the one
+  DelegationManager it is bound to, and the delegation's signature is over that manager's EIP-712
+  domain. The only consequence is that one delegation redeemable through two managers would get two
+  budgets. No account here is built that way. `ReceiptEnforcer`: all four hooks gated on
+  `DELEGATION_MANAGER`. **Clean.**
+- **Integer arithmetic**: overflow only in the caller's own slot, and it reverts. **Clean.**
+- **Input validation**: unchanged. **Clean.**
+- **Front-running / MEV**: the v1 grief is closed. An attacker's direct call with
+  `cap = value = 2**255` leaves the manager's slot at zero
+  (`test_directCall_cannotFillTheManagersSlot`), and a real redemption through `DelegationManager`
+  then succeeds (`test_redemption_succeedsAfterAttackerFillsTheHashDirectly`). `ReceiptEnforcer`: a
+  stranger's node key consumes only its own `(chainId, signer, payment)` slot. **Clean.**
+- **Signature replay**: `ReceiptEnforcer` still gives one receipt one deposit. The key carries the
+  signer and no delegation hash, so the same receipt under a second delegation reverts
+  (`test_beforeHook_revertsOnSameReceiptUnderAnotherDelegation`), and a second receipt from the same
+  signer for the same payment reverts (`test_beforeHook_revertsOnSecondReceiptForOnePayment`). What
+  changed: one payment hash can now unlock one deposit **per accepted signer**. This weakens nothing
+  that held before. `payment` is asserted by the signer, so any one accepted key could already mint
+  unlimited fresh payment hashes. What the rung holds, "an accepted key signed this receipt", is
+  unchanged. (INFO-T60-2.)
+- **Oracles**: `block.timestamp`, ~15 s, documented. **Clean.**
+- **DoS via unbounded loops**: `MAX_BINDINGS = 32`; no loop in the cap enforcer. **Clean.**
+- **Upgradeability**: none. **Clean.**
+- **Events**: `StakeCapChecked(delegationManager indexed, delegationHash indexed, …)` on every
+  write. `scripts/measure/enforcer-events.ts` counts v2 logs whose topic 1 is the DelegationManager
+  apart from the rest. **Clean.**
+
+## Deployment check
+
+- Testnet 13579 `trustStakeCapEnforcer` `0x19e07280F1483Aa9aCDb1a7F8C61bfd20c7879Bc`: `cast code`
+  output is **byte-identical** to `forge inspect TrustStakeCapEnforcer deployedBytecode`, including
+  the CBOR metadata trailer, so it was built from these exact sources. Tx `0x8dd54ea3…3159`,
+  block 9375217, status 1, from the recorded deployer `0xE596…1AA1`.
+- `lib/delegation-framework/src/` and its nested `erc7579-implementation/src/` are identical to the
+  pinned commits `1bdb8a3` and `16138d1`. Checked by fresh fetch and `diff -rq`, because in the
+  reviewed checkout `lib/` is a plain directory, not an initialised submodule.
+- `scripts/deploy/deploy.sh` refuses 1155 without `--mainnet-i-confirmed` and refuses
+  `--identity-registry` on 1155. It refuses chain 11155111 even with the flag, all exit 1, and
+  nothing is sent. The forge scripts refuse 1155 on their own: `DeployEnforcers` without
+  `ARP_MAINNET_CONFIRMED`, and `DeployIdentityRegistry` even with it (`WrongChain(1155)`). A testnet
+  dry run reports "already runs the current source" and skips.
+
+## Test coverage
+
+`forge test`: 113 passed, 0 failed (5 suites). `forge coverage`, `src/` only:
+
+| File                        | Lines   | Statements | Branches | Funcs  |
+| --------------------------- | ------- | ---------- | -------- | ------ |
+| `TrustStakeCapEnforcer.sol` | 18/18   | 22/22      | 3/3      | 3/3    |
+| `ReceiptEnforcer.sol`       | 61/61   | 84/84      | 17/17    | 13/13  |
+| `IdentityRegistry.sol`      | 75/75   | 78/78      | 33/33    | 17/17  |
+
+Coverage is complete, but **two invariant tests are vacuous** (M-T60-1).
+
+## Gas
+
+`TrustStakeCapEnforcer.beforeHook` min 26 540 / avg 36 640 / median 35 230 / max 72 910; deployment
+393 207 gas, 1 601 bytes. `ReceiptEnforcer.beforeHook` max 138 090. `IdentityRegistry.register()`
+max 100 683. No gas target is set for task 60.
+
+## Lint
+
+`solhint --disc 'src/**/*.sol'` 0 problems (`src/erc8004/` ignored by `.solhintignore`, recorded).
+`forge fmt --check` clean. `forge build` prints 5 `block-timestamp` forge-lint notes, all on
+documented, intended comparisons. Slither 0.11.5: 22 results, none High or Medium, none new in kind.
+
+## Findings
+
+- **M-T60-1 (Medium)**: `test/enforcers/TrustStakeCapEnforcer.t.sol`, `TrustStakeCapHandler.stake`.
+  The handler calls `beforeHook` without `vm.prank(DM)`, so every call writes the **handler's** slot.
+  Both invariants read slot `DM = 0xD3`, which is always zero, so they cannot fail. A mutant with the
+  `CapExceeded` check deleted passes both. With `vm.prank(DM);` added before the `try`, the mutant
+  fails `invariant_cumulativeNeverExceedsCap` and the real source passes both (verified in a scratch
+  copy). The caller keying in ADR `0118` introduced this. **Fix:** add `vm.prank(DM);` immediately
+  before the `try enforcer.beforeHook(...)` in the handler.
+- **L-T60-1 (Low)**: `scripts/deploy/deploy.sh`. `--private-key "$PRIVATE_KEY"` puts the key in
+  forge's argv, readable by any local user through `ps` or `/proc/<pid>/cmdline` while the script
+  runs. `set -a; source .env` also exports every `.env` value to `cast` and `jq`. **Recommendation:**
+  read the key from the environment inside the script, which `run()` already does with
+  `vm.envUint("PRIVATE_KEY")`. Pass the signer through an interactive or keystore option, or export
+  only the variables needed.
+- **INFO-T60-1**: delegations already signed against the v1 testnet copy
+  `0x7BB5…0F8E` keep running v1 code and stay griefable until their operators re-sign naming
+  `0x19e0…79Bc`. The redeploy does not migrate them.
+- **INFO-T60-2**: `ReceiptEnforcer` lets one payment hash unlock one deposit per accepted signer,
+  where before it allowed one in total. Not a weakening; see Signature replay above. A sponsoring
+  service that cross-checks must pass the signer to `isPaymentUsed`.
+
+## Verdict
+
+**FAIL**, on M-T60-1 alone. The contract changes themselves are sound: the grief is closed, no new
+grief is opened, one receipt still unlocks one deposit, and the testnet bytecode matches `src/`.
+Re-review after the one-line handler fix.
 
 ---
 
@@ -41,7 +152,10 @@ hash the **DelegationManager** passes during `redeemDelegations`. The enforcer n
 was the DelegationManager calling, and that is the whole gap: the binding upstream protects the
 redemption path, not the storage slot.
 
-**Reachability** (`claims.md` §1). Both deployed copies run the v1 code. On mainnet 1155
+**Reachability** (`claims.md` §1). ~~Both deployed copies run the v1 code.~~ **Corrected
+2026-11-03:** both copies deployed before task 60 run the v1 code; testnet 13579 now points at a v2
+redeploy (Task 60 reviewer pass, above), and the v1 testnet copy stays live for any delegation that
+names it. On mainnet 1155
 (`0x9992…5f34`) the hook has never fired — 0 `StakeCapChecked` logs, measured 2026-10-27 by
 `scripts/measure/enforcer-events.ts` — so no known delegation uses it and the defect is latent
 there. On testnet 13579 delegations do use it (the same script found 9 distinct delegation hashes
@@ -424,8 +538,10 @@ Ready for Task 02 sign-off and Task 03 (deployment + Intuition integration).
 # Caveat enforcers as first deployed (Task 02b)
 
 **Two kinds of record in this section.** `DomainScopeEnforcer` is **historical**: removed from `src/`
-in `59ac83a`, its mainnet copy inert. `TrustStakeCapEnforcer` here is the **v1 code**, which both
-deployed copies still run; v2 is the "Task 60" section at the top of this file. The griefing claims
+in `59ac83a`, its mainnet copy inert. `TrustStakeCapEnforcer` here is the **v1 code**, which ~~both
+deployed copies still run~~ the mainnet 1155 copy and the superseded testnet copy
+`trustStakeCapEnforcerV1` still run (**Corrected 2026-11-03:** testnet 13579 runs v2 since task 60);
+v2 is the "Task 60" section at the top of this file. The griefing claims
 below were wrong and are struck through in place.
 
 **Reviewed:** 2026-06-01
