@@ -56,7 +56,7 @@ export function trustStakeCapCaveat(cap: bigint, periodSeconds: bigint): Caveat 
 /**
  * The MetaMask delegation framework environment for Intuition Testnet
  * (chainId 13579). Resolved once via `getSmartAccountsEnvironment` — the
- * vendored `@metamask/delegation-deployments` package ships the addresses
+ * kit's own `@metamask/delegation-deployments` dependency ships the addresses
  * for this chain (confirmed at vendoring time).
  */
 const SMART_ACCOUNTS_ENV = getSmartAccountsEnvironment(intuitionTestnet.id);
