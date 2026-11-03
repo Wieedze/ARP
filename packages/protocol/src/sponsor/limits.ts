@@ -50,6 +50,11 @@ export type SponsorLimits = {
      */
     listingsPerDay: number;
     /**
+     * New categories the service writes a UTC day, as the attestor the index reads (task 59, ADR
+     * `0124`). One proposal is counted once however many of its three terms it creates.
+     */
+    categoriesPerDay: number;
+    /**
      * Past this share of its sponsored shares withdrawn, in basis points, an agent is no longer
      * sponsored. A **mainnet** rule: `null`, not enforced, on testnet, where everything proven is
      * sponsored (ADR `0094` as amended).
@@ -80,7 +85,15 @@ export type SponsorRecord = {
      * (ADR `0110`); `list-tool` the terms of a sponsored tool listing (ADR `0123`), whose subject
      * is the signing address, or {@link ANONYMOUS_LISTER} for an unsigned request.
      */
-    kind: "deposit" | "gas" | "publish" | "mint-gas" | "identity" | "create" | "list-tool";
+    kind:
+        | "deposit"
+        | "gas"
+        | "publish"
+        | "mint-gas"
+        | "identity"
+        | "create"
+        | "list-tool"
+        | "category";
     subject: Address;
     /** The `value` the service sent for it, in wei. A publication's term fees are in it; the gas of the transaction is not. */
     value: bigint;
@@ -342,6 +355,28 @@ export function checkListToolLimits(
                     ? `${cap} unsigned listings a day, reached; sign the request to use your own limit`
                     : `${cap} listings a day for ${lister}, reached`,
         };
+    }
+    return budget(records, value, now, limits) ?? {ok: true};
+}
+
+/**
+ * Whether one more category proposal, costing `value`, fits: at most
+ * {@link SponsorLimits.categoriesPerDay} a UTC day, and the budget. Records are keyed
+ * `<proposal>#<n>`, so a proposal completing a half-written category is not counted twice.
+ */
+export function checkCategoryLimits(
+    records: readonly SponsorRecord[],
+    params: {proposal: string; value: bigint; now: number; limits: SponsorLimits},
+): LimitDecision {
+    const {proposal, value, now, limits} = params;
+    const day = utcDay(now);
+    const proposals = new Set(
+        records
+            .filter((r) => r.kind === "category" && utcDay(r.at) === day && r.key !== undefined)
+            .map((r) => (r.key ?? "").split("#")[0]),
+    );
+    if (!proposals.has(proposal) && proposals.size >= limits.categoriesPerDay) {
+        return {ok: false, reason: `${limits.categoriesPerDay} new categories a day, reached`};
     }
     return budget(records, value, now, limits) ?? {ok: true};
 }

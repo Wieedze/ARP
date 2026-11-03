@@ -114,6 +114,7 @@ describe("checkListToolLimits", () => {
     const limits = {
         listingsPerAddressPerDay: 1,
         anonymousListingsPerDay: 2,
+        categoriesPerDay: 2,
         listingsPerDay: 3,
         dailyBudget: 10n ** 18n,
     } as SponsorLimits; // Only the three members this check reads.

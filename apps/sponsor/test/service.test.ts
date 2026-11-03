@@ -74,6 +74,7 @@ const LIMITS: SponsorLimits = {
   newAgentsPerDay: 2,
   listingsPerAddressPerDay: 2,
   anonymousListingsPerDay: 2,
+  categoriesPerDay: 2,
   listingsPerDay: 4,
   dailyBudget: 10n ** 18n,
   depositsPerAgentPerDay: 2,
@@ -1819,5 +1820,91 @@ describe('POST /list-tool', () => {
     );
     expect(gas.status).toBe(403);
     expect(w.gas).toHaveLength(0);
+  });
+});
+
+describe('POST /propose-category', () => {
+  const logged: unknown[] = [];
+  const known = new Set(['tool', 'design']);
+  const categories = {
+    isCategory: async (label: string) => known.has(label),
+    compounds: new Map<string, string>(),
+    log: (entry: unknown) => {
+      logged.push(entry);
+    },
+  };
+  const proposal = (over: Record<string, unknown> = {}) => ({
+    label: 'Typography',
+    parent: 'design',
+    subjectId: OBJECT,
+    reason: 'none of the design children is about type',
+    ...over,
+  });
+  const fresh = () => {
+    const w = world();
+    w.terms = new Set([OBJECT.toLowerCase()]);
+    return w;
+  };
+
+  afterEach(() => {
+    logged.length = 0;
+  });
+
+  test('writes the atom, the parent edge and the tag on the MultiVault, and logs the reason', async () => {
+    const w = fresh();
+    const res = await call(sponsor(w, { categories }), '/propose-category', proposal());
+    expect(res.status).toBe(200);
+    expect(res.body.label).toBe('typography');
+    expect(w.sent.map((c) => c.kind)).toEqual(['create-atom', 'create-triple', 'create-triple']);
+    expect(w.sent.every((c) => c.to === MULTIVAULT)).toBe(true);
+    expect(w.sent.every((c) => c.value === 2n * MILLI)).toBe(true);
+    expect(logged).toEqual([
+      expect.objectContaining({
+        label: 'typography',
+        parent: 'design',
+        reason: 'none of the design children is about type',
+        transactions: expect.arrayContaining([expect.any(String)]),
+      }),
+    ]);
+  });
+
+  test('refuses by the rule that refused: a hyphen, an existing category, a parent off the tree, no reason', async () => {
+    const service = sponsor(fresh(), { categories });
+    const cases: [Record<string, unknown>, string][] = [
+      [{ label: 'web-design' }, 'hyphen'],
+      [{ label: 'design' }, 'exists'],
+      [{ parent: 'nowhere' }, 'parent'],
+      [{ reason: '  ' }, 'reason'],
+      [{ subjectId: `0x${'cd'.repeat(32)}` }, 'skill'],
+    ];
+    for (const [over, rule] of cases) {
+      const res = await call(service, '/propose-category', proposal(over));
+      expect(res.status).toBe(422);
+      expect(res.body.rule).toBe(rule);
+    }
+    expect(logged).toHaveLength(0);
+  });
+
+  test('stops at the daily cap of new categories', async () => {
+    const w = fresh();
+    const service = sponsor(w, { categories });
+    for (const label of ['typography', 'icons']) {
+      expect((await call(service, '/propose-category', proposal({ label }))).status).toBe(200);
+    }
+    const third = await call(service, '/propose-category', proposal({ label: 'colour' }));
+    expect(third.status).toBe(429);
+    expect(third.body.rule).toBe('limit');
+    expect(w.sent).toHaveLength(6);
+  });
+
+  test('answers 503 when not configured, and refuses a browser', async () => {
+    const w = fresh();
+    expect((await call(sponsor(w), '/propose-category', proposal())).status).toBe(503);
+    const browser = await sponsor(w, {
+      categories,
+      listToolOrigins: ['http://localhost:5173'],
+    }).fetch(post('/propose-category', proposal(), { origin: 'http://localhost:5173' }));
+    expect(browser.status).toBe(403);
+    expect(w.sent).toHaveLength(0);
   });
 });

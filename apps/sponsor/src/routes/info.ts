@@ -22,6 +22,7 @@ export function info(ctx: SponsorContext): Record<string, unknown> {
       listingsPerAddressPerDay: limits.listingsPerAddressPerDay,
       anonymousListingsPerDay: limits.anonymousListingsPerDay,
       listingsPerDay: limits.listingsPerDay,
+      categoriesPerDay: limits.categoriesPerDay,
       withdrawalThresholdBps: limits.withdrawalThresholdBps ?? 'unset',
       belowProofCost: limits.belowProofCost,
       spentTodayWei: spentOnDay(ledger.relevant(now()), now()),
@@ -40,6 +41,7 @@ export function info(ctx: SponsorContext): Record<string, unknown> {
     approve: planDepositApproval({ multiVault, chainId, sponsor: wallet.address }),
     publish: options.publish === null ? 'disabled' : 'enabled',
     identity: (options.pinThing ?? null) === null ? 'disabled' : 'enabled',
+    proposeCategory: (options.categories ?? null) === null ? 'disabled' : 'enabled',
     listTool:
       (options.pinThing ?? null) === null || (options.resolveTool ?? null) === null
         ? 'disabled'

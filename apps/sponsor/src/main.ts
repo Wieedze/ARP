@@ -149,6 +149,8 @@ const limits: SponsorLimits = {
   listingsPerAddressPerDay: count('SPONSOR_LISTINGS_PER_ADDRESS_PER_DAY', 5),
   anonymousListingsPerDay: count('SPONSOR_ANONYMOUS_LISTINGS_PER_DAY', 20),
   listingsPerDay: count('SPONSOR_LISTINGS_PER_DAY', 50),
+  // Task 59, ADR `0124`: new categories the service writes as an attestor, all proposers together.
+  categoriesPerDay: count('SPONSOR_CATEGORIES_PER_DAY', 10),
   dailyBudget: wei('SPONSOR_DAILY_BUDGET_WEI', ADR_0092_LIMITS.dailyBudget),
   depositsPerAgentPerDay: count(
     'SPONSOR_DEPOSITS_PER_AGENT_PER_DAY',
