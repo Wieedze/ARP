@@ -29,10 +29,15 @@ The user said yes to both fixes.
   `GET /` answered on 2026-11-02. It is a public address, not a key. `useToolCatalog` uses it when
   `VITE_ARP_SPONSOR_ADDRESS` is unset or empty, and the variable still overrides it. On mainnet
   nothing changes: `sponsorAddressFor` returns `null` off 13579.
-- **A repository row shows its skills' use** on its qualifier line, next to its stars: "N skills
-  declared", and "M usage" when M is above zero. This comes from `skillUsageByRepo` over every row
-  read, not the page, because a repository's skills are in the other index. The row's own columns
-  are unchanged: the repository's vault and its skills' are two markets, never summed (`RepoPage`).
+- **A repository row shows how many agents use its skills**, on its qualifier line next to its
+  stars: a person glyph and a number, announced as "N agents use its skills". An agent that declared
+  two of the repository's skills counts once. The user chose this form on 2026-11-03, after review
+  round 1 refused "N skills declared · M usage": "declared" already names the row's Declared column,
+  and the two figures read as one. The count comes from `skillUsageByRepo` over every row read, not
+  the page, because a repository's skills are in the other index. `listTools` now carries each
+  tool's `declarers` (the edges' subjects, each once) so the count can be made across skills. The
+  row's own columns are unchanged: the repository's vault and its skills' are two markets, never
+  summed (`RepoPage`). The glyph is `StakerCount`'s, extracted as `PersonMark`.
 
 ## 3. Measured
 
@@ -41,6 +46,11 @@ two tools with a non-zero Usage:
 - `101-skills/superpowers?skill=youtube-thumbnail-design`, 7;
 - `Agent 13579:2`, 3.
 
+Re-measured 2026-11-03 by `scripts/measure/sponsor-deposit-provenance.ts`, with both ledgers the
+service ran against (`~/.arp` and the repo's `.arp/`): 13 deposits from the sponsor's address on
+`uses` edges, 10 in a ledger and 3 not. The 3 are the whole of `Agent 13579:2`'s figure, written on
+2026-10-20 and 2026-10-30, before the service existed.
+
 ## 4. Known limits
 
 - **Usage counts what the sponsor sent, the creation of an edge included.** The 7 on
@@ -48,7 +58,12 @@ two tools with a non-zero Usage:
   #11, in the sponsor's ledger) plus 3 triple creations the sponsor paid for (ADR `0110`). A creation
   is not proof-gated in the same way, so the column overcounts proven uses by the number of edges
   the sponsor created. Separating them needs the deposit events to say which was a creation.
-- A repository's figure counts declared skills and adds their Usage. It carries the limit above.
+- **The sponsor's address is also ARP's deployer** (`data/deployments/13579.json` `deployer`), so
+  every deposit that key ever sent on a `uses` edge counts as Usage. Live on 13579: the 3 on
+  `Agent 13579:2` were never proof-gated (§3). Separating them needs a key used by the service
+  alone.
+- A repository's figure counts agents, from the same read. It does not carry the Usage limits above,
+  because it counts declarations and not deposits.
 
 ## 5. Do not do in this task
 

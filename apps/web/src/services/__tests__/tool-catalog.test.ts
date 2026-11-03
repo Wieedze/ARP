@@ -12,6 +12,7 @@ function tool(overrides: Partial<ToolListing> = {}): ToolListing {
         hostedAt: "https://colony.io",
         type: "Thing",
         edgeCount: 1,
+        declarers: [],
         pricedEdges: 1,
         provenDeposits: 0,
         declaredDeposits: 1,
@@ -211,7 +212,17 @@ describe("a repository's skills (task 58)", () => {
 
     it("keys a GitHub repository row by owner/repo, and nothing else", () => {
         const of = (label: string | null, source: string | null = null) =>
-            repoKeyOf({...base, key: "k", name: "n", label, source, declarations: 0, provenDeposits: 0, declaredDeposits: 0});
+            repoKeyOf({
+                ...base,
+                key: "k",
+                name: "n",
+                label,
+                source,
+                declarations: 0,
+                declarers: [],
+                provenDeposits: 0,
+                declaredDeposits: 0,
+            });
         expect(of("github.com/Anthropics/skills")).toBe("anthropics/skills");
         expect(of("https://github.com/anthropics/skills/")).toBe("anthropics/skills");
         expect(of("https://mcp.stripe.com")).toBeNull();
@@ -219,24 +230,25 @@ describe("a repository's skills (task 58)", () => {
         expect(of(null)).toBeNull();
     });
 
-    it("counts each repository's declared skills and adds their Usage, skipping undeclared skills", () => {
-        const skill = (key: string, source: string, declarations: number, provenDeposits: number | null) => ({
+    it("counts each repository's agents once across its skills, skipping undeclared skills", () => {
+        const skill = (key: string, source: string, declarers: string[]) => ({
             ...base,
             key,
             name: key,
             label: null,
             source,
-            declarations,
-            provenDeposits,
+            declarations: declarers.length,
+            declarers,
+            provenDeposits: 0,
             declaredDeposits: 0,
         });
         const usage = skillUsageByRepo([
-            skill("a", "Acme/skills", 2, 2),
-            skill("b", "acme/skills", 1, null),
-            skill("c", "acme/skills", 0, 0),
-            skill("d", "other/repo", 1, 1),
+            skill("a", "Acme/skills", ["0xagent1", "0xagent2"]),
+            skill("b", "acme/skills", ["0xagent1"]),
+            skill("c", "acme/skills", []),
+            skill("d", "other/repo", ["0xagent3"]),
         ]);
-        expect(usage.get("acme/skills")).toEqual({skillsDeclared: 2, usage: 2});
-        expect(usage.get("other/repo")).toEqual({skillsDeclared: 1, usage: 1});
+        expect(usage.get("acme/skills")).toEqual({agents: 2});
+        expect(usage.get("other/repo")).toEqual({agents: 1});
     });
 });

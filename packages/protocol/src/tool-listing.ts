@@ -82,6 +82,11 @@ export type ToolListing = {
     /** How many `uses` edges point at this tool. One per declaring agent, per declaration. */
     edgeCount: number;
     /**
+     * The identity atoms of the agents that declared this tool, each once. A caller grouping several
+     * tools counts people by this, not by `edgeCount`, which counts one agent once per tool.
+     */
+    declarers: string[];
+    /**
      * How many of those edges carry at least one position on the read curve.
      *
      * The honest discriminator, and not a staker count. A term's vaults are seeded with `minShare`
@@ -221,6 +226,7 @@ export async function listTools(config: ToolListingConfig): Promise<ToolListingP
         if (!isRecord(object)) continue;
         const atomId = readString(object, "term_id");
         if (atomId === null) continue;
+        const declarer = readString(row, "subject_id");
 
         const support = sideOf(row["term"]);
         const oppose = sideOf(row["counter_term"]);
@@ -235,6 +241,7 @@ export async function listTools(config: ToolListingConfig): Promise<ToolListingP
                 hostedAt: hostedAtFrom(object),
                 type: readString(object, "type"),
                 edgeCount: 1,
+                declarers: declarer === null ? [] : [declarer],
                 pricedEdges: support.positions > 0 ? 1 : 0,
                 provenDeposits: deposits.proven,
                 declaredDeposits: deposits.declared,
@@ -244,6 +251,9 @@ export async function listTools(config: ToolListingConfig): Promise<ToolListingP
             continue;
         }
         existing.edgeCount += 1;
+        if (declarer !== null && !existing.declarers.includes(declarer)) {
+            existing.declarers.push(declarer);
+        }
         if (support.positions > 0) existing.pricedEdges += 1;
         existing.provenDeposits += deposits.proven;
         existing.declaredDeposits += deposits.declared;

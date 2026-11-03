@@ -162,9 +162,12 @@ export type ToolRow = {
      * tiebreak, after the Declared and Usage figures the reader can see.
      */
     declarations: number;
+    /** The agents that declared the tool, by identity atom, each once. Empty when this read cannot say. */
+    declarers: readonly string[];
     /**
-     * Deposits on the tool's edges that ARP's sponsoring service sent, so each one passed the proof
-     * gate (ADR `0094` §2). The "Usage" column, and the only figure on the page that word is true
+     * Deposits on the tool's edges sent from ARP's sponsoring address (ADR `0094` §2). Most passed
+     * the proof gate; the edge creations it paid for and the deployer's earlier writes from the same
+     * key did not (`scripts/measure/sponsor-deposit-provenance.ts`). The "Usage" column, and the only figure on the page that word is true
      * of. `null` when this read cannot say.
      *
      * Read from the deposit events, not from positions: a position merges a sponsored deposit with
@@ -224,10 +227,11 @@ export function toolIndexOf(row: ToolRow): ToolIndex {
 
 /** What a repository's skills carry, for its row (task 58). */
 export type RepoSkillUsage = {
-    /** How many of its skills have at least one declaration. */
-    skillsDeclared: number;
-    /** Sponsored deposits on its skills' edges, the Usage column's figure, added over its skills. */
-    usage: number;
+    /**
+     * How many agents declared at least one of its skills, each counted once however many of the
+     * repository's skills it declared. The figure beside the person glyph (the user, 2026-11-03).
+     */
+    agents: number;
 };
 
 /**
@@ -236,19 +240,19 @@ export type RepoSkillUsage = {
  * A declaration names a skill, never its repository (ADR `0077`), so a repository row's own Usage
  * and Declared stay empty while its skills are used. This is that use, kept apart from the row's
  * own columns: the repository's vault and its skills' are two markets, never summed (`RepoPage`).
- * Added over one repository's skills, in one unit, from one read.
+ * An agent is counted once across one repository's skills, from one read.
  */
 export function skillUsageByRepo(rows: readonly ToolRow[]): Map<string, RepoSkillUsage> {
-    const byRepo = new Map<string, RepoSkillUsage>();
+    const declarersByRepo = new Map<string, Set<string>>();
     for (const row of rows) {
-        if (row.source === null || row.declarations === 0) continue;
+        if (row.source === null || row.declarers.length === 0) continue;
         const key = row.source.toLowerCase();
-        const kept = byRepo.get(key) ?? {skillsDeclared: 0, usage: 0};
-        byRepo.set(key, {
-            skillsDeclared: kept.skillsDeclared + 1,
-            usage: kept.usage + (row.provenDeposits ?? 0),
-        });
+        const kept = declarersByRepo.get(key) ?? new Set<string>();
+        for (const declarer of row.declarers) kept.add(declarer);
+        declarersByRepo.set(key, kept);
     }
+    const byRepo = new Map<string, RepoSkillUsage>();
+    for (const [key, declarers] of declarersByRepo) byRepo.set(key, {agents: declarers.size});
     return byRepo;
 }
 
@@ -309,6 +313,7 @@ function rowOf(tool: ToolListing): ToolRow {
         label: label ?? null,
         href: `/atom/${tool.atomId}`,
         declarations: tool.edgeCount,
+        declarers: tool.declarers,
         provenDeposits: tool.provenDeposits,
         declaredDeposits: tool.declaredDeposits,
         supportTrust: formatTrust(tool.supportAssetsSum),
@@ -331,6 +336,7 @@ function registeredRowOf(tool: RegisteredTool): ToolRow {
         label: label ?? null,
         href: `/atom/${tool.atomId}`,
         declarations: tool.declarations,
+        declarers: [],
         // `null`, not `0`: a registered row's deposits are on its edges, which is `listTools`'s
         // read, so they are **unknown** here. A tool whose edges that read did find appears as a
         // declared row instead and carries both figures. A zero would read as "nobody deposited",

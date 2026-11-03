@@ -17,9 +17,12 @@ function edge(params: {
     /** Every deposit on the support term, and how many of them the sponsor sent. */
     deposits?: number;
     proven?: number;
+    /** The declaring agent's identity atom, the edge's subject. */
+    subject?: string;
 }) {
     return {
         term_id: `edge-${params.atomId}-${params.supportAssets ?? "0"}`,
+        ...(params.subject === undefined ? {} : {subject_id: params.subject}),
         object: {
             term_id: params.atomId,
             label: params.label ?? null,
@@ -75,6 +78,19 @@ describe("listTools", () => {
         ]);
         expect(page.edgesRead).toBe(3);
         expect(page.truncated).toBe(false);
+    });
+
+    it("names each declaring agent once per tool, from the edge's subject", async () => {
+        const {transport} = transportOf([
+            edge({atomId: "0xaa", subject: "0xagent1"}),
+            edge({atomId: "0xaa", subject: "0xagent2"}),
+            edge({atomId: "0xaa", subject: "0xagent1"}),
+            edge({atomId: "0xbb"}),
+        ]);
+        const page = await listTools({graphqlUrl: INTUITION_URL, transport});
+        const byId = new Map(page.tools.map((t) => [t.atomId, t.declarers]));
+        expect(byId.get("0xaa")).toEqual(["0xagent1", "0xagent2"]);
+        expect(byId.get("0xbb")).toEqual([]);
     });
 
     it("counts priced edges, not summed positions — ADR 0023's trap", async () => {

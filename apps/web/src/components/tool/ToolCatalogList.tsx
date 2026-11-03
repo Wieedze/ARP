@@ -1,6 +1,7 @@
 import {Link} from "react-router-dom";
 import {useChainChoice} from "../../lib/chain-choice";
 import {useSkillFacts, type SkillFact} from "../../hooks/use-skill-facts";
+import {PersonMark} from "../agent/StakerCount";
 
 import {repoKeyOf, type RepoSkillUsage, type ToolRow} from "../../services/tool-catalog";
 import {shortTrust} from "../../services/trust-format";
@@ -9,7 +10,7 @@ import {shortTrust} from "../../services/trust-format";
  * Tools as a list, not as N boxes.
  *
  * One grid, one hairline under each row, every figure in mono and right-aligned so the columns read
- * down. Four columns and no more: the name, the deposits that passed ARP's proof gate ("Usage"),
+ * down. Four columns and no more: the name, the deposits ARP's sponsoring address sent ("Usage"),
  * every other deposit ("Declared"), and the TRUST summed across the edges. Proven first, by the
  * user's decision (ADR `0094` §2), and never weighted against each other. Nothing restates a column
  * in prose.
@@ -132,15 +133,16 @@ function Row({
                                             ·
                                         </span>
                                     )}
-                                    {`${skills.skillsDeclared} ${skills.skillsDeclared === 1 ? "skill" : "skills"} declared`}
-                                    {skills.usage === 0 ? null : (
-                                        <>
-                                            <span className="px-1.5 text-[color:var(--color-rule-strong)]">
-                                                ·
-                                            </span>
-                                            {`${skills.usage} usage`}
-                                        </>
-                                    )}
+                                    {/* A glyph and a count, the user's words (2026-11-03): one
+                                        figure, people, so it cannot be read as either column. */}
+                                    <span
+                                        role="img"
+                                        aria-label={`${skills.agents} ${skills.agents === 1 ? "agent uses" : "agents use"} its skills`}
+                                        className="inline-flex items-baseline gap-1 tabular-nums"
+                                    >
+                                        <PersonMark />
+                                        {skills.agents}
+                                    </span>
                                 </>
                             )}
                             {row.provenance === "declared" ? (
@@ -209,7 +211,9 @@ function Headers({curveId}: {curveId: number}) {
                 unproven edges (2026-10-27): whether a use happened is unknowable from outside
                 (`docs/14`). A sponsored deposit carries a proof that it did — a payment another
                 party made, or a fetch through ARP (ADR `0094` §2) — so the word is true of that
-                column and of nothing else here. */}
+                column and of nothing else here. Not of every deposit in it: the sponsor's address is
+                also the deployer's, and its edge creations count too
+                (`scripts/measure/sponsor-deposit-provenance.ts`). */}
             <span>Tool</span>
             <span className="text-right">Usage</span>
             <span className="text-right">Declared</span>
