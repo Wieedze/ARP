@@ -52,12 +52,19 @@ for (const filing of filings) {
     const body = first
         ? {label: filing.category, parent: filing.parent, reason: filing.reason, subjectId: filing.atom}
         : {label: filing.category, subjectId: filing.atom};
-    const response = await fetch(`${sponsor}/propose-category`, {
-        method: "POST",
-        headers: {"content-type": "application/json"},
-        body: JSON.stringify(body),
-        signal: AbortSignal.timeout(180000),
-    });
+    let response: Response;
+    try {
+        response = await fetch(`${sponsor}/propose-category`, {
+            method: "POST",
+            headers: {"content-type": "application/json"},
+            body: JSON.stringify(body),
+            signal: AbortSignal.timeout(180000),
+        });
+    } catch (error) {
+        // A dropped connection says nothing about whether this one landed; a re-run finds out.
+        console.log(`stopped after ${done}: the sponsor did not answer for ${filing.url} (${String(error)}); re-run`);
+        break;
+    }
     const answer = (await response.json().catch(() => null)) as {rule?: string; error?: string; created?: boolean} | null;
     if (!response.ok) {
         console.log(`  REFUSED ${filing.url} → ${filing.category}: ${answer?.rule ?? response.status} ${answer?.error ?? ""}`);
