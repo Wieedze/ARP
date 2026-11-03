@@ -277,6 +277,9 @@ contract TrustStakeCapHandler is Test {
         bytes memory execution = ExecutionLib.encodeSingle(address(0x7E54), amount, hex"");
         ModeCode mode = ModeLib.encodeSimpleSingle();
 
+        // The invariants read the DelegationManager's slot (ADR 0118); without the prank every call
+        // would land in the handler's own slot and the invariants could not fail.
+        vm.prank(DM);
         try enforcer.beforeHook(terms, "", mode, execution, DELEGATION_HASH, address(0), address(0)) {
             (, uint256 windowStart) = enforcer.getState(DM, DELEGATION_HASH);
             if (windowStart > lastWindowStart) lastWindowStart = windowStart;
