@@ -6,7 +6,6 @@ import {describe, expect, it} from "vitest";
 import {
     getAgentEndpoints,
     isSameAgent,
-    resolveAgentEndpoint,
     type DirectoryConfig,
     type DirectorySubject,
 } from "../src/directory.js";
@@ -127,6 +126,15 @@ function config(
     };
 }
 
+/** The newest endpoint the token's current owner signed for, or null — what a caller would dial. */
+async function firstBound(
+    subject: Parameters<typeof getAgentEndpoints>[0],
+    config: Parameters<typeof getAgentEndpoints>[1],
+): Promise<string | null> {
+    const listed = await getAgentEndpoints(subject, config);
+    return listed.find((entry) => entry.status === "bound")?.endpoint ?? null;
+}
+
 describe("getAgentEndpoints", () => {
     it("lists each claimed endpoint with its proof, and the bound one resolves", async () => {
         const state = {owner: owner.address};
@@ -154,7 +162,7 @@ describe("getAgentEndpoints", () => {
             {triple: "0xa1", inContextOf: "0xc1", limit: 5},
             {triple: "0xb1", inContextOf: "0xc1", limit: 5},
         ]);
-        expect(await resolveAgentEndpoint(SUBJECT, cfg)).toBe("https://a.example");
+        expect(await firstBound(SUBJECT, cfg)).toBe("https://a.example");
     });
 
     it("reads a transferred token as transferred, and resolves nothing", async () => {
@@ -172,7 +180,7 @@ describe("getAgentEndpoints", () => {
         );
         const [entry] = await getAgentEndpoints(SUBJECT, cfg);
         expect(entry?.status).toBe("transferred");
-        expect(await resolveAgentEndpoint(SUBJECT, cfg)).toBeNull();
+        expect(await firstBound(SUBJECT, cfg)).toBeNull();
     });
 
     it("keeps the best proof, and reports proofs that are unreadable, foreign or for another endpoint", async () => {
@@ -273,11 +281,9 @@ describe("getAgentEndpoints", () => {
         expect(entry?.proofs).toMatchObject([
             {status: "invalid", reason: "the document binds another agent"},
         ]);
-        expect(await resolveAgentEndpoint(SUBJECT, cfg)).toBeNull();
+        expect(await firstBound(SUBJECT, cfg)).toBeNull();
         // The same binding read for its own agent is bound: the check is the subject, not the proof.
-        expect(await resolveAgentEndpoint({...SUBJECT, agentId: "8"}, cfg)).toBe(
-            "https://attacker.example",
-        );
+        expect(await firstBound({...SUBJECT, agentId: "8"}, cfg)).toBe("https://attacker.example");
     });
 
     it("keeps the genuine endpoint when a newer foreign binding is attached beside it", async () => {
@@ -301,7 +307,7 @@ describe("getAgentEndpoints", () => {
                 "ipfs://genuine": JSON.parse(endpointBindingDocument(genuine)),
             },
         );
-        expect(await resolveAgentEndpoint(SUBJECT, cfg)).toBe("https://a.example");
+        expect(await firstBound(SUBJECT, cfg)).toBe("https://a.example");
     });
 
     it("checks at most maxProofsPerClaim proofs per claim, oldest first", async () => {

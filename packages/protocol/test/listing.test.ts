@@ -4,7 +4,6 @@ import {createErc8004Client} from "../src/client.js";
 import {
     listAgents,
     ListAgentsFailedError,
-    listingCapableSources,
     MAX_PAGE_SIZE,
     NoListingSourceError,
     resolveListOptions,
@@ -55,15 +54,6 @@ describe("resolveListOptions", () => {
 });
 
 describe("listAgents — which sources can answer", () => {
-    it("names Intuition as listing-capable and the registry as not", () => {
-        expect(listingCapableSources(createErc8004Client({sources: [source()]}))).toEqual([
-            "intuition",
-        ]);
-        expect(
-            listingCapableSources(createErc8004Client({sources: [erc8004RegistrySource()]})),
-        ).toEqual([]);
-    });
-
     it("raises rather than returning an empty page when nothing can enumerate", async () => {
         const registryOnly = createErc8004Client({sources: [erc8004RegistrySource()]});
         await expect(listAgents(registryOnly)).rejects.toBeInstanceOf(NoListingSourceError);

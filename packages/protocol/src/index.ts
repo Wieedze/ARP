@@ -47,7 +47,6 @@ export {
     DEFAULT_PAGE_SIZE,
     listAgents,
     ListAgentsFailedError,
-    listingCapableSources,
     MAX_PAGE_SIZE,
     NoListingSourceError,
     resolveListOptions,
@@ -106,12 +105,8 @@ export {
 export {
     CAPABILITY_PREDICATE_IDS as INTUITION_CAPABILITY_PREDICATE_IDS,
     SAME_AS as INTUITION_SAME_AS_TERM_ID,
-    USE as INTUITION_USE_TERM_ID,
     USES as INTUITION_USES_TERM_ID,
     HAS_TAG as INTUITION_HAS_TAG_MAINNET,
-    /** The trust pattern's other two edges. Read-only here; exported so a shell can be checked. */
-    PROVIDED_BY as INTUITION_PROVIDED_BY_TERM_ID,
-    TRUST_ASSESSMENT_SOURCE as INTUITION_TRUST_ASSESSMENT_SOURCE,
     /**
      * The hierarchy predicate. **Not published by Intuition** — unlike every other term here, it
      * is absent from `docs/07`'s tables, and it carries zero edges on mainnet 1155.
@@ -444,7 +439,6 @@ export {
 export {
     decideTransition,
     DOWN_VERDICTS_TO_CONDEMN,
-    flipCost,
     verdictOf,
     type FlipCost,
     type RecordedState,
@@ -479,13 +473,6 @@ export {
     type FindAgentsPage,
 } from "./discover.js";
 
-/**
- * **Rate** — declaring that you used an agent, with a position behind it.
- *
- * `prepareDeclareUsed` pointed at an agent's existing atom instead of a tool's derived one. The
- * predicate is `uses`, unchanged: ARP does not mint an agent-rating predicate (ADR `0030`).
- */
-export {prepareRate, prepareRateStake, type RatePlan} from "./declare/rate.js";
 
 /**
  * **Corroborate** — what a runtime actually invoked, and what a node signs for having served it.
@@ -654,13 +641,11 @@ export {
     type HandshakeVerifierOptions,
     type PendingChallenge,
 } from "./handshake.js";
-export {handshakeChain} from "./handshake-chain.js";
 export {handshakeFetchHandler, handshakeStatusOf} from "./handshake-http.js";
 export {
     DEFAULT_MAX_PROOFS_PER_CLAIM,
     getAgentEndpoints,
     isSameAgent,
-    resolveAgentEndpoint,
     type DirectoryConfig,
     type DirectorySubject,
     type EndpointProof,

@@ -117,7 +117,6 @@ getCapabilities(client, ref); // Capabilities[] — one per source that answered
 getMarkets(client, ref); // ClaimMarket[]
 marketCapableSources(client); // which sources can price a claim at all
 listAgents(client, options); // AgentPage — one window onto the cohort
-listingCapableSources(client); // which sources can enumerate agents at all
 ```
 
 Four functions are pure — no client, no network, no configuration. **A consumer who wants nothing

@@ -81,13 +81,6 @@ export class ListAgentsFailedError extends Error {
     }
 }
 
-/** The ids of sources that can enumerate agents at all. */
-export function listingCapableSources(client: Erc8004Client): string[] {
-    return client.sources
-        .filter((source) => typeof source.listAgents === "function")
-        .map((source) => source.id);
-}
-
 /**
  * Fill in the defaults and hold the page size to a sane range.
  *
