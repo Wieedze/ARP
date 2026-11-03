@@ -59,10 +59,13 @@ if [[ ! -f .env ]]; then
   echo "Error: .env not found at repo root. Copy .env.example and fill PRIVATE_KEY." >&2
   exit 1
 fi
+# Sourced, not exported: only PRIVATE_KEY reaches the forge scripts, through the environment
+# (`vm.envUint`), never through argv, where `ps` would show it to every local user.
 # shellcheck disable=SC1091
-set -a; source .env; set +a
+source .env
 
 : "${PRIVATE_KEY:?PRIVATE_KEY must be set in .env}"
+export PRIVATE_KEY
 if [[ -z "$RPC_URL" ]]; then
   : "${INTUITION_TESTNET_RPC_URL:?INTUITION_TESTNET_RPC_URL must be set in .env, or pass --rpc-url}"
   RPC_URL="$INTUITION_TESTNET_RPC_URL"
@@ -194,7 +197,7 @@ deploy() {
   (
     cd contracts
     ARP_MAINNET_CONFIRMED="$MAINNET_CONFIRMED" forge script "script/$script" \
-      --rpc-url "$RPC_URL" --private-key "$PRIVATE_KEY" "${BROADCAST_ARG[@]}"
+      --rpc-url "$RPC_URL" "${BROADCAST_ARG[@]}"
   )
   [[ "$BROADCAST" == true ]] || return 0
   run="contracts/broadcast/$script/$CHAIN_ID/run-latest.json"
