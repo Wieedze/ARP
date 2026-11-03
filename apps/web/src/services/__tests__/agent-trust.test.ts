@@ -555,7 +555,7 @@ describe("buildPanelTabs", () => {
         // The whole point of the strip: one provider signs its document and the
         // other does not, and that is legible from either tab without the
         // scores being repeated up here.
-        expect(deep3.summary).toEqual({signature: {status: "verified", label: "verified"}});
+        expect(deep3.summary).toEqual({signature: {status: "self-signed", label: "self-signed"}});
         expect(asterpay.summary).toEqual({
             signature: {status: "unverified", label: "not verified"},
         });

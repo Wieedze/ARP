@@ -105,9 +105,10 @@ describe("describeSignature", () => {
         expect(copy.detail).toContain("00dEaD");
     });
 
-    it("says exactly what verified means and nothing more", () => {
+    it("says the signature recovers and that the author is not checked", () => {
         const copy = describeSignature(VERIFIED);
-        expect(copy.tone).toBe("verified");
+        expect(copy.tone).toBe("self-signed");
+        expect(copy.label).toBe("Signed, author not checked");
         expect(copy.detail).toContain("recovers to the signer the document names");
     });
 });

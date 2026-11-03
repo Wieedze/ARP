@@ -91,7 +91,7 @@ describe("agentProfileQueryOptions", () => {
         expect(view.rows).toHaveLength(2);
         expect(view.rows[0].score).toBe(55.35);
         expect(view.rows[0].weight).toBe("moderate");
-        expect(view.rows[0].rating?.signature.status).toBe("verified");
+        expect(view.rows[0].rating?.signature.status).toBe("self-signed");
         expect(view.rows[1].rating?.signature.status).toBe("unverified");
     });
 

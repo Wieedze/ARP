@@ -15,7 +15,7 @@ import {
  */
 
 const SIGNATURE_TONE: Record<SignatureCopy["tone"], string> = {
-    verified: "text-[color:var(--color-accent)] border-[color:var(--color-accent)]",
+    "self-signed": "text-[color:var(--color-accent)] border-[color:var(--color-accent)]",
     mismatch:
         "text-[color:var(--color-alarm)] border-[color:var(--color-alarm)] bg-[color:var(--color-alarm-dim)]",
     unverified: "text-[color:var(--color-steel)] border-[color:var(--color-rule-strong)]",

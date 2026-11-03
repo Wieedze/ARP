@@ -2,7 +2,7 @@
  * `@arp-protocol/core` — a connector for the ERC-8004 agent layer. Holds no key, sends nothing.
  *
  * Give it an ERC-8004 identity and it returns one merged profile: every trust
- * provider's assessment with its EIP-712 signature actually verified and its
+ * provider's assessment with its EIP-712 signature checked against the signer it names and its
  * declared freshness window actually enforced, the agent's capability
  * declarations, and the live market on each provider claim.
  *

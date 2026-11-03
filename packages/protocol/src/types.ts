@@ -393,7 +393,10 @@ export type SignatureAttempt = {
  * The honest answer to "does this signature recover to the address the
  * document claims signed it?".
  *
- *   - `verified`   — it does. Recovery matched the declared signer exactly.
+ *   - `self-signed` — it does. Recovery matched the declared signer exactly.
+ *                    The name says only that: the document names its own
+ *                    signer, and nothing binds that key to the provider
+ *                    (ADR 0119, addendum 2026-11-02).
  *                    Available to any provider, confirmed or not: vouching for
  *                    a correct signature costs nobody anything.
  *   - `mismatch`   — a reconstruction confirmed against *this provider's own*
@@ -407,7 +410,7 @@ export type SignatureAttempt = {
  */
 export type SignatureVerdict =
     | {
-          status: "verified";
+          status: "self-signed";
           declaredSigner: Address;
           recovered: Address;
           strategyId: string;

@@ -497,7 +497,7 @@ export type PanelTabs = {
 
 /** The connector's own words, compressed to fit a tab. Nothing is upgraded. */
 const SIGNATURE_TAB_LABEL: Record<SignatureVerdict["status"], string> = {
-    verified: "verified",
+    "self-signed": "self-signed",
     mismatch: "mismatch",
     unverified: "not verified",
 };

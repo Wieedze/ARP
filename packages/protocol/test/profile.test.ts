@@ -97,8 +97,8 @@ describe("getAgentProfile — the rich fixture (Clawnch, Base #2340)", () => {
         const deep3 = profile.assessments.find(
             (entry) => entry.claim.provider.name === "Deep3 Labs — 🦞 Clawnch 🦞 assessment",
         );
-        expect(deep3?.signature.status).toBe("verified");
-        if (deep3?.signature.status === "verified") {
+        expect(deep3?.signature.status).toBe("self-signed");
+        if (deep3?.signature.status === "self-signed") {
             expect(deep3.signature.recovered).toBe("0x27A6265e6daf8d9935A3031f2E7cDC4bDFbe2Ebe");
         }
 
@@ -171,7 +171,7 @@ describe("getAgentProfile — the bare fixture (Agent 8453:6649)", () => {
         expect(profile.capabilities[0]?.tags).toEqual([]);
 
         const signed = profile.assessments.find((entry) => entry.fetch.status === "ok");
-        expect(signed?.signature.status).toBe("verified");
+        expect(signed?.signature.status).toBe("self-signed");
     });
 });
 
@@ -224,7 +224,7 @@ describe("getAgentProfile — the multi-provider fixture (Captain Dackie, Base #
         const deep3 = assessmentEdges.find((entry) =>
             entry.claim.resolverUrl?.includes("deep3.ai"),
         );
-        expect(deep3?.signature.status).toBe("verified");
+        expect(deep3?.signature.status).toBe("self-signed");
 
         // AsterPay advertises a resolver URL for this agent that 404s. The claim
         // stays in the profile; what cannot be checked is reported, not hidden.
