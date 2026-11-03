@@ -2,7 +2,7 @@
 
 **Generated** 2026-11-03 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-124 decisions. Newest last. `choices/README.md` says when to write one.
+125 decisions. Newest last. `choices/README.md` says when to write one.
 
 ## Not accepted
 
@@ -156,3 +156,4 @@ Read these before relying on them.
 | [0125](0125-one-door-register-folds-into-get-started.md) | 2026-11-03 | Accepted | One door: Register folds into Get started |
 | [0126](0126-the-one-liner-is-discovery-not-money.md) | 2026-11-03 | Accepted | The one-liner is discovery, not money |
 | [0128](0128-a-wallet-is-asked-for-by-the-action-that-signs.md) | 2026-11-03 | Accepted | A wallet is asked for by the action that signs, and nowhere else |
+| [0129](0129-no-per-agent-deposit-cap-on-testnet.md) | 2026-11-03 | Accepted | No per-agent deposit cap on testnet; the daily budget is the bound |

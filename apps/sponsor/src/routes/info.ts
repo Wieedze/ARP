@@ -13,7 +13,7 @@ export function info(ctx: SponsorContext): Record<string, unknown> {
     registries: [...options.registries],
     limits: {
       depositAmountWei: limits.depositAmount,
-      depositsPerAgentPerDay: limits.depositsPerAgentPerDay,
+      depositsPerAgentPerDay: limits.depositsPerAgentPerDay ?? 'off',
       publicationsPerDelegatorPerDay: limits.publicationsPerDelegatorPerDay,
       dailyBudgetWei: limits.dailyBudget,
       approvalGasWei: limits.approvalGas,
@@ -31,7 +31,7 @@ export function info(ctx: SponsorContext): Record<string, unknown> {
       pendingSends: ledger.pending().length,
     },
     proofs: {
-      hire: 'accepted: the payment on chain, and a v2 hire receipt signed by the hired agent’s holder or agentWallet, naming receiptVerifier as its verifyingContract and the deposit’s termId, unexpired. A v1 receipt, or one for another verifier, is refused. The edge must be (requester identity, uses, hired agent identity). The payment is a transfer: one operator holding both agents gets it back, so for that operator the bound is the daily count and budget, not the price.',
+      hire: 'accepted: the payment on chain, and a v2 hire receipt signed by the hired agent’s holder or agentWallet, naming receiptVerifier as its verifyingContract and the deposit’s termId, unexpired. A v1 receipt, or one for another verifier, is refused. The edge must be (requester identity, uses, hired agent identity). The payment is a transfer: one operator holding both agents gets it back, so for that operator the bound is the daily budget, not the price.',
       content:
         options.acceptedContentSigners.length === 0
           ? 'no signer accepted'

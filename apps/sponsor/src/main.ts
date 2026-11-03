@@ -159,10 +159,11 @@ const limits: SponsorLimits = {
   categoriesPerDay: count('SPONSOR_CATEGORIES_PER_DAY', 10),
   categoryTagsPerDay: count('SPONSOR_CATEGORY_TAGS_PER_DAY', 50),
   dailyBudget: wei('SPONSOR_DAILY_BUDGET_WEI', ADR_0092_LIMITS.dailyBudget),
-  depositsPerAgentPerDay: count(
-    'SPONSOR_DEPOSITS_PER_AGENT_PER_DAY',
-    ADR_0092_LIMITS.depositsPerAgentPerDay,
-  ),
+  // Off unless set (ADR `0129`): on testnet the daily budget is the bound.
+  depositsPerAgentPerDay:
+    (process.env.SPONSOR_DEPOSITS_PER_AGENT_PER_DAY ?? '').trim() === ''
+      ? null
+      : count('SPONSOR_DEPOSITS_PER_AGENT_PER_DAY', 1),
   publicationsPerDelegatorPerDay: count(
     'SPONSOR_PUBLICATIONS_PER_DELEGATOR_PER_DAY',
     ADR_0092_LIMITS.publicationsPerDelegatorPerDay,
@@ -386,7 +387,7 @@ export async function main(): Promise<void> {
   process.stderr.write(`  sponsor    ${account.address}\n`);
   process.stderr.write(`  chain      ${intuitionTestnet.id}\n`);
   process.stderr.write(
-    `  deposit    ${limits.depositAmount} wei, ${limits.depositsPerAgentPerDay}/agent/day\n`,
+    `  deposit    ${limits.depositAmount} wei, ${limits.depositsPerAgentPerDay === null ? 'no per-agent limit' : `${limits.depositsPerAgentPerDay}/agent/day`}\n`,
   );
   process.stderr.write(`  budget     ${limits.dailyBudget} wei/day\n`);
   process.stderr.write(`  withdrawal ${limits.withdrawalThresholdBps ?? 'unset'}\n`);

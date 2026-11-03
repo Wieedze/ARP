@@ -22,7 +22,12 @@ import {getAddress, type Address, type Hex} from "viem";
 export type SponsorLimits = {
     /** The fixed amount of one sponsored deposit, in wei. Never a share of a payment (ADR `0094` §4). */
     depositAmount: bigint;
-    depositsPerAgentPerDay: number;
+    /**
+     * Sponsored deposits, and the `uses` triples they land on, a UTC day for one agent. `null`, off:
+     * the user removed it on testnet 13579 on 2026-11-03 (ADR `0129`), where the
+     * {@link dailyBudget} is what protects the treasury. Mainnet decides it again.
+     */
+    depositsPerAgentPerDay: number | null;
     publicationsPerDelegatorPerDay: number;
     /**
      * The `value` the service sends in one UTC day, in wei: deposits, the approval-gas transfers,
@@ -74,9 +79,11 @@ export type SponsorLimits = {
     belowProofCost: boolean;
 };
 
-/** The three values ADR `0092` item 3 fixed. The other three have no default on purpose. */
+/**
+ * Two of the three values ADR `0092` item 3 fixed. The third, 2 deposits a day per agent, is off
+ * on testnet since ADR `0129`. The other values have no default on purpose.
+ */
 export const ADR_0092_LIMITS = {
-    depositsPerAgentPerDay: 2,
     publicationsPerDelegatorPerDay: 2,
     /** "About 1 tTRUST a day overall." */
     dailyBudget: 10n ** 18n,
@@ -204,7 +211,10 @@ export function checkDepositLimits(
     params: {agent: Address; now: number; limits: SponsorLimits; withdrawn: number},
 ): LimitDecision {
     const {agent, now, limits, withdrawn} = params;
-    if (countOnDay(records, "deposit", agent, now) >= limits.depositsPerAgentPerDay) {
+    if (
+        limits.depositsPerAgentPerDay !== null &&
+        countOnDay(records, "deposit", agent, now) >= limits.depositsPerAgentPerDay
+    ) {
         return {
             ok: false,
             reason: `${limits.depositsPerAgentPerDay} sponsored deposits a day per agent, reached`,
@@ -270,7 +280,7 @@ export function checkMintGasLimits(
 
 /**
  * Whether the service may create one more `uses` triple for `agent`, costing `value`: at most
- * {@link SponsorLimits.depositsPerAgentPerDay} a UTC day, and the budget. Counted on its own,
+ * {@link SponsorLimits.depositsPerAgentPerDay} a UTC day when that is set, and the budget. Counted on its own,
  * because a creation lands before the deposit it is for, and a deposit that then fails records no
  * deposit: without this count one agent could have triples created until the budget is gone.
  */
@@ -279,7 +289,10 @@ export function checkCreateLimits(
     params: {agent: Address; value: bigint; now: number; limits: SponsorLimits},
 ): LimitDecision {
     const {agent, value, now, limits} = params;
-    if (countOnDay(records, "create", agent, now) >= limits.depositsPerAgentPerDay) {
+    if (
+        limits.depositsPerAgentPerDay !== null &&
+        countOnDay(records, "create", agent, now) >= limits.depositsPerAgentPerDay
+    ) {
         return {
             ok: false,
             reason: `${limits.depositsPerAgentPerDay} sponsored triple creations a day per agent, reached`,

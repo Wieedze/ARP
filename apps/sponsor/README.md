@@ -19,8 +19,8 @@ sponsor pays the deposit, and **the position stays the agent's**.
 | `GET /`                  | the service's address, limits and what is switched on              |
 
 Every request is signed by the agent or the address that asks, and it is verified before anything
-is spent. Daily caps per agent, per address and overall, plus a global daily budget, bound what it
-can pay out.
+is spent. Daily caps per address and overall, plus a global daily budget, bound what it can pay
+out. Deposits have no per-agent cap unless you set one (ADR `0129`).
 
 ## Run it
 
@@ -40,6 +40,7 @@ prints it. The deposit amount and the approval gas have no default: you set both
 | `INTUITION_PIN_API_KEY`     | `/identity`                                   |
 | `SPONSOR_CONTENT_SIGNERS`   | which content servers' receipts unlock a deposit |
 | `SPONSOR_DAILY_BUDGET_WEI`  | the global daily budget                       |
+| `SPONSOR_DEPOSITS_PER_AGENT_PER_DAY` | a per-agent cap on deposits, off unless set |
 | `SPONSOR_ALLOWED_ORIGINS`   | extra origins allowed to call it from a browser |
 
 It calls Intuition's MultiVault and nothing else.
