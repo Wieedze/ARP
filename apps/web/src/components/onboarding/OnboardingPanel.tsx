@@ -38,13 +38,17 @@ export function OnboardingProvider({children}: {children: ReactNode}) {
         root?.setAttribute("inert", "");
         root?.setAttribute("aria-hidden", "true");
         document.body.dataset.modal = "open";
-        const overflow = document.body.style.overflow;
-        document.body.style.overflow = "hidden";
+        // The root element, not `body`: `index.css` sets `html, body { overflow-x: clip }`, so the
+        // body's overflow is never handed to the viewport and `body { overflow: hidden }` leaves
+        // the window scrolling. Measured in Chromium by ui-reviewer, task 53.
+        const html = document.documentElement;
+        const overflow = html.style.overflow;
+        html.style.overflow = "hidden";
         return () => {
             root?.removeAttribute("inert");
             root?.removeAttribute("aria-hidden");
             delete document.body.dataset.modal;
-            document.body.style.overflow = overflow;
+            html.style.overflow = overflow;
             opener.current?.focus();
         };
     }, [isOpen]);
@@ -81,7 +85,7 @@ function OnboardingPanel({onClose}: {onClose: () => void}) {
             role="dialog"
             aria-modal="true"
             aria-labelledby="onboarding-title"
-            className="fixed inset-0 z-50 overflow-y-auto bg-[color:var(--color-ground)]"
+            className="fixed inset-0 z-50 overflow-y-auto overscroll-contain bg-[color:var(--color-ground)]"
         >
             <div className="mx-auto flex max-w-4xl flex-col gap-10 px-6 py-16">
                 <div className="flex items-start justify-between gap-6">

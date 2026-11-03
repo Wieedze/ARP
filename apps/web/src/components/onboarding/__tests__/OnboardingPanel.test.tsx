@@ -48,10 +48,13 @@ describe("the onboarding panel", () => {
         await screen.findByRole("dialog");
         // `SceneDeck` reads this flag and leaves the wheel alone while the sheet is up.
         expect(document.body.dataset.modal).toBe("open");
-        expect(document.body.style.overflow).toBe("hidden");
+        // On the root element: `body`'s overflow does not lock the window, because `index.css`
+        // clips `html, body` and the body's value is then never handed to the viewport.
+        expect(document.documentElement.style.overflow).toBe("hidden");
 
         fireEvent.click(screen.getByRole("button", {name: "Close"}));
         expect(document.body.dataset.modal).toBeUndefined();
+        expect(document.documentElement.style.overflow).toBe("");
         expect(document.activeElement).toBe(screen.getByRole("button", {name: "Connect"}));
     });
 });
