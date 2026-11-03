@@ -341,10 +341,18 @@ export {
     toolThing,
     toolThingDocument,
     ZeroPositionError,
+    checkCategoryLabel,
+    normaliseCategoryLabel,
+    planCategory,
 } from "./declare/index.js";
 
 export type {
     AgentThing,
+    CategoryDeps,
+    CategoryPlan,
+    CategoryProposal,
+    CategoryRefusal,
+    CategoryRule,
     DeclarePlan,
     MarketExitPlan,
     MarketPositionPlan,
