@@ -223,6 +223,7 @@ type JudgeRecord = {
     labels: Record<string, Arm>;
     ranking: Arm[];
     raw: string;
+    costUsd: number;
 };
 
 function claude(args: string[], cwd: string, env: NodeJS.ProcessEnv): Promise<string> {
@@ -397,14 +398,17 @@ async function judgeOne(need: Need, runs: RunRecord[], model: string): Promise<J
     rmSync(cwd, {recursive: true, force: true});
     let raw = "";
     let ranking: Arm[] = [];
+    let costUsd = 0;
     try {
-        raw = String((JSON.parse(out) as {result?: unknown}).result ?? ""); // `--output-format json` returns one object
+        const answer = JSON.parse(out) as {result?: unknown; total_cost_usd?: unknown}; // `--output-format json` returns one object
+        raw = String(answer.result ?? "");
+        costUsd = typeof answer.total_cost_usd === "number" ? answer.total_cost_usd : 0;
         const picked = (JSON.parse(raw.match(/\{[^}]*\}/)?.[0] ?? "{}") as {ranking?: unknown}).ranking;
         if (Array.isArray(picked)) ranking = picked.map((label) => labels[String(label)]).filter((arm): arm is Arm => arm !== undefined);
     } catch {
         ranking = [];
     }
-    return {kind: "judge", need: need.id, rep: runs[0]?.rep ?? 0, labels, ranking: ranking.length === 3 ? ranking : [], raw};
+    return {kind: "judge", need: need.id, rep: runs[0]?.rep ?? 0, labels, ranking: ranking.length === 3 ? ranking : [], raw, costUsd};
 }
 
 // ---- summary ------------------------------------------------------------------------------------
@@ -425,7 +429,8 @@ function summarise(file: string): void {
         .map((line) => JSON.parse(line) as RunRecord | JudgeRecord); // this script's own output
     const runs = records.filter((r): r is RunRecord => r.kind === "run");
     const judged = records.filter((r): r is JudgeRecord => r.kind === "judge" && r.ranking.length === 3);
-    console.log(`${file}: ${runs.length} runs, ${judged.length} judged triples`);
+    const judgeCost = records.reduce((sum, r) => sum + (r.kind === "judge" ? (r.costUsd ?? 0) : 0), 0);
+    console.log(`${file}: ${runs.length} runs, ${judged.length} judged triples, judging $${judgeCost.toFixed(2)}`);
     for (const need of [...new Set(runs.map((run) => run.need)), "all"]) {
         console.log(`\n${need}`);
         for (const arm of ARMS) {

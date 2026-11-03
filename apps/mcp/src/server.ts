@@ -148,6 +148,14 @@ const READ_INSTRUCTIONS = [
 const DESKTOP_INSTRUCTIONS = [
   READ_INSTRUCTIONS,
   '',
+  // `LOOK HERE FIRST` covers a tool Claude does not already have, so a deck it can build from memory
+  // was built from memory: task 54's smoke run, 2026-11-03, never called arp_find_tools (ADR `0129`).
+  'EVEN WHEN YOU COULD DO IT YOURSELF. Before you make something for the person (a document, a',
+  'deck, a spreadsheet, a PDF, a web page, an image, a video, a data job), call arp_find_tools',
+  'with one word for it. A skill written for that job often does it better than doing it from',
+  'memory. If one fits and its requires asks for nothing the person lacks, fetch it with',
+  'arp_get_skill and follow it. If none fits, do the task yourself without searching again.',
+  '',
   'TO USE A SKILL YOU FOUND, call arp_get_skill with its id: it returns the SKILL.md to follow.',
   'Say what it will do before you run anything it asks for. If it then helped with the task, call',
   'arp_declare_used with the same id: ARP records publicly that you used it and pays for that.',

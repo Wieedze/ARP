@@ -2,7 +2,7 @@
 
 **Generated** 2026-11-03 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-122 decisions. Newest last. `choices/README.md` says when to write one.
+123 decisions. Newest last. `choices/README.md` says when to write one.
 
 ## Not accepted
 
@@ -154,3 +154,4 @@ Read these before relying on them.
 | [0123](0123-the-sponsor-lists-a-tool-for-the-web-app.md) | 2026-11-03 | Accepted | The sponsor lists a tool, and the web app may ask it to |
 | [0124](0124-the-sponsor-writes-a-category-and-the-index-reads-it.md) | 2026-11-03 | Accepted | The sponsor writes an accepted category, and the index reads the sponsor too |
 | [0126](0126-the-one-liner-is-discovery-not-money.md) | 2026-11-03 | Accepted | The one-liner is discovery, not money |
+| [0129](0129-look-for-a-skill-even-for-what-claude-can-do.md) | 2026-11-03 | Accepted | Look for a skill even for what Claude can do itself |

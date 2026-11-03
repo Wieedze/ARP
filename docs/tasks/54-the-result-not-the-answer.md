@@ -1,8 +1,8 @@
 # Task 54 — The result, not the answer: what discovery without a prior search is worth
 
-**Status:** **PLAN**, 2026-11-02. Nothing built. Decided with the user the same day.
+**Status:** **IN PROGRESS**, 2026-11-03. The harness is built (`scripts/measure/result-eval.ts`), on a pilot of three needs: slides, PDF, landing page. Its first smoke run found that Claude, able to make a deck, never asked ARP; the user chose to change ARP's instructions (ADR `0129`), and the re-run consulted it (§7). The full pilot waits on the user's go and its cost.
 **Depends on:** task 52 (`scripts/measure/discovery-eval.ts --suite install`, its 14 needs).
-**Owner:** session arp-7f, who built the task 52 measurement.
+**Owner:** session arp-5e since 2026-11-03 (arp-7f, who built the task 52 measurement, planned it).
 **Rules:** `code.md`, `claims.md`, `workflow.md`.
 **Reviewers:** `task-verifier`.
 
@@ -97,3 +97,24 @@ The Claude Desktop extension still receives SKILL.md alone, because Chat runs no
 It serves no tier directly: it measures whether a declaration's subject, the skill, changes an
 outcome. It is what makes declaring worth doing for an operator, which is what moves agents onto
 the **staked** tier.
+
+## 7. Built, and what the smoke runs found (2026-11-03)
+
+`scripts/measure/result-eval.ts`, fixtures under `scripts/measure/result-eval/`. `--plan` spends
+nothing; `--budget` stops starting runs. Arm C's skills, from skills.sh on 2026-11-03, the first
+result whose name says it makes the thing: `anthropics/skills` pptx, `claude-office-skills/skills`
+pdf-form-filler, `101-skills/superpowers` landing-page-design (the first `landing page` result is an
+audit). That last one needs an inference.sh account, which is what a user picking it would meet.
+
+Two smoke runs, `slides` only, one rep, Sonnet runs, Opus judge. n = 1 per arm: every figure below
+is one run, not a rate.
+
+| run | A | B | C |
+| --- | --- | --- | --- |
+| before ADR `0129` (`result-eval-smoke-2026-11-03T1328-before.jsonl`) | pass, $0.077 | pass, $0.106, **ARP not called** | pass, $0.179 |
+| after (`result-eval-smoke-2026-11-03T1345-after.jsonl`) | pass, $0.070 | pass, $0.171, found and used `anthropics/skills` pptx | pass, $0.171 |
+
+All six decks had 8 slides. The judge ranked C, A, B both times. One judged triple each, so that is
+not a finding. Arm C's second run left a background `find` that ran 750 s, so its time is not its
+effort.
+

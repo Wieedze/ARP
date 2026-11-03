@@ -802,6 +802,31 @@ describe("a request from a web page", () => {
         expect(lines[2]).toMatchObject({id: 7, result: {}});
     });
 
+    it("tells a sponsored agent to look for a skill even for a task it could do itself", () => {
+        const init = (tools: string | undefined) => {
+            const run = spawnSync("bun", ["run", SERVER, "--stdio"], {
+                cwd: SCRATCH,
+                env: {
+                    ...process.env,
+                    ARP_HOME: SCRATCH,
+                    ARP_NO_RECEIPTS: "1",
+                    ARP_TARGET: "testnet",
+                    ...(tools === undefined ? {} : {ARP_TOOLS: tools}),
+                },
+                input: '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"t","version":"0"}}}\n',
+                encoding: "utf8",
+                timeout: 15_000,
+            });
+            const line = JSON.parse(run.stdout.trim().split("\n")[0] ?? "{}") as {result?: {instructions?: string}};
+            return line.result?.instructions ?? "";
+        };
+        // Task 54's smoke run: with only `LOOK HERE FIRST`, a deck Claude could build was built from
+        // memory and ARP was never asked (ADR `0129`).
+        expect(init("sponsored")).toContain("EVEN WHEN YOU COULD DO IT YOURSELF");
+        // Read mode has no arp_get_skill, so the line would send an agent to a skill it cannot fetch.
+        expect(init("read")).not.toContain("EVEN WHEN YOU COULD DO IT YOURSELF");
+    });
+
     it("will not start the sponsored mode over HTTP", () => {
         const run = spawnSync("bun", ["run", SERVER], {
             cwd: SCRATCH,
