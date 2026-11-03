@@ -168,6 +168,7 @@ describe("readHierarchy, reading from the attestor's positions", () => {
             },
         ]);
         expect(seen[0]?.["who"]).toBe(ATTESTOR);
+        expect(seen[0]?.["curveId"]).toBe("1");
     });
 
     it("skips a position that is on an atom rather than a triple", async () => {
@@ -308,13 +309,20 @@ describe("toolsInDomain", () => {
                     term_id: "0xours",
                     subject: {term_id: "0xaa", value: {thing: {url: "https://x/ours"}}},
                     object: {data: "payment"},
-                    term: {vaults: [{position_count: 1, total_shares: "1", positions: [{shares: "9"}]}]},
+                    term: {vaults: [{curve_id: "1", position_count: 1, total_shares: "1", positions: [{shares: "9"}]}]},
                 },
                 {
                     term_id: "0xtheirs",
                     subject: {term_id: "0xbb", value: {thing: {url: "https://x/theirs"}}},
                     object: {data: "payment"},
-                    term: {vaults: [{position_count: 1, total_shares: "1", positions: []}]},
+                    term: {vaults: [{curve_id: "1", position_count: 1, total_shares: "1", positions: []}]},
+                },
+                {
+                    // Backed only on another curve: a different market, so not ours on curve 1.
+                    term_id: "0xothercurve",
+                    subject: {term_id: "0xcc", value: {thing: {url: "https://x/other"}}},
+                    object: {data: "payment"},
+                    term: {vaults: [{curve_id: "2", position_count: 1, total_shares: "1", positions: [{shares: "9"}]}]},
                 },
             ],
         ]);
@@ -323,7 +331,7 @@ describe("toolsInDomain", () => {
             "payment",
             {tree},
         );
-        expect(tools.map((tool) => tool.attestorBacked)).toEqual([true, false]);
+        expect(tools.map((tool) => tool.attestorBacked)).toEqual([true, false, false]);
         expect(seen[0]?.["who"]).toBe("0xATTESTOR");
     });
 

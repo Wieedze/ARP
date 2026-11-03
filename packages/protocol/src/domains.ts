@@ -316,7 +316,7 @@ export async function readHierarchy(
                 pid: config.hierarchyPredicate,
                 limit: page,
                 offset,
-                ...(attestor === undefined ? {} : {who: attestor}),
+                ...(attestor === undefined ? {} : {who: attestor, curveId}),
             },
         );
 
@@ -427,9 +427,14 @@ export async function toolsInDomain(
                 : rawUrl.trim();
         const term = row["term"];
         const vaults = isRecord(term) && Array.isArray(term["vaults"]) ? term["vaults"] : [];
+        // One curve, like `positions` below: a position on another curve is a different market.
+        const curveId = curveOf(config);
         const attestorBacked = vaults.some(
             (vault) =>
-                isRecord(vault) && Array.isArray(vault["positions"]) && vault["positions"].length > 0,
+                isRecord(vault) &&
+                readBigInt(vault, "curve_id")?.toString() === curveId &&
+                Array.isArray(vault["positions"]) &&
+                vault["positions"].length > 0,
         );
         tools.push({
             atomId,
