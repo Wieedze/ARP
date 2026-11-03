@@ -39,11 +39,16 @@ export type SponsorLimits = {
     approvalGas: bigint;
     /**
      * Sent once, ever, to an address that is **not yet** an agent, for its own `register()` (ADR
-     * `0110`). `null` turns the route off. Anyone can ask, so {@link newAgentsPerDay} is the bound.
+     * `0110`). `null` turns the route off. Anyone can ask, so {@link newAgentsPerDay} and the budget
+     * are the bound.
      */
     mintGas: bigint | null;
-    /** How many addresses a UTC day may receive {@link mintGas}, all requesters together. */
-    newAgentsPerDay: number;
+    /**
+     * How many addresses a UTC day may receive {@link mintGas}, and how many identities the service
+     * may create, all requesters together. `null`, off: the user removed it on testnet 13579 on
+     * 2026-11-03 (ADR `0130`), where the {@link dailyBudget} is the bound.
+     */
+    newAgentsPerDay: number | null;
     /** Sponsored tool listings a UTC day for one signing address (ADR `0123`). */
     listingsPerAddressPerDay: number;
     /** Sponsored tool listings a UTC day from unsigned requests, all of them together (ADR `0123`). */
@@ -258,7 +263,7 @@ export function checkPublishLimits(
 
 /**
  * Whether `address` may receive its one-time mint gas: once ever per address, and at most
- * {@link SponsorLimits.newAgentsPerDay} addresses a UTC day, whoever asks.
+ * {@link SponsorLimits.newAgentsPerDay} addresses a UTC day when that is set, whoever asks.
  */
 export function checkMintGasLimits(
     records: readonly SponsorRecord[],
@@ -272,7 +277,7 @@ export function checkMintGasLimits(
     }
     const day = utcDay(now);
     const today = records.filter((r) => r.kind === "mint-gas" && utcDay(r.at) === day).length;
-    if (today >= limits.newAgentsPerDay) {
+    if (limits.newAgentsPerDay !== null && today >= limits.newAgentsPerDay) {
         return {ok: false, reason: `${limits.newAgentsPerDay} new agents a day, reached`};
     }
     return budget(records, limits.mintGas, now, limits) ?? {ok: true};
@@ -303,7 +308,7 @@ export function checkCreateLimits(
 
 /**
  * Whether one more agent's identity, costing `value`, fits: at most
- * {@link SponsorLimits.newAgentsPerDay} agents a UTC day, and the budget. `agentKey` is the agent's
+ * {@link SponsorLimits.newAgentsPerDay} agents a UTC day when that is set, and the budget. `agentKey` is the agent's
  * `<registry>:<id>`; an `identity` record's key is `agentKey#<n>`, one per term it created, so an
  * agent finishing a half-created identity is not counted twice.
  */
@@ -318,7 +323,11 @@ export function checkIdentityLimits(
             .filter((r) => r.kind === "identity" && utcDay(r.at) === day && r.key !== undefined)
             .map((r) => (r.key ?? "").split("#")[0]),
     );
-    if (!agents.has(agentKey) && agents.size >= limits.newAgentsPerDay) {
+    if (
+        limits.newAgentsPerDay !== null &&
+        !agents.has(agentKey) &&
+        agents.size >= limits.newAgentsPerDay
+    ) {
         return {ok: false, reason: `${limits.newAgentsPerDay} new identities a day, reached`};
     }
     return budget(records, value, now, limits) ?? {ok: true};

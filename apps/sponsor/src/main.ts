@@ -150,7 +150,11 @@ const limits: SponsorLimits = {
   // Optional: unset, `POST /mint-gas` answers 503 (ADR `0110`).
   mintGas:
     (process.env.SPONSOR_MINT_GAS_WEI ?? '').trim() === '' ? null : wei('SPONSOR_MINT_GAS_WEI'),
-  newAgentsPerDay: count('SPONSOR_NEW_AGENTS_PER_DAY', 20),
+  // Off unless set (ADR `0130`): on testnet the daily budget is the bound.
+  newAgentsPerDay:
+    (process.env.SPONSOR_NEW_AGENTS_PER_DAY ?? '').trim() === ''
+      ? null
+      : count('SPONSOR_NEW_AGENTS_PER_DAY', 1),
   // ADR `0123`: a signing address's own limit, and the shared cap for unsigned listings.
   listingsPerAddressPerDay: count('SPONSOR_LISTINGS_PER_ADDRESS_PER_DAY', 5),
   anonymousListingsPerDay: count('SPONSOR_ANONYMOUS_LISTINGS_PER_DAY', 20),
@@ -392,7 +396,7 @@ export async function main(): Promise<void> {
   process.stderr.write(`  budget     ${limits.dailyBudget} wei/day\n`);
   process.stderr.write(`  withdrawal ${limits.withdrawalThresholdBps ?? 'unset'}\n`);
   process.stderr.write(
-    `  mint gas   ${limits.mintGas === null ? 'off' : `${limits.mintGas} wei`}, ${limits.newAgentsPerDay} new agents/day\n`,
+    `  mint gas   ${limits.mintGas === null ? 'off' : `${limits.mintGas} wei`}, ${limits.newAgentsPerDay === null ? 'no daily cap on new agents' : `${limits.newAgentsPerDay} new agents/day`}\n`,
   );
   process.stderr.write(
     `  identity   ${PIN_KEY === '' ? 'off (no INTUITION_PIN_API_KEY)' : 'on'}\n`,

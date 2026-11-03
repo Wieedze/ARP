@@ -543,6 +543,19 @@ describe("limits", () => {
         expect(spentOnDay([deposit(), deposit({at: at - DAY})], at)).toBe(MILLI);
     });
 
+    it("counts no new agent a day when that cap is off", () => {
+        const off = {...limits, newAgentsPerDay: null};
+        const mints = [0, 1, 2].map((n) => ({
+            kind: "mint-gas" as const,
+            subject: getAddress(`0x${(n + 1).toString(16).padStart(40, "0")}`),
+            value: 1n,
+            at: at + 1,
+        }));
+        expect(
+            checkMintGasLimits(mints, {address: CALLEE.address, now: at + 2, limits: off}).ok,
+        ).toBe(true);
+    });
+
     it("counts no deposit per agent when the cap is off", () => {
         const off = {...limits, depositsPerAgentPerDay: null};
         const many = [deposit(), deposit(), deposit()];

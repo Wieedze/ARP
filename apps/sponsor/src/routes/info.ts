@@ -18,7 +18,7 @@ export function info(ctx: SponsorContext): Record<string, unknown> {
       dailyBudgetWei: limits.dailyBudget,
       approvalGasWei: limits.approvalGas,
       mintGasWei: limits.mintGas ?? 'off',
-      newAgentsPerDay: limits.newAgentsPerDay,
+      newAgentsPerDay: limits.newAgentsPerDay ?? 'off',
       listingsPerAddressPerDay: limits.listingsPerAddressPerDay,
       anonymousListingsPerDay: limits.anonymousListingsPerDay,
       listingsPerDay: limits.listingsPerDay,
