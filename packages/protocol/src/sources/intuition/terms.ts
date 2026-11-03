@@ -88,7 +88,7 @@ export const COMPATIBLE_WITH =
  * second for testnet writes. Measured 2026-10-28 on testnet 13579 (`scripts/seed/seed-domain-tree.ts`
  * header): this one carries 52,781 edges there and `0x6de69cc0…` 311, so ARP writes this one on
  * both chains. The testnet constant and `hasTagForWriting(chainId)`, which had no callers, were
- * deleted in task 59 (ADR `0115`): a chain literal outside `src/arp/`.
+ * deleted in task 60 (ADR `0119`): a chain literal outside `src/arp/`.
  */
 export const HAS_TAG =
     "0x7ec36d201c842dc787b45cb5bb753bea4cf849be3908fb1b0a7d067c3c3cc1f5" as const;

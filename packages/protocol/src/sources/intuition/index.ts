@@ -56,7 +56,7 @@ export const INTUITION_TESTNET_GRAPHQL = "https://testnet.intuition.sh/v1/graphq
  * that also writes should pass the value it read from chain, so the market it
  * renders and the vault it deposits into are the same one. This is the only
  * copy in the package: every read defaults to it, every write reads the chain
- * (ADR `0115`).
+ * (ADR `0119`).
  */
 export const DEFAULT_CURVE_ID = "1";
 

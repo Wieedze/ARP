@@ -41,7 +41,7 @@
  *  testnet 13579, 2026-10-28: `0x7ec36d20…` carries **52,781** edges there and `0x6de69cc0…`
  *  carries **311**. The guide's testnet recommendation holds 0.6% of that chain's `has tag` edges,
  *  so following it would write where almost nothing reads. `hasTagForWriting` had no callers, so
- *  nothing was written the wrong way; it was deleted in task 59 (ADR `0115`).
+ *  nothing was written the wrong way; it was deleted in task 60 (ADR `0119`).
  *
  *  ## `assets` is `cost + minDeposit`
  *
