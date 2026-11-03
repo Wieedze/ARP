@@ -1,6 +1,8 @@
 # Task 27 — A pass over the prose: slop, redundancy, over-explanation
 
-> **Status: STEPS 1-3 DONE 2026-10-27 (`dc3ef0b`), STEP 1 RE-RUN 2026-11-03 against the positioning (below); STEPS 4-6 NOT DONE.** Recorded 2026-10-20 at
+> **Status: DONE 2026-11-03.** Steps 1-3 2026-10-27 (`dc3ef0b`); step 1 re-run and steps 4-5
+> 2026-11-03 against the positioning (below). **Step 6 dropped by the user** the same day: ADRs and
+> post-mortems are written as the work happens, so there is nothing to review after. Recorded 2026-10-20 at
 > the user's request, to be run after the connector and the tools page.
 > Scope: every word a human or a third party reads. Not the code.
 >
@@ -16,14 +18,7 @@
 >    apologetic and marketing patterns. `app/README.md` was still the Vite template and is now
 >    real (`docs/tasks/28` item 22).
 >
-> **Not done**, and not claimed: steps **4** (`docs/` — 16 files, 5,967 lines), **5**
-> (`.claude/rules/` — two sentences cut, the rest untouched) and **6** (31 task files, 65 ADRs,
-> 19 post-mortems). Two targeted cuts landed in 4 and 5 — `docs/09:47` and `claims.md:88` — and
-> that is all.
->
-> The remaining work is large and low-risk, and splitting it is deliberate: the gate below asks
-> that a reader who did not write a file can say which sentence matters, and that is a judgement
-> made per file, not a sweep.
+> Steps 4 and 5 are recorded below, under "The reference". Step 6 is dropped (status line).
 
 ## The reference: the positioning, not the prose alone
 
@@ -167,6 +162,9 @@ Front-facing first, because those are read by people who did not write them:
 
 Every file in the order above is shorter, and a reader who did not write it can say which sentence in
 each section is the one that matters. No figure loses its script. No retraction loses its strike.
+
+**Amended 2026-11-03:** step 6 is out of the gate (user). Dated historical files in `docs/` meet it
+by a header saying what drifted rather than by a line-by-line cut, since their body is the record.
 
 ## Which tier of the evidence ladder does this serve?
 
