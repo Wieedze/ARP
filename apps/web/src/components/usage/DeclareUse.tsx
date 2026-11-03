@@ -125,11 +125,8 @@ export function DeclareUse({
     }
 
     if (chain.isMainnet) {
-        // **A status line, not a headline, and that is the second version of this branch.** The
-        // first gave the refusal an `h2` at `type-face text-[20px]` at the top of the column — so
-        // on mainnet, then the default chain, the loudest thing on every atom page was a feature announcing that
-        // it does not work, 218px above the evidence the page exists to show. Measured, and
-        // screenshotted, by the reviewer.
+        // A status line, not a headline: the refusal must not be the loudest thing on the page,
+        // above the evidence the page exists to show.
         //
         // Said before the form rather than after a click, because a reader who fills a field and
         // connects a wallet to learn it was pointless has been wasted.

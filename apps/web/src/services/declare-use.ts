@@ -197,9 +197,8 @@ export async function planUseDeclaration(params: {
     // authorised** — which that rule is explicit is not the same as forbidden, and it says to read
     // the ADR before widening it. Widening it is the user's decision, not this module's.
     //
-    // It matters because `lib/chain-choice.ts` defaults to **mainnet**, where this write costs
-    // 0.11 TRUST of which 0.1 never comes back. Shipping it open by default would spend real money
-    // under an authorisation nobody wrote. Deleting this guard plus one ADR turns it on.
+    // On mainnet this write costs 0.11 TRUST of which 0.1 never comes back, and the toggle is one
+    // click away from the testnet default (ADR `0105`). Deleting this guard plus one ADR turns it on.
     if (params.chain.isMainnet) {
         throw new DeclareUseGuardError(
             "mainnet-not-authorised",
