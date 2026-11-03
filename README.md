@@ -183,11 +183,13 @@ that can sign a transaction and make an HTTP request
 | Contract                      | Address                                                                                                                                       |
 | ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
 | `IdentityRegistry` (ERC-8004) | [`0xC165A2AD2E540A4069E02834009161E2b4490d5A`](https://testnet.explorer.intuition.systems/address/0xC165A2AD2E540A4069E02834009161E2b4490d5A) |
-| `TrustStakeCapEnforcer`       | [`0x7BB56819E9a413B8B4668C5cAF5C494c41dC0F8E`](https://testnet.explorer.intuition.systems/address/0x7BB56819E9a413B8B4668C5cAF5C494c41dC0F8E) |
+| `TrustStakeCapEnforcer`       | [`0x19e07280F1483Aa9aCDb1a7F8C61bfd20c7879Bc`](https://testnet.explorer.intuition.systems/address/0x19e07280F1483Aa9aCDb1a7F8C61bfd20c7879Bc) |
 
-That `TrustStakeCapEnforcer` runs the code from before ADR `0118`, which keyed its state by
-delegation hash alone and so let anyone fill a delegation's counter; the fix is in `src/` and a
-testnet redeploy replaces it (`contracts/SECURITY_REVIEW.md`, "Task 59"). `ReceiptEnforcer` is not
+That `TrustStakeCapEnforcer` was deployed 2026-11-03 with ADR `0118`'s fix: its state is keyed by
+caller and delegation, so nobody can fill another delegation's counter. The copy it replaces,
+`0x7BB56819E9a413B8B4668C5cAF5C494c41dC0F8E`, keyed by delegation hash alone and is kept in
+`data/deployments/13579.json` as `trustStakeCapEnforcerV1`; delegations signed against it still
+point at it (`contracts/SECURITY_REVIEW.md`, "Task 59"). `ReceiptEnforcer` is not
 deployed. `ModuleRegistry` and `DomainScopeEnforcer` were removed from `src/` in `59ac83a`; their
 addresses stay in `data/deployments/13579.json` as the record.
 
