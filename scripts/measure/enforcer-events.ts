@@ -3,8 +3,13 @@ import type { JsonRpcReply } from '../helpers/shapes.js';
  *
  *  Step 4 of `docs/tasks/22` — the one evidence source in this project that is both tier 4 (proven) and
  *  already deployed. `TrustStakeCapEnforcer` emits `StakeCapChecked` on every pass of its
- *  `beforeHook`, and that hook is unreachable without an actual delegation redemption, so one log
- *  is a fact about a redemption that happened. No self-report, no counterparty.
+ *  `beforeHook`. **That hook is public** — anyone can call it with any delegation hash and any
+ *  terms, so a log is a fact about a redemption only when the caller was the DelegationManager.
+ *  The first version of this comment said the hook was unreachable without a redemption; it was
+ *  not (ADR `0118`). The event from ADR `0118` on carries the caller as its first indexed topic,
+ *  and this script counts the DelegationManager's logs apart from everyone else's. The v1 event
+ *  (the mainnet copy, and testnet's first deployment) names no caller, so its count is an upper
+ *  bound on redemptions, not a count of them.
  *
  *      bun run scripts/measure/enforcer-events.ts
  *
@@ -16,7 +21,10 @@ import type { JsonRpcReply } from '../helpers/shapes.js';
  */
 import { readFileSync } from 'node:fs';
 
-const STAKE_CAP_CHECKED = '0x0ccea75bd08495eda9f6cfa676f71860054e889fb1c28333351ad8303fedc1f1';
+/** `StakeCapChecked(bytes32,uint256,uint256)` — v1, names no caller. */
+const STAKE_CAP_CHECKED_V1 = '0x0ccea75bd08495eda9f6cfa676f71860054e889fb1c28333351ad8303fedc1f1';
+/** `StakeCapChecked(address,bytes32,uint256,uint256)` — ADR `0118`, caller first. */
+const STAKE_CAP_CHECKED_V2 = '0x16a2d87039037e58cde7103f8edc0a7a1e3c368a84d8a3dce41b153136490989';
 
 /**
  * The two deployment files record the same two contracts in **different shapes**: 1155 nests them
@@ -30,7 +38,13 @@ type Log = { topics: string[]; transactionHash: string; blockNumber: string };
 type Deployment = {
   chain: { chainId: number; rpcUrl: string; name: string };
   arp?: Record<string, unknown> & { enforcers?: Record<string, Enforcer> };
+  metamaskDelegationFramework?: { delegationManager?: string };
 };
+
+/** A topic is a 32-byte word; an address sits in its low 20 bytes. */
+function topicAddress(topic: string | undefined): string {
+  return `0x${(topic ?? '').slice(-40)}`.toLowerCase();
+}
 
 function enforcersOf(file: Deployment): [string, Enforcer][] {
   const arp = file.arp ?? {};
@@ -60,6 +74,7 @@ for (const chainId of [1155, 13579]) {
   const file = JSON.parse(readFileSync(`data/deployments/${chainId}.json`, 'utf8')) as Deployment;
   const url = file.chain.rpcUrl;
   const enforcers = enforcersOf(file);
+  const manager = (file.metamaskDelegationFramework?.delegationManager ?? '').toLowerCase();
 
   const headHex = (await rpc(url, 'eth_blockNumber', [])) as string;
   const head = BigInt(headHex);
@@ -74,7 +89,7 @@ for (const chainId of [1155, 13579]) {
       const page = (await rpc(url, 'eth_getLogs', [
         {
           address: record.address,
-          topics: [STAKE_CAP_CHECKED],
+          topics: [[STAKE_CAP_CHECKED_V1, STAKE_CAP_CHECKED_V2]],
           fromBlock: `0x${from.toString(16)}`,
           toBlock: `0x${to.toString(16)}`,
         },
@@ -89,12 +104,23 @@ for (const chainId of [1155, 13579]) {
     );
     if (logs.length === 0) continue;
 
+    const v2 = logs.filter((l) => l.topics[0] === STAKE_CAP_CHECKED_V2);
+    const viaManager = v2.filter((l) => topicAddress(l.topics[1]) === manager);
+    if (v2.length > 0) {
+      console.log(
+        `      v2 event: ${viaManager.length} from the DelegationManager, ` +
+          `${v2.length - viaManager.length} from direct callers (not redemptions)`,
+      );
+    }
+
     // **A log count is not a redemption count, and neither is an adoption count.** One transaction
     // can emit more than one, one delegation can be redeemed many times, and one sender can hold
     // every delegation there is. Measured 2026-10-27 on 13579: 122 logs, 108 transactions, 9
     // delegations, 3 senders — of which 93 transactions are ARP's own rig agent
     // (`0x906f3A52…`, ADR `0047`). Reporting the 122 alone would read as adoption.
-    const delegations = new Set(logs.map((l) => l.topics[1]));
+    const delegations = new Set(
+      logs.map((l) => (l.topics[0] === STAKE_CAP_CHECKED_V2 ? l.topics[2] : l.topics[1])),
+    );
     const txs = [...new Set(logs.map((l) => l.transactionHash))];
     const senders = new Map<string, number>();
     for (const hash of txs) {
@@ -112,7 +138,7 @@ for (const chainId of [1155, 13579]) {
 }
 
 console.log(
-  '\nA log here is a redemption that happened — the hook is unreachable without one, so this is the\n' +
-    'one tier-4 source already producing data. Read the sender column before calling any of it\n' +
-    'adoption: a guard rail ARP crosses itself proves the machinery, not the market.',
+  '\nA v2 log from the DelegationManager is a redemption that happened. A v1 log may not be: the\n' +
+    'hook is public, and v1 does not say who called it. Read the sender column before calling any\n' +
+    'of it adoption: a guard rail ARP crosses itself proves the machinery, not the market.',
 );

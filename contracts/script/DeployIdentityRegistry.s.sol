@@ -6,24 +6,29 @@ import {Script, console2} from "forge-std/Script.sol";
 import {IdentityRegistry} from "../src/erc8004/IdentityRegistry.sol";
 
 /// @title  DeployIdentityRegistry
-/// @notice Deploys the ARP-vendored ERC-8004 `IdentityRegistry` to the
-///         configured RPC. The vendored source is a port of
-///         ChaosChain/trustless-agents-erc-ri to OpenZeppelin v5 — see
-///         ADR `0010-scope-reanchor-...` for the rationale (no canonical
-///         deployment exists on Intuition Testnet).
-/// @dev    Run with:
-///         forge script script/DeployIdentityRegistry.s.sol \
-///             --rpc-url $INTUITION_TESTNET_RPC_URL \
-///             --private-key $PRIVATE_KEY --broadcast
-///         Omit `--broadcast` for a dry-run simulation.
+/// @notice Deploys the ARP-vendored ERC-8004 `IdentityRegistry`. The vendored source is a port of
+///         ChaosChain/trustless-agents-erc-ri to OpenZeppelin v5 — see ADR `0010` for the rationale
+///         (no canonical deployment exists on Intuition Testnet).
+/// @dev    Run it through `scripts/deploy/deploy.sh --identity-registry`. Directly:
+///         forge script script/DeployIdentityRegistry.s.sol --rpc-url <rpc> --private-key $PRIVATE_KEY
+///         and add `--broadcast` to send.
 ///
-///         Pragma `^0.8.20` matches the vendored IdentityRegistry. The
-///         repo's other deploy scripts (`DeployRegistry.s.sol` at ^0.8.24
-///         and `DeployEnforcers.s.sol` at 0.8.23 strict) cover the other
-///         pragma islands; `auto_detect_solc = true` in foundry.toml
-///         resolves the multi-version graph at compile time.
+///         **Testnet 13579 only, with no override.** No ARP registry is on mainnet and none is
+///         planned (ADR `0025`); on mainnet the identity is the canonical ERC-8004 registry.
+///
+///         Pragma `^0.8.20` matches the vendored IdentityRegistry; `DeployEnforcers.s.sol` is
+///         `0.8.23` strict, and `auto_detect_solc = true` in foundry.toml compiles both.
 contract DeployIdentityRegistry is Script {
+    /// @notice The chain is not testnet 13579.
+    error WrongChain(uint256 chainId);
+
+    uint256 internal constant TESTNET = 13_579;
+
+    /// @notice Deploy `IdentityRegistry` from `PRIVATE_KEY`.
+    /// @return registry The new deployment.
     function run() external returns (IdentityRegistry registry) {
+        if (block.chainid != TESTNET) revert WrongChain(block.chainid);
+
         uint256 deployerKey = vm.envUint("PRIVATE_KEY");
         address deployer = vm.addr(deployerKey);
 

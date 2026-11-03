@@ -75,7 +75,7 @@
       "hasEndpoint": "0xa4488686eb3702e4e972a971ea008d6832a7f935b942366f1091566d1993a5f1",
       "inContextOf": "0x61a88b9c372c0d164d2caf66947b67ed0fcb4c457178a271b6b3dc39fb1f8862"
     },
-    "_note": "Populated by scripts/deploy/deploy.sh. Addresses are EOA-nonce-derived (CREATE), so re-running with a new nonce will produce different addresses. To redeploy, increment the nonce assumption \u2014 there is no on-chain idempotency guard.",
+    "_note": "Written by scripts/deploy/deploy.sh --broadcast. Addresses are EOA-nonce-derived (CREATE). deploy.sh skips a contract whose address here already has code unless --force, and on a redeploy keeps the replaced address under <name>V<n>. ModuleRegistry and DomainScopeEnforcer were removed from src/ in 59ac83a; their entries are the record.",
     "deployer": "0xE596096F4176b682E300d73963e7B04B383C1AA1",
     "deployedAt": "2026-06-01T13:30:00Z",
     "moduleRegistry": "0xc9a2f66775828017e984E8be077fA2d17e0A41F4",
