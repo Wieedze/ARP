@@ -65,7 +65,8 @@ export const TOOL_THING_DESCRIPTION =
  *
  * The last three rules were added in task 60, after checking that no URL in `data/catalogue/`
  * (including `registered-13579.json`) has a `.git` path, a trailing-dot host or an explicit
- * `:443`/`:80`, so no atom ARP has derived changes id.
+ * `:443`/`:80`, and that all 744 tool Things on testnet 13579 re-derive unchanged (read 2026-11-03),
+so no atom ARP has derived changes id. Applying it twice gives the same URL as applying it once.
  *
  * The path's **case is kept**. Most servers are case-sensitive there, and `github.com/Crytic` vs
  * `github.com/crytic` are the same page only because GitHub chooses to be lenient — not a rule to
@@ -89,8 +90,10 @@ export function normaliseToolUrl(input: string): string {
     }
     if (url.hostname.length === 0) throw new InvalidToolUrlError(input, "no host");
 
-    const host = url.hostname.replace(/\.+$/, "").replace(/^www\./, "");
-    const path = url.pathname === "/" ? "" : url.pathname.replace(/\/+$/, "").replace(/\.git$/, "");
+    // Each strip repeats until nothing changes, so the function is idempotent: a stored, already
+    // normalised URL derives the same atom again (`/x/.git` once stripped `.git` and left `/x/`).
+    const host = url.hostname.replace(/\.+$/, "").replace(/^(?:www\.)+/, "");
+    const path = url.pathname.replace(/(?:\.git|\/)+$/, "");
 
     const params = [...new URLSearchParams(url.search).entries()].sort(([a], [b]) =>
         a < b ? -1 : a > b ? 1 : 0,

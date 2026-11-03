@@ -38,6 +38,22 @@ describe("normaliseToolUrl", () => {
         expect(ids.size).toBe(1);
     });
 
+    it("is idempotent, so a stored URL derives the same atom again", () => {
+        const inputs = [
+            ...SPELLINGS.map(([input]) => input),
+            "https://h.com/x/.git",
+            "https://h.com/.git",
+            "https://h.com/x/y.git.git",
+            "https://h.com/x//.git",
+            "https://www.www.h.com/x",
+            "https://h.com/a?b=2&a=1",
+        ];
+        for (const input of inputs) {
+            const once = normaliseToolUrl(input);
+            expect(normaliseToolUrl(once)).toBe(once);
+        }
+    });
+
     it("sorts query keys, because order is not identity", () => {
         expect(normaliseToolUrl("https://x.org/a?b=2&a=1")).toBe("https://x.org/a?a=1&b=2");
         expect(toolAtomUri("https://x.org/a?b=2&a=1")).toBe(toolAtomUri("https://x.org/a?a=1&b=2"));
