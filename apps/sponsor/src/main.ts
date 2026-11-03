@@ -52,7 +52,7 @@ import deployments from '../../../data/deployments/13579.json';
 import { assertSponsorChain, readKeyFile } from './key-file.ts';
 import { SponsorLedger } from './ledger.ts';
 import { intuitionPinner } from './pin.ts';
-import { addressList, createSponsor, type SponsorWallet } from './service.ts';
+import { addressList, createSponsor, type SendOutcome, type SponsorWallet } from './service.ts';
 
 function fail(message: string): never {
   console.error(message);
@@ -146,9 +146,23 @@ try {
 const account = privateKeyToAccount(readKeyFile(required('SPONSOR_KEY_FILE')));
 const walletClient = createWalletClient({ account, chain: intuitionTestnet, transport: http(RPC) });
 
-async function mined(hash: Hex) {
-  const receipt = await publicClient.waitForTransactionReceipt({ hash });
-  return { hash, status: receipt.status };
+/**
+ * Waits for a sent transaction, bounded. Every send runs inside the service's one queue, so an
+ * unbounded wait on a transaction that never lands stopped every route (ADR `0116`). Past the
+ * bound, or when the RPC fails while it waits, the outcome is `unconfirmed`: the hash is kept, the
+ * spend stays pending in the ledger, and the queue moves on.
+ */
+const RECEIPT_TIMEOUT_MS = 120_000;
+async function mined(hash: Hex): Promise<SendOutcome> {
+  try {
+    const receipt = await publicClient.waitForTransactionReceipt({
+      hash,
+      timeout: RECEIPT_TIMEOUT_MS,
+    });
+    return { hash, status: receipt.status };
+  } catch {
+    return { hash, status: 'unconfirmed' };
+  }
 }
 
 const wallet: SponsorWallet = {

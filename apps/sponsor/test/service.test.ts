@@ -92,6 +92,8 @@ type World = {
   sharesThrowAfterSend: boolean;
   /** Sends that come back reverted. */
   revert: boolean;
+  /** Sends broadcast whose receipt did not come within the wait. */
+  unconfirmed: boolean;
 };
 
 function world(): World {
@@ -105,6 +107,7 @@ function world(): World {
     sendThrows: false,
     sharesThrowAfterSend: false,
     revert: false,
+    unconfirmed: false,
   };
 }
 
@@ -127,12 +130,18 @@ function fakeWallet(w: World): SponsorWallet {
         w.terms.add(`created:${w.sent.length}`);
       }
       if (w.sendThrows) throw new Error('timed out waiting for the receipt');
-      return { hash: hash(), status: w.revert ? 'reverted' : 'success' };
+      return {
+        hash: hash(),
+        status: w.unconfirmed ? 'unconfirmed' : w.revert ? 'reverted' : 'success',
+      };
     },
     sendGas: async (to, value) => {
       w.gas.push({ to, value });
       if (w.sendThrows) throw new Error('timed out waiting for the receipt');
-      return { hash: hash(), status: w.revert ? 'reverted' : 'success' };
+      return {
+        hash: hash(),
+        status: w.unconfirmed ? 'unconfirmed' : w.revert ? 'reverted' : 'success',
+      };
     },
   };
 }
@@ -1354,5 +1363,43 @@ describe('a request from somewhere other than this machine', () => {
     );
     expect(page.status).toBe(403);
     expect(w.gas).toHaveLength(0);
+  });
+});
+
+describe('a send whose receipt does not come in time', () => {
+  test('answers 504, keeps the spend pending with its hash, and frees the queue', async () => {
+    const w = world();
+    w.unconfirmed = true;
+    const ledger = new SponsorLedger(null);
+    const service = sponsor(w, { ledger });
+    const res = await call(service, '/gas', { agentRegistry: REGISTRY, agentId: '7' });
+    expect(res.status).toBe(504);
+    const key = `gas:${AGENT.address.toLowerCase()}`;
+    expect(ledger.pending().map((r) => r.key)).toEqual([key]);
+    expect(ledger.hashOf('gas', key)).toBe(res.body.pending as Hex);
+    // Still spent: the agent does not get its gas a second time while the first may land.
+    w.unconfirmed = false;
+    expect((await call(service, '/gas', { agentRegistry: REGISTRY, agentId: '7' })).status).toBe(
+      429,
+    );
+    // And the queue moved on: another agent's request is served.
+    expect((await call(service, '/gas', { agentRegistry: REGISTRY, agentId: '8' })).status).toBe(
+      200,
+    );
+  });
+
+  test('the hash of a pending send survives a restart', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'sponsor-ledger-'));
+    try {
+      const path = join(dir, 'ledger.jsonl');
+      const first = new SponsorLedger(path);
+      first.reserve({ kind: 'gas', subject: AGENT.address, value: 1n, at: NOW, key: 'g' });
+      first.noteSent('gas', 'g', PAYMENT);
+      const second = new SponsorLedger(path);
+      expect(second.pending().map((r) => r.key)).toEqual(['g']);
+      expect(second.hashOf('gas', 'g')).toBe(PAYMENT);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 });

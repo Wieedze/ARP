@@ -37,6 +37,9 @@ type Row = {
   shares?: string;
 };
 
+/** The hash of a reserved row's transaction, sent and not yet confirmed. It stays pending. */
+type SentNote = { sent: string; kind: SponsorRecord['kind']; hash: string };
+
 /** The settlement of a reserved row, appended as its own line so the file stays append-only. */
 type Settlement = {
   settle: string;
@@ -84,15 +87,16 @@ export class SponsorLedger {
     if (path === null || !existsSync(path)) return;
     for (const line of readFileSync(path, 'utf8').split('\n')) {
       if (line.trim().length === 0) continue;
-      let parsed: Row | Settlement;
+      let parsed: Row | Settlement | SentNote;
       try {
-        parsed = JSON.parse(line) as Row | Settlement; // This service's own format, written below.
+        parsed = JSON.parse(line) as Row | Settlement | SentNote; // This service's own format, written below.
       } catch {
         // A half-written last line from a crash. A reservation is written before its send, so the
         // line lost here is a settlement at worst, and its reservation still counts as spent.
         continue;
       }
       if ('settle' in parsed) this.applySettlement(parsed);
+      else if ('sent' in parsed) this.applySent(parsed);
       else this.entries.push({ record: fromRow(parsed), status: parsed.status ?? 'success' });
     }
   }
@@ -105,6 +109,21 @@ export class SponsorLedger {
   /** Reservations whose outcome is unknown, for the operator to reconcile against the chain. */
   pending(): readonly SponsorRecord[] {
     return this.entries.filter((e) => e.status === 'pending').map((e) => e.record);
+  }
+
+  /** The transaction hash recorded for a reserved row, if one was. */
+  hashOf(kind: SponsorRecord['kind'], key: string): Hex | undefined {
+    return this.entries.find((e) => e.record.kind === kind && e.record.key === key)?.hash;
+  }
+
+  /**
+   * A reserved spend's transaction was broadcast and its receipt did not come in time. It stays
+   * pending, so it still counts as spent; the hash is what the operator reconciles it with.
+   */
+  noteSent(kind: SponsorRecord['kind'], key: string, hash: Hex): void {
+    const note: SentNote = { sent: key, kind, hash };
+    if (!this.applySent(note)) throw new Error(`no pending ${kind} ${key} to note`);
+    this.write(note);
   }
 
   /** Whether `key` is spent: reserved, pending or settled, and not reverted. */
@@ -172,7 +191,16 @@ export class SponsorLedger {
     return true;
   }
 
-  private write(line: Row | Settlement): void {
+  private applySent(note: SentNote): boolean {
+    const entry = this.entries.find(
+      (e) => e.status === 'pending' && e.record.kind === note.kind && e.record.key === note.sent,
+    );
+    if (entry === undefined) return false;
+    entry.hash = note.hash as Hex; // Written from a `Hex`.
+    return true;
+  }
+
+  private write(line: Row | Settlement | SentNote): void {
     if (this.path === null) return;
     mkdirSync(dirname(this.path), { recursive: true });
     appendFileSync(this.path, `${JSON.stringify(line)}\n`);

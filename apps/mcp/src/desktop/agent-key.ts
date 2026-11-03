@@ -28,6 +28,9 @@ import { intuitionTestnet } from '@arp-protocol/core';
 
 export const DESKTOP_CHAIN_ID = 13579;
 
+/** How long a sent transaction is waited for before the tool call gives up on it. */
+const RECEIPT_TIMEOUT_MS = 120_000;
+
 /** Where the key lives: `ARP_HOME` or `~/.arp`, never the working directory (Claude Desktop's cwd is system32). */
 export function agentKeyPath(home: string = homedir()): string {
   return join(arpHome(process.env, home), 'agent-key');
@@ -82,7 +85,15 @@ export function agentSender(account: PrivateKeyAccount, rpcUrl: string): AgentSe
       const why = refusal(call, permitted);
       if (why !== null) throw new Error(`refused: ${why}`);
       const hash = await wallet.sendTransaction({ to: call.to, data: call.data, value: 0n });
-      const receipt = await client.waitForTransactionReceipt({ hash });
+      // Bounded: a tool call that waits forever on a transaction that never lands is a hung session.
+      const receipt = await client
+        .waitForTransactionReceipt({ hash, timeout: RECEIPT_TIMEOUT_MS })
+        .catch((error: unknown) => {
+          throw new Error(
+            `transaction ${hash} was sent and not confirmed within ${RECEIPT_TIMEOUT_MS / 1000} s; ` +
+              `check it on the explorer before trying again (${error instanceof Error ? error.name : 'error'})`,
+          );
+        });
       if (receipt.status !== 'success') throw new Error(`transaction ${hash} reverted`);
       return receipt;
     },

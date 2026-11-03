@@ -84,6 +84,7 @@ import {
   type SignedSponsorRequest,
   type SponsorLimits,
   type SponsorProof,
+  type SponsorRecord,
   type StrictIdentityAtom,
   type TypedDataVerifier,
 } from '@arp-protocol/core';
@@ -93,15 +94,22 @@ import { getAddress, isAddress, isHex, type Address, type Hex } from 'viem';
 import { SPONSOR_CHAIN_ID } from './key-file.ts';
 import type { SponsorLedger } from './ledger.ts';
 
+/**
+ * What a send came to. `unconfirmed` is a transaction that was broadcast and whose receipt did not
+ * arrive within the wait (`main.ts`, `mined`): it may still land, so it stays spent and its hash is
+ * recorded for the operator, and the queue moves on rather than waiting on it forever.
+ */
+export type SendOutcome = { hash: Hex; status: 'success' | 'reverted' | 'unconfirmed' };
+
 /** The one key ARP holds here, behind three methods. `main.ts` builds it from viem. */
 export type SponsorWallet = {
   address: Address;
   /** `eth_call` the call from this address. A deposit the agent has not approved fails here. */
   simulate(call: PreparedCall): Promise<{ ok: true } | { ok: false; reason: string }>;
-  /** Send one call and wait for it to be mined. */
-  send(call: PreparedCall): Promise<{ hash: Hex; status: 'success' | 'reverted' }>;
+  /** Send one call and wait, for a bounded time, for it to be mined. */
+  send(call: PreparedCall): Promise<SendOutcome>;
   /** A plain value transfer, used for the approval gas and for nothing else. */
-  sendGas(to: Address, value: bigint): Promise<{ hash: Hex; status: 'success' | 'reverted' }>;
+  sendGas(to: Address, value: bigint): Promise<SendOutcome>;
 };
 
 /** Who holds an ERC-8004 token, or `null` when it does not exist, and the `agentWallet` it set. */
@@ -219,6 +227,22 @@ export function createSponsor(options: SponsorOptions): {
     }
   }
 
+  /**
+   * A send that was broadcast and not confirmed in time: its reservation stays pending, so it
+   * counts as spent, with the hash beside it for the operator to reconcile (ADR `0116`).
+   */
+  function unconfirmed(kind: SponsorRecord['kind'], key: string, hash: Hex, extra: object = {}) {
+    ledger.noteSent(kind, key, hash);
+    return json(
+      {
+        error: `transaction ${hash} was sent and not confirmed in time; it is recorded as pending`,
+        pending: hash,
+        ...extra,
+      },
+      504,
+    );
+  }
+
   /** The allow-list again, at the last step before a key is used. */
   async function sendToMultiVault(call: PreparedCall) {
     assertMultiVault(call);
@@ -320,6 +344,7 @@ export function createSponsor(options: SponsorOptions): {
       });
       // A throw from here on leaves the reservation pending, which `checkGasLimits` counts as sent.
       const sent = await wallet.sendGas(agent.owner, limits.approvalGas);
+      if (sent.status === 'unconfirmed') return unconfirmed('gas', key, sent.hash);
       if (sent.status !== 'success') {
         ledger.settle('gas', key, { status: 'reverted', hash: sent.hash });
         return json({ error: `gas transfer ${sent.hash} reverted` }, 502);
@@ -543,6 +568,7 @@ export function createSponsor(options: SponsorOptions): {
           termId: request.termId,
         });
         const sent = await sendToMultiVault(create);
+        if (sent.status === 'unconfirmed') return unconfirmed('create', key, sent.hash);
         if (sent.status !== 'success') {
           ledger.settle('create', key, { status: 'reverted', hash: sent.hash });
           return json({ error: `creating ${request.termId}: ${sent.hash} reverted` }, 502);
@@ -591,6 +617,7 @@ export function createSponsor(options: SponsorOptions): {
       });
       // From here a throw leaves the proof spent: the deposit may have landed.
       const sent = await sendToMultiVault(plan.call);
+      if (sent.status === 'unconfirmed') return unconfirmed('deposit', proven.id, sent.hash);
       if (sent.status !== 'success') {
         ledger.settle('deposit', proven.id, { status: 'reverted', hash: sent.hash });
         return json({ error: `deposit ${sent.hash} reverted` }, 502);
@@ -662,6 +689,7 @@ export function createSponsor(options: SponsorOptions): {
       const key = nonceKey;
       ledger.reserve({ kind: 'mint-gas', subject: address, value, at: now(), key });
       const sent = await wallet.sendGas(address, value);
+      if (sent.status === 'unconfirmed') return unconfirmed('mint-gas', key, sent.hash);
       if (sent.status !== 'success') {
         ledger.settle('mint-gas', key, { status: 'reverted', hash: sent.hash });
         return json({ error: `gas transfer ${sent.hash} reverted` }, 502);
@@ -760,6 +788,8 @@ export function createSponsor(options: SponsorOptions): {
           key,
         });
         const result = await sendToMultiVault(call);
+        if (result.status === 'unconfirmed')
+          return unconfirmed('identity', key, result.hash, { sent });
         if (result.status !== 'success') {
           ledger.settle('identity', key, { status: 'reverted', hash: result.hash });
           return json({ error: `${call.why}: ${result.hash} reverted`, sent }, 502);
@@ -832,11 +862,18 @@ export function createSponsor(options: SponsorOptions): {
       plan.calls.forEach(assertMultiVault);
       const sent: Hex[] = [];
       let spent = 0n;
+      let pending: Hex | null = null;
       try {
         for (const call of plan.calls) {
           // Counted before the send: a throw while it is awaited may still have spent it.
           spent += call.value;
           const result = await sendToMultiVault(call);
+          // Unconfirmed stays counted as spent, and stops the publication: the next call may
+          // depend on this one's term.
+          if (result.status === 'unconfirmed') {
+            pending = result.hash;
+            break;
+          }
           if (result.status !== 'success') {
             spent -= call.value;
             break;
@@ -854,6 +891,17 @@ export function createSponsor(options: SponsorOptions): {
             key: delegationHash(parsed),
           });
         }
+      }
+      if (pending !== null) {
+        return json(
+          {
+            error: `transaction ${pending} was sent and not confirmed in time; re-publishing resumes once it lands`,
+            pending,
+            sent,
+            documentUri,
+          },
+          504,
+        );
       }
       if (sent.length < plan.calls.length) {
         return json(
