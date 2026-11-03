@@ -35,7 +35,7 @@ left: their long passages carry decisions or amendment records.
 
 **Positive:**
 
-- 18 fewer lines read at the start of every task.
+- 13 fewer lines (376 → 363 over the three files, `wc -l`) read at the start of every task.
 
 **Negative:**
 
