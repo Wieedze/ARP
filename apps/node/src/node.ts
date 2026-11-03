@@ -44,7 +44,9 @@
  */
 import { serveFetch, stateFile } from '@arp-protocol/core/node';
 
-import { createPublicClient, formatEther, http, parseEther } from 'viem';
+import { createPublicClient, formatEther, http } from 'viem';
+
+import { minBudgetFrom, portFrom } from './env.ts';
 
 import { resolveNodeKey } from './node-key.ts';
 
@@ -61,8 +63,15 @@ import { chooseTunnel, clientAddress, startTunnel } from './tunnel.ts';
 
 export type { TaskContext, TaskHandler } from './task.ts';
 
-const PORT = Number(process.env.AGENT_NODE_PORT ?? 3100);
-const MIN_BUDGET = parseEther(process.env.AGENT_NODE_MIN_BUDGET ?? '0.001');
+let PORT: number;
+let MIN_BUDGET: bigint;
+try {
+  PORT = portFrom(process.env.AGENT_NODE_PORT, 3100);
+  MIN_BUDGET = minBudgetFrom(process.env.AGENT_NODE_MIN_BUDGET, '0.001');
+} catch (error) {
+  console.error(error instanceof Error ? error.message : String(error));
+  process.exit(1);
+}
 // Under `~/.arp/`, never the working directory: a node restarted elsewhere would read an empty
 // ledger and sign a second receipt for every payment it had already used (ADR `0116`).
 let LEDGER: string;

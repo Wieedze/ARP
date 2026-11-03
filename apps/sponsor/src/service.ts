@@ -978,6 +978,25 @@ export function createSponsor(options: SponsorOptions): {
   };
 }
 
+/**
+ * Exported for `main.ts`: the sponsored registries, each `eip155:<chainId>:<address>` on `chainId`,
+ * refused whole at start if one entry is not (ADR `0116`). Until then a bad entry surfaced as a
+ * `getAddress` throw inside a request, and a registry on another chain was never sponsorable.
+ */
+export function registryList(raw: string, chainId: number): string[] {
+  const entries = raw
+    .split(',')
+    .map((entry) => entry.trim())
+    .filter((entry) => entry !== '');
+  if (entries.length === 0) throw new Error('no registry given');
+  return entries.map((entry) => {
+    const match = REGISTRY.exec(entry);
+    if (match === null) throw new Error(`${entry} is not eip155:<chainId>:<address>`);
+    if (Number(match[1]) !== chainId) throw new Error(`${entry} is not on chain ${chainId}`);
+    return entry;
+  });
+}
+
 /** Exported for `main.ts`: an address list from configuration, refused whole if one entry is bad. */
 export function addressList(raw: string | undefined): Address[] {
   if (raw === undefined || raw.trim() === '') return [];

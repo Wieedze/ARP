@@ -52,7 +52,13 @@ import deployments from '../../../data/deployments/13579.json';
 import { assertSponsorChain, readKeyFile } from './key-file.ts';
 import { SponsorLedger } from './ledger.ts';
 import { intuitionPinner } from './pin.ts';
-import { addressList, createSponsor, type SendOutcome, type SponsorWallet } from './service.ts';
+import {
+  addressList,
+  createSponsor,
+  registryList,
+  type SendOutcome,
+  type SponsorWallet,
+} from './service.ts';
 
 function fail(message: string): never {
   console.error(message);
@@ -128,9 +134,12 @@ const limits: SponsorLimits = {
 // The predicate the declare path writes (`declare/plan.ts`) and every reader filters on. Not
 // configurable: a sponsored deposit on any other `uses` atom would be invisible to all of them.
 const usesPredicate: Hex = INTUITION_USES_TERM_ID;
-const registries = required('SPONSOR_REGISTRIES')
-  .split(',')
-  .map((entry) => entry.trim());
+let registries: string[];
+try {
+  registries = registryList(required('SPONSOR_REGISTRIES'), intuitionTestnet.id);
+} catch (error) {
+  fail(`SPONSOR_REGISTRIES: ${error instanceof Error ? error.message : String(error)}`);
+}
 let acceptedContentSigners: Address[];
 try {
   acceptedContentSigners = addressList(process.env.SPONSOR_CONTENT_SIGNERS);

@@ -37,6 +37,7 @@ import { SponsorLedger } from '../src/ledger.ts';
 import {
   addressList,
   createSponsor,
+  registryList,
   type PublishConfig,
   type SponsorWallet,
 } from '../src/service.ts';
@@ -1131,6 +1132,13 @@ describe('the key file and the chain', () => {
   test('refuses any chain but 13579', () => {
     expect(() => assertSponsorChain(13579)).not.toThrow();
     expect(() => assertSponsorChain(1155)).toThrow(/testnet 13579 only/);
+  });
+
+  test('parses the registry list and refuses it whole on one bad or foreign entry', () => {
+    expect(registryList(` ${REGISTRY} `, CHAIN)).toEqual([REGISTRY]);
+    expect(() => registryList(`${REGISTRY},0xabc`, CHAIN)).toThrow(/0xabc/);
+    expect(() => registryList(`eip155:1155:${REGISTRY_ADDRESS}`, CHAIN)).toThrow(/not on chain/);
+    expect(() => registryList(' , ', CHAIN)).toThrow(/no registry/);
   });
 
   test('parses an address list and refuses it whole on one bad entry', () => {
