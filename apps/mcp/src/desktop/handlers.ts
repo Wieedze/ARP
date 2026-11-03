@@ -4,8 +4,6 @@
  * The key is created the first time one of them is called, not when the server starts, so a user
  * who only searches never gets one.
  */
-import { dirname, join } from 'node:path';
-
 import { skillRefFromUrl } from '@arp-protocol/core';
 import { arpHome } from '@arp-protocol/core/node';
 import { getAddress, type Hex } from 'viem';
@@ -51,7 +49,6 @@ function config(): LoopConfig {
       : {
           skillsDir: SKILLS_DIR,
           projectReceipts: RECEIPTS_LOG,
-          pendingDir: join(dirname(RECEIPTS_LOG), 'pending'),
           ask: askPerson,
           reviewContext,
         }),
@@ -82,15 +79,18 @@ export async function desktopTool(id: JsonRpcId, name: string, args: Record<stri
               files: skill.files,
               note: 'The person accepted it. Installed for this project, with its scripts: invoke it with the Skill tool from the next session.',
             }
-          : skill.declined === true
-            ? { installed: false, note: 'The person was shown the facts page and did not accept. Nothing was installed; do not retry unless they ask.' }
-            : skill.pendingAt !== undefined
-              ? {
-                  installed: false,
-                  pending_at: skill.pendingAt,
-                  note: `Nothing was installed: this client cannot ask the person directly. Tell them to run \`arp skills accept ${skill.name}\` in their own terminal; it shows the facts and asks. You cannot answer it for them.`,
-                }
-              : {}),
+          : skill.notInstalled !== undefined
+            ? {
+                installed: false,
+                note:
+                  'Nothing was installed and nothing was kept. ' +
+                  (skill.notInstalled === 'unavailable'
+                    ? 'This client cannot show the person the install question. '
+                    : 'The client answered without an accept. ') +
+                  'Tell the person: if they saw no question, their editor cannot show it (Claude Code in VS Code answers no without showing it, anthropics/claude-code#98256); ' +
+                  'they can open Claude Code in a terminal in this project and ask again, and the question will show there. If they did say no, do not retry.',
+              }
+            : {}),
       });
     }
     const done = await declareUsed(loop, agentFor(), atom as Hex); // checked to be 32 bytes of hex above

@@ -287,7 +287,6 @@ group('the loop a new agent walks', () => {
       stateDir: join(dir, '.arp'),
       skillsDir,
       projectReceipts: join(dir, 'project', '.arp', 'receipts.jsonl'),
-      pendingDir: join(dir, 'project', '.arp', 'pending'),
       fetch: services(agentAddress).fake,
       ...over,
     });
@@ -298,8 +297,8 @@ group('the loop a new agent walks', () => {
       const pages: string[] = [];
       const skill = await getSkill(
         base(agent.address, skillsDir, {
-          ask: async (page) => {
-            pages.push(page);
+          ask: async (prompt) => {
+            pages.push(`${prompt.message}\n${prompt.confirm}`);
             // Nothing is on disk while the question is open.
             expect(existsSync(join(skillsDir, 'thumbs'))).toBe(false);
             return 'accepted';
@@ -310,27 +309,28 @@ group('the loop a new agent walks', () => {
       );
       expect(skill.installedAt).toBe(join(skillsDir, 'thumbs', 'SKILL.md'));
       expect(pages).toHaveLength(1);
-      expect(pages[0]).toContain('Install thumbs from acme/skills?');
-      expect(pages[0]).toContain('scripts/thumb.py');
+      expect(pages[0]).toContain('Install the skill "thumbs" from acme/skills?');
+      expect(pages[0]).toContain('2 files');
+      expect(pages[0]).toContain(`Install thumbs into ${join(skillsDir, 'thumbs')}`);
     });
 
     it('installs nothing when the person declines', async () => {
       const agent = fakeAgent([]);
       const skillsDir = join(dir, 'project', '.claude', 'skills');
       const skill = await getSkill(base(agent.address, skillsDir, { ask: async () => 'declined' }), agent, ATOM);
-      expect(skill.declined).toBe(true);
+      expect(skill.notInstalled).toBe('declined');
       expect(skill.installedAt).toBeUndefined();
       expect(existsSync(join(skillsDir, 'thumbs'))).toBe(false);
       expect(existsSync(join(dir, 'project', '.arp', 'receipts.jsonl'))).toBe(false);
     });
 
-    it('parks the skill in the pending folder when nobody can be asked, and installs nothing', async () => {
+    it('installs nothing and keeps nothing when the client cannot ask', async () => {
       const agent = fakeAgent([]);
       const skillsDir = join(dir, 'project', '.claude', 'skills');
       const skill = await getSkill(base(agent.address, skillsDir, { ask: async () => 'unavailable' }), agent, ATOM);
-      expect(skill.pendingAt).toBe(join(dir, 'project', '.arp', 'pending', 'thumbs'));
+      expect(skill.notInstalled).toBe('unavailable');
       expect(existsSync(join(skillsDir, 'thumbs'))).toBe(false);
-      expect(readFileSync(join(dir, 'project', '.arp', 'pending', 'thumbs', 'files', 'scripts', 'thumb.py'), 'utf8')).toBe("print('thumb')\n");
+      expect(existsSync(join(dir, 'project', '.arp', 'pending'))).toBe(false);
     });
 
     it('treats a config with no way to ask as nobody to ask: there is no path that skips the question', async () => {
@@ -338,7 +338,7 @@ group('the loop a new agent walks', () => {
       const skillsDir = join(dir, 'project', '.claude', 'skills');
       const skill = await getSkill(base(agent.address, skillsDir), agent, ATOM);
       expect(skill.installedAt).toBeUndefined();
-      expect(skill.pendingAt).toBeDefined();
+      expect(skill.notInstalled).toBe('unavailable');
       expect(existsSync(join(skillsDir, 'thumbs'))).toBe(false);
     });
   });

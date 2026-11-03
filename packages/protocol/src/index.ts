@@ -568,10 +568,12 @@ export {
 /** The facts a person reads before a skill is installed: counts and lines, never a verdict (task 61). */
 export {
     REVIEW_PATTERNS,
+    renderSkillPrompt,
     renderSkillReview,
     reviewSkill,
     type MatchedLine,
     type ReviewFile,
+    type SkillPrompt,
     type SkillReview,
     type SkillReviewInput,
     type ThirdPartyFigure,

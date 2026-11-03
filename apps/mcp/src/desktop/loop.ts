@@ -16,7 +16,7 @@
 import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { installFiles, recordInstall, reviewPage, SAFE_SKILL_NAME, writePending, type GateAnswer, type ReviewContext } from './skill-gate.js';
+import { installFiles, installPrompt, recordInstall, SAFE_SKILL_NAME, type GateAnswer, type ReviewContext } from './skill-gate.js';
 
 import {
   decodeEventLog,
@@ -42,6 +42,7 @@ import {
   verifyContentReceipt,
   type BundleFile,
   type SignedContentReceipt,
+  type SkillPrompt,
 } from '@arp-protocol/core';
 
 import { DESKTOP_CHAIN_ID, type AgentSender } from './agent-key.js';
@@ -78,14 +79,12 @@ export type LoopConfig = {
    * (`apps/hook/src/hook.ts`, `fetchedRefs`). Written with `skillsDir`, never without.
    */
   projectReceipts?: string;
-  /** Where a skill waits when nobody could be asked: `arp skills accept` reads it (task 61). */
-  pendingDir?: string;
   /**
-   * Shows the page to the person and returns their answer. Absent, or `unavailable`, parks the
-   * skill in `pendingDir`: there is no path that installs without asking (task 61, deliverable D).
+   * Shows the install question to the person and returns their answer. Absent, it is the same as a
+   * client that cannot ask: nothing is installed (task 61, deliverable D).
    */
-  ask?: (page: string) => Promise<GateAnswer>;
-  /** The commit's date and third-party figures for the page, by skill URL. */
+  ask?: (prompt: SkillPrompt) => Promise<GateAnswer>;
+  /** The commit's date and third-party figures for the question, by skill URL. */
   reviewContext?: (url: string) => ReviewContext;
   /** How long to wait for the indexer to see a new identity, in ms. */
   indexerWaitMs?: number;
@@ -103,10 +102,8 @@ export type ServedSkill = {
   files?: number;
   /** Where the person accepted it into. */
   installedAt?: string;
-  /** Where it waits because nobody could be asked. */
-  pendingAt?: string;
-  /** The person was asked and said no, or closed the question. */
-  declined?: boolean;
+  /** Not installed: what the client answered instead of an accept. */
+  notInstalled?: Exclude<GateAnswer, 'accepted'>;
 };
 
 type ReceiptLine = { atom: Hex; url: string; skill: string | null; receipt: SignedContentReceipt };
@@ -196,13 +193,15 @@ export async function getSkill(config: LoopConfig, agent: AgentSender, atom: Hex
   if (config.skillsDir === undefined || ref === null || !SAFE_SKILL_NAME.test(ref.skill)) return served;
 
   // The question is always asked (task 61): an absent `ask` is the same as nobody to ask.
-  const page = reviewPage(signed, files, config.reviewContext?.(signed.receipt.url) ?? { committedAt: null, thirdParty: [] });
-  const answer = config.ask === undefined ? 'unavailable' : await config.ask(page);
-  if (answer === 'declined') return { ...served, declined: true, files: files.length };
-  if (answer === 'unavailable') {
-    const pendingDir = config.pendingDir ?? join(config.stateDir, 'pending');
-    return { ...served, pendingAt: writePending(pendingDir, ref.skill, signed, files), files: files.length };
-  }
+  const prompt = installPrompt(
+    signed,
+    files,
+    join(config.skillsDir, ref.skill),
+    config.reviewContext?.(signed.receipt.url) ?? { committedAt: null, thirdParty: [] },
+  );
+  const answer = config.ask === undefined ? 'unavailable' : await config.ask(prompt);
+  // Nothing written, nothing kept: a refusal is not parked for later (user decision 2026-11-03).
+  if (answer !== 'accepted') return { ...served, notInstalled: answer, files: files.length };
   const installedAt = installFiles(config.skillsDir, ref.skill, files);
   if (config.projectReceipts !== undefined) recordInstall(config.projectReceipts, ref.skill, signed);
   return { ...served, installedAt, files: files.length };

@@ -5,8 +5,10 @@
  * before a skill is installed it has to send the client a request — MCP elicitation — and wait for
  * the answer while a tool call is still open. Only the stdio transport can: it is a pipe from the
  * one client that launched it. Over HTTP there is no channel back, so elicitation is unavailable
- * there and a skill goes to the pending folder instead.
+ * there and nothing is installed.
  */
+import type { SkillPrompt } from '@arp-protocol/core';
+
 import type { GateAnswer } from './desktop/skill-gate.js';
 
 type Requester = (method: string, params: unknown) => Promise<unknown>;
@@ -28,19 +30,21 @@ export function setRequester(next: Requester | null): void {
 }
 
 /**
- * Show the page to the person and return their answer. `accepted` only for an explicit accept with
- * `install: true`; a decline, a cancel or a closed dialog is `declined`; no channel, or a client
- * that errors, is `unavailable`, which parks the skill rather than installing it.
+ * Show the install question to the person and return their answer. `accepted` only for an explicit
+ * accept with the box ticked; a decline, a cancel or an unticked box is `declined`; no channel, or a
+ * client that errors, is `unavailable`. Both install nothing.
  */
-export async function askPerson(page: string): Promise<GateAnswer> {
+export async function askPerson(prompt: SkillPrompt): Promise<GateAnswer> {
   if (!declaredElicitation || requester === null) return 'unavailable';
   let answer: unknown;
   try {
     answer = await requester('elicitation/create', {
-      message: page,
+      message: prompt.message,
       requestedSchema: {
         type: 'object',
-        properties: { install: { type: 'boolean', title: 'Install this skill' } },
+        properties: {
+          install: { type: 'boolean', title: prompt.confirm, description: prompt.confirmHelp },
+        },
         required: ['install'],
       },
     });
