@@ -15,7 +15,7 @@ import {
 } from '@arp-protocol/core';
 import { type Hex } from 'viem';
 import { SPONSOR_CHAIN_ID } from '../key-file.ts';
-import { json, isBytes32, type Body, type SponsorContext } from './context.ts';
+import { chainUnreadable, json, isBytes32, type Body, type SponsorContext } from './context.ts';
 
 export async function deposit(ctx: SponsorContext, body: Body): Promise<Response> {
   const {
@@ -71,6 +71,7 @@ export async function deposit(ctx: SponsorContext, body: Body): Promise<Response
   }
 
   const registered = await ownerOfAgent(request.agentRegistry, request.agentId);
+  if ('unreadable' in registered) return registered.unreadable;
   if ('error' in registered) return json({ error: registered.error }, registered.status);
   if (registered.owner !== agent) {
     return json(
@@ -102,6 +103,8 @@ export async function deposit(ctx: SponsorContext, body: Body): Promise<Response
     termId: request.termId,
     now: Math.floor(now() / 1000),
   });
+  // Nothing is known about a proof the chain could not be read for: try again, not refused.
+  if (proven.status === 'unreadable') return chainUnreadable(proven.reason);
   if (proven.status !== 'proven') return json({ error: proven.reason }, 403);
   // An unpriced proof is refused, except a content receipt on testnet 13579 (ADR `0109`): there it
   // unlocks a deposit within the same count and budget. Mainnet keeps ADR `0096` until

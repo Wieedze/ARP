@@ -34,6 +34,7 @@ import { privateKeyToAccount } from 'viem/accounts';
 
 import { assertSponsorChain, KeyFileError, readKeyFile } from '../src/key-file.ts';
 import { SponsorLedger } from '../src/ledger.ts';
+import { nullOnRevert } from '../src/routes/context.ts';
 import {
   addressList,
   createSponsor,
@@ -1431,6 +1432,66 @@ describe('a send whose receipt does not come in time', () => {
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
+  });
+});
+
+describe('a chain that cannot be read', () => {
+  const outage = (): never => {
+    throw new Error('HTTP request failed. URL: https://rpc.example/v2/SECRETKEY');
+  };
+
+  test("the requester's owner unreadable is a 503 with a retry hint, not a refusal", async () => {
+    const w = world();
+    const service = sponsor(w, {
+      owners: { ownerOf: async () => outage(), agentWalletOf: async () => null },
+    });
+    const response = await service.fetch(post('/deposit', await depositBody(await hireProof())));
+    expect(response.status).toBe(503);
+    expect(response.headers.get('retry-after')).toBe('5');
+    const text = await response.text();
+    expect(JSON.parse(text)).toMatchObject({ retry: true });
+    expect(text).not.toContain('SECRETKEY');
+    expect(w.sent).toHaveLength(0);
+  });
+
+  test('the same on /gas, which also asks who holds the agent', async () => {
+    const w = world();
+    const service = sponsor(w, {
+      owners: { ownerOf: async () => outage(), agentWalletOf: async () => null },
+    });
+    const gas = await service.fetch(post('/gas', { agentRegistry: REGISTRY, agentId: '7' }));
+    expect(gas.status).toBe(503);
+    expect(gas.headers.get('retry-after')).toBe('5');
+    expect(w.sent).toHaveLength(0);
+  });
+
+  test('a proof the chain could not be read for is a 503, not a 403', async () => {
+    // A receipt signed by NODE for agent 8 (held by CALLEE) makes the check ask agent 8's wallet.
+    const w = world();
+    const toNode = {
+      getTransaction: async () => ({ from: AGENT.address, to: NODE.address, value: 5n * MILLI }),
+      getTransactionReceipt: async () => ({ status: 'success' as const }),
+    };
+    const held = owners();
+    const service = sponsor(w, {
+      payments: toNode,
+      owners: { ownerOf: held.ownerOf, agentWalletOf: async () => outage() },
+    });
+    const response = await service.fetch(
+      post('/deposit', await depositBody(await hireProof(5n * MILLI, NODE))),
+    );
+    expect(response.status).toBe(503);
+    expect(response.headers.get('retry-after')).toBe('5');
+    const body = (await response.json()) as Record<string, unknown>;
+    expect(body.retry).toBe(true);
+    expect(String(body.error)).toMatch(/could not be read/);
+    expect(w.sent).toHaveLength(0);
+  });
+
+  test('a registry read that reverts is "none", and every other failure is rethrown', () => {
+    expect(nullOnRevert(new Error('execution reverted'))).toBeNull();
+    const down = new Error('fetch failed');
+    expect(() => nullOnRevert(down)).toThrow(down);
   });
 });
 

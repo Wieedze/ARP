@@ -33,6 +33,7 @@ export async function publish(ctx: SponsorContext, body: Body): Promise<Response
   }
   const document = delegationDocument(parsed, domain);
   const registered = await ownerOfAgent(body.agentRegistry, body.agentId);
+  if ('unreadable' in registered) return registered.unreadable;
   if ('error' in registered) {
     // Not sponsored, still publishable: the operator pins this document and sends the plan.
     return json({ error: registered.error, document }, registered.status);
