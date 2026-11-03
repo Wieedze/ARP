@@ -40,7 +40,8 @@ the categories this route wrote and nothing else.
 **`POST /propose-category`, testnet 13579 only.** Body `{label, parent, subjectId, reason}`. The
 service runs `planCategory` with the tree read through the attestor set and the compounds of
 `data/catalogue/domains.proposal.json`. A refusal answers 422 and names its rule: `empty`, `hyphen`,
-`compound`, `reason`, `exists`, `parent` or `skill`. An accepted proposal writes the missing terms
+`charset`, `compound`, `reason`, `exists`, `parent`, `skill` or `root` (the root `tool` is not a
+category to tag with). A 409 `changed` asks again when a label changed kind while queued. An accepted proposal writes the missing terms
 at `cost + minDeposit` (ADR `0053`) under a daily cap, `SPONSOR_CATEGORIES_PER_DAY`, default 10,
 inside ADR `0092`'s budget. Each written proposal is logged for the weekly review list (task 59 §2
 item 4): label, parent, skill, reason and transactions.

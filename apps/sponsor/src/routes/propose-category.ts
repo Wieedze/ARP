@@ -93,6 +93,10 @@ export async function proposeCategory(ctx: SponsorContext, body: Body): Promise<
       created: transactions.length > 0,
       transactions,
     });
+  // The root is where every path ends, not a category to tag with.
+  if (first.label === 'tool') {
+    return json({ error: '"tool" is the root, not a category to tag with', rule: 'root' }, 422);
+  }
   if (first.calls.length === 0) return answer(first, []);
 
   // The parent is in the key: one cap slot per label, parent and subject, so a second parent for
@@ -131,6 +135,14 @@ export async function proposeCategory(ctx: SponsorContext, body: Body): Promise<
     }
     if (current.status === 'refused')
       return json({ error: current.detail, rule: current.rule }, 422);
+    // The key and the cap were chosen for one kind of proposal: if the label changed kind between
+    // the two reads, the caller asks again rather than be charged to the other cap.
+    if (current.newCategory !== first.newCategory) {
+      return json(
+        { error: 'the category changed while this was queued; ask again', rule: 'changed' },
+        409,
+      );
+    }
     if (current.calls.length === 0) return answer(current, []);
     current.calls.forEach(assertMultiVault);
     const decision = limitOf(current.totalValue);

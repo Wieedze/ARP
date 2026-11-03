@@ -1886,6 +1886,15 @@ describe('POST /propose-category', () => {
     expect(logged).toEqual([expect.objectContaining({ newCategory: false, parent: null })]);
   });
 
+  test('refuses to tag with the root', async () => {
+    const res = await call(sponsor(fresh(), { categories }), '/propose-category', {
+      label: 'tool',
+      subjectId: OBJECT,
+    });
+    expect(res.status).toBe(422);
+    expect(res.body.rule).toBe('root');
+  });
+
   test('answers the web app from its origin, with a preflight', async () => {
     const service = sponsor(fresh(), { categories, listToolOrigins: ['http://localhost:5173'] });
     const preflight = await service.fetch(
