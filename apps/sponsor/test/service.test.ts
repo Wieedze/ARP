@@ -1109,6 +1109,22 @@ describe('a first declaration: the uses triple is created, then the deposit', ()
     return w;
   }
 
+  test('creates nothing when the triple would be born with zero shares', async () => {
+    const w = fresh();
+    const reads = {
+      ...fakeReads(w),
+      previewTripleCreate: async () => ({
+        shares: 0n,
+        assetsAfterFixedFees: 0n,
+        assetsAfterFees: 0n,
+      }),
+    } as MultiVaultReads; // The fake's members, with the one preview the test is about replaced.
+    const res = await call(sponsor(w, { reads }), '/deposit', await depositBody(await hireProof()));
+    expect(res.status).toBe(400);
+    expect(String(res.body.error)).toMatch(/would buy 0 shares/);
+    expect(w.sent).toHaveLength(0);
+  });
+
   test("creates the missing triple, then deposits the agent's position on it", async () => {
     const w = fresh();
     const res = await call(sponsor(w), '/deposit', await depositBody(await hireProof()));
@@ -1212,6 +1228,27 @@ describe('POST /mint-gas', () => {
 
 describe('POST /identity', () => {
   const pinned = async (thing: Parameters<typeof thingUri>[0]) => thingUri(thing);
+
+  test('pins both documents even when every term exists, and sends nothing', async () => {
+    const w = world();
+    const pins: string[] = [];
+    const reads = { ...fakeReads(w), termExists: async () => true } as MultiVaultReads; // Every term exists.
+    const res = await call(
+      sponsor(w, {
+        reads,
+        pinThing: async (thing) => {
+          pins.push(thing.name);
+          return thingUri(thing);
+        },
+      }),
+      '/identity',
+      { agentRegistry: REGISTRY, agentId: '7' },
+    );
+    expect(res.status).toBe(200);
+    expect(res.body.sent).toEqual([]);
+    expect(pins).toHaveLength(2);
+    expect(w.sent).toHaveLength(0);
+  });
 
   test('pins both documents, then creates the two atoms and three triples, all to the MultiVault', async () => {
     const w = world();
