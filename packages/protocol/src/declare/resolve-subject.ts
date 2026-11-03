@@ -8,6 +8,15 @@ import {NoAgentIdentityError, asAgentIdentityAtom} from "../verify/subject.js";
 import type {AgentIdentityAtom} from "../verify/subject.js";
 
 /**
+ * Where the identity is read from: a `TrustSource` (injected in tests, swappable per source), or
+ * the Intuition source on the indexer at `graphqlUrl`. One or the other; there is no default
+ * network.
+ */
+export type SubjectSource =
+    | {source: TrustSource; graphqlUrl?: string}
+    | {graphqlUrl: string; source?: undefined};
+
+/**
  * The atom a `uses` edge must carry as its subject, resolved from an ERC-8004 identity.
  *
  * This is the step a third party cannot skip and would not guess. ADR `0032`: the subject is the
@@ -23,17 +32,14 @@ import type {AgentIdentityAtom} from "../verify/subject.js";
  *         and not a fallback, because the fallback is the permanent mistake above. The remedy is
  *         ADR `0027` — mint the agent into the canonical registry first.
  */
-export async function resolveDeclarationSubject(params: {
-    agent: AgentRef;
-    /** Defaults to the Intuition source. Injected in tests, and swappable per `TrustSource`. */
-    source?: TrustSource;
-    graphqlUrl?: string;
-}): Promise<AgentIdentityAtom> {
+export async function resolveDeclarationSubject(
+    params: {
+        agent: AgentRef;
+    } & SubjectSource,
+): Promise<AgentIdentityAtom> {
     const ref = resolveRef(params.agent);
     const caip19 = toCaip19(ref);
-    const source =
-        params.source ??
-        intuitionSource(params.graphqlUrl === undefined ? {} : {graphqlUrl: params.graphqlUrl});
+    const source = params.source ?? intuitionSource({graphqlUrl: params.graphqlUrl});
 
     const identity = await source.resolveAgent(ref);
     if (identity === null) throw new NoAgentIdentityError(caip19);
@@ -59,16 +65,14 @@ export type StrictIdentityAtom =
  * deposit cannot, because the edge it pays for would then be chosen by whoever wrote the second
  * `same as`. So this answers `ambiguous` instead of picking.
  */
-export async function resolveIdentityAtomStrict(params: {
-    agent: AgentRef;
-    source?: TrustSource;
-    graphqlUrl?: string;
-}): Promise<StrictIdentityAtom> {
+export async function resolveIdentityAtomStrict(
+    params: {
+        agent: AgentRef;
+    } & SubjectSource,
+): Promise<StrictIdentityAtom> {
     const ref = resolveRef(params.agent);
     const caip19 = toCaip19(ref);
-    const source =
-        params.source ??
-        intuitionSource(params.graphqlUrl === undefined ? {} : {graphqlUrl: params.graphqlUrl});
+    const source = params.source ?? intuitionSource({graphqlUrl: params.graphqlUrl});
     const identity = await source.resolveAgent(ref);
     if (identity === null || identity.sourceHandle === null) return {status: "none"};
     if (identity.provenance.kind !== "claim") {

@@ -15,7 +15,6 @@ import {
 import {parseCaip19} from "./caip.js";
 import {CAPABILITY_PREDICATE_IDS, USES} from "./sources/intuition/terms.js";
 import {mapMarketSide} from "./sources/intuition/map.js";
-import {INTUITION_MAINNET_GRAPHQL} from "./sources/intuition/index.js";
 import {provenanceFor} from "./provenance.js";
 import type {MarketSide, Provenance} from "./types.js";
 
@@ -162,7 +161,7 @@ export type AtomStandingConfig = {
      * than as a bad query.
      */
     attestor?: string;
-    graphqlUrl?: string;
+    graphqlUrl: string;
     fetch?: FetchLike;
     timeoutMs?: number;
     /** Stringified for the transport; Hasura coerces it to `numeric`. */
@@ -205,12 +204,12 @@ function heldByAttestor(term: unknown): boolean {
 
 export async function getAtomStanding(
     atomId: string,
-    config: AtomStandingConfig = {},
+    config: AtomStandingConfig,
 ): Promise<AtomStanding> {
     const transport =
         config.transport ??
         createGraphqlTransport({
-            url: config.graphqlUrl ?? INTUITION_MAINNET_GRAPHQL,
+            url: config.graphqlUrl,
             fetch: config.fetch ?? defaultFetch(),
             timeoutMs: config.timeoutMs ?? DEFAULT_TIMEOUT_MS,
         });
@@ -339,20 +338,17 @@ export async function getAtomStanding(
  */
 export async function resolveAgentRefForAtom(
     atomId: string,
-    config: AtomStandingConfig = {},
+    config: AtomStandingConfig,
 ): Promise<{chainId: number; tokenId: string} | null> {
     const transport =
         config.transport ??
         createGraphqlTransport({
-            url: config.graphqlUrl ?? INTUITION_MAINNET_GRAPHQL,
+            url: config.graphqlUrl,
             fetch: config.fetch ?? defaultFetch(),
             timeoutMs: config.timeoutMs ?? DEFAULT_TIMEOUT_MS,
         });
 
-    const data = await transport.request(
-        AGENT_REF_FOR_ATOM_QUERY,
-        {atomId},
-    );
+    const data = await transport.request(AGENT_REF_FOR_ATOM_QUERY, {atomId});
 
     const labels: string[] = [];
     for (const [key, side] of [
@@ -395,26 +391,23 @@ export async function resolveAgentRefForAtom(
  */
 export async function getDeclaredModulesFor(
     subjectIds: readonly string[],
-    config: AtomStandingConfig & {predicateId?: string} = {},
+    config: AtomStandingConfig & {predicateId?: string},
 ): Promise<Record<string, string[]>> {
     if (subjectIds.length === 0) return {};
 
     const transport =
         config.transport ??
         createGraphqlTransport({
-            url: config.graphqlUrl ?? INTUITION_MAINNET_GRAPHQL,
+            url: config.graphqlUrl,
             fetch: config.fetch ?? defaultFetch(),
             timeoutMs: config.timeoutMs ?? DEFAULT_TIMEOUT_MS,
         });
 
-    const data = await transport.request(
-        DECLARED_MODULES_FOR_QUERY,
-        {
-            subjects: [...new Set(subjectIds)],
-            predicate: config.predicateId ?? USES,
-            limit: 250,
-        },
-    );
+    const data = await transport.request(DECLARED_MODULES_FOR_QUERY, {
+        subjects: [...new Set(subjectIds)],
+        predicate: config.predicateId ?? USES,
+        limit: 250,
+    });
 
     const rows = Array.isArray(data["triples"]) ? data["triples"] : [];
     const modules: Record<string, string[]> = {};
@@ -446,20 +439,20 @@ export async function getDeclaredModulesFor(
  */
 export async function getListedCapabilitiesFor(
     subjectId: string,
-    config: AtomStandingConfig = {},
+    config: AtomStandingConfig,
 ): Promise<string[]> {
     const transport =
         config.transport ??
         createGraphqlTransport({
-            url: config.graphqlUrl ?? INTUITION_MAINNET_GRAPHQL,
+            url: config.graphqlUrl,
             fetch: config.fetch ?? defaultFetch(),
             timeoutMs: config.timeoutMs ?? DEFAULT_TIMEOUT_MS,
         });
 
-    const data = await transport.request(
-        LISTED_CAPABILITIES_FOR_QUERY,
-        {subject: subjectId, predicates: [...CAPABILITY_PREDICATE_IDS]},
-    );
+    const data = await transport.request(LISTED_CAPABILITIES_FOR_QUERY, {
+        subject: subjectId,
+        predicates: [...CAPABILITY_PREDICATE_IDS],
+    });
 
     const atoms = Array.isArray(data["atoms"]) ? data["atoms"] : [];
     const atom = atoms[0];

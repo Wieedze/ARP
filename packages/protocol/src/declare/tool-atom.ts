@@ -7,7 +7,6 @@ import {
     isRecord,
     readString,
 } from "@arp-protocol/graphql";
-import {INTUITION_MAINNET_GRAPHQL} from "../sources/intuition/index.js";
 
 /** An atom that already represents a tool, found by the URL inside its pinned Thing. */
 export type ToolAtomCandidate = {
@@ -49,7 +48,7 @@ export type ToolAtomLookup = {
 };
 
 export type ToolAtomLookupConfig = {
-    graphqlUrl?: string;
+    graphqlUrl: string;
     fetch?: FetchLike;
     timeoutMs?: number;
     /** Pre-built transport. Tests inject one here so no network is touched. */
@@ -66,11 +65,11 @@ export type ToolAtomLookupConfig = {
  * `sources/intuition/terms.ts` was written to prevent, and here the cost of choosing wrong is a
  * permanent write.
  */
-export function intuitionToolAtomLookup(config: ToolAtomLookupConfig = {}): ToolAtomLookup {
+export function intuitionToolAtomLookup(config: ToolAtomLookupConfig): ToolAtomLookup {
     const transport =
         config.transport ??
         createGraphqlTransport({
-            url: config.graphqlUrl ?? INTUITION_MAINNET_GRAPHQL,
+            url: config.graphqlUrl,
             fetch: config.fetch ?? defaultFetch(),
             ...(config.timeoutMs === undefined ? {} : {timeoutMs: config.timeoutMs}),
         });

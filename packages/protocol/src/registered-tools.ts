@@ -107,7 +107,7 @@ export type RegisteredToolsPage = {
 export type RegisteredToolsOrder = "conviction" | "stakers" | "declarations";
 
 export type RegisteredToolsConfig = {
-    graphqlUrl?: string;
+    graphqlUrl: string;
     fetch?: FetchLike;
     timeoutMs?: number;
     transport?: GraphqlTransport;
@@ -126,7 +126,6 @@ const DEFAULT_CURVE_ID = 1;
 const DEFAULT_TIMEOUT_MS = 10_000;
 /** Eight pages at the indexer's cap. Enough for the whole set today, with room to grow. */
 const DEFAULT_MAX_ROWS = 2_000;
-const INTUITION_MAINNET_GRAPHQL = "https://mainnet.intuition.sh/v1/graphql";
 
 function bigintFrom(value: unknown): bigint {
     const text =
@@ -146,12 +145,12 @@ function urlFrom(value: unknown): string | null {
 }
 
 export async function listRegisteredTools(
-    config: RegisteredToolsConfig = {},
+    config: RegisteredToolsConfig,
 ): Promise<RegisteredToolsPage> {
     const transport =
         config.transport ??
         createGraphqlTransport({
-            url: config.graphqlUrl ?? INTUITION_MAINNET_GRAPHQL,
+            url: config.graphqlUrl,
             fetch: config.fetch ?? defaultFetch(),
             timeoutMs: config.timeoutMs ?? DEFAULT_TIMEOUT_MS,
         });
@@ -198,7 +197,8 @@ export async function listRegisteredTools(
         const edges = isRecord(row["as_object_triples_aggregate"])
             ? row["as_object_triples_aggregate"]
             : null;
-        const aggregate = edges !== null && isRecord(edges["aggregate"]) ? edges["aggregate"] : null;
+        const aggregate =
+            edges !== null && isRecord(edges["aggregate"]) ? edges["aggregate"] : null;
 
         tools.push({
             atomId: termId,

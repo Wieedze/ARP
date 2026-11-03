@@ -183,7 +183,7 @@ export async function planUseDeclaration(params: {
     object: Hex;
     publicClient: PublicClient;
     chain: StakeChain;
-    graphqlUrl?: string;
+    graphqlUrl: string;
     /** Injected in tests. Defaults to the ERC-8004 registry client inside `agent-import`. */
     ownership?: typeof verifyAgentOwnership;
     /** Injected in tests. Defaults to the package's Intuition-backed resolver. */
@@ -237,10 +237,7 @@ export async function planUseDeclaration(params: {
     const resolve = params.subject ?? resolveDeclarationSubject;
     let subject: AgentIdentityAtom;
     try {
-        subject = await resolve({
-            agent: params.agent,
-            ...(params.graphqlUrl === undefined ? {} : {graphqlUrl: params.graphqlUrl}),
-        });
+        subject = await resolve({agent: params.agent, graphqlUrl: params.graphqlUrl});
     } catch (caught) {
         // `NoAgentIdentityError` is the package's deliberate refusal to fall back onto the
         // operating wallet's `caip10:` atom — 21 such triples exist on testnet and Intuition has no

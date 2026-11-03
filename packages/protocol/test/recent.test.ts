@@ -1,4 +1,5 @@
 import {describe, expect, it} from "vitest";
+import {INTUITION_URL} from "./helpers.js";
 
 import {getRecentDeclarations, getRecentStakes} from "../src/recent.js";
 import {SAME_AS, USES} from "../src/sources/intuition/terms.js";
@@ -42,7 +43,7 @@ function transportOf(triples: unknown[]) {
 describe("getRecentDeclarations", () => {
     it("asks for `uses` edges whose subject carries `same as`", async () => {
         const {seen, transport} = transportOf([]);
-        await getRecentDeclarations({transport, limit: 5});
+        await getRecentDeclarations({graphqlUrl: INTUITION_URL, transport, limit: 5});
 
         // The filter is the whole point of this read: without it the newest `uses` edges on
         // mainnet are `Optimism uses …`, `Arbitrum uses …` — prose, not agent declarations. It
@@ -52,7 +53,7 @@ describe("getRecentDeclarations", () => {
 
     it("sends `curveId` as a string, because the variable is declared `numeric`", async () => {
         const {seen, transport} = transportOf([]);
-        await getRecentDeclarations({transport, curveId: 2});
+        await getRecentDeclarations({graphqlUrl: INTUITION_URL, transport, curveId: 2});
 
         // Declaring it `String!` is rejected at validation time and takes the whole query down —
         // the bug that broke the trust surface on 2026-09-16.
@@ -64,7 +65,7 @@ describe("getRecentDeclarations", () => {
             edge({id: "backed", at: "2026-10-20T10:00:00Z", positions: 1, assets: "5000000"}),
             edge({id: "bare", at: "2026-10-19T10:00:00Z", positions: 0, assets: "1000000"}),
         ]);
-        const rows = await getRecentDeclarations({transport});
+        const rows = await getRecentDeclarations({graphqlUrl: INTUITION_URL, transport});
 
         // Every term is born holding `minShare`, so a non-zero figure is not evidence of a stake.
         // The position count is the test, never the amount (ADR `0042`).
@@ -77,7 +78,7 @@ describe("getRecentDeclarations", () => {
             edge({id: "with", at: "2026-10-20T10:00:00Z", tx: `0x${"12".repeat(32)}`}),
             edge({id: "without", at: "2026-10-19T10:00:00Z", tx: null}),
         ]);
-        const rows = await getRecentDeclarations({transport});
+        const rows = await getRecentDeclarations({graphqlUrl: INTUITION_URL, transport});
         expect(rows[0]?.txHash).toBe(`0x${"12".repeat(32)}`);
         expect(rows[1]?.txHash).toBeNull();
     });
@@ -92,7 +93,7 @@ describe("getRecentDeclarations", () => {
             {...good, object: null},
             "not an object",
         ]);
-        const rows = await getRecentDeclarations({transport});
+        const rows = await getRecentDeclarations({graphqlUrl: INTUITION_URL, transport});
 
         // A declaration without a subject, an object or a date is not one anybody can act on, and
         // guessing at the gap would put a half-row on the front page.
@@ -104,7 +105,9 @@ describe("getRecentDeclarations", () => {
         // Mainnet returns zero and that is the honest answer, not a failure — a caller renders it
         // as "nothing yet" and never falls back to a sample.
         const {transport} = transportOf([]);
-        await expect(getRecentDeclarations({transport})).resolves.toEqual([]);
+        await expect(
+            getRecentDeclarations({graphqlUrl: INTUITION_URL, transport}),
+        ).resolves.toEqual([]);
     });
 });
 
@@ -134,6 +137,7 @@ describe("getRecentStakes", () => {
     it("asks with the same agent filter as the declarations", async () => {
         const seen: Record<string, unknown>[] = [];
         await getRecentStakes({
+            graphqlUrl: INTUITION_URL,
             transport: {
                 async request(_query, variables) {
                     seen.push(variables);
@@ -148,6 +152,7 @@ describe("getRecentStakes", () => {
     it("asks the indexer to leave out deposits of zero, so the limit counts real ones", async () => {
         let asked = "";
         await getRecentStakes({
+            graphqlUrl: INTUITION_URL,
             transport: {
                 async request(query) {
                     asked = query;
@@ -162,6 +167,7 @@ describe("getRecentStakes", () => {
 
     it("keys each row on the indexer's event id", async () => {
         const rows = await getRecentStakes({
+            graphqlUrl: INTUITION_URL,
             transport: {
                 async request() {
                     return {
@@ -177,6 +183,7 @@ describe("getRecentStakes", () => {
     it("reads whose position it is apart from who signed it", async () => {
         // A sponsored deposit: the sponsor signs, the operator holds the position (ADR `0094`).
         const rows = await getRecentStakes({
+            graphqlUrl: INTUITION_URL,
             transport: {
                 async request() {
                     return {
@@ -198,6 +205,7 @@ describe("getRecentStakes", () => {
     it("asks the indexer for the receiver on both lists", async () => {
         let asked = "";
         await getRecentStakes({
+            graphqlUrl: INTUITION_URL,
             transport: {
                 async request(query) {
                     asked = query;
@@ -210,6 +218,7 @@ describe("getRecentStakes", () => {
 
     it("merges deposits and redemptions newest first, each with its own amount field", async () => {
         const rows = await getRecentStakes({
+            graphqlUrl: INTUITION_URL,
             transport: {
                 async request() {
                     return {
@@ -232,6 +241,7 @@ describe("getRecentStakes", () => {
 
     it("drops a row whose term is not a triple", async () => {
         const rows = await getRecentStakes({
+            graphqlUrl: INTUITION_URL,
             transport: {
                 async request() {
                     return {

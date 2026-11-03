@@ -6,9 +6,9 @@
  * declared freshness window actually enforced, the agent's capability
  * declarations, and the live market on each provider claim.
  *
- *     import {createErc8004Client, getAgentProfile, listAgents} from "@arp-protocol/core";
+ *     import {createErc8004Client, getAgentProfile, INTUITION_MAINNET_GRAPHQL} from "@arp-protocol/core";
  *
- *     const client = createErc8004Client();
+ *     const client = createErc8004Client({graphqlUrl: INTUITION_MAINNET_GRAPHQL});
  *     const profile = await getAgentProfile(client, {chainId: 8453, tokenId: "2340"});
  *     for (const entry of profile.assessments) {
  *         console.log(entry.claim.provider.name, entry.signature.status, entry.freshness.status);

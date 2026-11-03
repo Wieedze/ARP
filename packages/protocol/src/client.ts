@@ -14,10 +14,16 @@ export type Erc8004ClientConfig = {
      * Ethereum). Pass `[erc8004RegistrySource()]` for a client with no Intuition
      * in it at all.
      */
-    sources?: TrustSource[];
     fetch?: FetchLike;
     timeoutMs?: number;
-};
+} & (
+    | {sources: TrustSource[]; graphqlUrl?: string}
+    /**
+     * The indexer the default Intuition source reads. Required when `sources` is omitted: there
+     * is no default network, so a caller cannot land on mainnet by forgetting to say which.
+     */
+    | {graphqlUrl: string; sources?: undefined}
+);
 
 export type Erc8004Client = {
     readonly sources: readonly TrustSource[];
@@ -28,19 +34,23 @@ export type Erc8004Client = {
 /**
  * Build a client over an ordered list of sources.
  *
- *     const client = createErc8004Client();
+ *     const client = createErc8004Client({graphqlUrl: INTUITION_MAINNET_GRAPHQL});
  *     const profile = await getAgentProfile(client, {chainId: 8453, tokenId: "2340"});
  *
  * The client holds no credentials and no signer. Every read in this package is
  * unauthenticated and nothing here can send a transaction.
  */
-export function createErc8004Client(config: Erc8004ClientConfig = {}): Erc8004Client {
+export function createErc8004Client(config: Erc8004ClientConfig): Erc8004Client {
     const fetchImpl = config.fetch ?? defaultFetch();
     const timeoutMs = config.timeoutMs ?? DEFAULT_TIMEOUT_MS;
-    const sources = config.sources ?? [
-        intuitionSource({fetch: fetchImpl, timeoutMs}),
-        erc8004RegistrySource(),
-    ];
+    const sources =
+        config.sources ??
+        (config.graphqlUrl === undefined
+            ? []
+            : [
+                  intuitionSource({graphqlUrl: config.graphqlUrl, fetch: fetchImpl, timeoutMs}),
+                  erc8004RegistrySource(),
+              ]);
 
     return {sources, fetch: fetchImpl, timeoutMs};
 }

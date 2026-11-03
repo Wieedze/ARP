@@ -11,7 +11,6 @@ import {
     TOOL_USAGE_QUERY,
 } from "@arp-protocol/graphql";
 import {mapMarketSide} from "./sources/intuition/map.js";
-import {INTUITION_MAINNET_GRAPHQL} from "./sources/intuition/index.js";
 import {USES} from "./sources/intuition/terms.js";
 import type {MarketSide, Provenance} from "./types.js";
 
@@ -45,13 +44,13 @@ export type ToolUsageEdge = {
     /** Deposits saying the use happened and mattered. */
     support: MarketSide;
     /**
- * Deposits on the counter-triple, betting the other way.
- *
- * It exists for every triple at the same price as agreement, and is almost never used: 1 of the 185
- * mainnet `uses` edges has ever carried one, 969 of 285,775 triples chain-wide
- * (`scripts/measure/counter-side-usage.ts`, 1155, 2026-10-21). Read an empty one as "nobody
- * bothered", never as agreement.
- */
+     * Deposits on the counter-triple, betting the other way.
+     *
+     * It exists for every triple at the same price as agreement, and is almost never used: 1 of the 185
+     * mainnet `uses` edges has ever carried one, 969 of 285,775 triples chain-wide
+     * (`scripts/measure/counter-side-usage.ts`, 1155, 2026-10-21). Read an empty one as "nobody
+     * bothered", never as agreement.
+     */
     oppose: MarketSide;
 };
 
@@ -105,7 +104,7 @@ export type ToolUsageConfig = {
      * hold positions on their own `uses` edges on mainnet today.
      */
     attestedBy?: string;
-    graphqlUrl?: string;
+    graphqlUrl: string;
     fetch?: FetchLike;
     timeoutMs?: number;
     /** Stringified for the transport; Hasura coerces it to `numeric`. */
@@ -130,12 +129,12 @@ function sumPositions(side: MarketSide): number {
  */
 export async function getToolUsage(
     toolAtomId: string,
-    config: ToolUsageConfig = {},
+    config: ToolUsageConfig,
 ): Promise<ToolUsage> {
     const transport =
         config.transport ??
         createGraphqlTransport({
-            url: config.graphqlUrl ?? INTUITION_MAINNET_GRAPHQL,
+            url: config.graphqlUrl,
             fetch: config.fetch ?? defaultFetch(),
             timeoutMs: config.timeoutMs ?? DEFAULT_TIMEOUT_MS,
         });

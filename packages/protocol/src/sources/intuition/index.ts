@@ -85,7 +85,7 @@ export const DEFAULT_CURVE_ID = "1";
 export const DEFAULT_LIST_TIMEOUT_MS = 30_000;
 
 export type IntuitionSourceConfig = {
-    graphqlUrl?: string;
+    graphqlUrl: string;
     fetch?: FetchLike;
     timeoutMs?: number;
     /**
@@ -165,7 +165,7 @@ async function resolveSubject(
  * deliberate: the methods are independently callable, and this package ships no
  * cache (see the README).
  */
-export function intuitionSource(config: IntuitionSourceConfig = {}): TrustSource {
+export function intuitionSource(config: IntuitionSourceConfig): TrustSource {
     // `curve_id` is a Hasura `numeric`, which accepts a JSON string for the
     // variable's value. Stringifying here means a bigint read straight from
     // getBondingCurveConfig() needs no conversion at the call site.
@@ -176,7 +176,7 @@ export function intuitionSource(config: IntuitionSourceConfig = {}): TrustSource
     const transport =
         config.transport ??
         createGraphqlTransport({
-            url: config.graphqlUrl ?? INTUITION_MAINNET_GRAPHQL,
+            url: config.graphqlUrl,
             fetch: config.fetch ?? defaultFetch(),
             ...(config.timeoutMs === undefined ? {} : {timeoutMs: config.timeoutMs}),
         });

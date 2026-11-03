@@ -353,7 +353,10 @@ describe("intuitionSource — the bonding curve is a parameter, not an assumptio
 
     it("filters market reads to curve 1 by default", async () => {
         const seen: Record<string, unknown>[] = [];
-        const source = intuitionSource({transport: recordingTransport(seen)});
+        const source = intuitionSource({
+            graphqlUrl: INTUITION_URL,
+            transport: recordingTransport(seen),
+        });
         await source.getAssessments(ref);
 
         const surface = seen.find((entry) => String(entry["query"]).includes("AgentTrustSurface"));
@@ -363,7 +366,11 @@ describe("intuitionSource — the bonding curve is a parameter, not an assumptio
     it("sends the curve it was given, so the market shown matches the vault deposited into", async () => {
         const seen: Record<string, unknown>[] = [];
         // A bigint, as getBondingCurveConfig() returns it — no conversion at the call site.
-        const source = intuitionSource({transport: recordingTransport(seen), curveId: 7n});
+        const source = intuitionSource({
+            graphqlUrl: INTUITION_URL,
+            transport: recordingTransport(seen),
+            curveId: 7n,
+        });
         await source.getAssessments(ref);
 
         const surface = seen.find((entry) => String(entry["query"]).includes("AgentTrustSurface"));

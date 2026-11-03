@@ -119,7 +119,7 @@ export type ToolListingPage = {
 export type ToolListingOrder = "declarations" | "priced-edges" | "conviction";
 
 export type ToolListingConfig = {
-    graphqlUrl?: string;
+    graphqlUrl: string;
     fetch?: FetchLike;
     timeoutMs?: number;
     transport?: GraphqlTransport;
@@ -136,8 +136,6 @@ export type ToolListingConfig = {
      */
     sponsor?: string | null;
 };
-
-const INTUITION_MAINNET_GRAPHQL = "https://mainnet.intuition.sh/v1/graphql";
 
 function bigintFrom(value: unknown): bigint {
     const text =
@@ -199,11 +197,11 @@ function depositsOf(term: unknown): {proven: number; declared: number} {
 }
 
 /** Tools, grouped from the `uses` edges and ordered by a measure the caller picks. */
-export async function listTools(config: ToolListingConfig = {}): Promise<ToolListingPage> {
+export async function listTools(config: ToolListingConfig): Promise<ToolListingPage> {
     const transport =
         config.transport ??
         createGraphqlTransport({
-            url: config.graphqlUrl ?? INTUITION_MAINNET_GRAPHQL,
+            url: config.graphqlUrl,
             fetch: config.fetch ?? defaultFetch(),
             timeoutMs: config.timeoutMs ?? DEFAULT_TIMEOUT_MS,
         });

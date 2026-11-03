@@ -138,21 +138,32 @@ describe("listAgents — the cohort gets its own deadline", () => {
         expect(DEFAULT_LIST_TIMEOUT_MS).toBeGreaterThan(10_000);
 
         const seen: {timeoutMs: number | undefined}[] = [];
-        const source = intuitionSource({transport: timeoutRecorder(seen)});
+        const source = intuitionSource({
+            graphqlUrl: INTUITION_URL,
+            transport: timeoutRecorder(seen),
+        });
         await source.listAgents?.({order: "evidence-quantity", limit: 25, offset: 0, name: null});
         expect(seen).toEqual([{timeoutMs: DEFAULT_LIST_TIMEOUT_MS}]);
     });
 
     it("takes the budget it is given", async () => {
         const seen: {timeoutMs: number | undefined}[] = [];
-        const source = intuitionSource({transport: timeoutRecorder(seen), listTimeoutMs: 4_000});
+        const source = intuitionSource({
+            graphqlUrl: INTUITION_URL,
+            transport: timeoutRecorder(seen),
+            listTimeoutMs: 4_000,
+        });
         await source.listAgents?.({order: "evidence-quantity", limit: 25, offset: 0, name: null});
         expect(seen).toEqual([{timeoutMs: 4_000}]);
     });
 
     it("leaves the profile reads on the shared budget", async () => {
         const seen: {timeoutMs: number | undefined}[] = [];
-        const source = intuitionSource({transport: timeoutRecorder(seen), listTimeoutMs: 4_000});
+        const source = intuitionSource({
+            graphqlUrl: INTUITION_URL,
+            transport: timeoutRecorder(seen),
+            listTimeoutMs: 4_000,
+        });
         await source.resolveAgent({
             chainId: 8453,
             tokenId: "2340",

@@ -168,6 +168,7 @@ describe("planToolRegistration", () => {
                         url: bad,
                         publicClient: pc as never,
                         chain: MAINNET,
+                        graphqlUrl: "https://indexer.test/graphql",
                         lookup: noAtoms,
                     }),
                 ),
@@ -188,6 +189,7 @@ describe("planToolRegistration", () => {
                     url,
                     publicClient: pc as never,
                     chain: MAINNET,
+                    graphqlUrl: "https://indexer.test/graphql",
                     lookup: noAtoms,
                 }),
             );
@@ -203,6 +205,7 @@ describe("planToolRegistration", () => {
             url: "github.com/x",
             publicClient: pc as never,
             chain: MAINNET,
+            graphqlUrl: "https://indexer.test/graphql",
             lookup: noAtoms,
         });
         expect(plan.assets).toBe(ASSETS);
@@ -224,6 +227,7 @@ describe("planToolRegistration", () => {
                     url: "github.com/x",
                     publicClient: zero as never,
                     chain: MAINNET,
+                    graphqlUrl: "https://indexer.test/graphql",
                     lookup: noAtoms,
                 }),
             ),
@@ -241,6 +245,7 @@ describe("planToolRegistration", () => {
                     url: "github.com/x",
                     publicClient: expensive as never,
                     chain: MAINNET,
+                    graphqlUrl: "https://indexer.test/graphql",
                     lookup: noAtoms,
                 }),
             ),
@@ -252,6 +257,7 @@ describe("planToolRegistration", () => {
             url: "github.com/x",
             publicClient: publicClientWith({exists: true}) as never,
             chain: MAINNET,
+            graphqlUrl: "https://indexer.test/graphql",
             lookup: noAtoms,
         });
         expect(plan.exists).toBe(true);
@@ -266,6 +272,7 @@ describe("planToolRegistration", () => {
             url: "https://www.github.com/crytic/slither/",
             publicClient: pc as never,
             chain: MAINNET,
+            graphqlUrl: "https://indexer.test/graphql",
             lookup,
         });
         // An atom on the graph carries whatever URL its creator typed, which is usually not the
@@ -286,6 +293,7 @@ describe("planToolRegistration", () => {
             url: "github.com/crytic/slither",
             publicClient: pc as never,
             chain: MAINNET,
+            graphqlUrl: "https://indexer.test/graphql",
             lookup,
         });
         // Reported, never chosen between: a deposit on the wrong one is permanent.

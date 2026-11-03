@@ -134,7 +134,7 @@ export type TermActivityBucket = {
 export type TermActivityGrain = "hour" | "day" | "week" | "month";
 
 export type TermShapeConfig = {
-    graphqlUrl?: string;
+    graphqlUrl: string;
     fetch?: FetchLike;
     timeoutMs?: number;
     transport?: GraphqlTransport;
@@ -155,7 +155,6 @@ export const INTUITION_MAX_POSITIONS_PAGE = 100;
 
 const DEFAULT_CURVE_ID = 1;
 const DEFAULT_TIMEOUT_MS = 10_000;
-const INTUITION_MAINNET_GRAPHQL = "https://mainnet.intuition.sh/v1/graphql";
 
 const ACTIVITY_QUERIES: Record<TermActivityGrain, string> = {
     hour: "signal_stats_hourly",
@@ -204,20 +203,20 @@ function buildTransport(config: TermShapeConfig): GraphqlTransport {
     return (
         config.transport ??
         createGraphqlTransport({
-            url: config.graphqlUrl ?? INTUITION_MAINNET_GRAPHQL,
+            url: config.graphqlUrl,
             fetch: config.fetch ?? defaultFetch(),
             timeoutMs: config.timeoutMs ?? DEFAULT_TIMEOUT_MS,
         })
     );
 }
 
-export async function getTermShape(
-    termId: string,
-    config: TermShapeConfig = {},
-): Promise<TermShape> {
+export async function getTermShape(termId: string, config: TermShapeConfig): Promise<TermShape> {
     const transport = buildTransport(config);
     const curveId = config.curveId ?? DEFAULT_CURVE_ID;
-    const limit = Math.min(config.backerLimit ?? INTUITION_MAX_POSITIONS_PAGE, INTUITION_MAX_POSITIONS_PAGE);
+    const limit = Math.min(
+        config.backerLimit ?? INTUITION_MAX_POSITIONS_PAGE,
+        INTUITION_MAX_POSITIONS_PAGE,
+    );
 
     const data = await transport.request(SHAPE_QUERY, {
         termId,
@@ -290,7 +289,8 @@ async function backerBreadth(
         const data = await transport.request(backerBreadthQuery(chunk.length), variables);
         for (let index = 0; index < chunk.length; index += 1) {
             const node = data[`a${index}`];
-            const aggregate = isRecord(node) && isRecord(node["aggregate"]) ? node["aggregate"] : null;
+            const aggregate =
+                isRecord(node) && isRecord(node["aggregate"]) ? node["aggregate"] : null;
             held.push(aggregate === null ? 0 : numberFrom(aggregate["count"]));
         }
     }
@@ -310,18 +310,15 @@ async function backerBreadth(
  */
 export async function getTermActivity(
     termId: string,
-    config: TermShapeConfig & {grain?: TermActivityGrain; buckets?: number} = {},
+    config: TermShapeConfig & {grain?: TermActivityGrain; buckets?: number},
 ): Promise<TermActivityBucket[]> {
     const transport = buildTransport(config);
     const table = ACTIVITY_QUERIES[config.grain ?? "day"];
-    const data = await transport.request(
-        termActivityQuery(table),
-        {
-            termId,
-            curveId: String(config.curveId ?? DEFAULT_CURVE_ID),
-            limit: config.buckets ?? 90,
-        },
-    );
+    const data = await transport.request(termActivityQuery(table), {
+        termId,
+        curveId: String(config.curveId ?? DEFAULT_CURVE_ID),
+        limit: config.buckets ?? 90,
+    });
 
     const rows = Array.isArray(data["rows"]) ? data["rows"] : [];
     const buckets: TermActivityBucket[] = [];
@@ -389,7 +386,7 @@ export type AccountActivityBucket = {
 
 export async function getAccountHoldings(
     account: string,
-    config: TermShapeConfig = {},
+    config: TermShapeConfig,
 ): Promise<AccountHoldings> {
     const transport = buildTransport(config);
     const curveId = config.curveId ?? DEFAULT_CURVE_ID;
@@ -435,7 +432,7 @@ export async function getAccountHoldings(
  */
 export async function getAccountActivity(
     account: string,
-    config: TermShapeConfig & {limit?: number} = {},
+    config: TermShapeConfig & {limit?: number},
 ): Promise<{
     buckets: AccountActivityBucket[];
     /**
@@ -451,7 +448,10 @@ export async function getAccountActivity(
     truncated: boolean;
 }> {
     const transport = buildTransport(config);
-    const limit = Math.min(config.limit ?? INTUITION_MAX_POSITIONS_PAGE, INTUITION_MAX_POSITIONS_PAGE);
+    const limit = Math.min(
+        config.limit ?? INTUITION_MAX_POSITIONS_PAGE,
+        INTUITION_MAX_POSITIONS_PAGE,
+    );
     const data = await transport.request(ACCOUNT_ACTIVITY_QUERY, {
         account,
         curveId: String(config.curveId ?? DEFAULT_CURVE_ID),
@@ -545,13 +545,14 @@ export type TermValuePoint = {
 export async function getTermValueHistory(
     termId: string,
     curveId: bigint | number,
-    config: TermShapeConfig & {limit?: number} = {},
+    config: TermShapeConfig & {limit?: number},
 ): Promise<TermValuePoint[]> {
     const transport = buildTransport(config);
-    const data = await transport.request(
-        TERM_VALUE_QUERY,
-        {termId, curveId: String(curveId), limit: config.limit ?? 250},
-    );
+    const data = await transport.request(TERM_VALUE_QUERY, {
+        termId,
+        curveId: String(curveId),
+        limit: config.limit ?? 250,
+    });
 
     const rows = Array.isArray(data["signals"]) ? data["signals"] : [];
     const points: TermValuePoint[] = [];
@@ -611,13 +612,14 @@ export type TermBacker = {
 export async function getTermBackers(
     termId: string,
     curveId: bigint | number,
-    config: TermShapeConfig & {limit?: number} = {},
+    config: TermShapeConfig & {limit?: number},
 ): Promise<TermBacker[]> {
     const transport = buildTransport(config);
-    const data = await transport.request(
-        TERM_BACKERS_QUERY,
-        {termId, curveId: String(curveId), limit: config.limit ?? 100},
-    );
+    const data = await transport.request(TERM_BACKERS_QUERY, {
+        termId,
+        curveId: String(curveId),
+        limit: config.limit ?? 100,
+    });
 
     const rows = Array.isArray(data["positions"]) ? data["positions"] : [];
     const backers: TermBacker[] = [];

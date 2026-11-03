@@ -23,9 +23,9 @@ delegated signing (see below) and is imported lazily, so a direct-mode consumer 
 ## The one call
 
 ```ts
-import {createErc8004Client, getAgentProfile} from "@arp-protocol/core";
+import {createErc8004Client, getAgentProfile, INTUITION_MAINNET_GRAPHQL} from "@arp-protocol/core";
 
-const client = createErc8004Client();
+const client = createErc8004Client({graphqlUrl: INTUITION_MAINNET_GRAPHQL});
 const profile = await getAgentProfile(client, {chainId: 8453, tokenId: "2340"});
 
 for (const entry of profile.assessments) {
@@ -56,9 +56,9 @@ Ethereum.
 Everything above is keyed by an identity. `listAgents` is the read for when you do not have one yet.
 
 ```ts
-import {createErc8004Client, listAgents} from "@arp-protocol/core";
+import {createErc8004Client, INTUITION_MAINNET_GRAPHQL, listAgents} from "@arp-protocol/core";
 
-const client = createErc8004Client();
+const client = createErc8004Client({graphqlUrl: INTUITION_MAINNET_GRAPHQL});
 const page = await listAgents(client, {order: "evidence-quantity", limit: 25, offset: 0});
 
 console.log(page.total); // ~28,700 on mainnet — the graph's count, not page.agents.length
