@@ -63,8 +63,9 @@ until the rebuilt `skill-facts.json` is merged. The README badge is the next ste
 
 - `curl -s -o /dev/null -w "%{http_code}" https://registry.npmjs.org/@arp-protocol%2fcli` → `404`.
   Path B's first step cannot be published on a public page until the package is.
-- Path A's last step is task 50, which arp-7f reported working once on testnet; not merged as a
-  finished task at the time of writing.
+- Path A's last step is task 50, merged on 2026-11-02: extension 0.2.1 ran end to end in Claude
+  Desktop on the user's machine, with the sponsor paying the deposit. Nothing is hosted; the
+  sponsor and the content server run locally.
 
 ## 5. Do not do in this task
 
