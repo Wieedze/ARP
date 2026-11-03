@@ -28,9 +28,9 @@ sources, and where they disagree the repo's ADRs win:
 - **This repo** — `docs/12` (the mechanism), `docs/01` (the positioning, ADR `0075`), ADRs `0094`
   (directory and verifier, _declared_ vs _proven_), `0103` (UI words), `0112` (who pays).
 - **`Wieedze/ARP-business-dev`** — `pitch/kit-de-presentation.md`: the goal (_ARP makes money
-  flow to the tools agents actually use_), the signature (_Stars show who looked. ARP shows who used
-  it._), the three principles (rates nobody, holds nothing, every figure recomputable), and the
-  vocabulary table — never `best`, `score`, `verified` about a usage, `proof` outside the _proven_
+  flow to the tools agents actually use_, replaced in this repo the same day by ADR `0126`), the
+  signature (_Stars show who looked. ARP shows who used it._), the three principles (rates nobody,
+  holds nothing, every figure recomputable), and the vocabulary table — never `best`, `score`, `verified` about a usage, `proof` outside the _proven_
   label, `trustless`, `guaranteed`, nor `registry` as a lead.
 
 So a pass also asks of each file: **does it say what ARP is today?** A text that still presents the
