@@ -5,7 +5,8 @@
  *  Task 56. Reads `data/measurements/skill-requires-2026-11-03.json`, writes
  *  `data/catalogue/skill-requires.json`, keyed by the skill atom's label like `skill-facts.json`.
  *  Only skills that declare a CLI or mention a login get an entry: absence means "nothing found in
- *  its file", or "not read" for the 139 the layout could not locate, never "needs nothing".
+ *  its file", or "not read" for the 141 the layout left unread (139 not located, 2 found at
+ *  several paths with different content), never "needs nothing".
  */
 import {writeFileSync} from "node:fs";
 

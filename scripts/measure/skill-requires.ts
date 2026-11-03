@@ -7,7 +7,9 @@
  *  ambiguous-with-the-same-content, first path), and ARP's own from this repository. Writes one
  *  dated file under `data/measurements/` and prints the counts. No credential, nothing signed.
  *
- *  A skill the layout could not locate is reported as `unread`, never as needing nothing.
+ *  Two kinds of skill are **not fetched** and are counted apart: the ones the layout could not
+ *  locate, and the ones it found at several paths with different content. `unread` counts only a
+ *  fetch that failed. None of them is ever reported as needing nothing.
  */
 import {readFileSync, writeFileSync} from "node:fs";
 
@@ -49,6 +51,10 @@ const counts = {
     read: readRows.length,
     unread: rows.length - readRows.length,
     notLocated: (layouts as {counts: {unlocated: number}}).counts.unlocated,
+    // Found at several paths whose contents differ, so no one path is the skill's file.
+    ambiguousDiffering: (layouts as {ambiguous: {sameContent: boolean}[]}).ambiguous.filter(
+        (row) => !row.sameContent,
+    ).length,
     declaresCli: readRows.filter((row) => row.cli.length > 0).length,
     mentionsLogin: readRows.filter((row) => row.login !== null).length,
     either: readRows.filter((row) => row.cli.length > 0 || row.login !== null).length,

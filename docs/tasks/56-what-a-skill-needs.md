@@ -36,6 +36,21 @@ No standard frontmatter field says "needs an account". The two files show it in 
 3. **Measure** how many of the 663 declare a CLI and how many mention a login, with a committed
    script and its output file, so the share is quoted from a run and not estimated.
 
+## 3. Do not do in this task
+
+- Reorder or filter results by requirement. Task 54 forbids changing the ranking to improve its
+  measurement, and an agent can choose for itself once it can see the field.
+- Call a skill good or bad. ARP publishes no score (ADR `0046`): "this file mentions `belt login`"
+  is a fact a reader can check; "this skill is worse" is not.
+- Ask a third party for the data. Everything comes from the skill's own file.
+
+## 4. Evidence ladder
+
+It serves **asserted**, tier 1: `cli` is the author's own declaration and `mentions_login` a quote
+from the author's own file, shown as what the file says and promoted to nothing. It does not move
+ARP up the ladder, since it adds nothing staked or proven. What it protects is task 54's
+measurement, which would otherwise count a skill nobody can use without an account as a success.
+
 ## 5. Built and measured (2026-11-03)
 
 - `scripts/helpers/skill-requires.ts` reads `cli` (frontmatter `metadata.requires.bins`,
@@ -55,6 +70,7 @@ Measured 2026-11-03 over 663 catalogued skills (re-run `bun run scripts/measure/
 | --- | --- |
 | read | 522 |
 | not located on 2026-10-29, so not read | 139 |
+| found at several paths with different content, so not read | 2 (the layout file's `ambiguous` rows with `sameContent: false`; the script counts them as `ambiguousDiffering` from its next run) |
 | failed to read | 0 |
 | declare a CLI | 211 |
 | mention a login, a key or a sign-up | 263 |
@@ -62,23 +78,11 @@ Measured 2026-11-03 over 663 catalogued skills (re-run `bun run scripts/measure/
 
 Two readings of those figures, before anyone quotes them:
 
-- **`belt` is 156 of the 211**: 26 skills copied byte for byte into six `superpowers`
-  repositories, all needing inference.sh. The other CLIs are `lark-cli` (28), `runcomfy` (19),
+- **`belt` is 156 of the 211**: the same 26 skill names in six repositories named
+  `superpowers`, all needing inference.sh. One skill set copied into six repos, counted six times. The other CLIs are `lark-cli` (28), `runcomfy` (19),
   `agents-cli` (7), `agent-browser` (1).
-- **`mentions_login` has false positives by construction**, seen in a sample of twelve: "Requires
-  no API key, fully free" (`remotion-dev/skills` remotion-maps), a query containing "Failed Login"
-  (`microsoft/azure-skills`), "after signup" in a marketing skill. That is why the field says
+- **`mentions_login` has false positives by construction.** Three are in the measurement file:
+  "Requires no API key, fully free" (`remotion-dev/skills` remotion-maps), a query containing
+  "Failed Login" (`microsoft/azure-skills`), "after signup" (`coreyhaines31/marketingskills`
+  onboarding). ARP's own skill is a fourth: its line is "You need **no API key**, no account…". That is why the field says
   "mentions" and the agent is told to read it.
-
-## 3. Do not do in this task
-
-- Reorder or filter results by requirement. Task 54 forbids changing the ranking to improve its
-  measurement, and an agent can choose for itself once it can see the field.
-- Call a skill good or bad. ARP publishes no score (ADR `0046`): "this file mentions `belt login`"
-  is a fact a reader can check; "this skill is worse" is not.
-- Ask a third party for the data. Everything comes from the skill's own file.
-
-## 4. Evidence ladder
-
-It serves no tier directly. It keeps the discovery claim honest: a skill found but unusable without
-an account is a result that tasks 52 and 54 would otherwise count as a success.
