@@ -166,18 +166,28 @@ const LOOPBACK = new Set(['127.0.0.1', '::1', '::ffff:127.0.0.1']);
  * Who sent a request, for the node's per-client rate limit.
  *
  * Behind a tunnel every request arrives from the tunnel's own loopback connection, so the socket
- * address is the same for every caller and one flood would spend everybody's allowance. Both
- * tunnels name the caller in a header — Cloudflare in `cf-connecting-ip`, ngrok in
- * `x-forwarded-for` — and the header is trusted **only on a loopback socket**, which is the only
- * socket the node listens on. A local process can set the header too; it could already reach the
- * port.
+ * address is the same for every caller and one flood would spend everybody's allowance. So the
+ * header **the running tunnel writes** is read, on a loopback socket only, and no other (ADR
+ * `0116`): Cloudflare's `cf-connecting-ip` behind `cloudflared`, and the right-most
+ * `x-forwarded-for` hop behind ngrok — the one ngrok appended; every hop left of it is whatever the
+ * caller sent. Until ADR `0116` either header was read whatever the tunnel, and the left-most hop,
+ * so a caller could name a new client on every request and never reach the limit. Any other tunnel
+ * gets the socket address.
  */
-export function clientAddress(request: Request, socketIp: string): string {
+export function clientAddress(
+  request: Request,
+  socketIp: string,
+  tunnel: TunnelSpec['kind'],
+): string {
   if (!LOOPBACK.has(socketIp)) return socketIp;
-  const cloudflare = request.headers.get('cf-connecting-ip')?.trim();
-  if (cloudflare !== undefined && cloudflare !== '') return cloudflare;
-  const forwarded = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim();
-  if (forwarded !== undefined && forwarded !== '') return forwarded;
+  if (tunnel === 'cloudflared') {
+    const cloudflare = request.headers.get('cf-connecting-ip')?.trim();
+    if (cloudflare !== undefined && cloudflare !== '') return cloudflare;
+  }
+  if (tunnel === 'ngrok') {
+    const forwarded = request.headers.get('x-forwarded-for')?.split(',').at(-1)?.trim();
+    if (forwarded !== undefined && forwarded !== '') return forwarded;
+  }
   return socketIp;
 }
 

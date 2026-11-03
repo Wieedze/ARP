@@ -22,6 +22,12 @@ export type TaskContext = {
   paid: bigint;
   paymentTxHash: Hex;
   agent: Address;
+  /**
+   * Aborted when the node stops waiting (`handlerTimeoutMs`). A handler that does long work should
+   * stop on it: the payment stays claimed, and so refused to anyone else, until the handler settles
+   * (ADR `0116`).
+   */
+  signal: AbortSignal;
 };
 export type TaskHandler = (payload: unknown, context: TaskContext) => Promise<unknown>;
 
@@ -106,7 +112,10 @@ export type AgentIdentity = { agentRegistry: string; agentId: bigint };
 export type NodeLimits = {
   /** Largest body accepted, in bytes. `serveFetch` enforces it as well, before the body is read whole; this is the same number. */
   maxBodyBytes: number;
-  /** A handler that has not answered by then is a 504, and the payment is released. */
+  /**
+   * A handler that has not answered by then is a 504 and is aborted; its payment is released once
+   * the handler settles, so a retry cannot run a second job beside one still running.
+   */
   handlerTimeoutMs: number;
   /** `POST /task` requests per client per minute, paid or not. */
   requestsPerMinute: number;
@@ -217,7 +226,7 @@ export function createNode(options: NodeOptions): {
   async function verifyPayment(
     hash: Hex,
     requester: Address,
-  ): Promise<TaskContext | { error: string }> {
+  ): Promise<Omit<TaskContext, 'signal'> | { error: string }> {
     const tx = await publicClient.getTransaction({ hash }).catch(() => null);
     if (tx === null) return { error: `payment tx ${hash} not found` };
     const receipt = await publicClient.getTransactionReceipt({ hash }).catch(() => null);
@@ -322,20 +331,32 @@ export function createNode(options: NodeOptions): {
       let result: unknown;
       let requestHash: Hex;
       let resultHash: Hex;
+      const abort = new AbortController();
+      // Started once, here, so a timeout can wait for the same promise to settle.
+      const work = Promise.resolve().then(() =>
+        handle(body.payload, { ...verified, signal: abort.signal }),
+      );
       try {
-        const answer = await withTimeout(handle(body.payload, verified), limits.handlerTimeoutMs);
+        const answer = await withTimeout(work, limits.handlerTimeoutMs);
         // The result as it will cross the wire, so the requester hashes exactly what it receives.
         result = JSON.parse(JSON.stringify(answer ?? null, bigintSafe)) as unknown;
         requestHash = hireDigest(body.payload ?? null);
         resultHash = hireDigest(result);
       } catch (error) {
-        ledger.release(payment);
         if (error instanceof Timeout) {
+          // The handler may still be working. Its payment stays claimed until it settles, so the
+          // same payment cannot start a second job beside it (ADR `0116`).
+          abort.abort();
+          void work.then(
+            () => ledger.release(payment),
+            () => ledger.release(payment),
+          );
           return json(
             { error: `handler did not answer within ${limits.handlerTimeoutMs} ms` },
             504,
           );
         }
+        ledger.release(payment);
         // The message, not a stack: enough for the caller to retry or report, nothing about the host.
         return json({ error: `handler failed: ${String(error).slice(0, 300)}` }, 500);
       }

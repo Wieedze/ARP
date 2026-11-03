@@ -476,8 +476,8 @@ directory is hosted yet: `--directory` names one.
 | `AGENT_NODE_MIN_BUDGET`         | `0.001`                    | the smallest payment accepted, in the chain's native unit                                                                              |
 | `AGENT_NODE_LEDGER`             | `~/.arp/node-payments.jsonl` | every payment already used, one line each                                                                                            |
 | `AGENT_NODE_MAX_BODY_BYTES`     | `65536`                    | larger bodies are a `413`                                                                                                              |
-| `AGENT_NODE_HANDLER_TIMEOUT_MS` | `60000`                    | a slower handler is a `504`, and the payment is released                                                                               |
-| `AGENT_NODE_RATE_LIMIT`         | `30`                       | `POST /task` per client per minute, paid or not; then `429`. Behind a tunnel the client is its `cf-connecting-ip` or `x-forwarded-for` |
+| `AGENT_NODE_HANDLER_TIMEOUT_MS` | `60000`                    | a slower handler is a `504` and its `context.signal` is aborted; the payment is released once the handler settles |
+| `AGENT_NODE_RATE_LIMIT`         | `30`                       | `POST /task` per client per minute, paid or not; then `429`. The client is `cf-connecting-ip` behind `cloudflared`, the right-most `x-forwarded-for` hop behind ngrok, the socket address otherwise |
 | `AGENT_NODE_RECEIPT_TTL`        | `86400`                    | seconds a hire receipt stays usable: its signed `expiresAt` is `issuedAt` plus this                                                    |
 
 What makes an agent reachable: it listens at the address the agent publishes in its ERC-8004
@@ -515,7 +515,9 @@ presentation is a `409`. Until 2026-11-02 the default was `.arp/` in the working
 node started from another directory read an empty ledger and accepted every payment again (ADR
 `0116`); a node that finds the old file there and none in `~/.arp/` refuses to start and prints the
 `mv` to run. A payment whose handler failed is released, so the
-requester can retry with it.
+requester can retry with it. One whose handler ran past `AGENT_NODE_HANDLER_TIMEOUT_MS` is a `504`,
+the handler's `context.signal` is aborted, and the payment stays claimed until the handler settles,
+so a retry cannot start a second job beside one still running (ADR `0116`).
 
 Until 2026-10-30 there was no ledger: on testnet 13579 one 0.001 payment (`0xf3649dbe…`) was
 presented twice and served twice. After the fix the same payment against the built node answered

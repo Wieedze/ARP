@@ -169,7 +169,7 @@ export async function main(): Promise<void> {
   }
   await serveFetch(
     { port: PORT, hostname: '127.0.0.1', maxBodyBytes: LIMITS.maxBodyBytes },
-    (request, ip) => node.fetch(request, clientAddress(request, ip)),
+    (request, ip) => node.fetch(request, clientAddress(request, ip, tunnel.kind)),
   );
   const local = `http://127.0.0.1:${PORT}`;
   let running: Awaited<ReturnType<typeof startTunnel>>;
