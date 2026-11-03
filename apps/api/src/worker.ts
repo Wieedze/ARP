@@ -97,6 +97,22 @@ function everyHours(env: Env): number {
   return Number.isFinite(value) && value > 0 ? value : 24;
 }
 
+/**
+ * Whether two strings are equal, in time that does not depend on where they first differ (ADR
+ * `0116`): `!==` returns at the first differing character, which lets a caller find the secret a
+ * byte at a time. Both sides are hashed first, so the comparison is over 32 bytes whatever the
+ * lengths, and neither length leaks either.
+ */
+export async function sameSecret(given: string, expected: string): Promise<boolean> {
+  const encode = (text: string) => crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+  const [a, b] = await Promise.all([encode(given), encode(expected)]);
+  const x = new Uint8Array(a);
+  const y = new Uint8Array(b);
+  let diff = 0;
+  for (let i = 0; i < x.length; i += 1) diff |= (x[i] ?? 0) ^ (y[i] ?? 0);
+  return diff === 0;
+}
+
 export async function handle(
   request: Request,
   env: Env,
@@ -120,7 +136,7 @@ export async function handle(
   if (request.method === 'POST' && url.pathname === '/refresh') {
     const secret = env.REFRESH_SECRET?.trim();
     if (!secret) return json({ error: 'refresh is disabled: REFRESH_SECRET is not set' }, 404);
-    if (request.headers.get('authorization') !== `Bearer ${secret}`)
+    if (!(await sameSecret(request.headers.get('authorization') ?? '', `Bearer ${secret}`)))
       return json({ error: 'unauthorised' }, 401);
     const all = url.searchParams.get('all') === '1';
     let result = await runSlice({
