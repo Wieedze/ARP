@@ -80,10 +80,21 @@ describe("a category anyone can add (task 59)", () => {
         expect(again.calls.map((call) => call.kind)).toEqual(["create-triple", "create-triple"]);
     });
 
-    it("refuses what the rules can see: an existing category, an orphan, no reason, no skill", async () => {
-        expect(await planCategory({...proposal, label: "Design"}, deps())).toMatchObject({
-            rule: "exists",
-        });
+    it("tags with an existing category: the tag only, parent ignored, reason optional", async () => {
+        const plan = await planCategory(
+            {...proposal, label: "Design", parent: "", reason: ""},
+            deps(),
+        );
+        if (plan.status !== "planned") throw new Error(plan.detail);
+        expect(plan.newCategory).toBe(false);
+        expect(plan.parent).toBeNull();
+        expect(plan.subDomainTripleId).toBeNull();
+        expect(plan.calls).toHaveLength(1);
+        expect(plan.calls[0]?.kind).toBe("create-triple");
+        expect(argsOf(plan.calls[0]!.data)[1]).toEqual([HAS_TAG]);
+    });
+
+    it("refuses what the rules can see for a new category: an orphan, no reason, no skill", async () => {
         expect(await planCategory({...proposal, parent: "nowhere"}, deps())).toMatchObject({
             rule: "parent",
         });
@@ -91,6 +102,45 @@ describe("a category anyone can add (task 59)", () => {
             rule: "reason",
         });
         expect(await planCategory(proposal, deps(new Set()))).toMatchObject({rule: "skill"});
+    });
+
+    it("refuses look-alikes and the characters ledger keys use, after NFKC", () => {
+        for (const raw of ["x#1", "a:b", "de\u200bsign", "d\u0435sign", "a\u001bb"]) {
+            expect(checkCategoryLabel(normaliseCategoryLabel(raw), COMPOUNDS)).toMatchObject({
+                rule: "charset",
+            });
+        }
+        expect(normaliseCategoryLabel("\uFF24esign")).toBe("design");
+    });
+
+    it("refuses a label already in the tree in any state, and a subject that is not a tool", async () => {
+        const tied = await planCategory(proposal, {
+            ...deps(),
+            isKnown: async (l: string) => l === "slides",
+        });
+        expect(tied).toMatchObject({rule: "exists"});
+        const notTool = await planCategory(proposal, {...deps(), isTool: async () => false});
+        expect(notTool).toMatchObject({rule: "skill"});
+    });
+
+    it("with backing, deposits on an existing edge no attestor holds", async () => {
+        const first = await planCategory(proposal, deps());
+        if (first.status !== "planned") throw new Error(first.detail);
+        const existing = new Set([SKILL.toLowerCase(), first.subDomainTripleId!.toLowerCase()]);
+        const depositor = "0x00000000000000000000000000000000000000aa" as const;
+        const backed = await planCategory(proposal, {
+            ...deps(existing),
+            backing: {attestors: [depositor], depositor},
+        });
+        if (backed.status !== "planned") throw new Error(backed.detail);
+        expect(backed.calls.map((call) => call.kind)).toEqual([
+            "create-atom",
+            "create-triple",
+            "deposit",
+        ]);
+        const unbacked = await planCategory(proposal, deps(existing));
+        if (unbacked.status !== "planned") throw new Error(unbacked.detail);
+        expect(unbacked.calls.map((call) => call.kind)).toEqual(["create-atom", "create-triple"]);
     });
 
     it("counts as a category only a label that climbs to the root", async () => {

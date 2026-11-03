@@ -156,7 +156,11 @@ describe("readHierarchy, reading from the attestor's positions", () => {
                 },
             },
         ]);
-        const {triples, truncated} = await readHierarchy({...CONFIG, attestor: ATTESTOR, transport});
+        const {triples, truncated} = await readHierarchy({
+            ...CONFIG,
+            attestor: ATTESTOR,
+            transport,
+        });
         expect(truncated).toBe(false);
         expect(triples).toEqual([
             {
@@ -167,7 +171,7 @@ describe("readHierarchy, reading from the attestor's positions", () => {
                 shares: 990000000000000n,
             },
         ]);
-        expect(seen[0]?.["who"]).toBe(ATTESTOR);
+        expect(seen[0]?.["who"]).toEqual([ATTESTOR]);
         expect(seen[0]?.["curveId"]).toBe("1");
     });
 
@@ -179,17 +183,55 @@ describe("readHierarchy, reading from the attestor's positions", () => {
         );
     });
 
-    it("pages positions at 100, the indexer's cap on that table, not at 250", async () => {
-        const row = {
-            shares: "1",
-            term: {triple: {term_id: "0x1", subject: {data: "a"}, object: {data: "tool"}}},
+    it("reads several attestors in one query, and counts an edge two of them back once", async () => {
+        const edge = {
+            term: {triple: {term_id: "0xedge", subject: {data: "card"}, object: {data: "payment"}}},
         };
+        const seen: Record<string, unknown>[] = [];
+        const transport = {
+            async request(_query: string, variables: Record<string, unknown>) {
+                seen.push(variables);
+                return {
+                    positions: [
+                        {...edge, shares: "3"},
+                        {...edge, shares: "4"},
+                    ],
+                };
+            },
+        };
+        const {triples} = await readHierarchy({
+            ...CONFIG,
+            attestor: [ATTESTOR, "0xSPONSOR"],
+            transport,
+        });
+        expect(seen[0]?.["who"]).toEqual([ATTESTOR, "0xSPONSOR"]);
+        expect(triples).toEqual([
+            {tripleId: "0xedge", child: "card", parent: "payment", positions: 1, shares: 7n},
+        ]);
+    });
+
+    it("pages positions at 100, the indexer's cap on that table, not at 250", async () => {
+        // A distinct triple per row: the reader merges two rows for one triple (two attestors on
+        // one edge), and that is a different test.
+        const row = (index: number) => ({
+            shares: "1",
+            term: {
+                triple: {
+                    term_id: `0x${index}`,
+                    subject: {data: `a${index}`},
+                    object: {data: "tool"},
+                },
+            },
+        });
         const seen: Record<string, unknown>[] = [];
         let call = 0;
         const transport = {
             async request(_query: string, variables: Record<string, unknown>) {
                 seen.push(variables);
-                return {positions: call++ === 0 ? Array.from({length: 100}, () => row) : []};
+                return {
+                    positions:
+                        call++ === 0 ? Array.from({length: 100}, (_, index) => row(index)) : [],
+                };
             },
         };
         const {triples} = await readHierarchy({...CONFIG, attestor: ATTESTOR, transport});
@@ -261,7 +303,7 @@ describe("readHierarchy", () => {
 });
 
 describe("toolsInDomain", () => {
-    it("asks for the whole subtree in one tag query and treats the string \"null\" as no host", async () => {
+    it('asks for the whole subtree in one tag query and treats the string "null" as no host', async () => {
         const tree = DomainTree.from("tool", [edge("payment", "tool"), edge("card", "payment")]);
         const {transport, seen} = transportOf([
             [
@@ -309,20 +351,42 @@ describe("toolsInDomain", () => {
                     term_id: "0xours",
                     subject: {term_id: "0xaa", value: {thing: {url: "https://x/ours"}}},
                     object: {data: "payment"},
-                    term: {vaults: [{curve_id: "1", position_count: 1, total_shares: "1", positions: [{shares: "9"}]}]},
+                    term: {
+                        vaults: [
+                            {
+                                curve_id: "1",
+                                position_count: 1,
+                                total_shares: "1",
+                                positions: [{shares: "9"}],
+                            },
+                        ],
+                    },
                 },
                 {
                     term_id: "0xtheirs",
                     subject: {term_id: "0xbb", value: {thing: {url: "https://x/theirs"}}},
                     object: {data: "payment"},
-                    term: {vaults: [{curve_id: "1", position_count: 1, total_shares: "1", positions: []}]},
+                    term: {
+                        vaults: [
+                            {curve_id: "1", position_count: 1, total_shares: "1", positions: []},
+                        ],
+                    },
                 },
                 {
                     // Backed only on another curve: a different market, so not ours on curve 1.
                     term_id: "0xothercurve",
                     subject: {term_id: "0xcc", value: {thing: {url: "https://x/other"}}},
                     object: {data: "payment"},
-                    term: {vaults: [{curve_id: "2", position_count: 1, total_shares: "1", positions: [{shares: "9"}]}]},
+                    term: {
+                        vaults: [
+                            {
+                                curve_id: "2",
+                                position_count: 1,
+                                total_shares: "1",
+                                positions: [{shares: "9"}],
+                            },
+                        ],
+                    },
                 },
             ],
         ]);
@@ -332,7 +396,7 @@ describe("toolsInDomain", () => {
             {tree},
         );
         expect(tools.map((tool) => tool.attestorBacked)).toEqual([true, false, false]);
-        expect(seen[0]?.["who"]).toBe("0xATTESTOR");
+        expect(seen[0]?.["who"]).toEqual(["0xATTESTOR"]);
     });
 
     it("sends no tag query for a domain the hierarchy does not reach", async () => {

@@ -11,10 +11,12 @@ piece.
 
 ## What ARP is
 
-> ARP makes money flow to the tools agents actually use.
+> Your agent finds the right skill, tool or agent for you, and shows which ones other agents
+> actually use.
 
 `docs/01` holds the positioning. This line read "a connector between the Intuition protocol and
-agents" until 2026-11-03.
+agents", then "ARP makes money flow to the tools agents actually use", until 2026-11-03 (ADR
+`0126`).
 
 An agent's operator signs one delegation. The agent runs, declares the tools it used, and deposits
 its own TRUST on them under that cap. The tool gains reputation and so does the agent. **ARP is not a

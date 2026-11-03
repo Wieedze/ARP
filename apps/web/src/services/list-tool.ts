@@ -1,9 +1,11 @@
+import type {SignedListToolRequest} from "@arp-protocol/core";
+
 /**
  * Ask the sponsor to list a tool or a skill on testnet 13579 (task 53c, ADR `0123`).
  *
- * Unsigned for now: the sponsor counts it against its shared anonymous cap. A request signed by
- * the agent key or a wallet gets its own per-address cap; signing it waits for
- * `signListToolRequest` to reach `@arp-protocol/core` on `dev`.
+ * Signed when the caller can sign: a request signed by a wallet or the agent key gets that
+ * address's own daily cap. Unsigned otherwise, counted against the shared anonymous cap (the
+ * user's decision, 2026-11-03, `docs/tasks/53` §2).
  *
  * No React. Every IO is injected, so the test needs no server.
  */
@@ -22,14 +24,18 @@ function isRecord(value: unknown): value is Record<string, unknown> {
     return typeof value === "object" && value !== null;
 }
 
-export async function listTool(url: string, deps: ListToolDeps): Promise<ListToolResult> {
+export async function listTool(
+    url: string,
+    deps: ListToolDeps,
+    signed?: SignedListToolRequest,
+): Promise<ListToolResult> {
     if (deps.endpoint === undefined) return {status: "unavailable"};
     let response: Response;
     try {
         response = await deps.fetch(`${deps.endpoint}/list-tool`, {
             method: "POST",
             headers: {"content-type": "application/json"},
-            body: JSON.stringify({url}),
+            body: JSON.stringify(signed === undefined ? {url} : {url, request: signed}),
         });
     } catch {
         // The sponsor runs on the operator's machine (`docs/26` §2); not running is the usual cause.

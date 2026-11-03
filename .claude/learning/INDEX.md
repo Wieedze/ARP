@@ -2,7 +2,7 @@
 
 **Generated** 2026-11-03 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-56 entries, one per completed task. Written by `task-verifier` on a pass.
+57 entries, one per completed task. Written by `task-verifier` on a pass.
 
 | # | task | verdict | entry |
 | --- | --- | --- | --- |
@@ -61,4 +61,5 @@
 | [51](51-what-a-skill-needs.md) | `docs/tasks/56-what-a-skill-needs.md` | PASS (second pass; first pass FAIL on claims) | What a skill needs, shown to the agent before it picks one |
 | [52](52-audit-cleanup.md) | `docs/tasks/60-audit-cleanup.md` | PASS | the audit cleanup |
 | [53](53-the-prose-pass-against-the-positioning.md) | `docs/tasks/27-strip-the-ai-slop.md` — step 1 re-run, steps 4 and 5; step 6 dropped | PASS on the second run | The prose pass, judged against the positioning |
+| [54](54-one-path-per-profile.md) | `docs/tasks/53-one-path-per-profile.md` | PASS on the second pass | One path per profile, from the landing |
 | [56](56-review-before-install.md) | `docs/tasks/61-review-before-install.md` (A, C, D, E; B deferred by the user) | PASS (second round; round 1 FAIL) | Review before install: a pinned version, a page of facts, and a human who accepts |

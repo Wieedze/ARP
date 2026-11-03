@@ -383,7 +383,7 @@ export type {
  * What stays is why the namespace exists at all: `rules/portability.md` makes this the one place in
  * the package allowed to name a chain, because an L3 is not in viem's registry.
  */
-export {intuitionMainnet, intuitionTestnet} from "./arp/index.js";
+export {ARP_DOMAIN_ATTESTORS, intuitionMainnet, intuitionTestnet} from "./arp/index.js";
 
 export {
     getAccountActivity,
@@ -751,6 +751,7 @@ export {
     checkDepositLimits,
     checkGasLimits,
     checkIdentityLimits,
+    checkCategoryLimits,
     checkListToolLimits,
     checkMintGasLimits,
     checkPublishLimits,

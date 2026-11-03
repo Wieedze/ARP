@@ -50,6 +50,16 @@ export type SponsorLimits = {
      */
     listingsPerDay: number;
     /**
+     * New categories the service writes a UTC day, as the attestor the index reads (task 59, ADR
+     * `0124`). One proposal is counted once however many of its three terms it creates.
+     */
+    categoriesPerDay: number;
+    /**
+     * Tags with an existing category the service writes a UTC day (path C's common case, the user
+     * 2026-11-03). One triple each, counted apart from new categories.
+     */
+    categoryTagsPerDay: number;
+    /**
      * Past this share of its sponsored shares withdrawn, in basis points, an agent is no longer
      * sponsored. A **mainnet** rule: `null`, not enforced, on testnet, where everything proven is
      * sponsored (ADR `0094` as amended).
@@ -80,7 +90,15 @@ export type SponsorRecord = {
      * (ADR `0110`); `list-tool` the terms of a sponsored tool listing (ADR `0123`), whose subject
      * is the signing address, or {@link ANONYMOUS_LISTER} for an unsigned request.
      */
-    kind: "deposit" | "gas" | "publish" | "mint-gas" | "identity" | "create" | "list-tool";
+    kind:
+        | "deposit"
+        | "gas"
+        | "publish"
+        | "mint-gas"
+        | "identity"
+        | "create"
+        | "list-tool"
+        | "category";
     subject: Address;
     /** The `value` the service sent for it, in wei. A publication's term fees are in it; the gas of the transaction is not. */
     value: bigint;
@@ -341,6 +359,55 @@ export function checkListToolLimits(
                 lister === null
                     ? `${cap} unsigned listings a day, reached; sign the request to use your own limit`
                     : `${cap} listings a day for ${lister}, reached`,
+        };
+    }
+    return budget(records, value, now, limits) ?? {ok: true};
+}
+
+/**
+ * Whether one more category proposal, costing `value`, fits: at most
+ * {@link SponsorLimits.categoriesPerDay} a UTC day, and the budget. Records are keyed
+ * `<proposal>#<n>`, so a proposal completing a half-written category is not counted twice.
+ */
+export function checkCategoryLimits(
+    records: readonly SponsorRecord[],
+    params: {
+        proposal: string;
+        /** False for a tag with an existing category, counted against `categoryTagsPerDay`. */
+        newCategory: boolean;
+        value: bigint;
+        now: number;
+        limits: SponsorLimits;
+    },
+): LimitDecision {
+    const {proposal, newCategory, value, now, limits} = params;
+    // Keys start `category:` for a new category and `category-tag:` for a tag, so each is counted
+    // against its own cap.
+    const kindPrefix = newCategory ? "category:" : "category-tag:";
+    const cap = newCategory ? limits.categoriesPerDay : limits.categoryTagsPerDay;
+    const day = utcDay(now);
+    const proposals = new Set(
+        records
+            .filter(
+                (r) =>
+                    r.kind === "category" &&
+                    utcDay(r.at) === day &&
+                    r.key !== undefined &&
+                    r.key.startsWith(kindPrefix),
+            )
+            // The `#<n>` suffix is the last `#`; a label cannot hold one (`checkCategoryLabel`), but the
+            // count does not rely on that.
+            .map((r) => {
+                const key = r.key ?? "";
+                return key.slice(0, key.lastIndexOf("#"));
+            }),
+    );
+    if (!proposals.has(proposal) && proposals.size >= cap) {
+        return {
+            ok: false,
+            reason: newCategory
+                ? `${cap} new categories a day, reached`
+                : `${cap} tags with an existing category a day, reached`,
         };
     }
     return budget(records, value, now, limits) ?? {ok: true};

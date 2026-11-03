@@ -33,3 +33,31 @@ export function intuitionPinner(auth: {
     return uri;
   };
 }
+
+/**
+ * The delegation register's document, for `POST /publish` (task 37c): an arbitrary JSON document,
+ * which `pinThing` cannot carry, through the same API's `uploadJsonToIpfs`. The argument is
+ * `jsonb`, so the stored key order is the database's, not the string's: the same delegation still
+ * gives the same CID, and the planner builds the atom from the URI this returns.
+ */
+export function intuitionJsonPinner(auth: {
+  apiKey: string;
+  headerName: string;
+}): (document: string) => Promise<string> {
+  return async (document) => {
+    const res = await fetch(PIN_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', [auth.headerName]: auth.apiKey },
+      body: JSON.stringify({
+        query: 'mutation upload($json: jsonb!) { uploadJsonToIpfs(json: $json) { hash } }',
+        variables: { json: JSON.parse(document) as unknown },
+      }),
+      signal: AbortSignal.timeout(15_000),
+    });
+    if (!res.ok) throw new Error(`pinning failed: http ${res.status}`);
+    const hash = ((await res.json()) as { data?: { uploadJsonToIpfs?: { hash?: string } } }).data
+      ?.uploadJsonToIpfs?.hash; // The API's own shape.
+    if (hash === undefined) throw new Error('pinning returned no hash');
+    return `ipfs://${hash}`;
+  };
+}

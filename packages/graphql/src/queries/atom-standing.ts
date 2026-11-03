@@ -23,7 +23,7 @@ const VAULT_SIDE = `
  * edges first so a truncated read loses the quiet tail rather than an arbitrary slice.
  */
 export const ATOM_STANDING_QUERY = `
-query AtomStanding($atomId: String!, $curveId: numeric!, $limit: Int!, $attestor: String!) {
+query AtomStanding($atomId: String!, $curveId: numeric!, $limit: Int!, $attestor: [String!]!) {
   atom: atoms(where: {term_id: {_eq: $atomId}}, limit: 1) {
     term_id
     label
@@ -54,7 +54,7 @@ query AtomStanding($atomId: String!, $curveId: numeric!, $limit: Int!, $attestor
     term {
       ${VAULT_SIDE}
       vaults(where: {curve_id: {_eq: $curveId}}, limit: 1) {
-        positions(where: {account_id: {_eq: $attestor}, shares: {_gt: "0"}}, limit: 1) { shares }
+        positions(where: {account_id: {_in: $attestor}, shares: {_gt: "0"}}, limit: 1) { shares }
       }
     }
   }

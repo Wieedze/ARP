@@ -4,6 +4,7 @@ import {
   intuitionSource,
   intuitionToolAtomLookup,
   multiVaultReads,
+  ARP_DOMAIN_ATTESTORS,
 } from '@arp-protocol/core';
 import { getAddress, type Address } from 'viem';
 import { catalogueFor, receiptSigner } from './content.js';
@@ -41,7 +42,8 @@ export const RECEIPT_SIGNER = (() => {
  * `arp init --sponsored` writes for Claude Code (task 55). Both hold a local agent key; no other
  * mode does.
  */
-export const DESKTOP = process.env['ARP_TOOLS'] === 'desktop' || process.env['ARP_TOOLS'] === 'sponsored';
+export const DESKTOP =
+  process.env['ARP_TOOLS'] === 'desktop' || process.env['ARP_TOOLS'] === 'sponsored';
 /**
  * Where `arp_get_skill` installs a fetched skill, relative to the working directory: set by
  * `arp init --sponsored` for Claude Code (task 55), unset in the Desktop extension, whose working
@@ -182,7 +184,8 @@ export const REACHABLE_ATOM =
  * rows — which reads as "nobody staked" rather than as a bad query.
  */
 /**
- * ARP's published domain attestor — the address whose positions are ARP's index.
+ * ARP's published domain attestors — the addresses whose positions are ARP's index. Two since
+ * task 59, both ARP's (`ARP_DOMAIN_ATTESTORS` in `@arp-protocol/core`, ADR `0124`).
  *
  * A **default**, not a fallback to the operator's own address. ADR `0045` has every operator run
  * this server on their own machine, so the attestor has to travel with the code: an operator who
@@ -193,19 +196,12 @@ export const REACHABLE_ATOM =
  * position on any ARP domain, so every operator's server would have read an **empty index** and
  * reported that ARP has filed nothing. Silent, and indistinguishable from an empty registry.
  *
- * Override it with `ARP_DOMAIN_ATTESTOR` to read somebody else's index, or your own once you have
+ * Override it with `ARP_DOMAIN_ATTESTOR` (comma-separated for several) to read somebody else's index, or your own once you have
  * filed domains yourself. Blank it to disable domain search altogether — the search then refuses
  * rather than falling back to the unfiltered graph.
  */
-const ARP_DOMAIN_ATTESTOR = '0x906f3A52ec089f8D4E9127F91C6bE5Ae0d18f91f';
-
-function configuredAttestor(): string | undefined {
-  const raw = process.env['ARP_DOMAIN_ATTESTOR'] ?? ARP_DOMAIN_ATTESTOR;
-  // `??` alone let an EMPTY string through, because an empty string is not nullish: the guard below
-  // saw a value, the query ran with `account_id: ""`, and every domain came back with nothing in
-  // it. A search that silently returns zero rows reads as "this domain is empty", not as "this server
-  // is misconfigured" — the same trap as the lowercase address, one level up.
-  if (raw === undefined || raw.trim().length === 0) return undefined;
+/** One address from the environment, checksummed, or why it was refused. */
+function checkedAttestor(raw: string): string | undefined {
   const address = raw.trim();
   if (/^0x[0-9a-f]{40}$/.test(address) || /^0x[0-9A-F]{40}$/.test(address)) {
     // Normalised rather than refused. The indexer's `positions.account_id` is checksummed and a
@@ -238,11 +234,29 @@ function configuredAttestor(): string | undefined {
 }
 
 /**
- * The address whose positions define this server's domain index. Set once, at load.
+ * The attestors, from `ARP_DOMAIN_ATTESTOR` (one address or several, comma-separated) or ARP's
+ * published list. `undefined` when blank or when any address is invalid: a partly valid list
+ * would read a partial index and look complete.
+ */
+function configuredAttestors(): readonly string[] | undefined {
+  const raw = process.env['ARP_DOMAIN_ATTESTOR'];
+  // `??` alone let an EMPTY string through, because an empty string is not nullish: the guard below
+  // saw a value, the query ran with `account_id: ""`, and every domain came back with nothing in
+  // it. A search that silently returns zero rows reads as "this domain is empty", not as "this server
+  // is misconfigured" — the same trap as the lowercase address, one level up.
+  if (raw === undefined) return ARP_DOMAIN_ATTESTORS;
+  const parts = raw.split(',').filter((part) => part.trim().length > 0);
+  if (parts.length === 0) return undefined;
+  const checked = parts.map(checkedAttestor);
+  return checked.every((address): address is string => address !== undefined) ? checked : undefined;
+}
+
+/**
+ * The addresses whose positions define this server's domain index. Set once, at load.
  *
  * Not a request parameter, deliberately — see the note in `findTools`.
  */
-export const DOMAIN_ATTESTOR = configuredAttestor();
+export const DOMAIN_ATTESTORS = configuredAttestors();
 
 /**
  * The directory read, pointed at the same graph as everything else here.

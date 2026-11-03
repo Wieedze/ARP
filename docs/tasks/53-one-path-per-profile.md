@@ -1,7 +1,7 @@
 # Task 53 — One path per profile, from the landing
 
-**Status:** **IN PROGRESS**, 2026-11-02, branch `feat/53-paths`. 53a built, then moved the same evening: the chooser is a panel opened by the nav's Connect and the landing's Get started (`components/onboarding/`), scene 4 is gone, and `/account` opens on Your agent with the delegations behind a "Delegation · later" tab. 53b built (`/start/:profile`, steps ticked from the local feed by `services/start-steps.ts`). The action gate is built: every place that asked for a wallet in a sentence (support, withdraw, mint, register a tool, positions, the delegation tab) is a button that opens the onboarding panel (`components/onboarding/ConnectPrompt.tsx`). 53c web side built: path C's last step posts the URL to the sponsor's `POST /list-tool` (`services/list-tool.ts`, `VITE_ARP_SPONSOR_URL`, dev default 127.0.0.1:3200) and says what it answered. The route itself is the sponsor owner's, on `feat/53c-list-tool` (ADR `0123`); until it reaches `dev` the form answers "It could not be added." and offers "Add it with a wallet →" (`/register?what=tool`), which is also all a build without a sponsor shows. Unsigned only for now: signing waits for `signListToolRequest` on `dev`. The user's decisions are in §2.
-**ADR:** `0112` (the badge is free). A new ADR is needed for 53c (§3).
+**Status:** **DONE** 2026-11-03, `de14def` on `feat/53-signed-listing` (the rest merged with PRs #50, #53 and #54). `task-verifier` PASS on the second pass, post-mortem `.claude/learning/54-one-path-per-profile.md`. Path B's public first step waits for `@arp-protocol/cli` on npm (404 on 2026-11-03), a distribution task outside this build; the step says so on the page. The user's decisions are in §2.
+**ADR:** `0114` (one path per profile; the action gated, not the read; amended), `0123` (the sponsor's `/list-tool`, by the sponsor's owner session), `0112` (the badge is free).
 **Depends on:** task 50 for path A's last step; `@arp-protocol/cli` on npm for path B's first.
 **Rules:** `ui.md`, `code.md`, `security.md` (53c), `claims.md`, `workflow.md`.
 **Reviewers:** `ui-reviewer`, `contract-reviewer` is not needed (no contract), `intuition-integrator`
@@ -13,7 +13,7 @@ for 53c, then `task-verifier`.
 
 Scene 4 of `/` offers four jobs, and three of them say "Needs wallet" (`apps/web/src/pages/Landing.tsx`,
 `jobsFor`). The person task 52 measured the gain for — a Claude user, 40 of 42 answers naming a
-skill that exists against 6 of 42 without (`docs/tasks/52` §3) — is not offered a way in. Task 45's
+skill that exists against 6 of 42 without (95% intervals 84–99% and 7–28%, `docs/tasks/52` §3) — is not offered a way in. Task 45's
 promise is that nothing web3 is visible to that person.
 
 The proposal the user answered is the artifact "Parcours d'entrée ARP"
@@ -39,7 +39,7 @@ onboarding skill ARP itself returned for "onboarding" (`coreyhaines31/marketings
 | --- | --- | --- |
 | 53a | Scene 4 becomes one question, "What brings you here?", with three tiles: a title and what to have at hand, nothing else (`ui.md`, no sentence in a card). Saffron on the first tile only. The choice is kept in `localStorage`, wrapped in try/catch, so the nav can offer the path again | `SceneJobs` and `jobsFor`, to be replaced |
 | 53b | `/start/:profile`, one page per path: an ordered list whose steps tick themselves when ARP sees the result, the first one ticked from the start ("Free for now. Nothing to pay.", no chain word, as path A promises). No account | the activity bar's "your agent: live / connecting / not connected" (task 36, task 48 item 8); `/activity`; `/search` |
-| 53c | Path C's "add it" step, sponsored: a sponsor route that creates a tool atom for a URL, within a per-address daily limit and the global budget | **no route**: `apps/sponsor/src/service.ts` serves `/gas`, `/mint-gas`, `/identity`, `/deposit`, `/publish`. Needs its own ADR, because `security.md`'s sponsor rows do not cover it |
+| 53c | Path C's "add it" step, sponsored: a sponsor route that creates a tool atom for a URL, within a per-address daily limit and the global budget | `POST /list-tool` on `dev` since PR #54 (`apps/sponsor/src/routes/list-tool.ts`, ADR `0123`); before it, the sponsor had no such route. The web signs the request when a wallet is connected (`services/list-tool-sign.ts`), asking it to switch to 13579 first; if it will not switch or declines to sign, the request goes unsigned under the anonymous cap |
 
 The three paths, as the proposal has them:
 
