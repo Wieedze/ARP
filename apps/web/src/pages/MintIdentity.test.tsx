@@ -41,7 +41,7 @@ vi.mock("../hooks/use-identity-mint", () => ({
     }),
 }));
 
-import {MintIdentity} from "./YourAgent";
+import {MintIdentity} from "./MintIdentity";
 
 describe("the mint after a toggle flip", () => {
     it("keeps showing and signing the chain the quote was made on", async () => {

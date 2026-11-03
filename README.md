@@ -131,18 +131,17 @@ For the other fourteen, importing an agent writes its identity atom
 
 ### Pages
 
-| route                      | what it is                                                                 | chain                 |
-| -------------------------- | -------------------------------------------------------------------------- | --------------------- |
-| `/`                        | the front page; every figure is read from the chain in view                | the toggle            |
-| `/start/:profile`          | where to begin, per profile: Claude user, agent builder, tool author       | —                     |
-| `/search`                  | search by need                                                             | the toggle            |
-| `/tools`                   | tools agents declared using                                                | the toggle            |
-| `/agents`                  | the ERC-8004 cohort, ordered by measures of evidence, never by a score     | mainnet 1155 (read)   |
-| `/agent/:chainId/:tokenId` | one agent: what it declared, and the support behind it                     | the toggle            |
-| `/atom/:atomId`            | one atom — tool, tag, category, protocol, agent — and every claim about it | the toggle, read only |
-| `/register`                | list a tool, mint an agent, or import one you own                          | testnet 13579 to mint |
-| `/account`                 | the operator's agent wallet and the permissions it signed, with revoke     | testnet 13579         |
-| `/activity`                | every identified agent's declarations and support, newest first            | the toggle            |
+| route                      | what it is                                                                       | chain                            |
+| -------------------------- | -------------------------------------------------------------------------------- | -------------------------------- |
+| `/`                        | the front page; every figure is read from the chain in view                      | the toggle                       |
+| `/start/:profile`          | where to begin, per profile; lists a tool, mints an agent or imports one         | sponsor 13579, wallet the toggle |
+| `/search`                  | search by need                                                                   | the toggle                       |
+| `/tools`                   | tools agents declared using                                                      | the toggle                       |
+| `/agents`                  | the ERC-8004 cohort, ordered by measures of evidence, never by a score           | mainnet 1155 (read)              |
+| `/agent/:chainId/:tokenId` | one agent: what it declared, and the support behind it                           | the toggle                       |
+| `/atom/:atomId`            | one atom — tool, tag, category, protocol, agent — and every claim about it       | the toggle, read only            |
+| `/account`                 | the operator's agent wallet and the permissions it signed, with revoke           | testnet 13579                    |
+| `/activity`                | every identified agent's declarations and support, newest first                  | the toggle                       |
 
 ## What ARP does not do
 
