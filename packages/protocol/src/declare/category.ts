@@ -35,10 +35,14 @@ export type CategoryRefusal = {status: "refused"; rule: CategoryRule; detail: st
 export type CategoryPlan = {
     status: "planned";
     chainId: number;
+    /** False when the label was already a category: then only the tag is planned. */
+    newCategory: boolean;
     label: string;
-    parent: string;
+    /** `null` for an existing category, whose parent is not the proposer's to choose. */
+    parent: string | null;
     categoryId: Hex;
-    subDomainTripleId: Hex;
+    /** `null` for an existing category. */
+    subDomainTripleId: Hex | null;
     tagTripleId: Hex;
     calls: PreparedCall[];
     /** The sum of every call's `value`: what signing the plan spends. */
@@ -48,7 +52,7 @@ export type CategoryPlan = {
 export type CategoryProposal = {
     /** The new category's label, as proposed. Normalised before anything else. */
     label: string;
-    /** An existing category the new one sits under. */
+    /** An existing category the new one sits under. Ignored when `label` is already a category. */
     parent: string;
     /** The skill or tool atom that none of the existing categories fits. */
     subjectId: Hex;
@@ -147,37 +151,42 @@ export async function planCategory(
     deps: CategoryDeps,
 ): Promise<CategoryPlan | CategoryRefusal> {
     const label = normaliseCategoryLabel(proposal.label);
-    const parent = normaliseCategoryLabel(proposal.parent);
 
-    const refused = checkCategoryLabel(label, deps.compounds);
-    if (refused !== null) return refused;
-    if (proposal.reason.trim().length === 0) {
-        return {status: "refused", rule: "reason", detail: "say why no existing category fits"};
-    }
-    // The rules cannot see meaning, so they refuse what they can see: a second node for a label
-    // that is already a category, and an orphan that would not climb to `tool`.
-    if (
-        (await deps.isCategory(label)) ||
-        (deps.isKnown !== undefined && (await deps.isKnown(label)))
-    ) {
-        return {
-            status: "refused",
-            rule: "exists",
-            detail: `"${label}" is already a category; tag with it`,
-        };
-    }
-    if (!(await deps.isCategory(parent))) {
-        return {
-            status: "refused",
-            rule: "parent",
-            detail: `"${parent}" is not a category under tool`,
-        };
-    }
     if (!(await deps.reads.termExists(proposal.subjectId))) {
         return {status: "refused", rule: "skill", detail: "the skill to tag is not on chain"};
     }
     if (deps.isTool !== undefined && !(await deps.isTool(proposal.subjectId))) {
         return {status: "refused", rule: "skill", detail: "the subject is not a skill or a tool"};
+    }
+
+    // An existing category is a valid choice, and path C's common one (the user, 2026-11-03):
+    // only the tag is written, the parent is ignored, the reason is optional, and the label rules
+    // do not apply, since a category such as `card-payment` predates them.
+    const existing = await deps.isCategory(label);
+    let parent: string | null = null;
+    if (!existing) {
+        const refused = checkCategoryLabel(label, deps.compounds);
+        if (refused !== null) return refused;
+        if (proposal.reason.trim().length === 0) {
+            return {status: "refused", rule: "reason", detail: "say why no existing category fits"};
+        }
+        // A node the tree already holds in another state (tied, unparented, a cycle, or only a
+        // parent) is not new: a parent edge for it would be one the proposer chose.
+        if (deps.isKnown !== undefined && (await deps.isKnown(label))) {
+            return {
+                status: "refused",
+                rule: "exists",
+                detail: `"${label}" is already in the tree but does not reach tool`,
+            };
+        }
+        parent = normaliseCategoryLabel(proposal.parent);
+        if (!(await deps.isCategory(parent))) {
+            return {
+                status: "refused",
+                rule: "parent",
+                detail: `"${parent}" is not a category under tool`,
+            };
+        }
     }
 
     const {reads} = deps;
@@ -190,17 +199,19 @@ export async function planCategory(
     const tripleAssets = tripleCost + stake;
 
     const categoryData = stringToHex(label);
-    const [categoryId, parentId] = await Promise.all([
-        reads.atomId(categoryData),
-        reads.atomId(stringToHex(parent)),
-    ]);
+    const categoryId = await reads.atomId(categoryData);
+    const parentId = parent === null ? null : await reads.atomId(stringToHex(parent));
     const [subDomainTripleId, tagTripleId] = await Promise.all([
-        reads.tripleId(categoryId, IS_A_SUB_DOMAIN_OF, parentId),
+        parentId === null
+            ? Promise.resolve(null)
+            : reads.tripleId(categoryId, IS_A_SUB_DOMAIN_OF, parentId),
         reads.tripleId(proposal.subjectId, HAS_TAG, categoryId),
     ]);
-    const [atomOn, edgeOn, tagOn] = await Promise.all(
-        [categoryId, subDomainTripleId, tagTripleId].map((id) => reads.termExists(id)),
-    );
+    const [atomOn, edgeOn, tagOn] = await Promise.all([
+        existing ? Promise.resolve(true) : reads.termExists(categoryId),
+        subDomainTripleId === null ? Promise.resolve(true) : reads.termExists(subDomainTripleId),
+        reads.termExists(tagTripleId),
+    ]);
 
     const calls: PreparedCall[] = [];
     if (!atomOn) {
@@ -213,7 +224,7 @@ export async function planCategory(
             why: `the category "${label}"`,
         });
     }
-    if (!edgeOn) {
+    if (!edgeOn && parentId !== null && subDomainTripleId !== null) {
         calls.push({
             kind: "create-triple",
             chainId: reads.chainId,
@@ -238,11 +249,10 @@ export async function planCategory(
     const backing = deps.backing;
     if (backing !== undefined) {
         const curveId = await reads.defaultCurveId();
-        for (const [on, termId] of [
-            [edgeOn, subDomainTripleId],
-            [tagOn, tagTripleId],
-        ] as const) {
-            if (!on) continue;
+        const toBack: Hex[] = [];
+        if (edgeOn && subDomainTripleId !== null) toBack.push(subDomainTripleId);
+        if (tagOn) toBack.push(tagTripleId);
+        for (const termId of toBack) {
             const held = await Promise.all(
                 backing.attestors.map((who) => reads.sharesOf(who, termId, curveId)),
             );
@@ -261,6 +271,7 @@ export async function planCategory(
     return {
         status: "planned",
         chainId: reads.chainId,
+        newCategory: !existing,
         label,
         parent,
         categoryId,

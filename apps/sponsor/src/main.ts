@@ -157,6 +157,7 @@ const limits: SponsorLimits = {
   listingsPerDay: count('SPONSOR_LISTINGS_PER_DAY', 50),
   // Task 59, ADR `0124`: new categories the service writes as an attestor, all proposers together.
   categoriesPerDay: count('SPONSOR_CATEGORIES_PER_DAY', 10),
+  categoryTagsPerDay: count('SPONSOR_CATEGORY_TAGS_PER_DAY', 50),
   dailyBudget: wei('SPONSOR_DAILY_BUDGET_WEI', ADR_0092_LIMITS.dailyBudget),
   depositsPerAgentPerDay: count(
     'SPONSOR_DEPOSITS_PER_AGENT_PER_DAY',
@@ -384,7 +385,9 @@ export async function main(): Promise<void> {
   process.stderr.write(
     `  listing    ${PIN_KEY === '' ? 'off (no INTUITION_PIN_API_KEY)' : `${limits.listingsPerAddressPerDay}/address/day, ${limits.anonymousListingsPerDay} unsigned/day, ${limits.listingsPerDay}/day in all`}\n`,
   );
-  process.stderr.write(`  categories ${limits.categoriesPerDay}/day, log ${CATEGORY_LOG}\n`);
+  process.stderr.write(
+    `  categories ${limits.categoriesPerDay} new/day, ${limits.categoryTagsPerDay} tags/day, log ${CATEGORY_LOG}\n`,
+  );
   process.stderr.write(`  ledger     ${LEDGER}\n`);
   process.stderr.write(`  publish    disabled (no pinning service, predicates not read)\n`);
 }

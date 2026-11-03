@@ -11,7 +11,9 @@ const MAX_REASON_LENGTH = 500;
 export type CategoryLogEntry = {
   at: number;
   label: string;
-  parent: string;
+  /** `null` for a tag with an existing category. */
+  parent: string | null;
+  newCategory: boolean;
   subjectId: Hex;
   reason: string;
   transactions: Hex[];
@@ -27,8 +29,11 @@ export type CategoryLogEntry = {
  * `(category, is a sub-domain of, parent)` and `(skill, has tag, category)`, each at
  * `cost + minDeposit`.
  *
- * Closed to browsers: the MCP server proposes, and no page does (arp-5e, task 59). Every accepted
- * proposal is logged with its reason, under a daily cap inside the budget.
+ * An existing category is a valid choice: then only the tag is written (the user, 2026-11-03).
+ *
+ * Open to the web app's local origins, like `/list-tool`: path C proposes a category right after a
+ * tool is listed (the user, 2026-11-03, ADR `0124`). Every accepted proposal is logged with its
+ * reason, under its daily cap inside the budget.
  */
 export async function proposeCategory(ctx: SponsorContext, body: Body): Promise<Response> {
   const { options, reads, limits, ledger, now, exclusive, assertMultiVault } = ctx;
@@ -47,10 +52,12 @@ export async function proposeCategory(ctx: SponsorContext, body: Body): Promise<
       400,
     );
   }
-  if (typeof parent !== 'string' || parent.length === 0 || parent.length > MAX_LABEL_LENGTH) {
-    return json({ error: 'parent is required', rule: 'parent' }, 400);
+  // Ignored, and so optional, when `label` is already a category.
+  if (parent !== undefined && (typeof parent !== 'string' || parent.length > MAX_LABEL_LENGTH)) {
+    return json({ error: 'parent is a string', rule: 'parent' }, 400);
   }
-  if (typeof reason !== 'string' || reason.length > MAX_REASON_LENGTH) {
+  // Optional for an existing category, required for a new one (`planCategory` decides).
+  if (reason !== undefined && (typeof reason !== 'string' || reason.length > MAX_REASON_LENGTH)) {
     return json(
       { error: `reason is required, at most ${MAX_REASON_LENGTH} characters`, rule: 'reason' },
       400,
@@ -58,7 +65,7 @@ export async function proposeCategory(ctx: SponsorContext, body: Body): Promise<
   }
   if (!isBytes32(subjectId)) return json({ error: 'subjectId is required', rule: 'skill' }, 400);
 
-  const proposal = { label, parent, subjectId, reason };
+  const proposal = { label, parent: parent ?? '', subjectId, reason: reason ?? '' };
   const plan = () =>
     planCategory(proposal, {
       reads,
@@ -77,6 +84,7 @@ export async function proposeCategory(ctx: SponsorContext, body: Body): Promise<
   if (first.status === 'refused') return json({ error: first.detail, rule: first.rule }, 422);
   const answer = (planned: typeof first, transactions: Hex[]) =>
     json({
+      newCategory: planned.newCategory,
       label: planned.label,
       parent: planned.parent,
       categoryId: planned.categoryId,
@@ -89,9 +97,17 @@ export async function proposeCategory(ctx: SponsorContext, body: Body): Promise<
 
   // The parent is in the key: one cap slot per label, parent and subject, so a second parent for
   // the same label is a second proposal and not a free edge (security review, task 59).
-  const key = `category:${first.label}:${first.parent}:${subjectId.toLowerCase()}`;
+  const key = first.newCategory
+    ? `category:${first.label}:${first.parent}:${subjectId.toLowerCase()}`
+    : `category-tag:${first.label}:${subjectId.toLowerCase()}`;
   const limitOf = (value: bigint) =>
-    checkCategoryLimits(ledger.relevant(now()), { proposal: key, value, now: now(), limits });
+    checkCategoryLimits(ledger.relevant(now()), {
+      proposal: key,
+      newCategory: first.newCategory,
+      value,
+      now: now(),
+      limits,
+    });
   const early = limitOf(first.totalValue);
   if (!early.ok) return json({ error: early.reason, rule: 'limit' }, 429);
 
@@ -130,8 +146,9 @@ export async function proposeCategory(ctx: SponsorContext, body: Body): Promise<
         at: now(),
         label: current.label,
         parent: current.parent,
+        newCategory: current.newCategory,
         subjectId,
-        reason: reason.trim(),
+        reason: (reason ?? '').trim(),
         transactions: sent,
         status,
       });

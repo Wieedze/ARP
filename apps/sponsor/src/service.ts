@@ -18,7 +18,8 @@
  *  | `POST /propose-category`| a new category, its parent edge and one skill's tag | `planCategory`'s rules, a daily cap |
  *
  *  `/mint-gas`, `/identity`, and the `uses` triple `/deposit` creates when it is missing, are ADR
- *  `0110`. `/list-tool` is ADR `0123`, and it is the only route a browser may call.
+ *  `0110`. `/list-tool` is ADR `0123`; it and `/propose-category` are the only routes a browser may
+ *  call.
  *  `/propose-category` is task 59 and ADR `0124`: the service writes as an attestor the index reads.
  *
  *  **The allow-list is enforced here, not trusted to the wallet.** Every call sent goes to the
@@ -201,8 +202,10 @@ export function createSponsor(options: SponsorOptions): {
   return {
     async fetch(request: Request): Promise<Response> {
       const url = new URL(request.url);
-      // `/list-tool` alone answers a browser, and only the origins listed for it (ADR `0123`).
-      const listing = url.pathname === '/list-tool';
+      // `/list-tool` and `/propose-category` alone answer a browser, and only the origins listed for
+      // them (ADRs `0123`, `0124`).
+      // And `/propose-category`, the step path C takes right after a listing (ADR `0124`).
+      const listing = url.pathname === '/list-tool' || url.pathname === '/propose-category';
       const corsOrigins = listing ? (options.listToolOrigins ?? []) : [];
       const foreign = refuseForeignRequest(request, {
         hosts: options.hosts,

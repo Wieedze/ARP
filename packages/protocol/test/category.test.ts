@@ -80,10 +80,21 @@ describe("a category anyone can add (task 59)", () => {
         expect(again.calls.map((call) => call.kind)).toEqual(["create-triple", "create-triple"]);
     });
 
-    it("refuses what the rules can see: an existing category, an orphan, no reason, no skill", async () => {
-        expect(await planCategory({...proposal, label: "Design"}, deps())).toMatchObject({
-            rule: "exists",
-        });
+    it("tags with an existing category: the tag only, parent ignored, reason optional", async () => {
+        const plan = await planCategory(
+            {...proposal, label: "Design", parent: "", reason: ""},
+            deps(),
+        );
+        if (plan.status !== "planned") throw new Error(plan.detail);
+        expect(plan.newCategory).toBe(false);
+        expect(plan.parent).toBeNull();
+        expect(plan.subDomainTripleId).toBeNull();
+        expect(plan.calls).toHaveLength(1);
+        expect(plan.calls[0]?.kind).toBe("create-triple");
+        expect(argsOf(plan.calls[0]!.data)[1]).toEqual([HAS_TAG]);
+    });
+
+    it("refuses what the rules can see for a new category: an orphan, no reason, no skill", async () => {
         expect(await planCategory({...proposal, parent: "nowhere"}, deps())).toMatchObject({
             rule: "parent",
         });
@@ -115,7 +126,7 @@ describe("a category anyone can add (task 59)", () => {
     it("with backing, deposits on an existing edge no attestor holds", async () => {
         const first = await planCategory(proposal, deps());
         if (first.status !== "planned") throw new Error(first.detail);
-        const existing = new Set([SKILL.toLowerCase(), first.subDomainTripleId.toLowerCase()]);
+        const existing = new Set([SKILL.toLowerCase(), first.subDomainTripleId!.toLowerCase()]);
         const depositor = "0x00000000000000000000000000000000000000aa" as const;
         const backed = await planCategory(proposal, {
             ...deps(existing),

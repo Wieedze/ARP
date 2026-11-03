@@ -76,6 +76,7 @@ const LIMITS: SponsorLimits = {
   listingsPerAddressPerDay: 2,
   anonymousListingsPerDay: 2,
   categoriesPerDay: 2,
+  categoryTagsPerDay: 2,
   listingsPerDay: 4,
   dailyBudget: 10n ** 18n,
   depositsPerAgentPerDay: 2,
@@ -1874,11 +1875,38 @@ describe('POST /propose-category', () => {
     ]);
   });
 
-  test('refuses by the rule that refused: a hyphen, an existing category, a parent off the tree, no reason', async () => {
+  test('tags with an existing category: one tag, no parent, no reason, its own cap', async () => {
+    const w = fresh();
+    const service = sponsor(w, { categories });
+    const res = await call(service, '/propose-category', { label: 'Design', subjectId: OBJECT });
+    expect(res.status).toBe(200);
+    expect(res.body.newCategory).toBe(false);
+    expect(res.body.parent).toBeNull();
+    expect(w.sent.map((c) => c.kind)).toEqual(['create-triple']);
+    expect(logged).toEqual([expect.objectContaining({ newCategory: false, parent: null })]);
+  });
+
+  test('answers the web app from its origin, with a preflight', async () => {
+    const service = sponsor(fresh(), { categories, listToolOrigins: ['http://localhost:5173'] });
+    const preflight = await service.fetch(
+      new Request('http://sponsor/propose-category', {
+        method: 'OPTIONS',
+        headers: { host: 'sponsor', origin: 'http://localhost:5173' },
+      }),
+    );
+    expect(preflight.status).toBe(204);
+    expect(preflight.headers.get('access-control-allow-origin')).toBe('http://localhost:5173');
+    const elsewhere = await service.fetch(
+      post('/propose-category', proposal(), { origin: 'https://evil.example' }),
+    );
+    expect(elsewhere.status).toBe(403);
+  });
+
+  test('refuses by the rule that refused: a hyphen, a tied node, a parent off the tree, no reason', async () => {
     const service = sponsor(fresh(), { categories });
     const cases: [Record<string, unknown>, string][] = [
       [{ label: 'web-design' }, 'hyphen'],
-      [{ label: 'design' }, 'exists'],
+      [{ label: 'branding' }, 'exists'],
       [{ parent: 'nowhere' }, 'parent'],
       [{ reason: '  ' }, 'reason'],
       [{ subjectId: `0x${'cd'.repeat(32)}` }, 'skill'],
@@ -1938,13 +1966,13 @@ describe('POST /propose-category', () => {
       { reads: fakeReads(w), isCategory: categories.isCategory, compounds: categories.compounds },
     );
     if (planned.status !== 'planned') throw new Error('expected a plan');
-    w.terms.add(planned.subDomainTripleId.toLowerCase());
+    w.terms.add(planned.subDomainTripleId!.toLowerCase());
     const res = await call(sponsor(w, { categories }), '/propose-category', proposal());
     expect(res.status).toBe(200);
     expect(w.sent.map((c) => c.kind)).toEqual(['create-atom', 'create-triple', 'deposit']);
     const { args } = decodeFunctionData({ abi: depositAbi, data: w.sent[2]!.data });
     expect(args[0]).toBe(SPONSOR);
-    expect(args[1]).toBe(planned.subDomainTripleId);
+    expect(args[1]).toBe(planned.subDomainTripleId!);
   });
 
   test('stops at the daily cap of new categories', async () => {
@@ -1959,14 +1987,9 @@ describe('POST /propose-category', () => {
     expect(w.sent).toHaveLength(6);
   });
 
-  test('answers 503 when not configured, and refuses a browser', async () => {
+  test('answers 503 when not configured', async () => {
     const w = fresh();
     expect((await call(sponsor(w), '/propose-category', proposal())).status).toBe(503);
-    const browser = await sponsor(w, {
-      categories,
-      listToolOrigins: ['http://localhost:5173'],
-    }).fetch(post('/propose-category', proposal(), { origin: 'http://localhost:5173' }));
-    expect(browser.status).toBe(403);
     expect(w.sent).toHaveLength(0);
   });
 });

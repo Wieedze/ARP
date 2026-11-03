@@ -43,10 +43,8 @@ export function categoryTree(graphqlUrl: string) {
   return {
     isCategory: async (label: string) => isCategoryIn(await current())(label),
     // Any node the tree holds, reachable or not: only "unknown" means the label is not there.
-    isKnown: async (label: string) => {
-      const path = (await current()).pathToRoot(label);
-      return path.found || path.reason !== 'unknown';
-    },
+    // Any node the tree holds, reachable or not, including a label that is only a parent.
+    isKnown: async (label: string) => (await current()).knows(label),
     invalidate: () => {
       read = null;
     },

@@ -55,6 +55,11 @@ export type SponsorLimits = {
      */
     categoriesPerDay: number;
     /**
+     * Tags with an existing category the service writes a UTC day (path C's common case, the user
+     * 2026-11-03). One triple each, counted apart from new categories.
+     */
+    categoryTagsPerDay: number;
+    /**
      * Past this share of its sponsored shares withdrawn, in basis points, an agent is no longer
      * sponsored. A **mainnet** rule: `null`, not enforced, on testnet, where everything proven is
      * sponsored (ADR `0094` as amended).
@@ -366,13 +371,30 @@ export function checkListToolLimits(
  */
 export function checkCategoryLimits(
     records: readonly SponsorRecord[],
-    params: {proposal: string; value: bigint; now: number; limits: SponsorLimits},
+    params: {
+        proposal: string;
+        /** False for a tag with an existing category, counted against `categoryTagsPerDay`. */
+        newCategory: boolean;
+        value: bigint;
+        now: number;
+        limits: SponsorLimits;
+    },
 ): LimitDecision {
-    const {proposal, value, now, limits} = params;
+    const {proposal, newCategory, value, now, limits} = params;
+    // Keys start `category:` for a new category and `category-tag:` for a tag, so each is counted
+    // against its own cap.
+    const kindPrefix = newCategory ? "category:" : "category-tag:";
+    const cap = newCategory ? limits.categoriesPerDay : limits.categoryTagsPerDay;
     const day = utcDay(now);
     const proposals = new Set(
         records
-            .filter((r) => r.kind === "category" && utcDay(r.at) === day && r.key !== undefined)
+            .filter(
+                (r) =>
+                    r.kind === "category" &&
+                    utcDay(r.at) === day &&
+                    r.key !== undefined &&
+                    r.key.startsWith(kindPrefix),
+            )
             // The `#<n>` suffix is the last `#`; a label cannot hold one (`checkCategoryLabel`), but the
             // count does not rely on that.
             .map((r) => {
@@ -380,8 +402,13 @@ export function checkCategoryLimits(
                 return key.slice(0, key.lastIndexOf("#"));
             }),
     );
-    if (!proposals.has(proposal) && proposals.size >= limits.categoriesPerDay) {
-        return {ok: false, reason: `${limits.categoriesPerDay} new categories a day, reached`};
+    if (!proposals.has(proposal) && proposals.size >= cap) {
+        return {
+            ok: false,
+            reason: newCategory
+                ? `${cap} new categories a day, reached`
+                : `${cap} tags with an existing category a day, reached`,
+        };
     }
     return budget(records, value, now, limits) ?? {ok: true};
 }

@@ -2,8 +2,11 @@
 
 **Status:** Accepted
 **Date:** 2026-11-03
-**Triggered by:** `docs/tasks/59` §2 item 3, and the user's decision on the question PR #56 left
-open, 2026-11-03: « L'index lit aussi le sponsor ».
+**Triggered by:** `docs/tasks/59` §2 item 3, and three decisions of the user, 2026-11-03:
+- on the question PR #56 left open: « L'index lit aussi le sponsor »;
+- tagging with an existing category is a valid proposal, the common case from path C;
+- the route is open to the web app, like `/list-tool`, so path C proposes a category right after a
+  tool is listed (relayed by arp-5e, confirmed to arp-c4 directly).
 
 ## Context
 
@@ -62,8 +65,18 @@ term a `minDeposit` deposit from the sponsor, held by the sponsor. Without it th
 - Every write that lands is logged, finished or not (`status: partial`), so the review list sees
   what the index now reads.
 
-**Closed to browsers.** The MCP server proposes and no page does (arp-5e, task 59), so this route
-keeps ADR `0116`'s refusal of any `Origin`.
+**An existing category is a valid choice.** When the label is already a category (it climbs to
+`tool`), the plan writes only `(subject, has tag, category)`, plus a backing deposit if that tag
+exists unbacked. The parent is ignored, the reason is optional, and the label rules do not apply,
+since a category such as `card-payment` predates them. These tags have their own daily cap,
+`SPONSOR_CATEGORY_TAGS_PER_DAY`, default 50, apart from new categories. The answer says
+`newCategory: false`. A label the tree holds in another state (tied, unparented, a cycle, or only a
+parent) is still refused as `exists`.
+
+**Open to the web app, like `/list-tool`.** The same origins (Vite's 5173 and 4173 plus
+`SPONSOR_ALLOWED_ORIGINS`), the same preflight. Every other route keeps ADR `0116`'s refusal. A page
+on those ports can therefore spend up to both routes' daily caps, which is what this decision
+accepts.
 
 ## Alternatives considered
 
