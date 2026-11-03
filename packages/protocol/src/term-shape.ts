@@ -2,6 +2,7 @@ import {
     ACCOUNT_ACTIVITY_QUERY,
     backerBreadthQuery,
     createGraphqlTransport,
+    DEFAULT_TIMEOUT_MS,
     defaultFetch,
     type FetchLike,
     type GraphqlTransport,
@@ -156,7 +157,6 @@ export type TermShapeConfig = {
  */
 export const INTUITION_MAX_POSITIONS_PAGE = 100;
 
-const DEFAULT_TIMEOUT_MS = 10_000;
 
 const ACTIVITY_QUERIES: Record<TermActivityGrain, string> = {
     hour: "signal_stats_hourly",

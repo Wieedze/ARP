@@ -3,6 +3,7 @@ import {getAddress, type Address, type Hex} from "viem";
 import {hireReceiptIsFor, verifyHireReceipt, type AnySignedHireReceipt} from "../hire-receipt.js";
 import {corroborationOf, verifyContentReceipt, type SignedContentReceipt} from "../receipt.js";
 import {ChainUnreadableError, isTransactionAbsent} from "../chain-errors.js";
+import {DECIMAL, ERC8004_REGISTRY} from "../identifiers.js";
 
 /**
  * The proofs that make a deposit eligible for ARP's sponsorship (ADR `0094` §2), and the check.
@@ -122,8 +123,6 @@ export type ProofCheckContext = {
     now: number;
 };
 
-const REGISTRY = /^eip155:([1-9][0-9]*):(0x[0-9a-fA-F]{40})$/;
-const DECIMAL = /^(0|[1-9][0-9]*)$/;
 
 /** Whether two receipt-style identity references name the same ERC-8004 token. */
 function sameAgent(a: AgentIdentityRef, b: AgentIdentityRef): boolean {
@@ -142,7 +141,7 @@ async function signsAsAgent(
     agent: AgentIdentityRef,
     context: ProofCheckContext,
 ): Promise<string | null> {
-    const match = REGISTRY.exec(agent.agentRegistry);
+    const match = ERC8004_REGISTRY.exec(agent.agentRegistry);
     const accepted = new Set(context.acceptedRegistries.map((r) => r.toLowerCase()));
     if (match === null || !accepted.has(agent.agentRegistry.toLowerCase())) {
         return `hire receipt names registry ${agent.agentRegistry}, which is not accepted`;

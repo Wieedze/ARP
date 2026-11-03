@@ -1,5 +1,6 @@
 import {
     createGraphqlTransport,
+    DEFAULT_TIMEOUT_MS,
     defaultFetch,
     type FetchLike,
     type GraphqlTransport,
@@ -42,7 +43,6 @@ import {DEFAULT_CURVE_ID} from "./sources/intuition/index.js";
  * there is none, and every deposit is declared.
  */
 
-const DEFAULT_TIMEOUT_MS = 10_000;
 
 /**
  * The most rows Intuition's indexer will return for one query, whatever `limit` asks for.

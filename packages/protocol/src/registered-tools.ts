@@ -1,5 +1,6 @@
 import {
     createGraphqlTransport,
+    DEFAULT_TIMEOUT_MS,
     defaultFetch,
     type FetchLike,
     type GraphqlTransport,
@@ -125,7 +126,6 @@ export type RegisteredToolsConfig = {
     order?: RegisteredToolsOrder;
 };
 
-const DEFAULT_TIMEOUT_MS = 10_000;
 /** Eight pages at the indexer's cap. Enough for the whole set today, with room to grow. */
 const DEFAULT_MAX_ROWS = 2_000;
 

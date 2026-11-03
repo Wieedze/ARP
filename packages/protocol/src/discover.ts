@@ -1,5 +1,6 @@
 import {
     createGraphqlTransport,
+    DEFAULT_TIMEOUT_MS,
     defaultFetch,
     type FetchLike,
     FIND_AGENTS_QUERY,
@@ -64,7 +65,6 @@ import {DEFAULT_CURVE_ID} from "./sources/intuition/index.js";
  * matched and decides.
  */
 
-const DEFAULT_TIMEOUT_MS = 10_000;
 const DEFAULT_LIMIT = 25;
 
 /** The predicates an agent describes itself with. Frozen ids, never resolved by label (ADR `0015`). */

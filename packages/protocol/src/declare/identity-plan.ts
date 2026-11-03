@@ -12,6 +12,7 @@ import {
 } from "./agent-atom.js";
 import {atomDataForUri, encodeCreateAtom, encodeCreateTriple, type MultiVaultReads} from "./multivault.js";
 import type {PreparedCall} from "./types.js";
+import {CAIP19_ERC721} from "../identifiers.js";
 
 /**
  * Plan the two atoms and the edge that give an agent an Intuition identity, **without pinning**.
@@ -120,9 +121,12 @@ export async function prepareIdentityAtom(params: {
     birthDeposit?: bigint;
 }): Promise<IdentityAtomPlan> {
     const caip19 = toCaip19(params.agent);
-    const ref = /^eip155:(\d+)\/erc721:0x[0-9a-fA-F]{40}\/(\d+)$/.exec(caip19);
-    if (ref === null) throw new Error(`toCaip19 produced an unparseable id: ${caip19}`);
-    const [, chainId, tokenId] = ref as unknown as [string, string, string];
+    const ref = CAIP19_ERC721.exec(caip19);
+    const chainId = ref?.[1];
+    const tokenId = ref?.[3];
+    if (chainId === undefined || tokenId === undefined) {
+        throw new Error(`toCaip19 produced an unparseable id: ${caip19}`);
+    }
 
     const things = {
         identity: canonicalAgentThing(Number(chainId), tokenId, params.registration),

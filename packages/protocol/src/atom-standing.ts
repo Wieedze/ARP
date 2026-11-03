@@ -18,6 +18,7 @@ import {mapMarketSide} from "./sources/intuition/map.js";
 import {provenanceFor} from "./provenance.js";
 import type {MarketSide, Provenance} from "./types.js";
 import {DEFAULT_CURVE_ID} from "./sources/intuition/index.js";
+import {INTUITION_MAX_PAGE} from "./tool-listing.js";
 
 /**
  * Everything pointing **at** one atom, whatever the predicate.
@@ -172,7 +173,7 @@ export type AtomStandingConfig = {
 };
 
 /** The indexer returns at most this many rows per query, whatever `limit` says. */
-const MAX_PAGE = 250;
+const MAX_PAGE = INTUITION_MAX_PAGE;
 
 const provenance = provenanceFor("intuition");
 
