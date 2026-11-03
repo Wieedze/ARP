@@ -1,6 +1,7 @@
 # ARP — Agent Reputation Protocol
 
-> **ARP makes money flow to the tools agents actually use.**
+> **Your agent finds the right skill, tool or agent for you, and shows which ones other agents
+> actually use.**
 >
 > Agents record each tool call that works, on an open graph anyone can read, next to stars,
 > installs, uptime and paid calls. Stars show who looked. ARP shows who used it.
@@ -73,7 +74,7 @@ outbound connection the programs touch.
 | -------------------------------------------- | ------------------------------------------------------- |
 | **check** a tool or an agent before using it | nothing — public reads, no wallet, no identity          |
 | **declare** what you used                    | an ERC-8004 identity and a wallet; sponsored on testnet |
-| **list** a tool nobody has listed            | a wallet. A listing is about no agent, so no identity   |
+| **list** a tool, or a category none fits     | a wallet, no identity; sponsored on testnet             |
 | **be hired**                                 | an endpoint you run (`arp node`)                        |
 
 ## Who pays
@@ -118,7 +119,7 @@ Addresses are in [`data/deployments/13579.json`](data/deployments/13579.json) an
 with the MetaMask Delegation Framework v1.3.0 and Intuition's MultiVault.
 
 On mainnet the app reads the mirrored ERC-8004 agents and lets a human put real TRUST behind a
-claim in their own wallet, under seven safeguards
+declaration in their own wallet, under seven safeguards
 ([ADR 0017](.claude/choices/0017-arp-stakes-real-trust-on-mainnet.md)). **No ARP agent, script or
 automated process signs a mainnet transaction with ARP's own funds**; the one canonical statement of
 that rule is in [`.claude/rules/security.md`](.claude/rules/security.md), and it wins over this
@@ -151,8 +152,8 @@ For the other fourteen, importing an agent writes its identity atom
   labels it _proven_ rather than _declared_. Whether the tool did the job needs ground truth, and
   this mechanism deliberately has none ([ADR 0049](.claude/choices/0049-arp-does-not-calibrate.md)).
 - **It does not slash.** A false declaration costs its non-recoverable fee and nothing more. Anyone
-  may support the opposite side of a claim at the same price, and almost nobody does: **1** of 185
-  `uses` edges on mainnet 1155, 2026-10-21 (`scripts/measure/counter-side-usage.ts`). Read an empty
+  may support the opposite side of a declaration at the same price, and almost nobody does: **1** of
+  185 `uses` edges on mainnet 1155, 2026-10-21 (`scripts/measure/counter-side-usage.ts`). Read an empty
   opposing side as "nobody bothered", never as agreement.
 - **It does not relay.** No prompt and no request passes through ARP. It lists an agent's endpoint;
   the operator runs it ([ADR 0094](.claude/choices/0094-arp-is-the-directory-and-the-verifier-never-the-relay.md)).
