@@ -84,6 +84,47 @@ describe("verifyContentReceipt", () => {
         expect(verdict).toEqual({status: "valid", signer: NODE.address, namesNobody: false});
     });
 
+    describe("version 2, which names the commit (task 61)", () => {
+        const COMMIT = "0123456789abcdef0123456789abcdef01234567";
+
+        it("verifies a receipt that names its commit", async () => {
+            const verdict = await verifyContentReceipt(await sign(receipt({commit: COMMIT})));
+            expect(verdict.status).toBe("valid");
+        });
+
+        it("still verifies a version 1 receipt, which names none", async () => {
+            // Every receipt written before task 61 is version 1 and keeps its meaning.
+            expect(contentReceiptTypedData(receipt(), TESTNET).domain?.version).toBe("1");
+            expect((await verifyContentReceipt(await sign(receipt()))).status).toBe("valid");
+        });
+
+        it("signs under the version 2 domain when a commit is named", () => {
+            expect(
+                contentReceiptTypedData(receipt({commit: COMMIT}), TESTNET).domain?.version,
+            ).toBe("2");
+        });
+
+        it("refuses a commit swapped after signing", async () => {
+            const signed = await sign(receipt({commit: COMMIT}));
+            const swapped = {...signed, receipt: {...signed.receipt, commit: "f".repeat(40)}};
+            expect((await verifyContentReceipt(swapped)).status).toBe("mismatch");
+        });
+
+        it("refuses a commit dropped after signing, which would pass it off as version 1", async () => {
+            const signed = await sign(receipt({commit: COMMIT}));
+            const {commit: _dropped, ...v1} = signed.receipt;
+            expect((await verifyContentReceipt({...signed, receipt: v1})).status).toBe("mismatch");
+        });
+
+        it("says malformed for a commit that is not a sha", async () => {
+            const verdict = await verifyContentReceipt(await sign(receipt({commit: "HEAD"})));
+            expect(verdict).toEqual({
+                status: "malformed",
+                reason: "commit is not a 40-character git sha",
+            });
+        });
+    });
+
     it("refuses a receipt replayed onto the other chain", async () => {
         // The failure that justifies EIP-712 here. An atom id is a pure function of its URL
         // (ADR `0054`), so the SAME tool has the SAME atom id on 13579 and on 1155. Without the
@@ -360,7 +401,7 @@ describe("contentReceiptTypedData", () => {
         // not exist — the same deliberate absence as `agent-import.ts`'s import consent.
         const data = contentReceiptTypedData(receipt(), TESTNET);
         expect(data.domain).toEqual({name: "ARP Content Receipt", version: "1", chainId: TESTNET});
-        expect("verifyingContract" in data.domain).toBe(false);
+        expect("verifyingContract" in (data.domain ?? {})).toBe(false);
     });
 
     it("sends the path as the path, so a verifier can find the file", () => {

@@ -37,13 +37,17 @@ const BODY: Record<string, string> = {
     "skills/pptx/scripts/office/validate.py": "print('ok')\n",
 };
 
+const PIN = "fedcba9876543210fedcba9876543210fedcba98";
+
 function config(over: Partial<BundleServeConfig> = {}): BundleServeConfig {
     return {
         chainId: 13579,
         index: INDEX,
+        pin: () => PIN,
         listing: async (repo) => LISTINGS[repo] ?? [],
         raw: async (url) => {
-            const path = decodeURIComponent(url.split("/HEAD/")[1] ?? "");
+            // Only the pinned commit answers: a fetch at HEAD would be a 404 here.
+            const path = decodeURIComponent(url.split(`/${PIN}/`)[1] ?? "");
             const body = BODY[path];
             return body === undefined ? {code: 404, bytes: new Uint8Array()} : {code: 200, bytes: stringToBytes(body)};
         },
