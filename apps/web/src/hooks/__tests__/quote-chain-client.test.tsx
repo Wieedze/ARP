@@ -18,8 +18,10 @@ const HASH: Hex = `0x${"ab".repeat(32)}`;
 const walletClient = {account: {address: "0x000000000000000000000000000000000000c0DE"}};
 
 type Submitted = {publicClient: unknown; chain?: unknown};
-const submitStake = vi.fn<(params: Submitted) => Promise<Hex>>(async () => HASH);
-const submitRedeem = vi.fn<(params: Submitted) => Promise<Hex>>(async () => HASH);
+// The stake submits take no client; they read the one on `quote.chain`.
+type SubmittedQuote = {quote: {chain: {client: unknown}}};
+const submitStake = vi.fn<(params: SubmittedQuote) => Promise<Hex>>(async () => HASH);
+const submitRedeem = vi.fn<(params: SubmittedQuote) => Promise<Hex>>(async () => HASH);
 const submitUseDeclaration = vi.fn<(params: Submitted) => Promise<Hex>>(async () => HASH);
 const submitToolRegistration = vi.fn<(params: Submitted) => Promise<Hex>>(async () => HASH);
 const submitOperatorLink = vi.fn<(params: Submitted) => Promise<object>>(async () => ({}));
@@ -39,8 +41,8 @@ vi.mock("../../services/tx-record", () => ({
 }));
 vi.mock("../../services/trust-stake", async (importOriginal) => ({
     ...(await importOriginal<typeof import("../../services/trust-stake")>()),
-    submitStake: (params: {publicClient: unknown}) => submitStake(params),
-    submitRedeem: (params: {publicClient: unknown}) => submitRedeem(params),
+    submitStake: (params: SubmittedQuote) => submitStake(params),
+    submitRedeem: (params: SubmittedQuote) => submitRedeem(params),
 }));
 vi.mock("../../services/declare-use", async (importOriginal) => ({
     ...(await importOriginal<typeof import("../../services/declare-use")>()),
@@ -99,8 +101,8 @@ describe("a submit after the toggle moved", () => {
         const actions = mountThenFlip(useStakeActions);
         await actions.submit(stakeQuote);
         await actions.submitExit(redeemQuote);
-        expect(submitStake.mock.calls[0]?.[0].publicClient).toBe(TESTNET.client);
-        expect(submitRedeem.mock.calls[0]?.[0].publicClient).toBe(TESTNET.client);
+        expect(submitStake.mock.calls[0]?.[0].quote.chain.client).toBe(TESTNET.client);
+        expect(submitRedeem.mock.calls[0]?.[0].quote.chain.client).toBe(TESTNET.client);
     });
 
     it("waits for the receipt on the quote's chain", async () => {

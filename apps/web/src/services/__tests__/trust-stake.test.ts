@@ -37,8 +37,11 @@ import {
 
 import {DEFAULT_TEST_ACCOUNT, DEFAULT_TEST_ADDRESS, readContractDispatcher} from "./fixtures";
 
-/** A `StakeChain` carries its client for the hooks; the services take theirs as an argument. */
-// Never read by the service under test, so an empty object is a safe stand-in.
+/**
+ * A `StakeChain` carries its client. The quote services take theirs as an argument; the submits
+ * read `quote.chain.client`, and their tests replace this with a double (`withClient`).
+ */
+// Never read where it is left in place, so an empty object is a safe stand-in.
 const UNREAD_CLIENT = {} as PublicClient;
 
 const TRIPLE: Hex = `0x${"11".repeat(32)}`;
@@ -110,6 +113,11 @@ function makeWalletClient(
 const asPublic = (client: StakeMockPublicClient) => client as any;
 const asWallet = (client: StakeMockWalletClient) => client as any;
 /* eslint-enable @typescript-eslint/no-explicit-any */
+
+/** A submit reads its client off the quote's chain, so the double rides there. */
+function withClient<Q extends {chain: object}>(quote: Q, client: StakeMockPublicClient): Q {
+    return {...quote, chain: {...quote.chain, client: asPublic(client)}};
+}
 
 describe("resolveMaxStakeWei", () => {
     it("defaults to 1 TRUST when the env var is absent", () => {
@@ -502,8 +510,7 @@ describe("submitStake", () => {
         await expect(
             submitStake({
                 walletClient: asWallet(wallet),
-                publicClient: asPublic(publicClient),
-                quote,
+                quote: withClient(quote, publicClient),
             }),
         ).rejects.toMatchObject({code: "wrong-chain"});
 
@@ -518,8 +525,7 @@ describe("submitStake", () => {
         await expect(
             submitStake({
                 walletClient: asWallet(wallet),
-                publicClient: asPublic(publicClient),
-                quote,
+                quote: withClient(quote, publicClient),
             }),
         ).rejects.toMatchObject({code: "wrong-chain"});
 
@@ -533,8 +539,7 @@ describe("submitStake", () => {
         await expect(
             submitStake({
                 walletClient: asWallet(wallet),
-                publicClient: asPublic(publicClient),
-                quote: {...quote, assets: MAX_STAKE_WEI + 1n},
+                quote: withClient({...quote, assets: MAX_STAKE_WEI + 1n}, publicClient),
             }),
         ).rejects.toMatchObject({code: "above-ceiling"});
 
@@ -549,8 +554,7 @@ describe("submitStake", () => {
         await expect(
             submitStake({
                 walletClient: asWallet(wallet),
-                publicClient: asPublic(publicClient),
-                quote: {...quote, receiver: otherReceiver},
+                quote: withClient({...quote, receiver: otherReceiver}, publicClient),
             }),
         ).rejects.toMatchObject({code: "receiver-mismatch"});
         expect(wallet.writeContract).not.toHaveBeenCalled();
@@ -562,16 +566,14 @@ describe("submitStake", () => {
         await expect(
             submitStake({
                 walletClient: asWallet(wallet),
-                publicClient: asPublic(publicClient),
-                quote: {...quote, receiver: zeroAddress},
+                quote: withClient({...quote, receiver: zeroAddress}, publicClient),
             }),
         ).rejects.toMatchObject({code: "zero-receiver"});
 
         await expect(
             submitStake({
                 walletClient: asWallet(wallet),
-                publicClient: asPublic(publicClient),
-                quote: {...quote, minShares: 0n},
+                quote: withClient({...quote, minShares: 0n}, publicClient),
             }),
         ).rejects.toMatchObject({code: "no-slippage-floor"});
 
@@ -585,8 +587,7 @@ describe("submitStake", () => {
         await expect(
             submitStake({
                 walletClient: asWallet(wallet),
-                publicClient: asPublic(publicClient),
-                quote,
+                quote: withClient(quote, publicClient),
             }),
         ).rejects.toThrow("execution reverted");
         expect(wallet.writeContract).not.toHaveBeenCalled();
@@ -597,8 +598,7 @@ describe("submitStake", () => {
 
         const hash = await submitStake({
             walletClient: asWallet(wallet),
-            publicClient: asPublic(publicClient),
-            quote,
+            quote: withClient(quote, publicClient),
         });
 
         expect(hash).toBe(`0x${"aa".repeat(32)}`);
@@ -800,8 +800,7 @@ describe("submitRedeem", () => {
         await expect(
             submitRedeem({
                 walletClient: asWallet(wallet),
-                publicClient: asPublic(client),
-                quote: exit,
+                quote: withClient(exit, client),
             }),
         ).rejects.toMatchObject({code: "wrong-chain"});
         expect(wallet.writeContract).not.toHaveBeenCalled();
@@ -819,8 +818,7 @@ describe("submitRedeem", () => {
         await expect(
             submitRedeem({
                 walletClient: asWallet(wallet),
-                publicClient: asPublic(client),
-                quote: exit,
+                quote: withClient(exit, client),
             }),
         ).rejects.toMatchObject({code: "wrong-chain"});
         expect(wallet.writeContract).not.toHaveBeenCalled();
@@ -833,8 +831,7 @@ describe("submitRedeem", () => {
         await expect(
             submitRedeem({
                 walletClient: asWallet(wallet),
-                publicClient: asPublic(client),
-                quote: {...exit, receiver: `0x${"cd".repeat(20)}`},
+                quote: withClient({...exit, receiver: `0x${"cd".repeat(20)}`}, client),
             }),
         ).rejects.toMatchObject({code: "receiver-mismatch"});
         expect(wallet.writeContract).not.toHaveBeenCalled();
@@ -847,8 +844,7 @@ describe("submitRedeem", () => {
 
         await submitRedeem({
             walletClient: asWallet(wallet),
-            publicClient: asPublic(client),
-            quote: exit,
+            quote: withClient(exit, client),
         });
 
         expect(client.simulateContract).toHaveBeenCalledTimes(1);

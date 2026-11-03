@@ -58,14 +58,9 @@ export function useStakeActions() {
             if (walletClient === null || walletClient.account === undefined) {
                 throw new Error("No wallet client — reconnect your wallet and try again.");
             }
-            // The quote's own client, not the hook's: if the toggle moved after the quote was
-            // priced, the simulation has to run against the chain the quote was priced on so the
-            // guard reports a mismatch instead of a revert.
-            const hash = await submitStake({
-                walletClient,
-                publicClient: stake.chain.client,
-                quote: stake,
-            });
+            // `submitStake` simulates on `stake.chain.client`, never the hook's: if the toggle
+            // moved after pricing, the guard then reports a mismatch instead of a revert.
+            const hash = await submitStake({walletClient, quote: stake});
             recordSent(hash, {
                 label: "support",
                 chainId: stake.chain.chainId,
@@ -99,11 +94,7 @@ export function useStakeActions() {
             if (walletClient === null || walletClient.account === undefined) {
                 throw new Error("No wallet client — reconnect your wallet and try again.");
             }
-            const hash = await submitRedeem({
-                walletClient,
-                publicClient: exit.chain.client,
-                quote: exit,
-            });
+            const hash = await submitRedeem({walletClient, quote: exit});
             recordSent(hash, {label: "withdraw", chainId: exit.chain.chainId});
             return hash;
         },
