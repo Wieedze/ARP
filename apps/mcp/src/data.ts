@@ -22,6 +22,6 @@ export const SKILL_CATALOGUES: Readonly<Record<number, { skills?: CataloguedSkil
 };
 
 /** The commit each repository is served at (task 61), by chain. A repository absent here is refused. */
-export const SKILL_PINS: Readonly<Record<number, { repos: Record<string, { commit: string }> }>> = {
+export const SKILL_PINS: Readonly<Record<number, { repos: Record<string, { commit: string; committedAt: string }> }>> = {
   13579: pins13579,
 };

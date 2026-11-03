@@ -264,6 +264,7 @@ group('the loop a new agent walks', () => {
       stateDir: join(dir, '.arp'),
       skillsDir,
       projectReceipts: join(dir, 'project', '.arp', 'receipts.jsonl'),
+      ask: async () => 'accepted',
       fetch: services(agent.address).fake,
     };
     const skill = await getSkill(config, agent, ATOM);
@@ -275,6 +276,71 @@ group('the loop a new agent walks', () => {
     // The line the hook reads to name the atom of `thumbs` when it sees it invoked.
     const line = JSON.parse(readFileSync(join(dir, 'project', '.arp', 'receipts.jsonl'), 'utf8'));
     expect(line).toMatchObject({ skill: 'thumbs', atom: ATOM, url: 'github.com/acme/skills?skill=thumbs' });
+  });
+
+  group('the person accepts before anything is installed (task 61)', () => {
+    const base = (agentAddress: Address, skillsDir: string, over: Partial<LoopConfig> = {}): LoopConfig => ({
+      contentUrl: 'http://content.test',
+      sponsorUrl: 'http://sponsor.test',
+      registry: REGISTRY,
+      multiVault: MULTI_VAULT,
+      stateDir: join(dir, '.arp'),
+      skillsDir,
+      projectReceipts: join(dir, 'project', '.arp', 'receipts.jsonl'),
+      pendingDir: join(dir, 'project', '.arp', 'pending'),
+      fetch: services(agentAddress).fake,
+      ...over,
+    });
+
+    it('shows the person the files and the commit, and installs only on accept', async () => {
+      const agent = fakeAgent([]);
+      const skillsDir = join(dir, 'project', '.claude', 'skills');
+      const pages: string[] = [];
+      const skill = await getSkill(
+        base(agent.address, skillsDir, {
+          ask: async (page) => {
+            pages.push(page);
+            // Nothing is on disk while the question is open.
+            expect(existsSync(join(skillsDir, 'thumbs'))).toBe(false);
+            return 'accepted';
+          },
+        }),
+        agent,
+        ATOM,
+      );
+      expect(skill.installedAt).toBe(join(skillsDir, 'thumbs', 'SKILL.md'));
+      expect(pages).toHaveLength(1);
+      expect(pages[0]).toContain('Install thumbs from acme/skills?');
+      expect(pages[0]).toContain('scripts/thumb.py');
+    });
+
+    it('installs nothing when the person declines', async () => {
+      const agent = fakeAgent([]);
+      const skillsDir = join(dir, 'project', '.claude', 'skills');
+      const skill = await getSkill(base(agent.address, skillsDir, { ask: async () => 'declined' }), agent, ATOM);
+      expect(skill.declined).toBe(true);
+      expect(skill.installedAt).toBeUndefined();
+      expect(existsSync(join(skillsDir, 'thumbs'))).toBe(false);
+      expect(existsSync(join(dir, 'project', '.arp', 'receipts.jsonl'))).toBe(false);
+    });
+
+    it('parks the skill in the pending folder when nobody can be asked, and installs nothing', async () => {
+      const agent = fakeAgent([]);
+      const skillsDir = join(dir, 'project', '.claude', 'skills');
+      const skill = await getSkill(base(agent.address, skillsDir, { ask: async () => 'unavailable' }), agent, ATOM);
+      expect(skill.pendingAt).toBe(join(dir, 'project', '.arp', 'pending', 'thumbs'));
+      expect(existsSync(join(skillsDir, 'thumbs'))).toBe(false);
+      expect(readFileSync(join(dir, 'project', '.arp', 'pending', 'thumbs', 'files', 'scripts', 'thumb.py'), 'utf8')).toBe("print('thumb')\n");
+    });
+
+    it('treats a config with no way to ask as nobody to ask: there is no path that skips the question', async () => {
+      const agent = fakeAgent([]);
+      const skillsDir = join(dir, 'project', '.claude', 'skills');
+      const skill = await getSkill(base(agent.address, skillsDir), agent, ATOM);
+      expect(skill.installedAt).toBeUndefined();
+      expect(skill.pendingAt).toBeDefined();
+      expect(existsSync(join(skillsDir, 'thumbs'))).toBe(false);
+    });
   });
 
   it('refuses to overwrite a different SKILL.md of the same name, and writes nothing', async () => {
@@ -289,6 +355,7 @@ group('the loop a new agent walks', () => {
       multiVault: MULTI_VAULT,
       stateDir: join(dir, '.arp'),
       skillsDir,
+      ask: async () => 'accepted',
       fetch: services(agent.address).fake,
     };
     await expect(getSkill(config, agent, ATOM)).rejects.toThrow(/already exists with different contents/);

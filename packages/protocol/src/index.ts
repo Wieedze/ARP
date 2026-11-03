@@ -565,6 +565,18 @@ export {
     type BundleServeConfig,
 } from "./content-bundle.js";
 
+/** The facts a person reads before a skill is installed: counts and lines, never a verdict (task 61). */
+export {
+    REVIEW_PATTERNS,
+    renderSkillReview,
+    reviewSkill,
+    type MatchedLine,
+    type ReviewFile,
+    type SkillReview,
+    type SkillReviewInput,
+    type ThirdPartyFigure,
+} from "./skill-review.js";
+
 export {
     contentDigest,
     contentReceiptDomain,
