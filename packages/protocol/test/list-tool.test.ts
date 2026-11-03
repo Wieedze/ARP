@@ -10,6 +10,7 @@ import {
 } from "../src/sponsor/limits.js";
 import {
     canonicalToolUrl,
+    chooseRepoSpelling,
     planToolListing,
     signListToolRequest,
     SOURCE_PREDICATE,
@@ -84,6 +85,28 @@ describe("canonicalToolUrl", () => {
             "https://github.com/Wieedze/ARP?skill=arp",
         );
         expect(canonicalToolUrl("https://Example.com/mcp")).toBe("https://example.com/mcp");
+    });
+});
+
+describe("chooseRepoSpelling", () => {
+    it("prefers the spelling on the graph, then GitHub's, then the one asked", () => {
+        expect(
+            chooseRepoSpelling({
+                asked: "Leonxlnx/taste-skill",
+                fullName: "Leonxlnx/taste-skill",
+                existing: ["leonxlnx/taste-skill"],
+            }),
+        ).toBe("leonxlnx/taste-skill");
+        expect(chooseRepoSpelling({asked: "a/b", fullName: "A/B", existing: ["a/b", "A/B"]})).toBe(
+            "a/b",
+        );
+        expect(chooseRepoSpelling({asked: "x/y", fullName: "A/B", existing: ["a/b", "A/B"]})).toBe(
+            "A/B",
+        );
+        expect(
+            chooseRepoSpelling({asked: "wieedze/arp", fullName: "Wieedze/ARP", existing: []}),
+        ).toBe("Wieedze/ARP");
+        expect(chooseRepoSpelling({asked: "a/b", existing: []})).toBe("a/b");
     });
 });
 

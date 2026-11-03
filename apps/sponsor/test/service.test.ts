@@ -1629,6 +1629,45 @@ describe('POST /list-tool', () => {
     expect(w.sent).toHaveLength(0);
   });
 
+  test("reuses a seeded repository's spelling when GitHub spells it in another case", async () => {
+    const w = world();
+    const seeded = await planToolListing({
+      url: 'https://github.com/leonxlnx/taste-skill?skill=design-taste-frontend',
+      reads: fakeReads(w),
+    });
+    for (const id of [seeded.atomId, seeded.repository!.atomId, seeded.repository!.sourceTripleId])
+      w.terms.add(id.toLowerCase());
+    const service = listing(w, {
+      resolveTool: async () => ({ ok: true, fullName: 'Leonxlnx/taste-skill' }),
+      repoSpellings: async () => ['leonxlnx/taste-skill'],
+    });
+    for (const url of [
+      'https://github.com/leonxlnx/taste-skill?skill=design-taste-frontend',
+      'https://github.com/Leonxlnx/taste-skill?skill=design-taste-frontend',
+    ]) {
+      const res = await call(service, '/list-tool', { url });
+      expect(res.status).toBe(200);
+      expect(res.body.created).toBe(false);
+      expect(res.body.atomId).toBe(seeded.atomId);
+    }
+    expect(w.sent).toHaveLength(0);
+  });
+
+  test('answers 503 when the indexer cannot be asked for existing spellings', async () => {
+    const w = world();
+    const res = await call(
+      listing(w, {
+        repoSpellings: async () => {
+          throw new Error('the indexer answered HTTP 502');
+        },
+      }),
+      '/list-tool',
+      { url: SKILL },
+    );
+    expect(res.status).toBe(503);
+    expect(w.sent).toHaveLength(0);
+  });
+
   test('stops all listings at the daily total, however many keys sign them', async () => {
     const w = world();
     const service = listing(w, { limits: { ...LIMITS, anonymousListingsPerDay: 10 } });

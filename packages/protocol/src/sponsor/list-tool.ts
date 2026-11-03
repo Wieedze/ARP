@@ -45,8 +45,8 @@ export type ToolListingPlan = {
  *
  * A GitHub URL is rebuilt the way the seed scripts build theirs (`scripts/seed/seed-skills.ts`):
  * `https://github.com/<owner>/<repo>`, with `?skill=<s>` for a skill and nothing else. A path such
- * as `/tree/main` and any other query parameter are dropped. `repoFullName` is GitHub's own
- * `owner/repo`, case included. `normaliseToolUrl` keeps path case, so `wieedze/arp` and
+ * as `/tree/main` and any other query parameter are dropped. `repoFullName` is the spelling to list
+ * under, from {@link chooseRepoSpelling}. `normaliseToolUrl` keeps path case, so `wieedze/arp` and
  * `Wieedze/ARP` would otherwise be two atoms. Any other URL is `normaliseToolUrl`'s output.
  */
 export function canonicalToolUrl(url: string, repoFullName?: string): string {
@@ -67,11 +67,43 @@ export function canonicalToolUrl(url: string, repoFullName?: string): string {
     );
 }
 
+/**
+ * Which spelling of a GitHub repository to list under, so a listing reuses the atom that exists.
+ *
+ * `existing` is every `owner/repo` already on the graph that matches case-insensitively. The seed
+ * scripts used skills.sh's spelling, not GitHub's: measured 2026-11-03 by `intuition-integrator`,
+ * 3 of 31 catalogue repositories differ from GitHub's `full_name` only in case, and carry 54 atoms
+ * under the seeded spelling. So an existing spelling wins: the pasted one if it exists, then
+ * GitHub's, then the first in order. With none on the graph, GitHub's own spelling is used.
+ */
+export function chooseRepoSpelling(params: {
+    asked: string;
+    fullName?: string;
+    existing: readonly string[];
+}): string {
+    const {asked, fullName, existing} = params;
+    if (existing.includes(asked)) return asked;
+    if (fullName !== undefined && existing.includes(fullName)) return fullName;
+    const first = [...existing].sort()[0];
+    return first ?? fullName ?? asked;
+}
+
+/** The `owner/repo` a GitHub URL names, as written, or `null` for any other URL. */
+export function githubRepoOf(url: string): string | null {
+    const normalised = normaliseToolUrl(url);
+    const parsed = new URL(normalised);
+    if (parsed.hostname !== "github.com") return null;
+    const ref = skillRefFromUrl(normalised);
+    if (ref !== null) return ref.repo;
+    const [owner, name] = parsed.pathname.replace(/^\/+/, "").split("/");
+    return owner && name ? `${owner}/${name.replace(/\.git$/, "")}` : null;
+}
+
 /** Plan a listing for `url`. Nothing to create gives an empty `calls`. Throws on a URL that is not a tool. */
 export async function planToolListing(params: {
     url: string;
     reads: MultiVaultReads;
-    /** GitHub's `owner/repo` for a GitHub URL, case included ({@link canonicalToolUrl}). */
+    /** The `owner/repo` spelling to list a GitHub URL under ({@link chooseRepoSpelling}). */
     repoFullName?: string;
 }): Promise<ToolListingPlan> {
     const {reads} = params;

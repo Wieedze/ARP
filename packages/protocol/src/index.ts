@@ -697,6 +697,8 @@ export {
     LIST_TOOL_REQUEST_TYPES,
     listToolRequestTypedData,
     canonicalToolUrl,
+    chooseRepoSpelling,
+    githubRepoOf,
     planToolListing,
     signListToolRequest,
     SOURCE_PREDICATE,

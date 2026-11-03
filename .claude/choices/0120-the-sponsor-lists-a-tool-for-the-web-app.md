@@ -32,7 +32,12 @@ Three constraints:
    of the repository;
 3. lists it under its **canonical spelling** (`canonicalToolUrl`). A GitHub URL is rebuilt as the
    seed scripts build theirs, `https://github.com/<owner>/<repo>`, with `?skill=<s>` for a skill.
-   The rebuild uses GitHub's case, and drops a path such as `/tree/main`, any other query parameter
+   The rebuild uses **the spelling already on the graph** (`chooseRepoSpelling`): the pasted one if
+   it exists, then GitHub's `full_name`, then any other, matched case-insensitively on the indexer.
+   GitHub's spelling is used only when none exists. The seed scripts kept skills.sh's case: 3 of 31
+   catalogue repositories differ from GitHub's only in case, and carry 54 atoms (measured
+   2026-11-03 by `intuition-integrator`), so preferring GitHub's spelling would have minted a second
+   market for 51 seeded skills. The rebuild drops a path such as `/tree/main`, any other query parameter
    and a port. `normaliseToolUrl` keeps path case, so without this, `wieedze/arp` and `Wieedze/ARP`
    would be two permanent atoms beside the seeded one. This was found by `intuition-integrator`
    before it shipped;
@@ -111,6 +116,10 @@ route, so DNS rebinding is still refused.
 - **The limit checked before the pins is not final under concurrency.** Parallel requests with
   distinct URLs can each pass it and each pin with ARP's pinning key, and only those that fit spend.
   Pinning moves no value. The count inside the queue is the one that decides, as in `/identity`.
+- **A GitHub sub-path is listed as its repository.** `github.com/<org>/servers/tree/main/src/<x>`
+  would be listed as `github.com/<org>/servers`. No catalogue URL and no 13579 atom has a GitHub path
+  deeper than `owner/repo` (measured 2026-11-03 by `intuition-integrator`), so nothing is merged
+  today. A monorepo of distinct tools would be, and that would need its own rule.
 - `security.md`'s signing table gains a row.
 
 **Neutral (worth knowing):**

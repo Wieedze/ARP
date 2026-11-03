@@ -2,6 +2,8 @@ import {
   ANONYMOUS_LISTER,
   canonicalToolUrl,
   checkListToolLimits,
+  chooseRepoSpelling,
+  githubRepoOf,
   isToolUrl,
   planToolListing,
   thingUri,
@@ -79,7 +81,23 @@ export async function listTool(ctx: SponsorContext, body: Body): Promise<Respons
     return response;
   }
   if (!found.ok) return json({ error: found.reason, rule: 'resolves' }, 422);
-  const repoFullName = found.fullName;
+  // The spelling already on the graph wins over GitHub's: the seed scripts kept skills.sh's case
+  // (`chooseRepoSpelling`), and a second spelling is a second permanent atom.
+  const asked = githubRepoOf(pasted);
+  let repoFullName: string | undefined;
+  if (asked !== null) {
+    let existing: string[];
+    try {
+      existing = (await options.repoSpellings?.(found.fullName ?? asked)) ?? [];
+    } catch (error) {
+      return chainUnreadable(String(error instanceof Error ? error.message : error));
+    }
+    repoFullName = chooseRepoSpelling({
+      asked,
+      ...(found.fullName === undefined ? {} : { fullName: found.fullName }),
+      existing,
+    });
+  }
 
   const plan = () =>
     planToolListing({ url: pasted, reads, ...(repoFullName ? { repoFullName } : {}) });

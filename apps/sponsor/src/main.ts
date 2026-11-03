@@ -59,6 +59,7 @@ import { assertSponsorChain, readKeyFile } from './key-file.ts';
 import { nullOnRevert } from './routes/context.ts';
 import { SponsorLedger } from './ledger.ts';
 import { resolveOnGitHubCached } from './github.ts';
+import { repoSpellingsOnGraph } from './indexer.ts';
 import { intuitionPinner } from './pin.ts';
 import {
   addressList,
@@ -324,6 +325,7 @@ const service = createSponsor({
     ...originList(process.env.SPONSOR_ALLOWED_ORIGINS),
   ],
   resolveTool: (url) => resolveOnGitHubCached(url),
+  repoSpellings: (repo) => repoSpellingsOnGraph(deployments.chain.graphqlUrl, repo),
   usesPredicate,
   limits,
   ledger,

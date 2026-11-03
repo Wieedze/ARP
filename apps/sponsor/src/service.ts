@@ -164,6 +164,8 @@ export type SponsorOptions = {
    * `main.ts` asks GitHub's API.
    */
   resolveTool?: ((url: string) => Promise<ToolResolution>) | null;
+  /** The spellings of a GitHub `owner/repo` already on the graph, matched case-insensitively. */
+  repoSpellings?: ((repo: string) => Promise<string[]>) | null;
   /** Milliseconds. Injected so a test can move the day. */
   now?: () => number;
   /** Where a failed request's detail goes, redacted. `console.error` by default. */
