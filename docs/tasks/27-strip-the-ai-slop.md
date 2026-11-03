@@ -73,6 +73,17 @@ Found and **not** fixed, because they are outside this file's reach:
 B2B infrastructure". It is not B2B first; aggregators and publishers may be later. Both now say so
 (ADR `0120`).
 
+Then `docs/13`, `docs/14`, `docs/15`, same method — the body kept as the dated record, a header
+saying what drifted:
+
+- `docs/13`: a drift table (hire → ADR `0060`; the MCP server became the product; "rated" → ADR
+  `0046`; dated figures → their scripts).
+- `docs/15`: "What ARP is" now the kit's goal; **one factual error fixed** — "what testnet can
+  prove" listed `ModuleRegistry` and `DomainScopeEnforcer` as deployed and gating, both removed in
+  `59ac83a`; the live plan is `plan/next-steps.md`.
+- `docs/14`: "What this means for the build" items 1 and 3 marked overtaken (ADRs `0030`, `0060`);
+  a paragraph narrating a past miscount cut.
+
 ## Why this is a task and not a tidy-up
 
 The repo has **43 ADRs, 18 post-mortems, 31 task files and 16 docs**, almost all written by me in a

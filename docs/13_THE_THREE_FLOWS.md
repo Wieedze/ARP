@@ -2,6 +2,16 @@
 
 **Date**: 2026-10-16
 **Serves**: `docs/12_THE_IDEA.md`. Read that first; this is how the mechanism reaches agents that never heard of ARP.
+**Status**: analysis, dated. The verifier (flow A) and its rule — _not checkable_ is never _failing_
+— still hold. The order and two of the flows drifted:
+
+| here                                                     | now                                                                                                                                                                      |
+| -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| flow C and Phase 2, "hire … then `(A, uses, B)` + stake" | ARP records a use; it does not broker one (ADR `0060`)                                                                                                                   |
+| Phase 3, the MCP server "deliberately last"              | it became the product: the agent searches ARP by need mid-task (`docs/01`, `docs/tasks/52`)                                                                              |
+| "the agent being rated", "ratings"                       | ARP rates nobody (ADR `0046`); the verifier records facts                                                                                                                |
+| "194 `use` triples", "a registry past 309,000"           | dated figures; re-run `scripts/measure/predicate-edges.ts` and `scripts/measure/registry-mintability.ts`. The 194 does not reproduce (`.claude/STATE.md`, known defects) |
+| where probe results live, "off-graph first"              | built that way: the probe is a dated fact, never on chain (ADR `0093`)                                                                                                   |
 
 ---
 
