@@ -129,10 +129,12 @@ ARP's servers and every read, declaration and stake above still completes.
 
 ### The delegation guard rail
 
-Deployed on testnet 13579, where ARP's contracts are. `DomainScopeEnforcer` bounds where an agent may
-stake; `TrustStakeCapEnforcer` caps the native value it may spend per rolling period — **the amount,
-not the kind**, so fees count against it too and an agent can exhaust a cap and hold no position.
-Out-of-scope attempts revert before any state change. The agent-server surface that drove them is
+`TrustStakeCapEnforcer` caps the native value an agent may spend under a delegation per fixed
+period — **the amount, not the kind**, so fees count against it too and an agent can exhaust a cap
+and hold no position. The window opens at the first spend after the last one expired, so up to about
+twice the cap can pass across a boundary. A spend over the cap reverts before any state change.
+`ReceiptEnforcer` ("no signed receipt, no deposit", task 43) is written and tested, and not deployed.
+`DomainScopeEnforcer` was removed with `ModuleRegistry` in `59ac83a` (ADR `0055`). The agent-server surface that drove them is
 **set aside** ([ADR 0033](.claude/choices/0033-the-hackathon-surface-is-set-aside.md)) and kept as
 historical record.
 
@@ -178,12 +180,21 @@ that can sign a transaction and make an HTTP request
 
 ## Deployed contracts (Intuition Testnet, chainId 13579)
 
-| Contract                                     | Address                                                                                                                                       |
-| -------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| `ModuleRegistry` (v2 — schemaURI uniqueness) | [`0xc9a2f66775828017e984E8be077fA2d17e0A41F4`](https://testnet.explorer.intuition.systems/address/0xc9a2f66775828017e984E8be077fA2d17e0A41F4) |
-| `IdentityRegistry` (ERC-8004)                | [`0xC165A2AD2E540A4069E02834009161E2b4490d5A`](https://testnet.explorer.intuition.systems/address/0xC165A2AD2E540A4069E02834009161E2b4490d5A) |
-| `DomainScopeEnforcer`                        | [`0x516B82E29e3Ca46Ca810FC2EEf348932b198f7f9`](https://testnet.explorer.intuition.systems/address/0x516B82E29e3Ca46Ca810FC2EEf348932b198f7f9) |
-| `TrustStakeCapEnforcer`                      | [`0x7BB56819E9a413B8B4668C5cAF5C494c41dC0F8E`](https://testnet.explorer.intuition.systems/address/0x7BB56819E9a413B8B4668C5cAF5C494c41dC0F8E) |
+| Contract                      | Address                                                                                                                                       |
+| ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| `IdentityRegistry` (ERC-8004) | [`0xC165A2AD2E540A4069E02834009161E2b4490d5A`](https://testnet.explorer.intuition.systems/address/0xC165A2AD2E540A4069E02834009161E2b4490d5A) |
+| `TrustStakeCapEnforcer`       | [`0x7BB56819E9a413B8B4668C5cAF5C494c41dC0F8E`](https://testnet.explorer.intuition.systems/address/0x7BB56819E9a413B8B4668C5cAF5C494c41dC0F8E) |
+
+That `TrustStakeCapEnforcer` runs the code from before ADR `0118`, which keyed its state by
+delegation hash alone and so let anyone fill a delegation's counter; the fix is in `src/` and a
+testnet redeploy replaces it (`contracts/SECURITY_REVIEW.md`, "Task 59"). `ReceiptEnforcer` is not
+deployed. `ModuleRegistry` and `DomainScopeEnforcer` were removed from `src/` in `59ac83a`; their
+addresses stay in `data/deployments/13579.json` as the record.
+
+On mainnet 1155 ARP has two enforcers and no registry (`data/deployments/1155.json`):
+`TrustStakeCapEnforcer` `0x99921C234d4Ca518DC58ba63ff9bfD2Cc9435f34`, the same pre-`0118` code,
+never fired; and `DomainScopeEnforcer` `0x4E20279EeE9f77673A4f1605E58607cD9A597d70`, inert, with no
+`ModuleRegistry` to gate.
 
 Composes with the MetaMask Delegation Framework v1.3.0 (`DelegationManager` at `0xdb9B1e94B5b69Df7e401DDbedE43491141047dB3`) and Intuition's MultiVault (`0x2Ece8D4dEdcB9918A398528f3fa4688b1d2CAB91`). Full address set in [data/deployments/13579.json](data/deployments/13579.json).
 
@@ -191,7 +202,7 @@ Composes with the MetaMask Delegation Framework v1.3.0 (`DelegationManager` at `
 
 |                                                         | Intuition Testnet 13579       | Intuition mainnet 1155           |
 | ------------------------------------------------------- | ----------------------------- | -------------------------------- |
-| ARP's registries (`ModuleRegistry`, `IdentityRegistry`) | deployed here                 | **not deployed, not planned**    |
+| ARP's registry (`IdentityRegistry`)                      | deployed here                 | **not deployed, not planned**    |
 | ARP's two caveat enforcers                              | deployed here                 | deployed 2026-09-16, never fired |
 | The mirrored ERC-8004 agents                            | absent                        | here                             |
 | What the panels read                                    | —                             | here                             |
@@ -276,8 +287,7 @@ ARP/
 │       └── src/arp/                ← ARP's own contracts (the folded-in `sdk/`)
 ├── contracts/                      ← Foundry workspace (Solidity)
 │   └── src/
-│       ├── ModuleRegistry.sol
-│       ├── enforcers/              ← DomainScopeEnforcer, TrustStakeCapEnforcer
+│       ├── enforcers/              ← TrustStakeCapEnforcer, ReceiptEnforcer (not deployed)
 │       └── erc8004/                ← IdentityRegistry + interfaces
 ├── scripts/                        ← personal tooling, never imported by apps/ or packages/
 │   ├── agent/                      ← plan as an agent: mint, identity atom, declare, send a plan
@@ -285,7 +295,7 @@ ARP/
 │   ├── build/                      ← generate the files the app bundles
 │   ├── verify/                     ← re-check a claim against the chain
 │   ├── demo/                       ← demo-adopt (nothing → a readable position), demo-hire
-│   ├── deploy/                     ← three-phase contract deploy
+│   ├── deploy/                     ← deploy.sh: testnet only, skips what is deployed
 │   ├── measure/*.ts                ← every number in this repo is re-runnable from one of these
 │   ├── sandbox/                    ← a Claude Code sandbox that walks the whole loop on testnet
 │   ├── helpers/                    ← what several scripts share. helpers/send-plan.ts is the ONLY

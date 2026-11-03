@@ -1,8 +1,8 @@
 {
-  "name": "arp-module-registry-mvp",
+  "name": "arp",
   "version": "0.0.0",
   "private": true,
-  "description": "ARP Module Registry \u2014 MVP. First on-chain deliverable of the Agent Reputation Protocol.",
+  "description": "ARP — Agent Reputation Protocol: the web app, the MCP server, the node, the protocol packages and the contracts.",
   "engines": {
     "node": ">=20",
     "bun": ">=1.2"

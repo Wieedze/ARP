@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "arp-module-registry-mvp",
+      "name": "arp",
       "devDependencies": {
         "@types/bun": "^1.4.4",
         "prettier": "^3.3.3",
