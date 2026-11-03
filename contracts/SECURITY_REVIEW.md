@@ -128,6 +128,30 @@ documented, intended comparisons. Slither 0.11.5: 22 results, none High or Mediu
 grief is opened, one receipt still unlocks one deposit, and the testnet bytecode matches `src/`.
 Re-review after the one-line handler fix.
 
+## Re-review, 2026-11-03
+
+**Commits:** `d46c30b` (M-T60-1), `d755b9c` (L-T60-1).
+
+- **M-T60-1, closed.** The handler calls `vm.prank(DM)` before the `try`. Mutation check against
+  the committed test, in a scratch copy, with the `CapExceeded` check deleted from `src/`:
+  `invariant_cumulativeNeverExceedsCap` **fails** (1 024.57e18 > 1 000e18). On the real source both
+  invariants pass at 256 runs × 500 calls. The full suite is 113 passed, 0 failed.
+  `invariant_windowStartMonotonic` was not mutation-tested on its own.
+- **L-T60-1, closed.** `deploy.sh` sources `.env` without `set -a` and exports only `PRIVATE_KEY`.
+  `forge script` gets no `--private-key`, and both scripts sign through
+  `vm.startBroadcast(vm.envUint("PRIVATE_KEY"))`. In a testnet dry run with `--force`, I sampled
+  every `forge` process's `/proc/<pid>/cmdline` while the script ran: the `forge script` process was
+  observed, and `--private-key` never appeared. The simulation deployed from the recorded deployer
+  `0xE596…1AA1` and exited 0, and nothing was sent or written. The mainnet refusal is unchanged:
+  chain 1155 without the flag still exits 1.
+- **INFO-T60-3 (new).** The `@dev` NatSpec of `script/DeployEnforcers.s.sol:13` and
+  `script/DeployIdentityRegistry.s.sol:13` still documents a direct run with
+  `--private-key $PRIVATE_KEY`, the argv exposure L-T60-1 removed from `deploy.sh`. Documentation
+  only; not blocking.
+- Lint: `solhint` 0 problems, `forge fmt --check` clean.
+
+**Verdict: PASS.**
+
 ---
 
 # Task 60 (2026-11-02): `TrustStakeCapEnforcer` could be griefed
