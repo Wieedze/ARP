@@ -210,3 +210,18 @@ describe("listRegisteredTools, paging", () => {
         expect(paging.requests).toBe(8);
     });
 });
+
+describe("listRegisteredTools — an unreadable figure is not a zero", () => {
+    it("skips a tool whose vault figures cannot be read, instead of listing it at zero", async () => {
+        const {transport} = transportOf([
+            atom("0xaa", "a.example", 1, "500"),
+            atom("0xbb", "b.example", 1, "not a number"),
+            atom("0xcc", "c.example", null, null),
+        ]);
+        const page = await listRegisteredTools({graphqlUrl: INTUITION_URL, transport});
+        expect(page.tools.map((tool: {label: string | null}) => tool.label).sort()).toEqual([
+            "a.example",
+            "c.example",
+        ]);
+    });
+});

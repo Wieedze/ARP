@@ -4,6 +4,7 @@ import {
     type FetchLike,
     type GraphqlTransport,
     isRecord,
+    readBigInt,
     readNumber,
     readString,
     TOOL_LISTING_QUERY,
@@ -137,13 +138,6 @@ export type ToolListingConfig = {
     sponsor?: string | null;
 };
 
-function bigintFrom(value: unknown): bigint {
-    const text =
-        typeof value === "string" ? value : typeof value === "number" ? String(value) : null;
-    if (text === null || !/^\d+$/.test(text)) return 0n;
-    return BigInt(text);
-}
-
 /** The Thing's `url`, with the literal string `"null"` treated as absent — three tools carry it. */
 function hostedAtFrom(object: Record<string, unknown>): string | null {
     const value = object["value"];
@@ -161,7 +155,7 @@ function sideOf(term: unknown): {assets: bigint; positions: number} {
     return {
         // Per-vault assets when the curve was found, the term-level total otherwise. The two are
         // different populations and the fallback is stated rather than silent.
-        assets: bigintFrom(vault?.["total_assets"] ?? term["total_assets"]),
+        assets: readBigInt(vault, "total_assets") ?? readBigInt(term, "total_assets") ?? 0n,
         positions: vault === null ? 0 : (readNumber(vault, "position_count") ?? 0),
     };
 }

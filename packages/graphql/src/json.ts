@@ -47,6 +47,23 @@ export function readBigInt(source: unknown, key: string): bigint | null {
     return BigInt(value);
 }
 
+/**
+ * A count: a non-negative safe integer, as a number or as a decimal string. The indexer sends some
+ * counts as strings (`signal_stats_*.count` comes back as `"5"`, probed on mainnet 2026-10-21).
+ * Null for anything else — never a zero standing in for "could not read".
+ */
+export function readCount(source: unknown, key: string): number | null {
+    if (!isRecord(source)) return null;
+    const value = source[key];
+    const parsed =
+        typeof value === "number"
+            ? value
+            : typeof value === "string" && /^\d+$/.test(value)
+              ? Number(value)
+              : null;
+    return parsed !== null && Number.isSafeInteger(parsed) && parsed >= 0 ? parsed : null;
+}
+
 /** Reads a path like `assessment.signature`. Returns null if any segment is missing. */
 export function readPath(source: unknown, path: readonly string[]): unknown {
     let cursor: unknown = source;

@@ -23,6 +23,7 @@ export {
     omitPath,
     readArray,
     readBigInt,
+    readCount,
     readNumber,
     readPath,
     readRecord,

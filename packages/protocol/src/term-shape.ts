@@ -7,6 +7,8 @@ import {
     type GraphqlTransport,
     HOLDINGS_QUERY,
     isRecord,
+    readBigInt,
+    readCount,
     readString,
     SHAPE_QUERY,
     TERM_BACKERS_QUERY,
@@ -163,27 +165,6 @@ const ACTIVITY_QUERIES: Record<TermActivityGrain, string> = {
     month: "signal_stats_monthly",
 };
 
-function bigintFrom(value: unknown): bigint {
-    const text =
-        typeof value === "string" ? value : typeof value === "number" ? String(value) : null;
-    if (text === null || !/^\d+$/.test(text)) return 0n;
-    return BigInt(text);
-}
-
-/**
- * A count from the indexer, which sends some of them as **strings**.
- *
- * `signal_stats_*.count` comes back as `"5"`, not `5` — probed on mainnet 2026-10-21 after this
- * function returned 0 for every bucket while `volume` read correctly. Accepting only `number` made
- * a whole column silently zero, which is the same class as the `market.totalAssets` defect
- * `STATE.md` records: a field whose type was assumed rather than read.
- */
-function numberFrom(value: unknown): number {
-    if (typeof value === "number") return Number.isFinite(value) ? value : 0;
-    if (typeof value === "string" && /^\d+$/.test(value)) return Number(value);
-    return 0;
-}
-
 /** Basis points of `part` in `whole`, or `null` when `whole` is zero. */
 function shareBps(part: bigint, whole: bigint): number | null {
     if (whole <= 0n) return null;
@@ -227,8 +208,9 @@ export async function getTermShape(termId: string, config: TermShapeConfig): Pro
     const agg = isRecord(data["agg"]) ? data["agg"] : null;
     const aggregate = agg !== null && isRecord(agg["aggregate"]) ? agg["aggregate"] : null;
     const sum = aggregate !== null && isRecord(aggregate["sum"]) ? aggregate["sum"] : null;
-    const positionCount = aggregate === null ? 0 : numberFrom(aggregate["count"]);
-    const totalShares = sum === null ? 0n : bigintFrom(sum["shares"]);
+    // Hasura answers an empty aggregate with a null sum, which is zero; a count is always present.
+    const positionCount = readCount(aggregate, "count") ?? 0;
+    const totalShares = readBigInt(sum, "shares") ?? 0n;
 
     const rowsOf = (key: string) => (Array.isArray(data[key]) ? data[key] : []);
     const firstRow = rowsOf("first")[0];
@@ -238,8 +220,9 @@ export async function getTermShape(termId: string, config: TermShapeConfig): Pro
     for (const row of rowsOf("backers")) {
         if (!isRecord(row)) continue;
         const accountId = readString(row, "account_id");
-        if (accountId === null) continue;
-        backers.push({accountId, shares: bigintFrom(row["shares"])});
+        const shares = readBigInt(row, "shares");
+        if (accountId === null || shares === null) continue;
+        backers.push({accountId, shares});
     }
 
     const sortedShares = backers.map((backer) => backer.shares).sort((a, b) => (a < b ? 1 : -1));
@@ -291,7 +274,7 @@ async function backerBreadth(
             const node = data[`a${index}`];
             const aggregate =
                 isRecord(node) && isRecord(node["aggregate"]) ? node["aggregate"] : null;
-            held.push(aggregate === null ? 0 : numberFrom(aggregate["count"]));
+            held.push(readCount(aggregate, "count") ?? 0);
         }
     }
     return held;
@@ -325,12 +308,10 @@ export async function getTermActivity(
     for (const row of rows) {
         if (!isRecord(row)) continue;
         const bucket = readString(row, "bucket");
-        if (bucket === null) continue;
-        buckets.push({
-            bucket,
-            signals: numberFrom(row["count"]),
-            volume: bigintFrom(row["volume"]),
-        });
+        const signals = readCount(row, "count");
+        const volume = readBigInt(row, "volume");
+        if (bucket === null || signals === null || volume === null) continue;
+        buckets.push({bucket, signals, volume});
     }
     // Oldest first, because a curve is read left to right. The query orders descending so the
     // `limit` takes the most recent buckets rather than the first ninety days of history.
@@ -400,7 +381,7 @@ export async function getAccountHoldings(
     const sumOf = (key: string, field: string): bigint => {
         const aggregate = agg(key);
         const sum = aggregate !== null && isRecord(aggregate["sum"]) ? aggregate["sum"] : null;
-        return sum === null ? 0n : bigintFrom(sum[field]);
+        return readBigInt(sum, field) ?? 0n;
     };
 
     const depositedAssets = sumOf("deposited", "assets_after_fees");
@@ -409,13 +390,13 @@ export async function getAccountHoldings(
     return {
         account,
         curveId,
-        termsHeld: numberFrom(agg("held")?.["count"]),
+        termsHeld: readCount(agg("held"), "count") ?? 0,
         totalShares: sumOf("held", "shares"),
         depositedAssets,
         redeemedAssets,
         netAssets: depositedAssets - redeemedAssets,
-        atomDeposits: numberFrom(agg("onAtoms")?.["count"]),
-        tripleDeposits: numberFrom(agg("onTriples")?.["count"]),
+        atomDeposits: readCount(agg("onAtoms"), "count") ?? 0,
+        tripleDeposits: readCount(agg("onTriples"), "count") ?? 0,
     };
 }
 
@@ -464,10 +445,11 @@ export async function getAccountActivity(
         for (const row of rows) {
             if (!isRecord(row)) continue;
             const createdAt = readString(row, "created_at");
-            if (createdAt === null) continue;
+            const amount = readBigInt(row, field);
+            if (createdAt === null || amount === null) continue;
             const day = createdAt.slice(0, 10);
             const bucket = byDay.get(day) ?? {deposited: 0n, redeemed: 0n};
-            bucket[into] += bigintFrom(row[field]);
+            bucket[into] += amount;
             byDay.set(day, bucket);
         }
         return rows.length;
@@ -480,7 +462,7 @@ export async function getAccountActivity(
         if (!isRecord(node) || !isRecord(node["aggregate"])) return 0n;
         const aggregate = node["aggregate"];
         const sum = isRecord(aggregate["sum"]) ? aggregate["sum"] : null;
-        return sum === null ? 0n : bigintFrom(sum[field]);
+        return readBigInt(sum, field) ?? 0n;
     };
     const allTimeNet = sumOf("allDeposited", "assets_after_fees") - sumOf("allRedeemed", "assets");
     const windowNet = [...byDay.values()].reduce(
@@ -560,8 +542,8 @@ export async function getTermValueHistory(
     for (const row of rows) {
         if (!isRecord(row)) continue;
         const at = readString(row, "created_at");
-        const delta = bigintFrom(row["delta"]);
-        if (at === null) continue;
+        const delta = readBigInt(row, "delta");
+        if (at === null || delta === null) continue;
         // `deposit_id` present means TRUST entered; `redemption_id` means it left. Neither present
         // is a signal shape this reader does not know, and it is skipped rather than guessed at.
         const isDeposit = row["deposit_id"] !== null && row["deposit_id"] !== undefined;
@@ -627,14 +609,18 @@ export async function getTermBackers(
         if (!isRecord(row)) continue;
         const account = isRecord(row["account"]) ? row["account"] : null;
         const address = account === null ? null : readString(account, "id");
-        if (address === null) continue;
+        const shares = readBigInt(row, "shares");
+        const deposited = readBigInt(row, "total_deposit_assets_after_total_fees");
+        const redeemed = readBigInt(row, "total_redeem_assets_for_receiver");
+        if (address === null || shares === null || deposited === null || redeemed === null)
+            continue;
         backers.push({
             account: address,
             atomId: account === null ? null : readString(account, "atom_id"),
             label: account === null ? null : readString(account, "label"),
-            shares: bigintFrom(row["shares"]),
-            deposited: bigintFrom(row["total_deposit_assets_after_total_fees"]),
-            redeemed: bigintFrom(row["total_redeem_assets_for_receiver"]),
+            shares,
+            deposited,
+            redeemed,
             openedAt: readString(row, "created_at"),
         });
     }

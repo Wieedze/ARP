@@ -4,6 +4,8 @@ import {
     type FetchLike,
     type GraphqlTransport,
     isRecord,
+    readBigInt,
+    readCount,
     readString,
     REGISTERED_TOOLS_QUERY,
 } from "@arp-protocol/graphql";
@@ -127,17 +129,6 @@ const DEFAULT_TIMEOUT_MS = 10_000;
 /** Eight pages at the indexer's cap. Enough for the whole set today, with room to grow. */
 const DEFAULT_MAX_ROWS = 2_000;
 
-function bigintFrom(value: unknown): bigint {
-    const text =
-        typeof value === "string" ? value : typeof value === "number" ? String(value) : null;
-    if (text === null || !/^\d+$/.test(text)) return 0n;
-    return BigInt(text);
-}
-
-function numberFrom(value: unknown): number {
-    return typeof value === "number" && Number.isFinite(value) ? value : 0;
-}
-
 /** `"null"` reaches the indexer as a literal string for some pinned Things. Not a url. */
 function urlFrom(value: unknown): string | null {
     const text = typeof value === "string" ? value.trim() : "";
@@ -200,14 +191,19 @@ export async function listRegisteredTools(
         const aggregate =
             edges !== null && isRecord(edges["aggregate"]) ? edges["aggregate"] : null;
 
+        // No vault on the curve is zero; a vault whose figures cannot be read is skipped rather
+        // than listed at zero, which would rank it as a tool nobody backs.
+        const positionCount = vault === null ? 0 : readCount(vault, "position_count");
+        const assets = vault === null ? 0n : readBigInt(vault, "total_assets");
+        if (positionCount === null || assets === null) continue;
         tools.push({
             atomId: termId,
             label: readString(row, "label"),
             uri: readString(row, "data"),
             url: urlFrom(thing?.["url"]),
-            positionCount: vault === null ? 0 : numberFrom(vault["position_count"]),
-            assets: vault === null ? 0n : bigintFrom(vault["total_assets"]),
-            declarations: aggregate === null ? 0 : numberFrom(aggregate["count"]),
+            positionCount,
+            assets,
+            declarations: readCount(aggregate, "count") ?? 0,
         });
     }
 

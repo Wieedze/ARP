@@ -5,6 +5,8 @@ import {
     FIND_AGENTS_QUERY,
     type GraphqlTransport,
     isRecord,
+    readBigInt,
+    readCount,
     readString,
 } from "@arp-protocol/graphql";
 import {
@@ -121,17 +123,6 @@ export type FindAgentsConfig = {
     predicates?: readonly string[];
 };
 
-function bigintFrom(value: unknown): bigint {
-    const text =
-        typeof value === "string" ? value : typeof value === "number" ? String(value) : null;
-    if (text === null || !/^\d+$/.test(text)) return 0n;
-    return BigInt(text);
-}
-
-function numberFrom(value: unknown): number {
-    return typeof value === "number" && Number.isFinite(value) ? value : 0;
-}
-
 /**
  * @param domain What to match an agent's declared capability against, case-insensitively. `%` is
  *               the graph's wildcard, so `"defi%"` is a prefix search and `"defi"` is exact-ish.
@@ -189,7 +180,7 @@ export async function findAgents(
         const vault = isRecord(vaults[0]) ? vaults[0] : null;
         const object = isRecord(row["object"]) ? row["object"] : null;
 
-        const backers = vault === null ? 0 : numberFrom(vault["position_count"]);
+        const backers = readCount(vault, "position_count") ?? 0;
         byAgent.set(atomId.toLowerCase(), {
             atomId,
             label: readString(subject, "label"),
@@ -197,8 +188,7 @@ export async function findAgents(
                 predicateId: readString(row, "predicate_id") ?? "",
                 label: readString(object, "label"),
             },
-            backingAssets:
-                backers === 0 || vault === null ? null : bigintFrom(vault["total_assets"]),
+            backingAssets: backers === 0 ? null : readBigInt(vault, "total_assets"),
             backers,
         });
     }
