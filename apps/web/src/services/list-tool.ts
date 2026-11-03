@@ -1,5 +1,5 @@
 /**
- * Ask the sponsor to list a tool or a skill on testnet 13579 (task 53c, ADR `0120`).
+ * Ask the sponsor to list a tool or a skill on testnet 13579 (task 53c, ADR `0123`).
  *
  * Unsigned for now: the sponsor counts it against its shared anonymous cap. A request signed by
  * the agent key or a wallet gets its own per-address cap; signing it waits for
@@ -67,7 +67,7 @@ export function listToolMessage(result: ListToolResult): string {
             if (result.rule === "resolves" && !result.retry)
                 return "Nothing found at that URL on GitHub.";
             if (result.rule === "limit") return "Today's limit is reached. Try again tomorrow.";
-            // 409 `pending`: a send of this same listing is not confirmed yet (ADR `0120`).
+            // 409 `pending`: a send of this same listing is not confirmed yet (ADR `0123`).
             if (result.rule === "pending") return "Already being added. Try again in a minute.";
             if (result.retry) return "Not answered right now. Try again.";
             return "It could not be added.";
