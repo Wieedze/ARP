@@ -101,10 +101,11 @@ export const CONTENT_RECEIPT_TYPES = {
  * What a caller signs to be named in a receipt.
  *
  * **The caller supplies the nonce and the node signs over it**, which is what makes this stateless
- * without being replayable into a second record. Replaying a request signature produces a
- * **byte-identical receipt** — same atom, same caller, same nonce — so it is the same receipt rather
- * than a new one, and a reader counting receipts counts one. A server-issued challenge would need
- * state for no gain; a bare timestamp would leave a window.
+ * without being replayable into a second record. Replaying a request signature produces a receipt
+ * with the **same atom, caller and nonce** — but not the same bytes: the node stamps a fresh
+ * `servedAt`, so the signature differs. A reader that counts receipts must therefore count distinct
+ * `(atom, to, nonce)`, not distinct signatures; counted that way a replay is one receipt, not two.
+ * A server-issued challenge would need state for no gain; a bare timestamp would leave a window.
  *
  * It is also why **a third party whose signer the reader does not accept** cannot manufacture
  * receipts in somebody else's name: the only thing a stolen request signature buys is a copy of a
