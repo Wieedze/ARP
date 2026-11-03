@@ -58,6 +58,7 @@ import { formatEther, stringToHex, type Hex } from 'viem';
 import { encodeCreateAtom, encodeCreateTriple, multiVaultReads } from '../../packages/protocol/src/declare/index.js';
 import { atomDataForUri } from '../../packages/protocol/src/declare/multivault.js';
 import { normaliseToolUrl, toolAtomUri } from '../../packages/protocol/src/declare/tool-thing.js';
+import { checkCategoryLabel, normaliseCategoryLabel } from '../../packages/protocol/src/declare/category.js';
 
 const TARGETS = { mainnet: 1155, testnet: 13579 } as const;
 
@@ -127,12 +128,8 @@ const TAGS: readonly [string, string][] = [
  * with the typo `motion-desing` attached to one of them.
  */
 function normaliseLabel(raw: string): string {
-  return raw
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .toLowerCase()
-    .trim()
-    .replace(/\s+/g, ' ');
+  // One implementation since task 59: the MCP server, the web and the sponsor use the same rule.
+  return normaliseCategoryLabel(raw);
 }
 
 /**
@@ -157,14 +154,10 @@ function normaliseLabel(raw: string): string {
  * phrases, not vocabulary ARP chooses.
  */
 function assertLabel(label: string, compounds: ReadonlyMap<string, string>): void {
-  if (/[-_]/.test(label)) {
-    console.error(`refusing "${label}": never a hyphen or an underscore. Write a compound with a space.`);
-    process.exit(1);
-  }
-  if (label.includes(' ') && !compounds.get(label)?.trim()) {
-    console.error(
-      `refusing "${label}": one word unless necessary. List it under \`compounds\` in domains.proposal.json with why no single word fits.`,
-    );
+  // The rule itself lives in `packages/protocol/src/declare/category.ts` since task 59.
+  const refused = checkCategoryLabel(label, compounds);
+  if (refused !== null) {
+    console.error(`refusing ${refused.detail}`);
     process.exit(1);
   }
 }

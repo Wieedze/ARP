@@ -108,6 +108,19 @@ export {
     type ReachabilityTerms,
 } from "./reachability-plan.js";
 
+/** A category anyone can add, by the same rules as the rest (task 59, ADR `0115`). */
+export {
+    checkCategoryLabel,
+    isCategoryIn,
+    normaliseCategoryLabel,
+    planCategory,
+    type CategoryDeps,
+    type CategoryPlan,
+    type CategoryProposal,
+    type CategoryRefusal,
+    type CategoryRule,
+} from "./category.js";
+
 /** The endpoint binding on Intuition (task 39c): the claim and the signed handshake attached to it. */
 export {
     AgentAtomMismatchError,
