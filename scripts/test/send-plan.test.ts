@@ -5,7 +5,7 @@ import { RAW_KEY_CHAIN_ID, sendPlan, type SerialisedCall } from '../helpers/send
 /**
  * The raw-key signer refuses every chain but testnet 13579, and refuses an RPC that answers a chain
  * other than the plan's. `.claude/rules/security.md`: an agent session signs with a raw key on 13579
- * only (ADR `0037`). Before task 59 `--chain 1155 --execute` reached the signing loop.
+ * only (ADR `0037`). Before task 60 `--chain 1155 --execute` reached the signing loop.
  */
 
 // A throwaway key, never funded anywhere: the guards under test refuse before anything is signed.

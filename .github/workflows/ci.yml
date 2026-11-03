@@ -1,4 +1,4 @@
-# The repo's gates, run on every push and pull request to main and dev (task 59, ADR 0117).
+# The repo's gates, run on every push and pull request to main and dev (task 60, ADR 0117).
 #
 # Every action is pinned to a version tag. Bun is pinned to the version the lockfile was written
 # with; it satisfies package.json's `engines.bun` (>=1.2).
@@ -58,7 +58,7 @@ jobs:
           version: v1.7.1
 
       # contracts/lib/ is gitignored and was never vendored by a submodule, so a fresh checkout
-      # had no delegation-framework. Task 59 stream A restores it, as submodules or as
+      # had no delegation-framework. Task 60 stream A restores it, as submodules or as
       # contracts/scripts/setup-deps.sh; this step covers both and is a no-op for whichever is absent.
       - name: contract dependencies
         run: |

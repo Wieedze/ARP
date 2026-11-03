@@ -3,7 +3,7 @@ import { describe, expect, it } from 'bun:test';
 import { checkHirePayment, DEFAULT_MAX_PAY_WEI } from '../helpers/hire-payment.js';
 
 /**
- * `demo-hire.ts` pays a node-supplied payee a node-supplied price. Before task 59 it took mainnet,
+ * `demo-hire.ts` pays a node-supplied payee a node-supplied price. Before task 60 it took mainnet,
  * checked no chain, and paid whatever `minBudgetWei` the node answered.
  */
 const ok = { chainId: 13579, rpcChainId: 13579, minBudget: 1000n, payAmount: 1000n, maxPay: 5000n };

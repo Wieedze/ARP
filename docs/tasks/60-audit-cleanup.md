@@ -1,4 +1,4 @@
-# Task 59 — the audit cleanup
+# Task 60 — the audit cleanup
 
 **Status:** **IN PROGRESS**, 2026-11-02, branch `chore/59-audit-cleanup`.
 

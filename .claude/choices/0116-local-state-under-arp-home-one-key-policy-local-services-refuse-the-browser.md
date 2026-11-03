@@ -2,7 +2,7 @@
 
 **Status:** Accepted
 **Date:** 2026-11-03
-**Triggered by:** `docs/tasks/59-audit-cleanup.md`, stream C (the read-only audit of 2026-11-02,
+**Triggered by:** `docs/tasks/60-audit-cleanup.md`, stream C (the read-only audit of 2026-11-02,
 server apps). The user authorised every item.
 
 ## Context
@@ -103,4 +103,4 @@ follow from the audit's items and are recorded in the commits, not decided here.
 - Related rule: `.claude/rules/security.md` (signature sites), `.claude/rules/code.md`
 - Related doc: `docs/22_RUNNING_THE_NODE.md` (files, env vars, the write-and-connect grep)
 - Related ADR: `0080` (receipt key), `0092`, `0094`, `0110` (sponsoring service), `0082` (what apps share)
-- Task: `docs/tasks/59-audit-cleanup.md`, stream C
+- Task: `docs/tasks/60-audit-cleanup.md`, stream C

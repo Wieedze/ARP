@@ -2,7 +2,7 @@
 
 **Status:** Accepted
 **Date:** 2026-11-02
-**Triggered by:** `docs/tasks/59-audit-cleanup.md`, stream E — the read-only audit of 2026-11-02,
+**Triggered by:** `docs/tasks/60-audit-cleanup.md`, stream E — the read-only audit of 2026-11-02,
 every finding planned and executed on the user's decision.
 
 ## Context
@@ -78,13 +78,13 @@ edited; this is the record.
 
 **Negative:**
 
-- CI is red until other task 59 streams land: `contracts/lib/` is absent on a fresh checkout and
+- CI is red until other task 60 streams land: `contracts/lib/` is absent on a fresh checkout and
   `solhint` is not installed (stream A), and `check:contrast` fails on `apps/web` (stream D).
 - A re-sync of the MetaMask skills needs one manual delete.
 
 **Neutral (worth knowing):**
 
-- `format:check` fails on 286 files on this branch; formatting them is left to the end of task 59
+- `format:check` fails on 286 files on this branch; formatting them is left to the end of task 60
   so it does not conflict with every stream.
 - `scripts/measure/landing-fit.ts` still imports `NAV_HEIGHT` from `apps/web/src`: it measures the
   web app's layout, so the constant it checks is the app's own.
@@ -93,5 +93,5 @@ edited; this is the record.
 
 - Related rules: `.claude/rules/security.md`, `solidity.md`, `metamask-delegation.md`,
   `portability.md`, `workflow.md`; `.claude/agents/task-verifier.md`
-- Related doc: `docs/tasks/59-audit-cleanup.md`
+- Related doc: `docs/tasks/60-audit-cleanup.md`
 - Related ADRs: `0003`, `0022`, `0037`, `0055`, `0065`

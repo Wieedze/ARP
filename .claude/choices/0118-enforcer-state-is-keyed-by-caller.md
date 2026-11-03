@@ -2,9 +2,9 @@
 
 **Status:** Accepted
 **Date:** 2026-11-02
-**Triggered by:** `docs/tasks/59-audit-cleanup.md` stream A, the read-only audit of 2026-11-02, and
+**Triggered by:** `docs/tasks/60-audit-cleanup.md` stream A, the read-only audit of 2026-11-02, and
 the user's decision that day: fix `TrustStakeCapEnforcer`, test it, redeploy it on testnet 13579,
-leave the mainnet copy as it is. Task 59 assigned this ADR the number `0114`. That number was already
+leave the mainnet copy as it is. Task 60 assigned this ADR the number `0114`. That number was already
 taken (`0114-one-path-per-profile-…`, task 53), so it is `0118`.
 
 ## Context
@@ -51,7 +51,7 @@ receipt revert `PaymentAlreadyUsed`.
 - **Gate `TrustStakeCapEnforcer` on an immutable `DELEGATION_MANAGER`**, as `ReceiptEnforcer` does.
   This closes the grief too. Not chosen because the caller-keyed map is upstream's pattern, needs
   no constructor argument, and lets one bytecode serve any DelegationManager deployment.
-- **Key `ReceiptEnforcer` replay by delegation hash** (the first suggestion in task 59). This also
+- **Key `ReceiptEnforcer` replay by delegation hash** (the first suggestion in task 60). This also
   closes the grief. Not chosen because one receipt could then unlock a deposit in every delegation
   that accepts its signer, two delegators funding one payment. The signer key keeps one payment,
   one deposit, per node, across delegations.
@@ -87,6 +87,6 @@ receipt revert `PaymentAlreadyUsed`.
 ## References
 
 - Related rule: `.claude/rules/security.md`, `.claude/rules/metamask-delegation.md`, `.claude/rules/claims.md` §1, §5
-- Related doc: `contracts/SECURITY_REVIEW.md`, "Task 59"
+- Related doc: `contracts/SECURITY_REVIEW.md`, "Task 60"
 - Related ADR: `0040`, `0055`, `0092`, `0098`
-- Triggered by: `docs/tasks/59-audit-cleanup.md`
+- Triggered by: `docs/tasks/60-audit-cleanup.md`

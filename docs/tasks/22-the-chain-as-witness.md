@@ -37,7 +37,7 @@
 > | 13579 | **122** |          108 |                    9 | 3 — 93 tx from ARP's own rig agent `0x906f3A52…` (ADR `0047`) |
 > | 1155  |       0 |            — |                    — | —                                                             |
 >
-> ~~The hook is unreachable without a redemption, so each log is a fact about one.~~ **Corrected 2026-11-02 (task 59, ADR `0118`):**
+> ~~The hook is unreachable without a redemption, so each log is a fact about one.~~ **Corrected 2026-11-02 (task 60, ADR `0118`):**
 > the hook is public, so a v1 log is a fact about a call, not necessarily a redemption. **But 93 of the 108
 > transactions are ARP crossing its own guard rail**, which proves the machinery and not the market;
 > 15 transactions from two accounts are not recorded anywhere in this repo. A count of 122 quoted
@@ -117,7 +117,7 @@ receipts.
 4. The agent's own delegation redemptions are the same class and already exist:
    `TrustStakeCapEnforcer` (`0x99921C234d4Ca518DC58ba63ff9bfD2Cc9435f34`, chain 1155) emits
    `StakeCapChecked(delegationHash, newCumulative, cap)` on every pass, ~~and it is unreachable without
-   an actual redeem~~ (**Corrected 2026-11-02 (task 59, ADR `0118`):** it is public; only a log whose caller is the
+   an actual redeem~~ (**Corrected 2026-11-02 (task 60, ADR `0118`):** it is public; only a log whose caller is the
    DelegationManager, which v2's event names, is a redemption). Index that first — it is one contract, one event, and ARP's own.
 
 ## Do not do in this task

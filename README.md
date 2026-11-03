@@ -189,7 +189,7 @@ That `TrustStakeCapEnforcer` was deployed 2026-11-03 with ADR `0118`'s fix: its 
 caller and delegation, so nobody can fill another delegation's counter. The copy it replaces,
 `0x7BB56819E9a413B8B4668C5cAF5C494c41dC0F8E`, keyed by delegation hash alone and is kept in
 `data/deployments/13579.json` as `trustStakeCapEnforcerV1`; delegations signed against it still
-point at it (`contracts/SECURITY_REVIEW.md`, "Task 59"). `ReceiptEnforcer` is not
+point at it (`contracts/SECURITY_REVIEW.md`, "Task 60"). `ReceiptEnforcer` is not
 deployed. `ModuleRegistry` and `DomainScopeEnforcer` were removed from `src/` in `59ac83a`; their
 addresses stay in `data/deployments/13579.json` as the record.
 

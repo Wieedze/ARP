@@ -27,7 +27,7 @@ const TARGETS = {
   testnet: { label: 'Intuition testnet 13579', url: 'https://testnet.intuition.sh/v1/graphql' },
 } as const;
 
-/** The dust ceiling the tool page used before its usage view was removed (task 59). */
+/** The dust ceiling the tool page used before its usage view was removed (task 60). */
 const DUST_CEILING = 1_000_000_000n;
 /** The curve `getToolUsage` scopes its position counts to. Also a copy — see ADR `0042`. */
 const READ_CURVE = '1';
