@@ -10,7 +10,9 @@ If you find yourself wanting to add a rule to this file, **don't.** Add it to th
    - `docs/01_PROJECT_CONTEXT.md` — what ARP is and is not. Still authoritative on positioning.
    - `docs/08`, `docs/09`, `docs/11` are **analysis, not commitment**. The measurements in `08` hold. Their differentiation arguments drifted; `12` corrects them.
    - `docs/00_HACKATHON_PIVOT.md` is **historical record** — why the MetaMask/Intuition stack was chosen. Deadline passed 2026-06-15.
-2. `docs/02_ARCHITECTURE.md` — locked architectural decisions.
+2. `docs/02_ARCHITECTURE.md` — **the storage principle only**: one canonical source per datum, no
+   dual-write. Its components, SDK and integration sections describe the deleted `ModuleRegistry`;
+   its header says which (ADR `0122`).
 3. `docs/03_MVP_SCOPE.md` — extended (not replaced) by the pivot. **Historical where superseded**:
    its Base Sepolia `ModuleRegistry` deliverable is gone (ADR `0002` moved the target to testnet
    13579, `59ac83a` deleted the contract under ADR `0055`); its header says so. `docs/04_SEED_MODULES.md`
@@ -128,7 +130,7 @@ ARP/
 ├── docs/                              project specification
 │   ├── 00_HACKATHON_PIVOT.md         (historical record — why the MetaMask/Intuition stack)
 │   ├── 01_PROJECT_CONTEXT.md         (positioning — still authoritative)
-│   ├── 02_ARCHITECTURE.md            (locked decisions)
+│   ├── 02_ARCHITECTURE.md            (the storage principle; the rest is stale — ADR `0122`)
 │   ├── 03_MVP_SCOPE.md            (historical where superseded — see its header)
 │   ├── 04_SEED_MODULES.md         (historical — Base Sepolia ModuleRegistry seed, see its header)
 │   ├── 05_UI_DESIGN.md
