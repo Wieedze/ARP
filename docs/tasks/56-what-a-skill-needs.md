@@ -1,6 +1,6 @@
 # Task 56 — What a skill needs, shown to the agent before it picks one
 
-**Status:** **PLAN**, 2026-11-02. Nothing built. Decided with the user the same day.
+**Status:** **BUILT**, 2026-11-03, branch `feat/56-requires`. Decided with the user on 2026-11-02. Measured and built in §5.
 **Depends on:** task 31's content path (the SKILL.md files are already fetched for serving).
 **Rules:** `code.md`, `claims.md`, `workflow.md`.
 **Reviewers:** `task-verifier`.
@@ -35,6 +35,40 @@ No standard frontmatter field says "needs an account". The two files show it in 
    Nothing is computed at query time.
 3. **Measure** how many of the 663 declare a CLI and how many mention a login, with a committed
    script and its output file, so the share is quoted from a run and not estimated.
+
+## 5. Built and measured (2026-11-03)
+
+- `scripts/helpers/skill-requires.ts` reads `cli` (frontmatter `metadata.requires.bins`,
+  `allowed-tools: Bash(<name> …)`) and the first body line matching login, sign up, API key or
+  access token. No YAML library: these two fields have two shapes each. Tests:
+  `scripts/test/skill-requires.test.ts`, on the two files task 54's reading found.
+- `scripts/measure/skill-requires.ts` reads every located SKILL.md from
+  `raw.githubusercontent.com`, at the paths of `skill-layouts-2026-10-29T2200.json`, and ARP's own
+  from this repository. Output: `data/measurements/skill-requires-2026-11-03.json`.
+- `scripts/build/build-skill-requires.ts` writes `data/catalogue/skill-requires.json`, and
+  `arp_find_tools` adds `requires: {cli?, mentions_login?}` to a result, short and full. The tool's
+  description tells the agent to read it before it picks. Test: `apps/mcp/test/requires.test.ts`.
+
+Measured 2026-11-03 over 663 catalogued skills (re-run `bun run scripts/measure/skill-requires.ts`):
+
+| | skills |
+| --- | --- |
+| read | 522 |
+| not located on 2026-10-29, so not read | 139 |
+| failed to read | 0 |
+| declare a CLI | 211 |
+| mention a login, a key or a sign-up | 263 |
+| either | 288 |
+
+Two readings of those figures, before anyone quotes them:
+
+- **`belt` is 156 of the 211**: 26 skills copied byte for byte into six `superpowers`
+  repositories, all needing inference.sh. The other CLIs are `lark-cli` (28), `runcomfy` (19),
+  `agents-cli` (7), `agent-browser` (1).
+- **`mentions_login` has false positives by construction**, seen in a sample of twelve: "Requires
+  no API key, fully free" (`remotion-dev/skills` remotion-maps), a query containing "Failed Login"
+  (`microsoft/azure-skills`), "after signup" in a marketing skill. That is why the field says
+  "mentions" and the agent is told to read it.
 
 ## 3. Do not do in this task
 

@@ -74,7 +74,9 @@ export const TOOLS = [
       'need ("video editing", "transcription"): a result must hold every word. Or pass `domain`, ' +
       'one broad word (`marketing`, `payment`), or both. Each result is short: `name`, `purpose` (one sentence), `url` (the source to read ' +
       'before you use it, not something to call), `declarations` (how many agents said they used ' +
-      'it) and, for a skill, `installs`. Results come best match first, 25 at a time: when ' +
+      'it) and, for a skill, `installs` and, when its file shows one, `requires`: the CLI it ' +
+      'declares and a login line it mentions. Read `requires` before you pick: a skill that needs ' +
+      'an account the person does not have is not the right one. Results come best match first, 25 at a time: when ' +
       '`next_offset` is not null, pass it as `offset` to see more. If a `domain` matches ' +
       'nothing, `domains_available` lists the words the registry uses. ' +
       '`detail: "full"` adds everything else the registry holds about each result. `id` is what ' +
@@ -479,7 +481,10 @@ export const DESKTOP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        id: { type: 'string', description: 'The skill\'s `id` from `arp_find_tools`, 0x + 32 bytes.' },
+        id: {
+          type: 'string',
+          description: "The skill's `id` from `arp_find_tools`, 0x + 32 bytes.",
+        },
       },
       required: ['id'],
     },
@@ -501,7 +506,9 @@ export const DESKTOP_TOOLS = [
   },
 ] as const;
 
-export const DESKTOP_TOOL_NAMES: ReadonlySet<string> = new Set(DESKTOP_TOOLS.map((tool) => tool.name));
+export const DESKTOP_TOOL_NAMES: ReadonlySet<string> = new Set(
+  DESKTOP_TOOLS.map((tool) => tool.name),
+);
 
 /**
  * What a server started with `ARP_TOOLS=read` serves: the reads, and nothing that plans a write.

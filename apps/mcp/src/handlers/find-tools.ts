@@ -1,5 +1,6 @@
 import catalogue from '../../../../data/catalogue/tools.json';
 import skillFacts from '../../../../data/catalogue/skill-facts.json';
+import skillRequires from '../../../../data/catalogue/skill-requires.json';
 import {
   INTUITION_HAS_TAG_MAINNET as HAS_TAG,
   INTUITION_IS_A_SUB_DOMAIN_OF as IS_A_SUB_DOMAIN_OF,
@@ -36,6 +37,25 @@ const SKILLS: ReadonlyMap<string, SkillFact> = new Map(
     fact,
   ]),
 );
+
+type SkillRequires = { cli?: string[]; mentions_login?: string };
+
+// The shape of a committed file `scripts/build/build-skill-requires.ts` generates (task 56).
+const REQUIRES: ReadonlyMap<string, SkillRequires> = new Map(
+  Object.entries(skillRequires.requires as Record<string, SkillRequires>).map(([label, fact]) => [
+    keyOf(label),
+    fact,
+  ]),
+);
+
+/**
+ * What a skill's own file says it needs, shown before the agent picks it (task 56). Absent when
+ * the file declared and mentioned nothing, or was not read; never a claim that it needs nothing.
+ */
+export function requiresFor(label: string | null): { requires?: SkillRequires } {
+  const hit = label === null ? undefined : REQUIRES.get(keyOf(label));
+  return hit === undefined ? {} : { requires: hit };
+}
 
 /**
  * `data/catalogue/tools.json`'s entry for an atom label, as the two fields a caller gets.
@@ -307,6 +327,7 @@ export async function findTools(id: JsonRpcId, args: Record<string, unknown>) {
         purpose: about.purpose,
         declarations: row.declarations,
         ...(about.installs === null ? {} : { installs: about.installs }),
+        ...requiresFor(row.label),
         ...(copies > 1 ? { copies } : {}),
       })),
     });
@@ -342,6 +363,7 @@ export async function findTools(id: JsonRpcId, args: Record<string, unknown>) {
       title: row.title ?? (about.name === keyOf(row.label ?? '') ? null : about.name),
       purpose: row.purpose ?? about.purpose,
       installs: about.installs,
+      ...requiresFor(row.label),
     })),
   });
 }
