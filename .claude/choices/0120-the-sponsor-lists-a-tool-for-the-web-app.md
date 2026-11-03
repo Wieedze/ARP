@@ -95,8 +95,15 @@ route, so DNS rebinding is still refused.
 
 - **An allowed origin is a port, not an app.** Any page served on localhost at 5173 or 4173 can
   call this route, and so can any other dev server the user runs on those ports. Such a page can use
-  up the anonymous cap, and with throwaway keys the daily total. It cannot spend past the total, and
-  the total is set well below the budget the other routes share.
+  up the anonymous cap, and with throwaway keys the daily total. It cannot spend past the total. At
+  testnet prices that total is about 0.1 to 0.3 tTRUST a day (50 listings of one to three terms, at
+  `cost + minDeposit` ≈ 0.002 tTRUST a term, read from 13579 on 2026-11-03), against the 1 tTRUST
+  daily budget the other routes share. The price is read at send time, so the figure moves with
+  `minDeposit`.
+- **A pending listing blocks its tool until the operator reconciles it.** A send whose outcome was
+  lost may still land, so the service answers 409 instead of sending again. A send that never
+  landed, or a skill whose atoms landed but whose `source` triple was never sent, stays blocked
+  until the pending row is settled by hand.
 - An invented non-GitHub URL is listed if it is well formed. Its cost is bounded by the caps: about
   0.002 tTRUST a listing at testnet prices (`atomCost + minDeposit`, read at send time).
 - Checking GitHub costs a request per listing, and GitHub allows 60 an hour per IP without

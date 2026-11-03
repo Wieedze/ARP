@@ -18,6 +18,8 @@ const FETCH_TIMEOUT_MS = 10_000;
 export type ToolResolution = { ok: true; fullName?: string } | { ok: false; reason: string };
 
 const CACHE_MS = 10 * 60_000;
+/** Bounded: the route runs this before any limit, so an unbounded map is a way to fill memory. */
+const CACHE_ENTRIES = 1_000;
 const cache = new Map<string, { at: number; answer: ToolResolution }>();
 
 /**
@@ -28,10 +30,15 @@ export async function resolveOnGitHubCached(
   url: string,
   now = Date.now(),
 ): Promise<ToolResolution> {
+  // Only GitHub URLs cost a request, so only they are remembered.
+  if (new URL(url).hostname.replace(/^www\./, '') !== 'github.com') return resolveOnGitHub(url);
   const hit = cache.get(url);
   if (hit !== undefined && now - hit.at < CACHE_MS) return hit.answer;
   const answer = await resolveOnGitHub(url);
+  cache.delete(url);
   cache.set(url, { at: now, answer });
+  // A `Map` iterates in insertion order, so the first key is the oldest.
+  if (cache.size > CACHE_ENTRIES) cache.delete(cache.keys().next().value ?? url);
   return answer;
 }
 

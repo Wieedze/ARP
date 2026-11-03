@@ -134,7 +134,14 @@ export async function listTool(ctx: SponsorContext, body: Body): Promise<Respons
     if (
       ledger.pending().some((r) => r.kind === 'list-tool' && (r.key ?? '').startsWith(atomPrefix))
     ) {
-      return json({ error: 'a listing of this tool is pending', rule: 'pending' }, 409);
+      return json(
+        {
+          error:
+            'a listing of this tool was sent and not confirmed; the operator reconciles it against the chain (ledger pending())',
+          rule: 'pending',
+        },
+        409,
+      );
     }
     let current;
     try {
