@@ -81,6 +81,11 @@ deposits that carry a valid proof. It never relays a request, and it never sees 
 - **The condition binds ARP's sponsorship and ARP's "proven" label, not the chain.** MultiVault is
   permissionless, so an agent can always deposit its own TRUST with no proof. ARP indexes that as
   _declared_, never as _proven_. This is also what keeps ADR `0045`'s test passing.
+  **Corrected 2026-11-03** (task 58 §4): the label is granted by **sender**, not by the gate, so
+  _proven_ also covers the edge creations the service pays for and anything else the same key sent.
+  On 13579 that key is also ARP's deployer: of 13 deposits counted proven on 2026-11-03, 6 passed
+  the gate, 4 were creations and 3 predate the service
+  (`scripts/measure/sponsor-deposit-provenance.ts`). A key used by the service alone would close it.
 - **Now:** the sponsoring service checks the proof before it sends. **Later:** a caveat enforcer checks a signed
   receipt passed in the redemption, ~~so "no proof, no deposit" is held by a contract,~~ the same pattern
   as `DomainScopeEnforcer` and `TrustStakeCapEnforcer`. **Corrected 2026-10-30** (ADR `0098`, user

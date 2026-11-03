@@ -162,10 +162,13 @@ export type ToolRow = {
      * tiebreak, after the Declared and Usage figures the reader can see.
      */
     declarations: number;
+    /** The agents that declared the tool, by identity atom, each once. Empty when unknown here. */
+    declarers: readonly string[];
     /**
-     * Deposits on the tool's edges that ARP's sponsoring service sent, so each one passed the proof
-     * gate (ADR `0094` §2). The "Usage" column, and the only figure on the page that word is true
-     * of. `null` when this read cannot say.
+     * Deposits on the tool's edges sent from ARP's sponsoring address (ADR `0094` §2), the "Usage"
+     * column. Not every one passed the proof gate: on 13579, 2026-11-03, 6 of 13 did, 4 were edge
+     * creations the service paid for, and 3 the deployer wrote from the same key before the service
+     * existed (`scripts/measure/sponsor-deposit-provenance.ts`). `null` when this read cannot say.
      *
      * Read from the deposit events, not from positions: a position merges a sponsored deposit with
      * the agent's own, and a withdrawal does not say which part it takes.
@@ -222,6 +225,44 @@ export function toolIndexOf(row: ToolRow): ToolIndex {
     return row.source === null ? "repos" : "skills";
 }
 
+/** What a repository's skills carry, for its row (task 58). */
+export type RepoSkillUsage = {
+    /**
+     * How many agents declared at least one of its skills, each counted once however many of the
+     * repository's skills it declared. The figure beside the person glyph (the user, 2026-11-03).
+     */
+    agents: number;
+};
+
+/**
+ * Each repository's skills' figures, keyed by `owner/repo`, from the rows already read.
+ *
+ * A declaration names a skill, never its repository (ADR `0077`), so a repository row's own Usage
+ * and Declared stay empty while its skills are used. This is that use, kept apart from the row's
+ * own columns: the repository's vault and its skills' are two markets, never summed (`RepoPage`).
+ * An agent is counted once across one repository's skills, from one read.
+ */
+export function skillUsageByRepo(rows: readonly ToolRow[]): Map<string, RepoSkillUsage> {
+    const declarersByRepo = new Map<string, Set<string>>();
+    for (const row of rows) {
+        if (row.source === null || row.declarers.length === 0) continue;
+        const key = row.source.toLowerCase();
+        const kept = declarersByRepo.get(key) ?? new Set<string>();
+        for (const declarer of row.declarers) kept.add(declarer);
+        declarersByRepo.set(key, kept);
+    }
+    const byRepo = new Map<string, RepoSkillUsage>();
+    for (const [key, declarers] of declarersByRepo) byRepo.set(key, {agents: declarers.size});
+    return byRepo;
+}
+
+/** A repository row's `owner/repo`, the key {@link skillUsageByRepo} uses, or `null`. */
+export function repoKeyOf(row: ToolRow): string | null {
+    if (row.source !== null || row.label === null) return null;
+    const match = /^(?:https?:\/\/)?github\.com\/([^/?#]+\/[^/?#]+?)\/?$/i.exec(row.label.trim());
+    return match?.[1]?.toLowerCase() ?? null;
+}
+
 export type ToolCatalogView = {
     rows: ToolRow[];
     /** True when the read hit its limit, so these rows are a prefix rather than the whole set. */
@@ -272,6 +313,7 @@ function rowOf(tool: ToolListing): ToolRow {
         label: label ?? null,
         href: `/atom/${tool.atomId}`,
         declarations: tool.edgeCount,
+        declarers: tool.declarers,
         provenDeposits: tool.provenDeposits,
         declaredDeposits: tool.declaredDeposits,
         supportTrust: formatTrust(tool.supportAssetsSum),
@@ -294,6 +336,7 @@ function registeredRowOf(tool: RegisteredTool): ToolRow {
         label: label ?? null,
         href: `/atom/${tool.atomId}`,
         declarations: tool.declarations,
+        declarers: [],
         // `null`, not `0`: a registered row's deposits are on its edges, which is `listTools`'s
         // read, so they are **unknown** here. A tool whose edges that read did find appears as a
         // declared row instead and carries both figures. A zero would read as "nobody deposited",
@@ -377,10 +420,10 @@ export type ToolSortAxis = "declared" | "installs" | "stars";
  * Two axes per index, and only ones that mean something there (user, 2026-10-30).
  *
  * "Most staked" and "Most claims" were two orders of the same thing, and read as noise. **Declared**
- * is the one ARP measures: the Declared column, deposits on the tool's `uses` edges that did not
- * pass the proof gate (task 42), so the order reads down the figure it is named for. Not "used": the user
- * asked for that word and, reminded of 2026-10-27, chose "declared" — a declaration is a signed
- * sentence, not an observed use (`docs/14`). Stake behind those edges
+ * is the one ARP measures: the Declared column, deposits on the tool's `uses` edges not sent from
+ * the sponsoring address (task 42), so the order reads down the figure it is named for. Not "used":
+ * the user asked for that word and, reminded of 2026-10-27, chose "declared" — a declaration is a
+ * signed sentence, not an observed use (`docs/14`). Stake behind those edges
  * is the tiebreak and stays on the row, not a separate order. The second axis is somebody else's
  * figure: skills.sh's installs for a skill, GitHub's stars for a repository. A skill's stars would
  * be its repository's, tied across every skill in it, so skills do not get that axis.
@@ -478,9 +521,9 @@ export function rankTools(
             return (b.installs ?? -1) - (a.installs ?? -1);
         if (axis === "stars" && a.stars !== b.stars) return (b.stars ?? -1) - (a.stars ?? -1);
         // **The order reads down the column it is named for.** "Most declared" sorts on the
-        // Declared figure, deposits that did not pass the proof gate, and not on the edge count:
-        // two edges with three deposits each print 6 and rank above three edges with one each,
-        // which print 3. It sorted on `declarations` until review found the Declared column not
+        // Declared figure, deposits not sent from the sponsoring address, and not on the edge
+        // count: two edges with three deposits each print 6 and rank above three edges with one
+        // each, which print 3. It sorted on `declarations` until review found the Declared column not
         // reading down in order under its own sort. `null` (unknown) ranks below a known zero.
         const leftDeclared = left.declaredDeposits ?? -1;
         const rightDeclared = right.declaredDeposits ?? -1;

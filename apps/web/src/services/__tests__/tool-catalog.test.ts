@@ -2,7 +2,7 @@ import {describe, expect, it} from "vitest";
 import type {ToolListing, ToolListingPage} from "@arp-protocol/core";
 
 import {SEED_TOOLS} from "../../lib/tool-catalogue-seed";
-import {buildToolCatalogView, TOOL_ORDERS} from "../tool-catalog";
+import {buildToolCatalogView, repoKeyOf, skillUsageByRepo, TOOL_ORDERS} from "../tool-catalog";
 
 function tool(overrides: Partial<ToolListing> = {}): ToolListing {
     return {
@@ -12,6 +12,7 @@ function tool(overrides: Partial<ToolListing> = {}): ToolListing {
         hostedAt: "https://colony.io",
         type: "Thing",
         edgeCount: 1,
+        declarers: [],
         pricedEdges: 1,
         provenDeposits: 0,
         declaredDeposits: 1,
@@ -71,8 +72,9 @@ describe("buildToolCatalogView", () => {
     });
 
     it("carries proven and declared deposits through as two figures, never one", () => {
-        // ADR 0094 §2: a deposit the sponsoring service sent passed the proof gate, every other one
-        // did not. Two figures side by side, and no sum or weighting of them (ADR 0046).
+        // ADR 0094 §2: a deposit sent from the sponsoring address counts as proven, every other one
+        // as declared (`provenDeposits` holds what proven covers). Two figures side by side, and no
+        // sum or weighting of them (ADR 0046).
         const view = buildToolCatalogView(
             page([tool({edgeCount: 3, provenDeposits: 2, declaredDeposits: 5})]),
         );
@@ -196,5 +198,58 @@ describe("the seed title", () => {
             expect(seed.title.length).toBeGreaterThan(0);
         }
         expect(new Set(SEED_TOOLS.map((seed) => seed.url)).size).toBe(SEED_TOOLS.length);
+    });
+});
+
+describe("a repository's skills (task 58)", () => {
+    const base = {
+        provenance: "declared" as const,
+        isUnnamed: false,
+        href: "/atom/x",
+        supportTrust: "0",
+        opposeTrust: null,
+        stakers: null,
+    };
+
+    it("keys a GitHub repository row by owner/repo, and nothing else", () => {
+        const of = (label: string | null, source: string | null = null) =>
+            repoKeyOf({
+                ...base,
+                key: "k",
+                name: "n",
+                label,
+                source,
+                declarations: 0,
+                declarers: [],
+                provenDeposits: 0,
+                declaredDeposits: 0,
+            });
+        expect(of("github.com/Anthropics/skills")).toBe("anthropics/skills");
+        expect(of("https://github.com/anthropics/skills/")).toBe("anthropics/skills");
+        expect(of("https://mcp.stripe.com")).toBeNull();
+        expect(of("github.com/anthropics/skills?skill=pptx", "anthropics/skills")).toBeNull();
+        expect(of(null)).toBeNull();
+    });
+
+    it("counts each repository's agents once across its skills, skipping undeclared skills", () => {
+        const skill = (key: string, source: string, declarers: string[]) => ({
+            ...base,
+            key,
+            name: key,
+            label: null,
+            source,
+            declarations: declarers.length,
+            declarers,
+            provenDeposits: 0,
+            declaredDeposits: 0,
+        });
+        const usage = skillUsageByRepo([
+            skill("a", "Acme/skills", ["0xagent1", "0xagent2"]),
+            skill("b", "acme/skills", ["0xagent1"]),
+            skill("c", "acme/skills", []),
+            skill("d", "other/repo", ["0xagent3"]),
+        ]);
+        expect(usage.get("acme/skills")).toEqual({agents: 2});
+        expect(usage.get("other/repo")).toEqual({agents: 1});
     });
 });

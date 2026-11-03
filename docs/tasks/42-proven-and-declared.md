@@ -14,6 +14,8 @@ A deposit made through ARP and one made from Intuition's explorer land in the sa
 `Deposited` event carries both `sender` and `receiver`, and Intuition's indexer serves both as
 `sender_id` and `receiver_id` (checked live on `https://testnet.intuition.sh/v1/graphql`,
 2026-10-30). A deposit whose `sender_id` is ARP's sponsoring address went through the proof gate.
+**Corrected 2026-11-03** (task 58 §4): not every one. The edge creations the service pays for count
+too, and on 13579 the address is also ARP's deployer, whose earlier writes count as well.
 User decision: show both, _proven_ first.
 
 ## 2. Deliverables, in order
@@ -36,6 +38,8 @@ session.
   `packages/protocol/src/tool-listing.ts` `pricedEdges` alone, because the `priced-edges` order uses it.
 - "Usage" is the _proven_ figure, and "Declared" the rest. The user rejected "Most used" on
   2026-10-27 for unproven edges (`tool-catalog.ts:92`), and "Usage" is now true only of proven ones.
+  **Corrected 2026-11-03**: "proven" is decided by sender, so it is not true of every deposit in
+  Usage (task 58 §4).
 - Do not rename `/agents`' "Claims" (`CohortList.tsx`, `agent-cohort.ts`, `AgentTrustPanel.tsx`).
   It counts a different population.
 

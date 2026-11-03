@@ -14,6 +14,7 @@ const row = (index: number, source: string | null): ToolRow => ({
     label: `tool-${index}`,
     href: `/atom/0x${index}`,
     declarations: 0,
+    declarers: [],
     provenDeposits: null,
     declaredDeposits: null,
     supportTrust: "0.001",

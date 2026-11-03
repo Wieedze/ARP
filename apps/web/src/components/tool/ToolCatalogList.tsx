@@ -1,15 +1,16 @@
 import {Link} from "react-router-dom";
 import {useChainChoice} from "../../lib/chain-choice";
 import {useSkillFacts, type SkillFact} from "../../hooks/use-skill-facts";
+import {PersonMark} from "../agent/StakerCount";
 
-import {type ToolRow} from "../../services/tool-catalog";
+import {repoKeyOf, type RepoSkillUsage, type ToolRow} from "../../services/tool-catalog";
 import {shortTrust} from "../../services/trust-format";
 
 /**
  * Tools as a list, not as N boxes.
  *
  * One grid, one hairline under each row, every figure in mono and right-aligned so the columns read
- * down. Four columns and no more: the name, the deposits that passed ARP's proof gate ("Usage"),
+ * down. Four columns and no more: the name, the deposits ARP's sponsoring address sent ("Usage"),
  * every other deposit ("Declared"), and the TRUST summed across the edges. Proven first, by the
  * user's decision (ADR `0094` §2), and never weighted against each other. Nothing restates a column
  * in prose.
@@ -56,7 +57,17 @@ function countText(count: number | null): string {
     return count === null || count === 0 ? "" : String(count);
 }
 
-function Row({row, fact, stars}: {row: ToolRow; fact: SkillFact | null; stars: number | null}) {
+function Row({
+    row,
+    fact,
+    stars,
+    skills,
+}: {
+    row: ToolRow;
+    fact: SkillFact | null;
+    stars: number | null;
+    skills: RepoSkillUsage | null;
+}) {
     const {symbol} = useChainChoice();
     return (
         <li className="border-b border-[color:var(--color-rule)]">
@@ -110,6 +121,28 @@ function Row({row, fact, stars}: {row: ToolRow; fact: SkillFact | null; stars: n
                                         </span>
                                     )}
                                     {`${Intl.NumberFormat("en-US", {notation: "compact"}).format(stars)} stars`}
+                                </>
+                            )}
+                            {/* Its skills' use, on the qualifier line and not in the columns: a
+                                declaration names a skill, so the repository's own Usage and
+                                Declared stay its own (task 58). */}
+                            {skills === null ? null : (
+                                <>
+                                    {stars === null ? null : (
+                                        <span className="px-1.5 text-[color:var(--color-rule-strong)]">
+                                            ·
+                                        </span>
+                                    )}
+                                    {/* A glyph and a count, the user's words (2026-11-03): one
+                                        figure, people, so it cannot be read as either column. */}
+                                    <span
+                                        role="img"
+                                        aria-label={`${skills.agents} ${skills.agents === 1 ? "agent uses" : "agents use"} its skills`}
+                                        className="inline-flex items-baseline gap-1 tabular-nums"
+                                    >
+                                        <PersonMark />
+                                        {skills.agents}
+                                    </span>
                                 </>
                             )}
                             {row.provenance === "declared" ? (
@@ -174,11 +207,13 @@ function Headers({curveId}: {curveId: number}) {
             aria-hidden
             className={`${ROW_GRID} hidden sm:grid pb-2 border-b border-[color:var(--color-rule-strong)] font-mono uppercase tracking-wider text-[length:var(--text-label)] text-[color:var(--color-steel)]`}
         >
-            {/* **"Usage" only for what passed the proof gate.** The user rejected "Most used" for
-                unproven edges (2026-10-27): whether a use happened is unknowable from outside
-                (`docs/14`). A sponsored deposit carries a proof that it did — a payment another
-                party made, or a fetch through ARP (ADR `0094` §2) — so the word is true of that
-                column and of nothing else here. */}
+            {/* **"Usage" is the sponsor's deposits.** The user rejected "Most used" for unproven
+                edges (2026-10-27): whether a use happened is unknowable from outside (`docs/14`).
+                A proof-gated deposit carries a proof that it did — a payment another party made,
+                or a fetch through ARP (ADR `0094` §2) — which is why the word was allowed on this
+                column. Not every deposit in it passed the gate: the sponsor's address is also the
+                deployer's, and its edge creations count too
+                (`scripts/measure/sponsor-deposit-provenance.ts`). */}
             <span>Tool</span>
             <span className="text-right">Usage</span>
             <span className="text-right">Declared</span>
@@ -195,11 +230,14 @@ export function ToolCatalogList({
     rows,
     curveId,
     showStars = false,
+    repoUsage,
 }: {
     rows: ToolRow[];
     curveId: number;
     /** Repositories show their GitHub stars; a skill's would be its repository's, tied. */
     showStars?: boolean;
+    /** Each repository's skills' figures, by `owner/repo` (`skillUsageByRepo`). */
+    repoUsage?: ReadonlyMap<string, RepoSkillUsage>;
 }) {
     const {factFor, repoFactFor} = useSkillFacts();
     return (
@@ -212,6 +250,7 @@ export function ToolCatalogList({
                         row={row}
                         fact={factFor(row.label)}
                         stars={showStars ? (repoFactFor(row.label)?.stars ?? null) : null}
+                        skills={repoUsage?.get(repoKeyOf(row) ?? "") ?? null}
                     />
                 ))}
             </ul>

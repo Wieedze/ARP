@@ -20,6 +20,15 @@ describe("sponsorAddressFor", () => {
         expect(sponsorAddressFor(1155, SPONSOR)).toBeNull();
     });
 
+    it("falls back to the recorded address when the environment leaves it unset or blank (task 58)", () => {
+        const RECORDED = "0xE596096F4176b682E300d73963e7B04B383C1AA1";
+        expect(sponsorAddressFor(13579, undefined, RECORDED)).toBe(RECORDED);
+        expect(sponsorAddressFor(13579, "", RECORDED)).toBe(RECORDED);
+        expect(sponsorAddressFor(13579, "   ", RECORDED)).toBe(RECORDED);
+        expect(sponsorAddressFor(13579, SPONSOR, RECORDED)).toBe(SPONSOR);
+        expect(sponsorAddressFor(1155, undefined, RECORDED)).toBeNull();
+    });
+
     it("drops a malformed value rather than guessing", () => {
         expect(sponsorAddressFor(13579, "0x1234")).toBeNull();
         expect(sponsorAddressFor(13579, "0x%")).toBeNull();

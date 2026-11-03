@@ -155,5 +155,6 @@ Read these before relying on them.
 | [0124](0124-the-sponsor-writes-a-category-and-the-index-reads-it.md) | 2026-11-03 | Accepted | The sponsor writes an accepted category, and the index reads the sponsor too |
 | [0125](0125-one-door-register-folds-into-get-started.md) | 2026-11-03 | Accepted | One door: Register folds into Get started |
 | [0126](0126-the-one-liner-is-discovery-not-money.md) | 2026-11-03 | Accepted | The one-liner is discovery, not money |
+| [0127](0127-a-person-accepts-a-skill-and-the-question-has-no-off-switch.md) | 2026-11-03 | Accepted | A person accepts a skill before it is installed, the question has no off switch, and the page shows facts, never a verdict |
 | [0128](0128-a-wallet-is-asked-for-by-the-action-that-signs.md) | 2026-11-03 | Accepted | A wallet is asked for by the action that signs, and nowhere else |
 | [0129](0129-no-per-agent-deposit-cap-on-testnet.md) | 2026-11-03 | Accepted | No per-agent deposit cap on testnet; the daily budget is the bound |

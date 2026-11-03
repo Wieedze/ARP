@@ -15,6 +15,7 @@ const tool = (name: string, label: string): ToolRow => ({
     label,
     href: `/atom/0x${name}`,
     declarations: 0,
+    declarers: [],
     provenDeposits: null,
     declaredDeposits: null,
     supportTrust: "0.001",

@@ -18,6 +18,7 @@ const row = (overrides: Partial<ToolRow> = {}): ToolRow => ({
     label: null,
     href: "/atom/0x",
     declarations: 0,
+    declarers: [],
     provenDeposits: null,
     declaredDeposits: null,
     supportTrust: "0.001",
