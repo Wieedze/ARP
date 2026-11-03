@@ -1,7 +1,10 @@
 import {
     DEFAULT_MAX_BODY_BYTES,
     HttpError,
+    readArray,
     readBodyText,
+    readRecord,
+    readString,
     type FetchLike,
 } from "@arp-protocol/graphql";
 
@@ -615,21 +618,12 @@ async function listTools(
     );
     if (!("response" in sent)) return [];
     try {
-        const parsed = JSON.parse(unframe(sent.body)) as Record<string, unknown>;
-        const result = parsed["result"] as Record<string, unknown> | undefined;
-        const tools = Array.isArray(result?.["tools"]) ? result["tools"] : [];
+        const parsed: unknown = JSON.parse(unframe(sent.body));
+        const tools = readArray(readRecord(parsed, "result"), "tools");
         return tools.flatMap((tool) => {
-            if (typeof tool !== "object" || tool === null) return [];
-            const record = tool as Record<string, unknown>;
-            const name = record["name"];
-            if (typeof name !== "string" || name.length === 0) return [];
-            return [
-                {
-                    name,
-                    description:
-                        typeof record["description"] === "string" ? record["description"] : null,
-                },
-            ];
+            const name = readString(tool, "name");
+            if (name === null || name.length === 0) return [];
+            return [{name, description: readString(tool, "description")}];
         });
     } catch {
         return [];
@@ -666,26 +660,22 @@ async function probeMcp(url: string, options: ProbeOptions): Promise<ProbeOutcom
         return rateLimited(request, response.status, body);
     }
     const framed = unframe(body);
-    let parsed: Record<string, unknown> | null = null;
+    let parsed: unknown = null;
     try {
-        parsed = JSON.parse(framed) as Record<string, unknown>;
+        parsed = JSON.parse(framed);
     } catch {
         parsed = null;
     }
-    const result =
-        parsed !== null && typeof parsed["result"] === "object" && parsed["result"] !== null
-            ? (parsed["result"] as Record<string, unknown>)
-            : null;
+    const result = readRecord(parsed, "result");
 
     if (response.ok && result !== null) {
-        const info = (result["serverInfo"] ?? {}) as Record<string, unknown>;
+        const info = readRecord(result, "serverInfo");
         const server = {
-            name: typeof info["name"] === "string" ? info["name"] : null,
-            version: typeof info["version"] === "string" ? info["version"] : null,
+            name: readString(info, "name"),
+            version: readString(info, "version"),
             // What the server NEGOTIATED, not what we asked for. gmchain and nebula-scan both
             // answer 2024-11-05 to a 2025-06-18 request, which is correct MCP behaviour.
-            protocolVersion:
-                typeof result["protocolVersion"] === "string" ? result["protocolVersion"] : null,
+            protocolVersion: readString(result, "protocolVersion"),
         };
         const session = response.headers.get("mcp-session-id");
         const servedTools = options.listTools ? await listTools(url, session, options) : undefined;
@@ -715,9 +705,8 @@ async function probeMcp(url: string, options: ProbeOptions): Promise<ProbeOutcom
     // protocol it declared, or our handshake being wrong for this deployment — and we cannot tell
     // which from one exchange. A JSON-RPC error object is the one case we can read as the former:
     // the server understood the envelope and refused the call.
-    const rpcError =
-        parsed === null ? null : (parsed["error"] as Record<string, unknown> | undefined);
-    if (rpcError !== null && rpcError !== undefined && typeof rpcError["code"] === "number") {
+    const rpcError = readRecord(parsed, "error");
+    if (rpcError !== null && typeof rpcError["code"] === "number") {
         return {
             status: "confirmed",
             code: "declared-protocol-not-served",

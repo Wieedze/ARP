@@ -10,7 +10,12 @@ import {
     thingUri,
     type AgentThing,
 } from "./agent-atom.js";
-import {atomDataForUri, encodeCreateAtom, encodeCreateTriple, type MultiVaultReads} from "./multivault.js";
+import {
+    atomDataForUri,
+    encodeCreateAtom,
+    encodeCreateTriple,
+    type MultiVaultReads,
+} from "./multivault.js";
 import type {PreparedCall} from "./types.js";
 import {CAIP19_ERC721} from "../identifiers.js";
 
@@ -144,9 +149,9 @@ export async function prepareIdentityAtom(params: {
     // The three edges Intuition's minimum names, in the order they are written. `same as` first,
     // because it is the one resolution reads and the one whose absence makes the rest unreachable.
     const [tripleId, typeTripleId, implementTripleId] = await Promise.all([
-        params.reads.tripleId(identityAtom, SAME_AS as Hex, caipAtom),
-        params.reads.tripleId(identityAtom, HAS_TYPE as Hex, AI_AGENT as Hex),
-        params.reads.tripleId(identityAtom, IMPLEMENT as Hex, ERC8004 as Hex),
+        params.reads.tripleId(identityAtom, SAME_AS, caipAtom),
+        params.reads.tripleId(identityAtom, HAS_TYPE, AI_AGENT),
+        params.reads.tripleId(identityAtom, IMPLEMENT, ERC8004),
     ]);
 
     const [
@@ -214,7 +219,7 @@ export async function prepareIdentityAtom(params: {
             chainId: chainId_,
             to: params.reads.address,
             value: tripleAssets,
-            data: encodeCreateTriple(identityAtom, SAME_AS as Hex, caipAtom, tripleAssets),
+            data: encodeCreateTriple(identityAtom, SAME_AS, caipAtom, tripleAssets),
             why: "identity --same as--> CAIP-19 identifier, the link resolution reads",
             preview: await preview("triple", tripleId, tripleAssets),
         });
@@ -227,7 +232,7 @@ export async function prepareIdentityAtom(params: {
             chainId: chainId_,
             to: params.reads.address,
             value: tripleAssets,
-            data: encodeCreateTriple(identityAtom, HAS_TYPE as Hex, AI_AGENT as Hex, tripleAssets),
+            data: encodeCreateTriple(identityAtom, HAS_TYPE, AI_AGENT, tripleAssets),
             why: "identity --has type--> AIAgent, Intuition's stated minimum",
             preview: await preview("triple", typeTripleId, tripleAssets),
         });
@@ -238,7 +243,7 @@ export async function prepareIdentityAtom(params: {
             chainId: chainId_,
             to: params.reads.address,
             value: tripleAssets,
-            data: encodeCreateTriple(identityAtom, IMPLEMENT as Hex, ERC8004 as Hex, tripleAssets),
+            data: encodeCreateTriple(identityAtom, IMPLEMENT, ERC8004, tripleAssets),
             why: "identity --implement--> ERC-8004, which is what COHORT_QUERY filters on",
             preview: await preview("triple", implementTripleId, tripleAssets),
         });
