@@ -27,6 +27,8 @@
  *  predicates have not been read from the graph yet (ADR `0092` item 7), so `POST /publish` answers
  *  503 until both are wired here. The route itself is built and tested (`service.ts`).
  */
+import { fileURLToPath } from 'node:url';
+
 import {
   ADR_0092_LIMITS,
   INTUITION_USES_TERM_ID,
@@ -58,6 +60,7 @@ import deployments from '../../../data/deployments/13579.json';
 import { assertSponsorChain, readKeyFile } from './key-file.ts';
 import { nullOnRevert } from './routes/context.ts';
 import { SponsorLedger } from './ledger.ts';
+import { categoryLog, categoryTree, compoundsFrom } from './categories.ts';
 import { resolveOnGitHubCached } from './github.ts';
 import { repoSpellingsOnGraph } from './indexer.ts';
 import { intuitionPinner } from './pin.ts';
@@ -105,9 +108,11 @@ const PIN_KEY = (process.env.INTUITION_PIN_API_KEY ?? '').trim();
 // against it is empty, and an empty ledger sponsors every proof a second time (ADR `0116`).
 // Opened here, before the key is read: a second service on the same ledger is refused (ADR `0116`).
 let LEDGER: string;
+let CATEGORY_LOG: string;
 let ledger: SponsorLedger;
 try {
   LEDGER = stateFile(process.env.SPONSOR_LEDGER, 'sponsor-ledger.jsonl');
+  CATEGORY_LOG = stateFile(process.env.SPONSOR_CATEGORY_LOG, 'category-log.jsonl');
   ledger = new SponsorLedger(LEDGER);
 } catch (error) {
   fail(String(error instanceof Error ? error.message : error));
@@ -328,6 +333,13 @@ const service = createSponsor({
   ],
   resolveTool: (url) => resolveOnGitHubCached(url),
   repoSpellings: (repo) => repoSpellingsOnGraph(deployments.chain.graphqlUrl, repo),
+  categories: {
+    isCategory: categoryTree(deployments.chain.graphqlUrl),
+    compounds: compoundsFrom(
+      fileURLToPath(new URL('../../../data/catalogue/domains.proposal.json', import.meta.url)),
+    ),
+    log: categoryLog(CATEGORY_LOG),
+  },
   usesPredicate,
   limits,
   ledger,
@@ -367,6 +379,7 @@ export async function main(): Promise<void> {
   process.stderr.write(
     `  listing    ${PIN_KEY === '' ? 'off (no INTUITION_PIN_API_KEY)' : `${limits.listingsPerAddressPerDay}/address/day, ${limits.anonymousListingsPerDay} unsigned/day, ${limits.listingsPerDay}/day in all`}\n`,
   );
+  process.stderr.write(`  categories ${limits.categoriesPerDay}/day, log ${CATEGORY_LOG}\n`);
   process.stderr.write(`  ledger     ${LEDGER}\n`);
   process.stderr.write(`  publish    disabled (no pinning service, predicates not read)\n`);
 }
