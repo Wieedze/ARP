@@ -27,6 +27,7 @@ import {
 } from "../components/import/ImportResults";
 import {Failure, Field, labelClass, Step} from "../components/import/ImportStep";
 import {MissingIdentityAtom} from "../components/import/MissingIdentityAtom";
+import {ConnectPrompt} from "../components/onboarding/ConnectPrompt";
 import {controlClass} from "../lib/control-class";
 import {useAgentImport} from "../hooks/use-agent-import";
 import {useChainChoice} from "../lib/chain-choice";
@@ -410,9 +411,10 @@ export function AgentImport() {
                         {phase.step === "checking" ? "Reading the registry…" : "Check ownership"}
                     </button>
                     {!isConnected ? (
-                        <p className="mt-3 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
-                            Connect the wallet that owns the agent.
-                        </p>
+                        <ConnectPrompt
+                            label="Connect the wallet that owns the agent"
+                            className="mt-3"
+                        />
                     ) : null}
                 </form>
             </Step>

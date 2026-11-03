@@ -32,8 +32,8 @@ export type StartSignals = {
 /** An everyday need the catalogue covers, from the demo plan (`docs/26` §3). */
 export const EXAMPLE_PROMPT = "Make me a YouTube thumbnail for a video about sourdough bread.";
 
-/** No chain word: the Claude path promises none on screen (task 45, `docs/tasks/53` §3). */
-const FREE: StartStep = {id: "free", title: "Free for now. Nothing to pay.", done: true};
+// No "Free for now" step: it read as a selling point the user does not want to push yet
+// (2026-11-03, task 62). The Claude path still carries no chain word (task 45).
 
 function declared(events: readonly ActivityEvent[]): boolean {
     return events.some(
@@ -52,7 +52,6 @@ export function stepsFor(profile: StartProfile, signals: StartSignals): StartSte
     switch (profile) {
         case "claude":
             return [
-                FREE,
                 {
                     id: "connect",
                     title: "Add ARP to Claude, and connect your agent",
@@ -75,7 +74,6 @@ export function stepsFor(profile: StartProfile, signals: StartSignals): StartSte
             ];
         case "agent":
             return [
-                FREE,
                 {
                     id: "init",
                     title: "Install ARP in your project",
@@ -97,7 +95,6 @@ export function stepsFor(profile: StartProfile, signals: StartSignals): StartSte
             ];
         case "tool":
             return [
-                FREE,
                 {
                     id: "find",
                     title: "Find your tool by its URL",

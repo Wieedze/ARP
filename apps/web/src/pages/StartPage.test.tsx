@@ -107,14 +107,19 @@ describe("the start page", () => {
         expect(screen.getByLabelText("Repository URL")).toBeTruthy();
     });
 
-    it("asks whether the agent has an id, and shows the free steps until told yes", async () => {
+    it("asks whether the agent has an id, and shows the steps until told yes", async () => {
         renderWithProviders(<StartPage feed={feedWith([]).feed} />, at("agent"));
         expect(await screen.findByText("Install ARP in your project")).toBeTruthy();
         expect(screen.getByRole("button", {name: "No"})).toHaveAttribute("aria-pressed", "true");
         fireEvent.click(screen.getByRole("button", {name: "Yes, it has one"}));
         // The steps would mint a second identity, so the import replaces them.
         expect(
-            await screen.findByRole("heading", {name: "Import an agent you already have"}),
+            // The form is a lazy chunk, slow to arrive while the whole suite runs in parallel.
+            await screen.findByRole(
+                "heading",
+                {name: "Import an agent you already have"},
+                {timeout: 5000},
+            ),
         ).toBeTruthy();
         expect(screen.queryByText("Install ARP in your project")).toBeNull();
     });
@@ -131,7 +136,11 @@ describe("the start page", () => {
         expect(link.getAttribute("href")).toBe("/start/agent?with=wallet");
         fireEvent.click(link);
         expect(
-            await screen.findByRole("heading", {name: "Mint an ERC-8004 identity"}),
+            await screen.findByRole(
+                "heading",
+                {name: "Mint an ERC-8004 identity"},
+                {timeout: 5000},
+            ),
         ).toBeTruthy();
         expect(screen.queryByRole("link", {name: "Mint with a wallet instead →"})).toBeNull();
         // The link that held the focus is gone, so the form it opened takes it.
@@ -140,7 +149,7 @@ describe("the start page", () => {
 
     it("leaves the focus alone when the URL opens the wallet form on arrival", async () => {
         renderWithProviders(<StartPage feed={feedWith([]).feed} />, at("agent?with=wallet"));
-        await screen.findByRole("heading", {name: "Mint an ERC-8004 identity"});
+        await screen.findByRole("heading", {name: "Mint an ERC-8004 identity"}, {timeout: 5000});
         expect(document.activeElement?.tagName).not.toBe("SECTION");
     });
 

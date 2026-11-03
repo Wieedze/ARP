@@ -19,6 +19,7 @@ import type {AgentFeed} from "../services/agent-feed";
 import {useListTool} from "../hooks/use-list-tool";
 import {listToolMessage} from "../services/list-tool";
 import {stepsFor, type StartStep} from "../services/start-steps";
+import {useOnboarding} from "../components/onboarding/onboarding-context";
 
 // The wallet forms carry wagmi's write path; a visitor on the sponsored path never loads them.
 const AgentImport = lazy(() =>
@@ -63,22 +64,27 @@ export function StartPage({feed}: {feed?: AgentFeed} = {}) {
         if (isStartProfile(profile)) rememberProfile(profile);
     }, [profile]);
 
+    // The onboarding panel waits for this page before closing, so no frame in between shows the
+    // page it was opened over, or the route's loading fallback.
+    const {landed} = useOnboarding();
+    useEffect(() => landed(), [landed]);
+
     if (path === undefined) {
         return (
-            <main className="mx-auto flex max-w-3xl flex-col gap-6 px-6 py-16">
+            <div className="mx-auto flex max-w-3xl flex-col gap-6 px-6 py-16">
                 <BackLink to="/" label="home" />
                 <h1 className="type-face text-[32px]">No path by that name</h1>
                 <Link to="/" className={linkClass}>
                     Choose one on the home page →
                 </Link>
-            </main>
+            </div>
         );
     }
 
     const steps = stepsFor(path.profile, {feed: activity.status, events: activity.events});
 
     return (
-        <main className="mx-auto flex max-w-3xl flex-col gap-10 px-6 py-16">
+        <div className="mx-auto flex max-w-3xl flex-col gap-10 px-6 py-16">
             <div className="flex flex-col gap-4">
                 <BackLink to="/" label="home" />
                 <h1 className="type-face text-[40px] leading-none">{path.title}</h1>
@@ -108,13 +114,13 @@ export function StartPage({feed}: {feed?: AgentFeed} = {}) {
                     {path.profile === "agent" ? <MintIdentity /> : <ToolRegister />}
                 </WalletSection>
             )}
-        </main>
+        </div>
     );
 }
 
 /**
  * The question that decides between minting and importing. Unanswered, the steps show: most agents
- * arriving here have no id yet, and the steps are the free way to get one.
+ * arriving here have no id yet, and the steps are the sponsored way to get one.
  */
 function HasId({hasId}: {hasId: boolean}) {
     const [, setSearchParams] = useSearchParams();

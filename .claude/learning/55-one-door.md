@@ -40,3 +40,32 @@
 **Which tier of the evidence ladder does this serve, and does it move ARP up it?**
 
 Asserted: an agent or tool entering ARP is the step before any declaration; it does not move ARP up a tier, it removes a duplicate door below the first rung that the staked and proven tiers depend on.
+
+---
+
+## Follow-up: §7 and §8, the wallet leaves the panel (ADR `0128`)
+
+**Verified:** 2026-11-03, on top of `8cb7bea`, uncommitted. **Verdict:** PASS on the third pass. The first failed on code-adjacent issues (none in the code itself): ADR `0128` cited §2 for quotes in §7, and the working tree held a `README.md` rewrite and six `apps/*/README.md` that another session wrote. The second pass confirmed both resolved: the citation is fixed, and those files are excluded from the task-62 commit.
+
+**What shipped**
+
+- `components/onboarding/ConnectPrompt.tsx` — connects the wallet directly; an always-rendered `aria-live` line says "No wallet detected" (`ProviderNotFoundError` or no connector) or wagmi's `shortMessage`.
+- `components/onboarding/OnboardingPanel.tsx` + `onboarding-context.ts` — no wallet line; centred (`m-auto` in a flex parent); Close fixed top-right on a banged `--color-ground`; closes on `landed()`, which `StartPage` calls on mount, so neither the landing nor the route fallback shows through.
+- `components/WalletConnect.tsx` — renders nothing while disconnected.
+- `DeclareUse.tsx`, `AgentImport.tsx` — "Connect the wallet that owns the agent" is a `ConnectPrompt`, not a sentence.
+- `services/start-steps.ts` — the "Free for now" step removed from all three paths. `StartPage`'s `<main>` → `<div>`.
+
+**Surprises**
+
+- `injected()` is always configured, so "no wallet" surfaces only as `connect`'s error. A connector-presence check would have left a dead button. `ui-reviewer` found it in a browser.
+- Closing the sheet on the location change still flashed the route fallback for about 280ms, because `RouteTransition` keys routes on `location.key`. Only a mount signal from the destination page closes it cleanly.
+- An ADR number collided with one already on origin (`0126`), so it became `0128`. Check `git ls-tree origin/main .claude/choices` before numbering.
+- A shared checkout picked up another session's README rewrite. Commit by explicit path when sibling sessions share a working tree.
+
+**Decisions**
+
+- **A wallet is asked for only by the action that signs.** ADR: `.claude/choices/0128-a-wallet-is-asked-for-by-the-action-that-signs.md`. It supersedes part of ADR `0114` item 1.
+
+**Gates** (`apps/web` only): `tsc -b` 0, lint 0, test 81 files / 745 passed / 2 skipped, `check:tokens` clean.
+
+**Evidence ladder:** asserted. It does not move ARP up a tier; it removes friction before the first rung.
