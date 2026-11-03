@@ -46,11 +46,18 @@ function topicAddress(topic: string | undefined): string {
   return `0x${(topic ?? '').slice(-40)}`.toLowerCase();
 }
 
+/**
+ * `deploy.sh` keeps a replaced address under `<name>V<n>` (13579's `_note`), so the testnet copy
+ * replaced on 2026-11-03 is `trustStakeCapEnforcerV1`. Matching only a trailing `enforcer` dropped
+ * it from the scan, and with it every log the old copy ever emitted.
+ */
+const ENFORCER_KEY = /enforcer(v\d+)?$/i;
+
 function enforcersOf(file: Deployment): [string, Enforcer][] {
   const arp = file.arp ?? {};
   if (arp.enforcers !== undefined) return Object.entries(arp.enforcers);
   return Object.entries(arp).flatMap(([key, value]) =>
-    key.toLowerCase().endsWith('enforcer') && typeof value === 'string'
+    ENFORCER_KEY.test(key) && typeof value === 'string'
       ? [[key, { address: value }] as [string, Enforcer]]
       : [],
   );
