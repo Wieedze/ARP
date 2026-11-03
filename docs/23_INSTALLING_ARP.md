@@ -6,6 +6,12 @@ The decisions taken from it are ADR `0089` (one installer) and ADR `0090` (what 
 Everything about a third party below cites the page it came from; everything about this repo cites a
 file and a line.
 
+**Two things changed since it was written** (2026-11-03). The **Claude Desktop extension** — one
+`.mcpb` file, installed from Settings → Extensions, holding a local agent key (ADR `0110`,
+`docs/tasks/50`) — is the install for ARP's first audience, people who use Claude and never open a
+terminal (ADR `0120`); this document predates it and does not cover it. And `@arp-protocol/cli` is
+**not on npm yet**, so every `npx @arp-protocol/cli` line below is the target, not today's path.
+
 ---
 
 ## 1. Where each program lives
@@ -103,6 +109,7 @@ From https://clig.dev unless stated. Each line names the clig.dev section it com
 The plan that builds it is `docs/tasks/33-one-installer.md`. Its summary:
 
 ```
+arp-<version>.mcpb                        Claude Desktop: one file, Settings → Extensions (ADR 0110)
 npx @arp-protocol/cli init                any runtime: detects them, writes the MCP entry and the hook
 claude plugin install arp@arp             Claude Code: hook + MCP server + skill
 grok plugin install arp --trust           Grok Build: the same Claude Code plugin, unchanged

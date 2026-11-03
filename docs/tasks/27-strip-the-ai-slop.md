@@ -84,6 +84,11 @@ saying what drifted:
 - `docs/14`: "What this means for the build" items 1 and 3 marked overtaken (ADRs `0030`, `0060`);
   a paragraph narrating a past miscount cut.
 
+Then `docs/21`–`docs/26`, the ones a stranger opens. Mostly written after 2026-10-29 and already
+aligned; `docs/21`, `22`, `24` and `26` left as they are. Two fixes: `docs/23` now says the Claude
+Desktop extension (ADR `0110`) postdates it and that `@arp-protocol/cli` is not on npm yet;
+`docs/25`'s opening table no longer presents `DomainScopeEnforcer` as live.
+
 ## Why this is a task and not a tidy-up
 
 The repo has **43 ADRs, 18 post-mortems, 31 task files and 16 docs**, almost all written by me in a
