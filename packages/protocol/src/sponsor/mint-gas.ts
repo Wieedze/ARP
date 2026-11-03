@@ -63,7 +63,11 @@ export async function signMintGasRequest(
     chainId: number,
     signer: MintGasRequestSigner,
 ): Promise<SignedMintGasRequest> {
-    return {request, chainId, signature: await signer.signTypedData(mintGasRequestTypedData(request, chainId))};
+    return {
+        request,
+        chainId,
+        signature: await signer.signTypedData(mintGasRequestTypedData(request, chainId)),
+    };
 }
 
 /** Recover the signer and compare it to the address the request names. `now` is unix seconds. */
@@ -71,10 +75,12 @@ export async function verifyMintGasRequest(
     signed: unknown,
     now: number,
 ): Promise<MintGasRequestVerdict> {
-    if (typeof signed !== "object" || signed === null) return {status: "malformed", reason: "no request"};
+    if (typeof signed !== "object" || signed === null)
+        return {status: "malformed", reason: "no request"};
     // Each field is checked below before it is used.
     const {request, chainId, signature} = signed as Partial<SignedMintGasRequest>;
-    if (typeof request !== "object" || request === null) return {status: "malformed", reason: "no request"};
+    if (typeof request !== "object" || request === null)
+        return {status: "malformed", reason: "no request"};
     if (typeof request.address !== "string" || !isAddress(request.address))
         return {status: "malformed", reason: "address is not an address"};
     if (typeof request.nonce !== "string" || !isHex(request.nonce) || request.nonce.length !== 66)
@@ -87,14 +93,23 @@ export async function verifyMintGasRequest(
         return {status: "malformed", reason: "signature is not hex"};
     if (request.expiresAt <= now) return {status: "expired", expiresAt: request.expiresAt};
     if (request.expiresAt > now + MINT_GAS_MAX_TTL_SECONDS)
-        return {status: "malformed", reason: `expiresAt is more than ${MINT_GAS_MAX_TTL_SECONDS} s ahead`};
+        return {
+            status: "malformed",
+            reason: `expiresAt is more than ${MINT_GAS_MAX_TTL_SECONDS} s ahead`,
+        };
 
     const declared = getAddress(request.address);
     let recovered: Address;
     try {
-        recovered = await recoverTypedDataAddress({...mintGasRequestTypedData(request, chainId), signature});
+        recovered = await recoverTypedDataAddress({
+            ...mintGasRequestTypedData(request, chainId),
+            signature,
+        });
     } catch (error) {
-        return {status: "malformed", reason: error instanceof Error ? error.message : String(error)};
+        return {
+            status: "malformed",
+            reason: error instanceof Error ? error.message : String(error),
+        };
     }
     if (recovered !== declared) return {status: "mismatch", declared, recovered};
     return {status: "valid", address: recovered};

@@ -696,6 +696,7 @@ export {
     LIST_TOOL_MAX_TTL_SECONDS,
     LIST_TOOL_REQUEST_TYPES,
     listToolRequestTypedData,
+    canonicalToolUrl,
     planToolListing,
     signListToolRequest,
     SOURCE_PREDICATE,

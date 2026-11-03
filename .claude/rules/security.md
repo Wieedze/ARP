@@ -37,7 +37,7 @@ Walk through each item for every contract change. Document the result (clean pas
 ### Signature replay
 
 - If signatures are used (EIP-712, EIP-1271), they include a nonce + chainId + verifying contract.
-- Signatures are in use, so this section applies. Eight sites: `contracts/src/erc8004/IdentityRegistry.sol`
+- Signatures are in use, so this section applies. Nine sites: `contracts/src/erc8004/IdentityRegistry.sol`
   (ARP's testnet deployment of the reference registry, which verifies signatures); MetaMask
   Delegation Framework delegations (EIP-712, signed in the app, verified by `apps/sponsor` before
   it publishes one); the operator's EIP-712 statement on import
@@ -46,7 +46,9 @@ Walk through each item for every contract change. Document the result (clean pas
   (`packages/protocol/src/hire-receipt.ts`, ADR `0083`); the agent's sponsor request
   (`packages/protocol/src/sponsor/request.ts`, ADR `0096`); the address's mint-gas request
   (`packages/protocol/src/sponsor/mint-gas.ts`, ADR `0116`), which carries no verifying contract
-  because no contract checks it, and whose nonce the sponsoring service spends once; and `ReceiptEnforcer`
+  because no contract checks it, and whose nonce the sponsoring service spends once; the address's
+  list-tool request (`packages/protocol/src/sponsor/list-tool.ts`, ADR `0120`), the same shape
+  with the URL in the signed message; and `ReceiptEnforcer`
   (`contracts/src/enforcers/ReceiptEnforcer.sol`, task 43, not deployed), which verifies that hire
   receipt on chain. The content receipt and the sponsor request carry no verifying contract. For the
   content receipt the cause still holds: no contract checks it. The sponsor request's nonce is the

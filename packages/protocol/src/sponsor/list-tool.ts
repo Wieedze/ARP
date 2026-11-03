@@ -40,14 +40,43 @@ export type ToolListingPlan = {
     totalValue: bigint;
 };
 
+/**
+ * The one URL a tool is listed under, so two spellings of it cannot mint two atoms.
+ *
+ * A GitHub URL is rebuilt the way the seed scripts build theirs (`scripts/seed/seed-skills.ts`):
+ * `https://github.com/<owner>/<repo>`, with `?skill=<s>` for a skill and nothing else. A path such
+ * as `/tree/main` and any other query parameter are dropped. `repoFullName` is GitHub's own
+ * `owner/repo`, case included. `normaliseToolUrl` keeps path case, so `wieedze/arp` and
+ * `Wieedze/ARP` would otherwise be two atoms. Any other URL is `normaliseToolUrl`'s output.
+ */
+export function canonicalToolUrl(url: string, repoFullName?: string): string {
+    const normalised = normaliseToolUrl(url);
+    const parsed = new URL(normalised);
+    if (parsed.hostname !== "github.com") return normalised;
+    const ref = skillRefFromUrl(normalised);
+    const [owner, name] = parsed.pathname.replace(/^\/+/, "").split("/");
+    const repo =
+        repoFullName ??
+        ref?.repo ??
+        (owner && name ? `${owner}/${name.replace(/\.git$/, "")}` : null);
+    if (repo === null) return normalised;
+    return normaliseToolUrl(
+        ref === null
+            ? `https://github.com/${repo}`
+            : `https://github.com/${repo}?skill=${encodeURIComponent(ref.skill)}`,
+    );
+}
+
 /** Plan a listing for `url`. Nothing to create gives an empty `calls`. Throws on a URL that is not a tool. */
 export async function planToolListing(params: {
     url: string;
     reads: MultiVaultReads;
+    /** GitHub's `owner/repo` for a GitHub URL, case included ({@link canonicalToolUrl}). */
+    repoFullName?: string;
 }): Promise<ToolListingPlan> {
     const {reads} = params;
     if (!isToolUrl(params.url)) throw new Error(`${params.url} is not a tool URL`);
-    const url = normaliseToolUrl(params.url);
+    const url = canonicalToolUrl(params.url, params.repoFullName);
     const ref = skillRefFromUrl(url);
     const repoUrl = ref === null ? null : normaliseToolUrl(`https://github.com/${ref.repo}`);
 

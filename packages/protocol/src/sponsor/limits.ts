@@ -44,6 +44,12 @@ export type SponsorLimits = {
     /** Sponsored tool listings a UTC day from unsigned requests, all of them together (ADR `0120`). */
     anonymousListingsPerDay: number;
     /**
+     * Sponsored tool listings a UTC day, signed and unsigned together (ADR `0120`). A fresh key is
+     * free to make, so the per-address limit alone does not bound a caller; this does, and it keeps
+     * listings from spending the budget the other routes share.
+     */
+    listingsPerDay: number;
+    /**
      * Past this share of its sponsored shares withdrawn, in basis points, an agent is no longer
      * sponsored. A **mainnet** rule: `null`, not enforced, on testnet, where everything proven is
      * sponsored (ADR `0094` as amended).
@@ -319,6 +325,14 @@ export function checkListToolLimits(
             )
             .map((r) => (r.key ?? "").split("#")[0]),
     );
+    const all = new Set(
+        records
+            .filter((r) => r.kind === "list-tool" && utcDay(r.at) === day && r.key !== undefined)
+            .map((r) => (r.key ?? "").split("#")[0]),
+    );
+    if (!all.has(listing) && all.size >= limits.listingsPerDay) {
+        return {ok: false, reason: `${limits.listingsPerDay} listings a day in all, reached`};
+    }
     const cap = lister === null ? limits.anonymousListingsPerDay : limits.listingsPerAddressPerDay;
     if (!listings.has(listing) && listings.size >= cap) {
         return {

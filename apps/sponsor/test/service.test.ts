@@ -74,6 +74,7 @@ const LIMITS: SponsorLimits = {
   newAgentsPerDay: 2,
   listingsPerAddressPerDay: 2,
   anonymousListingsPerDay: 2,
+  listingsPerDay: 4,
   dailyBudget: 10n ** 18n,
   depositsPerAgentPerDay: 2,
   publicationsPerDelegatorPerDay: 2,
@@ -1587,26 +1588,67 @@ describe('POST /list-tool', () => {
     expect(res.body.sourceTriple).toBeDefined();
   });
 
-  test('answers created: false, and checks nothing, when the tool is already listed', async () => {
+  test('answers created: false, and spends nothing, when the tool is already listed', async () => {
     const w = world();
     const plan = await planToolListing({ url: TOOL, reads: fakeReads(w) });
     w.terms.add(plan.atomId.toLowerCase());
-    let checked = false;
-    const res = await call(
-      listing(w, {
-        resolveTool: async () => {
-          checked = true;
-          return { ok: true };
-        },
-      }),
-      '/list-tool',
-      { url: TOOL },
-    );
+    const res = await call(listing(w), '/list-tool', { url: TOOL });
     expect(res.status).toBe(200);
     expect(res.body.created).toBe(false);
     expect(res.body.transactions).toEqual([]);
-    expect(checked).toBe(false);
+    expect(pinned).toHaveLength(0);
     expect(w.sent).toHaveLength(0);
+  });
+
+  test("lists a skill under GitHub's spelling, whatever path, query or case was pasted", async () => {
+    const w = world();
+    const canonical = await planToolListing({
+      url: 'https://github.com/Wieedze/ARP?skill=arp',
+      reads: fakeReads(w),
+    });
+    for (const id of [
+      canonical.atomId,
+      canonical.repository!.atomId,
+      canonical.repository!.sourceTripleId,
+    ])
+      w.terms.add(id.toLowerCase());
+    const service = listing(w, {
+      resolveTool: async () => ({ ok: true, fullName: 'Wieedze/ARP' }),
+    });
+    for (const url of [
+      'https://github.com/wieedze/arp?skill=arp',
+      'https://github.com/Wieedze/ARP/tree/main?skill=arp',
+      'https://github.com/Wieedze/ARP?skill=arp&ref=x',
+      'https://github.com:8080/Wieedze/ARP.git?skill=arp',
+    ]) {
+      const res = await call(service, '/list-tool', { url });
+      expect(res.status).toBe(200);
+      expect(res.body.created).toBe(false);
+      expect(res.body.atomId).toBe(canonical.atomId);
+    }
+    expect(w.sent).toHaveLength(0);
+  });
+
+  test('stops all listings at the daily total, however many keys sign them', async () => {
+    const w = world();
+    const service = listing(w, { limits: { ...LIMITS, anonymousListingsPerDay: 10 } });
+    for (const n of ['1', '2', '3', '4']) {
+      const signer = privateKeyToAccount(`0x${n.repeat(64)}`);
+      const url = `${TOOL}${n}`;
+      expect(
+        (await call(service, '/list-tool', { url, request: await signedFor(url, signer) })).status,
+      ).toBe(200);
+    }
+    const fifth = await call(service, '/list-tool', { url: `${TOOL}5` });
+    expect(fifth.status).toBe(429);
+    expect(String(fifth.body.error)).toMatch(/in all/);
+    expect(w.sent).toHaveLength(4);
+  });
+
+  test('refuses a URL longer than any tool URL', async () => {
+    const res = await call(listing(world()), '/list-tool', { url: `${TOOL}/${'a'.repeat(2_100)}` });
+    expect(res.status).toBe(400);
+    expect(res.body.rule).toBe('url');
   });
 
   test('stops unsigned listings at the anonymous cap; a signed one uses its own limit', async () => {

@@ -69,6 +69,7 @@ import type {
 import { redactUrls, refuseForeignRequest } from '@arp-protocol/core/node';
 import { getAddress, isAddress, type Address, type Hex } from 'viem';
 
+import type { ToolResolution } from './github.ts';
 import type { SponsorLedger } from './ledger.ts';
 import { createContext, json, readBody, REGISTRY } from './routes/context.ts';
 import { deposit } from './routes/deposit.ts';
@@ -159,9 +160,10 @@ export type SponsorOptions = {
   listToolOrigins?: readonly string[];
   /**
    * Whether a tool URL exists where it says: for GitHub, the repository, and for a skill its
-   * SKILL.md. Absent, `POST /list-tool` answers 503. `main.ts` asks GitHub's API.
+   * SKILL.md, and GitHub's own spelling of the repository. Absent, `POST /list-tool` answers 503.
+   * `main.ts` asks GitHub's API.
    */
-  resolveTool?: ((url: string) => Promise<{ ok: true } | { ok: false; reason: string }>) | null;
+  resolveTool?: ((url: string) => Promise<ToolResolution>) | null;
   /** Milliseconds. Injected so a test can move the day. */
   now?: () => number;
   /** Where a failed request's detail goes, redacted. `console.error` by default. */

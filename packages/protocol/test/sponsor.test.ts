@@ -511,6 +511,7 @@ describe("limits", () => {
         newAgentsPerDay: 2,
         listingsPerAddressPerDay: 2,
         anonymousListingsPerDay: 2,
+        listingsPerDay: 4,
         withdrawalThresholdBps: null,
         belowProofCost: false,
     };

@@ -9,6 +9,7 @@ import {
     type SponsorRecord,
 } from "../src/sponsor/limits.js";
 import {
+    canonicalToolUrl,
     planToolListing,
     signListToolRequest,
     SOURCE_PREDICATE,
@@ -73,10 +74,24 @@ describe("planToolListing", () => {
     });
 });
 
+describe("canonicalToolUrl", () => {
+    it("rebuilds a GitHub URL as the seed scripts do, with GitHub's own case when given", () => {
+        expect(canonicalToolUrl("github.com/a/b/tree/main?skill=c&x=1")).toBe(
+            "https://github.com/a/b?skill=c",
+        );
+        expect(canonicalToolUrl("https://github.com/a/b.git")).toBe("https://github.com/a/b");
+        expect(canonicalToolUrl("https://github.com/wieedze/arp?skill=arp", "Wieedze/ARP")).toBe(
+            "https://github.com/Wieedze/ARP?skill=arp",
+        );
+        expect(canonicalToolUrl("https://Example.com/mcp")).toBe("https://example.com/mcp");
+    });
+});
+
 describe("checkListToolLimits", () => {
     const limits = {
         listingsPerAddressPerDay: 1,
         anonymousListingsPerDay: 2,
+        listingsPerDay: 3,
         dailyBudget: 10n ** 18n,
     } as SponsorLimits; // Only the three members this check reads.
     const at = 20_000 * 86_400_000;

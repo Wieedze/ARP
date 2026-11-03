@@ -112,7 +112,6 @@ export async function signSponsorRequest(
     };
 }
 
-
 function malformed(reason: string): SponsorRequestVerdict {
     return {status: "malformed", reason};
 }

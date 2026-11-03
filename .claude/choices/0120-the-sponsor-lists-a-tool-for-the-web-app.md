@@ -27,16 +27,26 @@ Three constraints:
 ## Decision
 
 **`POST /list-tool`, testnet 13579 only.** Body `{url, request?}`. The service:
-1. normalises the URL and refuses one that is not a tool URL;
-2. plans the terms (`planToolListing`, `packages/protocol/src/sponsor/list-tool.ts`). When
+1. refuses a string that is not a tool URL, or one longer than 2,048 characters;
+2. checks that the URL exists where it says (below), and for a GitHub URL learns GitHub's own spelling
+   of the repository;
+3. lists it under its **canonical spelling** (`canonicalToolUrl`). A GitHub URL is rebuilt as the
+   seed scripts build theirs, `https://github.com/<owner>/<repo>`, with `?skill=<s>` for a skill.
+   The rebuild uses GitHub's case, and drops a path such as `/tree/main`, any other query parameter
+   and a port. `normaliseToolUrl` keeps path case, so without this, `wieedze/arp` and `Wieedze/ARP`
+   would be two permanent atoms beside the seeded one. This was found by `intuition-integrator`
+   before it shipped;
+4. plans the terms (`planToolListing`, `packages/protocol/src/sponsor/list-tool.ts`). When
    everything already exists it answers `created: false` and spends nothing;
-3. checks the limit (below);
-4. checks that the URL exists where it says. A GitHub repository must answer GitHub's tree API, and
+5. checks the limits (below);
+6. on the existence check of step 2: a GitHub repository must answer GitHub's tree API, and
    a skill must have a SKILL.md in a directory of its name, by the content server's rule
    (`resolveContentPath`). **Any other URL is accepted unchecked**: fetching an arbitrary URL from
-   the process that holds the treasury key would let a caller point it at the local network;
-5. pins each Thing it creates and checks the returned URI against the computed one;
-6. creates each term at `cost + minDeposit` (ADR `0053`). The service holds the creation position,
+   the process that holds the treasury key would let a caller point it at the local network. An
+   answer is remembered for ten minutes, so one URL repeated does not spend GitHub's hourly
+   allowance;
+7. pins each Thing it creates and checks the returned URI against the computed one;
+8. creates each term at `cost + minDeposit` (ADR `0053`). The service holds the creation position,
    as `/publish` and `/identity` do.
 
 It creates no `uses` edge and labels nothing declared or proven. A listing is a pointer.
@@ -48,7 +58,12 @@ It creates no `uses` edge and labels nothing declared or proven. A listing is a 
   must be the URL sent.
 - An unsigned request counts against one shared cap, `SPONSOR_ANONYMOUS_LISTINGS_PER_DAY`, default
   20. arp-5e proposed "about 20"; the user did not fix the number.
-- Both sit inside ADR `0092`'s daily budget. A listing counts once however many terms it creates.
+- **All listings together stay under `SPONSOR_LISTINGS_PER_DAY`**, default 50. A fresh key costs
+  nothing to make, so the per-address limit alone does not bound a caller. Without this total, a page
+  signing with throwaway keys could spend the daily budget that `/deposit`, `/gas`, `/mint-gas`,
+  `/identity` and `/publish` share. This was found by the security review before it shipped.
+- All of it sits inside ADR `0092`'s daily budget. A listing counts once however many terms it
+  creates.
 
 **This route alone answers a browser.** It answers only the web app's local origins (Vite's 5173
 and 4173, the activity feed's list, ADR `0091`) plus `SPONSOR_ALLOWED_ORIGINS`, which is empty by
@@ -78,12 +93,17 @@ route, so DNS rebinding is still refused.
 
 **Negative:**
 
-- **Anyone on the allowed origins can use up the anonymous cap**, and with it nothing else: a signed
-  request still has its own limit. On a local demo, the origins are the user's own app.
+- **An allowed origin is a port, not an app.** Any page served on localhost at 5173 or 4173 can
+  call this route, and so can any other dev server the user runs on those ports. Such a page can use
+  up the anonymous cap, and with throwaway keys the daily total. It cannot spend past the total, and
+  the total is set well below the budget the other routes share.
 - An invented non-GitHub URL is listed if it is well formed. Its cost is bounded by the caps: about
   0.002 tTRUST a listing at testnet prices (`atomCost + minDeposit`, read at send time).
 - Checking GitHub costs a request per listing, and GitHub allows 60 an hour per IP without
   `GITHUB_TOKEN`. A rate-limited check answers 503 and spends nothing.
+- **The limit checked before the pins is not final under concurrency.** Parallel requests with
+  distinct URLs can each pass it and each pin with ARP's pinning key, and only those that fit spend.
+  Pinning moves no value. The count inside the queue is the one that decides, as in `/identity`.
 - `security.md`'s signing table gains a row.
 
 **Neutral (worth knowing):**
