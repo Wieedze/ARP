@@ -8,8 +8,11 @@ import {useAgentActivity} from "../hooks/use-agent-activity";
 import {controlClass, linkClass} from "../lib/control-class";
 import {START_PATHS, isStartProfile, rememberProfile} from "../lib/start-paths";
 import type {AgentFeed} from "../services/agent-feed";
+import {useDomainTree} from "../hooks/use-domain-tree";
 import {useListTool} from "../hooks/use-list-tool";
+import {useProposeCategory} from "../hooks/use-propose-category";
 import {listToolMessage} from "../services/list-tool";
+import {proposeCategoryMessage} from "../services/propose-category";
 import {stepsFor, type StartStep} from "../services/start-steps";
 
 /**
@@ -159,46 +162,165 @@ function AddTool() {
         return <div className="mt-3 text-[length:var(--text-body-sm)]">{wallet}</div>;
 
     return (
+        <>
+            <form
+                className="mt-4 flex flex-col gap-2"
+                onSubmit={(event) => {
+                    event.preventDefault();
+                    if (url.trim() === "" || listing.pending) return;
+                    listing.submit(url.trim());
+                }}
+            >
+                <label
+                    htmlFor="start-add-url"
+                    className="font-mono text-[length:var(--text-label)] uppercase tracking-[0.08em] text-[color:var(--color-steel)]"
+                >
+                    Tool or skill URL
+                </label>
+                <div className="flex gap-2">
+                    <input
+                        id="start-add-url"
+                        value={url}
+                        onChange={(event) => setUrl(event.target.value)}
+                        placeholder="github.com/owner/repo?skill=name"
+                        className="min-w-0 flex-1 rounded-[var(--radius-control)] border border-[color:var(--color-rule-strong)] bg-[color:var(--color-bg)] px-3.5 py-2.5 font-mono text-[13px]"
+                    />
+                    <button type="submit" disabled={listing.pending} className={controlClass}>
+                        Add it
+                    </button>
+                </div>
+                <p
+                    aria-live="polite"
+                    className="min-h-5 text-[length:var(--text-body-sm)] text-[color:var(--color-silver)]"
+                >
+                    {listing.pending ? "Adding…" : result !== null && listToolMessage(result)}
+                    {!listing.pending && result?.status === "listed" && (
+                        <>
+                            {" "}
+                            <Link to={`/atom/${result.atomId}`} className={linkClass}>
+                                Open its page →
+                            </Link>
+                        </>
+                    )}
+                    {!listing.pending && result !== null && offerWallet && <> {wallet}</>}
+                </p>
+            </form>
+            {/* Its own form, after the listing: a tool added on the web is categorised here too, so
+            the search can find it by what it is for (task 59, the user's decision of 2026-11-03). */}
+            {!listing.pending && result?.status === "listed" && (
+                <ChooseCategory subjectId={result.atomId} />
+            )}
+        </>
+    );
+}
+
+const NONE_FITS = "__none-fits";
+
+/** Tag the listed tool with an existing category, or file a new one under a parent (task 59). */
+function ChooseCategory({subjectId}: {subjectId: string}) {
+    const {options} = useDomainTree();
+    const proposal = useProposeCategory();
+    const [choice, setChoice] = useState("");
+    const [label, setLabel] = useState("");
+    const [parent, setParent] = useState("");
+    const [reason, setReason] = useState("");
+    const isNew = choice === NONE_FITS;
+    const field =
+        "min-w-0 rounded-[var(--radius-control)] border border-[color:var(--color-rule-strong)] bg-[color:var(--color-bg)] px-3.5 py-2.5 text-[14px]";
+    const caption =
+        "font-mono text-[length:var(--text-label)] uppercase tracking-[0.08em] text-[color:var(--color-steel)]";
+
+    if (!proposal.available) return null;
+
+    return (
         <form
-            className="mt-4 flex flex-col gap-2"
+            className="mt-6 flex flex-col gap-3 border-t border-[color:var(--color-rule)] pt-5"
             onSubmit={(event) => {
                 event.preventDefault();
-                if (url.trim() === "" || listing.pending) return;
-                listing.submit(url.trim());
+                if (proposal.pending || choice === "") return;
+                proposal.submit(
+                    isNew
+                        ? {label: label.trim(), parent, reason: reason.trim(), subjectId}
+                        : {label: choice, subjectId},
+                );
             }}
         >
-            <label
-                htmlFor="start-add-url"
-                className="font-mono text-[length:var(--text-label)] uppercase tracking-[0.08em] text-[color:var(--color-steel)]"
-            >
-                Tool or skill URL
+            <label htmlFor="start-category" className={caption}>
+                Category
             </label>
-            <div className="flex gap-2">
-                <input
-                    id="start-add-url"
-                    value={url}
-                    onChange={(event) => setUrl(event.target.value)}
-                    placeholder="github.com/owner/repo?skill=name"
-                    className="min-w-0 flex-1 rounded-[var(--radius-control)] border border-[color:var(--color-rule-strong)] bg-[color:var(--color-bg)] px-3.5 py-2.5 font-mono text-[13px]"
-                />
-                <button type="submit" disabled={listing.pending} className={controlClass}>
-                    Add it
+            <select
+                id="start-category"
+                value={choice}
+                onChange={(event) => setChoice(event.target.value)}
+                className={field}
+            >
+                <option value="" disabled>
+                    Choose one
+                </option>
+                {options.map((option) => (
+                    <option key={option.label} value={option.label}>
+                        {`${"— ".repeat(Math.max(0, option.depth - 1))}${option.label}`}
+                    </option>
+                ))}
+                <option value={NONE_FITS}>None fits</option>
+            </select>
+            {isNew && (
+                <>
+                    <label htmlFor="start-category-new" className={caption}>
+                        New category
+                    </label>
+                    <input
+                        id="start-category-new"
+                        value={label}
+                        onChange={(event) => setLabel(event.target.value)}
+                        placeholder="one word"
+                        className={field}
+                    />
+                    <label htmlFor="start-category-parent" className={caption}>
+                        Under
+                    </label>
+                    <select
+                        id="start-category-parent"
+                        value={parent}
+                        onChange={(event) => setParent(event.target.value)}
+                        className={field}
+                    >
+                        <option value="" disabled>
+                            Choose its parent
+                        </option>
+                        {options.map((option) => (
+                            <option key={option.label} value={option.label}>
+                                {option.label}
+                            </option>
+                        ))}
+                    </select>
+                    <label htmlFor="start-category-reason" className={caption}>
+                        Why none fits
+                    </label>
+                    <input
+                        id="start-category-reason"
+                        value={reason}
+                        onChange={(event) => setReason(event.target.value)}
+                        className={field}
+                    />
+                </>
+            )}
+            <div>
+                <button
+                    type="submit"
+                    disabled={proposal.pending || choice === ""}
+                    className={controlClass}
+                >
+                    File it
                 </button>
             </div>
             <p
                 aria-live="polite"
                 className="min-h-5 text-[length:var(--text-body-sm)] text-[color:var(--color-silver)]"
             >
-                {listing.pending ? "Adding…" : result !== null && listToolMessage(result)}
-                {!listing.pending && result?.status === "listed" && (
-                    <>
-                        {" "}
-                        <Link to={`/atom/${result.atomId}`} className={linkClass}>
-                            Open its page →
-                        </Link>
-                    </>
-                )}
-                {!listing.pending && result !== null && offerWallet && <> {wallet}</>}
+                {proposal.pending
+                    ? "Filing…"
+                    : proposal.result !== null && proposeCategoryMessage(proposal.result)}
             </p>
         </form>
     );

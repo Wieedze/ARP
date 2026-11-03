@@ -2,6 +2,7 @@ import {fireEvent, screen, waitFor} from "@testing-library/react";
 import {beforeEach, describe, expect, it, vi} from "vitest";
 
 import type {ListToolResult} from "../services/list-tool";
+import type {ProposeCategoryResult} from "../services/propose-category";
 
 const listing: {
     available: boolean;
@@ -12,11 +13,33 @@ const listing: {
 
 vi.mock("../hooks/use-list-tool", () => ({useListTool: () => listing}));
 
+const proposal: {
+    available: boolean;
+    submit: ReturnType<typeof vi.fn>;
+    pending: boolean;
+    result: ProposeCategoryResult | null;
+} = {available: true, submit: vi.fn(), pending: false, result: null};
+
+vi.mock("../hooks/use-propose-category", () => ({useProposeCategory: () => proposal}));
+vi.mock("../hooks/use-domain-tree", () => ({
+    useDomainTree: () => ({
+        tree: undefined,
+        error: null,
+        options: [
+            {label: "design", depth: 1},
+            {label: "payment", depth: 1},
+        ],
+    }),
+}));
+
 beforeEach(() => {
     listing.available = true;
     listing.submit = vi.fn();
     listing.pending = false;
     listing.result = null;
+    proposal.submit = vi.fn();
+    proposal.pending = false;
+    proposal.result = null;
 });
 
 import {StartPage} from "./StartPage";
@@ -104,6 +127,36 @@ describe("the start page", () => {
         renderWithProviders(<StartPage feed={feedWith([]).feed} />, at("tool"));
         expect(await screen.findByRole("link", {name: "Add it with a wallet →"})).toBeTruthy();
         expect(screen.queryByLabelText("Tool or skill URL")).toBeNull();
+    });
+
+    it("offers the category step once the tool is listed: an existing one, or a new one", async () => {
+        listing.result = {status: "listed", atomId: "0xabc", created: true, transactions: []};
+        renderWithProviders(<StartPage feed={feedWith([]).feed} />, at("tool"));
+
+        const select = await screen.findByLabelText("Category");
+        fireEvent.change(select, {target: {value: "design"}});
+        fireEvent.click(screen.getByRole("button", {name: "File it"}));
+        expect(proposal.submit).toHaveBeenCalledWith({label: "design", subjectId: "0xabc"});
+
+        fireEvent.change(select, {target: {value: "__none-fits"}});
+        fireEvent.change(screen.getByLabelText("New category"), {target: {value: "slides"}});
+        fireEvent.change(screen.getByLabelText("Under"), {target: {value: "design"}});
+        fireEvent.change(screen.getByLabelText("Why none fits"), {
+            target: {value: "no deck category"},
+        });
+        fireEvent.click(screen.getByRole("button", {name: "File it"}));
+        expect(proposal.submit).toHaveBeenLastCalledWith({
+            label: "slides",
+            parent: "design",
+            reason: "no deck category",
+            subjectId: "0xabc",
+        });
+    });
+
+    it("shows no category step before a tool is listed", async () => {
+        renderWithProviders(<StartPage feed={feedWith([]).feed} />, at("tool"));
+        await screen.findByLabelText("Tool or skill URL");
+        expect(screen.queryByLabelText("Category")).toBeNull();
     });
 
     it("says so when the path does not exist", async () => {
