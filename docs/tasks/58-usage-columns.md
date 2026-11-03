@@ -1,6 +1,8 @@
 # Task 58 — /tools' Usage column filled, and a repository's skills shown on its row
 
-**Status:** **BUILT** 2026-11-02, revised 2026-11-03, branch `feat/58-usage-columns`.
+**Status:** **COMPLETE** 2026-11-03 (built 2026-11-02, revised 2026-11-03), branch
+`feat/58-usage-columns`. `ui-reviewer` PASS on round 4, `task-verifier` PASS on round 2,
+post-mortem `.claude/learning/58-usage-columns.md`.
 **Rules:** `code.md`, `ui.md`, `claims.md`, `workflow.md`.
 **Reviewers:** `ui-reviewer`, `task-verifier`.
 
