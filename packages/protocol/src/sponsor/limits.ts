@@ -39,12 +39,12 @@ export type SponsorLimits = {
     mintGas: bigint | null;
     /** How many addresses a UTC day may receive {@link mintGas}, all requesters together. */
     newAgentsPerDay: number;
-    /** Sponsored tool listings a UTC day for one signing address (ADR `0120`). */
+    /** Sponsored tool listings a UTC day for one signing address (ADR `0123`). */
     listingsPerAddressPerDay: number;
-    /** Sponsored tool listings a UTC day from unsigned requests, all of them together (ADR `0120`). */
+    /** Sponsored tool listings a UTC day from unsigned requests, all of them together (ADR `0123`). */
     anonymousListingsPerDay: number;
     /**
-     * Sponsored tool listings a UTC day, signed and unsigned together (ADR `0120`). A fresh key is
+     * Sponsored tool listings a UTC day, signed and unsigned together (ADR `0123`). A fresh key is
      * free to make, so the per-address limit alone does not bound a caller; this does, and it keeps
      * listings from spending the budget the other routes share.
      */
@@ -77,7 +77,7 @@ export type SponsorRecord = {
     /**
      * `mint-gas` is the transfer for an unregistered address's `register()`; `identity` the atoms
      * and triples that give an agent its identity; `create` a `uses` triple a deposit lands on
-     * (ADR `0110`); `list-tool` the terms of a sponsored tool listing (ADR `0120`), whose subject
+     * (ADR `0110`); `list-tool` the terms of a sponsored tool listing (ADR `0123`), whose subject
      * is the signing address, or {@link ANONYMOUS_LISTER} for an unsigned request.
      */
     kind: "deposit" | "gas" | "publish" | "mint-gas" | "identity" | "create" | "list-tool";

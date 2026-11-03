@@ -19,7 +19,7 @@ import { chainUnreadable, json, type Body, type SponsorContext } from './context
 export const MAX_TOOL_URL_LENGTH = 2_048;
 
 /**
- * A tool listing, paid by the service (ADR `0120`, `docs/tasks/53` 53c): the tool's atom, and for a
+ * A tool listing, paid by the service (ADR `0123`, `docs/tasks/53` 53c): the tool's atom, and for a
  * skill its repository's atom and `(skill, source, repository)`. It makes a tool findable and says
  * nothing about who used it.
  *

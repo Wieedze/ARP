@@ -12,7 +12,7 @@ import {isToolUrl, normaliseToolUrl, toolAtomUri, toolThing} from "../declare/to
 import type {PreparedCall} from "../declare/types.js";
 
 /**
- * A sponsored tool listing (ADR `0120`, `docs/tasks/53` 53c): the atoms and the one triple that make
+ * A sponsored tool listing (ADR `0123`, `docs/tasks/53` 53c): the atoms and the one triple that make
  * a tool findable, and the request an address signs to ask for one.
  *
  * **A listing is a pointer, never a claim of use.** It creates the tool's atom, and for a skill the

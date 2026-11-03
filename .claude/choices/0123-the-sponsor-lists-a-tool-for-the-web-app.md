@@ -1,4 +1,4 @@
-# 0120 — The sponsor lists a tool, and the web app may ask it to
+# 0123 — The sponsor lists a tool, and the web app may ask it to
 
 **Status:** Accepted
 **Date:** 2026-11-03

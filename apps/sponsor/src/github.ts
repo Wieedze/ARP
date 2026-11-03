@@ -1,4 +1,4 @@
-/** Whether a tool URL exists where it says, for `POST /list-tool` (ADR `0120`).
+/** Whether a tool URL exists where it says, for `POST /list-tool` (ADR `0123`).
  *
  *  A GitHub URL is checked against GitHub's API: the repository's tree, and for a skill
  *  (`?skill=<s>`) a SKILL.md in a directory of that name (`resolveContentPath`, the same rule the

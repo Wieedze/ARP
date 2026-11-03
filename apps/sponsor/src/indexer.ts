@@ -1,4 +1,4 @@
-/** The spellings of a GitHub repository already on the graph, for `POST /list-tool` (ADR `0120`).
+/** The spellings of a GitHub repository already on the graph, for `POST /list-tool` (ADR `0123`).
  *
  *  A repository atom's label is its normalised URL without the scheme, `github.com/<owner>/<repo>`
  *  (`toolThing`). The label is matched case-insensitively and exactly: `_ilike` with `%`, `_` and `\`

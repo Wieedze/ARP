@@ -149,6 +149,6 @@ Read these before relying on them.
 | [0118](0118-enforcer-state-is-keyed-by-caller.md) | 2026-11-02 | Accepted | Enforcer state is keyed by its caller; a receipt's replay key names its signer |
 | [0119](0119-what-the-connector-checks-and-what-it-no-longer-defaults.md) | 2026-11-03 | Accepted | What the connector checks, and what it no longer defaults |
 | [0120](0120-arp-is-not-b2b-first.md) | 2026-11-03 | Accepted | ARP is not B2B first |
-| [0120](0120-the-sponsor-lists-a-tool-for-the-web-app.md) | 2026-11-03 | Accepted | The sponsor lists a tool, and the web app may ask it to |
 | [0121](0121-the-rules-prose-pass-changes-no-rule.md) | 2026-11-03 | Accepted | The rules' prose pass changes no rule |
 | [0122](0122-docs-02-is-authoritative-on-storage-only.md) | 2026-11-03 | Accepted | `docs/02` is authoritative on the storage principle only |
+| [0123](0123-the-sponsor-lists-a-tool-for-the-web-app.md) | 2026-11-03 | Accepted | The sponsor lists a tool, and the web app may ask it to |

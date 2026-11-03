@@ -17,7 +17,7 @@
  *  | `POST /list-tool`| a tool's atom, and a skill's repository and `source` | the URL exists, the pins, a daily cap |
  *
  *  `/mint-gas`, `/identity`, and the `uses` triple `/deposit` creates when it is missing, are ADR
- *  `0110`. `/list-tool` is ADR `0120`, and it is the only route a browser may call.
+ *  `0110`. `/list-tool` is ADR `0123`, and it is the only route a browser may call.
  *
  *  **The allow-list is enforced here, not trusted to the wallet.** Every call sent goes to the
  *  MultiVault on this chain, and the only value sent anywhere else is gas: `limits.approvalGas` to
@@ -155,7 +155,7 @@ export type SponsorOptions = {
   /** Browser origins allowed to call. Empty by default: nothing in a browser needs this service. */
   origins?: readonly string[];
   /**
-   * Browser origins allowed to call `POST /list-tool`, and only that route (ADR `0120`): the web
+   * Browser origins allowed to call `POST /list-tool`, and only that route (ADR `0123`): the web
    * app's own path C. They get a CORS answer; every other route still refuses them.
    */
   listToolOrigins?: readonly string[];
@@ -180,7 +180,7 @@ export function createSponsor(options: SponsorOptions): {
   return {
     async fetch(request: Request): Promise<Response> {
       const url = new URL(request.url);
-      // `/list-tool` alone answers a browser, and only the origins listed for it (ADR `0120`).
+      // `/list-tool` alone answers a browser, and only the origins listed for it (ADR `0123`).
       const listing = url.pathname === '/list-tool';
       const corsOrigins = listing ? (options.listToolOrigins ?? []) : [];
       const foreign = refuseForeignRequest(request, {

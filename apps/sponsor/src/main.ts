@@ -145,7 +145,7 @@ const limits: SponsorLimits = {
   mintGas:
     (process.env.SPONSOR_MINT_GAS_WEI ?? '').trim() === '' ? null : wei('SPONSOR_MINT_GAS_WEI'),
   newAgentsPerDay: count('SPONSOR_NEW_AGENTS_PER_DAY', 20),
-  // ADR `0120`: a signing address's own limit, and the shared cap for unsigned listings.
+  // ADR `0123`: a signing address's own limit, and the shared cap for unsigned listings.
   listingsPerAddressPerDay: count('SPONSOR_LISTINGS_PER_ADDRESS_PER_DAY', 5),
   anonymousListingsPerDay: count('SPONSOR_ANONYMOUS_LISTINGS_PER_DAY', 20),
   listingsPerDay: count('SPONSOR_LISTINGS_PER_DAY', 50),
@@ -319,7 +319,7 @@ const service = createSponsor({
   },
   registries,
   hosts: loopbackHosts(PORT),
-  // The web app's own origins, for `/list-tool` only (ADR `0120`), plus any the operator lists.
+  // The web app's own origins, for `/list-tool` only (ADR `0123`), plus any the operator lists.
   listToolOrigins: [
     ...DEFAULT_LIST_TOOL_ORIGINS,
     ...originList(process.env.SPONSOR_ALLOWED_ORIGINS),
