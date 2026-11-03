@@ -3,7 +3,7 @@
  *      ARP_TARGET=testnet bun run scripts/verify/verify-domain-tree.ts
  *      ARP_TARGET=testnet bun run scripts/verify/verify-domain-tree.ts --domain payment
  *
- *  Read-only. Signs nothing. Two GraphQL queries, no RPC.
+ *  Read-only. Signs nothing. GraphQL only, no RPC: two queries over the whole graph, then the index's own reading.
  *
  *  This is the test, not the transactions. A tree that only exists as a plan proves nothing; what
  *  has to hold is that **one** set of edges answers both readings (`docs/25_THE_DOMAIN_TREE.md`):
@@ -29,6 +29,9 @@
  *  the most shares wins and the rest are reported as dissent rather than dropped — nothing is
  *  deleted on this graph, so a reading rule is the only thing that can rank them.
  */
+import { ARP_DOMAIN_ATTESTORS } from '../../packages/protocol/src/arp/attestors.js';
+import { readDomainTree } from '../../packages/protocol/src/domains.js';
+
 const TARGETS = { mainnet: 1155, testnet: 13579 } as const;
 const GRAPHQL: Record<number, string> = {
   1155: 'https://mainnet.intuition.sh/v1/graphql',
@@ -253,6 +256,29 @@ for (const leaf of domains) {
       : `UP    from "${leaf}": no path — ${result.reason}`,
   );
 }
+
+// ---- EVERY CATEGORY: the index's own reading reaches the root -----------------------------------
+// The dirty graph above is the stake rule's test. This is the index's: anyone may add a category
+// (task 59, ADR `0115`), so every child in the tree ARP's addresses back must climb to `tool`, or
+// `arp_find_tools` cannot reach the skills filed under it. Exits non-zero on the first that does not.
+const ours = await readDomainTree({
+  graphqlUrl: url,
+  attestor: ARP_DOMAIN_ATTESTORS,
+  hierarchyPredicate: IS_A_SUB_DOMAIN_OF,
+  tagPredicate: HAS_TAG,
+  root: ROOT,
+});
+const categories = [...new Set(ours.triples.map((triple) => triple.child))].sort();
+const stranded = categories.flatMap((category) => {
+  const result = ours.pathToRoot(category);
+  return result.found ? [] : [`${category} — ${result.detail}`];
+});
+console.log(
+  `\nEVERY ${categories.length} categor${categories.length === 1 ? 'y' : 'ies'} backed by ${ARP_DOMAIN_ATTESTORS.join(', ')}` +
+    `${ours.truncated ? ' (read truncated)' : ''}: ${stranded.length === 0 ? `all reach "${ROOT}"` : `${stranded.length} do not`}`,
+);
+for (const line of stranded) console.log(`      ${line}`);
+if (stranded.length > 0 || ours.truncated) process.exitCode = 1;
 
 // A module, not a global script — see the note in scripts/measure/predicate-objects.ts.
 export {};
