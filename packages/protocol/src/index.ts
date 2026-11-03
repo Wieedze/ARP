@@ -342,6 +342,7 @@ export {
     toolThingDocument,
     ZeroPositionError,
     checkCategoryLabel,
+    isCategoryIn,
     normaliseCategoryLabel,
     planCategory,
 } from "./declare/index.js";

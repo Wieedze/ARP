@@ -111,6 +111,7 @@ export {
 /** A category anyone can add, by the same rules as the rest (task 59, ADR `0115`). */
 export {
     checkCategoryLabel,
+    isCategoryIn,
     normaliseCategoryLabel,
     planCategory,
     type CategoryDeps,

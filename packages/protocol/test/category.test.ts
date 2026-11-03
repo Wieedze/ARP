@@ -1,8 +1,14 @@
 import {decodeFunctionData, type Hex} from "viem";
 import {describe, expect, it} from "vitest";
 
-import {checkCategoryLabel, normaliseCategoryLabel, planCategory} from "../src/declare/category.js";
+import {
+    checkCategoryLabel,
+    isCategoryIn,
+    normaliseCategoryLabel,
+    planCategory,
+} from "../src/declare/category.js";
 import {multiVaultDeclareAbi} from "../src/declare/multivault.js";
+import type {PathResult} from "../src/domains.js";
 import {HAS_TAG, IS_A_SUB_DOMAIN_OF} from "../src/sources/intuition/terms.js";
 import {atomIdFor, fakeReads} from "./helpers.js";
 
@@ -85,5 +91,17 @@ describe("a category anyone can add (task 59)", () => {
             rule: "reason",
         });
         expect(await planCategory(proposal, deps(new Set()))).toMatchObject({rule: "skill"});
+    });
+
+    it("counts as a category only a label that climbs to the root", async () => {
+        const tree = {
+            pathToRoot: (label: string): PathResult =>
+                label === "card"
+                    ? {found: true, path: ["card", "payment", "tool"]}
+                    : {found: false, reason: "unknown", at: label, detail: "no parent"},
+        };
+        const isCategory = isCategoryIn(tree);
+        expect(await isCategory("card")).toBe(true);
+        expect(await isCategory("orphan")).toBe(false);
     });
 });

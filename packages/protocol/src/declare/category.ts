@@ -1,5 +1,6 @@
 import {stringToHex, type Hex} from "viem";
 
+import type {DomainTree} from "../domains.js";
 import {HAS_TAG, IS_A_SUB_DOMAIN_OF} from "../sources/intuition/terms.js";
 import {encodeCreateAtom, encodeCreateTriple, type MultiVaultReads} from "./multivault.js";
 import type {PreparedCall} from "./types.js";
@@ -60,6 +61,17 @@ export type CategoryDeps = {
     /** Compounds allowed with their reason (`domains.proposal.json`); a space passes only here. */
     compounds: ReadonlyMap<string, string>;
 };
+
+/**
+ * `isCategory` from a tree read with `readDomainTree`: a label is a category when it climbs to the
+ * root along edges that carry a position. Read the tree with the index's attestor, so a category
+ * somebody else filed does not count as one here either.
+ */
+export function isCategoryIn(
+    tree: Pick<DomainTree, "pathToRoot">,
+): (label: string) => Promise<boolean> {
+    return async (label) => tree.pathToRoot(label).found;
+}
 
 /**
  * Lowercase, accents stripped, inner whitespace collapsed to one space. Applied before anything is
