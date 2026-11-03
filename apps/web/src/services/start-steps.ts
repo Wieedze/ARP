@@ -107,9 +107,8 @@ export function stepsFor(profile: StartProfile, signals: StartSignals): StartSte
                 {
                     id: "add",
                     title: "Not listed yet? Add it",
+                    // The form answers in place (task 53c); the step itself observes nothing.
                     done: null,
-                    link: {to: "/register", label: "Add a tool"},
-                    hint: "Adding a tool needs a wallet with tTRUST for now.",
                 },
             ];
     }

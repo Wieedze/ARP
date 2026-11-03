@@ -1,5 +1,5 @@
 import {fireEvent, screen, waitFor} from "@testing-library/react";
-import {describe, expect, it} from "vitest";
+import {describe, expect, it, vi} from "vitest";
 
 import {StartPage} from "./StartPage";
 import {ActivityLog} from "../services/activity-log";
@@ -55,6 +55,30 @@ describe("the start page", () => {
         fireEvent.change(field, {target: {value: "github.com/Wieedze/ARP"}});
         fireEvent.click(screen.getByRole("button", {name: "Find"}));
         await waitFor(() => expect(screen.queryByLabelText("Repository URL")).toBeNull());
+    });
+
+    it("lists a tool through the sponsor and links to its page", async () => {
+        const fetch = vi.fn(
+            async () =>
+                new Response(JSON.stringify({atomId: "0xabc", created: true, transactions: []}), {
+                    status: 200,
+                }),
+        );
+        vi.stubGlobal("fetch", fetch);
+        try {
+            renderWithProviders(<StartPage feed={feedWith([]).feed} />, at("tool"));
+            fireEvent.change(await screen.findByLabelText("Tool or skill URL"), {
+                target: {value: "https://github.com/Wieedze/ARP?skill=arp"},
+            });
+            fireEvent.click(screen.getByRole("button", {name: "Add it"}));
+            expect(await screen.findByText("Listed.")).toBeTruthy();
+            expect(screen.getByRole("link", {name: "Open its page →"}).getAttribute("href")).toBe(
+                "/atom/0xabc",
+            );
+            expect(fetch).toHaveBeenCalledTimes(1);
+        } finally {
+            vi.unstubAllGlobals();
+        }
     });
 
     it("says so when the path does not exist", async () => {
