@@ -110,4 +110,4 @@ merges.
   rename.
 - `curveId` stays optional (ADR `0119`).
 - Delegations signed against the v1 testnet enforcer still run v1 and their operators must re-sign;
-  the mainnet copy still runs v1 and a redeploy needs the user's confirmation.
+  the mainnet copy still runs v1; the user decided 2026-11-03 that nothing goes on mainnet for now.

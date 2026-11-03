@@ -43,8 +43,8 @@ directory.
   `0118`). The old copy `0x7BB5…0F8E` is kept as `trustStakeCapEnforcerV1` in
   `data/deployments/13579.json`; a delegation signed against it still runs v1 and can still be
   griefed, so its operator must re-sign.
-- **The mainnet copy `0x9992…5f34` still runs v1.** It has never fired. A redeploy there needs the
-  user's confirmation.
+- **The mainnet copy `0x9992…5f34` still runs v1.** It has never fired. Not redeployed: the user
+  decided 2026-11-03 that nothing goes on mainnet for now (a dry run was simulated, nothing sent).
 - **The signature status `verified` is now `self-signed`**, labelled "Signed, author not checked"
   on screen (ADR `0119` addendum).
 - **Local state lives under `~/.arp`** (or `ARP_HOME`): the sponsor ledger, the node ledger and the
@@ -387,7 +387,7 @@ Ethereum, IPFS, Claude, Obsidian and Bitcoin.
 | what | where | severity |
 | --- | --- | --- |
 | **Delegations signed against the v1 `TrustStakeCapEnforcer` on 13579 (`0x7BB5…0F8E`) still run v1 and can still be griefed** — its state was keyed by `delegationHash` alone | ADR `0118`, `data/deployments/13579.json` `trustStakeCapEnforcerV1` | live for each such delegation until its operator re-signs against `0x19e0…79Bc` |
-| **The mainnet `TrustStakeCapEnforcer` `0x9992…5f34` runs v1** | `data/deployments/1155.json`, ADR `0118` | latent — it has never fired. A redeploy needs the user's confirmation |
+| **The mainnet `TrustStakeCapEnforcer` `0x9992…5f34` runs v1** | `data/deployments/1155.json`, ADR `0118` | latent — it has never fired. **Not redeployed, the user's decision 2026-11-03: nothing on mainnet for now** (simulated only) |
 | **`docs/09:35`'s "194 `use` edges" does not reproduce and never did.** `scripts/measure/predicate-edges.ts` on mainnet 1155 gives **158 `use`, 185 `uses`, 120 `has category`** — identical on 2026-10-16 and 2026-10-27. Two of that trio's three figures reproduce; the 194 is the outlier | quoted at `docs/08:125`, `docs/09:35`, `docs/12:100`, `docs/13:85`, `docs/tasks/08:78`, `docs/tasks/23:49` — six sites, `docs/tasks/28` | **it is not a stale figure, it is a different query.** Intuition has no deletion, so 194 → 158 cannot be a graph that shrank, and reading the pair as a time series is a claim the data forbids. `docs/tasks/17` briefly made exactly that mistake while correcting a different one |
 | `apps/web/vitest.config.ts` is in neither tsconfig project | task 21 | measured at zero errors to add; same shape as task 18, missed by it |
 | `bun run format:check` fails on about 286 tracked files. **Deliberately not formatted**: a repo-wide format would conflict with other sessions' open branches. both generated `INDEX.md` files are among them, re-dirtied by every `build-claude-index.ts` run | task 60 | a gate that always fails is not a gate; citing it green would be a `claims.md` check-4 error. Run `bun run format:check` for today's count |
