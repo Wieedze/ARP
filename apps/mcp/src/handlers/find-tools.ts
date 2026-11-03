@@ -11,7 +11,7 @@ import {
   toolsInDomain,
 } from '@arp-protocol/core';
 
-import { GRAPHQL, DOMAIN_ROOT, DOMAIN_ATTESTOR } from '../config.js';
+import { GRAPHQL, DOMAIN_ROOT, DOMAIN_ATTESTORS } from '../config.js';
 import { type JsonRpcId, fail, text } from '../rpc.js';
 import {
   type CatalogueEntry,
@@ -159,7 +159,7 @@ export async function findTools(id: JsonRpcId, args: Record<string, unknown>) {
   //
   // The attestor is a property of the SERVER, not of the request. Anybody who wants a different
   // index runs a server with a different `ARP_DOMAIN_ATTESTOR`. Nobody changes it per call.
-  const attestor = DOMAIN_ATTESTOR;
+  const attestor = DOMAIN_ATTESTORS;
   if (domainRaw !== undefined && attestor === undefined) {
     // Refuses rather than falling back to the unfiltered graph. The fallback is the failure this
     // whole design exists to prevent, and it would have been silent: a search returning more rows
@@ -168,7 +168,7 @@ export async function findTools(id: JsonRpcId, args: Record<string, unknown>) {
       id,
       -32603,
       'this server has no domain attestor configured, so it cannot answer a domain search. ' +
-        'Set ARP_DOMAIN_ATTESTOR (or AGENT_ADDRESS) to the address whose filings are the index. ' +
+        'Set ARP_DOMAIN_ATTESTOR to the address or addresses (comma-separated) whose filings are the index. ' +
         'Reading the hierarchy unfiltered would return every filing anybody has ever published ' +
         'under it, which is not an index.',
     );
@@ -352,7 +352,7 @@ export async function findTools(id: JsonRpcId, args: Record<string, unknown>) {
           // Whose tree was walked: "the domain tree" is a reading, not a fact about the chain, and
           // an address in the wrong case returns an empty tree, which this makes diagnosable
           // instead of looking like "this domain has nothing in it".
-          domain_attestor: attestor,
+          domain_attestors: attestor,
           // How many filings under this domain this attestor does not back, and were left out.
           // Reported even when zero, so a reader never wonders whether the question was asked.
           tags_from_others_hidden: domainScope.othersHidden,

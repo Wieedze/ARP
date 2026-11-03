@@ -2,7 +2,7 @@ import {describe, expect, it, vi} from "vitest";
 import type {AtomStanding} from "@arp-protocol/core";
 
 import {atomStandingQueryKey, atomStandingQueryOptions, isAtomId} from "../use-atom-standing";
-import {DOMAIN_ATTESTOR} from "../../services/domain-filter";
+import {DOMAIN_ATTESTORS} from "../../services/domain-filter";
 
 const ATOM = `0x${"ab".repeat(32)}`;
 
@@ -93,7 +93,7 @@ describe("atomStandingQueryOptions", () => {
         // if ARP had filed it there.
         expect(fetcher).toHaveBeenCalledWith(ATOM, {
             graphqlUrl: TESTNET.graphqlUrl,
-            attestor: DOMAIN_ATTESTOR,
+            attestor: DOMAIN_ATTESTORS,
         });
     });
 

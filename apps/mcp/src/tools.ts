@@ -99,7 +99,7 @@ export const TOOLS = [
             'for the broad word: narrower kinds are found under it, so `payment` also finds a ' +
             'tool filed under `card`. `domains_walked` in the answer shows which. Omit it to list ' +
             'everything. The registry read is fixed by the server, not by the caller ' +
-            '(`domain_attestor` names it).',
+            '(`domain_attestors` names them).',
         },
         order: {
           type: 'string',

@@ -267,7 +267,7 @@ ARP_TRANSPORT          stdio, for an MCP client
 INTUITION_GRAPHQL_URL  override the graph
 INTUITION_RPC_URL      override the RPC
 ARP_MULTI_VAULT        override the contract address
-ARP_DOMAIN_ATTESTOR    whose domain tags to read. A property of the server, never a request parameter
+ARP_DOMAIN_ATTESTOR    whose domain tags to read, one address or several comma-separated (default: ARP's two). A property of the server, never a request parameter
 GITHUB_TOKEN           optional. Raises GitHub's 60-requests-an-hour limit on file listings
 ARP_HOME               where the receipt key and the sponsored mode's state live. Default ~/.arp
 ARP_RECEIPT_KEY        a key you manage, instead of the generated one. Never a funded one

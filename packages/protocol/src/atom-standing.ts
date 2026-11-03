@@ -161,7 +161,7 @@ export type AtomStandingConfig = {
      * filter in the wrong case matches nothing — which reads as "ARP backs none of this" rather
      * than as a bad query.
      */
-    attestor?: string;
+    attestor?: string | readonly string[];
     graphqlUrl: string;
     fetch?: FetchLike;
     timeoutMs?: number;
@@ -222,7 +222,12 @@ export async function getAtomStanding(
         limit,
         // An address that cannot hold a position when none is configured: every claim then comes
         // back unbacked, which is the truth rather than a silent pass.
-        attestor: config.attestor ?? "0x0000000000000000000000000000000000000000",
+        attestor:
+            config.attestor === undefined
+                ? ["0x0000000000000000000000000000000000000000"]
+                : typeof config.attestor === "string"
+                  ? [config.attestor]
+                  : [...config.attestor],
     });
 
     const atomRows = Array.isArray(data["atom"]) ? data["atom"] : [];
