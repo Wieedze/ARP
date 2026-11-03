@@ -89,6 +89,10 @@ aligned; `docs/21`, `22`, `24` and `26` left as they are. Two fixes: `docs/23` n
 Desktop extension (ADR `0110`) postdates it and that `@arp-protocol/cli` is not on npm yet;
 `docs/25`'s opening table no longer presents `DomainScopeEnforcer` as live.
 
+Then `docs/02`: a header table — the storage principle holds; the components, the SDK shape and
+the integration sections describe the deleted `ModuleRegistry` and a feedback path ADR `0048`
+rejected. Post-mortem so far: `.claude/learning/51-the-prose-pass-against-the-positioning.md`.
+
 ## Why this is a task and not a tidy-up
 
 The repo has **43 ADRs, 18 post-mortems, 31 task files and 16 docs**, almost all written by me in a
