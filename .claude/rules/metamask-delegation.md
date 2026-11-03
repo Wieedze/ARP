@@ -112,26 +112,39 @@ specification below is kept as the record of task 02b.
 - Tests: 15-20 minimum, matching Bear Trap's density. See test list in `docs/06_BEAR_TRAP_REFERENCE.md` "Concrete ARP enforcer specifications".
 - 100% line + branch coverage on the contract.
 
-### `TrustStakeCapEnforcer` (Task 02b)
+### `TrustStakeCapEnforcer` (Task 02b, v2 since ADR `0118`)
 
-- `_terms` encodes `(uint256 cap, uint256 periodSeconds)` — the cap value and the rolling period length.
-- `_executionCalldata` decodes to the stake action, including the amount.
-- State, keyed by `_delegationHash`:
+The spec below is the shipped v2 (`contracts/src/enforcers/TrustStakeCapEnforcer.sol`). The v1 it
+replaced keyed state by `_delegationHash` alone, so anyone could call the public `beforeHook` with a
+victim's hash and fill its counter (ADR `0118`). The mainnet copy still runs v1.
+
+- `_terms` encodes `(uint256 cap, uint256 periodSeconds)` — the cap value and the window length.
+- `_executionCalldata` decodes to the stake action. Only its native `value` is read.
+- State, keyed by **`(msg.sender, _delegationHash)`** — the caller is the DelegationManager on a
+  real redemption, and a direct caller only ever writes its own slot. This is the pattern MetaMask's
+  own stateful enforcers use (`LimitedCallsEnforcer`, `NativeTokenPeriodTransferEnforcer`):
 
   ```solidity
-  mapping(bytes32 delegationHash => uint256 cumulativeStake) private _cumulativeStake;
-  mapping(bytes32 delegationHash => uint256 windowStartTime) private _windowStart;
+  mapping(address delegationManager => mapping(bytes32 delegationHash => uint256 cumulative)) private _cumulativeSpend;
+  mapping(address delegationManager => mapping(bytes32 delegationHash => uint256 windowStart)) private _windowStart;
   ```
 
 - Validation order in `beforeHook`:
   1. Reject batch/try modes.
-  2. Decode `_terms` to get `cap` and `period`.
-  3. Decode `_executionCalldata` to get the attempted stake amount.
-  4. If `block.timestamp - _windowStart[_delegationHash] >= period`, reset cumulative and update window start.
-  5. Compute `proposed = _cumulativeStake[_delegationHash] + attempted`.
-  6. If `proposed > cap`, revert with `StakeExceedsCap(proposed, cap)`.
-  7. Update `_cumulativeStake[_delegationHash] = proposed`.
-- Emit `event StakeCapChecked(bytes32 indexed delegationHash, uint256 cumulativeAmount, uint256 cap)`.
+  2. Decode `_terms` to get `cap` and `period`; revert `InvalidPeriod()` on a zero period.
+  3. Decode `_executionCalldata` to get the attempted `value`.
+  4. If `block.timestamp - _windowStart[msg.sender][_delegationHash] >= period`, reset cumulative
+     and start the window now.
+  5. Compute `proposed = _cumulativeSpend[msg.sender][_delegationHash] + value`.
+  6. If `proposed > cap`, revert with `CapExceeded(proposed, cap)`.
+  7. Update `_cumulativeSpend[msg.sender][_delegationHash] = proposed`.
+- **The window is fixed, not rolling.** It opens at the first spend after the previous window
+  expired and lasts `periodSeconds`; it does not slide with each spend. So about **2 × `cap`** can
+  pass inside one `periodSeconds` interval that straddles a boundary. Choose `cap` with that in mind.
+- Emit `event StakeCapChecked(address indexed delegationManager, bytes32 indexed delegationHash, uint256 newCumulative, uint256 cap)`.
+  Anyone can emit it by calling the hook directly, so a log is evidence of a redemption only when
+  `delegationManager` is the real DelegationManager.
+- `getState(address delegationManager, bytes32 delegationHash)` reads one caller's slot.
 - `beforeAllHook`, `afterHook`, `afterAllHook` are no-op.
 - Document the `block.timestamp` miner-manipulation tolerance (~15 s) in NatSpec — non-issue at our period scale (days) but worth recording.
 - Tests: 15-20 minimum including window expiration, exact-cap, fuzz over caps/amounts/timings. See `docs/06_BEAR_TRAP_REFERENCE.md`.

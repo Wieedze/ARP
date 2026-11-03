@@ -35,7 +35,7 @@ DelegationManager.
 
 - the full loop: create the triple, deposit, caveats enforcing, every revert path
 - `DomainScopeEnforcer` **actually gating** — it works there, because `ModuleRegistry` is deployed
-- `TrustStakeCapEnforcer` bounding a rolling period
+- `TrustStakeCapEnforcer` bounding a fixed window (ADR `0118`: not rolling)
 - the connector surface; a protocol does not care which chain
 - discovery, once the agents have registration files
 - reading a tool's reputation
