@@ -107,7 +107,12 @@ export function skillRefFromUrl(url: string): SkillRef | null {
     const skill = parsed.searchParams.get("skill");
     if (skill === null || skill.length === 0) return null;
 
-    const [owner, repo] = parsed.pathname.replace(/^\/+/, "").replace(/\/+$/, "").split("/");
+    // `owner/repo.git` is the clone URL; the raw-file host 404s on it, so it is the repository name.
+    const [owner, repo] = parsed.pathname
+        .replace(/^\/+/, "")
+        .replace(/\/+$/, "")
+        .replace(/\.git$/, "")
+        .split("/");
     if (owner === undefined || repo === undefined) return null;
     if (owner.length === 0 || repo.length === 0) return null;
 

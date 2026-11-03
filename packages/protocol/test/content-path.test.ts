@@ -45,6 +45,12 @@ describe("skillRefFromUrl", () => {
         ).toEqual({repo: "magentosh/superpowers", skill: "product-photography"});
     });
 
+    it("names the repository, not the clone URL, when the URL ends in .git", () => {
+        expect(
+            skillRefFromUrl("https://github.com/obra/superpowers.git?skill=brainstorming"),
+        ).toEqual({repo: "obra/superpowers", skill: "brainstorming"});
+    });
+
     it("accepts the host-only form the catalogue stores", () => {
         expect(skillRefFromUrl("github.com/obra/superpowers?skill=brainstorming")).toEqual({
             repo: "obra/superpowers",

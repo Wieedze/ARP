@@ -23,6 +23,10 @@ describe("normaliseToolUrl", () => {
         ["HTTPS://GitHub.COM/crytic/slither", "https://github.com/crytic/slither"],
         ["https://github.com:443/crytic/slither", "https://github.com/crytic/slither"],
         ["http://github.com:80/crytic/slither", "https://github.com/crytic/slither"],
+        ["http://github.com:443/crytic/slither", "https://github.com/crytic/slither"],
+        ["https://github.com./crytic/slither", "https://github.com/crytic/slither"],
+        ["https://github.com/crytic/slither.git", "https://github.com/crytic/slither"],
+        ["github.com/crytic/slither.git/", "https://github.com/crytic/slither"],
     ];
 
     it.each(SPELLINGS)("%s -> %s", (input, expected) => {
