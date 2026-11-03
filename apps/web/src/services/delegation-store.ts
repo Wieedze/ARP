@@ -1,16 +1,9 @@
 import {type Delegation} from "@metamask/smart-accounts-kit";
-import {type Address} from "viem";
+import {isAddress, isHex, type Address} from "viem";
 
 /**
- * The signed delegations this browser holds, one list per Smart Account.
- *
- * **It held one.** `v2` stored a single `compose` delegation per Smart Account and `set` overwrote
- * it, so signing a second delegation dropped the first from the only place that remembered it —
- * while the first stayed valid on chain, redeemable by its delegate, and now impossible to revoke
- * from this page. A list is the fix: `/account` shows one row per delegation and each can be revoked.
- *
- * A `v2` blob is read once, carried into the list and removed, so nobody signed before this change
- * loses a row.
+ * The signed delegations this browser holds, one list per Smart Account, so `/account` can show
+ * and revoke each one. A legacy `v2` single-delegation blob is carried into the list and removed.
  *
  * Storage is injected so the logic is testable without a DOM, and every access is wrapped: a
  * private window or blocked site data throws on access, and the page must still render.
@@ -31,6 +24,18 @@ function v2Key(smartAccount: Address): string {
     return `${V2_PREFIX}.${smartAccount.toLowerCase()}`;
 }
 
+/** One caveat as the framework signs it: an enforcer address, and hex terms and args. */
+function isCaveat(value: unknown): boolean {
+    if (typeof value !== "object" || value === null) return false;
+    const caveat = value as Record<string, unknown>; // An object, checked above.
+    return (
+        typeof caveat.enforcer === "string" &&
+        isAddress(caveat.enforcer, {strict: false}) &&
+        isHex(caveat.terms) &&
+        isHex(caveat.args)
+    );
+}
+
 function isStored(value: unknown): value is StoredDelegation {
     if (typeof value !== "object" || value === null) return false;
     const entry = value as Record<string, unknown>; // An object, checked above.
@@ -42,7 +47,8 @@ function isStored(value: unknown): value is StoredDelegation {
         typeof d.delegate === "string" &&
         typeof d.delegator === "string" &&
         typeof d.signature === "string" &&
-        Array.isArray(d.caveats)
+        Array.isArray(d.caveats) &&
+        d.caveats.every(isCaveat)
     );
 }
 
@@ -88,11 +94,13 @@ export function readStoredDelegations(
     if (legacy.length > 0) {
         const known = new Set(list.map((entry) => entry.delegation.signature));
         list = [...list, ...legacy.filter((entry) => !known.has(entry.delegation.signature))];
-        writeList(storage, smartAccount, list);
+        // A read never throws: if storage refuses the migrated list, the v2 key stays, and the
+        // next read carries it again.
         try {
+            writeList(storage, smartAccount, list);
             storage.removeItem(v2Key(smartAccount));
         } catch {
-            // The list now holds it; a v2 key that cannot be removed is read and deduplicated again.
+            // The list returned below still holds the legacy entry for this render.
         }
     }
     return [...list].sort((a, b) => b.signedAt - a.signedAt);
