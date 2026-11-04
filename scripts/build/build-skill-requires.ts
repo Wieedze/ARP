@@ -2,7 +2,7 @@
  *
  *      bun run scripts/build/build-skill-requires.ts
  *
- *  Task 56. Reads `data/measurements/skill-requires-2026-11-04T0804.json`, writes
+ *  Task 56. Reads `data/measurements/skill-requires-2026-11-04T1046.json`, writes
  *  `data/catalogue/skill-requires.json`, keyed by the skill atom's label like `skill-facts.json`.
  *  Only skills that declare a CLI, run a command or mention a login get an entry, and `read` lists
  *  every skill whose file was read, so "nothing found in its file" and "file not read" stay two
@@ -11,7 +11,7 @@
  */
 import {writeFileSync} from "node:fs";
 
-import measured from "../../data/measurements/skill-requires-2026-11-04T0804.json";
+import measured from "../../data/measurements/skill-requires-2026-11-04T1046.json";
 
 type Row = {
     repo: string;

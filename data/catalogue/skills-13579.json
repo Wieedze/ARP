@@ -8,9 +8,9 @@
   "attestor": "0x906f3A52ec089f8D4E9127F91C6bE5Ae0d18f91f",
   "recordedAt": "2026-10-29T12:30:21.574Z",
   "counts": {
-    "skills": 671,
+    "skills": 673,
     "tagged": 601,
-    "untagged": 70,
+    "untagged": 72,
     "notTaggedButClassifiable": 0
   },
   "skills": [
@@ -6057,6 +6057,26 @@
       "skill": "remove-filler-words",
       "url": "https://github.com/clueso-ai/skills?skill=remove-filler-words",
       "atom": "0x6ed4c0e93ea29b18366fbdcfd0fdf4c02b2b8d98c2d5089cf3aab983d32fc06f",
+      "domain": null,
+      "tagTriple": null,
+      "untagged": true,
+      "listedBy": "sponsoring service /list-tool, 2026-11-04 (ADR 0123)"
+    },
+    {
+      "repo": "browser-use/video-use",
+      "skill": "video-use",
+      "url": "https://github.com/browser-use/video-use?skill=video-use",
+      "atom": "0x430806d82bbe2ee0bb1264364d087739ff6287591cd5a7486f267d63abf3a309",
+      "domain": null,
+      "tagTriple": null,
+      "untagged": true,
+      "listedBy": "sponsoring service /list-tool, 2026-11-04 (ADR 0123)"
+    },
+    {
+      "repo": "louisedesadeleer/cut-video",
+      "skill": "cut-video",
+      "url": "https://github.com/louisedesadeleer/cut-video?skill=cut-video",
+      "atom": "0x3c48beece71f4b8c9618c9567ff3424b3914b5d58689bdadf86a30e8512a5a30",
       "domain": null,
       "tagTriple": null,
       "untagged": true,
