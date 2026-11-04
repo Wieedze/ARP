@@ -79,7 +79,8 @@ export const TOOLS = [
       'declares, the commands its instructions run and a login line it mentions. Read `requires` ' +
       'before you pick: a skill that needs a program or an account the person does not have is ' +
       'not the right one, so check for the program first. `file_not_read` means nobody read its ' +
-      'file, so what it needs is unknown. Results come best match first, 25 at a time: when ' +
+      'file, so what it needs is unknown. `not_fetchable` means `arp_get_skill` will refuse it, so ' +
+      'pick another. Results come best match first, 25 at a time: when ' +
       '`next_offset` is not null, pass it as `offset` to see more. If a `domain` matches ' +
       'nothing, `domains_available` lists the words the registry uses. ' +
       '`detail: "full"` adds everything else the registry holds about each result. `id` is what ' +

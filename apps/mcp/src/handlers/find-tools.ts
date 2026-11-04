@@ -61,18 +61,38 @@ const REQUIRES: ReadonlyMap<string, SkillRequires> = new Map(
   ]),
 );
 const READ: ReadonlySet<string> = new Set(skillRequires.read.map(keyOf));
+const NOT_FETCHABLE: ReadonlySet<string> = new Set(skillRequires.not_fetchable.map(keyOf));
+
+export function isNotFetchable(label: string | null): boolean {
+  return label !== null && NOT_FETCHABLE.has(keyOf(label));
+}
+
+// Listing a skill also writes its repository's atom, which then reads as a tool of its own. It came
+// first on "cut video", above the skill it holds and with none of the skill's facts (ADR `0133`).
+const SKILL_REPOSITORIES: ReadonlySet<string> = new Set(
+  [...SKILLS.keys(), ...NOT_FETCHABLE].map((key) => key.split('?skill=')[0] ?? key),
+);
+
+export function isOnlyASkillsRepository(label: string | null, declarations: number | null): boolean {
+  if (label === null || (declarations ?? 0) > 0) return false;
+  const key = keyOf(label);
+  return SKILL_REPOSITORIES.has(key) && !CATALOGUE.has(key);
+}
 
 /**
  * What a skill's own file says it needs, shown before the agent picks it (task 56). Nothing when
  * the file was read and showed nothing, which is not a claim that it needs nothing. `file_not_read`
  * when nobody read it, a skill listed since the last measurement among them (ADR `0132`): the
- * silence that sent 16 agents to a skill whose CLI none of them had.
+ * silence that sent 16 agents to a skill whose CLI none of them had. `not_fetchable` when the
+ * content server refuses it, because its repository holds differing copies (ADR `0133`).
  */
 export function requiresFor(label: string | null): {
   requires?: SkillRequires;
   file_not_read?: true;
+  not_fetchable?: true;
 } {
   if (label === null) return {};
+  if (isNotFetchable(label)) return { not_fetchable: true };
   const key = keyOf(label);
   const hit = REQUIRES.get(key);
   if (hit !== undefined) return { requires: hit };
@@ -307,7 +327,7 @@ export async function findTools(id: JsonRpcId, args: Record<string, unknown>) {
   // order stands. Matching runs on the whole description, so "montage" or "subtitles" finds a
   // skill whose name says neither.
   const described = rows
-    .filter((row) => !isGone(row.label))
+    .filter((row) => !isGone(row.label) && !isOnlyASkillsRepository(row.label, row.declarations))
     .map((row) => ({ row, about: describe(row.label, CATALOGUE, SKILLS) }));
   const matched =
     query === null
@@ -316,8 +336,14 @@ export async function findTools(id: JsonRpcId, args: Record<string, unknown>) {
           .map((entry) => ({ ...entry, ...matchOf(query, entry.about) }))
           .filter((entry) => entry.score > 0)
           .map((entry) => ({ ...entry, rank: rankOf(entry.score, entry.row.declarations ?? 0) }))
-          // A row holding every word comes before one that missed a word, whatever its usage.
-          .sort((a, b) => a.missed - b.missed || b.rank - a.rank);
+          // A skill an agent cannot fetch comes last. Then a row holding every word comes before
+          // one that missed a word, whatever its usage.
+          .sort(
+            (a, b) =>
+              Number(isNotFetchable(a.row.label)) - Number(isNotFetchable(b.row.label)) ||
+              a.missed - b.missed ||
+              b.rank - a.rank,
+          );
   // The same skill copied into several repositories reads as one result in the short answer: one
   // copy stands for the others (`collapseCopies` says which), and `copies` says how many. Five rows of
   // `youtube-thumbnail-design` were five times the tokens for one finding (testnet, 2026-11-02).

@@ -6,11 +6,13 @@
  *  `data/catalogue/skill-requires.json`, keyed by the skill atom's label like `skill-facts.json`.
  *  Only skills that declare a CLI, run a command or mention a login get an entry, and `read` lists
  *  every skill whose file was read, so "nothing found in its file" and "file not read" stay two
- *  answers (ADR `0132`). 141 of the catalogue were left unread (139 not located, 2 found at several
- *  paths with different content), and so is anything listed after this measurement.
+ *  answers (ADR `0132`). Left unread: the skills not located, those found at several paths with
+ *  different content, which the content server refuses and `not_fetchable` lists (ADR `0133`), and
+ *  anything listed after this measurement. The measurement's `counts` holds how many of each.
  */
 import {writeFileSync} from "node:fs";
 
+import layouts from "../../data/measurements/skill-layouts-2026-11-04T1046.json";
 import measured from "../../data/measurements/skill-requires-2026-11-04T1046.json";
 
 type Row = {
@@ -47,6 +49,10 @@ for (const row of (measured as unknown as {rows: Row[]}).rows) {
     };
 }
 
+const notFetchable = layouts.ambiguous
+    .filter((row) => !row.sameContent)
+    .map((row) => `github.com/${row.repo}?skill=${encodeURIComponent(row.skill)}`);
+
 const out = {
     _note:
         "What a skill's own SKILL.md says it needs. Built by scripts/build/build-skill-requires.ts from " +
@@ -57,10 +63,12 @@ const out = {
         "matching login, sign up, API key or access token: a keyword match, so it can name a line " +
         "that says no key is needed. `runs` is what its shell instructions run beyond the common commands, " +
         "at most five: a reading of the text, which can take a stray word for a command. A skill in `read` " +
-        "with no entry showed nothing. A skill not in `read` was not read.",
+        "with no entry showed nothing. A skill not in `read` was not read. `not_fetchable` lists the skills " +
+        "found at several paths with different content, which the content server refuses.",
     requires,
     read,
     about,
+    not_fetchable: notFetchable,
 };
 
 const path = "data/catalogue/skill-requires.json";
