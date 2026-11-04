@@ -410,3 +410,9 @@ two ways:
 
 Decide before the mainnet port. If (1), `/account` has no purpose and goes. If (2), the MCP server
 has to redeem through `delegated.ts`.
+
+## `/list-tool` records what it lists
+
+A skill listed through the sponsoring service reaches the chain but not `data/catalogue/`, so the
+content server answers `unknown-atom` and a search says `file_not_read` until someone re-runs the
+measurements (ADR `0132`). Asked for implicitly by the usage demo, 2026-11-03; not built.

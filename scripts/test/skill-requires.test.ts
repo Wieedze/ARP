@@ -33,7 +33,9 @@ describe("what a SKILL.md says it needs", () => {
     it("reads a declared bin list and the first login it mentions", () => {
         expect(readRequires(LARK)).toEqual({
             cli: ["lark-cli"],
+            runs: [],
             login: {line: 12, text: "Run `lark-cli auth login` first."},
+            description: null,
         });
     });
 
@@ -49,12 +51,71 @@ describe("what a SKILL.md says it needs", () => {
     });
 
     it("claims nothing for a skill that declares nothing and mentions no login", () => {
-        expect(readRequires("---\nname: pdf\n---\n\nFill the form.\n")).toEqual({cli: [], login: null});
+        expect(readRequires("---\nname: pdf\n---\n\nFill the form.\n")).toEqual({
+            cli: [],
+            runs: [],
+            login: null,
+            description: null,
+        });
         // A bare `Bash` names no binary.
         expect(readRequires("---\nallowed-tools: Bash, Read\n---\n").cli).toEqual([]);
     });
 
     it("does not read `logging` or `blogin` as a login", () => {
         expect(readRequires("---\nname: x\n---\nSet up logging.\nblogin\n").login).toBeNull();
+    });
+
+    it("reads a command only the instructions name, as web-to-markdown does", () => {
+        const markdown =
+            "---\nname: web-to-markdown\n---\n" +
+            "3) Ensure it is installed:\n   - Run: `command -v web2md`\n" +
+            "   - Then `web2md '<url>' --out ./page.md`, and check with `ls -la <path>`.\n";
+        expect(readRequires(markdown).runs).toEqual(["web2md"]);
+    });
+
+    it("reads shell fences and install lines, not other code or the common commands", () => {
+        const markdown = [
+            "---",
+            "name: x",
+            "---",
+            "Install: `npm install -g @scope/tool`, and `render --fast` is a subcommand.",
+            "```bash",
+            "cd out && ffmpeg -i a.mp4 | jq .",
+            "```",
+            "```python",
+            "print('not shell')",
+            "```",
+        ].join("\n");
+        expect(readRequires(markdown).runs).toEqual(["@scope/tool", "ffmpeg", "jq"]);
+    });
+
+    it("does not read a heredoc, an open string or a continued line as a command", () => {
+        const markdown = [
+            "---",
+            "name: x",
+            "---",
+            "```sh",
+            "cat > a.js <<EOF",
+            "const a = 1",
+            "EOF",
+            'tool --prompt "first line',
+            'change the second line"',
+            "tool --long \\",
+            "  argument",
+            "```",
+        ].join("\n");
+        expect(readRequires(markdown).runs).toEqual(["tool"]);
+    });
+
+    it("does not name what a skill declares twice", () => {
+        const markdown = "---\nallowed-tools: Bash(belt *)\n---\n```bash\nbelt login\n```\n";
+        expect(readRequires(markdown).runs).toEqual([]);
+    });
+
+    it("reads a description written inline, quoted or as a block", () => {
+        const of = (line: string) => readRequires(`---\n${line}\n---\n`).description;
+        expect(of("description: Fills forms")).toBe("Fills forms");
+        expect(of('description: "Says: hello"')).toBe("Says: hello");
+        expect(of("description: >-\n  Two\n  lines")).toBe("Two lines");
     });
 });

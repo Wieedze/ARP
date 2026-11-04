@@ -1,8 +1,8 @@
 # ADR index
 
-**Generated** 2026-11-03 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
+**Generated** 2026-11-04 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-127 decisions. Newest last. `choices/README.md` says when to write one.
+128 decisions. Newest last. `choices/README.md` says when to write one.
 
 ## Not accepted
 
@@ -159,3 +159,4 @@ Read these before relying on them.
 | [0129](0129-no-per-agent-deposit-cap-on-testnet.md) | 2026-11-03 | Accepted | No per-agent deposit cap on testnet; the daily budget is the bound |
 | [0130](0130-no-daily-cap-on-new-agents-on-testnet.md) | 2026-11-03 | Accepted | No daily cap on new agents on testnet |
 | [0131](0131-search-ranks-by-words-and-usage.md) | 2026-11-03 | Accepted | A search ranks by the words it matched and by how many agents used each tool |
+| [0132](0132-a-search-says-what-a-skill-needs-from-its-file.md) | 2026-11-04 | Accepted | A search says what a skill needs from its own file, including a skill listed yesterday |

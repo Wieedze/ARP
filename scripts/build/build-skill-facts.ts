@@ -40,6 +40,7 @@ import {readFileSync, writeFileSync} from "node:fs";
 
 import installs from "../../data/measurements/skills-installs-2026-10-29.json";
 import domains from "../../data/measurements/skill-domains-2026-10-29.json";
+import files from "../../data/measurements/skill-requires-2026-11-04T0651.json";
 
 const MEASURED_ON = "2026-10-29";
 
@@ -85,6 +86,17 @@ for (const row of (domains as {rows: DomainRow[]}).rows) {
 }
 
 /**
+ * A skill listed after skills.sh was read has no row above, and an agent then chose it on its name
+ * alone (ADR `0132`). Its own file's description stands in, with no install count.
+ */
+type FileRow = {repo: string; skill: string; status: string; description?: string | null};
+for (const row of (files as unknown as {rows: FileRow[]}).rows) {
+    const label = `github.com/${row.repo}?skill=${encodeURIComponent(row.skill)}`;
+    if (facts[label] !== undefined || row.status !== "read" || !row.description) continue;
+    facts[label] = {description: shorten(row.description), installs: null};
+}
+
+/**
  * ARP's own skills, which skills.sh does not list. Read from the SKILL.md in this repository, so
  * the description is the author's own and a rewrite of the file is a rebuild away. No install
  * count: that number is skills.sh's, and there is none.
@@ -104,10 +116,10 @@ for (const own of FIRST_PARTY) {
 const out = {
     _note:
         "What a skill atom cannot carry: a description and an install count. Built by " +
-        "scripts/build/build-skill-facts.ts from two committed measurements and ARP's own SKILL.md — do not edit by hand. " +
+        "scripts/build/build-skill-facts.ts from three committed measurements and ARP's own SKILL.md — do not edit by hand. " +
         "Keyed by the atom's label, which is its normalised URL without the scheme.",
     _measuredOn: MEASURED_ON,
-    _source: "skills.sh, read from the JSON-LD its own pages publish for machines",
+    _source: "skills.sh, read from the JSON-LD its own pages publish for machines; for a skill listed after that, its own SKILL.md",
     _limits:
         "A dated copy, not a live read: skills.sh sends no CORS header, so a browser cannot fetch " +
         "it, and a description is cut at 200 characters — the full text is on the detail page, " +

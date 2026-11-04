@@ -15,8 +15,21 @@ describe('what a skill needs, in a search result', () => {
     ).toEqual(['belt']);
   });
 
-  it('adds nothing for a skill whose file showed nothing, or for no label', () => {
-    expect(requiresFor('github.com/nobody/nothing?skill=none')).toEqual({});
+  it('shows a command only the instructions run, for a skill listed after the first reading', () => {
+    expect(
+      requiresFor('github.com/softaworks/agent-toolkit?skill=web-to-markdown').requires?.runs,
+    ).toEqual(['web2md']);
+  });
+
+  it('tells a file nobody read from a file that showed nothing', () => {
+    expect(requiresFor('github.com/nobody/nothing?skill=none')).toEqual({ file_not_read: true });
+    expect(requiresFor('github.com/vercel-labs/skills?skill=find-skills')).not.toHaveProperty(
+      'file_not_read',
+    );
+  });
+
+  it('adds nothing for a tool that is not a skill, or for no label', () => {
+    expect(requiresFor('github.com/nobody/nothing')).toEqual({});
     expect(requiresFor(null)).toEqual({});
   });
 });

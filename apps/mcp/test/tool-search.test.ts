@@ -1,9 +1,11 @@
 import { describe as group, expect, it } from 'vitest';
 
 import {
+  cachedFor,
   collapseCopies,
   describe,
   keyOf,
+  matchOf,
   pageOf,
   rankOf,
   relevance,
@@ -180,5 +182,65 @@ group('rankOf', () => {
   it('keeps the words when nobody declared anything', () => {
     expect(rankOf(3, 0)).toBe(3);
     expect(rankOf(0, 50)).toBe(0);
+  });
+});
+
+group('matchOf', () => {
+  const page = {
+    name: 'webpage-to-markdown',
+    purpose: null,
+    text: 'webpage-to-markdown converts a public url into clean markdown',
+    installs: null,
+  };
+
+  it('finds two words side by side written as one', () => {
+    expect(matchOf('web page', page)).toEqual({ score: 4, missed: 0 });
+  });
+
+  it('lets one word of three go missing, and says so', () => {
+    expect(matchOf('markdown url invoice', page)).toEqual({ score: 3, missed: 1 });
+  });
+
+  it('never lets a word of two go missing', () => {
+    expect(matchOf('markdown invoice', page).score).toBe(0);
+  });
+
+  it('never lets two words of four go missing', () => {
+    expect(matchOf('markdown url invoice receipt', page).score).toBe(0);
+  });
+});
+
+group('cachedFor', () => {
+  it('reads once inside the window and again after it', async () => {
+    let clock = 0;
+    let reads = 0;
+    const read = cachedFor(
+      100,
+      async (key) => {
+        reads += 1;
+        return key;
+      },
+      () => clock,
+    );
+    await Promise.all([read('a'), read('a')]);
+    clock = 99;
+    await read('a');
+    expect(reads).toBe(1);
+    await read('b');
+    expect(reads).toBe(2);
+    clock = 100;
+    await read('a');
+    expect(reads).toBe(3);
+  });
+
+  it('forgets a read that failed', async () => {
+    let reads = 0;
+    const read = cachedFor(100, async () => {
+      reads += 1;
+      if (reads === 1) throw new Error('down');
+      return 'up';
+    });
+    await expect(read('a')).rejects.toThrow('down');
+    await expect(read('a')).resolves.toBe('up');
   });
 });

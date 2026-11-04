@@ -1,9 +1,10 @@
-/** What each catalogued skill says it needs: a declared CLI, and the first login it mentions.
+/** What each catalogued skill says it needs: a declared CLI, the commands its instructions run, and
+ *  the first login it mentions. Its own description too, for a skill skills.sh was not read for.
  *
  *      bun run scripts/measure/skill-requires.ts
  *
  *  Task 56. Reads each located SKILL.md from `raw.githubusercontent.com`, at the paths the layout
- *  measurement found (`data/measurements/skill-layouts-2026-10-29T2200.json`, located plus
+ *  measurement found (`data/measurements/skill-layouts-2026-11-04T0650.json`, located plus
  *  ambiguous-with-the-same-content, first path), and ARP's own from this repository. Writes one
  *  dated file under `data/measurements/` and prints the counts. No credential, nothing signed.
  *
@@ -13,7 +14,7 @@
  */
 import {readFileSync, writeFileSync} from "node:fs";
 
-import layouts from "../../data/measurements/skill-layouts-2026-10-29T2200.json";
+import layouts from "../../data/measurements/skill-layouts-2026-11-04T0650.json";
 import {readRequires, type SkillRequires} from "../helpers/skill-requires.js";
 
 type Located = {repo: string; skill: string; path: string};
@@ -56,8 +57,9 @@ const counts = {
         (row) => !row.sameContent,
     ).length,
     declaresCli: readRows.filter((row) => row.cli.length > 0).length,
+    runsCommand: readRows.filter((row) => row.runs.length > 0).length,
     mentionsLogin: readRows.filter((row) => row.login !== null).length,
-    either: readRows.filter((row) => row.cli.length > 0 || row.login !== null).length,
+    either: readRows.filter((row) => row.cli.length > 0 || row.runs.length > 0 || row.login !== null).length,
 };
 
 const measuredAt = new Date().toISOString();
@@ -70,9 +72,9 @@ writeFileSync(
     `${JSON.stringify(
         {
             measuredAt,
-            source: "raw.githubusercontent.com/{repo}/HEAD/{path}, paths from skill-layouts-2026-10-29T2200.json",
+            source: "raw.githubusercontent.com/{repo}/HEAD/{path}, paths from skill-layouts-2026-11-04T0650.json",
             question:
-                "Which skills declare a CLI in their frontmatter, and which mention a login, a key or a sign-up in their body.",
+                "Which skills declare a CLI in their frontmatter, which commands their instructions run, and which mention a login, a key or a sign-up in their body.",
             counts,
             rows,
         },

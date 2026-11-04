@@ -17,12 +17,13 @@ import { type JsonRpcId, fail, text } from '../rpc.js';
 import {
   type CatalogueEntry,
   type SkillFact,
+  cachedFor,
   collapseCopies,
   describe,
   keyOf,
+  matchOf,
   pageOf,
   rankOf,
-  relevance,
 } from '../tool-search.js';
 
 // Both casts name the shape of a committed JSON file this repo generates; a field that went
@@ -48,7 +49,7 @@ export function isGone(label: string | null): boolean {
   return label !== null && GONE.has(keyOf(label));
 }
 
-type SkillRequires = { cli?: string[]; mentions_login?: string };
+type SkillRequires = { cli?: string[]; runs?: string[]; mentions_login?: string };
 
 // The shape of a committed file `scripts/build/build-skill-requires.ts` generates (task 56).
 const REQUIRES: ReadonlyMap<string, SkillRequires> = new Map(
@@ -57,14 +58,23 @@ const REQUIRES: ReadonlyMap<string, SkillRequires> = new Map(
     fact,
   ]),
 );
+const READ: ReadonlySet<string> = new Set(skillRequires.read.map(keyOf));
 
 /**
- * What a skill's own file says it needs, shown before the agent picks it (task 56). Absent when
- * the file declared and mentioned nothing, or was not read; never a claim that it needs nothing.
+ * What a skill's own file says it needs, shown before the agent picks it (task 56). Nothing when
+ * the file was read and showed nothing, which is not a claim that it needs nothing. `file_not_read`
+ * when nobody read it, a skill listed since the last measurement among them (ADR `0132`): the
+ * silence that sent 16 agents to a skill whose CLI none of them had.
  */
-export function requiresFor(label: string | null): { requires?: SkillRequires } {
-  const hit = label === null ? undefined : REQUIRES.get(keyOf(label));
-  return hit === undefined ? {} : { requires: hit };
+export function requiresFor(label: string | null): {
+  requires?: SkillRequires;
+  file_not_read?: true;
+} {
+  if (label === null) return {};
+  const key = keyOf(label);
+  const hit = REQUIRES.get(key);
+  if (hit !== undefined) return { requires: hit };
+  return key.includes('?skill=') && !READ.has(key) ? { file_not_read: true } : {};
 }
 
 /**
@@ -121,6 +131,22 @@ function seedFor(label: string | null): { title: string | null; purpose: string 
  * itself, quoted and dated, never written by us. Absent for a tool we have not catalogued, which
  * is most of the graph — a caller gets `null` and the URL, not a guess.
  */
+
+type ListingKey = { order: ToolListingOrder; curveId?: number };
+
+// A search read the whole registry from the graph every time, 1.3 s at best (testnet 13579,
+// 2026-11-04), and an agent searches two or three times to pick one skill. A minute is how long a
+// declaration can take to move the order within one session (ADR `0132`).
+const LISTINGS_TTL_MS = 60_000;
+const readListings = cachedFor(LISTINGS_TTL_MS, (key) => {
+  // The key is the `JSON.stringify` of a `ListingKey`, two lines below its only caller.
+  const { order, curveId } = JSON.parse(key) as ListingKey;
+  const curve = curveId === undefined ? {} : { curveId };
+  return Promise.all([
+    listTools({ graphqlUrl: GRAPHQL, order, ...curve }),
+    listRegisteredTools({ graphqlUrl: GRAPHQL, ...curve }),
+  ]);
+});
 
 export async function findTools(id: JsonRpcId, args: Record<string, unknown>) {
   const orderRaw = args['order'] ?? 'priced-edges';
@@ -220,17 +246,11 @@ export async function findTools(id: JsonRpcId, args: Record<string, unknown>) {
     };
   }
 
-  const [page, registered] = await Promise.all([
-    listTools({
-      graphqlUrl: GRAPHQL,
-      order: orderRaw as ToolListingOrder,
-      ...(curveRaw === undefined ? {} : { curveId: curveRaw }),
-    }),
-    listRegisteredTools({
-      graphqlUrl: GRAPHQL,
-      ...(curveRaw === undefined ? {} : { curveId: curveRaw }),
-    }),
-  ]);
+  const listingKey: ListingKey = {
+    order: orderRaw as ToolListingOrder,
+    ...(curveRaw === undefined ? {} : { curveId: curveRaw }),
+  };
+  const [page, registered] = await readListings(JSON.stringify(listingKey));
 
   const declared = new Set(page.tools.map((tool) => tool.atomId.toLowerCase()));
   const registeredRows = registered.tools
@@ -291,10 +311,11 @@ export async function findTools(id: JsonRpcId, args: Record<string, unknown>) {
     query === null
       ? described
       : described
-          .map((entry) => ({ ...entry, score: relevance(query, entry.about) }))
+          .map((entry) => ({ ...entry, ...matchOf(query, entry.about) }))
           .filter((entry) => entry.score > 0)
           .map((entry) => ({ ...entry, rank: rankOf(entry.score, entry.row.declarations ?? 0) }))
-          .sort((a, b) => b.rank - a.rank);
+          // A row holding every word comes before one that missed a word, whatever its usage.
+          .sort((a, b) => a.missed - b.missed || b.rank - a.rank);
   // The same skill copied into several repositories reads as one result in the short answer: one
   // copy stands for the others (`collapseCopies` says which), and `copies` says how many. Five rows of
   // `youtube-thumbnail-design` were five times the tokens for one finding (testnet, 2026-11-02).

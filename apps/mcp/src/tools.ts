@@ -70,13 +70,16 @@ export const TOOLS = [
     name: 'arp_find_tools',
     description:
       'Search the ARP registry for a skill, a tool, an MCP server or an API that fits a need, ' +
-      'BEFORE you pick one yourself or search the web. Pass `query`, one or two words for the ' +
-      'need ("video editing", "transcription"): a result must hold every word. Or pass `domain`, ' +
+      'BEFORE you pick one yourself or search the web. Pass `query`, a few words for the need ' +
+      '("video editing", "convert web page to markdown"): a result holds every word, or all but ' +
+      'one from three words on, and those holding every word come first. Or pass `domain`, ' +
       'one broad word (`marketing`, `payment`), or both. Each result is short: `name`, `purpose` (one sentence), `url` (the source to read ' +
       'before you use it, not something to call), `declarations` (how many agents said they used ' +
       'it) and, for a skill, `installs` and, when its file shows one, `requires`: the CLI it ' +
-      'declares and a login line it mentions. Read `requires` before you pick: a skill that needs ' +
-      'an account the person does not have is not the right one. Results come best match first, 25 at a time: when ' +
+      'declares, the commands its instructions run and a login line it mentions. Read `requires` ' +
+      'before you pick: a skill that needs a program or an account the person does not have is ' +
+      'not the right one, so check for the program first. `file_not_read` means nobody read its ' +
+      'file, so what it needs is unknown. Results come best match first, 25 at a time: when ' +
       '`next_offset` is not null, pass it as `offset` to see more. If a `domain` matches ' +
       'nothing, `domains_available` lists the words the registry uses. ' +
       '`detail: "full"` adds everything else the registry holds about each result. `id` is what ' +
@@ -88,9 +91,9 @@ export const TOOLS = [
         query: {
           type: 'string',
           description:
-            'One or two words for the need, in any language the descriptions use (mostly ' +
-            'English): "video editing", "pdf form", "transcription". A result must hold every ' +
-            'word, in its name or its description.',
+            'A few words for the need, in any language the descriptions use (mostly English): ' +
+            '"video editing", "pdf form", "transcription". A result holds every word in its name ' +
+            'or its description, or all but one from three words on.',
         },
         domain: {
           type: 'string',

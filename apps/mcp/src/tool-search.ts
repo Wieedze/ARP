@@ -75,27 +75,48 @@ const FILLER = new Set(
   'a an and any app apps are can do for from help how i in is it me my of on or the to tool tools use what with you your'.split(' '),
 );
 
+/** At the start of a word: "form" is not in "platform", "performance" or "Terraform". */
+function atWordStart(word: string): RegExp {
+  return new RegExp(`(^|[^a-z0-9])${rootOf(word).replace(/[.+#-]/g, '\\$&')}`);
+}
+
+/** Which of `words` a text holds. Two words side by side also match as one: "web page", "webpage". */
+function wordsHeld(words: readonly string[], text: string): boolean[] {
+  const held = words.map((word) => atWordStart(word).test(text));
+  for (let at = 0; at + 1 < words.length; at += 1) {
+    if (atWordStart(`${words[at]}${words[at + 1]}`).test(text)) held[at] = held[at + 1] = true;
+  }
+  return held;
+}
+
 /**
- * How well a tool's text answers `query`. Every word of the query must be found, or the answer is
- * zero: "card payments" used to return ten tools that only said "card" (orbit cards, marketplace
- * cards), and an agent read all ten before answering from memory (task 51). A word found counts
+ * How well a tool's text answers `query`, and how many of its words it missed. A word found counts
  * one, two when it is in the name. It orders search results and is never returned: it measures
  * words matched, not the tool.
+ *
+ * One or two words must all be found, or the score is zero: "card payments" used to return ten
+ * tools that only said "card" (orbit cards, marketplace cards), and an agent read all ten before
+ * answering from memory (task 51). From three words on, one may be missing: "convert web page to
+ * markdown" found nothing because no description says "page" beside the other three (ADR `0132`).
  */
-export function relevance(query: string, described: Described): number {
-  // At the start of a word: "form" is not in "platform", "performance" or "Terraform".
+export function matchOf(query: string, described: Described): { score: number; missed: number } {
   const words = query
     .toLowerCase()
     .split(/[^a-z0-9+#.-]+/)
-    .filter((word) => word.length >= 2 && !FILLER.has(word))
-    .map((word) => new RegExp(`(^|[^a-z0-9])${rootOf(word).replace(/[.+#-]/g, '\\$&')}`));
-  const name = described.name.toLowerCase();
+    .filter((word) => word.length >= 2 && !FILLER.has(word));
+  const inText = wordsHeld(words, described.text);
+  const inName = wordsHeld(words, described.name.toLowerCase());
+  const missed = inText.filter((held) => !held).length;
+  if (missed > (words.length >= 3 ? 1 : 0)) return { score: 0, missed };
   let score = 0;
-  for (const word of words) {
-    if (!word.test(described.text)) return 0;
-    score += word.test(name) ? 2 : 1;
-  }
-  return score;
+  words.forEach((_, at) => {
+    if (inText[at]) score += inName[at] ? 2 : 1;
+  });
+  return { score, missed };
+}
+
+export function relevance(query: string, described: Described): number {
+  return matchOf(query, described).score;
 }
 
 /**
@@ -132,6 +153,26 @@ export function collapseCopies<T extends { about: Described }>(
     else kept.copies += 1;
   }
   return [...groups.values()];
+}
+
+/**
+ * `load` kept per key for `ttlMs`. The promise is what is kept, so two calls at once make one
+ * read, and a read that failed is forgotten rather than served for the rest of the window.
+ */
+export function cachedFor<T>(
+  ttlMs: number,
+  load: (key: string) => Promise<T>,
+  now: () => number = Date.now,
+): (key: string) => Promise<T> {
+  const entries = new Map<string, { at: number; value: Promise<T> }>();
+  return (key) => {
+    const hit = entries.get(key);
+    if (hit !== undefined && now() - hit.at < ttlMs) return hit.value;
+    const value = load(key);
+    entries.set(key, { at: now(), value });
+    value.catch(() => entries.delete(key));
+    return value;
+  };
 }
 
 /** One page of `entries`, the total, and where the next page starts (`null` on the last). */
