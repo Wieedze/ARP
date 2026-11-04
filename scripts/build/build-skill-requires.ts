@@ -2,7 +2,7 @@
  *
  *      bun run scripts/build/build-skill-requires.ts
  *
- *  Task 56. Reads `data/measurements/skill-requires-2026-11-04T0651.json`, writes
+ *  Task 56. Reads `data/measurements/skill-requires-2026-11-04T0804.json`, writes
  *  `data/catalogue/skill-requires.json`, keyed by the skill atom's label like `skill-facts.json`.
  *  Only skills that declare a CLI, run a command or mention a login get an entry, and `read` lists
  *  every skill whose file was read, so "nothing found in its file" and "file not read" stay two
@@ -11,7 +11,7 @@
  */
 import {writeFileSync} from "node:fs";
 
-import measured from "../../data/measurements/skill-requires-2026-11-04T0651.json";
+import measured from "../../data/measurements/skill-requires-2026-11-04T0804.json";
 
 type Row = {
     repo: string;
@@ -20,6 +20,7 @@ type Row = {
     cli?: string[];
     runs?: string[];
     login?: {line: number; text: string} | null;
+    description?: string | null;
 };
 
 // A file can name a dozen; an agent choosing needs to see that it runs something, not the list.
@@ -27,10 +28,14 @@ const RUNS_SHOWN = 5;
 
 const requires: Record<string, {cli?: string[]; runs?: string[]; mentions_login?: string}> = {};
 const read: string[] = [];
+// Whole, for matching a search: `skill-facts.json` cuts at 200 characters for the web's bundle, and
+// "remove silences" found nothing when the words sat past the cut (ADR `0132`).
+const about: Record<string, string> = {};
 for (const row of (measured as unknown as {rows: Row[]}).rows) {
     if (row.status !== "read") continue;
     const label = `github.com/${row.repo}?skill=${encodeURIComponent(row.skill)}`;
     read.push(label);
+    if (row.description) about[label] = row.description;
     const cli = row.cli ?? [];
     const runs = (row.runs ?? []).slice(0, RUNS_SHOWN);
     const login = row.login ?? null;
@@ -55,6 +60,7 @@ const out = {
         "with no entry showed nothing. A skill not in `read` was not read.",
     requires,
     read,
+    about,
 };
 
 const path = "data/catalogue/skill-requires.json";

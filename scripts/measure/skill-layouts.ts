@@ -138,10 +138,13 @@ for (const row of skills) {
   // silent failure this measurement exists to prevent. `data/measurements/skill-layouts-2026-10-29.json`
   // is that first run; the correction is in the later file.
   const exact = inRepo.filter((path) => directoryOf(path) === row.skill);
-  const folded =
+  const named =
     exact.length > 0
       ? exact
       : inRepo.filter((path) => directoryOf(path).toLowerCase() === row.skill.toLowerCase());
+  // A repository that is one skill: the root file, as `resolveContentPath` serves it (ADR `0132`).
+  const atRoot = row.repo.split('/')[1]?.toLowerCase() === row.skill.toLowerCase();
+  const folded = named.length === 0 && atRoot ? inRepo.filter((path) => path === 'SKILL.md') : named;
 
   const only = folded[0];
   if (folded.length === 0) {

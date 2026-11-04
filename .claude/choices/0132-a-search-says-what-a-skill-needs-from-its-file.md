@@ -32,6 +32,12 @@ What each agent had been shown for that skill, and for the two others listed tha
 - **Search**: from three words on, one may be missing, and a row holding every word always comes
   first. One or two words must all be found, so task 51's "card payments" still answers nothing (ADR
   `0111` stands). Two words side by side also match as one: "web page" finds "webpage".
+- **A search matches a skill's whole description**, from its file where it was read. The 200-character
+  cut stays in `skill-facts.json`, for the web's bundle.
+- **A SKILL.md at a repository's root resolves when the repository carries the skill's name**, under
+  the same exact-or-case-folded rule as a directory. `browser-use/video-use` and
+  `louisedesadeleer/cut-video` could not be listed without it. Their whole repository is then the
+  skill's directory, inside the existing file and size caps.
 - **The listing read is kept 60 s per process.** A search read the registry from the graph each
   time. The first search of a session still pays it.
 

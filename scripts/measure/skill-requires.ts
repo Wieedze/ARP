@@ -4,7 +4,7 @@
  *      bun run scripts/measure/skill-requires.ts
  *
  *  Task 56. Reads each located SKILL.md from `raw.githubusercontent.com`, at the paths the layout
- *  measurement found (`data/measurements/skill-layouts-2026-11-04T0650.json`, located plus
+ *  measurement found (`data/measurements/skill-layouts-2026-11-04T0803.json`, located plus
  *  ambiguous-with-the-same-content, first path), and ARP's own from this repository. Writes one
  *  dated file under `data/measurements/` and prints the counts. No credential, nothing signed.
  *
@@ -14,7 +14,7 @@
  */
 import {readFileSync, writeFileSync} from "node:fs";
 
-import layouts from "../../data/measurements/skill-layouts-2026-11-04T0650.json";
+import layouts from "../../data/measurements/skill-layouts-2026-11-04T0803.json";
 import {readRequires, type SkillRequires} from "../helpers/skill-requires.js";
 
 type Located = {repo: string; skill: string; path: string};
@@ -72,7 +72,7 @@ writeFileSync(
     `${JSON.stringify(
         {
             measuredAt,
-            source: "raw.githubusercontent.com/{repo}/HEAD/{path}, paths from skill-layouts-2026-11-04T0650.json",
+            source: "raw.githubusercontent.com/{repo}/HEAD/{path}, paths from skill-layouts-2026-11-04T0803.json",
             question:
                 "Which skills declare a CLI in their frontmatter, which commands their instructions run, and which mention a login, a key or a sign-up in their body.",
             counts,

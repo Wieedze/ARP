@@ -96,10 +96,13 @@ export async function serveSkillBundle(atomId: string, config: BundleServeConfig
     if (resolved.status === "ambiguous") return {status: "ambiguous", ref, paths: resolved.paths};
     if (!isSafeRelativePath(resolved.path)) return {status: "unsafe-path", ref, path: resolved.path};
 
-    const dir = resolved.path.slice(0, resolved.path.lastIndexOf("/"));
+    // A SKILL.md at the root makes the whole repository the skill's directory; the caps below hold.
+    const slash = resolved.path.lastIndexOf("/");
+    const dir = slash === -1 ? "" : resolved.path.slice(0, slash);
+    const prefix = slash === -1 ? "" : `${dir}/`;
     const members = listing
-        .filter((file) => file.path.startsWith(`${dir}/`))
-        .map((file) => ({repoPath: file.path, path: file.path.slice(dir.length + 1)}));
+        .filter((file) => file.path.startsWith(prefix))
+        .map((file) => ({repoPath: file.path, path: file.path.slice(prefix.length)}));
     const maxFiles = config.maxFiles ?? DEFAULT_MAX_FILES;
     if (members.length > maxFiles) {
         return {status: "too-many-files", ref, path: dir, files: members.length, cap: maxFiles};

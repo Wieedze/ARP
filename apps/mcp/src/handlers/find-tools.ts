@@ -34,10 +34,12 @@ const CATALOGUE: ReadonlyMap<string, CatalogueEntry> = new Map(
     tool,
   ]),
 );
+// The file's whole description where it was read: a search matches all of it (ADR `0132`).
+const ABOUT = skillRequires.about as Record<string, string>;
 const SKILLS: ReadonlyMap<string, SkillFact> = new Map(
   Object.entries(skillFacts.facts as Record<string, SkillFact>).map(([label, fact]) => [
     keyOf(label),
-    fact,
+    { ...fact, description: ABOUT[label] ?? fact.description },
   ]),
 );
 

@@ -156,7 +156,15 @@ export function resolveContentPath(
             : files.filter((file) => directoryOf(file.path).toLowerCase() === folded);
 
     const first = candidates[0];
-    if (first === undefined) return {status: "absent"};
+    if (first === undefined) {
+        // A repository that is one skill keeps its SKILL.md at the root, so no directory carries
+        // the name: `browser-use/video-use`. The repository's own name stands in for it, under the
+        // same exact-or-case-folded rule as a directory (ADR `0132`).
+        const name = ref.repo.split("/")[1] ?? "";
+        const root = files.find((file) => file.path === "SKILL.md");
+        if (root === undefined || name.toLowerCase() !== folded) return {status: "absent"};
+        return {status: "resolved", path: root.path, alsoAt: [], exact: name === ref.skill};
+    }
     if (candidates.length === 1) {
         return {status: "resolved", path: first.path, alsoAt: [], exact: exact.length > 0};
     }

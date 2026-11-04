@@ -112,6 +112,10 @@ describe("what a SKILL.md says it needs", () => {
         expect(readRequires(markdown).runs).toEqual([]);
     });
 
+    it("reads one name on a requires line", () => {
+        expect(readRequires("---\nmetadata:\n  requires: clueso-mcp\n---\n").cli).toEqual(["clueso-mcp"]);
+    });
+
     it("reads a description written inline, quoted or as a block", () => {
         const of = (line: string) => readRequires(`---\n${line}\n---\n`).description;
         expect(of("description: Fills forms")).toBe("Fills forms");

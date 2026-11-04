@@ -8,9 +8,9 @@
   "attestor": "0x906f3A52ec089f8D4E9127F91C6bE5Ae0d18f91f",
   "recordedAt": "2026-10-29T12:30:21.574Z",
   "counts": {
-    "skills": 665,
+    "skills": 671,
     "tagged": 601,
-    "untagged": 64,
+    "untagged": 70,
     "notTaggedButClassifiable": 0
   },
   "skills": [
@@ -6001,6 +6001,66 @@
       "tagTriple": null,
       "untagged": true,
       "listedBy": "sponsoring service /list-tool, 2026-11-03 (ADR 0123)"
+    },
+    {
+      "repo": "WyattBlue/auto-editor",
+      "skill": "auto-editor",
+      "url": "https://github.com/WyattBlue/auto-editor?skill=auto-editor",
+      "atom": "0x7f85e4343561c896a38024c13260e99e82ddf7c66760bb0289631eb3ba0da3f6",
+      "domain": null,
+      "tagTriple": null,
+      "untagged": true,
+      "listedBy": "sponsoring service /list-tool, 2026-11-04 (ADR 0123)"
+    },
+    {
+      "repo": "nateherkai/herk-edit-kit",
+      "skill": "cut-silences",
+      "url": "https://github.com/nateherkai/herk-edit-kit?skill=cut-silences",
+      "atom": "0x1a05bacde0e03b8b862e111696a9d68d89007e3a96d5a3f0f570e5413908d541",
+      "domain": null,
+      "tagTriple": null,
+      "untagged": true,
+      "listedBy": "sponsoring service /list-tool, 2026-11-04 (ADR 0123)"
+    },
+    {
+      "repo": "nateherkai/herk-edit-kit",
+      "skill": "cut-mistakes",
+      "url": "https://github.com/nateherkai/herk-edit-kit?skill=cut-mistakes",
+      "atom": "0x702dde088d0568fe42289661d798bb6ac4fa307c524b5f31e570db6427f059cc",
+      "domain": null,
+      "tagTriple": null,
+      "untagged": true,
+      "listedBy": "sponsoring service /list-tool, 2026-11-04 (ADR 0123)"
+    },
+    {
+      "repo": "affaan-m/ECC",
+      "skill": "video-editing",
+      "url": "https://github.com/affaan-m/ECC?skill=video-editing",
+      "atom": "0x6ae24b9db6ad88f5753919c68cac57e1f58d7d21340f80c2d34ee890076d37aa",
+      "domain": null,
+      "tagTriple": null,
+      "untagged": true,
+      "listedBy": "sponsoring service /list-tool, 2026-11-04 (ADR 0123)"
+    },
+    {
+      "repo": "Melvynx/video-agent-skills",
+      "skill": "short-editing",
+      "url": "https://github.com/Melvynx/video-agent-skills?skill=short-editing",
+      "atom": "0x8d52707810ad0601e117ec74a993c4c8bfb758ee69d20eb5193a956e93ea0275",
+      "domain": null,
+      "tagTriple": null,
+      "untagged": true,
+      "listedBy": "sponsoring service /list-tool, 2026-11-04 (ADR 0123)"
+    },
+    {
+      "repo": "clueso-ai/skills",
+      "skill": "remove-filler-words",
+      "url": "https://github.com/clueso-ai/skills?skill=remove-filler-words",
+      "atom": "0x6ed4c0e93ea29b18366fbdcfd0fdf4c02b2b8d98c2d5089cf3aab983d32fc06f",
+      "domain": null,
+      "tagTriple": null,
+      "untagged": true,
+      "listedBy": "sponsoring service /list-tool, 2026-11-04 (ADR 0123)"
     }
   ]
 }

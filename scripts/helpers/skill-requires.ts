@@ -166,9 +166,15 @@ function commandsRun(body: readonly string[], declared: readonly string[]): stri
     return [...new Set(found)].filter((name) => !COMMON.has(name) && !declared.includes(name));
 }
 
+/** `requires: clueso-mcp`, one name on the line. A block or a list is `bins`' shape, read above. */
+function requiresLine(lines: readonly string[]): string[] {
+    const name = lines.map((line) => /^\s*requires\s*:\s*(\S+)\s*$/.exec(line)?.[1]).find(Boolean);
+    return name === undefined ? [] : [unquote(name)];
+}
+
 export function readRequires(markdown: string): SkillRequires {
     const {lines, bodyStart} = frontmatter(markdown);
-    const cli = [...new Set([...declaredBins(lines), ...bashTools(lines)])];
+    const cli = [...new Set([...declaredBins(lines), ...bashTools(lines), ...requiresLine(lines)])];
     const description = declaredDescription(lines);
     const body = markdown.split("\n");
     const runs = commandsRun(body.slice(bodyStart), cli);

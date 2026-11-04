@@ -187,6 +187,31 @@ describe("resolveContentPath", () => {
     });
 });
 
+describe("resolveContentPath, a SKILL.md at the repository root", () => {
+    const root = [{path: "SKILL.md", sha: "a"}, {path: "helpers/run.py", sha: "b"}];
+
+    it("resolves it when the repository carries the skill's name", () => {
+        expect(resolveContentPath({repo: "browser-use/video-use", skill: "video-use"}, root)).toEqual({
+            status: "resolved",
+            path: "SKILL.md",
+            alsoAt: [],
+            exact: true,
+        });
+    });
+
+    it("never gives a repository's root file to another skill's name", () => {
+        expect(resolveContentPath({repo: "browser-use/video-use", skill: "cut"}, root)).toEqual({
+            status: "absent",
+        });
+    });
+
+    it("prefers a directory of that name over the root", () => {
+        const both = [...root, {path: "skills/video-use/SKILL.md", sha: "c"}];
+        const resolved = resolveContentPath({repo: "browser-use/video-use", skill: "video-use"}, both);
+        expect(resolved).toMatchObject({status: "resolved", path: "skills/video-use/SKILL.md"});
+    });
+});
+
 describe("rawContentUrl", () => {
     it("points at the origin, because ARP hosts nothing", () => {
         expect(
