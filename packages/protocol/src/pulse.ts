@@ -385,7 +385,7 @@ function usualPaths(skill: string): string[] {
 
 /** The file alone, from `raw.githubusercontent.com`, which the hourly limit does not cover. It must name the skill. */
 async function readFileOnly(result: SkillSearchResult, source: PulseSource): Promise<SkillPulse | null> {
-    if (!/^[\w.-]+$/.test(result.skill)) return null;
+    if (!/^[\w.-]+$/.test(result.skill) || /^\.+$/.test(result.skill)) return null;
     const wanted = normaliseName(result.skill);
     for (const path of usualPaths(result.skill)) {
         const markdown = await source.file(result.source, path);
@@ -398,7 +398,8 @@ async function readFileOnly(result: SkillSearchResult, source: PulseSource): Pro
 
 /** Read one search result. Every way it can fail is a status, because "unknown" must stay visible. */
 export async function readPulse(result: SkillSearchResult, source: PulseSource): Promise<SkillPulse> {
-    if (!/^[\w.-]+\/[\w.-]+$/.test(result.source)) return {...result, status: "not_github"};
+    // `.` and `..` would leave the repository: `new URL` normalises them away.
+    if (!/^(?!\.{1,2}\/)[\w.-]+\/(?!\.{1,2}$)[\w.-]+$/.test(result.source)) return {...result, status: "not_github"};
     const listing = await source.listing(result.source);
     if (listing === "rate_limited") return (await readFileOnly(result, source)) ?? {...result, status: "rate_limited"};
     if (listing === "unreachable") return {...result, status: "repository_unreachable"};

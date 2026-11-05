@@ -124,6 +124,7 @@ would stop accepting your receipts.
 ~/.arp/agent-key              the agent's key, mode 0600, created on the first fetch, or by arp line or arp share send
 ~/.arp/agent.json             the agent's id and identity atom, once it is registered
 ~/.arp/receipts.jsonl         every skill served to the agent, with its receipt
+~/.arp/pulse-listings/        the file lists of repositories your searches returned, one file per repository, named by a hash, mode 0700. Read for a day, never deleted by ARP. Safe to delete
 <ARP_SKILLS_DIR>/<name>/**    the skill's files, scripts included, when ARP_SKILLS_DIR is set and you accepted
 .arp/receipts.jsonl           a copy of the receipt for the hook, for each skill you accepted
 ```
@@ -156,7 +157,7 @@ the private directory `skills-cli` in `ARP_HOME`, and two that turn off telemetr
 one argument with no shell. **Your search words reach skills.sh**, and `npx` reaches the npm registry.
 `ARP_PULSE_SEARCH=off` stops it, and it never runs in `desktop` or `sponsored`, which keep an agent key on
 the machine. An agent can always pass the command's text as `search_output`, which runs nothing. Either way
-the tool asks `api.github.com` for each repository's listing and metadata, using `GITHUB_TOKEN` when set.
+the tool asks `api.github.com` for each repository's listing and, with `GITHUB_TOKEN`, also its figures.
 
 **And two that are not fixed, which you should know about before you install this.** Both exist for
 the same reason and ADR `0045` is explicit about it: ARP can **verify** another agent's endpoint and
@@ -297,7 +298,7 @@ INTUITION_GRAPHQL_URL  override the graph
 INTUITION_RPC_URL      override the RPC
 ARP_MULTI_VAULT        override the contract address
 ARP_DOMAIN_ATTESTOR    whose domain tags to read, one address or several comma-separated (default: ARP's two). A property of the server, never a request parameter
-GITHUB_TOKEN           optional. Raises GitHub's 60-requests-an-hour limit on file listings
+GITHUB_TOKEN           optional. Keeps the whole window and the repository's figures, and raises GitHub's 60-requests-an-hour limit on file listings
 ARP_HOME               where the receipt key and the sponsored mode's state live. Default ~/.arp
 ARP_RECEIPT_KEY        a key you manage, instead of the generated one. Never a funded one
 ARP_NO_RECEIPTS        set to 1 to run with no key at all

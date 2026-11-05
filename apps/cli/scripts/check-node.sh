@@ -30,7 +30,7 @@ clean npm install --silent --no-audit --no-fund --prefix "$work/install" "$work/
 arp="$work/install/node_modules/.bin/arp"
 [[ -x "$arp" ]] || fail "no arp binary after install"
 pass "installed"
-[[ "$(ls "$work/install/node_modules" | wc -l)" -le 2 ]] || fail "the package pulled dependencies: $(ls "$work/install/node_modules" | tr "\n" " ")"
+[[ "$(ls "$work/install/node_modules" | wc -l)" -eq 1 ]] || fail "the package pulled dependencies: $(ls "$work/install/node_modules" | tr "\n" " ")"
 pass "no dependency installed (ADR 0145)"
 
 clean "$arp" --help | grep -q '^usage' || fail "--help"

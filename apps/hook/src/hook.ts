@@ -67,7 +67,8 @@
  * `$ARP_SESSION_LOG`, or `.arp/session.jsonl` beside the working directory. One JSON object per
  * line, appended, never rewritten — a log a later step reads is a log nothing may edit.
  */
-import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { appendOwn } from './append.ts';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { dirname, join } from 'node:path';
 
@@ -301,8 +302,9 @@ try {
   // no content, but it is a record of what an agent did and is not the operator's to publish by
   // accident. Only our own directory: a path chosen through ARP_SESSION_LOG is left alone.
   const ignore = join(own, '.gitignore');
-  if (dirname(path) === own && !existsSync(ignore)) writeFileSync(ignore, '*\n');
-  appendFileSync(path, `${JSON.stringify(line)}\n`);
+  // `wx` will not follow a link planted there.
+  if (dirname(path) === own && !existsSync(ignore)) writeFileSync(ignore, '*\n', { flag: 'wx' });
+  appendOwn(path, `${JSON.stringify(line)}\n`);
 } catch {
   // Same reason as above. A session must not fail because a record could not be kept.
 }

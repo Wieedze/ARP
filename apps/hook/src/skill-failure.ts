@@ -1,4 +1,5 @@
-import { appendFileSync, existsSync, mkdirSync, readFileSync } from 'node:fs';
+import { appendOwn } from './append.ts';
+import { existsSync, mkdirSync, readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { dirname, join } from 'node:path';
 
@@ -148,7 +149,7 @@ export function recordSearch(call: ToolCall, cwd: string): void {
   try {
     const path = searchesPath(cwd);
     mkdirSync(dirname(path), { recursive: true });
-    appendFileSync(path, `${JSON.stringify({ session: call.session, domain, skills })}\n`);
+    appendOwn(path, `${JSON.stringify({ session: call.session, domain, skills })}\n`);
   } catch {
     // A session must not fail because a record could not be kept.
   }
@@ -243,7 +244,7 @@ export function appendFailure(line: FailureLine): boolean {
   const key = `"session":${JSON.stringify(line.session)},"skill":${JSON.stringify(line.skill)},`;
   if (seen.split('\n').some((row) => row.includes(key) && row.includes(`"reason":"${line.reason}"`))) return false;
   mkdirSync(dirname(path), { recursive: true });
-  appendFileSync(path, `${JSON.stringify(line)}\n`);
+  appendOwn(path, `${JSON.stringify(line)}\n`);
   return true;
 }
 

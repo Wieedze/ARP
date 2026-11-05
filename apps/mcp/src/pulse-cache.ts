@@ -19,19 +19,26 @@ type Stored = {
 const isStored = (value: unknown): value is Stored => {
   if (typeof value !== 'object' || value === null) return false;
   const row = value as Record<string, unknown>; // each field is checked next
+  const isFile = (file: unknown): boolean => {
+    if (typeof file !== 'object' || file === null) return false;
+    const entry = file as Record<string, unknown>; // each field is checked next
+    return typeof entry['path'] === 'string' && typeof entry['sha'] === 'string' && typeof entry['size'] === 'number';
+  };
   return (
     typeof row['readAt'] === 'string' &&
     typeof row['rootTreeId'] === 'string' &&
     Array.isArray(row['files']) &&
+    row['files'].every(isFile) &&
     Array.isArray(row['trees']) &&
     typeof row['truncated'] === 'boolean'
   );
 };
 
 /**
- * Each repository's file list on disk for a day, with the date it was read, shown beside any result it served.
- * A list a day old can miss a new file, and the files themselves are always read fresh. It holds what GitHub
- * publishes and nothing of the person's.
+ * Each repository's file list on disk, read for a day and replaced when asked again, never deleted. The date it
+ * was read is shown beside any result it served. A list a day old can miss a new file, and the files themselves
+ * are always read fresh. It holds what GitHub publishes. With a scoped token it could hold a private repository's
+ * file names, which is one more reason `docs/22` says to give a token no scopes.
  */
 export function diskListingCache(directory: string, now: () => number = Date.now): ListingCache {
   const pathOf = (repo: string) => join(directory, `${createHash('sha256').update(repo).digest('hex')}.json`);

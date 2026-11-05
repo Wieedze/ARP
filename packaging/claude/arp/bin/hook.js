@@ -1,7 +1,22 @@
+// ../hook/src/append.ts
+import { closeSync, constants, lstatSync, openSync, writeSync } from "node:fs";
+import { dirname } from "node:path";
+function appendOwn(path, text) {
+  if (lstatSync(dirname(path)).isSymbolicLink())
+    throw new Error(`${dirname(path)} is a symbolic link`);
+  const flags = constants.O_WRONLY | constants.O_APPEND | constants.O_CREAT | (constants.O_NOFOLLOW ?? 0);
+  const fd = openSync(path, flags, 384);
+  try {
+    writeSync(fd, text);
+  } finally {
+    closeSync(fd);
+  }
+}
+
 // ../hook/src/hook.ts
-import { appendFileSync as appendFileSync2, existsSync as existsSync2, mkdirSync as mkdirSync3, readFileSync as readFileSync3, writeFileSync as writeFileSync2 } from "node:fs";
+import { existsSync as existsSync2, mkdirSync as mkdirSync3, readFileSync as readFileSync3, writeFileSync as writeFileSync2 } from "node:fs";
 import { homedir as homedir3 } from "node:os";
-import { dirname as dirname2, join as join4 } from "node:path";
+import { dirname as dirname3, join as join4 } from "node:path";
 // ../../packages/protocol/dist/declare/tool-thing.js
 class InvalidToolUrlError extends Error {
   input;
@@ -673,9 +688,9 @@ function toolCallOf(raw) {
 }
 
 // ../hook/src/skill-failure.ts
-import { appendFileSync, existsSync, mkdirSync as mkdirSync2, readFileSync as readFileSync2 } from "node:fs";
+import { existsSync, mkdirSync as mkdirSync2, readFileSync as readFileSync2 } from "node:fs";
 import { homedir as homedir2 } from "node:os";
-import { dirname, join as join3 } from "node:path";
+import { dirname as dirname2, join as join3 } from "node:path";
 var MISSING_KEY = /\b(api[ _-]?key|access[ _-]?token|credentials?)\b.{0,40}\b(missing|not set|not found|required|invalid|expired)\b|(?<!\bnot )\b(missing|no|invalid|expired)\b.{0,20}\b(api[ _-]?key|access[ _-]?token|credentials?)\b|\b(HTTP|status)(\/[\d.]+| code)?[ :=]*(401|403)\b|\b(401|403) (unauthori[sz]ed|forbidden)\b|\bunauthori[sz]ed\b|not authenticated|not logged in/i;
 var MISSING_KEY_VARIABLE = /\b[A-Z0-9_]*(API_KEY|TOKEN|SECRET)\b.{0,30}\b(not set|missing|required|unset)\b/;
 var MISSING_PROGRAM = /command not found|executable file not found|\bnot installed\b|No module named|spawn \S+ ENOENT|Cannot find module/i;
@@ -757,7 +772,7 @@ function answerOf(response) {
   }
   return null;
 }
-var searchesPath = (cwd) => join3(dirname(process.env["ARP_SESSION_LOG"] ?? join3(cwd, ".arp", "session.jsonl")), "searches.jsonl");
+var searchesPath = (cwd) => join3(dirname2(process.env["ARP_SESSION_LOG"] ?? join3(cwd, ".arp", "session.jsonl")), "searches.jsonl");
 function recordSearch(call, cwd) {
   if (call.session === null)
     return;
@@ -770,8 +785,8 @@ function recordSearch(call, cwd) {
     return;
   try {
     const path = searchesPath(cwd);
-    mkdirSync2(dirname(path), { recursive: true });
-    appendFileSync(path, `${JSON.stringify({ session: call.session, domain, skills })}
+    mkdirSync2(dirname2(path), { recursive: true });
+    appendOwn(path, `${JSON.stringify({ session: call.session, domain, skills })}
 `);
   } catch {}
 }
@@ -842,8 +857,8 @@ function appendFailure(line) {
   if (seen.split(`
 `).some((row) => row.includes(key) && row.includes(`"reason":"${line.reason}"`)))
     return false;
-  mkdirSync2(dirname(path), { recursive: true });
-  appendFileSync(path, `${JSON.stringify(line)}
+  mkdirSync2(dirname2(path), { recursive: true });
+  appendOwn(path, `${JSON.stringify(line)}
 `);
   return true;
 }
@@ -1000,11 +1015,11 @@ var line = {
   response: responseOf(call, classified.outcome)
 };
 try {
-  mkdirSync3(dirname2(path), { recursive: true });
+  mkdirSync3(dirname3(path), { recursive: true });
   const ignore = join4(own, ".gitignore");
-  if (dirname2(path) === own && !existsSync2(ignore))
+  if (dirname3(path) === own && !existsSync2(ignore))
     writeFileSync2(ignore, `*
-`);
-  appendFileSync2(path, `${JSON.stringify(line)}
+`, { flag: "wx" });
+  appendOwn(path, `${JSON.stringify(line)}
 `);
 } catch {}

@@ -104,7 +104,7 @@ export function commandsFor(env: InstallEnv, cliPath: string, capture = false, s
   const fromNpx = /[\\/]_npx[\\/]/.test(cliPath);
   const mcp: McpServer = {
     ...(fromNpx
-      ? { command: 'npx', args: ['-y', `@arp-protocol/cli@${env.version}`, 'mcp'] }
+      ? { command: 'npx', args: ['--prefix', '/', '-y', `@arp-protocol/cli@${env.version}`, 'mcp'] }
       : { command: env.node, args: [cliPath, 'mcp'] }),
     env: sponsored ? SPONSORED_ENV : SERVER_ENV,
   };

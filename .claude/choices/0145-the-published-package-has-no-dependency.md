@@ -8,11 +8,13 @@
 
 The plugin runs `npx -y @arp-protocol/cli@0.0.1 mcp` (ADR `0089`). `npx` installs into `~/.npm/_npx/<hash>`, and an install killed part-way can leave the package there without `node_modules/.bin`, which later runs treat as installed. Other projects report the same symptom and clear the entry by hand ([tortoise #10287](https://github.com/daniel-ospina/tortoise/issues/10287), [termul #1413](https://github.com/gnoviawan/termul/issues/1413)). Our package depended on viem, so the window was long.
 
-Measured 2026-11-05, in a clean container against a local registry, killed at 12 moments from 0.3 s to 5 s, then run again. With viem as a dependency: 6 of 12 stayed broken (Wilson 95%: 25% to 75%), and a clean install took 10 s. With viem in the bundle: 0 of 12 (0% to 24%), and 0.7 s.
+Measured 2026-11-05 by `scripts/measure/npx-kill.sh`, raw output `data/measurements/npx-kill-2026-11-05.jsonl`, in a clean container against a local registry: an install killed at a moment during its own length, then run again. With viem as a dependency, a clean install took 10.6 s, and 8 of 24 stayed broken (Wilson 95%: 19% to 53%). With viem in the bundle, 1.7 s on that run, and 0 of 17 (0% to 18%). A first hand run gave 6 of 12 and 0 of 12, with kills past the end of the short install, so it said less.
 
 ## Decision
 
 `apps/cli`'s build bundles viem, and the package declares no dependency. `npx` and the thin plugin stay, as ADR `0089` decided.
+
+**The launch line carries `--prefix /`.** A red-team pass proved that `npx -y <package>` run from a project executes that project's planted `node_modules/.bin/arp`, and takes its `.npmrc`'s registry. In a clean container both attacks ran without the flag and neither ran with it. The search, the same way, runs with its private home as `cwd` and prefix. Not tested on Windows.
 
 ## Alternatives considered
 

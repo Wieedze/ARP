@@ -3,6 +3,8 @@
     "arp": {
       "command": "npx",
       "args": [
+        "--prefix",
+        "/",
         "-y",
         "@arp-protocol/cli@0.0.1",
         "mcp"

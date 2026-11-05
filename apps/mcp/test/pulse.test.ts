@@ -35,7 +35,13 @@ describe("the search package", () => {
     it("runs pinned, with the query as one argument", () => {
         const {file, args} = searchInvocation('video; rm -rf "$HOME"', "/usr/bin", "/private/cli");
         expect(SKILLS_CLI).toMatch(/^skills@\d+\.\d+\.\d+$/);
-        expect([file, ...args]).toEqual(["npx", "--yes", SKILLS_CLI, "find", 'video; rm -rf "$HOME"']);
+        expect([file, ...args]).toEqual(["npx", "--prefix", "/private/cli", "--yes", SKILLS_CLI, "find", 'video; rm -rf "$HOME"']);
+    });
+
+    it("runs away from the project, so a planted package or .npmrc is not read", () => {
+        const {cwd, args} = searchInvocation("x", "/usr/bin", "/private/cli");
+        expect(cwd).toBe("/private/cli");
+        expect(args.slice(0, 2)).toEqual(["--prefix", "/private/cli"]);
     });
 
     it("hands it no secret, and not the operator's home", () => {

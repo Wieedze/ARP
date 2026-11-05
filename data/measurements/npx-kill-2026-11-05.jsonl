@@ -1,0 +1,67 @@
+{"package":"@arp-protocol/cli@0.0.1","clean_install_ms":1688}
+{"killed_at_s":0.05,"after":"ok"}
+{"killed_at_s":0.1,"after":"ok"}
+{"killed_at_s":0.15,"after":"ok"}
+{"killed_at_s":0.2,"after":"ok"}
+{"killed_at_s":0.25,"after":"ok"}
+{"killed_at_s":0.3,"after":"ok"}
+{"killed_at_s":0.35,"after":"ok"}
+{"killed_at_s":0.4,"after":"ok"}
+{"killed_at_s":0.45,"after":"ok"}
+{"killed_at_s":0.5,"after":"ok"}
+{"killed_at_s":0.55,"after":"ok"}
+{"killed_at_s":0.6,"after":"ok"}
+{"killed_at_s":0.65,"after":"ok"}
+{"killed_at_s":0.7,"after":"ok"}
+{"killed_at_s":0.8,"after":"ok"}
+{"killed_at_s":1,"after":"ok"}
+{"killed_at_s":1.5,"after":"ok"}
+{"killed_at_s":2,"after":"ok"}
+{"killed_at_s":3,"after":"ok"}
+{"killed_at_s":4,"after":"ok"}
+{"killed_at_s":5,"after":"ok"}
+{"killed_at_s":6,"after":"ok"}
+{"killed_at_s":7,"after":"ok"}
+{"killed_at_s":8,"after":"ok"}
+{"package":"@arp-protocol/cli-with-viem-dep@0.0.1","clean_install_ms":10648}
+{"killed_at_s":0.05,"after":"ok"}
+{"killed_at_s":0.1,"after":"ok"}
+{"killed_at_s":0.15,"after":"ok"}
+{"killed_at_s":0.2,"after":"broken"}
+rm: cannot remove '/root/.npm/_npx/a4d92506cdab82a3/node_modules/abitype': Directory not empty
+rm: cannot remove '/root/.npm/_npx/a4d92506cdab82a3/node_modules/ox/_cjs': Directory not empty
+rm: cannot remove '/root/.npm/_npx/a4d92506cdab82a3/node_modules/ox/_esm': Directory not empty
+rm: cannot remove '/root/.npm/_npx/a4d92506cdab82a3/node_modules/viem/_cjs/chains/definitions': Directory not empty
+{"killed_at_s":0.25,"after":"broken"}
+{"killed_at_s":0.3,"after":"ok"}
+{"killed_at_s":0.35,"after":"ok"}
+{"killed_at_s":0.4,"after":"ok"}
+{"killed_at_s":0.45,"after":"ok"}
+{"killed_at_s":0.5,"after":"ok"}
+{"killed_at_s":0.55,"after":"ok"}
+{"killed_at_s":0.6,"after":"ok"}
+{"killed_at_s":0.65,"after":"ok"}
+{"killed_at_s":0.7,"after":"ok"}
+{"killed_at_s":0.8,"after":"ok"}
+{"killed_at_s":1,"after":"ok"}
+{"killed_at_s":1.5,"after":"broken"}
+rm: cannot remove '/root/.npm/_npx/a4d92506cdab82a3/node_modules/viem/_cjs/chains/definitions': Directory not empty
+rm: cannot remove '/root/.npm/_npx/a4d92506cdab82a3/node_modules/viem/_esm/chains/definitions': Directory not empty
+{"killed_at_s":2,"after":"broken"}
+rm: cannot remove '/root/.npm/_npx/a4d92506cdab82a3/node_modules/@arp-protocol/cli-with-viem-dep/dist/chunks': Directory not empty
+{"killed_at_s":3,"after":"ok"}
+{"killed_at_s":4,"after":"broken"}
+rm: cannot remove '/root/.npm/_npx/a4d92506cdab82a3/node_modules/viem/_cjs/chains/definitions': Directory not empty
+rm: cannot remove '/root/.npm/_npx/a4d92506cdab82a3/node_modules/viem/_esm': Directory not empty
+{"killed_at_s":5,"after":"ok"}
+{"killed_at_s":6,"after":"broken"}
+rm: cannot remove '/root/.npm/_npx/a4d92506cdab82a3/node_modules/viem/_cjs/chains/definitions': Directory not empty
+rm: cannot remove '/root/.npm/_npx/a4d92506cdab82a3/node_modules/viem/_types/utils': Directory not empty
+rm: cannot remove '/root/.npm/_npx/a4d92506cdab82a3/node_modules/viem/_types/chains': Directory not empty
+rm: cannot remove '/root/.npm/_npx/a4d92506cdab82a3/node_modules/viem/_esm/chains/definitions': Directory not empty
+{"killed_at_s":7,"after":"broken"}
+rm: cannot remove '/root/.npm/_npx/a4d92506cdab82a3/node_modules/@arp-protocol/cli-with-viem-dep/node_modules/viem/_cjs/chains/definitions': Directory not empty
+rm: cannot remove '/root/.npm/_npx/a4d92506cdab82a3/node_modules/@arp-protocol/cli-with-viem-dep/node_modules/viem/_types/utils/signature': Directory not empty
+rm: cannot remove '/root/.npm/_npx/a4d92506cdab82a3/node_modules/@arp-protocol/cli-with-viem-dep/node_modules/viem/_esm/utils/hash': Directory not empty
+rm: cannot remove '/root/.npm/_npx/a4d92506cdab82a3/node_modules/@arp-protocol/cli-with-viem-dep/node_modules/viem/_esm/chains/definitions': Directory not empty
+{"killed_at_s":8,"after":"broken"}

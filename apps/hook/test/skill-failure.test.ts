@@ -1,10 +1,11 @@
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import { parseLocalFailures, yourFailures } from '@arp-protocol/core';
 import { afterEach, beforeEach, expect, test } from 'bun:test';
 
+import { appendOwn } from '../src/append.ts';
 import { askedBySkill, contextOf, failureReason, lastUserWords, programsOf } from '../src/skill-failure.ts';
 
 const HOOK = join(import.meta.dir, '..', 'src', 'hook.ts');
@@ -236,4 +237,13 @@ test('a cancelled command is not a failure, and a shell call never reaches the s
   expect(failures()).toEqual([]);
   const log = readFileSync(join(dir, 'session.jsonl'), 'utf8').trim().split('\n');
   expect(log).toHaveLength(1);
+});
+
+test('a link planted in a project is not written through', () => {
+  const target = join(dir, 'precious');
+  writeFileSync(target, 'mine\n');
+  const link = join(dir, 'session.jsonl');
+  symlinkSync(target, link);
+  expect(() => appendOwn(link, 'x\n')).toThrow();
+  expect(readFileSync(target, 'utf8')).toBe('mine\n');
 });

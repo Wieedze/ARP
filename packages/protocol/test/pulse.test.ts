@@ -251,6 +251,12 @@ describe("readPulse", () => {
         });
     });
 
+    it("refuses a source that would leave the repository", async () => {
+        for (const source of ["victim/..", "../attacker", "attacker/.", "./x"]) {
+            expect((await readPulse(result(source, "x"), sourceOf({}))).status).toBe("not_github");
+        }
+    });
+
     it("says each failure rather than reading as an empty skill", async () => {
         const failing = (failure: "unreachable" | "rate_limited"): PulseSource => ({
             ...sourceOf({}),
