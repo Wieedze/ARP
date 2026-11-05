@@ -138,3 +138,9 @@ A skill not in a run's view cannot be chosen, so this measures what the agent do
 
 **Depending on one vendor is an open question whatever this shows.** Every search goes through one CLI and one service. The user named the alternative: an index of ARP's own. It is
 not built here.
+
+## 7. GitHub as a second source, written before it ran
+
+`scripts/measure/discovery-bench2.ts`, raw output `data/measurements/discovery-bench2-2026-11-05.json`. The same twelve needs and three phrases as §5. `skills` fuses `npx skills find`, `github` fuses GitHub's code search over files named SKILL.md, `both` fuses the two, and a blind judge rates each top 5 twice from descriptions.
+
+**How it will be read, decided now.** Two questions. Can GitHub stand in if the first source fails? `github` alone is rated against `skills`, and "can stand in" means at least as many needs with a skill doing the job, within one. Does it add anything? `both` counts as better than `skills` only if up on at least 10 of 12 needs. A rating is what a description claims, and code search ranks by text and knows nothing of popularity or trust, so unknown and possibly hostile skills are exactly what it may surface: unread skills and distinct contents are reported beside the rating. Nothing is built from this until the user reads it.
