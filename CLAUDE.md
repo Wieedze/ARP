@@ -162,6 +162,7 @@ ARP/
 │   ├── 27_THE_PASSAGE_TO_MAINNET.md (the state on 1155, what the launch needs, the decisions it waits on)
 │   ├── 28_THE_SIGNAL.md             (how a line is written on chain, with the schema, and what it does to a search)
 │   ├── 30_THE_POSITIONING.md        (what ARP says in public and what it may claim today)
+│   ├── 31_HOW_IT_WORKS.md           (for someone new, with diagrams: the whole picture, one failure, a line, the rank, what runs where)
 │   ├── tasks/                       atomic task files
 │   ├── design/                      design handoffs, one folder per thing designed — its
 │   │                                `README.md` says what each is and whether it is built:

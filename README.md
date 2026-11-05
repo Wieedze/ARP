@@ -112,7 +112,7 @@ ARP/
 | Protocol SDK                      | [`packages/protocol/README.md`](packages/protocol/README.md)                                  |
 | GraphQL layer                     | [`packages/graphql/README.md`](packages/graphql/README.md)                                    |
 | The ARP skill                     | [`skills/arp/SKILL.md`](skills/arp/SKILL.md)                                                  |
-| How it works                      | [The idea](docs/12_THE_IDEA.md) · [The three flows](docs/13_THE_THREE_FLOWS.md)               |
+| How it works                      | [How it works](docs/31_HOW_IT_WORKS.md) · [The idea](docs/12_THE_IDEA.md) · [The three flows](docs/13_THE_THREE_FLOWS.md) |
 | Installing per runtime            | [Installing ARP](docs/23_INSTALLING_ARP.md)                                                   |
 | Roadmap                           | [Roadmap](docs/15_ROADMAP.md)                                                                 |
 
