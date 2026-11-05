@@ -54,18 +54,78 @@ an agent used it in a comparable situation.
 The catalogue stops growing and is not deleted: the site, the existing declarations and the search
 fallback still read it. No mainnet write is part of this task.
 
-## 5. What the first reading measured
+## 5. What was measured
 
-`scripts/measure/pulse-read.ts`, 2026-11-05, on two searches ("video editing", "video editing
-ffmpeg"), raw output `data/measurements/pulse-read-2026-11-05.json`. These searches on this date,
-not skills in general. 180 results: 157 read, 12 not on GitHub, 9 absent, 2 repositories unreachable.
+**The reader.** `scripts/measure/pulse-read.ts`, 2026-11-05, three searches ("video editing", "video
+editing ffmpeg", "cut silences video"), raw output `data/measurements/pulse-read-2026-11-05.json`.
+These searches on this date, not skills in general. 214 results: 188 read, 12 absent, 12 not on GitHub,
+2 repositories unreachable. 5 skills name no key in their own file while a script they run does.
 
-One directory (`d896bd88cedd`) is `ai-video-generation` in several repositories, at figures from
-958.8K installs to 11. Nothing here establishes why, and the pulse states the figures without
-judging them.
+One directory (`d896bd88cedd`) is `ai-video-generation` in several repositories, at figures from 958.8K
+installs to 11. Nothing here establishes why, and the pulse states the figures without judging them.
 
-## 6. What it does not establish
+**The walk on 13579.** `data/measurements/pulse-walk-2026-11-05.jsonl`, by `scripts/demo/pulse-walk.ts`,
+wallets `0x906f…f91f` (agent 13579/6) and `0xE596…1AA1` (agent 13579/2). Same session, same operator:
+these are not independent witnesses, and no third party has declared anything.
+
+| Agent | Skill | Domain | Outcome | What happened |
+| --- | --- | --- | --- | --- |
+| 13579/6 | `agenticluke/claude-skill-video-editing-plus` `video-editing` | video | worked | Its `silencedetect` command with the machine's ffmpeg, then a cut by hand: 16.0 s to 8.0 s |
+| 13579/2 | the same | video | worked | The same command on another clip: 8.0 s to 3.0 s |
+| 13579/6 | `nateherkai/herk-edit-kit` `cut-silences` | video | failed | Its prerequisite is a transcript from a script that stops at line 91 without `ELEVENLABS_API_KEY` |
+
+That file's row for the failure carries a wrong note, corrected by a later row: the script is in the
+repository, and it was read rather than run. The first call of the first walk reverted out of gas; the
+retry passed, and the cause is not established. The tool atoms are not pinned, so a graph reader sees
+`Unknown` as their label; the id still follows from the URL.
+
+**The comparison.** `scripts/measure/pulse-eval.ts`, figures from `scripts/measure/pulse-eval-summary.ts`,
+raw output `data/measurements/pulse-eval-2026-11-05.jsonl`, sonnet, 48 sessions, $2.37. An agent chooses a
+skill for a person who will not pay, sign up or provide a key. **It chooses and runs nothing.**
+
+| Arm and search | n | Chose a skill naming a key | No choice | Saw a declaration | Median turns | Median cost |
+| --- | --- | --- | --- | --- | --- | --- |
+| A, `npx skills find`, free words | 9 | 2 | 0 | 0 | 7 | $0.051 |
+| B, `arp_pulse`, free words | 9 | 0 | 2 | 3 | 4 | $0.044 |
+| A, fixed words "video editing ffmpeg" | 3 | 2 | 1 | 0 | 8 | $0.099 |
+| B, fixed words | 3 | 0 | 0 | 3 | 3 | $0.037 |
+
+What that table can and cannot carry:
+
+- **n is 3 to 9, on three needs, and B's rows use the later code.** It shows a direction, not a rate.
+- **The fixed-words row is a rehearsal of the mechanism.** All 3 runs of B chose the skill two ARP wallets
+  had declared. So a declaration steers a choice, and a false one would steer it just as well. That is
+  what `docs/14` says a declaration is worth.
+- **No chosen skill was run**, except the one in the walk. Choosing a skill that names no key does not
+  show that it works, and naming a key does not show that it needs one.
+- **Free words often miss what is declared.** 6 of B's 9 free-word runs saw no declaration: the search is
+  the bottleneck.
+- **The rows `before` (arm B), `before2` and `after` are in the raw file and are not in the table.** A
+  failed chain read took down 4 of 9 runs in the first, the second predates the last fixes, and the words
+  used in the third never reached a declaration.
+
+## 6. What the reviews changed
+
+- A declared failure lifted a skill to the top of its list, because the order counted declarations. It
+  now counts wallets that said it worked.
+- A filter on `runs` set aside the one skill that had worked, over a shell variable named `end`, and a
+  filter on words flagged a file that says "No track needs an API key". Only a named key, a declared CLI
+  or a script sets a skill aside now; a word match is listed for the agent to check.
+- `intuition-integrator`: someone writing a qualifier first could silence the declarer. A plan given a
+  `declarer` now deposits on it, and the reader counts a position as well as a creator. What stays open is
+  in ADR `0135`.
+
+## 7. Safety of the tests
+
+The comparison allows two commands and an MCP tool, so nothing a search returns can run. One real attempt
+ran a skill's script in `bubblewrap`, with no network and no home directory. The harness's classifier then
+refused a downloaded binary, and that refusal was respected: the other uses are commands typed by hand
+with the machine's ffmpeg.
+
+## 8. What it does not establish
 
 - A mention is not a requirement. `keys`, `paidWords` and `login` are text matches.
 - A figure for installs is skills.sh's, and it is not a count of use.
 - An outcome is one agent's word that it paid to say. ARP gives no verdict (ADR `0049`).
+- Nobody outside ARP has declared anything. This shows the mechanism, not demand.
+- `npx` in Claude Desktop is untested; `search_output` is the path meant for it, also untested there.
