@@ -2,7 +2,15 @@ import { appendFileSync, existsSync, mkdirSync, readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { dirname, join } from 'node:path';
 
-import { inferDomain, readRequires, type UsageReason } from '@arp-protocol/core';
+import {
+  classifySkill,
+  inferDomain,
+  installedFromReceipts,
+  installedFromSkillLock,
+  readRequires,
+  SKILL_DOMAINS,
+  type UsageReason,
+} from '@arp-protocol/core';
 
 import { classifyCall, failureText } from './classify.ts';
 import type { ToolCall } from './payload.ts';
@@ -66,15 +74,8 @@ export function askedBySkill(command: string, markdown: string, directory: strin
 
 const DOMAIN = /^[a-z0-9][a-z0-9-]*$/;
 
-/**
- * The categories under `tool` on testnet 13579, read 2026-11-05. A copy, because a hook has no network:
- * a category added later is simply not matched, and the writer refuses one that does not exist.
- */
-const DOMAINS = [
-  'audio', 'video', 'api', 'method', 'writing', 'collaboration', 'blockchain', 'research', 'database', 'quality',
-  'scraping', 'automation', 'website', 'infrastructure', 'marketing', 'design', 'image', 'document', 'browser',
-  'payment', 'card', 'observability', 'development',
-];
+/** The categories under `tool`: the table's own, as a hook has no network to read the tree. */
+const DOMAINS = [...new Set(SKILL_DOMAINS.map((rule) => rule.domain))];
 
 /** The latest words the person typed in a transcript. Only ever matched against closed words. */
 export function lastUserWords(transcript: string): string {
@@ -99,11 +100,12 @@ export function lastUserWords(transcript: string): string {
 }
 
 /**
- * The context of a failure, in the tree's words, or `null`. First what the person asked for, then what
- * the skill says it is for. Whole words only, so it invents nothing, and the words stay here.
+ * The context of a failure, in the tree's words, or `null`. First what the person asked for, whole
+ * words only, then the table that tags the catalogue, on the skill's name and description. Both are
+ * reproducible and invent nothing, and the person's words stay here.
  */
-export function contextOf(words: string, description: string | null): string | null {
-  return inferDomain(words, DOMAINS) ?? inferDomain(description ?? '', DOMAINS);
+export function contextOf(words: string, skill: string, description: string | null): string | null {
+  return inferDomain(words, DOMAINS) ?? classifySkill(skill.split(':').pop() ?? skill, description ?? '');
 }
 
 /** The JSON text of an MCP answer: Claude Code hands the hook a list of blocks (seen 2026-11-05, 2.1.318). */
@@ -171,6 +173,22 @@ function foundBySearch(cwd: string, session: string, skill: string): { domain: s
   return found;
 }
 
+const readIfThere = (path: string) => (existsSync(path) ? readFileSync(path, 'utf8') : null);
+
+/**
+ * Where this skill was installed from, when this machine says so without doubt: the skills CLI's lock
+ * file, or a receipt. Without it a failure would land on every skill of that name in a search.
+ */
+function installedSource(name: string, cwd: string): string | null {
+  const known = [
+    ...installedFromSkillLock(readIfThere(join(homedir(), '.agents', '.skill-lock.json'))),
+    ...installedFromReceipts(readIfThere(join(arpHome(), 'receipts.jsonl'))),
+    ...installedFromReceipts(readIfThere(join(cwd, '.arp', 'receipts.jsonl'))),
+  ];
+  const sources = new Set(known.filter((entry) => entry.skill === name).map((entry) => entry.source));
+  return sources.size === 1 ? ([...sources][0] ?? null) : null;
+}
+
 /** Skills this session used, the latest first. A missing or half-written log is an empty list. */
 function skillsOfSession(log: string, session: string): { name: string; source: string | null }[] {
   if (!existsSync(log)) return [];
@@ -213,7 +231,7 @@ export type FailureLine = {
   session: string;
   skill: string;
   source: string | null;
-  /** The search's domain in this session, else one the person's words or the skill's description name. */
+  /** The search's domain in this session, else `contextOf`. Absent when neither gives a closed word. */
   domain?: string;
   reason: DetectedReason;
 };
@@ -254,12 +272,12 @@ export function recordSkillFailure(call: ToolCall, cwd: string): void {
 
       const search = foundBySearch(cwd, call.session, skill.name);
       const words = call.transcript !== null && existsSync(call.transcript) ? lastUserWords(readFileSync(call.transcript, 'utf8')) : '';
-      const domain = search?.domain ?? contextOf(words, readRequires(markdown).description);
+      const domain = search?.domain ?? contextOf(words, skill.name, readRequires(markdown).description);
       appendFailure({
         at: new Date().toISOString(),
         session: call.session,
         skill: skill.name,
-        source: skill.source ?? search?.source ?? null,
+        source: skill.source ?? search?.source ?? installedSource(skill.name.split(':').pop() ?? skill.name, cwd),
         ...(domain === null ? {} : { domain }),
         reason,
       });

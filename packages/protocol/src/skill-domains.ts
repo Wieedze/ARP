@@ -1,7 +1,8 @@
 /** Which domain a catalogued skill belongs to, decided by a table rather than by judgement.
  *
- * Read by `measure/skill-domains.ts`, which reports the classification, and by `seed-skill-tags.ts`,
- * which writes it — one table, so the measurement and the writing cannot disagree.
+ * Read by `measure/skill-domains.ts`, which reports the classification, by `seed-skill-tags.ts`,
+ * which writes it, and by the runtime hook, which gives a failure its context (ADR `0140`) — one table,
+ * so none of them can disagree.
  *
  * ## Why a keyword table and not a model
  *
@@ -79,7 +80,7 @@ export const SKILL_DOMAINS: readonly DomainRule[] = [
         // so only the name identifies them. `animation` is a name word: nine of emilkowalski's UI
         // motion skills describe themselves with it and belong to `design`.
         words: ["video", "remotion", "hyperframes", "keyframe", "footage", "youtube"],
-        nameWords: ["render", "caption", "motion", "title", "carousel", "cursor", "frame", "overlay", "shard", "animation", "avatar"],
+        nameWords: ["render", "caption", "motion", "title", "carousel", "cursor", "frame", "overlay", "shard", "animation", "avatar", "clip"],
     },
     {
         domain: "image",
@@ -106,7 +107,8 @@ export const SKILL_DOMAINS: readonly DomainRule[] = [
         // **New, 2026-10-29.** Office formats as objects to read and write — Anthropic's `pptx`,
         // `pdf` and `docx`, and co-authoring. Distinct from `writing`, which is about prose.
         words: ["pptx", "docx", "xlsx", "powerpoint", "spreadsheet", ".potx", "pdf file"],
-        nameWords: ["pdf", "docx", "pptx", "xlsx", "document", "slide"],
+        // `markdown` is a name word: "outputs markdown" appears in prose about anything.
+        nameWords: ["pdf", "docx", "pptx", "xlsx", "document", "slide", "markdown"],
     },
     {
         domain: "scraping",

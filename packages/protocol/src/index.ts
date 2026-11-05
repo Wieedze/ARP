@@ -570,6 +570,7 @@ export {
     type SkillSearchResult,
 } from "./pulse.js";
 export {readRequires, type SkillRequires} from "./skill-requires.js";
+export {classifySkill, SKILL_DOMAINS, type DomainRule} from "./skill-domains.js";
 export {parseLocalFailures, yourFailures, type LocalFailure, type YourFailures} from "./local-failures.js";
 export {
     decideShare,

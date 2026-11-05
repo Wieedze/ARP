@@ -93,8 +93,10 @@ reaches the outbound URL.** `packages/protocol/test/content-serve.test.ts` has a
 .arp/session.jsonl     what the hook recorded, if you wired the hook
 ~/.arp/failures.jsonl  a skill's failures the hook saw, or `arp backfill` read from old transcripts:
                        the skill, its source, the session, the date, a closed reason, and a domain:
-                       the search's, else a category your request or the skill's description names.
-                       Your words are read for that and not kept. Never
+                       the search's, else a category your request names, else the catalogue's keyword
+                       table on the skill's name and description, which can be wrong. The source, with
+                       no search, comes from ~/.agents/.skill-lock.json or a receipt, when only one
+                       source is known for that name. Your words are read for that and not kept. Never
                        the command or its output. Stays on this machine unless you run `arp share on`
 ~/.arp/sharing.json    whether failures may become public lines. Absent means off
 ~/.arp/shared-failures.jsonl  what has been made public: a skill's public URL, `failed`, a closed reason, and a domain if known

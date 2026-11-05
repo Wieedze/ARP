@@ -46,7 +46,8 @@
 - A command with several parts counts if any part is asked for, since the hook cannot tell which part failed.
 - A reason is a text match on the output, so output that merely mentions it can mislabel: `expected status 403, got 200` reads as `missing-key`.
 - A skill that fails with no error, or an error outside the three reasons, leaves no line.
-- A live line may have no source: 0 of 24 `Skill` inputs in this machine's transcripts carry one on 2026-11-05 (`grep -rhoE '"name":"Skill","input":\{[^}]*\}' ~/.claude/projects --include='*.jsonl'`, then count those holding `"source"`). So it matches by name and says so. A namesake in another repository would show the same failure.
+- **A live line's source** comes from the session's log or its search, else from what the machine says without doubt: `~/.agents/.skill-lock.json` or a receipt (ADR `0140`). 0 of 24 `Skill` inputs in this machine's transcripts carry one on 2026-11-05 (`grep -rhoE '"name":"Skill","input":\{[^}]*\}' ~/.claude/projects --include='*.jsonl'`, then count those holding `"source"`), which is why the lock file matters. Two sources for one name stay unknown. With none, the line matches by name and says so, and a namesake in another repository would show the same failure. `arp backfill` does not read the lock file, as what is installed today may not be what ran then, so its lines keep `source: null`.
+- **A line's domain with no search** is a closed word in the person's words, else the catalogue's table on the skill's name and description (`packages/protocol/src/skill-domains.ts`), else none. It is a table, so it can be wrong, and a wrong word goes public if the person shares the line after reading it in `arp share on`. Measured below.
 - Only Claude Code: the other runtimes' payloads wait on task 33i.
 - How often skills fail is not known. The local transcripts are too few to say.
 - **Attribution lasts the whole session, by program:** a skill naming `git` or `gh` takes a later unrelated failure of that program. Stated rather than bounded, for now (ADR `0140`).
@@ -54,6 +55,23 @@
 - Only the first 4000 characters of an error are read, so a reason after them is missed.
 - `bash -c "x"` and `sudo x` are not recognised as asked, and a quoted `a | gh b` counts as `gh`.
 - Two failures at the same instant can write one line twice, found by reading the code and not tested.
+
+### The table's coverage, 2026-11-05
+
+    bun run scripts/measure/skill-context-coverage.ts
+
+Offline, on the table's last step only: a person's words and a search's domain come first and are not counted. Two populations, not added. A fixed sample of 40 distinct names of what each placed was read by hand, and the script prints each verdict.
+
+| Population | Get a domain | Wrong in the sample |
+| --- | --- | --- |
+| The catalogue, whole, name and description | 575 of 671 | 6 of 40 (Wilson 95% 7% to 29%) |
+| `skills@1.7.6 find` on 12 needs chosen by hand, names only | 720 of 1156 | 6 of 40 (Wilson 95% 7% to 29%) |
+
+The second is not the market: the needs lean towards categories the table has, and it has no description where the hook would. Its doubtful names were read from their `SKILL.md`, except `fleet-management` and `list-hygiene-monitor`, whose file was not found and which were judged by their repository (`grafana/skills`, `aaron-he-zhu/aaron-marketing-skills`).
+
+The errors have two causes the table's header already names. A word in prose: `agent-browser` is `video` for "record video", `scaffold-exercises` is `quality` for "pass linting". A name word caught at the start of a longer word: `codex-pet` is `development` for "code", `service-helpagent-coordinate` is `method` for "help". The table was not changed for them, since it also decides tags.
+
+**The move changed four catalogue results**, from `markdown` as a name word: `web-to-markdown` from `browser`, `lark-markdown` from `collaboration`, `markdown-token-optimizer` from `method`, `webpage-to-markdown` from none, all to `document`. Tags already on chain were written by the older table, and no seed was run, so `scripts/verify/audit-skill-tags.ts` can now disagree with them on these.
 
 ## 6. Evidence ladder
 

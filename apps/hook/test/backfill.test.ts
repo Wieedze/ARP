@@ -6,7 +6,7 @@ import { afterEach, beforeEach, expect, test } from 'bun:test';
 
 import { backfill, readTranscript } from '../src/backfill.ts';
 
-const SKILL = 'Base directory for this skill: /s/clip\n\nRun:\n\n```bash\nvidcut --in a.mp4\n```\n';
+const SKILL = 'Base directory for this skill: /s/gadget\n\nRun:\n\n```bash\nvidcut --in a.mp4\n```\n';
 const base = { sessionId: 's1', cwd: '/nowhere', timestamp: '2026-11-01T10:00:00Z' };
 const tool = (id: string, name: string, input: unknown) =>
   JSON.stringify({ ...base, type: 'assistant', message: { content: [{ type: 'tool_use', id, name, input }] } });
@@ -14,13 +14,13 @@ const body = JSON.stringify({ ...base, type: 'user', isMeta: true, message: { co
 const result = (id: string, text: string, isError = true) =>
   JSON.stringify({ ...base, type: 'user', message: { content: [{ type: 'tool_result', tool_use_id: id, is_error: isError, content: text }] } });
 
-const useClip = [tool('a', 'Skill', { skill: 'clip' }), result('a', 'Launching skill: clip', false), body];
+const useClip = [tool('a', 'Skill', { skill: 'gadget' }), result('a', 'Launching skill: gadget', false), body];
 
 test('a failure of a command the skill asks for gives its closed reason', () => {
   const lines = [...useClip, tool('b', 'Bash', { command: 'vidcut --in private.mp4' }), result('b', 'Exit code 127\nvidcut: command not found')];
   expect(readTranscript(lines.join('\n'), 'f')).toEqual({
     uses: 1,
-    failures: [{ at: base.timestamp, session: 's1', skill: 'clip', source: null, reason: 'missing-program' }],
+    failures: [{ at: base.timestamp, session: 's1', skill: 'gadget', source: null, reason: 'missing-program' }],
   });
 });
 
@@ -38,7 +38,7 @@ test('a skill opened by slash command counts, and a broken line stops nothing', 
   const lines = ['{broken tool_use', body, tool('b', 'Bash', { command: 'vidcut' }), result('b', 'vidcut: command not found')];
   const read = readTranscript(lines.join('\n'), 'f');
   expect(read.uses).toBe(1);
-  expect(read.failures[0]?.skill).toBe('clip');
+  expect(read.failures[0]?.skill).toBe('gadget');
 });
 
 test('the context comes from what the person asked before the failure', () => {
@@ -52,22 +52,22 @@ test('a Skill call that failed does not claim the next skill loaded', () => {
     tool('g', 'Skill', { skill: 'ghost' }), result('g', 'Unknown skill: ghost'),
     body, tool('b', 'Bash', { command: 'vidcut' }), result('b', 'vidcut: command not found'),
   ];
-  expect(readTranscript(lines.join('\n'), 'f').failures[0]?.skill).toBe('clip');
+  expect(readTranscript(lines.join('\n'), 'f').failures[0]?.skill).toBe('gadget');
 });
 
 test('two Skill calls in one message each keep their own text', () => {
   const other = JSON.stringify({ ...base, type: 'user', isMeta: true, message: { content: [{ type: 'text', text: 'Base directory for this skill: /s/ocr\n\n```bash\nocrtool a\n```\n' }] } });
   const lines = [
-    tool('a', 'Skill', { skill: 'clip' }), tool('c', 'Skill', { skill: 'ocr' }), body, other,
+    tool('a', 'Skill', { skill: 'gadget' }), tool('c', 'Skill', { skill: 'ocr' }), body, other,
     tool('b', 'Bash', { command: 'vidcut' }), result('b', 'vidcut: command not found'),
   ];
   const read = readTranscript(lines.join('\n'), 'f');
   expect(read.uses).toBe(2);
-  expect(read.failures[0]?.skill).toBe('clip');
+  expect(read.failures[0]?.skill).toBe('gadget');
 });
 
 test('a directory with a space is read whole, so its parent folder is not the skill', () => {
-  const spaced = JSON.stringify({ ...base, type: 'user', isMeta: true, message: { content: [{ type: 'text', text: 'Base directory for this skill: /mnt/c/Max Foo/skills/clip\n\nRun.\n' }] } });
+  const spaced = JSON.stringify({ ...base, type: 'user', isMeta: true, message: { content: [{ type: 'text', text: 'Base directory for this skill: /mnt/c/Max Foo/skills/gadget\n\nRun.\n' }] } });
   const lines = [spaced, tool('b', 'Bash', { command: 'bash /mnt/c/Max/other.sh' }), result('b', 'bash: command not found')];
   expect(readTranscript(lines.join('\n'), 'f').failures).toEqual([]);
 });
