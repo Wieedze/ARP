@@ -85,6 +85,8 @@ reaches the outbound URL.** `packages/protocol/test/content-serve.test.ts` has a
 .arp/session.jsonl     what the hook recorded, if you wired the hook
 .arp/receipts.jsonl    what you fetched through a server, and the receipts
 .arp/skills/<name>/SKILL.md   files you fetched, if you used arp-fetch-skill.ts
+~/.arp/skills-cli/     the search package's home, mode 0700, with npm's cache of that package.
+                       Created by the first arp_pulse call with a query. Safe to delete
 ```
 
 That is all of it. The key is in your home directory (`ARP_HOME` moves it), so it is one key
@@ -124,7 +126,7 @@ ipfs.io                an agent's registration document, when it published an `i
 **`arp_pulse` runs somebody else's package, and you should decide about that.** Called with a `query`,
 it runs `npx --yes skills@1.7.6 find <query>`: the pinned npm package executes on your machine, as your
 OS user, so it can read what that user can read. It gets four environment variables (`PATH`, `HOME` set to
-the private directory `~/.arp/skills-cli`, and two that turn off telemetry and colour), none of your secrets, and the query as
+the private directory `skills-cli` in `ARP_HOME`, and two that turn off telemetry and colour), none of your secrets, and the query as
 one argument with no shell. **Your search words reach skills.sh**, and `npx` reaches the npm registry.
 `ARP_PULSE_SEARCH=off` stops it, and it never runs in `desktop` or `sponsored`, which keep an agent key on
 the machine. An agent can always pass the command's text as `search_output`, which runs nothing. Either way

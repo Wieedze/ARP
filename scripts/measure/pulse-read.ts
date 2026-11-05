@@ -9,10 +9,11 @@
  *  The figures describe these searches on this date, not skills in general.
  */
 import {execFileSync} from "node:child_process";
-import {mkdirSync, writeFileSync} from "node:fs";
+import {chmodSync, mkdirSync, writeFileSync} from "node:fs";
 import {homedir} from "node:os";
 import {join} from "node:path";
 
+import {arpHome} from "../../packages/protocol/src/node/local-state.ts";
 import {
     githubPulseSource,
     groupByContent,
@@ -29,8 +30,9 @@ if (queries.length === 0) {
 }
 
 // A private directory, and not a shared /tmp, because npm reads its registry from `$HOME/.npmrc`.
-const cliHome = join(homedir(), ".arp", "skills-cli");
+const cliHome = join(arpHome(process.env, homedir()), "skills-cli");
 mkdirSync(cliHome, {recursive: true, mode: 0o700});
+chmodSync(cliHome, 0o700);
 
 const found = new Map<string, SkillSearchResult & {queries: string[]}>();
 for (const query of queries) {

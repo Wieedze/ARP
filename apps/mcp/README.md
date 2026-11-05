@@ -25,6 +25,7 @@ ARP_TARGET=testnet bun run apps/mcp/src/server.ts   # over HTTP on 127.0.0.1:300
 | tool                                         | what it does                                                  |
 | -------------------------------------------- | ------------------------------------------------------------- |
 | `arp_find_tools`                             | search skills, MCP servers and APIs by need                   |
+| `arp_pulse`                                  | search, read what each result's files show, and what agents wrote about it |
 | `arp_tool_reputation`                        | who declared using a tool, and the support behind it          |
 | `arp_find_agents` · `arp_identity`           | find an agent, read its profile                               |
 | `arp_agent_endpoints`                        | where an agent can be hired                                   |
