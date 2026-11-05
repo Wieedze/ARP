@@ -23,7 +23,7 @@ import {
 } from "../../packages/protocol/src/declare/index.js";
 import {normaliseToolUrl, toolAtomUri} from "../../packages/protocol/src/declare/tool-thing.js";
 import {HAS_TAG} from "../../packages/protocol/src/sources/intuition/terms.js";
-import {classifySkill} from "../helpers/skill-domains-table.js";
+import {classifySkill} from "../../packages/protocol/src/skill-domains.js";
 
 const REPO = "Wieedze/ARP";
 const SKILL = "arp";

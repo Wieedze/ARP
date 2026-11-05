@@ -172,3 +172,17 @@ cd apps/mcp && ARP_TARGET=testnet ARP_NO_RECEIPTS=1 bunx vitest run
  Tests  157 passed (157)
 ```
 
+**What a search costs without a token.** `bun run scripts/measure/pulse-github-cost.ts`, `data/measurements/pulse-github-cost-2026-11-05.json`: 13 windows of the results recorded in `pulse-read-2026-11-05.json`, against a stub that counts requests on `api.github.com`, with every result reading fine, which is the cheap case for the new code.
+
+| | Requests per search | Searches an hour, of 60 |
+| --- | --- | --- |
+| Before | 25.2 on average, 30 at worst | 2 |
+| After, a new search | 4.3 on average, 5 at worst | 13 |
+| After, the same repositories within a day | 0 | not limited by this |
+
+So the first "4 or 5 searches" was too kind: 2 an hour from a fresh quota, which is not enough, so this changed more than a message. Without a token: no repository figures, results read only up to `limit`, a list on disk for a day, nothing more asked once GitHub says stop, and past that the file alone from `raw.githubusercontent.com`, as `read_file_only`, naming no scripts. A token keeps the whole window. What it gives up without one: fewer copies in other repositories, and no stars or archived flag.
+
+Live, with this address's quota at 0 on 2026-11-05 at 21:41: 15 recorded results, 6 read, 5 `read_file_only` and 1 `rate_limited`, 4 requests sent before the stop since a batch runs together. `npx skills` was not run, since the auto mode refused it to the agent session.
+
+From a fresh quota, the same day at 21:50 UTC, same script with `--live`, raw output `data/measurements/pulse-github-live-2026-11-05.txt`: two windows of recorded results, 5 read each, the remaining count going 60, 55, 50. So 5 requests a search with five new repositories, 12 searches an hour for one address with no token. Anything else on that address shares the 60.
+

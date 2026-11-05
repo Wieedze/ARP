@@ -319,73 +319,66 @@ export type WrittenLine = { toolUrl: string; termId: Hex; levels: Hex[]; created
  * and the approval, and nothing that sends value.
  */
 export async function writeLine(config: LoopConfig, agent: AgentSender, input: LineInput): Promise<WrittenLine> {
-  try {
-    const state = await ensureAgent(config, agent);
-    const ref = { agentRegistry: registryRef(config), agentId: state.agentId };
-    await ensureIdentity(config, state);
-    const approval = await sponsorApproval(config);
-    const expiresAt = () => Math.floor(Date.now() / 1000) + 600;
+  const state = await ensureAgent(config, agent);
+  const ref = { agentRegistry: registryRef(config), agentId: state.agentId };
+  await ensureIdentity(config, state);
+  const approval = await sponsorApproval(config);
+  const expiresAt = () => Math.floor(Date.now() / 1000) + 600;
 
-    const listing = await signListToolRequest(
-      { address: agent.address, url: input.toolUrl, nonce: keccak256(stringToBytes(`list-${input.toolUrl}-${Date.now()}`)), expiresAt: expiresAt() },
+  const listing = await signListToolRequest(
+    { address: agent.address, url: input.toolUrl, nonce: keccak256(stringToBytes(`list-${input.toolUrl}-${Date.now()}`)), expiresAt: expiresAt() },
+    DESKTOP_CHAIN_ID,
+    agent.account,
+  );
+  const listed = await post(config, '/list-tool', { url: input.toolUrl, request: listing });
+  if (listed.status !== 200 || typeof listed.body['atomId'] !== 'string') {
+    throw new Error(`the tool could not be listed (${listed.status}): ${String(listed.body['error'] ?? '')}`);
+  }
+  const tool = listed.body['atomId'] as Hex; // a string, checked on the line above
+
+  const wait = config.sleep ?? ((ms: number) => new Promise<void>((done) => setTimeout(done, ms)));
+  const deadline = Date.now() + (config.indexerWaitMs ?? 120_000);
+  let approved = false;
+  for (;;) {
+    const request = await signLineRequest(
+      {
+        agent: agent.address,
+        ...ref,
+        tool,
+        domain: input.domain ?? '',
+        outcome: input.outcome,
+        reason: input.reason ?? '',
+        nonce: keccak256(stringToBytes(`line-${tool}-${Date.now()}`)),
+        expiresAt: expiresAt(),
+      },
       DESKTOP_CHAIN_ID,
       agent.account,
     );
-    const listed = await post(config, '/list-tool', { url: input.toolUrl, request: listing });
-    if (listed.status !== 200 || typeof listed.body['atomId'] !== 'string') {
-      throw new Error(`the tool could not be listed (${listed.status}): ${String(listed.body['error'] ?? '')}`);
+    const answer = await post(config, '/line', { request });
+    if (answer.status === 200) {
+      return {
+        toolUrl: String(listed.body['url']),
+        termId: answer.body['termId'] as Hex, // the service's own answer
+        levels: answer.body['levels'] as Hex[], // the service's own answer
+        created: answer.body['created'] === true,
+        transactions: answer.body['transactions'] as Hex[], // the service's own answer
+      };
     }
-    const tool = listed.body['atomId'] as Hex; // a string, checked on the line above
-
-    const wait = config.sleep ?? ((ms: number) => new Promise<void>((done) => setTimeout(done, ms)));
-    const deadline = Date.now() + (config.indexerWaitMs ?? 120_000);
-    let approved = false;
-    for (;;) {
-      const request = await signLineRequest(
-        {
-          agent: agent.address,
-          ...ref,
-          tool,
-          domain: input.domain ?? '',
-          outcome: input.outcome,
-          reason: input.reason ?? '',
-          nonce: keccak256(stringToBytes(`line-${tool}-${Date.now()}`)),
-          expiresAt: expiresAt(),
-        },
-        DESKTOP_CHAIN_ID,
-        agent.account,
-      );
-      const answer = await post(config, '/line', { request });
-      if (answer.status === 200) {
-        return {
-          toolUrl: String(listed.body['url']),
-          termId: answer.body['termId'] as Hex, // the service's own answer
-          levels: answer.body['levels'] as Hex[], // the service's own answer
-          created: answer.body['created'] === true,
-          transactions: answer.body['transactions'] as Hex[], // the service's own answer
-        };
-      }
-      const error = String(answer.body['error'] ?? '');
-      const notIndexedYet =
-        (answer.status === 403 && /no identity atom on the graph/.test(error)) ||
-        (answer.status === 422 && answer.body['retry'] === true) ||
-        (answer.status === 503 && answer.body['retry'] === true);
-      if (notIndexedYet && Date.now() < deadline) {
-        await wait(5_000);
-        continue;
-      }
-      if (answer.status === 409 && answer.body['approve'] !== undefined && !approved) {
-        await approveSponsor(config, agent, ref, approval);
-        approved = true;
-        continue;
-      }
-      throw new Error(`the sponsor refused the line (${answer.status}): ${error}`);
+    const error = String(answer.body['error'] ?? '');
+    const notIndexedYet =
+      (answer.status === 403 && /no identity atom on the graph/.test(error)) ||
+      (answer.status === 422 && answer.body['retry'] === true) ||
+      (answer.status === 503 && answer.body['retry'] === true);
+    if (notIndexedYet && Date.now() < deadline) {
+      await wait(5_000);
+      continue;
     }
-  } catch (error) {
-    if (error instanceof TypeError || (error instanceof Error && /fetch failed|ECONNREFUSED|Unable to connect|TimeoutError/.test(`${error.name} ${error.message}`))) {
-      throw new Error(`ARP's sponsoring service did not answer at ${config.sponsorUrl}. Is it running? (${error.message})`, { cause: error });
+    if (answer.status === 409 && answer.body['approve'] !== undefined && !approved) {
+      await approveSponsor(config, agent, ref, approval);
+      approved = true;
+      continue;
     }
-    throw error;
+    throw new Error(`the sponsor refused the line (${answer.status}): ${error}`);
   }
 }
 

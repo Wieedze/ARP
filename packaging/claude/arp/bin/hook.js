@@ -196,6 +196,190 @@ function readRequires(markdown) {
   }
   return { cli, runs, login: null, description };
 }
+// ../../packages/protocol/dist/skill-domains.js
+var SKILL_DOMAINS = [
+  {
+    domain: "payment",
+    parent: "tool",
+    words: ["payment", "stripe", "paypal", "invoice", "checkout", "billing", "paywall"]
+  },
+  {
+    domain: "video",
+    parent: "tool",
+    words: ["video", "remotion", "hyperframes", "keyframe", "footage", "youtube"],
+    nameWords: ["render", "caption", "motion", "title", "carousel", "cursor", "frame", "overlay", "shard", "animation", "avatar", "clip"]
+  },
+  {
+    domain: "image",
+    parent: "tool",
+    words: ["image generation", "inpainting", "outpainting", "flux", "midjourney", "stable diffusion", "nano banana"],
+    nameWords: ["image", "photo", "relight", "upscale", "thumbnail", "imagegen"]
+  },
+  {
+    domain: "audio",
+    parent: "tool",
+    words: ["elevenlabs", "music generation", "text to speech", "voiceover", "sound effect", "instrumental"],
+    nameWords: ["audio", "music", "voice", "speech", "sound"]
+  },
+  {
+    domain: "document",
+    parent: "tool",
+    words: ["pptx", "docx", "xlsx", "powerpoint", "spreadsheet", ".potx", "pdf file"],
+    nameWords: ["pdf", "docx", "pptx", "xlsx", "document", "slide", "markdown"]
+  },
+  {
+    domain: "scraping",
+    parent: "tool",
+    words: ["scrap", "crawl", "firecrawl", "apify"],
+    nameWords: ["extract", "scrape"]
+  },
+  {
+    domain: "browser",
+    parent: "tool",
+    words: ["playwright", "puppeteer", "headless browser", "selenium"],
+    nameWords: ["browser", "chrome"]
+  },
+  {
+    domain: "database",
+    parent: "tool",
+    words: ["database", "postgres", "prisma", "supabase", "mongo", " sql"],
+    nameWords: ["schema", "query", "migration", "sql"]
+  },
+  {
+    domain: "design",
+    parent: "tool",
+    words: ["figma", "typograph", "design system", "design token"],
+    nameWords: ["design", "ux", "colour", "color", "layout", "logo", "icon", "theme"]
+  },
+  {
+    domain: "collaboration",
+    parent: "tool",
+    words: ["slack", "notion", "jira", "linear", "atlassian", "monday", "飞书", "obsidian"],
+    nameWords: ["lark", "calendar", "whiteboard", "meeting"]
+  },
+  {
+    domain: "marketing",
+    parent: "tool",
+    words: ["marketing", "seo", "campaign", "copywriting", "newsletter", "onboarding", "referral", "product hunt"],
+    nameWords: ["cro", "launch", "photography", "signup", "popup", "ads", "audience", "growth", "brand"]
+  },
+  {
+    domain: "blockchain",
+    parent: "tool",
+    words: ["blockchain", "onchain", "on-chain", "ethereum", "solidity", "web3", "smart contract", "erc-20", "erc-721"],
+    nameWords: ["wallet", "crypto", "nft", "defi"]
+  },
+  {
+    domain: "infrastructure",
+    parent: "tool",
+    words: ["deploy", "docker", "kubernetes", "terraform", "cloudflare", "aws", "azure", "serverless", "ci/cd", "firebase", "hosting", "vercel"],
+    nameWords: ["infra", "cli"]
+  },
+  {
+    domain: "observability",
+    parent: "tool",
+    words: ["observab", "logging", "grafana", "sentry", "telemetry"],
+    nameWords: ["monitor", "metric", "trace", "alert", "log"]
+  },
+  {
+    domain: "quality",
+    parent: "tool",
+    words: ["linting", "unit test", "code coverage", "static analysis"],
+    nameWords: ["test", "lint", "review", "debug", "audit", "coverage", "quality", "refactor", "eval"]
+  },
+  {
+    domain: "writing",
+    parent: "tool",
+    words: ["cold email", "pr body", "commit message", "conventional commits"],
+    nameWords: ["writing", "write", "article", "prose", "caveman", "cave", "edit"]
+  },
+  {
+    domain: "method",
+    parent: "tool",
+    words: ["handoff", "hand the current", "implementation plan", "subagent", "superpowers", "overbuilding", "chief of staff", "retrospective", "acceptance condition", "router over", "re-pitch"],
+    nameWords: ["handoff", "triage", "retro", "brainstorm", "spec", "prd", "questionnaire", "plan", "implement", "dispatch", "execute", "executing", "investigate", "wayfinder", "decision", "teach", "verify", "verification", "authoring", "template", "zoom", "wait", "grill", "ask", "manage", "optimize", "worktree", "lean", "sensei", "help", "ticket", "issue"]
+  },
+  {
+    domain: "website",
+    parent: "tool",
+    words: ["landing page", "static site", "next.js", "nextjs", "tailwind"],
+    nameWords: ["website", "html", "css", "landing", "frontend", "react"]
+  },
+  {
+    domain: "api",
+    parent: "tool",
+    words: ["rest api", "graphql", "webhook", "openapi", "postman"],
+    nameWords: ["api", "endpoint", "rest"]
+  },
+  {
+    domain: "automation",
+    parent: "tool",
+    words: ["zapier", "cron", "orchestrat"],
+    nameWords: ["automation", "workflow", "schedule", "pipeline"]
+  },
+  {
+    domain: "development",
+    parent: "tool",
+    words: ["typescript", "python", "rust ", "sdk"],
+    nameWords: ["code", "compile", "library", "framework", "git"]
+  }
+];
+function classifySkill(skill, description) {
+  const name = ` ${skill.replace(/-/g, " ").toLowerCase()} `;
+  const both = `${name}${description.toLowerCase()}`;
+  const hit = SKILL_DOMAINS.find((rule) => rule.words.some((word) => both.includes(word)) || (rule.nameWords ?? []).some((word) => name.includes(` ${word}`)));
+  return hit?.domain ?? null;
+}
+// ../../packages/protocol/dist/content-path.js
+function skillRefFromUrl(url) {
+  let parsed;
+  try {
+    parsed = new URL(url.includes("://") ? url : `https://${url}`);
+  } catch {
+    return null;
+  }
+  if (parsed.hostname.replace(/^www\./, "") !== "github.com")
+    return null;
+  const skill = parsed.searchParams.get("skill");
+  if (skill === null || skill.length === 0)
+    return null;
+  const [owner, repo] = parsed.pathname.replace(/^\/+/, "").replace(/\/+$/, "").replace(/\.git$/, "").split("/");
+  if (owner === undefined || repo === undefined)
+    return null;
+  if (owner.length === 0 || repo.length === 0)
+    return null;
+  return { repo: `${owner}/${repo}`, skill };
+}
+
+// ../../packages/protocol/dist/share-failures.js
+function installedFromSkillLock(lock) {
+  if (lock === null)
+    return [];
+  try {
+    const parsed = JSON.parse(lock);
+    return Object.entries(parsed.skills ?? {}).flatMap(([skill, entry]) => entry?.sourceType === "github" && typeof entry.source === "string" ? [{ skill, source: entry.source }] : []);
+  } catch {
+    return [];
+  }
+}
+function installedFromReceipts(text) {
+  const found = [];
+  for (const line of (text ?? "").split(`
+`)) {
+    if (line.trim() === "")
+      continue;
+    try {
+      const row = JSON.parse(line);
+      const url = typeof row.url === "string" ? row.url : row.receipt?.url;
+      const ref = typeof url === "string" ? skillRefFromUrl(url) : null;
+      if (ref !== null)
+        found.push({ skill: ref.skill, source: ref.repo });
+    } catch {
+      continue;
+    }
+  }
+  return found;
+}
 // ../../packages/protocol/dist/pulse-score.js
 function inferDomain(query, labels) {
   const words = ` ${query.toLowerCase().replace(/[^a-z0-9-]+/g, " ").trim()} `;
@@ -533,31 +717,7 @@ function askedBySkill(command, markdown, directory) {
   return programsOf(command).some((program) => named.has(program) || program.includes(".") && new RegExp(`(?:^|[\\s\`'"/(])${escaped(program)}(?=[\\s\`'")]|$)`, "m").test(markdown));
 }
 var DOMAIN = /^[a-z0-9][a-z0-9-]*$/;
-var DOMAINS = [
-  "audio",
-  "video",
-  "api",
-  "method",
-  "writing",
-  "collaboration",
-  "blockchain",
-  "research",
-  "database",
-  "quality",
-  "scraping",
-  "automation",
-  "website",
-  "infrastructure",
-  "marketing",
-  "design",
-  "image",
-  "document",
-  "browser",
-  "payment",
-  "card",
-  "observability",
-  "development"
-];
+var DOMAINS = [...new Set(SKILL_DOMAINS.map((rule) => rule.domain))];
 function lastUserWords(transcript) {
   let words = "";
   for (const line of transcript.split(`
@@ -578,8 +738,8 @@ function lastUserWords(transcript) {
   }
   return words;
 }
-function contextOf(words, description) {
-  return inferDomain(words, DOMAINS) ?? inferDomain(description ?? "", DOMAINS);
+function contextOf(words, skill, description) {
+  return inferDomain(words, DOMAINS) ?? classifySkill(skill.split(":").pop() ?? skill, description ?? "");
 }
 function answerOf(response) {
   const blocks = Array.isArray(response) ? response : typeof response === "object" && response !== null && Array.isArray(response.content) ? response.content : [response];
@@ -635,6 +795,16 @@ function foundBySearch(cwd, session, skill) {
     }
   }
   return found;
+}
+var readIfThere = (path) => existsSync(path) ? readFileSync2(path, "utf8") : null;
+function installedSource(name, cwd) {
+  const known = [
+    ...installedFromSkillLock(readIfThere(join3(homedir2(), ".agents", ".skill-lock.json"))),
+    ...installedFromReceipts(readIfThere(join3(arpHome(), "receipts.jsonl"))),
+    ...installedFromReceipts(readIfThere(join3(cwd, ".arp", "receipts.jsonl")))
+  ];
+  const sources = new Set(known.filter((entry) => entry.skill === name).map((entry) => entry.source));
+  return sources.size === 1 ? [...sources][0] ?? null : null;
 }
 function skillsOfSession(log, session) {
   if (!existsSync(log))
@@ -698,12 +868,12 @@ function recordSkillFailure(call, cwd) {
         continue;
       const search = foundBySearch(cwd, call.session, skill.name);
       const words = call.transcript !== null && existsSync(call.transcript) ? lastUserWords(readFileSync2(call.transcript, "utf8")) : "";
-      const domain = search?.domain ?? contextOf(words, readRequires(markdown).description);
+      const domain = search?.domain ?? contextOf(words, skill.name, readRequires(markdown).description);
       appendFailure({
         at: new Date().toISOString(),
         session: call.session,
         skill: skill.name,
-        source: skill.source ?? search?.source ?? null,
+        source: skill.source ?? search?.source ?? installedSource(skill.name.split(":").pop() ?? skill.name, cwd),
         ...domain === null ? {} : { domain },
         reason
       });

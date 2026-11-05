@@ -1,0 +1,50 @@
+21:50:39
+ "live": "recorded results from 0",
+ "results": 15,
+ "read": 5,
+ "statuses": {
+  "read": 5
+ },
+ "before": {
+  "limit": 60,
+  "remaining": 60,
+  "reset": 1793919353,
+  "used": 0
+ },
+ "after": {
+  "limit": 60,
+  "remaining": 55,
+  "reset": 1793919353,
+  "used": 5
+ },
+ "quota": {
+  "apiRequests": 5,
+  "limited": false,
+  "resetsAt": null
+ }
+}
+21:50:41
+ "live": "recorded results from 15",
+ "results": 15,
+ "read": 5,
+ "statuses": {
+  "read": 5
+ },
+ "before": {
+  "limit": 60,
+  "remaining": 55,
+  "reset": 1793919353,
+  "used": 5
+ },
+ "after": {
+  "limit": 60,
+  "remaining": 50,
+  "reset": 1793919353,
+  "used": 10
+ },
+ "quota": {
+  "apiRequests": 5,
+  "limited": false,
+  "resetsAt": null
+ }
+}

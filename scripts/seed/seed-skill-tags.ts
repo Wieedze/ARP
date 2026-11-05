@@ -14,7 +14,7 @@
  *
  *  ## Two new domain terms, and the one that was rejected
  *
- *  The table in `skill-domains-table.ts` placed 569 of 662 in the 16 domains already under `tool`.
+ *  The table in `packages/protocol/src/skill-domains.ts` placed 569 of 662 in the 16 domains already under `tool`.
  *  Two clusters had no home, and keywords could not invent one:
  *
  *    - **`method`** — ~32 skills about *how a piece of work is conducted*: handing a session over,
@@ -54,7 +54,7 @@ import {
 } from "../../packages/protocol/src/declare/index.js";
 import {HAS_TAG, IS_A_SUB_DOMAIN_OF} from "../../packages/protocol/src/sources/intuition/terms.js";
 import {normaliseToolUrl, toolAtomUri} from "../../packages/protocol/src/declare/tool-thing.js";
-import {classifySkill, SKILL_DOMAINS} from "../helpers/skill-domains-table.js";
+import {classifySkill, SKILL_DOMAINS} from "../../packages/protocol/src/skill-domains.js";
 
 const TARGETS = {mainnet: 1155, testnet: 13579} as const;
 

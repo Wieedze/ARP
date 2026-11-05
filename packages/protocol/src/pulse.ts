@@ -67,7 +67,14 @@ export type SkillPulse = SkillSearchResult &
               contentId: string;
               skillMdSha: string;
               repository: SkillRepository | null;
+              /** When the repository's file list was read, if it came from a cache. */
+              listingReadAt?: string;
           } & SkillFacts)
+        /**
+         * GitHub's limit was reached, and the file was read at a usual path without the repository's list.
+         * What the file says is known. Its scripts, its size and whether an install takes this copy are not.
+         */
+        | ({status: "read_file_only"; path: string} & Pick<SkillFacts, "keys" | "paidWords" | "hosts" | "requires">)
         /** The source is not a GitHub repository, so this reader has nothing to list. */
         | {status: "not_github"}
         | {status: "repository_unreachable"}
@@ -88,6 +95,8 @@ export type RepositoryListing = {
     /** Directory path to git's tree id. */
     trees: ReadonlyMap<string, string>;
     truncated: boolean;
+    /** Set when this list came from a cache: it may be older than the repository. */
+    readAt?: string;
 };
 
 export type PulseFailure = "unreachable" | "rate_limited";
@@ -97,6 +106,22 @@ export type PulseSource = {
     listing(repo: string): Promise<RepositoryListing | PulseFailure>;
     file(repo: string, path: string): Promise<string | null>;
     repository(repo: string): Promise<SkillRepository | null>;
+    /** What GitHub's quota did so far, for a caller to say so. */
+    quota?(): GitHubQuota;
+};
+
+export type GitHubQuota = {
+    /** Requests that count against the hourly limit. Raw files do not. */
+    apiRequests: number;
+    limited: boolean;
+    /** When the limit resets, as GitHub says. */
+    resetsAt: string | null;
+};
+
+/** A listing kept between searches, because 60 requests an hour is all a person without a token has. */
+export type ListingCache = {
+    get(repo: string): Promise<RepositoryListing | null>;
+    set(repo: string, listing: RepositoryListing): Promise<void>;
 };
 
 /** Beyond this a repository is a collection, and reading each file's name costs too much per ask. */
@@ -353,11 +378,29 @@ async function locate(
     };
 }
 
+/** Where a skill's file usually is, tried without a list when the list cannot be had. */
+function usualPaths(skill: string): string[] {
+    return [`skills/${skill}/SKILL.md`, `${skill}/SKILL.md`, `.claude/skills/${skill}/SKILL.md`, "SKILL.md"];
+}
+
+/** The file alone, from `raw.githubusercontent.com`, which the hourly limit does not cover. It must name the skill. */
+async function readFileOnly(result: SkillSearchResult, source: PulseSource): Promise<SkillPulse | null> {
+    if (!/^[\w.-]+$/.test(result.skill)) return null;
+    const wanted = normaliseName(result.skill);
+    for (const path of usualPaths(result.skill)) {
+        const markdown = await source.file(result.source, path);
+        if (markdown === null || normaliseName(frontmatterName(markdown) ?? "") !== wanted) continue;
+        const {keys, paidWords, hosts, requires} = readSkillFacts(markdown, []);
+        return {...result, status: "read_file_only", path, keys, paidWords, hosts, requires};
+    }
+    return null;
+}
+
 /** Read one search result. Every way it can fail is a status, because "unknown" must stay visible. */
 export async function readPulse(result: SkillSearchResult, source: PulseSource): Promise<SkillPulse> {
     if (!/^[\w.-]+\/[\w.-]+$/.test(result.source)) return {...result, status: "not_github"};
     const listing = await source.listing(result.source);
-    if (listing === "rate_limited") return {...result, status: "rate_limited"};
+    if (listing === "rate_limited") return (await readFileOnly(result, source)) ?? {...result, status: "rate_limited"};
     if (listing === "unreachable") return {...result, status: "repository_unreachable"};
 
     const located = await locate(source, result.source, result.skill, listing);
@@ -386,6 +429,7 @@ export async function readPulse(result: SkillSearchResult, source: PulseSource):
         contentId: directory === "" ? listing.rootTreeId : (listing.trees.get(directory) ?? located.file.sha),
         skillMdSha: located.file.sha,
         repository: await source.repository(result.source),
+        ...(listing.readAt === undefined ? {} : {listingReadAt: listing.readAt}),
         ...readSkillFacts(located.markdown, inDirectory, listing.files),
         keysInScriptsItRuns,
     };
@@ -412,11 +456,15 @@ type GitHubTree = {
 };
 
 /**
- * Read GitHub. One tree request and one repository request per repository, cached for the source's
- * life. Unauthenticated that is 60 requests an hour, so a token is optional and only makes it
- * comfortable. `raw.githubusercontent.com` is not on that quota.
+ * Read GitHub. A tree request per repository and, when asked, a repository request, kept for the source's life.
+ * Without a token that is 60 requests an hour for one address, so a search spends as few as it can: the
+ * repository's figures are left out with `withRepository: false`, lists come from `cache` when one is
+ * given, and once GitHub says the limit is reached nothing more is asked of it.
+ * `raw.githubusercontent.com` is not on that quota.
  */
-export function githubPulseSource(options: {fetch?: typeof fetch; token?: string} = {}): PulseSource {
+export function githubPulseSource(
+    options: {fetch?: typeof fetch; token?: string; withRepository?: boolean; cache?: ListingCache} = {},
+): PulseSource {
     const get = options.fetch ?? fetch;
     const headers: Record<string, string> = {
         accept: "application/vnd.github+json",
@@ -425,10 +473,27 @@ export function githubPulseSource(options: {fetch?: typeof fetch; token?: string
     };
     const listings = new Map<string, Promise<RepositoryListing | PulseFailure>>();
     const repositories = new Map<string, Promise<SkillRepository | null>>();
+    const quota: GitHubQuota = {apiRequests: 0, limited: false, resetsAt: null};
+    /** A 403 can also be a repository GitHub blocks, which says nothing about the limit. */
+    const noteLimit = (response: Response): boolean => {
+        const hit =
+            response.status === 429 ||
+            (response.status === 403 &&
+                (response.headers.get("x-ratelimit-remaining") === "0" || response.headers.has("retry-after")));
+        if (!hit) return false;
+        quota.limited = true;
+        const reset = Number(response.headers.get("x-ratelimit-reset"));
+        if (Number.isFinite(reset) && reset > 0) quota.resetsAt = new Date(reset * 1000).toISOString();
+        return true;
+    };
 
     const readListing = async (repo: string): Promise<RepositoryListing | PulseFailure> => {
+        const cached = await options.cache?.get(repo).catch(() => null);
+        if (cached !== null && cached !== undefined) return cached;
+        if (quota.limited) return "rate_limited";
+        quota.apiRequests += 1;
         const response = await get(`https://api.github.com/repos/${repo}/git/trees/HEAD?recursive=1`, {headers});
-        if (response.status === 403 || response.status === 429) return "rate_limited";
+        if (noteLimit(response)) return "rate_limited";
         if (!response.ok) return "unreachable";
         const body = (await response.json()) as GitHubTree; // validated field by field below
         const files: ListedFile[] = [];
@@ -440,16 +505,21 @@ export function githubPulseSource(options: {fetch?: typeof fetch; token?: string
                 files.push({path: entry.path, sha: entry.sha, size: typeof entry.size === "number" ? entry.size : 0});
             }
         }
-        return {
+        const listing: RepositoryListing = {
             rootTreeId: typeof body.sha === "string" ? body.sha : "",
             files,
             trees,
             truncated: body.truncated === true,
         };
+        await options.cache?.set(repo, listing).catch(() => undefined);
+        return listing;
     };
 
     const readRepository = async (repo: string): Promise<SkillRepository | null> => {
+        if (options.withRepository === false || quota.limited) return null;
+        quota.apiRequests += 1;
         const response = await get(`https://api.github.com/repos/${repo}`, {headers});
+        noteLimit(response);
         if (!response.ok) return null;
         // validated field by field below
         const body = (await response.json()) as {stargazers_count?: unknown; pushed_at?: unknown; archived?: unknown};
@@ -476,5 +546,6 @@ export function githubPulseSource(options: {fetch?: typeof fetch; token?: string
             const response = await get(`https://raw.githubusercontent.com/${repo}/HEAD/${encoded}`);
             return response.ok ? response.text() : null;
         },
+        quota: () => ({...quota}),
     };
 }

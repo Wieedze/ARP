@@ -93,8 +93,10 @@ reaches the outbound URL.** `packages/protocol/test/content-serve.test.ts` has a
 .arp/session.jsonl     what the hook recorded, if you wired the hook
 ~/.arp/failures.jsonl  a skill's failures the hook saw, or `arp backfill` read from old transcripts:
                        the skill, its source, the session, the date, a closed reason, and a domain:
-                       the search's, else a category your request or the skill's description names.
-                       Your words are read for that and not kept. Never
+                       the search's, else a category your request names, else the catalogue's keyword
+                       table on the skill's name and description, which can be wrong. The source, with
+                       no search, comes from ~/.agents/.skill-lock.json or a receipt, when only one
+                       source is known for that name. Your words are read for that and not kept. Never
                        the command or its output. Stays on this machine unless you run `arp share on`
 ~/.arp/sharing.json    whether failures may become public lines. Absent means off
 ~/.arp/shared-failures.jsonl  what has been made public: a skill's public URL, `failed`, a closed reason, and a domain if known
@@ -135,7 +137,9 @@ both local by default. `arp line` and `arp share send` reach the sponsoring serv
 ```
 the Intuition graph    reads. Set by ARP_TARGET, or INTUITION_GRAPHQL_URL
 the Intuition RPC      reads. Set by ARP_TARGET, or INTUITION_RPC_URL
-api.github.com         one file listing per repository, cached ten minutes
+api.github.com         one file listing per repository, cached ten minutes on the content route and a
+                       day for `arp_pulse`, in ~/.arp/pulse-listings. With no token, no repository figures,
+                       and only as many results read as you asked for, so fewer copies are seen
 raw.githubusercontent.com   the skill's own bytes, passed through, never cached
 gateway.pinata.cloud   a pinned document: an agent's registration file when it published an
                        `ipfs://` one, a proof the index does not hold, or a skill atom's document
