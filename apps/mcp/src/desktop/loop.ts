@@ -269,7 +269,8 @@ async function approveSponsor(config: LoopConfig, agent: AgentSender, ref: objec
 }
 
 export type LineInput = { toolUrl: string; domain?: string; outcome: UsageOutcome; reason?: UsageReason };
-export type WrittenLine = { termId: Hex; levels: Hex[]; created: boolean; transactions: Hex[] };
+/** `toolUrl` is the spelling it was listed under, which can differ from the one asked: GitHub's own wins. */
+export type WrittenLine = { toolUrl: string; termId: Hex; levels: Hex[]; created: boolean; transactions: Hex[] };
 
 /**
  * Writes one form B line about a tool through ARP's sponsoring service (ADR `0144`): the tool is listed if it
@@ -316,6 +317,7 @@ export async function writeLine(config: LoopConfig, agent: AgentSender, input: L
       const answer = await post(config, '/line', { request });
       if (answer.status === 200) {
         return {
+          toolUrl: String(listed.body['url']),
           termId: answer.body['termId'] as Hex, // the service's own answer
           levels: answer.body['levels'] as Hex[], // the service's own answer
           created: answer.body['created'] === true,

@@ -15,6 +15,8 @@ import {toolAtomUri} from "../../packages/protocol/src/index.ts";
 const SKILLS = [
     "https://github.com/nateherkai/herk-edit-kit?skill=cut-silences",
     "https://github.com/agenticluke/claude-skill-video-editing-plus?skill=video-editing",
+    // The test line of `docs/tasks/70` item 1, about ARP's own skill, under the spelling GitHub answers with.
+    "https://github.com/intuition-box/ARP?skill=arp",
 ];
 const graphqlUrl = deployment.chain.graphqlUrl;
 const inContextOf = deployment.arp.endpointBinding.inContextOf;
@@ -24,7 +26,7 @@ const because = await reads.atomId(stringToHex(BECAUSE_LABEL));
 
 const uris = SKILLS.map(toolAtomUri);
 const atoms = await findToolAtoms(uris, {graphqlUrl});
-const usage = await getPulseUsage([...atoms.values()], {graphqlUrl, inContextOf, hasOutcome, because});
+const usage = await getPulseUsage([...atoms.values()], {graphqlUrl, inContextOf, hasOutcome, because, payers: [deployment.arp.deployer]});
 const skills = SKILLS.map((url, at) => {
     const atom = atoms.get(uris[at] ?? "");
     const read = atom === undefined ? undefined : usage.get(atom.toLowerCase());
