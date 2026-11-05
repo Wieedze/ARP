@@ -70,7 +70,7 @@ flowchart TD
 | Says it can supply a key (`can_provide: ["key"]`) | 0 | 0.50 |
 | Says nothing, or has no key | 1 | 0.25 |
 
-**What never counts: the amount deposited.** Rank is not for sale. A line written pays a fee per level. A line held on deposits, where the triples exist, loses about 50 times less on 13579 in small vaults (`scripts/measure/line-cost.ts`), which is an open question for the user, proposed as acceptable on testnet and blocking for mainnet. This corrects how `docs/12` reads for the score, and the reader does not ask for an amount.
+**What never counts: the amount deposited.** Rank is not for sale. A line written pays a fee per level. A line held on deposits, where the triples exist, loses about 50 times less on 13579 in small vaults (`scripts/measure/line-cost.ts`), which the user accepted on testnet and which blocks a mainnet port until it is answered. This corrects how `docs/12` reads for the score, and the reader does not ask for an amount.
 
 ## What each part is worth, in simulation
 
