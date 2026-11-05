@@ -85,11 +85,11 @@
 
 | Question | Answer | Where |
 | --- | --- | --- |
-| How a line below the threshold is shown | Qualified, with no further measurement | `unconfirmed` in `arp_pulse`, `unconfirmedNote` |
+| How a line below the threshold is shown | Qualified, with no further measurement | `unconfirmed` in `arp_pulse`, `unconfirmedNote`, on lines that concern this search |
 | Whether a skill the search did not return needs the threshold to enter the list | Yes | `entersList` |
 | A line's cost to the treasury, 0.012 tTRUST | Accepted on testnet, blocking for mainnet | ADR `0144`, `docs/27` §2 |
 
-**What the second costs.** No skill has 3 wallets on 13579, so no declared skill reaches an agent whose search did not return it. Task 64's one separation came from that path.
+**What the second costs.** No skill among those `data/measurements/pulse-lines-2026-11-05T1838.json` lists has more than one wallet saying the same thing, and 9 `has outcome` triples exist on 13579 in all, read 2026-11-05, so no declared skill reaches an agent whose search did not return it. Task 64's one separation came from that path.
 
 **What the first does not show.** Nothing measured that the wording changes a choice: §4 is open, and at 15 runs a repeat would not settle it.
 

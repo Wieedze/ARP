@@ -384,7 +384,6 @@ export async function pulse(id: JsonRpcId, args: Record<string, unknown>) {
     usageRead = false;
     console.error(`arp_pulse: usage not read: ${error instanceof Error ? error.message : String(error)}`);
   }
-  if (results.length === 0) return text(id, { search: 'npx skills find', results: [], ...(await agentsPart(domain, phrases)) });
 
   const atomOf = (result: SkillSearchResult) => {
     const uri = toolUriOf(result.source, result.skill);
@@ -406,6 +405,7 @@ export async function pulse(id: JsonRpcId, args: Record<string, unknown>) {
   };
   // A skill the search did not return enters only from the threshold, so one line cannot add one (ADR `0143`).
   results = results.filter((result) => rankOf.has(`${result.source}@${result.skill}`) || entersList(usageOf(result), signal));
+  if (results.length === 0) return text(id, { search: 'npx skills find', results: [], ...(await agentsPart(domain, phrases)) });
   const workedHere = (result: SkillSearchResult) =>
     domain === null ? 0 : workedInDomain(usageOf(result), domain);
 

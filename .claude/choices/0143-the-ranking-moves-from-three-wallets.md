@@ -24,7 +24,7 @@ With `pulse-score-2`, one wallet saying `worked` took a skill in the middle of a
 
 **Positive:** one false line no longer moves the ranking of what the search returned.
 
-**One line no longer adds a skill to the list.** A skill entering from 3 wallets can say `failed` as well as `worked`, and enters at the floor.
+**One line no longer adds a skill to the list.** A skill entering from 3 wallets starts from the floor prior and then has its score: with 3 `worked` wallets in this domain it reaches (0.2 + 3) / 4 = 0.8, which ties the search's first result and sits above every other, so three wallets can place a skill second. With 3 `failed` it reads 0.05.
 
 **Negative:**
 - **The first real lines do not move it either.** On 13579 no skill has 3 wallets saying the same thing, so no real line moves any ranking today, and a skill the search placed low stays low: task 64's one separation came from a line reaching the agent through the order, and that path now needs 3 wallets.
