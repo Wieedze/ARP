@@ -379,7 +379,7 @@ export type Corroboration =
  * The user's reasoning, and it is why none of these is an error: a forged local receipt costs the
  * agent the price of the claim and earns it a reputation on a tool it never used, which is worth
  * nothing the day somebody picks an agent by that reputation. A status, never a weight — ADR
- * `0046` composes no score, and this is the same shape as the distinct-declarer count and the
+ * this composes no score, and this is the same shape as the distinct-declarer count and the
  * declarer-creator overlap in `docs/tasks/31` §8.
  *
  * Hand it a `signer` that came from a `valid` verdict. A signer this never checked is an address

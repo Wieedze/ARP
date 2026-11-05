@@ -131,11 +131,15 @@ export {
 } from "./endpoint-binding-plan.js";
 
 export {
+    BECAUSE_LABEL,
     HAS_OUTCOME_LABEL,
     isUsageOutcome,
+    isUsageReason,
     prepareUsageContext,
     USAGE_OUTCOMES,
+    USAGE_REASONS,
     type UsageContextPlan,
     type UsageContextRefusal,
     type UsageOutcome,
+    type UsageReason,
 } from "./usage-context.js";

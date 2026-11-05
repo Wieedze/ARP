@@ -174,7 +174,7 @@ export async function identity(id: JsonRpcId, args: Record<string, unknown>) {
  *
  * Two orders, and the names say what they measure rather than implying a ranking: how **many**
  * statements a source holds about an agent, or how much TRUST sits on its own atom. Neither is a
- * score and this server composes none (ADR `0046`) — a caller that wants one has the parts.
+ * score and this tool composes none — a caller that wants one has the parts.
  *
  * `total` is the cohort's size from the source's own aggregate, never `agents.length`, so a page of
  * 25 out of 28,648 cannot read as 25 agents existing.

@@ -11,6 +11,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock("@arp-protocol/core", () => ({
     getPulseUsage: mocks.getPulseUsage,
     githubPulseSource: () => ({}),
+    BECAUSE_LABEL: "because",
     HAS_OUTCOME_LABEL: "has outcome",
     multiVaultReads: () => ({atomId: mocks.atomId}),
     readPulse: mocks.readPulse,

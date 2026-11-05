@@ -1,4 +1,5 @@
 import {
+    BECAUSE_LABEL,
     getPulseUsage,
     githubPulseSource,
     HAS_OUTCOME_LABEL,
@@ -39,6 +40,7 @@ export async function loadPulse(source: string, skill: string, chain: PulseChain
             graphqlUrl: chain.graphqlUrl,
             inContextOf: chain.inContextOf,
             hasOutcome: await reads.atomId(stringToHex(HAS_OUTCOME_LABEL)),
+            because: await reads.atomId(stringToHex(BECAUSE_LABEL)),
         });
         return {pulse, atomId, usage: read.get(atomId.toLowerCase()) ?? null};
     } catch {

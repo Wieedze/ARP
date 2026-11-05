@@ -24,7 +24,7 @@ import {browseUrlOf, parseToolLabel, primaryNameOf, sourceOf} from "../lib/tool-
  * `docs/14`'s ladder grades the evidence behind a `uses` edge. That is the right question on an
  * agent's page — how good is this evidence — and the wrong one here. A `has tag` edge is not weak
  * evidence of a tag; it is a declaration whose only cost is what the writer paid. Grading it would
- * invent a scale the data does not carry, and ARP composes no score (ADR `0046`).
+ * invent a scale the data does not carry, and this composes no score.
  *
  * The order is the graph's own: `getAtomStanding` asks for edges by `total_assets desc`, so the
  * groups arrive busiest first. Nothing here re-sorts them.

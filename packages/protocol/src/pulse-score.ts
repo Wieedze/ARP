@@ -1,3 +1,4 @@
+import type {UsageOutcome, UsageReason} from "./declare/usage-context.js";
 import type {PulseUsage} from "./pulse-usage.js";
 
 /**
@@ -6,8 +7,9 @@ import type {PulseUsage} from "./pulse-usage.js";
  *
  *     score = (prior + worked) / (1 + worked + failed)
  *
- * `worked` and `failed` count **distinct wallets** that said so in this context. `prior` comes from the
- * position in the search we start on, between 0.2 and 0.8, and counts as one wallet's word. So:
+ * `worked` and `failed` are **distinct wallets** that said so, each weighed by `lineWeight` (ADR `0138`).
+ * `prior` comes from the position in the search we start on, between 0.2 and 0.8, and counts as one
+ * full wallet's word. The amount a wallet deposited is never read: rank is not for sale. So:
  *
  * - with nothing declared, the score is the prior, and the search's own order stands;
  * - one wallet cannot lift a skill above the search's first result, and two can;
@@ -16,7 +18,7 @@ import type {PulseUsage} from "./pulse-usage.js";
  *
  * It says how a skill ranks for this search, today, from these signals. It does not say the skill works.
  */
-export const SCORE_VERSION = "pulse-score-1";
+export const SCORE_VERSION = "pulse-score-2";
 const PRIOR_TOP = 0.8;
 const PRIOR_BOTTOM = 0.2;
 
@@ -35,26 +37,83 @@ export function priorFromRank(rank: number | null, total: number): number {
     return PRIOR_TOP - ((PRIOR_TOP - PRIOR_BOTTOM) * rank) / (total - 1);
 }
 
-/** Distinct wallets per outcome, in these domains. `null` domains counts every declaration. */
-export function walletsSaying(
-    usage: PulseUsage | undefined,
-    domains: ReadonlySet<string> | null,
-): {worked: number; failed: number} {
-    const worked = new Set<string>();
-    const failed = new Set<string>();
-    for (const row of usage?.declarations ?? []) {
-        if (domains !== null && !row.domains.some((domain) => domains.has(domain))) continue;
-        const wallet = row.writer.toLowerCase();
-        if (row.outcomes.includes("worked")) worked.add(wallet);
-        if (row.outcomes.includes("failed")) failed.add(wallet);
+/** What a person can supply, so a failure for lack of it does not concern them. */
+export type Capability = "key" | "program" | "file";
+
+const NEEDS: Partial<Record<UsageReason, Capability>> = {
+    "missing-key": "key",
+    "missing-program": "program",
+    "missing-file": "file",
+};
+
+/**
+ * A first guess, like the constants above. Changing one is the user's decision (`docs/tasks/66` §3).
+ * `proven` stays at 1 by that decision: a self-hire passes every check, so a higher weight pays a faked receipt.
+ */
+export const SIGNAL_WEIGHTS = {near: 0.5, proven: 1};
+
+export type SignalContext = {
+    /** The domain searched and how near others are. `null` when the search names none: every line counts in full. */
+    domain: string | null;
+    /** The domains above and below it. */
+    near: ReadonlySet<string>;
+    canProvide: ReadonlySet<Capability>;
+};
+
+export type WeighedLine = {domain: string | null; outcome: UsageOutcome; reasons: readonly UsageReason[]; proven?: boolean};
+
+/**
+ * What one line is worth to this search. Zero means it does not concern this search.
+ *
+ * - **Domain**: the same one in full, one above or below at `near`, any other not at all.
+ * - **Reason**: a failure for lack of something this person can supply does not concern them. `not-the-right-tool`
+ *   counts only in the domain it names. A failure with no reason counts, as nothing excuses it.
+ * - **Proof**: a verified receipt multiplies it by `proven`, 1 today. It says two keys talked, not that they are two people.
+ */
+export function lineWeight(line: WeighedLine, context: SignalContext, weights = SIGNAL_WEIGHTS): number {
+    const exact = context.domain === null || line.domain === context.domain;
+    const near = !exact && line.domain !== null && context.near.has(line.domain);
+    if (!exact && !near) return 0;
+    if (line.outcome === "failed" && line.reasons.length > 0) {
+        const applies = line.reasons.some((reason) => {
+            if (reason === "not-the-right-tool") return exact;
+            const need = NEEDS[reason];
+            return need === undefined || !context.canProvide.has(need);
+        });
+        if (!applies) return 0;
     }
-    return {worked: worked.size, failed: failed.size};
+    return (exact ? 1 : weights.near) * (line.proven === true ? weights.proven : 1);
+}
+
+/** The weight behind each outcome. A wallet keeps its heaviest line per outcome, so writing more lines adds nothing. */
+export function signalOf(
+    usage: PulseUsage | undefined,
+    context: SignalContext,
+): {worked: number; failed: number; failuresThatDoNotApply: number} {
+    const best = {worked: new Map<string, number>(), failed: new Map<string, number>()};
+    const excused = new Set<string>();
+    for (const row of usage?.declarations ?? []) {
+        const wallet = row.writer.toLowerCase();
+        for (const line of row.lines) {
+            const weight = lineWeight(line, context);
+            if (line.outcome === "failed" && weight === 0 && lineWeight({...line, reasons: []}, context) > 0) excused.add(wallet);
+            if (weight > (best[line.outcome].get(wallet) ?? 0)) best[line.outcome].set(wallet, weight);
+        }
+    }
+    const failuresThatDoNotApply = [...excused].filter((wallet) => !best.failed.has(wallet)).length;
+    const sum = (map: Map<string, number>) => [...map.values()].reduce((total, weight) => total + weight, 0);
+    return {worked: sum(best.worked), failed: sum(best.failed), failuresThatDoNotApply};
+}
+
+/** The formula alone, so a caller that already holds the weights runs the same one. */
+export function scoreFrom(prior: number, worked: number, failed: number): number {
+    return (prior + worked) / (1 + worked + failed);
 }
 
 export function scoreSkill(input: {rank: number | null; total: number; worked: number; failed: number}): PulseScore {
     const prior = priorFromRank(input.rank, input.total);
     return {
-        score: (prior + input.worked) / (1 + input.worked + input.failed),
+        score: scoreFrom(prior, input.worked, input.failed),
         prior,
         worked: input.worked,
         failed: input.failed,
