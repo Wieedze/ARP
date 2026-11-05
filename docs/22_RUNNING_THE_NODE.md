@@ -85,7 +85,9 @@ reaches the outbound URL.** `packages/protocol/test/content-serve.test.ts` has a
 .arp/session.jsonl     what the hook recorded, if you wired the hook
 ~/.arp/failures.jsonl  a skill's failures the hook saw, or `arp backfill` read from old transcripts:
                        the skill, its source, the session, the date and a closed reason. Never
-                       the command or its output. Stays on this machine
+                       the command or its output. Stays on this machine unless you run `arp share on`
+~/.arp/sharing.json    whether failures may become public lines. Absent means off
+~/.arp/shared-failures.jsonl  what has been made public: a skill's public URL, `failed`, a closed reason
 .arp/receipts.jsonl    what you fetched through a server, and the receipts
 .arp/skills/<name>/SKILL.md   files you fetched, if you used arp-fetch-skill.ts
 ~/.arp/skills-cli/     the search package's home, mode 0700, with npm's cache of that package.

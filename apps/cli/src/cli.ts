@@ -34,6 +34,8 @@ usage
   arp hook           the runtime hook: one payload on stdin. Records what a session used in
                      .arp/session.jsonl, and a skill's failures in ~/.arp/failures.jsonl
   arp backfill       read old Claude Code transcripts into ~/.arp/failures.jsonl. Sends nothing
+  arp share          say what would be public from ~/.arp/failures.jsonl, and what stays here.
+                     arp share on, arp share off. Off by default
   arp node           the hire endpoint. Opt-in: it listens on 127.0.0.1 and is reached through
                      a tunnel you rent (cloudflared or ngrok, or ARP_NODE_PUBLIC_URL)
 
@@ -117,6 +119,19 @@ async function run(argv: readonly string[]): Promise<number> {
       // The hook is a script: importing it reads stdin, writes at most one line and exits 0.
       await import(new URL('./hook.js', import.meta.url).href);
       return EXIT.ok;
+    case 'share': {
+      const { arpHome } = await import('@arp-protocol/core/node');
+      const { homedir } = await import('node:os');
+      const share = await import('./share.ts');
+      const env = { arpHome: arpHome(process.env, homedir()), home: homedir() };
+      if (rest[0] === 'on' || rest[0] === 'off') share.setSharing(env, rest[0] === 'on');
+      else if (rest[0] !== undefined) {
+        process.stderr.write('usage: arp share [on|off]\n');
+        return EXIT.usage;
+      }
+      process.stdout.write(share.describe(share.decide(env)));
+      return EXIT.ok;
+    }
     case 'backfill': {
       const { backfill } = await import('@arp/hook/backfill');
       const found = backfill();

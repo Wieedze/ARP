@@ -578,6 +578,15 @@ export {
     type ShareDecision,
     type SharedLine,
 } from "./share-failures.js";
+export {
+    decideShare,
+    installedFromSkillLock,
+    isSharingOn,
+    sharedLineKey,
+    type InstalledSkill,
+    type ShareDecision,
+    type SharedLine,
+} from "./share-failures.js";
 
 /** The score of a skill in a context: public, recomputable, never on chain (ADR `0137`). */
 export {
