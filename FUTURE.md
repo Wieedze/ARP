@@ -417,7 +417,6 @@ A skill listed through the sponsoring service reaches the chain but not `data/ca
 content server answers `unknown-atom` and a search says `file_not_read` until someone re-runs the
 measurements (ADR `0132`). Asked for implicitly by the usage demo, 2026-11-03; not built.
 
-<<<<<<< ours
 ## The delegation register, read side
 
 **Left 2026-11-03**, when task 37 closed at 37b and 37c (`docs/tasks/37`). Publishing works on
@@ -431,7 +430,7 @@ back yet:
 
 It depends on "Who pays on mainnet" above: if the operator funds the agent's wallet, nothing redeems
 a delegation and this read has no user.
-=======
+
 ## A market on whether it worked
 
 **Asked 2026-11-05.** _« worked c'est pas mal car propose aussi de se positionner sur oppose et donc
@@ -471,4 +470,3 @@ passed every check with one operator on both sides. The score counts distinct wa
 (`pulse-score.ts`), so several wallets buy several votes.
 
 Ordered after the effect on the search and the depth of the tree are established.
->>>>>>> theirs
